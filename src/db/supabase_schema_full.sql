@@ -4,7 +4,7 @@
 -- GENERATED FILE -- DO NOT EDIT BY HAND.
 -- Regenerate with:  .\scripts\Export-SupabaseSchema.ps1
 --
--- Generated : 2026-10-14 09:33
+-- Generated : 2026-10-15 07:14
 -- Source    : local Docker database (ga40db @ ga40prj-postgres)
 --
 -- Applies the complete schema from scratch after running
@@ -1204,6 +1204,31 @@ CREATE TABLE public.schema_migrations (
 
 
 --
+-- Name: skill_attempt; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.skill_attempt (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id text NOT NULL,
+    skill_key text NOT NULL,
+    quiz_variant text NOT NULL,
+    items jsonb NOT NULL,
+    question_count integer NOT NULL,
+    correct_count integer NOT NULL,
+    passed boolean NOT NULL,
+    started_at timestamp with time zone NOT NULL,
+    finished_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT skill_attempt_count_check CHECK (((question_count > 0) AND (correct_count >= 0) AND (correct_count <= question_count))),
+    CONSTRAINT skill_attempt_items_check CHECK (((jsonb_typeof(items) = 'array'::text) AND (jsonb_array_length(items) = question_count))),
+    CONSTRAINT skill_attempt_passed_check CHECK ((passed = ((correct_count * 5) >= (question_count * 4)))),
+    CONSTRAINT skill_attempt_skill_check CHECK ((skill_key ~ '^[a-z0-9]+(-[a-z0-9]+)*$'::text)),
+    CONSTRAINT skill_attempt_time_check CHECK ((finished_at >= started_at)),
+    CONSTRAINT skill_attempt_user_check CHECK (((user_id <> ''::text) AND (user_id <> 'anonymous'::text))),
+    CONSTRAINT skill_attempt_variant_check CHECK ((quiz_variant ~ '^[a-z0-9-]{1,40}$'::text))
+);
+
+
+--
 -- Name: stamp_code_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
@@ -1880,6 +1905,14 @@ ALTER TABLE ONLY public.schema_migrations
 
 
 --
+-- Name: skill_attempt skill_attempt_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.skill_attempt
+    ADD CONSTRAINT skill_attempt_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: stamp_member stamp_member_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2282,6 +2315,13 @@ CREATE UNIQUE INDEX property_property_unique ON public.property_property USING b
 --
 
 CREATE UNIQUE INDEX property_version_property_number_unique ON public.property_version USING btree (property_id, version_number);
+
+
+--
+-- Name: skill_attempt_user_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX skill_attempt_user_idx ON public.skill_attempt USING btree (user_id, skill_key, finished_at);
 
 
 --
