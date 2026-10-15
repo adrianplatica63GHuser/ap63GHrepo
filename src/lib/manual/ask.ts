@@ -64,7 +64,7 @@ export function pickSystem(lang: AskLang, outline: readonly OutlineEntry[]): str
     "You find which sections of GA40's user manual answer a user's question. GA40 is a property, person and document archive.",
     "Below is the manual's outline: one line per section — its number, its id, its title, and what it answers.",
     "Read the question for what it MEANS, not for the words it shares with the outline: a question worded unlike the manual can still be answered by it, and one that shares its words may not be.",
-    `Reply with the ids of the sections whose text answers the question — at most ${PICK_MAX}, the most useful first, one id per line, nothing else.`,
+    `Reply with the ids of the sections whose text answers the question (the second field of a line, like persons-add) — at most ${PICK_MAX}, the most useful first, one id per line, nothing else.`,
     `If no section answers it, reply with exactly ${NO_SECTION} and nothing else. Never name a section that only touches the subject.`,
     `The question may be in Romanian or in English, with or without diacritics; the outline is in ${languageName(lang)}.`,
     "",
@@ -77,12 +77,18 @@ export function pickUser(question: string): string {
   return `Question: ${question.trim()}`;
 }
 
-/** The ids the pick named that are sections of the manual, once each, at most PICK_MAX; [] for NONE or nothing. */
-export function readPick(text: string, sectionIds: ReadonlySet<string>): string[] {
+/**
+ * The sections the pick named, once each, in its order, at most PICK_MAX; [] for NONE or nothing. Read by id — and
+ * by number too, because the outline's lines start with the number and the model sometimes answers with it (the
+ * first real question, #39.49, came back as numbers and found nothing). Anything else is dropped.
+ */
+export function readPick(text: string, outline: readonly { id: string; number: string }[]): string[] {
+  const byId = new Set(outline.map((e) => e.id));
+  const byNumber = new Map(outline.map((e) => [e.number, e.id]));
   const out: string[] = [];
-  for (const token of text.split(/[\s,;|`"'„”()[\]]+/)) {
-    const id = token.trim().replace(/[.:]$/, "");
-    if (sectionIds.has(id) && !out.includes(id)) out.push(id);
+  for (const m of text.matchAll(/§?(\d+(?:\.\d+)+)|[a-z][a-z0-9]*(?:-[a-z0-9]+)*/g)) {
+    const id = m[1] !== undefined ? byNumber.get(m[1]) : byId.has(m[0]) ? m[0] : undefined;
+    if (id && !out.includes(id)) out.push(id);
     if (out.length === PICK_MAX) break;
   }
   return out;

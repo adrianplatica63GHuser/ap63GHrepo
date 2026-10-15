@@ -132,7 +132,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       messages: [{ role: "user", content: pickUser(question) }],
     });
     if (!pick.ok) return pick.response;
-    const ids = readPick(pick.text, new Set(outline.map((e) => e.id)));
+    const ids = readPick(pick.text, outline);
     if (ids.length === 0) return Response.json({ kind: "not-in-manual", usage: pick.usage });
 
     // 2 — the answer, from those sections' text alone.

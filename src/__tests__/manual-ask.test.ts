@@ -65,14 +65,18 @@ describe("the pick", () => {
     expect(pickUser("  cum adaug o persoană? ")).toBe("Question: cum adaug o persoană?");
   });
 
-  it("keeps the ids that are sections, once each, at most five, and nothing for NONE", () => {
-    const known = new Set(outline.map((e) => e.id));
-    expect(readPick("persons-add\nnu-exista\npersons-add\nstart-sign-in", known)).toEqual(["persons-add", "start-sign-in"]);
-    expect(readPick(NO_SECTION, known)).toEqual([]);
-    expect(readPick("", known)).toEqual([]);
-    expect(readPick("`persons-add`, start-sign-in.", known)).toEqual(["persons-add", "start-sign-in"]);
+  it("keeps the sections named by id or by number, once each, at most five, and nothing for NONE", () => {
+    const add = outline.find((e) => e.id === "persons-add")!;
+    const signIn = outline.find((e) => e.id === "start-sign-in")!;
+    expect(readPick("persons-add\nnu-exista\npersons-add\nstart-sign-in", outline)).toEqual(["persons-add", "start-sign-in"]);
+    expect(readPick(NO_SECTION, outline)).toEqual([]);
+    expect(readPick("", outline)).toEqual([]);
+    expect(readPick("`persons-add`, **start-sign-in**.", outline)).toEqual(["persons-add", "start-sign-in"]);
+    // The line's number for its id — what the first real question came back as.
+    expect(readPick(`${add.number}\n§${signIn.number}\n99.99`, outline)).toEqual(["persons-add", "start-sign-in"]);
+    expect(readPick(`${add.number} | persons-add | ${add.title}`, outline)).toEqual(["persons-add"]);
     const many = outline.slice(0, 9).map((e) => e.id).join("\n");
-    expect(readPick(many, known)).toHaveLength(PICK_MAX);
+    expect(readPick(many, outline)).toHaveLength(PICK_MAX);
   });
 
   it("gives a section's whole text, its subsections' too, and nothing for an id that is not one", () => {
