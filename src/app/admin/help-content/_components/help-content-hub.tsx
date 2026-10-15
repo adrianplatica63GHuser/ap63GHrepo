@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { IconButton } from "@/lib/ui/icon-button";
-import { Save } from "lucide-react";
+import { Check, Clock, Pencil, Save } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -13,6 +13,14 @@ import {
   type HelpScreenKey,
 } from "@/lib/help/registry";
 import { screenBox, screenPanel, stepGridStyle } from "@/lib/ui/field-widths";
+import {
+  helpFingerprint,
+  proposalState,
+  proposalTexts,
+  type HelpProposal,
+  type HelpTexts,
+} from "@/lib/help/proposals";
+import { HELP_PROPOSALS } from "@/lib/help/proposals-data";
 import { UnitRow } from "@/components/screen/unit-row";
 
 /**
@@ -86,6 +94,15 @@ function isComplete(row: ContentRow | undefined): boolean {
 function isHintComplete(row: HintRow | undefined): boolean {
   if (!row) return false;
   return !!(row.textEn || row.textRo);
+}
+
+/**
+ * Slice #39.40: the proposal on offer for a screen, if any — one written against the text the screen holds
+ * now. A screen whose text is anything else (Adrian wrote over it, or accepted it) offers nothing.
+ */
+function offeredProposal(screenKey: string, row: ContentRow | undefined): HelpProposal | null {
+  const p = (HELP_PROPOSALS as Partial<Record<string, HelpProposal>>)[screenKey];
+  return p && proposalState(p, row ?? null) === "offered" ? p : null;
 }
 
 type Tab = "screens" | "hints";
@@ -192,18 +209,22 @@ function SaveBar({
 function ScreenEditor({
   screenKey,
   row,
+  seed,
 }: {
   screenKey: HelpScreenKey;
   row: ContentRow | undefined;
+  /** Slice #39.40: „Editează” on a proposal — the boxes start from the proposal, and nothing is saved until „Salvează”. */
+  seed?: HelpTexts;
 }) {
   const t = useTranslations("help.admin");
   const qc = useQueryClient();
 
+  const start = seed ?? row;
   const [values, setValues] = useState({
-    backgroundEn: row?.backgroundEn ?? "",
-    backgroundRo: row?.backgroundRo ?? "",
-    howToEn: row?.howToEn ?? "",
-    howToRo: row?.howToRo ?? "",
+    backgroundEn: start?.backgroundEn ?? "",
+    backgroundRo: start?.backgroundRo ?? "",
+    howToEn: start?.howToEn ?? "",
+    howToRo: start?.howToRo ?? "",
   });
 
   const mutation = useMutation({
@@ -277,6 +298,96 @@ function ScreenEditor({
         </div>
       </div>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Proposal (Slice #39.40) — the screen's text and a proposed one side by side
+// ---------------------------------------------------------------------------
+//
+// The proposals are Claude's, versioned in src/lib/help/proposals-data.ts; the texts are Adrian's. „Acceptă”
+// writes the proposal through the same PUT „Salvează” sends, under his session — the only way a proposal ever
+// becomes a row. „Editează” puts it in the boxes below and saves nothing. „Nu acum” hides it until the page is
+// opened again.
+
+const PROPOSAL_FIELDS = [
+  ["backgroundRo", "labelBackgroundRo"],
+  ["howToRo", "labelHowToRo"],
+  ["backgroundEn", "labelBackgroundEn"],
+  ["howToEn", "labelHowToEn"],
+] as const;
+
+function ProposalPanel({
+  screenKey,
+  row,
+  proposal,
+  onAccepted,
+  onEdit,
+  onLater,
+}: {
+  screenKey: HelpScreenKey;
+  row: ContentRow | undefined;
+  proposal: HelpProposal;
+  onAccepted: () => void;
+  onEdit: () => void;
+  onLater: () => void;
+}) {
+  const t = useTranslations("help.admin");
+  const qc = useQueryClient();
+  const mutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/admin/help-content/${screenKey}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(proposalTexts(proposal)),
+      });
+      if (!res.ok) throw new Error("save failed");
+      return res.json();
+    },
+    onSuccess: async () => {
+      onAccepted();
+      await qc.invalidateQueries({ queryKey: ["admin-help-content"] });
+      qc.invalidateQueries({ queryKey: ["help", screenKey] });
+    },
+  });
+
+  return (
+    <section
+      {...screenPanel("help-proposal", EDITOR_UNITS)}
+      aria-label={t("proposal.title")}
+      data-help-proposal={screenKey}
+      className="rounded-lg border border-amber-300 bg-amber-50 p-4 flex flex-col gap-3 dark:border-amber-800 dark:bg-amber-950/30"
+    >
+      <div className="flex flex-col gap-1">
+        <h2 className="text-sm font-semibold text-ink dark:text-zinc-100">{t("proposal.title")}</h2>
+        <p className="text-xs text-fade">{t("proposal.intro")}</p>
+      </div>
+      <div style={stepGridStyle("XXL", 2, 1)}>
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-fade">{t("proposal.current")}</p>
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-fade">{t("proposal.proposed")}</p>
+        {PROPOSAL_FIELDS.map(([field, label]) => (
+          <div key={field} className="contents" data-proposal-field={field}>
+            <PreviewBlock heading={t(label)} text={row?.[field] || "—"} />
+            <PreviewBlock heading={t(label)} text={proposal[field]} />
+          </div>
+        ))}
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <IconButton
+          icon={Check}
+          label={t("proposal.accept")}
+          showLabel
+          busy={mutation.isPending}
+          busyLabel={t("saving")}
+          variant="primary"
+          onClick={() => mutation.mutate()}
+          disabled={mutation.isPending}
+        />
+        <IconButton icon={Pencil} label={t("proposal.edit")} showLabel variant="secondary" onClick={onEdit} disabled={mutation.isPending} />
+        <IconButton icon={Clock} label={t("proposal.later")} showLabel variant="secondary" onClick={onLater} disabled={mutation.isPending} />
+        {mutation.isError && <span className="text-xs text-red-600 dark:text-red-400">{t("proposal.acceptError")}</span>}
+      </div>
+    </section>
   );
 }
 
@@ -390,6 +501,11 @@ export function HelpContentHub() {
   const [selectedScreen, setSelectedScreen] = useState<HelpScreenKey | null>(null);
   // Selection is by hintKey alone now — a hint may span several screens.
   const [selectedHint, setSelectedHint] = useState<string | null>(null);
+  // Slice #39.40: proposals hidden with „Nu acum”, put in the boxes with „Editează”, or just accepted — for as
+  // long as the page is open.
+  const [laterProposals, setLaterProposals] = useState<ReadonlySet<string>>(new Set());
+  const [editingProposal, setEditingProposal] = useState<string | null>(null);
+  const [acceptedNow, setAcceptedNow] = useState<string | null>(null);
 
   const contentQuery = useQuery({ queryKey: ["admin-help-content"], queryFn: fetchContentList });
   const hintsQuery = useQuery({ queryKey: ["admin-help-hints"], queryFn: fetchHintsList });
@@ -398,6 +514,19 @@ export function HelpContentHub() {
   const hintsByKey = new Map(
     (hintsQuery.data ?? []).map((r) => [`${r.screenKey}::${r.hintKey}`, r]),
   );
+
+  const proposals = new Map(
+    contentQuery.isSuccess
+      ? HELP_SCREENS.flatMap((s) => {
+          const p = offeredProposal(s.key, contentByKey.get(s.key));
+          return p ? [[s.key, p] as const] : [];
+        })
+      : [],
+  );
+  const selectedRow = selectedScreen ? contentByKey.get(selectedScreen) : undefined;
+  const selectedProposal = selectedScreen ? (proposals.get(selectedScreen) ?? null) : null;
+  const editingSeed =
+    selectedScreen && editingProposal === selectedScreen && selectedProposal ? proposalTexts(selectedProposal) : undefined;
 
   const selectedHintEntry = selectedHint
     ? (HELP_HINTS.find((h) => h.hintKey === selectedHint) ?? null)
@@ -428,6 +557,12 @@ export function HelpContentHub() {
         </button>
       </div>
 
+      {tab === "screens" && proposals.size > 0 && (
+        <p className="text-sm text-fade" data-help-proposals-count={proposals.size}>
+          {t("proposal.count", { count: proposals.size })}
+        </p>
+      )}
+
       <UnitRow units={[NAV_UNITS, EDITOR_UNITS]}>
         <div {...screenPanel("help-nav", NAV_UNITS)} className="shrink-0 rounded-lg border border-card-rim bg-white dark:border-zinc-800 dark:bg-zinc-900 overflow-hidden">
           {tab === "screens" &&
@@ -446,14 +581,22 @@ export function HelpContentHub() {
                   ].join(" ")}
                 >
                   <span className="truncate">{t(helpScreenLabelKey(s.key))}</span>
-                  {/* Slice #36.21 (TC-HELP-01): no badge until the list has
-                      loaded — before, every screen read „Lipsă" for a few
-                      seconds, including the thirty that have content. */}
-                  {contentQuery.isSuccess && <StatusBadge
-                    complete={complete}
-                    completeLabel={t("statusComplete")}
-                    missingLabel={t("statusMissing")}
-                  />}
+                  <span className="flex shrink-0 items-center gap-1">
+                    {/* Slice #39.40: a text proposed from the manual waits for this screen. */}
+                    {proposals.has(s.key) && (
+                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                        {t("statusProposal")}
+                      </span>
+                    )}
+                    {/* Slice #36.21 (TC-HELP-01): no badge until the list has
+                        loaded — before, every screen read „Lipsă" for a few
+                        seconds, including the thirty that have content. */}
+                    {contentQuery.isSuccess && <StatusBadge
+                      complete={complete}
+                      completeLabel={t("statusComplete")}
+                      missingLabel={t("statusMissing")}
+                    />}
+                  </span>
                 </button>
               );
             })}
@@ -494,15 +637,35 @@ export function HelpContentHub() {
         <div className="w-fit max-w-full">
           {tab === "screens" &&
             (selectedScreen ? (
-              <ScreenEditor
-                // Slice #36.21: the editor seeds its fields once, on mount. Keyed
-                // on the load state too, so a screen picked before the list
-                // arrived is re-seeded with its stored text rather than left
-                // empty — where „Salvează" would have written blanks over it.
-                key={`${selectedScreen}:${contentQuery.isSuccess}`}
-                screenKey={selectedScreen}
-                row={contentByKey.get(selectedScreen)}
-              />
+              <div className="flex flex-col gap-4">
+                {selectedProposal && !laterProposals.has(selectedScreen) && editingProposal !== selectedScreen && (
+                  <ProposalPanel
+                    key={selectedScreen}
+                    screenKey={selectedScreen}
+                    row={selectedRow}
+                    proposal={selectedProposal}
+                    onAccepted={() => setAcceptedNow(selectedScreen)}
+                    onEdit={() => setEditingProposal(selectedScreen)}
+                    onLater={() => setLaterProposals((prev) => new Set(prev).add(selectedScreen))}
+                  />
+                )}
+                {acceptedNow === selectedScreen && !selectedProposal && (
+                  <p role="status" className="text-sm text-emerald-700 dark:text-emerald-400">{t("proposal.accepted")}</p>
+                )}
+                {editingSeed && <p role="status" className="text-sm text-fade">{t("proposal.editing")}</p>}
+                <ScreenEditor
+                  // Slice #36.21: the editor seeds its fields once, on mount. Keyed
+                  // on the load state too, so a screen picked before the list
+                  // arrived is re-seeded with its stored text rather than left
+                  // empty — where „Salvează" would have written blanks over it.
+                  // Slice #39.40: and on the stored text itself, so an accepted proposal re-seeds the boxes
+                  // (a „Salvează" after it would otherwise write the old text back), and on „Editează”.
+                  key={`${selectedScreen}:${contentQuery.isSuccess}:${helpFingerprint(selectedRow ?? null)}:${editingSeed ? "proposal" : "row"}`}
+                  screenKey={selectedScreen}
+                  row={selectedRow}
+                  seed={editingSeed}
+                />
+              </div>
             ) : (
               <EmptyState text={t("noScreenSelected")} />
             ))}

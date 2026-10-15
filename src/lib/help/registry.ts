@@ -15,7 +15,8 @@
  * ignored by the UI.
  *
  * HOW A SCREEN GETS HELP
- *   1. Add an entry to HELP_SCREENS below.
+ *   1. Add an entry to HELP_SCREENS below, with the id of the manual section
+ *      that describes the screen (`manual`, Slice #39.40).
  *   2. Add its name to `help.admin.screens.<key>` in BOTH message files.
  *   3. Map its route in src/lib/help/route-map.ts.
  *   4. That's it — <HelpButton> is auto-mounted in the breadcrumb bar for
@@ -39,62 +40,72 @@
 
 export const HELP_SCREENS = [
   // ── Home ────────────────────────────────────────────────────────────────
-  { key: "dashboard" },
+  { key: "dashboard", manual: "intro-purpose" },
 
   // ── Properties ──────────────────────────────────────────────────────────
-  { key: "properties-list" },
-  { key: "property-detail" },
-  { key: "properties-map" },
+  { key: "properties-list", manual: "properties-list" },
+  { key: "property-detail", manual: "properties-add" },
+  { key: "properties-map", manual: "map-what" },
 
   // ── Documents ───────────────────────────────────────────────────────────
-  { key: "documents-list" },
-  { key: "document-detail" },
+  { key: "documents-list", manual: "documents-list" },
+  { key: "document-detail", manual: "documents-add" },
 
   // ── Interacțiuni (Slice #38.84) ─────────────────────────────────────────
-  { key: "interactions" },
+  { key: "interactions", manual: "reports-interactions" },
 
   // ── Persons ─────────────────────────────────────────────────────────────
-  { key: "natural-persons-list" },
-  { key: "natural-person-detail" },
-  { key: "judicial-persons-list" },
-  { key: "judicial-person-detail" },
+  { key: "natural-persons-list", manual: "persons-list" },
+  { key: "natural-person-detail", manual: "persons-add" },
+  { key: "judicial-persons-list", manual: "companies-list" },
+  { key: "judicial-person-detail", manual: "companies-add" },
 
   // ── Association sub-pages ───────────────────────────────────────────────
   // Deliberately generic: the same five screens are reached from Property,
   // Document and both Person types, and the instructions are identical
   // regardless of which entity you arrived from. One key each, not one per
   // (entity x association) pair.
-  { key: "associate-person" },
-  { key: "associate-document" },
-  { key: "associate-property" },
-  { key: "associate-reference" },
-  { key: "associate-party" },
+  { key: "associate-person", manual: "links-associate-screen" },
+  { key: "associate-document", manual: "links-associate-screen" },
+  { key: "associate-property", manual: "links-associate-screen" },
+  { key: "associate-reference", manual: "links-references" },
+  { key: "associate-party", manual: "documents-dependent-inheritance" },
 
   // ── Administration ──────────────────────────────────────────────────────
-  { key: "admin-value-lists" },
-  { key: "admin-import" },
+  { key: "admin-value-lists", manual: "admin-reference-data" },
+  { key: "admin-import", manual: "import-overview" },
   // Slice #29.09. Registered rather than opted out: a screen that spends money
   // on twenty model reads and then writes a form every future document of a
   // type is read against is the opposite of self-evident.
-  { key: "admin-doc-type-engine" },
-  { key: "admin-calculation" },
-  { key: "admin-calculation-history" },
-  { key: "admin-calculation-run" },
-  { key: "admin-groups" },
-  { key: "admin-group-editor" },
-  { key: "admin-stamps" },
-  { key: "admin-stamp-applicator" },
-  { key: "admin-tags" },
-  { key: "admin-settings" },
-  { key: "admin-users" },
-  { key: "admin-global-search" },
-  { key: "admin-help-content" },
+  { key: "admin-doc-type-engine", manual: "tools-doc-type-engine" },
+  { key: "admin-calculation", manual: "tools-side-road" },
+  { key: "admin-calculation-history", manual: "tools-side-road-history" },
+  { key: "admin-calculation-run", manual: "tools-side-road-history" },
+  { key: "admin-groups", manual: "admin-groups-groups" },
+  { key: "admin-group-editor", manual: "admin-groups-groups" },
+  { key: "admin-stamps", manual: "admin-groups-stamps" },
+  { key: "admin-stamp-applicator", manual: "admin-groups-stamps" },
+  { key: "admin-tags", manual: "admin-groups-tags" },
+  { key: "admin-settings", manual: "admin-settings" },
+  { key: "admin-users", manual: "admin-users" },
+  { key: "admin-global-search", manual: "reports-search" },
+  { key: "admin-help-content", manual: "learning-help" },
 
   // ── Ajutor și învățare (Slice #39.37) ───────────────────────────────────
-  { key: "manual" },
-] as const;
+  { key: "manual", manual: "learning-manual" },
+] as const satisfies readonly { key: string; manual: string }[];
 
 export type HelpScreenKey = (typeof HELP_SCREENS)[number]["key"];
+
+/**
+ * The manual section a screen's „?” points at (Slice #39.40): its popover ends with „Vezi în manual: §5.2 …”, a
+ * link to `manualHref(id)`. An id, never a number — the number is the manual's own, and renumbering a chapter
+ * moves every link with it. `help-manual-links.test.ts` fails when an id resolves in either language's manual
+ * to nothing.
+ */
+export function helpScreenManualSection(key: string): string | undefined {
+  return HELP_SCREENS.find((s) => s.key === key)?.manual;
+}
 
 export function isHelpScreenKey(key: string): key is HelpScreenKey {
   return HELP_SCREENS.some((s) => s.key === key);

@@ -16,7 +16,14 @@ export type HelpHintData = {
   textRo: string | null;
 };
 
-type HelpApiResponse = { content: HelpContentData; hints: HelpHintData[] };
+/** Slice #39.40: the screen's „Vezi în manual” link, resolved by the API (src/lib/help/manual-link.ts). */
+export type HelpManualData = {
+  id: string;
+  href: string;
+  labels: Record<"ro-RO" | "en-GB", { number: string; title: string }>;
+} | null;
+
+type HelpApiResponse = { content: HelpContentData; hints: HelpHintData[]; manual?: HelpManualData };
 
 async function fetchHelp(screenKey: string): Promise<HelpApiResponse> {
   const res = await fetch(`/api/help/${screenKey}`);

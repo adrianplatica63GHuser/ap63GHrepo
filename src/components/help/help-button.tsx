@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { CircleHelp, X } from "lucide-react";
-import { IconTooltip, IconButton } from "@/lib/ui/icon-button";
+import { BookOpenText, CircleHelp, X } from "lucide-react";
+import { IconTooltip, IconButton, LeadingIcon } from "@/lib/ui/icon-button";
 import { useHelpData, pickLocaleText } from "./use-help-data";
 import type { HelpScreenKey } from "@/lib/help/registry";
 
@@ -53,6 +54,9 @@ export function HelpButton({ screenKey, className, align = "right" }: Props) {
   const content = data?.content ?? null;
   const background = pickLocaleText(locale, content?.backgroundEn, content?.backgroundRo);
   const howTo = pickLocaleText(locale, content?.howToEn, content?.howToRo);
+  // Slice #39.40: the section of the manual that describes this screen, in the application's language.
+  const manual = data?.manual ?? null;
+  const manualLabel = manual ? manual.labels[locale === "en-GB" ? "en-GB" : "ro-RO"] : null;
 
   if (!background && !howTo) return null;
 
@@ -108,6 +112,21 @@ export function HelpButton({ screenKey, className, align = "right" }: Props) {
                   {howTo}
                 </p>
               </section>
+            )}
+
+            {/* Slice #39.40: the long form of this popover. Its number and title are the manual's current ones. */}
+            {manual && manualLabel && (
+              <p className="mt-3 border-t border-card-rim pt-2 text-sm dark:border-zinc-800">
+                <Link
+                  href={manual.href}
+                  onClick={() => setIsOpen(false)}
+                  className="inline-flex items-baseline text-cta hover:underline"
+                  data-help-manual-link={manual.id}
+                >
+                  <LeadingIcon icon={BookOpenText} />
+                  {t("seeInManual", { number: manualLabel.number, title: manualLabel.title })}
+                </Link>
+              </p>
             )}
           </div>
         </>
