@@ -36,7 +36,7 @@ Nothing.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Opens „Ajutor și învățare” → „Harta competențelor” | Beside the Path chips, „Progresul meu” pressed and „Prezentare” not; the legend shows the four states |
-| 2 | Presses the Path „Proprietăți” | Under the chips, „Traseul Proprietăți și hartă: 16 competențe — competențele lui de expert, tot ce le trebuie înainte, din orice traseu, și celelalte competențe ale lui.” Box 4.2 and the skills it rests on stay as they were — among them 1.2 („Spațiul de lucru”), 1.6 („Persoane”) and 1.12 („Legături”); every other box fades — 1.1 and 4.1, for two |
+| 2 | Presses the Path „Proprietăți” | Under the chips, „Traseul Proprietăți: 16 competențe — competențele lui de expert, tot ce le trebuie înainte, din orice traseu, și celelalte competențe ale lui.” Box 4.2 and the skills it rests on stay as they were — among them 1.2 („Spațiul de lucru”), 1.6 („Persoane”) and 1.12 („Legături”); every other box fades — 1.1 and 4.1, for two |
 | 3 | Looks at the arrows | The arrow from 3.3 to 4.2 is navy, its head navy; the arrow from 3.7 to 4.3 (4.3 is outside the Path) is light grey, and so is its head |
 | 4 | Holds the mouse over box 4.3 | Its arrows come forward in navy, heads included, the one from 3.7 too; moving away greys it again |
 | 5 | Presses „Prezentare” | „Prezentare” pressed. Every box in its level's colour, none grey, none with a dotted frame, none with the green badge; the Path chips carry no badge either. The legend shows the four levels, „De bază” … „Expert”, and „„Prezentare” arată fiecare casetă în culoarea nivelului ei, deschisă, fără stări și fără bife. „Progresul meu” arată unde sunteți.” The Path „Proprietăți” is still chosen, the same boxes faded |
@@ -49,6 +49,11 @@ Nothing.
 Nothing is written by this case.
 
 ## Notes from the runs
+
+**2026-10-15, third run (Slice #39.50) — `confirmed` again, after a change to the screen.** The figures run
+showed the Path's note naming the Path by its long name, „The Properties and the map path” in English; the note
+now names it as its chip does, „Traseul Proprietăți”, and step 2 says so. Driven again by script in the browser
+pane against this file: every step as written.
 
 **2026-10-15, second run (Slice #39.50) — `confirmed`: the file held line for line.** Driven again from the
 map, by script in the browser pane, every step checked against this file: unchanged.

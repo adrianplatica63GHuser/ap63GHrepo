@@ -237,7 +237,7 @@ export function SkillsMapView({ sections }: { sections: Readonly<Record<string, 
 
       {path && (
         <p className="text-sm text-fade" data-path-note={path}>
-          {t("pathNote", { path: pathName(path), count: PATH_SKILLS[path].size })}
+          {t("pathNote", { path: pathShort(path), count: PATH_SKILLS[path].size })}
         </p>
       )}
 

@@ -195,7 +195,7 @@ test.describe("TC-SKILL-01 — „Harta competențelor”", () => {
     // Step 2 — the Path „Proprietăți”: its note, and every box in it — other Paths' skills included — at full strength.
     await page.locator('[data-path-chip="properties"]').filter({ visible: true }).click();
     await expect(page.locator('[data-path-note="properties"]')).toHaveText(
-      `Traseul Proprietăți și hartă: ${inProperties.size} competențe — competențele lui de expert, tot ce le trebuie înainte, din orice traseu, și celelalte competențe ale lui.`,
+      `Traseul Proprietăți: ${inProperties.size} competențe — competențele lui de expert, tot ce le trebuie înainte, din orice traseu, și celelalte competențe ale lui.`,
     );
     for (const n of ["4.2", "1.2", "1.6", "1.12"]) expect(inProperties.has(key(n))).toBe(true);
     expect(SKILLS.filter((s) => inProperties.has(s.key) && s.path !== "properties").length).toBeGreaterThan(0);
