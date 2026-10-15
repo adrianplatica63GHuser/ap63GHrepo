@@ -9,9 +9,11 @@
 import {
   EMPTY_FINGERPRINT,
   helpFingerprint,
+  offeredProposals,
   proposalState,
   proposalTexts,
   type HelpProposal,
+  type HelpTexts,
 } from "@/lib/help/proposals";
 import { HELP_PROPOSALS } from "@/lib/help/proposals-data";
 import { HELP_SCREENS, isHelpScreenKey } from "@/lib/help/registry";
@@ -100,5 +102,60 @@ describe("HELP_PROPOSALS — the file Adrian is offered", () => {
   it("covers every screen but „manual”, whose text was written against the manual as it is", () => {
     const missing = HELP_SCREENS.map((s) => s.key).filter((k) => !(k in HELP_PROPOSALS));
     expect(missing).toEqual(["manual"]);
+  });
+});
+
+describe("offeredProposals — what „Acceptă toate” accepts (Slice #39.52)", () => {
+  const prop = (against: string, tag: string): HelpProposal => ({
+    against,
+    reason: "test",
+    backgroundRo: `Context ${tag}`,
+    howToRo: `Cum ${tag}`,
+    backgroundEn: `Background ${tag}`,
+    howToEn: `How ${tag}`,
+  });
+  const proposals = {
+    old: prop(helpFingerprint(TEXT), "old"),
+    empty: prop(EMPTY_FINGERPRINT, "empty"),
+    changed: prop(helpFingerprint(TEXT), "changed"),
+    done: prop(helpFingerprint(TEXT), "done"),
+  };
+  const keys = ["old", "empty", "changed", "done", "none"] as const;
+  const rows = new Map<string, Partial<HelpTexts>>([
+    ["old", TEXT],
+    ["changed", { ...TEXT, howToRo: "Cum, rescris de Adrian" }],
+    ["done", proposalTexts(proposals.done)],
+    ["none", TEXT],
+  ]);
+
+  it("takes every screen still holding the text its proposal was written against — a screen with no row included", () => {
+    expect(offeredProposals(keys, rows, proposals).map((x) => x.screenKey)).toEqual(["old", "empty"]);
+  });
+
+  it("skips a screen whose text changed, never overwriting it, and one already accepted", () => {
+    const keysTaken = offeredProposals(keys, rows, proposals).map((x) => x.screenKey);
+    expect(keysTaken).not.toContain("changed");
+    expect(keysTaken).not.toContain("done");
+  });
+
+  it("is the same rule as one „Acceptă”: each screen taken is exactly one proposalState calls offered", () => {
+    for (const k of keys) {
+      const p = (proposals as Partial<Record<string, HelpProposal>>)[k];
+      const offered = !!p && proposalState(p, rows.get(k) ?? null) === "offered";
+      expect([k, offered]).toEqual([k, offeredProposals([k], rows, proposals).length === 1]);
+    }
+  });
+
+  it("writes the proposal's four texts, in the order the screens are given", () => {
+    const out = offeredProposals(["empty", "old"] as const, rows, proposals);
+    expect(out.map((x) => x.screenKey)).toEqual(["empty", "old"]);
+    expect(proposalTexts(out[1].proposal)).toEqual(proposalTexts(proposals.old));
+  });
+
+  it("on the real file and an empty database, offers every screen whose proposal was written against no text", () => {
+    const keysReal = HELP_SCREENS.map((s) => s.key);
+    const out = offeredProposals(keysReal, new Map(), HELP_PROPOSALS).map((x) => x.screenKey);
+    const againstEmpty = keysReal.filter((k) => HELP_PROPOSALS[k]?.against === EMPTY_FINGERPRINT);
+    expect(out).toEqual(againstEmpty);
   });
 });

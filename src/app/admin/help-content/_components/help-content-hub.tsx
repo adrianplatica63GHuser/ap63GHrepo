@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { IconButton } from "@/lib/ui/icon-button";
-import { Check, Clock, Pencil, Save } from "lucide-react";
+import { Check, CheckCheck, Clock, Pencil, Save, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -15,6 +15,7 @@ import {
 import { screenBox, screenPanel, stepGridStyle } from "@/lib/ui/field-widths";
 import {
   helpFingerprint,
+  offeredProposals,
   proposalState,
   proposalTexts,
   type HelpProposal,
@@ -392,6 +393,129 @@ function ProposalPanel({
 }
 
 // ---------------------------------------------------------------------------
+// „Acceptă toate” (Slice #39.52) — every proposal on offer, after a confirmation over their list
+// ---------------------------------------------------------------------------
+//
+// Adrian, three times: „please “Accept” all of them”. Each screen goes through the same PUT as its own „Acceptă”,
+// one after another, and the rule is applied again on a fresh read of the texts just before writing
+// (offeredProposals): a screen whose text changed since the page was loaded is skipped, never overwritten. The
+// button stays, so the next batch — and Ciprian's box — takes one click.
+
+function AcceptAllProposals({ screenKeys }: { screenKeys: readonly HelpScreenKey[] }) {
+  const t = useTranslations("help.admin");
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const titleId = "help-accept-all-title";
+  const mutation = useMutation({
+    mutationFn: async () => {
+      const fresh = await fetchContentList();
+      const todo = offeredProposals(screenKeys, new Map(fresh.map((r) => [r.screenKey, r])), HELP_PROPOSALS);
+      const accepted: HelpScreenKey[] = [];
+      const failed: HelpScreenKey[] = [];
+      for (const { screenKey, proposal } of todo) {
+        const res = await fetch(`/api/admin/help-content/${screenKey}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(proposalTexts(proposal)),
+        });
+        (res.ok ? accepted : failed).push(screenKey);
+      }
+      return { accepted, failed, skipped: screenKeys.length - todo.length };
+    },
+    onSettled: async (result) => {
+      setOpen(false);
+      await qc.invalidateQueries({ queryKey: ["admin-help-content"] });
+      for (const k of result?.accepted ?? []) qc.invalidateQueries({ queryKey: ["help", k] });
+    },
+  });
+  const result = mutation.data;
+
+  return (
+    <div className="flex flex-col gap-2" data-help-accept-all>
+      {screenKeys.length > 0 && (
+        <div>
+          <IconButton
+            icon={CheckCheck}
+            label={t("proposal.acceptAll", { count: screenKeys.length })}
+            showLabel
+            variant="primary"
+            size="sm"
+            onClick={() => setOpen(true)}
+            disabled={mutation.isPending}
+          />
+        </div>
+      )}
+      {result && (
+        <p role="status" className="text-sm text-emerald-700 dark:text-emerald-400" data-help-accept-all-done={result.accepted.length}>
+          {t("proposal.acceptAllDone", { count: result.accepted.length })}
+          {result.skipped > 0 && ` ${t("proposal.acceptAllSkipped", { count: result.skipped })}`}
+        </p>
+      )}
+      {result && result.failed.length > 0 && (
+        <p role="alert" className="text-sm text-red-600 dark:text-red-400" data-help-accept-all-failed>
+          {t("proposal.acceptAllFailed", { screens: result.failed.map((k) => t(helpScreenLabelKey(k))).join(", ") })}
+        </p>
+      )}
+      {mutation.isError && (
+        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+          {t("proposal.acceptError")}
+        </p>
+      )}
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40 bg-black/50" aria-hidden />
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
+            data-help-accept-all-dialog
+            onKeyDown={(e) => {
+              if (e.key === "Escape" && !mutation.isPending) setOpen(false);
+            }}
+            className="fixed inset-x-4 top-[15%] z-50 mx-auto flex max-h-[70vh] max-w-md flex-col gap-3 rounded-xl border border-card-rim bg-card p-6 text-left shadow-2xl dark:border-zinc-800 dark:bg-zinc-900"
+          >
+            <h2 id={titleId} className="text-base font-semibold text-ink dark:text-zinc-100">
+              {t("proposal.acceptAllTitle")}
+            </h2>
+            <p className="text-sm text-ink dark:text-zinc-300">{t("proposal.acceptAllBody", { count: screenKeys.length })}</p>
+            <ul className="flex min-h-0 list-disc flex-col gap-0.5 overflow-auto pl-5 text-sm text-ink dark:text-zinc-200">
+              {screenKeys.map((k) => (
+                <li key={k} data-help-accept-all-screen={k}>
+                  {t(helpScreenLabelKey(k))}
+                </li>
+              ))}
+            </ul>
+            <div className="flex justify-end gap-2">
+              <IconButton
+                icon={CheckCheck}
+                label={t("proposal.acceptAllConfirm")}
+                showLabel
+                variant="primary"
+                size="sm"
+                busy={mutation.isPending}
+                busyLabel={t("saving")}
+                onClick={() => mutation.mutate()}
+                disabled={mutation.isPending}
+              />
+              <IconButton
+                icon={X}
+                label={t("proposal.acceptAllCancel")}
+                showLabel
+                variant="secondary"
+                size="sm"
+                autoFocus
+                onClick={() => setOpen(false)}
+                disabled={mutation.isPending}
+              />
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Hint editor (single short tip, 2 textareas: EN/RO)
 // ---------------------------------------------------------------------------
 
@@ -562,6 +686,8 @@ export function HelpContentHub() {
           {t("proposal.count", { count: proposals.size })}
         </p>
       )}
+      {/* Slice #39.52: „Acceptă toate (N)” while proposals wait; its result stays after they are gone. */}
+      {tab === "screens" && contentQuery.isSuccess && <AcceptAllProposals screenKeys={[...proposals.keys()]} />}
 
       <UnitRow units={[NAV_UNITS, EDITOR_UNITS]}>
         <div {...screenPanel("help-nav", NAV_UNITS)} className="shrink-0 rounded-lg border border-card-rim bg-white dark:border-zinc-800 dark:bg-zinc-900 overflow-hidden">

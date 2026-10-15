@@ -71,3 +71,19 @@ export function proposalState(p: HelpProposal, current: Partial<HelpTexts> | nul
   if (now === helpFingerprint(proposalTexts(p))) return "accepted";
   return now === p.against ? "offered" : "lapsed";
 }
+
+/**
+ * Slice #39.52: what „Acceptă toate” accepts — every screen, in the order given, whose proposal is offered
+ * against the text it holds now. The same rule as one „Acceptă”: a screen whose text is anything but the one its
+ * proposal was written against is skipped, never overwritten.
+ */
+export function offeredProposals<K extends string>(
+  screenKeys: readonly K[],
+  rows: ReadonlyMap<string, Partial<HelpTexts>>,
+  proposals: Partial<Record<K, HelpProposal>>,
+): { screenKey: K; proposal: HelpProposal }[] {
+  return screenKeys.flatMap((screenKey) => {
+    const proposal = proposals[screenKey];
+    return proposal && proposalState(proposal, rows.get(screenKey) ?? null) === "offered" ? [{ screenKey, proposal }] : [];
+  });
+}
