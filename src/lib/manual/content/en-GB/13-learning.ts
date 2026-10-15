@@ -1,11 +1,11 @@
 /**
- * Manual, en-GB, chapter 13 — 13.1 written in #39.39, 13.2 in #39.40; 13.3–13.5 are headings until 39.42–39.45 write them. (Slice #39.37)
+ * Manual, en-GB, chapter 13 — 13.1 written in #39.39, 13.2 in #39.40, 13.3 in #39.42; 13.4–13.5 are headings until 39.43–39.45 write them. (Slice #39.37)
  * The source format is src/lib/manual/format.ts. Edited here, read by the screen and by the Word download alike.
  */
 export const CHAPTER = `
 # 13 Help and learning {#learning}
 
-This chapter describes what helps you learn the application. The first two sections, about the manual and about the „?” help, are written; the others are written as their screens are ready.
+This chapter describes what helps you learn the application. The first three sections, about the manual, the „?” help and the skills map, are written; the others are written as their screens are ready.
 
 ## 13.1 The user manual {#learning-manual}
 
@@ -39,6 +39,31 @@ Open the screen: the current text and the proposal stand side by side, field by 
 Your text is never changed without your choosing. A proposal is tied to the text it found: if you write something else over it, the proposal disappears by itself, because it no longer answers the text you have.
 
 ## 13.3 The skills map {#learning-skills}
+
+„Ajutor și învățare” → „Harta competențelor” (the skills map) shows what there is to learn about working with the archive, as a map (Figure [[fig-learning-skills-map]]). Each box is a skill, with its number, its name and its path. The boxes stand in four columns, from left to right: „De bază” (basic), „Intermediar” (intermediate), „Avansat” (advanced) and „Expert”. An arrow runs from a skill to one that builds on it.
+
+![13.1 „Harta competențelor”, with the four states](skills-map.png){#fig-learning-skills-map}
+
+### 13.3.1 The colours and the states {#learning-skills-states}
+
+A box's colour is its level's and never changes: pale blue with navy text for „De bază”, blue for „Intermediar”, deep blue for „Avansat”, navy with a gold frame and gold text for „Expert”. Over the colour, the box shows where you stand:
+
+| The state | What it looks like | What it means |
+|---|---|---|
+| „Deschisă” (open) | coloured, no tick | every skill before it is mastered; its quiz is available |
+| „Stăpânită” (mastered) | coloured, with the green tick | its quiz has been passed |
+| „Închisă” (closed) | grey, no tick, its frame dotted | at least one skill before it is missing |
+| „Depășită” (obsolete) | grey, with the green tick, its frame green and thick | mastered, and a skill that builds on it is mastered too |
+
+A skill with nothing before it — every basic one — is open from the start. When you pass a quiz, the skill becomes mastered, and the ones before it become obsolete: you have gone past them, but they still count as mastered for the other skills that build on them.
+
+### 13.3.2 On the map {#learning-skills-use}
+
+- Press an open box to take its quiz (section [[learning-quizzes]]).
+- A closed box, pressed, shows which skills it needs to open, each with its state. A mastered or obsolete box says since when it is mastered.
+- When you hold the mouse over a box, its arrows come forward and the others fade.
+- Above the map stand the paths, from „Persoane” (persons) to „Spațiul de lucru” (the workspace). Choose one to keep only its skills in front; „Toate traseele” (all paths) brings them all back. A path is mastered when all its advanced and expert skills are mastered or obsolete; it then carries the green tick.
+- „Potrivește” (fit) fits the map to the window's width, and „100%” shows it at full size. „Listă” (list) shows the same skills as a list, by level; „Diagramă” (diagram) brings the map back.
 
 ## 13.4 The quizzes {#learning-quizzes}
 

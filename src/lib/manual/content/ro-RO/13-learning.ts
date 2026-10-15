@@ -1,11 +1,11 @@
 /**
- * Manual, ro-RO, chapter 13 — 13.1 written in #39.39, 13.2 in #39.40; 13.3–13.5 are headings until 39.42–39.45 write them. (Slice #39.37)
+ * Manual, ro-RO, chapter 13 — 13.1 written in #39.39, 13.2 in #39.40, 13.3 in #39.42; 13.4–13.5 are headings until 39.43–39.45 write them. (Slice #39.37)
  * The source format is src/lib/manual/format.ts. Edited here, read by the screen and by the Word download alike.
  */
 export const CHAPTER = `
 # 13 Ajutor și învățare {#learning}
 
-Capitolul acesta descrie ce vă ajută să învățați aplicația. Primele două secțiuni, despre manual și despre ajutorul „?”, sunt scrise; celelalte se scriu pe măsură ce ecranele lor sunt gata.
+Capitolul acesta descrie ce vă ajută să învățați aplicația. Primele trei secțiuni, despre manual, despre ajutorul „?” și despre harta competențelor, sunt scrise; celelalte se scriu pe măsură ce ecranele lor sunt gata.
 
 ## 13.1 Manualul de utilizare {#learning-manual}
 
@@ -39,6 +39,31 @@ Deschideți ecranul: textul de acum și propunerea stau unul lângă altul, câm
 Textul dumneavoastră nu este schimbat niciodată fără să alegeți. O propunere este legată de textul pe care l-a găsit: dacă scrieți altceva peste el, propunerea dispare singură, pentru că nu mai răspunde textului pe care îl aveți.
 
 ## 13.3 Harta competențelor {#learning-skills}
+
+„Ajutor și învățare” → „Harta competențelor” arată ce se învață în lucrul cu arhiva, ca o hartă (Figura [[fig-learning-skills-map]]). Fiecare casetă este o competență, cu numărul, numele și traseul ei. Casetele stau pe patru coloane, de la stânga la dreapta: „De bază”, „Intermediar”, „Avansat” și „Expert”. O săgeată duce de la o competență la una care se sprijină pe ea.
+
+![13.1 „Harta competențelor”, cu cele patru stări](skills-map.png){#fig-learning-skills-map}
+
+### 13.3.1 Culorile și stările {#learning-skills-states}
+
+Culoarea unei casete este a nivelului ei și nu se schimbă niciodată: bleu deschis cu text bleumarin pentru „De bază”, albastru pentru „Intermediar”, albastru închis pentru „Avansat”, bleumarin cu chenar și text auriu pentru „Expert”. Peste culoare, caseta arată unde sunteți:
+
+| Starea | Cum arată | Ce înseamnă |
+|---|---|---|
+| „Deschisă” | colorată, fără bifă | toate competențele dinainte sunt stăpânite; chestionarul ei este disponibil |
+| „Stăpânită” | colorată, cu bifa verde | chestionarul ei a fost trecut |
+| „Închisă” | gri, fără bifă, cu chenarul punctat | îi lipsește cel puțin o competență dinainte |
+| „Depășită” | gri, cu bifa verde, cu chenarul verde și gros | stăpânită, iar o competență care se sprijină pe ea este stăpânită și ea |
+
+O competență fără nimic înainte — toate cele de bază — este deschisă de la început. Când trec un chestionar, competența devine stăpânită, iar cele de dinaintea ei devin depășite: le-ați depășit, dar contează în continuare ca stăpânite pentru celelalte competențe care se sprijină pe ele.
+
+### 13.3.2 Pe hartă {#learning-skills-use}
+
+- Apăsați o casetă deschisă ca să dați chestionarul ei (secțiunea [[learning-quizzes]]).
+- O casetă închisă, apăsată, arată ce competențe îi lipsesc ca să se deschidă, fiecare cu starea ei. O casetă stăpânită sau depășită spune de când e stăpânită.
+- Când țineți mouse-ul pe o casetă, săgețile ei ies în față, iar celelalte se estompează.
+- Deasupra hărții stau traseele, de la „Persoane” la „Spațiul de lucru”. Alegeți unul ca să rămână în față doar competențele lui; „Toate traseele” le aduce înapoi. Un traseu e stăpânit când toate competențele lui avansate și de expert sunt stăpânite sau depășite; atunci are bifa verde.
+- „Potrivește” încape harta în lățimea ferestrei, iar „100%” o arată în mărime naturală. „Listă” arată aceleași competențe ca listă, pe niveluri; „Diagramă” aduce harta înapoi.
 
 ## 13.4 Chestionarele {#learning-quizzes}
 
