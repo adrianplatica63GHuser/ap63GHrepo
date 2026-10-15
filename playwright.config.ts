@@ -39,6 +39,12 @@ if (fs.existsSync(dotenvPath)) {
 
 export const AUTH_FILE = path.join(__dirname, "e2e/.auth/session.json");
 
+// Slice #39.37: the user manual's figures are shot by a test in e2e/help/manual.spec.ts that runs ONLY when that
+// file is named on the command line (`claude.sh request e2e e2e/help/manual.spec.ts`) — never in the whole
+// regression, which names no file. The config runs in Playwright's main process before any worker starts, so
+// the workers inherit the flag.
+if (process.argv.some((a) => /(^|[\\/])manual\.spec\.ts$/.test(a))) process.env.GA40_MANUAL_FIGURES = "1";
+
 export default defineConfig({
   testDir: "./e2e",
 
