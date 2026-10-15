@@ -16,8 +16,8 @@ import {
   type Skill,
   type SkillPath,
 } from "@/lib/skills/catalogue";
-import { escapeXml } from "@/lib/skills/render-svg";
-import { zipStore } from "@/lib/skills/zip-store";
+import { escapeXml } from "@/lib/docx/xml";
+import { zipStore } from "@/lib/docx/zip-store";
 
 export type DocxInput = {
   skills: readonly Skill[];

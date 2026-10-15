@@ -1,5 +1,7 @@
 /**
- * A ZIP archive of STORED (uncompressed) entries — the container a .docx is.                (Slice #39.36)
+ * A ZIP archive of STORED (uncompressed) entries — the container a .docx is.        (Slice #39.36; shared #39.37)
+ *
+ * Moved here from src/lib/skills/ in #39.37, when the user manual's Word download became its second user.
  *
  * Written here rather than added as a package for the reason #39.35 wrote its QR encoder: an `npm install` over
  * the bridge would rewrite the Windows `node_modules` from Linux, and the sandbox's registry refuses most packages.
@@ -8,7 +10,7 @@
  * 1980-01-01 timestamp so the same input always gives the same bytes. No ZIP64: every entry and the whole archive
  * stay far below 4 GB.
  *
- * PURE — `skills-render.test.ts` covers it.
+ * PURE — `skills-render.test.ts` covers it, and `manual-docx.test.ts` reads the manual's package back through it.
  */
 
 export type ZipEntry = { name: string; data: Uint8Array };

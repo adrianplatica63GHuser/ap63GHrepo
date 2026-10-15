@@ -9,7 +9,7 @@
 import { SKILL_PATHS, SKILLS } from "@/lib/skills/catalogue";
 import { inventoryDocumentXml, renderInventoryDocx } from "@/lib/skills/render-docx";
 import { escapeXml, renderSkillsSvg, wrapWords } from "@/lib/skills/render-svg";
-import { crc32, readZipStore, zipStore } from "@/lib/skills/zip-store";
+import { crc32, readZipStore, zipStore } from "@/lib/docx/zip-store";
 
 const enc = new TextEncoder();
 const dec = new TextDecoder();

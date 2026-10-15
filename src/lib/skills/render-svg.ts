@@ -9,6 +9,7 @@
  * Generated from the catalogue, never typed: `scripts/skills/render-inventory.ts` writes it. PURE.
  */
 
+import { escapeXml } from "@/lib/docx/xml";
 import { SKILL_LEVELS, type Skill, type SkillLevel, type SkillPath } from "@/lib/skills/catalogue";
 
 export type SvgInput = { skills: readonly Skill[]; paths: readonly SkillPath[] };
@@ -22,14 +23,7 @@ const BOX_PAD = 10;
 const BOX_GAP = 14;
 const MAX_CHARS = 36;
 
-export function escapeXml(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
-}
+export { escapeXml };
 
 /** Greedy word wrap to at most `max` characters a line (a single longer word keeps its own line). */
 export function wrapWords(text: string, max: number): string[] {
