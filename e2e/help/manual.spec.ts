@@ -143,7 +143,7 @@ test.describe("TC-HELP-02 — „Manual de utilizare”", () => {
 
 // ── The manual's figures — not a step of the case (see the header) ─────────────────────────────────────────────
 
-type SeedObject = { kind: string; id: string; label: string };
+type SeedObject = { kind: string; id: string; code: string; label: string };
 
 function seed(): SeedObject[] | null {
   const file = path.join(process.cwd(), ".seed-dev-data-big", "manifest.json");
