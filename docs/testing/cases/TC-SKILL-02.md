@@ -5,8 +5,8 @@
 | **Area** | help |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
-| **Last green** | — |
+| **State** | `automated` |
+| **Last green** | 2026-10-15 |
 
 ## What this proves
 
@@ -45,6 +45,8 @@ Nothing.
 Nothing is written by this case. (The dialog's „Salvează” would send the quiz; the case never presses it.)
 
 ## Notes from the runs
+
+**2026-10-15 — `automated` (Slice #39.43).** Its spec, `e2e/help/skills-quiz.spec.ts`, green in the test runner's e2e runs `20261015T123908Z-5899` and `20261015T124455Z-30627`, the pass-and-fail test with it.
 
 **2026-10-15, third run (Slice #39.43) — `confirmed`: the file held line for line.** Driven again from the map,
 by script in the browser pane, every step checked against this file: unchanged. Outside the steps, the
