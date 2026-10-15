@@ -74,6 +74,8 @@ const ALLOW: Record<string, Allowed[]> = {
   // Slice #39.45: „Întreabă”'s AI answer names its sections in the sentence, as the manual's cross-references do (A096).
   "src/app/ask/_components/ask-box.tsx": [
     ["A096", "{`§${run.number}`}"],
+    // #39.49: „Manualul nu răspunde la această întrebare. Deschide cuprinsul manualului” — a link in a sentence.
+    ["A096", "{t(\"openContents\")}"],
   ],
   "src/app/manual/_components/manual-view.tsx": [
     ["A096", "{target.number}"],
