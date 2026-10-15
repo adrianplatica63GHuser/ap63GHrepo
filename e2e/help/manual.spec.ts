@@ -27,7 +27,14 @@ import path from "node:path";
 import { test, expect, type Page } from "../helpers/test";
 import { openSection, sidebar } from "../helpers/sidebar";
 import { readZipStore } from "../../src/lib/docx/zip-store";
-import { E2E_MARKER, createSaleContract, removeLeftovers, removeRecord } from "../helpers/records";
+import {
+  E2E_MARKER,
+  createDocumentOfType,
+  createSaleContract,
+  documentRoleOptions,
+  removeLeftovers,
+  removeRecord,
+} from "../helpers/records";
 
 const FIGURES = "playwright-report/manual-figures";
 const BLUR = "blur(7px)";
@@ -502,6 +509,39 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
       await removeRecord(page.request, "document", docId);
     }
 
+    // Figura 6.3 (Slice #39.47) — an antecontract's „Legături”, linked to the seed's sale contract with „Antecontract
+    // al”, two seed persons on it. The seed has no antecontract, so one is made here — its title in the seed's own
+    // style, the marker in its „Subiect” (which „Căutare globală” searches, so removeLeftovers finds it) — and
+    // removed in `finally`, its links with it.
+    const ANTE = `${E2E_MARKER}MANUAL-FIG-ANTE`;
+    await removeLeftovers(page.request, ANTE);
+    const anteTitle = `Antecontract nr. 848/19.07.2018 — ${sale.label.split(" — ").slice(1).join(" — ") || sale.label}`;
+    const anteId = await createDocumentOfType(page.request, "ANTECONTRACT", anteTitle, { subject: ANTE });
+    try {
+      // What the type offers on „Asociere persoană”, for the manual's sentence on roles (printed, not asserted).
+      console.log(`[manual-figures] Antecontract person roles: ${JSON.stringify(await documentRoleOptions(page.request, anteId))}`);
+      const persons = await page.request.post(`/api/documents/${anteId}/persons`, { data: { personIds: [naturals[0].id, naturals[1].id] } });
+      expect(persons.ok(), `POST persons ${persons.status()}`).toBeTruthy();
+      const roles = await page.request.get("/api/admin/value-lists/document-document-roles");
+      expect(roles.ok()).toBeTruthy();
+      const role = ((await roles.json()) as { items?: { id: string; name: string }[] }).items?.find((r) => r.name === "Antecontract al");
+      expect(role, "the reference data has no „Antecontract al” role").toBeTruthy();
+      const link = await page.request.post(`/api/documents/${anteId}/references`, {
+        data: { documentIds: [sale.id], relationshipRoleId: role!.id },
+      });
+      expect(link.ok(), `POST references ${link.status()}`).toBeTruthy();
+      await page.goto(`/documents/${anteId}`);
+      await expect(tile("general")).toBeVisible({ timeout: 60_000 });
+      await tick(S.links, true);
+      await expect(tile("related")).toBeVisible({ timeout: 30_000 });
+      await expect(tile("related")).toContainText(/Contract de v[âa]nzare/i, { timeout: 30_000 });
+      await page.waitForTimeout(1500);
+      await still(page);
+      await tile("related").screenshot({ path: `${dir}/documents-antecontract.png` });
+    } finally {
+      await removeRecord(page.request, "document", anteId);
+    }
+
     // Figures 9.1, 9.2, 10.1, 12.1, 12.2 (Slice #39.39) — five screens as they open. None of them lists a record of
     // the archive before something is chosen, so there is nothing to blur but „Recente”.
     for (const [url, file] of [
@@ -560,7 +600,7 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     for (const f of [
       "dashboard", "sidebar", "breadcrumb", "list", "record", "help",
       "persons-new", "persons-tree", "companies-record", "properties-list", "properties-record",
-      "documents-pages", "documents-sale", "links-associate", "links-related", "links-versions",
+      "documents-pages", "documents-sale", "documents-antecontract", "links-associate", "links-related", "links-versions",
       "tools-doc-type-engine", "tools-calculation", "import-steps", "reports-search", "admin-value-lists", "admin-settings",
     ]) {
       expect(fs.existsSync(`${dir}/${f}.png`)).toBe(true);
