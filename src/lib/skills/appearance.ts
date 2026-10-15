@@ -46,6 +46,9 @@ export const CLOSED_FRAME = "#8b929c";
  */
 export const GREYED_TEXT = "#374151";
 
+/** What a greyed box's wash lies on: a light grey, so that a greyed Basic box is grey, not near-white. */
+export const GREYED_BASE = "#d4d7dd";
+
 export type BoxAppearance = {
   /** The level's — the same in every state. */
   fill: string;

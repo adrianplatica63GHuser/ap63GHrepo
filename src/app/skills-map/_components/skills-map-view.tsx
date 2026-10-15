@@ -24,7 +24,7 @@ import { Check, List, Maximize2, Waypoints, X, ZoomIn } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { SKILLS, SKILL_LEVELS, SKILL_PATHS, type Skill, type SkillLevel, type SkillPathKey } from "@/lib/skills/catalogue";
 import { layoutSkills } from "@/lib/skills/layout";
-import { boxAppearance, MASTERY_GREEN } from "@/lib/skills/appearance";
+import { boxAppearance, GREYED_BASE, MASTERY_GREEN } from "@/lib/skills/appearance";
 import type { SkillState } from "@/lib/skills/progress";
 
 type SkillProgressDto = {
@@ -68,8 +68,9 @@ function BoxFace({ skill, name, state, pathLabel }: { skill: Pick<Skill, "level"
   const a = boxAppearance(skill.level, state);
   return (
     <>
-      {/* A solid base, so no arrow shows through a greyed box; then the level's fill, greyed as a light wash of it. */}
-      <span aria-hidden="true" className="absolute inset-0 rounded-lg bg-white" />
+      {/* A solid base, so no arrow shows through; on a greyed box a grey one, so that even a pale Basic box reads as
+          greyed. Then the level's fill — over a greyed box's base, a light grey wash of it. */}
+      <span aria-hidden="true" className="absolute inset-0 rounded-lg" style={{ background: a.greyed ? GREYED_BASE : "#ffffff" }} />
       <span
         aria-hidden="true"
         className="absolute inset-0 rounded-lg"

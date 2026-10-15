@@ -149,6 +149,11 @@ test.describe("TC-SKILL-01 — „Harta competențelor”", () => {
           if (recent) recent.style.filter = "blur(7px)";
         });
         await page.addStyleTag({ content: "nextjs-portal { display: none !important; }" });
+        // The app shell scrolls its content column, not the window: every scrolling box above the map back to its top.
+        await page.locator("[data-skills-frame]").filter({ visible: true }).evaluate((el) => {
+          for (let n: HTMLElement | null = el; n; n = n.parentElement) n.scrollTop = 0;
+          window.scrollTo(0, 0);
+        });
         await page.mouse.move(5, 5);
         await page.waitForTimeout(400);
         await page.screenshot({ path: `${FIGURES}/skills-map.png` });
