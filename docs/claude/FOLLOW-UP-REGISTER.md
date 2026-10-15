@@ -12,17 +12,17 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-10-14, FU-331 filed — 331 entries (FU-309 resolved in #39.30). Rows are status, columns are impact.
+As of 2026-10-14, FU-334 filed — 334 entries (FU-309 resolved in #39.30). Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
-| open | 19 | 75 | 75 | 16 | 185 |
+| open | 19 | 76 | 77 | 16 | 188 |
 | planned | 0 | 0 | 1 | 0 | 1 |
 | resolved | 37 | 57 | 31 | 3 | 128 |
 | ignored | 4 | 3 | 4 | 2 | 13 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 4 | 0 | 0 | 4 |
-| **total** | 60 | 139 | 111 | 21 | 331 |
+| **total** | 60 | 140 | 113 | 21 | 334 |
 <!-- summary:end -->
 
 `src/__tests__/follow-up-register.test.ts` recounts the table and fails when this block disagrees
@@ -415,3 +415,6 @@ Nothing is filed from memory: every row carries evidence someone actually looked
 | FU-329 | 2026-10-12 #39.17 0bfda81 | next-slice idea | Tooling & CI | No provider's own billing figures are connected — no Anthropic Admin key, Google billing export, Supabase, Vercel or GitHub token exists — so the runner's daily cost collection the 39.17 header proposed has nothing to collect; every figure is counted or entered. | .env.example — the commented „Setări → Costuri" keys; src/lib/costs/catalogue.ts — PROVIDER_FACTS[*].liveKey | dev | M | open | Once Adrian adds a key: a runner sequence that reads it daily into cost_record as 'live', and the key added to DRILL_BLANKED_KEYS (scripts/backup/rules.ts). | 2026-10-12 |
 | FU-330 | 2026-10-14 #39.37 20261015T005213Z-17172 | debt | UI shell | The router keeps the page before mounted and hidden, ids and all, so after a navigation between two addresses of one screen the document holds two elements with the same id; a `document.getElementById` — three of them move focus — can then act on the hidden copy (the manual's scroll did, before a98ef35). | runner 20261015T005213Z-17172 (two `#fig-list` after `page.goto`); `document.getElementById` in src/app/admin/import/_components/import-structure-stage.tsx, src/app/documents/_components/document-form.tsx, src/app/interactions/_components/log-tile.tsx | dev | S | open | Unverified: whether those three reach a screen reopened at another address. Fix: resolve ids inside the component's own root, as manual-view.tsx does since a98ef35. | 2026-10-14 |
 | FU-331 | 2026-10-14 #39.37 runner 20261015T005146Z-9096, 20261015T005201Z-18874 | tooling | Tooling & CI | A runner request takes at most 50 `only` entries and 4,096 bytes, so a slice whose targeted list is longer — #39.37's was 134: three e2e specs, and the jest suites that read the message files or walk every source file — needs several runs on one commit, each restarting lint and tsc. | scripts/test-runner/protocol.ts — MAX_ONLY_ENTRIES and the request's size cap | dev | S | open | Raise both caps, or let `only` name a directory or a glob; lint and tsc run once a request either way. | 2026-10-14 |
+| FU-332 | 2026-10-14 #39.38 Handover.39.38.md | debt | Tests & e2e | Many case files still name tiles and tabs as they were: „Corelate” (now „Legături”), „Clasificări” / „Conexiuni” (now „Clasificare” / „Etichete și grupuri”), „Date cadastrale” (now „Identificare cadastrală”), a firm's „Identitate” (now „Date de înregistrare”), the document's old DETALII · ASOCIERI · PERSOANE tabs; their specs are green, so the drift is in titles, notes and steps a person reads — and a manual or a quiz written from them repeats it. | TC-PROP-07, TC-PERS-05, TC-DOC-10 titles; TC-PROP-06, TC-PROP-12; TC-PERS-07 notes; TC-DOC-01 step 6; TC-AI-01; messages/ro-RO.json *.tiles.* | dev | S | open | Sweep the case files against messages/ro-RO.json, title and steps, in one slice; the specs need no change where they already match the screen. | 2026-10-14 |
+| FU-333 | 2026-10-14 #39.38 Handover.39.38.md | defect | Tooling & CI | The big dev seed's page files do not open: a seed document's „Pagini” draws the missing-file placeholder on Adrian's server and the runner's alike, so no screen or figure can show a seed document's page. | /documents/3a8616eb-… (D0001) on localhost:3000, 2026-10-14; scripts/seed-dev-data-big/documents.ts | dev | S | open | Unverified: whether the seed writes its dummy files where the storage layer reads them. #39.38's figure 6.1 uses a TC-E2E- contract with a synthetic page instead. | 2026-10-14 |
+| FU-334 | 2026-10-14 #39.38 TC-TILES-03 step 7 | copy/i18n | Properties | The property form's validation message under „Suprafață oficială (m²)” is English on the Romanian screen: „Surface area must be a positive number”, as FU-261 is for the persons' forms. | docs/testing/cases/TC-TILES-03.md step 7 | user | XS | open | Move it to the message files as FU-261 proposes for the persons. | 2026-10-14 |
