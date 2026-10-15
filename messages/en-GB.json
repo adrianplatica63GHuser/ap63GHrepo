@@ -4369,7 +4369,8 @@
       "masteredOn": "Mastered on {date}.",
       "obsoleteNote": "Obsolete: a skill that builds on it is mastered.",
       "openQuiz": "Open the quiz",
-      "retryAt": "The quiz can be taken again from {when} (Toronto time)."
+      "retryAt": "The quiz can be taken again from {when} (Toronto time).",
+      "sections": "In the manual:"
     },
     "listNumber": "No.",
     "listSkill": "Skill",
@@ -4389,7 +4390,25 @@
     "preparing": "This skill's quiz is being prepared. Until then, go back to the map.",
     "notOpen": "This skill is not open yet: master the skills before it first.",
     "unknown": "There is no skill „{key}”.",
-    "back": "Back to the map"
+    "back": "Back to the map",
+    "intro": "{count} questions. Choose one answer to each, then press „Trimite” (send). You pass with at least {pass} right answers.",
+    "question": "Question {n} of {count}",
+    "send": "Send",
+    "sending": "Sending…",
+    "answered": "{answered} of {count} answered",
+    "allNeeded": "Answer every question to be able to send.",
+    "sendFailed": "The quiz could not be sent. Please try again.",
+    "passedTitle": "You passed the quiz",
+    "passedScore": "{correct} right answers out of {total}. The skill is now mastered on the map.",
+    "explanationsTitle": "Why these are the right answers",
+    "rightAnswer": "The right answer: {answer}",
+    "failedTitle": "Not this time",
+    "failedScore": "{correct} right answers out of {total}; at least {pass} were needed.",
+    "readAgain": "Read again in the manual:",
+    "cooling": "The quiz can be taken again from {when} (Toronto time).",
+    "masteredOn": "You mastered this skill on {date}.",
+    "masteredNoDate": "This skill is mastered.",
+    "sectionsTitle": "The skill rests on:"
   },
   "parentsFromIdCard": {
     "foldTitle": "The holder's parents",

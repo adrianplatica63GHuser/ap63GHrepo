@@ -24,8 +24,9 @@ import { Check, List, Maximize2, Waypoints, X, ZoomIn } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { SKILLS, SKILL_LEVELS, SKILL_PATHS, type Skill, type SkillLevel, type SkillPathKey } from "@/lib/skills/catalogue";
 import { layoutSkills } from "@/lib/skills/layout";
-import { boxAppearance, GREYED_BASE, MASTERY_GREEN } from "@/lib/skills/appearance";
+import { boxAppearance, MASTERY_GREEN } from "@/lib/skills/appearance";
 import type { SkillState } from "@/lib/skills/progress";
+import { SectionList, type SectionLinkData } from "./section-list";
 
 type SkillProgressDto = {
   key: string;
@@ -68,9 +69,8 @@ function BoxFace({ skill, name, state, pathLabel }: { skill: Pick<Skill, "level"
   const a = boxAppearance(skill.level, state);
   return (
     <>
-      {/* A solid base, so no arrow shows through; on a greyed box a grey one, so that even a pale Basic box reads as
-          greyed. Then the level's fill — over a greyed box's base, a light grey wash of it. */}
-      <span aria-hidden="true" className="absolute inset-0 rounded-lg" style={{ background: a.greyed ? GREYED_BASE : "#ffffff" }} />
+      {/* A solid base, so no arrow shows through a greyed box; then the level's fill, greyed as a light wash of it. */}
+      <span aria-hidden="true" className="absolute inset-0 rounded-lg bg-white" />
       <span
         aria-hidden="true"
         className="absolute inset-0 rounded-lg"
@@ -96,7 +96,7 @@ function BoxFace({ skill, name, state, pathLabel }: { skill: Pick<Skill, "level"
   );
 }
 
-export function SkillsMapView() {
+export function SkillsMapView({ sections }: { sections: Readonly<Record<string, readonly SectionLinkData[]>> }) {
   const t = useTranslations("skillsMap");
   const locale = useLocale();
   const lang = locale === "en-GB" ? "en" : "ro";
@@ -374,6 +374,10 @@ export function SkillsMapView() {
             <p>{t("panel.masteredOn", { date: date(selectedProgress.masteredAt) })}</p>
           )}
           {selectedProgress.state === "obsolete" && <p className="text-fade">{t("panel.obsoleteNote")}</p>}
+          {/* Slice #39.43: a mastered skill's manual sections. */}
+          {(selectedProgress.state === "mastered" || selectedProgress.state === "obsolete") && (
+            <SectionList title={t("panel.sections")} sections={sections[selectedSkill.key] ?? []} />
+          )}
         </aside>
       )}
     </div>

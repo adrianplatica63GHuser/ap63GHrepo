@@ -271,10 +271,10 @@ export const HELP_PROPOSALS: Partial<Record<HelpScreenKey, HelpProposal>> = {
   },
   "skill-quiz": {
     against: EMPTY_FINGERPRINT,
-    reason: "a new screen (#39.42) with no text yet",
-    backgroundRo: "Pagina chestionarului unei competențe. Se deschide dintr-o casetă deschisă a „Hărții competențelor”; o competență închisă nu are încă chestionar.",
-    howToRo: "Chestionarul se trece cu cel puțin 80 % răspunsuri bune, iar atunci competența devine stăpânită pe hartă. Un chestionar picat se poate relua după trei zile; pagina spune data și ora de la care se poate.",
-    backgroundEn: "A skill's quiz page. It opens from an open box of „Harta competențelor” (the skills map); a closed skill has no quiz yet.",
-    howToEn: "The quiz is passed with at least 80 % right answers, and the skill then becomes mastered on the map. A failed quiz can be taken again after three days; the page says the date and hour from which it can.",
+    reason: "a new screen (#39.42), its quiz added in #39.43, with no text yet",
+    backgroundRo: "Pagina chestionarului unei competențe. Se deschide dintr-o casetă deschisă a „Hărții competențelor”; o competență închisă nu are încă chestionar. Fiecare întrebare are trei sau patru răspunsuri, dintre care unul singur este bun.",
+    howToRo: "Alegeți câte un răspuns la fiecare întrebare; „Trimite” se poate apăsa abia după ce toate au un răspuns. Chestionarul se trece cu cel puțin 80 % răspunsuri bune, iar atunci competența devine stăpânită pe hartă și pagina arată explicația fiecărei întrebări. Un chestionar picat arată secțiunile din manual de recitit și se poate relua după trei zile; pagina spune data și ora de la care se poate. Dacă plecați de pe pagină cu răspunsuri alese, aplicația întreabă întâi.",
+    backgroundEn: "A skill's quiz page. It opens from an open box of „Harta competențelor” (the skills map); a closed skill has no quiz yet. Each question has three or four answers, only one of them right.",
+    howToEn: "Choose one answer to every question; „Trimite” (Send) can be pressed only once all of them have an answer. The quiz is passed with at least 80 % right answers, and the skill then becomes mastered on the map and the page shows each question's explanation. A failed quiz shows the manual sections to read again and can be taken again after three days; the page says the date and hour from which it can. If you leave the page with answers chosen, the application asks first.",
   },
 };

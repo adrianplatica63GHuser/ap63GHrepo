@@ -4369,7 +4369,8 @@
       "masteredOn": "Stăpânită pe {date}.",
       "obsoleteNote": "Depășită: o competență care se sprijină pe ea este stăpânită.",
       "openQuiz": "Deschide chestionarul",
-      "retryAt": "Chestionarul se poate relua din {when} (ora Toronto)."
+      "retryAt": "Chestionarul se poate relua din {when} (ora Toronto).",
+      "sections": "În manual:"
     },
     "listNumber": "Nr.",
     "listSkill": "Competența",
@@ -4389,7 +4390,25 @@
     "preparing": "Chestionarul acestei competențe se pregătește. Până atunci, reveniți la hartă.",
     "notOpen": "Competența nu este deschisă încă: întâi stăpâniți competențele dinainte.",
     "unknown": "Nu există competența „{key}”.",
-    "back": "Înapoi la hartă"
+    "back": "Înapoi la hartă",
+    "intro": "{count} întrebări. Alegeți câte un răspuns la fiecare, apoi apăsați „Trimite”. Treceți cu cel puțin {pass} răspunsuri bune.",
+    "question": "Întrebarea {n} din {count}",
+    "send": "Trimite",
+    "sending": "Se trimite…",
+    "answered": "{answered} din {count} răspunsuri",
+    "allNeeded": "Răspundeți la toate întrebările ca să puteți trimite.",
+    "sendFailed": "Chestionarul nu a putut fi trimis. Încercați din nou.",
+    "passedTitle": "Ați trecut chestionarul",
+    "passedScore": "{correct} răspunsuri bune din {total}. Competența este acum stăpânită pe hartă.",
+    "explanationsTitle": "De ce sunt acestea răspunsurile bune",
+    "rightAnswer": "Răspunsul bun: {answer}",
+    "failedTitle": "Nu ați trecut de data aceasta",
+    "failedScore": "{correct} răspunsuri bune din {total}; trebuiau cel puțin {pass}.",
+    "readAgain": "Recitiți în manual:",
+    "cooling": "Chestionarul se poate relua din {when} (ora Toronto).",
+    "masteredOn": "Ați stăpânit această competență pe {date}.",
+    "masteredNoDate": "Această competență este stăpânită.",
+    "sectionsTitle": "Competența se sprijină pe:"
   },
   "parentsFromIdCard": {
     "foldTitle": "Părinții titularului",
