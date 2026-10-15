@@ -56,6 +56,14 @@ const ALLOW: Record<string, Allowed[]> = {
     ["A113", "<span className=\"font-bold\">{data.documents}</span> <spa"],
     ["A113", "{nameOr(item.displayName, item.entityType)}"],
   ],
+  // Slice #39.37: the user manual. A cross-reference in a sentence is a same-tab link whose words are the number
+  // it points at (A096); the contents' rows are the chapters and sections themselves, as the sidebar's rows are
+  // the places they open (A001). „Capitolul anterior / următor" carry LeadingIcon / TrailingIcon, so are not listed.
+  "src/app/manual/_components/manual-view.tsx": [
+    ["A096", "{target.number}"],
+    ["A001", "{`${c.number} ${c.title}`}"],
+    ["A001", "{`${b.number} ${b.title}`}"],
+  ],
   "src/app/account/change-password/change-password-form.tsx": [
     ["A108", "{state === \"saving\" ? t(\"buttonSaving\") : t(\"buttonSave\""],
   ],

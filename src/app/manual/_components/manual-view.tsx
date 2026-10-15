@@ -17,7 +17,7 @@ import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight, Download } from "lucide-react";
-import { IconButton } from "@/lib/ui/icon-button";
+import { IconButton, LeadingIcon, TrailingIcon } from "@/lib/ui/icon-button";
 import { PROSE_STYLE, rem } from "@/lib/ui/field-widths";
 import type { Block, Inline, Manual, ManualChapter } from "@/lib/manual/format";
 import { figureUrl, getManual, manualHref, manualLocale } from "@/lib/manual/manual";
@@ -264,7 +264,7 @@ export function ManualView() {
           <div className="mt-6 flex flex-wrap justify-between gap-4 border-t border-wire pt-4">
             {prev ? (
               <Link href={manualHref(prev.id)} className="inline-flex items-center gap-1 text-cta hover:underline">
-                <ChevronLeft size={16} aria-hidden="true" />
+                <LeadingIcon icon={ChevronLeft} />
                 {`${t("previous")}: ${prev.number} ${prev.title}`}
               </Link>
             ) : (
@@ -273,7 +273,7 @@ export function ManualView() {
             {next && (
               <Link href={manualHref(next.id)} className="inline-flex items-center gap-1 text-cta hover:underline">
                 {`${t("next")}: ${next.number} ${next.title}`}
-                <ChevronRight size={16} aria-hidden="true" />
+                <TrailingIcon icon={ChevronRight} />
               </Link>
             )}
           </div>

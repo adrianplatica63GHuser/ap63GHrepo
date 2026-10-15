@@ -198,14 +198,18 @@ export const SKILLS: readonly Skill[] = [
     number: "1.4",
     level: 1,
     path: "workspace",
-    name: { ro: "Citește ajutorul din spatele „?” și indiciile cu bec", en: "Read the help behind „?” and the light-bulb hints" },
+    name: {
+      ro: "Citește ajutorul: „?”, indiciile cu bec și manualul de utilizare",
+      en: "Read the help: „?”, the light-bulb hints and the user manual",
+    },
     description: {
-      ro: "Deschizi „?” pe un ecran, citești la ce folosește ecranul și cum se lucrează pe el și găsești indiciile cu bec pentru gesturile care nu se văd.",
-      en: "Open a screen's „?”, read what the screen is for and how it is worked, and find the light-bulb hints for the gestures you cannot see.",
+      ro: "Deschizi „?” pe un ecran, citești la ce folosește ecranul și cum se lucrează pe el, găsești indiciile cu bec pentru gesturile care nu se văd și cauți în „Manual de utilizare” ce nu știi, după capitol sau după numărul unei secțiuni.",
+      en: "Open a screen's „?”, read what the screen is for and how it is worked, find the light-bulb hints for the gestures you cannot see, and look up what you do not know in „Manual de utilizare”, by chapter or by a section's number.",
     },
     predecessors: [],
-    screens: ["dashboard"],
-    cases: ["TC-HELP-01"],
+    // #39.37: + the manual's screen and its case.
+    screens: ["dashboard", "manual"],
+    cases: ["TC-HELP-01", "TC-HELP-02"],
   },
   {
     key: "persons-add-natural-person-by-hand",
