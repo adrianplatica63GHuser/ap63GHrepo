@@ -18,6 +18,8 @@ Manualul se deschide din bara laterală, „Ajutor și învățare” → „Man
 
 „Descarcă (Word)” face din manual un document Word, în limba în care folosiți aplicația: titlul, cuprinsul, fiecare capitol pe pagina lui și toate figurile. Este același text cu cel de pe ecran, așa că documentul descărcat azi spune ce spune și ecranul azi.
 
+Alături, „Descarcă în engleză (Word)” dă manualul în engleză, de pildă pentru cineva care nu citește românește. Există două manuale, câte unul pentru fiecare limbă: fiecare este scris în întregime în limba lui, iar figurile lui sunt fotografiate în aplicația folosită în acea limbă.
+
 Figurile sunt fotografiate din aplicație, pe înregistrări inventate. Unde pe ecran ar fi apărut date ale unor persoane reale, ele sunt estompate.
 
 ## 13.2 Ajutorul „?” și textele lui {#learning-help}
@@ -94,23 +96,20 @@ Un chestionar picat se poate relua după trei zile, socotite de la încercarea p
 
 „Întreabă” răspunde din acest manual la o întrebare scrisă cu cuvintele dumneavoastră. Îl deschideți din bara laterală, „Ajutor și învățare” → „Întreabă”; aceeași căsuță stă și în capul „Manual de utilizare”.
 
-### 13.5.1 Căutarea {#learning-ask-search}
+### 13.5.1 Cum se găsește răspunsul {#learning-ask-search}
 
-Scrieți întrebarea — de exemplu „cum adaug o persoană?” — și apăsați Enter sau „Caută”. Apar pe loc cel mult cinci secțiuni ale manualului care răspund, cea mai potrivită întâi. Fiecare arată numărul și titlul ei, capitolul ei și propozițiile care se potrivesc cu întrebarea, cu cuvintele găsite marcate. Apăsați titlul ca să citiți secțiunea în manual.
+Scrieți întrebarea — de exemplu „cum adaug o persoană?” — și apăsați Enter sau „Întreabă”. Întrebarea merge la Claude împreună cu cuprinsul manualului: fiecare secțiune, cu numărul, titlul ei și un rând care spune la ce răspunde. Claude alege după ce înseamnă întrebarea, nu după cuvintele pe care le are în comun cu manualul, cel mult cinci secțiuni care răspund la ea, apoi scrie din textul lor un răspuns de cel mult trei propoziții.
 
-- Căutarea nu trimite nimic în afara aplicației și nu costă nimic.
-- Diacriticele nu contează: „adaug”, „adăug” și „adaugă” găsesc aceleași secțiuni.
-- Ajunge începutul unui cuvânt: „adaug” găsește și „adăugarea”.
-- Cuvintele mici, ca „cum”, „unde” sau „o”, nu se caută.
+Pagina arată unul din două lucruri, niciodată ceva între ele:
 
-Dacă nicio secțiune nu se potrivește, aplicația spune „Manualul nu pare să răspundă la întrebarea aceasta.” Încercați alte cuvinte sau căutați în „Cuprins” (secțiunea [[learning-manual]]).
+- **un răspuns**, care numește secțiunile pe care se sprijină, de exemplu „§3.2” — apăsați numărul ca să citiți secțiunea —, iar sub el, aceleași secțiuni, cu numărul și titlul, fiecare o legătură în manual;
+- **„Manualul nu răspunde la această întrebare.”**, cu „Deschide cuprinsul manualului”, când nicio secțiune nu răspunde. Atunci nu apare nicio listă: o listă de secțiuni care doar seamănă cu întrebarea nu vă ajută.
 
-### 13.5.2 „Răspuns AI” {#learning-ask-ai}
+Răspunsul este scris de AI: verificați în secțiunea numită înainte să vă bazați pe el.
 
-Sub secțiunile găsite stă „Răspuns AI”. Numai dacă îl apăsați, aplicația trimite întrebarea și aceste secțiuni la Claude, care scrie din ele un răspuns de cel mult trei propoziții. Răspunsul numește secțiunile pe care se sprijină, de exemplu „§3.2”; apăsați numărul ca să citiți secțiunea.
+### 13.5.2 Ce trimite și ce costă {#learning-ask-ai}
 
-- Claude primește doar întrebarea și textul secțiunilor găsite — nimic din înregistrările arhivei și nici întrebările de dinainte.
-- Dacă secțiunile nu răspund la întrebare, aplicația spune că manualul nu spune, în loc să ghicească.
-- Un răspuns AI este o citire plătită, sub un cent. „Setări” → „Costuri” → „AI” o numără cu celelalte citiri plătite (secțiunea [[admin-settings-costs]]).
-- Răspunsul este scris de AI: verificați în secțiunea numită înainte să vă bazați pe el.
+- Claude primește doar întrebarea, cuprinsul manualului și textul secțiunilor alese — nimic din înregistrările arhivei și nici întrebările de dinainte.
+- Fiecare întrebare este plătită: o citire ca să aleagă secțiunile și, când găsește, încă una ca să scrie răspunsul. De obicei costă împreună sub un cent. „Setări” → „Costuri” → „AI” le numără cu celelalte citiri plătite (secțiunea [[admin-settings-costs]]).
+- Diacriticele, ordinea cuvintelor și felul în care e formulată întrebarea nu contează: contează ce întrebați.
 `;

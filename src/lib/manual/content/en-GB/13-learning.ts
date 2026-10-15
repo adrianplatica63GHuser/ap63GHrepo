@@ -18,6 +18,8 @@ The manual opens from the sidebar, „Help & learning” → „User manual”. 
 
 „Download (Word)” turns the manual into a Word document, in the language you use the application in: the title, the contents, each chapter on its own page and every figure. It is the same text as on the screen, so a document downloaded today says what the screen says today.
 
+Beside it, „Download in Romanian (Word)” gives the Romanian manual. There are two manuals, one per language: each is written wholly in its language, and its figures are shot in the application used in that language.
+
 The figures are photographed from the application, on invented records. Where real people's data would have appeared on the screen, it is blurred.
 
 ## 13.2 The „?” help and its texts {#learning-help}
@@ -94,23 +96,20 @@ A failed quiz can be taken again after three days, counted from the failed attem
 
 „Ask” answers, from this manual, a question written in your own words. Open it from the sidebar, „Help & learning” → „Ask”; the same box also stands at the top of „User manual”.
 
-### 13.5.1 The search {#learning-ask-search}
+### 13.5.1 How the answer is found {#learning-ask-search}
 
-Type the question — for example „how do I add a person?” — and press Enter or „Search”. At once, at most five sections of the manual that answer it appear, the best match first. Each shows its number and title, its chapter and the sentences that match the question, with the words found marked. Press the title to read the section in the manual.
+Type the question — for example „how do I add a person?” — and press Enter or „Ask”. The question goes to Claude together with the manual's outline: every section, with its number, its title and a line saying what it answers. Claude picks, by what the question means rather than by the words it shares with the manual, at most five sections that answer it, then writes from their text an answer of at most three sentences.
 
-- The search sends nothing outside the application and costs nothing.
-- Diacritics do not matter: „vanzare” and „vânzare” find the same sections.
-- The beginning of a word is enough: „interact” also finds „interactions”.
-- Small words, such as „how”, „where” or „a”, are not searched for.
+The page shows one of two things, never anything in between:
 
-If no section matches, the application says „The manual does not seem to answer this question.” Try other words, or look in „Contents” (section [[learning-manual]]).
+- **an answer**, which names the sections it rests on, for example „§3.2” — press the number to read the section —, and under it the same sections, with their number and title, each a link into the manual;
+- **„The manual does not answer this question.”**, with „Open the manual's contents”, when no section answers it. No list appears then: a list of sections that only look like the question does not help you.
 
-### 13.5.2 „AI answer” {#learning-ask-ai}
+The answer is written by AI: check the section it names before relying on it.
 
-Below the sections found stands „AI answer”. Only if you press it, the application sends the question and those sections to Claude, which writes from them an answer of at most three sentences. The answer names the sections it rests on, for example „§3.2”; press the number to read the section.
+### 13.5.2 What it sends and what it costs {#learning-ask-ai}
 
-- Claude receives only the question and the text of the sections found — nothing from the archive's records, and no earlier questions.
-- If the sections do not answer the question, the application says the manual does not say, instead of guessing.
-- An AI answer is a paid read, under a cent. „Settings” → „Costs” → „AI” counts it with the other paid reads (section [[admin-settings-costs]]).
-- The answer is written by AI: check the section it names before relying on it.
+- Claude receives only the question, the manual's outline and the text of the sections it picked — nothing from the archive's records, and no earlier questions.
+- Every question is paid for: one read to pick the sections and, when it finds some, another to write the answer. Together they usually cost under a cent. „Settings” → „Costs” → „AI” counts them with the other paid reads (section [[admin-settings-costs]]).
+- Diacritics, word order and the way the question is worded do not matter: what you ask does.
 `;

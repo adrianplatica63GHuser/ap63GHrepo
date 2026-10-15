@@ -279,10 +279,10 @@ export const HELP_PROPOSALS: Partial<Record<HelpScreenKey, HelpProposal>> = {
   },
   ask: {
     against: EMPTY_FINGERPRINT,
-    reason: "a new screen (#39.45) with no text yet",
+    reason: "a new screen (#39.45) with no text yet; #39.49: answered by meaning, no word search",
     backgroundRo: "Întrebări cu cuvintele dumneavoastră, la care răspunde „Manual de utilizare”. Aceeași căsuță stă și în capul manualului.",
-    howToRo: "Scrieți întrebarea și apăsați Enter sau „Caută”: apar pe loc secțiunile din manual care răspund, cu propozițiile potrivite și cuvintele găsite marcate. Căutarea nu trimite nimic în afară și nu costă nimic; merge cu și fără diacritice și găsește și începutul unui cuvânt. Apăsați titlul unei secțiuni ca să o citiți în manual.\n\n„Răspuns AI”, doar dacă îl apăsați, trimite întrebarea și secțiunile găsite la Claude, care scrie un răspuns scurt numai din ele și numește secțiunile; o citire plătită, sub un cent. Dacă secțiunile nu răspund, aplicația spune că manualul nu spune, nu ghicește.",
-    backgroundEn: "Questions in your own words, answered by „Manual de utilizare” (the user manual). The same box stands at the top of the manual.",
-    howToEn: "Type the question and press Enter or „Caută” (search): the manual sections that answer it appear at once, with the matching sentences and the words found marked. The search sends nothing out and costs nothing; it works with and without diacritics and finds the beginning of a word. Press a section's title to read it in the manual.\n\n„Răspuns AI” (AI answer), only when you press it, sends the question and the sections found to Claude, which writes a short answer from them alone and names the sections; one paid read, under a cent. If the sections do not answer, the application says the manual does not say; it does not guess.",
+    howToRo: "Scrieți întrebarea și apăsați Enter sau „Întreabă”. Claude citește cuprinsul manualului, alege după ce înseamnă întrebarea secțiunile care răspund la ea și scrie din ele un răspuns scurt, care le numește; sub el stau aceleași secțiuni, ca legături în manual.\n\nDacă nicio secțiune nu răspunde, pagina spune „Manualul nu răspunde la această întrebare.” și nu arată nicio listă. Fiecare întrebare este o citire plătită, de obicei sub un cent; nimic din arhivă nu pleacă la Claude.",
+    backgroundEn: "Questions in your own words, answered by the „User manual”. The same box stands at the top of the manual.",
+    howToEn: "Type the question and press Enter or „Ask”. Claude reads the manual's outline, picks by what the question means the sections that answer it, and writes a short answer from them that names them; under it stand the same sections, as links into the manual.\n\nIf no section answers, the page says „The manual does not answer this question.” and shows no list. Each question is a paid read, usually under a cent; nothing from the archive goes to Claude.",
   },
 };
