@@ -5,8 +5,8 @@
 | **Area** | help |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `draft` |
-| **Last green** | — |
+| **State** | `confirmed` |
+| **Last green** | 2026-10-14 |
 
 ## What this proves
 
@@ -49,3 +49,19 @@ Nothing.
 Nothing to undo: the case reads only. The downloaded file may be deleted.
 
 ## Notes from the runs
+
+**2026-10-14 — run 1, `driven` (Slice #39.37).** Driven in the desktop app's browser pane, its viewport
+emulated at 1920 × 1080, against `npm run dev` on 3000, by script (`click()` on the sidebar's section and
+link, the contents' links and the cross-reference; the address typed for steps 5 and 6). Step 1: the heading,
+„Descarcă (Word)", „Cuprins" with 13 chapters from „1 Introducere" to „13 Ajutor și învățare", „1 Introducere"
+on the right, the breadcrumb „Acasă › Ajutor și învățare › Manual de utilizare". Step 2: `?s=start`, 9 sections
+„2.1 Conectarea" … „2.9 Exemple și cazuri de utilizare". Step 3: `?s=start-sidebar`, the heading at the top of
+the view, the table's last row „Ajutor și învățare", Figura 2.1 captioned as above, its picture 224 px wide.
+Step 4: the link „2.8", `?s=start-help`, its heading in view. Step 5: Figura 2.3 at the top of the view. Step
+6: the sentence above and „1 Introducere". Step 7: `?s=start`. Step 8: the download was caught in the page —
+„Manual de utilizare.docx", 626 287 bytes, a ZIP holding word/document.xml with the title, „Cuprins",
+„1  Introducere" … „13  Ajutor și învățare" and six pictures; the same package, built from the same six
+pictures in the sandbox and opened in LibreOffice, is 21 pages, the chapters each on their own page. The case
+file needed no correction.
+
+**2026-10-14 — run 2, `confirmed`.** The same pane and window, every step again, unchanged and green.
