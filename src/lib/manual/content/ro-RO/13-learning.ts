@@ -1,11 +1,11 @@
 /**
- * Manual, ro-RO, chapter 13 — 13.1 written in #39.39, 13.2 in #39.40, 13.3 in #39.42; 13.4–13.5 are headings until 39.43–39.45 write them. (Slice #39.37)
+ * Manual, ro-RO, chapter 13 — 13.1 written in #39.39, 13.2 in #39.40, 13.3 in #39.42, 13.4 in #39.43; 13.5 is a heading until 39.45 writes it. (Slice #39.37)
  * The source format is src/lib/manual/format.ts. Edited here, read by the screen and by the Word download alike.
  */
 export const CHAPTER = `
 # 13 Ajutor și învățare {#learning}
 
-Capitolul acesta descrie ce vă ajută să învățați aplicația. Primele trei secțiuni, despre manual, despre ajutorul „?” și despre harta competențelor, sunt scrise; celelalte se scriu pe măsură ce ecranele lor sunt gata.
+Capitolul acesta descrie ce vă ajută să învățați aplicația. Primele patru secțiuni, despre manual, despre ajutorul „?”, despre harta competențelor și despre chestionare, sunt scrise; celelalte se scriu pe măsură ce ecranele lor sunt gata.
 
 ## 13.1 Manualul de utilizare {#learning-manual}
 
@@ -66,6 +66,29 @@ O competență fără nimic înainte — toate cele de bază — este deschisă 
 - „Potrivește” încape harta în lățimea ferestrei, iar „100%” o arată în mărime naturală. „Listă” arată aceleași competențe ca listă, pe niveluri; „Diagramă” aduce harta înapoi.
 
 ## 13.4 Chestionarele {#learning-quizzes}
+
+Fiecare competență a hărții are un chestionar; îl deschideți apăsând caseta ei, cât timp este deschisă (secțiunea [[learning-skills]]). Chestionarele competențelor de bază sunt gata; cele ale nivelurilor următoare vin pe rând. Până atunci, pagina unei competențe fără chestionar spune că acesta se pregătește.
+
+### 13.4.1 Cum se dă un chestionar {#learning-quizzes-take}
+
+Pagina arată câteva întrebări, fiecare cu trei sau patru răspunsuri, dintre care unul singur este bun. Alegeți câte un răspuns la fiecare întrebare; „Trimite” se poate apăsa abia când ați răspuns la toate, iar sub el se vede câte ați făcut. Apăsat, „Trimite” trimite răspunsurile o singură dată.
+
+- Întrebările și răspunsurile apar de fiecare dată în altă ordine.
+- O competență are cel puțin două variante ale chestionarului; o încercare nouă vă dă altă variantă decât ultima.
+- Nimic nu se înregistrează până la „Trimite”. Dacă plecați de pe pagină cu răspunsuri alese, aplicația întreabă întâi: „Renunță” pleacă fără să înregistreze nimic, deci plecarea nu vă costă nicio așteptare.
+
+### 13.4.2 Rezultatul {#learning-quizzes-result}
+
+Treceți cu cel puțin 80 % răspunsuri bune — de exemplu 5 din 6 sau 8 din 10.
+
+| Rezultatul | Ce vedeți | Ce se schimbă pe hartă |
+|---|---|---|
+| Trecut | câte răspunsuri bune ați avut și, la fiecare întrebare, răspunsul bun cu explicația lui și secțiunea din manual de unde vine | competența devine stăpânită, iar cele de dinaintea ei devin depășite; competențele care se sprijineau doar pe acestea se deschid |
+| Picat | câte răspunsuri bune ați avut, câte trebuiau, secțiunile din manual de recitit și data și ora de la care se poate relua | nimic; competența rămâne deschisă |
+
+După un chestionar picat, răspunsurile bune nu se arată: le-ați lua cu dumneavoastră la încercarea următoare. Recitiți secțiunile propuse.
+
+Un chestionar picat se poate relua după trei zile, socotite de la încercarea picată. Data și ora sunt spuse în ora Toronto, pe pagina rezultatului și pe pagina competenței.
 
 ## 13.5 Întreabă {#learning-ask}
 `;

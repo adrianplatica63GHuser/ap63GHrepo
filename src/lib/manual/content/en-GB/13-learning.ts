@@ -1,11 +1,11 @@
 /**
- * Manual, en-GB, chapter 13 — 13.1 written in #39.39, 13.2 in #39.40, 13.3 in #39.42; 13.4–13.5 are headings until 39.43–39.45 write them. (Slice #39.37)
+ * Manual, en-GB, chapter 13 — 13.1 written in #39.39, 13.2 in #39.40, 13.3 in #39.42, 13.4 in #39.43; 13.5 is a heading until 39.45 writes it. (Slice #39.37)
  * The source format is src/lib/manual/format.ts. Edited here, read by the screen and by the Word download alike.
  */
 export const CHAPTER = `
 # 13 Help and learning {#learning}
 
-This chapter describes what helps you learn the application. The first three sections, about the manual, the „?” help and the skills map, are written; the others are written as their screens are ready.
+This chapter describes what helps you learn the application. The first four sections, about the manual, the „?” help, the skills map and the quizzes, are written; the others are written as their screens are ready.
 
 ## 13.1 The user manual {#learning-manual}
 
@@ -66,6 +66,29 @@ A skill with nothing before it — every basic one — is open from the start. W
 - „Potrivește” (fit) fits the map to the window's width, and „100%” shows it at full size. „Listă” (list) shows the same skills as a list, by level; „Diagramă” (diagram) brings the map back.
 
 ## 13.4 The quizzes {#learning-quizzes}
+
+Every skill of the map has a quiz; you open it by pressing its box while it is open (section [[learning-skills]]). The quizzes of the basic skills are ready; those of the higher levels follow. Until then, the page of a skill with no quiz says it is being prepared.
+
+### 13.4.1 Taking a quiz {#learning-quizzes-take}
+
+The page shows a few questions, each with three or four answers, only one of which is right. Choose one answer to each question; „Trimite” (send) can be pressed only once you have answered them all, and under it you see how many you have done. Pressed, „Trimite” sends the answers once.
+
+- The questions and the answers come in a different order every time.
+- A skill has at least two variants of its quiz; a new attempt gives you a variant other than the last.
+- Nothing is recorded until „Trimite”. If you leave the page with answers chosen, the application asks first: „Renunță” (discard) leaves without recording anything, so leaving costs you no wait.
+
+### 13.4.2 The result {#learning-quizzes-result}
+
+You pass with at least 80 % right answers — for example 5 of 6, or 8 of 10.
+
+| The result | What you see | What changes on the map |
+|---|---|---|
+| Passed | how many right answers you had and, for each question, the right answer with its explanation and the manual section it comes from | the skill becomes mastered, and the ones before it become obsolete; the skills that rested only on these open |
+| Failed | how many right answers you had, how many were needed, the manual sections to read again, and the date and hour from which you can try again | nothing; the skill stays open |
+
+After a failed quiz the right answers are not shown: you would carry them into the next attempt. Read the suggested sections again.
+
+A failed quiz can be taken again after three days, counted from the failed attempt. The date and hour are given in Toronto time, on the result page and on the skill's page.
 
 ## 13.5 Ask {#learning-ask}
 `;
