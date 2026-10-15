@@ -21,6 +21,7 @@
  * (C:\dev\.claude\rules\capture-and-personal-data.md). No figure loads a map or a Street View panorama.
  */
 
+import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { test, expect, type Page } from "../helpers/test";
@@ -165,6 +166,25 @@ test.describe("TC-HELP-02 — „Manual de utilizare”", () => {
 // ── The manual's figures — not a step of the case (see the header) ─────────────────────────────────────────────
 
 type SeedObject = { kind: string; id: string; code: string; label: string };
+
+/**
+ * Does the e2e account hold quiz attempts of its own? Then skills-map.spec.ts cannot seed the four states and
+ * does not shoot the map's figure, so this test shoots it as the account stands (#39.46).
+ */
+function accountHasOwnAttempts(): boolean {
+  const email = process.env.E2E_EMAIL;
+  if (!email) return false;
+  try {
+    execFileSync(
+      process.execPath,
+      ["--env-file=.env", "node_modules/tsx/dist/cli.mjs", "scripts/skills/set-progress.ts", "--email", email, "--require-empty"],
+      { stdio: "pipe", timeout: 60_000 },
+    );
+    return false;
+  } catch (err) {
+    return (err as { status?: number }).status === 3;
+  }
+}
 
 function seed(): SeedObject[] | null {
   const file = path.join(process.cwd(), ".seed-dev-data-big", "manifest.json");
@@ -519,6 +539,23 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     await blurRecent(page, S.recent);
     await still(page);
     await page.screenshot({ path: `${dir}/reports-search.png` });
+
+    // Figura 13.1 — the skills map. skills-map.spec.ts shoots it with the four states seeded, which it can do only on
+    // an account with no attempts of its own; on one that has some, it is shot here, as the account stands.
+    if (accountHasOwnAttempts()) {
+      await page.setViewportSize({ width: 1366, height: 900 });
+      await page.goto("/skills-map");
+      await expect(page.locator("[data-skills-frame]").filter({ visible: true })).toBeVisible({ timeout: 60_000 });
+      await page.waitForTimeout(1500);
+      await blurRecent(page, S.recent);
+      await page.locator("[data-skills-frame]").filter({ visible: true }).evaluate((el) => {
+        for (let n: Element | null = el; n; n = n.parentElement) n.scrollTop = 0;
+        window.scrollTo(0, 0);
+      });
+      await still(page);
+      await page.screenshot({ path: `${dir}/skills-map.png` });
+      expect(fs.existsSync(`${dir}/skills-map.png`)).toBe(true);
+    }
 
     for (const f of [
       "dashboard", "sidebar", "breadcrumb", "list", "record", "help",
