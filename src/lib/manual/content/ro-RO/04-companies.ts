@@ -24,7 +24,7 @@ Caseta de căutare din capul listei („caută după cod, nume, poreclă sau ID�
 
 Butonul arată câte câmpuri ați ales, de exemplu „Câmpuri afișate 1/4”. Coloana CUI nu apare până nu o bifați, dar căutarea după CUI merge oricum. La „Persoană de contact” se vede prima persoană de contact a firmei; dacă primul loc e gol, se vede a doua (secțiunea [[companies-people-contact]]).
 
-Pe fiecare rând stau „Previzualizare”, „Incursiune”, „Legături” și „Deschide”. Previzualizarea unei firme arată denumirea ei, urmată de numărul persoanelor de contact între paranteze — de exemplu „(2 contacte)” —, apoi porecla. „Incursiune” arată, alături de listă, fișa „Interacțiuni” a firmei, iar „Legături” arată, tot alături, cu cine este legată firma, fără să o deschideți.
+Pe fiecare rând stau „Previzualizare”, „Incursiune”, „Legături” și „Deschide”. Previzualizarea unei firme arată denumirea ei, apoi porecla. „Incursiune” arată, alături de listă, fișa „Interacțiuni” a firmei, iar „Legături” arată, tot alături, cu cine este legată firma, fără să o deschideți.
 
 O firmă adăugată de curând apare în capul listei, marcată „Nou!”.
 
@@ -123,7 +123,7 @@ O legătură greșită se scoate selectând rândul ei în „Legături” și a
 O firmă poate fi parte într-un act sau proprietar al unui teren, la fel ca o persoană fizică. Legătura se face din ecranul firmei, tot din „Legături”, sau de la celălalt capăt.
 
 - „Asociază act” deschide „Asociere act”. Bifați actul, apoi alegeți „Rol”: după ce ați bifat actul, lista rolurilor se strânge la cele pe care tipul acela de act le are. La un „Contract de Vânzare”, de pildă: „Cumpărător”, „Moștenitor”, „Notar”, „Reprezentant legal / Mandatar”, „Vânzător”. Pe act, firma apare apoi în fișa „Părți”, cu rolul ei. Despre părți, roluri și cota-parte, vedeți secțiunile [[documents-parties]] și [[documents-sale]].
-- „Asociază proprietate” deschide „Asociere proprietate”. Bifați proprietatea și alegeți „Rol”: „Coproprietari / Coindivizari”, „Cumpărător”, „Proprietar” sau „Titular de drept”. Pe proprietate, firma apare în „Legături”, de exemplu „Denumirea firmei (Proprietar)”.
+- „Asociază proprietate” deschide „Asociere proprietate”. Bifați proprietatea și alegeți „Rol”: „Coproprietar”, „Cumpărător”, „Proprietar” sau „Titular de drept”. Pe proprietate, firma apare în „Legături”, de exemplu „Denumirea firmei (Proprietar)”.
 
 De pe act sau de pe proprietate, „Vizualizare” pe rândul firmei deschide ecranul firmei — nu al unei persoane fizice —, doar pentru citit, cu „Înapoi la listă” și „Modifică” jos. Asocierea în general este în capitolul [[links]].
 

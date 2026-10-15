@@ -11,7 +11,7 @@ This manual shows you how to work with the archive: what it holds, how to find a
 
 The archive keeps in one place the persons the business works with, their properties, and the documents that concern them — contracts, certificates, permits, identity cards — together with the scanned pages of each document. From any record you can reach everything linked to it: from a parcel to its owners, and to the documents through which it passed from one owner to the next.
 
-The first screen after signing in is the **Tablou de bord**, the dashboard (Figure [[fig-dashboard]]): what was added in the last seven days, the records whose metadata has not been updated for a long time, the documents that expire soon, and what was worked on recently.
+The first screen after signing in is the **Dashboard** (Figure [[fig-dashboard]]): what was added in the last seven days, the records whose metadata has not been updated for a long time, the documents that expire soon, and what was worked on recently.
 
 ![1.1 The dashboard, the first screen after signing in](dashboard.png){#fig-dashboard}
 
@@ -37,11 +37,11 @@ Chapter [[start]] takes you through what every screen shares: signing in, the si
 
 Chapters, sections and figures are numbered, so a reference such as „section 2.5” or „Figure 2.3” is found by its number in the contents. Every chapter ends with examples and use cases: ordinary tasks, step by step.
 
-The names of buttons, fields and screens are written in quotation marks, as they appear in the application: „Adaugă nou”, „Câmpuri afișate”, „Legături”.
+The names of buttons, fields and screens are written in quotation marks, as they appear in the application: „Add new Property”, „Choose fields”, „Links”.
 
 ## 1.5 Examples {#intro-examples}
 
-- **Everything about a parcel.** Open the property and read its „Legături” tile: its owners, documents and linked parcels are there.
+- **Everything about a parcel.** Open the property and read its „Links” tile: its owners, documents and linked parcels are there.
 - **What changed on a person.** On the person's screen, step back through the versions: every save is one of them.
-- **What was worked on today.** On the dashboard, „Activitate recentă” shows the records touched last.
+- **What was worked on today.** On the dashboard, „Recent activity” shows the records touched last.
 `;

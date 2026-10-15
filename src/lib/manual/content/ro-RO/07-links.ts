@@ -41,8 +41,8 @@ Cota-parte a unei persoane pe un act se scrie după asociere, pe act (secțiunea
 
 ### 7.1.3 Rolul {#links-associate-role}
 
-- Rolul nu este obligatoriu: o asociere se poate face și cu „— fără rol —”.
-- Când legați un act de o persoană pornind de pe persoană, **bifați întâi actul și abia apoi alegeți rolul**. La bifare, lista „Rol” se strânge la rolurile pe care le are tipul acelui act și revine la „— fără rol —”; un rol ales înainte de bifare se pierde, iar legătura s-ar salva fără rol.
+- Rolul nu este obligatoriu: o asociere se poate face și cu „fără rol”.
+- Când legați un act de o persoană pornind de pe persoană, **bifați întâi actul și abia apoi alegeți rolul**. La bifare, lista „Rol” se strânge la rolurile pe care le are tipul acelui act și revine la „fără rol”; un rol ales înainte de bifare se pierde, iar legătura s-ar salva fără rol.
 - Între două persoane, rolul este al persoanei bifate față de persoana pe al cărei ecran sunteți; propoziția de lângă „Rol” o spune: „Rolul pe care persoana bifată îl are față de …”. Celălalt capăt arată rolul invers, potrivit genului persoanei: dacă pe ecranul unei fiice îl bifați pe tatăl ei ca „Părinte”, pe ecranul tatălui ea apare ca „Fiică”.
 - O persoană legată de o firmă ca „Reprezentant legal / Mandatar” vede firma, pe ecranul ei, cu rolul „Reprezentat(ă) / Mandant(ă)”.
 - Dacă tipul actului nu are niciun rol pregătit, ecranul spune asta în locul listei „Rol”, iar asocierea se face fără rol. Rolurile se pregătesc în „Date de referință” (secțiunea [[admin-reference-data]]).

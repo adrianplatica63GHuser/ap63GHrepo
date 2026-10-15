@@ -42,7 +42,7 @@ O pagină poate fi o fotografie sau o scanare, un PDF ori un document Word, Exce
 
 ### 6.2.2 Citirea paginilor {#documents-add-read}
 
-Un clic pe rândul unei pagini o arată în fișă. Cu două pagini sau mai multe apare și numărătoarea lor. „Pagini extinse” deschide paginile pe toată fereastra, destul de mari ca să se citească; „✕ Restrânge” le închide.
+Un clic pe rândul unei pagini o arată în fișă. Cu două pagini sau mai multe apare și numărătoarea lor. „Pagini extinse” deschide paginile pe toată fereastra, destul de mari ca să se citească; „Restrânge” le închide.
 
 - Un PDF se arată doar ca pagină, fără coloana de miniaturi a browserului.
 - Un fișier care nu se poate arăta în browser (de exemplu un document Word) spune „Acest tip de fișier nu poate fi previzualizat în browser.” și se poate descărca.
