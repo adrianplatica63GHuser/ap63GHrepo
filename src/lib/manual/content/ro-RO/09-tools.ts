@@ -1,17 +1,190 @@
 /**
- * Manual, ro-RO, chapter 9 — its headings only; 39.39 writes it. (Slice #39.37)
+ * Manual, ro-RO, chapter 9. (Slice #39.39)
  * The source format is src/lib/manual/format.ts. Edited here, read by the screen and by the Word download alike.
  */
 export const CHAPTER = `
 # 9 Instrumente {#tools}
 
-Capitolul acesta se scrie în curând. Titlurile de mai jos arată ce va cuprinde.
+Secțiunea „Instrumente” din bara laterală ține trei unelte de lucru: „Distilare Tipizate”, „Calcul drum lateral” și „Calcul suprafață”. Fiecare face altceva și costă altfel, așa că merită știut dinainte:
+
+- „Distilare Tipizate” face formularul unui tip de act din câteva acte-mostră. Citirea mostrelor o face AI-ul și **se plătește**.
+- „Calcul drum lateral” împarte o parcelă între proprietarii ei, cu un drum comun, și **creează proprietăți reale** în arhivă — dar numai când confirmați.
+- „Calcul suprafață” doar deschide harta proprietăților, cu uneltele de suprafață arătate. Nu scrie nimic.
 
 ## 9.1 Distilare Tipizate {#tools-doc-type-engine}
 
+Un tip de act poate avea un formular: câmpurile lui proprii, pe lângă câmpurile generale ale oricărui act (secțiunea [[documents-type]]). Formularul contează mai ales la import: fiecare act de un tip cu formular își completează singur câmpurile, din ce citește AI-ul pe pagini. Pentru un tip fără formular, importul se oprește și vă trimite aici (secțiunea [[import-scanning]]).
+
+„Distilare Tipizate” face acel formular. Îi dați un folder cu mai multe acte de același fel; fiecare este citit în întregime, actele sunt comparate între ele, iar instrumentul vă propune formularul cu informațiile pe care le au în comun. Îl corectați, îl aprobați, și de atunci importul citește acel tip cu formularul lui. **Nu se importă nimic**: niciun act nu se creează și nimic altceva nu se scrie în arhivă. Singurul lucru care se schimbă este formularul unui tip.
+
+Ecranul se deschide pe „Alegeți tipul, folderul cu mostre și pragul” (Figura [[fig-tools-doc-type-engine]]).
+
+![9.1 Ecranul „Distilare Tipizate”](tools-doc-type-engine.png){#fig-tools-doc-type-engine}
+
+Se ajunge aici și din alte locuri, cu tipul deja ales: din linia „Acest tip nu are încă formular; formularul se construiește în Distilare Tipizate.” de sub „Tip document” al unui act (secțiunea [[documents-type]]) și din „Creați formularul în „Distilare Tipizate”” de pe ecranul la care se oprește importul (secțiunea [[import-scanning]]). Ca să vedeți ce tipuri nu au încă formular, deschideți „Date de referință” → „Tipuri de Document” și bifați „Fără formular” (secțiunea [[admin-reference-data]]).
+
+### 9.1.1 Tipul, mostrele și pragul {#tools-doc-type-engine-pick}
+
+**„Tipul de document care primește formularul”** — alegeți tipul din listă. Două semne din listă spun ceva:
+
+- „are deja formular” — tipul se poate alege și așa. Câmpurile noi se adaugă la cele pe care le are; niciunul dintre cele existente nu este modificat sau șters.
+- „nu poate primi formular” — cartea de identitate, ale cărei date se preiau la import ca persoane, nu ca valori într-un formular, și tipul de rezervă, care adună actele al căror tip nu s-a putut stabili.
+
+**„Alege folderul cu mostre…”** — arătați un folder de pe calculator cu acte de același fel, de obicei între zece și douăzeci. Browserul vă cere voie să citească folderul; dați-i-o. Merge în Chrome, Edge sau alt browser bazat pe Chromium. Se citesc imagini JPEG, PNG, GIF sau WebP și fișiere PDF; TIFF, BMP, Word sau text nu se pot citi. O rulare citește un număr limitat de mostre: dacă folderul are mai multe, ecranul vă spune câte rămân necitite, iar dacă le vreți pe toate, împărțiți folderul.
+
+**„Procent de potrivire”** — pragul. O informație devine câmp pe formular dacă apare în cel puțin acest procent din mostrele care chiar au fost citite. Restul nu se pierde: la fiecare import viitor ajunge în „Note extinse” ale actului, ca până acum.
+
+### 9.1.2 Citirea și costul ei {#tools-doc-type-engine-cost}
+
+Înainte să porniți, ecranul vă spune ce veți plăti: „Citirea AI se plătește”, câte mostre vor fi citite în întregime, plus un apel de comparare la final. Vă spune și cât durează cel puțin, pentru că se trimite doar un număr limitat de citiri pe minut. Citirea fiecărei mostre costă, așa că alegeți mostrele cu grijă: acte întregi, lizibile, toate de același fel.
+
+„Începe citirea” pornește. Ecranul arată câte mostre s-au încheiat; când așteaptă limita pe minut, numără secundele, iar nicio mostră nu se pierde din această cauză.
+
+„Oprește citirea” oprește așteptarea și mostrele încă netrimise; acestea nu se plătesc. O citire deja pornită se termină, pentru că este oricum plătită, iar mostrele citite până atunci se compară totuși, ca să nu fi fost plătite degeaba.
+
+Dacă mostrele s-au citit, dar compararea lor nu reușește, citirile s-au plătit deja, iar reluarea le plătește din nou.
+
+### 9.1.3 Formularul propus {#tools-doc-type-engine-review}
+
+După comparare se deschide „Formularul propus”. Primul rând spune câte mostre s-au citit din câte ați ales — de exemplu „S-au citit 14 din 20 de mostre alese.” Toate procentele de sub el sunt din mostrele citite, nu din cele alese.
+
+Informațiile găsite sunt împărțite în trei:
+
+- **câmpurile de pe formular** — cele care trec pragul. Fiecare are o bifă (bifată de la început), „Etichetă”, „Fel” („Text”, „Text lung”, „Dată” sau „Număr”), în câte mostre a fost găsit, cum este scris pe acte („Scris pe documente ca: …”), „Indiciu pentru AI” și „Vezi valorile citite din … mostre”, care arată ce s-a citit pe fiecare act;
+- **informațiile sub prag** — nu devin câmpuri; la importurile viitoare ajung în „Note extinse”;
+- **informațiile pe care tipul le are deja** — trec pragul, dar tipul are deja câte un câmp pentru ele, așa că nu se propun din nou.
+
+Eticheta o schimbați cum doriți: AI-ul citește în continuare la fel, pentru că „Indiciu pentru AI” păstrează formularea de pe pagină. Debifați un câmp ca să nu ajungă pe formular. Fiecare câmp bifat are nevoie de o etichetă, iar un câmp nu poate primi numele unui câmp pe care tipul îl are deja.
+
+„Procent de potrivire” se poate muta și aici: nu se recitește nimic și nu costă nimic, doar se mută informațiile între „pe formular” și „sub prag”. Un tip de act poate avea un număr limitat de câmpuri; dacă formularul l-ar depăși, ridicați procentul sau debifați câteva câmpuri. „Ia de la capăt” renunță la ce vedeți și vă întoarce la alegere.
+
+### 9.1.4 Aprobarea formularului {#tools-doc-type-engine-save}
+
+„Aprobă formularul”, cu numărul de câmpuri bifate în paranteză, scrie doar câmpurile bifate. Nimic altceva din arhivă nu se modifică. Apare „Formularul a fost salvat”: de acum, fiecare act de acest tip își completează aceste câmpuri singur, la import, fără să mai întrebe, iar un import care s-a oprit pentru acest tip poate fi pornit din nou de la început. „Mergi la Import în sistem” vă duce la import (capitolul [[import]]).
+
+Un formular se poate face sau corecta și de mână, pe pagina tipului din „Date de referință” → „Tipuri de Document”, la fila „Formular” (secțiunea [[admin-reference-data]]).
+
 ## 9.2 Calculul drumului lateral {#tools-side-road}
+
+„Calcul drum lateral” împarte o parcelă cu patru colțuri între proprietarii ei, după cotele-părți, cu un drum comun de acces pe o latură. Din fișierul de date vă arată împărțirea pe hartă, vă lasă să alegeți ordinea proprietarilor și locul drumului și, la sfârșit, creează câte o proprietate pentru fiecare proprietar, una pentru drum și un grup cu toate. Fiecare calcul se înregistrează în „Istoricul calculelor”.
+
+În bara laterală, deschideți „Instrumente” → „Calcul drum lateral”. Se deschide ecranul „Calcul” (Figura [[fig-tools-calculation]]): explicația fișierului, pictograma istoricului și „Alegeți fișierul de date…”.
+
+![9.2 Ecranul „Calcul drum lateral”](tools-calculation.png){#fig-tools-calculation}
+
+**Până la „Creează proprietățile” nu se creează nimic.** Tot ce vedeți pe hartă și în tabel este o previzualizare; puteți încerca oricâte ordini și oricâte drumuri.
+
+### 9.2.1 Fișierul de date {#tools-side-road-file}
+
+Fișierul are trei secțiuni, fiecare deschisă de un rând care începe cu „Secțiunea de”:
+
+| Secțiunea | Ce conține | Regula |
+|---|---|---|
+| „Colțuri” | câte un colț pe rând: numărul colțului, X (Nord) și Y (Est), în Stereo 70 | exact 4 colțuri, scrise în ordinea în care se parcurge conturul |
+| „Proprietari” | câte un proprietar pe rând: numele, apoi cota-parte („24,33%”) | cel puțin 2 proprietari; cotele însumează 100% sau 99,99%, nimic altceva |
+| „Lățime drum” | lățimea drumului, în metri | o singură valoare, peste 0 și sub 15 m |
+
+Coloanele se despart prin tab sau spații, iar numerele pot avea virgulă sau punct zecimal. Înaintea primei secțiuni pot fi doar rânduri goale sau rânduri de „*”.
+
+Un fișier care încalcă o regulă este refuzat: ecranul scrie „Fișierul nu poate fi folosit:” și motivul, iar harta nu apare. De exemplu:
+
+- „Fișierul are 5 colțuri; trebuie să aibă exact 4.”
+- „Cotele-părți însumează 98,00%; trebuie să fie 100% sau 99,99%.”
+- „Lățimea drumului este 15 m; trebuie să fie peste 0 și sub 15 m.”
+- o secțiune care lipsește sau apare de două ori, un colț scris de două ori, colțuri care, în ordinea din fișier, își intersectează laturile, ori un rând care nu se poate citi — atunci ecranul arată rândul și ce se aștepta pe el.
+
+Corectați fișierul și alegeți-l din nou.
+
+### 9.2.2 Proprietarii pe hartă {#tools-side-road-owners}
+
+Un fișier bun aduce parcela pe hartă, cu colțurile numerotate ca în fișier, tăiată în câte o felie pentru fiecare proprietar, într-o ordine aleatorie. Ecranul arată „Suprafața parcelei”, „Lățime drum”, lungimea fiecărei laturi („Latura 16–17” și așa mai departe) și tabelul proprietarilor.
+
+Ordinea feliilor o schimbați în două feluri: trageți o felie peste alta, ca să le schimbați între ele, sau folosiți butoanele ↑ ↓ din coloana „Mută” a tabelului. Fiecare felie își păstrează suprafața, iar liniile de tăiere se mută. Fiecare proprietar își păstrează și culoarea: pătrățelul de lângă numele lui din tabel are culoarea feliei lui de pe hartă, oriunde s-ar muta.
+
+Dacă cotele însumează 99,99%, sub tabel scrie că ultima felie din ordine preia diferența de 0,01%, iar cifrele ei o includ.
+
+### 9.2.3 Drumul {#tools-side-road-road}
+
+La „Pasul 3 — drumul”, faceți clic pe colțul din care pornește drumul — pe numărul lui de pe hartă — sau alegeți-l mai jos, la „Colțul drumului”. Ecranul vă spune apoi cele două laturi care pornesc din acel colț; faceți clic pe numele laturii, scris la mijlocul ei, sau alegeți-o la „Latura drumului”. O latură care nu pornește din colțul ales este refuzată, iar colțul rămâne ales.
+
+Drumul apare alb pe hartă: o fâșie de lățimea din fișier, în interiorul parcelei, de-a lungul laturii alese, pornind din colțul ales. Proprietarii se înșiră de-a lungul lui, cu granițele dintre ei perpendiculare pe drum; primul stă la colțul de unde pornește drumul, iar ultimul, dincolo de capătul drumului, ajunge la drum prin capătul lui. Fiecare proprietar primește, după cotă, partea lui din parcela fără drum și tot după cotă o parte din drum. Lungimea drumului se calculează singură, cât să iasă suprafețele.
+
+Ecranul arată „Lungime drum” și „Suprafață drum”, iar tabelul are coloanele:
+
+| Coloana | Ce arată |
+|---|---|
+| „Nr.”, „Proprietar”, „Cotă” | ordinea, numele și cota-parte |
+| „Cotă × parcelă (m²)” | cât i se cuvine din toată parcela |
+| „Cotă din drum (m²)” | partea lui din suprafața drumului |
+| „Suprafață proprie (m²)” | felia lui, fără drum |
+| „Proprie + drum (m²)” | cele două la un loc |
+| „Diferență (m²)” | la un calcul reușit, 0,00 |
+
+Ordinea proprietarilor se poate schimba și după ce ați pus drumul: drumul își păstrează colțul și latura, iar lungimea lui se recalculează. „Alege alt drum” vă lasă să alegeți alt colț sau altă latură.
+
+Uneori forma parcelei nu permite drumul ales — drumul ar fi mai lung decât latura, ar ieși din parcelă, nu ar lăsa loc proprietarilor sau felia unui proprietar nu ar ajunge la el. Ecranul spune care dintre acestea este și vă cere altă latură, alt colț sau altă ordine.
+
+### 9.2.4 Crearea proprietăților {#tools-side-road-create}
+
+Mai jos stă „Creează … proprietăți — proprietarii și drumul — și un grup”, cu două câmpuri:
+
+- „Descrierea grupului” — se completează singură cu „Diviz —” urmat de numele fișierului. Alegerea unui alt fișier o scrie din nou, așa că scrieți descrierea dumneavoastră după ce ați ales fișierul.
+- „Poreclă drum” — pornește cu „Drum comun”.
+
+Numele proprietarilor din fișier se salvează doar ca poreclă a fiecărei proprietăți, ca text. Nu se creează persoane și nu se leagă nimeni de proprietăți: proprietarii se leagă separat, de pe ecranul fiecărei proprietăți (secțiunea [[links-associate]]).
+
+„Creează proprietățile” creează proprietățile și grupul. Ecranul scrie „S-a creat grupul GRP-… cu următoarele proprietăți:”, codul calculului („Calculul înregistrat: CALC…”) și câte un link spre fiecare proprietate nouă. Colțurile fiecărei proprietăți poartă, în „Nr. orig.”, numerele colțurilor parcelei din fișier, acolo unde un colț al parcelei a ajuns pe ea (secțiunea [[properties-corners-table]]). Grupul îl găsiți în „Grupuri” (secțiunea [[links-classify-groups]]). „Vezi istoricul calculului” deschide pagina calculului.
+
+### 9.2.5 Istoricul calculelor {#tools-side-road-history}
+
+Pictograma istoricului, pe ecranul „Calcul”, deschide „Istoricul calculelor”: câte un rând pentru fiecare calcul, cu „Cod”, „Algoritm” („Drum lateral”), „Parcele” (câte proprietăți a creat), „Grup”, „Stare”, „Creat de” și „Data”. „Înapoi la Calcul” vă întoarce.
+
+„Detalii”, pe un rând, deschide „Detalii calcul”: „Parametrii calculului”, „Descriere grup”, „Pașii calculului” (tabelul proprietarilor), „Previzualizare hartă” (feliile, în culorile proprietarilor) și „Parcele create” — fiecare proprietate, cu „Rol” („Parcelă proprietar” sau „Drum comun”) și „Vezi proprietatea”. O proprietate ștearsă între timp apare cu „(ștearsă)”.
+
+„Re-rulează cu acești parametri” redeschide „Calcul” pe același fișier, cu proprietarii în aceeași ordine și cu drumul deja pus. Un calcul vechi, făcut cu fișierul de odinioară, în cinci secțiuni, se poate consulta, dar nu se mai poate re-rula.
+
+„Șterge calculul”, pe rândul unui calcul, întreabă „Ștergeți calculul?” și spune că proprietățile și grupul create rămân. „Șterge” scoate calculul din istoric; proprietățile și grupul se șterg separat, dacă e cazul. Codul unui calcul șters nu se mai dă altuia.
 
 ## 9.3 Calculul suprafeței {#tools-area}
 
+„Instrumente” → „Calcul suprafață” deschide harta tuturor proprietăților, „Toate Proprietățile”. În bara laterală rămâne marcat „Calcul suprafață”, nu „Proprietăți”.
+
+Ca să le găsiți ușor, cele două butoane de suprafață din bara de unelte a hărții pâlpâie împreună, în violet, de trei ori, apoi se liniștesc:
+
+- „Suprafața unei zone delimitate” — alegeți colțuri de proprietăți, unul după altul;
+- „Suprafața unei zone oarecare” — desenați zona liber, colț cu colț, ca la o proprietate nouă.
+
+Niciunul nu este apăsat în locul dumneavoastră: apăsați-l pe cel de care aveți nevoie. Cum se lucrează cu fiecare găsiți în secțiunea [[map-area]]. Dacă reîncărcați pagina, butoanele sunt arătate din nou.
+
 ## 9.4 Exemple și cazuri de utilizare {#tools-examples}
+
+### 9.4.1 Faceți formularul unui tip de act care nu are încă unul {#tools-example-form}
+
+Importul s-a oprit pentru că tipul „Certificat de Moștenitor” nu are formular, iar aveți cincisprezece certificate scanate.
+
+1. Puneți certificatele, ca PDF sau imagini, într-un folder doar al lor.
+2. Deschideți „Instrumente” → „Distilare Tipizate” și alegeți tipul la „Tipul de document care primește formularul” (secțiunea [[tools-doc-type-engine-pick]]).
+3. „Alege folderul cu mostre…”, lăsați „Procent de potrivire” cum este și citiți ce va costa (secțiunea [[tools-doc-type-engine-cost]]).
+4. „Începe citirea” și așteptați până se deschide „Formularul propus”.
+5. Dați câmpurilor etichete clare, alegeți „Fel”-ul potrivit și debifați ce nu vă trebuie (secțiunea [[tools-doc-type-engine-review]]).
+6. „Aprobă formularul”, apoi porniți importul din nou, de la început (secțiunea [[tools-doc-type-engine-save]]).
+
+### 9.4.2 Împărțiți un teren din Bragadiru între trei moștenitori, cu drum de acces {#tools-example-road}
+
+Topograful v-a trimis colțurile terenului, iar cei trei moștenitori au câte o treime fiecare.
+
+1. Scrieți fișierul de date: cele patru colțuri, cei trei proprietari cu „33,33%” fiecare și lățimea drumului, de exemplu 3 (secțiunea [[tools-side-road-file]]).
+2. „Instrumente” → „Calcul drum lateral”, apoi „Alegeți fișierul de date…”.
+3. Puneți proprietarii în ordinea dorită, trăgând feliile sau cu ↑ ↓ (secțiunea [[tools-side-road-owners]]).
+4. Faceți clic pe colțul de la drumul public, apoi pe latura pe care merge drumul; verificați că „Diferență” arată 0,00 pe fiecare rând (secțiunea [[tools-side-road-road]]).
+5. Scrieți „Descrierea grupului”, apoi apăsați „Creează proprietățile” (secțiunea [[tools-side-road-create]]).
+6. Pe fiecare proprietate nouă, legați moștenitorul ei (secțiunea [[links-associate]]).
+
+### 9.4.3 Refaceți un calcul făcut cu proprietarii în altă ordine {#tools-example-redo}
+
+Ați creat proprietățile, dar proprietarii stăteau în altă ordine decât trebuia.
+
+1. Deschideți „Istoricul calculelor” de pe ecranul „Calcul”, apoi „Șterge calculul” pe rândul calculului greșit și „Șterge” (secțiunea [[tools-side-road-history]]).
+2. Ștergeți proprietățile și grupul create de el, care au rămas (secțiunile [[properties-add-edit]] și [[admin-groups]]).
+3. Alegeți din nou fișierul pe „Calcul”, puneți ordinea bună și drumul, apoi „Creează proprietățile” (secțiunea [[tools-side-road-create]]).
 `;
