@@ -42,6 +42,8 @@ export type SkillProgress = {
   retryAt: Date | null;
   /** How many attempts this skill has, passed or not. */
   attempts: number;
+  /** When its quiz was first passed (#39.42 shows it); null for a skill never passed — an Obsolete one included. */
+  masteredAt: Date | null;
 };
 
 export type Progress = {
@@ -115,7 +117,10 @@ export function computeProgress(
         if (opens > now) retryAt = opens;
       }
     }
-    return { key: s.key, state, quizAvailable: state === "open" && retryAt === null, retryAt, attempts: mine.length };
+    const firstPass = mine
+      .filter((a) => a.passed)
+      .reduce<Date | null>((first, a) => (!first || a.finishedAt < first ? a.finishedAt : first), null);
+    return { key: s.key, state, quizAvailable: state === "open" && retryAt === null, retryAt, attempts: mine.length, masteredAt: firstPass };
   });
 
   const paths = Object.fromEntries(

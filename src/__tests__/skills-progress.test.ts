@@ -176,6 +176,18 @@ describe("the request's picture — three states the rules cannot produce", () =
   });
 });
 
+describe("when a skill was mastered (#39.42)", () => {
+  it("is the first passed attempt, and stays when the skill becomes Obsolete", () => {
+    const G = [mk("a", 1), mk("b", 2, ["a"])];
+    const p = computeProgress([fail("a"), pass("a", 73), pass("b", 74)], at(80), G);
+    expect(skillProgress(p, "a")).toMatchObject({ state: "obsolete", masteredAt: at(73) });
+    expect(skillProgress(p, "b")).toMatchObject({ state: "mastered", masteredAt: at(74) });
+  });
+  it("is null for a skill never passed", () => {
+    expect(skillProgress(computeProgress([fail("a")], at(1), [mk("a", 1)]), "a")!.masteredAt).toBeNull();
+  });
+});
+
 describe("the three days after a failed quiz", () => {
   const G = [mk("a", 1)];
 
