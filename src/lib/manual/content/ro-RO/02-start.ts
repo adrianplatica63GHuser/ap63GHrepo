@@ -60,7 +60,7 @@ Bifa din capul tabelului selectează rândurile paginii curente, nu ale întregi
 
 ## 2.6 Ecranul unei înregistrări: fișele {#start-tiles}
 
-O înregistrare deschisă își arată datele în fișe — panouri cu câte un nume (Figura [[fig-record]]). Pe o persoană fizică sunt, de exemplu, identitatea ei, „Corelate”, „Clasificări”, „Conexiuni” și „Interacțiuni”.
+O înregistrare deschisă își arată datele în fișe — panouri cu câte un nume (Figura [[fig-record]]). Pe o persoană fizică sunt, de exemplu, identitatea ei, „Legături”, „Clasificare”, „Etichete și grupuri” și „Interacțiuni”.
 
 - Bifele din capul ecranului aleg ce fișe se văd; „Toate” le arată pe toate, iar „Implicit” revine la setul obișnuit. Setul vostru se salvează în „Setări”, la „Implicitele mele”.
 - O fișă se trage de spațiul ei gol într-un loc liber; un dublu-clic pe ea o urcă sub fișa de deasupra.

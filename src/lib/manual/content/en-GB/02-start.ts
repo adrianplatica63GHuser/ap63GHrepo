@@ -60,7 +60,7 @@ The tick box at the head of the table selects the rows of the current page, not 
 
 ## 2.6 A record's screen: its tiles {#start-tiles}
 
-An open record shows its data in tiles — panels with a name each (Figure [[fig-record]]). A natural person has, for instance, their identity, „Corelate”, „Clasificări”, „Conexiuni” and „Interacțiuni”.
+An open record shows its data in tiles — panels with a name each (Figure [[fig-record]]). A natural person has, for instance, their identity, „Legături”, „Clasificare”, „Etichete și grupuri” and „Interacțiuni”.
 
 - The tick boxes at the top of the screen choose which tiles show; „Toate” shows them all, and „Implicit” returns to the usual set. Your own set is saved in „Setări”, under „Implicitele mele”.
 - A tile is dragged by its empty space into a free place; a double-click raises it under the tile above.

@@ -331,7 +331,7 @@ export const SKILLS: readonly Skill[] = [
     number: "1.13",
     level: 1,
     path: "links",
-    name: { ro: "Citește fișa „Corelate”", en: "Read the „Corelate” tile" },
+    name: { ro: "Citește fișa „Legături”", en: "Read the „Legături” tile" },
     description: {
       ro: "Vezi într-o singură fișă persoanele, proprietățile și actele legate de o înregistrare și citești relația fiecăreia.",
       en: "See in one tile the persons, properties and documents linked to a record, and read each one's relation.",
@@ -554,8 +554,8 @@ export const SKILLS: readonly Skill[] = [
     path: "links",
     name: { ro: "Clasifică o înregistrare și pune-i etichete", en: "Classify a record and tag it" },
     description: {
-      ro: "Alegi importanța, relevanța și proveniența în „Clasificări”, pui și scoți etichete în „Conexiuni”, găsești înregistrările după o etichetă și, în norul etichetelor, redenumești și unești etichete.",
-      en: "Choose importance, relevance and provenance in „Clasificări”, add and remove tags in „Conexiuni”, find records by a tag and, in the tag cloud, rename and merge tags.",
+      ro: "Alegi importanța, relevanța și proveniența în „Clasificare”, pui și scoți etichete în „Etichete și grupuri”, găsești înregistrările după o etichetă și, în norul etichetelor, redenumești și unești etichete.",
+      en: "Choose importance, relevance and provenance in „Clasificare”, add and remove tags in „Etichete și grupuri”, find records by a tag and, in the tag cloud, rename and merge tags.",
     },
     predecessors: ["workspace-read-a-record-screen", "links-read-related-tile"],
     screens: ["admin-tags"],
@@ -747,8 +747,8 @@ export const SKILLS: readonly Skill[] = [
       en: "Follow a chain from a document to every parcel and person it touches",
     },
     description: {
-      ro: "Pornești de la un act sau de la o persoană și, din „Corelate” în „Corelate”, ajungi la fiecare proprietate, persoană și înscris citat legate de el.",
-      en: "Start from a document or a person and, from „Corelate” to „Corelate”, reach every property, person and cited deed linked to it.",
+      ro: "Pornești de la un act sau de la o persoană și, din „Legături” în „Legături”, ajungi la fiecare proprietate, persoană și înscris citat legate de el.",
+      en: "Start from a document or a person and, from „Legături” to „Legături”, reach every property, person and cited deed linked to it.",
     },
     predecessors: ["workspace-global-search", "links-link-records-both-ways", "links-references-and-parts"],
     screens: DETAIL_SCREENS,

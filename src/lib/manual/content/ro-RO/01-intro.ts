@@ -37,11 +37,11 @@ Capitolul [[start]] vă duce prin ce este comun tuturor ecranelor: conectarea, b
 
 Capitolele, secțiunile și figurile sunt numerotate, așa că o trimitere ca „secțiunea 2.5” sau „Figura 2.3” se găsește după număr, în cuprins. Fiecare capitol se încheie cu exemple și cazuri de utilizare: sarcini obișnuite, pas cu pas.
 
-Numele butoanelor, ale câmpurilor și ale ecranelor sunt scrise între ghilimele, așa cum apar în aplicație: „Adaugă nou”, „Câmpuri afișate”, „Corelate”.
+Numele butoanelor, ale câmpurilor și ale ecranelor sunt scrise între ghilimele, așa cum apar în aplicație: „Adaugă nou”, „Câmpuri afișate”, „Legături”.
 
 ## 1.5 Exemple {#intro-examples}
 
-- **Tot ce ține de o parcelă.** Deschideți proprietatea și citiți fișa „Corelate”: acolo sunt proprietarii, actele și parcelele legate de ea.
+- **Tot ce ține de o parcelă.** Deschideți proprietatea și citiți fișa „Legături”: acolo sunt proprietarii, actele și parcelele legate de ea.
 - **Ce s-a schimbat la o persoană.** Pe ecranul persoanei, mergeți înapoi printre versiuni: fiecare salvare este una dintre ele.
 - **Ce s-a lucrat azi.** Pe tabloul de bord, „Activitate recentă” arată ultimele înregistrări atinse.
 `;

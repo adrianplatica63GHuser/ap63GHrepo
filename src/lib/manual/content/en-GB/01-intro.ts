@@ -37,11 +37,11 @@ Chapter [[start]] takes you through what every screen shares: signing in, the si
 
 Chapters, sections and figures are numbered, so a reference such as „section 2.5” or „Figure 2.3” is found by its number in the contents. Every chapter ends with examples and use cases: ordinary tasks, step by step.
 
-The names of buttons, fields and screens are written in quotation marks, as they appear in the application: „Adaugă nou”, „Câmpuri afișate”, „Corelate”.
+The names of buttons, fields and screens are written in quotation marks, as they appear in the application: „Adaugă nou”, „Câmpuri afișate”, „Legături”.
 
 ## 1.5 Examples {#intro-examples}
 
-- **Everything about a parcel.** Open the property and read its „Corelate” tile: its owners, documents and linked parcels are there.
+- **Everything about a parcel.** Open the property and read its „Legături” tile: its owners, documents and linked parcels are there.
 - **What changed on a person.** On the person's screen, step back through the versions: every save is one of them.
 - **What was worked on today.** On the dashboard, „Activitate recentă” shows the records touched last.
 `;
