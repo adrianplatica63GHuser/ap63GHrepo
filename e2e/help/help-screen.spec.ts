@@ -42,7 +42,12 @@ const TC_TEXT = "TC-E2E-HELP-01 — text de ajutor scris de cazul de test.";
  * is his, the handover proposes it). Each may read „Lipsă"; every other screen must read „Complet". The list may
  * outlive the gap: once the text is written the screen reads „Complet" and still passes. (Slice #38.84)
  */
-const HELP_TO_WRITE = ["Interacțiuni — Istoric"] as const;
+const HELP_TO_WRITE = [
+  "Interacțiuni — Istoric",
+  // Slice #39.42: two new screens, each with a proposal written against no text (#39.40).
+  "Ajutor și învățare — Harta competențelor",
+  "Ajutor și învățare — Chestionarul unei competențe",
+] as const;
 
 test.describe("TC-HELP-01 — Text de ajutor scris pentru un ecran și citit în spatele „?”", () => {
   test.describe.configure({ mode: "serial" });
