@@ -414,10 +414,49 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
       await removeRecord(page.request, "document", docId);
     }
 
+    // Figures 9.1, 9.2, 10.1, 12.1, 12.2 (Slice #39.39) — five screens as they open. None of them lists a record of
+    // the archive before something is chosen, so there is nothing to blur but „Recente”.
+    for (const [url, file] of [
+      ["/admin/doc-type-engine", "tools-doc-type-engine"],
+      ["/admin/calculation", "tools-calculation"],
+      ["/admin/import", "import-steps"],
+      ["/admin/value-lists", "admin-value-lists"],
+      ["/admin/settings", "admin-settings"],
+    ] as const) {
+      await page.goto(url);
+      await expect(page.locator("h1").filter({ visible: true }).first()).toBeVisible({ timeout: 60_000 });
+      await page.waitForTimeout(2500);
+      await blurRecent(page);
+      await still(page);
+      await page.screenshot({ path: `${FIGURES}/${file}.png` });
+    }
+
+    // Figura 11.1 — „Căutare globală” with the results of a search for a seed person's surname. Any row whose
+    // record is not the seed's is blurred, whatever kind of record it is.
+    await page.goto("/admin/global-search");
+    const surname = person.label.split(" ").pop() ?? person.label;
+    await page.getByPlaceholder(/Popescu/).filter({ visible: true }).first().fill(surname);
+    await page.getByRole("button", { name: "Caută", exact: true }).filter({ visible: true }).first().click();
+    await expect(page.getByText(/\d+ rezultat/).filter({ visible: true }).first()).toBeVisible({ timeout: 60_000 });
+    await page.waitForTimeout(1500);
+    await page.evaluate(
+      ([ids, f]) => {
+        for (const tr of document.querySelectorAll<HTMLElement>("tbody tr")) {
+          const href = tr.querySelector("a[href]")?.getAttribute("href") ?? "";
+          if (!(ids as string[]).includes(href.split("?")[0].split("/").pop() ?? "")) tr.style.filter = f as string;
+        }
+      },
+      [[...seedIds], BLUR] as const,
+    );
+    await blurRecent(page);
+    await still(page);
+    await page.screenshot({ path: `${FIGURES}/reports-search.png` });
+
     for (const f of [
       "dashboard", "sidebar", "breadcrumb", "list", "record", "help",
       "persons-new", "persons-tree", "companies-record", "properties-list", "properties-record",
       "documents-pages", "documents-sale", "links-associate", "links-related", "links-versions",
+      "tools-doc-type-engine", "tools-calculation", "import-steps", "reports-search", "admin-value-lists", "admin-settings",
     ]) {
       expect(fs.existsSync(`${FIGURES}/${f}.png`)).toBe(true);
     }
