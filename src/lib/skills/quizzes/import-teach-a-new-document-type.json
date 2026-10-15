@@ -1,0 +1,934 @@
+{
+  "skill": "import-teach-a-new-document-type",
+  "manual": [
+    "tools-doc-type-engine",
+    "tools-doc-type-engine-pick",
+    "tools-doc-type-engine-review",
+    "tools-doc-type-engine-save",
+    "tools-doc-type-engine-cost"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "import-scanning-stops",
+          "ro": {
+            "question": "Importul dosarului unui teren din Bragadiru se oprește: „Încheiere de Intabulare” nu are încă formular. Ciprian vrea ca, de acum, încheierile să-și aibă câmpurile completate singure. Ce face?",
+            "explanation": "Ca să aibă câmpurile completate, apăsați „Oprește importul”, faceți formularul în „Distilare Tipizate” și reluați importul de la început; verificările de dinainte nu costă nimic, dar clasificarea se plătește a doua oară."
+          },
+          "en": {
+            "question": "The import of the folder of a plot in Bragadiru stops: „Încheiere de Intabulare” (registration decision) has no form yet. Ciprian wants the decisions to have their fields filled in by themselves from now on. What does he do?",
+            "explanation": "To have the fields filled in, press „Oprește importul”, build the form in „Distilare Tipizate” and start the import again from the beginning; the checks before it cost nothing, but the classification is paid for a second time."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Apasă „Continuă fără formulare”; câmpurile proprii tipului se completează oricum la import.",
+              "en": "He presses „Continuă fără formulare” (continue without forms); the type's own fields are filled in at import anyway."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "„Oprește importul”, face formularul în „Distilare Tipizate”, apoi reia importul de la început.",
+              "en": "„Oprește importul” (stop the import), builds the form in „Distilare Tipizate”, then starts the import again from the beginning."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Face formularul în „Distilare Tipizate”, apoi continuă importul oprit de la „Scanare”, fără nicio plată.",
+              "en": "He builds the form in „Distilare Tipizate”, then continues the stopped import from „Scanare”, at no cost."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Alege pentru aceste acte tipul „neclasificat”, care nu cere formular.",
+              "en": "He gives these documents the „neclasificat” (unclassified) type, which needs no form."
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "tools-doc-type-engine-pick",
+          "ro": {
+            "question": "Ciprian are 15 contracte de comodat scanate ca fișiere TIFF și vrea să facă din ele formularul tipului. Ce trebuie să știe înainte să aleagă folderul?",
+            "explanation": "„Distilare Tipizate” citește imagini JPEG, PNG, GIF sau WebP și fișiere PDF; TIFF, BMP, Word sau text nu se pot citi."
+          },
+          "en": {
+            "question": "Ciprian has 15 loan-for-use contracts scanned as TIFF files and wants to build the type's form from them. What must he know before choosing the folder?",
+            "explanation": "„Distilare Tipizate” reads JPEG, PNG, GIF or WebP images and PDF files; TIFF, BMP, Word or text cannot be read."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Fișierele TIFF se citesc ca orice scanare, doar că mai încet.",
+              "en": "TIFF files are read like any scan, only more slowly."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Merge orice fișier, dacă folderul are între zece și douăzeci de mostre.",
+              "en": "Any file will do, as long as the folder holds between ten and twenty samples."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "TIFF nu se poate citi; mostrele trebuie să fie JPEG, PNG, GIF, WebP sau PDF.",
+              "en": "TIFF cannot be read; the samples must be JPEG, PNG, GIF, WebP or PDF."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "TIFF se citește doar în Microsoft Edge, nu și în Chrome.",
+              "en": "TIFF is read only in Microsoft Edge, not in Chrome."
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "tools-doc-type-engine-pick",
+          "ro": {
+            "question": "„Contract de Vânzare” apare în listă cu „are deja formular”, dar Ciprian vrea să-i adauge câmpuri noi dintr-un set de contracte recente. Ce se întâmplă cu câmpurile pe care tipul le are deja?",
+            "explanation": "Un tip care are deja formular se poate alege și așa: câmpurile noi se adaugă la cele existente, iar niciunul dintre cele existente nu este modificat sau șters."
+          },
+          "en": {
+            "question": "„Contract de Vânzare” (sale contract) appears in the list with „are deja formular” (already has a form), but Ciprian wants to add new fields to it from a set of recent contracts. What happens to the fields the type already has?",
+            "explanation": "A type that already has a form can still be chosen: the new fields are added to the existing ones, and none of the existing ones is changed or removed."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Rămân neatinse; câmpurile noi se adaugă lângă ele.",
+              "en": "They stay untouched; the new fields are added beside them."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Se înlocuiesc cu formularul propus din noile mostre.",
+              "en": "They are replaced by the form proposed from the new samples."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Cele care nu apar în noile mostre sunt șterse.",
+              "en": "Those that do not appear in the new samples are removed."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nu se poate: un tip cu formular nu se mai poate alege.",
+              "en": "It cannot be done: a type with a form can no longer be chosen."
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "tools-doc-type-engine-review",
+          "ro": {
+            "question": "Ciprian a ales 20 de mostre, cu „Procent de potrivire” 60. „Formularul propus” scrie „S-au citit 15 din 20 de mostre alese.”, iar numărul cadastral a fost găsit în 9 mostre. Ajunge el câmp pe formular?",
+            "explanation": "Toate procentele de sub primul rând sunt din mostrele citite, nu din cele alese: 9 din 15 înseamnă 60 %, deci informația trece pragul și devine câmp."
+          },
+          "en": {
+            "question": "Ciprian chose 20 samples, with „Procent de potrivire” (matching percentage) at 60. „Formularul propus” says „S-au citit 15 din 20 de mostre alese.” (15 of 20 chosen samples were read), and the cadastral number was found in 9 samples. Does it become a field on the form?",
+            "explanation": "Every percentage below the first line is out of the samples read, not the samples chosen: 9 of 15 is 60 %, so the information passes the threshold and becomes a field."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Nu: 9 din 20 alese înseamnă 45 %, sub prag.",
+              "en": "No: 9 of the 20 chosen is 45 %, below the threshold."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Nu: un câmp trebuie găsit în toate mostrele citite.",
+              "en": "No: a field must be found in every sample read."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Doar dacă Ciprian recitește cele 5 mostre necitite.",
+              "en": "Only if Ciprian reads the 5 unread samples again."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Da: 9 din cele 15 citite înseamnă 60 %, cât pragul.",
+              "en": "Yes: 9 of the 15 read is 60 %, the threshold."
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "tools-doc-type-engine-cost",
+          "ro": {
+            "question": "La a șasea mostră din douăsprezece, Ciprian își dă seama că în folder a pus și un act adițional, nu doar contracte, și apasă „Oprește citirea”. Ce a plătit?",
+            "explanation": "„Oprește citirea” oprește mostrele încă netrimise, care nu se plătesc; o citire deja pornită se termină, pentru că este oricum plătită, iar mostrele citite până atunci se compară totuși."
+          },
+          "en": {
+            "question": "At the sixth sample out of twelve, Ciprian realises he also put an addendum in the folder, not just contracts, and presses „Oprește citirea” (stop reading). What has he paid for?",
+            "explanation": "„Oprește citirea” stops the samples not yet sent, which are not paid for; a reading already under way finishes, because it is paid for anyway, and the samples read so far are still compared."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Nimic: oprirea anulează și citirile deja făcute.",
+              "en": "Nothing: stopping cancels the readings already done too."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Citirile pornite deja, care se termină și se compară; restul nu se plătesc.",
+              "en": "The readings already started, which finish and are compared; the rest are not paid for."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Toate cele douăsprezece mostre, anunțate înainte de pornire.",
+              "en": "All twelve samples, announced before starting."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Citirile pornite, dar fără comparare, așa că sunt pierdute și trebuie plătite din nou la reluare.",
+              "en": "The readings started, but with no comparison, so they are wasted and must be paid for again when he restarts."
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "tools-doc-type-engine-review",
+          "ro": {
+            "question": "Pe „Formularul propus”, Ciprian schimbă eticheta „Nr. cartea funciară” în „Număr CF”, mai scurtă. Va mai găsi AI-ul informația pe actele importate de acum încolo?",
+            "explanation": "Eticheta se schimbă cum doriți: AI-ul citește în continuare la fel, pentru că „Indiciu pentru AI” păstrează formularea de pe pagină."
+          },
+          "en": {
+            "question": "On „Formularul propus”, Ciprian changes the label „Nr. cartea funciară” to the shorter „Număr CF”. Will the AI still find the information on the documents imported from now on?",
+            "explanation": "The label can be changed however you like: the AI goes on reading the same way, because „Indiciu pentru AI” (hint for the AI) keeps the wording found on the page."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Nu; eticheta trebuie să rămână exact cum e scrisă pe acte.",
+              "en": "No; the label must stay exactly as it is written on the documents."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Doar dacă scrie și „Scris pe documente ca: Număr CF”.",
+              "en": "Only if he also writes „Scris pe documente ca: Număr CF”."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Da; „Indiciu pentru AI” păstrează formularea de pe pagină.",
+              "en": "Yes; „Indiciu pentru AI” keeps the wording found on the page."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Da, dar numai după ce se recitesc toate mostrele.",
+              "en": "Yes, but only once all the samples are read again."
+            }
+          ]
+        },
+        {
+          "id": "a7",
+          "section": "tools-doc-type-engine-review",
+          "ro": {
+            "question": "Formularul propus pentru certificatele de urbanism ar avea mai multe câmpuri decât poate ține un tip de act. Ce face Ciprian, fără să plătească din nou?",
+            "explanation": "Un tip de act poate avea un număr limitat de câmpuri; ridicați procentul sau debifați câteva câmpuri. Mutarea pragului aici nu recitește nimic și nu costă nimic."
+          },
+          "en": {
+            "question": "The form proposed for the town-planning certificates would have more fields than a document type can hold. What does Ciprian do, without paying again?",
+            "explanation": "A document type can have a limited number of fields; raise the percentage or untick a few fields. Moving the threshold here re-reads nothing and costs nothing."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Ridică „Procent de potrivire” sau debifează câteva câmpuri.",
+              "en": "He raises „Procent de potrivire” or unticks a few fields."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Apasă „Ia de la capăt” și alege mai puține mostre.",
+              "en": "He presses „Ia de la capăt” (start over) and picks fewer samples."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Coboară „Procent de potrivire”, ca să rămână doar câmpurile sigure.",
+              "en": "He lowers „Procent de potrivire”, so that only the sure fields remain."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Aprobă așa; câmpurile în plus trec singure în „Note extinse”.",
+              "en": "He approves it as it is; the extra fields move to „Note extinse” by themselves."
+            }
+          ]
+        },
+        {
+          "id": "a8",
+          "section": "tools-doc-type-engine-review",
+          "ro": {
+            "question": "Pe formularul propus, „Termenul de valabilitate” stă printre informațiile sub prag. Ce se întâmplă cu el la importurile viitoare ale acestui tip?",
+            "explanation": "Informațiile sub prag nu devin câmpuri; la importurile viitoare ajung în „Note extinse” ale actului."
+          },
+          "en": {
+            "question": "On the proposed form, „Termenul de valabilitate” (period of validity) sits among the information below the threshold. What happens to it at future imports of this type?",
+            "explanation": "Information below the threshold does not become fields; at future imports it goes into the document's „Note extinse” (extended notes)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Se pierde: AI-ul nu-l mai citește.",
+              "en": "It is lost: the AI no longer reads it."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Devine câmp de îndată ce apare pe un act importat.",
+              "en": "It becomes a field as soon as it appears on an imported document."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Ajunge în „Subiect”, în locul celui scris de mână.",
+              "en": "It goes into „Subiect”, instead of the one typed by hand."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Ajunge, la fiecare import, în „Note extinse” ale actului.",
+              "en": "At every import, it goes into the document's „Note extinse”."
+            }
+          ]
+        },
+        {
+          "id": "a9",
+          "section": "tools-doc-type-engine-save",
+          "ro": {
+            "question": "Ciprian a aprobat formularul „Încheiere de Intabulare”; apare „Formularul a fost salvat”. Importul dosarului din Bragadiru se oprise tocmai pentru acest tip. Ce face cu el?",
+            "explanation": "După aprobare, un import care s-a oprit pentru acest tip poate fi pornit din nou de la început; „Mergi la Import în sistem” vă duce la import."
+          },
+          "en": {
+            "question": "Ciprian approved the „Încheiere de Intabulare” form; „Formularul a fost salvat” (the form has been saved) appears. The import of the Bragadiru folder had stopped precisely for this type. What does he do with it?",
+            "explanation": "After approval, an import that stopped for this type can be started again from the beginning; „Mergi la Import în sistem” takes you to the import."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Nimic: importul oprit se reia singur la salvarea formularului.",
+              "en": "Nothing: the stopped import resumes by itself when the form is saved."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Îl continuă de la pasul la care s-a oprit, cu „Reia ultimul import”, fără să plătească din nou clasificarea.",
+              "en": "He continues it from the step where it stopped, with „Reia ultimul import”, without paying for the classification again."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Îl pornește din nou de la început, de exemplu din „Mergi la Import în sistem”.",
+              "en": "He starts it again from the beginning, for instance from „Mergi la Import în sistem”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Șterge documentele deja create și abia apoi reia importul.",
+              "en": "He deletes the documents already created and only then restarts the import."
+            }
+          ]
+        },
+        {
+          "id": "a10",
+          "section": "admin-reference-data-document-types",
+          "ro": {
+            "question": "Înainte de un import mare, Ciprian vrea să afle ce tipuri de acte nu au încă formular, ca să le facă dinainte. Unde se uită?",
+            "explanation": "„Tipuri de Document” are deasupra tabelului bifele „Cu formular” și „Fără formular”; „Fără formular” arată doar tipurile care nu au formular."
+          },
+          "en": {
+            "question": "Before a large import, Ciprian wants to find out which document types have no form yet, so as to build them beforehand. Where does he look?",
+            "explanation": "„Tipuri de Document” has the ticks „Cu formular” and „Fără formular” above the table; „Fără formular” (without a form) shows only the types that have no form."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "În lista „Acte”, căutând „(are formular)” în coloana „Tip”.",
+              "en": "In the „Acte” list, looking for „(are formular)” in the „Tip” column."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "În „Date de referință” → „Tipuri de Document”, cu „Fără formular” bifat.",
+              "en": "In „Date de referință” → „Tipuri de Document”, with „Fără formular” ticked."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În „Distilare Tipizate”, unde lista tipurilor le arată doar pe cele fără formular, în ordine alfabetică.",
+              "en": "In „Distilare Tipizate”, where the list of types shows only those without a form, in alphabetical order."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "În raportul ultimului import, la „Pe scurt”.",
+              "en": "In the last import's report, under „Pe scurt”."
+            }
+          ]
+        },
+        {
+          "id": "a11",
+          "section": "tools-doc-type-engine",
+          "ro": {
+            "question": "Un coleg se teme că, dacă Ciprian dă „Distilare Tipizate” cincisprezece certificate de moștenitor, în arhivă vor apărea cincisprezece acte noi. Are dreptate?",
+            "explanation": "„Distilare Tipizate” nu importă nimic: niciun act nu se creează și nimic altceva nu se scrie în arhivă. Singurul lucru care se schimbă este formularul unui tip."
+          },
+          "en": {
+            "question": "A colleague fears that if Ciprian gives „Distilare Tipizate” fifteen inheritance certificates, fifteen new documents will appear in the archive. Is he right?",
+            "explanation": "„Distilare Tipizate” imports nothing: no document is created and nothing else is written to the archive. The only thing that changes is one type's form."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Da; mostrele citite se salvează ca acte, cu formularul completat.",
+              "en": "Yes; the samples read are saved as documents, with the form filled in."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Da, dar numai după „Aprobă formularul”.",
+              "en": "Yes, but only after „Aprobă formularul”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Nu, dar mostrele se salvează ca pagini ale tipului.",
+              "en": "No, but the samples are saved as pages of the type."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Nu; nu se creează niciun act, se schimbă doar formularul tipului.",
+              "en": "No; no document is created, only the type's form changes."
+            }
+          ]
+        },
+        {
+          "id": "a12",
+          "section": "tools-doc-type-engine-pick",
+          "ro": {
+            "question": "Ciprian ar vrea ca CNP-ul și seria de pe cărțile de identitate să fie câmpuri pe un formular, dar în „Distilare Tipizate” tipul apare cu „nu poate primi formular”. De ce?",
+            "explanation": "Cartea de identitate nu poate primi formular: datele ei se preiau la import ca persoane, nu ca valori într-un formular."
+          },
+          "en": {
+            "question": "Ciprian would like the CNP and the series on identity cards to be fields on a form, but in „Distilare Tipizate” the type appears with „nu poate primi formular” (cannot have a form). Why?",
+            "explanation": "The identity card cannot have a form: its details are taken at import as persons, not as values in a form."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Datele cărții se preiau la import ca persoane, nu ca valori pe un formular.",
+              "en": "The card's details are taken at import as persons, not as values on a form."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Are deja formular, iar un tip nu poate primi câmpuri noi.",
+              "en": "It already has a form, and a type cannot receive new fields."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Cărțile de identitate se scanează ca TIFF, care nu se citește.",
+              "en": "Identity cards are scanned as TIFF, which cannot be read."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Tipul adună actele al căror tip nu s-a putut stabili, așa că nu are câmpuri proprii.",
+              "en": "The type gathers the documents whose type could not be established, so it has no fields of its own."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "import-scanning-stops",
+          "ro": {
+            "question": "Importul se oprește la „Proces-verbal de recepție”, tip fără formular. Actele trebuie să intre azi, iar Ciprian va face formularul mai târziu. Dacă apasă „Continuă fără formulare”, ce se întâmplă?",
+            "explanation": "Cu „Continuă fără formulare”, documentele se creează cu scanările lor, câmpurile proprii tipului rămân necompletate, iar ce se citește pentru ele ajunge în Note; clasificarea nu se plătește a doua oară."
+          },
+          "en": {
+            "question": "The import stops at „Proces-verbal de recepție” (handover report), a type without a form. The documents must go in today, and Ciprian will build the form later. If he presses „Continuă fără formulare”, what happens?",
+            "explanation": "With „Continuă fără formulare”, the documents are created with their scans, the type's own fields stay empty, and what is read for them goes into the Notes; the classification is not paid for a second time."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Importul pornește din nou de la început, iar clasificarea actelor deja scanate se plătește a doua oară.",
+              "en": "The import starts again from the beginning, and the classification of the documents already scanned is paid for a second time."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Actele acelui tip sunt lăsate deoparte și se importă după ce are formular.",
+              "en": "The documents of that type are set aside and imported once it has a form."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Actele intră cu scanările; câmpurile tipului rămân goale, iar ce s-a citit ajunge în Note.",
+              "en": "The documents go in with their scans; the type's fields stay empty, and what was read goes into the Notes."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Aplicația îi face singură formularul din actele importate.",
+              "en": "The application builds the form by itself from the imported documents."
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "tools-doc-type-engine-pick",
+          "ro": {
+            "question": "Ciprian a pus în folderul cu mostre 40 de contracte de arendă. Ecranul îi spune că o parte vor rămâne necitite, dar el le vrea citite pe toate. Ce face?",
+            "explanation": "O rulare citește un număr limitat de mostre: dacă folderul are mai multe, ecranul spune câte rămân necitite, iar dacă le vreți pe toate, împărțiți folderul."
+          },
+          "en": {
+            "question": "Ciprian put 40 lease contracts in the sample folder. The screen tells him some will not be read, but he wants them all read. What does he do?",
+            "explanation": "One run reads a limited number of samples: if the folder holds more, the screen says how many will not be read, and if you want them all, split the folder."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Coboară „Procent de potrivire”, ca să încapă toate mostrele.",
+              "en": "He lowers „Procent de potrivire”, so that all the samples fit."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Împarte folderul, ca fiecare rulare să aibă mai puține mostre.",
+              "en": "He splits the folder, so that each run has fewer samples."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Apasă din nou „Începe citirea” după terminare; restul se adaugă singur.",
+              "en": "He presses „Începe citirea” again once it ends; the rest are added by themselves."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nimic: mostrele necitite se citesc la primul import al tipului.",
+              "en": "Nothing: the unread samples are read at the type's first import."
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "tools-doc-type-engine-cost",
+          "ro": {
+            "question": "Pentru formularul contractelor de vânzare, Ciprian are în folder 14 contracte întregi, 3 contracte din care s-a scanat doar prima pagină, neclară, și 2 acte adiționale. Ce face înainte să pornească citirea?",
+            "explanation": "Citirea fiecărei mostre costă, așa că alegeți mostrele cu grijă: acte întregi, lizibile, toate de același fel."
+          },
+          "en": {
+            "question": "For the sale contracts' form, Ciprian has in the folder 14 whole contracts, 3 contracts of which only the blurred first page was scanned, and 2 addenda. What does he do before starting the reading?",
+            "explanation": "Reading each sample costs money, so choose the samples with care: whole, legible documents, all of the same kind."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Le lasă pe toate; mai multe mostre dau un formular mai bun.",
+              "en": "He leaves them all; more samples give a better form."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Scoate doar actele adiționale; paginile neclare nu contează.",
+              "en": "He removes only the addenda; the blurred pages do not matter."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Le lasă și ridică „Procent de potrivire”, ca să le cearnă pragul.",
+              "en": "He leaves them and raises „Procent de potrivire”, so that the threshold sifts them."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Păstrează doar cele 14 contracte întregi și lizibile.",
+              "en": "He keeps only the 14 whole, legible contracts."
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "tools-doc-type-engine-cost",
+          "ro": {
+            "question": "Toate mostrele s-au citit, dar compararea lor nu reușește. Ce trebuie să știe Ciprian înainte să reia?",
+            "explanation": "Dacă mostrele s-au citit, dar compararea nu reușește, citirile s-au plătit deja, iar reluarea le plătește din nou."
+          },
+          "en": {
+            "question": "All the samples were read, but comparing them fails. What must Ciprian know before starting again?",
+            "explanation": "If the samples were read but comparing them fails, the readings have already been paid for, and starting again pays for them a second time."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Citirile s-au plătit deja, iar reluarea le plătește din nou.",
+              "en": "The readings are already paid for, and starting again pays for them a second time."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Nu s-a plătit nimic, pentru că formularul nu s-a propus.",
+              "en": "Nothing was paid for, because no form was proposed."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Reluarea refolosește citirile, deci costă doar compararea.",
+              "en": "Starting again reuses the readings, so only the comparison costs."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Citirile s-au salvat în „Note extinse” ale fiecărui act.",
+              "en": "The readings were saved in each document's „Note extinse”."
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "tools-doc-type-engine-review",
+          "ro": {
+            "question": "Ciprian face câmpuri noi pentru un tip care are deja formular. „Notariat” a fost găsit în toate mostrele, dar nu apare printre câmpurile propuse, ci în a treia grupă. De ce?",
+            "explanation": "Informațiile pe care tipul le are deja trec pragul, dar tipul are deja câte un câmp pentru ele, așa că nu se propun din nou."
+          },
+          "en": {
+            "question": "Ciprian is building new fields for a type that already has a form. „Notariat” was found in every sample, but it does not appear among the proposed fields; it is in the third group. Why?",
+            "explanation": "The information the type already has passes the threshold, but the type already has a field for each, so it is not proposed again."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "A fost găsită prea des ca să conteze.",
+              "en": "It was found too often to matter."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Este sub prag, deci ajunge în „Note extinse”.",
+              "en": "It is below the threshold, so it goes into „Note extinse”."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Tipul are deja un câmp pentru ea, deci nu se propune din nou.",
+              "en": "The type already has a field for it, so it is not proposed again."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "AI-ul nu propune niciodată emitentul unui act.",
+              "en": "The AI never proposes a document's issuer."
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "tools-doc-type-engine-review",
+          "ro": {
+            "question": "Tipul „Contract de Vânzare” are deja câmpul „Suprafață”. Pe formularul propus, Ciprian vrea să dea aceeași etichetă, „Suprafață”, unui câmp nou bifat. Ce se întâmplă?",
+            "explanation": "Fiecare câmp bifat are nevoie de o etichetă, iar un câmp nu poate primi numele unui câmp pe care tipul îl are deja."
+          },
+          "en": {
+            "question": "The „Contract de Vânzare” type already has the field „Suprafață” (area). On the proposed form, Ciprian wants to give the same label, „Suprafață”, to a new ticked field. What happens?",
+            "explanation": "Every ticked field needs a label, and a field cannot take the name of a field the type already has."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Câmpul nou îl înlocuiește pe cel vechi la aprobare.",
+              "en": "The new field replaces the old one on approval."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Nu se poate: un câmp nu poate primi numele unui câmp existent.",
+              "en": "It cannot be done: a field cannot take the name of an existing field."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Se poate; cele două câmpuri se unesc într-unul singur.",
+              "en": "It can; the two fields are merged into one."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Se poate, dacă debifează mai întâi câmpul vechi „Suprafață” pe formularul propus.",
+              "en": "It can, if he first unticks the old „Suprafață” field on the proposed form."
+            }
+          ]
+        },
+        {
+          "id": "b7",
+          "section": "tools-doc-type-engine-review",
+          "ro": {
+            "question": "Pe formularul propus, Ciprian coboară „Procent de potrivire” de la 70 la 50, ca să vadă ce câmpuri ar mai intra. Cât îl costă?",
+            "explanation": "„Procent de potrivire” se poate muta și pe formularul propus: nu se recitește nimic și nu costă nimic, doar se mută informațiile între „pe formular” și „sub prag”."
+          },
+          "en": {
+            "question": "On the proposed form, Ciprian lowers „Procent de potrivire” from 70 to 50, to see which fields would come in. What does it cost him?",
+            "explanation": "„Procent de potrivire” can be moved on the proposed form too: nothing is re-read and nothing is paid for; the information simply moves between „on the form” and „below the threshold”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "O citire nouă a tuturor mostrelor.",
+              "en": "A new reading of every sample."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Doar un apel nou de comparare.",
+              "en": "Only one new comparison call."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Citirea mostrelor care nu au trecut pragul.",
+              "en": "The reading of the samples that did not pass the threshold."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Nimic; informațiile doar se mută între formular și sub prag.",
+              "en": "Nothing; the information simply moves between the form and below the threshold."
+            }
+          ]
+        },
+        {
+          "id": "b8",
+          "section": "tools-doc-type-engine-review",
+          "ro": {
+            "question": "Pe formularul propus, Ciprian se îndoiește că „Preț” a fost citit bine pe toate contractele. Cum verifică înainte să aprobe?",
+            "explanation": "Fiecare câmp propus are „Vezi valorile citite din … mostre”, care arată ce s-a citit pe fiecare act."
+          },
+          "en": {
+            "question": "On the proposed form, Ciprian doubts that „Preț” (price) was read correctly on every contract. How does he check before approving?",
+            "explanation": "Every proposed field has „Vezi valorile citite din … mostre” (see the values read from … samples), which shows what was read on each document."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Deschide „Vezi valorile citite din … mostre” la câmpul „Preț”.",
+              "en": "He opens „Vezi valorile citite din … mostre” on the „Preț” field."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Aprobă formularul și se uită apoi la mostrele importate.",
+              "en": "He approves the form and then looks at the imported samples."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Apasă „Ia de la capăt” și citește din nou un singur contract.",
+              "en": "He presses „Ia de la capăt” and reads a single contract again."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Citește „Indiciu pentru AI”, care arată valoarea de pe fiecare act.",
+              "en": "He reads „Indiciu pentru AI”, which shows the value on each document."
+            }
+          ]
+        },
+        {
+          "id": "b9",
+          "section": "tools-doc-type-engine-save",
+          "ro": {
+            "question": "Din nouă câmpuri propuse, Ciprian a debifat două și apasă „Aprobă formularul (7)”. Ce se scrie în arhivă?",
+            "explanation": "„Aprobă formularul”, cu numărul de câmpuri bifate în paranteză, scrie doar câmpurile bifate; nimic altceva din arhivă nu se modifică."
+          },
+          "en": {
+            "question": "Of nine proposed fields, Ciprian unticked two and presses „Aprobă formularul (7)”. What is written to the archive?",
+            "explanation": "„Aprobă formularul”, with the number of ticked fields in brackets, writes only the ticked fields; nothing else in the archive changes."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Toate nouă câmpurile; cele debifate stau ascunse pe formular.",
+              "en": "All nine fields; the unticked ones are hidden on the form."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Cele șapte câmpuri și actele-mostră, ca documente noi.",
+              "en": "The seven fields and the sample documents, as new documents."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Doar cele șapte câmpuri bifate; restul arhivei nu se schimbă.",
+              "en": "Only the seven ticked fields; the rest of the archive does not change."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Cele șapte câmpuri, completate și pe actele deja importate.",
+              "en": "The seven fields, filled in on the documents already imported as well."
+            }
+          ]
+        },
+        {
+          "id": "b10",
+          "section": "tools-doc-type-engine-save",
+          "ro": {
+            "question": "După aprobare, Ciprian observă că formularului îi lipsește un singur câmp, pe care îl știe bine. Nu vrea să plătească o nouă citire de mostre. Unde îl adaugă?",
+            "explanation": "Un formular se poate face sau corecta și de mână, pe pagina tipului din „Date de referință” → „Tipuri de Document”, la fila „Formular”."
+          },
+          "en": {
+            "question": "After approval, Ciprian notices that the form lacks a single field he knows well. He does not want to pay for a new reading of samples. Where does he add it?",
+            "explanation": "A form can also be built or corrected by hand, on the type's page under „Date de referință” → „Tipuri de Document”, on the „Formular” tab."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Pe ecranul unui act de acel tip, în „Note extinse”.",
+              "en": "On the screen of a document of that type, in „Note extinse”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Doar într-o nouă rulare „Distilare Tipizate”, cu alte mostre, unde câmpul trebuie să treacă pragul.",
+              "en": "Only in a new „Distilare Tipizate” run, with other samples, where the field has to pass the threshold."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În „Setări”, la „Implicitele mele” pentru „Act”.",
+              "en": "In „Setări”, under „Implicitele mele” for „Act”."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Pe pagina tipului, în „Tipuri de Document”, la fila „Formular”.",
+              "en": "On the type's page, in „Tipuri de Document”, on the „Formular” tab."
+            }
+          ]
+        },
+        {
+          "id": "b11",
+          "section": "documents-type",
+          "ro": {
+            "question": "Ciprian deschide un act de tipul „Încheiere de Intabulare” și vede sub „Tip document”: „Acest tip nu are încă formular; formularul se construiește în Distilare Tipizate.” Care e drumul cel mai scurt spre formular?",
+            "explanation": "Sub „Tip document” al unui tip fără formular, „Distilare Tipizate” deschide instrumentul cu tipul deja ales."
+          },
+          "en": {
+            "question": "Ciprian opens a document of the „Încheiere de Intabulare” type and sees under „Tip document”: „Acest tip nu are încă formular; formularul se construiește în Distilare Tipizate.” What is the shortest way to the form?",
+            "explanation": "Under the „Tip document” of a type without a form, „Distilare Tipizate” opens the tool with the type already chosen."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Apasă „Distilare Tipizate” de acolo; instrumentul se deschide cu tipul ales.",
+              "en": "He presses „Distilare Tipizate” there; the tool opens with the type chosen."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Schimbă tipul actului într-unul cu „(are formular)”.",
+              "en": "He changes the document's type to one with „(are formular)”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Importă din nou actul, ca importul să-i facă formularul.",
+              "en": "He imports the document again, so that the import builds its form."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Completează „Note extinse”; din ele se face formularul.",
+              "en": "He fills in „Note extinse”; the form is built from them."
+            }
+          ]
+        },
+        {
+          "id": "b12",
+          "section": "import-result-report",
+          "ro": {
+            "question": "Ciprian a apăsat „Continuă fără formulare” pentru două tipuri și a terminat importul. Unde vede, la sfârșit, ce formulare mai are de făcut?",
+            "explanation": "La „Rezultat”, „Pe scurt” dă cifrele importului, printre ele „Tipuri de documente rămase fără formular”."
+          },
+          "en": {
+            "question": "Ciprian pressed „Continuă fără formulare” for two types and finished the import. Where does he see, at the end, which forms he still has to build?",
+            "explanation": "At „Rezultat”, „Pe scurt” gives the import's figures, among them „Tipuri de documente rămase fără formular” (document types left without a form)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Nicăieri; trebuie să-și noteze tipurile când se oprește importul.",
+              "en": "Nowhere; he must note the types down when the import stops."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "În „Distilare Tipizate”, care la deschidere alege singur primul tip rămas fără formular.",
+              "en": "In „Distilare Tipizate”, which on opening picks by itself the first type left without a form."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "La „Rezultat”, în „Pe scurt”: „Tipuri de documente rămase fără formular”.",
+              "en": "At „Rezultat”, in „Pe scurt”: „Tipuri de documente rămase fără formular”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "În „Note extinse” ale fiecărui act importat.",
+              "en": "In the „Note extinse” of each imported document."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

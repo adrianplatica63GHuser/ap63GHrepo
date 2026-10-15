@@ -1,0 +1,624 @@
+{
+  "skill": "links-classify-and-tag",
+  "manual": [
+    "links-classify-tags",
+    "links-classify-classification",
+    "admin-groups-tags",
+    "reports-search-filters",
+    "reports-example-tag"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "reports-search-filters",
+          "ro": {
+            "question": "Ați pus „Importanță” „Ridicată” pe câteva acte, în fișa „Clasificare”. Unde le vedeți apoi pe toate la un loc?",
+            "explanation": "„Importanță”, „Relevanță” și „Proveniență”, valorile din fișa „Clasificare”, sunt filtre în „Căutare globală”, iar toate filtrele puse se aplică împreună."
+          },
+          "en": {
+            "question": "You have set „Importanță” (importance) to „Ridicată” (high) on a few documents, in the „Clasificare” (classification) tile. Where do you then see them all in one place?",
+            "explanation": "„Importanță”, „Relevanță” and „Proveniență”, the values in the „Clasificare” tile, are filters in „Căutare globală” (global search), and all the filters set apply together."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "În „Administrare” → „Etichete”, unde importanța stă lângă fiecare etichetă",
+              "en": "In „Administrare” → „Etichete”, where the importance stands beside each tag"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "În „Căutare globală”, cu „Importanță” „Ridicată” și „Tip entitate” „Document”",
+              "en": "In „Căutare globală”, with „Importanță” „Ridicată” and „Tip entitate” „Document”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În fișa „Clasificare” a oricărui act, la „Istoric”",
+              "en": "In the „Clasificare” tile of any document, under „Istoric”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "În lista „Acte”, unde actele cu „Importanță” „Ridicată” urcă singure primele, deasupra celorlalte",
+              "en": "In the „Acte” list, where the documents with „Importanță” „Ridicată” rise to the top by themselves, above the rest"
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "links-classify-classification",
+          "ro": {
+            "question": "Un coleg vă întreabă când a fost schimbată valoarea din „Relevanță” a unui teren și ce valoare avea înainte. Unde aflați?",
+            "explanation": "Sub „Proveniență”, „Istoric” ține fiecare schimbare din „Clasificare”, cu data ei."
+          },
+          "en": {
+            "question": "A colleague asks you when the value in a plot's „Relevanță” (relevance) was changed and what it was before. Where do you find out?",
+            "explanation": "Under „Proveniență”, „Istoric” (history) keeps every change in „Clasificare”, with its date."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "La „Istoric”, sub „Proveniență”, în fișa „Clasificare” a terenului",
+              "en": "Under „Istoric”, below „Proveniență”, in the plot's „Clasificare” tile"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "În „Nor de etichete”, unde fiecare schimbare apare ca etichetă",
+              "en": "In „Nor de etichete” (the tag cloud), where every change shows as a tag"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În „Căutare globală”, în coloana „Relevanță” a rezultatelor, cu data schimbării",
+              "en": "In „Căutare globală”, in the results' „Relevanță” column, with the date of the change"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nicăieri: valoarea nouă o înlocuiește pe cea veche fără urmă",
+              "en": "Nowhere: the new value replaces the old one without a trace"
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "admin-groups-tags",
+          "ro": {
+            "question": "În „Nor de etichete” fuzionați „arenda” cu „arendă”, alegând „Păstrează aceasta” la „arendă”. Ce vedeți apoi, la „Etichete / Cuvinte cheie”, pe un teren care purta „arenda”?",
+            "explanation": "Fereastra „Fuzionare etichete” spune ce se va întâmpla, de exemplu „Etichetele „arenda” vor deveni „arendă”.”: pe înregistrări, eticheta lăsată devine cea păstrată."
+          },
+          "en": {
+            "question": "In „Nor de etichete” you merge „arenda” with „arendă”, choosing „Păstrează aceasta” (keep this one) on „arendă”. What do you then see, under „Etichete / Cuvinte cheie” (tags / keywords), on a plot that carried „arenda”?",
+            "explanation": "The „Fuzionare etichete” window says what will happen, for instance „Etichetele „arenda” vor deveni „arendă”.” (the tags „arenda” will become „arendă”): on the records, the tag let go becomes the one kept."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Tot „arenda”, până salvați terenul încă o dată",
+              "en": "Still „arenda”, until you save the plot once more"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Nicio etichetă: fuzionarea o scoate de pe înregistrări",
+              "en": "No tag: the merge takes it off the records"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Amândouă, „arenda” și „arendă”, una lângă alta",
+              "en": "Both, „arenda” and „arendă”, side by side"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "„arendă”, eticheta păstrată la fuzionare",
+              "en": "„arendă”, the tag kept in the merge"
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "reports-example-tag",
+          "ro": {
+            "question": "Ați etichetat „prioritar” persoane, terenuri și acte. Acum vreți să vedeți doar terenurile care poartă eticheta. Ce faceți?",
+            "explanation": "Etichetele se caută în „Căutare globală”, la „Etichetă”; cu „Proprietate” la „Tip entitate” rămân doar terenurile. Norul doar alege etichete, iar caseta listei caută după cod, poreclă și datele cadastrale."
+          },
+          "en": {
+            "question": "You have tagged persons, plots and documents „prioritar” (priority). Now you want to see only the plots that carry the tag. What do you do?",
+            "explanation": "Tags are searched in „Căutare globală”, under „Etichetă” (tag); with „Proprietate” under „Tip entitate” only the plots remain. The cloud only selects tags, and the list's search box looks by code, nickname and cadastral data."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "În „Nor de etichete”, dublu-clic pe „prioritar”, ca să se deschidă terenurile",
+              "en": "In „Nor de etichete”, double-click „prioritar” so that the plots open"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Scrieți „prioritar” în caseta de căutare a listei „Proprietăți”",
+              "en": "Type „prioritar” into the search box of the „Proprietăți” list"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "În „Căutare globală”, „prioritar” la „Etichetă” și „Proprietate” la „Tip entitate”",
+              "en": "In „Căutare globală”, „prioritar” under „Etichetă” and „Proprietate” under „Tip entitate”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "În „Căutare globală”, „prioritar” la „Căutare nume / cod”",
+              "en": "In „Căutare globală”, „prioritar” under „Căutare nume / cod”"
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "links-classify-classification",
+          "ro": {
+            "question": "Pe un act, schimbați „Relevanță” din „Actual” în „Istoric” și apăsați „Salvează”, pe linia lui „Istoric”. Ce s-a mai întâmplat cu actul, în afară de noua valoare?",
+            "explanation": "Salvarea din „Clasificare” adaugă o versiune a înregistrării, iar „Istoric” păstrează schimbarea, cu data ei."
+          },
+          "en": {
+            "question": "On a document, you change „Relevanță” from „Actual” (current) to „Istoric” (historical) and press „Salvează” (save), on the line of „Istoric”. What else happened to the document, besides the new value?",
+            "explanation": "The save in „Clasificare” adds a version of the record, and „Istoric” keeps the change, with its date."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "A primit o versiune nouă, ca la orice salvare",
+              "en": "It got a new version, as with any save"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Nimic: clasificarea nu face parte din versiunile actului",
+              "en": "Nothing: the classification is not part of the document's versions"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "A ieșit din listele obișnuite, fiind acum istoric",
+              "en": "It left the ordinary lists, being historical now"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Valoarea veche s-a șters, fără să rămână undeva",
+              "en": "The old value was erased, kept nowhere"
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "links-classify-tags",
+          "ro": {
+            "question": "Pe același teren adăugați eticheta „litigiu” și schimbați „Importanță” în „Ridicată”. Care dintre cele două schimbări are nevoie de „Salvează”?",
+            "explanation": "Eticheta se salvează pe loc, fără „Salvează”; în „Clasificare”, „Salvează” de pe linia lui „Istoric” scrie valoarea schimbată."
+          },
+          "en": {
+            "question": "On the same plot you add the tag „litigiu” (dispute) and change „Importanță” to „Ridicată”. Which of the two changes needs „Salvează”?",
+            "explanation": "The tag is saved at once, without „Salvează”; in „Clasificare”, „Salvează” on the line of „Istoric” writes the changed value."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Amândouă, cu un singur „Salvează” la sfârșit",
+              "en": "Both, with one „Salvează” at the end"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Doar eticheta; „Clasificare” se salvează singură",
+              "en": "Only the tag; „Clasificare” saves itself"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Niciuna; amândouă se salvează la plecarea de pe ecran",
+              "en": "Neither; both are saved when you leave the screen"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Doar „Importanță”; eticheta s-a salvat pe loc",
+              "en": "Only „Importanță”; the tag was saved at once"
+            }
+          ]
+        },
+        {
+          "id": "a7",
+          "section": "reports-search-filters",
+          "ro": {
+            "question": "Vreți să vedeți toate înregistrările scrise de mână, nu cele aduse de AI sau dintr-un fișier. Ce alegeți în „Căutare globală”?",
+            "explanation": "„Proveniență”, valoarea din „Clasificare”, spune cum a intrat înregistrarea în arhivă: „Manual (Adaugă nou)” pentru una scrisă de mână."
+          },
+          "en": {
+            "question": "You want to see every record typed in by hand, not those brought in by the AI or from a file. What do you choose in „Căutare globală”?",
+            "explanation": "„Proveniență” (provenance), the value in „Clasificare”, says how the record came into the archive: „Manual (Adaugă nou)” for one typed in by hand."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Relevanță” „Actual”",
+              "en": "„Relevanță” „Actual”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Eticheta „manual”, la „Etichetă”",
+              "en": "The tag „manual”, under „Etichetă”"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "„Proveniență” „Manual (Adaugă nou)”",
+              "en": "„Proveniență” „Manual (Adaugă nou)”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Are metadate”, lăsat nebifat",
+              "en": "„Are metadate”, left unticked"
+            }
+          ]
+        },
+        {
+          "id": "a8",
+          "section": "links-classify-classification",
+          "ro": {
+            "question": "Un act din 1940 nu mai produce efecte astăzi, dar contează foarte mult pentru dumneavoastră. Cum îl clasificați?",
+            "explanation": "„Relevanță” spune unde stă înregistrarea în timp, iar „Importanță” cât contează pentru dumneavoastră: un act vechi poate fi istoric și totuși foarte important."
+          },
+          "en": {
+            "question": "A document from 1940 no longer has any effect today, but it matters a great deal to you. How do you classify it?",
+            "explanation": "„Relevanță” says where the record stands in time, and „Importanță” how much it matters to you: an old deed can be historical and still very important."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Relevanță” „De perspectivă” și „Importanță” „Ridicată”",
+              "en": "„Relevanță” „De perspectivă” (prospective) and „Importanță” „Ridicată”"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "„Relevanță” „Istoric” și „Importanță” „Ridicată”",
+              "en": "„Relevanță” „Istoric” and „Importanță” „Ridicată”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Relevanță” „Istoric” și „Importanță” „Scăzută”",
+              "en": "„Relevanță” „Istoric” and „Importanță” „Scăzută” (low)"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Relevanță” „Inactiv” și „Importanță” „Medie”",
+              "en": "„Relevanță” „Inactiv” (inactive) and „Importanță” „Medie” (medium)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "admin-groups-tags",
+          "ro": {
+            "question": "În „Nor de etichete”, redenumiți „mostenire” în „moștenire”, o etichetă care există deja. Ce se întâmplă?",
+            "explanation": "La „Redenumește etichetă”, dacă noul nume există deja, cele două etichete se contopesc."
+          },
+          "en": {
+            "question": "In „Nor de etichete”, you rename „mostenire” to „moștenire” (inheritance), a tag that already exists. What happens?",
+            "explanation": "With „Redenumește etichetă” (rename tag), if the new name already exists, the two tags join into one."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Redenumirea este refuzată, pentru că numele există deja",
+              "en": "The rename is refused, because the name already exists"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Cele două etichete se contopesc într-una singură",
+              "en": "The two tags join into a single one"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Rămân două etichete cu același nume, una lângă alta",
+              "en": "Two tags with the same name remain, side by side"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Eticheta „moștenire” veche se scoate de pe înregistrări",
+              "en": "The old „moștenire” tag is taken off the records"
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "links-classify-tags",
+          "ro": {
+            "question": "Pe un act scrieți eticheta „Litigiu”, cu L mare, și apăsați „Adaugă”. Cum o regăsiți apoi în „Nor de etichete”?",
+            "explanation": "Eticheta se salvează pe loc și se scrie cu litere mici; norul arată toate etichetele din arhivă."
+          },
+          "en": {
+            "question": "On a document you type the tag „Litigiu”, with a capital L, and press „Adaugă” (add). How do you then find it in „Nor de etichete”?",
+            "explanation": "The tag is saved at once and written in lower case; the cloud shows every tag in the archive."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Litigiu”, cu majusculă, separată de „litigiu”",
+              "en": "„Litigiu”, capitalised, separate from „litigiu”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Nu apare în nor până nu apăsați „Salvează”",
+              "en": "It does not appear in the cloud until you press „Salvează”"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "„litigiu”, cu litere mici",
+              "en": "„litigiu”, in lower case"
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "links-classify-tags",
+          "ro": {
+            "question": "În nor, „moștenire” arată „×4”. Ce înseamnă și unde vedeți care sunt cele patru?",
+            "explanation": "Norul arată, pe fiecare etichetă, câte înregistrări o poartă; înregistrările cu o etichetă le găsiți în „Căutare globală”, scriind-o la „Etichetă”. Dublu-clicul în nor doar alege eticheta."
+          },
+          "en": {
+            "question": "In the cloud, „moștenire” shows „×4”. What does it mean, and where do you see which four they are?",
+            "explanation": "The cloud shows, on each tag, how many records carry it; you find the records with a tag in „Căutare globală”, by typing it under „Etichetă”. A double click in the cloud only selects the tag."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "A fost redenumită de patru ori; vedeți la „Istoric”, în „Clasificare”",
+              "en": "It was renamed four times; you see it under „Istoric”, in „Clasificare”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Patru înregistrări o poartă; le vedeți cu un dublu-clic pe ea, chiar în nor",
+              "en": "Four records carry it; you see them with a double click on it, right in the cloud"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Patru grupuri o folosesc; le vedeți în „Administrare” → „Grupuri”",
+              "en": "Four groups use it; you see them in „Administrare” → „Grupuri”"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Patru înregistrări o poartă; le vedeți în „Căutare globală”, la „Etichetă”",
+              "en": "Four records carry it; you see them in „Căutare globală”, under „Etichetă”"
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "reports-search-filters",
+          "ro": {
+            "question": "Căutați actele care poartă eticheta „arendă” și au „Importanță” „Ridicată”. Cum o faceți în „Căutare globală”?",
+            "explanation": "Toate filtrele puse se aplică împreună: un rezultat trebuie să le îndeplinească pe toate. „Resetează” golește toate filtrele."
+          },
+          "en": {
+            "question": "You are looking for the documents that carry the tag „arendă” (lease) and have „Importanță” „Ridicată”. How do you do it in „Căutare globală”?",
+            "explanation": "All the filters set apply together: a result must meet every one of them. „Resetează” (reset) empties every filter."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "O căutare după etichetă, apoi „Resetează” și una după importanță",
+              "en": "One search by tag, then „Resetează” and one by importance"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Toate odată: „Etichetă”, „Tip entitate” și „Importanță”, apoi „Caută”",
+              "en": "All at once: „Etichetă”, „Tip entitate” and „Importanță”, then „Caută”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„arendă” la „Căutare nume / cod”, apoi „Ridicată” la „Importanță” și „Caută”",
+              "en": "„arendă” under „Căutare nume / cod”, then „Ridicată” under „Importanță” and „Caută”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nu se poate: se caută doar după un singur filtru odată",
+              "en": "It cannot be done: you search by one filter at a time"
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "reports-search-results",
+          "ro": {
+            "question": "După o căutare după etichetă, vreți să știți ce „Relevanță” are fiecare rezultat, fără să le deschideți pe rând. Unde vă uitați?",
+            "explanation": "Rezultatele din „Căutare globală” au, printre coloane, „Importanță”, „Relevanță” și „Proveniență”, valorile din fișa „Clasificare”."
+          },
+          "en": {
+            "question": "After a search by tag, you want to know what „Relevanță” each result has, without opening them one by one. Where do you look?",
+            "explanation": "The results in „Căutare globală” have, among their columns, „Importanță”, „Relevanță” and „Proveniență”, the values in the „Clasificare” tile."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Nu se vede: trebuie deschisă fișa „Clasificare” a fiecăruia",
+              "en": "It is not shown: each one's „Clasificare” tile must be opened"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "În coloana „Relevanță” a tabelului de rezultate",
+              "en": "In the „Relevanță” column of the results table"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În „Nor de etichete”, lângă eticheta căutată",
+              "en": "In „Nor de etichete”, beside the tag searched for"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "În coloana „Proveniență”, care o cuprinde și pe aceasta",
+              "en": "In the „Proveniență” column, which includes it too"
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "links-classify-tags",
+          "ro": {
+            "question": "Eticheta „litgiu”, scrisă greșit, stă pe un singur teren și vreți să dispară din nor. Ce faceți?",
+            "explanation": "O etichetă se scoate de pe înregistrare cu „×”-ul care apare când țineți mouse-ul pe ea; scoasă de pe ultima înregistrare care o purta, dispare din nor."
+          },
+          "en": {
+            "question": "The misspelt tag „litgiu” is on a single plot and you want it gone from the cloud. What do you do?",
+            "explanation": "A tag is taken off a record with the „×” that appears when you rest the mouse on it; taken off the last record that carried it, it disappears from the cloud."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Dublu-clic pe ea în nor și apăsați tasta Delete",
+              "en": "Double-click it in the cloud and press the Delete key"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "O redenumiți în nor, lăsând numele gol",
+              "en": "Rename it in the cloud, leaving the name empty"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "O alegeți singură în nor și apăsați „Fuzionează etichete”",
+              "en": "Select it alone in the cloud and press „Fuzionează etichete”"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Pe teren, țineți mouse-ul pe ea și apăsați „×”-ul din colțul ei",
+              "en": "On the plot, rest the mouse on it and press the „×” in its corner"
+            }
+          ]
+        },
+        {
+          "id": "b7",
+          "section": "links-classify-classification",
+          "ro": {
+            "question": "Deschideți fișa „Clasificare” a unei persoane, dar „Salvează”, pe linia lui „Istoric”, nu se poate apăsa. De ce?",
+            "explanation": "„Salvează” din „Clasificare” nu se poate apăsa până nu schimbați o valoare; după salvare scrie „✓ Salvat”."
+          },
+          "en": {
+            "question": "You open a person's „Clasificare” tile, but „Salvează”, on the line of „Istoric”, cannot be pressed. Why?",
+            "explanation": "„Salvează” in „Clasificare” cannot be pressed until you change a value; after the save it reads „✓ Salvat”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Nu ați schimbat încă nicio valoare",
+              "en": "You have not changed any value yet"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Persoana are „Proveniență” „Interpretare AI”",
+              "en": "The person has „Proveniență” „Interpretare AI”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Clasificarea se schimbă doar din „Căutare globală”",
+              "en": "The classification is changed only from „Căutare globală”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Trebuie întâi să-i puneți o etichetă",
+              "en": "You must first give it a tag"
+            }
+          ]
+        },
+        {
+          "id": "b8",
+          "section": "reports-search-results",
+          "ro": {
+            "question": "Căutați după eticheta „arendă”, iar ecranul vă spune că sunt mai multe rezultate decât arată și vă cere să restrângeți căutarea. Ce faceți?",
+            "explanation": "Se arată cel mult 50 de rezultate pentru fiecare fel de înregistrare, câte 15 pe pagină; când sunt mai multe, adăugați un filtru."
+          },
+          "en": {
+            "question": "You search by the tag „arendă” and the screen tells you there are more results than it shows and asks you to narrow the search. What do you do?",
+            "explanation": "At most 50 results are shown for each kind of record, 15 to a page; when there are more, add a filter."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Treceți prin pagini până la ultimul rezultat",
+              "en": "Page through to the last result"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Adăugați un filtru, de exemplu „Tip entitate” sau „Importanță”",
+              "en": "Add a filter, for instance „Tip entitate” or „Importanță”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Împărțiți eticheta, din nor, în două etichete mai mici",
+              "en": "Split the tag, from the cloud, into two smaller tags"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Apăsați „Resetează” și căutați din nou după aceeași etichetă",
+              "en": "Press „Resetează” and search again by the same tag"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

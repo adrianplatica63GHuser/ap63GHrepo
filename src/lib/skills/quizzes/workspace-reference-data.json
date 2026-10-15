@@ -1,0 +1,782 @@
+{
+  "skill": "workspace-reference-data",
+  "manual": [
+    "admin-reference-data-values",
+    "admin-reference-data-roles",
+    "admin-reference-data-document-types",
+    "admin-reference-data",
+    "admin-example-role"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "admin-reference-data-values",
+          "ro": {
+            "question": "În „Categorii Folosință”, Ciprian găsește „Pășune”, folosită de 12 obiecte, și „Pasune”, folosită de 3: aceeași valoare, scrisă diferit. Ce face?",
+            "explanation": "Când aceeași valoare a ajuns în listă de două ori, scrisă diferit, apăsați „Unește” pe cea care trebuie să dispară și alegeți în „Valoarea păstrată” valoarea care rămâne; înregistrările trec pe ea, iar cealaltă dispare."
+          },
+          "en": {
+            "question": "In „Categorii Folosință” (land-use categories), Ciprian finds „Pășune” (pasture), used by 12 objects, and „Pasune”, used by 3: the same value, spelt differently. What does he do?",
+            "explanation": "When the same value has got into the list twice, spelt differently, you press „Unește” (merge) on the one that should go and choose the value that stays in „Valoarea păstrată”; the records move to it, and the other disappears."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Șterge” pe „Pasune”: cele 3 obiecte rămân fără categorie",
+              "en": "„Șterge” on „Pasune”: the 3 objects are left without a category"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "„Unește” pe „Pasune”, cu „Pășune” la „Valoarea păstrată”",
+              "en": "„Unește” on „Pasune”, with „Pășune” as „Valoarea păstrată”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Unește” pe „Pășune”, cu „Pasune” la „Valoarea păstrată”",
+              "en": "„Unește” on „Pășune”, with „Pasune” as „Valoarea păstrată”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Deschide pe rând cele 3 proprietăți și le schimbă categoria",
+              "en": "Opens the 3 properties one by one and changes their category"
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "admin-reference-data-values",
+          "ro": {
+            "question": "Ciprian vrea să șteargă din „Cetățenie” o valoare la care „Folosit de” arată „2 obiecte”. Ce se întâmplă când apasă „Șterge”?",
+            "explanation": "Fereastra verifică întâi ce depinde de valoare și spune câte înregistrări o folosesc; ștergerea nu este posibilă până nu le mutați pe altă valoare, aleasă la „Mutați-le pe:”, cu „Mută”."
+          },
+          "en": {
+            "question": "Ciprian wants to delete from „Cetățenie” (citizenship) a value whose „Folosit de” reads „2 obiecte”. What happens when he presses „Șterge”?",
+            "explanation": "The window first checks what depends on the value and says how many records use it; deleting is not possible until you move them onto another value, chosen under „Mutați-le pe:”, with „Mută” (move)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Valoarea dispare, iar cele două persoane rămân fără cetățenie",
+              "en": "The value goes, and the two persons are left with no citizenship"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Valoarea devine „nefolosit” și trece, cu gri, la capătul listei",
+              "en": "The value becomes „nefolosit” and moves, in grey, to the end of the list"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Aplicația refuză, iar valoarea nu se mai poate șterge niciodată",
+              "en": "The application refuses, and the value can never be deleted"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Nu se poate șterge până nu mută cele două pe altă valoare",
+              "en": "It cannot be deleted until he moves the two onto another value"
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "admin-reference-data-values",
+          "ro": {
+            "question": "După ce a unit „Pasune” în „Pășune”, Ciprian deschide o versiune veche a unei proprietăți salvate pe vremea când avea „Pasune”. Ce valoare vede pe versiunea veche?",
+            "explanation": "Versiunile vechi ale înregistrărilor nu se schimbă: fiecare păstrează valoarea așa cum era când a fost salvată."
+          },
+          "en": {
+            "question": "After merging „Pasune” into „Pășune”, Ciprian opens an old version of a property saved back when it had „Pasune”. What value does he see on the old version?",
+            "explanation": "Old versions of the records do not change: each keeps the value as it was when it was saved."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "„Pasune”: versiunea veche păstrează valoarea de la salvare",
+              "en": "„Pasune”: the old version keeps the value it was saved with"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Pășune”: unirea schimbă și versiunile vechi, ca toată arhiva să fie la fel",
+              "en": "„Pășune”: merging changes the old versions too, so the whole archive matches"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Un câmp gol, pentru că valoarea veche nu mai există",
+              "en": "An empty field, because the old value no longer exists"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Versiunile vechi dispar la unirea unei valori",
+              "en": "Old versions disappear when a value is merged"
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "admin-reference-data-roles",
+          "ro": {
+            "question": "În „Roluri Persoane”, Ciprian scrie un rol nou, „Uzufructuar”, și vrea să-i aleagă imediat, la „Act”, tipurile de act pe care să fie oferit. Ce trebuie să facă întâi?",
+            "explanation": "Un rol nou se salvează întâi; abia apoi i se pot alege tipurile de act."
+          },
+          "en": {
+            "question": "In „Roluri Persoane” (person roles), Ciprian writes a new role, „Uzufructuar” (usufructuary), and wants to choose at once, under „Act”, the document types it is offered on. What must he do first?",
+            "explanation": "A new role is saved first; only then can its document types be chosen."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Să bifeze „Deține cotă” pe rol",
+              "en": "Tick „Deține cotă” on the role"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Să aleagă o rudenie, apoi „Act”",
+              "en": "Choose a kinship, then „Act”"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Să salveze rolul; abia apoi alege tipurile",
+              "en": "Save the role; only then choose the types"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Să creeze întâi formularul tipului de act, pe fila „Formular”",
+              "en": "First create the document type's form, on the „Formular” tab"
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "admin-reference-data-document-types",
+          "ro": {
+            "question": "În lista actelor, coloana „Tip” arată „Intabulare”, iar Ciprian vrea ca acolo să scrie „ÎI”. Unde schimbă asta?",
+            "explanation": "Denumirea scurtă este cea din coloana „Tip” a listei actelor; se schimbă în „Tipuri de Document”, cu „Deschide” pe tip, pe fila „General”, la „Denumire scurtă”."
+          },
+          "en": {
+            "question": "In the documents list, the „Tip” column shows „Intabulare”, and Ciprian wants it to read „ÎI”. Where does he change that?",
+            "explanation": "The short name is the one in the „Tip” column of the documents list; it is changed in „Tipuri de Document”, with „Deschide” on the type, on the „General” tab, under „Denumire scurtă” (short name)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Pe fila „General” a tipului, la „Cod”",
+              "en": "On the type's „General” tab, under „Cod”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Direct în celula „Tip” din lista actelor",
+              "en": "Straight in the „Tip” cell of the documents list"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Pe fila „Formular”, în eticheta primului câmp",
+              "en": "On the „Formular” tab, in the first field's label"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Pe fila „General” a tipului, la „Denumire scurtă”",
+              "en": "On the type's „General” tab, under „Denumire scurtă”"
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "admin-reference-data-document-types",
+          "ro": {
+            "question": "Pe fila „General” a tipului „Contract de Vânzare”, Ciprian vrea să schimbe codul, care i se pare urât. Ce constată?",
+            "explanation": "Codul se poate doar citi: „Codul nu se schimbă: formularele exportate, cererea către AI și testele îl folosesc.”. Se pot schimba „Denumire” și „Denumire scurtă”."
+          },
+          "en": {
+            "question": "On the „General” tab of the „Contract de Vânzare” type, Ciprian wants to change the code, which he finds ugly. What does he find?",
+            "explanation": "The code can only be read: „Codul nu se schimbă: formularele exportate, cererea către AI și testele îl folosesc.” (the code does not change: exported forms, the request to the AI and the tests use it). „Denumire” and „Denumire scurtă” can be changed."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Codul se schimbă, iar actele de acel tip și formularele exportate se actualizează singure",
+              "en": "The code changes, and the documents of that type and the exported forms update themselves"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Codul nu se schimbă: îl folosesc formularele, cererea către AI și testele",
+              "en": "The code does not change: the forms, the AI request and the tests use it"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Codul se schimbă doar după ce tipul rămâne fără acte",
+              "en": "The code changes only once the type has no documents left"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Codul se schimbă din „Roluri Persoane”, nu de pe tip",
+              "en": "The code is changed from „Roluri Persoane”, not on the type"
+            }
+          ]
+        },
+        {
+          "id": "a7",
+          "section": "admin-reference-data-roles",
+          "ro": {
+            "question": "Pe un contract de vânzare-cumpărare al lui Andrei Munteanu, rândul unei persoane cu rolul „Coproprietar” nu are butonul „Cotă”. Ce verifică Ciprian în „Date de referință”?",
+            "explanation": "Cota-parte există doar pentru rolurile care dețin o cotă pe acel tip de act: în „Roluri Persoane”, în panoul rolului, la „Act”, tipul trebuie să aibă bifat „Deține cotă”."
+          },
+          "en": {
+            "question": "On one of Andrei Munteanu's sale-purchase contracts, the row of a person with the role „Coproprietar” (co-owner) has no „Cotă” button. What does Ciprian check in „Date de referință”?",
+            "explanation": "The share exists only for roles that hold a share on that type of document: in „Roluri Persoane”, on the role's panel, under „Act”, the type must have „Deține cotă” (holds a share) ticked."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Că rolul are „Proprietate” apăsat la „Se aplică la”",
+              "en": "That the role has „Proprietate” pressed under „Se aplică la”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Că rolul are completat „Rol invers — bărbat”",
+              "en": "That the role has „Rol invers — bărbat” filled in"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Că la „Act”, pe tipul contractului, „Deține cotă” e bifat",
+              "en": "That under „Act”, on the contract's type, „Deține cotă” is ticked"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Că tipul „Contract de Vânzare” are „Are formular” la „Stare”",
+              "en": "That the „Contract de Vânzare” type has „Are formular” under „Stare”"
+            }
+          ]
+        },
+        {
+          "id": "a8",
+          "section": "admin-reference-data-roles",
+          "ro": {
+            "question": "Ciprian apasă, în panoul rolului „Martor”, „Scoate „Contract de Vânzare””. Ce se întâmplă cu contractele pe care cineva era deja legat ca „Martor”?",
+            "explanation": "Legăturile făcute deja rămân, dar rolul nu mai poate fi ales pentru acel tip de act."
+          },
+          "en": {
+            "question": "On the panel of the role „Martor” (witness), Ciprian presses „Scoate „Contract de Vânzare”” (remove). What happens to the contracts where someone was already linked as „Martor”?",
+            "explanation": "Links already made stay, but the role can no longer be chosen for that type of document."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Legăturile cu rolul „Martor” se șterg de pe toate contractele",
+              "en": "The links with the role „Martor” are deleted from every contract"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Legăturile rămân, dar rolul lor devine „— fără rol —”",
+              "en": "The links stay, but their role becomes „— fără rol —”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Nu se poate scoate tipul cât timp îl folosește o legătură",
+              "en": "The type cannot be removed while a link uses it"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Legăturile rămân; rolul nu mai poate fi ales pe acel tip",
+              "en": "The links stay; the role can no longer be chosen on that type"
+            }
+          ]
+        },
+        {
+          "id": "a9",
+          "section": "admin-reference-data-roles",
+          "ro": {
+            "question": "Ciprian vrea ca rolul nou „Unchi” să lege două persoane și să fie o legătură de familie. Ce alege în panoul rolului?",
+            "explanation": "„Persoană” oferă rolul la legătura dintre două persoane, iar cât timp este apăsat, panoul arată și „Rudenie”, unde se alege, de exemplu, „Altă rudă”."
+          },
+          "en": {
+            "question": "Ciprian wants the new role „Unchi” (uncle) to link two persons and be a family link. What does he choose on the role's panel?",
+            "explanation": "„Persoană” offers the role on the link between two persons, and while it is pressed the panel also shows „Rudenie” (kinship), where you choose, for instance, „Altă rudă” (other relative)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "„Persoană” la „Se aplică la”, apoi „Altă rudă” la „Rudenie”",
+              "en": "„Persoană” under „Se aplică la”, then „Altă rudă” under „Rudenie”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Proprietate” la „Se aplică la”, apoi „Altă rudă” la „Rudenie”",
+              "en": "„Proprietate” under „Se aplică la”, then „Altă rudă” under „Rudenie”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Act” la „Se aplică la”, cu „Certificat de Moștenitor”",
+              "en": "„Act” under „Se aplică la”, with „Certificat de Moștenitor”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Doar „Nepot” la „Rol invers”, fără alte butoane",
+              "en": "Only „Nepot” under „Rol invers”, with no other buttons"
+            }
+          ]
+        },
+        {
+          "id": "a10",
+          "section": "admin-reference-data-document-types",
+          "ro": {
+            "question": "Un import se oprește la tipul „Proces-verbal de vecinătate”, care nu are formular, iar legătura lui deschide „Tipuri de Document” cu „Fără formular” bifat. Ce face Ciprian?",
+            "explanation": "„Deschide” pe rândul tipului deschide pagina lui; pe fila „Formular” scrie „Acest tip nu are încă formular.” și oferă „Creează formularul”."
+          },
+          "en": {
+            "question": "An import stops at the type „Proces-verbal de vecinătate” (boundary report), which has no form, and its link opens „Tipuri de Document” with „Fără formular” ticked. What does Ciprian do?",
+            "explanation": "„Deschide” on the type's row opens its page; on the „Formular” tab it reads „Acest tip nu are încă formular.” (this type has no form yet) and offers „Creează formularul” (create the form)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Pe fila „General”, schimbă „Stare” în „Are formular”",
+              "en": "On the „General” tab, changes „Stare” to „Are formular”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Bifează și „Cu formular”, ca tipul să primească unul",
+              "en": "Also ticks „Cu formular”, so that the type gets one"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "„Deschide” pe tip, apoi „Creează formularul” pe fila „Formular”",
+              "en": "„Deschide” on the type, then „Creează formularul” on the „Formular” tab"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Pe fila „Roluri”, adaugă un rol, care creează formularul",
+              "en": "On the „Roluri” tab, adds a role, which creates the form"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "admin-reference-data",
+          "ro": {
+            "question": "Pe ecranul unei proprietăți din Snagov, lista derulantă a tipului de proprietate nu are „Teren intravilan”. Unde îl adaugă Ciprian?",
+            "explanation": "„Date de referință” ține vocabularul arhivei: tipul unei proprietăți se umple de aici, din grupa „Tipuri de obiecte”, lista „Tipuri de Proprietate”, cu „Adaugă”."
+          },
+          "en": {
+            "question": "On the screen of a property in Snagov, the property-type drop-down list has no „Teren intravilan” (built-up-area land). Where does Ciprian add it?",
+            "explanation": "„Date de referință” holds the archive's vocabulary: the type of a property is filled from here, from the „Tipuri de obiecte” group, the „Tipuri de Proprietate” list, with „Adaugă”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Îl scrie direct în lista derulantă, pe ecranul proprietății",
+              "en": "He types it straight into the drop-down, on the property's screen"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "În „Date de referință”, la „Categorii Folosință”",
+              "en": "In „Date de referință”, under „Categorii Folosință”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În „Date de referință”, la „Indicative Tarla”",
+              "en": "In „Date de referință”, under „Indicative Tarla”"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "În „Date de referință”, la „Tipuri de Proprietate”",
+              "en": "In „Date de referință”, under „Tipuri de Proprietate”"
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "admin-reference-data-values",
+          "ro": {
+            "question": "Ciprian adaugă în „Instituții” valoarea „Primăria Snagov” și apasă „Salvează”. O caută apoi la începutul listei și nu o vede. Unde este?",
+            "explanation": "Valoarea nouă apare ultima în listă; o valoare pe care nu o folosește nimeni scrie „nefolosit” și stă după valorile folosite."
+          },
+          "en": {
+            "question": "Ciprian adds the value „Primăria Snagov” (Snagov town hall) to „Instituții” and presses „Salvează”. He then looks for it at the top of the list and does not see it. Where is it?",
+            "explanation": "The new value appears last in the list; a value that nothing uses reads „nefolosit” (unused) and stands after the values in use."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Ultima în listă, ca valoare nouă, încă nefolosită",
+              "en": "Last in the list, as a new value, not yet used"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Nicăieri: o valoare nouă apare abia după o reîncărcare",
+              "en": "Nowhere: a new value appears only after a reload"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În ordine alfabetică, la litera P",
+              "en": "In alphabetical order, under the letter P"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Într-o listă separată, a valorilor de aprobat",
+              "en": "In a separate list, of values awaiting approval"
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "admin-reference-data-values",
+          "ro": {
+            "question": "Ciprian șterge din „Instituții” o valoare „nefolosit”; fereastra spune „Nimic nu depinde de această valoare. …” și el apasă „Șterge”. A doua zi vrea valoarea înapoi. Ce poate face?",
+            "explanation": "La ștergere valoarea dispare definitiv, iar acțiunea nu poate fi anulată; dacă îi trebuie, o adaugă din nou cu „Adaugă”."
+          },
+          "en": {
+            "question": "Ciprian deletes an „nefolosit” value from „Instituții”; the window says „Nimic nu depinde de această valoare. …” and he presses „Șterge”. The next day he wants the value back. What can he do?",
+            "explanation": "Once deleted the value is gone for good, and the action cannot be undone; if he needs it, he adds it again with „Adaugă”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "O readuce cu „Fă curentă”, dintr-o versiune veche",
+              "en": "Brings it back with „Fă curentă”, from an old version"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "O găsește cu gri, la capătul listei, și o reactivează",
+              "en": "Finds it in grey, at the end of the list, and reactivates it"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Nimic de anulat: o adaugă din nou cu „Adaugă”",
+              "en": "Nothing to undo: he adds it again with „Adaugă”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Apasă „Anulează” în fereastra de ștergere, încă deschisă",
+              "en": "Presses „Anulează” in the delete window, still open"
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "admin-example-merge",
+          "ro": {
+            "question": "Ciprian tocmai a unit două valori din „Categorii Folosință”. Cum verifică că unirea a reușit?",
+            "explanation": "Verifică că valoarea unită a dispărut din listă și că „Folosit de” al valorii păstrate a crescut."
+          },
+          "en": {
+            "question": "Ciprian has just merged two values in „Categorii Folosință”. How does he check that the merge worked?",
+            "explanation": "He checks that the merged value has gone from the list and that „Folosit de” on the value kept has grown."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Valoarea unită apare „nefolosit”, cu gri, la capăt",
+              "en": "The merged value shows „nefolosit”, in grey, at the end"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Valoarea unită a dispărut, iar „Folosit de” al celei păstrate a crescut",
+              "en": "The merged value has gone, and „Folosit de” of the one kept has grown"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Numărul de deasupra tabelului, „… valori”, a crescut cu unu",
+              "en": "The number above the table, „… valori”, has grown by one"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Ambele valori au acum același număr la „Folosit de”",
+              "en": "Both values now have the same number under „Folosit de”"
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "admin-reference-data-roles",
+          "ro": {
+            "question": "Rolul „Tutore” are la „Rol invers (bărbat, femeie)” „Pupil, Pupilă”. Pe ecranul Elenei Dumitru, Tudor Stan este legat ca „Tutore” al ei. Cum apare Elena pe ecranul lui Tudor?",
+            "explanation": "„Rol invers” spune cum se citește rolul din celălalt capăt al legăturii, după genul persoanei: pentru o femeie, al doilea nume, „Pupilă”."
+          },
+          "en": {
+            "question": "The role „Tutore” (guardian) has „Pupil, Pupilă” under „Rol invers (bărbat, femeie)”. On Elena Dumitru's screen, Tudor Stan is linked as her „Tutore”. How does Elena appear on Tudor's screen?",
+            "explanation": "„Rol invers” says how the role reads from the other end of the link, by the person's gender: for a woman, the second name, „Pupilă” (female ward)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Ca „Tutore”, la fel ca în celălalt capăt",
+              "en": "As „Tutore”, the same as at the other end"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Ca „Pupil”, prima formă din coloană",
+              "en": "As „Pupil”, the first form in the column"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Fără rol, pentru că rolul este al lui Tudor",
+              "en": "With no role, because the role is Tudor's"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Ca „Pupilă”, forma de femeie a rolului invers",
+              "en": "As „Pupilă”, the female form of the converse role"
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "admin-reference-data-roles",
+          "ro": {
+            "question": "Ciprian vrea să schimbe rudenia rolului „Tată”, pe care îl caută importul unei cărți de identitate. Ce se întâmplă în panoul rolului?",
+            "explanation": "La un rol pe care îl caută importul unei cărți de identitate, rudenia nu se poate schimba, iar panoul spune de ce."
+          },
+          "en": {
+            "question": "Ciprian wants to change the kinship of the role „Tată” (father), which the import of an identity card looks for. What happens on the role's panel?",
+            "explanation": "On a role that the import of an identity card looks for, the kinship cannot be changed, and the panel says why."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Rudenia nu se poate schimba, iar panoul spune de ce",
+              "en": "The kinship cannot be changed, and the panel says why"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Se schimbă, iar importul învață singur rolul nou",
+              "en": "It changes, and the import learns the new role by itself"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Se schimbă doar după ce se scoate „Persoană”",
+              "en": "It changes only once „Persoană” is taken off"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Se schimbă, dar doar pe legăturile făcute de acum",
+              "en": "It changes, but only on links made from now on"
+            }
+          ]
+        },
+        {
+          "id": "b7",
+          "section": "admin-example-role",
+          "ro": {
+            "question": "Pe pagina tipului „Contract de Vânzare”, fila „Roluri”, Ciprian adaugă rolul „Uzufructuar” și bifează „Deține cotă”. Ce vede apoi în „Roluri Persoane”, la „Editează” pe acest rol?",
+            "explanation": "Fila „Roluri” a unui tip și „Act” din panoul unui rol arată aceleași perechi, din două capete: la „Act”, contractul apare cu „Deține cotă” bifat."
+          },
+          "en": {
+            "question": "On the page of the „Contract de Vânzare” type, „Roluri” tab, Ciprian adds the role „Uzufructuar” and ticks „Deține cotă”. What does he then see in „Roluri Persoane”, on „Editează” for this role?",
+            "explanation": "A type's „Roluri” tab and „Act” on a role's panel show the same pairs, from two ends: under „Act”, the contract appears with „Deține cotă” ticked."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Nimic încă: trebuie adăugat și acolo, separat",
+              "en": "Nothing yet: it must be added there too, separately"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Contractul, dar fără bifa „Deține cotă”",
+              "en": "The contract, but without the „Deține cotă” tick"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "La „Act”, contractul, cu „Deține cotă” bifat",
+              "en": "Under „Act”, the contract, with „Deține cotă” ticked"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "La „Rudenie”, „Nicio rudenie”, pusă de tip",
+              "en": "Under „Rudenie”, „Nicio rudenie”, set by the type"
+            }
+          ]
+        },
+        {
+          "id": "b8",
+          "section": "admin-reference-data-document-types",
+          "ro": {
+            "question": "Pe fila „Formular” a unui tip, Ciprian vrea să redenumească eticheta „Preț total” în „Preț”. Se tem că actele completate deja își pierd valorile. Are dreptate?",
+            "explanation": "Cheia de sub etichetă se stabilește la adăugarea câmpului și nu se mai schimbă, așa că o etichetă se poate redenumi fără grijă."
+          },
+          "en": {
+            "question": "On a type's „Formular” tab, Ciprian wants to rename the label „Preț total” (total price) to „Preț”. He fears the documents already filled in will lose their values. Is he right?",
+            "explanation": "The key under the label is set when the field is added and never changes, so a label can be renamed without worry."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Da: valorile scrise sub vechea etichetă se pierd, deci face un câmp nou",
+              "en": "Yes: the values typed under the old label are lost, so he makes a new field"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Da, doar la actele aduse cu importul",
+              "en": "Yes, only for documents brought in by the import"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Nu, pentru că etichetele nu se pot redenumi",
+              "en": "No, because labels cannot be renamed"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Nu: cheia câmpului nu se schimbă, eticheta da",
+              "en": "No: the field's key does not change, the label does"
+            }
+          ]
+        },
+        {
+          "id": "b9",
+          "section": "admin-reference-data-document-types",
+          "ro": {
+            "question": "Ciprian vrea să adauge câmpuri proprii tipului „Carte de identitate”, ca pe un contract. Ce găsește?",
+            "explanation": "Cartea de identitate și tipul de rezervă pentru actele neclasificate nu pot avea formular."
+          },
+          "en": {
+            "question": "Ciprian wants to add fields of its own to the „Carte de identitate” (identity card) type, as on a contract. What does he find?",
+            "explanation": "The identity card and the catch-all type for unclassified documents cannot have a form."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Cartea de identitate nu poate avea formular",
+              "en": "The identity card cannot have a form"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Creează formularul”, ca la orice alt tip",
+              "en": "„Creează formularul”, as on any other type"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Câmpurile se adaugă pe fila „Roluri” a tipului",
+              "en": "The fields are added on the type's „Roluri” tab"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Poate primi formular doar după ce rămâne fără acte",
+              "en": "It can get a form only once it has no documents left"
+            }
+          ]
+        },
+        {
+          "id": "b10",
+          "section": "admin-reference-data-roles",
+          "ro": {
+            "question": "În fișa „Cum se leagă obiectele între ele”, Ciprian apasă latura punctată „Document – Proprietate” și nu se deschide nimic. De ce?",
+            "explanation": "Latura „Document – Proprietate” este punctată și nu deschide nimic: legătura nu are o listă, pentru că tipul actului spune ce înseamnă."
+          },
+          "en": {
+            "question": "In the „Cum se leagă obiectele între ele” tile (how objects link to one another), Ciprian presses the dotted side „Document – Proprietate” and nothing opens. Why?",
+            "explanation": "The „Document – Proprietate” side is dotted and opens nothing: the link has no list, because the document's type says what it means."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Lista ei este goală până se adaugă o primă valoare",
+              "en": "Its list is empty until a first value is added"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Legătura nu are listă: tipul actului spune ce înseamnă",
+              "en": "The link has no list: the document's type says what it means"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Se configurează doar din „Legături Document → Document”",
+              "en": "It is configured only from „Legături Document → Document”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Se deschide doar cu butonul ⓘ de după nota 5",
+              "en": "It opens only with the ⓘ button after note 5"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

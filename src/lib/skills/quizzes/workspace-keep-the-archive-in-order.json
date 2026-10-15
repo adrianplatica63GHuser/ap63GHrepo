@@ -1,0 +1,934 @@
+{
+  "skill": "workspace-keep-the-archive-in-order",
+  "manual": [
+    "admin-reference-data-values",
+    "admin-groups-tags",
+    "admin-settings-thresholds",
+    "learning-help-proposals",
+    "admin-example-merge"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "admin-reference-data-values",
+          "ro": {
+            "question": "În „Categorii Folosință” stau „Arabil”, folosit de 14 obiecte, și „Teren arabil”, folosit de 2. Ciprian a hotărât să rămână „Arabil”. Ce face?",
+            "explanation": "Apăsați „Unește” pe valoarea care trebuie să dispară, alegeți în „Valoarea păstrată” valoarea care rămâne și apăsați „Unește”. Aici, „Unește” pe „Teren arabil”, cu „Arabil” ca valoare păstrată."
+          },
+          "en": {
+            "question": "In „Categorii Folosință” (land-use categories) stand „Arabil” (arable), used by 14 objects, and „Teren arabil” (arable land), used by 2. Ciprian has decided that „Arabil” stays. What does he do?",
+            "explanation": "Press „Unește” (merge) on the value that should go, choose the value that stays in „Valoarea păstrată” (the value kept) and press „Unește”. Here, „Unește” on „Teren arabil”, with „Arabil” as the value kept."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Apasă „Unește” pe „Arabil” și alege „Teren arabil” în „Valoarea păstrată”.",
+              "en": "He presses „Unește” on „Arabil” and chooses „Teren arabil” in „Valoarea păstrată”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Apasă „Șterge” pe „Teren arabil”; cele 2 obiecte trec singure pe „Arabil”.",
+              "en": "He presses „Șterge” on „Teren arabil”; the 2 objects move to „Arabil” by themselves."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Apasă „Unește” pe „Teren arabil” și alege „Arabil” în „Valoarea păstrată”.",
+              "en": "He presses „Unește” on „Teren arabil” and chooses „Arabil” in „Valoarea păstrată”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Deschide cele 2 proprietăți și le schimbă de mână categoria, apoi lasă lista așa.",
+              "en": "He opens the 2 properties and changes their category by hand, then leaves the list as it is."
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "admin-example-merge",
+          "ro": {
+            "question": "Ciprian a unit „Teren arabil” cu „Arabil”. Ce verifică apoi în listă, ca să știe că unirea a ieșit bine?",
+            "explanation": "Verificați că valoarea unită a dispărut și că „Folosit de” al valorii păstrate a crescut — aici, cu cele 2 obiecte mutate."
+          },
+          "en": {
+            "question": "Ciprian has merged „Teren arabil” into „Arabil”. What does he then check in the list, to know the merge went well?",
+            "explanation": "Check that the merged value has gone and that „Folosit de” (used by) on the value kept has grown — here, by the 2 objects moved."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Că „Teren arabil” a dispărut și „Folosit de” al lui „Arabil” a crescut.",
+              "en": "That „Teren arabil” has gone and „Folosit de” on „Arabil” has grown."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Că „Teren arabil” apare acum „nefolosit”, cu gri, la sfârșitul listei.",
+              "en": "That „Teren arabil” now shows „nefolosit” (unused), in grey, at the end of the list."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Că numărul valorilor de deasupra tabelului a rămas același.",
+              "en": "That the number of values above the table has stayed the same."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Că „Arabil” a urcat primul în listă, ca valoare păstrată.",
+              "en": "That „Arabil” has moved to the top of the list, as the value kept."
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "admin-reference-data-values",
+          "ro": {
+            "question": "În „Cetățenie”, Ciprian vrea să șteargă „Romana”, scrisă fără diacritice, cu „Șterge”. Trei persoane o folosesc. Ce îi spune fereastra?",
+            "explanation": "Dacă o folosesc înregistrări, fereastra spune câte, iar ștergerea nu este posibilă până nu le mutați pe altă valoare: alegeți-o la „Mutați-le pe:” și apăsați „Mută”."
+          },
+          "en": {
+            "question": "In „Cetățenie” (citizenship), Ciprian wants to delete „Romana”, spelt without diacritics, with „Șterge”. Three persons use it. What does the window tell him?",
+            "explanation": "If records use it, the window says how many, and deleting is not possible until you move them onto another value: choose it under „Mutați-le pe:” (move them to) and press „Mută” (move)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Că valoarea dispare definitiv, iar cele trei persoane rămân fără cetățenie.",
+              "en": "That the value disappears for good, and the three persons are left without citizenship."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Că o valoare folosită nu se poate șterge niciodată, ci doar redenumi.",
+              "en": "That a value in use can never be deleted, only renamed."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Că persoanele trec singure pe valoarea cea mai folosită din listă.",
+              "en": "That the persons move by themselves to the most used value in the list."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Că trei înregistrări o folosesc și trebuie mutate întâi, cu „Mutați-le pe:” și „Mută”.",
+              "en": "That three records use it and must be moved first, with „Mutați-le pe:” and „Mută”."
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "admin-reference-data-values",
+          "ro": {
+            "question": "După ce a unit „Teren arabil” cu „Arabil”, Ciprian deschide o versiune de anul trecut a unei proprietăți care avea „Teren arabil”. Ce categorie arată versiunea aceea?",
+            "explanation": "Versiunile vechi ale înregistrărilor nu se schimbă: fiecare păstrează valoarea așa cum era când a fost salvată. Versiunea veche arată tot „Teren arabil”."
+          },
+          "en": {
+            "question": "After merging „Teren arabil” into „Arabil”, Ciprian opens last year's version of a property that had „Teren arabil”. Which category does that version show?",
+            "explanation": "Old versions of the records do not change: each keeps the value as it was when it was saved. The old version still shows „Teren arabil”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Arabil”, pentru că unirea schimbă toate versiunile proprietății.",
+              "en": "„Arabil”, because the merge changes every version of the property."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "„Teren arabil”, valoarea așa cum era când s-a salvat versiunea.",
+              "en": "„Teren arabil”, the value as it was when the version was saved."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Un câmp gol, pentru că valoarea veche a dispărut din listă.",
+              "en": "An empty field, because the old value has gone from the list."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Amândouă valorile, una lângă alta, până la „Fă curentă”.",
+              "en": "Both values, side by side, until „Fă curentă” (make current)."
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "admin-groups-tags",
+          "ro": {
+            "question": "În „Nor de etichete” stau „arenda ×4” și „arendă ×9”. Ciprian vrea să rămână doar „arendă”. Ce face?",
+            "explanation": "Alege amândouă etichetele cu dublu-clic, apasă „Fuzionează etichete”, alege „Păstrează aceasta” la „arendă” și apasă „Fuzionează”. Fereastra spune „Etichetele „arenda” vor deveni „arendă”.”."
+          },
+          "en": {
+            "question": "In „Nor de etichete” (tag cloud) stand „arenda ×4” and „arendă ×9”. Ciprian wants only „arendă” to remain. What does he do?",
+            "explanation": "He selects both tags with a double click, presses „Fuzionează etichete” (merge tags), chooses „Păstrează aceasta” (keep this one) on „arendă” and presses „Fuzionează”. The window says „Etichetele „arenda” vor deveni „arendă”.”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Le unește în „Date de referință”, cu „Unește” pe „arenda”.",
+              "en": "He merges them in „Date de referință”, with „Unește” on „arenda”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Alege „arenda” cu un clic și apasă „Fuzionează etichete”; aplicația găsește singură perechea.",
+              "en": "He selects „arenda” with one click and presses „Fuzionează etichete”; the application finds the pair itself."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Le alege pe amândouă cu dublu-clic, apasă „Fuzionează etichete” și păstrează „arendă”.",
+              "en": "He selects both with a double click, presses „Fuzionează etichete” and keeps „arendă”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Scoate „arenda” de pe fiecare înregistrare și pune în loc „arendă”, una câte una.",
+              "en": "He removes „arenda” from each record and puts „arendă” instead, one by one."
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "admin-groups-tags",
+          "ro": {
+            "question": "În nor stau „litigii ×2” și „litigiu ×7”. Ciprian alege „litigii”, apasă „Redenumește etichetă”, scrie „litigiu” și apasă Enter. Ce se întâmplă?",
+            "explanation": "Dacă noul nume există deja, cele două etichete se contopesc: rămâne o singură etichetă, „litigiu”."
+          },
+          "en": {
+            "question": "In the cloud stand „litigii ×2” (disputes) and „litigiu ×7” (dispute). Ciprian selects „litigii”, presses „Redenumește etichetă” (rename tag), types „litigiu” and presses Enter. What happens?",
+            "explanation": "If the new name already exists, the two tags are combined: a single tag remains, „litigiu”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Cele două etichete se contopesc într-una singură, „litigiu”.",
+              "en": "The two tags are combined into a single one, „litigiu”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Redenumirea este refuzată, pentru că numele există deja.",
+              "en": "The renaming is refused, because the name already exists."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Rămân două etichete „litigiu”, una ×2 și una ×7.",
+              "en": "Two „litigiu” tags remain, one ×2 and one ×7."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Se deschide „Fuzionare etichete”, unde trebuie aleasă „Păstrează aceasta”.",
+              "en": "„Fuzionare etichete” (merging tags) opens, where „Păstrează aceasta” must be chosen."
+            }
+          ]
+        },
+        {
+          "id": "a7",
+          "section": "admin-groups-tags",
+          "ro": {
+            "question": "Ciprian deschide „Administrare” → „Etichete” și vede că „Redenumește etichetă” și „Fuzionează etichete” nu se pot apăsa. De ce?",
+            "explanation": "Fără nicio etichetă aleasă, ambele butoane sunt inactive. O etichetă se alege cu un dublu-clic pe ea în nor."
+          },
+          "en": {
+            "question": "Ciprian opens „Administrare” → „Etichete” and sees that „Redenumește etichetă” and „Fuzionează etichete” cannot be pressed. Why?",
+            "explanation": "With no tag selected, both buttons are inactive. A tag is selected with a double click on it in the cloud."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Contul lui nu are dreptul să schimbe etichete.",
+              "en": "His account is not allowed to change tags."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Arhiva are prea puține etichete ca să fie ceva de unit.",
+              "en": "The archive has too few tags for there to be anything to merge."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Norul se încarcă încă, iar butoanele se aprind după derulare.",
+              "en": "The cloud is still loading, and the buttons light up after scrolling."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Nu a ales încă nicio etichetă, cu dublu-clic pe ea.",
+              "en": "He has not yet selected any tag, with a double click on it."
+            }
+          ]
+        },
+        {
+          "id": "a8",
+          "section": "links-classify-tags",
+          "ro": {
+            "question": "În nor stă „proba ×1”, pusă din greșeală pe un teren din Bragadiru. Ciprian vrea ca eticheta să dispară din nor. Ce face?",
+            "explanation": "Pe teren, în „Etichete și grupuri”, ține mouse-ul pe etichetă și apasă „×”-ul din colțul ei. O etichetă scoasă de pe ultima înregistrare care o purta dispare din nor."
+          },
+          "en": {
+            "question": "In the cloud stands „proba ×1” (test), put by mistake on a plot in Bragadiru. Ciprian wants the tag to disappear from the cloud. What does he do?",
+            "explanation": "On the plot, in „Etichete și grupuri” (tags and groups), he holds the mouse over the tag and presses the „×” in its corner. A tag removed from the last record that carried it disappears from the cloud."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "O redenumește în nor cu un nume gol și apasă Enter.",
+              "en": "He renames it in the cloud with an empty name and presses Enter."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "O scoate de pe teren cu „×”; fiind ultima înregistrare, eticheta dispare din nor.",
+              "en": "He removes it from the plot with „×”; being the last record, the tag disappears from the cloud."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "O alege singură și apasă „Fuzionează etichete”, fără altă etichetă.",
+              "en": "He selects it alone and presses „Fuzionează etichete”, with no other tag."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "O caută în „Date de referință” și apasă „Șterge” pe rândul ei.",
+              "en": "He looks for it in „Date de referință” and presses „Șterge” on its row."
+            }
+          ]
+        },
+        {
+          "id": "a9",
+          "section": "learning-help-proposals",
+          "ro": {
+            "question": "După o schimbare a manualului, „Proprietăți — Listă” are „Propunere”, pentru că textul ei de ajutor trimite la un capitol care nu mai există. Ciprian vrea propunerea exact cum este. Ce apasă?",
+            "explanation": "„Acceptă” salvează propunerea ca text al ecranului, iar „?” o arată de îndată. „Editează” ar fi pentru o propunere de schimbat întâi."
+          },
+          "en": {
+            "question": "After a change to the manual, „Proprietăți — Listă” has „Propunere” (proposal), because its help text points at a chapter that no longer exists. Ciprian wants the proposal exactly as it is. What does he press?",
+            "explanation": "„Acceptă” (accept) saves the proposal as the screen's text, and „?” shows it at once. „Editează” (edit) would be for a proposal to change first."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Editează”, care o salvează de îndată ca text al ecranului.",
+              "en": "„Editează”, which saves it at once as the screen's text."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Nu acum”, ca propunerea să se aplice la următoarea deschidere.",
+              "en": "„Nu acum” (not now), so the proposal applies at the next opening."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Salvează”, fără să aleagă nimic din propunere.",
+              "en": "„Salvează”, without choosing anything from the proposal."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "„Acceptă”, care o salvează ca text al ecranului.",
+              "en": "„Acceptă”, which saves it as the screen's text."
+            }
+          ]
+        },
+        {
+          "id": "a10",
+          "section": "admin-example-threshold",
+          "ro": {
+            "question": "Pentru o lună de verificări, afacerea vrea ca actele să apară „expiră curând” mai devreme. Ciprian deschide „Setări” → „Praguri de timp”. Ce face întâi, înainte să schimbe numărul?",
+            "explanation": "Notați valoarea de acum de la „Fereastră filtru expiră curând”: după lună, o scrieți la loc. Pragurile se văd la toți utilizatorii, deci trebuie puse la loc exact."
+          },
+          "en": {
+            "question": "For a month of checks, the business wants documents to show „expiră curând” (expiring soon) earlier. Ciprian opens „Setări” → „Praguri de timp” (settings, time thresholds). What does he do first, before changing the number?",
+            "explanation": "Note the current value of „Fereastră filtru expiră curând” (expiring-soon filter window): after the month, you write it back. The thresholds are seen by every user, so they must be put back exactly."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Notează valoarea de acum de la „Fereastră filtru expiră curând”.",
+              "en": "He notes the current value of „Fereastră filtru expiră curând”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Apasă „Implicit”, ca pragurile să plece de la valorile aplicației.",
+              "en": "He presses „Implicit” (default), so the thresholds start from the application's values."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Le cere colegilor să iasă din aplicație până la salvare.",
+              "en": "He asks his colleagues to leave the application until the save."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Salvează în „Implicitele mele” setul de acum al pragurilor.",
+              "en": "He saves the current set of thresholds in „Implicitele mele” (my defaults)."
+            }
+          ]
+        },
+        {
+          "id": "a11",
+          "section": "admin-settings-thresholds",
+          "ro": {
+            "question": "Ciprian vrea ca, doar pentru el, cărțile de identitate să fie semnalate mai devreme, iar colegii să rămână cum sunt. Ce spune manualul?",
+            "explanation": "Pragurile sunt ale arhivei, nu ale unui cont: o schimbare se vede la toți utilizatorii. Nu există un prag doar pentru contul lui."
+          },
+          "en": {
+            "question": "Ciprian wants identity cards flagged earlier for him alone, with his colleagues left as they are. What does the manual say?",
+            "explanation": "The thresholds belong to the archive, not to an account: a change is seen by every user. There is no threshold for his account alone."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Că pragurile sunt ale contului, ca „Implicitele mele”, deci se poate.",
+              "en": "That the thresholds belong to the account, like „Implicitele mele”, so it can be done."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Că pragurile se țin în browser, deci se schimbă doar pe calculatorul lui.",
+              "en": "That the thresholds are kept in the browser, so they change only on his computer."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Că pragurile sunt ale arhivei, iar schimbarea se vede la toți utilizatorii.",
+              "en": "That the thresholds belong to the archive, and the change is seen by every user."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Că o schimbare de prag se vede doar la cei care se conectează după ea.",
+              "en": "That a threshold change is seen only by those who sign in after it."
+            }
+          ]
+        },
+        {
+          "id": "a12",
+          "section": "admin-settings-thresholds",
+          "ro": {
+            "question": "Biroul vrea să afle mai devreme când expiră cartea de identitate a unui client, ca să-i ceară una nouă la timp. Ce schimbă Ciprian?",
+            "explanation": "În „Praguri de timp”, „Prag CI expiră curând” hotărăște cu cât timp înainte de expirare este semnalată o carte de identitate."
+          },
+          "en": {
+            "question": "The office wants to know earlier when a client's identity card expires, so as to ask for a new one in time. What does Ciprian change?",
+            "explanation": "In „Praguri de timp”, „Prag CI expiră curând” (the identity-card expiring-soon threshold) decides how long before its expiry an identity card is flagged."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Fereastră filtru expiră curând”, care ține și cărțile de identitate.",
+              "en": "„Fereastră filtru expiră curând”, which also covers identity cards."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "„Prag CI expiră curând”, în „Praguri de timp”.",
+              "en": "„Prag CI expiră curând”, in „Praguri de timp”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Insigna „Nou!”, ca persoana să rămână roșie mai mult timp.",
+              "en": "The „Nou!” badge, so the person stays red for longer."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Data expirării pe fiecare carte de identitate, cu câteva luni mai devreme.",
+              "en": "The expiry date on each identity card, a few months earlier."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "admin-example-merge",
+          "ro": {
+            "question": "În „Instituții” stau „Primăria Bragadiru” și „Primaria Bragadiru”, aceeași instituție scrisă de două ori. Înainte de orice, ce citește Ciprian ca să hotărască pe care o păstrează?",
+            "explanation": "Citiți „Folosit de” pe cele două rânduri și hotărâți care valoare rămâne; apoi apăsați „Unește” pe cealaltă."
+          },
+          "en": {
+            "question": "In „Instituții” (institutions) stand „Primăria Bragadiru” and „Primaria Bragadiru” (Bragadiru town hall), the same institution entered twice. Before anything else, what does Ciprian read to decide which to keep?",
+            "explanation": "Read „Folosit de” (used by) on the two rows and decide which value stays; then press „Unește” on the other."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Data la care a fost adăugată fiecare, ca s-o păstreze pe cea mai veche.",
+              "en": "The date each was added, so as to keep the older one."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Istoricul fiecărei valori, din versiunile ei.",
+              "en": "Each value's history, from its versions."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "„Folosit de” pe cele două rânduri.",
+              "en": "„Folosit de” on the two rows."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Lista instituțiilor din „Căutare globală”.",
+              "en": "The list of institutions in „Căutare globală” (global search)."
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "admin-reference-data-values",
+          "ro": {
+            "question": "Ciprian apasă „Unește” pe „Primaria Bragadiru”, iar fereastra spune „Un obiect se mută pe valoarea păstrată:”. Ce înseamnă?",
+            "explanation": "Fereastra spune câte înregistrări se mută. După „Unește”, înregistrarea trece pe valoarea aleasă în „Valoarea păstrată”, iar „Primaria Bragadiru” dispare din listă."
+          },
+          "en": {
+            "question": "Ciprian presses „Unește” on „Primaria Bragadiru”, and the window says „Un obiect se mută pe valoarea păstrată:” (one object moves to the value kept). What does it mean?",
+            "explanation": "The window says how many records move. After „Unește”, the record moves to the value chosen in „Valoarea păstrată”, and „Primaria Bragadiru” disappears from the list."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Că o singură valoare poate fi păstrată pe zi.",
+              "en": "That only one value can be kept per day."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Că obiectul se mută, dar „Primaria Bragadiru” rămâne în listă, „nefolosit”.",
+              "en": "That the object moves, but „Primaria Bragadiru” stays in the list, „nefolosit”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Că obiectul trebuie mutat de mână înainte de a apăsa „Unește”.",
+              "en": "That the object must be moved by hand before pressing „Unește”."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Că o înregistrare trece pe valoarea păstrată, iar cealaltă dispare.",
+              "en": "That one record moves to the value kept, and the other disappears."
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "admin-reference-data-values",
+          "ro": {
+            "question": "În „Indicative Tarla”, o valoare dublă apare cu gri, „nefolosit”, după celelalte. Ciprian apasă „Șterge”. Ce îi spune fereastra înainte să confirme?",
+            "explanation": "Dacă nu depinde nimic, fereastra scrie „Nimic nu depinde de această valoare. La ștergere dispare definitiv — acțiunea nu poate fi anulată.”; „Șterge” o șterge, „Anulează” renunță."
+          },
+          "en": {
+            "question": "In „Indicative Tarla” (field-block codes), a duplicate value shows in grey, „nefolosit”, after the others. Ciprian presses „Șterge”. What does the window tell him before he confirms?",
+            "explanation": "If nothing depends on it, the window reads „Nimic nu depinde de această valoare. La ștergere dispare definitiv — acțiunea nu poate fi anulată.” (nothing depends on this value; once deleted it is gone for good — this cannot be undone); „Șterge” deletes it, „Anulează” gives up."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Că nimic nu depinde de ea și că ștergerea nu poate fi anulată.",
+              "en": "That nothing depends on it and that the deletion cannot be undone."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Că trebuie aleasă întâi o valoare la „Mutați-le pe:”.",
+              "en": "That a value must first be chosen under „Mutați-le pe:”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Că valoarea se ascunde și poate fi adusă înapoi cu „Adaugă”.",
+              "en": "That the value is hidden and can be brought back with „Adaugă”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Că o valoare nefolosită nu se șterge, ci se unește cu alta.",
+              "en": "That an unused value is not deleted but merged with another."
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "admin-reference-data-values",
+          "ro": {
+            "question": "Ciprian a unit „Teren arabil” cu „Arabil”. Deschide acum o proprietate care avea „Teren arabil”, în versiunea ei curentă. Ce categorie vede?",
+            "explanation": "La unire, înregistrările trec pe valoarea păstrată, deci versiunea curentă arată „Arabil”. Doar versiunile vechi păstrează valoarea de când au fost salvate."
+          },
+          "en": {
+            "question": "Ciprian has merged „Teren arabil” into „Arabil”. He now opens a property that had „Teren arabil”, in its current version. Which category does he see?",
+            "explanation": "On a merge, the records move to the value kept, so the current version shows „Arabil”. Only old versions keep the value from when they were saved."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Teren arabil”, până când salvează din nou proprietatea.",
+              "en": "„Teren arabil”, until he saves the property again."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Un câmp gol, de completat din lista de valori.",
+              "en": "An empty field, to fill in from the list of values."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "„Arabil”, valoarea păstrată, pe care a trecut înregistrarea.",
+              "en": "„Arabil”, the value kept, to which the record moved."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Teren arabil”, pentru că unirea schimbă doar înregistrările noi.",
+              "en": "„Teren arabil”, because the merge changes only new records."
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "links-classify-tags",
+          "ro": {
+            "question": "Un coleg pune pe un act eticheta „Litigiu”, cu majusculă, deși în nor există deja „litigiu”. Se teme că a făcut o etichetă dublă. Ce spune manualul?",
+            "explanation": "Eticheta se salvează pe loc și se scrie cu litere mici, așa că „Litigiu” se scrie „litigiu”, la fel ca eticheta din nor."
+          },
+          "en": {
+            "question": "A colleague puts the tag „Litigiu” (dispute), with a capital, on a document, although „litigiu” already exists in the cloud. He fears he has made a duplicate tag. What does the manual say?",
+            "explanation": "The tag is saved at once and is written in lower case, so „Litigiu” is written „litigiu”, the same as the tag in the cloud."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Că are dreptate și trebuie să le fuzioneze după fiecare etichetă scrisă așa.",
+              "en": "That he is right and must merge them after each tag written that way."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Că eticheta se scrie cu litere mici, deci este tot „litigiu”.",
+              "en": "That the tag is written in lower case, so it is still „litigiu”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Că eticheta nu se salvează până nu apasă „Salvează” pe act.",
+              "en": "That the tag is not saved until he presses „Salvează” on the document."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Că etichetele cu majusculă apar doar pe acte, nu și în nor.",
+              "en": "That tags with a capital show only on documents, not in the cloud."
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "admin-groups-tags",
+          "ro": {
+            "question": "În „Fuzionare etichete”, înainte să apese „Fuzionează”, Ciprian citește „Etichetele „mostenire” vor deveni „moștenire”.”. Ce îi spune asta?",
+            "explanation": "Fereastra spune ce se va întâmpla: eticheta aleasă cu „Păstrează aceasta” este „moștenire”, iar înregistrările cu „mostenire” vor purta „moștenire”."
+          },
+          "en": {
+            "question": "In „Fuzionare etichete”, before pressing „Fuzionează”, Ciprian reads „Etichetele „mostenire” vor deveni „moștenire”.” (the tags „mostenire” will become „moștenire”, inheritance). What does that tell him?",
+            "explanation": "The window says what will happen: the tag chosen with „Păstrează aceasta” is „moștenire”, and the records with „mostenire” will carry „moștenire”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Că a ales „Păstrează aceasta” la „mostenire”, eticheta fără diacritice.",
+              "en": "That he chose „Păstrează aceasta” on „mostenire”, the tag without diacritics."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Că fuziunea s-a făcut deja și nu mai poate renunța.",
+              "en": "That the merge is already done and he can no longer give up."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Că „moștenire” va fi adăugată pe toate înregistrările din arhivă.",
+              "en": "That „moștenire” will be added to every record in the archive."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Că rămâne „moștenire”, iar înregistrările cu „mostenire” o vor purta pe ea.",
+              "en": "That „moștenire” stays, and the records with „mostenire” will carry it."
+            }
+          ]
+        },
+        {
+          "id": "b7",
+          "section": "admin-groups-tags",
+          "ro": {
+            "question": "Ciprian a apăsat „Redenumește etichetă” pe „arendă”, iar eticheta a devenit casetă în nor. A început să scrie, dar se răzgândește. Ce face ca eticheta să rămână cum era?",
+            "explanation": "În casetă scrieți noul nume și apăsați Enter, sau Esc ca s-o lăsați cum era."
+          },
+          "en": {
+            "question": "Ciprian pressed „Redenumește etichetă” on „arendă”, and the tag became a box in the cloud. He has started typing, but changes his mind. What does he do so the tag stays as it was?",
+            "explanation": "In the box you type the new name and press Enter, or Esc to leave it as it was."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Apasă Enter cu caseta goală.",
+              "en": "He presses Enter with the box empty."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Apasă Esc.",
+              "en": "He presses Esc."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Face dublu-clic pe altă etichetă, ca s-o salveze pe aceasta.",
+              "en": "He double-clicks another tag, so as to save this one."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Reîncarcă pagina; numele scris pe jumătate se salvează.",
+              "en": "He reloads the page; the half-typed name is saved."
+            }
+          ]
+        },
+        {
+          "id": "b8",
+          "section": "admin-groups-tags",
+          "ro": {
+            "question": "Ciprian a ales „mostenire” cu dublu-clic și vrea s-o fuzioneze cu „moștenire”. Ce face mai departe?",
+            "explanation": "„Fuzionează etichete” lucrează cu două sau mai multe etichete alese. Alege și „moștenire” cu dublu-clic, apoi „Fuzionează etichete” deschide fereastra cu amândouă bifate."
+          },
+          "en": {
+            "question": "Ciprian has selected „mostenire” with a double click and wants to merge it with „moștenire”. What does he do next?",
+            "explanation": "„Fuzionează etichete” works with two or more selected tags. He selects „moștenire” with a double click too, then „Fuzionează etichete” opens the window with both ticked."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Alege și „moștenire” cu dublu-clic, apoi apasă „Fuzionează etichete”.",
+              "en": "He selects „moștenire” too with a double click, then presses „Fuzionează etichete”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Apasă „Fuzionează etichete” și scrie „moștenire” în fereastra care se deschide.",
+              "en": "He presses „Fuzionează etichete” and types „moștenire” in the window that opens."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Face încă un dublu-clic pe „mostenire”, care o leagă de eticheta cea mai apropiată.",
+              "en": "He double-clicks „mostenire” again, which links it to the nearest tag."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Trage „mostenire” peste „moștenire” în nor.",
+              "en": "He drags „mostenire” onto „moștenire” in the cloud."
+            }
+          ]
+        },
+        {
+          "id": "b9",
+          "section": "learning-help-proposals",
+          "ro": {
+            "question": "După o lună în care manualul a primit capitole noi, Ciprian vrea să afle repede câte texte de ajutor ar trebui revăzute. Unde se uită?",
+            "explanation": "Deasupra listei din „Informații de ajutor”, un rând spune câte ecrane au o propunere, iar lângă fiecare dintre ele stă „Propunere”."
+          },
+          "en": {
+            "question": "After a month in which the manual gained new chapters, Ciprian wants to find out quickly how many help texts should be reviewed. Where does he look?",
+            "explanation": "Above the list in „Informații de ajutor”, a line says how many screens have a proposal, and „Propunere” stands beside each of them."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "În „Setări” → „Despre”, la numărul versiunii.",
+              "en": "In „Setări” → „Despre” (about), at the version number."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "În „Cuprins”, la capitolele marcate noi.",
+              "en": "In „Cuprins”, at the chapters marked new."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Pe fila „Sfaturi rapide”, la sfaturile fără text.",
+              "en": "On the „Sfaturi rapide” tab, at the hints without text."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Deasupra listei din „Informații de ajutor”, la rândul cu ecranele care au o propunere.",
+              "en": "Above the list in „Informații de ajutor”, at the line with the screens that have a proposal."
+            }
+          ]
+        },
+        {
+          "id": "b10",
+          "section": "admin-settings-thresholds",
+          "ro": {
+            "question": "În „Praguri de timp”, Ciprian scrie 45 la „Fereastră filtru expiră curând”, citește exemplul și se răzgândește înainte să salveze. Ce apasă ca să revină la valoarea salvată?",
+            "explanation": "Cum schimbați un număr, lângă „Salvează” apare „Anulează”, care readuce valoarea salvată."
+          },
+          "en": {
+            "question": "In „Praguri de timp”, Ciprian types 45 for „Fereastră filtru expiră curând”, reads the example and changes his mind before saving. What does he press to return to the saved value?",
+            "explanation": "As soon as you change a number, „Anulează” (cancel) appears beside „Salvează” and brings back the saved value."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Implicit”, care readuce pragurile aplicației.",
+              "en": "„Implicit”, which brings back the application's thresholds."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Revino la implicit”, din „Contul meu”.",
+              "en": "„Revino la implicit” (back to default), in „Contul meu”."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "„Anulează”, apărut lângă „Salvează”.",
+              "en": "„Anulează”, which has appeared beside „Salvează”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Salvează”, apoi scrie la loc numărul vechi.",
+              "en": "„Salvează”, then types the old number back."
+            }
+          ]
+        },
+        {
+          "id": "b11",
+          "section": "admin-example-threshold",
+          "ro": {
+            "question": "Luna de verificări s-a încheiat. Ciprian scrie la loc, la „Fereastră filtru expiră curând”, valoarea notată și apasă „Salvează”. Ce mai face, după exemplul din manual?",
+            "explanation": "Reîncărcați pagina și verificați că valoarea a rămas: abia atunci pragul este pus la loc exact."
+          },
+          "en": {
+            "question": "The month of checks is over. Ciprian writes the noted value back into „Fereastră filtru expiră curând” and presses „Salvează”. What else does he do, following the manual's example?",
+            "explanation": "Reload the page and check that the value has stayed: only then is the threshold put back exactly."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Apasă „Anulează”, ca să confirme valoarea salvată.",
+              "en": "He presses „Anulează”, to confirm the saved value."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Reîncarcă pagina și verifică că valoarea a rămas.",
+              "en": "He reloads the page and checks that the value has stayed."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Le cere colegilor să-și pună și ei pragul la loc.",
+              "en": "He asks his colleagues to put the threshold back on their side too."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Iese din aplicație, pentru că pragul se aplică abia la conectare.",
+              "en": "He signs out, because the threshold applies only at sign-in."
+            }
+          ]
+        },
+        {
+          "id": "b12",
+          "section": "admin-settings-thresholds",
+          "ro": {
+            "question": "În aceeași zi, Ciprian salvează în „Implicitele mele” ca o proprietate să arate doar „Hartă” și „Legături”, apoi schimbă „Prag CI expiră curând”. Care dintre cele două schimbări o văd și colegii lui?",
+            "explanation": "Pragurile sunt ale arhivei, nu ale unui cont: o schimbare se vede la toți utilizatorii. „Implicitele mele” sunt ale contului lui."
+          },
+          "en": {
+            "question": "On the same day, Ciprian saves in „Implicitele mele” that a property should show only „Hartă” (map) and „Legături” (links), then changes „Prag CI expiră curând”. Which of the two changes do his colleagues see as well?",
+            "explanation": "The thresholds belong to the archive, not to an account: a change is seen by every user. „Implicitele mele” belong to his account."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Amândouă: tot ce se salvează în „Setări” este al arhivei.",
+              "en": "Both: everything saved in „Setări” belongs to the archive."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Niciuna: amândouă sunt ale contului lui.",
+              "en": "Neither: both belong to his account."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Doar fișele din „Implicitele mele”; pragul e doar al lui.",
+              "en": "Only the tiles in „Implicitele mele”; the threshold is his alone."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Doar pragul; fișele din „Implicitele mele” sunt ale contului lui.",
+              "en": "Only the threshold; the tiles in „Implicitele mele” belong to his account."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

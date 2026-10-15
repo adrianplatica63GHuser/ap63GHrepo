@@ -1,0 +1,782 @@
+{
+  "skill": "import-check-the-ai-reading",
+  "manual": [
+    "import-scanning-read",
+    "import-scanning-people",
+    "documents-identification",
+    "documents-sale",
+    "persons-id-card-document"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "documents-sale",
+          "ro": {
+            "question": "Ciprian a importat contractul de vânzare-cumpărare prin care Andrei Munteanu a vândut un teren și vrea să verifice prețul citit de AI. Unde se uită?",
+            "explanation": "La contractul de vânzare-cumpărare, fișa „Preț și plată” are panourile „[Preț]” și „[Plată]”; acolo stă prețul, cu moneda, completat de AI."
+          },
+          "en": {
+            "question": "Ciprian has imported the sale contract by which Andrei Munteanu sold a plot and wants to check the price the AI read. Where does he look?",
+            "explanation": "On the sale contract, the tile „Preț și plată” (price and payment) has the panels „[Preț]” and „[Plată]”; that is where the price sits, with its currency, filled in by the AI."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "În „Note extinse”, unde AI-ul scrie tot ce citește.",
+              "en": "In „Note extinse”, where the AI writes everything it reads."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "În fișa „Obiectul vânzării”, la „Descrierea obiectului”.",
+              "en": "In the tile „Obiectul vânzării”, under „Descrierea obiectului”."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "În fișa „Preț și plată”, la panoul „[Preț]”.",
+              "en": "In the tile „Preț și plată”, at the panel „[Preț]”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "În fișa „Taxe și cheltuieli”, la „[Taxe și onorarii]”.",
+              "en": "In the tile „Taxe și cheltuieli”, at „[Taxe și onorarii]”."
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "documents-identification",
+          "ro": {
+            "question": "Contractul lui Andrei Munteanu are o clauză despre o fântână comună, pentru care formularul nu are câmp. Unde caută Ciprian ce a citit AI-ul despre ea?",
+            "explanation": "Un act adus cu importul are formularul completat de AI; ce nu are loc în formular rămâne o notă scurtă în „Note extinse”, din fișa „Identificarea actului”."
+          },
+          "en": {
+            "question": "Andrei Munteanu's contract has a clause about a shared well, for which the form has no field. Where does Ciprian look for what the AI read about it?",
+            "explanation": "A document brought in by the import has its form filled in by AI; what has no place in the form remains as a short note in „Note extinse”, on the tile „Identificarea actului”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "În „Note extinse”, în fișa „Identificarea actului”.",
+              "en": "In „Note extinse”, on the tile „Identificarea actului”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "În „Subiect”, unde AI-ul pune clauzele în plus.",
+              "en": "In „Subiect”, where the AI puts the extra clauses."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Nicăieri: ce nu are câmp nu se păstrează.",
+              "en": "Nowhere: what has no field is not kept."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "În notițele primei pagini, din fișa „Pagini”.",
+              "en": "In the first page's notes, on the „Pagini” tile."
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "import-scanning-read",
+          "ro": {
+            "question": "Odată cu un contract, Ciprian a importat și „memoriu.docx”, un fișier Word. După import, formularul lui este gol. De ce?",
+            "explanation": "AI-ul nu citește fișierele Word, Excel, .rtf și .txt; ele se păstrează, dar conținutul lor nu poate fi citit sau căutat."
+          },
+          "en": {
+            "question": "Together with a contract, Ciprian imported „memoriu.docx”, a Word file. After the import, its form is empty. Why?",
+            "explanation": "The AI does not read Word, Excel, .rtf or .txt files; they are kept, but their content cannot be read or searched."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Pentru că citirea AI a eșuat și trebuie reluată.",
+              "en": "Because the AI reading failed and must be repeated."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Pentru că tipul lui nu are încă formular.",
+              "en": "Because its type has no form yet."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Pentru că a primit încredere scăzută la „Scanare”.",
+              "en": "Because it got low confidence at „Scanare”."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Pentru că AI-ul nu citește fișierele Word.",
+              "en": "Because the AI does not read Word files."
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "import-scanning-people",
+          "ro": {
+            "question": "În „Confirmați persoanele din acest document”, AI-ul propune „Andrei Munteanu”, cu rolul „Vânzător”. Andrei Munteanu este deja în arhivă. Ce alege Ciprian?",
+            "explanation": "„Confirmați persoanele din acest document” arată, una câte una, persoanele găsite de AI, cu rolul fiecăreia; pentru cineva din arhivă alegeți „Da, asociază această persoană”."
+          },
+          "en": {
+            "question": "In „Confirmați persoanele din acest document”, the AI proposes „Andrei Munteanu”, with the role „Vânzător” (seller). Andrei Munteanu is already in the archive. What does Ciprian choose?",
+            "explanation": "„Confirmați persoanele din acest document” shows, one by one, the persons the AI found, with each one's role; for someone in the archive choose „Da, asociază această persoană”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Nu, creează o persoană nouă”.",
+              "en": "„Nu, creează o persoană nouă” (no, create a new person)."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "„Da, asociază această persoană”.",
+              "en": "„Da, asociază această persoană” (yes, associate this person)."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Omite”, fiindcă este deja în arhivă.",
+              "en": "„Omite” (skip), since he is already in the archive."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Creează și asociază”.",
+              "en": "„Creează și asociază” (create and associate)."
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "import-scanning-people",
+          "ro": {
+            "question": "Spre sfârșitul importului se deschide „Confirmați persoanele din acest document”. Ciprian vrea să închidă fereastra și să confirme persoanele mâine, de pe ecranul contractului. Se poate?",
+            "explanation": "Răspundeți atunci: după ce închideți fereastra importului, persoanele găsite în documente nu mai sunt oferite — „După ce închideți, nu mai există unde.”"
+          },
+          "en": {
+            "question": "Towards the end of the import, „Confirmați persoanele din acest document” opens. Ciprian wants to close the window and confirm the persons tomorrow, from the contract's screen. Can he?",
+            "explanation": "Answer then: once you close the import's window, the persons found in documents are not offered again — „După ce închideți, nu mai există unde.” (after you close, there is nowhere else)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Da, cu „Creează persoane din CI”, de pe ecranul contractului.",
+              "en": "Yes, with „Creează persoane din CI”, from the contract's screen."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Da, cu „Reia ultimul import (…)”, care le oferă din nou.",
+              "en": "Yes, with „Reia ultimul import (…)”, which offers them again."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Nu: după închidere, persoanele nu mai sunt oferite.",
+              "en": "No: once closed, the persons are not offered again."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Da, din „Înscrisuri citate”, pe fișa „Legături”.",
+              "en": "Yes, from „Înscrisuri citate”, on the „Legături” tile."
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "import-scanning-people",
+          "ro": {
+            "question": "Fereastra „Creează persoană din cartea de identitate” arată, pentru cartea lui Ion Popescu, „Persoana există deja”. Ce face Ciprian?",
+            "explanation": "Fereastra caută titularul în arhivă după CNP. Dacă îl găsește, „Persoana există deja”: comparați datele și apăsați „Confirmă și leagă”."
+          },
+          "en": {
+            "question": "The window „Creează persoană din cartea de identitate” shows, for Ion Popescu's card, „Persoana există deja” (the person already exists). What does Ciprian do?",
+            "explanation": "The window looks for the holder in the archive by CNP. If it finds him, „Persoana există deja”: compare the details and press „Confirmă și leagă” (confirm and link)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Compară datele și apasă „Confirmă și leagă”.",
+              "en": "He compares the details and presses „Confirmă și leagă”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Apasă „Creează și leagă”, ca să aibă cartea nouă.",
+              "en": "He presses „Creează și leagă”, to have the new card."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Apasă „Omite”: persoana este deja în arhivă.",
+              "en": "He presses „Omite”: the person is already in the archive."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Șterge persoana veche și creează una din carte.",
+              "en": "He deletes the old person and creates one from the card."
+            }
+          ]
+        },
+        {
+          "id": "a7",
+          "section": "import-scanning-people",
+          "ro": {
+            "question": "Pentru cartea Mariei Ionescu, fereastra scrie „Persoană nouă”, dar la „Potriviri posibile” apare o „Maria Ionescu” din arhivă. Ce înseamnă?",
+            "explanation": "După CNP nu s-a găsit nimeni, deci „Persoană nouă”. Persoanele cu nume asemănător apar la „Potriviri posibile”, ca sugestii, nu ca potriviri sigure."
+          },
+          "en": {
+            "question": "For Maria Ionescu's card, the window says „Persoană nouă” (new person), but under „Potriviri posibile” (possible matches) a „Maria Ionescu” from the archive appears. What does that mean?",
+            "explanation": "Nobody was found by CNP, hence „Persoană nouă”. Persons with a similar name appear under „Potriviri posibile”, as suggestions, not as sure matches."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Este sigur aceeași persoană, găsită după CNP.",
+              "en": "It is surely the same person, found by CNP."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Arhiva are deja două persoane cu același CNP.",
+              "en": "The archive already holds two persons with the same CNP."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Cartea este expirată și trebuie omisă.",
+              "en": "The card has expired and must be skipped."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Este doar o sugestie după nume, nu o potrivire sigură.",
+              "en": "It is only a suggestion by name, not a sure match."
+            }
+          ]
+        },
+        {
+          "id": "a8",
+          "section": "persons-id-card-document",
+          "ro": {
+            "question": "Pe cartea Elenei Munteanu, la „Părinții titularului”, mama apare cu numele de familie „Munteanu”. Ce verifică Ciprian?",
+            "explanation": "Tatăl și mama citiți de pe carte sunt bifați, cu numele de familie al titularului, marcat ca presupus. Verificați-i: al mamei poate fi cel de dinainte de căsătorie."
+          },
+          "en": {
+            "question": "On Elena Munteanu's card, under „Părinții titularului” (the holder's parents), the mother appears with the surname „Munteanu”. What does Ciprian check?",
+            "explanation": "The father and mother read from the card are ticked, with the holder's surname, marked as assumed. Check them: the mother's may be her name before marriage."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Nimic: numele de familie este citit de pe carte.",
+              "en": "Nothing: the surname is read from the card."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Numele de familie, presupus a fi al titularului.",
+              "en": "The surname, assumed to be the holder's."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "CNP-ul mamei, tipărit și el pe carte.",
+              "en": "The mother's CNP, printed on the card too."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Rolul „Mamă”, care trebuie ales de mână.",
+              "en": "The role „Mamă”, which must be chosen by hand."
+            }
+          ]
+        },
+        {
+          "id": "a9",
+          "section": "import-scanning-people",
+          "ro": {
+            "question": "Ciprian a confirmat cartea Elenei Munteanu, cu tatăl și mama. Cum sunt legate apoi persoanele?",
+            "explanation": "Titularul este legat de carte ca „Titular act de identitate”, iar părinții propuși la „Părinții titularului” sunt legați de titular ca „Tată” și „Mamă”."
+          },
+          "en": {
+            "question": "Ciprian has confirmed Elena Munteanu's card, with her father and mother. How are the persons then linked?",
+            "explanation": "The holder is linked to the card as „Titular act de identitate”, and the parents proposed under „Părinții titularului” are linked to the holder as „Tată” and „Mamă”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Toți trei de carte, ca „Titular act de identitate”.",
+              "en": "All three to the card, as „Titular act de identitate”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Părinții de carte, ca „Tată” și „Mamă”; titularul de proprietate.",
+              "en": "The parents to the card, as „Tată” and „Mamă”; the holder to the property."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Titularul de carte; părinții de titular, ca „Tată” și „Mamă”.",
+              "en": "The holder to the card; the parents to the holder, as „Tată” and „Mamă”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Titularul de carte; părinții rămân nelegați, ca sugestii.",
+              "en": "The holder to the card; the parents stay unlinked, as suggestions."
+            }
+          ]
+        },
+        {
+          "id": "a10",
+          "section": "links-references-documents",
+          "ro": {
+            "question": "Contractul importat al lui Andrei Munteanu, din 1998, citează un titlu de proprietate vechi, care nu este în arhivă. La „Verifică înscrisurile citate”, ce răspunde Ciprian?",
+            "explanation": "Înscrisurile citate de document vă așteaptă răspunsul; cele mai multe înscrisuri citate de un act vechi nu sunt în arhivă, așa că „Lasă” este adesea răspunsul potrivit."
+          },
+          "en": {
+            "question": "Andrei Munteanu's imported contract, from 1998, cites an old title deed that is not in the archive. At „Verifică înscrisurile citate”, what does Ciprian answer?",
+            "explanation": "The instruments the document cites wait for your answer; most deeds cited by an old document are not in the archive, so „Lasă” (leave) is often the right answer."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "„Lasă”: înscrisul rămâne nelegat.",
+              "en": "„Lasă”: the deed stays unlinked."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Leagă”, pe primul act propus.",
+              "en": "„Leagă”, on the first document offered."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Reimportă contractul, ca AI-ul să-l găsească.",
+              "en": "He re-imports the contract, so the AI finds it."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Încearcă citirea din nou”, până apare înscrisul.",
+              "en": "„Încearcă citirea din nou”, until the deed appears."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "import-result-run",
+          "ro": {
+            "question": "La „Se importă fișierele…”, rândul contractului lui Andrei Munteanu arată că citirea AI n-a reușit. Ce poate face Ciprian și ce îl costă?",
+            "explanation": "Unde citirea AI n-a reușit, „Încearcă citirea din nou” o reia, ca citire nouă, plătită."
+          },
+          "en": {
+            "question": "At „Se importă fișierele…”, the row of Andrei Munteanu's contract shows that the AI reading failed. What can Ciprian do, and what does it cost?",
+            "explanation": "Where the AI reading failed, „Încearcă citirea din nou” (try the reading again) repeats it, as a new, paid reading."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Să renunțe la import și să-l reia: clasificarea nu se plătește din nou.",
+              "en": "Cancel the import and run it again: the classification is not paid again."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Nimic: citirea se reia singură la deschiderea actului.",
+              "en": "Nothing: the reading repeats by itself when the document is opened."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Deschide” pe rând și „Recompune”: nu costă nimic.",
+              "en": "„Deschide” on the row and „Recompune”: it costs nothing."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "„Încearcă citirea din nou”: o citire nouă, plătită.",
+              "en": "„Încearcă citirea din nou”: a new, paid reading."
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "import-scanning",
+          "ro": {
+            "question": "Ciprian a adăugat de mână, din „Acte”, un contract de vânzare-cumpărare cu scanările lui și se așteaptă ca prețul să se completeze singur. Ce se întâmplă?",
+            "explanation": "AI-ul citește actele și le completează formularul doar la import, după „Importă”; un act adăugat de mână nu trece prin această citire."
+          },
+          "en": {
+            "question": "Ciprian has added a sale contract by hand, from „Acte”, with its scans, and expects the price to fill itself in. What happens?",
+            "explanation": "The AI reads documents and fills in their form only in an import, after „Importă”; a document added by hand does not go through this reading."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Prețul se completează după salvare, din prima pagină.",
+              "en": "The price is filled in after saving, from the first page."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Nimic: un act adăugat de mână nu trece prin citirea AI.",
+              "en": "Nothing: a document added by hand does not go through the AI reading."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Prețul ajunge în „Note extinse”, nu în „[Preț]”.",
+              "en": "The price goes into „Note extinse”, not into „[Preț]”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Se completează după ce alegeți tipul „(are formular)”.",
+              "en": "It is filled in once you choose the „(are formular)” type."
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "import-scanning-read",
+          "ro": {
+            "question": "AI-ul a citit pe contract numele vânzătorilor. Ciprian crede că ei sunt deja legați de contract, chiar dacă a apăsat „Omite” pentru ei. Are dreptate?",
+            "explanation": "AI-ul nu creează și nu leagă vreo persoană fără confirmarea dumneavoastră; „Omite” trece peste persoana propusă."
+          },
+          "en": {
+            "question": "The AI read the sellers' names on the contract. Ciprian thinks they are already linked to the contract, even though he pressed „Omite” for them. Is he right?",
+            "explanation": "The AI neither creates nor links a person without your confirmation; „Omite” passes over the proposed person."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Nu: AI-ul nu leagă nicio persoană fără confirmare.",
+              "en": "No: the AI links no person without confirmation."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Da: AI-ul îi leagă singur, cu rolul „Vânzător”.",
+              "en": "Yes: the AI links them by itself, with the role „Vânzător”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Da, dacă erau deja în arhivă cu același nume.",
+              "en": "Yes, if they were already in the archive under the same name."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nu: ei sunt legați doar de proprietate, nu de contract.",
+              "en": "No: they are linked only to the property, not to the contract."
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "documents-sale",
+          "ro": {
+            "question": "Ciprian a confirmat la import vânzătorul și cumpărătorul. Deschide apoi contractul și nu vede nicăieri fișa cu părțile. Ce face?",
+            "explanation": "Fișa „Părți” ține vânzătorii și cumpărătorii; nu se vede de la început, așa că bifați-o. Părțile stau pe grupe, „Vânzător” întâi, apoi „Cumpărător”."
+          },
+          "en": {
+            "question": "Ciprian confirmed the seller and the buyer during the import. He then opens the contract and sees no tile with the parties anywhere. What does he do?",
+            "explanation": "The „Părți” (parties) tile holds the sellers and buyers; it is not shown at first, so tick it. The parties sit in groups, „Vânzător” first, then „Cumpărător”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Asociază din nou părțile: confirmarea de la import nu le-a legat.",
+              "en": "He associates the parties again: the confirmation at the import did not link them."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Apasă „Recompune” în „Obiectul vânzării”.",
+              "en": "He presses „Recompune” in „Obiectul vânzării”."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Bifează fișa „Părți” din capul ecranului.",
+              "en": "He ticks the „Părți” tile at the top of the screen."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Caută părțile în „Note extinse”.",
+              "en": "He looks for the parties in „Note extinse”."
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "documents-sale",
+          "ro": {
+            "question": "La import, Ciprian a confirmat și notarul contractului, cu rolul „Notar”. În fișa „Părți” nu-l găsește. Unde este?",
+            "explanation": "Fișa „Părți” ține vânzătorii și cumpărătorii; celelalte persoane ale contractului, de pildă notarul, stau pe „Legături”."
+          },
+          "en": {
+            "question": "During the import, Ciprian also confirmed the contract's notary, with the role „Notar”. He does not find him on the „Părți” tile. Where is he?",
+            "explanation": "The „Părți” tile holds the sellers and buyers; the contract's other persons, the notary for instance, sit on „Legături”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Nicăieri: notarul nu se leagă de contract.",
+              "en": "Nowhere: the notary is not linked to the contract."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "În „Identificarea actului”, la „Notariat”.",
+              "en": "In „Identificarea actului”, under „Notariat”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În „Note extinse”, ca notă a AI-ului.",
+              "en": "In „Note extinse”, as a note from the AI."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Pe fișa „Legături”, cu celelalte persoane ale actului.",
+              "en": "On the „Legături” tile, with the document's other persons."
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "import-scanning-people",
+          "ro": {
+            "question": "Pentru cartea de identitate a lui Gheorghe Stan, arhiva nu are pe nimeni cu CNP-ul lui, iar fereastra scrie „Persoană nouă”. Ce apasă Ciprian?",
+            "explanation": "Fereastra caută titularul după CNP; dacă nu îl găsește, „Persoană nouă”: apăsați „Creează și leagă”."
+          },
+          "en": {
+            "question": "For Gheorghe Stan's identity card, the archive has nobody with his CNP, and the window says „Persoană nouă”. What does Ciprian press?",
+            "explanation": "The window looks for the holder by CNP; if it does not find him, „Persoană nouă”: press „Creează și leagă” (create and link)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Confirmă și leagă”.",
+              "en": "„Confirmă și leagă” (confirm and link)."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "„Creează și leagă”.",
+              "en": "„Creează și leagă” (create and link)."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Da, asociază această persoană”.",
+              "en": "„Da, asociază această persoană”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Omite”, apoi îl adaugă de mână.",
+              "en": "„Omite”, then he adds him by hand."
+            }
+          ]
+        },
+        {
+          "id": "b7",
+          "section": "import-scanning-people",
+          "ro": {
+            "question": "AI-ul a găsit în contract cumpărătoarea „Ana Dumitru”, care nu este încă în arhivă. Ce alege Ciprian în „Confirmați persoanele din acest document”?",
+            "explanation": "Pentru cineva nou alegeți „Creează și asociază” sau „Nu, creează o persoană nouă”; „Da, asociază această persoană” este pentru cineva din arhivă."
+          },
+          "en": {
+            "question": "The AI found the buyer „Ana Dumitru” in the contract; she is not in the archive yet. What does Ciprian choose in „Confirmați persoanele din acest document”?",
+            "explanation": "For someone new choose „Creează și asociază” or „Nu, creează o persoană nouă”; „Da, asociază această persoană” is for someone in the archive."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "„Creează și asociază”.",
+              "en": "„Creează și asociază” (create and associate)."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Da, asociază această persoană”.",
+              "en": "„Da, asociază această persoană” (yes, associate this person)."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Confirmă și leagă”.",
+              "en": "„Confirmă și leagă” (confirm and link)."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Omite”, ca să fie creată la sfârșit.",
+              "en": "„Omite”, so that she is created at the end."
+            }
+          ]
+        },
+        {
+          "id": "b8",
+          "section": "persons-id-card-document",
+          "ro": {
+            "question": "Ciprian a închis importul fără să răspundă la cartea de identitate a lui Gheorghe Stan. Cum creează acum persoana de pe ea?",
+            "explanation": "Unei cărți rămase fără răspuns îi rămâne „Creează persoane din CI”: deschideți actul de tip „Carte de identitate” și apăsați butonul, lângă „Modifică”."
+          },
+          "en": {
+            "question": "Ciprian closed the import without answering Gheorghe Stan's identity card. How does he now create the person from it?",
+            "explanation": "A card left unanswered still has „Creează persoane din CI”: open the document of type „Carte de identitate” and press the button, beside „Modifică”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Nu mai poate: după închidere nu mai există unde.",
+              "en": "He cannot any more: after closing there is nowhere else."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Reimportă dosarul, ca fereastra să apară din nou.",
+              "en": "He re-imports the file, so the window appears again."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Cu „Reia ultimul import (…)”, de pe ecranul importului.",
+              "en": "With „Reia ultimul import (…)”, from the import screen."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Deschide actul cărții și apasă „Creează persoane din CI”.",
+              "en": "He opens the card's document and presses „Creează persoane din CI”."
+            }
+          ]
+        },
+        {
+          "id": "b9",
+          "section": "persons-id-card-document",
+          "ro": {
+            "question": "La cartea lui Ion Popescu, rândurile tatălui și mamei de la „Părinții titularului” apar goale și nebifate. Ce face Ciprian?",
+            "explanation": "Dacă citirea nu găsește prenumele părinților, cele două rânduri apar goale și nebifate, cu nota „Cartea nu tipărește prenumele părinților, sau citirea nu le-a găsit…”: le puteți scrie voi."
+          },
+          "en": {
+            "question": "On Ion Popescu's card, the father's and mother's rows under „Părinții titularului” appear empty and unticked. What does Ciprian do?",
+            "explanation": "If the reading does not find the parents' first names, the two rows appear empty and unticked, with the note „Cartea nu tipărește prenumele părinților, sau citirea nu le-a găsit…”: you can type them yourself."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Renunță la import: cartea nu a fost citită.",
+              "en": "He cancels the import: the card was not read."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Apasă „Încearcă citirea din nou” până apar.",
+              "en": "He presses „Încearcă citirea din nou” until they appear."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Scrie el prenumele părinților, dacă le știe.",
+              "en": "He types the parents' first names himself, if he knows them."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Apasă „Omite”: părinții nu se pot adăuga.",
+              "en": "He presses „Omite”: the parents cannot be added."
+            }
+          ]
+        },
+        {
+          "id": "b10",
+          "section": "import-scanning-stops",
+          "ro": {
+            "question": "Ciprian a scanat pe aceeași pagină cărțile de identitate ale soților Stan. După scanare, importul se oprește. Ce face?",
+            "explanation": "O imagine cu actele mai multor persoane nu se citește, iar importul se oprește fără „continuă oricum”: apăsați „Oprește importul”, împărțiți fișierul — o persoană, un fișier — și porniți din nou."
+          },
+          "en": {
+            "question": "Ciprian scanned the Stan couple's identity cards on the same page. After scanning, the import stops. What does he do?",
+            "explanation": "An image holding several people's documents is not read, and the import stops with no „continue anyway”: press „Oprește importul”, split the file — one person, one file — and start again."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Continuă: AI-ul creează câte o persoană pentru fiecare carte.",
+              "en": "He carries on: the AI creates one person for each card."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Oprește importul, împarte fișierul, câte unul pe persoană, și reia.",
+              "en": "He stops the import, splits the file, one per person, and starts again."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Apasă „Continuă fără formulare”, apoi confirmă persoanele.",
+              "en": "He presses „Continuă fără formulare”, then confirms the persons."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Continuă și creează persoanele de mână după import.",
+              "en": "He carries on and creates the persons by hand after the import."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

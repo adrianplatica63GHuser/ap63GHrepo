@@ -1,0 +1,630 @@
+{
+  "skill": "import-run-an-import",
+  "manual": [
+    "import-overview",
+    "import-duplicates",
+    "import-scanning-classify",
+    "import-result-evaluation",
+    "import-result-report"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "import-overview",
+          "ro": {
+            "question": "Ați ajuns la „Evaluare” și vă dați seama că ați ales folderul greșit. Ce s-a scris până acum în arhivă din acest import?",
+            "explanation": "Nimic nu intră în arhivă până la pasul „Import”; „Evaluare” doar spune în cifre ce urmează, iar până atunci puteți renunța oricând."
+          },
+          "en": {
+            "question": "You have reached „Evaluare” and realise you chose the wrong folder. What has this import written to the archive so far?",
+            "explanation": "Nothing enters the archive until the „Import” step; „Evaluare” only says in figures what comes next, and until then you can give up at any time."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Documentele clasificate la „Scanare”, încă fără formular completat.",
+              "en": "The documents classified at „Scanare” (scanning), with no form filled in yet."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Nimic: nimic nu intră în arhivă până la pasul „Import”.",
+              "en": "Nothing: nothing enters the archive until the „Import” step."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Proprietățile, create la „Structură” din numele folderelor.",
+              "en": "The properties, created at „Structură” (structure) from the folder names."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Doar fișierul de coordonate, citit la „Deja în sistem”.",
+              "en": "Only the coordinate file, read at „Deja în sistem” (already in the system)."
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "import-duplicates",
+          "ro": {
+            "question": "În folderul ales, același contract stă în două foldere de pagini cu nume diferite. Un alt act al proprietății a fost adus deja în arhivă la un import vechi. Care pas vă arată cele două foldere de pagini?",
+            "explanation": "„Duplicate” compară fișierele din folderul ales între ele și găsește același document în două foldere de pagini, chiar dacă se numesc altfel; „Deja în sistem” compară folderul cu arhiva."
+          },
+          "en": {
+            "question": "In the chosen folder, the same contract sits in two page folders with different names. Another of the property's documents was already brought into the archive by an old import. Which step shows you the two page folders?",
+            "explanation": "„Duplicate” compares the files in the chosen folder with each other and finds the same document in two page folders, even when they are named differently; „Deja în sistem” compares the folder with the archive."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Deja în sistem”, pentru că acolo sistemul se uită în arhivă.",
+              "en": "„Deja în sistem”, because that is where the system looks at the archive."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Scanare”, care marchează al doilea folder „Nescanabil”.",
+              "en": "„Scanare”, which marks the second folder „Nescanabil” (not scannable)."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "„Duplicate”, care compară fișierele din folder între ele.",
+              "en": "„Duplicate”, which compares the files in the folder with each other."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Evaluare”, la „Fișiere care vor fi ignorate”.",
+              "en": "„Evaluare”, under „Fișiere care vor fi ignorate” (files to be ignored)."
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "import-overview",
+          "ro": {
+            "question": "De la care pas se uită sistemul și în arhivă, nu doar în folderul ales?",
+            "explanation": "Primii cinci pași, de pe linia „Pregătire și verificare”, se uită doar în folderul ales; de la „Deja în sistem” încolo, sistemul se uită și în arhivă."
+          },
+          "en": {
+            "question": "From which step does the system look at the archive too, not only at the chosen folder?",
+            "explanation": "The first five steps, on the line „Pregătire și verificare”, look only at the chosen folder; from „Deja în sistem” onwards, the system looks at the archive too."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "De la „Deja în sistem”, primul pas de pe linia „Clasificare și import”.",
+              "en": "From „Deja în sistem”, the first step on the line „Clasificare și import”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "De la „Structură”, când alegeți folderul în fereastra Windows.",
+              "en": "From „Structură”, when you choose the folder in the Windows window."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "De la „Duplicate”, care caută copiile și în arhivă.",
+              "en": "From „Duplicate”, which looks for copies in the archive too."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Abia de la „Import”, când se apasă „Importă”.",
+              "en": "Only from „Import”, when „Importă” is pressed."
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "import-result-evaluation",
+          "ro": {
+            "question": "Subfolderul „Contract vanzare 2008” are paginile 1.jpg, 2.jpg și 3.jpg. Cum apare el la „Scanare” și cum se numără la „Evaluare”?",
+            "explanation": "La „Scanare”, un folder de pagini este un singur rând, cu „Grup de 3 pagini”, iar la „Evaluare” un folder de pagini este un singur document."
+          },
+          "en": {
+            "question": "The subfolder „Contract vanzare 2008” holds the pages 1.jpg, 2.jpg and 3.jpg. How does it appear at „Scanare” and how is it counted at „Evaluare”?",
+            "explanation": "At „Scanare” a page folder is a single row, with „Grup de 3 pagini” (group of 3 pages), and at „Evaluare” a page folder is a single document."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Trei rânduri la „Scanare” și trei documente la „Evaluare”.",
+              "en": "Three rows at „Scanare” and three documents at „Evaluare”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Trei rânduri la „Scanare”, dar un singur document la „Evaluare”.",
+              "en": "Three rows at „Scanare”, but a single document at „Evaluare”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Un rând la „Scanare”, dar trei documente la „Evaluare”.",
+              "en": "One row at „Scanare”, but three documents at „Evaluare”."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Un rând, „Grup de 3 pagini”, și un singur document la „Evaluare”.",
+              "en": "One row, „Grup de 3 pagini”, and a single document at „Evaluare”."
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "import-scanning-classify",
+          "ro": {
+            "question": "La „Scanare”, rândul unui plan arată „Încredere scăzută”. Ce faceți?",
+            "explanation": "La „Scanare” nimic nu intră încă în arhivă; la o încredere scăzută, verificați tipul documentului după import."
+          },
+          "en": {
+            "question": "At „Scanare”, the row of a plan shows „Încredere scăzută” (low confidence). What do you do?",
+            "explanation": "At „Scanare” nothing enters the archive yet; where the confidence is low, check the document's type after the import."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Renunțați la import și scanați planul din nou, mai clar.",
+              "en": "Cancel the import and scan the plan again, more clearly."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Scoateți planul din folder: nu va fi importat.",
+              "en": "Take the plan out of the folder: it will not be imported."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Continuați și verificați tipul documentului după import.",
+              "en": "Carry on, and check the document's type after the import."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Așteptați: rândul trece singur la „Încredere ridicată”.",
+              "en": "Wait: the row moves to „Încredere ridicată” by itself."
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "import-result-evaluation",
+          "ro": {
+            "question": "La „Evaluare”, ecranul vă spune că un folder de proprietate are un fișier cu posibile coordonate numit „puncte.txt”. Ce vă costă să-l redenumiți acum?",
+            "explanation": "Redenumiți fișierul și apăsați „Verifică din nou folderul (clasificarea de până acum se pierde)” — exact ce scrie: clasificarea plătită se pierde. Altfel continuați; colțurile se pot adăuga și mai târziu."
+          },
+          "en": {
+            "question": "At „Evaluare”, the screen tells you that a property folder holds a file with possible coordinates named „puncte.txt”. What does renaming it now cost you?",
+            "explanation": "Rename the file and press „Verifică din nou folderul (clasificarea de până acum se pierde)” — exactly what it says: the paid classification is lost. Otherwise carry on; the corners can be added later too."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Nimic: verificările de structură nu costă nimic.",
+              "en": "Nothing: the structure checks cost nothing."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Clasificarea plătită de până acum se pierde.",
+              "en": "The classification paid for so far is lost."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Documentele deja create din folder se șterg.",
+              "en": "The documents already created from the folder are deleted."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Proprietatea se creează fără contur, oricum.",
+              "en": "The property is created with no outline, whatever you do."
+            }
+          ]
+        },
+        {
+          "id": "a7",
+          "section": "import-result-report",
+          "ro": {
+            "question": "Ați ajuns la „Rezultat” și vreți acum să importați dosarul altui teren. Ce faceți?",
+            "explanation": "Un import încheiat nu se reia — ar crea documentele a doua oară; pentru alt folder apăsați „Începe alt import”."
+          },
+          "en": {
+            "question": "You have reached „Rezultat” and now want to import the file of another plot. What do you do?",
+            "explanation": "A finished import is not run again — it would create the documents a second time; for another folder press „Începe alt import” (start another import)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Apăsați „Începe alt import”.",
+              "en": "Press „Începe alt import” (start another import)."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Reluați importul încheiat și alegeți alt folder la „Structură”.",
+              "en": "Run the finished import again and choose another folder at „Structură”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Apăsați „Salvează raportul (HTML)”, care pornește un import nou.",
+              "en": "Press „Salvează raportul (HTML)”, which starts a new import."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Apăsați „Închide și vezi proprietățile” și alegeți folderul de acolo.",
+              "en": "Press „Închide și vezi proprietățile” and choose the folder from there."
+            }
+          ]
+        },
+        {
+          "id": "a8",
+          "section": "import-result-report",
+          "ro": {
+            "question": "La „Deja în sistem”, două acte dintr-un folder de proprietate apăreau deja în arhivă. Unde le regăsiți în „Pe scurt”, la „Rezultat”?",
+            "explanation": "Un document deja în sistem, aflat într-un folder de proprietate, este legat de proprietate, nu importat a doua oară; „Pe scurt” îl numără la „Existau deja și au fost legate de proprietate”."
+          },
+          "en": {
+            "question": "At „Deja în sistem”, two documents from a property folder already appeared in the archive. Where do you find them in „Pe scurt”, at „Rezultat”?",
+            "explanation": "A document already in the system that sits in a property folder is linked to the property, not imported a second time; „Pe scurt” counts it under „Existau deja și au fost legate de proprietate”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "La „Documente create”, pentru că au fost importate din nou.",
+              "en": "Under „Documente create” (documents created), because they were imported again."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "La „Documente citite de AI (inclusiv cărțile de identitate)”.",
+              "en": "Under „Documente citite de AI (inclusiv cărțile de identitate)”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Nicăieri: ce se află deja în sistem nu apare în raport.",
+              "en": "Nowhere: what is already in the system does not appear in the report."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "La „Existau deja și au fost legate de proprietate”.",
+              "en": "Under „Existau deja și au fost legate de proprietate” (already existed and were linked)."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "import-overview",
+          "ro": {
+            "question": "La „Structură”, verificarea vă listează un folder de proprietate de îndreptat. Ce faceți?",
+            "explanation": "Sistemul nu vă atinge fișierele: faceți schimbarea în File Explorer, reveniți și apăsați din nou butonul de verificare. Bifa se cere din nou la fiecare verificare, deci și după fiecare îndreptare."
+          },
+          "en": {
+            "question": "At „Structură”, the check lists a property folder to put right. What do you do?",
+            "explanation": "The system does not touch your files: make the change in File Explorer, come back and press the check button again. The tick is asked for again at every check, so also after every fix."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Apăsați rândul și lăsați sistemul să redenumească folderul.",
+              "en": "Press the row and let the system rename the folder."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Mergeți mai departe: se îndreaptă singur la „Import”.",
+              "en": "Go on: it is put right by itself at „Import”."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Îl îndreptați în File Explorer, bifați din nou și verificați din nou.",
+              "en": "Put it right in File Explorer, tick again and check again."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Cereți administratorului să îndrepte rândul cu „problemă”.",
+              "en": "Ask the administrator to fix the row marked „problemă”."
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "import-overview",
+          "ro": {
+            "question": "Aveți de îndreptat multe lucruri în File Explorer și vreți să aveți lista în față cât lucrați. Ce folosiți?",
+            "explanation": "Butonul „Salvează … ca pagină” al pasului descarcă regulile și lista lucrurilor de îndreptat, ca să le aveți în față cât lucrați în File Explorer."
+          },
+          "en": {
+            "question": "You have many things to put right in File Explorer and want the list in front of you while you work. What do you use?",
+            "explanation": "The step's „Salvează … ca pagină” button downloads the rules and the list of things to put right, so that you have them in front of you while you work in File Explorer."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Butonul „Salvează … ca pagină” al pasului.",
+              "en": "The step's „Salvează … ca pagină” (save … as a page) button."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Butonul „Salvează raportul (HTML)” de la „Rezultat”.",
+              "en": "The „Salvează raportul (HTML)” button at „Rezultat”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Bifa „Începe fiecare pas cu regulile la vedere”.",
+              "en": "The tick „Începe fiecare pas cu regulile la vedere”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Reia ultimul import (…)”, care păstrează lista.",
+              "en": "„Reia ultimul import (…)”, which keeps the list."
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "import-duplicates-copies",
+          "ro": {
+            "question": "„Duplicate” arată „plan.pdf” și „plan - Copie.pdf” în două foldere de proprietate diferite. Ce faceți?",
+            "explanation": "Sistemul spune că fișierele par la fel, nu că sunt: uitați-vă la ele înainte să scoateți ceva. Păstrați copia din locul potrivit; dacă sunt documente diferite, redenumiți-l pe unul."
+          },
+          "en": {
+            "question": "„Duplicate” shows „plan.pdf” and „plan - Copie.pdf” in two different property folders. What do you do?",
+            "explanation": "The system says the files look alike, not that they are: look at them before taking anything out. Keep the copy in the right place; if they are different documents, rename one."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Lăsați-le: „ - Copie” le face documente diferite.",
+              "en": "Leave them: „ - Copie” makes them different documents."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Ștergeți pe loc copia cu „ - Copie” în nume.",
+              "en": "Delete the copy with „ - Copie” in its name straight away."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Lăsați sistemul să păstreze unul singur la import.",
+              "en": "Let the system keep only one of them at the import."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Vă uitați la ele; păstrați copia potrivită sau redenumiți una.",
+              "en": "Look at them; keep the right copy, or rename one."
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "import-duplicates-archive",
+          "ro": {
+            "question": "Vreți să știți, înainte de a plăti ceva, câte imagini vor fi trimise spre clasificare. Unde citiți asta?",
+            "explanation": "La „Deja în sistem”, sub listă, ecranul spune câte imagini vor fi trimise spre clasificare la butonul următor: „acesta este primul pas care costă”."
+          },
+          "en": {
+            "question": "Before paying for anything, you want to know how many images will be sent for classification. Where do you read it?",
+            "explanation": "At „Deja în sistem”, below the list, the screen says how many images the next button will send for classification: „acesta este primul pas care costă” (this is the first step that costs)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "La „Rezultat”, în „Pe scurt”.",
+              "en": "At „Rezultat”, in „Pe scurt”."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "La „Deja în sistem”, sub listă.",
+              "en": "At „Deja în sistem”, below the list."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "La „Precondiții”, printre cele opt verificări.",
+              "en": "At „Precondiții”, among the eight checks."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "La „Import”, lângă butonul „Importă”.",
+              "en": "At „Import”, beside the „Importă” button."
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "import-scanning-classify",
+          "ro": {
+            "question": "Folderul unei proprietăți are un contract scanat ca PDF, o notă scrisă în Word și un act aflat deja în sistem. Ce se trimite la clasificare, la „Scanare”?",
+            "explanation": "Se trimite doar prima pagină a fiecărui document; fișierele Word, Excel și text și cele aflate deja în sistem nu se trimit."
+          },
+          "en": {
+            "question": "A property's folder holds a contract scanned as a PDF, a note written in Word and a document already in the system. What is sent for classification at „Scanare”?",
+            "explanation": "Only the first page of each document is sent; Word, Excel and text files, and those already in the system, are not sent."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Toate trei, câte o pagină din fiecare.",
+              "en": "All three, one page from each."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Contractul și nota Word, dar nu actul din arhivă.",
+              "en": "The contract and the Word note, but not the archived document."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Doar prima pagină a contractului.",
+              "en": "Only the first page of the contract."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Toate paginile contractului și ale actului din arhivă.",
+              "en": "Every page of the contract and of the archived document."
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "import-scanning-classify",
+          "ro": {
+            "question": "În tabelul de la „Scanare”, un rând are starea „Deja în sistem”. Ce înseamnă asta pentru costul lui?",
+            "explanation": "Ce se află deja în sistem nu se trimite la clasificare și nu se citește, așa că nu costă nimic; pasul „Deja în sistem” v-a spus dinainte ce se întâmplă cu el."
+          },
+          "en": {
+            "question": "In the table at „Scanare”, a row has the state „Deja în sistem”. What does that mean for its cost?",
+            "explanation": "What is already in the system is neither sent for classification nor read, so it costs nothing; the „Deja în sistem” step told you beforehand what happens to it."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Nu se clasifică și nu se citește, deci nu costă nimic.",
+              "en": "It is neither classified nor read, so it costs nothing."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Se clasifică din nou, dar nu se mai citește.",
+              "en": "It is classified again, but no longer read."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Se clasifică și se citește, ca un act nou.",
+              "en": "It is classified and read, like a new document."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Se citește din nou, ca formularul să fie la zi.",
+              "en": "It is read again, so that its form is up to date."
+            }
+          ]
+        },
+        {
+          "id": "b7",
+          "section": "import-result-evaluation",
+          "ro": {
+            "question": "Folderul „40-212per40-Bragadiru” are fișierul „coord …”, cartea de identitate a vânzătoarei și un folder de pagini cu contractul. Ce anunță „Evaluare” la „Documente care vor fi create”?",
+            "explanation": "Un folder de pagini este un singur document, iar fișierul de coordonate se numără și el, ca document în sine: trei documente. Nimic nu s-a salvat încă."
+          },
+          "en": {
+            "question": "The folder „40-212per40-Bragadiru” holds the „coord …” file, the seller's identity card and a page folder with the contract. What does „Evaluare” announce under „Documente care vor fi create”?",
+            "explanation": "A page folder is a single document, and the coordinate file is counted too, as a document in its own right: three documents. Nothing has been saved yet."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Două: fișierul de coordonate nu este un document.",
+              "en": "Two: the coordinate file is not a document."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Trei: cartea, contractul și fișierul de coordonate.",
+              "en": "Three: the card, the contract and the coordinate file."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Patru: cartea, contractul și cele două imagini clasificate.",
+              "en": "Four: the card, the contract and the two images classified."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Cinci: cartea, fiecare pagină a contractului și coordonatele.",
+              "en": "Five: the card, each page of the contract and the coordinates."
+            }
+          ]
+        },
+        {
+          "id": "b8",
+          "section": "import-result-report",
+          "ro": {
+            "question": "Importul s-a încheiat. Ce vă sfătuiește manualul să faceți imediat după „Închide și vezi proprietățile”?",
+            "explanation": "„Închide și vezi proprietățile” deschide lista proprietăților. Deschideți câteva proprietăți și câteva documente: acum este cel mai ușor de corectat ceva."
+          },
+          "en": {
+            "question": "The import has finished. What does the manual advise you to do straight after „Închide și vezi proprietățile”?",
+            "explanation": "„Închide și vezi proprietățile” opens the list of properties. Open a few properties and a few documents: now is when something is easiest to correct."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Reluați importul, ca să verificați că nu lipsește nimic.",
+              "en": "Run the import again, to check that nothing is missing."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Ștergeți folderul de pe calculator, fiind deja importat.",
+              "en": "Delete the folder from the computer, since it is imported."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Închideți fila browserului, ca importul să se salveze.",
+              "en": "Close the browser tab, so that the import is saved."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Deschideți câteva proprietăți și câteva documente.",
+              "en": "Open a few properties and a few documents."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

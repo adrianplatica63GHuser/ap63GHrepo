@@ -1,0 +1,934 @@
+{
+  "skill": "properties-parcel-dossier",
+  "manual": [
+    "links-related",
+    "properties-corners-table",
+    "links-references-properties",
+    "links-classify-groups",
+    "map-what-groups"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "links-related",
+          "ro": {
+            "question": "Ciprian începe dosarul parcelei „Teren Bragadiru” și vrea să vadă într-un singur loc persoanele, proprietățile și actele legate de ea. Pe ecranul proprietății, cu fișele „Implicit”, nu le găsește. Ce face?",
+            "explanation": "Tot ce este legat de o înregistrare stă în fișa „Legături”. „Implicit” arată doar „Identificare cadastrală”, „Adresă”, „Hartă” și „Puncte de contur”, așa că „Legături” se bifează printre fișele din capul ecranului."
+          },
+          "en": {
+            "question": "Ciprian starts the dossier of the parcel „Teren Bragadiru” and wants to see in one place the persons, properties and documents linked to it. On the property's screen, with the „Implicit” (default) tiles, he does not find them. What does he do?",
+            "explanation": "Everything linked to a record stands in the „Legături” (links) tile. „Implicit” shows only „Identificare cadastrală”, „Adresă”, „Hartă” and „Puncte de contur”, so „Legături” is ticked among the tiles at the top of the screen."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Deschide „Căutare globală” și caută parcela după poreclă.",
+              "en": "He opens „Căutare globală” (global search) and searches for the parcel by nickname."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Bifează „Legături” printre fișele din capul ecranului.",
+              "en": "He ticks „Legături” among the tiles at the top of the screen."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Deschide fișa „Etichete și grupuri”, unde stau legăturile.",
+              "en": "He opens the „Etichete și grupuri” (tags and groups) tile, where the links are."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Deschide pe rând actele din lista „Acte” și caută parcela în ele.",
+              "en": "He opens the documents in the „Acte” list one by one and looks for the parcel in them."
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "links-related",
+          "ro": {
+            "question": "Pe „Legături” al parcelei, Ciprian vede rândurile „Andrei Munteanu (Proprietar)” și „CVC 112 (Contract de Vânzare)”. Ce arată parantezele?",
+            "explanation": "La o persoană, paranteza ține rolul ei; la un act, după eticheta scurtă, paranteza ține tipul actului."
+          },
+          "en": {
+            "question": "On the parcel's „Legături”, Ciprian sees the rows „Andrei Munteanu (Proprietar)” and „CVC 112 (Contract de Vânzare)”. What do the brackets show?",
+            "explanation": "For a person, the brackets hold the person's role; for a document, after the short label, the brackets hold the document's type."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "La amândouă, rolul pe care îl au față de parcelă.",
+              "en": "For both, the role they have towards the parcel."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "La persoană, cota-parte; la act, numărul lui.",
+              "en": "For the person, the share; for the document, its number."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "La amândouă, felul înregistrării legate.",
+              "en": "For both, the kind of the linked record."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "La persoană, rolul ei; la act, tipul actului.",
+              "en": "For the person, their role; for the document, its type."
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "documents-parties",
+          "ro": {
+            "question": "Andrei Munteanu este legat de parcelă ca „Proprietar”. Pentru dosar, Ciprian are nevoie și de cota lui. Unde o citește?",
+            "explanation": "Legătura persoană – proprietate are doar rol. Cota-parte se scrie pe act, după asociere: pe contractul prin care a cumpărat, rândul lui are butonul portocaliu „Cotă”, iar mouse-ul ținut pe el arată valorile."
+          },
+          "en": {
+            "question": "Andrei Munteanu is linked to the parcel as „Proprietar” (owner). For the dossier, Ciprian also needs his share. Where does he read it?",
+            "explanation": "The person – property link has only a role. The share is written on the document, after the association: on the contract by which he bought, his row has the orange „Cotă” (share) button, and resting the mouse on it shows the values."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Pe parcelă, în „Legături”, la „Cotă” de pe rândul lui.",
+              "en": "On the parcel, in „Legături”, at the „Cotă” on his row."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Pe contractul prin care a cumpărat, la „Cotă” de pe rândul lui.",
+              "en": "On the contract by which he bought, at the „Cotă” on his row."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În „Relația” de pe rândul lui din „Legături” al parcelei.",
+              "en": "In „Relația” (the relationship) on his row in the parcel's „Legături”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "În „Identificare cadastrală” a parcelei, lângă suprafața oficială.",
+              "en": "In the parcel's „Identificare cadastrală”, beside the official area."
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "documents-parties",
+          "ro": {
+            "question": "Pe contractul de vânzare al parcelei, sub rânduri scrie „Cotele pentru „Cumpărător” însumează 50%, nu 100%.”. Ce înțelege Ciprian, pentru dosar?",
+            "explanation": "Aplicația adună cotele pe fiecare rol și avertizează când suma nu dă 100%, dar actul se salvează oricum: arhiva înregistrează ce scrie în act. Rămâne de verificat ce scrie în act."
+          },
+          "en": {
+            "question": "On the parcel's sale contract, under the rows it says „Cotele pentru „Cumpărător” însumează 50%, nu 100%.” (the shares for „Cumpărător” add up to 50%, not 100%). What does Ciprian understand, for the dossier?",
+            "explanation": "The application adds up the shares for each role and warns when the sum is not 100%, but the document is saved all the same: the archive records what the document says. What remains is to check what the document says."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Că contractul nu s-a salvat și nu se salvează până la 100%.",
+              "en": "That the contract was not saved and will not be saved until 100%."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Că aplicația va trece singură restul de 50% la ultimul cumpărător.",
+              "en": "That the application will put the remaining 50% on the last buyer by itself."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Că verifică ce scrie în act: arhiva ține cotele scrise, chiar dacă nu dau 100%.",
+              "en": "That he checks what the document says: the archive keeps the shares written, even if they do not make 100%."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Că cumpărătorul are jumătate din parcelă, iar restul e tot al vânzătorului.",
+              "en": "That the buyer holds half the parcel, and the rest still belongs to the seller."
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "links-references-properties",
+          "ro": {
+            "question": "Parcela face parte dintr-un teren mai mare, aflat și el în arhivă. Cum notează Ciprian asta, ca legătura să se citească corect din ambele capete?",
+            "explanation": "Legătura se citește de la proprietatea pe care vă aflați. De pe parcelă, „Asociază proprietate”, bifați terenul întreg și alegeți „Inclus în” la „Tip legătură”."
+          },
+          "en": {
+            "question": "The parcel is part of a larger plot, which is also in the archive. How does Ciprian record this, so that the link reads correctly from both ends?",
+            "explanation": "The link is read from the property you are on. From the parcel, „Asociază proprietate” (associate property), tick the whole plot and choose „Inclus în” (included in) at „Tip legătură” (link type)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "De pe terenul întreg, bifează parcela și alege „Inclus în”.",
+              "en": "From the whole plot, he ticks the parcel and chooses „Inclus în”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "De pe parcelă, bifează terenul întreg și alege „Adiacent”.",
+              "en": "From the parcel, he ticks the whole plot and chooses „Adiacent” (adjacent)."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Le pune pe amândouă în același grup, din „Etichete și grupuri”.",
+              "en": "He puts both in the same group, from „Etichete și grupuri”."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "De pe parcelă, bifează terenul întreg și alege „Inclus în”.",
+              "en": "From the parcel, he ticks the whole plot and chooses „Inclus în”."
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "links-references-properties",
+          "ro": {
+            "question": "Pe „Legături” al terenului întreg, „Relația” de pe rândul parcelei arată: parcela, „Inclus în”, „această proprietate”. Ce spune legătura?",
+            "explanation": "„Relația” citește legătura ca pe o propoziție: parcela este inclusă în proprietatea pe care vă aflați, adică în terenul întreg. Pe parcelă, aceeași legătură se citește „această proprietate „Inclus în”” urmat de terenul întreg."
+          },
+          "en": {
+            "question": "On the whole plot's „Legături”, „Relația” on the parcel's row shows: the parcel, „Inclus în”, „această proprietate” (this property). What does the link say?",
+            "explanation": "„Relația” reads the link as a sentence: the parcel is included in the property you are on, that is in the whole plot. On the parcel, the same link reads „această proprietate „Inclus în”” followed by the whole plot."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Că parcela este inclusă în terenul întreg, pe care se află el.",
+              "en": "That the parcel is included in the whole plot, which he is on."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Că terenul întreg este inclus în parcelă.",
+              "en": "That the whole plot is included in the parcel."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Că legătura e făcută greșit și trebuie refăcută de pe parcelă.",
+              "en": "That the link is made wrongly and must be redone from the parcel."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Că parcela și terenul întreg sunt alipite, în ambele sensuri.",
+              "en": "That the parcel and the whole plot are joined, both ways."
+            }
+          ]
+        },
+        {
+          "id": "a7",
+          "section": "properties-corners-table",
+          "ro": {
+            "question": "„Suprafață calculată (m²)” a parcelei diferă mult de cea din acte, iar în „Puncte de contur” apare „Ordinea colțurilor se încrucișează”. Ce face Ciprian înainte să treacă suprafața în dosar?",
+            "explanation": "Când laturile se încrucișează, suprafața calculată nu mai are sens. „Îndreaptă ordinea” arată forma de acum și forma îndreptată, cu suprafețele lor; colțurile rămân unde sunt, se schimbă doar ordinea, apoi se salvează ca de obicei."
+          },
+          "en": {
+            "question": "The parcel's „Suprafață calculată (m²)” (calculated area) differs greatly from the one in the deeds, and „Puncte de contur” shows „Ordinea colțurilor se încrucișează” (the order of the corners crosses). What does Ciprian do before putting the area in the dossier?",
+            "explanation": "When the sides cross, the calculated area no longer means anything. „Îndreaptă ordinea” (straighten the order) shows the shape as it is and the straightened shape, with their areas; the corners stay where they are, only the order changes, then you save as usual."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Trece în dosar „Suprafață oficială (m²)” și lasă colțurile cum sunt.",
+              "en": "He puts „Suprafață oficială (m²)” in the dossier and leaves the corners as they are."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Șterge colțurile și le desenează din nou pe harta proprietăților.",
+              "en": "He deletes the corners and draws them again on the properties map."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Folosește „Îndreaptă ordinea”, compară cele două forme și salvează.",
+              "en": "He uses „Îndreaptă ordinea”, compares the two shapes and saves."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Scrie de mână suprafața bună în „Suprafață calculată (m²)”.",
+              "en": "He types the right area by hand into „Suprafață calculată (m²)”."
+            }
+          ]
+        },
+        {
+          "id": "a8",
+          "section": "map-area-delimited",
+          "ro": {
+            "question": "Ciprian vrea să verifice pe harta proprietăților „Suprafață calculată (m²)” a parcelei, fără să schimbe nimic în arhivă. Ce face?",
+            "explanation": "Cu „Suprafața unei zone delimitate”, dacă alegeți toate colțurile unei singure proprietăți, în ordinea lor, suprafața din poligon este chiar suprafața ei calculată. Zona este doar o măsurătoare: nimic nu se scrie în arhivă."
+          },
+          "en": {
+            "question": "Ciprian wants to check the parcel's „Suprafață calculată (m²)” on the properties map, without changing anything in the archive. What does he do?",
+            "explanation": "With „Suprafața unei zone delimitate” (area of a delimited zone), if you choose all the corners of a single property, in their order, the area in the polygon is exactly its calculated area. The zone is only a measurement: nothing is written to the archive."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Măsoară fiecare latură cu „Riglă” și înmulțește lungimile.",
+              "en": "He measures each side with „Riglă” (ruler) and multiplies the lengths."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Desenează parcela din ochi cu „Suprafața unei zone oarecare”.",
+              "en": "He draws the parcel by eye with „Suprafața unei zone oarecare” (area of any zone)."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Apasă „Unghiuri” pe fiecare colț și citește suprafața din bulă.",
+              "en": "He presses „Unghiuri” (angles) on each corner and reads the area from the bubble."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Alege cu „Suprafața unei zone delimitate” toate colțurile ei, în ordine.",
+              "en": "He picks all its corners, in order, with „Suprafața unei zone delimitate”."
+            }
+          ]
+        },
+        {
+          "id": "a9",
+          "section": "links-classify-groups",
+          "ro": {
+            "question": "Parcela face deja parte din trei grupuri, iar Ciprian vrea s-o pună și în grupul dosarului, „Dosar Munteanu”. „+” nu se poate apăsa. Ce face?",
+            "explanation": "O înregistrare poate face parte din cel mult trei grupuri. Ca s-o adăugați în altul, o scoateți întâi dintr-un grup, cu „×” pe acel grup."
+          },
+          "en": {
+            "question": "The parcel already belongs to three groups, and Ciprian wants to put it also in the dossier's group, „Dosar Munteanu”. „+” cannot be pressed. What does he do?",
+            "explanation": "A record can belong to at most three groups. To add it to another, you first take it out of one group, with the „×” on that group."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "O scoate întâi, cu „×”, dintr-un grup de care nu mai e nevoie.",
+              "en": "He first takes it out, with „×”, of a group that is no longer needed."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Salvează parcela, pentru că „+” se deblochează după salvare.",
+              "en": "He saves the parcel, because „+” unlocks after saving."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "O adaugă din „Administrare” → „Grupuri”, unde limita nu se aplică.",
+              "en": "He adds it from „Administrare” → „Grupuri”, where the limit does not apply."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Face o copie a parcelei și o pune pe aceea în grup.",
+              "en": "He makes a copy of the parcel and puts that one in the group."
+            }
+          ]
+        },
+        {
+          "id": "a10",
+          "section": "map-what-groups",
+          "ro": {
+            "question": "Pentru dosar, Ciprian a făcut două grupuri, fiecare cu descrierea lui: unul cu „Țintă” „Persoană fizică”, pentru proprietari, și unul cu „Țintă” „Proprietate”, pentru parcele. Pe harta proprietăților, în lista „Grupuri”, îl găsește doar pe al doilea. De ce?",
+            "explanation": "Filtrul „Grupuri” al hărții cuprinde „Toate (în grup sau nu)”, „Fără grup” și grupurile de proprietăți ale arhivei. Un grup de persoane fizice nu apare acolo."
+          },
+          "en": {
+            "question": "For the dossier, Ciprian made two groups, each with its description: one with „Țintă” (target) „Persoană fizică”, for the owners, and one with „Țintă” „Proprietate”, for the parcels. On the properties map, in the „Grupuri” list, he finds only the second. Why?",
+            "explanation": "The map's „Grupuri” filter holds „Toate (în grup sau nu)”, „Fără grup” and the archive's groups of properties. A group of natural persons does not appear there."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Primul grup nu a fost încă salvat cu „Salvează grupul”.",
+              "en": "The first group has not been saved yet with „Salvează grupul”."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Lista hărții cuprinde doar grupurile de proprietăți ale arhivei.",
+              "en": "The map's list holds only the archive's groups of properties."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Harta arată doar grupurile care au cel puțin trei membri.",
+              "en": "The map shows only the groups that have at least three members."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Grupurile de persoane apar abia după ce harta se reîncarcă.",
+              "en": "Groups of persons appear only after the map is reloaded."
+            }
+          ]
+        },
+        {
+          "id": "a11",
+          "section": "map-what",
+          "ro": {
+            "question": "Pe harta proprietăților, cu „Grupuri” pe „Toate (în grup sau nu)”, Ciprian nu găsește parcela deloc, deși o deschide fără probleme din lista „Proprietăți”. Pe ecranul ei, „Puncte de contur” este gol. De ce lipsește și ce face?",
+            "explanation": "O proprietate fără colțuri nu are contur, deci nu apare pe hartă. Colțurile i se pot adăuga oricând, în „Puncte de contur”, iar proprietatea se salvează apoi ca de obicei."
+          },
+          "en": {
+            "question": "On the properties map, with „Grupuri” set to „Toate (în grup sau nu)” (all, in a group or not), Ciprian cannot find the parcel at all, though he opens it without trouble from the „Proprietăți” list. On its screen, „Puncte de contur” is empty. Why is it missing and what does he do?",
+            "explanation": "A property without corners has no outline, so it does not appear on the map. Corners can be added to it at any time, in „Puncte de contur”, and the property is then saved as usual."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Harta s-a deschis prea departe; mărește până găsește parcela.",
+              "en": "The map opened too far out; he zooms in until he finds the parcel."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Parcela e duplicată; caută cealaltă înregistrare, care clipește.",
+              "en": "The parcel is a duplicate; he looks for the other record, which blinks."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Fără colțuri nu are contur; îi adaugă colțurile în „Puncte de contur”.",
+              "en": "Without corners it has no outline; he adds its corners in „Puncte de contur”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "O desenează direct pe harta proprietăților, cu „Suprafața unei zone oarecare”.",
+              "en": "He draws it straight on the properties map, with „Suprafața unei zone oarecare”."
+            }
+          ]
+        },
+        {
+          "id": "a12",
+          "section": "map-what-duplicates",
+          "ro": {
+            "question": "Pe harta proprietăților, parcela din dosar clipește în roz. Ce înseamnă pentru dosarul lui Ciprian?",
+            "explanation": "O proprietate care clipește în roz este duplicată: aceeași bucată de teren este trecută de două ori în arhivă. Le deschideți pe amândouă, le comparați și o păstrați pe cea bună."
+          },
+          "en": {
+            "question": "On the properties map, the dossier's parcel blinks pink. What does it mean for Ciprian's dossier?",
+            "explanation": "A property that blinks pink is a duplicate: the same piece of land is entered twice in the archive. You open both, compare them and keep the right one."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Că parcela e deschisă în altă fereastră, cu modificări nesalvate.",
+              "en": "That the parcel is open in another window, with unsaved changes."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Că parcela face parte din grupul ales în filtrul „Grupuri”.",
+              "en": "That the parcel belongs to the group chosen in the „Grupuri” filter."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Că parcela nu are încă tarla și parcelă în „Identificare cadastrală”.",
+              "en": "That the parcel has no tarla and parcel number yet in „Identificare cadastrală”."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Că terenul e trecut de două ori; compară cele două și o păstrează pe cea bună.",
+              "en": "That the land is entered twice; he compares the two and keeps the right one."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "links-associate-kinds",
+          "ro": {
+            "question": "Ciprian leagă contractul de vânzare de parcelă, de pe ecranul parcelei, și caută la „Asociere” un rol precum „Obiect vândut”. Ce alege?",
+            "explanation": "Legătura proprietate – act nu are rol: la „Asociere” nu se alege nimic. Rolurile le au persoanele și firmele, într-un act sau pe o proprietate."
+          },
+          "en": {
+            "question": "Ciprian links the sale contract to the parcel, from the parcel's screen, and looks in „Asociere” (association) for a role such as „Obiect vândut” (object sold). What does he choose?",
+            "explanation": "The property – document link has no role: nothing is chosen in „Asociere”. Roles belong to persons and companies, in a document or on a property."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Nimic: legătura dintre o proprietate și un act nu are rol.",
+              "en": "Nothing: the link between a property and a document has no role."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Inclus în”, din „Tip legătură”.",
+              "en": "„Inclus în” (included in), from „Tip legătură”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Rolul „Proprietar”, ca pentru cumpărător.",
+              "en": "The „Proprietar” (owner) role, as for the buyer."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Titlu anterior al”, ca între două acte.",
+              "en": "„Titlu anterior al” (earlier title of), as between two documents."
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "links-related",
+          "ro": {
+            "question": "Lucrând la dosar pe ecranul parcelei, Ciprian vrea să citească repede contractul legat, fără să plece de pe parcelă. Ce apasă pe rândul contractului din „Legături”?",
+            "explanation": "„Previzualizare” deschide înregistrarea legată alături, fără să plecați de pe ecran. „Vizualizare” o deschide numai pentru citire, pe ecranul ei."
+          },
+          "en": {
+            "question": "Working on the dossier on the parcel's screen, Ciprian wants to read the linked contract quickly, without leaving the parcel. What does he press on the contract's row in „Legături”?",
+            "explanation": "„Previzualizare” (preview) opens the linked record alongside, without leaving the screen. „Vizualizare” (view) opens it read-only, on its own screen."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Vizualizare”, care îl deschide în aceeași fișă.",
+              "en": "„Vizualizare”, which opens it in the same tile."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Relația”, care arată paginile contractului într-o bulă.",
+              "en": "„Relația”, which shows the contract's pages in a bubble."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "„Previzualizare”, care îl deschide alături.",
+              "en": "„Previzualizare”, which opens it alongside."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Cotă”, care arată rezumatul contractului.",
+              "en": "„Cotă”, which shows the contract's summary."
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "links-associate",
+          "ro": {
+            "question": "Ciprian o leagă pe Elena Dumitru de parcelă, ca proprietar, de pe ecranul parcelei. Trebuie să facă legătura și de pe ecranul Elenei, ca dosarul ei să arate parcela?",
+            "explanation": "O asociere se face o singură dată, din oricare capăt, și se vede din amândouă. Pe fișa „Legături” a Elenei apare parcela, cu rolul în paranteză."
+          },
+          "en": {
+            "question": "Ciprian links Elena Dumitru to the parcel, as owner, from the parcel's screen. Must he also make the link from Elena's screen, for her file to show the parcel?",
+            "explanation": "An association is made once, from either end, and is seen from both. On Elena's „Legături” tile the parcel appears, with the role in brackets."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Da, altfel parcela nu apare pe ecranul Elenei.",
+              "en": "Yes, otherwise the parcel does not appear on Elena's screen."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Nu: legătura se face o dată și se vede din ambele capete.",
+              "en": "No: the link is made once and is seen from both ends."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Da, dar fără rol, ca să nu se dubleze legătura.",
+              "en": "Yes, but with no role, so the link is not doubled."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nu, dar parcela apare la Elena abia după ce Elena e salvată din nou.",
+              "en": "No, but the parcel appears on Elena only after Elena is saved again."
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "companies-people-records",
+          "ro": {
+            "question": "O firmă aflată în arhivă a cumpărat o parte din parcelă. Poate Ciprian s-o treacă în dosar ca proprietar, la fel ca pe o persoană fizică?",
+            "explanation": "O firmă poate fi proprietar al unui teren, la fel ca o persoană fizică. Se leagă cu „Asociază proprietate” de pe firmă, sau din celălalt capăt, cu un rol precum „Proprietar” sau „Coproprietari / Coindivizari”, și apare pe proprietate în „Legături”, cu rolul în paranteză."
+          },
+          "en": {
+            "question": "A company in the archive has bought part of the parcel. Can Ciprian put it in the dossier as owner, just like a natural person?",
+            "explanation": "A company can be the owner of a plot, just like a natural person. It is linked with „Asociază proprietate” from the company, or from the other end, with a role such as „Proprietar” or „Coproprietari / Coindivizari” (co-owners), and appears on the property in „Legături”, with the role in brackets."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Nu: o firmă se leagă doar de acte, nu de proprietăți.",
+              "en": "No: a company is linked only to documents, not to properties."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Da, dar doar prin reprezentantul ei legal, legat de parcelă.",
+              "en": "Yes, but only through its legal representative, linked to the parcel."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Da: se leagă de parcelă cu un rol, de exemplu „Proprietar”.",
+              "en": "Yes: it is linked to the parcel with a role, for instance „Proprietar”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Da, dar doar printr-o etichetă cu numele firmei, pe parcelă.",
+              "en": "Yes, but only through a tag with the company's name, on the parcel."
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "documents-parties",
+          "ro": {
+            "question": "Doi frați au cumpărat parcela împreună, câte o jumătate, în indiviziune. Unde notează Ciprian, pentru dosar, că o dețin în indiviziune?",
+            "explanation": "Pe contract, „Cotă” de pe rândul fiecărui cumpărător ține „Cotă-parte” (de exemplu 1/2), „Suprafață echivalentă (mp)” și „Mod de deținere”, unde se alege „indiviziune”."
+          },
+          "en": {
+            "question": "Two brothers bought the parcel together, a half each, in undivided co-ownership. Where does Ciprian record, for the dossier, that they hold it „în indiviziune” (undivided)?",
+            "explanation": "On the contract, the „Cotă” on each buyer's row holds „Cotă-parte” (share, for instance 1/2), „Suprafață echivalentă (mp)” (equivalent area) and „Mod de deținere” (manner of holding), where „indiviziune” is chosen."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Pe parcelă, ca etichetă „indiviziune”, în „Etichete și grupuri”.",
+              "en": "On the parcel, as an „indiviziune” tag, in „Etichete și grupuri”."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Pe contract, la „Cotă” fiecărui cumpărător, în „Mod de deținere”.",
+              "en": "On the contract, in each buyer's „Cotă”, under „Mod de deținere”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Pe parcelă, în „Clasificare”, la „Relevanță”.",
+              "en": "On the parcel, in „Clasificare”, under „Relevanță” (relevance)."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Pe contract, în „Obiectul vânzării”, la „Scop vânzare”.",
+              "en": "On the contract, in „Obiectul vânzării”, under „Scop vânzare” (purpose of sale)."
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "properties-add-one-parcel",
+          "ro": {
+            "question": "Pentru dosar, Ciprian adaugă de mână parcela, fără să știe că există deja în arhivă cu aceeași tarla și aceeași parcelă. Ce se întâmplă la „Salvează”?",
+            "explanation": "Arhiva ține o singură proprietate pentru fiecare parcelă: aplicația refuză salvarea, scrie „Această parcelă are deja o proprietate”, iar linkul „Deschide …” duce la proprietatea care există. Nu se scrie nimic."
+          },
+          "en": {
+            "question": "For the dossier, Ciprian adds the parcel by hand, not knowing that it already exists in the archive with the same tarla and the same parcel number. What happens on „Salvează” (save)?",
+            "explanation": "The archive holds a single property for each parcel: the application refuses the save, writes „Această parcelă are deja o proprietate” (this parcel already has a property), and the „Deschide …” (open) link leads to the existing property. Nothing is written."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Se salvează a doua proprietate, care apoi clipește în roz pe hartă.",
+              "en": "The second property is saved, and then blinks pink on the map."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Se salvează, iar cele două se unesc într-o singură proprietate.",
+              "en": "It is saved, and the two merge into a single property."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Se salvează ca versiune nouă a proprietății care există.",
+              "en": "It is saved as a new version of the existing property."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "E refuzată, cu un link „Deschide …” spre proprietatea care există.",
+              "en": "It is refused, with a „Deschide …” link to the existing property."
+            }
+          ]
+        },
+        {
+          "id": "b7",
+          "section": "links-references-properties",
+          "ro": {
+            "question": "Ciprian leagă parcela de terenul vecin cu „Adiacent”, de pe ecranul parcelei. Contează din ce capăt a făcut legătura?",
+            "explanation": "Doar „Inclus în”, „Subdiviziune a” și „Acces prin” au sens. „Adiacent”, „Contiguu”, „Suprapus cu” și „Alipit de” spun același lucru din ambele capete."
+          },
+          "en": {
+            "question": "Ciprian links the parcel to the neighbouring plot with „Adiacent” (adjacent), from the parcel's screen. Does it matter from which end he made the link?",
+            "explanation": "Only „Inclus în”, „Subdiviziune a” (subdivision of) and „Acces prin” (access through) have a direction. „Adiacent”, „Contiguu”, „Suprapus cu” and „Alipit de” say the same from both ends."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Nu: „Adiacent” spune același lucru din ambele capete.",
+              "en": "No: „Adiacent” says the same from both ends."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Da: trebuie făcută de pe terenul vecin, ca să se citească bine.",
+              "en": "Yes: it must be made from the neighbouring plot, to read correctly."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Da: trebuie făcută din ambele capete, câte o dată.",
+              "en": "Yes: it must be made from both ends, once each."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nu, dar numai dacă cele două au aceeași tarla.",
+              "en": "No, but only if the two have the same tarla."
+            }
+          ]
+        },
+        {
+          "id": "b8",
+          "section": "properties-corners-table",
+          "ro": {
+            "question": "Topograful îi cere lui Ciprian colțurile parcelei cu numerele din planul lui, în coordonate Stereo 70. Ce îi trimite din „Puncte de contur”?",
+            "explanation": "„Nr. orig.” este numărul colțului în fișierul sau planul din care vine, iar „Nr.” este doar ordinea. „Afișare:” „Stereo 70” arată coordonatele ca Nord și Est, în metri."
+          },
+          "en": {
+            "question": "The surveyor asks Ciprian for the parcel's corners with the numbers from his plan, in Stereo 70 coordinates. What does he send him from „Puncte de contur”?",
+            "explanation": "„Nr. orig.” is the corner's number in the file or plan it comes from, while „Nr.” is only the order. „Afișare:” (display) „Stereo 70” shows the coordinates as North and East, in metres."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Coloana „Nr.” și coordonatele cu „Afișare:” „DD”.",
+              "en": "The „Nr.” column and the coordinates with „Afișare:” „DD”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Coloana „Nr.” și coordonatele cu „Afișare:” „Stereo 70”.",
+              "en": "The „Nr.” column and the coordinates with „Afișare:” „Stereo 70”."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Coloana „Nr. orig.” și coordonatele cu „Afișare:” „Stereo 70”.",
+              "en": "The „Nr. orig.” column and the coordinates with „Afișare:” „Stereo 70”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Coloana „Nr. orig.” și coordonatele cu „Afișare:” „DMS”.",
+              "en": "The „Nr. orig.” column and the coordinates with „Afișare:” „DMS”."
+            }
+          ]
+        },
+        {
+          "id": "b9",
+          "section": "map-area-delimited",
+          "ro": {
+            "question": "Parcela și terenul vecin, amândouă cu colțuri, se vând împreună, iar dosarul cere suprafața lor laolaltă. Cum o află Ciprian pe hartă?",
+            "explanation": "Cu „Suprafața unei zone delimitate”, alegând în ordine colțurile de pe marginea din afară a celor două terenuri vecine, aflați suprafața lor împreună. Colțurile alese sărind de pe o latură pe alta încrucișează laturile."
+          },
+          "en": {
+            "question": "The parcel and the neighbouring plot, both with corners, are sold together, and the dossier needs their area combined. How does Ciprian find it on the map?",
+            "explanation": "With „Suprafața unei zone delimitate”, choosing in order the corners along the outer edge of the two neighbouring plots, you find their area together. Corners chosen by jumping from one side to another make the sides cross."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Le pune într-un grup și citește suprafața grupului pe hartă.",
+              "en": "He puts them in a group and reads the group's area on the map."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Alege în ordine colțurile de pe marginea lor din afară, cu „Suprafața unei zone delimitate”.",
+              "en": "He picks in order the corners along their outer edge, with „Suprafața unei zone delimitate”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Alege cu „Selectează” amândouă terenurile și citește suprafața selecției.",
+              "en": "He picks both plots with „Selectează” (select) and reads the selection's area."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Alege, cu aceeași unealtă, toate colțurile parcelei, apoi pe ale vecinului.",
+              "en": "He picks, with the same tool, all the parcel's corners, then the neighbour's."
+            }
+          ]
+        },
+        {
+          "id": "b10",
+          "section": "links-classify-groups",
+          "ro": {
+            "question": "Ciprian a făcut grupul dosarului cu „Țintă” „Proprietate” și vrea să pună în el și contractul de vânzare al parcelei. Se poate?",
+            "explanation": "Un grup strânge înregistrări de un singur fel, cel ales la „Țintă”, iar pe ecranul grupului „Țintă” se poate doar citi. Pentru acte e nevoie de un grup cu „Țintă” „Document”."
+          },
+          "en": {
+            "question": "Ciprian made the dossier's group with „Țintă” „Proprietate” and wants to put the parcel's sale contract in it too. Can he?",
+            "explanation": "A group gathers records of one kind, the one chosen at „Țintă”, and on the group's screen „Țintă” is read-only. Documents need a group with „Țintă” „Document”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Da, de pe contract, cu „+ Adaugă în grup”.",
+              "en": "Yes, from the contract, with „+ Adaugă în grup” (add to group)."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Da, dacă întâi leagă contractul de parcelă.",
+              "en": "Yes, if he first links the contract to the parcel."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Nu: actele merg într-un grup cu „Țintă” „Document”.",
+              "en": "No: documents go in a group with „Țintă” „Document”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nu, dar poate schimba „Țintă” pe ecranul grupului.",
+              "en": "No, but he can change „Țintă” on the group's screen."
+            }
+          ]
+        },
+        {
+          "id": "b11",
+          "section": "links-classify-groups",
+          "ro": {
+            "question": "Dosarul e gata, iar Ciprian vrea să vadă într-o singură listă toate parcelele grupului GRP-007. Unde le găsește?",
+            "explanation": "Membrii unui grup îi găsiți în „Căutare globală”, după „Cod grup”."
+          },
+          "en": {
+            "question": "The dossier is done, and Ciprian wants to see in a single list all the parcels of group GRP-007. Where does he find them?",
+            "explanation": "You find a group's members in „Căutare globală”, by „Cod grup” (group code)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "În „Căutare globală”, cu GRP-007 la „Cod grup”.",
+              "en": "In „Căutare globală”, with GRP-007 at „Cod grup”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "În lista „Proprietăți”, cu GRP-007 în caseta de căutare.",
+              "en": "In the „Proprietăți” list, with GRP-007 in the search box."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În „Administrare” → „Etichete”, la eticheta grupului.",
+              "en": "In „Administrare” → „Etichete”, under the group's tag."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Pe „Legături” al oricărei parcele din grup.",
+              "en": "On the „Legături” of any parcel in the group."
+            }
+          ]
+        },
+        {
+          "id": "b12",
+          "section": "map-what-groups",
+          "ro": {
+            "question": "Înainte să închidă dosarul, Ciprian vrea să vadă pe hartă ce terenuri nu fac parte din niciun grup. Ce lasă bifat la „Grupuri”?",
+            "explanation": "„Grupuri” are bifele „Toate (în grup sau nu)”, „Fără grup” și grupurile de proprietăți ale arhivei; cu ele alegeți ce proprietăți desenează harta. „Fără grup” lasă pe hartă terenurile din niciun grup."
+          },
+          "en": {
+            "question": "Before closing the dossier, Ciprian wants to see on the map which plots belong to no group. What does he leave ticked in „Grupuri”?",
+            "explanation": "„Grupuri” has the ticks „Toate (în grup sau nu)”, „Fără grup” (not in a group) and the archive's groups of properties; with them you choose which properties the map draws. „Fără grup” leaves on the map the plots in no group."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Toate (în grup sau nu)”.",
+              "en": "„Toate (în grup sau nu)”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Toate grupurile din listă.",
+              "en": "Every group in the list."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "„Fără grup”.",
+              "en": "„Fără grup”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Niciun grup denumit”.",
+              "en": "„Niciun grup denumit” (no named group)."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,774 @@
+{
+  "skill": "persons-read-inheritance-tree",
+  "manual": [
+    "reports-inheritance-levels",
+    "reports-inheritance",
+    "persons-relatives-tree"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "reports-inheritance-levels",
+          "ro": {
+            "question": "Pe „Arbori de moștenire”, Ciprian vede la familia Munteanu doar puncte și prenume. Vrea să vadă și anul nașterii fiecăruia. Ce face?",
+            "explanation": "Nivelul 1 arată un punct și prenumele, nivelul 2 numele și anul nașterii; rotiți rotița mouse-ului peste arbore ca să treceți de la un nivel la altul."
+          },
+          "en": {
+            "question": "On „Arbori de moștenire” (inheritance trees), Ciprian sees only dots and first names for the Munteanu family. He also wants to see each one's year of birth. What does he do?",
+            "explanation": "Level 1 shows a dot and the first name, level 2 the name and the year of birth; turn the mouse wheel over the tree to go from one level to another."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Trage cu mouse-ul arborele spre centrul paginii.",
+              "en": "He drags the tree with the mouse towards the centre of the page."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Pornește „Acte comune”, care adaugă anii pe fiecare persoană.",
+              "en": "He turns on „Acte comune” (shared documents), which adds the years on each person."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Rotește rotița mouse-ului peste arbore, până la nivelul 2.",
+              "en": "He turns the mouse wheel over the tree, up to level 2."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Mută „Anul” de pe „azi”, ca să apară anii nașterii.",
+              "en": "He moves „Anul” (the year) off „azi” (today), so that the years of birth appear."
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "reports-inheritance-levels",
+          "ro": {
+            "question": "Ciprian vrea să citească direct în arbore data nașterii și genul Elenei Munteanu, de forma „n. 15.01.1982 · femeie”. Pe ce nivel le găsește?",
+            "explanation": "Nivelul 3 arată numele, data nașterii și genul, de exemplu „n. 15.01.1982 · femeie”, și legăturile de familie."
+          },
+          "en": {
+            "question": "Ciprian wants to read Elena Munteanu's date of birth and gender straight in the tree, in the form „n. 15.01.1982 · femeie” (born 15.01.1982, female). On which level does he find them?",
+            "explanation": "Level 3 shows the name, the date of birth and the gender, for instance „n. 15.01.1982 · femeie”, and the family ties."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Pe nivelul 1, sub punctul ei.",
+              "en": "On level 1, under her dot."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Pe nivelul 2, lângă numele ei.",
+              "en": "On level 2, beside her name."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Pe nivelul 3, cel mai detaliat.",
+              "en": "On level 3, the most detailed."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Pe niciunul: genul apare doar pe ecranul persoanei.",
+              "en": "On none: the gender appears only on the person's screen."
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "reports-inheritance-levels",
+          "ro": {
+            "question": "Familia Munteanu are multe persoane, iar Ciprian vrea să ajungă repede la Andrei Munteanu în arbore. Ce face?",
+            "explanation": "Scrieți numele în „Caută o persoană…” și apăsați „Caută”: arborele se centrează pe persoană, la nivelul cel mai apropiat, iar cartea ei se deschide alături."
+          },
+          "en": {
+            "question": "The Munteanu family has many persons, and Ciprian wants to get quickly to Andrei Munteanu in the tree. What does he do?",
+            "explanation": "Type the name into „Caută o persoană…” (search for a person) and press „Caută” (search): the tree centres on the person, at the nearest level, and their card opens alongside."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Scrie „Andrei Munteanu” în „Caută o persoană…” și apasă „Caută”.",
+              "en": "He types „Andrei Munteanu” into „Caută o persoană…” and presses „Caută”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Folosește „Căutare globală”, care centrează arborele pe Andrei și îi deschide cartea.",
+              "en": "He uses „Căutare globală” (global search), which centres the tree on Andrei and opens his card."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Trece la nivelul 3 și citește numele pe rând, bandă cu bandă.",
+              "en": "He goes to level 3 and reads the names one by one, lane by lane."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Pune „Anul” pe anul nașterii lui, ca să rămână doar el.",
+              "en": "He sets „Anul” to his year of birth, so that only he remains."
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "reports-inheritance",
+          "ro": {
+            "question": "Ciprian caută „Radu Popa” în „Caută o persoană…” și primește „Nicio persoană cu acest nume în arbore.”, deși Radu este în arhivă și apare pe trei acte. Care este explicația cea mai probabilă?",
+            "explanation": "„Arbori de moștenire” desenează doar persoanele care au o legătură de familie, adică o legătură cu un rol marcat „Rudenie” în „Roluri Persoane”; actele nu ajung ca o persoană să intre în arbore."
+          },
+          "en": {
+            "question": "Ciprian searches for „Radu Popa” in „Caută o persoană…” and gets „Nicio persoană cu acest nume în arbore.” (no person with this name in the tree), although Radu is in the archive and appears on three documents. What is the most likely explanation?",
+            "explanation": "„Arbori de moștenire” draws only the persons who have a family tie, that is a tie with a role marked „Rudenie” (kinship) in „Roluri Persoane”; documents are not enough for a person to enter the tree."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Arborele arată doar persoanele decedate, cu „†”.",
+              "en": "The tree shows only deceased persons, with „†”."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Radu nu are încă nicio legătură cu un rol de rudenie.",
+              "en": "Radu does not yet have any tie with a kinship role."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Căutarea merge doar la nivelul 3, iar arborele este pe nivelul 1.",
+              "en": "The search works only on level 3, and the tree is on level 1."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Arborele arată doar persoanele care au acte comune cu o rudă.",
+              "en": "The tree shows only persons who share documents with a relative."
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "reports-inheritance",
+          "ro": {
+            "question": "Pe „Arbori de moștenire”, Ciprian observă că sora lui Andrei Munteanu lipsește și vrea s-o adauge chiar acolo, pe desen. Cum procedează?",
+            "explanation": "Ecranul „Arbori de moștenire” este doar pentru citit: rudele se leagă din fișa „Arbore de moștenire” a persoanei sau din „Legături”. Un clic pe numele lui Andrei îi deschide ecranul, cu panoul rudelor deja deschis."
+          },
+          "en": {
+            "question": "On „Arbori de moștenire”, Ciprian notices that Andrei Munteanu's sister is missing and wants to add her right there, on the drawing. How does he go about it?",
+            "explanation": "The „Arbori de moștenire” screen is for reading only: relatives are linked from the person's „Arbore de moștenire” tile or from „Legături”. A click on Andrei's name opens his screen, with the relatives' panel already open."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Trage cu mouse-ul o persoană nouă lângă Andrei, pe banda familiei.",
+              "en": "He drags a new person with the mouse next to Andrei, on the family's lane."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Face clic dreapta pe Andrei și alege rudenia dintr-un meniu.",
+              "en": "He right-clicks Andrei and chooses the kinship from a menu."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Trece la nivelul 3, unde apare butonul de adăugare a unei rude.",
+              "en": "He goes to level 3, where the button for adding a relative appears."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Deschide ecranul lui Andrei din arbore și o leagă din „Arbore de moștenire”.",
+              "en": "He opens Andrei's screen from the tree and links her from „Arbore de moștenire”."
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "reports-inheritance-levels",
+          "ro": {
+            "question": "În arbore, Gheorghe și Elena Munteanu stau unul lângă altul, iar Andrei este pe rândul de dedesubt, sub ei. Ce citește Ciprian de aici?",
+            "explanation": "Generațiile se citesc de sus în jos; soțul și soția stau unul lângă altul, iar copilul sub părinții lui."
+          },
+          "en": {
+            "question": "In the tree, Gheorghe and Elena Munteanu stand side by side, and Andrei is on the row below, under them. What does Ciprian read from this?",
+            "explanation": "The generations read from top to bottom; husband and wife stand side by side, and a child under its parents."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Gheorghe și Elena sunt soț și soție, iar Andrei este copilul lor.",
+              "en": "Gheorghe and Elena are husband and wife, and Andrei is their child."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Gheorghe și Elena sunt frați, iar Andrei este nepotul lor.",
+              "en": "Gheorghe and Elena are siblings, and Andrei is their nephew."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Andrei este părintele lor: generațiile se citesc de jos în sus.",
+              "en": "Andrei is their parent: the generations read from bottom to top."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Toți trei sunt frați, așezați după anul nașterii.",
+              "en": "All three are siblings, laid out by year of birth."
+            }
+          ]
+        },
+        {
+          "id": "a7",
+          "section": "reports-inheritance-levels",
+          "ro": {
+            "question": "Deasupra arborelui scrie că sunt desenate trei familii: Munteanu, Stan și Popa, fără nicio rudenie între ele. Cum le deosebește Ciprian în desen?",
+            "explanation": "Fiecare familie are banda ei, separată de celelalte; deasupra arborelui scrie câte persoane și câte familii sunt desenate."
+          },
+          "en": {
+            "question": "Above the tree it says that three families are drawn: Munteanu, Stan and Popa, with no kinship between them. How does Ciprian tell them apart in the drawing?",
+            "explanation": "Each family has its own lane, apart from the others; above the tree it says how many persons and how many families are drawn."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "După culoare: fiecare familie are culoarea ei.",
+              "en": "By colour: each family has its own colour."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Fiecare familie stă pe banda ei, separată de celelalte.",
+              "en": "Each family stands on its own lane, apart from the others."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Doar una se vede odată; celelalte se aleg dintr-o listă.",
+              "en": "Only one is seen at a time; the others are chosen from a list."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Stau amestecate; le deosebește doar căutând fiecare nume.",
+              "en": "They are mixed together; he tells them apart only by searching each name."
+            }
+          ]
+        },
+        {
+          "id": "a8",
+          "section": "reports-inheritance-levels",
+          "ro": {
+            "question": "Ciprian este pe ecranul lui Andrei Munteanu, în fișa „Arbore de moștenire”, și vrea să vadă familia pe toată pagina, centrată pe Andrei. Ce apasă?",
+            "explanation": "Din fișa „Arbore de moștenire” a unei persoane, „Deschide arborele întreg” deschide ecranul „Arbori de moștenire” centrat pe ea."
+          },
+          "en": {
+            "question": "Ciprian is on Andrei Munteanu's screen, in the „Arbore de moștenire” tile, and wants to see the family over the whole page, centred on Andrei. What does he press?",
+            "explanation": "From a person's „Arbore de moștenire” tile, „Deschide arborele întreg” (open the whole tree) opens the „Arbori de moștenire” screen centred on them."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Adaugă sau scoate o rudă”, care mărește desenul.",
+              "en": "„Adaugă sau scoate o rudă” (add or remove a relative), which enlarges the drawing."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Bifa „Arbore de moștenire” din capul ecranului, a doua oară.",
+              "en": "The „Arbore de moștenire” tick at the top of the screen, a second time."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "„Deschide arborele întreg”, din fișa „Arbore de moștenire”.",
+              "en": "„Deschide arborele întreg”, in the „Arbore de moștenire” tile."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Previzualizare”, din lista persoanelor fizice.",
+              "en": "„Previzualizare” (preview), in the list of natural persons."
+            }
+          ]
+        },
+        {
+          "id": "a9",
+          "section": "reports-inheritance-levels",
+          "ro": {
+            "question": "Dintr-un certificat de moștenitor, Ciprian știe că Gheorghe Munteanu a murit în 2015, dar în arbore Gheorghe nu are nici „†”, nici anii vieții. Ce face ca arborele să-l arate decedat?",
+            "explanation": "În arbore, o persoană marcată „Decedat” are „†” după nume și anii vieții sub el; marcajul se pune pe ecranul persoanei, bifând „Decedat” și scriind „Data decesului”."
+          },
+          "en": {
+            "question": "From a certificate of inheritance, Ciprian knows that Gheorghe Munteanu died in 2015, but in the tree Gheorghe has neither „†” nor the years of his life. What makes the tree show him as deceased?",
+            "explanation": "In the tree, a person marked „Decedat” (deceased) has „†” after the name and the years of their life under it; the mark is set on the person's screen, by ticking „Decedat” and writing „Data decesului” (date of death)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Mută „Anul” în 2015, ca Gheorghe să primească „†”.",
+              "en": "He moves „Anul” to 2015, so that Gheorghe gets „†”."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Pe ecranul lui Gheorghe bifează „Decedat”, scrie data decesului și salvează.",
+              "en": "On Gheorghe's screen he ticks „Decedat”, writes the date of death and saves."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Leagă certificatul de moștenitor de Gheorghe; arborele citește decesul din certificat.",
+              "en": "He links the certificate of inheritance to Gheorghe; the tree reads the death from the certificate."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Trece arborele la nivelul 3, unde apare și decesul.",
+              "en": "He takes the tree to level 3, where the death appears too."
+            }
+          ]
+        },
+        {
+          "id": "a10",
+          "section": "reports-inheritance",
+          "ro": {
+            "question": "Un notar îi cere lui Ciprian CNP-ul lui Andrei Munteanu, iar Ciprian are deschis „Arbori de moștenire”. Unde îl găsește?",
+            "explanation": "În arbore nu apar CNP-ul, actul de identitate sau adresa: fiecare persoană este arătată doar prin nume, poreclă, gen, data nașterii și, dacă e cazul, deces. CNP-ul se citește pe ecranul persoanei."
+          },
+          "en": {
+            "question": "A notary asks Ciprian for Andrei Munteanu's CNP, and Ciprian has „Arbori de moștenire” open. Where does he find it?",
+            "explanation": "The tree shows no CNP, identity card or address: each person is shown only by name, nickname, gender, date of birth and, where it applies, the death. The CNP is read on the person's screen."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Pe nivelul 3, sub data nașterii.",
+              "en": "On level 3, under the date of birth."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "În cartea mică ce apare când ține mouse-ul pe Andrei, sub data nașterii.",
+              "en": "In the small card that appears when he holds the mouse over Andrei, under the date of birth."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În cartea din lateral, deschisă cu un clic pe Andrei.",
+              "en": "In the side card, opened with a click on Andrei."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Nu în arbore: îl deschide pe Andrei și îl citește pe ecranul lui.",
+              "en": "Not in the tree: he opens Andrei and reads it on his screen."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "reports-inheritance-levels",
+          "ro": {
+            "question": "Bara arborelui arată „Nivelul 2 din 3 — rotița mărește, tragerea mută”, iar familia Stan iese din pagină, în dreapta. Cum o aduce Ciprian în fața ochilor, fără să schimbe nivelul?",
+            "explanation": "Rotița mouse-ului trece de la un nivel la altul, iar tragerea cu mouse-ul mută arborele pe pagină."
+          },
+          "en": {
+            "question": "The tree's bar shows „Nivelul 2 din 3 — rotița mărește, tragerea mută” (level 2 of 3 — the wheel zooms, dragging moves), and the Stan family runs off the page, on the right. How does Ciprian bring it into view without changing the level?",
+            "explanation": "The mouse wheel goes from one level to another, and dragging with the mouse moves the tree about the page."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Trage arborele cu mouse-ul spre stânga.",
+              "en": "He drags the tree with the mouse to the left."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Rotește rotița mouse-ului peste familia Stan.",
+              "en": "He turns the mouse wheel over the Stan family."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Mută „Anul” până când familia intră în pagină.",
+              "en": "He moves „Anul” until the family fits on the page."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Pornește „Acte comune”, care strânge familiile pe pagină.",
+              "en": "He turns on „Acte comune”, which packs the families onto the page."
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "reports-inheritance-levels",
+          "ro": {
+            "question": "Ciprian vrea să afle repede câte legături de familie are Maria Stan, fără să plece de pe „Arbori de moștenire” și fără să deschidă nimic. Ce face?",
+            "explanation": "Când țineți mouse-ul pe o persoană, o carte mică îi arată numele, data nașterii și câte legături de familie are."
+          },
+          "en": {
+            "question": "Ciprian wants to find out quickly how many family ties Maria Stan has, without leaving „Arbori de moștenire” and without opening anything. What does he do?",
+            "explanation": "When you hold the mouse over a person, a small card shows their name, their date of birth and how many family ties they have."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Trece la nivelul 1 și numără liniile din jurul punctului ei.",
+              "en": "He goes to level 1 and counts the lines around her dot."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Pornește „Acte comune” și citește numărul de lângă nume.",
+              "en": "He turns on „Acte comune” and reads the number beside the name."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Ține mouse-ul pe Maria: cartea mică arată câte legături are.",
+              "en": "He holds the mouse over Maria: the small card shows how many ties she has."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "O caută în „Caută o persoană…”; numărul apare în bară.",
+              "en": "He searches for her in „Caută o persoană…”; the number appears in the bar."
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "persons-relatives-tree",
+          "ro": {
+            "question": "În arbore, Ciprian apasă pe numele Mariei Stan, pentru că vrea să-i lege fiul, care lipsește. Ce găsește când se deschide ecranul ei?",
+            "explanation": "Când ajungeți la persoană din „Rapoarte” → „Arbori de moștenire”, cu un clic pe numele ei, panoul legăturilor de familie din fișa „Arbore de moștenire” este deja deschis."
+          },
+          "en": {
+            "question": "In the tree, Ciprian clicks Maria Stan's name, because he wants to link her son, who is missing. What does he find when her screen opens?",
+            "explanation": "When you reach the person from „Rapoarte” → „Arbori de moștenire”, with a click on their name, the panel of family ties in the „Arbore de moștenire” tile is already open."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Fișa „Identitate” în modificare, cu „Rudenie” printre câmpuri.",
+              "en": "The „Identitate” (identity) tile in editing, with „Rudenie” among its fields."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Panoul legăturilor de familie din „Arbore de moștenire”, deja deschis.",
+              "en": "The panel of family ties in „Arbore de moștenire”, already open."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Fereastra „Asociere persoană corelată”, deschisă de la sine.",
+              "en": "The window „Asociere persoană corelată” (associate related person), opened on its own."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Un ecran doar de citit; rudele se leagă numai din „Legături”, cu „Asociază persoană”.",
+              "en": "A read-only screen; relatives are linked only from „Legături”, with „Asociază persoană”."
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "persons-relatives-tree",
+          "ro": {
+            "question": "Pe ecranul Mariei Stan, „Legături” are trei acte și o firmă, dar fișa „Arbore de moștenire” scrie „Nicio legătură de familie încă.”. De ce?",
+            "explanation": "În arbore intră doar legăturile cu un rol de rudenie — rolurile marcate „Rudenie” în „Roluri Persoane”; actele și firmele nu sunt legături de familie."
+          },
+          "en": {
+            "question": "On Maria Stan's screen, „Legături” has three documents and a company, but the „Arbore de moștenire” tile says „Nicio legătură de familie încă.” (no family tie yet). Why?",
+            "explanation": "Only links with a kinship role go into the tree — the roles marked „Rudenie” in „Roluri Persoane”; documents and companies are not family ties."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Fișa arată doar rudele care apar și ele pe aceleași acte, iar Maria nu are rude pe ele.",
+              "en": "The tile shows only relatives who also appear on the same documents, and Maria has none on hers."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Arborele se completează doar după „Deschide arborele întreg”.",
+              "en": "The tree fills in only after „Deschide arborele întreg”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Maria nu are „Gen” completat, iar arborele nu o poate așeza.",
+              "en": "Maria has no „Gen” filled in, and the tree cannot place her."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "În arbore intră doar legături cu rol de rudenie, iar Maria nu are niciuna.",
+              "en": "Only ties with a kinship role go into the tree, and Maria has none."
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "reports-inheritance",
+          "ro": {
+            "question": "Administratorul a făcut un rol nou, „Văr”, pentru legătura dintre două persoane. Ciprian l-a legat cu el pe Ion Stan de Radu Popa, dar Radu nu apare în arbore lângă Ion. Ce se verifică întâi?",
+            "explanation": "„Arbori de moștenire” desenează doar legăturile cu un rol marcat „Rudenie” în „Roluri Persoane”; un rol fără rudenie aleasă nu aduce persoana în arbore."
+          },
+          "en": {
+            "question": "The administrator has made a new role, „Văr” (cousin), for the link between two persons. Ciprian used it to link Ion Stan to Radu Popa, but Radu does not appear in the tree next to Ion. What is checked first?",
+            "explanation": "„Arbori de moștenire” draws only the ties with a role marked „Rudenie” in „Roluri Persoane”; a role with no kinship chosen does not bring the person into the tree."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Dacă rolul „Văr” are aleasă o rudenie la „Rudenie”, în „Roluri Persoane”.",
+              "en": "Whether the role „Văr” has a kinship chosen under „Rudenie”, in „Roluri Persoane”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Dacă Radu apare pe vreun act împreună cu Ion, la „Acte comune”.",
+              "en": "Whether Radu appears on some document together with Ion, under „Acte comune”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Dacă arborele este pe nivelul 3, singurul care arată verii.",
+              "en": "Whether the tree is on level 3, the only one that shows cousins."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Dacă „Anul” este pe „azi”, nu pe anul legăturii.",
+              "en": "Whether „Anul” is on „azi”, not on the year of the link."
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "reports-inheritance",
+          "ro": {
+            "question": "Ciprian vrea să vadă dintr-o privire toate familiile din arhivă, nu doar pe a Mariei Stan. Unde se uită?",
+            "explanation": "„Arbori de moștenire” desenează, pe toată pagina, fiecare persoană fizică ce are o legătură de familie, fiecare familie pe banda ei."
+          },
+          "en": {
+            "question": "Ciprian wants to see all the families in the archive at a glance, not only Maria Stan's. Where does he look?",
+            "explanation": "„Arbori de moștenire” draws, over the whole page, every natural person who has a family tie, each family on its own lane."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "În fișa „Arbore de moștenire” a Mariei, care le arată pe toate.",
+              "en": "In Maria's „Arbore de moștenire” tile, which shows them all."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "În „Rapoarte” → „Arbori de moștenire”, unde sunt desenate toate.",
+              "en": "In „Rapoarte” → „Arbori de moștenire”, where they are all drawn."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În „Căutare globală”, filtrată pe persoanele cu rude.",
+              "en": "In „Căutare globală”, filtered on persons with relatives."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "În lista „Persoane Fizice”, cu o coloană „Rudenie” adăugată.",
+              "en": "In the „Persoane Fizice” list, with a „Rudenie” column added."
+            }
+          ]
+        },
+        {
+          "id": "b7",
+          "section": "reports-inheritance-levels",
+          "ro": {
+            "question": "Arborele este pe nivelul 1, cu puncte și prenume. Ciprian caută „Ion Stan” cu „Caută”. Ce se întâmplă?",
+            "explanation": "Arborele se centrează pe persoana căutată, la nivelul cel mai apropiat, iar cartea ei se deschide alături."
+          },
+          "en": {
+            "question": "The tree is on level 1, with dots and first names. Ciprian searches for „Ion Stan” with „Caută”. What happens?",
+            "explanation": "The tree centres on the person searched for, at the nearest level, and their card opens alongside."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Se deschide direct ecranul lui Ion, cu fișele lui.",
+              "en": "Ion's screen opens straight away, with his tiles."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Arborele rămâne pe loc, iar punctul lui Ion se colorează.",
+              "en": "The tree stays where it is, and Ion's dot changes colour."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Arborele se centrează pe Ion, iar cartea lui se deschide alături.",
+              "en": "The tree centres on Ion, and his card opens alongside."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Arborele ascunde celelalte familii și o păstrează pe ecran doar pe a lui Ion.",
+              "en": "The tree hides the other families and keeps only Ion's on the screen."
+            }
+          ]
+        },
+        {
+          "id": "b8",
+          "section": "reports-inheritance-levels",
+          "ro": {
+            "question": "Familia Stan are peste patruzeci de persoane, pe patru generații. Ciprian vrea s-o vadă toată dintr-o privire, ca să înțeleagă cum se leagă ramurile. Ce nivel alege?",
+            "explanation": "Nivelul 1 arată un punct și prenumele, ca să vedeți o familie mare dintr-o privire."
+          },
+          "en": {
+            "question": "The Stan family has over forty persons, across four generations. Ciprian wants to see all of it at a glance, to understand how the branches join. Which level does he choose?",
+            "explanation": "Level 1 shows a dot and the first name, so that you see a large family at a glance."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Nivelul 1: un punct și prenumele fiecăruia.",
+              "en": "Level 1: a dot and each one's first name."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Nivelul 2: numele și anul nașterii.",
+              "en": "Level 2: the name and the year of birth."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Nivelul 3: numele, data nașterii, genul și legăturile de familie.",
+              "en": "Level 3: the name, the date of birth, the gender and the family ties."
+            }
+          ]
+        },
+        {
+          "id": "b9",
+          "section": "reports-inheritance",
+          "ro": {
+            "question": "Ciprian vrea să-i arate unui client, pe ecran, arborele familiei Stan, dar se teme că acolo s-ar vedea CNP-urile și adresele rudelor. Are dreptate?",
+            "explanation": "În arbore nu apar CNP-ul, actul de identitate sau adresa: fiecare persoană este arătată doar prin nume, poreclă, gen, data nașterii și, dacă e cazul, deces."
+          },
+          "en": {
+            "question": "Ciprian wants to show a client the Stan family's tree on screen, but fears that the relatives' CNPs and addresses would show there. Is he right?",
+            "explanation": "The tree shows no CNP, identity card or address: each person is shown only by name, nickname, gender, date of birth and, where it applies, the death."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Da: la nivelul 3 apar și CNP-ul, și adresa.",
+              "en": "Yes: at level 3 both the CNP and the address appear."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Doar în parte: adresa nu apare, dar CNP-ul e în cartea mică.",
+              "en": "Only partly: the address does not appear, but the CNP is in the small card."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Nu: arborele arată doar nume, poreclă, gen, naștere și deces.",
+              "en": "No: the tree shows only name, nickname, gender, birth and death."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Da, dar numai pentru persoanele care au acte în arhivă.",
+              "en": "Yes, but only for the persons who have documents in the archive."
+            }
+          ]
+        },
+        {
+          "id": "b10",
+          "section": "persons-relatives-tree",
+          "ro": {
+            "question": "Pe ecranul Mariei Stan, Ciprian vrea să-i vadă în fișa „Arbore de moștenire” străbunicii și strănepoții, plus fratele și soțul ei. Îi arată fișa?",
+            "explanation": "Fișa „Arbore de moștenire” desenează părinții și bunicii până la străbunici, copiii până la strănepoți, frații și soțul sau soția."
+          },
+          "en": {
+            "question": "On Maria Stan's screen, Ciprian wants to see in the „Arbore de moștenire” tile her great-grandparents and great-grandchildren, plus her brother and her husband. Does the tile show them?",
+            "explanation": "The „Arbore de moștenire” tile draws the parents and grandparents up to great-grandparents, the children down to great-grandchildren, the siblings and the husband or wife."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Doar părinții și copiii; restul se văd numai pe „Arbori de moștenire”.",
+              "en": "Only the parents and children; the rest are seen only on „Arbori de moștenire”."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Da: de la străbunici la strănepoți, cu frații și soțul.",
+              "en": "Yes: from great-grandparents to great-grandchildren, with siblings and husband."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Doar rudele care apar și pe actele Mariei.",
+              "en": "Only the relatives who also appear on Maria's documents."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Da, dar soțul doar dacă amândoi au „Gen” completat.",
+              "en": "Yes, but the husband only if both have „Gen” filled in."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

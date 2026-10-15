@@ -1,0 +1,630 @@
+{
+  "skill": "documents-fill-identification",
+  "manual": [
+    "documents-identification",
+    "documents-type",
+    "documents-sale",
+    "documents-list",
+    "documents-example-sale"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "documents-identification",
+          "ro": {
+            "question": "Vreți ca în lista „Acte”, la coloana „Titlu”, un contract să se citească „Teren Bragadiru – Ionescu”. Unde scrieți acest text pe act?",
+            "explanation": "Titlul din coloana „Titlu” a listei este „Etichetă scurtă” a actului, unul dintre câmpurile generale din fișa „Identificarea actului”."
+          },
+          "en": {
+            "question": "You want a contract to read „Teren Bragadiru – Ionescu” in the „Titlu” (title) column of the „Acte” (documents) list. Where on the document do you write this text?",
+            "explanation": "The title in the list's „Titlu” column is the document's „Etichetă scurtă” (short label), one of the general fields on the tile „Identificarea actului” (the document's identification)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "În „Subiect”, în fișa „Identificarea actului”, care dă titlul din listă.",
+              "en": "In „Subiect” (subject), on the tile „Identificarea actului”, which gives the list's title."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "În „Denumire pagină”, la prima pagină a actului.",
+              "en": "In „Denumire pagină” (page name), on the document's first page."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "În „Etichetă scurtă”, în fișa „Identificarea actului”.",
+              "en": "In „Etichetă scurtă” (short label), on the tile „Identificarea actului”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "În „Note extinse”, pe primul rând al notei.",
+              "en": "In „Note extinse” (extended notes), on the first line of the note."
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "documents-type",
+          "ro": {
+            "question": "Ați început un act cu un tip fără denumiri proprii și ați completat „Emitent”, „Nr. document” și „Data”. Apoi schimbați „Tip document” în „Contract de Vânzare (are formular)”. Ce se întâmplă cu formularul?",
+            "explanation": "Tipul hotărăște ce câmpuri are formularul și cum se numesc emitentul, numărul și data. La „Contract de Vânzare” ele devin „Notariat”, „Nr. act autentic” și „Data autentificării”, iar formularul capătă fișele contractului; dacă schimbați tipul, se schimbă și fișele."
+          },
+          "en": {
+            "question": "You started a document with a type that has no names of its own and filled in „Emitent”, „Nr. document” and „Data”. Then you change „Tip document” to „Contract de Vânzare (are formular)”. What happens to the form?",
+            "explanation": "The type decides which fields the form has and what the issuer, the number and the date are called. On „Contract de Vânzare” they become „Notariat”, „Nr. act autentic” and „Data autentificării”, and the form gains the contract's tiles; if you change the type, the tiles change with it."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Câmpurile devin „Notariat”, „Nr. act autentic”, „Data autentificării”, iar formularul capătă fișele contractului.",
+              "en": "The fields become „Notariat”, „Nr. act autentic”, „Data autentificării”, and the form gains the contract's tiles."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Nu se schimbă nimic pe formular; tipul nou se vede doar în coloana „Tip” a listei „Acte”.",
+              "en": "Nothing changes on the form; the new type shows only in the „Tip” column of the „Acte” list."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Câmpurile își păstrează numele, iar sub ele apare o singură fișă nouă, „Detalii act”.",
+              "en": "The fields keep their names, and a single new tile, „Detalii act” (document details), appears below them."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Aplicația refuză schimbarea, pentru că tipul unui act nu se mai poate schimba după ce l-ați ales.",
+              "en": "The application refuses the change, because a document's type cannot be changed once chosen."
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "documents-identification",
+          "ro": {
+            "question": "Un contract apare pe „Acte” la „Câmp specific:” „Stare plată” → „Achitat integral”, deși nu se știe dacă a fost plătit. Ce faceți pe contract ca să nu mai fie trecut ca achitat?",
+            "explanation": "Filtrul arată actele după valoarea aleasă în lista derulantă a tipului. Ca să ștergeți o valoare aleasă, alegeți din nou „fără valoare”, care înseamnă că nu s-a ales nimic, și salvați."
+          },
+          "en": {
+            "question": "On „Acte”, a contract shows under „Câmp specific:” „Stare plată” → „Achitat integral” (paid in full), though nobody knows whether it was paid. What do you do on the contract so that it is no longer recorded as paid?",
+            "explanation": "The filter shows documents by the value chosen in the type's drop-down. To clear a chosen value, choose „fără valoare” (no value) again, which means nothing has been chosen, and save."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Scrieți „neachitat” în „Note extinse” și salvați; filtrul citește și notele.",
+              "en": "Write „neachitat” (unpaid) in „Note extinse” and save; the filter reads the notes too."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Pe „Acte”, debifați contractul la „Tip document:”, ca să iasă din filtru.",
+              "en": "On „Acte”, untick the contract under „Tip document:”, so that it leaves the filter."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Ștergeți cu tastatura textul din lista „Stare plată” și lăsați căsuța albă.",
+              "en": "Delete the text in the „Stare plată” list with the keyboard and leave the box blank."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "La „Stare plată” alegeți din nou „fără valoare” și salvați contractul.",
+              "en": "Under „Stare plată” choose „fără valoare” again and save the contract."
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "documents-list",
+          "ro": {
+            "question": "La „Câmp specific:”, pentru contractele de vânzare, Ciprian găsește „Stare plată”, dar nu găsește un câmp în care se scrie text liber. De ce?",
+            "explanation": "„Câmp specific:” filtrează doar după câmpurile tipului cu listă închisă de valori, adică listele derulante din formular; alegeți câmpul, apoi una dintre valorile lui."
+          },
+          "en": {
+            "question": "Under „Câmp specific:” (specific field), for the sale contracts, Ciprian finds „Stare plată” (payment status) but not a field where free text is typed. Why?",
+            "explanation": "„Câmp specific:” filters only by the type's fields that have a closed list of values, that is the form's drop-downs; you choose the field, then one of its values."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Filtrul merge doar cu câmpurile cu listă închisă de valori, adică listele derulante ale formularului.",
+              "en": "The filter works only with the fields that have a closed list of values, that is the form's drop-downs."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Câmpurile de text apar acolo doar după ce le bifați în „Câmpuri afișate”, ca pe o coloană a listei.",
+              "en": "Text fields appear there only after you tick them in „Câmpuri afișate” (columns shown), like a list column."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Câmpul de text apare doar după ce este completat pe cel puțin un contract.",
+              "en": "The text field appears only once it has been filled in on at least one contract."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Câmpurile de text pot fi filtrate doar de un utilizator cu rol de superutilizator, din „Distilare Tipizate”.",
+              "en": "Text fields can be filtered only by a user with the superuser role, from „Distilare Tipizate”."
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "documents-identification",
+          "ro": {
+            "question": "Deschideți un act pe care nu l-a adăugat nimeni de mână: „Stare procesare” arată „Procesat cu AI”, iar în „Note extinse” stă o notă scurtă. Ce este nota?",
+            "explanation": "Un act adus cu importul are formularul completat de AI din ce a citit pe pagini; ce nu are loc în formular rămâne o notă scurtă în „Note extinse”."
+          },
+          "en": {
+            "question": "You open a document nobody added by hand: „Stare procesare” (processing status) reads „Procesat cu AI”, and „Note extinse” holds a short note. What is the note?",
+            "explanation": "A document brought in by the import has its form filled in by AI from what it read on the pages; what has no place in the form remains as a short note in „Note extinse”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "O listă a câmpurilor pe care AI-ul nu le-a putut citi și pe care trebuie să le completați.",
+              "en": "A list of the fields the AI could not read and that you must fill in."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Ce a citit AI-ul pe pagini și nu are loc în niciun câmp al formularului.",
+              "en": "What the AI read on the pages and that has no place in any field of the form."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Un mesaj al importului că actul trebuie salvat din nou, ca să devină „Neprocesat”.",
+              "en": "A message from the import that the document must be saved again to become „Neprocesat”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Textul întreg al paginilor, copiat acolo ca să poată fi căutat din lista „Acte”.",
+              "en": "The pages' whole text, copied there so that it can be searched from the „Acte” list."
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "documents-sale",
+          "ro": {
+            "question": "Pe un contract de vânzare-cumpărare trebuie să treceți câte exemplare s-au emis și temeiul autentificării. În ce fișă le găsiți?",
+            "explanation": "La contractul de vânzare-cumpărare, „Identificarea actului” ține, pe lângă „Notariat”, „Nr. act autentic” și „Data autentificării”, și „Calitate exemplar”, „Exemplare emise”, „Temei autentificare” și „Data conținutului”."
+          },
+          "en": {
+            "question": "On a sale contract you have to record how many copies were issued and the basis of the authentication. On which tile do you find them?",
+            "explanation": "On the sale contract, „Identificarea actului” holds, besides „Notariat”, „Nr. act autentic” and „Data autentificării”, also „Calitate exemplar”, „Exemplare emise” (copies issued), „Temei autentificare” (authentication basis) and „Data conținutului”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "În „Taxe și cheltuieli”, la panoul „[Taxe și onorarii]”, lângă „Onorariu notarial”.",
+              "en": "In „Taxe și cheltuieli” (taxes and costs), in the panel „[Taxe și onorarii]”, beside „Onorariu notarial”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "În „Carte funciară”, la panoul „[Dosar cadastral]”.",
+              "en": "In „Carte funciară” (land register), in the panel „[Dosar cadastral]”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În „Declarații și garanții”, la panoul „[Declarații legale]”.",
+              "en": "In „Declarații și garanții” (statements and warranties), in the panel „[Declarații legale]”."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "În „Identificarea actului”, lângă „Notariat” și „Nr. act autentic”.",
+              "en": "In „Identificarea actului”, beside „Notariat” and „Nr. act autentic”."
+            }
+          ]
+        },
+        {
+          "id": "a7",
+          "section": "links-related",
+          "ro": {
+            "question": "Pe ecranul cumpărătorului, în fișa „Legături”, contractul lui trebuie să se recunoască ușor între alte acte. Ce completați bine pe contract ca să ajute?",
+            "explanation": "Pe „Legături”, un act se citește pe un singur rând: eticheta scurtă și, în paranteză, tipul actului. O „Etichetă scurtă” clară face rândul ușor de recunoscut."
+          },
+          "en": {
+            "question": "On the buyer's screen, on the „Legături” (links) tile, his contract should be easy to recognise among other documents. What do you fill in well on the contract to help?",
+            "explanation": "On „Legături”, a document reads on a single line: the short label and, in brackets, the document's type. A clear „Etichetă scurtă” makes the row easy to recognise."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "„Etichetă scurtă”: rândul actului arată eticheta și, în paranteză, tipul.",
+              "en": "„Etichetă scurtă”: the document's row shows the label and, in brackets, the type."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Subiect”: rândul actului arată subiectul și, în paranteză, data.",
+              "en": "„Subiect”: the document's row shows the subject and, in brackets, the date."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Note extinse”: rândul actului arată primul rând al notelor.",
+              "en": "„Note extinse”: the document's row shows the first line of the notes."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Temei autentificare”: rândul actului arată temeiul și, în paranteză, notariatul.",
+              "en": "„Temei autentificare”: the document's row shows the basis and, in brackets, the notary's office."
+            }
+          ]
+        },
+        {
+          "id": "a8",
+          "section": "documents-identification",
+          "ro": {
+            "question": "Ciprian completează un act de tipul „Certificat de Moștenitor” și vrea să treacă data la care notariatul l-a eliberat. În ce câmp scrie?",
+            "explanation": "Numele emitentului, numărului și datei depind de tip: la „Certificat de Moștenitor” ele sunt „Notariat”, „Nr. certificat de moștenitor” și „Data eliberării”, în „Identificarea actului”."
+          },
+          "en": {
+            "question": "Ciprian is filling in a document of the type „Certificat de Moștenitor” (certificate of inheritance) and wants to record the date the notary's office issued it. Which field does he write in?",
+            "explanation": "The names of the issuer, the number and the date depend on the type: on „Certificat de Moștenitor” they are „Notariat”, „Nr. certificat de moștenitor” and „Data eliberării” (date of issue), in „Identificarea actului”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Data autentificării”, din „Identificarea actului”.",
+              "en": "„Data autentificării” (date of authentication), in „Identificarea actului”."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "„Data eliberării”, din „Identificarea actului”.",
+              "en": "„Data eliberării” (date of issue), in „Identificarea actului”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Data”, din fișa „Detalii act”.",
+              "en": "„Data” (date), on the tile „Detalii act”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Data conținutului”, din „Identificarea actului”.",
+              "en": "„Data conținutului” (date of the content), in „Identificarea actului”."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "documents-list",
+          "ro": {
+            "question": "Peste o lună vreți să regăsiți un contract scriind câteva cuvinte în caseta de căutare a listei „Acte”. Ce câmp din „Identificarea actului” vă ajută cel mai mult, dacă e completat bine?",
+            "explanation": "Caseta caută după cod, titlu sau nr. document, iar titlul actului este „Etichetă scurtă”, completată în „Identificarea actului”."
+          },
+          "en": {
+            "question": "In a month's time you want to find a contract again by typing a few words into the search box of the „Acte” list. Which field of „Identificarea actului” helps you most, if it is filled in well?",
+            "explanation": "The box searches by code, title or document number, and the document's title is its „Etichetă scurtă”, filled in on „Identificarea actului”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Subiect”, pentru că lista caută în subiectul actelor.",
+              "en": "„Subiect”, because the list searches in the documents' subjects."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Note extinse”, pentru că lista caută în notele actelor.",
+              "en": "„Note extinse”, because the list searches in the documents' notes."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "„Etichetă scurtă”, pentru că lista caută după titlul actelor.",
+              "en": "„Etichetă scurtă”, because the list searches by the documents' title."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Temei autentificare”, pentru că lista caută în temeiul actelor.",
+              "en": "„Temei autentificare”, because the list searches in the documents' basis."
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "documents-identification",
+          "ro": {
+            "question": "Ați ales un tip care are formular, dar cu puține câmpuri proprii. Unde completați câmpurile acestea?",
+            "explanation": "Câmpurile proprii ale tipului stau în fișe separate; la un tip cu puține câmpuri ele sunt într-o singură fișă, „Detalii act”. Doar contractul de vânzare-cumpărare le împarte pe mai multe fișe cu panouri."
+          },
+          "en": {
+            "question": "You have chosen a type that has a form, but with few fields of its own. Where do you fill in those fields?",
+            "explanation": "The type's own fields sit on separate tiles; on a type with few fields they are on a single tile, „Detalii act” (document details). Only the sale contract spreads them over several tiles with panels."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "În „Identificarea actului”, sub „Note extinse”.",
+              "en": "In „Identificarea actului”, under „Note extinse”."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Într-o singură fișă separată, „Detalii act”.",
+              "en": "On a single separate tile, „Detalii act”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În mai multe fișe, cu panouri între paranteze drepte.",
+              "en": "On several tiles, with panels in square brackets."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "În „Note extinse”, ca text, câte un câmp pe rând.",
+              "en": "In „Note extinse”, as text, one field per line."
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "links-versions",
+          "ro": {
+            "question": "Ați golit o listă derulantă a unui act alegând „fără valoare” și ați salvat. A doua zi vreți să vedeți ce valoare fusese aleasă înainte. Ce faceți?",
+            "explanation": "Fiecare salvare a unui act face o versiune nouă și o lasă neatinsă pe cea dinainte. Apăsați „N versiuni”, în dreapta-sus, și citiți versiunea anterioară."
+          },
+          "en": {
+            "question": "You cleared one of a document's drop-downs by choosing „fără valoare” and saved. The next day you want to see which value had been chosen before. What do you do?",
+            "explanation": "Every save of a document makes a new version and leaves the one before it untouched. Press „N versiuni” (N versions), at the top right, and read the previous version."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Alegeți din nou „fără valoare”: a doua alegere readuce valoarea de dinainte.",
+              "en": "Choose „fără valoare” again: the second choice brings back the earlier value."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Nimic: „fără valoare” șterge valoarea și din istoricul actului.",
+              "en": "Nothing: „fără valoare” deletes the value from the document's history too."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Apăsați „N versiuni” și citiți versiunea anterioară a actului.",
+              "en": "Press „N versiuni” and read the document's previous version."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Căutați în „Note extinse”, unde aplicația mută valoarea ștearsă.",
+              "en": "Look in „Note extinse”, where the application moves the cleared value."
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "documents-type",
+          "ro": {
+            "question": "În exemplul contractului pentru terenul din Bragadiru, „Tip document” se alege înaintea oricărui alt câmp. De ce?",
+            "explanation": "Tipul hotărăște ce câmpuri are formularul, cum se numesc emitentul, numărul și data și ce roluri pot avea persoanele legate de act; cum alegeți un tip cu formular, formularul crește cu fișele lui."
+          },
+          "en": {
+            "question": "In the example of the contract for the plot in Bragadiru, „Tip document” is chosen before any other field. Why?",
+            "explanation": "The type decides which fields the form has, what the issuer, the number and the date are called, and which roles the people linked to the document can have; as soon as you choose a type with a form, the form grows with its tiles."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Fără tip, aplicația nu lasă să alegeți paginile actului.",
+              "en": "Without a type, the application does not let you choose the document's pages."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Tipul hotărăște câmpurile formularului și numele emitentului, numărului și datei.",
+              "en": "The type decides the form's fields and the names of the issuer, the number and the date."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Tipul se fixează la prima alegere și nu se mai poate schimba după aceea.",
+              "en": "The type is fixed at the first choice and cannot be changed afterwards."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Tipul completează singur „Etichetă scurtă” cu denumirea lui scurtă.",
+              "en": "The type fills in „Etichetă scurtă” by itself with its short name."
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "documents-identification",
+          "ro": {
+            "question": "Ciprian vrea ca un contract plătit să apară la filtrul „Câmp specific:” „Stare plată” → „Achitat integral”. Pe contract, lista „Stare plată” arată „fără valoare”, cu litere cursive. Ce face?",
+            "explanation": "„Fără valoare” înseamnă că în lista derulantă nu s-a ales nimic. Ciprian alege „Achitat integral” la „Stare plată” și salvează; filtrul arată actele după valoarea aleasă."
+          },
+          "en": {
+            "question": "Ciprian wants a paid contract to appear under the filter „Câmp specific:” „Stare plată” → „Achitat integral”. On the contract, the „Stare plată” list reads „fără valoare”, in italics. What does he do?",
+            "explanation": "„Fără valoare” (no value) means nothing has been chosen in the drop-down. Ciprian chooses „Achitat integral” under „Stare plată” and saves; the filter shows the documents by the value chosen."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Alege „Achitat integral” în lista „Stare plată” și salvează contractul.",
+              "en": "He chooses „Achitat integral” in the „Stare plată” list and saves the contract."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Scrie „Achitat integral” în „Note extinse” și salvează contractul.",
+              "en": "He writes „Achitat integral” in „Note extinse” and saves the contract."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Bifează „Data” în „Câmpuri afișate”, ca filtrul să vadă contractul.",
+              "en": "He ticks „Data” in „Câmpuri afișate”, so that the filter sees the contract."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nimic: „fără valoare” este citit de filtru ca „Achitat integral”.",
+              "en": "Nothing: the filter reads „fără valoare” as „Achitat integral”."
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "documents-sale",
+          "ro": {
+            "question": "Un contract de vânzare-cumpărare a fost redactat într-o zi și autentificat la notariat câteva zile mai târziu. Unde scrieți ziua în care notarul l-a autentificat?",
+            "explanation": "La „Contract de Vânzare”, data actului se numește „Data autentificării” și stă în „Identificarea actului”, lângă „Notariat” și „Nr. act autentic”; tot acolo stă și „Data conținutului”."
+          },
+          "en": {
+            "question": "A sale contract was drawn up on one day and authenticated at the notary's office a few days later. Where do you write the day the notary authenticated it?",
+            "explanation": "On „Contract de Vânzare”, the document's date is called „Data autentificării” and sits in „Identificarea actului”, beside „Notariat” and „Nr. act autentic”; „Data conținutului” sits there too."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "La „Data conținutului”, în „Identificarea actului”.",
+              "en": "Under „Data conținutului”, in „Identificarea actului”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "La „Data eliberării”, în „Identificarea actului”.",
+              "en": "Under „Data eliberării”, in „Identificarea actului”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "La „Data”, în fișa „Detalii act” a contractului, unde stau datele notariale.",
+              "en": "Under „Data”, on the contract's „Detalii act” tile, where the notarial dates are kept."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "La „Data autentificării”, în „Identificarea actului”.",
+              "en": "Under „Data autentificării”, in „Identificarea actului”."
+            }
+          ]
+        },
+        {
+          "id": "b7",
+          "section": "documents-identification",
+          "ro": {
+            "question": "Pe lista „Acte” stau acte adăugate de mână și acte aduse cu importul, toate cu formularul completat. După ce recunoașteți pe ecranul actului unul adus cu importul?",
+            "explanation": "Un act adăugat de mână are după salvare starea „Neprocesat”; la unul adus cu importul, completat de AI, „Stare procesare” arată „Importat” sau „Procesat cu AI”."
+          },
+          "en": {
+            "question": "The „Acte” list holds documents added by hand and documents brought in by the import, all with their form filled in. By what do you recognise, on the document's screen, one brought in by the import?",
+            "explanation": "A document added by hand has the status „Neprocesat” after saving; on one brought in by the import, filled in by AI, „Stare procesare” reads „Importat” or „Procesat cu AI”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Etichetă scurtă” începe cu „AI”, pusă de import.",
+              "en": "„Etichetă scurtă” begins with „AI”, put there by the import."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "„Stare procesare” arată „Importat” sau „Procesat cu AI”.",
+              "en": "„Stare procesare” reads „Importat” or „Procesat cu AI”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Toate listele lui derulante arată „fără valoare”.",
+              "en": "All its drop-downs read „fără valoare”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Stare procesare” arată „Neprocesat” până îl salvați.",
+              "en": "„Stare procesare” reads „Neprocesat” until you save it."
+            }
+          ]
+        },
+        {
+          "id": "b8",
+          "section": "documents-dependent-addendum",
+          "ro": {
+            "question": "Pe un contract de vânzare-cumpărare, „Onorariu notarial” stă în „Taxe și cheltuieli”, la „[Taxe și onorarii]”. Unde îl găsiți pe un act adițional?",
+            "explanation": "Actul adițional are fișele „Identificarea actului”, „Actul modificat”, „Ce modifică” și „Părți”; „Onorariu notarial” stă chiar în „Identificarea actului”, alături de numele notariale."
+          },
+          "en": {
+            "question": "On a sale contract, „Onorariu notarial” (notary's fee) sits in „Taxe și cheltuieli”, in „[Taxe și onorarii]”. Where do you find it on an addendum?",
+            "explanation": "The addendum has the tiles „Identificarea actului”, „Actul modificat”, „Ce modifică” and „Părți”; „Onorariu notarial” sits right in „Identificarea actului”, alongside the notarial names."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Tot în „Taxe și cheltuieli”, la „[Taxe și onorarii]”.",
+              "en": "Also in „Taxe și cheltuieli”, in „[Taxe și onorarii]”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "În fișa „Ce modifică”, lângă „Preț neschimbat”.",
+              "en": "On the tile „Ce modifică” (what it changes), beside „Preț neschimbat”."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "În „Identificarea actului”, alături de numele notariale.",
+              "en": "In „Identificarea actului”, alongside the notarial names."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "În fișa „Actul modificat”, printre datele contractului modificat.",
+              "en": "On the tile „Actul modificat” (amended document), among the amended contract's details."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

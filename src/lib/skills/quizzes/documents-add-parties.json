@@ -1,0 +1,630 @@
+{
+  "skill": "documents-add-parties",
+  "manual": [
+    "documents-parties",
+    "links-associate-role",
+    "companies-people-records",
+    "links-associate-kinds",
+    "links-associate-remove"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "links-associate-role",
+          "ro": {
+            "question": "Pe ecranul lui Andrei Munteanu apăsați „Asociază act”, alegeți întâi „Cumpărător” la „Rol”, apoi bifați contractul și apăsați „Asociază selecția”. Cum se salvează legătura?",
+            "explanation": "La bifarea actului, lista „Rol” se strânge la rolurile tipului acelui act și revine la „— fără rol —”; rolul ales înainte se pierde, iar legătura se salvează fără rol. De aceea bifați întâi actul și abia apoi alegeți rolul."
+          },
+          "en": {
+            "question": "On Andrei Munteanu's screen you press „Asociază act” (associate a document), first choose „Cumpărător” (buyer) under „Rol”, then tick the contract and press „Asociază selecția”. How is the link saved?",
+            "explanation": "When the document is ticked, the „Rol” list narrows to the roles of that document's type and goes back to „— fără rol —” (no role); the role chosen before is lost, and the link is saved without a role. That is why you tick the document first and only then choose the role."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Cu rolul „Cumpărător”, ales înainte de bifare.",
+              "en": "With the role „Cumpărător”, chosen before the tick."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Fără rol: la bifare, lista „Rol” a revenit la „— fără rol —”.",
+              "en": "Without a role: on the tick, the „Rol” list went back to „— fără rol —”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Nu se salvează: aplicația cere întâi să alegeți din nou rolul.",
+              "en": "It is not saved: the application first asks you to choose the role again."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Cu rolul „Cumpărător”, dar fără butonul „Cotă” pe rând.",
+              "en": "With the role „Cumpărător”, but without the „Cotă” button on the row."
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "documents-parties",
+          "ro": {
+            "question": "Pe un contract ați asociat vânzătorul, cumpărătorul și notarul, fiecare cu rolul lui. Pe ce rânduri apare butonul portocaliu „Cotă”?",
+            "explanation": "Cota-parte există doar pentru rolurile care dețin o cotă pe acel tip de act: vânzătorul și cumpărătorul, da; notarul, nu. Doar rândurile acelea au butonul „Cotă”."
+          },
+          "en": {
+            "question": "On a contract you have associated the seller, the buyer and the notary, each with their role. On which rows does the orange „Cotă” (share) button appear?",
+            "explanation": "A share exists only for the roles that hold one on that type of document: the seller and the buyer, yes; the notary, no. Only those rows have the „Cotă” button."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Pe toate trei, dar la notar rămâne mereu gol.",
+              "en": "On all three, but on the notary's it always stays empty."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Doar pe rândul cumpărătorului, care dobândește cota.",
+              "en": "Only on the buyer's row, who acquires the share."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Pe rândurile vânzătorului și cumpărătorului, nu și al notarului.",
+              "en": "On the seller's and the buyer's rows, not on the notary's."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Pe niciunul, până nu completați „Preț și plată”.",
+              "en": "On none of them, until you fill in „Preț și plată”."
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "documents-parties",
+          "ro": {
+            "question": "Pe un tip de act, un rol ar trebui să aibă cotă-parte, dar rândurile lui din „Legături” nu au butonul „Cotă”. Unde se hotărăște ce rol deține o cotă?",
+            "explanation": "Se hotărăște în „Date de referință”, la „Roluri Persoane”: în rol, la „Act”, bifa „Deține cotă”, pentru fiecare tip de act."
+          },
+          "en": {
+            "question": "On one type of document, a role ought to hold a share, but its rows on „Legături” have no „Cotă” button. Where is it decided which role holds a share?",
+            "explanation": "It is decided in „Date de referință” (reference data), under „Roluri Persoane” (person roles): in the role, under „Act”, the tick „Deține cotă” (holds a share), for each type of document."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "În „Date de referință” → „Roluri Persoane”: în rol, la „Act”, bifa „Deține cotă”.",
+              "en": "In „Date de referință” → „Roluri Persoane”: in the role, under „Act”, the tick „Deține cotă”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Pe ecranul „Asociere persoană”, cu o bifă de lângă „Rol”, la fiecare asociere în parte.",
+              "en": "On the „Asociere persoană” screen, with a tick beside „Rol”, at each association separately."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Pe act, în „Identificarea actului”, unde se alege care părți au cotă.",
+              "en": "On the document, in „Identificarea actului”, where you choose which parties have a share."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "În „Setări”, la „Implicitele mele”, unde se aleg butoanele rândurilor.",
+              "en": "In „Setări” (settings), under „Implicitele mele”, where the rows' buttons are chosen."
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "documents-parties",
+          "ro": {
+            "question": "Contractul spune că Elena și Mihai Popescu cumpără fiecare câte 1/2, dar deocamdată ați scris doar cota Elenei. Ce arată aplicația sub rânduri?",
+            "explanation": "Aplicația adună cotele pe fiecare rol și, când suma nu dă 100%, scrie de exemplu „Cotele pentru „Cumpărător” însumează 50%, nu 100%. Actul se salvează oricum — verificați ce scrie în act.”"
+          },
+          "en": {
+            "question": "The contract says that Elena and Mihai Popescu each buy 1/2, but so far you have typed only Elena's share. What does the application show under the rows?",
+            "explanation": "The application adds up the shares per role and, when the sum is not 100%, reads for example „Cotele pentru „Cumpărător” însumează 50%, nu 100%. Actul se salvează oricum — verificați ce scrie în act.” (the shares add up to 50%, not 100%; the document is saved anyway — check what the deed says)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Nimic; „Salvează” rămâne inactiv până când cotele dau 100%.",
+              "en": "Nothing; „Salvează” stays disabled until the shares make 100%."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Completează singură cota lui Mihai cu restul de 50%, ca totalul să dea 100%.",
+              "en": "It fills in Mihai's share with the remaining 50% by itself, so the total makes 100%."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Scoate rândul lui Mihai din „Legături”, pentru că nu are cotă.",
+              "en": "It removes Mihai's row from „Legături”, because he has no share."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Că cotele pentru „Cumpărător” dau 50%, nu 100%; actul se salvează oricum.",
+              "en": "That the shares for „Cumpărător” make 50%, not 100%; the document is saved anyway."
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "companies-people-records",
+          "ro": {
+            "question": "Cumpărătorul dintr-un act este o firmă din Bragadiru, deja în arhivă. Pornind de pe ecranul firmei, cum o legați de act ca „Cumpărător”?",
+            "explanation": "O firmă poate fi parte într-un act la fel ca o persoană fizică. Din „Legături” al firmei, „Asociază act” deschide „Asociere act”: bifați actul, apoi alegeți „Rol”, care s-a strâns la rolurile tipului acela de act."
+          },
+          "en": {
+            "question": "The buyer in a document is a firm from Bragadiru, already in the archive. Starting from the firm's screen, how do you link it to the document as „Cumpărător”?",
+            "explanation": "A firm can be a party to a document just as a natural person can. From the firm's „Legături”, „Asociază act” opens „Asociere act”: tick the document, then choose „Rol”, which has narrowed to the roles of that type of document."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Nu se poate: legați administratorul firmei ca „Cumpărător”.",
+              "en": "It cannot be done: link the firm's administrator as „Cumpărător”."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "„Legături” → „Asociază act”, bifați actul, apoi alegeți „Cumpărător”.",
+              "en": "„Legături” → „Asociază act”, tick the document, then choose „Cumpărător”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Legături” → „Asociază act”, alegeți „Cumpărător”, apoi bifați actul.",
+              "en": "„Legături” → „Asociază act”, choose „Cumpărător”, then tick the document."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Reprezentanți și contact” → alegeți actul la „Persoană de contact 1”.",
+              "en": "„Reprezentanți și contact” → choose the document under „Persoană de contact 1”."
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "documents-parties",
+          "ro": {
+            "question": "Ați deschis „Cotă” la un vânzător, ați scris 1/2 la „Cotă-parte” și ați ales „indiviziune” la „Mod de deținere”. Cum se păstrează valorile?",
+            "explanation": "Valorile din panoul „Cotă” se salvează când închideți panoul, cu Esc sau cu un clic în afara lui."
+          },
+          "en": {
+            "question": "You opened „Cotă” on a seller, typed 1/2 under „Cotă-parte” and chose „indiviziune” (undivided co-ownership) under „Mod de deținere”. How are the values kept?",
+            "explanation": "The values in the „Cotă” panel are saved when you close the panel, with Esc or with a click outside it."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Doar după ce apăsați „Salvează”, jos pe ecranul actului.",
+              "en": "Only after you press „Salvează”, at the bottom of the document's screen."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Doar după ce apăsați din nou „Asociază selecția”.",
+              "en": "Only after you press „Asociază selecția” again."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Se salvează când închideți panoul, cu Esc sau cu un clic în afara lui.",
+              "en": "They are saved when you close the panel, with Esc or a click outside it."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Doar după ce cotele tuturor vânzătorilor însumează 100%.",
+              "en": "Only once all the sellers' shares add up to 100%."
+            }
+          ]
+        },
+        {
+          "id": "a7",
+          "section": "documents-parties",
+          "ro": {
+            "question": "Pe „Legături” al unui act, rândul unei persoane se citește „Ion Vasilescu (Vânzător)”. De unde vine cuvântul din paranteză?",
+            "explanation": "O persoană se citește pe „Legături” „Nume (Rol)”. Rolul spune în ce calitate apare persoana în act și se alege la „Rol”, pe ecranul „Asociere persoană”."
+          },
+          "en": {
+            "question": "On a document's „Legături”, a person's row reads „Ion Vasilescu (Vânzător)”. Where does the word in brackets come from?",
+            "explanation": "On „Legături” a person reads „Name (Role)”. The role says in what capacity the person appears in the document and is chosen under „Rol”, on the „Asociere persoană” screen."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Din fișa de identitate a persoanei, unde i se scrie ocupația.",
+              "en": "From the person's identity tile, where their occupation is written down."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Din „Rol”, ales pe ecranul „Asociere persoană” la asociere.",
+              "en": "From „Rol”, chosen on the „Asociere persoană” screen at the association."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Din „Mod de deținere”, ales în panoul „Cotă” al rândului.",
+              "en": "From „Mod de deținere”, chosen in the row's „Cotă” panel."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Din tipul actului, care dă același rol tuturor persoanelor.",
+              "en": "From the document's type, which gives the same role to all persons."
+            }
+          ]
+        },
+        {
+          "id": "a8",
+          "section": "documents-parties",
+          "ro": {
+            "question": "Asociați o persoană de un plan și, la „Rol”, nu găsiți „Vânzător”, deși pe contracte îl alegeți mereu. De ce?",
+            "explanation": "Rolurile oferite la „Rol”, pe ecranul „Asociere persoană”, depind de tipul actului; un plan nu are aceleași roluri ca un contract de vânzare."
+          },
+          "en": {
+            "question": "You are associating a person with a plan and, under „Rol”, you cannot find „Vânzător” (seller), though on contracts you always choose it. Why?",
+            "explanation": "The roles offered under „Rol”, on the „Asociere persoană” screen, depend on the document's type; a plan does not have the same roles as a sale contract."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Rolul „Vânzător” a fost șters din arhivă de un administrator.",
+              "en": "The role „Vânzător” has been deleted from the archive by an administrator."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Lista „Rol” arată doar rolurile folosite deja pe acel act.",
+              "en": "The „Rol” list shows only the roles already used on that document."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Vânzător” se poate alege doar pornind de pe ecranul persoanei.",
+              "en": "„Vânzător” can be chosen only when starting from the person's screen."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Rolurile oferite depind de tipul actului, iar planul are alte roluri.",
+              "en": "The roles offered depend on the document's type, and the plan has other roles."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "documents-parties",
+          "ro": {
+            "question": "Pe un contract, butonul „Cotă” al vânzătorului este portocaliu plin, iar al cumpărătorului are doar contur portocaliu. Ce înseamnă?",
+            "explanation": "Un „Cotă” plin portocaliu este încă gol; unul cu contur portocaliu are valori. Deci cota vânzătorului nu e scrisă, iar a cumpărătorului da."
+          },
+          "en": {
+            "question": "On a contract, the seller's „Cotă” button is solid orange, and the buyer's has only an orange outline. What does it mean?",
+            "explanation": "A solid orange „Cotă” is still empty; one with an orange outline holds values. So the seller's share has not been written, and the buyer's has."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Cota vânzătorului e încă goală; cea a cumpărătorului are valori.",
+              "en": "The seller's share is still empty; the buyer's holds values."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Cota vânzătorului are valori; cea a cumpărătorului e încă goală.",
+              "en": "The seller's share holds values; the buyer's is still empty."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Vânzătorul are 100%; cumpărătorul are doar o parte din cotă.",
+              "en": "The seller has 100%; the buyer has only part of the share."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Cota vânzătorului e salvată; a cumpărătorului încă nesalvată.",
+              "en": "The seller's share is saved; the buyer's is still unsaved."
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "documents-parties",
+          "ro": {
+            "question": "Contractul spune că Maria Ionescu dobândește jumătate din teren. Cum puteți scrie asta la „Cotă-parte”?",
+            "explanation": "La „Cotă-parte” scrieți de exemplu 50, 50%, 63,64 sau 1/2; o jumătate se poate scrie deci în oricare dintre formele 50, 50% sau 1/2."
+          },
+          "en": {
+            "question": "The contract says that Maria Ionescu acquires half of the plot. How can you write this under „Cotă-parte” (share)?",
+            "explanation": "Under „Cotă-parte” you type for example 50, 50%, 63,64 or 1/2; a half can therefore be written in any of the forms 50, 50% or 1/2."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Doar ca suprafață, la „Suprafață echivalentă (mp)”.",
+              "en": "Only as an area, under „Suprafață echivalentă (mp)”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Doar ca număr întreg, 50; „50%” și „1/2” sunt refuzate.",
+              "en": "Only as a whole number, 50; „50%” and „1/2” are refused."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "În oricare formă: 50, 50% sau 1/2.",
+              "en": "In any form: 50, 50% or 1/2."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Doar în cuvinte, „o jumătate”, cum scrie în act.",
+              "en": "Only in words, „o jumătate” (one half), as the deed says."
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "documents-parties",
+          "ro": {
+            "question": "Un administrator scoate bifa „Deține cotă” de la un rol, pe un tip de act la care unele părți aveau deja cote scrise. Ce se întâmplă cu cotele acelea?",
+            "explanation": "Dacă bifa „Deține cotă” se scoate mai târziu, cotele salvate rămân, doar de citit."
+          },
+          "en": {
+            "question": "An administrator removes the tick „Deține cotă” from a role, on a type of document where some parties already had shares written. What happens to those shares?",
+            "explanation": "If the „Deține cotă” tick is removed later, the saved shares remain, read-only."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Se șterg de pe toate actele de acel tip.",
+              "en": "They are deleted from every document of that type."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Rămân și se pot schimba în continuare.",
+              "en": "They remain and can still be changed."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Se mută în „Note extinse” ale fiecărui act.",
+              "en": "They are moved into each document's „Note extinse”."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Rămân salvate, dar se pot doar citi.",
+              "en": "They stay saved, but can only be read."
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "links-associate-role",
+          "ro": {
+            "question": "Asociați o persoană de un act al cărui tip nu are pregătit niciun rol. Ce vedeți la „Asociere” și cum se face legătura?",
+            "explanation": "Dacă tipul actului nu are niciun rol pregătit, ecranul spune asta în locul listei „Rol”, iar asocierea se face fără rol. Rolurile se pregătesc în „Date de referință”."
+          },
+          "en": {
+            "question": "You are associating a person with a document whose type has no role prepared. What do you see under „Asociere” and how is the link made?",
+            "explanation": "If the document's type has no role prepared, the screen says so in place of the „Rol” list, and the association is made without a role. Roles are prepared in „Date de referință”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Ecranul spune asta în locul listei „Rol”, iar legătura se face fără rol.",
+              "en": "The screen says so in place of the „Rol” list, and the link is made without a role."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Lista „Rol” arată toate rolurile arhivei, de la toate tipurile de act.",
+              "en": "The „Rol” list shows every role in the archive, from all document types."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Asociază selecția” nu se poate apăsa până nu alegeți un rol.",
+              "en": "„Asociază selecția” cannot be pressed until you choose a role."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "În locul listei „Rol” apare o casetă în care scrieți rolul de mână.",
+              "en": "In place of the „Rol” list a box appears where you type the role by hand."
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "companies-people-records",
+          "ro": {
+            "question": "Pe ecranul unei firme apăsați „Asociază act” și bifați un „Contract de Vânzare”. Ce roluri vă oferă apoi „Rol”?",
+            "explanation": "După ce ați bifat actul, lista rolurilor se strânge la cele pe care tipul acela de act le are; la un „Contract de Vânzare”, de pildă „Cumpărător”, „Moștenitor”, „Notar”, „Reprezentant legal / Mandatar”, „Vânzător”."
+          },
+          "en": {
+            "question": "On a firm's screen you press „Asociază act” and tick a „Contract de Vânzare”. Which roles does „Rol” then offer you?",
+            "explanation": "Once you have ticked the document, the list of roles narrows to those that type of document has; on a „Contract de Vânzare”, for instance „Cumpărător”, „Moștenitor”, „Notar”, „Reprezentant legal / Mandatar”, „Vânzător”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Rolurile de pe proprietăți: „Proprietar”, „Titular de drept” și celelalte.",
+              "en": "The roles on properties: „Proprietar”, „Titular de drept” and the others."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Niciunul: o firmă se leagă de un act fără rol.",
+              "en": "None: a firm is linked to a document without a role."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Rolurile contractului, de pildă „Cumpărător”, „Notar”, „Vânzător”.",
+              "en": "The contract's roles, for instance „Cumpărător”, „Notar”, „Vânzător”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Doar „Reprezentant legal / Mandatar”, singurul rol al unei firme.",
+              "en": "Only „Reprezentant legal / Mandatar”, a firm's only role."
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "companies-people-records",
+          "ro": {
+            "question": "Pe un act ați asociat o firmă ca „Vânzător”. Vreți să-i verificați datele, așa că apăsați „Vizualizare” pe rândul ei. Ce se deschide?",
+            "explanation": "De pe act, „Vizualizare” pe rândul firmei deschide ecranul firmei — nu al unei persoane fizice —, doar pentru citit, cu „Înapoi la listă” și „Modifică” jos."
+          },
+          "en": {
+            "question": "On a document you have associated a firm as „Vânzător”. You want to check its details, so you press „Vizualizare” (view) on its row. What opens?",
+            "explanation": "From the document, „Vizualizare” on the firm's row opens the firm's screen — not a natural person's —, read-only, with „Înapoi la listă” and „Modifică” at the bottom."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Ecranul persoanei fizice care reprezintă firma.",
+              "en": "The screen of the natural person who represents the firm."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Ecranul firmei, deschis direct pentru modificare.",
+              "en": "The firm's screen, opened straight for editing."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Panoul „Cotă” al firmei, cu cota și modul de deținere.",
+              "en": "The firm's „Cotă” panel, with its share and manner of holding."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Ecranul firmei, doar pentru citit, cu „Modifică” jos.",
+              "en": "The firm's screen, read-only, with „Modifică” at the bottom."
+            }
+          ]
+        },
+        {
+          "id": "b7",
+          "section": "links-associate-kinds",
+          "ro": {
+            "question": "Pornind de pe ecranul Mariei Ionescu, o legați de un contract cu rolul „Cumpărător”. Unde scrieți cota ei?",
+            "explanation": "Cota-parte a unei persoane pe un act se scrie după asociere, pe act: cu butonul „Cotă” de pe rândul ei."
+          },
+          "en": {
+            "question": "Starting from Maria Ionescu's screen, you link her to a contract with the role „Cumpărător”. Where do you write her share?",
+            "explanation": "A person's share in a document is written after the association, on the document: with the „Cotă” button on her row."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Pe ecranul de asociere, într-o casetă de lângă „Rol”.",
+              "en": "On the association screen, in a box beside „Rol”."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "După asociere, pe contract, cu „Cotă” de pe rândul ei.",
+              "en": "After the association, on the contract, with „Cotă” on her row."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În fișa de identitate a Mariei Ionescu, la observații.",
+              "en": "On Maria Ionescu's identity tile, in the remarks."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "În „Identificarea actului” a contractului, la „Subiect”.",
+              "en": "In the contract's „Identificarea actului”, under „Subiect”."
+            }
+          ]
+        },
+        {
+          "id": "b8",
+          "section": "links-associate-remove",
+          "ro": {
+            "question": "Ați legat-o pe Elena Popescu de un contract ca „Vânzător”, dar actul o arată cumpărătoare. Ce faceți și ce rămâne în arhivă?",
+            "explanation": "Alegeți rândul ei și apăsați „Dezasociază”: legătura dispare din ambele capete, iar persoana și contractul rămân neatinse. Apoi o asociați din nou, cu rolul „Cumpărător”."
+          },
+          "en": {
+            "question": "You linked Elena Popescu to a contract as „Vânzător”, but the deed shows her as buyer. What do you do, and what stays in the archive?",
+            "explanation": "Choose her row and press „Dezasociază”: the link disappears from both ends, and the person and the contract stay untouched. Then associate her again, with the role „Cumpărător”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Ștergeți persoana și o adăugați din nou, apoi o legați ca „Cumpărător”.",
+              "en": "Delete the person and add her again, then link her as „Cumpărător”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Redenumiți rolul „Vânzător” în „Date de referință” → „Roluri Persoane”, ca să se citească „Cumpărător”.",
+              "en": "Rename the role „Vânzător” in „Date de referință” → „Roluri Persoane”, so that it reads „Cumpărător”."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "„Dezasociază” pe rândul ei, apoi o asociați din nou ca „Cumpărător”; persoana rămâne.",
+              "en": "„Dezasociază” on her row, then associate her again as „Cumpărător”; the person stays."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Alegeți „prin mandatar” la „Mod de deținere”, ca rolul să se întoarcă.",
+              "en": "Choose „prin mandatar” under „Mod de deținere”, so that the role is reversed."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

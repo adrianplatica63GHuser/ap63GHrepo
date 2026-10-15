@@ -1,0 +1,781 @@
+{
+  "skill": "workspace-write-help",
+  "manual": [
+    "admin-help",
+    "learning-help-proposals",
+    "learning-help",
+    "start-help"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "admin-help",
+          "ro": {
+            "question": "O colegă îi spune lui Ciprian că „?” de pe ecranul „Proprietăți — Listă” nu spune nimic util și îl roagă să scrie un text. Unde îl scrie Ciprian?",
+            "explanation": "Textele din spatele lui „?” le scrie administratorul în „Ajutor și învățare” → „Informații de ajutor”: pe fila „Ecrane” alege ecranul și completează câmpurile lui."
+          },
+          "en": {
+            "question": "A colleague tells Ciprian that the „?” on the screen „Proprietăți — Listă” (properties — list) says nothing useful and asks him to write a text. Where does Ciprian write it?",
+            "explanation": "The texts behind „?” are written by the administrator in „Ajutor și învățare” → „Informații de ajutor” (help information): on the „Ecrane” (screens) tab he chooses the screen and fills in its fields."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Direct în panoul „Ajutor” care se deschide din „?”, pe ecranul acela.",
+              "en": "Directly in the „Ajutor” (help) panel that opens from „?”, on that screen."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "În „Setări” → „Contul meu”, unde se aleg limba și fișele ecranelor.",
+              "en": "In „Setări” → „Contul meu” (settings, my account), where the language and the screens' tiles are chosen."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "În „Ajutor și învățare” → „Informații de ajutor”, fila „Ecrane”, la ecranul acela.",
+              "en": "In „Ajutor și învățare” → „Informații de ajutor”, the „Ecrane” tab, on that screen."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "În „Ajutor și învățare” → „Manual de utilizare”, în secțiunea manualului care descrie lista.",
+              "en": "In „Ajutor și învățare” → „Manual de utilizare” (user manual), in the manual section that describes the list."
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "admin-help",
+          "ro": {
+            "question": "Pentru ecranul „Interacțiuni”, Ciprian vrea să scrie propoziția „Jurnalul tuturor contactelor cu clienții, pentru toți clienții.”. În ce câmp o pune?",
+            "explanation": "„Context” spune la ce folosește ecranul, iar „Cum se folosește” ce faceți pe el, pas cu pas. Propoziția spune la ce folosește ecranul, deci intră în „Context (Română)”."
+          },
+          "en": {
+            "question": "For the „Interacțiuni” (interactions) screen, Ciprian wants to write the sentence „The journal of every contact with clients, for all clients.”. Which field does he put it in?",
+            "explanation": "„Context” says what the screen is for, and „Cum se folosește” (how to use it) what you do on it, step by step. The sentence says what the screen is for, so it goes into „Context (Română)”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "În „Context (Română)”, pentru că spune la ce folosește ecranul.",
+              "en": "In „Context (Română)”, because it says what the screen is for."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "În „Cum se folosește (Română)”, pentru că acolo se descrie ecranul.",
+              "en": "In „Cum se folosește (Română)”, because that is where the screen is described."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În „Text sfat (Română)”, pe fila „Sfaturi rapide” a ecranului.",
+              "en": "In „Text sfat (Română)” (hint text), on the screen's „Sfaturi rapide” (quick hints) tab."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "În „Previzualizare”, ca să apară deasupra celorlalte texte.",
+              "en": "In „Previzualizare” (preview), so that it shows above the other texts."
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "start-help",
+          "ro": {
+            "question": "Pe „Nor de etichete”, o etichetă se alege cu un dublu-clic, iar nimic de pe ecran nu arată asta. Ce fel de text de ajutor este făcut pentru un asemenea gest?",
+            "explanation": "Acolo unde un gest nu se vede — o tragere, un dublu-clic — un bec mic, lângă locul acela, îl explică. Este sfatul cu bec, nu textul general al ecranului."
+          },
+          "en": {
+            "question": "On „Nor de etichete” (tag cloud), a tag is selected with a double click, and nothing on the screen shows it. What kind of help text is made for such a gesture?",
+            "explanation": "Where a gesture cannot be seen — a drag, a double-click — a small light bulb beside that place explains it. It is the light-bulb hint, not the screen's general text."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "O notă în „Context”, ca utilizatorul s-o citească înainte de orice.",
+              "en": "A note in „Context”, so the user reads it before anything else."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "O trimitere „Vezi în manual” spre secțiunea despre etichete.",
+              "en": "A „Vezi în manual” (see in the manual) pointer to the section on tags."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Un mesaj care apare pe ecran la fiecare deschidere a norului.",
+              "en": "A message that appears on screen each time the cloud is opened."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Un sfat cu bec, care stă chiar lângă locul gestului și îl explică.",
+              "en": "A light-bulb hint, which stands right beside the place of the gesture and explains it."
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "admin-help",
+          "ro": {
+            "question": "În „Sfaturi rapide”, Ciprian alege un sfat sub care scrie „Apare pe 3 ecrane — textul se salvează pe toate.”. Îi schimbă textul și apasă „Salvează”. Ce se întâmplă?",
+            "explanation": "Un sfat care stă pe mai multe ecrane spune „Apare pe … ecrane — textul se salvează pe toate.”: textul nou ajunge pe toate cele trei ecrane."
+          },
+          "en": {
+            "question": "In „Sfaturi rapide”, Ciprian chooses a hint under which it reads „Apare pe 3 ecrane — textul se salvează pe toate.” (appears on 3 screens — the text is saved on all of them). He changes its text and presses „Salvează”. What happens?",
+            "explanation": "A hint that stands on several screens says „Apare pe … ecrane — textul se salvează pe toate.”: the new text reaches all three screens."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Textul nou apare doar pe ecranul pe care l-a deschis ultima dată.",
+              "en": "The new text appears only on the screen he opened last."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Textul nou apare pe toate cele trei ecrane pe care stă sfatul.",
+              "en": "The new text appears on all three screens the hint stands on."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Se face o copie a sfatului, iar celelalte ecrane păstrează textul vechi.",
+              "en": "A copy of the hint is made, and the other screens keep the old text."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Salvarea nu trece până nu alege unul dintre cele trei ecrane.",
+              "en": "The save does not go through until he chooses one of the three screens."
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "admin-help",
+          "ro": {
+            "question": "Ciprian a scris „Cum se folosește (Română)” pentru „Administrare — Etichete” și vrea să vadă cum va arăta textul, fără să-l salveze încă. Ce folosește?",
+            "explanation": "„Previzualizare” arată textul așa cum va apărea, pe măsură ce scrieți. „?” de pe ecran arată textul abia după „Salvează”."
+          },
+          "en": {
+            "question": "Ciprian has written „Cum se folosește (Română)” for „Administrare — Etichete” and wants to see how the text will look, without saving it yet. What does he use?",
+            "explanation": "„Previzualizare” (preview) shows the text as it will appear, as you type. The „?” on the screen shows the text only after „Salvează”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "„Previzualizare”, care arată textul pe măsură ce îl scrie.",
+              "en": "„Previzualizare”, which shows the text as he types it."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„?” de pe ecranul „Etichete”, deschis într-o altă fereastră.",
+              "en": "The „?” on the „Etichete” screen, opened in another window."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Descarcă (Word)”, care pune textele de ajutor într-un document.",
+              "en": "„Descarcă (Word)” (download), which puts the help texts into a document."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Vezi în manual”, care arată textul lângă secțiunea manualului.",
+              "en": "„Vezi în manual”, which shows the text beside the manual's section."
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "learning-help",
+          "ro": {
+            "question": "Ciprian a salvat textele de ajutor ale ecranului „Interacțiuni”. O colegă apasă „?” acolo. Ce găsește sub „Context” și „Cum se folosește”?",
+            "explanation": "Sub ele stă „Vezi în manual”, cu numărul și titlul secțiunii din manual care descrie ecranul pe larg; apăsat, manualul se deschide acolo."
+          },
+          "en": {
+            "question": "Ciprian has saved the help texts of the „Interacțiuni” screen. A colleague presses „?” there. What does she find under „Context” and „Cum se folosește”?",
+            "explanation": "Under them stands „Vezi în manual”, with the number and title of the manual section that describes the screen in full; pressed, the manual opens there."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Lista sfaturilor cu bec ale ecranului, fiecare cu textul ei.",
+              "en": "The list of the screen's light-bulb hints, each with its text."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Numele celui care a scris textul și data ultimei salvări.",
+              "en": "The name of whoever wrote the text and the date of the last save."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "„Vezi în manual”, cu secțiunea manualului care descrie ecranul.",
+              "en": "„Vezi în manual”, with the manual section that describes the screen."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Aceleași texte în engleză, sub cele în română.",
+              "en": "The same texts in English, under the Romanian ones."
+            }
+          ]
+        },
+        {
+          "id": "a7",
+          "section": "learning-help-proposals",
+          "ro": {
+            "question": "În lista din „Informații de ajutor”, lângă „Proprietăți — Listă” a apărut „Propunere”. Care este motivul obișnuit al unei propuneri?",
+            "explanation": "Propunerea este un text scris din manual, de obicei pentru că textul de acum trimite la un capitol care nu mai există sau numește o filă care și-a schimbat numele."
+          },
+          "en": {
+            "question": "In the list in „Informații de ajutor”, „Propunere” (proposal) has appeared beside „Proprietăți — Listă”. What is the usual reason for a proposal?",
+            "explanation": "The proposal is a text written from the manual, usually because the current text points at a chapter that no longer exists or names a tab whose name has changed."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Un coleg a scris un text nou pentru ecran și așteaptă aprobarea.",
+              "en": "A colleague has written a new text for the screen and awaits approval."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Textul de acum trimite la un capitol care nu mai există sau la o filă redenumită.",
+              "en": "The current text points at a chapter that no longer exists or at a renamed tab."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Ecranul nu are încă niciun text, iar câmpurile lui sunt goale.",
+              "en": "The screen has no text yet, and its fields are empty."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Textul în română și cel în engleză nu au aceeași lungime.",
+              "en": "The Romanian and the English texts are not the same length."
+            }
+          ]
+        },
+        {
+          "id": "a8",
+          "section": "learning-help-proposals",
+          "ro": {
+            "question": "Ciprian deschide un ecran cu propunere. Îi place textul propus, dar vrea să schimbe un cuvânt în „Cum se folosește (Română)”. Ce face?",
+            "explanation": "„Editează” pune propunerea în casetele de dedesubt, ca s-o schimbați; nu se salvează nimic până nu apăsați „Salvează”. „Acceptă” ar salva-o neschimbată."
+          },
+          "en": {
+            "question": "Ciprian opens a screen with a proposal. He likes the proposed text but wants to change one word in „Cum se folosește (Română)”. What does he do?",
+            "explanation": "„Editează” (edit) puts the proposal in the boxes underneath, so you can change it; nothing is saved until you press „Salvează”. „Acceptă” (accept) would save it unchanged."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Apasă „Acceptă”, apoi schimbă cuvântul direct în panoul „?”.",
+              "en": "He presses „Acceptă”, then changes the word directly in the „?” panel."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Apasă „Nu acum” și scrie de la capăt tot textul ecranului.",
+              "en": "He presses „Nu acum” (not now) and writes the screen's whole text from scratch."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Schimbă cuvântul chiar în textul propunerii, care se salvează apoi singură.",
+              "en": "He changes the word right in the proposal's text, which then saves itself."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Apasă „Editează”, schimbă cuvântul în casete și apasă „Salvează”.",
+              "en": "He presses „Editează”, changes the word in the boxes and presses „Salvează”."
+            }
+          ]
+        },
+        {
+          "id": "a9",
+          "section": "learning-help-proposals",
+          "ro": {
+            "question": "Ciprian nu are timp azi să citească o propunere și apasă „Nu acum”. Ce se întâmplă cu ea?",
+            "explanation": "„Nu acum” o lasă deoparte; o regăsiți data viitoare când deschideți ecranul „Informații de ajutor”. Textul de acum al ecranului rămâne neschimbat."
+          },
+          "en": {
+            "question": "Ciprian has no time today to read a proposal and presses „Nu acum”. What happens to it?",
+            "explanation": "„Nu acum” sets it aside; you find it again the next time you open the „Informații de ajutor” screen. The screen's current text stays unchanged."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Rămâne deoparte și o regăsește data viitoare în „Informații de ajutor”.",
+              "en": "It stays aside and he finds it again next time in „Informații de ajutor”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Se șterge definitiv și nu mai apare pentru acel ecran.",
+              "en": "It is deleted for good and no longer appears for that screen."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Se acceptă singură după câteva zile, dacă nu o deschide nimeni.",
+              "en": "It accepts itself after a few days, if nobody opens it."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Ia locul textului de acum până când Ciprian o citește.",
+              "en": "It takes the place of the current text until Ciprian reads it."
+            }
+          ]
+        },
+        {
+          "id": "a10",
+          "section": "admin-help",
+          "ro": {
+            "question": "Ciprian alege un ecran pe fila „Ecrane”. Ce câmpuri completează pentru el?",
+            "explanation": "Sunt patru câmpuri: „Context (Română)”, „Cum se folosește (Română)”, „Context (Engleză)” și „Cum se folosește (Engleză)”. Engleza o scrie tot el, în câmpurile ei."
+          },
+          "en": {
+            "question": "Ciprian chooses a screen on the „Ecrane” tab. Which fields does he fill in for it?",
+            "explanation": "There are four fields: „Context (Română)”, „Cum se folosește (Română)”, „Context (Engleză)” and „Cum se folosește (Engleză)”. He writes the English too, in its own fields."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Context” și „Cum se folosește”, doar în română; textul în engleză se traduce singur.",
+              "en": "„Context” and „Cum se folosește”, in Romanian only; the English text translates itself."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Context”, „Cum se folosește”, „Text sfat” și „Vezi în manual”.",
+              "en": "„Context”, „Cum se folosește”, „Text sfat” and „Vezi în manual”."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "„Context” și „Cum se folosește”, fiecare o dată în română și o dată în engleză.",
+              "en": "„Context” and „Cum se folosește”, each once in Romanian and once in English."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Un singur câmp de text, în limba aleasă în „Contul meu”.",
+              "en": "A single text field, in the language chosen in „Contul meu”."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "admin-help",
+          "ro": {
+            "question": "Ciprian vrea să afle care ecrane nu au încă text de ajutor, ca să le completeze pe rând. Unde se uită?",
+            "explanation": "Fila „Ecrane” din „Informații de ajutor” arată lista ecranelor aplicației, fiecare cu „Complet” sau „Lipsă”."
+          },
+          "en": {
+            "question": "Ciprian wants to find out which screens still have no help text, so as to fill them in one by one. Where does he look?",
+            "explanation": "The „Ecrane” tab in „Informații de ajutor” shows the list of the application's screens, each with „Complet” (complete) or „Lipsă” (missing)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "În „Cuprins”, la manualul de utilizare, unde secțiunile goale sunt gri.",
+              "en": "In „Cuprins” (contents), in the user manual, where empty sections are grey."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Pe fila „Ecrane” din „Informații de ajutor”, după „Complet” sau „Lipsă”.",
+              "en": "On the „Ecrane” tab in „Informații de ajutor”, by „Complet” or „Lipsă”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Pe fila „Sfaturi rapide”, unde fiecare ecran are numărul sfaturilor lui.",
+              "en": "On the „Sfaturi rapide” tab, where each screen has the number of its hints."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Pe „Harta competențelor”, unde ecranele fără ajutor sunt închise.",
+              "en": "On „Harta competențelor” (the skills map), where screens without help are locked."
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "admin-help",
+          "ro": {
+            "question": "Pentru un coleg care folosește aplicația în engleză, Ciprian scrie pașii de lucru pe ecranul „Etichete”, în engleză. În ce câmp îi scrie?",
+            "explanation": "Instrucțiunile pas cu pas stau în „Cum se folosește”, iar varianta în engleză are câmpul ei, „Cum se folosește (Engleză)”."
+          },
+          "en": {
+            "question": "For a colleague who uses the application in English, Ciprian writes the working steps on the „Etichete” (tags) screen, in English. Which field does he write them in?",
+            "explanation": "The step-by-step instructions go in „Cum se folosește”, and the English version has its own field, „Cum se folosește (Engleză)”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "În „Context (Engleză)”, unde se descrie ecranul în engleză.",
+              "en": "In „Context (Engleză)”, where the screen is described in English."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "În „Cum se folosește (Română)”, după ce trece „Limba” pe „English”.",
+              "en": "In „Cum se folosește (Română)”, after switching „Limba” (language) to „English”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În „Text sfat (Engleză)”, pe fila „Sfaturi rapide”.",
+              "en": "In „Text sfat (Engleză)”, on the „Sfaturi rapide” tab."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "În „Cum se folosește (Engleză)”, pe fila „Ecrane”.",
+              "en": "In „Cum se folosește (Engleză)”, on the „Ecrane” tab."
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "admin-help",
+          "ro": {
+            "question": "Ciprian apasă „Salvează” după ce a scris textele ecranului „Proprietăți — Listă”. Cum știe că s-au salvat și de când le văd colegii?",
+            "explanation": "„Salvează” salvează textul, iar ecranul confirmă cu „Salvat”. De acum, „?” de pe ecranul acela deschide panoul „Ajutor”, cu textele așa cum le-a scris."
+          },
+          "en": {
+            "question": "Ciprian presses „Salvează” after writing the texts of the „Proprietăți — Listă” screen. How does he know they are saved, and from when do his colleagues see them?",
+            "explanation": "„Salvează” saves the text, and the screen confirms with „Salvat” (saved). From then on, the „?” on that screen opens the „Ajutor” panel, with the texts as he wrote them."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Ecranul confirmă cu „Salvat”, iar „?” de pe listă le arată de acum.",
+              "en": "The screen confirms with „Salvat”, and the „?” on the list shows them from now on."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Primește un e-mail de confirmare, iar colegii le văd a doua zi.",
+              "en": "He gets a confirmation e-mail, and colleagues see them the next day."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Ecranul trece pe „Propunere”, iar colegii le văd după aprobare.",
+              "en": "The screen turns to „Propunere”, and colleagues see them after approval."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Ecranul confirmă cu „Salvat”, dar colegii le văd după reîncărcarea manualului.",
+              "en": "The screen confirms with „Salvat”, but colleagues see them after the manual is reloaded."
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "admin-help",
+          "ro": {
+            "question": "Pe ecranul „Grupuri”, fișele se mută trăgându-le de un loc gol, iar Ciprian vrea să rescrie, în română și în engleză, sfatul cu bec care explică această tragere. Unde îl scrie?",
+            "explanation": "„Sfaturi rapide” ține sfaturile cu bec: alegeți sfatul din listă și scrieți-i textul în „Text sfat (Română)” și „Text sfat (Engleză)”."
+          },
+          "en": {
+            "question": "On the „Grupuri” (groups) screen, the tiles are moved by dragging them from an empty spot, and Ciprian wants to rewrite, in Romanian and in English, the light-bulb hint that explains this drag. Where does he write it?",
+            "explanation": "„Sfaturi rapide” holds the light-bulb hints: choose the hint from the list and write its text in „Text sfat (Română)” and „Text sfat (Engleză)”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Pe fila „Ecrane”, la „Grupuri”, la sfârșitul lui „Cum se folosește”.",
+              "en": "On the „Ecrane” tab, for „Grupuri”, at the end of „Cum se folosește”."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Pe fila „Sfaturi rapide”, în „Text sfat (Română)” și „Text sfat (Engleză)”.",
+              "en": "On the „Sfaturi rapide” tab, in „Text sfat (Română)” and „Text sfat (Engleză)”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Pe ecranul „Grupuri”, într-o notă lipită lângă fișa trasă.",
+              "en": "On the „Grupuri” screen, in a note stuck beside the dragged tile."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Pe fila „Sfaturi rapide”, doar în română; engleza se ia din manual.",
+              "en": "On the „Sfaturi rapide” tab, in Romanian only; the English is taken from the manual."
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "learning-help-proposals",
+          "ro": {
+            "question": "Deasupra listei din „Informații de ajutor” scrie că trei ecrane au o propunere. Ciprian deschide unul dintre ele. Ce vede?",
+            "explanation": "Textul de acum și propunerea stau unul lângă altul, câmp cu câmp, în română și în engleză, ca să le poată compara înainte să aleagă."
+          },
+          "en": {
+            "question": "Above the list in „Informații de ajutor” it says that three screens have a proposal. Ciprian opens one of them. What does he see?",
+            "explanation": "The current text and the proposal stand side by side, field by field, in Romanian and in English, so he can compare them before he chooses."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Doar propunerea, care a înlocuit deja textul de acum al ecranului.",
+              "en": "Only the proposal, which has already replaced the screen's current text."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Secțiunea din manual din care s-a scris propunerea, deschisă alături.",
+              "en": "The manual section the proposal was written from, opened alongside."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Textul de acum și propunerea, unul lângă altul, câmp cu câmp, în ambele limbi.",
+              "en": "The current text and the proposal, side by side, field by field, in both languages."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Propunerea în română, iar engleza după ce apasă „Acceptă”.",
+              "en": "The proposal in Romanian, and the English after he presses „Acceptă”."
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "learning-help-proposals",
+          "ro": {
+            "question": "Ciprian apasă „Acceptă” pe propunerea pentru ecranul „Interacțiuni”. Când o vede o colegă care apasă „?” pe acel ecran?",
+            "explanation": "„Acceptă” salvează propunerea ca text al ecranului, iar „?” o arată de îndată; nu mai trebuie apăsat și „Salvează”."
+          },
+          "en": {
+            "question": "Ciprian presses „Acceptă” on the proposal for the „Interacțiuni” screen. When does a colleague who presses „?” on that screen see it?",
+            "explanation": "„Acceptă” saves the proposal as the screen's text, and „?” shows it at once; there is no need to press „Salvează” as well."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "După ce Ciprian apasă și „Salvează” sub casete.",
+              "en": "After Ciprian also presses „Salvează” under the boxes."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "De îndată: „Acceptă” o salvează ca text al ecranului.",
+              "en": "At once: „Acceptă” saves it as the screen's text."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Abia după ce manualul este descărcat din nou în Word.",
+              "en": "Only after the manual is downloaded again in Word."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Abia data viitoare când Ciprian deschide „Informații de ajutor”.",
+              "en": "Only the next time Ciprian opens „Informații de ajutor”."
+            }
+          ]
+        },
+        {
+          "id": "b7",
+          "section": "learning-help-proposals",
+          "ro": {
+            "question": "Ciprian apasă „Editează” pe o propunere, schimbă două propoziții în casete și pleacă la o întâlnire fără să apese „Salvează”. Ce s-a salvat?",
+            "explanation": "„Editează” pune propunerea în casete ca s-o schimbați, dar nu se salvează nimic până nu apăsați „Salvează”. Textul ecranului rămâne cel de dinainte."
+          },
+          "en": {
+            "question": "Ciprian presses „Editează” on a proposal, changes two sentences in the boxes and leaves for a meeting without pressing „Salvează”. What has been saved?",
+            "explanation": "„Editează” puts the proposal in the boxes so you can change it, but nothing is saved until you press „Salvează”. The screen's text stays what it was."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Propunerea, așa cum era înainte de schimbările lui.",
+              "en": "The proposal, as it was before his changes."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Propunerea cu cele două propoziții schimbate, salvată singură.",
+              "en": "The proposal with the two changed sentences, saved by itself."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Doar partea în română; cea în engleză se pierde.",
+              "en": "Only the Romanian part; the English one is lost."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Nimic; ecranul păstrează textul pe care îl avea.",
+              "en": "Nothing; the screen keeps the text it had."
+            }
+          ]
+        },
+        {
+          "id": "b8",
+          "section": "learning-help-proposals",
+          "ro": {
+            "question": "Ciprian a lăsat deoparte, cu „Nu acum”, o propunere pentru „Proprietăți — Listă”. Apoi rescrie el însuși „Context (Română)” al ecranului și salvează. Ce se întâmplă cu propunerea?",
+            "explanation": "O propunere este legată de textul pe care l-a găsit: dacă scrieți altceva peste el, propunerea dispare singură, pentru că nu mai răspunde textului pe care îl aveți."
+          },
+          "en": {
+            "question": "Ciprian set aside, with „Nu acum”, a proposal for „Proprietăți — Listă”. Then he rewrites the screen's „Context (Română)” himself and saves. What happens to the proposal?",
+            "explanation": "A proposal is tied to the text it found: if you write something else over it, the proposal disappears by itself, because it no longer answers the text you have."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Dispare singură, pentru că nu mai răspunde textului de acum.",
+              "en": "It disappears by itself, because it no longer answers the current text."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Rămâne și o regăsește data viitoare, ca orice propunere lăsată deoparte.",
+              "en": "It stays, and he finds it again next time, like any proposal set aside."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Se aplică peste textul lui, pentru că vine din manual.",
+              "en": "It is applied over his text, because it comes from the manual."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Se mută la fila „Sfaturi rapide”, ca sfat al ecranului.",
+              "en": "It moves to the „Sfaturi rapide” tab, as the screen's hint."
+            }
+          ]
+        },
+        {
+          "id": "b9",
+          "section": "learning-help-proposals",
+          "ro": {
+            "question": "Un coleg se teme că propunerile scrise din manual îi vor înlocui, fără să știe, textele de ajutor scrise cu grijă. Ce îi spune Ciprian?",
+            "explanation": "Textul dumneavoastră nu este schimbat niciodată fără să alegeți: o propunere ajunge text al ecranului doar prin „Acceptă” sau prin „Editează” și „Salvează”."
+          },
+          "en": {
+            "question": "A colleague fears that the proposals written from the manual will replace, without his knowing, the help texts he wrote with care. What does Ciprian tell him?",
+            "explanation": "Your text is never changed without your choosing: a proposal becomes the screen's text only through „Acceptă”, or through „Editează” and „Salvează”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Că propunerile înlocuiesc textul doar dacă nu sunt deschise într-o săptămână.",
+              "en": "That proposals replace the text only if they are not opened within a week."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Că textele lui se înlocuiesc doar în engleză, nu și în română.",
+              "en": "That his texts are replaced only in English, not in Romanian."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Că textul lui nu se schimbă niciodată fără ca cineva să aleagă asta.",
+              "en": "That his text never changes unless someone chooses it."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Că manualul are întâietate și îi înlocuiește textul la prima schimbare.",
+              "en": "That the manual takes precedence and replaces his text at the first change."
+            }
+          ]
+        },
+        {
+          "id": "b10",
+          "section": "learning-help",
+          "ro": {
+            "question": "Ciprian vrea să copieze în „Cum se folosește” secțiunea întreagă din manual despre ecranul „Interacțiuni”. Ce spune manualul despre „?” și manual?",
+            "explanation": "„?” este forma scurtă a manualului, iar manualul este forma lungă a lui „?”. Cine vrea detaliile apasă „Vezi în manual” și ajunge la secțiunea care descrie ecranul pe larg."
+          },
+          "en": {
+            "question": "Ciprian wants to copy into „Cum se folosește” the manual's whole section on the „Interacțiuni” screen. What does the manual say about „?” and the manual?",
+            "explanation": "„?” is the short form of the manual, and the manual is the long form of „?”. Whoever wants the details presses „Vezi în manual” and reaches the section that describes the screen in full."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Că „?” trebuie să repete manualul cuvânt cu cuvânt, ca să nu difere.",
+              "en": "That „?” must repeat the manual word for word, so that they do not differ."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Că „?” înlocuiește manualul pe ecranele care au text complet.",
+              "en": "That „?” replaces the manual on screens that have a complete text."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Că manualul se scrie din „?”, deci textul lung trebuie pus în „?”.",
+              "en": "That the manual is written from „?”, so the long text must go into „?”."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Că „?” e forma scurtă, iar detaliile se citesc prin „Vezi în manual”.",
+              "en": "That „?” is the short form, and the details are read through „Vezi în manual”."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

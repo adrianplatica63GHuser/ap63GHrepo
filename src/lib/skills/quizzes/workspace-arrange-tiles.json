@@ -1,0 +1,629 @@
+{
+  "skill": "workspace-arrange-tiles",
+  "manual": [
+    "start-tiles",
+    "start-preview",
+    "links-related",
+    "admin-settings-account"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "properties-type-tiles",
+          "ro": {
+            "question": "Pe ecranul unei proprietăți, vreți să trageți fișa „Hartă” în stânga, lângă „Adresă”, dar ea nu se mișcă. De ce?",
+            "explanation": "Fișele mov deschis stau pe loc; pe o proprietate, „Hartă”, „Puncte de contur” și „Street View” stau într-o coloană în dreapta și nu se mută."
+          },
+          "en": {
+            "question": "On a property's screen, you want to drag the „Hartă” (map) tile to the left, beside „Adresă”, but it does not move. Why?",
+            "explanation": "The light purple tiles stay where they are; on a property, „Hartă”, „Puncte de contur” and „Street View” sit in a column on the right and do not move."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Ați apucat-o de nume; o fișă se trage doar de bara ei de titlu.",
+              "en": "You grabbed it by its name; a tile can be dragged only by its title bar."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Este o fișă mov deschis; ca harta și colțurile, stă pe loc.",
+              "en": "It is a light purple tile; like the map and the corners, it stays put."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Locul de lângă „Adresă” e ocupat; mai întâi debifați „Adresă”.",
+              "en": "The place beside „Adresă” is taken; untick „Adresă” first."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Fișele se mută doar după ce apăsați creionul.",
+              "en": "Tiles move only after you press the pencil."
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "start-help",
+          "ro": {
+            "question": "Un coleg nou nu știe că fișele se pot muta, pentru că pe ecran nu scrie nicăieri. Unde găsește explicația fără să plece de pe ecran?",
+            "explanation": "Butonul „?” din capătul barei de navigare deschide ajutorul ecranului, iar acolo unde un gest nu se vede — o tragere, un dublu-clic — un bec mic, lângă locul acela, îl explică."
+          },
+          "en": {
+            "question": "A new colleague does not know that tiles can be moved, because nothing on the screen says so. Where does he find the explanation without leaving the screen?",
+            "explanation": "The „?” button at the end of the navigation bar opens the screen's help, and where a gesture cannot be seen — a drag, a double-click — a small light bulb beside that place explains it."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Doar în manual, în „Ajutor și învățare”, după ce plecați de pe ecran.",
+              "en": "Only in the manual, under „Ajutor și învățare”, after leaving the screen."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "În „Setări”, la „Implicitele mele”.",
+              "en": "In „Setări”, under „Implicitele mele”."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "În becul mic de lângă gest sau în ajutorul din „?”.",
+              "en": "In the small light bulb beside the gesture, or in the help behind „?”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Trecând cu mouse-ul peste fișă, care își arată numele.",
+              "en": "By passing the mouse over the tile, which shows its name."
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "start-preview",
+          "ro": {
+            "question": "Pe un contract de vânzare-cumpărare ați schimbat „Preț și plată” și nu ați salvat încă. Vreți să vedeți datele cumpărătorului fără să plecați de pe contract. Ce faceți?",
+            "explanation": "Cu „Previzualizare”, înregistrarea legată se deschide alături, fără să plecați de pe ecran, iar o modificare nesalvată pe ecranul principal rămâne neatinsă."
+          },
+          "en": {
+            "question": "On a sale contract you changed „Preț și plată” (price and payment) and have not saved yet. You want to see the buyer's details without leaving the contract. What do you do?",
+            "explanation": "With „Previzualizare”, the linked record opens beside the one you are on, without leaving your screen, and an unsaved change on the main screen is left untouched."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Salvați întâi: previzualizarea pierde modificările nesalvate.",
+              "en": "Save first: the preview loses unsaved changes."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Apăsați „Înapoi” și căutați cumpărătorul în „Persoane Fizice”.",
+              "en": "Press „Înapoi” and look the buyer up in „Persoane Fizice”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Apăsați „Relația” pe rândul lui; bula arată toate datele lui.",
+              "en": "Press „Relația” on his row; the bubble shows all his details."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "„Previzualizare” pe rândul cumpărătorului; ce n-ați salvat rămâne neatins.",
+              "en": "„Previzualizare” on the buyer's row; what you have not saved is left untouched."
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "start-preview",
+          "ro": {
+            "question": "Lângă un contract aveți deschise previzualizările vânzătorului și cumpărătorului. Ați vrea alături și notarul. Ce trebuie să știți?",
+            "explanation": "Se deschid cel mult două previzualizări odată."
+          },
+          "en": {
+            "question": "Beside a contract you have the previews of the seller and of the buyer open. You would like the notary beside them too. What must you know?",
+            "explanation": "At most two previews open at a time."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Se deschid cel mult două previzualizări odată.",
+              "en": "At most two previews open at a time."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Se pot deschide oricâte, câte încap pe ecran.",
+              "en": "Any number can be opened, as many as fit on the screen."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Se poate deschide una singură; a doua o închide pe prima.",
+              "en": "Only one can be opened; the second closes the first."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Notarul nu se poate previzualiza, fiind pe „Legături”, nu pe „Părți”.",
+              "en": "The notary cannot be previewed, being on „Legături”, not „Părți”."
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "admin-settings-account",
+          "ro": {
+            "question": "Ciprian bifează de fiecare dată „Legături” pe ecranul unei persoane fizice. Vrea ca orice persoană să se deschidă cu ea bifată, și pe calculatorul de acasă. Ce face?",
+            "explanation": "În „Setări” → „Contul meu” → „Implicitele mele” bifați, pentru „Persoană fizică”, fișele pe care să le arate „Implicit” și apăsați „Salvează”. Setul este al contului, nu al browserului."
+          },
+          "en": {
+            "question": "Ciprian ticks „Legături” every time on a natural person's screen. He wants every person to open with it ticked, on his home computer too. What does he do?",
+            "explanation": "In „Setări” → „Contul meu” → „Implicitele mele” tick, for „Persoană fizică”, the tiles „Implicit” should show and press „Salvează”. The set belongs to the account, not to the browser."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Apasă „Toate” o dată; alegerea rămâne pentru toate persoanele.",
+              "en": "He presses „Toate” once; the choice stays for every person."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Bifează „Legături” în „Implicitele mele”, la „Persoană fizică”, și salvează.",
+              "en": "He ticks „Legături” in „Implicitele mele”, for „Persoană fizică”, and saves."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Bifează „Legături” pe o persoană și apasă „Salvează” în bara de butoane.",
+              "en": "He ticks „Legături” on one person and presses „Salvează” in the button bar."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Bifează în „Implicitele mele”, dar acasă trebuie să bifeze din nou, alt browser.",
+              "en": "He ticks it in „Implicitele mele”, but at home must tick again, another browser."
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "persons-list",
+          "ro": {
+            "question": "În lista persoanelor fizice, vreți să aflați repede data și locul nașterii unei persoane, fără să-i deschideți ecranul. Ce apăsați pe rândul ei?",
+            "explanation": "„Previzualizare” arată, lângă listă, un rezumat scurt: numele, apoi porecla și CNP-ul, apoi „născut:” (sau „născută:”) cu data și locul nașterii. Un al doilea clic îl închide."
+          },
+          "en": {
+            "question": "In the list of natural persons, you want to learn quickly a person's date and place of birth without opening their screen. What do you press on their row?",
+            "explanation": "„Previzualizare” shows, beside the list, a short summary: the name, then the nickname and the CNP, then „născut:” (or „născută:”) with the date and place of birth. A second click closes it."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Incursiune”, care arată fișa „Identitate” lângă listă.",
+              "en": "„Incursiune”, which shows the „Identitate” tile beside the list."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Legături”, care arată toate datele persoanei.",
+              "en": "„Legături”, which shows all the person's details."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Deschide”, apoi „Înapoi”; altfel nu se vede.",
+              "en": "„Deschide”, then „Înapoi”; it cannot be seen otherwise."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "„Previzualizare”: lângă listă apare un rezumat cu „născut:”.",
+              "en": "„Previzualizare”: a summary with „născut:” appears beside the list."
+            }
+          ]
+        },
+        {
+          "id": "a7",
+          "section": "documents-type",
+          "ro": {
+            "question": "Pe un contract de vânzare-cumpărare ați debifat „Taxe și cheltuieli” și „Declarații și garanții”. Apoi deschideți un plan. Ce fișe vedeți pe plan?",
+            "explanation": "Alegerea fișelor se ține minte pentru fiecare tip: un contract de vânzare-cumpărare și un plan își păstrează fiecare aranjamentul lui."
+          },
+          "en": {
+            "question": "On a sale contract you unticked „Taxe și cheltuieli” and „Declarații și garanții”. Then you open a plan. Which tiles do you see on the plan?",
+            "explanation": "The choice of tiles is remembered for each type: a sale contract and a plan each keep their own arrangement."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Aceleași fișe ca pe contract, cu aceleași bife scoase.",
+              "en": "The same tiles as on the contract, with the same ticks removed."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Aranjamentul planului; fiecare tip își ține minte alegerea lui.",
+              "en": "The plan's arrangement; each type remembers its own choice."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Toate fișele, pentru că bifele se pierd la plecarea de pe ecran.",
+              "en": "All the tiles, because the ticks are lost when you leave the screen."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Doar „Identificarea actului”, până apăsați „Implicit”.",
+              "en": "Only „Identificarea actului”, until you press „Implicit”."
+            }
+          ]
+        },
+        {
+          "id": "a8",
+          "section": "links-related",
+          "ro": {
+            "question": "Pe ecranul unei persoane fizice nu vedeți fișa „Legături”, dar vreți să previzualizați terenul de care este legată. Ce faceți?",
+            "explanation": "Dacă nu vedeți „Legături”, bifați-o printre fișele din capul ecranului; pe rândul unei înregistrări legate, „Previzualizare” o deschide alături."
+          },
+          "en": {
+            "question": "On a natural person's screen you cannot see the „Legături” tile, but you want to preview the plot linked to them. What do you do?",
+            "explanation": "If you cannot see „Legături”, tick it among the tiles at the top of the screen; on a linked record's row, „Previzualizare” opens it beside the screen."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Mergeți în lista proprietăților și apăsați acolo „Previzualizare”.",
+              "en": "Go to the list of properties and press „Previzualizare” there."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Apăsați „Asociază proprietate”, care arată terenurile deja legate de persoană.",
+              "en": "Press „Asociază proprietate”, which shows the plots already linked to the person."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Bifați „Legături” sus, apoi „Previzualizare” pe rândul terenului.",
+              "en": "Tick „Legături” at the top, then „Previzualizare” on the plot's row."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Un dublu-clic pe fișa „Identitate” deschide legăturile ei.",
+              "en": "A double-click on the „Identitate” tile opens its links."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "admin-settings-account",
+          "ro": {
+            "question": "În „Implicitele mele”, la „Proprietate”, Ciprian a bifat și „Street View”. Pe ecranul unui teren a debifat mai multe fișe, apoi apasă „Implicit”. Ce vede?",
+            "explanation": "În „Implicitele mele” bifați, pentru fiecare fel de înregistrare, fișele pe care vreți să le arate „Implicit” pe ecranul ei; „Implicit” revine deci la setul salvat, cu „Street View”."
+          },
+          "en": {
+            "question": "In „Implicitele mele”, for „Proprietate”, Ciprian also ticked „Street View”. On a plot's screen he unticked several tiles, then presses „Implicit”. What does he see?",
+            "explanation": "In „Implicitele mele” you tick, for each kind of record, the tiles you want „Implicit” to show on its screen; „Implicit” therefore returns to the saved set, with „Street View”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Setul obișnuit al aplicației, fără „Street View”.",
+              "en": "The application's usual set, without „Street View”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Toate fișele proprietății, ca la „Toate”.",
+              "en": "All of the property's tiles, as with „Toate”."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Setul lui salvat în „Implicitele mele”, cu „Street View”.",
+              "en": "His set saved in „Implicitele mele”, with „Street View”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Fișele pe care le-a lăsat bifate înainte de clic.",
+              "en": "The tiles he left ticked before the click."
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "admin-settings-account",
+          "ro": {
+            "question": "Setul de fișe pe care Ciprian l-a salvat pentru „Act” nu-i mai folosește; vrea înapoi setul obișnuit al aplicației, pe orice act. Ce face?",
+            "explanation": "„Revino la implicit”, în „Setări” → „Contul meu” → „Implicitele mele”, uită setul dumneavoastră și readuce setul obișnuit al aplicației."
+          },
+          "en": {
+            "question": "The set of tiles Ciprian saved for „Act” is no use to him any more; he wants the application's usual set back, on every document. What does he do?",
+            "explanation": "„Revino la implicit” (back to default), in „Setări” → „Contul meu” → „Implicitele mele”, forgets your set and brings back the application's usual set."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "„Revino la implicit” în „Implicitele mele”.",
+              "en": "„Revino la implicit” in „Implicitele mele”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Implicit” pe ecranul unui act.",
+              "en": "„Implicit” on a document's screen."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Debifează toate fișele din „Implicitele mele” și salvează.",
+              "en": "He unticks every tile in „Implicitele mele” and saves."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Toate” pe ecranul unui act, apoi „Salvează”.",
+              "en": "„Toate” on a document's screen, then „Salvează”."
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "properties-type-tiles",
+          "ro": {
+            "question": "Pe laptop, cu fereastra îngustă, coloana cu „Hartă” și „Puncte de contur” a unui teren apare sub celelalte fișe, nu în dreapta. Ce înseamnă?",
+            "explanation": "Fișele „Hartă”, „Puncte de contur” și „Street View” stau într-o coloană în dreapta; pe un ecran îngust, coloana coboară sub celelalte fișe."
+          },
+          "en": {
+            "question": "On a laptop, with a narrow window, a plot's column with „Hartă” and „Puncte de contur” appears under the other tiles, not on the right. What does it mean?",
+            "explanation": "The „Hartă”, „Puncte de contur” and „Street View” tiles sit in a column on the right; on a narrow screen, the column moves down under the other tiles."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Cineva le-a tras acolo; trageți-le înapoi în dreapta, de spațiul lor gol.",
+              "en": "Someone dragged them there; drag them back to the right by their empty space."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Implicitele mele” s-au pierdut; apăsați „Implicit”.",
+              "en": "„Implicitele mele” were lost; press „Implicit”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Terenul nu are colțuri, așa că harta se mută jos.",
+              "en": "The plot has no corners, so the map moves down."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Nimic greșit: pe un ecran îngust coloana coboară sub fișe.",
+              "en": "Nothing is wrong: on a narrow screen the column moves under the tiles."
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "start-tiles",
+          "ro": {
+            "question": "Pe ecranul unei firme, fișa „Clasificare” stă jos, departe de „Legături”, iar lângă „Legături” e un loc liber. Cum o aduceți acolo?",
+            "explanation": "O fișă se trage de spațiul ei gol într-un loc liber; un dublu-clic pe ea o urcă sub fișa de deasupra."
+          },
+          "en": {
+            "question": "On a company's screen, the „Clasificare” tile sits at the bottom, far from „Legături”, and beside „Legături” there is a free place. How do you bring it there?",
+            "explanation": "A tile is dragged by its empty space into a free place; a double-click on it raises it under the tile above."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "O debifați și o bifați din nou; reapare lângă ultima fișă bifată.",
+              "en": "Untick it and tick it again; it reappears beside the last tile ticked."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "O trageți de spațiul ei gol în locul liber de lângă „Legături”.",
+              "en": "Drag it by its empty space into the free place beside „Legături”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "O trageți de un câmp al ei peste fișa „Legături”.",
+              "en": "Drag it by one of its fields on top of the „Legături” tile."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Apăsați creionul, apoi alegeți locul ei din bara de butoane.",
+              "en": "Press the pencil, then choose its place from the button bar."
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "companies-list",
+          "ro": {
+            "question": "Vreți să aflați câte persoane de contact are o firmă, fără să-i deschideți ecranul. Ce faceți în lista persoanelor juridice?",
+            "explanation": "Previzualizarea unei firme, lângă listă, arată denumirea ei, urmată de numărul persoanelor de contact între paranteze — de exemplu „(2 contacte)” —, apoi porecla."
+          },
+          "en": {
+            "question": "You want to learn how many contact persons a company has, without opening its screen. What do you do in the list of legal persons?",
+            "explanation": "A company's preview, beside the list, shows its name, followed by the number of contact persons in brackets — for instance „(2 contacte)” —, then its nickname."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Incursiune” pe rând, care arată persoanele de contact.",
+              "en": "„Incursiune” on the row, which shows the contact persons."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Bifați „Persoană de contact” în „Câmpuri afișate”; coloana le numără.",
+              "en": "Tick „Persoană de contact” in „Câmpuri afișate”; the column counts them."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "„Previzualizare” pe rând; lângă denumire scrie, de pildă, „(2 contacte)”.",
+              "en": "„Previzualizare” on the row; beside the name it says, say, „(2 contacte)”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nu se poate fără „Deschide”; contactele sunt doar pe ecranul firmei.",
+              "en": "It cannot be done without „Deschide”; the contacts are only on its screen."
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "persons-list",
+          "ro": {
+            "question": "Din lista persoanelor fizice vreți să vedeți cu ce terenuri și acte este legată Elena Ionescu, fără să-i deschideți ecranul. Ce apăsați pe rândul ei?",
+            "explanation": "„Legături”, pe rândul din listă, arată lângă listă legăturile persoanei, numai pentru citit; „Previzualizare” arată doar un rezumat scurt."
+          },
+          "en": {
+            "question": "From the list of natural persons you want to see which plots and documents Elena Ionescu is linked to, without opening her screen. What do you press on her row?",
+            "explanation": "„Legături”, on the list's row, shows the person's links beside the list, read-only; „Previzualizare” shows only a short summary."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "„Legături”, care le arată lângă listă, numai pentru citit.",
+              "en": "„Legături”, which shows them beside the list, read-only."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Previzualizare”, al cărei rezumat cuprinde și legăturile.",
+              "en": "„Previzualizare”, whose summary includes the links too."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Incursiune”, care arată fișa „Legături” a persoanei.",
+              "en": "„Incursiune”, which shows the person's „Legături” tile."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Bifa rândului, apoi „Câmpuri afișate”.",
+              "en": "The row's tick box, then „Câmpuri afișate”."
+            }
+          ]
+        },
+        {
+          "id": "b7",
+          "section": "links-related",
+          "ro": {
+            "question": "Pe fișa „Legături” a unui teren vedeți proprietarul, Andrei Munteanu, și vreți să-i corectați numărul de telefon. Ce faceți?",
+            "explanation": "„Vizualizare” deschide înregistrarea legată numai pentru citire; „Modifică”, jos pe ecranul ei, o face modificabilă."
+          },
+          "en": {
+            "question": "On a plot's „Legături” tile you see the owner, Andrei Munteanu, and you want to correct his telephone number. What do you do?",
+            "explanation": "„Vizualizare” opens the linked record read-only; „Modifică”, at the bottom of its screen, makes it editable."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Apăsați „Relația” și scrieți numărul nou în bulă.",
+              "en": "Press „Relația” and type the new number in the bubble."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Apăsați „Dezasociază”, apoi „Asociază persoană” din nou, cu numărul nou.",
+              "en": "Press „Dezasociază”, then „Asociază persoană” again, with the new number."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Apăsați „Cotă”, care deschide datele persoanei.",
+              "en": "Press „Cotă”, which opens the person's details."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "„Vizualizare” pe rândul lui, apoi „Modifică”, jos pe ecranul lui.",
+              "en": "„Vizualizare” on his row, then „Modifică”, at the bottom of his screen."
+            }
+          ]
+        },
+        {
+          "id": "b8",
+          "section": "documents-sale",
+          "ro": {
+            "question": "Pe un contract de vânzare-cumpărare nou nu găsiți vânzătorii și cumpărătorii, ca să-l previzualizați pe cumpărător lângă contract. Unde sunt?",
+            "explanation": "Fișa „Părți” ține vânzătorii și cumpărătorii; nu se vede de la început, așa că bifați-o. De pe rândul unei părți, „Previzualizare” o deschide alături."
+          },
+          "en": {
+            "question": "On a new sale contract you cannot find the sellers and buyers, so as to preview the buyer beside the contract. Where are they?",
+            "explanation": "The „Părți” (parties) tile holds the sellers and the buyers; it is not shown to begin with, so tick it. From a party's row, „Previzualizare” opens it beside the contract."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Pe „Legături”, unde stau toate persoanele contractului.",
+              "en": "On „Legături”, where all the contract's persons are."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "În fișa „Părți”, care trebuie întâi bifată în capul ecranului.",
+              "en": "In the „Părți” tile, which must first be ticked at the top of the screen."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În „Identificarea actului”, lângă „Notariat”.",
+              "en": "In „Identificarea actului”, beside „Notariat”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Doar în lista „Acte”, cu „Previzualizare” pe rândul contractului.",
+              "en": "Only in the „Acte” list, with „Previzualizare” on the contract's row."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

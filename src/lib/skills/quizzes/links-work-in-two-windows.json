@@ -1,0 +1,781 @@
+{
+  "skill": "links-work-in-two-windows",
+  "manual": [
+    "links-two-windows",
+    "reports-interactions-edit",
+    "start-preview",
+    "links-versions"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "links-two-windows",
+          "ro": {
+            "question": "Ciprian are ecranul lui Andrei Munteanu deschis în două file ale browserului. În prima corectează telefonul și apasă „Salvează”; în a doua nu a scris nimic. Ce se întâmplă în a doua filă?",
+            "explanation": "Când salvați într-o fereastră, cealaltă se reîncarcă singură, dacă nu are nimic nesalvat."
+          },
+          "en": {
+            "question": "Ciprian has Andrei Munteanu's screen open in two browser tabs. In the first he corrects the phone and presses „Salvează” (save); in the second he has typed nothing. What happens in the second tab?",
+            "explanation": "When you save in one window, the other reloads by itself, if it has nothing unsaved."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Rămâne cu telefonul vechi până o închideți",
+              "en": "It keeps the old phone until you close it"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Se reîncarcă singură și arată telefonul nou",
+              "en": "It reloads by itself and shows the new phone"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Arată un mesaj roșu și așteaptă „Reîncarcă”",
+              "en": "It shows a red message and waits for „Reîncarcă”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Întreabă dacă vreți să suprascrieți salvarea",
+              "en": "It asks whether you want to overwrite the save"
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "links-two-windows",
+          "ro": {
+            "question": "De data aceasta, în a doua filă Ciprian începuse să scrie o adresă nouă când prima filă a salvat. Ce vede în a doua filă?",
+            "explanation": "O fereastră în care ați început să scrieți nu se reîncarcă peste ce ați scris: sub banda „Modificări nesalvate” apare, cu roșu, că obiectul a fost salvat în altă fereastră și că salvarea va fi refuzată, alături de „Reîncarcă”."
+          },
+          "en": {
+            "question": "This time, in the second tab Ciprian had started typing a new address when the first tab saved. What does he see in the second tab?",
+            "explanation": "A window in which you have started typing is not reloaded over what you typed: under the „Modificări nesalvate” (unsaved changes) band appears, in red, that the item was saved in another window and that the save will be refused, with „Reîncarcă” (reload)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Un mesaj roșu sub „Modificări nesalvate”, cu „Reîncarcă” alături",
+              "en": "A red message under „Modificări nesalvate”, with „Reîncarcă” beside it"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Fila se reîncarcă, iar adresa scrisă se pierde",
+              "en": "The tab reloads, and the address he typed is lost"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Adresa scrisă se adaugă singură la versiunea salvată în prima filă, fără nicio întrebare",
+              "en": "The address he typed is added by itself to the version saved in the first tab, with no question"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nimic deosebit, până când apasă „Salvează”",
+              "en": "Nothing special, until he presses „Salvează”"
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "links-two-windows",
+          "ro": {
+            "question": "Ciprian nu ia în seamă mesajul roșu și apasă totuși „Salvează” în a doua filă. Ce se întâmplă?",
+            "explanation": "Nu se scrie nimic: „Nu s-a salvat nimic: obiectul a fost salvat între timp în altă fereastră sau de alt utilizator. Valorile introduse au rămas pe ecran.”"
+          },
+          "en": {
+            "question": "Ciprian ignores the red message and presses „Salvează” in the second tab anyway. What happens?",
+            "explanation": "Nothing is written: „Nu s-a salvat nimic: obiectul a fost salvat între timp în altă fereastră sau de alt utilizator. Valorile introduse au rămas pe ecran.” (nothing was saved; the values you typed have stayed on screen)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Adresa se salvează peste ce s-a salvat în prima filă",
+              "en": "The address is saved over what was saved in the first tab"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Se face o versiune nouă, cu ambele modificări",
+              "en": "A new version is made, with both changes"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Nu se scrie nimic, iar valorile scrise rămân pe ecran",
+              "en": "Nothing is written, and the values typed stay on screen"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Valorile scrise se șterg și se încarcă versiunea curentă",
+              "en": "The values typed are cleared and the current version loads"
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "links-two-windows",
+          "ro": {
+            "question": "După salvarea refuzată, Ciprian apasă „N versiuni” ca să găsească în istoric adresa pe care a încercat s-o salveze. Ce găsește?",
+            "explanation": "Istoricul versiunilor ține doar salvările care au trecut, așa că o salvare refuzată nu lasă nicio versiune."
+          },
+          "en": {
+            "question": "After the refused save, Ciprian presses „N versiuni” (N versions) to find in the history the address he tried to save. What does he find?",
+            "explanation": "The version history holds only the saves that went through, so a refused save leaves no version."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "O versiune marcată ca refuzată, cu adresa lui",
+              "en": "A version marked as refused, with his address"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "O versiune cu adresa, pe care o poate face curentă cu „Fă curentă”",
+              "en": "A version with the address, which he can make current with „Fă curentă”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Adresa, dar numai după ce apasă „Reîncarcă”",
+              "en": "The address, but only after he presses „Reîncarcă”"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Nimic: istoricul ține doar salvările care au trecut",
+              "en": "Nothing: the history holds only the saves that went through"
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "links-two-windows",
+          "ro": {
+            "question": "Ciprian vede mesajul roșu și apasă „Reîncarcă”, apoi confirmă la „Reîncărcați obiectul?”. Ce se întâmplă cu e-mailul pe care îl scrisese în fila aceea?",
+            "explanation": "„Reîncarcă” întreabă „Reîncărcați obiectul?”: valorile nesalvate se pierd și se încarcă versiunea curentă."
+          },
+          "en": {
+            "question": "Ciprian sees the red message and presses „Reîncarcă”, then confirms at „Reîncărcați obiectul?” (reload the item?). What happens to the e-mail he had typed in that tab?",
+            "explanation": "„Reîncarcă” asks „Reîncărcați obiectul?”: the unsaved values are lost and the current version is loaded."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Se pierde, iar fila arată versiunea curentă",
+              "en": "It is lost, and the tab shows the current version"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Se păstrează și se adaugă la versiunea curentă",
+              "en": "It is kept and added to the current version"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Se salvează într-o versiune separată, de citit",
+              "en": "It is saved in a separate, read-only version"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Rămâne în „Recente”, de unde îl puteți lua",
+              "en": "It stays in „Recente”, where you can pick it up"
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "links-two-windows",
+          "ro": {
+            "question": "Ciprian are un teren din Bragadiru deschis în două ferestre. În prima îl șterge. Ce spune a doua fereastră?",
+            "explanation": "Dacă înregistrarea este ștearsă într-o fereastră, cealaltă spune „Acest obiect a fost șters în altă fereastră.”."
+          },
+          "en": {
+            "question": "Ciprian has a plot in Bragadiru open in two windows. In the first he deletes it. What does the second window say?",
+            "explanation": "If the record is deleted in one window, the other says „Acest obiect a fost șters în altă fereastră.” (this item was deleted in another window)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Acest obiect a fost salvat în altă fereastră.”",
+              "en": "„Acest obiect a fost salvat în altă fereastră.”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Nimic corelat încă.”",
+              "en": "„Nimic corelat încă.”"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "„Acest obiect a fost șters în altă fereastră.”",
+              "en": "„Acest obiect a fost șters în altă fereastră.”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Reîncărcați obiectul?”",
+              "en": "„Reîncărcați obiectul?”"
+            }
+          ]
+        },
+        {
+          "id": "a7",
+          "section": "links-two-windows",
+          "ro": {
+            "question": "Ciprian trebuie să schimbe, pe același contract, și prețul, și suprafața. Un coleg îi propune să-l deschidă în două file, câte una pentru fiecare fișă, ca să meargă mai repede. Ce spune manualul?",
+            "explanation": "Manualul spune că cel mai sigur este să modificați o înregistrare într-o singură fereastră; istoricul versiunilor ține doar salvările care au trecut."
+          },
+          "en": {
+            "question": "On the same contract, Ciprian has to change both the price and the area. A colleague suggests opening it in two tabs, one per tile, to go faster. What does the manual say?",
+            "explanation": "The manual says the safest way is to change a record in one window only; the version history holds only the saves that went through."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Merge, dacă salvează în ambele file deodată",
+              "en": "It works, if he saves in both tabs at once"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Cel mai sigur este să lucreze într-o singură fereastră",
+              "en": "The safest way is to work in one window only"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Merge, dacă ascunde în fiecare filă fișa cealaltă",
+              "en": "It works, if he hides the other tile in each tab"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Merge, dacă salvează întâi fila cu mai multe schimbări",
+              "en": "It works, if he first saves the tab with more changes"
+            }
+          ]
+        },
+        {
+          "id": "a8",
+          "section": "start-preview",
+          "ro": {
+            "question": "Ciprian schimbă prețul pe un contract de vânzare și, fără să salveze încă, vrea să se uite la datele cumpărătoarei, Maria Dobre. Ce face ca să nu-și pună în pericol modificarea?",
+            "explanation": "„Previzualizare” deschide înregistrarea legată alături, fără să plecați de pe ecran, iar o modificare nesalvată pe ecranul principal rămâne neatinsă."
+          },
+          "en": {
+            "question": "Ciprian is changing the price on a sale contract and, without saving yet, wants to look at the buyer's details, Maria Dobre. What does he do so as not to put his change at risk?",
+            "explanation": "„Previzualizare” (preview) opens the linked record beside you, without leaving the screen, and an unsaved change on the main screen is left untouched."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Deschide contractul și într-o filă nouă, unde o caută pe ea",
+              "en": "Opens the contract in a new tab too, and looks for her there"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Apasă „Vizualizare” pe rândul ei; prețul se salvează singur",
+              "en": "Presses „Vizualizare” on her row; the price saves by itself"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Apasă „Înapoi” și alege „Renunță”, apoi o deschide pe ea",
+              "en": "Presses „Înapoi”, chooses „Renunță”, then opens her"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Apasă „Previzualizare” pe rândul ei; prețul rămâne neatins",
+              "en": "Presses „Previzualizare” on her row; the price stays untouched"
+            }
+          ]
+        },
+        {
+          "id": "a9",
+          "section": "reports-interactions-edit",
+          "ro": {
+            "question": "Ciprian și o colegă modifică în același timp o interacțiune a lui Ion Popescu. Colega salvează prima. Ce alegeri are Ciprian când apasă „Salvează modificările”?",
+            "explanation": "La o interacțiune, salvarea nu trece peste celălalt: apare „Această înregistrare a fost modificată de altcineva. O reîncarci sau o suprascrii?”; „Reîncarcă” aduce varianta lui, „Suprascrie” păstrează ce ați scris."
+          },
+          "en": {
+            "question": "Ciprian and a colleague are changing one of Ion Popescu's interactions at the same time. The colleague saves first. What choices does Ciprian have when he presses „Salvează modificările” (save the changes)?",
+            "explanation": "On an interaction, the save does not go over the other person's: „Această înregistrare a fost modificată de altcineva. O reîncarci sau o suprascrii?” appears; „Reîncarcă” brings their version, „Suprascrie” (overwrite) keeps what you typed."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "„Reîncarcă”, cu varianta colegei, sau „Suprascrie”, cu a lui",
+              "en": "„Reîncarcă”, with the colleague's version, or „Suprascrie”, with his"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Doar „Reîncarcă”; salvarea lui este refuzată fără altă alegere",
+              "en": "Only „Reîncarcă”; his save is refused with no other choice"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Niciuna: salvarea lui trece și o înlocuiește pe a colegei",
+              "en": "None: his save goes through and replaces the colleague's"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Doar „Anulează”, până când colega închide interacțiunea în fereastra ei",
+              "en": "Only „Anulează”, until the colleague closes the interaction in her window"
+            }
+          ]
+        },
+        {
+          "id": "a10",
+          "section": "reports-interactions-edit",
+          "ro": {
+            "question": "Înainte să schimbe o interacțiune a Elenei Stoica, Ciprian vrea să știe dacă a mai modificat-o cineva în ultimele zile. Unde vede asta?",
+            "explanation": "Un clic pe o interacțiune din istoric o încarcă în formular, care arată cine a creat-o și cine a modificat-o ultima dată, și când."
+          },
+          "en": {
+            "question": "Before changing one of Elena Stoica's interactions, Ciprian wants to know whether anyone has changed it in the last few days. Where does he see this?",
+            "explanation": "A click on an interaction in the history loads it into the form, which shows who created it and who last changed it, and when."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "În „N versiuni”, în dreapta-sus pe ecranul persoanei",
+              "en": "In „N versiuni”, at the top right of the person's screen"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Pe ecranul „Interacțiuni”, în coloana „Stare”",
+              "en": "On the „Interacțiuni” screen, in the „Stare” column"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "În formular, după un clic pe interacțiune: cine și când a modificat-o",
+              "en": "In the form, after a click on it: who changed it last, and when"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "În „Clasificare”, la „Istoric”, sub „Proveniență”",
+              "en": "In „Clasificare”, at „Istoric”, under „Proveniență”"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "links-two-windows",
+          "ro": {
+            "question": "Ciprian are același act deschis în fila 1 și în fila 2. Salvează o schimbare în fila 2; în fila 1 nu atinsese nimic. Ce trebuie să facă în fila 1 ca să vadă valoarea nouă?",
+            "explanation": "Când salvați într-o fereastră, cealaltă se reîncarcă singură, dacă nu are nimic nesalvat; nu trebuie făcut nimic."
+          },
+          "en": {
+            "question": "Ciprian has the same document open in tab 1 and tab 2. He saves a change in tab 2; in tab 1 he had touched nothing. What must he do in tab 1 to see the new value?",
+            "explanation": "When you save in one window, the other reloads by itself, if it has nothing unsaved; nothing needs to be done."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Să apese „Reîncarcă” și să confirme",
+              "en": "Press „Reîncarcă” and confirm"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Să închidă fila și s-o deschidă din „Recente”",
+              "en": "Close the tab and open it again from „Recente”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Să apese „N versiuni” și apoi „Versiunea următoare”",
+              "en": "Press „N versiuni” and then „Versiunea următoare”"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Nimic: fila 1 s-a reîncărcat singură",
+              "en": "Nothing: tab 1 has reloaded by itself"
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "links-two-windows",
+          "ro": {
+            "question": "De ce refuză aplicația salvarea dintr-o fereastră învechită, în loc s-o lase să treacă?",
+            "explanation": "Aceeași înregistrare poate fi deschisă în două ferestre, iar una nu acoperă pe ascuns ce s-a salvat în cealaltă; de aceea salvarea învechită este refuzată."
+          },
+          "en": {
+            "question": "Why does the application refuse the save from a stale window, instead of letting it through?",
+            "explanation": "The same record can be open in two windows, and one does not silently cover what was saved in the other; that is why the stale save is refused."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Ca o fereastră să nu acopere pe ascuns ce s-a salvat în cealaltă",
+              "en": "So that one window does not silently cover what was saved in the other"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Fiindcă o înregistrare poate avea o singură versiune pe zi",
+              "en": "Because a record can have only one version a day"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Fiindcă o a doua fereastră poate doar citi, niciodată salva",
+              "en": "Because a second window can only read, never save"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Ca valorile scrise să fie șterse și luate de la capăt",
+              "en": "So that the values typed are cleared and started again"
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "links-two-windows",
+          "ro": {
+            "question": "Ciprian a scris o notă lungă despre Vasile Toma în fila 2, când apare mesajul roșu „Acest obiect a fost salvat în altă fereastră…”. Ce este adevărat despre nota lui?",
+            "explanation": "Fila nu se reîncarcă peste ce ați scris, dar modificările de acolo nu sunt salvate, iar salvarea lor va fi refuzată; „Reîncarcă” le-ar pierde."
+          },
+          "en": {
+            "question": "Ciprian has typed a long note about Vasile Toma in tab 2 when the red message „Acest obiect a fost salvat în altă fereastră…” appears. What is true about his note?",
+            "explanation": "The tab is not reloaded over what you typed, but the changes there are not saved, and saving them will be refused; „Reîncarcă” would lose them."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "S-a salvat deja singură, ca versiune nouă",
+              "en": "It has already saved itself, as a new version"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "E încă pe ecran, dar salvarea ei va fi refuzată",
+              "en": "It is still on screen, but saving it will be refused"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Se salvează dacă apasă „Salvează” de două ori",
+              "en": "It saves if he presses „Salvează” twice"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "S-a pierdut deja, odată cu apariția mesajului",
+              "en": "It was already lost when the message appeared"
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "links-two-windows",
+          "ro": {
+            "question": "Ciprian are o singură filă deschisă, pe un teren din Cornetu. Apasă „Salvează” și primește „Nu s-a salvat nimic: obiectul a fost salvat între timp…”. Ce înseamnă?",
+            "explanation": "Mesajul spune că obiectul a fost salvat între timp în altă fereastră sau de alt utilizator; cu o singură filă, înseamnă că l-a salvat altcineva."
+          },
+          "en": {
+            "question": "Ciprian has only one tab open, on a plot in Cornetu. He presses „Salvează” and gets „Nu s-a salvat nimic: obiectul a fost salvat între timp…”. What does it mean?",
+            "explanation": "The message says the item was saved meanwhile in another window or by another user; with only one tab, it means someone else saved it."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Că i-a expirat conectarea și trebuie să intre din nou",
+              "en": "That his sign-in has expired and he must sign in again"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Că un câmp cerut a rămas gol într-o fișă ascunsă",
+              "en": "That a required field was left empty in a hidden tile"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Că terenul a fost salvat între timp de alt utilizator",
+              "en": "That the plot was saved meanwhile by another user"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Că terenul a fost șters între timp",
+              "en": "That the plot was deleted meanwhile"
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "links-two-windows",
+          "ro": {
+            "question": "Înregistrarea unei persoane arăta „v 2”. Ciprian salvează o schimbare în fereastra 1, apoi încearcă să salveze în fereastra 2, unde scrisese ceva înainte. Ce arată apoi persoana, în dreapta-sus?",
+            "explanation": "Fiecare salvare care trece face o versiune nouă, iar istoricul versiunilor ține doar salvările care au trecut: a doua salvare a fost refuzată, deci persoana ajunge la „v 3”."
+          },
+          "en": {
+            "question": "A person's record showed „v 2”. Ciprian saves a change in window 1, then tries to save in window 2, where he had typed something earlier. What does the person show afterwards, at the top right?",
+            "explanation": "Every save that goes through makes a new version, and the version history holds only the saves that went through: the second save was refused, so the person reaches „v 3”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„v 4”, câte o versiune pentru fiecare fereastră",
+              "en": "„v 4”, one version for each window"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "„v 3”, doar salvarea care a trecut",
+              "en": "„v 3”, only the save that went through"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„v 2”, fiindcă salvările s-au anulat una pe alta",
+              "en": "„v 2”, because the saves cancelled each other"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„v 3”, plus o versiune refuzată, de citit",
+              "en": "„v 3”, plus a refused version, to read"
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "links-two-windows",
+          "ro": {
+            "question": "Când apare mesajul „Acest obiect a fost salvat în altă fereastră. Modificările de aici nu sunt salvate, iar salvarea lor va fi refuzată.”?",
+            "explanation": "Apare în fereastra în care ați început să scrieți, când înregistrarea a fost salvată în cealaltă: ea nu se reîncarcă peste ce ați scris, ci vă avertizează înainte de „Salvează”."
+          },
+          "en": {
+            "question": "When does the message „Acest obiect a fost salvat în altă fereastră. Modificările de aici nu sunt salvate, iar salvarea lor va fi refuzată.” appear?",
+            "explanation": "It appears in the window where you have started typing, when the record has been saved in the other one: it is not reloaded over what you typed, but warns you before „Salvează”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Când cealaltă fereastră a salvat, iar în aceasta ați început să scrieți",
+              "en": "When the other window has saved, and in this one you have started typing"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "După ce ați apăsat „Salvează” și salvarea a trecut",
+              "en": "After you pressed „Salvează” and the save went through"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Când înregistrarea a fost ștearsă în cealaltă fereastră",
+              "en": "When the record has been deleted in the other window"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Când o deschideți a doua oară, înainte de orice salvare",
+              "en": "When you open it a second time, before any save"
+            }
+          ]
+        },
+        {
+          "id": "b7",
+          "section": "reports-interactions-edit",
+          "ro": {
+            "question": "Pe care dintre cele două poate trece totuși o salvare învechită, dacă utilizatorul o alege: pe ecranul unei înregistrări sau la o interacțiune?",
+            "explanation": "La o interacțiune, întrebarea „O reîncarci sau o suprascrii?” oferă „Suprascrie”, care păstrează ce ați scris; pe ecranul unei înregistrări, salvarea învechită este refuzată, fără altă alegere."
+          },
+          "en": {
+            "question": "On which of the two can a stale save still go through, if the user chooses it: on a record's screen or on an interaction?",
+            "explanation": "On an interaction, the question „O reîncarci sau o suprascrii?” offers „Suprascrie”, which keeps what you typed; on a record's screen, the stale save is refused, with no other choice."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Pe ecranul înregistrării, cu „Salvează” apăsat a doua oară",
+              "en": "On the record's screen, with „Salvează” pressed a second time"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Pe niciuna: amândouă refuză orice salvare învechită",
+              "en": "On neither: both refuse every stale save"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Pe amândouă: ultima salvare câștigă întotdeauna",
+              "en": "On both: the last save always wins"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "La interacțiune, cu „Suprascrie”; înregistrarea o refuză",
+              "en": "On the interaction, with „Suprascrie”; the record refuses it"
+            }
+          ]
+        },
+        {
+          "id": "b8",
+          "section": "reports-interactions-edit",
+          "ro": {
+            "question": "La întrebarea „Această înregistrare a fost modificată de altcineva. O reîncarci sau o suprascrii?”, Ciprian alege „Suprascrie”. Ce rămâne în interacțiune?",
+            "explanation": "„Suprascrie” păstrează ce ați scris dumneavoastră, peste varianta salvată de celălalt; „Reîncarcă” ar fi adus varianta lui."
+          },
+          "en": {
+            "question": "At the question „Această înregistrare a fost modificată de altcineva. O reîncarci sau o suprascrii?”, Ciprian chooses „Suprascrie”. What stays in the interaction?",
+            "explanation": "„Suprascrie” keeps what you typed, over the version the other person saved; „Reîncarcă” would have brought theirs."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Varianta colegului; textul lui Ciprian se pierde",
+              "en": "The colleague's version; Ciprian's text is lost"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Ce a scris Ciprian, peste varianta colegului",
+              "en": "What Ciprian typed, over the colleague's version"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Amândouă variantele, ca două interacțiuni în istoric",
+              "en": "Both versions, as two interactions in the history"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Varianta de dinainte de amândouă modificările",
+              "en": "The version from before both changes"
+            }
+          ]
+        },
+        {
+          "id": "b9",
+          "section": "start-preview",
+          "ro": {
+            "question": "Pe un contract de vânzare, Ciprian vrea să vadă alături și vânzătorul, și cumpărătorul, fără să deschidă contractul în alte file. Cum face?",
+            "explanation": "„Previzualizare” deschide o înregistrare legată alături, fără să plecați de pe ecran; se deschid cel mult două previzualizări odată."
+          },
+          "en": {
+            "question": "On a sale contract, Ciprian wants to see both the seller and the buyer beside it, without opening the contract in other tabs. How does he do it?",
+            "explanation": "„Previzualizare” opens a linked record beside you, without leaving the screen; at most two previews open at a time."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Deschide contractul în trei file, câte una pentru fiecare",
+              "en": "Opens the contract in three tabs, one for each"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Vizualizare” pe ambele rânduri, care le pune alături",
+              "en": "„Vizualizare” on both rows, which puts them side by side"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "„Previzualizare” pe ambele rânduri; merg cel mult două odată",
+              "en": "„Previzualizare” on both rows; at most two at a time"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Previzualizare” pe oricâte rânduri, fără nicio limită",
+              "en": "„Previzualizare” on as many rows as he likes, with no limit"
+            }
+          ]
+        },
+        {
+          "id": "b10",
+          "section": "links-two-windows",
+          "ro": {
+            "question": "Ce hotărăște dacă o fereastră se reîncarcă singură după ce aceeași înregistrare a fost salvată în alta?",
+            "explanation": "Cealaltă fereastră se reîncarcă singură doar dacă nu are nimic nesalvat; dacă ați început să scrieți în ea, nu se reîncarcă peste ce ați scris."
+          },
+          "en": {
+            "question": "What decides whether a window reloads by itself after the same record has been saved in another?",
+            "explanation": "The other window reloads by itself only if it has nothing unsaved; if you have started typing in it, it is not reloaded over what you typed."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Dacă este fila activă a browserului",
+              "en": "Whether it is the browser's active tab"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Dacă înregistrarea are mai mult de o versiune",
+              "en": "Whether the record has more than one version"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Dacă a fost deschisă înaintea celeilalte",
+              "en": "Whether it was opened before the other"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Dacă are ceva nesalvat în ea",
+              "en": "Whether it has anything unsaved in it"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

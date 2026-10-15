@@ -1,0 +1,776 @@
+{
+  "skill": "properties-measure-on-the-map",
+  "manual": [
+    "map-area-delimited",
+    "map-area-free",
+    "map-area",
+    "map-ruler-distance",
+    "map-ruler-angles"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "map-area-delimited",
+          "ro": {
+            "question": "Andrei Munteanu vrea să vândă două terenuri alăturate din Bragadiru, iar cumpărătorul întreabă cât au împreună. Ciprian deschide harta proprietăților. Cum află suprafața lor laolaltă?",
+            "explanation": "Cu „Suprafața unei zone delimitate” apăsați, în ordine, colțurile de pe marginea din afară a celor două terenuri, ocolindu-le împreună; cu colțurile de pe marginea a două terenuri vecine aflați suprafața lor împreună."
+          },
+          "en": {
+            "question": "Andrei Munteanu wants to sell two adjoining plots in Bragadiru, and the buyer asks how much they measure together. Ciprian opens the properties map. How does he find their area together?",
+            "explanation": "With „Suprafața unei zone delimitate” (area of a bounded zone) you click, in order, the corners along the outer edge of the two plots, going round them together; with the corners along the edge of two neighbouring plots you find their area together."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Cu „Selectează” trage un dreptunghi peste ele și citește suprafața selecției.",
+              "en": "With „Selectează” (select) he drags a rectangle over them and reads the selection's area."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Cu „Suprafața unei zone delimitate” alege, în ordine, colțurile de pe marginea lor din afară.",
+              "en": "With „Suprafața unei zone delimitate” he picks, in order, the corners along their outer edge."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Cu „Suprafața unei zone delimitate” alege toate colțurile unui teren, apoi pe toate ale celuilalt.",
+              "en": "With „Suprafața unei zone delimitate” he picks all the corners of one plot, then all those of the other."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Cu „Riglă” măsoară laturile din afară, iar harta adună suprafața.",
+              "en": "With „Riglă” (ruler) he measures the outer sides, and the map adds up the area."
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "map-area-delimited",
+          "ro": {
+            "question": "Alegând colțurile unei zone delimitate, Ciprian apasă din greșeală un colț al terenului vecin. Cum îl scoate fără să piardă celelalte colțuri alese?",
+            "explanation": "Tasta Backspace scoate ultimul colț ales; un clic pe hartă departe de orice colț nu schimbă nimic."
+          },
+          "en": {
+            "question": "While picking the corners of a bounded zone, Ciprian clicks by mistake a corner of the neighbouring plot. How does he remove it without losing the other corners he picked?",
+            "explanation": "The Backspace key removes the last corner chosen; a click on the map far from any corner changes nothing."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Apasă din nou pe colțul greșit, ca să-l deselecteze.",
+              "en": "He clicks the wrong corner again, to deselect it."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Face un clic pe hartă, departe de colțuri, ca să-l anuleze.",
+              "en": "He clicks the map, far from the corners, to cancel it."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Apasă tasta Backspace, care scoate ultimul colț ales.",
+              "en": "He presses the Backspace key, which removes the last corner chosen."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Apasă din nou butonul de suprafață, care scoate ultimul colț.",
+              "en": "He presses the area button again, which removes the last corner."
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "map-area",
+          "ro": {
+            "question": "Ciprian are apăsat „Suprafața unei zone delimitate” și vrea să măsoare repede cu „Riglă” lățimea drumului de lângă teren, dar „Riglă” nu se poate apăsa. De ce, și ce face?",
+            "explanation": "Cât timp un buton de suprafață este apăsat, restul hărții nu răspunde, iar „Riglă” și „Grupuri” sunt inactive. Apăsat a doua oară, butonul se eliberează."
+          },
+          "en": {
+            "question": "Ciprian has „Suprafața unei zone delimitate” pressed and wants to measure quickly with „Riglă” the width of the road beside the plot, but „Riglă” cannot be pressed. Why, and what does he do?",
+            "explanation": "While an area button is pressed, the rest of the map does not respond, and „Riglă” and „Grupuri” are inactive. Pressed a second time, the button is released."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Cât e apăsat un buton de suprafață, „Riglă” e inactivă; îl apasă din nou ca să-l elibereze.",
+              "en": "While an area button is pressed, „Riglă” is inactive; he presses it again to release it."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Riglă” funcționează doar pe „SATELIT”; trece pe imaginea din satelit.",
+              "en": "„Riglă” works only on „SATELIT”; he switches to the satellite image."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Riglă” se activează abia după ce poligonul are trei colțuri.",
+              "en": "„Riglă” becomes active only once the polygon has three corners."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Riglă” e doar pe fișa „Hartă” a proprietății; deschide ecranul terenului și o folosește acolo.",
+              "en": "„Riglă” is only on the property's „Hartă” tile; he opens the plot's screen and uses it there."
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "map-area",
+          "ro": {
+            "question": "Ciprian a aflat suprafața unei zone pentru o ofertă și ar vrea ca Elena Dobre să vadă mâine același poligon. Ce îi spune?",
+            "explanation": "Zona este doar o măsurătoare: nimic nu se scrie în arhivă, iar când butonul se eliberează poligonul și suprafața dispar. Elena trebuie s-o măsoare din nou."
+          },
+          "en": {
+            "question": "Ciprian has found the area of a zone for an offer and would like Elena Dobre to see the same polygon tomorrow. What does he tell her?",
+            "explanation": "The zone is only a measurement: nothing is written to the archive, and when the button is released the polygon and the area disappear. Elena has to measure it again."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Că poligonul rămâne pe hartă până mâine, pentru toți.",
+              "en": "That the polygon stays on the map until tomorrow, for everyone."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Că zona s-a salvat la proprietatea cea mai apropiată.",
+              "en": "That the zone was saved to the nearest property."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Că zona nu se salvează: trebuie s-o măsoare din nou.",
+              "en": "That the zone is not saved: she has to measure it again."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Că o găsește în „Grupuri”, ca grup nou.",
+              "en": "That she finds it in „Grupuri” (groups), as a new group."
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "map-ruler-distance",
+          "ro": {
+            "question": "Un cumpărător întreabă cât de departe e terenul lui Mihai Stan de drum. Ciprian folosește „Riglă”. Cum face ca măsurătoarea să pornească exact din colțul terenului?",
+            "explanation": "Când apăsați aproape de colțul unei proprietăți, capătul riglei se fixează pe colț; așa măsurătoarea este exactă, nu cât de sigură v-a fost mâna."
+          },
+          "en": {
+            "question": "A buyer asks how far Mihai Stan's plot is from the road. Ciprian uses „Riglă”. How does he make the measurement start exactly at the plot's corner?",
+            "explanation": "When you click close to a property's corner, the end of the ruler snaps to the corner; that way the measurement is exact, not as steady as your hand was."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Mărește harta cât poate, ca să nimerească punctul exact.",
+              "en": "He zooms the map in as far as he can, to hit the exact point."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Scrie întâi coordonatele colțului din „Puncte de contur”.",
+              "en": "He first types the corner's coordinates from „Puncte de contur”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Apasă întâi „Unghiuri” pe colț, ca să-l marcheze.",
+              "en": "He first presses „Unghiuri” (angles) on the corner, to mark it."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Apasă aproape de colț: capătul riglei se fixează pe el.",
+              "en": "He clicks close to the corner: the ruler's end snaps to it."
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "map-ruler-angles",
+          "ro": {
+            "question": "Trei terenuri ale familiei Munteanu se întâlnesc într-un singur colț. Ciprian apasă „Unghiuri”, apoi colțul acela. Ce vede?",
+            "explanation": "Acolo unde se întâlnesc mai multe proprietăți într-un singur colț, apar unghiurile fiecăreia."
+          },
+          "en": {
+            "question": "Three plots of the Munteanu family meet at a single corner. Ciprian presses „Unghiuri”, then that corner. What does he see?",
+            "explanation": "Where several properties meet at a single corner, the angle of each appears."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Doar unghiul terenului desenat ultimul.",
+              "en": "Only the angle of the plot drawn last."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Unghiul fiecăruia dintre cele trei terenuri.",
+              "en": "The angle of each of the three plots."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "O fereastră care întreabă al cui teren este colțul.",
+              "en": "A window asking whose plot the corner belongs to."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Suma celor trei unghiuri, adică un singur număr.",
+              "en": "The sum of the three angles, that is a single number."
+            }
+          ]
+        },
+        {
+          "id": "a7",
+          "section": "map-area-free",
+          "ro": {
+            "question": "Ciprian desenează cu „Suprafața unei zone oarecare” o fâșie de pășune și a pus al patrulea colț al ei. Cum închide poligonul?",
+            "explanation": "Poligonul unei zone oarecare se închide apăsând din nou pe primul colț sau apăsând „Gata”. Apăsat a doua oară, butonul de suprafață s-ar elibera și poligonul ar dispărea."
+          },
+          "en": {
+            "question": "Ciprian is drawing a strip of pasture with „Suprafața unei zone oarecare” (area of any zone) and has placed its fourth corner. How does he close the polygon?",
+            "explanation": "A free zone's polygon is closed by clicking the first corner again or by pressing „Gata” (done). Pressed a second time, the area button would be released and the polygon would disappear."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Apasă din nou „Suprafața unei zone oarecare”.",
+              "en": "He presses „Suprafața unei zone oarecare” again."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Apasă tasta Backspace pe ultimul colț.",
+              "en": "He presses the Backspace key on the last corner."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Apasă din nou pe primul colț sau apasă „Gata”.",
+              "en": "He clicks the first corner again or presses „Gata”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Trece pe „Suprafața unei zone delimitate”, care unește colțurile.",
+              "en": "He switches to „Suprafața unei zone delimitate”, which joins the corners."
+            }
+          ]
+        },
+        {
+          "id": "a8",
+          "section": "map-area-free",
+          "ro": {
+            "question": "Ciprian a închis poligonul unei zone oarecare, dar vede că un colț a ieșit puțin în afara gardului. Ce face?",
+            "explanation": "După închidere, un colț al zonei oarecare se poate trage cu mouse-ul; poligonul și suprafața îl urmează."
+          },
+          "en": {
+            "question": "Ciprian has closed the polygon of a free zone, but sees that one corner fell slightly outside the fence. What does he do?",
+            "explanation": "Once it is closed, a corner of the free zone can be dragged with the mouse; the polygon and the area follow it."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Trage colțul cu mouse-ul; poligonul și suprafața îl urmează.",
+              "en": "He drags the corner with the mouse; the polygon and the area follow it."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Nimic de făcut: după închidere poligonul nu se mai schimbă.",
+              "en": "Nothing can be done: once closed, the polygon no longer changes."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Corectează coordonatele colțului în „Puncte de contur”, cu „Editează”, pe ecranul terenului.",
+              "en": "He corrects the corner's coordinates in „Puncte de contur”, with „Editează”, on the plot's screen."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Îl îndreaptă cu „Îndreaptă ordinea”.",
+              "en": "He straightens it with „Îndreaptă ordinea”."
+            }
+          ]
+        },
+        {
+          "id": "a9",
+          "section": "tools-area",
+          "ro": {
+            "question": "Ciprian deschide „Instrumente” → „Calcul suprafață”. Cele două butoane de suprafață pulsează de trei ori în violet, iar el așteaptă să înceapă calculul. Ce trebuie să știe?",
+            "explanation": "Niciunul dintre butoane nu este apăsat în locul dumneavoastră: apăsați-l pe cel de care aveți nevoie."
+          },
+          "en": {
+            "question": "Ciprian opens „Instrumente” → „Calcul suprafață” (tools, area calculation). The two area buttons pulse three times in violet, and he waits for the calculation to start. What should he know?",
+            "explanation": "Neither button is pressed for you: press the one you need."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Că „Suprafața unei zone delimitate” s-a apăsat deja singur.",
+              "en": "That „Suprafața unei zone delimitate” has already been pressed by itself."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Că se apasă singur butonul folosit ultima oară.",
+              "en": "That the button used last time is pressed by itself."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Că niciunul nu se apasă singur: îl apasă el pe cel potrivit.",
+              "en": "That neither is pressed by itself: he presses the right one."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Că pulsarea înseamnă că harta încă se încarcă.",
+              "en": "That the pulsing means the map is still loading."
+            }
+          ]
+        },
+        {
+          "id": "a10",
+          "section": "map-area-delimited",
+          "ro": {
+            "question": "Ciprian vrea să verifice direct pe hartă suprafața calculată a unui singur teren din Bragadiru. Ce obține dacă alege, cu „Suprafața unei zone delimitate”, toate colțurile lui, în ordinea lor?",
+            "explanation": "Dacă alegeți toate colțurile unei singure proprietăți, în ordinea lor, suprafața din poligon este chiar suprafața ei calculată."
+          },
+          "en": {
+            "question": "Ciprian wants to check directly on the map the calculated area of a single plot in Bragadiru. What does he get if, with „Suprafața unei zone delimitate”, he picks all its corners, in their order?",
+            "explanation": "If you choose all the corners of a single property, in their order, the area in the polygon is exactly its calculated area."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Suprafața oficială a terenului, cea din acte.",
+              "en": "The plot's official area, the one from the papers."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "O valoare apropiată, care diferă puțin de cea calculată.",
+              "en": "A close value, which differs slightly from the calculated one."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Doar suprafața în hectare, fără metri pătrați.",
+              "en": "Only the area in hectares, without square metres."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Chiar suprafața calculată a terenului.",
+              "en": "Exactly the plot's calculated area."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "map-area-delimited",
+          "ro": {
+            "question": "Alegând colțurile a două terenuri vecine, Ciprian sare de pe o latură pe alta, iar harta spune „Laturile se încrucișează — alegeți colțurile în ordine.”. Ce face?",
+            "explanation": "Colțurile trebuie alese în ordinea în care urmează pe marginea zonei. Backspace scoate ultimul colț ales, așa că îl scoate pe cel greșit și continuă în ordine."
+          },
+          "en": {
+            "question": "Picking the corners of two neighbouring plots, Ciprian jumps from one side to another, and the map says „Laturile se încrucișează — alegeți colțurile în ordine.” (the sides cross; pick the corners in order). What does he do?",
+            "explanation": "The corners must be chosen in the order in which they follow along the edge of the zone. Backspace removes the last corner chosen, so he removes the wrong one and carries on in order."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Apasă „Îndreaptă ordinea”, care reordonează colțurile alese.",
+              "en": "He presses „Îndreaptă ordinea”, which reorders the chosen corners."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Scoate cu Backspace colțul greșit și le alege în ordine pe margine.",
+              "en": "He removes the wrong corner with Backspace and picks them in order along the edge."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Nimic: mesajul e doar un sfat, suprafața rămâne bună.",
+              "en": "Nothing: the message is only advice, the area stays good."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Face un clic departe de colțuri, ca să golească zona.",
+              "en": "He clicks far from the corners, to empty the zone."
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "map-area",
+          "ro": {
+            "question": "Ciprian a început cu „Suprafața unei zone delimitate”, apoi se răzgândește și apasă „Suprafața unei zone oarecare”. Ce se întâmplă?",
+            "explanation": "Se folosește doar un buton de suprafață odată: când îl apăsați pe al doilea, primul se eliberează."
+          },
+          "en": {
+            "question": "Ciprian started with „Suprafața unei zone delimitate”, then changes his mind and presses „Suprafața unei zone oarecare”. What happens?",
+            "explanation": "Only one area button is used at a time: when you press the second, the first is released."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Merg amândouă deodată, cu câte un poligon fiecare.",
+              "en": "Both work at once, with a polygon each."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Apare „Eliberați întâi butonul suprafeței.”, iar al doilea nu pornește.",
+              "en": "„Eliberați întâi butonul suprafeței.” appears, and the second does not start."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Primul se eliberează și pornește al doilea.",
+              "en": "The first is released and the second starts."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Colțurile alese trec în zona oarecare, ca să le poată trage.",
+              "en": "The chosen corners pass to the free zone, so he can drag them."
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "map-area",
+          "ro": {
+            "question": "Elena Dobre se întreabă dacă suprafața din poligonul violet e la fel de bună ca suprafața calculată a unei parcele. Ce îi răspunde Ciprian?",
+            "explanation": "Suprafața zonei se calculează la fel ca suprafața unei parcele, din coordonatele Stereo 70, și se arată ca „… m² (… ha)”."
+          },
+          "en": {
+            "question": "Elena Dobre wonders whether the area in the violet polygon is as good as a parcel's calculated area. What does Ciprian answer?",
+            "explanation": "The zone's area is calculated the same way as a parcel's area, from the Stereo 70 coordinates, and is shown as „… m² (… ha)”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Da: se calculează la fel, din coordonatele Stereo 70.",
+              "en": "Yes: it is calculated the same way, from the Stereo 70 coordinates."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Nu: e o estimare din pixelii de pe ecran.",
+              "en": "No: it is an estimate from the pixels on the screen."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Nu: se socotește din imaginea din satelit.",
+              "en": "No: it is worked out from the satellite image."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Da, dar doar dacă zona cuprinde terenuri întregi.",
+              "en": "Yes, but only if the zone contains whole plots."
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "map-ruler-distance",
+          "ro": {
+            "question": "Ciprian vrea lungimea exactă a laturii dinspre drum a terenului lui Andrei Munteanu, de la un colț la celălalt. Cum lucrează cu „Riglă”?",
+            "explanation": "Apăsați „Riglă”, apoi lângă primul colț și lângă al doilea: capetele riglei se fixează pe colțuri, așa că măsurătoarea de la colț la colț este exactă."
+          },
+          "en": {
+            "question": "Ciprian wants the exact length of the road-side boundary of Andrei Munteanu's plot, from one corner to the other. How does he work with „Riglă”?",
+            "explanation": "Press „Riglă”, then near the first corner and near the second: the ruler's ends snap to the corners, so the corner-to-corner measurement is exact."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Trage cu mouse-ul de-a lungul laturii, de la un capăt la altul.",
+              "en": "He drags the mouse along the side, from one end to the other."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Apasă „Arată Unghiuri”, care scrie și lungimile laturilor.",
+              "en": "He presses „Arată Unghiuri”, which also writes the sides' lengths."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Apasă lângă un colț, apoi lângă celălalt; rigla se fixează pe ele.",
+              "en": "He clicks near one corner, then near the other; the ruler snaps to them."
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "map-ruler-angles",
+          "ro": {
+            "question": "Pe harta proprietăților, Ciprian vrea să vadă deodată unghiurile tuturor colțurilor unui teren. „Unghiuri” îi arată câte un colț la fiecare clic. Unde le vede pe toate odată?",
+            "explanation": "„Unghiuri” arată unghiul colțului apăsat; pe ecranul unei proprietăți, „Arată Unghiuri” arată unghiurile tuturor colțurilor ei deodată."
+          },
+          "en": {
+            "question": "On the properties map, Ciprian wants to see the angles of all of a plot's corners at once. „Unghiuri” shows him one corner per click. Where does he see them all at once?",
+            "explanation": "„Unghiuri” shows the angle of the corner clicked; on a property's screen, „Arată Unghiuri” (show angles) shows the angles of all its corners at once."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Pe aceeași hartă, cu dublu-clic pe „Unghiuri”.",
+              "en": "On the same map, with a double-click on „Unghiuri”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Cu „Suprafața unei zone delimitate”, care arată și unghiurile.",
+              "en": "With „Suprafața unei zone delimitate”, which shows the angles too."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Cu „Selectează”, după ce trage un dreptunghi peste teren.",
+              "en": "With „Selectează”, after dragging a rectangle over the plot."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Pe ecranul terenului, cu „Arată Unghiuri” pe fișa „Hartă”.",
+              "en": "On the plot's screen, with „Arată Unghiuri” on the „Hartă” tile."
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "map-ruler",
+          "ro": {
+            "question": "Ciprian a măsurat cu „Riglă” distanța de la terenul lui Mihai Stan până la râu și vrea s-o regăsească la dosar. Ce trebuie să știe?",
+            "explanation": "Rigla și unghiurile doar măsoară: nu schimbă nimic, iar ce măsurați nu se salvează. Distanța trebuie notată de el."
+          },
+          "en": {
+            "question": "Ciprian has measured with „Riglă” the distance from Mihai Stan's plot to the river and wants to find it again in the file. What should he know?",
+            "explanation": "The ruler and the angles only measure: they change nothing, and what you measure is not saved. He has to note the distance himself."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Că distanța se scrie singură în „Note” la proprietate.",
+              "en": "That the distance writes itself into the property's „Note”."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Că rigla nu salvează nimic: distanța trebuie notată.",
+              "en": "That the ruler saves nothing: the distance has to be noted."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Că distanța rămâne pe hartă până la închiderea aplicației.",
+              "en": "That the distance stays on the map until the application is closed."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Că o găsește în „Istoric”, în fișa „Clasificare”.",
+              "en": "That he finds it in „Istoric”, in the „Clasificare” tile."
+            }
+          ]
+        },
+        {
+          "id": "b7",
+          "section": "map-area-free",
+          "ro": {
+            "question": "Desenând o zonă oarecare, Ciprian vede că suprafața din poligon se schimbă când mișcă mouse-ul, înainte să pună colțul următor. Ce înseamnă?",
+            "explanation": "O linie urmează mouse-ul, iar suprafața se schimbă pe măsură ce îl mișcați, ca și cum mouse-ul ar fi colțul următor. Suprafața zonei o citește după ce închide poligonul."
+          },
+          "en": {
+            "question": "Drawing a free zone, Ciprian sees the area in the polygon change when he moves the mouse, before he places the next corner. What does it mean?",
+            "explanation": "A line follows the mouse, and the area changes as you move it, as though the mouse were the next corner. He reads the zone's area once he closes the polygon."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "O eroare: trebuie să elibereze butonul și să reia.",
+              "en": "An error: he has to release the button and start again."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Aplicația recalculează suprafața terenului de dedesubt.",
+              "en": "The application recalculates the area of the plot underneath."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Mouse-ul ține locul colțului următor; normal, până închide.",
+              "en": "The mouse stands for the next corner; normal, until he closes it."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Mărirea hărții schimbă suprafața; trebuie să nu o miște.",
+              "en": "Zooming the map changes the area; he must not move it."
+            }
+          ]
+        },
+        {
+          "id": "b8",
+          "section": "map-area-free",
+          "ro": {
+            "question": "Elena Dobre vrea să știe cât ar ocupa un drum de acces peste terenul din Bragadiru, dar fără să schimbe deloc terenul. Ce o sfătuiește Ciprian?",
+            "explanation": "Pe harta proprietăților, „Suprafața unei zone oarecare” desenează zona liber, iar nimic nu se scrie în arhivă. „Desenează” de pe fișa „Hartă” a terenului i-ar pune colțuri chiar terenului."
+          },
+          "en": {
+            "question": "Elena Dobre wants to know how much an access road across the plot in Bragadiru would take up, but without changing the plot at all. What does Ciprian advise her?",
+            "explanation": "On the properties map, „Suprafața unei zone oarecare” draws the zone freely, and nothing is written to the archive. „Desenează” on the plot's „Hartă” tile would put corners on the plot itself."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Să deseneze fâșia cu „Desenează” pe fișa „Hartă” a terenului.",
+              "en": "To draw the strip with „Desenează” on the plot's „Hartă” tile."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Să adauge colțurile fâșiei cu „+ Adaugă punct” în „Puncte de contur”, pe ecranul terenului.",
+              "en": "To add the strip's corners with „+ Adaugă punct” in „Puncte de contur”, on the plot's screen."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Să deseneze fâșia cu „Suprafața unei zone oarecare” pe harta proprietăților.",
+              "en": "To draw the strip with „Suprafața unei zone oarecare” on the properties map."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Să aleagă colțurile terenului cu „Suprafața unei zone delimitate”.",
+              "en": "To pick the plot's corners with „Suprafața unei zone delimitate”."
+            }
+          ]
+        },
+        {
+          "id": "b9",
+          "section": "tools-area",
+          "ro": {
+            "question": "Ciprian deschide harta din „Instrumente” → „Calcul suprafață”, nu din „Hartă completă”. Ce este diferit?",
+            "explanation": "„Calcul suprafață” deschide aceeași hartă, „Toate Proprietățile”; doar cele două butoane de suprafață pâlpâie de trei ori în violet, iar în bara laterală rămâne marcat „Calcul suprafață”, nu „Proprietăți”."
+          },
+          "en": {
+            "question": "Ciprian opens the map from „Instrumente” → „Calcul suprafață”, not from „Hartă completă”. What is different?",
+            "explanation": "„Calcul suprafață” opens the same map, „Toate Proprietățile”; only the two area buttons pulse three times in violet, and in the sidebar „Calcul suprafață” stays marked, not „Proprietăți”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "E aceeași hartă; doar butoanele de suprafață pulsează, iar bara laterală marchează „Calcul suprafață”.",
+              "en": "It is the same map; only the area buttons pulse, and the sidebar marks „Calcul suprafață”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "E o hartă separată, care are doar cele două unelte de suprafață.",
+              "en": "It is a separate map, which has only the two area tools."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Arată doar proprietățile din grupul ales ultima dată.",
+              "en": "It shows only the properties of the group chosen last time."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Suprafețele măsurate acolo se salvează în arhivă, spre deosebire de cele măsurate pe harta completă a proprietăților.",
+              "en": "The areas measured there are saved in the archive, unlike those measured on the full properties map."
+            }
+          ]
+        },
+        {
+          "id": "b10",
+          "section": "map-area-delimited",
+          "ro": {
+            "question": "Cu „Suprafața unei zone delimitate” apăsat, Ciprian face un clic în mijlocul unui câmp, departe de orice colț, dar nu apare niciun punct. De ce?",
+            "explanation": "Zona delimitată este mărginită de colțuri care există deja, ale proprietăților de pe hartă; un clic departe de orice colț nu schimbă nimic. O zonă desenată liber se face cu „Suprafața unei zone oarecare”."
+          },
+          "en": {
+            "question": "With „Suprafața unei zone delimitate” pressed, Ciprian clicks in the middle of a field, far from any corner, but no dot appears. Why?",
+            "explanation": "The bounded zone is bounded by corners that already exist, those of the properties on the map; a click far from any corner changes nothing. A zone drawn freely is made with „Suprafața unei zone oarecare”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Harta mai trebuie să se încarce; reîncearcă peste câteva secunde.",
+              "en": "The map still has to load; he tries again in a few seconds."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Trebuie întâi să treacă pe „SATELIT”.",
+              "en": "He first has to switch to „SATELIT”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Primul clic doar pornește unealta; punctul apare la al doilea.",
+              "en": "The first click only starts the tool; the dot appears at the second."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Unealta alege doar colțuri existente ale proprietăților.",
+              "en": "The tool picks only existing corners of properties."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

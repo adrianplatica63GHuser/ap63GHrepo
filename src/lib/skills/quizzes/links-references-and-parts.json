@@ -1,0 +1,618 @@
+{
+  "skill": "links-references-and-parts",
+  "manual": [
+    "links-references-documents",
+    "links-references-properties",
+    "links-references",
+    "links-example-title",
+    "links-related"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "links-example-title",
+          "ro": {
+            "question": "Un contract de vânzare-cumpărare citează certificatul de moștenitor din care vine dreptul vânzătorului; amândouă sunt în arhivă. De pe care act faceți legătura și ce alegeți?",
+            "explanation": "Legătura se citește ca o propoziție care începe cu actul pe care vă aflați. De pe certificat, „Titlu anterior al” cu contractul bifat spune exact că dreptul vânzătorului vine din certificat."
+          },
+          "en": {
+            "question": "A sale contract cites the certificate of inheritance the seller's right comes from; both are in the archive. From which document do you make the link, and what do you choose?",
+            "explanation": "The link reads as a sentence that starts with the document you are on. From the certificate, „Titlu anterior al” with the contract ticked says exactly that the seller's right comes from the certificate."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "De pe contract: bifați certificatul și alegeți „Titlu anterior al”.",
+              "en": "From the contract: tick the certificate and choose „Titlu anterior al” (earlier title of)."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "De pe certificat: bifați contractul și alegeți „Titlu anterior al”.",
+              "en": "From the certificate: tick the contract and choose „Titlu anterior al” (earlier title of)."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "De pe oricare, cu „Anexă la”: sensul se potrivește singur.",
+              "en": "From either, with „Anexă la” (annex to): the direction sorts itself out."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "De pe contract, din „Înscrisuri citate”, cu „Creează schiță”.",
+              "en": "From the contract, in „Înscrisuri citate” (cited deeds), with „Creează schiță” (create a draft)."
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "links-references-documents",
+          "ro": {
+            "question": "De pe certificatul de moștenitor, ați legat contractul de vânzare cu „Titlu anterior al”. Pe ecranul contractului, apăsați „Relația” pe rândul certificatului. Ce citiți?",
+            "explanation": "Pe contract, aceeași legătură se citește din celălalt capăt: certificatul, „Titlu anterior al”, „acest document”."
+          },
+          "en": {
+            "question": "From the certificate of inheritance you linked the sale contract with „Titlu anterior al”. On the contract's screen you press „Relația” on the certificate's row. What do you read?",
+            "explanation": "On the contract, the same link is read from the other end: the certificate, „Titlu anterior al”, „acest document”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„acest document „Titlu anterior al”” urmat de certificat.",
+              "en": "„acest document „Titlu anterior al”” (this document, earlier title of) followed by the certificate."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Certificatul, „Înlocuiește”, „acest document”.",
+              "en": "The certificate, „Înlocuiește” (replaces), „acest document”."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Certificatul, „Titlu anterior al”, „acest document”.",
+              "en": "The certificate, „Titlu anterior al”, „acest document” (this document)."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nimic: legătura se vede doar pe certificat.",
+              "en": "Nothing: the link shows only on the certificate."
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "links-references-properties",
+          "ro": {
+            "question": "O parcelă face parte dintr-un teren mai mare; amândouă sunt în arhivă. Cum arătați asta?",
+            "explanation": "Legătura se citește de la proprietatea pe care vă aflați: de pe parcelă, bifați terenul întreg și alegeți „Inclus în”."
+          },
+          "en": {
+            "question": "A parcel is part of a larger plot of land; both are in the archive. How do you show this?",
+            "explanation": "The link is read from the property you are on: from the parcel, tick the whole plot and choose „Inclus în”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "De pe parcelă, bifați terenul întreg și alegeți „Inclus în”.",
+              "en": "From the parcel, tick the whole plot and choose „Inclus în” (included in)."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "De pe terenul întreg, bifați parcela și alegeți „Inclus în”.",
+              "en": "From the whole plot, tick the parcel and choose „Inclus în” (included in)."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "De pe parcelă, bifați terenul întreg și alegeți „Adiacent”.",
+              "en": "From the parcel, tick the whole plot and choose „Adiacent” (adjacent)."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "De pe terenul întreg, bifați parcela și alegeți „Proprietar”.",
+              "en": "From the whole plot, tick the parcel and choose „Proprietar” (owner)."
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "links-references-properties",
+          "ro": {
+            "question": "Două terenuri vecine sunt în arhivă, iar Ciprian vrea să le lege cu „Adiacent”. Contează de pe care dintre ele pornește?",
+            "explanation": "Doar „Inclus în”, „Subdiviziune a” și „Acces prin” au sens; „Adiacent”, „Contiguu”, „Suprapus cu” și „Alipit de” spun același lucru din ambele capete."
+          },
+          "en": {
+            "question": "Two neighbouring plots are in the archive, and Ciprian wants to link them with „Adiacent”. Does it matter which of them he starts from?",
+            "explanation": "Only „Inclus în”, „Subdiviziune a” and „Acces prin” have a direction; „Adiacent”, „Contiguu”, „Suprapus cu” and „Alipit de” say the same from both ends."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Da: de pe terenul mai mare, ca la „Inclus în”.",
+              "en": "Yes: from the larger plot, as with „Inclus în”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Da: de pe terenul intrat primul în arhivă.",
+              "en": "Yes: from the plot that came into the archive first."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Nu: „Adiacent” spune același lucru din ambele capete.",
+              "en": "No: „Adiacent” says the same from both ends."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nu, dar trebuie făcută de pe amândouă, câte o dată.",
+              "en": "No, but it must be made from both, once each."
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "links-related",
+          "ro": {
+            "question": "Pe ecranul unei parcele, în „Legături”, stă terenul în care este inclusă. Unde citiți propoziția legăturii și cum o închideți?",
+            "explanation": "„Relația” arată, într-o bulă, propoziția unei legături cu sens; un clic în afara bulei sau tasta Esc o închide."
+          },
+          "en": {
+            "question": "On a parcel's screen, in „Legături”, stands the plot it is included in. Where do you read the link's sentence, and how do you close it?",
+            "explanation": "„Relația” shows, in a bubble, the sentence of a link with a direction; a click outside the bubble or the Esc key closes it."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "În „Previzualizare”; o închideți cu „Anulează”.",
+              "en": "In „Previzualizare”; you close it with „Anulează”."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "În bula lui „Relația”; cu Esc sau un clic în afara ei.",
+              "en": "In the „Relația” bubble; with Esc or a click outside it."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În paranteza de pe rândul terenului; nu are nimic de închis.",
+              "en": "In the brackets on the plot's row; there is nothing to close."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "În „Vizualizare”; o închideți cu „Înapoi la listă”.",
+              "en": "In „Vizualizare”; you close it with „Înapoi la listă”."
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "links-references-documents",
+          "ro": {
+            "question": "Un contract vechi citează cinci înscrisuri. „Verifică înscrisurile citate” nu găsește în arhivă un act potrivit pentru trei dintre ele. Ce alege Ciprian, de obicei, pentru acestea trei?",
+            "explanation": "Cele mai multe înscrisuri citate de un act vechi nu sunt în arhivă, așa că „Lasă”, care lasă înscrisul nelegat, este adesea răspunsul potrivit."
+          },
+          "en": {
+            "question": "An old contract cites five deeds. „Verifică înscrisurile citate” finds no matching document in the archive for three of them. What does Ciprian usually choose for those three?",
+            "explanation": "Most deeds cited by an old document are not in the archive, so „Lasă”, which leaves the deed unlinked, is often the right answer."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Leagă”, cu actul cel mai apropiat dintre cele propuse.",
+              "en": "„Leagă” (link), with the closest of the documents offered."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Creează schiță” pentru fiecare, ca să nu rămână goluri.",
+              "en": "„Creează schiță” (create a draft) for each, so that no gaps remain."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "„Lasă”: înscrisul rămâne nelegat, ceea ce e adesea potrivit.",
+              "en": "„Lasă” (leave): the deed stays unlinked, which is often right."
+            }
+          ]
+        },
+        {
+          "id": "a7",
+          "section": "admin-reference-data-roles",
+          "ro": {
+            "question": "Ciprian caută în „Tip legătură” o legătură între două acte și vrea să știe unde sunt ținute legăturile de felul acesta. Unde?",
+            "explanation": "În „Date de referință”, „Legături Document → Document” și „Legături Proprietate → Proprietate” țin legăturile cu sens dintre două acte și dintre două proprietăți."
+          },
+          "en": {
+            "question": "Ciprian is looking in „Tip legătură” for a link between two documents and wants to know where links of this kind are kept. Where?",
+            "explanation": "In „Date de referință”, „Legături Document → Document” and „Legături Proprietate → Proprietate” hold the directed links between two documents and between two properties."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "În „Roluri Persoane”, la „Rol invers”.",
+              "en": "In „Roluri Persoane”, under „Rol invers” (converse role)."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "În tipul fiecărui act, la „Tipuri de act”.",
+              "en": "In each document's type, under „Tipuri de act”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În „Administrare” → „Etichete”, în „Nor de etichete”.",
+              "en": "In „Administrare” → „Etichete”, in „Nor de etichete”."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "În „Date de referință”, la „Legături Document → Document”.",
+              "en": "In „Date de referință”, under „Legături Document → Document”."
+            }
+          ]
+        },
+        {
+          "id": "a8",
+          "section": "links-references-documents",
+          "ro": {
+            "question": "Ciprian are un act adițional care modifică un contract; amândouă sunt în arhivă. Ce face pe ecranul actului adițional?",
+            "explanation": "Pe un act, „Asociază act” deschide „Asociază Document”: bifați celălalt act și alegeți legătura în „Tip legătură”. Propoziția începe cu actul pe care vă aflați: „acest document „Act adițional la”” contractul."
+          },
+          "en": {
+            "question": "Ciprian has an addendum that changes a contract; both are in the archive. What does he do on the addendum's screen?",
+            "explanation": "On a document, „Asociază act” opens „Asociază Document”: tick the other document and choose the link in „Tip legătură”. The sentence starts with the document you are on: „acest document „Act adițional la”” the contract."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "„Asociază act”, bifează contractul, alege „Act adițional la”.",
+              "en": "„Asociază act”, ticks the contract, chooses „Act adițional la” (addendum to)."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Asociază act”, bifează contractul, alege rolul „Notar”.",
+              "en": "„Asociază act”, ticks the contract, chooses the role „Notar”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Asociază proprietate”, bifează terenul, alege „Inclus în”.",
+              "en": "„Asociază proprietate”, ticks the land, chooses „Inclus în”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Înscrisuri citate”, apoi „Creează schiță” pentru contractul modificat.",
+              "en": "„Înscrisuri citate” (cited deeds), then „Creează schiță” (create a draft) for the changed contract."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "links-references-documents",
+          "ro": {
+            "question": "Pe ecranul contractului de vânzare, Ciprian a bifat certificatul de moștenitor și a ales „Titlu anterior al”. Propoziția spune acum că contractul este titlul anterior al certificatului. Ce face?",
+            "explanation": "Dacă propoziția nu spune ce scrie în acte, legătura se face de pe celălalt act; cea greșită se scoate alegându-i rândul în „Legături” și apăsând „Dezasociază”."
+          },
+          "en": {
+            "question": "On the sale contract's screen, Ciprian ticked the certificate of inheritance and chose „Titlu anterior al”. The sentence now says the contract is the earlier title of the certificate. What does he do?",
+            "explanation": "If the sentence does not say what the deeds say, the link is made from the other document; the wrong one is removed by choosing its row in „Legături” and pressing „Dezasociază”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Nimic: aplicația întoarce singură sensul potrivit.",
+              "en": "Nothing: the application turns the direction round by itself."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "O dezasociază și o face din nou, de pe certificat.",
+              "en": "He dissociates it and makes it again, from the certificate."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "O lasă și schimbă „Tip legătură” în „Înlocuiește”.",
+              "en": "He leaves it and changes „Tip legătură” to „Înlocuiește”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "O mai face o dată, de pe certificat, și le păstrează pe amândouă.",
+              "en": "He makes it once more, from the certificate, and keeps both."
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "links-references-properties",
+          "ro": {
+            "question": "Care dintre aceste legături între două proprietăți au un sens, adică se citesc diferit din cele două capete?",
+            "explanation": "Trei legături au sens: „Inclus în”, „Subdiviziune a” și „Acces prin”; celelalte spun același lucru din ambele capete."
+          },
+          "en": {
+            "question": "Which of these links between two properties have a direction, that is, read differently from the two ends?",
+            "explanation": "Three links have a direction: „Inclus în”, „Subdiviziune a” and „Acces prin”; the others say the same from both ends."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Adiacent”, „Contiguu” și „Alipit de”.",
+              "en": "„Adiacent”, „Contiguu” and „Alipit de” (adjacent, contiguous, joined to)."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "„Inclus în”, „Subdiviziune a” și „Acces prin”.",
+              "en": "„Inclus în”, „Subdiviziune a” and „Acces prin” (included in, subdivision of, access through)."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Inclus în”, „Suprapus cu” și „Alipit de”.",
+              "en": "„Inclus în”, „Suprapus cu” and „Alipit de” (included in, overlapping with, joined to)."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Toate, pentru că fiecare legătură pornește de la proprietatea pe care sunteți.",
+              "en": "All of them, because every link starts from the property you are on and is read from there."
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "links-references-properties",
+          "ro": {
+            "question": "De pe o parcelă, ați ales „Inclus în” cu terenul întreg bifat. Ce arată „Relația” pe ecranul terenului întreg, pe rândul parcelei?",
+            "explanation": "Pe terenul întreg, legătura se citește din celălalt capăt: parcela, „Inclus în”, „această proprietate”."
+          },
+          "en": {
+            "question": "From a parcel, you chose „Inclus în” with the whole plot ticked. What does „Relația” show on the whole plot's screen, on the parcel's row?",
+            "explanation": "On the whole plot, the link is read from the other end: the parcel, „Inclus în”, „această proprietate”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„această proprietate „Inclus în”” urmat de parcelă.",
+              "en": "„această proprietate „Inclus în”” (this property, included in) followed by the parcel."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Parcela, „Subdiviziune a”, „această proprietate”.",
+              "en": "The parcel, „Subdiviziune a”, „această proprietate”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Nimic: legătura se vede doar pe parcelă.",
+              "en": "Nothing: the link shows only on the parcel."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Parcela, „Inclus în”, „această proprietate”.",
+              "en": "The parcel, „Inclus în”, „această proprietate” (this property)."
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "links-references-properties",
+          "ro": {
+            "question": "Pe ecranul unei proprietăți apăsați „Asociază proprietate”, ca s-o legați de alta. Ce ecran se deschide și ce alegeți în el?",
+            "explanation": "Pe o proprietate, „Asociază proprietate” deschide „Asociere proprietate corelată”, unde legătura se alege în „Tip legătură”."
+          },
+          "en": {
+            "question": "On a property's screen you press „Asociază proprietate”, to link it to another. Which screen opens, and what do you choose on it?",
+            "explanation": "On a property, „Asociază proprietate” opens „Asociere proprietate corelată”, where the link is chosen in „Tip legătură”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "„Asociere proprietate corelată”, cu „Tip legătură”.",
+              "en": "„Asociere proprietate corelată” (associate a related property), with „Tip legătură”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Asociere proprietate”, cu „Rol”, de exemplu „Proprietar”.",
+              "en": "„Asociere proprietate”, with „Rol”, for instance „Proprietar”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Asociază Document”, cu „Tip legătură”.",
+              "en": "„Asociază Document”, with „Tip legătură”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Asociere proprietate corelată”, cu „Cotă”.",
+              "en": "„Asociere proprietate corelată” (associate a related property), with „Cotă” (share)."
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "links-references-documents",
+          "ro": {
+            "question": "Un contract citează o autorizație care nu este în arhivă, dar Ciprian vrea ca ea să aibă un loc al ei până o primește. Ce alege în „Verifică înscrisurile citate”?",
+            "explanation": "„Creează schiță” face un act nou, fără pagini, care ține locul înscrisului; „Lasă” l-ar lăsa nelegat."
+          },
+          "en": {
+            "question": "A contract cites a permit that is not in the archive, but Ciprian wants it to have a place of its own until he receives it. What does he choose in „Verifică înscrisurile citate”?",
+            "explanation": "„Creează schiță” makes a new document, with no pages, that stands in for the deed; „Lasă” would leave it unlinked."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Lasă”, ca înscrisul să aștepte în panou.",
+              "en": "„Lasă”, so that the deed waits in the panel."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Leagă”, cu un act oarecare, schimbat mai târziu.",
+              "en": "„Leagă”, with any document, changed later."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "„Creează schiță”: un act nou, fără pagini, îi ține locul.",
+              "en": "„Creează schiță”: a new document, with no pages, stands in for it."
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "links-related",
+          "ro": {
+            "question": "Ciprian caută butonul „Înscrisuri citate” pe fișa „Legături” a unui teren și nu-l găsește. De ce?",
+            "explanation": "„Înscrisuri citate” stă doar pe fișa „Legături” a unui act, după „Asociază …” și „Dezasociază”; el deschide panoul înscrisurilor pe care actul le citează."
+          },
+          "en": {
+            "question": "Ciprian looks for the „Înscrisuri citate” button on a plot of land's „Legături” tile and cannot find it. Why?",
+            "explanation": "„Înscrisuri citate” stands only on a document's „Legături” tile, after „Asociază …” and „Dezasociază”; it opens the panel of the deeds the document cites."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Fișa „Legături” a terenului este ascunsă și trebuie bifată.",
+              "en": "The land's „Legături” tile is hidden and must be ticked."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Butonul stă doar pe „Legături” a unui act, nu a unui teren.",
+              "en": "The button is only on a document's „Legături”, not on land's."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Butonul apare doar după ce terenul are o parcelă inclusă.",
+              "en": "The button appears only once the land has a parcel included in it."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Butonul se vede doar cu un rând ales în „Legături”.",
+              "en": "The button shows only with a row chosen in „Legături”."
+            }
+          ]
+        },
+        {
+          "id": "b7",
+          "section": "links-references-properties",
+          "ro": {
+            "question": "Un teren a fost împărțit, iar unul dintre loturi a intrat în arhivă ca proprietate separată. Ciprian vrea să arate că lotul este o subdiviziune a terenului. Cum face legătura?",
+            "explanation": "Legătura se citește de la proprietatea pe care vă aflați: de pe lot, „Subdiviziune a” cu terenul bifat spune „această proprietate „Subdiviziune a”” terenul."
+          },
+          "en": {
+            "question": "A plot of land was divided, and one of the lots came into the archive as a separate property. Ciprian wants to show that the lot is a subdivision of the land. How does he make the link?",
+            "explanation": "The link is read from the property you are on: from the lot, „Subdiviziune a” with the land ticked says „această proprietate „Subdiviziune a”” the land."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "De pe teren, bifând lotul, cu „Subdiviziune a”.",
+              "en": "From the land, ticking the lot, with „Subdiviziune a” (subdivision of)."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "De pe lot, bifând terenul, cu „Subdiviziune a”.",
+              "en": "From the lot, ticking the land, with „Subdiviziune a” (subdivision of)."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "De pe oricare, cu „Contiguu”, care spune același lucru.",
+              "en": "From either, with „Contiguu” (contiguous), which says the same."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "De pe teren, bifând lotul, cu „Alipit de”.",
+              "en": "From the land, ticking the lot, with „Alipit de”."
+            }
+          ]
+        },
+        {
+          "id": "b8",
+          "section": "links-references-documents",
+          "ro": {
+            "question": "Un contract nou îl înlocuiește pe unul mai vechi; amândouă sunt în arhivă. Pe ecranul contractului nou, apăsați „Asociază act”. Ce bifați și ce alegeți?",
+            "explanation": "Propoziția începe cu actul pe care vă aflați: de pe contractul nou, „Înlocuiește” cu contractul vechi bifat spune „acest document „Înlocuiește”” contractul vechi."
+          },
+          "en": {
+            "question": "A new contract replaces an older one; both are in the archive. On the new contract's screen you press „Asociază act”. What do you tick and what do you choose?",
+            "explanation": "The sentence starts with the document you are on: from the new contract, „Înlocuiește” with the old contract ticked says „acest document „Înlocuiește”” the old contract."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Bifați contractul vechi și alegeți „Titlu anterior al”.",
+              "en": "Tick the old contract and choose „Titlu anterior al”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Bifați contractul vechi și alegeți „Act adițional la”.",
+              "en": "Tick the old contract and choose „Act adițional la”."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Bifați contractul vechi și alegeți „Înlocuiește”.",
+              "en": "Tick the old contract and choose „Înlocuiește” (replaces)."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nimic: „Înlocuiește” se alege doar de pe contractul vechi.",
+              "en": "Nothing: „Înlocuiește” is chosen only from the old contract."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

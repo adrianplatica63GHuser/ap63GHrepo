@@ -1,0 +1,934 @@
+{
+  "skill": "links-audit-the-history",
+  "manual": [
+    "links-versions",
+    "links-example-version",
+    "links-associate-remove",
+    "links-classify-classification",
+    "links-two-windows"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "links-example-version",
+          "ro": {
+            "question": "Ciprian a corectat prenumele lui Andrei Munteanu în „Andreiaș” și a salvat; apoi află că „Andrei” era forma bună. Ce face, ca să nu piardă nimic?",
+            "explanation": "Cu „N versiuni”, „Versiunea anterioară” și „Versiunea următoare” găsiți versiunea cu prenumele vechi, apoi „Fă curentă” și „OK”: ea se copiază într-una nouă, curentă, iar cea corectată greșit rămâne în istoric."
+          },
+          "en": {
+            "question": "Ciprian corrected Andrei Munteanu's first name to „Andreiaș” and saved; then he learns „Andrei” was the right form. What does he do, so as to lose nothing?",
+            "explanation": "With „N versiuni”, „Versiunea anterioară” and „Versiunea următoare” you find the version with the old first name, then „Fă curentă” and „OK”: it is copied into a new, current one, and the wrongly corrected one stays in the history."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Șterge persoana și o adaugă din nou, cu prenumele vechi",
+              "en": "Deletes the person and adds them again, with the old first name"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Găsește versiunea cu prenumele vechi și apasă „Fă curentă”",
+              "en": "Finds the version with the old first name and presses „Fă curentă”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Pe versiunea veche, schimbă prenumele înapoi și apasă „Salvează” chiar acolo",
+              "en": "On the old version, changes the first name back and presses „Salvează” right there"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Apasă „Reîncarcă”, care aduce versiunea de dinainte",
+              "en": "Presses „Reîncarcă”, which brings back the earlier version"
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "links-versions",
+          "ro": {
+            "question": "Un teren arată „v 4”. Ciprian deschide versiunea 1 și apasă „Fă curentă”, apoi „OK”. Ce rezultă?",
+            "explanation": "„Fă curentă” copiază versiunea citită într-o versiune nouă, care devine curentă; versiunile dintre ele rămân în istoric, așa că nimic nu se pierde."
+          },
+          "en": {
+            "question": "A plot shows „v 4”. Ciprian opens version 1 and presses „Fă curentă” (make current), then „OK”. What results?",
+            "explanation": "„Fă curentă” copies the version being read into a new version, which becomes current; the versions in between stay in the history, so nothing is lost."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Versiunile 2, 3 și 4 se șterg, iar 1 redevine ultima",
+              "en": "Versions 2, 3 and 4 are deleted, and 1 is the last again"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Versiunea 4 primește conținutul versiunii 1",
+              "en": "Version 4 receives the content of version 1"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Versiunea 1 se copiază într-o nouă versiune 5, curentă",
+              "en": "Version 1 is copied into a new version 5, which is current"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Versiunea 1 se mută la capăt; numărul lor nu se schimbă",
+              "en": "Version 1 moves to the end; their number does not change"
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "links-versions",
+          "ro": {
+            "question": "Elena Stoica și-a schimbat numele de familie, iar Ciprian citește o versiune de dinainte. Ce arată titlul ecranului?",
+            "explanation": "Pe o versiune veche, titlul ecranului arată tot numele curent, nu pe cel din versiunea pe care o citiți; numele vechi se citește în câmpuri."
+          },
+          "en": {
+            "question": "Elena Stoica changed her surname, and Ciprian is reading a version from before. What does the screen's title show?",
+            "explanation": "On an old version, the screen's title still shows the current name, not the one in the version you are reading; the old name is read in the fields."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Numele curent; numele vechi se citește în câmpuri",
+              "en": "The current name; the old name is read in the fields"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Numele din versiunea pe care o citește",
+              "en": "The name in the version he is reading"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Ambele nume, unul sub celălalt",
+              "en": "Both names, one under the other"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Doar „v” și numărul versiunii, fără niciun nume alături",
+              "en": "Only „v” and the version number, with no name beside them"
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "companies-add-edit",
+          "ro": {
+            "question": "Un client întreabă de când are firma lui e-mailul trecut în arhivă. Cum află Ciprian, pe ecranul firmei?",
+            "explanation": "Cu „Versiunea anterioară” și „Versiunea următoare” vedeți firma la fiecare salvare; pe versiunea în care e-mailul a fost scris, câmpul lui este încadrat cu verde."
+          },
+          "en": {
+            "question": "A client asks since when his firm has had the e-mail held in the archive. How does Ciprian find out, on the firm's screen?",
+            "explanation": "With „Versiunea anterioară” and „Versiunea următoare” you see the firm at each save; on the version in which the e-mail was written, its field is framed in green."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Citește data din colțul dreapta-sus al primei fișe",
+              "en": "Reads the date in the top-right corner of the first tile"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Caută e-mailul în „Recente”, unde stă fiecare schimbare, cu data și ora ei",
+              "en": "Looks for the e-mail in „Recente”, where every change is, with its date and time"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Apasă „Fă curentă” pe fiecare versiune, pe rând",
+              "en": "Presses „Fă curentă” on each version, in turn"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Caută versiunea în care câmpul e-mail este încadrat cu verde",
+              "en": "Looks for the version in which the e-mail field is framed in green"
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "links-classify-classification",
+          "ro": {
+            "question": "Ciprian vrea să afle când a fost trecută „Relevanță” a unui teren din „Actual” în „Istoric”. Unde se uită?",
+            "explanation": "Sub „Proveniență”, „Istoric” ține fiecare schimbare din „Clasificare”, cu data ei."
+          },
+          "en": {
+            "question": "Ciprian wants to find out when a plot's „Relevanță” (relevance) was moved from „Actual” to „Istoric”. Where does he look?",
+            "explanation": "Under „Proveniență” (provenance), „Istoric” (history) keeps every change in „Clasificare”, with its date."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "În „Etichete și grupuri”, la „Etichete / Cuvinte cheie”",
+              "en": "In „Etichete și grupuri”, at „Etichete / Cuvinte cheie”"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "În „Clasificare”, la „Istoric”, sub „Proveniență”",
+              "en": "In „Clasificare”, at „Istoric”, under „Proveniență”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În „Administrare” → „Etichete”, în „Nor de etichete”",
+              "en": "In „Administrare” → „Etichete”, in „Nor de etichete”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nicăieri: „Clasificare” nu își ține istoricul",
+              "en": "Nowhere: „Clasificare” keeps no history"
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "links-associate-remove",
+          "ro": {
+            "question": "Ion Popescu apare ca proprietar al unui teren din Cornetu care nu este al lui. Ciprian alege rândul pe „Legături” și apasă „Dezasociază”. Ce se întâmplă?",
+            "explanation": "Legătura dispare din ambele capete, fără nicio întrebare; cele două înregistrări rămân în arhivă, neatinse."
+          },
+          "en": {
+            "question": "Ion Popescu appears as owner of a plot in Cornetu that is not his. Ciprian chooses the row on „Legături” and presses „Dezasociază” (dissociate). What happens?",
+            "explanation": "The link disappears from both ends, without any question; the two records stay in the archive, untouched."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Aplicația întreabă întâi, apoi șterge și terenul",
+              "en": "The application asks first, then deletes the plot too"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Legătura dispare doar de pe ecranul persoanei",
+              "en": "The link disappears only from the person's screen"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Legătura dispare din ambele capete; ambele rămân neatinse",
+              "en": "The link disappears from both ends; both stay untouched"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Legătura rămâne, dar trece ca „Inactiv” în „Clasificare” la amândouă",
+              "en": "The link stays, but turns „Inactiv” in „Clasificare” on both of them"
+            }
+          ]
+        },
+        {
+          "id": "a7",
+          "section": "links-associate-remove",
+          "ro": {
+            "question": "Pe „Legături”, Ciprian a ales cu butonul rotund rândul greșit, dar vrea întâi să lege terenul bun. „Asociază proprietate” nu se poate apăsa. De ce?",
+            "explanation": "Cât timp un rând este ales, cele trei „Asociază …” nu se pot folosi; „Dezasociază” se folosește doar cu un rând ales."
+          },
+          "en": {
+            "question": "On „Legături”, Ciprian has chosen the wrong row with the round button, but wants to link the right plot first. „Asociază proprietate” cannot be pressed. Why?",
+            "explanation": "While a row is chosen, the three „Asociază …” cannot be used; „Dezasociază” is used only with a row chosen."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Cât timp un rând este ales, „Asociază …” nu se pot folosi",
+              "en": "While a row is chosen, „Asociază …” cannot be used"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Persoana are deja numărul maxim de proprietăți legate",
+              "en": "The person already has the maximum number of linked properties"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Trebuie salvată întâi o versiune nouă a persoanei",
+              "en": "A new version of the person must be saved first"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Legătura greșită trebuie întâi aprobată de administrator",
+              "en": "The wrong link must first be approved by the administrator"
+            }
+          ]
+        },
+        {
+          "id": "a8",
+          "section": "links-associate-role",
+          "ro": {
+            "question": "Pe ecranul Mariei Dobre, Ciprian a legat un contract de vânzare, dar pe „Legături” ea apare fără rol, deși alesese „Cumpărător”. Scoate legătura și o face din nou. Ce schimbă de data aceasta?",
+            "explanation": "Când legați un act de o persoană pornind de pe persoană, bifați întâi actul și abia apoi alegeți rolul: la bifare, „Rol” revine la „— fără rol —”, iar un rol ales înainte se pierde."
+          },
+          "en": {
+            "question": "On Maria Dobre's screen, Ciprian linked a sale contract, but on „Legături” she appears with no role, though he had chosen „Cumpărător” (buyer). He removes the link and makes it again. What does he change this time?",
+            "explanation": "When you link a document to a person starting from the person, tick the document first and only then choose the role: on ticking, „Rol” returns to „— fără rol —”, and a role chosen before is lost."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Alege un alt tip de act, care are roluri pregătite",
+              "en": "Chooses another document type, which has roles prepared"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Apasă „Salvează” pe persoană după asociere",
+              "en": "Presses „Salvează” on the person after linking"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Bifează întâi contractul și abia apoi alege rolul",
+              "en": "Ticks the contract first and only then chooses the role"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Alege rolul de două ori, înainte și după bifare",
+              "en": "Chooses the role twice, before and after ticking"
+            }
+          ]
+        },
+        {
+          "id": "a9",
+          "section": "links-two-windows",
+          "ro": {
+            "question": "O colegă spune că azi-dimineață a corectat adresa lui Vasile Toma „în cealaltă fereastră”, dar Ciprian nu găsește schimbarea printre versiuni. Ce explicație dă manualul?",
+            "explanation": "Istoricul versiunilor ține doar salvările care au trecut; o salvare dintr-o fereastră învechită este refuzată și nu lasă nicio versiune."
+          },
+          "en": {
+            "question": "A colleague says that this morning she corrected Vasile Toma's address „in the other window”, but Ciprian cannot find the change among the versions. What explanation does the manual give?",
+            "explanation": "The version history holds only the saves that went through; a save from a stale window is refused and leaves no version."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Versiunile mai vechi de o zi se strâng într-una singură",
+              "en": "Versions older than a day are gathered into one"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "O versiune făcută în altă fereastră se vede doar acolo, până la închiderea ei",
+              "en": "A version made in another window can be seen only there, until that window is closed"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Schimbarea ei este în „Recente”, nu în versiuni",
+              "en": "Her change is in „Recente”, not in the versions"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Salvarea ei a fost refuzată; istoricul ține doar ce a trecut",
+              "en": "Her save was refused; the history holds only what went through"
+            }
+          ]
+        },
+        {
+          "id": "a10",
+          "section": "links-versions",
+          "ro": {
+            "question": "Ciprian vrea să compare două versiuni ale unui act, ca să vadă ce câmp s-a schimbat între ele. Cum face?",
+            "explanation": "„Versiunea anterioară” și „Versiunea următoare” vă mută câte o versiune; așa comparați două versiuni, citind câmpurile uneia, apoi ale celeilalte."
+          },
+          "en": {
+            "question": "Ciprian wants to compare two versions of a document, to see which field changed between them. How does he do it?",
+            "explanation": "„Versiunea anterioară” and „Versiunea următoare” move you one version at a time; that is how you compare two versions, reading the fields of one, then of the other."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Citește câmpurile uneia, apoi ale celeilalte, cu „Versiunea anterioară” și „Versiunea următoare”",
+              "en": "Reads the fields of one, then of the other, with „Versiunea anterioară” and „Versiunea următoare”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Apasă „Fă curentă” pe fiecare, pe rând, și apoi „Anulează” la sfârșit",
+              "en": "Presses „Fă curentă” on each, in turn, and then „Anulează” at the end"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Bifează „Toate” în capul ecranului, care pune toate versiunile alăturat",
+              "en": "Ticks „Toate” at the top of the screen, which puts all versions side by side"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Apasă „Previzualizare”, care deschide versiunea veche alături de cea curentă, ca să le compare câmp cu câmp",
+              "en": "Presses „Previzualizare”, which opens the old version beside the current one, so he can compare them field by field"
+            }
+          ]
+        },
+        {
+          "id": "a11",
+          "section": "links-references-documents",
+          "ro": {
+            "question": "Pe un contract, „Relația” arată: „acest document „Titlu anterior al”” urmat de certificatul de moștenitor. Dar dreptul vânzătorului vine din certificat. Cum repară Ciprian?",
+            "explanation": "Legătura se citește ca o propoziție care începe cu actul pe care vă aflați; dacă propoziția nu spune ce scrie în acte, faceți legătura de pe celălalt act. De pe certificat, „Titlu anterior al” cu contractul bifat spune exact că dreptul vine din certificat."
+          },
+          "en": {
+            "question": "On a contract, „Relația” (the relation) shows: „acest document „Titlu anterior al”” followed by the certificate of inheritance. But the seller's right comes from the certificate. How does Ciprian repair it?",
+            "explanation": "The link reads as a sentence that begins with the document you are on; if the sentence does not say what the deeds say, make the link from the other document. From the certificate, „Titlu anterior al” (prior title of) with the contract ticked says exactly that the right comes from the certificate."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "O lasă așa: aplicația o citește oricum corect",
+              "en": "Leaves it: the application reads it correctly anyway"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "O dezasociază și o face din nou de pe certificat",
+              "en": "Dissociates it and makes it again from the certificate"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Schimbă „Tip legătură” în „Înlocuiește”, care e la fel",
+              "en": "Changes „Tip legătură” to „Înlocuiește”, which is the same"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Apasă „Creează schiță” în „Înscrisuri citate”",
+              "en": "Presses „Creează schiță” in „Înscrisuri citate”"
+            }
+          ]
+        },
+        {
+          "id": "a12",
+          "section": "links-versions",
+          "ro": {
+            "question": "Ciprian apasă „Fă curentă”, iar întrebarea spune „Versiunea 2 va fi copiată într-o nouă versiune 6…”. Abia acum vede că voia versiunea 3. Ce face?",
+            "explanation": "Aplicația întreabă întâi „Faceți această versiune curentă?” și spune ce se va întâmpla; „OK” o face, „Anulează” renunță, iar el poate căuta apoi versiunea bună."
+          },
+          "en": {
+            "question": "Ciprian presses „Fă curentă”, and the question says „Versiunea 2 va fi copiată într-o nouă versiune 6…”. Only now does he see he wanted version 3. What does he do?",
+            "explanation": "The application first asks „Faceți această versiune curentă?” and says what will happen; „OK” does it, „Anulează” (cancel) gives it up, and he can then look for the right version."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Apasă „OK”, apoi șterge versiunea 6 din istoric",
+              "en": "Presses „OK”, then deletes version 6 from the history"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Închide fila browserului, ca să nu se copieze nimic",
+              "en": "Closes the browser tab, so that nothing is copied"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Apasă „OK”; versiunea 3 se adaugă singură după ea",
+              "en": "Presses „OK”; version 3 is added by itself after it"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Apasă „Anulează” și caută apoi versiunea 3",
+              "en": "Presses „Anulează” and then looks for version 3"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "links-versions",
+          "ro": {
+            "question": "Vasile Toma îl întreabă pe Ciprian ce adresă avea trecută în arhivă înainte de schimbarea din primăvară. Unde o găsește Ciprian?",
+            "explanation": "Fiecare salvare păstrează o versiune; „N versiuni” vă duce cu o versiune înapoi, iar „Versiunea anterioară” vă mută mai departe, până la versiunea căutată."
+          },
+          "en": {
+            "question": "Vasile Toma asks Ciprian what address the archive held for him before the change in the spring. Where does Ciprian find it?",
+            "explanation": "Every save keeps a version; „N versiuni” takes you one version back, and „Versiunea anterioară” moves you further, to the version you want."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "În „Clasificare”, la „Proveniență”",
+              "en": "In „Clasificare”, at „Proveniență”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "În fișa „Interacțiuni”, unde stă fiecare schimbare, cu adresa veche și cea nouă",
+              "en": "In the „Interacțiuni” tile, where every change is, with the old and the new address"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Cu „N versiuni” și „Versiunea anterioară”, pe ecranul lui",
+              "en": "With „N versiuni” and „Versiunea anterioară”, on his screen"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nicăieri: adresa nouă s-a scris peste cea veche",
+              "en": "Nowhere: the new address was written over the old one"
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "links-versions",
+          "ro": {
+            "question": "Citind o versiune veche a unui act, Ciprian vede o greșeală de scriere și vrea s-o corecteze chiar acolo. Ce se întâmplă?",
+            "explanation": "Pe o versiune veche, câmpurile se pot doar citi, iar „Salvează” lipsește."
+          },
+          "en": {
+            "question": "Reading an old version of a document, Ciprian sees a typing mistake and wants to correct it right there. What happens?",
+            "explanation": "On an old version, the fields can only be read, and „Salvează” is missing."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Nu poate: câmpurile sunt doar de citit și „Salvează” lipsește",
+              "en": "He cannot: the fields are read-only and „Salvează” is missing"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Poate, iar corectura se scrie în versiunea veche",
+              "en": "He can, and the correction is written into the old version"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Poate, dar corectura se pierde când apasă „Versiunea următoare” fără să salveze",
+              "en": "He can, but the correction is lost when he presses „Versiunea următoare” without saving"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Poate, după ce apasă creionul din bara de butoane",
+              "en": "He can, after pressing the pencil in the button bar"
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "links-versions",
+          "ro": {
+            "question": "Ion Popescu: în versiunea 2 prenumele a fost stricat, în versiunea 3 s-a adăugat telefonul corect. Ciprian face curentă versiunea 1, cu prenumele bun. Ce trebuie să verifice apoi?",
+            "explanation": "„Fă curentă” copiază întreaga versiune citită într-una nouă, iar lista arată valorile noii versiuni curente: telefonul adăugat abia în versiunea 3 nu este în ea, dar versiunea 3 rămâne în istoric."
+          },
+          "en": {
+            "question": "Ion Popescu: in version 2 the first name was spoilt, in version 3 the right phone was added. Ciprian makes version 1, with the good first name, current. What must he check afterwards?",
+            "explanation": "„Fă curentă” copies the whole version being read into a new one, and the list shows the values of the new current version: the phone added only in version 3 is not in it, but version 3 stays in the history."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Nimic: „Fă curentă” aduce înapoi doar prenumele",
+              "en": "Nothing: „Fă curentă” brings back only the first name"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Telefonul: noua versiune curentă are valorile versiunii 1",
+              "en": "The phone: the new current version has version 1's values"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Prenumele: se copiază abia după încă un „Salvează”",
+              "en": "The first name: it is copied only after one more „Salvează”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Versiunea 3: ea se șterge odată cu „Fă curentă”",
+              "en": "Version 3: it is deleted along with „Fă curentă”"
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "links-versions",
+          "ro": {
+            "question": "Un act arată „v 0” în dreapta-sus, fără „N versiuni”. Ce înțelege Ciprian despre istoria lui?",
+            "explanation": "Versiunile se numără de la 0, iar o versiune nouă apare doar când s-a salvat o schimbare; „v 0” înseamnă că actul nu a mai fost salvat de când a fost creat."
+          },
+          "en": {
+            "question": "A document shows „v 0” at the top right, with no „N versiuni”. What does Ciprian understand about its history?",
+            "explanation": "Versions are counted from 0, and a new version appears only when a change has been saved; „v 0” means the document has not been saved again since it was created."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Că versiunile lui se văd doar cu bifa „Toate”",
+              "en": "That its versions show only with the „Toate” tick"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Că a fost întors cu „Fă curentă” la prima versiune",
+              "en": "That it was taken back with „Fă curentă” to the first version"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Că a fost salvat de mai multe ori, fără nicio schimbare",
+              "en": "That it was saved several times, with no change"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Că nu a mai fost salvat de când a fost creat",
+              "en": "That it has not been saved again since it was created"
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "links-versions",
+          "ro": {
+            "question": "Un teren arată „5 versiuni”. Ciprian deschide versiunea 0 și apasă „Fă curentă”. Ce spune întrebarea aplicației?",
+            "explanation": "Versiunile se numără de la 0, deci „5 versiuni” sunt versiunile 0–4; „Fă curentă” copiază versiunea 0 într-o nouă versiune 5, care devine curentă."
+          },
+          "en": {
+            "question": "A plot shows „5 versiuni”. Ciprian opens version 0 and presses „Fă curentă”. What does the application's question say?",
+            "explanation": "Versions are counted from 0, so „5 versiuni” are versions 0–4; „Fă curentă” copies version 0 into a new version 5, which becomes current."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Versiunea 0 va fi copiată într-o nouă versiune 6…”",
+              "en": "„Versiunea 0 va fi copiată într-o nouă versiune 6…”"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "„Versiunea 0 va fi copiată într-o nouă versiune 5…”",
+              "en": "„Versiunea 0 va fi copiată într-o nouă versiune 5…”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Versiunea 0 va fi copiată într-o nouă versiune 4…”",
+              "en": "„Versiunea 0 va fi copiată într-o nouă versiune 4…”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Versiunea 0 va fi copiată într-o nouă versiune 1…”",
+              "en": "„Versiunea 0 va fi copiată într-o nouă versiune 1…”"
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "links-associate-remove",
+          "ro": {
+            "question": "Pe „Legături”-le unui contract, Ciprian găsește două legături greșite: un teren și un act. Cum le scoate?",
+            "explanation": "Se alege un singur rând odată, cu butonul rotund, de orice fel ar fi, apoi „Dezasociază”; a doua legătură se scoate la fel, după prima."
+          },
+          "en": {
+            "question": "On a contract's „Legături”, Ciprian finds two wrong links: a plot and a document. How does he remove them?",
+            "explanation": "One row is chosen at a time, with the round button, whatever its kind, then „Dezasociază”; the second link is removed the same way, after the first."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Le alege pe amândouă și apasă o dată „Dezasociază”",
+              "en": "Chooses both and presses „Dezasociază” once"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Pe rând: alege un rând, „Dezasociază”, apoi celălalt",
+              "en": "In turn: chooses one row, „Dezasociază”, then the other"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Le scoate din „Etichete și grupuri”, cu „×”",
+              "en": "Removes them from „Etichete și grupuri”, with „×”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Scoate actul de aici, iar terenul doar de pe teren",
+              "en": "Removes the document here, and the plot only from the plot"
+            }
+          ]
+        },
+        {
+          "id": "b7",
+          "section": "links-associate-remove",
+          "ro": {
+            "question": "Pe un contract de vânzare, cumpărătoare apare Elena Stoica, dar în act cumpărătoarea este Ana Pavel. Cum repară Ciprian fără să strice nimic altceva?",
+            "explanation": "„Dezasociază” scoate doar legătura, din ambele capete; cele două înregistrări rămân în arhivă, neatinse. Apoi Ana Pavel se asociază cu rolul ei."
+          },
+          "en": {
+            "question": "On a sale contract, the buyer shown is Elena Stoica, but in the deed the buyer is Ana Pavel. How does Ciprian repair it without spoiling anything else?",
+            "explanation": "„Dezasociază” removes only the link, from both ends; the two records stay in the archive, untouched. Then Ana Pavel is linked with her role."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Schimbă, pe ecranul Elenei, numele în Ana Pavel",
+              "en": "Changes, on Elena's screen, the name to Ana Pavel"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "O șterge pe Elena; legătura greșită pleacă odată cu ea",
+              "en": "Deletes Elena; the wrong link goes along with her"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "O dezasociază pe Elena și o asociază pe Ana ca „Cumpărător”",
+              "en": "Dissociates Elena and links Ana as „Cumpărător”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "O asociază pe Ana peste rândul Elenei, care se înlocuiește",
+              "en": "Links Ana over Elena's row, which is replaced"
+            }
+          ]
+        },
+        {
+          "id": "b8",
+          "section": "links-two-windows",
+          "ro": {
+            "question": "În fila 2, Ciprian a corectat o suprafață când apare mesajul roșu că înregistrarea a fost salvată în altă fereastră. Vrea ca, la final, corectura lui să fie în istoric. Ce face?",
+            "explanation": "Salvarea din fila învechită va fi refuzată; „Reîncarcă” pierde valorile nesalvate și încarcă versiunea curentă, pe care corectura se poate salva ca de obicei."
+          },
+          "en": {
+            "question": "In tab 2, Ciprian has corrected an area when the red message appears that the record was saved in another window. He wants his correction to end up in the history. What does he do?",
+            "explanation": "The save from the stale tab will be refused; „Reîncarcă” loses the unsaved values and loads the current version, on which the correction can be saved as usual."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Apasă „Salvează” până când salvarea trece",
+              "en": "Presses „Salvează” until the save goes through"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Apasă „Fă curentă” pe versiunea din fila 2",
+              "en": "Presses „Fă curentă” on the version in tab 2"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "„Reîncarcă”, apoi scrie din nou corectura și salvează",
+              "en": "„Reîncarcă”, then types the correction again and saves"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Deschide o filă nouă din fila 2 și salvează acolo",
+              "en": "Opens a new tab from tab 2 and saves there"
+            }
+          ]
+        },
+        {
+          "id": "b9",
+          "section": "links-classify-classification",
+          "ro": {
+            "question": "Ciprian schimbă „Importanță” a unui teren din „Medie” în „Ridicată” și apasă „Salvează” pe linia lui „Istoric”. Ce urmă lasă schimbarea?",
+            "explanation": "După salvare scrie „✓ Salvat”; „Istoric” ține fiecare schimbare, cu data ei, iar salvarea adaugă o versiune a înregistrării."
+          },
+          "en": {
+            "question": "Ciprian changes a plot's „Importanță” (importance) from „Medie” to „Ridicată” and presses „Salvează” on the line of „Istoric”. What trace does the change leave?",
+            "explanation": "After the save it reads „✓ Salvat”; „Istoric” keeps every change, with its date, and the save adds a version of the record."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Niciuna: clasificarea nu intră în istoric",
+              "en": "None: the classification does not go into the history"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Valoarea „Medie” se șterge din toate versiunile",
+              "en": "The value „Medie” is cleared from all versions"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Se vede doar în „Nor de etichete”, din „Administrare”",
+              "en": "It shows only in „Nor de etichete”, in „Administrare”"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Intră în „Istoric”, cu data ei, și adaugă o versiune",
+              "en": "It goes into „Istoric”, with its date, and adds a version"
+            }
+          ]
+        },
+        {
+          "id": "b10",
+          "section": "links-classify-classification",
+          "ro": {
+            "question": "Ciprian bănuiește că un teren a intrat în arhivă dintr-un fișier de coordonate, nu adăugat de mână. Unde verifică?",
+            "explanation": "„Proveniență”, în „Clasificare”, spune cum a intrat înregistrarea în arhivă, de exemplu „Manual (Adaugă nou)” sau „Fișier de coordonate (.txt)”."
+          },
+          "en": {
+            "question": "Ciprian suspects that a plot came into the archive from a coordinates file, not added by hand. Where does he check?",
+            "explanation": "„Proveniență” (provenance), in „Clasificare”, says how the record came into the archive, for instance „Manual (Adaugă nou)” or „Fișier de coordonate (.txt)”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "La „Proveniență”, în „Clasificare”",
+              "en": "At „Proveniență”, in „Clasificare”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "La „Relevanță”, în „Clasificare”",
+              "en": "At „Relevanță”, in „Clasificare”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "La „Importanță”, în „Clasificare”",
+              "en": "At „Importanță”, in „Clasificare”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Pe fișa „Legături” a terenului",
+              "en": "On the plot's „Legături” tile"
+            }
+          ]
+        },
+        {
+          "id": "b11",
+          "section": "links-references-properties",
+          "ro": {
+            "question": "Pe terenul întreg, „Relația” arată „această proprietate „Inclus în”” urmat de o parcelă a lui. Legătura e întoarsă. Cum o repară Ciprian?",
+            "explanation": "Legătura se citește de la proprietatea pe care vă aflați: de pe parcelă, bifați terenul întreg și alegeți „Inclus în”. Legătura greșită se scoate întâi cu „Dezasociază”."
+          },
+          "en": {
+            "question": "On the whole plot, „Relația” shows „această proprietate „Inclus în”” followed by one of its parcels. The link is the wrong way round. How does Ciprian repair it?",
+            "explanation": "The link reads from the property you are on: from the parcel, tick the whole plot and choose „Inclus în” (included in). The wrong link is first removed with „Dezasociază”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Alege „Adiacent”, care spune același lucru din ambele capete, deci sensul nu mai contează",
+              "en": "Chooses „Adiacent”, which says the same from both ends, so the direction no longer matters"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "O lasă: „Inclus în” se citește la fel din ambele capete",
+              "en": "Leaves it: „Inclus în” reads the same from both ends"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "O face încă o dată, de pe terenul întreg, peste cea veche",
+              "en": "Makes it once more, from the whole plot, over the old one"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "„Dezasociază”, apoi, de pe parcelă, leagă terenul cu „Inclus în”",
+              "en": "„Dezasociază”, then, from the parcel, links the plot with „Inclus în”"
+            }
+          ]
+        },
+        {
+          "id": "b12",
+          "section": "links-example-version",
+          "ro": {
+            "question": "Un coleg propune ca o persoană modificată greșit de mai multe ori să fie ștearsă și adăugată din nou, „ca istoricul să fie curat”. Ce soluție dă manualul?",
+            "explanation": "Manualul întoarce persoana la o valoare de dinainte cu „Fă curentă”: versiunea bună se copiază într-una nouă, curentă, iar cele greșite rămân în istoric; nimic nu se pierde."
+          },
+          "en": {
+            "question": "A colleague suggests that a person changed wrongly several times should be deleted and added again, „so the history is clean”. What solution does the manual give?",
+            "explanation": "The manual takes the person back to an earlier value with „Fă curentă”: the good version is copied into a new, current one, and the wrong ones stay in the history; nothing is lost."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Ștergerea și adăugarea din nou, care pornește de la „v 0”",
+              "en": "Deleting and adding again, which starts from „v 0”"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "„Fă curentă” pe versiunea bună; cele greșite rămân în istoric",
+              "en": "„Fă curentă” on the good version; the wrong ones stay in the history"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Ștergerea, apoi „Fă curentă” pe persoana ștearsă",
+              "en": "Deleting, then „Fă curentă” on the deleted person"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Ștergerea doar a versiunilor greșite, din „N versiuni”",
+              "en": "Deleting only the wrong versions, from „N versiuni”"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

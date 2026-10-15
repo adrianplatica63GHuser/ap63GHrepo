@@ -1,0 +1,782 @@
+{
+  "skill": "workspace-settings-and-users",
+  "manual": [
+    "admin-settings-thresholds",
+    "admin-settings-account",
+    "admin-settings-costs",
+    "admin-users",
+    "admin-example-threshold"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "admin-example-threshold",
+          "ro": {
+            "question": "Pentru o lună de verificări, Ciprian vrea ca actele să apară „expiră curând” mai devreme. Ce face înainte să scrie valoarea nouă?",
+            "explanation": "Notează valoarea de acum de la „Fereastră filtru expiră curând”, ca după lună să o scrie la loc și să o salveze, exact cum era."
+          },
+          "en": {
+            "question": "For a month of checks, Ciprian wants documents to show „expiră curând” (expiring soon) earlier. What does he do before typing the new value?",
+            "explanation": "He notes the current value of „Fereastră filtru expiră curând”, so that after the month he can type it back and save it, exactly as it was."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Apasă „Implicit”, ca să poată reveni apoi la pragurile inițiale",
+              "en": "Presses „Implicit”, so that he can later return to the original thresholds"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Notează valoarea de acum a pragului, ca s-o pună la loc exact",
+              "en": "Notes the threshold's current value, so as to put it back exactly"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Deschide „Copii de siguranță”, care păstrează valoarea veche",
+              "en": "Opens „Copii de siguranță”, which keeps the old value"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Bifează „Praguri de timp” în „Implicitele mele”",
+              "en": "Ticks „Praguri de timp” in „Implicitele mele”"
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "admin-settings-thresholds",
+          "ro": {
+            "question": "Ciprian a scris 45 în loc de 30 la un prag, dar se răzgândește înainte de a salva. Ce apasă?",
+            "explanation": "Cum schimbați un număr, lângă „Salvează” apare „Anulează”, care readuce valoarea salvată."
+          },
+          "en": {
+            "question": "Ciprian has typed 45 instead of 30 on a threshold, but changes his mind before saving. What does he press?",
+            "explanation": "As soon as you change a number, „Anulează” (cancel) appears beside „Salvează” and brings back the saved value."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Implicit”, din capul ecranului „Setări”",
+              "en": "„Implicit”, at the top of the „Setări” screen"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Revino la implicit”, din „Contul meu”",
+              "en": "„Revino la implicit”, in „Contul meu”"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "„Anulează”, apărut lângă „Salvează”",
+              "en": "„Anulează”, which appeared beside „Salvează”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Restrânge”, care strânge partea fără salvare",
+              "en": "„Restrânge”, which folds the part without saving"
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "admin-settings-thresholds",
+          "ro": {
+            "question": "Ciprian a mărit pragul „expiră curând” în „Setări”. A doua zi, Elena Dumitru, de pe contul ei, se miră că actele îi apar „expiră curând” mai devreme. De ce?",
+            "explanation": "Pragurile sunt ale arhivei, nu ale unui cont: o schimbare se vede la toți utilizatorii."
+          },
+          "en": {
+            "question": "Ciprian raised the „expiră curând” threshold in „Setări”. The next day Elena Dumitru, on her own account, is surprised that documents show „expiră curând” earlier for her. Why?",
+            "explanation": "The thresholds belong to the archive, not to an account: a change is seen by every user."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Pragurile sunt ale arhivei: schimbarea se vede la toți",
+              "en": "The thresholds belong to the archive: everyone sees the change"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Elena a primit „Implicitele mele” ale lui Ciprian",
+              "en": "Elena has been given Ciprian's „Implicitele mele”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Pragurile se copiază la toate conturile o dată pe zi",
+              "en": "The thresholds are copied to every account once a day"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Elena folosește același browser ca Ciprian",
+              "en": "Elena uses the same browser as Ciprian"
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "admin-settings-thresholds",
+          "ro": {
+            "question": "Ciprian vrea ca insigna „Nou!” să nu dispară deloc și scrie 5000 de zile la pragul ei. Ce spune manualul despre o asemenea valoare?",
+            "explanation": "Valorile pragurilor sunt numere întregi între 1 și 3650, deci 5000 nu este o valoare permisă."
+          },
+          "en": {
+            "question": "Ciprian wants the „Nou!” badge never to disappear and types 5000 days on its threshold. What does the manual say about such a value?",
+            "explanation": "The thresholds' values are whole numbers between 1 and 3650, so 5000 is not an allowed value."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Este primită, iar insigna rămâne aproape pentru totdeauna",
+              "en": "It is accepted, and the badge stays almost for ever"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Este primită, dar numai pentru contul lui Ciprian",
+              "en": "It is accepted, but only for Ciprian's account"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Se scrie 0, care înseamnă că insigna nu dispare",
+              "en": "You type 0, which means the badge never disappears"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Nu e permisă: valorile sunt întregi între 1 și 3650",
+              "en": "It is not allowed: the values are whole numbers from 1 to 3650"
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "admin-settings-account",
+          "ro": {
+            "question": "Pe fiecare persoană fizică, Ciprian ascunde de fiecare dată aceleași fișe și vrea ca „Implicit” să-i arate direct setul lui. Ce face?",
+            "explanation": "În „Setări” → „Contul meu” → „Implicitele mele”, la „Persoană fizică”, bifează fișele pe care vrea să le arate „Implicit” și apasă „Salvează”; apare „Salvat.”."
+          },
+          "en": {
+            "question": "On every natural person, Ciprian hides the same tiles each time and wants „Implicit” to show his own set straight away. What does he do?",
+            "explanation": "In „Setări” → „Contul meu” → „Implicitele mele” (my defaults), under „Persoană fizică”, he ticks the tiles he wants „Implicit” to show and presses „Salvează”; „Salvat.” appears."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Debifează fișele pe ecranul persoanei și apasă „Implicit”",
+              "en": "Unticks the tiles on the person's screen and presses „Implicit”"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "În „Implicitele mele”, la „Persoană fizică”, bifează fișele și salvează",
+              "en": "In „Implicitele mele”, under „Persoană fizică”, ticks the tiles and saves"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În „Praguri de timp”, grupa „Persoane”, alege fișele",
+              "en": "In „Praguri de timp”, the „Persoane” group, chooses the tiles"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Trage fișele pe ecranul persoanei: aranjamentul devine implicit",
+              "en": "Drags the tiles on the person's screen: the layout becomes the default"
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "admin-settings-account",
+          "ro": {
+            "question": "Ciprian și-a salvat „Implicitele mele” pe calculatorul de la birou. Acasă deschide aplicația în alt browser. Ce arată „Implicit” pe ecranul unei proprietăți?",
+            "explanation": "Setul este al contului, nu al browserului, așa că rămâne și după o reîncărcare, și în orice browser."
+          },
+          "en": {
+            "question": "Ciprian saved his „Implicitele mele” on the office computer. At home he opens the application in another browser. What does „Implicit” show on a property's screen?",
+            "explanation": "The set belongs to the account, not to the browser, so it stays after a reload, and in any browser."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Setul obișnuit al aplicației, până îl salvează din nou acasă",
+              "en": "The application's usual set, until he saves it again at home"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Toate fișele, ca la „Toate”",
+              "en": "Every tile, as with „Toate”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Ultimul aranjament făcut în acel browser",
+              "en": "The last layout made in that browser"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Setul lui: este al contului, nu al browserului",
+              "en": "His set: it belongs to the account, not the browser"
+            }
+          ]
+        },
+        {
+          "id": "a7",
+          "section": "admin-settings-costs",
+          "ro": {
+            "question": "Ciprian primește factura pe anul acesta pentru domeniul web, în lei. Ce face ca suma să intre în cifrele lunii din „Costuri”?",
+            "explanation": "Acolo unde suma vine de pe o factură, o scrie la „Sume introduse”: „De la”, „Până la”, „Suma”, „Moneda”, „Curs în CA$” și, dacă vrea, „Notă”, apoi apasă „Adaugă o sumă”."
+          },
+          "en": {
+            "question": "Ciprian receives this year's invoice for the web domain, in lei. What does he do so that the amount counts in the month's figures in „Costuri”?",
+            "explanation": "Where an amount comes from an invoice, he enters it under „Sume introduse” (amounts entered): „De la”, „Până la”, „Suma”, „Moneda”, „Curs în CA$” and, if he likes, „Notă”, then presses „Adaugă o sumă” (add an amount)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "La „Domeniu web”, „Detalii”, completează „Sume introduse” și „Adaugă o sumă”",
+              "en": "On „Domeniu web”, „Detalii”, fills in „Sume introduse” and „Adaugă o sumă”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Nimic: aplicația citește singură factura de la furnizor",
+              "en": "Nothing: the application reads the provider's invoice by itself"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "O scrie la „Prognoză la sfârșitul lunii”, în lei",
+              "en": "Types it under „Prognoză la sfârșitul lunii”, in lei"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "O trece în „Despre”, la „Mediu”, ca notă",
+              "en": "Enters it in „Despre”, under „Mediu”, as a note"
+            }
+          ]
+        },
+        {
+          "id": "a8",
+          "section": "admin-settings-costs",
+          "ro": {
+            "question": "În „Costuri”, rândul strâns al părții „AI” începe cu „Estimat luna aceasta”, nu cu „Luna aceasta: …” ca celelalte. De ce?",
+            "explanation": "La „AI” rândul începe cu „Estimat luna aceasta”, pentru că acolo costul este o estimare."
+          },
+          "en": {
+            "question": "In „Costuri”, the collapsed line of the „AI” part starts with „Estimat luna aceasta” (estimated this month), not „Luna aceasta: …” like the others. Why?",
+            "explanation": "On „AI” the line starts with „Estimat luna aceasta”, because there the cost is an estimate."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Factura pe AI nu a fost încă introdusă",
+              "en": "The AI invoice has not been entered yet"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Partea „AI” se plătește în altă monedă decât CA$",
+              "en": "The „AI” part is paid in a currency other than CA$"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Pentru că la „AI” costul este o estimare",
+              "en": "Because on „AI” the cost is an estimate"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Pentru că luna nu s-a încheiat încă",
+              "en": "Because the month has not ended yet"
+            }
+          ]
+        },
+        {
+          "id": "a9",
+          "section": "admin-users",
+          "ro": {
+            "question": "În „Cereri în așteptare” apare o cerere de la „Marius Georgescu”, pe care nu-l cunoaște nimeni din firmă. Ce face Ciprian?",
+            "explanation": "Un cont aprobat nu se poate șterge din aplicație, așa că aprobați doar cererile pe care le recunoașteți; „Respinge” refuză cererea și îl anunță pe solicitant."
+          },
+          "en": {
+            "question": "Under „Cereri în așteptare” (pending requests) there is a request from „Marius Georgescu”, whom nobody in the firm knows. What does Ciprian do?",
+            "explanation": "An approved account cannot be deleted from the application, so approve only the requests you recognise; „Respinge” (refuse) refuses the request and tells the applicant."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Aprobă, iar dacă e nevoie șterge contul apoi din „Istoric”",
+              "en": "Approves it, and deletes the account later from „Istoric” if need be"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Aprobă, apoi îi schimbă parola din „Contul meu”",
+              "en": "Approves it, then changes his password from „Contul meu”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "O lasă în așteptare: cererile vechi dispar singure",
+              "en": "Leaves it pending: old requests disappear by themselves"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Respinge: un cont aprobat nu se mai poate șterge",
+              "en": "Refuses it: an approved account can no longer be deleted"
+            }
+          ]
+        },
+        {
+          "id": "a10",
+          "section": "admin-users",
+          "ro": {
+            "question": "Ciprian apasă „Aprobă” pe cererea Elenei Dumitru, iar mesajul spune, în paranteză, că e-mailul nu a putut fi trimis. Ce s-a întâmplat cu contul?",
+            "explanation": "Dacă e-mailul nu a putut fi trimis, mesajul o spune în paranteză; contul s-a înregistrat totuși, iar cererea pleacă în „Istoric”."
+          },
+          "en": {
+            "question": "Ciprian presses „Aprobă” on Elena Dumitru's request, and the message says, in brackets, that the e-mail could not be sent. What has happened to the account?",
+            "explanation": "If the e-mail could not be sent, the message says so in brackets; the account has been recorded all the same, and the request goes to „Istoric”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Nu s-a creat; cererea rămâne în „Cereri în așteptare”",
+              "en": "It was not created; the request stays under „Cereri în așteptare”"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "S-a creat totuși; doar e-mailul nu a plecat",
+              "en": "It was created all the same; only the e-mail did not go"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "S-a creat fără parolă, deci Elena nu se poate conecta",
+              "en": "It was created with no password, so Elena cannot sign in"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Cererea a trecut în „Istoric” ca „Respins”",
+              "en": "The request went to „Istoric” as „Respins”"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "admin-example-threshold",
+          "ro": {
+            "question": "După luna de verificări, Ciprian scrie la loc valoarea notată la „Fereastră filtru expiră curând” și apasă „Salvează”. Cum se asigură că a rămas?",
+            "explanation": "Așteaptă „Salvat cu succes.”, apoi reîncarcă pagina și verifică că valoarea a rămas."
+          },
+          "en": {
+            "question": "After the month of checks, Ciprian types the noted value back into „Fereastră filtru expiră curând” and presses „Salvează”. How does he make sure it has stayed?",
+            "explanation": "He waits for „Salvat cu succes.” (saved successfully), then reloads the page and checks that the value has stayed."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Apasă „Implicit” și vede dacă valoarea se schimbă",
+              "en": "Presses „Implicit” and sees whether the value changes"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Citește „Versiune” și „Commit” în „Despre”",
+              "en": "Reads „Versiune” and „Commit” in „Despre”"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Reîncarcă pagina și verifică valoarea pragului",
+              "en": "Reloads the page and checks the threshold's value"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Se uită dacă a apărut „Anulează” lângă „Salvează”",
+              "en": "Looks whether „Anulează” has appeared beside „Salvează”"
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "admin-settings-thresholds",
+          "ro": {
+            "question": "Înainte să salveze, Ciprian vrea să știe ce ar însemna 60 la „Fereastră filtru expiră curând”. Unde află?",
+            "explanation": "Fiecare prag are un exemplu, care se schimbă pe loc după numărul scris: cu 60 ar scrie „Exemplu: Un act apare «expiră curând» cu 60 de zile înainte.”."
+          },
+          "en": {
+            "question": "Before saving, Ciprian wants to know what 60 would mean on „Fereastră filtru expiră curând”. Where does he find out?",
+            "explanation": "Each threshold has an example, which changes at once with the number typed: with 60 it would read „Exemplu: Un act apare «expiră curând» cu 60 de zile înainte.”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "În exemplul pragului, care se schimbă pe loc după număr",
+              "en": "In the threshold's example, which changes at once with the number"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Doar după salvare, pe „Tablou de bord”",
+              "en": "Only after saving, on „Tablou de bord”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În „Copii de siguranță”, la ultima probă",
+              "en": "In „Copii de siguranță”, at the last check"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "În lista actelor, după o reîncărcare",
+              "en": "In the documents list, after a reload"
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "admin-settings-thresholds",
+          "ro": {
+            "question": "Cartea de identitate a lui Andrei Munteanu expiră, iar Ciprian vrea ca asemenea cărți să fie semnalate cu mai mult timp înainte. Ce prag schimbă?",
+            "explanation": "Cu cât timp înainte de expirare este semnalată o carte de identitate hotărăște „Prag CI expiră curând”."
+          },
+          "en": {
+            "question": "Andrei Munteanu's identity card is expiring, and Ciprian wants such cards to be flagged further ahead. Which threshold does he change?",
+            "explanation": "How long before its expiry an identity card is flagged is decided by „Prag CI expiră curând” (the identity-card expiring-soon threshold)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Fereastră filtru expiră curând”, din grupa „Acte”",
+              "en": "„Fereastră filtru expiră curând”, in the „Acte” group"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "„Prag CI expiră curând”",
+              "en": "„Prag CI expiră curând”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Un prag din grupa „Insigna „Nou!””",
+              "en": "A threshold in the „Insigna „Nou!”” group"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Zilele numărate de „Recente” pe „Tablou de bord”",
+              "en": "The days „Recente” counts on „Tablou de bord”"
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "admin-settings-thresholds",
+          "ro": {
+            "question": "Ciprian observă că insigna „Nou!” dispare de pe persoanele schimbate prea repede, înainte să apuce să le verifice. Unde lungește timpul?",
+            "explanation": "„Praguri de timp” hotărăște și cât timp poartă o înregistrare schimbată insigna „Nou!”, roșie și apoi chihlimbar, și după cât timp dispare; pragurile ei stau în grupa „Insigna „Nou!””."
+          },
+          "en": {
+            "question": "Ciprian notices that the „Nou!” badge disappears from changed persons too soon, before he gets round to checking them. Where does he lengthen the time?",
+            "explanation": "„Praguri de timp” also decides how long a changed record carries the „Nou!” badge, red and then amber, and after how long it disappears; its thresholds are in the „Insigna „Nou!”” group."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "În „Implicitele mele”, la „Persoană fizică”",
+              "en": "In „Implicitele mele”, under „Persoană fizică”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "În lista persoanelor, la „Câmpuri afișate”",
+              "en": "In the list of persons, under „Câmpuri afișate”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În „Date de referință”, la „Tipuri de Persoană Fizică”",
+              "en": "In „Date de referință”, under „Tipuri de Persoană Fizică”"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "În „Praguri de timp”, grupa „Insigna „Nou!””",
+              "en": "In „Praguri de timp”, the „Insigna „Nou!”” group"
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "admin-settings-account",
+          "ro": {
+            "question": "Elena Dumitru tocmai a primit pe e-mail parola temporară și vrea una a ei. Ce îi spune Ciprian?",
+            "explanation": "Parola temporară o poate schimba colegul însuși, în „Setări” → „Contul meu”: „Parola nouă”, de cel puțin 8 caractere, încă o dată în „Confirmă parola”, apoi „Schimbă parola”."
+          },
+          "en": {
+            "question": "Elena Dumitru has just received the temporary password by e-mail and wants one of her own. What does Ciprian tell her?",
+            "explanation": "The colleague can change the temporary password themselves, in „Setări” → „Contul meu”: „Parola nouă”, at least 8 characters, once more in „Confirmă parola”, then „Schimbă parola”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Să-i ceară lui să i-o schimbe în „Utilizatori & Acces”",
+              "en": "To ask him to change it for her in „Utilizatori & Acces”"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "S-o schimbe ea, în „Contul meu”, cu cel puțin 8 caractere",
+              "en": "To change it herself, in „Contul meu”, with at least 8 characters"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Să ceară din nou acces din pagina de conectare",
+              "en": "To ask for access again from the sign-in page"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "S-o schimbe în „Contul meu”, cu cel puțin 4 caractere",
+              "en": "To change it in „Contul meu”, with at least 4 characters"
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "admin-settings-account",
+          "ro": {
+            "question": "Setul salvat de Ciprian în „Implicitele mele” pentru „Proprietate” ascunde prea mult, iar el vrea înapoi setul obișnuit al aplicației. Ce apasă?",
+            "explanation": "„Revino la implicit” uită setul dumneavoastră și readuce setul obișnuit al aplicației: „Revenit la implicit.”."
+          },
+          "en": {
+            "question": "The set Ciprian saved in „Implicitele mele” for „Proprietate” hides too much, and he wants the application's usual set back. What does he press?",
+            "explanation": "„Revino la implicit” (back to the default) forgets your set and brings back the application's usual one: „Revenit la implicit.”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Debifează toate fișele și apasă „Salvează”",
+              "en": "Unticks every tile and presses „Salvează”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Implicit”, pe ecranul unei proprietăți",
+              "en": "„Implicit”, on a property's screen"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Golește datele browserului și se conectează din nou",
+              "en": "Clears the browser's data and signs in again"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "„Revino la implicit”, în „Implicitele mele”",
+              "en": "„Revino la implicit”, in „Implicitele mele”"
+            }
+          ]
+        },
+        {
+          "id": "b7",
+          "section": "admin-settings",
+          "ro": {
+            "question": "Pe ecranul „Setări”, Ciprian vrea să vadă doar „Praguri de timp” și „Costuri”, fără celelalte părți. Cum face?",
+            "explanation": "Ca pe ecranul unei înregistrări, căsuțele de sus aleg ce părți se văd, iar „Implicit” le aduce înapoi."
+          },
+          "en": {
+            "question": "On the „Setări” screen, Ciprian wants to see only „Praguri de timp” and „Costuri”, without the other parts. How does he do it?",
+            "explanation": "As on a record's screen, the boxes at the top choose which parts are shown, and „Implicit” brings them back."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Din căsuțele de sus, ca pe ecranul unei înregistrări",
+              "en": "With the boxes at the top, as on a record's screen"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Din „Implicitele mele”, la „Act”",
+              "en": "From „Implicitele mele”, under „Act”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Cu „Restrânge” pe fiecare parte nedorită",
+              "en": "With „Restrânge” on each unwanted part"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nu se poate: „Setări” arată mereu toate părțile",
+              "en": "It cannot be done: „Setări” always shows every part"
+            }
+          ]
+        },
+        {
+          "id": "b8",
+          "section": "admin-settings-costs",
+          "ro": {
+            "question": "Ciprian vrea să știe dacă folosirea Street View de luna aceasta a trecut de partea gratuită. Unde se uită?",
+            "explanation": "La „Street View” și „Adrese căutate”, partea deschisă cu „Detalii” arată folosirea lunii față de partea gratuită; ce vine de la oameni este o estimare, iar ecranul o spune."
+          },
+          "en": {
+            "question": "Ciprian wants to know whether this month's Street View use has gone past the free part. Where does he look?",
+            "explanation": "On „Street View” and „Adrese căutate”, the part opened with „Detalii” shows the month's use against the free part; what comes from people is an estimate, and the screen says so."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "În „Despre”, la „Mediu” și „Bază de date”",
+              "en": "In „Despre”, under „Mediu” and „Bază de date”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "În „Praguri de timp”, grupa „Tablou de bord”",
+              "en": "In „Praguri de timp”, the „Tablou de bord” group"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "În „Costuri”, la „Street View”, cu „Detalii”",
+              "en": "In „Costuri”, on „Street View”, with „Detalii”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "În „Costuri”, la „Google Maps”, în rândul strâns",
+              "en": "In „Costuri”, on „Google Maps”, in the collapsed line"
+            }
+          ]
+        },
+        {
+          "id": "b9",
+          "section": "admin-users",
+          "ro": {
+            "question": "Un coleg a respins ieri o cerere de acces. Ciprian vrea să afle cine a răspuns și când. Unde se uită?",
+            "explanation": "Fila „Istoric” ține cererile la care s-a răspuns, cu „Stare” („Aprobat” sau „Respins”), „Procesat la” și „De”, adică cine a răspuns; cererile rămân acolo pentru totdeauna."
+          },
+          "en": {
+            "question": "A colleague refused an access request yesterday. Ciprian wants to find out who answered and when. Where does he look?",
+            "explanation": "The „Istoric” tab holds the requests that have been answered, with „Stare” („Aprobat” or „Respins”), „Procesat la” and „De”, that is, who answered; the requests stay there for good."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "În „Cereri în așteptare”, unde cererea rămâne marcată",
+              "en": "In „Cereri în așteptare”, where the request stays marked"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Pe fila „Istoric”, la „Procesat la” și „De”",
+              "en": "On the „Istoric” tab, under „Procesat la” and „De”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Nicăieri: o cerere respinsă se șterge",
+              "en": "Nowhere: a refused request is deleted"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "În „Contul meu”, la istoricul contului",
+              "en": "In „Contul meu”, in the account's history"
+            }
+          ]
+        },
+        {
+          "id": "b10",
+          "section": "admin-users",
+          "ro": {
+            "question": "Un coleg nou, Radu Ionescu, vrea să lucreze în aplicație și nu are cont. Ce îi spune Ciprian să facă?",
+            "explanation": "Un coleg fără cont cere acces din pagina de conectare; cererea ajunge în „Utilizatori & Acces”, iar aprobarea creează contul și îi trimite parola temporară pe e-mail."
+          },
+          "en": {
+            "question": "A new colleague, Radu Ionescu, wants to work in the application and has no account. What does Ciprian tell him to do?",
+            "explanation": "A colleague without an account asks for access from the sign-in page; the request arrives in „Utilizatori & Acces”, and approving it creates the account and e-mails him the temporary password."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Să aștepte: Ciprian îi face contul cu „Adaugă” în „Utilizatori & Acces”",
+              "en": "To wait: Ciprian makes his account with „Adaugă” in „Utilizatori & Acces”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Să se conecteze cu contul lui Ciprian și să-și schimbe limba",
+              "en": "To sign in with Ciprian's account and change the language"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Să ceară acces din pagina de conectare, apoi Ciprian aprobă",
+              "en": "To ask for access from the sign-in page, then Ciprian approves"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Să-și facă singur contul din „Setări” → „Contul meu”",
+              "en": "To make his own account from „Setări” → „Contul meu”"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

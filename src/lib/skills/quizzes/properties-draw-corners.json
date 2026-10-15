@@ -1,0 +1,612 @@
+{
+  "skill": "properties-draw-corners",
+  "manual": [
+    "properties-corners-draw",
+    "properties-corners-table",
+    "properties-corners-map",
+    "properties-example-draw",
+    "properties-example-corner"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "properties-corners-draw",
+          "ro": {
+            "question": "Ați desenat colțurile unui teren pe fișa „Hartă” și ați închis forma. Unde le regăsiți și ce mai faceți ca să rămână?",
+            "explanation": "Colțurile desenate apar în „Puncte de contur”, dar rămân doar după ce salvați proprietatea cu „Salvează” de jos."
+          },
+          "en": {
+            "question": "You drew a plot's corners on the „Hartă” tile and closed the shape. Where do you find them, and what else do you do so that they stay?",
+            "explanation": "The drawn corners appear in „Puncte de contur”, but they stay only once you save the property with the „Salvează” at the bottom."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Apar în „Identificare cadastrală”; rămân singure de îndată ce apăsați „Gata”.",
+              "en": "They appear in „Identificare cadastrală” (cadastral identification); they stay by themselves as soon as you press „Gata” (done)."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Apar în „Puncte de contur”; apăsați „Salvează” de jos, ca să rămână.",
+              "en": "They appear in „Puncte de contur” (boundary points); press the „Salvează” at the bottom so that they stay."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Apar doar pe hartă; în „Puncte de contur” intră abia după salvare.",
+              "en": "They appear only on the map; they enter „Puncte de contur” only after saving."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Apar în „Puncte de contur”; rămân de îndată ce închideți forma pe primul punct.",
+              "en": "They appear in „Puncte de contur”; they stay as soon as you close the shape on the first point."
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "properties-corners-draw",
+          "ro": {
+            "question": "Pe fișa „Hartă”, trageți cu mouse-ul un colț pus greșit. Ce se întâmplă în fișa „Puncte de contur” și cu suprafața calculată?",
+            "explanation": "Tabelul și suprafața calculată urmează tragerea: ce schimbați într-o fișă se vede imediat în cealaltă, chiar înainte de salvare."
+          },
+          "en": {
+            "question": "On the „Hartă” tile you drag with the mouse a corner placed wrongly. What happens in the „Puncte de contur” tile and to the calculated area?",
+            "explanation": "The table and the calculated area follow the drag: what you change in one tile shows at once in the other, even before saving."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Tabelul se schimbă abia după „Salvează”, iar suprafața la fel.",
+              "en": "The table changes only after „Salvează”, and so does the area."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Tabelul rămâne cum era; trebuie să apăsați „Editează” pe rândul colțului.",
+              "en": "The table stays as it was; you have to press „Editează” (edit) on the corner's row."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Tabelul și suprafața calculată urmează tragerea pe loc, înainte de salvare.",
+              "en": "The table and the calculated area follow the drag at once, before saving."
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "properties-corners-table",
+          "ro": {
+            "question": "În „Puncte de contur” ați corectat un colț cu „Editează” și ați apăsat „Salvează” pe rândul lui. Este colțul nou scris în arhivă?",
+            "explanation": "Nu încă. „Salvează” de pe rând nu scrie nimic în arhivă: colțurile se salvează abia cu „Salvează” de jos, împreună cu restul proprietății."
+          },
+          "en": {
+            "question": "In „Puncte de contur” you corrected a corner with „Editează” and pressed „Salvează” on its row. Is the new corner written to the archive?",
+            "explanation": "Not yet. A row's „Salvează” writes nothing to the archive: the corners are saved only with the „Salvează” at the bottom, together with the rest of the property."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Nu încă: se scrie abia cu „Salvează” de jos, cu restul proprietății.",
+              "en": "Not yet: it is written only with the „Salvează” at the bottom, with the rest of the property."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Da: „Salvează” de pe rând face pe loc o versiune nouă.",
+              "en": "Yes: the row's „Salvează” makes a new version at once."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Da, dar suprafața calculată se schimbă abia la „Salvează” de jos.",
+              "en": "Yes, but the calculated area changes only at the „Salvează” at the bottom."
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "properties-corners-draw",
+          "ro": {
+            "question": "Ați apăsat „Desenează” și ați pus pe hartă al patrulea și ultimul colț al terenului. Cum închideți forma?",
+            "explanation": "Forma se închide apăsând din nou pe primul punct sau apăsând „Gata”, butonul apărut în locul lui „Desenează”."
+          },
+          "en": {
+            "question": "You pressed „Desenează” (draw) and placed on the map the plot's fourth and last corner. How do you close the shape?",
+            "explanation": "The shape is closed by clicking the first point again or by pressing „Gata”, the button that appeared in place of „Desenează”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Apăsați „+ Adaugă punct” și scrieți coordonatele primului colț.",
+              "en": "Press „+ Adaugă punct” and type the coordinates of the first corner."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Apăsați „Hartă extinsă”, apoi „Restrânge”.",
+              "en": "Press „Hartă extinsă”, then „Restrânge” (collapse)."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Apăsați din nou pe primul punct sau apăsați „Gata”.",
+              "en": "Click the first point again, or press „Gata”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Apăsați „Arată Unghiuri”, care unește ultimul colț cu primul.",
+              "en": "Press „Arată Unghiuri” (show angles), which joins the last corner to the first."
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "properties-corners-table",
+          "ro": {
+            "question": "În „Puncte de contur” apăsați „Mută mai jos” pe rândul colțului 2. Ce se schimbă pe fișa „Hartă”?",
+            "explanation": "Ordinea rândurilor este ordinea în care colțurile sunt unite, deci „Mută mai sus” și „Mută mai jos” schimbă forma parcelei, iar harta o arată pe loc."
+          },
+          "en": {
+            "question": "In „Puncte de contur” you press „Mută mai jos” (move down) on the row of corner 2. What changes on the „Hartă” tile?",
+            "explanation": "The order of the rows is the order in which the corners are joined, so „Mută mai sus” and „Mută mai jos” change the parcel's shape, and the map shows it at once."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Nimic: se schimbă doar numărul din coloana „Nr.”.",
+              "en": "Nothing: only the number in the „Nr.” column changes."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Forma: colțurile se unesc în altă ordine, iar desenul se schimbă.",
+              "en": "The shape: the corners are joined in another order, and the drawing changes."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Colțul 2 se mută pe hartă puțin mai jos, spre sud.",
+              "en": "Corner 2 moves a little lower on the map, towards the south."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nimic până la „Salvează” de jos; abia atunci se redesenează.",
+              "en": "Nothing until the „Salvează” at the bottom; only then is it redrawn."
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "properties-corners-table",
+          "ro": {
+            "question": "Desenând pe hartă, ați pus un colț în plus, în mijlocul unei laturi. Cum îl scoateți?",
+            "explanation": "Un colț se scoate cu „Șterge” pe rândul lui din „Puncte de contur”; harta și suprafața calculată urmează pe loc. Apoi salvați proprietatea."
+          },
+          "en": {
+            "question": "While drawing on the map, you placed one corner too many, in the middle of a side. How do you remove it?",
+            "explanation": "A corner is removed with „Șterge” (delete) on its row in „Puncte de contur”; the map and the calculated area follow at once. Then save the property."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Apăsați „Îndreaptă ordinea”, care scoate colțurile în plus.",
+              "en": "Press „Îndreaptă ordinea” (straighten the order), which removes the extra corners."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Debifați fișa „Puncte de contur”, ca rândul să nu se salveze.",
+              "en": "Untick the „Puncte de contur” tile, so that the row is not saved."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Îl mutați cu „Mută mai jos” la sfârșitul tabelului.",
+              "en": "Move it with „Mută mai jos” to the end of the table."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Apăsați „Șterge” pe rândul lui din „Puncte de contur”.",
+              "en": "Press „Șterge” on its row in „Puncte de contur”."
+            }
+          ]
+        },
+        {
+          "id": "a7",
+          "section": "properties-corners-map",
+          "ro": {
+            "question": "Ați terminat de desenat un teren și vreți să vedeți deodată unghiurile tuturor colțurilor lui. Ce apăsați?",
+            "explanation": "Pe fișa „Hartă”, sus în dreapta, „Arată Unghiuri” arată unghiurile colțurilor; apăsat din nou, devine „Ascunde Unghiuri”."
+          },
+          "en": {
+            "question": "You have finished drawing a plot and want to see the angles of all its corners at once. What do you press?",
+            "explanation": "On the „Hartă” tile, at the top right, „Arată Unghiuri” shows the corners' angles; pressed again, it becomes „Ascunde Unghiuri” (hide angles)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "„Arată Unghiuri”, sus în dreapta pe fișa „Hartă”.",
+              "en": "„Arată Unghiuri”, at the top right of the „Hartă” tile."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Afișare:” „DMS” în „Puncte de contur”.",
+              "en": "„Afișare:” (display) „DMS” in „Puncte de contur”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Desenează”, apoi un clic pe fiecare colț.",
+              "en": "„Desenează”, then a click on each corner."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„SATELIT”, care arată și unghiurile.",
+              "en": "„SATELIT” (satellite), which shows the angles too."
+            }
+          ]
+        },
+        {
+          "id": "a8",
+          "section": "properties-example-draw",
+          "ro": {
+            "question": "Ați adăugat de mână „Teren Bragadiru”, cu suprafața din acte, și i-ați desenat colțurile. Ce comparați înainte să salvați?",
+            "explanation": "„Suprafață calculată (m²)” o calculează aplicația din colțurile desenate; o comparați cu „Suprafață oficială (m²)”, suprafața din acte."
+          },
+          "en": {
+            "question": "You added „Teren Bragadiru” by hand, with the area from the papers, and drew its corners. What do you compare before saving?",
+            "explanation": "„Suprafață calculată (m²)” (calculated area) is calculated by the application from the drawn corners; you compare it with „Suprafață oficială (m²)” (official area), the area from the papers."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Nr.” cu „Nr. orig.” din „Puncte de contur”.",
+              "en": "„Nr.” with „Nr. orig.” in „Puncte de contur”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Coordonatele „Stereo 70” cu cele „DD”.",
+              "en": "The „Stereo 70” coordinates with the „DD” ones."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "„Suprafață calculată (m²)” cu „Suprafață oficială (m²)”.",
+              "en": "„Suprafață calculată (m²)” with „Suprafață oficială (m²)”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Tarlaua aleasă cu tarlaua arătată pe hartă.",
+              "en": "The tarla you chose with the tarla shown on the map."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "properties-example-corner",
+          "ro": {
+            "question": "Topograful vă trimite coordonata corectă a unui colț greșit. Care este calea întreagă ca terenul să rămână corectat?",
+            "explanation": "Apăsați „Editează” pe rândul colțului în „Puncte de contur”, scrieți coordonata, „Salvează” pe rând, apoi „Salvează” jos; versiunea de dinainte păstrează colțul vechi."
+          },
+          "en": {
+            "question": "The surveyor sends you the correct coordinate of a wrong corner. What is the whole path for the plot to stay corrected?",
+            "explanation": "Press „Editează” on the corner's row in „Puncte de contur”, type the coordinate, the row's „Salvează”, then „Salvează” at the bottom; the version before keeps the old corner."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Editează” pe rând, scrieți coordonata și „Salvează” pe rând; atât.",
+              "en": "„Editează” on the row, type the coordinate and the row's „Salvează”; that is all."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„+ Adaugă punct” cu coordonata corectă; colțul vechi dispare singur.",
+              "en": "„+ Adaugă punct” (add point) with the correct coordinate; the old corner disappears by itself."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "„Editează” pe rând, coordonata, „Salvează” pe rând, apoi „Salvează” jos.",
+              "en": "„Editează” on the row, the coordinate, the row's „Salvează”, then „Salvează” at the bottom."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Desenează” și refaceți tot conturul; „Gata” înlocuiește colțurile.",
+              "en": "„Desenează” and redo the whole outline; „Gata” replaces the corners."
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "properties-corners-table",
+          "ro": {
+            "question": "La „Afișare:” ați ales „Stereo 70”. Apăsați „Editează” pe un rând. Cum scrieți coordonatele colțului?",
+            "explanation": "„Afișare:” alege cum se arată coordonatele, iar în același fel le și scrieți: la „Stereo 70”, Nord și Est, în metri."
+          },
+          "en": {
+            "question": "At „Afișare:” you chose „Stereo 70”. You press „Editează” on a row. How do you type the corner's coordinates?",
+            "explanation": "„Afișare:” chooses how the coordinates are shown, and you type them in the same form: with „Stereo 70”, North and East, in metres."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Ca Nord și Est, în metri, cum le arată tabelul.",
+              "en": "As North and East, in metres, as the table shows them."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Mereu în grade zecimale, oricare ar fi „Afișare:”.",
+              "en": "Always in decimal degrees, whatever „Afișare:” is."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Mereu în grade, minute și secunde.",
+              "en": "Always in degrees, minutes and seconds."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nu se pot scrie: „Stereo 70” vine doar din fișiere.",
+              "en": "They cannot be typed: „Stereo 70” comes only from files."
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "properties-corners-table",
+          "ro": {
+            "question": "După ce ați mutat câteva rânduri, sub tabel apare „Ordinea colțurilor se încrucișează”. Ce faceți?",
+            "explanation": "Când laturile se încrucișează, suprafața calculată nu mai are sens. „Îndreaptă ordinea” arată forma de acum și pe cea îndreptată; colțurile rămân unde sunt, se schimbă doar ordinea. Apoi salvați."
+          },
+          "en": {
+            "question": "After moving a few rows, „Ordinea colțurilor se încrucișează” (the order of the corners crosses) appears under the table. What do you do?",
+            "explanation": "When the sides cross, the calculated area no longer means anything. „Îndreaptă ordinea” (straighten the order) shows the shape as it is and the straightened one; the corners stay where they are, only the order changes. Then save."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Nimic: suprafața calculată rămâne corectă oricum.",
+              "en": "Nothing: the calculated area stays correct anyway."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "„Îndreaptă ordinea”, comparați formele, apoi salvați.",
+              "en": "„Îndreaptă ordinea”, compare the shapes, then save."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Îndreaptă ordinea”, care mută colțurile la locul bun.",
+              "en": "„Îndreaptă ordinea”, which moves the corners to the right place."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Ștergeți toate colțurile și desenați-le din nou.",
+              "en": "Delete all the corners and draw them again."
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "properties-corners-expanded",
+          "ro": {
+            "question": "Ați desenat colțurile în „Hartă extinsă”, apoi ați apăsat Escape. Ce s-a întâmplat cu desenul?",
+            "explanation": "Escape sau „Restrânge” vă întoarce la fișă cu desenul păstrat: un colț desenat în harta extinsă este colțul proprietății. Îl salvați ca de obicei."
+          },
+          "en": {
+            "question": "You drew the corners in „Hartă extinsă” (expanded map), then pressed Escape. What happened to the drawing?",
+            "explanation": "Escape or „Restrânge” (collapse) takes you back to the tile with the drawing kept: a corner drawn in the expanded map is the property's corner. You save it as usual."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "S-a pierdut: Escape anulează desenul din harta extinsă.",
+              "en": "It was lost: Escape cancels the drawing in the expanded map."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "S-a salvat singur în arhivă, cu o versiune nouă.",
+              "en": "It saved itself to the archive, with a new version."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Rămâne doar o schiță, separată de colțurile proprietății.",
+              "en": "It remains only a sketch, separate from the property's corners."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "S-a păstrat pe fișă, ca și colțuri ale proprietății.",
+              "en": "It was kept on the tile, as the property's corners."
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "properties-corners-table",
+          "ro": {
+            "question": "Terenul are patru colțuri, iar topograful vă dă un al cincilea, care vine după ultimul. Cum îl adăugați din tabel?",
+            "explanation": "Sub tabel, „+ Adaugă punct” adaugă un colț nou la sfârșit; harta și suprafața calculată îl urmează imediat."
+          },
+          "en": {
+            "question": "The plot has four corners, and the surveyor gives you a fifth, which comes after the last. How do you add it from the table?",
+            "explanation": "Below the table, „+ Adaugă punct” adds a new corner at the end; the map and the calculated area follow it at once."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Editează” pe ultimul rând și scrieți acolo colțul nou.",
+              "en": "„Editează” on the last row and type the new corner there."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "„+ Adaugă punct”, sub tabel, care îl pune la sfârșit.",
+              "en": "„+ Adaugă punct”, below the table, which puts it at the end."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Mută mai jos” pe ultimul rând, care face loc unui rând nou.",
+              "en": "„Mută mai jos” on the last row, which makes room for a new row."
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "properties-corners-map",
+          "ro": {
+            "question": "O proprietate nu are încă niciun colț. De unde îi desenați conturul?",
+            "explanation": "Conturul se desenează pe ecranul proprietății, cu „Desenează” de pe fișa „Hartă”. Pe harta tuturor proprietăților nu se desenează și nu se mută colțuri."
+          },
+          "en": {
+            "question": "A property has no corner yet. Where do you draw its outline from?",
+            "explanation": "The outline is drawn on the property's screen, with „Desenează” on the „Hartă” tile. On the map of all properties, corners are neither drawn nor moved."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Din „Hartă completă”, unde desenați peste celelalte terenuri.",
+              "en": "From „Hartă completă” (full map), where you draw over the other plots."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Din „Puncte de contur”, cu „Editează” pe primul rând gol.",
+              "en": "From „Puncte de contur”, with „Editează” on the first empty row."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "De pe fișa „Hartă” a proprietății, cu „Desenează”.",
+              "en": "From the property's „Hartă” tile, with „Desenează”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Din fișa „Street View”, apăsând pe colțurile terenului.",
+              "en": "From the „Street View” tile, by clicking the plot's corners."
+            }
+          ]
+        },
+        {
+          "id": "b7",
+          "section": "properties-corners-table",
+          "ro": {
+            "question": "În „Puncte de contur”, ce arată coloana „Nr.” și ce arată „Nr. orig.”?",
+            "explanation": "„Nr.” este ordinea în care colțurile sunt unite; „Nr. orig.” este numărul colțului în fișierul sau planul din care vine."
+          },
+          "en": {
+            "question": "In „Puncte de contur”, what does the „Nr.” column show and what does „Nr. orig.” show?",
+            "explanation": "„Nr.” is the order in which the corners are joined; „Nr. orig.” is the corner's number in the file or plan it comes from."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "„Nr.” e ordinea; „Nr. orig.” e numărul din fișier sau plan.",
+              "en": "„Nr.” is the order; „Nr. orig.” is the number in the file or plan."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Nr.” e numărul din plan; „Nr. orig.” e ordinea de pe hartă.",
+              "en": "„Nr.” is the number in the plan; „Nr. orig.” is the order on the map."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Nr.” e ordinea de acum; „Nr. orig.” e ordinea din prima versiune.",
+              "en": "„Nr.” is the current order; „Nr. orig.” is the order in the first version."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Amândouă arată ordinea; „Nr. orig.” doar nu se poate schimba.",
+              "en": "Both show the order; „Nr. orig.” simply cannot be changed."
+            }
+          ]
+        },
+        {
+          "id": "b8",
+          "section": "properties-example-corner",
+          "ro": {
+            "question": "Ați corectat un colț și ați salvat proprietatea. Un coleg întreabă unde era colțul înainte. Unde îl găsiți?",
+            "explanation": "Fiecare salvare adaugă o versiune, iar versiunea de dinainte păstrează colțul vechi; o citiți din „… versiuni”, în capul ecranului."
+          },
+          "en": {
+            "question": "You corrected a corner and saved the property. A colleague asks where the corner was before. Where do you find it?",
+            "explanation": "Every save adds a version, and the version before keeps the old corner; you read it from „… versiuni” (versions), at the top of the screen."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Nicăieri: colțul vechi s-a pierdut la salvare.",
+              "en": "Nowhere: the old corner was lost on saving."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "În coloana „Nr. orig.”, care ține coordonata veche.",
+              "en": "In the „Nr. orig.” column, which keeps the old coordinate."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "În versiunea de dinainte, din „… versiuni”.",
+              "en": "In the version before, from „… versiuni”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "În câmpul „Note”, unde aplicația o scrie singură.",
+              "en": "In the „Note” field, where the application writes it by itself."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

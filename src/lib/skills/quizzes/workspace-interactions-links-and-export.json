@@ -1,0 +1,782 @@
+{
+  "skill": "workspace-interactions-links-and-export",
+  "manual": [
+    "reports-interactions-links",
+    "reports-interactions-edit",
+    "reports-interactions-export",
+    "reports-example-export",
+    "reports-interactions-log"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "reports-interactions-links",
+          "ro": {
+            "question": "Maria Stoica sună să întrebe de contractul de vânzare-cumpărare al terenului ei din Bragadiru, deja arhivat. Ciprian înregistrează convorbirea și vrea ca ea să trimită la contract. Ce face?",
+            "explanation": "În „Asocieri”, la „Acte legate”, apăsați „Adaugă legătură” și găsiți actul în „Caută un act”, după titlu sau cod. Actul nu se copiază și nu se încarcă din nou: interacțiunea doar trimite la el."
+          },
+          "en": {
+            "question": "Maria Stoica rings to ask about the sale contract of her land in Bragadiru, already archived. Ciprian records the call and wants it to point at the contract. What does he do?",
+            "explanation": "In „Asocieri” (associations), under „Acte legate” (linked documents), press „Adaugă legătură” (add link) and find the document in „Caută un act” (search for a document), by title or code. The document is not copied or uploaded again: the interaction only points at it."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Încarcă din nou scanarea contractului în formularul interacțiunii.",
+              "en": "He uploads the contract's scan again into the interaction's form."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "La „Acte legate”, apasă „Adaugă legătură” și caută contractul după titlu sau cod.",
+              "en": "Under „Acte legate”, he presses „Adaugă legătură” and searches for the contract by title or code."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Scrie codul contractului în „Descriere”, ca să apară în coloana „Acte”.",
+              "en": "He writes the contract's code in „Descriere”, so that it shows in the „Acte” column."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Deschide contractul și apasă acolo „Înregistrează o interacțiune”.",
+              "en": "He opens the contract and presses „Înregistrează o interacțiune” there."
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "reports-interactions-log",
+          "ro": {
+            "question": "Ciprian deschide formularul cu „Înregistrează o interacțiune” și vede doar câmpurile de canal, sens, stare și subiect. Unde leagă actele și etichetele?",
+            "explanation": "Formularul are cinci secțiuni, iar la deschidere doar „Înregistrare manuală” este deschisă. Un clic pe titlul „Asocieri” deschide secțiunea în care se leagă actele, etichetele și proprietatea."
+          },
+          "en": {
+            "question": "Ciprian opens the form with „Înregistrează o interacțiune” and sees only the channel, direction, status and subject fields. Where does he link the documents and tags?",
+            "explanation": "The form has five sections, and when it opens only „Înregistrare manuală” (manual entry) is open. A click on the title „Asocieri” opens the section where the documents, tags and property are linked."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Pe ecranul „Interacțiuni”, în coloana „Acte”, după salvare.",
+              "en": "On the „Interacțiuni” screen, in the „Acte” column, after saving."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "În „Conturi conectate”, după ce apasă „Conectează” la Gmail.",
+              "en": "In „Conturi conectate” (connected accounts), after pressing „Conectează” for Gmail."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Apasă titlul secțiunii „Asocieri”, care este închisă la început.",
+              "en": "He presses the title of the „Asocieri” section, which is closed at first."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "În „Notă internă”, unde scrie titlurile actelor, câte unul pe rând.",
+              "en": "In „Notă internă” (internal note), where he writes the documents' titles, one per line."
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "reports-interactions-links",
+          "ro": {
+            "question": "La o întâlnire cu Andrei Munteanu, Ciprian leagă interacțiunea și de proprietatea discutată, la „Proprietate legată”. Apoi caută proprietatea în istoricul „Interacțiuni”. Ce găsește?",
+            "explanation": "„Proprietate legată” este opțională și nu apare în istoric. În istoric, coloana „Acte” arată doar actele legate."
+          },
+          "en": {
+            "question": "At a meeting with Andrei Munteanu, Ciprian also links the interaction to the property discussed, under „Proprietate legată” (linked property). Then he looks for the property in the „Interacțiuni” history. What does he find?",
+            "explanation": "„Proprietate legată” is optional and does not appear in the history. In the history, the „Acte” column shows only the linked documents."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Porecla proprietății, în coloana „Subiect”, după subiectul scris.",
+              "en": "The property's nickname, in the „Subiect” column, after the subject written."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "O agrafă în coloana „Acte”, cu proprietatea printre actele legate.",
+              "en": "A paperclip in the „Acte” column, with the property among the linked documents."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "O coloană nouă „Proprietate”, care apare când e legată una.",
+              "en": "A new „Proprietate” column, which appears when one is linked."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Nimic: proprietatea legată nu apare în istoric.",
+              "en": "Nothing: the linked property does not appear in the history."
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "reports-interactions-links",
+          "ro": {
+            "question": "Săptămâna trecută Ciprian a pus eticheta „arendă” pe o interacțiune. Azi înregistrează una nouă, despre același subiect, și începe s-o scrie la „Adaugă etichetă”. Ce îl ajută?",
+            "explanation": "O etichetă folosită la o interacțiune vă este sugerată la următoarele, așa că o alege fără s-o scrie altfel."
+          },
+          "en": {
+            "question": "Last week Ciprian put the tag „arendă” (lease) on an interaction. Today he records a new one, on the same subject, and starts typing it under „Adaugă etichetă” (add tag). What helps him?",
+            "explanation": "A tag used on one interaction is suggested on the next ones, so he picks it without spelling it differently."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Eticheta „arendă” îi este sugerată, pentru că a mai folosit-o.",
+              "en": "The tag „arendă” is suggested to him, because he has used it before."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Eticheta se copiază singură de la interacțiunea anterioară a persoanei.",
+              "en": "The tag copies itself from the person's previous interaction."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Lista din „Date de referință”, din care alege eticheta.",
+              "en": "The list in „Date de referință” (reference data), from which he picks the tag."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nimic: o etichetă de interacțiune se scrie de fiecare dată de la zero.",
+              "en": "Nothing: an interaction tag is typed from scratch every time."
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "reports-interactions-edit",
+          "ro": {
+            "question": "Pe ecranul Mariei Stoica, Ciprian apasă o interacțiune din istoric ca s-o corecteze. Cum știe că modifică acea interacțiune și nu înregistrează una nouă?",
+            "explanation": "Interacțiunea se încarcă în formular, iar modul trece din „Înregistrare nouă” în „Editează selecția”; formularul arată și cine a creat-o și cine a modificat-o ultima dată, și când."
+          },
+          "en": {
+            "question": "On Maria Stoica's screen, Ciprian presses an interaction in the history to correct it. How does he know he is changing that interaction and not recording a new one?",
+            "explanation": "The interaction is loaded into the form, and the mode moves from „Înregistrare nouă” (new record) to „Editează selecția” (edit the selection); the form also shows who created it and who last changed it, and when."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Rândul din istoric devine casetă și scrie direct în el.",
+              "en": "The history row turns into a box and he types straight into it."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Modul trece în „Editează selecția” și apar cine a creat-o și cine a modificat-o.",
+              "en": "The mode moves to „Editează selecția”, and who created and who changed it appear."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Butonul „Salvează și adaugă” devine roșu până la salvare.",
+              "en": "The „Salvează și adaugă” (save and add) button turns red until saving."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Se deschide ecranul „Interacțiuni”, restrâns la Maria Stoica.",
+              "en": "The „Interacțiuni” screen opens, narrowed to Maria Stoica."
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "reports-interactions-edit",
+          "ro": {
+            "question": "Ciprian corectează subiectul unei interacțiuni, dar la salvare apare „Această înregistrare a fost modificată de altcineva. O reîncarci sau o suprascrii?”. Vrea să păstreze ce a salvat colegul lui. Ce apasă?",
+            "explanation": "Salvarea nu trece peste celălalt: „Reîncarcă” aduce varianta colegului, iar „Suprascrie” ar păstra ce a scris Ciprian."
+          },
+          "en": {
+            "question": "Ciprian corrects an interaction's subject, but on saving „Această înregistrare a fost modificată de altcineva. O reîncarci sau o suprascrii?” (this record was changed by someone else; reload it or overwrite it?) appears. He wants to keep what his colleague saved. What does he press?",
+            "explanation": "The save does not go over the other person: „Reîncarcă” (reload) brings the colleague's version, while „Suprascrie” (overwrite) would keep what Ciprian typed."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Suprascrie”, care păstrează varianta salvată mai întâi.",
+              "en": "„Suprascrie”, which keeps the version saved first."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Salvează modificările” încă o dată, până trece.",
+              "en": "„Salvează modificările” (save the changes) once more, until it goes through."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "„Reîncarcă”, care aduce varianta colegului.",
+              "en": "„Reîncarcă”, which brings the colleague's version."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Restrânge”, care renunță la formular și păstrează varianta colegului.",
+              "en": "„Restrânge” (collapse), which drops the form and keeps the colleague's version."
+            }
+          ]
+        },
+        {
+          "id": "a7",
+          "section": "reports-interactions-edit",
+          "ro": {
+            "question": "O interacțiune cu Andrei Munteanu a fost înregistrată din greșeală de două ori; cea dublă are legate un contract și o proprietate. Ciprian o șterge. Ce se întâmplă cu contractul?",
+            "explanation": "Întrebarea „Ștergi interacțiunea?” spune „Actele legate rămân în arhivă; persoana și proprietatea nu se schimbă.”. Se șterge doar interacțiunea."
+          },
+          "en": {
+            "question": "An interaction with Andrei Munteanu was recorded twice by mistake; the duplicate has a contract and a property linked. Ciprian deletes it. What happens to the contract?",
+            "explanation": "The question „Ștergi interacțiunea?” (delete the interaction?) says „Actele legate rămân în arhivă; persoana și proprietatea nu se schimbă.” (the linked documents stay in the archive; the person and the property do not change). Only the interaction is deleted."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Se șterge și el, pentru că era legat doar de interacțiunea dublă.",
+              "en": "It is deleted too, because it was linked only to the duplicate interaction."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Ștergerea nu e posibilă până nu scoate întâi contractul cu „×”.",
+              "en": "Deleting is not possible until he first removes the contract with „×”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Trece pe cealaltă interacțiune cu Andrei Munteanu, de aceeași zi.",
+              "en": "It moves to the other interaction with Andrei Munteanu, of the same day."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Rămâne în arhivă; persoana și proprietatea nu se schimbă nici ele.",
+              "en": "It stays in the archive; the person and the property do not change either."
+            }
+          ]
+        },
+        {
+          "id": "a8",
+          "section": "reports-interactions-export",
+          "ro": {
+            "question": "Elena Dobre cere lista tuturor e-mailurilor schimbate cu ea în ultimele 30 de zile, într-un fișier Excel. Cum face Ciprian ca fișierul să le conțină exact pe acestea?",
+            "explanation": "„Exportă” descarcă rândurile pe care le arată filtrele, în ordinea din listă. Așa că pune întâi filtrele — persoana, perioada, canalul — și apoi exportă: fișierul conține exact ce vede."
+          },
+          "en": {
+            "question": "Elena Dobre asks for the list of every e-mail exchanged with her in the last 30 days, in an Excel file. How does Ciprian make the file hold exactly those?",
+            "explanation": "„Exportă” (export) downloads the rows the filters show, in the list's order. So he sets the filters first — the person, the period, the channel — and exports afterwards: the file holds exactly what he sees."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Alege persoana, „Ultimele 30 de zile” și „E-mail”, apoi apasă „Exportă”.",
+              "en": "He chooses the person, „Ultimele 30 de zile” and „E-mail”, then presses „Exportă”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Apasă „Exportă” pe lista întreagă; fișierul cere apoi persoana și perioada.",
+              "en": "He presses „Exportă” on the whole list; the file then asks for the person and period."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Selectează cu clic rândurile Elenei Dobre, apoi apasă „Exportă”.",
+              "en": "He selects Elena Dobre's rows with a click, then presses „Exportă”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Alege persoana și „E-mail”; perioada nu contează, exportul ia toată istoria.",
+              "en": "He chooses the person and „E-mail”; the period does not matter, the export takes the whole history."
+            }
+          ]
+        },
+        {
+          "id": "a9",
+          "section": "reports-interactions-export",
+          "ro": {
+            "question": "La câteva convorbiri cu Elena Dobre, Ciprian a scris în „Notă internă” părerea lui despre negociere. Elena primește fișierul exportat. Ce vede din aceste note?",
+            "explanation": "Nota internă nu intră în fișier. Coloanele lui sunt „Data și ora”, „Canal”, „Sens”, „Persoană”, „Subiect”, „Descriere”, „Acte legate”, „Stare”, „Memento” și „Etichete”."
+          },
+          "en": {
+            "question": "On a few calls with Elena Dobre, Ciprian wrote his view of the negotiation in „Notă internă”. Elena receives the exported file. What does she see of those notes?",
+            "explanation": "The internal note does not go into the file. Its columns are „Data și ora”, „Canal”, „Sens”, „Persoană”, „Subiect”, „Descriere”, „Acte legate”, „Stare”, „Memento” and „Etichete”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Notele, într-o coloană „Notă internă” la capătul fișierului.",
+              "en": "The notes, in a „Notă internă” column at the end of the file."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Nimic: nota internă nu intră în fișier.",
+              "en": "Nothing: the internal note does not go into the file."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Notele, lipite la sfârșitul descrierii fiecărei convorbiri.",
+              "en": "The notes, appended to the end of each call's description."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Doar primul rând al fiecărei note, în coloana „Memento”.",
+              "en": "Only the first line of each note, in the „Memento” column."
+            }
+          ]
+        },
+        {
+          "id": "a10",
+          "section": "reports-interactions-export",
+          "ro": {
+            "question": "Descrierea unei întâlniri cu Maria Stoica are opt rânduri. Cum apare ea în fișierul descărcat cu „Exportă”, deschis în Excel?",
+            "explanation": "Descrierea intră întreagă, într-o singură celulă, chiar dacă are mai multe rânduri."
+          },
+          "en": {
+            "question": "The description of a meeting with Maria Stoica runs to eight lines. How does it appear in the file downloaded with „Exportă”, opened in Excel?",
+            "explanation": "The description goes in whole, in a single cell, even when it runs to several lines."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Doar primul ei rând; restul rămâne în aplicație.",
+              "en": "Only its first line; the rest stays in the application."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Pe opt rânduri ale foii, câte unul pentru fiecare rând al ei.",
+              "en": "On eight rows of the sheet, one for each of its lines."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Întreagă, într-o singură celulă a coloanei „Descriere”.",
+              "en": "Whole, in a single cell of the „Descriere” column."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nu apare; fișierul are doar subiectul, ca istoricul.",
+              "en": "It does not appear; the file has only the subject, like the history."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "reports-interactions-links",
+          "ro": {
+            "question": "Ciprian a legat contractul de vânzare la o interacțiune cu Andrei Munteanu și vrea să-l lege și pe actul adițional. Caută din nou în „Caută un act” și contractul nu mai apare în rezultate. De ce?",
+            "explanation": "Un act deja legat nu mai este oferit a doua oară. Actul adițional îl găsește la fel, după titlu sau cod."
+          },
+          "en": {
+            "question": "Ciprian has linked the sale contract to an interaction with Andrei Munteanu and wants to link the addendum too. He searches again in „Caută un act” and the contract no longer appears in the results. Why?",
+            "explanation": "A document already linked is not offered a second time. He finds the addendum the same way, by title or code."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Contractul s-a mutat din arhivă în interacțiune la prima legare.",
+              "en": "The contract moved from the archive into the interaction at the first link."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Un act deja legat nu mai este oferit a doua oară.",
+              "en": "A document already linked is not offered a second time."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "O interacțiune poate avea un singur act legat.",
+              "en": "An interaction can have only one linked document."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Căutarea arată doar actele încărcate în ultimele 90 de zile.",
+              "en": "The search shows only documents uploaded in the last 90 days."
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "reports-interactions-links",
+          "ro": {
+            "question": "Ciprian observă că a legat de o convorbire cu Maria Stoica un act greșit, al unui vecin. Vrea să scoată doar legătura. Ce face?",
+            "explanation": "„×” de lângă un act scoate legătura. Actul nu fusese copiat — interacțiunea doar trimitea la el —, deci rămâne în arhivă."
+          },
+          "en": {
+            "question": "Ciprian notices that he linked the wrong document, a neighbour's, to a call with Maria Stoica. He wants to remove only the link. What does he do?",
+            "explanation": "The „×” beside a document removes the link. The document was never copied — the interaction only pointed at it —, so it stays in the archive."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Șterge actul vecinului din arhivă, ca să dispară din interacțiune.",
+              "en": "He deletes the neighbour's document from the archive, so it disappears from the interaction."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Apasă „Șterge înregistrarea” și înregistrează convorbirea din nou.",
+              "en": "He presses „Șterge înregistrarea” (delete the record) and records the call again."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Încarcă interacțiunea în formular, apasă „×” lângă act și salvează.",
+              "en": "He loads the interaction into the form, presses „×” beside the document and saves."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Apasă agrafa din coloana „Acte” și debifează actul acolo.",
+              "en": "He presses the paperclip in the „Acte” column and unticks the document there."
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "reports-interactions-history",
+          "ro": {
+            "question": "Pe ecranul „Interacțiuni”, rândul unei convorbiri cu Andrei Munteanu are în coloana „Acte” o agrafă cu cifra 2. Ciprian vrea să citească unul dintre cele două acte. Ce face?",
+            "explanation": "Agrafa, apăsată, înșiră actele legate, iar un clic pe un act îl deschide din arhivă."
+          },
+          "en": {
+            "question": "On the „Interacțiuni” screen, the row of a call with Andrei Munteanu has a paperclip with the figure 2 in the „Acte” column. Ciprian wants to read one of the two documents. What does he do?",
+            "explanation": "The paperclip, pressed, lists the linked documents, and a click on a document opens it from the archive."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Apasă agrafa, care înșiră actele, și apasă actul ca să-l deschidă.",
+              "en": "He presses the paperclip, which lists the documents, and presses the document to open it."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Apasă numele persoanei, iar actele se deschid pe ecranul ei.",
+              "en": "He presses the person's name, and the documents open on their screen."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Apasă „Exportă”, iar actele legate vin în fișier ca atașamente.",
+              "en": "He presses „Exportă”, and the linked documents come in the file as attachments."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Selectează rândul, iar actele apar sub subiect, în locul descrierii.",
+              "en": "He selects the row, and the documents appear under the subject, instead of the description."
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "reports-interactions-history",
+          "ro": {
+            "question": "Înainte de un export, Ciprian vrea să vadă doar interacțiunile care au acte legate. Cum le restrânge?",
+            "explanation": "Antetul coloanei „Acte” are filtrul lui: alegeți „Cu acte legate”. Exportul ia apoi exact rândurile pe care le arată filtrele."
+          },
+          "en": {
+            "question": "Before an export, Ciprian wants to see only the interactions that have linked documents. How does he narrow them?",
+            "explanation": "The „Acte” column's header has its own filter: choose „Cu acte legate” (with linked documents). The export then takes exactly the rows the filters show."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Scrie „act” în „Caută persoană sau subiect…”.",
+              "en": "He types „act” into „Caută persoană sau subiect…” (search person or subject)."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Apasă „Așteaptă răspuns: …”, care lasă doar rândurile cu acte.",
+              "en": "He presses „Așteaptă răspuns: …” (awaiting a reply), which leaves only the rows with documents."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Ordonează lista după „Acte”, iar rândurile fără acte trec la sfârșit.",
+              "en": "He sorts the list by „Acte”, and the rows without documents move to the end."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "În antetul coloanei „Acte”, alege „Cu acte legate”.",
+              "en": "In the „Acte” column's header, he chooses „Cu acte legate”."
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "reports-interactions-edit",
+          "ro": {
+            "question": "Pe ecranul „Interacțiuni”, Ciprian vede că subiectul unei convorbiri cu Elena Dobre e greșit. Cum ajunge să-l corecteze?",
+            "explanation": "În lista ecranului „Interacțiuni” nu se poate scrie nimic. Numele persoanei deschide ecranul ei, iar acolo un clic pe interacțiune în istoricul fișei „Interacțiuni” o încarcă în formular, pentru „Salvează modificările”."
+          },
+          "en": {
+            "question": "On the „Interacțiuni” screen, Ciprian sees that the subject of a call with Elena Dobre is wrong. How does he get to correct it?",
+            "explanation": "Nothing can be typed into the list on the „Interacțiuni” screen. The person's name opens her screen, and there a click on the interaction in the „Interacțiuni” tile's history loads it into the form, for „Salvează modificările”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Face dublu-clic pe subiect în listă, îl rescrie și apasă Enter.",
+              "en": "He double-clicks the subject in the list, retypes it and presses Enter."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Apasă numele Elenei Dobre, apoi interacțiunea din istoricul ei, și o modifică în formular.",
+              "en": "He presses Elena Dobre's name, then the interaction in her history, and changes it in the form."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Apasă numele Elenei Dobre și scrie subiectul corect în formularul gol care se deschide.",
+              "en": "He presses Elena Dobre's name and types the right subject into the empty form that opens."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Exportă rândul, corectează subiectul în Excel și îl încarcă înapoi.",
+              "en": "He exports the row, corrects the subject in Excel and uploads it back."
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "reports-interactions-edit",
+          "ro": {
+            "question": "Ciprian a schimbat starea unei interacțiuni încărcate în formular și, fără să salveze, apasă alt rând din istoricul persoanei. Ce se întâmplă?",
+            "explanation": "Nimic din ce ați scris nu se pierde fără întrebare: dacă alegeți alt rând cu modificări nesalvate, formularul întreabă „Renunți la modificările nesalvate?”."
+          },
+          "en": {
+            "question": "Ciprian has changed the status of an interaction loaded into the form and, without saving, presses another row in the person's history. What happens?",
+            "explanation": "Nothing you typed is lost without a question: if you choose another row with unsaved changes, the form asks „Renunți la modificările nesalvate?” (discard the unsaved changes?)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Schimbarea se salvează singură, iar rândul nou se încarcă.",
+              "en": "The change saves itself, and the new row loads."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Rândul nou se încarcă, iar schimbarea se pierde fără întrebare.",
+              "en": "The new row loads, and the change is lost without a question."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Schimbarea se mută pe rândul nou ales.",
+              "en": "The change moves onto the newly chosen row."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Formularul întreabă întâi „Renunți la modificările nesalvate?”.",
+              "en": "The form first asks „Renunți la modificările nesalvate?”."
+            }
+          ]
+        },
+        {
+          "id": "b7",
+          "section": "reports-interactions-edit",
+          "ro": {
+            "question": "Ciprian a corectat data unei întâlniri cu Maria Stoica, după actele din dosar. La salvare află că un coleg a salvat între timp aceeași interacțiune, cu data veche. Ciprian e sigur de data lui. Ce apasă?",
+            "explanation": "La mesajul „Această înregistrare a fost modificată de altcineva. O reîncarci sau o suprascrii?”, „Suprascrie” păstrează ce ați scris dumneavoastră; „Reîncarcă” ar aduce varianta colegului."
+          },
+          "en": {
+            "question": "Ciprian has corrected the date of a meeting with Maria Stoica, from the papers in the file. On saving he learns that a colleague meanwhile saved the same interaction, with the old date. Ciprian is sure of his date. What does he press?",
+            "explanation": "At the message „Această înregistrare a fost modificată de altcineva. O reîncarci sau o suprascrii?”, „Suprascrie” (overwrite) keeps what you typed; „Reîncarcă” (reload) would bring the colleague's version."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "„Suprascrie”, care păstrează ce a scris el.",
+              "en": "„Suprascrie”, which keeps what he typed."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Reîncarcă”, care păstrează varianta cea mai nouă.",
+              "en": "„Reîncarcă”, which keeps the newest version."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Salvează și adaugă”, care salvează peste colegul lui.",
+              "en": "„Salvează și adaugă”, which saves over his colleague."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Renunță”, apoi înregistrează întâlnirea ca interacțiune nouă.",
+              "en": "„Renunță” (discard), then records the meeting as a new interaction."
+            }
+          ]
+        },
+        {
+          "id": "b8",
+          "section": "reports-interactions-export",
+          "ro": {
+            "question": "Andrei Munteanu vrea convorbirile lui de anul acesta într-un fișier, de la cea mai veche la cea mai nouă. Lista arată „Cele mai noi întâi”. Ce face Ciprian înainte de „Exportă”?",
+            "explanation": "„Exportă” descarcă rândurile filtrate în ordinea din listă. Apăsat, „Cele mai noi întâi” devine „Cele mai vechi întâi” și întoarce ordinea, deci și pe cea din fișier."
+          },
+          "en": {
+            "question": "Andrei Munteanu wants his calls from this year in a file, from the oldest to the newest. The list shows „Cele mai noi întâi” (newest first). What does Ciprian do before „Exportă”?",
+            "explanation": "„Exportă” downloads the filtered rows in the list's order. Pressed, „Cele mai noi întâi” becomes „Cele mai vechi întâi” (oldest first) and reverses the order, and so the file's order too."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Nimic: fișierul pune mereu rândurile de la cel mai vechi.",
+              "en": "Nothing: the file always puts the rows oldest first."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Alege „Personalizat” la „Perioada”, care ordonează după dată.",
+              "en": "He chooses „Personalizat” (custom) under „Perioada”, which sorts by date."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Apasă „Cele mai noi întâi”, ca să devină „Cele mai vechi întâi”.",
+              "en": "He presses „Cele mai noi întâi”, so that it becomes „Cele mai vechi întâi”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Alege „Trimise” la „Sens”, ca rândurile să vină în ordinea trimiterii.",
+              "en": "He chooses „Trimise” (sent) under „Sens”, so the rows come in the order sent."
+            }
+          ]
+        },
+        {
+          "id": "b9",
+          "section": "reports-example-export",
+          "ro": {
+            "question": "Maria Stoica cere toate telefoanele din ultima lună despre terenul ei din Bragadiru. Ciprian a ales-o la „Caută persoană…”, apoi „Ultimele 30 de zile” și butonul „Telefon”. Ce verifică înainte să apese „Exportă”?",
+            "explanation": "Verificați rândurile din listă: exact acestea intră în fișier. Fișierul conține ce arată filtrele, în ordinea din listă."
+          },
+          "en": {
+            "question": "Maria Stoica asks for every phone call from the last month about her land in Bragadiru. Ciprian has chosen her under „Caută persoană…”, then „Ultimele 30 de zile” and the „Telefon” button. What does he check before pressing „Exportă”?",
+            "explanation": "Check the rows in the list: exactly these go into the file. The file holds what the filters show, in the list's order."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Că a bifat fiecare rând de pus în fișier.",
+              "en": "That he has ticked each row to go into the file."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Că a legat terenul la fiecare convorbire, ca să intre în fișier.",
+              "en": "That he has linked the land to each call, so it goes into the file."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Că a apăsat „Șterge filtrele”, ca fișierul să fie complet.",
+              "en": "That he has pressed „Șterge filtrele” (clear the filters), so the file is complete."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Rândurile din listă, pentru că exact acestea intră în fișier.",
+              "en": "The rows in the list, because exactly these go into the file."
+            }
+          ]
+        },
+        {
+          "id": "b10",
+          "section": "reports-interactions-edit",
+          "ro": {
+            "question": "Ciprian a șters din greșeală o interacțiune cu Elena Dobre, confirmând cu „Șterge”. Poate s-o aducă înapoi dintr-o versiune mai veche, ca pe o persoană?",
+            "explanation": "„Șterge” o șterge definitiv: apare „Interacțiune ștearsă”, rândul dispare, iar formularul revine la „Înregistrare nouă”. Ca s-o aibă din nou, o înregistrează din nou."
+          },
+          "en": {
+            "question": "Ciprian deleted an interaction with Elena Dobre by mistake, confirming with „Șterge”. Can he bring it back from an older version, as with a person?",
+            "explanation": "„Șterge” deletes it for good: „Interacțiune ștearsă” (interaction deleted) appears, the row goes, and the form returns to „Înregistrare nouă”. To have it again, he records it again."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Da, cu „Fă curentă” pe versiunea de dinainte de ștergere.",
+              "en": "Yes, with „Fă curentă” (make current) on the version before the deletion."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Nu: ștergerea este definitivă și rândul a dispărut.",
+              "en": "No: the deletion is final and the row has gone."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Da, cu „Șterge filtrele”, care arată și interacțiunile șterse.",
+              "en": "Yes, with „Șterge filtrele”, which also shows deleted interactions."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Da, din ultimul fișier exportat, încărcat înapoi în „Interacțiuni”.",
+              "en": "Yes, from the last exported file, uploaded back into „Interacțiuni”."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

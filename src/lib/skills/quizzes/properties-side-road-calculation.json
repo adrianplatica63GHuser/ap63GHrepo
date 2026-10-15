@@ -1,0 +1,782 @@
+{
+  "skill": "properties-side-road-calculation",
+  "manual": [
+    "tools-side-road",
+    "tools-side-road-file",
+    "tools-side-road-road",
+    "tools-side-road-create",
+    "tools-side-road-history"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "tools-side-road",
+          "ro": {
+            "question": "Ciprian alege fișierul de date al unui teren din Bragadiru, încearcă trei ordini ale proprietarilor și două drumuri, apoi închide ecranul fără să apese „Creează proprietățile”. Ce a rămas în arhivă din toată încercarea?",
+            "explanation": "Nimic. Până la „Creează proprietățile” nu se creează nimic: tot ce se vede pe hartă și în tabel este o previzualizare, în care se pot încerca oricâte ordini și oricâte drumuri."
+          },
+          "en": {
+            "question": "Ciprian chooses the data file of a plot in Bragadiru, tries three orders of the owners and two roads, then closes the screen without pressing „Creează proprietățile” (create the properties). What is left in the archive from the whole attempt?",
+            "explanation": "Nothing. Nothing is created until „Creează proprietățile”: everything on the map and in the table is a preview, in which as many orders and as many roads as you like can be tried."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Un calcul în „Istoricul calculelor”, fără proprietăți, cu ultima ordine încercată.",
+              "en": "A calculation in „Istoricul calculelor” (the calculation history), with no properties, with the last order tried."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Proprietățile din ultima ordine încercată, fără grup, până la confirmare.",
+              "en": "The properties of the last order tried, with no group, until confirmation."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Nimic: până la „Creează proprietățile” totul a fost doar previzualizare.",
+              "en": "Nothing: until „Creează proprietățile” it was all only a preview."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Un grup „Diviz —” gol, care așteaptă proprietățile.",
+              "en": "An empty „Diviz —” group, waiting for the properties."
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "tools-side-road-owners",
+          "ro": {
+            "question": "Trei moștenitori au câte „33,33%” fiecare, deci cotele din fișier însumează 99,99%. Ciprian se teme că lipsește 0,01%. Ce face aplicația cu diferența?",
+            "explanation": "Cotele pot însuma 100% sau 99,99%. La 99,99%, sub tabel scrie că ultima felie din ordine preia diferența de 0,01%, iar cifrele ei o includ."
+          },
+          "en": {
+            "question": "Three heirs hold „33,33%” each, so the shares in the file add up to 99,99%. Ciprian fears that 0,01% is missing. What does the application do with the difference?",
+            "explanation": "The shares may add up to 100% or 99,99%. At 99,99%, the line under the table says that the last slice in the order takes the missing 0,01%, and its figures include it."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Refuză fișierul: cotele trebuie să însumeze exact 100%.",
+              "en": "It rejects the file: the shares must add up to exactly 100%."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Ultima felie din ordine preia cei 0,01%, iar cifrele ei îi includ.",
+              "en": "The last slice in the order takes the 0,01%, and its figures include it."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Lasă cei 0,01% din parcelă nedistribuiți, în suprafața drumului.",
+              "en": "It leaves the 0,01% of the parcel unassigned, in the road's area."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Împarte cei 0,01% în mod egal între cei trei proprietari.",
+              "en": "It splits the 0,01% equally between the three owners."
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "tools-side-road-file",
+          "ro": {
+            "question": "Planul topografului are cinci colțuri, pentru că pe o latură e un punct în plus, iar Ciprian le scrie pe toate cinci în secțiunea „Colțuri”. Ce se întâmplă când alege fișierul?",
+            "explanation": "Fișierul trebuie să aibă exact 4 colțuri. Un fișier care încalcă o regulă este refuzat: ecranul scrie „Fișierul nu poate fi folosit:” și motivul, de exemplu „Fișierul are 5 colțuri; trebuie să aibă exact 4.”, iar harta nu apare."
+          },
+          "en": {
+            "question": "The surveyor's plan has five corners, because one side has an extra point, and Ciprian writes all five in the „Colțuri” (corners) section. What happens when he chooses the file?",
+            "explanation": "The file must have exactly 4 corners. A file that breaks a rule is rejected: the screen reads „Fișierul nu poate fi folosit:” (the file cannot be used) and the reason, for instance „Fișierul are 5 colțuri; trebuie să aibă exact 4.”, and no map appears."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Aplicația ignoră colțul în plus și împarte parcela după primele patru.",
+              "en": "The application ignores the extra corner and splits the parcel by the first four."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Harta apare, cu un avertisment că parcela are cinci colțuri.",
+              "en": "The map appears, with a warning that the parcel has five corners."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Aplicația îl întreabă care colț să lase deoparte.",
+              "en": "The application asks him which corner to leave out."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Fișierul este refuzat, cu motivul lui, iar harta nu apare.",
+              "en": "The file is rejected, with its reason, and no map appears."
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "tools-side-road-road",
+          "ro": {
+            "question": "La „Pasul 3 — drumul”, Ciprian face clic pe colțul 16, apoi pe o latură care nu pornește din colțul 16. Ce se întâmplă?",
+            "explanation": "După alegerea colțului, ecranul spune cele două laturi care pornesc din el. O latură care nu pornește din colțul ales este refuzată, iar colțul rămâne ales."
+          },
+          "en": {
+            "question": "At „Pasul 3 — drumul” (step 3 — the road), Ciprian clicks corner 16, then a side that does not start from corner 16. What happens?",
+            "explanation": "Once the corner is chosen, the screen names the two sides that start from it. A side that does not start from the chosen corner is refused, and the corner stays chosen."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Latura este refuzată, iar colțul 16 rămâne ales.",
+              "en": "The side is refused, and corner 16 stays chosen."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Drumul se mută pe latura aleasă, cu colțul ei cel mai apropiat.",
+              "en": "The road moves to the chosen side, with that side's nearest corner."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Alegerea colțului se anulează și trebuie luată de la capăt.",
+              "en": "The choice of corner is cancelled and must start over."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Drumul pornește din colțul 16 pe latura cea mai apropiată.",
+              "en": "The road starts from corner 16 along the nearest side."
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "tools-side-road-road",
+          "ro": {
+            "question": "Drumul este deja pus, pornind din colțul de la drumul public. Ciprian își dă seama că Elena Dumitru trebuie să stea prima și o urcă în tabel cu ↑. Ce se întâmplă cu drumul?",
+            "explanation": "Ordinea proprietarilor se poate schimba și după ce ați pus drumul: drumul își păstrează colțul și latura, iar lungimea lui se recalculează."
+          },
+          "en": {
+            "question": "The road is already set, starting from the corner by the public road. Ciprian realises that Elena Dumitru must come first and moves her up the table with ↑. What happens to the road?",
+            "explanation": "The order of the owners can still be changed after you have set the road: the road keeps its corner and its side, and its length is recalculated."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Drumul dispare și trebuie ales din nou, la „Pasul 3 — drumul”.",
+              "en": "The road disappears and must be chosen again, at „Pasul 3 — drumul”."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Își păstrează colțul și latura, iar lungimea lui se recalculează.",
+              "en": "It keeps its corner and its side, and its length is recalculated."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Nu se poate: ordinea se schimbă doar înainte de alegerea drumului.",
+              "en": "It cannot be done: the order changes only before the road is chosen."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Își păstrează și lungimea, iar suprafața Elenei se ajustează.",
+              "en": "It keeps its length too, and Elena's area is adjusted."
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "tools-side-road-road",
+          "ro": {
+            "question": "Înainte să creeze proprietățile, Ciprian vrea să fie sigur că împărțirea a ieșit. Ce verifică în tabelul proprietarilor?",
+            "explanation": "La un calcul reușit, coloana „Diferență (m²)” arată 0,00. De aceea se verifică, înainte de creare, că „Diferență” arată 0,00 pe fiecare rând."
+          },
+          "en": {
+            "question": "Before creating the properties, Ciprian wants to be sure the split has come out right. What does he check in the table of owners?",
+            "explanation": "On a successful calculation, the „Diferență (m²)” (difference) column reads 0,00. That is why you check, before creating, that „Diferență” reads 0,00 on every row."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Că „Cotă din drum (m²)” este aceeași pe fiecare rând.",
+              "en": "That „Cotă din drum (m²)” (share of the road) is the same on every row."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Că „Suprafață proprie (m²)” este egală cu „Cotă × parcelă (m²)”.",
+              "en": "That „Suprafață proprie (m²)” (own area) equals „Cotă × parcelă (m²)” (share × parcel)."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Că „Diferență (m²)” arată 0,00 pe fiecare rând.",
+              "en": "That „Diferență (m²)” reads 0,00 on every row."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Că „Lungime drum” este egală cu lungimea laturii drumului.",
+              "en": "That „Lungime drum” (road length) equals the length of the road's side."
+            }
+          ]
+        },
+        {
+          "id": "a7",
+          "section": "tools-side-road-create",
+          "ro": {
+            "question": "După „Creează proprietățile”, Ciprian deschide proprietatea nouă a lui Mihai Stan și îl caută în „Legături”, ca proprietar. Ce găsește?",
+            "explanation": "Numele proprietarilor din fișier se salvează doar ca poreclă a fiecărei proprietăți, ca text. Nu se creează persoane și nu se leagă nimeni: proprietarul se leagă separat, de pe ecranul proprietății."
+          },
+          "en": {
+            "question": "After „Creează proprietățile”, Ciprian opens Mihai Stan's new property and looks for him in „Legături” (links), as owner. What does he find?",
+            "explanation": "The owners' names from the file are saved only as each property's nickname, as text. No persons are created and nobody is linked: the owner is linked separately, from the property's screen."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Pe Mihai Stan, legat cu rolul de proprietar și cu cota din fișier.",
+              "en": "Mihai Stan, linked with the owner's role and with the share from the file."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "O persoană nouă, „Mihai Stan”, creată din fișier, încă nelegată.",
+              "en": "A new person, „Mihai Stan”, created from the file, not linked yet."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Nimic legat: numele lui e doar porecla proprietății; persoana se leagă separat.",
+              "en": "Nothing linked: his name is only the property's nickname; the person is linked separately."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Pe Mihai Stan, legat fără rol, cu „Cotă” de completat.",
+              "en": "Mihai Stan, linked with no role, with „Cotă” (share) to fill in."
+            }
+          ]
+        },
+        {
+          "id": "a8",
+          "section": "tools-side-road-create",
+          "ro": {
+            "question": "Ciprian scrie „Moștenire familia Radu” în „Descrierea grupului”, apoi observă că a ales fișierul greșit și alege fișierul bun. Ce scrie acum în „Descrierea grupului”?",
+            "explanation": "„Descrierea grupului” se completează singură cu „Diviz —” urmat de numele fișierului, iar alegerea unui alt fișier o scrie din nou. De aceea descrierea proprie se scrie după ce ați ales fișierul."
+          },
+          "en": {
+            "question": "Ciprian types „Moștenire familia Radu” (Radu family inheritance) in „Descrierea grupului” (the group's description), then notices he chose the wrong file and chooses the right one. What does „Descrierea grupului” say now?",
+            "explanation": "„Descrierea grupului” fills itself in with „Diviz —” followed by the file's name, and choosing another file writes it again. That is why your own description is written after you have chosen the file."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "„Diviz —” urmat de numele fișierului nou; descrierea lui trebuie scrisă din nou.",
+              "en": "„Diviz —” followed by the new file's name; his description must be written again."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Tot „Moștenire familia Radu”: o descriere scrisă de mână nu se mai schimbă.",
+              "en": "Still „Moștenire familia Radu”: a description typed by hand no longer changes."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Moștenire familia Radu”, urmat de numele fișierului nou.",
+              "en": "„Moștenire familia Radu”, followed by the new file's name."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nimic: câmpul se golește și trebuie completat înainte de creare.",
+              "en": "Nothing: the field is emptied and must be filled in before creating."
+            }
+          ]
+        },
+        {
+          "id": "a9",
+          "section": "tools-side-road-history",
+          "ro": {
+            "question": "După o lună, Ciprian deschide „Detalii calcul” pentru un calcul, iar la „Parcele create” una dintre proprietăți apare cu „(ștearsă)”. Ce înseamnă?",
+            "explanation": "„Parcele create” arată fiecare proprietate creată de calcul, cu „Rol” și „Vezi proprietatea”. O proprietate ștearsă între timp apare cu „(ștearsă)”; calculul rămâne în istoric."
+          },
+          "en": {
+            "question": "A month later, Ciprian opens „Detalii calcul” (calculation details) for a calculation, and under „Parcele create” (parcels created) one of the properties shows „(ștearsă)” (deleted). What does it mean?",
+            "explanation": "„Parcele create” shows each property the calculation created, with „Rol” (role) and „Vezi proprietatea” (see the property). A property deleted since shows „(ștearsă)”; the calculation stays in the history."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Calculul a fost șters, iar proprietatea a plecat odată cu el.",
+              "en": "The calculation was deleted, and the property went with it."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Proprietatea a fost ștearsă între timp; calculul a rămas în istoric.",
+              "en": "The property has been deleted since; the calculation stayed in the history."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Proprietatea nu s-a creat niciodată, pentru că drumul nu încăpea.",
+              "en": "The property was never created, because the road did not fit."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Proprietatea a fost scoasă doar din grupul creat de calcul.",
+              "en": "The property was only taken out of the group the calculation created."
+            }
+          ]
+        },
+        {
+          "id": "a10",
+          "section": "tools-side-road-history",
+          "ro": {
+            "question": "Ciprian vrea să reia un calcul salvat, pe același fișier și cu proprietarii în aceeași ordine, ca să încerce alt drum. Ce folosește?",
+            "explanation": "„Re-rulează cu acești parametri” redeschide „Calcul” pe același fișier, cu proprietarii în aceeași ordine și cu drumul deja pus; „Alege alt drum” lasă apoi alegerea altui colț sau a altei laturi."
+          },
+          "en": {
+            "question": "Ciprian wants to take up a saved calculation again, on the same file and with the owners in the same order, to try another road. What does he use?",
+            "explanation": "„Re-rulează cu acești parametri” (re-run with these parameters) reopens „Calcul” on the same file, with the owners in the same order and the road already set; „Alege alt drum” (choose another road) then lets another corner or another side be chosen."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Vezi istoricul calculului”, care îl lasă să mute drumul pe pagina calculului.",
+              "en": "„Vezi istoricul calculului”, which lets him move the road on the calculation's page."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Detalii”, unde schimbă drumul în „Parametrii calculului” și salvează.",
+              "en": "„Detalii”, where he changes the road in „Parametrii calculului” and saves."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Grupul creat de calcul, cu „Editează” pe rândul lui.",
+              "en": "The group the calculation created, with „Editează” (edit) on its row."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "„Re-rulează cu acești parametri”, apoi „Alege alt drum”.",
+              "en": "„Re-rulează cu acești parametri”, then „Alege alt drum”."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "tools-side-road",
+          "ro": {
+            "question": "O parcelă cu patru colțuri are trei proprietari. Ce creează în arhivă „Calcul drum lateral” când Ciprian confirmă?",
+            "explanation": "La sfârșit, instrumentul creează câte o proprietate pentru fiecare proprietar, una pentru drum și un grup cu toate; calculul se înregistrează în „Istoricul calculelor”."
+          },
+          "en": {
+            "question": "A four-cornered parcel has three owners. What does „Calcul drum lateral” (side-road calculation) create in the archive when Ciprian confirms?",
+            "explanation": "At the end, the tool creates one property for each owner, one for the road and a group holding them all; the calculation is recorded in „Istoricul calculelor”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Trei proprietăți, câte una pentru fiecare proprietar.",
+              "en": "Three properties, one for each owner."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Trei proprietăți și un grup; drumul rămâne doar desenat.",
+              "en": "Three properties and a group; the road stays only drawn."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Patru proprietăți, trei ale proprietarilor și una a drumului, și un grup.",
+              "en": "Four properties, three for the owners and one for the road, and a group."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Patru proprietăți, trei persoane noi pentru proprietari și un grup.",
+              "en": "Four properties, three new persons for the owners and a group."
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "tools-side-road-file",
+          "ro": {
+            "question": "Proprietarii au convenit un drum lat de 15 m, iar Ciprian scrie 15 în secțiunea „Lățime drum”. Ce se întâmplă când alege fișierul?",
+            "explanation": "Lățimea drumului trebuie să fie peste 0 și sub 15 m. Fișierul este refuzat cu „Lățimea drumului este 15 m; trebuie să fie peste 0 și sub 15 m.”, iar harta nu apare."
+          },
+          "en": {
+            "question": "The owners have agreed on a road 15 m wide, and Ciprian writes 15 in the „Lățime drum” (road width) section. What happens when he chooses the file?",
+            "explanation": "The road width must be above 0 and below 15 m. The file is rejected with „Lățimea drumului este 15 m; trebuie să fie peste 0 și sub 15 m.”, and no map appears."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Fișierul trece, iar drumul este limitat singur la 14,99 m.",
+              "en": "The file goes through, and the road is capped by itself at 14,99 m."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Fișierul este refuzat: lățimea trebuie să fie peste 0 și sub 15 m.",
+              "en": "The file is rejected: the width must be above 0 and below 15 m."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Fișierul trece, dar „Diferență (m²)” nu mai poate ajunge la 0,00.",
+              "en": "The file goes through, but „Diferență (m²)” can no longer reach 0,00."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Harta apare fără drum, iar lățimea se alege la „Pasul 3 — drumul”.",
+              "en": "The map appears with no road, and the width is chosen at „Pasul 3 — drumul”."
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "tools-side-road-file",
+          "ro": {
+            "question": "Ciprian a greșit cota unui moștenitor, iar cotele din fișier însumează 98%. Ce face aplicația?",
+            "explanation": "Cotele trebuie să însumeze 100% sau 99,99%, nimic altceva. Fișierul este refuzat cu „Cotele-părți însumează 98,00%; trebuie să fie 100% sau 99,99%.”; corectați fișierul și alegeți-l din nou."
+          },
+          "en": {
+            "question": "Ciprian got one heir's share wrong, and the shares in the file add up to 98%. What does the application do?",
+            "explanation": "The shares must add up to 100% or 99,99%, nothing else. The file is rejected with „Cotele-părți însumează 98,00%; trebuie să fie 100% sau 99,99%.”; correct the file and choose it again."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Primește fișierul, iar ultima felie din ordine preia cei 2%.",
+              "en": "It accepts the file, and the last slice in the order takes the 2%."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Primește fișierul și mărește toate cotele pe măsură, până la 100%.",
+              "en": "It accepts the file and raises every share in proportion, up to 100%."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Primește fișierul, iar cei 2% se adaugă la suprafața drumului.",
+              "en": "It accepts the file, and the 2% is added to the road's area."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Îl refuză; Ciprian corectează cota în fișier și îl alege din nou.",
+              "en": "It rejects it; Ciprian corrects the share in the file and chooses it again."
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "tools-side-road-owners",
+          "ro": {
+            "question": "Harta arată parcela tăiată în felii, iar felia Ioanei Radu nu e acolo unde trebuie. Cum o mută Ciprian în locul cuvenit?",
+            "explanation": "Ordinea feliilor se schimbă trăgând o felie peste alta, ca să le schimbați între ele, sau cu butoanele ↑ ↓ din coloana „Mută” a tabelului. Feliile vin la început într-o ordine aleatorie."
+          },
+          "en": {
+            "question": "The map shows the parcel cut into slices, and Ioana Radu's slice is not where it should be. How does Ciprian move it to its proper place?",
+            "explanation": "The order of the slices is changed by dragging one slice onto another, to swap them, or with the ↑ ↓ buttons in the table's „Mută” (move) column. The slices first come in a random order."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Îi trage felia peste alta sau o mută cu ↑ ↓ din coloana „Mută”.",
+              "en": "He drags her slice onto another or moves it with ↑ ↓ in the „Mută” column."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Trage colțurile feliei ei pe hartă până unde trebuie.",
+              "en": "He drags the corners of her slice on the map to where they should be."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "O mută mai sus în fișier și alege fișierul din nou.",
+              "en": "He moves her higher in the file and chooses the file again."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Îi schimbă „Cotă” în tabel, iar felia se mută singură.",
+              "en": "He changes her „Cotă” (share) in the table, and the slice moves by itself."
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "tools-side-road-owners",
+          "ro": {
+            "question": "Ciprian schimbă între ele feliile Ioanei Radu și a lui Vasile Toma. Cum recunoaște apoi, pe hartă, care felie e a cui?",
+            "explanation": "Fiecare proprietar își păstrează culoarea: pătrățelul de lângă numele lui din tabel are culoarea feliei lui de pe hartă, oriunde s-ar muta. Fiecare felie își păstrează și suprafața; se mută doar liniile de tăiere."
+          },
+          "en": {
+            "question": "Ciprian swaps Ioana Radu's and Vasile Toma's slices. How does he then tell, on the map, which slice is whose?",
+            "explanation": "Each owner keeps its colour: the swatch beside its name in the table has the colour of its slice on the map, wherever it moves. Each slice also keeps its area; only the cutting lines move."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "După mărime: feliile își schimbă suprafața la fiecare mutare.",
+              "en": "By size: the slices change their area at every move."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "După numerele colțurilor, care se mută odată cu felia.",
+              "en": "By the corner numbers, which move along with the slice."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "După culoare: pătrățelul de lângă nume are culoarea feliei lui.",
+              "en": "By colour: the swatch beside the name has the colour of its slice."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "După ordinea din fișier, pe care feliile o păstrează pe hartă.",
+              "en": "By the order in the file, which the slices keep on the map."
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "tools-side-road-road",
+          "ro": {
+            "question": "Elena Dumitru vrea ca terenul ei să fie chiar la colțul de lângă drumul public, de unde pornește drumul de acces. Unde o pune Ciprian în ordine?",
+            "explanation": "Proprietarii se înșiră de-a lungul drumului: primul stă la colțul de unde pornește drumul, iar ultimul, dincolo de capătul drumului, ajunge la drum prin capătul lui."
+          },
+          "en": {
+            "question": "Elena Dumitru wants her plot to be right at the corner by the public road, where the access road starts. Where does Ciprian put her in the order?",
+            "explanation": "The owners are laid out along the road: the first sits at the corner where the road starts, and the last, beyond the road's end, reaches the road at its end."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Prima: primul proprietar stă la colțul de unde pornește drumul.",
+              "en": "First: the first owner sits at the corner where the road starts."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Ultima: ultimul proprietar stă la colțul de unde pornește drumul.",
+              "en": "Last: the last owner sits at the corner where the road starts."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Oriunde: locul fiecăruia îl dă cota, nu ordinea.",
+              "en": "Anywhere: each one's place is set by the share, not the order."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "La mijloc: acolo drumul trece pe lângă toate feliile.",
+              "en": "In the middle: there the road passes all the slices."
+            }
+          ]
+        },
+        {
+          "id": "b7",
+          "section": "tools-side-road-road",
+          "ro": {
+            "question": "Ciprian alege colțul și latura drumului, iar ecranul îi spune că drumul ar fi mai lung decât latura. Ce face?",
+            "explanation": "Uneori forma parcelei nu permite drumul ales. Ecranul spune care este piedica și cere altă latură, alt colț sau altă ordine a proprietarilor."
+          },
+          "en": {
+            "question": "Ciprian chooses the road's corner and side, and the screen tells him the road would be longer than the side. What does he do?",
+            "explanation": "Sometimes the shape of the parcel does not allow the chosen road. The screen says what the obstacle is and asks for another side, another corner or another order of the owners."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Apasă totuși „Creează proprietățile” și corectează apoi colțurile.",
+              "en": "He presses „Creează proprietățile” anyway and corrects the corners afterwards."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Lasă ecranul așa: drumul se scurtează singur la lungimea laturii.",
+              "en": "He leaves the screen as it is: the road shortens itself to the side's length."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Alege altă latură, alt colț sau altă ordine a proprietarilor.",
+              "en": "He chooses another side, another corner or another order of the owners."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Așteaptă ca aplicația să mute singură drumul pe latura cea mai lungă.",
+              "en": "He waits for the application to move the road to the longest side by itself."
+            }
+          ]
+        },
+        {
+          "id": "b8",
+          "section": "tools-side-road-create",
+          "ro": {
+            "question": "Pe una dintre proprietățile create de calcul, Ciprian vede în „Puncte de contur”, la „Nr. orig.”, numărul 17 pe un rând. Ce înseamnă?",
+            "explanation": "Colțurile fiecărei proprietăți create poartă, în „Nr. orig.”, numerele colțurilor parcelei din fișier, acolo unde un colț al parcelei a ajuns pe ea. „Nr.” rămâne ordinea colțurilor."
+          },
+          "en": {
+            "question": "On one of the properties the calculation created, Ciprian sees in „Puncte de contur” (contour points), under „Nr. orig.”, the number 17 on a row. What does it mean?",
+            "explanation": "Each created property's corners carry, in „Nr. orig.”, the numbers of the parcel's corners from the file, where a corner of the parcel landed on it. „Nr.” remains the order of the corners."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Că acel colț este al 17-lea în ordinea colțurilor proprietății.",
+              "en": "That this corner is the 17th in the order of the property's corners."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Că acolo a ajuns colțul 17 al parcelei din fișierul de date.",
+              "en": "That corner 17 of the parcel in the data file landed there."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Că proprietatea este a 17-a creată de calcul.",
+              "en": "That the property is the 17th created by the calculation."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Că acel colț a fost tras de mână după creare.",
+              "en": "That this corner was dragged by hand after creation."
+            }
+          ]
+        },
+        {
+          "id": "b9",
+          "section": "tools-side-road-history",
+          "ro": {
+            "question": "Ciprian a creat proprietățile cu proprietarii în altă ordine decât trebuia. Apasă „Șterge calculul” și apoi „Șterge”. Ce mai are de făcut înainte să refacă calculul?",
+            "explanation": "„Șterge” scoate calculul din istoric, dar proprietățile și grupul create de el rămân; ele se șterg separat. Apoi calculul se reface pe „Calcul”, cu ordinea bună."
+          },
+          "en": {
+            "question": "Ciprian created the properties with the owners in the wrong order. He presses „Șterge calculul” (delete the calculation) and then „Șterge”. What is left for him to do before redoing the calculation?",
+            "explanation": "„Șterge” removes the calculation from the history, but the properties and the group it created stay; they are deleted separately. Then the calculation is redone on „Calcul”, in the right order."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Nimic: odată cu calculul s-au șters proprietățile și grupul.",
+              "en": "Nothing: the properties and the group were deleted with the calculation."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Doar grupul: proprietățile s-au șters odată cu calculul.",
+              "en": "Only the group: the properties were deleted with the calculation."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Doar proprietățile: grupul s-a șters odată cu calculul.",
+              "en": "Only the properties: the group was deleted with the calculation."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Să șteargă separat proprietățile și grupul, care au rămas.",
+              "en": "Delete separately the properties and the group, which stayed."
+            }
+          ]
+        },
+        {
+          "id": "b10",
+          "section": "tools-side-road-history",
+          "ro": {
+            "question": "În „Istoricul calculelor”, Ciprian găsește un calcul de anul trecut, făcut cu fișierul de odinioară, în cinci secțiuni. Ce poate face cu el?",
+            "explanation": "Un calcul vechi, făcut cu fișierul de odinioară, în cinci secțiuni, se poate consulta, dar nu se mai poate re-rula."
+          },
+          "en": {
+            "question": "In „Istoricul calculelor”, Ciprian finds a calculation from last year, made with the former five-section file. What can he do with it?",
+            "explanation": "An old calculation, made with the former five-section file, can be looked at but can no longer be re-run."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Îl poate consulta, dar nu îl mai poate re-rula.",
+              "en": "He can look at it, but can no longer re-run it."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Îl poate re-rula, iar aplicația îl aduce la trei secțiuni.",
+              "en": "He can re-run it, and the application brings it to three sections."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Nu îl mai poate deschide: „Detalii” lipsește de pe rândul lui.",
+              "en": "He can no longer open it: „Detalii” is missing from its row."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Îl poate re-rula doar după ce îi șterge proprietățile.",
+              "en": "He can re-run it only after deleting its properties."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

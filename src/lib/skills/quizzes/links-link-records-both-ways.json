@@ -1,0 +1,630 @@
+{
+  "skill": "links-link-records-both-ways",
+  "manual": [
+    "links-associate-kinds",
+    "links-associate-screen",
+    "links-related",
+    "links-example-owner",
+    "companies-people-representatives"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "links-associate-kinds",
+          "ro": {
+            "question": "Ciprian vrea să lege un contract de vânzare-cumpărare de terenul vândut prin el și pornește de pe ecranul terenului. Ce alege în fișa „Asociere”?",
+            "explanation": "Legătura proprietate – act se face de pe act sau de pe proprietate și nu are rol: la „Asociere” nu alegeți nimic, bifați actul și apăsați „Asociază selecția”."
+          },
+          "en": {
+            "question": "Ciprian wants to link a sale contract to the land sold by it, and he starts from the land's screen. What does he choose in the „Asociere” tile?",
+            "explanation": "The property – document link is made from the document or from the property and has no role: in „Asociere” you choose nothing, you tick the document and press „Asociază selecția”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Rolul terenului în act, de exemplu „Vânzător”.",
+              "en": "The land's role in the document, for instance „Vânzător” (seller)."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Nimic: legătura proprietate – act nu are rol.",
+              "en": "Nothing: the property – document link has no role."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Un „Tip legătură”, de exemplu „Inclus în”.",
+              "en": "A „Tip legătură” (link type), for instance „Inclus în” (included in)."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nimic, dar legătura se poate face doar de pe contract.",
+              "en": "Nothing, but the link can be made only from the contract."
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "links-related",
+          "ro": {
+            "question": "De pe ecranul unui contract, ați legat un teren din Bragadiru. Deschideți apoi terenul. Cum apare contractul în fișa lui „Legături”?",
+            "explanation": "O legătură se face o dată și se vede din ambele capete. Pe „Legături”, un act stă pe un singur rând: eticheta scurtă și, în paranteză, tipul actului."
+          },
+          "en": {
+            "question": "From a contract's screen you linked a plot of land in Bragadiru. You then open the land. How does the contract appear in its „Legături” tile?",
+            "explanation": "A link is made once and shows from both ends. On „Legături”, a document stands on a single row: the short label and, in brackets, the document's type."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Nu apare: legătura se vede doar pe contract, de unde ați făcut-o.",
+              "en": "It does not: the link shows only on the contract, where you made it."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Apare doar după ce îl legați încă o dată, de pe teren.",
+              "en": "It appears only after you link it once more, from the land."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Pe un rând, cu eticheta scurtă și tipul actului în paranteză.",
+              "en": "On one row, with the short label and the document's type in brackets."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Pe un rând, cu numele vânzătorului și rolul lui în paranteză.",
+              "en": "On one row, with the seller's name and his role in brackets."
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "companies-people-representatives",
+          "ro": {
+            "question": "Pe ecranul unei firme, Ciprian l-a legat pe Andrei Munteanu cu rolul „Reprezentant legal / Mandatar”. Ce vede apoi pe ecranul lui Andrei Munteanu, în „Legături”?",
+            "explanation": "Aceeași legătură se citește din celălalt capăt cu rolul întors: pe ecranul persoanei, firma apare ca „Reprezentat(ă) / Mandant(ă)”, pentru că firma este cea reprezentată."
+          },
+          "en": {
+            "question": "On a firm's screen, Ciprian linked Andrei Munteanu with the role „Reprezentant legal / Mandatar”. What does he then see on Andrei Munteanu's screen, in „Legături”?",
+            "explanation": "The same link reads from the other end with the role turned round: on the person's screen the firm appears as „Reprezentat(ă) / Mandant(ă)”, because the firm is the one represented."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Firma, cu rolul „(Reprezentant legal / Mandatar)”.",
+              "en": "The firm, with the role „(Reprezentant legal / Mandatar)” (legal representative / agent)."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Firma, cu rolul întors: „(Reprezentat(ă) / Mandant(ă))”.",
+              "en": "The firm, with the role turned round: „(Reprezentat(ă) / Mandant(ă))” (represented / principal)."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Nimic: reprezentanții se văd doar pe ecranul firmei.",
+              "en": "Nothing: representatives show only on the firm's screen."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Firma, în fișa „Reprezentanți și contact” a persoanei.",
+              "en": "The firm, in the person's „Reprezentanți și contact” tile."
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "links-associate-kinds",
+          "ro": {
+            "question": "Ciprian este pe ecranul unei persoane și află că ea este coproprietar al unui teren care e deja în arhivă. Ce face?",
+            "explanation": "Legătura persoană – proprietate se face de pe proprietate sau de pe persoană. De pe persoană, apăsați „Asociază proprietate”, bifați terenul și alegeți rolul, de exemplu „Coproprietari / Coindivizari”."
+          },
+          "en": {
+            "question": "Ciprian is on a person's screen and learns that she is a co-owner of a plot of land already in the archive. What does he do?",
+            "explanation": "The person – property link is made from the property or from the person. From the person, press „Asociază proprietate”, tick the land and choose the role, for instance „Coproprietari / Coindivizari”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Deschide terenul: o legătură cu rol se face doar de pe proprietate.",
+              "en": "He opens the land: a link with a role is made only from the property."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Apasă „Asociază act” și o leagă de actul de proprietate al terenului.",
+              "en": "He presses „Asociază act” and links her to the land's title deed."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Apasă „Asociază proprietate”, bifează terenul și alege rolul de coproprietar.",
+              "en": "He presses „Asociază proprietate”, ticks the land and chooses the co-owner role."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Apasă „Asociază proprietate”, bifează terenul și lasă „— fără rol —”.",
+              "en": "He presses „Asociază proprietate”, ticks the land and leaves „— fără rol —” (no role)."
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "links-associate-role",
+          "ro": {
+            "question": "Pe ecranul unei persoane, apăsați „Asociază act”, ca s-o legați de un contract cu rolul „Cumpărător”. În ce ordine lucrați pe ecranul de asociere?",
+            "explanation": "Bifați întâi actul și abia apoi alegeți rolul: la bifare, lista „Rol” se strânge la rolurile tipului de act și revine la „— fără rol —”, iar un rol ales înainte se pierde."
+          },
+          "en": {
+            "question": "On a person's screen you press „Asociază act”, to link them to a contract with the role „Cumpărător”. In what order do you work on the association screen?",
+            "explanation": "Tick the document first and only then choose the role: on the tick, the „Rol” list narrows to the roles of the document's type and goes back to „— fără rol —”, and a role chosen before is lost."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Bifați întâi contractul, apoi alegeți „Cumpărător” la „Rol”.",
+              "en": "Tick the contract first, then choose „Cumpărător” (buyer) under „Rol”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Alegeți întâi „Cumpărător” la „Rol”, apoi bifați contractul.",
+              "en": "Choose „Cumpărător” under „Rol” first, then tick the contract."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Ordinea nu contează: rolul ales se păstrează oricum.",
+              "en": "The order does not matter: the chosen role is kept anyway."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Asociați fără rol, apoi alegeți rolul cu „Cotă” pe contract.",
+              "en": "Associate with no role, then choose the role with „Cotă” on the contract."
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "links-associate-screen",
+          "ro": {
+            "question": "De pe ecranul unui teren, Ciprian vrea să lege firma care îl deține. Ce buton apasă și cum recunoaște firma printre rezultate?",
+            "explanation": "„Asociază persoană” caută persoanele fizice și pe cele juridice în același tabel; coloana „Tip” spune care este care: „Fizică” sau „Juridică”."
+          },
+          "en": {
+            "question": "From a plot of land's screen, Ciprian wants to link the firm that owns it. Which button does he press, and how does he recognise the firm among the results?",
+            "explanation": "„Asociază persoană” searches natural and judicial persons in the same table; the „Tip” column says which is which: „Fizică” or „Juridică”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Asociază act”, pentru că firma apare prin actul de cumpărare.",
+              "en": "„Asociază act”, because the firm appears through the purchase deed."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "„Asociază persoană”; firma are „Juridică” în coloana „Tip”.",
+              "en": "„Asociază persoană”; the firm has „Juridică” (judicial) in the „Tip” column."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Asociază persoană”, după ce alege „Juridică” la „Căutare”.",
+              "en": "„Asociază persoană”, after choosing „Juridică” under „Căutare”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Niciunul: firma se leagă de teren doar de pe ecranul ei.",
+              "en": "None: the firm is linked to the land only from its own screen."
+            }
+          ]
+        },
+        {
+          "id": "a7",
+          "section": "links-associate-screen",
+          "ro": {
+            "question": "Ați plecat de pe ecranul unei firme, ați bifat o persoană în „Rezultate” și ați apăsat „Asociază selecția”. Unde ajungeți?",
+            "explanation": "„Asociază selecția” vă întoarce pe înregistrarea de la care ați plecat, cu legătura nouă în „Legături”."
+          },
+          "en": {
+            "question": "You started from a firm's screen, ticked a person in „Rezultate” and pressed „Asociază selecția”. Where do you end up?",
+            "explanation": "„Asociază selecția” takes you back to the record you started from, with the new link in „Legături”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Pe ecranul persoanei, cu firma în „Legături”.",
+              "en": "On the person's screen, with the firm in „Legături”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Tot pe ecranul de asociere, cu rândul încă bifat.",
+              "en": "Still on the association screen, with the row still ticked."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Pe lista firmelor, cu firma marcată „Nou!”.",
+              "en": "On the list of firms, with the firm marked „Nou!”."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Înapoi pe firmă, cu persoana nouă în „Legături”.",
+              "en": "Back on the firm, with the new person in „Legături”."
+            }
+          ]
+        },
+        {
+          "id": "a8",
+          "section": "links-related",
+          "ro": {
+            "question": "De pe ecranul lui Ion Popescu, Ciprian îl leagă de un contract de vânzare-cumpărare cu rolul „Vânzător”. Unde îl găsește apoi pe Ion Popescu pe ecranul contractului?",
+            "explanation": "Pe un contract de vânzare-cumpărare, vânzătorii și cumpărătorii stau în fișa „Părți”, grupați pe rol, iar „Legături” ține celelalte legături ale contractului."
+          },
+          "en": {
+            "question": "From Ion Popescu's screen, Ciprian links him to a sale contract with the role „Vânzător”. Where does he then find Ion Popescu on the contract's screen?",
+            "explanation": "On a sale contract, the sellers and buyers stand in the „Părți” tile, grouped by role, and „Legături” holds the contract's other links."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "În fișa „Părți”, printre vânzători.",
+              "en": "In the „Părți” (parties) tile, among the sellers."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "În fișa „Legături”, cu „(Vânzător)” după nume.",
+              "en": "In the „Legături” tile, with „(Vânzător)” after the name."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Nicăieri, până nu îl leagă și de pe contract.",
+              "en": "Nowhere, until he links him from the contract as well."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "În „Identificarea actului”, la emitent.",
+              "en": "In „Identificarea actului”, as the issuer."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "links-example-owner",
+          "ro": {
+            "question": "Ați legat, de pe un teren din Bragadiru, proprietarul lui. Cum verificați direct de acolo că legătura se vede și de la persoană?",
+            "explanation": "Pe „Legături”, „Vizualizare” pe rândul persoanei îi deschide ecranul; în fișa ei „Legături” apare terenul, cu rolul în paranteză."
+          },
+          "en": {
+            "question": "From a plot of land in Bragadiru, you linked its owner. How do you check, straight from there, that the link also shows from the person?",
+            "explanation": "On „Legături”, „Vizualizare” on the person's row opens their screen; in their „Legături” tile the land appears, with the role in brackets."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Căutați persoana în „Persoane Fizice” și o legați și de acolo.",
+              "en": "Find the person in „Persoane Fizice” and link them from there too."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "„Vizualizare” pe rândul ei: terenul apare în „Legături”, cu rolul.",
+              "en": "„Vizualizare” on their row: the land appears in „Legături”, with the role."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Relația” pe rândul ei: bula arată fișa „Legături” a persoanei.",
+              "en": "„Relația” on their row: the bubble shows the person's „Legături” tile."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Dezasociază” și refaceți legătura de pe persoană, ca probă.",
+              "en": "„Dezasociază” and make the link again from the person, as a test."
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "companies-people-records",
+          "ro": {
+            "question": "O firmă a cumpărat un teren. De pe ecranul firmei, Ciprian apasă „Asociază proprietate”, bifează terenul și alege „Proprietar”. Ce vede apoi pe teren, în „Legături”?",
+            "explanation": "Pe proprietate, firma apare în „Legături” pe un rând, cu rolul în paranteză, de exemplu „Denumirea firmei (Proprietar)”."
+          },
+          "en": {
+            "question": "A firm has bought a plot of land. From the firm's screen, Ciprian presses „Asociază proprietate”, ticks the land and chooses „Proprietar”. What does he then see on the land, in „Legături”?",
+            "explanation": "On the property, the firm appears in „Legături” on one row, with the role in brackets, for instance „Firm's name (Proprietar)”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Firma, cu rolul întors: „(Cumpărător)”.",
+              "en": "The firm, with the role turned round: „(Cumpărător)”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Nimic, până nu leagă și contractul de cumpărare.",
+              "en": "Nothing, until he also links the purchase contract."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Firma pe un rând, cu „(Proprietar)” în paranteză.",
+              "en": "The firm on one row, with „(Proprietar)” (owner) in brackets."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Firma fără rol: rolul se vede doar pe ecranul firmei.",
+              "en": "The firm with no role: the role shows only on the firm's screen."
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "companies-people-records",
+          "ro": {
+            "question": "Pe ecranul unui teren, în „Legături”, apăsați „Vizualizare” pe rândul firmei proprietare, ca să-i schimbați telefonul. Ce faceți pe ecranul care se deschide?",
+            "explanation": "„Vizualizare” deschide ecranul firmei doar pentru citit, cu „Înapoi la listă” și „Modifică” jos; „Modifică” îl face modificabil."
+          },
+          "en": {
+            "question": "On a plot of land's screen, in „Legături”, you press „Vizualizare” on the owning firm's row, to change its phone. What do you do on the screen that opens?",
+            "explanation": "„Vizualizare” opens the firm's screen read-only, with „Înapoi la listă” and „Modifică” at the bottom; „Modifică” makes it editable."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Apăsați „Modifică”, jos, apoi schimbați telefonul.",
+              "en": "Press „Modifică” (edit), at the bottom, then change the phone."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Scrieți direct în câmp: ecranul e deja modificabil.",
+              "en": "Type straight into the field: the screen is already editable."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Nimic: firma se modifică doar din lista firmelor.",
+              "en": "Nothing: the firm is changed only from the list of firms."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Apăsați „Previzualizare” și schimbați telefonul acolo.",
+              "en": "Press „Previzualizare” and change the phone there."
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "links-associate",
+          "ro": {
+            "question": "Ciprian a legat un teren de un contract, de pe ecranul contractului. Un coleg îi spune să facă legătura și de pe teren, „ca să fie în ambele locuri”. Are dreptate colegul?",
+            "explanation": "Asocierea se face o singură dată, din oricare capăt, și se vede din amândouă: contractul apare deja pe ecranul terenului."
+          },
+          "en": {
+            "question": "Ciprian linked a plot of land to a contract, from the contract's screen. A colleague tells him to make the link from the land as well, „so that it is in both places”. Is the colleague right?",
+            "explanation": "An association is made only once, from either end, and shows from both: the contract already appears on the land's screen."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Da: fiecare capăt își ține separat legăturile lui.",
+              "en": "Yes: each end keeps its own links separately."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Da: altfel terenul nu apare la căutarea contractului.",
+              "en": "Yes: otherwise the land does not appear when searching for the contract."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Nu: legătura se face o dată și se vede din ambele capete.",
+              "en": "No: the link is made once and shows from both ends."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nu, dar pe teren se vede abia după o nouă salvare.",
+              "en": "No, but on the land it shows only after a new save."
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "links-related",
+          "ro": {
+            "question": "Pe un teren sunt legate un contract de vânzare, o firmă coproprietar, o persoană fizică proprietar și o parcelă vecină. În ce ordine apar rândurile în „Legături”?",
+            "explanation": "Rândurile vin mereu în aceeași ordine — persoanele fizice, persoanele juridice, proprietățile, actele —, cu o linie subțire între două feluri."
+          },
+          "en": {
+            "question": "Linked to a plot of land are a sale contract, a co-owning firm, a natural person who owns it and a neighbouring parcel. In what order do the rows appear in „Legături”?",
+            "explanation": "The rows always come in the same order — natural persons, judicial persons, properties, documents —, with a thin line between two kinds."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "În ordinea în care au fost legate, cea mai nouă sus.",
+              "en": "In the order they were linked, the newest at the top."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Persoana fizică, firma, parcela, apoi contractul.",
+              "en": "The natural person, the firm, the parcel, then the contract."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Contractul, apoi persoana fizică, firma și parcela.",
+              "en": "The contract, then the natural person, the firm and the parcel."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Firma, persoana fizică, contractul, apoi parcela.",
+              "en": "The firm, the natural person, the contract, then the parcel."
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "links-associate-remove",
+          "ro": {
+            "question": "Ciprian a legat din greșeală o persoană de un teren străin, pornind de pe persoană. Acum, de pe ecranul terenului, alege rândul persoanei și apasă „Dezasociază”. Ce se întâmplă?",
+            "explanation": "„Dezasociază” scoate legătura din ambele capete, fără nicio întrebare; persoana și terenul rămân în arhivă, neatinse."
+          },
+          "en": {
+            "question": "Ciprian linked a person by mistake to the wrong plot of land, starting from the person. Now, from the land's screen, he chooses the person's row and presses „Dezasociază”. What happens?",
+            "explanation": "„Dezasociază” removes the link from both ends, without any question; the person and the land stay in the archive, untouched."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Legătura dispare doar de pe teren; pe persoană rămâne.",
+              "en": "The link disappears only from the land; it stays on the person."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Legătura dispare din ambele capete; amândouă rămân în arhivă.",
+              "en": "The link disappears from both ends; both stay in the archive."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Aplicația refuză: se dezasociază doar de unde s-a legat.",
+              "en": "The application refuses: you dissociate only where you linked."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Legătura dispare, iar persoana este scoasă din arhivă.",
+              "en": "The link disappears, and the person is taken out of the archive."
+            }
+          ]
+        },
+        {
+          "id": "b7",
+          "section": "links-related",
+          "ro": {
+            "question": "Pe ecranul unei persoane, în „Legături”, stă un contract de care a fost legată. Ce aflați apăsând „Relația” pe rândul contractului?",
+            "explanation": "„Relația” arată, într-o bulă, ce leagă cele două înregistrări: aici, rolul persoanei în act, de pildă Rol: „Vânzător”."
+          },
+          "en": {
+            "question": "On a person's screen, in „Legături”, stands a contract they were linked to. What do you learn by pressing „Relația” on the contract's row?",
+            "explanation": "„Relația” shows, in a bubble, what links the two records: here, the person's role in the document, for instance Rol: „Vânzător”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Contractul întreg, deschis alături, pentru citit.",
+              "en": "The whole contract, opened alongside, for reading."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Toate persoanele legate de contract, cu rolurile lor.",
+              "en": "Every person linked to the contract, with their roles."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Data la care s-a făcut legătura și cine a făcut-o.",
+              "en": "The date the link was made and who made it."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Într-o bulă, rolul persoanei în act, de pildă „Vânzător”.",
+              "en": "In a bubble, the person's role in the document, for instance „Vânzător”."
+            }
+          ]
+        },
+        {
+          "id": "b8",
+          "section": "links-associate-kinds",
+          "ro": {
+            "question": "Ciprian leagă de un teren, pe rând, o persoană fizică și o firmă, amândouă coproprietari. Din ce listă alege rolul firmei?",
+            "explanation": "Rolul unei firme pe o proprietate se alege din aceeași listă ca pentru o persoană, de exemplu „Coproprietari / Coindivizari” sau „Proprietar”."
+          },
+          "en": {
+            "question": "Ciprian links to a plot of land, one after the other, a natural person and a firm, both co-owners. From which list does he choose the firm's role?",
+            "explanation": "A firm's role on a property is chosen from the same list as for a person, for instance „Coproprietari / Coindivizari” or „Proprietar”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Din aceeași listă ca pentru persoana fizică.",
+              "en": "From the same list as for the natural person."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Dintr-o listă separată, doar cu roluri de firmă.",
+              "en": "From a separate list, with firm roles only."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Din niciuna: o firmă se leagă de teren fără rol.",
+              "en": "From none: a firm is linked to land with no role."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Din lista rolurilor contractului de cumpărare.",
+              "en": "From the list of roles of the purchase contract."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

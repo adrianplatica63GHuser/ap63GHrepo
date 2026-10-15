@@ -1,0 +1,782 @@
+{
+  "skill": "import-big-and-special-folders",
+  "manual": [
+    "import-duplicates-archive",
+    "import-folder-shared",
+    "import-folder-structure",
+    "import-example-again",
+    "import-result-run"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "import-example-again",
+          "ro": {
+            "question": "Ciprian a primit un extras de carte funciară pentru terenul din Bragadiru, al cărui dosar l-a importat luna trecută. Cum îl aduce în arhivă prin import?",
+            "explanation": "Puneți extrasul în folderul proprietății, fără să redenumiți nimic altceva, și importați din nou folderul. La „Deja în sistem”, documentele vechi apar „legate, nu importate din nou”."
+          },
+          "en": {
+            "question": "Ciprian has received a land-register extract for the plot in Bragadiru, whose file he imported last month. How does he bring it into the archive through the import?",
+            "explanation": "Put the extract in the property folder, without renaming anything else, and import the folder again. At „Deja în sistem”, the old documents appear „legate, nu importate din nou” (linked, not imported again)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Face un folder nou, „40-212per40-extras”, doar cu extrasul.",
+              "en": "He makes a new folder, „40-212per40-extras”, with only the extract."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Redenumește actele vechi din folder, ca să nu se confunde cu extrasul.",
+              "en": "He renames the old documents in the folder, so they are not confused with the extract."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Pune extrasul în folderul proprietății și importă din nou folderul.",
+              "en": "He puts the extract in the property folder and imports the folder again."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Apasă „Reia ultimul import (…)” și adaugă extrasul acolo.",
+              "en": "He presses „Reia ultimul import (…)” and adds the extract there."
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "import-duplicates-archive",
+          "ro": {
+            "question": "La reimportul unui dosar, „Deja în sistem” arată pe rândul fișierului „Contract.pdf” codul și titlul unui alt contract decât cel la care se gândea Ciprian. Ce face?",
+            "explanation": "Fiecare rând arată codul și titlul documentului din arhivă. Dacă nu este cel la care vă gândeați, redenumiți fișierul sau folderul de pagini și va fi importat ca document nou."
+          },
+          "en": {
+            "question": "On re-importing a file, „Deja în sistem” shows on the row of „Contract.pdf” the code and title of a different contract from the one Ciprian had in mind. What does he do?",
+            "explanation": "Each row shows the code and the title of the archived document. If it is not the one you had in mind, rename the file or the page folder and it will be imported as a new document."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Redenumește fișierul, ca să fie importat ca document nou.",
+              "en": "He renames the file, so that it is imported as a new document."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Nimic: pasul „Deja în sistem” îl va importa oricum.",
+              "en": "Nothing: the „Deja în sistem” step will import it anyway."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Șterge din arhivă contractul arătat, apoi continuă.",
+              "en": "He deletes the contract shown from the archive, then carries on."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Apasă „Renunță la import”: rândul acesta nu se mai poate îndrepta.",
+              "en": "He presses „Renunță la import”: this row can no longer be put right."
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "import-duplicates-archive",
+          "ro": {
+            "question": "Dosarul reimportat conține cartea de identitate a vânzătoarei, adusă deja în arhivă la primul import. Ce se întâmplă cu ea?",
+            "explanation": "O carte de identitate se importă totuși: cea din arhivă poate fi expirată, iar o persoană de două ori este mai puțin grav decât una lipsă — verificați persoanele după import."
+          },
+          "en": {
+            "question": "The re-imported file holds the seller's identity card, already brought into the archive at the first import. What happens to it?",
+            "explanation": "An identity card is imported anyway: the one in the archive may have expired, and a person twice is less harm than a person missing — check the persons after the import."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Se leagă de proprietate, ca orice act aflat deja în sistem.",
+              "en": "It is linked to the property, like any document already in the system."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Importul se oprește până o scoateți din folder.",
+              "en": "The import stops until you take it out of the folder."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Se ignoră, fără să vă oprească, ca o copie de siguranță.",
+              "en": "It is ignored, without stopping you, like a backup copy."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Se importă totuși; verificați persoanele după import.",
+              "en": "It is imported anyway; check the persons after the import."
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "import-result-run",
+          "ro": {
+            "question": "La „Proprietățile acestui import”, folderul „40-212per40-Bragadiru” corespunde unei proprietăți care există deja, cu colțurile ei. Fișierul „coord …” din folder are alte puncte. Ce se întâmplă cu colțurile?",
+            "explanation": "O proprietate care există deja, găsită după tarla și parcelă, se leagă: bifați „Confirm legarea …”; colțurile ei rămân neschimbate, iar ele se schimbă pe ecranul proprietății."
+          },
+          "en": {
+            "question": "At „Proprietățile acestui import”, the folder „40-212per40-Bragadiru” matches a property that already exists, with its corners. The „coord …” file in the folder has other points. What happens to the corners?",
+            "explanation": "A property that already exists, found by tarla and parcel, is linked: tick „Confirm legarea …”; its corners stay unchanged, and you change them on the property's screen."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Se înlocuiesc cu punctele din fișierul nou.",
+              "en": "They are replaced by the points in the new file."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Rămân neschimbate; se schimbă pe ecranul proprietății.",
+              "en": "They stay unchanged; you change them on the property's screen."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Se adaugă punctele noi la cele vechi.",
+              "en": "The new points are added to the old ones."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Se creează o a doua proprietate, cu colțurile noi din fișierul „coord …”.",
+              "en": "A second property is created, with the new corners from the „coord …” file."
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "import-duplicates-archive",
+          "ro": {
+            "question": "Ciprian reimportă un dosar neschimbat, cu tot cu fișierul „coord …”. Se aștepta ca acesta să apară „legat, nu importat din nou”, dar se importă. De ce?",
+            "explanation": "Fișierul de coordonate se importă totuși, pentru că orice colț trebuie să arate din ce document a fost citit."
+          },
+          "en": {
+            "question": "Ciprian re-imports an unchanged file, „coord …” file included. He expected it to appear „linked, not imported again”, but it is imported. Why?",
+            "explanation": "The coordinate file is imported anyway, because every corner has to show which document it was read from."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Pentru că fișierele .txt nu se compară cu arhiva.",
+              "en": "Because .txt files are not compared with the archive."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Pentru că i s-a schimbat data la copierea pe calculator.",
+              "en": "Because its date changed when it was copied onto the computer."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Pentru că orice colț trebuie să arate din ce document a fost citit.",
+              "en": "Because every corner has to show which document it was read from."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Pentru că proprietatea se creează din nou la fiecare import.",
+              "en": "Because the property is created again at every import."
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "import-folder-shared",
+          "ro": {
+            "question": "Ciprian importă deodată cinci terenuri. Are o procură notarială care privește toate cele cinci proprietăți. Unde o pune ca să fie legată de fiecare?",
+            "explanation": "„comune” ține documentele care privesc toate proprietățile din import; fiecare este legat de fiecare proprietate."
+          },
+          "en": {
+            "question": "Ciprian imports five plots at once. He has a notarial power of attorney that concerns all five properties. Where does he put it so that it is linked to each?",
+            "explanation": "„comune” holds the documents that concern every property in the import; each is linked to every property."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "În folderul „comune”, din folderul ales.",
+              "en": "In the „comune” folder, inside the chosen folder."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Direct în folderul ales, lângă cele cinci foldere.",
+              "en": "Directly in the chosen folder, beside the five folders."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În folderul „flotante”, ca să nu fie legată de una singură.",
+              "en": "In the „flotante” folder, so that it is not tied to just one."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Câte o copie în fiecare dintre cele cinci foldere.",
+              "en": "One copy in each of the five folders."
+            }
+          ]
+        },
+        {
+          "id": "a7",
+          "section": "import-folder-shared",
+          "ro": {
+            "question": "În același import, Ciprian are o scrisoare de la bancă despre firmă, care nu privește niciun teren. Ce se întâmplă dacă o pune în „flotante”?",
+            "explanation": "„flotante” ține documentele care nu privesc nicio proprietate; se salvează etichetate, dar nelegate."
+          },
+          "en": {
+            "question": "In the same import, Ciprian has a letter from the bank about the business, which concerns no plot. What happens if he puts it in „flotante”?",
+            "explanation": "„flotante” holds the documents that concern no property; they are saved with their tags, but unlinked."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Este legată de toate proprietățile din import.",
+              "en": "It is linked to every property in the import."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Este ignorată la import, fără să vă oprească.",
+              "en": "It is ignored at the import, without stopping you."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Rămâne pe calculator, pentru un import ulterior.",
+              "en": "It stays on the computer, for a later import."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Se salvează etichetată, dar nelegată de vreo proprietate.",
+              "en": "It is saved with its tags, but linked to no property."
+            }
+          ]
+        },
+        {
+          "id": "a8",
+          "section": "import-folder-structure",
+          "ro": {
+            "question": "În folderul „Import cinci terenuri”, Ciprian a pus, lângă cele cinci foldere de proprietate, și fișierul „lista terenurilor.pdf”. Ce spune verificarea de la „Structură”?",
+            "explanation": "Folderul ales conține numai foldere: câte unul pentru fiecare proprietate, plus, dacă vă trebuie, „comune” și „flotante”. Niciun fișier direct în el."
+          },
+          "en": {
+            "question": "In the folder „Import cinci terenuri”, Ciprian has put, beside the five property folders, the file „lista terenurilor.pdf”. What does the check at „Structură” say?",
+            "explanation": "The chosen folder holds only folders: one for each property, plus, if you need them, „comune” and „flotante”. No file directly in it."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Nimic: fișierul devine un document al primei proprietăți din folder.",
+              "en": "Nothing: the file becomes a document of the first property in the folder."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Îl arată de îndreptat: în folderul ales nu stă niciun fișier.",
+              "en": "It shows it to put right: no file sits in the chosen folder."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Nimic: fișierul se pune singur în „flotante”.",
+              "en": "Nothing: the file goes into „flotante” by itself."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Îl ignoră, ca pe un fișier de sistem Windows.",
+              "en": "It ignores it, like a Windows system file."
+            }
+          ]
+        },
+        {
+          "id": "a9",
+          "section": "import-folder-structure",
+          "ro": {
+            "question": "Dintre cele cinci foldere, unul se numește „33-15per2” și altul „33-15per2-Livada”: Ciprian a împărțit actele aceluiași teren în două. Ce spune regula de structură?",
+            "explanation": "Regula folderului ales spune că două foldere nu pot însemna aceeași proprietate; numele folderului este tarlaua, o liniuță, parcela și, dacă vreți, o descriere, așa că amândouă înseamnă tarla 33, parcela 15/2."
+          },
+          "en": {
+            "question": "Of the five folders, one is named „33-15per2” and another „33-15per2-Livada”: Ciprian split the same plot's documents in two. What does the structure rule say?",
+            "explanation": "The chosen folder's rule says two folders may not mean the same property; a folder's name is the tarla, a dash, the parcel and, if you like, a description, so both mean tarla 33, parcel 15/2."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Sunt două proprietăți, pentru că descrierea diferă.",
+              "en": "They are two properties, because the description differs."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Al doilea folder se importă ca „flotante”.",
+              "en": "The second folder is imported as „flotante”."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Două foldere nu pot însemna aceeași proprietate.",
+              "en": "Two folders may not mean the same property."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Al doilea folder se leagă singur de primul.",
+              "en": "The second folder is linked to the first by itself."
+            }
+          ]
+        },
+        {
+          "id": "a10",
+          "section": "import-result-run",
+          "ro": {
+            "question": "La „Proprietățile acestui import”, pentru folderul „33-15per2”, arhiva are două proprietăți cu tarla 33 și parcela 15/2. Ce face Ciprian?",
+            "explanation": "Dacă aceeași parcelă are mai multe proprietăți în arhivă, păstrați una singură și apăsați „Încearcă din nou”. Apoi „Continuă”."
+          },
+          "en": {
+            "question": "At „Proprietățile acestui import”, for the folder „33-15per2”, the archive has two properties with tarla 33 and parcel 15/2. What does Ciprian do?",
+            "explanation": "If the same parcel has several properties in the archive, keep only one and press „Încearcă din nou” (try again). Then „Continuă”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Păstrează în arhivă una singură și apasă „Încearcă din nou”.",
+              "en": "He keeps only one in the archive and presses „Încearcă din nou”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Bifează „Confirm legarea …” pentru amândouă și continuă.",
+              "en": "He ticks „Confirm legarea …” for both and carries on."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Redenumește folderul în „33-15per2-bis” și continuă.",
+              "en": "He renames the folder „33-15per2-bis” and carries on."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Continuă: importul creează o a treia proprietate.",
+              "en": "He carries on: the import creates a third property."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "import-example-again",
+          "ro": {
+            "question": "Ciprian a reimportat dosarul terenului din Bragadiru cu un extras de carte funciară nou. Ce găsește apoi în „Acte” al proprietății?",
+            "explanation": "În „Acte”, documentele vechi nu apar de două ori; extrasul și fișierul de coordonate sunt documente noi."
+          },
+          "en": {
+            "question": "Ciprian has re-imported the file of the plot in Bragadiru with a new land-register extract. What does he then find in the property's „Acte”?",
+            "explanation": "In „Acte”, the old documents do not appear twice; the extract and the coordinate file are new documents."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Toate actele de două ori: o dată din fiecare import.",
+              "en": "Every document twice: once from each import."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Doar extrasul: actele vechi s-au mutat în „flotante”.",
+              "en": "Only the extract: the old documents moved to „flotante”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Actele vechi și extrasul; fișierul de coordonate nu mai apare.",
+              "en": "The old documents and the extract; the coordinate file no longer appears."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Actele vechi o dată, plus extrasul și fișierul de coordonate noi.",
+              "en": "The old documents once, plus the extract and the new coordinate file."
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "import-duplicates-archive",
+          "ro": {
+            "question": "Ciprian a scanat din nou, la o calitate mai bună, paginile din „Contract vanzare 2008”, importat deja, și a păstrat numele folderului. Este contractul „deja în sistem” la reimport?",
+            "explanation": "Un document este deja în sistem când arhiva are unul adus cu aceeași denumire și cu aceleași fișiere, de aceleași mărimi. Scanările noi au alte mărimi, deci contractul nu este deja în sistem."
+          },
+          "en": {
+            "question": "Ciprian has scanned the pages of „Contract vanzare 2008”, already imported, again at a better quality, and kept the folder's name. Is the contract „already in the system” at the re-import?",
+            "explanation": "A document is already in the system when the archive holds one brought in under the same name and with the same files, of the same sizes. The new scans have other sizes, so the contract is not already in the system."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Da: ajunge aceeași denumire a folderului de pagini.",
+              "en": "Yes: the same page-folder name is enough."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Nu: fișierele nu mai au aceleași mărimi.",
+              "en": "No: the files no longer have the same sizes."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Da: sistemul îl recunoaște după prima pagină.",
+              "en": "Yes: the system recognises it by its first page."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nu: un folder de pagini nu este niciodată „deja în sistem”.",
+              "en": "No: a page folder is never „already in the system”."
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "import-duplicates-archive",
+          "ro": {
+            "question": "O scrisoare din „flotante”, adusă în arhivă la importul trecut, apare acum la „Deja în sistem”. Ce se întâmplă cu ea?",
+            "explanation": "Un document deja în sistem dintr-un folder de proprietate este legat de proprietate; altfel nu se întâmplă nimic cu el."
+          },
+          "en": {
+            "question": "A letter in „flotante”, brought into the archive at the last import, now appears at „Deja în sistem”. What happens to it?",
+            "explanation": "A document already in the system that sits in a property folder is linked to the property; otherwise nothing happens to it."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Nimic: nu stă într-un folder de proprietate.",
+              "en": "Nothing: it does not sit in a property folder."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Se leagă de toate proprietățile din import.",
+              "en": "It is linked to every property in the import."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Se importă a doua oară, ca document nou.",
+              "en": "It is imported a second time, as a new document."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Importul se oprește până o scoateți din folder.",
+              "en": "The import stops until you take it out of the folder."
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "import-duplicates-archive",
+          "ro": {
+            "question": "Un dosar de douăsprezece acte a fost importat deja. Ciprian vrea să adauge un singur extras și se teme că reimportul costă cât primul import. Ce îi spune manualul?",
+            "explanation": "Ce se află deja în sistem nu se trimite la clasificare și nu se citește, așa că reimportul costă puțin: se clasifică și se citește doar actul nou."
+          },
+          "en": {
+            "question": "A file of twelve documents has already been imported. Ciprian wants to add a single extract and fears the re-import costs as much as the first import. What does the manual tell him?",
+            "explanation": "What is already in the system is neither sent for classification nor read, so a re-import costs little: only the new document is classified and read."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Costă la fel: toate actele se clasifică din nou.",
+              "en": "It costs the same: every document is classified again."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Costă jumătate: actele vechi se clasifică, dar nu se citesc.",
+              "en": "It costs half: the old documents are classified but not read."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Costă puțin: doar extrasul se clasifică și se citește.",
+              "en": "It costs little: only the extract is classified and read."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nu costă nimic: un reimport nu se plătește deloc.",
+              "en": "It costs nothing: a re-import is never paid for."
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "import-duplicates-archive",
+          "ro": {
+            "question": "La „Deja în sistem”, pentru un import de cinci terenuri, lista este lungă, iar Ciprian se grăbește la „Scanare”. Ce nu trebuie să sară?",
+            "explanation": "„De verificat înainte de a continua” arată fișierele ignorate și observațiile despre folder; citiți-l, pentru că unele observații spun să nu porniți importul."
+          },
+          "en": {
+            "question": "At „Deja în sistem”, for an import of five plots, the list is long and Ciprian is in a hurry to reach „Scanare”. What must he not skip?",
+            "explanation": "„De verificat înainte de a continua” shows the ignored files and the remarks about the folder; read it, because some remarks say not to start the import."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Bifa „Oprește-te după fiecare pas”, care trebuie scoasă.",
+              "en": "The tick „Oprește-te după fiecare pas”, which must be removed."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Rândurile „Nescanabil”, care opresc importul.",
+              "en": "The „Nescanabil” rows, which stop the import."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Salvează raportul (HTML)”, cerut înainte de scanare.",
+              "en": "„Salvează raportul (HTML)”, required before scanning."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "„De verificat înainte de a continua”, de sub listă.",
+              "en": "„De verificat înainte de a continua”, below the list."
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "import-folder-shared",
+          "ro": {
+            "question": "Ciprian a numit folderul cu actele valabile pentru toate terenurile „Comune”. Ce se întâmplă la verificare?",
+            "explanation": "„comune” și „flotante” se scriu exact așa, cu litere mici; „Comune” este o greșeală pe care verificarea o arată."
+          },
+          "en": {
+            "question": "Ciprian has named the folder with the documents valid for all the plots „Comune”. What happens at the check?",
+            "explanation": "„comune” and „flotante” are spelt exactly so, in small letters; „Comune” is a mistake the check points out."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Nimic: numele nu ține seama de litere mari.",
+              "en": "Nothing: the name ignores capital letters."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Verificarea arată greșeala; numele se scrie „comune”.",
+              "en": "The check points out the mistake; the name is spelt „comune”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Folderul este luat drept o proprietate fără „per”.",
+              "en": "The folder is taken as a property without „per”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Actele din el ajung singure în „flotante”.",
+              "en": "The documents in it go into „flotante” by themselves."
+            }
+          ]
+        },
+        {
+          "id": "b7",
+          "section": "import-folder-shared",
+          "ro": {
+            "question": "Ciprian are un fișier „coord zona.txt” cu punctele întregii zone și vrea să-l pună în „comune”, ca să privească toate cele cinci terenuri. Este bine?",
+            "explanation": "„comune” și „flotante” nu conțin fișiere de coordonate; fișierul de coordonate, cel mult unul, stă în folderul unei proprietăți."
+          },
+          "en": {
+            "question": "Ciprian has a file „coord zona.txt” with the points of the whole area and wants to put it in „comune”, so that it concerns all five plots. Is that right?",
+            "explanation": "„comune” and „flotante” hold no coordinate files; the coordinate file, at most one, sits in a property's folder."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Nu: „comune” nu conține fișiere de coordonate.",
+              "en": "No: „comune” holds no coordinate files."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Da: colțurile din el se aplică fiecărei proprietăți.",
+              "en": "Yes: the corners are applied to every property."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Da, dacă numele începe cu „coord”.",
+              "en": "Yes, as long as the name starts with „coord”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nu: trebuie pus în „flotante”, nelegat.",
+              "en": "No: it must go in „flotante”, unlinked."
+            }
+          ]
+        },
+        {
+          "id": "b8",
+          "section": "import-folder-structure",
+          "ro": {
+            "question": "Ciprian vrea să importe deodată toate terenurile firmei, câteva zeci. Ce verifică întâi, înainte să pregătească folderul?",
+            "explanation": "Regula folderului ales spune că numărul de proprietăți are o limită, scrisă în regulă, la pasul „Structură”."
+          },
+          "en": {
+            "question": "Ciprian wants to import all the business's plots at once, several dozen. What does he check first, before preparing the folder?",
+            "explanation": "The chosen folder's rule says the number of properties has a limit, written in the rule, at the „Structură” step."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Că fiecare folder de proprietate are câte un fișier de coordonate.",
+              "en": "That every property folder has a coordinate file of its own."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Că are cel puțin un folder „comune”.",
+              "en": "That he has at least one „comune” folder."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Limita numărului de proprietăți din regula de structură.",
+              "en": "The limit on the number of properties in the structure rule."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Că browserul este Google Chrome, nu Microsoft Edge.",
+              "en": "That the browser is Google Chrome, not Microsoft Edge."
+            }
+          ]
+        },
+        {
+          "id": "b9",
+          "section": "import-result-run",
+          "ro": {
+            "question": "La „Creare etichete din dosare”, Ciprian crede că etichetele sunt cele care leagă actele din „comune” de cele cinci proprietăți. Are dreptate?",
+            "explanation": "Fiecare document este etichetat cu dosarele lui; etichetele ajută la căutare și nu leagă nimic. Legarea actelor din „comune” de fiecare proprietate vine din folderul „comune”."
+          },
+          "en": {
+            "question": "At „Creare etichete din dosare”, Ciprian thinks the tags are what link the documents in „comune” to the five properties. Is he right?",
+            "explanation": "Each document is tagged with its folders; tags help searching and link nothing. The linking of the documents in „comune” to every property comes from the „comune” folder."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Da: fără etichete, actele din „comune” rămân nelegate.",
+              "en": "Yes: without tags, the documents in „comune” stay unlinked."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Da: eticheta „comune” le leagă de fiecare proprietate.",
+              "en": "Yes: the „comune” tag links them to every property."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Nu: actele din „comune” nu primesc etichete deloc.",
+              "en": "No: the documents in „comune” get no tags at all."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Nu: etichetele ajută la căutare și nu leagă nimic.",
+              "en": "No: tags help searching and link nothing."
+            }
+          ]
+        },
+        {
+          "id": "b10",
+          "section": "import-folder-structure",
+          "ro": {
+            "question": "Unul dintre cele cinci foldere se numește „48-50D”. Ce se întâmplă la „Structură”?",
+            "explanation": "Un nume fără „per”, ca „48-50D”, devine întrebarea „Acest folder este o proprietate?”: răspundeți „Da, este o proprietate” sau „Nu este o proprietate”."
+          },
+          "en": {
+            "question": "One of the five folders is named „48-50D”. What happens at „Structură”?",
+            "explanation": "A name without „per”, such as „48-50D”, becomes the question „Acest folder este o proprietate?” (is this folder a property?): answer „Da, este o proprietate” or „Nu este o proprietate”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Folderul este refuzat și trebuie redenumit cu „per”.",
+              "en": "The folder is refused and must be renamed with „per”."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Apare întrebarea „Acest folder este o proprietate?”.",
+              "en": "The question „Acest folder este o proprietate?” appears."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Folderul este luat singur drept „flotante”.",
+              "en": "The folder is taken as „flotante” by itself."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Folderul este importat ca tarla 48, parcela 50D.",
+              "en": "The folder is imported as tarla 48, parcel 50D."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

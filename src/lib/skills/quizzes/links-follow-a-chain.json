@@ -1,0 +1,758 @@
+{
+  "skill": "links-follow-a-chain",
+  "manual": [
+    "links-related",
+    "links-references-documents",
+    "links-references-properties",
+    "links-associate-kinds",
+    "documents-dependent-inheritance"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "links-related",
+          "ro": {
+            "question": "Un client întreabă ce acte, proprietari și parcele țin de terenul lui din Bragadiru. De unde pornește Ciprian?",
+            "explanation": "Fișa „Legături” arată tot ce este legat de înregistrare, într-un singur loc: persoanele, proprietățile și actele."
+          },
+          "en": {
+            "question": "A client asks which documents, owners and parcels belong to his plot in Bragadiru. Where does Ciprian start?",
+            "explanation": "The „Legături” (links) tile shows everything linked to the record, in one place: the persons, the properties and the documents."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "De la „Căutare globală”, unde rezultatele arată legăturile fiecărui teren",
+              "en": "From „Căutare globală”, where the results show each plot's links"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Deschide terenul și citește fișa lui „Legături”",
+              "en": "He opens the plot and reads its „Legături” tile"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "De la „Arbori de moștenire”, căutând proprietarul",
+              "en": "From „Arbori de moștenire”, looking for the owner"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "De la lista „Acte”, citind toate contractele din Bragadiru",
+              "en": "From the „Acte” list, reading every contract from Bragadiru"
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "links-related",
+          "ro": {
+            "question": "Ciprian deschide contractul de vânzare-cumpărare prin care Andrei Munteanu i-a vândut un teren Elenei Dumitrescu. Pe „Legături” vede terenul și notarul, dar nu pe cei doi. Unde îi găsește?",
+            "explanation": "Pe un contract de vânzare-cumpărare, vânzătorii și cumpărătorii stau în fișa „Părți”, grupați pe rol, iar „Legături” ține celelalte legături ale contractului."
+          },
+          "en": {
+            "question": "Ciprian opens the sale contract by which Andrei Munteanu sold a plot to Elena Dumitrescu. On „Legături” he sees the plot and the notary, but not the two of them. Where does he find them?",
+            "explanation": "On a sale contract, the sellers and buyers stand in the „Părți” (parties) tile, grouped by role, and „Legături” holds the contract's other links."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Nicăieri: legătura cu părțile s-a pierdut și trebuie refăcută",
+              "en": "Nowhere: the link to the parties was lost and must be made again"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "În „Obiectul vânzării”, la „Descrierea obiectului”",
+              "en": "In „Obiectul vânzării”, under „Descrierea obiectului”"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "În fișa „Părți”, grupați pe rol, după ce o bifează",
+              "en": "In the „Părți” tile, grouped by role, once he ticks it"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Doar pe ecranele lor, nu și pe contract",
+              "en": "Only on their own screens, not on the contract"
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "links-related",
+          "ro": {
+            "question": "Pe „Legături” al unui teren stă rândul „Mihai Stoica (Proprietar)”. Ciprian vrea să afle ce alte terenuri mai are Mihai. Ce face?",
+            "explanation": "„Vizualizare” deschide înregistrarea legată, iar fișa ei „Legături” arată ce este legat de ea; „Relația” arată doar ce leagă cele două înregistrări."
+          },
+          "en": {
+            "question": "On a plot's „Legături” there is the row „Mihai Stoica (Proprietar)”. Ciprian wants to find out which other plots Mihai has. What does he do?",
+            "explanation": "„Vizualizare” (view) opens the linked record, and its own „Legături” tile shows what is linked to it; „Relația” (the relationship) shows only what links the two records."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Apasă „Relația” pe rândul lui Mihai, care îi arată terenurile",
+              "en": "He presses „Relația” on Mihai's row, which shows his plots"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Caută „Stoica” în caseta de căutare a listei „Proprietăți”",
+              "en": "He searches for „Stoica” in the search box of the „Proprietăți” list"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Caută „Mihai Stoica” în „Căutare globală”, cu „Tip entitate” „Proprietate”",
+              "en": "He searches for „Mihai Stoica” in „Căutare globală”, with „Tip entitate” „Proprietate”"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Apasă „Vizualizare” pe rândul lui Mihai și îi citește „Legături”",
+              "en": "He presses „Vizualizare” on Mihai's row and reads his „Legături”"
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "links-references-documents",
+          "ro": {
+            "question": "Pe contractul Elenei Dumitrescu, „Relația” de pe rândul unui certificat de moștenitor arată: certificatul, „Titlu anterior al”, „acest document”. Ce află Ciprian?",
+            "explanation": "Pe contract, legătura se citește din celălalt capăt: certificatul este „Titlu anterior al” contractului, adică dreptul vânzătorului vine din certificat."
+          },
+          "en": {
+            "question": "On Elena Dumitrescu's contract, „Relația” on a certificate of inheritance's row reads: the certificate, „Titlu anterior al”, „acest document”. What does Ciprian learn?",
+            "explanation": "On the contract, the link is read from the other end: the certificate is „Titlu anterior al” (the earlier title of) the contract, that is, the seller's right comes from the certificate."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Contractul este titlul anterior al certificatului",
+              "en": "The contract is the earlier title of the certificate"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Dreptul vânzătorului vine din certificat",
+              "en": "The seller's right comes from the certificate"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Certificatul înlocuiește contractul",
+              "en": "The certificate replaces the contract"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Legătura e greșită, pentru că nu începe cu „acest document”",
+              "en": "The link is wrong, because it does not start with „acest document”"
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "links-references-properties",
+          "ro": {
+            "question": "Pe terenul mare din Cornetu, „Relația” de pe rândul parcelei P12 arată: parcela, „Inclus în”, „această proprietate”. Ce înțelege Ciprian?",
+            "explanation": "Legătura se citește de la proprietatea pe care vă aflați; pe terenul întreg, parcela, „Inclus în”, „această proprietate” spune că parcela este inclusă în el."
+          },
+          "en": {
+            "question": "On the large plot in Cornetu, „Relația” on parcel P12's row reads: the parcel, „Inclus în”, „această proprietate”. What does Ciprian understand?",
+            "explanation": "The link is read from the property you are on; on the whole plot, the parcel, „Inclus în” (included in), „această proprietate” says the parcel is included in it."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "P12 este inclusă în terenul pe care se află el",
+              "en": "P12 is included in the plot he is on"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Terenul pe care se află el este inclus în P12",
+              "en": "The plot he is on is included in P12"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Cele două sunt doar vecine",
+              "en": "The two are only neighbours"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Legătura trebuie refăcută de pe P12, ca să se citească bine",
+              "en": "The link must be made again from P12 to read correctly"
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "links-references-documents",
+          "ro": {
+            "question": "Un contract vechi citează un act de partaj din 1936. „Verifică înscrisurile citate” nu propune nimic potrivit, iar Ciprian știe că actul nu e în arhivă și nu are nevoie să-i țină locul. Ce apasă?",
+            "explanation": "„Lasă” lasă înscrisul nelegat; cele mai multe înscrisuri citate de un act vechi nu sunt în arhivă, așa că „Lasă” este adesea răspunsul potrivit. „Creează schiță” ar face un act nou, fără pagini, care ține locul înscrisului."
+          },
+          "en": {
+            "question": "An old contract cites a partition deed from 1936. „Verifică înscrisurile citate” (check the cited deeds) offers nothing that matches, and Ciprian knows the deed is not in the archive and needs nothing to stand in for it. What does he press?",
+            "explanation": "„Lasă” (leave) leaves the deed unlinked; most deeds cited by an old document are not in the archive, so „Lasă” is often the right answer. „Creează schiță” would make a new document, with no pages, that stands in for the deed."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Leagă”, pe cel mai apropiat act propus",
+              "en": "„Leagă” (link), on the closest document offered"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Creează schiță”, ca lanțul să fie complet",
+              "en": "„Creează schiță” (create a draft), so that the chain is complete"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Dezasociază”, pe rândul contractului",
+              "en": "„Dezasociază”, on the contract's row"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "„Lasă”",
+              "en": "„Lasă”"
+            }
+          ]
+        },
+        {
+          "id": "a7",
+          "section": "links-references-properties",
+          "ro": {
+            "question": "Pe un teren din Măgurele, Ciprian a legat terenul vecin cu „Adiacent”. Cum apare legătura pe terenul vecin?",
+            "explanation": "Doar „Inclus în”, „Subdiviziune a” și „Acces prin” au sens; „Adiacent”, „Contiguu”, „Suprapus cu” și „Alipit de” spun același lucru din ambele capete."
+          },
+          "en": {
+            "question": "On a plot in Măgurele, Ciprian has linked the neighbouring plot with „Adiacent” (adjacent). How does the link appear on the neighbouring plot?",
+            "explanation": "Only „Inclus în”, „Subdiviziune a” and „Acces prin” have a direction; „Adiacent”, „Contiguu”, „Suprapus cu” and „Alipit de” say the same from both ends."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Întoarsă, ca „Acces prin”",
+              "en": "Reversed, as „Acces prin” (access through)"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Nu apare: o vecinătate se vede doar din capătul de pe care a fost făcută",
+              "en": "It does not appear: a neighbour link is seen only from the end it was made from"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Tot „Adiacent”: legătura spune același lucru din ambele capete",
+              "en": "Still „Adiacent”: the link says the same from both ends"
+            }
+          ]
+        },
+        {
+          "id": "a8",
+          "section": "companies-people-representatives",
+          "ro": {
+            "question": "Pe „Legături” al unui teren, o firmă apare cu „(Proprietar)”. Ciprian vrea să afle cine o reprezintă. Cum ajunge acolo?",
+            "explanation": "Reprezentanții unei firme sunt legați de ea cu un rol, în fișa „Legături”, de exemplu „Nume Prenume (Reprezentant legal / Mandatar)”; persoanele de contact sunt doar oamenii cu care țineți legătura."
+          },
+          "en": {
+            "question": "On a plot's „Legături”, a company appears with „(Proprietar)” (owner). Ciprian wants to find out who represents it. How does he get there?",
+            "explanation": "A company's representatives are linked to it with a role, in the „Legături” tile, for instance „Nume Prenume (Reprezentant legal / Mandatar)”; contact persons are only the people you keep in touch with."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Apasă „Relația” pe rândul firmei, care arată și reprezentantul",
+              "en": "He presses „Relația” on the company's row, which also shows the representative"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Deschide firma cu „Vizualizare” și caută în „Legături” rolul „Reprezentant legal / Mandatar”",
+              "en": "He opens the company with „Vizualizare” and looks in „Legături” for the role „Reprezentant legal / Mandatar”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Caută reprezentantul în fișa „Părți” a terenului",
+              "en": "He looks for the representative in the plot's „Părți” tile"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Deschide firma și citește „Persoană de contact 1”",
+              "en": "He opens the company and reads „Persoană de contact 1”"
+            }
+          ]
+        },
+        {
+          "id": "a9",
+          "section": "links-related",
+          "ro": {
+            "question": "Pe un teren cu paisprezece legături, Ciprian caută doar actele. Unde se uită pe „Legături”?",
+            "explanation": "Rândurile vin mereu în aceeași ordine — persoanele fizice, persoanele juridice, proprietățile, actele —, iar un act se citește cu eticheta scurtă și, în paranteză, tipul actului."
+          },
+          "en": {
+            "question": "On a plot with fourteen links, Ciprian is looking only for the documents. Where does he look on „Legături”?",
+            "explanation": "The rows always come in the same order — natural persons, judicial persons, properties, documents — and a document reads as its short label and, in brackets, the document's type."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "La primele rânduri, pentru că actele vin întâi",
+              "en": "At the first rows, because documents come first"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "La rândurile cu „Cotă”, pentru că doar actele au cotă",
+              "en": "At the rows with „Cotă”, because only documents have a share"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Oriunde: rândurile vin în ordinea în care au fost legate",
+              "en": "Anywhere: the rows come in the order they were linked"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "La ultimele rânduri, după persoane și proprietăți",
+              "en": "At the last rows, after the persons and properties"
+            }
+          ]
+        },
+        {
+          "id": "a10",
+          "section": "documents-dependent-inheritance",
+          "ro": {
+            "question": "Andrei Munteanu a murit, iar Ciprian vrea să ajungă de la el la moștenitorii trecuți în certificatul de moștenitor. Ce drum urmează?",
+            "explanation": "Defunctul și moștenitorii sunt părțile certificatului, în „Părți”, iar fiecare persoană vede certificatul printre legăturile ei, cu rolul ei."
+          },
+          "en": {
+            "question": "Andrei Munteanu has died, and Ciprian wants to get from him to the heirs named on the certificate of inheritance. What path does he follow?",
+            "explanation": "The deceased and the heirs are the certificate's parties, in „Părți”, and each person sees the certificate among their links, with their role."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Arbori de moștenire”, unde certificatul îi leagă singur pe moștenitori de Andrei",
+              "en": "„Arbori de moștenire”, where the certificate links the heirs to Andrei by itself"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Legături” al lui Andrei, unde moștenitorii stau direct, cu rolul „Moștenitor”",
+              "en": "Andrei's „Legături”, where the heirs stand directly, with the role „Moștenitor”"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Din „Legături” al lui Andrei deschide certificatul și îi citește „Părți”",
+              "en": "From Andrei's „Legături” he opens the certificate and reads its „Părți”"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "links-associate-kinds",
+          "ro": {
+            "question": "Ciprian a legat un teren de un contract, de pe ecranul contractului. Pe terenul acela, ce găsește și ce rol are legătura?",
+            "explanation": "O legătură proprietate–act se face de pe act sau de pe proprietate și se vede din amândouă; la „Asociere” nu se alege nimic, pentru că legătura nu are rol."
+          },
+          "en": {
+            "question": "Ciprian has linked a plot to a contract, from the contract's screen. On that plot, what does he find, and what role does the link have?",
+            "explanation": "A property–document link is made from the document or from the property and is seen from both; at „Asociere” nothing is chosen, because the link has no role."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Contractul, pe „Legături”; legătura proprietate–act nu are rol",
+              "en": "The contract, on „Legături”; a property–document link has no role"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Nimic, până nu face legătura și de pe teren",
+              "en": "Nothing, until he also makes the link from the plot"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Contractul, pe „Legături”, cu rolul „Cumpărător”",
+              "en": "The contract, on „Legături”, with the role „Cumpărător”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Contractul, doar în „Obiectul vânzării” al terenului",
+              "en": "The contract, only in the plot's „Obiectul vânzării”"
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "links-references-documents",
+          "ro": {
+            "question": "Elena Dumitrescu a cumpărat un teren, iar contractul ei este legat de certificatul din care vine dreptul vânzătorului. Pornind de la Elena, cum ajunge Ciprian la certificat?",
+            "explanation": "Fiecare „Legături” arată ce este legat de înregistrarea aceea: contractul e legat de Elena, iar certificatul de contract, unde aceeași legătură se citește din celălalt capăt."
+          },
+          "en": {
+            "question": "Elena Dumitrescu bought a plot, and her contract is linked to the certificate the seller's right comes from. Starting from Elena, how does Ciprian reach the certificate?",
+            "explanation": "Each „Legături” shows what is linked to that record: the contract is linked to Elena, and the certificate to the contract, where the same link is read from the other end."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Îl găsește direct pe „Legături” al Elenei, fiindcă e legat de contractul ei",
+              "en": "He finds it directly on Elena's „Legături”, since it is linked to her contract"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Din „Legături” al Elenei deschide contractul, apoi găsește certificatul pe „Legături” al contractului",
+              "en": "From Elena's „Legături” he opens the contract, then finds the certificate on the contract's „Legături”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Deschide contractul și caută certificatul în fișa „Părți”",
+              "en": "He opens the contract and looks for the certificate in the „Părți” tile"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Caută numele Elenei în „Căutare globală”, cu „Tip entitate” „Document”",
+              "en": "He searches Elena's name in „Căutare globală”, with „Tip entitate” „Document”"
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "links-references-documents",
+          "ro": {
+            "question": "De pe contract, Ciprian a bifat certificatul de moștenitor și a ales „Titlu anterior al”. „Relația” arată acum pe contract „acest document „Titlu anterior al””, urmat de certificat. Ce face?",
+            "explanation": "Legătura se citește ca o propoziție care începe cu actul pe care vă aflați; dacă nu spune ce scrie în acte, faceți-o de pe celălalt act. De pe certificat, „Titlu anterior al” cu contractul bifat spune că dreptul vânzătorului vine din certificat."
+          },
+          "en": {
+            "question": "From the contract, Ciprian ticked the certificate of inheritance and chose „Titlu anterior al”. „Relația” now shows on the contract „acest document „Titlu anterior al””, followed by the certificate. What does he do?",
+            "explanation": "The link reads as a sentence that starts with the document you are on; if it does not say what the deeds say, make it from the other document. From the certificate, „Titlu anterior al” with the contract ticked says the seller's right comes from the certificate."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Nimic: legătura se citește la fel din ambele capete",
+              "en": "Nothing: the link reads the same from both ends"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Alege pe contract „Înlocuiește” în loc de „Titlu anterior al”, ca să întoarcă sensul",
+              "en": "He chooses „Înlocuiește” (replaces) on the contract instead of „Titlu anterior al”, to turn the direction round"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Șterge certificatul și îl adaugă din nou în arhivă",
+              "en": "He deletes the certificate and adds it to the archive again"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Dezasociază legătura și o face din nou, de pe certificat",
+              "en": "He unlinks it and makes it again, from the certificate"
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "links-related",
+          "ro": {
+            "question": "Pe „Legături” al unui teren mare apar trei parcele. Ciprian vrea să știe care sunt incluse în el și care doar îl ating. Ce face?",
+            "explanation": "„Relația” arată, într-o bulă, ce leagă cele două înregistrări, inclusiv propoziția unei legături cu sens, de exemplu „Inclus în”."
+          },
+          "en": {
+            "question": "On a large plot's „Legături” three parcels appear. Ciprian wants to know which are included in it and which only touch it. What does he do?",
+            "explanation": "„Relația” shows, in a bubble, what links the two records, including the sentence of a link with a direction, for instance „Inclus în”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Se uită la ordinea rândurilor: parcelele incluse vin primele, cele vecine după ele",
+              "en": "He looks at the order of the rows: the included parcels come first, the neighbouring ones after them"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Apasă „Previzualizare” pe fiecare parcelă",
+              "en": "He presses „Previzualizare” on each parcel"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Apasă „Relația” pe fiecare rând și citește propoziția legăturii",
+              "en": "He presses „Relația” on each row and reads the link's sentence"
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "links-references-properties",
+          "ro": {
+            "question": "La un teren din Bragadiru se ajunge doar prin terenul vecin. De pe care teren face Ciprian legătura „Acces prin”, ca propoziția să fie adevărată?",
+            "explanation": "„Acces prin” are sens, iar legătura se citește de la proprietatea pe care vă aflați: „această proprietate „Acces prin”” terenul bifat."
+          },
+          "en": {
+            "question": "A plot in Bragadiru can be reached only through the neighbouring plot. From which plot does Ciprian make the „Acces prin” link, so that the sentence is true?",
+            "explanation": "„Acces prin” has a direction, and the link is read from the property you are on: „această proprietate „Acces prin”” (this property has access through) the ticked plot."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "De pe terenul la care se ajunge greu, bifând terenul vecin",
+              "en": "From the hard-to-reach plot, ticking the neighbouring plot"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "De pe terenul vecin, bifând terenul la care se ajunge greu",
+              "en": "From the neighbouring plot, ticking the hard-to-reach plot"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "De pe oricare: „Acces prin” spune același lucru din ambele capete",
+              "en": "From either: „Acces prin” says the same from both ends"
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "links-related",
+          "ro": {
+            "question": "Pe „Legături” al lui Andrei Munteanu stă un contract de vânzare-cumpărare. Ciprian vrea să știe dacă Andrei a vândut sau a cumpărat. Ce apasă?",
+            "explanation": "Pe „Legături”, un act se citește cu eticheta scurtă și, în paranteză, tipul actului; „Relația” arată, într-o bulă, rolul persoanei în act."
+          },
+          "en": {
+            "question": "On Andrei Munteanu's „Legături” there is a sale contract. Ciprian wants to know whether Andrei sold or bought. What does he press?",
+            "explanation": "On „Legături”, a document reads as its short label and, in brackets, the document's type; „Relația” shows, in a bubble, the person's role in the document."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Cotă”, care arată rolul și cota-parte",
+              "en": "„Cotă”, which shows the role and the share"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Asociază act”, unde rolul se vede la „Rol”",
+              "en": "„Asociază act”, where the role shows under „Rol”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Nimic: rolul stă în paranteză, după numele contractului",
+              "en": "Nothing: the role is in brackets, after the contract's name"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "„Relația”, care arată rolul lui în act, de pildă Rol: „Vânzător”",
+              "en": "„Relația”, which shows his role in the document, for instance Rol: „Vânzător”"
+            }
+          ]
+        },
+        {
+          "id": "b7",
+          "section": "documents-dependent-inheritance",
+          "ro": {
+            "question": "Pe certificatul de moștenitor al lui Andrei Munteanu, Ciprian vrea să afle ce cotă a primit Elena, una dintre moștenitoare. Unde se uită?",
+            "explanation": "Pe „Legături”, moștenitorii au „Cotă”, iar defunctul nu; „Părți” arată doar un tabel cu „Nume” și „Rol”."
+          },
+          "en": {
+            "question": "On Andrei Munteanu's certificate of inheritance, Ciprian wants to find out what share Elena, one of the heirs, received. Where does he look?",
+            "explanation": "On „Legături”, the heirs have „Cotă” (share), and the deceased does not; „Părți” shows only a table with „Nume” and „Rol”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "În tabelul „Părți” al certificatului, la „Rol”",
+              "en": "In the certificate's „Părți” table, under „Rol”"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Pe „Legături” al certificatului, la „Cotă” de pe rândul Elenei",
+              "en": "On the certificate's „Legături”, at „Cotă” on Elena's row"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Pe „Legături” al Elenei, la „Relația” de pe rândul certificatului",
+              "en": "On Elena's „Legături”, at „Relația” on the certificate's row"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Pe „Legături” al certificatului, la „Cotă” de pe rândul lui Andrei",
+              "en": "On the certificate's „Legături”, at „Cotă” on Andrei's row"
+            }
+          ]
+        },
+        {
+          "id": "b8",
+          "section": "reports-search",
+          "ro": {
+            "question": "Ciprian știe doar că lanțul pornește de la cineva numit Stoica, dar nu știe dacă e o persoană fizică sau o firmă. De unde începe?",
+            "explanation": "„Căutare globală” caută dintr-un singur loc în persoane, fizice și juridice, proprietăți și acte; este locul în care căutați când nu știți în ce listă se află ce căutați."
+          },
+          "en": {
+            "question": "Ciprian knows only that the chain starts from someone called Stoica, but not whether it is a natural person or a company. Where does he begin?",
+            "explanation": "„Căutare globală” searches from one place across persons, natural and legal, properties and documents; it is where you search when you do not know which list holds what you are looking for."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "De la „Recente”, unde stau toate înregistrările cu acel nume",
+              "en": "From „Recente”, which holds every record with that name"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "De la „Căutare globală”, cu „Stoica” la „Căutare nume / cod” și „Tip entitate” „Orice”",
+              "en": "From „Căutare globală”, with „Stoica” under „Căutare nume / cod” and „Tip entitate” „Orice”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "De la „Nor de etichete”, unde numele apar ca etichete",
+              "en": "From „Nor de etichete”, where names show as tags"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "De la „Arbori de moștenire”, care arată și firmele",
+              "en": "From „Arbori de moștenire”, which shows companies too"
+            }
+          ]
+        },
+        {
+          "id": "b9",
+          "section": "persons-list",
+          "ro": {
+            "question": "Ciprian trece prin lista persoanelor fizice și vrea să vadă repede de ce e legată fiecare persoană, fără s-o deschidă. Ce apasă pe rând?",
+            "explanation": "Pe lista persoanelor, „Legături” arată, lângă listă, legăturile persoanei, numai pentru citit; „Incursiune” arată interacțiunile, iar „Previzualizare” un rezumat scurt."
+          },
+          "en": {
+            "question": "Ciprian is going through the list of natural persons and wants to see quickly what each person is linked to, without opening it. What does he press on the row?",
+            "explanation": "On the list of persons, „Legături” shows, beside the list, the person's links, read-only; „Incursiune” shows the interactions, and „Previzualizare” a short summary."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Incursiune”, care arată legăturile persoanei",
+              "en": "„Incursiune”, which shows the person's links"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Previzualizare”, care arată lângă listă persoanele și actele legate de ea",
+              "en": "„Previzualizare”, which shows beside the list the persons and documents linked to it"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Deschide”, singurul fel de a le vedea",
+              "en": "„Deschide”, the only way to see them"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "„Legături”, care le arată alături de listă, numai pentru citit",
+              "en": "„Legături”, which shows them beside the list, read-only"
+            }
+          ]
+        },
+        {
+          "id": "b10",
+          "section": "start-preview",
+          "ro": {
+            "question": "Ciprian completează un contract și nu l-a salvat încă. Vrea să verifice datele terenului legat, fără să-și piardă ce a scris. Ce apasă pe rândul terenului?",
+            "explanation": "„Previzualizare” deschide înregistrarea legată alături, fără să plecați de pe ecran, iar o modificare nesalvată pe ecranul principal rămâne neatinsă."
+          },
+          "en": {
+            "question": "Ciprian is filling in a contract and has not saved it yet. He wants to check the linked plot's data without losing what he has typed. What does he press on the plot's row?",
+            "explanation": "„Previzualizare” (preview) opens the linked record alongside, without leaving the screen, and an unsaved change on the main screen stays untouched."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Vizualizare”, care ține contractul deschis alături",
+              "en": "„Vizualizare”, which keeps the contract open alongside"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "„Previzualizare”, care deschide terenul alături",
+              "en": "„Previzualizare”, which opens the plot alongside"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Relația”, care arată datele terenului în bulă",
+              "en": "„Relația”, which shows the plot's data in the bubble"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Dezasociază”, apoi din nou „Asociază proprietate”",
+              "en": "„Dezasociază”, then „Asociază proprietate” again"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

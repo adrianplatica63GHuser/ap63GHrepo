@@ -1,0 +1,598 @@
+{
+  "skill": "properties-from-coordinate-file",
+  "manual": [
+    "properties-coord-file",
+    "properties-example-file",
+    "properties-corners-table"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "properties-coord-file",
+          "ro": {
+            "question": "Topograful v-a trimis colțurile Stereo 70 ale unui teren într-un fișier .txt. Ce cale alegeți în fereastra „Adaugă Proprietate”?",
+            "explanation": "În „Proprietăți” apăsați „Adaugă proprietate”, apoi „Din fișier text”: fișierul cu coordonatele colțurilor devine o proprietate întreagă, fără să scrieți colțurile de mână."
+          },
+          "en": {
+            "question": "The surveyor sent you a plot's Stereo 70 corners in a .txt file. Which path do you choose in the „Adaugă Proprietate” (add property) window?",
+            "explanation": "In „Proprietăți” you press „Adaugă proprietate”, then „Din fișier text” (from a text file): the file with the corners' coordinates becomes a whole property, without typing the corners by hand."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Introducere manuală”, apoi lipiți rândurile în „Puncte de contur”.",
+              "en": "„Introducere manuală” (manual entry), then paste the rows into „Puncte de contur”."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "„Din fișier text”, apoi alegeți fișierul și apăsați „Importă”.",
+              "en": "„Din fișier text”, then choose the file and press „Importă” (import)."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Din imagine scanată”, care citește și fișierele .txt.",
+              "en": "„Din imagine scanată” (from a scanned image), which reads .txt files too."
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "properties-coord-file",
+          "ro": {
+            "question": "Pregătiți fișierul cu colțurile unui teren. Cum trebuie să arate fiecare rând?",
+            "explanation": "Fișierul are câte un rând pe colț, cu valorile separate prin tab sau virgulă: indexul colțului, X (Nord) și Y (Est), în metri."
+          },
+          "en": {
+            "question": "You are preparing the file with a plot's corners. What must each row look like?",
+            "explanation": "The file has one row per corner, the values separated by a tab or a comma: the corner's index, X (North) and Y (East), in metres."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Latitudinea și longitudinea colțului, în grade zecimale.",
+              "en": "The corner's latitude and longitude, in decimal degrees."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Toate colțurile pe un singur rând, separate prin virgulă.",
+              "en": "All the corners on a single row, separated by commas."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Tarlaua și parcela, apoi colțul, în grade, minute și secunde.",
+              "en": "The tarla and the parcela, then the corner, in degrees, minutes and seconds."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Indexul colțului, X (Nord) și Y (Est) în metri, cu tab sau virgulă.",
+              "en": "The corner's index, X (North) and Y (East) in metres, with a tab or a comma."
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "properties-coord-file",
+          "ro": {
+            "question": "Deschideți o proprietate importată dintr-un fișier. În „Puncte de contur”, ce arată coloana „Nr. orig.”?",
+            "explanation": "Colțurile vin în ordinea din fișier, fiecare cu numărul lui din fișier în „Nr. orig.”; „Nr.” este ordinea în care sunt unite."
+          },
+          "en": {
+            "question": "You open a property imported from a file. In „Puncte de contur”, what does the „Nr. orig.” column show?",
+            "explanation": "The corners come in the file's order, each with its number from the file in „Nr. orig.”; „Nr.” is the order in which they are joined."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Numărul fiecărui colț din fișierul topografului.",
+              "en": "Each corner's number from the surveyor's file."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Ordinea în care colțurile sunt unite pe hartă.",
+              "en": "The order in which the corners are joined on the map."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Numărul rândului din fișier pe care aplicația l-a ignorat.",
+              "en": "The number of the file row the application ignored."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Numărul cadastral al parcelei, luat din fișier.",
+              "en": "The parcel's cadastral number, taken from the file."
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "properties-coord-file",
+          "ro": {
+            "question": "În fereastra „Încarcă fișier cu coordonate”, aplicația vă avertizează că proprietatea nu va avea identitate cadastrală. Ce faceți după import?",
+            "explanation": "Fișierul nu aduce tarla și parcelă. Deschideți proprietatea și completați „Nr. tarla / sola” și „Nr. parcelă” în „Identificare cadastrală”, apoi salvați."
+          },
+          "en": {
+            "question": "In the „Încarcă fișier cu coordonate” (upload a coordinate file) window, the application warns you that the property will have no cadastral identity. What do you do after the import?",
+            "explanation": "The file brings no tarla and no parcela. Open the property and fill in „Nr. tarla / sola” and „Nr. parcelă” in „Identificare cadastrală”, then save."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Nimic: aplicația le ia din numele fișierului.",
+              "en": "Nothing: the application takes them from the file's name."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Le scrieți în fișier și îl importați din nou.",
+              "en": "Write them in the file and import it again."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Le completați pe ecranul proprietății, în „Identificare cadastrală”.",
+              "en": "Fill them in on the property's screen, in „Identificare cadastrală”."
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "properties-example-file",
+          "ro": {
+            "question": "Deschideți proprietatea abia importată, iar pe fișa „Hartă” laturile ei se încrucișează. Ce faceți?",
+            "explanation": "În „Puncte de contur” folosiți „Îndreaptă ordinea”: colțurile din fișier rămân unde sunt, se schimbă doar ordinea în care sunt unite. Apoi salvați."
+          },
+          "en": {
+            "question": "You open the property just imported, and on the „Hartă” tile its sides cross. What do you do?",
+            "explanation": "In „Puncte de contur” use „Îndreaptă ordinea” (straighten the order): the corners from the file stay where they are, only the order in which they are joined changes. Then save."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Trageți colțurile pe hartă până nu se mai încrucișează.",
+              "en": "Drag the corners on the map until they no longer cross."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Importați același fișier încă o dată, ca să se refacă ordinea.",
+              "en": "Import the same file once more, so the order is redone."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "„Îndreaptă ordinea” în „Puncte de contur”, apoi salvați.",
+              "en": "„Îndreaptă ordinea” in „Puncte de contur”, then save."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Ștergeți proprietatea și desenați terenul de mână.",
+              "en": "Delete the property and draw the plot by hand."
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "properties-coord-file",
+          "ro": {
+            "question": "Fișierul primit are un rând de titlu și doar două rânduri cu coordonate. Ce se întâmplă la „Importă”?",
+            "explanation": "Rândurile fără coordonate sunt ignorate; dacă nu rămân cel puțin trei rânduri cu coordonate valide, aplicația spune că nu a găsit coordonate Stereo 70 valide."
+          },
+          "en": {
+            "question": "The file you received has a title row and only two rows with coordinates. What happens at „Importă”?",
+            "explanation": "Rows without coordinates are ignored; if at least three rows with valid coordinates do not remain, the application says it found no valid Stereo 70 coordinates."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Se creează o proprietate cu o singură latură.",
+              "en": "A property with a single side is created."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Aplicația spune că nu a găsit coordonate Stereo 70 valide.",
+              "en": "The application says it found no valid Stereo 70 coordinates."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Se creează o proprietate fără colțuri, de completat de mână.",
+              "en": "A property without corners is created, to be completed by hand."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Rândul de titlu oprește importul, oricâte colțuri ar fi.",
+              "en": "The title row stops the import, however many corners there are."
+            }
+          ]
+        },
+        {
+          "id": "a7",
+          "section": "properties-coord-file",
+          "ro": {
+            "question": "Ați apăsat „Importă” și a apărut „Proprietatea a fost importată cu succes.”. Unde găsiți proprietatea nouă?",
+            "explanation": "După mesaj apăsați „Închide”: în lista „Proprietăți”, sus, stă proprietatea nouă, cu insigna „Nou!”."
+          },
+          "en": {
+            "question": "You pressed „Importă” and „Proprietatea a fost importată cu succes.” appeared. Where do you find the new property?",
+            "explanation": "After the message press „Închide” (close): in the „Proprietăți” list, at the top, is the new property, badged „Nou!”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Doar pe „Hartă completă”, până îi completați tarlaua.",
+              "en": "Only on „Hartă completă”, until you fill in its tarla."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "În listă, la locul ei după tarla și parcelă.",
+              "en": "In the list, at its place by tarla and parcela."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Sus în lista „Proprietăți”, cu insigna „Nou!”.",
+              "en": "At the top of the „Proprietăți” list, badged „Nou!”."
+            }
+          ]
+        },
+        {
+          "id": "a8",
+          "section": "properties-coord-file",
+          "ro": {
+            "question": "Proprietatea importată arată deja „Suprafață calculată (m²)”. De unde vine această suprafață?",
+            "explanation": "Proprietatea nouă primește „Suprafață calculată (m²)” din colțurile din fișier, și harta desenată; suprafața din acte, „Suprafață oficială (m²)”, nu vine din fișier."
+          },
+          "en": {
+            "question": "The imported property already shows „Suprafață calculată (m²)”. Where does this area come from?",
+            "explanation": "The new property gets „Suprafață calculată (m²)” from the corners in the file, and the map drawn; the area from the papers, „Suprafață oficială (m²)”, does not come from the file."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Din ultimul rând al fișierului, unde topograful o scrie.",
+              "en": "From the file's last row, where the surveyor writes it."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Aplicația o calculează din colțurile din fișier.",
+              "en": "The application calculates it from the corners in the file."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Este copiată din „Suprafață oficială (m²)”.",
+              "en": "It is copied from „Suprafață oficială (m²)”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Din proprietatea care are aceeași tarla și parcelă.",
+              "en": "From the property that has the same tarla and parcela."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "properties-coord-file",
+          "ro": {
+            "question": "Importați fișierul „Teren Cornetu.txt”. Ce „Poreclă” primește proprietatea nouă?",
+            "explanation": "Proprietatea importată primește drept „Poreclă” numele fișierului; o puteți schimba apoi pe ecranul ei."
+          },
+          "en": {
+            "question": "You import the file „Teren Cornetu.txt”. What „Poreclă” (nickname) does the new property get?",
+            "explanation": "The imported property gets the file's name as its „Poreclă”; you can then change it on its screen."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Niciuna: porecla rămâne goală până o scrieți.",
+              "en": "None: the nickname stays empty until you type it."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Codul proprietății, dat de aplicație.",
+              "en": "The property's code, given by the application."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Numele fișierului.",
+              "en": "The file's name."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Tarlaua și parcela din primul rând al fișierului.",
+              "en": "The tarla and the parcela from the file's first row."
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "properties-coord-file",
+          "ro": {
+            "question": "Un coleg spune că tarla și parcela se pot completa oricând, că nu contează. De ce contează să le completați după import?",
+            "explanation": "Fără tarla și parcelă, proprietatea nu are identitate cadastrală: nu poate fi găsită după parcelă și nu se poate verifica dacă este un duplicat."
+          },
+          "en": {
+            "question": "A colleague says the tarla and the parcela can be filled in any time, that it does not matter. Why does it matter to fill them in after the import?",
+            "explanation": "Without a tarla and a parcela, the property has no cadastral identity: it cannot be found by its parcel, and it cannot be checked for being a duplicate."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Fără ele nu se găsește după parcelă și nu se verifică dacă e duplicat.",
+              "en": "Without them it cannot be found by parcel or checked for being a duplicate."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Fără ele harta nu desenează forma terenului.",
+              "en": "Without them the map does not draw the plot's shape."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Fără ele nu se calculează „Suprafață calculată (m²)”.",
+              "en": "Without them „Suprafață calculată (m²)” is not calculated."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Fără ele butonul „Navighează” rămâne inactiv.",
+              "en": "Without them the „Navighează” button stays inactive."
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "properties-coord-file",
+          "ro": {
+            "question": "Peste o lună, cineva întreabă cum a intrat în arhivă un teren. Unde vedeți că a venit dintr-un fișier cu coordonate?",
+            "explanation": "Proprietatea importată primește proveniența „Fișier de coordonate (.txt)”, pe care o citiți în fișa „Clasificare”."
+          },
+          "en": {
+            "question": "A month later, someone asks how a plot came into the archive. Where do you see that it came from a coordinate file?",
+            "explanation": "The imported property gets the provenance „Fișier de coordonate (.txt)” (coordinate file), which you read in the „Clasificare” (classification) tile."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "În „Note”, unde aplicația scrie numele fișierului.",
+              "en": "In „Note”, where the application writes the file's name."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "În „Etichete și grupuri”, la eticheta „Import”.",
+              "en": "In „Etichete și grupuri”, at the label „Import”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În coloana „Nr. orig.” din „Puncte de contur”.",
+              "en": "In the „Nr. orig.” column of „Puncte de contur”."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "În „Clasificare”: proveniența „Fișier de coordonate (.txt)”.",
+              "en": "In „Clasificare”: the provenance „Fișier de coordonate (.txt)”."
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "properties-coord-file",
+          "ro": {
+            "question": "Topograful a trimis colțurile într-un tabel Excel. Ce îi cereți ca să-l puteți aduce cu „Din fișier text”?",
+            "explanation": "Fereastra de alegere arată doar fișiere .txt: cereți un fișier text cu câte un rând pe colț, cu coordonatele Stereo 70."
+          },
+          "en": {
+            "question": "The surveyor sent the corners in an Excel table. What do you ask for so that you can bring it in with „Din fișier text”?",
+            "explanation": "The file window shows only .txt files: ask for a text file with one row per corner, with the Stereo 70 coordinates."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Nimic: fereastra primește și tabelul Excel așa cum e.",
+              "en": "Nothing: the window takes the Excel table as it is."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Un fișier .txt, cu câte un rând pe colț, în Stereo 70.",
+              "en": "A .txt file, with one row per corner, in Stereo 70."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "O fotografie a tabelului, încărcată la „Din fișier text”.",
+              "en": "A photograph of the table, loaded at „Din fișier text”."
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "properties-coord-file",
+          "ro": {
+            "question": "Fișierul începe cu două rânduri de text, numele topografului și data, apoi are cinci rânduri cu colțuri. Ce face importul?",
+            "explanation": "Rândurile care nu conțin coordonate sunt ignorate, așa că proprietatea primește cele cinci colțuri, în ordinea din fișier."
+          },
+          "en": {
+            "question": "The file starts with two rows of text, the surveyor's name and the date, then has five rows with corners. What does the import do?",
+            "explanation": "Rows that hold no coordinates are ignored, so the property gets the five corners, in the file's order."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Refuză fișierul, pentru că primele rânduri nu sunt colțuri.",
+              "en": "It refuses the file, because the first rows are not corners."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Pune cele două rânduri de text în „Note”.",
+              "en": "It puts the two rows of text into „Note”."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Le ignoră și face o proprietate cu cinci colțuri.",
+              "en": "It ignores them and makes a property with five corners."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Ia porecla din primul rând, numele topografului.",
+              "en": "It takes the nickname from the first row, the surveyor's name."
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "properties-corners-table",
+          "ro": {
+            "question": "Colțurile au venit din fișier în Stereo 70, dar vreți să le citiți în grade. Ce faceți pe ecranul proprietății?",
+            "explanation": "În „Puncte de contur”, „Afișare:” alege cum se arată coordonatele: „DD”, „DMS” sau „Stereo 70”. Colțurile sunt aceleași, doar se arată altfel."
+          },
+          "en": {
+            "question": "The corners came from the file in Stereo 70, but you want to read them in degrees. What do you do on the property's screen?",
+            "explanation": "In „Puncte de contur”, „Afișare:” (display) chooses how the coordinates are shown: „DD”, „DMS” or „Stereo 70”. The corners are the same, only shown differently."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "La „Afișare:” alegeți „DD” sau „DMS”.",
+              "en": "At „Afișare:” choose „DD” or „DMS”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Importați din nou fișierul, scris în grade.",
+              "en": "Import the file again, written in degrees."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Apăsați „Editează” pe fiecare rând și le rescrieți.",
+              "en": "Press „Editează” on each row and rewrite them."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nu se poate: colțurile din fișier rămân în Stereo 70.",
+              "en": "It cannot be done: the corners from the file stay in Stereo 70."
+            }
+          ]
+        },
+        {
+          "id": "b7",
+          "section": "properties-example-file",
+          "ro": {
+            "question": "Ați primit fișierul topografului pentru un teren nou. Care este ordinea bună a pașilor?",
+            "explanation": "Importați fișierul, deschideți proprietatea și verificați pe hartă că laturile nu se încrucișează, apoi completați tarlaua și parcela în „Identificare cadastrală” și salvați."
+          },
+          "en": {
+            "question": "You received the surveyor's file for a new plot. What is the right order of the steps?",
+            "explanation": "Import the file, open the property and check on the map that the sides do not cross, then fill in the tarla and the parcela in „Identificare cadastrală” and save."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Creați întâi proprietatea de mână, apoi importați fișierul peste ea.",
+              "en": "First create the property by hand, then import the file over it."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Importați, verificați pe hartă laturile, completați tarla și parcelă, salvați.",
+              "en": "Import, check the sides on the map, fill in tarla and parcela, save."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Importați, apoi doar apăsați „Închide”: restul îl face aplicația.",
+              "en": "Import, then just press „Închide”: the application does the rest."
+            }
+          ]
+        },
+        {
+          "id": "b8",
+          "section": "properties-corners-table",
+          "ro": {
+            "question": "După import, topograful vă anunță că un colț din fișier avea o cifră greșită și vă dă valoarea bună. Cum corectați proprietatea?",
+            "explanation": "Pe proprietatea importată, apăsați „Editează” pe rândul colțului în „Puncte de contur”, scrieți coordonata, „Salvează” pe rând, apoi „Salvează” jos. Un import nou ar face o altă proprietate."
+          },
+          "en": {
+            "question": "After the import, the surveyor tells you that one corner in the file had a wrong digit and gives you the right value. How do you correct the property?",
+            "explanation": "On the imported property, press „Editează” on the corner's row in „Puncte de contur”, type the coordinate, the row's „Salvează”, then „Salvează” at the bottom. A new import would make another property."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Corectați fișierul și îl importați din nou; proprietatea se actualizează.",
+              "en": "Correct the file and import it again; the property is updated."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Schimbați „Nr. orig.” al colțului, iar coordonata se refață.",
+              "en": "Change the corner's „Nr. orig.”, and the coordinate is redone."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Editează” pe rândul colțului și „Salvează” pe rând; atât.",
+              "en": "„Editează” on the corner's row and the row's „Salvează”; that is all."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "„Editează” pe rând, coordonata, „Salvează” pe rând, apoi „Salvează” jos.",
+              "en": "„Editează” on the row, the coordinate, the row's „Salvează”, then „Salvează” at the bottom."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

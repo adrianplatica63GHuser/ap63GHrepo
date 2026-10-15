@@ -1,0 +1,782 @@
+{
+  "skill": "documents-sale-contract",
+  "manual": [
+    "documents-sale",
+    "documents-parties",
+    "documents-example-sale",
+    "links-related",
+    "documents-type"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "documents-sale",
+          "ro": {
+            "question": "Ciprian deschide un contract de vânzare-cumpărare pe care l-a arhivat un coleg și nu vede nicăieri vânzătorii și cumpărătorii. Ce face întâi?",
+            "explanation": "Vânzătorii și cumpărătorii stau în fișa „Părți”, care nu se vede de la început, așa că trebuie bifată printre fișele din capul ecranului."
+          },
+          "en": {
+            "question": "Ciprian opens a sale contract that a colleague filed and cannot see the sellers and buyers anywhere. What does he do first?",
+            "explanation": "The sellers and buyers sit on the „Părți” (parties) tile, which is not shown at first, so it has to be ticked among the tiles at the head of the screen."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Îi asociază din nou pe toți, pentru că părțile nu au fost salvate.",
+              "en": "He associates them all again, because the parties were not saved."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Bifează fișa „Părți” printre fișele din capul ecranului.",
+              "en": "He ticks the „Părți” tile among the tiles at the head of the screen."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Îi caută în „Obiectul vânzării”, la panoul „[Descriere]”.",
+              "en": "He looks for them in „Obiectul vânzării”, in the panel „[Descriere]”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Îi caută în „Identificarea actului”, sub „Notariat”.",
+              "en": "He looks for them in „Identificarea actului”, under „Notariat”."
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "documents-sale",
+          "ro": {
+            "question": "Pe contractul lui Andrei Munteanu, Ciprian a legat o a doua parcelă vândută, dar „Descrierea obiectului” vorbește tot despre un singur imobil. Ce face?",
+            "explanation": "„Descrierea obiectului” se compune din proprietățile contractului, din părți și din „Scop vânzare” și se completează singură doar când câmpul e gol. După ce legați o proprietate nouă, apăsați „Recompune”, apoi „Salvează”."
+          },
+          "en": {
+            "question": "On Andrei Munteanu's contract, Ciprian has linked a second plot that was sold, but „Descrierea obiectului” (description of the object) still speaks of a single property. What does he do?",
+            "explanation": "„Descrierea obiectului” is composed from the contract's properties, its parties and „Scop vânzare”, and fills itself in only when the field is empty. After you link a new property, press „Recompune” (recompose), then „Salvează”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Închide și redeschide contractul, ca descrierea să se refacă singură.",
+              "en": "He closes and reopens the contract, so that the description rewrites itself."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Leagă parcela încă o dată, din fișa „Părți”, ca să intre în descriere.",
+              "en": "He links the plot once more, from the „Părți” tile, so that it enters the description."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "În „Obiectul vânzării” apasă „Recompune”, apoi „Salvează”.",
+              "en": "In „Obiectul vânzării” he presses „Recompune”, then „Salvează”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Scrie a doua parcelă în „Scop vânzare”, iar descrierea rămâne cum e.",
+              "en": "He writes the second plot into „Scop vânzare”, and the description stays as it is."
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "documents-parties",
+          "ro": {
+            "question": "Un contract vinde doar jumătate din terenul lui Andrei Munteanu: cumpărătorul primește 1/2. Ciprian scrie 1/2 și citește „Cotele pentru „Cumpărător” însumează 50%, nu 100%.” Ce face?",
+            "explanation": "Mesajul spune „Actul se salvează oricum — verificați ce scrie în act.”: arhiva înregistrează ce scrie în act, chiar dacă cotele nu se adună. Dacă actul dă 1/2, cota rămâne 1/2."
+          },
+          "en": {
+            "question": "A contract sells only half of Andrei Munteanu's plot: the buyer receives 1/2. Ciprian types 1/2 and reads „Cotele pentru „Cumpărător” însumează 50%, nu 100%.” (the buyer's shares add up to 50%, not 100%). What does he do?",
+            "explanation": "The message says „Actul se salvează oricum — verificați ce scrie în act.” (the document is saved anyway — check what the deed says): the archive records what the deed says, even when the shares do not add up. If the deed gives 1/2, the share stays 1/2."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Schimbă cota în 100%, ca să dispară avertismentul.",
+              "en": "He changes the share to 100%, so that the warning disappears."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Mai adaugă un cumpărător cu 1/2, ca totalul să dea 100%.",
+              "en": "He adds another buyer with 1/2, so that the total makes 100%."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Lasă contractul nesalvat până când cotele dau 100%.",
+              "en": "He leaves the contract unsaved until the shares make 100%."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Verifică actul și, dacă scrie 1/2, lasă 1/2: arhiva ține ce scrie în act.",
+              "en": "He checks the deed and, if it says 1/2, keeps 1/2: the archive holds what the deed says."
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "documents-sale",
+          "ro": {
+            "question": "Notarul care a autentificat contractul este deja în arhivă ca persoană fizică. Ciprian vrea ca notarul să vadă contractul printre legăturile lui. Ce face?",
+            "explanation": "„Părți” ține doar vânzătorii și cumpărătorii; celelalte persoane ale contractului, de pildă notarul, stau pe „Legături”. Acolo îl asociați cu „Asociază persoană” și rolul „Notar”, iar legătura se vede din ambele capete."
+          },
+          "en": {
+            "question": "The notary who authenticated the contract is already in the archive as a natural person. Ciprian wants the notary to see the contract among his own links. What does he do?",
+            "explanation": "„Părți” holds only the sellers and buyers; the contract's other people, the notary for instance, sit on „Legături”. There you associate him with „Asociază persoană” and the role „Notar”, and the link shows from both ends."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Pe „Legături”, „Asociază persoană” cu rolul „Notar”.",
+              "en": "On „Legături”, „Asociază persoană” with the role „Notar”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Îi scrie numele la „Notariat”, în „Identificarea actului”.",
+              "en": "He writes his name under „Notariat”, in „Identificarea actului”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Îi scrie numele la „Onorariu notarial”, în „Taxe și cheltuieli”.",
+              "en": "He writes his name under „Onorariu notarial”, in „Taxe și cheltuieli”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Îl pune în „[Declarații legale]”, din „Declarații și garanții”.",
+              "en": "He puts him in „[Declarații legale]”, in „Declarații și garanții”."
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "documents-sale",
+          "ro": {
+            "question": "Contractul arată impozitul pe transfer și onorariul notarial plătite la autentificare. Unde le trece Ciprian?",
+            "explanation": "În fișa „Taxe și cheltuieli”, panoul „[Taxe și onorarii]” ține „Timbru judiciar”, „Onorariu notarial”, „Impozit transfer” și „Taxă timbru și publicitate”."
+          },
+          "en": {
+            "question": "The contract shows the transfer tax and the notary's fee paid at the authentication. Where does Ciprian record them?",
+            "explanation": "On the „Taxe și cheltuieli” (taxes and costs) tile, the panel „[Taxe și onorarii]” holds „Timbru judiciar”, „Onorariu notarial”, „Impozit transfer” and „Taxă timbru și publicitate”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "În „Preț și plată”, la panoul „[Plată]”.",
+              "en": "In „Preț și plată”, in the panel „[Plată]”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "În „Taxe și cheltuieli”, la panoul „[Cheltuieli]”.",
+              "en": "In „Taxe și cheltuieli”, in the panel „[Cheltuieli]”."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "În „Taxe și cheltuieli”, la panoul „[Taxe și onorarii]”.",
+              "en": "In „Taxe și cheltuieli”, in the panel „[Taxe și onorarii]”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "În „Identificarea actului”, lângă „Temei autentificare”.",
+              "en": "In „Identificarea actului”, beside „Temei autentificare”."
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "documents-type",
+          "ro": {
+            "question": "Ieri, Ciprian a bifat fișa „Părți” pe contractul lui Andrei Munteanu. Azi deschide un alt contract de vânzare-cumpărare. Ce vede?",
+            "explanation": "Fișele care se văd se aleg cu bifele din capul ecranului, iar alegerea se ține minte pentru fiecare tip; un alt contract de același tip arată deci și el fișa „Părți”."
+          },
+          "en": {
+            "question": "Yesterday Ciprian ticked the „Părți” tile on Andrei Munteanu's contract. Today he opens another sale contract. What does he see?",
+            "explanation": "The tiles shown are chosen with the ticks at the head of the screen, and the choice is remembered per type; another contract of the same type therefore shows the „Părți” tile too."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Fișa „Părți” ascunsă, pentru că bifa ține doar pentru actul pe care a fost pusă.",
+              "en": "The „Părți” tile hidden, because the tick holds only for the document it was put on."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Și aici fișa „Părți”, pentru că alegerea fișelor se ține minte pe tip.",
+              "en": "The „Părți” tile here too, because the choice of tiles is remembered per type."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Fișa „Părți” pe orice act, de orice tip, de acum înainte.",
+              "en": "The „Părți” tile on every document, of any type, from now on."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Fișa „Părți” ascunsă, pentru că bifele revin în fiecare zi la cele implicite.",
+              "en": "The „Părți” tile hidden, because the ticks go back to the defaults every day."
+            }
+          ]
+        },
+        {
+          "id": "a7",
+          "section": "companies-people-records",
+          "ro": {
+            "question": "Cumpărătorul dintr-un contract este o firmă din arhivă. Ciprian o asociază de pe ecranul firmei, cu rolul „Cumpărător”. Unde o găsește apoi pe contract?",
+            "explanation": "O firmă poate fi parte într-un act la fel ca o persoană fizică; pe act, firma asociată apare în fișa „Părți”, cu rolul ei."
+          },
+          "en": {
+            "question": "The buyer in a contract is a firm in the archive. Ciprian associates it from the firm's screen, with the role „Cumpărător”. Where does he then find it on the contract?",
+            "explanation": "A firm can be a party to a document just as a natural person can; on the document, the associated firm appears on the „Părți” tile, with its role."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Doar pe „Legături”, după persoanele fizice, ca orice firmă.",
+              "en": "Only on „Legături”, after the natural persons, like any firm."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Nicăieri: pe un contract, doar persoanele fizice pot fi părți.",
+              "en": "Nowhere: on a contract, only natural persons can be parties."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În „Identificarea actului”, în locul „Notariat”.",
+              "en": "In „Identificarea actului”, in place of „Notariat”."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "În fișa „Părți”, la cumpărători, cu rolul ei.",
+              "en": "On the „Părți” tile, among the buyers, with its role."
+            }
+          ]
+        },
+        {
+          "id": "a8",
+          "section": "documents-sale",
+          "ro": {
+            "question": "În arhivă sunt două persoane pe nume Ion Vasilescu, iar Ciprian știe codul celui care vinde. Cum îl pune ca vânzător pe contract?",
+            "explanation": "În „Părți”, „Asociază persoană” adaugă o parte: căutați persoana după „Nume” sau „Cod”, alegeți „Rol”, bifați rândul și apăsați „Asociază selecția”. Căutarea după cod găsește persoana potrivită."
+          },
+          "en": {
+            "question": "There are two persons named Ion Vasilescu in the archive, and Ciprian knows the seller's code. How does he put him on the contract as seller?",
+            "explanation": "In „Părți”, „Asociază persoană” adds a party: search for the person by „Nume” or „Cod”, choose „Rol”, tick the row and press „Asociază selecția”. Searching by code finds the right person."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "În „Părți”, „Asociază persoană”: caută după „Cod”, alege „Vânzător”, bifează rândul.",
+              "en": "In „Părți”, „Asociază persoană”: search by „Cod”, choose „Vânzător”, tick the row."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "În „Părți”, „Asociază persoană”: caută după „Nume” și bifează ambele rânduri.",
+              "en": "In „Părți”, „Asociază persoană”: search by „Nume” and tick both rows."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În „Declarații și garanții”, scrie codul la „[Declarațiile vânzătorului]”.",
+              "en": "In „Declarații și garanții”, write the code in „[Declarațiile vânzătorului]”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Pe „Legături”, „Asociază proprietate”: caută după cod și bifează rândul.",
+              "en": "On „Legături”, „Asociază proprietate”: search by code and tick the row."
+            }
+          ]
+        },
+        {
+          "id": "a9",
+          "section": "documents-sale",
+          "ro": {
+            "question": "Un coleg întreabă din ce scrie aplicația „Descrierea obiectului”, de exemplu „2 imobile, 7.400 mp în total”. Ce îi răspunde Ciprian?",
+            "explanation": "„Descrierea obiectului” se compune din proprietățile contractului, din părți și din „Scop vânzare”."
+          },
+          "en": {
+            "question": "A colleague asks what the application writes „Descrierea obiectului” from, for example „2 imobile, 7.400 mp în total”. What does Ciprian answer?",
+            "explanation": "„Descrierea obiectului” is composed from the contract's properties, its parties and „Scop vânzare” (purpose of the sale)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Din ce citește AI-ul pe paginile scanate ale contractului.",
+              "en": "From what the AI reads on the contract's scanned pages."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Din preț, din „Stare plată” și din data autentificării.",
+              "en": "From the price, „Stare plată” and the date of authentication."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Din proprietățile contractului, din părți și din „Scop vânzare”.",
+              "en": "From the contract's properties, its parties and „Scop vânzare”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Din panourile fișei „Carte funciară”, completate de mână.",
+              "en": "From the panels of the „Carte funciară” tile, filled in by hand."
+            }
+          ]
+        },
+        {
+          "id": "a10",
+          "section": "links-associate-remove",
+          "ro": {
+            "question": "În „Părți”, Ciprian a asociat din greșeală o altă Elena Popescu ca cumpărătoare. O scoate cu „Dezasociază”. Ce se întâmplă cu persoana aceea?",
+            "explanation": "„Dezasociază” scoate legătura rândului ales din ambele capete, fără nicio întrebare; cele două înregistrări rămân în arhivă, neatinse."
+          },
+          "en": {
+            "question": "In „Părți”, Ciprian associated another Elena Popescu as buyer by mistake. He removes her with „Dezasociază”. What happens to that person?",
+            "explanation": "„Dezasociază” removes the selected row's link from both ends, without any question; the two records stay in the archive, untouched."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Este ștearsă din arhivă împreună cu legătura.",
+              "en": "She is deleted from the archive together with the link."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Rămâne în arhivă; legătura dispare din ambele capete.",
+              "en": "She stays in the archive; the link disappears from both ends."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Rămâne pe contract, cu „Cotă” golită și rolul șters.",
+              "en": "She stays on the contract, with „Cotă” emptied and the role removed."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Dispare de pe contract, dar contractul rămâne pe ecranul ei.",
+              "en": "She disappears from the contract, but the contract stays on her screen."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "documents-sale",
+          "ro": {
+            "question": "Pe un contract nou, fișa „Părți” spune „Nicio parte asociată încă. Asociați vânzătorii și cumpărătorii cu rolul și cota lor.” Ce face Ciprian?",
+            "explanation": "Mesajul arată că pe contract nu este încă nicio parte. „Asociază persoană” adaugă o parte cu rolul ei, iar cota se scrie apoi cu „Cotă”, pe rândul ei."
+          },
+          "en": {
+            "question": "On a new contract, the „Părți” tile reads „Nicio parte asociată încă. Asociați vânzătorii și cumpărătorii cu rolul și cota lor.” (no party associated yet). What does Ciprian do?",
+            "explanation": "The message shows that the contract has no party yet. „Asociază persoană” adds a party with its role, and the share is then written with „Cotă”, on its row."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Leagă întâi terenul pe „Legături”, iar părțile apar singure din el.",
+              "en": "He first links the plot on „Legături”, and the parties appear from it by themselves."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Așteaptă terminarea importului, care aduce părțile mai târziu.",
+              "en": "He waits for the import to finish, which brings the parties later."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Scrie vânzătorii și cumpărătorii în „Descrierea obiectului”.",
+              "en": "He writes the sellers and buyers into „Descrierea obiectului”."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Cu „Asociază persoană” pune fiecare parte cu rolul ei, apoi scrie „Cotă”.",
+              "en": "With „Asociază persoană” he adds each party with its role, then fills in „Cotă”."
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "documents-sale",
+          "ro": {
+            "question": "Pe un contract vechi, cu terenul și părțile deja legate, „Descrierea obiectului” a rămas goală. Ciprian deschide contractul. Ce se întâmplă cu câmpul?",
+            "explanation": "„Descrierea obiectului” se completează singură când deschideți un contract cu câmpul gol, din proprietățile contractului, din părți și din „Scop vânzare”."
+          },
+          "en": {
+            "question": "On an old contract, with the plot and the parties already linked, „Descrierea obiectului” has stayed empty. Ciprian opens the contract. What happens to the field?",
+            "explanation": "„Descrierea obiectului” fills itself in when you open a contract with the field empty, from the contract's properties, its parties and „Scop vânzare”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Se completează singur, din proprietăți, părți și „Scop vânzare”.",
+              "en": "It fills itself in, from the properties, the parties and „Scop vânzare”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Rămâne gol până când îl scrie Ciprian de mână.",
+              "en": "It stays empty until Ciprian writes it by hand."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Rămâne gol până când contractul trece din nou prin import.",
+              "en": "It stays empty until the contract goes through the import again."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Se umple cu textul din „Note extinse” al contractului.",
+              "en": "It fills with the text of the contract's „Note extinse”."
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "documents-sale",
+          "ro": {
+            "question": "Contractul lui Andrei Munteanu vinde un teren din Bragadiru, care este deja în arhivă. De unde leagă Ciprian terenul de contract?",
+            "explanation": "Fișa „Părți” ține doar vânzătorii și cumpărătorii; proprietățile vândute se leagă de pe „Legături”, cu „Asociază proprietate”."
+          },
+          "en": {
+            "question": "Andrei Munteanu's contract sells a plot in Bragadiru, which is already in the archive. From where does Ciprian link the plot to the contract?",
+            "explanation": "The „Părți” tile holds only the sellers and buyers; the properties sold are linked from „Legături”, with „Asociază proprietate”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Din „Părți”, cu „Asociază persoană”, alegând terenul în „Rezultate”.",
+              "en": "From „Părți”, with „Asociază persoană”, choosing the plot in „Rezultate”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Din „Obiectul vânzării”, scriind codul terenului la „[Obiect declarat]”.",
+              "en": "From „Obiectul vânzării”, writing the plot's code in „[Obiect declarat]”."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Din „Legături”, cu „Asociază proprietate”.",
+              "en": "From „Legături”, with „Asociază proprietate”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Din „Carte funciară”, scriind codul terenului la „[Dosar cadastral]”.",
+              "en": "From „Carte funciară”, writing the plot's code in „[Dosar cadastral]”."
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "documents-sale",
+          "ro": {
+            "question": "Contractul arată că terenul vândut se află sub o excepție de la cadastru. În ce fișă și panou notează Ciprian asta?",
+            "explanation": "Fișa „Carte funciară” are panourile „[Dosar cadastral]”, „[Situația în cartea funciară]” și „[Excepția de la cadastru]”."
+          },
+          "en": {
+            "question": "The contract shows that the plot sold falls under an exception from the cadastre. On which tile and panel does Ciprian record this?",
+            "explanation": "The „Carte funciară” (land register) tile has the panels „[Dosar cadastral]”, „[Situația în cartea funciară]” and „[Excepția de la cadastru]”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Declarații și garanții”, la panoul „[Declarații legale]”.",
+              "en": "„Declarații și garanții”, in the panel „[Declarații legale]”."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "„Carte funciară”, la panoul „[Excepția de la cadastru]”.",
+              "en": "„Carte funciară”, in the panel „[Excepția de la cadastru]”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Obiectul vânzării”, la panoul „[Obiect declarat]”.",
+              "en": "„Obiectul vânzării”, in the panel „[Obiect declarat]”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Declarații și garanții”, la panoul „[Garanții]”.",
+              "en": "„Declarații și garanții”, in the panel „[Garanții]”."
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "documents-parties",
+          "ro": {
+            "question": "Elena și Mihai Popescu cumpără împreună un teren, iar contractul spune că îl dobândesc în devălmășie. Cum îi trece Ciprian?",
+            "explanation": "Fiecare cumpărător se asociază cu rolul „Cumpărător”, iar în panoul „Cotă” al rândului, „Mod de deținere” oferă „în nume propriu”, „devălmășie”, „indiviziune” sau „prin mandatar”; arhiva înregistrează ce scrie în act."
+          },
+          "en": {
+            "question": "Elena and Mihai Popescu buy a plot together, and the contract says they acquire it in joint ownership („devălmășie”). How does Ciprian record them?",
+            "explanation": "Each buyer is associated with the role „Cumpărător”, and in the row's „Cotă” panel „Mod de deținere” (manner of holding) offers „în nume propriu”, „devălmășie”, „indiviziune” or „prin mandatar”; the archive records what the deed says."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Îl asociază doar pe Mihai, ca „Cumpărător”, și scrie numele Elenei în „Subiect”.",
+              "en": "He associates only Mihai, as „Cumpărător”, and writes Elena's name in „Subiect”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Îi asociază pe amândoi și scrie „devălmășie” în „Note extinse”, fără „Cotă”.",
+              "en": "He associates both and writes „devălmășie” in „Note extinse”, without „Cotă”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Îi asociază ca „Reprezentant legal / Mandatar” unul pentru celălalt.",
+              "en": "He associates them as „Reprezentant legal / Mandatar” for each other."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Îi asociază pe amândoi ca „Cumpărător” și alege la „Cotă” „devălmășie”.",
+              "en": "He associates both as „Cumpărător” and chooses „devălmășie” under „Cotă”."
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "documents-parties",
+          "ro": {
+            "question": "Contractul are trei cumpărători. Ciprian vrea să vadă dintr-o privire dacă cotele lor, așa cum le-a scris, însumează 100%. Unde se uită?",
+            "explanation": "Sub rânduri, aplicația adună cotele pe fiecare rol, de exemplu „Total Cumpărător: 100%”, și spune când suma nu dă 100%."
+          },
+          "en": {
+            "question": "The contract has three buyers. Ciprian wants to see at a glance whether their shares, as he typed them, add up to 100%. Where does he look?",
+            "explanation": "Under the rows, the application adds up the shares per role, for example „Total Cumpărător: 100%”, and says so when the sum is not 100%."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "În „Preț și plată”, la panoul „[Plată]”.",
+              "en": "In „Preț și plată”, in the panel „[Plată]”."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Sub rânduri, la „Total Cumpărător: …%”.",
+              "en": "Under the rows, at „Total Cumpărător: …%”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În lista „Acte”, în coloana „Persoane”.",
+              "en": "In the „Acte” list, in the „Persoane” column."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "În „Obiectul vânzării”, la „[Descriere]”.",
+              "en": "In „Obiectul vânzării”, at „[Descriere]”."
+            }
+          ]
+        },
+        {
+          "id": "b7",
+          "section": "documents-parties",
+          "ro": {
+            "question": "Vânzătorul dintr-un contract este o firmă, iar actul îl semnează pentru ea Ion Vasilescu, ca mandatar. Cum îi trece Ciprian pe contract?",
+            "explanation": "Rolul spune în ce calitate apare persoana în act. Firma vinde, deci are rolul „Vânzător”; Ion Vasilescu apare ca mandatar, deci are rolul „Reprezentant legal / Mandatar”, oferit la contractul de vânzare."
+          },
+          "en": {
+            "question": "The seller in a contract is a firm, and Ion Vasilescu signs the deed for it, as its agent. How does Ciprian record them on the contract?",
+            "explanation": "The role says in what capacity the person appears in the document. The firm sells, so it has the role „Vânzător”; Ion Vasilescu appears as agent, so he has the role „Reprezentant legal / Mandatar”, which the sale contract offers."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Firma ca „Vânzător”, Ion Vasilescu ca „Reprezentant legal / Mandatar”.",
+              "en": "The firm as „Vânzător”, Ion Vasilescu as „Reprezentant legal / Mandatar”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Doar pe Ion Vasilescu, ca „Vânzător”, pentru că el semnează actul.",
+              "en": "Only Ion Vasilescu, as „Vânzător”, because he signs the deed."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Firma ca „Reprezentant legal / Mandatar”, Ion Vasilescu ca „Vânzător”.",
+              "en": "The firm as „Reprezentant legal / Mandatar”, Ion Vasilescu as „Vânzător”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Doar firma, ca „Vânzător”, cu numele mandatarului în „Etichetă scurtă”.",
+              "en": "Only the firm, as „Vânzător”, with the agent's name in „Etichetă scurtă”."
+            }
+          ]
+        },
+        {
+          "id": "b8",
+          "section": "documents-example-sale",
+          "ro": {
+            "question": "Ciprian a salvat un contract nou pentru un teren din Bragadiru, cu paginile și identificarea completate; terenul e deja în arhivă. În ce ordine continuă?",
+            "explanation": "După salvare, bifați „Părți” și asociați vânzătorul și cumpărătorul cu rolul și cota lor; apoi, pe „Legături”, asociați terenul, iar în „Obiectul vânzării” apăsați „Recompune” și „Salvează”."
+          },
+          "en": {
+            "question": "Ciprian has saved a new contract for a plot in Bragadiru, with its pages and identification filled in; the plot is already in the archive. In what order does he go on?",
+            "explanation": "After saving, tick „Părți” and associate the seller and the buyer with their role and share; then, on „Legături”, associate the plot, and in „Obiectul vânzării” press „Recompune” and „Salvează”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Recompune” întâi, apoi leagă terenul pe „Legături”, apoi părțile în „Părți”.",
+              "en": "„Recompune” first, then link the plot on „Legături”, then the parties in „Părți”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Părțile și terenul în „Părți”, apoi scrie descrierea de mână.",
+              "en": "The parties and the plot in „Părți”, then write the description by hand."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Terenul în „Obiectul vânzării”, scris de mână; „Legături” nu e nevoie.",
+              "en": "The plot in „Obiectul vânzării”, by hand; „Legături” is not needed."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Părțile în „Părți”, cu rol și cotă; terenul pe „Legături”; apoi „Recompune” și „Salvează”.",
+              "en": "The parties in „Părți”, with role and share; the plot on „Legături”; then „Recompune” and „Salvează”."
+            }
+          ]
+        },
+        {
+          "id": "b9",
+          "section": "documents-sale",
+          "ro": {
+            "question": "Contractul arată prețul și spune că s-a plătit în două tranșe. În ce fișă lucrează Ciprian?",
+            "explanation": "Fișa „Preț și plată” are panourile „[Preț]” și „[Plată]”."
+          },
+          "en": {
+            "question": "The contract shows the price and says it was paid in two instalments. On which tile does Ciprian work?",
+            "explanation": "The „Preț și plată” (price and payment) tile has the panels „[Preț]” and „[Plată]”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Taxe și cheltuieli”, la „[Cheltuieli]”.",
+              "en": "„Taxe și cheltuieli”, in „[Cheltuieli]”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Obiectul vânzării”, la „[Scop și predare]”.",
+              "en": "„Obiectul vânzării”, in „[Scop și predare]”."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "„Preț și plată”, la „[Preț]” și „[Plată]”.",
+              "en": "„Preț și plată”, in „[Preț]” and „[Plată]”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Declarații și garanții”, la „[Garanții]”.",
+              "en": "„Declarații și garanții”, in „[Garanții]”."
+            }
+          ]
+        },
+        {
+          "id": "b10",
+          "section": "documents-sale",
+          "ro": {
+            "question": "Ciprian arhivează un duplicat al contractului, nu exemplarul original, și vrea să rămână scris asta. Unde notează?",
+            "explanation": "La contractul de vânzare-cumpărare, „Identificarea actului” ține, pe lângă numele notariale, „Calitate exemplar”, „Exemplare emise”, „Temei autentificare” și „Data conținutului”."
+          },
+          "en": {
+            "question": "Ciprian is filing a duplicate of the contract, not the original copy, and wants this recorded. Where does he note it?",
+            "explanation": "On the sale contract, „Identificarea actului” holds, besides the notarial names, „Calitate exemplar” (copy status), „Exemplare emise”, „Temei autentificare” and „Data conținutului”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "În „Clasificare”, la „Proveniență”.",
+              "en": "In „Clasificare”, under „Proveniență” (provenance)."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "În „Declarații și garanții”, la „[Declarații legale]”.",
+              "en": "In „Declarații și garanții”, in „[Declarații legale]”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În „Carte funciară”, la „[Situația în cartea funciară]”.",
+              "en": "In „Carte funciară”, in „[Situația în cartea funciară]”."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "În „Identificarea actului”, la „Calitate exemplar”.",
+              "en": "In „Identificarea actului”, under „Calitate exemplar”."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

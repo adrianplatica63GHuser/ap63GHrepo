@@ -1,0 +1,922 @@
+{
+  "skill": "documents-chain-of-title",
+  "manual": [
+    "links-references-documents",
+    "documents-dependent-addendum",
+    "documents-dependent-inheritance",
+    "documents-parties",
+    "links-example-title"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "links-related",
+          "ro": {
+            "question": "Ciprian trebuie să afle prin ce acte a trecut „Teren Bragadiru” de la un proprietar la altul. De unde pornește?",
+            "explanation": "Pe ecranul proprietății, fișa „Legături” strânge tot ce e legat de ea, actele printre ele: fiecare act cu eticheta scurtă și, în paranteză, tipul lui."
+          },
+          "en": {
+            "question": "Ciprian has to find out through which documents „Teren Bragadiru” passed from one owner to the next. Where does he start?",
+            "explanation": "On the property's screen, the „Legături” tile gathers everything linked to it, the documents among them: each document with its short label and, in brackets, its type."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Din „N versiuni” al terenului, unde fiecare versiune salvată arată proprietarul de atunci al terenului.",
+              "en": "From the land's „N versiuni”, where each saved version shows the land's owner at that time."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Din „Legături” al terenului, unde stau actele, cu tipul lor în paranteză.",
+              "en": "From the land's „Legături”, where the documents are, with their type in brackets."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Din „Clasificare” → „Istoric” al terenului, unde stau proprietarii.",
+              "en": "From the land's „Clasificare” → „Istoric”, where the owners are."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Din „Activitate recentă”, pe tabloul de bord.",
+              "en": "From „Activitate recentă” (recent activity), on the dashboard."
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "documents-identification",
+          "ro": {
+            "question": "Pe „Legături” al terenului sunt un „Contract de Vânzare” și un „Certificat de Moștenitor”. Ca să le pună în ordine, de la cel mai vechi, ce dată citește Ciprian pe fiecare?",
+            "explanation": "Numele câmpurilor din „Identificarea actului” depind de tip: la contractul de vânzare data este „Data autentificării”, la certificatul de moștenitor „Data eliberării”."
+          },
+          "en": {
+            "question": "On the land's „Legături” there are a „Contract de Vânzare” and a „Certificat de Moștenitor”. To put them in order, oldest first, which date does Ciprian read on each?",
+            "explanation": "The names of the fields in „Identificarea actului” depend on the type: on the sale contract the date is „Data autentificării” (date of authentication), on the certificate of inheritance „Data eliberării” (date of issue)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Adăugat la” pe amândouă, din lista „Acte”.",
+              "en": "„Adăugat la” (added on) on both, from the „Acte” list."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Data versiunii „v 0” a fiecărui act.",
+              "en": "The date of each document's version „v 0”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Data eliberării” pe amândouă, în „Identificarea actului”, pentru că ambele acte sunt eliberate de notar.",
+              "en": "„Data eliberării” on both, in „Identificarea actului”, because both documents are issued by the notary."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "„Data autentificării” pe contract și „Data eliberării” pe certificat.",
+              "en": "„Data autentificării” on the contract and „Data eliberării” on the certificate."
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "links-example-title",
+          "ro": {
+            "question": "În 2015, Maria și Andrei Ionescu au vândut terenul moștenit de la tatăl lor. Contractul și certificatul de moștenitor sunt în arhivă, dar nelegate. Ce face Ciprian ca lanțul să se vadă din ambele acte?",
+            "explanation": "Deschideți certificatul, pe „Legături” apăsați „Asociază act”, bifați contractul, alegeți „Titlu anterior al” și apăsați „Asociază selecția”. O asociere se face o singură dată și se vede din ambele capete."
+          },
+          "en": {
+            "question": "In 2015 Maria and Andrei Ionescu sold the land they had inherited from their father. The contract and the certificate of inheritance are in the archive but not linked. What does Ciprian do so that the chain shows from both documents?",
+            "explanation": "Open the certificate, press „Asociază act” on „Legături”, tick the contract, choose „Titlu anterior al” and press „Asociază selecția”. An association is made once and shows from both ends."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "De pe certificat, „Asociază act” cu contractul bifat și „Titlu anterior al”.",
+              "en": "From the certificate, „Asociază act” with the contract ticked and „Titlu anterior al”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "De pe contract, „Asociază act” cu certificatul bifat și „Titlu anterior al”.",
+              "en": "From the contract, „Asociază act” with the certificate ticked and „Titlu anterior al”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Leagă actele din ambele capete, pe rând, ca legătura să apară pe amândouă.",
+              "en": "He links the documents from both ends, in turn, so the link appears on both."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "De pe certificat, „Asociază act” cu contractul bifat și „Înlocuiește”.",
+              "en": "From the certificate, „Asociază act” with the contract ticked and „Înlocuiește” (replaces)."
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "links-references-documents",
+          "ro": {
+            "question": "Legătura „Titlu anterior al” s-a făcut de pe certificat. Ciprian deschide contractul și apasă „Relația” pe rândul certificatului. Ce trebuie să citească?",
+            "explanation": "Pe contract, aceeași legătură se citește din celălalt capăt: certificatul, „Titlu anterior al”, „acest document”."
+          },
+          "en": {
+            "question": "The „Titlu anterior al” link was made from the certificate. Ciprian opens the contract and presses „Relația” on the certificate's row. What should he read?",
+            "explanation": "On the contract the same link is read from the other end: the certificate, „Titlu anterior al”, „acest document” (this document)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„acest document „Titlu anterior al”” urmat de certificat.",
+              "en": "„acest document „Titlu anterior al”” followed by the certificate."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Certificatul, „Titlu anterior al”, „acest document”.",
+              "en": "The certificate, „Titlu anterior al”, „acest document”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Rol: „Moștenitor”, rolul vânzătorilor în certificat.",
+              "en": "Rol: „Moștenitor”, the sellers' role in the certificate."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nimic: legătura se vede doar pe certificat, unde s-a făcut.",
+              "en": "Nothing: the link shows only on the certificate, where it was made."
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "links-references-documents",
+          "ro": {
+            "question": "Un coleg a făcut legătura de pe contract, cu certificatul bifat și „Titlu anterior al”. Acum contractul apare ca titlu anterior al certificatului. Cum repară Ciprian?",
+            "explanation": "Dacă propoziția nu spune ce scrie în acte, legătura se face de pe celălalt act. „Dezasociază” scoate legătura greșită din ambele capete, apoi o faceți de pe certificat."
+          },
+          "en": {
+            "question": "A colleague made the link from the contract, with the certificate ticked and „Titlu anterior al”. Now the contract shows as the earlier title of the certificate. How does Ciprian put it right?",
+            "explanation": "If the sentence does not say what the deeds say, the link is made from the other document. „Dezasociază” removes the wrong link from both ends; then you make it from the certificate."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "O lasă așa: aplicația citește legătura corect din ambele capete, oricare ar fi actul de pe care a făcut-o.",
+              "en": "He leaves it: the application reads the link correctly from both ends, whichever document he made it from."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Deschide „Relația” și întoarce sensul propoziției din bulă.",
+              "en": "He opens „Relația” and turns round the sentence in the bubble."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "„Dezasociază” rândul certificatului, apoi reface legătura de pe certificat.",
+              "en": "„Dezasociază” on the certificate's row, then makes the link again from the certificate."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Mai face o legătură, de pe certificat, și le păstrează pe amândouă.",
+              "en": "He makes another link, from the certificate, and keeps both."
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "documents-dependent-inheritance",
+          "ro": {
+            "question": "Certificatul din 2009 spune că Maria și Andrei moștenesc de la Gheorghe Ionescu câte jumătate din teren. Ce trebuie să arate „Legături” al certificatului ca lanțul să aibă cotele?",
+            "explanation": "Pe „Legături”, moștenitorii au „Cotă”, iar defunctul nu: Maria și Andrei au fiecare cota 1/2, iar Gheorghe, „Defunct”, rămâne fără cotă."
+          },
+          "en": {
+            "question": "The 2009 certificate says Maria and Andrei each inherit half the land from Gheorghe Ionescu. What should the certificate's „Legături” show for the chain to have the shares?",
+            "explanation": "On „Legături” the heirs have „Cotă” and the deceased does not: Maria and Andrei each have the share 1/2, and Gheorghe, „Defunct”, stays without a share."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Cotă” 100% la Gheorghe și câte 50% la Maria și la Andrei.",
+              "en": "„Cotă” 100% on Gheorghe and 50% each on Maria and Andrei."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Câte 1/2 scris în tabelul „Părți”, lângă „Rol”.",
+              "en": "1/2 each typed in the „Părți” table, beside „Rol”."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "„Cotă” 1/2 la Maria și la Andrei; Gheorghe, „Defunct”, fără cotă.",
+              "en": "„Cotă” 1/2 on Maria and on Andrei; Gheorghe, „Defunct”, with no share."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Cotă” la Gheorghe, cu „Mod de deținere” „indiviziune”, pe care moștenitorii o împart apoi între ei.",
+              "en": "„Cotă” on Gheorghe, with „Mod de deținere” „indiviziune”, which the heirs then share out between themselves."
+            }
+          ]
+        },
+        {
+          "id": "a7",
+          "section": "documents-parties",
+          "ro": {
+            "question": "Pe un contract vechi, Ciprian scrie cotele vânzătorilor exact cum apar în act, iar aplicația spune „Cotele pentru „Vânzător” însumează 75%, nu 100%. Actul se salvează oricum — verificați ce scrie în act.” Ce face?",
+            "explanation": "Arhiva înregistrează ce scrie în act, chiar dacă cotele nu se adună: după ce a verificat actul, Ciprian lasă cotele cum sunt."
+          },
+          "en": {
+            "question": "On an old contract, Ciprian types the sellers' shares exactly as the deed gives them, and the application says „Cotele pentru „Vânzător” însumează 75%, nu 100%. Actul se salvează oricum — verificați ce scrie în act.” (the sellers' shares add up to 75%, not 100%; the document is saved anyway — check what the deed says). What does he do?",
+            "explanation": "The archive records what the deed says, even when the shares do not add up: having checked the deed, Ciprian leaves the shares as they are."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Mărește una dintre cote până când totalul dă 100%.",
+              "en": "He raises one of the shares until the total is 100%."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Verifică actul și, dacă acolo scrie așa, lasă cotele cum sunt.",
+              "en": "He checks the deed and, if that is what it says, leaves the shares as they are."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Nu salvează actul până când suma nu dă 100%, pentru că aplicația oricum l-ar refuza.",
+              "en": "He does not save the document until the sum is 100%, since the application would refuse it anyway."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Adaugă un vânzător inventat, cu restul de 25%.",
+              "en": "He adds an invented seller, with the remaining 25%."
+            }
+          ]
+        },
+        {
+          "id": "a8",
+          "section": "documents-dependent-addendum",
+          "ro": {
+            "question": "Pe „Legături” al terenului apare și un act adițional din 2016. Ciprian vrea să știe ce contract modifică și să-l deschidă. Unde se uită?",
+            "explanation": "Fișa „Actul modificat” a actului adițional arată actul legat, tipul lui și „Deschide”."
+          },
+          "en": {
+            "question": "On the land's „Legături” there is also a 2016 addendum. Ciprian wants to know which contract it amends and to open it. Where does he look?",
+            "explanation": "The addendum's „Actul modificat” tile shows the linked document, its type and „Deschide” (open)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "În „Ce modifică”, unde stă numărul contractului.",
+              "en": "In „Ce modifică”, where the contract's number is."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "În „Părți” al actului adițional, la vânzători.",
+              "en": "In the addendum's „Părți”, under the sellers."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În „Relația” de pe teren, care arată contractul modificat.",
+              "en": "In „Relația” on the land, which shows the amended contract."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "În „Actul modificat”, care arată contractul, tipul lui și „Deschide”.",
+              "en": "In „Actul modificat”, which shows the contract, its type and „Deschide”."
+            }
+          ]
+        },
+        {
+          "id": "a9",
+          "section": "documents-dependent-addendum",
+          "ro": {
+            "question": "Actul adițional din 2016 schimbă suprafața parcelei vândute. Ciprian trebuie să știe dacă s-a schimbat și prețul din contract. Unde citește?",
+            "explanation": "Fișa „Ce modifică” a actului adițional ține „Motiv completare”, „Efect urmărit”, „Preț neschimbat” și clauzele schimbate."
+          },
+          "en": {
+            "question": "The 2016 addendum changes the area of the parcel sold. Ciprian needs to know whether the contract's price changed too. Where does he read it?",
+            "explanation": "The addendum's „Ce modifică” tile holds „Motiv completare”, „Efect urmărit”, „Preț neschimbat” (price unchanged) and the clauses changed."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "În „Ce modifică” al actului adițional, la „Preț neschimbat” și la clauze.",
+              "en": "In the addendum's „Ce modifică”, under „Preț neschimbat” and the clauses."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "În „Preț și plată” al contractului, care se schimbă singur.",
+              "en": "In the contract's „Preț și plată”, which changes by itself."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În „Identificarea actului” al actului adițional, la „Onorariu notarial”, lângă numărul actului.",
+              "en": "In the addendum's „Identificarea actului”, under „Onorariu notarial”, beside the document's number."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "În „Obiectul vânzării” al contractului, după „Recompune”.",
+              "en": "In the contract's „Obiectul vânzării”, after „Recompune”."
+            }
+          ]
+        },
+        {
+          "id": "a10",
+          "section": "links-references-properties",
+          "ro": {
+            "question": "„Teren Bragadiru” este o parcelă inclusă într-un teren mai mare, iar contractul din 1999 este legat doar de terenul mare. Cum ajunge Ciprian la contract pornind de la parcelă?",
+            "explanation": "Pe parcelă, „Legături” are terenul mare, iar „Relația” arată „această proprietate „Inclus în”” urmat de el. Deschideți terenul mare și citiți-i actele pe „Legături”."
+          },
+          "en": {
+            "question": "„Teren Bragadiru” is a parcel included in a larger plot, and the 1999 contract is linked only to the larger plot. How does Ciprian reach the contract starting from the parcel?",
+            "explanation": "On the parcel, „Legături” has the larger plot, and „Relația” shows „această proprietate „Inclus în”” (this property is included in) followed by it. Open the larger plot and read its documents on „Legături”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Apasă „Înscrisuri citate” pe „Legături” al parcelei.",
+              "en": "He presses „Înscrisuri citate” on the parcel's „Legături”."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Deschide terenul mare, „Inclus în”, din „Legături” al parcelei, și îi citește actele.",
+              "en": "He opens the larger plot, „Inclus în”, from the parcel's „Legături”, and reads its documents."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Caută în „Clasificare” → „Istoric” al parcelei.",
+              "en": "He looks in the parcel's „Clasificare” → „Istoric”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Apasă „N versiuni” pe parcelă și merge înapoi, versiune cu versiune, până la cea din 1999.",
+              "en": "He presses „N versiuni” on the parcel and goes back, version by version, to the one from 1999."
+            }
+          ]
+        },
+        {
+          "id": "a11",
+          "section": "links-references-documents",
+          "ro": {
+            "question": "Contractul din 1999 citează un act de vânzare din 1970, care nu este în arhivă și nici nu e scanat. Ciprian vrea totuși ca lanțul să aibă un loc pentru el. Ce apasă în „Verifică înscrisurile citate”?",
+            "explanation": "„Creează schiță” face un act nou, fără pagini, care ține locul înscrisului; „Lasă” l-ar lăsa nelegat."
+          },
+          "en": {
+            "question": "The 1999 contract cites a 1970 sale deed that is not in the archive and has not been scanned. Ciprian still wants the chain to have a place for it. What does he press in „Verifică înscrisurile citate”?",
+            "explanation": "„Creează schiță” (create a draft) makes a new document, with no pages, that stands in for the deed; „Lasă” (leave) would leave it unlinked."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Lasă”, care îl păstrează ca act fără pagini.",
+              "en": "„Lasă”, which keeps it as a document with no pages."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Leagă”, pe actul cel mai apropiat dintre cele propuse.",
+              "en": "„Leagă”, on the closest of the documents offered."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "„Creează schiță”, care face în locul lui un act fără pagini.",
+              "en": "„Creează schiță”, which makes a document with no pages in its place."
+            }
+          ]
+        },
+        {
+          "id": "a12",
+          "section": "start-preview",
+          "ro": {
+            "question": "Pe contractul din 2015, Ciprian vrea să compare cotele vânzătorilor cu cele din certificat, fără să plece de pe contract. Ce face?",
+            "explanation": "„Previzualizare”, pe rândul certificatului din „Legături”, îl deschide alături, fără să plecați de pe ecranul pe care lucrați."
+          },
+          "en": {
+            "question": "On the 2015 contract, Ciprian wants to compare the sellers' shares with those in the certificate without leaving the contract. What does he do?",
+            "explanation": "„Previzualizare” (preview), on the certificate's row in „Legături”, opens it alongside, without leaving the screen you are working on."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Apasă „Vizualizare” pe rândul certificatului; contractul rămâne alături.",
+              "en": "He presses „Vizualizare” on the certificate's row; the contract stays alongside."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Apasă „Relația”, care arată și cotele moștenitorilor.",
+              "en": "He presses „Relația”, which also shows the heirs' shares."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Apasă „Previzualizare” pe rândul certificatului din „Legături”.",
+              "en": "He presses „Previzualizare” on the certificate's row in „Legături”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Deschide „Înscrisuri citate”, unde apar cotele din certificat.",
+              "en": "He opens „Înscrisuri citate”, where the certificate's shares appear."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "links-related",
+          "ro": {
+            "question": "Ciprian pornește de la Maria Ionescu. Pe „Legături” al ei apar certificatul din 2009 și contractul din 2015. Cum află în ce calitate apare ea în fiecare act?",
+            "explanation": "Pe „Legături”, un act se citește cu eticheta scurtă și tipul în paranteză; „Relația”, pe rândul lui, arată rolul persoanei în act, de pildă Rol: „Vânzător”."
+          },
+          "en": {
+            "question": "Ciprian starts from Maria Ionescu. On her „Legături” are the 2009 certificate and the 2015 contract. How does he find out in what capacity she appears in each document?",
+            "explanation": "On „Legături” a document reads as its short label with the type in brackets; „Relația”, on its row, shows the person's role in the document, for instance Rol: „Vânzător”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Din paranteza de pe rândul actului, care arată rolul ei.",
+              "en": "From the brackets on the document's row, which show her role."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Din „Arbore de moștenire”, care arată actele fiecărei rude și rolul ei în fiecare.",
+              "en": "From „Arbore de moștenire”, which shows each relative's documents and her role in each."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Din „Clasificare”, la „Relevanță”.",
+              "en": "From „Clasificare”, under „Relevanță”."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Apasă „Relația” pe rândul fiecărui act, care arată rolul ei.",
+              "en": "He presses „Relația” on each document's row, which shows her role."
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "documents-list",
+          "ro": {
+            "question": "Ciprian vrea să vadă toate contractele de vânzare-cumpărare din arhivă, cu data și proprietățile lor, ca să le pună în ordine. Cum își pregătește lista „Acte”?",
+            "explanation": "La „Tip document:” bifați doar „Contract de Vânzare”; „Câmpuri afișate” adaugă coloanele „Data” și „Proprietăți”."
+          },
+          "en": {
+            "question": "Ciprian wants to see all the sale contracts in the archive, with their date and properties, to put them in order. How does he set up the „Acte” list?",
+            "explanation": "Under „Tip document:” tick only „Contract de Vânzare”; „Câmpuri afișate” adds the columns „Data” and „Proprietăți”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Bifează doar „Contract de Vânzare” și adaugă „Data” și „Proprietăți”.",
+              "en": "He ticks only „Contract de Vânzare” and adds „Data” and „Proprietăți”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Scrie „CVC” în caseta de căutare și adaugă „Adăugat la”.",
+              "en": "He types „CVC” in the search box and adds „Adăugat la”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Alege „Stare plată” la „Câmp specific:”, cu toate tipurile bifate, și sortează după ea.",
+              "en": "He chooses „Stare plată” under „Câmp specific:”, with every type ticked, and sorts by it."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Lasă „Toate tipurile” și adaugă „Subiect” și „Nr. pagini”.",
+              "en": "He leaves „Toate tipurile” and adds „Subiect” and „Nr. pagini”."
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "documents-sale",
+          "ro": {
+            "question": "Ciprian deschide contractul din 2015 ca să vadă cine a vândut, cine a cumpărat și cu ce cote. Pe „Legături” găsește doar notarul și terenul. Unde sunt vânzătorii și cumpărătorul?",
+            "explanation": "Pe un contract de vânzare-cumpărare, vânzătorii și cumpărătorii stau în fișa „Părți”, grupați pe rol, fiecare cu „Cotă” lui; fișa nu se vede de la început, așa că bifați-o."
+          },
+          "en": {
+            "question": "Ciprian opens the 2015 contract to see who sold, who bought and with what shares. On „Legături” he finds only the notary and the land. Where are the sellers and the buyer?",
+            "explanation": "On a sale contract, the sellers and the buyers sit on the „Părți” tile, grouped by role, each with their „Cotă”; the tile is not shown at first, so tick it."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Nu au fost asociați; trebuie asociați din nou pe „Legături”.",
+              "en": "They were never associated; they must be associated again on „Legături”."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "În fișa „Părți”, care trebuie bifată, grupați pe rol, cu „Cotă”.",
+              "en": "On the „Părți” tile, which must be ticked, grouped by role, with „Cotă”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În „Obiectul vânzării”, la „Descrierea obiectului”.",
+              "en": "In „Obiectul vânzării”, under „Descrierea obiectului”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "În „Declarații și garanții”, la „[Declarațiile vânzătorului]”, unde notarul îi enumeră.",
+              "en": "In „Declarații și garanții”, under „[Declarațiile vânzătorului]”, where the notary lists them."
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "documents-parties",
+          "ro": {
+            "question": "Pe certificat, „Cotă” lui Andrei are contur portocaliu, iar „Cotă” Mariei este plin portocaliu. Ce înțelege Ciprian?",
+            "explanation": "Un „Cotă” plin portocaliu este încă gol; cu contur portocaliu are valori. Cota Mariei nu a fost scrisă."
+          },
+          "en": {
+            "question": "On the certificate, Andrei's „Cotă” has an orange outline and Maria's „Cotă” is solid orange. What does Ciprian understand?",
+            "explanation": "A solid orange „Cotă” is still empty; an orange outline means it holds values. Maria's share has not been typed in."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Cota Mariei este mai mare decât a lui Andrei.",
+              "en": "Maria's share is larger than Andrei's."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Cota lui Andrei nu a fost scrisă încă.",
+              "en": "Andrei's share has not been typed in yet."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Cota Mariei nu a fost scrisă; a lui Andrei are valori.",
+              "en": "Maria's share has not been typed in; Andrei's holds values."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Cota Mariei a fost scrisă, dar nu s-a salvat.",
+              "en": "Maria's share was typed in but not saved."
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "links-references-documents",
+          "ro": {
+            "question": "Ciprian este pe contractul din 2015, în „Asociază Document”, cu certificatul bifat. Vrea să arate că dreptul vânzătorilor vine din certificat. Ce face?",
+            "explanation": "Legătura se citește ca o propoziție care începe cu actul pe care vă aflați; de aici, „Titlu anterior al” ar spune că contractul este titlul certificatului. Dacă propoziția nu spune ce scrie în acte, faceți legătura de pe celălalt act."
+          },
+          "en": {
+            "question": "Ciprian is on the 2015 contract, in „Asociază Document”, with the certificate ticked. He wants to show that the sellers' right comes from the certificate. What does he do?",
+            "explanation": "The link reads as a sentence that starts with the document you are on; from here, „Titlu anterior al” would say the contract is the certificate's title. If the sentence does not say what the deeds say, make the link from the other document."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Alege „Titlu anterior al” și „Asociază selecția”; sensul nu contează.",
+              "en": "He chooses „Titlu anterior al” and „Asociază selecția”; the direction does not matter."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Alege „Act adițional la”, care spune că certificatul completează contractul.",
+              "en": "He chooses „Act adițional la” (addendum to), which says the certificate completes the contract."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Apasă „Anulează” și face legătura de pe certificat, cu „Titlu anterior al”.",
+              "en": "He presses „Anulează” and makes the link from the certificate, with „Titlu anterior al”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Alege „Înlocuiește”, pentru că certificatul vine înaintea contractului.",
+              "en": "He chooses „Înlocuiește” (replaces), because the certificate comes before the contract."
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "links-associate-remove",
+          "ro": {
+            "question": "Ciprian a legat din greșeală certificatul de alt contract decât cel bun și scoate legătura cu „Dezasociază”. Ce se întâmplă?",
+            "explanation": "Legătura dispare din ambele capete, fără nicio întrebare; cele două înregistrări rămân în arhivă, neatinse."
+          },
+          "en": {
+            "question": "Ciprian has by mistake linked the certificate to the wrong contract and removes the link with „Dezasociază”. What happens?",
+            "explanation": "The link disappears from both ends, without any question; the two records stay in the archive, untouched."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Aplicația întreabă întâi și apoi șterge contractul greșit.",
+              "en": "The application asks first and then deletes the wrong contract."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Legătura dispare din ambele capete; cele două acte rămân neatinse.",
+              "en": "The link disappears from both ends; the two documents stay untouched."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Legătura dispare doar de pe certificat; pe contract rămâne.",
+              "en": "The link disappears only from the certificate; it stays on the contract."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Legătura dispare abia după „Salvează” pe certificat.",
+              "en": "The link disappears only after „Salvează” on the certificate."
+            }
+          ]
+        },
+        {
+          "id": "b7",
+          "section": "documents-dependent-addendum",
+          "ro": {
+            "question": "Urmărind titlul, Ciprian găsește un act adițional pe a cărui fișă „Actul modificat” scrie „Actul modificat nu e în arhivă — datele lui, așa cum le dă actul adițional:”. Ce află de aici?",
+            "explanation": "Contractul modificat nu este în arhivă; fișa arată datele lui așa cum le dă actul adițional, în patru câmpuri, întâi „Nr. act părinte”."
+          },
+          "en": {
+            "question": "Tracing the title, Ciprian finds an addendum whose „Actul modificat” tile reads „Actul modificat nu e în arhivă — datele lui, așa cum le dă actul adițional:”. What does he learn from it?",
+            "explanation": "The amended contract is not in the archive; the tile shows its details as the addendum gives them, in four fields, „Nr. act părinte” (parent deed number) first."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Contractul a fost șters și se poate aduce înapoi cu „Fă curentă”.",
+              "en": "The contract was deleted and can be brought back with „Fă curentă”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Actul adițional nu este încă salvat, deci nu se poate lega.",
+              "en": "The addendum is not saved yet, so it cannot be linked."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Contractul lipsește din arhivă; datele lui stau în câmpuri, întâi „Nr. act părinte”.",
+              "en": "The contract is missing from the archive; its details are in fields, „Nr. act părinte” first."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Contractul este în arhivă, dar e legat deja de alt act adițional, iar un contract nu poate avea două.",
+              "en": "The contract is in the archive but is already linked to another addendum, and a contract cannot have two."
+            }
+          ]
+        },
+        {
+          "id": "b8",
+          "section": "links-references-documents",
+          "ro": {
+            "question": "Un contract vechi, adus cu importul, citează o încheiere de intabulare din 1985. „Verifică înscrisurile citate” propune un act din arhivă cu alt număr și altă dată, iar Ciprian nu are nevoie de ea în lanț. Ce apasă?",
+            "explanation": "„Lasă” lasă înscrisul nelegat. Cele mai multe înscrisuri citate de un act vechi nu sunt în arhivă, așa că „Lasă” este adesea răspunsul potrivit."
+          },
+          "en": {
+            "question": "An old contract, brought in by the import, cites a 1985 land-registry entry („încheiere de intabulare”). „Verifică înscrisurile citate” offers a document from the archive with a different number and date, and Ciprian does not need it in the chain. What does he press?",
+            "explanation": "„Lasă” (leave) leaves the deed unlinked. Most deeds cited by an old document are not in the archive, so „Lasă” is often the right answer."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Leagă”, ca înscrisul să nu rămână fără act.",
+              "en": "„Leagă”, so that the deed is not left without a document."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "„Lasă”, ca înscrisul să rămână nelegat.",
+              "en": "„Lasă”, so that the deed stays unlinked."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Creează schiță”, ca să nu rămână nimic nelegat.",
+              "en": "„Creează schiță”, so that nothing is left unlinked."
+            }
+          ]
+        },
+        {
+          "id": "b9",
+          "section": "documents-parties",
+          "ro": {
+            "question": "În contractul din 2015, Ion Popescu și soția lui, Ana Popescu, cumpără terenul în devălmășie. Unde notează Ciprian felul în care îl dețin?",
+            "explanation": "Panoul „Cotă” al fiecărui cumpărător are „Mod de deținere”, cu valorile „în nume propriu”, „devălmășie”, „indiviziune” sau „prin mandatar”."
+          },
+          "en": {
+            "question": "In the 2015 contract, Ion Popescu and his wife, Ana Popescu, buy the land in joint ownership („devălmășie”). Where does Ciprian record how they hold it?",
+            "explanation": "Each buyer's „Cotă” panel has „Mod de deținere” (manner of holding), with the values „în nume propriu”, „devălmășie”, „indiviziune” or „prin mandatar”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Ca etichetă „devălmășie”, în „Etichete și grupuri”.",
+              "en": "As the tag „devălmășie”, in „Etichete și grupuri”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "În „Note extinse” ale contractului.",
+              "en": "In the contract's „Note extinse”."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "În panoul „Cotă” al fiecăruia, la „Mod de deținere”.",
+              "en": "In each one's „Cotă” panel, under „Mod de deținere”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "În „Clasificare”, la „Relevanță”.",
+              "en": "In „Clasificare”, under „Relevanță”."
+            }
+          ]
+        },
+        {
+          "id": "b10",
+          "section": "persons-example-death",
+          "ro": {
+            "question": "Din certificatul din 2009, Ciprian află data la care a murit Gheorghe Ionescu, care este deja în arhivă. Pe lângă rolul „Defunct” pe certificat, ce face pe ecranul lui ca arhiva să noteze decesul?",
+            "explanation": "Pe ecranul persoanei, în „Identitate”, bifați „Decedat” și scrieți „Data decesului”, apoi „Salvează”; în listă apare „†” după nume."
+          },
+          "en": {
+            "question": "From the 2009 certificate, Ciprian learns the date on which Gheorghe Ionescu died; he is already in the archive. Besides the role „Defunct” on the certificate, what does he do on his screen so that the archive records the death?",
+            "explanation": "On the person's screen, in „Identitate”, tick „Decedat” (deceased) and type „Data decesului” (date of death), then „Salvează”; in the list „†” appears after the name."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "În „Identitate” bifează „Decedat”, scrie „Data decesului” și salvează.",
+              "en": "In „Identitate” he ticks „Decedat”, types „Data decesului” and saves."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Nimic: rolul „Defunct” bifează singur „Decedat” pe ecranul lui.",
+              "en": "Nothing: the role „Defunct” ticks „Decedat” on his screen by itself."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Scrie data decesului în „Note extinse” ale certificatului.",
+              "en": "He types the date of death in the certificate's „Note extinse”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Îi schimbă „Relevanță” în „Istoric”, în „Clasificare”.",
+              "en": "He changes his „Relevanță” to „Istoric”, in „Clasificare”."
+            }
+          ]
+        },
+        {
+          "id": "b11",
+          "section": "documents-parties",
+          "ro": {
+            "question": "Pe contractul din 2015 sunt doi cumpărători. Ciprian vrea să verifice dintr-o privire că, împreună, cumpără tot terenul. Unde se uită?",
+            "explanation": "Sub rânduri, aplicația adună cotele pe fiecare rol, de exemplu „Total Cumpărător: 100%”, și spune când suma nu dă 100%."
+          },
+          "en": {
+            "question": "The 2015 contract has two buyers. Ciprian wants to check at a glance that, together, they buy the whole land. Where does he look?",
+            "explanation": "Under the rows, the application adds up the shares per role, for instance „Total Cumpărător: 100%”, and says when the sum is not 100%."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "În „Obiectul vânzării”, la „Descrierea obiectului”.",
+              "en": "In „Obiectul vânzării”, under „Descrierea obiectului”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "În „Preț și plată”, la „[Plată]”.",
+              "en": "In „Preț și plată”, under „[Plată]”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Pe ecranul terenului, la „Suprafață oficială (m²)”, care se împarte după cotele părților.",
+              "en": "On the land's screen, under „Suprafață oficială (m²)”, which is divided by the parties' shares."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Sub rânduri, la totalul pe rol, de pildă „Total Cumpărător: 100%”.",
+              "en": "Under the rows, at the total per role, for instance „Total Cumpărător: 100%”."
+            }
+          ]
+        },
+        {
+          "id": "b12",
+          "section": "start-preview",
+          "ro": {
+            "question": "Ciprian are deschis contractul din 2015 și vrea alături, în același timp, certificatul din 2009 și actul adițional din 2016. Se poate?",
+            "explanation": "Se deschid cel mult două previzualizări odată, alături de ecranul pe care lucrați: certificatul și actul adițional încap amândouă lângă contract."
+          },
+          "en": {
+            "question": "Ciprian has the 2015 contract open and wants beside it, at the same time, the 2009 certificate and the 2016 addendum. Can he?",
+            "explanation": "At most two previews open at a time, beside the screen you are working on: the certificate and the addendum both fit beside the contract."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Nu: se deschide o singură previzualizare odată.",
+              "en": "No: only one preview opens at a time."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Da: se deschid cel mult două previzualizări, deci încap amândouă.",
+              "en": "Yes: at most two previews open, so both fit."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Da, dar numai după ce salvează contractul.",
+              "en": "Yes, but only after he saves the contract."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nu: actele se previzualizează doar din lista „Acte”.",
+              "en": "No: documents can be previewed only from the „Acte” list."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

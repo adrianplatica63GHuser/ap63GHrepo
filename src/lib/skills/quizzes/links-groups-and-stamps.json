@@ -1,0 +1,606 @@
+{
+  "skill": "links-groups-and-stamps",
+  "manual": [
+    "links-classify-groups",
+    "links-classify-stamps",
+    "admin-groups-groups",
+    "admin-groups-stamps",
+    "reports-search-filters"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "links-classify-groups",
+          "ro": {
+            "question": "Pe ecranul grupului GRP-004 bifați cinci terenuri, apăsați „Adaugă în grup” și plecați fără „Salvează grupul”. Ce arată „Grupuri”, în „Etichete și grupuri”, pe unul dintre terenuri?",
+            "explanation": "Până la „Salvează grupul” nu se scrie nimic, iar ecranul grupului arată „Modificări nesalvate”; terenurile nu au intrat în grup."
+          },
+          "en": {
+            "question": "On the screen of group GRP-004 you tick five plots, press „Adaugă în grup” (add to group) and leave without „Salvează grupul” (save the group). What does „Grupuri”, in „Etichete și grupuri”, show on one of the plots?",
+            "explanation": "Until „Salvează grupul” nothing is written, and the group's screen shows „Modificări nesalvate” (unsaved changes); the plots did not join the group."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "GRP-004, cu semnul „[nou]” lângă el",
+              "en": "GRP-004, with the „[nou]” mark beside it"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Nu arată GRP-004: nu s-a scris nimic",
+              "en": "It does not show GRP-004: nothing was written"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "GRP-004, salvat automat la plecare",
+              "en": "GRP-004, saved automatically on leaving"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "GRP-004, dar numai până la închiderea aplicației",
+              "en": "GRP-004, but only until the application is closed"
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "links-classify-groups",
+          "ro": {
+            "question": "Un teren din Măgurele este deja în trei grupuri, iar acum trebuie pus și în grupul evaluării de primăvară. Ce faceți?",
+            "explanation": "O înregistrare poate face parte din cel mult trei grupuri; ecranul spune: „Scoateți-l dintr-un grup pentru a-l adăuga în altul.”"
+          },
+          "en": {
+            "question": "A plot in Măgurele is already in three groups, and now it must also go into the spring valuation group. What do you do?",
+            "explanation": "A record can belong to at most three groups; the screen says: „Scoateți-l dintr-un grup pentru a-l adăuga în altul.” (take it out of one group to add it to another)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Îl adăugați din „Administrare” → „Grupuri”, unde limita nu se aplică",
+              "en": "Add it from „Administrare” → „Grupuri”, where the limit does not apply"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Îl scoateți întâi dintr-un grup de care nu mai e nevoie",
+              "en": "First take it out of a group that is no longer needed"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Îl adăugați, iar cel mai vechi grup al lui se scoate singur",
+              "en": "Add it, and its oldest group is removed by itself"
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "links-classify-stamps",
+          "ro": {
+            "question": "Ciprian vrea să marcheze, pentru totdeauna, terenurile și actele care țin de o zonă protejată, o însușire care nu se schimbă. Ce folosește?",
+            "explanation": "O ștampilă marchează o însușire de durată, pe înregistrări de orice fel; un grup strânge înregistrări de un singur fel, pentru o treabă de scurtă durată."
+          },
+          "en": {
+            "question": "Ciprian wants to mark, for good, the plots and documents that belong to a protected area, a characteristic that does not change. What does he use?",
+            "explanation": "A stamp marks a lasting characteristic, on records of any kind; a group gathers records of one kind, for a short-lived task."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Un grup cu „Țintă” „Proprietate”, în care pune și actele",
+              "en": "A group with „Țintă” (target) „Proprietate”, into which he also puts the documents"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Două grupuri, unul pentru terenuri și unul pentru acte",
+              "en": "Two groups, one for the plots and one for the documents"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Relevanță” „De perspectivă” pe fiecare teren și act",
+              "en": "„Relevanță” „De perspectivă” (prospective) on every plot and document"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "O ștampilă, aplicată și terenurilor, și actelor",
+              "en": "A stamp, applied to both the plots and the documents"
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "admin-groups-stamps",
+          "ro": {
+            "question": "Pe „Aplică ștampila: …” ați ștampilat trei persoane. Aceeași ștampilă trebuie pusă și pe două acte. Ce faceți?",
+            "explanation": "O ștampilă poate sta pe înregistrări de feluri diferite: schimbați „Tip element” și continuați; „Salvează ștampilele” scrie schimbările."
+          },
+          "en": {
+            "question": "On „Aplică ștampila: …” (apply the stamp) you have stamped three persons. The same stamp must also go on two documents. What do you do?",
+            "explanation": "A stamp can stand on records of different kinds: change „Tip element” (item type) and carry on; „Salvează ștampilele” (save the stamps) writes the changes."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Schimbați „Tip element” pe acte, le bifați, „Aplică ștampila”, apoi „Salvează ștampilele”",
+              "en": "Change „Tip element” to documents, tick them, „Aplică ștampila”, then „Salvează ștampilele”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Creați o a doua ștampilă, pentru acte, cu aceeași descriere",
+              "en": "Create a second stamp, for documents, with the same description"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Nu se poate: o ștampilă stă pe un singur fel de înregistrări",
+              "en": "It cannot be done: a stamp stands on one kind of record only"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Bifați actele în „Elemente deja ștampilate”, lângă persoane",
+              "en": "Tick the documents in „Elemente deja ștampilate”, beside the persons"
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "reports-search-filters",
+          "ro": {
+            "question": "Vreți să vedeți într-un singur tabel toate persoanele, terenurile și actele care poartă ștampila STMP-AAB. Unde?",
+            "explanation": "„Cod ștampilă” este un filtru al „Căutare globală”, iar cu „Tip entitate” „Orice” toate felurile apar laolaltă. Pe ecranul ștampilei, listele arată doar felul ales în „Tip element”."
+          },
+          "en": {
+            "question": "You want to see in a single table every person, plot and document that carries the stamp STMP-AAB. Where?",
+            "explanation": "„Cod ștampilă” (stamp code) is a filter of „Căutare globală”, and with „Tip entitate” „Orice” every kind appears together. On the stamp's screen, the lists show only the kind chosen in „Tip element”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Pe „Aplică ștampila: …”, în „Elemente deja ștampilate”",
+              "en": "On „Aplică ștampila: …”, in „Elemente deja ștampilate”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "În „Administrare” → „Ștampile”, pe rândul ștampilei",
+              "en": "In „Administrare” → „Ștampile”, on the stamp's row"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "În „Căutare globală”, la „Cod ștampilă”, cu „Tip entitate” „Orice”",
+              "en": "In „Căutare globală”, under „Cod ștampilă”, with „Tip entitate” „Orice”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "În „Nor de etichete”, unde ștampila apare ca etichetă",
+              "en": "In „Nor de etichete”, where the stamp shows as a tag"
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "admin-groups-groups",
+          "ro": {
+            "question": "Evaluarea s-a încheiat și ștergeți grupul GRP-002, care strângea șase terenuri. Ce se întâmplă cu terenurile?",
+            "explanation": "„Șterge” întreabă „Ștergeți acest grup? Această acțiune nu poate fi anulată.”, iar înregistrările din grup rămân în arhivă."
+          },
+          "en": {
+            "question": "The valuation is over and you delete group GRP-002, which gathered six plots. What happens to the plots?",
+            "explanation": "„Șterge” (delete) asks „Ștergeți acest grup? Această acțiune nu poate fi anulată.” (delete this group? this cannot be undone), and the records in the group stay in the archive."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Se șterg și ele, după aceeași întrebare",
+              "en": "They are deleted too, after the same question"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Rămân în arhivă; doar grupul dispare",
+              "en": "They stay in the archive; only the group goes"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Grupul nu se poate șterge cât timp are membri",
+              "en": "The group cannot be deleted while it has members"
+            }
+          ]
+        },
+        {
+          "id": "a7",
+          "section": "links-classify-groups",
+          "ro": {
+            "question": "Pe ecranul unei persoane, la „Grupuri”, vedeți „GRP-002 [3]”. Ce înseamnă 3?",
+            "explanation": "Lângă codul grupului, numărul din paranteze este câți membri are grupul acum; ținând mouse-ul pe el, scrie, de exemplu, „3 membri”."
+          },
+          "en": {
+            "question": "On a person's screen, under „Grupuri” (groups), you see „GRP-002 [3]”. What does the 3 mean?",
+            "explanation": "Beside the group's code, the number in brackets is how many members the group has now; resting the mouse on it, it reads, for instance, „3 membri” (3 members)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Persoana face parte din trei grupuri, maximul permis",
+              "en": "The person belongs to three groups, the most allowed"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Grupul GRP-002 are acum trei membri",
+              "en": "Group GRP-002 now has three members"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Persoana este a treia în ordinea din grup",
+              "en": "The person is third in the group's order"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Grupul a fost salvat de trei ori",
+              "en": "The group has been saved three times"
+            }
+          ]
+        },
+        {
+          "id": "a8",
+          "section": "admin-groups-stamps",
+          "ro": {
+            "question": "Ștergeți, din „Administrare” → „Ștampile”, o ștampilă pusă pe mai multe persoane. Ce găsiți apoi pe acele persoane, la „Ștampile”?",
+            "explanation": "„Șterge” întreabă „Ștergeți această ștampilă și o eliminați de pe toate elementele?”: ștampila dispare și de pe înregistrări, iar înregistrările rămân."
+          },
+          "en": {
+            "question": "You delete, from „Administrare” → „Ștampile”, a stamp put on several persons. What do you then find on those persons, under „Ștampile” (stamps)?",
+            "explanation": "„Șterge” asks „Ștergeți această ștampilă și o eliminați de pe toate elementele?” (delete this stamp and remove it from every item?): the stamp disappears from the records too, and the records stay."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Ștampila, care rămâne pe cele deja ștampilate",
+              "en": "The stamp, which stays on those already stamped"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Ștampila, tăiată, ca semn că a fost ștearsă",
+              "en": "The stamp, struck through, as a sign it was deleted"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Nimic: ștampila a dispărut de pe toate înregistrările",
+              "en": "Nothing: the stamp has gone from every record"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "links-classify-groups",
+          "ro": {
+            "question": "Pentru o evaluare de o lună, Ciprian vrea să strângă câteva terenuri și actele lor. Ce face?",
+            "explanation": "Un grup strânge, pentru o treabă de scurtă durată, înregistrări de un singur fel, ales la „Țintă”; ștampila este pentru o însușire de durată."
+          },
+          "en": {
+            "question": "For a month-long valuation, Ciprian wants to gather a few plots and their documents. What does he do?",
+            "explanation": "A group gathers, for a short-lived task, records of one kind, chosen in „Țintă”; a stamp is for a lasting characteristic."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Un singur grup, cu „Țintă” „Proprietate”, în care pune și actele",
+              "en": "A single group, with „Țintă” „Proprietate”, into which he also puts the documents"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "O ștampilă, pentru că strânge feluri diferite",
+              "en": "A stamp, because it gathers different kinds"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Două grupuri: unul cu „Țintă” „Proprietate”, altul cu „Țintă” „Document”",
+              "en": "Two groups: one with „Țintă” „Proprietate”, another with „Țintă” „Document”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Un singur grup, cu „Țintă” „Document”, fiindcă actele citează terenurile",
+              "en": "A single group, with „Țintă” „Document”, since the documents cite the plots"
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "admin-groups-groups",
+          "ro": {
+            "question": "Pe ecranul grupului, terenurile adăugate poartă „[nou]”, iar ecranul arată „Modificări nesalvate”. Ce urmează și ce vedeți după?",
+            "explanation": "Membrii adăugați poartă „[nou]” și încă nu s-a scris nimic; „Salvează grupul” scrie schimbările, iar „[nou]” devine poziția membrului în grup."
+          },
+          "en": {
+            "question": "On the group's screen, the plots added carry „[nou]” (new), and the screen shows „Modificări nesalvate”. What comes next, and what do you see after?",
+            "explanation": "The members added carry „[nou]” and nothing has been written yet; „Salvează grupul” writes the changes, and „[nou]” becomes the member's position in the group."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "„Salvează grupul”; „[nou]” devine poziția terenului, „[01]”, „[02]”",
+              "en": "„Salvează grupul”; „[nou]” becomes the plot's position, „[01]”, „[02]”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Nimic: terenurile sunt deja în grup, „[nou]” arată doar că sunt recente",
+              "en": "Nothing: the plots are already in the group, „[nou]” only shows they are recent"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Salvează”, pe ecranul fiecărui teren; „[nou]” dispare",
+              "en": "„Salvează”, on each plot's screen; „[nou]” goes away"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Implicit”, sus în dreapta, care confirmă membrii noi",
+              "en": "„Implicit” (default), top right, which confirms the new members"
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "links-classify-groups",
+          "ro": {
+            "question": "Sunteți pe ecranul unui teren și vreți să-l puneți în grupul GRP-003 fără să plecați de pe el. Ce apăsați?",
+            "explanation": "Pe o înregistrare, „Grupuri” din „Etichete și grupuri” arată grupurile ei, iar „+ Adaugă în grup” deschide lista grupurilor."
+          },
+          "en": {
+            "question": "You are on a plot's screen and want to put it into group GRP-003 without leaving it. What do you press?",
+            "explanation": "On a record, „Grupuri” in „Etichete și grupuri” shows its groups, and „+ Adaugă în grup” opens the list of groups."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Asociază proprietate”, pe fișa „Legături”",
+              "en": "„Asociază proprietate”, on the „Legături” tile"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Salvează”, pe linia lui „Istoric”, în „Clasificare”",
+              "en": "„Salvează”, on the line of „Istoric”, in „Clasificare”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Nimic: un grup se umple doar din „Administrare” → „Grupuri”",
+              "en": "Nothing: a group is filled only from „Administrare” → „Grupuri”"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "„+ Adaugă în grup”, la „Grupuri”, în „Etichete și grupuri”",
+              "en": "„+ Adaugă în grup”, under „Grupuri”, in „Etichete și grupuri”"
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "admin-groups-stamps",
+          "ro": {
+            "question": "Ieri ați ștampilat trei persoane pe „Aplică ștampila: …”. Azi, în lista ștampilelor, rândul ștampilei arată că n-o poartă nicio înregistrare. Ce s-a întâmplat, cel mai probabil?",
+            "explanation": "După „Aplică ștampila”, ecranul arată „Modificări nesalvate”; abia „Salvează ștampilele”, butonul cu discheta, scrie schimbările."
+          },
+          "en": {
+            "question": "Yesterday you stamped three persons on „Aplică ștampila: …”. Today, in the list of stamps, the stamp's row shows that no record carries it. What most likely happened?",
+            "explanation": "After „Aplică ștampila”, the screen shows „Modificări nesalvate”; only „Salvează ștampilele”, the button with the floppy disk, writes the changes."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Ștampilele se numără abia a doua zi",
+              "en": "Stamps are only counted the next day"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Nu ați apăsat „Salvează ștampilele” după „Aplică ștampila”",
+              "en": "You did not press „Salvează ștampilele” after „Aplică ștampila”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Persoanele trebuiau salvate și ele, pe ecranul fiecăreia",
+              "en": "The persons also had to be saved, each on its own screen"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Lista numără doar actele, nu și persoanele",
+              "en": "The list counts only documents, not persons"
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "reports-search-filters",
+          "ro": {
+            "question": "Vreți să vedeți membrii grupului GRP-001 în „Căutare globală”. Unde scrieți codul grupului?",
+            "explanation": "„Cod grup”, „Cod ștampilă” și „Etichetă” caută după ce stă în fișa „Etichete și grupuri”; membrii unui grup îi găsiți după „Cod grup”. „Căutare nume / cod” caută în numele și codul înregistrării."
+          },
+          "en": {
+            "question": "You want to see the members of group GRP-001 in „Căutare globală”. Where do you type the group's code?",
+            "explanation": "„Cod grup”, „Cod ștampilă” and „Etichetă” search by what is in the „Etichete și grupuri” tile; you find a group's members by „Cod grup” (group code). „Căutare nume / cod” searches the record's own name and code."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "La „Căutare nume / cod”",
+              "en": "Under „Căutare nume / cod”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "La „Etichetă”",
+              "en": "Under „Etichetă”"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "La „Cod grup”",
+              "en": "Under „Cod grup”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "La „Cod ștampilă”",
+              "en": "Under „Cod ștampilă”"
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "links-classify-stamps",
+          "ro": {
+            "question": "Ștampila STMP-AAC a fost pusă din greșeală pe o persoană; pe celelalte este bine pusă. Ce faceți?",
+            "explanation": "Pe înregistrare, la „Ștampile”, „×” scoate ștampila; „Șterge” din lista ștampilelor ar scoate-o de pe toate înregistrările."
+          },
+          "en": {
+            "question": "Stamp STMP-AAC was put on one person by mistake; on the others it is right. What do you do?",
+            "explanation": "On the record, under „Ștampile”, the „×” takes the stamp off; „Șterge” in the list of stamps would take it off every record."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Șterge” pe rândul ștampilei, în „Administrare” → „Ștampile”",
+              "en": "„Șterge” on the stamp's row, in „Administrare” → „Ștampile”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Pe ecranul persoanei, „Dezasociază” pe fișa „Legături”",
+              "en": "On the person's screen, „Dezasociază” on the „Legături” tile"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Îi puneți persoanei o a doua ștampilă, care o anulează pe prima",
+              "en": "Give the person a second stamp that cancels the first"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Pe ecranul persoanei, la „Ștampile”, apăsați „×” pe ștampilă",
+              "en": "On the person's screen, under „Ștampile”, press „×” on the stamp"
+            }
+          ]
+        },
+        {
+          "id": "b7",
+          "section": "admin-groups-stamps",
+          "ro": {
+            "question": "Ciprian vrea ca noua ștampilă să aibă codul „ZONA”. Ce îi spuneți?",
+            "explanation": "Pe „Creare ștampilă” se completează „Descriere scurtă”, obligatorie, și „Note”; codul, de forma STMP-AAA, se dă la salvare."
+          },
+          "en": {
+            "question": "Ciprian wants the new stamp to have the code „ZONA”. What do you tell him?",
+            "explanation": "On „Creare ștampilă” (create stamp) you fill in „Descriere scurtă” (short description), which is required, and „Note” (notes); the code, in the form STMP-AAA, is given on saving."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Îl scrie în „Descriere scurtă”, care devine codul",
+              "en": "He types it into „Descriere scurtă”, which becomes the code"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Codul nu se alege: se dă la salvare, de forma STMP-AAA",
+              "en": "The code is not chosen: it is given on saving, in the form STMP-AAA"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Îl scrie în „Note”, înainte de prima salvare",
+              "en": "He types it into „Note”, before the first save"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Îl schimbă după salvare, pe „Aplică ștampila: …”",
+              "en": "He changes it after saving, on „Aplică ștampila: …”"
+            }
+          ]
+        },
+        {
+          "id": "b8",
+          "section": "links-classify-stamps",
+          "ro": {
+            "question": "Ați pus ștampila STMP-AAD pe două persoane și pe un act și ați salvat. Ce număr arată lista ștampilelor pe rândul ei?",
+            "explanation": "Lista ștampilelor arată la fiecare câte înregistrări o poartă, iar o ștampilă poate sta pe înregistrări de feluri diferite."
+          },
+          "en": {
+            "question": "You have put stamp STMP-AAD on two persons and one document and saved. What number does the list of stamps show on its row?",
+            "explanation": "The list of stamps shows, for each, how many records carry it, and a stamp can stand on records of different kinds."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "3, câte înregistrări o poartă, de orice fel",
+              "en": "3, how many records carry it, of any kind"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "1, doar felul ales ultima dată în „Tip element”",
+              "en": "1, only the kind last chosen in „Tip element”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "2, doar persoanele, care au fost ștampilate primele",
+              "en": "2, only the persons, who were stamped first"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

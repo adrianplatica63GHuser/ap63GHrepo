@@ -429,13 +429,13 @@ export const SKILLS: readonly Skill[] = [
     path: "persons",
     name: { ro: "Adaugă o persoană fizică dintr-o carte de identitate", en: "Add a natural person from an identity card" },
     description: {
-      ro: "Din „Adaugă nou” citești o carte de identitate și primești persoana completată, cu tatăl și mama create și legate ca „Tată” și „Mamă”.",
-      en: "From „Adaugă nou”, read an identity card and get the person filled in, with the father and mother created and linked as „Tată” and „Mamă”.",
+      ro: "Din „Adaugă persoană” citești o carte de identitate și primești persoana completată, cu tatăl și mama create și legate ca „Tată” și „Mamă”.",
+      en: "From „Adaugă persoană”, read an identity card and get the person filled in, with the father and mother created and linked as „Tată” and „Mamă”.",
     },
     predecessors: ["persons-add-natural-person-by-hand", "documents-read-pages"],
     screens: ["natural-persons-list", "natural-person-detail"],
     cases: ["TC-PERS-08"],
-    manual: ["persons-id-card-manual", "persons-id-card", "persons-example-parents"],
+    manual: ["persons-id-card-manual", "persons-id-card-document", "persons-id-card", "persons-example-parents", "import-scanning-people"],
   },
   {
     key: "persons-keep-identity-current",
@@ -453,7 +453,7 @@ export const SKILLS: readonly Skill[] = [
     predecessors: ["persons-add-natural-person-by-hand", "links-read-version-history"],
     screens: ["natural-person-detail"],
     cases: ["TC-PERS-03", "TC-PERS-11"],
-    manual: ["persons-identity-cnp", "persons-identity-death", "persons-example-death"],
+    manual: ["persons-identity-cnp", "persons-identity-death", "persons-example-death", "links-versions"],
   },
   {
     key: "persons-link-relatives",
@@ -468,7 +468,7 @@ export const SKILLS: readonly Skill[] = [
     predecessors: ["persons-add-natural-person-by-hand", "links-associate-two-records"],
     screens: ["natural-person-detail", "associate-person"],
     cases: ["TC-ASSOC-09", "TC-INHER-02"],
-    manual: ["persons-relatives-link", "persons-relatives-tree", "links-associate-role", "persons-example-tree"],
+    manual: ["persons-relatives-link", "persons-relatives-tree", "links-associate-role", "persons-example-tree", "links-associate-remove"],
   },
   {
     key: "properties-draw-corners",
@@ -513,7 +513,7 @@ export const SKILLS: readonly Skill[] = [
     predecessors: ["documents-create-document", "documents-read-pages", "documents-choose-document-type"],
     screens: ["document-detail"],
     cases: ["TC-DOC-02", "TC-DOC-03", "TC-DOC-04", "TC-DOC-06", "TC-DOC-18"],
-    manual: ["documents-identification", "documents-type", "documents-example-sale"],
+    manual: ["documents-identification", "documents-type", "documents-sale", "documents-list", "documents-example-sale"],
   },
   {
     key: "documents-add-parties",
@@ -528,7 +528,7 @@ export const SKILLS: readonly Skill[] = [
     predecessors: ["persons-add-judicial-person", "documents-choose-document-type", "links-associate-two-records"],
     screens: ["document-detail", "associate-party"],
     cases: ["TC-ASSOC-01", "TC-ASSOC-10", "TC-DOC-07", "TC-DOC-09"],
-    manual: ["documents-parties", "links-associate-role", "companies-people-records", "links-associate-screen"],
+    manual: ["documents-parties", "links-associate-role", "companies-people-records", "links-associate-kinds", "links-associate-remove"],
   },
   {
     key: "links-link-records-both-ways",
@@ -564,7 +564,7 @@ export const SKILLS: readonly Skill[] = [
     predecessors: ["links-associate-two-records", "links-read-related-tile"],
     screens: ["associate-reference"],
     cases: ["TC-ASSOC-07", "TC-ASSOC-08"],
-    manual: ["links-references-documents", "links-references-properties", "links-references", "links-example-title"],
+    manual: ["links-references-documents", "links-references-properties", "links-references", "links-example-title", "links-related"],
   },
   {
     key: "links-restore-a-version",
@@ -604,7 +604,7 @@ export const SKILLS: readonly Skill[] = [
       "TC-TAG-03",
       "TC-ICON-05",
     ],
-    manual: ["links-classify-classification", "links-classify-tags", "admin-groups-tags", "reports-search-filters", "reports-example-tag"],
+    manual: ["links-classify-tags", "links-classify-classification", "admin-groups-tags", "reports-search-filters", "reports-example-tag"],
   },
   {
     key: "import-run-an-import",
@@ -646,7 +646,7 @@ export const SKILLS: readonly Skill[] = [
       "TC-TILES-21",
       "TC-TILES-22",
     ],
-    manual: ["start-tiles", "start-preview", "links-related"],
+    manual: ["start-tiles", "start-preview", "links-related", "admin-settings-account"],
   },
   {
     key: "workspace-read-interaction-history",
@@ -696,7 +696,7 @@ export const SKILLS: readonly Skill[] = [
     predecessors: ["persons-person-from-id-card", "persons-link-relatives"],
     screens: ["document-detail", "natural-person-detail"],
     cases: ["TC-PERS-10"],
-    manual: ["persons-id-card-document", "persons-id-card", "import-scanning-people"],
+    manual: ["persons-id-card-document", "import-scanning-people", "persons-id-card", "persons-identity-cnp"],
   },
   {
     key: "persons-read-inheritance-tree",
@@ -729,7 +729,7 @@ export const SKILLS: readonly Skill[] = [
     predecessors: ["properties-read-the-map", "properties-draw-corners"],
     screens: ["properties-map"],
     cases: ["TC-MAP-02", "TC-MAP-03", "TC-MAP-04"],
-    manual: ["map-ruler-distance", "map-ruler-angles", "map-area-delimited", "map-area-free", "tools-area"],
+    manual: ["map-area-delimited", "map-area-free", "map-area", "map-ruler-distance", "map-ruler-angles"],
   },
   {
     key: "properties-side-road-calculation",
@@ -762,7 +762,7 @@ export const SKILLS: readonly Skill[] = [
     predecessors: ["documents-fill-identification", "documents-add-parties"],
     screens: ["document-detail"],
     cases: ["TC-DOC-05", "TC-DOC-19", "TC-DOC-22"],
-    manual: ["documents-sale", "documents-parties", "documents-example-sale"],
+    manual: ["documents-sale", "documents-parties", "documents-example-sale", "links-related", "documents-type"],
   },
   {
     key: "documents-addendum-and-certificate",
@@ -780,7 +780,7 @@ export const SKILLS: readonly Skill[] = [
     predecessors: ["documents-add-parties", "links-references-and-parts"],
     screens: ["document-detail", "associate-reference", "associate-party"],
     cases: ["TC-DOC-11", "TC-DOC-20", "TC-ASSOC-12"],
-    manual: ["documents-dependent-addendum", "documents-dependent-inheritance", "links-references-documents", "documents-example-inheritance"],
+    manual: ["documents-dependent-addendum", "documents-dependent-inheritance", "links-references-documents", "documents-example-inheritance", "documents-parties"],
   },
   {
     key: "links-follow-a-chain",
@@ -798,7 +798,7 @@ export const SKILLS: readonly Skill[] = [
     predecessors: ["workspace-global-search", "links-link-records-both-ways", "links-references-and-parts"],
     screens: DETAIL_SCREENS,
     cases: ["TC-PROP-07", "TC-PERS-05", "TC-DOC-10"],
-    manual: ["links-related", "links-references-documents", "links-references-properties", "links-associate-kinds"],
+    manual: ["links-related", "links-references-documents", "links-references-properties", "links-associate-kinds", "documents-dependent-inheritance"],
   },
   {
     key: "links-work-in-two-windows",
@@ -813,7 +813,7 @@ export const SKILLS: readonly Skill[] = [
     predecessors: ["links-restore-a-version", "workspace-arrange-tiles"],
     screens: DETAIL_SCREENS,
     cases: ["TC-TABS-01", "TC-INT-04"],
-    manual: ["links-two-windows", "reports-interactions-edit"],
+    manual: ["links-two-windows", "reports-interactions-edit", "start-preview", "links-versions"],
   },
   {
     key: "import-big-and-special-folders",
@@ -849,7 +849,7 @@ export const SKILLS: readonly Skill[] = [
     predecessors: ["documents-add-parties", "import-run-an-import"],
     screens: ["admin-import"],
     cases: ["TC-AI-01", "TC-IMP-05"],
-    manual: ["import-scanning-read", "import-scanning-people", "documents-identification", "documents-sale"],
+    manual: ["import-scanning-read", "import-scanning-people", "documents-identification", "documents-sale", "persons-id-card-document"],
   },
   {
     key: "workspace-reference-data",
@@ -908,7 +908,7 @@ export const SKILLS: readonly Skill[] = [
     predecessors: ["workspace-read-help", "workspace-arrange-tiles"],
     screens: ["admin-help-content"],
     cases: ["TC-HELP-01"],
-    manual: ["admin-help", "learning-help", "learning-help-proposals"],
+    manual: ["admin-help", "learning-help-proposals", "learning-help", "start-help"],
   },
   {
     key: "workspace-interactions-links-and-export",
@@ -943,7 +943,7 @@ export const SKILLS: readonly Skill[] = [
     predecessors: ["persons-id-card-from-the-archive", "persons-read-inheritance-tree", "documents-addendum-and-certificate"],
     screens: ["natural-person-detail", "document-detail"],
     cases: ["TC-INHER-03"],
-    manual: ["reports-inheritance-documents", "reports-inheritance-year", "documents-dependent-inheritance", "reports-example-family", "documents-parties"],
+    manual: ["reports-inheritance-documents", "reports-inheritance-year", "documents-dependent-inheritance", "documents-parties", "reports-example-family"],
   },
   {
     key: "properties-parcel-dossier",
@@ -991,7 +991,7 @@ export const SKILLS: readonly Skill[] = [
     predecessors: ["links-follow-a-chain", "links-work-in-two-windows"],
     screens: DETAIL_SCREENS,
     cases: ["TC-VER-01", "TC-VER-02", "TC-TABS-01"],
-    manual: ["links-versions", "links-example-version", "links-associate-remove", "links-two-windows", "links-classify-classification"],
+    manual: ["links-versions", "links-example-version", "links-associate-remove", "links-classify-classification", "links-two-windows"],
   },
   {
     key: "import-teach-a-new-document-type",
@@ -1024,7 +1024,7 @@ export const SKILLS: readonly Skill[] = [
     predecessors: ["workspace-reference-data", "workspace-settings-and-users", "workspace-write-help"],
     screens: ["admin-value-lists", "admin-tags", "admin-help-content", "admin-settings"],
     cases: ["TC-VL-02", "TC-TAG-02"],
-    manual: ["admin-reference-data-values", "admin-groups-tags", "admin-help", "admin-settings-thresholds", "admin-example-merge"],
+    manual: ["admin-reference-data-values", "admin-groups-tags", "admin-settings-thresholds", "learning-help-proposals", "admin-example-merge"],
   },
 ];
 

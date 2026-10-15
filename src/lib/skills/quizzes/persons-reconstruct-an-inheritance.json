@@ -1,0 +1,934 @@
+{
+  "skill": "persons-reconstruct-an-inheritance",
+  "manual": [
+    "reports-inheritance-documents",
+    "reports-inheritance-year",
+    "documents-dependent-inheritance",
+    "documents-parties",
+    "reports-example-family"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "reports-inheritance-documents",
+          "ro": {
+            "question": "Ciprian reconstituie moștenirea lui Gheorghe Munteanu. Pe „Arbori de moștenire”, la nivelul 1, nu vede la nimeni insigna cu numărul actelor. Ce face?",
+            "explanation": "De la nivelul din mijloc, fiecare persoană care apare pe acte poartă o insignă cu numărul lor, de exemplu „Un act”; rotița mouse-ului trece de la un nivel la altul."
+          },
+          "en": {
+            "question": "Ciprian is reconstructing Gheorghe Munteanu's inheritance. On „Arbori de moștenire”, at level 1, he sees nobody carrying the badge with the number of documents. What does he do?",
+            "explanation": "From the middle level, each person who appears on documents carries a badge with their number, for instance „Un act” (one document); the mouse wheel goes from one level to another."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Pornește „Acte comune”, care aprinde insignele pe fiecare persoană.",
+              "en": "He turns on „Acte comune” (shared documents), which lights up the badges on each person."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Rotește rotița până la nivelul din mijloc, de unde apar insignele.",
+              "en": "He turns the wheel up to the middle level, from which the badges appear."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Mută „Anul” pe anul certificatului, ca să apară actele din acel an.",
+              "en": "He moves „Anul” (the year) to the certificate's year, so that that year's documents appear."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Deschide ecranul lui Gheorghe: insignele nu apar niciodată în arbore.",
+              "en": "He opens Gheorghe's screen: the badges never appear in the tree."
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "reports-inheritance-documents",
+          "ro": {
+            "question": "Elena Munteanu poartă în arbore insigna „3 acte”. Ciprian vrea să deschidă, din arbore, contractul din 2001 pe care apare ea. Cum ajunge la el?",
+            "explanation": "Un clic pe insignă deschide „Actele pe care apare …”, cu tipul, numărul și data fiecărui act; un clic pe un act îl deschide."
+          },
+          "en": {
+            "question": "Elena Munteanu carries the badge „3 acte” (3 documents) in the tree. Ciprian wants to open, from the tree, the 2001 contract on which she appears. How does he get to it?",
+            "explanation": "A click on the badge opens „Actele pe care apare …” (the documents on which … appears), with each document's type, number and date; a click on a document opens it."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Apasă insigna, apoi contractul din lista „Actele pe care apare …”.",
+              "en": "He clicks the badge, then the contract in the list „Actele pe care apare …”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Pornește „Acte comune” și apasă numărul de lângă numele ei.",
+              "en": "He turns on „Acte comune” and clicks the number beside her name."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Mută „Anul” în 2001, iar contractul se deschide de la sine.",
+              "en": "He moves „Anul” to 2001, and the contract opens on its own."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Trece la nivelul 3, unde actele ei apar scrise sub nume.",
+              "en": "He goes to level 3, where her documents appear written under the name."
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "reports-inheritance-documents",
+          "ro": {
+            "question": "Ca să vadă pe ce acte apar împreună Gheorghe Munteanu și fiica lui, Ioana, Ciprian pornește „Acte comune”. Unde citește rezultatul?",
+            "explanation": "„Acte comune” pune pe linia dintre două rude câte acte au amândouă în comun; un clic pe număr deschide „Acte comune: … și …”, cu lista acelor acte."
+          },
+          "en": {
+            "question": "To see on which documents Gheorghe Munteanu and his daughter, Ioana, appear together, Ciprian turns on „Acte comune”. Where does he read the result?",
+            "explanation": "„Acte comune” puts on the line between two relatives how many documents both of them are on; a click on the number opens „Acte comune: … și …” (shared documents: … and …), with the list of those documents."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Pe insigna lui Gheorghe, care arată acum doar actele comune.",
+              "en": "On Gheorghe's badge, which now shows only the shared documents."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "În cartea din lateral a Ioanei, sub data nașterii.",
+              "en": "In Ioana's side card, under the date of birth."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Într-o listă nouă din „Rapoarte”, separată de arbore.",
+              "en": "In a new list under „Rapoarte” (reports), separate from the tree."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Pe linia dintre ei, apoi în lista deschisă cu un clic pe număr.",
+              "en": "On the line between them, then in the list opened with a click on the number."
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "reports-inheritance-year",
+          "ro": {
+            "question": "Un contract al lui Gheorghe Munteanu este din 1990. Ciprian mută „Anul” în 1990, iar fiica lui, Ioana, apare estompată. Ce înseamnă?",
+            "explanation": "Mutat într-un an din trecut, „Anul” arată familia așa cum era atunci: cine s-a născut după anul ales apare estompat."
+          },
+          "en": {
+            "question": "One of Gheorghe Munteanu's contracts is from 1990. Ciprian moves „Anul” to 1990, and his daughter, Ioana, appears faded. What does that mean?",
+            "explanation": "Moved to a year in the past, „Anul” shows the family as it was then: whoever was born after the chosen year appears faded."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Ioana murise până în 1990.",
+              "en": "Ioana had died by 1990."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Ioana s-a născut după 1990.",
+              "en": "Ioana was born after 1990."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Ioana nu apare pe contractul din 1990.",
+              "en": "Ioana does not appear on the 1990 contract."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Ioana nu avea încă rude legate în 1990.",
+              "en": "Ioana had no relatives linked yet in 1990."
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "reports-inheritance-year",
+          "ro": {
+            "question": "Cu „Anul” pus în 2005, Gheorghe Munteanu, mort în 2015 și marcat „Decedat”, apare fără „†”. Ciprian crede că e o greșeală a arborelui. Are dreptate?",
+            "explanation": "O persoană care a murit mai târziu nu este marcată ca decedată în anul ales; în 2005, Gheorghe era încă în viață."
+          },
+          "en": {
+            "question": "With „Anul” set to 2005, Gheorghe Munteanu, who died in 2015 and is marked „Decedat”, appears without „†”. Ciprian thinks it is a mistake in the tree. Is he right?",
+            "explanation": "A person who died later is not marked as deceased in the chosen year; in 2005, Gheorghe was still alive."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Da: o persoană marcată „Decedat” poartă „†” în orice an.",
+              "en": "Yes: a person marked „Decedat” carries „†” in any year."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Da: „Anul” pune „†” doar persoanelor fără dată a decesului.",
+              "en": "Yes: „Anul” puts „†” only on persons without a date of death."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Nu: în 2005 Gheorghe trăia, deci nu este marcat decedat.",
+              "en": "No: in 2005 Gheorghe was alive, so he is not marked deceased."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nu: „†” apare doar la nivelul 3, nu și la celelalte.",
+              "en": "No: „†” appears only at level 3, not at the others."
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "documents-dependent-inheritance",
+          "ro": {
+            "question": "Ciprian înregistrează certificatul de moștenitor după Gheorghe Munteanu, cu moștenitorii Elena și Andrei. Cum îi trece în „Părți”?",
+            "explanation": "„+ Adaugă parte” deschide „Adaugă parte la certificat”, unde se alege o singură persoană odată, cu rolul „Defunct” sau „Moștenitor”."
+          },
+          "en": {
+            "question": "Ciprian is recording the certificate of inheritance after Gheorghe Munteanu, with the heirs Elena and Andrei. How does he enter them in „Părți” (parties)?",
+            "explanation": "„+ Adaugă parte” (add party) opens „Adaugă parte la certificat” (add a party to the certificate), where one person is chosen at a time, with the role „Defunct” (deceased) or „Moștenitor” (heir)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Îi bifează pe toți trei odată în „Adaugă parte la certificat”, apoi alege rolul fiecăruia pe rând.",
+              "en": "He ticks all three at once in „Adaugă parte la certificat”, then chooses each one's role in turn."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Câte unul, cu „+ Adaugă parte”: Gheorghe ca „Defunct”, apoi fiecare ca „Moștenitor”.",
+              "en": "One at a time, with „+ Adaugă parte”: Gheorghe as „Defunct”, then each as „Moștenitor”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Din „Legături”, cu „Asociază persoană”, ca „Vânzător” și „Cumpărător”.",
+              "en": "From „Legături”, with „Asociază persoană”, as „Vânzător” (seller) and „Cumpărător” (buyer)."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nu îi trece: certificatul își citește singur părțile de pe pagini.",
+              "en": "He does not enter them: the certificate reads its parties from the pages on its own."
+            }
+          ]
+        },
+        {
+          "id": "a7",
+          "section": "documents-dependent-inheritance",
+          "ro": {
+            "question": "Pe „Legături” ale certificatului, Ciprian vrea să scrie cota lui Gheorghe Munteanu, defunctul, dar pe rândul lui nu găsește „Cotă”. Ce s-a întâmplat?",
+            "explanation": "Pe „Legături”, moștenitorii au „Cotă”, iar defunctul nu; cota se scrie doar la moștenitori."
+          },
+          "en": {
+            "question": "On the certificate's „Legături”, Ciprian wants to write the share of Gheorghe Munteanu, the deceased, but finds no „Cotă” (share) on his row. What has happened?",
+            "explanation": "On „Legături”, the heirs have „Cotă” and the deceased does not; the share is written only for the heirs."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Nimic greșit: defunctul nu are „Cotă”, doar moștenitorii au.",
+              "en": "Nothing is wrong: the deceased has no „Cotă”, only the heirs have."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Cotă” apare doar după ce se completează „Data eliberării”.",
+              "en": "„Cotă” appears only once „Data eliberării” (date of issue) is filled in."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Gheorghe e marcat „Decedat”, iar decedaților li se ascund butoanele.",
+              "en": "Gheorghe is marked „Decedat”, and the deceased have their buttons hidden."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Cota defunctului se scrie în „Părți”, în tabelul cu „Nume” și „Rol”.",
+              "en": "The deceased's share is written in „Părți”, in the table with „Nume” and „Rol”."
+            }
+          ]
+        },
+        {
+          "id": "a8",
+          "section": "documents-parties",
+          "ro": {
+            "question": "Certificatul îi dă Elenei 1/4 și lui Andrei 1/2, iar sub rânduri apare „Cotele pentru „Moștenitor” însumează 75%, nu 100%. Actul se salvează oricum — verificați ce scrie în act.” Ce face Ciprian?",
+            "explanation": "Arhiva înregistrează ce scrie în act, chiar dacă cotele nu se adună: actul se salvează oricum, iar mesajul vă cere să verificați ce scrie în act."
+          },
+          "en": {
+            "question": "The certificate gives Elena 1/4 and Andrei 1/2, and under the rows appears „Cotele pentru „Moștenitor” însumează 75%, nu 100%. Actul se salvează oricum — verificați ce scrie în act.” (the shares for „Moștenitor” add up to 75%, not 100%; the document is saved anyway — check what the document says). What does Ciprian do?",
+            "explanation": "The archive records what the document says, even if the shares do not add up: the document is saved anyway, and the message asks you to check what the document says."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Mărește cota lui Andrei la 3/4, ca totalul să dea 100%.",
+              "en": "He raises Andrei's share to 3/4, so that the total comes to 100%."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Nu poate salva certificatul până ce cotele nu dau 100%.",
+              "en": "He cannot save the certificate until the shares come to 100%."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Verifică certificatul; dacă așa scrie acolo, lasă cotele cum sunt.",
+              "en": "He checks the certificate; if that is what it says, he leaves the shares as they are."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Șterge cotele și le lasă goale, ca să dispară mesajul.",
+              "en": "He deletes the shares and leaves them empty, so that the message goes away."
+            }
+          ]
+        },
+        {
+          "id": "a9",
+          "section": "documents-parties",
+          "ro": {
+            "question": "Pe „Legături” ale certificatului, „Cotă” are pe rândul Elenei contur portocaliu, iar pe rândul lui Andrei este plin portocaliu. Ce îi spune asta lui Ciprian?",
+            "explanation": "Un „Cotă” plin portocaliu este încă gol; cu contur portocaliu are valori. Cota lui Andrei nu a fost scrisă încă."
+          },
+          "en": {
+            "question": "On the certificate's „Legături”, „Cotă” has an orange outline on Elena's row and is solid orange on Andrei's. What does that tell Ciprian?",
+            "explanation": "A solid orange „Cotă” is still empty; with an orange outline it has values. Andrei's share has not been written yet."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Cota lui Andrei este mai mare decât a Elenei.",
+              "en": "Andrei's share is larger than Elena's."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Cota Elenei nu a fost încă salvată, iar a lui Andrei a fost salvată.",
+              "en": "Elena's share has not been saved yet, while Andrei's has been saved."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Andrei are cota întreagă, iar Elena doar o parte.",
+              "en": "Andrei has the whole share, and Elena only a part."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Cota lui Andrei este încă goală; a Elenei are valori.",
+              "en": "Andrei's share is still empty; Elena's has values."
+            }
+          ]
+        },
+        {
+          "id": "a10",
+          "section": "links-references-documents",
+          "ro": {
+            "question": "Andrei Munteanu a vândut terenul moștenit din Bragadiru lui Mihai Popa. Certificatul și contractul sunt în arhivă, iar Ciprian vrea să arate că dreptul lui Andrei vine din certificat. Ce face?",
+            "explanation": "Legătura se citește ca o propoziție care începe cu actul pe care vă aflați: de pe certificat, „Titlu anterior al” cu contractul bifat spune exact că dreptul vânzătorului vine din certificat."
+          },
+          "en": {
+            "question": "Andrei Munteanu sold the inherited land in Bragadiru to Mihai Popa. The certificate and the contract are both in the archive, and Ciprian wants to show that Andrei's right comes from the certificate. What does he do?",
+            "explanation": "The link reads as a sentence that starts with the document you are on: from the certificate, „Titlu anterior al” (prior title of) with the contract ticked says exactly that the seller's right comes from the certificate."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "De pe contract, „Asociază act”, bifează certificatul și alege „Titlu anterior al”.",
+              "en": "From the contract, „Asociază act”, he ticks the certificate and chooses „Titlu anterior al”."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "De pe certificat, „Asociază act”, bifează contractul și alege „Titlu anterior al”.",
+              "en": "From the certificate, „Asociază act”, he ticks the contract and chooses „Titlu anterior al”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "De pe certificat, „Asociază act”, bifează contractul și alege „Act adițional la”.",
+              "en": "From the certificate, „Asociază act”, he ticks the contract and chooses „Act adițional la” (addendum to)."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Pe contract, îl trece pe Andrei în „Părți” cu rolul „Moștenitor”.",
+              "en": "On the contract, he enters Andrei in „Părți” with the role „Moștenitor”."
+            }
+          ]
+        },
+        {
+          "id": "a11",
+          "section": "persons-identity-death",
+          "ro": {
+            "question": "Din certificat, Ciprian află că Gheorghe Munteanu a murit pe 12.03.2015. Vrea ca arborele, cu „Anul” mutat în 2016, să-l arate cu „†”. Ce face întâi?",
+            "explanation": "Decesul se notează pe ecranul persoanei: bifați „Decedat”, scrieți „Data decesului” și apăsați „Salvează”. Arborele pune apoi „†” celor care muriseră până în anul ales."
+          },
+          "en": {
+            "question": "From the certificate, Ciprian learns that Gheorghe Munteanu died on 12.03.2015. He wants the tree, with „Anul” moved to 2016, to show him with „†”. What does he do first?",
+            "explanation": "The death is noted on the person's screen: tick „Decedat”, write „Data decesului” and press „Salvează”. The tree then puts „†” on whoever had died by the chosen year."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Îl adaugă pe certificat ca „Defunct”; arborele ia decesul de acolo.",
+              "en": "He adds him to the certificate as „Defunct”; the tree takes the death from there."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Mută „Anul” în 2015 și apasă pe Gheorghe ca să-l marcheze.",
+              "en": "He moves „Anul” to 2015 and clicks Gheorghe to mark him."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Pe ecranul lui Gheorghe bifează „Decedat”, scrie data și salvează.",
+              "en": "On Gheorghe's screen he ticks „Decedat”, writes the date and saves."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Scrie data decesului în „Note”, iar „Vârstă” se oprește singură.",
+              "en": "He writes the date of death in „Note”, and „Vârstă” (age) stops on its own."
+            }
+          ]
+        },
+        {
+          "id": "a12",
+          "section": "reports-example-family",
+          "ro": {
+            "question": "Ciprian pregătește succesiunea lui Gheorghe Munteanu. A găsit prin „Acte comune” contractul pe care apar Gheorghe și fiica lui, Ioana, și l-a deschis. De ce mută apoi „Anul” în anul contractului?",
+            "explanation": "În pregătirea unei succesiuni, după ce deschideți actul comun, mutați „Anul” în anul contractului, ca să vedeți cine era în viață atunci."
+          },
+          "en": {
+            "question": "Ciprian is preparing Gheorghe Munteanu's succession. Through „Acte comune” he has found the contract on which Gheorghe and his daughter, Ioana, appear, and has opened it. Why does he then move „Anul” to the contract's year?",
+            "explanation": "When preparing a succession, after you open the shared document, you move „Anul” to the contract's year, to see who was alive then."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Ca să rămână în arbore doar actele din acel an.",
+              "en": "So that only that year's documents remain in the tree."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Ca să se completeze singure cotele părților din contract.",
+              "en": "So that the shares of the contract's parties fill themselves in."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Ca să vadă ce proprietăți avea familia în acel an.",
+              "en": "To see which properties the family had in that year."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Ca să vadă cine din familie era în viață atunci.",
+              "en": "To see who in the family was alive then."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "reports-inheritance-documents",
+          "ro": {
+            "question": "Ciprian vrea să afle numărul și data certificatului pe care apare Andrei Munteanu, fără să deschidă actul. În arbore, Andrei poartă insigna „Un act”. Ce face?",
+            "explanation": "Un clic pe insignă deschide „Actele pe care apare …”, cu tipul, numărul și data fiecărui act, de exemplu „nr. 123/2001 · din 02.05.2001”."
+          },
+          "en": {
+            "question": "Ciprian wants to find out the number and date of the certificate on which Andrei Munteanu appears, without opening the document. In the tree, Andrei carries the badge „Un act”. What does he do?",
+            "explanation": "A click on the badge opens „Actele pe care apare …”, with each document's type, number and date, for instance „nr. 123/2001 · din 02.05.2001”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Apasă insigna: lista arată tipul, numărul și data actului.",
+              "en": "He clicks the badge: the list shows the document's type, number and date."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Ține mouse-ul pe Andrei: cartea mică arată actul lui.",
+              "en": "He holds the mouse over Andrei: the small card shows his document."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Trece la nivelul 3, unde numărul actului apare sub nume.",
+              "en": "He goes to level 3, where the document's number appears under the name."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Pornește „Acte comune” și citește numărul de pe insignă.",
+              "en": "He turns on „Acte comune” and reads the number on the badge."
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "reports-inheritance-documents",
+          "ro": {
+            "question": "Ciprian deschide „Arbori de moștenire” ca să vadă ce acte au în comun Elena și Andrei Munteanu, dar pe linia dintre ei nu apare niciun număr. Ce verifică întâi?",
+            "explanation": "„Acte comune” este oprit la început; pornit, pune pe linia dintre două rude câte acte au amândouă în comun."
+          },
+          "en": {
+            "question": "Ciprian opens „Arbori de moștenire” to see which documents Elena and Andrei Munteanu share, but no number appears on the line between them. What does he check first?",
+            "explanation": "„Acte comune” is off at first; once on, it puts on the line between two relatives how many documents both of them are on."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Dacă arborele e pe nivelul 3, singurul care arată actele.",
+              "en": "Whether the tree is on level 3, the only one that shows documents."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Dacă a pornit „Acte comune”, care este oprit la început.",
+              "en": "Whether he has turned on „Acte comune”, which is off at first."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Dacă „Anul” este pus pe anul actului comun.",
+              "en": "Whether „Anul” is set to the year of the shared document."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Dacă amândoi poartă insigna „Un act”.",
+              "en": "Whether both carry the badge „Un act”."
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "reports-inheritance-documents",
+          "ro": {
+            "question": "Cu „Acte comune” pornit, pe linia dintre Elena și Andrei Munteanu stă „2”. Ce înseamnă și cum vede Ciprian care sunt?",
+            "explanation": "Numărul de pe linie spune câte acte au amândoi în comun; un clic pe el deschide „Acte comune: … și …”, cu lista acelor acte."
+          },
+          "en": {
+            "question": "With „Acte comune” on, the line between Elena and Andrei Munteanu shows „2”. What does it mean, and how does Ciprian see which they are?",
+            "explanation": "The number on the line says how many documents both of them are on; a click on it opens „Acte comune: … și …”, with the list of those documents."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Au două legături de familie; un clic le deschide pe amândouă.",
+              "en": "They have two family ties; a click opens both."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Sunt la două generații distanță; un clic arată rudele dintre ei.",
+              "en": "They are two generations apart; a click shows the relatives between them."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Apar amândoi pe două acte; un clic pe număr le arată lista.",
+              "en": "Both appear on two documents; a click on the number shows their list."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Au două proprietăți comune; un clic deschide harta lor.",
+              "en": "They have two properties in common; a click opens their map."
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "reports-inheritance-year",
+          "ro": {
+            "question": "Gheorghe Munteanu a murit în 1999 și este marcat „Decedat”, cu data decesului. Ciprian pune „Anul” în 2005, ca să vadă familia la data unui act. Cum apare Gheorghe?",
+            "explanation": "Cu „Anul” într-un an din trecut, cine murise până atunci poartă „†”, iar cine s-a născut după anul ales apare estompat."
+          },
+          "en": {
+            "question": "Gheorghe Munteanu died in 1999 and is marked „Decedat”, with the date of death. Ciprian sets „Anul” to 2005, to see the family at the date of a document. How does Gheorghe appear?",
+            "explanation": "With „Anul” on a year in the past, whoever had died by then carries „†”, and whoever was born after the chosen year appears faded."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Estompat, ca toți cei care nu mai trăiau în 2005.",
+              "en": "Faded, like everyone no longer alive in 2005."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Nu mai apare deloc în arbore pentru anul 2005.",
+              "en": "He no longer appears in the tree at all for 2005."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Cu „†”, pentru că murise până în 2005.",
+              "en": "With „†”, because he had died by 2005."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Ca în viață, pentru că „†” apare doar pe „azi”.",
+              "en": "As alive, because „†” appears only on „azi”."
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "documents-dependent-inheritance",
+          "ro": {
+            "question": "Certificatul după Gheorghe Munteanu are părțile trecute. Ciprian vrea să se asigure, de pe ecranul lui Andrei, că acolo apare certificatul, cu Andrei ca moștenitor. Unde se uită?",
+            "explanation": "Fiecare persoană vede certificatul printre legăturile ei, cu rolul ei; pe ecranul lui Andrei, certificatul este în „Legături”."
+          },
+          "en": {
+            "question": "The certificate after Gheorghe Munteanu has its parties entered. Ciprian wants to make sure, from Andrei's screen, that the certificate appears there, with Andrei as heir. Where does he look?",
+            "explanation": "Each person sees the certificate among their own links, with their role; on Andrei's screen, the certificate is in „Legături”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "În „Legături” ale lui Andrei, unde certificatul apare cu rolul lui.",
+              "en": "In Andrei's „Legături”, where the certificate appears with his role."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "În fișa „Arbore de moștenire”, unde moștenitorii sunt marcați.",
+              "en": "In the „Arbore de moștenire” tile, where the heirs are marked."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În fișa „Identitate”, la „Proveniență”.",
+              "en": "In the „Identitate” tile, under „Proveniență” (provenance)."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nicăieri pe ecranul lui: părțile unui certificat se văd doar pe ecranul certificatului.",
+              "en": "Nowhere on his screen: a certificate's parties are seen only on the certificate's screen."
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "documents-dependent-inheritance",
+          "ro": {
+            "question": "În „Părți” ale certificatului, Ciprian a adăugat-o din greșeală pe Elena Munteanu cu rolul „Defunct”, în loc de „Moștenitor”. Cum îndreaptă?",
+            "explanation": "„Părți” arată un tabel cu „Nume” și „Rol”, iar „Elimină” scoate o parte; apoi o adăugați din nou cu „+ Adaugă parte”, cu rolul potrivit."
+          },
+          "en": {
+            "question": "In the certificate's „Părți”, Ciprian added Elena Munteanu by mistake with the role „Defunct” instead of „Moștenitor”. How does he put it right?",
+            "explanation": "„Părți” shows a table of „Nume” and „Rol”, and „Elimină” (remove) takes a party out; then you add her again with „+ Adaugă parte”, with the right role."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Bifează „Decedat” pe ecranul Elenei, ca rolul să se potrivească.",
+              "en": "He ticks „Decedat” on Elena's screen, so that the role fits."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Pe „Legături”, îi scrie o cotă; rolul trece singur pe „Moștenitor”, fiindcă defunctul nu are cotă.",
+              "en": "On „Legături”, he writes her a share; the role turns into „Moștenitor” on its own, since the deceased has no share."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Apasă „Elimină” pe rândul ei, apoi o adaugă din nou ca „Moștenitor”.",
+              "en": "He presses „Elimină” on her row, then adds her again as „Moștenitor”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Lasă așa: rolul se corectează la salvarea certificatului.",
+              "en": "He leaves it: the role is corrected when the certificate is saved."
+            }
+          ]
+        },
+        {
+          "id": "b7",
+          "section": "documents-parties",
+          "ro": {
+            "question": "Certificatul spune că Elena și Andrei Munteanu moștenesc casa în indiviziune, fiecare cu 1/2. Ce scrie Ciprian în panoul „Cotă” al lui Andrei?",
+            "explanation": "În panoul „Cotă”, „Cotă-parte” primește de exemplu 50, 50%, 63,64 sau 1/2, iar „Mod de deținere” se alege dintre „în nume propriu”, „devălmășie”, „indiviziune” sau „prin mandatar”."
+          },
+          "en": {
+            "question": "The certificate says that Elena and Andrei Munteanu inherit the house in indiviziune (joint ownership in shares), each with 1/2. What does Ciprian write in Andrei's „Cotă” panel?",
+            "explanation": "In the „Cotă” panel, „Cotă-parte” takes for instance 50, 50%, 63,64 or 1/2, and „Mod de deținere” (manner of holding) is chosen from „în nume propriu”, „devălmășie”, „indiviziune” or „prin mandatar”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "La „Cotă-parte” 1/2, iar la „Mod de deținere” „indiviziune”.",
+              "en": "Under „Cotă-parte” 1/2, and under „Mod de deținere” „indiviziune”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "La „Cotă-parte” 1/2, iar „indiviziune” în „Note extinse”.",
+              "en": "Under „Cotă-parte” 1/2, and „indiviziune” in „Note extinse” (extended notes)."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "La „Suprafață echivalentă (mp)” 1/2, iar la „Mod de deținere” „în nume propriu”.",
+              "en": "Under „Suprafață echivalentă (mp)” (equivalent area) 1/2, and under „Mod de deținere” „în nume propriu”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Doar „Mod de deținere” „devălmășie”; cota nu se scrie la moștenitori.",
+              "en": "Only „Mod de deținere” „devălmășie”; no share is written for heirs."
+            }
+          ]
+        },
+        {
+          "id": "b8",
+          "section": "documents-parties",
+          "ro": {
+            "question": "Ciprian a scris în panoul „Cotă” al lui Andrei Munteanu cota 1/2 și caută butonul care o salvează. Ce face?",
+            "explanation": "Valorile din panoul „Cotă” se salvează când închideți panoul, cu Esc sau cu un clic în afara lui."
+          },
+          "en": {
+            "question": "Ciprian has written the share 1/2 in Andrei Munteanu's „Cotă” panel and is looking for the button that saves it. What does he do?",
+            "explanation": "The values in the „Cotă” panel are saved when you close the panel, with Esc or with a click outside it."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Apasă „Salvează” din josul certificatului; altfel cota se pierde.",
+              "en": "He presses „Salvează” at the bottom of the certificate; otherwise the share is lost."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Închide panoul, cu Esc sau cu un clic în afara lui.",
+              "en": "He closes the panel, with Esc or with a click outside it."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Apasă „Recompune”, care scrie cotele în certificat.",
+              "en": "He presses „Recompune” (recompose), which writes the shares into the certificate."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Trece cota și în „Părți”, unde se salvează rolurile.",
+              "en": "He enters the share in „Părți” too, where the roles are saved."
+            }
+          ]
+        },
+        {
+          "id": "b9",
+          "section": "documents-parties",
+          "ro": {
+            "question": "Pe un certificat mai vechi, Ciprian vede cota lui Andrei Munteanu când ține mouse-ul pe „Cotă”, dar nu o mai poate schimba. Ce explică asta?",
+            "explanation": "Ce rol deține o cotă se hotărăște în „Roluri Persoane”, cu bifa „Deține cotă” pe fiecare tip de act; dacă bifa se scoate mai târziu, cotele salvate rămân, doar de citit."
+          },
+          "en": {
+            "question": "On an older certificate, Ciprian sees Andrei Munteanu's share when he holds the mouse over „Cotă”, but can no longer change it. What explains this?",
+            "explanation": "Which role holds a share is decided in „Roluri Persoane”, with the tick „Deține cotă” (holds a share) for each document type; if the tick is removed later, the saved shares remain, read-only."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Certificatul are „Data eliberării” trecută, deci s-a închis.",
+              "en": "The certificate has its „Data eliberării” filled in, so it is closed."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Andrei a fost marcat „Decedat” după ce i s-a scris cota.",
+              "en": "Andrei was marked „Decedat” after his share was written."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Suma cotelor a ajuns la 100%, iar cotele s-au blocat.",
+              "en": "The sum of the shares reached 100%, and the shares locked."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "La rolul „Moștenitor”, bifa „Deține cotă” a fost scoasă între timp.",
+              "en": "For the role „Moștenitor”, the tick „Deține cotă” has since been removed."
+            }
+          ]
+        },
+        {
+          "id": "b10",
+          "section": "reports-inheritance-documents",
+          "ro": {
+            "question": "Ciprian vrea actele comune ale lui Gheorghe Munteanu și ale fiicei lui, Ana Popa. Ana apare în arbore doar pe banda familiei soțului ei, fără nicio linie spre Gheorghe. Ce face întâi?",
+            "explanation": "„Acte comune” pune numărul pe linia dintre două rude; fără o legătură de familie între Gheorghe și Ana nu există o asemenea linie, așa că întâi o legați pe Ana de el."
+          },
+          "en": {
+            "question": "Ciprian wants the shared documents of Gheorghe Munteanu and his daughter, Ana Popa. In the tree Ana appears only on her husband's family lane, with no line to Gheorghe. What does he do first?",
+            "explanation": "„Acte comune” puts the number on the line between two relatives; without a family tie between Gheorghe and Ana there is no such line, so you first link Ana to him."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "O leagă pe Ana de Gheorghe ca fiică, din „Arbore de moștenire”.",
+              "en": "He links Ana to Gheorghe as his daughter, from „Arbore de moștenire”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Pornește „Acte comune”; numărul apare și între benzi.",
+              "en": "He turns on „Acte comune”; the number also appears between lanes."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Mută „Anul” înapoi, la anul căsătoriei Anei.",
+              "en": "He moves „Anul” back, to the year of Ana's marriage."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Trage cu mouse-ul banda Anei lângă a lui Gheorghe.",
+              "en": "He drags Ana's lane with the mouse next to Gheorghe's."
+            }
+          ]
+        },
+        {
+          "id": "b11",
+          "section": "links-references-documents",
+          "ro": {
+            "question": "Ciprian deschide contractul prin care Andrei Munteanu i-a vândut terenul din Bragadiru lui Mihai Popa și apasă „Relația” pe rândul certificatului de moștenitor. Ce trebuie să citească, dacă legătura a fost făcută corect?",
+            "explanation": "Pe contract, aceeași legătură se citește din celălalt capăt: certificatul, „Titlu anterior al”, „acest document” — adică dreptul vânzătorului vine din certificat."
+          },
+          "en": {
+            "question": "Ciprian opens the contract by which Andrei Munteanu sold the land in Bragadiru to Mihai Popa and presses „Relația” (the relation) on the certificate of inheritance's row. What must he read, if the link was made correctly?",
+            "explanation": "On the contract, the same link reads from the other end: the certificate, „Titlu anterior al”, „acest document” (this document) — that is, the seller's right comes from the certificate."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„acest document „Titlu anterior al””, urmat de certificat.",
+              "en": "„acest document „Titlu anterior al””, followed by the certificate."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Certificatul, „Titlu anterior al”, „acest document”.",
+              "en": "The certificate, „Titlu anterior al”, „acest document”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„acest document „Act adițional la””, urmat de certificat.",
+              "en": "„acest document „Act adițional la””, followed by the certificate."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Rol: „Moștenitor”, rolul lui Andrei în contract.",
+              "en": "Rol: „Moștenitor”, Andrei's role in the contract."
+            }
+          ]
+        },
+        {
+          "id": "b12",
+          "section": "documents-parties",
+          "ro": {
+            "question": "Ciprian a pus laolaltă certificatul după Gheorghe Munteanu, cu Elena și Andrei moștenitori și cotele lor. Un client întreabă ce parte a moștenit Andrei. Unde o citește Ciprian cel mai repede?",
+            "explanation": "Rândul unei persoane cu cotă are butonul portocaliu „Cotă”; țineți mouse-ul pe el ca să vedeți valorile."
+          },
+          "en": {
+            "question": "Ciprian has put together the certificate after Gheorghe Munteanu, with Elena and Andrei as heirs and their shares. A client asks what part Andrei inherited. Where does Ciprian read it fastest?",
+            "explanation": "The row of a person with a share has the orange „Cotă” button; hold the mouse over it to see the values."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "În tabelul „Părți”, în coloana de lângă „Rol”.",
+              "en": "In the „Părți” table, in the column beside „Rol”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "În arbore, pe linia dintre Gheorghe și Andrei.",
+              "en": "In the tree, on the line between Gheorghe and Andrei."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Pe „Legături” ale certificatului, ținând mouse-ul pe „Cotă” la Andrei.",
+              "en": "On the certificate's „Legături”, holding the mouse over „Cotă” on Andrei's row."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Pe ecranul lui Andrei, în fișa „Identitate”.",
+              "en": "On Andrei's screen, in the „Identitate” tile."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

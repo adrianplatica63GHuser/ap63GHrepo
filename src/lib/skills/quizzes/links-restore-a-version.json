@@ -1,0 +1,628 @@
+{
+  "skill": "links-restore-a-version",
+  "manual": [
+    "links-versions",
+    "links-example-version",
+    "intro-versions"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "links-example-version",
+          "ro": {
+            "question": "Ați corectat prenumele unei persoane și ați salvat; apoi aflați că forma veche era cea bună. Ce faceți?",
+            "explanation": "Apăsați „N versiuni”, căutați cu „Versiunea anterioară” și „Versiunea următoare” versiunea cu prenumele vechi, apoi apăsați „Fă curentă” și „OK”."
+          },
+          "en": {
+            "question": "You corrected a person's first name and saved; then you learn that the old form was the right one. What do you do?",
+            "explanation": "Press „N versiuni”, find the version with the old first name with „Versiunea anterioară” and „Versiunea următoare”, then press „Fă curentă” and „OK”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Ștergeți persoana și o adăugați din nou, cu prenumele vechi.",
+              "en": "Delete the person and add them again, with the old first name."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "„N versiuni”, găsiți versiunea cu prenumele vechi, „Fă curentă”, „OK”.",
+              "en": "„N versiuni”, find the version with the old first name, „Fă curentă”, „OK”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„N versiuni”, găsiți versiunea veche, scrieți în ea prenumele vechi și apăsați „Salvează”.",
+              "en": "„N versiuni”, find the old version, type the old first name into it and press „Salvează”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Apăsați „Anulează” jos, ca să desfaceți ultima salvare.",
+              "en": "Press „Anulează” at the bottom, to undo the last save."
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "links-versions",
+          "ro": {
+            "question": "Ați făcut din nou curentă o versiune mai veche a unei persoane. Ce s-a întâmplat cu versiunea în care prenumele fusese corectat?",
+            "explanation": "„Fă curentă” copiază versiunea citită într-o versiune nouă; nimic nu se pierde, iar versiunile dintre ele rămân în istoric."
+          },
+          "en": {
+            "question": "You made an older version of a person current again. What happened to the version in which the first name had been corrected?",
+            "explanation": "„Fă curentă” copies the version you are reading into a new version; nothing is lost, and the versions in between stay in the history."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "A fost ștearsă, ca să nu încurce istoricul.",
+              "en": "It was deleted, so as not to muddle the history."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "A fost înlocuită de versiunea veche, sub același număr.",
+              "en": "It was replaced by the old version, under the same number."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "A rămas în istoric, neatinsă.",
+              "en": "It stayed in the history, untouched."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "A rămas doar dacă ați bifat-o înainte de „OK”.",
+              "en": "It stayed only if you ticked it before „OK”."
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "links-versions",
+          "ro": {
+            "question": "O firmă are versiunile 0, 1 și 2. Citiți versiunea 0 și apăsați „Fă curentă”. Ce vă spune aplicația că se va întâmpla?",
+            "explanation": "Aplicația întreabă „Faceți această versiune curentă?” și spune ce se va întâmpla: versiunea 0 va fi copiată într-o nouă versiune 3, care devine versiunea curentă."
+          },
+          "en": {
+            "question": "A firm has versions 0, 1 and 2. You read version 0 and press „Fă curentă”. What does the application tell you will happen?",
+            "explanation": "The application asks „Faceți această versiune curentă?” and says what will happen: version 0 will be copied into a new version 3, which becomes the current version."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Versiunea 0 va fi copiată într-o nouă versiune 3, curentă.",
+              "en": "Version 0 will be copied into a new version 3, the current one."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Versiunile 1 și 2 vor fi șterse, iar versiunea 0 redevine curentă, sub numărul ei.",
+              "en": "Versions 1 and 2 will be deleted, and version 0 becomes current again, under its own number."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Versiunea 2 va fi scrisă peste, cu valorile versiunii 0.",
+              "en": "Version 2 will be overwritten with the values of version 0."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Versiunea 0 va primi numărul 2, iar 2 va trece pe 0.",
+              "en": "Version 0 will get the number 2, and 2 will move to 0."
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "links-versions",
+          "ro": {
+            "question": "Ați schimbat numele unei persoane din Popescu în Popa și ați salvat. Citiți acum versiunea de dinainte. Ce arată titlul ecranului?",
+            "explanation": "Pe o versiune veche, titlul ecranului arată tot numele curent, nu pe cel din versiunea pe care o citiți; numele de atunci îl vedeți în câmpuri."
+          },
+          "en": {
+            "question": "You changed a person's surname from Popescu to Popa and saved. You are now reading the version before. What does the screen's title show?",
+            "explanation": "On an old version, the screen's title still shows the current name, not the one in the version you are reading; the name of that time you see in the fields."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Popescu”, numele din versiunea pe care o citiți.",
+              "en": "„Popescu”, the name in the version you are reading."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "„Popa”, numele curent; „Popescu” se vede în câmpuri.",
+              "en": "„Popa”, the current name; „Popescu” shows in the fields."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Amândouă numele, unul lângă altul, cu o săgeată.",
+              "en": "Both names, side by side, with an arrow."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Versiunea anterioară”, în locul numelui.",
+              "en": "„Versiunea anterioară”, in place of the name."
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "links-versions",
+          "ro": {
+            "question": "Pe o versiune veche a unui teren vedeți o greșeală în adresă și vreți s-o corectați chiar pe versiunea aceea. Ce constatați?",
+            "explanation": "Pe o versiune veche câmpurile se pot doar citi, iar „Salvează” lipsește; o versiune salvată rămâne neatinsă."
+          },
+          "en": {
+            "question": "On an old version of a plot of land you see a mistake in the address and want to correct it on that very version. What do you find?",
+            "explanation": "On an old version the fields can only be read, and „Salvează” is missing; a saved version stays untouched."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Puteți scrie, iar „Salvează” corectează versiunea aceea.",
+              "en": "You can type, and „Salvează” corrects that version."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Puteți scrie, iar „Salvează” face din ea o versiune nouă.",
+              "en": "You can type, and „Salvează” makes a new version of it."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Câmpurile se pot doar citi, iar „Salvează” lipsește.",
+              "en": "The fields can only be read, and „Salvează” is missing."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Puteți scrie după ce apăsați „Modifică”, jos.",
+              "en": "You can type after pressing „Modifică”, at the bottom."
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "links-classify-classification",
+          "ro": {
+            "question": "Ciprian schimbă „Importanță” unui act din „Medie” în „Ridicată” și apasă „Salvează” pe linia lui „Istoric”. Apoi se răzgândește. Unde găsește valoarea de dinainte, ca s-o facă din nou curentă?",
+            "explanation": "Salvarea din „Clasificare” adaugă o versiune a înregistrării; versiunea de dinainte, cu „Medie”, se poate face din nou curentă cu „Fă curentă”."
+          },
+          "en": {
+            "question": "Ciprian changes a document's „Importanță” from „Medie” to „Ridicată” and presses „Salvează” on the line of „Istoric”. Then he changes his mind. Where does he find the earlier value, to make it current again?",
+            "explanation": "The save in „Clasificare” adds a version of the record; the version before, with „Medie”, can be made current again with „Fă curentă”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Nicăieri: „Clasificare” nu face parte din versiuni.",
+              "en": "Nowhere: „Clasificare” is not part of the versions."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "În versiunea de dinainte a actului, pe care o face curentă.",
+              "en": "In the document's version before, which he makes current."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Doar în „Istoric”, de unde nu se poate aduce înapoi.",
+              "en": "Only in „Istoric”, from where it cannot be brought back."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "În lista actelor, bifând „Importanță” în „Câmpuri afișate”.",
+              "en": "In the list of documents, ticking „Importanță” in „Câmpuri afișate”."
+            }
+          ]
+        },
+        {
+          "id": "a7",
+          "section": "links-versions",
+          "ro": {
+            "question": "După ce ați făcut curentă o versiune veche a unei persoane, vă întoarceți la lista persoanelor fizice. Ce valori arată rândul ei?",
+            "explanation": "Lista arată valorile noii versiuni curente, adică ale versiunii vechi copiate cu „Fă curentă”."
+          },
+          "en": {
+            "question": "After making an old version of a person current, you go back to the list of natural persons. What values does their row show?",
+            "explanation": "The list shows the values of the new current version, that is, of the old version copied with „Fă curentă”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Pe cele dinainte de „Fă curentă”, până la o nouă salvare.",
+              "en": "Those from before „Fă curentă”, until a new save."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Pe cele ale primei versiuni, „v 0”.",
+              "en": "Those of the first version, „v 0”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Câte un câmp din fiecare dintre ultimele două versiuni.",
+              "en": "One field from each of the last two versions."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Pe cele ale noii versiuni curente, copiate din cea veche.",
+              "en": "Those of the new current version, copied from the old one."
+            }
+          ]
+        },
+        {
+          "id": "a8",
+          "section": "persons-add-save",
+          "ro": {
+            "question": "Ciprian a șters din greșeală o persoană, cu „Șterge” și „Da”. O poate aduce înapoi dintr-o versiune mai veche, cu „Fă curentă”?",
+            "explanation": "Nu: ștergerea unei persoane nu se poate anula. „Fă curentă” întoarce la o versiune veche o înregistrare care există, nu una ștearsă."
+          },
+          "en": {
+            "question": "Ciprian deleted a person by mistake, with „Șterge” and „Da”. Can he bring them back from an older version, with „Fă curentă”?",
+            "explanation": "No: deleting a person cannot be undone. „Fă curentă” takes a record that exists back to an old version, not a deleted one."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Da: o deschide din „Activitate recentă” și apasă „Fă curentă”.",
+              "en": "Yes: he opens it from „Activitate recentă” and presses „Fă curentă”."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Nu: ștergerea unei persoane nu se poate anula.",
+              "en": "No: deleting a person cannot be undone."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Da, dar numai în aceeași zi în care a șters-o.",
+              "en": "Yes, but only on the same day he deleted it."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Da, dacă persoana avea cel puțin două versiuni.",
+              "en": "Yes, if the person had at least two versions."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "links-versions",
+          "ro": {
+            "question": "O persoană arată în dreapta-sus „3 versiuni”. Apăsați pe el. Ce vedeți?",
+            "explanation": "„N versiuni” vă duce cu o versiune înapoi și arată „Versiunea anterioară”, „Versiunea următoare” și „Fă curentă”."
+          },
+          "en": {
+            "question": "A person shows „3 versiuni” at the top right. You press it. What do you see?",
+            "explanation": "„N versiuni” takes you one version back and shows „Versiunea anterioară”, „Versiunea următoare” and „Fă curentă”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Prima versiune, „v 0”, cu „Versiunea următoare”.",
+              "en": "The first version, „v 0”, with „Versiunea următoare”."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Versiunea dinainte, cu butoanele de mers și „Fă curentă”.",
+              "en": "The version before, with the stepping buttons and „Fă curentă”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "O listă cu toate versiunile, din care alegeți una.",
+              "en": "A list of every version, from which you choose one."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Versiunea curentă, cu câmpurile schimbate marcate.",
+              "en": "The current version, with the changed fields marked."
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "links-versions",
+          "ro": {
+            "question": "Vreți să vedeți ce s-a schimbat la o firmă între două salvări. Cum comparați cele două versiuni?",
+            "explanation": "„Versiunea anterioară” și „Versiunea următoare” vă mută câte o versiune; așa comparați două versiuni, citind câmpurile uneia, apoi ale celeilalte."
+          },
+          "en": {
+            "question": "You want to see what changed on a firm between two saves. How do you compare the two versions?",
+            "explanation": "„Versiunea anterioară” and „Versiunea următoare” move you one version at a time; that is how you compare two versions, reading the fields of one, then of the other."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Bifați amândouă versiunile și apăsați „Compară”.",
+              "en": "Tick both versions and press „Compară” (compare)."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Apăsați „Fă curentă”: mesajul enumeră diferențele.",
+              "en": "Press „Fă curentă”: the message lists the differences."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Citiți câmpurile uneia, apoi treceți la cealaltă cu butoanele de versiune.",
+              "en": "Read the fields of one, then move to the other with the version buttons."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Deschideți versiunea veche cu „Previzualizare”, care o arată alături de cea curentă.",
+              "en": "Open the old version with „Previzualizare”, which shows it beside the current one."
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "links-versions",
+          "ro": {
+            "question": "Ați apăsat „Fă curentă” pe o versiune veche, dar la întrebarea „Faceți această versiune curentă?” vă răzgândiți. Ce apăsați și ce se schimbă?",
+            "explanation": "„OK” face versiunea curentă, iar „Anulează” renunță: versiunea curentă rămâne cea de dinainte."
+          },
+          "en": {
+            "question": "You pressed „Fă curentă” on an old version, but at the question „Faceți această versiune curentă?” you change your mind. What do you press, and what changes?",
+            "explanation": "„OK” makes the version current, and „Anulează” gives it up: the current version stays the one it was."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "„Anulează”; curentă rămâne versiunea de dinainte.",
+              "en": "„Anulează”; the current version stays the one it was."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Anulează”; versiunea veche devine totuși curentă.",
+              "en": "„Anulează”; the old version becomes current all the same."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„OK”, apoi „Versiunea următoare”, ca să reveniți.",
+              "en": "„OK”, then „Versiunea următoare”, to go back."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nimic: întrebarea doar anunță o copiere deja făcută.",
+              "en": "Nothing: the question only announces a copy already made."
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "companies-add-edit",
+          "ro": {
+            "question": "Telefonul unei firme a fost schimbat de câteva ori. Mergând printre versiuni, cum recunoașteți versiunea în care a fost scris numărul de acum?",
+            "explanation": "Pe versiunea în care au fost scrise, câmpurile telefonului și e-mailului firmei sunt încadrate cu verde, semnul unei valori adăugate atunci."
+          },
+          "en": {
+            "question": "A firm's phone has been changed several times. Stepping through the versions, how do you recognise the version in which the present number was written?",
+            "explanation": "On the version in which they were written, the firm's phone and e-mail fields are framed in green, the mark of a value added then."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "După „Nou!”, scris lângă câmpul telefonului.",
+              "en": "By „Nou!”, written beside the phone field."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "După chenarul verde al câmpului pe versiunea aceea.",
+              "en": "By the field's green frame on that version."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "După data salvării, scrisă lângă „N versiuni”.",
+              "en": "By the date of the save, written beside „N versiuni”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "După „Modificări nesalvate”, afișat pe versiunea aceea.",
+              "en": "By „Modificări nesalvate”, shown on that version."
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "properties-corners-table",
+          "ro": {
+            "question": "Ciprian a corectat un colț al unei parcele, a apăsat „Salvează” pe rând și apoi „Salvează” jos. A doua zi află că vechiul colț era cel bun. Ce face?",
+            "explanation": "Colțurile se salvează cu „Salvează” de jos, împreună cu restul proprietății, iar versiunea de dinainte păstrează colțurile vechi; acea versiune se poate face din nou curentă cu „Fă curentă”."
+          },
+          "en": {
+            "question": "Ciprian corrected a corner of a parcel, pressed „Salvează” on the row and then „Salvează” at the bottom. The next day he learns the old corner was the right one. What does he do?",
+            "explanation": "The corners are saved with the „Salvează” at the bottom, together with the rest of the property, and the version before keeps the old corners; that version can be made current again with „Fă curentă”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Nimic: colțurile nu se păstrează în versiuni.",
+              "en": "Nothing: corners are not kept in the versions."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Apasă „Anulează” pe rândul colțului.",
+              "en": "He presses „Anulează” on the corner's row."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Apasă „Îndreaptă ordinea”, care aduce colțul înapoi.",
+              "en": "He presses „Îndreaptă ordinea”, which brings the corner back."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Merge la versiunea de dinainte și apasă „Fă curentă”.",
+              "en": "He goes to the version before and presses „Fă curentă”."
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "links-versions",
+          "ro": {
+            "question": "Înainte de o schimbare mare, Ciprian vrea să apese „Salvează” fără să schimbe nimic, ca să-și facă un punct de întoarcere. Ce se întâmplă?",
+            "explanation": "„Salvează” nu se poate apăsa până nu schimbați ceva, așa că o versiune nouă apare doar când s-a schimbat ceva. Oricum, fiecare salvare lasă neatinsă versiunea de dinainte."
+          },
+          "en": {
+            "question": "Before a big change, Ciprian wants to press „Salvează” without changing anything, to make himself a point to return to. What happens?",
+            "explanation": "„Salvează” cannot be pressed until you change something, so a new version appears only when something has changed. In any case, every save leaves the version before untouched."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Apare o versiune nouă, la fel, la care se poate întoarce.",
+              "en": "A new, identical version appears, which he can go back to."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Nu poate: „Salvează” nu se apasă până nu schimbă ceva.",
+              "en": "He cannot: „Salvează” cannot be pressed until he changes something."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Aplicația îl întreabă dacă vrea o versiune fără schimbări.",
+              "en": "The application asks whether he wants a version with no changes."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Se salvează, dar numărul versiunii rămâne același.",
+              "en": "It saves, but the version number stays the same."
+            }
+          ]
+        },
+        {
+          "id": "b7",
+          "section": "links-two-windows",
+          "ro": {
+            "question": "Ciprian a scris o adresă nouă în a doua fereastră a unei înregistrări, dar salvarea a fost refuzată, pentru că înregistrarea se salvase între timp în prima. Găsește adresa aceea printre versiuni?",
+            "explanation": "Istoricul versiunilor ține doar salvările care au trecut; valorile introduse au rămas doar pe ecranul ferestrei a doua."
+          },
+          "en": {
+            "question": "Ciprian typed a new address in a second window of a record, but the save was refused, because the record had meanwhile been saved in the first. Does he find that address among the versions?",
+            "explanation": "The version history holds only the saves that went through; the values typed stayed only on the screen of the second window."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Da, ca versiune nesalvată, la capătul istoricului.",
+              "en": "Yes, as an unsaved version, at the end of the history."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Da, după „Reîncarcă”, care o pune într-o versiune nouă.",
+              "en": "Yes, after „Reîncarcă”, which puts it into a new version."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Nu: istoricul ține doar salvările care au trecut.",
+              "en": "No: the history holds only the saves that went through."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Da, în prima fereastră, la „Versiunea următoare”.",
+              "en": "Yes, in the first window, under „Versiunea următoare”."
+            }
+          ]
+        },
+        {
+          "id": "b8",
+          "section": "intro-versions",
+          "ro": {
+            "question": "Ciprian a făcut curentă versiunea 0 a unei persoane, care a fost copiată în versiunea 3. Apoi își dă seama că versiunea 2 era, totuși, cea bună. Ce poate face?",
+            "explanation": "Nimic din ce s-a salvat nu se pierde: versiunea 2 a rămas în istoric, așa că o poate citi și o poate face din nou curentă."
+          },
+          "en": {
+            "question": "Ciprian made version 0 of a person current, and it was copied into version 3. Then he realises that version 2 was the right one after all. What can he do?",
+            "explanation": "Nothing that was saved is lost: version 2 stayed in the history, so he can read it and make it current again."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Nimic: versiunea 2 a fost înlocuită de versiunea 3.",
+              "en": "Nothing: version 2 was replaced by version 3."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Merge la versiunea 2, rămasă în istoric, și „Fă curentă”.",
+              "en": "He goes to version 2, still in the history, and „Fă curentă”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Apasă „Fă curentă” pe versiunea 3, ca să se întoarcă.",
+              "en": "He presses „Fă curentă” on version 3, to go back."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Șterge versiunea 3 din „N versiuni”, iar versiunea 2 redevine curentă.",
+              "en": "He deletes version 3 from „N versiuni”, and version 2 becomes current again."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

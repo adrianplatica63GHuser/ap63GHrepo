@@ -1,0 +1,781 @@
+{
+  "skill": "persons-id-card-from-the-archive",
+  "manual": [
+    "persons-id-card-document",
+    "import-scanning-people",
+    "persons-id-card",
+    "persons-identity-cnp"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "persons-id-card-document",
+          "ro": {
+            "question": "Cartea de identitate a lui Andrei Munteanu este deja în arhivă, ca act cu scanarea ei ca pagină, dar Andrei nu este încă persoană în arhivă. Ciprian vrea să-l creeze, împreună cu părinții lui. De unde pornește?",
+            "explanation": "Când cartea de identitate este deja un act în arhivă, persoanele se creează de pe ecranul actului: deschideți actul de tip „Carte de identitate” și apăsați „Creează persoane din CI”, lângă „Modifică”."
+          },
+          "en": {
+            "question": "Andrei Munteanu's identity card is already in the archive, as a document with its scan as a page, but Andrei is not yet a person in the archive. Ciprian wants to create him, together with his parents. Where does he start?",
+            "explanation": "When the identity card is already a document in the archive, the persons are created from the document's screen: open the document of type „Carte de identitate” and press „Creează persoane din CI” (create persons from the ID card), beside „Modifică”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Din „Persoane Fizice” → „Adaugă persoană”, alegând „Carte de identitate” la „Tip document”.",
+              "en": "From „Persoane Fizice” → „Adaugă persoană” (add person), choosing „Carte de identitate” under „Tip document”."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Deschide actul de tip „Carte de identitate” și apasă „Creează persoane din CI”, lângă „Modifică”.",
+              "en": "He opens the document of type „Carte de identitate” and presses „Creează persoane din CI”, beside „Modifică”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Importă din nou dosarul cu cartea, ca să reapară fereastra persoanelor propuse.",
+              "en": "He imports the folder with the card again, so that the window of proposed persons comes back."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Pe „Legături” ale actului apasă „Asociază persoană” și creează acolo titularul.",
+              "en": "On the document's „Legături” he presses „Asociază persoană” (associate person) and creates the holder there."
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "persons-id-card-document",
+          "ro": {
+            "question": "Andrei Munteanu este deja în arhivă, cu CNP-ul completat. Ciprian apasă totuși „Creează persoane din CI” pe cartea lui și se teme că va face o a doua persoană. Ce se întâmplă cu titularul?",
+            "explanation": "Dacă titularul există deja în arhivă, aplicația îl găsește după CNP și nu face o a doua persoană."
+          },
+          "en": {
+            "question": "Andrei Munteanu is already in the archive, with his CNP filled in. Ciprian nevertheless presses „Creează persoane din CI” on his card and fears he will make a second person. What happens to the holder?",
+            "explanation": "If the holder is already in the archive, the application finds them by CNP and does not make a second person."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Aplicația îl caută după nume și îi arată toate persoanele cu nume asemănător.",
+              "en": "The application looks for him by name and shows all the persons with a similar name."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Aplicația face o persoană nouă, pe care Ciprian o unește apoi cu cea veche.",
+              "en": "The application makes a new person, which Ciprian then merges with the old one."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Aplicația îl găsește după CNP și nu face o a doua persoană.",
+              "en": "The application finds him by CNP and does not make a second person."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Aplicația refuză, până ce Ciprian șterge persoana care există deja.",
+              "en": "The application refuses until Ciprian deletes the person who already exists."
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "persons-id-card-document",
+          "ro": {
+            "question": "Ciprian a creat de pe cartea lui Andrei Munteanu titularul și ambii părinți. Cum sunt legați acum, unii de alții și de act?",
+            "explanation": "Titularul este legat de act ca „Titular act de identitate”, iar părinții sunt legați de titular ca „Tată” și „Mamă”."
+          },
+          "en": {
+            "question": "From Andrei Munteanu's card Ciprian has created the holder and both parents. How are they now linked, to each other and to the document?",
+            "explanation": "The holder is linked to the document as „Titular act de identitate” (identity-document holder), and the parents are linked to the holder as „Tată” (father) and „Mamă” (mother)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Andrei, de act, ca „Titular act de identitate”; părinții, de Andrei, ca „Tată” și „Mamă”.",
+              "en": "Andrei to the document, as „Titular act de identitate”; the parents to Andrei, as „Tată” and „Mamă”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Toți trei, de act, ca „Titular act de identitate”; între ei nu se face nicio legătură.",
+              "en": "All three to the document, as „Titular act de identitate”; no link is made between them."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Părinții, de act, ca „Tată” și „Mamă”; Andrei, de act, ca „Titular act de identitate”.",
+              "en": "The parents to the document, as „Tată” and „Mamă”; Andrei to the document, as „Titular act de identitate”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Andrei, de părinți, ca „Fiu”; de act nu este legat nimeni, actul doar a fost citit.",
+              "en": "Andrei to the parents, as „Fiu” (son); nobody is linked to the document, it was only read."
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "persons-id-card-document",
+          "ro": {
+            "question": "În fereastra „Creează persoană din cartea de identitate”, rândurile tatălui și mamei lui Andrei sunt goale și nebifate, cu nota „Cartea nu tipărește prenumele părinților, sau citirea nu le-a găsit…”. Ciprian vede pe scanare prenumele lor. Ce face?",
+            "explanation": "Dacă citirea nu găsește prenumele părinților, cele două rânduri apar goale și nebifate, cu nota aceasta, iar prenumele le puteți scrie voi."
+          },
+          "en": {
+            "question": "In the window „Creează persoană din cartea de identitate”, the rows of Andrei's father and mother are empty and unticked, with the note „Cartea nu tipărește prenumele părinților, sau citirea nu le-a găsit…” (the card does not print the parents' first names, or the reading did not find them). Ciprian can see their first names on the scan. What does he do?",
+            "explanation": "If the reading does not find the parents' first names, the two rows appear empty and unticked, with this note, and you can type the first names yourself."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Lasă rândurile goale: părinții se completează singuri la următorul import.",
+              "en": "He leaves the rows empty: the parents fill themselves in at the next import."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Scrie el prenumele părinților în cele două rânduri, apoi îi creează.",
+              "en": "He types the parents' first names into the two rows himself, then creates them."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Creează doar titularul; părinții se pot adăuga numai cu „Adaugă persoană”.",
+              "en": "He creates only the holder; the parents can only be added with „Adaugă persoană”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Bifează rândurile goale, iar aplicația caută singură părinții după numele de familie.",
+              "en": "He ticks the empty rows, and the application looks for the parents by surname on its own."
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "persons-id-card-manual",
+          "ro": {
+            "question": "La mama lui Andrei Munteanu, fereastra propune numele de familie Munteanu, marcat ca presupus. Ciprian știe că mama lui se numește Elena Stan. Ce face și de ce?",
+            "explanation": "Numele de familie al părinților este luat de la titular și marcat „Numele titularului, presupus — verificați-l: al mamei poate fi cel de dinainte de căsătorie.” Îl corectați dacă știți altul."
+          },
+          "en": {
+            "question": "For Andrei Munteanu's mother, the window proposes the surname Munteanu, marked as assumed. Ciprian knows that his mother is called Elena Stan. What does he do, and why?",
+            "explanation": "The parents' surname is taken from the holder and marked „Numele titularului, presupus — verificați-l: al mamei poate fi cel de dinainte de căsătorie.” (the holder's surname, assumed — check it: the mother's may be her maiden name). You correct it if you know another."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Îl lasă Munteanu: numele de pe cartea fiului este cel valabil pentru mamă.",
+              "en": "He leaves it as Munteanu: the name on the son's card is the valid one for the mother."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Îl lasă Munteanu și scrie „Stan” la „Poreclă”, ca să nu piardă informația.",
+              "en": "He leaves it as Munteanu and writes „Stan” under „Poreclă” (nickname), so as not to lose it."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Îl corectează în Stan: numele mamei poate fi cel de dinainte de căsătorie.",
+              "en": "He corrects it to Stan: the mother's surname may be the one from before her marriage."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Omite mama: aplicația nu poate crea o mamă cu alt nume decât al titularului.",
+              "en": "He skips the mother: the application cannot create a mother with a name other than the holder's."
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "import-scanning-people",
+          "ro": {
+            "question": "La importul unui dosar, fereastra „Creează persoană din cartea de identitate” („Card 1 din 2”) scrie, la cartea lui Andrei Munteanu, „Persoana există deja”. Ce face Ciprian?",
+            "explanation": "Fereastra caută titularul în arhivă după CNP; dacă îl găsește, scrie „Persoana există deja”: comparați datele și apăsați „Confirmă și leagă”."
+          },
+          "en": {
+            "question": "During the import of a folder, the window „Creează persoană din cartea de identitate” („Card 1 din 2”) says, for Andrei Munteanu's card, „Persoana există deja” (the person already exists). What does Ciprian do?",
+            "explanation": "The window looks for the holder in the archive by CNP; if it finds them, it says „Persoana există deja”: compare the details and press „Confirmă și leagă” (confirm and link)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Apasă „Omite”: Andrei e deja în arhivă, deci cartea nu mai trebuie legată.",
+              "en": "He presses „Omite” (skip): Andrei is already in the archive, so the card need not be linked."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Compară datele citite cu cele din arhivă și apasă „Confirmă și leagă”.",
+              "en": "He compares the details read with those in the archive and presses „Confirmă și leagă”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Apasă „Creează și leagă”, ca Andrei să aibă o persoană nouă, cu datele cărții.",
+              "en": "He presses „Creează și leagă” (create and link), so that Andrei gets a new person with the card's details."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Închide fereastra importului; aplicația leagă singură cartea de Andrei.",
+              "en": "He closes the import window; the application links the card to Andrei on its own."
+            }
+          ]
+        },
+        {
+          "id": "a7",
+          "section": "import-scanning-people",
+          "ro": {
+            "question": "La un import, Ciprian a închis fereastra fără să răspundă la două ferestre: „Creează persoană din cartea de identitate”, pentru o carte, și „Confirmați persoanele din acest document”, pentru vânzătorii unui contract. Ce i-a mai rămas de făcut, după aceea?",
+            "explanation": "După ce închideți fereastra importului, persoanele găsite în documente nu mai sunt oferite; doar unei cărți de identitate rămase fără răspuns îi rămâne „Creează persoane din CI”, pe ecranul actului."
+          },
+          "en": {
+            "question": "During an import, Ciprian closed the window without answering two windows: „Creează persoană din cartea de identitate”, for a card, and „Confirmați persoanele din acest document” (confirm the persons in this document), for the sellers of a contract. What is still left to him afterwards?",
+            "explanation": "Once you close the import's window, the persons found in documents are not offered again; only an identity card left unanswered still has „Creează persoane din CI”, on the document's screen."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Amândouă ferestrele se redeschid singure la următoarea deschidere a importului.",
+              "en": "Both windows reopen on their own the next time the import is opened."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Vânzătorii îi sunt oferiți din nou pe contract; cartea nu mai poate fi folosită.",
+              "en": "The sellers are offered again on the contract; the card can no longer be used."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Cartea are încă „Creează persoane din CI”; vânzătorii nu îi mai sunt oferiți.",
+              "en": "The card still has „Creează persoane din CI”; the sellers are no longer offered."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nimic: după închidere, nici cartea, nici contractul nu mai propun persoane.",
+              "en": "Nothing: after closing, neither the card nor the contract proposes persons any more."
+            }
+          ]
+        },
+        {
+          "id": "a8",
+          "section": "persons-identity-cnp",
+          "ro": {
+            "question": "În fereastra „Creează persoană din cartea de identitate”, CNP-ul lui Andrei citit de pe carte pare să aibă o cifră diferită față de scanare. De ce contează să-l verifice Ciprian înainte de „Creează și leagă”?",
+            "explanation": "CNP-ul este ceea ce folosește aplicația ca să recunoască o persoană, de exemplu când citește o carte de identitate; de aceea, odată salvat, nu se mai poate schimba."
+          },
+          "en": {
+            "question": "In the window „Creează persoană din cartea de identitate”, Andrei's CNP read from the card seems to have one digit different from the scan. Why does it matter that Ciprian checks it before „Creează și leagă”?",
+            "explanation": "The CNP is what the application uses to recognise a person, for instance when it reads an identity card; that is why, once saved, it can no longer be changed."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Odată salvat, CNP-ul nu se mai schimbă, iar după el aplicația recunoaște persoana.",
+              "en": "Once saved, the CNP no longer changes, and the application recognises the person by it."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "CNP-ul se poate corecta oricând pe ecranul persoanei, dar se pierde legătura cu actul.",
+              "en": "The CNP can be corrected at any time on the person's screen, but the link to the document is lost."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Un CNP greșit oprește crearea părinților, care se caută după CNP-ul titularului.",
+              "en": "A wrong CNP stops the parents being created, as they are looked up by the holder's CNP."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nu contează: aplicația recunoaște persoanele după nume, iar CNP-ul e doar informativ.",
+              "en": "It does not matter: the application recognises persons by name, and the CNP is only for information."
+            }
+          ]
+        },
+        {
+          "id": "a9",
+          "section": "persons-relatives-link",
+          "ro": {
+            "question": "Andrei Munteanu, cu „Gen” completat ca bărbat, a fost creat de pe carte, iar tatăl lui, Gheorghe, a fost legat de el ca „Tată”. Cum îl vede Ciprian pe Andrei în „Legături”, pe ecranul lui Gheorghe?",
+            "explanation": "Legătura se citește corect din ambele capete: fiecare capăt arată rolul celuilalt, la genul lui, așa că pe ecranul tatălui titularul apare cu „(Fiu)”."
+          },
+          "en": {
+            "question": "Andrei Munteanu, with „Gen” (gender) filled in as male, was created from the card, and his father, Gheorghe, was linked to him as „Tată”. How does Ciprian see Andrei in „Legături”, on Gheorghe's screen?",
+            "explanation": "The link reads correctly from both ends: each end shows the other's role, in their gender, so on the father's screen the holder appears with „(Fiu)” (son)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Andrei Munteanu (Tată)",
+              "en": "Andrei Munteanu (Tată)"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Andrei Munteanu (Titular act de identitate)",
+              "en": "Andrei Munteanu (Titular act de identitate)"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Andrei Munteanu (Copil)",
+              "en": "Andrei Munteanu (Copil)"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Andrei Munteanu (Fiu)",
+              "en": "Andrei Munteanu (Fiu)"
+            }
+          ]
+        },
+        {
+          "id": "a10",
+          "section": "persons-relatives-tree",
+          "ro": {
+            "question": "După ce a creat părinții lui Andrei de pe carte, Ciprian vrea să-i vadă desenați împreună cu el, fără să mai lege nimic. Unde se uită?",
+            "explanation": "Fișa „Arbore de moștenire” desenează familia persoanei din legăturile cu rol de rudenie, care sunt aceleași cu cele din „Legături”; dacă nu o vedeți, bifați-o în capul ecranului."
+          },
+          "en": {
+            "question": "Having created Andrei's parents from the card, Ciprian wants to see them drawn together with him, without linking anything else. Where does he look?",
+            "explanation": "The „Arbore de moștenire” (inheritance tree) tile draws the person's family from the links with a kinship role, which are the same as those in „Legături”; if you do not see it, tick it at the top of the screen."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Pe ecranul lui Andrei, în fișa „Arbore de moștenire”, bifată în capul ecranului dacă lipsește.",
+              "en": "On Andrei's screen, in the „Arbore de moștenire” tile, ticked at the top of the screen if missing."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Pe ecranul cărții de identitate, în „Legături”, unde părinții stau sub titular.",
+              "en": "On the identity card's screen, in „Legături”, where the parents stand under the holder."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Nicăieri încă: legăturile din carte trebuie refăcute din „Adaugă sau scoate o rudă”.",
+              "en": "Nowhere yet: the links from the card must be made again from „Adaugă sau scoate o rudă”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "În fișa „Interacțiuni” a lui Andrei, unde apare crearea fiecărui părinte.",
+              "en": "In Andrei's „Interacțiuni” (interactions) tile, where each parent's creation appears."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "persons-id-card-document",
+          "ro": {
+            "question": "Actul de tip „Carte de identitate” al Ioanei Dumitru are două pagini: prima este scanarea cărții, a doua o cerere scrisă de mână. Ce citește aplicația când Ciprian apasă „Creează persoane din CI”?",
+            "explanation": "Apăsând „Creează persoane din CI”, aplicația citește cartea de pe prima pagină a actului și deschide fereastra „Creează persoană din cartea de identitate”."
+          },
+          "en": {
+            "question": "Ioana Dumitru's document of type „Carte de identitate” has two pages: the first is the scan of the card, the second a handwritten request. What does the application read when Ciprian presses „Creează persoane din CI”?",
+            "explanation": "On „Creează persoane din CI”, the application reads the card from the document's first page and opens the window „Creează persoană din cartea de identitate”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Ambele pagini, și o alege pe cea în care găsește un CNP.",
+              "en": "Both pages, choosing the one on which it finds a CNP."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Cartea de pe prima pagină a actului.",
+              "en": "The card on the document's first page."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Câmpurile completate în formularul actului, nu paginile.",
+              "en": "The fields filled in on the document's form, not the pages."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Ultima pagină adăugată, care este de obicei cea mai nouă.",
+              "en": "The last page added, which is usually the newest."
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "persons-id-card-document",
+          "ro": {
+            "question": "Ciprian a apăsat „Creează și leagă” pentru Ioana Dumitru și apoi pentru tatăl ei. Unde vede ce a făcut aplicația cu fiecare?",
+            "explanation": "Sub buton, aplicația scrie ce a făcut: „Titularul a fost creat și legat de act.”, „Tatăl: creat(ă) și legat(ă)”, „Mama: creat(ă) și legat(ă)”."
+          },
+          "en": {
+            "question": "Ciprian pressed „Creează și leagă” for Ioana Dumitru and then for her father. Where does he see what the application did with each?",
+            "explanation": "Under the button, the application writes what it did: „Titularul a fost creat și legat de act.” (the holder was created and linked to the document), „Tatăl: creat(ă) și legat(ă)”, „Mama: creat(ă) și legat(ă)”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Într-un raport „Rezultat”, ca la import, deschis după ce închide fereastra.",
+              "en": "In a „Rezultat” (result) report, as for an import, opened after he closes the window."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "În fișa „Interacțiuni” a Ioanei, unde fiecare creare devine o interacțiune.",
+              "en": "In Ioana's „Interacțiuni” tile, where each creation becomes an interaction."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Chiar sub buton, de exemplu „Titularul a fost creat și legat de act.”.",
+              "en": "Right under the button, for instance „Titularul a fost creat și legat de act.”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nicăieri în fereastră: trebuie să deschidă ecranul fiecărei persoane.",
+              "en": "Nowhere in the window: he has to open each person's screen."
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "persons-id-card-document",
+          "ro": {
+            "question": "În „Părinții titularului”, tatăl și mama Ioanei Dumitru sunt deja bifați. Ce verifică Ciprian la ei înainte de „Creează și leagă”?",
+            "explanation": "Tatăl și mama citiți de pe carte vin deja bifați, cu numele de familie al titularului, marcat ca presupus; de aceea îi verificați înainte de a-i crea."
+          },
+          "en": {
+            "question": "In „Părinții titularului” (the holder's parents), Ioana Dumitru's father and mother are already ticked. What does Ciprian check about them before „Creează și leagă”?",
+            "explanation": "The father and mother read from the card come already ticked, with the holder's surname, marked as assumed; that is why you check them before creating them."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "CNP-urile lor, citite de pe carte lângă prenume.",
+              "en": "Their CNPs, read from the card beside the first names."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Adresele lor, preluate din domiciliul titularului.",
+              "en": "Their addresses, taken from the holder's home address."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Datele lor de naștere, calculate din vârsta titularului.",
+              "en": "Their dates of birth, worked out from the holder's age."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Numele de familie, luat de la titular și marcat ca presupus.",
+              "en": "The surname, taken from the holder and marked as assumed."
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "import-scanning-people",
+          "ro": {
+            "question": "La import, cartea lui Vasile Dumitru nu se potrivește după CNP cu nimeni din arhivă: fereastra scrie „Persoană nouă”, dar la „Potriviri posibile” apare un Vasile Dumitrescu. Ce înseamnă asta pentru Ciprian?",
+            "explanation": "Fereastra caută titularul după CNP; persoanele cu nume asemănător apar la „Potriviri posibile”, ca sugestii, nu ca potriviri sigure."
+          },
+          "en": {
+            "question": "During an import, Vasile Dumitru's card matches nobody in the archive by CNP: the window says „Persoană nouă” (new person), but under „Potriviri posibile” (possible matches) a Vasile Dumitrescu appears. What does that mean for Ciprian?",
+            "explanation": "The window looks for the holder by CNP; persons with a similar name appear under „Potriviri posibile”, as suggestions, not as sure matches."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Este același om, găsit după CNP; îl leagă fără altă verificare.",
+              "en": "It is the same person, found by CNP; he links him without further checks."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Este doar o sugestie după nume, nu o potrivire sigură; verifică dacă e același om.",
+              "en": "It is only a suggestion by name, not a sure match; he checks whether it is the same person."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Este o rudă a titularului, pe care aplicația o va lega ca „Tată”.",
+              "en": "It is a relative of the holder, whom the application will link as „Tată”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Cele două persoane vor fi unite singure, la sfârșitul importului.",
+              "en": "The two persons will be merged on their own, at the end of the import."
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "import-scanning-people",
+          "ro": {
+            "question": "Ciprian a închis fereastra unui import fără să răspundă la cartea de identitate a lui Mihai Popa. Peste o săptămână vrea să-l creeze pe Mihai și pe părinții lui de pe cartea aceea. Ce face?",
+            "explanation": "După ce închideți fereastra importului, persoanele găsite nu mai sunt oferite acolo, dar unei cărți de identitate rămase fără răspuns îi rămâne „Creează persoane din CI”, pe ecranul actului."
+          },
+          "en": {
+            "question": "Ciprian closed an import's window without answering Mihai Popa's identity card. A week later he wants to create Mihai and his parents from that card. What does he do?",
+            "explanation": "Once you close the import's window, the persons found are not offered there any more, but an identity card left unanswered still has „Creează persoane din CI”, on the document's screen."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Adaugă persoana de mână: după închidere, cartea nu mai poate fi folosită.",
+              "en": "He adds the person by hand: after closing, the card can no longer be used."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Importă din nou dosarul, ca fereastra cărții să se deschidă iar.",
+              "en": "He imports the folder again, so that the card's window opens once more."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Deschide actul cărții și apasă „Creează persoane din CI”.",
+              "en": "He opens the card's document and presses „Creează persoane din CI”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Deschide persoana Mihai Popa, creată deja de import fără răspuns.",
+              "en": "He opens the person Mihai Popa, already created by the import without an answer."
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "persons-identity-cnp",
+          "ro": {
+            "question": "După ce a creat-o pe Ioana Dumitru de pe carte, Ciprian observă că CNP-ul salvat are o cifră citită greșit. Cum îl îndreaptă?",
+            "explanation": "CNP-ul nu se mai poate schimba odată salvat; un CNP greșit se îndreaptă ștergând persoana și adăugând-o din nou, cu CNP-ul corect."
+          },
+          "en": {
+            "question": "Having created Ioana Dumitru from the card, Ciprian notices that the saved CNP has one digit misread. How does he put it right?",
+            "explanation": "The CNP can no longer be changed once saved; a wrong CNP is put right by deleting the person and adding them again, with the correct CNP."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Scrie CNP-ul corect în câmpul „CNP” al Ioanei și apasă „Salvează”.",
+              "en": "He types the correct CNP into Ioana's „CNP” field and presses „Salvează” (save)."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Șterge persoana și o adaugă din nou, cu CNP-ul corect.",
+              "en": "He deletes the person and adds her again, with the correct CNP."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Corectează CNP-ul în formularul cărții, iar persoana se actualizează singură.",
+              "en": "He corrects the CNP on the card's form, and the person updates on its own."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Întoarce persoana la o versiune de dinainte, cu „Fă curentă”.",
+              "en": "He takes the person back to an earlier version, with „Fă curentă” (make current)."
+            }
+          ]
+        },
+        {
+          "id": "b7",
+          "section": "persons-id-card",
+          "ro": {
+            "question": "Un coleg îl întreabă pe Ciprian de unde știe aplicația prenumele părinților Ioanei Dumitru, pe care nu le-a scris nimeni. Ce îi răspunde?",
+            "explanation": "O carte de identitate românească tipărește și prenumele părinților; aplicația se folosește de asta ca să creeze tatăl și mama odată cu titularul."
+          },
+          "en": {
+            "question": "A colleague asks Ciprian how the application knows the first names of Ioana Dumitru's parents, which nobody typed. What does he answer?",
+            "explanation": "A Romanian identity card also prints the parents' first names; the application makes use of that to create the father and the mother together with the holder."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Din persoanele aflate deja în arhivă cu același nume de familie.",
+              "en": "From the persons already in the archive with the same surname."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Din certificatele de moștenitor pe care apare Ioana.",
+              "en": "From the certificates of inheritance on which Ioana appears."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "De pe cartea de identitate, care tipărește și prenumele părinților.",
+              "en": "From the identity card, which also prints the parents' first names."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Din CNP-ul Ioanei, din care aplicația deduce părinții.",
+              "en": "From Ioana's CNP, from which the application works out the parents."
+            }
+          ]
+        },
+        {
+          "id": "b8",
+          "section": "persons-id-card-manual",
+          "ro": {
+            "question": "Ciprian are pe birou, pe hârtie, cartea de identitate a lui Radu Stan, care nu este nici persoană, nici act în arhivă. Vrea să-l adauge pe Radu împreună cu părinții. Ce cale folosește?",
+            "explanation": "Când cartea nu este în arhivă, adăugați persoana de mână: pe „Persoană fizică nouă”, alegeți „Carte de identitate” la „Tip document” și bifați „Creează și tatăl” și „Creează și mama”. „Creează persoane din CI” citește o carte aflată deja ca act în arhivă."
+          },
+          "en": {
+            "question": "Ciprian has on his desk, on paper, the identity card of Radu Stan, who is neither a person nor a document in the archive. He wants to add Radu together with his parents. Which way does he use?",
+            "explanation": "When the card is not in the archive, you add the person by hand: on „Persoană fizică nouă”, choose „Carte de identitate” under „Tip document” and tick „Creează și tatăl” (create the father too) and „Creează și mama” (create the mother too). „Creează persoane din CI” reads a card that is already a document in the archive."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "„Adaugă persoană”, „Carte de identitate” la „Tip document” și bifele pentru tată și mamă.",
+              "en": "„Adaugă persoană”, „Carte de identitate” under „Tip document” and the ticks for father and mother."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Creează persoane din CI”, din lista „Persoane Fizice”, fără să mai facă un act.",
+              "en": "„Creează persoane din CI”, from the „Persoane Fizice” list, without making a document."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Un act nou de tip „Carte de identitate”, fără pagini, apoi „Creează persoane din CI”.",
+              "en": "A new document of type „Carte de identitate”, with no pages, then „Creează persoane din CI”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Adaugă persoană”, cu „Pașaport” la „Tip document”, ca să apară „Părinții titularului”.",
+              "en": "„Adaugă persoană”, with „Pașaport” (passport) under „Tip document”, so that „Părinții titularului” appears."
+            }
+          ]
+        },
+        {
+          "id": "b9",
+          "section": "import-scanning-read",
+          "ro": {
+            "question": "Ciprian importă un dosar cu trei cărți de identitate și pleacă de la birou cât rulează importul. Va găsi persoanele create și legate când se întoarce?",
+            "explanation": "AI-ul nu creează și nu leagă vreo persoană fără confirmarea dumneavoastră; ferestrele cărților de identitate se deschid spre sfârșitul importului și cer răspunsul lui."
+          },
+          "en": {
+            "question": "Ciprian imports a folder with three identity cards and leaves the office while the import runs. Will he find the persons created and linked when he comes back?",
+            "explanation": "The AI neither creates nor links any person without your confirmation; the identity cards' windows open towards the end of the import and ask for his answer."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Da: cărțile de identitate se citesc, iar persoanele se creează singure.",
+              "en": "Yes: the identity cards are read, and the persons are created on their own."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Da, dar fără părinți; ei se creează doar din „Creează persoane din CI”.",
+              "en": "Yes, but without parents; they are created only from „Creează persoane din CI”."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Nu: AI-ul nu creează și nu leagă vreo persoană fără confirmarea lui.",
+              "en": "No: the AI neither creates nor links any person without his confirmation."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Doar titularii găsiți după CNP; ceilalți rămân necreați.",
+              "en": "Only the holders found by CNP; the others remain uncreated."
+            }
+          ]
+        },
+        {
+          "id": "b10",
+          "section": "persons-relatives-tree",
+          "ro": {
+            "question": "Citirea nu a găsit părinții Ioanei Dumitru, iar Ciprian i-a lăsat necreați. Află apoi că tatăl ei, Vasile Dumitru, este deja persoană în arhivă. Cum îi leagă?",
+            "explanation": "Pe ecranul Ioanei, „Adaugă sau scoate o rudă” din fișa „Arbore de moștenire” deschide panoul legăturilor de familie: la „Ruda” alegeți tatăl, la „Ce este pentru …” alegeți „Tată” și apăsați „Adaugă legătura”."
+          },
+          "en": {
+            "question": "The reading did not find Ioana Dumitru's parents, and Ciprian left them uncreated. He then learns that her father, Vasile Dumitru, is already a person in the archive. How does he link them?",
+            "explanation": "On Ioana's screen, „Adaugă sau scoate o rudă” (add or remove a relative) in the „Arbore de moștenire” tile opens the panel of family ties: under „Ruda” choose the father, under „Ce este pentru …” choose „Tată”, and press „Adaugă legătura” (add the tie)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Pe ecranul cărții, „Asociază persoană” cu Vasile, cu rolul „Tată”.",
+              "en": "On the card's screen, „Asociază persoană” with Vasile, with the role „Tată”."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Pe ecranul Ioanei, „Adaugă sau scoate o rudă”, cu Vasile ca „Tată”.",
+              "en": "On Ioana's screen, „Adaugă sau scoate o rudă”, with Vasile as „Tată”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Pe ecranul lui Vasile, completează fișa „Act de identitate” cu cartea Ioanei.",
+              "en": "On Vasile's screen, he fills in the „Act de identitate” tile with Ioana's card."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Importă din nou cartea, ca fereastra să-l propună pe Vasile ca tată.",
+              "en": "He imports the card again, so that the window proposes Vasile as father."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

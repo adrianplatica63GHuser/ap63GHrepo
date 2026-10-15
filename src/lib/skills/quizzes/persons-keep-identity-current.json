@@ -1,0 +1,623 @@
+{
+  "skill": "persons-keep-identity-current",
+  "manual": [
+    "persons-identity-cnp",
+    "persons-identity-death",
+    "persons-example-death",
+    "links-versions"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "persons-identity-cnp",
+          "ro": {
+            "question": "De ce nu se mai poate schimba CNP-ul unei persoane după ce a fost salvat?",
+            "explanation": "CNP-ul este ceea ce folosește aplicația ca să recunoască o persoană, de exemplu când citește o carte de identitate. De aceea, odată salvat, nu se mai poate schimba."
+          },
+          "en": {
+            "question": "Why can a person's CNP no longer be changed once it has been saved?",
+            "explanation": "The CNP is what the application uses to recognise a person, for instance when it reads an identity card. That is why, once saved, it can no longer be changed."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Pentru că doar un administrator are voie să-l schimbe, din „Date de referință”.",
+              "en": "Because only an administrator may change it, from „Date de referință”."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Pentru că după el recunoaște aplicația persoana, de exemplu la citirea unei cărți de identitate.",
+              "en": "Because the application recognises the person by it, for instance when reading an identity card."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Pentru că versiunile vechi nu ar mai avea un CNP de păstrat.",
+              "en": "Because the old versions would have no CNP left to keep."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Pentru că CNP-ul se citește mereu de pe cartea de identitate și nu se scrie de mână în fișa persoanei.",
+              "en": "Because the CNP is always read from the identity card and never typed by hand on the person's screen."
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "persons-identity-cnp",
+          "ro": {
+            "question": "Ciprian vede că CNP-ul Elenei Popescu are o cifră greșită. Scrie cifra corectă în câmpul „CNP” și apasă „Salvează”. Ce se întâmplă?",
+            "explanation": "Sub formular apare, cu roșu, „CNP-ul nu poate fi modificat odată setat — ștergeți și creați din nou pentru a-l schimba”, „Modificări nesalvate” rămâne afișat, iar CNP-ul păstrat este cel vechi."
+          },
+          "en": {
+            "question": "Ciprian sees that Elena Popescu's CNP has a wrong digit. He types the correct digit in the „CNP” field and presses „Salvează”. What happens?",
+            "explanation": "Under the form appears, in red, „CNP-ul nu poate fi modificat odată setat — ștergeți și creați din nou pentru a-l schimba” (the CNP cannot be changed once set — delete and create again to change it), „Modificări nesalvate” stays on screen, and the CNP kept is the old one."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Se salvează o versiune nouă, cu CNP-ul corect; cel vechi rămâne în istoric.",
+              "en": "A new version is saved, with the correct CNP; the old one stays in the history."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Aplicația întreabă dacă sigur vrea să schimbe CNP-ul, apoi îl salvează.",
+              "en": "The application asks whether he really wants to change the CNP, then saves it."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Apare cu roșu că CNP-ul nu se poate modifica, iar CNP-ul păstrat este cel vechi.",
+              "en": "It says in red that the CNP cannot be changed, and the CNP kept is the old one."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Câmpul se golește, iar persoana rămâne fără CNP până îl scrie din nou.",
+              "en": "The field empties, and the person stays without a CNP until he types it again."
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "persons-identity-cnp",
+          "ro": {
+            "question": "CNP-ul lui Andrei Munteanu a fost salvat greșit. Cum îl îndreptați, după manual?",
+            "explanation": "Un CNP greșit se îndreaptă așa: ștergeți persoana și adăugați-o din nou, cu CNP-ul corect. Ștergerea se face cu „Șterge” și „Da” la „Ștergeți persoana?” și nu se poate anula."
+          },
+          "en": {
+            "question": "Andrei Munteanu's CNP was saved wrong. How do you put it right, according to the manual?",
+            "explanation": "A wrong CNP is put right this way: delete the person and add them again, with the correct CNP. The deletion is done with „Șterge” and „Da” to „Ștergeți persoana?”, and it cannot be undone."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Cu „N versiuni” și „Fă curentă” pe o versiune mai veche.",
+              "en": "With „N versiuni” and „Fă curentă” (make current) on an older version."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Scrieți CNP-ul corect și apăsați Escape înainte de „Salvează”.",
+              "en": "Type the correct CNP and press Escape before „Salvează”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Scrieți CNP-ul corect în „Note” și lăsați câmpul „CNP” așa.",
+              "en": "Type the correct CNP in „Note” and leave the „CNP” field as it is."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Ștergeți persoana și o adăugați din nou, cu CNP-ul corect.",
+              "en": "Delete the person and add them again, with the correct CNP."
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "persons-identity-death",
+          "ro": {
+            "question": "Ciprian află dintr-un certificat de moștenitor că Gheorghe Ionescu a murit, dar certificatul nu spune când. Ce poate face?",
+            "explanation": "„Data decesului” nu este obligatorie: bifați „Decedat” și salvați. O persoană bifată „Decedat”, dar fără dată, are „Vârstă” „—”."
+          },
+          "en": {
+            "question": "Ciprian learns from a certificate of inheritance that Gheorghe Ionescu has died, but the certificate does not say when. What can he do?",
+            "explanation": "„Data decesului” is not required: tick „Decedat” and save. A person ticked „Decedat” but with no date has „Vârstă” „—”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Bifează „Decedat” fără dată și salvează; „Vârstă” arată „—”.",
+              "en": "He ticks „Decedat” with no date and saves; „Vârstă” shows „—”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Nimic deocamdată: „Decedat” nu se poate salva fără „Data decesului”.",
+              "en": "Nothing for now: „Decedat” cannot be saved without „Data decesului”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Bifează „Decedat” și scrie data de azi, ca să poată salva.",
+              "en": "He ticks „Decedat” and types today's date, so as to be able to save."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Scrie data certificatului la „Data decesului”, fără să bifeze „Decedat”.",
+              "en": "He types the certificate's date under „Data decesului”, without ticking „Decedat”."
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "persons-identity-death",
+          "ro": {
+            "question": "Grăbit, Ciprian scrie la „Data decesului” o dată din anul viitor și apasă „Salvează”. Ce face aplicația?",
+            "explanation": "Aplicația refuză o dată de deces care nu are sens și scrie sub câmp de ce: „„Data decesului” nu poate fi în viitor.”."
+          },
+          "en": {
+            "question": "In a hurry, Ciprian types a date in next year under „Data decesului” and presses „Salvează”. What does the application do?",
+            "explanation": "The application refuses a date of death that makes no sense and writes under the field why: „„Data decesului” nu poate fi în viitor.” (it cannot be in the future)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "O salvează, iar „Vârstă” arată „—” până la acea dată.",
+              "en": "It saves it, and „Vârstă” shows „—” until that date."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "O înlocuiește singură cu data de azi.",
+              "en": "It replaces it by itself with today's date."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "O refuză și scrie sub câmp că data decesului nu poate fi în viitor.",
+              "en": "It refuses it and writes under the field that the date of death cannot be in the future."
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "persons-list",
+          "ro": {
+            "question": "După ce a notat câteva decese, Ciprian vrea să vadă în lista „Persoane Fizice” cine a murit și când. Ce folosește?",
+            "explanation": "În listă, „†” după nume înseamnă că persoana a murit (cu mouse-ul peste el scrie „Decedat”), iar „Câmpuri afișate” poate adăuga coloana „Data decesului”."
+          },
+          "en": {
+            "question": "Having recorded a few deaths, Ciprian wants to see in the „Persoane Fizice” list who has died and when. What does he use?",
+            "explanation": "In the list, „†” after the name means the person has died (with the mouse over it, it reads „Decedat”), and „Câmpuri afișate” (the columns shown) can add the „Data decesului” column."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Filtrul „Relevanță” al listei, pus pe „Inactiv”.",
+              "en": "The list's „Relevanță” filter, set to „Inactiv”."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "„†” după nume și coloana „Data decesului”, adăugată din „Câmpuri afișate”.",
+              "en": "The „†” after the name and the „Data decesului” column, added from „Câmpuri afișate”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Nimic: persoanele decedate ies din listă și se văd doar în „Rapoarte” → „Arbori de moștenire”.",
+              "en": "Nothing: deceased persons leave the list and are seen only in „Rapoarte” → „Arbori de moștenire”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Previzualizare” pe fiecare rând, unde apare data decesului.",
+              "en": "„Previzualizare” on each row, where the date of death appears."
+            }
+          ]
+        },
+        {
+          "id": "a7",
+          "section": "links-versions",
+          "ro": {
+            "question": "Ciprian a bifat „Decedat” la persoana greșită și a salvat. A debifat apoi „Decedat” și a salvat din nou. Ce arată acum istoricul versiunilor persoanei?",
+            "explanation": "Fiecare salvare păstrează o versiune nouă și o lasă neatinsă pe cea dinainte. Versiunea curentă este fără deces, iar versiunea cu „Decedat” bifat rămâne în istoric."
+          },
+          "en": {
+            "question": "Ciprian ticked „Decedat” on the wrong person and saved. He then unticked „Decedat” and saved again. What does the person's version history show now?",
+            "explanation": "Every save keeps a new version and leaves the one before untouched. The current version has no death, and the version with „Decedat” ticked stays in the history."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Versiunea cu „Decedat” a fost ștearsă, iar contorul a revenit la cât era.",
+              "en": "The version with „Decedat” has been deleted, and the counter is back where it was."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Nimic nou: debifarea anulează salvarea de dinainte, fără versiune.",
+              "en": "Nothing new: unticking cancels the earlier save, with no version."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "O singură versiune, cea de la crearea persoanei.",
+              "en": "A single version, the one from the person's creation."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "O versiune nouă, fără deces; cea cu „Decedat” bifat rămâne în istoric.",
+              "en": "A new version, with no death; the one with „Decedat” ticked stays in the history."
+            }
+          ]
+        },
+        {
+          "id": "a8",
+          "section": "reports-inheritance-levels",
+          "ro": {
+            "question": "Ați notat decesul lui Gheorghe Ionescu, cu data nașterii și a decesului, iar el are rude legate. Cum apare el în „Rapoarte” → „Arbori de moștenire”?",
+            "explanation": "O persoană marcată „Decedat” are în arbore „†” după nume și anii vieții sub el, de exemplu „1955–2010”."
+          },
+          "en": {
+            "question": "You have recorded Gheorghe Ionescu's death, with the dates of birth and death, and he has relatives linked. How does he appear in „Rapoarte” → „Arbori de moștenire”?",
+            "explanation": "A person marked „Decedat” has, in the tree, „†” after the name and the years of their life under it, for instance „1955–2010”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Nu mai apare: arborele desenează doar persoanele în viață.",
+              "en": "He no longer appears: the tree draws only living persons."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Estompat, ca persoanele născute după anul ales.",
+              "en": "Faded, like the persons born after the chosen year."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Cu „†” după nume și anii vieții sub el.",
+              "en": "With „†” after the name and the years of his life under it."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Cu data decesului și CNP-ul, sub nume.",
+              "en": "With the date of death and the CNP, under the name."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "persons-add-save",
+          "ro": {
+            "question": "Ciprian adaugă de mână o persoană și are CNP-ul ei scris de mână pe o hârtie, cu o cifră greu de citit. De ce merită să-l verifice înainte de prima salvare?",
+            "explanation": "Dacă știți CNP-ul, scrieți-l la adăugare: după salvare nu se mai poate schimba. Singura cale de a-l îndrepta apoi este să ștergeți persoana și s-o adăugați din nou."
+          },
+          "en": {
+            "question": "Ciprian is adding a person by hand and has their CNP handwritten on a sheet of paper, with one digit hard to read. Why is it worth checking it before the first save?",
+            "explanation": "If you know the CNP, type it when adding: once saved it can no longer be changed. The only way to put it right afterwards is to delete the person and add them again."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Pentru că după salvare nu se mai poate schimba decât ștergând persoana.",
+              "en": "Because after saving it can be changed only by deleting the person."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Pentru că fără un CNP corect persoana nu se poate salva deloc.",
+              "en": "Because without a correct CNP the person cannot be saved at all."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Pentru că un CNP greșit oprește salvarea celorlalte fișe.",
+              "en": "Because a wrong CNP stops the other tiles from being saved."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nu e nevoie: îl poate corecta oricând cu „Fă curentă”.",
+              "en": "There is no need: he can correct it any time with „Fă curentă”."
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "persons-add-save",
+          "ro": {
+            "question": "Ca să îndrepte un CNP greșit, Ciprian se pregătește să-l șteargă pe Ion Popescu și să-l adauge din nou. Ce trebuie să știe despre ștergere?",
+            "explanation": "Ca să ștergeți o persoană, apăsați „Șterge” și răspundeți „Da” la „Ștergeți persoana?”; ștergerea nu se poate anula."
+          },
+          "en": {
+            "question": "To put a wrong CNP right, Ciprian is getting ready to delete Ion Popescu and add him again. What must he know about the deletion?",
+            "explanation": "To delete a person, press „Șterge” and answer „Da” to „Ștergeți persoana?” (delete the person?); the deletion cannot be undone."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Se poate anula din „N versiuni”, cu „Fă curentă”.",
+              "en": "It can be undone from „N versiuni”, with „Fă curentă”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Se face fără nicio întrebare, de pe rândul din listă.",
+              "en": "It is done without any question, from the row in the list."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Aplicația întreabă „Ștergeți persoana?”, iar ștergerea nu se poate anula.",
+              "en": "The application asks „Ștergeți persoana?”, and the deletion cannot be undone."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Persoana trece în „Recente”, de unde se poate readuce cu toate legăturile și versiunile ei.",
+              "en": "The person goes into „Recente”, from where it can be brought back with all its links and versions."
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "persons-identity-death",
+          "ro": {
+            "question": "Ciprian vrea să scrie „Data decesului” Mariei Ionescu, dar câmpul nu primește nimic. Ce i-a scăpat?",
+            "explanation": "„Data decesului” se poate completa doar cât timp „Decedat” este bifat; bifa stă în „Identitate”, sub „Data nașterii”, nebifată la început."
+          },
+          "en": {
+            "question": "Ciprian wants to type Maria Ionescu's „Data decesului”, but the field accepts nothing. What has he missed?",
+            "explanation": "„Data decesului” can be filled in only while „Decedat” is ticked; the tick is in „Identitate”, under „Data nașterii”, unticked at first."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Să apese întâi creionul din bara de butoane a fișei „Clasificare”.",
+              "en": "Pressing first the pencil in the „Clasificare” tile's button bar."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Să bifeze „Decedat”, sub „Data nașterii”.",
+              "en": "Ticking „Decedat”, under „Data nașterii”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Să completeze întâi „Locul nașterii”.",
+              "en": "Filling in „Locul nașterii” first."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Să adauge coloana „Data decesului” din „Câmpuri afișate”.",
+              "en": "Adding the „Data decesului” column from „Câmpuri afișate”."
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "persons-identity-death",
+          "ro": {
+            "question": "Ion Popescu a fost notat „Decedat”, cu data decesului, la 76 de ani. Ce va arăta „Vârstă” pe ecranul lui peste doi ani?",
+            "explanation": "După deces, „Vârstă” nu mai crește: arată vârsta la moarte, urmată de „†” — de exemplu „76 †”."
+          },
+          "en": {
+            "question": "Ion Popescu was recorded as „Decedat”, with the date of death, at the age of 76. What will „Vârstă” show on his screen two years from now?",
+            "explanation": "After the death, „Vârstă” no longer grows: it shows the age at death, followed by „†” — for instance „76 †”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„78”, pentru că vârsta se socotește mereu până azi.",
+              "en": "„78”, because the age is always counted up to today."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„—”, pentru că o persoană decedată nu mai are vârstă.",
+              "en": "„—”, because a deceased person has no age any more."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„78 †”, vârsta de azi, cu semnul decesului.",
+              "en": "„78 †”, today's age, with the mark of death."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "„76 †”, vârsta la moarte.",
+              "en": "„76 †”, the age at death."
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "persons-identity-death",
+          "ro": {
+            "question": "Ciprian scrie la „Data decesului” anul 1938 în loc de 1983, pentru o persoană născută în 1950. Ce face aplicația?",
+            "explanation": "Aplicația refuză o dată de deces care nu are sens și scrie sub câmp de ce: „„Data decesului” nu poate fi înainte de „Data nașterii”.”."
+          },
+          "en": {
+            "question": "Ciprian types the year 1938 instead of 1983 under „Data decesului”, for a person born in 1950. What does the application do?",
+            "explanation": "The application refuses a date of death that makes no sense and writes under the field why: „„Data decesului” nu poate fi înainte de „Data nașterii”.” (it cannot be before the date of birth)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "O refuză și scrie sub câmp că nu poate fi înainte de „Data nașterii”.",
+              "en": "It refuses it and writes under the field that it cannot be before „Data nașterii”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "O salvează și arată la „Vârstă” un număr negativ.",
+              "en": "It saves it and shows a negative number under „Vârstă”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "O salvează, dar debifează singură „Decedat”.",
+              "en": "It saves it, but unticks „Decedat” by itself."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Schimbă singură „Data nașterii” ca să se potrivească și scrie în „Note” că a corectat-o.",
+              "en": "It changes „Data nașterii” by itself to match, and writes in „Note” that it corrected it."
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "persons-example-death",
+          "ro": {
+            "question": "Ați notat decesul unei persoane și ați apăsat „Salvează”. Vă întoarceți la lista „Persoane Fizice”. Ce vă arată acolo că decesul a fost salvat?",
+            "explanation": "După salvare, „Vârstă” arată vârsta la deces, cu „†”, iar înapoi în listă „†” stă după numele persoanei."
+          },
+          "en": {
+            "question": "You have recorded a person's death and pressed „Salvează”. You go back to the „Persoane Fizice” list. What shows you there that the death was saved?",
+            "explanation": "After saving, „Vârstă” shows the age at death, with „†”, and back in the list „†” stands after the person's name."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Numele ei apare cu gri, la sfârșitul listei.",
+              "en": "Their name appears in grey, at the end of the list."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Lista adaugă singură coloana „Data decesului”.",
+              "en": "The list adds the „Data decesului” column by itself."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "„†” stă după numele ei.",
+              "en": "„†” stands after their name."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Rândul ei nu mai are butonul „Deschide”.",
+              "en": "Their row no longer has the „Deschide” button."
+            }
+          ]
+        },
+        {
+          "id": "b7",
+          "section": "reports-inheritance-year",
+          "ro": {
+            "question": "Gheorghe Ionescu a murit în 2010 și este notat așa. În „Arbori de moștenire”, Ciprian mută „Anul” la 2005. Cum apare Gheorghe?",
+            "explanation": "Cu „Anul” mutat în trecut, arborele arată familia așa cum era atunci: cine murise până atunci poartă „†”, iar o persoană care a murit mai târziu nu este marcată ca decedată în anul ales."
+          },
+          "en": {
+            "question": "Gheorghe Ionescu died in 2010 and is recorded so. In „Arbori de moștenire”, Ciprian moves „Anul” (the year) to 2005. How does Gheorghe appear?",
+            "explanation": "With „Anul” moved into the past, the tree shows the family as it was then: whoever had died by then carries „†”, and a person who died later is not marked as deceased in the chosen year."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Cu „†”, pentru că decesul lui este salvat.",
+              "en": "With „†”, because his death is saved."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Estompat, ca o persoană care nu se născuse.",
+              "en": "Faded, like a person not yet born."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Nu apare deloc în anul ales.",
+              "en": "He does not appear at all in the chosen year."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Fără „†”: în 2005 nu murise încă.",
+              "en": "Without „†”: in 2005 he had not died yet."
+            }
+          ]
+        },
+        {
+          "id": "b8",
+          "section": "persons-identity-death",
+          "ro": {
+            "question": "Ciprian a bifat „Decedat” la Ion Popescu în loc de Ion Popa și a salvat. Ce face ca Ion Popescu să fie din nou în viață în arhivă?",
+            "explanation": "Dacă ați bifat „Decedat” din greșeală, debifați-l și salvați: data decesului se golește, iar „Vârstă” arată din nou vârsta de azi."
+          },
+          "en": {
+            "question": "Ciprian ticked „Decedat” on Ion Popescu instead of Ion Popa and saved. What does he do so that Ion Popescu is alive again in the archive?",
+            "explanation": "If you ticked „Decedat” by mistake, untick it and save: the date of death is emptied, and „Vârstă” shows today's age again."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Șterge persoana și o adaugă din nou, ca la un CNP greșit.",
+              "en": "He deletes the person and adds them again, as for a wrong CNP."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Debifează „Decedat” și salvează; data decesului se golește.",
+              "en": "He unticks „Decedat” and saves; the date of death is emptied."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Golește doar „Data decesului” și lasă „Decedat” bifat.",
+              "en": "He empties only „Data decesului” and leaves „Decedat” ticked."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nu se mai poate; scrie în „Note” că a fost o greșeală.",
+              "en": "It cannot be done any more; he writes in „Note” that it was a mistake."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

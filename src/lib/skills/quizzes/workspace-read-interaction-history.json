@@ -1,0 +1,629 @@
+{
+  "skill": "workspace-read-interaction-history",
+  "manual": [
+    "reports-interactions-history",
+    "reports-interactions-person",
+    "persons-interactions",
+    "reports-example-reply"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "reports-interactions-person",
+          "ro": {
+            "question": "Sunteți pe ecranul Mariei Ionescu, în fișa „Interacțiuni”. Vreți să-i vedeți interacțiunile cu filtrele de canal și de perioadă. Ce apăsați?",
+            "explanation": "„Deschide în „Interacțiuni”” duce la ecranul „Interacțiuni”, deja restrâns la persoană; acolo stau filtrele din bara de unelte."
+          },
+          "en": {
+            "question": "You are on Maria Ionescu's screen, in the „Interacțiuni” tile. You want to see her interactions with the channel and period filters. What do you press?",
+            "explanation": "„Deschide în „Interacțiuni”” (open in interactions) takes you to the „Interacțiuni” screen, already narrowed to the person; the toolbar's filters are there."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Înregistrează o interacțiune”, care deschide filtrele sub istoric",
+              "en": "„Înregistrează o interacțiune”, which opens the filters under the history"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "„Deschide în „Interacțiuni””, care deschide ecranul restrâns la ea",
+              "en": "„Deschide în „Interacțiuni””, which opens the screen narrowed to her"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Incursiune” din lista persoanelor, care arată filtrele alături",
+              "en": "„Incursiune” in the list of persons, which shows the filters beside it"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Arată toți clienții”, apoi căutați-o în „Caută persoană…”",
+              "en": "„Arată toți clienții”, then look for her in „Caută persoană…”"
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "reports-interactions-history",
+          "ro": {
+            "question": "Pe ecranul „Interacțiuni”, apăsați numele lui Andrei Munteanu dintr-un rând. Ce se deschide?",
+            "explanation": "Numele persoanei dintr-un rând este o legătură: deschide ecranul persoanei, cu formularul de înregistrare deja deschis pe o interacțiune nouă."
+          },
+          "en": {
+            "question": "On the „Interacțiuni” screen, you press Andrei Munteanu's name in a row. What opens?",
+            "explanation": "The person's name in a row is a link: it opens the person's screen, with the recording form already open on a new interaction."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Rândul se selectează și arată descrierea interacțiunii",
+              "en": "The row is selected and shows the interaction's description"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Fișa lui „Interacțiuni” se deschide alături, fără formular",
+              "en": "His „Interacțiuni” tile opens beside it, without a form"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Ecranul lui, cu interacțiunea din rând încărcată în formular",
+              "en": "His screen, with the row's interaction loaded into the form"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Ecranul lui, cu formularul deschis pe o interacțiune nouă",
+              "en": "His screen, with the form open on a new interaction"
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "reports-interactions-history",
+          "ro": {
+            "question": "Ieri ați înregistrat un telefon cu subiectul „Întrebare contract Bragadiru”; în descriere ați scris despre arendă. Azi scrieți „arendă” în „Caută persoană sau subiect…” și nu apare nimic. De ce?",
+            "explanation": "Descrierea unei interacțiuni nu se folosește la filtrare: căutați după subiect. De aceea subiectul, ce apare în istoric și la filtrare, se păstrează scurt și grăitor."
+          },
+          "en": {
+            "question": "Yesterday you recorded a phone call with the subject „Întrebare contract Bragadiru”; in the description you wrote about a lease. Today you type „arendă” (lease) in „Caută persoană sau subiect…” and nothing appears. Why?",
+            "explanation": "An interaction's description is not used for filtering: search by subject. That is why the subject, which shows in the history and is used for filtering, is kept short and telling."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Căutarea citește doar numele și subiectul, nu descrierea",
+              "en": "The search reads only the name and the subject, not the description"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Interacțiunile de ieri apar abia după o reîncărcare",
+              "en": "Yesterday's interactions only appear after a reload"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Căutarea merge doar după ce alegeți și canalul „Telefon” din bara de unelte",
+              "en": "The search only works once you also choose the „Telefon” channel in the toolbar"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Cuvintele cu diacritice nu se pot căuta în istoric",
+              "en": "Words with diacritics cannot be searched in the history"
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "reports-interactions-history",
+          "ro": {
+            "question": "În antetul coloanei „Canal”, la „Filtrează după „Canal””, bifați „Telefon”. Ce vedeți în bara de unelte?",
+            "explanation": "Filtrul din antet și butoanele din bara de unelte sunt același filtru: ce bifați într-un loc se vede și în celălalt, deci butonul „Telefon” apare umplut."
+          },
+          "en": {
+            "question": "In the „Canal” column header, under „Filtrează după „Canal””, you tick „Telefon”. What do you see in the toolbar?",
+            "explanation": "The header's filter and the toolbar's buttons are the same filter: what you tick in one place shows in the other, so the „Telefon” button shows filled."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Nimic nu se schimbă: antetul are un filtru separat de cel din bara de unelte",
+              "en": "Nothing changes: the header has a filter separate from the one in the toolbar"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Butoanele de canal se golesc toate, ca să nu se dubleze",
+              "en": "All the channel buttons empty, so as not to double up"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Butonul „Telefon” apare umplut: este același filtru",
+              "en": "The „Telefon” button shows filled: it is the same filter"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Sens” trece singur pe „Primite”",
+              "en": "„Sens” switches to „Primite” by itself"
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "reports-example-reply",
+          "ro": {
+            "question": "Dimineața, Ciprian apasă „Așteaptă răspuns: …” pe ecranul „Interacțiuni”. Ce rămâne în listă?",
+            "explanation": "„Așteaptă răspuns: …” lasă în listă doar interacțiunile primite care sunt încă pe starea „Așteaptă răspuns” și alege „Primite”: clienții care au scris sau au sunat și încă nu au primit răspuns."
+          },
+          "en": {
+            "question": "In the morning, Ciprian presses „Așteaptă răspuns: …” on the „Interacțiuni” screen. What stays in the list?",
+            "explanation": "„Așteaptă răspuns: …” leaves in the list only the received interactions still in the status „Așteaptă răspuns” and chooses „Primite”: the clients who wrote or rang and have not yet had a reply."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Toate interacțiunile, primite și trimise, cu un memento pus",
+              "en": "Every interaction, received and sent, that has a reminder set"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Doar cele primite, încă pe starea „Așteaptă răspuns”",
+              "en": "Only the received ones, still in the status „Așteaptă răspuns”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Doar cele trimise de el la care clientul nu a răspuns",
+              "en": "Only those he sent that the client has not answered"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Doar interacțiunile de azi, de pe orice canal",
+              "en": "Only today's interactions, on any channel"
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "reports-interactions-person",
+          "ro": {
+            "question": "Din lista persoanelor, Ciprian apasă „Incursiune” pe rândul lui Vasile Stan și vede o interacțiune căreia vrea să-i schimbe starea. Ce face?",
+            "explanation": "„Incursiune” arată doar istoricul, fără formular; un clic pe o interacțiune de acolo deschide ecranul persoanei, cu interacțiunea încărcată în formular."
+          },
+          "en": {
+            "question": "From the list of persons, Ciprian presses „Incursiune” on Vasile Stan's row and sees an interaction whose status he wants to change. What does he do?",
+            "explanation": "„Incursiune” shows the history alone, no form; a click on an interaction there opens the person's screen, with the interaction loaded into the form."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Schimbă starea în formularul de sub istoricul din „Incursiune”",
+              "en": "Changes the status in the form under the history in „Incursiune”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Deschide „Interacțiuni” și scrie starea nouă direct în rând",
+              "en": "Opens „Interacțiuni” and types the new status straight into the row"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Face clic pe interacțiune: se deschide ecranul lui, cu ea în formular",
+              "en": "Clicks the interaction: his screen opens, with it in the form"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Apasă „Legături” pe rând, unde stau și interacțiunile lui",
+              "en": "Presses „Legături” on the row, where his interactions also are"
+            }
+          ]
+        },
+        {
+          "id": "a7",
+          "section": "reports-interactions-history",
+          "ro": {
+            "question": "Un client vă amintește că a sunat acum patru luni. Deschideți „Interacțiuni”, căutați-i numele și nu găsiți convorbirea. Ce verificați întâi?",
+            "explanation": "La deschidere perioada este „Ultimele 90 de zile”, iar o interacțiune din afara perioadei alese nu apare; alegeți „Anul acesta” sau „Personalizat”, cu „De la” și „Până la”."
+          },
+          "en": {
+            "question": "A client reminds you he rang four months ago. You open „Interacțiuni”, search for his name and do not find the call. What do you check first?",
+            "explanation": "On opening, the period is „Ultimele 90 de zile” (the last 90 days), and an interaction outside the chosen period does not appear; choose „Anul acesta” (this year) or „Personalizat” (custom), with „De la” and „Până la”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Ordinea: treceți pe „Cele mai vechi întâi”",
+              "en": "The order: switch to „Cele mai vechi întâi”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Sensul: treceți de la „Toate” la „Primite”, ca să apară apelurile clientului",
+              "en": "The direction: switch from „Toate” to „Primite”, so that the client's calls appear"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Coloana „Acte”: alegeți „Cu acte legate”",
+              "en": "The „Acte” column: choose „Cu acte legate”"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "„Perioada”: implicit sunt doar ultimele 90 de zile",
+              "en": "„Perioada”: by default only the last 90 days show"
+            }
+          ]
+        },
+        {
+          "id": "a8",
+          "section": "persons-interactions",
+          "ro": {
+            "question": "Pe ecranul Elenei Dumitru nu vedeți deloc fișa „Interacțiuni”, deși știți că are convorbiri înregistrate. Ce faceți?",
+            "explanation": "Fișa „Interacțiuni” este bifată de la început, iar bifa ei este ultima din capul ecranului; dacă a fost debifată, o bifați din nou și fișa revine."
+          },
+          "en": {
+            "question": "On Elena Dumitru's screen you do not see the „Interacțiuni” tile at all, though you know she has calls recorded. What do you do?",
+            "explanation": "The „Interacțiuni” tile is ticked from the start, and its tick is the last at the top of the screen; if it was unticked, you tick it again and the tile comes back."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Bifați din nou ultima bifă din capul ecranului, „Interacțiuni”",
+              "en": "Tick again the last tick at the top of the screen, „Interacțiuni”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Înregistrați o interacțiune nouă, ca fișa să se creeze",
+              "en": "Record a new interaction, so that the tile is created"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Căutați-o în „Legături”, unde stau interacțiunile ei",
+              "en": "Look for it in „Legături”, where her interactions are"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Ștergeți filtrele de pe ecranul „Interacțiuni”",
+              "en": "Clear the filters on the „Interacțiuni” screen"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "reports-interactions-history",
+          "ro": {
+            "question": "Ieri ați apăsat „Cele mai noi întâi” și lista a trecut pe „Cele mai vechi întâi”. Azi reîncărcați pagina. În ce ordine este lista?",
+            "explanation": "Ordinea aleasă rămâne și după ce reîncărcați pagina, deci lista este tot cu cele mai vechi întâi; „Șterge filtrele” o pune la loc pe „Cele mai noi întâi”."
+          },
+          "en": {
+            "question": "Yesterday you pressed „Cele mai noi întâi” and the list switched to „Cele mai vechi întâi”. Today you reload the page. What order is the list in?",
+            "explanation": "The order you chose stays even after you reload the page, so the list is still oldest first; „Șterge filtrele” (clear the filters) puts it back to „Cele mai noi întâi”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Cele mai noi întâi: reîncărcarea pune totul la loc",
+              "en": "Newest first: reloading puts everything back"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Tot cele mai vechi întâi: ordinea aleasă se păstrează",
+              "en": "Still oldest first: the chosen order is kept"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În ordinea numelor din coloana „Persoană”",
+              "en": "In the order of the names in the „Persoană” column"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Depinde de perioada aleasă la „Perioada”",
+              "en": "It depends on the period chosen under „Perioada”"
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "reports-interactions-history",
+          "ro": {
+            "question": "Pe ecranul „Interacțiuni”, un rând are în coloana „Acte” o agrafă cu cifra 2. Vreți să citiți contractul legat. Ce faceți?",
+            "explanation": "Apăsată, agrafa înșiră actele legate, iar un clic pe un act îl deschide din arhivă; în listă nu se poate scrie nimic."
+          },
+          "en": {
+            "question": "On the „Interacțiuni” screen, a row has a paperclip with the figure 2 in the „Acte” column. You want to read the linked contract. What do you do?",
+            "explanation": "Pressed, the paperclip lists the linked documents, and a click on a document opens it from the archive; nothing can be typed into the list."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Apăsați „Exportă”: actele legate se descarcă odată cu rândul",
+              "en": "Press „Exportă”: the linked documents download with the row"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Faceți clic pe rând: descrierea arată și paginile actelor",
+              "en": "Click the row: the description also shows the documents' pages"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Apăsați numele persoanei și căutați actul în „Legături”",
+              "en": "Press the person's name and look for the document in „Legături”"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Apăsați agrafa, apoi actul din listă: se deschide din arhivă",
+              "en": "Press the paperclip, then the document in the list: it opens from the archive"
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "reports-interactions-history",
+          "ro": {
+            "question": "Un client a sunat; ați înregistrat convorbirea ca „Primite”, cu starea „Încheiată”. Intră ea în numărul „Așteaptă răspuns: …”?",
+            "explanation": "„Așteaptă răspuns: …” numără doar interacțiunile primite care sunt încă pe starea „Așteaptă răspuns”; una „Încheiată” nu intră."
+          },
+          "en": {
+            "question": "A client rang; you recorded the call as „Primite” (received), with the status „Încheiată” (completed). Is it counted in „Așteaptă răspuns: …”?",
+            "explanation": "„Așteaptă răspuns: …” counts only the received interactions still in the status „Așteaptă răspuns”; one that is „Încheiată” is not counted."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Da, orice interacțiune primită intră în număr, oricare i-ar fi starea",
+              "en": "Yes, every received interaction is counted, whatever its status"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Da, până trec cele 90 de zile ale perioadei",
+              "en": "Yes, until the period's 90 days have passed"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Nu, se numără doar cele pe starea „Așteaptă răspuns”",
+              "en": "No, only those in the status „Așteaptă răspuns” are counted"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nu, se numără doar interacțiunile cu un memento",
+              "en": "No, only interactions with a reminder are counted"
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "reports-example-reply",
+          "ro": {
+            "question": "Ciprian l-a sunat înapoi pe Vasile Stan, care aștepta răspuns, și a înregistrat convorbirea ca „Telefon”, „Trimisă”. Vasile apare totuși la „Așteaptă răspuns: …”. Ce mai face Ciprian?",
+            "explanation": "Pe ecranul lui Vasile, în istoric, apasă interacțiunea care aștepta, alege la „Stare” „Încheiată” și apasă „Salvează modificările”; contorul numără interacțiunile primite încă pe „Așteaptă răspuns”."
+          },
+          "en": {
+            "question": "Ciprian rang back Vasile Stan, who was waiting for a reply, and recorded the call as „Telefon”, „Trimisă”. Vasile still shows under „Așteaptă răspuns: …”. What else does Ciprian do?",
+            "explanation": "On Vasile's screen, in the history, he presses the interaction that was waiting, chooses „Încheiată” under „Stare” and presses „Salvează modificările”; the counter counts the received interactions still in „Așteaptă răspuns”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Pune pe „Încheiată” interacțiunea care aștepta și salvează modificările",
+              "en": "Sets the waiting interaction to „Încheiată” and saves the changes"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Șterge interacțiunea care aștepta, ca să iasă din număr",
+              "en": "Deletes the waiting interaction, so it leaves the count"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Schimbă starea direct în rândul de pe ecranul „Interacțiuni”",
+              "en": "Changes the status straight in the row on the „Interacțiuni” screen"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Apasă „Șterge filtrele”, care golește și contorul",
+              "en": "Presses „Șterge filtrele”, which also empties the counter"
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "reports-interactions-person",
+          "ro": {
+            "question": "Prin ce se deosebește fișa „Interacțiuni” de pe ecranul unei persoane de cea arătată de „Incursiune” în lista persoanelor?",
+            "explanation": "Pe ecranul persoanei fișa arată lista ei cu formularul sub ea; „Incursiune” arată fișa doar cu istoricul, fără formular."
+          },
+          "en": {
+            "question": "How does the „Interacțiuni” tile on a person's screen differ from the one „Incursiune” shows in the list of persons?",
+            "explanation": "On the person's screen the tile shows her list with the form under it; „Incursiune” shows the tile with the history alone, no form."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Incursiune” arată interacțiunile tuturor clienților",
+              "en": "„Incursiune” shows every client's interactions"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "„Incursiune” arată doar istoricul, fără formularul de dedesubt",
+              "en": "„Incursiune” shows the history alone, without the form beneath"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Pe ecranul persoanei se văd doar ultimele 90 de zile",
+              "en": "On the person's screen only the last 90 days show"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Incursiune” are în plus filtrele de canal și de sens, ca ecranul „Interacțiuni”",
+              "en": "„Incursiune” also has the channel and direction filters, like the „Interacțiuni” screen"
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "reports-interactions-history",
+          "ro": {
+            "question": "Vreți să vedeți doar mesajele pe WhatsApp pe care le-ați trimis dumneavoastră clienților în ultima săptămână. Ce puneți în bara de unelte?",
+            "explanation": "„Perioada” „Ultimele 7 zile”, butonul „WhatsApp” și, la „Sens”, „Trimise”, adică cele plecate de la dumneavoastră."
+          },
+          "en": {
+            "question": "You want to see only the WhatsApp messages you yourself sent to clients in the last week. What do you set in the toolbar?",
+            "explanation": "„Perioada” „Ultimele 7 zile”, the „WhatsApp” button and, under „Sens”, „Trimise”, that is, those that went out from you."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Ultimele 7 zile”, „WhatsApp” și „Sens” pe „Primite”",
+              "en": "„Ultimele 7 zile”, „WhatsApp” and „Sens” on „Primite”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Azi”, „WhatsApp” și „Așteaptă răspuns: …”",
+              "en": "„Azi”, „WhatsApp” and „Așteaptă răspuns: …”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Ultimele 7 zile”, „SMS” și „Sens” pe „Trimise”",
+              "en": "„Ultimele 7 zile”, „SMS” and „Sens” on „Trimise”"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "„Ultimele 7 zile”, „WhatsApp” și „Sens” pe „Trimise”",
+              "en": "„Ultimele 7 zile”, „WhatsApp” and „Sens” on „Trimise”"
+            }
+          ]
+        },
+        {
+          "id": "b7",
+          "section": "reports-interactions-history",
+          "ro": {
+            "question": "Vreți să găsiți interacțiunile care nu au încă niciun act legat, ca să le completați. Unde filtrați?",
+            "explanation": "În antetul coloanei „Acte” alegeți „Fără acte legate”; antetul unei coloane are filtrul lui, la fel ca bara de unelte."
+          },
+          "en": {
+            "question": "You want to find the interactions that have no linked document yet, so as to complete them. Where do you filter?",
+            "explanation": "In the „Acte” column header you choose „Fără acte legate” (without linked documents); a column's header has its own filter, as the toolbar does."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Scrieți „fără acte” în „Caută persoană sau subiect…”",
+              "en": "Type „fără acte” in „Caută persoană sau subiect…”"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "În antetul coloanei „Acte”, alegeți „Fără acte legate”",
+              "en": "In the „Acte” column header, choose „Fără acte legate”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "În antetul coloanei „Canal”, debifați toate canalele",
+              "en": "In the „Canal” column header, untick every channel"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "La „Sens”, alegeți „Toate”, apoi ordonați după „Stare”",
+              "en": "Under „Sens”, choose „Toate”, then sort by „Stare”"
+            }
+          ]
+        },
+        {
+          "id": "b8",
+          "section": "persons-example-call",
+          "ro": {
+            "question": "Ion Popescu a sunat să întrebe de un teren din Bragadiru. Înregistrați convorbirea pe ecranul lui și apăsați „Salvează”. Unde o găsiți apoi?",
+            "explanation": "Convorbirea apare în istoricul persoanei, prima, și pe ecranul „Interacțiuni”, care arată toate contactele, pentru toți clienții."
+          },
+          "en": {
+            "question": "Ion Popescu rang to ask about a plot in Bragadiru. You record the call on his screen and press „Salvează”. Where do you find it afterwards?",
+            "explanation": "The call appears in the person's history, first, and on the „Interacțiuni” screen, which shows every contact, for every client."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Doar în istoricul lui, până o exportați",
+              "en": "Only in his history, until you export it"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Doar pe ecranul „Interacțiuni”, după o reîncărcare",
+              "en": "Only on the „Interacțiuni” screen, after a reload"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "În istoricul lui și pe ecranul „Interacțiuni”",
+              "en": "In his history and on the „Interacțiuni” screen"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "În „Legături”, ca rând nou, și în istoricul lui",
+              "en": "In „Legături”, as a new row, and in his history"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

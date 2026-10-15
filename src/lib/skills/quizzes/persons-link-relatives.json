@@ -1,0 +1,630 @@
+{
+  "skill": "persons-link-relatives",
+  "manual": [
+    "persons-relatives-link",
+    "persons-relatives-tree",
+    "links-associate-role",
+    "persons-example-tree",
+    "links-associate-remove"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "persons-relatives-link",
+          "ro": {
+            "question": "Pe ecranul Anei Popescu, în „Legături”, Ciprian apasă „Asociază persoană” și îl bifează pe tatăl ei, Ion. Ce alege la „Rol”?",
+            "explanation": "La „Rol” alegeți ce este persoana bifată pentru cea de pe ecran; fraza de lângă „Rol” o spune: „Rolul pe care persoana bifată îl are față de …”. Ion, bifat, este „Părinte” pentru Ana."
+          },
+          "en": {
+            "question": "On Ana Popescu's screen, in „Legături”, Ciprian presses „Asociază persoană” and ticks her father, Ion. What does he choose under „Rol” (role)?",
+            "explanation": "Under „Rol” you choose what the ticked person is to the one on screen; the sentence beside „Rol” says so: „Rolul pe care persoana bifată îl are față de …” (the role the ticked person holds towards …). Ion, ticked, is „Părinte” to Ana."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Fiică”, rolul Anei, pe al cărei ecran se află.",
+              "en": "„Fiică” (daughter), the role of Ana, whose screen he is on."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "„Părinte”, rolul lui Ion față de Ana.",
+              "en": "„Părinte” (parent), Ion's role towards Ana."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Oricare dintre ele; aplicația potrivește sensul după vârste.",
+              "en": "Either of them; the application fixes the direction by age."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„— fără rol —”; rudenia se alege apoi în „Arbore de moștenire”.",
+              "en": "„— fără rol —” (no role); the kinship is chosen afterwards in „Arbore de moștenire”."
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "persons-relatives-link",
+          "ro": {
+            "question": "Ion a fost legat ca „Părinte” de pe ecranul Anei, care are „Gen” completat. Ciprian deschide acum ecranul lui Ion. Ce vede în „Legături”?",
+            "explanation": "Legătura se citește corect din ambele capete: fiecare capăt arată rolul celuilalt, la genul lui. Dacă Ion este „Părinte” pentru Ana, pe ecranul lui Ion Ana apare ca „Fiică”."
+          },
+          "en": {
+            "question": "Ion was linked as „Părinte” from the screen of Ana, who has „Gen” filled in. Ciprian now opens Ion's screen. What does he see in „Legături”?",
+            "explanation": "The link reads correctly from both ends: each end shows the other person's role, in that person's gender. If Ion is „Părinte” to Ana, on Ion's screen Ana appears as „Fiică”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Nimic: legătura trebuie făcută și de pe ecranul lui Ion.",
+              "en": "Nothing: the link must be made from Ion's screen too."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Ana Popescu (Părinte)”, același rol din ambele capete.",
+              "en": "„Ana Popescu (Părinte)”, the same role from both ends."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "„Ana Popescu (Fiică)”.",
+              "en": "„Ana Popescu (Fiică)”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Ana Popescu (Copil)”, forma de pe ecranul părintelui.",
+              "en": "„Ana Popescu (Copil)”, the form used on the parent's screen."
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "persons-relatives-link",
+          "ro": {
+            "question": "Ion este legat ca „Părinte” pentru Mihai Popescu, la care „Gen” nu a fost completat. Cum apare Mihai pe ecranul lui Ion?",
+            "explanation": "Pentru o persoană fără „Gen” completat, aplicația folosește forma neutră a rolului invers, de exemplu „Copil”."
+          },
+          "en": {
+            "question": "Ion is linked as „Părinte” to Mihai Popescu, whose „Gen” was not filled in. How does Mihai appear on Ion's screen?",
+            "explanation": "For a person with no „Gen” filled in, the application uses the neutral form of the converse role, for instance „Copil” (child)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Mihai Popescu (Fiu)”, după prenume.",
+              "en": "„Mihai Popescu (Fiu)” (son), by the first name."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Mihai Popescu (Părinte)”.",
+              "en": "„Mihai Popescu (Părinte)”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Fără rol, până se completează „Gen”.",
+              "en": "With no role, until „Gen” is filled in."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "„Mihai Popescu (Copil)”, forma neutră.",
+              "en": "„Mihai Popescu (Copil)”, the neutral form."
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "persons-relatives-tree",
+          "ro": {
+            "question": "Ciprian a legat două persoane cu un rol, iar legătura se vede în „Legături”. În „Arbore de moștenire”, însă, scrie „Nicio legătură de familie încă.”. Care e cauza cea mai probabilă?",
+            "explanation": "În arbore intră doar legăturile cu un rol de rudenie — rolurile marcate „Rudenie” în „Roluri Persoane”. Un rol fără rudenie se vede în „Legături”, dar nu și în arbore."
+          },
+          "en": {
+            "question": "Ciprian linked two persons with a role, and the link shows in „Legături”. In „Arbore de moștenire”, however, it says „Nicio legătură de familie încă.” (no family tie yet). What is the most likely cause?",
+            "explanation": "Only links with a kinship role go into the tree — the roles marked „Rudenie” (kinship) in „Roluri Persoane”. A role with no kinship shows in „Legături”, but not in the tree."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Rolul ales nu este marcat „Rudenie” în „Roluri Persoane”.",
+              "en": "The role chosen is not marked „Rudenie” in „Roluri Persoane”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Legăturile făcute din „Legături” nu intră niciodată în arbore.",
+              "en": "Links made from „Legături” never go into the tree."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Arborele se actualizează abia după o nouă versiune a persoanei.",
+              "en": "The tree updates only after a new version of the person."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Fișa „Arbore de moștenire” nu era bifată în capul ecranului.",
+              "en": "The „Arbore de moștenire” tile was not ticked at the top of the screen."
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "persons-relatives-tree",
+          "ro": {
+            "question": "Ciprian l-a adăugat pe tatăl lui Andrei Munteanu din panoul „Adaugă sau scoate o rudă” al fișei „Arbore de moștenire”. Trebuie să-l mai asocieze o dată și din „Legături”?",
+            "explanation": "Legăturile adăugate în „Arbore de moștenire” sunt aceleași cu cele din „Legături”: o rudă legată într-un loc apare și în celălalt."
+          },
+          "en": {
+            "question": "Ciprian added Andrei Munteanu's father from the „Adaugă sau scoate o rudă” panel of the „Arbore de moștenire” tile. Must he associate him once more from „Legături”?",
+            "explanation": "The ties added in „Arbore de moștenire” are the same as those in „Legături”: a relative linked in one place appears in the other too."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Da, altfel tatăl apare doar în desen.",
+              "en": "Yes, otherwise the father appears only in the drawing."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Da, dar numai de pe ecranul tatălui.",
+              "en": "Yes, but only from the father's screen."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Nu: legătura este aceeași și apare și în „Legături”.",
+              "en": "No: the tie is the same and appears in „Legături” too."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nu, dar tatăl apare în „Legături” fără rol, până îi alegeți unul.",
+              "en": "No, but the father appears in „Legături” without a role, until you choose one for him."
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "links-associate-remove",
+          "ro": {
+            "question": "Ciprian a legat-o pe Elena Popescu ca „Soră” de o persoană greșită. Pe „Legături”, alege rândul și apasă „Dezasociază”. Ce se întâmplă?",
+            "explanation": "Legătura dispare din ambele capete, fără nicio întrebare; cele două înregistrări rămân în arhivă, neatinse."
+          },
+          "en": {
+            "question": "Ciprian linked Elena Popescu as „Soră” (sister) to the wrong person. On „Legături”, he chooses the row and presses „Dezasociază”. What happens?",
+            "explanation": "The link disappears from both ends, without any question; the two records stay in the archive, untouched."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Legătura dispare doar aici; pe celălalt ecran trebuie scoasă și ea.",
+              "en": "The link disappears only here; on the other screen it must be removed too."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Legătura dispare din ambele capete; amândouă persoanele rămân în arhivă.",
+              "en": "The link disappears from both ends; both persons stay in the archive."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Persoana legată greșit este ștearsă din arhivă, după o întrebare.",
+              "en": "The wrongly linked person is deleted from the archive, after a question."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Legătura rămâne în arbore până o scoateți și de acolo, cu „Adaugă sau scoate o rudă”.",
+              "en": "The link stays in the tree until you remove it from there too, with „Adaugă sau scoate o rudă”."
+            }
+          ]
+        },
+        {
+          "id": "a7",
+          "section": "reports-inheritance",
+          "ro": {
+            "question": "În „Rapoarte” → „Arbori de moștenire”, Ciprian vede că Ana Popescu nu are legată mama. Cum o adaugă?",
+            "explanation": "Ecranul „Arbori de moștenire” este doar pentru citit. Un clic pe numele Anei deschide ecranul ei, cu panoul rudelor din fișa „Arbore de moștenire” deja deschis; de acolo adăugați ruda."
+          },
+          "en": {
+            "question": "In „Rapoarte” → „Arbori de moștenire”, Ciprian sees that Ana Popescu has no mother linked. How does he add her?",
+            "explanation": "The „Arbori de moștenire” screen is for reading only. A click on Ana's name opens her screen, with the relatives' panel of the „Arbore de moștenire” tile already open; from there you add the relative."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Trage mama peste Ana, direct în desenul raportului.",
+              "en": "He drags the mother onto Ana, straight in the report's drawing."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Alege „Rudenie” în „Date de referință”, iar mama apare singură.",
+              "en": "He chooses „Rudenie” in „Date de referință”, and the mother appears by herself."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Face clic pe numele Anei și o adaugă din panoul rudelor, deja deschis.",
+              "en": "He clicks Ana's name and adds her from the relatives' panel, already open."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Mută „Anul” la nașterea Anei, ca arborele să ceară singur părinții ei la nivelul următor.",
+              "en": "He moves „Anul” to Ana's birth, so that the tree asks for her parents by itself at the next level."
+            }
+          ]
+        },
+        {
+          "id": "a8",
+          "section": "links-associate-screen",
+          "ro": {
+            "question": "În „Asociere persoană corelată”, Ciprian caută „Popescu” la „Nume”. În „Rezultate” apar și persoane fizice, și persoane juridice. Cum o recunoaște pe ruda pe care o bifează?",
+            "explanation": "Persoanele fizice și cele juridice stau în același tabel, iar coloana „Tip” spune care este care: „Fizică” sau „Juridică”. O rudă este o persoană fizică."
+          },
+          "en": {
+            "question": "In „Asociere persoană corelată”, Ciprian searches „Popescu” under „Nume”. Under „Rezultate” both natural and judicial persons appear. How does he recognise the relative he ticks?",
+            "explanation": "Natural and judicial persons stand in the same table, and the „Tip” column says which is which: „Fizică” (natural) or „Juridică” (judicial). A relative is a natural person."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Persoanele juridice apar cu gri și nu se pot bifa.",
+              "en": "Judicial persons appear in grey and cannot be ticked."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "După coloana „Tip”, unde ruda are „Fizică”.",
+              "en": "By the „Tip” column, where the relative has „Fizică”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "După „Cod”: persoanele fizice au codul de forma GRP-001.",
+              "en": "By „Cod”: natural persons have codes of the form GRP-001."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nu se poate: trebuie căutat întâi în „Persoane Fizice”.",
+              "en": "He cannot: he must search in „Persoane Fizice” first."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "persons-relatives-tree",
+          "ro": {
+            "question": "Pe ecranul lui Mihai Popescu, Ciprian vrea să-i lege tatăl din fișa „Arbore de moștenire”. Ce apasă ca să se deschidă panoul legăturilor de familie?",
+            "explanation": "Sub desen, un singur buton mare, „Adaugă sau scoate o rudă”, deschide panoul legăturilor de familie. Dacă fișa nu se vede, bifați „Arbore de moștenire” în capul ecranului."
+          },
+          "en": {
+            "question": "On Mihai Popescu's screen, Ciprian wants to link his father from the „Arbore de moștenire” tile. What does he press so that the panel of family ties opens?",
+            "explanation": "Under the drawing, a single large button, „Adaugă sau scoate o rudă” (add or remove a relative), opens the panel of family ties. If the tile is not showing, tick „Arbore de moștenire” at the top of the screen."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Asociază persoană”, sub desenul arborelui.",
+              "en": "„Asociază persoană”, under the tree's drawing."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Deschide arborele întreg”, apoi un clic pe tată.",
+              "en": "„Deschide arborele întreg”, then a click on the father."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Un dublu-clic pe locul gol de deasupra lui Mihai.",
+              "en": "A double click on the empty space above Mihai."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "„Adaugă sau scoate o rudă”, sub desen.",
+              "en": "„Adaugă sau scoate o rudă”, under the drawing."
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "persons-example-tree",
+          "ro": {
+            "question": "În panou, Ciprian alege la „Ruda” tatăl lui Mihai, la „Ce este pentru …” alege „Tată” și apasă „Adaugă legătura”. Ce verifică apoi?",
+            "explanation": "Tatăl apare în desen deasupra fiului, iar în „Legături” fiecare îl vede pe celălalt."
+          },
+          "en": {
+            "question": "In the panel, Ciprian chooses Mihai's father under „Ruda”, chooses „Tată” under „Ce este pentru …” and presses „Adaugă legătura”. What does he then check?",
+            "explanation": "The father appears in the drawing above the son, and in „Legături” each sees the other."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Tatăl stă în desen deasupra lui Mihai, iar în „Legături” fiecare îl vede pe celălalt.",
+              "en": "The father stands in the drawing above Mihai, and in „Legături” each sees the other."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Tatăl stă în desen lângă Mihai, ca un frate, până la o nouă salvare.",
+              "en": "The father stands in the drawing beside Mihai, like a brother, until another save."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Legătura apare doar pe ecranul lui Mihai; tatăl o vede abia după „Asociază selecția” pe ecranul lui.",
+              "en": "The tie appears only on Mihai's screen; the father sees it only after „Asociază selecția” on his own screen."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Tatăl apare în „Rapoarte”, dar nu și în „Legături”.",
+              "en": "The father appears in „Rapoarte”, but not in „Legături”."
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "links-associate-role",
+          "ro": {
+            "question": "De data aceasta Ciprian lucrează de pe ecranul tatălui, Ion Popescu. Apasă „Asociază persoană” și o bifează pe fiica lui, Ana. Ce alege la „Rol”?",
+            "explanation": "Între două persoane, rolul este al persoanei bifate față de persoana pe al cărei ecran sunteți. Ana, bifată, este „Fiică” pentru Ion."
+          },
+          "en": {
+            "question": "This time Ciprian works from the father's screen, Ion Popescu. He presses „Asociază persoană” and ticks his daughter, Ana. What does he choose under „Rol”?",
+            "explanation": "Between two persons, the role is the ticked person's, towards the person whose screen you are on. Ana, ticked, is „Fiică” to Ion."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Părinte”, pentru că lucrează de pe ecranul tatălui.",
+              "en": "„Părinte”, because he is working from the father's screen."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "„Fiică”, rolul Anei față de Ion.",
+              "en": "„Fiică”, Ana's role towards Ion."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Soră”, rolul invers potrivit genului ei.",
+              "en": "„Soră” (sister), the converse role matched to her gender."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nimic: de pe ecranul părintelui rolul se pune singur.",
+              "en": "Nothing: from the parent's screen the role is set by itself."
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "admin-reference-data-roles",
+          "ro": {
+            "question": "Ciprian vrea să afle de ce un anumit rol se citește într-un fel pe ecranul unui bărbat și în altul pe ecranul unei femei. Unde sunt stabilite aceste perechi?",
+            "explanation": "În „Date de referință”, la „Roluri Persoane”, coloana „Rol invers (bărbat, femeie)” spune cum se citește rolul din celălalt capăt al legăturii; în panoul rolului stau „Rol invers — bărbat” și „Rol invers — femeie”."
+          },
+          "en": {
+            "question": "Ciprian wants to find out why a certain role reads one way on a man's screen and another way on a woman's screen. Where are these pairs set?",
+            "explanation": "In „Date de referință”, under „Roluri Persoane”, the „Rol invers (bărbat, femeie)” (converse role, man, woman) column says how the role reads from the other end of the link; the role's panel holds „Rol invers — bărbat” and „Rol invers — femeie”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "În fișa „Identitate” a fiecărei persoane, la „Gen”.",
+              "en": "In each person's „Identitate” tile, under „Gen”."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "În „Setări”, la „Implicitele mele”.",
+              "en": "In „Setări”, under „Implicitele mele” (my defaults)."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Pe ecranul „Arbori de moștenire”, la nivelul 3.",
+              "en": "On the „Arbori de moștenire” screen, at level 3."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "În „Date de referință” → „Roluri Persoane”, la „Rol invers”.",
+              "en": "In „Date de referință” → „Roluri Persoane”, under „Rol invers”."
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "reports-inheritance-levels",
+          "ro": {
+            "question": "Pe ecranul Mariei Ionescu, Ciprian vrea să-i vadă familia pe toată pagina, printre celelalte familii din arhivă. Ce face?",
+            "explanation": "Din fișa „Arbore de moștenire” a unei persoane, „Deschide arborele întreg” deschide ecranul „Arbori de moștenire” centrat pe ea."
+          },
+          "en": {
+            "question": "On Maria Ionescu's screen, Ciprian wants to see her family over the whole page, among the other families in the archive. What does he do?",
+            "explanation": "From a person's „Arbore de moștenire” tile, „Deschide arborele întreg” (open the whole tree) opens the „Arbori de moștenire” screen centred on them."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Apasă „Deschide arborele întreg” în fișa „Arbore de moștenire”.",
+              "en": "He presses „Deschide arborele întreg” in the „Arbore de moștenire” tile."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Apasă „Legături” pe rândul ei din listă.",
+              "en": "He presses „Legături” on her row in the list."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Apasă „Toate” printre bifele din capul ecranului.",
+              "en": "He presses „Toate” among the ticks at the top of the screen."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Apasă „Previzualizare” pe fiecare rudă din „Legături”.",
+              "en": "He presses „Previzualizare” on each relative in „Legături”."
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "persons-relatives-tree",
+          "ro": {
+            "question": "Din panoul fișei „Arbore de moștenire”, Ciprian scoate o rudă legată greșit, cu „Scoate legătura cu …” și apoi „Scoate”. Ce se întâmplă în „Legături”?",
+            "explanation": "Ruda dispare din desen și din listă. Legăturile din arbore sunt aceleași cu cele din „Legături”, așa că dispare și de acolo."
+          },
+          "en": {
+            "question": "From the panel of the „Arbore de moștenire” tile, Ciprian removes a wrongly linked relative, with „Scoate legătura cu …” (remove the tie with …) and then „Scoate”. What happens in „Legături”?",
+            "explanation": "The relative disappears from the drawing and from the list. The ties in the tree are the same as those in „Legături”, so it disappears from there too."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Ruda rămâne în „Legături”, fără rol.",
+              "en": "The relative stays in „Legături”, without a role."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Ruda rămâne în „Legături” până apăsați „Dezasociază”.",
+              "en": "The relative stays in „Legături” until you press „Dezasociază”."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Ruda dispare și din „Legături”: legătura este aceeași.",
+              "en": "The relative disappears from „Legături” too: the tie is the same."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Ruda este ștearsă din arhivă cu totul.",
+              "en": "The relative is deleted from the archive altogether."
+            }
+          ]
+        },
+        {
+          "id": "b7",
+          "section": "links-associate-screen",
+          "ro": {
+            "question": "În „Asociere persoană corelată”, Ciprian alege „Soț” la „Rol” și apasă „Asociază selecția”, dar sub butoane scrie „Selectați cel puțin o persoană”. Ce i-a scăpat?",
+            "explanation": "Până nu bifați nimic în „Rezultate”, sub butoane scrie ce lipsește — de exemplu „Selectați cel puțin o persoană”. Trebuie bifat rândul rudei."
+          },
+          "en": {
+            "question": "In „Asociere persoană corelată”, Ciprian chooses „Soț” (husband) under „Rol” and presses „Asociază selecția”, but under the buttons it reads „Selectați cel puțin o persoană” (select at least one person). What has he missed?",
+            "explanation": "Until you tick something under „Rezultate”, the text under the buttons says what is missing — for instance „Selectați cel puțin o persoană”. The relative's row must be ticked."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Să completeze „Gen” la persoana de pe ecran.",
+              "en": "Filling in „Gen” on the person on screen."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Să bifeze rândul rudei în „Rezultate”.",
+              "en": "Ticking the relative's row under „Rezultate”."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Să marcheze rolul „Soț” ca „Rudenie”.",
+              "en": "Marking the „Soț” role as „Rudenie”."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Să salveze întâi persoana de pe ecran.",
+              "en": "Saving the person on screen first."
+            }
+          ]
+        },
+        {
+          "id": "b8",
+          "section": "links-associate-remove",
+          "ro": {
+            "question": "Pe „Legături”, Ciprian a ales cu butonul rotund rândul Anei Popescu, ca s-o vadă mai bine. Acum vrea să apese „Asociază persoană”, dar butonul nu se poate folosi. De ce?",
+            "explanation": "Se alege un singur rând odată, iar cât timp un rând este ales, cele trei „Asociază …” nu se pot folosi; ele sunt pentru legături noi, „Dezasociază” pentru rândul ales."
+          },
+          "en": {
+            "question": "On „Legături”, Ciprian chose Ana Popescu's row with the round button, to look at it more closely. Now he wants to press „Asociază persoană”, but the button cannot be used. Why?",
+            "explanation": "One row is chosen at a time, and while a row is chosen the three „Asociază …” cannot be used; they are for new links, „Dezasociază” for the chosen row."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Pentru că Ana are deja numărul maxim de rude legate.",
+              "en": "Because Ana already has the largest number of relatives allowed."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Pentru că ecranul are „Modificări nesalvate”.",
+              "en": "Because the screen has „Modificări nesalvate” (unsaved changes)."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Pentru că rudele se leagă doar din „Arbore de moștenire”, cu „Adaugă sau scoate o rudă”.",
+              "en": "Because relatives are linked only from „Arbore de moștenire”, with „Adaugă sau scoate o rudă”."
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Pentru că un rând este ales; cât timp e ales, „Asociază …” nu se pot folosi.",
+              "en": "Because a row is chosen; while it is chosen, „Asociază …” cannot be used."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
