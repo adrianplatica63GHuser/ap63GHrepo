@@ -5,7 +5,7 @@
 | **Area** | help |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-15 |
 
 ## What this proves
@@ -49,6 +49,8 @@ Nothing.
 Nothing is written by this case.
 
 ## Notes from the runs
+
+**2026-10-15 — `automated` (Slice #39.42).** Its spec, `e2e/help/skills-map.spec.ts`, green in the test runner's e2e runs `20261015T115310Z-26909` and `20261015T115520Z-5677`, the seeded four-states test with it.
 
 **2026-10-15, third run (Slice #39.42) — `confirmed`: the file held line for line.** Driven again from the
 dashboard, by script in the browser pane, every step checked against this file: unchanged.
