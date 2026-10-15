@@ -1467,7 +1467,7 @@
         "later": "Nu acum",
         "acceptAll": "Acceptă toate ({count})",
         "acceptAllTitle": "Acceptați toate propunerile?",
-        "acceptAllBody": "{count, plural, one {Textul propus se salvează ca text al acestui ecran:} few {Textele propuse se salvează ca texte ale acestor # ecrane:} other {Textele propuse se salvează ca texte ale acestor # de ecrane:}} Un ecran al cărui text s-a schimbat între timp este sărit, nu suprascris.",
+        "acceptAllBody": "{count, plural, one {Propunerea se salvează ca text al ecranului de mai jos.} few {Propunerile se salvează ca texte ale celor # ecrane de mai jos.} other {Propunerile se salvează ca texte ale celor # de ecrane de mai jos.}} Un ecran al cărui text s-a schimbat între timp este sărit, nu suprascris.",
         "acceptAllConfirm": "Acceptă toate",
         "acceptAllCancel": "Anulează",
         "acceptAllDone": "{count, plural, =0 {Niciun text propus nu a fost salvat.} one {# text propus a fost salvat.} few {# texte propuse au fost salvate.} other {# de texte propuse au fost salvate.}}",

@@ -1467,7 +1467,7 @@
         "later": "Not now",
         "acceptAll": "Accept all ({count})",
         "acceptAllTitle": "Accept every proposal?",
-        "acceptAllBody": "{count, plural, one {The proposed text is saved as this screen’s text:} other {The proposed texts are saved as the texts of these # screens:}} A screen whose text has changed in the meantime is skipped, not overwritten.",
+        "acceptAllBody": "{count, plural, one {The proposal is saved as the text of the screen below.} other {The proposals are saved as the texts of the # screens below.}} A screen whose text has changed in the meantime is skipped, not overwritten.",
         "acceptAllConfirm": "Accept all",
         "acceptAllCancel": "Cancel",
         "acceptAllDone": "{count, plural, =0 {No proposed text was saved.} one {# proposed text was saved.} other {# proposed texts were saved.}}",
