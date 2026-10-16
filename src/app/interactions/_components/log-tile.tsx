@@ -68,7 +68,7 @@ export type SwitchRequest = { kind: "select"; id: string } | { kind: "new" };
  * all (§8.4). The form is checked with the route's own schema (`src/lib/interactions/form.ts`); Save stays disabled
  * until it passes, and Ctrl+S on a form that does not pass outlines what is missing and moves the focus there.
  *
- * 38.87 — TWO MODES, the spec's two-part switch: „Înregistrare nouă", and „Editează selecția" once a row of the history
+ * 38.87 — TWO MODES, the spec's two-part switch: „Interacțiune nouă", and „Editează selecția" once a row of the history
  * is chosen (the screen's `selectedId`). Edit mode loads the record, saves it with „Salvează modificările" over the
  * `updatedAt` it read — a record someone else changed since answers 409 and the tile offers „Reîncarcă" (the default)
  * or „Suprascrie", never silently — deletes it after a confirmation that names the person and the date, and shows

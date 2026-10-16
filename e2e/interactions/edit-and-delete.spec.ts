@@ -1,5 +1,5 @@
 /**
- * Case:   TC-INT-04 — „Interacțiuni": o înregistrare schimbată, apărată de o salvare învechită, apoi ștearsă
+ * Case:   TC-INT-04 — „Interacțiuni": o interacțiune schimbată, apărată de o salvare învechită, apoi ștearsă
  * Source: docs/testing/cases/TC-INT-04.md, „Last green" 2026-10-10
  *
  * A translation of the case file, step for step. Every Romanian string below
@@ -127,7 +127,7 @@ test.describe("TC-INT-04 — schimbat, apărat, șters", () => {
       await subject.fill("Schimbat de mine");
       await saveChanges.click();
       const conflict = tile.locator("[data-log-conflict]");
-      await expect(conflict).toContainText("Această înregistrare a fost modificată de altcineva.");
+      await expect(conflict).toContainText("Această interacțiune a fost modificată de altcineva.");
       await conflict.getByRole("button", { name: "Reîncarcă", exact: true }).click();
       await expect(subject).toHaveValue("Schimbat de altcineva");
       await changeBehind(page.request, call.id, "Iar altcineva");
@@ -137,15 +137,15 @@ test.describe("TC-INT-04 — schimbat, apărat, șters", () => {
       await expect(page.locator("[data-toast]")).toHaveText("Modificări salvate");
       await expect(rowOf(call.id).locator("[data-subject]")).toHaveText("Tot eu", { timeout: 15_000 });
 
-      // Step 6 — „Șterge înregistrarea": the person and the date named, the documents kept; „Șterge".
-      await tile.getByRole("button", { name: "Șterge înregistrarea", exact: true }).click();
+      // Step 6 — „Șterge interacțiunea": the person and the date named, the documents kept; „Șterge".
+      await tile.getByRole("button", { name: "Șterge interacțiunea", exact: true }).click();
       const confirm = page.locator("[data-log-delete]");
       await expect(confirm).toContainText(`${MARK} Popa`);
       await expect(confirm).toContainText("Actele legate rămân în arhivă");
       await confirm.getByRole("button", { name: "Șterge", exact: true }).click();
       await expect(page.locator("[data-toast]")).toHaveText("Interacțiune ștearsă");
       await expect(rowOf(call.id)).toHaveCount(0, { timeout: 15_000 });
-      await expect(mode.getByRole("radio", { name: "Înregistrare nouă" })).toBeChecked();
+      await expect(mode.getByRole("radio", { name: "Interacțiune nouă" })).toBeChecked();
       expect((await page.request.get(`/api/interactions/${call.id}`)).status()).toBe(404);
     } finally {
       await removeRecord(page.request, "person", ana);

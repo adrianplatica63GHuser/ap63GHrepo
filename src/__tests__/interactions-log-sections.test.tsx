@@ -78,7 +78,7 @@ describe("which sections are open, and what they hold (#39.33, Ask first 1 and 2
     expect(LOG_SECTIONS).toEqual(["connections", "manual", "related", "followUp", "internal"]);
   });
 
-  it("a new record: only „Înregistrare manuală”", () => {
+  it("a new record: only „Introducere manuală”", () => {
     expect([...initialOpen(emptyForm(null), "new")]).toEqual(["manual"]);
     // „Salvează și adaugă" keeps values; a new record still starts from the defaults.
     expect([...initialOpen(filled({ tags: ["x"], followUp: true }), "new")]).toEqual(["manual"]);

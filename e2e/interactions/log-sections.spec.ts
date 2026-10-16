@@ -13,13 +13,13 @@ import { test, expect, type Locator } from "../helpers/test";
 import { E2E_MARKER, createNaturalPerson, removeLeftovers, removeRecord } from "../helpers/records";
 
 const MARK = `${E2E_MARKER}INT-07`;
-const SECTIONS = ["Conturi conectate", "Înregistrare manuală", "Asocieri", "Memento", "Notă internă"] as const;
+const SECTIONS = ["Conturi conectate", "Introducere manuală", "Asocieri", "Memento", "Notă internă"] as const;
 
 const title = (log: Locator, name: string | RegExp) =>
   log.getByRole("button", { name: typeof name === "string" ? new RegExp(`^${name}( · .*)?$`) : name });
 
 test.describe("TC-INT-07 — cinci secțiuni care se deschid și se închid", () => {
-  test("„Înregistrare manuală” deschisă, celelalte închise; un clic deschide, al doilea închide; o eroare își deschide secțiunea", async ({ page }) => {
+  test("„Introducere manuală” deschisă, celelalte închise; un clic deschide, al doilea închide; o eroare își deschide secțiunea", async ({ page }) => {
     test.slow();
     await removeLeftovers(page.request, MARK);
     const person = await createNaturalPerson(page.request, { lastName: `${MARK} Pop`, firstName: "Ana" });
@@ -29,9 +29,9 @@ test.describe("TC-INT-07 — cinci secțiuni care se deschid și se închid", ()
       await page.goto(`/natural-persons/${person}?log=new`);
       await expect(log.getByRole("heading", { name: "Înregistrează o interacțiune" })).toBeVisible({ timeout: 30_000 });
 
-      // Step 1 — the five titles, in order; only „Înregistrare manuală" open.
+      // Step 1 — the five titles, in order; only „Introducere manuală" open.
       for (const name of SECTIONS) {
-        await expect(title(log, name)).toHaveAttribute("aria-expanded", name === "Înregistrare manuală" ? "true" : "false");
+        await expect(title(log, name)).toHaveAttribute("aria-expanded", name === "Introducere manuală" ? "true" : "false");
       }
       const order = await Promise.all(SECTIONS.map(async (name) => (await title(log, name).boundingBox())!.y));
       expect([...order].sort((a, b) => a - b)).toEqual(order);
@@ -53,10 +53,10 @@ test.describe("TC-INT-07 — cinci secțiuni care se deschid și se închid", ()
         await expect(title(log, name)).toHaveAttribute("aria-expanded", "false");
         await expect(inside).toBeHidden();
       }
-      // And „Înregistrare manuală" closes too.
-      await title(log, "Înregistrare manuală").click();
+      // And „Introducere manuală" closes too.
+      await title(log, "Introducere manuală").click();
       await expect(log.getByLabel("Subiect", { exact: true })).toBeHidden();
-      await title(log, "Înregistrare manuală").click();
+      await title(log, "Introducere manuală").click();
 
       // Step 3 — from the keyboard: Enter opens „Memento", Space closes it.
       await title(log, "Memento").focus();

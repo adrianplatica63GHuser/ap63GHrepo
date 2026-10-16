@@ -34,9 +34,9 @@ Nothing.
 | 1 | Opens the person at 1366 px | „Interacțiuni" lists „Ofertă de preț"; under it one large button across the tile, „Înregistrează o interacțiune"; no form |
 | 2 | Presses it; chooses „Telefon", types the subject „Telefon de clarificare", „Salvează" | The log form, with no „Persoană" box; „Interacțiune înregistrată"; the history lists „Telefon de clarificare", then „Ofertă de preț" |
 | 3 | Clicks „Telefon de clarificare" in the history, changes the subject, „Salvează modificările" | The row reads chosen; the form in „Editează selecția" with the subject; after saving, the history shows the new subject |
-| 4 | „Șterge înregistrarea", „Șterge" | „Interacțiune ștearsă"; the row is gone; the form on „Înregistrare nouă" |
+| 4 | „Șterge interacțiunea", „Șterge" | „Interacțiune ștearsă"; the row is gone; the form on „Interacțiune nouă" |
 | 5 | „Restrânge" | The large button again |
-| 6 | Opens the person's address with `?log=new`, then with `?log=<the offer's id>` | The form open on „Înregistrare nouă"; then open on „Ofertă de preț", the row chosen in the history |
+| 6 | Opens the person's address with `?log=new`, then with `?log=<the offer's id>` | The form open on „Interacțiune nouă"; then open on „Ofertă de preț", the row chosen in the history |
 | 7 | On „Persoane Fizice", searches „TC-INT-06" and presses her eye („Incursiune") | Her „Interacțiuni" lists „Ofertă de preț"; no „Interacțiune nouă", no form, no large button |
 | 8 | Clicks „Ofertă de preț" there | Her screen, the form open on that row |
 

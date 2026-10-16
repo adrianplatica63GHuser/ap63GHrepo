@@ -1,7 +1,7 @@
 /**
  * „Înregistrează o interacțiune" in five sections that open and close.   (Slice #39.33)
  *
- * Adrian, 2026-10-14: „Conturi conectate", „Înregistrare manuală", „Asocieri", „Memento", „Notă internă" — each a
+ * Adrian, 2026-10-14: „Conturi conectate", „Introducere manuală", „Asocieri", „Memento", „Notă internă" — each a
  * title with a „>" after it; a click opens it, a second closes it. This module decides which are open when the tile
  * opens (Ask first 1), which section a field lives in (so an error can open its section, Ask first 3), and what a
  * closed section holds (so its title line can say so, Ask first 2). The open/closed state is not remembered (Ask
@@ -40,7 +40,7 @@ export function holds(form: LogForm, section: LogSection): boolean {
 }
 
 /**
- * Open when the tile opens: „Înregistrare manuală" always; in edit mode also every section that holds a value
+ * Open when the tile opens: „Introducere manuală" always; in edit mode also every section that holds a value
  * (Ask first 1). A new record — even „Salvează și adaugă"'s, which keeps some values — starts from the defaults.
  */
 export function initialOpen(form: LogForm, mode: "new" | "edit"): Set<LogSection> {

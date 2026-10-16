@@ -179,7 +179,7 @@ test.describe("TC-INT-01 — istoricul interacțiunilor", () => {
       await link.click();
       await expect(page).toHaveURL((u) => u.pathname === `/natural-persons/${ana}` && u.searchParams.get("log") === "new", { timeout: 30_000 });
       const log = page.locator("[data-interactions-log]");
-      await expect(log.getByRole("radiogroup", { name: "Mod" }).getByRole("radio", { name: "Înregistrare nouă" })).toBeChecked({ timeout: 30_000 });
+      await expect(log.getByRole("radiogroup", { name: "Mod" }).getByRole("radio", { name: "Interacțiune nouă" })).toBeChecked({ timeout: 30_000 });
     } finally {
       await removeRecord(page.request, "person", ana);
       await removeRecord(page.request, "person", mihai);

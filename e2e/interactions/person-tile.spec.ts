@@ -94,12 +94,12 @@ test.describe("TC-INT-06 — istoricul și panoul de acțiune pe fișa persoanei
       await logTile.getByRole("button", { name: "Salvează modificările", exact: true }).click();
       await expect(subjects.first()).toHaveText("Telefon de clarificare, cu răspuns", { timeout: 30_000 });
 
-      // Step 4 — deleted: „Șterge înregistrarea", „Șterge"; gone from B, C on a new record.
-      await logTile.getByRole("button", { name: "Șterge înregistrarea", exact: true }).click();
+      // Step 4 — deleted: „Șterge interacțiunea", „Șterge"; gone from B, C on a new record.
+      await logTile.getByRole("button", { name: "Șterge interacțiunea", exact: true }).click();
       await page.locator("[data-log-delete]").getByRole("button", { name: "Șterge", exact: true }).click();
       await expect(page.locator("[data-toast]")).toHaveText("Interacțiune ștearsă");
       await expect(subjects).toHaveText(["Ofertă de preț"], { timeout: 30_000 });
-      await expect(mode.getByRole("radio", { name: "Înregistrare nouă" })).toBeChecked();
+      await expect(mode.getByRole("radio", { name: "Interacțiune nouă" })).toBeChecked();
       expect((await page.request.get(`/api/interactions/${id}`)).status()).toBe(404);
 
       // Step 5 — „Restrânge": the large button again.
@@ -109,7 +109,7 @@ test.describe("TC-INT-06 — istoricul și panoul de acțiune pe fișa persoanei
       // Step 6 — the address: `?log=new` opens C expanded on a new record; `?log=<id>` on that row.
       await page.goto(`/natural-persons/${ana}?log=new`);
       await expect(logTile).toBeVisible({ timeout: 30_000 });
-      await expect(mode.getByRole("radio", { name: "Înregistrare nouă" })).toBeChecked();
+      await expect(mode.getByRole("radio", { name: "Interacțiune nouă" })).toBeChecked();
       await page.goto(`/natural-persons/${ana}?log=${offer}`);
       await expect(subject).toHaveValue("Ofertă de preț", { timeout: 30_000 });
       await expect(tile.locator(`[data-person-interaction="${offer}"]`)).toHaveAttribute("aria-selected", "true");

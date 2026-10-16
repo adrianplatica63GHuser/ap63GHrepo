@@ -1,4 +1,4 @@
-# TC-INT-04 — „Interacțiuni": o înregistrare schimbată, apărată de o salvare învechită, apoi ștearsă
+# TC-INT-04 — „Interacțiuni": o interacțiune schimbată, apărată de o salvare învechită, apoi ștearsă
 
 | | |
 |---|---|
@@ -36,8 +36,8 @@ Nothing.
 | 2 | Changes the subject to „Ofertă revizuită" and presses „Salvează modificările" | „Modificări salvate"; the row reads „Ofertă revizuită" |
 | 3 | Types „Ciornă" in the subject and clicks „Apel de clarificare"; presses „Continuă"; clicks it again and presses „Renunță la ea" | „Renunți la modificările nesalvate?"; „Continuă" keeps „Ciornă" and the first row chosen; „Renunță la ea" loads „Apel de clarificare" |
 | 4 | Types „Ciornă" and presses „Acte" in the sidebar; presses „Anulează" | „Modificări nesalvate"; the screen stays, „Ciornă" still there |
-| 5 | Someone else saves the record first („Schimbat de altcineva"); types „Schimbat de mine" and presses „Salvează modificările"; presses „Reîncarcă". Someone else saves again; types „Tot eu", saves, presses „Suprascrie" | „Această înregistrare a fost modificată de altcineva. …"; „Reîncarcă" brings „Schimbat de altcineva"; the second time, „Modificări salvate" and the row reads „Tot eu" |
-| 6 | Presses „Șterge înregistrarea", then „Șterge" | The confirmation names Ana and the record's date and says „Actele legate rămân în arhivă; …"; then „Interacțiune ștearsă", the row gone, „Înregistrare nouă" chosen |
+| 5 | Someone else saves the interaction first („Schimbat de altcineva"); types „Schimbat de mine" and presses „Salvează modificările"; presses „Reîncarcă". Someone else saves again; types „Tot eu", saves, presses „Suprascrie" | „Această interacțiune a fost modificată de altcineva. …"; „Reîncarcă" brings „Schimbat de altcineva"; the second time, „Modificări salvate" and the row reads „Tot eu" |
+| 6 | Presses „Șterge interacțiunea", then „Șterge" | The confirmation names Ana and the record's date and says „Actele legate rămân în arhivă; …"; then „Interacțiune ștearsă", the row gone, „Interacțiune nouă" chosen |
 
 ## At the end — leaving things as they were found
 

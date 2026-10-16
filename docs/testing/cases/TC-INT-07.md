@@ -10,10 +10,10 @@
 
 ## What this proves
 
-The log part of a person's „Interacțiuni" tile is five sections — „Conturi conectate", „Înregistrare manuală",
+The log part of a person's „Interacțiuni" tile is five sections — „Conturi conectate", „Introducere manuală",
 „Asocieri", „Memento", „Notă internă" — each a title with a „>" after it (Slice #39.33). A click on the title opens
 the section (the arrow points down, the content shows); a second click closes it (the arrow points right again).
-Enter and Space do the same. When the tile opens only „Înregistrare manuală" is open. A closed section that holds
+Enter and Space do the same. When the tile opens only „Introducere manuală" is open. A closed section that holds
 something says so after its title, and one that holds an error says the error; a save that meets an error in a
 closed section opens it and puts the focus on the field. A section that cannot be opened, content that does not
 hide, or a save stopped by something nobody can see is the defect this case exists to catch.
@@ -32,7 +32,7 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens Ana's screen with the log tile open (`?log=new`) | The five titles, in that order; „Înregistrare manuală" open (Subiect visible), the other four closed |
+| 1 | Opens Ana's screen with the log tile open (`?log=new`) | The five titles, in that order; „Introducere manuală" open (Subiect visible), the other four closed |
 | 2 | Clicks each closed title, then clicks it again | Each opens — the Gmail and WhatsApp rows, „Adaugă legătură", „Setează un memento", „Vizibilă doar echipei" — and closes again |
 | 3 | On „Memento": Enter, then Space | Opens, then closes |
 | 4 | Opens „Asocieri", adds the tag „TC-INT-07 vizită", closes it | The title reads „Asocieri · 1 etichetă" |
