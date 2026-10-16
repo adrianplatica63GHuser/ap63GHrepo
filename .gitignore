@@ -80,6 +80,8 @@ public/pdf.worker.min.js
 # Removed on the happy path; any abort between the docker cp and that removal
 # leaves it in the repo root.
 /ga40prj-refdata-dump.sql
+# Slice #39.58: build-ciprian-image.ps1 -WithData's dump of dev's archive — real people's records, never committed
+/ga40prj-opdata-dump.sql
 
 # Local diagnostic output — scripts/Check-ImportHealth.ps1
 import-health.txt

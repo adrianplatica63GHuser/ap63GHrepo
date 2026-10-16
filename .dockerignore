@@ -43,3 +43,7 @@ test-results
 # version"). Excluding it makes the guard mean what it says, and takes ~1 MB
 # out of the build context.
 public/pdf.worker.min.js
+# Slice #39.58: build-ciprian-image.ps1's dumps sit in the repo root, which is the build context; the -WithData one
+# holds real people's records and must never be baked into the image (an aborted run can leave either behind).
+ga40prj-refdata-dump.sql
+ga40prj-opdata-dump.sql

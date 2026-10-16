@@ -4,6 +4,7 @@
 # Run from C:\dev\ga40prj\ in PowerShell:
 #
 #   .\build-ciprian-image.ps1
+#   .\build-ciprian-image.ps1 -WithData     (Slice #39.58: dev's archive and page files too)
 #
 # Prerequisites:
 #   - Docker Desktop running
@@ -72,6 +73,22 @@
 #   4. Ciprian runs update.bat, then applies ciprian-schema-update.sql per UC-C6
 #      (this wipes and reloads his UAT database -- by design, at this stage)
 #
+# -WithData (Slice #39.58) -- the dev database's DATA and its page files, too:
+#   Step 5 adds section 6 to ciprian-schema-update.sql: a data-only dump of every
+#   table scripts\ciprian\package-tables.ts lists as SHIPPED (the archive:
+#   persons, properties, documents, their pages, links, versions, groups, stamps,
+#   tags, classification, interactions, calculations) and the setval of the four
+#   code sequences. HELD BACK, and never in the package, are Adrian's own:
+#   skill_attempt (his skills-map progress), app_users, user_requests,
+#   user_tile_default, ai_paid_read and cost_record. Step 5.6 zips
+#   uploads\document-pages into a FOURTH deliverable, ciprian-uploads.zip.
+#   Step 6 then checks every shipped table's rows against dev, that no held-back
+#   table is in the file, each sequence's setval, that every populated table of
+#   dev is in one of the lists (a table in none REFUSES the package), and that
+#   the zip holds every page file on disk. Without the switch the package is
+#   exactly what it was before. UC-C6 gains one step for Ciprian: unpack the zip
+#   and docker cp its document-pages folder into ciprian-ga40prj-app:/app/uploads.
+#
 # NOTE -- upcoming transition (data-preservation mode):
 #   Once Ciprian starts keeping real data, the full-wipe delivery above will be
 #   replaced by a delta-migration approach: only the migration_*.sql files that
@@ -80,6 +97,10 @@
 #   already the foundation for that: it confirms dev's schema_migrations is
 #   complete before any delivery action. A future script
 #   (ciprian-send-migrations.ps1 or similar) will handle the delta delivery.
+
+param(
+    [switch]$WithData
+)
 
 $ErrorActionPreference = "Stop"
 
@@ -108,6 +129,12 @@ if (-not (Test-Path $ciprianRoot)) {
     exit 1
 }
 $refDataDumpLocal = Join-Path $repoRoot "ga40prj-refdata-dump.sql"
+# Slice #39.58: -WithData's two extra artefacts. The operational dump is a scratch file beside the reference one
+# (gitignored AND dockerignored -- it holds real people's records, and Step 2's build context is this folder);
+# the page-file zip is staged as .new like every other file that replaces one of Ciprian's.
+$opDataDumpLocal = Join-Path $repoRoot "ga40prj-opdata-dump.sql"
+$uploadsZip      = "$ciprianRoot\ciprian-uploads.zip"
+$uploadsZipNew   = "$uploadsZip.new"
 
 # Discard whatever has been staged so far. Defined HERE, before the first
 # staged write, because every early `exit 1` below it -- a failed docker save,
@@ -124,7 +151,9 @@ $refDataDumpLocal = Join-Path $repoRoot "ga40prj-refdata-dump.sql"
 $outputTarNew = $schemaDestNew = $updateFileDestNew = $initRefDestNew = $null
 
 function Remove-StagedFiles {
-    foreach ($f in @($updateFileDestNew, $initRefDestNew, $schemaDestNew, $outputTarNew)) {
+    # #39.58: the page-file zip and the operational dump too -- the dump holds real people's records and has no
+    # business outliving a failed run.
+    foreach ($f in @($updateFileDestNew, $initRefDestNew, $schemaDestNew, $outputTarNew, $uploadsZipNew, $opDataDumpLocal)) {
         if ($f -and (Test-Path -LiteralPath $f)) {
             # try/catch, not a bare Remove-Item: $ErrorActionPreference is Stop,
             # so one failure (an AV hold on a file written seconds ago is the
@@ -692,6 +721,50 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
+# ---- Step 5 (-WithData, Slice #39.58): the archive's data -------------------
+#
+# Which tables are the archive and which are Adrian's own is scripts\ciprian\package-tables.ts's answer, read
+# here from a FILE as UTF-8 (never captured from stdout -- the same reason as the forms SQL below). One answer:
+# src\__tests__\ciprian-package-tables.test.ts pins $refTablePatterns and $knownOperationalTables to it too.
+$opDataText = ""
+$packageLists = $null
+if ($WithData) {
+    Write-Host ""
+    Write-Host "-WithData: dumping dev's archive (operational data) from ga40prj-postgres..." -ForegroundColor Cyan
+    $listsLocal = Join-Path ([System.IO.Path]::GetTempPath()) "ga40prj-package-tables.json"
+    & node (Join-Path $repoRoot "node_modules\tsx\dist\cli.mjs") (Join-Path $repoRoot "scripts\ciprian\package-tables.ts") json $listsLocal
+    if ($LASTEXITCODE -ne 0 -or -not (Test-Path $listsLocal)) {
+        Write-Host "ERROR: scripts\ciprian\package-tables.ts json failed -- cannot tell which tables to ship." -ForegroundColor Red
+        Remove-StagedFiles
+        exit 1
+    }
+    $packageLists = [System.IO.File]::ReadAllText($listsLocal) | ConvertFrom-Json
+    Remove-Item $listsLocal -Force -ErrorAction SilentlyContinue
+    $opDumpArgs = @()
+    foreach ($t in $packageLists.shipped)   { $opDumpArgs += "-t"; $opDumpArgs += "public.$t" }
+    foreach ($q in $packageLists.sequences) { $opDumpArgs += "-t"; $opDumpArgs += "public.$q" }
+    # The reference dump's flags, for its reasons: --strict-names makes a renamed table an error rather than a
+    # smaller dump, and --disable-triggers loads the rows whatever order pg_dump writes the tables in. A sequence
+    # named by -t is dumped as its setval.
+    docker exec ga40prj-postgres pg_dump --data-only --no-owner --no-privileges --strict-names --disable-triggers @opDumpArgs -U postgres -d ga40db -f /tmp/ga40prj-opdata-dump.sql
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host ""
+        Write-Host "ERROR: pg_dump of the archive's data failed inside ga40prj-postgres." -ForegroundColor Red
+        Remove-StagedFiles
+        exit 1
+    }
+    docker cp ga40prj-postgres:/tmp/ga40prj-opdata-dump.sql $opDataDumpLocal
+    $cpExit = $LASTEXITCODE
+    docker exec ga40prj-postgres rm -f /tmp/ga40prj-opdata-dump.sql | Out-Null
+    if ($cpExit -ne 0) {
+        Write-Host ""
+        Write-Host "ERROR: docker cp failed -- could not retrieve the archive's data dump." -ForegroundColor Red
+        Remove-StagedFiles
+        exit 1
+    }
+    $opDataText = [System.IO.File]::ReadAllText($opDataDumpLocal)
+}
+
 $extensionsSrc = "$ciprianRoot\docker\postgres\init\01-extensions.sql"
 if (-not (Test-Path $extensionsSrc)) {
     Write-Host "ERROR: $extensionsSrc not found -- cannot assemble ciprian-schema-update.sql." -ForegroundColor Red
@@ -765,6 +838,13 @@ $combined = $header `
     + "-- ---- 5. Document-type forms (from src/db/document-type-forms.json) -------`r`n" `
     + $formsSqlText
 
+if ($WithData) {
+    $combined = $combined + "`r`n" `
+        + "-- ---- 6. The archive (-WithData, Slice #39.58): dev's operational data, without Adrian's own tables ----`r`n" `
+        + "-- Held back: $(@($packageLists.heldBack) -join ', ') (scripts\ciprian\package-tables.ts)`r`n" `
+        + $opDataText
+}
+
 [System.IO.File]::WriteAllText($updateFileDestNew, $combined, $utf8NoBom)
 
 # ---- Step 5.5: regenerate Ciprian's init/03-reference-data.sql ---------------
@@ -813,6 +893,38 @@ $initRefHeader = @"
 Write-Host ""
 Write-Host "ciprian-schema-update.sql assembled (staged)." -ForegroundColor Green
 Write-Host "init\03-reference-data.sql regenerated from the same dump (staged)." -ForegroundColor Green
+
+
+# ---- Step 5.6 (-WithData, Slice #39.58): the page files ---------------------
+#
+# A document_page row names a file under uploads\document-pages\<document id>\ -- on this disk, not in the
+# database -- so the archive travels in two parts: section 6 above, and this zip. Ciprian's app keeps its files in
+# the Docker volume app_uploads (/app/uploads), so UC-C6 unpacks the zip and docker cp's the folder in.
+# ZipFile, not Compress-Archive: Compress-Archive refuses any destination that does not end in .zip, and the
+# staging name ends in .new.
+$uploadsDir = Join-Path $repoRoot "uploads\document-pages"
+$diskPageFiles = 0
+if ($WithData) {
+    Write-Host ""
+    Write-Host "-WithData: zipping the page files (uploads\document-pages)..." -ForegroundColor Cyan
+    if (-not (Test-Path -LiteralPath $uploadsDir)) {
+        Write-Host "ERROR: $uploadsDir not found -- there are no page files to send." -ForegroundColor Red
+        Remove-StagedFiles
+        exit 1
+    }
+    $diskPageFiles = @(Get-ChildItem -LiteralPath $uploadsDir -Recurse -File).Count
+    try {
+        Add-Type -AssemblyName System.IO.Compression.FileSystem
+        if (Test-Path -LiteralPath $uploadsZipNew) { Remove-Item -LiteralPath $uploadsZipNew -Force }
+        # includeBaseDirectory: the zip's root is document-pages\, exactly what /app/uploads holds.
+        [System.IO.Compression.ZipFile]::CreateFromDirectory($uploadsDir, $uploadsZipNew, [System.IO.Compression.CompressionLevel]::Optimal, $true)
+    } catch {
+        Write-Host "ERROR: could not write $uploadsZipNew -- $($_.Exception.Message)" -ForegroundColor Red
+        Remove-StagedFiles
+        exit 1
+    }
+    Write-Host "ciprian-uploads.zip assembled (staged): $diskPageFiles page file(s)." -ForegroundColor Green
+}
 
 # ---- Step 6: prove the package actually carries the reference data ----------
 #
@@ -942,11 +1054,14 @@ while ($i -lt $fileLines.Count) {
     if ($fileLines[$i] -match '^COPY public\."?([A-Za-z0-9_]+)"? \((.*)\) FROM stdin;') {
         $t = $matches[1]
         $fileColumns[$t] = ($matches[2] -split ',\s*')
-        $block = @()
+        # A List, not `$block += ...`: an array grows by copying, so `+=` is quadratic in the rows, and -WithData
+        # (#39.58) puts tens of thousands of them in one block. Only lookup_document_type's rows are kept -- arm (d)
+        # is their one reader; every other table needs its count.
+        $block = [System.Collections.Generic.List[string]]::new()
         $i++
-        while ($i -lt $fileLines.Count -and $fileLines[$i] -ne '\.') { $block += $fileLines[$i]; $i++ }
+        while ($i -lt $fileLines.Count -and $fileLines[$i] -ne '\.') { $block.Add($fileLines[$i]); $i++ }
         $fileCounts[$t] = $block.Count
-        $fileRows[$t]   = $block
+        if ($t -eq "lookup_document_type") { $fileRows[$t] = $block }
     }
     $i++
 }
@@ -1027,19 +1142,19 @@ if ($verifyFailed) {
 # data, and belongs in $refTablePatterns. Leaving it unanswered is the only
 # wrong move.
 $knownOperationalTables = @(
+    # #39.58: every table that is not reference data, as scripts\ciprian\package-tables.ts answers it --
+    # shipped with -WithData, held back, or not data -- pinned to it by ciprian-package-tables.test.ts.
     "spatial_ref_sys", "schema_migrations",
-    "address", "app_users", "user_requests",
-    "person", "natural_person", "judicial_person", "person_version",
-    "property", "property_address", "property_corner", "property_corner_source",
-    "property_version",
+    "app_users", "user_requests", "user_tile_default", "skill_attempt", "ai_paid_read", "cost_record",
+    "principal_object", "person", "natural_person", "judicial_person", "address", "person_version",
+    "property", "property_address", "property_corner", "property_corner_source", "property_version",
     "document", "document_page", "document_version",
-    "person_document", "person_person", "property_document", "property_person",
-    "property_property", "document_document",
+    "person_person", "person_document", "property_person", "property_document", "property_property",
+    "document_document",
     "groups", "group_member", "stamps", "stamp_member",
-    "principal_object",
+    "entity_metadata", "entity_metadata_version", "entity_provenance_log", "entity_cross_reference", "entity_tag",
     "calculation_run", "calculation_run_output",
-    "entity_metadata", "entity_metadata_version", "entity_provenance_log",
-    "entity_cross_reference", "entity_tag"
+    "interaction", "interaction_document", "interaction_tag"
 )
 $knownOperationalSql = "'" + ($knownOperationalTables -join "', '") + "'"
 
@@ -1071,6 +1186,109 @@ if ($carriesData.Count -gt 0) {
     Write-Host "  Each is either new operational data (add it to `$knownOperationalTables)" -ForegroundColor Yellow
     Write-Host "  or new reference data (add it to `$refTablePatterns and re-run). Not fatal," -ForegroundColor Yellow
     Write-Host "  because this script cannot tell which -- but do not ship without deciding." -ForegroundColor Yellow
+}
+
+
+# -- e) -WithData (Slice #39.58): the archive's rows, Adrian's own tables kept out, the sequences, the page files --
+if ($WithData) {
+    Write-Host ""
+    Write-Host ("  {0,-32} {1,7}   {2,7}" -f "Archive table (-WithData)", "dev", "package") -ForegroundColor Gray
+    $shippedSql = "'" + (@($packageLists.shipped) -join "', '") + "'"
+    $opCountsSql = "SELECT t.table_name || '|' || $countExpr FROM information_schema.tables t WHERE $tableFilter AND t.table_name IN ($shippedSql) ORDER BY 1"
+    $opCountsRaw = docker exec ga40prj-postgres psql -U postgres -d ga40db -t -A -c $opCountsSql
+    if ($LASTEXITCODE -ne 0) {
+        Stop-UnverifiedPackage @("ERROR: could not read the archive's table counts from ga40prj-postgres.")
+    }
+    $opSeen = @{}
+    $opFailed = $false
+    foreach ($line in $opCountsRaw) {
+        $trimmed = "$line".Trim()
+        if ($trimmed -eq "") { continue }
+        $parts = $trimmed -split '\|', 2
+        # Arm (a)'s strictness, for arm (a)'s reason: a row this cannot read is a table nobody compared.
+        if ($parts.Count -ne 2 -or $parts[1] -notmatch '^\d+$') {
+            Stop-UnverifiedPackage @("ERROR: unreadable row from the archive's count query: '$trimmed'")
+        }
+        $t = $parts[0]
+        $devN = [int]$parts[1]
+        $opSeen[$t] = $true
+        if ($fileCounts.ContainsKey($t)) { $pkgN = $fileCounts[$t]; $pkgTx = "$pkgN" } else { $pkgN = -1; $pkgTx = "MISSING" }
+        $colour = "Green"
+        if ($pkgN -ne $devN) { $colour = "Red"; $opFailed = $true }
+        Write-Host ("  {0,-32} {1,7}   {2,7}" -f $t, $devN, $pkgTx) -ForegroundColor $colour
+    }
+    foreach ($t in $packageLists.shipped) {
+        if (-not $opSeen.ContainsKey($t)) {
+            Write-Host ("  {0,-32} {1,7}   {2,7}" -f $t, "MISSING", "-") -ForegroundColor Red
+            $opFailed = $true
+        }
+    }
+    if ($opFailed) {
+        Stop-UnverifiedPackage @(
+            "ERROR: the package's archive does not match dev (see the red rows).",
+            "       A count mismatch means something wrote to dev between the dump and this check -- re-run."
+        )
+    }
+    foreach ($t in $packageLists.heldBack) {
+        if ($fileCounts.ContainsKey($t)) {
+            Stop-UnverifiedPackage @("ERROR: $t is held back (scripts\ciprian\package-tables.ts) and yet the package carries it.")
+        }
+    }
+    foreach ($q in $packageLists.sequences) {
+        if ($opDataText -notmatch "(?m)^SELECT pg_catalog\.setval\('public\.$q',") {
+            Stop-UnverifiedPackage @("ERROR: the package does not set the sequence $q -- Ciprian's next code would repeat one dev has used.")
+        }
+    }
+    Write-Host "  Held back, not in the package: $(@($packageLists.heldBack) -join ', ')" -ForegroundColor Green
+    Write-Host "  Sequences set: $(@($packageLists.sequences) -join ', ')" -ForegroundColor Green
+
+    # Every table that holds rows has an answer. (c2) only WARNS, because without -WithData nothing operational
+    # travels; with it, a table in no list would be left behind -- or shipped -- by accident, so it REFUSES.
+    $allCountsSql = "SELECT t.table_name || '|' || $countExpr FROM information_schema.tables t WHERE $tableFilter ORDER BY 1"
+    $allCountsRaw = docker exec ga40prj-postgres psql -U postgres -d ga40db -t -A -c $allCountsSql
+    if ($LASTEXITCODE -ne 0) {
+        Stop-UnverifiedPackage @("ERROR: could not list the tables of ga40prj-postgres.")
+    }
+    $answered = @($packageLists.shipped) + @($packageLists.heldBack) + @($packageLists.notData)
+    $unanswered = @()
+    foreach ($line in $allCountsRaw) {
+        $trimmed = "$line".Trim()
+        if ($trimmed -eq "") { continue }
+        $parts = $trimmed -split '\|', 2
+        if ($parts.Count -ne 2 -or $parts[1] -notmatch '^\d+$') {
+            Stop-UnverifiedPackage @("ERROR: unreadable row from the table list: '$trimmed'")
+        }
+        if ([int]$parts[1] -eq 0) { continue }
+        $t = $parts[0]
+        $isRef = $false
+        # -like: `*` is the wildcard and `_` is literal, as in pg_dump's patterns.
+        foreach ($pattern in $packageLists.reference) { if ($t -like $pattern) { $isRef = $true } }
+        if (-not $isRef -and $answered -notcontains $t) { $unanswered += "$t ($($parts[1]) rows)" }
+    }
+    if ($unanswered.Count -gt 0) {
+        Stop-UnverifiedPackage (@("ERROR: -WithData: these tables hold rows in dev and are in no list of scripts\ciprian\package-tables.ts:") `
+            + @($unanswered | ForEach-Object { "         $_" }) `
+            + @("       Add each to SHIPPED_WITH_DATA or HELD_BACK there, with its reason, and re-run."))
+    }
+
+    # The page files: the zip holds every file on disk; the rows are counted beside them.
+    $zipFiles = 0
+    try {
+        $zip = [System.IO.Compression.ZipFile]::OpenRead($uploadsZipNew)
+        try { $zipFiles = @($zip.Entries | Where-Object { $_.Name -ne "" }).Count } finally { $zip.Dispose() }
+    } catch {
+        Stop-UnverifiedPackage @("ERROR: could not read back $uploadsZipNew -- $($_.Exception.Message)")
+    }
+    if ($zipFiles -ne $diskPageFiles) {
+        Stop-UnverifiedPackage @("ERROR: ciprian-uploads.zip holds $zipFiles file(s); uploads\document-pages holds $diskPageFiles.")
+    }
+    $pageRows = 0
+    if ($fileCounts.ContainsKey("document_page")) { $pageRows = $fileCounts["document_page"] }
+    Write-Host "  Page files: all $zipFiles of uploads\document-pages in ciprian-uploads.zip; $pageRows page row(s) in the package." -ForegroundColor Green
+    if ($pageRows -gt $zipFiles) {
+        Write-Host "  ($($pageRows - $zipFiles) more page rows than files. The big dev seed's pages have no file (FU-333): they show the" -ForegroundColor Yellow
+        Write-Host "   missing-file placeholder on Ciprian's box, as they do on dev.)" -ForegroundColor Yellow
+    }
 }
 
 # -- d) document types and their forms -----------------------------------------
@@ -1221,6 +1439,10 @@ $promotions = @(
     @{ New = $schemaDestNew;     Final = $schemaDest;     Label = "init\02-schema.sql" },
     @{ New = $initRefDestNew;    Final = $initRefDest;    Label = "init\03-reference-data.sql" }
 )
+# #39.58: the page-file zip first -- it is self-contained, and the init pair stays last and adjacent.
+if ($WithData) {
+    $promotions = @(@{ New = $uploadsZipNew; Final = $uploadsZip; Label = "ciprian-uploads.zip" }) + $promotions
+}
 
 $promoted = @()
 foreach ($pair in $promotions) {
@@ -1265,6 +1487,8 @@ foreach ($pair in $promotions) {
 # before the init zip is rebuilt, which is the exact mixed state everything
 # above works to avoid, delivered with no message at all.
 Remove-Item -LiteralPath $refDataDumpLocal -Force -ErrorAction SilentlyContinue
+# #39.58: the archive dump holds real people's records; it goes as soon as it has been promoted.
+Remove-Item -LiteralPath $opDataDumpLocal -Force -ErrorAction SilentlyContinue
 
 # ⚠️ **THE INIT FOLDER HAS TO BE SENT, AND FOR YEARS IT WAS NOT.** 02-schema.sql
 # has been regenerated by Step 4 on every build since this script existed, and
@@ -1366,11 +1590,20 @@ Write-Host "=====================================================" -ForegroundCo
 Write-Host " Image ready : $outputTar" -ForegroundColor Green
 Write-Host " Update file : $updateFileDest" -ForegroundColor Green
 Write-Host " Init files  : $initZip" -ForegroundColor Green
-Write-Host " Next step   : send ALL THREE files to Ciprian" -ForegroundColor Green
+Write-Host " Next step   : send ALL $(if ($WithData) { 'FOUR' } else { 'THREE' }) files to Ciprian" -ForegroundColor Green
 Write-Host "               1. ga40prj-app.tar      -> docker\app\ (replace)" -ForegroundColor Green
 Write-Host "               2. ciprian-schema-update.sql -> folder root (replace)" -ForegroundColor Green
 Write-Host "               3. ciprian-init.zip     -> unpack over" -ForegroundColor Green
 Write-Host "                  docker\postgres\init\ (3 .sql + README-INIT.txt)" -ForegroundColor Green
+if ($WithData) {
+    Write-Host "               4. ciprian-uploads.zip  -> the page files: unpack it, then" -ForegroundColor Green
+    Write-Host "                  docker cp into ciprian-ga40prj-app:/app/uploads/ (UC-C6)" -ForegroundColor Green
+    Write-Host "               -WithData: the update file carries dev's archive too," -ForegroundColor Green
+    Write-Host "               without your skills-map progress or your accounts." -ForegroundColor Green
+} elseif (Test-Path -LiteralPath $uploadsZip) {
+    Write-Host " NOTE        : ciprian-uploads.zip in that folder is from an earlier" -ForegroundColor Yellow
+    Write-Host "               -WithData build. This package carries no data -- do not send it." -ForegroundColor Yellow
+}
 Write-Host " Ciprian     : start.bat (first run) OR update.bat + apply" -ForegroundColor Green
 Write-Host "               ciprian-schema-update.sql per UC-C6." -ForegroundColor Green
 Write-Host "               The init files matter only on a first-time setup or" -ForegroundColor Green
