@@ -130,7 +130,7 @@
           "section": "links-associate",
           "ro": {
             "question": "De pe ecranul unui contract legați un teren. Unde se vede legătura?",
-            "explanation": "O asociere se face o singură dată, din oricare capăt, și se vede din amândouă: contractul apare și pe ecranul terenului."
+            "explanation": "O asociere se face o singură dată, din orice direcție, și se vede din amândouă: contractul apare și pe ecranul terenului."
           },
           "en": {
             "question": "From a contract's screen you link a plot of land. Where does the link show?",

@@ -35,7 +35,7 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „Harta competențelor” and presses box 1.1 „Conectează-te și găsește-ți drumul în bara laterală” (Open) | The heading „Chestionar — 1.1 Conectează-te și găsește-ți drumul în bara laterală”, the skill's description, „6 întrebări. Alegeți câte un răspuns la fiecare, apoi apăsați „Trimite”. Treceți cu cel puțin 5 răspunsuri bune.”, and six questions, each with three or four answers |
+| 1 | Opens „Harta competențelor” and presses box 1.1 „Conectează-te și orientează-te în bara laterală” (Open) | The heading „Chestionar — 1.1 Conectează-te și orientează-te în bara laterală”, the skill's description, „6 întrebări. Alegeți câte un răspuns la fiecare, apoi apăsați „Trimite”. Treceți cu cel puțin 5 răspunsuri bune.”, and six questions, each with three or four answers |
 | 2 | Looks at „Trimite”, then chooses one answer of the first question | „Trimite” cannot be pressed; under the questions „0 din 6 răspunsuri”, then „1 din 6 răspunsuri”, and „Trimite” still cannot be pressed |
 | 3 | Presses „Înapoi la hartă”, then „Anulează”; presses „Înapoi la hartă” again, then „Renunță” | A dialog „Modificări nesalvate” with „Anulează”, „Renunță” and „Salvează”; „Anulează” closes it and leaves the quiz as it was, „1 din 6 răspunsuri”; „Renunță” goes to the map |
 | 4 | Looks at box 1.1 | Still „Deschisă”, without the green badge: nothing was recorded |

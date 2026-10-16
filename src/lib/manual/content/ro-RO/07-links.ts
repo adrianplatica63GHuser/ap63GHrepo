@@ -9,7 +9,7 @@ export const CHAPTER = `
 
 ## 7.1 Asocierea a două înregistrări {#links-associate}
 
-Legătura dintre două înregistrări se numește asociere. Se face o singură dată, din oricare capăt, și se vede din amândouă: dacă legați un teren de pe ecranul unui contract, contractul apare și pe ecranul terenului.
+Legătura dintre două înregistrări se numește asociere. Se face o singură dată, din orice direcție, și se vede din amândouă: dacă legați un teren de pe ecranul unui contract, contractul apare și pe ecranul terenului.
 
 ### 7.1.1 Ecranul de asociere {#links-associate-screen}
 

@@ -90,7 +90,7 @@ export const SKILL_PATHS: readonly SkillPath[] = [
   },
   {
     key: "import",
-    name: { ro: "Import și DocTypeEngine", en: "Import and DocTypeEngine" },
+    name: { ro: "Import și Distilare Tipizate", en: "Import and DocTypeEngine" },
     description: {
       ro: "Importul dosarelor de proprietate, ce citește AI-ul și învățarea unui tip nou de act.",
       en: "Importing property folders, what the AI reads, and teaching the application a new document type.",
@@ -143,7 +143,7 @@ export const SKILLS: readonly Skill[] = [
     level: 1,
     path: "workspace",
     name: {
-      ro: "Conectează-te și găsește-ți drumul în bara laterală",
+      ro: "Conectează-te și orientează-te în bara laterală",
       en: "Sign in and find your way through the sidebar",
     },
     description: {
@@ -537,7 +537,7 @@ export const SKILLS: readonly Skill[] = [
     level: 2,
     path: "links",
     name: {
-      ro: "Leagă actele, proprietățile și persoanele din oricare capăt",
+      ro: "Leagă actele, proprietățile și persoanele din orice direcție",
       en: "Link documents, properties and persons from either end",
     },
     description: {
@@ -755,7 +755,7 @@ export const SKILLS: readonly Skill[] = [
     number: "3.5",
     level: 3,
     path: "documents",
-    name: { ro: "Lucrează un contract de vânzare-cumpărare", en: "Work a sale contract" },
+    name: { ro: "Procesează un contract de vânzare-cumpărare", en: "Work a sale contract" },
     description: {
       ro: "Pui vânzătorii și cumpărătorii pe grupe, cu cota lor, compui „Obiectul vânzării” din proprietăți și îl recompui după o schimbare; te orientezi în filele și panourile formularului.",
       en: "Put the sellers and the buyers in their groups, with their shares, compose „Obiectul vânzării” from the properties and recompose it after a change; find your way through the form's tabs and panels.",
@@ -771,7 +771,7 @@ export const SKILLS: readonly Skill[] = [
     level: 3,
     path: "documents",
     name: {
-      ro: "Lucrează actele care se sprijină pe alte acte: actul adițional și certificatul de moștenitor",
+      ro: "Procesează actele care se sprijină pe alte acte: actul adițional și certificatul de moștenitor",
       en: "Work the documents that rest on others: the addendum and the certificate of inheritance",
     },
     description: {
@@ -888,7 +888,7 @@ export const SKILLS: readonly Skill[] = [
     number: "3.12",
     level: 3,
     path: "workspace",
-    name: { ro: "Potrivește aplicația: setări, implicite și utilizatori", en: "Fit the application: settings, defaults and users" },
+    name: { ro: "Ajustează aplicația: setări, implicite și utilizatori", en: "Fit the application: settings, defaults and users" },
     description: {
       ro: "Schimbi o setare și o pui la loc exact, salvezi setul tău de fișe în „Implicitele mele”, alegi furnizorii din „Costuri” și răspunzi unei cereri de acces.",
       en: "Change a setting and put it back exactly, save your own set of tiles in „Implicitele mele”, choose the providers in „Costuri”, and answer an access request.",
@@ -1002,11 +1002,11 @@ export const SKILLS: readonly Skill[] = [
     level: 4,
     path: "import",
     name: {
-      ro: "Învață aplicația un tip nou de act cu DocTypeEngine",
+      ro: "Învață aplicația un tip nou de act cu „Distilare Tipizate”",
       en: "Teach the application a new document type with DocTypeEngine",
     },
     description: {
-      ro: "Dai DocTypeEngine-ului actele-model ale unui tip, citești formularul propus, îl corectezi și îl salvezi, ca importurile următoare să citească singure acel tip.",
+      ro: "Încarci în „Distilare Tipizate” actele-model ale unui tip, citești formularul propus, îl corectezi și îl salvezi, ca importurile următoare să citească singure acel tip.",
       en: "Give DocTypeEngine the sample documents of a type, read the proposed form, correct it and save it, so that the next imports read that type by themselves.",
     },
     predecessors: ["import-big-and-special-folders", "import-check-the-ai-reading", "workspace-reference-data"],
@@ -1021,7 +1021,7 @@ export const SKILLS: readonly Skill[] = [
     path: "workspace",
     name: { ro: "Ține arhiva în ordine", en: "Keep the archive in order" },
     description: {
-      ro: "Unești valorile duble din datele de referință, fuzionezi etichetele, ții textele de ajutor la zi și potrivești setările după cum lucrează afacerea.",
+      ro: "Unești valorile duble din datele de referință, fuzionezi etichetele, ții textele de ajutor la zi și ajustezi setările după cum funcționează lucrurile în realitate.",
       en: "Merge duplicate values in the reference data, merge tags, keep the help texts up to date, and fit the settings to how the business works.",
     },
     predecessors: ["workspace-reference-data", "workspace-settings-and-users", "workspace-write-help"],
