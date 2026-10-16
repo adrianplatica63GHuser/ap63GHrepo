@@ -81,22 +81,40 @@ describe("who is a party", () => {
     expect(isPartyLink({ holdsShare: true })).toBe(true);
     expect(isPartyLink({ holdsShare: false })).toBe(false);
   });
-  it("a contract de vânzare, an act adițional and a certificat de moștenitor show „Părți”, and nothing else does", () => {
-    // #38.34: the act adițional; #39.48: the certificate, by the same rule.
-    expect(PARTIES_TILE_TYPES).toEqual(["CONTRACT_VANZARE", "ACT_ADITIONAL", "CERTIFICAT_MOSTENITOR"]);
-    expect(hasPartiesTile("CONTRACT_VANZARE")).toBe(true);
-    expect(hasPartiesTile("ACT_ADITIONAL")).toBe(true);
-    expect(hasPartiesTile("CERTIFICAT_MOSTENITOR")).toBe(true);
-    expect(hasPartiesTile("ANTECONTRACT")).toBe(false);
+  // #39.57, INVERTED: was „a contract de vânzare, an act adițional and a certificat de moștenitor show „Părți”, and
+  // nothing else does”, with hasPartiesTile("ANTECONTRACT") false. Adrian: „… for all cases where it applies”.
+  it("every type whose act is made between share-holding parties, or passes ownership to them, shows „Părți”", () => {
+    // #38.34: the act adițional; #39.48: the certificate; #39.57: the antecontract and the others the rule fits.
+    expect(PARTIES_TILE_TYPES).toEqual([
+      "CONTRACT_VANZARE",
+      "ACT_ADITIONAL",
+      "CERTIFICAT_MOSTENITOR",
+      "ANTECONTRACT",
+      "ACT_DONATIE",
+      "CONTRACT_PARTAJ",
+      "ACT_PARTAJ",
+      "TESTAMENT",
+      "ACT_ADJUDECARE",
+      "TITLU_PROPRIETATE",
+    ]);
+    for (const k of PARTIES_TILE_TYPES) expect(hasPartiesTile(k)).toBe(true);
+    // The documents that only report the owner of record keep their people on „Legături”.
+    for (const k of ["EXTRAS_CARTE_FUNCIARA", "CERTIFICAT_SARCINI", "ACT_CADASTRU", "AUTORIZATIE", "AUTORIZATIE_CONSTRUIRE", "CERTIFICAT_URBANISM", "HOTARARE_JUDECATOREASCA", "PROCURA", "CARTE_IDENTITATE"]) {
+      expect({ k, tile: hasPartiesTile(k) }).toEqual({ k, tile: false });
+    }
     expect(hasPartiesTile(null)).toBe(false);
   });
   it("„Asociază persoană” on „Părți” opens the certificate's own screen on a certificate, the common one elsewhere", () => {
     expect(partiesAssociatePath("CERTIFICAT_MOSTENITOR", "d 1")).toBe("/documents/d%201/associate-party");
     expect(partiesAssociatePath("CONTRACT_VANZARE", "d1")).toBe("/documents/d1/associate-person");
     expect(partiesAssociatePath("ACT_ADITIONAL", "d1")).toBe("/documents/d1/associate-person");
+    expect(partiesAssociatePath("ANTECONTRACT", "d1")).toBe("/documents/d1/associate-person");
   });
   it("orders the groups sellers, buyers, then the rest alphabetically, then no role", () => {
-    expect(PARTY_ROLES_FIRST).toEqual(["Vânzător", "Cumpărător"]);
+    expect(PARTY_ROLES_FIRST).toEqual(["Vânzător", "Cumpărător", "Promitent vânzător", "Promitent cumpărător", "Donator", "Donatar"]);
+    // #39.57: the antecontract's and the donation's groups, the one who gives first.
+    expect(partyGroupOrder(["Promitent cumpărător", "Promitent vânzător"])).toEqual(["Promitent vânzător", "Promitent cumpărător"]);
+    expect(partyGroupOrder(["Donatar", "Donator"])).toEqual(["Donator", "Donatar"]);
     expect(partyGroupOrder(["Moștenitor / Succesor", null, "Cumpărător", "Vânzător", "Cumpărător", "Adjudecatar"])).toEqual([
       "Vânzător", "Cumpărător", "Adjudecatar", "Moștenitor / Succesor", null,
     ]);

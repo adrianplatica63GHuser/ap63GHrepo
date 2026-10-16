@@ -24,9 +24,10 @@
  * The document types whose saved records show „Părți": the contract de vânzare
  * (#38.33), the act adițional that amends one (#38.34), whose sellers and
  * buyers are the same people with the same shares, and — since #39.47 — the
- * certificat de moștenitor, whose heirs are its parties by the same rule.
+ * certificat de moștenitor, whose heirs are its parties by the same rule; since
+ * #39.57 every other type the rule fits, each with its reason below.
  *
- * ⚠️ **ONE RULE FOR ALL THREE (Slice #39.48).** Until then a certificate drew
+ * ⚠️ **ONE RULE FOR ALL OF THEM (Slice #39.48).** Until then a certificate drew
  * its own „Părți" — a table of EVERY person on it, Defunct and notary too —
  * while „Legături" drew them all again with the heirs' „Cotă": every person in
  * two places, and the sale contract's rule read as the opposite. Now each of the
@@ -35,7 +36,36 @@
  * (`document.parties.elsewhere`). A certificate's deceased holds no share, so
  * he stands on „Legături", as the sale contract's notary does.
  */
-export const PARTIES_TILE_TYPES: readonly string[] = ["CONTRACT_VANZARE", "ACT_ADITIONAL", "CERTIFICAT_MOSTENITOR"];
+export const PARTIES_TILE_TYPES: readonly string[] = [
+  "CONTRACT_VANZARE",
+  "ACT_ADITIONAL",
+  "CERTIFICAT_MOSTENITOR",
+  // ── Slice #39.57, Adrian: „it should be done for all cases where it applies … and any other case where it fits!”
+  // A type fits when its reference data gives at least one role that holds a share AND the act is made between those
+  // parties or passes ownership to them. Each one below, and why:
+  /** The promitent vânzător and the promitent cumpărător, each with a share; the notary on „Legături”. */
+  "ANTECONTRACT",
+  /** Donator and donatar: ownership passes from one to the other. */
+  "ACT_DONATIE",
+  /** The co-owners who divide the property between them („Coproprietar”, „Moștenitor”). */
+  "CONTRACT_PARTAJ",
+  "ACT_PARTAJ",
+  /** The legatees („Legatar”) receive it; the testator holds no share and stays on „Legături”, as a deceased does. */
+  "TESTAMENT",
+  /** The adjudecatar receives it at auction; the debtor and the bailiff stay on „Legături”. */
+  "ACT_ADJUDECARE",
+  /**
+   * The titlu de proprietate GIVES ownership — it is the deed that constitutes or reconstitutes it — to its owners,
+   * heirs and co-owners, often several with their shares (66 „Proprietar” links on dev, 2026-10-15). Its issuing
+   * authority holds no share and stays on „Legături”.
+   */
+  "TITLU_PROPRIETATE",
+  // NOT here, and why: the extras de carte funciară, certificat de sarcini, act de cadastru, autorizație (and
+  // autorizație de construire), certificat de urbanism, certificat fiscal, certificat de bunuri, aviz, plan de
+  // amplasament, act de dezmembrare / alipire and încheiere de intabulare only REPORT the owner of record: a
+  // „Părți” of one owner with no counterpart adds a tile and tells nothing new. The hotărâre judecătorească's
+  // parties are the claimant and the defendant, whose roles hold no share.
+];
 
 export function hasPartiesTile(typeKey: string | null | undefined): boolean {
   return !!typeKey && PARTIES_TILE_TYPES.includes(typeKey);
@@ -56,8 +86,11 @@ export function isPartyLink(link: { holdsShare: boolean }): boolean {
   return link.holdsShare;
 }
 
-/** Roles whose group comes first, in this order; the order only, never membership. */
-export const PARTY_ROLES_FIRST: readonly string[] = ["Vânzător", "Cumpărător"];
+/**
+ * Roles whose group comes first, in this order; the order only, never membership. The one who gives before the one
+ * who receives, as a deed names them (#39.57: the promitenți, the donor before the donee).
+ */
+export const PARTY_ROLES_FIRST: readonly string[] = ["Vânzător", "Cumpărător", "Promitent vânzător", "Promitent cumpărător", "Donator", "Donatar"];
 
 /** The role groups, in display order: `PARTY_ROLES_FIRST`, then the rest alphabetically (Romanian), then no role. */
 export function partyGroupOrder(roleNames: readonly (string | null)[]): (string | null)[] {
