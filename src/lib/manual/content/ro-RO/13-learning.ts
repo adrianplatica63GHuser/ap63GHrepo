@@ -90,7 +90,7 @@ Alegerea ține și pentru „Toate traseele” și pentru „Listă”: în „P
 
 ## 13.4 Chestionarele {#learning-quizzes}
 
-Fiecare competență a hărții are un chestionar; îl deschideți apăsând caseta ei, cât timp este deschisă (secțiunea [[learning-skills]]). Progresul ține de cont: fiecare își vede chestionarele lui, pe orice calculator se conectează; pe o instalare fără conturi, progresul ține de instalare.
+Fiecare competență a hărții are un chestionar; îl deschideți apăsând caseta ei, cât timp este deschisă (secțiunea [[learning-skills]]). Progresul ține de cont: fiecare își vede chestionarele lui, pe orice calculator se conectează; pe o instalare fără conturi, progresul ține de instalare. De aceea, pe calculatorul lui Ciprian, care nu are conturi, chestionarele le dă numai Ciprian: „Numai Ciprian!”, lângă „Progresul meu” și „Prezentare”, spune de ce.
 
 ### 13.4.1 Cum se dă un chestionar {#learning-quizzes-take}
 

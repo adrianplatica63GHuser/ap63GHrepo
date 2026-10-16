@@ -90,7 +90,7 @@ The choice holds for „All paths” and for „List” too: in „Overview”, 
 
 ## 13.4 The quizzes {#learning-quizzes}
 
-Every skill of the map has a quiz; you open it by pressing its box while it is open (section [[learning-skills]]). Progress belongs to the account: each person sees their own quizzes, on whatever computer they sign in; on an installation without accounts, progress belongs to the installation.
+Every skill of the map has a quiz; you open it by pressing its box while it is open (section [[learning-skills]]). Progress belongs to the account: each person sees their own quizzes, on whatever computer they sign in; on an installation without accounts, progress belongs to the installation. That is why, on Ciprian's computer, which has no accounts, only Ciprian takes the quizzes: „Only Ciprian!”, beside „My progress” and „Overview”, says why.
 
 ### 13.4.1 Taking a quiz {#learning-quizzes-take}
 

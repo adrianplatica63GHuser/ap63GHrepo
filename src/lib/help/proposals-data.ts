@@ -11,7 +11,8 @@
  * Nothing here is ever written to the database except by Adrian's own „Acceptă”.
  * „manual” has no entry: its text was written in #39.37 against the manual as it is. A screen added since with no
  * text yet carries a proposal written against no text (EMPTY_FINGERPRINT): „skills-map” and „skill-quiz” (#39.42).
- * #39.55 rewrote „skills-map”'s text and accepted it on Adrian's dev database with `against` set to its #39.52 text;
+ * #39.55 and #39.56 rewrote „skills-map”'s text and accepted it on Adrian's dev database with `against` set to the
+ * text before;
  * once accepted, `against` is inert, so it is back on EMPTY_FINGERPRINT, which is how TC-HELP-01 (e2e/help/
  * help-screen.spec.ts) offers it again: by emptying the screen.
  */
@@ -269,11 +270,11 @@ export const HELP_PROPOSALS: Partial<Record<HelpScreenKey, HelpProposal>> = {
   },
   "skills-map": {
     against: EMPTY_FINGERPRINT,
-    reason: "a new screen (#39.42) with no text yet; #39.50: a Path is everything it takes, and the two views; #39.55: mastering a skill removes the arrows into it in „Progresul meu”, and only a skill left with no arrow out is Obsolete",
+    reason: "a new screen (#39.42) with no text yet; #39.50: a Path is everything it takes, and the two views; #39.55: mastering a skill removes the arrows into it in „Progresul meu”, and only a skill left with no arrow out is Obsolete; #39.56: „Numai Ciprian!”",
     backgroundRo: "„Harta competențelor” arată, ca o hartă, ce se învață în lucrul cu arhiva: fiecare casetă este o competență, de la cele de bază, în stânga, la cele de expert, în dreapta. Culoarea casetei este a nivelului ei. În „Progresul meu” desenul de peste ea arată unde sunteți: deschisă, stăpânită, închisă sau depășită; în „Prezentare” toate casetele sunt colorate și deschise, fără stări.",
-    howToRo: "Apăsați o casetă deschisă ca să dați chestionarul ei. Cu cel puțin 80 % răspunsuri bune competența devine stăpânită, iar în „Progresul meu” săgețile spre ea dispar; o competență din care nu mai pleacă nicio săgeată devine depășită. O casetă închisă, apăsată, spune ce competențe îi lipsesc. Un chestionar picat se poate relua după trei zile.\n\nUn traseu de deasupra hărții aduce în față tot ce trebuie ca să ajungeți la competențele lui de expert, și competențele din alte trasee pe care se sprijină ele; celelalte casete și săgeți devin gri. „Potrivește” încape harta în fereastră, iar „Listă” arată aceleași competențe ca listă.",
+    howToRo: "Apăsați o casetă deschisă ca să dați chestionarul ei. Cu cel puțin 80 % răspunsuri bune competența devine stăpânită, iar în „Progresul meu” săgețile spre ea dispar; o competență din care nu mai pleacă nicio săgeată devine depășită. O casetă închisă, apăsată, spune ce competențe îi lipsesc. Un chestionar picat se poate relua după trei zile.\n\nUn traseu de deasupra hărții aduce în față tot ce trebuie ca să ajungeți la competențele lui de expert, și competențele din alte trasee pe care se sprijină ele; celelalte casete și săgeți devin gri. „Potrivește” încape harta în fereastră, iar „Listă” arată aceleași competențe ca listă. „Numai Ciprian!” spune de ce, pe calculatorul lui Ciprian, chestionarele le dă numai el.",
     backgroundEn: "„Skills map” shows, as a map, what there is to learn about working with the archive: each box is a skill, from the basic ones on the left to the expert ones on the right. A box's colour is its level's. In „My progress” what is drawn over it shows where you stand: open, mastered, closed or obsolete; in „Overview” every box is coloured and open, with no states.",
-    howToEn: "Press an open box to take its quiz. With at least 80 % right answers the skill becomes mastered, and in „My progress” the arrows into it disappear; a skill that no arrow leaves any more becomes obsolete. A closed box, pressed, says which skills it is missing. A failed quiz can be taken again after three days.\n\nA path above the map brings forward everything it takes to reach its expert skills, including the skills of other paths they build on; the other boxes and arrows turn grey. „Fit” fits the map to the window, and „List” shows the same skills as a list.",
+    howToEn: "Press an open box to take its quiz. With at least 80 % right answers the skill becomes mastered, and in „My progress” the arrows into it disappear; a skill that no arrow leaves any more becomes obsolete. A closed box, pressed, says which skills it is missing. A failed quiz can be taken again after three days.\n\nA path above the map brings forward everything it takes to reach its expert skills, including the skills of other paths they build on; the other boxes and arrows turn grey. „Fit” fits the map to the window, and „List” shows the same skills as a list. „Only Ciprian!” says why, on Ciprian's computer, only he takes the quizzes.",
   },
   "skill-quiz": {
     against: EMPTY_FINGERPRINT,
