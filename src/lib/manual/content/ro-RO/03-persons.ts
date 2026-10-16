@@ -57,7 +57,7 @@ Pe lista persoanelor fizice, apăsați „Adaugă persoană”. Se deschide dire
 | „Contact” | Telefoanele și adresele de e-mail. |
 | „Adrese” | „Adresă domiciliu” și „Adresă corespondență”. |
 
-Bifele din capul ecranului arată sau ascund fișe, ca pe orice înregistrare (secțiunea [[start-tiles]]). O fișă ascunsă nu își pierde datele: ce ați scris în ea se salvează la fel.
+Bifele din capul ecranului arată sau ascund fișe, ca pe orice obiect (secțiunea [[start-tiles]]). O fișă ascunsă nu își pierde datele: ce ați scris în ea se salvează la fel.
 
 ### 3.2.2 Salvarea {#persons-add-save}
 
@@ -170,7 +170,7 @@ Sub istoric, butonul mare „Înregistrează o interacțiune” deschide formula
 2. Alegeți canalul, de exemplu „Telefon”, și scrieți subiectul.
 3. Apăsați „Salvează”. Apare „Interacțiune înregistrată”, iar interacțiunea apare în istoric.
 
-Un clic pe o interacțiune din istoric o deschide în formular: schimbați ce trebuie și apăsați „Salvează modificările”, sau apăsați „Șterge înregistrarea”, apoi „Șterge”. „Restrânge” strânge formularul la loc.
+Un clic pe o interacțiune din istoric o deschide în formular: schimbați ce trebuie și apăsați „Salvează modificările”, sau apăsați „Șterge interacțiunea”, apoi „Șterge”. „Restrânge” strânge formularul la loc.
 
 Din lista persoanelor, „Incursiune” arată doar istoricul; un clic pe o interacțiune de acolo deschide ecranul persoanei, cu interacțiunea în formular. Ecranul „Interacțiuni”, cu filtrele lui, este descris în secțiunea [[reports-interactions]].
 

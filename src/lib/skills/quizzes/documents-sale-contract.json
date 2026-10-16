@@ -358,11 +358,11 @@
           "section": "links-associate-remove",
           "ro": {
             "question": "În „Părți”, Ciprian a asociat din greșeală o altă Elena Popescu ca cumpărătoare. O scoate cu „Dezasociază”. Ce se întâmplă cu persoana aceea?",
-            "explanation": "„Dezasociază” scoate legătura rândului ales din ambele capete, fără nicio întrebare; cele două înregistrări rămân în arhivă, neatinse."
+            "explanation": "„Dezasociază” scoate legătura rândului ales din ambele capete, fără nicio întrebare; cele două obiecte rămân în arhivă, neatinse."
           },
           "en": {
             "question": "In „Părți”, Ciprian associated another Elena Popescu as buyer by mistake. He removes her with „Dezasociază”. What happens to that person?",
-            "explanation": "„Dezasociază” removes the selected row's link from both ends, without any question; the two records stay in the archive, untouched."
+            "explanation": "„Dezasociază” removes the selected row's link from both ends, without any question; the two objects stay in the archive, untouched."
           },
           "options": [
             {

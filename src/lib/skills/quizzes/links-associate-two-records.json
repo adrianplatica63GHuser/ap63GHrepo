@@ -15,12 +15,12 @@
           "id": "a1",
           "section": "links-associate-screen",
           "ro": {
-            "question": "De unde deschideți ecranul pe care legați o persoană de înregistrarea la care lucrați?",
-            "explanation": "Pe fișa „Legături” a înregistrării stau „Asociază persoană”, „Asociază proprietate” și „Asociază act”; fiecare deschide un ecran de asociere."
+            "question": "De unde deschideți ecranul pe care legați o persoană de obiectul la care lucrați?",
+            "explanation": "Pe fișa „Legături” a obiectului stau „Asociază persoană”, „Asociază proprietate” și „Asociază act”; fiecare deschide un ecran de asociere."
           },
           "en": {
-            "question": "Where do you open the screen on which you link a person to the record you are working on?",
-            "explanation": "On the record's „Legături” tile there are „Asociază persoană”, „Asociază proprietate” and „Asociază act”; each opens an association screen."
+            "question": "Where do you open the screen on which you link a person to the object you are working on?",
+            "explanation": "On the object's „Legături” tile there are „Asociază persoană”, „Asociază proprietate” and „Asociază act”; each opens an association screen."
           },
           "options": [
             {
@@ -53,11 +53,11 @@
           "id": "a2",
           "section": "links-associate-screen",
           "ro": {
-            "question": "Pe ecranul de asociere ați găsit înregistrarea căutată în „Rezultate”. Cum o alegeți pentru legare?",
+            "question": "Pe ecranul de asociere ați găsit obiectul căutat în „Rezultate”. Cum îl alegeți pentru legare?",
             "explanation": "În „Rezultate” bifați rândul sau rândurile pe care vreți să le legați, apoi apăsați „Asociază selecția” în „Asociere”."
           },
           "en": {
-            "question": "On the association screen you have found the record you were looking for in „Rezultate”. How do you choose it for linking?",
+            "question": "On the association screen you have found the object you were looking for in „Rezultate”. How do you choose it for linking?",
             "explanation": "In „Rezultate” you tick the row or rows you want to link, then press „Asociază selecția” in „Asociere”."
           },
           "options": [
@@ -92,18 +92,18 @@
           "section": "links-associate-screen",
           "ro": {
             "question": "Ce se întâmplă după ce apăsați „Asociază selecția”?",
-            "explanation": "„Asociază selecția” vă întoarce pe înregistrarea de la care ați plecat, cu legătura nouă în „Legături”."
+            "explanation": "„Asociază selecția” vă întoarce pe obiectul de la care ați plecat, cu legătura nouă în „Legături”."
           },
           "en": {
             "question": "What happens after you press „Asociază selecția”?",
-            "explanation": "„Asociază selecția” takes you back to the record you started from, with the new link in „Legături”."
+            "explanation": "„Asociază selecția” takes you back to the object you started from, with the new link in „Legături”."
           },
           "options": [
             {
               "id": "o1",
               "correct": true,
-              "ro": "Vă întoarceți pe înregistrarea de la care ați plecat, cu legătura nouă în „Legături”",
-              "en": "You go back to the record you started from, with the new link in „Legături”"
+              "ro": "Vă întoarceți pe obiectul de la care ați plecat, cu legătura nouă în „Legături”",
+              "en": "You go back to the object you started from, with the new link in „Legături”"
             },
             {
               "id": "o2",
@@ -114,8 +114,8 @@
             {
               "id": "o3",
               "correct": false,
-              "ro": "Se deschide înregistrarea bifată, numai pentru citire",
-              "en": "The ticked record opens, read-only"
+              "ro": "Se deschide obiectul bifat, numai pentru citire",
+              "en": "The ticked object opens, read-only"
             },
             {
               "id": "o4",
@@ -401,24 +401,24 @@
           "section": "links-associate-remove",
           "ro": {
             "question": "Ce se întâmplă când apăsați „Dezasociază” pe un rând ales din „Legături”?",
-            "explanation": "Legătura dispare din ambele capete, fără nicio întrebare; cele două înregistrări rămân în arhivă, neatinse."
+            "explanation": "Legătura dispare din ambele capete, fără nicio întrebare; cele două obiecte rămân în arhivă, neatinse."
           },
           "en": {
             "question": "What happens when you press „Dezasociază” on a row chosen in „Legături”?",
-            "explanation": "The link disappears from both ends, without any question; the two records stay in the archive, untouched."
+            "explanation": "The link disappears from both ends, without any question; the two objects stay in the archive, untouched."
           },
           "options": [
             {
               "id": "o1",
               "correct": false,
-              "ro": "Aplicația cere confirmare și șterge înregistrarea legată",
-              "en": "The application asks for confirmation and deletes the linked record"
+              "ro": "Aplicația cere confirmare și șterge obiectul legat",
+              "en": "The application asks for confirmation and deletes the linked object"
             },
             {
               "id": "o2",
               "correct": false,
-              "ro": "Legătura dispare doar de pe înregistrarea pe care sunteți",
-              "en": "The link disappears only from the record you are on"
+              "ro": "Legătura dispare doar de pe obiectul pe care sunteți",
+              "en": "The link disappears only from the object you are on"
             },
             {
               "id": "o3",
@@ -429,8 +429,8 @@
             {
               "id": "o4",
               "correct": true,
-              "ro": "Legătura dispare din ambele capete; înregistrările rămân neatinse",
-              "en": "The link disappears from both ends; the records stay untouched"
+              "ro": "Legătura dispare din ambele capete; obiectele rămân neatinse",
+              "en": "The link disappears from both ends; the objects stay untouched"
             }
           ]
         },

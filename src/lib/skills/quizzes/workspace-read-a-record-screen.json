@@ -14,11 +14,11 @@
           "id": "a1",
           "section": "start-tiles",
           "ro": {
-            "question": "Pe ecranul unei înregistrări, la ce folosesc bifele din capul ecranului?",
+            "question": "Pe ecranul unui obiect, la ce folosesc bifele din capul ecranului?",
             "explanation": "Bifele din capul ecranului aleg ce fișe se văd; „Toate” le arată pe toate, iar „Implicit” revine la setul obișnuit."
           },
           "en": {
-            "question": "On a record's screen, what are the tick boxes at the top of the screen for?",
+            "question": "On an object's screen, what are the tick boxes at the top of the screen for?",
             "explanation": "The tick boxes at the top of the screen choose which tiles show; „Toate” shows them all, and „Implicit” returns to the usual set."
           },
           "options": [
@@ -52,12 +52,12 @@
           "id": "a2",
           "section": "start-tiles",
           "ro": {
-            "question": "Unde găsiți ID-ul de sistem al unei înregistrări deschise?",
-            "explanation": "ID-ul de sistem al înregistrării stă în colțul din dreapta-sus al primei fișe."
+            "question": "Unde găsiți ID-ul de sistem al unui obiect deschis?",
+            "explanation": "ID-ul de sistem al obiectului stă în colțul din dreapta-sus al primei fișe."
           },
           "en": {
-            "question": "Where do you find the system ID of an open record?",
-            "explanation": "The record's system ID sits in the top right-hand corner of the first tile."
+            "question": "Where do you find the system ID of an open object?",
+            "explanation": "The object's system ID sits in the top right-hand corner of the first tile."
           },
           "options": [
             {
@@ -128,12 +128,12 @@
           "id": "a4",
           "section": "intro-objects",
           "ro": {
-            "question": "Codul de sistem al unei înregistrări începe cu PROP. Ce fel de înregistrare este?",
-            "explanation": "Codul spune felul înregistrării: PPERS pentru o persoană fizică, JPERS pentru o persoană juridică, PROP pentru o proprietate și DOC pentru un act."
+            "question": "Codul de sistem al unui obiect începe cu PROP. Ce fel de obiect este?",
+            "explanation": "Codul spune felul obiectului: PPERS pentru o persoană fizică, JPERS pentru o persoană juridică, PROP pentru o proprietate și DOC pentru un act."
           },
           "en": {
-            "question": "A record's system code begins with PROP. What kind of record is it?",
-            "explanation": "The code tells the kind of record: PPERS for a natural person, JPERS for a legal person, PROP for a property and DOC for a document."
+            "question": "An object's system code begins with PROP. What kind of object is it?",
+            "explanation": "The code tells the kind of object: PPERS for a natural person, JPERS for a legal person, PROP for a property and DOC for a document."
           },
           "options": [
             {
@@ -279,12 +279,12 @@
           "id": "b2",
           "section": "start-tiles",
           "ro": {
-            "question": "Vreți să schimbați datele unei înregistrări deschise. Ce buton din bara de butoane apăsați întâi?",
-            "explanation": "Creionul înseamnă „modificați”; salvarea păstrează ce ați schimbat, iar coșul șterge înregistrarea."
+            "question": "Vreți să schimbați datele unui obiect deschis. Ce buton din bara de butoane apăsați întâi?",
+            "explanation": "Creionul înseamnă „modificați”; salvarea păstrează ce ați schimbat, iar coșul șterge obiectul."
           },
           "en": {
-            "question": "You want to change an open record's data. Which button in the button bar do you press first?",
-            "explanation": "The pencil means „edit”; the save keeps what you changed, and the bin deletes the record."
+            "question": "You want to change an open object's data. Which button in the button bar do you press first?",
+            "explanation": "The pencil means „edit”; the save keeps what you changed, and the bin deletes the object."
           },
           "options": [
             {
@@ -350,11 +350,11 @@
           "section": "admin-settings-account",
           "ro": {
             "question": "Vreți ca „Implicit” să arate, pe ecranul unei proprietăți, fișele alese de dumneavoastră. Unde le alegeți?",
-            "explanation": "În „Setări” → „Contul meu”, la „Implicitele mele”, bifați pentru fiecare fel de înregistrare fișele pe care să le arate „Implicit” și apăsați „Salvează”; setul este al contului, nu al browserului."
+            "explanation": "În „Setări” → „Contul meu”, la „Implicitele mele”, bifați pentru fiecare fel de obiect fișele pe care să le arate „Implicit” și apăsați „Salvează”; setul este al contului, nu al browserului."
           },
           "en": {
             "question": "You want „Implicit” to show, on a property's screen, the tiles you chose. Where do you choose them?",
-            "explanation": "In „Setări” → „Contul meu”, under „Implicitele mele”, you tick for each kind of record the tiles „Implicit” should show and press „Salvează”; the set belongs to the account, not the browser."
+            "explanation": "In „Setări” → „Contul meu”, under „Implicitele mele”, you tick for each kind of object the tiles „Implicit” should show and press „Salvează”; the set belongs to the account, not the browser."
           },
           "options": [
             {
@@ -387,11 +387,11 @@
           "id": "b5",
           "section": "intro-objects",
           "ro": {
-            "question": "Codul de sistem al unei înregistrări începe cu JPERS. Ce fel de înregistrare este?",
+            "question": "Codul de sistem al unui obiect începe cu JPERS. Ce fel de obiect este?",
             "explanation": "JPERS înseamnă o persoană juridică — o firmă, o asociație, o instituție; PPERS este o persoană fizică, PROP o proprietate, DOC un act."
           },
           "en": {
-            "question": "A record's system code begins with JPERS. What kind of record is it?",
+            "question": "An object's system code begins with JPERS. What kind of object is it?",
             "explanation": "JPERS means a legal person — a company, an association, an institution; PPERS is a natural person, PROP a property, DOC a document."
           },
           "options": [
@@ -426,11 +426,11 @@
           "section": "start-preview",
           "ro": {
             "question": "Lucrați pe un contract de vânzare, cu o modificare încă nesalvată, și vreți să vedeți cumpărătorul. Ce face „Previzualizare”?",
-            "explanation": "„Previzualizare” deschide înregistrarea legată alături, fără să plecați de pe ecran, iar o modificare nesalvată pe ecranul principal rămâne neatinsă."
+            "explanation": "„Previzualizare” deschide obiectul legat alături, fără să plecați de pe ecran, iar o modificare nesalvată pe ecranul principal rămâne neatinsă."
           },
           "en": {
             "question": "You are working on a sale contract, with a change not yet saved, and want to see the buyer. What does „Previzualizare” (preview) do?",
-            "explanation": "„Previzualizare” opens the linked record beside yours, without leaving the screen, and an unsaved change on the main screen is left untouched."
+            "explanation": "„Previzualizare” opens the linked object beside yours, without leaving the screen, and an unsaved change on the main screen is left untouched."
           },
           "options": [
             {

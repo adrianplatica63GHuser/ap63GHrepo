@@ -152,7 +152,7 @@ You want to know how much two adjoining plots measure together, before an offer.
 On the map, a plot blinks pink (section [[map-what-duplicates]]).
 
 1. Double-click the plot to open it, and look at its code and at what it has in „Links” (section [[map-what-bubble]]).
-2. Go back to the map with „Back” (section [[start-breadcrumb]]) and open the other record of the same plot too.
+2. Go back to the map with „Back” (section [[start-breadcrumb]]) and open the other object of the same plot too.
 3. Decide which one is right and link to it whatever it lacks (chapter [[links]]).
 4. Delete the other one from its own screen (section [[properties-add-edit]]).
 

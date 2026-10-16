@@ -53,12 +53,12 @@
           "id": "a2",
           "section": "reports-search",
           "ro": {
-            "question": "În ce înregistrări caută „Căutare globală”?",
-            "explanation": "„Căutare globală” caută dintr-un singur loc în toate cele trei feluri de înregistrări: persoane (fizice și juridice), proprietăți și acte."
+            "question": "În ce obiecte caută „Căutare globală”?",
+            "explanation": "„Căutare globală” caută dintr-un singur loc în toate cele trei feluri de obiecte: persoane (fizice și juridice), proprietăți și acte."
           },
           "en": {
-            "question": "Which records does „Căutare globală” (global search) search?",
-            "explanation": "„Căutare globală” searches from one place across all three kinds of record: persons (natural and legal), properties and documents."
+            "question": "Which objects does „Căutare globală” (global search) search?",
+            "explanation": "„Căutare globală” searches from one place across all three kinds of object: persons (natural and legal), properties and documents."
           },
           "options": [
             {
@@ -206,11 +206,11 @@
           "section": "reports-search-results",
           "ro": {
             "question": "O căutare găsește mai multe persoane decât pot fi arătate. Ce face ecranul?",
-            "explanation": "Se arată cel mult 50 de rezultate pentru fiecare fel de înregistrare, câte 15 pe pagină. Când sunt mai multe, ecranul vă spune și vă cere să restrângeți căutarea — adăugați un filtru."
+            "explanation": "Se arată cel mult 50 de rezultate pentru fiecare fel de obiect, câte 15 pe pagină. Când sunt mai multe, ecranul vă spune și vă cere să restrângeți căutarea — adăugați un filtru."
           },
           "en": {
             "question": "A search finds more persons than can be shown. What does the screen do?",
-            "explanation": "At most 50 results are shown for each kind of record, 15 to a page. When there are more, the screen says so and asks you to narrow the search — add a filter."
+            "explanation": "At most 50 results are shown for each kind of object, 15 to a page. When there are more, the screen says so and asks you to narrow the search — add a filter."
           },
           "options": [
             {
@@ -271,8 +271,8 @@
             {
               "id": "o3",
               "correct": false,
-              "ro": "Când vreți să modificați mai multe înregistrări deodată",
-              "en": "When you want to change several records at once"
+              "ro": "Când vreți să modificați mai multe obiecte deodată",
+              "en": "When you want to change several objects at once"
             },
             {
               "id": "o4",
@@ -315,8 +315,8 @@
             {
               "id": "o4",
               "correct": false,
-              "ro": "Arată toate înregistrările din arhivă, fără filtre",
-              "en": "It shows every record in the archive, with no filters"
+              "ro": "Arată toate obiectele din arhivă, fără filtre",
+              "en": "It shows every object in the archive, with no filters"
             }
           ]
         },
@@ -362,25 +362,25 @@
           "id": "b4",
           "section": "reports-search-filters",
           "ro": {
-            "question": "Ce spune filtrul „Proveniență” despre o înregistrare?",
-            "explanation": "„Proveniență” spune cum a intrat înregistrarea în arhivă, de exemplu „Manual (Adaugă nou)” pentru una scrisă de mână."
+            "question": "Ce spune filtrul „Proveniență” despre un obiect?",
+            "explanation": "„Proveniență” spune cum a intrat obiectul în arhivă, de exemplu „Manual (Adaugă nou)” pentru unul scris de mână."
           },
           "en": {
-            "question": "What does the „Proveniență” (provenance) filter tell about a record?",
-            "explanation": "„Proveniență” says how the record came into the archive, for instance „Manual (Adaugă nou)” for one typed in by hand."
+            "question": "What does the „Proveniență” (provenance) filter tell about an object?",
+            "explanation": "„Proveniență” says how the object came into the archive, for instance „Manual (Adaugă nou)” for one typed in by hand."
           },
           "options": [
             {
               "id": "o1",
               "correct": true,
-              "ro": "Cum a intrat înregistrarea în arhivă, de exemplu scrisă de mână",
-              "en": "How the record came into the archive, for instance typed in by hand"
+              "ro": "Cum a intrat obiectul în arhivă, de exemplu scris de mână",
+              "en": "How the object came into the archive, for instance typed in by hand"
             },
             {
               "id": "o2",
               "correct": false,
-              "ro": "Cine a modificat ultima dată înregistrarea",
-              "en": "Who last changed the record"
+              "ro": "Cine a modificat ultima dată obiectul",
+              "en": "Who last changed the object"
             },
             {
               "id": "o3",
@@ -391,8 +391,8 @@
             {
               "id": "o4",
               "correct": false,
-              "ro": "Cât de importantă este înregistrarea pentru firmă",
-              "en": "How important the record is for the business"
+              "ro": "Cât de important este obiectul pentru firmă",
+              "en": "How important the object is for the business"
             }
           ]
         },
@@ -401,11 +401,11 @@
           "section": "reports-search-results",
           "ro": {
             "question": "Ce arată coloana „Tip” din tabelul de rezultate?",
-            "explanation": "„Tip” spune „Persoană”, „Proprietate” sau „Document”, adică ce fel de înregistrare este rezultatul."
+            "explanation": "„Tip” spune „Persoană”, „Proprietate” sau „Document”, adică ce fel de obiect este rezultatul."
           },
           "en": {
             "question": "What does the „Tip” (type) column of the results table show?",
-            "explanation": "„Tip” says „Persoană”, „Proprietate” or „Document”, that is, what kind of record the result is."
+            "explanation": "„Tip” says „Persoană”, „Proprietate” or „Document”, that is, what kind of object the result is."
           },
           "options": [
             {
@@ -439,11 +439,11 @@
           "section": "reports-search-results",
           "ro": {
             "question": "După „Caută” apare „Nicio entitate nu corespunde filtrelor selectate.”. Ce înseamnă?",
-            "explanation": "Nicio înregistrare nu îndeplinește toate filtrele puse, pentru că filtrele se aplică împreună; scoateți sau schimbați un filtru și căutați din nou."
+            "explanation": "Niciun obiect nu îndeplinește toate filtrele puse, pentru că filtrele se aplică împreună; scoateți sau schimbați un filtru și căutați din nou."
           },
           "en": {
             "question": "After „Caută”, „Nicio entitate nu corespunde filtrelor selectate.” appears. What does it mean?",
-            "explanation": "No record meets every filter you set, because the filters apply together; remove or change a filter and search again."
+            "explanation": "No object meets every filter you set, because the filters apply together; remove or change a filter and search again."
           },
           "options": [
             {
@@ -467,8 +467,8 @@
             {
               "id": "o4",
               "correct": true,
-              "ro": "Nicio înregistrare nu îndeplinește toate filtrele puse",
-              "en": "No record meets every filter you set"
+              "ro": "Niciun obiect nu îndeplinește toate filtrele puse",
+              "en": "No object meets every filter you set"
             }
           ]
         }

@@ -129,12 +129,12 @@
           "id": "a4",
           "section": "start-recent",
           "ro": {
-            "question": "Vreți să redeschideți o înregistrare pe care ați văzut-o mai devreme. Unde sunt ultimele înregistrări deschise de dumneavoastră?",
-            "explanation": "„Recente”, jos în bara laterală, ține ultimele înregistrări pe care le-ați deschis; un clic pe una o redeschide."
+            "question": "Vreți să redeschideți un obiect pe care l-ați văzut mai devreme. Unde sunt ultimele obiecte deschise de dumneavoastră?",
+            "explanation": "„Recente”, jos în bara laterală, ține ultimele obiecte pe care le-ați deschis; un clic pe unul îl redeschide."
           },
           "en": {
-            "question": "You want to reopen a record you saw earlier. Where are the records you opened last?",
-            "explanation": "„Recente”, at the bottom of the sidebar, holds the records you opened last; a click on one opens it again."
+            "question": "You want to reopen an object you saw earlier. Where are the objects you opened last?",
+            "explanation": "„Recente”, at the bottom of the sidebar, holds the objects you opened last; a click on one opens it again."
           },
           "options": [
             {
@@ -389,11 +389,11 @@
           "section": "intro-purpose",
           "ro": {
             "question": "Ce găsiți pe „Tablou de bord”?",
-            "explanation": "Tabloul de bord arată ce s-a adăugat în ultimele șapte zile, înregistrările ale căror metadate nu au mai fost actualizate de mult, actele care expiră în curând și ce s-a lucrat recent."
+            "explanation": "Tabloul de bord arată ce s-a adăugat în ultimele șapte zile, obiectele ale căror metadate nu au mai fost actualizate de mult, actele care expiră în curând și ce s-a lucrat recent."
           },
           "en": {
             "question": "What do you find on „Tablou de bord” (the dashboard)?",
-            "explanation": "The dashboard shows what was added in the last seven days, the records whose metadata has not been updated for a long time, the documents that expire soon and what was worked on recently."
+            "explanation": "The dashboard shows what was added in the last seven days, the objects whose metadata has not been updated for a long time, the documents that expire soon and what was worked on recently."
           },
           "options": [
             {
@@ -421,24 +421,24 @@
           "section": "start-recent",
           "ro": {
             "question": "Ce se întâmplă când faceți clic pe „Recente”, jos în bara laterală?",
-            "explanation": "Un clic pe „Recente” deschide sau strânge lista ultimelor înregistrări deschise, iar un clic pe o înregistrare din ea o redeschide."
+            "explanation": "Un clic pe „Recente” deschide sau strânge lista ultimelor obiecte deschise, iar un clic pe un obiect din ea îl redeschide."
           },
           "en": {
             "question": "What happens when you click „Recente” (recent), at the bottom of the sidebar?",
-            "explanation": "A click on „Recente” opens or folds the list of the records you opened last, and a click on a record in it opens that record again."
+            "explanation": "A click on „Recente” opens or folds the list of the objects you opened last, and a click on an object in it opens that object again."
           },
           "options": [
             {
               "id": "o1",
               "correct": true,
-              "ro": "Se deschide sau se strânge lista ultimelor înregistrări deschise",
-              "en": "The list of the records you opened last opens or folds"
+              "ro": "Se deschide sau se strânge lista ultimelor obiecte deschise",
+              "en": "The list of the objects you opened last opens or folds"
             },
             {
               "id": "o2",
               "correct": false,
-              "ro": "Se redeschide direct ultima înregistrare pe care ați văzut-o",
-              "en": "The last record you saw opens again straight away"
+              "ro": "Se redeschide direct ultimul obiect pe care l-ați văzut",
+              "en": "The last object you saw opens again straight away"
             },
             {
               "id": "o3",
@@ -449,8 +449,8 @@
             {
               "id": "o4",
               "correct": false,
-              "ro": "Se arată înregistrările schimbate azi de toți utilizatorii arhivei",
-              "en": "The records changed today by all the archive's users are shown"
+              "ro": "Se arată obiectele schimbate azi de toți utilizatorii arhivei",
+              "en": "The objects changed today by all the archive's users are shown"
             }
           ]
         }

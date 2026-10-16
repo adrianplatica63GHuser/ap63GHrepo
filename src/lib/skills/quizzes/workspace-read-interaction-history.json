@@ -53,11 +53,11 @@
           "section": "reports-interactions-history",
           "ro": {
             "question": "Pe ecranul „Interacțiuni”, apăsați numele lui Andrei Munteanu dintr-un rând. Ce se deschide?",
-            "explanation": "Numele persoanei dintr-un rând este o legătură: deschide ecranul persoanei, cu formularul de înregistrare deja deschis pe o interacțiune nouă."
+            "explanation": "Numele persoanei dintr-un rând este o legătură: deschide ecranul persoanei, cu formularul deja deschis pe o interacțiune nouă."
           },
           "en": {
             "question": "On the „Interacțiuni” screen, you press Andrei Munteanu's name in a row. What opens?",
-            "explanation": "The person's name in a row is a link: it opens the person's screen, with the recording form already open on a new interaction."
+            "explanation": "The person's name in a row is a link: it opens the person's screen, with the form already open on a new interaction."
           },
           "options": [
             {

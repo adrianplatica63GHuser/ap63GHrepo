@@ -84,8 +84,8 @@ export const SKILL_PATHS: readonly SkillPath[] = [
     key: "links",
     name: { ro: "Legături și istoric", en: "Links and history" },
     description: {
-      ro: "Legăturile dintre înregistrări, clasificarea și conexiunile lor, versiunile și istoricul.",
-      en: "The links between records, their classification and connections, versions and history.",
+      ro: "Legăturile dintre obiecte, clasificarea și conexiunile lor, versiunile și istoricul.",
+      en: "The links between objects, their classification and connections, versions and history.",
     },
   },
   {
@@ -160,7 +160,7 @@ export const SKILLS: readonly Skill[] = [
     number: "1.2",
     level: 1,
     path: "workspace",
-    name: { ro: "Găsește o înregistrare într-o listă", en: "Find a record in a list" },
+    name: { ro: "Găsește un obiect într-o listă", en: "Find an object in a list" },
     description: {
       ro: "Cauți în lista persoanelor, a proprietăților sau a actelor, treci de la o pagină la alta, alegi coloanele din „Câmpuri afișate” și selectezi rânduri.",
       en: "Search the list of persons, properties or documents, page through it, choose its columns in „Câmpuri afișate” and select rows.",
@@ -176,8 +176,8 @@ export const SKILLS: readonly Skill[] = [
     level: 1,
     path: "workspace",
     name: {
-      ro: "Citește ecranul unei înregistrări: fișele și bara de butoane",
-      en: "Read a record's screen: its tiles and its button bar",
+      ro: "Citește ecranul unui obiect: fișele și bara de butoane",
+      en: "Read an object's screen: its tiles and its button bar",
     },
     description: {
       ro: "Recunoști fișele unei persoane, ale unei proprietăți sau ale unui act, le alegi cu bifele, găsești ID-ul de sistem, citești numele butoanelor cu pictogramă și folosești creionul, salvarea și coșul.",
@@ -336,10 +336,10 @@ export const SKILLS: readonly Skill[] = [
     number: "1.12",
     level: 1,
     path: "links",
-    name: { ro: "Asociază două înregistrări", en: "Link two records" },
+    name: { ro: "Asociază două obiecte", en: "Link two objects" },
     description: {
-      ro: "De pe o înregistrare deschizi ecranul de asociere, cauți, alegi din „Rezultate” și asociezi; mai târziu dezasociezi.",
-      en: "From a record, open the association screen, search, pick from „Rezultate” and link; later, unlink.",
+      ro: "De pe un obiect deschizi ecranul de asociere, cauți, alegi din „Rezultate” și asociezi; mai târziu dezasociezi.",
+      en: "From an object, open the association screen, search, pick from „Rezultate” and link; later, unlink.",
     },
     predecessors: [],
     screens: ["associate-person", "associate-document", "associate-property"],
@@ -353,8 +353,8 @@ export const SKILLS: readonly Skill[] = [
     path: "links",
     name: { ro: "Citește fișa „Legături”", en: "Read the „Legături” tile" },
     description: {
-      ro: "Vezi într-o singură fișă persoanele, proprietățile și actele legate de o înregistrare și citești relația fiecăreia.",
-      en: "See in one tile the persons, properties and documents linked to a record, and read each one's relation.",
+      ro: "Vezi într-o singură fișă persoanele, proprietățile și actele legate de un obiect și citești relația fiecăreia.",
+      en: "See in one tile the persons, properties and documents linked to an object, and read each one's relation.",
     },
     predecessors: [],
     screens: DETAIL_SCREENS,
@@ -366,7 +366,7 @@ export const SKILLS: readonly Skill[] = [
     number: "1.14",
     level: 1,
     path: "links",
-    name: { ro: "Citește istoricul versiunilor unei înregistrări", en: "Read a record's version history" },
+    name: { ro: "Citește istoricul versiunilor unui obiect", en: "Read an object's version history" },
     description: {
       ro: "Știi că fiecare salvare face o versiune nouă, vezi contorul de versiuni crescând și te miști înapoi și înainte printre versiuni.",
       en: "Know that every save makes a new version, watch the version counter rise, and step back and forth through the versions.",
@@ -572,7 +572,7 @@ export const SKILLS: readonly Skill[] = [
     number: "2.10",
     level: 2,
     path: "links",
-    name: { ro: "Întoarce o înregistrare la o versiune mai veche", en: "Return a record to an earlier version" },
+    name: { ro: "Întoarce un obiect la o versiune mai veche", en: "Return an object to an earlier version" },
     description: {
       ro: "Mergi înapoi la o versiune, o compari cu cea curentă și o faci din nou curentă cu „Fă curentă”, fără să pierzi celelalte versiuni.",
       en: "Go back to a version, compare it with the current one and make it current again with „Fă curentă”, without losing the other versions.",
@@ -587,10 +587,10 @@ export const SKILLS: readonly Skill[] = [
     number: "2.11",
     level: 2,
     path: "links",
-    name: { ro: "Clasifică o înregistrare și pune-i etichete", en: "Classify a record and tag it" },
+    name: { ro: "Clasifică un obiect și pune-i etichete", en: "Classify an object and tag it" },
     description: {
-      ro: "Alegi importanța, relevanța și proveniența în „Clasificare”, pui și scoți etichete în „Etichete și grupuri”, găsești înregistrările după o etichetă și, în norul etichetelor, redenumești și unești etichete.",
-      en: "Choose importance, relevance and provenance in „Clasificare”, add and remove tags in „Etichete și grupuri”, find records by a tag and, in the tag cloud, rename and merge tags.",
+      ro: "Alegi importanța, relevanța și proveniența în „Clasificare”, pui și scoți etichete în „Etichete și grupuri”, găsești obiectele după o etichetă și, în norul etichetelor, redenumești și unești etichete.",
+      en: "Choose importance, relevance and provenance in „Clasificare”, add and remove tags in „Etichete și grupuri”, find objects by a tag and, in the tag cloud, rename and merge tags.",
     },
     predecessors: ["workspace-read-a-record-screen", "links-read-related-tile"],
     screens: ["admin-tags"],
@@ -629,8 +629,8 @@ export const SKILLS: readonly Skill[] = [
     path: "workspace",
     name: { ro: "Așază fișele și previzualizează alături", en: "Arrange the tiles and preview side by side" },
     description: {
-      ro: "Tragi o fișă într-un loc liber, o urci cu dublu-clic, deschizi o înregistrare legată ca previzualizare lângă cea pe care lucrezi și, dintr-o listă, lângă tabel.",
-      en: "Drag a tile into a free place, raise it with a double-click, open a linked record as a preview beside the one you are working on and, from a list, beside the table.",
+      ro: "Tragi o fișă într-un loc liber, o urci cu dublu-clic, deschizi un obiect legat ca previzualizare lângă cel pe care lucrezi și, dintr-o listă, lângă tabel.",
+      en: "Drag a tile into a free place, raise it with a double-click, open a linked object as a preview beside the one you are working on and, from a list, beside the table.",
     },
     predecessors: ["workspace-sign-in-and-navigate", "workspace-find-in-a-list", "workspace-read-a-record-screen"],
     screens: DETAIL_SCREENS,
@@ -669,7 +669,7 @@ export const SKILLS: readonly Skill[] = [
     number: "2.15",
     level: 2,
     path: "links",
-    name: { ro: "Strânge înregistrări în grupuri și aplică-le ștampile", en: "Gather records into groups and stamp them" },
+    name: { ro: "Strânge obiecte în grupuri și aplică-le ștampile", en: "Gather objects into groups and stamp them" },
     description: {
       ro: "Faci un grup de proprietăți, vezi câți membri are și de ce o proprietate intră în cel mult trei grupuri, creezi o ștampilă și o aplici unei persoane, apoi le regăsești din ambele capete.",
       en: "Make a group of properties, see how many members it has and why a property joins at most three groups, create a stamp and apply it to a person, then find both again from either end.",
@@ -810,8 +810,8 @@ export const SKILLS: readonly Skill[] = [
     path: "links",
     name: { ro: "Lucrează în siguranță în două ferestre", en: "Work safely in two windows" },
     description: {
-      ro: "Deschizi aceeași înregistrare în două ferestre, vezi cum cealaltă urmează și înțelegi de ce o salvare învechită este refuzată în loc să șteargă munca altcuiva.",
-      en: "Open the same record in two windows, watch the other one follow, and understand why a stale save is refused rather than wiping out someone else's work.",
+      ro: "Deschizi același obiect în două ferestre, vezi cum cealaltă urmează și înțelegi de ce o salvare învechită este refuzată în loc să șteargă munca altcuiva.",
+      en: "Open the same object in two windows, watch the other one follow, and understand why a stale save is refused rather than wiping out someone else's work.",
     },
     predecessors: ["links-restore-a-version", "workspace-arrange-tiles"],
     screens: DETAIL_SCREENS,
@@ -984,8 +984,8 @@ export const SKILLS: readonly Skill[] = [
     level: 4,
     path: "links",
     name: {
-      ro: "Verifică istoria unei înregistrări și repară o greșeală fără să pierzi nimic",
-      en: "Audit a record's history and repair a mistake without losing anything",
+      ro: "Verifică istoria unui obiect și repară o greșeală fără să pierzi nimic",
+      en: "Audit an object's history and repair a mistake without losing anything",
     },
     description: {
       ro: "Afli din versiuni ce s-a schimbat și când, găsești legătura sau valoarea greșită, o repari și știi că versiunea veche rămâne în istoric.",

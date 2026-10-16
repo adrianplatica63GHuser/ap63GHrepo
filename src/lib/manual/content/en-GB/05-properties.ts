@@ -86,7 +86,7 @@ You choose the type in „Property Type”. When you choose another type, the he
 
 ### 5.3.1 A property's tiles {#properties-type-tiles}
 
-The ticks at the top of the screen („Parts shown”) choose the tiles, as on any record (section [[start-tiles]]):
+The ticks at the top of the screen („Parts shown”) choose the tiles, as on any object (section [[start-tiles]]):
 
 | The tile | What it shows |
 |---|---|

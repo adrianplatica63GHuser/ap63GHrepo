@@ -244,11 +244,11 @@
           "section": "links-associate-screen",
           "ro": {
             "question": "Ați plecat de pe ecranul unei firme, ați bifat o persoană în „Rezultate” și ați apăsat „Asociază selecția”. Unde ajungeți?",
-            "explanation": "„Asociază selecția” vă întoarce pe înregistrarea de la care ați plecat, cu legătura nouă în „Legături”."
+            "explanation": "„Asociază selecția” vă întoarce pe obiectul de la care ați plecat, cu legătura nouă în „Legături”."
           },
           "en": {
             "question": "You started from a firm's screen, ticked a person in „Rezultate” and pressed „Asociază selecția”. Where do you end up?",
-            "explanation": "„Asociază selecția” takes you back to the record you started from, with the new link in „Legături”."
+            "explanation": "„Asociază selecția” takes you back to the object you started from, with the new link in „Legături”."
           },
           "options": [
             {
@@ -553,11 +553,11 @@
           "section": "links-related",
           "ro": {
             "question": "Pe ecranul unei persoane, în „Legături”, stă un contract de care a fost legată. Ce aflați apăsând „Relația” pe rândul contractului?",
-            "explanation": "„Relația” arată, într-o bulă, ce leagă cele două înregistrări: aici, rolul persoanei în act, de pildă Rol: „Vânzător”."
+            "explanation": "„Relația” arată, într-o bulă, ce leagă cele două obiecte: aici, rolul persoanei în act, de pildă Rol: „Vânzător”."
           },
           "en": {
             "question": "On a person's screen, in „Legături”, stands a contract they were linked to. What do you learn by pressing „Relația” on the contract's row?",
-            "explanation": "„Relația” shows, in a bubble, what links the two records: here, the person's role in the document, for instance Rol: „Vânzător”."
+            "explanation": "„Relația” shows, in a bubble, what links the two objects: here, the person's role in the document, for instance Rol: „Vânzător”."
           },
           "options": [
             {

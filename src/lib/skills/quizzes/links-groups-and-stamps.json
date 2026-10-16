@@ -54,11 +54,11 @@
           "section": "links-classify-groups",
           "ro": {
             "question": "Un teren din Măgurele este deja în trei grupuri, iar acum trebuie pus și în grupul evaluării de primăvară. Ce faceți?",
-            "explanation": "O înregistrare poate face parte din cel mult trei grupuri; ecranul spune: „Scoateți-l dintr-un grup pentru a-l adăuga în altul.”"
+            "explanation": "Un obiect poate face parte din cel mult trei grupuri; ecranul spune: „Scoateți-l dintr-un grup pentru a-l adăuga în altul.”"
           },
           "en": {
             "question": "A plot in Măgurele is already in three groups, and now it must also go into the spring valuation group. What do you do?",
-            "explanation": "A record can belong to at most three groups; the screen says: „Scoateți-l dintr-un grup pentru a-l adăuga în altul.” (take it out of one group to add it to another)."
+            "explanation": "An object can belong to at most three groups; the screen says: „Scoateți-l dintr-un grup pentru a-l adăuga în altul.” (take it out of one group to add it to another)."
           },
           "options": [
             {
@@ -86,11 +86,11 @@
           "section": "links-classify-stamps",
           "ro": {
             "question": "Ciprian vrea să marcheze, pentru totdeauna, terenurile și actele care țin de o zonă protejată, o însușire care nu se schimbă. Ce folosește?",
-            "explanation": "O ștampilă marchează o însușire de durată, pe înregistrări de orice fel; un grup strânge înregistrări de un singur fel, pentru o treabă de scurtă durată."
+            "explanation": "O ștampilă marchează o însușire de durată, pe obiecte de orice fel; un grup strânge obiecte de un singur fel, pentru o treabă de scurtă durată."
           },
           "en": {
             "question": "Ciprian wants to mark, for good, the plots and documents that belong to a protected area, a characteristic that does not change. What does he use?",
-            "explanation": "A stamp marks a lasting characteristic, on records of any kind; a group gathers records of one kind, for a short-lived task."
+            "explanation": "A stamp marks a lasting characteristic, on objects of any kind; a group gathers objects of one kind, for a short-lived task."
           },
           "options": [
             {
@@ -124,11 +124,11 @@
           "section": "admin-groups-stamps",
           "ro": {
             "question": "Pe „Aplică ștampila: …” ați ștampilat trei persoane. Aceeași ștampilă trebuie pusă și pe două acte. Ce faceți?",
-            "explanation": "O ștampilă poate sta pe înregistrări de feluri diferite: schimbați „Tip element” și continuați; „Salvează ștampilele” scrie schimbările."
+            "explanation": "O ștampilă poate sta pe obiecte de feluri diferite: schimbați „Tip element” și continuați; „Salvează ștampilele” scrie schimbările."
           },
           "en": {
             "question": "On „Aplică ștampila: …” (apply the stamp) you have stamped three persons. The same stamp must also go on two documents. What do you do?",
-            "explanation": "A stamp can stand on records of different kinds: change „Tip element” (item type) and carry on; „Salvează ștampilele” (save the stamps) writes the changes."
+            "explanation": "A stamp can stand on objects of different kinds: change „Tip element” (item type) and carry on; „Salvează ștampilele” (save the stamps) writes the changes."
           },
           "options": [
             {
@@ -146,8 +146,8 @@
             {
               "id": "o3",
               "correct": false,
-              "ro": "Nu se poate: o ștampilă stă pe un singur fel de înregistrări",
-              "en": "It cannot be done: a stamp stands on one kind of record only"
+              "ro": "Nu se poate: o ștampilă stă pe un singur fel de obiecte",
+              "en": "It cannot be done: a stamp stands on one kind of object only"
             },
             {
               "id": "o4",
@@ -200,11 +200,11 @@
           "section": "admin-groups-groups",
           "ro": {
             "question": "Evaluarea s-a încheiat și ștergeți grupul GRP-002, care strângea șase terenuri. Ce se întâmplă cu terenurile?",
-            "explanation": "„Șterge” întreabă „Ștergeți acest grup? Această acțiune nu poate fi anulată.”, iar înregistrările din grup rămân în arhivă."
+            "explanation": "„Șterge” întreabă „Ștergeți acest grup? Această acțiune nu poate fi anulată.”, iar obiectele din grup rămân în arhivă."
           },
           "en": {
             "question": "The valuation is over and you delete group GRP-002, which gathered six plots. What happens to the plots?",
-            "explanation": "„Șterge” (delete) asks „Ștergeți acest grup? Această acțiune nu poate fi anulată.” (delete this group? this cannot be undone), and the records in the group stay in the archive."
+            "explanation": "„Șterge” (delete) asks „Ștergeți acest grup? Această acțiune nu poate fi anulată.” (delete this group? this cannot be undone), and the objects in the group stay in the archive."
           },
           "options": [
             {
@@ -270,11 +270,11 @@
           "section": "admin-groups-stamps",
           "ro": {
             "question": "Ștergeți, din „Administrare” → „Ștampile”, o ștampilă pusă pe mai multe persoane. Ce găsiți apoi pe acele persoane, la „Ștampile”?",
-            "explanation": "„Șterge” întreabă „Ștergeți această ștampilă și o eliminați de pe toate elementele?”: ștampila dispare și de pe înregistrări, iar înregistrările rămân."
+            "explanation": "„Șterge” întreabă „Ștergeți această ștampilă și o eliminați de pe toate elementele?”: ștampila dispare și de pe obiecte, iar obiectele rămân."
           },
           "en": {
             "question": "You delete, from „Administrare” → „Ștampile”, a stamp put on several persons. What do you then find on those persons, under „Ștampile” (stamps)?",
-            "explanation": "„Șterge” asks „Ștergeți această ștampilă și o eliminați de pe toate elementele?” (delete this stamp and remove it from every item?): the stamp disappears from the records too, and the records stay."
+            "explanation": "„Șterge” asks „Ștergeți această ștampilă și o eliminați de pe toate elementele?” (delete this stamp and remove it from every item?): the stamp disappears from the objects too, and the objects stay."
           },
           "options": [
             {
@@ -292,8 +292,8 @@
             {
               "id": "o3",
               "correct": true,
-              "ro": "Nimic: ștampila a dispărut de pe toate înregistrările",
-              "en": "Nothing: the stamp has gone from every record"
+              "ro": "Nimic: ștampila a dispărut de pe toate obiectele",
+              "en": "Nothing: the stamp has gone from every object"
             }
           ]
         }
@@ -307,11 +307,11 @@
           "section": "links-classify-groups",
           "ro": {
             "question": "Pentru o evaluare de o lună, Ciprian vrea să strângă câteva terenuri și actele lor. Ce face?",
-            "explanation": "Un grup strânge, pentru o treabă de scurtă durată, înregistrări de un singur fel, ales la „Țintă”; ștampila este pentru o însușire de durată."
+            "explanation": "Un grup strânge, pentru o treabă de scurtă durată, obiecte de un singur fel, ales la „Țintă”; ștampila este pentru o însușire de durată."
           },
           "en": {
             "question": "For a month-long valuation, Ciprian wants to gather a few plots and their documents. What does he do?",
-            "explanation": "A group gathers, for a short-lived task, records of one kind, chosen in „Țintă”; a stamp is for a lasting characteristic."
+            "explanation": "A group gathers, for a short-lived task, objects of one kind, chosen in „Țintă”; a stamp is for a lasting characteristic."
           },
           "options": [
             {
@@ -383,11 +383,11 @@
           "section": "links-classify-groups",
           "ro": {
             "question": "Sunteți pe ecranul unui teren și vreți să-l puneți în grupul GRP-003 fără să plecați de pe el. Ce apăsați?",
-            "explanation": "Pe o înregistrare, „Grupuri” din „Etichete și grupuri” arată grupurile ei, iar „+ Adaugă în grup” deschide lista grupurilor."
+            "explanation": "Pe un obiect, „Grupuri” din „Etichete și grupuri” arată grupurile lui, iar „+ Adaugă în grup” deschide lista grupurilor."
           },
           "en": {
             "question": "You are on a plot's screen and want to put it into group GRP-003 without leaving it. What do you press?",
-            "explanation": "On a record, „Grupuri” in „Etichete și grupuri” shows its groups, and „+ Adaugă în grup” opens the list of groups."
+            "explanation": "On an object, „Grupuri” in „Etichete și grupuri” shows its groups, and „+ Adaugă în grup” opens the list of groups."
           },
           "options": [
             {
@@ -420,11 +420,11 @@
           "id": "b4",
           "section": "admin-groups-stamps",
           "ro": {
-            "question": "Ieri ați ștampilat trei persoane pe „Aplică ștampila: …”. Azi, în lista ștampilelor, rândul ștampilei arată că n-o poartă nicio înregistrare. Ce s-a întâmplat, cel mai probabil?",
+            "question": "Ieri ați ștampilat trei persoane pe „Aplică ștampila: …”. Azi, în lista ștampilelor, rândul ștampilei arată că n-o poartă niciun obiect. Ce s-a întâmplat, cel mai probabil?",
             "explanation": "După „Aplică ștampila”, ecranul arată „Modificări nesalvate”; abia „Salvează ștampilele”, butonul cu discheta, scrie schimbările."
           },
           "en": {
-            "question": "Yesterday you stamped three persons on „Aplică ștampila: …”. Today, in the list of stamps, the stamp's row shows that no record carries it. What most likely happened?",
+            "question": "Yesterday you stamped three persons on „Aplică ștampila: …”. Today, in the list of stamps, the stamp's row shows that no object carries it. What most likely happened?",
             "explanation": "After „Aplică ștampila”, the screen shows „Modificări nesalvate”; only „Salvează ștampilele”, the button with the floppy disk, writes the changes."
           },
           "options": [
@@ -459,11 +459,11 @@
           "section": "reports-search-filters",
           "ro": {
             "question": "Vreți să vedeți membrii grupului GRP-001 în „Căutare globală”. Unde scrieți codul grupului?",
-            "explanation": "„Cod grup”, „Cod ștampilă” și „Etichetă” caută după ce stă în fișa „Etichete și grupuri”; membrii unui grup îi găsiți după „Cod grup”. „Căutare nume / cod” caută în numele și codul înregistrării."
+            "explanation": "„Cod grup”, „Cod ștampilă” și „Etichetă” caută după ce stă în fișa „Etichete și grupuri”; membrii unui grup îi găsiți după „Cod grup”. „Căutare nume / cod” caută în numele și codul obiectului."
           },
           "en": {
             "question": "You want to see the members of group GRP-001 in „Căutare globală”. Where do you type the group's code?",
-            "explanation": "„Cod grup”, „Cod ștampilă” and „Etichetă” search by what is in the „Etichete și grupuri” tile; you find a group's members by „Cod grup” (group code). „Căutare nume / cod” searches the record's own name and code."
+            "explanation": "„Cod grup”, „Cod ștampilă” and „Etichetă” search by what is in the „Etichete și grupuri” tile; you find a group's members by „Cod grup” (group code). „Căutare nume / cod” searches the object's own name and code."
           },
           "options": [
             {
@@ -497,11 +497,11 @@
           "section": "links-classify-stamps",
           "ro": {
             "question": "Ștampila STMP-AAC a fost pusă din greșeală pe o persoană; pe celelalte este bine pusă. Ce faceți?",
-            "explanation": "Pe înregistrare, la „Ștampile”, „×” scoate ștampila; „Șterge” din lista ștampilelor ar scoate-o de pe toate înregistrările."
+            "explanation": "Pe obiect, la „Ștampile”, „×” scoate ștampila; „Șterge” din lista ștampilelor ar scoate-o de pe toate obiectele."
           },
           "en": {
             "question": "Stamp STMP-AAC was put on one person by mistake; on the others it is right. What do you do?",
-            "explanation": "On the record, under „Ștampile”, the „×” takes the stamp off; „Șterge” in the list of stamps would take it off every record."
+            "explanation": "On the object, under „Ștampile”, the „×” takes the stamp off; „Șterge” in the list of stamps would take it off every object."
           },
           "options": [
             {
@@ -573,18 +573,18 @@
           "section": "links-classify-stamps",
           "ro": {
             "question": "Ați pus ștampila STMP-AAD pe două persoane și pe un act și ați salvat. Ce număr arată lista ștampilelor pe rândul ei?",
-            "explanation": "Lista ștampilelor arată la fiecare câte înregistrări o poartă, iar o ștampilă poate sta pe înregistrări de feluri diferite."
+            "explanation": "Lista ștampilelor arată la fiecare câte obiecte o poartă, iar o ștampilă poate sta pe obiecte de feluri diferite."
           },
           "en": {
             "question": "You have put stamp STMP-AAD on two persons and one document and saved. What number does the list of stamps show on its row?",
-            "explanation": "The list of stamps shows, for each, how many records carry it, and a stamp can stand on records of different kinds."
+            "explanation": "The list of stamps shows, for each, how many objects carry it, and a stamp can stand on objects of different kinds."
           },
           "options": [
             {
               "id": "o1",
               "correct": true,
-              "ro": "3, câte înregistrări o poartă, de orice fel",
-              "en": "3, how many records carry it, of any kind"
+              "ro": "3, câte obiecte o poartă, de orice fel",
+              "en": "3, how many objects carry it, of any kind"
             },
             {
               "id": "o2",

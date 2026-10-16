@@ -16,11 +16,11 @@
           "section": "links-related",
           "ro": {
             "question": "Un client întreabă ce acte, proprietari și parcele țin de terenul lui din Bragadiru. De unde pornește Ciprian?",
-            "explanation": "Fișa „Legături” arată tot ce este legat de înregistrare, într-un singur loc: persoanele, proprietățile și actele."
+            "explanation": "Fișa „Legături” arată tot ce este legat de obiect, într-un singur loc: persoanele, proprietățile și actele."
           },
           "en": {
             "question": "A client asks which documents, owners and parcels belong to his plot in Bragadiru. Where does Ciprian start?",
-            "explanation": "The „Legături” (links) tile shows everything linked to the record, in one place: the persons, the properties and the documents."
+            "explanation": "The „Legături” (links) tile shows everything linked to the object, in one place: the persons, the properties and the documents."
           },
           "options": [
             {
@@ -92,11 +92,11 @@
           "section": "links-related",
           "ro": {
             "question": "Pe „Legături” al unui teren stă rândul „Mihai Stoica (Proprietar)”. Ciprian vrea să afle ce alte terenuri mai are Mihai. Ce face?",
-            "explanation": "„Vizualizare” deschide înregistrarea legată, iar fișa ei „Legături” arată ce este legat de ea; „Relația” arată doar ce leagă cele două înregistrări."
+            "explanation": "„Vizualizare” deschide obiectul legat, iar fișa lui „Legături” arată ce este legat de el; „Relația” arată doar ce leagă cele două obiecte."
           },
           "en": {
             "question": "On a plot's „Legături” there is the row „Mihai Stoica (Proprietar)”. Ciprian wants to find out which other plots Mihai has. What does he do?",
-            "explanation": "„Vizualizare” (view) opens the linked record, and its own „Legături” tile shows what is linked to it; „Relația” (the relationship) shows only what links the two records."
+            "explanation": "„Vizualizare” (view) opens the linked object, and its own „Legături” tile shows what is linked to it; „Relația” (the relationship) shows only what links the two objects."
           },
           "options": [
             {
@@ -427,11 +427,11 @@
           "section": "links-references-documents",
           "ro": {
             "question": "Elena Dumitrescu a cumpărat un teren, iar contractul ei este legat de certificatul din care vine dreptul vânzătorului. Pornind de la Elena, cum ajunge Ciprian la certificat?",
-            "explanation": "Fiecare „Legături” arată ce este legat de înregistrarea aceea: contractul e legat de Elena, iar certificatul de contract, unde aceeași legătură se citește din celălalt capăt."
+            "explanation": "Fiecare „Legături” arată ce este legat de obiectul acela: contractul e legat de Elena, iar certificatul de contract, unde aceeași legătură se citește din celălalt capăt."
           },
           "en": {
             "question": "Elena Dumitrescu bought a plot, and her contract is linked to the certificate the seller's right comes from. Starting from Elena, how does Ciprian reach the certificate?",
-            "explanation": "Each „Legături” shows what is linked to that record: the contract is linked to Elena, and the certificate to the contract, where the same link is read from the other end."
+            "explanation": "Each „Legături” shows what is linked to that object: the contract is linked to Elena, and the certificate to the contract, where the same link is read from the other end."
           },
           "options": [
             {
@@ -503,11 +503,11 @@
           "section": "links-related",
           "ro": {
             "question": "Pe „Legături” al unui teren mare apar trei parcele. Ciprian vrea să știe care sunt incluse în el și care doar îl ating. Ce face?",
-            "explanation": "„Relația” arată, într-o bulă, ce leagă cele două înregistrări, inclusiv propoziția unei legături cu sens, de exemplu „Inclus în”."
+            "explanation": "„Relația” arată, într-o bulă, ce leagă cele două obiecte, inclusiv propoziția unei legături cu sens, de exemplu „Inclus în”."
           },
           "en": {
             "question": "On a large plot's „Legături” three parcels appear. Ciprian wants to know which are included in it and which only touch it. What does he do?",
-            "explanation": "„Relația” shows, in a bubble, what links the two records, including the sentence of a link with a direction, for instance „Inclus în”."
+            "explanation": "„Relația” shows, in a bubble, what links the two objects, including the sentence of a link with a direction, for instance „Inclus în”."
           },
           "options": [
             {
@@ -653,8 +653,8 @@
             {
               "id": "o1",
               "correct": false,
-              "ro": "De la „Recente”, unde stau toate înregistrările cu acel nume",
-              "en": "From „Recente”, which holds every record with that name"
+              "ro": "De la „Recente”, unde stau toate obiectele cu acel nume",
+              "en": "From „Recente”, which holds every object with that name"
             },
             {
               "id": "o2",
@@ -719,11 +719,11 @@
           "section": "start-preview",
           "ro": {
             "question": "Ciprian completează un contract și nu l-a salvat încă. Vrea să verifice datele terenului legat, fără să-și piardă ce a scris. Ce apasă pe rândul terenului?",
-            "explanation": "„Previzualizare” deschide înregistrarea legată alături, fără să plecați de pe ecran, iar o modificare nesalvată pe ecranul principal rămâne neatinsă."
+            "explanation": "„Previzualizare” deschide obiectul legat alături, fără să plecați de pe ecran, iar o modificare nesalvată pe ecranul principal rămâne neatinsă."
           },
           "en": {
             "question": "Ciprian is filling in a contract and has not saved it yet. He wants to check the linked plot's data without losing what he has typed. What does he press on the plot's row?",
-            "explanation": "„Previzualizare” (preview) opens the linked record alongside, without leaving the screen, and an unsaved change on the main screen stays untouched."
+            "explanation": "„Previzualizare” (preview) opens the linked object alongside, without leaving the screen, and an unsaved change on the main screen stays untouched."
           },
           "options": [
             {

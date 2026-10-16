@@ -14,12 +14,12 @@
           "id": "a1",
           "section": "intro-versions",
           "ro": {
-            "question": "Ce se întâmplă cu datele de dinainte când salvați o înregistrare?",
-            "explanation": "De fiecare dată când salvați o înregistrare, arhiva păstrează o versiune nouă a ei și o lasă neatinsă pe cea dinainte."
+            "question": "Ce se întâmplă cu datele de dinainte când salvați un obiect?",
+            "explanation": "De fiecare dată când salvați un obiect, arhiva păstrează o versiune nouă a lui și o lasă neatinsă pe cea dinainte."
           },
           "en": {
-            "question": "What happens to the earlier data when you save a record?",
-            "explanation": "Every time you save a record, the archive keeps a new version of it and leaves the previous one untouched."
+            "question": "What happens to the earlier data when you save an object?",
+            "explanation": "Every time you save an object, the archive keeps a new version of it and leaves the previous one untouched."
           },
           "options": [
             {
@@ -52,12 +52,12 @@
           "id": "a2",
           "section": "links-versions",
           "ro": {
-            "question": "Ce scrie în dreapta-sus pe o înregistrare abia creată?",
-            "explanation": "Versiunile se numără de la 0: o înregistrare abia creată arată „v 0” în dreapta-sus."
+            "question": "Ce scrie în dreapta-sus pe un obiect abia creat?",
+            "explanation": "Versiunile se numără de la 0: un obiect abia creat arată „v 0” în dreapta-sus."
           },
           "en": {
-            "question": "What does a record just created show at the top right?",
-            "explanation": "Versions are counted from 0: a record just created shows „v 0” at the top right."
+            "question": "What does an object just created show at the top right?",
+            "explanation": "Versions are counted from 0: an object just created shows „v 0” at the top right."
           },
           "options": [
             {
@@ -90,11 +90,11 @@
           "id": "a3",
           "section": "links-versions",
           "ro": {
-            "question": "Ați deschis o înregistrare și vreți să apăsați „Salvează” fără să fi schimbat nimic. Ce se întâmplă?",
+            "question": "Ați deschis un obiect și vreți să apăsați „Salvează” fără să fi schimbat nimic. Ce se întâmplă?",
             "explanation": "„Salvează” nu se poate apăsa până nu schimbați ceva, așa că o versiune nouă apare doar când s-a schimbat ceva."
           },
           "en": {
-            "question": "You have opened a record and want to press „Salvează” without having changed anything. What happens?",
+            "question": "You have opened an object and want to press „Salvează” without having changed anything. What happens?",
             "explanation": "„Salvează” cannot be pressed until you change something, so a new version appears only when something has changed."
           },
           "options": [
@@ -166,11 +166,11 @@
           "id": "a5",
           "section": "links-versions",
           "ro": {
-            "question": "Citiți o versiune veche a unei înregistrări. Ce puteți face cu câmpurile ei?",
+            "question": "Citiți o versiune veche a unui obiect. Ce puteți face cu câmpurile ei?",
             "explanation": "Pe o versiune veche câmpurile se pot doar citi, iar „Salvează” lipsește."
           },
           "en": {
-            "question": "You are reading an old version of a record. What can you do with its fields?",
+            "question": "You are reading an old version of an object. What can you do with its fields?",
             "explanation": "On an old version the fields can only be read, and „Salvează” is missing."
           },
           "options": [
@@ -204,11 +204,11 @@
           "id": "a6",
           "section": "links-versions",
           "ro": {
-            "question": "O înregistrare are versiunile 0, 1 și 2. Pe versiunea 0 apăsați „Fă curentă” și apoi „OK”. Ce se întâmplă?",
+            "question": "Un obiect are versiunile 0, 1 și 2. Pe versiunea 0 apăsați „Fă curentă” și apoi „OK”. Ce se întâmplă?",
             "explanation": "„Fă curentă” copiază versiunea pe care o citiți într-o versiune nouă, care devine cea curentă; versiunile dintre ele rămân în istoric."
           },
           "en": {
-            "question": "A record has versions 0, 1 and 2. On version 0 you press „Fă curentă” and then „OK”. What happens?",
+            "question": "An object has versions 0, 1 and 2. On version 0 you press „Fă curentă” and then „OK”. What happens?",
             "explanation": "„Fă curentă” copies the version you are reading into a new version, which becomes the current one; the versions in between stay in the history."
           },
           "options": [
@@ -248,24 +248,24 @@
           "section": "links-versions",
           "ro": {
             "question": "Ați schimbat o valoare și ați apăsat „Salvează”. Unde ajungeți?",
-            "explanation": "După salvare rămâneți pe înregistrare, iar salvarea a păstrat o versiune nouă."
+            "explanation": "După salvare rămâneți pe obiect, iar salvarea a păstrat o versiune nouă."
           },
           "en": {
             "question": "You changed a value and pressed „Salvează”. Where do you end up?",
-            "explanation": "After the save you stay on the record, and the save has kept a new version."
+            "explanation": "After the save you stay on the object, and the save has kept a new version."
           },
           "options": [
             {
               "id": "o1",
               "correct": false,
-              "ro": "Înapoi în lista de înregistrări",
-              "en": "Back in the list of records"
+              "ro": "Înapoi în lista de obiecte",
+              "en": "Back in the list of objects"
             },
             {
               "id": "o2",
               "correct": true,
-              "ro": "Rămâneți pe înregistrare",
-              "en": "You stay on the record"
+              "ro": "Rămâneți pe obiect",
+              "en": "You stay on the object"
             },
             {
               "id": "o3",
@@ -437,19 +437,19 @@
           "id": "b6",
           "section": "links-classify-classification",
           "ro": {
-            "question": "Care dintre acestea adaugă o versiune nouă a înregistrării?",
-            "explanation": "„Salvează”, pe linia lui „Istoric” din „Clasificare”, se apasă după ce schimbați o valoare, iar salvarea adaugă o versiune a înregistrării."
+            "question": "Care dintre acestea adaugă o versiune nouă a obiectului?",
+            "explanation": "„Salvează”, pe linia lui „Istoric” din „Clasificare”, se apasă după ce schimbați o valoare, iar salvarea adaugă o versiune a obiectului."
           },
           "en": {
-            "question": "Which of these adds a new version of the record?",
-            "explanation": "„Salvează”, on the line of „Istoric” in „Clasificare”, is pressed after you change a value, and the save adds a version of the record."
+            "question": "Which of these adds a new version of the object?",
+            "explanation": "„Salvează”, on the line of „Istoric” in „Clasificare”, is pressed after you change a value, and the save adds a version of the object."
           },
           "options": [
             {
               "id": "o1",
               "correct": false,
-              "ro": "Deschiderea înregistrării cu „Vizualizare”",
-              "en": "Opening the record with „Vizualizare”"
+              "ro": "Deschiderea obiectului cu „Vizualizare”",
+              "en": "Opening the object with „Vizualizare”"
             },
             {
               "id": "o2",

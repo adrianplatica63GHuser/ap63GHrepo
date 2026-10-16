@@ -5,7 +5,7 @@
 export const CHAPTER = `
 # 2 Getting started {#start}
 
-This chapter shows what you use everywhere in the application: signing in, the sidebar, the navigation bar, the lists, a record's tiles and the help. Once you know them, every other screen reads the same way.
+This chapter shows what you use everywhere in the application: signing in, the sidebar, the navigation bar, the lists, an object's tiles and the help. Once you know them, every other screen reads the same way.
 
 ## 2.1 Signing in {#start-sign-in}
 
@@ -46,33 +46,33 @@ At the right-hand end of the bar is „?”, the screen's help (section [[start-
 
 ## 2.4 „Recently viewed” {#start-recent}
 
-„Recently viewed”, at the bottom of the sidebar, holds the records you opened last. A click on „Recently viewed” opens or folds the list, and a click on a record in it opens that record again.
+„Recently viewed”, at the bottom of the sidebar, holds the objects you opened last. A click on „Recently viewed” opens or folds the list, and a click on an object in it opens that object again.
 
 ## 2.5 The lists and their columns {#start-lists}
 
-Each of the four lists — Natural Persons, Judicial Persons, Properties, Documents — shows 15 records a page, and the buttons under the table move from page to page. The search box at the top of the list searches by code, by name and, for persons, by e-mail or phone.
+Each of the four lists — Natural Persons, Judicial Persons, Properties, Documents — shows 15 objects a page, and the buttons under the table move from page to page. The search box at the top of the list searches by code, by name and, for persons, by e-mail or phone.
 
-„Choose fields” chooses the list's columns: tick what you want to see and untick what you do not need (Figure [[fig-list]]). „Open”, on a row, opens the record; „Add new …”, above the table, creates a new one.
+„Choose fields” chooses the list's columns: tick what you want to see and untick what you do not need (Figure [[fig-list]]). „Open”, on a row, opens the object; „Add new …”, above the table, creates a new one.
 
 The tick box at the head of the table selects the rows of the current page, not of the whole list.
 
 ![2.3 The list of natural persons, with „Choose fields” open](list.png){#fig-list}
 
-## 2.6 A record's screen: its tiles {#start-tiles}
+## 2.6 An object's screen: its tiles {#start-tiles}
 
-An open record shows its data in tiles — panels with a name each (Figure [[fig-record]]). A natural person has, for instance, their identity, „Links”, „Classification”, „Tags and groups” and „Interactions”.
+An open object shows its data in tiles — panels with a name each (Figure [[fig-record]]). A natural person has, for instance, their identity, „Links”, „Classification”, „Tags and groups” and „Interactions”.
 
 - The tick boxes at the top of the screen choose which tiles show; „All” shows them all, and „Default” returns to the usual set. Your own set is saved in „Settings”, under „My defaults”.
 - A tile is dragged by its empty space into a free place; a double-click raises it under the tile above.
 - The light purple tiles — the map, the corners, Street View, a document's pages — stay where they are.
-- The record's system ID sits in the top right-hand corner of the first tile.
+- The object's system ID sits in the top right-hand corner of the first tile.
 - The button bar, the last thing on the screen, holds the pencil (edit), the save and the bin (delete). An icon button shows its name when the mouse passes over it.
 
 ![2.4 A natural person's screen, with its tiles](record.png){#fig-record}
 
 ## 2.7 The preview {#start-preview}
 
-A linked record can be opened beside the one you are working on, with „Preview”, without leaving your screen — for instance the buyer, beside the sale contract. At most two previews open at a time, and an unsaved change on the main screen is left untouched. From a list, a row's preview opens beside the table.
+A linked object can be opened beside the one you are working on, with „Preview”, without leaving your screen — for instance the buyer, beside the sale contract. At most two previews open at a time, and an unsaved change on the main screen is left untouched. From a list, a row's preview opens beside the table.
 
 ## 2.8 The help behind „?” {#start-help}
 

@@ -32,7 +32,7 @@ O firmă adăugată de curând apare în capul listei, marcată „Nou!”.
 
 Pe lista firmelor, apăsați „Adaugă persoană juridică”. Se deschide direct formularul „Persoană juridică nouă”, fără altă întrebare. Completați ce aveți; restul se adaugă oricând, după ce firma este salvată.
 
-Singurul câmp obligatoriu este „Denumire”. O firmă care are doar denumirea este o înregistrare adevărată și se completează mai târziu. Când apăsați „Salvează”, jos, aplicația vă întoarce la listă, unde firma nouă stă sus, marcată „Nou!”. O deschideți cu „Deschide”.
+Singurul câmp obligatoriu este „Denumire”. O firmă care are doar denumirea este un obiect adevărat și se completează mai târziu. Când apăsați „Salvează”, jos, aplicația vă întoarce la listă, unde firma nouă stă sus, marcată „Nou!”. O deschideți cu „Deschide”.
 
 Ecranul unei firme deschise are în cap denumirea și versiunea („v 0” pentru o firmă abia creată), iar dedesubt fișele ei (Figura [[fig-companies-record]]):
 
@@ -46,7 +46,7 @@ Ecranul unei firme deschise are în cap denumirea și versiunea („v 0” pentr
 | Etichete și grupuri | Etichete, grupuri, ștampile, „vezi și” | nu |
 | Interacțiuni | Istoricul interacțiunilor cu această firmă | da |
 
-Fișele se aleg cu bife, ca pe orice înregistrare (secțiunea [[start-tiles]]). Alegerea făcută pe o firmă este a firmelor: nu schimbă fișele pe care le vedeți la persoanele fizice. Spre deosebire de o proprietate, firma nu are o fișă „Persoane”: oamenii firmei se văd în „Reprezentanți și contact” și în „Legături” (secțiunea [[companies-people]]).
+Fișele se aleg cu bife, ca pe orice obiect (secțiunea [[start-tiles]]). Alegerea făcută pe o firmă este a firmelor: nu schimbă fișele pe care le vedeți la persoanele fizice. Spre deosebire de o proprietate, firma nu are o fișă „Persoane”: oamenii firmei se văd în „Reprezentanți și contact” și în „Legături” (secțiunea [[companies-people]]).
 
 ![4.1 Ecranul unei persoane juridice](companies-record.png){#fig-companies-record}
 
@@ -90,7 +90,7 @@ Câteva lucruri bune de știut:
 
 Apăsați „Șterge”, jos pe ecranul firmei, și răspundeți „Da” la întrebarea „Ștergeți persoana juridică?”. Ștergerea nu se poate anula.
 
-O firmă deschisă dintr-o altă înregistrare — de pe un act sau de pe o proprietate — nu se șterge de acolo. Aplicația vă spune să o dezasociați întâi de înregistrarea din care ați deschis-o, apoi să o deschideți din bara laterală și să o ștergeți de acolo.
+O firmă deschisă dintr-un alt obiect — de pe un act sau de pe o proprietate — nu se șterge de acolo. Aplicația vă spune să o dezasociați întâi de obiectul din care ați deschis-o, apoi să o deschideți din bara laterală și să o ștergeți de acolo.
 
 ## 4.3 Persoanele unei firme {#companies-people}
 

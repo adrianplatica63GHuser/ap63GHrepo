@@ -91,11 +91,11 @@
           "section": "start-preview",
           "ro": {
             "question": "Pe un contract de vânzare-cumpărare ați schimbat „Preț și plată” și nu ați salvat încă. Vreți să vedeți datele cumpărătorului fără să plecați de pe contract. Ce faceți?",
-            "explanation": "Cu „Previzualizare”, înregistrarea legată se deschide alături, fără să plecați de pe ecran, iar o modificare nesalvată pe ecranul principal rămâne neatinsă."
+            "explanation": "Cu „Previzualizare”, obiectul legat se deschide alături, fără să plecați de pe ecran, iar o modificare nesalvată pe ecranul principal rămâne neatinsă."
           },
           "en": {
             "question": "On a sale contract you changed „Preț și plată” (price and payment) and have not saved yet. You want to see the buyer's details without leaving the contract. What do you do?",
-            "explanation": "With „Previzualizare”, the linked record opens beside the one you are on, without leaving your screen, and an unsaved change on the main screen is left untouched."
+            "explanation": "With „Previzualizare”, the linked object opens beside the one you are on, without leaving your screen, and an unsaved change on the main screen is left untouched."
           },
           "options": [
             {
@@ -281,11 +281,11 @@
           "section": "links-related",
           "ro": {
             "question": "Pe ecranul unei persoane fizice nu vedeți fișa „Legături”, dar vreți să previzualizați terenul de care este legată. Ce faceți?",
-            "explanation": "Dacă nu vedeți „Legături”, bifați-o printre fișele din capul ecranului; pe rândul unei înregistrări legate, „Previzualizare” o deschide alături."
+            "explanation": "Dacă nu vedeți „Legături”, bifați-o printre fișele din capul ecranului; pe rândul unui obiect legat, „Previzualizare” îl deschide alături."
           },
           "en": {
             "question": "On a natural person's screen you cannot see the „Legături” tile, but you want to preview the plot linked to them. What do you do?",
-            "explanation": "If you cannot see „Legături”, tick it among the tiles at the top of the screen; on a linked record's row, „Previzualizare” opens it beside the screen."
+            "explanation": "If you cannot see „Legături”, tick it among the tiles at the top of the screen; on a linked object's row, „Previzualizare” opens it beside the screen."
           },
           "options": [
             {
@@ -324,11 +324,11 @@
           "section": "admin-settings-account",
           "ro": {
             "question": "În „Implicitele mele”, la „Proprietate”, Ciprian a bifat și „Street View”. Pe ecranul unui teren a debifat mai multe fișe, apoi apasă „Implicit”. Ce vede?",
-            "explanation": "În „Implicitele mele” bifați, pentru fiecare fel de înregistrare, fișele pe care vreți să le arate „Implicit” pe ecranul ei; „Implicit” revine deci la setul salvat, cu „Street View”."
+            "explanation": "În „Implicitele mele” bifați, pentru fiecare fel de obiect, fișele pe care vreți să le arate „Implicit” pe ecranul lui; „Implicit” revine deci la setul salvat, cu „Street View”."
           },
           "en": {
             "question": "In „Implicitele mele”, for „Proprietate”, Ciprian also ticked „Street View”. On a plot's screen he unticked several tiles, then presses „Implicit”. What does he see?",
-            "explanation": "In „Implicitele mele” you tick, for each kind of record, the tiles you want „Implicit” to show on its screen; „Implicit” therefore returns to the saved set, with „Street View”."
+            "explanation": "In „Implicitele mele” you tick, for each kind of object, the tiles you want „Implicit” to show on its screen; „Implicit” therefore returns to the saved set, with „Street View”."
           },
           "options": [
             {
@@ -552,11 +552,11 @@
           "section": "links-related",
           "ro": {
             "question": "Pe fișa „Legături” a unui teren vedeți proprietarul, Andrei Munteanu, și vreți să-i corectați numărul de telefon. Ce faceți?",
-            "explanation": "„Vizualizare” deschide înregistrarea legată numai pentru citire; „Modifică”, jos pe ecranul ei, o face modificabilă."
+            "explanation": "„Vizualizare” deschide obiectul legat numai pentru citire; „Modifică”, jos pe ecranul lui, îl face modificabil."
           },
           "en": {
             "question": "On a plot's „Legături” tile you see the owner, Andrei Munteanu, and you want to correct his telephone number. What do you do?",
-            "explanation": "„Vizualizare” opens the linked record read-only; „Modifică”, at the bottom of its screen, makes it editable."
+            "explanation": "„Vizualizare” opens the linked object read-only; „Modifică”, at the bottom of its screen, makes it editable."
           },
           "options": [
             {

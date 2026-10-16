@@ -152,9 +152,9 @@ Vreți să știți cât au împreună două terenuri alăturate, înainte de o o
 Pe hartă, un teren clipește în roz (secțiunea [[map-what-duplicates]]).
 
 1. Faceți dublu-clic pe teren, ca să-l deschideți, și uitați-vă la codul lui și la ce are în „Legături” (secțiunea [[map-what-bubble]]).
-2. Întoarceți-vă la hartă cu „Înapoi” (secțiunea [[start-breadcrumb]]) și deschideți-o și pe cealaltă înregistrare a aceluiași teren.
-3. Hotărâți care este cea bună și legați de ea ce îi lipsește (capitolul [[links]]).
-4. Ștergeți-o pe cealaltă de pe ecranul ei (secțiunea [[properties-add-edit]]).
+2. Întoarceți-vă la hartă cu „Înapoi” (secțiunea [[start-breadcrumb]]) și deschideți-l și pe celălalt obiect al aceluiași teren.
+3. Hotărâți care este cel bun și legați de el ce îi lipsește (capitolul [[links]]).
+4. Ștergeți-l pe celălalt de pe ecranul lui (secțiunea [[properties-add-edit]]).
 
 ### 8.6.4 Vedeți doar terenurile unui grup {#map-example-group}
 

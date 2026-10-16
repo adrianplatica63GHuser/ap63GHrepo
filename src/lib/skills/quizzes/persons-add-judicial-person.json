@@ -48,11 +48,11 @@
           "section": "companies-add",
           "ro": {
             "question": "Care este singurul câmp obligatoriu al unei firme noi?",
-            "explanation": "Singurul câmp obligatoriu este „Denumire”. O firmă care are doar denumirea este o înregistrare adevărată și se completează mai târziu."
+            "explanation": "Singurul câmp obligatoriu este „Denumire”. O firmă care are doar denumirea este un obiect adevărat și se completează mai târziu."
           },
           "en": {
             "question": "Which is the only required field of a new firm?",
-            "explanation": "The only required field is „Denumire”. A firm that has only its name is a real record and is completed later."
+            "explanation": "The only required field is „Denumire”. A firm that has only its name is a real object and is completed later."
           },
           "options": [
             {

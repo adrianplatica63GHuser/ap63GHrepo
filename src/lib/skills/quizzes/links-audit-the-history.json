@@ -206,11 +206,11 @@
           "section": "links-associate-remove",
           "ro": {
             "question": "Ion Popescu apare ca proprietar al unui teren din Cornetu care nu este al lui. Ciprian alege rândul pe „Legături” și apasă „Dezasociază”. Ce se întâmplă?",
-            "explanation": "Legătura dispare din ambele capete, fără nicio întrebare; cele două înregistrări rămân în arhivă, neatinse."
+            "explanation": "Legătura dispare din ambele capete, fără nicio întrebare; cele două obiecte rămân în arhivă, neatinse."
           },
           "en": {
             "question": "Ion Popescu appears as owner of a plot in Cornetu that is not his. Ciprian chooses the row on „Legături” and presses „Dezasociază” (dissociate). What happens?",
-            "explanation": "The link disappears from both ends, without any question; the two records stay in the archive, untouched."
+            "explanation": "The link disappears from both ends, without any question; the two objects stay in the archive, untouched."
           },
           "options": [
             {
@@ -705,11 +705,11 @@
           "section": "links-associate-remove",
           "ro": {
             "question": "Pe un contract de vânzare, cumpărătoare apare Elena Stoica, dar în act cumpărătoarea este Ana Pavel. Cum repară Ciprian fără să strice nimic altceva?",
-            "explanation": "„Dezasociază” scoate doar legătura, din ambele capete; cele două înregistrări rămân în arhivă, neatinse. Apoi Ana Pavel se asociază cu rolul ei."
+            "explanation": "„Dezasociază” scoate doar legătura, din ambele capete; cele două obiecte rămân în arhivă, neatinse. Apoi Ana Pavel se asociază cu rolul ei."
           },
           "en": {
             "question": "On a sale contract, the buyer shown is Elena Stoica, but in the deed the buyer is Ana Pavel. How does Ciprian repair it without spoiling anything else?",
-            "explanation": "„Dezasociază” removes only the link, from both ends; the two records stay in the archive, untouched. Then Ana Pavel is linked with her role."
+            "explanation": "„Dezasociază” removes only the link, from both ends; the two objects stay in the archive, untouched. Then Ana Pavel is linked with her role."
           },
           "options": [
             {
@@ -742,11 +742,11 @@
           "id": "b8",
           "section": "links-two-windows",
           "ro": {
-            "question": "În fila 2, Ciprian a corectat o suprafață când apare mesajul roșu că înregistrarea a fost salvată în altă fereastră. Vrea ca, la final, corectura lui să fie în istoric. Ce face?",
+            "question": "În fila 2, Ciprian a corectat o suprafață când apare mesajul roșu că obiectul a fost salvat în altă fereastră. Vrea ca, la final, corectura lui să fie în istoric. Ce face?",
             "explanation": "Salvarea din fila învechită va fi refuzată; „Reîncarcă” pierde valorile nesalvate și încarcă versiunea curentă, pe care corectura se poate salva ca de obicei."
           },
           "en": {
-            "question": "In tab 2, Ciprian has corrected an area when the red message appears that the record was saved in another window. He wants his correction to end up in the history. What does he do?",
+            "question": "In tab 2, Ciprian has corrected an area when the red message appears that the object was saved in another window. He wants his correction to end up in the history. What does he do?",
             "explanation": "The save from the stale tab will be refused; „Reîncarcă” loses the unsaved values and loads the current version, on which the correction can be saved as usual."
           },
           "options": [
@@ -781,11 +781,11 @@
           "section": "links-classify-classification",
           "ro": {
             "question": "Ciprian schimbă „Importanță” a unui teren din „Medie” în „Ridicată” și apasă „Salvează” pe linia lui „Istoric”. Ce urmă lasă schimbarea?",
-            "explanation": "După salvare scrie „✓ Salvat”; „Istoric” ține fiecare schimbare, cu data ei, iar salvarea adaugă o versiune a înregistrării."
+            "explanation": "După salvare scrie „✓ Salvat”; „Istoric” ține fiecare schimbare, cu data ei, iar salvarea adaugă o versiune a obiectului."
           },
           "en": {
             "question": "Ciprian changes a plot's „Importanță” (importance) from „Medie” to „Ridicată” and presses „Salvează” on the line of „Istoric”. What trace does the change leave?",
-            "explanation": "After the save it reads „✓ Salvat”; „Istoric” keeps every change, with its date, and the save adds a version of the record."
+            "explanation": "After the save it reads „✓ Salvat”; „Istoric” keeps every change, with its date, and the save adds a version of the object."
           },
           "options": [
             {
@@ -819,11 +819,11 @@
           "section": "links-classify-classification",
           "ro": {
             "question": "Ciprian bănuiește că un teren a intrat în arhivă dintr-un fișier de coordonate, nu adăugat de mână. Unde verifică?",
-            "explanation": "„Proveniență”, în „Clasificare”, spune cum a intrat înregistrarea în arhivă, de exemplu „Manual (Adaugă nou)” sau „Fișier de coordonate (.txt)”."
+            "explanation": "„Proveniență”, în „Clasificare”, spune cum a intrat obiectul în arhivă, de exemplu „Manual (Adaugă nou)” sau „Fișier de coordonate (.txt)”."
           },
           "en": {
             "question": "Ciprian suspects that a plot came into the archive from a coordinates file, not added by hand. Where does he check?",
-            "explanation": "„Proveniență” (provenance), in „Clasificare”, says how the record came into the archive, for instance „Manual (Adaugă nou)” or „Fișier de coordonate (.txt)”."
+            "explanation": "„Proveniență” (provenance), in „Clasificare”, says how the object came into the archive, for instance „Manual (Adaugă nou)” or „Fișier de coordonate (.txt)”."
           },
           "options": [
             {

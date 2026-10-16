@@ -32,7 +32,7 @@ A firm added recently stands at the top of the list, marked „New!”.
 
 On the list of firms, press „Add new Judicial Person”. The form „New Judicial Person” opens straight away, with no other question. Fill in what you have; the rest can be added at any time, once the firm is saved.
 
-The only required field is „Name”. A firm that has only its name is a real record and is completed later. When you press „Save”, at the bottom, the application takes you back to the list, where the new firm stands at the top, marked „New!”. You open it with „Open”.
+The only required field is „Name”. A firm that has only its name is a real object and is completed later. When you press „Save”, at the bottom, the application takes you back to the list, where the new firm stands at the top, marked „New!”. You open it with „Open”.
 
 The screen of an open firm carries its name and its version at the top („v 0” for a firm just created), and its tiles below (Figure [[fig-companies-record]]):
 
@@ -46,7 +46,7 @@ The screen of an open firm carries its name and its version at the top („v 0�
 | Tags and groups | Tags, groups, stamps, „See Also” | no |
 | Interactions | The history of interactions with this firm | yes |
 
-The tiles are chosen with ticks, as on any record (section [[start-tiles]]). The choice made on a firm belongs to firms: it does not change the tiles you see on natural persons. Unlike a property, a firm has no „Persons” tile: the firm's people are seen in „Representatives and contact” and in „Links” (section [[companies-people]]).
+The tiles are chosen with ticks, as on any object (section [[start-tiles]]). The choice made on a firm belongs to firms: it does not change the tiles you see on natural persons. Unlike a property, a firm has no „Persons” tile: the firm's people are seen in „Representatives and contact” and in „Links” (section [[companies-people]]).
 
 ![4.1 A judicial person's screen](companies-record.png){#fig-companies-record}
 
@@ -90,7 +90,7 @@ A few things worth knowing:
 
 Press „Delete”, at the bottom of the firm's screen, and answer „Yes” to the question „Delete judicial person?”. A deletion cannot be undone.
 
-A firm opened from another record — from a document or from a property — is not deleted from there. The application tells you to dissociate it first from the record you opened it from, then to open it from the sidebar and delete it there.
+A firm opened from another object — from a document or from a property — is not deleted from there. The application tells you to dissociate it first from the object you opened it from, then to open it from the sidebar and delete it there.
 
 ## 4.3 A firm's people {#companies-people}
 
@@ -125,7 +125,7 @@ A firm can be a party to a document or the owner of a piece of land, just as a n
 - „Associate document” opens „Associate Document”. Tick the document, then choose „Role”: once you have ticked the document, the list of roles narrows to those that type of document has. On a „Contract de Vânzare” (sale contract), for instance: „Cumpărător”, „Moștenitor”, „Notar”, „Reprezentant legal / Mandatar”, „Vânzător”. On the document, the firm then appears in the „Parties” tile, with its role. On parties, roles and the share, see sections [[documents-parties]] and [[documents-sale]].
 - „Associate property” opens „Associate Property”. Tick the property and choose „Role”: „Coproprietar”, „Cumpărător”, „Proprietar” or „Titular de drept”. On the property, the firm appears in „Links”, for instance „Firm's name (Proprietar)”.
 
-From the document or the property, „View” on the firm's row opens the firm's screen — not a natural person's —, read-only, with „Back to list” and „Modify” at the bottom. Associating records in general is in chapter [[links]].
+From the document or the property, „View” on the firm's row opens the firm's screen — not a natural person's —, read-only, with „Back to list” and „Modify” at the bottom. Associating objects in general is in chapter [[links]].
 
 ### 4.3.4 The firm's interactions {#companies-people-interactions}
 

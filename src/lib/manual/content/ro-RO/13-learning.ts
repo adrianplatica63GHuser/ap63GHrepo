@@ -20,7 +20,7 @@ Manualul se deschide din bara laterală, „Ajutor și învățare” → „Man
 
 Alături, „Descarcă în engleză (Word)” dă manualul în engleză, de pildă pentru cineva care nu citește românește. Există două manuale, câte unul pentru fiecare limbă: fiecare este scris în întregime în limba lui, iar figurile lui sunt fotografiate în aplicația folosită în acea limbă.
 
-Figurile sunt fotografiate din aplicație, pe înregistrări inventate. Unde pe ecran ar fi apărut date ale unor persoane reale, ele sunt estompate.
+Figurile sunt fotografiate din aplicație, pe obiecte inventate. Unde pe ecran ar fi apărut date ale unor persoane reale, ele sunt estompate.
 
 ## 13.2 Ajutorul „?” și textele lui {#learning-help}
 
@@ -130,7 +130,7 @@ Răspunsul este scris de AI: verificați în secțiunea numită înainte să vă
 
 ### 13.5.2 Ce trimite și ce costă {#learning-ask-ai}
 
-- Claude primește doar întrebarea, cuprinsul manualului și textul secțiunilor alese — nimic din înregistrările arhivei și nici întrebările de dinainte.
+- Claude primește doar întrebarea, cuprinsul manualului și textul secțiunilor alese — nimic din obiectele arhivei și nici întrebările de dinainte.
 - Fiecare întrebare este plătită: o citire ca să aleagă secțiunile și, când găsește, încă una ca să scrie răspunsul. De obicei costă împreună sub un cent. „Setări” → „Costuri” → „AI” le numără cu celelalte citiri plătite (secțiunea [[admin-settings-costs]]).
 - Diacriticele, ordinea cuvintelor și felul în care e formulată întrebarea nu contează: contează ce întrebați.
 `;

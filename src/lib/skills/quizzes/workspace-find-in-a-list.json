@@ -15,12 +15,12 @@
           "id": "a1",
           "section": "start-lists",
           "ro": {
-            "question": "Câte înregistrări arată o listă pe o pagină, de exemplu lista „Persoane Fizice”?",
-            "explanation": "Fiecare dintre cele patru liste arată câte 15 înregistrări pe pagină, iar butoanele de sub tabel trec de la o pagină la alta."
+            "question": "Câte obiecte arată o listă pe o pagină, de exemplu lista „Persoane Fizice”?",
+            "explanation": "Fiecare dintre cele patru liste arată câte 15 obiecte pe pagină, iar butoanele de sub tabel trec de la o pagină la alta."
           },
           "en": {
-            "question": "How many records does a list show on one page, for instance the „Persoane Fizice” list?",
-            "explanation": "Each of the four lists shows 15 records a page, and the buttons under the table move from page to page."
+            "question": "How many objects does a list show on one page, for instance the „Persoane Fizice” list?",
+            "explanation": "Each of the four lists shows 15 objects a page, and the buttons under the table move from page to page."
           },
           "options": [
             {
@@ -161,12 +161,12 @@
           "id": "a5",
           "section": "start-lists",
           "ro": {
-            "question": "Ați găsit rândul căutat. Ce buton de pe rând deschide ecranul înregistrării?",
-            "explanation": "„Deschide”, pe un rând, deschide înregistrarea; „Adaugă …”, deasupra tabelului, creează una nouă."
+            "question": "Ați găsit rândul căutat. Ce buton de pe rând deschide ecranul obiectului?",
+            "explanation": "„Deschide”, pe un rând, deschide obiectul; „Adaugă …”, deasupra tabelului, creează unul nou."
           },
           "en": {
-            "question": "You have found the row you wanted. Which button on the row opens the record's screen?",
-            "explanation": "„Deschide” (open), on a row, opens the record; „Adaugă …”, above the table, creates a new one."
+            "question": "You have found the row you wanted. Which button on the row opens the object's screen?",
+            "explanation": "„Deschide” (open), on a row, opens the object; „Adaugă …”, above the table, creates a new one."
           },
           "options": [
             {
@@ -274,12 +274,12 @@
           "id": "b2",
           "section": "start-lists",
           "ro": {
-            "question": "Înregistrarea căutată nu este pe prima pagină a listei. Cum treceți la următoarea?",
-            "explanation": "Listele arată câte 15 înregistrări pe pagină, iar butoanele de sub tabel trec de la o pagină la alta."
+            "question": "Obiectul căutat nu este pe prima pagină a listei. Cum treceți la următoarea?",
+            "explanation": "Listele arată câte 15 obiecte pe pagină, iar butoanele de sub tabel trec de la o pagină la alta."
           },
           "en": {
-            "question": "The record you want is not on the list's first page. How do you move to the next one?",
-            "explanation": "The lists show 15 records a page, and the buttons under the table move from page to page."
+            "question": "The object you want is not on the list's first page. How do you move to the next one?",
+            "explanation": "The lists show 15 objects a page, and the buttons under the table move from page to page."
           },
           "options": [
             {
@@ -335,8 +335,8 @@
             {
               "id": "o3",
               "correct": false,
-              "ro": "Alege fișele pe care le arată ecranul înregistrării",
-              "en": "It chooses the tiles the record's screen shows"
+              "ro": "Alege fișele pe care le arată ecranul obiectului",
+              "en": "It chooses the tiles the object's screen shows"
             }
           ]
         },

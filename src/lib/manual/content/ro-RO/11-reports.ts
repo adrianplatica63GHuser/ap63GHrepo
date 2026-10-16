@@ -5,7 +5,7 @@
 export const CHAPTER = `
 # 11 Rapoarte {#reports}
 
-Secțiunea „Rapoarte” din bara laterală strânge trei ecrane care privesc arhiva de sus, peste toate înregistrările: „Interacțiuni”, jurnalul contactelor cu clienții; „Arbori de moștenire”, familiile din arhivă desenate într-un singur loc; și „Căutare globală”, care găsește persoane, proprietăți și acte dintr-un singur ecran. Deschideți „Rapoarte” în bara laterală (secțiunea [[start-sidebar]]) și apăsați ecranul dorit.
+Secțiunea „Rapoarte” din bara laterală strânge trei ecrane care privesc arhiva de sus, peste toate obiectele: „Interacțiuni”, jurnalul contactelor cu clienții; „Arbori de moștenire”, familiile din arhivă desenate într-un singur loc; și „Căutare globală”, care găsește persoane, proprietăți și acte dintr-un singur ecran. Deschideți „Rapoarte” în bara laterală (secțiunea [[start-sidebar]]) și apăsați ecranul dorit.
 
 ## 11.1 Interacțiuni {#reports-interactions}
 
@@ -30,14 +30,14 @@ Bara de unelte de deasupra listei o restrânge:
 
 Imediat ce un filtru este pus, apare „Șterge filtrele”. Apăsat, pune totul la loc: ultimele 90 de zile, toate canalele, „Toate”, căsuța de căutare goală și „Cele mai noi întâi”.
 
-Un clic pe un rând îl selectează și arată descrierea interacțiunii sub subiect. În listă nu se poate scrie nimic. Dacă o interacțiune are acte legate, în coloana „Acte” apare o agrafă cu numărul lor; apăsată, agrafa le înșiră, iar un clic pe un act îl deschide din arhivă. Numele persoanei dintr-un rând este o legătură: deschide ecranul persoanei, cu formularul de înregistrare deja deschis pe o interacțiune nouă.
+Un clic pe un rând îl selectează și arată descrierea interacțiunii sub subiect. În listă nu se poate scrie nimic. Dacă o interacțiune are acte legate, în coloana „Acte” apare o agrafă cu numărul lor; apăsată, agrafa le înșiră, iar un clic pe un act îl deschide din arhivă. Numele persoanei dintr-un rând este o legătură: deschide ecranul persoanei, cu formularul deja deschis pe o interacțiune nouă.
 
 ### 11.1.2 Înregistrarea unei interacțiuni {#reports-interactions-log}
 
-Pe ecranul persoanei, sub istoricul din fișa „Interacțiuni”, apăsați butonul mare „Înregistrează o interacțiune”. Formularul nu are căsuță pentru persoană: interacțiunea este a persoanei de pe ecran. Formularul are cinci secțiuni, fiecare cu un titlu urmat de o săgeată; un clic pe titlu deschide secțiunea, al doilea o închide. Când formularul se deschide, doar „Înregistrare manuală” este deschisă.
+Pe ecranul persoanei, sub istoricul din fișa „Interacțiuni”, apăsați butonul mare „Înregistrează o interacțiune”. Formularul nu are căsuță pentru persoană: interacțiunea este a persoanei de pe ecran. Formularul are cinci secțiuni, fiecare cu un titlu urmat de o săgeată; un clic pe titlu deschide secțiunea, al doilea o închide. Când formularul se deschide, doar „Introducere manuală” este deschisă.
 
 - „Conturi conectate” — Gmail și WhatsApp Business, fiecare „Neconectat”. Butoanele „Conectează” nu fac încă nimic: o interacțiune se înregistrează de mână, fără niciun cont conectat, iar „Nimic nu se trimite fără confirmare.”.
-- „Înregistrare manuală” — „Canal”, „Sens”, „Stare”, „Data și ora” (implicit acum), „Subiect” și „Descriere”. Subiectul este ce apare în istoric și ce se folosește la filtrare, deci păstrați-l scurt. Descrierea ține restul; întrebarea scrisă în ea se schimbă după canal — la „Telefon”, de exemplu, „Ce s-a convenit?”.
+- „Introducere manuală” — „Canal”, „Sens”, „Stare”, „Data și ora” (implicit acum), „Subiect” și „Descriere”. Subiectul este ce apare în istoric și ce se folosește la filtrare, deci păstrați-l scurt. Descrierea ține restul; întrebarea scrisă în ea se schimbă după canal — la „Telefon”, de exemplu, „Ce s-a convenit?”.
 - „Asocieri” — actele, etichetele și proprietatea legate de interacțiune (secțiunea [[reports-interactions-links]]).
 - „Memento” — bifați „Setează un memento” și alegeți „Data mementoului”. Data se păstrează și se vede în istoric; aplicația nu trimite notificări.
 - „Notă internă” — o notă „Vizibilă doar echipei”.
@@ -67,13 +67,13 @@ După salvare, rândul interacțiunii arată agrafa și numărul de acte legate.
 
 ### 11.1.4 Modificarea și ștergerea {#reports-interactions-edit}
 
-Un clic pe o interacțiune din istoricul persoanei o încarcă în formular: modul trece din „Înregistrare nouă” în „Editează selecția”, iar formularul arată cine a creat-o și cine a modificat-o ultima dată, și când. Schimbați ce trebuie și apăsați „Salvează modificările”; apare „Modificări salvate”, iar istoricul arată noua valoare.
+Un clic pe o interacțiune din istoricul persoanei o încarcă în formular: modul trece din „Interacțiune nouă” în „Editează selecția”, iar formularul arată cine a creat-o și cine a modificat-o ultima dată, și când. Schimbați ce trebuie și apăsați „Salvează modificările”; apare „Modificări salvate”, iar istoricul arată noua valoare.
 
 Nimic din ce ați scris nu se pierde fără întrebare. Dacă alegeți alt rând cu modificări nesalvate, formularul întreabă „Renunți la modificările nesalvate?”. Dacă plecați de pe ecran, aplicația întreabă „Modificări nesalvate”, iar „Anulează” vă lasă pe loc, cu ce ați scris.
 
-Dacă altcineva a salvat aceeași interacțiune înaintea dumneavoastră, salvarea nu trece peste el: apare „Această înregistrare a fost modificată de altcineva. O reîncarci sau o suprascrii?”. „Reîncarcă” aduce varianta lui; „Suprascrie” păstrează ce ați scris dumneavoastră.
+Dacă altcineva a salvat aceeași interacțiune înaintea dumneavoastră, salvarea nu trece peste el: apare „Această interacțiune a fost modificată de altcineva. O reîncarci sau o suprascrii?”. „Reîncarcă” aduce varianta lui; „Suprascrie” păstrează ce ați scris dumneavoastră.
 
-Ca să ștergeți o interacțiune, apăsați „Șterge înregistrarea”. Întrebarea „Ștergi interacțiunea?” numește persoana și data și spune „Actele legate rămân în arhivă; persoana și proprietatea nu se schimbă.”. „Șterge” o șterge definitiv: apare „Interacțiune ștearsă”, rândul dispare, iar formularul revine la „Înregistrare nouă”.
+Ca să ștergeți o interacțiune, apăsați „Șterge interacțiunea”. Întrebarea „Ștergi interacțiunea?” numește persoana și data și spune „Actele legate rămân în arhivă; persoana și proprietatea nu se schimbă.”. „Șterge” o șterge definitiv: apare „Interacțiune ștearsă”, rândul dispare, iar formularul revine la „Interacțiune nouă”.
 
 ### 11.1.5 „Exportă” {#reports-interactions-export}
 
@@ -125,7 +125,7 @@ De la nivelul din mijloc, fiecare persoană care apare pe acte poartă o insign�
 
 ## 11.3 Căutare globală {#reports-search}
 
-„Căutare globală” caută dintr-un singur loc în toate cele trei feluri de înregistrări: persoane (fizice și juridice), proprietăți și acte (Figura [[fig-reports-search]]). Este locul în care căutați când nu știți în ce listă se află ce căutați, sau când vreți să vedeți împreună tot ce poartă un nume, o etichetă ori o ștampilă.
+„Căutare globală” caută dintr-un singur loc în toate cele trei feluri de obiecte: persoane (fizice și juridice), proprietăți și acte (Figura [[fig-reports-search]]). Este locul în care căutați când nu știți în ce listă se află ce căutați, sau când vreți să vedeți împreună tot ce poartă un nume, o etichetă ori o ștampilă.
 
 ![11.1 „Căutare globală”, cu rezultatele unei căutări](reports-search.png){#fig-reports-search}
 
@@ -135,7 +135,7 @@ Completați unul sau mai multe filtre, apoi apăsați „Caută”. Toate filtre
 
 - „Căutare nume / cod” — o parte din nume sau din cod, de exemplu „Popescu”.
 - „Tip entitate” — „Orice”, „Persoană”, „Proprietate” sau „Document”. „Subtip persoană” alege între „Persoană fizică” și „Persoană juridică”.
-- „Importanță”, „Relevanță” și „Proveniență” — valorile din fișa „Clasificare” a înregistrării (secțiunea [[links-classify-classification]]). „Proveniență” spune cum a intrat înregistrarea în arhivă, de exemplu „Manual (Adaugă nou)” pentru una scrisă de mână.
+- „Importanță”, „Relevanță” și „Proveniență” — valorile din fișa „Clasificare” a obiectului (secțiunea [[links-classify-classification]]). „Proveniență” spune cum a intrat obiectul în arhivă, de exemplu „Manual (Adaugă nou)” pentru unul scris de mână.
 - „Cod grup”, „Cod ștampilă” și „Etichetă” — grupurile, ștampilele și etichetele din fișa „Etichete și grupuri” (secțiunile [[links-classify-groups]], [[links-classify-stamps]] și [[links-classify-tags]]).
 - „Are metadate”, cu „Metadate actualizate de la” și „Metadate actualizate până la”.
 
@@ -145,7 +145,7 @@ Completați unul sau mai multe filtre, apoi apăsați „Caută”. Toate filtre
 
 Deasupra tabelului scrie câte rezultate s-au găsit, de exemplu „3 rezultate”. Coloanele sunt „Tip”, „Nume”, „Grupuri”, „Ștampile”, „Importanță”, „Relevanță”, „Proveniență”, „Actualizat de” și „Metadate actualizate”. „Tip” spune „Persoană”, „Proprietate” sau „Document”. O proprietate este numită după tarla și parcelă, cu porecla între paranteze.
 
-Se arată cel mult 50 de rezultate pentru fiecare fel de înregistrare, câte 15 pe pagină. Când sunt mai multe, ecranul vă spune și vă cere să restrângeți căutarea — adăugați un filtru.
+Se arată cel mult 50 de rezultate pentru fiecare fel de obiect, câte 15 pe pagină. Când sunt mai multe, ecranul vă spune și vă cere să restrângeți căutarea — adăugați un filtru.
 
 Dacă nu se potrivește nimic, apare „Nicio entitate nu corespunde filtrelor selectate.”.
 

@@ -27,14 +27,14 @@ Fiecare rând stă pe o singură linie. O valoare prea lungă pentru coloana ei 
 
 Deasupra tabelului stau „Adaugă” și numărul valorilor, de exemplu „8 valori”. Pe fiecare rând stau „Editează”, „Unește” și „Șterge”.
 
-Coloana „Folosit de” spune câte înregistrări folosesc valoarea: „1 obiect”, „2 obiecte”. O valoare pe care nu o folosește nimeni scrie „nefolosit”, cu gri, și stă după valorile folosite.
+Coloana „Folosit de” spune câte obiecte folosesc valoarea: „1 obiect”, „2 obiecte”. O valoare pe care nu o folosește nimeni scrie „nefolosit”, cu gri, și stă după valorile folosite.
 
 - **O valoare nouă.** „Adaugă” deschide „Adaugă o valoare nouă”. Completați „Denumire” — este obligatorie — și celelalte câmpuri ale listei, apoi apăsați „Salvează”. Valoarea nouă apare ultima în listă.
 - **O valoare redenumită.** „Editează” deschide „Editează valoarea”, cu valoarea de acum. Schimbați-o și apăsați „Salvează”.
-- **Două valori unite.** Când aceeași valoare a ajuns în listă de două ori, scrisă diferit, apăsați „Unește” pe cea care trebuie să dispară. Fereastra „Unește „…” cu altă valoare” spune câte înregistrări se mută, de exemplu „Un obiect se mută pe valoarea păstrată:”. Alegeți în „Valoarea păstrată” valoarea care rămâne și apăsați „Unește”. Înregistrările trec pe valoarea păstrată, iar cealaltă dispare din listă.
-- **O valoare ștearsă.** „Șterge” întreabă „Ștergeți „…”?” și verifică întâi ce depinde de valoare: „Se verifică ce depinde de această valoare…”. Dacă nu depinde nimic, scrie „Nimic nu depinde de această valoare. La ștergere dispare definitiv — acțiunea nu poate fi anulată.”; „Șterge” o șterge, „Anulează” renunță. Dacă o folosesc înregistrări, fereastra spune câte, iar ștergerea nu este posibilă până nu le mutați pe altă valoare: alegeți-o la „Mutați-le pe:” și apăsați „Mută”.
+- **Două valori unite.** Când aceeași valoare a ajuns în listă de două ori, scrisă diferit, apăsați „Unește” pe cea care trebuie să dispară. Fereastra „Unește „…” cu altă valoare” spune câte obiecte se mută, de exemplu „Un obiect se mută pe valoarea păstrată:”. Alegeți în „Valoarea păstrată” valoarea care rămâne și apăsați „Unește”. Obiectele trec pe valoarea păstrată, iar cealaltă dispare din listă.
+- **O valoare ștearsă.** „Șterge” întreabă „Ștergeți „…”?” și verifică întâi ce depinde de valoare: „Se verifică ce depinde de această valoare…”. Dacă nu depinde nimic, scrie „Nimic nu depinde de această valoare. La ștergere dispare definitiv — acțiunea nu poate fi anulată.”; „Șterge” o șterge, „Anulează” renunță. Dacă o folosesc obiecte, fereastra spune câte, iar ștergerea nu este posibilă până nu le mutați pe altă valoare: alegeți-o la „Mutați-le pe:” și apăsați „Mută”.
 
-Versiunile vechi ale înregistrărilor nu se schimbă: fiecare păstrează valoarea așa cum era când a fost salvată (secțiunea [[links-versions]]).
+Versiunile vechi ale obiectelor nu se schimbă: fiecare păstrează valoarea așa cum era când a fost salvată (secțiunea [[links-versions]]).
 
 ### 12.1.2 Rolurile și legăturile {#admin-reference-data-roles}
 
@@ -43,7 +43,7 @@ Versiunile vechi ale înregistrărilor nu se schimbă: fiecare păstrează valoa
 - „Denumire” — numele rolului; descrierea lui o citiți ținând mouse-ul pe nume.
 - „Persoană → Proprietate” și „Persoană → Persoană” — un ✓ spune că rolul se poate alege la legătura aceea. La rolurile de rudenie, în locul ✓-ului stă rudenia, de exemplu „Părinte” sau „Copil”.
 - „Rol invers (bărbat, femeie)” — cum se citește rolul din celălalt capăt al legăturii, despărțit prin virgulă, de exemplu „Vânzător, Vânzătoare” (secțiunea [[links-associate-role]]).
-- „Folosit de” — câte înregistrări îl folosesc.
+- „Folosit de” — câte obiecte îl folosesc.
 
 „Editează” deschide panoul rolului. Acolo stau numele, numele inverse — „Rol invers”, „Rol invers — bărbat”, „Rol invers — femeie” — și „Se aplică la”, cu trei butoane: „Act”, „Proprietate” și „Persoană”. „Proprietate” oferă rolul la legătura unei persoane cu o proprietate, „Persoană” la legătura dintre două persoane. Cât timp „Persoană” este apăsat, panoul arată și „Rudenie”: „Părinte”, „Copil”, „Soț/soție”, „Frate/soră”, „Altă rudă” sau „Nicio rudenie”. La un rol pe care îl caută importul unei cărți de identitate, rudenia nu se poate schimba, iar panoul spune de ce.
 
@@ -88,29 +88,29 @@ Un cont aprobat nu se poate șterge din aplicație, așa că aprobați doar cere
 
 ## 12.3 Grupuri, ștampile și etichete {#admin-groups}
 
-Grupurile, ștampilele și etichetele se pun pe înregistrări din fișa „Etichete și grupuri” a fiecăreia (secțiunea [[links-classify]]). Aici sunt ecranele care le țin pe toate laolaltă.
+Grupurile, ștampilele și etichetele se pun pe obiecte din fișa „Etichete și grupuri” a fiecăruia (secțiunea [[links-classify]]). Aici sunt ecranele care le țin pe toate laolaltă.
 
 ### 12.3.1 Grupurile {#admin-groups-groups}
 
-„Administrare” → „Grupuri” arată panoul „Ce este un Grup?”, „Adaugă”, numărul grupurilor, de exemplu „4 grupuri”, și tabelul „Cod” · „Descriere”. Fiecare rând are codul grupului, cu numărul membrilor în paranteză, felul înregistrărilor pe care le strânge, descrierea, „Editează” și „Șterge”.
+„Administrare” → „Grupuri” arată panoul „Ce este un Grup?”, „Adaugă”, numărul grupurilor, de exemplu „4 grupuri”, și tabelul „Cod” · „Descriere”. Fiecare rând are codul grupului, cu numărul membrilor în paranteză, felul obiectelor pe care le strânge, descrierea, „Editează” și „Șterge”.
 
 1. „Adaugă” deschide „Adaugă grup nou”. Alegeți „Țintă” — „Proprietate”, „Persoană fizică”, „Persoană juridică” sau „Document” —, scrieți „Descriere” și apăsați „Salvează”. Rămâneți pe listă, cu grupul nou primul; codul, de forma GRP-001, se dă la salvare.
 2. „Editează” deschide „Grup GRP-…”, cu trei fișe: „Identitatea grupului” („Țintă” și „Cod” doar de citit, „Descriere”), „Membri disponibili pentru includere” și „Deja în grup”.
-3. Căutați în „Caută…”, bifați înregistrările și apăsați „Adaugă în grup”; ca să scoateți una, bifați-o în „Deja în grup” și apăsați „Elimină din grup”. Membrii adăugați poartă „[nou]”, iar ecranul arată „Modificări nesalvate”: încă nu s-a scris nimic.
+3. Căutați în „Caută…”, bifați obiectele și apăsați „Adaugă în grup”; ca să scoateți unul, bifați-l în „Deja în grup” și apăsați „Elimină din grup”. Membrii adăugați poartă „[nou]”, iar ecranul arată „Modificări nesalvate”: încă nu s-a scris nimic.
 4. „Salvează grupul” scrie schimbările; „[nou]” devine poziția membrului în grup, „[01]”, „[02]”.
 
-Fișele ecranului se pot muta trăgându-le de un loc gol, iar „Implicit”, sus în dreapta, le pune la loc. „Șterge” pe rândul unui grup întreabă „Ștergeți acest grup? Această acțiune nu poate fi anulată.”; înregistrările din grup rămân în arhivă.
+Fișele ecranului se pot muta trăgându-le de un loc gol, iar „Implicit”, sus în dreapta, le pune la loc. „Șterge” pe rândul unui grup întreabă „Ștergeți acest grup? Această acțiune nu poate fi anulată.”; obiectele din grup rămân în arhivă.
 
 ### 12.3.2 Ștampilele {#admin-groups-stamps}
 
-„Administrare” → „Ștampile” arată panoul „Ce este o Ștampilă?”, numărul ștampilelor și tabelul „Ștampilă” · „Elemente”: fiecare rând are codul și descrierea ștampilei, nota ei, câte înregistrări o poartă, „Aplică” și „Șterge”.
+„Administrare” → „Ștampile” arată panoul „Ce este o Ștampilă?”, numărul ștampilelor și tabelul „Ștampilă” · „Elemente”: fiecare rând are codul și descrierea ștampilei, nota ei, câte obiecte o poartă, „Aplică” și „Șterge”.
 
 1. Butonul cu „+”, „Creare ștampilă”, deschide formularul: „Descriere scurtă” (obligatorie, cel mult 200 de caractere) și „Note”. Codul, de forma STMP-AAA, se dă la salvare. „Salvează” vă lasă pe listă, cu ștampila nouă prima.
 2. „Aplică” deschide „Aplică ștampila: …”, cu patru fișe: „Descrierea ștampilei”, „Tip element”, „Elemente disponibile pentru ștampilare” și „Elemente deja ștampilate”.
-3. Alegeți în „Tip element” felul înregistrărilor; listele arată doar înregistrări de felul acela. Bifați-le și apăsați „Aplică ștampila”, sau, în cealaltă listă, „Elimină ștampila”. Ecranul arată „Modificări nesalvate”.
-4. „Salvează ștampilele”, butonul cu discheta, scrie schimbările. O ștampilă poate sta pe înregistrări de feluri diferite: schimbați „Tip element” și continuați.
+3. Alegeți în „Tip element” felul obiectelor; listele arată doar obiecte de felul acela. Bifați-le și apăsați „Aplică ștampila”, sau, în cealaltă listă, „Elimină ștampila”. Ecranul arată „Modificări nesalvate”.
+4. „Salvează ștampilele”, butonul cu discheta, scrie schimbările. O ștampilă poate sta pe obiecte de feluri diferite: schimbați „Tip element” și continuați.
 
-Ca la grupuri, fișele se mută trăgându-le, iar „Implicit” le pune la loc. „Șterge” întreabă „Ștergeți această ștampilă și o eliminați de pe toate elementele?”: ștampila dispare și de pe înregistrări, iar înregistrările rămân.
+Ca la grupuri, fișele se mută trăgându-le, iar „Implicit” le pune la loc. „Șterge” întreabă „Ștergeți această ștampilă și o eliminați de pe toate elementele?”: ștampila dispare și de pe obiecte, iar obiectele rămân.
 
 ### 12.3.3 Etichetele {#admin-groups-tags}
 
@@ -142,7 +142,7 @@ Textele din spatele butonului „?” și sfaturile cu bec de pe ecrane (secțiu
 
 ## 12.5 Setări {#admin-settings}
 
-„Setări” se deschide din bara laterală (Figura [[fig-admin-settings]]). Ca pe ecranul unei înregistrări, căsuțele de sus aleg ce părți se văd, iar „Implicit” le aduce înapoi (secțiunea [[start-tiles]]). Părțile sunt „Contul meu”, „Praguri de timp”, „Copii de siguranță”, „Despre” și, în grupa „Costuri”, câte una pentru fiecare furnizor care poate costa bani.
+„Setări” se deschide din bara laterală (Figura [[fig-admin-settings]]). Ca pe ecranul unui obiect, căsuțele de sus aleg ce părți se văd, iar „Implicit” le aduce înapoi (secțiunea [[start-tiles]]). Părțile sunt „Contul meu”, „Praguri de timp”, „Copii de siguranță”, „Despre” și, în grupa „Costuri”, câte una pentru fiecare furnizor care poate costa bani.
 
 ![12.2 „Setări”](admin-settings.png){#fig-admin-settings}
 
@@ -152,7 +152,7 @@ Textele din spatele butonului „?” și sfaturile cu bec de pe ecrane (secțiu
 
 - **Parola.** Scrieți parola nouă în „Parola nouă” — cel puțin 8 caractere — și încă o dată în „Confirmă parola”, apoi apăsați „Schimbă parola”. Aplicația confirmă cu „Parola a fost schimbată!”. Dacă cele două nu se potrivesc, spune „Parolele nu coincid.”.
 - **Limba.** La „Limba” alegeți „Română” sau „English”.
-- **„Implicitele mele”.** Pentru fiecare fel de înregistrare — „Persoană fizică”, „Persoană juridică”, „Proprietate”, „Act” — bifați fișele pe care vreți să le arate „Implicit” pe ecranul ei și apăsați „Salvează”; apare „Salvat.”. Setul este al contului, nu al browserului, așa că rămâne și după o reîncărcare, și în orice browser. „Revino la implicit” uită setul dumneavoastră și readuce setul obișnuit al aplicației: „Revenit la implicit.”. Cel puțin o fișă rămâne bifată.
+- **„Implicitele mele”.** Pentru fiecare fel de obiect — „Persoană fizică”, „Persoană juridică”, „Proprietate”, „Act” — bifați fișele pe care vreți să le arate „Implicit” pe ecranul lui și apăsați „Salvează”; apare „Salvat.”. Setul este al contului, nu al browserului, așa că rămâne și după o reîncărcare, și în orice browser. „Revino la implicit” uită setul dumneavoastră și readuce setul obișnuit al aplicației: „Revenit la implicit.”. Cel puțin o fișă rămâne bifată.
 
 „Ieșire” stă jos în bara laterală.
 
@@ -165,7 +165,7 @@ Pragurile hotărăsc, printre altele:
 - câte zile în urmă numără „Recente” pe „Tablou de bord” și câte zile înainte arată acolo actele care expiră;
 - cu cât timp înainte un act apare „expiră curând”;
 - cu cât timp înainte de expirare este semnalată o carte de identitate („Prag CI expiră curând”);
-- cât timp poartă o înregistrare schimbată insigna „Nou!”, roșie și apoi chihlimbar, și după cât timp insigna dispare.
+- cât timp poartă un obiect schimbat insigna „Nou!”, roșie și apoi chihlimbar, și după cât timp insigna dispare.
 
 Cum schimbați un număr, lângă „Salvează” apare „Anulează”, care readuce valoarea salvată. „Salvează” confirmă cu „Salvat cu succes.”. Valorile sunt numere întregi între 1 și 3650. Pragurile sunt ale arhivei, nu ale unui cont: o schimbare se vede la toți utilizatorii.
 

@@ -27,14 +27,14 @@ Every row stands on a single line. A value too long for its column ends in „�
 
 Above the table are „Add” and the number of values, for instance „8 values”. On each row are „Edit”, „Merge” and „Delete”.
 
-The „Used by” column says how many records use the value: „1 object”, „2 objects”. A value that nothing uses reads „unused”, in grey, and stands after the values in use.
+The „Used by” column says how many objects use the value: „1 object”, „2 objects”. A value that nothing uses reads „unused”, in grey, and stands after the values in use.
 
 - **A new value.** „Add” opens „Add a new value”. Fill in „Name” — it is required — and the list's other fields, then press „Save”. The new value appears last in the list.
 - **A value renamed.** „Edit” opens „Edit the value”, with the current value. Change it and press „Save”.
-- **Two values merged.** When the same value has got into the list twice, spelt differently, press „Merge” on the one that should go. The window „Merge “…” into another value” says how many records move, for instance „One object moves to the value kept:”. Choose the value that stays in „Value to keep” and press „Merge”. The records move to the value kept, and the other disappears from the list.
-- **A value deleted.** „Delete” asks „Delete “…”?” and first checks what depends on the value: „Checking what depends on this value…”. If nothing does, it reads „Nothing depends on this value. Deleting it removes it permanently — this cannot be undone.”; „Delete” deletes it, „Cancel” gives up. If records use it, the window says how many, and deleting is not possible until you move them onto another value: choose it under „Move them to:” and press „Move”.
+- **Two values merged.** When the same value has got into the list twice, spelt differently, press „Merge” on the one that should go. The window „Merge “…” into another value” says how many objects move, for instance „One object moves to the value kept:”. Choose the value that stays in „Value to keep” and press „Merge”. The objects move to the value kept, and the other disappears from the list.
+- **A value deleted.** „Delete” asks „Delete “…”?” and first checks what depends on the value: „Checking what depends on this value…”. If nothing does, it reads „Nothing depends on this value. Deleting it removes it permanently — this cannot be undone.”; „Delete” deletes it, „Cancel” gives up. If objects use it, the window says how many, and deleting is not possible until you move them onto another value: choose it under „Move them to:” and press „Move”.
 
-Old versions of the records do not change: each keeps the value as it was when it was saved (section [[links-versions]]).
+Old versions of the objects do not change: each keeps the value as it was when it was saved (section [[links-versions]]).
 
 ### 12.1.2 Roles and links {#admin-reference-data-roles}
 
@@ -43,7 +43,7 @@ Old versions of the records do not change: each keeps the value as it was when i
 - „Name” — the role's name; you read its description by holding the mouse over the name.
 - „Person → Property” and „Person → Person” — a ✓ says the role can be chosen on that link. On kinship roles the kinship stands in place of the ✓, for instance „Parent” or „Child”.
 - „Converse role (man, woman)” — how the role reads from the other end of the link, separated by commas, for instance „Vânzător, Vânzătoare” (section [[links-associate-role]]).
-- „Used by” — how many records use it.
+- „Used by” — how many objects use it.
 
 „Edit” opens the role's panel. It holds the name, the converse names — „Converse role”, „Converse role — man”, „Converse role — woman” — and „Applies to”, with three buttons: „Document”, „Property” and „Person”. „Property” offers the role on the link between a person and a property, „Person” on the link between two persons. While „Person” is pressed, the panel also shows „Kinship”: „Parent”, „Child”, „Spouse”, „Sibling”, „Other relative” or „No family tie”. On a role that the import of an identity card looks for, the kinship cannot be changed, and the panel says why.
 
@@ -88,29 +88,29 @@ An approved account cannot be deleted from the application, so approve only the 
 
 ## 12.3 Groups, stamps and tags {#admin-groups}
 
-Groups, stamps and tags are put on records from each record's „Tags and groups” tile (section [[links-classify]]). Here are the screens that hold them all together.
+Groups, stamps and tags are put on objects from each object's „Tags and groups” tile (section [[links-classify]]). Here are the screens that hold them all together.
 
 ### 12.3.1 Groups {#admin-groups-groups}
 
-„Administration” → „Groups” shows the panel „Ce este un Grup?” (what is a group?), „Add”, the number of groups, for instance „4 groups”, and the table „Code” · „Description”. Each row has the group's code, with the number of members in brackets, the kind of records it gathers, the description, „Edit” and „Delete”.
+„Administration” → „Groups” shows the panel „Ce este un Grup?” (what is a group?), „Add”, the number of groups, for instance „4 groups”, and the table „Code” · „Description”. Each row has the group's code, with the number of members in brackets, the kind of objects it gathers, the description, „Edit” and „Delete”.
 
 1. „Add” opens „Add new group”. Choose „Target” — „Property”, „Physical person”, „Judicial person” or „Document” —, write „Description” and press „Save”. You stay on the list, with the new group first; the code, of the form GRP-001, is given on saving.
 2. „Edit” opens „Group GRP-…”, with three tiles: „Group identity” („Target” and „Code” read-only, „Description”), „Members available to include” and „In Group already”.
-3. Search in „Search…”, tick the records and press „Add to Group”; to take one out, tick it in „In Group already” and press „Remove from Group”. Members added carry „[new]”, and the screen shows „Unsaved changes”: nothing has been written yet.
+3. Search in „Search…”, tick the objects and press „Add to Group”; to take one out, tick it in „In Group already” and press „Remove from Group”. Members added carry „[new]”, and the screen shows „Unsaved changes”: nothing has been written yet.
 4. „Save group” writes the changes; „[new]” becomes the member's position in the group, „[01]”, „[02]”.
 
-The screen's tiles can be moved by dragging them by an empty spot, and „Default”, at the top right, puts them back. „Delete” on a group's row asks „Delete this group? This cannot be undone.”; the records in the group stay in the archive.
+The screen's tiles can be moved by dragging them by an empty spot, and „Default”, at the top right, puts them back. „Delete” on a group's row asks „Delete this group? This cannot be undone.”; the objects in the group stay in the archive.
 
 ### 12.3.2 Stamps {#admin-groups-stamps}
 
-„Administration” → „Stamps” shows the panel „Ce este o Ștampilă?” (what is a stamp?), the number of stamps and the table „Stamp” · „Members”: each row has the stamp's code and description, its note, how many records carry it, „Apply” and „Delete”.
+„Administration” → „Stamps” shows the panel „Ce este o Ștampilă?” (what is a stamp?), the number of stamps and the table „Stamp” · „Members”: each row has the stamp's code and description, its note, how many objects carry it, „Apply” and „Delete”.
 
 1. The „+” button, „Create stamp”, opens the form: „Short description” (required, at most 200 characters) and „Notes”. The code, of the form STMP-AAA, is given on saving. „Save” leaves you on the list, with the new stamp first.
 2. „Apply” opens „Apply stamp: …”, with four tiles: „Stamp description”, „Object type”, „Objects available to stamp” and „Objects already stamped”.
-3. Choose the kind of records in „Object type”; the lists show only records of that kind. Tick them and press „Apply stamp”, or, in the other list, „Remove stamp”. The screen shows „Unsaved changes”.
-4. „Save stamps”, the floppy-disk button, writes the changes. A stamp can sit on records of different kinds: change „Object type” and carry on.
+3. Choose the kind of objects in „Object type”; the lists show only objects of that kind. Tick them and press „Apply stamp”, or, in the other list, „Remove stamp”. The screen shows „Unsaved changes”.
+4. „Save stamps”, the floppy-disk button, writes the changes. A stamp can sit on objects of different kinds: change „Object type” and carry on.
 
-As with groups, the tiles are moved by dragging, and „Default” puts them back. „Delete” asks „Delete this stamp and remove it from all items? …”: the stamp disappears from the records as well, and the records stay.
+As with groups, the tiles are moved by dragging, and „Default” puts them back. „Delete” asks „Delete this stamp and remove it from all items? …”: the stamp disappears from the objects as well, and the objects stay.
 
 ### 12.3.3 Tags {#admin-groups-tags}
 
@@ -142,7 +142,7 @@ The texts behind the „?” button and the light-bulb hints on the screens (sec
 
 ## 12.5 Settings {#admin-settings}
 
-„Settings” opens from the sidebar (Figure [[fig-admin-settings]]). As on a record's screen, the boxes at the top choose which parts are shown, and „Default” brings them back (section [[start-tiles]]). The parts are „My account”, „Time thresholds”, „Backups”, „About” and, in the „Costs” group, one for each provider that can cost money.
+„Settings” opens from the sidebar (Figure [[fig-admin-settings]]). As on an object's screen, the boxes at the top choose which parts are shown, and „Default” brings them back (section [[start-tiles]]). The parts are „My account”, „Time thresholds”, „Backups”, „About” and, in the „Costs” group, one for each provider that can cost money.
 
 ![12.2 „Settings”](admin-settings.png){#fig-admin-settings}
 
@@ -152,7 +152,7 @@ The texts behind the „?” button and the light-bulb hints on the screens (sec
 
 - **The password.** Type the new password in „New password” — at least 8 characters — and once more in „Confirm password”, then press „Change password”. The application confirms with „Password changed!”. If the two do not match, it says „The passwords do not match.”.
 - **The language.** Under „Language” choose „Română” or „English”.
-- **„My defaults”**. For each kind of record — „Natural person”, „Judicial person”, „Property”, „Document” — tick the tiles you want „Default” to show on its screen and press „Save”; „Saved.” appears. The set belongs to the account, not to the browser, so it stays after a reload, and in any browser. „Back to default” forgets your set and brings back the application's usual one: „Back to default.”. At least one tile stays ticked.
+- **„My defaults”**. For each kind of object — „Natural person”, „Judicial person”, „Property”, „Document” — tick the tiles you want „Default” to show on its screen and press „Save”; „Saved.” appears. The set belongs to the account, not to the browser, so it stays after a reload, and in any browser. „Back to default” forgets your set and brings back the application's usual one: „Back to default.”. At least one tile stays ticked.
 
 „Sign out” is at the bottom of the sidebar.
 
@@ -165,7 +165,7 @@ Among other things, the thresholds decide:
 - how many days back „Recent” counts on „Dashboard”, and how many days ahead it shows the documents that expire;
 - how long before a document shows „expiring soon”;
 - how long before its expiry an identity card is flagged („ID card expiring soon threshold”);
-- how long a changed record carries the „New!” badge, red and then amber, and after how long the badge disappears.
+- how long a changed object carries the „New!” badge, red and then amber, and after how long the badge disappears.
 
 As soon as you change a number, „Cancel” appears beside „Save” and brings back the saved value. „Save” confirms with „Saved successfully.”. The values are whole numbers between 1 and 3650. The thresholds belong to the archive, not to an account: a change is seen by every user.
 

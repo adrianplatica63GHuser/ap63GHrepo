@@ -5,7 +5,7 @@
 export const CHAPTER = `
 # 11 Reports {#reports}
 
-The „Reporting” section of the sidebar gathers three screens that look at the archive from above, across all the records: „Interactions”, the log of contacts with clients; „Inheritance trees”, the archive's families drawn in one place; and „Global Search”, which finds persons, properties and documents from a single screen. Open „Reporting” in the sidebar (section [[start-sidebar]]) and press the screen you want.
+The „Reporting” section of the sidebar gathers three screens that look at the archive from above, across all the objects: „Interactions”, the log of contacts with clients; „Inheritance trees”, the archive's families drawn in one place; and „Global Search”, which finds persons, properties and documents from a single screen. Open „Reporting” in the sidebar (section [[start-sidebar]]) and press the screen you want.
 
 ## 11.1 Interactions {#reports-interactions}
 
@@ -30,7 +30,7 @@ A column's header has its own filter too: in „Channel”, „Filter by Channel
 
 As soon as a filter is set, „Clear filters” appears. Pressed, it puts everything back: the last 90 days, every channel, „All”, the search box empty and „Newest first”.
 
-A click on a row selects it and shows the interaction's description under its subject. Nothing can be typed into the list. When an interaction has linked documents, a paperclip with their number appears in the „Docs” column; pressed, the paperclip lists them, and a click on a document opens it from the archive. The person's name in a row is a link: it opens the person's screen, with the recording form already open on a new interaction.
+A click on a row selects it and shows the interaction's description under its subject. Nothing can be typed into the list. When an interaction has linked documents, a paperclip with their number appears in the „Docs” column; pressed, the paperclip lists them, and a click on a document opens it from the archive. The person's name in a row is a link: it opens the person's screen, with the form already open on a new interaction.
 
 ### 11.1.2 Recording an interaction {#reports-interactions-log}
 
@@ -67,13 +67,13 @@ After saving, the interaction's row shows the paperclip and the number of linked
 
 ### 11.1.4 Changing and deleting {#reports-interactions-edit}
 
-A click on an interaction in the person's history loads it into the form: the mode moves from „New record” to „Edit selected”, and the form shows who created it and who last changed it, and when. Change what is needed and press „Save changes”; „Changes saved” appears, and the history shows the new value.
+A click on an interaction in the person's history loads it into the form: the mode moves from „New interaction” to „Edit selected”, and the form shows who created it and who last changed it, and when. Change what is needed and press „Save changes”; „Changes saved” appears, and the history shows the new value.
 
 Nothing you typed is lost without a question. If you choose another row with unsaved changes, the form asks „Discard the changes you have not saved?”. If you leave the screen, the application asks „Unsaved changes”, and „Cancel” keeps you where you are, with what you typed.
 
-If someone else saved the same interaction before you, your save does not go over theirs: „This record was updated by someone else. Reload, or overwrite?” appears. „Reload” brings their version; „Overwrite” keeps what you typed.
+If someone else saved the same interaction before you, your save does not go over theirs: „This interaction was updated by someone else. Reload, or overwrite?” appears. „Reload” brings their version; „Overwrite” keeps what you typed.
 
-To delete an interaction, press „Delete record”. The question „Delete the interaction?” names the person and the date and says „Linked documents stay in the archive; the person and the property do not change.”. „Delete” deletes it for good: „Interaction deleted” appears, the row goes, and the form returns to „New record”.
+To delete an interaction, press „Delete interaction”. The question „Delete the interaction?” names the person and the date and says „Linked documents stay in the archive; the person and the property do not change.”. „Delete” deletes it for good: „Interaction deleted” appears, the row goes, and the form returns to „New interaction”.
 
 ### 11.1.5 „Export” {#reports-interactions-export}
 
@@ -125,7 +125,7 @@ From the middle level, each person who appears on documents carries a badge with
 
 ## 11.3 Global search {#reports-search}
 
-„Global search” searches from one place across all three kinds of record: persons (natural and legal), properties and documents (Figure [[fig-reports-search]]). It is where you search when you do not know which list holds what you are after, or when you want to see together everything that carries a name, a tag or a stamp.
+„Global search” searches from one place across all three kinds of object: persons (natural and legal), properties and documents (Figure [[fig-reports-search]]). It is where you search when you do not know which list holds what you are after, or when you want to see together everything that carries a name, a tag or a stamp.
 
 ![11.1 „Global search”, with the results of a search](reports-search.png){#fig-reports-search}
 
@@ -135,7 +135,7 @@ Fill in one or more filters, then press „Search”. All the filters set apply 
 
 - „Name / code search” — part of a name or of a code, for instance „Popescu”.
 - „Entity type” — „Any”, „Person”, „Property” or „Document”. „Person subtype” chooses between „Natural person” and „Judicial person”.
-- „Importance”, „Relevance” and „Provenance” — the values in the record's „Classification” tile (section [[links-classify-classification]]). „Provenance” says how the record came into the archive, for instance „Manual (Add new)” for one typed in by hand.
+- „Importance”, „Relevance” and „Provenance” — the values in the object's „Classification” tile (section [[links-classify-classification]]). „Provenance” says how the object came into the archive, for instance „Manual (Add new)” for one typed in by hand.
 - „Group code”, „Stamp code” and „Tag” — the groups, stamps and tags in the „Tags and groups” tile (sections [[links-classify-groups]], [[links-classify-stamps]] and [[links-classify-tags]]).
 - „Has metadata”, with „Metadata updated from” and „Metadata updated to”.
 
@@ -145,7 +145,7 @@ Fill in one or more filters, then press „Search”. All the filters set apply 
 
 Above the table it says how many results were found, for instance „3 results”. The columns are „Type”, „Name”, „Groups”, „Stamps”, „Importance”, „Relevance”, „Provenance”, „Updated by” and „Metadata updated”. „Type” says „Person”, „Property” or „Document”. A property is named by its tarla and parcel, with its nickname in brackets.
 
-At most 50 results are shown for each kind of record, 15 to a page. When there are more, the screen says so and asks you to narrow the search — add a filter.
+At most 50 results are shown for each kind of object, 15 to a page. When there are more, the screen says so and asks you to narrow the search — add a filter.
 
 When nothing matches, „No entities match the selected filters.” appears.
 

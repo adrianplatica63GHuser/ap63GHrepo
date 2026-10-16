@@ -16,11 +16,11 @@
           "section": "admin-reference-data-values",
           "ro": {
             "question": "În „Categorii Folosință”, Ciprian găsește „Pășune”, folosită de 12 obiecte, și „Pasune”, folosită de 3: aceeași valoare, scrisă diferit. Ce face?",
-            "explanation": "Când aceeași valoare a ajuns în listă de două ori, scrisă diferit, apăsați „Unește” pe cea care trebuie să dispară și alegeți în „Valoarea păstrată” valoarea care rămâne; înregistrările trec pe ea, iar cealaltă dispare."
+            "explanation": "Când aceeași valoare a ajuns în listă de două ori, scrisă diferit, apăsați „Unește” pe cea care trebuie să dispară și alegeți în „Valoarea păstrată” valoarea care rămâne; obiectele trec pe ea, iar cealaltă dispare."
           },
           "en": {
             "question": "In „Categorii Folosință” (land-use categories), Ciprian finds „Pășune” (pasture), used by 12 objects, and „Pasune”, used by 3: the same value, spelt differently. What does he do?",
-            "explanation": "When the same value has got into the list twice, spelt differently, you press „Unește” (merge) on the one that should go and choose the value that stays in „Valoarea păstrată”; the records move to it, and the other disappears."
+            "explanation": "When the same value has got into the list twice, spelt differently, you press „Unește” (merge) on the one that should go and choose the value that stays in „Valoarea păstrată”; the objects move to it, and the other disappears."
           },
           "options": [
             {
@@ -54,11 +54,11 @@
           "section": "admin-reference-data-values",
           "ro": {
             "question": "Ciprian vrea să șteargă din „Cetățenie” o valoare la care „Folosit de” arată „2 obiecte”. Ce se întâmplă când apasă „Șterge”?",
-            "explanation": "Fereastra verifică întâi ce depinde de valoare și spune câte înregistrări o folosesc; ștergerea nu este posibilă până nu le mutați pe altă valoare, aleasă la „Mutați-le pe:”, cu „Mută”."
+            "explanation": "Fereastra verifică întâi ce depinde de valoare și spune câte obiecte o folosesc; ștergerea nu este posibilă până nu le mutați pe altă valoare, aleasă la „Mutați-le pe:”, cu „Mută”."
           },
           "en": {
             "question": "Ciprian wants to delete from „Cetățenie” (citizenship) a value whose „Folosit de” reads „2 obiecte”. What happens when he presses „Șterge”?",
-            "explanation": "The window first checks what depends on the value and says how many records use it; deleting is not possible until you move them onto another value, chosen under „Mutați-le pe:”, with „Mută” (move)."
+            "explanation": "The window first checks what depends on the value and says how many objects use it; deleting is not possible until you move them onto another value, chosen under „Mutați-le pe:”, with „Mută” (move)."
           },
           "options": [
             {
@@ -92,11 +92,11 @@
           "section": "admin-reference-data-values",
           "ro": {
             "question": "După ce a unit „Pasune” în „Pășune”, Ciprian deschide o versiune veche a unei proprietăți salvate pe vremea când avea „Pasune”. Ce valoare vede pe versiunea veche?",
-            "explanation": "Versiunile vechi ale înregistrărilor nu se schimbă: fiecare păstrează valoarea așa cum era când a fost salvată."
+            "explanation": "Versiunile vechi ale obiectelor nu se schimbă: fiecare păstrează valoarea așa cum era când a fost salvată."
           },
           "en": {
             "question": "After merging „Pasune” into „Pășune”, Ciprian opens an old version of a property saved back when it had „Pasune”. What value does he see on the old version?",
-            "explanation": "Old versions of the records do not change: each keeps the value as it was when it was saved."
+            "explanation": "Old versions of the objects do not change: each keeps the value as it was when it was saved."
           },
           "options": [
             {

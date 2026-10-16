@@ -57,7 +57,7 @@ On the list of natural persons, press „Add new Person”. The screen „New Na
 | „Contact” | The telephone numbers and e-mail addresses. |
 | „Addresses” | „Home Address” and „Correspondence Address”. |
 
-The ticks at the top of the screen show or hide tiles, as on any record (section [[start-tiles]]). A hidden tile does not lose its data: what you typed in it is saved all the same.
+The ticks at the top of the screen show or hide tiles, as on any object (section [[start-tiles]]). A hidden tile does not lose its data: what you typed in it is saved all the same.
 
 ### 3.2.2 Saving {#persons-add-save}
 
@@ -170,7 +170,7 @@ Under the history, the large button „Log interaction” opens the form, alread
 2. Choose the channel, for instance „Phone”, and type the subject.
 3. Press „Save”. „Interaction logged” appears, and the interaction appears in the history.
 
-A click on an interaction in the history opens it in the form: change what is needed and press „Save changes”, or press „Delete record”, then „Delete”. „Collapse” folds the form away again.
+A click on an interaction in the history opens it in the form: change what is needed and press „Save changes”, or press „Delete interaction”, then „Delete”. „Collapse” folds the form away again.
 
 From the list of persons, „Peek inside” shows the history only; a click on an interaction there opens the person's screen, with the interaction in the form. The „Interactions” screen, with its filters, is described in section [[reports-interactions]].
 

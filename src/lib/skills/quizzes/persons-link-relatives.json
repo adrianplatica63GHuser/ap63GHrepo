@@ -206,11 +206,11 @@
           "section": "links-associate-remove",
           "ro": {
             "question": "Ciprian a legat-o pe Elena Popescu ca „Soră” de o persoană greșită. Pe „Legături”, alege rândul și apasă „Dezasociază”. Ce se întâmplă?",
-            "explanation": "Legătura dispare din ambele capete, fără nicio întrebare; cele două înregistrări rămân în arhivă, neatinse."
+            "explanation": "Legătura dispare din ambele capete, fără nicio întrebare; cele două obiecte rămân în arhivă, neatinse."
           },
           "en": {
             "question": "Ciprian linked Elena Popescu as „Soră” (sister) to the wrong person. On „Legături”, he chooses the row and presses „Dezasociază”. What happens?",
-            "explanation": "The link disappears from both ends, without any question; the two records stay in the archive, untouched."
+            "explanation": "The link disappears from both ends, without any question; the two objects stay in the archive, untouched."
           },
           "options": [
             {

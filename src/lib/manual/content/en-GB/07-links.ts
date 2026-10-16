@@ -5,21 +5,21 @@
 export const CHAPTER = `
 # 7 Links, versions and history {#links}
 
-In the archive a record seldom stands alone: a contract has sellers and buyers, a plot of land has owners, a person has relatives and companies they represent. This chapter shows how you link two records and read the link from both ends, how you classify records and find them again by tags, groups and stamps, and how you go back to an older version of a record.
+In the archive an object seldom stands alone: a contract has sellers and buyers, a plot of land has owners, a person has relatives and companies they represent. This chapter shows how you link two objects and read the link from both ends, how you classify objects and find them again by tags, groups and stamps, and how you go back to an older version of an object.
 
-## 7.1 Linking two records {#links-associate}
+## 7.1 Linking two objects {#links-associate}
 
-A link between two records is called an association. It is made once, from either end, and it shows from both: if you link a plot of land from a contract's screen, the contract also appears on the land's screen.
+A link between two objects is called an association. It is made once, from either end, and it shows from both: if you link a plot of land from a contract's screen, the contract also appears on the land's screen.
 
 ### 7.1.1 The association screen {#links-associate-screen}
 
-On a record's „Links” tile (section [[links-related]]) there are three buttons: „Associate person”, „Associate property” and „Associate document”. Each opens an association screen, with three tiles one under another (Figure [[fig-links-associate]]):
+On an object's „Links” tile (section [[links-related]]) there are three buttons: „Associate person”, „Associate property” and „Associate document”. Each opens an association screen, with three tiles one under another (Figure [[fig-links-associate]]):
 
 - „Search” — the filters. For persons they are „Name” and „Code”; for properties and documents there is a single box, „Search”, which searches by code and by name or title.
-- „Results” — the records found. Tick the row or rows you want to link. Natural and judicial persons stand in the same table, and the „Type” column says which is which: „Natural” or „Judicial”.
+- „Results” — the objects found. Tick the row or rows you want to link. Natural and judicial persons stand in the same table, and the „Type” column says which is which: „Natural” or „Judicial”.
 - „Association” — „Role” or „Link type”, where the link has one, then „Associate Selected” and „Cancel”. The tile stays in sight at the bottom of the screen, even under a long list of results.
 
-Until you tick something, the line under the buttons says what is missing — for instance „Select at least one person”. „Associate Selected” takes you back to the record you started from, with the new link in „Links”. „Cancel” takes you back without linking anything.
+Until you tick something, the line under the buttons says what is missing — for instance „Select at least one person”. „Associate Selected” takes you back to the object you started from, with the new link in „Links”. „Cancel” takes you back without linking anything.
 
 ![7.1 The association screen: „Search”, „Results” and „Association”](links-associate.png){#fig-links-associate}
 
@@ -49,11 +49,11 @@ A person's share in a document is written after the association, on the document
 
 ### 7.1.4 Removing a link {#links-associate-remove}
 
-On „Links”, choose the row with the round button at its left, then press „Dissociate”. The link disappears from both ends, without any question; the two records stay in the archive, untouched. One row is chosen at a time, whatever its kind. „Dissociate” can be used only with a row chosen, and while a row is chosen the three „Associate …” cannot be used.
+On „Links”, choose the row with the round button at its left, then press „Dissociate”. The link disappears from both ends, without any question; the two objects stay in the archive, untouched. One row is chosen at a time, whatever its kind. „Dissociate” can be used only with a row chosen, and while a row is chosen the three „Associate …” cannot be used.
 
 ## 7.2 The „Links” tile {#links-related}
 
-Every natural person, company, property and document has the „Links” tile: everything linked to the record, in one place (Figure [[fig-links-related]]). If you do not see it, tick „Links” among the tiles at the top of the screen (section [[start-tiles]]). When nothing is linked, the tile says „Nothing related yet.”.
+Every natural person, company, property and document has the „Links” tile: everything linked to the object, in one place (Figure [[fig-links-related]]). If you do not see it, tick „Links” among the tiles at the top of the screen (section [[start-tiles]]). When nothing is linked, the tile says „Nothing related yet.”.
 
 The rows always come in the same order — natural persons, judicial persons, properties, documents — with a thin line between two kinds and the kind's icon at the start of the row. Each row stays on one line:
 
@@ -63,14 +63,14 @@ The rows always come in the same order — natural persons, judicial persons, pr
 
 A row can carry a few buttons:
 
-- „Relationship” shows, in a bubble, what links the two records: the person's role in the document (for instance Role: „Vânzător”) or the sentence of a link with a direction (section [[links-references]]). A click outside the bubble or the Esc key closes it.
-- „View” opens the linked record read-only; „Modify”, at the bottom of its screen, makes it editable.
+- „Relationship” shows, in a bubble, what links the two objects: the person's role in the document (for instance Role: „Vânzător”) or the sentence of a link with a direction (section [[links-references]]). A click outside the bubble or the Esc key closes it.
+- „View” opens the linked object read-only; „Modify”, at the bottom of its screen, makes it editable.
 - „Preview” opens it alongside, without leaving the screen (section [[start-preview]]).
 - „Share”, in orange, holds a person's share in a document (section [[documents-parties]]).
 
 Under the rows are „Associate person”, „Associate property”, „Associate document” and „Dissociate”; on a document, after them, also „Cited instruments” (section [[links-references]]). On a sale contract, an addendum or a certificate of inheritance, the parties stand in the „Parties” tile, grouped by role, and „Links” holds the document's other links and, above them, a line saying how many parties are in „Parties” (section [[documents-parties]]).
 
-![7.2 A record's „Links” tile](links-related.png){#fig-links-related}
+![7.2 An object's „Links” tile](links-related.png){#fig-links-related}
 
 ## 7.3 Cited deeds and included properties {#links-references}
 
@@ -94,48 +94,48 @@ As with documents, the link is read from the property you are on. From the parce
 
 ## 7.4 The „Classification” and „Tags and groups” tiles {#links-classify}
 
-Every record has two tiles that concern how you work with it: „Classification” and „Tags and groups”. Rest the mouse on a field's title to learn what it is for, or on the chosen value to learn what it means.
+Every object has two tiles that concern how you work with it: „Classification” and „Tags and groups”. Rest the mouse on a field's title to learn what it is for, or on the chosen value to learn what it means.
 
 ### 7.4.1 „Classification” {#links-classify-classification}
 
 | The field | Its values | What it says |
 |---|---|---|
-| Importance | Low, Medium, High | how much the record matters to you, with no justification needed |
-| Relevance | Inactive, Historical, Current, Future | where the record stands in time; an old deed can be historical and still very important |
-| Provenance | for instance „Manual (Add new)”, „AI interpretation”, „Coordinate file (.txt)” | how the record came into the archive |
+| Importance | Low, Medium, High | how much the object matters to you, with no justification needed |
+| Relevance | Inactive, Historical, Current, Future | where the object stands in time; an old deed can be historical and still very important |
+| Provenance | for instance „Manual (Add new)”, „AI interpretation”, „Coordinate file (.txt)” | how the object came into the archive |
 
-Under „Provenance”, „History” keeps every change, with its date. „Save”, on the line of „History”, cannot be pressed until you change a value; after the save it reads „✓ Saved”. The save adds a version of the record (section [[links-versions]]).
+Under „Provenance”, „History” keeps every change, with its date. „Save”, on the line of „History”, cannot be pressed until you change a value; after the save it reads „✓ Saved”. The save adds a version of the object (section [[links-versions]]).
 
 ### 7.4.2 Tags {#links-classify-tags}
 
-Tags are free words by which you find records again — „lease”, „dispute”, „inheritance”. In „Tags and groups”, under „Tags / Keywords”, type the tag into „Enter a tag…” and press „Add” or Enter. The tag is saved at once, without „Save”, and is written in lower case. To remove it, rest the mouse on it and press the „×” that appears in its corner.
+Tags are free words by which you find objects again — „lease”, „dispute”, „inheritance”. In „Tags and groups”, under „Tags / Keywords”, type the tag into „Enter a tag…” and press „Add” or Enter. The tag is saved at once, without „Save”, and is written in lower case. To remove it, rest the mouse on it and press the „×” that appears in its corner.
 
-You find every record with a tag in „Global Search”: type the tag into „Tag” and press „Search” (section [[reports-search]]).
+You find every object with a tag in „Global Search”: type the tag into „Tag” and press „Search” (section [[reports-search]]).
 
-„Administration” → „Tags” shows „Tag cloud”: every tag in the archive, each with the number of records that carry it, the most used ones larger. A double click on a tag selects it or lets it go:
+„Administration” → „Tags” shows „Tag cloud”: every tag in the archive, each with the number of objects that carry it, the most used ones larger. A double click on a tag selects it or lets it go:
 
 - with one tag selected, „Rename tag” turns it into a box right in the cloud; type the new name and press Enter, or Esc to leave it as it was;
 - with two or more selected, „Merge tags” opens „Merge tags”; choose „Keep this” on the tag that stays and press „Merge”.
 
-A tag removed from the last record that carried it disappears from the cloud.
+A tag removed from the last object that carried it disappears from the cloud.
 
 ### 7.4.3 Groups {#links-classify-groups}
 
-A group gathers, for a short-lived task, records of one kind — for instance the plots of land for a valuation. The group is made in „Administration” → „Groups” (section [[admin-groups]]): „Add”, choose „Target” and type „Description”, then „Save”; the code, in the form GRP-001, is given automatically. „Edit” on the group's row opens its screen: tick records in „Members available to include”, press „Add to Group” and then „Save group”. Until „Save group” nothing is written, and the screen shows „Unsaved changes”.
+A group gathers, for a short-lived task, objects of one kind — for instance the plots of land for a valuation. The group is made in „Administration” → „Groups” (section [[admin-groups]]): „Add”, choose „Target” and type „Description”, then „Save”; the code, in the form GRP-001, is given automatically. „Edit” on the group's row opens its screen: tick objects in „Members available to include”, press „Add to Group” and then „Save group”. Until „Save group” nothing is written, and the screen shows „Unsaved changes”.
 
-On a record, „Groups” in „Tags and groups” shows its groups. „+ Add to group” opens the list of groups; „×” on a group takes the record out of it. Beside the group's code, the number in brackets is how many members the group has now — for instance „GRP-001 [2]”, with „2 members” when you rest the mouse on it.
+On an object, „Groups” in „Tags and groups” shows its groups. „+ Add to group” opens the list of groups; „×” on a group takes the object out of it. Beside the group's code, the number in brackets is how many members the group has now — for instance „GRP-001 [2]”, with „2 members” when you rest the mouse on it.
 
-A record can belong to at most three groups. At the third, „+” can no longer be pressed and under the list it says: „An object can belong to at most 3 groups. Remove it from one to add it to another.”. You find a group's members in „Global Search”, by „Group code”. A deleted group does not take its records with it.
+An object can belong to at most three groups. At the third, „+” can no longer be pressed and under the list it says: „An object can belong to at most 3 groups. Remove it from one to add it to another.”. You find a group's members in „Global Search”, by „Group code”. A deleted group does not take its objects with it.
 
 ### 7.4.4 Stamps {#links-classify-stamps}
 
-A stamp marks a lasting characteristic, on records of any kind. It is made in „Administration” → „Stamps”, with „Create stamp”: „Short description” and „Notes”, and the code is given on saving. „Apply”, on the stamp's row, opens its screen: choose the kind of records in „Object type”, tick them in „Objects available to stamp”, press „Apply stamp” and then „Save stamps”. The list of stamps shows, for each, how many records carry it.
+A stamp marks a lasting characteristic, on objects of any kind. It is made in „Administration” → „Stamps”, with „Create stamp”: „Short description” and „Notes”, and the code is given on saving. „Apply”, on the stamp's row, opens its screen: choose the kind of objects in „Object type”, tick them in „Objects available to stamp”, press „Apply stamp” and then „Save stamps”. The list of stamps shows, for each, how many objects carry it.
 
-On the record, the stamp appears in „Tags and groups”, under „Stamps”, where „+ Apply stamp” puts on another and „×” takes it off. A deleted stamp disappears from every record.
+On the object, the stamp appears in „Tags and groups”, under „Stamps”, where „+ Apply stamp” puts on another and „×” takes it off. A deleted stamp disappears from every object.
 
 ## 7.5 Versions and „Make Current” {#links-versions}
 
-Every save of a record keeps a new version and leaves the one before untouched (section [[intro-versions]]). Versions are counted from 0: a record just created shows „v 0” at the top right. „Save” cannot be pressed until you change something, so a new version appears only when something has changed. After the save you stay on the record.
+Every save of an object keeps a new version and leaves the one before untouched (section [[intro-versions]]). Versions are counted from 0: an object just created shows „v 0” at the top right. „Save” cannot be pressed until you change something, so a new version appears only when something has changed. After the save you stay on the object.
 
 When it has several versions, the top right shows „N versions”, for instance „2 versions”. Pressed, it takes you one version back and shows „Previous version”, „Next version” and „Make Current” (Figure [[fig-links-versions]]). On an old version:
 
@@ -145,19 +145,19 @@ When it has several versions, the top right shows „N versions”, for instance
 
 „Make Current” makes the version you are reading the current one again, **by copying it into a new version**. The application first asks „Make this version current?” and says what will happen, for instance: „Version 0 will be copied to a new version 3, which becomes the current version. Continue?”. „OK” does it, „Cancel” gives it up. Nothing is lost: the versions in between stay in the history, and the list shows the values of the new current version.
 
-![7.3 A record's versions](links-versions.png){#fig-links-versions}
+![7.3 An object's versions](links-versions.png){#fig-links-versions}
 
-## 7.6 The same record in two windows {#links-two-windows}
+## 7.6 The same object in two windows {#links-two-windows}
 
-The same record can be open in two windows or tabs of the browser, and one does not silently cover what was saved in the other:
+The same object can be open in two windows or tabs of the browser, and one does not silently cover what was saved in the other:
 
 - When you save in one window, the other reloads by itself, if it has nothing unsaved.
 - If you have started typing in the other, it is not reloaded over what you typed. Under the „Unsaved changes” band appears, in red: „This object was saved in another window. Your changes here are not saved, and saving them will be refused.”, with „Reload”.
 - If you press „Save” there anyway, nothing is written: „Nothing was saved: this object was saved in another window or by another user since you opened it. What you typed is still on screen.”.
 - „Reload” asks „Reload the object?”: the unsaved values are lost and the current version is loaded.
-- If the record is deleted in one window, the other says „This object was deleted in another window.”.
+- If the object is deleted in one window, the other says „This object was deleted in another window.”.
 
-The version history holds only the saves that went through. The safest way is to change a record in one window only.
+The version history holds only the saves that went through. The safest way is to change an object in one window only.
 
 ## 7.7 Examples and use cases {#links-examples}
 

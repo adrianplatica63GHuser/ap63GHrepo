@@ -20,7 +20,7 @@ The manual opens from the sidebar, „Help & learning” → „User manual”. 
 
 Beside it, „Download in Romanian (Word)” gives the Romanian manual. There are two manuals, one per language: each is written wholly in its language, and its figures are shot in the application used in that language.
 
-The figures are photographed from the application, on invented records. Where real people's data would have appeared on the screen, it is blurred.
+The figures are photographed from the application, on invented objects. Where real people's data would have appeared on the screen, it is blurred.
 
 ## 13.2 The „?” help and its texts {#learning-help}
 
@@ -130,7 +130,7 @@ The answer is written by AI: check the section it names before relying on it.
 
 ### 13.5.2 What it sends and what it costs {#learning-ask-ai}
 
-- Claude receives only the question, the manual's outline and the text of the sections it picked — nothing from the archive's records, and no earlier questions.
+- Claude receives only the question, the manual's outline and the text of the sections it picked — nothing from the archive's objects, and no earlier questions.
 - Every question is paid for: one read to pick the sections and, when it finds some, another to write the answer. Together they usually cost under a cent. „Settings” → „Costs” → „AI” counts them with the other paid reads (section [[admin-settings-costs]]).
 - Diacritics, word order and the way the question is worded do not matter: what you ask does.
 `;

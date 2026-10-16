@@ -52,11 +52,11 @@
           "id": "a2",
           "section": "reports-interactions-log",
           "ro": {
-            "question": "Formularul de înregistrare nu are nicio căsuță pentru persoană. De ce?",
+            "question": "Formularul interacțiunii nu are nicio căsuță pentru persoană. De ce?",
             "explanation": "Interacțiunea este a persoanei de pe ecran: formularul se deschide pe ecranul ei, deja legat de ea."
           },
           "en": {
-            "question": "The recording form has no box for the person. Why?",
+            "question": "The interaction form has no box for the person. Why?",
             "explanation": "The interaction belongs to the person on the screen: the form opens on their screen, already tied to them."
           },
           "options": [
@@ -91,18 +91,18 @@
           "section": "reports-interactions-log",
           "ro": {
             "question": "La „Conturi conectate”, Gmail și WhatsApp Business arată „Neconectat”. Puteți totuși înregistra un mesaj primit pe WhatsApp?",
-            "explanation": "Butoanele „Conectează” nu fac încă nimic: o interacțiune se înregistrează de mână, fără niciun cont conectat, în „Înregistrare manuală”."
+            "explanation": "Butoanele „Conectează” nu fac încă nimic: o interacțiune se înregistrează de mână, fără niciun cont conectat, în „Introducere manuală”."
           },
           "en": {
             "question": "At „Conturi conectate”, Gmail and WhatsApp Business show „Neconectat” (not connected). Can you still record a message received on WhatsApp?",
-            "explanation": "The „Conectează” buttons do nothing yet: an interaction is recorded by hand, with no account connected, in „Înregistrare manuală”."
+            "explanation": "The „Conectează” buttons do nothing yet: an interaction is recorded by hand, with no account connected, in „Introducere manuală”."
           },
           "options": [
             {
               "id": "o1",
               "correct": true,
-              "ro": "Da, de mână, în „Înregistrare manuală”, fără niciun cont conectat",
-              "en": "Yes, by hand, in „Înregistrare manuală”, with no account connected"
+              "ro": "Da, de mână, în „Introducere manuală”, fără niciun cont conectat",
+              "en": "Yes, by hand, in „Introducere manuală”, with no account connected"
             },
             {
               "id": "o2",
@@ -248,11 +248,11 @@
           "section": "reports-interactions-log",
           "ro": {
             "question": "Când se deschide formularul, care dintre cele cinci secțiuni este deschisă?",
-            "explanation": "Fiecare secțiune are un titlu urmat de o săgeată; un clic pe titlu o deschide, al doilea o închide. Când formularul se deschide, doar „Înregistrare manuală” este deschisă."
+            "explanation": "Fiecare secțiune are un titlu urmat de o săgeată; un clic pe titlu o deschide, al doilea o închide. Când formularul se deschide, doar „Introducere manuală” este deschisă."
           },
           "en": {
             "question": "When the form opens, which of its five sections is open?",
-            "explanation": "Each section is a title followed by an arrow; a click on the title opens it, a second click closes it. When the form opens, only „Înregistrare manuală” is open."
+            "explanation": "Each section is a title followed by an arrow; a click on the title opens it, a second click closes it. When the form opens, only „Introducere manuală” is open."
           },
           "options": [
             {
@@ -276,8 +276,8 @@
             {
               "id": "o4",
               "correct": true,
-              "ro": "Doar „Înregistrare manuală”",
-              "en": "Only „Înregistrare manuală”"
+              "ro": "Doar „Introducere manuală”",
+              "en": "Only „Introducere manuală”"
             }
           ]
         },

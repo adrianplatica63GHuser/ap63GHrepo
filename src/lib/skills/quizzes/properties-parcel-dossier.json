@@ -16,11 +16,11 @@
           "section": "links-related",
           "ro": {
             "question": "Ciprian începe dosarul parcelei „Teren Bragadiru” și vrea să vadă într-un singur loc persoanele, proprietățile și actele legate de ea. Pe ecranul proprietății, cu fișele „Implicit”, nu le găsește. Ce face?",
-            "explanation": "Tot ce este legat de o înregistrare stă în fișa „Legături”. „Implicit” arată doar „Identificare cadastrală”, „Adresă”, „Hartă” și „Puncte de contur”, așa că „Legături” se bifează printre fișele din capul ecranului."
+            "explanation": "Tot ce este legat de un obiect stă în fișa „Legături”. „Implicit” arată doar „Identificare cadastrală”, „Adresă”, „Hartă” și „Puncte de contur”, așa că „Legături” se bifează printre fișele din capul ecranului."
           },
           "en": {
             "question": "Ciprian starts the dossier of the parcel „Teren Bragadiru” and wants to see in one place the persons, properties and documents linked to it. On the property's screen, with the „Implicit” (default) tiles, he does not find them. What does he do?",
-            "explanation": "Everything linked to a record stands in the „Legături” (links) tile. „Implicit” shows only „Identificare cadastrală”, „Adresă”, „Hartă” and „Puncte de contur”, so „Legături” is ticked among the tiles at the top of the screen."
+            "explanation": "Everything linked to an object stands in the „Legături” (links) tile. „Implicit” shows only „Identificare cadastrală”, „Adresă”, „Hartă” and „Puncte de contur”, so „Legături” is ticked among the tiles at the top of the screen."
           },
           "options": [
             {
@@ -76,8 +76,8 @@
             {
               "id": "o3",
               "correct": false,
-              "ro": "La amândouă, felul înregistrării legate.",
-              "en": "For both, the kind of the linked record."
+              "ro": "La amândouă, felul obiectului legat.",
+              "en": "For both, the kind of the linked object."
             },
             {
               "id": "o4",
@@ -320,11 +320,11 @@
           "section": "links-classify-groups",
           "ro": {
             "question": "Parcela face deja parte din trei grupuri, iar Ciprian vrea s-o pună și în grupul dosarului, „Dosar Munteanu”. „+” nu se poate apăsa. Ce face?",
-            "explanation": "O înregistrare poate face parte din cel mult trei grupuri. Ca s-o adăugați în altul, o scoateți întâi dintr-un grup, cu „×” pe acel grup."
+            "explanation": "Un obiect poate face parte din cel mult trei grupuri. Ca să-l adăugați în altul, îl scoateți întâi dintr-un grup, cu „×” pe acel grup."
           },
           "en": {
             "question": "The parcel already belongs to three groups, and Ciprian wants to put it also in the dossier's group, „Dosar Munteanu”. „+” cannot be pressed. What does he do?",
-            "explanation": "A record can belong to at most three groups. To add it to another, you first take it out of one group, with the „×” on that group."
+            "explanation": "An object can belong to at most three groups. To add it to another, you first take it out of one group, with the „×” on that group."
           },
           "options": [
             {
@@ -412,8 +412,8 @@
             {
               "id": "o2",
               "correct": false,
-              "ro": "Parcela e duplicată; caută cealaltă înregistrare, care clipește.",
-              "en": "The parcel is a duplicate; he looks for the other record, which blinks."
+              "ro": "Parcela e duplicată; caută celălalt obiect, care clipește.",
+              "en": "The parcel is a duplicate; he looks for the other object, which blinks."
             },
             {
               "id": "o3",
@@ -515,11 +515,11 @@
           "section": "links-related",
           "ro": {
             "question": "Lucrând la dosar pe ecranul parcelei, Ciprian vrea să citească repede contractul legat, fără să plece de pe parcelă. Ce apasă pe rândul contractului din „Legături”?",
-            "explanation": "„Previzualizare” deschide înregistrarea legată alături, fără să plecați de pe ecran. „Vizualizare” o deschide numai pentru citire, pe ecranul ei."
+            "explanation": "„Previzualizare” deschide obiectul legat alături, fără să plecați de pe ecran. „Vizualizare” îl deschide numai pentru citire, pe ecranul lui."
           },
           "en": {
             "question": "Working on the dossier on the parcel's screen, Ciprian wants to read the linked contract quickly, without leaving the parcel. What does he press on the contract's row in „Legături”?",
-            "explanation": "„Previzualizare” (preview) opens the linked record alongside, without leaving the screen. „Vizualizare” (view) opens it read-only, on its own screen."
+            "explanation": "„Previzualizare” (preview) opens the linked object alongside, without leaving the screen. „Vizualizare” (view) opens it read-only, on its own screen."
           },
           "options": [
             {
@@ -819,11 +819,11 @@
           "section": "links-classify-groups",
           "ro": {
             "question": "Ciprian a făcut grupul dosarului cu „Țintă” „Proprietate” și vrea să pună în el și contractul de vânzare al parcelei. Se poate?",
-            "explanation": "Un grup strânge înregistrări de un singur fel, cel ales la „Țintă”, iar pe ecranul grupului „Țintă” se poate doar citi. Pentru acte e nevoie de un grup cu „Țintă” „Document”."
+            "explanation": "Un grup strânge obiecte de un singur fel, cel ales la „Țintă”, iar pe ecranul grupului „Țintă” se poate doar citi. Pentru acte e nevoie de un grup cu „Țintă” „Document”."
           },
           "en": {
             "question": "Ciprian made the dossier's group with „Țintă” „Proprietate” and wants to put the parcel's sale contract in it too. Can he?",
-            "explanation": "A group gathers records of one kind, the one chosen at „Țintă”, and on the group's screen „Țintă” is read-only. Documents need a group with „Țintă” „Document”."
+            "explanation": "A group gathers objects of one kind, the one chosen at „Țintă”, and on the group's screen „Țintă” is read-only. Documents need a group with „Țintă” „Document”."
           },
           "options": [
             {

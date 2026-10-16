@@ -64,7 +64,7 @@ On each page's row are „Page notes” (a pen), „Print” and „Delete”. T
 
 Types that have a form of their own read „(has a form)” after their name in the list — for example „Contract de Vânzare (has a form)”. As soon as you choose such a type, the form grows with its tiles. A type with no form keeps only the document's general fields. For a user with the superuser role, under „Document Type” on a type with no form it reads „This type has no form yet; its form is built in DocTypeEngine.”, and „DocTypeEngine” opens the tool with the type already chosen (section [[tools-doc-type-engine]]).
 
-The tiles shown are chosen with the ticks at the head of the screen, as on any record (section [[start-tiles]]), and the choice is remembered per type: a sale contract and a plan each keep their own arrangement. If you change a document's type, the tiles change with it.
+The tiles shown are chosen with the ticks at the head of the screen, as on any object (section [[start-tiles]]), and the choice is remembered per type: a sale contract and a plan each keep their own arrangement. If you change a document's type, the tiles change with it.
 
 ## 6.4 The document's identification and form {#documents-identification}
 
@@ -84,7 +84,7 @@ Many of a type's fields are drop-downs. The blank choice reads „no value”, i
 
 A document brought into the archive by the import has its form filled in by AI from what it read on the pages, and „Processing status” reads „Imported” or „AI processed”. What has no place in the form remains as a short note in „Enhanced Notes”. The import is described in chapter [[import]] (section [[import-scanning]]).
 
-The document's classification, tags, groups and stamps sit on the tiles „Classification” and „Tags and groups”; they work as on any record (section [[links-classify]]).
+The document's classification, tags, groups and stamps sit on the tiles „Classification” and „Tags and groups”; they work as on any object (section [[links-classify]]).
 
 ## 6.5 Parties, roles and shares {#documents-parties}
 

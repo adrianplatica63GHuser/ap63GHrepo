@@ -92,11 +92,11 @@
           "section": "admin-reference-data-values",
           "ro": {
             "question": "În „Cetățenie”, Ciprian vrea să șteargă „Romana”, scrisă fără diacritice, cu „Șterge”. Trei persoane o folosesc. Ce îi spune fereastra?",
-            "explanation": "Dacă o folosesc înregistrări, fereastra spune câte, iar ștergerea nu este posibilă până nu le mutați pe altă valoare: alegeți-o la „Mutați-le pe:” și apăsați „Mută”."
+            "explanation": "Dacă o folosesc obiecte, fereastra spune câte, iar ștergerea nu este posibilă până nu le mutați pe altă valoare: alegeți-o la „Mutați-le pe:” și apăsați „Mută”."
           },
           "en": {
             "question": "In „Cetățenie” (citizenship), Ciprian wants to delete „Romana”, spelt without diacritics, with „Șterge”. Three persons use it. What does the window tell him?",
-            "explanation": "If records use it, the window says how many, and deleting is not possible until you move them onto another value: choose it under „Mutați-le pe:” (move them to) and press „Mută” (move)."
+            "explanation": "If objects use it, the window says how many, and deleting is not possible until you move them onto another value: choose it under „Mutați-le pe:” (move them to) and press „Mută” (move)."
           },
           "options": [
             {
@@ -120,8 +120,8 @@
             {
               "id": "o4",
               "correct": true,
-              "ro": "Că trei înregistrări o folosesc și trebuie mutate întâi, cu „Mutați-le pe:” și „Mută”.",
-              "en": "That three records use it and must be moved first, with „Mutați-le pe:” and „Mută”."
+              "ro": "Că trei obiecte o folosesc și trebuie mutate întâi, cu „Mutați-le pe:” și „Mută”.",
+              "en": "That three objects use it and must be moved first, with „Mutați-le pe:” and „Mută”."
             }
           ]
         },
@@ -130,11 +130,11 @@
           "section": "admin-reference-data-values",
           "ro": {
             "question": "După ce a unit „Teren arabil” cu „Arabil”, Ciprian deschide o versiune de anul trecut a unei proprietăți care avea „Teren arabil”. Ce categorie arată versiunea aceea?",
-            "explanation": "Versiunile vechi ale înregistrărilor nu se schimbă: fiecare păstrează valoarea așa cum era când a fost salvată. Versiunea veche arată tot „Teren arabil”."
+            "explanation": "Versiunile vechi ale obiectelor nu se schimbă: fiecare păstrează valoarea așa cum era când a fost salvată. Versiunea veche arată tot „Teren arabil”."
           },
           "en": {
             "question": "After merging „Teren arabil” into „Arabil”, Ciprian opens last year's version of a property that had „Teren arabil”. Which category does that version show?",
-            "explanation": "Old versions of the records do not change: each keeps the value as it was when it was saved. The old version still shows „Teren arabil”."
+            "explanation": "Old versions of the objects do not change: each keeps the value as it was when it was saved. The old version still shows „Teren arabil”."
           },
           "options": [
             {
@@ -196,8 +196,8 @@
             {
               "id": "o4",
               "correct": false,
-              "ro": "Scoate „arenda” de pe fiecare înregistrare și pune în loc „arendă”, una câte una.",
-              "en": "He removes „arenda” from each record and puts „arendă” instead, one by one."
+              "ro": "Scoate „arenda” de pe fiecare obiect și pune în loc „arendă”, unul câte unul.",
+              "en": "He removes „arenda” from each object and puts „arendă” instead, one by one."
             }
           ]
         },
@@ -282,11 +282,11 @@
           "section": "links-classify-tags",
           "ro": {
             "question": "În nor stă „proba ×1”, pusă din greșeală pe un teren din Bragadiru. Ciprian vrea ca eticheta să dispară din nor. Ce face?",
-            "explanation": "Pe teren, în „Etichete și grupuri”, ține mouse-ul pe etichetă și apasă „×”-ul din colțul ei. O etichetă scoasă de pe ultima înregistrare care o purta dispare din nor."
+            "explanation": "Pe teren, în „Etichete și grupuri”, ține mouse-ul pe etichetă și apasă „×”-ul din colțul ei. O etichetă scoasă de pe ultimul obiect care o purta dispare din nor."
           },
           "en": {
             "question": "In the cloud stands „proba ×1” (test), put by mistake on a plot in Bragadiru. Ciprian wants the tag to disappear from the cloud. What does he do?",
-            "explanation": "On the plot, in „Etichete și grupuri” (tags and groups), he holds the mouse over the tag and presses the „×” in its corner. A tag removed from the last record that carried it disappears from the cloud."
+            "explanation": "On the plot, in „Etichete și grupuri” (tags and groups), he holds the mouse over the tag and presses the „×” in its corner. A tag removed from the last object that carried it disappears from the cloud."
           },
           "options": [
             {
@@ -298,8 +298,8 @@
             {
               "id": "o2",
               "correct": true,
-              "ro": "O scoate de pe teren cu „×”; fiind ultima înregistrare, eticheta dispare din nor.",
-              "en": "He removes it from the plot with „×”; being the last record, the tag disappears from the cloud."
+              "ro": "O scoate de pe teren cu „×”; fiind ultimul obiect, eticheta dispare din nor.",
+              "en": "He removes it from the plot with „×”; being the last object, the tag disappears from the cloud."
             },
             {
               "id": "o3",
@@ -515,11 +515,11 @@
           "section": "admin-reference-data-values",
           "ro": {
             "question": "Ciprian apasă „Unește” pe „Primaria Bragadiru”, iar fereastra spune „Un obiect se mută pe valoarea păstrată:”. Ce înseamnă?",
-            "explanation": "Fereastra spune câte înregistrări se mută. După „Unește”, înregistrarea trece pe valoarea aleasă în „Valoarea păstrată”, iar „Primaria Bragadiru” dispare din listă."
+            "explanation": "Fereastra spune câte obiecte se mută. După „Unește”, obiectul trece pe valoarea aleasă în „Valoarea păstrată”, iar „Primaria Bragadiru” dispare din listă."
           },
           "en": {
             "question": "Ciprian presses „Unește” on „Primaria Bragadiru”, and the window says „Un obiect se mută pe valoarea păstrată:” (one object moves to the value kept). What does it mean?",
-            "explanation": "The window says how many records move. After „Unește”, the record moves to the value chosen in „Valoarea păstrată”, and „Primaria Bragadiru” disappears from the list."
+            "explanation": "The window says how many objects move. After „Unește”, the object moves to the value chosen in „Valoarea păstrată”, and „Primaria Bragadiru” disappears from the list."
           },
           "options": [
             {
@@ -543,8 +543,8 @@
             {
               "id": "o4",
               "correct": true,
-              "ro": "Că o înregistrare trece pe valoarea păstrată, iar cealaltă dispare.",
-              "en": "That one record moves to the value kept, and the other disappears."
+              "ro": "Că un obiect trece pe valoarea păstrată, iar cealaltă dispare.",
+              "en": "That one object moves to the value kept, and the other disappears."
             }
           ]
         },
@@ -591,11 +591,11 @@
           "section": "admin-reference-data-values",
           "ro": {
             "question": "Ciprian a unit „Teren arabil” cu „Arabil”. Deschide acum o proprietate care avea „Teren arabil”, în versiunea ei curentă. Ce categorie vede?",
-            "explanation": "La unire, înregistrările trec pe valoarea păstrată, deci versiunea curentă arată „Arabil”. Doar versiunile vechi păstrează valoarea de când au fost salvate."
+            "explanation": "La unire, obiectele trec pe valoarea păstrată, deci versiunea curentă arată „Arabil”. Doar versiunile vechi păstrează valoarea de când au fost salvate."
           },
           "en": {
             "question": "Ciprian has merged „Teren arabil” into „Arabil”. He now opens a property that had „Teren arabil”, in its current version. Which category does he see?",
-            "explanation": "On a merge, the records move to the value kept, so the current version shows „Arabil”. Only old versions keep the value from when they were saved."
+            "explanation": "On a merge, the objects move to the value kept, so the current version shows „Arabil”. Only old versions keep the value from when they were saved."
           },
           "options": [
             {
@@ -613,14 +613,14 @@
             {
               "id": "o3",
               "correct": true,
-              "ro": "„Arabil”, valoarea păstrată, pe care a trecut înregistrarea.",
-              "en": "„Arabil”, the value kept, to which the record moved."
+              "ro": "„Arabil”, valoarea păstrată, pe care a trecut obiectul.",
+              "en": "„Arabil”, the value kept, to which the object moved."
             },
             {
               "id": "o4",
               "correct": false,
-              "ro": "„Teren arabil”, pentru că unirea schimbă doar înregistrările noi.",
-              "en": "„Teren arabil”, because the merge changes only new records."
+              "ro": "„Teren arabil”, pentru că unirea schimbă doar obiectele noi.",
+              "en": "„Teren arabil”, because the merge changes only new objects."
             }
           ]
         },
@@ -667,11 +667,11 @@
           "section": "admin-groups-tags",
           "ro": {
             "question": "În „Fuzionare etichete”, înainte să apese „Fuzionează”, Ciprian citește „Etichetele „mostenire” vor deveni „moștenire”.”. Ce îi spune asta?",
-            "explanation": "Fereastra spune ce se va întâmpla: eticheta aleasă cu „Păstrează aceasta” este „moștenire”, iar înregistrările cu „mostenire” vor purta „moștenire”."
+            "explanation": "Fereastra spune ce se va întâmpla: eticheta aleasă cu „Păstrează aceasta” este „moștenire”, iar obiectele cu „mostenire” vor purta „moștenire”."
           },
           "en": {
             "question": "In „Fuzionare etichete”, before pressing „Fuzionează”, Ciprian reads „Etichetele „mostenire” vor deveni „moștenire”.” (the tags „mostenire” will become „moștenire”, inheritance). What does that tell him?",
-            "explanation": "The window says what will happen: the tag chosen with „Păstrează aceasta” is „moștenire”, and the records with „mostenire” will carry „moștenire”."
+            "explanation": "The window says what will happen: the tag chosen with „Păstrează aceasta” is „moștenire”, and the objects with „mostenire” will carry „moștenire”."
           },
           "options": [
             {
@@ -689,14 +689,14 @@
             {
               "id": "o3",
               "correct": false,
-              "ro": "Că „moștenire” va fi adăugată pe toate înregistrările din arhivă.",
-              "en": "That „moștenire” will be added to every record in the archive."
+              "ro": "Că „moștenire” va fi adăugată pe toate obiectele din arhivă.",
+              "en": "That „moștenire” will be added to every object in the archive."
             },
             {
               "id": "o4",
               "correct": true,
-              "ro": "Că rămâne „moștenire”, iar înregistrările cu „mostenire” o vor purta pe ea.",
-              "en": "That „moștenire” stays, and the records with „mostenire” will carry it."
+              "ro": "Că rămâne „moștenire”, iar obiectele cu „mostenire” o vor purta pe ea.",
+              "en": "That „moștenire” stays, and the objects with „mostenire” will carry it."
             }
           ]
         },

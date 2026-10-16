@@ -54,11 +54,11 @@
           "section": "reports-interactions-log",
           "ro": {
             "question": "Ciprian deschide formularul cu „Înregistrează o interacțiune” și vede doar câmpurile de canal, sens, stare și subiect. Unde leagă actele și etichetele?",
-            "explanation": "Formularul are cinci secțiuni, iar la deschidere doar „Înregistrare manuală” este deschisă. Un clic pe titlul „Asocieri” deschide secțiunea în care se leagă actele, etichetele și proprietatea."
+            "explanation": "Formularul are cinci secțiuni, iar la deschidere doar „Introducere manuală” este deschisă. Un clic pe titlul „Asocieri” deschide secțiunea în care se leagă actele, etichetele și proprietatea."
           },
           "en": {
             "question": "Ciprian opens the form with „Înregistrează o interacțiune” and sees only the channel, direction, status and subject fields. Where does he link the documents and tags?",
-            "explanation": "The form has five sections, and when it opens only „Înregistrare manuală” (manual entry) is open. A click on the title „Asocieri” opens the section where the documents, tags and property are linked."
+            "explanation": "The form has five sections, and when it opens only „Introducere manuală” (manual entry) is open. A click on the title „Asocieri” opens the section where the documents, tags and property are linked."
           },
           "options": [
             {
@@ -168,11 +168,11 @@
           "section": "reports-interactions-edit",
           "ro": {
             "question": "Pe ecranul Mariei Stoica, Ciprian apasă o interacțiune din istoric ca s-o corecteze. Cum știe că modifică acea interacțiune și nu înregistrează una nouă?",
-            "explanation": "Interacțiunea se încarcă în formular, iar modul trece din „Înregistrare nouă” în „Editează selecția”; formularul arată și cine a creat-o și cine a modificat-o ultima dată, și când."
+            "explanation": "Interacțiunea se încarcă în formular, iar modul trece din „Interacțiune nouă” în „Editează selecția”; formularul arată și cine a creat-o și cine a modificat-o ultima dată, și când."
           },
           "en": {
             "question": "On Maria Stoica's screen, Ciprian presses an interaction in the history to correct it. How does he know he is changing that interaction and not recording a new one?",
-            "explanation": "The interaction is loaded into the form, and the mode moves from „Înregistrare nouă” (new record) to „Editează selecția” (edit the selection); the form also shows who created it and who last changed it, and when."
+            "explanation": "The interaction is loaded into the form, and the mode moves from „Interacțiune nouă” (new interaction) to „Editează selecția” (edit the selection); the form also shows who created it and who last changed it, and when."
           },
           "options": [
             {
@@ -205,11 +205,11 @@
           "id": "a6",
           "section": "reports-interactions-edit",
           "ro": {
-            "question": "Ciprian corectează subiectul unei interacțiuni, dar la salvare apare „Această înregistrare a fost modificată de altcineva. O reîncarci sau o suprascrii?”. Vrea să păstreze ce a salvat colegul lui. Ce apasă?",
+            "question": "Ciprian corectează subiectul unei interacțiuni, dar la salvare apare „Această interacțiune a fost modificată de altcineva. O reîncarci sau o suprascrii?”. Vrea să păstreze ce a salvat colegul lui. Ce apasă?",
             "explanation": "Salvarea nu trece peste celălalt: „Reîncarcă” aduce varianta colegului, iar „Suprascrie” ar păstra ce a scris Ciprian."
           },
           "en": {
-            "question": "Ciprian corrects an interaction's subject, but on saving „Această înregistrare a fost modificată de altcineva. O reîncarci sau o suprascrii?” (this record was changed by someone else; reload it or overwrite it?) appears. He wants to keep what his colleague saved. What does he press?",
+            "question": "Ciprian corrects an interaction's subject, but on saving „Această interacțiune a fost modificată de altcineva. O reîncarci sau o suprascrii?” (this interaction was changed by someone else; reload it or overwrite it?) appears. He wants to keep what his colleague saved. What does he press?",
             "explanation": "The save does not go over the other person: „Reîncarcă” (reload) brings the colleague's version, while „Suprascrie” (overwrite) would keep what Ciprian typed."
           },
           "options": [
@@ -455,8 +455,8 @@
             {
               "id": "o2",
               "correct": false,
-              "ro": "Apasă „Șterge înregistrarea” și înregistrează convorbirea din nou.",
-              "en": "He presses „Șterge înregistrarea” (delete the record) and records the call again."
+              "ro": "Apasă „Șterge interacțiunea” și înregistrează convorbirea din nou.",
+              "en": "He presses „Șterge interacțiunea” (delete the interaction) and records the call again."
             },
             {
               "id": "o3",
@@ -629,11 +629,11 @@
           "section": "reports-interactions-edit",
           "ro": {
             "question": "Ciprian a corectat data unei întâlniri cu Maria Stoica, după actele din dosar. La salvare află că un coleg a salvat între timp aceeași interacțiune, cu data veche. Ciprian e sigur de data lui. Ce apasă?",
-            "explanation": "La mesajul „Această înregistrare a fost modificată de altcineva. O reîncarci sau o suprascrii?”, „Suprascrie” păstrează ce ați scris dumneavoastră; „Reîncarcă” ar aduce varianta colegului."
+            "explanation": "La mesajul „Această interacțiune a fost modificată de altcineva. O reîncarci sau o suprascrii?”, „Suprascrie” păstrează ce ați scris dumneavoastră; „Reîncarcă” ar aduce varianta colegului."
           },
           "en": {
             "question": "Ciprian has corrected the date of a meeting with Maria Stoica, from the papers in the file. On saving he learns that a colleague meanwhile saved the same interaction, with the old date. Ciprian is sure of his date. What does he press?",
-            "explanation": "At the message „Această înregistrare a fost modificată de altcineva. O reîncarci sau o suprascrii?”, „Suprascrie” (overwrite) keeps what you typed; „Reîncarcă” (reload) would bring the colleague's version."
+            "explanation": "At the message „Această interacțiune a fost modificată de altcineva. O reîncarci sau o suprascrii?”, „Suprascrie” (overwrite) keeps what you typed; „Reîncarcă” (reload) would bring the colleague's version."
           },
           "options": [
             {
@@ -743,11 +743,11 @@
           "section": "reports-interactions-edit",
           "ro": {
             "question": "Ciprian a șters din greșeală o interacțiune cu Elena Dobre, confirmând cu „Șterge”. Poate s-o aducă înapoi dintr-o versiune mai veche, ca pe o persoană?",
-            "explanation": "„Șterge” o șterge definitiv: apare „Interacțiune ștearsă”, rândul dispare, iar formularul revine la „Înregistrare nouă”. Ca s-o aibă din nou, o înregistrează din nou."
+            "explanation": "„Șterge” o șterge definitiv: apare „Interacțiune ștearsă”, rândul dispare, iar formularul revine la „Interacțiune nouă”. Ca s-o aibă din nou, o înregistrează din nou."
           },
           "en": {
             "question": "Ciprian deleted an interaction with Elena Dobre by mistake, confirming with „Șterge”. Can he bring it back from an older version, as with a person?",
-            "explanation": "„Șterge” deletes it for good: „Interacțiune ștearsă” (interaction deleted) appears, the row goes, and the form returns to „Înregistrare nouă”. To have it again, he records it again."
+            "explanation": "„Șterge” deletes it for good: „Interacțiune ștearsă” (interaction deleted) appears, the row goes, and the form returns to „Interacțiune nouă”. To have it again, he records it again."
           },
           "options": [
             {

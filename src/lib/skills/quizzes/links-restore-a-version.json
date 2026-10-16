@@ -204,11 +204,11 @@
           "section": "links-classify-classification",
           "ro": {
             "question": "Ciprian schimbă „Importanță” unui act din „Medie” în „Ridicată” și apasă „Salvează” pe linia lui „Istoric”. Apoi se răzgândește. Unde găsește valoarea de dinainte, ca s-o facă din nou curentă?",
-            "explanation": "Salvarea din „Clasificare” adaugă o versiune a înregistrării; versiunea de dinainte, cu „Medie”, se poate face din nou curentă cu „Fă curentă”."
+            "explanation": "Salvarea din „Clasificare” adaugă o versiune a obiectului; versiunea de dinainte, cu „Medie”, se poate face din nou curentă cu „Fă curentă”."
           },
           "en": {
             "question": "Ciprian changes a document's „Importanță” from „Medie” to „Ridicată” and presses „Salvează” on the line of „Istoric”. Then he changes his mind. Where does he find the earlier value, to make it current again?",
-            "explanation": "The save in „Clasificare” adds a version of the record; the version before, with „Medie”, can be made current again with „Fă curentă”."
+            "explanation": "The save in „Clasificare” adds a version of the object; the version before, with „Medie”, can be made current again with „Fă curentă”."
           },
           "options": [
             {
@@ -280,11 +280,11 @@
           "section": "persons-add-save",
           "ro": {
             "question": "Ciprian a șters din greșeală o persoană, cu „Șterge” și „Da”. O poate aduce înapoi dintr-o versiune mai veche, cu „Fă curentă”?",
-            "explanation": "Nu: ștergerea unei persoane nu se poate anula. „Fă curentă” întoarce la o versiune veche o înregistrare care există, nu una ștearsă."
+            "explanation": "Nu: ștergerea unei persoane nu se poate anula. „Fă curentă” întoarce la o versiune veche un obiect care există, nu unul șters."
           },
           "en": {
             "question": "Ciprian deleted a person by mistake, with „Șterge” and „Da”. Can he bring them back from an older version, with „Fă curentă”?",
-            "explanation": "No: deleting a person cannot be undone. „Fă curentă” takes a record that exists back to an old version, not a deleted one."
+            "explanation": "No: deleting a person cannot be undone. „Fă curentă” takes an object that exists back to an old version, not a deleted one."
           },
           "options": [
             {
@@ -550,11 +550,11 @@
           "id": "b7",
           "section": "links-two-windows",
           "ro": {
-            "question": "Ciprian a scris o adresă nouă în a doua fereastră a unei înregistrări, dar salvarea a fost refuzată, pentru că înregistrarea se salvase între timp în prima. Găsește adresa aceea printre versiuni?",
+            "question": "Ciprian a scris o adresă nouă în a doua fereastră a unui obiect, dar salvarea a fost refuzată, pentru că obiectul se salvase între timp în prima. Găsește adresa aceea printre versiuni?",
             "explanation": "Istoricul versiunilor ține doar salvările care au trecut; valorile introduse au rămas doar pe ecranul ferestrei a doua."
           },
           "en": {
-            "question": "Ciprian typed a new address in a second window of a record, but the save was refused, because the record had meanwhile been saved in the first. Does he find that address among the versions?",
+            "question": "Ciprian typed a new address in a second window of an object, but the save was refused, because the object had meanwhile been saved in the first. Does he find that address among the versions?",
             "explanation": "The version history holds only the saves that went through; the values typed stayed only on the screen of the second window."
           },
           "options": [

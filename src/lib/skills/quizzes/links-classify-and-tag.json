@@ -92,11 +92,11 @@
           "section": "admin-groups-tags",
           "ro": {
             "question": "În „Nor de etichete” fuzionați „arenda” cu „arendă”, alegând „Păstrează aceasta” la „arendă”. Ce vedeți apoi, la „Etichete / Cuvinte cheie”, pe un teren care purta „arenda”?",
-            "explanation": "Fereastra „Fuzionare etichete” spune ce se va întâmpla, de exemplu „Etichetele „arenda” vor deveni „arendă”.”: pe înregistrări, eticheta lăsată devine cea păstrată."
+            "explanation": "Fereastra „Fuzionare etichete” spune ce se va întâmpla, de exemplu „Etichetele „arenda” vor deveni „arendă”.”: pe obiecte, eticheta lăsată devine cea păstrată."
           },
           "en": {
             "question": "In „Nor de etichete” you merge „arenda” with „arendă”, choosing „Păstrează aceasta” (keep this one) on „arendă”. What do you then see, under „Etichete / Cuvinte cheie” (tags / keywords), on a plot that carried „arenda”?",
-            "explanation": "The „Fuzionare etichete” window says what will happen, for instance „Etichetele „arenda” vor deveni „arendă”.” (the tags „arenda” will become „arendă”): on the records, the tag let go becomes the one kept."
+            "explanation": "The „Fuzionare etichete” window says what will happen, for instance „Etichetele „arenda” vor deveni „arendă”.” (the tags „arenda” will become „arendă”): on the objects, the tag let go becomes the one kept."
           },
           "options": [
             {
@@ -108,8 +108,8 @@
             {
               "id": "o2",
               "correct": false,
-              "ro": "Nicio etichetă: fuzionarea o scoate de pe înregistrări",
-              "en": "No tag: the merge takes it off the records"
+              "ro": "Nicio etichetă: fuzionarea o scoate de pe obiecte",
+              "en": "No tag: the merge takes it off the objects"
             },
             {
               "id": "o3",
@@ -168,11 +168,11 @@
           "section": "links-classify-classification",
           "ro": {
             "question": "Pe un act, schimbați „Relevanță” din „Actual” în „Istoric” și apăsați „Salvează”, pe linia lui „Istoric”. Ce s-a mai întâmplat cu actul, în afară de noua valoare?",
-            "explanation": "Salvarea din „Clasificare” adaugă o versiune a înregistrării, iar „Istoric” păstrează schimbarea, cu data ei."
+            "explanation": "Salvarea din „Clasificare” adaugă o versiune a obiectului, iar „Istoric” păstrează schimbarea, cu data ei."
           },
           "en": {
             "question": "On a document, you change „Relevanță” from „Actual” (current) to „Istoric” (historical) and press „Salvează” (save), on the line of „Istoric”. What else happened to the document, besides the new value?",
-            "explanation": "The save in „Clasificare” adds a version of the record, and „Istoric” keeps the change, with its date."
+            "explanation": "The save in „Clasificare” adds a version of the object, and „Istoric” keeps the change, with its date."
           },
           "options": [
             {
@@ -243,12 +243,12 @@
           "id": "a7",
           "section": "reports-search-filters",
           "ro": {
-            "question": "Vreți să vedeți toate înregistrările scrise de mână, nu cele aduse de AI sau dintr-un fișier. Ce alegeți în „Căutare globală”?",
-            "explanation": "„Proveniență”, valoarea din „Clasificare”, spune cum a intrat înregistrarea în arhivă: „Manual (Adaugă nou)” pentru una scrisă de mână."
+            "question": "Vreți să vedeți toate obiectele scrise de mână, nu cele aduse de AI sau dintr-un fișier. Ce alegeți în „Căutare globală”?",
+            "explanation": "„Proveniență”, valoarea din „Clasificare”, spune cum a intrat obiectul în arhivă: „Manual (Adaugă nou)” pentru unul scris de mână."
           },
           "en": {
-            "question": "You want to see every record typed in by hand, not those brought in by the AI or from a file. What do you choose in „Căutare globală”?",
-            "explanation": "„Proveniență” (provenance), the value in „Clasificare”, says how the record came into the archive: „Manual (Adaugă nou)” for one typed in by hand."
+            "question": "You want to see every object typed in by hand, not those brought in by the AI or from a file. What do you choose in „Căutare globală”?",
+            "explanation": "„Proveniență” (provenance), the value in „Clasificare”, says how the object came into the archive: „Manual (Adaugă nou)” for one typed in by hand."
           },
           "options": [
             {
@@ -282,11 +282,11 @@
           "section": "links-classify-classification",
           "ro": {
             "question": "Un act din 1940 nu mai produce efecte astăzi, dar contează foarte mult pentru dumneavoastră. Cum îl clasificați?",
-            "explanation": "„Relevanță” spune unde stă înregistrarea în timp, iar „Importanță” cât contează pentru dumneavoastră: un act vechi poate fi istoric și totuși foarte important."
+            "explanation": "„Relevanță” spune unde stă obiectul în timp, iar „Importanță” cât contează pentru dumneavoastră: un act vechi poate fi istoric și totuși foarte important."
           },
           "en": {
             "question": "A document from 1940 no longer has any effect today, but it matters a great deal to you. How do you classify it?",
-            "explanation": "„Relevanță” says where the record stands in time, and „Importanță” how much it matters to you: an old deed can be historical and still very important."
+            "explanation": "„Relevanță” says where the object stands in time, and „Importanță” how much it matters to you: an old deed can be historical and still very important."
           },
           "options": [
             {
@@ -353,8 +353,8 @@
             {
               "id": "o4",
               "correct": false,
-              "ro": "Eticheta „moștenire” veche se scoate de pe înregistrări",
-              "en": "The old „moștenire” tag is taken off the records"
+              "ro": "Eticheta „moștenire” veche se scoate de pe obiecte",
+              "en": "The old „moștenire” tag is taken off the objects"
             }
           ]
         },
@@ -395,11 +395,11 @@
           "section": "links-classify-tags",
           "ro": {
             "question": "În nor, „moștenire” arată „×4”. Ce înseamnă și unde vedeți care sunt cele patru?",
-            "explanation": "Norul arată, pe fiecare etichetă, câte înregistrări o poartă; înregistrările cu o etichetă le găsiți în „Căutare globală”, scriind-o la „Etichetă”. Dublu-clicul în nor doar alege eticheta."
+            "explanation": "Norul arată, pe fiecare etichetă, câte obiecte o poartă; obiectele cu o etichetă le găsiți în „Căutare globală”, scriind-o la „Etichetă”. Dublu-clicul în nor doar alege eticheta."
           },
           "en": {
             "question": "In the cloud, „moștenire” shows „×4”. What does it mean, and where do you see which four they are?",
-            "explanation": "The cloud shows, on each tag, how many records carry it; you find the records with a tag in „Căutare globală”, by typing it under „Etichetă”. A double click in the cloud only selects the tag."
+            "explanation": "The cloud shows, on each tag, how many objects carry it; you find the objects with a tag in „Căutare globală”, by typing it under „Etichetă”. A double click in the cloud only selects the tag."
           },
           "options": [
             {
@@ -411,8 +411,8 @@
             {
               "id": "o2",
               "correct": false,
-              "ro": "Patru înregistrări o poartă; le vedeți cu un dublu-clic pe ea, chiar în nor",
-              "en": "Four records carry it; you see them with a double click on it, right in the cloud"
+              "ro": "Patru obiecte o poartă; le vedeți cu un dublu-clic pe ea, chiar în nor",
+              "en": "Four objects carry it; you see them with a double click on it, right in the cloud"
             },
             {
               "id": "o3",
@@ -423,8 +423,8 @@
             {
               "id": "o4",
               "correct": true,
-              "ro": "Patru înregistrări o poartă; le vedeți în „Căutare globală”, la „Etichetă”",
-              "en": "Four records carry it; you see them in „Căutare globală”, under „Etichetă”"
+              "ro": "Patru obiecte o poartă; le vedeți în „Căutare globală”, la „Etichetă”",
+              "en": "Four objects carry it; you see them in „Căutare globală”, under „Etichetă”"
             }
           ]
         },
@@ -509,11 +509,11 @@
           "section": "links-classify-tags",
           "ro": {
             "question": "Eticheta „litgiu”, scrisă greșit, stă pe un singur teren și vreți să dispară din nor. Ce faceți?",
-            "explanation": "O etichetă se scoate de pe înregistrare cu „×”-ul care apare când țineți mouse-ul pe ea; scoasă de pe ultima înregistrare care o purta, dispare din nor."
+            "explanation": "O etichetă se scoate de pe obiect cu „×”-ul care apare când țineți mouse-ul pe ea; scoasă de pe ultimul obiect care o purta, dispare din nor."
           },
           "en": {
             "question": "The misspelt tag „litgiu” is on a single plot and you want it gone from the cloud. What do you do?",
-            "explanation": "A tag is taken off a record with the „×” that appears when you rest the mouse on it; taken off the last record that carried it, it disappears from the cloud."
+            "explanation": "A tag is taken off an object with the „×” that appears when you rest the mouse on it; taken off the last object that carried it, it disappears from the cloud."
           },
           "options": [
             {
@@ -585,11 +585,11 @@
           "section": "reports-search-results",
           "ro": {
             "question": "Căutați după eticheta „arendă”, iar ecranul vă spune că sunt mai multe rezultate decât arată și vă cere să restrângeți căutarea. Ce faceți?",
-            "explanation": "Se arată cel mult 50 de rezultate pentru fiecare fel de înregistrare, câte 15 pe pagină; când sunt mai multe, adăugați un filtru."
+            "explanation": "Se arată cel mult 50 de rezultate pentru fiecare fel de obiect, câte 15 pe pagină; când sunt mai multe, adăugați un filtru."
           },
           "en": {
             "question": "You search by the tag „arendă” and the screen tells you there are more results than it shows and asks you to narrow the search. What do you do?",
-            "explanation": "At most 50 results are shown for each kind of record, 15 to a page; when there are more, add a filter."
+            "explanation": "At most 50 results are shown for each kind of object, 15 to a page; when there are more, add a filter."
           },
           "options": [
             {

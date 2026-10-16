@@ -5,21 +5,21 @@
 export const CHAPTER = `
 # 7 Legături, versiuni și istoric {#links}
 
-În arhivă, o înregistrare rareori stă singură: un contract are vânzători și cumpărători, un teren are proprietari, o persoană are rude și firme pe care le reprezintă. Capitolul acesta arată cum legați două înregistrări și cum citiți legătura din ambele capete, cum le clasificați și le regăsiți după etichete, grupuri și ștampile, și cum vă întoarceți la o versiune mai veche a unei înregistrări.
+În arhivă, un obiect rareori stă singur: un contract are vânzători și cumpărători, un teren are proprietari, o persoană are rude și firme pe care le reprezintă. Capitolul acesta arată cum legați două obiecte și cum citiți legătura din ambele capete, cum le clasificați și le regăsiți după etichete, grupuri și ștampile, și cum vă întoarceți la o versiune mai veche a unui obiect.
 
-## 7.1 Asocierea a două înregistrări {#links-associate}
+## 7.1 Asocierea a două obiecte {#links-associate}
 
-Legătura dintre două înregistrări se numește asociere. Se face o singură dată, din orice direcție, și se vede din amândouă: dacă legați un teren de pe ecranul unui contract, contractul apare și pe ecranul terenului.
+Legătura dintre două obiecte se numește asociere. Se face o singură dată, din orice direcție, și se vede din amândouă: dacă legați un teren de pe ecranul unui contract, contractul apare și pe ecranul terenului.
 
 ### 7.1.1 Ecranul de asociere {#links-associate-screen}
 
-Pe fișa „Legături” a unei înregistrări (secțiunea [[links-related]]) stau trei butoane: „Asociază persoană”, „Asociază proprietate” și „Asociază act”. Fiecare deschide un ecran de asociere, cu trei fișe una sub alta (Figura [[fig-links-associate]]):
+Pe fișa „Legături” a unui obiect (secțiunea [[links-related]]) stau trei butoane: „Asociază persoană”, „Asociază proprietate” și „Asociază act”. Fiecare deschide un ecran de asociere, cu trei fișe una sub alta (Figura [[fig-links-associate]]):
 
 - „Căutare” — filtrele. Pentru persoane sunt „Nume” și „Cod”; pentru proprietăți și acte este o singură casetă, „Căutare”, care caută după cod și după denumire sau titlu.
-- „Rezultate” — înregistrările găsite. Bifați rândul sau rândurile pe care vreți să le legați. Persoanele fizice și cele juridice stau în același tabel, iar coloana „Tip” spune care este care: „Fizică” sau „Juridică”.
+- „Rezultate” — obiectele găsite. Bifați rândul sau rândurile pe care vreți să le legați. Persoanele fizice și cele juridice stau în același tabel, iar coloana „Tip” spune care este care: „Fizică” sau „Juridică”.
 - „Asociere” — „Rol” sau „Tip legătură”, acolo unde legătura are așa ceva, apoi „Asociază selecția” și „Anulează”. Fișa rămâne la vedere jos pe ecran, chiar și sub o listă lungă de rezultate.
 
-Până nu bifați nimic, sub butoane scrie ce lipsește — de exemplu „Selectați cel puțin o persoană”. „Asociază selecția” vă întoarce pe înregistrarea de la care ați plecat, cu legătura nouă în „Legături”. „Anulează” vă întoarce fără să lege nimic.
+Până nu bifați nimic, sub butoane scrie ce lipsește — de exemplu „Selectați cel puțin o persoană”. „Asociază selecția” vă întoarce pe obiectul de la care ați plecat, cu legătura nouă în „Legături”. „Anulează” vă întoarce fără să lege nimic.
 
 ![7.1 Ecranul de asociere: „Căutare”, „Rezultate” și „Asociere”](links-associate.png){#fig-links-associate}
 
@@ -49,11 +49,11 @@ Cota-parte a unei persoane pe un act se scrie după asociere, pe act (secțiunea
 
 ### 7.1.4 Dezasocierea {#links-associate-remove}
 
-Pe „Legături”, alegeți rândul cu butonul rotund din stânga lui, apoi apăsați „Dezasociază”. Legătura dispare din ambele capete, fără nicio întrebare; cele două înregistrări rămân în arhivă, neatinse. Se alege un singur rând odată, de orice fel ar fi. „Dezasociază” se poate folosi doar cu un rând ales, iar cât timp un rând este ales, cele trei „Asociază …” nu se pot folosi.
+Pe „Legături”, alegeți rândul cu butonul rotund din stânga lui, apoi apăsați „Dezasociază”. Legătura dispare din ambele capete, fără nicio întrebare; cele două obiecte rămân în arhivă, neatinse. Se alege un singur rând odată, de orice fel ar fi. „Dezasociază” se poate folosi doar cu un rând ales, iar cât timp un rând este ales, cele trei „Asociază …” nu se pot folosi.
 
 ## 7.2 Fișa „Legături” {#links-related}
 
-Fiecare persoană fizică, firmă, proprietate și act are fișa „Legături”: tot ce este legat de înregistrare, într-un singur loc (Figura [[fig-links-related]]). Dacă nu o vedeți, bifați „Legături” printre fișele din capul ecranului (secțiunea [[start-tiles]]). Când nu e legat nimic, fișa spune „Nimic corelat încă.”.
+Fiecare persoană fizică, firmă, proprietate și act are fișa „Legături”: tot ce este legat de obiect, într-un singur loc (Figura [[fig-links-related]]). Dacă nu o vedeți, bifați „Legături” printre fișele din capul ecranului (secțiunea [[start-tiles]]). Când nu e legat nimic, fișa spune „Nimic corelat încă.”.
 
 Rândurile vin mereu în aceeași ordine — persoanele fizice, persoanele juridice, proprietățile, actele — cu o linie subțire între două feluri și pictograma felului la începutul rândului. Fiecare rând stă pe o singură linie:
 
@@ -63,14 +63,14 @@ Rândurile vin mereu în aceeași ordine — persoanele fizice, persoanele jurid
 
 Pe rânduri pot sta câteva butoane:
 
-- „Relația” arată, într-o bulă, ce leagă cele două înregistrări: rolul persoanei în act (de pildă Rol: „Vânzător”) sau propoziția unei legături cu sens (secțiunea [[links-references]]). Un clic în afara bulei sau tasta Esc o închide.
-- „Vizualizare” deschide înregistrarea legată numai pentru citire; „Modifică”, jos pe ecranul ei, o face modificabilă.
+- „Relația” arată, într-o bulă, ce leagă cele două obiecte: rolul persoanei în act (de pildă Rol: „Vânzător”) sau propoziția unei legături cu sens (secțiunea [[links-references]]). Un clic în afara bulei sau tasta Esc o închide.
+- „Vizualizare” deschide obiectul legat numai pentru citire; „Modifică”, jos pe ecranul lui, îl face modificabil.
 - „Previzualizare” o deschide alături, fără să plecați de pe ecran (secțiunea [[start-preview]]).
 - „Cotă”, portocaliu, ține cota-parte a unei persoane pe un act (secțiunea [[documents-parties]]).
 
 Sub rânduri stau „Asociază persoană”, „Asociază proprietate”, „Asociază act” și „Dezasociază”; pe un act, după ele, și „Înscrisuri citate” (secțiunea [[links-references]]). Pe un contract de vânzare-cumpărare, un act adițional sau un certificat de moștenitor, părțile stau în fișa „Părți”, grupate pe rol, iar „Legături” ține celelalte legături ale actului și, deasupra lor, un rând care spune câte părți sunt în „Părți” (secțiunea [[documents-parties]]).
 
-![7.2 Fișa „Legături” a unei înregistrări](links-related.png){#fig-links-related}
+![7.2 Fișa „Legături” a unui obiect](links-related.png){#fig-links-related}
 
 ## 7.3 Înscrisuri citate și proprietăți incluse {#links-references}
 
@@ -94,48 +94,48 @@ Ca la acte, legătura se citește de la proprietatea pe care vă aflați. De pe 
 
 ## 7.4 Fișele „Clasificare” și „Etichete și grupuri” {#links-classify}
 
-Pe orice înregistrare stau două fișe care țin de felul în care lucrați cu ea: „Clasificare” și „Etichete și grupuri”. Țineți mouse-ul pe titlul unui câmp ca să aflați la ce folosește, sau pe valoarea aleasă ca să aflați ce înseamnă.
+Pe orice obiect stau două fișe care țin de felul în care lucrați cu el: „Clasificare” și „Etichete și grupuri”. Țineți mouse-ul pe titlul unui câmp ca să aflați la ce folosește, sau pe valoarea aleasă ca să aflați ce înseamnă.
 
 ### 7.4.1 „Clasificare” {#links-classify-classification}
 
 | Câmpul | Valorile | Ce spune |
 |---|---|---|
-| Importanță | Scăzută, Medie, Ridicată | cât contează înregistrarea pentru dumneavoastră, fără vreo justificare |
-| Relevanță | Inactiv, Istoric, Actual, De perspectivă | unde stă înregistrarea în timp; un act vechi poate fi istoric și totuși foarte important |
-| Proveniență | de exemplu „Manual (Adaugă nou)”, „Interpretare AI”, „Fișier de coordonate (.txt)” | cum a intrat înregistrarea în arhivă |
+| Importanță | Scăzută, Medie, Ridicată | cât contează obiectul pentru dumneavoastră, fără vreo justificare |
+| Relevanță | Inactiv, Istoric, Actual, De perspectivă | unde stă obiectul în timp; un act vechi poate fi istoric și totuși foarte important |
+| Proveniență | de exemplu „Manual (Adaugă nou)”, „Interpretare AI”, „Fișier de coordonate (.txt)” | cum a intrat obiectul în arhivă |
 
-Sub „Proveniență”, „Istoric” ține fiecare schimbare, cu data ei. „Salvează”, pe linia lui „Istoric”, nu se poate apăsa până nu schimbați o valoare; după salvare scrie „✓ Salvat”. Salvarea adaugă o versiune a înregistrării (secțiunea [[links-versions]]).
+Sub „Proveniență”, „Istoric” ține fiecare schimbare, cu data ei. „Salvează”, pe linia lui „Istoric”, nu se poate apăsa până nu schimbați o valoare; după salvare scrie „✓ Salvat”. Salvarea adaugă o versiune a obiectului (secțiunea [[links-versions]]).
 
 ### 7.4.2 Etichetele {#links-classify-tags}
 
-Etichetele sunt cuvinte libere după care regăsiți înregistrările — „arendă”, „litigiu”, „moștenire”. În „Etichete și grupuri”, la „Etichete / Cuvinte cheie”, scrieți eticheta în „Introduceți o etichetă…” și apăsați „Adaugă” sau Enter. Eticheta se salvează pe loc, fără „Salvează”, și se scrie cu litere mici. Ca s-o scoateți, țineți mouse-ul pe ea și apăsați „×”-ul care apare în colțul ei.
+Etichetele sunt cuvinte libere după care regăsiți obiectele — „arendă”, „litigiu”, „moștenire”. În „Etichete și grupuri”, la „Etichete / Cuvinte cheie”, scrieți eticheta în „Introduceți o etichetă…” și apăsați „Adaugă” sau Enter. Eticheta se salvează pe loc, fără „Salvează”, și se scrie cu litere mici. Ca s-o scoateți, țineți mouse-ul pe ea și apăsați „×”-ul care apare în colțul ei.
 
-Toate înregistrările cu o etichetă le găsiți în „Căutare globală”: scrieți eticheta în „Etichetă” și apăsați „Caută” (secțiunea [[reports-search]]).
+Toate obiectele cu o etichetă le găsiți în „Căutare globală”: scrieți eticheta în „Etichetă” și apăsați „Caută” (secțiunea [[reports-search]]).
 
-„Administrare” → „Etichete” arată „Nor de etichete”: toate etichetele din arhivă, fiecare cu numărul de înregistrări care o poartă, cele mai folosite mai mari. Un dublu-clic pe o etichetă o alege sau o lasă:
+„Administrare” → „Etichete” arată „Nor de etichete”: toate etichetele din arhivă, fiecare cu numărul de obiecte care o poartă, cele mai folosite mai mari. Un dublu-clic pe o etichetă o alege sau o lasă:
 
 - cu o etichetă aleasă, „Redenumește etichetă” o face casetă chiar în nor; scrieți noul nume și apăsați Enter, sau Esc ca s-o lăsați cum era;
 - cu două sau mai multe alese, „Fuzionează etichete” deschide „Fuzionare etichete”; alegeți „Păstrează aceasta” la eticheta care rămâne și apăsați „Fuzionează”.
 
-O etichetă scoasă de pe ultima înregistrare care o purta dispare din nor.
+O etichetă scoasă de pe ultimul obiect care o purta dispare din nor.
 
 ### 7.4.3 Grupurile {#links-classify-groups}
 
-Un grup strânge, pentru o treabă de scurtă durată, înregistrări de un singur fel — de exemplu terenurile pentru o evaluare. Grupul se face în „Administrare” → „Grupuri” (secțiunea [[admin-groups]]): „Adaugă”, alegeți „Țintă” și scrieți „Descriere”, apoi „Salvează”; codul, de forma GRP-001, se dă singur. „Editează” pe rândul grupului deschide ecranul lui: bifați înregistrări în „Membri disponibili pentru includere”, apăsați „Adaugă în grup” și apoi „Salvează grupul”. Până la „Salvează grupul” nu se scrie nimic, iar ecranul arată „Modificări nesalvate”.
+Un grup strânge, pentru o treabă de scurtă durată, obiecte de un singur fel — de exemplu terenurile pentru o evaluare. Grupul se face în „Administrare” → „Grupuri” (secțiunea [[admin-groups]]): „Adaugă”, alegeți „Țintă” și scrieți „Descriere”, apoi „Salvează”; codul, de forma GRP-001, se dă singur. „Editează” pe rândul grupului deschide ecranul lui: bifați obiecte în „Membri disponibili pentru includere”, apăsați „Adaugă în grup” și apoi „Salvează grupul”. Până la „Salvează grupul” nu se scrie nimic, iar ecranul arată „Modificări nesalvate”.
 
-Pe o înregistrare, „Grupuri” din „Etichete și grupuri” arată grupurile ei. „+ Adaugă în grup” deschide lista grupurilor; „×” pe un grup o scoate din el. Lângă codul grupului, numărul din paranteze este câți membri are grupul acum — de exemplu „GRP-001 [2]”, cu „2 membri” când țineți mouse-ul pe el.
+Pe un obiect, „Grupuri” din „Etichete și grupuri” arată grupurile lui. „+ Adaugă în grup” deschide lista grupurilor; „×” pe un grup îl scoate din grup. Lângă codul grupului, numărul din paranteze este câți membri are grupul acum — de exemplu „GRP-001 [2]”, cu „2 membri” când țineți mouse-ul pe el.
 
-O înregistrare poate face parte din cel mult trei grupuri. La al treilea, „+” nu se mai poate apăsa și sub listă scrie: „Un obiect poate face parte din cel mult 3 grupuri. Scoateți-l dintr-un grup pentru a-l adăuga în altul.” Membrii unui grup îi găsiți în „Căutare globală”, după „Cod grup”. Un grup șters nu ia cu el înregistrările.
+Un obiect poate face parte din cel mult trei grupuri. La al treilea, „+” nu se mai poate apăsa și sub listă scrie: „Un obiect poate face parte din cel mult 3 grupuri. Scoateți-l dintr-un grup pentru a-l adăuga în altul.” Membrii unui grup îi găsiți în „Căutare globală”, după „Cod grup”. Un grup șters nu ia cu el obiectele.
 
 ### 7.4.4 Ștampilele {#links-classify-stamps}
 
-O ștampilă marchează o însușire de durată, pe înregistrări de orice fel. Se face în „Administrare” → „Ștampile”, cu „Creare ștampilă”: „Descriere scurtă” și „Note”, iar codul se dă la salvare. „Aplică”, pe rândul ștampilei, deschide ecranul ei: alegeți felul înregistrărilor în „Tip element”, bifați-le în „Elemente disponibile pentru ștampilare”, apăsați „Aplică ștampila” și apoi „Salvează ștampilele”. Lista ștampilelor arată la fiecare câte înregistrări o poartă.
+O ștampilă marchează o însușire de durată, pe obiecte de orice fel. Se face în „Administrare” → „Ștampile”, cu „Creare ștampilă”: „Descriere scurtă” și „Note”, iar codul se dă la salvare. „Aplică”, pe rândul ștampilei, deschide ecranul ei: alegeți felul obiectelor în „Tip element”, bifați-le în „Elemente disponibile pentru ștampilare”, apăsați „Aplică ștampila” și apoi „Salvează ștampilele”. Lista ștampilelor arată la fiecare câte obiecte o poartă.
 
-Pe înregistrare, ștampila apare în „Etichete și grupuri”, la „Ștampile”, unde „+ Aplică ștampilă” pune alta și „×” o scoate. O ștampilă ștearsă dispare de pe toate înregistrările.
+Pe obiect, ștampila apare în „Etichete și grupuri”, la „Ștampile”, unde „+ Aplică ștampilă” pune alta și „×” o scoate. O ștampilă ștearsă dispare de pe toate obiectele.
 
 ## 7.5 Versiunile și „Fă curentă” {#links-versions}
 
-Fiecare salvare a unei înregistrări păstrează o versiune nouă și o lasă neatinsă pe cea dinainte (secțiunea [[intro-versions]]). Versiunile se numără de la 0: o înregistrare abia creată arată „v 0” în dreapta-sus. „Salvează” nu se poate apăsa până nu schimbați ceva, așa că o versiune nouă apare doar când s-a schimbat ceva. După salvare rămâneți pe înregistrare.
+Fiecare salvare a unui obiect păstrează o versiune nouă și o lasă neatinsă pe cea dinainte (secțiunea [[intro-versions]]). Versiunile se numără de la 0: un obiect abia creat arată „v 0” în dreapta-sus. „Salvează” nu se poate apăsa până nu schimbați ceva, așa că o versiune nouă apare doar când s-a schimbat ceva. După salvare rămâneți pe obiect.
 
 Când are mai multe versiuni, în dreapta-sus stă „N versiuni”, de exemplu „2 versiuni”. Apăsat, vă duce cu o versiune înapoi și arată „Versiunea anterioară”, „Versiunea următoare” și „Fă curentă” (Figura [[fig-links-versions]]). Pe o versiune veche:
 
@@ -145,19 +145,19 @@ Când are mai multe versiuni, în dreapta-sus stă „N versiuni”, de exemplu 
 
 „Fă curentă” face versiunea pe care o citiți din nou cea curentă, **copiind-o într-o versiune nouă**. Aplicația întreabă întâi „Faceți această versiune curentă?” și spune ce se va întâmpla, de exemplu: „Versiunea 0 va fi copiată într-o nouă versiune 3, care devine versiunea curentă. Continuați?”. „OK” o face, „Anulează” renunță. Nimic nu se pierde: versiunile dintre ele rămân în istoric, iar lista arată valorile noii versiuni curente.
 
-![7.3 Versiunile unei înregistrări](links-versions.png){#fig-links-versions}
+![7.3 Versiunile unui obiect](links-versions.png){#fig-links-versions}
 
-## 7.6 Aceeași înregistrare în două ferestre {#links-two-windows}
+## 7.6 Același obiect în două ferestre {#links-two-windows}
 
-Aceeași înregistrare poate fi deschisă în două ferestre sau file ale browserului, iar una nu acoperă pe ascuns ce s-a salvat în cealaltă:
+Același obiect poate fi deschis în două ferestre sau file ale browserului, iar una nu acoperă pe ascuns ce s-a salvat în cealaltă:
 
 - Când salvați într-o fereastră, cealaltă se reîncarcă singură, dacă nu are nimic nesalvat.
 - Dacă în cealaltă ați început să scrieți, ea nu se reîncarcă peste ce ați scris. Sub banda „Modificări nesalvate” apare, cu roșu: „Acest obiect a fost salvat în altă fereastră. Modificările de aici nu sunt salvate, iar salvarea lor va fi refuzată.”, alături de „Reîncarcă”.
 - Dacă apăsați totuși „Salvează” acolo, nu se scrie nimic: „Nu s-a salvat nimic: obiectul a fost salvat între timp în altă fereastră sau de alt utilizator. Valorile introduse au rămas pe ecran.”.
 - „Reîncarcă” întreabă „Reîncărcați obiectul?”: valorile nesalvate se pierd și se încarcă versiunea curentă.
-- Dacă înregistrarea este ștearsă într-o fereastră, cealaltă spune „Acest obiect a fost șters în altă fereastră.”.
+- Dacă obiectul este șters într-o fereastră, cealaltă spune „Acest obiect a fost șters în altă fereastră.”.
 
-Istoricul versiunilor ține doar salvările care au trecut. Cel mai sigur este să modificați o înregistrare într-o singură fereastră.
+Istoricul versiunilor ține doar salvările care au trecut. Cel mai sigur este să modificați un obiect într-o singură fereastră.
 
 ## 7.7 Exemple și cazuri de utilizare {#links-examples}
 

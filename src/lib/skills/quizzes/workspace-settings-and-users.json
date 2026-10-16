@@ -515,11 +515,11 @@
           "section": "admin-settings-thresholds",
           "ro": {
             "question": "Ciprian observă că insigna „Nou!” dispare de pe persoanele schimbate prea repede, înainte să apuce să le verifice. Unde lungește timpul?",
-            "explanation": "„Praguri de timp” hotărăște și cât timp poartă o înregistrare schimbată insigna „Nou!”, roșie și apoi chihlimbar, și după cât timp dispare; pragurile ei stau în grupa „Insigna „Nou!””."
+            "explanation": "„Praguri de timp” hotărăște și cât timp poartă un obiect schimbat insigna „Nou!”, roșie și apoi chihlimbar, și după cât timp dispare; pragurile ei stau în grupa „Insigna „Nou!””."
           },
           "en": {
             "question": "Ciprian notices that the „Nou!” badge disappears from changed persons too soon, before he gets round to checking them. Where does he lengthen the time?",
-            "explanation": "„Praguri de timp” also decides how long a changed record carries the „Nou!” badge, red and then amber, and after how long it disappears; its thresholds are in the „Insigna „Nou!”” group."
+            "explanation": "„Praguri de timp” also decides how long a changed object carries the „Nou!” badge, red and then amber, and after how long it disappears; its thresholds are in the „Insigna „Nou!”” group."
           },
           "options": [
             {
@@ -629,18 +629,18 @@
           "section": "admin-settings",
           "ro": {
             "question": "Pe ecranul „Setări”, Ciprian vrea să vadă doar „Praguri de timp” și „Costuri”, fără celelalte părți. Cum face?",
-            "explanation": "Ca pe ecranul unei înregistrări, căsuțele de sus aleg ce părți se văd, iar „Implicit” le aduce înapoi."
+            "explanation": "Ca pe ecranul unui obiect, căsuțele de sus aleg ce părți se văd, iar „Implicit” le aduce înapoi."
           },
           "en": {
             "question": "On the „Setări” screen, Ciprian wants to see only „Praguri de timp” and „Costuri”, without the other parts. How does he do it?",
-            "explanation": "As on a record's screen, the boxes at the top choose which parts are shown, and „Implicit” brings them back."
+            "explanation": "As on an object's screen, the boxes at the top choose which parts are shown, and „Implicit” brings them back."
           },
           "options": [
             {
               "id": "o1",
               "correct": true,
-              "ro": "Din căsuțele de sus, ca pe ecranul unei înregistrări",
-              "en": "With the boxes at the top, as on a record's screen"
+              "ro": "Din căsuțele de sus, ca pe ecranul unui obiect",
+              "en": "With the boxes at the top, as on an object's screen"
             },
             {
               "id": "o2",

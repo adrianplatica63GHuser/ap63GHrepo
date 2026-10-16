@@ -86,7 +86,7 @@ Tipul îl alegeți în „Tip proprietate”. Când alegeți alt tip, titlul și
 
 ### 5.3.1 Fișele unei proprietăți {#properties-type-tiles}
 
-Bifele din capul ecranului („Părți afișate”) aleg fișele, ca pe orice înregistrare (secțiunea [[start-tiles]]):
+Bifele din capul ecranului („Părți afișate”) aleg fișele, ca pe orice obiect (secțiunea [[start-tiles]]):
 
 | Fișa | Ce arată |
 |---|---|

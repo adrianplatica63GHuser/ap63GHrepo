@@ -5,7 +5,7 @@
 export const CHAPTER = `
 # 2 Primii pași {#start}
 
-Capitolul acesta vă arată ce folosiți peste tot în aplicație: conectarea, bara laterală, bara de navigare, listele, fișele unei înregistrări și ajutorul. Odată știute, orice alt ecran se citește la fel.
+Capitolul acesta vă arată ce folosiți peste tot în aplicație: conectarea, bara laterală, bara de navigare, listele, fișele unui obiect și ajutorul. Odată știute, orice alt ecran se citește la fel.
 
 ## 2.1 Conectarea {#start-sign-in}
 
@@ -46,33 +46,33 @@ La capătul din dreapta al barei stă „?”, ajutorul ecranului (secțiunea [[
 
 ## 2.4 „Recente” {#start-recent}
 
-„Recente”, jos în bara laterală, ține ultimele înregistrări pe care le-ați deschis. Un clic pe „Recente” deschide sau strânge lista, iar un clic pe o înregistrare din ea o redeschide.
+„Recente”, jos în bara laterală, ține ultimele obiecte pe care le-ați deschis. Un clic pe „Recente” deschide sau strânge lista, iar un clic pe un obiect din ea îl redeschide.
 
 ## 2.5 Listele și coloanele lor {#start-lists}
 
-Fiecare dintre cele patru liste — Persoane Fizice, Persoane Juridice, Proprietăți, Acte — arată câte 15 înregistrări pe pagină, iar butoanele de sub tabel trec de la o pagină la alta. Caseta de căutare din capul listei caută după cod, nume și, la persoane, după e-mail sau telefon.
+Fiecare dintre cele patru liste — Persoane Fizice, Persoane Juridice, Proprietăți, Acte — arată câte 15 obiecte pe pagină, iar butoanele de sub tabel trec de la o pagină la alta. Caseta de căutare din capul listei caută după cod, nume și, la persoane, după e-mail sau telefon.
 
-„Câmpuri afișate” alege coloanele listei: bifați ce vreți să vedeți și debifați ce nu vă trebuie (Figura [[fig-list]]). „Deschide”, pe un rând, deschide înregistrarea; „Adaugă …”, deasupra tabelului, creează una nouă.
+„Câmpuri afișate” alege coloanele listei: bifați ce vreți să vedeți și debifați ce nu vă trebuie (Figura [[fig-list]]). „Deschide”, pe un rând, deschide obiectul; „Adaugă …”, deasupra tabelului, creează unul nou.
 
 Bifa din capul tabelului selectează rândurile paginii curente, nu ale întregii liste.
 
 ![2.3 Lista persoanelor fizice, cu „Câmpuri afișate” deschis](list.png){#fig-list}
 
-## 2.6 Ecranul unei înregistrări: fișele {#start-tiles}
+## 2.6 Ecranul unui obiect: fișele {#start-tiles}
 
-O înregistrare deschisă își arată datele în fișe — panouri cu câte un nume (Figura [[fig-record]]). Pe o persoană fizică sunt, de exemplu, identitatea ei, „Legături”, „Clasificare”, „Etichete și grupuri” și „Interacțiuni”.
+Un obiect deschis își arată datele în fișe — panouri cu câte un nume (Figura [[fig-record]]). Pe o persoană fizică sunt, de exemplu, identitatea ei, „Legături”, „Clasificare”, „Etichete și grupuri” și „Interacțiuni”.
 
 - Bifele din capul ecranului aleg ce fișe se văd; „Toate” le arată pe toate, iar „Implicit” revine la setul obișnuit. Setul vostru se salvează în „Setări”, la „Implicitele mele”.
 - O fișă se trage de spațiul ei gol într-un loc liber; un dublu-clic pe ea o urcă sub fișa de deasupra.
 - Fișele mov deschis — harta, colțurile, Street View, paginile unui act — stau pe loc.
-- ID-ul de sistem al înregistrării stă în colțul din dreapta-sus al primei fișe.
+- ID-ul de sistem al obiectului stă în colțul din dreapta-sus al primei fișe.
 - Bara de butoane, ultimul lucru de pe ecran, ține creionul (modificați), salvarea și coșul (ștergeți). Un buton cu pictogramă își arată numele când treceți cu mouse-ul peste el.
 
 ![2.4 Ecranul unei persoane fizice, cu fișele ei](record.png){#fig-record}
 
 ## 2.7 Previzualizarea {#start-preview}
 
-O înregistrare legată se poate deschide alături, cu „Previzualizare”, fără să plecați de pe ecranul pe care lucrați — de exemplu cumpărătorul, lângă contractul de vânzare. Se deschid cel mult două previzualizări odată, iar o modificare nesalvată pe ecranul principal rămâne neatinsă. Dintr-o listă, previzualizarea unui rând se deschide lângă tabel.
+Un obiect legat se poate deschide alături, cu „Previzualizare”, fără să plecați de pe ecranul pe care lucrați — de exemplu cumpărătorul, lângă contractul de vânzare. Se deschid cel mult două previzualizări odată, iar o modificare nesalvată pe ecranul principal rămâne neatinsă. Dintr-o listă, previzualizarea unui rând se deschide lângă tabel.
 
 ## 2.8 Ajutorul din spatele „?” {#start-help}
 

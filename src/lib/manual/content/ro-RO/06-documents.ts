@@ -64,7 +64,7 @@ Pe rândul fiecărei pagini sunt „Notițe pagină” (un creion), „Tipărire
 
 Tipurile care au formular propriu se citesc în listă cu „(are formular)” după nume — de exemplu „Contract de Vânzare (are formular)”. Cum alegeți un astfel de tip, formularul crește cu fișele lui. Un tip fără formular păstrează doar câmpurile generale ale actului. Pentru un utilizator cu rol de superutilizator, sub „Tip document” al unui tip fără formular scrie „Acest tip nu are încă formular; formularul se construiește în Distilare Tipizate.”, iar „Distilare Tipizate” deschide instrumentul cu tipul deja ales (secțiunea [[tools-doc-type-engine]]).
 
-Fișele care se văd se aleg cu bifele din capul ecranului, ca pe orice înregistrare (secțiunea [[start-tiles]]), iar alegerea se ține minte pentru fiecare tip: un contract de vânzare-cumpărare și un plan își păstrează fiecare aranjamentul lui. Dacă schimbați tipul unui act, se schimbă și fișele.
+Fișele care se văd se aleg cu bifele din capul ecranului, ca pe orice obiect (secțiunea [[start-tiles]]), iar alegerea se ține minte pentru fiecare tip: un contract de vânzare-cumpărare și un plan își păstrează fiecare aranjamentul lui. Dacă schimbați tipul unui act, se schimbă și fișele.
 
 ## 6.4 Identificarea actului și formularul {#documents-identification}
 
@@ -84,7 +84,7 @@ Multe câmpuri ale tipului sunt liste derulante. Alegerea goală se citește „
 
 Un act adus în arhivă cu importul are formularul completat de AI, din ce a citit pe pagini, iar „Stare procesare” arată „Importat” sau „Procesat cu AI”. Ce nu are loc în formular rămâne o notă scurtă în „Note extinse”. Importul este descris în capitolul [[import]] (secțiunea [[import-scanning]]).
 
-Clasificarea, etichetele, grupurile și ștampilele actului stau în fișele „Clasificare” și „Etichete și grupuri”; sunt la fel ca pe orice înregistrare (secțiunea [[links-classify]]).
+Clasificarea, etichetele, grupurile și ștampilele actului stau în fișele „Clasificare” și „Etichete și grupuri”; sunt la fel ca pe orice obiect (secțiunea [[links-classify]]).
 
 ## 6.5 Părțile, rolurile și cota-parte {#documents-parties}
 
