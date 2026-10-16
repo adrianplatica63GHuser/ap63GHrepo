@@ -4335,6 +4335,15 @@
     "notFound": "There is no section „{id}” in the manual; the first chapter is open."
   },
   "skillsMap": {
+    "onlyCiprian": {
+      "button": "Only Ciprian!",
+      "title": "Only Ciprian!",
+      "close": "Close",
+      "lead": "Only Ciprian takes the quizzes — no other user.",
+      "noAccounts": "His computer has no accounts: every quiz finished there is kept as the installation's progress. If someone else takes a quiz there, the result becomes Ciprian's progress.",
+      "moveLater": "If the installation ever gains accounts, his progress can be moved to his account.",
+      "withAccounts": "On an installation with accounts, each account has its own progress."
+    },
     "title": "Skills map",
     "intro": "Each box is a skill of working with the archive, from the basic ones on the left to the expert ones on the right. An arrow runs from a skill to one that builds on it. Press an open box to take its quiz; a closed one tells you what it is missing.",
     "level": "Level {level}",

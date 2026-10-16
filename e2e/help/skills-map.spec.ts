@@ -315,5 +315,23 @@ test.describe("TC-SKILL-01 — „Harta competențelor”", () => {
     await page.getByRole("button", { name: "Toate traseele", exact: true }).click();
     await expect(box(page, key("1.1"))).toHaveCSS("opacity", "1");
     await expect(box(page, key("4.1"))).toHaveCSS("opacity", "1");
+
+    // Step 9 (#39.56) — „Numai Ciprian!” beside the two views: its explanation opens; Escape closes it and gives the
+    // focus back to the button. This box has accounts, so the sentence about them is there too.
+    const onlyCiprian = page.locator("[data-only-ciprian]").filter({ visible: true }).getByRole("button", { name: "Numai Ciprian!", exact: true });
+    await expect(onlyCiprian).toHaveAttribute("aria-expanded", "false");
+    await onlyCiprian.click();
+    await expect(onlyCiprian).toHaveAttribute("aria-expanded", "true");
+    const explanation = page.locator("[data-only-ciprian-panel]");
+    await expect(explanation).toBeVisible();
+    await expect(explanation).toContainText("Chestionarele le dă numai Ciprian — niciun alt utilizator.");
+    await expect(explanation).toContainText("fiecare chestionar terminat acolo se păstrează ca progres al instalării");
+    await expect(explanation).toContainText("Dacă instalarea primește cândva conturi, progresul lui poate fi mutat în contul lui.");
+    await expect(explanation).toContainText("Pe o instalare cu conturi, fiecare cont își are progresul lui.");
+    await expect(explanation).not.toContainText("npm");
+    await page.keyboard.press("Escape");
+    await expect(explanation).toBeHidden();
+    await expect(onlyCiprian).toBeFocused();
+    await expect(onlyCiprian).toHaveAttribute("aria-expanded", "false");
   });
 });

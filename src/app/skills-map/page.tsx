@@ -1,4 +1,5 @@
 import { getLocale } from "next-intl/server";
+import { isUatNoAuth } from "@/lib/auth/current-user";
 import { SKILLS } from "@/lib/skills/catalogue";
 import { sectionLinks } from "@/lib/skills/quiz-server";
 import { SkillsMapView } from "./_components/skills-map-view";
@@ -20,7 +21,8 @@ export default async function SkillsMapPage() {
   return (
     <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-zinc-950">
       <main className="flex w-full flex-col gap-6 px-6 py-8">
-        <SkillsMapView sections={sections} />
+        {/* #39.56: a box without accounts — Ciprian's — keeps every quiz as the box's progress. */}
+        <SkillsMapView sections={sections} hasAccounts={!isUatNoAuth()} />
       </main>
     </div>
   );

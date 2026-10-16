@@ -43,6 +43,7 @@ Nothing.
 | 6 | Presses box 1.8 „Citește harta proprietăților”, then „Închide” | A panel with the skill's number and name, its level and Path, its description and „În manual:” with its sections — and no state. „Închide” closes it |
 | 7 | Presses „Listă”, then „Diagramă” | Only the Path's 16 skills, by level, with „Nr.”, „Competența” and „Traseul” — no „Starea” column, and no name is a link. „Diagramă” brings the map back, still in „Prezentare” |
 | 8 | Presses „Progresul meu”, then „Toate traseele” | Every box in the account's own state again — the legend's four states back; „Toate traseele” brings every box back |
+| 9 | Presses „Numai Ciprian!”, beside „Progresul meu” and „Prezentare”, then Escape (#39.56) | A small panel under the button: „Chestionarele le dă numai Ciprian — niciun alt utilizator.”, why (his computer has no accounts, so every quiz finished there is the installation's progress), and that his progress can be moved to an account one day — no command. On a box with accounts, also „Pe o instalare cu conturi, fiecare cont își are progresul lui.” Escape closes it and the focus is back on the button |
 
 ## At the end — leaving things as they were found
 

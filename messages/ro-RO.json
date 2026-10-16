@@ -4335,6 +4335,15 @@
     "notFound": "Secțiunea „{id}” nu există în manual; s-a deschis primul capitol."
   },
   "skillsMap": {
+    "onlyCiprian": {
+      "button": "Numai Ciprian!",
+      "title": "Numai Ciprian!",
+      "close": "Închide",
+      "lead": "Chestionarele le dă numai Ciprian — niciun alt utilizator.",
+      "noAccounts": "Pe calculatorul lui nu există conturi: fiecare chestionar terminat acolo se păstrează ca progres al instalării. Dacă altcineva dă un chestionar acolo, rezultatul devine progresul lui Ciprian.",
+      "moveLater": "Dacă instalarea primește cândva conturi, progresul lui poate fi mutat în contul lui.",
+      "withAccounts": "Pe o instalare cu conturi, fiecare cont își are progresul lui."
+    },
     "title": "Harta competențelor",
     "intro": "Fiecare casetă este o competență a lucrului cu arhiva, de la cele de bază, în stânga, la cele de expert, în dreapta. O săgeată duce de la o competență la una care se sprijină pe ea. Apăsați o casetă deschisă ca să dați chestionarul ei; una închisă vă spune ce îi lipsește.",
     "level": "Nivelul {level}",

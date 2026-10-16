@@ -18,6 +18,8 @@
  *   - Slice #39.50: two views. „Progresul meu” (the default) draws each box in the user's state; „Prezentare”
  *     draws every box as its level's colour, Open, with no badge and no grey — the map as it is meant, not as
  *     the user stands on it. Both follow the chosen Path, in the diagram and in „Listă”.
+ *   - Slice #39.56: „Numai Ciprian!” beside the two views says only Ciprian takes the quizzes on his box
+ *     (only-ciprian.tsx).
  *   - Slice #39.55: „Progresul meu” draws no arrow into a Mastered or Obsolete skill (progress.ts, `arrowShown`);
  *     „Prezentare” draws them all.
  *   - „Potrivește” fits the map to the window's width (the default), „100%” draws it at full size; the frame
@@ -35,6 +37,7 @@ import { boxAppearance, MASTERY_GREEN } from "@/lib/skills/appearance";
 import { ARROW_GREY, ARROW_NAVY, arrowLook, inPath as pathHas, PATH_SKILLS } from "@/lib/skills/paths";
 import { arrowShown, type SkillState } from "@/lib/skills/progress";
 import { SectionList, type SectionLinkData } from "./section-list";
+import { OnlyCiprian } from "./only-ciprian";
 
 type SkillProgressDto = {
   key: string;
@@ -107,7 +110,14 @@ function BoxFace({ skill, name, state, pathLabel }: { skill: Pick<Skill, "level"
   );
 }
 
-export function SkillsMapView({ sections }: { sections: Readonly<Record<string, readonly SectionLinkData[]>> }) {
+export function SkillsMapView({
+  sections,
+  hasAccounts,
+}: {
+  sections: Readonly<Record<string, readonly SectionLinkData[]>>;
+  /** False on a box without accounts — Ciprian's (#39.56). */
+  hasAccounts: boolean;
+}) {
   const t = useTranslations("skillsMap");
   const locale = useLocale();
   const lang = locale === "en-GB" ? "en" : "ro";
@@ -222,6 +232,7 @@ export function SkillsMapView({ sections }: { sections: Readonly<Record<string, 
                 setSelected(null);
               }}
             />
+            <OnlyCiprian hasAccounts={hasAccounts} />
           </span>
           {view === "diagram" && (
             <>
