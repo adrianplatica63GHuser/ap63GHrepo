@@ -4348,7 +4348,7 @@
       "closed": "At least one skill before it is missing; its quiz is not available.",
       "open": "Every skill before it is mastered; its quiz is available.",
       "mastered": "Its quiz has been passed.",
-      "obsolete": "Mastered, and a skill that builds on it is mastered too."
+      "obsolete": "Mastered, and every skill that builds on it is mastered: no arrow leaves it any more."
     },
     "legend": "Legend",
     "paths": "Paths",
@@ -4372,7 +4372,7 @@
       "levelPath": "{level} · path {path}",
       "missing": "To open, it needs:",
       "masteredOn": "Mastered on {date}.",
-      "obsoleteNote": "Obsolete: a skill that builds on it is mastered.",
+      "obsoleteNote": "Obsolete: every skill that builds on it is mastered.",
       "openQuiz": "Open the quiz",
       "retryAt": "The quiz can be taken again from {when} (Toronto time).",
       "sections": "In the manual:"

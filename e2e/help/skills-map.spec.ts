@@ -119,14 +119,19 @@ test.describe("TC-SKILL-01 — „Harta competențelor”", () => {
     test.skip(setProgress("--require-empty") === 3, "The e2e account has quiz attempts of its own; nothing is seeded over them.");
     setProgress("--clear", "--apply");
     try {
-      // 1.1, 1.2, 1.3 passed, then 2.13 (which needs all three): 2.13 Mastered, its three Obsolete; 3.12 (1.1 and
-      // 2.13) Open; 3.13 (1.4 and 2.13) Closed, 1.4 not mastered; 1.4 failed once — still Open.
-      setProgress("--pass", [key("1.1"), key("1.2"), key("1.3"), key("2.13")].join(","), "--fail", key("1.4"), "--apply");
+      // #39.55, Adrian's rule: mastering a skill removes the arrows into it, and only a skill left with no arrow out
+      // is Obsolete. 1.1, 1.2, 1.3 passed, then 2.13 (which needs all three), then 3.12 (1.1 and 2.13):
+      //   - 1.1 leads only to 2.13 and 3.12, both mastered: no arrow out left — Obsolete;
+      //   - 1.2 still leads to 2.14, not mastered — Mastered, not Obsolete (39.41's rule made it Obsolete);
+      //   - 2.13 still leads to 3.8 and 3.13 — Mastered; 3.12 Mastered;
+      //   - 3.13 (1.4 and 2.13) Closed, 1.4 not mastered; 1.4 failed once — still Open.
+      setProgress("--pass", [key("1.1"), key("1.2"), key("1.3"), key("2.13"), key("3.12")].join(","), "--fail", key("1.4"), "--apply");
       await openMap(page);
       const expected: [string, string, boolean, RegExp][] = [
         [key("1.1"), "obsolete", true, /^solid-4$/],
+        [key("1.2"), "mastered", true, /^solid-/],
         [key("2.13"), "mastered", true, /^solid-/],
-        [key("3.12"), "open", false, /^solid-/],
+        [key("3.12"), "mastered", true, /^solid-/],
         [key("3.13"), "closed", false, /^dotted-/],
         [key("1.4"), "open", false, /^solid-/],
       ];
@@ -135,6 +140,16 @@ test.describe("TC-SKILL-01 — „Harta competențelor”", () => {
         await expect(box(page, k).locator("[data-mastery-badge]")).toHaveCount(badge ? 1 : 0);
         await expect(box(page, k).locator("[data-frame]")).toHaveAttribute("data-frame", frame);
       }
+      await expect(box(page, key("1.2")).locator("[data-frame]")).not.toHaveAttribute("data-frame", /^solid-4$/);
+      // The arrows: into a Mastered or Obsolete box, gone in „Progresul meu”; the rest drawn.
+      const arrow = (from: string, to: string) => page.locator(`[data-arrow="${key(from)}>${key(to)}"]`);
+      for (const [from, to] of [["1.1", "2.13"], ["1.1", "3.12"], ["1.2", "2.13"], ["2.13", "3.12"]]) await expect(arrow(from, to)).toHaveCount(0);
+      for (const [from, to] of [["1.2", "2.14"], ["2.13", "3.13"], ["1.4", "3.13"]]) await expect(arrow(from, to)).toHaveCount(1);
+      // „Prezentare” draws every arrow, as before.
+      await page.locator('[data-map-view="overview"]').filter({ visible: true }).click();
+      for (const [from, to] of [["1.1", "2.13"], ["1.1", "3.12"], ["1.2", "2.13"], ["2.13", "3.12"]]) await expect(arrow(from, to)).toHaveCount(1);
+      await page.locator('[data-map-view="progress"]').filter({ visible: true }).click();
+      await expect(arrow("1.1", "2.13")).toHaveCount(0);
       // A Mastered box says when; 3.13's panel names 1.4 only.
       await box(page, key("2.13")).click();
       await expect(page.locator(`[data-skill-panel="${key("2.13")}"]`)).toContainText("Stăpânită pe");

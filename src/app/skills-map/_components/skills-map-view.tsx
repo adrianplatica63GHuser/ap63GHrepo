@@ -18,6 +18,8 @@
  *   - Slice #39.50: two views. „Progresul meu” (the default) draws each box in the user's state; „Prezentare”
  *     draws every box as its level's colour, Open, with no badge and no grey — the map as it is meant, not as
  *     the user stands on it. Both follow the chosen Path, in the diagram and in „Listă”.
+ *   - Slice #39.55: „Progresul meu” draws no arrow into a Mastered or Obsolete skill (progress.ts, `arrowShown`);
+ *     „Prezentare” draws them all.
  *   - „Potrivește” fits the map to the window's width (the default), „100%” draws it at full size; the frame
  *     scrolls both ways. „Listă” shows the same skills as a list, by level.
  */
@@ -31,7 +33,7 @@ import { SKILLS, SKILL_LEVELS, SKILL_PATHS, type Skill, type SkillLevel, type Sk
 import { layoutSkills } from "@/lib/skills/layout";
 import { boxAppearance, MASTERY_GREEN } from "@/lib/skills/appearance";
 import { ARROW_GREY, ARROW_NAVY, arrowLook, inPath as pathHas, PATH_SKILLS } from "@/lib/skills/paths";
-import type { SkillState } from "@/lib/skills/progress";
+import { arrowShown, type SkillState } from "@/lib/skills/progress";
 import { SectionList, type SectionLinkData } from "./section-list";
 
 type SkillProgressDto = {
@@ -293,7 +295,9 @@ export function SkillsMapView({ sections }: { sections: Readonly<Record<string, 
                     <path d="M0,0 L10,5 L0,10 z" fill={ARROW_GREY} />
                   </marker>
                 </defs>
-                {layout.arrows.map((a) => {
+                {/* #39.55: in „Progresul meu” an arrow into a Mastered or Obsolete skill is gone, hover included;
+                    „Prezentare” draws every arrow. */}
+                {layout.arrows.filter((a) => overview || arrowShown(stateOf(a.to)?.state)).map((a) => {
                   const look = arrowLook({ kept: inPath(a.from) && inPath(a.to), focused: focused !== null, lit: touches(a.from, a.to) });
                   return (
                     <line

@@ -7,10 +7,15 @@
  *   - A skill is OPEN when every predecessor is Mastered or Obsolete; otherwise it is CLOSED, and its quiz is
  *     not available.
  *   - Passing its quiz — at least 80 %: ceil(0.8 × n) right out of n, 8 of 10 — makes it MASTERED.
- *   - When a skill is Mastered, every predecessor becomes OBSOLETE. Obsolete is mastered-and-superseded (Ask
- *     first 1): it still counts as mastered for its other successors, or mastering 2.1 would close 2.2 again
- *     whenever both need 1.1. It is applied all the way down: a skill whose successor is Mastered or Obsolete is
- *     Obsolete itself, so a revised catalogue that adds a level under a mastered skill cannot open it again.
+ *   - #39.55, Adrian's rule, replacing 39.41's („When a skill is Mastered, every predecessor becomes OBSOLETE …
+ *     applied all the way down"): mastering a skill removes every arrow that points to it, in „Progresul meu"; a
+ *     skill becomes OBSOLETE only when every arrow leaving it has been removed that way — that is, when every
+ *     skill that builds on it is Mastered or Obsolete. A skill that still leads to one not yet mastered stays
+ *     Mastered. Obsolete counts as mastered (Ask first 1), so the arrows into it go too, and it still counts as
+ *     mastered for opening its successors. A skill that never had an arrow out — the top of a Path — is never
+ *     Obsolete. A revised catalogue that adds a skill under a mastered one: its only arrow points to a done
+ *     skill, so it is Obsolete at once and does not open again (Ask first 4). `arrowShown` says which arrows
+ *     „Progresul meu" still draws.
  *   - A failed quiz cannot be taken again for 72 hours from the failed attempt (Ask first 3); the user is told
  *     the date and hour it opens again, in Toronto time.
  *   - A PATH is mastered when all its Advanced and Expert skills are Mastered or Obsolete.
@@ -72,14 +77,17 @@ export function isPass(correct: number, questionCount: number): boolean {
   return correct >= passMark(questionCount);
 }
 
-/** Every skill the given skill depends on, directly or through others. */
-function ancestors(key: string, byKey: ReadonlyMap<string, Skill>, seen = new Set<string>()): Set<string> {
-  for (const p of byKey.get(key)?.predecessors ?? []) {
-    if (seen.has(p) || !byKey.has(p)) continue;
-    seen.add(p);
-    ancestors(p, byKey, seen);
-  }
-  return seen;
+/** Mastered or Obsolete: the skill's quiz has been passed, or it has been passed by. */
+export function isDone(state: SkillState | undefined): boolean {
+  return state === "mastered" || state === "obsolete";
+}
+
+/**
+ * Whether „Progresul meu" draws the arrow into `toState`'s skill (#39.55): an arrow that points to a Mastered or
+ * Obsolete skill is gone. „Prezentare" draws every arrow and never asks.
+ */
+export function arrowShown(toState: SkillState | undefined): boolean {
+  return !isDone(toState);
 }
 
 /**
@@ -95,14 +103,28 @@ export function computeProgress(
   const known = attempts.filter((a) => byKey.has(a.skillKey));
 
   const passed = new Set(known.filter((a) => a.passed).map((a) => a.skillKey));
-  const obsolete = new Set<string>();
-  for (const k of passed) for (const a of ancestors(k, byKey)) obsolete.add(a);
-  const done = (k: string) => passed.has(k) || obsolete.has(k);
+  // The arrows out of each skill: to the skills that build on it (#39.55).
+  const successors = new Map<string, string[]>(skills.map((s) => [s.key, []]));
+  for (const s of skills) for (const p of s.predecessors) successors.get(p)?.push(s.key);
+  // Obsolete ⇔ it had arrows out, and every one is gone because it points to a done skill. The graph is acyclic
+  // (validate-graph.ts), so the recursion ends at the skills with no arrow out.
+  const obsoleteMemo = new Map<string, boolean>();
+  const isObsolete = (k: string): boolean => {
+    const seen = obsoleteMemo.get(k);
+    if (seen !== undefined) return seen;
+    const out = successors.get(k) ?? [];
+    const v = out.length > 0 && out.every(done);
+    obsoleteMemo.set(k, v);
+    return v;
+  };
+  function done(k: string): boolean {
+    return passed.has(k) || isObsolete(k);
+  }
 
   const result: SkillProgress[] = skills.map((s) => {
     const mine = known.filter((a) => a.skillKey === s.key);
     let state: SkillState;
-    if (obsolete.has(s.key)) state = "obsolete";
+    if (isObsolete(s.key)) state = "obsolete";
     else if (passed.has(s.key)) state = "mastered";
     else if (s.predecessors.filter((p) => byKey.has(p)).every(done)) state = "open";
     else state = "closed";

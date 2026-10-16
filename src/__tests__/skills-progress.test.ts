@@ -5,10 +5,17 @@
  * graphs built for the purpose, rebuild the three impossible states of the request's picture and show the
  * rules cannot produce them, and then walk the real catalogue through many random histories checking that
  * nothing the rules forbid ever appears.
+ *
+ * #39.55 replaced the Obsolete rule, and these tests with it — inverted in place, so the rule has one home. 39.41's
+ * rule was „When a skill is Mastered, every predecessor becomes OBSOLETE … applied all the way down”. Adrian's
+ * (2026-10-15): „If a skill is mastered then all the arrows that point to that skill disappear”; „If a skill does
+ * not have any more arrows originating from itself … then make that skill obsolete; that's the only case when a
+ * skill becomes obsolete”.
  */
 import { SKILLS, SKILL_PATHS, type Skill, type SkillLevel, type SkillPathKey } from "@/lib/skills/catalogue";
 import {
   RETRY_HOURS,
+  arrowShown,
   computeProgress,
   formatRetryAt,
   isPass,
@@ -110,20 +117,48 @@ describe("Mastered and Obsolete", () => {
     expect(stateOf(computeProgress([pass("a")], T0, [mk("a", 1)]), "a")).toBe("mastered");
   });
 
-  it("when a skill is Mastered, every predecessor becomes Obsolete", () => {
+  // #39.55: was „when a skill is Mastered, every predecessor becomes Obsolete”. Here c is the only skill a and b lead
+  // to, so mastering it removes every arrow out of both, and both are Obsolete under the new rule too.
+  it("a skill whose every arrow out points to a mastered skill is Obsolete", () => {
     const G = [mk("a", 1), mk("b", 1), mk("c", 2, ["a", "b"])];
     expect(states(computeProgress([pass("a"), pass("b"), pass("c")], T0, G))).toEqual({ a: "obsolete", b: "obsolete", c: "mastered" });
   });
 
-  it("all the way down: a skill under an Obsolete one is Obsolete too", () => {
+  // #39.55: was „all the way down”. A chain still ends this way, because each arrow out points to a done skill.
+  it("a chain: each skill under a done one is Obsolete, the top one Mastered", () => {
     const G = [mk("a", 1), mk("b", 2, ["a"]), mk("c", 3, ["b"])];
     expect(states(computeProgress([pass("a"), pass("b", 1), pass("c", 2)], T0, G))).toEqual({ a: "obsolete", b: "obsolete", c: "mastered" });
   });
 
-  it("Ask first 1: an Obsolete skill still counts as mastered for its other successors", () => {
-    // 1.1 feeds both 2.1 and 2.2. Mastering 2.1 makes 1.1 Obsolete; 2.2 must stay Open.
+  // #39.55, INVERTED: was „Mastering 2.1 makes 1.1 Obsolete; 2.2 must stay Open” → { s11: "obsolete", … }. Now 1.1
+  // still has an arrow to 2.2, which is not mastered, so 1.1 stays Mastered.
+  it("a skill with two successors, one of them mastered, stays Mastered", () => {
     const G = [mk("s11", 1), mk("s21", 2, ["s11"]), mk("s22", 2, ["s11"])];
-    expect(states(computeProgress([pass("s11"), pass("s21", 1)], T0, G))).toEqual({ s11: "obsolete", s21: "mastered", s22: "open" });
+    expect(states(computeProgress([pass("s11"), pass("s21", 1)], T0, G))).toEqual({ s11: "mastered", s21: "mastered", s22: "open" });
+    // …and once 2.2 is mastered too, no arrow leaves 1.1: Obsolete.
+    expect(states(computeProgress([pass("s11"), pass("s21", 1), pass("s22", 2)], T0, G))).toEqual({ s11: "obsolete", s21: "mastered", s22: "mastered" });
+  });
+
+  it("a chain mastered only at its foot: nothing is Obsolete while the skill above is not mastered", () => {
+    const G = [mk("a", 1), mk("b", 2, ["a"]), mk("c", 3, ["b"])];
+    expect(states(computeProgress([pass("a")], T0, G))).toEqual({ a: "mastered", b: "open", c: "closed" });
+    expect(states(computeProgress([pass("a"), pass("b", 1)], T0, G))).toEqual({ a: "obsolete", b: "mastered", c: "open" });
+  });
+
+  it("Ask first 1: an Obsolete skill counts as mastered — the arrows into it go, and its successors stay open", () => {
+    // a → b → c and a → d. Mastering b and c: b loses its only arrow out (Obsolete), so the arrow a → b goes too; a
+    // still leads to d, so a stays Mastered, and d, which needs only a, is Open.
+    const G = [mk("a", 1), mk("b", 2, ["a"]), mk("c", 3, ["b"]), mk("d", 2, ["a"])];
+    const p = computeProgress([pass("a"), pass("b", 1), pass("c", 2)], T0, G);
+    expect(states(p)).toEqual({ a: "mastered", b: "obsolete", c: "mastered", d: "open" });
+    expect(arrowShown(stateOf(p, "b"))).toBe(false);
+    expect(arrowShown(stateOf(p, "d"))).toBe(true);
+  });
+
+  it("the top of a Path — a skill no arrow leaves — is never Obsolete", () => {
+    const G = [mk("a", 3), mk("e", 4, ["a"])];
+    expect(states(computeProgress([pass("a"), pass("e", 1)], T0, G))).toEqual({ a: "obsolete", e: "mastered" });
+    expect(stateOf(computeProgress([pass("e")], T0, [mk("e", 4)]), "e")).toBe("mastered");
   });
 
   it("an Obsolete or Mastered skill offers no quiz", () => {
@@ -133,6 +168,8 @@ describe("Mastered and Obsolete", () => {
     expect(skillProgress(p, "b")!.quizAvailable).toBe(false);
   });
 
+  // #39.55, Ask first 4: the case 39.41's „all the way down” existed for. Adrian's rule covers it: the new skill's only
+  // arrow points to a mastered skill, so the arrow is gone and the skill is Obsolete.
   it("a revised catalogue that puts a new skill under a mastered one marks it Obsolete, not Open", () => {
     const before = [mk("a", 1), mk("b", 2, ["a"])];
     const after = [mk("a", 1), mk("new", 1), mk("b", 2, ["a", "new"])];
@@ -186,6 +223,27 @@ describe("when a skill was mastered (#39.42)", () => {
   });
   it("is null for a skill never passed", () => {
     expect(skillProgress(computeProgress([fail("a")], at(1), [mk("a", 1)]), "a")!.masteredAt).toBeNull();
+  });
+});
+
+describe("the arrows „Progresul meu” draws (#39.55)", () => {
+  it("an arrow into a Mastered or Obsolete skill is gone; into an Open or Closed one it stays", () => {
+    expect(arrowShown("mastered")).toBe(false);
+    expect(arrowShown("obsolete")).toBe(false);
+    expect(arrowShown("open")).toBe(true);
+    expect(arrowShown("closed")).toBe(true);
+    expect(arrowShown(undefined)).toBe(true);
+  });
+
+  it("the real catalogue: every Basic skill mastered, none is Obsolete — each still leads somewhere not mastered", () => {
+    const p = computeProgress(SKILLS.filter((s) => s.level === 1).map((s) => pass(s.key)), T0);
+    for (const s of SKILLS.filter((x) => x.level === 1)) expect({ key: s.key, state: stateOf(p, s.key) }).toEqual({ key: s.key, state: "mastered" });
+  });
+
+  it("the real catalogue, everything mastered: only the skills no arrow leaves stay Mastered", () => {
+    const p = computeProgress(SKILLS.map((s) => pass(s.key)), T0);
+    const leaves = new Set(SKILLS.map((s) => s.key).filter((k) => !SKILLS.some((x) => x.predecessors.includes(k))));
+    for (const s of SKILLS) expect({ key: s.key, state: stateOf(p, s.key) }).toEqual({ key: s.key, state: leaves.has(s.key) ? "mastered" : "obsolete" });
   });
 });
 
@@ -299,9 +357,13 @@ describe("the real catalogue, walked through random histories", () => {
         // Open ⇒ every predecessor done; Closed ⇒ some predecessor not done.
         if (st[s.key] === "open") expect({ seed, step, key: s.key, predsDone: s.predecessors.every(done) }).toMatchObject({ predsDone: true });
         if (st[s.key] === "closed") expect({ seed, step, key: s.key, somePredOpen: !s.predecessors.every(done) }).toMatchObject({ somePredOpen: true });
-        // Mastered ⇒ every predecessor Obsolete; Obsolete ⇒ some successor done.
-        if (st[s.key] === "mastered") expect({ seed, step, key: s.key, predsObsolete: preds.get(s.key)!.every((k) => st[k] === "obsolete") }).toMatchObject({ predsObsolete: true });
-        if (st[s.key] === "obsolete") expect({ seed, step, key: s.key, aSuccessorDone: successors.get(s.key)!.some(done) }).toMatchObject({ aSuccessorDone: true });
+        // #39.55, INVERTED: was „Mastered ⇒ every predecessor Obsolete; Obsolete ⇒ some successor done”. Now: Obsolete
+        // ⇔ it has arrows out and every one points to a done skill; Mastered ⇒ every predecessor done, and some
+        // arrow out still drawn (or none ever left it).
+        const out = successors.get(s.key)!;
+        const allOutGone = out.length > 0 && out.every(done);
+        expect({ seed, step, key: s.key, obsolete: st[s.key] === "obsolete" }).toEqual({ seed, step, key: s.key, obsolete: allOutGone });
+        if (st[s.key] === "mastered") expect({ seed, step, key: s.key, predsDone: preds.get(s.key)!.every(done) }).toMatchObject({ predsDone: true });
         // A Basic skill is never Closed.
         if (s.level === 1) expect({ seed, step, key: s.key, closed: st[s.key] === "closed" }).toMatchObject({ closed: false });
       }
