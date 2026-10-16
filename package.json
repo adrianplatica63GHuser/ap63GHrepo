@@ -15,6 +15,8 @@
     "db:studio": "node --env-file=.env node_modules/drizzle-kit/bin.cjs studio",
     "db:seed": "node --env-file=.env node_modules/tsx/dist/cli.mjs src/db/seed.ts",
     "seed:admin": "node --env-file=.env node_modules/tsx/dist/cli.mjs scripts/seed-admin.ts",
+    "seed:dev": "node --env-file=.env node_modules/tsx/dist/cli.mjs scripts/seed-dev.ts",
+    "seed:dev:remove": "node --env-file=.env node_modules/tsx/dist/cli.mjs scripts/seed-dev.ts --remove",
     "supabase:sync": "node --env-file=.env node_modules/tsx/dist/cli.mjs scripts/supabase-sync.ts",
     "supabase:migrate": "node --env-file=.env node_modules/tsx/dist/cli.mjs scripts/supabase-migrate.ts",
     "supabase:forms": "node --env-file=.env node_modules/tsx/dist/cli.mjs scripts/supabase-forms.ts",

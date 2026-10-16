@@ -515,6 +515,13 @@ export const SEED_REHEARSAL_INTERACTIONS_SCRIPT = "scripts/seed-dev-data-interac
  */
 export const SEED_REHEARSAL_BACKFILL_SCRIPT = "scripts/backfill-deceased/backfill.ts";
 
+/**
+ * Slice #39.58: the rehearsal runs the ONE command Adrian runs — `npm run seed:dev`, both seeds in order — then a
+ * second (refused by the big seed, nothing after it runs), then `seed:dev:remove`, and every table must read as it did
+ * before. Each seed's part of the output is found by the command's markers (scripts/seed-dev-plan.ts).
+ */
+export const SEED_REHEARSAL_SEED_DEV_SCRIPT = "scripts/seed-dev.ts";
+
 export interface BackfillRehearsalObservation {
   dryExit: number | null;
   dryOutput: string;
@@ -534,12 +541,16 @@ export function backfillCount(output: string, verb: "Would change" | "Changed"):
 export interface InteractionsRehearsalObservation {
   seedExit: number | null;
   seedOutput: string;
-  reseedExit: number | null;
-  reseedOutput: string;
-  removeExit: number | null;
+  /**
+   * The interactions seed's own round — absent when it ran inside `seed:dev` (#39.58), where its second run and its
+   * --remove are the command's, judged by the whole tables before and after.
+   */
+  reseedExit?: number | null;
+  reseedOutput?: string;
+  removeExit?: number | null;
   /** after the big seed, before the interactions seed — and after the interactions seed's --remove */
-  before: readonly TableCount[];
-  after: readonly TableCount[];
+  before?: readonly TableCount[];
+  after?: readonly TableCount[];
 }
 
 export interface SeedRehearsalObservation {
@@ -558,6 +569,8 @@ export interface SeedRehearsalObservation {
   backfill?: BackfillRehearsalObservation;
   /** #39.30: the archive's own seeds, removed before the rehearsal's — empty or absent when it held none */
   cleared?: readonly { exit: number | null; output: string }[];
+  /** #39.58: the seeds ran as `npm run seed:dev` / `seed:dev:remove`, one command */
+  oneCommand?: boolean;
 }
 
 /**
@@ -597,11 +610,13 @@ export function seedRehearsalVerdict(o: SeedRehearsalObservation): { verdict: "p
       const unmet = i.seedOutput.split(/\r?\n/).filter((l) => l.startsWith("✗")).map((l) => l.slice(2).trim());
       problems.push(unmet.length ? `interactions coverage not met: ${unmet.slice(0, 5).join("; ")}` : "the interactions seed printed no coverage table");
     }
-    if (i.reseedExit === 0 || !/A previous interactions seed is still recorded/.test(i.reseedOutput)) problems.push("a second interactions seed was not refused");
-    if (i.removeExit !== 0) problems.push(`the interactions --remove exited ${i.removeExit ?? "without an exit code"}`);
-    const ib = new Map(i.before.map((t) => [t.table, t.rows]));
-    for (const t of i.after) if (ib.get(t.table) !== t.rows) problems.push(`${t.table}: ${ib.get(t.table) ?? "missing"} → ${t.rows} after the interactions --remove`);
-    for (const t of i.before) if (!i.after.some((x) => x.table === t.table)) problems.push(`${t.table}: missing after the interactions --remove`);
+    if (i.reseedOutput !== undefined && (i.reseedExit === 0 || !/A previous interactions seed is still recorded/.test(i.reseedOutput))) problems.push("a second interactions seed was not refused");
+    if (i.removeExit !== undefined && i.removeExit !== 0) problems.push(`the interactions --remove exited ${i.removeExit ?? "without an exit code"}`);
+    if (i.before && i.after) {
+      const ib = new Map(i.before.map((t) => [t.table, t.rows]));
+      for (const t of i.after) if (ib.get(t.table) !== t.rows) problems.push(`${t.table}: ${ib.get(t.table) ?? "missing"} → ${t.rows} after the interactions --remove`);
+      for (const t of i.before) if (!i.after.some((x) => x.table === t.table)) problems.push(`${t.table}: missing after the interactions --remove`);
+    }
   }
   for (const c of o.cleared ?? []) if (c.exit !== 0) problems.push(`removing the archive's own seed first exited ${c.exit ?? "without an exit code"}`);
   const clearedLine = o.cleared && o.cleared.length > 0 ? `; the archive's own seed${o.cleared.length === 1 ? "" : "s"} removed first` : "";
@@ -622,6 +637,13 @@ export function seedRehearsalVerdict(o: SeedRehearsalObservation): { verdict: "p
     bfLine = `; the deaths backfill changed ${did ?? "?"} as its --dry-run said, and a second run nothing`;
   }
   if (problems.length > 0) return { verdict: "failed", line: `FAILED — backup ${o.backup}: ${problems.slice(0, 4).join("; ")}`, problems };
+  if (o.oneCommand) {
+    return {
+      verdict: "passed",
+      line: `passed — backup ${o.backup}: npm run seed:dev — the big seed met all ${met![1]} coverage lines${iMet ? `, the interactions seed all ${iMet[1]}` : ""}; a second seed:dev was refused; seed:dev:remove brought every table back (${kept} reference row${kept === 1 ? "" : "s"} kept)${bfLine}${clearedLine}`,
+      problems,
+    };
+  }
   const also = iMet ? `; the interactions seed met all ${iMet[1]} lines, a second was refused, its --remove brought every table back` : "";
   return {
     verdict: "passed",

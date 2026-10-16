@@ -522,6 +522,26 @@ describe("the big dev seed's rehearsal on a restored copy (Slice #39.21)", () =>
     });
   });
 
+  describe("as one command, npm run seed:dev (Slice #39.58)", () => {
+    const iPart = { seedExit: 0, seedOutput: "\n✓ PJ cu interacțiuni  ≥ 70 %  342 / 450 (76.0 %)\nToate cele 13 cerințe sunt îndeplinite.\n" };
+
+    it("passes on both seeds' coverage, a refused second seed:dev and every table back after seed:dev:remove", () => {
+      const v = seedRehearsalVerdict({ ...ok, oneCommand: true, interactions: iPart });
+      expect(v.verdict).toBe("passed");
+      expect(v.line).toMatch(/npm run seed:dev — the big seed met all \d+ coverage lines, the interactions seed all 13; a second seed:dev was refused; seed:dev:remove brought every table back/);
+    });
+
+    it("fails when the interactions seed did not run inside it — the big seed stopped the command", () => {
+      const v = seedRehearsalVerdict({ ...ok, oneCommand: true, interactions: { seedExit: null, seedOutput: "" } });
+      expect(v.verdict).toBe("failed");
+      expect(v.problems).toContain("the interactions seed printed no coverage table");
+    });
+
+    it("does not ask for the interactions seed's own round, which the command's removal covers", () => {
+      expect(seedRehearsalVerdict({ ...ok, oneCommand: true, interactions: iPart }).problems).toEqual([]);
+    });
+  });
+
   describe("with the interactions seed's round (Slice #39.29)", () => {
     const mid = [t("public.person", 960), t("public.interaction", 0)];
     const round = {

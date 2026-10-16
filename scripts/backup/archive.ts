@@ -34,8 +34,9 @@
  * not the archive) · 2 could not run. The last line is `BACKUP: …` or `DRILL: …`.
  *
  * `seed-rehearsal` (Slice #39.21) uses the drill's throwaway database the same way — restored from the newest
- * backup, removed at the end, pass or fail — and runs the big dev seed against it, then a second seed, then
- * `--remove`, counting every table before and after. The seed's manifest goes to a scratch folder under
+ * backup, removed at the end, pass or fail — and runs `npm run seed:dev` against it (since #39.58 the one command:
+ * the big seed, then the interactions seed), then a second (refused), then `seed:dev:remove`, counting every table
+ * before and after. The seed's manifest goes to a scratch folder under
  * `.test-runner\seed-rehearsal\`, never the repo's own, and its environment is the drill app's: every `.env`
  * key blanked, DATABASE_URL the throwaway's. Exit 0 passed · 1 failed · 2 could not run; last line
  * `SEED-REHEARSAL: …`.
@@ -71,6 +72,7 @@ import {
   SEED_REHEARSAL_SCRIPT,
   SEED_REHEARSAL_INTERACTIONS_SCRIPT,
   SEED_REHEARSAL_BACKFILL_SCRIPT,
+  SEED_REHEARSAL_SEED_DEV_SCRIPT,
   seedRehearsalVerdict,
   selectPrune,
   validateManifest,
@@ -80,6 +82,7 @@ import {
   type TableCount,
 } from "./rules";
 import { backupRoot, listBackups, readDrillLog, type DrillLogEntry } from "./state";
+import { splitSeedDevOutput } from "../seed-dev-plan";
 
 const REPO = path.resolve(__dirname, "..", "..");
 const LIVE_CONTAINER = "ga40prj-postgres";
@@ -675,42 +678,33 @@ async function seedRehearsal(resultId: string | null): Promise<number> {
     }
     const before = drillJson<TableCount[]>(password, TABLE_COUNT_SQL);
 
+    // #39.58: the ONE command Adrian runs — `npm run seed:dev`: the big seed, then the interactions seed; a second
+    // (refused by the big seed, so nothing after it runs); then `seed:dev:remove`. Every table must then read as it
+    // did before, the lookups excepted (they may only grow).
     const t0 = Date.now();
-    const seed = runSeed(env, []);
-    say(`seed-rehearsal: the seed exited ${seed.exit} in ${((Date.now() - t0) / 1000).toFixed(0)} s — its output:`);
+    const seed = runSeed(env, [], SEED_REHEARSAL_SEED_DEV_SCRIPT);
+    say(`seed-rehearsal: npm run seed:dev exited ${seed.exit} in ${((Date.now() - t0) / 1000).toFixed(0)} s — its output:`);
     say(seed.text.trimEnd());
-    const again = runSeed(env, []);
-    say(`seed-rehearsal: a second seed exited ${again.exit}: ${lastLines(again.text, 1)}`);
-
-    // The interactions seed (#39.29), on the big seed's persons: its round must leave every table as it found it.
-    const iBefore = drillJson<TableCount[]>(password, TABLE_COUNT_SQL);
-    const ti = Date.now();
-    const iSeed = runSeed(env, [], SEED_REHEARSAL_INTERACTIONS_SCRIPT);
-    say(`seed-rehearsal: the interactions seed exited ${iSeed.exit} in ${((Date.now() - ti) / 1000).toFixed(0)} s — its output:`);
-    say(iSeed.text.trimEnd());
-    const iAgain = runSeed(env, [], SEED_REHEARSAL_INTERACTIONS_SCRIPT);
-    say(`seed-rehearsal: a second interactions seed exited ${iAgain.exit}: ${lastLines(iAgain.text, 1)}`);
-    const tr = Date.now();
-    const iRemoved = runSeed(env, ["--remove"], SEED_REHEARSAL_INTERACTIONS_SCRIPT);
-    say(`seed-rehearsal: the interactions --remove exited ${iRemoved.exit} in ${((Date.now() - tr) / 1000).toFixed(0)} s: ${lastLines(iRemoved.text, 1)}`);
-    const iAfter = drillJson<TableCount[]>(password, TABLE_COUNT_SQL);
-
+    const parts = splitSeedDevOutput(seed.text);
+    const again = runSeed(env, [], SEED_REHEARSAL_SEED_DEV_SCRIPT);
+    say(`seed-rehearsal: a second seed:dev exited ${again.exit}: ${lastLines(again.text, 2)}`);
     const t1 = Date.now();
-    const removed = runSeed(env, ["--remove"]);
-    say(`seed-rehearsal: --remove exited ${removed.exit} in ${((Date.now() - t1) / 1000).toFixed(0)} s: ${lastLines(removed.text, 2)}`);
+    const removed = runSeed(env, ["--remove"], SEED_REHEARSAL_SEED_DEV_SCRIPT);
+    say(`seed-rehearsal: seed:dev:remove exited ${removed.exit} in ${((Date.now() - t1) / 1000).toFixed(0)} s: ${lastLines(removed.text, 3)}`);
     const after = drillJson<TableCount[]>(password, TABLE_COUNT_SQL);
 
     const report = seedRehearsalVerdict({
       backup: newest.name,
       restoreErrors,
       seedExit: seed.exit,
-      seedOutput: seed.text,
+      seedOutput: parts.big,
       reseedExit: again.exit,
       reseedOutput: again.text,
       removeExit: removed.exit,
       before,
       after,
       cleared,
+      oneCommand: true,
       backfill: {
         dryExit: bDry.exit,
         dryOutput: bDry.text,
@@ -719,15 +713,9 @@ async function seedRehearsal(resultId: string | null): Promise<number> {
         againExit: bAgain.exit,
         againOutput: bAgain.text,
       },
-      interactions: {
-        seedExit: iSeed.exit,
-        seedOutput: iSeed.text,
-        reseedExit: iAgain.exit,
-        reseedOutput: iAgain.text,
-        removeExit: iRemoved.exit,
-        before: iBefore,
-        after: iAfter,
-      },
+      // The interactions seed ran inside seed:dev: its coverage is judged here, its second run and its removal by the
+      // command's, through the whole tables before and after.
+      interactions: { seedExit: parts.interactions ? seed.exit : null, seedOutput: parts.interactions },
     });
     for (const p of report.problems) say(`  PROBLEM ${p}`);
     say(`SEED-REHEARSAL: ${report.line}`);

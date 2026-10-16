@@ -117,10 +117,11 @@ this fixed sequence. Do not ask again.
 - **A rehearsal on the archive runs on the laptop, never in the sandbox** (#39.21). The cloud
   sandbox refuses to hold a copy of the backup — measured twice on 2026-10-13, as personal data and
   as data leaving the machine — so do not stage `ga40db.dump`. `request seed-rehearsal` restores the
-  newest backup into the drill's throwaway database (5434, no volume), runs the big dev seed
-  (`scripts/seed-dev-data-big`) against it with its manifest in a scratch folder, checks that a second
-  seed is refused, runs `--remove`, and counts every table before and after. Its line says whether the
-  coverage table was met and everything came back; the log holds the table.
+  newest backup into the drill's throwaway database (5434, no volume), runs `npm run seed:dev` — since
+  #39.58 the one command for both dev seeds, the big one (`scripts/seed-dev-data-big`) then the
+  interactions one — against it with their manifests in a scratch folder, checks that a second
+  `seed:dev` is refused, runs `seed:dev:remove`, and counts every table before and after. Its line says
+  whether both coverage tables were met and everything came back; the log holds the tables.
 - **The runner also runs the whole regression every two weeks, on its own** (#39.15), on fixed dates:
   November 4, 2026, then every 14 days (`REGRESSION_FIRST`, `REGRESSION_EVERY_DAYS`). From a date's
   Toronto midnight, when idle, with no backup or drill due and no tracked change in the tree, it
