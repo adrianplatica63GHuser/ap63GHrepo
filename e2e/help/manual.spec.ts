@@ -520,8 +520,17 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     try {
       // What the type offers on „Asociere persoană”, for the manual's sentence on roles (printed, not asserted).
       console.log(`[manual-figures] Antecontract person roles: ${JSON.stringify(await documentRoleOptions(page.request, anteId))}`);
-      const persons = await page.request.post(`/api/documents/${anteId}/persons`, { data: { personIds: [naturals[0].id, naturals[1].id] } });
-      expect(persons.ok(), `POST persons ${persons.status()}`).toBeTruthy();
+      // #39.57: the two seed persons as the antecontract's parties — „Promitent vânzător” and „Promitent cumpărător”,
+      // which hold a share — so „Legături” shows the line that says they are in „Părți”. Where the type offers no
+      // such role (a database without FU-344's rows), they are linked without one and stand on „Legături”.
+      const validRes = await page.request.get(`/api/documents/${anteId}/valid-person-roles`);
+      const validBody = (await validRes.json()) as { items?: { id: string; name: string }[] } | { id: string; name: string }[];
+      const valid = Array.isArray(validBody) ? validBody : (validBody.items ?? []);
+      for (const [person, roleName] of [[naturals[0], "Promitent vânzător"], [naturals[1], "Promitent cumpărător"]] as const) {
+        const roleId = valid.find((r) => r.name === roleName)?.id ?? null;
+        const persons = await page.request.post(`/api/documents/${anteId}/persons`, { data: { personIds: [person.id], personRoleId: roleId } });
+        expect(persons.ok(), `POST persons ${persons.status()}`).toBeTruthy();
+      }
       const roles = await page.request.get("/api/admin/value-lists/document-document-roles");
       expect(roles.ok()).toBeTruthy();
       const role = ((await roles.json()) as { items?: { id: string; name: string }[] }).items?.find((r) => r.name === "Antecontract al");
