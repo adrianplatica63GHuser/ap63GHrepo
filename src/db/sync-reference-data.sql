@@ -428,7 +428,11 @@ INSERT INTO lookup_person_role (id, name, description, sort_order, created_at, u
   -- Slice #38.29 (migration_095): the two a parent read off an identity card is
   -- linked by. Same names, descriptions and sort_orders as migration_095.
   (gen_random_uuid(), 'Tată', '(părintele, bărbat)', 64, now(), now()),
-  (gen_random_uuid(), 'Mamă', '(părintele, femeie)', 65, now(), now())
+  (gen_random_uuid(), 'Mamă', '(părintele, femeie)', 65, now(), now()),
+  -- Slice #39.59 (migration_110, FU-344): the antecontract's parties. Same names, descriptions and sort_orders
+  -- as migration_110.
+  (gen_random_uuid(), 'Promitent vânzător', '(cel care promite să vândă, prin antecontract)', 66, now(), now()),
+  (gen_random_uuid(), 'Promitent cumpărător', '(cel care promite să cumpere, prin antecontract)', 67, now(), now())
 ON CONFLICT DO NOTHING;
 
 -- ── lookup_doc_type_person_role ───────────────────────────────────────────────
@@ -443,6 +447,9 @@ FROM (VALUES
   ('Act de Adjudecare',             'Executor judecătoresc'),
   ('Act de Adjudecare',             'Creditor'),
   ('Act de Adjudecare',             'Moștenitor'),
+  ('Antecontract',                  'Promitent vânzător'),
+  ('Antecontract',                  'Promitent cumpărător'),
+  ('Antecontract',                  'Notar'),
   ('Act Cadastru',                  'Proprietar'),
   ('Act Cadastru',                  'Solicitant'),
   ('Act Cadastru',                  'Coproprietar'),
@@ -539,6 +546,16 @@ UPDATE lookup_doc_type_person_role AS p
      OR r.name LIKE 'Moștenitor%'
      OR r.name LIKE 'Moştenitor%'
    );
+
+-- Slice #39.59 (migration_110): the antecontract's promitenți hold a share - on the antecontract only (the act
+-- adițional's pairs with these roles, where a database has them, stay as they are).
+UPDATE lookup_doc_type_person_role AS p
+   SET holds_share = true
+  FROM lookup_person_role AS r, lookup_document_type AS d
+ WHERE r.id = p.person_role_id
+   AND d.id = p.document_type_id
+   AND d.name = 'Antecontract'
+   AND r.name IN ('Promitent vânzător', 'Promitent cumpărător');
 
 -- ── lookup_person_role.valid_for_property ─────────────────────────────────────
 -- Name-resolved. Roles valid for the Property ↔ Person association.
