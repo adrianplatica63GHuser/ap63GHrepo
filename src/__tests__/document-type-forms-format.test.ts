@@ -70,6 +70,13 @@ describe("the SQL a rebuild runs", () => {
     expect(sql).toContain("WHERE key = 'ACT_B';");
   });
 
+  it("sets its own search_path inside the transaction, because it runs after a pg_dump that emptied it", () => {
+    // Ciprian's package (2026-10-16): section 4's dump ends with search_path ''
+    // and every UPDATE failed with `relation "lookup_document_type" does not exist`.
+    expect(sql).toMatch(/^BEGIN;\nSET LOCAL search_path = public;\n/m);
+    expect(sql).not.toMatch(/^SET search_path/m);
+  });
+
   it("carries each form as the exact JSON, dollar-quoted, cast to jsonb", () => {
     expect(sql).toContain(`$form$${JSON.stringify(A.fields)}$form$::jsonb`);
   });

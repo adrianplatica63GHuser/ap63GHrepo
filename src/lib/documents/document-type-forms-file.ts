@@ -160,6 +160,12 @@ export function formsFileToSql(
     `-- Generated from ${FORMS_FILE_REL} by src/lib/documents/document-type-forms-file.ts. Do not edit.`,
     "-- Every document type's form (lookup_document_type.template_fields), by key.",
     "BEGIN;",
+    // ⚠️ Every caller runs this AFTER a pg_dump, and pg_dump leaves the session's
+    // search_path EMPTY (`set_config('search_path', '', false)`), so the
+    // unqualified table below is "relation does not exist" — measured on
+    // Ciprian's package, 2026-10-16. LOCAL, so it ends at the COMMIT and leaves
+    // whatever runs next exactly as it found it.
+    "SET LOCAL search_path = public;",
   ];
   const sorted = [...file.forms].sort(byKey);
   for (const form of sorted) {
