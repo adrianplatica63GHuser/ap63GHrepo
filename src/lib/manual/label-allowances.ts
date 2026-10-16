@@ -14,6 +14,8 @@ import type { ManualLocale } from "@/lib/manual/format";
 
 export const MANUAL_QUOTES_NOT_LABELS: Readonly<Record<ManualLocale, Readonly<Record<string, string>>>> = {
   "ro-RO": {
+    "Promitent vânzător": "a role's name — data from the dev seed until #39.59 puts it in the reference SQL (FU-344); remove then",
+    "Promitent cumpărător": "a role's name — data from the dev seed until #39.59 puts it in the reference SQL (FU-344); remove then",
     "secțiunea 2.5": "an example of the manual's own cross-reference, not a label",
     "Figura 2.3": "an example of the manual's own cross-reference, not a label",
     "Ion Popescu": "an invented person's name in an example",
@@ -66,6 +68,8 @@ export const MANUAL_QUOTES_NOT_LABELS: Readonly<Record<ManualLocale, Readonly<Re
     "§3.2": "an example of how an AI answer names a section",
   },
   "en-GB": {
+    "Promitent vânzător": "a role's name — data from the dev seed until #39.59 puts it in the reference SQL (FU-344); remove then",
+    "Promitent cumpărător": "a role's name — data from the dev seed until #39.59 puts it in the reference SQL (FU-344); remove then",
     "section 2.5": "an example of the manual's own cross-reference, not a label",
     "Figure 2.3": "an example of the manual's own cross-reference, not a label",
     "Ion Popescu": "an invented person's name in an example",
