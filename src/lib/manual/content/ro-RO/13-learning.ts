@@ -57,15 +57,15 @@ Culoarea unei casete este a nivelului ei și nu se schimbă niciodată: bleu des
 | „Deschisă” | colorată, fără bifă | toate competențele dinainte sunt stăpânite; chestionarul ei este disponibil |
 | „Stăpânită” | colorată, cu bifa verde | chestionarul ei a fost trecut |
 | „Închisă” | gri, fără bifă, cu chenarul punctat | îi lipsește cel puțin o competență dinainte |
-| „Depășită” | gri, cu bifa verde, cu chenarul verde și gros | stăpânită, iar o competență care se sprijină pe ea este stăpânită și ea |
+| „Depășită” | gri, cu bifa verde, cu chenarul verde și gros | stăpânită, iar toate competențele care se sprijină pe ea sunt stăpânite: din ea nu mai pleacă nicio săgeată |
 
-O competență fără nimic înainte — toate cele de bază — este deschisă de la început. Când trec un chestionar, competența devine stăpânită, iar cele de dinaintea ei devin depășite: le-ați depășit, dar contează în continuare ca stăpânite pentru celelalte competențe care se sprijină pe ele.
+O competență fără nimic înainte — toate cele de bază — este deschisă de la început. Când trec un chestionar, competența devine stăpânită, iar în „Progresul meu” săgețile care duc la ea dispar. O competență din care nu mai pleacă nicio săgeată — toate cele care se sprijină pe ea sunt stăpânite — devine depășită: ați depășit-o, dar contează în continuare ca stăpânită. Numai așa devine o competență depășită. Una care duce încă la o competență nestăpânită rămâne stăpânită, colorată, cu bifa verde, iar una din care n-a plecat niciodată o săgeată — o competență de expert — nu devine niciodată depășită. „Prezentare” arată toate săgețile, ca înainte.
 
 ### 13.3.2 Pe hartă {#learning-skills-use}
 
 - Apăsați o casetă deschisă ca să dați chestionarul ei (secțiunea [[learning-quizzes]]).
 - O casetă închisă, apăsată, arată ce competențe îi lipsesc ca să se deschidă, fiecare cu starea ei. O casetă stăpânită sau depășită spune de când e stăpânită.
-- Când țineți mouse-ul pe o casetă, săgețile ei ies în față, iar celelalte se estompează.
+- Când țineți mouse-ul pe o casetă, săgețile ei ies în față, iar celelalte se estompează. În „Progresul meu” ies în față doar săgețile care se mai văd.
 - Deasupra hărții stau traseele, de la „Persoane” la „Spațiul de lucru” (secțiunea [[learning-skills-paths]]). „Toate traseele” arată toată harta.
 - „Potrivește” încape harta în lățimea ferestrei, iar „100%” o arată în mărime naturală. „Listă” arată aceleași competențe ca listă, pe niveluri; „Diagramă” aduce harta înapoi.
 
@@ -106,7 +106,7 @@ Treceți cu cel puțin 80 % răspunsuri bune — de exemplu 5 din 6 sau 8 din 10
 
 | Rezultatul | Ce vedeți | Ce se schimbă pe hartă |
 |---|---|---|
-| Trecut | câte răspunsuri bune ați avut și, la fiecare întrebare, răspunsul bun cu explicația lui și secțiunea din manual de unde vine | competența devine stăpânită, iar cele de dinaintea ei devin depășite; competențele care se sprijineau doar pe acestea se deschid |
+| Trecut | câte răspunsuri bune ați avut și, la fiecare întrebare, răspunsul bun cu explicația lui și secțiunea din manual de unde vine | competența devine stăpânită și săgețile spre ea dispar; o competență dinainte devine depășită când toate cele care se sprijină pe ea sunt stăpânite; competențele care așteptau doar această competență se deschid |
 | Picat | câte răspunsuri bune ați avut, câte trebuiau, secțiunile din manual de recitit și data și ora de la care se poate relua | nimic; competența rămâne deschisă |
 
 După un chestionar picat, răspunsurile bune nu se arată: le-ați lua cu dumneavoastră la încercarea următoare. Recitiți secțiunile propuse.

@@ -57,15 +57,15 @@ A box's colour is its level's and never changes: pale blue with navy text for �
 | „Open” | coloured, no tick | every skill before it is mastered; its quiz is available |
 | „Mastered” | coloured, with the green tick | its quiz has been passed |
 | „Closed” | grey, no tick, its frame dotted | at least one skill before it is missing |
-| „Obsolete” | grey, with the green tick, its frame green and thick | mastered, and a skill that builds on it is mastered too |
+| „Obsolete” | grey, with the green tick, its frame green and thick | mastered, and every skill that builds on it is mastered: no arrow leaves it any more |
 
-A skill with nothing before it — every basic one — is open from the start. When you pass a quiz, the skill becomes mastered, and the ones before it become obsolete: you have gone past them, but they still count as mastered for the other skills that build on them.
+A skill with nothing before it — every basic one — is open from the start. When you pass a quiz, the skill becomes mastered, and in „My progress” the arrows that lead to it disappear. A skill that no arrow leaves any more — every skill that builds on it is mastered — becomes obsolete: you have gone past it, but it still counts as mastered. That is the only way a skill becomes obsolete. One that still leads to a skill not yet mastered stays mastered, coloured, with its green tick, and one that never had an arrow leaving it — an expert skill — never becomes obsolete. „Overview” shows every arrow, as before.
 
 ### 13.3.2 On the map {#learning-skills-use}
 
 - Press an open box to take its quiz (section [[learning-quizzes]]).
 - A closed box, pressed, shows which skills it needs to open, each with its state. A mastered or obsolete box says since when it is mastered.
-- When you hold the mouse over a box, its arrows come forward and the others fade.
+- When you hold the mouse over a box, its arrows come forward and the others fade. In „My progress” only the arrows still drawn come forward.
 - Above the map stand the paths, from „Persons” to „Workspace” (section [[learning-skills-paths]]). „All paths” shows the whole map.
 - „Fit” fits the map to the window's width, and „100%” shows it at full size. „List” shows the same skills as a list, by level; „Diagram” brings the map back.
 
@@ -106,7 +106,7 @@ You pass with at least 80 % right answers — for example 5 of 6, or 8 of 10.
 
 | The result | What you see | What changes on the map |
 |---|---|---|
-| Passed | how many right answers you had and, for each question, the right answer with its explanation and the manual section it comes from | the skill becomes mastered, and the ones before it become obsolete; the skills that rested only on these open |
+| Passed | how many right answers you had and, for each question, the right answer with its explanation and the manual section it comes from | the skill becomes mastered and the arrows into it disappear; a skill before it becomes obsolete once every skill that builds on it is mastered; the skills that waited only on this one open |
 | Failed | how many right answers you had, how many were needed, the manual sections to read again, and the date and hour from which you can try again | nothing; the skill stays open |
 
 After a failed quiz the right answers are not shown: you would carry them into the next attempt. Read the suggested sections again.
