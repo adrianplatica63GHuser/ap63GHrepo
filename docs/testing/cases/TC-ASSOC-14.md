@@ -50,3 +50,6 @@ All four are deleted at the end.
 „Șterge" and **„Da"** on the antecontract („Ștergeți actul?") and on each person („Ștergeți persoana?").
 
 ## Notes from the runs
+
+**2026-10-15 — `automated` (Slice #39.57).** Its spec, `e2e/association/antecontract-parties.spec.ts`, green in the test
+runner's targeted run `20261016T014842Z-4377`, every step as written.
