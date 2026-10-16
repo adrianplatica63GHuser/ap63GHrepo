@@ -63,8 +63,9 @@ export function DocumentRelatedTile({
       <p className="text-sm text-fade dark:text-zinc-400" data-parties-elsewhere={parties.rows.length}>
         {tDoc.rich("elsewhere", {
           count: parties.rows.length,
+          // A key: `rich` returns the sentence as an array, and this button is one of its children.
           tile: (chunks) => (
-            <button type="button" onClick={showParties} className={buttonClass({ variant: "bare", size: "sm", className: "font-medium underline-offset-2 hover:underline" })}>
+            <button key="parties-tile" type="button" onClick={showParties} className={buttonClass({ variant: "bare", size: "sm", className: "font-medium underline-offset-2 hover:underline" })}>
               {chunks}
             </button>
           ),
