@@ -130,6 +130,7 @@ fixed fixture where the existing one will do.
 | [TC-ASSOC-11](cases/TC-ASSOC-11.md) | Persoană fizică legată de o firmă, citită din ambele capete | association | happy | — | `automated` | 2026-10-02 | `e2e/association/company-person.spec.ts` |
 | [TC-ASSOC-12](cases/TC-ASSOC-12.md) | Defunctul și doi moștenitori adăugați pe un Certificat de Moștenitor | association | happy | — | `automated` | 2026-10-03 | `e2e/association/certificate-parties.spec.ts` |
 | [TC-ASSOC-13](cases/TC-ASSOC-13.md) | Ecranele de asociere: „Căutare", „Rezultate" și „Asociere" una sub alta; numele proprietății pe un rând | association | happy | — | `automated` | 2026-10-03 | `e2e/association/associate-stacked.spec.ts` |
+| [TC-ASSOC-14](cases/TC-ASSOC-14.md) | Promitentul vânzător și promitentul cumpărător în „Părți" pe un Antecontract | association | happy | — | `automated` | 2026-10-15 | `e2e/association/antecontract-parties.spec.ts` |
 | [TC-IMP-01](cases/TC-IMP-01.md) | Import cap-coadă al unui folder mic | import | happy | `07.smoke.tc.marker` | `driven` | 2026-10-01 | — |
 | [TC-IMP-02](cases/TC-IMP-02.md) | Același folder importat a doua oară — „Deja în sistem" | import | happy | `02.rerun` | `driven` | 2026-09-23 | — |
 | [TC-IMP-03](cases/TC-IMP-03.md) | Import lung: cinci proprietăți, 59 de fișiere, fiecare regăsit | import | happy | `10.big.tc.marker` | `driven` | 2026-09-25 | — |
