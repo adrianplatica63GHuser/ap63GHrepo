@@ -3,13 +3,14 @@
  *
  * One condition per filtered field, ANDed with the list's own (type, „Expiră curând", „Câmp specific", search). The
  * counts are the list's own columns' subqueries — a person or property linked twice counts once — so a filter on
- * „Persoane" means what the column shows. Also the institution checklist's facet query: `documents/queries.ts` may
+ * „Persoane" means what the column shows. Also the issuer checklist's facet query (Slice #39.72: the issuer is a
+ * juridical person; the filter keeps its key, `institution`, and its label, „Instituție / Notariat”): `documents/queries.ts` may
  * quote no snapshot key (object-writers-enumerated), and these fields' names are snapshot keys.
  *
  * NO DATABASE — `document-list-filters.test.ts` renders the conditions with `PgDialect`.
  */
 import { sql, type SQL } from "drizzle-orm";
-import { document, entityMetadata, lookupInstitution } from "@/db/schema";
+import { document, entityMetadata, person } from "@/db/schema";
 import type { FilterState } from "@/lib/list/filter-bar";
 import { contains, oneOf } from "@/lib/list/filter-sql";
 
@@ -25,7 +26,7 @@ export function documentFilterConditions(filters: FilterState): SQL[] {
   for (const [key, f] of Object.entries(filters)) {
     if (f.kind === "values") {
       if (key === "institution") {
-        const c = oneOf(document.institutionId, f.ids);
+        const c = oneOf(document.issuerPersonId, f.ids);
         if (c) out.push(c);
       }
     } else if (f.kind === "range") {
@@ -47,21 +48,21 @@ export function documentFilterConditions(filters: FilterState): SQL[] {
   return out;
 }
 
-/** The institution checklist's facet query over `where` — the list's conditions with every other filter. */
+/** The issuer checklist's facet query over `where` — the list's conditions with every other filter. */
 export function documentFacetSql(field: string, where: SQL | undefined): SQL | null {
   if (field !== "institution") return null;
   return sql`
-    SELECT ${document.institutionId}::text AS id, ${lookupInstitution.name} AS label, count(DISTINCT ${document.id})::int AS n
+    SELECT ${document.issuerPersonId}::text AS id, ${person.displayName} AS label, count(DISTINCT ${document.id})::int AS n
     FROM ${document}
-    LEFT JOIN ${lookupInstitution} ON ${lookupInstitution.id} = ${document.institutionId}
+    LEFT JOIN ${person} ON ${person.id} = ${document.issuerPersonId}
     LEFT JOIN ${entityMetadata} ON ${entityMetadata.principalObjectId} = ${document.principalObjectId}
     ${where ? sql`WHERE ${where}` : sql``}
     GROUP BY 1, 2`;
 }
 
-/** The names of ticked institutions no document of the list holds just now. */
+/** The names of ticked issuers no document of the list holds just now. */
 export function documentFacetNamesSql(field: string, ids: readonly string[]): SQL | null {
   if (field !== "institution" || ids.length === 0) return null;
-  return sql`SELECT ${lookupInstitution.id}::text AS id, ${lookupInstitution.name} AS label FROM ${lookupInstitution}
-    WHERE ${lookupInstitution.id} = ANY(ARRAY[${sql.join(ids.map((i) => sql`${i}`), sql`, `)}]::uuid[])`;
+  return sql`SELECT ${person.id}::text AS id, ${person.displayName} AS label FROM ${person}
+    WHERE ${person.id} = ANY(ARRAY[${sql.join(ids.map((i) => sql`${i}`), sql`, `)}]::uuid[])`;
 }

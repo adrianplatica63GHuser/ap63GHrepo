@@ -1061,6 +1061,8 @@ export const lookupJudicialPersonType = pgTable("lookup_judicial_person_type", {
   id:        uuid("id").primaryKey().defaultRandom(),
   name:      text("name").notNull(),
   sortOrder: integer("sort_order").notNull().default(0),
+  // Slice #39.72 (migration_116): a public-body type — the document's issuer picker offers these persons first.
+  publicBody: boolean("public_body").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
@@ -1170,43 +1172,8 @@ export const lookupDocumentType = pgTable("lookup_document_type", {
   ],
 );
 
-export const lookupInstitution = pgTable("lookup_institution", {
-  id:              uuid("id").primaryKey().defaultRandom(),
-  name:            text("name").notNull(),
-  institutionType: text("institution_type"),
-  sortOrder:       integer("sort_order").notNull().default(0),
-  createdAt:       timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  updatedAt:       timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-  // Slice #34.02: the same column as `lookupTarla.origin` above, on the list
-  // beside it in the same modal. CHECK constraint in
-  // migration_077_reference_data_origin.sql.
-  //
-  // ⚠️ **Nothing writes 'IMPORT' here today, and that is the answer rather
-  // than a gap.** This table is written only by the seed and by an
-  // administrator: `src/lib/import/id-card.ts` deliberately does NOT mint an
-  // institution from a model's reading of "Emisă de", and #34.02 keeps that
-  // refusal — what it replaces is the alternative that reading used to get,
-  // which was a free-text `subject` and no row at all. `extract-id-card`
-  // resolves the authority against these rows
-  // (`src/lib/import/lookup-name-match.ts`), the review dialog offers the
-  // unmatched spelling with a one-click add, and `id-card.ts` files the card
-  // under the row a PERSON chose. So every row here still reads MANUAL — which
-  // is #29.06's rule, not an accident: origin says who chose the NAME, and a
-  // person who reads the model's spelling and presses "adaugă" has confirmed
-  // it.
-  // The column is here because the status word has to be answerable on both
-  // lists from one component, and a list with no answer reads as one whose
-  // answer was lost.
-  //
-  // Unlike tarla, this is a real foreign key — `document.institutionId`,
-  // ON DELETE SET NULL — and no creation path writes past the dropdown into
-  // it. That asymmetry is the point: tarla is the list an import can extend
-  // without anyone looking.
-  origin: text("origin").$type<"MANUAL" | "IMPORT">().notNull().default("MANUAL"),
-  // Slice #39.71 (migration_115): the juridical person this institution became — made by
-  // ga40_institution_juridical_person(), for every row, and by a trigger for a row added later. 39.72 drops the list.
-  juridicalPersonId: uuid("juridical_person_id").references(() => person.id, { onDelete: "set null" }),
-}, (t) => [uniqueIndex("lookup_institution_juridical_person_unique").on(t.juridicalPersonId)]);
+// lookup_institution (#18.16.VL) was dropped by migration_116 (Slice #39.72): every institution became a juridical
+// person in migration_115, and a document's issuer is `document.issuerPersonId`.
 
 // ── Document Type ↔ Person Role junction ────────────────────────────────────
 //
@@ -1360,16 +1327,12 @@ export const document = pgTable("document", {
   // "Data autentificarii" / "Data eliberarii" / "Data emiterii"
   dateDocument: date("date_document", { mode: "string" }),
 
-  // FK to lookup_institution (Slice #18.16.VL). Replaces the free-text
-  // `institution` column (dropped in migration_052); ON DELETE SET NULL so
-  // removing an institution from Reference Data just clears the tag.
-  institutionId: uuid("institution_id")
-    .references(() => lookupInstitution.id, { onDelete: "set null" }),
-
-  // Slice #39.71 (migration_115): the issuer, a juridical person — what the screens read. Until 39.72 a trigger
-  // (ga40_document_issuer_from_institution) writes it from `institutionId`, so every writer of that column keeps it
-  // right; the deleted institution's SET NULL clears both.
+  // The issuer, a juridical person (Slice #39.71, migration_115) — picked on the form since #39.72, which dropped the
+  // `institution_id` FK to the „Instituții" list it replaced. SET NULL: deleting the person clears the issuer.
   issuerPersonId: uuid("issuer_person_id").references(() => person.id, { onDelete: "set null" }),
+  // Slice #39.72 (migration_116): the issuer as the AI read it off the pages — a PROPOSAL a person confirms (D-12),
+  // offered beside the issuer field while it is empty. Never the issuer itself.
+  issuerRead: text("issuer_read"),
 
   // ── Titlu de Proprietate specific ──────────────────────────────────────
   emitent:       text("emitent"),

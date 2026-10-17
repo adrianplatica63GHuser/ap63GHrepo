@@ -43,10 +43,11 @@ import { z } from "zod/v4";
 import type { NextRequest } from "next/server";
 import { asc } from "drizzle-orm";
 import { db } from "@/db";
-import { lookupDocumentType, lookupInstitution } from "@/db/schema";
+import { lookupDocumentType } from "@/db/schema";
 import { unexpectedError, zodErrorToResponse } from "@/lib/api/errors";
 import { getCurrentUserEmail } from "@/lib/auth/current-user";
-import { matchInstitution } from "@/lib/import/lookup-name-match";
+import { matchIssuer } from "@/lib/documents/issuer";
+import { listIssuers } from "@/lib/documents/issuer-queries";
 import { sameDocumentTypeName } from "@/lib/documents/document-type-match";
 import {
   PURPOSE_ROLE_NAME,
@@ -275,17 +276,14 @@ export async function POST(request: NextRequest, ctx: Ctx): Promise<Response> {
     let targetId: string;
     let createdStub: { id: string; code: string } | null = null;
     if (body.action === "stub") {
-      const institutions = await db
-        .select({ id: lookupInstitution.id, name: lookupInstitution.name })
-        .from(lookupInstitution)
-        .orderBy(asc(lookupInstitution.sortOrder), asc(lookupInstitution.name));
-
-      // ⚠️ **A `null` HERE IS NOT A LICENCE TO CREATE**, which is
-      // `matchInstitution`'s own rule and `src/lib/import/id-card.ts`'s refusal
-      // one module over: an institution row only ever comes from a person
-      // pressing „adaugă". The issuer as PRINTED is not lost either — it is in
-      // the stub's `importTitle` below, and in the reference's own `rawText`.
-      const institutionId = matchInstitution(ref.issuer, institutions);
+      // Slice #39.72: matched against the juridical persons of a public-body type — what the issuer picker lists —
+      // by the same matcher (`matchIssuer` is `matchInstitution` over the persons' names).
+      //
+      // ⚠️ **A `null` HERE IS NOT A LICENCE TO CREATE**, which is the matcher's own rule and
+      // `src/lib/import/id-card.ts`'s refusal one module over: a juridical person only ever comes from a person
+      // pressing „Adaugă". The issuer as PRINTED is not lost either — it is in the stub's `importTitle` below, and in
+      // the reference's own `rawText`.
+      const issuerPersonId = matchIssuer(ref.issuer, await listIssuers());
 
       // The title a person will see in a list of documents. It is composed
       // rather than copied because a stub has no printed heading to copy: its
@@ -303,7 +301,7 @@ export async function POST(request: NextRequest, ctx: Ctx): Promise<Response> {
         documentTypeId: body.documentTypeId,
         nrDocument:     ref.nrDocument,
         dateDocument:   ref.dateDocument,
-        institutionId,
+        issuerPersonId,
         importTitle,
         updatedBy:      email,
       });

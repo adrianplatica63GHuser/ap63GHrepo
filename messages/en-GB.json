@@ -2184,6 +2184,24 @@
       "error": "The card could not be read. Try again.",
       "holderCreated": "The holder was created and linked to the document.",
       "holderLinked": "The holder already existed and was linked to the document."
+    },
+    "issuer": {
+      "search": "Search for a judicial person",
+      "searchTitle": "The issuer: a judicial person",
+      "close": "Close",
+      "searchLabel": "Name, nickname, code or CUI",
+      "searchPlaceholder": "e.g. Judecătoria Cornetu",
+      "searchPrompt": "Type part of the name, the code or the CUI. Public bodies come first.",
+      "loading": "Searching…",
+      "error": "The search failed. Try again.",
+      "searchEmpty": "No judicial person matches.",
+      "read": "Read by the AI as the issuer: “{text}”",
+      "use": "Use “{name}”",
+      "add": "Add “{name}” as a judicial person",
+      "adding": "Adding…",
+      "addError": "The judicial person could not be added.",
+      "made": "“{name}” was added and chosen as the issuer — save the document.",
+      "openToFill": "Open it, for the CUI and “Fill in from ANAF”"
     }
   },
   "valueList": {
@@ -2256,7 +2274,6 @@
       "personRelationships": "Relationship to the business",
       "judicialPersonTypes": "Judicial Person Types",
       "documentTypes": "Document Types",
-      "institutions": "Institutions",
       "propertyToProperty": "Property → Property Links",
       "documentToDocument": "Document → Document Links",
       "propertyTypesPage": "Property types and uses"
@@ -2266,7 +2283,6 @@
       "indicativ": "Code",
       "descriere": "Description",
       "description": "Description",
-      "institutionType": "Institution Type",
       "key": "Key",
       "validForProperty": "Person → Property",
       "validForPerson": "Person → Person",
@@ -2281,7 +2297,8 @@
       "locality": "Locality",
       "county": "County",
       "tarlaLocalityJoined": "Locality",
-      "tarlaLocalityJoinedSub": "(county)"
+      "tarlaLocalityJoinedSub": "(county)",
+      "publicBody": "Public body"
     },
     "documentTypeStatus": {
       "new": "Added by hand",
@@ -2752,7 +2769,7 @@
           "extractRefusedTitle": "A person cannot be created from this image",
           "extracting": "Reading the ID card…",
           "fInstitution": "Issuing institution",
-          "institutionUnmatched": "“{name}” is not in the institution list yet.",
+          "institutionUnmatched": "“{name}” is not among the issuing judicial persons yet.",
           "citizenshipHiddenListFailed": "The citizenship list could not be read, so “—” does not mean “no citizenship”: the citizenship read off the card cannot be shown and is NOT saved along with the person. Try reading the list again, then create the person.",
           "citizenshipHiddenNotListed": "The citizenship read off the card is no longer in the citizenship list, so it cannot be shown and is NOT saved along with the person. Add it back under Reference Data → Citizenship, then fill it in on the person's record.",
           "citizenshipHiddenNotListedNamed": "The citizenship read off the card (printed there as “{name}”) is no longer in the citizenship list, so it cannot be shown and is NOT saved along with the person. Add the matching citizenship under Reference Data → Citizenship, then fill it in on the person's record.",
@@ -2766,9 +2783,9 @@
           "institutionRetry": "Try again",
           "institutionRetrying": "Trying again…",
           "institutionNearDuplicate": "The list already holds “{name}”. Choose it if it is the same institution.",
-          "institutionAdd": "Add “{name}”",
+          "institutionAdd": "Add “{name}” as a judicial person",
           "institutionAdding": "Adding…",
-          "institutionAddError": "The institution could not be added.",
+          "institutionAddError": "The judicial person could not be added.",
           "fieldCnp": "CNP",
           "fieldCui": "CUI",
           "fieldDomiciliu": "Address",

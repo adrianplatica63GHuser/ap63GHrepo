@@ -2184,6 +2184,24 @@
       "error": "Cartea nu a putut fi citită. Încercați din nou.",
       "holderCreated": "Titularul a fost creat și legat de act.",
       "holderLinked": "Titularul există deja și a fost legat de act."
+    },
+    "issuer": {
+      "search": "Caută o persoană juridică",
+      "searchTitle": "Emitentul: o persoană juridică",
+      "close": "Închide",
+      "searchLabel": "Denumire, poreclă, cod sau CUI",
+      "searchPlaceholder": "ex. Judecătoria Cornetu",
+      "searchPrompt": "Scrieți o parte din nume, codul sau CUI-ul. Autoritățile publice apar primele.",
+      "loading": "Se caută…",
+      "error": "Căutarea nu a reușit. Încercați din nou.",
+      "searchEmpty": "Nicio persoană juridică nu se potrivește.",
+      "read": "Citit de AI ca emitent: „{text}”",
+      "use": "Folosește „{name}”",
+      "add": "Adaugă „{name}” ca persoană juridică",
+      "adding": "Se adaugă…",
+      "addError": "Persoana juridică nu a putut fi adăugată.",
+      "made": "„{name}” a fost adăugată și aleasă ca emitent — salvați actul.",
+      "openToFill": "Deschide-o, pentru CUI și „Completează din ANAF”"
     }
   },
   "valueList": {
@@ -2256,7 +2274,6 @@
       "personRelationships": "Relația cu firma",
       "judicialPersonTypes": "Tipuri de Persoană Juridică",
       "documentTypes": "Tipuri de Document",
-      "institutions": "Instituții",
       "propertyToProperty": "Legături Proprietate → Proprietate",
       "documentToDocument": "Legături Document → Document",
       "propertyTypesPage": "Tipuri de proprietate și folosințe"
@@ -2266,7 +2283,6 @@
       "indicativ": "Indicativ",
       "descriere": "Descriere",
       "description": "Descriere",
-      "institutionType": "Tip instituție",
       "key": "Cheie",
       "validForProperty": "Persoană → Proprietate",
       "validForPerson": "Persoană → Persoană",
@@ -2281,7 +2297,8 @@
       "locality": "Localitate",
       "county": "Județ",
       "tarlaLocalityJoined": "Localitate",
-      "tarlaLocalityJoinedSub": "(județ)"
+      "tarlaLocalityJoinedSub": "(județ)",
+      "publicBody": "Autoritate publică"
     },
     "documentTypeStatus": {
       "new": "Adăugat manual",
@@ -2752,7 +2769,7 @@
           "extractRefusedTitle": "Nu se poate crea o persoană din această imagine",
           "extracting": "Se citește cartea de identitate…",
           "fInstitution": "Instituție emitentă",
-          "institutionUnmatched": "„{name}” nu există încă în lista de instituții.",
+          "institutionUnmatched": "„{name}” nu este încă printre persoanele juridice emitente.",
           "citizenshipHiddenListFailed": "Lista de cetățenii nu a putut fi citită, așa că „—” nu înseamnă „fără cetățenie”: cetățenia citită de pe card nu se poate afișa și NU se salvează odată cu persoana. Reîncercați citirea listei, apoi creați persoana.",
           "citizenshipHiddenNotListed": "Cetățenia citită de pe card nu mai există în lista de cetățenii, așa că nu se poate afișa și NU se salvează odată cu persoana. Adăugați-o la loc în Date de referință → Cetățenie, apoi completați-o pe fișa persoanei.",
           "citizenshipHiddenNotListedNamed": "Cetățenia citită de pe card (scrisă pe card „{name}”) nu se mai regăsește în lista de cetățenii, așa că nu se poate afișa și NU se salvează odată cu persoana. Adăugați cetățenia corespunzătoare în Date de referință → Cetățenie, apoi completați-o pe fișa persoanei.",
@@ -2766,9 +2783,9 @@
           "institutionRetry": "Reîncearcă",
           "institutionRetrying": "Se reîncearcă…",
           "institutionNearDuplicate": "Lista conține deja „{name}”. Alegeți-o din listă dacă este aceeași instituție.",
-          "institutionAdd": "Adaugă „{name}”",
+          "institutionAdd": "Adaugă „{name}” ca persoană juridică",
           "institutionAdding": "Se adaugă…",
-          "institutionAddError": "Instituția nu a putut fi adăugată.",
+          "institutionAddError": "Persoana juridică nu a putut fi adăugată.",
           "fieldCnp": "CNP",
           "fieldCui": "CUI",
           "fieldDomiciliu": "Domiciliu",

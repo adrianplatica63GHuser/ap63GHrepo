@@ -201,7 +201,7 @@ describe("DOCUMENT_SNAPSHOT_KEYS", () => {
       title:             null,
       nrDocument:        null,
       dateDocument:      null,
-      institutionId:     null,
+      issuerPersonId:     null,
       emitent:           null,
       bazaLegala:        null,
       uatProprietate:    null,

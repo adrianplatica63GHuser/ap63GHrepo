@@ -58,6 +58,9 @@ export default async function EditDocumentPage({ params, searchParams }: PagePar
           documentCode={record.code}
           documentName={label}
           initialValues={initialValues}
+          // Slice #39.72: the issuer's name for its picker, and what the AI read as the issuer (a proposal, D-12).
+          issuerName={record.issuerName}
+          issuerRead={record.issuerRead}
           aiInterpretedAt={record.aiInterpretedAt ? record.aiInterpretedAt.toISOString() : null}
           status={status}
           canConfigure={canConfigure}

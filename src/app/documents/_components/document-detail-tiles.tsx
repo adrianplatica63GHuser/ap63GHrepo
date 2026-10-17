@@ -71,6 +71,9 @@ type Props = {
   documentCode:      string;
   documentName:      string;
   initialValues:     FormValues;
+  /** Slice #39.72: the issuer's name, and the AI's reading of the issuer — passed to the form's issuer field. */
+  issuerName?:       string | null;
+  issuerRead?:       string | null;
   /** Slice #21.02.Import: timestamp set when AI-interpret has run; null if not yet processed. */
   aiInterpretedAt?:  string | null;
   /** Slice #26.12 — New / Imported / AI processed, derived on the server. */
@@ -92,6 +95,8 @@ export function DocumentDetailTiles({
   documentCode,
   documentName,
   initialValues,
+  issuerName,
+  issuerRead,
   aiInterpretedAt,
   status,
   canConfigure = false,
@@ -203,6 +208,8 @@ export function DocumentDetailTiles({
             documentId={documentId}
             documentCode={documentCode}
             initialValues={initialValues}
+            issuerName={issuerName ?? null}
+            issuerRead={issuerRead ?? null}
             aiInterpretedAt={aiInterpretedAt ?? null}
             canConfigure={canConfigure}
             versionNavSlot={navSlot}

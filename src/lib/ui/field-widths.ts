@@ -459,7 +459,7 @@ export const DOCUMENT = {
   title: { step: "TILE", kind: "grows", fill: true }, //  Etichetă scurtă; m: 105 · 151 · 73; the panel's whole width (#37.31)
   subject: { step: "TILE", kind: "grows", fill: true }, // m: 48 · 428 · 301; the panel's whole width (#37.31)
   notes: { step: "TILE", kind: "lines", fold: NOTE_FOLD_LINES, rows: 1, fill: true }, // Note extinse; m: 50 · 2504 · 2283, at most 4000; whole width
-  institutionId: { step: "XXL", kind: "select" }, //     m: 7 options; the dropdown shows „name (type)", longest „Primăria Municipiului (Administrație Locală)" (44)
+  issuerPersonId: { step: "XXL", kind: "select" }, //     #39.72: the issuer, a juridical person by name — „Biroul Individual Notarial …" passes 40
   nrDocument: { step: "M", kind: "fixed", sample: "00/00.00.0000" }, // m: 24 · 13 · 6
   dateDocument: { step: "M", kind: "fixed" }, //         dd.mm.yyyy and the calendar button
 } as const satisfies Record<string, FieldWidth>;
@@ -695,7 +695,7 @@ export const SCREEN_ROWS = {
     // Emitent / Notariat — Nr. document | Data (rule 14) — then the type's identification
     // fields, packed — then Etichetă scurtă — Subiect — Note extinse, each the whole width.
     // The issuer, number and date sat at the top of the fees panel until #38.32.
-    general: [["documentTypeId"], ["institutionId"], ["nrDocument", "dateDocument"], ["title"], ["subject"], ["notes"]],
+    general: [["documentTypeId"], ["issuerPersonId"], ["nrDocument", "dateDocument"], ["title"], ["subject"], ["notes"]],
   },
 } as const satisfies {
   naturalPerson: Record<string, readonly (readonly NpField[])[]>;

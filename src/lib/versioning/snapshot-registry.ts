@@ -233,7 +233,7 @@ export const DOCUMENT_SNAPSHOT_KEYS = [
   "title",
   "nrDocument",
   "dateDocument",
-  "institutionId",
+  "issuerPersonId",
   "emitent",
   "bazaLegala",
   "uatProprietate",

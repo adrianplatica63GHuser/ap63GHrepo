@@ -40,7 +40,7 @@
  *
  * ⚠️ **„NOT COMPARABLE" IS NOT „DISAGREES", AND THE TWO CLAUSES SAY SO.**
  * `matched` is what agrees; `missing` is what could not be compared because one
- * side is blank — overwhelmingly the archive's own null `institution_id`. A
+ * side is blank — overwhelmingly the archive's own null `issuer_person_id`. A
  * signal that genuinely disagrees appears in neither list, because the ranker
  * treats a disagreement on the number or the date as fatal and does not offer
  * the candidate at all.

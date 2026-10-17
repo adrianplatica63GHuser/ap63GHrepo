@@ -9,7 +9,7 @@
  * table. The form no longer imports a static type list; the dropdown is
  * populated dynamically by the component from `GET /api/admin/value-lists/document-types`.
  *
- * NOTE (Slice #18.16.VL): `institution` (free text) replaced by `institutionId`
+ * NOTE (Slice #18.16.VL): `institution` (free text) replaced by `issuerPersonId`
  * (uuid FK → lookup_institution). Dropdown populated from
  * `GET /api/admin/value-lists/institutions`.
  */
@@ -35,8 +35,8 @@ export const formSchema = z.object({
   title:        z.string(),
   nrDocument:   z.string(),
   dateDocument: z.string(), // "YYYY-MM-DD" or ""
-  // Slice #18.16.VL: was free-text `institution`; now uuid FK (empty string = unset).
-  institutionId: z.string(),
+  // Slice #39.72: the issuer, a juridical person's id (empty string = unset); was `institutionId`.
+  issuerPersonId: z.string(),
 
   // Titlu de Proprietate specific
   emitent:        z.string(),
@@ -86,7 +86,7 @@ export const emptyFormValues: FormValues = {
   title:        "",
   nrDocument:   "",
   dateDocument: "",
-  institutionId: "",
+  issuerPersonId: "",
   emitent:        "",
   bazaLegala:     "",
   uatProprietate: "",
@@ -116,8 +116,8 @@ type ApiRecord = {
   title:        string | null;
   nrDocument:   string | null;
   dateDocument: string | null;
-  // Slice #18.16.VL: was `institution: string | null`
-  institutionId: string | null;
+  // Slice #39.72: the issuer person; its name and the AI's reading come with it, for the picker.
+  issuerPersonId: string | null;
   emitent:        string | null;
   bazaLegala:     string | null;
   uatProprietate: string | null;
@@ -147,7 +147,7 @@ export function fromApiRecord(r: ApiRecord): FormValues {
     title:        r.title        ?? "",
     nrDocument:   r.nrDocument   ?? "",
     dateDocument: r.dateDocument ?? "",
-    institutionId: r.institutionId ?? "",
+    issuerPersonId: r.issuerPersonId ?? "",
     emitent:        r.emitent        ?? "",
     bazaLegala:     r.bazaLegala     ?? "",
     uatProprietate: r.uatProprietate ?? "",
@@ -189,8 +189,8 @@ export function toApiPayload(values: FormValues): Record<string, unknown> {
     title:        str(values.title),
     nrDocument:   str(values.nrDocument),
     dateDocument: dateStr(values.dateDocument),
-    // Slice #18.16.VL: send as uuid or null
-    institutionId: uuid(values.institutionId),
+    // Slice #39.72: the issuer person, as uuid or null
+    issuerPersonId: uuid(values.issuerPersonId),
     emitent:        str(values.emitent),
     bazaLegala:     str(values.bazaLegala),
     uatProprietate: str(values.uatProprietate),
@@ -232,7 +232,7 @@ export function toApiPayload(values: FormValues): Record<string, unknown> {
 // DocumentSnapshot, and the migration backfill. Used for highlights and
 // edit-dirty. Display-only fields (surveyorName, surveyorPersonType) are
 // intentionally excluded — they don't drive version diffs or dirty state.
-// Slice #18.16.VL: "institution" → "institutionId"
+// Slice #18.16.VL: "institution" → "issuerPersonId"
 // Slice #19.03: added subject, dateValidUntil, surveyorId
 // Slice #052: removed titularText, defunctText, partiesAText, partiesBText (now 20 keys)
 //

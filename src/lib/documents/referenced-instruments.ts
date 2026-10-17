@@ -468,7 +468,7 @@ export type InstrumentCandidate = {
    * Signals that could NOT be compared because one side is blank.
    *
    * ⚠️ **„NOT COMPARABLE" IS NOT „DISAGREES", AND THE SCREEN SAYS SO.** A
-   * candidate whose `institution_id` is null has a missing issuer, not a wrong
+   * candidate whose `issuer_person_id` is null has a missing issuer, not a wrong
    * one — that is the „notarul nu e completat pe documentul din arhivă" half of
    * the sentence above, and it is the commonest state in this archive. A signal
    * that genuinely DISAGREES is in neither list, because a disagreement is
@@ -524,7 +524,7 @@ const TIER_ORDER: Record<CandidateTier, number> = { strong: 0, fair: 1, weak: 2 
  *          **45 of 45 offered, the right document at rank 1 in 45 of 45, none
  *          wrong, no reference with more than one candidate**, every rank-1 at
  *          tier `strong`.
- *        * archive with `institution_id` NULL, which is the commonest real
+ *        * archive with `issuer_person_id` NULL, which is the commonest real
  *          state in this archive: **identical — 45/45 correct at rank 1**. The
  *          issuer earns its place as a tie-breaker and is never needed as one
  *          here, which is exactly why rule 3 refuses to let it disqualify.

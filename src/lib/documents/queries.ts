@@ -375,8 +375,8 @@ export function snapshotFromFull(full: DocumentFull): DocumentSnapshot {
     title:             full.title             ?? null,
     nrDocument:        full.nrDocument        ?? null,
     dateDocument:      full.dateDocument      ?? null,
-    // Slice #18.16.VL: was `institution` (free text); now FK uuid.
-    institutionId:     full.institutionId     ?? null,
+    // Slice #39.72: the issuer person (was `institutionId`).
+    issuerPersonId:    full.issuerPersonId    ?? null,
     emitent:           full.emitent           ?? null,
     bazaLegala:        full.bazaLegala        ?? null,
     uatProprietate:    full.uatProprietate    ?? null,
@@ -406,6 +406,8 @@ export function snapshotFromFull(full: DocumentFull): DocumentSnapshot {
 export type DocumentWithSurveyor = DocumentFull & {
   surveyorDisplayName: string | null;
   surveyorPersonType:  "NATURAL" | "JUDICIAL" | null;
+  /** Slice #39.72: the issuer's name, for the picker's value when its list does not hold the person. */
+  issuerName:          string | null;
 };
 
 export async function getDocumentWithSurveyor(
@@ -435,7 +437,17 @@ export async function getDocumentWithSurveyor(
     }
   }
 
-  return { ...doc, surveyorDisplayName, surveyorPersonType };
+  let issuerName: string | null = null;
+  if (doc.issuerPersonId) {
+    const iRows = await db
+      .select({ displayName: person.displayName })
+      .from(person)
+      .where(eq(person.id, doc.issuerPersonId))
+      .limit(1);
+    issuerName = iRows[0]?.displayName ?? null;
+  }
+
+  return { ...doc, surveyorDisplayName, surveyorPersonType, issuerName };
 }
 
 /**
@@ -646,8 +658,9 @@ export async function updateDocument(
     if (input.title          !== undefined) patch.title          = input.title          ?? null;
     if (input.nrDocument     !== undefined) patch.nrDocument     = input.nrDocument     ?? null;
     if (input.dateDocument   !== undefined) patch.dateDocument   = input.dateDocument   ?? null;
-    // Slice #18.16.VL: institution is now a FK uuid column.
-    if (input.institutionId  !== undefined) patch.institutionId  = input.institutionId  ?? null;
+    // Slice #39.72: the issuer, a juridical person.
+    if (input.issuerPersonId !== undefined) patch.issuerPersonId = input.issuerPersonId ?? null;
+    if (input.issuerRead !== undefined) patch.issuerRead = input.issuerRead?.trim() || null;
 
     if (input.emitent        !== undefined) patch.emitent        = input.emitent        ?? null;
     if (input.bazaLegala     !== undefined) patch.bazaLegala     = input.bazaLegala     ?? null;
@@ -826,8 +839,8 @@ function inputToValues(
     title:          input.title        ?? null,
     nrDocument:     input.nrDocument   ?? null,
     dateDocument:   input.dateDocument ?? null,
-    // Slice #18.16.VL: institution is now a FK uuid column.
-    institutionId:  input.institutionId ?? null,
+    // Slice #39.72: the issuer, a juridical person.
+    issuerPersonId: input.issuerPersonId ?? null,
 
     emitent:        input.emitent        ?? null,
     bazaLegala:     input.bazaLegala     ?? null,
@@ -1986,7 +1999,7 @@ export async function createInstrumentStub(input: {
   documentTypeId: string;
   nrDocument:     string | null;
   dateDocument:   string | null;
-  institutionId:  string | null;
+  issuerPersonId:  string | null;
   importTitle:    string;
   updatedBy:      string | null;
 }): Promise<DocumentFull> {
@@ -1995,7 +2008,7 @@ export async function createInstrumentStub(input: {
       documentTypeId: input.documentTypeId,
       nrDocument:     input.nrDocument,
       dateDocument:   input.dateDocument,
-      institutionId:  input.institutionId,
+      issuerPersonId:  input.issuerPersonId,
       importTitle:    input.importTitle,
     },
     input.updatedBy,

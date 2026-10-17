@@ -1,5 +1,6 @@
 "use client";
 
+import { IssuerProposal, IssuerSearchButton, IssuerSearchDialog, useIssuerOptions } from "./issuer-field";
 import { SystemIdCorner } from "@/components/record/system-id-corner";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -122,7 +123,7 @@ const FrameContext = createContext(false);
  * since #38.32 (they sat in the fees panel before), so a highlight or an error
  * on one of them is shown on that tile.
  */
-const ISSUE_FIELDS: ReadonlySet<string> = new Set(["institutionId", "nrDocument", "dateDocument"]);
+const ISSUE_FIELDS: ReadonlySet<string> = new Set(["issuerPersonId", "nrDocument", "dateDocument"]);
 
 // ---------------------------------------------------------------------------
 // Document type list — fetched dynamically from the admin-managed
@@ -151,25 +152,6 @@ async function fetchDocumentTypes(): Promise<DocumentTypeOption[]> {
   if (res.redirected || !res.ok) throw new Error(`Failed to load document types (HTTP ${res.status})`);
   const body = await res.json();
   return (body.items ?? []) as DocumentTypeOption[];
-}
-
-// ---------------------------------------------------------------------------
-// Institution list — fetched from admin-managed lookup_institution table
-// (Slice #18.16.VL: replaces free-text institution field)
-// ---------------------------------------------------------------------------
-
-type InstitutionOption = { id: string; value: string; label: string };
-
-async function fetchInstitutions(): Promise<InstitutionOption[]> {
-  const res = await fetch("/api/admin/value-lists/institutions");
-  if (res.redirected || !res.ok) throw new Error(`Failed to load institutions (HTTP ${res.status})`);
-  const body = await res.json();
-  // lookup_institution rows: { id, name, institutionType, sortOrder, ... }
-  return (body.items ?? []).map((item: { id: string; name: string; institutionType?: string | null }) => ({
-    id:    item.id,
-    value: item.id,   // SelectField value = the UUID (FK stored in institution_id)
-    label: item.institutionType ? `${item.name} (${item.institutionType})` : item.name,
-  }));
 }
 
 // ---------------------------------------------------------------------------
@@ -224,6 +206,10 @@ type Props = {
   documentId?:      string;
   documentCode?:    string;
   initialValues?:   FormValues;
+  /** Slice #39.72: the saved issuer's name — the picker's value label when its list does not hold the person. */
+  issuerName?:      string | null;
+  /** Slice #39.72: the issuer as the AI read it — offered beside the field while it is empty, never applied (D-12). */
+  issuerRead?:      string | null;
   /**
    * ⚠️ Kept in the contract and no longer READ here.   (Slice #26.09)
    *
@@ -289,6 +275,8 @@ export function DocumentForm({
   documentId,
   documentCode,
   initialValues,
+  issuerName = null,
+  issuerRead = null,
   canConfigure = false,
   onBigPageChange,
   versionNavSlot,
@@ -362,16 +350,6 @@ export function DocumentForm({
     [typeOptions],
   );
 
-  // Slice #18.16.VL — institution dropdown
-  const { data: institutions } = useQuery({
-    queryKey: ["institutions"],
-    queryFn:  fetchInstitutions,
-    staleTime: 5 * 60 * 1000,
-  });
-  const institutionOptions: { value: string; label: string }[] = [
-    { value: "", label: "—" },
-    ...(institutions ?? []).map((i) => ({ value: i.value, label: i.label })),
-  ];
 
   const form = useForm<FormValues>({
     resolver:      zodResolver(formSchema),
@@ -405,6 +383,20 @@ export function DocumentForm({
   // form.watch() is intentionally not memoizable; this is the documented usage.
   // eslint-disable-next-line react-hooks/incompatible-library
   const watchedValues = form.watch();
+
+  // ── Slice #39.72: the issuer picker ──
+  // Names already in hand: the saved issuer's, and every person picked by search or made from the AI's reading in
+  // this visit — so the select never shows a value as blank while its list catches up.
+  const [knownIssuers, setKnownIssuers] = useState<{ id: string; displayName: string }[]>(() =>
+    initialValues?.issuerPersonId && issuerName ? [{ id: initialValues.issuerPersonId, displayName: issuerName }] : [],
+  );
+  const [issuerSearchOpen, setIssuerSearchOpen] = useState(false);
+  const issuer = useIssuerOptions(watchedValues.issuerPersonId ?? "", knownIssuers);
+  const pickIssuer = (p: { id: string; displayName: string }) => {
+    setKnownIssuers((prev) => (prev.some((k) => k.id === p.id) ? prev : [...prev, p]));
+    form.setValue("issuerPersonId", p.id, { shouldDirty: true, shouldValidate: true });
+    setIssuerSearchOpen(false);
+  };
 
   // Watch `documentTypeId` so the form re-renders when the user changes the type.
   // Conditional sections key off the *key* string (e.g. "TITLU_PROPRIETATE"),
@@ -1270,15 +1262,30 @@ export function DocumentForm({
   const identificationPacked = packCustomFields(identificationGroup?.fields ?? [], false, unitsInnerRem(PANEL_UNITS.document.general));
   const issueFields = (
     <>
+      {/* Slice #39.72: the issuer, a juridical person — public-body persons listed, every one on search, and the
+          AI's reading offered while the field is empty (issuer-field.tsx). */}
       <SelectField
         label={t(cfg.labels.institution)}
-        name="institutionId"
+        name="issuerPersonId"
         register={register}
-        error={errors.institutionId?.message}
-        options={institutionOptions}
-        highlight={displayHighlights?.institutionId}
-        width={DOC.institutionId}
-        watchValue={watchedValues.institutionId}
+        error={errors.issuerPersonId?.message}
+        options={issuer.options}
+        highlight={displayHighlights?.issuerPersonId}
+        width={DOC.issuerPersonId}
+        watchValue={watchedValues.issuerPersonId}
+        hint={
+          <>
+            <IssuerSearchButton onClick={() => setIssuerSearchOpen(true)} />
+            {issuerRead && !watchedValues.issuerPersonId ? (
+              <IssuerProposal
+                read={issuerRead}
+                listed={issuer.listed}
+                publicBodyTypes={issuer.publicBodyTypes}
+                onPick={pickIssuer}
+              />
+            ) : null}
+          </>
+        }
       />
       <div className={STACKED_ROW_CLASS}>
         <Field
@@ -1928,6 +1935,7 @@ export function DocumentForm({
       />
     )}
 
+    {issuerSearchOpen && <IssuerSearchDialog onPick={pickIssuer} onClose={() => setIssuerSearchOpen(false)} />}
     {/* Slice #19.03 — surveyor picker dialog */}
     {surveyorPickerOpen && (
       <SurveyorPickerDialog
