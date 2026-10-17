@@ -22,6 +22,7 @@ Caseta de căutare („caută după cod, nume, email sau telefon”) păstrează
 - „Data decesului”
 - „Locul nașterii”
 - „Tip profesional”
+- „Relația cu firma”
 
 Butonul arată câte coloane ați ales, de exemplu „Câmpuri afișate 2/4”. Alegerea rămâne până o schimbați.
 
@@ -48,7 +49,8 @@ Filtrele se pun și se scot ca pe lista proprietăților: „+ Filtru”, o etic
 
 Câmpurile după care filtrați:
 
-- **„Tip profesional”** — valorile listei de tipuri de persoană fizică, așa cum sunt acum în arhivă;
+- **„Tip profesional”** — profesiile din listă, așa cum sunt acum în arhivă (secțiunea [[persons-add-profession]]);
+- **„Relația cu firma”** — o persoană trece de filtru dacă are cel puțin una dintre relațiile bifate; „(necompletat)” arată persoanele fără nicio relație;
 - **„Rol în documente”** — rolurile pe care persoanele le au în acte, de exemplu Proprietar, Vânzător, Moștenitor sau Notar. O persoană trece de filtru dacă are rolul ales în cel puțin un act; „(necompletat)” arată persoanele care nu au niciun rol în niciun act;
 - **„Localitate (domiciliu)”** — localitatea din adresa de domiciliu;
 - **„Decedat”** — „Toți”, „În viață” sau „Decedați”;
@@ -82,6 +84,14 @@ Singurul lucru cerut este numele: completați cel puțin „Nume” sau „Prenu
 Dacă un câmp cerut a rămas gol într-o fișă ascunsă, la salvare fișa reapare, aplicația vă duce la câmpul acela și scrie dedesubt ce lipsește. Nu se salvează nimic până nu îl completați.
 
 Mai târziu, o persoană se modifică pe ecranul ei: schimbați câmpurile și apăsați „Salvează”. Fiecare salvare face o versiune nouă (secțiunea [[links-versions]]). Ca să ștergeți o persoană, apăsați „Șterge” și răspundeți „Da” la întrebarea „Ștergeți persoana?”; ștergerea nu se poate anula.
+### 3.2.3 Tipul profesional și relația cu firma {#persons-add-profession}
+
+În fișa „Identitate”, două câmpuri spun cine este persoana pentru firmă:
+
+- **„Tip profesional”** — profesia ei, una singură: Notar, Avocat, Executor judecătoresc, Topograf / expert cadastral, Evaluator, Expert tehnic / judiciar, Agent imobiliar, Arhitect / proiectant, Constructor / meșter, Funcționar public, Contabil / consultant fiscal, Fermier / arendaș sau Persoană privată. O firmă, o instituție sau un ONG nu este persoană fizică: se adaugă ca persoană juridică (secțiunea [[companies-add]]);
+- **„Relația cu firma”** — de ce este persoana în arhivă, cu câte o bifă pentru fiecare: Client, Vânzător de teren, Cumpărător, Moștenitor / familie, Colaborator, Vecin, Contact instituțional. O persoană poate avea mai multe bife.
+
+Amândouă se salvează cu „Salvează”. „Tip profesional” intră în versiunile persoanei; „Relația cu firma” nu: pe o versiune mai veche arată bifele de acum, iar sub ea scrie „Relația cu firma nu are versiuni: arată valorile de acum.”. Listele de valori se schimbă în „Date de referință” (secțiunea [[admin-reference-data]]).
 
 ## 3.3 O persoană dintr-o carte de identitate {#persons-id-card}
 

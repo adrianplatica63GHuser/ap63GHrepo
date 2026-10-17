@@ -22,6 +22,7 @@ The search box („search by code, name, email, or phone”) keeps in the table 
 - „Date of death”
 - „Place of Birth”
 - „Professional type”
+- „Relationship to the business”
 
 The button shows how many columns you have chosen, for instance „Choose fields 2/4”. The choice stays until you change it.
 
@@ -48,7 +49,8 @@ Filters are set and removed as on the list of properties: „+ Filter”, a labe
 
 The fields you filter by:
 
-- **„Professional type”** — the values of the list of natural-person types, as they stand in the archive now;
+- **„Professional type”** — the professions in the list, as they stand in the archive now (section [[persons-add-profession]]);
+- **„Relationship to the business”** — a person passes the filter when they hold at least one of the ticked relationships; „(empty)” shows the persons with none;
 - **„Role in documents”** — the roles persons hold on documents, for example owner, seller, heir or notary. A person passes the filter when they hold the chosen role on at least one document; „(empty)” shows the persons who hold no role on any document;
 - **„Locality (home)”** — the locality of the home address;
 - **„Deceased”** — „All”, „Alive” or the deceased only;
@@ -82,6 +84,14 @@ The only thing required is the name: fill in at least „Last Name” or „Firs
 If a required field was left empty in a hidden tile, on saving the tile reappears, the application takes you to that field and writes underneath what is missing. Nothing is saved until you fill it in.
 
 Later, a person is changed on their own screen: change the fields and press „Save”. Every save makes a new version (section [[links-versions]]). To delete a person, press „Delete” and answer „Yes” to the question „Delete person?”; the deletion cannot be undone.
+### 3.2.3 The professional type and the relationship to the business {#persons-add-profession}
+
+In the „Identity” tile, two fields say who the person is to the business:
+
+- **„Professional type”** — their profession, a single one: „Notar”, „Avocat”, „Executor judecătoresc”, „Topograf / expert cadastral”, „Evaluator”, „Expert tehnic / judiciar”, „Agent imobiliar”, „Arhitect / proiectant”, „Constructor / meșter”, „Funcționar public”, „Contabil / consultant fiscal”, „Fermier / arendaș” or „Persoană privată”. A firm, an institution or an NGO is not a natural person: it is added as a juridical person (section [[companies-add]]);
+- **„Relationship to the business”** — why the person is in the archive, with a tick for each: „Client”, „Vânzător de teren”, „Cumpărător”, „Moștenitor / familie”, „Colaborator”, „Vecin”, „Contact instituțional”. A person can have several ticks.
+
+Both are saved with „Save”. „Professional type” goes into the person's versions; „Relationship to the business” does not: on an older version it shows today's ticks, and under it reads „The relationship to the business has no versions: it shows today's values.”. The value lists are changed in „Reference Data” (section [[admin-reference-data]]).
 
 ## 3.3 A person from an identity card {#persons-id-card}
 

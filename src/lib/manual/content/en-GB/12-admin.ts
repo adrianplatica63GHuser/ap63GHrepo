@@ -19,7 +19,7 @@ The screen is a single page (Figure [[fig-admin-value-lists]]). On the left are 
 |---|---|
 | Object types | „Physical Person Types”, „Judicial Person Types”, „Property types and uses”, „Document Types” |
 | Roles and links | „Person Roles”, „Property → Property Links”, „Document → Document Links” |
-| Value lists | „Tarla Codes”, „Citizenship”, „Institutions” |
+| Value lists | „Tarla Codes”, „Citizenship”, „Relationship to the business”, „Institutions” |
 
 „Use Categories” has no button of its own: it is the second tile of the page „Property types and uses” (section [[admin-reference-data-property-types]]).
 

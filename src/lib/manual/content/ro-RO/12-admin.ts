@@ -19,7 +19,7 @@ Ecranul este o singură pagină (Figura [[fig-admin-value-lists]]). În stânga 
 |---|---|
 | Tipuri de obiecte | „Tipuri de Persoană Fizică”, „Tipuri de Persoană Juridică”, „Tipuri de proprietate și folosințe”, „Tipuri de Document” |
 | Roluri și legături | „Roluri Persoane”, „Legături Proprietate → Proprietate”, „Legături Document → Document” |
-| Liste de valori | „Indicative Tarla”, „Cetățenie”, „Instituții” |
+| Liste de valori | „Indicative Tarla”, „Cetățenie”, „Relația cu firma”, „Instituții” |
 
 „Categorii Folosință” nu are un buton al ei: este a doua fișă a paginii „Tipuri de proprietate și folosințe” (secțiunea [[admin-reference-data-property-types]]).
 

@@ -27,6 +27,7 @@ export const OUTLINE: Readonly<Record<string, string>> = {
   "persons-add": "Cum adaugi (creezi) de mână o persoană fizică nouă: formularul pe fișe, ce câmpuri are, ce e obligatoriu, salvarea, apoi modificarea și ștergerea ei.",
   "persons-add-tiles": "Ce câmpuri are formularul: nume, CNP, gen, naștere, deces, buletin sau pașaport, telefon, e-mail, adresa de domiciliu și de corespondență.",
   "persons-add-save": "Ce e obligatoriu (doar numele sau prenumele), cum salvezi, ce se întâmplă dacă lipsește un câmp, cum modifici o persoană și cum o ștergi definitiv.",
+  "persons-add-profession": "Ce înseamnă „Tip profesional” (o profesie) și „Relația cu firma” (mai multe bife), unde se aleg, ce intră în versiuni și unde se schimbă listele.",
   "persons-id-card": "Cum creezi o persoană dintr-o carte de identitate (buletin), împreună cu tatăl și mama, legați automat ca părinți; cele două feluri de a o face.",
   "persons-id-card-manual": "Cum adaugi tatăl și mama la crearea de mână a titularului unui buletin: numele de familie presupus, căutarea după nume, legare sau persoană nouă.",
   "persons-id-card-document": "Cum creezi titularul și părinții dintr-un buletin scanat deja în arhivă, cu „Creează persoane din CI”; recunoaștere după CNP, fără dubluri.",

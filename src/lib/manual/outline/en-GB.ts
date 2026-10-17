@@ -27,6 +27,7 @@ export const OUTLINE: Readonly<Record<string, string>> = {
   "persons-add": "How to add (create) a new natural person by hand: the form's tiles and fields, what is required, saving, and later editing or deleting the person.",
   "persons-add-tiles": "Which fields the form has: name, CNP, gender, birth, death, ID card or passport, phone, e-mail, home and correspondence address; hidden tiles keep their data.",
   "persons-add-save": "What is required (only surname or first name), how to save, what happens if a field is missing, how to edit a person and how to delete them for good (no undo).",
+  "persons-add-profession": "What „Professional type” (one profession) and „Relationship to the business” (several ticks) mean, where they are chosen, what goes into versions and where the lists change.",
   "persons-id-card": "How to create a person from an identity card, together with the father and mother, linked automatically as parents; the two ways of doing it.",
   "persons-id-card-manual": "How to add the father and mother while creating an ID card holder by hand: the assumed surname, name-only matching, linking an existing person or creating a new one.",
   "persons-id-card-document": "How to create the holder and parents from a scanned identity card already in the archive with „Create people from the ID card”; matched by CNP, no duplicates.",
