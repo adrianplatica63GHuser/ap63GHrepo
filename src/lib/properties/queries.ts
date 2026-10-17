@@ -1033,6 +1033,22 @@ async function resolveTarlaForCreate(
   input: { tarlaId?: string | null; tarlaCode?: string | null; tarlaLocality?: string | null },
 ): Promise<string | null> {
   if (input.tarlaId) return input.tarlaId;
+  return (await findOrCreateImportTarla(tx, input.tarlaCode, input.tarlaLocality))?.id ?? null;
+}
+
+/**
+ * The tarla with this code in this locality, created when there is none — and whether it was.   (Slice #39.69)
+ *
+ * `resolveTarlaForCreate`'s body, exported for the second machine-side writer: a plan parcelar the user confirmed
+ * (src/lib/tarla/plan-queries.ts). One body, so the plan path takes the same two locks, adopts a racer the same way
+ * and writes the same `origin: "IMPORT"` literal, which still takes no parameter.
+ */
+export async function findOrCreateImportTarla(
+  tx: DbTransaction,
+  code: string | null | undefined,
+  tarlaLocality: string | null | undefined,
+): Promise<{ id: string; created: boolean } | null> {
+  const input = { tarlaCode: code, tarlaLocality };
   const raw = input.tarlaCode?.trim();
   if (!raw) return null;
 
@@ -1096,7 +1112,7 @@ async function resolveTarlaForCreate(
   };
 
   const hit = await findFolded();
-  if (hit) return hit;
+  if (hit) return { id: hit, created: false };
 
   // ── About to mint a code: serialise on it first. ─────────  (Slice #34.14)
   //
@@ -1133,7 +1149,7 @@ async function resolveTarlaForCreate(
   // that was taken to prevent it. Stated because it is invisible: the code
   // would look exactly the same and be exactly wrong.
   const raced = await findFolded();
-  if (raced) return raced;
+  if (raced) return { id: raced, created: false };
 
   // ⚠️ The origin literal is written HERE and takes no parameter, so no caller
   // can express one and no sixth caller can forget it. See migration_077.
@@ -1141,7 +1157,7 @@ async function resolveTarlaForCreate(
     .insert(lookupTarla)
     .values({ indicativ: value, locality, origin: "IMPORT" })
     .returning({ id: lookupTarla.id });
-  return created.id;
+  return { id: created.id, created: true };
 }
 
 /**

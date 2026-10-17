@@ -19,7 +19,7 @@ import { aiPaidRead } from "@/db/schema";
 import { monthStart } from "./paid-read-month";
 
 /** The routes that pay, by the name the count keeps. */
-export type PaidReadRoute = "ai-interpret" | "read-sample" | "cluster" | "scan-folder" | "extract-id-card" | "ask-manual"; // #39.45: + „Întreabă”
+export type PaidReadRoute = "ai-interpret" | "read-sample" | "cluster" | "scan-folder" | "extract-id-card" | "ask-manual" | "tarla-plan"; // #39.45: + „Întreabă”; #39.69: + a plan parcelar's tarla
 
 export async function recordPaidRead(read: { route: PaidReadRoute; model: string; success: boolean }): Promise<void> {
   try {

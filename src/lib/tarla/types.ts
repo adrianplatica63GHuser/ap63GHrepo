@@ -48,3 +48,17 @@ export type TarlaUpdate = {
   notes?: string | null;
   corners?: { lat: number; lon: number; originalIndex?: number | null }[];
 };
+
+/** Slice #39.69: a parcel a plan parcelar drew on the tarla (`tarla_parcel`), with the plan it came from. */
+export type TarlaParcelItem = {
+  id: string;
+  parcela: string;
+  areaSqm: number | null;
+  /** The use category's name, or the use as printed when it matched none. */
+  use: string | null;
+  sourceDocumentId: string | null;
+  sourceDocumentCode: string | null;
+};
+
+/** Slice #39.69: a document linked to the tarla as its plan (`document_tarla`). */
+export type TarlaPlanItem = { id: string; code: string; title: string | null; typeName: string | null };

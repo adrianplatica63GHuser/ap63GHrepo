@@ -213,6 +213,7 @@ describe("the paid reads (migration_100)", () => {
     ["src/app/api/admin/import/scan-folder/route.ts", "scan-folder"],
     ["src/app/api/admin/import/extract-id-card/route.ts", "extract-id-card"],
     ["src/app/api/manual/ask/route.ts", "ask-manual"], // #39.45
+    ["src/app/api/documents/[id]/tarla-plan/route.ts", "tarla-plan"], // #39.69
   ])("%s records every answer it gets, as %s", (file, route) => {
     const src = read(file);
     expect(src).toContain(`recordPaidRead({`);
@@ -226,7 +227,7 @@ describe("the paid reads (migration_100)", () => {
       );
     const calling = walk("src/app/api").filter((f) => /fetch\(ANTHROPIC_API_URL|callAnthropic\(/.test(read(f)));
     expect(calling.filter((f) => !read(f).includes("recordPaidRead(")).sort()).toEqual([]);
-    expect(calling.length).toBe(6); // #39.45: + „Întreabă”
+    expect(calling.length).toBe(7); // #39.45: + „Întreabă”; #39.69: + a plan parcelar's tarla (was 6)
   });
 
   it("the words, at 0, 1, 7 and 20", () => {
