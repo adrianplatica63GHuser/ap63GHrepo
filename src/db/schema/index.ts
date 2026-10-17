@@ -859,6 +859,24 @@ export const lookupUseCategory = pgTable("lookup_use_category", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+// Slice #39.66, migration_111: the use categories allowed for a property type — „Teren extravilan" allows the
+// agricultural uses, a building allows „Curți-construcții". ⚠️ A TYPE WITH NO ROWS ALLOWS EVERY USE: an empty list is
+// „no restriction", not „nothing allowed", so a type an admin adds needs no pairs to be usable. The property form reads
+// it to offer only the allowed uses; both keys cascade, so deleting a type or a use takes its pairs with it.
+export const lookupPropertyTypeUse = pgTable(
+  "lookup_property_type_use",
+  {
+    propertyTypeId: uuid("property_type_id")
+      .notNull()
+      .references(() => lookupPropertyType.id, { onDelete: "cascade" }),
+    useCategoryId:  uuid("use_category_id")
+      .notNull()
+      .references(() => lookupUseCategory.id, { onDelete: "cascade" }),
+    createdAt:      timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.propertyTypeId, t.useCategoryId] })],
+);
+
 // ── Persoană group ──────────────────────────────────────────────────────────
 
 export const lookupPersonType = pgTable("lookup_person_type", {
