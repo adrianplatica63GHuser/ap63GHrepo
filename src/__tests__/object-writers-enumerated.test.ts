@@ -344,6 +344,19 @@ const EXPECTED_WRITERS = [
   "src/db/seed_dev_data.sql:judicial_person:INSERT:1",
   "src/db/seed_dev_data.sql:natural_person:INSERT:1",
   "src/db/seed_dev_data.sql:property:INSERT:1",
+
+  // ── An institution's juridical person (Slice #39.71, migration_115). The
+  //    exported schema carries the function and triggers migration_115 made,
+  //    so their bodies are counted here: `ga40_institution_juridical_person`
+  //    INSERTs the judicial_person (with its person, version 0 and metadata,
+  //    the way createJudicialPerson does), and the rename trigger UPDATEs its
+  //    name when the institution's changes. They are writers deliberately —
+  //    an institution added through Reference Data, the import or a seed must
+  //    have its person without anyone calling a TypeScript function — and they
+  //    go when 39.72 retires the value list. The repair file adds only the
+  //    columns, so it has no line.
+  "src/db/supabase_schema_full.sql:judicial_person:INSERT:1",
+  "src/db/supabase_schema_full.sql:judicial_person:UPDATE:1",
 ].sort();
 
 describe("every writer to the four object tables is named", () => {

@@ -1203,7 +1203,10 @@ export const lookupInstitution = pgTable("lookup_institution", {
   // it. That asymmetry is the point: tarla is the list an import can extend
   // without anyone looking.
   origin: text("origin").$type<"MANUAL" | "IMPORT">().notNull().default("MANUAL"),
-});
+  // Slice #39.71 (migration_115): the juridical person this institution became — made by
+  // ga40_institution_juridical_person(), for every row, and by a trigger for a row added later. 39.72 drops the list.
+  juridicalPersonId: uuid("juridical_person_id").references(() => person.id, { onDelete: "set null" }),
+}, (t) => [uniqueIndex("lookup_institution_juridical_person_unique").on(t.juridicalPersonId)]);
 
 // ── Document Type ↔ Person Role junction ────────────────────────────────────
 //
@@ -1363,6 +1366,11 @@ export const document = pgTable("document", {
   institutionId: uuid("institution_id")
     .references(() => lookupInstitution.id, { onDelete: "set null" }),
 
+  // Slice #39.71 (migration_115): the issuer, a juridical person — what the screens read. Until 39.72 a trigger
+  // (ga40_document_issuer_from_institution) writes it from `institutionId`, so every writer of that column keeps it
+  // right; the deleted institution's SET NULL clears both.
+  issuerPersonId: uuid("issuer_person_id").references(() => person.id, { onDelete: "set null" }),
+
   // ── Titlu de Proprietate specific ──────────────────────────────────────
   emitent:       text("emitent"),
   bazaLegala:    text("baza_legala"),
@@ -1464,7 +1472,7 @@ export const document = pgTable("document", {
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
-});
+}, (t) => [index("document_issuer_person_idx").on(t.issuerPersonId)]);
 
 // ---------------------------------------------------------------------------
 // document_version — full-snapshot version history  (Slice #18.06)

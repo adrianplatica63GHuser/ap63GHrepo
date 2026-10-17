@@ -127,9 +127,21 @@ INSERT INTO lookup_citizenship (name, sort_order) VALUES
   ('Franceză', 5), ('Italiană', 6), ('Spaniolă',  7), ('Engleză',  8);
 
 -- ── lookup_judicial_person_type (Slice #15.07) ───────────────────────────────
+-- Slice #39.71 (migration_115): the seven public-body types, at 21–27 so they list after the company forms, and
+-- „Altele" moved to 100 so it stays last. They are here, before lookup_institution, because inserting an
+-- institution makes its juridical person (the `lookup_institution_juridical_person_added` trigger) and takes the
+-- person's type from these names — an institution inserted before its type exists gets a person with no type.
 INSERT INTO lookup_judicial_person_type (name, sort_order) VALUES
   ('SRL', 1), ('SA', 2), ('SRL-D', 3), ('PFA', 4),
-  ('II',  5), ('IF', 6), ('ONG',   7), ('Altele', 8);
+  ('II',  5), ('IF', 6), ('ONG',   7),
+  ('Autoritate publică centrală',        21),
+  ('Instituție publică teritorială',     22),
+  ('Autoritate locală',                  23),
+  ('Instanță',                           24),
+  ('Birou notarial',                     25),
+  ('Birou de executor judecătoresc',     26),
+  ('Cabinet sau societate de avocatură', 27),
+  ('Altele', 100);
 
 -- ── lookup_document_type ──────────────────────────────────────────────────────
 -- `key` (added by migration 020, Slice #15.05) is the immutable slug app code
@@ -378,6 +390,10 @@ UPDATE lookup_document_type AS t
 -- `build-ciprian-image.ps1` sends the same SQL to Ciprian.
 
 -- ── lookup_institution ────────────────────────────────────────────────────────
+-- ⚠️ Each row inserted here also makes a juridical person — person, judicial_person, version 0 and its metadata —
+-- through the `lookup_institution_juridical_person_added` trigger (migration_115, Slice #39.71). That is the same
+-- thing migration_115 did to these rows on a migrated database, so the two still agree; seed.ts counts only the
+-- juridical persons no institution made.
 INSERT INTO lookup_institution (name, institution_type, sort_order) VALUES
   ('OCPI',                  'Cadastru',                1),
   ('Primăria Municipiului', 'Administrație Locală',    2),

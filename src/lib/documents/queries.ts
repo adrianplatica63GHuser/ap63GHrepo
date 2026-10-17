@@ -14,6 +14,7 @@
  */
 
 import { asc, and, count, desc, eq, ilike, inArray, isNotNull, lte, or, sql, type SQL } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import type { FilterState } from "@/lib/list/filter-bar";
 import { DOCUMENT_COUNT_SQL, documentFilterConditions } from "./list-filter-sql";
 import { perSearchTerms } from "@/lib/search/per-terms";
@@ -21,6 +22,9 @@ import { db, type DbTransaction } from "@/db";
 import { appendVersionsIfChanged } from "@/lib/versioning/append";
 import { DOCUMENT_SNAPSHOT_KEYS } from "@/lib/versioning/snapshot-registry";
 import { document, documentVersion, entityMetadata, groupMember, groups, lookupDocumentType, person, principalObject } from "@/db/schema";
+
+/** Slice #39.71: the document's issuer, a juridical person — `person` under its own name in the list's joins. */
+const issuerPerson = alias(person, "issuer_person");
 import { deletePrincipalObjects } from "@/lib/entities/delete";
 import { listDocumentPageFilePaths } from "./pages-queries";
 import { deleteFiles } from "@/lib/storage";
@@ -193,7 +197,8 @@ export async function listDocument(
         // reason the groups filter above gives: a bare `id` would resolve to the
         // inner table's. A person or property associated twice (two roles)
         // counts once — „how many are associated", not how many links.
-        institutionName:  lookupInstitution.name,
+        // Slice #39.71: the issuer is a juridical person now — its name, which is the institution's (migration_115).
+        institutionName:  issuerPerson.displayName,
         subject:          document.subject,
         // Slice #39.63: one copy of the three, shared with the bar's filters on them.
         pageCount:        DOCUMENT_COUNT_SQL.pageCount,
@@ -204,7 +209,7 @@ export async function listDocument(
       })
       .from(document)
       .leftJoin(lookupDocumentType, eq(document.documentTypeId, lookupDocumentType.id))
-      .leftJoin(lookupInstitution, eq(document.institutionId, lookupInstitution.id))
+      .leftJoin(issuerPerson, eq(document.issuerPersonId, issuerPerson.id))
       .leftJoin(entityMetadata, eq(entityMetadata.principalObjectId, document.principalObjectId))
       .where(where)
       // Slice #16.UX.01: most-recently modified/created first.
@@ -967,7 +972,6 @@ import {
   propertyDocument,
   personDocument,
   documentDocument,
-  lookupInstitution,
   lookupPersonRole,
   lookupDocTypePersonRole,
   lookupDocumentDocumentRole,
@@ -1858,12 +1862,12 @@ export async function listInstrumentCandidateDocuments(
       typeName:        lookupDocumentType.name,
       nrDocument:      document.nrDocument,
       dateDocument:    document.dateDocument,
-      institutionName: lookupInstitution.name,
+      institutionName: issuerPerson.displayName, // Slice #39.71: the issuer person's name
       pageCount:       sql<number>`(SELECT count(*) FROM document_page dp WHERE dp.document_id = ${document.id})`,
     })
     .from(document)
     .leftJoin(lookupDocumentType, eq(document.documentTypeId, lookupDocumentType.id))
-    .leftJoin(lookupInstitution, eq(document.institutionId, lookupInstitution.id))
+    .leftJoin(issuerPerson, eq(document.issuerPersonId, issuerPerson.id))
     .where(and(sql`${folded} = ${foldedNumber}`, sql`${document.id} <> ${citingDocumentId}`))
     .orderBy(document.code)
     .limit(limit);

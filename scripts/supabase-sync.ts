@@ -99,6 +99,24 @@ async function execFile(pool: Pool, filePath: string): Promise<void> {
 const REGENERATED_COLUMNS = new Set(["id", "created_at", "updated_at"]);
 
 /**
+ * Columns the TARGET fills for itself, per table, and so never copied.
+ *                                                          (Slice #39.71)
+ *
+ * `lookup_institution.juridical_person_id` points at the institution's own
+ * juridical person — a `person` row, whose UUID exists only in the database
+ * that made it. Supabase makes its own: the
+ * `lookup_institution_juridical_person_added` trigger (migration_115) runs on
+ * every row this script inserts there, and sets the column to the person it
+ * just created. Copying the local value instead would either fail the FK or,
+ * worse, overwrite the trigger's link with an id that means nothing there.
+ * Left out BEFORE the foreign-key check below, which would otherwise refuse
+ * the table.
+ */
+const TARGET_FILLED_COLUMNS: Record<string, ReadonlySet<string>> = {
+  lookup_institution: new Set(["juridical_person_id"]),
+};
+
+/**
  * What `planFor` resolves for one table: the columns to copy, and which of them
  * are json/jsonb.
  *
@@ -152,7 +170,8 @@ async function planFor(table: string, orderBy: string): Promise<ColumnPlan> {
   );
   const dataColumns: string[] = colRows
     .map((r) => r.column_name as string)
-    .filter((c) => !REGENERATED_COLUMNS.has(c));
+    .filter((c) => !REGENERATED_COLUMNS.has(c))
+    .filter((c) => !(TARGET_FILLED_COLUMNS[table]?.has(c) ?? false));
 
   // Resolved here rather than at copy time for the same reason as everything
   // else in this function: after the TRUNCATE there is no safe place to throw.

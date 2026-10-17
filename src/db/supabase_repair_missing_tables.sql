@@ -1763,6 +1763,20 @@ CREATE TABLE IF NOT EXISTS document_tarla (
 );
 CREATE INDEX IF NOT EXISTS document_tarla_tarla_idx ON document_tarla (tarla_id);
 
+-- migration_115 (Slice #39.71) -- every institution is a juridical person, and a document's issuer is one
+-- The two columns and their indexes only. The function that makes an institution's juridical person, the
+-- three triggers that keep the pair in step and the backfill are migration_115's and are NOT repeated here:
+-- they write person, judicial_person and person_version, and a second copy of that body is a second
+-- create path for juridical persons (object-writers-enumerated.test.ts counts them). A database repaired by
+-- this file without migration_115 has the columns empty; applying migration_115 fills them.
+ALTER TABLE lookup_institution
+  ADD COLUMN IF NOT EXISTS juridical_person_id uuid REFERENCES person(id) ON DELETE SET NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS lookup_institution_juridical_person_unique
+  ON lookup_institution (juridical_person_id);
+ALTER TABLE document
+  ADD COLUMN IF NOT EXISTS issuer_person_id uuid REFERENCES person(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS document_issuer_person_idx ON document (issuer_person_id);
+
 -- migration_034 -- Street View street line on the property address
 ALTER TABLE property_address
   ADD COLUMN IF NOT EXISTS street_view_street_line text;
