@@ -5,7 +5,7 @@
 | **Area** | person |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-17 |
 
 ## What this proves
@@ -64,3 +64,7 @@ away and the server's later ask was answered, as designed. Deleted (204).
 **2026-10-17 — run 4, `confirmed` (Slice #39.64).** The same, the file unchanged: every step as written; the CUI 12
 answer in 1.0 s, step 3's in 4.9 s, step 6's in 1.0 s. Deleted (204). `e2e/person/company-anaf.spec.ts` translates
 it, with ANAF's answer recorded.
+
+**2026-10-17 — `automated` (Slice #39.64).** The test runner's targeted run 20261017T053445Z-14295 on e653906 ran its
+spec green, with TC-PERS-02, TC-PERS-09 and the other list and record specs the width guard reads, lint, tsc and 36
+jest suites.
