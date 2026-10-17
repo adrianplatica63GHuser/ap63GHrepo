@@ -5,8 +5,8 @@
 | **Area** | map |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `draft` |
-| **Last green** | — |
+| **State** | `confirmed` |
+| **Last green** | 2026-10-16 |
 
 ## What this proves
 
@@ -43,3 +43,10 @@ The four lots are deleted.
 **2026-10-16 — written (Slice #39.60).** `e2e/map/property-map-drops.spec.ts`. A drop is read as
 `[data-map-drop="<count>"]`, a corner dot as `[data-corner-marker="<lat>,<lon>"]`, the zoom as `data-map-zoom` on the
 map. Opens the real map once.
+
+**2026-10-16 — driven twice by hand, unchanged, green: `confirmed` (Slice #39.60).** Claude, in the browser pane on
+localhost:3000, with the four lots made through the API and deleted after. Step 1: one „3" holding the three lots and
+the fourth alone, no corner dots of theirs. Step 2: the bubble „TC-E2E-MAP-05 Lot 4" with „Deschide" to its screen.
+Step 3: zoom 15 → 19, the „3" gone, all twelve corner dots drawn. Not yet `automated`: the runner's first run skipped
+the spec, because the tests' Google maps ceiling for October is reached (14,598 maps this month) — it runs from
+November 1.

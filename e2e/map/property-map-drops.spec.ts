@@ -1,6 +1,6 @@
 /**
  * Case:   TC-MAP-05 — Harta micșorată: proprietățile mici devin picături, picăturile apropiate o picătură cu număr
- * Source: docs/testing/cases/TC-MAP-05.md, written 2026-10-16 (Slice #39.60)
+ * Source: docs/testing/cases/TC-MAP-05.md, „Last green" 2026-10-16 (confirmed by two hand runs, Slice #39.60)
  *
  * A translation of the case file, step for step. Every Romanian string below is quoted from it verbatim.
  *
