@@ -56,7 +56,8 @@ function mockFetch(anaf: unknown): Call[] {
   global.fetch = jest.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
     calls.push({ url, method: init?.method ?? "GET", body: init?.body ? JSON.parse(String(init.body)) : null });
-    const json = (b: unknown, status = 200) => new Response(JSON.stringify(b), { status, headers: { "content-type": "application/json" } });
+    // A plain object, not a `Response`: jsdom has no fetch API of its own.
+    const json = (b: unknown, status = 200) => ({ ok: status >= 200 && status < 300, status, redirected: false, json: async () => b });
     if (url.startsWith("/api/judicial-persons/anaf")) return json(anaf);
     if (url === "/api/judicial-persons") return json({ person: { id: "new-jp" } }, 201);
     if (url.includes("/persons")) return json({ ok: true });
