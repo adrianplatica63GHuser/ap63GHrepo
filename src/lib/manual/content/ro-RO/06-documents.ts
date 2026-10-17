@@ -25,7 +25,7 @@ Deasupra tabelului stau caseta de căutare („caută după cod, titlu sau nr. d
 
 Bara de filtre de sub caseta de căutare merge ca pe lista proprietăților (secțiunea [[properties-list-filters]]). Începe cu „Tip document:” și „Câmp specific:”, care sunt mereu acolo și se poartă ca mai sus. După ele vine „Expiră curând”: apăsat, lista păstrează doar actele a căror valabilitate se încheie în curând; apăsat din nou, renunță la filtru. Urmează „+ Filtru”, din care alegeți oricare dintre coloanele din „Câmpuri afișate”:
 
-- **„Instituție / Notariat”** — o listă cu bife, cu numărul de acte de lângă fiecare instituție, numărat cu celelalte filtre puse, cu „Tip document:” și „Câmp specific:” cu tot;
+- **„Instituție / Notariat”** — o listă cu bife a emitenților actelor, persoane juridice, cu numărul de acte de lângă fiecare, numărat cu celelalte filtre puse, cu „Tip document:” și „Câmp specific:” cu tot;
 - **„Data” și „Adăugat la”** — „De la” și „Până la” sau, din „Perioadă…”, „Anul acesta” ori „Ultimele 12 luni”;
 - **„Nr. pagini”, „Persoane” și „Proprietăți”** — „De la” și „Până la”, numărate ca în coloanele lor: o persoană legată de act de două ori se numără o dată;
 - **„Nr. document” și „Subiect”** — „Conține”.
@@ -83,6 +83,8 @@ Fiecare act începe cu fișa „Identificarea actului”: „Tip document”, ap
 | Un tip fără denumiri proprii | Emitent | Nr. document | Data |
 | Contract de Vânzare | Notariat | Nr. act autentic | Data autentificării |
 | Certificat de Moștenitor | Notariat | Nr. certificat de moștenitor | Data eliberării |
+
+**Emitentul este o persoană juridică.** Lista lui ține persoanele juridice de un tip de autoritate publică — instanțe, birouri notariale, primării, oficiul de cadastru (secțiunea [[companies-add-public-bodies]]); lupa de lângă ea, „Caută o persoană juridică”, găsește orice persoană juridică după denumire, poreclă, cod sau CUI, întâi autoritățile publice. Când AI-ul importului a citit un emitent pe pagini și actul nu are încă unul, câmpul arată sub căsuță ce a citit — „Citit de AI ca emitent: „…”” — cu un singur buton: „Folosește „…”” când instituția e în arhivă, sau „Adaugă „…” ca persoană juridică” când nu e. Nu se alege nimic până nu apăsați, și nu se păstrează nimic până la „Salvează”. O instituție adăugată astfel primește tipul pe care i-l sugerează numele și o legătură spre ecranul ei, unde îi adăugați CUI-ul și o completați din ANAF (secțiunea [[companies-add-anaf]]).
 
 Tot aici stau câmpurile generale: „Etichetă scurtă”, titlul actului — cel din coloana „Titlu” a listei —, „Subiect” și „Note extinse”. Căsuțele în care scrieți text cresc singure cât e nevoie.
 

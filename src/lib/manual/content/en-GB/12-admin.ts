@@ -19,7 +19,7 @@ The screen is a single page (Figure [[fig-admin-value-lists]]). On the left are 
 |---|---|
 | Object types | „Physical Person Types”, „Judicial Person Types”, „Property types and uses”, „Document Types” |
 | Roles and links | „Person Roles”, „Property → Property Links”, „Document → Document Links” |
-| Value lists | „Tarla Codes”, „Citizenship”, „Relationship to the business”, „Institutions” |
+| Value lists | „Tarla Codes”, „Citizenship”, „Relationship to the business” |
 
 „Use Categories” has no button of its own: it is the second tile of the page „Property types and uses” (section [[admin-reference-data-property-types]]).
 
@@ -85,15 +85,11 @@ A type's „Roles” tab and „Document” on a role's panel show the same pair
 
 The property form offers in „Use Category” only the uses the chosen type allows (section [[properties-add-cadastral]]). A property that already holds a use its type no longer allows keeps it; under the field it says the use is not among the ones its type allows.
 
-### 12.1.5 Institutions {#admin-reference-data-institutions}
+### 12.1.5 Public bodies {#admin-reference-data-public-bodies}
 
-„Institutions” holds the institutions a document's issuer is chosen from — „OCPI”, „ANAF”, „Notariat” and the others. Each institution is also a judicial person, of a public-body type (section [[companies-add-public-bodies]]), and what you do to the list reaches it:
+On „Judicial Person Types”, every type has the tick „Public body”. The seven public-body types have it — „Autoritate publică centrală”, „Instituție publică teritorială”, „Autoritate locală”, „Instanță”, „Birou notarial”, „Birou de executor judecătoresc”, „Cabinet sau societate de avocatură” (section [[companies-add-public-bodies]]) — and the company forms do not. The list of a document's issuer holds the judicial persons whose type is ticked (section [[documents-identification]]): tick a type of your own and its firms join that list; untick one and they leave it, though a document that names one keeps it.
 
-- **An institution added.** Its judicial person is made at once, with a JPERS code and a type taken from the name — a court becomes „Instanță”, a town hall „Autoritate locală”.
-- **An institution renamed.** Its judicial person takes the new name, with a new version.
-- **Two institutions merged, or one deleted with its documents moved.** The documents' issuer moves to the judicial person of the institution kept. The judicial person of the institution that went stays in the list of judicial persons, where you can delete it.
-
-The seven public-body types stand in „Judicial Person Types”, after the company forms and before „Altele”.
+The archive no longer has a list of institutions: its institutions became judicial persons of these types.
 
 ## 12.2 Users and access {#admin-users}
 

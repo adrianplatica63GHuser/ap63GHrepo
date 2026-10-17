@@ -19,7 +19,7 @@ Ecranul este o singură pagină (Figura [[fig-admin-value-lists]]). În stânga 
 |---|---|
 | Tipuri de obiecte | „Tipuri de Persoană Fizică”, „Tipuri de Persoană Juridică”, „Tipuri de proprietate și folosințe”, „Tipuri de Document” |
 | Roluri și legături | „Roluri Persoane”, „Legături Proprietate → Proprietate”, „Legături Document → Document” |
-| Liste de valori | „Indicative Tarla”, „Cetățenie”, „Relația cu firma”, „Instituții” |
+| Liste de valori | „Indicative Tarla”, „Cetățenie”, „Relația cu firma” |
 
 „Categorii Folosință” nu are un buton al ei: este a doua fișă a paginii „Tipuri de proprietate și folosințe” (secțiunea [[admin-reference-data-property-types]]).
 
@@ -85,15 +85,11 @@ Fila „Roluri” a unui tip și „Act” din panoul unui rol arată aceleași 
 
 Formularul proprietății oferă la „Categorie de folosință” doar folosințele permise tipului ales (secțiunea [[properties-add-cadastral]]). O proprietate care are deja o folosință pe care tipul ei n-o mai permite o păstrează; sub câmp scrie că folosința nu este printre cele permise tipului.
 
-### 12.1.5 Instituțiile {#admin-reference-data-institutions}
+### 12.1.5 Autoritățile publice {#admin-reference-data-public-bodies}
 
-„Instituții” ține instituțiile din care se alege emitentul unui act — „OCPI”, „ANAF”, „Notariat” și celelalte. Fiecare instituție este și o persoană juridică, de un tip de autoritate publică (secțiunea [[companies-add-public-bodies]]), iar ce faceți în listă ajunge la ea:
+La „Tipuri de Persoană Juridică”, fiecare tip are bifa „Autoritate publică”. O au cele șapte tipuri de autoritate publică — „Autoritate publică centrală”, „Instituție publică teritorială”, „Autoritate locală”, „Instanță”, „Birou notarial”, „Birou de executor judecătoresc”, „Cabinet sau societate de avocatură” (secțiunea [[companies-add-public-bodies]]) —, iar formele de firmă nu. Lista emitentului unui act ține persoanele juridice al căror tip e bifat (secțiunea [[documents-identification]]): bifați un tip al vostru și firmele lui intră în listă; debifați-l și ies din ea, deși un act care numește una o păstrează.
 
-- **O instituție adăugată.** Persoana ei juridică se face pe loc, cu cod JPERS și cu tipul luat după nume — o judecătorie devine „Instanță”, o primărie „Autoritate locală”.
-- **O instituție redenumită.** Persoana ei juridică ia numele nou, cu o versiune nouă.
-- **Două instituții unite, sau una ștearsă cu actele mutate.** Emitentul actelor trece pe persoana juridică a instituției păstrate. Persoana juridică a instituției care a dispărut rămâne în lista persoanelor juridice, de unde o puteți șterge.
-
-Cele șapte tipuri de autoritate publică stau în „Tipuri de Persoană Juridică”, după formele de firmă și înainte de „Altele”.
+Arhiva nu mai are o listă de instituții: instituțiile ei au devenit persoane juridice de aceste tipuri.
 
 ## 12.2 Utilizatori și acces {#admin-users}
 

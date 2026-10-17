@@ -25,7 +25,7 @@ Above the table stand the search box („search by code, title, or document no.�
 
 The filter bar under the search box works as on the list of properties (section [[properties-list-filters]]). It opens with „Document type:” and „Type-specific field:”, which are always there and work as above. After them comes „Expiring soon”: pressed, the list keeps only the documents whose validity ends soon; pressed again, it drops the filter. Then comes „+ Filter”, from which you choose any of the columns of „Choose fields”:
 
-- **„Institution / Notariat”** — a list with ticks, with the number of documents beside each institution, counted with the other filters set, „Document type:” and „Type-specific field:” included;
+- **„Institution / Notariat”** — a list with ticks of the documents' issuers, judicial persons, with the number of documents beside each, counted with the other filters set, „Document type:” and „Type-specific field:” included;
 - **„Date” and „Added on”** — „From” and „To”, or, from „Period…”, „This year” or „The last 12 months”;
 - **„Pages”, „Persons” and „Properties”** — „From” and „To”, counted as in their columns: a person linked to the document twice counts once;
 - **„Document No.” and „Subject”** — „Contains”.
@@ -83,6 +83,8 @@ Every document begins with the tile „Document identification”: „Document T
 | A type with no names of its own | Issuer | Document No. | Date |
 | „Contract de Vânzare” | Notary Office | Authentic Deed No. | Authentication date |
 | „Certificat de Moștenitor” | Notary Office | Certificate of Inheritance No. | Issue date |
+
+**The issuer is a judicial person.** Its list holds the judicial persons of a public-body type — courts, notaries' offices, town halls, the cadastre office (section [[companies-add-public-bodies]]); the magnifier beside it, „Search for a judicial person”, finds any judicial person by name, nickname, code or CUI, public bodies first. When the import's AI read an issuer on the pages and the document has none yet, the field shows the reading under the box — „Read by the AI as the issuer: “…”” — with one button: „Use “…”” when that body is in the archive, or „Add “…” as a judicial person” when it is not. Nothing is chosen until you press it, and nothing is kept until „Save”. A body added this way gets the type its name suggests, and a link to its screen, where you add its CUI and fill it in from ANAF (section [[companies-add-anaf]]).
 
 The general fields sit here too: „Short Label”, the document's title — the one in the list's „Title” column —, „Subject” and „Enhanced Notes”. The boxes you type text into grow by themselves as far as they need.
 

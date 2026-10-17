@@ -121,7 +121,7 @@ Public bodies are in ANAF's register too, by their tax code; the button works fo
 
 ### 4.2.7 Institutions are judicial persons {#companies-add-public-bodies}
 
-An institution that issues documents — a notary's office, a court, a town hall, the cadastre office, ANAF — is a judicial person too, under one of seven public-body types:
+The bodies that issue documents — a notary's office, a court, a town hall, the cadastre office, ANAF — are judicial persons too, under one of seven public-body types:
 
 | Type | For instance |
 |---|---|
@@ -135,9 +135,9 @@ An institution that issues documents — a notary's office, a court, a town hall
 
 In „Type” they stand after the company forms, with „Altele” last. Each has a tax code in ANAF's register, so „Fill in from ANAF” fills them in like any firm (section [[companies-add-anaf]]).
 
-Every institution of the „Institutions” list has its judicial person, with a JPERS code, in the list of judicial persons (section [[admin-reference-data-institutions]]). A row of that list that names no particular body — „Notariat”, „Judecătorie”, „Tribunal” — has one too, under the same name and with the note „generic — de înlocuit cu instituția exactă” (generic — to be replaced with the exact institution). Open it, put the exact institution's name and CUI in place of the generic ones, and save.
+A document's issuer — the field of its form whose label changes with its type — is chosen among them: its list holds the judicial persons of a public-body type, and its search finds any judicial person (section [[documents-identification]]). Which types count as public bodies is a tick in Reference Data (section [[admin-reference-data-public-bodies]]).
 
-A document's issuer — the field of the document's form whose label changes with its type — is that judicial person, and the list of documents shows its name. For now the issuer is still chosen on the document's form from the „Institutions” list.
+The archive's former list of institutions became judicial persons of these types, each with a JPERS code. Those that named no particular body — the generic notary's office, court or town hall — carry the note „generic — de înlocuit cu instituția exactă” (generic — to be replaced with the exact institution). Open one, put the exact body's name and CUI in place of the generic ones, and save: every document it issued then names the exact body.
 
 ## 4.3 A firm's people {#companies-people}
 

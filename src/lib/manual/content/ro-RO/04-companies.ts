@@ -121,7 +121,7 @@ Instituțiile publice sunt și ele în registrul ANAF, după codul lor fiscal; b
 
 ### 4.2.7 Instituțiile sunt persoane juridice {#companies-add-public-bodies}
 
-O instituție care emite acte — un birou notarial, o instanță, o primărie, oficiul de cadastru, ANAF — este și ea o persoană juridică, de unul dintre cele șapte tipuri de autoritate publică:
+Instituțiile care emit acte — un birou notarial, o instanță, o primărie, oficiul de cadastru, ANAF — sunt și ele persoane juridice, de unul dintre cele șapte tipuri de autoritate publică:
 
 | Tip | De exemplu |
 |---|---|
@@ -135,9 +135,9 @@ O instituție care emite acte — un birou notarial, o instanță, o primărie, 
 
 La „Tip” stau după formele de firmă, cu „Altele” la urmă. Fiecare are cod fiscal în registrul ANAF, așa că „Completează din ANAF” le completează ca pe orice firmă (secțiunea [[companies-add-anaf]]).
 
-Fiecare instituție din lista „Instituții” are persoana ei juridică, cu cod JPERS, în lista persoanelor juridice (secțiunea [[admin-reference-data-institutions]]). Un rând al listei care nu numește o instituție anume — „Notariat”, „Judecătorie”, „Tribunal” — are și el una, cu același nume și cu nota „generic — de înlocuit cu instituția exactă”. Deschideți-o, puneți numele și CUI-ul instituției exacte în locul celor generice și salvați.
+Emitentul unui act — câmpul din formularul actului a cărui etichetă se schimbă după tip — se alege dintre ele: lista lui ține persoanele juridice de un tip de autoritate publică, iar căutarea lui găsește orice persoană juridică (secțiunea [[documents-identification]]). Ce tipuri sunt autorități publice se bifează în „Date de referință” (secțiunea [[admin-reference-data-public-bodies]]).
 
-Emitentul unui act — câmpul din formularul actului a cărui etichetă se schimbă după tip — este acea persoană juridică, iar lista actelor arată numele ei. Deocamdată emitentul se alege încă, în formularul actului, din lista „Instituții”.
+Fosta listă de instituții a arhivei a devenit persoane juridice de aceste tipuri, fiecare cu cod JPERS. Cele care nu numeau o instituție anume — biroul notarial, instanța sau primăria generice — au nota „generic — de înlocuit cu instituția exactă”. Deschideți-o, puneți numele și CUI-ul instituției exacte în locul celor generice și salvați: toate actele emise de ea numesc atunci instituția exactă.
 
 ## 4.3 Persoanele unei firme {#companies-people}
 
