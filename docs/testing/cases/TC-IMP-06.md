@@ -5,7 +5,7 @@
 | **Area** | import |
 | **Kind** | happy |
 | **Data** | `C:\dev\TEST.DATA\Test.Claude\13.tc.plan.parcelar` |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-17 |
 
 ## What this proves
@@ -75,3 +75,7 @@ does; the buttons were pressed by script (FU-290).
 step the same, word for word. Cleanup the same (409, then 204, 204).
 
 Paid calls for the slice's runs: 10 (three per run, plus the first attempt's classification).
+
+**2026-10-17 — `automated` (Slice #39.69).** The test runner's targeted run 20261017T145651Z-32332 on 76a4631 ran
+`e2e/import/plan-parcelar-tarla.spec.ts` green with four other specs and 39 jest suites (lint and tsc green too). The
+spec answers the three paid calls itself, with what the hand runs read.

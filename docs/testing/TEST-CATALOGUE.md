@@ -143,7 +143,7 @@ fixed fixture where the existing one will do.
 | [TC-IMP-03](cases/TC-IMP-03.md) | Import lung: cinci proprietăți, 59 de fișiere, fiecare regăsit | import | happy | `10.big.tc.marker` | `driven` | 2026-09-25 | — |
 | [TC-IMP-04](cases/TC-IMP-04.md) | Folderele speciale „comune” și „flotante” | import | happy | `11.mixed.tc.marker` | `driven` | 2026-09-25 | — |
 | [TC-IMP-05](cases/TC-IMP-05.md) | Importul unei cărți de identitate cu părinții: titularul, apoi tatăl și mama | import | happy | `12.tc.id.card.parents` | `driven` | 2026-10-08 | — |
-| [TC-IMP-06](cases/TC-IMP-06.md) | Un plan parcelar importat: tarla lui, cu parcelele, propusă, confirmată și legată de plan | import | happy | `13.tc.plan.parcelar` | `confirmed` | 2026-10-17 | `e2e/import/plan-parcelar-tarla.spec.ts` |
+| [TC-IMP-06](cases/TC-IMP-06.md) | Un plan parcelar importat: tarla lui, cu parcelele, propusă, confirmată și legată de plan | import | happy | `13.tc.plan.parcelar` | `automated` | 2026-10-17 | `e2e/import/plan-parcelar-tarla.spec.ts` |
 | [TC-AI-01](cases/TC-AI-01.md) | CVC citit de AI la import — panourile se completează | ai | happy | `07.smoke.tc.marker` | `driven` | 2026-09-23 | — |
 | [TC-SRCH-01](cases/TC-SRCH-01.md) | Cele trei obiecte găsite prin Căutare globală | search | happy | — | `automated` | 2026-10-02 | `e2e/search/global-search.spec.ts` |
 | [TC-GRP-01](cases/TC-GRP-01.md) | Grup cu două proprietăți | group | happy | — | `automated` | 2026-09-25 | `e2e/group/group-two-properties.spec.ts` |
