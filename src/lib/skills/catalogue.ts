@@ -498,7 +498,7 @@ export const SKILLS: readonly Skill[] = [
     },
     predecessors: ["properties-add-property-by-hand", "properties-read-the-map"],
     screens: ["properties-list", "property-detail"],
-    cases: ["TC-PROP-03"],
+    cases: ["TC-PROP-03", "TC-PROP-15"],
     manual: ["properties-coord-file", "properties-example-file", "properties-corners-table"],
   },
   {

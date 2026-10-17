@@ -94,14 +94,15 @@ test.describe("TC-PROP-01 — Proprietate creată manual, vizibilă în listă",
       // Step 3 — note the count.
       const before = await readCount(page);
 
-      // Step 4 — „Adaugă proprietate" opens a dialog of four ways in.
+      // Step 4 — „Adaugă proprietate" opens a dialog of two ways in (#39.65: it read four, with „Din imagine scanată"
+      // and „Din folder text", until FU-217 retired them).
       await page.getByRole("button", { name: "Adaugă proprietate" }).click({ force: true });
       const chooser = page.getByRole("dialog", { name: "Adaugă Proprietate" });
       await expect(chooser).toBeVisible();
       await expect(chooser.getByText("Introducere manuală")).toBeVisible();
-      await expect(chooser.getByText("Din imagine scanată")).toBeVisible();
       await expect(chooser.getByText("Din fișier text")).toBeVisible();
-      await expect(chooser.getByText("Din folder text")).toBeVisible();
+      await expect(chooser.getByText("Din imagine scanată")).toHaveCount(0);
+      await expect(chooser.getByText("Din folder text")).toHaveCount(0);
 
       // Step 5 — „Introducere manuală" („Completați detaliile proprietății manual").
       await chooser.getByRole("link", { name: "Introducere manuală" }).click();

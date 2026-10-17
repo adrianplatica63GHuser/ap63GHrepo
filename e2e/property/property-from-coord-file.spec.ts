@@ -1,6 +1,6 @@
 /**
  * Case:   TC-PROP-03 — Proprietate creată dintr-un fișier cu coordonate
- * Source: docs/testing/cases/TC-PROP-03.md, „Last green" 2026-09-25
+ * Source: docs/testing/cases/TC-PROP-03.md, „Last green" 2026-10-17 (steps 2–6 follow Slice #39.65)
  *
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim.
@@ -65,33 +65,41 @@ test.describe("TC-PROP-03 — Proprietate creată dintr-un fișier cu coordonate
       await expect(page.getByText(/^Se afișează \d+ din \d+$/)).toBeVisible({ timeout: 15_000 });
       const before = await readTotal(page);
 
-      // Step 2 — „Adaugă proprietate": four ways in; „Din fișier text" with its line and warning.
+      // Step 2 — „Adaugă proprietate": two ways in (#39.65); „Din fișier text" with its line, and no identity warning.
       await page.getByRole("button", { name: "Adaugă proprietate" }).click({ force: true });
       const dialog = page.getByRole("dialog", { name: "Adaugă Proprietate" });
       await expect(dialog).toBeVisible();
       const fromText = dialog.getByRole("button", { name: /^Din fișier text/ });
       await expect(fromText).toContainText("Încărcați un fișier .txt cu coloane index, X (Northing), Y (Easting)");
-      await expect(fromText).toContainText("Fără tarla și fără parcelă — proprietatea nu va avea identitate cadastrală.");
+      await expect(dialog.getByText("Din imagine scanată")).toHaveCount(0);
+      await expect(dialog.getByText("Din folder text")).toHaveCount(0);
+      await expect(dialog.getByText("Fără tarla și fără parcelă", { exact: false })).toHaveCount(0);
 
-      // Step 3 — „Din fișier text": the drop zone, the hint, „Înapoi" / „Importă".
+      // Step 3 — „Din fișier text": the drop zone, the hint, „Tarla și parcelă", „Înapoi" / „Importă" greyed out.
       await fromText.click();
       await expect(dialog.getByText("Încarcă fișier cu coordonate")).toBeVisible();
       await expect(dialog.getByText("Selectați fișierul cu coordonate")).toBeVisible();
       await expect(dialog.getByText("Fereastra de fișiere arată doar fișiere .txt.", { exact: false })).toBeVisible();
+      await expect(dialog.getByText("Tarla și parcelă")).toBeVisible();
+      const tarla = dialog.getByRole("combobox", { name: "Nr. tarla / sola" });
+      await expect(tarla.locator("option").first()).toHaveText("niciunul");
+      const parcela = dialog.getByRole("textbox", { name: "Nr. parcelă" });
       await expect(dialog.getByRole("button", { name: "Înapoi" })).toBeVisible();
       const importBtn = dialog.getByRole("button", { name: "Importă" });
-      await expect(importBtn).toBeVisible();
+      await expect(importBtn).toBeDisabled();
 
-      // Step 4 — the file onto the hidden input; the drop zone is NOT pressed.
+      // Step 4 — the file onto the hidden input; the drop zone is NOT pressed. „Importă" still greyed out.
       await dialog.locator('input[type="file"]').setInputFiles(FIXTURE);
       await expect(dialog.getByText(FIXTURE_NAME)).toBeVisible();
+      await expect(importBtn).toBeDisabled();
 
-      // Step 5 — „Importă": success, the longer warning, „Închide"; behind it the new row.
+      // Step 5 — 40 and TC03, „Importă": success, „Deschide proprietatea" and „Închide"; behind it the new row.
+      await tarla.selectOption({ label: "40" });
+      await parcela.fill("TC03");
+      await expect(importBtn).toBeEnabled();
       await importBtn.click();
       await expect(dialog.getByText("Proprietatea a fost importată cu succes.")).toBeVisible({ timeout: 30_000 });
-      await expect(
-        dialog.getByText("Această proprietate nu are nici tarla, nici parcelă, deci nu are identitate cadastrală:", { exact: false }),
-      ).toBeVisible();
+      await expect(dialog.getByRole("link", { name: "Deschide proprietatea" })).toBeVisible();
       const close = dialog.getByRole("button", { name: "Închide" });
       await expect(close).toBeVisible();
 
@@ -108,6 +116,8 @@ test.describe("TC-PROP-03 — Proprietate creată dintr-un fișier cu coordonate
       await expect(page).toHaveURL(new RegExp(`/properties/${propertyId}$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: NICKNAME })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText("v 0", { exact: true }).first()).toBeAttached({ timeout: 30_000 });
+      await expect(page.locator('[name="tarlaId"] option:checked')).toHaveText("40");
+      await expect(page.locator('[name="parcela"]')).toHaveValue("TC03");
       await expect(page.getByRole("group", { name: "Suprafață calculată (m²)" })).toContainText("600.00", { timeout: 30_000 });
       await expect(page.getByText("PUNCTE DE CONTUR").first()).toBeVisible();
       for (const [i, [orig, north, east]] of CORNERS.entries()) {

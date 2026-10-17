@@ -5,16 +5,18 @@
 | **Area** | property |
 | **Kind** | happy |
 | **Data** | `08.tc.coord.file` |
-| **State** | `automated` |
-| **Last green** | 2026-10-02 |
+| **State** | `confirmed` |
+| **Last green** | 2026-10-17 |
 
 ## What this proves
 
-A property can be created from a Stereo 70 coordinate text file — the second of the four ways
-in that „Adaugă proprietate" offers (TC-PROP-01 takes the first). The file's corners land on
-the property in file order with their original indices, the area is computed from them, the
-nickname comes from the file name, and the property is marked as having come from a coordinate
-file. It is also the second property TC-GRP-01 puts in a group.
+A property can be created from a Stereo 70 coordinate text file — the second of the two ways
+in that „Adaugă proprietate" offers since #39.65 (TC-PROP-01 takes the first). The tarla and the
+parcela are asked for before the import, so the one-property-per-parcel check runs (FU-217;
+TC-PROP-15 is the parcel that already has one). The file's corners land on the property in file
+order with their original indices, the area is computed from them, the nickname comes from the
+file name, and the property is marked as having come from a coordinate file. It is also the
+second property TC-GRP-01 puts in a group.
 
 ## Before you start
 
@@ -39,11 +41,11 @@ moved; the archive is not touched.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Presses „Proprietăți" and notes the count at the foot | „Se afișează N din N" |
-| 2 | Presses „Adaugă proprietate" | The dialog „Adaugă Proprietate" with four ways in. „Din fișier text" reads „Încărcați un fișier .txt cu coloane index, X (Northing), Y (Easting)" and carries the warning „Fără tarla și fără parcelă — proprietatea nu va avea identitate cadastrală." |
-| 3 | Presses „Din fișier text" | „Încarcă fișier cu coordonate", a drop zone „Selectați fișierul cu coordonate" with the hint about the file's rows, a note that the file window shows only .txt files, and „Înapoi" / „Importă" |
-| 4 | Puts the data file into the dialog's file input **without pressing the drop zone** — the same way TC-DOC-01 puts a page in (see the catalogue's „A file into a page, without the dialog") | The drop zone shows `TC-PROP-03 Teren din fisier.txt` |
-| 5 | Presses „Importă" | „Proprietatea a fost importată cu succes." and the longer warning „Această proprietate nu are nici tarla, nici parcelă, deci nu are identitate cadastrală: …", with „Închide". Behind the dialog, the list already has a new row at the top badged „Nou!", „Poreclă" `TC-PROP-03 Teren din fisier`, no tarla and no parcelă, and the count is N+1 |
-| 6 | Presses „Închide", then „Deschide" on that row | The property's screen, headed `TC-PROP-03 Teren din fisier`, „v 0", „Suprafață calculată (m²)" **611.87**, and under „PUNCTE DE CONTUR" four rows — NR. 1–4, NR. ORIG. **16, 17, 18, 19**, NORD/EST 318693.71 / 573578.56, 318675.77 / 573554.70, 318659.52 / 573567.20, 318677.46 / 573591.06 — and the map drawn |
+| 2 | Presses „Adaugă proprietate" | The dialog „Adaugă Proprietate" with two ways in (#39.65): „Introducere manuală" and „Din fișier text", which reads „Încărcați un fișier .txt cu coloane index, X (Northing), Y (Easting)". No „Din imagine scanată", no „Din folder text", no warning about a cadastral identity |
+| 3 | Presses „Din fișier text" | „Încarcă fișier cu coordonate", a drop zone „Selectați fișierul cu coordonate" with the hint about the file's rows, a note that the file window shows only .txt files; under it „Tarla și parcelă", „Nr. tarla / sola" (a list: „niciunul" and the archive's tarlale) and „Nr. parcelă"; „Înapoi" / „Importă", „Importă" greyed out |
+| 4 | Puts the data file into the dialog's file input **without pressing the drop zone** — the same way TC-DOC-01 puts a page in (see the catalogue's „A file into a page, without the dialog") | The drop zone shows `TC-PROP-03 Teren din fisier.txt`; „Importă" still greyed out |
+| 5 | Selects `40` in „Nr. tarla / sola", types `TC03` into „Nr. parcelă", presses „Importă" | „Importă" turns on once both are given. Then „Proprietatea a fost importată cu succes.", with „Deschide proprietatea" and „Închide". Behind the dialog, the list already has a new row at the top badged „Nou!", „Poreclă" `TC-PROP-03 Teren din fisier`, and the count is N+1 |
+| 6 | Presses „Închide", then „Deschide" on that row | The property's screen, headed `TC-PROP-03 Teren din fisier`, „v 0", „Nr. tarla / sola" `40` and „Nr. parcelă" `TC03`, „Suprafață calculată (m²)" **611.87**, and under „PUNCTE DE CONTUR" four rows — NR. 1–4, NR. ORIG. **16, 17, 18, 19**, NORD/EST 318693.71 / 573578.56, 318675.77 / 573554.70, 318659.52 / 573567.20, 318677.46 / 573591.06 — and the map drawn |
 | 7 | On Căutare globală, searches `TC-PROP-03` | One row, with no system ID, with „Proveniență" = **„Fișier de coordonate (.txt)"** |
 
 ## At the end — leaving things as they were found
@@ -89,3 +91,20 @@ Corrections to what was written from the code before the run:
 **2026-10-05 — Slice #37.92.** The sidebar's „Proprietăți — Listă" and „Proprietăți — Hartă" are one item,
 „Proprietăți"; the whole map opens from the list's „Hartă completă" (TC-PROP-10). The steps above name
 the sidebar item by its new name; nothing else in them changed.
+
+**2026-10-17 — steps 2 to 6 rewritten for #39.65, run 1, `driven`.** The dialog has two ways in and the text-file
+way asks for the tarla and the parcela (FU-217). Claude, in the browser pane on localhost:3000, read with a script; the
+file went in through the input's `files` (a `DataTransfer`), not the drop zone, holding the e2e fixture's four corners.
+Step 2: „Anulează", „Introducere manuală", „Din fișier text" and nothing else. Step 3: the drop zone, the hint, the
+.txt note, „Tarla și parcelă" with „Nr. tarla / sola" („niciunul", 40, 46, 47/2, 52, 61) and „Nr. parcelă";
+„Importă" disabled. Step 4: the file's name in the zone, „Importă" still disabled. Step 5: enabled with 40 and the
+parcel; „Proprietatea a fost importată cu succes.", „Deschide proprietatea", „Închide"; the list 611 → 612. This run
+used parcel `9915`; the file now says `TC03`, the e2e fixture's parcel.
+
+**2026-10-17 — runs 2 and 3, `confirmed` (Slice #39.65).** Against the file as it now stands, with parcel `TC03` and
+the file named for the TC-E2E- marker. Both runs: step 2 „Anulează", „Introducere manuală", „Din fișier text"; step 3
+„Tarla și parcelă", the list „niciunul, 40, 46, 47/2, 52, 61", „Importă" disabled; step 4 the name in the zone, still
+disabled; step 5 enabled, then „Proprietatea a fost importată cu succes." with „Deschide proprietatea" and „Închide",
+the new row on top badged „Nou!" (run 3: 611 → 612; run 2 read the count before the list had refreshed after a
+cleanup). Run 2, step 6: „v 0", „Nr. tarla / sola" 40, „Nr. parcelă" TC03. Each property was deleted (204). The case
+no longer leaves its property behind for TC-GRP-01 by hand — the cleanup ran each time.

@@ -36,7 +36,7 @@ Properties list and can be removed by hand.
 | 1 | Presses „Proprietăți" in the left sidebar | The heading „Proprietăți", a search box („caută după cod, poreclă, nr. cadastru, carte funciară, tarla sau parcelă"), no „Importanță" or „Relevanță" filter (#37.61), „Câmpuri afișate 1/4" (#37.72, #37.94, #38.02), a button „Adaugă proprietate", and a table headed by **Poreclă, always, then the columns „Câmpuri afișate" holds for this browser** — in a browser that has never changed them: PORECLĂ · TIP PROPRIETATE |
 | 2 | Presses „Câmpuri afișate" and makes the ticked columns „Localitate", „Tarla/Solă" and „Parcelă" (Poreclă is always shown, #37.72) — in a browser that has never changed them, untick „Tip proprietate", then tick „Localitate", „Tarla/Solă" and „Parcelă" in that order; otherwise **untick first** whatever else is ticked: the list („Selectați până la 4 coloane opționale") greys out every other box while four are on. Then presses anywhere outside it | The table is headed PORECLĂ · LOCALITATE · TARLA/SOLĂ · PARCELĂ. The choice is kept by this browser, so on a later run it is already made |
 | 3 | Notes the count at the foot of the list | „Se afișează N din N" — write N down, step 12 checks it |
-| 4 | Presses „Adaugă proprietate" | **A dialog** headed „Adaugă Proprietate", offering four ways in: „Introducere manuală", „Din imagine scanată", „Din fișier text", „Din folder text" |
+| 4 | Presses „Adaugă proprietate" | **A dialog** headed „Adaugă Proprietate", offering two ways in (#39.65): „Introducere manuală" and „Din fișier text" |
 | 5 | Presses „Introducere manuală" („Completați detaliile proprietății manual") | The heading „Proprietate nouă" at `/properties/new`, with the sections „DATE CADASTRALE", „PUNCTE DE CONTUR", „ADRESĂ" and a map |
 | 6 | Types `TC-PROP-01 Teren de test` into „Poreclă" | The value appears |
 | 7 | **Selects** `40` in „Nr. tarla / sola" | The dropdown shows `40`. **This is a closed list, not a free-text field** — it offers „— niciunul —" and the tarla values already in the archive |
@@ -163,3 +163,7 @@ rest is unchanged; the spec follows.
 
 **2026-10-05 — `automated` (Slice #38.02).** The test runner's full run 20261005T193605Z-29374 on
 7505a33 ran the changed spec green with the other 87 (lint, tsc, jest and forms-drift green too).
+
+**2026-10-17 — step 4 rewritten for #39.65.** „Din imagine scanată" and „Din folder text" were retired (FU-217), so the
+dialog offers two ways in. Read in the browser pane on localhost:3000 the same day: „Anulează", „Introducere manuală
+| Completați detaliile proprietății manual", „Din fișier text | …" and nothing else. The rest of the case is unchanged.
