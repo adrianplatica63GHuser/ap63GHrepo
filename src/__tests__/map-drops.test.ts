@@ -137,11 +137,20 @@ describe("mergeDrops", () => {
     expect(m.y).toBe(0);
   });
 
-  it("merges repeatedly, so counts add up: a chain 30 px apart becomes one numbered drop", () => {
-    const chain = Array.from({ length: 6 }, (_, i) => pt(i * 30, 0, `p${i}`));
-    const out = mergeDrops(chain, 40);
+  it("merges repeatedly, so counts add up: a drop formed in one pass merges again with its neighbour", () => {
+    // Pass 1 merges a, d and b; c is 51 px from a, so it stays. The drop of three stands at (30, 23.3), 38 px from
+    // c, so pass 2 takes c in: four.
+    const out = mergeDrops([pt(10, 10, "a"), pt(40, 40, "b"), pt(20, 60, "c"), pt(40, 20, "d")], 40);
     expect(out).toHaveLength(1);
-    expect(out[0].items).toHaveLength(6);
+    expect([...out[0].items].sort()).toEqual(["a", "b", "c", "d"]);
+    expect(out[0].x).toBeCloseTo(27.5, 9);
+    expect(out[0].y).toBeCloseTo(32.5, 9);
+  });
+
+  it("stops once no two drops are closer: a chain 30 px apart pairs up into drops 60 px apart", () => {
+    const out = mergeDrops(Array.from({ length: 6 }, (_, i) => pt(i * 30, 0, `p${i}`)), 40);
+    expect(out.map((c) => c.items.length)).toEqual([2, 2, 2]);
+    expect(out.map((c) => c.x)).toEqual([15, 75, 135]);
   });
 
   it("a merged drop weighs each property once: 3 at one spot and 1 at 39 px stand at a quarter of the way", () => {
