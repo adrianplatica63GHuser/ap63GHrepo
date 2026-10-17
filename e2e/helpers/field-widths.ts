@@ -200,6 +200,14 @@ export async function expectStableColumns(page: Page, widths: readonly number[] 
           if (td.scrollWidth <= td.clientWidth + 1) return;
           // Slice #38.50/#38.57: a one-line cell cut with „…" that shows its whole text on hover holds its value.
           if (getComputedStyle(td).textOverflow === "ellipsis" && (td.title || "").trim()) return;
+          // Slice #39.64: a cell marked `data-spills-into-padding` (#39.24's tick-box columns, where „Nou!" runs past the
+          // narrow column on purpose) may overflow by as much as the next cell's left padding — no further, so it still
+          // never reaches the next cell's text. TC-PERS-02 found the juridical list's „Nou!" 10 px over, in 16 of padding.
+          if (td.dataset.spillsIntoPadding !== undefined) {
+            const next = td.nextElementSibling;
+            const room = next ? parseFloat(getComputedStyle(next).paddingLeft) || 0 : 0;
+            if (td.scrollWidth - td.clientWidth <= room) return;
+          }
           out.push(`${th.dataset.widthColumn}: „${td.textContent?.trim()}" needs ${td.scrollWidth} px in ${td.clientWidth}`);
         });
       });

@@ -539,12 +539,12 @@ export function PropertyListView() {
                   onAuxClick={(e) => newTabIfAsked(e, `/properties/${item.id}`)}
                   className="align-top hover:bg-cta-pale dark:hover:bg-zinc-800/50 cursor-pointer"
                 >
-                  <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
+                  <td className="px-4 py-2" onClick={(e) => e.stopPropagation()} data-spills-into-padding="">
                     {/* Slice #37.16 had „the badges wrap — „Încrucișat" takes a line of its own rather than widening
                         the column". Slice #38.57: one line per row — the column holds all three (`listBadges`).
                         Slice #39.24: the column is the box and 11 px (the gap to the nickname at 30 %, Adrian). „Nou!"
-                        stays beside the box and runs into the padding; „Încrucișat", on the rare row that has it,
-                        takes a line under them again. */}
+                        stays beside the box and runs into the padding — `data-spills-into-padding` tells the e2e width
+                        guard so (#39.64); „Încrucișat", on the rare row that has it, takes a line under them again. */}
                     <span className="inline-flex flex-wrap items-center" data-select-badges="">
                       <span className="inline-flex flex-nowrap items-center">
                         <input

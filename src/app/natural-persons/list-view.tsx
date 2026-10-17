@@ -451,7 +451,9 @@ export function NaturalPersonListView() {
                   onAuxClick={(e) => newTabIfAsked(e, `/natural-persons/${item.id}`)}
                   className="align-top hover:bg-cta-pale dark:hover:bg-zinc-800/50 cursor-pointer"
                 >
-                  <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
+                  {/* #39.24: „Nou!" runs past this narrow column into the name cell's padding, on purpose; the attribute tells
+                      the e2e width guard so (`expectStableColumns`, Slice #39.64). */}
+                  <td className="px-4 py-2" onClick={(e) => e.stopPropagation()} data-spills-into-padding="">
                     <span className="inline-flex items-center">
                       <input
                         type="checkbox"
