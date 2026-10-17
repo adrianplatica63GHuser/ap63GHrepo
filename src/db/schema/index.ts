@@ -964,6 +964,34 @@ export const lookupPersonType = pgTable("lookup_person_type", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+// Slice #39.70, migration_114: „Relația cu firma" — why a natural person is in the archive (Client, Vânzător de teren,
+// Cumpărător, …). A person may hold several, through natural_person_relationship below.
+export const lookupPersonRelationship = pgTable("lookup_person_relationship", {
+  id:        uuid("id").primaryKey().defaultRandom(),
+  name:      text("name").notNull(),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// Slice #39.70, migration_114: the relationships a natural person holds — one row each, deleted with either side.
+export const naturalPersonRelationship = pgTable(
+  "natural_person_relationship",
+  {
+    naturalPersonId: uuid("natural_person_id")
+      .notNull()
+      .references(() => naturalPerson.personId, { onDelete: "cascade" }),
+    relationshipId: uuid("relationship_id")
+      .notNull()
+      .references(() => lookupPersonRelationship.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.naturalPersonId, t.relationshipId] }),
+    index("natural_person_relationship_relationship_idx").on(t.relationshipId),
+  ],
+);
+
 export const lookupPersonRole = pgTable("lookup_person_role", {
   id:          uuid("id").primaryKey().defaultRandom(),
   name:        text("name").notNull(),

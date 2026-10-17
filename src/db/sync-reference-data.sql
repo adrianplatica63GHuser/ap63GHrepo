@@ -38,7 +38,7 @@ TRUNCATE lookup_doc_type_person_role CASCADE;
 -- Slice #39.66: the type ↔ use pairs, before the two lists they join (the CASCADE below would clear them anyway).
 TRUNCATE lookup_property_type_use CASCADE;
 TRUNCATE lookup_person_role, lookup_property_type, lookup_tarla,
-         lookup_use_category, lookup_person_type, lookup_citizenship,
+         lookup_use_category, lookup_person_type, lookup_person_relationship, lookup_citizenship,
          lookup_document_type, lookup_institution,
          lookup_judicial_person_type,
          lookup_property_property_role, lookup_document_document_role CASCADE;
@@ -107,10 +107,19 @@ SELECT t.id, u.id
   JOIN lookup_use_category  u ON u.name = v.use_name;
 
 -- ── lookup_person_type ────────────────────────────────────────────────────────
+-- Slice #39.70 (migration_114): the professions. The organisation kinds (Persoană Juridică, Instituție, ONG,
+-- Consiliu Local, PFA) left; Expert became „Expert tehnic / judiciar", Persoană Fizică „Persoană privată".
 INSERT INTO lookup_person_type (name, sort_order) VALUES
-  ('Persoană Fizică',   1), ('Persoană Juridică', 2), ('Expert',       3),
-  ('PFA',               4), ('Instituție',         5), ('ONG',          6),
-  ('Consiliu Local',    7);
+  ('Notar',                         10), ('Avocat',                  20), ('Executor judecătoresc', 30),
+  ('Topograf / expert cadastral',   40), ('Evaluator',               50), ('Expert tehnic / judiciar', 60),
+  ('Agent imobiliar',               70), ('Arhitect / proiectant',   80), ('Constructor / meșter',  90),
+  ('Funcționar public',            100), ('Contabil / consultant fiscal', 110), ('Fermier / arendaș', 120),
+  ('Persoană privată',             130);
+
+-- ── lookup_person_relationship (Slice #39.70, migration_114) ─────────────────
+INSERT INTO lookup_person_relationship (name, sort_order) VALUES
+  ('Client', 10), ('Vânzător de teren', 20), ('Cumpărător', 30), ('Moștenitor / familie', 40),
+  ('Colaborator', 50), ('Vecin', 60), ('Contact instituțional', 70);
 
 -- ── lookup_citizenship ────────────────────────────────────────────────────────
 INSERT INTO lookup_citizenship (name, sort_order) VALUES

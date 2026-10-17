@@ -44,6 +44,8 @@ export const VALID_LIST_KEYS = [
   "person-types",
   "person-roles",
   "citizenships",
+  // Slice #39.70 — „Relația cu firma" (migration_114).
+  "person-relationships",
   "judicial-person-types",
   "document-types",
   "institutions",
@@ -231,6 +233,11 @@ export const LIST_META: Record<ListKey, ListMeta> = {
       // „Persoană" is ticked, read in „Persoană → Persoană" in place of its ✓. See src/lib/persons/kinship.ts.
       { key: "kinship", labelKey: "kinship", required: false, type: "select", options: KINSHIPS, readIn: "validForPerson" },
     ],
+  },
+  // Slice #39.70 — „Relația cu firma": why a natural person is in the archive; a person may hold several.
+  "person-relationships": {
+    titleKey: "personRelationships",
+    fields: [{ key: "name", labelKey: "name", required: true }],
   },
   citizenships: {
     titleKey: "citizenships",

@@ -488,6 +488,7 @@ describe("the unversioned association tables", () => {
       document_document: "documentDocument",
       document_tarla:    "documentTarla", // Slice #39.69
       tarla_parcel:      "tarlaParcel",   // Slice #39.69 — has an updated_at, which the move stamps
+      natural_person_relationship: "naturalPersonRelationship", // Slice #39.70
     };
     const schema = read("db", "schema", "index.ts");
 

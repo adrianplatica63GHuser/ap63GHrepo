@@ -3,17 +3,18 @@
  *                                                              (Slice #29.05)
  *
  * WHY THIS EXISTS AT ALL
- *   TWENTY-ONE foreign keys reach the ELEVEN lookup tables behind Reference Data.
+ *   TWENTY-TWO foreign keys reach the TWELVE lookup tables behind Reference Data (Slice #39.70 added the twelfth,
+ *   „Relația cu firma", and its link).
  *   Exactly ONE refuses a delete: `document.document_type_id` is NOT NULL with
  *   no `onDelete` clause, so Postgres' default "no action" blocks it
  *   (src/db/schema/index.ts → `document`). Every other edge does the damage
  *   quietly — THIRTEEN are ON DELETE SET NULL, which blanks the tag on the rows
- *   that carried it, and SEVEN are CASCADE, deleting whitelist rows outright
+ *   that carried it, and EIGHT are CASCADE, deleting whitelist rows outright
  *   (`lookup_doc_type_person_role`'s two halves — its person-role edge and its
  *   document-type edge — and, since Slice #39.66, `lookup_property_type_use`'s
  *   two: the uses a property type allows; since Slice #39.67 `tarla_corner`'s, a tarla's own outline; and since
  *   Slice #39.69 `tarla_parcel`'s and `document_tarla`'s, a tarla's parcels and the plans linked to it).
- *   Eighteen and five before #39.69; seventeen and four before #39.67; seventeen and four until Slice #34.04, which folded
+ *   Twenty-one and seven before #39.70; eighteen and five before #39.69; seventeen and four before #39.67; seventeen and four until Slice #34.04, which folded
  *   `lookup_property_person_role` and `lookup_person_person_role` into two
  *   booleans ON `lookup_person_role`; a column on the row being deleted is not
  *   an inbound edge. So for ten lists of eleven, the refusal has to be
@@ -145,6 +146,8 @@ import {
   documentDocument,
   judicialPerson,
   lookupCitizenship,
+  lookupPersonRelationship,
+  naturalPersonRelationship,
   lookupDocTypePersonRole,
   lookupDocumentDocumentRole,
   lookupDocumentType,
@@ -585,6 +588,23 @@ export const LIST_DEPENDENCIES: Record<ListKey, ListDependencies> = {
     snapshot: { keys: NATURAL_PERSON_SNAPSHOT_FIELDS_KEYS, field: "citizenshipId" },
   },
 
+  // Slice #39.70 (migration_114): „Relația cu firma". A person holding the value is a dependent — it holds a delete
+  // back and moves with „Unește" — and the link is unversioned (outside the person's snapshot, as tags are).
+  "person-relationships": {
+    table: lookupPersonRelationship,
+    idColumn: lookupPersonRelationship.id,
+    refs: [
+      {
+        kind: "column",
+        labelKey: "naturalPersonRelationships",
+        table: naturalPersonRelationship,
+        column: naturalPersonRelationship.relationshipId,
+        enforcement: "cascades",
+        uniqueWith: [naturalPersonRelationship.naturalPersonId],
+      },
+    ],
+  },
+
   "judicial-person-types": {
     table: lookupJudicialPersonType,
     idColumn: lookupJudicialPersonType.id,
@@ -725,6 +745,8 @@ export const UNVERSIONED_MOVE_TABLES = [
   // moved with „Unește" on use categories.
   "document_tarla",
   "tarla_parcel",
+  // Slice #39.70 (migration_114): a natural person's „Relația cu firma", moved with „Unește".
+  "natural_person_relationship",
 ] as const;
 
 /**

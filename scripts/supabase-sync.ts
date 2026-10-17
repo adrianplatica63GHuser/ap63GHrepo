@@ -448,6 +448,7 @@ async function main() {
       lookup_tarla,
       lookup_use_category,
       lookup_person_type,
+      lookup_person_relationship,
       lookup_judicial_person_type,
       lookup_citizenship,
       lookup_document_type,
@@ -464,6 +465,7 @@ async function main() {
   await syncSimple("lookup_tarla",         "sort_order");
   await syncSimple("lookup_use_category",  "sort_order");
   await syncSimple("lookup_person_type",   "sort_order");
+  await syncSimple("lookup_person_relationship", "sort_order"); // Slice #39.70
   await syncSimple("lookup_citizenship",   "sort_order");
   await syncSimple("lookup_document_type", "sort_order");
   await syncSimple("lookup_institution",   "sort_order");

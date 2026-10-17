@@ -203,7 +203,8 @@ describe("the dependency map", () => {
     // Slice #39.67: `{ total: 17, cascades: 4, configured: 4 }` until tarla_corner added a tarla's outline.
     // Slice #39.69: `{ total: 18, clears: 12, cascades: 5, configured: 5 }` until tarla_parcel (a tarla's parcels, and
     // a use's) and document_tarla (a tarla's plans, a dependent) were added.
-    }).toEqual({ total: 21, clears: 13, cascades: 7, blocks: 1, configured: 6 });
+    // Slice #39.70: `{ total: 21, cascades: 7 }` until natural_person_relationship („Relația cu firma") was added.
+    }).toEqual({ total: 22, clears: 13, cascades: 8, blocks: 1, configured: 6 });
   });
 
   // Slice #39.66: „the two whitelist edges" until lookup_property_type_use added two more.
@@ -269,7 +270,12 @@ describe("the dependency map", () => {
         if (ref.uniqueWith && !ref.configuration) objectRefsWithUnique.push(`${list}:${getTableName(ref.table)}`);
       }
     }
-    expect(objectRefsWithUnique.sort()).toEqual(["person-roles:person_document", "tarla:document_tarla"]);
+    // Slice #39.70: and a person's „Relația cu firma", unique over (person, value).
+    expect(objectRefsWithUnique.sort()).toEqual([
+      "person-relationships:natural_person_relationship",
+      "person-roles:person_document",
+      "tarla:document_tarla",
+    ]);
   });
 
   /**

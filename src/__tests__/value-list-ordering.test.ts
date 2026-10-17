@@ -128,6 +128,7 @@ import {
   lookupPersonType,
   lookupPersonRole,
   lookupCitizenship,
+  lookupPersonRelationship,
   lookupJudicialPersonType,
   lookupDocumentType,
   lookupInstitution,
@@ -149,6 +150,7 @@ const TABLES = {
   lookupPersonType,
   lookupPersonRole,
   lookupCitizenship,
+  lookupPersonRelationship, // Slice #39.70
   lookupJudicialPersonType,
   lookupDocumentType,
   lookupInstitution,
