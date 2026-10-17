@@ -1715,6 +1715,38 @@ CREATE TABLE IF NOT EXISTS tarla_corner (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS tarla_corner_tarla_seq_unique ON tarla_corner (tarla_id, sequence_no);
 
+-- migration_113 (Slice #39.69) -- a tarla's parcels, and the documents that drew it
+CREATE TABLE IF NOT EXISTS tarla_parcel (
+  id                 uuid          PRIMARY KEY DEFAULT gen_random_uuid(),
+  tarla_id           uuid          NOT NULL REFERENCES lookup_tarla(id) ON DELETE CASCADE,
+  parcela            text          NOT NULL,
+  area_sqm           numeric(14,2),
+  use_category_id    uuid          REFERENCES lookup_use_category(id) ON DELETE SET NULL,
+  use_printed        text,
+  source_document_id uuid          REFERENCES document(id) ON DELETE SET NULL,
+  created_at         timestamptz   NOT NULL DEFAULT now(),
+  updated_at         timestamptz   NOT NULL DEFAULT now(),
+  CONSTRAINT tarla_parcel_parcela_not_blank CHECK (btrim(parcela) <> ''),
+  CONSTRAINT tarla_parcel_area_positive CHECK (area_sqm IS NULL OR area_sqm > 0)
+);
+CREATE UNIQUE INDEX IF NOT EXISTS tarla_parcel_tarla_parcela_folded_unique
+  ON tarla_parcel (
+    tarla_id,
+    (btrim(regexp_replace(
+       regexp_replace(
+         lower(normalize(parcela, NFD)),
+         '[' || chr(768) || '-' || chr(879) || ']', '', 'g'),
+       '\s+', ' ', 'g')))
+  );
+CREATE INDEX IF NOT EXISTS tarla_parcel_source_document_idx ON tarla_parcel (source_document_id);
+CREATE TABLE IF NOT EXISTS document_tarla (
+  document_id uuid        NOT NULL REFERENCES document(id) ON DELETE CASCADE,
+  tarla_id    uuid        NOT NULL REFERENCES lookup_tarla(id) ON DELETE CASCADE,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (document_id, tarla_id)
+);
+CREATE INDEX IF NOT EXISTS document_tarla_tarla_idx ON document_tarla (tarla_id);
+
 -- migration_034 -- Street View street line on the property address
 ALTER TABLE property_address
   ADD COLUMN IF NOT EXISTS street_view_street_line text;

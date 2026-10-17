@@ -201,7 +201,9 @@ describe("the dependency map", () => {
       configured: all.filter((r) => r.configuration).length,
     // Slice #39.66: `{ total: 15, cascades: 2, configured: 2 }` until lookup_property_type_use added its two halves.
     // Slice #39.67: `{ total: 17, cascades: 4, configured: 4 }` until tarla_corner added a tarla's outline.
-    }).toEqual({ total: 18, clears: 12, cascades: 5, blocks: 1, configured: 5 });
+    // Slice #39.69: `{ total: 18, clears: 12, cascades: 5, configured: 5 }` until tarla_parcel (a tarla's parcels, and
+    // a use's) and document_tarla (a tarla's plans, a dependent) were added.
+    }).toEqual({ total: 21, clears: 13, cascades: 7, blocks: 1, configured: 6 });
   });
 
   // Slice #39.66: „the two whitelist edges" until lookup_property_type_use added two more.

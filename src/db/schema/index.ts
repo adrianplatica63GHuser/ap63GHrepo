@@ -879,6 +879,55 @@ export const tarlaCorner = pgTable(
   (t) => [uniqueIndex("tarla_corner_tarla_seq_unique").on(t.tarlaId, t.sequenceNo)],
 );
 
+// ---------------------------------------------------------------------------
+// tarla_parcel — the parcels a plan parcelar draws on a tarla  (Slice #39.69, migration_113)
+// ---------------------------------------------------------------------------
+// The parcel number as printed, the area in m² and the use when the plan prints one: the matching use category, or
+// the printed words when none matches. No owners. One row per (tarla, folded parcel number); deleted with the tarla.
+export const tarlaParcel = pgTable(
+  "tarla_parcel",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tarlaId: uuid("tarla_id")
+      .notNull()
+      .references(() => lookupTarla.id, { onDelete: "cascade" }),
+    parcela: text("parcela").notNull(),
+    areaSqm: numeric("area_sqm", { precision: 14, scale: 2 }),
+    useCategoryId: uuid("use_category_id").references(() => lookupUseCategory.id, { onDelete: "set null" }),
+    usePrinted: text("use_printed"),
+    sourceDocumentId: uuid("source_document_id").references(() => document.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("tarla_parcel_tarla_parcela_folded_unique").on(
+      t.tarlaId,
+      sql`btrim(regexp_replace(regexp_replace(lower(normalize(${t.parcela}, NFD)), '[' || chr(768) || '-' || chr(879) || ']', '', 'g'), '\\s+', ' ', 'g'))`,
+    ),
+    index("tarla_parcel_source_document_idx").on(t.sourceDocumentId),
+    check("tarla_parcel_parcela_not_blank", sql`btrim(${t.parcela}) <> ''`),
+    check("tarla_parcel_area_positive", sql`${t.areaSqm} IS NULL OR ${t.areaSqm} > 0`),
+  ],
+);
+
+// ---------------------------------------------------------------------------
+// document_tarla — which document drew which tarla  (Slice #39.69, migration_113)
+// ---------------------------------------------------------------------------
+// A plan parcelar linked to the tarla it draws. Not entity_cross_reference: a tarla is not a principal object.
+export const documentTarla = pgTable(
+  "document_tarla",
+  {
+    documentId: uuid("document_id")
+      .notNull()
+      .references(() => document.id, { onDelete: "cascade" }),
+    tarlaId: uuid("tarla_id")
+      .notNull()
+      .references(() => lookupTarla.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.documentId, t.tarlaId] }), index("document_tarla_tarla_idx").on(t.tarlaId)],
+);
+
 export const lookupUseCategory = pgTable("lookup_use_category", {
   id:        uuid("id").primaryKey().defaultRandom(),
   name:      text("name").notNull(),

@@ -3,16 +3,17 @@
  *                                                              (Slice #29.05)
  *
  * WHY THIS EXISTS AT ALL
- *   EIGHTEEN foreign keys reach the ELEVEN lookup tables behind Reference Data.
+ *   TWENTY-ONE foreign keys reach the ELEVEN lookup tables behind Reference Data.
  *   Exactly ONE refuses a delete: `document.document_type_id` is NOT NULL with
  *   no `onDelete` clause, so Postgres' default "no action" blocks it
  *   (src/db/schema/index.ts → `document`). Every other edge does the damage
- *   quietly — TWELVE are ON DELETE SET NULL, which blanks the tag on the rows
- *   that carried it, and FIVE are CASCADE, deleting whitelist rows outright
+ *   quietly — THIRTEEN are ON DELETE SET NULL, which blanks the tag on the rows
+ *   that carried it, and SEVEN are CASCADE, deleting whitelist rows outright
  *   (`lookup_doc_type_person_role`'s two halves — its person-role edge and its
  *   document-type edge — and, since Slice #39.66, `lookup_property_type_use`'s
- *   two: the uses a property type allows; and since Slice #39.67 `tarla_corner`'s, a tarla's own outline).
- *   Seventeen and four before #39.67; seventeen and four until Slice #34.04, which folded
+ *   two: the uses a property type allows; since Slice #39.67 `tarla_corner`'s, a tarla's own outline; and since
+ *   Slice #39.69 `tarla_parcel`'s and `document_tarla`'s, a tarla's parcels and the plans linked to it).
+ *   Eighteen and five before #39.69; seventeen and four before #39.67; seventeen and four until Slice #34.04, which folded
  *   `lookup_property_person_role` and `lookup_person_person_role` into two
  *   booleans ON `lookup_person_role`; a column on the row being deleted is not
  *   an inbound edge. So for ten lists of eleven, the refusal has to be
@@ -155,6 +156,8 @@ import {
   lookupPropertyType,
   lookupPropertyTypeUse,
   tarlaCorner,
+  tarlaParcel,
+  documentTarla,
   lookupTarla,
   lookupUseCategory,
   naturalPerson,
@@ -400,6 +403,27 @@ export const LIST_DEPENDENCIES: Record<ListKey, ListDependencies> = {
         configuration: true,
         uniqueWith: [tarlaCorner.sequenceNo],
       },
+      // Slice #39.69: the parcels its plans drew (migration_113). Its own content, as its outline is — named,
+      // cascading, never moved onto another tarla.
+      {
+        kind: "column",
+        labelKey: "tarlaParcels",
+        table: tarlaParcel,
+        column: tarlaParcel.tarlaId,
+        enforcement: "cascades",
+        configuration: true,
+        uniqueWith: [tarlaParcel.parcela],
+      },
+      // Slice #39.69: the plans linked to it (migration_113). Documents are objects, so a link is a dependent: it
+      // holds a delete back and moves with „Unește", as a property does; the database would only drop the link.
+      {
+        kind: "column",
+        labelKey: "tarlaPlans",
+        table: documentTarla,
+        column: documentTarla.tarlaId,
+        enforcement: "cascades",
+        uniqueWith: [documentTarla.documentId],
+      },
     ],
     snapshot: { keys: PROPERTY_SNAPSHOT_PROPERTY_KEYS, field: "tarlaId" },
   },
@@ -425,6 +449,14 @@ export const LIST_DEPENDENCIES: Record<ListKey, ListDependencies> = {
         enforcement: "cascades",
         configuration: true,
         uniqueWith: [lookupPropertyTypeUse.propertyTypeId],
+      },
+      // Slice #39.69: the tarla parcels a plan printed with this use (migration_113).
+      {
+        kind: "column",
+        labelKey: "tarlaParcels",
+        table: tarlaParcel,
+        column: tarlaParcel.useCategoryId,
+        enforcement: "clears",
       },
     ],
     snapshot: { keys: PROPERTY_SNAPSHOT_PROPERTY_KEYS, field: "useCategoryId" },

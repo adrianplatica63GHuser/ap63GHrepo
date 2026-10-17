@@ -328,6 +328,33 @@ async function syncTarlaCorners(): Promise<void> {
   ok(`tarla_corner  (${rowCount ?? 0} rows)`);
 }
 
+/**
+ * tarla_parcel — the parcels a plan parcelar drew on a tarla (migration_113, Slice #39.69).
+ * By the tarla's code and locality, as tarla_corner; the use by its category's name. TRUNCATE lookup_tarla CASCADE
+ * empties this table on Supabase. The plan it came from is not copied: documents are domain data, which this script
+ * does not copy (document_tarla, the plan's link to its tarla, is domain data for the same reason).
+ */
+async function syncTarlaParcels(): Promise<void> {
+  const { rows, rowCount } = await localPool.query(`
+    SELECT lt.indicativ, coalesce(lt.locality, '') AS locality, tp.parcela, tp.area_sqm, luc.name AS use_name,
+           tp.use_printed
+    FROM   tarla_parcel tp
+    JOIN   lookup_tarla lt ON lt.id = tp.tarla_id
+    LEFT JOIN lookup_use_category luc ON luc.id = tp.use_category_id
+    ORDER BY lt.indicativ, lt.locality, tp.parcela
+  `);
+  for (const row of rows) {
+    await supaPool.query(
+      `INSERT INTO tarla_parcel (tarla_id, parcela, area_sqm, use_category_id, use_printed)
+       SELECT t.id, $3, $4, (SELECT u.id FROM lookup_use_category u WHERE u.name = $5 LIMIT 1), $6
+       FROM   lookup_tarla t
+       WHERE  t.indicativ = $1 AND coalesce(t.locality, '') = $2`,
+      [row.indicativ, row.locality, row.parcela, row.area_sqm, row.use_name, row.use_printed],
+    );
+  }
+  ok(`tarla_parcel  (${rowCount ?? 0} rows)`);
+}
+
 async function syncPropertyTypeUses(): Promise<void> {
   const { rows, rowCount } = await localPool.query(`
     SELECT lpt.name AS type_name, luc.name AS use_name
@@ -454,6 +481,7 @@ async function main() {
   await syncDocTypePersonRoles();
   await syncPropertyTypeUses();
   await syncTarlaCorners();
+  await syncTarlaParcels();
 
   // Step 4: Seed domain data (persons, properties, documents, judicial persons)
   // Run seed.ts as a child process with DATABASE_URL temporarily pointed at Supabase.

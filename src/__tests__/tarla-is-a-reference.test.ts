@@ -195,9 +195,12 @@ describe("Reference Data writes the list, not the properties", () => {
     const def = LIST_DEPENDENCIES.tarla;
     // Slice #39.67: one ref that a move rewrites, beside the outline, which goes with the tarla (configuration)
     // and is never moved. Was `expect(def.refs).toHaveLength(1)`.
+    // Slice #39.69: the plans linked to the tarla move too (an unversioned link), and its parcels go with it. Was
+    // `expect(moved).toHaveLength(1)` and the configuration `["tarlaCorners"]`.
     const moved = def.refs.filter((r) => !r.configuration);
-    expect(moved).toHaveLength(1);
-    expect(def.refs.filter((r) => r.configuration).map((r) => r.labelKey)).toEqual(["tarlaCorners"]);
+    expect(moved.map((r) => r.labelKey)).toEqual(["properties", "tarlaPlans"]);
+    expect(moved[1].versioned).toBeUndefined();
+    expect(def.refs.filter((r) => r.configuration).map((r) => r.labelKey)).toEqual(["tarlaCorners", "tarlaParcels"]);
     const ref = moved[0];
     expect(ref.column.name).toBe("tarla_id");
     expect(ref.versioned).toEqual({
