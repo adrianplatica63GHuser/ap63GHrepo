@@ -852,7 +852,7 @@ export const SKILLS: readonly Skill[] = [
     },
     predecessors: ["documents-add-parties", "import-run-an-import"],
     screens: ["admin-import"],
-    cases: ["TC-AI-01", "TC-IMP-05"],
+    cases: ["TC-AI-01", "TC-IMP-05", "TC-IMP-06"],
     manual: ["import-scanning-read", "import-scanning-people", "documents-identification", "documents-sale", "persons-id-card-document"],
   },
   {

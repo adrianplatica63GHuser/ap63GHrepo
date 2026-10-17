@@ -45,7 +45,7 @@ export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCa
   "/properties":                           ["TC-PROP-01", "TC-PROP-03", "TC-TILES-06", "TC-SYSID-01", "TC-PROP-06", "TC-TILES-11", "TC-LAYOUT-02", "TC-PROP-10", "TC-LAYOUT-03", "TC-TILES-19", "TC-LAYOUT-04", "TC-LAYOUT-05", "TC-PROP-14", "TC-PROP-15"],
   "/properties/new":                       ["TC-PROP-01", "TC-PROP-05", "TC-PROP-16"],
   "/tarlale":                               ["TC-PROP-16"],
-  "/tarlale/[id]":                          ["TC-PROP-16", "TC-MAP-06"],
+  "/tarlale/[id]":                          ["TC-PROP-16", "TC-MAP-06", "TC-IMP-06"],
   // Slice #37.38: the map opened on a Property from its form. Needs a Google
   // Maps key in .env — the laptop and the runner have one.
   "/properties/map":                       ["TC-MAP-01", "TC-PROP-10", "TC-MAP-02", "TC-MAP-03", "TC-MAP-04", "TC-MAP-05", "TC-MAP-06"],
@@ -62,7 +62,7 @@ export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCa
   "/documents/[id]":                       ["TC-DOC-01", "TC-ASSOC-01", "TC-AI-01", "TC-ASSOC-03", "TC-ASSOC-05", "TC-ASSOC-07", "TC-ASSOC-10", "TC-ASSOC-12", "TC-VER-02", "TC-TILES-04", "TC-TABS-01", "TC-TILES-05", "TC-FOLD-01", "TC-ICON-07", "TC-DOC-02", "TC-DOC-03", "TC-DOC-04", "TC-DOC-05", "TC-DOC-06", "TC-TILES-07", "TC-SYSID-01", "TC-ASSOC-13", "TC-DOC-07", "TC-TILES-08", "TC-TILES-09", "TC-DOC-09", "TC-DOC-10", "TC-DOC-11", "TC-TILES-14", "TC-TILES-15", "TC-DOC-12", "TC-TILES-16", "TC-TILES-17", "TC-DOC-13", "TC-TILES-18", "TC-DOC-17", "TC-DOC-18", "TC-DOC-19", "TC-DOC-20", "TC-PERS-10", "TC-TILES-23", "TC-DOC-22", "TC-DOC-24", "TC-DOC-25", "TC-DOC-26", "TC-ASSOC-14"],
   "/documents/[id]/associate-person":      ["TC-ASSOC-01", "TC-LAYOUT-01", "TC-ASSOC-13", "TC-DOC-19", "TC-VL-03"],
   "/documents/[id]/associate-property":    ["TC-ASSOC-02", "TC-LAYOUT-01", "TC-ASSOC-13"],
-  "/admin/import":                         ["TC-IMP-01", "TC-IMP-02", "TC-IMP-03", "TC-IMP-04", "TC-ICON-06", "TC-IMP-05"],
+  "/admin/import":                         ["TC-IMP-01", "TC-IMP-02", "TC-IMP-03", "TC-IMP-04", "TC-ICON-06", "TC-IMP-05", "TC-IMP-06"],
   "/admin/global-search":                  ["TC-SRCH-01", "TC-PROP-03", "TC-GRP-01", "TC-TAG-01"],
   "/judicial-persons":                     ["TC-PERS-02", "TC-TILES-06", "TC-SYSID-01", "TC-PERS-04", "TC-TILES-11", "TC-PERS-06", "TC-LAYOUT-02", "TC-LAYOUT-03", "TC-LAYOUT-05", "TC-PERS-13"],
   "/judicial-persons/new":                 ["TC-PERS-02", "TC-ASSOC-10", "TC-ASSOC-11", "TC-PERS-14"],
