@@ -300,6 +300,32 @@ async function syncDocTypePersonRoles(): Promise<void> {
 }
 
 /**
+ * lookup_property_type_use — which uses a property type allows (migration_111, Slice #39.66).
+ * By name, as the junction above: a type with no pairs allows every use, so a sync that left this table empty
+ * would quietly open every type to every use on Supabase.
+ */
+async function syncPropertyTypeUses(): Promise<void> {
+  const { rows, rowCount } = await localPool.query(`
+    SELECT lpt.name AS type_name, luc.name AS use_name
+    FROM   lookup_property_type_use lptu
+    JOIN   lookup_property_type lpt ON lpt.id = lptu.property_type_id
+    JOIN   lookup_use_category  luc ON luc.id = lptu.use_category_id
+    ORDER BY lpt.name, luc.name
+  `);
+  for (const row of rows) {
+    await supaPool.query(
+      `INSERT INTO lookup_property_type_use (property_type_id, use_category_id)
+       SELECT t.id, u.id
+       FROM   lookup_property_type t, lookup_use_category u
+       WHERE  t.name = $1 AND u.name = $2
+       ON CONFLICT DO NOTHING`,
+      [row.type_name, row.use_name],
+    );
+  }
+  ok(`lookup_property_type_use  (${rowCount ?? 0} rows)`);
+}
+
+/**
  * ⚠️ **`syncPropertyPersonRoles` and `syncPersonPersonRoles` are GONE, and
  * nothing replaced them, which is the point.**                (Slice #34.04)
  *
@@ -359,7 +385,8 @@ async function main() {
   // ticks are cleared and refilled with lookup_person_role itself, below.
   await supaPool.query(`
     TRUNCATE
-      lookup_doc_type_person_role
+      lookup_doc_type_person_role,
+      lookup_property_type_use
     CASCADE
   `);
   await supaPool.query(`
@@ -400,6 +427,7 @@ async function main() {
 
   // Junction tables (depend on base tables already inserted above)
   await syncDocTypePersonRoles();
+  await syncPropertyTypeUses();
 
   // Step 4: Seed domain data (persons, properties, documents, judicial persons)
   // Run seed.ts as a child process with DATABASE_URL temporarily pointed at Supabase.

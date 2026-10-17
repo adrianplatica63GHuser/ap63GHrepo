@@ -3,9 +3,9 @@
  *
  * PURE: a plan of properties (type, use category, size, corners in Stereo 70, address, tarla and parcel, notes
  * and owners) that seed.ts writes through createProperty and associatePersonsToProperty. The mix:
- *   - about 360 „Curți construcții", every one a „Teren pentru Construcții";
- *   - about 120 more „Teren pentru Construcții" with another use category;
- *   - about 120 of the SQL seed's other types in its proportions (Teren Arabil, Casă, Teren Construit,
+ *   - about 360 „Curți-construcții", every one a „Teren intravilan" (#39.66: „Teren pentru Construcții" until then);
+ *   - about 120 more „Teren intravilan" with another use category;
+ *   - about 120 of the SQL seed's other types in its proportions (Teren extravilan, Casă, Teren construit,
  *     Apartament, Pășune), its sizes kept: land from about 590 to 15,000 m², building plots at the small end.
  * About 360 have corners: the six-lot cluster on Adrian's line, clusters of two to four lots that touch, single
  * lots — inside Bragadiru's Stereo 70 range, overlapping nothing, nor any property already in the database.
@@ -37,8 +37,9 @@ import {
 } from "./geometry";
 
 export const PROPERTY_TOTAL = 600;
-export const TPC = "Teren pentru Construcții";
-export const CURTI = "Curți construcții";
+// Slice #39.66 (migration_111): „Teren pentru Construcții" and „Curți construcții" until the agreed names.
+export const TPC = "Teren intravilan";
+export const CURTI = "Curți-construcții";
 /** A building plot's size, m² — the SQL seed's small end. */
 export const PLOT_AREA = { min: 450, max: 1500 };
 /** The line cluster's depth: 90.55 m / 6 = 15.09 m fronts × 50 m = 755 m² each, inside PLOT_AREA. */
@@ -55,14 +56,14 @@ type Spec = { type: string; use: string | null; count: number; drawn: number; ad
 export const MIX: readonly Spec[] = [
   { type: TPC, use: CURTI, count: 360, drawn: 230, address: 200, size: [PLOT_AREA.min, PLOT_AREA.max], kind: "plot" },
   { type: TPC, use: "Arabil", count: 120, drawn: 50, address: 43, size: [PLOT_AREA.min, PLOT_AREA.max], kind: "plot" },
-  { type: "Teren Arabil", use: "Arabil", count: 48, drawn: 36, address: 0, size: [2500, 9000], kind: "land" },
-  { type: "Teren Arabil", use: "Fânețe", count: 3, drawn: 3, address: 0, size: [6000, 9000], kind: "land" },
-  { type: "Teren Arabil", use: "Livadă", count: 3, drawn: 3, address: 0, size: [2500, 4000], kind: "land" },
-  { type: "Teren Arabil", use: "Vie", count: 3, drawn: 3, address: 0, size: [2500, 4000], kind: "land" },
-  { type: "Casă", use: "Arabil", count: 24, drawn: 15, address: 24, size: [600, 1200], kind: "house" },
-  { type: "Teren Construit", use: "Arabil", count: 18, drawn: 14, address: 18, size: [590, 3000], kind: "house" },
+  { type: "Teren extravilan", use: "Arabil", count: 48, drawn: 36, address: 0, size: [2500, 9000], kind: "land" },
+  { type: "Teren extravilan", use: "Fânețe", count: 3, drawn: 3, address: 0, size: [6000, 9000], kind: "land" },
+  { type: "Teren extravilan", use: "Livadă", count: 3, drawn: 3, address: 0, size: [2500, 4000], kind: "land" },
+  { type: "Teren extravilan", use: "Vie", count: 3, drawn: 3, address: 0, size: [2500, 4000], kind: "land" },
+  { type: "Casă", use: null, count: 24, drawn: 15, address: 24, size: [600, 1200], kind: "house" },
+  { type: "Teren construit", use: "Arabil", count: 18, drawn: 14, address: 18, size: [590, 3000], kind: "house" },
   { type: "Apartament", use: null, count: 15, drawn: 0, address: 15, size: [48, 72], kind: "flat" },
-  { type: "Pășune", use: "Pășune", count: 6, drawn: 6, address: 0, size: [9000, 11000], kind: "land" },
+  { type: "Teren extravilan", use: "Pășune", count: 6, drawn: 6, address: 0, size: [9000, 11000], kind: "land" },
 ];
 
 export type Ownership = "single" | "shares" | "devalmasie" | "company" | "estate";

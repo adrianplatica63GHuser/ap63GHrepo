@@ -28,8 +28,8 @@
  * REFERENCE DATA, ADDITIVE ONLY: person roles for ties the list lacks („Fost soț", „Fostă soție", „Frate vitreg",
  * „Soră vitregă", „Părinte vitreg", „Părinte adoptiv", „Bunic", „Bunică"), each with its kinship (migration_106) and its
  * converse; a missing kinship filled in, „valid for person" switched on; the person types „Notar" and „Expert"
- * and any company type that is missing; the property type „Teren pentru Construcții" (with the panels a
- * building plot needs, read from „Teren Construit" and „Teren Arabil") and the use category „Curți
+ * and any company type that is missing; the property type „Teren intravilan" (#39.66; „Teren pentru Construcții",
+ * its panels read from „Teren Construit" and „Teren Arabil", until then) and the use category „Curți
  * construcții" where they are missing, and any other type or category the mix uses; „valid for property" on
  * „Proprietar" and „Coproprietar"; every role a document type of the mix needs and its „Roluri pe Document"
  * pair (the act adițional's included — FU-318), with „deține cotă" as DOC_TYPE_ROLES has it where the pair is
@@ -355,16 +355,14 @@ function byName<T extends { name: string }>(rows: T[], name: string): T | undefi
 
 async function ensurePropertyReferenceData(added: string[]): Promise<void> {
   const types = await db.select().from(lookupPropertyType);
-  // a building plot gets an address and Street View like „Teren Construit", tarla and parcel like „Teren Arabil"
-  const built = byName(types, "Teren Construit");
-  const arable = byName(types, "Teren Arabil");
+  // Slice #39.66: the agreed types (migration_111) — „Teren intravilan" with all three panels, „Teren extravilan" with
+  // tarla and parcel only. The migration makes them; this only fills a database that has not run it.
   const want: Record<string, { tarla: boolean; address: boolean; streetView: boolean }> = {
-    [TPC]: { tarla: arable?.showTarlaParcela ?? true, address: built?.showAddress ?? true, streetView: built?.showStreetView ?? true },
-    "Teren Arabil": { tarla: true, address: false, streetView: false },
+    [TPC]: { tarla: true, address: true, streetView: true },
+    "Teren extravilan": { tarla: true, address: false, streetView: false },
     "Casă": { tarla: false, address: true, streetView: true },
-    "Teren Construit": { tarla: false, address: true, streetView: true },
+    "Teren construit": { tarla: false, address: true, streetView: true },
     Apartament: { tarla: false, address: true, streetView: true },
-    "Pășune": { tarla: true, address: false, streetView: false },
   };
   let sort = Math.max(0, ...types.map((t) => t.sortOrder)) + 1;
   for (const name of [...new Set(MIX.map((m) => m.type))]) {

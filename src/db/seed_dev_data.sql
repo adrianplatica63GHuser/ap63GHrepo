@@ -532,11 +532,11 @@ JOIN person p ON p.code = v.code;
 
 -- =============================================================================
 -- 6. PROPERTY rows (40)
--- PROP00001-PROP00012: Teren Arabil — mostly from text-file import, with corners
--- PROP00013-PROP00020: Teren Construit / Casă — with addresses
+-- PROP00001-PROP00012: Teren extravilan (#39.66; Teren Arabil until then) — mostly from text-file import, with corners
+-- PROP00013-PROP00020: Teren construit / Casă — with addresses
 -- PROP00021-PROP00025: Apartament — address only
 -- PROP00026-PROP00030: Casă + teren — with corners and addresses
--- PROP00031-PROP00040: Mixed (Pășune, Livadă, Teren Arabil) — some with corners
+-- PROP00031-PROP00040: Mixed (Teren extravilan with use Pășune, Livadă, Arabil) — some with corners
 -- =============================================================================
 
 -- Slice #34.03: the tarla codes these rows name have to EXIST before the rows
@@ -614,28 +614,28 @@ SELECT gen_random_uuid(), po.id, v.code,
   v.cat::timestamptz, v.cat::timestamptz
 FROM (VALUES
 -- Tarla 3 cluster — from text-file import
-  ('PROP00001','Teren Arabil','Arabil','Parcela Ion Popescu T3-1',    'T3','1',  '12001','CF-101',5200.00,'Parcelă arabilă importată din fișier text. Tarla 3, zona nord.','2022-05-02 10:00:00+02'),
-  ('PROP00002','Teren Arabil','Arabil','Parcela Popescu T3-2',         'T3','2',  '12002','CF-102',4800.00,'Adjacent cu parcela 1. Import text-file batch 1.','2022-05-02 10:10:00+02'),
-  ('PROP00003','Teren Arabil','Arabil','Teren arabil T3-3',            'T3','3',  '12003','CF-103',5100.00,'Import text-file batch 1. Coordonate Stereo70 verificate.','2022-05-02 10:20:00+02'),
-  ('PROP00004','Teren Arabil','Arabil','Teren arabil T3-4 (neregulat)','T3','4',  '12004','CF-104',3900.00,'Formă neregulată — 5 colțuri. Import text-file batch 1.','2022-05-02 10:30:00+02'),
-  ('PROP00005','Teren Arabil','Arabil','Parcela Marin T3-5',           'T3','5',  '12005','CF-105',6200.00,'Parcelă arabilă. Proprietar Elena Marin.','2022-05-02 10:40:00+02'),
-  ('PROP00006','Teren Arabil','Arabil','Parcela T3-6 Stoica',          'T3','6',  '12006','CF-106',5800.00,'Coproprietat Stoica-Vlad. Import text-file.','2022-05-02 10:50:00+02'),
-  ('PROP00007','Teren Arabil','Arabil','Teren arabil T3-7',            'T3','7',  '12007','CF-107',4100.00,'Parte din succesiunea Ardelean.','2022-05-02 11:00:00+02'),
+  ('PROP00001','Teren extravilan','Arabil','Parcela Ion Popescu T3-1',    'T3','1',  '12001','CF-101',5200.00,'Parcelă arabilă importată din fișier text. Tarla 3, zona nord.','2022-05-02 10:00:00+02'),
+  ('PROP00002','Teren extravilan','Arabil','Parcela Popescu T3-2',         'T3','2',  '12002','CF-102',4800.00,'Adjacent cu parcela 1. Import text-file batch 1.','2022-05-02 10:10:00+02'),
+  ('PROP00003','Teren extravilan','Arabil','Teren arabil T3-3',            'T3','3',  '12003','CF-103',5100.00,'Import text-file batch 1. Coordonate Stereo70 verificate.','2022-05-02 10:20:00+02'),
+  ('PROP00004','Teren extravilan','Arabil','Teren arabil T3-4 (neregulat)','T3','4',  '12004','CF-104',3900.00,'Formă neregulată — 5 colțuri. Import text-file batch 1.','2022-05-02 10:30:00+02'),
+  ('PROP00005','Teren extravilan','Arabil','Parcela Marin T3-5',           'T3','5',  '12005','CF-105',6200.00,'Parcelă arabilă. Proprietar Elena Marin.','2022-05-02 10:40:00+02'),
+  ('PROP00006','Teren extravilan','Arabil','Parcela T3-6 Stoica',          'T3','6',  '12006','CF-106',5800.00,'Coproprietat Stoica-Vlad. Import text-file.','2022-05-02 10:50:00+02'),
+  ('PROP00007','Teren extravilan','Arabil','Teren arabil T3-7',            'T3','7',  '12007','CF-107',4100.00,'Parte din succesiunea Ardelean.','2022-05-02 11:00:00+02'),
 -- Tarla 5 cluster
-  ('PROP00008','Teren Arabil','Arabil','Parcela Ene T5-1',             'T5','1',  '15001','CF-201',7800.00,'Tarla 5. Import text-file batch 2. Proprietar Marian Ene.','2022-05-02 11:10:00+02'),
-  ('PROP00009','Teren Arabil','Arabil','Parcela Dinu T5-2',            'T5','2',  '15002','CF-202',6500.00,'Tarla 5. Folosință curentă pășune, categoria arabil.','2022-05-02 11:20:00+02'),
-  ('PROP00010','Teren Arabil','Arabil','Parcela Badea T5-3',           'T5','3',  '15003','CF-203',7200.00,'Tarla 5. Proprietar Luminița Badea.','2022-05-02 11:30:00+02'),
-  ('PROP00011','Pășune',      'Pășune','Pășune Coman T5-P1',           'T5','P1', '15010','CF-204',9400.00,'Pășune. Cel mai în vârstă proprietar Augustin Coman.','2022-05-02 11:40:00+02'),
-  ('PROP00012','Teren Arabil','Arabil','Teren arabil T5-4',            'T5','4',  '15004','CF-205',5600.00,'Parcelă arabilă. Import text-file batch 2.','2022-05-02 11:50:00+02'),
+  ('PROP00008','Teren extravilan','Arabil','Parcela Ene T5-1',             'T5','1',  '15001','CF-201',7800.00,'Tarla 5. Import text-file batch 2. Proprietar Marian Ene.','2022-05-02 11:10:00+02'),
+  ('PROP00009','Teren extravilan','Arabil','Parcela Dinu T5-2',            'T5','2',  '15002','CF-202',6500.00,'Tarla 5. Folosință curentă pășune, categoria arabil.','2022-05-02 11:20:00+02'),
+  ('PROP00010','Teren extravilan','Arabil','Parcela Badea T5-3',           'T5','3',  '15003','CF-203',7200.00,'Tarla 5. Proprietar Luminița Badea.','2022-05-02 11:30:00+02'),
+  ('PROP00011','Teren extravilan','Pășune','Pășune Coman T5-P1',           'T5','P1', '15010','CF-204',9400.00,'Pășune. Cel mai în vârstă proprietar Augustin Coman.','2022-05-02 11:40:00+02'),
+  ('PROP00012','Teren extravilan','Arabil','Teren arabil T5-4',            'T5','4',  '15004','CF-205',5600.00,'Parcelă arabilă. Import text-file batch 2.','2022-05-02 11:50:00+02'),
 -- Terenuri construite / case cu adresă
-  ('PROP00013','Teren Construit','Arabil','Casa Popescu — str. Independenței',NULL,NULL,'13001','CF-301',720.00, 'Teren intravilan cu casă. Adresă: Str. Independenței nr. 12.','2022-05-03 09:00:00+02'),
-  ('PROP00014','Teren Construit','Arabil','Casă Dinu — str. Florilor',         NULL,NULL,'13002','CF-302',650.00, 'Teren intravilan cu casă veche. Necesită lucrări.','2022-05-03 09:15:00+02'),
-  ('PROP00015','Teren Construit','Arabil','Casă Oprea — str. Independenței',   NULL,NULL,'13003','CF-303',810.00, 'Teren construit. Autorizație construire emisă 2019.','2022-05-03 09:30:00+02'),
-  ('PROP00016','Teren Construit','Arabil','Casă Tudor — str. Florilor',        NULL,NULL,'13004','CF-304',590.00, 'Casă cu etaj. Teren intravilan.','2022-05-03 09:45:00+02'),
-  ('PROP00017','Casă',         'Arabil','Vilă Moldovan — str. Câmpului',       NULL,NULL,'13005','CF-305',1200.00,'Vilă cu piscină și garaj. Achiziție recentă.','2022-05-03 10:00:00+02'),
-  ('PROP00018','Casă',         'Arabil','Casă Marin — str. Independenței',     NULL,NULL,'13006','CF-306',840.00, 'Casă familială. Teren 840 mp.','2022-05-03 10:15:00+02'),
-  ('PROP00019','Teren Construit','Arabil','Casă Badea — teren intravilan',      NULL,NULL,'13007','CF-307',680.00, 'Teren intravilan. Casă în stare bună.','2022-05-03 10:30:00+02'),
-  ('PROP00020','Casă',         'Arabil','Casă Ene — str. Principală',          NULL,NULL,'13008','CF-308',920.00, 'Casă veche. Proprietar Marian Ene.','2022-05-03 10:45:00+02'),
+  ('PROP00013','Teren construit','Arabil','Casa Popescu — str. Independenței',NULL,NULL,'13001','CF-301',720.00, 'Teren intravilan cu casă. Adresă: Str. Independenței nr. 12.','2022-05-03 09:00:00+02'),
+  ('PROP00014','Teren construit','Arabil','Casă Dinu — str. Florilor',         NULL,NULL,'13002','CF-302',650.00, 'Teren intravilan cu casă veche. Necesită lucrări.','2022-05-03 09:15:00+02'),
+  ('PROP00015','Teren construit','Arabil','Casă Oprea — str. Independenței',   NULL,NULL,'13003','CF-303',810.00, 'Teren construit. Autorizație construire emisă 2019.','2022-05-03 09:30:00+02'),
+  ('PROP00016','Teren construit','Arabil','Casă Tudor — str. Florilor',        NULL,NULL,'13004','CF-304',590.00, 'Casă cu etaj. Teren intravilan.','2022-05-03 09:45:00+02'),
+  ('PROP00017','Casă',         'Curți-construcții','Vilă Moldovan — str. Câmpului',       NULL,NULL,'13005','CF-305',1200.00,'Vilă cu piscină și garaj. Achiziție recentă.','2022-05-03 10:00:00+02'),
+  ('PROP00018','Casă',         'Curți-construcții','Casă Marin — str. Independenței',     NULL,NULL,'13006','CF-306',840.00, 'Casă familială. Teren 840 mp.','2022-05-03 10:15:00+02'),
+  ('PROP00019','Teren construit','Arabil','Casă Badea — teren intravilan',      NULL,NULL,'13007','CF-307',680.00, 'Teren intravilan. Casă în stare bună.','2022-05-03 10:30:00+02'),
+  ('PROP00020','Casă',         'Curți-construcții','Casă Ene — str. Principală',          NULL,NULL,'13008','CF-308',920.00, 'Casă veche. Proprietar Marian Ene.','2022-05-03 10:45:00+02'),
 -- Apartamente
   ('PROP00021','Apartament',   NULL,   'Apartament Luca — bloc 3, ap. 8',      NULL,NULL,'21001','CF-401',67.00,  'Apartament 3 camere. Etaj 2. Bloc 3.','2022-06-01 09:00:00+02'),
   ('PROP00022','Apartament',   NULL,   'Apartament Radu — bloc 7, ap. 15',     NULL,NULL,'21002','CF-402',54.00,  'Apartament 2 camere. Etaj 4. Bloc 7.','2022-06-01 09:20:00+02'),
@@ -643,22 +643,22 @@ FROM (VALUES
   ('PROP00024','Apartament',   NULL,   'Apartament Nistor — bloc 2, ap. 4',    NULL,NULL,'21004','CF-404',48.00,  'Apartament 2 camere. Parter.','2022-06-01 10:00:00+02'),
   ('PROP00025','Apartament',   NULL,   'Apartament Petrescu — bloc 7, ap. 22', NULL,NULL,'21005','CF-405',58.00,  'Apartament 2 camere. Etaj 5. Vedere stradală.','2022-06-01 10:20:00+02'),
 -- Case cu teren si colțuri
-  ('PROP00026','Casă',         'Arabil','Casă Stoica — str. Păcii',            NULL,NULL,'26001','CF-501',750.00, 'Casă cu teren. Colțuri din plan cadastral.','2022-06-01 10:40:00+02'),
-  ('PROP00027','Casă',         'Arabil','Casă Chirilă — lot nou',              NULL,NULL,'26002','CF-502',820.00, 'Lot rezultat din dezmembrare 2022. Casă nouă.','2022-06-01 11:00:00+02'),
-  ('PROP00028','Casă',         'Arabil','Casă Barbu — str. Nouă',              NULL,NULL,'26003','CF-503',680.00, 'Achiziție 2022. Contract vânzare autentificat.','2022-06-01 11:20:00+02'),
-  ('PROP00029','Casă',         'Arabil','Casă Ciobanu — coproprietate',        NULL,NULL,'26004','CF-504',900.00, 'Coproprietate familie Ciobanu.','2022-06-01 11:40:00+02'),
-  ('PROP00030','Casă',         'Arabil','Casă Niculescu — proprietate nouă',   NULL,NULL,'26005','CF-505',610.00, 'Beneficiar tânăr. Construcție 2021.','2022-06-01 12:00:00+02'),
+  ('PROP00026','Casă',         'Curți-construcții','Casă Stoica — str. Păcii',            NULL,NULL,'26001','CF-501',750.00, 'Casă cu teren. Colțuri din plan cadastral.','2022-06-01 10:40:00+02'),
+  ('PROP00027','Casă',         'Curți-construcții','Casă Chirilă — lot nou',              NULL,NULL,'26002','CF-502',820.00, 'Lot rezultat din dezmembrare 2022. Casă nouă.','2022-06-01 11:00:00+02'),
+  ('PROP00028','Casă',         'Curți-construcții','Casă Barbu — str. Nouă',              NULL,NULL,'26003','CF-503',680.00, 'Achiziție 2022. Contract vânzare autentificat.','2022-06-01 11:20:00+02'),
+  ('PROP00029','Casă',         'Curți-construcții','Casă Ciobanu — coproprietate',        NULL,NULL,'26004','CF-504',900.00, 'Coproprietate familie Ciobanu.','2022-06-01 11:40:00+02'),
+  ('PROP00030','Casă',         'Curți-construcții','Casă Niculescu — proprietate nouă',   NULL,NULL,'26005','CF-505',610.00, 'Beneficiar tânăr. Construcție 2021.','2022-06-01 12:00:00+02'),
 -- Parcele diverse cu colțuri (batches suplimentare)
-  ('PROP00031','Teren Arabil','Fânețe','Fânețe Ardelean T2-1',                 'T2','1',  '12101','CF-601',8200.00,'Fânețe moștenire. Dosar succesoral finalizat.','2022-07-04 09:00:00+02'),
-  ('PROP00032','Teren Arabil','Arabil','Parcelă Manolescu T2-2',               'T2','2',  '12102','CF-602',4400.00,'Parcelă vândută lui Cristian Moldovan în 2022.','2022-07-04 09:20:00+02'),
-  ('PROP00033','Teren Arabil','Arabil','Parcelă Popa T3-8',                    'T3','8',  '12008','CF-107',6100.00,'Proprietar Nicolae Popa. Parte din grup T3.','2022-07-04 09:40:00+02'),
-  ('PROP00034','Teren Arabil','Vie',   'Vie Ardelean — tarla 4',               'T4','1',  '14001','CF-701',3200.00,'Vie plantată 1998. Dosar succesoral.','2022-07-04 10:00:00+02'),
-  ('PROP00035','Teren Arabil','Livadă','Livadă Constantin T4-2',               'T4','2',  '14002','CF-702',2800.00,'Livadă de meri și pruni. Proprietar Ana Constantin.','2022-07-04 10:20:00+02'),
-  ('PROP00036','Pășune',      'Pășune','Pășune Dinu T6-1',                     'T6','1',  '16001','CF-801',11000.00,'Pășune extinsă. Arendată SC Nord Agro SRL.','2022-07-04 10:40:00+02'),
-  ('PROP00037','Teren Arabil','Arabil','Teren Vlad-Stoica T3-9',               'T3','9',  '12009','CF-108',4700.00,'Coproprietate Stoica-Vlad. Import text-file.','2022-07-04 11:00:00+02'),
-  ('PROP00038','Teren Arabil','Arabil','Parcelă Manolescu T1-1',               'T1','1',  '11001','CF-901',5300.00,'Ultimă parcelă vândută de Stela Manolescu.','2022-07-04 11:20:00+02'),
-  ('PROP00039','Teren Arabil','Arabil','Parcelă comună T3-10',                 'T3','10', '12010','CF-109',3800.00,'Litigiu proprietate cu vecin. Dosar instanță.','2022-07-04 11:40:00+02'),
-  ('PROP00040','Teren Construit','Arabil','Teren industrial Cornetu',          NULL,NULL,'40001','CF-001',15000.00,'Teren intravilan industrial. Zonă Cornetu.','2022-07-04 12:00:00+02')
+  ('PROP00031','Teren extravilan','Fânețe','Fânețe Ardelean T2-1',                 'T2','1',  '12101','CF-601',8200.00,'Fânețe moștenire. Dosar succesoral finalizat.','2022-07-04 09:00:00+02'),
+  ('PROP00032','Teren extravilan','Arabil','Parcelă Manolescu T2-2',               'T2','2',  '12102','CF-602',4400.00,'Parcelă vândută lui Cristian Moldovan în 2022.','2022-07-04 09:20:00+02'),
+  ('PROP00033','Teren extravilan','Arabil','Parcelă Popa T3-8',                    'T3','8',  '12008','CF-107',6100.00,'Proprietar Nicolae Popa. Parte din grup T3.','2022-07-04 09:40:00+02'),
+  ('PROP00034','Teren extravilan','Vie',   'Vie Ardelean — tarla 4',               'T4','1',  '14001','CF-701',3200.00,'Vie plantată 1998. Dosar succesoral.','2022-07-04 10:00:00+02'),
+  ('PROP00035','Teren extravilan','Livadă','Livadă Constantin T4-2',               'T4','2',  '14002','CF-702',2800.00,'Livadă de meri și pruni. Proprietar Ana Constantin.','2022-07-04 10:20:00+02'),
+  ('PROP00036','Teren extravilan','Pășune','Pășune Dinu T6-1',                     'T6','1',  '16001','CF-801',11000.00,'Pășune extinsă. Arendată SC Nord Agro SRL.','2022-07-04 10:40:00+02'),
+  ('PROP00037','Teren extravilan','Arabil','Teren Vlad-Stoica T3-9',               'T3','9',  '12009','CF-108',4700.00,'Coproprietate Stoica-Vlad. Import text-file.','2022-07-04 11:00:00+02'),
+  ('PROP00038','Teren extravilan','Arabil','Parcelă Manolescu T1-1',               'T1','1',  '11001','CF-901',5300.00,'Ultimă parcelă vândută de Stela Manolescu.','2022-07-04 11:20:00+02'),
+  ('PROP00039','Teren extravilan','Arabil','Parcelă comună T3-10',                 'T3','10', '12010','CF-109',3800.00,'Litigiu proprietate cu vecin. Dosar instanță.','2022-07-04 11:40:00+02'),
+  ('PROP00040','Teren construit','Arabil','Teren industrial Cornetu',          NULL,NULL,'40001','CF-001',15000.00,'Teren intravilan industrial. Zonă Cornetu.','2022-07-04 12:00:00+02')
 ) AS v(code, ptype, usecat, nickname, tarla, parcela, cad_nr, cf_nr, surface_mp, notes, cat)
 JOIN principal_object po ON po.code = v.code;
 

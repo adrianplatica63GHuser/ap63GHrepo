@@ -659,7 +659,7 @@ function fillOthers(r: Rng, b: Docs, ctx: DocumentContext): void {
       case "CONTRACT_ARENDA":
       case "CONTRACT_INCHIRIERE": {
         const land = type === "CONTRACT_ARENDA";
-        const p = pickProp((x) => (land ? ["Teren Arabil", "Pășune"].includes(x.type) : ["Casă", "Apartament", "Teren Construit"].includes(x.type)));
+        const p = pickProp((x) => (land ? ["Teren extravilan"].includes(x.type) : ["Casă", "Apartament", "Teren construit"].includes(x.type)));
         if (!p) break;
         const date = datedAfter(addDays(p.acquiredOn, 30));
         if (!date) break;

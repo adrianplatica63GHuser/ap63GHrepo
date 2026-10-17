@@ -35,6 +35,8 @@ SET client_encoding = 'UTF8';
 -- lookup_doc_type_person_role does NOT collapse -- it is unique over the PAIR
 -- (document_type_id, person_role_id) -- and stays.
 TRUNCATE lookup_doc_type_person_role CASCADE;
+-- Slice #39.66: the type ↔ use pairs, before the two lists they join (the CASCADE below would clear them anyway).
+TRUNCATE lookup_property_type_use CASCADE;
 TRUNCATE lookup_person_role, lookup_property_type, lookup_tarla,
          lookup_use_category, lookup_person_type, lookup_citizenship,
          lookup_document_type, lookup_institution,
@@ -62,26 +64,20 @@ TRUNCATE lookup_person_role, lookup_property_type, lookup_tarla,
 -- and rows created through Reference Data from #34.03 on hold NULL.
 -- `lookup_document_type.key` further down is a different column with the same
 -- name and is genuinely load-bearing. (Slice #34.03)
+-- Slice #39.66 (migration_111): the nine types Ciprian agreed, in his order. What a property IS — the land-use names
+-- that used to sit here too (Teren Arabil, Pășune, Vie, Livadă, Fâneață, Pădure, Vegetație Forestieră) are
+-- „Categorie de folosință" values now, on a „Teren extravilan". `key` stays only for the four rows that had one.
 INSERT INTO lookup_property_type
   (name, key, sort_order, show_tarla_parcela, show_address, show_street_view) VALUES
-  -- Generic / Linear: everything visible
-  ('Liniară',             'LINIARA',               3, TRUE,  TRUE,  TRUE),
-  -- Urban / Built: no Tarla/Parcela, show Address + Street View
-  ('Teren Construit',     'TEREN_CONSTRUIT',       2, FALSE, TRUE,  TRUE),
-  ('Apartament',          'APARTAMENT',            5, FALSE, TRUE,  TRUE),
-  ('Casă',                'CASA',                  6, FALSE, TRUE,  TRUE),
+  ('Teren extravilan',    NULL,                    1, TRUE,  FALSE, FALSE),
+  ('Teren intravilan',    NULL,                    2, TRUE,  TRUE,  TRUE),
+  ('Teren construit',     'TEREN_CONSTRUIT',       3, FALSE, TRUE,  TRUE),
+  ('Liniară',             'LINIARA',               4, TRUE,  TRUE,  TRUE),
+  ('Casă',                'CASA',                  5, FALSE, TRUE,  TRUE),
+  ('Apartament',          'APARTAMENT',            6, FALSE, TRUE,  TRUE),
   ('Garaj',               'GARAJ',                 7, FALSE, TRUE,  TRUE),
-  ('Spațiu Comercial',    'SPATIU_COMERCIAL',      8, FALSE, TRUE,  TRUE),
-  ('Birou',               'BIROU',                 9, FALSE, TRUE,  TRUE),
-  -- Agricultural / Rural: show Tarla/Parcela only
-  ('Teren Arabil',        'TEREN_ARABIL',          1, TRUE,  FALSE, FALSE),
-  ('Pășune',              'PASUNE',                4, TRUE,  FALSE, FALSE),
-  ('Vie',                 'VIE',                  10, TRUE,  FALSE, FALSE),
-  ('Livadă',              'LIVADA',               11, TRUE,  FALSE, FALSE),
-  ('Fâneață',             'FANATA',               12, TRUE,  FALSE, FALSE),
-  -- Forest / Vegetation: show Tarla/Parcela only
-  ('Pădure',              'PADURE',               13, TRUE,  FALSE, FALSE),
-  ('Vegetație Forestieră','VEGETATIE_FORESTIERA',  14, TRUE,  FALSE, FALSE);
+  ('Spațiu comercial',    'SPATIU_COMERCIAL',      8, FALSE, TRUE,  TRUE),
+  ('Birou',               'BIROU',                 9, FALSE, TRUE,  TRUE);
 
 -- ── lookup_tarla ──────────────────────────────────────────────────────────────
 INSERT INTO lookup_tarla (indicativ, descriere, sort_order) VALUES
@@ -93,7 +89,22 @@ INSERT INTO lookup_tarla (indicativ, descriere, sort_order) VALUES
 -- ── lookup_use_category ───────────────────────────────────────────────────────
 INSERT INTO lookup_use_category (name, sort_order) VALUES
   ('Arabil', 1), ('Pășune', 2), ('Fânețe', 3), ('Vie', 4),
-  ('Livadă', 5), ('Pădure', 6), ('Ape',    7), ('Neproductiv', 8);
+  ('Livadă', 5), ('Pădure', 6), ('Ape',    7), ('Neproductiv', 8),
+  ('Curți-construcții', 9), ('Drumuri', 10);
+
+-- ── lookup_property_type_use (Slice #39.66, migration_111) ───────────────────
+-- The uses a type allows. A type with no rows allows every use (Teren intravilan, Teren construit, Liniară).
+INSERT INTO lookup_property_type_use (property_type_id, use_category_id)
+SELECT t.id, u.id
+  FROM (VALUES
+    ('Teren extravilan', 'Arabil'), ('Teren extravilan', 'Pășune'), ('Teren extravilan', 'Fânețe'),
+    ('Teren extravilan', 'Vie'), ('Teren extravilan', 'Livadă'), ('Teren extravilan', 'Pădure'),
+    ('Teren extravilan', 'Ape'), ('Teren extravilan', 'Neproductiv'),
+    ('Casă', 'Curți-construcții'), ('Apartament', 'Curți-construcții'), ('Garaj', 'Curți-construcții'),
+    ('Spațiu comercial', 'Curți-construcții'), ('Birou', 'Curți-construcții')
+  ) AS v(type_name, use_name)
+  JOIN lookup_property_type t ON t.name = v.type_name
+  JOIN lookup_use_category  u ON u.name = v.use_name;
 
 -- ── lookup_person_type ────────────────────────────────────────────────────────
 INSERT INTO lookup_person_type (name, sort_order) VALUES

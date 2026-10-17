@@ -41,7 +41,7 @@ export const GROUPS: readonly (readonly [GroupTarget, string])[] = [
   ["JUDICIAL_PERSON", "Constructori și antreprenori. Firmele care au construit pe loturile vândute (date de test)."],
   ["JUDICIAL_PERSON", "Asociații și fundații locale. Organizații din comunitatea Bragadiru (date de test)."],
   ["PROPERTY", "Parcelarea de pe aliniamentul de nord-est. Loturile aliniate pe latura comună (date de test)."],
-  ["PROPERTY", "Curți construcții cu acces din drum asfaltat. Loturi gata de autorizare (date de test)."],
+  ["PROPERTY", "Curți-construcții cu acces din drum asfaltat. Loturi gata de autorizare (date de test)."],
   ["PROPERTY", "Terenuri în indiviziune. Proprietăți cu mai mulți coproprietari pe cote (date de test)."],
   ["PROPERTY", "Succesiuni nedezbătute. Imobile ale unor proprietari decedați (date de test)."],
   ["PROPERTY", "Extravilan arendat. Terenuri arabile și pășuni date în arendă (date de test)."],

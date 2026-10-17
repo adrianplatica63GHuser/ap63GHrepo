@@ -639,14 +639,14 @@ let clusters: Cluster[] = [];
 
 function propertyPlan(): PP[] {
   return [
-    { key: "P1", nickname: "Teren arabil T52 P212/1 (moștenire Ionescu)", cluster: 0, pts: box(-70, -35, 70, 35), type: "Teren Arabil", use: "Arabil", tarla: "52", parcela: "212/1", declared: 10000, notes: "Parcela inițială, dezmembrată în 2021 în două loturi." },
-    { key: "P2", nickname: "Lot 1 din T52 P212/1", cluster: 0, pts: box(-70, -35, -13, 35), type: "Teren Arabil", use: "Arabil", tarla: "52", parcela: "212/1/1" },
-    { key: "P3", nickname: "Lot 2 din T52 P212/1", cluster: 0, pts: box(-13, -35, 70, 35), type: "Teren Arabil", use: "Arabil", tarla: "52", parcela: "212/1/2" },
+    { key: "P1", nickname: "Teren arabil T52 P212/1 (moștenire Ionescu)", cluster: 0, pts: box(-70, -35, 70, 35), type: "Teren extravilan", use: "Arabil", tarla: "52", parcela: "212/1", declared: 10000, notes: "Parcela inițială, dezmembrată în 2021 în două loturi." },
+    { key: "P2", nickname: "Lot 1 din T52 P212/1", cluster: 0, pts: box(-70, -35, -13, 35), type: "Teren extravilan", use: "Arabil", tarla: "52", parcela: "212/1/1" },
+    { key: "P3", nickname: "Lot 2 din T52 P212/1", cluster: 0, pts: box(-13, -35, 70, 35), type: "Teren extravilan", use: "Arabil", tarla: "52", parcela: "212/1/2" },
     { key: "P4", nickname: "Casă Str. Haiducului 12", cluster: 1, pts: box(0, 0, 25, 26), type: "Casă", street: "Str. Haiducului nr. 12" },
-    { key: "P5", nickname: "Teren construit Str. Leordeni 45", cluster: 1, pts: box(25, 0, 65, 30), type: "Teren Construit", street: "Str. Leordeni nr. 45", declared: 1200 },
+    { key: "P5", nickname: "Teren construit Str. Leordeni 45", cluster: 1, pts: box(25, 0, 65, 30), type: "Teren construit", street: "Str. Leordeni nr. 45", declared: 1200 },
     { key: "P6", nickname: "Livadă T46 P118", cluster: 2, pts: jitter(box(0, 0, 70, 50), 1.5), type: "Livadă", use: "Livadă", tarla: "46", parcela: "118" },
-    { key: "P7", nickname: "Pășune T61 P7", cluster: 2, pts: jitter(box(75, 0, 195, 60), 1.5), type: "Pășune", use: "Pășune", tarla: "61", parcela: "7" },
-    { key: "P8", nickname: "Spațiu comercial Str. Gării 3", cluster: 1, pts: jitter(box(70, 0, 120, 42), 1.5), type: "Spațiu Comercial", street: "Str. Gării nr. 3" },
+    { key: "P7", nickname: "Pășune T61 P7", cluster: 2, pts: jitter(box(75, 0, 195, 60), 1.5), type: "Teren extravilan", use: "Pășune", tarla: "61", parcela: "7" },
+    { key: "P8", nickname: "Spațiu comercial Str. Gării 3", cluster: 1, pts: jitter(box(70, 0, 120, 42), 1.5), type: "Spațiu comercial", street: "Str. Gării nr. 3" },
   ];
 }
 
