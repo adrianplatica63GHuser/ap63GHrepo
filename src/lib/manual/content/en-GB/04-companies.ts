@@ -11,7 +11,7 @@ A judicial person is a firm, an institution, a local council or an association �
 
 The list opens from the sidebar: „Domain”, then „Judicial Persons”. The screen is called „Judicial Person” and, like every list (section [[start-lists]]), shows 15 firms a page, with the columns „Name” and „Nickname”.
 
-The search box at the top of the list („search by code, name, nickname, or ID”) is the list's only filter. It finds a firm by its name, by its nickname and by its CUI: type the CUI and the firms that have it remain. When nothing is found, the list says „No judicial persons found”.
+The search box at the top of the list („search by code, name, nickname, or ID”) finds a firm by its name, by its nickname and by its CUI: type the CUI and the firms that have it remain. When nothing is found, the list says „No judicial persons found”.
 
 „Choose fields” adds columns to the list. On the list of firms you can choose four:
 
@@ -27,6 +27,17 @@ The button shows how many fields you chose, for instance „Choose fields 1/4”
 Each row carries „Preview”, „Peek inside”, „Links” and „Open”. A firm's preview shows its name, then its nickname. „Peek inside” shows the firm's „Interactions” tile beside the list, and „Links” shows, also beside it, whom the firm is linked to, without opening it.
 
 A firm added recently stands at the top of the list, marked „New!”.
+
+### 4.1.1 The list's filters {#companies-list-filters}
+
+Below the search box, the list's filters are set and removed as on the list of properties: „+ Filter”, a label for each filter, the funnel in a column's header and „Clear filters” (section [[properties-list-filters]]). Beside each value is how many firms hold it, counted with the other filters already set.
+
+The fields you filter by:
+
+- **„Type”** — the values of the list of judicial-person types, as they stand in the archive now;
+- **„Role in documents”** — the roles firms hold on documents; a firm passes the filter when it holds the role on at least one document;
+- **„Locality (head office)”** — the locality of the head office's address;
+- **„Registration No. (CUI)”**, „Trade Register No.” and „Contact person” — „Contains”. For „Contact person”, either of the firm's two contact persons counts.
 
 ## 4.2 A firm added and edited {#companies-add}
 

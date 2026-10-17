@@ -11,7 +11,7 @@ O persoană fizică este un om: numele, CNP-ul, data nașterii, actul de identit
 
 În bara laterală, deschideți „Domeniu”, apoi „Persoane Fizice”. Ecranul se numește „Persoană fizică” și arată un tabel cu coloanele „Nume” și „Poreclă”, 15 rânduri pe pagină (secțiunea [[start-lists]]). În coloana „Nume”, prenumele vine primul: o persoană cu numele Popescu și prenumele Ion apare ca „Ion Popescu”.
 
-Caseta de căutare („caută după cod, nume, email sau telefon”) păstrează în tabel doar persoanele care se potrivesc cu ce scrieți; ajunge o parte din nume. Lista nu are filtre de „Importanță” sau „Relevanță”.
+Caseta de căutare („caută după cod, nume, email sau telefon”) păstrează în tabel doar persoanele care se potrivesc cu ce scrieți; ajunge o parte din nume. Sub ea, filtrele listei îngustează ce vedeți după tip, rol, localitate și celelalte câmpuri (secțiunea [[persons-list-filters]]). Lista nu are filtre de „Importanță” sau „Relevanță”.
 
 „Câmpuri afișate” adaugă coloane la tabel, cel mult patru odată. Le puteți alege dintre:
 
@@ -41,6 +41,18 @@ Fiecare rând are patru butoane:
 | „Deschide” | Deschide ecranul persoanei. |
 
 Un al doilea clic pe același buton închide ce a deschis.
+
+### 3.1.1 Filtrele listei {#persons-list-filters}
+
+Filtrele se pun și se scot ca pe lista proprietăților: „+ Filtru”, o etichetă pentru fiecare filtru, pâlnia din capul unei coloane și „Șterge filtrele” (secțiunea [[properties-list-filters]]). Lângă fiecare valoare dintr-o listă cu bife stă câte persoane o au, numărate cu celelalte filtre deja puse. Filtrele se păstrează în adresa paginii.
+
+Câmpurile după care filtrați:
+
+- **„Tip profesional”** — valorile listei de tipuri de persoană fizică, așa cum sunt acum în arhivă;
+- **„Rol în documente”** — rolurile pe care persoanele le au în acte, de exemplu Proprietar, Vânzător, Moștenitor sau Notar. O persoană trece de filtru dacă are rolul ales în cel puțin un act; „(necompletat)” arată persoanele care nu au niciun rol în niciun act;
+- **„Localitate (domiciliu)”** — localitatea din adresa de domiciliu;
+- **„Decedat”** — „Toți”, „În viață” sau „Decedați”;
+- **„Gen”**, „Vârstă”, „Data nașterii”, „Data decesului”, „CNP” și „Locul nașterii” — coloanele din „Câmpuri afișate”. „Vârstă” este vârsta din listă: la o persoană decedată, vârsta la deces. La date alegeți „De la” și „Până la” sau, din „Perioadă…”, „Anul acesta” ori „Ultimele 12 luni”.
 
 ## 3.2 O persoană adăugată de mână {#persons-add}
 

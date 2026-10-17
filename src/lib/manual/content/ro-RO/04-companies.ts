@@ -11,7 +11,7 @@ O persoană juridică este o firmă, o instituție, un consiliu local sau o asoc
 
 Lista se deschide din bara laterală: „Domeniu”, apoi „Persoane Juridice”. Ecranul se numește „Persoană juridică” și arată, ca orice listă (secțiunea [[start-lists]]), câte 15 firme pe pagină, cu coloanele „Denumire” și „Poreclă”.
 
-Caseta de căutare din capul listei („caută după cod, nume, poreclă sau ID”) este singurul filtru al listei. Ea găsește o firmă după denumire, după poreclă și după CUI: scrieți CUI-ul și rămân firmele care îl au. Când nu se găsește nimic, lista spune „Nu există persoane juridice”.
+Caseta de căutare din capul listei („caută după cod, nume, poreclă sau ID”) găsește o firmă după denumire, după poreclă și după CUI: scrieți CUI-ul și rămân firmele care îl au. Când nu se găsește nimic, lista spune „Nu există persoane juridice”.
 
 „Câmpuri afișate” adaugă coloane listei. Pe lista firmelor puteți alege patru:
 
@@ -27,6 +27,17 @@ Butonul arată câte câmpuri ați ales, de exemplu „Câmpuri afișate 1/4”.
 Pe fiecare rând stau „Previzualizare”, „Incursiune”, „Legături” și „Deschide”. Previzualizarea unei firme arată denumirea ei, apoi porecla. „Incursiune” arată, alături de listă, fișa „Interacțiuni” a firmei, iar „Legături” arată, tot alături, cu cine este legată firma, fără să o deschideți.
 
 O firmă adăugată de curând apare în capul listei, marcată „Nou!”.
+
+### 4.1.1 Filtrele listei {#companies-list-filters}
+
+Sub caseta de căutare, filtrele listei se pun și se scot ca pe lista proprietăților: „+ Filtru”, o etichetă pentru fiecare filtru, pâlnia din capul unei coloane și „Șterge filtrele” (secțiunea [[properties-list-filters]]). Lângă fiecare valoare stă câte firme o au, numărate cu celelalte filtre deja puse.
+
+Câmpurile după care filtrați:
+
+- **„Tip”** — valorile listei de tipuri de persoană juridică, așa cum sunt acum în arhivă;
+- **„Rol în documente”** — rolurile pe care firmele le au în acte; o firmă trece de filtru dacă are rolul în cel puțin un act;
+- **„Localitate (sediu)”** — localitatea din adresa sediului;
+- **„Nr. înregistrare (CUI)”**, „Nr. registru comerțului” și „Persoană de contact” — „Conține”. La „Persoană de contact” contează oricare dintre cele două persoane de contact ale firmei.
 
 ## 4.2 O firmă adăugată și modificată {#companies-add}
 

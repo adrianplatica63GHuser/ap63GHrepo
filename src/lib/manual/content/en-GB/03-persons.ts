@@ -11,7 +11,7 @@ A natural person is a human being: their name, CNP, date of birth, identity docu
 
 In the sidebar, open „Domain”, then „Natural Persons”. The screen is called „Natural Person” and shows a table with the columns „Name” and „Nickname”, 15 rows to a page (section [[start-lists]]). In the „Name” column the first name comes first: a person whose surname is Popescu and whose first name is Ion appears as „Ion Popescu”.
 
-The search box („search by code, name, email, or phone”) keeps in the table only the persons who match what you type; part of the name is enough. The list has no „Importance” or „Relevance” filter.
+The search box („search by code, name, email, or phone”) keeps in the table only the persons who match what you type; part of the name is enough. Below it, the list's filters narrow what you see by type, role, locality and the other fields (section [[persons-list-filters]]). The list has no „Importance” or „Relevance” filter.
 
 „Choose fields” adds columns to the table, at most four at a time. You can choose them from:
 
@@ -41,6 +41,18 @@ Each row has four buttons:
 | „Open” | Opens the person's screen. |
 
 A second click on the same button closes what it opened.
+
+### 3.1.1 The list's filters {#persons-list-filters}
+
+Filters are set and removed as on the list of properties: „+ Filter”, a label for each filter, the funnel in a column's header and „Clear filters” (section [[properties-list-filters]]). Beside each value in a list with ticks is how many persons hold it, counted with the other filters already set. The filters are kept in the page's address.
+
+The fields you filter by:
+
+- **„Professional type”** — the values of the list of natural-person types, as they stand in the archive now;
+- **„Role in documents”** — the roles persons hold on documents, for example owner, seller, heir or notary. A person passes the filter when they hold the chosen role on at least one document; „(empty)” shows the persons who hold no role on any document;
+- **„Locality (home)”** — the locality of the home address;
+- **„Deceased”** — „All”, „Alive” or the deceased only;
+- **„Gender”**, „Age”, „Date of Birth”, „Date of death”, „CNP” and „Place of Birth” — the columns of „Choose fields”. „Age” is the age the list shows: for a deceased person, the age at death. For dates, choose „From” and „To”, or, from „Period…”, „This year” or „The last 12 months”.
 
 ## 3.2 A person added by hand {#persons-add}
 
