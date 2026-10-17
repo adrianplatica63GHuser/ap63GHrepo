@@ -20,6 +20,7 @@ import {
 } from "react-hook-form";
 import { useMapsLibrary } from "@vis.gl/react-google-maps";
 import type { PropertySnapshot } from "@/lib/properties/validation";
+import { TYPE_USES_QUERY_KEY, fetchTypeUses, useNotAllowed, usesForType } from "@/lib/properties/type-uses";
 import {
   polygonSelfIntersects,
   shoelaceAreaM2,
@@ -308,6 +309,12 @@ export function PropertyForm({
     queryFn:  () => fetchValueList("use-categories"),
     staleTime: 5 * 60 * 1000,
   });
+  // Slice #39.66: the uses each type allows. Unread or failed — every use, as before the pairs existed.
+  const { data: typeUses } = useQuery({
+    queryKey: TYPE_USES_QUERY_KEY,
+    queryFn:  fetchTypeUses,
+    staleTime: 5 * 60 * 1000,
+  });
 
   // Slice #18.16.VL — tarla dropdown. Slice #34.03: the option VALUE is the
   // row's `id` now, not its `indicativ` text; the four-word comment that used
@@ -578,6 +585,16 @@ export function PropertyForm({
   // selected, or while the list is loading, default to showing everything.
   const selectedType =
     (propertyTypes ?? []).find((o) => o.id === (watchedValues.propertyTypeId ?? "")) ?? null;
+
+  // Slice #39.66: „Categorie de folosință" offers the uses the chosen type allows — every use for a type with no pairs,
+  // or with no type chosen. The value the property already holds is always offered, so a select never blanks it on
+  // the next save; when the type does not allow it, a line under the field says so. `useCategoryOptions` above stays
+  // the whole list: it is what a version's recorded value is looked up in (`snapshotLookupStates`).
+  const useCategorySelectOptions = [
+    noneOption,
+    ...usesForType(useCategories ?? [], typeUses, watchedValues.propertyTypeId, watchedValues.useCategoryId).map((o) => ({ value: o.id, label: o.name })),
+  ];
+  const useOutsideType = useNotAllowed(typeUses, watchedValues.propertyTypeId, watchedValues.useCategoryId);
   const typeConfig = {
     hideTarlaParcela: selectedType ? !selectedType.showTarlaParcela : false,
     hideAddress:      selectedType ? !selectedType.showAddress      : false,
@@ -1286,7 +1303,7 @@ export function PropertyForm({
                   register={register}
                   control={control}
                   error={errors.useCategoryId?.message}
-                  options={useCategoryOptions}
+                  options={useCategorySelectOptions}
                   highlight={displayHighlights?.property.useCategoryId}
                   snapshot={snapshotLookups.useCategoryId}
                   width={PROP.useCategoryId}
@@ -1303,6 +1320,11 @@ export function PropertyForm({
                   width={PROP.propertyTypeId}
                 />
               </div>
+              {useOutsideType && (
+                <p className="text-xs text-amber-700 dark:text-amber-400" role="note" data-use-not-allowed="">
+                  {t("fields.useNotAllowed", { type: selectedType?.name ?? "" })}
+                </p>
+              )}
               <Field
                 label={t("fields.notes")}
                 name="notes"

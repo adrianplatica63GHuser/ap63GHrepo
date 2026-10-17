@@ -314,7 +314,8 @@
       "surfaceAreaMp": "Suprafață oficială (m²)",
       "calculatedAreaMp": "Suprafață calculată (m²)",
       "notes": "Note",
-      "noneOption": "niciunul"
+      "noneOption": "niciunul",
+      "useNotAllowed": "Tipul „{type}” nu are această categorie de folosință printre cele permise. Rămâne până o schimbați."
     },
     "filters": {
       "group": "Grup"
@@ -2247,7 +2248,8 @@
       "documentTypes": "Tipuri de Document",
       "institutions": "Instituții",
       "propertyToProperty": "Legături Proprietate → Proprietate",
-      "documentToDocument": "Legături Document → Document"
+      "documentToDocument": "Legături Document → Document",
+      "propertyTypesPage": "Tipuri de proprietate și folosințe"
     },
     "fields": {
       "name": "Denumire",
@@ -2417,7 +2419,9 @@
         "docTypePersonRoleWhitelist": "{count, plural, one {# tip de act pe care e oferit rolul} few {# tipuri de act pe care e oferit rolul} other {# de tipuri de act pe care e oferit rolul}}",
         "personPersonRoleWhitelist": "{count, plural, one {bifa „Persoană → Persoană”} few {# bife „Persoană → Persoană”} other {# de bife „Persoană → Persoană”}}",
         "propertyProperties": "{count, plural, one {# asociere Proprietate–Proprietate} few {# asocieri Proprietate–Proprietate} other {# de asocieri Proprietate–Proprietate}}",
-        "documentDocuments": "{count, plural, one {# asociere Document–Document} few {# asocieri Document–Document} other {# de asocieri Document–Document}}"
+        "documentDocuments": "{count, plural, one {# asociere Document–Document} few {# asocieri Document–Document} other {# de asocieri Document–Document}}",
+        "propertyTypeUses": "{count, plural, one {# folosință pe care o permite tipul} few {# folosințe pe care le permite tipul} other {# de folosințe pe care le permite tipul}}",
+        "useTypeAllowed": "{count, plural, one {# tip de proprietate care permite folosința} few {# tipuri de proprietate care permit folosința} other {# de tipuri de proprietate care permit folosința}}"
       },
       "notes": {
         "versionSnapshots": "Istoricul versiunilor nu este numărat mai sus. Fiecare versiune salvată păstrează valoarea așa cum era atunci — nici ștergerea, nici mutarea nu modifică versiunile deja salvate. Mutarea adaugă însă câte o versiune nouă fiecărui obiect pe care îl modifică."
@@ -2526,6 +2530,15 @@
         "rolesError": "Rolurile nu s-au putut încărca",
         "add": "Adaugă rolul"
       }
+    },
+    "typeUses": {
+      "title": "Folosințe permise pentru fiecare tip",
+      "hint": "Bifați categoriile de folosință pe care le poate avea un tip de proprietate. Un tip fără nicio bifă le permite pe toate. Formularul proprietății le oferă doar pe cele permise.",
+      "allowsAll": "toate",
+      "saveError": "Bifa nu s-a putut salva. Încercați din nou.",
+      "loading": "Se încarcă…",
+      "colType": "Tip",
+      "tick": "{use} pentru {type}"
     }
   },
   "adminTags": {

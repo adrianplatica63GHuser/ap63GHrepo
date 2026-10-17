@@ -314,7 +314,8 @@
       "surfaceAreaMp": "Official Surface Area (m²)",
       "calculatedAreaMp": "Calculated Area (m²)",
       "notes": "Notes",
-      "noneOption": "none"
+      "noneOption": "none",
+      "useNotAllowed": "The type „{type}” does not list this use category among the ones it allows. It stays until you change it."
     },
     "filters": {
       "group": "Group"
@@ -2247,7 +2248,8 @@
       "documentTypes": "Document Types",
       "institutions": "Institutions",
       "propertyToProperty": "Property → Property Links",
-      "documentToDocument": "Document → Document Links"
+      "documentToDocument": "Document → Document Links",
+      "propertyTypesPage": "Property types and uses"
     },
     "fields": {
       "name": "Name",
@@ -2417,7 +2419,9 @@
         "docTypePersonRoleWhitelist": "{count, plural, one {# document type the role is offered on} other {# document types the role is offered on}}",
         "personPersonRoleWhitelist": "{count, plural, one {the “Person → Person” tick} other {# “Person → Person” ticks}}",
         "propertyProperties": "{count, plural, one {# Property–Property association} other {# Property–Property associations}}",
-        "documentDocuments": "{count, plural, one {# Document–Document association} other {# Document–Document associations}}"
+        "documentDocuments": "{count, plural, one {# Document–Document association} other {# Document–Document associations}}",
+        "propertyTypeUses": "{count, plural, one {# use the type allows} other {# uses the type allows}}",
+        "useTypeAllowed": "{count, plural, one {# property type that allows the use} other {# property types that allow the use}}"
       },
       "notes": {
         "versionSnapshots": "Version history is not counted above. Each saved version keeps the value as it was at the time — neither deleting nor moving alters a version that is already saved. Moving does add one new version to each object it changes."
@@ -2526,6 +2530,15 @@
         "rolesError": "The roles could not be loaded",
         "add": "Add the role"
       }
+    },
+    "typeUses": {
+      "title": "Uses allowed for each type",
+      "hint": "Tick the use categories a property type may have. A type with no tick allows them all. The property form offers only the allowed ones.",
+      "allowsAll": "all",
+      "saveError": "The tick could not be saved. Try again.",
+      "loading": "Loading…",
+      "colType": "Type",
+      "tick": "{use} for {type}"
     }
   },
   "adminTags": {

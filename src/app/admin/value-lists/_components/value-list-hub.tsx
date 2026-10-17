@@ -25,7 +25,8 @@ import { useRef, useState, type KeyboardEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { LIST_META, isValidListKey, type ListKey } from "@/lib/admin/value-lists/config";
-import { categoryOfList, listsByCategory } from "@/lib/admin/value-lists/categories";
+import { categoryOfList, listsByCategory, listsOnPage, pageListOf } from "@/lib/admin/value-lists/categories";
+import { PropertyTypeUses } from "./property-type-uses";
 import { listOfLink, markedLinks, type PressedLink, type RelationshipId } from "@/lib/admin/value-lists/relationships";
 import { LINK_MARK_BOX } from "@/lib/ui/link-mark";
 import { VALUE_LIST_CARD_UNITS, ValueListModal } from "./value-list-modal";
@@ -75,9 +76,12 @@ export function ValueListHub({
   const router = useRouter();
   const navRef = useRef<HTMLElement>(null);
 
-  const selected: ListKey | null =
-    initialList !== undefined && isValidListKey(initialList) ? initialList : null;
-  const [arrival] = useState<ListKey | null>(selected);
+  // Slice #39.66: the list the address names, and the PAGE it is on — „Categorii Folosință" is a tile of „Tipuri de
+  // proprietate și folosințe", so `?list=use-categories` opens that page. `?add=` / `?form=` still go to the list the
+  // address named.
+  const named: ListKey | null = initialList !== undefined && isValidListKey(initialList) ? initialList : null;
+  const selected: ListKey | null = named === null ? null : pageListOf(named);
+  const [arrival] = useState<ListKey | null>(named);
   const [addNameUsed, setAddNameUsed] = useState(false);
   // Slice #38.68: a link pressed on the triangle or among the six — one choice, marked in four places
   // (`markedLinks`): the list's name here, the triangle, the six and the list card's title.
@@ -140,7 +144,8 @@ export function ValueListHub({
               </h2>
               <ul className="flex flex-col">
                 {category.lists.map((key) => {
-                  const label = t(`lists.${LIST_META[key].titleKey}`);
+                  // Slice #39.66: a page of several lists is named for all of them.
+                  const label = listsOnPage(key).length > 1 ? t(`lists.${LIST_META[key].titleKey}Page`) : t(`lists.${LIST_META[key].titleKey}`);
                   const current = key === selected;
                   // Slice #38.68: in „Roluri și legături" the chosen link's list is the heavy yellow, not the navy.
                   const linkGroup = category.id === "rolesLinks";
@@ -192,14 +197,19 @@ export function ValueListHub({
               <RelationshipTriangle marked={marking.links} onPress={pressLink} onOpenList={chooseList} cardUnits={VALUE_LIST_CARD_UNITS} />
             )}
             {/* Keyed on the list: each list starts from its own state — a filter
-                ticked on one never filters the next (#27.07). */}
-            <ValueListModal
-              key={selected}
-              listKey={selected}
-              initialAddName={selected === arrival && !addNameUsed ? initialAddName : undefined}
-              initialFormFilter={selected === arrival && !addNameUsed ? initialFormFilter : undefined}
-              titleMarked={marking.list === selected}
-            />
+                ticked on one never filters the next (#27.07). Slice #39.66: a page may hold several lists, each its
+                own tile — „Tipuri de proprietate și folosințe" holds the types, the uses, and which uses each type
+                allows. */}
+            {listsOnPage(selected).map((key) => (
+              <ValueListModal
+                key={key}
+                listKey={key}
+                initialAddName={key === arrival && !addNameUsed ? initialAddName : undefined}
+                initialFormFilter={key === arrival && !addNameUsed ? initialFormFilter : undefined}
+                titleMarked={marking.list === key}
+              />
+            ))}
+            {selected === "property-types" && <PropertyTypeUses cardUnits={VALUE_LIST_CARD_UNITS} />}
           </>
         )}
       </div>

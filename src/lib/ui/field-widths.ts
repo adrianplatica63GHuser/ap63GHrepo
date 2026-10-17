@@ -399,7 +399,7 @@ export const PROPERTY = {
   carteFunciara: { step: "M", kind: "fixed", sample: "000000" }, //       m: 0
   cadastralNumber: { step: "M", kind: "fixed", sample: "HHHHH-00.00-H" }, // m: 1 · 13
   useCategoryId: { step: "M", kind: "select" }, //              m: 8 options, longest „Neproductiv" (11) — v02 guessed L
-  propertyTypeId: { step: "L", kind: "select" }, //             m: 14 options, longest „Vegetație Forestieră" (20)
+  propertyTypeId: { step: "L", kind: "select" }, //             m: 9 agreed options since #39.66, longest „Spațiu comercial" (16); was 14, „Vegetație Forestieră" (20)
   notes: { step: "TILE", kind: "lines", fold: NOTE_FOLD_LINES, rows: 1, fill: true }, // m: 1 · 72, at most 300; the panel's whole width (#37.30)
   /** The Street View address row: the box, then „Preia" and its hint, in the panel's width. */
   streetViewStreetLine: { step: "TILE", kind: "grows" },
@@ -1331,7 +1331,8 @@ export const COLUMN = {
   // headers), and rounded up to the next quarter rem with at least 1 px to spare. A longer value added later is cut
   // with „…" and whole on hover, as every reference cell is (#38.50). The seeds' values all fit.
   valueJudicialTypeName: { content: 5.75, kind: "fixed" }, // „Consiliu Local" (87.2 px); was valueName's XL (272)
-  // Slice #39.23: „Teren pentru Construcții" (148.6 px), the property type the big dev seed adds, was cut at 8 rem.
+  // Slice #39.23: „Teren pentru Construcții" (148.6 px), the property type the big dev seed added, was cut at 8 rem.
+  // #39.66 folded it into „Teren intravilan"; the width stays, for a type Adrian names longer.
   valuePropertyTypeName: { content: 9.5, kind: "fixed" }, // „Teren pentru Construcții" (148.6 px); was 8 for „Vegetație Forestieră" (125.3)
   valueFlagTarlaParcela: { content: 4, kind: "fixed" }, //   ✓ / – under „TARLA /" over „PARCELĂ" (59.2 px); was valueFlag (88)
   valueFlagAddress: { content: 3.5, kind: "fixed" }, //      ✓ / – under „ADRESĂ" (52.5 px)

@@ -129,7 +129,7 @@ function useFrameHeight(frameRef: RefObject<HTMLDivElement | null>): number | nu
 const REVIEWED_LISTS: ReadonlySet<ListKey> = new Set(["document-types", "tarla", "institutions"]);
 
 /**
- * Slice #38.50: the lists whose names are short — „Teren Arabil", „Română" — take a narrower name
+ * Slice #38.50: the lists whose names are short — „Garaj", „Română" — take a narrower name
  * column, so their table is as wide as its content needs (measured at 1920 px: 125 px the longest).
  */
 const SHORT_NAME_LISTS: ReadonlySet<ListKey> = new Set(["use-categories", "person-types", "citizenships"]);

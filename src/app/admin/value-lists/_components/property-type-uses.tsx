@@ -1,0 +1,115 @@
+"use client";
+
+/**
+ * „Folosințe permise pentru fiecare tip" — the third tile of „Tipuri de proprietate și folosințe".   (Slice #39.66)
+ *
+ * A grid: a row per property type, a column per use category, a tick where the type allows the use. Each tick is
+ * written at once (PUT /api/admin/property-type-uses), as the role panel's ticks are. ⚠️ A ROW WITH NO TICK ALLOWS
+ * EVERY USE — the row says „toate" — so unticking a type's last use opens it to all of them rather than to none
+ * (src/lib/properties/type-uses.ts). The property form reads the same pairs, under the same query key.
+ *
+ * The two lists are read under the keys their own tiles use, so a type or a use added in the tile above appears here
+ * as soon as that tile's write lands.
+ */
+import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
+import { dialogCardStyle } from "@/lib/ui/field-widths";
+import { TYPE_USES_QUERY_KEY, fetchTypeUses, setTypeUse, type TypeUsePair } from "@/lib/properties/type-uses";
+import { fetchValueListRows, toLookupItems } from "./role-doc-types";
+
+export function PropertyTypeUses({ cardUnits }: { cardUnits: number }) {
+  const t = useTranslations("valueList.typeUses");
+  const qc = useQueryClient();
+  const types = useQuery({ queryKey: ["value-list", "property-types"], queryFn: () => fetchValueListRows("property-types"), select: toLookupItems });
+  const uses = useQuery({ queryKey: ["value-list", "use-categories"], queryFn: () => fetchValueListRows("use-categories"), select: toLookupItems });
+  const pairs = useQuery({ queryKey: TYPE_USES_QUERY_KEY, queryFn: fetchTypeUses });
+  const [error, setError] = useState(false);
+  // The tick shows the click at once, before the PUT and the refetch land (#37.59's lesson).
+  const [pending, setPending] = useState<Record<string, boolean>>({});
+
+  const save = useMutation({
+    mutationFn: setTypeUse,
+    onMutate: (v) => {
+      setError(false);
+      setPending((p) => ({ ...p, [`${v.propertyTypeId}:${v.useCategoryId}`]: v.allowed }));
+    },
+    onError: () => setError(true),
+    onSettled: async (_d, _e, v) => {
+      await qc.invalidateQueries({ queryKey: TYPE_USES_QUERY_KEY });
+      setPending((p) => {
+        const n = { ...p };
+        delete n[`${v.propertyTypeId}:${v.useCategoryId}`];
+        return n;
+      });
+    },
+  });
+
+  const allowed = (pair: TypeUsePair): boolean => {
+    const k = `${pair.propertyTypeId}:${pair.useCategoryId}`;
+    if (k in pending) return pending[k];
+    return (pairs.data ?? []).some((p) => p.propertyTypeId === pair.propertyTypeId && p.useCategoryId === pair.useCategoryId);
+  };
+
+  const loading = types.isPending || uses.isPending || pairs.isPending;
+
+  return (
+    <section
+      className="rounded-xl border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+      style={dialogCardStyle(cardUnits)}
+      data-property-type-uses=""
+      aria-labelledby="property-type-uses-title"
+    >
+      <div className="border-b border-card-rim px-5 py-3 dark:border-zinc-800">
+        <h2 id="property-type-uses-title" className="text-base font-semibold text-ink dark:text-zinc-100">{t("title")}</h2>
+        <p className="mt-1 text-xs text-fade dark:text-zinc-400">{t("hint")}</p>
+      </div>
+      <div className="overflow-x-auto px-5 py-3">
+        {loading ? (
+          <p className="text-sm text-fade" role="status">{t("loading")}</p>
+        ) : (
+          <table className="text-sm">
+            <thead>
+              <tr>
+                <th className="py-1 pr-3 text-left text-xs font-medium text-fade">{t("colType")}</th>
+                {(uses.data ?? []).map((u) => (
+                  <th key={u.id} className="px-1 py-1 text-xs font-medium text-fade" data-use-column={u.name}>
+                    <span className="inline-block max-w-[6rem] whitespace-normal">{u.name}</span>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {(types.data ?? []).map((ty) => {
+                const any = (uses.data ?? []).some((u) => allowed({ propertyTypeId: ty.id, useCategoryId: u.id }));
+                return (
+                  <tr key={ty.id} className="border-t border-wire dark:border-zinc-700" data-type-row={ty.name}>
+                    <td className="whitespace-nowrap py-1 pr-3 font-medium text-ink dark:text-zinc-100">
+                      {ty.name}
+                      {!any && <span className="ml-2 text-xs italic text-fade" data-allows-all="">({t("allowsAll")})</span>}
+                    </td>
+                    {(uses.data ?? []).map((u) => {
+                      const pair = { propertyTypeId: ty.id, useCategoryId: u.id };
+                      return (
+                        <td key={u.id} className="px-1 py-1 text-center">
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4"
+                            checked={allowed(pair)}
+                            onChange={(e) => save.mutate({ ...pair, allowed: e.target.checked })}
+                            aria-label={t("tick", { use: u.name, type: ty.name })}
+                          />
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+        {error && <p role="alert" className="mt-2 text-sm text-red-700 dark:text-red-400">{t("saveError")}</p>}
+      </div>
+    </section>
+  );
+}
