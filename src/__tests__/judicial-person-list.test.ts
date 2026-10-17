@@ -23,8 +23,8 @@ describe("the Judicial Persons list has no „Grupuri” filter (Slice #37.71)",
     for (const gone of [/GroupsFilterDropdown/, /GroupsFilter\b/, /groupFilter/, /groupDropdownOpen/, /availableGroupCodes/, /fetchJudicialPersonGroupCodes/, /groupCodes/, /includeUngrouped/, /groupsFilterLabel/]) {
       expect([String(gone), gone.test(VIEW)]).toEqual([String(gone), false]);
     }
-    expect(VIEW).toMatch(/queryKey: \["judicial-persons", "list", debouncedSearch, currentPage\]/);
-    expect(VIEW).toMatch(/const pageKey = `\$\{debouncedSearch\}\|\$\{currentPage\}`;/);
+    expect(VIEW).toMatch(/queryKey: \["judicial-persons", "list", debouncedSearch, currentPage, filterSig\]/); // #39.62 added the bar's signature; it read `…, currentPage]`
+    expect(VIEW).toMatch(/const pageKey = `\$\{debouncedSearch\}\|\$\{currentPage\}\|\$\{filterSig\}`;/);
   });
 
   it("the toolbar starts with the search box, then „Câmpuri afișate”", () => {

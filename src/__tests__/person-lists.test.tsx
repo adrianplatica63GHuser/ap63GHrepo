@@ -56,8 +56,8 @@ describe("„Câmpuri afișate” on the two persons' lists (Slice #37.60)", () 
     const view = read("src", "app", "natural-persons", "list-view.tsx");
     expect(view).not.toMatch(/useState\(""\);[^\n]*\n?[^\n]*(setImportance|setRelevance)/);
     expect(view).not.toMatch(/setImportance|setRelevance|importanceLabel|relevanceLabel/);
-    expect(view).toMatch(/queryKey: \["people", "list", debouncedSearch, currentPage\]/);
-    expect(view).toMatch(/const pageKey = `\$\{debouncedSearch\}\|\$\{currentPage\}`;/);
+    expect(view).toMatch(/queryKey: \["people", "list", debouncedSearch, currentPage, filterSig\]/); // #39.62 added the bar's signature; it read `…, currentPage]`
+    expect(view).toMatch(/const pageKey = `\$\{debouncedSearch\}\|\$\{currentPage\}\|\$\{filterSig\}`;/);
   });
 
   it("the lists' API returns the values the new columns need", () => {

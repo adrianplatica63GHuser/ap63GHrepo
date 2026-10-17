@@ -139,8 +139,10 @@ const FORMS = [
 
 /** The four list queries, and the column each must match on a code search. */
 const LIST_QUERIES = [
-  { fn: "listPersons",         file: path.join("src", "lib", "persons",          "queries.ts"), column: "person.code" },
-  { fn: "listJudicialPersons", file: path.join("src", "lib", "judicial-persons", "queries.ts"), column: "person.code" },
+  // Slice #39.62: the two person lists' searches are their own functions, which the lists and the filter bar's
+  // counts both call — `listPersons` and `listJudicialPersons` here until then.
+  { fn: "naturalPersonSearchCondition",  file: path.join("src", "lib", "persons",          "queries.ts"), column: "person.code" },
+  { fn: "judicialPersonSearchCondition", file: path.join("src", "lib", "judicial-persons", "queries.ts"), column: "person.code" },
   // Slice #39.61: the Properties list's search is its own function, which `listProperties` and the filter bar's
   // counts (`listPropertyFilterValues`) both call — it was `listProperties` here until then.
   { fn: "propertySearchCondition", file: path.join("src", "lib", "properties", "queries.ts"), column: "property.code" },
@@ -278,7 +280,8 @@ describe("every list search matches its entity's code", () => {
    */
   it("listJudicialPersons also matches the CUI its list shows", () => {
     const body = code(read(path.join("src", "lib", "judicial-persons", "queries.ts")));
-    expect(functionBody(body, "listJudicialPersons")).toContain("ilike(judicialPerson.cuiNumber, ");
+    // #39.62: in the list's search function (it read `functionBody(body, "listJudicialPersons")`).
+    expect(functionBody(body, "judicialPersonSearchCondition")).toContain("ilike(judicialPerson.cuiNumber, ");
   });
 });
 
