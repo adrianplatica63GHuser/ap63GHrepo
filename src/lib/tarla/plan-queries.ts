@@ -4,8 +4,8 @@
  * The import's tarla step calls this once the user has pressed „Creează" or „Leagă" on what the plan read
  * (src/lib/tarla/plan-read.ts). Nothing reaches here unconfirmed (D-12).
  *
- *   - The tarla: `findOrCreateImportTarla` — the import's own find-or-mint, under the same two locks and with the same
- *     `origin: "IMPORT"` literal, looked for in the plan's locality (#39.67). So „link" and „create" cannot race into
+ *   - The tarla: `resolveTarlaForCreate` — the import's own find-or-mint, under the same two locks and with the same
+ *     IMPORT origin, written there and only there, looked for in the plan's locality (#39.67). So „link" and „create" cannot race into
  *     two rows, and a tarla someone added by hand meanwhile is adopted, not duplicated.
  *   - The parcels: added when the tarla does not have that number yet (folded, as the unique index folds it);
  *     a parcel already recorded keeps what it has — a second plan of the same tarla adds, it never overwrites.
@@ -13,10 +13,10 @@
  *
  * One transaction: a plan is linked to a tarla with its parcels, or nothing is written.
  */
-import { asc, eq } from "drizzle-orm";
+import { asc, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { document, documentTarla, lookupDocumentType, lookupTarla, lookupUseCategory, tarlaParcel } from "@/db/schema";
-import { findOrCreateImportTarla } from "@/lib/properties/queries";
+import { resolveTarlaForCreate } from "@/lib/properties/queries";
 import { matchUseCategory, type TarlaPlanParcel } from "./plan-read";
 import type { TarlaParcelItem, TarlaPlanItem } from "./types";
 
@@ -49,8 +49,15 @@ export async function applyTarlaPlan(input: TarlaPlanApply): Promise<TarlaPlanAp
     const [doc] = await tx.select({ id: document.id }).from(document).where(eq(document.id, input.documentId)).limit(1);
     if (!doc) throw new TarlaPlanDocumentMissing();
 
-    const found = await findOrCreateImportTarla(tx, input.indicativ, input.locality);
-    if (!found) throw new Error("tarla_code_empty");
+    const tarlaId = await resolveTarlaForCreate(tx, { tarlaCode: input.indicativ, tarlaLocality: input.locality });
+    if (!tarlaId) throw new Error("tarla_code_empty");
+    // Created by this transaction? `now()` is the transaction's start in Postgres, and a row inserted in it carries
+    // exactly that as its default `created_at` — so the comparison is exact, and needs no second copy of the scan.
+    const [row] = await tx
+      .select({ created: sql<boolean>`${lookupTarla.createdAt} = now()` })
+      .from(lookupTarla)
+      .where(eq(lookupTarla.id, tarlaId));
+    const found = { id: tarlaId, created: row?.created === true };
     // A tarla the plan created takes the county the plan printed; one that existed keeps its own.
     if (found.created && input.county) {
       await tx.update(lookupTarla).set({ county: input.county, updatedAt: new Date() }).where(eq(lookupTarla.id, found.id));

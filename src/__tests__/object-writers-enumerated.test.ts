@@ -409,8 +409,11 @@ describe("every writer to the four object tables is named", () => {
     // reintroduce is ~25 000 statements for a 5 000-property move against
     // about 60, which is why the port is set-shaped. Slice #34.07 examined it
     // and deliberately left it.
+    // Slice #39.69: `${stamp}` after the new value — `updated_at = now()` on an unversioned table that has one
+    // (tarla_parcel), nothing on the four object tables, which are versioned. Was
+    // „sql`UPDATE ${table} SET ${column} = ${to} WHERE ${column} = ${from} RETURNING ${returning}`".
     expect(read(SRC, "lib", "admin", "value-lists", "queries.ts")).toContain(
-      "sql`UPDATE ${table} SET ${column} = ${to} WHERE ${column} = ${from} RETURNING ${returning}`",
+      "sql`UPDATE ${table} SET ${column} = ${to}${stamp} WHERE ${column} = ${from} RETURNING ${returning}`",
     );
   });
 });

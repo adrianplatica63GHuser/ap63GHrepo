@@ -62,6 +62,7 @@ import type { PgColumn } from "drizzle-orm/pg-core";
 import { VALID_LIST_KEYS, type ListKey } from "@/lib/admin/value-lists/config";
 import {
   LIST_DEPENDENCIES,
+  MOVE_STAMPS_UPDATED_AT,
   UNVERSIONED_MOVE_TABLES,
   type VersionedEntityKey,
 } from "@/lib/admin/value-lists/dependents";
@@ -485,6 +486,8 @@ describe("the unversioned association tables", () => {
       person_person:     "personPerson",
       property_property: "propertyProperty",
       document_document: "documentDocument",
+      document_tarla:    "documentTarla", // Slice #39.69
+      tarla_parcel:      "tarlaParcel",   // Slice #39.69 — has an updated_at, which the move stamps
     };
     const schema = read("db", "schema", "index.ts");
 
@@ -497,7 +500,8 @@ describe("the unversioned association tables", () => {
         true,
       ]);
       expect([table, /updatedBy/.test(block)]).toEqual([table, false]);
-      expect([table, /updatedAt/.test(block)]).toEqual([table, false]);
+      // Slice #39.69: `false` for every table until tarla_parcel, whose `updated_at` the move stamps.
+      expect([table, /updatedAt/.test(block)]).toEqual([table, MOVE_STAMPS_UPDATED_AT.includes(table)]);
       // …and no version table keys on them.
       expect([table, schema.includes(`pgTable("${table}_version"`)]).toEqual([
         table,
@@ -510,6 +514,15 @@ describe("the unversioned association tables", () => {
 // ---------------------------------------------------------------------------
 // 4. The mover really writes the trail, in the transaction that moved the rows
 // ---------------------------------------------------------------------------
+
+describe("an unversioned table with an updated_at (Slice #39.69)", () => {
+  it("has it stamped by the move's own UPDATE", () => {
+    const mover = code(read("lib", "admin", "value-lists", "queries.ts"));
+    expect(mover).toContain("MOVE_STAMPS_UPDATED_AT.includes(getTableName(ref.table))");
+    expect(mover.replace(/\s+/g, "")).toContain("sql`,updated_at=now()`");
+    expect([...MOVE_STAMPS_UPDATED_AT]).toEqual(["tarla_parcel"]);
+  });
+});
 
 describe("the move records itself", () => {
   const moverSource = () => read("lib", "admin", "value-lists", "queries.ts");

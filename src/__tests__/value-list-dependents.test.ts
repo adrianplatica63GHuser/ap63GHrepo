@@ -208,7 +208,7 @@ describe("the dependency map", () => {
 
   // Slice #39.66: „the two whitelist edges" until lookup_property_type_use added two more.
   // Slice #39.67: „the four" until tarla_corner added a tarla's outline.
-  it("marks exactly the five configuration edges", () => {
+  it("marks exactly the six configuration edges", () => {
     // A configuration ref does not block a delete and is never moved. Getting
     // this set wrong in either direction is a real failure: too wide and a
     // delete silently blanks real associations, too narrow and a role ticked
@@ -230,6 +230,8 @@ describe("the dependency map", () => {
         "use-categories:lookup_property_type_use.use_category_id",
         // Slice #39.67: a tarla's outline goes with the tarla.
         "tarla:tarla_corner.tarla_id",
+        // Slice #39.69: and so do its parcels (its plans are dependents: they move and hold a delete back).
+        "tarla:tarla_parcel.tarla_id",
       ].sort(),
     );
     /*
@@ -258,15 +260,16 @@ describe("the dependency map", () => {
      * is asserted below, against the real function, rather than inferred from a
      * flag.
      */
+    // Slice #39.69: a second, decided on purpose — a plan's link to its tarla is unique over (document, tarla), so
+    // merging two tarlale both linked to one plan collides and is refused with a count, as a person's role is. Was
+    // the one pair `["person-roles", "person_document"]`.
+    const objectRefsWithUnique: string[] = [];
     for (const list of LISTS) {
       for (const ref of LIST_DEPENDENCIES[list].refs) {
-        if (ref.uniqueWith && !ref.configuration) {
-          // The one object ref this is true of. If a second ever appears, this
-          // line is what makes somebody decide about it on purpose.
-          expect([list, getTableName(ref.table)]).toEqual(["person-roles", "person_document"]);
-        }
+        if (ref.uniqueWith && !ref.configuration) objectRefsWithUnique.push(`${list}:${getTableName(ref.table)}`);
       }
     }
+    expect(objectRefsWithUnique.sort()).toEqual(["person-roles:person_document", "tarla:document_tarla"]);
   });
 
   /**

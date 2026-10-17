@@ -710,9 +710,10 @@ export const LIST_DEPENDENCIES: Record<ListKey, ListDependencies> = {
  * tag itself.
  *
  * value-list-move-history.test.ts asserts this list against BOTH the map and
- * the schema, in both directions — so a sixth unversioned ref, or an
- * `updated_by` added to one of these five, fails a test rather than being
- * quietly left unstamped.
+ * the schema, in both directions — so another unversioned ref, or an
+ * `updated_by` added to one of these, fails a test rather than being
+ * quietly left unstamped. Seven since Slice #39.69; `tarla_parcel`'s `updated_at`
+ * is stamped by the move (`MOVE_STAMPS_UPDATED_AT`).
  */
 export const UNVERSIONED_MOVE_TABLES = [
   "property_person",
@@ -720,7 +721,21 @@ export const UNVERSIONED_MOVE_TABLES = [
   "person_person",
   "property_property",
   "document_document",
+  // Slice #39.69 (migration_113): a plan linked to a tarla, moved with „Unește" on tarlale; and a parcel's use,
+  // moved with „Unește" on use categories.
+  "document_tarla",
+  "tarla_parcel",
 ] as const;
+
+/**
+ * The one exception to „no `updated_at`" above: unversioned tables that carry one, which the move therefore stamps
+ * (`updated_at = now()`) in the same UPDATE that re-points the tag.                      (Slice #39.69)
+ *
+ * `tarla_parcel` is not an association row: it is a tarla's own content, with an `updated_at` as `tarla_corner` has.
+ * Its use is a value-list tag, so a use-category merge re-points it, and a move that left `updated_at` behind would be
+ * the stale stamp the paragraph above exists to forbid. value-list-move-history.test.ts pins both halves.
+ */
+export const MOVE_STAMPS_UPDATED_AT: readonly string[] = ["tarla_parcel"];
 
 /** One class of dependent and how many of them there are. */
 export type DependentCount = {

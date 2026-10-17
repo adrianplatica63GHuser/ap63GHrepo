@@ -51,7 +51,13 @@ const ALLOW: Record<string, Allowed[]> = {
   ],
   "src/app/tarlale/_components/tarla-detail.tsx": [
     ["A113", "{p.code}"],
+    ["A113", "{d.code}"], // Slice #39.69: a plan's code opens the plan
+    ["A113", "{p.sourceDocumentCode}"], // Slice #39.69: the plan a parcel came from
     ["A113", "{d.code}"],
+  ],
+  // Slice #39.69: the tarla step — „Deschide pagina tarlalei” at the end of the proposal's sentence (A096).
+  "src/app/admin/import/_components/tarla-plan-dialog.tsx": [
+    ["A096", "{chunks}"],
   ],
   "src/app/(all-roles)/admin/global-search/_components/global-search-view.tsx": [
     ["A113", "{row.entityType === \"PROPERTY\" ? propertyLabel(row, nameOr(n"], // #37.57: the name is the link

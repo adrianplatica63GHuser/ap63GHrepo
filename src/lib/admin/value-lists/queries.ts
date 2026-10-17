@@ -71,6 +71,7 @@ import type { ListKey } from "./config";
 import { getCurrentUser } from "@/lib/auth/current-user";
 import { recordMoveHistory } from "./move-history";
 import {
+  MOVE_STAMPS_UPDATED_AT,
   LIST_DEPENDENCIES,
   dependentNotes,
   type DependentCount,
@@ -1501,8 +1502,10 @@ async function moveRef(
   // place that knows which they were — a second SELECT afterwards would look
   // for the SOURCE value that no longer exists.
   const returning = versioned ? sql.identifier(versioned.idColumn.name) : sql`1`;
+  // Slice #39.69: an unversioned table with an `updated_at` of its own has it stamped by the same UPDATE.
+  const stamp = !versioned && MOVE_STAMPS_UPDATED_AT.includes(getTableName(ref.table)) ? sql`, updated_at = now()` : sql``;
   const moved = await tx.execute(
-    sql`UPDATE ${table} SET ${column} = ${to} WHERE ${column} = ${from} RETURNING ${returning}`,
+    sql`UPDATE ${table} SET ${column} = ${to}${stamp} WHERE ${column} = ${from} RETURNING ${returning}`,
   );
 
   const rows = moved.rows as Array<Record<string, unknown>>;
