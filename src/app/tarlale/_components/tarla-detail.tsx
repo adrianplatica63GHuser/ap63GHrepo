@@ -27,6 +27,8 @@ import { TARLA, boxStyle } from "@/lib/ui/field-widths";
 import { tarlaLabel } from "@/lib/tarla/label";
 import type { TarlaDocumentItem, TarlaFull, TarlaPropertyItem } from "@/lib/tarla/types";
 import { TARLA_LIST_QUERY_KEY } from "./tarla-list";
+import { TarlaMap } from "./tarla-map";
+import { MAP_BOX_HEIGHT_REM } from "@/lib/ui/field-widths";
 
 type Draft = {
   indicativ: string;
@@ -84,6 +86,14 @@ export function TarlaDetail({ id }: { id: string }) {
   const properties = useQuery({
     queryKey: ["tarla", id, "properties"],
     queryFn: () => getJson<{ items: TarlaPropertyItem[] }>(`/api/tarlale/${id}/properties`).then((b) => b.items),
+  });
+  // Slice #39.68: the properties' corners — drawn on the page's map, and the outline's hull when none is drawn.
+  const propertyCorners = useQuery({
+    queryKey: ["tarla", id, "corners"],
+    queryFn: () =>
+      getJson<{ items: { id: string; corners: { lat: number; lon: number }[] }[] }>(`/api/tarlale/${id}/corners`).then(
+        (b) => b.items,
+      ),
   });
   const documents = useQuery({
     queryKey: ["tarla", id, "documents"],
@@ -215,6 +225,20 @@ export function TarlaDetail({ id }: { id: string }) {
           {t("outline")}
         </h2>
         <p className="mt-1 text-xs text-fade dark:text-zinc-400">{t("outlineHint")}</p>
+        {/* Slice #39.68: the outline on a map — the corners below when drawn, else the shape around the properties. */}
+        <div className="mt-3 overflow-hidden rounded-md border border-wire" style={{ height: `${MAP_BOX_HEIGHT_REM}rem` }}>
+          {propertyCorners.data ? (
+            <TarlaMap
+              id={id}
+              indicativ={current.indicativ || tarla.data.indicativ}
+              locality={current.locality || null}
+              own={current.corners}
+              properties={propertyCorners.data}
+            />
+          ) : (
+            <ActivityCue>{tc("loading")}</ActivityCue>
+          )}
+        </div>
         <div className="mt-3">
           <CornersManager corners={current.corners} onChange={(next) => set("corners", next)} />
         </div>

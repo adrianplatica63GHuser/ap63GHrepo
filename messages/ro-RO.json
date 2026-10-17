@@ -292,7 +292,9 @@
         "hintMore": "Apasă pe hartă pentru a adăuga puncte",
         "hintClose": "Apasă pe hartă pentru a adăuga puncte · apasă punctul 1 pentru a închide"
       },
-      "loadingChunk": "Se încarcă harta…"
+      "loadingChunk": "Se încarcă harta…",
+      "tarlaleButton": "Tarlale",
+      "tarlaleHint": "Conturul fiecărei tarlale: colțurile ei, dacă sunt desenate, altfel forma din jurul proprietăților ei. Un clic pe contur sau pe cod deschide tarlaua."
     },
     "createTitle": "Proprietate nouă",
     "saveError": "Salvarea a eșuat",
@@ -4912,7 +4914,7 @@
         "notes": "Note"
       },
       "outline": "Contur",
-      "outlineHint": "Opțional: colțurile tarlalei, introduse ca la o proprietate. Desenul pe hartă vine într-o versiune următoare.",
+      "outlineHint": "Colțurile tarlalei, introduse ca la o proprietate. Fără ele, harta arată forma din jurul proprietăților tarlalei.",
       "save": "Salvează",
       "saved": "Salvat.",
       "saveError": "Tarla nu s-a putut salva. Încercați din nou.",
@@ -4933,7 +4935,8 @@
         "docTitle": "Titlu",
         "docType": "Tip act",
         "viaProperties": "Prin proprietățile"
-      }
+      },
+      "mapNone": "Niciun contur: tarlaua nu are colțuri desenate, iar proprietățile ei nu au colțuri."
     },
     "info": {
       "title": "Despre limitele tarlalelor",

@@ -1,7 +1,7 @@
 "use client";
 
 import { useNameOr } from "@/components/record/use-name-or";
-import { ArrowRight, Check, DraftingCompass, Group, RotateCcw, Ruler, ScanEye, Settings2, Square, SquareCheck, SquareDashedMousePointer, Trash2, X } from "lucide-react";
+import { ArrowRight, Check, DraftingCompass, Fence, Group, RotateCcw, Ruler, ScanEye, Settings2, Square, SquareCheck, SquareDashedMousePointer, Trash2, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -45,6 +45,8 @@ import { AreaDelimitedIcon, AreaFreeIcon } from "@/components/icons/area-icons";
 import { usePolygonDraw } from "@/components/maps/use-polygon-draw";
 import { AREA_PULSE_CLASS, readAreaPulse, useAreaPulse } from "@/lib/ui/area-pulse";
 import { AreaLayer } from "./area-layer";
+import { TarlaLayer } from "@/components/maps/tarla-layer";
+import { tarlaOutlines } from "@/lib/geo/tarla-outline";
 import { NavigateButton } from "@/components/maps/navigate-dialog";
 import {
   FOCUS_BLINK,
@@ -84,6 +86,8 @@ type MapProperty = {
   id:         string;
   code:       string;
   nickname:   string | null;
+  // Slice #39.68: the property's tarla — its corners make the tarla's outline when the tarla has none drawn.
+  tarlaId:    string | null;
   corners:    Corner[];
   // PROPERTY-group codes this property belongs to (Slice #18.08). Empty when
   // it belongs to no group.
@@ -94,6 +98,8 @@ type MapResponse = {
   items: MapProperty[];
   // Every PROPERTY-target group code — the Groups panel's checkbox list.
   allGroupCodes: string[];
+  // Slice #39.68: every tarla, with its own (drawn) corners — the „Tarlale" layer.
+  tarlale?: { id: string; indicativ: string; locality: string | null; corners: Corner[] }[];
 };
 
 type LatLng = { lat: number; lng: number };
@@ -959,6 +965,8 @@ export default function PropertyMap() {
   // group codes. Tracking unchecked (rather than checked) means "all checked"
   // is the empty-set default, so no async init from the loaded code list.
   const [groupsPanelOpen, setGroupsPanelOpen] = useState(false);
+  // Slice #39.68: the „Tarlale" layer — off by default (Ask first 2).
+  const [showTarlale, setShowTarlale] = useState(false);
   const [uncheckedGroups, setUncheckedGroups] = useState<Set<string>>(new Set());
   const mapGroupsMasterRef = useRef<HTMLInputElement>(null);
 
@@ -1060,6 +1068,17 @@ export default function PropertyMap() {
   const withGeometry  = items.filter((p) => p.corners.length >= 1);
   // #39.35: „Navighează" in the bubble takes the property's corners from here.
   const cornersById   = useMemo(() => new globalThis.Map((data?.items ?? []).map((p) => [p.id, p.corners] as const)), [data?.items]);
+  // Slice #39.68: each tarla's outline — its drawn corners, else the hull of its properties' — computed once per load.
+  const tarlaOnMap    = useMemo(
+    () =>
+      tarlaOutlines(data?.tarlale ?? [], data?.items ?? []).map(({ tarla, outline }) => ({
+        id: tarla.id,
+        indicativ: tarla.indicativ,
+        locality: tarla.locality,
+        outline,
+      })),
+    [data?.tarlale, data?.items],
+  );
 
   // Group filter — applied only on the "all" tab. A property is hidden only
   // when every group it belongs to is unchecked (see isPropertyVisibleForGroups).
@@ -2167,6 +2186,10 @@ export default function PropertyMap() {
             // Slice #39.07: the area tools measure through the Ruler's local Stereo 70 fit, refitted on every settle.
             <RulerCalibrator active={rulerMode || areaOn} onCalibrate={recalibrateRuler} />
           )}
+          {/* Slice #39.68 — the „Tarlale" layer: each outline dashed, labelled from about 6 km down; a click opens it */}
+          {showTarlale && activeTab === "all" && (
+            <TarlaLayer tarlale={tarlaOnMap} onOpen={(id) => router.push(`/tarlale/${id}`)} />
+          )}
           {/* Slices #39.07/#39.08 — the area tools' polygon, its corners and its area */}
           {areaOn && (
             <AreaLayer
@@ -2419,6 +2442,18 @@ export default function PropertyMap() {
                 onClick={freeDraw.exitDraw}
               />
             )}
+
+            {/* Slice #39.68 — „Tarlale": the tarla outlines, a toggle beside Grupuri, off by default. */}
+            <IconButton
+              icon={Fence}
+              label={t("map.tarlaleButton")}
+              note={t("map.tarlaleHint")}
+              variant={showTarlale ? "primary" : "secondary"}
+              size="sm"
+              aria-pressed={showTarlale}
+              data-map-layer="tarlale"
+              onClick={() => setShowTarlale((on) => !on)}
+            />
 
             {/* Groups filter — button + dropdown panel (Slice #18.08).        */}
             {/* Panel is anchored under the button (left-0 right-0 → exactly    */}

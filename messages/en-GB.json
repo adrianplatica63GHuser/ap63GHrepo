@@ -292,7 +292,9 @@
         "hintMore": "Click map to add corners",
         "hintClose": "Click map to add corners · click corner 1 to close"
       },
-      "loadingChunk": "Loading map…"
+      "loadingChunk": "Loading map…",
+      "tarlaleButton": "Tarlale",
+      "tarlaleHint": "Each tarla's outline: its own corners when drawn, otherwise the shape around its properties. A click on the outline or the code opens the tarla."
     },
     "createTitle": "New Property",
     "saveError": "Could not save",
@@ -4912,7 +4914,7 @@
         "notes": "Notes"
       },
       "outline": "Outline",
-      "outlineHint": "Optional: the tarla's corners, entered as on a property. Drawing them on the map comes in a later version.",
+      "outlineHint": "The tarla's corners, entered as on a property. Without them, the map shows the shape around the tarla's properties.",
       "save": "Save",
       "saved": "Saved.",
       "saveError": "The tarla could not be saved. Try again.",
@@ -4933,7 +4935,8 @@
         "docTitle": "Title",
         "docType": "Document Type",
         "viaProperties": "Through the properties"
-      }
+      },
+      "mapNone": "No outline: the tarla has no corners drawn, and its properties have no corners."
     },
     "info": {
       "title": "About tarla boundaries",
