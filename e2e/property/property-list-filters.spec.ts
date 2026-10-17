@@ -38,7 +38,8 @@ test.describe("TC-PROP-14 — filtrele listei proprietăților", () => {
       // The list is newest first; the case names the rows, not their order.
       const shows = (...ns: string[]) =>
         expect.poll(async () => (await rows.allInnerTexts()).map((t) => t.trim()).sort(), { timeout: 30_000 }).toEqual(ns.map((n) => `${MARK} ${n}`));
-      const value = (name: string) => main.locator("[data-filter-value]").filter({ hasText: name });
+      // A value's row by its name exactly — „SA" is in „SRL"'s neighbours' words, and the count follows the name.
+      const value = (name: string) => main.locator("[data-filter-value]").filter({ has: page.locator("span", { hasText: new RegExp(`^${name}$`) }) });
 
       // Step 1 — the three, by the search.
       await page.goto(`/properties?q=${MARK}`);

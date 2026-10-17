@@ -151,6 +151,8 @@ export async function createNaturalPerson(
     // Slice #39.30: „Decedat" and „Data decesului", for TC-INHER-03 and TC-PERS-11.
     isDeceased?: boolean;
     dateOfDeath?: string;
+    // Slice #39.62: „Tip profesional", for TC-PERS-12's filter.
+    physicalPersonTypeId?: string;
   },
 ): Promise<string> {
   const body = await postJson<{ person: { id: string } }>(request, ROUTE.person, {

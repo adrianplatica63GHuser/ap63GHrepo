@@ -167,7 +167,7 @@ export const SKILLS: readonly Skill[] = [
     },
     predecessors: [],
     screens: ["natural-persons-list", "judicial-persons-list", "properties-list", "documents-list"],
-    cases: ["TC-PROP-06", "TC-PERS-04", "TC-PERS-06", "TC-DOC-08", "TC-LAYOUT-02", "TC-LAYOUT-03", "TC-LAYOUT-05", "TC-PROP-14"],
+    cases: ["TC-PROP-06", "TC-PERS-04", "TC-PERS-06", "TC-DOC-08", "TC-LAYOUT-02", "TC-LAYOUT-03", "TC-LAYOUT-05", "TC-PROP-14", "TC-PERS-12", "TC-PERS-13"],
     manual: ["start-lists", "start-example-find", "persons-list", "properties-list", "documents-list"],
   },
   {
