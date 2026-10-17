@@ -12,11 +12,14 @@
  *   those rows untouched. Passing address: null deletes the address row.
  */
 
-import { and, count, desc, eq, ilike, inArray, isNotNull, or, sql } from "drizzle-orm";
+import { and, count, desc, eq, ilike, inArray, isNotNull, or, sql, type SQL } from "drizzle-orm";
 import { db, type DbTransaction } from "@/db";
 import { deletePrincipalObjects } from "@/lib/entities/delete";
 import { cadastralKey, cadastralValue } from "./cadastral-identity";
 import { perSearchTerms } from "@/lib/search/per-terms";
+import { NONE_VALUE, withoutFilter, type FacetValue, type FilterState } from "@/lib/list/filter-bar";
+import type { PropertyFacetField } from "./list-filters";
+import { inGroups, propertyFilterConditions, textValue } from "./list-filter-sql";
 // Slice #34.32 — migration_083's fold, so the auto-seed adopts under the same
 // rule the index enforces. See `findFolded` in `resolveTarlaForCreate`.
 import { sameTarlaCode, tarlaLockIdentities } from "./tarla-code-guard";
@@ -457,12 +460,124 @@ export async function listPropertyVersions(
 // List
 // ---------------------------------------------------------------------------
 
-export async function listProperties(opts: PropertyListQuery): Promise<{
+// ---------------------------------------------------------------------------
+// The list's filter bar (Slice #39.61) — its conditions are `./list-filter-sql`, which needs no database
+// ---------------------------------------------------------------------------
+
+/** The free-text search of the list's box, as `listProperties` has always read it. */
+function propertySearchCondition(q: string | undefined): SQL | undefined {
+  const t = q?.trim();
+  if (!t) return undefined;
+  const pat = `%${t}%`;
+  return or(
+    ilike(property.code,            pat),
+    // Slice #37.39: as typed, and with its `per` decoded.
+    ...perSearchTerms(t).map((x) => ilike(property.nickname, `%${x}%`)),
+    ilike(property.cadastralNumber, pat),
+    ilike(property.carteFunciara,   pat),
+    // Slice #34.03: the code lives one table over now. The LEFT JOIN in both of `listProperties`' queries is what
+    // makes this reachable; on a property with no tarla `indicativ` is NULL and `ilike` is NULL, which `or` treats
+    // as "no match" — the same answer the old NULL `tarla_sola` gave.
+    ...perSearchTerms(t).map((x) => ilike(lookupTarla.indicativ, `%${x}%`)),
+    ...perSearchTerms(t).map((x) => ilike(property.parcela, `%${x}%`)),
+  );
+}
+
+/**
+ * The values a checklist offers, with how many properties of the list hold each — counted over the list with the
+ * search and every OTHER filter applied (#39.61's Ask first 3), so the counts say what ticking a value would show.
+ * „(necompletat)" is `_none`. A group is named by its code and its description. A value ticked in the field's own
+ * filter that the list no longer holds comes back too, with a count of 0 and its name, so its chip can still say
+ * what it is and it can still be unticked.
+ */
+export async function listPropertyFilterValues(
+  field: PropertyFacetField,
+  opts: { q?: string; filters?: FilterState },
+): Promise<FacetValue[]> {
+  const held = await countPropertyFilterValues(field, opts);
+  const own = opts.filters?.[field];
+  const missing = own?.kind === "values" ? own.ids.filter((id) => id !== NONE_VALUE && !held.some((h) => h.id === id)) : [];
+  if (missing.length === 0) return held;
+  const named = await namePropertyFilterValues(field, missing);
+  return [...held, ...missing.map((id) => ({ id, label: named.get(id) ?? id, count: 0 }))];
+}
+
+/** The names of values no row of the list holds just now: a value list's entries by id, groups by code. */
+async function namePropertyFilterValues(field: PropertyFacetField, ids: readonly string[]): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  if (field === "locality" || field === "county") {
+    for (const id of ids) out.set(id, id);
+    return out;
+  }
+  if (field === "group") {
+    const rows = await db.select({ code: groups.code, description: groups.description }).from(groups).where(inArray(groups.code, [...ids]));
+    for (const r of rows) out.set(r.code, `${r.code} — ${r.description}`);
+    return out;
+  }
+  const table = field === "propertyType" ? lookupPropertyType : lookupUseCategory;
+  if (field === "tarla") {
+    const rows = await db.select({ id: lookupTarla.id, name: lookupTarla.indicativ }).from(lookupTarla).where(inArray(lookupTarla.id, [...ids]));
+    for (const r of rows) out.set(r.id, r.name);
+    return out;
+  }
+  const rows = await db.select({ id: table.id, name: table.name }).from(table).where(inArray(table.id, [...ids]));
+  for (const r of rows) out.set(r.id, r.name);
+  return out;
+}
+
+async function countPropertyFilterValues(
+  field: PropertyFacetField,
+  opts: { q?: string; filters?: FilterState },
+): Promise<FacetValue[]> {
+  const where = and(propertySearchCondition(opts.q), ...propertyFilterConditions(withoutFilter(opts.filters ?? {}, field)));
+  const whereSql = where ? sql`WHERE ${where}` : sql``;
+  const from = sql`${property}
+    LEFT JOIN ${lookupTarla} ON ${lookupTarla.id} = ${property.tarlaId}
+    LEFT JOIN ${lookupUseCategory} ON ${lookupUseCategory.id} = ${property.useCategoryId}
+    LEFT JOIN ${lookupPropertyType} ON ${lookupPropertyType.id} = ${property.propertyTypeId}
+    LEFT JOIN ${propertyAddress} ON ${propertyAddress.propertyId} = ${property.id}`;
+  type Row = { id: string | null; label: string | null; n: number };
+  const read = (rows: Row[]): FacetValue[] =>
+    rows.map((r) => ({ id: r.id ?? NONE_VALUE, label: r.id === null ? null : r.label, count: Number(r.n) }));
+
+  if (field === "group") {
+    const [inGroup, none] = await Promise.all([
+      db.execute<Row>(sql`
+        SELECT g_fv.code AS id, g_fv.code || ' — ' || g_fv.description AS label, count(DISTINCT ${property.id})::int AS n
+        FROM ${from}
+        JOIN ${groupMember} gm_fv ON gm_fv.principal_object_id = ${property.principalObjectId}
+        JOIN ${groups} g_fv ON g_fv.id = gm_fv.group_id AND g_fv.target_type = 'PROPERTY'
+        ${whereSql}
+        GROUP BY g_fv.code, g_fv.description`),
+      db.execute<{ n: number }>(sql`
+        SELECT count(DISTINCT ${property.id})::int AS n FROM ${from}
+        ${where ? sql`WHERE ${where} AND ${inGroups([NONE_VALUE])}` : sql`WHERE ${inGroups([NONE_VALUE])}`}`),
+    ]);
+    const noneCount = Number(none.rows[0]?.n ?? 0);
+    return [...read(inGroup.rows), ...(noneCount > 0 ? [{ id: NONE_VALUE, label: null, count: noneCount }] : [])];
+  }
+
+  const pick: Record<Exclude<PropertyFacetField, "group">, { id: SQL; label: SQL }> = {
+    propertyType: { id: sql`${property.propertyTypeId}::text`, label: sql`${lookupPropertyType.name}` },
+    useCategory:  { id: sql`${property.useCategoryId}::text`,  label: sql`${lookupUseCategory.name}` },
+    tarla:        { id: sql`${property.tarlaId}::text`,        label: sql`${lookupTarla.indicativ}` },
+    locality:     { id: textValue(propertyAddress.locality),   label: textValue(propertyAddress.locality) },
+    county:       { id: textValue(propertyAddress.county),     label: textValue(propertyAddress.county) },
+  };
+  const { id, label } = pick[field];
+  const res = await db.execute<Row>(sql`
+    SELECT ${id} AS id, ${label} AS label, count(DISTINCT ${property.id})::int AS n
+    FROM ${from}
+    ${whereSql}
+    GROUP BY 1, 2`);
+  return read(res.rows);
+}
+
+export async function listProperties(opts: PropertyListQuery & { filters?: FilterState }): Promise<{
   items: PropertyListItem[];
   total: number;
 }> {
   const q   = opts.q?.trim();
-  const pat = q ? `%${q}%` : null;
 
   // Slice #18.17: Groups filter.
   // groupCodes undefined → no filter.
@@ -506,22 +621,10 @@ export async function listProperties(opts: PropertyListQuery): Promise<{
   }
 
   const where = and(
-    pat
-      ? or(
-          ilike(property.code,            pat),
-          // Slice #37.39: as typed, and with its `per` decoded.
-          ...perSearchTerms(q).map((t) => ilike(property.nickname, `%${t}%`)),
-          ilike(property.cadastralNumber, pat),
-          ilike(property.carteFunciara,   pat),
-          // Slice #34.03: the code lives one table over now. The LEFT JOIN
-          // below is what makes this reachable; on a property with no tarla
-          // `indicativ` is NULL and `ilike` is NULL, which `or` treats as
-          // "no match" — the same answer the old NULL `tarla_sola` gave.
-          ...perSearchTerms(q).map((t) => ilike(lookupTarla.indicativ, `%${t}%`)),
-          ...perSearchTerms(q).map((t) => ilike(property.parcela, `%${t}%`)),
-        )
-      : undefined,
+    propertySearchCondition(q),
     groupFilter,
+    // Slice #39.61: the filter bar's fields.
+    ...propertyFilterConditions(opts.filters ?? {}),
     // Slice #20.06: metadata filters.
     opts.importance ? eq(entityMetadata.importance, opts.importance) : undefined,
     opts.relevance  ? eq(entityMetadata.relevance,  opts.relevance)  : undefined,
@@ -581,6 +684,10 @@ export async function listProperties(opts: PropertyListQuery): Promise<{
       // only when the user types something. The same trap the comment below
       // records for entityMetadata, one slice later.
       .leftJoin(lookupTarla, eq(lookupTarla.id, property.tarlaId))
+      // Slice #39.61: and the bar's filters name these three — the same trap.
+      .leftJoin(lookupUseCategory, eq(lookupUseCategory.id, property.useCategoryId))
+      .leftJoin(lookupPropertyType, eq(lookupPropertyType.id, property.propertyTypeId))
+      .leftJoin(propertyAddress, eq(propertyAddress.propertyId, property.id))
       // Slice #20.06: must join entityMetadata when importance/relevance filter active.
       .leftJoin(
         entityMetadata,

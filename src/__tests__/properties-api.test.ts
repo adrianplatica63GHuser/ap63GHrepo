@@ -101,6 +101,16 @@ describe("GET /api/properties", () => {
     expect(mocks.listProperties).toHaveBeenCalledWith({ q: "bragadiru", limit: 10, offset: 0 });
   });
 
+  it("forwards the filter bar's fields, whitelisted (#39.61)", async () => {
+    mocks.listProperties.mockResolvedValueOnce({ items: [], total: 0 });
+    await listGet(req("http://localhost/api/properties?surfaceAreaMp=100..500&parcela=7&propertyType=not-a-uuid&zz=1"));
+    expect(mocks.listProperties).toHaveBeenCalledWith({
+      limit: 50,
+      offset: 0,
+      filters: { surfaceAreaMp: { kind: "range", from: 100, to: 500 }, parcela: { kind: "text", text: "7" } },
+    });
+  });
+
   it("rejects limit above 200 with 400", async () => {
     const res = await listGet(req("http://localhost/api/properties?limit=999"));
     expect(res.status).toBe(400);

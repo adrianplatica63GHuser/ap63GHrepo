@@ -7,6 +7,7 @@
  */
 
 import { createInsertSchema } from "drizzle-zod";
+import type { FilterState } from "@/lib/list/filter-bar";
 import { z } from "zod/v4";
 import { property } from "@/db/schema";
 
@@ -241,5 +242,8 @@ export const propertyListQuerySchema = z.object({
   importance: z.enum(["LOW", "MEDIUM", "HIGH"]).optional(),
   //   "INACTIVE"|"HISTORICAL"|"CURRENT"|"FUTURE" → filter to that relevance value
   relevance:  z.enum(["INACTIVE", "HISTORICAL", "CURRENT", "FUTURE"]).optional(),
+  // Slice #39.61: the filter bar's fields — already whitelisted and typed by `parsePropertyFilters`
+  // (src/lib/properties/list-filters.ts), which is the only thing that builds this.
+  filters: z.custom<FilterState>((v) => typeof v === "object" && v !== null && !Array.isArray(v)).optional(),
 });
 export type PropertyListQuery = z.infer<typeof propertyListQuerySchema>;

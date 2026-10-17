@@ -17,6 +17,8 @@ import {
   propertyCreateSchema,
   propertyListQuerySchema,
 } from "@/lib/properties/validation";
+import { parsePropertyFilters } from "@/lib/properties/list-filters";
+import type { FilterState } from "@/lib/list/filter-bar";
 import { provenanceFromRequestBody } from "@/lib/metadata/provenance";
 import { setInitialProvenance } from "@/lib/metadata/queries";
 import { getCurrentUserEmail } from "@/lib/auth/current-user";
@@ -28,6 +30,11 @@ import { getCurrentUserEmail } from "@/lib/auth/current-user";
  * bundle to carry one string is the wrong trade.
  */
 const PARCEL_EXISTS = "PARCEL_EXISTS";
+
+/** No filter set is no `filters` at all — the call is the one it was before the bar (#39.61). */
+function filtersOrNone(f: FilterState): FilterState | undefined {
+  return Object.keys(f).length > 0 ? f : undefined;
+}
 
 export async function GET(request: NextRequest): Promise<Response> {
   const url = new URL(request.url);
@@ -56,6 +63,8 @@ export async function GET(request: NextRequest): Promise<Response> {
     // Slice #20.06: metadata filters.
     importance:      url.searchParams.get("importance")   ?? undefined,
     relevance:       url.searchParams.get("relevance")    ?? undefined,
+    // Slice #39.61: the filter bar's fields, whitelisted.
+    filters:         filtersOrNone(parsePropertyFilters(url.searchParams)),
   });
 
   if (!parsed.success) {
