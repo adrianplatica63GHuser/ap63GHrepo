@@ -316,6 +316,9 @@
       "notes": "Note",
       "noneOption": "niciunul"
     },
+    "filters": {
+      "group": "Grup"
+    },
     "bowTie": {
       "marker": "Ordinea colțurilor se încrucișează",
       "markerHint": "Colțurile sunt exact cum au fost introduse — ORDINEA lor se încrucișează, iar din acest motiv suprafața calculată de mai sus nu are sens, nu este doar greșită. Îndreptarea schimbă numai ordinea; fiecare colț își păstrează propriul număr.",
@@ -1009,6 +1012,27 @@
       "HISTORICAL": "Istoric",
       "CURRENT": "Actual",
       "FUTURE": "De perspectivă"
+    },
+    "filterBar": {
+      "add": "Adaugă un filtru",
+      "addOption": "+ Filtru",
+      "clearAll": "Șterge filtrele",
+      "remove": "Scoate filtrul „{field}”",
+      "close": "Închide",
+      "none": "(necompletat)",
+      "valuesCount": "{count, plural, one {o valoare} few {# valori} other {# de valori}}",
+      "search": "Caută o valoare…",
+      "searchEmpty": "Nicio valoare nu se potrivește.",
+      "loading": "Se încarcă…",
+      "loadError": "Valorile nu au putut fi încărcate.",
+      "from": "De la",
+      "to": "Până la",
+      "rangeBoth": "{from} – {to}",
+      "rangeFrom": "cel puțin {from}",
+      "rangeTo": "cel mult {to}",
+      "contains": "conține „{text}”",
+      "containsLabel": "Conține",
+      "funnel": "Filtrează după „{field}”"
     },
     "listFilters": {
       "expiringSoon": "Expiră curând",

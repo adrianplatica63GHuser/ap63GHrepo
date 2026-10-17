@@ -316,6 +316,9 @@
       "notes": "Notes",
       "noneOption": "none"
     },
+    "filters": {
+      "group": "Group"
+    },
     "bowTie": {
       "marker": "The corner order crosses itself",
       "markerHint": "The corners are as they were entered — it is the ORDER that crosses, which makes the calculated area above a meaningless number rather than a wrong one. Straightening changes only the order; every corner keeps its own number.",
@@ -1009,6 +1012,27 @@
       "HISTORICAL": "Historical",
       "CURRENT": "Current",
       "FUTURE": "Future"
+    },
+    "filterBar": {
+      "add": "Add a filter",
+      "addOption": "+ Filter",
+      "clearAll": "Clear filters",
+      "remove": "Remove the „{field}” filter",
+      "close": "Close",
+      "none": "(empty)",
+      "valuesCount": "{count, plural, one {# value} other {# values}}",
+      "search": "Search for a value…",
+      "searchEmpty": "No value matches.",
+      "loading": "Loading…",
+      "loadError": "The values could not be loaded.",
+      "from": "From",
+      "to": "To",
+      "rangeBoth": "{from} – {to}",
+      "rangeFrom": "at least {from}",
+      "rangeTo": "at most {to}",
+      "contains": "contains „{text}”",
+      "containsLabel": "Contains",
+      "funnel": "Filter by „{field}”"
     },
     "listFilters": {
       "expiringSoon": "Expiring soon",

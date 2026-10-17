@@ -22,6 +22,15 @@ import { IncursionTile } from "@/app/_components/incursion-tile";
 import { useListAddress, useListScrollMemory, useWriteListAddress } from "@/components/list/use-list-address";
 import { FieldChooser, useFieldChooser, type ChooserField } from "@/components/list/field-chooser";
 import { LIST_COLUMN_CHOICE } from "@/lib/ui/list-columns";
+import { FilterBar, FilterFunnel, type FilterBarField } from "@/components/list/filter-bar";
+import {
+  appendFilterParams,
+  filterAddressPatch,
+  filterSignature,
+  type FacetValue,
+  type FilterState,
+} from "@/lib/list/filter-bar";
+import { PROPERTY_FILTER_FIELDS, PROPERTY_FILTER_KEYS, parsePropertyFilters, type PropertyFilterKey } from "@/lib/properties/list-filters";
 
 const PAGE_SIZE = 15;
 // Slice #37.94: the key and the defaults (Tarla/Solă, Parcelă) are LIST_COLUMN_CHOICE.property.
@@ -65,15 +74,45 @@ type ListResponse = {
 
 // Slice #37.61: no importance or relevance filter any more — the route still
 // takes both parameters, and nothing here sends them.
-async function fetchProperties(q: string, page: number): Promise<ListResponse> {
+// Slice #39.61: the filter bar's filters, in the address's words (`appendFilterParams`).
+async function fetchProperties(q: string, page: number, filters: FilterState): Promise<ListResponse> {
   const url = new URL("/api/properties", window.location.origin);
   if (q)          url.searchParams.set("q",          q);
+  appendFilterParams(url.searchParams, filters, PROPERTY_FILTER_FIELDS);
   url.searchParams.set("limit",  String(PAGE_SIZE));
   url.searchParams.set("offset", String(page * PAGE_SIZE));
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Request failed (${res.status})`);
   return res.json();
 }
+
+/**
+ * Slice #39.61 — a checklist's values, counted with the search and every other filter applied. The field's own
+ * filter is sent too: the route leaves it out of the counts, and names a ticked value the list no longer holds.
+ */
+async function fetchFilterValues(field: string, q: string, filters: FilterState): Promise<FacetValue[]> {
+  const url = new URL("/api/properties/filter-values", window.location.origin);
+  url.searchParams.set("field", field);
+  if (q) url.searchParams.set("q", q);
+  appendFilterParams(url.searchParams, filters, PROPERTY_FILTER_FIELDS);
+  const res = await fetch(url);
+  if (res.redirected || !res.ok) throw new Error(`Request failed (${res.status})`);
+  const body = (await res.json()) as { items?: FacetValue[] };
+  return body.items ?? [];
+}
+
+/** Slice #39.61 — which column's funnel opens which filter. */
+const COLUMN_FILTER: Readonly<Record<string, PropertyFilterKey>> = {
+  tarlaSola:        "tarla",
+  parcela:          "parcela",
+  surfaceAreaMp:    "surfaceAreaMp",
+  calculatedAreaMp: "calculatedAreaMp",
+  carteFunciara:    "carteFunciara",
+  cadastralNumber:  "cadastralNumber",
+  useCategory:      "useCategory",
+  propertyType:     "propertyType",
+  locality:         "locality",
+};
 
 async function callBatchDelete(ids: string[]): Promise<void> {
   const res = await fetch("/api/properties/batch-delete", {
@@ -153,8 +192,16 @@ export function PropertyListView() {
   const queryClient = useQueryClient();
 
   // Slice #39.26: the view starts from the list's address — Back from a record brings it back as it was left.
-  const address = useListAddress();
+  const address = useListAddress(PROPERTY_FILTER_KEYS);
   const [searchInput,     setSearchInput]     = useState(address.search);
+  // Slice #39.61: the filter bar — from the address, like the search; a change goes back to the first page.
+  const [filters, setFilters] = useState<FilterState>(() => parsePropertyFilters({ get: (k) => address.filters[k] ?? null }));
+  const [editingFilter, setEditingFilter] = useState<string | null>(null);
+  const filterSig = filterSignature(filters, PROPERTY_FILTER_FIELDS);
+  function changeFilters(next: FilterState) {
+    setFilters(next);
+    setCurrentPage(0);
+  }
   const [debouncedSearch, setDebouncedSearch] = useState(address.search);
   const [currentPage,     setCurrentPage]     = useState(address.page);
 
@@ -177,8 +224,8 @@ export function PropertyListView() {
   }, [searchInput, debouncedSearch]);
 
   const query = useQuery<ListResponse>({
-    queryKey: ["properties", "list", debouncedSearch, currentPage],
-    queryFn:  () => fetchProperties(debouncedSearch, currentPage),
+    queryKey: ["properties", "list", debouncedSearch, currentPage, filterSig],
+    queryFn:  () => fetchProperties(debouncedSearch, currentPage, filters),
   });
 
   const total      = query.data?.total ?? 0;
@@ -189,10 +236,13 @@ export function PropertyListView() {
   // Slice #32.15: this key must carry every value the query key above carries.
   // A filter that is missing here leaves ticks set on rows the filter has just
   // taken off the screen, and the bulk delete then acts on records nobody can see.
-  const pageKey = `${debouncedSearch}|${currentPage}`;
+  const pageKey = `${debouncedSearch}|${currentPage}|${filterSig}`;
   // Slice #39.26: the view, in the list's address; the scroll, in the session. The search as typed, not debounced:
   // a link that carries it (Acte's type filter) must not find the box's last word missing.
-  useWriteListAddress({ search: searchInput, page: currentPage }, `${searchInput}|${currentPage}`);
+  useWriteListAddress(
+    { search: searchInput, page: currentPage, filters: filterAddressPatch(filters, PROPERTY_FILTER_FIELDS) },
+    `${searchInput}|${currentPage}|${filterSig}`,
+  );
   useListScrollMemory(query.isSuccess);
   const [prevPageKey, setPrevPageKey] = useState(pageKey);
   if (prevPageKey !== pageKey) {
@@ -298,6 +348,22 @@ export function PropertyListView() {
   const shownCols = chooser.visible.flatMap((key) => optionalCols.filter((c) => c.key === key));
   // Slice #37.72: Poreclă always, the first after the checkbox. Slice #38.57: the list's own columns, one line each.
   const columns: ColumnName[] = ["listBadges", "listPropertyNickname", ...shownCols.map((c) => c.column), "listRowActions"];
+  // Slice #39.61: the bar's fields, labelled as the form and the columns label them, in the „+ Filtru" order.
+  const filterLabels: Record<PropertyFilterKey, string> = {
+    propertyType:     t("fields.propertyType"),
+    useCategory:      t("fields.useCategory"),
+    tarla:            t("table.tarlaSola"),
+    locality:         t("table.locality"),
+    county:           t("address.county"),
+    group:            t("filters.group"),
+    surfaceAreaMp:    t("fields.surfaceAreaMp"),
+    calculatedAreaMp: t("fields.calculatedAreaMp"),
+    cadastralNumber:  t("fields.cadastralNumber"),
+    carteFunciara:    t("fields.carteFunciara"),
+    parcela:          t("fields.parcela"),
+  };
+  const filterFields: FilterBarField[] = PROPERTY_FILTER_FIELDS.map((f) => ({ key: f.key, kind: f.kind, label: filterLabels[f.key] }));
+
   // Slice #37.84: the toolbar's group ends at the table frame's right edge, not the window's.
   const edge = useListEdge(columns);
   const colCount = columns.length;
@@ -329,6 +395,17 @@ export function PropertyListView() {
           visible={chooser.visible}
           max={MAX_OPT}
           onToggle={chooser.toggle}
+        />
+
+        {/* Slice #39.61 — the filter bar: a chip per filter, „+ Filtru", „Șterge filtrele". */}
+        <FilterBar
+          fields={filterFields}
+          state={filters}
+          onChange={changeFilters}
+          editing={editingFilter}
+          onEditing={setEditingFilter}
+          loadValues={(key) => fetchFilterValues(key, debouncedSearch, filters)}
+          valuesKey={(key) => ["properties", "filter-values", key, debouncedSearch, filterSig]}
         />
 
         <div className="ml-auto flex items-center gap-2">
@@ -408,11 +485,22 @@ export function PropertyListView() {
                 <th className="px-4 py-2" {...columnHead("listPropertyNickname")}>
                   {t("table.nickname")}
                 </th>
-                {shownCols.map((col) => (
-                  <th key={col.key} className="px-4 py-2" {...columnHead(col.column)}>
-                    {col.label}
-                  </th>
-                ))}
+                {shownCols.map((col) => {
+                  const filterKey = COLUMN_FILTER[col.key];
+                  return (
+                    <th key={col.key} className="px-4 py-2" {...columnHead(col.column)}>
+                      {col.label}
+                      {/* Slice #39.61: the column's funnel opens its filter in the bar. */}
+                      {filterKey && (
+                        <FilterFunnel
+                          label={filterLabels[filterKey]}
+                          active={filters[filterKey] !== undefined}
+                          onOpen={() => setEditingFilter(filterKey)}
+                        />
+                      )}
+                    </th>
+                  );
+                })}
                 <th className="px-4 py-2" {...columnHead("listRowActions")} />
               </tr>
             </thead>
