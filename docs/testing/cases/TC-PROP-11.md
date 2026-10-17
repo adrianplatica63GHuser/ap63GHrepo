@@ -23,9 +23,9 @@ flags, is the defect.
 
 - TC-AUTH-01 is green.
 - **Created through the API** as `e2e/helpers/records.ts` creates prerequisites: a property
-  „TC-PROP-11 Teren urban" of type Teren Construit, and a property „TC-PROP-11 Teren agricol" of
-  type Teren Arabil. Teren Construit shows „Adresă" and „Street View" and not Tarla/Solă and
-  Parcelă; Teren Arabil the reverse (migration_041's profiles, as Date de referință holds them).
+  „TC-PROP-11 Teren urban" of type Teren construit, and a property „TC-PROP-11 Teren agricol" of
+  type Teren extravilan. Teren construit shows „Adresă" and „Street View" and not Tarla/Solă and
+  Parcelă; Teren extravilan the reverse (migration_041's profiles, kept by migration_111, as Date de referință holds them).
 - The window is 1920 px wide.
 
 ## What Adrian is asked for
@@ -36,10 +36,10 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „TC-PROP-11 Teren urban" | The heading `TC-PROP-11 Teren urban`, its `<h1>` named exactly that; after it „  -  " and „(Teren Construit)" in italics, at the heading's size; then an ⓘ named „Despre tipul proprietății" |
+| 1 | Opens „TC-PROP-11 Teren urban" | The heading `TC-PROP-11 Teren urban`, its `<h1>` named exactly that; after it „  -  " and „(Teren construit)" in italics, at the heading's size; then an ⓘ named „Despre tipul proprietății" |
 | 2 | Presses the ⓘ | A bubble, in italics: „Pentru acest tip se afișează „Adresă” și „Street View”. Tarla/Solă și Parcelă nu apar în „Identificare cadastrală”." |
-| 3 | Opens „TC-PROP-11 Teren agricol" | After its name „(Teren Arabil)"; the ⓘ's bubble: „Pentru acest tip nu se afișează „Adresă” și „Street View”. Tarla/Solă și Parcelă apar în „Identificare cadastrală”." |
-| 4 | Chooses „Teren Construit" in „Tip proprietate", without saving | At once „(Teren Construit)", and the bubble of step 2 |
+| 3 | Opens „TC-PROP-11 Teren agricol" | After its name „(Teren extravilan)"; the ⓘ's bubble: „Pentru acest tip nu se afișează „Adresă” și „Street View”. Tarla/Solă și Parcelă apar în „Identificare cadastrală”." |
+| 4 | Chooses „Teren construit" in „Tip proprietate", without saving | At once „(Teren construit)", and the bubble of step 2 |
 | 5 | Chooses „niciunul" in „Tip proprietate", without saving | Nothing after the name: no dash, no type, no ⓘ |
 
 ## At the end — leaving things as they were found
@@ -70,3 +70,9 @@ translates it.
 **2026-10-05 — `automated` (Slice #38.03).** The test runner's full run 20261005T200656Z-867 on
 5406f1e ran `e2e/property/property-heading-type.spec.ts` green with the other 88 (lint, tsc, jest and
 forms-drift green too).
+
+**2026-10-17 — Slice #39.66, the types renamed, the steps not.** migration_111 folded „Teren Arabil"
+into „Teren extravilan" and renamed „Teren Construit" to „Teren construit", with the same three flags
+each; the steps above now name the new types, and nothing else in them changed. The spec was changed
+the same way: it finds the two types by NAME, because the new ones carry no key. Its first runner
+result on the renamed types is recorded here when it lands.

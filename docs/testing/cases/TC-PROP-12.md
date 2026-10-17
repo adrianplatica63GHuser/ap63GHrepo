@@ -22,7 +22,7 @@ the defect.
 
 - TC-AUTH-01 is green.
 - **Created through the API** as `e2e/helpers/records.ts` creates prerequisites: a property
-  „TC-PROP-12 Teren agricol" of type Teren Arabil (it shows neither „Adresă" nor „Street View").
+  „TC-PROP-12 Teren agricol" of type Teren extravilan (it shows neither „Adresă" nor „Street View").
 - In this browser, nothing is stored under the Property's tile choice (`ga40-tiles-property-v1`,
   `localStorage`); whatever was there is kept to put back at the end. So the screen opens on its
   defaults: Date cadastrale, Adresă, Hartă, Puncte de contur.
@@ -38,10 +38,10 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „TC-PROP-12 Teren agricol" | In the bar „Adresă" and „Street View" unticked and disabled, their labels in italics; each one's tooltip „Tipul „Teren Arabil” nu afișează această fișă."; Date cadastrale, Hartă and Puncte de contur ticked. No „Adresă" tile on screen |
+| 1 | Opens „TC-PROP-12 Teren agricol" | In the bar „Adresă" and „Street View" unticked and disabled, their labels in italics; each one's tooltip „Tipul „Teren extravilan” nu afișează această fișă."; Date cadastrale, Hartă and Puncte de contur ticked. No „Adresă" tile on screen |
 | 2 | Presses „Toate" | Every other box ticked; „Adresă" and „Street View" still unticked and disabled |
 | 3 | Presses „Implicit" | Date cadastrale, Hartă and Puncte de contur ticked, the rest not; „Adresă" and „Street View" still unticked and disabled |
-| 4 | Chooses „Teren Construit" in „Tip proprietate", without saving | „Adresă" and „Street View" enabled, no longer in italics, no tooltip; „Adresă" ticked, as the default choice holds it, and its tile on screen; „Street View" unticked |
+| 4 | Chooses „Teren construit" in „Tip proprietate", without saving | „Adresă" and „Street View" enabled, no longer in italics, no tooltip; „Adresă" ticked, as the default choice holds it, and its tile on screen; „Street View" unticked |
 
 ## At the end — leaving things as they were found
 
@@ -75,3 +75,9 @@ translates it.
 **2026-10-05 — `automated` (Slice #38.04).** The test runner's full run 20261005T210427Z-8996 on
 fe9ee19 ran `e2e/property/property-tiles-by-type.spec.ts` green with the other 89 (lint, tsc, jest and
 forms-drift green too).
+
+**2026-10-17 — Slice #39.66, the types renamed, the steps not.** migration_111 folded „Teren Arabil"
+into „Teren extravilan" and renamed „Teren Construit" to „Teren construit", with the same three flags
+each; the steps above now name the new types, and nothing else in them changed. The spec was changed
+the same way: it finds the two types by NAME, because the new ones carry no key. Its first runner
+result on the renamed types is recorded here when it lands.

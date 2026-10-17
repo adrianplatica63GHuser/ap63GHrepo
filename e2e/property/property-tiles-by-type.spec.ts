@@ -7,7 +7,7 @@
  *
  * Divergences from the hand run, each for a reason the case cannot have:
  *   - The property carries `TC-E2E-PROP-12` (records.ts), and its type is found
- *     by its stable key, TEREN_ARABIL.
+ *     by name, „Teren extravilan" (#39.66: it carries no key; TEREN_ARABIL until then).
  *   - This test's browser context is new, so nothing is stored under
  *     `ga40-tiles-property-v1`; the spec removes it anyway, and the context is
  *     thrown away after.
@@ -25,15 +25,15 @@ import { tileBox, TILE_GROUP } from "../helpers/tiles";
 const MARK = `${E2E_MARKER}PROP-12`;
 const NAME = `${MARK} Teren agricol`;
 const SHOTS = "playwright-report/property-tiles-by-type";
-const REASON = "Tipul „Teren Arabil” nu afișează această fișă.";
+const REASON = "Tipul „Teren extravilan” nu afișează această fișă.";
 const OFF = ["Adresă", "Street View"];
 
-async function typeIdOf(page: Page, key: string): Promise<string> {
+async function typeIdOf(page: Page, name: string): Promise<string> {
   const res = await page.request.get("/api/admin/value-lists/property-types");
   expect(res.ok()).toBeTruthy();
-  const items = ((await res.json()) as { items: { id: string; key: string | null }[] }).items;
-  const hit = items.find((i) => i.key === key);
-  if (!hit) throw new Error(`No property type with key ${key}`);
+  const items = ((await res.json()) as { items: { id: string; name: string }[] }).items;
+  const hit = items.find((i) => i.name === name);
+  if (!hit) throw new Error(`No property type named ${name}`);
   return hit.id;
 }
 
@@ -62,7 +62,7 @@ test.describe("TC-PROP-12 — căsuțele fișelor pe care tipul nu le arată", (
     test.slow();
     await removeLeftovers(page.request, MARK);
     await page.setViewportSize({ width: 1920, height: 1200 });
-    const id = await createProperty(page.request, { nickname: NAME, propertyTypeId: await typeIdOf(page, "TEREN_ARABIL") });
+    const id = await createProperty(page.request, { nickname: NAME, propertyTypeId: await typeIdOf(page, "Teren extravilan") });
     try {
       await page.goto("/");
       await page.evaluate(() => localStorage.removeItem("ga40-tiles-property-v1"));
@@ -70,7 +70,7 @@ test.describe("TC-PROP-12 — căsuțele fișelor pe care tipul nu le arată", (
       // Step 1 — the two boxes off, disabled, italic, the type named; the defaults ticked; no „Adresă" tile.
       await page.goto(`/properties/${id}`);
       await expect(page.getByRole("heading", { level: 1, name: NAME, exact: true })).toBeVisible({ timeout: 30_000 });
-      await expect(page.locator("header [data-heading-type-name]")).toHaveText("(Teren Arabil)", { timeout: 30_000 });
+      await expect(page.locator("header [data-heading-type-name]")).toHaveText("(Teren extravilan)", { timeout: 30_000 });
       await expectOff(page);
       for (const name of ["Identificare cadastrală", "Hartă", "Puncte de contur"]) await expect(tileBox(page, name)).toBeChecked();
       await expect(page.getByRole("region", { name: "Adresă", exact: true })).toHaveCount(0);
@@ -89,9 +89,9 @@ test.describe("TC-PROP-12 — căsuțele fișelor pe care tipul nu le arată", (
       for (const name of ["Legături", "Clasificare", "Etichete și grupuri"]) await expect(tileBox(page, name)).not.toBeChecked();
       await expectOff(page);
 
-      // Step 4 — „Teren Construit" on the form, not saved: both enabled; „Adresă" ticked, its tile on screen.
-      const select = page.getByRole("combobox").filter({ has: page.locator("option", { hasText: "Teren Arabil" }) });
-      await select.selectOption({ label: "Teren Construit" });
+      // Step 4 — „Teren construit" on the form, not saved: both enabled; „Adresă" ticked, its tile on screen.
+      const select = page.getByRole("combobox").filter({ has: page.locator("option", { hasText: "Teren extravilan" }) });
+      await select.selectOption({ label: "Teren construit" });
       for (const name of OFF) {
         await expect(tileBox(page, name)).toBeEnabled();
         await expect(tileBox(page, name)).not.toHaveAttribute("title", /.+/);

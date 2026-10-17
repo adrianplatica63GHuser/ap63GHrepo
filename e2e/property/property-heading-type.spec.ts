@@ -7,7 +7,8 @@
  *
  * Divergences from the hand run, each for a reason the case cannot have:
  *   - The properties carry `TC-E2E-PROP-11` (records.ts), and the two types
- *     are found by their stable keys, TEREN_CONSTRUIT and TEREN_ARABIL.
+ *     are found by name, „Teren construit" and „Teren extravilan" (#39.66:
+ *     „Teren extravilan" carries no key; TEREN_CONSTRUIT and TEREN_ARABIL until then).
  *   - The bubble is opened by resting Playwright's mouse on the type, not by
  *     pressing the ⓘ: a press after the mouse has rested there closes it again
  *     (the ⓘ is the way in for a finger, as TC-DOC-08's step 5 notes). The
@@ -31,12 +32,12 @@ const URBAN_SAYS =
 const RURAL_SAYS =
   "Pentru acest tip nu se afișează „Adresă” și „Street View”. Tarla/Solă și Parcelă apar în „Identificare cadastrală”.";
 
-async function typeIdOf(page: Page, key: string): Promise<string> {
+async function typeIdOf(page: Page, name: string): Promise<string> {
   const res = await page.request.get("/api/admin/value-lists/property-types");
   expect(res.ok()).toBeTruthy();
-  const items = ((await res.json()) as { items: { id: string; key: string | null }[] }).items;
-  const hit = items.find((i) => i.key === key);
-  if (!hit) throw new Error(`No property type with key ${key}`);
+  const items = ((await res.json()) as { items: { id: string; name: string }[] }).items;
+  const hit = items.find((i) => i.name === name);
+  if (!hit) throw new Error(`No property type named ${name}`);
   return hit.id;
 }
 
@@ -70,14 +71,14 @@ test.describe("TC-PROP-11 — titlul proprietății numește tipul ei", () => {
     test.slow();
     await removeLeftovers(page.request, MARK);
     await page.setViewportSize({ width: 1920, height: 1200 });
-    const urban = await createProperty(page.request, { nickname: URBAN, propertyTypeId: await typeIdOf(page, "TEREN_CONSTRUIT") });
-    const rural = await createProperty(page.request, { nickname: RURAL, propertyTypeId: await typeIdOf(page, "TEREN_ARABIL") });
+    const urban = await createProperty(page.request, { nickname: URBAN, propertyTypeId: await typeIdOf(page, "Teren construit") });
+    const rural = await createProperty(page.request, { nickname: RURAL, propertyTypeId: await typeIdOf(page, "Teren extravilan") });
     try {
-      // Step 1 — the name in the <h1>; after it „  -  " and „(Teren Construit)" in italics; the ⓘ.
+      // Step 1 — the name in the <h1>; after it „  -  " and „(Teren construit)" in italics; the ⓘ.
       await page.goto(`/properties/${urban}`);
       await expect(page.getByRole("heading", { level: 1, name: URBAN, exact: true })).toBeVisible({ timeout: 30_000 });
       const h = headingType(page);
-      await expect(h.name).toHaveText("(Teren Construit)", { timeout: 30_000 });
+      await expect(h.name).toHaveText("(Teren construit)", { timeout: 30_000 });
       expect(await h.separator.textContent()).toBe("  -  ");
       await expect(h.name).toHaveCSS("font-style", "italic");
       await expect(h.part).toHaveCSS("font-size", "24px");
@@ -91,20 +92,20 @@ test.describe("TC-PROP-11 — titlul proprietății numește tipul ei", () => {
       await expect(h.bubble).toHaveCSS("font-style", "italic");
       await photograph(page, "urban");
 
-      // Step 3 — the agricultural property: „(Teren Arabil)" and its sentence.
+      // Step 3 — the agricultural property: „(Teren extravilan)" and its sentence.
       await page.goto(`/properties/${rural}`);
       await expect(page.getByRole("heading", { level: 1, name: RURAL, exact: true })).toBeVisible({ timeout: 30_000 });
-      await expect(h.name).toHaveText("(Teren Arabil)", { timeout: 30_000 });
+      await expect(h.name).toHaveText("(Teren extravilan)", { timeout: 30_000 });
       await expect(h.bubble).toHaveText(RURAL_SAYS);
       await h.name.hover();
       // Open: the bubble drawn, not the screen-reader copy (`sr-only` reads as visible to Playwright).
       await expect(h.bubble).not.toHaveClass(/sr-only/);
       await photograph(page, "agricultural");
 
-      // Step 4 — „Teren Construit" chosen on the form, not saved: the heading and the bubble follow.
-      const select = page.getByRole("combobox").filter({ has: page.locator("option", { hasText: "Teren Arabil" }) });
-      await select.selectOption({ label: "Teren Construit" });
-      await expect(h.name).toHaveText("(Teren Construit)");
+      // Step 4 — „Teren construit" chosen on the form, not saved: the heading and the bubble follow.
+      const select = page.getByRole("combobox").filter({ has: page.locator("option", { hasText: "Teren extravilan" }) });
+      await select.selectOption({ label: "Teren construit" });
+      await expect(h.name).toHaveText("(Teren construit)");
       await expect(h.bubble).toHaveText(URBAN_SAYS);
       await expect(page.getByRole("heading", { level: 1, name: RURAL, exact: true })).toBeVisible();
 

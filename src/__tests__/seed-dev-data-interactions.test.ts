@@ -34,10 +34,10 @@ function population(): SeedPerson[] {
   const plan = generateFamilies(2026);
   const details = naturalDetails(plan, makeRng(7), new Set());
   const companies = generateCompanies(makeRng(9), plan, details, new Set());
-  const TPC = "Teren pentru Construcții";
+  const TPC = "Teren intravilan"; // #39.66: „Teren pentru Construcții" until migration_111
   const flags = new Map<string, TypeFlags>([
-    [TPC, { tarla: true, address: true }], ["Teren Arabil", { tarla: true, address: false }], ["Pășune", { tarla: true, address: false }],
-    ["Casă", { tarla: false, address: true }], ["Teren Construit", { tarla: false, address: true }], ["Apartament", { tarla: false, address: true }],
+    [TPC, { tarla: true, address: true }], ["Teren extravilan", { tarla: true, address: false }],
+    ["Casă", { tarla: false, address: true }], ["Teren construit", { tarla: false, address: true }], ["Apartament", { tarla: false, address: true }],
   ]);
   const props = generateProperties(makeRng(11), { plan, companies, existing: [], takenNumbers: new Set(), tarlas: ["52", "61"], flags, names: new Map() });
   const forms = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "db", "document-type-forms.json"), "utf8")).forms as Record<string, { key: string; type: string; options: { value: string }[] | null }[]>;

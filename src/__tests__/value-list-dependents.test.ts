@@ -199,10 +199,12 @@ describe("the dependency map", () => {
       cascades:   by("cascades"),
       blocks:     by("blocks"),
       configured: all.filter((r) => r.configuration).length,
-    }).toEqual({ total: 15, clears: 12, cascades: 2, blocks: 1, configured: 2 });
+    // Slice #39.66: `{ total: 15, cascades: 2, configured: 2 }` until lookup_property_type_use added its two halves.
+    }).toEqual({ total: 17, clears: 12, cascades: 4, blocks: 1, configured: 4 });
   });
 
-  it("marks exactly the two whitelist edges as configuration", () => {
+  // Slice #39.66: „the two whitelist edges" until lookup_property_type_use added two more.
+  it("marks exactly the four whitelist edges as configuration", () => {
     // A configuration ref does not block a delete and is never moved. Getting
     // this set wrong in either direction is a real failure: too wide and a
     // delete silently blanks real associations, too narrow and a role ticked
@@ -219,6 +221,9 @@ describe("the dependency map", () => {
         // halves stay.
         "document-types:lookup_doc_type_person_role.document_type_id",
         "person-roles:lookup_doc_type_person_role.person_role_id",
+        // Slice #39.66: the uses a property type allows, from both sides.
+        "property-types:lookup_property_type_use.property_type_id",
+        "use-categories:lookup_property_type_use.use_category_id",
       ].sort(),
     );
     /*

@@ -6,7 +6,7 @@ import fs from "fs";
 import path from "path";
 
 import { LIST_META, VALID_LIST_KEYS } from "@/lib/admin/value-lists/config";
-import { VALUE_LIST_CATEGORIES, categoryOfList, listsByCategory, usedFirst } from "@/lib/admin/value-lists/categories";
+import { VALUE_LIST_CATEGORIES, categoryOfList, listsByCategory, listsOnPage, pageListOf, usedFirst } from "@/lib/admin/value-lists/categories";
 import {
   PANEL_BORDER_REM,
   PANEL_PADDING_REM,
@@ -39,13 +39,25 @@ describe("the categories (nothing disappears)", () => {
     expect(titles(ro)).toEqual([
       ["Tipuri de Persoană Fizică", "Tipuri de Persoană Juridică", "Tipuri de Proprietate", "Tipuri de Document"],
       ["Roluri Persoane", "Legături Proprietate → Proprietate", "Legături Document → Document"],
-      ["Indicative Tarla", "Categorii Folosință", "Cetățenie", "Instituții"],
+      // #39.66: „Categorii Folosință" left this group — a tile on the property types' page (below).
+      ["Indicative Tarla", "Cetățenie", "Instituții"],
     ]);
     expect(titles(en)).toEqual([
       ["Physical Person Types", "Judicial Person Types", "Property Types", "Document Types"],
       ["Person Roles", "Property → Property Links", "Document → Document Links"],
-      ["Tarla Codes", "Use Categories", "Citizenship", "Institutions"],
+      ["Tarla Codes", "Citizenship", "Institutions"],
     ]);
+  });
+
+  it("put the use categories on the property types' page, named for both (#39.66)", () => {
+    expect(pageListOf("use-categories")).toBe("property-types");
+    expect(pageListOf("tarla")).toBe("tarla");
+    expect(listsOnPage("use-categories")).toEqual(["property-types", "use-categories"]);
+    expect(listsOnPage("property-types")).toEqual(["property-types", "use-categories"]);
+    expect(listsOnPage("citizenships")).toEqual(["citizenships"]);
+    expect(categoryOfList("use-categories")).toBe("objectTypes");
+    expect(ro.valueList.lists.propertyTypesPage).toBe("Tipuri de proprietate și folosințe");
+    expect(en.valueList.lists.propertyTypesPage).toBe("Property types and uses");
   });
 
   it("keep no category key that names a group the page no longer has", () => {
@@ -53,7 +65,8 @@ describe("the categories (nothing disappears)", () => {
   });
 
   it("hold every list the hub opened, each exactly once — so „Altele” is empty today", () => {
-    const all = listsByCategory().flatMap((c) => c.lists);
+    // #39.66: a list that is a tile of another's page is reached through that page, so it is in no group.
+    const all = listsByCategory().flatMap((c) => c.lists).flatMap((k) => listsOnPage(k).filter((l) => l === k || pageListOf(l) === k));
     expect([...all].sort()).toEqual([...VALID_LIST_KEYS].sort());
     expect(new Set(all).size).toBe(all.length);
     expect(listsByCategory().map((c) => c.id)).not.toContain("other");
@@ -137,7 +150,8 @@ describe("the page", () => {
     expect(panel).toContain('role="region"');
     expect(panel).not.toContain("aria-modal");
     expect(panel).not.toMatch(/fixed inset/);
-    expect(hub).toContain("<ValueListModal\n              key={selected}");
+    // #39.66: one panel per list on the page, each keyed on its own list (was `key={selected}`).
+    expect(hub).toContain("{listsOnPage(selected).map((key) => (\n              <ValueListModal\n                key={key}");
   });
 
   it("moves between the lists with ↑ ↓ Home End", () => {

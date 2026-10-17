@@ -424,8 +424,8 @@ describe("the properties", () => {
   // a property already in the database: a 600 × 600 m block in the middle of the range
   const block: Poly = [{ n: 322_200, e: 579_700 }, { n: 322_200, e: 580_300 }, { n: 322_800, e: 580_300 }, { n: 322_800, e: 579_700 }];
   const flags = new Map<string, TypeFlags>([
-    [TPC, { tarla: true, address: true }], ["Teren Arabil", { tarla: true, address: false }], ["Pășune", { tarla: true, address: false }],
-    ["Casă", { tarla: false, address: true }], ["Teren Construit", { tarla: false, address: true }], ["Apartament", { tarla: false, address: true }],
+    [TPC, { tarla: true, address: true }], ["Teren extravilan", { tarla: true, address: false }],
+    ["Casă", { tarla: false, address: true }], ["Teren construit", { tarla: false, address: true }], ["Apartament", { tarla: false, address: true }],
   ]);
   const taken = new Set(["60000", "70000"]);
   const props = generateProperties(makeRng(11), { plan, companies, existing: [block], takenNumbers: new Set(taken), tarlas: ["52", "61", "T3"], flags, names: new Map() });
@@ -433,7 +433,7 @@ describe("the properties", () => {
   const firms = new Map(companies.map((c) => [c.key, c]));
   const drawn = props.filter((p) => p.corners);
 
-  it("600, in Adrian's proportions: 360 „Curți construcții”, all of them among 480 „Teren pentru Construcții”", () => {
+  it("600, in Adrian's proportions: 360 „Curți-construcții”, all of them among 480 „Teren intravilan” (#39.66)", () => {
     expect(props).toHaveLength(PROPERTY_TOTAL);
     expect(props.filter((p) => p.useCategory === CURTI).length).toBe(360);
     expect(props.filter((p) => p.type === TPC).length).toBe(480);
@@ -548,8 +548,8 @@ describe("the documents", () => {
   const details = naturalDetails(plan, makeRng(7), new Set());
   const companies = generateCompanies(makeRng(9), plan, details, new Set());
   const flags = new Map<string, TypeFlags>([
-    [TPC, { tarla: true, address: true }], ["Teren Arabil", { tarla: true, address: false }], ["Pășune", { tarla: true, address: false }],
-    ["Casă", { tarla: false, address: true }], ["Teren Construit", { tarla: false, address: true }], ["Apartament", { tarla: false, address: true }],
+    [TPC, { tarla: true, address: true }], ["Teren extravilan", { tarla: true, address: false }],
+    ["Casă", { tarla: false, address: true }], ["Teren construit", { tarla: false, address: true }], ["Apartament", { tarla: false, address: true }],
   ]);
   const props = generateProperties(makeRng(11), { plan, companies, existing: [], takenNumbers: new Set(), tarlas: ["52", "61"], flags, names: new Map() });
   // the forms as the repository holds them (src/db/document-type-forms.json — the screens' forms, exported)
@@ -660,8 +660,8 @@ describe("„Legături”: every object at 3–15 rows", () => {
   const details = naturalDetails(plan, makeRng(7), new Set());
   const companies = generateCompanies(makeRng(9), plan, details, new Set());
   const flags = new Map<string, TypeFlags>([
-    [TPC, { tarla: true, address: true }], ["Teren Arabil", { tarla: true, address: false }], ["Pășune", { tarla: true, address: false }],
-    ["Casă", { tarla: false, address: true }], ["Teren Construit", { tarla: false, address: true }], ["Apartament", { tarla: false, address: true }],
+    [TPC, { tarla: true, address: true }], ["Teren extravilan", { tarla: true, address: false }],
+    ["Casă", { tarla: false, address: true }], ["Teren construit", { tarla: false, address: true }], ["Apartament", { tarla: false, address: true }],
   ]);
   const props = generateProperties(makeRng(11), { plan, companies, existing: [], takenNumbers: new Set(), tarlas: ["52"], flags, names: new Map() });
   const forms = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "db", "document-type-forms.json"), "utf8")).forms as Record<string, { key: string; type: string; options: { value: string }[] | null }[]>;

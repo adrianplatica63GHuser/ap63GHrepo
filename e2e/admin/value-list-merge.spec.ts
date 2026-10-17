@@ -72,7 +72,7 @@ test.describe("TC-VL-02 — „Date de referință” pe o pagină, două valori
 
       // Step 1 — the page: Adrian's three groups, each with its lists in his order (#38.61 — #38.35 had five,
       // „Proprietăți", „Persoane", „Acte", „Roluri", „Legături între obiecte"); no list name wraps; „Categorii
-      // Folosință" open, marked in the column.
+      // Folosință" open, its page marked in the column (#39.66).
       await page.goto("/admin/value-lists?list=use-categories");
       const nav = page.getByRole("navigation", { name: "Liste de referință" });
       await expect(nav.locator("h2")).toHaveText(["Tipuri de obiecte", "Roluri și legături", "Liste de valori"], { timeout: 30_000 });
@@ -84,12 +84,13 @@ test.describe("TC-VL-02 — „Date de referință” pe o pagină, două valori
         }))),
       );
       expect(groups.map((g) => g.map((b) => b.name))).toEqual([
-        ["Tipuri de Persoană Fizică", "Tipuri de Persoană Juridică", "Tipuri de Proprietate", "Tipuri de Document"],
+        // #39.66: „Categorii Folosință" is a tile on the property types' page, named for both.
+        ["Tipuri de Persoană Fizică", "Tipuri de Persoană Juridică", "Tipuri de proprietate și folosințe", "Tipuri de Document"],
         ["Roluri Persoane", "Legături Proprietate → Proprietate", "Legături Document → Document"],
-        ["Indicative Tarla", "Categorii Folosință", "Cetățenie", "Instituții"],
+        ["Indicative Tarla", "Cetățenie", "Instituții"],
       ]);
       expect(groups.flat().filter((b) => !b.oneLine || !b.whole).map((b) => b.name)).toEqual([]);
-      await expect(nav.getByRole("button", { name: "Categorii Folosință", exact: true })).toHaveAttribute("aria-current", "page");
+      await expect(nav.getByRole("button", { name: "Tipuri de proprietate și folosințe", exact: true })).toHaveAttribute("aria-current", "page");
       const panel = page.getByRole("region", { name: "Categorii Folosință", exact: true });
       // Slice #38.59: the header is two lines, „Folosit de" over „(n obiecte)".
       await expect(panel.getByRole("columnheader", { name: /^folosit de\s*\(n obiecte\)$/i })).toBeVisible({ timeout: 30_000 });

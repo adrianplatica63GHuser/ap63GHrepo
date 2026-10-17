@@ -880,6 +880,7 @@ export const SKILLS: readonly Skill[] = [
       "TC-VL-08",
       "TC-VL-09",
       "TC-VL-10",
+      "TC-VL-11",
     ],
     manual: ["admin-reference-data-values", "admin-reference-data-roles", "admin-reference-data-document-types", "admin-reference-data", "admin-example-role"],
   },
