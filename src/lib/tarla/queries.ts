@@ -18,6 +18,7 @@ import {
   lookupTarla,
   property,
   propertyAddress,
+  propertyCorner,
   propertyDocument,
   tarlaCorner,
 } from "@/db/schema";
@@ -169,4 +170,24 @@ export async function listTarlaDocuments(id: string): Promise<TarlaDocumentItem[
     byId.set(r.id, item);
   }
   return [...byId.values()];
+}
+
+/**
+ * Slice #39.68: the corners of every property on this tarla, in order — the page draws them and, when the tarla has
+ * no outline of its own, the hull around them (src/lib/geo/tarla-outline.ts).
+ */
+export async function listTarlaPropertyCorners(id: string): Promise<{ id: string; corners: { lat: number; lon: number }[] }[]> {
+  const rows = await db
+    .select({ propertyId: propertyCorner.propertyId, lat: propertyCorner.lat, lon: propertyCorner.lon })
+    .from(propertyCorner)
+    .innerJoin(property, eq(property.id, propertyCorner.propertyId))
+    .where(eq(property.tarlaId, id))
+    .orderBy(asc(propertyCorner.propertyId), asc(propertyCorner.sequenceNo));
+  const byProperty = new Map<string, { lat: number; lon: number }[]>();
+  for (const r of rows) {
+    const list = byProperty.get(r.propertyId) ?? [];
+    list.push({ lat: r.lat, lon: r.lon });
+    byProperty.set(r.propertyId, list);
+  }
+  return [...byProperty].map(([pid, corners]) => ({ id: pid, corners }));
 }
