@@ -36,6 +36,12 @@ export const PROPERTY_FACET_FIELDS: readonly PropertyFacetField[] = PROPERTY_FIL
   (f): f is Extract<(typeof PROPERTY_FILTER_FIELDS)[number], { kind: "values" }> => f.kind === "values",
 ).map((f) => f.key);
 
+/** The checklists whose values are the text itself (an address's locality, its county), not ids. */
+const TEXT_FACET_FIELDS: readonly string[] = ["locality", "county"];
+export function isTextFacetField(key: PropertyFacetField): boolean {
+  return TEXT_FACET_FIELDS.includes(key);
+}
+
 export function isPropertyFacetField(key: string): key is PropertyFacetField {
   return (PROPERTY_FACET_FIELDS as readonly string[]).includes(key);
 }

@@ -18,7 +18,7 @@ import { deletePrincipalObjects } from "@/lib/entities/delete";
 import { cadastralKey, cadastralValue } from "./cadastral-identity";
 import { perSearchTerms } from "@/lib/search/per-terms";
 import { NONE_VALUE, withoutFilter, type FacetValue, type FilterState } from "@/lib/list/filter-bar";
-import type { PropertyFacetField } from "./list-filters";
+import { isTextFacetField, type PropertyFacetField } from "./list-filters";
 import { inGroups, propertyFilterConditions, textValue } from "./list-filter-sql";
 // Slice #34.32 — migration_083's fold, so the auto-seed adopts under the same
 // rule the index enforces. See `findFolded` in `resolveTarlaForCreate`.
@@ -505,7 +505,8 @@ export async function listPropertyFilterValues(
 /** The names of values no row of the list holds just now: a value list's entries by id, groups by code. */
 async function namePropertyFilterValues(field: PropertyFacetField, ids: readonly string[]): Promise<Map<string, string>> {
   const out = new Map<string, string>();
-  if (field === "locality" || field === "county") {
+  // Slice #39.61: by `isTextFacetField`, not the two names — this file quotes no snapshot key (object-writers-enumerated).
+  if (isTextFacetField(field)) {
     for (const id of ids) out.set(id, id);
     return out;
   }
