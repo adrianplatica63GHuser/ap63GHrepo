@@ -32,8 +32,8 @@
             {
               "id": "o2",
               "correct": false,
-              "ro": "„Din imagine scanată”",
-              "en": "„Din imagine scanată” (from a scanned image)"
+              "ro": "„Câmpuri afișate”",
+              "en": "„Câmpuri afișate” (choose fields)"
             },
             {
               "id": "o3",
@@ -44,8 +44,8 @@
             {
               "id": "o4",
               "correct": false,
-              "ro": "„Din folder text”",
-              "en": "„Din folder text” (from a text folder)"
+              "ro": "„Hartă completă”",
+              "en": "„Hartă completă” (full map)"
             }
           ]
         },
@@ -449,8 +449,8 @@
             {
               "id": "o3",
               "correct": false,
-              "ro": "În fereastra „Adaugă Proprietate”, sub cele patru căi, ca butoane cu text.",
-              "en": "In the window „Adaugă Proprietate”, under the four ways in, as text buttons."
+              "ro": "În fereastra „Adaugă Proprietate”, sub cele două căi, ca butoane cu text.",
+              "en": "In the window „Adaugă Proprietate”, under the two ways in, as text buttons."
             },
             {
               "id": "o4",

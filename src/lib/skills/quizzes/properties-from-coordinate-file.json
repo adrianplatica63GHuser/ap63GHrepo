@@ -36,8 +36,8 @@
             {
               "id": "o3",
               "correct": false,
-              "ro": "„Din imagine scanată”, care citește și fișierele .txt.",
-              "en": "„Din imagine scanată” (from a scanned image), which reads .txt files too."
+              "ro": "Niciuna: fișierele .txt se aduc doar prin import.",
+              "en": "None: .txt files come in only through the import."
             }
           ]
         },
@@ -121,31 +121,31 @@
           "id": "a4",
           "section": "properties-coord-file",
           "ro": {
-            "question": "În fereastra „Încarcă fișier cu coordonate”, aplicația vă avertizează că proprietatea nu va avea identitate cadastrală. Ce faceți după import?",
-            "explanation": "Fișierul nu aduce tarla și parcelă. Deschideți proprietatea și completați „Nr. tarla / sola” și „Nr. parcelă” în „Identificare cadastrală”, apoi salvați."
+            "question": "În fereastra „Încarcă fișier cu coordonate”, după ce ați ales fișierul, „Importă” a rămas gri. Ce mai lipsește?",
+            "explanation": "Tarlaua și parcela: alegeți tarlaua la „Nr. tarla / sola” și scrieți parcela la „Nr. parcelă”, sub fișier. Cu ele aplicația verifică, înainte să salveze, dacă parcela are deja o proprietate."
           },
           "en": {
-            "question": "In the „Încarcă fișier cu coordonate” (upload a coordinate file) window, the application warns you that the property will have no cadastral identity. What do you do after the import?",
-            "explanation": "The file brings no tarla and no parcela. Open the property and fill in „Nr. tarla / sola” and „Nr. parcelă” in „Identificare cadastrală”, then save."
+            "question": "In the „Încarcă fișier cu coordonate” (upload a coordinate file) window, you chose the file and „Importă” (import) stayed grey. What is still missing?",
+            "explanation": "The tarla and the parcela: choose the tarla at „Nr. tarla / sola” and type the parcela at „Nr. parcelă”, under the file. With them the application checks, before it saves, whether the parcel already has a property."
           },
           "options": [
             {
               "id": "o1",
               "correct": false,
-              "ro": "Nimic: aplicația le ia din numele fișierului.",
-              "en": "Nothing: the application takes them from the file's name."
+              "ro": "„Poreclă”: se scrie înainte de import.",
+              "en": "„Poreclă” (nickname): it is typed before the import."
             },
             {
               "id": "o2",
               "correct": false,
-              "ro": "Le scrieți în fișier și îl importați din nou.",
-              "en": "Write them in the file and import it again."
+              "ro": "Nimic: fișierul trebuie să aibă cel puțin patru colțuri.",
+              "en": "Nothing: the file must have at least four corners."
             },
             {
               "id": "o3",
               "correct": true,
-              "ro": "Le completați pe ecranul proprietății, în „Identificare cadastrală”.",
-              "en": "Fill them in on the property's screen, in „Identificare cadastrală”."
+              "ro": "Tarlaua și parcela, sub fișier.",
+              "en": "The tarla and the parcela, under the file."
             }
           ]
         },
@@ -342,19 +342,19 @@
           "id": "b2",
           "section": "properties-coord-file",
           "ro": {
-            "question": "Un coleg spune că tarla și parcela se pot completa oricând, că nu contează. De ce contează să le completați după import?",
-            "explanation": "Fără tarla și parcelă, proprietatea nu are identitate cadastrală: nu poate fi găsită după parcelă și nu se poate verifica dacă este un duplicat."
+            "question": "Un coleg întreabă de ce fereastra „Încarcă fișier cu coordonate” cere tarla și parcelă înainte de import. Ce îi spuneți?",
+            "explanation": "Cu ele aplicația verifică, înainte să salveze, dacă parcela are deja o proprietate. Dacă are, nu creează una nouă și vă arată proprietatea care există deja."
           },
           "en": {
-            "question": "A colleague says the tarla and the parcela can be filled in any time, that it does not matter. Why does it matter to fill them in after the import?",
-            "explanation": "Without a tarla and a parcela, the property has no cadastral identity: it cannot be found by its parcel, and it cannot be checked for being a duplicate."
+            "question": "A colleague asks why the „Încarcă fișier cu coordonate” (upload a coordinate file) window asks for a tarla and a parcela before the import. What do you tell them?",
+            "explanation": "With them the application checks, before it saves, whether the parcel already has a property. If it has, it creates no new one and shows you the property that already exists."
           },
           "options": [
             {
               "id": "o1",
               "correct": true,
-              "ro": "Fără ele nu se găsește după parcelă și nu se verifică dacă e duplicat.",
-              "en": "Without them it cannot be found by parcel or checked for being a duplicate."
+              "ro": "Ca aplicația să verifice dacă parcela are deja o proprietate, înainte să creeze una.",
+              "en": "So that the application checks whether the parcel already has a property before it creates one."
             },
             {
               "id": "o2",

@@ -49,14 +49,14 @@ The columns from „Choose fields” carry a small funnel in their header: a cli
 
 ## 5.2 A property added by hand {#properties-add}
 
-Press „Add new Property”. The window „Add Property” opens, with four ways in:
+Press „Add new Property”. The window „Add Property” opens, with two ways in:
 
 | The way | What it does |
 |---|---|
 | Manual data entry | You fill in the property's details by hand. |
-| From a scanned image | You upload a photo or a scan, and the coordinates are extracted from it. |
-| From a text file | You upload a .txt file with the corners' coordinates (section [[properties-coord-file]]). |
-| From a text folder | You choose a folder, and every .txt file in it becomes a separate property. |
+| From a text file | You upload a .txt file with the corners' coordinates and choose the tarla and the parcel (section [[properties-coord-file]]). |
+
+Both check whether the parcel already has a property (section [[properties-add-one-parcel]]). A whole folder, with documents and coordinates, comes in through the import (chapter [[import]]).
 
 This section follows „Manual data entry”. The screen „New Property” opens, with the cadastral data, the corners, the address and the map.
 
@@ -88,7 +88,7 @@ Some property types do not show the address at all (section [[properties-type-hi
 
 ### 5.2.3 One property per parcel {#properties-add-one-parcel}
 
-The archive keeps one property per parcel. If you save a new property with a tarla and a parcela that already have a property, the application refuses it: you stay on „New Property”, and below the form appears „This parcel already has a property”, explaining that no new property was created. The link „Open …” under the message takes you to the property that exists. Nothing is written, and the list holds as many properties as before.
+The archive keeps one property per parcel. If you save a new property with a tarla and a parcela that already have a property — by hand or from a coordinate file — the application refuses it: you stay on „New Property”, and below the form appears „This parcel already has a property”, explaining that no new property was created. The link „Open …” under the message takes you to the property that exists. Nothing is written, and the list holds as many properties as before.
 
 ### 5.2.4 Changing and deleting {#properties-add-edit}
 
@@ -181,8 +181,11 @@ A text file with the Stereo 70 coordinates of the corners — from a surveyor, f
 
 1. In „Properties”, press „Add new Property”, then „From a text file”.
 2. In the window „Upload coordinate file”, choose the file at „Select the coordinate file”. The file window shows only .txt files.
-3. Press „Import”.
-4. „Property imported successfully.” appears, and in the list, at the top, the new property badged „New!”. Press „Close”.
+3. Under the file, at „Tarla and parcel”, choose the tarla at „Tarla / Sola” and type the parcel at „Parcela”. Until both are filled in, „Import” stays grey.
+4. Press „Import”.
+5. „Property imported successfully.” appears, and in the list, at the top, the new property badged „New!”. Press „Close” or „Open the property”.
+
+If the parcel already has a property, no other is created: the window stays open and shows „This parcel already has a property”, with a link to the property that exists (section [[properties-add-one-parcel]]).
 
 The file has one row per corner, the values separated by a tab or a comma: the corner's index, X (North) and Y (East), in metres. Rows that hold no coordinates are ignored. If the file does not have at least three rows with valid coordinates, the application says it found no valid Stereo 70 coordinates.
 
@@ -191,9 +194,10 @@ What the new property gets:
 - „Nickname” — the file's name;
 - the corners, in the file's order, each with its number from the file in „Orig. #”;
 - „Calculated Area (m²)”, from the corners, and the map drawn;
-- the provenance „Coordinate file (.txt)”.
+- the provenance „Coordinate file (.txt)”;
+- the tarla and the parcel chosen in the window.
 
-The file brings no tarla and no parcela. That is why, already in the window, the application warns you that the property will have no cadastral identity: it cannot be found by its parcel, and it cannot be checked for being a duplicate. Open the property and fill in „Tarla / Sola” and „Parcela” in „Cadastral identification”.
+The rest of the cadastral data — the cadastral number, the land book, the area in the deeds — you fill in on the property's screen, in „Cadastral identification”.
 
 ## 5.6 „Navigate” {#properties-navigate}
 
@@ -226,9 +230,9 @@ Scan the QR code with the phone, and Google Maps starts the navigation. On the c
 
 ### 5.7.2 Bring in a parcel from a surveyor's file {#properties-example-file}
 
-1. „Add new Property”, then „From a text file”; choose the .txt file and press „Import” (section [[properties-coord-file]]).
+1. „Add new Property”, then „From a text file”; choose the .txt file, the tarla and the parcel, and press „Import” (section [[properties-coord-file]]).
 2. Open the new property and check on the map that the sides do not cross; if they do, use „Straighten the order” (section [[properties-corners-table]]).
-3. Fill in the tarla and the parcela in „Cadastral identification” and save.
+3. Fill in what else the deeds tell you in „Cadastral identification” — the cadastral number, the land book — and save.
 
 ### 5.7.3 Go to the plot with your phone {#properties-example-navigate}
 

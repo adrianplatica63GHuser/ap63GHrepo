@@ -49,14 +49,14 @@ Coloanele din „Câmpuri afișate” au în capul lor o pâlnie mică: un clic 
 
 ## 5.2 O proprietate adăugată de mână {#properties-add}
 
-Apăsați „Adaugă proprietate”. Se deschide fereastra „Adaugă Proprietate”, cu patru căi:
+Apăsați „Adaugă proprietate”. Se deschide fereastra „Adaugă Proprietate”, cu două căi:
 
 | Calea | Ce face |
 |---|---|
 | Introducere manuală | Completați detaliile proprietății manual. |
-| Din imagine scanată | Încărcați o fotografie sau o scanare, iar coordonatele se extrag din ea. |
-| Din fișier text | Încărcați un fișier .txt cu coordonatele colțurilor (secțiunea [[properties-coord-file]]). |
-| Din folder text | Alegeți un folder, iar fiecare fișier .txt din el devine o proprietate separată. |
+| Din fișier text | Încărcați un fișier .txt cu coordonatele colțurilor și alegeți tarlaua și parcela (secțiunea [[properties-coord-file]]). |
+
+Amândouă verifică dacă parcela are deja o proprietate (secțiunea [[properties-add-one-parcel]]). Un dosar întreg, cu acte și coordonate, se aduce prin import (capitolul [[import]]).
 
 Secțiunea aceasta urmează „Introducere manuală”. Se deschide ecranul „Proprietate nouă”, cu datele cadastrale, colțurile, adresa și harta.
 
@@ -88,7 +88,7 @@ Unele tipuri de proprietate nu arată adresa deloc (secțiunea [[properties-type
 
 ### 5.2.3 O singură proprietate pentru o parcelă {#properties-add-one-parcel}
 
-Arhiva ține o singură proprietate pentru fiecare parcelă. Dacă salvați o proprietate nouă cu o tarla și o parcelă care au deja o proprietate, aplicația o refuză: rămâneți pe „Proprietate nouă”, iar sub formular apare „Această parcelă are deja o proprietate”, cu explicația că nu s-a creat o proprietate nouă. Linkul „Deschide …” de sub mesaj vă duce la proprietatea care există. Nu se scrie nimic, iar lista are tot atâtea proprietăți ca înainte.
+Arhiva ține o singură proprietate pentru fiecare parcelă. Dacă salvați o proprietate nouă cu o tarla și o parcelă care au deja o proprietate — de mână sau dintr-un fișier cu coordonate —, aplicația o refuză: rămâneți pe „Proprietate nouă”, iar sub formular apare „Această parcelă are deja o proprietate”, cu explicația că nu s-a creat o proprietate nouă. Linkul „Deschide …” de sub mesaj vă duce la proprietatea care există. Nu se scrie nimic, iar lista are tot atâtea proprietăți ca înainte.
 
 ### 5.2.4 Modificarea și ștergerea {#properties-add-edit}
 
@@ -181,8 +181,11 @@ Un fișier text cu coordonatele Stereo 70 ale colțurilor — de pildă de la un
 
 1. În „Proprietăți”, apăsați „Adaugă proprietate”, apoi „Din fișier text”.
 2. În fereastra „Încarcă fișier cu coordonate”, alegeți fișierul la „Selectați fișierul cu coordonate”. Fereastra de alegere arată doar fișiere .txt.
-3. Apăsați „Importă”.
-4. Apare „Proprietatea a fost importată cu succes.”, iar în listă, sus, proprietatea nouă cu insigna „Nou!”. Apăsați „Închide”.
+3. Sub fișier, la „Tarla și parcelă”, alegeți tarlaua la „Nr. tarla / sola” și scrieți parcela la „Nr. parcelă”. Până nu le completați pe amândouă, „Importă” rămâne gri.
+4. Apăsați „Importă”.
+5. Apare „Proprietatea a fost importată cu succes.”, iar în listă, sus, proprietatea nouă cu insigna „Nou!”. Apăsați „Închide” sau „Deschide proprietatea”.
+
+Dacă parcela are deja o proprietate, nu se creează alta: fereastra rămâne deschisă și arată „Această parcelă are deja o proprietate”, cu un link spre proprietatea care există (secțiunea [[properties-add-one-parcel]]).
 
 Fișierul are câte un rând pe colț, cu valorile separate prin tab sau virgulă: indexul colțului, X (Nord) și Y (Est), în metri. Rândurile care nu conțin coordonate sunt ignorate. Dacă fișierul nu are cel puțin trei rânduri cu coordonate valide, aplicația spune că nu a găsit coordonate Stereo 70 valide.
 
@@ -191,9 +194,10 @@ Ce primește proprietatea nouă:
 - „Poreclă” — numele fișierului;
 - colțurile, în ordinea din fișier, fiecare cu numărul lui din fișier în „Nr. orig.”;
 - „Suprafață calculată (m²)”, din colțuri, și harta desenată;
-- proveniența „Fișier de coordonate (.txt)”.
+- proveniența „Fișier de coordonate (.txt)”;
+- tarlaua și parcela alese în fereastră.
 
-Fișierul nu aduce tarla și parcelă. De aceea, încă din fereastră, aplicația vă avertizează că proprietatea nu va avea identitate cadastrală: nu poate fi găsită după parcelă și nu se poate verifica dacă este un duplicat. Deschideți proprietatea și completați „Nr. tarla / sola” și „Nr. parcelă” în „Identificare cadastrală”.
+Restul datelor cadastrale — numărul cadastral, cartea funciară, suprafața din acte — le completați pe ecranul proprietății, în „Identificare cadastrală”.
 
 ## 5.6 „Navighează” {#properties-navigate}
 
@@ -226,9 +230,9 @@ Scanați codul QR cu telefonul, iar Google Maps pornește navigarea. Pe calculat
 
 ### 5.7.2 Aduceți o parcelă din fișierul unui topograf {#properties-example-file}
 
-1. „Adaugă proprietate”, apoi „Din fișier text”; alegeți fișierul .txt și apăsați „Importă” (secțiunea [[properties-coord-file]]).
+1. „Adaugă proprietate”, apoi „Din fișier text”; alegeți fișierul .txt, tarlaua și parcela, și apăsați „Importă” (secțiunea [[properties-coord-file]]).
 2. Deschideți proprietatea nouă și verificați pe hartă că laturile nu se încrucișează; dacă se încrucișează, folosiți „Îndreaptă ordinea” (secțiunea [[properties-corners-table]]).
-3. Completați tarlaua și parcela în „Identificare cadastrală” și salvați.
+3. Completați în „Identificare cadastrală” ce mai știți din acte — numărul cadastral, cartea funciară — și salvați.
 
 ### 5.7.3 Mergeți la teren cu telefonul {#properties-example-navigate}
 
