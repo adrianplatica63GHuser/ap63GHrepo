@@ -334,6 +334,10 @@ describe("deleting a lookup value really removes the row", () => {
     const offenders = allSourceFiles().filter((p) => {
       const rel = path.relative(SRC, p).split(path.sep).join("/");
       if (rel.startsWith("lib/admin/")) return false;
+      // Slice #39.66: a type's allowed use is a PAIR in a junction (`lookup_property_type_use`), unticked in the
+      // grid — not a reference-data value, so it has no count to stand in front of it. Named, so a third file is
+      // still caught.
+      if (rel === "lib/properties/type-uses-queries.ts") return false;
       return /\.delete\(\s*lookup/i.test(code(fs.readFileSync(p, "utf8")));
     });
     expect(offenders.map((p) => path.relative(SRC, p).split(path.sep).join("/"))).toEqual([]);

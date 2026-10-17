@@ -193,8 +193,12 @@ describe("Reference Data writes the list, not the properties", () => {
    */
   it("a tarla move still writes the properties' version rows", () => {
     const def = LIST_DEPENDENCIES.tarla;
-    expect(def.refs).toHaveLength(1);
-    const ref = def.refs[0];
+    // Slice #39.67: one ref that a move rewrites, beside the outline, which goes with the tarla (configuration)
+    // and is never moved. Was `expect(def.refs).toHaveLength(1)`.
+    const moved = def.refs.filter((r) => !r.configuration);
+    expect(moved).toHaveLength(1);
+    expect(def.refs.filter((r) => r.configuration).map((r) => r.labelKey)).toEqual(["tarlaCorners"]);
+    const ref = moved[0];
     expect(ref.column.name).toBe("tarla_id");
     expect(ref.versioned).toEqual({
       entity: "property",
@@ -400,7 +404,8 @@ describe("only an import can still create a tarla code", () => {
     // `code()` blanks string BODIES, so `origin: "IMPORT"` reads as `origin: ""`
     // here. This half asserts the SHAPE — a literal in the `.values(...)`, no
     // identifier, nothing off `input` — inside this function and no other.
-    expect(fn.replace(/\s+/g, "")).toContain('.values({indicativ:value,origin:""})');
+    // Slice #39.67: the locality is written beside the code (was `.values({indicativ:value,origin:""})`).
+    expect(fn.replace(/\s+/g, "")).toContain('.values({indicativ:value,locality,origin:""})');
     // …and this half asserts the VALUE, unblanked.
     expect(q).toContain('.values({ indicativ: value, origin: "IMPORT" })');
   });

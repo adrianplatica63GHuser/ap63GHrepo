@@ -112,7 +112,8 @@ describe("the nickname a folder gives a Property", () => {
       },
     ]);
     const out = await ensurePropertyForFolder({ tarlaSola: "T47 per P2", parcela: "5", nickname: "T47 per P2-5" });
-    expect(mocks.findPropertiesByCadastralIdentity).toHaveBeenCalledWith(expect.anything(), "T47/P2", "5");
+    // Slice #39.67: the identity carries the locality too — none given, so null (was three arguments).
+    expect(mocks.findPropertiesByCadastralIdentity).toHaveBeenCalledWith(expect.anything(), "T47/P2", "5", null);
     expect(mocks.createPropertyIn).not.toHaveBeenCalled();
     expect(out.outcome).not.toBe("created");
   });

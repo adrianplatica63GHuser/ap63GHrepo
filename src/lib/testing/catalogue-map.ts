@@ -43,7 +43,9 @@ export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCa
   "/":                                     ["TC-AUTH-01", "TC-AUTH-02", "TC-LAYOUT-01", "TC-NAV-01"],
   "/login":                                ["TC-AUTH-01"],
   "/properties":                           ["TC-PROP-01", "TC-PROP-03", "TC-TILES-06", "TC-SYSID-01", "TC-PROP-06", "TC-TILES-11", "TC-LAYOUT-02", "TC-PROP-10", "TC-LAYOUT-03", "TC-TILES-19", "TC-LAYOUT-04", "TC-LAYOUT-05", "TC-PROP-14", "TC-PROP-15"],
-  "/properties/new":                       ["TC-PROP-01", "TC-PROP-05"],
+  "/properties/new":                       ["TC-PROP-01", "TC-PROP-05", "TC-PROP-16"],
+  "/tarlale":                               ["TC-PROP-16"],
+  "/tarlale/[id]":                          ["TC-PROP-16"],
   // Slice #37.38: the map opened on a Property from its form. Needs a Google
   // Maps key in .env — the laptop and the runner have one.
   "/properties/map":                       ["TC-MAP-01", "TC-PROP-10", "TC-MAP-02", "TC-MAP-03", "TC-MAP-04", "TC-MAP-05"],

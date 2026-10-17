@@ -264,8 +264,9 @@ export const SKILLS: readonly Skill[] = [
       en: "Create a property, choose its type and read in the heading which tiles that type shows; a second property for the same parcel is refused.",
     },
     predecessors: [],
-    screens: ["properties-list", "property-detail"],
-    cases: ["TC-PROP-01", "TC-PROP-05", "TC-PROP-11", "TC-PROP-12"],
+    // Slice #39.67: a tarla belongs to a locality — its pages and the case of two T50.
+    screens: ["properties-list", "property-detail", "tarla-list", "tarla-detail"],
+    cases: ["TC-PROP-01", "TC-PROP-05", "TC-PROP-11", "TC-PROP-12", "TC-PROP-16"],
     manual: ["properties-add", "properties-type", "properties-add-one-parcel", "properties-add-cadastral", "properties-type-hidden"],
   },
   {

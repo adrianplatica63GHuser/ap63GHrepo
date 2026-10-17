@@ -122,7 +122,8 @@ describe("POST /api/properties with a tarla and a parcelă (FU-016)", () => {
 
     expect(res.status).toBe(201);
     expect(mockTx.execute).toHaveBeenCalledTimes(1); // pg_advisory_xact_lock, before the lookup
-    expect(mocks.findPropertiesByCadastralIdentity).toHaveBeenCalledWith(mockTx, "40", "213");
+    // Slice #39.67: and the tarla's locality — the mocked row has none, so null (was three arguments).
+    expect(mocks.findPropertiesByCadastralIdentity).toHaveBeenCalledWith(mockTx, "40", "213", null);
     expect(mocks.createPropertyIn).toHaveBeenCalledTimes(1);
     expect(mocks.createProperty).not.toHaveBeenCalled();
   });
