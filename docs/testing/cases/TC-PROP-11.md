@@ -74,5 +74,5 @@ forms-drift green too).
 **2026-10-17 — Slice #39.66, the types renamed, the steps not.** migration_111 folded „Teren Arabil"
 into „Teren extravilan" and renamed „Teren Construit" to „Teren construit", with the same three flags
 each; the steps above now name the new types, and nothing else in them changed. The spec was changed
-the same way: it finds the two types by NAME, because the new ones carry no key. Its first runner
-result on the renamed types is recorded here when it lands.
+the same way: it finds the two types by NAME, because the new ones carry no key. Its runner result
+on the renamed types: targeted 20261017T115938Z-16709 on be11515, green.

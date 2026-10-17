@@ -5,7 +5,7 @@
 | **Area** | reference-data |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-17 |
 
 ## What this proves
@@ -72,3 +72,7 @@ the reads polled until the pair landed.
 **2026-10-17 — run 3, `confirmed` (Slice #39.66).** The file unchanged since run 2: every step the same,
 word for word. The property deleted (204); the grid back at 13 pairs. A spec translates it,
 `e2e/admin/property-type-uses.spec.ts`.
+
+**2026-10-17 — `automated` (Slice #39.66).** The test runner's targeted run 20261017T115938Z-16709 on
+be11515 ran `e2e/admin/property-type-uses.spec.ts` green, with the six other specs and 26 jest suites
+the slice touched (lint and tsc green too).

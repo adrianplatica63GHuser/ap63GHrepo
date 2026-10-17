@@ -63,6 +63,6 @@ side beside the title from just under the breadcrumbs bar. The test runner ran i
 
 **2026-10-17 — Slice #39.66, step 1 and step 5 changed.** „Categorii Folosință” left „Liste de valori”: it is a tile
 on the page „Tipuri de proprietate și folosințe”, beside the types and the allowed-uses grid, and `?list=use-categories`
-opens that page with the property-types button marked. The spec's step 1 and step 5 changed in the same commit; its first
-runner result on them is recorded here when it lands. Measured in the pane: the new name is 194.7 px wide, under
+opens that page with the property-types button marked. The spec's step 1 and step 5 changed in the same commit; its runner
+result on them: targeted 20261017T115938Z-16709 on be11515, green. Measured in the pane: the new name is 194.7 px wide, under
 „Legături Proprietate → Proprietate” at 213.1, so step 7's column is unchanged.
