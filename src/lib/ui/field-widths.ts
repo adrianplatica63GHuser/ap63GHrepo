@@ -362,8 +362,8 @@ export function tileTableRem(units: number): number {
  */
 export const JUDICIAL_PERSON = {
   name: { step: "XXL", kind: "grows", fill: true }, //      „SOCIETATEA AGRICOLĂ … S.R.L." can pass 60 — it wraps; the panel's whole width since #37.29; m: 0
-  nickname: { step: "L", kind: "grows" }, //                m: 0
-  judicialPersonTypeId: { step: "L", kind: "select" }, //   m: 10 options, longest „Consiliu Local" (14) — one character past M
+  nickname: { step: "M", kind: "grows" }, //                m: 0 — M since #39.71, so Tip's XL keeps Poreclă | Tip in three units
+  judicialPersonTypeId: { step: "XL", kind: "select" }, //  #39.71: 17 options, longest „Cabinet sau societate de avocatură" (34, 243.5 px) — past L
   cuiNumber: { step: "M", kind: "fixed", sample: "HH0000000000" }, //    „RO12345678", up to 10 digits; m: 0
   tradeRegisterNumber: { step: "M", kind: "fixed", sample: "H00/00000/0000" }, // „J40/12345/2020"; m: 0
   // Slice #38.31: the firm's own phone and e-mail — the Natural Person's boxes (NP.personalPhone1, NP.personalEmail1).

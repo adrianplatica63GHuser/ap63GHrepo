@@ -106,7 +106,10 @@ test.describe("TC-ASSOC-07 — Act legat manual de înscrisul pe care îl citeaz
       await expect(page.getByRole("heading", { name: CERTIFICATE })).toBeVisible({ timeout: 30_000 });
       await showTile(page, "Legături");
       await expect(page.getByText("Nimic corelat încă.")).toBeVisible({ timeout: 30_000 });
-      await expect(page.getByRole("button", { name: "Dezasociază", exact: true })).toBeVisible();
+      // #39.71: scoped, as the cleanup below is (#38.33) — „Părți" has its own „Dezasociază".
+      await expect(
+        page.getByRole("region", { name: "Legături", exact: true }).getByRole("button", { name: "Dezasociază", exact: true }),
+      ).toBeVisible();
       const cited = page.getByRole("button", { name: "Înscrisuri citate", exact: true });
       await expect(cited).toHaveAttribute("aria-expanded", "false");
       await expect(page.getByText("Înscrisuri citate în acest document")).toHaveCount(0);

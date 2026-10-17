@@ -72,7 +72,8 @@ describe("the Documents list (Slice #37.62)", () => {
 describe("the list's API returns the new fields' values (Slice #37.62)", () => {
   it("selects the institution's name, the subject, and the counts of pages, persons and properties", () => {
     const list = QUERIES.slice(QUERIES.indexOf("export async function listDocument("), QUERIES.indexOf("export async function listDocument(") + 9000);
-    expect(list).toMatch(/institutionName: {2}lookupInstitution\.name,/);
+    // #39.71: the issuer is a juridical person; its name is the institution's (migration_115 keeps them in step).
+    expect(list).toMatch(/institutionName: {2}issuerPerson\.displayName,/);
     expect(list).toMatch(/subject: {10}document\.subject,/);
     // #39.63: the three subqueries were asserted in `list` itself until they moved into DOCUMENT_COUNT_SQL; the list
     // selects them from there, and the range filters count with the very same SQL.
@@ -82,6 +83,6 @@ describe("the list's API returns the new fields' values (Slice #37.62)", () => {
     expect(FILTER_SQL).toMatch(/FROM document_page dp_c WHERE dp_c\.document_id = document\.id/);
     expect(FILTER_SQL).toMatch(/count\(DISTINCT pd_c\.person_id\)::int FROM person_document pd_c WHERE pd_c\.document_id = document\.id/);
     expect(FILTER_SQL).toMatch(/count\(DISTINCT prd_c\.property_id\)::int FROM property_document prd_c WHERE prd_c\.document_id = document\.id/);
-    expect(list).toMatch(/\.leftJoin\(lookupInstitution, eq\(document\.institutionId, lookupInstitution\.id\)\)/);
+    expect(list).toMatch(/\.leftJoin\(issuerPerson, eq\(document\.issuerPersonId, issuerPerson\.id\)\)/);
   });
 });

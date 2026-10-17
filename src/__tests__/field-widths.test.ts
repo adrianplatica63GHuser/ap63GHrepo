@@ -519,7 +519,8 @@ describe("the Judicial Person: labels above, rows by meaning, every tile on the 
   });
 
   it("each panel is the fewest whole units that hold its widest row: Persoană juridică 3, Persoane de contact 2, Adresă 3", () => {
-    expect(rowRem([JP.nickname, JP.judicialPersonTypeId])).toBe(26.5);
+    // #39.71: Poreclă M | Tip XL (the public-body types are long) — 26 rem, still three units.
+    expect(rowRem([JP.nickname, JP.judicialPersonTypeId])).toBe(26);
     // #37.57: the system ID left this row for the heading's corner; Poreclă | Tip still makes it 3.
     expect(rowRem([JP.cuiNumber, JP.tradeRegisterNumber])).toBe(17.5);
     expect("code" in JP).toBe(false);
