@@ -678,7 +678,7 @@ Write-Host "Dumping current reference/lookup data from ga40prj-postgres..." -For
 # second hand-written copy of this list in Step 6 would make that step agree
 # with this one by construction and catch nothing, which is the exact shape of
 # bug it exists to find.
-$refTablePatterns = @("lookup_*", "time_frame_setting", "help_content", "help_hint")
+$refTablePatterns = @("lookup_*", "time_frame_setting", "help_content", "help_hint", "tarla_corner")
 
 $dumpTableArgs = @()
 foreach ($pattern in $refTablePatterns) { $dumpTableArgs += "-t"; $dumpTableArgs += $pattern }
@@ -845,6 +845,21 @@ if ($WithData) {
         + $opDataText
 }
 
+# Slice #39.71: every institution is a juridical person (migration_115), and lookup_institution.juridical_person_id
+# arrives in section 4 holding DEV's person ids. With -WithData section 6 brings those persons and nothing is left to
+# do. Without it the ids point at persons this package does not carry -- the dump loads with --disable-triggers, so
+# nothing refuses them -- and the institutions would have no juridical person on Ciprian's box. So, LAST, after
+# section 6 has had its chance: a link to a person that is not there is cleared, and every institution without one
+# gets its own, made by the same function migration_115 used. Appended to 03-reference-data.sql too, for a fresh volume.
+$institutionPersonsSql = @"
+-- ---- 7. Institutions' juridical persons (Slice #39.71) -- made here when this package does not carry dev's ----
+UPDATE lookup_institution li SET juridical_person_id = NULL
+ WHERE li.juridical_person_id IS NOT NULL
+   AND NOT EXISTS (SELECT 1 FROM person p WHERE p.id = li.juridical_person_id);
+SELECT ga40_institution_juridical_person(id) FROM lookup_institution WHERE juridical_person_id IS NULL ORDER BY sort_order, name, id;
+"@
+$combined = $combined + "`r`n" + $institutionPersonsSql + "`r`n"
+
 [System.IO.File]::WriteAllText($updateFileDestNew, $combined, $utf8NoBom)
 
 # ---- Step 5.5: regenerate Ciprian's init/03-reference-data.sql ---------------
@@ -882,7 +897,7 @@ $initRefHeader = @"
 
 "@
 
-[System.IO.File]::WriteAllText($initRefDestNew, ($initRefHeader + $refDataText + "`r`n" + $formsSqlText), $utf8NoBom)
+[System.IO.File]::WriteAllText($initRefDestNew, ($initRefHeader + $refDataText + "`r`n" + $formsSqlText + "`r`n" + $institutionPersonsSql + "`r`n"), $utf8NoBom)
 
 # ⚠️ $refDataDumpLocal is deliberately NOT removed here. It is the only
 # artefact showing what pg_dump actually selected, and Step 6 is where that
@@ -1154,7 +1169,8 @@ $knownOperationalTables = @(
     "groups", "group_member", "stamps", "stamp_member",
     "entity_metadata", "entity_metadata_version", "entity_provenance_log", "entity_cross_reference", "entity_tag",
     "calculation_run", "calculation_run_output",
-    "interaction", "interaction_document", "interaction_tag"
+    "interaction", "interaction_document", "interaction_tag",
+    "tarla_parcel", "document_tarla", "natural_person_relationship"
 )
 $knownOperationalSql = "'" + ($knownOperationalTables -join "', '") + "'"
 

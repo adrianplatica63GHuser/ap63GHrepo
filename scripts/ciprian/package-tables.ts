@@ -15,7 +15,9 @@
 import fs from "node:fs";
 
 /** Reference data: shipped on every build (Step 5's `-t` patterns). `*` is pg_dump's wildcard. */
-export const REFERENCE_TABLE_PATTERNS = ["lookup_*", "time_frame_setting", "help_content", "help_hint"] as const;
+// `tarla_corner` (#39.67) is a tarla's outline, and a tarla (lookup_tarla) is reference data: the outline goes with
+// it, every build. It refers to nothing but its tarla.
+export const REFERENCE_TABLE_PATTERNS = ["lookup_*", "time_frame_setting", "help_content", "help_hint", "tarla_corner"] as const;
 
 /** The archive itself — shipped with `-WithData`, exactly as dev holds it. */
 export const SHIPPED_WITH_DATA: Readonly<Record<string, string>> = {
@@ -53,6 +55,11 @@ export const SHIPPED_WITH_DATA: Readonly<Record<string, string>> = {
   interaction: "„Interacțiuni”",
   interaction_document: "„Interacțiuni”",
   interaction_tag: "„Interacțiuni”",
+  // #39.69: a parcel names the plan parcelar it was read from (source_document_id → document), so it travels with
+  // the documents — shipped with the reference data, it would point at documents a reference-only build has not got.
+  tarla_parcel: "the tarlale's parcels, read from the documents' plans",
+  document_tarla: "the links between a document and the tarlale it draws",
+  natural_person_relationship: "the persons' „Relația cu firma”",
 };
 
 /** Adrian's, not the archive's — never shipped. Adrian: „I don't want my progress from the Skills Map to show up in Ciprian database”. */

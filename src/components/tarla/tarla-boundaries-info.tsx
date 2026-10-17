@@ -9,7 +9,9 @@
  * afternoon looking for an outline that no public source holds. The words are messages (`tarla.info.*`), in both
  * languages; the order is the doc's.
  */
-import { Info } from "lucide-react";
+// A lightbulb, not Lucide's Info: the ⓘ is HintBubble's alone (#38.08, info-glyph.test.tsx), and this panel is no
+// button that opens a hint — it is the facts themselves, always shown.
+import { Lightbulb } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 export const TARLA_INFO_FACTS = ["f1", "f2", "f3", "f4", "f5", "f6"] as const;
@@ -23,7 +25,7 @@ export function TarlaBoundariesInfo() {
       data-tarla-boundaries-info=""
     >
       <h2 id="tarla-boundaries-info-title" className="flex items-center gap-2 text-base font-semibold">
-        <Info className="h-5 w-5 shrink-0 text-amber-700 dark:text-amber-300" aria-hidden />
+        <Lightbulb className="h-5 w-5 shrink-0 text-amber-700 dark:text-amber-300" aria-hidden />
         {t("title")}
       </h2>
       <ol className="mt-2 list-decimal space-y-1 pl-6 text-sm">
