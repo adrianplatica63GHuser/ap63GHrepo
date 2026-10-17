@@ -397,17 +397,6 @@ export function PropertyListView() {
           onToggle={chooser.toggle}
         />
 
-        {/* Slice #39.61 — the filter bar: a chip per filter, „+ Filtru", „Șterge filtrele". */}
-        <FilterBar
-          fields={filterFields}
-          state={filters}
-          onChange={changeFilters}
-          editing={editingFilter}
-          onEditing={setEditingFilter}
-          loadValues={(key) => fetchFilterValues(key, debouncedSearch, filters)}
-          valuesKey={(key) => ["properties", "filter-values", key, debouncedSearch, filterSig]}
-        />
-
         <div className="ml-auto flex items-center gap-2">
           {/* Slice #37.92: the whole-properties map's door, now the sidebar
               has one „Proprietăți" — at the left of the group, the Map icon
@@ -456,6 +445,19 @@ export function PropertyListView() {
           />
         </div>
       </div>
+
+      {/* Slice #39.61 — the filter bar, a row of its own under the toolbar: a chip per filter, „+ Filtru",
+          „Șterge filtrele". Not in the toolbar, whose width is the table frame's (#37.84): chips that came and went
+          there would widen the frame and stretch the columns. */}
+      <FilterBar
+        fields={filterFields}
+        state={filters}
+        onChange={changeFilters}
+        editing={editingFilter}
+        onEditing={setEditingFilter}
+        loadValues={(key) => fetchFilterValues(key, debouncedSearch, filters)}
+        valuesKey={(key) => ["properties", "filter-values", key, debouncedSearch, filterSig]}
+      />
 
       {deleteError && (
         <p className="text-sm text-red-600 dark:text-red-400" role="alert">
