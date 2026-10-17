@@ -407,7 +407,8 @@ describe("only an import can still create a tarla code", () => {
     // Slice #39.67: the locality is written beside the code (was `.values({indicativ:value,origin:""})`).
     expect(fn.replace(/\s+/g, "")).toContain('.values({indicativ:value,locality,origin:""})');
     // …and this half asserts the VALUE, unblanked.
-    expect(q).toContain('.values({ indicativ: value, origin: "IMPORT" })');
+    // Slice #39.67: the locality beside the code (was `.values({ indicativ: value, origin: "IMPORT" })`).
+    expect(q).toContain('.values({ indicativ: value, locality, origin: "IMPORT" })');
   });
 });
 

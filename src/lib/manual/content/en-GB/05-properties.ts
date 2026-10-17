@@ -98,7 +98,7 @@ The bin („Delete”) asks first: „Delete property?”. „No” leaves you o
 
 ### 5.2.5 A tarla and its locality {#properties-tarla}
 
-Tarla numbers restart in every locality: T50 in Bragadiru is not T50 in Cornetu. So a tarla belongs to a locality, and the rule „one property per parcel” (section [[properties-add-one-parcel]]) compares only parcels in the same locality: parcel 1 on T50 in Cornetu is not refused because parcel 1 on T50 in Bragadiru exists.
+Tarla numbers restart in every locality: T50 in Bragadiru is not T50 in Cornetu. So a tarla belongs to a locality, and the rule of one property per parcel (section [[properties-add-one-parcel]]) compares only parcels in the same locality: parcel 1 on T50 in Cornetu is not refused because parcel 1 on T50 in Bragadiru exists.
 
 In „Reference Data” → „Tarla Codes”, each tarla has a „Locality” and a „County”, read together on its row, for instance Bragadiru, Ilfov. The same code can exist once in each locality. In a property's „Tarla / Sola”, a code two tarlale share shows its locality in brackets, and the button „Open the tarla's page” under the list opens the chosen tarla.
 

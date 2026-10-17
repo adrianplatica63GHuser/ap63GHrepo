@@ -98,7 +98,7 @@ Coșul („Șterge”) întreabă întâi „Ștergeți proprietatea?”. „Nu�
 
 ### 5.2.5 Tarla și localitatea ei {#properties-tarla}
 
-Numerele de tarla o iau de la capăt în fiecare localitate: T50 din Bragadiru nu este T50 din Cornetu. De aceea o tarla aparține unei localități, iar regula „o singură proprietate pentru o parcelă” (secțiunea [[properties-add-one-parcel]]) compară doar parcelele din aceeași localitate: parcela 1 pe T50 din Cornetu nu este refuzată pentru că există parcela 1 pe T50 din Bragadiru.
+Numerele de tarla o iau de la capăt în fiecare localitate: T50 din Bragadiru nu este T50 din Cornetu. De aceea o tarla aparține unei localități, iar regula unei singure proprietăți pentru o parcelă (secțiunea [[properties-add-one-parcel]]) compară doar parcelele din aceeași localitate: parcela 1 pe T50 din Cornetu nu este refuzată pentru că există parcela 1 pe T50 din Bragadiru.
 
 În „Date de referință” → „Indicative Tarla”, fiecare tarla are „Localitate” și „Județ”, citite împreună pe rând, de exemplu Bragadiru, Ilfov. Același cod poate exista o dată în fiecare localitate. Pe „Nr. tarla / sola” al unei proprietăți, un cod pe care îl au două tarlale își arată localitatea între paranteze, iar butonul „Deschide pagina tarlalei” de sub listă deschide tarla aleasă.
 
