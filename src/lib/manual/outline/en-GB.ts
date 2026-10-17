@@ -68,7 +68,7 @@ export const OUTLINE: Readonly<Record<string, string>> = {
   "properties-add-address": "How to enter a property's address (street, locality, county, country) and fetch the address automatically from Street View, a look-up Google charges for.",
   "properties-add-one-parcel": "Why you cannot save a second property for the same tarla and parcela, the message shown for a duplicate, and how to open the property that already exists.",
   "properties-add-edit": "How to change, edit or delete (remove) a property, what „Unsaved changes” means, and how every save creates a new version.",
-  "properties-tarla": "Why a tarla belongs to a locality (T50 in Bragadiru is not T50 in Cornetu), a tarla's page with notes, outline, properties and documents, which sources exist for tarla boundaries, and how an import gives the locality.",
+  "properties-tarla": "Why a tarla belongs to a locality, a tarla's page (notes, outline, properties, documents), which sources exist for tarla boundaries, and an import's locality.",
   "properties-type": "What the property type (arable land, built-up land etc.) changes, how to choose it, and what its ⓘ says about the tiles the type shows or hides.",
   "properties-type-tiles": "Which tiles (panels) a property screen has — cadastral identification, address, links, map, corners, Street View — and how to show or hide them.",
   "properties-type-hidden": "Why „Address” and „Street View” are greyed out and cannot be ticked for some property types, such as arable land with no postal address.",

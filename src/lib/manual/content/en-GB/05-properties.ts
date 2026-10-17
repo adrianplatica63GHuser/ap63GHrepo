@@ -100,7 +100,7 @@ The bin („Delete”) asks first: „Delete property?”. „No” leaves you o
 
 Tarla numbers restart in every locality: T50 in Bragadiru is not T50 in Cornetu. So a tarla belongs to a locality, and the rule „one property per parcel” (section [[properties-add-one-parcel]]) compares only parcels in the same locality: parcel 1 on T50 in Cornetu is not refused because parcel 1 on T50 in Bragadiru exists.
 
-In „Reference Data” → „Tarla Codes”, each tarla has a „Locality” and a „County”, read together on its row, for instance „Bragadiru, Ilfov”. The same code can exist once in each locality. In a property's „Tarla / Sola”, a code two tarlale share shows its locality in brackets, and the button „Open the tarla's page” under the list opens the chosen tarla.
+In „Reference Data” → „Tarla Codes”, each tarla has a „Locality” and a „County”, read together on its row, for instance Bragadiru, Ilfov. The same code can exist once in each locality. In a property's „Tarla / Sola”, a code two tarlale share shows its locality in brackets, and the button „Open the tarla's page” under the list opens the chosen tarla.
 
 Each tarla has a page of its own, „Tarlale” → the tarla, opened with „Open the tarla's page” from „Tarla Codes” or from the property. On the page:
 
@@ -109,7 +109,7 @@ Each tarla has a page of its own, „Tarlale” → the tarla, opened with „Op
 - „Outline”: optional, the tarla's corners, entered as on a property (section [[properties-corners-table]]);
 - the properties on the tarla and the documents linked to them. A tarla has no documents, groups or tags of its own.
 
-An import adds its tarla codes in the locality given in the property step: „The tarlale's locality” is read from the name of the folder chosen, for instance „Clinceni” from „CLINCENI.3”, and can be changed (section [[import-overview]]).
+An import adds its tarla codes in the locality given in the property step: „The tarlale's locality” is read from the name of the folder chosen, for instance Clinceni from a folder named CLINCENI.3, and can be changed (section [[import-overview]]).
 
 ## 5.3 The property's type and its tiles {#properties-type}
 

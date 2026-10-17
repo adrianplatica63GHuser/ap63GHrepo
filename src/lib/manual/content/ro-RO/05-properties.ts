@@ -100,7 +100,7 @@ Coșul („Șterge”) întreabă întâi „Ștergeți proprietatea?”. „Nu�
 
 Numerele de tarla o iau de la capăt în fiecare localitate: T50 din Bragadiru nu este T50 din Cornetu. De aceea o tarla aparține unei localități, iar regula „o singură proprietate pentru o parcelă” (secțiunea [[properties-add-one-parcel]]) compară doar parcelele din aceeași localitate: parcela 1 pe T50 din Cornetu nu este refuzată pentru că există parcela 1 pe T50 din Bragadiru.
 
-În „Date de referință” → „Indicative Tarla”, fiecare tarla are „Localitate” și „Județ”, citite împreună pe rând, de exemplu „Bragadiru, Ilfov”. Același cod poate exista o dată în fiecare localitate. Pe „Nr. tarla / sola” al unei proprietăți, un cod pe care îl au două tarlale își arată localitatea între paranteze, iar butonul „Deschide pagina tarlalei” de sub listă deschide tarla aleasă.
+În „Date de referință” → „Indicative Tarla”, fiecare tarla are „Localitate” și „Județ”, citite împreună pe rând, de exemplu Bragadiru, Ilfov. Același cod poate exista o dată în fiecare localitate. Pe „Nr. tarla / sola” al unei proprietăți, un cod pe care îl au două tarlale își arată localitatea între paranteze, iar butonul „Deschide pagina tarlalei” de sub listă deschide tarla aleasă.
 
 Fiecare tarla are o pagină a ei, „Tarlale” → tarla, deschisă cu „Deschide pagina tarlalei” din „Indicative Tarla” sau de pe proprietate. Pe pagină:
 
@@ -109,7 +109,7 @@ Fiecare tarla are o pagină a ei, „Tarlale” → tarla, deschisă cu „Desch
 - „Contur”: opțional, colțurile tarlalei, introduse ca la o proprietate (secțiunea [[properties-corners-table]]);
 - proprietățile de pe tarla și actele legate de ele. O tarla nu are acte, grupuri sau etichete ale ei.
 
-Un import adaugă codurile de tarla în localitatea dată în pasul proprietăților: „Localitatea tarlalelor” este citită din numele dosarului ales, de exemplu „Clinceni” din „CLINCENI.3”, și se poate schimba (secțiunea [[import-overview]]).
+Un import adaugă codurile de tarla în localitatea dată în pasul proprietăților: „Localitatea tarlalelor” este citită din numele dosarului ales, de exemplu Clinceni dintr-un dosar numit CLINCENI.3, și se poate schimba (secțiunea [[import-overview]]).
 
 ## 5.3 Tipul proprietății și fișele lui {#properties-type}
 

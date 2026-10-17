@@ -268,6 +268,23 @@ export const HELP_PROPOSALS: Partial<Record<HelpScreenKey, HelpProposal>> = {
     backgroundEn: "A property's screen: its cadastral data, address, links and, in the light-purple column on the right, the parcel's map, its corners and Street View. The parcel's shape is given by its corners, in the order in which they are joined. The property's type, in italics after the nickname, decides which tiles can be shown.",
     howToEn: "Corners are worked on in „Puncte de contur” (the boundary points) or on „Hartă” (map), with „Desenează” (draw); a wrong corner is dragged with the mouse. „Mută mai sus” and „Mută mai jos” (move up, move down) change the order, and so the shape. If „Ordinea colțurilor se încrucișează” (the order of the corners crosses) appears, the calculated area means nothing: „Îndreaptă ordinea” (straighten the order) fixes the order without moving the corners.\n\nNothing is written to the archive, not even by a corner row's „Salvează”, until you press „Salvează” at the bottom, below the map.\n\n„Navighează” (directions), below the map, gives the route to the land, as a Google Maps link and a QR code. The „Street View” tile is off until you tick it, because Google charges for every view.",
   },
+  // Slice #39.67: the tarlale — two new screens with no text yet.
+  "tarla-list": {
+    against: EMPTY_FINGERPRINT,
+    reason: "a new screen (#39.67) with no text yet",
+    backgroundRo: "„Tarlale” arată toate tarlalele arhivei, pe localități. O tarla aparține unei localități, pentru că numerele de tarla o iau de la capăt în fiecare: T50 din Bragadiru nu este T50 din Cornetu. Chenarul de sus, „Despre limitele tarlalelor”, spune ce surse există pentru limitele lor și ce nu este disponibil.",
+    howToRo: "Un clic pe codul unei tarlale deschide pagina ei. Codul, localitatea și descrierea se schimbă și din „Date de referință” → „Indicative Tarla”, unde se adaugă și o tarla nouă.",
+    backgroundEn: "„Tarlale” shows all the archive's tarlale, by locality. A tarla belongs to a locality, because tarla numbers restart in each: T50 in Bragadiru is not T50 in Cornetu. The box at the top, „Despre limitele tarlalelor” (about tarla boundaries), says which sources exist for their boundaries and what is not available.",
+    howToEn: "A click on a tarla's code opens its page. The code, locality and description can also be changed in „Date de referință” (reference data) → „Indicative Tarla” (tarla codes), where a new tarla is added too.",
+  },
+  "tarla-detail": {
+    against: EMPTY_FINGERPRINT,
+    reason: "a new screen (#39.67) with no text yet",
+    backgroundRo: "Pagina unei tarlale: codul și localitatea ei, notele, conturul (opțional), proprietățile de pe ea și actele legate de ele. O tarla nu are acte, grupuri sau etichete ale ei.",
+    howToRo: "Schimbați „Indicativ”, „Localitate”, „Județ”, „Descriere” sau „Note” și apăsați „Salvează”. Un cod care există deja în aceeași localitate este refuzat. Colțurile conturului se introduc ca la o proprietate; desenul lor pe hartă vine într-o versiune următoare.",
+    backgroundEn: "A tarla's page: its code and locality, its notes, its outline (optional), the properties on it and the documents linked to them. A tarla has no documents, groups or tags of its own.",
+    howToEn: "Change „Indicativ” (code), „Localitate” (locality), „Județ” (county), „Descriere” (description) or „Note” (notes) and press „Salvează” (save). A code that already exists in the same locality is refused. The outline's corners are entered as on a property; drawing them on the map comes in a later version.",
+  },
   "skills-map": {
     against: EMPTY_FINGERPRINT,
     reason: "a new screen (#39.42) with no text yet; #39.50: a Path is everything it takes, and the two views; #39.55: mastering a skill removes the arrows into it in „Progresul meu”, and only a skill left with no arrow out is Obsolete; #39.56: „Numai Ciprian!”",
