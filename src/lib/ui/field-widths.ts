@@ -1346,7 +1346,9 @@ export const COLUMN = {
   // measured in the runner's Chromium at 1366 px on the archive, 2026-10-10 (Arial: 14 px cells, 12 px uppercase
   // headers), and rounded up to the next quarter rem with at least 1 px to spare. A longer value added later is cut
   // with „…" and whole on hover, as every reference cell is (#38.50). The seeds' values all fit.
-  valueJudicialTypeName: { content: 5.75, kind: "fixed" }, // „Consiliu Local" (87.2 px); was valueName's XL (272)
+  // Slice #39.72 (fixing #39.71's types): „Cabinet sau societate de avocatură" (219.5 px, from TC-VL-05's gap of
+  // -111.5 at 5.75 rem) — was 5.75 for „Consiliu Local" (87.2 px), and valueName's XL (272) before #38.66.
+  valueJudicialTypeName: { content: 14, kind: "fixed" },
   // Slice #39.23: „Teren pentru Construcții" (148.6 px), the property type the big dev seed added, was cut at 8 rem.
   // #39.66 folded it into „Teren intravilan"; the width stays, for a type Adrian names longer.
   // Slice #39.70 (fixing #39.66's names): the nine agreed types are shorter — at 9.5 rem TC-VL-05 measured the longest

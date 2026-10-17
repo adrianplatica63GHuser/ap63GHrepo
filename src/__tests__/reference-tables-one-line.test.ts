@@ -108,7 +108,8 @@ describe("„Tipuri de obiecte” without the wasted space (#38.66)", () => {
   // Each column: [its COLUMN name, the field it is drawn for, the widest thing it holds — its longest value or its
   // header's longest word — measured in px at 1366 on the archive (field-widths.ts says where)].
   const OWN: [string, keyof typeof COLUMN, string, number][] = [
-    ["judicial-person-types", "valueJudicialTypeName", "name", 87.2], //   „Consiliu Local"
+    // #39.72: „Cabinet sau societate de avocatură", #39.71's public-body type — was 87.2, „Consiliu Local".
+    ["judicial-person-types", "valueJudicialTypeName", "name", 219.5],
     // #39.70: the header „DENUMIRE" (104 px; „Spațiu comercial" 103.4) since #39.66's types — was 148.6, „Teren pentru
     // Construcții" (#39.23).
     ["property-types", "valuePropertyTypeName", "name", 104],
