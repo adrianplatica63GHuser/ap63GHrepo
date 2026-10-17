@@ -97,6 +97,11 @@ export type EnsurePropertyInput = {
   parcela: string;
   /** Shown in lists. Free text; never part of identity. */
   nickname?: string | null;
+  /**
+   * Slice #39.67: the locality the folders belong to — tarla numbers restart in every locality, so it is half of
+   * the identity, and a tarla code this import adds is added in it. Absent or blank: a tarla with no locality.
+   */
+  locality?: string | null;
   /** Parsed from this folder's coordinate file. Empty when it has none. */
   corners?: CornerInput[];
   /**
@@ -208,15 +213,21 @@ export async function createPropertyUnlessParcelExists(
   }
 
   return await db.transaction(async (tx): Promise<CreateUnlessParcelExistsResult> => {
-    const tarlaCode = input.tarlaId
+    // Slice #39.67: the tarla's locality is half of the identity. A chosen tarla names its own; a code takes the
+    // locality given with it, or the address's — the same one `createPropertyIn` will find or mint it in.
+    const chosen = input.tarlaId
       ? (
           await tx
-            .select({ indicativ: lookupTarla.indicativ })
+            .select({ indicativ: lookupTarla.indicativ, locality: lookupTarla.locality })
             .from(lookupTarla)
             .where(eq(lookupTarla.id, input.tarlaId))
             .limit(1)
-        )[0]?.indicativ ?? ""
-      : (input.tarlaCode ?? "");
+        )[0]
+      : undefined;
+    const tarlaCode = input.tarlaId ? chosen?.indicativ ?? "" : (input.tarlaCode ?? "");
+    const locality = input.tarlaId
+      ? chosen?.locality ?? null
+      : input.tarlaLocality ?? input.address?.locality ?? null;
 
     if (!hasCadastralIdentity(tarlaCode, parcelaRaw)) {
       return { outcome: "created", full: await createPropertyIn(tx, input, updatedBy) };
@@ -227,7 +238,7 @@ export async function createPropertyUnlessParcelExists(
     const [lockA, lockB] = advisoryLockKeys(cadastralIdentityKey(tarlaSola, parcela));
     await tx.execute(sql`select pg_advisory_xact_lock(${lockA}::int4, ${lockB}::int4)`);
 
-    const matches = await findPropertiesByCadastralIdentity(tx, tarlaSola, parcela);
+    const matches = await findPropertiesByCadastralIdentity(tx, tarlaSola, parcela, locality);
     if (matches.length > 0) return { outcome: "exists", matches };
 
     return { outcome: "created", full: await createPropertyIn(tx, input, updatedBy) };
@@ -254,6 +265,8 @@ export async function ensurePropertyForFolder(
   const corners = input.corners ?? [];
   const identity = cadastralIdentityKey(tarlaSola, parcela);
   const confirm = input.confirm;
+  // Slice #39.67: the locality the import's folder gave — the step asks for it once, read off the root folder.
+  const locality = input.locality?.trim() || null;
 
   const decision = await db.transaction(async (tx): Promise<Decision> => {
     // Held until this transaction ends, however it ends. EVERYTHING below is
@@ -265,7 +278,7 @@ export async function ensurePropertyForFolder(
     const [lockA, lockB] = advisoryLockKeys(identity);
     await tx.execute(sql`select pg_advisory_xact_lock(${lockA}::int4, ${lockB}::int4)`);
 
-    const matches = await findPropertiesByCadastralIdentity(tx, tarlaSola, parcela);
+    const matches = await findPropertiesByCadastralIdentity(tx, tarlaSola, parcela, locality);
 
     // ── Nothing there ──────────────────────────────────────────────────────
     if (matches.length === 0) {
@@ -300,6 +313,7 @@ export async function ensurePropertyForFolder(
           // Slice #34.03: a folder-derived CODE, not an id. See
           // `resolveTarlaForCreate` in properties/queries.ts.
           tarlaCode: tarlaSola,
+          tarlaLocality: locality,
           parcela,
           corners,
         },
@@ -519,6 +533,8 @@ async function cornersOf(
  */
 export async function planPropertyFolders(
   folders: readonly PropertyFolderInput[],
+  // Slice #39.67: the tarlale's locality for this import — one for the whole run.
+  locality: string | null = null,
 ): Promise<PropertyFolderPlan[]> {
   return await db.transaction(async (tx) => {
     const out: PropertyFolderPlan[] = [];
@@ -528,6 +544,7 @@ export async function planPropertyFolders(
             tx,
             cadastralValue(folder.tarlaSola),
             cadastralValue(folder.parcela),
+            locality?.trim() || null,
           )
         : [];
       out.push(planForMatches(folder, matches));

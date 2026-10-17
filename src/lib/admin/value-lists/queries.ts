@@ -448,8 +448,9 @@ export async function listValues(key: ListKey): Promise<LookupRow[]> {
  *
  * `exceptId` is the row being renamed; pass `null` on a create.
  */
-async function writeTarlaRow<T>(
+export async function writeTarlaRow<T>(
   code: unknown,
+  locality: unknown,
   exceptId: string | null,
   write: (tx: DbTransaction) => Promise<T>,
 ): Promise<T> {
@@ -463,10 +464,13 @@ async function writeTarlaRow<T>(
         const [lockA, lockB] = advisoryLockKeys(identity);
         await tx.execute(sql`select pg_advisory_xact_lock(${lockA}::int4, ${lockB}::int4)`);
       }
+      // Slice #39.67: unique per locality — the same code in another locality is another tarla. A PUT that does
+      // not state the locality (a direct caller) is judged against the row's own.
       const rows = await tx
-        .select({ id: lookupTarla.id, indicativ: lookupTarla.indicativ })
+        .select({ id: lookupTarla.id, indicativ: lookupTarla.indicativ, locality: lookupTarla.locality })
         .from(lookupTarla);
-      const taken = tarlaCodeTakenBy(code, rows, exceptId);
+      const ownLocality = locality === undefined && exceptId !== null ? rows.find((r) => r.id === exceptId)?.locality : locality;
+      const taken = tarlaCodeTakenBy(code, rows, exceptId, ownLocality);
       if (taken !== null) throw new TarlaCodeTakenError(taken.indicativ);
     }
     return write(tx);
@@ -569,7 +573,7 @@ export async function createValue(
     case "tarla": {
       // Slice #34.32: `t3` beside `T3` was creatable here, with no fold and no
       // lock, since the list existed. See `writeTarlaRow` above.
-      return writeTarlaRow(data.indicativ, null, async (tx) => {
+      return writeTarlaRow(data.indicativ, data.locality, null, async (tx) => {
         const [row] = await tx.insert(lookupTarla).values(data).returning();
         return row as LookupRow;
       });
@@ -940,7 +944,7 @@ export async function updateValue(
       // to judge. `writeTarlaRow`'s "no code" arm is for a DIRECT caller — this
       // function's `payload` is `any` — and is not a route behaviour. An
       // adversarial round corrected a comment here that described it as one.
-      return writeTarlaRow(data.indicativ, id, async (tx) => {
+      return writeTarlaRow(data.indicativ, data.locality, id, async (tx) => {
         const [row] = await tx.update(lookupTarla).set(data).where(eq(lookupTarla.id, id)).returning();
         return (row as LookupRow) ?? null;
       });

@@ -135,9 +135,21 @@ export const propertyTypeSchema = z.object({
   sortOrder,
 });
 
+/**
+ * Slice #39.67: a tarla's locality, county and notes — free text; blank is null. Left out of a PUT, it stays as it
+ * was (undefined is passed through, so drizzle's `set` leaves the column alone).
+ */
+const optionalText = z
+  .string()
+  .nullish()
+  .transform((v) => (v === undefined ? undefined : v === null || v.trim() === "" ? null : v.trim()));
+
 export const tarlaSchema = z.object({
   indicativ: z.string().min(1, "required"),
   descriere: z.string().nullish(),
+  locality:  optionalText,
+  county:    optionalText,
+  notes:     optionalText,
   sortOrder,
 });
 

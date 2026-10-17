@@ -68,6 +68,8 @@ const bodySchema = z.object({
   tarlaSola: z.string().refine((v) => cadastralKey(v) !== "", "tarla is required"),
   parcela: z.string().refine((v) => cadastralKey(v) !== "", "parcela is required"),
   nickname: z.string().nullish(),
+  // Slice #39.67: the tarlale's locality for this import (the step reads it off the root folder; editable).
+  locality: z.string().nullish(),
   corners: z.array(cornerInputSchema).default([]),
   confirm: z
     .object({

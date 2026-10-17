@@ -172,6 +172,9 @@ export const LIST_META: Record<ListKey, ListMeta> = {
     titleKey: "tarla",
     fields: [
       { key: "indicativ", labelKey: "indicativ", required: true },
+      // Slice #39.67: tarla numbers restart in every locality, so the locality is part of what a tarla is.
+      { key: "locality",  labelKey: "locality",  required: false },
+      { key: "county",    labelKey: "county",    required: false },
       { key: "descriere", labelKey: "descriere", required: false },
     ],
   },

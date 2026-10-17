@@ -127,7 +127,8 @@ export const TARLA_CODE_TAKEN_CODE = "tarla_code_taken";
  * `tarla-code-unique.test.ts` reads the migration file and asserts the two
  * agree.
  */
-export const TARLA_CODE_UNIQUE_INDEX = "lookup_tarla_indicativ_folded_unique";
+// Slice #39.67 (migration_112): per locality — was "lookup_tarla_indicativ_folded_unique" (migration_083).
+export const TARLA_CODE_UNIQUE_INDEX = "lookup_tarla_locality_indicativ_folded_unique";
 
 /**
  * Are these two tarla codes the same code?
@@ -144,10 +145,24 @@ export function sameTarlaCode(a: unknown, b: unknown): boolean {
   return folded === foldRomanian(b);
 }
 
+/**
+ * Do two localities name the same place?                                   (Slice #39.67, migration_112)
+ *
+ * The index's fold again (`lookup_tarla_locality_indicativ_folded_unique`), with ONE difference from
+ * `sameTarlaCode`: an empty locality is a locality of its own, equal to another empty one — the index folds
+ * `coalesce(locality, '')`, so two T50 with no locality collide, as two T50 did before there were localities.
+ */
+export function sameTarlaLocality(a: unknown, b: unknown): boolean {
+  const fold = (v: unknown) => (typeof v === "string" ? foldRomanian(v) : "");
+  return fold(a) === fold(b);
+}
+
 /** The little of a row this question needs. */
 export type TarlaCoded = {
   id?:        string | null;
   indicativ?: unknown;
+  /** Slice #39.67: a row read without it is a row with no locality — so every reader selects it. */
+  locality?:  unknown;
 };
 
 /**
@@ -170,11 +185,13 @@ export function tarlaCodeTakenBy<T extends TarlaCoded>(
   code: unknown,
   rows: readonly T[],
   exceptId?: string | null,
+  locality?: unknown,
 ): T | null {
   if (typeof code !== "string") return null;
   for (const row of rows) {
     if (exceptId != null && row.id === exceptId) continue;
-    if (sameTarlaCode(code, row.indicativ)) return row;
+    // Slice #39.67: the same code in another locality is another tarla.
+    if (sameTarlaCode(code, row.indicativ) && sameTarlaLocality(locality, row.locality)) return row;
   }
   return null;
 }

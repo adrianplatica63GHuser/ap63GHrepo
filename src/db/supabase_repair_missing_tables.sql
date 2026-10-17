@@ -1622,6 +1622,11 @@ END $$;
 -- share. Said out loud because a shape probe that goes silently stale is the
 -- exact failure that block exists to record.
 
+-- migration_112 (Slice #39.67) -- a tarla belongs to a locality. Before the index block below, which reads them.
+ALTER TABLE lookup_tarla ADD COLUMN IF NOT EXISTS locality text;
+ALTER TABLE lookup_tarla ADD COLUMN IF NOT EXISTS county   text;
+ALTER TABLE lookup_tarla ADD COLUMN IF NOT EXISTS notes    text;
+
 DO $$
 DECLARE
   dupes integer;
@@ -1631,6 +1636,8 @@ BEGIN
     RETURN;
   END IF;
 
+  -- Slice #39.67 (migration_112): the index is over (folded locality, folded code) — two key expressions. A
+  -- database one migration behind gets the columns here (above) and this index in place of migration_083's.
   IF EXISTS (
     SELECT 1
       FROM pg_index i
@@ -1638,8 +1645,9 @@ BEGIN
        AND i.indisunique
        AND i.indisvalid
        AND i.indpred IS NOT NULL
-       AND i.indnkeyatts = 1
+       AND i.indnkeyatts = 2
        AND i.indkey[0]   = 0
+       AND i.indkey[1]   = 0
   ) THEN
     RETURN;
   END IF;
@@ -1647,11 +1655,16 @@ BEGIN
   SELECT count(*) INTO dupes FROM (
     SELECT btrim(regexp_replace(
              regexp_replace(
+               lower(normalize(coalesce(locality, ''), NFD)),
+               '[' || chr(768) || '-' || chr(879) || ']', '', 'g'),
+             '\s+', ' ', 'g')) AS folded_locality,
+           btrim(regexp_replace(
+             regexp_replace(
                lower(normalize(coalesce(indicativ, ''), NFD)),
                '[' || chr(768) || '-' || chr(879) || ']', '', 'g'),
              '\s+', ' ', 'g')) AS folded
       FROM lookup_tarla
-     GROUP BY 1
+     GROUP BY 1, 2
     HAVING count(*) > 1
        AND btrim(regexp_replace(
              regexp_replace(
@@ -1661,11 +1674,19 @@ BEGIN
   ) x;
 
   IF dupes > 0 THEN
-    RAISE WARNING 'lookup_tarla_indicativ_folded_unique not created: % group(s) of tarla codes fold to one code. Apply src/db/migration_083_tarla_code_unique.sql, which names the colliding rows and how many properties point at each, and resolve them first.', dupes;
+    RAISE WARNING 'lookup_tarla_locality_indicativ_folded_unique not created: % group(s) of tarla codes fold to one code in one locality. Apply src/db/migration_112_tarla_locality.sql, which gives each tarla its properties'' locality, and resolve what is left first.', dupes;
   ELSE
     EXECUTE $q$
-      CREATE UNIQUE INDEX lookup_tarla_indicativ_folded_unique
+      DROP INDEX IF EXISTS lookup_tarla_indicativ_folded_unique
+    $q$;
+    EXECUTE $q$
+      CREATE UNIQUE INDEX lookup_tarla_locality_indicativ_folded_unique
         ON lookup_tarla (
+          (btrim(regexp_replace(
+             regexp_replace(
+               lower(normalize(coalesce(locality, ''), NFD)),
+               '[' || chr(768) || '-' || chr(879) || ']', '', 'g'),
+             '\s+', ' ', 'g'))),
           (btrim(regexp_replace(
              regexp_replace(
                lower(normalize(coalesce(indicativ, ''), NFD)),
@@ -1673,13 +1694,26 @@ BEGIN
              '\s+', ' ', 'g')))
         )
         WHERE btrim(regexp_replace(
-                regexp_replace(
-                  lower(normalize(coalesce(indicativ, ''), NFD)),
-                  '[' || chr(768) || '-' || chr(879) || ']', '', 'g'),
-                '\s+', ' ', 'g')) <> ''
+             regexp_replace(
+               lower(normalize(coalesce(indicativ, ''), NFD)),
+               '[' || chr(768) || '-' || chr(879) || ']', '', 'g'),
+             '\s+', ' ', 'g')) <> ''
     $q$;
   END IF;
 END $$;
+
+-- migration_112 (Slice #39.67) -- a tarla's outline
+CREATE TABLE IF NOT EXISTS tarla_corner (
+  id             uuid             PRIMARY KEY DEFAULT gen_random_uuid(),
+  tarla_id       uuid             NOT NULL REFERENCES lookup_tarla(id) ON DELETE CASCADE,
+  sequence_no    integer          NOT NULL,
+  lat            double precision NOT NULL,
+  lon            double precision NOT NULL,
+  original_index integer,
+  created_at     timestamptz      NOT NULL DEFAULT now(),
+  updated_at     timestamptz      NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS tarla_corner_tarla_seq_unique ON tarla_corner (tarla_id, sequence_no);
 
 -- migration_034 -- Street View street line on the property address
 ALTER TABLE property_address
@@ -2017,10 +2051,11 @@ BEGIN
           AND i.indisunique
           AND i.indisvalid
           AND i.indpred IS NOT NULL
-          AND i.indnkeyatts = 1
+          AND i.indnkeyatts = 2
           AND i.indkey[0]   = 0
+          AND i.indkey[1]   = 0
      ) THEN
-    RAISE WARNING 'lookup_tarla has no partial unique index over the folded indicativ (migration_083, Slice #34.32). Two codes meaning one tarla can still be created by a racing writer; the application still refuses the ordinary case. Section 8 says why it was not created - a collision, or a missing table.';
+    RAISE WARNING 'lookup_tarla has no partial unique index over the folded locality and indicativ (migration_112, Slice #39.67; migration_083 before it). Two codes meaning one tarla can still be created by a racing writer; the application still refuses the ordinary case. Section 8 says why it was not created - a collision, or a missing table.';
   END IF;
 
   -- Slice #34.31: the five statements that gained a count-first guard earlier

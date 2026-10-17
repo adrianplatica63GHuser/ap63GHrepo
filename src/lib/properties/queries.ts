@@ -23,7 +23,7 @@ import { inGroups, propertyFilterConditions } from "./list-filter-sql";
 import { textValue } from "@/lib/list/filter-sql";
 // Slice #34.32 — migration_083's fold, so the auto-seed adopts under the same
 // rule the index enforces. See `findFolded` in `resolveTarlaForCreate`.
-import { sameTarlaCode, tarlaLockIdentities } from "./tarla-code-guard";
+import { sameTarlaCode, sameTarlaLocality, tarlaLockIdentities } from "./tarla-code-guard";
 import { advisoryLockKeys, type CadastralMatch } from "./import-property-plan";
 import { entityMetadata, groupMember, groups, lookupPersonRole, lookupPropertyType, lookupTarla, lookupUseCategory, person, principalObject, property, propertyAddress, propertyCorner, propertyPerson, propertyVersion } from "@/db/schema";
 import { appendVersionsIfChanged } from "@/lib/versioning/append";
@@ -767,6 +767,10 @@ export async function findPropertiesByCadastralIdentity(
   tx: DbTransaction,
   tarlaSola: string,
   parcela: string,
+  // Slice #39.67: the identity is locality + tarla + parcela — T50 P1 in Bragadiru is not T50 P1 in Cornetu. The
+  // locality is the TARLA's (lookup_tarla.locality), compared as the unique index folds it: no locality matches
+  // only a tarla with none.
+  locality: string | null = null,
 ): Promise<CadastralMatch[]> {
   // ⚠️ The two halves are compared SEPARATELY, never through a joined key, and
   // an adversarial round is what put them that way. `cadastralIdentityKey`
@@ -805,6 +809,7 @@ export async function findPropertiesByCadastralIdentity(
       nickname: property.nickname,
       principalObjectId: property.principalObjectId,
       tarla: lookupTarla.indicativ,
+      tarlaLocality: lookupTarla.locality,
       parcela: property.parcela,
     })
     .from(property)
@@ -817,11 +822,14 @@ export async function findPropertiesByCadastralIdentity(
     )
     .orderBy(property.code);
 
-  const hits = candidates.filter(
-    (row) =>
-      cadastralKey(row.tarla ?? "") === wantedTarla &&
-      cadastralKey(row.parcela ?? "") === wantedParcela,
-  );
+  const hits = candidates
+    .filter(
+      (row) =>
+        cadastralKey(row.tarla ?? "") === wantedTarla &&
+        cadastralKey(row.parcela ?? "") === wantedParcela &&
+        sameTarlaLocality(row.tarlaLocality, locality),
+    )
+    .map(({ tarlaLocality: _locality, ...row }) => row);
   if (hits.length === 0) return [];
 
   const counts = await tx
@@ -1022,7 +1030,7 @@ export async function createProperty(
  */
 async function resolveTarlaForCreate(
   tx: DbTransaction,
-  input: { tarlaId?: string | null; tarlaCode?: string | null },
+  input: { tarlaId?: string | null; tarlaCode?: string | null; tarlaLocality?: string | null },
 ): Promise<string | null> {
   if (input.tarlaId) return input.tarlaId;
   const raw = input.tarlaCode?.trim();
@@ -1035,6 +1043,8 @@ async function resolveTarlaForCreate(
   const value = cadastralValue(raw);
   const wanted = cadastralKey(value);
   if (wanted === "") return null;
+  // Slice #39.67: the tarla is looked for, and minted, in its locality only.
+  const locality = input.tarlaLocality?.trim() || null;
 
   // The scan is a helper rather than two copies, because the SECOND scan
   // deciding differently from the first — a looser fold, a stale `wanted` — is
@@ -1072,10 +1082,12 @@ async function resolveTarlaForCreate(
   // ⚠️ **It compares `value`, not `raw`** — the decoded string that is about to
   // be stored — because that is the text the index will actually see.
   const findFolded = async (): Promise<string | null> => {
-    const rows = await tx
-      .select({ id: lookupTarla.id, indicativ: lookupTarla.indicativ })
-      .from(lookupTarla)
-      .orderBy(lookupTarla.indicativ, lookupTarla.id);
+    const rows = (
+      await tx
+        .select({ id: lookupTarla.id, indicativ: lookupTarla.indicativ, locality: lookupTarla.locality })
+        .from(lookupTarla)
+        .orderBy(lookupTarla.indicativ, lookupTarla.id)
+    ).filter((r) => sameTarlaLocality(r.locality, locality));
     return (
       rows.find((r) => cadastralKey(r.indicativ) === wanted)?.id ??
       rows.find((r) => sameTarlaCode(value, r.indicativ))?.id ??
@@ -1127,7 +1139,7 @@ async function resolveTarlaForCreate(
   // can express one and no sixth caller can forget it. See migration_077.
   const [created] = await tx
     .insert(lookupTarla)
-    .values({ indicativ: value, origin: "IMPORT" })
+    .values({ indicativ: value, locality, origin: "IMPORT" })
     .returning({ id: lookupTarla.id });
   return created.id;
 }
@@ -1171,7 +1183,11 @@ export async function createPropertyIn(
     // holds the id. The seed used to run after the insert, which was fine when
     // it only had to make the dropdown offer a string the property already
     // carried; it cannot be after any more.
-    const tarlaId = await resolveTarlaForCreate(tx, propFields);
+    // Slice #39.67: a code without a locality takes the address's — the property says where it is.
+    const tarlaId = await resolveTarlaForCreate(tx, {
+      ...propFields,
+      tarlaLocality: propFields.tarlaLocality ?? addrInput?.locality ?? null,
+    });
 
     const [propRow] = await tx
       .insert(property)

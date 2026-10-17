@@ -3,15 +3,16 @@
  *                                                              (Slice #29.05)
  *
  * WHY THIS EXISTS AT ALL
- *   SEVENTEEN foreign keys reach the ELEVEN lookup tables behind Reference Data.
+ *   EIGHTEEN foreign keys reach the ELEVEN lookup tables behind Reference Data.
  *   Exactly ONE refuses a delete: `document.document_type_id` is NOT NULL with
  *   no `onDelete` clause, so Postgres' default "no action" blocks it
  *   (src/db/schema/index.ts → `document`). Every other edge does the damage
  *   quietly — TWELVE are ON DELETE SET NULL, which blanks the tag on the rows
- *   that carried it, and FOUR are CASCADE, deleting whitelist rows outright
+ *   that carried it, and FIVE are CASCADE, deleting whitelist rows outright
  *   (`lookup_doc_type_person_role`'s two halves — its person-role edge and its
  *   document-type edge — and, since Slice #39.66, `lookup_property_type_use`'s
- *   two: the uses a property type allows). Seventeen and four until Slice #34.04, which folded
+ *   two: the uses a property type allows; and since Slice #39.67 `tarla_corner`'s, a tarla's own outline).
+ *   Seventeen and four before #39.67; seventeen and four until Slice #34.04, which folded
  *   `lookup_property_person_role` and `lookup_person_person_role` into two
  *   booleans ON `lookup_person_role`; a column on the row being deleted is not
  *   an inbound edge. So for ten lists of eleven, the refusal has to be
@@ -153,6 +154,7 @@ import {
   lookupPropertyPropertyRole,
   lookupPropertyType,
   lookupPropertyTypeUse,
+  tarlaCorner,
   lookupTarla,
   lookupUseCategory,
   naturalPerson,
@@ -386,6 +388,17 @@ export const LIST_DEPENDENCIES: Record<ListKey, ListDependencies> = {
         // did not change, the truth of it did.
         enforcement: "clears",
         versioned: { entity: "property", idColumn: property.id },
+      },
+      // Slice #39.67: the tarla's own outline (migration_112). Its own content, as a type's allowed uses are —
+      // named („these go with it"), cascading, never moved onto another tarla.
+      {
+        kind: "column",
+        labelKey: "tarlaCorners",
+        table: tarlaCorner,
+        column: tarlaCorner.tarlaId,
+        enforcement: "cascades",
+        configuration: true,
+        uniqueWith: [tarlaCorner.sequenceNo],
       },
     ],
     snapshot: { keys: PROPERTY_SNAPSHOT_PROPERTY_KEYS, field: "tarlaId" },

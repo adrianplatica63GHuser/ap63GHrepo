@@ -98,6 +98,12 @@ export const propertyCreateSchema = propertyBase.extend({
    * edit mint a code would put an import-origin row behind a person's click.
    */
   tarlaCode: z.string().trim().min(1).nullish(),
+  /**
+   * Slice #39.67: the locality a `tarlaCode` belongs to — tarla numbers restart in every locality, so T50 is found
+   * (or created) in that locality only. Read only beside `tarlaCode`; without it the address's locality is used,
+   * and without that the tarla is one with no locality. A `tarlaId` already names its locality.
+   */
+  tarlaLocality: z.string().trim().min(1).nullish(),
   // null / omitted = no address
   address: propertyAddressInputSchema.nullish(),
   // [] = no corners (valid — corners can be added later)

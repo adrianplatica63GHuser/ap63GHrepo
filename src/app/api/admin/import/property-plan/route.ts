@@ -53,6 +53,8 @@ const bodySchema = z.object({
       }),
     )
     .max(MAX_PROPERTY_FOLDERS),
+  // Slice #39.67: the tarlale's locality for this import — half of every folder's cadastral identity.
+  locality: z.string().nullish(),
 });
 
 export async function POST(request: NextRequest): Promise<Response> {
@@ -71,7 +73,7 @@ export async function POST(request: NextRequest): Promise<Response> {
   if (!parsed.success) return zodErrorToResponse(parsed.error);
 
   try {
-    const plans = await planPropertyFolders(parsed.data.folders);
+    const plans = await planPropertyFolders(parsed.data.folders, parsed.data.locality ?? null);
     return Response.json({ plans }, { status: 200 });
   } catch (err) {
     const dbResponse = dbErrorToResponse(err);

@@ -304,6 +304,30 @@ async function syncDocTypePersonRoles(): Promise<void> {
  * By name, as the junction above: a type with no pairs allows every use, so a sync that left this table empty
  * would quietly open every type to every use on Supabase.
  */
+/**
+ * tarla_corner — a tarla's outline (migration_112, Slice #39.67).
+ * By the tarla's code AND locality: since #39.67 the code alone names several tarlale. TRUNCATE lookup_tarla
+ * CASCADE empties this table on Supabase, so a sync that did not copy it would erase every outline there.
+ */
+async function syncTarlaCorners(): Promise<void> {
+  const { rows, rowCount } = await localPool.query(`
+    SELECT lt.indicativ, coalesce(lt.locality, '') AS locality, tc.sequence_no, tc.lat, tc.lon, tc.original_index
+    FROM   tarla_corner tc
+    JOIN   lookup_tarla lt ON lt.id = tc.tarla_id
+    ORDER BY lt.indicativ, lt.locality, tc.sequence_no
+  `);
+  for (const row of rows) {
+    await supaPool.query(
+      `INSERT INTO tarla_corner (tarla_id, sequence_no, lat, lon, original_index)
+       SELECT t.id, $3, $4, $5, $6
+       FROM   lookup_tarla t
+       WHERE  t.indicativ = $1 AND coalesce(t.locality, '') = $2`,
+      [row.indicativ, row.locality, row.sequence_no, row.lat, row.lon, row.original_index],
+    );
+  }
+  ok(`tarla_corner  (${rowCount ?? 0} rows)`);
+}
+
 async function syncPropertyTypeUses(): Promise<void> {
   const { rows, rowCount } = await localPool.query(`
     SELECT lpt.name AS type_name, luc.name AS use_name
@@ -386,7 +410,8 @@ async function main() {
   await supaPool.query(`
     TRUNCATE
       lookup_doc_type_person_role,
-      lookup_property_type_use
+      lookup_property_type_use,
+      tarla_corner
     CASCADE
   `);
   await supaPool.query(`
@@ -428,6 +453,7 @@ async function main() {
   // Junction tables (depend on base tables already inserted above)
   await syncDocTypePersonRoles();
   await syncPropertyTypeUses();
+  await syncTarlaCorners();
 
   // Step 4: Seed domain data (persons, properties, documents, judicial persons)
   // Run seed.ts as a child process with DATABASE_URL temporarily pointed at Supabase.
