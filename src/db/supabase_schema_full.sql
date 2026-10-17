@@ -4,7 +4,7 @@
 -- GENERATED FILE -- DO NOT EDIT BY HAND.
 -- Regenerate with:  .\scripts\Export-SupabaseSchema.ps1
 --
--- Generated : 2026-10-17 08:21
+-- Generated : 2026-10-17 10:11
 -- Source    : local Docker database (ga40db @ ga40prj-postgres)
 --
 -- Applies the complete schema from scratch after running
@@ -399,6 +399,24 @@ CREATE TABLE public.document_page (
     rotation smallint DEFAULT 0 NOT NULL,
     CONSTRAINT document_page_rotation_check CHECK ((rotation = ANY (ARRAY[0, 90, 180, 270])))
 );
+
+
+--
+-- Name: document_tarla; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.document_tarla (
+    document_id uuid NOT NULL,
+    tarla_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: TABLE document_tarla; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.document_tarla IS 'Slice #39.69: a plan parcelar (or any document) linked to the tarla it draws.';
 
 
 --
@@ -1319,6 +1337,39 @@ COMMENT ON TABLE public.tarla_corner IS 'Slice #39.67: the optional outline of a
 
 
 --
+-- Name: tarla_parcel; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.tarla_parcel (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tarla_id uuid NOT NULL,
+    parcela text NOT NULL,
+    area_sqm numeric(14,2),
+    use_category_id uuid,
+    use_printed text,
+    source_document_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT tarla_parcel_area_positive CHECK (((area_sqm IS NULL) OR (area_sqm > (0)::numeric))),
+    CONSTRAINT tarla_parcel_parcela_not_blank CHECK ((btrim(parcela) <> ''::text))
+);
+
+
+--
+-- Name: TABLE tarla_parcel; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.tarla_parcel IS 'Slice #39.69: the parcels a plan parcelar draws on a tarla - number as printed, area in m2, use. No owners.';
+
+
+--
+-- Name: COLUMN tarla_parcel.use_printed; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.tarla_parcel.use_printed IS 'Slice #39.69: the use as the plan prints it, kept when it matches no lookup_use_category.';
+
+
+--
 -- Name: time_frame_setting; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1457,6 +1508,14 @@ ALTER TABLE ONLY public.cost_record
 
 ALTER TABLE ONLY public.document_page
     ADD CONSTRAINT document_page_document_number_unique UNIQUE (document_id, page_number);
+
+
+--
+-- Name: document_tarla document_tarla_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.document_tarla
+    ADD CONSTRAINT document_tarla_pkey PRIMARY KEY (document_id, tarla_id);
 
 
 --
@@ -2004,6 +2063,14 @@ ALTER TABLE ONLY public.tarla_corner
 
 
 --
+-- Name: tarla_parcel tarla_parcel_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tarla_parcel
+    ADD CONSTRAINT tarla_parcel_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: time_frame_setting time_frame_setting_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2067,6 +2134,13 @@ CREATE INDEX cost_record_provider_period_idx ON public.cost_record USING btree (
 --
 
 CREATE UNIQUE INDEX document_document_unique ON public.document_document USING btree (document_id_a, document_id_b);
+
+
+--
+-- Name: document_tarla_tarla_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX document_tarla_tarla_idx ON public.document_tarla USING btree (tarla_id);
 
 
 --
@@ -2413,6 +2487,20 @@ CREATE UNIQUE INDEX tarla_corner_tarla_seq_unique ON public.tarla_corner USING b
 
 
 --
+-- Name: tarla_parcel_source_document_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX tarla_parcel_source_document_idx ON public.tarla_parcel USING btree (source_document_id);
+
+
+--
+-- Name: tarla_parcel_tarla_parcela_folded_unique; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX tarla_parcel_tarla_parcela_folded_unique ON public.tarla_parcel USING btree (tarla_id, btrim(regexp_replace(regexp_replace(lower(NORMALIZE(parcela, NFD)), (((('['::text || chr(768)) || '-'::text) || chr(879)) || ']'::text), ''::text, 'g'::text), '\s+'::text, ' '::text, 'g'::text)));
+
+
+--
 -- Name: uq_lookup_person_role_parent_kind; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2663,6 +2751,22 @@ ALTER TABLE ONLY public.document
 
 ALTER TABLE ONLY public.document
     ADD CONSTRAINT document_surveyor_id_fkey FOREIGN KEY (surveyor_id) REFERENCES public.person(id) ON DELETE SET NULL;
+
+
+--
+-- Name: document_tarla document_tarla_document_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.document_tarla
+    ADD CONSTRAINT document_tarla_document_id_fkey FOREIGN KEY (document_id) REFERENCES public.document(id) ON DELETE CASCADE;
+
+
+--
+-- Name: document_tarla document_tarla_tarla_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.document_tarla
+    ADD CONSTRAINT document_tarla_tarla_id_fkey FOREIGN KEY (tarla_id) REFERENCES public.lookup_tarla(id) ON DELETE CASCADE;
 
 
 --
@@ -3119,6 +3223,30 @@ ALTER TABLE ONLY public.stamp_member
 
 ALTER TABLE ONLY public.tarla_corner
     ADD CONSTRAINT tarla_corner_tarla_id_fkey FOREIGN KEY (tarla_id) REFERENCES public.lookup_tarla(id) ON DELETE CASCADE;
+
+
+--
+-- Name: tarla_parcel tarla_parcel_source_document_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tarla_parcel
+    ADD CONSTRAINT tarla_parcel_source_document_id_fkey FOREIGN KEY (source_document_id) REFERENCES public.document(id) ON DELETE SET NULL;
+
+
+--
+-- Name: tarla_parcel tarla_parcel_tarla_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tarla_parcel
+    ADD CONSTRAINT tarla_parcel_tarla_id_fkey FOREIGN KEY (tarla_id) REFERENCES public.lookup_tarla(id) ON DELETE CASCADE;
+
+
+--
+-- Name: tarla_parcel tarla_parcel_use_category_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tarla_parcel
+    ADD CONSTRAINT tarla_parcel_use_category_id_fkey FOREIGN KEY (use_category_id) REFERENCES public.lookup_use_category(id) ON DELETE SET NULL;
 
 
 --
