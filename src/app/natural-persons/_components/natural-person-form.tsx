@@ -1509,8 +1509,9 @@ function RelationshipsField({
   const toggle = (id: string, on: boolean) =>
     onChange((on ? [...value, id] : value.filter((v) => v !== id)).sort());
   return (
-    <div className="flex flex-col gap-1" role="group" aria-labelledby={labelId} data-np-relationships="">
-      <span id={labelId} className={STACKED_LABEL_CLASS}>
+    <div className="flex flex-col gap-y-0.5 text-sm" role="group" aria-labelledby={labelId} data-np-relationships="">
+      {/* The stacked label's look without its `self-end`, which in a column would push it to the right. */}
+      <span id={labelId} className="font-medium text-ink dark:text-zinc-300">
         {label}
       </span>
       <div className="flex flex-wrap gap-x-4 gap-y-1">
