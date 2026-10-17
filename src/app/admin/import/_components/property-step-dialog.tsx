@@ -56,6 +56,8 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { localityFromFolderName } from "@/lib/import/folder-locality";
+import { TARLA, boxStyle } from "@/lib/ui/field-widths";
 import { ArrowRight, RefreshCw, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
@@ -249,12 +251,14 @@ async function parseCoordinateFile(file: File): Promise<Corner[]> {
 
 async function fetchPlan(
   folders: { folderName: string; tarlaSola: string; parcela: string; offeredCornerCount: number }[],
+  locality: string,
   sessionMsg: string,
 ): Promise<FolderPlan[]> {
   const res = await fetch("/api/admin/import/property-plan", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ folders }),
+    // Slice #39.67: the tarlale's locality — half of every folder's cadastral identity.
+    body: JSON.stringify({ folders, locality: locality.trim() || null }),
   });
   assertNotRedirected(res, sessionMsg);
   if (!res.ok) {
@@ -270,6 +274,7 @@ async function ensureProperty(
     tarlaSola: string;
     parcela: string;
     nickname: string | null;
+    locality: string | null;
     corners: Corner[];
     confirm?: { existingId: string; addCorners: boolean };
   },
@@ -320,6 +325,13 @@ export function PropertyStepDialog({
   const [loadError, setLoadError] = useState<string | null>(null);
   /** Bumped to re-run the load — the retry after a failed plan, and after a `stale`. */
   const [reloadKey, setReloadKey] = useState(0);
+  /**
+   * Slice #39.67: the locality this import's tarlale belong to — tarla numbers restart in every locality. Offered
+   * from the root folder's name, editable; `localityDraft` is the field, `locality` what the plan was made with
+   * (applied on leaving the field, so the plan is not re-asked on every key).
+   */
+  const [locality, setLocality] = useState(() => localityFromFolderName(rootFolderName));
+  const [localityDraft, setLocalityDraft] = useState(locality);
 
   /** folderName → the user ticked "link my documents to this Property". */
   const [linkConfirmed, setLinkConfirmed] = useState<Record<string, boolean>>({});
@@ -445,6 +457,7 @@ export function PropertyStepDialog({
             parcela: group.parcela,
             offeredCornerCount: parsed.get(group.folderName)?.corners?.length ?? 0,
           })),
+          locality,
           t("errorSession"),
         );
         if (!mounted) return;
@@ -466,9 +479,9 @@ export function PropertyStepDialog({
       mounted = false;
     };
     // `grouping` is derived from the stable `entries` prop; `t` is stable for
-    // a locale. `reloadKey` is the only real dependency — see the retry button.
+    // a locale. `reloadKey` is a real dependency — see the retry button — and so, since #39.67, is the locality.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reloadKey]);
+  }, [reloadKey, locality]);
 
   // ── What the screen is allowed to do ──────────────────────────────────────
 
@@ -614,6 +627,7 @@ export function PropertyStepDialog({
             // recognise in a list, and #26.01 made it a name they chose on
             // purpose rather than one the system decoded.
             nickname: group.folderName,
+            locality: locality.trim() || null,
             corners,
             confirm:
               plan.action === "link" && plan.matches.length === 1
@@ -720,6 +734,7 @@ export function PropertyStepDialog({
     plans,
     grouping,
     coordinates,
+    locality,
     cornersConfirmed,
     onResolved,
     onPropertyResolved,
@@ -786,6 +801,28 @@ export function PropertyStepDialog({
         </div>
 
         <div className="flex-1 space-y-4 overflow-y-auto px-5 py-5">
+          {/* Slice #39.67: the tarlale's locality, once for the run. Leaving the field re-asks the plan. */}
+          <div data-import-locality="">
+            <label htmlFor="import-property-locality" className="block text-sm font-medium text-ink dark:text-zinc-100">
+              {t("locality")}
+            </label>
+            <input
+              id="import-property-locality"
+              type="text"
+              value={localityDraft}
+              disabled={submitting}
+              onChange={(e) => setLocalityDraft(e.target.value)}
+              onBlur={() => {
+                if (localityDraft.trim() !== locality.trim()) setLocality(localityDraft.trim());
+              }}
+              style={boxStyle(TARLA.locality)}
+              className="mt-1 rounded-md border border-wire bg-white px-2 py-1 text-sm dark:border-zinc-600 dark:bg-zinc-800"
+              aria-describedby="import-property-locality-hint"
+            />
+            <p id="import-property-locality-hint" className="mt-1 text-xs text-fade dark:text-zinc-400">
+              {t("localityHint")}
+            </p>
+          </div>
           {loading && <ActivityCue>{t("loading")}</ActivityCue>}
 
           {loadError !== null && (

@@ -46,6 +46,9 @@ export const HELP_SCREENS = [
   { key: "properties-list", manual: "properties-list" },
   { key: "property-detail", manual: "properties-add" },
   { key: "properties-map", manual: "map-what" },
+  // Slice #39.67: the tarlale — a list and a page of their own.
+  { key: "tarla-list", manual: "properties-tarla" },
+  { key: "tarla-detail", manual: "properties-tarla" },
 
   // ── Documents ───────────────────────────────────────────────────────────
   { key: "documents-list", manual: "documents-list" },

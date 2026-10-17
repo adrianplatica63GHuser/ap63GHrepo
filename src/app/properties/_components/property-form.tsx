@@ -32,7 +32,7 @@ import {
   type Stereo70Point,
 } from "@/lib/geo/convert-client";
 import { streetLineFromGeocodeResult } from "@/lib/geo/reverse-geocode";
-import { ArrowLeft, ArrowRight, Camera, Minimize, Pencil, Save, Trash2, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Camera, FolderOpen, Minimize, Pencil, Save, Trash2, X } from "lucide-react";
 import type { PropertyTypeProfile } from "@/lib/properties/type-profile";
 import { IconButton } from "@/lib/ui/icon-button";
 import { UnsavedChangesBanner } from "@/components/unsaved-changes-banner";
@@ -325,7 +325,7 @@ export function PropertyForm({
       const res = await fetch("/api/admin/value-lists/tarla");
       if (res.redirected || !res.ok) throw new Error(`Failed to load tarla (HTTP ${res.status})`);
       const body = await res.json();
-      return (body.items ?? []) as { id: string; indicativ: string; descriere?: string | null }[];
+      return (body.items ?? []) as { id: string; indicativ: string; descriere?: string | null; locality?: string | null }[];
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -344,12 +344,19 @@ export function PropertyForm({
   // is the whole difference between a dropdown whose selection survives a
   // rename and one whose selection is a string that happens to match a label
   // today. The label is unchanged.
+  // Slice #39.67: tarla numbers restart in every locality, so a code held by two tarlale names its locality
+  // („50 (Cornetu)"); a code that is the only one of its kind reads as before, and keeps the box's width.
+  const tarlaCodeCount = new Map<string, number>();
+  for (const o of tarlaItems ?? []) tarlaCodeCount.set(o.indicativ.trim().toLowerCase(), (tarlaCodeCount.get(o.indicativ.trim().toLowerCase()) ?? 0) + 1);
   const tarlaOptions = [
     noneOption,
-    ...(tarlaItems ?? []).map((o) => ({
-      value: o.id,
-      label: o.descriere ? `${o.indicativ} — ${o.descriere}` : o.indicativ,
-    })),
+    ...(tarlaItems ?? []).map((o) => {
+      const code =
+        (tarlaCodeCount.get(o.indicativ.trim().toLowerCase()) ?? 0) > 1
+          ? `${o.indicativ} (${o.locality?.trim() || t("fields.tarlaNoLocality")})`
+          : o.indicativ;
+      return { value: o.id, label: o.descriere ? `${code} — ${o.descriere}` : code };
+    }),
   ];
 
   const [corners,          setCorners]          = useState<Corner[]>(initialCorners);
@@ -1213,6 +1220,8 @@ export function PropertyForm({
                       highlight={displayHighlights?.property.tarlaId}
                       snapshot={snapshotLookups.tarlaId}
                       width={PROP.tarlaId}
+                      pageHref={(value) => (value ? `/tarlale/${value}` : null)}
+                      pageLabel={t("fields.tarlaPage")}
                     />
                   )}
                   {!typeConfig.hideTarlaParcela && (
@@ -1947,9 +1956,14 @@ function SelectField({
   highlight,
   snapshot,
   width,
+  pageHref,
+  pageLabel,
 }: FieldProps & {
   control: Control<FormValues>;
   options: { value: string; label: string; blank?: boolean }[];
+  /** Slice #39.67: the chosen value's own page, opened from under the box (a tarla's), or null for none. */
+  pageHref?: (value: string) => string | null;
+  pageLabel?: string;
   /**
    * Slice #34.17: what the viewed VERSION recorded in this field.
    *
@@ -2027,6 +2041,15 @@ function SelectField({
         />
         {error && (
           <span className="text-xs text-red-600 dark:text-red-400">{error}</span>
+        )}
+        {pageHref && pageLabel && pageHref(String(current ?? "")) && (
+          <IconButton
+            icon={FolderOpen}
+            label={pageLabel}
+            variant="secondary"
+            size="xs"
+            href={pageHref(String(current ?? "")) as string}
+          />
         )}
       </div>
     </label>

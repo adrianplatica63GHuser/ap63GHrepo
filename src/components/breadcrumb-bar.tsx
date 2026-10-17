@@ -152,6 +152,11 @@ export function buildSegments(
       segments.push({ label: t("documents"), href: accumulated });
       continue;
     }
+    // Slice #39.67: „Tarlale" — a tarla's page is named by its code and locality (registered by the page).
+    if (part === "tarlale") {
+      segments.push({ label: t("tarlale"), href: accumulated });
+      continue;
+    }
     // Slice #38.84: „Interacțiuni". Slice #39.02: it sits in „Rapoarte" now, so the crumb names that
     // section before it, as text, the way an /admin/ screen's crumb names its own.
     if (part === "interactions") {

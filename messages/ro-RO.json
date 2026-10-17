@@ -315,7 +315,9 @@
       "calculatedAreaMp": "Suprafață calculată (m²)",
       "notes": "Note",
       "noneOption": "niciunul",
-      "useNotAllowed": "Tipul „{type}” nu are această categorie de folosință printre cele permise. Rămâne până o schimbați."
+      "useNotAllowed": "Tipul „{type}” nu are această categorie de folosință printre cele permise. Rămâne până o schimbați.",
+      "tarlaPage": "Deschide pagina tarlalei",
+      "tarlaNoLocality": "fără localitate"
     },
     "filters": {
       "group": "Grup"
@@ -1564,7 +1566,9 @@
         "manual": "Ajutor și învățare — Manual de utilizare",
         "skills-map": "Ajutor și învățare — Harta competențelor",
         "skill-quiz": "Ajutor și învățare — Chestionarul unei competențe",
-        "ask": "Ajutor și învățare — Întreabă"
+        "ask": "Ajutor și învățare — Întreabă",
+        "tarla-list": "Tarlale — Listă",
+        "tarla-detail": "Tarlale — Detaliu"
       },
       "hints": {
         "drag-select": "Hartă — trage un dreptunghi pentru a selecta mai multe proprietăți",
@@ -2267,7 +2271,11 @@
       "converseJoined": "Rol invers",
       "converseJoinedSub": "(bărbat, femeie)",
       "status": "Stare",
-      "shortName": "Denumire scurtă"
+      "shortName": "Denumire scurtă",
+      "locality": "Localitate",
+      "county": "Județ",
+      "tarlaLocalityJoined": "Localitate",
+      "tarlaLocalityJoinedSub": "(județ)"
     },
     "documentTypeStatus": {
       "new": "Adăugat manual",
@@ -2302,7 +2310,8 @@
       "delete": "Șterge",
       "editForm": "Formular ({count})",
       "allHaveForm": "Niciun tip de document nu mai așteaptă un formular.",
-      "allReviewed": "Nicio valoare nu așteaptă verificare."
+      "allReviewed": "Nicio valoare nu așteaptă verificare.",
+      "openTarla": "Deschide pagina tarlalei"
     },
     "templateFields": {
       "title": "Formular pentru „{type}”",
@@ -2421,7 +2430,8 @@
         "propertyProperties": "{count, plural, one {# asociere Proprietate–Proprietate} few {# asocieri Proprietate–Proprietate} other {# de asocieri Proprietate–Proprietate}}",
         "documentDocuments": "{count, plural, one {# asociere Document–Document} few {# asocieri Document–Document} other {# de asocieri Document–Document}}",
         "propertyTypeUses": "{count, plural, one {# folosință pe care o permite tipul} few {# folosințe pe care le permite tipul} other {# de folosințe pe care le permite tipul}}",
-        "useTypeAllowed": "{count, plural, one {# tip de proprietate care permite folosința} few {# tipuri de proprietate care permit folosința} other {# de tipuri de proprietate care permit folosința}}"
+        "useTypeAllowed": "{count, plural, one {# tip de proprietate care permite folosința} few {# tipuri de proprietate care permit folosința} other {# de tipuri de proprietate care permit folosința}}",
+        "tarlaCorners": "{count, plural, one {# colț al conturului} few {# colțuri ale conturului} other {# de colțuri ale conturului}}"
       },
       "notes": {
         "versionSnapshots": "Istoricul versiunilor nu este numărat mai sus. Fiecare versiune salvată păstrează valoarea așa cum era atunci — nici ștergerea, nici mutarea nu modifică versiunile deja salvate. Mutarea adaugă însă câte o versiune nouă fiecărui obiect pe care îl modifică."
@@ -2631,7 +2641,9 @@
         "introNoProperties": "Folderul „{folder}” nu conține niciun subfolder de proprietate — niciun document din el nu va fi legat de vreo proprietate. Dacă nu vă așteptați la asta, renunțați și verificați numele subfolderelor.",
         "cornersAlreadyApplied": "{count, plural, one {Colțul din acest fișier a fost deja adăugat proprietății, la o încercare anterioară din acest import} few {Cele # colțuri din acest fișier au fost deja adăugate proprietății, la o încercare anterioară din acest import} other {Cele # de colțuri din acest fișier au fost deja adăugate proprietății, la o încercare anterioară din acest import}}.",
         "cornersNone": "Proprietatea va rămâne fără colțuri.",
-        "cornersKeptNoFile": "Proprietatea are deja {existing, plural, one {un colț, care rămâne neschimbat} few {# colțuri, care rămân neschimbate} other {# de colțuri, care rămân neschimbate}}."
+        "cornersKeptNoFile": "Proprietatea are deja {existing, plural, one {un colț, care rămâne neschimbat} few {# colțuri, care rămân neschimbate} other {# de colțuri, care rămân neschimbate}}.",
+        "locality": "Localitatea tarlalelor",
+        "localityHint": "Numerele de tarla o iau de la capăt în fiecare localitate: tarlalele acestui import se caută și se adaugă în localitatea de aici. Este citită din numele dosarului; o puteți schimba."
       },
       "unsupported": "Browserul dvs. nu suportă accesul la foldere locale. Utilizați Chrome, Edge sau alt browser bazat pe Chromium.",
       "walkingFolder": "Se citește structura folderului…",
@@ -4216,7 +4228,8 @@
       "associateDocumentOfProperty": "Asociere act",
       "associateReferenceOfProperty": "Asociere proprietate corelată",
       "reports": "Rapoarte",
-      "inheritanceTree": "Arbori de moștenire"
+      "inheritanceTree": "Arbori de moștenire",
+      "tarlale": "Tarlale"
     },
     "recentlyViewed": {
       "title": "Recente",
@@ -4871,5 +4884,65 @@
     "copy": "Copiază linkul",
     "copied": "Linkul a fost copiat",
     "byGoogle": "Traseul îl trasează Google Maps, cu mașina, până la cel mai apropiat drum din hartă."
+  },
+  "tarla": {
+    "listTitle": "Tarlale",
+    "listIntro": "O tarla aparține unei localități. Codul, localitatea și descrierea se schimbă și din „Date de referință”.",
+    "columns": {
+      "code": "Tarla",
+      "locality": "Localitate",
+      "county": "Județ",
+      "description": "Descriere",
+      "properties": "Proprietăți",
+      "outline": "Contur"
+    },
+    "outlineCorners": "{count, plural, =0 {–} one {# colț} few {# colțuri} other {# de colțuri}}",
+    "none": "Nicio tarla încă.",
+    "noLocality": "fără localitate",
+    "loading": "Se încarcă…",
+    "loadError": "Lista nu s-a putut încărca.",
+    "detail": {
+      "title": "Tarla {label}",
+      "identity": "Tarla",
+      "fields": {
+        "indicativ": "Indicativ",
+        "locality": "Localitate",
+        "county": "Județ",
+        "descriere": "Descriere",
+        "notes": "Note"
+      },
+      "outline": "Contur",
+      "outlineHint": "Opțional: colțurile tarlalei, introduse ca la o proprietate. Desenul pe hartă vine într-o versiune următoare.",
+      "save": "Salvează",
+      "saved": "Salvat.",
+      "saveError": "Tarla nu s-a putut salva. Încercați din nou.",
+      "codeTaken": "În această localitate există deja tarla „{takenBy}”.",
+      "notFound": "Tarla nu există sau nu s-a putut încărca.",
+      "properties": "{count, plural, =0 {Proprietăți} one {O proprietate} few {# proprietăți} other {# de proprietăți}}",
+      "propertiesNone": "Nicio proprietate pe această tarla.",
+      "documents": "{count, plural, =0 {Acte} one {Un act} few {# acte} other {# de acte}}",
+      "documentsHint": "Actele legate de proprietățile de pe această tarla — o tarla nu are acte ale ei.",
+      "documentsNone": "Niciun act legat de proprietățile acestei tarlale.",
+      "columns": {
+        "code": "Cod",
+        "nickname": "Poreclă",
+        "parcela": "Parcelă",
+        "type": "Tip proprietate",
+        "locality": "Localitate",
+        "docCode": "Cod",
+        "docTitle": "Titlu",
+        "docType": "Tip act",
+        "viaProperties": "Prin proprietățile"
+      }
+    },
+    "info": {
+      "title": "Despre limitele tarlalelor",
+      "f1": "Nicio sursă publică nu dă limitele tarlalelor, nici în jurul Bragadirului, nici altundeva în România.",
+      "f2": "Geoportalul ANCPI arată parcele individuale, identificate prin codul localității și numărul cadastral. Nu are un atribut de tarla, iar serviciul lui de interogare nu este documentat.",
+      "f3": "Planul urbanistic general (PUG) al Bragadirului, cu numerele tarlalelor, nu este publicat online.",
+      "f4": "Planurile parcelare sunt făcute pentru comisia locală de fond funciar, la primărie, și pot fi cerute în baza Legii 544/2001. OCPI Ilfov poate furniza date, la un preț care nu se cunoaște.",
+      "f5": "Bolintin-Deal ține de județul Giurgiu, deci terenurile lui sunt la OCPI Giurgiu, nu la OCPI Ilfov.",
+      "f6": "Numerele de tarla o iau de la capăt în fiecare localitate: T50 din Bragadiru nu este T50 din Cornetu."
+    }
   }
 }

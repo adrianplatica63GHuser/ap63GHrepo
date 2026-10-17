@@ -144,6 +144,9 @@ export function resolveHelpScreenKey(pathname: string): HelpScreenKey | null {
   // ── Întreabă (Slice #39.45) — one screen ──
   if (head === "ask") return second ? null : "ask";
 
+  // ── Tarlale (Slice #39.67) — the list, and one tarla's page ──
+  if (head === "tarlale") return second ? (isIdSegment(second) && parts.length === 2 ? "tarla-detail" : null) : "tarla-list";
+
   // ── Interacțiuni (Slice #38.84) — one screen ────────────────────────────
   if (head === "interactions") return second ? null : "interactions";
 

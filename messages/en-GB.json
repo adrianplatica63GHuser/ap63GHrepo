@@ -315,7 +315,9 @@
       "calculatedAreaMp": "Calculated Area (m²)",
       "notes": "Notes",
       "noneOption": "none",
-      "useNotAllowed": "The type „{type}” does not list this use category among the ones it allows. It stays until you change it."
+      "useNotAllowed": "The type „{type}” does not list this use category among the ones it allows. It stays until you change it.",
+      "tarlaPage": "Open the tarla's page",
+      "tarlaNoLocality": "no locality"
     },
     "filters": {
       "group": "Group"
@@ -1564,7 +1566,9 @@
         "manual": "Help & learning — User manual",
         "skills-map": "Help & learning — Skills map",
         "skill-quiz": "Help & learning — A skill's quiz",
-        "ask": "Help & learning — Ask"
+        "ask": "Help & learning — Ask",
+        "tarla-list": "Tarlale — List",
+        "tarla-detail": "Tarlale — Detail"
       },
       "hints": {
         "drag-select": "Map — drag a rectangle to select many properties",
@@ -2267,7 +2271,11 @@
       "converseJoined": "Converse role",
       "converseJoinedSub": "(man, woman)",
       "status": "Status",
-      "shortName": "Short name"
+      "shortName": "Short name",
+      "locality": "Locality",
+      "county": "County",
+      "tarlaLocalityJoined": "Locality",
+      "tarlaLocalityJoinedSub": "(county)"
     },
     "documentTypeStatus": {
       "new": "Added by hand",
@@ -2302,7 +2310,8 @@
       "delete": "Delete",
       "editForm": "Form ({count})",
       "allHaveForm": "No document type is waiting for a form.",
-      "allReviewed": "No value is awaiting review."
+      "allReviewed": "No value is awaiting review.",
+      "openTarla": "Open the tarla's page"
     },
     "templateFields": {
       "title": "Form for “{type}”",
@@ -2421,7 +2430,8 @@
         "propertyProperties": "{count, plural, one {# Property–Property association} other {# Property–Property associations}}",
         "documentDocuments": "{count, plural, one {# Document–Document association} other {# Document–Document associations}}",
         "propertyTypeUses": "{count, plural, one {# use the type allows} other {# uses the type allows}}",
-        "useTypeAllowed": "{count, plural, one {# property type that allows the use} other {# property types that allow the use}}"
+        "useTypeAllowed": "{count, plural, one {# property type that allows the use} other {# property types that allow the use}}",
+        "tarlaCorners": "{count, plural, one {# corner of its outline} other {# corners of its outline}}"
       },
       "notes": {
         "versionSnapshots": "Version history is not counted above. Each saved version keeps the value as it was at the time — neither deleting nor moving alters a version that is already saved. Moving does add one new version to each object it changes."
@@ -2631,7 +2641,9 @@
         "introNoProperties": "The folder “{folder}” holds no property subfolders — nothing in it will be linked to a property. If that is not what you expected, cancel and check the subfolder names.",
         "cornersAlreadyApplied": "{count, plural, one {The corner in this file was already added to the property, on an earlier attempt in this import} other {The # corners in this file were already added to the property, on an earlier attempt in this import}}.",
         "cornersNone": "The property will have no corners.",
-        "cornersKeptNoFile": "The property already has {existing, plural, one {one corner, which is left unchanged} other {# corners, which are left unchanged}}."
+        "cornersKeptNoFile": "The property already has {existing, plural, one {one corner, which is left unchanged} other {# corners, which are left unchanged}}.",
+        "locality": "The tarlale's locality",
+        "localityHint": "Tarla numbers restart in every locality: this import's tarlale are looked for, and added, in the locality given here. It is read from the folder's name; you can change it."
       },
       "unsupported": "Your browser doesn't support local folder access. Please use Chrome, Edge, or another Chromium-based browser.",
       "walkingFolder": "Reading folder structure…",
@@ -4216,7 +4228,8 @@
       "associateDocumentOfProperty": "Associate Document",
       "associateReferenceOfProperty": "Associate Related Property",
       "reports": "Reports",
-      "inheritanceTree": "Inheritance Trees"
+      "inheritanceTree": "Inheritance Trees",
+      "tarlale": "Tarlale"
     },
     "recentlyViewed": {
       "title": "Recently viewed",
@@ -4871,5 +4884,65 @@
     "copy": "Copy link",
     "copied": "Link copied",
     "byGoogle": "The route is drawn by Google Maps, by car, to the nearest road on its map."
+  },
+  "tarla": {
+    "listTitle": "Tarlale",
+    "listIntro": "A tarla belongs to a locality. Its code, locality and description can also be changed in „Reference Data”.",
+    "columns": {
+      "code": "Tarla",
+      "locality": "Locality",
+      "county": "County",
+      "description": "Description",
+      "properties": "Properties",
+      "outline": "Outline"
+    },
+    "outlineCorners": "{count, plural, =0 {–} one {# corner} other {# corners}}",
+    "none": "No tarla yet.",
+    "noLocality": "no locality",
+    "loading": "Loading…",
+    "loadError": "The list could not be loaded.",
+    "detail": {
+      "title": "Tarla {label}",
+      "identity": "Tarla",
+      "fields": {
+        "indicativ": "Code",
+        "locality": "Locality",
+        "county": "County",
+        "descriere": "Description",
+        "notes": "Notes"
+      },
+      "outline": "Outline",
+      "outlineHint": "Optional: the tarla's corners, entered as on a property. Drawing them on the map comes in a later version.",
+      "save": "Save",
+      "saved": "Saved.",
+      "saveError": "The tarla could not be saved. Try again.",
+      "codeTaken": "This locality already has a tarla „{takenBy}”.",
+      "notFound": "The tarla does not exist or could not be loaded.",
+      "properties": "{count, plural, =0 {Properties} one {One property} other {# properties}}",
+      "propertiesNone": "No property on this tarla.",
+      "documents": "{count, plural, =0 {Documents} one {One document} other {# documents}}",
+      "documentsHint": "The documents linked to the properties on this tarla — a tarla has no documents of its own.",
+      "documentsNone": "No document is linked to this tarla's properties.",
+      "columns": {
+        "code": "Code",
+        "nickname": "Nickname",
+        "parcela": "Parcel",
+        "type": "Property Type",
+        "locality": "Locality",
+        "docCode": "Code",
+        "docTitle": "Title",
+        "docType": "Document Type",
+        "viaProperties": "Through the properties"
+      }
+    },
+    "info": {
+      "title": "About tarla boundaries",
+      "f1": "No public source gives tarla boundaries, around Bragadiru or anywhere else in Romania.",
+      "f2": "ANCPI's geoportal shows individual parcels, identified by the locality's code and the cadastral number. It has no tarla attribute, and its query service is undocumented.",
+      "f3": "Bragadiru's general urban plan (PUG), with the tarla numbers, is not published online.",
+      "f4": "The planuri parcelare are made for the local land commission at the primărie, and can be asked for under Legea 544/2001. OCPI Ilfov may provide data, at a price that is not known.",
+      "f5": "Bolintin-Deal belongs to Giurgiu county, so its land sits with OCPI Giurgiu, not OCPI Ilfov.",
+      "f6": "Tarla numbers restart in every locality: T50 in Bragadiru is not T50 in Cornetu."
+    }
   }
 }

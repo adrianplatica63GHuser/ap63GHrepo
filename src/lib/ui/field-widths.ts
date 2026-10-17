@@ -407,6 +407,18 @@ export const PROPERTY = {
 } as const satisfies Record<string, FieldWidth>;
 
 /**
+ * A tarla's page (Slice #39.67): the code at M, as on a property (`PROPERTY.tarlaId`); the locality and county as an
+ * address's (`ADDRESS`); the description like a nickname; the notes the page's width, folded as every note.
+ */
+export const TARLA = {
+  indicativ: { step: "M", kind: "fixed", sample: "000/00" },
+  locality: { step: "L", kind: "grows" },
+  county: { step: "M", kind: "grows" },
+  descriere: { step: "XL", kind: "grows" },
+  notes: { step: "TILE", kind: "lines", fold: NOTE_FOLD_LINES, rows: 3, fill: true },
+} as const satisfies Record<string, FieldWidth>;
+
+/**
  * The mini-map and Street View: each fills its tile — since #37.30 a tile of
  * whole units (`PANEL_UNITS.property.map`), 22rem tall. The polygon is
  * fitted with `fitBounds` (40 px padding), so any parcel fits at the default

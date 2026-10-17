@@ -200,11 +200,14 @@ function formBox(f: FieldMeta): "valueName" | "valueText" | "valueDescription" {
  */
 const STACKED_FIELDS: Partial<Record<ListKey, readonly string[]>> = {
   "person-roles": ["converseName", "converseNameMale", "converseNameFemale"],
+  // Slice #39.67: a tarla's locality and county are read together — „Bragadiru, Ilfov".
+  tarla: ["locality", "county"],
 };
 
 /** Slice #38.55: a joined cell's header — two lines, Adrian's words: „Rol invers" over „(bărbat, femeie)". */
 const JOINED_HEADS: Partial<Record<ListKey, { title: string; sub: string }>> = {
   "person-roles": { title: "converseJoined", sub: "converseJoinedSub" },
+  tarla: { title: "tarlaLocalityJoined", sub: "tarlaLocalityJoinedSub" },
 };
 
 /** A list's table cells: each field its own, the stacked ones together, in the fields' order. */
@@ -261,7 +264,12 @@ function usageColumn(listKey: ListKey): ColumnName {
 
 /** The buttons' column: a document type has two more (#38.50); the roles' at their padding (#38.70). */
 function actionsColumn(listKey: ListKey): ColumnName {
-  return listKey === "document-types" ? "valueActionsDocTypes" : COMPACT_LISTS.has(listKey) ? "valueActionsRoles" : "valueActions";
+  // Slice #39.67: a tarla's row opens its page too, so it takes the document types' wider column.
+  return listKey === "document-types" || listKey === "tarla"
+    ? "valueActionsDocTypes"
+    : COMPACT_LISTS.has(listKey)
+      ? "valueActionsRoles"
+      : "valueActions";
 }
 
 /** The card's padding (`p-5`). */
@@ -1832,6 +1840,17 @@ export function ValueListModal({
                           {/* Slice #38.39: a document type is edited on its own page —
                               General, Formular, Roluri — so its row opens that page
                               instead of the inline form. Adding one still uses it. */}
+                          {/* Slice #39.67: a tarla has a page of its own — notes, properties, documents, outline —
+                              opened from its row; the row's own values are still edited here. */}
+                          {listKey === "tarla" && (
+                            <IconButton
+                              icon={FolderOpen}
+                              label={t("table.openTarla")}
+                              variant="secondary"
+                              size="xs"
+                              href={`/tarlale/${row.id}`}
+                            />
+                          )}
                           {isDocumentTypes ? (
                             <IconButton
                               icon={FolderOpen}
