@@ -200,11 +200,13 @@ describe("the dependency map", () => {
       blocks:     by("blocks"),
       configured: all.filter((r) => r.configuration).length,
     // Slice #39.66: `{ total: 15, cascades: 2, configured: 2 }` until lookup_property_type_use added its two halves.
-    }).toEqual({ total: 17, clears: 12, cascades: 4, blocks: 1, configured: 4 });
+    // Slice #39.67: `{ total: 17, cascades: 4, configured: 4 }` until tarla_corner added a tarla's outline.
+    }).toEqual({ total: 18, clears: 12, cascades: 5, blocks: 1, configured: 5 });
   });
 
   // Slice #39.66: „the two whitelist edges" until lookup_property_type_use added two more.
-  it("marks exactly the four whitelist edges as configuration", () => {
+  // Slice #39.67: „the four" until tarla_corner added a tarla's outline.
+  it("marks exactly the five configuration edges", () => {
     // A configuration ref does not block a delete and is never moved. Getting
     // this set wrong in either direction is a real failure: too wide and a
     // delete silently blanks real associations, too narrow and a role ticked
@@ -224,6 +226,8 @@ describe("the dependency map", () => {
         // Slice #39.66: the uses a property type allows, from both sides.
         "property-types:lookup_property_type_use.property_type_id",
         "use-categories:lookup_property_type_use.use_category_id",
+        // Slice #39.67: a tarla's outline goes with the tarla.
+        "tarla:tarla_corner.tarla_id",
       ].sort(),
     );
     /*

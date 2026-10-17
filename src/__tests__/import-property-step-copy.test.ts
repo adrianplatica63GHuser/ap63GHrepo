@@ -46,6 +46,9 @@ function loadCopy(file: string): Record<string, unknown> {
 const REQUIRED_KEYS = [
   "title",
   "intro",
+  // Slice #39.67 — the tarlale's locality, once for the run, and why it is asked.
+  "locality",
+  "localityHint",
   "introNoProperties",
   "loading",
   "planFailed",

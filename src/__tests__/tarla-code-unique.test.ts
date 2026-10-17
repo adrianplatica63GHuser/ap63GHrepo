@@ -64,6 +64,9 @@ function readRoot(...parts: string[]): string {
 }
 
 const MIGRATION       = readRoot("src", "db", "migration_083_tarla_code_unique.sql");
+// Slice #39.67: the index migration_083 created is migration_112's now — over (folded locality, folded code). The
+// fold and the refusal are still 083's; the statement the code names is 112's.
+const INDEX_MIGRATION = readRoot("src", "db", "migration_112_tarla_locality.sql");
 const DECISION_CHECKS = readRoot("scripts", "decision-checks.sql");
 const SCHEMA          = readRoot("src", "db", "schema", "index.ts");
 const REPAIR          = readRoot("src", "db", "supabase_repair_missing_tables.sql");
@@ -136,14 +139,15 @@ function indexSource(): string {
   // TWICE** — once as the bare `CREATE UNIQUE INDEX` that fails on a colliding
   // table, once as the `CREATE UNIQUE INDEX IF NOT EXISTS` the repair file may
   // NOT use. Everything after `BEGIN;` is executable; nothing there quotes it.
-  const body = MIGRATION.indexOf("\nBEGIN;");
-  if (body < 0) throw new Error("migration_083: no BEGIN;");
+  // Slice #39.67: migration_112's statement (was migration_083's, which named the code alone).
+  const body = INDEX_MIGRATION.indexOf("\nBEGIN;");
+  if (body < 0) throw new Error("migration_112: no BEGIN;");
   const anchor = `CREATE UNIQUE INDEX IF NOT EXISTS ${TARLA_CODE_UNIQUE_INDEX}`;
-  const at = MIGRATION.indexOf(anchor, body);
-  if (at < 0) throw new Error(`migration_083: no "${anchor}" statement after BEGIN;`);
-  const end = MIGRATION.indexOf(";", at);
-  if (end < 0) throw new Error("migration_083: CREATE UNIQUE INDEX has no terminator");
-  return MIGRATION.slice(at, end + 1);
+  const at = INDEX_MIGRATION.indexOf(anchor, body);
+  if (at < 0) throw new Error(`migration_112: no "${anchor}" statement after BEGIN;`);
+  const end = INDEX_MIGRATION.indexOf(";", at);
+  if (end < 0) throw new Error("migration_112: CREATE UNIQUE INDEX has no terminator");
+  return INDEX_MIGRATION.slice(at, end + 1);
 }
 
 function messages(locale: "ro-RO" | "en-GB"): Record<string, unknown> {
@@ -323,11 +327,17 @@ describe("§2 migration_083 encodes the fold this table was measured under", () 
     expect(squash(MIGRATION)).toContain(INDEXED_FOLD);
   });
 
+  // Slice #39.67: migration_112 creates it now, and drops 083's (`MIGRATION` until then).
   it("⚠️ creates the index the code names, under the name the code holds", () => {
-    expect(MIGRATION).toContain(
+    expect(INDEX_MIGRATION).toContain(
       `CREATE UNIQUE INDEX IF NOT EXISTS ${TARLA_CODE_UNIQUE_INDEX}`,
     );
-    expect(MIGRATION).toContain("ON lookup_tarla (");
+    expect(INDEX_MIGRATION).toContain("ON lookup_tarla (");
+    expect(INDEX_MIGRATION).toContain("DROP INDEX IF EXISTS lookup_tarla_indicativ_folded_unique;");
+  });
+
+  it("⚠️ #39.67: the index's first key is the locality, folded the same way", () => {
+    expect(squash(indexSource())).toContain(INDEXED_FOLD.replace(/indicativ/g, "locality"));
   });
 
   /**
@@ -379,6 +389,7 @@ describe("§2 migration_083 encodes the fold this table was measured under", () 
    */
   it("⚠️ does NOT carry migration_080's extra [^a-z0-9] strip", () => {
     expect(squash(MIGRATION)).not.toContain("'[^a-z0-9]', '', 'g'");
+    expect(squash(INDEX_MIGRATION)).not.toContain("'[^a-z0-9]', '', 'g'");
   });
 
   it("is wrapped in a transaction and is idempotent by name", () => {
@@ -451,7 +462,8 @@ describe("§2 migration_083 encodes the fold this table was measured under", () 
   it("⚠️ the repair file creates it, counting first, and asks about it at the end", () => {
     expect(REPAIR).toContain(`CREATE UNIQUE INDEX ${TARLA_CODE_UNIQUE_INDEX}`);
     expect(REPAIR).toContain(`${TARLA_CODE_UNIQUE_INDEX} not created:`);
-    expect(REPAIR).toContain("lookup_tarla has no partial unique index over the folded indicativ");
+    // Slice #39.67: „…over the folded indicativ" until the index took the locality as well.
+    expect(REPAIR).toContain("lookup_tarla has no partial unique index over the folded locality and indicativ");
   });
 
   /**
@@ -501,8 +513,9 @@ describe("§3 the refusal itself", () => {
     // A guard on CREATE alone is a lock on a door with the window open beside
     // it: Reference Data's edit form renames a code.
     const code = stripSourceComments(VL_QUERIES);
-    expect(code).toContain("return writeTarlaRow(data.indicativ, null,");
-    expect(code).toContain("return writeTarlaRow(data.indicativ, id,");
+    // Slice #39.67: each door passes the locality too (was `writeTarlaRow(data.indicativ, null,` / `…, id,`).
+    expect(code).toContain("return writeTarlaRow(data.indicativ, data.locality, null,");
+    expect(code).toContain("return writeTarlaRow(data.indicativ, data.locality, id,");
     // One implementation, two callers — not a copy per branch.
     expect(code.match(/tarlaCodeTakenBy\(/g)?.length).toBe(1);
   });
@@ -532,7 +545,7 @@ describe("§3 the refusal itself", () => {
     // assertion here green, because the string it looks for had moved into a
     // comment.
     const source = stripSourceComments(VL_QUERIES);
-    const at = source.indexOf("async function writeTarlaRow<T>(");
+    const at = source.indexOf("export async function writeTarlaRow<T>(");
     expect(at).toBeGreaterThan(-1);
     const fn = source.slice(at);
     const body = fn.slice(0, fn.indexOf("\n}\n"));
@@ -573,7 +586,8 @@ describe("§3 the refusal itself", () => {
     const identities = body.indexOf("tarlaLockIdentities(code)");
     const lockCall   = body.indexOf("pg_advisory_xact_lock");
     const read       = body.indexOf(".select({ id: lookupTarla.id");
-    const predicate  = body.indexOf("tarlaCodeTakenBy(code, rows, exceptId)");
+    // Slice #39.67: judged in the row's locality (was `tarlaCodeTakenBy(code, rows, exceptId)`).
+    const predicate  = body.indexOf("tarlaCodeTakenBy(code, rows, exceptId, ownLocality)");
     const refusal    = body.indexOf("throw new TarlaCodeTakenError(taken.indicativ)");
     const write      = body.indexOf("return write(tx);");
     for (const [what, idx] of [
@@ -601,8 +615,9 @@ describe("§3 the refusal itself", () => {
     // The read goes through the TRANSACTION, not through `db` — a read on the
     // pool would not be covered by the locks this function has just taken, and
     // the whole point is that the check and the write see one state.
+    // Slice #39.67: the locality is read with the code (was `.select({ id: …, indicativ: … })`).
     expect(squash(body)).toContain(
-      "const rows = await tx .select({ id: lookupTarla.id, indicativ: lookupTarla.indicativ }) .from(lookupTarla);",
+      "const rows = await tx .select({ id: lookupTarla.id, indicativ: lookupTarla.indicativ, locality: lookupTarla.locality }) .from(lookupTarla);",
     );
     expect(body.slice(read - 40, read)).not.toContain("db");
   });

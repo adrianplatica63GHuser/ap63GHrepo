@@ -45,6 +45,14 @@ import { scanTextControls, type TextControl } from "@/lib/testing/text-controls"
 type Allowed = [id: string, childrenStart: string];
 
 const ALLOW: Record<string, Allowed[]> = {
+  // Slice #39.67: the tarlale — a tarla's code opens its page; a property's and a document's code open theirs.
+  "src/app/tarlale/_components/tarla-list.tsx": [
+    ["A113", "{row.indicativ}"],
+  ],
+  "src/app/tarlale/_components/tarla-detail.tsx": [
+    ["A113", "{p.code}"],
+    ["A113", "{d.code}"],
+  ],
   "src/app/(all-roles)/admin/global-search/_components/global-search-view.tsx": [
     ["A113", "{row.entityType === \"PROPERTY\" ? propertyLabel(row, nameOr(n"], // #37.57: the name is the link
   ],

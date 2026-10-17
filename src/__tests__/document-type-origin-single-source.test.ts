@@ -230,8 +230,10 @@ describe("only the import claims an IMPORT origin", () => {
     // value is the resolved `cadastralValue(...)` rather than the raw payload
     // string — the same argument as before, one step further: the VALUE is the
     // client's, the ORIGIN never is.
+    // Slice #39.67: the minted row carries the locality it was looked for in — still no origin from outside.
+    // Was `.insert(lookupTarla).values({indicativ:value,origin:"IMPORT"})`.
     expect(src.replace(/\s+/g, "")).toContain(
-      '.insert(lookupTarla).values({indicativ:value,origin:"IMPORT"})',
+      '.insert(lookupTarla).values({indicativ:value,locality,origin:"IMPORT"})',
     );
 
     // ⚠️ **And the function that holds it takes no origin either.** The
@@ -240,7 +242,8 @@ describe("only the import claims an IMPORT origin", () => {
     expect(src).toContain(
       "async function resolveTarlaForCreate(\n" +
         "  tx: DbTransaction,\n" +
-        "  input: { tarlaId?: string | null; tarlaCode?: string | null },\n" +
+        // Slice #39.67: `tarlaLocality` joined the input — a place, not a provenance (was `tarlaId` and `tarlaCode`).
+        "  input: { tarlaId?: string | null; tarlaCode?: string | null; tarlaLocality?: string | null },\n" +
         "): Promise<string | null> {",
     );
 
