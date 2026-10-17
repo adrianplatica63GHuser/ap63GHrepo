@@ -59,6 +59,7 @@ export const OUTLINE: Readonly<Record<string, string>> = {
   "companies-example-representative": "Pas cu pas: notezi cine semnează în numele unei firme (administrator, reprezentant legal) și verifici legătura din ambele părți.",
   "companies-example-owner": "Pas cu pas: treci o firmă ca proprietar al unui teren cumpărat și ca cumpărător în contractul de vânzare-cumpărare.",
   "properties-list": "Cum găsești o proprietate sau un teren în listă, ce caută căutarea (cod, poreclă, nr. cadastral, CF, tarla, parcelă) și cum alegi coloanele afișate.",
+  "properties-list-filters": "Cum filtrezi lista proprietăților după tip, categorie de folosință, tarla, localitate, suprafață sau număr cadastral, cu bife, de la / până la și conține.",
   "properties-add": "Cum adaugi sau creezi o proprietate nouă: cele patru căi (de mână, din imagine scanată, din fișier sau folder .txt) și ce are ecranul unei proprietăți noi.",
   "properties-add-cadastral": "Ce completezi la un teren nou: poreclă, tip, tarla, parcelă, nr. cadastral, CF, categorie de folosință, suprafața oficială și cea calculată, și cum salvezi.",
   "properties-add-address": "Cum completezi adresa unei proprietăți (stradă, localitate, județ, țară) și cum preiei automat adresa din Street View, căutare taxată de Google.",

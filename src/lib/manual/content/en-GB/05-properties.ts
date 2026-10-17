@@ -11,7 +11,7 @@ A property is a parcel: a piece of land, built on or not. In the archive it is i
 
 Open „Domain” in the sidebar, then „Properties”. The list „Properties” opens (Figure [[fig-properties-list]]).
 
-The search box at the top of the list searches by code, nickname, cadastral number, land-registry number, tarla or parcela — as the box itself says. The list has no filters: neither „Importance” nor „Relevance”. Below the table, „Showing … of …” says how many properties you are seeing out of how many there are.
+The search box at the top of the list searches by code, nickname, cadastral number, land-registry number, tarla or parcela — as the box itself says. Beside it, the list's filters narrow what you see by any field of the property (section [[properties-list-filters]]). Below the table, „Showing … of …” says how many properties you are seeing out of how many there are.
 
 The first column after the tick box is always „Nickname”, the name you give the property. It is always shown and is not among the options in „Choose fields”. The property's code has no column in the list; you find it on the property's screen, in the corner of its first tile.
 
@@ -28,6 +28,24 @@ The button shows how many columns you have chosen, for instance „Choose fields
 On the right, above the table, are two buttons: „Full map” opens the map of all properties (chapter [[map]]), and „Add new Property” creates a new one (section [[properties-add]]). While the full map is open, the navigation bar reads „Home › Properties › Full map”, and a click on „Properties” takes you back to the list.
 
 ![5.1 The list of properties](properties-list.png){#fig-properties-list}
+
+### 5.1.1 The list's filters {#properties-list-filters}
+
+Each filter is a rounded label above the table, with the field's name and what you chose, for instance „Property Type” House. The list shows only the properties that pass every filter at once.
+
+1. Choose the field from the „+ Filter” list. The filter's window opens below it.
+2. Choose what you want to see. The list changes at once, with no button to apply.
+3. Click outside the window, or press Esc, to close it. The label stays; a click on it opens the window again, and its X removes the filter.
+
+What you choose depends on the field:
+
+- **„Property Type”, „Use Category”, „Tarla/Solă”, „Locality”, „County / Sector” and „Group”** — a list with ticks. Beside each value is how many properties hold it, counted with the other filters already set, so the number says how many rows would remain. Tick several values to see the properties that hold any of them. „(empty)” means the properties whose field is blank. The box „Search for a value…” shortens the list;
+- **„Official Surface Area (m²)” and „Calculated Area (m²)”** — „From” and „To”, either or both;
+- **„Cadastral No.”, „Carte Funciara” and „Parcela”** — „Contains”: the properties whose field contains what you typed remain.
+
+The columns from „Choose fields” carry a small funnel in their header: a click on it opens that column's filter. A filled funnel shows the list is filtered by that column. A filter stays when you hide its column, and its label stays above the table, so the list is never filtered without your seeing it.
+
+„Clear filters” removes them all at once. The filters are kept in the page's address, as the search is: they survive a reload, a return to the list with „Back”, and an address sent to someone.
 
 ## 5.2 A property added by hand {#properties-add}
 

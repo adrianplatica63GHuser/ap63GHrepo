@@ -11,7 +11,7 @@ O proprietate este o parcelă: un teren, cu sau fără construcție. În arhivă
 
 Deschideți „Domeniu” în bara laterală, apoi „Proprietăți”. Se deschide lista „Proprietăți” (Figura [[fig-properties-list]]).
 
-Caseta de căutare din capul listei caută după cod, poreclă, nr. cadastru, carte funciară, tarla sau parcelă — așa scrie și în ea. Lista nu are filtre: nici „Importanță”, nici „Relevanță”. Sub tabel, „Se afișează … din …” spune câte proprietăți vedeți din câte sunt.
+Caseta de căutare din capul listei caută după cod, poreclă, nr. cadastru, carte funciară, tarla sau parcelă — așa scrie și în ea. Lângă ea, filtrele listei îngustează ce vedeți după orice câmp al proprietății (secțiunea [[properties-list-filters]]). Sub tabel, „Se afișează … din …” spune câte proprietăți vedeți din câte sunt.
 
 Prima coloană după bifă este mereu „Poreclă”, numele pe care îl dați proprietății. Ea se vede întotdeauna și nu apare printre opțiunile din „Câmpuri afișate”. Codul proprietății nu are coloană în listă; îl găsiți pe ecranul proprietății, în colțul primei fișe.
 
@@ -28,6 +28,24 @@ Butonul arată câte coloane ați ales, de exemplu „Câmpuri afișate 2/4”. 
 În dreapta, deasupra tabelului, stau două butoane: „Hartă completă” deschide harta tuturor proprietăților (capitolul [[map]]), iar „Adaugă proprietate” creează una nouă (secțiunea [[properties-add]]). Cât timp harta completă e deschisă, bara de navigare arată „Acasă › Proprietăți › Hartă completă”, iar un clic pe „Proprietăți” vă întoarce la listă.
 
 ![5.1 Lista proprietăților](properties-list.png){#fig-properties-list}
+
+### 5.1.1 Filtrele listei {#properties-list-filters}
+
+Fiecare filtru este o etichetă rotunjită deasupra tabelului, cu numele câmpului și ce ați ales, de exemplu „Tip proprietate” Casă. Lista arată doar proprietățile care trec de toate filtrele odată.
+
+1. Alegeți câmpul din lista „+ Filtru”. Se deschide sub ea fereastra filtrului.
+2. Alegeți ce vreți să vedeți. Lista se schimbă pe loc, fără niciun buton de aplicat.
+3. Apăsați în afara ferestrei sau tasta Esc ca s-o închideți. Eticheta rămâne; un clic pe ea redeschide fereastra, iar X-ul ei scoate filtrul.
+
+Ce alegeți depinde de câmp:
+
+- **„Tip proprietate”, „Categorie de folosință”, „Tarla/Solă”, „Localitate”, „Județ / Sector” și „Grup”** — o listă cu bife. Lângă fiecare valoare stă câte proprietăți o au, numărate cu celelalte filtre deja puse, așa că numărul spune câte rânduri ar rămâne. Bifați mai multe valori ca să vedeți proprietățile care au oricare dintre ele. „(necompletat)” înseamnă proprietățile la care câmpul este gol. Caseta „Caută o valoare…” scurtează lista;
+- **„Suprafață oficială (m²)” și „Suprafață calculată (m²)”** — „De la” și „Până la”, oricare dintre ele, sau amândouă;
+- **„Nr. cadastru”, „Nr. CF” și „Nr. parcelă”** — „Conține”: rămân proprietățile la care câmpul conține ce ați scris.
+
+Coloanele din „Câmpuri afișate” au în capul lor o pâlnie mică: un clic pe ea deschide filtrul coloanei. O pâlnie plină arată că lista este filtrată după acea coloană. Un filtru rămâne și dacă îi ascundeți coloana, iar eticheta lui stă deasupra tabelului, așa că lista nu este niciodată filtrată fără să vedeți asta.
+
+„Șterge filtrele” le scoate pe toate deodată. Filtrele se păstrează în adresa paginii, ca și căutarea: rămân după ce reîncărcați pagina, după ce vă întoarceți la listă cu „Înapoi” și când trimiteți adresa cuiva.
 
 ## 5.2 O proprietate adăugată de mână {#properties-add}
 

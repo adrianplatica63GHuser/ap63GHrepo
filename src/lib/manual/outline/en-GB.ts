@@ -59,6 +59,7 @@ export const OUTLINE: Readonly<Record<string, string>> = {
   "companies-example-representative": "Step by step: recording who signs on behalf of a firm (director, legal representative) and checking the link from both sides.",
   "companies-example-owner": "Step by step: recording a firm as owner of land it bought and as the buyer on the sale contract.",
   "properties-list": "How to find a property or plot in the list, what the search matches (code, nickname, cadastral, land-registry, tarla, parcela) and how to choose the columns shown.",
+  "properties-list-filters": "How to filter the list of properties by type, use category, tarla, locality, surface or cadastral number, with ticks, from / to and contains.",
   "properties-add": "How to add or create a new property: the four ways in (by hand, from a scanned image, from a .txt file or folder) and what the new property screen holds.",
   "properties-add-cadastral": "What to fill in for a new plot: nickname, type, tarla, parcela, cadastral and land-registry numbers, use category, official and calculated area, and how to save.",
   "properties-add-address": "How to enter a property's address (street, locality, county, country) and fetch the address automatically from Street View, a look-up Google charges for.",
