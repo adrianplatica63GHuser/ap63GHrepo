@@ -103,6 +103,22 @@ Apăsați „Șterge”, jos pe ecranul firmei, și răspundeți „Da” la în
 
 O firmă deschisă dintr-un alt obiect — de pe un act sau de pe o proprietate — nu se șterge de acolo. Aplicația vă spune să o dezasociați întâi de obiectul din care ați deschis-o, apoi să o deschideți din bara laterală și să o ștergeți de acolo.
 
+### 4.2.6 „Completează din ANAF” {#companies-add-anaf}
+
+Sub CUI și „Nr. registru comerțului” stă „Completează din ANAF”. Scrieți CUI-ul — cu sau fără RO în față — și apăsați-l: aplicația întreabă registrul public al ANAF și arată, într-o fereastră, ce ar schimba. Fără CUI butonul este gri și spune „Scrieți întâi CUI-ul.”.
+
+Fereastra are câte un rând pentru fiecare câmp pe care ANAF îl știe: „Denumire”, „Nr. registru comerțului”, „Telefon firmă”, „Tip” (propus după forma juridică — o societate cu răspundere limitată devine SRL) și adresa sediului, cu localitatea, județul și codul poștal. Fiecare rând arată ce are firma acum și ce spune ANAF, cu o bifă la „Preia”:
+
+- un câmp gol este bifat — se completează;
+- un câmp care are altceva nu este bifat; îl bifați doar dacă vreți valoarea ANAF;
+- un câmp pe care ANAF nu îl știe nu apare, deci nu se golește nimic.
+
+„Preia bifele” pune valorile bifate în formular. Nu se salvează nimic până nu apăsați „Salvează”: verificați întâi câmpurile. „Renunță” închide fereastra fără nicio schimbare.
+
+O firmă inactivă fiscal apare cu un avertisment în fereastră, iar la „Note” se adaugă un rând cu data verificării și data de la care e inactivă. O firmă radiată are și ea avertismentul ei. Dacă ANAF nu cunoaște CUI-ul, fereastra o spune; dacă ANAF nu răspunde, spune „ANAF nu răspunde acum. Încercați din nou peste câteva minute.”.
+
+Instituțiile publice sunt și ele în registrul ANAF, după codul lor fiscal; butonul merge pentru ele la fel, odată ce codul este scris la CUI.
+
 ## 4.3 Persoanele unei firme {#companies-people}
 
 O firmă are oameni în două feluri. Persoanele de contact sunt oamenii cu care țineți legătura; ele stau în fișa „Reprezentanți și contact”. Reprezentanții — administratorul, un mandatar — sunt legați de firmă cu un rol, în fișa „Legături”, și se văd de la ambele capete.

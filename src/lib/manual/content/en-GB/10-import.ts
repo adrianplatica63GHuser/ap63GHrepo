@@ -132,6 +132,8 @@ Towards the end of the import two kinds of window open, one after another.
 
 „Confirm people from this document” shows, one by one, the persons the AI found in a document — the sellers, the buyer, the notary — with each one's role. Choose „Yes, link this person” for someone in the archive, „Create & link” or „No, create a new person instead” for someone new, or „Skip”.
 
+For a new firm whose CUI the AI read, the window also has „Fill in from ANAF” (section [[companies-add-anaf]]). Pressed, it shows what ANAF would fill in beside what the AI read — the trade register number, the phone, the type, the head office address — with the same ticks: the empty fields ticked, those read differently only if you tick them. With „Create & link”, the firm is created with the ticked values, so it arrives in the archive complete.
+
 **Answer then.** Once you close the import's window, the persons found in documents are not offered again: „Once you close, there is nowhere left.” An identity card left unanswered still has „Create people from the ID card”, on the document's screen (section [[persons-id-card-document]]).
 
 ## 10.5 Evaluation, import and the result {#import-result}

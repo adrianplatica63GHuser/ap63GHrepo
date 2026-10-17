@@ -50,6 +50,7 @@ export const OUTLINE: Readonly<Record<string, string>> = {
   "companies-add-addresses": "Cum completezi adresa sediului social și adresa de corespondență a firmei; bifa „Aceeași cu adresa sediului social”.",
   "companies-add-edit": "Cum modifici o firmă, ce versiuni (v 0, v 1) face fiecare salvare, cum răsfoiești istoricul și ce se întâmplă cu greșelile din fișe ascunse.",
   "companies-add-delete": "Cum ștergi (elimini) definitiv o firmă și de ce nu o poți șterge când e deschisă de pe un act sau o proprietate: întâi o dezasociezi.",
+  "companies-add-anaf": "Cum completezi o firmă din ANAF după CUI: ce s-ar schimba, bifele, firma inactivă sau radiată, nimic salvat până la Salvează.",
   "companies-people": "Oamenii unei firme: persoanele de contact și reprezentanții (administrator, mandatar), plus firma ca parte în acte, ca proprietar și interacțiunile ei.",
   "companies-people-contact": "Cum alegi persoana de contact 1 și 2 a unei firme dintre persoanele fizice din arhivă; dacă omul lipsește, îl adaugi întâi ca persoană fizică.",
   "companies-people-representatives": "Cum legi administratorul sau reprezentantul legal / mandatarul de o firmă, cum se vede legătura pe persoană (reprezentat / mandant) și cum o scoți.",

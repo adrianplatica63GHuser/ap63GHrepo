@@ -50,6 +50,7 @@ export const OUTLINE: Readonly<Record<string, string>> = {
   "companies-add-addresses": "How to fill in the firm's registered office address and correspondence address; the „Same as registered address” tick.",
   "companies-add-edit": "How to edit a firm, the versions (v 0, v 1) each save makes, how to browse its history, and what happens to mistakes in hidden tiles.",
   "companies-add-delete": "How to delete (remove) a firm for good, and why you cannot delete it when opened from a document or property: dissociate it first.",
+  "companies-add-anaf": "How to fill in a firm from ANAF by its CUI: what would change, the ticks, an inactive or struck-off firm, nothing saved until Save.",
   "companies-people": "A firm's people: contact persons and representatives (director, agent), plus the firm as a party to documents, as an owner, and its interactions.",
   "companies-people-contact": "How to choose a firm's contact person 1 and 2 from the natural persons in the archive; if they are missing, add them as a natural person first.",
   "companies-people-representatives": "How to link a firm's director or legal representative / agent, how the link shows on the person (represented / principal), and how to remove it.",

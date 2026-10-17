@@ -103,6 +103,22 @@ Press „Delete”, at the bottom of the firm's screen, and answer „Yes” to 
 
 A firm opened from another object — from a document or from a property — is not deleted from there. The application tells you to dissociate it first from the object you opened it from, then to open it from the sidebar and delete it there.
 
+### 4.2.6 „Fill in from ANAF” {#companies-add-anaf}
+
+Under the CUI and „Trade Register No.” stands „Fill in from ANAF”. Type the CUI — with or without RO in front — and press it: the app asks ANAF's public register and shows, in a window, what it would change. Without a CUI the button is grey and says „Type the CUI first.”.
+
+The window has a row for each field ANAF knows: „Name”, „Trade Register No.”, „Firm's phone”, „Type” (proposed from the legal form — a limited liability company becomes SRL) and the head office address, with its locality, county and postcode. Each row shows what the firm holds now and what ANAF says, with a tick under „Take”:
+
+- an empty field is ticked — it is filled in;
+- a field that holds something else is not ticked; tick it only if you want ANAF's value;
+- a field ANAF does not know does not appear, so nothing is emptied.
+
+„Take the ticked” puts the ticked values on the form. Nothing is saved until you press „Save”: check the fields first. „Cancel” closes the window with no change.
+
+A firm that is inactive for tax shows a warning in the window, and „Notes” gets a line with the date of the check and the date it became inactive. A firm that has been struck off has its own warning. If ANAF does not know the CUI, the window says so; if ANAF is not answering, it says „ANAF is not answering right now. Try again in a few minutes.”.
+
+Public bodies are in ANAF's register too, by their tax code; the button works for them the same way once the code is typed in the CUI box.
+
 ## 4.3 A firm's people {#companies-people}
 
 A firm has people in two ways. The contact persons are the people you keep in touch with; they stand in the „Representatives and contact” tile. The representatives — the director, an agent — are linked to the firm with a role, in the „Links” tile, and are seen from both ends.

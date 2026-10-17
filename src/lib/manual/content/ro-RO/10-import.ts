@@ -132,6 +132,8 @@ Spre sfârșitul importului se deschid, pe rând, două feluri de ferestre.
 
 „Confirmați persoanele din acest document” arată, una câte una, persoanele găsite de AI într-un document — vânzătorii, cumpărătorul, notarul —, cu rolul fiecăreia. Alegeți „Da, asociază această persoană” pentru cineva din arhivă, „Creează și asociază” sau „Nu, creează o persoană nouă” pentru cineva nou, ori „Omite”.
 
+Pentru o firmă nouă al cărei CUI l-a citit AI-ul, fereastra are și „Completează din ANAF” (secțiunea [[companies-add-anaf]]). Apăsat, arată ce ar completa ANAF față de ce a citit AI-ul — numărul de la registrul comerțului, telefonul, tipul, adresa sediului —, cu aceleași bife: câmpurile goale bifate, cele citite altfel doar dacă le bifați. La „Creează și asociază”, firma se creează cu valorile bifate, deci ajunge în arhivă completă.
+
 **Răspundeți atunci.** După ce închideți fereastra importului, persoanele găsite în documente nu mai sunt oferite: „După ce închideți, nu mai există unde.” Unei cărți de identitate rămase fără răspuns îi rămâne „Creează persoane din CI”, pe ecranul actului (secțiunea [[persons-id-card-document]]).
 
 ## 10.5 Evaluare, import și rezultat {#import-result}
