@@ -5,7 +5,7 @@
 | **Area** | property |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-16 |
 
 ## What this proves
@@ -59,3 +59,6 @@ written from it.
 **2026-10-16 — run 2, `confirmed` (Slice #39.61).** The same, against the file above unchanged, with every step
 as in run 1. The three properties were deleted (204 each). `e2e/property/property-list-filters.spec.ts` translates
 it.
+
+**2026-10-16 — `automated` (Slice #39.61).** The test runner's targeted run 20261017T030703Z-21013 on 9877d13 ran
+`e2e/property/property-list-filters.spec.ts` green, with the list's other specs (lint, tsc and jest green too).
