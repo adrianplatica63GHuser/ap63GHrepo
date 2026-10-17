@@ -5,7 +5,7 @@
 | **Area** | document |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-17 |
 
 ## What this proves
@@ -61,3 +61,8 @@ A with the same address; after the reload A and the one chip „Data din 01.01.2
 the address
 `?q=TC-E2E-DOC-27&documentTypeIds=<the contract's type>&field=starePlata&value=ACHITAT_INTEGRAL`. The documents were
 deleted (204 ×4). `e2e/document/document-list-filters.spec.ts` translates it.
+
+**2026-10-17 — `automated` (Slice #39.63).** The test runner's targeted run 20261017T043855Z-2191 on 18fbdca ran its
+spec green, with the Acte list's other specs, the list-layout specs, lint, tsc and 21 jest suites; 20261017T044339Z-16610
+on the same commit ran the other 20 suites that read the list. That commit also made „Tip document:" and „Câmp
+specific:" the filter bar's first, fixed chips; this case names no place for them, so nothing in it changed.

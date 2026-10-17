@@ -120,7 +120,7 @@ fixed fixture where the existing one will do.
 | [TC-DOC-24](cases/TC-DOC-24.md) | „Pagini”: creionul „Notițe pagină” scrie, schimbă și șterge notițele unei pagini | document | happy | — | `automated` | 2026-10-10 | `e2e/document/page-notes.spec.ts` |
 | [TC-DOC-25](cases/TC-DOC-25.md) | „Pagini”: un PDF arată doar pagina, fără coloana de miniaturi a browserului | document | happy | — | `automated` | 2026-10-10 | `e2e/document/pdf-page-alone.spec.ts` |
 | [TC-DOC-26](cases/TC-DOC-26.md) | „Șterge” pe un act abia creat: actul dispare din listă; o ștergere eșuată spune de ce și lasă butoanele | document | happy | — | `automated` | 2026-10-14 | `e2e/document/document-delete.spec.ts` |
-| [TC-DOC-27](cases/TC-DOC-27.md) | Lista actelor filtrată cu bara de filtre peste „Tip document” și „Câmp specific”: „Data”, adresa, „Șterge filtrele” | document | happy | — | `confirmed` | 2026-10-17 | `e2e/document/document-list-filters.spec.ts` |
+| [TC-DOC-27](cases/TC-DOC-27.md) | Lista actelor filtrată cu bara de filtre peste „Tip document” și „Câmp specific”: „Data”, adresa, „Șterge filtrele” | document | happy | — | `automated` | 2026-10-17 | `e2e/document/document-list-filters.spec.ts` |
 | [TC-ASSOC-01](cases/TC-ASSOC-01.md) | Persoană asociată actului cu rol și cotă-parte | association | happy | — | `automated` | 2026-10-03 | `e2e/association/document-person.spec.ts` |
 | [TC-ASSOC-02](cases/TC-ASSOC-02.md) | Proprietate asociată actului | association | happy | — | `automated` | 2026-10-03 | `e2e/association/document-property.spec.ts` |
 | [TC-ASSOC-03](cases/TC-ASSOC-03.md) | Act asociat persoanei, din ecranul persoanei | association | happy | — | `automated` | 2026-10-03 | `e2e/association/person-document.spec.ts` |
