@@ -101,6 +101,7 @@
  * they survive React unmount/remount (handles cannot be serialised).
  */
 
+import { PLAN_PARCELAR_KEY } from "@/lib/tarla/plan-read";
 import { History } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -2731,6 +2732,22 @@ export function ImportWizard() {
   );
 
   /**
+   * Of those, the plans parcelare — each read a second time, for its tarla.   (Slice #39.69)
+   *
+   * From the scan's type, as the bound above is: the general read can still move a document onto „Plan parcelar",
+   * which this cannot foresee, so the sentence says „cel mult" only about the first number.
+   */
+  const planReadCount = useMemo(
+    () =>
+      entriesToImport.filter(
+        (entry) =>
+          scanResults.get(entry.path)?.typeKey === PLAN_PARCELAR_KEY &&
+          shouldInterpretEntry(entry, { isIdCard: isIdCardEntry(scanResults.get(entry.path)) }),
+      ).length,
+    [entriesToImport, scanResults],
+  );
+
+  /**
    * How many entries the classification pass actually sent.
    *
    * Over `entriesToImport`, not `entries`, and moved down here from beside
@@ -3826,6 +3843,7 @@ export function ImportWizard() {
           }
           documentCount={entriesToImport.length}
           interpretUpperBound={interpretUpperBound}
+          planReadCount={planReadCount}
           // Slice #32.05 — the same two numbers the Evaluation screen drew,
           // counted once in `waivedForms` rather than twice.
           waived={waivedForms}

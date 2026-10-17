@@ -3501,6 +3501,7 @@
       "stepFiles": "{count, plural, =0 {No new document is created} one {One document is created, with its files} other {# documents are created, with their files}}.",
       "stepInterpret": "Each document is then read by AI, automatically — its fields fill themselves in. People found in the documents are shown to you at the end, one at a time, for you to confirm; nobody is created without your confirmation.",
       "costNote": "AI reading costs money: {count, plural, =0 {no document will be read} one {at most one document will be read} other {at most # documents will be read}}.",
+      "costNotePlans": "{count, plural, one {The plan parcelar is read once more, for its tarla.} other {The # plans parcelare are read once more, for their tarlale.}}",
       "writesNote": "Documents already in the system were settled at the “Already in the system” step and are not imported a second time.",
       "waivedNote": "You chose to carry on without forms. {types, plural, one {One document type in this import has no form} other {# document types in this import have no form}}, and {documents, plural, one {one document will be written with no form} other {# documents will be written with no form}}: the scan is uploaded and linked to the document, but the fields belonging to the type are left empty.",
       "importButton": "Import",

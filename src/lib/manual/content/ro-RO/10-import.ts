@@ -122,7 +122,7 @@ Fișierele care nu au primit niciun tip ajung la tipul „neclasificat” și nu
 
 După „Importă”, fiecare document creat este citit de AI, iar câmpurile formularului se completează singure — la un contract de vânzare-cumpărare, de exemplu, prețul cu moneda și data autentificării. Ce nu are loc într-un câmp rămâne o notă scurtă în „Note extinse”, iar „Stare procesare” arată „Procesat cu AI” (secțiunea [[documents-identification]]). Uneori citirea îi dă documentului titlul tipărit pe el. Înscrisurile pe care le citează documentul vă așteaptă răspunsul (secțiunea [[links-references-documents]]).
 
-AI-ul nu citește fișierele Word, Excel, .rtf și .txt; o carte de identitate are citirea ei, mai jos; o imagine cu actele mai multor persoane nu se citește deloc. Și nu creează, nici nu leagă vreo persoană fără confirmarea dumneavoastră.
+AI-ul nu citește fișierele Word, Excel, .rtf și .txt; o carte de identitate are citirea ei, mai jos, iar un plan parcelar se mai citește o dată, pentru tarla lui; o imagine cu actele mai multor persoane nu se citește deloc. Și nu creează, nici nu leagă vreo persoană fără confirmarea dumneavoastră.
 
 ### 10.4.4 Cărțile de identitate și persoanele propuse {#import-scanning-people}
 
@@ -135,6 +135,18 @@ Spre sfârșitul importului se deschid, pe rând, două feluri de ferestre.
 Pentru o firmă nouă al cărei CUI l-a citit AI-ul, fereastra are și „Completează din ANAF” (secțiunea [[companies-add-anaf]]). Apăsat, arată ce ar completa ANAF față de ce a citit AI-ul — numărul de la registrul comerțului, telefonul, tipul, adresa sediului —, cu aceleași bife: câmpurile goale bifate, cele citite altfel doar dacă le bifați. La „Creează și asociază”, firma se creează cu valorile bifate, deci ajunge în arhivă completă.
 
 **Răspundeți atunci.** După ce închideți fereastra importului, persoanele găsite în documente nu mai sunt oferite: „După ce închideți, nu mai există unde.” Unei cărți de identitate rămase fără răspuns îi rămâne „Creează persoane din CI”, pe ecranul actului (secțiunea [[persons-id-card-document]]).
+
+### 10.4.5 Planurile parcelare și tarla lor {#import-scanning-tarla}
+
+Un document de tipul „Plan Parcelar” se citește a doua oară, numai pentru tarla lui: localitatea, codul tarlalei și parcelele desenate, fiecare cu numărul, suprafața în m² și folosința, când sunt tipărite. Proprietarii de pe plan nu se citesc și nu se păstrează. Ecranul „Import” spune dinainte că citirea aceasta se plătește: „Planul parcelar se citește încă o dată, pentru tarla lui.”
+
+După ferestrele persoanelor se deschide, pentru fiecare plan, „Tarla din planul parcelar”. Arată ce s-a citit: „Tarla”, „Localitate” și „Județ”, pe care le puteți corecta, apoi parcelele, iar sub ele ce nu s-a putut citi. Propunerea urmează codul și localitatea de deasupra:
+
+- când tarla cu acest cod există deja în localitate (secțiunea [[properties-tarla]]), „Leagă planul de tarla” leagă planul de ea și îi adaugă parcelele pe care nu le are. Parcelele pe care le are rămân cum erau;
+- când nu există, „Creează tarla și leagă planul” o creează, cu parcelele ei;
+- „Sari peste” nu scrie nimic.
+
+Nimic nu se scrie înainte să apăsați. Pe rândul documentului rămâne ce s-a întâmplat, de exemplu „tarla TCP9 creată, cu 4 parcele”, și tot așa în raportul salvat.
 
 ## 10.5 Evaluare, import și rezultat {#import-result}
 

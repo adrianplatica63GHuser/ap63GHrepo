@@ -88,6 +88,8 @@ type Props = {
   documentCount: number;
   /** At most this many documents will be read by the model — see the header. */
   interpretUpperBound: number;
+  /** Slice #39.69: the plans parcelare among them, each read a second time for its tarla. */
+  planReadCount?: number;
   /**
    * The user pressed "continue without forms" on the stop screen, and these are
    * the two numbers that press committed to.                    (Slice #32.05)
@@ -129,6 +131,7 @@ export function ImportRunStage({
   scanSummary,
   documentCount,
   interpretUpperBound,
+  planReadCount = 0,
   waived,
   canImport,
   onImport,
@@ -182,6 +185,7 @@ export function ImportRunStage({
           {interpretUpperBound > 0 && (
             <p className={`mt-3 ${COST_NOTE_CLASS}`}>
               {t("costNote", { count: interpretUpperBound })}
+              {planReadCount > 0 ? ` ${t("costNotePlans", { count: planReadCount })}` : ""}
             </p>
           )}
           <p className="mt-1.5 text-sm text-ink dark:text-zinc-300">{t("writesNote")}</p>

@@ -107,7 +107,8 @@ Each tarla has a page of its own, „Tarlale” → the tarla, opened with „Op
 - at the top, the box „About tarla boundaries”: which sources exist for tarla boundaries and what is not available. It also stands above the „Tarlale” list, because it is what to read before looking for a boundary;
 - „Code”, „Locality”, „County”, „Description” and „Notes”, saved with „Save”;
 - „Outline”: a map with the tarla's outline and its properties, then the tarla's corners, optional, entered as on a property (section [[properties-corners-table]]). Without corners, the outline is the shape around the tarla's properties (section [[map-what-tarlale]]);
-- the properties on the tarla and the documents linked to them. A tarla has no documents, groups or tags of its own.
+- the plans parcelare linked to the tarla at import and the parcels they draw: number, area and use, without owners (section [[import-scanning-tarla]]);
+- the properties on the tarla and the documents linked to them. Apart from its plans, a tarla has no documents, groups or tags of its own.
 
 An import adds its tarla codes in the locality given in the property step: „The tarlale's locality” is read from the name of the folder chosen, for instance Clinceni from a folder named CLINCENI.3, and can be changed (section [[import-overview]]).
 
