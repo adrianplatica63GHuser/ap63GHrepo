@@ -1,6 +1,6 @@
 /**
- * Case:   TC-PROP-06 — Lista proprietăților: fără filtre, fără „Cod", Poreclă mereu afișată, „Câmpuri afișate" cu toate câmpurile cadastrale
- * Source: docs/testing/cases/TC-PROP-06.md, „Last green" 2026-10-04 (steps 1 and 2 follow Slice #38.02)
+ * Case:   TC-PROP-06 — Lista proprietăților: fără „Importanță" și „Relevanță", fără „Cod", Poreclă mereu afișată, „Câmpuri afișate" cu toate câmpurile cadastrale
+ * Source: docs/testing/cases/TC-PROP-06.md, „Last green" 2026-10-04 (steps 1 and 2 follow Slice #38.02; step 1 Slice #39.61)
  *
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim.
@@ -40,7 +40,7 @@ async function firstOf(page: Page, list: string): Promise<{ id: string; name: st
 }
 
 test.describe("TC-PROP-06 — lista proprietăților", () => {
-  test("fără filtre, fără „Cod”, Poreclă mereu, „Câmpuri afișate” cu toate câmpurile cadastrale", async ({ page }) => {
+  test("fără „Importanță” și „Relevanță”, fără „Cod”, Poreclă mereu, „Câmpuri afișate” cu toate câmpurile cadastrale", async ({ page }) => {
     test.slow();
     await removeLeftovers(page.request, MARK);
     await page.setViewportSize({ width: 1366, height: 900 });
@@ -55,7 +55,9 @@ test.describe("TC-PROP-06 — lista proprietăților", () => {
       await expect(search).toBeVisible({ timeout: 30_000 });
       // #38.02: nothing stored in this browser, so the list's default — Tip proprietate.
       await expect(main.getByRole("button", { name: "Câmpuri afișate 1/4", exact: true })).toBeVisible();
-      await expect(main.locator("select")).toHaveCount(0);
+      // #39.61: the filter bar's „+ Filtru" is the list's one select. It read `toHaveCount(0)` — „no filters" — until then.
+      await expect(main.locator("select")).toHaveCount(1);
+      await expect(main.locator("select option").first()).toHaveText("+ Filtru");
       await expect(main.getByText(/Importanță|Relevanță/)).toHaveCount(0);
 
       // Step 2 — one row; „PORECLĂ" the first header after the tick box; no „Cod"; no system ID.
