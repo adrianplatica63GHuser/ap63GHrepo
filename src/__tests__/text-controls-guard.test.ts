@@ -45,6 +45,10 @@ import { scanTextControls, type TextControl } from "@/lib/testing/text-controls"
 type Allowed = [id: string, childrenStart: string];
 
 const ALLOW: Record<string, Allowed[]> = {
+  // Slice #39.72: the issuer search — a juridical person's name picks it, with its code, type and CUI beside it.
+  "src/app/documents/_components/issuer-field.tsx": [
+    ["A113", "{o.displayName}"],
+  ],
   // Slice #39.67: the tarlale — a tarla's code opens its page; a property's and a document's code open theirs.
   "src/app/tarlale/_components/tarla-list.tsx": [
     ["A113", "{row.indicativ}"],

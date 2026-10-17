@@ -49,11 +49,11 @@ describe("the identification group", () => {
 
 describe("the tile", () => {
   it("reads Tip document, then the issuer, number and date, then the type's identification fields", () => {
-    expect(SCREEN_ROWS.document.general.slice(0, 3)).toEqual([["documentTypeId"], ["institutionId"], ["nrDocument", "dateDocument"]]);
+    expect(SCREEN_ROWS.document.general.slice(0, 3)).toEqual([["documentTypeId"], ["issuerPersonId"], ["nrDocument", "dateDocument"]]);
     const general = between(FORM, "const generalSection = (", "const panelsOf = (");
     expect(general.indexOf('name="documentTypeId"')).toBeLessThan(general.indexOf("{issueFields}"));
     const issue = between(FORM, "const issueFields = (", "const financialPacked");
-    expect(issue).toMatch(/label=\{t\(cfg\.labels\.institution\)\}[\s\S]*name="institutionId"[\s\S]*label=\{t\(cfg\.labels\.nrDocument\)\}[\s\S]*label=\{t\(cfg\.labels\.dateDocument\)\}[\s\S]*\{identificationPacked\.nodes\}/);
+    expect(issue).toMatch(/label=\{t\(cfg\.labels\.institution\)\}[\s\S]*name="issuerPersonId"[\s\S]*label=\{t\(cfg\.labels\.nrDocument\)\}[\s\S]*label=\{t\(cfg\.labels\.dateDocument\)\}[\s\S]*\{identificationPacked\.nodes\}/);
   });
 
   it("is where an error or a highlight on those fields is shown", () => {
@@ -83,7 +83,7 @@ describe("the fees panel", () => {
   it("holds only the fees, and is not drawn without a fees group", () => {
     const fees = between(FORM, "const feesSection = ", "const issueFields");
     expect(fees).toContain("feesGroup && feesGroup.fields.length > 0 ?");
-    expect(fees).not.toMatch(/name="(institutionId|nrDocument|dateDocument)"/);
+    expect(fees).not.toMatch(/name="(issuerPersonId|nrDocument|dateDocument)"/);
     expect(PANEL_UNITS.document.fees).toBe(3);
   });
 });

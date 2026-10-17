@@ -67,11 +67,17 @@ const CITIZENSHIPS: NamedLookupRow[] = seededNames(
   "name, sort_order",
 ).map((name, i) => ({ id: `c${i}-${foldLookupName(name)}`, name }));
 
-/** The seeded `lookup_institution` list — note what is NOT in it. */
-const INSTITUTIONS: NamedLookupRow[] = seededNames(
-  "lookup_institution",
-  "name, institution_type, sort_order",
-).map((name, i) => ({ id: `i${i}-${foldLookupName(name)}`, name }));
+/**
+ * The issuers the archive was seeded with — note what is NOT in it.                     (Slice #39.72)
+ *
+ * Until #39.72 this was parsed from `sync-reference-data.sql`'s `lookup_institution` INSERT. migration_115 made each
+ * of those seven institutions a juridical person under the same name, and migration_116 dropped the list, so the
+ * names now live on `person.display_name` and the matcher runs over the public-body juridical persons
+ * (`matchIssuer`). The seven are written here, in the seed's old order, and held to migration_115's own list of the
+ * generic ones below, so the alias table still answers to something real.
+ */
+const INSTITUTION_NAMES = ["OCPI", "Primăria Municipiului", "Consiliu Județean", "ANAF", "Notariat", "Judecătorie", "Tribunal"];
+const INSTITUTIONS: NamedLookupRow[] = INSTITUTION_NAMES.map((name, i) => ({ id: `i${i}-${foldLookupName(name)}`, name }));
 
 /** The id of the seeded row with this exact name — fails loudly if it is gone. */
 function seeded(rows: NamedLookupRow[], name: string): string {
@@ -413,9 +419,15 @@ describe("the alias tables are frozen data, not behaviour", () => {
   });
 
   it("every alias in both tables names a row the SEED really holds", () => {
-    // An alias pointing at nothing is dead weight. Both fixtures are parsed
+    // An alias pointing at nothing is dead weight. The citizenships are parsed
     // from `sync-reference-data.sql`, so renaming a seeded row fails this
     // rather than leaving the table quietly pointing at a name that is gone.
+    // The issuers are migration_115's: every one but ANAF is in its list of
+    // generic names (Slice #39.72).
+    const m115 = fs.readFileSync(path.join(ROOT, "src/db/migration_115_institutions_as_juridical_persons.sql"), "utf8");
+    for (const name of INSTITUTION_NAMES.filter((n) => n !== "ANAF")) {
+      expect([name, m115.includes(`'${foldLookupName(name)}'`)]).toEqual([name, true]);
+    }
     const inst = new Set(INSTITUTIONS.map((r) => foldLookupName(r.name)));
     for (const target of Object.values(INSTITUTION_ALIASES)) {
       expect(inst.has(foldLookupName(target))).toBe(true);

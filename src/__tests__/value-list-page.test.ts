@@ -41,7 +41,8 @@ describe("the categories (nothing disappears)", () => {
       ["Roluri Persoane", "Legături Proprietate → Proprietate", "Legături Document → Document"],
       // #39.66: „Categorii Folosință" left this group — a tile on the property types' page (below).
       // #39.70: „Relația cu firma" after „Cetățenie".
-      ["Indicative Tarla", "Cetățenie", "Relația cu firma", "Instituții"],
+      // #39.72: „Instituții" retired — its institutions are juridical persons.
+      ["Indicative Tarla", "Cetățenie", "Relația cu firma"],
     ]);
     expect(titles(en)).toEqual([
       ["Physical Person Types", "Judicial Person Types", "Property Types", "Document Types"],

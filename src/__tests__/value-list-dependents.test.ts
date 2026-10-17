@@ -204,7 +204,8 @@ describe("the dependency map", () => {
     // Slice #39.69: `{ total: 18, clears: 12, cascades: 5, configured: 5 }` until tarla_parcel (a tarla's parcels, and
     // a use's) and document_tarla (a tarla's plans, a dependent) were added.
     // Slice #39.70: `{ total: 21, cascades: 7 }` until natural_person_relationship („Relația cu firma") was added.
-    }).toEqual({ total: 22, clears: 13, cascades: 8, blocks: 1, configured: 6 });
+    // Slice #39.72: `{ total: 22, clears: 13 }` until „Instituții" (document.institution_id) was retired.
+    }).toEqual({ total: 21, clears: 12, cascades: 8, blocks: 1, configured: 6 });
   });
 
   // Slice #39.66: „the two whitelist edges" until lookup_property_type_use added two more.

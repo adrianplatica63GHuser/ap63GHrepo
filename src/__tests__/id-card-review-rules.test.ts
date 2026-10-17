@@ -321,8 +321,9 @@ describe("the dialog decides through these rules and not beside them", () => {
     // and the rule degrades silently to the matcher — passing every assertion
     // above while the defect stays live.
     expect(code).toMatch(/fetch\(`\/api\/documents\/\$\{encodeURIComponent\(documentId\)\}`\)/);
-    expect(code).toMatch(/setDocumentInstitutionId\(doc\.institutionId \?\? ""\)/);
-    expect(code).toMatch(/setMatchedInstitutionId\(fields\.institutionId \?\? ""\)/);
+    // Slice #39.72: the wire keys are the issuer person's; the dialog's own names still say „institution".
+    expect(code).toMatch(/setDocumentInstitutionId\(doc\.issuerPersonId \?\? ""\)/);
+    expect(code).toMatch(/setMatchedInstitutionId\(fields\.issuerPersonId \?\? ""\)/);
   });
 
   it("derives the picker's value instead of racing two setters into it", () => {

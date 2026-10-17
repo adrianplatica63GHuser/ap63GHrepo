@@ -38,7 +38,8 @@ describe("the fields", () => {
 describe("the SQL", () => {
   it("the institution is IN its ids, OR empty with „(necompletat)”", () => {
     expect(render({ institution: { kind: "values", ids: [U1, NONE_VALUE] } })).toMatchObject({
-      sql: '("document"."institution_id" in ($1) or "document"."institution_id" IS NULL)',
+      // #39.72: the issuer is a juridical person; the filter keeps its key.
+      sql: '("document"."issuer_person_id" in ($1) or "document"."issuer_person_id" IS NULL)',
       params: [U1],
     });
   });
