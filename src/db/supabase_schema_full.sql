@@ -4,7 +4,7 @@
 -- GENERATED FILE -- DO NOT EDIT BY HAND.
 -- Regenerate with:  .\scripts\Export-SupabaseSchema.ps1
 --
--- Generated : 2026-10-17 10:11
+-- Generated : 2026-10-17 11:26
 -- Source    : local Docker database (ga40db @ ga40prj-postgres)
 --
 -- Applies the complete schema from scratch after running
@@ -751,6 +751,26 @@ CREATE TABLE public.lookup_judicial_person_type (
 
 
 --
+-- Name: lookup_person_relationship; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.lookup_person_relationship (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    sort_order integer DEFAULT 0 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: TABLE lookup_person_relationship; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.lookup_person_relationship IS 'Slice #39.70: „Relația cu firma" - why a natural person is in the archive. A person may hold several.';
+
+
+--
 -- Name: lookup_person_role; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -973,6 +993,24 @@ CREATE TABLE public.natural_person (
     CONSTRAINT natural_person_death_needs_deceased CHECK (((date_of_death IS NULL) OR is_deceased)),
     CONSTRAINT natural_person_has_name CHECK (((first_name IS NOT NULL) OR (last_name IS NOT NULL)))
 );
+
+
+--
+-- Name: natural_person_relationship; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.natural_person_relationship (
+    natural_person_id uuid NOT NULL,
+    relationship_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: TABLE natural_person_relationship; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.natural_person_relationship IS 'Slice #39.70: the relationships („Relația cu firma") a natural person holds - several per person.';
 
 
 --
@@ -1759,6 +1797,14 @@ ALTER TABLE ONLY public.lookup_judicial_person_type
 
 
 --
+-- Name: lookup_person_relationship lookup_person_relationship_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lookup_person_relationship
+    ADD CONSTRAINT lookup_person_relationship_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: lookup_person_role lookup_person_role_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1828,6 +1874,14 @@ ALTER TABLE ONLY public.lookup_use_category
 
 ALTER TABLE ONLY public.natural_person
     ADD CONSTRAINT natural_person_pkey PRIMARY KEY (person_id);
+
+
+--
+-- Name: natural_person_relationship natural_person_relationship_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.natural_person_relationship
+    ADD CONSTRAINT natural_person_relationship_pkey PRIMARY KEY (natural_person_id, relationship_id);
 
 
 --
@@ -2365,6 +2419,13 @@ COMMENT ON INDEX public.lookup_tarla_locality_indicativ_folded_unique IS 'Slice 
 --
 
 CREATE UNIQUE INDEX natural_person_cnp_unique ON public.natural_person USING btree (cnp) WHERE (cnp IS NOT NULL);
+
+
+--
+-- Name: natural_person_relationship_relationship_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX natural_person_relationship_relationship_idx ON public.natural_person_relationship USING btree (relationship_id);
 
 
 --
@@ -2967,6 +3028,22 @@ ALTER TABLE ONLY public.natural_person
 
 ALTER TABLE ONLY public.natural_person
     ADD CONSTRAINT natural_person_physical_person_type_id_fkey FOREIGN KEY (physical_person_type_id) REFERENCES public.lookup_person_type(id) ON DELETE SET NULL;
+
+
+--
+-- Name: natural_person_relationship natural_person_relationship_natural_person_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.natural_person_relationship
+    ADD CONSTRAINT natural_person_relationship_natural_person_id_fkey FOREIGN KEY (natural_person_id) REFERENCES public.natural_person(person_id) ON DELETE CASCADE;
+
+
+--
+-- Name: natural_person_relationship natural_person_relationship_relationship_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.natural_person_relationship
+    ADD CONSTRAINT natural_person_relationship_relationship_id_fkey FOREIGN KEY (relationship_id) REFERENCES public.lookup_person_relationship(id) ON DELETE CASCADE;
 
 
 --
