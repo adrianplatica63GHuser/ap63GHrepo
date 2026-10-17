@@ -2,7 +2,6 @@
  * src/lib/rate-limit/ocr.ts
  *
  * Simple in-memory sliding-window rate limiter for the OCR / Anthropic routes:
- *   POST /api/properties/scan-image
  *   POST /api/properties/parse-text
  *   POST /api/admin/import/extract-id-card
  *   POST /api/documents/[id]/ai-interpret              (extract AND discover)

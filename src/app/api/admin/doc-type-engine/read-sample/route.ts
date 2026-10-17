@@ -153,7 +153,7 @@ function skipReason(name: string, mime: string): string {
 
 export async function POST(request: NextRequest): Promise<Response> {
   // ── Rate limiting ─────────────────────────────────────────────────────────
-  // The same bucket as ai-interpret, scan-image, parse-text, extract-id-card
+  // The same bucket as ai-interpret, parse-text, extract-id-card
   // and this route's own clustering call
   // — shared, per user, twenty a minute for every account (one allowance since
   // Slice #38.21; it was sized by role from #29.09a), so a run here is always

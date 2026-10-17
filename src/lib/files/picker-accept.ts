@@ -63,18 +63,7 @@
  */
 export const COORDINATE_FILE_ACCEPT = ".txt,text/plain";
 
-/**
- * What the property-photograph picker offers.
- *
- * A wildcard rather than a list, and that is the honest value here: the photo
- * is a picture of a place, taken by whatever the user's phone or camera
- * produces, and the route that receives it is not the document-page route whose
- * registry decides what the archive may hold. The one cost of a wildcard is
- * recorded on `UPLOAD_ACCEPT_ATTRIBUTE`: every OS resolves `image/*` to include
- * HEIC, which belongs to no kind. That matters where a kind is looked up, and
- * here nothing looks one up.
- */
-export const PROPERTY_PHOTO_ACCEPT = "image/*";
+// Slice #39.65: `PROPERTY_PHOTO_ACCEPT` ("image/*", the property-photograph picker) went with „Din imagine scanată".
 
 /**
  * The file-name patterns an `accept` value actually shows a user, in the order

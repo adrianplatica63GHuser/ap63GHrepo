@@ -35,7 +35,7 @@
  *
  * ⚠️ **PACING IS A COURTESY, `Retry-After` IS THE FACT.** The limiter is
  * in-memory per Node process and its bucket is shared with `ai-interpret`,
- * `scan-image`, `parse-text` and `extract-id-card` — so the user's own import in
+ * `parse-text` and `extract-id-card` — so the user's own import in
  * another tab spends from the same allowance, and on more than one server
  * instance this client's model of the window is a guess. The run therefore does
  * BOTH: it self-paces so a 429 is rare, and it honours `Retry-After` and

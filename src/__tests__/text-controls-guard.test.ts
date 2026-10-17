@@ -247,13 +247,10 @@ const ALLOW: Record<string, Allowed[]> = {
     ["A110", "{yesLabel}"],
   ],
   "src/app/properties/_components/add-property-dialog.tsx": [
+    // Slice #39.65: two ways in — the scanned image's and the text folder's cards and drop zones went with them.
     ["A071", "<span className=\"font-medium\">{t(\"choiceManual\")}</span>"],
-    ["A071", "<span className=\"font-medium\">{t(\"choiceScan\")}</span> <"],
     ["A071", "<span className=\"font-medium\">{t(\"choiceTextFile\")}</spa"],
-    ["A071", "<span className=\"font-medium\">{t(\"choiceTextFolder\")}</s"],
-    ["A071", "<UploadIcon /> <span className=\"text-sm font-medium text"],
     ["A071", "<TextFileIcon /> <span className=\"text-sm font-medium te"],
-    ["A071", "<FolderIcon /> <span className=\"text-sm font-medium text"],
   ],
   "src/app/properties/_components/corners-manager.tsx": [
     ["A070", "{label}"],

@@ -63,8 +63,7 @@
  * Use it ONLY where the log is expected, and only where `unexpectedError` is
  * what writes it: the assertion matches that function's `[<context>] error:`
  * prefix, so a route that logs its own 500 under a different prefix — and a
- * few do, e.g. `api/help/[screenKey]`, `api/properties/scan-image` and
- * `api/time-frames` — would fail this rather than be silenced by it. Anywhere
+ * few do, e.g. `api/help/[screenKey]` and `api/time-frames` — would fail this rather than be silenced by it. Anywhere
  * else, a stack trace in the jest output is a finding, and this helper would
  * turn it into an absence.
  */

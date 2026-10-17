@@ -1,63 +1,40 @@
 "use client";
 
 /**
- * AddPropertyDialog
+ * AddPropertyDialog — „Adaugă proprietate": two ways in.                                    (Slice #39.65, FU-217)
  *
- * ⚠️ **WORK IN PROGRESS.** Reconnected by slice #32.20 after a period in which
- * nothing in the application imported this file: /properties/new was reachable
- * from the Properties list and the other three paths from nowhere at all. All
- * four are now exposed, and none of them was rebuilt — that was the explicit
- * boundary of #32.20 ("we shall return to it later", Adrian). In particular the
- * scan and folder paths do NOT write the tags and associations the Process
- * panel on a Document writes, and the Administration import wizard remains the
- * route for importing folders at scale.
+ *   1. „Introducere manuală" → /properties/new, the form (TC-PROP-01).
+ *   2. „Din fișier text" → a Stereo 70 coordinate file, parsed by POST /api/properties/parse-text (the import's own
+ *      parseLine and stereo70ToWgs84), with the tarla and the parcela asked for before the save (TC-PROP-03).
  *
- * The reasoning, the open questions and what each path costs to bring forward
- * are in
- *   01.Slice.Inputs\Slices.01--38\Slices.30.to.35\Slices.32.nn.UAT\32.12\Answers.32.12.docx
- *   section 4 — "Item 19, the Add Property dialog"
- * Cite the SECTION, never a page number: section 4 began on page 7 in the copy
- * Adrian read and moved to page 6 one revision later.
+ * ⚠️ **TARLA AND PARCELA ARE REQUIRED HERE, AND THAT IS WHAT FU-217 WAS ABOUT.** Until this slice the coordinate
+ * ways (a scanned image, a text file, a folder of them, #32.20) sent `corners`, `provenance` and a nickname and
+ * nothing else, so `createPropertyUnlessParcelExists` had no identity to compare and a second property for a parcel
+ * that already had one was created in silence. Both are asked for now, and `POST /api/properties` answers a parcel
+ * that already has a property with 409 `PARCEL_EXISTS` and the properties it found — shown here as the form shows
+ * it, with a way to open each. The manual form may still leave them blank (`hasCadastralIdentity` explains why the
+ * create route allows that); this way cannot, because a file of corners is nothing but a parcel's outline.
  *
- * Multi-step modal triggered from the Properties list view.
+ * ⚠️ **THE SCANNED IMAGE AND THE TEXT FOLDER ARE GONE** (Adrian, on the research doc: „agree with recommended").
+ * Reading coordinates out of a photograph with OCR was unreliable and never tested (FU-095); a folder of files is
+ * the import's job, and this copy of it failed on the sixth file (FU-052). POST /api/properties/scan-image and the
+ * tesseract.js dependency went with them.
  *
- * Steps:
- *  "choice"        – 4 entry-point cards
- *  "upload"        – image file picker  (→ OCR pipeline)
- *  "processing"    – spinner while OCR API works
- *  "select"        – (only when >1 property detected from image) choose how many to save
- *  "upload-text"   – single .txt file picker
- *  "upload-folder" – folder picker (webkitdirectory)
- *  "saving"        – spinner while POST /api/properties runs (all save paths)
- *
- * After all properties are saved the component navigates to each detail page.
+ * Escape and the backdrop close the dialog except while a file is being read or saved; focus moves into it on open;
+ * a drag that crosses the panel's edge does not count as a click on the backdrop (#32.20's three guards, kept).
  */
 
 import { useEffect, useRef, useState } from "react";
-import { Import, Save, ScanText, X } from "lucide-react";
-import { useQueryClient }   from "@tanstack/react-query";
-import { useTranslations }  from "next-intl";
-import { useRouter }        from "next/navigation";
-import Link                 from "next/link";
-import { ArrowLeft }         from "lucide-react";
-import { IconButton }        from "@/lib/ui/icon-button";
+import { ArrowLeft, ArrowRight, ExternalLink, Import, X } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
+import Link from "next/link";
+import { IconButton } from "@/lib/ui/icon-button";
 import { ErrorBoundary, PanelError } from "@/components/error-boundary";
 import { inferProvenance } from "@/lib/metadata/provenance-rules";
-import type { ProvenanceSourceKind } from "@/lib/metadata/provenance-rules";
-// Slice #34.20 — this dialog makes two of the three offers, and the
-// coordinate one is the copy `calculation-view.tsx` also held.
-// Slice #34.23 — and the list the coordinate sentence names. The photo picker
-// has no list to name: `image/*` resolves differently on every OS, so its
-// sentence names a kind of file instead. See `offeredExtensions`.
-import {
-  COORDINATE_FILE_ACCEPT,
-  COORDINATE_FILE_OFFER,
-  PROPERTY_PHOTO_ACCEPT,
-} from "@/lib/files/picker-accept";
-
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
+import { useNameOr } from "@/components/record/use-name-or";
+// Slice #34.20/#34.23 — the coordinate offer, from the one module the calculation screen reads it from too.
+import { COORDINATE_FILE_ACCEPT, COORDINATE_FILE_OFFER } from "@/lib/files/picker-accept";
 
 interface Corner {
   lat: number;
@@ -65,41 +42,13 @@ interface Corner {
   originalIndex?: number | null;
 }
 
-interface ScannedProperty {
-  corners: Corner[];
-}
+/** One property the create route found on the parcel (the form's `ParcelMatch`, Slice #37.04). */
+type ParcelMatch = { id: string; code: string; nickname: string | null; tarla: string | null; parcela: string | null };
 
-interface ScanResult {
-  properties: ScannedProperty[];
-  labels:     string[];
-}
+type Step = "choice" | "upload-text" | "saving" | "done-text";
 
-type Step =
-  | "choice"
-  | "upload"
-  | "processing"
-  | "select"
-  | "upload-text"
-  | "upload-folder"
-  | "saving"
-  | "done-text"
-  | "done-folder";
-
-// ---------------------------------------------------------------------------
-// API helpers
-// ---------------------------------------------------------------------------
-
-/** Call the OCR scan-image API. */
-async function callScanApi(file: File, signal?: AbortSignal): Promise<ScanResult> {
-  const fd = new FormData();
-  fd.append("image", file);
-  const res = await fetch("/api/properties/scan-image", { method: "POST", body: fd, signal });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error((body as { error?: string }).error ?? `HTTP ${res.status}`);
-  }
-  return res.json() as Promise<ScanResult>;
-}
+/** What `POST /api/properties` answered: the new id, the parcel's existing properties, or a message. */
+type CreateOutcome = { kind: "created"; id: string } | { kind: "exists"; matches: ParcelMatch[] } | { kind: "error"; message: string };
 
 /** Call the text-file parse API. Returns WGS84 corners. */
 async function callParseTextApi(file: File): Promise<Corner[]> {
@@ -110,50 +59,39 @@ async function callParseTextApi(file: File): Promise<Corner[]> {
     const body = await res.json().catch(() => ({}));
     throw new Error((body as { error?: string }).error ?? `HTTP ${res.status}`);
   }
-  const data = await res.json() as { corners: Corner[] };
+  const data = (await res.json()) as { corners: Corner[] };
   return data.corners ?? [];
 }
 
 /**
- * Create one property via the main properties API.
- *
- * `source` (Slice #21.07.Import) says where the corners came from, so the row
- * records an honest provenance: the OCR branch scans a graphics file, the two
- * text branches parse a cadastral coordinate file.
+ * Create the property — its corners, the tarla and the parcela, the nickname, and the provenance
+ * „Fișier de coordonate (.txt)". A 409 `PARCEL_EXISTS` is recognised by its `code`, never by the message.
  */
-async function createProperty(
-  corners:  Corner[],
-  notes:    string | null,
-  nickname: string | null,
-  source:   ProvenanceSourceKind,
-): Promise<string> {
+export async function createFromCoordinateFile(input: {
+  corners: Corner[];
+  tarlaId: string;
+  parcela: string;
+  nickname: string | null;
+}): Promise<CreateOutcome> {
   const payload: Record<string, unknown> = {
-    corners: corners.map((c) => ({ lat: c.lat, lon: c.lon, originalIndex: c.originalIndex ?? null })),
-    provenance: inferProvenance(source),
+    corners: input.corners.map((c) => ({ lat: c.lat, lon: c.lon, originalIndex: c.originalIndex ?? null })),
+    tarlaId: input.tarlaId,
+    parcela: input.parcela.trim(),
+    provenance: inferProvenance("COORDINATE_FILE"),
   };
-  if (notes)    payload.notes    = notes;
-  if (nickname) payload.nickname = nickname;
-
+  if (input.nickname) payload.nickname = input.nickname;
   const res = await fetch("/api/properties", {
-    method:  "POST",
+    method: "POST",
     headers: { "Content-Type": "application/json" },
-    body:    JSON.stringify(payload),
+    body: JSON.stringify(payload),
   });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error((body as { error?: string }).error ?? `HTTP ${res.status}`);
+  const body = (await res.json().catch(() => ({}))) as { code?: unknown; matches?: unknown; error?: unknown; property?: { id?: string } };
+  if (res.status === 409 && body.code === "PARCEL_EXISTS" && Array.isArray(body.matches)) {
+    return { kind: "exists", matches: body.matches as ParcelMatch[] };
   }
-  const data = await res.json() as { property?: { id?: string } };
-  if (!data.property?.id) throw new Error("No id returned from API");
-  return data.property.id;
-}
-
-/**
- * The same photograph, as far as a browser can tell: name, size and last
- * modification. What `scanSavedForRef` is keyed on (Slice #37.04, FU-017).
- */
-function imageKey(file: File): string {
-  return `${file.name}\u0000${file.size}\u0000${file.lastModified}`;
+  if (!res.ok) return { kind: "error", message: typeof body.error === "string" ? body.error : `HTTP ${res.status}` };
+  if (!body.property?.id) return { kind: "error", message: "No id returned from API" };
+  return { kind: "created", id: body.property.id };
 }
 
 /** Strip the file extension from a filename to use as a nickname. */
@@ -161,36 +99,9 @@ function nicknameFromFilename(filename: string): string {
   return filename.replace(/\.[^.]+$/, "");
 }
 
-/** Filter a FileList to only .txt files. */
-function extractTxtFiles(files: FileList): File[] {
-  return Array.from(files).filter((f) =>
-    f.name.toLowerCase().endsWith(".txt")
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Dialog component
-// ---------------------------------------------------------------------------
-
 /**
- * The four entry-point cards on the "choice" step.
- *
- * ⚠️ **NOT `buttonClass()`, and that is the fix, not an oversight** (#32.20
- * review round 1). Three of these four were migrated to
- * `buttonClass({ variant: "secondary", size: "lg" })` during the button sweep,
- * while nothing imported this file and so nobody looked at the result. That
- * helper's BASE is `inline-flex items-center justify-center`: each card holds a
- * title span and a description span, so the three lost their `flex-col` and
- * laid the two out side by side, centred, with `secondary`'s
- * `enabled:hover:**:text-white` turning the fade-grey description the same
- * colour as the title on hover. One proper card followed by three malformed
- * rows is what the entry point this slice adds would otherwise have opened
- * onto. Appending `flex-col items-start` to the helper's output is not a fix
- * either: Tailwind resolves competing utilities by stylesheet order, not class
- * order (see the warning in button-styles.ts), and `items-center` /
- * `justify-center` are exactly such a competition. A card is not a button
- * variant, so it carries the card's own classes — the ones card 1 has always
- * had — and all four now match.
+ * The two entry-point cards. Not `buttonClass()`: a card holds a title and a description one above the other, and
+ * that helper's base centres its content in a row (#32.20 review round 1).
  */
 const CHOICE_CARD =
   "flex flex-col cursor-pointer rounded-lg border-2 border-wire bg-white px-4 py-3 " +
@@ -198,237 +109,57 @@ const CHOICE_CARD =
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus " +
   "dark:border-zinc-700 dark:bg-zinc-900 dark:hover:border-cta dark:hover:bg-zinc-700";
 
-/**
- * The caution line the three coordinate cards carry, and the box the two
- * result screens end on.                                   (Slice #34.07, D-18)
- *
- * ⚠️ **WHAT IT SAYS IS A FACT ABOUT THE PAYLOAD, NOT A WARNING ABOUT A RISK.**
- * `createProperty` below builds its body key by key and sends `corners`,
- * `provenance` and optionally `notes` and `nickname`. There is no tarla and no
- * parcela in it, and none of these three steps has a field to collect one —
- * so a property made from a photograph, a `.txt` or a folder of them has NO
- * cadastral identity at all.
- *
- * The consequence is the one worth saying out loud, and it is the opposite of
- * what a user would assume: the one-property-per-parcel check
- * (`findPropertiesByCadastralIdentity`, reached through
- * `ensurePropertyForFolder`) compares a tarla against a tarla and a parcela
- * against a parcela. With neither present there is nothing to compare, so the
- * check is never invoked and a second property for a parcel that already has
- * one is created in silence. That is why Adrian's answer to D-18 was (c) —
- * SAY it — rather than "add the guard": the guard cannot be switched on until
- * these paths collect the parcel, which is the rebuild #32.20 deferred and
- * this slice is explicitly out of scope for. See
- * `src/lib/properties/cadastral-identity.ts` → `hasCadastralIdentity`, which
- * records the asymmetry between `POST /api/properties` and the import route as
- * deliberate.
- *
- * ⚠️ **CARD 1 IS NOT IN THIS SET, AND THAT IS THE WHOLE POINT OF PUTTING THE
- * LINE ON CARDS RATHER THAN ON THE DIALOG.** "Manual entry" opens
- * /properties/new, which has both fields; a note across the top of the choice
- * step would have libelled the one path that does collect an identity.
- *
- * ⚠️ **THE SCAN PATH HAS NO RESULT SCREEN.** It ends at `navigateToSaved`,
- * which pushes the user to the property page — where the empty Tarla and
- * Parcela fields are in front of them — so its copy is on the card and on the
- * "select" step, the last screen before the write. The two text paths do stop
- * on a result, and that is where the box goes.
- */
-const NO_IDENTITY_LINE = "mt-1 text-xs font-medium text-amber-700 dark:text-amber-400";
-const NO_IDENTITY_BOX =
-  "rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 " +
-  "dark:border-amber-900 dark:bg-amber-950 dark:text-amber-300";
-
-/**
- * The ids joining this dialog's two file pickers to the sentences describing
- * them.                                                        (Slice #34.23)
- *
- * Two ids and not one, even though the two pickers are never on screen at the
- * same time — `step` shows one of them — because "never at the same time" is a
- * fact about today's step machine and a duplicated id is invalid the moment
- * that changes. Constants rather than literals, so an `aria-describedby` cannot
- * outlive the element it points at: a dangling one is silent.
- */
-const PHOTO_PICKER_OFFER_ID = "property-photo-picker-offer";
+/** The ids joining the file picker to the sentences describing it (Slice #34.23). */
 const COORDINATE_PICKER_OFFER_ID = "property-coordinate-picker-offer";
-
-/**
- * …and the format hints that were already on screen and already unreachable.
- *                                                              (Slice #34.23)
- *
- * ⚠️ **A THIRD ADVERSARIAL ROUND FOUND THE SLICE ARGUING THIS AND NOT DOING
- * IT.** `aria-label` on a `role="button"` REPLACES its content as the
- * accessible name, so „Sunt acceptate formatele JPEG, PNG…" and the coordinate
- * file's column spec were announced by nothing at all — the same defect the new
- * sentence was written to avoid, one span higher, and the very line this
- * slice's own comment cites as the reason the new sentence is needed. Both go
- * into `aria-describedby`, hint first, in the order they are read on screen.
- */
-const PHOTO_PICKER_HINT_ID = "property-photo-picker-hint";
 const COORDINATE_PICKER_HINT_ID = "property-coordinate-picker-hint";
+
+const FIELD_BOX =
+  "rounded-md border border-wire bg-white px-2 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none " +
+  "dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100";
 
 interface Props {
   onClose: () => void;
 }
 
 export function AddPropertyDialog({ onClose }: Props) {
-  const t           = useTranslations("property.addDialog");
-  const tShared     = useTranslations("shared");
-  const router      = useRouter();
+  const t = useTranslations("property.addDialog");
+  const tProp = useTranslations("property");
+  const tShared = useTranslations("shared");
   const queryClient = useQueryClient();
+  const nameOr = useNameOr(); // #37.57: a name, or words — never the system ID
 
-  // ── State ──────────────────────────────────────────────────────────────────
+  const [step, setStep] = useState<Step>("choice");
+  const [error, setError] = useState<string | null>(null);
+  const [textFile, setTextFile] = useState<File | null>(null);
+  const [tarlaId, setTarlaId] = useState("");
+  const [parcela, setParcela] = useState("");
+  const [parcelExists, setParcelExists] = useState<ParcelMatch[] | null>(null);
+  const [createdId, setCreatedId] = useState<string | null>(null);
+  const [savingLabel, setSavingLabel] = useState("");
+  const textInputRef = useRef<HTMLInputElement>(null);
 
-  const [step,          setStep]          = useState<Step>("choice");
-  const [error,         setError]         = useState<string | null>(null);
+  // The same list, under the same key, as the form's „Nr. tarla / sola" (Slice #18.16.VL, #34.03: the value is the
+  // row's id). A failed read throws rather than caching an empty list (#34.04).
+  const { data: tarlaItems } = useQuery({
+    queryKey: ["value-list", "tarla"],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/value-lists/tarla");
+      if (res.redirected || !res.ok) throw new Error(`Failed to load tarla (HTTP ${res.status})`);
+      const body = await res.json();
+      return (body.items ?? []) as { id: string; indicativ: string; descriere?: string | null }[];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-  // Image (OCR) flow
-  const [selectedFile,  setSelectedFile]  = useState<File | null>(null);
-  const [scanResult,    setScanResult]    = useState<ScanResult | null>(null);
-  const [saveCount,     setSaveCount]     = useState(1);
   /**
-   * A render-safe mirror of `scanSavedIdsRef.current.length`. (Slice #34.07)
-   *
-   * The ref stays the thing `handleScanSave` resumes from: it must survive a
-   * re-render and be readable synchronously mid-loop, which is what a ref is
-   * for. What it cannot do is be read during RENDER — `react-hooks/refs`
-   * refuses that, rightly, because a paragraph reading `ref.current` would not
-   * re-render when the ref changed. And the "select" step's
-   * no-cadastral-identity note has to choose singular or plural from what will
-   * EXIST after this save rather than from `saveCount` alone, because a user
-   * can return to that step after a partial failure and pick a number BELOW
-   * what is already written. So the count is mirrored into state and the two
-   * are set together.
-   *
-   * This does re-render once per saved property, which is fine and is NOT the
-   * reason the ref stays a ref: `step` is `"saving"` throughout that loop, so
-   * nothing on screen depends on it.
+   * `importingRef` is the synchronous re-entry guard (a second click must not start a second save); `importing` is
+   * the same fact made renderable, so Escape, the backdrop, ✕ and Back are shut while the file is read and saved.
    */
-  const [scanSavedCount, setScanSavedCount] = useState(0);
-
-  // Text file flow
-  const [textFile,      setTextFile]      = useState<File | null>(null);
-
-  // Folder flow
-  const [folderFiles,   setFolderFiles]   = useState<File[]>([]);
-  const [folderHadFiles, setFolderHadFiles] = useState(false);
-  /**
-   * How many properties the folder import actually wrote.     (Slice #34.07)
-   *
-   * `savingLabel` already carries "Imported N of M" as text, but the
-   * no-cadastral-identity note beside it has to choose between a singular and
-   * a plural sentence and cannot read a number out of a formatted string. A
-   * folder of six .txt files where five carry no coordinates writes ONE
-   * property — `handleImportFolder` skips the unparseable ones and only the
-   * empty-set case returns early — so the plural is wrong often enough to be
-   * worth a state field. A review round found the screen saying "1 of 6" above
-   * "These properties … on each property page".
-   */
-  const [folderSavedCount, setFolderSavedCount] = useState(0);
-
-  // Saving progress (shared across all save paths)
-  const [savingLabel,   setSavingLabel]   = useState("");
-
-  const imageInputRef   = useRef<HTMLInputElement>(null);
-  const textInputRef    = useRef<HTMLInputElement>(null);
-  const folderInputRef  = useRef<HTMLInputElement>(null);
-  // Prevents double-click / concurrent invocations of import handlers.
-  /**
-   * `isImportingRef` is the SYNCHRONOUS re-entry guard and stays a ref — state
-   * would not be updated in time to stop a second click. `importing` is the
-   * same fact made renderable, because #32.20 review round 3 found that keying
-   * "is something in flight" off `step` alone leaves a hole: both import
-   * handlers set the ref, then read every selected file, and only THEN call
-   * setStep("saving"). For a folder off a network share that read is seconds
-   * long, and throughout it `step` is still "upload-folder" — so Escape, the
-   * backdrop, the ✕ and Back were all live over a run that was already
-   * committed to creating properties. Set the two together, always.
-   */
-  const isImportingRef  = useRef(false);
+  const importingRef = useRef(false);
   const [importing, setImporting] = useState(false);
-  // Ids already written by an interrupted handleScanSave — see its docblock.
-  const scanSavedIdsRef = useRef<string[]>([]);
-  /**
-   * WHICH image those ids were saved from.                (Slice #37.04, FU-017)
-   *
-   * ⚠️ **A RE-SCAN OF THE SAME PHOTOGRAPH IS NOT A NEW SET OF BOUNDARIES.**
-   * `handleProcess` used to clear the saved ids on every scan, so „Înapoi" from
-   * the count step and „Procesează" again on the same file wrote the properties
-   * already saved a second time — the exact duplicate #32.20's resume was built
-   * to prevent, reached by the Back button instead of the Save button. Now the
-   * ids belong to the image they came from: the same file (name, size, last
-   * modified) resumes where the last save stopped, and the count step says how
-   * many are already saved; a different file starts from nothing.
-   */
-  const scanSavedForRef = useRef<string | null>(null);
-  const markImporting = (v: boolean) => { isImportingRef.current = v; setImporting(v); };
-
-  // ── Navigation helpers ────────────────────────────────────────────────────
-
-  /**
-   * Escape closes — but never mid-flight, and never via the element's own
-   * onKeyDown (#32.20 review rounds 1 and 2).
-   *
-   * Round 1 put the handler on the overlay div and focused that div on mount.
-   * That works on the "choice" step and nowhere else: every step transition is
-   * fired by clicking a button which the transition then unmounts, at which
-   * point focus falls back to document.body — outside the React root — and a
-   * synthetic onKeyDown never reaches the overlay again. So Escape died the
-   * moment the user chose one of the four paths, which is exactly when they
-   * might want out. A window listener is focus-independent, and it is what the
-   * five other dialogs in this app already do (discover-review-dialog,
-   * tag-dialog, property-step-dialog, cancel-import-dialog, value-list-modal).
-   *
-   * `!isBusy` matches discover-review-dialog's rule and its reason: during
-   * "processing" and "saving" this dialog is the only thing telling the user a
-   * read or a write is in flight. Dismissing it does not cancel the loop in
-   * handleImportFolder — that keeps creating properties against an unmounted
-   * component — and it leaves isImportingRef behind with it, so a reopened
-   * dialog would happily import the same folder a second time and duplicate
-   * everything the first run saved.
-   */
-  /**
-   * ⚠️ **"processing" is deliberately NOT in here, and that is only safe
-   * because of `cancelled` below** (review rounds 4 and 5).
-   *
-   * isBusy exists to stop a dismissal abandoning a run already committed to
-   * WRITING properties. Round 3 folded the processing step in with the writes,
-   * which meant a wedged OCR request — no timeout the container enforces — left
-   * the dialog with no ✕, no Escape, no backdrop and no Back, forever, over a
-   * fetch that writes nothing. Round 4 took it out, and that on its own was
-   * WORSE: `handleProcess` is one async function, so dismissing the dialog
-   * unmounted the component without stopping the continuation, and when the
-   * fetch finally resolved it fell straight through to handleScanSave and
-   * created a property the user had cancelled — then called onClose() (closing
-   * whatever dialog they had since opened) and router.push'd them to it.
-   *
-   * So the lock is replaced by a cancellation the continuation checks, rather
-   * than removed. The controller aborts the fetch on unmount, and `cancelledRef`
-   * is tested at each of the OCR path's await-resumptions before it writes,
-   * navigates or closes — because an abort races the response and is not the
-   * only way a continuation can outlive the dialog.
-   *
-   * The two IMPORT handlers deliberately carry no such check, and do not need
-   * one: `markImporting(true)` is the first statement of each, so isBusy gates
-   * every exit for their whole duration, and neither reaches navigateToSaved,
-   * onClose() or router.push. The only way out from under them is the browser's
-   * own Back, and there the writes the user explicitly asked for finishing —
-   * followed by setState calls that are no-ops — is the outcome to want.
-   */
+  const markImporting = (v: boolean) => { importingRef.current = v; setImporting(v); };
   const isBusy = importing || step === "saving";
-  const cancelledRef = useRef(false);
-  const scanAbortRef = useRef<AbortController | null>(null);
-  useEffect(() => {
-    // ⚠️ Set to false on EVERY mount, not just initialised at declaration.
-    // React StrictMode runs mount → cleanup → mount in development, so a
-    // cleanup-only version would latch cancelledRef to true before the user
-    // touched anything and every path below would silently do nothing.
-    cancelledRef.current = false;
-    return () => {
-      cancelledRef.current = true;
-      scanAbortRef.current?.abort();
-    };
-  }, []);
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape" && !isBusy) onClose();
@@ -437,183 +168,34 @@ export function AddPropertyDialog({ onClose }: Props) {
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose, isBusy]);
 
-  // Focus moves into the dialog on open, which is what `aria-modal="true"`
-  // already promised a screen reader: without it, assistive tech is told to
-  // ignore everything outside a dialog the user's focus is still outside of.
   const overlayRef = useRef<HTMLDivElement>(null);
   useEffect(() => { overlayRef.current?.focus(); }, []);
-
-  /**
-   * The backdrop closes on click — with two guards.
-   *
-   * `!isBusy`, for the reason above: the panel is `max-w-md`, so most of the
-   * screen is backdrop and a misclick during a folder import would abandon it.
-   *
-   * And BOTH the mousedown and the mouseup must have landed on the backdrop.
-   * A `click` is dispatched at the nearest common ancestor of the two, so
-   * either direction of a drag across the panel edge otherwise reports the
-   * overlay as its target: a text-selection drag that starts on the list of
-   * found filenames and releases outside (round 2 caught this one), and a drag
-   * that starts on the backdrop and releases inside the panel (round 3 caught
-   * that one, and it is the worse of the two — the gesture ends inside the
-   * dialog and dismisses it anyway).
-   */
+  /** Both the mousedown and the mouseup must land on the backdrop for it to close the dialog (#32.20 rounds 2–3). */
   const downOnBackdrop = useRef(false);
 
-  /** Navigate to all saved property pages in sequence, then close. */
-  const navigateToSaved = async (ids: string[]) => {
-    // The last common gate before this component reaches outside itself. A
-    // continuation that outlived the dialog must not call onClose() — which by
-    // then belongs to whatever dialog the user has since opened — nor push a
-    // route out from under them (review round 5).
-    if (cancelledRef.current) return;
-    // #32.20 review round 1 — the two text paths each invalidate before they
-    // get here; the OCR path did not, and it is the one path with no successor
-    // elsewhere in the application. staleTime is 30s (query-provider.tsx), so
-    // without this a user who photographs a coordinate table, lands on the new
-    // property and presses Back inside half a minute is served the cached list
-    // page — without the property they just created on it. Invalidating on the
-    // shared "properties" prefix here covers all three paths; the two that
-    // already do it are harmless repeats.
-    // NOT awaited (#32.20 review round 2). The Properties list is mounted
-    // directly behind this dialog, so its query has an active observer and v5's
-    // invalidateQueries awaits the refetch that follows — with the default
-    // three retries and backoff. Awaiting it held the "Saving…" spinner open
-    // for seconds, on a flaky connection, for work already committed. The cache
-    // is marked stale synchronously either way, which is all this needs.
-    void queryClient.invalidateQueries({ queryKey: ["properties"] });
-    onClose();
-    for (let i = 0; i < ids.length; i++) {
-      if (i === 0) {
-        router.push(`/properties/${ids[i]}`);
-      } else {
-        await new Promise<void>((resolve) => setTimeout(resolve, 1_500 * i));
-        router.push(`/properties/${ids[i]}`);
-      }
-    }
-  };
-
-  // ── Image (OCR) handlers ──────────────────────────────────────────────────
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSelectedFile(e.target.files?.[0] ?? null);
+  const resetToChoice = () => {
+    setStep("choice");
     setError(null);
+    setTextFile(null);
+    setTarlaId("");
+    setParcela("");
+    setParcelExists(null);
   };
 
-  const handleProcess = async () => {
-    if (!selectedFile) return;
-    setError(null);
-    // A new IMAGE is a new set of boundaries — nothing saved from another one
-    // may be resumed against it. The SAME image scanned again keeps what it
-    // already saved (FU-017; see scanSavedForRef). See handleScanSave's docblock.
-    const key = imageKey(selectedFile);
-    if (scanSavedForRef.current !== key) {
-      scanSavedIdsRef.current = [];
-      setScanSavedCount(0);
-      scanSavedForRef.current = key;
-    }
-    setStep("processing");
-
-    const controller = new AbortController();
-    scanAbortRef.current = controller;
-
-    let result: ScanResult;
-    try {
-      result = await callScanApi(selectedFile, controller.signal);
-    } catch (err) {
-      // The dialog was dismissed while the scan was in flight: the abort is
-      // the expected outcome, not something to report to a user who is no
-      // longer looking at this component.
-      if (cancelledRef.current) return;
-      setError(err instanceof Error ? err.message : t("ocrError"));
-      setStep("upload");
-      return;
-    } finally {
-      if (scanAbortRef.current === controller) scanAbortRef.current = null;
-    }
-
-    // ⚠️ The scan can RESOLVE after the dialog has gone — an abort races the
-    // response and does not always win. Everything below this line writes,
-    // navigates or closes, so none of it may run for a dismissed dialog.
-    if (cancelledRef.current) return;
-
-    setScanResult(result);
-
-    if (result.properties.length === 0) {
-      setError(t("noPropertiesFound"));
-      setStep("upload");
-      return;
-    }
-
-    if (result.properties.length === 1) {
-      setSaveCount(1);
-      await handleScanSave(result, 1);
-    } else {
-      setSaveCount(result.properties.length);
-      setStep("select");
-    }
-  };
-
-  /**
-   * Save `count` of the boundaries the scan found.
-   *
-   * ⚠️ **Resumes; it does not restart** (review round 4). On a failure this
-   * returns to the "select" step, which carries a live Save button — and the
-   * ids already written were previously held in a local that died with the
-   * call, so pressing Save again re-created everything. Three boundaries, the
-   * second failing on a transient error, one press of Save: four properties in
-   * the archive for three boundaries, one a silent duplicate, with nothing on
-   * screen having said the first was already written.
-   *
-   * The loop returns on its first failure, so what it has saved is always a
-   * PREFIX of properties[] — which is what makes resuming at
-   * scanSavedIdsRef.current.length exactly right rather than approximately so.
-   * The ref is cleared whenever a NEW scan begins (handleProcess) or the dialog
-   * returns to the choice cards, never between attempts at the same one.
-   */
-  const handleScanSave = async (result: ScanResult, count: number) => {
-    setStep("saving");
-    const notesText = result.labels.join("   ") || null;
-    const savedIds = scanSavedIdsRef.current;
-
-    for (let i = savedIds.length; i < count; i++) {
-      // Re-checked every iteration: a multi-boundary save is several round
-      // trips and the dialog can go between any two of them.
-      if (cancelledRef.current) return;
-      setSavingLabel(t("savingProperties", { count }));
-      try {
-        const id = await createProperty(result.properties[i].corners, notesText, null, "IMAGE_FILE");
-        savedIds.push(id);
-        setScanSavedCount(savedIds.length);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Save failed");
-        setStep("select");
-        return;
-      }
-    }
-    await navigateToSaved(savedIds);
-  };
-
-  const handleConfirmSave = () => {
-    if (!scanResult) return;
-    void handleScanSave(scanResult, saveCount);
-  };
-
-  // ── Text file handlers ────────────────────────────────────────────────────
-
-  const handleTextFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTextFile(e.target.files?.[0] ?? null);
-    setError(null);
-  };
+  const canImport = textFile !== null && tarlaId !== "" && parcela.trim() !== "";
 
   const handleImportText = async () => {
-    if (!textFile || isImportingRef.current) return;
+    if (!textFile || importingRef.current) return;
+    if (!tarlaId || !parcela.trim()) {
+      setError(t("identityRequired"));
+      return;
+    }
     markImporting(true);
     setError(null);
+    setParcelExists(null);
 
-    // Read content BEFORE setStep("saving") unmounts the <input> element.
-    // File objects from a file input can become unreadable once the input
-    // is removed from the DOM; reading upfront avoids stale-file data.
+    // Read the content BEFORE setStep("saving") unmounts the <input>: a File from an input can become unreadable
+    // once the input has left the DOM.
     let fileText: string;
     const fileName = textFile.name;
     try {
@@ -626,20 +208,15 @@ export function AddPropertyDialog({ onClose }: Props) {
 
     setStep("saving");
     setSavingLabel(t("processingText"));
-
-    // Re-wrap as a File so callParseTextApi can build FormData normally.
-    const fileBlob = new File([fileText], fileName, { type: "text/plain" });
-
     let corners: Corner[];
     try {
-      corners = await callParseTextApi(fileBlob);
+      corners = await callParseTextApi(new File([fileText], fileName, { type: "text/plain" }));
     } catch (err) {
       setError(err instanceof Error ? err.message : t("noCoordinatesFound"));
       setStep("upload-text");
       markImporting(false);
       return;
     }
-
     if (corners.length === 0) {
       setError(t("noCoordinatesFound"));
       setStep("upload-text");
@@ -647,151 +224,31 @@ export function AddPropertyDialog({ onClose }: Props) {
       return;
     }
 
-    const nickname = nicknameFromFilename(fileName);
-    setSavingLabel(t("savingProperties", { count: 1 }));
-
+    setSavingLabel(t("savingOne"));
+    let outcome: CreateOutcome;
     try {
-      await createProperty(corners, null, nickname, "COORDINATE_FILE");
+      outcome = await createFromCoordinateFile({ corners, tarlaId, parcela, nickname: nicknameFromFilename(fileName) });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Save failed");
+      outcome = { kind: "error", message: err instanceof Error ? err.message : "Save failed" };
+    }
+    if (outcome.kind !== "created") {
+      if (outcome.kind === "exists") setParcelExists(outcome.matches);
+      else setError(outcome.message);
       setStep("upload-text");
       markImporting(false);
       return;
     }
 
-    // Invalidate the property list so it refreshes when the dialog closes.
-    // NOT awaited — see navigateToSaved for the full reason. It matters more
-    // here than there after review round 3: this runs while step === "saving",
-    // where the ✕, Escape, the backdrop and Back are ALL disabled and the step
-    // renders no other control. Awaiting a refetch that pauses on a dropped
-    // connection therefore left the user in an undismissable spinner, over work
-    // already committed, with a page reload as the only way out.
+    // NOT awaited: the list behind the dialog has an active observer, and awaiting its refetch held the spinner open
+    // over work already committed (#32.20 round 2). The cache is marked stale at once either way.
     void queryClient.invalidateQueries({ queryKey: ["properties"] });
-
-    // Show acknowledgement screen — user closes manually to return to list.
+    setCreatedId(outcome.id);
     setSavingLabel(t("textImportDone"));
     setStep("done-text");
     markImporting(false);
   };
 
-  // ── Folder handlers ───────────────────────────────────────────────────────
-
-  const handleFolderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files ? extractTxtFiles(e.target.files) : [];
-    setFolderFiles(files);
-    setFolderHadFiles((e.target.files?.length ?? 0) > 0);
-    setError(null);
-  };
-
-  const handleImportFolder = async () => {
-    if (folderFiles.length === 0 || isImportingRef.current) return;
-    markImporting(true);
-    setError(null);
-
-    // Read ALL file contents BEFORE setStep("saving") unmounts the <input>.
-    // File objects from a webkitdirectory input become unreadable once the
-    // input is removed from the DOM, which is why every fetch was previously
-    // returning the same stale bytes (the first file's data).
-    const fileData: { name: string; text: string }[] = [];
-    for (const file of folderFiles) {
-      try {
-        const text = await file.text();
-        fileData.push({ name: file.name, text });
-      } catch {
-        // unreadable — skip silently
-      }
-    }
-
-    setStep("saving");
-
-    const total     = fileData.length;
-    const savedIds: string[] = [];
-
-    for (let i = 0; i < total; i++) {
-      const { name, text } = fileData[i];
-      setSavingLabel(t("processingFolder", { done: i + 1, total }));
-
-      // Re-wrap the captured text as a File so callParseTextApi can build
-      // FormData normally — the actual bytes come from our in-memory copy.
-      const fileBlob = new File([text], name, { type: "text/plain" });
-
-      let corners: Corner[];
-      try {
-        corners = await callParseTextApi(fileBlob);
-      } catch {
-        continue; // skip files we can't parse
-      }
-
-      if (corners.length === 0) {
-        continue; // skip files with no coordinates
-      }
-
-      const nickname = nicknameFromFilename(name);
-      try {
-        const id = await createProperty(corners, null, nickname, "COORDINATE_FILE");
-        savedIds.push(id);
-      } catch {
-        // skip files that fail to save
-      }
-    }
-
-    if (savedIds.length === 0) {
-      setError(t("noCoordinatesFound"));
-      setStep("upload-folder");
-      markImporting(false);
-      return;
-    }
-
-    // Invalidate the property list so it refreshes when the dialog closes.
-    // NOT awaited — see navigateToSaved for the full reason. It matters more
-    // here than there after review round 3: this runs while step === "saving",
-    // where the ✕, Escape, the backdrop and Back are ALL disabled and the step
-    // renders no other control. Awaiting a refetch that pauses on a dropped
-    // connection therefore left the user in an undismissable spinner, over work
-    // already committed, with a page reload as the only way out.
-    void queryClient.invalidateQueries({ queryKey: ["properties"] });
-
-    // Show acknowledgement screen — user closes manually to return to list.
-    setSavingLabel(
-      t("folderImportDone", { success: savedIds.length, total })
-    );
-    setFolderSavedCount(savedIds.length);
-    setStep("done-folder");
-    markImporting(false);
-  };
-
-  // ── Shared reset ──────────────────────────────────────────────────────────
-
-  const resetToChoice = () => {
-    setStep("choice");
-    setError(null);
-    setSelectedFile(null);
-    setScanResult(null);
-    setTextFile(null);
-    setFolderFiles([]);
-    // Round 4: folderHadFiles survived the reset, so picking a folder with no
-    // .txt in it, pressing Back and re-entering the folder step showed "No .txt
-    // files found in the selected folder." above a picker reading "Select
-    // folder", with no folder selected. Four clicks, deterministic.
-    setFolderHadFiles(false);
-    setFolderSavedCount(0);
-    scanSavedIdsRef.current = [];
-    scanSavedForRef.current = null;
-    setScanSavedCount(0);
-  };
-
-  // ── Render ────────────────────────────────────────────────────────────────
-
   return (
-    /*
-      #32.20 — Escape, the backdrop and focus were all DECLARED here and none of
-      them worked, and none of it could bite while nothing imported this file.
-      Escape and the backdrop guards now live beside the handlers above, where
-      their reasons are written out; this div carries `tabIndex={-1}` only so
-      that it can be focused on open, and `outline-none` because it is a
-      container, not a control — every real control inside it keeps its own
-      focus ring.
-    */
     <div
       ref={overlayRef}
       tabIndex={-1}
@@ -805,309 +262,29 @@ export function AddPropertyDialog({ onClose }: Props) {
         if (!isBusy && downOnBackdrop.current && e.target === e.currentTarget) onClose();
       }}
     >
-      {/* Panel */}
       <div className="relative w-full max-w-md rounded-xl border border-card-rim bg-white shadow-xl dark:border-zinc-700 dark:bg-zinc-900">
-        {/* Header */}
         <div className="flex items-center justify-between border-b border-card-rim px-5 py-4 dark:border-zinc-700">
           <h2 className="text-base font-semibold">{t("title")}</h2>
-          {/*
-            `disabled={isBusy}` — #32.20 review round 3. Escape and the backdrop
-            were gated in round 2 and this, the most obvious way out of the
-            dialog and the one visible throughout the "Saving…" spinner, was
-            not. Every consequence the round-2 guards exist to prevent was still
-            reachable through it. discover-review-dialog does the same thing for
-            the same reason. Genuinely disabled rather than a no-op handler:
-            buttonClass paints the inert state, and a control that invites a
-            click it will not honour is the lying button #23.05.UX removed.
-          */}
-          <IconButton
-            icon={X}
-            label={t("cancel")}
-            variant="bare"
-            size="md"
-            onClick={onClose}
-            disabled={isBusy}
-          />
+          <IconButton icon={X} label={t("cancel")} variant="bare" size="md" onClick={onClose} disabled={isBusy} />
         </div>
 
-        {/*
-          Body.
-
-          ⚠️ **The <ErrorBoundary> wraps THIS, not the overlay** (#32.20 review
-          rounds 2 and 3). It used to wrap the whole `fixed inset-0` overlay, so
-          when it did fire it replaced the backdrop, the panel, the ✕ and the
-          Escape target with a PanelError box rendered inline at the bottom of
-          the Properties list — while `addOpen` in that list stayed true, and
-          with no way out but a page reload. Wrapping the body leaves the
-          header's ✕, the backdrop and the Escape handler alive.
-
-          ⚠️ **And be precise about what it can fire ON, because round 2's
-          version of this comment was not.** A boundary catches throws from the
-          render of its DESCENDANT COMPONENTS — Spinner, the icon SVGs,
-          ErrorBanner, BackButton, Link. It does NOT catch a throw from the JSX
-          below, because all of that is evaluated during AddPropertyDialog's own
-          render, before this boundary mounts, and propagates past it to an
-          ancestor: a missing `t(...)` key in a step is not caught here and
-          never was, in either placement. Nor is anything thrown by the async
-          handlers, which no error boundary sees. The `fallback` prop is
-          evaluated outside the boundary too, so a failure to resolve
-          `errorBoundary.ocr` itself cannot produce the fallback.
-        */}
+        {/* The boundary wraps the body, so the ✕, the backdrop and Escape stay alive if a part of it fails (#32.20). */}
         <div className="px-5 py-5">
           <ErrorBoundary fallback={<PanelError>{tShared("errorBoundary.ocr")}</PanelError>}>
 
-          {/* ── CHOICE ── */}
           {step === "choice" && (
             <div className="flex flex-col gap-3">
-              {/* 1. Manual entry */}
-              <Link
-                href="/properties/new"
-                onClick={onClose}
-                className={CHOICE_CARD}
-              >
+              <Link href="/properties/new" onClick={onClose} className={CHOICE_CARD}>
                 <span className="font-medium">{t("choiceManual")}</span>
                 <span className="mt-0.5 text-xs text-fade">{t("choiceManualDesc")}</span>
               </Link>
-
-              {/* 2. From scanned image */}
-              <button
-                type="button"
-                onClick={() => setStep("upload")}
-                className={`${CHOICE_CARD} text-left`}
-              >
-                <span className="font-medium">{t("choiceScan")}</span>
-                <span className="mt-0.5 text-xs text-fade">{t("choiceScanDesc")}</span>
-                <span className={NO_IDENTITY_LINE}>{t("noCadastralIdentityCard")}</span>
-              </button>
-
-              {/* 3. From a text file */}
-              <button
-                type="button"
-                onClick={() => setStep("upload-text")}
-                className={`${CHOICE_CARD} text-left`}
-              >
+              <button type="button" onClick={() => { setStep("upload-text"); setError(null); }} className={`${CHOICE_CARD} text-left`}>
                 <span className="font-medium">{t("choiceTextFile")}</span>
                 <span className="mt-0.5 text-xs text-fade">{t("choiceTextFileDesc")}</span>
-                <span className={NO_IDENTITY_LINE}>{t("noCadastralIdentityCard")}</span>
               </button>
-
-              {/* 4. From a text folder */}
-              <button
-                type="button"
-                onClick={() => setStep("upload-folder")}
-                className={`${CHOICE_CARD} text-left`}
-              >
-                <span className="font-medium">{t("choiceTextFolder")}</span>
-                <span className="mt-0.5 text-xs text-fade">{t("choiceTextFolderDesc")}</span>
-                <span className={NO_IDENTITY_LINE}>{t("noCadastralIdentityCard")}</span>
-              </button>
-
-              {/*
-                Slice #32.20 — the work-in-progress note Adrian asked for, in
-                the only form that belongs on a shipped screen. Deliberately no
-                file path: Ciprian sees this dialog, and a C:\dev.docs\ path in
-                the interface is noise to him. The pointer proper — to
-                Answers.32.12.docx section 4 — is in this file's header, where a
-                developer looks and where it cannot be shipped to anybody.
-              */}
-              <p className="mt-1 text-xs text-fade" role="note">
-                {t("wipNote")}
-              </p>
             </div>
           )}
 
-          {/* ── IMAGE UPLOAD ── */}
-          {step === "upload" && (
-            <div className="flex flex-col gap-4">
-              <p className="text-sm font-medium">{t("uploadTitle")}</p>
-
-              <div
-                className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-wire bg-canvas px-4 py-8 transition-colors hover:border-cta dark:border-zinc-600 dark:bg-zinc-800"
-                onClick={() => imageInputRef.current?.click()}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") imageInputRef.current?.click(); }}
-                aria-label={t("uploadLabel")}
-                // ⚠️ **ON THE WRAPPER AS WELL AS ON THE INPUT, AND A SECOND
-                // ADVERSARIAL ROUND IS WHY.** (Slice #34.23.) This div is the
-                // control: it has the click handler, the visible drop zone and
-                // its own accessible name. The `sr-only` input inside it is a
-                // separate tab stop, so a description put only there is never
-                // heard by somebody who reaches the button — which is the user
-                // this sentence was written for. Both carry it; neither is
-                // redundant, because either can be the one focused.
-                aria-describedby={`${PHOTO_PICKER_HINT_ID} ${PHOTO_PICKER_OFFER_ID}`}
-              >
-                <UploadIcon />
-                <span className="text-sm font-medium text-ink dark:text-zinc-200">
-                  {selectedFile ? selectedFile.name : t("uploadLabel")}
-                </span>
-                <span id={PHOTO_PICKER_HINT_ID} className="mt-1 text-xs text-fade">
-                  {t("uploadHint")}
-                </span>
-                <input
-                  ref={imageInputRef}
-                  type="file"
-                  accept={PROPERTY_PHOTO_ACCEPT}
-                  className="sr-only"
-                  onChange={handleImageChange}
-                  aria-label={t("uploadLabel")}
-                  // Slice #34.23 — `aria-label` is the whole accessible name of
-                  // an `sr-only` input, so the two lines below it have to be
-                  // attached rather than merely adjacent. Hint first, then the
-                  // sentence about the window, which is their order on screen.
-                  aria-describedby={`${PHOTO_PICKER_HINT_ID} ${PHOTO_PICKER_OFFER_ID}`}
-                />
-              </div>
-
-              {/*
-                Slice #34.23 — what the file window shows, beside the control
-                that opens it.
-
-                ⚠️ **NOT A SECOND `uploadHint`.** That line says which image
-                FORMATS this screen accepts, which is a fact about the route;
-                this one says what the dialog will list, which is a fact about
-                `PROPERTY_PHOTO_ACCEPT`. The two answer different questions and
-                a user who cannot see their file needs this one. It names no
-                extensions because `image/*` names none — see
-                `offeredExtensions` in `picker-accept.ts`.
-
-                ⚠️ **AND IT KEEPS THE „Toate fișierele" HALF, WHICH A REVIEW
-                ROUND TOOK OUT AND A LATER ONE PUT BACK.** The argument for
-                dropping it was that the escape hatch leads to a file the scan
-                route will refuse anyway. That is wrong here in the one
-                direction that matters: `uploadHint` above says the route takes
-                TIFF and BMP, and `image/*` is resolved by the OS — the module
-                header records that it drags HEIC in or out depending on the
-                platform — so the window can hide a file this screen would
-                accept. That is exactly the case the second sentence exists
-                for.
-              */}
-              <p id={PHOTO_PICKER_OFFER_ID} className="text-xs text-fade" role="note">
-                {tShared("filePicker.offersImages")}
-              </p>
-
-              {error && <ErrorBanner message={error} />}
-
-              <div className="flex justify-end gap-2">
-                <BackButton onClick={() => { setStep("choice"); setError(null); setSelectedFile(null); }} disabled={isBusy} label={t("back")} />
-                {/* #37.45 (A072): ScanText + „Procesează imaginea". */}
-                <IconButton
-                  icon={ScanText}
-                  label={t("processButton")}
-                  showLabel
-                  variant="primary"
-                  size="lg"
-                  onClick={() => { void handleProcess(); }}
-                  disabled={isBusy || !selectedFile}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* ── IMAGE PROCESSING ── */}
-          {step === "processing" && (
-            <div className="flex flex-col items-center gap-3 py-8">
-              <Spinner />
-              <p className="text-sm text-fade">{t("processing")}</p>
-            </div>
-          )}
-
-          {/* ── IMAGE SELECT COUNT ── */}
-          {step === "select" && scanResult && (
-            <div className="flex flex-col gap-4">
-              <div>
-                <p className="text-sm font-medium">{t("selectCountTitle")}</p>
-                <p className="mt-1 text-sm text-fade">
-                  {scanResult.properties.length === 1
-                    ? t("selectCountDesc",       { count: scanResult.properties.length })
-                    : t("selectCountDescPlural", { count: scanResult.properties.length })}
-                </p>
-              </div>
-
-              <div className="flex flex-col gap-2">
-                {Array.from({ length: scanResult.properties.length }, (_, i) => i + 1).map((n) => (
-                  <label
-                    key={n}
-                    className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 px-4 py-3 transition-colors ${
-                      saveCount === n
-                        ? "border-cta bg-cta-pale dark:border-cta dark:bg-cta/10"
-                        : "border-wire bg-white hover:border-cta/50 dark:border-zinc-700 dark:bg-zinc-900"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="saveCount"
-                      value={n}
-                      checked={saveCount === n}
-                      onChange={() => setSaveCount(n)}
-                      className="accent-cta"
-                    />
-                    <span className="text-sm font-medium">
-                      {n === 1
-                        ? t("saveCount1")
-                        : t("savingProperties", { count: n })}
-                    </span>
-                    <span className="ml-auto text-xs text-fade">
-                      {scanResult.properties[n - 1]?.corners.length ?? 0} corners
-                    </span>
-                  </label>
-                ))}
-              </div>
-
-              {scanResult.labels.length > 0 && (
-                <p className="rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
-                  {t("labelsNote")}
-                </p>
-              )}
-
-              {/*
-                Unconditional, unlike the labels note above it: the scan path
-                ends at `navigateToSaved` and never reaches a result screen, so
-                this is the last place it can be said before the write.
-              */}
-              {/*
-                ⚠️ `Math.max(saveCount, scanSavedCount)`, not `saveCount`, and a
-                review round found why: `handleScanSave` RESUMES rather than
-                restarts, and the radios let the user pick a count BELOW what a
-                previous, partly-failed attempt already wrote. Three boundaries,
-                two saved, the third throws, user comes back and picks 1 — on
-                `saveCount` alone this reads "This property…" while two exist.
-                (`scanSavedCount` and not the ref itself: reading a ref during
-                render is what `react-hooks/refs` refuses, and it is right — the
-                paragraph would not re-render when the ref changed.)
-              */}
-              {/* Slice #37.04 (FU-017): the same photograph scanned again resumes. */}
-              {scanSavedCount > 0 && (
-                <p className="rounded-md bg-cta-pale px-3 py-2 text-xs text-ink dark:bg-cta/10" role="note">
-                  {t("alreadySavedFromImage", { count: scanSavedCount })}
-                </p>
-              )}
-
-              <p className={NO_IDENTITY_BOX} role="note">
-                {Math.max(saveCount, scanSavedCount) === 1
-                  ? t("noCadastralIdentityResult")
-                  : t("noCadastralIdentityResultPlural")}
-              </p>
-
-              {error && <ErrorBanner message={error} />}
-
-              <div className="flex justify-end gap-2">
-                <BackButton onClick={() => { setStep("upload"); setError(null); }} disabled={isBusy} label={t("back")} />
-                <IconButton
-                  icon={Save}
-                  label={t("saveCount1")}
-                  busy={!(saveCount === 1)}
-                  busyLabel={t("savingProperties", { count: saveCount })}
-                  variant="primary"
-                  size="lg"
-                  onClick={handleConfirmSave}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* ── TEXT FILE UPLOAD ── */}
           {step === "upload-text" && (
             <div className="flex flex-col gap-4">
               <p className="text-sm font-medium">{t("uploadTextTitle")}</p>
@@ -1119,7 +296,6 @@ export function AddPropertyDialog({ onClose }: Props) {
                 tabIndex={0}
                 onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") textInputRef.current?.click(); }}
                 aria-label={t("uploadTextLabel")}
-                // Slice #34.23 — see the photo picker above.
                 aria-describedby={`${COORDINATE_PICKER_HINT_ID} ${COORDINATE_PICKER_OFFER_ID}`}
               >
                 <TextFileIcon />
@@ -1134,30 +310,81 @@ export function AddPropertyDialog({ onClose }: Props) {
                   type="file"
                   accept={COORDINATE_FILE_ACCEPT}
                   className="sr-only"
-                  onChange={handleTextFileChange}
+                  onChange={(e) => { setTextFile(e.target.files?.[0] ?? null); setError(null); setParcelExists(null); }}
                   aria-label={t("uploadTextLabel")}
-                  // Slice #34.23 — see the photo picker above.
                   aria-describedby={`${COORDINATE_PICKER_HINT_ID} ${COORDINATE_PICKER_OFFER_ID}`}
                 />
               </div>
 
-              {/*
-                Slice #34.23 — the same sentence the calculation screen makes,
-                from the same module, because it is the same offer. See the
-                photo picker above for why the two are not one line.
-              */}
-              <p
-                id={COORDINATE_PICKER_OFFER_ID}
-                className="text-xs text-fade"
-                role="note"
-              >
+              <p id={COORDINATE_PICKER_OFFER_ID} className="text-xs text-fade" role="note">
                 {tShared("filePicker.offersExtensions", { list: COORDINATE_FILE_OFFER })}
               </p>
 
+              {/* FU-217: the parcel, so the one-property-per-parcel check has something to compare. */}
+              <fieldset className="flex flex-col gap-2" data-coordinate-identity="">
+                <legend className="text-sm font-medium">{t("identityTitle")}</legend>
+                <p className="text-xs text-fade">{t("identityHint")}</p>
+                <div className="flex flex-wrap gap-3">
+                  <label className="flex flex-col gap-1 text-sm">
+                    <span className="text-fade">{tProp("fields.tarlaSola")}</span>
+                    <select
+                      value={tarlaId}
+                      onChange={(e) => { setTarlaId(e.target.value); setParcelExists(null); }}
+                      disabled={isBusy}
+                      className={`${FIELD_BOX} w-56`}
+                    >
+                      <option value="" data-blank="">{tProp("fields.noneOption")}</option>
+                      {(tarlaItems ?? []).map((o) => (
+                        <option key={o.id} value={o.id}>{o.descriere ? `${o.indicativ} — ${o.descriere}` : o.indicativ}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="flex flex-col gap-1 text-sm">
+                    <span className="text-fade">{tProp("fields.parcela")}</span>
+                    <input
+                      type="text"
+                      value={parcela}
+                      onChange={(e) => { setParcela(e.target.value); setParcelExists(null); }}
+                      disabled={isBusy}
+                      className={`${FIELD_BOX} w-32`}
+                    />
+                  </label>
+                </div>
+              </fieldset>
+
               {error && <ErrorBanner message={error} />}
 
+              {parcelExists && parcelExists.length > 0 && (
+                <div
+                  role="alert"
+                  data-parcel-exists=""
+                  className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-200"
+                >
+                  <p className="font-medium">{tProp("parcelExists.title")}</p>
+                  <p className="mt-1">
+                    {tProp("parcelExists.body", { tarla: parcelExists[0].tarla ?? "—", parcela: parcelExists[0].parcela ?? "—" })}
+                  </p>
+                  <ul className="mt-1 flex flex-col gap-0.5">
+                    {parcelExists.map((m) => (
+                      <li key={m.id}>
+                        {/* The form's A016 links: the arrow, and the property's nickname, which says which one it opens. */}
+                        <IconButton
+                          href={`/properties/${m.id}`}
+                          onClick={onClose}
+                          icon={ArrowRight}
+                          label={tProp("parcelExists.open", { name: nameOr(m.nickname, "property") })}
+                          showLabel
+                          variant="secondary"
+                          size="xs"
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               <div className="flex justify-end gap-2">
-                <BackButton onClick={() => { resetToChoice(); }} disabled={isBusy} label={t("back")} />
+                <IconButton icon={ArrowLeft} label={t("back")} variant="secondary" size="lg" onClick={resetToChoice} disabled={isBusy} />
                 {/* #37.45 (A073): Import + „Importă". */}
                 <IconButton
                   icon={Import}
@@ -1166,82 +393,13 @@ export function AddPropertyDialog({ onClose }: Props) {
                   variant="primary"
                   size="lg"
                   onClick={() => { void handleImportText(); }}
-                  disabled={isBusy || !textFile}
+                  disabled={isBusy || !canImport}
+                  note={canImport ? undefined : t("identityRequired")}
                 />
               </div>
             </div>
           )}
 
-          {/* ── FOLDER UPLOAD ── */}
-          {step === "upload-folder" && (
-            <div className="flex flex-col gap-4">
-              <p className="text-sm font-medium">{t("uploadFolderTitle")}</p>
-
-              <div
-                className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-wire bg-canvas px-4 py-8 transition-colors hover:border-cta dark:border-zinc-600 dark:bg-zinc-800"
-                onClick={() => folderInputRef.current?.click()}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") folderInputRef.current?.click(); }}
-                aria-label={t("uploadFolderLabel")}
-              >
-                <FolderIcon />
-                <span className="text-sm font-medium text-ink dark:text-zinc-200">
-                  {folderFiles.length > 0
-                    ? t("uploadFolderFilesFound", { count: folderFiles.length })
-                    : t("uploadFolderLabel")}
-                </span>
-                <span className="mt-1 text-xs text-fade">{t("uploadFolderHint")}</span>
-                {/* webkitdirectory lets the user pick a folder in supporting browsers */}
-                <input
-                  ref={folderInputRef}
-                  type="file"
-                  // @ts-expect-error webkitdirectory is not in React's HTMLInputElement types
-                  webkitdirectory=""
-                  multiple
-                  className="sr-only"
-                  onChange={handleFolderChange}
-                  aria-label={t("uploadFolderLabel")}
-                />
-              </div>
-
-              {/* Show found .txt file names */}
-              {folderFiles.length > 0 && (
-                <ul className="max-h-32 overflow-y-auto rounded-md border border-wire bg-canvas px-3 py-2 text-xs text-fade dark:border-zinc-700 dark:bg-zinc-800">
-                  {folderFiles.map((f) => (
-                    // webkitdirectory recurses, so two plan.txt in different
-                    // subfolders collide on name alone (#32.20 review round 3).
-                    <li key={f.webkitRelativePath || f.name} className="truncate">{f.name}</li>
-                  ))}
-                </ul>
-              )}
-
-              {/* No .txt files warning */}
-              {folderFiles.length === 0 && folderHadFiles && (
-                <p className="rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
-                  {t("uploadFolderNoFiles")}
-                </p>
-              )}
-
-              {error && <ErrorBanner message={error} />}
-
-              <div className="flex justify-end gap-2">
-                <BackButton onClick={() => { resetToChoice(); }} disabled={isBusy} label={t("back")} />
-                {/* #37.45 (A073): Import + „Importă tot". */}
-                <IconButton
-                  icon={Import}
-                  label={t("importAllButton")}
-                  showLabel
-                  variant="primary"
-                  size="lg"
-                  onClick={() => { void handleImportFolder(); }}
-                  disabled={isBusy || folderFiles.length === 0}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* ── SAVING (all paths) ── */}
           {step === "saving" && (
             <div className="flex flex-col items-center gap-3 py-8">
               <Spinner />
@@ -1249,45 +407,24 @@ export function AddPropertyDialog({ onClose }: Props) {
             </div>
           )}
 
-          {/* ── TEXT FILE IMPORT DONE ── */}
           {step === "done-text" && (
             <div className="flex flex-col items-center gap-4 py-8">
               <CheckCircleIcon />
-              <p className="text-sm text-center text-ink dark:text-zinc-200">
-                {savingLabel}
-              </p>
-              <p className={`max-w-sm text-center ${NO_IDENTITY_BOX}`} role="note">
-                {t("noCadastralIdentityResult")}
-              </p>
-              <IconButton
-                icon={X}
-                label={t("close")}
-                variant="primary"
-                size="lg"
-                onClick={onClose}
-              />
-            </div>
-          )}
-
-          {/* ── FOLDER IMPORT DONE ── */}
-          {step === "done-folder" && (
-            <div className="flex flex-col items-center gap-4 py-8">
-              <CheckCircleIcon />
-              <p className="text-sm text-center text-ink dark:text-zinc-200">
-                {savingLabel}
-              </p>
-              <p className={`max-w-sm text-center ${NO_IDENTITY_BOX}`} role="note">
-                {folderSavedCount === 1
-                  ? t("noCadastralIdentityResult")
-                  : t("noCadastralIdentityResultPlural")}
-              </p>
-              <IconButton
-                icon={X}
-                label={t("close")}
-                variant="primary"
-                size="lg"
-                onClick={onClose}
-              />
+              <p className="text-center text-sm text-ink dark:text-zinc-200">{savingLabel}</p>
+              <div className="flex gap-2">
+                {createdId && (
+                  <IconButton
+                    href={`/properties/${createdId}`}
+                    onClick={onClose}
+                    icon={ExternalLink}
+                    label={t("openNew")}
+                    showLabel
+                    variant="secondary"
+                    size="lg"
+                  />
+                )}
+                <IconButton icon={X} label={t("close")} variant="primary" size="lg" onClick={onClose} />
+              </div>
             </div>
           )}
 
@@ -1298,29 +435,11 @@ export function AddPropertyDialog({ onClose }: Props) {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Sub-components
-// ---------------------------------------------------------------------------
-
 function Spinner() {
   return (
-    <svg
-      className="h-8 w-8 animate-spin text-cta"
-      xmlns="http://www.w3.org/2000/svg"
-      fill="none"
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-    >
+    <svg className="h-8 w-8 animate-spin text-cta" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-    </svg>
-  );
-}
-
-function UploadIcon() {
-  return (
-    <svg className="mb-2 h-8 w-8 text-fade" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
     </svg>
   );
 }
@@ -1329,14 +448,6 @@ function TextFileIcon() {
   return (
     <svg className="mb-2 h-8 w-8 text-fade" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
       <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-    </svg>
-  );
-}
-
-function FolderIcon() {
-  return (
-    <svg className="mb-2 h-8 w-8 text-fade" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden="true">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
     </svg>
   );
 }
@@ -1354,22 +465,5 @@ function ErrorBanner({ message }: { message: string }) {
     <p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-400">
       {message}
     </p>
-  );
-}
-
-function BackButton(
-  { onClick, label, disabled }: { onClick: () => void; label: string; disabled?: boolean },
-) {
-  // #37.42 (A009): ArrowLeft, „Înapoi" its name and tooltip — the same icon
-  // as every other way back in the app.
-  return (
-    <IconButton
-      icon={ArrowLeft}
-      label={label}
-      variant="secondary"
-      size="lg"
-      onClick={onClick}
-      disabled={disabled}
-    />
   );
 }

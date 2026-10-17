@@ -51,7 +51,6 @@ import {
   COORDINATE_FILE_ACCEPT,
   COORDINATE_FILE_OFFER,
   offeredExtensions,
-  PROPERTY_PHOTO_ACCEPT,
 } from "@/lib/files/picker-accept";
 import { scanIcu } from "@/test-support/icu";
 
@@ -132,17 +131,6 @@ const PICKERS: {
       'onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") textInputRef.current?.click(); }}',
     hintId: "COORDINATE_PICKER_HINT_ID",
   },
-  {
-    file: "app/properties/_components/add-property-dialog.tsx",
-    anchor: "ref={imageInputRef}",
-    constant: "PROPERTY_PHOTO_ACCEPT",
-    accept: PROPERTY_PHOTO_ACCEPT,
-    messageKey: "offersImages",
-    offerId: "PHOTO_PICKER_OFFER_ID",
-    wrapperAnchor:
-      'onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") imageInputRef.current?.click(); }}',
-    hintId: "PHOTO_PICKER_HINT_ID",
-  },
 ];
 
 /**
@@ -174,19 +162,14 @@ function inputCarrying(code: string, anchor: string): string {
 }
 
 describe("the non-page pickers read their accept value from one module", () => {
-  it("holds the values the three pickers were shipping", () => {
+  // Slice #39.65: „the three pickers" until the property-photograph picker went with „Din imagine scanată"; its
+  // `PROPERTY_PHOTO_ACCEPT` ("image/*"), the test that the two offers differ, and `offersImages` went with it.
+  it("holds the value the two pickers are shipping", () => {
     // Pinned, so a widening is a deliberate edit to a test rather than a
     // one-word change nobody reviews. `.txt` AND the MIME type, because some
     // systems hand a text file no MIME and some hand `text/plain` to a file
     // named something else — a picker offers, it never checks.
     expect(COORDINATE_FILE_ACCEPT).toBe(".txt,text/plain");
-    expect(PROPERTY_PHOTO_ACCEPT).toBe("image/*");
-  });
-
-  it("gives the two offers different values", () => {
-    // The failure this catches is the transposition: a photo picker offering
-    // `.txt` shows the user an empty folder and says nothing about why.
-    expect(COORDINATE_FILE_ACCEPT).not.toBe(PROPERTY_PHOTO_ACCEPT);
   });
 
   it.each(PICKERS)("the input at $anchor reads $constant", ({ file, anchor, constant }) => {
@@ -232,7 +215,6 @@ describe("offeredExtensions", () => {
 
   it("holds the one list a shipped picker names", () => {
     expect(COORDINATE_FILE_OFFER).toBe(".txt");
-    expect(offeredExtensions(PROPERTY_PHOTO_ACCEPT)).toEqual([]);
   });
 
   /**
@@ -250,7 +232,6 @@ describe("offeredExtensions", () => {
     ".txt": "listed by offeredExtensions, so `offersExtensions` names it",
     "text/plain":
       "the same files as `.txt` on Windows, which is where this ships — see `offeredExtensions`",
-    "image/*": "the word „imagini”/„pictures” in `offersImages`",
   };
 
   it("names what covers every clause of every picker's accept value", () => {
@@ -262,9 +243,10 @@ describe("offeredExtensions", () => {
 });
 
 describe("the copy beside each picker", () => {
-  it.each(LOCALES)("%s carries both sentences", (locale) => {
+  it.each(LOCALES)("%s carries the sentence", (locale) => {
     const block = filePickerMessages(locale);
-    for (const key of ["offersExtensions", "offersImages"]) {
+    // #39.65: it read `["offersExtensions", "offersImages"]` — „both sentences" — until the photo picker went.
+    for (const key of ["offersExtensions"]) {
       expect(typeof block[key]).toBe("string");
       expect(block[key].trim()).not.toBe("");
     }
@@ -278,7 +260,7 @@ describe("the copy beside each picker", () => {
   it.each(LOCALES)("%s names the list once and only where there is one", (locale) => {
     const block = filePickerMessages(locale);
     expect([...scanIcu(block.offersExtensions).args]).toEqual(["list"]);
-    expect([...scanIcu(block.offersImages).args]).toEqual([]);
+    expect(block).not.toHaveProperty("offersImages"); // #39.65: gone with the photo picker
   });
 
   /**
@@ -326,14 +308,10 @@ describe("each picker carries its own sentence", () => {
    * decision, taken here, not a sentence inherited by default.
    */
   it.each(PICKERS)("$anchor uses the sentence its accept value calls for", ({ accept, messageKey }) => {
-    if (offeredExtensions(accept).length > 0) {
-      expect(messageKey).toBe("offersExtensions");
-    } else {
-      // Reaching here with anything else means a new picker shape with no
-      // sentence written for it — add the key and the copy, then this row.
-      expect(accept).toBe(PROPERTY_PHOTO_ACCEPT);
-      expect(messageKey).toBe("offersImages");
-    }
+    // #39.65: the other arm — `image/*` and `offersImages` — went with the photo picker. A picker naming no
+    // extension is now a new picker shape with no sentence written for it: add the key and the copy, then the arm.
+    expect(offeredExtensions(accept).length).toBeGreaterThan(0);
+    expect(messageKey).toBe("offersExtensions");
   });
 
   it.each(PICKERS)("$file: the sentence at $anchor is $messageKey", ({ file, anchor, messageKey }) => {

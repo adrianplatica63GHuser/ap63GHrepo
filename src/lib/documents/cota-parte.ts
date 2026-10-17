@@ -14,7 +14,7 @@
  * browser, a server or a connection.
  *
  * ⚠️ **IT DOES NOT REUSE OR EXTEND `normalizeCoordToken`, AND THAT IS
- * DELIBERATE.** `src/app/api/properties/scan-image/route.ts` holds a
+ * DELIBERATE.** `src/app/api/properties/scan-image/route.ts` held one (the route went in Slice #39.65): a
  * Romanian-versus-US decimal parser for Stereo 70 coordinates. It is the same
  * SHAPE of problem and it is not the same problem:
  *
@@ -25,8 +25,8 @@
  *     a value that was perfectly readable.
  *   * A coordinate is never a fraction. „1/2” is the commonest way a share is
  *     written on a deed.
- *   * `normalizeCoordToken` is module-private inside a Next route handler, so
- *     it is not importable as it stands, and `.claude/rules/ocr-and-parsing.md`
+ *   * `normalizeCoordToken` was module-private inside a Next route handler, so
+ *     it was not importable, and `.claude/rules/ocr-and-parsing.md`
  *     records a live bug in that family. Widening it to serve two callers with
  *     different separator rules would put this slice's input on top of that.
  *
