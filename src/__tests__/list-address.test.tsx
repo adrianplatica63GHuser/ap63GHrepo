@@ -175,7 +175,8 @@ describe("the row tiles start from the address and write back into it", () => {
 describe("the four lists keep their view in their address (#39.26)", () => {
   it.each(LISTS)("%s: starts from it, writes it back, keeps its scroll, hands the tiles theirs", (dir, kind) => {
     const view = read("src", "app", dir, "list-view.tsx");
-    expect(view).toMatch(/const address = useListAddress\((DOCUMENT_ADDRESS_FILTERS)?\);/);
+    // Slice #39.61: Proprietăți reads its filter bar's keys from the address too.
+    expect(view).toMatch(/const address = useListAddress\((DOCUMENT_ADDRESS_FILTERS|PROPERTY_FILTER_KEYS)?\);/);
     expect(view).toContain("useState(address.search);");
     expect(view).toContain("useState(address.page);");
     // The search as typed, not the debounced one — a link that carries it must find the box's word.

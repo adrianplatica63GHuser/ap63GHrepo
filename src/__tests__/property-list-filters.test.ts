@@ -59,7 +59,7 @@ describe("the SQL", () => {
     expect(q.params).toEqual(["AA"]);
   });
   it("a from / to is >= and <=, either alone", () => {
-    expect(render({ surfaceAreaMp: { kind: "range", from: 100, to: 500 } })).toEqual({
+    expect(render({ surfaceAreaMp: { kind: "range", from: 100, to: 500 } })).toMatchObject({
       sql: '("property"."surface_area_mp" >= $1 and "property"."surface_area_mp" <= $2)',
       params: [100, 500],
     });

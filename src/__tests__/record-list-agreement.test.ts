@@ -141,7 +141,9 @@ const FORMS = [
 const LIST_QUERIES = [
   { fn: "listPersons",         file: path.join("src", "lib", "persons",          "queries.ts"), column: "person.code" },
   { fn: "listJudicialPersons", file: path.join("src", "lib", "judicial-persons", "queries.ts"), column: "person.code" },
-  { fn: "listProperties",      file: path.join("src", "lib", "properties",       "queries.ts"), column: "property.code" },
+  // Slice #39.61: the Properties list's search is its own function, which `listProperties` and the filter bar's
+  // counts (`listPropertyFilterValues`) both call — it was `listProperties` here until then.
+  { fn: "propertySearchCondition", file: path.join("src", "lib", "properties", "queries.ts"), column: "property.code" },
   { fn: "listDocument",        file: path.join("src", "lib", "documents",        "queries.ts"), column: "document.code" },
 ] as const;
 
@@ -183,7 +185,9 @@ function pageKeyIdentifiers(source: string): string[] {
 
 /** The body of one exported function, up to the next top-level `export`. */
 function functionBody(source: string, name: string): string {
-  const start = source.indexOf(`export async function ${name}(`);
+  // `export function` too since #39.61 (`propertySearchCondition` builds a condition and awaits nothing).
+  const at = source.indexOf(`export async function ${name}(`);
+  const start = at === -1 ? source.indexOf(`export function ${name}(`) : at;
   if (start === -1) return "";
   const next = source.indexOf("\nexport ", start + 1);
   return next === -1 ? source.slice(start) : source.slice(start, next);
@@ -262,7 +266,7 @@ describe("every list search matches its entity's code", () => {
     "%s matches %s (%s)",
     (fn, column, file) => {
       const body = code(read(file));
-      expect([fn, body.includes(`export async function ${fn}(`)]).toEqual([fn, true]);
+      expect([fn, body.includes(`export async function ${fn}(`) || body.includes(`export function ${fn}(`)]).toEqual([fn, true]);
       expect(functionBody(body, fn)).toContain(`ilike(${column}, `);
     },
   );

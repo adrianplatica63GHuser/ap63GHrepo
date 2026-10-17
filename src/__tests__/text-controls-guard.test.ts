@@ -217,6 +217,9 @@ const ALLOW: Record<string, Allowed[]> = {
     ["A113", "<Paperclip aria-hidden=\"true\" size={14} /> {count}"], // how many documents, opening them
     ["A113", "<FileText aria-hidden=\"true\" size={16} /> {nameOr(d.title"], // a linked document, by its name
   ],
+  "src/components/list/filter-bar.tsx": [
+    ["A015", "<span className=\"text-fade\">{field.label}</span> <span className=\"font-medium te"], // #39.61: a filter's chip names its field and what is chosen, as a filter's trigger does
+  ],
   "src/app/documents/list-view.tsx": [
     ["A015", "<span className=\"text-fade\">{label}</span> {trigger.kind"], // #38.07: the trigger names one type, or says how many
     ["A110", "{noLabel}"],

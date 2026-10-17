@@ -46,8 +46,10 @@ describe("the Properties list (Slice #37.61)", () => {
 
   it("has no importance or relevance filter, in its state, its query key or its page", () => {
     expect(VIEW).not.toMatch(/setImportance|setRelevance|importanceLabel|relevanceLabel|metadataValueLabel/);
-    expect(VIEW).toMatch(/queryKey: \["properties", "list", debouncedSearch, currentPage\]/);
-    expect(VIEW).toMatch(/const pageKey = `\$\{debouncedSearch\}\|\$\{currentPage\}`;/);
+    // Slice #39.61 added the filter bar's signature — and only that — to both. It read
+    // `["properties", "list", debouncedSearch, currentPage]` and `${debouncedSearch}|${currentPage}` until then.
+    expect(VIEW).toMatch(/queryKey: \["properties", "list", debouncedSearch, currentPage, filterSig\]/);
+    expect(VIEW).toMatch(/const pageKey = `\$\{debouncedSearch\}\|\$\{currentPage\}\|\$\{filterSig\}`;/);
   });
 
   it("has no „Cod” column; Poreclă is always the first after the checkbox (#37.72)", () => {

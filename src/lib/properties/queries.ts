@@ -465,7 +465,7 @@ export async function listPropertyVersions(
 // ---------------------------------------------------------------------------
 
 /** The free-text search of the list's box, as `listProperties` has always read it. */
-function propertySearchCondition(q: string | undefined): SQL | undefined {
+export function propertySearchCondition(q: string | undefined): SQL | undefined {
   const t = q?.trim();
   if (!t) return undefined;
   const pat = `%${t}%`;
