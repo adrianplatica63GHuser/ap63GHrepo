@@ -44,6 +44,8 @@ type NaturalPersonListItem = {
   gender:           "MALE" | "FEMALE" | null;
   placeOfBirth:     string | null;
   professionalType: string | null;
+  // Slice #39.70: „Relația cu firma", joined.
+  relationships:    string | null;
   createdAt:   string;
   updatedAt:   string;
 };
@@ -179,6 +181,8 @@ export function NaturalPersonListView() {
     { key: "dateOfDeath",      label: t("fields.dateOfDeath"),          column: "listDate" },
     { key: "placeOfBirth",     label: t("fields.placeOfBirth"),         column: "listBirthPlace" },
     { key: "professionalType", label: t("fields.physicalPersonTypeId"), column: "listProfessionalType" },
+    // Slice #39.70
+    { key: "relationships",    label: t("fields.relationships"),        column: "listRelationship" },
   ];
   const chooser = useFieldChooser(LIST_COLUMN_CHOICE.person.storageKey, optionalCols.map((c) => c.key), MAX_OPT, LIST_COLUMN_CHOICE.person.defaults);
 
@@ -278,6 +282,7 @@ export function NaturalPersonListView() {
       case "gender":           return item.gender === "MALE" ? t("options.gender.MALE") : item.gender === "FEMALE" ? t("options.gender.FEMALE") : null;
       case "placeOfBirth":     return item.placeOfBirth;
       case "professionalType": return item.professionalType;
+      case "relationships":    return item.relationships;
       default:                 return null;
     }
   }
@@ -292,6 +297,7 @@ export function NaturalPersonListView() {
   // Slice #39.62: the bar's fields, labelled as the form and the columns label them, in the „+ Filtru" order.
   const filterLabels: Record<string, string> = {
     professionalType: t("fields.physicalPersonTypeId"),
+    relationship:     t("fields.relationships"),
     documentRole:     t("filters.documentRole"),
     locality:         t("filters.locality"),
     deceased:         t("fields.isDeceased"),

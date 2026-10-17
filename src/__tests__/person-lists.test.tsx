@@ -27,7 +27,9 @@ describe("„Câmpuri afișate” on the two persons' lists (Slice #37.60)", () 
       .filter((f) => !["lastName", "firstName", "nickname", "notes", "isDeceased"].includes(f))
       .map((f) => (f === "physicalPersonTypeId" ? "professionalType" : f));
     expect(panel).toEqual(["cnp", "dateOfBirth", "age", "gender", "dateOfDeath", "placeOfBirth", "professionalType"]);
-    expect(keysOf(read("src", "app", "natural-persons", "list-view.tsx"))).toEqual(panel);
+    // Slice #39.70: and „Relația cu firma" after them — a column the list offers that is not in the panel's rows
+    // (it is a group of boxes under them, outside the snapshot). Was `.toEqual(panel)`.
+    expect(keysOf(read("src", "app", "natural-persons", "list-view.tsx"))).toEqual([...panel, "relationships"]);
   });
 
   it("the Judicial Persons list offers its own, through the same chooser", () => {

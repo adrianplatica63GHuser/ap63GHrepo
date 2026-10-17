@@ -43,6 +43,7 @@ import {
   judicialPerson,
   lookupPersonType,
   naturalPerson,
+  naturalPersonRelationship,
   person,
   personVersion,
   principalObject,
@@ -109,6 +110,8 @@ export type PersonListItem = {
   gender:           "MALE" | "FEMALE" | null;
   placeOfBirth:     string | null;
   professionalType: string | null;
+  /** Slice #39.70: „Relația cu firma", the names in the list's order, joined; null when none. */
+  relationships:    string | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -209,6 +212,10 @@ export async function listPersons(opts: ListQuery & { filters?: FilterState }): 
         gender:           naturalPerson.gender,
         placeOfBirth:     naturalPerson.placeOfBirth,
         professionalType: lookupPersonType.name,
+        // Qualified by hand: inside a subquery drizzle renders a column bare.
+        relationships: sql<string | null>`(SELECT string_agg(r.name, ', ' ORDER BY r.sort_order, r.name)
+          FROM natural_person_relationship npr JOIN lookup_person_relationship r ON r.id = npr.relationship_id
+          WHERE npr.natural_person_id = "person"."id")`,
         createdAt: person.createdAt,
         updatedAt: person.updatedAt,
       })
@@ -361,7 +368,27 @@ export type PersonFull = {
   person: typeof person.$inferSelect;
   natural: typeof naturalPerson.$inferSelect | null;
   addresses: (typeof address.$inferSelect)[];
+  /** Slice #39.70: „Relația cu firma" — read by `getPersonById`; outside every snapshot. */
+  relationshipIds?: string[];
 };
+
+/** Slice #39.70: the relationships a natural person holds, by id. */
+async function relationshipIdsOf(conn: Pick<typeof db, "select">, personId: string): Promise<string[]> {
+  const rows = await conn
+    .select({ id: naturalPersonRelationship.relationshipId })
+    .from(naturalPersonRelationship)
+    .where(eq(naturalPersonRelationship.naturalPersonId, personId));
+  return rows.map((r) => r.id).sort();
+}
+
+/** Slice #39.70: replace a natural person's relationships with `ids`, inside the save's transaction. */
+async function writeRelationships(tx: DbTransaction, personId: string, ids: readonly string[]): Promise<void> {
+  await tx.delete(naturalPersonRelationship).where(eq(naturalPersonRelationship.naturalPersonId, personId));
+  const unique = [...new Set(ids)];
+  if (unique.length > 0) {
+    await tx.insert(naturalPersonRelationship).values(unique.map((relationshipId) => ({ naturalPersonId: personId, relationshipId })));
+  }
+}
 
 export async function getPersonById(id: string): Promise<PersonFull | null> {
   const personRows = await db
@@ -392,6 +419,7 @@ export async function getPersonById(id: string): Promise<PersonFull | null> {
     person: personRow,
     natural: naturalRows[0] ?? null,
     addresses: addressRows,
+    relationshipIds: personRow.type === "NATURAL" ? await relationshipIdsOf(db, id) : [],
   };
 }
 
@@ -723,7 +751,7 @@ export async function createNaturalPerson(
   input: NaturalPersonCreate,
   updatedBy: string | null = null,
 ): Promise<PersonFull> {
-  const { addresses: addressList, notes, ...given } = input;
+  const { addresses: addressList, notes, relationshipIds, ...given } = input;
   // Slice #39.30: „Decedat" off clears the date; a date before the birth or in the future is refused.
   const natFields = checkedDeath(given);
   const displayName =
@@ -808,6 +836,9 @@ export async function createNaturalPerson(
         .returning();
     }
 
+    // Slice #39.70: „Relația cu firma", beside the person and outside the snapshot below.
+    if (relationshipIds && relationshipIds.length > 0) await writeRelationships(tx, pRow.id, relationshipIds);
+
     const full: PersonFull = { person: pRow, natural: nRow, addresses: addressRows };
 
     // Slice #18.05: record version 0 — the state at creation.
@@ -833,7 +864,7 @@ export async function updateNaturalPerson(
   /** Slice #37.21: the version the form was loaded at; a later one refuses the save. */
   baseVersion?: number,
 ): Promise<(PersonFull & { version: number | null }) | null> {
-  const { addresses: addressList, notes, ...given } = input;
+  const { addresses: addressList, notes, relationshipIds, ...given } = input;
 
   return await db.transaction(async (tx) => {
     // Verify person exists and is not deleted.
@@ -920,6 +951,9 @@ export async function updateNaturalPerson(
       }
     }
 
+    // Slice #39.70: „Relația cu firma" — omitted leaves it; it changes no version (outside the snapshot).
+    if (relationshipIds !== undefined) await writeRelationships(tx, id, relationshipIds);
+
     // Re-fetch full record for the response.
     const [refreshedPerson] = await tx
       .select()
@@ -957,7 +991,7 @@ export async function updateNaturalPerson(
       new Map([[id, naturalSnapshotFromFull(full)]]),
     );
 
-    return { ...full, version: await latestVersionIn(tx, "person", id) };
+    return { ...full, relationshipIds: await relationshipIdsOf(tx, id), version: await latestVersionIn(tx, "person", id) };
   });
 }
 

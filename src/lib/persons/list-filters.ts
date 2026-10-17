@@ -8,7 +8,8 @@
  *   - Persoane juridice: Tip, Rol în documente, Localitate (the HEADQUARTERS address), CUI, Nr. Registrul
  *     Comerțului, Persoană de contact.
  * „Tip profesional" and „Tip" read their value lists live, so 39.70's professions and 39.71's public-body types
- * reach the filters with no change here.
+ * reach the filters with no change here. Slice #39.70 adds „Relația cu firma" to the natural persons' bar, after
+ * „Tip profesional": a person holds several, and is shown by any one ticked; „(necompletat)" is a person with none.
  *
  * ⚠️ **THE ROUTES READ ONLY THESE KEYS**, and a value-list id that is not a uuid is dropped before SQL.
  *
@@ -21,6 +22,7 @@ export const GENDER_VALUES = ["MALE", "FEMALE"] as const;
 
 export const NATURAL_PERSON_FILTER_FIELDS = [
   { key: "professionalType", kind: "values" },
+  { key: "relationship",     kind: "values" }, // Slice #39.70
   { key: "documentRole",     kind: "values" },
   { key: "locality",         kind: "values" },
   { key: "deceased",         kind: "choice", options: DECEASED_OPTIONS },
@@ -58,7 +60,7 @@ export function isPersonFacetField(kind: PersonListKind, key: string): boolean {
   return personFacetFields(kind).includes(key);
 }
 
-const UUID_FIELDS: readonly string[] = ["professionalType", "judicialPersonType", "documentRole"];
+const UUID_FIELDS: readonly string[] = ["professionalType", "relationship", "judicialPersonType", "documentRole"];
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const GENDERS: readonly string[] = GENDER_VALUES;
 

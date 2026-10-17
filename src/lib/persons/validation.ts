@@ -40,6 +40,12 @@ const addressArraySchema = z
 // Natural person — base shape derived from the Drizzle table
 // ---------------------------------------------------------------------------
 
+/**
+ * Slice #39.70 — „Relația cu firma": the ids of the relationships the person holds, written to
+ * natural_person_relationship beside the person and never part of a version's snapshot (as a person's tags are not).
+ */
+const relationshipIdsSchema = z.array(z.string().uuid()).max(50).optional();
+
 const naturalPersonBase = createInsertSchema(naturalPerson).omit({
   // Populated by the handler after inserting the parent person row.
   personId: true,
@@ -55,6 +61,7 @@ export const naturalPersonCreateSchema = naturalPersonBase
     // the natural_person satellite. The handler routes it accordingly.
     notes: z.string().nullish(),
     addresses: addressArraySchema.default([]),
+    relationshipIds: relationshipIdsSchema,
   })
   // At least one of firstName / lastName must be provided.
   .refine((d) => Boolean(d.firstName) || Boolean(d.lastName), {
@@ -78,6 +85,8 @@ export const naturalPersonUpdateSchema = naturalPersonBase
     // [] = clear all addresses.
     // Non-empty = merge by kind (delete existing, insert new).
     addresses: addressArraySchema.optional(),
+    // Slice #39.70: omitted = leave „Relația cu firma" untouched; [] = clear it.
+    relationshipIds: relationshipIdsSchema,
   });
 
 export type NaturalPersonUpdate = z.infer<typeof naturalPersonUpdateSchema>;

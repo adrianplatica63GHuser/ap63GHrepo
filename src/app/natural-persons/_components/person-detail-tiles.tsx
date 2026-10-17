@@ -55,6 +55,8 @@ type Props = {
   personCode:    string;
   personName:    string;
   initialValues: FormValues;
+  /** Slice #39.70 — „Relația cu firma", by id. */
+  initialRelationshipIds?: string[];
   readonly?:     boolean;
   /** The `?tab=` the page was opened with, if any. */
   initialTab?:   string;
@@ -66,6 +68,7 @@ export function PersonDetailTiles({
   personCode,
   personName,
   initialValues,
+  initialRelationshipIds,
   readonly,
   initialTab,
   linkedIdCard,
@@ -137,6 +140,7 @@ export function PersonDetailTiles({
             personId={personId}
             personCode={personCode}
             initialValues={initialValues}
+            initialRelationshipIds={initialRelationshipIds}
             linkedIdCard={linkedIdCard}
             versionNavSlot={navSlot}
             tiles={{ shown: choice.shown, labels, onRevealTile: choice.reveal }}

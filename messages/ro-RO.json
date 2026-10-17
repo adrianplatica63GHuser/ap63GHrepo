@@ -1172,7 +1172,8 @@
       "idMrzRaw": "MRZ (text brut)",
       "idLink": "Carte de identitate asociată",
       "notes": "Note",
-      "correspondenceSameAsHome": "Adresa de corespondență aceeași cu domiciliul"
+      "correspondenceSameAsHome": "Adresa de corespondență aceeași cu domiciliul",
+      "relationships": "Relația cu firma"
     },
     "options": {
       "idDoc": {
@@ -1214,7 +1215,9 @@
         "DEATH_WITHOUT_DECEASED": "„Data decesului\" se poate completa doar pentru o persoană marcată „Decedat\".",
         "DEATH_BEFORE_BIRTH": "„Data decesului\" nu poate fi înainte de „Data nașterii\".",
         "DEATH_IN_FUTURE": "„Data decesului\" nu poate fi în viitor."
-      }
+      },
+      "relationshipListFailed": "Lista „Relația cu firma” nu a putut fi citită.",
+      "relationshipsNotVersioned": "Relația cu firma nu are versiuni: arată valorile de acum."
     },
     "tabs": {
       "details": "Detalii",
@@ -2250,6 +2253,7 @@
       "personTypes": "Tipuri de Persoană Fizică",
       "personRoles": "Roluri Persoane",
       "citizenships": "Cetățenie",
+      "personRelationships": "Relația cu firma",
       "judicialPersonTypes": "Tipuri de Persoană Juridică",
       "documentTypes": "Tipuri de Document",
       "institutions": "Instituții",
@@ -2435,7 +2439,8 @@
         "useTypeAllowed": "{count, plural, one {# tip de proprietate care permite folosința} few {# tipuri de proprietate care permit folosința} other {# de tipuri de proprietate care permit folosința}}",
         "tarlaCorners": "{count, plural, one {# colț al conturului} few {# colțuri ale conturului} other {# de colțuri ale conturului}}",
         "tarlaParcels": "{count, plural, one {# parcelă a tarlalei} few {# parcele ale tarlalei} other {# de parcele ale tarlalei}}",
-        "tarlaPlans": "{count, plural, one {# plan parcelar legat} few {# planuri parcelare legate} other {# de planuri parcelare legate}}"
+        "tarlaPlans": "{count, plural, one {# plan parcelar legat} few {# planuri parcelare legate} other {# de planuri parcelare legate}}",
+        "naturalPersonRelationships": "{count, plural, one {# persoană fizică} few {# persoane fizice} other {# de persoane fizice}}"
       },
       "notes": {
         "versionSnapshots": "Istoricul versiunilor nu este numărat mai sus. Fiecare versiune salvată păstrează valoarea așa cum era atunci — nici ștergerea, nici mutarea nu modifică versiunile deja salvate. Mutarea adaugă însă câte o versiune nouă fiecărui obiect pe care îl modifică."

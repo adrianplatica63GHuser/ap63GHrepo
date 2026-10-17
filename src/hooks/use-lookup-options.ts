@@ -283,6 +283,25 @@ export function useCitizenshipOptions(): LookupOptions {
   };
 }
 
+/** `lookup_person_relationship` — „Relația cu firma" on the natural-person form (Slice #39.70). */
+export function usePersonRelationshipOptions(): LookupOptions {
+  const { data, isPending, isLoadingError, fetchStatus, refetch } = useQuery({
+    queryKey: ["value-list", "person-relationships"],
+    queryFn:  () => fetchValueList<NamedRow>("person-relationships"),
+    select:   toOptions,
+    retry:    LOOKUP_QUERY_RETRY,
+  });
+  const reload = useCallback((): void => {
+    void refetch();
+  }, [refetch]);
+  return {
+    options: data ?? NO_OPTIONS,
+    listState: lookupListState(isPending, isLoadingError, fetchStatus),
+    reload,
+    isReloading: fetchStatus === "fetching" || (fetchStatus === "paused" && !isPending),
+  };
+}
+
 /** `lookup_person_type` — the „Tip Profesional" select (Slice #18.16.VL). */
 export function usePersonTypeOptions(): LookupOptions {
   const { data, isPending, isLoadingError, fetchStatus, refetch } = useQuery({

@@ -1390,7 +1390,10 @@ export const COLUMN = {
   listAge: { content: 3.25, kind: "fixed" }, //             „VÂRSTĂ" (52 px); values 16
   listGender: { content: 3.5, kind: "fixed" }, //           „Masculin" (56 px)
   listBirthPlace: { content: 7.75, kind: "fixed" }, //      Locul nașterii — values 121 px
-  listProfessionalType: { content: 5.75, kind: "fixed" }, // Tip profesional — „PROFESIONAL" (90 px); values 41
+  // Slice #39.70: the professions are longer — „Executor judecătoresc", „Contabil / consultant fiscal" — so 9 rem
+  // (144 px), the longest on hover; was 5.75 („PROFESIONAL", 90 px; values 41).
+  listProfessionalType: { content: 9, kind: "fixed" }, //   Tip profesional
+  listRelationship: { content: 10, kind: "fixed" }, //      Relația cu firma (#39.70) — „Client, Vânzător de teren"; the rest on hover
   listCompanyType: { content: 5.5, kind: "fixed" }, //      a judicial person's „Tip" — values 88 px
   listCui: { content: 6, kind: "fixed" }, //                „ÎNREGISTRARE" (95 px); values 92
   listTradeRegister: { content: 6, kind: "fixed" }, //      „J40/12345/2020" (93 px)

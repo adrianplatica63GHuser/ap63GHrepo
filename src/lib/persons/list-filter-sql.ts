@@ -17,7 +17,17 @@
  * NO DATABASE — `person-list-filters.test.ts` renders the conditions with `PgDialect`.
  */
 import { and, or, sql, type SQL } from "drizzle-orm";
-import { judicialPerson, lookupJudicialPersonType, lookupPersonRole, lookupPersonType, naturalPerson, person, personDocument } from "@/db/schema";
+import {
+  judicialPerson,
+  lookupJudicialPersonType,
+  lookupPersonRelationship,
+  lookupPersonRole,
+  lookupPersonType,
+  naturalPerson,
+  naturalPersonRelationship,
+  person,
+  personDocument,
+} from "@/db/schema";
 import { NONE_VALUE, type FilterState } from "@/lib/list/filter-bar";
 import { contains, oneOf, textValue } from "@/lib/list/filter-sql";
 import type { PersonListKind } from "./list-filters";
@@ -53,6 +63,23 @@ function holdsRole(ids: readonly string[]): SQL | undefined {
   return parts.length === 0 ? undefined : parts.length === 1 ? parts[0] : or(...parts);
 }
 
+/** Slice #39.70: the person holds one of `ids` in „Relația cu firma", or — with `_none` — none at all. */
+function holdsRelationship(ids: readonly string[]): SQL | undefined {
+  const values = ids.filter((id) => id !== NONE_VALUE);
+  const parts: SQL[] = [];
+  if (values.length > 0) {
+    parts.push(sql`EXISTS (
+      SELECT 1 FROM ${naturalPersonRelationship} npr_f
+      WHERE npr_f.natural_person_id = ${person.id}
+        AND npr_f.relationship_id = ANY(ARRAY[${sql.join(values.map((r) => sql`${r}`), sql`, `)}]::uuid[])
+    )`);
+  }
+  if (ids.includes(NONE_VALUE)) {
+    parts.push(sql`NOT EXISTS (SELECT 1 FROM ${naturalPersonRelationship} npr_n WHERE npr_n.natural_person_id = ${person.id})`);
+  }
+  return parts.length === 0 ? undefined : parts.length === 1 ? parts[0] : or(...parts);
+}
+
 /** A company's contact person — either of the two — whose name contains `text`. */
 function contactNamed(text: string): SQL {
   return sql`EXISTS (
@@ -73,6 +100,7 @@ export function personFilterConditions(kind: PersonListKind, filters: FilterStat
       if (key === "documentRole") push(holdsRole(f.ids));
       else if (key === "locality") push(oneOf(addressLocality(kind === "NATURAL" ? "HOME" : "HEADQUARTERS"), f.ids));
       else if (kind === "NATURAL" && key === "professionalType") push(oneOf(naturalPerson.physicalPersonTypeId, f.ids));
+      else if (kind === "NATURAL" && key === "relationship") push(holdsRelationship(f.ids));
       else if (kind === "NATURAL" && key === "gender") push(oneOf(sql`${naturalPerson.gender}::text`, f.ids));
       else if (kind === "JUDICIAL" && key === "judicialPersonType") push(oneOf(judicialPerson.judicialPersonTypeId, f.ids));
     } else if (f.kind === "choice") {
@@ -126,6 +154,21 @@ export function personFacetSql(kind: PersonListKind, field: string, where: SQL |
       WHERE ${and(own, holdsRole([NONE_VALUE]))}
       HAVING count(*) > 0`;
   }
+  if (kind === "NATURAL" && field === "relationship") {
+    // Slice #39.70: each relationship held, then the persons holding none, as „(necompletat)" — as the roles above.
+    return sql`
+      SELECT r_fv.id::text AS id, r_fv.name AS label, ${n} AS n
+      FROM ${person} ${satellite}
+      JOIN ${naturalPersonRelationship} npr_fv ON npr_fv.natural_person_id = ${person.id}
+      JOIN ${lookupPersonRelationship} r_fv ON r_fv.id = npr_fv.relationship_id
+      WHERE ${own}
+      GROUP BY r_fv.id, r_fv.name
+      UNION ALL
+      SELECT NULL AS id, NULL AS label, ${n} AS n
+      FROM ${person} ${satellite}
+      WHERE ${and(own, holdsRelationship([NONE_VALUE]))}
+      HAVING count(*) > 0`;
+  }
   let id: SQL;
   let label: SQL;
   let join = sql``;
@@ -159,6 +202,7 @@ export function personFacetNamesSql(kind: PersonListKind, field: string, ids: re
   const table =
     field === "documentRole" ? lookupPersonRole :
     kind === "NATURAL" && field === "professionalType" ? lookupPersonType :
+    kind === "NATURAL" && field === "relationship" ? lookupPersonRelationship :
     kind === "JUDICIAL" && field === "judicialPersonType" ? lookupJudicialPersonType : null;
   if (!table || ids.length === 0) return null;
   return sql`SELECT ${table.id}::text AS id, ${table.name} AS label FROM ${table} WHERE ${table.id} = ANY(${arr})`;

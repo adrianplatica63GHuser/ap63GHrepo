@@ -34,6 +34,7 @@ export default async function EditNaturalPersonPage({ params, searchParams }: Pa
           personCode={data.person.code}
           personName={data.person.displayName}
           initialValues={initialValues}
+          initialRelationshipIds={data.relationshipIds ?? []}
           readonly={readonly === "true"}
           // Slice #37.17: a `?tab=` adds its tile for this visit
           // (NP_TILE_OF_TAB); `details`, or anything unknown, adds nothing.

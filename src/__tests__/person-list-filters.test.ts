@@ -21,11 +21,12 @@ const dialect = new PgDialect();
 const render = (kind: PersonListKind, f: FilterState) => dialect.sqlToQuery(and(...personFilterConditions(kind, f))!);
 
 describe("the fields", () => {
-  it("natural persons: the four named, then every optional column", () => {
+  // Slice #39.70: „Relația cu firma" after „Tip profesional" — was the four named, without `relationship`.
+  it("natural persons: the five named, then every optional column", () => {
     expect(NATURAL_PERSON_FILTER_FIELDS.map((f) => f.key)).toEqual([
-      "professionalType", "documentRole", "locality", "deceased", "gender", "age", "dateOfBirth", "dateOfDeath", "cnp", "placeOfBirth",
+      "professionalType", "relationship", "documentRole", "locality", "deceased", "gender", "age", "dateOfBirth", "dateOfDeath", "cnp", "placeOfBirth",
     ]);
-    expect(personFacetFields("NATURAL")).toEqual(["professionalType", "documentRole", "locality", "gender"]);
+    expect(personFacetFields("NATURAL")).toEqual(["professionalType", "relationship", "documentRole", "locality", "gender"]);
   });
   it("juridical persons: the three named, then every optional column", () => {
     expect(JUDICIAL_PERSON_FILTER_FIELDS.map((f) => f.key)).toEqual([
@@ -97,6 +98,18 @@ describe("the SQL", () => {
   });
   it("a natural-person field on the juridical list adds nothing", () => {
     expect(personFilterConditions("JUDICIAL", { cnp: { kind: "text", text: "1" }, gender: { kind: "values", ids: ["MALE"] } })).toEqual([]);
+  });
+  it("„Relația cu firma” holds on any one ticked (Slice #39.70); „(necompletat)” on a person with none", () => {
+    const q = render("NATURAL", { relationship: { kind: "values", ids: [U1, NONE_VALUE] } });
+    expect(q.sql).toMatch(/^\(EXISTS \(/);
+    expect(q.sql).toContain('npr_f.natural_person_id = "person"."id"');
+    expect(q.sql).toContain("npr_f.relationship_id = ANY(ARRAY[$1]::uuid[])");
+    expect(q.sql).toContain('NOT EXISTS (SELECT 1 FROM "natural_person_relationship" npr_n');
+    expect(q.params).toEqual([U1]);
+    expect(personFilterConditions("JUDICIAL", { relationship: { kind: "values", ids: [U1] } })).toEqual([]);
+    const facet = dialect.sqlToQuery(personFacetSql("NATURAL", "relationship", undefined)!);
+    expect(facet.sql).toContain('JOIN "lookup_person_relationship" r_fv');
+    expect(facet.sql).toContain("UNION ALL");
   });
   it("a facet query keeps to its kind of person and counts persons, not links", () => {
     const q = dialect.sqlToQuery(personFacetSql("NATURAL", "documentRole", undefined)!);

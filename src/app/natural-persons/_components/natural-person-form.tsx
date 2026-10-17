@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useTimeFrames, tfDays } from "@/hooks/use-time-frames";
-import { useCitizenshipOptions, usePersonTypeOptions } from "@/hooks/use-lookup-options";
+import { useCitizenshipOptions, usePersonRelationshipOptions, usePersonTypeOptions } from "@/hooks/use-lookup-options";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -102,6 +102,12 @@ type Props = {
   personCode?: string;
   /** Pre-filled form values; defaults to emptyFormValues for create. */
   initialValues?: FormValues;
+  /**
+   * Slice #39.70 — „Relația cu firma", by id. Held beside the form's values rather than in them: the person's
+   * versions do not record it (as they do not record tags), so a version's `form.reset` must not touch it. It is
+   * saved with the person, and it makes the form dirty like any field.
+   */
+  initialRelationshipIds?: string[];
   /** The person's CARTE_IDENTITATE Document, if one is linked (edit/view only). */
   linkedIdCard?: IdCardLink;
   /** Slice #18.05 — header DOM node to portal the version-nav controls into,
@@ -153,6 +159,7 @@ export function NaturalPersonForm({
   personId,
   personCode,
   initialValues,
+  initialRelationshipIds,
   linkedIdCard,
   versionNavSlot,
   tiles,
@@ -183,6 +190,8 @@ export function NaturalPersonForm({
   // Slice #18.16.VL:
   const { options: personTypeOptions, listState: personTypeListState } =
     usePersonTypeOptions();
+  // Slice #39.70:
+  const { options: relationshipOptions, listState: relationshipListState } = usePersonRelationshipOptions();
   const { data: tf } = useTimeFrames();
 
   const form = useForm<FormValues>({
@@ -278,6 +287,10 @@ export function NaturalPersonForm({
   const [baseline, setBaseline] = useState<{ values: FormValues }>(
     () => ({ values: initialValues ?? emptyFormValues }),
   );
+  // Slice #39.70 — „Relația cu firma" and its saved state, sorted so the comparison is by set.
+  const [relationshipIds, setRelationshipIds] = useState<string[]>(() => [...(initialRelationshipIds ?? [])].sort());
+  const [relationshipBaseline, setRelationshipBaseline] = useState<string[]>(() => [...(initialRelationshipIds ?? [])].sort());
+  const relationshipsDirty = relationshipIds.join(",") !== relationshipBaseline.join(",");
 
   // Bug 1 (Slice #18.15.bugs): transient pulse of the latest version's
   // N-1 -> N change. Set when the user navigates onto the latest from a
@@ -328,8 +341,9 @@ export function NaturalPersonForm({
           : "view";
 
   // Has the editable latest copy diverged from the loaded baseline?
+  // Slice #39.70: or „Relația cu firma" differs from what was saved.
   const editDirty =
-    !isCreate && isOnLatest && !formValuesEqual(watchedValues, baseline.values);
+    !isCreate && isOnLatest && (!formValuesEqual(watchedValues, baseline.values) || relationshipsDirty);
 
   // Navigate to a version. Locked while the latest has unsaved edits, so a
   // dirty draft is never stranded on a read-only historical view.
@@ -470,7 +484,8 @@ export function NaturalPersonForm({
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const payload = toApiPayload(values);
+      // Slice #39.70: „Relația cu firma" travels with the person; the server keeps it outside the version.
+      const payload = { ...toApiPayload(values), relationshipIds };
       const url =
         mode === "create"
           ? "/api/people"
@@ -578,6 +593,7 @@ export function NaturalPersonForm({
     // Save disables and version nav unlocks), follow the new latest, and
     // refresh server-rendered bits (e.g. the page title if the name changed).
     setBaseline({ values });
+    setRelationshipBaseline(relationshipIds);
     setViewingVersion(null);
     // Slice #21.04.Import: an associated record reverts to its read-only
     // presentation (Back to list + Modify) once the edit is saved — Modify
@@ -621,7 +637,7 @@ export function NaturalPersonForm({
       effectiveMode === "view"
         ? false
         : isCreate
-          ? form.formState.isDirty
+          ? form.formState.isDirty || relationshipIds.length > 0
           : editDirty,
     onSave: async () => {
       const valid = await form.trigger();
@@ -870,6 +886,20 @@ export function NaturalPersonForm({
               width={NP.physicalPersonTypeId}
             />
           </div>
+          {/* Slice #39.70 — „Relația cu firma": several at once, saved with the person, never versioned. */}
+          <RelationshipsField
+            label={t("fields.relationships")}
+            options={relationshipOptions}
+            value={relationshipIds}
+            onChange={setRelationshipIds}
+            hint={
+              relationshipListState === "failed"
+                ? t("hints.relationshipListFailed")
+                : !isOnLatest
+                  ? t("hints.relationshipsNotVersioned")
+                  : undefined
+            }
+          />
           <Field
             label={t("fields.notes")}
             name="notes"
@@ -1453,6 +1483,50 @@ function Field({ label, name, type = "text", register, error, bubble, highlight,
         <span className="text-xs text-red-600 dark:text-red-400">{error}</span>
       )}
     </label>
+  );
+}
+
+/**
+ * „Relația cu firma" — a box per value, ticked for each one the person holds.                     (Slice #39.70)
+ *
+ * Inside the form's fieldset, so it is read-only wherever the form is. On a past version it shows the person's
+ * relationships as they are now — the versions do not record them — and its hint says so.
+ */
+function RelationshipsField({
+  label,
+  options,
+  value,
+  onChange,
+  hint,
+}: {
+  label: string;
+  options: { value: string; label: string }[];
+  value: readonly string[];
+  onChange: (next: string[]) => void;
+  hint?: string;
+}) {
+  const labelId = useId();
+  const toggle = (id: string, on: boolean) =>
+    onChange((on ? [...value, id] : value.filter((v) => v !== id)).sort());
+  return (
+    <div className="flex flex-col gap-1" role="group" aria-labelledby={labelId} data-np-relationships="">
+      <span id={labelId} className={STACKED_LABEL_CLASS}>
+        {label}
+      </span>
+      <div className="flex flex-wrap gap-x-4 gap-y-1">
+        {options.map((o) => (
+          <label key={o.value} className="inline-flex items-center gap-1.5 text-sm text-ink dark:text-zinc-200">
+            <input
+              type="checkbox"
+              checked={value.includes(o.value)}
+              onChange={(e) => toggle(o.value, e.target.checked)}
+            />
+            {o.label}
+          </label>
+        ))}
+      </div>
+      {hint && <span className="text-xs text-fade dark:text-zinc-400">{hint}</span>}
+    </div>
   );
 }
 
