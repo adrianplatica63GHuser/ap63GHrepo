@@ -1,13 +1,14 @@
 "use client";
 
 import { useNameOr } from "@/components/record/use-name-or";
-import { ArrowRight, Check, DraftingCompass, Group, Ruler, ScanEye, Square, SquareCheck, SquareDashedMousePointer, Trash2, X } from "lucide-react";
+import { ArrowRight, Check, DraftingCompass, Group, RotateCcw, Ruler, ScanEye, Settings2, Square, SquareCheck, SquareDashedMousePointer, Trash2, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import {
   AdvancedMarker,
+  AdvancedMarkerAnchorPoint,
   Circle,
   InfoWindow,
   Map,
@@ -53,6 +54,25 @@ import {
   parseMapFocus,
   zoomToFitCorners,
 } from "@/lib/geo/map-focus";
+import {
+  CORNER_DOT_PX,
+  DROP_SIZE,
+  MERGE_DISTANCE,
+  boxCentre,
+  dropTone,
+  isDrop,
+  mergeDrops,
+  numberedDropAction,
+  numberedDropZoom,
+  shapeBox,
+  unionBox,
+  worldPoint,
+  worldToLatLon,
+  type DropBox,
+  type DropPoint,
+  type DropTone,
+} from "@/lib/geo/map-drops";
+import { useMergeDistance } from "@/components/maps/use-merge-distance";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -473,6 +493,157 @@ function CornerMarker({
 }
 
 // ---------------------------------------------------------------------------
+// The big map's corners, drops and numbered drops  (Slice #39.60)
+// ---------------------------------------------------------------------------
+//
+// Adrian, 2026-10-16: corners „much smaller … with the colour of the sides (Blue, not red and white)" — 4 px, the
+// polygon's own colour, no ring, drawn only while the polygon is; and, zoomed out, „each Polygon replaced with the
+// symbol of an upside down drop … just one solid colour", the same size at every zoom, crowded drops merged into
+// one „that has a number inside (in white fonts)". What is a drop, and what merges, is `src/lib/geo/map-drops.ts`.
+// The Ruler keeps its own green corners (CornerMarker, above).
+
+const SHAPE_COLOR: Record<DropTone, string> = { selected: "#ef4444", duplicate: "#ec4899", normal: "#3b82f6" };
+
+/** A property polygon's corner: a dot centred ON the corner. `data-corner-marker` is where TC-MAP-02 clicks. */
+function PropertyCornerDot({ corner, color }: { corner: Corner; color: string }) {
+  return (
+    <AdvancedMarker position={{ lat: corner.lat, lng: corner.lon }} anchorPoint={AdvancedMarkerAnchorPoint.CENTER}>
+      <div
+        data-corner-marker={`${corner.lat},${corner.lon}`}
+        style={{
+          width:           CORNER_DOT_PX,
+          height:          CORNER_DOT_PX,
+          borderRadius:    "50%",
+          backgroundColor: color,
+          pointerEvents:   "none",
+        }}
+      />
+    </AdvancedMarker>
+  );
+}
+
+/** A drop placed on the map: the properties it covers (one, or a numbered drop's many) and where its tip stands. */
+type PlacedDrop = { key: string; items: MapProperty[]; position: LatLng; tone: DropTone };
+
+/**
+ * A drop, its tip on the property's centre (AdvancedMarker's own bottom-centre anchor), or a numbered drop with the
+ * count in white. Clickable only when no tool that takes clicks is pressed; otherwise a click goes through to the map.
+ */
+function PropertyDrop({
+  drop,
+  title,
+  blinkOn,
+  clickable,
+  onClick,
+}: {
+  drop:      PlacedDrop;
+  title:     string;
+  blinkOn:   boolean;
+  clickable: boolean;
+  onClick:   (drop: PlacedDrop) => void;
+}) {
+  const count = drop.items.length;
+  const size = count > 1 ? DROP_SIZE.numbered : DROP_SIZE.single;
+  const fontPx = count >= 100 ? 11 : count >= 10 ? 13 : 14;
+  return (
+    <AdvancedMarker
+      position={drop.position}
+      title={title}
+      zIndex={count > 1 ? 3 : 2}
+      onClick={clickable ? () => onClick(drop) : undefined}
+    >
+      <div
+        data-map-drop={count}
+        // The properties it covers — TC-MAP-05 finds its own lots' drops by id.
+        data-map-drop-ids={drop.items.map((p) => p.id).join(" ")}
+        data-map-drop-tone={drop.tone}
+        style={{
+          position:      "relative",
+          width:         size.w,
+          height:        size.h,
+          cursor:        clickable ? "pointer" : undefined,
+          pointerEvents: clickable ? "auto" : "none",
+          filter:        "drop-shadow(0 1px 1.5px rgba(0,0,0,0.35))",
+        }}
+      >
+        <svg width={size.w} height={size.h} viewBox="0 0 24 32" aria-hidden="true" style={{ display: "block" }}>
+          <path
+            d="M12 0.8C5.8 0.8 0.8 5.8 0.8 12c0 8.4 11.2 19.2 11.2 19.2S23.2 20.4 23.2 12C23.2 5.8 18.2 0.8 12 0.8z"
+            fill={SHAPE_COLOR[drop.tone]}
+            // A duplicate blinks as its polygon does (#39.60: „pink applies to the drop as it does to the polygon").
+            fillOpacity={drop.tone === "duplicate" && !blinkOn ? 0.35 : 1}
+            stroke="#fff"
+            strokeWidth={1.4}
+          />
+        </svg>
+        {count > 1 && (
+          <span
+            aria-hidden="true"
+            style={{
+              position:      "absolute",
+              left:          0,
+              top:           0,
+              width:         size.w,
+              height:        size.w,
+              lineHeight:    `${size.w}px`,
+              textAlign:     "center",
+              color:         "#fff",
+              fontWeight:    700,
+              fontSize:      fontPx,
+              pointerEvents: "none",
+            }}
+          >
+            {count}
+          </span>
+        )}
+      </div>
+    </AdvancedMarker>
+  );
+}
+
+/**
+ * „Setări hartă" — the merge distance, kept per browser (#39.60's Ask first 2). A slider on the 5 px step, the value
+ * beside it, what it does in words, and the way back to the default.
+ */
+function MapSettingsPanel({ value, onChange }: { value: number; onChange: (px: number) => void }) {
+  const t = useTranslations("property");
+  return (
+    <div
+      data-map-settings
+      className="absolute right-0 top-full mt-1 w-72 rounded shadow-lg border border-wire bg-white p-3 flex flex-col gap-2"
+    >
+      <label className="flex flex-col gap-1">
+        <span className="text-xs font-semibold text-ink">{t("map.mergeDistanceLabel")}</span>
+        <span className="flex items-center gap-2">
+          <input
+            type="range"
+            min={MERGE_DISTANCE.min}
+            max={MERGE_DISTANCE.max}
+            step={MERGE_DISTANCE.step}
+            value={value}
+            onChange={(e) => onChange(Number(e.target.value))}
+            className="flex-1 accent-cta"
+            aria-valuetext={t("map.mergeDistanceValue", { px: value })}
+          />
+          <span className="w-12 text-right font-mono text-xs text-ink tabular-nums" data-map-merge-distance={value}>
+            {t("map.mergeDistanceValue", { px: value })}
+          </span>
+          <IconButton
+            icon={RotateCcw}
+            label={t("map.mergeDistanceReset", { px: MERGE_DISTANCE.default })}
+            variant="secondary"
+            size="xs"
+            disabled={value === MERGE_DISTANCE.default}
+            onClick={() => onChange(MERGE_DISTANCE.default)}
+          />
+        </span>
+      </label>
+      <p className="text-[11px] leading-snug text-fade">{t("map.mergeDistanceHelp")}</p>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Ruler tool — inner components + helpers  (Slice #18.14.ruler)
 // ---------------------------------------------------------------------------
 
@@ -834,6 +1005,13 @@ export default function PropertyMap() {
   const [deleting,          setDeleting]          = useState(false);
   const [deleteError,       setDeleteError]       = useState<string | null>(null);
 
+  // Slice #39.60 — the map's zoom (what decides polygon or drop, and what merges) and the merge distance setting.
+  const [zoom, setZoom] = useState(DEFAULT_ZOOM);
+  const [mergeDistance, setMergeDistance] = useMergeDistance();
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  // When a drop took a click: the map's own click, if Google sends it too, must not close the bubble it opened.
+  const dropClickAt = useRef(-Infinity);
+
   // Blink state for duplicate-polygon highlighting — toggled every 1 s.
   const [blinkOn, setBlinkOn] = useState(true);
   useEffect(() => {
@@ -964,6 +1142,35 @@ export default function PropertyMap() {
   // Properties whose corner set is identical to at least one other property.
   const duplicateIds = findDuplicateIds(withGeometry);
 
+  // Slice #39.60 — at this zoom, which properties are polygons and where the drops stand. Each property is decided on
+  // its own size on screen; the drops then merge (map-drops.ts). Recomputed on every zoom, so zooming in undoes it.
+  const toneOf = (ids: readonly string[]): DropTone =>
+    dropTone(ids, (id) => selectedIds.has(id) && activeTab === "all", (id) => duplicateIds.has(id));
+  const polygonIds = new Set<string>();
+  const dropPoints: DropPoint<MapProperty>[] = [];
+  for (const prop of displayItems) {
+    const box = shapeBox(prop.corners);
+    if (!box) continue;
+    if (!isDrop(box, zoom)) {
+      polygonIds.add(prop.id);
+      continue;
+    }
+    const c = boxCentre(box);
+    const w = worldPoint(c.lat, c.lon, zoom);
+    dropPoints.push({ x: w.x, y: w.y, item: prop });
+  }
+  const drops: PlacedDrop[] = mergeDrops(dropPoints, mergeDistance).map((cl) => {
+    const ids = cl.items.map((p) => p.id);
+    const at = worldToLatLon(cl, zoom);
+    return {
+      key:      `${[...ids].sort()[0]}:${ids.length}`,
+      items:    cl.items,
+      position: { lat: at.lat, lng: at.lon },
+      tone:     toneOf(ids),
+    };
+  });
+  const dropsClickable = !rulerMode && !anglesMode && !areaOn;
+
   // Slice #37.38 — the focused Property, once the data says whether it is on
   // the map. Until then the first fit is held back (FitAllProperties).
   const focusProp = focus && data ? withGeometry.find((p) => p.id === focus.id) ?? null : null;
@@ -1049,6 +1256,33 @@ export default function PropertyMap() {
     // mode — fall back to the same behaviour as a single click.
     handleMapClick(pos);
   }, [router, selectMode, handleMapClick]);
+
+  // Slice #39.60 — a drop's click opens the bubble its polygon opens. A numbered drop's zooms to fit its properties;
+  // at the closest zoom, or when fitting them would not go closer, it opens the bubble listing them instead.
+  const handleDropClick = useCallback((drop: PlacedDrop) => {
+    dropClickAt.current = performance.now();
+    const openList = () =>
+      setSelected({
+        position: drop.position,
+        items:    drop.items.map((p) => ({ id: p.id, label: nameOr(p.nickname, "property") })),
+      });
+    if (drop.items.length === 1) {
+      openList();
+      return;
+    }
+    const map = mapRef.current;
+    const box = containerRef.current;
+    const boxes = drop.items.map((p) => shapeBox(p.corners)).filter((b): b is DropBox => b !== null);
+    const target = box ? numberedDropZoom(boxes, box.clientWidth, box.clientHeight) : null;
+    const all = unionBox(boxes);
+    if (!map || !all || target === null || numberedDropAction(map.getZoom() ?? DEFAULT_ZOOM, target) === "list") {
+      openList();
+      return;
+    }
+    setSelected(null);
+    const c = boxCentre(all);
+    map.moveCamera({ center: { lat: c.lat, lng: c.lon }, zoom: target });
+  }, [nameOr]);
 
   // -------------------------------------------------------------------------
   // Selection mode toggle
@@ -1814,7 +2048,9 @@ export default function PropertyMap() {
           style={{ width: "100%", height: "100%" }}
           // Slice #39.07: and no InfoWindow while an area tool is pressed.
           // Slice #39.08: „… oarecare" takes the map's clicks and the cursor, as the new property's mini-map does.
-          onClick={(e) => { if (areaMode === "free") freeDraw.onMapClick(e); else if (!rulerMode && !anglesMode && !areaOn) handleMapClick(e.detail.latLng); }}
+          onClick={(e) => { if (performance.now() - dropClickAt.current < 400) return; if (areaMode === "free") freeDraw.onMapClick(e); else if (!rulerMode && !anglesMode && !areaOn) handleMapClick(e.detail.latLng); }}
+          // Slice #39.60: polygon or drop is decided at the zoom shown, so every zoom change recomputes them.
+          onZoomChanged={(e) => setZoom(e.detail.zoom)}
           onMousemove={areaMode === "free" ? freeDraw.onMouseMove : undefined}
           onDblclick={(e) => { if (!rulerMode && !anglesMode && !areaOn) handleMapDblClick(e.detail.latLng); }}
         >
@@ -1852,6 +2088,9 @@ export default function PropertyMap() {
               effectiveSelected ? 0.30 :
               isDuplicate       ? (blinkOn ? 0.45 : 0) :
                                   0.15;
+
+            // Slice #39.60: too small on screen to read — drawn as a drop instead (below).
+            if (!polygonIds.has(prop.id)) return null;
 
             return prop.corners.length >= 3 ? (
               <Polygon
@@ -1894,15 +2133,34 @@ export default function PropertyMap() {
             <FocusBlink prop={focusProp} onDone={endFocusBlink} />
           )}
 
-          {/* Corner markers — constant-size red dots */}
+          {/* Slice #39.60 — corners: 4-px dots in the polygon's own colour, only while the polygon is drawn */}
           {displayItems.flatMap((prop) =>
-            prop.corners.map((corner, idx) => (
-              <CornerMarker
-                key={`${prop.id}-c${idx}`}
-                corner={corner}
-              />
-            )),
+            polygonIds.has(prop.id)
+              ? prop.corners.map((corner, idx) => (
+                  <PropertyCornerDot
+                    key={`${prop.id}-c${idx}`}
+                    corner={corner}
+                    color={SHAPE_COLOR[toneOf([prop.id])]}
+                  />
+                ))
+              : [],
           )}
+
+          {/* Slice #39.60 — drops and numbered drops, for the properties too small to read as polygons */}
+          {drops.map((drop) => (
+            <PropertyDrop
+              key={drop.key}
+              drop={drop}
+              title={
+                drop.items.length === 1
+                  ? nameOr(drop.items[0].nickname, "property")
+                  : t("map.dropMany", { count: drop.items.length })
+              }
+              blinkOn={blinkOn}
+              clickable={dropsClickable}
+              onClick={handleDropClick}
+            />
+          ))}
 
           {/* Ruler tool overlays (Slice #18.14.ruler) */}
           {(rulerMode || areaOn) && (
@@ -2246,6 +2504,20 @@ export default function PropertyMap() {
               onClick={toggleSelectMode}
             />
             <HelpHint hintKey="drag-select" />
+
+            {/* Slice #39.60 — „Setări hartă": the distance at which drops merge, kept per browser. */}
+            <div className="relative">
+              <IconButton
+                icon={Settings2}
+                label={t("map.settingsButton")}
+                note={t("map.settingsHint")}
+                variant={settingsOpen ? "primary" : "secondary"}
+                size="sm"
+                aria-expanded={settingsOpen}
+                onClick={() => setSettingsOpen((o) => !o)}
+              />
+              {settingsOpen && <MapSettingsPanel value={mergeDistance} onChange={setMergeDistance} />}
+            </div>
 
             <MapTypeToggle value={mapType} onChange={setMapType} />
           </div>

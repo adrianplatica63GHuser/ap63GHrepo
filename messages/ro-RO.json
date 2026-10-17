@@ -277,6 +277,13 @@
       "cancelSelect": "Anulează selecția",
       "selectEnterTitle": "Intră în modul de selecție — trage un dreptunghi pentru a selecta proprietăți de șters",
       "selectExitTitle": "Ieși din modul de selecție",
+      "settingsButton": "Setări hartă",
+      "settingsHint": "Distanța la care picăturile se unesc într-o picătură cu număr",
+      "mergeDistanceLabel": "Picăturile se unesc sub",
+      "mergeDistanceValue": "{px} px",
+      "mergeDistanceHelp": "Când micșorați harta, o proprietate prea mică pentru a i se vedea forma devine o picătură albastră. Picăturile mai apropiate decât distanța aleasă se unesc într-o picătură cu numărul proprietăților pe care le acoperă. O distanță mai mică arată mai multe picături, una mai mare mai puține. Alegerea se păstrează în acest browser.",
+      "mergeDistanceReset": "Înapoi la {px} px",
+      "dropMany": "{count, plural, one {o proprietate} few {# proprietăți} other {# de proprietăți}} — apăsați pentru a mări",
       "miniMap": {
         "fullScreen": "Hartă extinsă",
         "draw": "Desenează",

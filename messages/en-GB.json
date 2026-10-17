@@ -277,6 +277,13 @@
       "cancelSelect": "Cancel select",
       "selectEnterTitle": "Enter selection mode — drag to select properties for deletion",
       "selectExitTitle": "Exit selection mode",
+      "settingsButton": "Map settings",
+      "settingsHint": "The distance at which drops merge into a numbered drop",
+      "mergeDistanceLabel": "Drops merge under",
+      "mergeDistanceValue": "{px} px",
+      "mergeDistanceHelp": "As you zoom out, a property too small to show its shape becomes a blue drop. Drops closer than the distance chosen merge into one drop showing how many properties it covers. A smaller distance shows more drops, a larger one fewer. The choice is kept in this browser.",
+      "mergeDistanceReset": "Back to {px} px",
+      "dropMany": "{count, plural, one {# property} other {# properties}} — click to zoom in",
       "miniMap": {
         "fullScreen": "Expand map",
         "draw": "Draw",
