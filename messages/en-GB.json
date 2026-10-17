@@ -1032,7 +1032,13 @@
       "rangeTo": "at most {to}",
       "contains": "contains „{text}”",
       "containsLabel": "Contains",
-      "funnel": "Filter by „{field}”"
+      "funnel": "Filter by „{field}”",
+      "datesFrom": "from {from}",
+      "datesTo": "until {to}",
+      "datesPreset": "Period…",
+      "thisYear": "This year",
+      "last12Months": "The last 12 months",
+      "all": "All"
     },
     "listFilters": {
       "expiringSoon": "Expiring soon",
@@ -1107,6 +1113,13 @@
     "searchPlaceholder": "search by code, name, email, or phone",
     "chooseFields": "Choose fields",
     "chooseFieldsHint": "Select up to {max} optional columns",
+    "filters": {
+      "documentRole": "Role in documents",
+      "locality": "Locality (home)",
+      "alive": "Alive",
+      "deceased": "Deceased",
+      "all": "All"
+    },
     "addNew": "Add new Person",
     "open": "Open",
     "loading": "Loading…",
@@ -1384,7 +1397,11 @@
       "comingSoon": "Coming soon — this section will be available in a future update."
     },
     "chooseFields": "Choose fields",
-    "chooseFieldsHint": "Select up to {max} optional columns"
+    "chooseFieldsHint": "Select up to {max} optional columns",
+    "filters": {
+      "documentRole": "Role in documents",
+      "locality": "Locality (head office)"
+    }
   },
   "nav": {
     "sections": {

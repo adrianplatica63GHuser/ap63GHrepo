@@ -19,6 +19,9 @@ import { IncursionTile } from "@/app/_components/incursion-tile";
 import { useListAddress, useListScrollMemory, useWriteListAddress } from "@/components/list/use-list-address";
 import { FieldChooser, useFieldChooser, type ChooserField } from "@/components/list/field-chooser";
 import { LIST_COLUMN_CHOICE } from "@/lib/ui/list-columns";
+import { FilterBar, FilterFunnel, type FilterBarField } from "@/components/list/filter-bar";
+import { appendFilterParams, filterAddressPatch, filterSignature, type FacetValue, type FilterState } from "@/lib/list/filter-bar";
+import { JUDICIAL_PERSON_FILTER_FIELDS, parsePersonFilters, personFilterKeys } from "@/lib/persons/list-filters";
 import { screenBox, type ColumnName } from "@/lib/ui/field-widths";
 
 const PAGE_SIZE = 15;
@@ -50,8 +53,10 @@ type ListResponse = {
 };
 
 // Slice #37.71: no „Grupuri" filter — the search box is the list's only filter.
-async function fetchJudicialPersons(q: string, page: number): Promise<ListResponse> {
+// Slice #39.62: the filter bar's filters, in the address's words (`appendFilterParams`).
+async function fetchJudicialPersons(q: string, page: number, filters: FilterState): Promise<ListResponse> {
   const url = new URL("/api/judicial-persons", window.location.origin);
+  appendFilterParams(url.searchParams, filters, JUDICIAL_PERSON_FILTER_FIELDS);
   if (q) url.searchParams.set("q", q);
   url.searchParams.set("limit",  String(PAGE_SIZE));
   url.searchParams.set("offset", String(page * PAGE_SIZE));
@@ -59,6 +64,21 @@ async function fetchJudicialPersons(q: string, page: number): Promise<ListRespon
   if (!res.ok) throw new Error(`Request failed (${res.status})`);
   return res.json();
 }
+
+/** Slice #39.62 — a checklist's values, counted with the search and every other filter applied (#39.61's route). */
+async function fetchFilterValues(field: string, q: string, filters: FilterState): Promise<FacetValue[]> {
+  const url = new URL("/api/judicial-persons/filter-values", window.location.origin);
+  url.searchParams.set("field", field);
+  if (q) url.searchParams.set("q", q);
+  appendFilterParams(url.searchParams, filters, JUDICIAL_PERSON_FILTER_FIELDS);
+  const res = await fetch(url);
+  if (res.redirected || !res.ok) throw new Error(`Request failed (${res.status})`);
+  const body = (await res.json()) as { items?: FacetValue[] };
+  return body.items ?? [];
+}
+
+/** Slice #39.62 — the filter keys, read from the address. */
+const FILTER_KEYS = personFilterKeys("JUDICIAL");
 
 async function callBatchDelete(ids: string[]): Promise<void> {
   const res = await fetch("/api/people/batch-delete", {
@@ -127,8 +147,16 @@ export function JudicialPersonListView() {
   const queryClient = useQueryClient();
 
   // Slice #39.26: the view starts from the list's address — Back from a record brings it back as it was left.
-  const address = useListAddress();
+  const address = useListAddress(FILTER_KEYS);
   const [searchInput,     setSearchInput]     = useState(address.search);
+  // Slice #39.62: the filter bar — from the address, like the search; a change goes back to the first page.
+  const [filters, setFilters] = useState<FilterState>(() => parsePersonFilters("JUDICIAL", { get: (k) => address.filters[k] ?? null }));
+  const [editingFilter, setEditingFilter] = useState<string | null>(null);
+  const filterSig = filterSignature(filters, JUDICIAL_PERSON_FILTER_FIELDS);
+  function changeFilters(next: FilterState) {
+    setFilters(next);
+    setCurrentPage(0);
+  }
   const [debouncedSearch, setDebouncedSearch] = useState(address.search);
   const [currentPage,     setCurrentPage]     = useState(address.page);
 
@@ -149,8 +177,8 @@ export function JudicialPersonListView() {
   }, [searchInput, debouncedSearch]);
 
   const query = useQuery<ListResponse>({
-    queryKey: ["judicial-persons", "list", debouncedSearch, currentPage],
-    queryFn:  () => fetchJudicialPersons(debouncedSearch, currentPage),
+    queryKey: ["judicial-persons", "list", debouncedSearch, currentPage, filterSig],
+    queryFn:  () => fetchJudicialPersons(debouncedSearch, currentPage, filters),
   });
 
   const total      = query.data?.total ?? 0;
@@ -158,10 +186,13 @@ export function JudicialPersonListView() {
   const paginate   = total > PAGE_SIZE;
   const items      = query.data?.items ?? [];
 
-  const pageKey = `${debouncedSearch}|${currentPage}`;
+  const pageKey = `${debouncedSearch}|${currentPage}|${filterSig}`;
   // Slice #39.26: the view, in the list's address; the scroll, in the session. The search as typed, not debounced:
   // a link that carries it (Acte's type filter) must not find the box's last word missing.
-  useWriteListAddress({ search: searchInput, page: currentPage }, `${searchInput}|${currentPage}`);
+  useWriteListAddress(
+    { search: searchInput, page: currentPage, filters: filterAddressPatch(filters, JUDICIAL_PERSON_FILTER_FIELDS) },
+    `${searchInput}|${currentPage}|${filterSig}`,
+  );
   useListScrollMemory(query.isSuccess);
   const [prevPageKey, setPrevPageKey] = useState(pageKey);
   if (prevPageKey !== pageKey) {
@@ -227,6 +258,17 @@ export function JudicialPersonListView() {
   const shownCols = chooser.visible.flatMap((key) => optionalCols.filter((c) => c.key === key));
   // Slice #38.57: the list's own columns, one line each — a company's name is longer than a person's.
   const COLUMNS: ColumnName[] = ["listSelectPerson", "listCompanyName", "listPersonNickname", ...shownCols.map((c) => c.column), "listRowActions"];
+  // Slice #39.62: the bar's fields, labelled as the form and the columns label them, in the „+ Filtru" order.
+  const filterLabels: Record<string, string> = {
+    judicialPersonType:  t("fields.judicialType"),
+    documentRole:        t("filters.documentRole"),
+    locality:            t("filters.locality"),
+    cuiNumber:           t("fields.cuiNumber"),
+    tradeRegisterNumber: t("fields.tradeRegisterNumber"),
+    contactPerson:       t("fields.contactPerson"),
+  };
+  const filterFields: FilterBarField[] = JUDICIAL_PERSON_FILTER_FIELDS.map((f) => ({ key: f.key, kind: f.kind, label: filterLabels[f.key] }));
+
   // Slice #37.84: the toolbar's group ends at the table frame's right edge, not the window's.
   const edge = useListEdge(COLUMNS);
   const colCount = COLUMNS.length;
@@ -286,6 +328,17 @@ export function JudicialPersonListView() {
         </div>
       </div>
 
+      {/* Slice #39.62 — the filter bar, a row of its own under the toolbar, as on Proprietăți (#39.61). */}
+      <FilterBar
+        fields={filterFields}
+        state={filters}
+        onChange={changeFilters}
+        editing={editingFilter}
+        onEditing={setEditingFilter}
+        loadValues={(key) => fetchFilterValues(key, debouncedSearch, filters)}
+        valuesKey={(key) => ["judicial-persons", "filter-values", key, debouncedSearch, filterSig]}
+      />
+
       {deleteError && (
         <p className="text-sm text-red-600 dark:text-red-400" role="alert">
           {deleteError}
@@ -315,7 +368,13 @@ export function JudicialPersonListView() {
                 <th className="px-4 py-2" {...columnHead("listCompanyName")}>{t("table.name")}</th>
                 <th className="px-4 py-2" {...columnHead("listPersonNickname")}>{t("table.nickname")}</th>
                 {shownCols.map((col) => (
-                  <th key={col.key} className="px-4 py-2" {...columnHead(col.column)}>{col.label}</th>
+                  <th key={col.key} className="px-4 py-2" {...columnHead(col.column)}>
+                    {col.label}
+                    {/* Slice #39.62: every optional column is a filter; its funnel opens it in the bar. */}
+                    {filterLabels[col.key] && (
+                      <FilterFunnel label={filterLabels[col.key]} active={filters[col.key] !== undefined} onOpen={() => setEditingFilter(col.key)} />
+                    )}
+                  </th>
                 ))}
                 <th className="px-4 py-2" {...columnHead("listRowActions")} />
               </tr>

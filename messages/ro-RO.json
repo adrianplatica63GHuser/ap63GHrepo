@@ -1032,7 +1032,13 @@
       "rangeTo": "cel mult {to}",
       "contains": "conține „{text}”",
       "containsLabel": "Conține",
-      "funnel": "Filtrează după „{field}”"
+      "funnel": "Filtrează după „{field}”",
+      "datesFrom": "din {from}",
+      "datesTo": "până la {to}",
+      "datesPreset": "Perioadă…",
+      "thisYear": "Anul acesta",
+      "last12Months": "Ultimele 12 luni",
+      "all": "Toate"
     },
     "listFilters": {
       "expiringSoon": "Expiră curând",
@@ -1107,6 +1113,13 @@
     "searchPlaceholder": "caută după cod, nume, email sau telefon",
     "chooseFields": "Câmpuri afișate",
     "chooseFieldsHint": "Selectați până la {max} coloane opționale",
+    "filters": {
+      "documentRole": "Rol în documente",
+      "locality": "Localitate (domiciliu)",
+      "alive": "În viață",
+      "deceased": "Decedați",
+      "all": "Toți"
+    },
     "addNew": "Adaugă persoană",
     "open": "Deschide",
     "loading": "Se încarcă…",
@@ -1384,7 +1397,11 @@
       "comingSoon": "În curând — această secțiune va fi disponibilă într-o actualizare viitoare."
     },
     "chooseFields": "Câmpuri afișate",
-    "chooseFieldsHint": "Selectați până la {max} coloane opționale"
+    "chooseFieldsHint": "Selectați până la {max} coloane opționale",
+    "filters": {
+      "documentRole": "Rol în documente",
+      "locality": "Localitate (sediu)"
+    }
   },
   "nav": {
     "sections": {
