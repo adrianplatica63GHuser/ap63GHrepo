@@ -291,7 +291,7 @@ export function isIdCardEntry(scan: IdCardScanSignal | null | undefined): boolea
 // for the one field the schema goes out of its way to protect. The Document
 // gets the fields that describe the card AS A DOCUMENT, and nothing else.
 //
-// institutionId WAS not a target, for a reason that still stands and a
+// issuerPersonId WAS not a target, for a reason that still stands and a
 // conclusion that no longer does.   (Slice #34.02)
 //
 // The reason: it is an FK to `lookup_institution`, so resolving "SPCLEP
@@ -309,7 +309,7 @@ export function isIdCardEntry(scan: IdCardScanSignal | null | undefined): boolea
 // dropdown with an "adaugă" button. The row is created by them, not by a model,
 // and `lookup_institution.origin` records that it was.
 //
-// So this function now accepts an `institutionId` a person has CHOSEN and, when
+// So this function now accepts an `issuerPersonId` a person has CHOSEN and, when
 // there is one, writes the FK and skips the `subject` line — two homes for one
 // fact is what migration_068 exists because of. With no choice made, the
 // `subject` fallback is untouched: a reading nobody has placed is still better
@@ -372,7 +372,7 @@ export type IdCardDocumentSource = {
    * filter that keeps this field meaning what the line above says, and a
    * reading of this docblock is what a future slice would use to delete it.
    */
-  institutionId?: string | null;
+  issuerPersonId?: string | null;
 };
 
 /** The Document's current values, as read back before the patch is built. */
@@ -384,7 +384,7 @@ export type IdCardDocumentCurrent = {
   subject?: string | null;
   notes?: string | null;
   /** Slice #34.02 — never overwritten, like every other field here. */
-  institutionId?: string | null;
+  issuerPersonId?: string | null;
 };
 
 /**
@@ -398,7 +398,7 @@ export type IdCardDocumentCurrent = {
  * `lookup_institution` came back is not something the card says — it is a fact
  * about one screen on one afternoon — and putting it there would invite the
  * next reader to treat it as a reading, which is exactly the confusion
- * `institutionId`'s own docblock spends twenty lines undoing.
+ * `issuerPersonId`'s own docblock spends twenty lines undoing.
  *
  * Optional, and absent means „the question does not arise": every caller that
  * has no dialog behind it — the extraction route, the wizard, a test of the
@@ -425,7 +425,7 @@ export type IdCardDocumentPatch = {
   subject?: string;
   notes?: string;
   /** Slice #34.02 — the FK, when a person chose one. */
-  institutionId?: string;
+  issuerPersonId?: string;
 };
 
 /**
@@ -577,7 +577,7 @@ export function documentFieldsFromIdCard(
   // had been overloaded as a lock. The document form shows the institution from
   // the dropdown; `subject` stays free for what it is for.
   //
-  // ⚠️ **NEITHER ARM OVERWRITES.** `institutionId` is written only when the
+  // ⚠️ **NEITHER ARM OVERWRITES.** `issuerPersonId` is written only when the
   // document has none, exactly like every other field in this function: a
   // person who set the institution by hand on the document form outranks a
   // card read afterwards.
@@ -593,10 +593,10 @@ export function documentFieldsFromIdCard(
   // not read until submit. #34.13 seeds it from the document too — which is
   // why the dropdown showing a row is no longer evidence that anybody placed
   // the CARD's authority there, and why `institutionForCardWrite` decides what
-  // reaches `card.institutionId`. Either way the fallback is reached whenever
+  // reaches `card.issuerPersonId`. Either way the fallback is reached whenever
   // the FK is NOT written, for either reason.
   const institutionWritten =
-    filled(card.institutionId) && !filled(current.institutionId);
+    filled(card.issuerPersonId) && !filled(current.issuerPersonId);
   // ⚠️ **…AND THE FALLBACK DOES NOT FIRE WHEN THE DOCUMENT ALREADY HOLDS THE
   // SAME ROW, which a second review round found.** With the FK arm blocked
   // purely by write-if-empty, "blocked" was being read as "the reading has
@@ -608,9 +608,9 @@ export function documentFieldsFromIdCard(
   // fallback fired. That made the flow non-idempotent and reported "1 field
   // written" for a duplicate.
   const sameInstitutionAlready =
-    filled(card.institutionId) &&
-    filled(current.institutionId) &&
-    card.institutionId.trim() === current.institutionId.trim();
+    filled(card.issuerPersonId) &&
+    filled(current.issuerPersonId) &&
+    card.issuerPersonId.trim() === current.issuerPersonId.trim();
   // ⚠️ **…AND IT DOES NOT FIRE WHEN THE FK IS MISSING ONLY BECAUSE NOBODY
   // COULD READ THE LIST.**                                      (Slice #34.25)
   //
@@ -634,13 +634,13 @@ export function documentFieldsFromIdCard(
   // filled, and where the dialog says on screen that this is what happened.
   //
   // ⚠️ **AND IT IS EXCLUSIVE WITH THE FK ARM BY CONSTRUCTION, not by
-  // ordering.** `institutionWritten` requires `current.institutionId` to be
+  // ordering.** `institutionWritten` requires `current.issuerPersonId` to be
   // EMPTY and this requires it to be filled, so no card can take both however
   // they are arranged.
   const institutionUnreadableOnFiledDocument =
-    review.institutionListUnreadable === true && filled(current.institutionId);
+    review.institutionListUnreadable === true && filled(current.issuerPersonId);
   if (institutionWritten) {
-    patch.institutionId = (card.institutionId as string).trim();
+    patch.issuerPersonId = (card.issuerPersonId as string).trim();
   } else if (institutionUnreadableOnFiledDocument) {
     // Nothing — deliberately, and the silence is the whole slice. No FK
     // (write-if-empty blocks it), no prose (it would duplicate the column the

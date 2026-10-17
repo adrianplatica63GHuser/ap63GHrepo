@@ -78,6 +78,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch, type Control, type FieldPath, type UseFormRegister } from "react-hook-form";
 import { AsyncSelect } from "@/components/forms/async-select";
 import { foldLookupName, matchInstitution } from "@/lib/import/lookup-name-match";
+import { publicBodyTypeIdFor, type PublicBodyType } from "@/lib/documents/issuer";
 import {
   emptyFormValues,
   formSchema,
@@ -257,17 +258,28 @@ const INSTITUTION_HINT_ID = "id-card-institution-hint";
  * archive already holds. That duplicate is the thing this whole path exists to
  * avoid, so the failure has to be representable.
  */
+// Slice #39.72: the „Instituție" picker lists the document's issuers — the juridical persons of a public-body type
+// (`/api/documents/issuers`, what the document form's issuer field lists) — and „adaugă" makes a juridical person.
+// The internal names below still say „institution": it is the card's issuing institution, and the box's label.
 async function fetchInstitutions(): Promise<{ id: string; name: string }[] | null> {
   try {
-    const res = await fetch("/api/admin/value-lists/institutions");
+    const res = await fetch("/api/documents/issuers");
     // A redirect is the session having expired — every other fetch in this file
     // checks it, and an HTML login page parses to `{}` and reads as "no rows".
     if (res.redirected || !res.ok) return null;
-    const data = (await res.json()) as { items?: { id: string; name: string }[] };
-    return data.items ?? [];
+    const data = (await res.json()) as { items?: { id: string; displayName: string }[] };
+    return (data.items ?? []).map((i) => ({ id: i.id, name: i.displayName }));
   } catch {
     return null;
   }
+}
+
+/** The public-body types, so a juridical person made from the card's authority gets the type its name suggests. */
+async function fetchPublicBodyTypes(): Promise<PublicBodyType[]> {
+  const res = await fetch("/api/documents/issuers");
+  if (res.redirected || !res.ok) return [];
+  const data = (await res.json().catch(() => ({}))) as { publicBodyTypes?: PublicBodyType[] };
+  return data.publicBodyTypes ?? [];
 }
 
 const toInstitutionOptions = (
@@ -736,7 +748,7 @@ export function IdCardPersonDialog({
         // decides what the control opens on and `institutionForCardWrite`
         // decides whether it may be written, and both need to know which of the
         // two sources this is.
-        setMatchedInstitutionId(fields.institutionId ?? "");
+        setMatchedInstitutionId(fields.issuerPersonId ?? "");
         setLookupUnavailable(data.lookupUnavailable === true);
         setCitizenshipRaw(fields.citizenshipRaw ?? "");
         setLowConfidence(new Set(data.lowConfidenceFields ?? []));
@@ -825,7 +837,7 @@ export function IdCardPersonDialog({
       })
       .then((doc) => {
         if (cancelled || doc === null) return;
-        setDocumentInstitutionId(doc.institutionId ?? "");
+        setDocumentInstitutionId(doc.issuerPersonId ?? "");
       })
       .catch(() => {});
     return () => {
@@ -1045,17 +1057,25 @@ export function IdCardPersonDialog({
       setAddingInstitution(true);
       setAddInstitutionError(null);
       try {
-        const res = await fetch("/api/admin/value-lists/institutions", {
+        // Slice #39.72: a juridical person, through the ordinary create route — typed by its name („SPCLEP …" →
+        // Autoritate locală), provenance „Interpretat AI": the model read the name, a person confirmed it (D-12).
+        const publicBodyTypes = await fetchPublicBodyTypes();
+        const res = await fetch("/api/judicial-persons", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: trimmed }),
+          body: JSON.stringify({
+            name: trimmed,
+            judicialPersonTypeId: publicBodyTypeIdFor(trimmed, publicBodyTypes),
+            provenance: "AI_INTERPRETED",
+          }),
         });
         if (res.redirected) throw new Error(t("sessionExpired"));
         if (!res.ok) {
           const body = (await res.json().catch(() => ({}))) as { error?: string };
           throw new Error(body.error ?? `HTTP ${res.status}`);
         }
-        const row = (await res.json()) as { id?: string; name?: string };
+        const created = (await res.json()) as { person?: { id?: string; displayName?: string } };
+        const row = { id: created.person?.id, name: created.person?.displayName };
         // The created row first, from the POST's own answer — so it is
         // selectable whatever the re-read does. The re-read then picks up
         // anything else that changed and puts the list back in order.
@@ -1096,7 +1116,7 @@ export function IdCardPersonDialog({
           // dropdown was on screen. Empty means nobody placed this authority,
           // and `documentFieldsFromIdCard` then falls back to the free-text
           // `subject` line exactly as it always did.
-          institutionId:      institutionForWrite,
+          issuerPersonId:     institutionForWrite,
         };
 
         let current: IdCardDocumentCurrent = {};
@@ -1351,7 +1371,7 @@ export function IdCardPersonDialog({
       // guard the preview promised "Instituție: OCPI" and hid the "Subiect"
       // row, while the PATCH wrote the subject and no FK. Both rows wrong, on
       // the one branch the preview exists for.
-      institutionId:      institutionForWrite,
+      issuerPersonId:     institutionForWrite,
     },
     {},
     // ⚠️ **Passed so the preview and the write call one function with one set
@@ -1396,8 +1416,8 @@ export function IdCardPersonDialog({
       // uuid — a preview printing an id tells a business user nothing.
       [
         t("docFieldInstitution"),
-        docPreview.institutionId
-          ? institutionOptions.find((o) => o.value === docPreview.institutionId)?.label ?? ""
+        docPreview.issuerPersonId
+          ? institutionOptions.find((o) => o.value === docPreview.issuerPersonId)?.label ?? ""
           : undefined,
       ],
     ] as const

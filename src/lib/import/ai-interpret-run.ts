@@ -733,6 +733,16 @@ export async function runAiInterpret(
     }
 
     /**
+     * The ISSUER as the model read it.                              (Slice #39.72)
+     *
+     * ⚠️ **Into `issuerRead`, never into `issuerPersonId`, and not counted as a field filled.** D-12 (#34.02): the
+     * model's issuer is a proposal a person confirms — the document's screen offers it beside the issuer field, with
+     * „Folosește" for a juridical person that matches and „Adaugă" for one the archive lacks. A reading is stored
+     * whatever the document holds; the screen offers it only while the issuer is empty.
+     */
+    if (filled(fields.issuer)) patch.issuerRead = fields.issuer.trim();
+
+    /**
      * What the model wants to do to this document's TYPE, and whether we know
      * enough to let it.
      *

@@ -66,17 +66,17 @@ describe("documentFieldsFromIdCard — the mapping", () => {
     const CHOSEN = "11111111-2222-3333-4444-555555555555";
 
     it("writes the FK and NOT the subject line when a person chose a row", () => {
-      const patch = documentFieldsFromIdCard({ ...FULL_CARD, institutionId: CHOSEN }, {});
-      expect(patch.institutionId).toBe(CHOSEN);
+      const patch = documentFieldsFromIdCard({ ...FULL_CARD, issuerPersonId: CHOSEN }, {});
+      expect(patch.issuerPersonId).toBe(CHOSEN);
       expect(patch.subject).toBeUndefined();
     });
 
     it("falls back to the subject line when nobody chose one", () => {
-      for (const institutionId of [null, undefined, "", "   "]) {
-        const patch = documentFieldsFromIdCard({ ...FULL_CARD, institutionId }, {});
-        expect([institutionId, patch.institutionId]).toEqual([institutionId, undefined]);
-        expect([institutionId, patch.subject]).toEqual([
-          institutionId,
+      for (const issuerPersonId of [null, undefined, "", "   "]) {
+        const patch = documentFieldsFromIdCard({ ...FULL_CARD, issuerPersonId }, {});
+        expect([issuerPersonId, patch.issuerPersonId]).toEqual([issuerPersonId, undefined]);
+        expect([issuerPersonId, patch.subject]).toEqual([
+          issuerPersonId,
           `${ID_CARD_SUBJECT_PREFIX}SPCLEP Bragadiru`,
         ]);
       }
@@ -86,26 +86,26 @@ describe("documentFieldsFromIdCard — the mapping", () => {
       // Write-if-empty, exactly like every other field here: a person who set
       // the institution on the document form outranks a card read afterwards.
       const patch = documentFieldsFromIdCard(
-        { ...FULL_CARD, institutionId: CHOSEN },
-        { institutionId: "99999999-8888-7777-6666-555555555555" },
+        { ...FULL_CARD, issuerPersonId: CHOSEN },
+        { issuerPersonId: "99999999-8888-7777-6666-555555555555" },
       );
-      expect(patch.institutionId).toBeUndefined();
+      expect(patch.issuerPersonId).toBeUndefined();
     });
 
     it("writes NOTHING when the document already holds the same institution", () => {
       // ⚠️ **The second review round's finding, and it is the ordinary second
       // pass over one document.** Click once: the FK is written. Click again:
-      // the matcher now HITS that row, so `card.institutionId` equals
-      // `current.institutionId`, the FK arm is blocked by write-if-empty — and
+      // the matcher now HITS that row, so `card.issuerPersonId` equals
+      // `current.issuerPersonId`, the FK arm is blocked by write-if-empty — and
       // the first version of the fallback then wrote "Eliberată de SPCLEP
       // Bragadiru" into `subject` beside the institution it duplicates, and
       // reported "1 field written". Blocked because the fact is ALREADY THERE
       // is not the same as blocked because it went somewhere else.
       const patch = documentFieldsFromIdCard(
-        { ...FULL_CARD, institutionId: CHOSEN },
-        { institutionId: CHOSEN },
+        { ...FULL_CARD, issuerPersonId: CHOSEN },
+        { issuerPersonId: CHOSEN },
       );
-      expect(patch.institutionId).toBeUndefined();
+      expect(patch.issuerPersonId).toBeUndefined();
       expect(patch.subject).toBeUndefined();
       // nrDocument, dateDocument, dateValidUntil, title — and neither an
       // institution nor a subject, which is one field fewer than any other
@@ -122,23 +122,23 @@ describe("documentFieldsFromIdCard — the mapping", () => {
       // with the dialog's preview having just shown it. Blocked for either
       // reason, the prose is written.
       const patch = documentFieldsFromIdCard(
-        { ...FULL_CARD, institutionId: CHOSEN },
-        { institutionId: "99999999-8888-7777-6666-555555555555" },
+        { ...FULL_CARD, issuerPersonId: CHOSEN },
+        { issuerPersonId: "99999999-8888-7777-6666-555555555555" },
       );
       expect(patch.subject).toBe(`${ID_CARD_SUBJECT_PREFIX}SPCLEP Bragadiru`);
 
       // …unless the document's own subject already says something, which is
       // the same write-if-empty rule one field over.
       const filled = documentFieldsFromIdCard(
-        { ...FULL_CARD, institutionId: CHOSEN },
-        { institutionId: "99999999-8888-7777-6666-555555555555", subject: "Ceva scris de om" },
+        { ...FULL_CARD, issuerPersonId: CHOSEN },
+        { issuerPersonId: "99999999-8888-7777-6666-555555555555", subject: "Ceva scris de om" },
       );
       expect(filled.subject).toBeUndefined();
-      expect(filled.institutionId).toBeUndefined();
+      expect(filled.issuerPersonId).toBeUndefined();
     });
 
     it("counts as a document field, so the dialog reports it", () => {
-      const patch = documentFieldsFromIdCard({ ...FULL_CARD, institutionId: CHOSEN }, {});
+      const patch = documentFieldsFromIdCard({ ...FULL_CARD, issuerPersonId: CHOSEN }, {});
       expect(idCardDocumentFieldCount(patch)).toBe(
         idCardDocumentFieldCount(documentFieldsFromIdCard(FULL_CARD, {})),
       );
@@ -163,9 +163,9 @@ describe("documentFieldsFromIdCard — the mapping", () => {
     expect(patch.customFields).toBeUndefined();
   });
 
-  it("targets institutionId only when somebody handed it one", () => {
+  it("targets issuerPersonId only when somebody handed it one", () => {
     // ⚠️ **The title of this assertion used to be "does not target
-    // institutionId (an FK that would mean auto-creating rows)", and #34.02
+    // issuerPersonId (an FK that would mean auto-creating rows)", and #34.02
     // changed what is true underneath it.** The reason has not changed — this
     // module still never RESOLVES an authority and never creates a row — but
     // the conclusion has: a person picks the row in the review dialog and the
@@ -173,12 +173,12 @@ describe("documentFieldsFromIdCard — the mapping", () => {
     // passing (FULL_CARD carries no id) while asserting the opposite of the
     // shipped behaviour, which a review round called out.
     const patch = documentFieldsFromIdCard(FULL_CARD, {}) as Record<string, unknown>;
-    expect(patch.institutionId).toBeUndefined();
+    expect(patch.issuerPersonId).toBeUndefined();
     const chosen = documentFieldsFromIdCard(
-      { ...FULL_CARD, institutionId: "11111111-2222-3333-4444-555555555555" },
+      { ...FULL_CARD, issuerPersonId: "11111111-2222-3333-4444-555555555555" },
       {},
     ) as Record<string, unknown>;
-    expect(chosen.institutionId).toBe("11111111-2222-3333-4444-555555555555");
+    expect(chosen.issuerPersonId).toBe("11111111-2222-3333-4444-555555555555");
   });
 });
 
@@ -393,13 +393,13 @@ describe("documentFieldsFromIdCard — the list nobody could read", () => {
     nrDocument: "RT123456",
     dateDocument: "2019-04-02",
     dateValidUntil: "2029-04-02",
-    institutionId: OTHER,
+    issuerPersonId: OTHER,
   };
 
   it("writes nothing at all — no FK, no prose, no note", () => {
     const patch = documentFieldsFromIdCard(FULL_CARD, FILED_DOC, UNREAD);
     expect(patch).toEqual({});
-    expect(patch.institutionId).toBeUndefined();
+    expect(patch.issuerPersonId).toBeUndefined();
     expect(patch.subject).toBeUndefined();
     // ⚠️ The note is the one that would be a LIE rather than a duplicate: it
     // claims data was taken from the card, on a document where none was.
@@ -440,18 +440,18 @@ describe("documentFieldsFromIdCard — the list nobody could read", () => {
     // fix.
     const blank = documentFieldsFromIdCard(FULL_CARD, {}, UNREAD);
     expect(blank.subject).toBe(`${ID_CARD_SUBJECT_PREFIX}SPCLEP Bragadiru`);
-    expect(blank.institutionId).toBeUndefined();
+    expect(blank.issuerPersonId).toBeUndefined();
 
     // …and a whitespace-only institution on the document is „none", exactly as
     // `filled` reads it everywhere else here.
-    const whitespace = documentFieldsFromIdCard(FULL_CARD, { institutionId: "   " }, UNREAD);
+    const whitespace = documentFieldsFromIdCard(FULL_CARD, { issuerPersonId: "   " }, UNREAD);
     expect(whitespace.subject).toBe(`${ID_CARD_SUBJECT_PREFIX}SPCLEP Bragadiru`);
   });
 
   it("takes nothing away from the card's other fields", () => {
     // The branch is about the authority and about nothing else: on a document
     // that is blank apart from its institution, every other target still fills.
-    const patch = documentFieldsFromIdCard(FULL_CARD, { institutionId: OTHER }, UNREAD);
+    const patch = documentFieldsFromIdCard(FULL_CARD, { issuerPersonId: OTHER }, UNREAD);
     expect(patch.nrDocument).toBe("RT123456");
     expect(patch.dateDocument).toBe("2019-04-02");
     expect(patch.dateValidUntil).toBe("2029-04-02");
@@ -464,13 +464,13 @@ describe("documentFieldsFromIdCard — the list nobody could read", () => {
 
   it("cannot collide with the FK arm, whatever the flag says", () => {
     // ⚠️ **Exclusive by construction rather than by ordering.** The FK arm
-    // needs `current.institutionId` EMPTY and this branch needs it filled, so a
+    // needs `current.issuerPersonId` EMPTY and this branch needs it filled, so a
     // card carrying a chosen row on a blank document writes the FK even with
     // the flag set — which is the honest answer: the picker cannot have been
     // unreadable and have produced that id, and if a caller says both, the id
     // in hand is the better evidence.
-    const patch = documentFieldsFromIdCard({ ...FULL_CARD, institutionId: CHOSEN }, {}, UNREAD);
-    expect(patch.institutionId).toBe(CHOSEN);
+    const patch = documentFieldsFromIdCard({ ...FULL_CARD, issuerPersonId: CHOSEN }, {}, UNREAD);
+    expect(patch.issuerPersonId).toBe(CHOSEN);
     expect(patch.subject).toBeUndefined();
   });
 
@@ -481,11 +481,11 @@ describe("documentFieldsFromIdCard — the list nobody could read", () => {
     // neither is allowed to start depending on the other.
     for (const review of [undefined, UNREAD]) {
       const patch = documentFieldsFromIdCard(
-        { ...FULL_CARD, institutionId: CHOSEN },
-        { institutionId: CHOSEN },
+        { ...FULL_CARD, issuerPersonId: CHOSEN },
+        { issuerPersonId: CHOSEN },
         review,
       );
-      expect([review, patch.institutionId]).toEqual([review, undefined]);
+      expect([review, patch.issuerPersonId]).toEqual([review, undefined]);
       expect([review, patch.subject]).toEqual([review, undefined]);
     }
   });
@@ -498,8 +498,8 @@ describe("documentFieldsFromIdCard — the list nobody could read", () => {
     // already filled, so both sides were `{}` and it would have passed against
     // any implementation whatsoever.
     const card = { ...FULL_CARD, idIssuingAuthority: null };
-    const withFlag = documentFieldsFromIdCard(card, { institutionId: OTHER }, UNREAD);
-    const without = documentFieldsFromIdCard(card, { institutionId: OTHER });
+    const withFlag = documentFieldsFromIdCard(card, { issuerPersonId: OTHER }, UNREAD);
+    const without = documentFieldsFromIdCard(card, { issuerPersonId: OTHER });
     expect(withFlag).toEqual(without);
     expect(withFlag.subject).toBeUndefined();
     expect(withFlag.nrDocument).toBe("RT123456");

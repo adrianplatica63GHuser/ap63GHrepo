@@ -17,9 +17,10 @@
  *       idDocumentNumber, idCardNumber, placeOfBirth,
  *       idIssuingAuthority, idValidFrom, idValidUntil, idMrzRaw,
  *       citizenshipId, citizenshipRaw,
- *       institutionId,                 // Slice #34.02 — `idIssuingAuthority`
- *                                      // resolved against the LIVE
- *                                      // lookup_institution rows, or null.
+ *       issuerPersonId,                // Slice #34.02 — `idIssuingAuthority`
+ *                                      // resolved against the LIVE issuers
+ *                                      // (#39.72: the public-body juridical
+ *                                      // persons; was `institutionId`), or null.
  *                                      // A null is an instruction to ASK, not
  *                                      // a licence to create; nothing here
  *                                      // ever writes a row. The review dialog
@@ -35,7 +36,7 @@
  *     lookupUnavailable: boolean,      // Slice #34.02 — a SIBLING of `fields`,
  *                                      // not a member of it. True when the two
  *                                      // lookup reads THEMSELVES failed, so a
- *                                      // null `citizenshipId`/`institutionId`
+ *                                      // null `citizenshipId`/`issuerPersonId`
  *                                      // means "could not look" rather than
  *                                      // "no such row". The model's read is
  *                                      // still returned in full; only the two
@@ -63,7 +64,9 @@ import { NextResponse }       from "next/server";
 import { db }                 from "@/db";
 
 import { asc }                from "drizzle-orm";
-import { lookupCitizenship, lookupInstitution } from "@/db/schema";
+import { lookupCitizenship } from "@/db/schema";
+import { matchIssuer } from "@/lib/documents/issuer";
+import { listIssuers } from "@/lib/documents/issuer-queries";
 import { unexpectedError }    from "@/lib/api/errors";
 import {
   MODEL_IMAGE_MIME_TYPES,
@@ -78,10 +81,7 @@ import {
   MULTI_IDENTITY_CODE,
   showsMoreThanOnePerson,
 } from "@/lib/import/multi-card-gate";
-import {
-  matchCitizenship,
-  matchInstitution,
-} from "@/lib/import/lookup-name-match";
+import { matchCitizenship } from "@/lib/import/lookup-name-match";
 import { cardParentsFrom, type CardParents } from "@/lib/import/id-card-parents";
 
 export const runtime = "nodejs";
@@ -483,7 +483,7 @@ export async function POST(request: NextRequest): Promise<Response> {
   // into a lost sample. Both ids are nullable and both already have a
   // "could not resolve" path, so the failure degrades to exactly that.
   let citizenshipId: string | null = null;
-  let institutionId: string | null = null;
+  let issuerPersonId: string | null = null;
   /**
    * ⚠️ **The one bit that separates "no such row" from "could not look".**
    * (Slice #34.02, third review round.) Citizenship degrades honestly on the
@@ -503,15 +503,14 @@ export async function POST(request: NextRequest): Promise<Response> {
    */
   let lookupUnavailable = false;
   try {
-    const [citizenshipRows, institutionRows] = await Promise.all([
+    // Slice #39.72: the issuer is a juridical person — matched against the persons the issuer picker lists (those
+    // of a public-body type), in its order.
+    const [citizenshipRows, issuerRows] = await Promise.all([
       db
         .select({ id: lookupCitizenship.id, name: lookupCitizenship.name })
         .from(lookupCitizenship)
         .orderBy(asc(lookupCitizenship.sortOrder), asc(lookupCitizenship.name)),
-      db
-        .select({ id: lookupInstitution.id, name: lookupInstitution.name })
-        .from(lookupInstitution)
-        .orderBy(asc(lookupInstitution.sortOrder), asc(lookupInstitution.name)),
+      listIssuers(),
     ]);
 
     citizenshipId = matchCitizenship(parsed.fields.citizenshipRaw, citizenshipRows);
@@ -530,14 +529,14 @@ export async function POST(request: NextRequest): Promise<Response> {
     // that refusal; the row only ever comes from a person pressing "adaugă" in
     // the review dialog, which is why `lookup_institution.origin` records the
     // row as a person's choice.
-    institutionId = matchInstitution(parsed.fields.idIssuingAuthority, institutionRows);
+    issuerPersonId = matchIssuer(parsed.fields.idIssuingAuthority, issuerRows);
   } catch (err) {
     // Logged, never swallowed silently — CLAUDE.md's "never dismiss an error".
     // The read survives; the two fields fall through to the same
     // "unresolved" handling a genuine miss gets.
     console.error("[extract-id-card] lookup resolve failed:", err);
     citizenshipId = null;
-    institutionId = null;
+    issuerPersonId = null;
     lookupUnavailable = true;
   }
 
@@ -560,7 +559,7 @@ export async function POST(request: NextRequest): Promise<Response> {
   }
 
   return Response.json({
-    fields: { ...parsed.fields, citizenshipId, institutionId },
+    fields: { ...parsed.fields, citizenshipId, issuerPersonId },
     lookupUnavailable,
     lowConfidenceFields: parsed.lowConfidenceFields,
     unmappedRaw: parsed.unmappedRaw,

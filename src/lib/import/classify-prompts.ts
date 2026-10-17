@@ -479,6 +479,10 @@ export const GENERIC_EXTRACT_FIELD_DESCRIPTIONS: Record<string, string> = {
   nrDocument:   "document number (nr. / no.)",
   dateDocument: "issue date, ISO yyyy-mm-dd",
   subject:      "brief subject / object of the document",
+  // Slice #39.72: the issuer, read on every document — a PROPOSAL the document's screen offers beside its issuer field
+  // (D-12), never written as the issuer. The name as printed, without the address: „Biroul Individual Notarial
+  // Popescu Ion", „Judecătoria Cornetu", „OCPI Ilfov", „Primăria Orașului Bragadiru".
+  issuer:       "the body that issued, authenticated or registered the document (notary's office, court, town hall, cadastre office, ministry...), its name exactly as printed, without its address; null when the page names none",
 };
 
 // ---------------------------------------------------------------------------
