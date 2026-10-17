@@ -19,7 +19,8 @@ import { cadastralKey, cadastralValue } from "./cadastral-identity";
 import { perSearchTerms } from "@/lib/search/per-terms";
 import { NONE_VALUE, withoutFilter, type FacetValue, type FilterState } from "@/lib/list/filter-bar";
 import { isTextFacetField, type PropertyFacetField } from "./list-filters";
-import { inGroups, propertyFilterConditions, textValue } from "./list-filter-sql";
+import { inGroups, propertyFilterConditions } from "./list-filter-sql";
+import { textValue } from "@/lib/list/filter-sql";
 // Slice #34.32 — migration_083's fold, so the auto-seed adopts under the same
 // rule the index enforces. See `findFolded` in `resolveTarlaForCreate`.
 import { sameTarlaCode, tarlaLockIdentities } from "./tarla-code-guard";

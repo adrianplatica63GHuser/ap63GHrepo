@@ -18,6 +18,8 @@ import { IconButton } from "@/lib/ui/icon-button";
 import {
   NONE_VALUE,
   activeFilterKeys,
+  datePreset,
+  dmy,
   offeredValues,
   setFilter,
   toggleValue,
@@ -29,7 +31,16 @@ import {
   type FilterValue,
 } from "@/lib/list/filter-bar";
 
-export type FilterBarField = { key: string; kind: FilterKind; label: string };
+export type FilterBarField = {
+  key: string;
+  kind: FilterKind;
+  label: string;
+  /** A „choice" field's values and their words, in order (#39.62: „în viață", „decedați"), and its „all". */
+  choices?: readonly { value: string; label: string }[];
+  allLabel?: string;
+  /** A checklist whose values are codes, not names (a gender): the words for each. */
+  valueLabel?: (id: string) => string;
+};
 
 type Props = {
   fields: readonly FilterBarField[];
@@ -82,7 +93,14 @@ export function FilterBar({ fields, state, onChange, editing, onEditing, loadVal
       if (value.ids.length > 1) return t("valuesCount", { count: value.ids.length });
       const id = value.ids[0];
       if (id === NONE_VALUE) return t("none");
+      if (field.valueLabel) return field.valueLabel(id);
       return facetsOf.get(field.key)?.find((f) => f.id === id)?.label ?? t("valuesCount", { count: 1 });
+    }
+    if (value.kind === "choice") return field.choices?.find((o) => o.value === value.value)?.label ?? value.value;
+    if (value.kind === "dates") {
+      if (value.from !== null && value.to !== null) return t("rangeBoth", { from: dmy(value.from), to: dmy(value.to) });
+      if (value.from !== null) return t("datesFrom", { from: dmy(value.from) });
+      return t("datesTo", { to: dmy(value.to ?? "") });
     }
     if (value.kind === "range") {
       if (value.from !== null && value.to !== null) return t("rangeBoth", { from: NUMBER.format(value.from), to: NUMBER.format(value.to) });
@@ -183,6 +201,10 @@ export function FilterBar({ fields, state, onChange, editing, onEditing, loadVal
             />
           ) : editingField.kind === "range" ? (
             <RangeEditor key={editingField.key} field={editingField} state={state} onChange={onChange} />
+          ) : editingField.kind === "dates" ? (
+            <DatesEditor key={editingField.key} field={editingField} state={state} onChange={onChange} />
+          ) : editingField.kind === "choice" ? (
+            <ChoiceEditor field={editingField} state={state} onChange={onChange} />
           ) : (
             <TextEditor key={editingField.key} field={editingField} state={state} onChange={onChange} />
           )}
@@ -211,7 +233,9 @@ function ValuesEditor({
   const query = useQuery({ queryKey, queryFn: load, staleTime: 30_000 });
   const cur = state[field.key];
   const ticked = cur?.kind === "values" ? cur.ids : [];
-  const offered = offeredValues(query.data ?? [], ticked);
+  const offered = offeredValues(query.data ?? [], ticked).map((v) =>
+    field.valueLabel && v.id !== NONE_VALUE ? { ...v, label: field.valueLabel(v.id) } : v,
+  );
   const shown = valuesMatching(offered, search, t("none"));
   return (
     <div className="flex flex-col gap-2">
@@ -242,7 +266,7 @@ function ValuesEditor({
               className="h-4 w-4 shrink-0 rounded border-wire accent-cta"
             />
             <span className={`min-w-0 flex-1 truncate ${v.id === NONE_VALUE ? "italic text-fade" : "text-ink dark:text-zinc-100"}`}>
-              {v.id === NONE_VALUE ? t("none") : (v.label ?? v.id)}
+              {v.id === NONE_VALUE ? t("none") : field.valueLabel ? field.valueLabel(v.id) : (v.label ?? v.id)}
             </span>
             <span className="shrink-0 tabular-nums text-xs text-fade" data-filter-count={v.count}>
               {v.count}
@@ -374,6 +398,74 @@ function TextEditor({ field, state, onChange }: { field: FilterBarField; state: 
         className="w-[18.5rem] rounded-md border border-wire bg-white px-2 py-1 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-cta dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
       />
     </Box>
+  );
+}
+
+function DatesEditor({ field, state, onChange }: { field: FilterBarField; state: FilterState; onChange: (next: FilterState) => void }) {
+  const t = useTranslations("shared.filterBar");
+  const cur = state[field.key];
+  const [from, setFrom] = useState(cur?.kind === "dates" ? (cur.from ?? "") : "");
+  const [to, setTo] = useState(cur?.kind === "dates" ? (cur.to ?? "") : "");
+  const latest = useLatest({ state, onChange });
+  const focus = useFocusOnOpen<HTMLInputElement>();
+  // A date input changes once per picked date, so it applies at once — no typing to wait for.
+  const apply = (f: string, tt: string) => {
+    const [lo, hi] = f && tt && f > tt ? [tt, f] : [f, tt];
+    latest.current.onChange(setFilter(latest.current.state, field.key, { kind: "dates", from: lo || null, to: hi || null }));
+  };
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-end gap-2">
+        <Box label={t("from")}>
+          <input ref={focus} type="date" value={from} onChange={(e) => { setFrom(e.target.value); apply(e.target.value, to); }} data-filter-from="" className={NUMBER_BOX} />
+        </Box>
+        <Box label={t("to")}>
+          <input type="date" value={to} onChange={(e) => { setTo(e.target.value); apply(from, e.target.value); }} data-filter-to="" className={NUMBER_BOX} />
+        </Box>
+      </div>
+      <select
+        value=""
+        aria-label={t("datesPreset")}
+        onChange={(e) => {
+          const v = e.target.value;
+          if (v !== "thisYear" && v !== "last12Months") return;
+          const p = datePreset(v);
+          setFrom(p.from);
+          setTo(p.to);
+          apply(p.from, p.to);
+        }}
+        className="w-[17.5rem] rounded-md border border-wire bg-white px-2 py-1 text-sm text-ink dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+      >
+        <option value="">{t("datesPreset")}</option>
+        <option value="thisYear">{t("thisYear")}</option>
+        <option value="last12Months">{t("last12Months")}</option>
+      </select>
+    </div>
+  );
+}
+
+/** A „choice": „toți" (no filter) or one of the field's options. */
+function ChoiceEditor({ field, state, onChange }: { field: FilterBarField; state: FilterState; onChange: (next: FilterState) => void }) {
+  const t = useTranslations("shared.filterBar");
+  const cur = state[field.key];
+  const value = cur?.kind === "choice" ? cur.value : "";
+  const options = [{ value: "", label: field.allLabel ?? t("all") }, ...(field.choices ?? [])];
+  return (
+    <div role="radiogroup" aria-label={field.label} className="flex flex-col gap-1" data-filter-choice="">
+      {options.map((o) => (
+        <label key={o.value || "_all"} className="flex cursor-pointer items-center gap-2 rounded px-1 py-1 text-sm hover:bg-cta-pale dark:hover:bg-zinc-800/50">
+          <input
+            type="radio"
+            name={`filter-${field.key}`}
+            value={o.value}
+            checked={value === o.value}
+            onChange={() => onChange(setFilter(state, field.key, o.value ? { kind: "choice", value: o.value } : null))}
+            className="h-4 w-4 accent-cta"
+          />
+          <span className="text-ink dark:text-zinc-100">{o.label}</span>
+        </label>
+      ))}
+    </div>
   );
 }
 

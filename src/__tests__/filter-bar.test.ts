@@ -10,8 +10,11 @@ import {
   NONE_VALUE,
   activeFilterKeys,
   appendFilterParams,
+  datePreset,
+  decodeDates,
   decodeFilter,
   decodeRange,
+  dmy,
   decodeValues,
   encodeFilter,
   encodeValues,
@@ -125,3 +128,26 @@ describe("what a checklist offers", () => {
     expect(foldForSearch("Șțăîâ")).toBe("staia");
   });
 });
+
+describe("dates and a choice (#39.62)", () => {
+  it("dates are <from>..<to>, real days only, a reversed pair swapped", () => {
+    expect(decodeDates("1970-01-01..1980-12-31")).toEqual({ kind: "dates", from: "1970-01-01", to: "1980-12-31" });
+    expect(decodeDates("1980-12-31..1970-01-01")).toEqual({ kind: "dates", from: "1970-01-01", to: "1980-12-31" });
+    expect(decodeDates("2023-02-29..")).toBeNull();
+    expect(decodeDates("..2024-02-29")).toEqual({ kind: "dates", from: null, to: "2024-02-29" });
+    expect(encodeFilter({ kind: "dates", from: null, to: "2024-02-29" })).toBe("..2024-02-29");
+  });
+  it("a choice is one of its options; anything else, and empty, is no filter", () => {
+    const f: FilterFieldDef = { key: "dead", kind: "choice", options: ["alive", "deceased"] };
+    expect(decodeFilter(f, "deceased")).toEqual({ kind: "choice", value: "deceased" });
+    expect(decodeFilter(f, "maybe")).toBeNull();
+    expect(setFilter({}, "dead", { kind: "choice", value: "" })).toEqual({});
+  });
+  it("„Anul acesta” and „Ultimele 12 luni”", () => {
+    const today = new Date(2026, 9, 16);
+    expect(datePreset("thisYear", today)).toEqual({ from: "2026-01-01", to: "2026-12-31" });
+    expect(datePreset("last12Months", today)).toEqual({ from: "2025-10-17", to: "2026-10-16" });
+    expect(dmy("2026-10-16")).toBe("16.10.2026");
+  });
+});
+

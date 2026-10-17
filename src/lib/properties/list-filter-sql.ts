@@ -8,26 +8,10 @@
  * NO DATABASE — the schema's tables only, so `property-list-filter-sql.test.ts` renders the conditions with
  * `PgDialect` and asserts the statement and its parameters, as `document-custom-field-filter.test.ts` does.
  */
-import { ilike, inArray, or, sql, type SQL } from "drizzle-orm";
-import type { AnyPgColumn } from "drizzle-orm/pg-core";
+import { or, sql, type SQL } from "drizzle-orm";
+import { contains, oneOf, textValue } from "@/lib/list/filter-sql";
 import { groupMember, groups, property, propertyAddress } from "@/db/schema";
 import { NONE_VALUE, type FilterState } from "@/lib/list/filter-bar";
-
-/** A text column as the checklist reads it: trimmed, and empty as NULL — so „" and „ " are „(necompletat)". */
-export function textValue(col: AnyPgColumn): SQL {
-  return sql`nullif(trim(${col}), '')`;
-}
-
-/** `col` one of `ids`, or — with `_none` among them — empty. */
-function oneOf(col: SQL | AnyPgColumn, ids: readonly string[]): SQL | undefined {
-  const values = ids.filter((id) => id !== NONE_VALUE);
-  const none = ids.includes(NONE_VALUE);
-  const parts: SQL[] = [];
-  const c = sql`${col}`;
-  if (values.length > 0) parts.push(inArray(c, values));
-  if (none) parts.push(sql`${c} IS NULL`);
-  return parts.length === 0 ? undefined : parts.length === 1 ? parts[0] : or(...parts);
-}
 
 /** The property is in one of the PROPERTY groups whose codes are `ids`, or — with `_none` — in none. */
 export function inGroups(ids: readonly string[]): SQL | undefined {
@@ -74,12 +58,12 @@ export function propertyFilterConditions(filters: FilterState): SQL[] {
       if (!col) continue;
       if (f.from !== null) out.push(sql`${col} >= ${f.from}`);
       if (f.to !== null) out.push(sql`${col} <= ${f.to}`);
-    } else {
+    } else if (f.kind === "text") {
       const col =
         key === "cadastralNumber" ? property.cadastralNumber :
         key === "carteFunciara"   ? property.carteFunciara :
         key === "parcela"         ? property.parcela : null;
-      if (col) out.push(ilike(col, `%${f.text.replace(/[\\%_]/g, (c) => `\\${c}`)}%`));
+      if (col) out.push(contains(col, f.text));
     }
   }
   return out;

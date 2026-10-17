@@ -17,15 +17,22 @@
  * PURE — `filter-bar.test.ts` covers it.
  */
 
-export type FilterKind = "values" | "range" | "text";
+export type FilterKind = "values" | "range" | "text" | "dates" | "choice";
 
-/** One filterable field of a list: its key (address and route) and what kind of filter it takes. */
-export type FilterFieldDef = { readonly key: string; readonly kind: FilterKind };
+/**
+ * One filterable field of a list: its key (address and route) and what kind of filter it takes. A „choice" names
+ * the values it may take (#39.62: „toți / în viață / decedați" is a choice of `alive` or `deceased`, none = toți).
+ */
+export type FilterFieldDef = { readonly key: string; readonly kind: FilterKind; readonly options?: readonly string[] };
 
 export type ValuesFilter = { readonly kind: "values"; readonly ids: readonly string[] };
 export type RangeFilter = { readonly kind: "range"; readonly from: number | null; readonly to: number | null };
 export type TextFilter = { readonly kind: "text"; readonly text: string };
-export type FilterValue = ValuesFilter | RangeFilter | TextFilter;
+/** Dates as ISO `yyyy-mm-dd`, either side open (#39.62: born, died). */
+export type DatesFilter = { readonly kind: "dates"; readonly from: string | null; readonly to: string | null };
+/** One of a field's `options`; no filter is „all". */
+export type ChoiceFilter = { readonly kind: "choice"; readonly value: string };
+export type FilterValue = ValuesFilter | RangeFilter | TextFilter | DatesFilter | ChoiceFilter;
 
 /** The filters set, by field key. A field that is not a key here is not filtered. */
 export type FilterState = Readonly<Record<string, FilterValue>>;
@@ -87,11 +94,35 @@ export function decodeRange(raw: string): RangeFilter | null {
   return { kind: "range", from, to };
 }
 
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** A real calendar date as `yyyy-mm-dd`, or null. */
+function isoDateOf(raw: string): string | null {
+  const t = raw.trim();
+  if (!ISO_DATE.test(t)) return null;
+  const d = new Date(`${t}T00:00:00Z`);
+  return Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== t ? null : t;
+}
+
+/** Dates read back as `<from>..<to>`; both sides unreadable is no filter; a reversed pair swaps. */
+export function decodeDates(raw: string): DatesFilter | null {
+  const t = raw.trim();
+  const at = t.indexOf("..");
+  if (at < 0) return null;
+  let from = isoDateOf(t.slice(0, at));
+  let to = isoDateOf(t.slice(at + 2));
+  if (from === null && to === null) return null;
+  if (from !== null && to !== null && from > to) [from, to] = [to, from];
+  return { kind: "dates", from, to };
+}
+
 /** One field's filter as the address writes it; "" when it filters nothing. */
 export function encodeFilter(value: FilterValue | undefined): string {
   if (!value) return "";
   if (value.kind === "values") return encodeValues(value.ids);
   if (value.kind === "range") return encodeRange(value.from, value.to);
+  if (value.kind === "dates") return value.from === null && value.to === null ? "" : `${value.from ?? ""}..${value.to ?? ""}`;
+  if (value.kind === "choice") return value.value;
   return value.text.trim().slice(0, MAX_FILTER_TEXT);
 }
 
@@ -103,6 +134,11 @@ export function decodeFilter(field: FilterFieldDef, raw: string | null): FilterV
     return ids.length > 0 ? { kind: "values", ids } : null;
   }
   if (field.kind === "range") return decodeRange(raw);
+  if (field.kind === "dates") return decodeDates(raw);
+  if (field.kind === "choice") {
+    const v = raw.trim();
+    return field.options?.includes(v) ? { kind: "choice", value: v } : null;
+  }
   const text = raw.trim().slice(0, MAX_FILTER_TEXT);
   return text ? { kind: "text", text } : null;
 }
@@ -130,7 +166,8 @@ export function filterAddressPatch(state: FilterState, fields: readonly FilterFi
 /** A filter that filters nothing — no value ticked, no bound, no text — is no filter. */
 export function isEmptyFilter(value: FilterValue): boolean {
   if (value.kind === "values") return value.ids.length === 0;
-  if (value.kind === "range") return value.from === null && value.to === null;
+  if (value.kind === "range" || value.kind === "dates") return value.from === null && value.to === null;
+  if (value.kind === "choice") return value.value === "";
   return value.text.trim() === "";
 }
 
@@ -186,6 +223,20 @@ export function offeredValues(facets: readonly FacetValue[], ticked: readonly st
     if (b.id === NONE_VALUE) return 1;
     return (a.label ?? a.id).localeCompare(b.label ?? b.id, "ro");
   });
+}
+
+/** The first and last day of the current year, and the twelve months to today — the dates editor's two shortcuts. */
+export function datePreset(preset: "thisYear" | "last12Months", today: Date = new Date()): { from: string; to: string } {
+  const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  if (preset === "thisYear") return { from: `${today.getFullYear()}-01-01`, to: `${today.getFullYear()}-12-31` };
+  const from = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate() + 1);
+  return { from: iso(from), to: iso(today) };
+}
+
+/** `yyyy-mm-dd` as the archive shows a date, `dd.mm.yyyy`. */
+export function dmy(iso: string): string {
+  const [y, m, d] = iso.split("-");
+  return `${d}.${m}.${y}`;
 }
 
 /** Folded for search: lower case, no diacritics — „Bragadiru" is found by „braga", „Ilfov" by „ILF", „Măgurele" by „magu". */
