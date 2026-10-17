@@ -209,6 +209,7 @@ export const OUTLINE: Readonly<Record<string, string>> = {
   "admin-reference-data-values": "How to add, rename, merge or delete a value in a list, and what to do when objects still use it.",
   "admin-reference-data-roles": "How to set up person roles (seller, buyer, relatives): the converse role, kinship, which document types offer them, and which hold a share.",
   "admin-reference-data-document-types": "How to view and edit document types: which have a form, the short name, the form's fields, and the roles allowed on each type.",
+  "admin-reference-data-property-types": "The page „Property types and uses”: the types, the use categories, and which uses each type allows, which the property form then offers.",
   "admin-users": "How to approve or reject colleagues' account requests, how they get their temporary password by e-mail, and where to see past requests.",
   "admin-groups": "Where to manage, all in one place, the groups, stamps and tags put on objects.",
   "admin-groups-groups": "How to create a group, add or remove members (properties, persons, documents), save the changes and delete a group.",

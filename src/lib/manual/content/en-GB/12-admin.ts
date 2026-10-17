@@ -17,9 +17,11 @@ The screen is a single page (Figure [[fig-admin-value-lists]]). On the left are 
 
 | Group | The lists |
 |---|---|
-| Object types | „Physical Person Types”, „Judicial Person Types”, „Property Types”, „Document Types” |
+| Object types | „Physical Person Types”, „Judicial Person Types”, „Property types and uses”, „Document Types” |
 | Roles and links | „Person Roles”, „Property → Property Links”, „Document → Document Links” |
-| Value lists | „Tarla Codes”, „Use Categories”, „Citizenship”, „Institutions” |
+| Value lists | „Tarla Codes”, „Citizenship”, „Institutions” |
+
+„Use Categories” has no button of its own: it is the second tile of the page „Property types and uses” (section [[admin-reference-data-property-types]]).
 
 Every row stands on a single line. A value too long for its column ends in „…”; hold the mouse over it and you see it whole. In a long list only the rows scroll: the column titles stay at the top.
 
@@ -72,6 +74,16 @@ Above the table are two ticks: „With a form” shows only the types that have 
 - „Roles” — the roles a person can have in a document of this type. Choose a role in „Add a role” and press „Add the role”; tick „Holds a share” where the role brings a share.
 
 A type's „Roles” tab and „Document” on a role's panel show the same pairs, from two ends: a role added on a type also appears on the role's panel, with its tick. „← Document Types” takes you back to the list.
+
+### 12.1.4 Property types and uses {#admin-reference-data-property-types}
+
+„Property types and uses” is one page with three tiles, one under the other:
+
+- „Property Types” — what the property is: „Teren extravilan”, „Teren intravilan”, „Teren construit”, „Liniară”, „Casă”, „Apartament”, „Garaj”, „Spațiu comercial”, „Birou”. On each row three ticks say what the type shows: the tarla and parcel, the address and Street View (section [[properties-type]]).
+- „Use Categories” — the land's legal category of use: „Arabil”, „Pășune”, „Fânețe”, „Vie”, „Livadă”, „Pădure”, „Ape”, „Neproductiv”, „Curți-construcții”, „Drumuri”. A value sits in one list only: „Pășune” or „Vie” are uses, not types.
+- „Uses allowed for each type” — a table with a row per type and a column per use. Tick the uses a type may have; the tick is saved at once. A type with no tick allows them all, and its row reads „(all)”.
+
+The property form offers in „Use Category” only the uses the chosen type allows (section [[properties-add-cadastral]]). A property that already holds a use its type no longer allows keeps it; under the field it says the use is not among the ones its type allows.
 
 ## 12.2 Users and access {#admin-users}
 
@@ -192,7 +204,7 @@ Where an amount comes from an invoice, you enter it under „Amounts entered”:
 
 In „Use Categories” there are two values that say the same thing, spelt differently.
 
-1. Open „Administration” → „Reference Data” and choose „Use Categories” (section [[admin-reference-data]]).
+1. Open „Administration” → „Reference Data” and choose „Property types and uses”; „Use Categories” is the page's second tile (section [[admin-reference-data-property-types]]).
 2. Read „Used by” on the two rows and decide which value stays.
 3. Press „Merge” on the other, choose the first in „Value to keep” and press „Merge” (section [[admin-reference-data-values]]).
 4. Check that the merged value has gone and that „Used by” on the value kept has grown.

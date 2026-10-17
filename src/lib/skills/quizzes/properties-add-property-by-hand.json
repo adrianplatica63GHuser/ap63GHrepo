@@ -242,11 +242,11 @@
           "id": "b1",
           "section": "properties-type",
           "ro": {
-            "question": "În capul ecranului unei proprietăți scrie, după poreclă, „(Teren Arabil)”, în cursiv. Ce este aceasta?",
+            "question": "În capul ecranului unei proprietăți scrie, după poreclă, „(Teren extravilan)”, în cursiv. Ce este aceasta?",
             "explanation": "Ecranul unei proprietăți are în cap porecla ei, apoi tipul, între paranteze și în cursiv. Tipul îl alegeți în „Tip proprietate”."
           },
           "en": {
-            "question": "At the top of a property's screen, after the nickname, it reads „(Teren Arabil)”, in italics. What is it?",
+            "question": "At the top of a property's screen, after the nickname, it reads „(Teren extravilan)”, in italics. What is it?",
             "explanation": "A property's screen is headed by its nickname, then its type, in brackets and in italics. You choose the type in „Tip proprietate”."
           },
           "options": [

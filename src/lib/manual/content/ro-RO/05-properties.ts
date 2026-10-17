@@ -65,11 +65,11 @@ Secțiunea aceasta urmează „Introducere manuală”. Se deschide ecranul „P
 Câmpurile principale sunt:
 
 - „Poreclă” — numele după care recunoașteți proprietatea în listă;
-- „Tip proprietate” — de exemplu teren arabil sau teren construit (secțiunea [[properties-type]]);
+- „Tip proprietate” — de exemplu teren extravilan sau teren construit (secțiunea [[properties-type]]);
 - „Nr. tarla / sola” — se alege dintr-o listă, nu se scrie: lista cuprinde „niciunul” și tarlalele care există deja în arhivă;
 - „Nr. parcelă” — se scrie liber;
 - „Nr. cadastru” și „Nr. CF”;
-- „Categorie de folosință”;
+- „Categorie de folosință” — lista oferă doar folosințele pe care tipul ales le permite; o folosință salvată înainte, pe care tipul n-o mai permite, rămâne, iar sub câmp scrie „Tipul „…” nu are această categorie de folosință printre cele permise.” (secțiunea [[admin-reference-data-property-types]]);
 - „Suprafață oficială (m²)” — suprafața din acte; trebuie să fie un număr pozitiv;
 - „Suprafață calculată (m²)” — o calculează aplicația din colțuri (secțiunea [[properties-corners]]);
 - „Note”.
@@ -98,7 +98,7 @@ Coșul („Șterge”) întreabă întâi „Ștergeți proprietatea?”. „Nu�
 
 ## 5.3 Tipul proprietății și fișele lui {#properties-type}
 
-Ecranul unei proprietăți are în cap porecla ei, apoi tipul, între paranteze și în cursiv — de exemplu „(Teren Arabil)” — și un ⓘ, „Despre tipul proprietății”. Bula lui spune ce fișe arată tipul acesta și ce fișe nu arată, și dacă „Tarla/Solă” și „Parcelă” apar în „Identificare cadastrală”.
+Ecranul unei proprietăți are în cap porecla ei, apoi tipul, între paranteze și în cursiv — de exemplu „(Teren extravilan)” — și un ⓘ, „Despre tipul proprietății”. Bula lui spune ce fișe arată tipul acesta și ce fișe nu arată, și dacă „Tarla/Solă” și „Parcelă” apar în „Identificare cadastrală”.
 
 Tipul îl alegeți în „Tip proprietate”. Când alegeți alt tip, titlul și bula se schimbă pe loc, înainte de salvare. Dacă alegeți „niciunul”, după poreclă nu mai apare nimic. Ce arată fiecare tip se stabilește în „Date de referință” (secțiunea [[admin-reference-data]]).
 

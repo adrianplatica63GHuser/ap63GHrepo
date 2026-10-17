@@ -65,11 +65,11 @@ This section follows „Manual data entry”. The screen „New Property” open
 The main fields are:
 
 - „Nickname” — the name by which you recognise the property in the list;
-- „Property Type” — for instance arable land or built-up land (section [[properties-type]]);
+- „Property Type” — for instance land outside the built-up area, or built-up land (section [[properties-type]]);
 - „Tarla / Sola” — chosen from a list, not typed: the list holds „none” and the tarlas already in the archive;
 - „Parcela” — typed freely;
 - „Cadastral No.” and „Carte Funciara”;
-- „Use Category”;
+- „Use Category” — the list offers only the uses the chosen type allows; a use saved earlier that the type no longer allows stays, and under the field it reads „The type „…” does not list this use category among the ones it allows.” (section [[admin-reference-data-property-types]]);
 - „Official Surface Area (m²)” — the area in the papers; it must be a positive number;
 - „Calculated Area (m²)” — calculated by the application from the corners (section [[properties-corners]]);
 - „Notes”.
@@ -98,7 +98,7 @@ The bin („Delete”) asks first: „Delete property?”. „No” leaves you o
 
 ## 5.3 The property's type and its tiles {#properties-type}
 
-A property's screen is headed by its nickname, then its type, in brackets and in italics — for instance „(Teren Arabil)” — and an ⓘ, „About the property type”. Its bubble says which tiles this type shows and which it does not, and whether „Tarla/Solă” and „Parcelă” appear in „Cadastral identification”.
+A property's screen is headed by its nickname, then its type, in brackets and in italics — for instance „(Teren extravilan)” — and an ⓘ, „About the property type”. Its bubble says which tiles this type shows and which it does not, and whether „Tarla/Solă” and „Parcelă” appear in „Cadastral identification”.
 
 You choose the type in „Property Type”. When you choose another type, the heading and the bubble change at once, before saving. If you choose „none”, nothing appears after the nickname. What each type shows is set in „Reference Data” (section [[admin-reference-data]]).
 
