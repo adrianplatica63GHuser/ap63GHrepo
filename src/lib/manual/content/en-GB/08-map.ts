@@ -18,6 +18,7 @@ At the top of the map are its buttons. „STR” and „SAT” choose the street
 - „Select” — picks several properties at once (section [[map-select]]);
 - „Ruler” and „Angles” — measure a distance and an angle (section [[map-ruler]]);
 - „Area of a delimited zone” and „Area of any zone” — calculate the area of a zone (section [[map-area]]);
+- „Tarlale” — each tarla's outline (section [[map-what-tarlale]]);
 - „Groups” — chooses which properties are shown (section [[map-what-groups]]);
 - „Map settings” — the distance at which drops merge (section [[map-what-drops]]).
 
@@ -61,6 +62,14 @@ Drops that come too close to one another merge into a **numbered drop**, larger,
 The colours say what they say on the shapes: red, a selected property (section [[map-select]]); blinking pink, a duplicate property (section [[map-what-duplicates]]). Two duplicate properties have the same corners, so from afar they always end up in the same numbered drop, which blinks pink. A numbered drop is red when a selected property is in it.
 
 „Map settings”, on the map's toolbar, chooses the distance under which drops merge: „Drops merge under” between 20 and 80 pixels, 40 by default. A smaller distance shows more drops, a larger one fewer. The choice is kept in the browser where you made it; another computer or another browser starts from 40.
+
+### 8.1.6 The „Tarlale” layer {#map-what-tarlale}
+
+„Tarlale” draws each tarla's outline: a dashed grey-green line with no fill, so it is never mistaken for a property. The layer is off when the map opens; pressing the button turns it on, pressing it again turns it off.
+
+A tarla's outline is its own corners, if they were entered on the tarla's page (section [[properties-tarla]]). Otherwise it is the shape around all the tarla's properties that have corners — the smallest shape without dents that holds them all. It grows as the archive grows, and it is not an official boundary: no public source gives tarla boundaries. A tarla with no corners and no properties with corners has no outline.
+
+The tarla's code appears on the outline when you zoom the map in to a few kilometres. A click on the outline or on the code opens the tarla's page.
 
 ## 8.2 Selecting {#map-select}
 

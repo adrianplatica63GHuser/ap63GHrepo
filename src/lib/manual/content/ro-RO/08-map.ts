@@ -18,6 +18,7 @@ Sus, pe hartă, stau butoanele ei. „HARTĂ” și „SATELIT” aleg harta str
 - „Selectează” — alege mai multe proprietăți deodată (secțiunea [[map-select]]);
 - „Riglă” și „Unghiuri” — măsoară o distanță și un unghi (secțiunea [[map-ruler]]);
 - „Suprafața unei zone delimitate” și „Suprafața unei zone oarecare” — calculează suprafața unei zone (secțiunea [[map-area]]);
+- „Tarlale” — conturul fiecărei tarlale (secțiunea [[map-what-tarlale]]);
 - „Grupuri” — alege ce proprietăți se văd (secțiunea [[map-what-groups]]);
 - „Setări hartă” — distanța la care picăturile se unesc (secțiunea [[map-what-drops]]).
 
@@ -61,6 +62,14 @@ Picăturile ajunse prea aproape una de alta se unesc într-o **picătură cu num
 Culorile spun ce spun și la forme: roșu, o proprietate selectată (secțiunea [[map-select]]); roz intermitent, o proprietate duplicată (secțiunea [[map-what-duplicates]]). Două proprietăți duplicate au aceleași colțuri, așa că, de departe, ajung mereu în aceeași picătură cu număr, care clipește în roz. O picătură cu număr este roșie dacă are în ea o proprietate selectată.
 
 „Setări hartă”, din bara hărții, alege distanța sub care picăturile se unesc: „Picăturile se unesc sub” între 20 și 80 de pixeli, implicit 40. O distanță mai mică arată mai multe picături, una mai mare mai puține. Alegerea se păstrează în browserul în care ați făcut-o; alt calculator sau alt browser pornește de la 40.
+
+### 8.1.6 Stratul „Tarlale” {#map-what-tarlale}
+
+„Tarlale” desenează conturul fiecărei tarlale: o linie verde-cenușie întreruptă, fără umplere, ca să nu se confunde cu o proprietate. Stratul este oprit când se deschide harta; butonul apăsat îl pornește, apăsat din nou îl oprește.
+
+Conturul unei tarlale sunt colțurile ei, dacă au fost introduse pe pagina tarlalei (secțiunea [[properties-tarla]]). Altfel este forma din jurul tuturor proprietăților tarlalei care au colțuri — cea mai mică formă fără adâncituri care le cuprinde pe toate. Crește pe măsură ce arhiva crește și nu este o limită oficială: nicio sursă publică nu dă limitele tarlalelor. O tarla fără colțuri și fără proprietăți cu colțuri nu are contur.
+
+Codul tarlalei apare pe contur când apropiați harta la câțiva kilometri. Un clic pe contur sau pe cod deschide pagina tarlalei.
 
 ## 8.2 Selecția {#map-select}
 

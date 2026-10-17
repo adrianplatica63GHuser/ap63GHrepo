@@ -132,6 +132,7 @@ export const OUTLINE: Readonly<Record<string, string>> = {
   "map-what-duplicates": "Ce înseamnă o proprietate care clipește roz pe hartă: un teren dublură, trecut de două ori în arhivă, și ce faci cu el.",
   "map-what-groups": "Cum alegi ce proprietăți arată harta cu filtrul Grupuri: toate, cele fără grup sau doar terenurile unui grup.",
   "map-what-drops": "Ce sunt picăturile și picăturile cu număr de pe harta micșorată, ce face un clic pe ele și cum alegi în Setări hartă distanța la care se unesc.",
+  "map-what-tarlale": "Stratul „Tarlale” al hărții: conturul fiecărei tarlale, din colțurile ei sau din forma din jurul proprietăților, codul ei și cum deschizi tarlaua.",
   "map-select": "Cum selectezi mai multe proprietăți pe hartă cu un dreptunghi, le afișezi separat sau le ștergi din arhivă, și de ce ștergerea e periculoasă.",
   "map-ruler": "Cum măsori pe hartă distanțe și unghiuri, fără să schimbi sau să salvezi ceva.",
   "map-ruler-distance": "Cum măsori distanța în linie dreaptă între două puncte sau colțuri cu rigla și cum se fixează rigla exact pe colțul unui teren.",

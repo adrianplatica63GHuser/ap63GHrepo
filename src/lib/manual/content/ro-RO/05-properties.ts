@@ -106,7 +106,7 @@ Fiecare tarla are o pagină a ei, „Tarlale” → tarla, deschisă cu „Desch
 
 - sus, chenarul „Despre limitele tarlalelor”: ce surse există pentru limitele tarlalelor și ce nu este disponibil. Stă și deasupra listei „Tarlale”, pentru că este informația de citit înainte de a căuta o limită;
 - „Indicativ”, „Localitate”, „Județ”, „Descriere” și „Note”, salvate cu „Salvează”;
-- „Contur”: opțional, colțurile tarlalei, introduse ca la o proprietate (secțiunea [[properties-corners-table]]);
+- „Contur”: o hartă cu conturul tarlalei și proprietățile ei, apoi colțurile tarlalei, opționale, introduse ca la o proprietate (secțiunea [[properties-corners-table]]). Fără colțuri, conturul este forma din jurul proprietăților tarlalei (secțiunea [[map-what-tarlale]]);
 - proprietățile de pe tarla și actele legate de ele. O tarla nu are acte, grupuri sau etichete ale ei.
 
 Un import adaugă codurile de tarla în localitatea dată în pasul proprietăților: „Localitatea tarlalelor” este citită din numele dosarului ales, de exemplu Clinceni dintr-un dosar numit CLINCENI.3, și se poate schimba (secțiunea [[import-overview]]).
