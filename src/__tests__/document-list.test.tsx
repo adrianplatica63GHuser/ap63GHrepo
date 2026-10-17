@@ -12,6 +12,8 @@ import en from "../../messages/en-GB.json";
 const ROOT = join(__dirname, "..", "..");
 const VIEW = readFileSync(join(ROOT, "src", "app", "documents", "list-view.tsx"), "utf8");
 const QUERIES = readFileSync(join(ROOT, "src", "lib", "documents", "queries.ts"), "utf8");
+// Slice #39.63: the three counts moved into DOCUMENT_COUNT_SQL, shared by the list and its range filters.
+const FILTER_SQL = readFileSync(join(ROOT, "src", "lib", "documents", "list-filter-sql.ts"), "utf8");
 
 const KEYS = ["nrDocument", "dateDocument", "institution", "subject", "pageCount", "personCount", "propertyCount", "createdAt"];
 
@@ -72,9 +74,14 @@ describe("the list's API returns the new fields' values (Slice #37.62)", () => {
     const list = QUERIES.slice(QUERIES.indexOf("export async function listDocument("), QUERIES.indexOf("export async function listDocument(") + 9000);
     expect(list).toMatch(/institutionName: {2}lookupInstitution\.name,/);
     expect(list).toMatch(/subject: {10}document\.subject,/);
-    expect(list).toMatch(/FROM document_page dp_c WHERE dp_c\.document_id = document\.id/);
-    expect(list).toMatch(/count\(DISTINCT pd_c\.person_id\)::int FROM person_document pd_c WHERE pd_c\.document_id = document\.id/);
-    expect(list).toMatch(/count\(DISTINCT prd_c\.property_id\)::int FROM property_document prd_c WHERE prd_c\.document_id = document\.id/);
+    // #39.63: the three subqueries were asserted in `list` itself until they moved into DOCUMENT_COUNT_SQL; the list
+    // selects them from there, and the range filters count with the very same SQL.
+    expect(list).toMatch(/pageCount: +DOCUMENT_COUNT_SQL\.pageCount,/);
+    expect(list).toMatch(/personCount: +DOCUMENT_COUNT_SQL\.personCount,/);
+    expect(list).toMatch(/propertyCount: +DOCUMENT_COUNT_SQL\.propertyCount,/);
+    expect(FILTER_SQL).toMatch(/FROM document_page dp_c WHERE dp_c\.document_id = document\.id/);
+    expect(FILTER_SQL).toMatch(/count\(DISTINCT pd_c\.person_id\)::int FROM person_document pd_c WHERE pd_c\.document_id = document\.id/);
+    expect(FILTER_SQL).toMatch(/count\(DISTINCT prd_c\.property_id\)::int FROM property_document prd_c WHERE prd_c\.document_id = document\.id/);
     expect(list).toMatch(/\.leftJoin\(lookupInstitution, eq\(document\.institutionId, lookupInstitution\.id\)\)/);
   });
 });

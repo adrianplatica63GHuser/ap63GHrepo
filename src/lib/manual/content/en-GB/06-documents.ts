@@ -11,10 +11,7 @@ A document is a deed held in the archive — a contract, a certificate, a permit
 
 In the sidebar, open „Domain”, then „Documents”. The list shows every document in the archive, in the columns „Type” and „Title”. The title is the document's „Short Label”. A document just added appears at the top, badged „New!”. Lists work the same everywhere (section [[start-lists]]).
 
-The bar above the table has two rows:
-
-- on the first, the search box („search by code, title, or document no.”), „Choose fields” and, at its end, „Add new Document”;
-- on the second, „Document type:”, a round sign and „Type-specific field:”, with an ⓘ beside it.
+Above the table stand the search box („search by code, title, or document no.”), „Choose fields” and, at their end, „Add new Document”. Under them is the list's filter bar. It always begins with „Document type:”, a round sign and „Type-specific field:”, with an ⓘ beside it; the rest of the bar is in section [[documents-list-filters]].
 
 **„Type” shows the type's short name** — for example „CVC” for „Contract de Vânzare”, „Intabulare” for „Încheiere de Intabulare”. Rest the mouse on the cell and the bubble shows the full name. The short name is chosen for each type in „Reference Data”, under „Document Types”, in the field „Short name” (section [[admin-reference-data]]). Left empty, the list shortens the name by itself, dropping a leading „Contract de”, „Act de”, „Încheiere de”, „Certificat de”. Two types may not share a short name.
 
@@ -26,14 +23,14 @@ The bar above the table has two rows:
 
 ### 6.1.1 The list's filters {#documents-list-filters}
 
-Below the two rows is the list's filter bar, as on the list of properties (section [[properties-list-filters]]). On it, „Expiring soon” comes first: pressed, the list keeps only the documents whose validity ends soon; pressed again, it drops the filter. Then comes „+ Filter”, from which you choose any of the columns of „Choose fields”:
+The filter bar under the search box works as on the list of properties (section [[properties-list-filters]]). It opens with „Document type:” and „Type-specific field:”, which are always there and work as above. After them comes „Expiring soon”: pressed, the list keeps only the documents whose validity ends soon; pressed again, it drops the filter. Then comes „+ Filter”, from which you choose any of the columns of „Choose fields”:
 
 - **„Institution / Notariat”** — a list with ticks, with the number of documents beside each institution, counted with the other filters set, „Document type:” and „Type-specific field:” included;
 - **„Date” and „Added on”** — „From” and „To”, or, from „Period…”, „This year” or „The last 12 months”;
 - **„Pages”, „Persons” and „Properties”** — „From” and „To”, counted as in their columns: a person linked to the document twice counts once;
 - **„Document No.” and „Subject”** — „Contains”.
 
-„Document type:” and „Type-specific field:” stay where they were, on the second row, and work the same. All the filters add up: the list shows the documents that pass every one. „Clear filters” removes the filters chosen from „+ Filter”; „Expiring soon”, the ticked types and the type-specific field stay. The filters are kept in the page's address; a link made before opens the same list.
+All the filters add up, „Document type:” and „Type-specific field:” included: the list shows the documents that pass every one. „Clear filters” removes the filters chosen from „+ Filter”; „Expiring soon”, the ticked types and the type-specific field stay. The filters are kept in the page's address; a link made before opens the same list.
 
 ## 6.2 A new document and its pages {#documents-add}
 

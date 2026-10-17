@@ -81,7 +81,8 @@ describe("„Câmp specific” — when it works (#38.07)", () => {
     expect(customFieldFilter(TYPES, [])).toEqual({ enabled: false, options: [] });
   });
 
-  it("the screen: the field joins the second row once the types load, its select disabled by the rule", () => {
+  // #39.63: it read „joins the second row" — the row is gone; the type and the field are the filter bar's fixed chips.
+  it("the screen: the field joins the filter bar's fixed chips once the types load, its select disabled by the rule", () => {
     expect(VIEW).toMatch(/\{typeOptions\.length > 0 && \(\s*<>\s*<CustomFieldSign/);
     expect(VIEW).toContain("disabled={!customField.enabled}");
     expect(VIEW).toContain("customFieldFilter(typeOptions, initialDocumentTypeIds)");

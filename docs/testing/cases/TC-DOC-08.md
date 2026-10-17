@@ -35,7 +35,7 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Presses „Acte" in the left sidebar | The toolbar in two rows (#37.83, #38.18). The first, level, in this order: the search box („caută după cod, titlu sau nr. document" — no „SAU"), „Câmpuri afișate n/4", and at its end „Adaugă act". Under the search box, the second, in this order: „Tip document: Toate tipurile", a red sign (a circle with a bar), „Câmp specific:" with an ⓘ beside it. Under the two rows, the filter bar, „Expiră curând" first on it (#39.63). No „Importanță" or „Relevanță" anywhere on the list |
+| 1 | Presses „Acte" in the left sidebar | The toolbar in one row (#39.63), level, in this order: the search box („caută după cod, titlu sau nr. document" — no „SAU"), „Câmpuri afișate n/4", and at its end „Adaugă act". Under it, starting under the search box, the filter bar, in this order: „Tip document: Toate tipurile", a red sign (a circle with a bar), „Câmp specific:" with an ⓘ beside it, „Expiră curând", „+ Filtru". No „Importanță" or „Relevanță" anywhere on the list |
 | 2 | Types `TC-DOC-08` into the search | One row: „Adeverință", `TC-DOC-08 Act de test` |
 | 3 | Presses „Câmpuri afișate" | „Selectați până la 4 coloane opționale", then Nr. document, Data, Instituție / Notariat, Subiect, Nr. pagini, Persoane, Proprietăți, Adăugat la — no Importanță, Relevanță or Proveniență |
 | 4 | Ticks „Subiect" and „Adăugat la" (unticking another first if four are on) | Two more headers, SUBIECT · ADĂUGAT LA, after TIP · TITLU; under them `Subiect de test TC-DOC-08` and today's date, dd.mm.yyyy |
@@ -43,7 +43,7 @@ Nothing.
 | 6 | With „Tip document: Toate tipurile", looks at „Câmp specific:", then opens „Tip document", unticks „Toate tipurile" and ticks only „Contract de Vânzare" | With every type the field list is disabled, offering only „Toate" (#38.07), and the sign is red. With only „Contract de Vânzare" the button reads „Contract de Vânzare", the sign turns green (a circle with a check), and the list is enabled: „Toate", then fields with a closed list of values — „Monedă", „Stare plată" and „Modalitate plată" among them — and none of the Antecontract's („CNP 1", „Anul", „luna", „suma de") and no „Temei preț" |
 | 7 | Clears the search, chooses „Stare plată", then „Achitat integral" | A second list of its values, each by its label with a count — „Achitat integral (n documente)" among them — and no code such as `ACHITAT_INTEGRAL`; chosen, the list holds only such contracts. Nothing on the first row moved: the search box and „Câmpuri afișate" where step 1 had them |
 | 8 | Chooses „Toate" in „Câmp specific:" again | The second list is gone |
-| 9 | Opens „Tip document", unticks „Contract de Vânzare" and ticks only „Adeverință" | The button reads „Adeverință"; the sign is red; „Câmp specific:" is still drawn, on the second row, its list disabled — Adeverință has no form (#38.07); the table lists only „Adeverință" rows |
+| 9 | Opens „Tip document", unticks „Contract de Vânzare" and ticks only „Adeverință" | The button reads „Adeverință"; the sign is red; „Câmp specific:" is still drawn, on the filter bar, its list disabled — Adeverință has no form (#38.07); the table lists only „Adeverință" rows |
 
 ## At the end — leaving things as they were found
 
@@ -191,9 +191,11 @@ confirmed, and `e2e/document/document-list.spec.ts` follows it.
 320819f ran `e2e/document/document-list.spec.ts`, as corrected, green with the other 97 specs (lint, tsc, jest and forms-drift
 green too).
 
-**2026-10-17 — steps 1 and 7 rewritten for #39.63.** „Expiră curând" moved off the first row to the head of the
-list's filter bar (TC-DOC-27), so step 1's first row is the search box, „Câmpuri afișate n/4" and „Adaugă act", and
-step 7's „nothing moved" names those two. Read in the browser pane on localhost:3000 the same day, at 1024 px: the
-first row at y 135 — the search box at x 248, „Câmpuri afișate" at 516, „Adaugă act" at 857 — and no „Expiră
-curând" on it; „Tip document" on the second row at y 184; „Expiră curând" at x 248, y 234, ahead of „+ Filtru"
-(x 290). The rest of the case is unchanged.
+**2026-10-17 — steps 1, 7 and 9 rewritten for #39.63.** „Tip document:", the sign and „Câmp specific:" left the
+toolbar's second row to be the first, fixed chips of the list's filter bar, and „Expiră curând" left the first row to
+follow them there (TC-DOC-27). So step 1's toolbar is one row — the search box, „Câmpuri afișate n/4", „Adaugă act" —
+with the bar under it; step 7's „nothing moved" names the search box and „Câmpuri afișate"; step 9's field is „on the
+filter bar". Read in the browser pane on localhost:3000 the same day, at 1024 px: the toolbar at y 135 — the search box
+at x 248, „Câmpuri afișate" at 516, „Adaugă act" at 857 — and nothing else on it; the bar at y 188: „Tip document" at
+x 248, the sign at 477, „Câmp specific:" at 505, „Expiră curând" at 715, „+ Filtru" at 757; no second toolbar row. The
+rest of the case is unchanged.

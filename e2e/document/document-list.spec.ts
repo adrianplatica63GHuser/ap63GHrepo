@@ -63,7 +63,7 @@ test.describe("TC-DOC-08 — lista actelor", () => {
       await expect(main.getByText("Câmp specific:")).toBeVisible();
       const about = main.getByRole("button", { name: "Despre „Câmp specific”" });
       await expect(about).toBeVisible();
-      // #39.63: „Expiră curând" heads the filter bar, under the two rows — no longer on the first.
+      // #39.63: „Expiră curând" is on the filter bar under the toolbar, after „Tip document" and „Câmp specific" — no longer on the first row.
       const expiring = main.getByRole("button", { name: "Expiră curând" });
       await expect(expiring).toBeVisible();
       await expect(main.locator('[data-toolbar-row="first"]').getByRole("button", { name: "Expiră curând" })).toHaveCount(0);
@@ -78,7 +78,7 @@ test.describe("TC-DOC-08 — lista actelor", () => {
       expect(Math.max(...centres) - Math.min(...centres)).toBeLessThanOrEqual(1);
       expect([...row1.map((r) => r.x), add.x]).toEqual([...row1.map((r) => r.x), add.x].sort((a, b) => a - b));
       await expect(main.locator('[data-toolbar-row="first"]').getByRole("button", { name: /^Tip document:/ })).toHaveCount(0);
-      // #38.18: the second row, under the search box: „Tip document: Toate tipurile", a red sign, „Câmp specific:" with its ⓘ.
+      // #38.18: under the search box, „Tip document: Toate tipurile", a red sign, „Câmp specific:" with its ⓘ — since #39.63 the filter bar's fixed chips.
       const sign = main.locator("[data-custom-field-sign]");
       await expect(sign).toHaveAttribute("data-custom-field-sign", "off");
       await expect(sign.locator("svg")).toHaveClass(/lucide-ban/);
@@ -86,7 +86,8 @@ test.describe("TC-DOC-08 — lista actelor", () => {
       expect([typeAt.x, signAt.x, field.x, aboutAt.x]).toEqual([typeAt.x, signAt.x, field.x, aboutAt.x].sort((a, b) => a - b));
       expect(typeAt.y).toBeGreaterThanOrEqual(row1[0].y + row1[0].height);
       expect(Math.abs(typeAt.x - row1[0].x)).toBeLessThanOrEqual(24);
-      expect((await expiring.boundingBox())!.y).toBeGreaterThanOrEqual(typeAt.y + typeAt.height);
+      expect((await expiring.boundingBox())!.x).toBeGreaterThan(aboutAt.x);
+      await expect(main.locator("[data-filter-bar] [data-filter-fixed]").getByRole("button", { name: /^Tip document:/ })).toHaveCount(1);
       await expect(main.getByText(/Importanță|Relevanță/)).toHaveCount(0);
 
       // Step 2 — one row: „Adeverință", the title.
@@ -192,7 +193,7 @@ test.describe("TC-DOC-08 — lista actelor", () => {
       await tick("Contract de Vânzare");
       await tick("Adeverință");
       await expect(main.getByRole("button", { name: /^Tip document:\s*Adeverință/ })).toBeVisible({ timeout: 30_000 });
-      await expect(main.locator('[data-toolbar-row="second"]')).toHaveCount(1);
+      await expect(main.locator("[data-filter-fixed]")).toHaveCount(1); // #39.63: it read `[data-toolbar-row="second"]`
       await expect(key).toBeDisabled();
       await expect(sign).toHaveAttribute("data-custom-field-sign", "off");
       await expect.poll(async () => new Set(await table.locator("tbody tr td:nth-child(2)").allTextContents()), { timeout: 30_000 }).toEqual(new Set(["Adeverință"]));

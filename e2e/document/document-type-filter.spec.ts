@@ -80,8 +80,9 @@ test.describe("TC-DOC-16 — „Tip document:” și „Câmp specific”", () =
       const key = main.getByRole("combobox", { name: "Câmp specific:" });
       await expect(key).toBeDisabled();
       expect(await key.locator("option").allTextContents()).toEqual(["Toate"]);
-      // #38.18: on the second row, „Tip document:", the sign, „Câmp specific:" — in that order; the field looks disabled.
-      const row2 = main.locator('[data-toolbar-row="second"]');
+      // #38.18: „Tip document:", the sign, „Câmp specific:" — in that order; the field looks disabled. Since #39.63 they
+      // are the filter bar's fixed chips; this read `[data-toolbar-row="second"]`, the toolbar's second row, until then.
+      const row2 = main.locator("[data-filter-bar] [data-filter-fixed]");
       const at = await Promise.all([row2.getByRole("button", { name: /^Tip document:/ }), row2.locator("[data-custom-field-sign]"), row2.getByText("Câmp specific:")].map(async (l) => (await l.boundingBox())!.x));
       expect(at).toEqual([...at].sort((a, b) => a - b));
       const fieldBox = main.locator("[data-custom-field-box]");
