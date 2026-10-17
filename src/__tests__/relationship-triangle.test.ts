@@ -194,7 +194,8 @@ describe("one link, marked in four places (Slice #38.68)", () => {
     expect(HUB).toContain('const linkGroup = category.id === "rolesLinks";');
     expect(HUB).toContain("const marked = linkGroup && key === marking.list;");
     expect(HUB).toMatch(/marked\s*\? LINK_MARK_BOX\s*: current && !linkGroup\s*\? "bg-cta font-medium text-white"/);
-    expect(HUB).toContain("titleMarked={marking.list === selected}");
+    // #39.66: a page may hold several lists, so each panel compares its own key (was `marking.list === selected`).
+    expect(HUB).toContain("titleMarked={marking.list === key}");
   });
 
   it("is #facc15 with #111827 text and rim — the side-road calculation's yellow — and says itself without colour too", () => {
