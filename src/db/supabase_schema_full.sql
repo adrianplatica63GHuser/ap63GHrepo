@@ -4,7 +4,7 @@
 -- GENERATED FILE -- DO NOT EDIT BY HAND.
 -- Regenerate with:  .\scripts\Export-SupabaseSchema.ps1
 --
--- Generated : 2026-10-17 07:44
+-- Generated : 2026-10-17 08:21
 -- Source    : local Docker database (ga40db @ ga40prj-postgres)
 --
 -- Applies the complete schema from scratch after running
@@ -886,6 +886,9 @@ CREATE TABLE public.lookup_tarla (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     origin text DEFAULT 'MANUAL'::text NOT NULL,
+    locality text,
+    county text,
+    notes text,
     CONSTRAINT chk_lt_origin CHECK ((origin = ANY (ARRAY['MANUAL'::text, 'IMPORT'::text])))
 );
 
@@ -895,6 +898,13 @@ CREATE TABLE public.lookup_tarla (
 --
 
 COMMENT ON COLUMN public.lookup_tarla.origin IS 'How this code came to exist: MANUAL = typed into the Indicative Tarla list by a person, IMPORT = auto-seeded by createPropertyIn from a tarla value an import parsed out of a folder name. The origin is decided at that write site and is never read from a request body. Write-once, and guarded twice: stripLookupOrigin() removes origin from the payload of every value-lists PUT in updateValue (src/lib/admin/value-lists/queries.ts), for all eleven lists including this one, and from every POST but document-types in createValue - and this list''s route schema (LIST_UPDATE_SCHEMAS["tarla"], a Zod object that declares no origin field) drops an unknown origin before the query layer sees it. The document-types POST schema is the one exception anywhere, and it carries origin as a create-only field on purpose. Superseded the comment migration_077 installed, which said no explicit strip existed for this table and that Zod was the only guard; that stopped being true when the strip moved above updateValue''s switch. See migration_077 for the full note on what MANUAL and IMPORT mean, and migration_082 for why this text had to arrive as a second statement rather than an edit.';
+
+
+--
+-- Name: COLUMN lookup_tarla.locality; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.lookup_tarla.locality IS 'Slice #39.67: the locality the tarla belongs to - tarla numbers restart in every locality. Free text, as on property_address; compared folded.';
 
 
 --
@@ -1283,6 +1293,29 @@ CREATE TABLE public.stamps (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
+
+
+--
+-- Name: tarla_corner; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.tarla_corner (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tarla_id uuid NOT NULL,
+    sequence_no integer NOT NULL,
+    lat double precision NOT NULL,
+    lon double precision NOT NULL,
+    original_index integer,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: TABLE tarla_corner; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.tarla_corner IS 'Slice #39.67: the optional outline of a tarla, WGS84 decimal degrees, 1-based order - property_corner''s shape.';
 
 
 --
@@ -1963,6 +1996,14 @@ ALTER TABLE ONLY public.stamps
 
 
 --
+-- Name: tarla_corner tarla_corner_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tarla_corner
+    ADD CONSTRAINT tarla_corner_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: time_frame_setting time_frame_setting_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2232,17 +2273,17 @@ CREATE UNIQUE INDEX lookup_document_type_short_name_uq ON public.lookup_document
 
 
 --
--- Name: lookup_tarla_indicativ_folded_unique; Type: INDEX; Schema: public; Owner: -
+-- Name: lookup_tarla_locality_indicativ_folded_unique; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX lookup_tarla_indicativ_folded_unique ON public.lookup_tarla USING btree (btrim(regexp_replace(regexp_replace(lower(NORMALIZE(COALESCE(indicativ, ''::text), NFD)), (((('['::text || chr(768)) || '-'::text) || chr(879)) || ']'::text), ''::text, 'g'::text), '\s+'::text, ' '::text, 'g'::text))) WHERE (btrim(regexp_replace(regexp_replace(lower(NORMALIZE(COALESCE(indicativ, ''::text), NFD)), (((('['::text || chr(768)) || '-'::text) || chr(879)) || ']'::text), ''::text, 'g'::text), '\s+'::text, ' '::text, 'g'::text)) <> ''::text);
+CREATE UNIQUE INDEX lookup_tarla_locality_indicativ_folded_unique ON public.lookup_tarla USING btree (btrim(regexp_replace(regexp_replace(lower(NORMALIZE(COALESCE(locality, ''::text), NFD)), (((('['::text || chr(768)) || '-'::text) || chr(879)) || ']'::text), ''::text, 'g'::text), '\s+'::text, ' '::text, 'g'::text)), btrim(regexp_replace(regexp_replace(lower(NORMALIZE(COALESCE(indicativ, ''::text), NFD)), (((('['::text || chr(768)) || '-'::text) || chr(879)) || ']'::text), ''::text, 'g'::text), '\s+'::text, ' '::text, 'g'::text))) WHERE (btrim(regexp_replace(regexp_replace(lower(NORMALIZE(COALESCE(indicativ, ''::text), NFD)), (((('['::text || chr(768)) || '-'::text) || chr(879)) || ']'::text), ''::text, 'g'::text), '\s+'::text, ' '::text, 'g'::text)) <> ''::text);
 
 
 --
--- Name: INDEX lookup_tarla_indicativ_folded_unique; Type: COMMENT; Schema: public; Owner: -
+-- Name: INDEX lookup_tarla_locality_indicativ_folded_unique; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON INDEX public.lookup_tarla_indicativ_folded_unique IS 'Two tarla codes may not fold to one code (Slice #34.32, migration_083). The expression is pg_temp.ga40_fold from scripts/decision-checks.sql - the Postgres spelling of foldRomanian() in src/lib/import/id-card.ts: NFD-decompose, strip the combining marks by code point, lowercase, collapse whitespace, trim - which is the fold this table was measured under by query 1c, and which migration_078 resolves property.tarla_sola with. It is deliberately NOT normaliseDocumentTypeName()''s fold (migration_080): that one drops everything outside [a-z0-9], which would make 47/2 and 472 one code. PARTIAL, excluding the empty folded form, because tarlaSchema accepts a single space as an indicativ and a total index would let the first whitespace-only row take the empty slot and refuse every other one. The application-level refusal that produces a Romanian sentence instead of a 23505 is tarlaCodeTakenBy() in src/lib/properties/tarla-code-guard.ts; the import auto-seed adopts an existing row rather than reaching this index, in resolveTarlaForCreate() in src/lib/properties/queries.ts, and both application writers hold the two advisory locks tarlaLockIdentities() returns so neither can land a colliding row while the other is between its scan and its insert. This index is what makes the rule true of a direct caller, a script, psql, and the race that a read-then-write refusal cannot close.';
+COMMENT ON INDEX public.lookup_tarla_locality_indicativ_folded_unique IS 'Slice #39.67 (was migration_083''s code-only index): one tarla per folded locality and folded code.';
 
 
 --
@@ -2362,6 +2403,13 @@ CREATE INDEX stamp_member_principal_object_idx ON public.stamp_member USING btre
 --
 
 CREATE UNIQUE INDEX stamp_member_stamp_principal_object_unique ON public.stamp_member USING btree (stamp_id, principal_object_id);
+
+
+--
+-- Name: tarla_corner_tarla_seq_unique; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX tarla_corner_tarla_seq_unique ON public.tarla_corner USING btree (tarla_id, sequence_no);
 
 
 --
@@ -3063,6 +3111,14 @@ ALTER TABLE ONLY public.stamp_member
 
 ALTER TABLE ONLY public.stamp_member
     ADD CONSTRAINT stamp_member_stamp_id_fkey FOREIGN KEY (stamp_id) REFERENCES public.stamps(id) ON DELETE CASCADE;
+
+
+--
+-- Name: tarla_corner tarla_corner_tarla_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tarla_corner
+    ADD CONSTRAINT tarla_corner_tarla_id_fkey FOREIGN KEY (tarla_id) REFERENCES public.lookup_tarla(id) ON DELETE CASCADE;
 
 
 --
