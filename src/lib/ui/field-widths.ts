@@ -188,7 +188,9 @@ export const NATURAL_PERSON = {
   // Slice #39.70: m: 13 professions, longest „Contabil / consultant fiscal" (28; 186.6 px measured) — L; was M, for
   // „Expert" (6).
   physicalPersonTypeId: { step: "L", kind: "select" },
-  placeOfBirth: { step: "XL", kind: "grows" }, //           m: 0
+  // Slice #39.70: L, so „Tip profesional" (L, the professions) stays beside it in the panel's three units — the row
+  // is 13 + 0.5 + 13 = 26.5 rem, the panel's widest as before. Was XL.
+  placeOfBirth: { step: "L", kind: "grows" }, //            m: 0
   notes: { step: "TILE", kind: "lines", fold: NOTE_FOLD_LINES, rows: 1, fill: true }, // m: 0; the panel's whole width (#37.26)
   // Carte de identitate — the first row „about 75%" of L, M and M (Adrian, #37.26). Tip document
   // is 10rem, not 9.75: „Carte de identitate" needs 156.4 px with the arrow, and 9.75rem is 156.
