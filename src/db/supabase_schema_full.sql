@@ -4,7 +4,7 @@
 -- GENERATED FILE -- DO NOT EDIT BY HAND.
 -- Regenerate with:  .\scripts\Export-SupabaseSchema.ps1
 --
--- Generated : 2026-10-17 11:26
+-- Generated : 2026-10-17 17:42
 -- Source    : local Docker database (ga40db @ ga40prj-postgres)
 --
 -- Applies the complete schema from scratch after running
@@ -142,6 +142,153 @@ CREATE TYPE public.user_request_status AS ENUM (
     'approved',
     'rejected'
 );
+
+
+--
+-- Name: ga40_document_issuer_from_institution(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.ga40_document_issuer_from_institution() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+  IF NEW.institution_id IS NULL THEN
+    NEW.issuer_person_id := NULL;
+  ELSE
+    NEW.issuer_person_id := (SELECT juridical_person_id FROM lookup_institution WHERE id = NEW.institution_id);
+  END IF;
+  RETURN NEW;
+END $$;
+
+
+--
+-- Name: ga40_institution_added(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.ga40_institution_added() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+  PERFORM ga40_institution_juridical_person(NEW.id);
+  RETURN NULL;
+END $$;
+
+
+--
+-- Name: ga40_institution_juridical_person(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.ga40_institution_juridical_person(inst_id uuid) RETURNS uuid
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+  inst      record;
+  folded    text;
+  kind      text;
+  type_name text;
+  type_id   uuid;
+  generic   boolean;
+  note      text;
+  po_id     uuid;
+  po_code   text;
+  p_id      uuid;
+  meta_id   uuid;
+  prov      text;
+BEGIN
+  SELECT * INTO inst FROM lookup_institution WHERE id = inst_id;
+  IF NOT FOUND THEN RETURN NULL; END IF;
+  IF inst.juridical_person_id IS NOT NULL THEN RETURN inst.juridical_person_id; END IF;
+
+  folded := btrim(regexp_replace(regexp_replace(lower(normalize(coalesce(inst.name, ''), NFD)),
+              '[' || chr(768) || '-' || chr(879) || ']', '', 'g'), '\s+', ' ', 'g'));
+  kind := btrim(regexp_replace(regexp_replace(lower(normalize(coalesce(inst.institution_type, ''), NFD)),
+              '[' || chr(768) || '-' || chr(879) || ']', '', 'g'), '\s+', ' ', 'g'));
+
+  type_name := CASE
+    WHEN folded ~ '^(judecatori|tribunal|curtea )'                         THEN 'Instanță'
+    WHEN folded ~ '(notar)'                                                THEN 'Birou notarial'
+    WHEN folded ~ '(executor)'                                             THEN 'Birou de executor judecătoresc'
+    WHEN folded ~ '(avocat)'                                               THEN 'Cabinet sau societate de avocatură'
+    WHEN folded ~ '^(ocpi|ajfp|dgrfp|institutia prefectului|prefectura)'   THEN 'Instituție publică teritorială'
+    WHEN folded ~ '^(anaf|ancpi|ministerul|guvernul)'                      THEN 'Autoritate publică centrală'
+    WHEN folded ~ '^(primaria|consiliu|consiliul)'                         THEN 'Autoritate locală'
+    WHEN kind ~ '(juridic)'                                                THEN 'Instanță'
+    WHEN kind ~ '(cadastru)'                                               THEN 'Instituție publică teritorială'
+    WHEN kind ~ '(administratie)'                                          THEN 'Autoritate locală'
+    WHEN kind ~ '(fiscal)'                                                 THEN 'Autoritate publică centrală'
+    ELSE NULL
+  END;
+  SELECT id INTO type_id FROM lookup_judicial_person_type
+   WHERE btrim(regexp_replace(regexp_replace(lower(normalize(name, NFD)), '[' || chr(768) || '-' || chr(879) || ']', '', 'g'), '\s+', ' ', 'g'))
+       = btrim(regexp_replace(regexp_replace(lower(normalize(coalesce(type_name, ''), NFD)), '[' || chr(768) || '-' || chr(879) || ']', '', 'g'), '\s+', ' ', 'g'))
+   LIMIT 1;
+
+  generic := folded IN ('notariat', 'judecatorie', 'tribunal', 'ocpi', 'primaria municipiului', 'consiliu judetean');
+  note := CASE WHEN generic THEN 'generic — de înlocuit cu instituția exactă' ELSE NULL END;
+  prov := CASE WHEN inst.origin = 'IMPORT' THEN 'AI_INTERPRETED' ELSE 'MANUAL' END;
+
+  INSERT INTO principal_object (object_type, code)
+  VALUES ('PERSON', 'JPERS' || lpad(nextval('principal_object_code_seq')::text, 5, '0'))
+  RETURNING id, code INTO po_id, po_code;
+
+  INSERT INTO person (principal_object_id, code, type, display_name, notes)
+  VALUES (po_id, po_code, 'JUDICIAL', btrim(inst.name), note)
+  RETURNING id INTO p_id;
+
+  INSERT INTO judicial_person (person_id, name, judicial_person_type_id, correspondence_same_as_hq)
+  VALUES (p_id, btrim(inst.name), type_id, false);
+
+  -- Version 0, the shape judicialSnapshotFromFull writes (src/lib/judicial-persons/queries.ts).
+  INSERT INTO person_version (person_id, version_number, snapshot)
+  VALUES (p_id, 0, jsonb_build_object(
+    'notes', note,
+    'judicial', jsonb_build_object(
+      'name', btrim(inst.name), 'nickname', NULL, 'judicialPersonTypeId', type_id, 'cuiNumber', NULL,
+      'tradeRegisterNumber', NULL, 'phone', NULL, 'email', NULL, 'contactPerson1Id', NULL, 'contactPerson2Id', NULL,
+      'correspondenceSameAsHq', false),
+    'addresses', jsonb_build_object('HEADQUARTERS', NULL, 'CORRESPONDENCE', NULL)));
+
+  -- Its provenance, the way setInitialProvenance records it (src/lib/metadata/queries.ts).
+  INSERT INTO entity_metadata (principal_object_id, provenance, provenance_updated_at)
+  VALUES (po_id, prov, now())
+  RETURNING id INTO meta_id;
+  INSERT INTO entity_metadata_version (entity_metadata_id, version_number, snapshot)
+  VALUES (meta_id, 0, jsonb_build_object('importance', NULL, 'relevance', NULL, 'provenance', prov));
+
+  UPDATE lookup_institution SET juridical_person_id = p_id WHERE id = inst_id;
+  RETURN p_id;
+END $$;
+
+
+--
+-- Name: FUNCTION ga40_institution_juridical_person(inst_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.ga40_institution_juridical_person(inst_id uuid) IS 'Slice #39.71: an institution''s juridical person, made once - code, person, version 0, provenance - and linked.';
+
+
+--
+-- Name: ga40_institution_renamed(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.ga40_institution_renamed() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+  latest record;
+BEGIN
+  IF NEW.juridical_person_id IS NULL OR btrim(NEW.name) = btrim(OLD.name) THEN RETURN NULL; END IF;
+  UPDATE judicial_person SET name = btrim(NEW.name) WHERE person_id = NEW.juridical_person_id;
+  UPDATE person SET display_name = btrim(NEW.name), updated_at = now() WHERE id = NEW.juridical_person_id;
+  SELECT version_number, snapshot INTO latest FROM person_version
+   WHERE person_id = NEW.juridical_person_id ORDER BY version_number DESC LIMIT 1;
+  IF FOUND THEN
+    INSERT INTO person_version (person_id, version_number, snapshot)
+    VALUES (NEW.juridical_person_id, latest.version_number + 1,
+            jsonb_set(latest.snapshot, '{judicial,name}', to_jsonb(btrim(NEW.name))));
+  END IF;
+  RETURN NULL;
+END $$;
 
 
 --
@@ -340,7 +487,8 @@ CREATE TABLE public.document (
     ai_interpreted_at timestamp with time zone,
     custom_fields jsonb,
     import_title text,
-    referenced_instruments jsonb
+    referenced_instruments jsonb,
+    issuer_person_id uuid
 );
 
 
@@ -356,6 +504,13 @@ COMMENT ON COLUMN public.document.import_title IS 'The title the import derived 
 --
 
 COMMENT ON COLUMN public.document.referenced_instruments IS 'The instruments THIS document''s pages cite, as the AI read returned them: an array of { typeKey, nrDocument, dateDocument, issuer, purpose, rawText, status }. A READING, never a fact - nothing here is an association and nothing here may be acted on until a person confirms it in the reference-linker dialog, which is what POST /api/documents/[id]/instrument-references writes back with each entry''s status. Stored rather than re-read because reopening that dialog otherwise costs a billed vision call over every page of the document. NULL means this document has never been read for references (every document imported before Slice #36.03); an empty array means it was read and cited nothing - the two are different and both are ordinary. NOT VERSIONED: DocumentSnapshot omits it, documentUpdateSchema does not accept it, and updateDocument never writes it, exactly as for ai_interpreted_at and import_title. The shape is declared and validated in src/lib/documents/referenced-instruments.ts rather than by a CHECK here, because a constraint that rejected one malformed entry would throw away the whole paid read.';
+
+
+--
+-- Name: COLUMN document.issuer_person_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.document.issuer_person_id IS 'Slice #39.71: the document''s issuer, a juridical person. Kept in step with institution_id by a trigger until 39.72.';
 
 
 --
@@ -726,6 +881,7 @@ CREATE TABLE public.lookup_institution (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     origin text DEFAULT 'MANUAL'::text NOT NULL,
+    juridical_person_id uuid,
     CONSTRAINT chk_li_origin CHECK ((origin = ANY (ARRAY['MANUAL'::text, 'IMPORT'::text])))
 );
 
@@ -735,6 +891,13 @@ CREATE TABLE public.lookup_institution (
 --
 
 COMMENT ON COLUMN public.lookup_institution.origin IS 'How this institution came to exist: MANUAL = added in Reference Data (every row today), IMPORT = created by a machine reading. Nothing writes IMPORT yet - src/lib/import/id-card.ts still refuses to mint an institution from a model reading, and #34.02 keeps that refusal - so the column exists to make the status word answerable on both lists in one modal.';
+
+
+--
+-- Name: COLUMN lookup_institution.juridical_person_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.lookup_institution.juridical_person_id IS 'Slice #39.71: the juridical person this institution became. 39.72 drops the list.';
 
 
 --
@@ -2191,6 +2354,13 @@ CREATE UNIQUE INDEX document_document_unique ON public.document_document USING b
 
 
 --
+-- Name: document_issuer_person_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX document_issuer_person_idx ON public.document USING btree (issuer_person_id);
+
+
+--
 -- Name: document_tarla_tarla_idx; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2401,6 +2571,13 @@ CREATE UNIQUE INDEX lookup_document_type_short_name_uq ON public.lookup_document
 
 
 --
+-- Name: lookup_institution_juridical_person_unique; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX lookup_institution_juridical_person_unique ON public.lookup_institution USING btree (juridical_person_id);
+
+
+--
 -- Name: lookup_tarla_locality_indicativ_folded_unique; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2583,6 +2760,13 @@ CREATE TRIGGER address_touch_updated_at BEFORE UPDATE ON public.address FOR EACH
 
 
 --
+-- Name: document document_issuer_from_institution; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER document_issuer_from_institution BEFORE INSERT OR UPDATE OF institution_id ON public.document FOR EACH ROW EXECUTE FUNCTION public.ga40_document_issuer_from_institution();
+
+
+--
 -- Name: groups groups_touch_updated_at; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -2608,6 +2792,20 @@ CREATE TRIGGER lookup_citizenship_touch_updated_at BEFORE UPDATE ON public.looku
 --
 
 CREATE TRIGGER lookup_document_type_touch_updated_at BEFORE UPDATE ON public.lookup_document_type FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
+
+
+--
+-- Name: lookup_institution lookup_institution_juridical_person_added; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER lookup_institution_juridical_person_added AFTER INSERT ON public.lookup_institution FOR EACH ROW EXECUTE FUNCTION public.ga40_institution_added();
+
+
+--
+-- Name: lookup_institution lookup_institution_juridical_person_renamed; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER lookup_institution_juridical_person_renamed AFTER UPDATE OF name ON public.lookup_institution FOR EACH ROW EXECUTE FUNCTION public.ga40_institution_renamed();
 
 
 --
@@ -2807,6 +3005,14 @@ ALTER TABLE ONLY public.document
 
 
 --
+-- Name: document document_issuer_person_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.document
+    ADD CONSTRAINT document_issuer_person_id_fkey FOREIGN KEY (issuer_person_id) REFERENCES public.person(id) ON DELETE SET NULL;
+
+
+--
 -- Name: document document_surveyor_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2988,6 +3194,14 @@ ALTER TABLE ONLY public.lookup_doc_type_person_role
 
 ALTER TABLE ONLY public.lookup_doc_type_person_role
     ADD CONSTRAINT lookup_doc_type_person_role_person_role_id_fkey FOREIGN KEY (person_role_id) REFERENCES public.lookup_person_role(id) ON DELETE CASCADE;
+
+
+--
+-- Name: lookup_institution lookup_institution_juridical_person_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lookup_institution
+    ADD CONSTRAINT lookup_institution_juridical_person_id_fkey FOREIGN KEY (juridical_person_id) REFERENCES public.person(id) ON DELETE SET NULL;
 
 
 --
