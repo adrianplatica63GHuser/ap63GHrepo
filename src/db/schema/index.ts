@@ -734,6 +734,11 @@ export const lookupTarla = pgTable("lookup_tarla", {
   id:        uuid("id").primaryKey().defaultRandom(),
   indicativ: text("indicativ").notNull(),
   descriere: text("descriere"),
+  // Slice #39.67 (migration_112): the locality and county the tarla belongs to — tarla numbers restart in every
+  // locality — free text, as on property_address, compared folded; and the tarla's own notes.
+  locality:  text("locality"),
+  county:    text("county"),
+  notes:     text("notes"),
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -840,15 +845,38 @@ export const lookupTarla = pgTable("lookup_tarla", {
   // compares the two structurally when it decides whether a query may use a
   // partial index; two folds that differed would still create, still enforce
   // uniqueness, and cover a different set of rows than they appear to.
+  // Slice #39.67 (migration_112): unique per (folded locality, folded code) — was the code alone (migration_083).
   (t) => [
-    uniqueIndex("lookup_tarla_indicativ_folded_unique")
+    uniqueIndex("lookup_tarla_locality_indicativ_folded_unique")
       .on(
+        sql`btrim(regexp_replace(regexp_replace(lower(normalize(coalesce(${t.locality}, ''), NFD)), '[' || chr(768) || '-' || chr(879) || ']', '', 'g'), '\\s+', ' ', 'g'))`,
         sql`btrim(regexp_replace(regexp_replace(lower(normalize(coalesce(${t.indicativ}, ''), NFD)), '[' || chr(768) || '-' || chr(879) || ']', '', 'g'), '\\s+', ' ', 'g'))`,
       )
       .where(
         sql`btrim(regexp_replace(regexp_replace(lower(normalize(coalesce(${t.indicativ}, ''), NFD)), '[' || chr(768) || '-' || chr(879) || ']', '', 'g'), '\\s+', ' ', 'g')) <> ''`,
       ),
   ],
+);
+
+// ---------------------------------------------------------------------------
+// tarla_corner — a tarla's optional outline  (Slice #39.67, migration_112)
+// ---------------------------------------------------------------------------
+// property_corner's shape: ordered WGS84 vertices, 1-based, unique per tarla; deleted with the tarla.
+export const tarlaCorner = pgTable(
+  "tarla_corner",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tarlaId: uuid("tarla_id")
+      .notNull()
+      .references(() => lookupTarla.id, { onDelete: "cascade" }),
+    sequenceNo: integer("sequence_no").notNull(),
+    lat: doublePrecision("lat").notNull(),
+    lon: doublePrecision("lon").notNull(),
+    originalIndex: integer("original_index"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("tarla_corner_tarla_seq_unique").on(t.tarlaId, t.sequenceNo)],
 );
 
 export const lookupUseCategory = pgTable("lookup_use_category", {
