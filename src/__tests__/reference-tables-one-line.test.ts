@@ -109,7 +109,9 @@ describe("„Tipuri de obiecte” without the wasted space (#38.66)", () => {
   // header's longest word — measured in px at 1366 on the archive (field-widths.ts says where)].
   const OWN: [string, keyof typeof COLUMN, string, number][] = [
     ["judicial-person-types", "valueJudicialTypeName", "name", 87.2], //   „Consiliu Local"
-    ["property-types", "valuePropertyTypeName", "name", 148.6], //          „Teren pentru Construcții" (#39.23)
+    // #39.70: the header „DENUMIRE" (104 px; „Spațiu comercial" 103.4) since #39.66's types — was 148.6, „Teren pentru
+    // Construcții" (#39.23).
+    ["property-types", "valuePropertyTypeName", "name", 104],
     ["property-types", "valueFlagTarlaParcela", "showTarlaParcela", 59.2], // „PARCELĂ"
     ["property-types", "valueFlagAddress", "showAddress", 52.5], //         „ADRESĂ"
     ["property-types", "valueFlagStreetView", "showStreetView", 49.1], //   „STREET"
@@ -129,7 +131,8 @@ describe("„Tipuri de obiecte” without the wasted space (#38.66)", () => {
     expect(MODAL).toContain('"document-types": { name: "valueDocTypeName", shortName: "valueDocTypeShortName" },');
     for (const [, column, field] of OWN.filter(([l]) => l === "property-types")) expect(MODAL).toContain(`${field}: "${column}",`);
     expect(MODAL).toMatch(/const own = OWN_COLUMNS\[listKey\]\?\.\[f\.key\];\s*if \(own\) return own;\s*if \(f\.type === "checkbox"\) return "valueFlag";/);
-    expect(MODAL).toContain('const SHORT_NAME_LISTS: ReadonlySet<ListKey> = new Set(["use-categories", "person-types", "citizenships"]);');
+    // #39.70: „person-types" left — the professions are long. Was ["use-categories", "person-types", "citizenships"].
+    expect(MODAL).toContain('const SHORT_NAME_LISTS: ReadonlySet<ListKey> = new Set(["use-categories", "citizenships"]);');
   });
 
   it("each is narrower than the shared column it replaced", () => {

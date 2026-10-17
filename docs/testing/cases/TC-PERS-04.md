@@ -37,7 +37,7 @@ Nothing.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Opens „Persoane Fizice" | A search box („caută după cod, nume, email sau telefon"), no „Importanță" or „Relevanță" filter, „Câmpuri afișate 0/4", and the filter bar's „+ Filtru", the list's one `<select>` (#39.62) |
-| 2 | Presses „Câmpuri afișate" | CNP, Data nașterii, Vârstă, Gen, Data decesului, Locul nașterii, Tip profesional — in that order |
+| 2 | Presses „Câmpuri afișate" | CNP, Data nașterii, Vârstă, Gen, Data decesului, Locul nașterii, Tip profesional, Relația cu firma — in that order |
 | 3 | Ticks CNP and Data nașterii, presses outside, types `TC-PERS-04` into the search | „Câmpuri afișate 2/4"; the table headed NUME · PORECLĂ · CNP · DATA NAȘTERII; one row: `Ion TC-PERS-04`, „Ionel TC", `1800101420045`, `01.01.1980` |
 | 4 | Presses „Previzualizare" on the row | A tile headed `TC-PERS-04 Ion` (Nume Prenume), then two lines: „Ionel TC, 1800101420045" and „născut: 01.01.1980, Localitatea Exemplu"; no system ID, no Nume or Prenume under the heading |
 | 5 | Opens „Persoane Juridice" and presses „Câmpuri afișate" (it reads `0/4`) | Tip, Nr. înregistrare (CUI), Nr. registru comerțului, Persoană de contact |
@@ -95,3 +95,6 @@ new field.
 **2026-10-16 — step 1 rewritten for #39.62.** The person lists have a filter bar now (TC-PERS-12, TC-PERS-13), so
 step 1's „no `<select>`" became „one, „+ Filtru"". Read in the browser pane on localhost:3000 the same day: one select,
 its first option „+ Filtru". The rest of the case is unchanged.
+
+**2026-10-17 — step 2 widened (Slice #39.70).** „Relația cu firma” joined „Câmpuri afișate” after „Tip profesional”;
+the case stays `automated` — its spec ran with the new label in the slice's targeted run.

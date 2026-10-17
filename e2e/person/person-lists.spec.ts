@@ -90,8 +90,10 @@ test.describe("TC-PERS-04 — listele de persoane", () => {
       // Step 2 — the six fields, in the panel's order.
       await npChooser.click();
       const npPicker = main.locator("[data-field-chooser]");
-      // #39.30: + „Data decesului", after „Gen" — the panel's order.
-      await expect(npPicker.locator("label")).toHaveText(["CNP", "Data nașterii", "Vârstă", "Gen", "Data decesului", "Locul nașterii", "Tip profesional"]);
+      // #39.30: + „Data decesului", after „Gen" — the panel's order. #39.70: + „Relația cu firma", last.
+      await expect(npPicker.locator("label")).toHaveText([
+        "CNP", "Data nașterii", "Vârstă", "Gen", "Data decesului", "Locul nașterii", "Tip profesional", "Relația cu firma",
+      ]);
 
       // Step 3 — CNP and Data nașterii; the search; the row.
       await npPicker.getByRole("checkbox", { name: "CNP" }).check();

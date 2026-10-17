@@ -185,7 +185,9 @@ export const NATURAL_PERSON = {
   // Slice #39.30 — „Decedat", a tick, and „Data decesului", a date like the birth's.
   isDeceased: { step: "XS", kind: "fixed" }, //            a tick under its label
   dateOfDeath: { step: "M", kind: "fixed" }, //             dd.mm.yyyy and the calendar button
-  physicalPersonTypeId: { step: "M", kind: "select" }, //   m: 2 options, longest „Expert" (6); longer ones show on hover
+  // Slice #39.70: m: 13 professions, longest „Contabil / consultant fiscal" (28; 186.6 px measured) — L; was M, for
+  // „Expert" (6).
+  physicalPersonTypeId: { step: "L", kind: "select" },
   placeOfBirth: { step: "XL", kind: "grows" }, //           m: 0
   notes: { step: "TILE", kind: "lines", fold: NOTE_FOLD_LINES, rows: 1, fill: true }, // m: 0; the panel's whole width (#37.26)
   // Carte de identitate — the first row „about 75%" of L, M and M (Adrian, #37.26). Tip document
@@ -1345,7 +1347,10 @@ export const COLUMN = {
   valueJudicialTypeName: { content: 5.75, kind: "fixed" }, // „Consiliu Local" (87.2 px); was valueName's XL (272)
   // Slice #39.23: „Teren pentru Construcții" (148.6 px), the property type the big dev seed added, was cut at 8 rem.
   // #39.66 folded it into „Teren intravilan"; the width stays, for a type Adrian names longer.
-  valuePropertyTypeName: { content: 9.5, kind: "fixed" }, // „Teren pentru Construcții" (148.6 px); was 8 for „Vegetație Forestieră" (125.3)
+  // Slice #39.70 (fixing #39.66's names): the nine agreed types are shorter — at 9.5 rem TC-VL-05 measured the longest
+  // ending 64.5 px before the next column. Now the header's „DENUMIRE" (104 px) is the widest, „Spațiu comercial"
+  // 103.4. Was 9.5 for „Teren pentru Construcții" (148.6 px), and 8 for „Vegetație Forestieră" (125.3) before that.
+  valuePropertyTypeName: { content: 6.75, kind: "fixed" },
   valueFlagTarlaParcela: { content: 4, kind: "fixed" }, //   ✓ / – under „TARLA /" over „PARCELĂ" (59.2 px); was valueFlag (88)
   valueFlagAddress: { content: 3.5, kind: "fixed" }, //      ✓ / – under „ADRESĂ" (52.5 px)
   valueFlagStreetView: { content: 3.25, kind: "fixed" }, //  ✓ / – under „STREET" over „VIEW" (49.1 px): the header takes two lines

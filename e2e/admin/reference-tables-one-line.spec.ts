@@ -98,7 +98,11 @@ test.describe("TC-VL-05 — tabele înguste, câte un rând pe linie", () => {
           };
         });
         const at = `${list.name} at ${width}`;
-        await expect(page.locator("[data-value-list-head]").getByRole("button", { name: "+ Adaugă", exact: true })).toBeVisible();
+        // Slice #39.70: the first card's — „Tipuri de proprietate și folosințe" has two tiles, each with its „+ Adaugă"
+        // (#39.66), and `head` above reads the first. Was the page's `[data-value-list-head]`.
+        await expect(
+          page.locator("[data-value-list-card]").first().locator("[data-value-list-head]").getByRole("button", { name: "+ Adaugă", exact: true }),
+        ).toBeVisible();
         expect(head.sameLine, `${at}: „+ Adaugă" on the title's line`).toBeLessThanOrEqual(4);
         expect(Math.abs(head.rightEdges), `${at}: „+ Adaugă"'s right edge against the table's`).toBeLessThanOrEqual(2);
         expect([head.countLeft, head.countSameLine <= 4], `${at}: the count to its left, on its line`).toEqual([true, true]);
