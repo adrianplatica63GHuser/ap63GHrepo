@@ -194,6 +194,10 @@ import {
   type AiExtractedParty,
   type AiPartyLinkerSummary,
 } from "@/app/documents/_components/ai-party-linker-dialog";
+// Slice #39.69 — a plan parcelar's tarla, read after the general read and confirmed as the fourth step.
+import { TarlaPlanDialog } from "./tarla-plan-dialog";
+import { PLAN_PARCELAR_KEY, readingHasTarla, type TarlaPlanReading } from "@/lib/tarla/plan-read";
+import { readTarlaPlan, tarlaPlanRowNote, type TarlaPlanRowState } from "@/lib/tarla/plan-step";
 // Slice #37.85 — only the REPORTING half of #27.05 is left here: whether a
 // row's type is waiting for a form. The one-document discovery read and its
 // review step are gone; a type's form comes from DocTypeEngine or the Form
@@ -391,6 +395,13 @@ export type ImportResult = {
    * server-only modules, which this is not.
    */
   aiParties?: AiPartyLinkerSummary | null;
+  /**
+   * A plan parcelar's tarla: queued, decided, or why there is none.   (Slice #39.69)
+   *
+   * Set only on a row whose type after the read is „Plan parcelar". `pending` while its step waits; the step's
+   * answer replaces it. The row and the saved report print it through `tarlaPlanRowNote`.
+   */
+  tarlaPlan?: TarlaPlanRowState;
   /**
    * How this row's automatic AI read went.   (Slice #26.09)
    *
@@ -742,7 +753,40 @@ type IdCardStep = {
  * on "is a follow-up open", and two independent cursors would give that one
  * question two answers. `kind` is what the render switches on.
  */
-type FollowUpStep = IdCardStep | PartyStep;
+/**
+ * One plan parcelar's tarla, read and waiting for a person.   (Slice #39.69)
+ *
+ * Queued after the parties: the people a plan's run creates come first, as the cards come before the parties. The
+ * reading is all the step needs; nothing has been written (D-12).
+ */
+type TarlaPlanStep = {
+  kind: "tarla-plan";
+  path: string;
+  docId: string;
+  label: string;
+  reading: TarlaPlanReading;
+};
+
+type FollowUpStep = IdCardStep | PartyStep | TarlaPlanStep;
+
+/**
+ * Read a plan's tarla and queue its step; what the row says until the step is answered.   (Slice #39.69)
+ *
+ * A reading with no tarla code queues nothing — there is nothing to create or link — and the row says so. A failed
+ * read is a note on the row, never a failed row: the document itself was imported and read.
+ */
+async function queueTarlaPlan(
+  steps: Map<string, TarlaPlanStep>,
+  path: string,
+  docId: string,
+  label: string,
+): Promise<TarlaPlanRowState> {
+  const read = await readTarlaPlan(docId);
+  if (!read.ok) return { status: "failed", reason: read.reason };
+  if (!readingHasTarla(read.reading)) return { status: "no-code" };
+  steps.set(path, { kind: "tarla-plan", path, docId, label, reading: read.reading });
+  return { status: "pending", code: read.reading.tarla ?? "" };
+}
 
 /**
  * Re-read the document type catalogue.          (Slice #27.05; narrowed in
@@ -1698,6 +1742,8 @@ export function BulkImportDialog({
    * for a queue nothing is reading yet.
    */
   const partyStepsRef = useRef<Map<string, PartyStep>>(new Map());
+  // Slice #39.69 — the plans' tarla steps, kept like the parties': by path, published in the folder's order.
+  const tarlaStepsRef = useRef<Map<string, TarlaPlanStep>>(new Map());
   /**
    * Which document types had a form when the run started, by id.
    * (Slice #27.05)
@@ -2257,6 +2303,7 @@ export function BulkImportDialog({
     // the second run's stepper a document the first had already queued.
     partyStepsRef.current = new Map();
     idCardStepsRef.current = new Map();
+    tarlaStepsRef.current = new Map();
     // Slice #26.03 — see the `onFirstDocumentCreated` prop. Local to this run,
     // so a StrictMode re-mount re-announces for its own first document rather
     // than staying silent because a discarded run had already spoken.
@@ -2953,6 +3000,12 @@ export function BulkImportDialog({
              * good, and it is in the handover rather than done here.
              */
             const finalTypeRow = docTypeItems.find((i) => i.id === finalTypeId) ?? null;
+            // Slice #39.69 — a plan parcelar's tarla: read now, confirmed in the queue.
+            const tarlaPlan =
+              finalTypeRow?.key === PLAN_PARCELAR_KEY
+                ? await queueTarlaPlan(tarlaStepsRef.current, entry.path, docId, titleForEntry(entry))
+                : undefined;
+            if (!mounted) return;
             const awaitsForm = typeAwaitsForm({
               typeId: finalTypeId,
               typeKey: finalTypeRow?.key ?? null,
@@ -2969,6 +3022,7 @@ export function BulkImportDialog({
               aiStatus: "done",
               aiProcessed: true,
               aiFieldCount: interpreted.fieldCount,
+              ...(tarlaPlan ? { tarlaPlan } : {}),
               // First read of this row, so there is no previous answer to
               // preserve and the three-state flag collapses to two. Both are
               // written from the SAME test: `printedHeadingNoted` is only ever
@@ -3110,6 +3164,7 @@ export function BulkImportDialog({
         : [
             ...inFolderOrder(entries, idCardStepsRef.current),
             ...inFolderOrder(entries, partyStepsRef.current),
+            ...inFolderOrder(entries, tarlaStepsRef.current),
           ];
 
       if (mounted) {
@@ -3487,6 +3542,25 @@ export function BulkImportDialog({
   );
 
   /**
+   * A plan's tarla is decided — created, linked or skipped — and the queue moves on.   (Slice #39.69)
+   *
+   * Every answer settles the step, a skip included: unlike a person nobody confirmed, a skipped tarla leaves nothing
+   * half-done — the plan is imported and read either way, and reading it again is a later command (out of scope in
+   * #39.69). So the ref entry goes either way.
+   */
+  const handleTarlaPlanDone = useCallback(
+    (state: TarlaPlanRowState) => {
+      const step = followUps[followUpIndex];
+      if (step !== undefined && step.kind === "tarla-plan") {
+        tarlaStepsRef.current.delete(step.path);
+        updateResult(step.path, { tarlaPlan: state });
+      }
+      advanceFollowUp(followUpIndex);
+    },
+    [advanceFollowUp, followUps, followUpIndex, updateResult],
+  );
+
+  /**
    * Open the questions nobody was asked.   (Slice #26.09, both queues since #26.10)
    *
    * ⚠️ **Free, and that is the point.** Both refs already hold their contents —
@@ -3514,6 +3588,7 @@ export function BulkImportDialog({
     const steps = [
       ...inFolderOrder(entries, idCardStepsRef.current),
       ...inFolderOrder(entries, partyStepsRef.current),
+      ...inFolderOrder(entries, tarlaStepsRef.current),
     ];
     // ⚠️ **The mirror is set EAGERLY here, not left to its effect.**
     // (Slice #27.06)
@@ -4147,6 +4222,12 @@ export function BulkImportDialog({
           finalTypeId === null
             ? null
             : preflight.typeRows?.find((r) => r.id === finalTypeId) ?? null;
+        // Slice #39.69 — a retried plan gets its tarla read too, unless its tarla was already created or linked.
+        const tarlaSettled = result.tarlaPlan?.status === "created" || result.tarlaPlan?.status === "linked";
+        const tarlaPlan =
+          finalTypeRow?.key === PLAN_PARCELAR_KEY && !tarlaSettled
+            ? await queueTarlaPlan(tarlaStepsRef.current, path, docId, titleForEntry(result.entry))
+            : undefined;
         const awaitsForm =
           finalTypeId !== null &&
           typeAwaitsForm({
@@ -4161,6 +4242,7 @@ export function BulkImportDialog({
           aiStatus: "done",
           aiProcessed: true,
           aiFieldCount: interpreted.fieldCount,
+          ...(tarlaPlan ? { tarlaPlan } : {}),
           // `null` leaves the previous answer alone — see the refill walk's
           // copy of this for the row it was clearing.
           ...(interpreted.titleKept === null
@@ -5115,6 +5197,8 @@ export function BulkImportDialog({
           : (r.aiPartiesPending ?? 0) > 0
             ? [t("interpretPartiesPending", { count: r.aiPartiesPending ?? 0 })]
             : []),
+        // Slice #39.69 — the plan's tarla, in the report as on the row.
+        ...((n) => (n ? [t(n.key, n.values)] : []))(tarlaPlanRowNote(r.tarlaPlan)),
         ...(r.aiProcessed === true && confidence !== null
           ? [`${confidence.title} — ${confidence.body}`]
           : []),
@@ -5774,6 +5858,16 @@ export function BulkImportDialog({
             />
           )}
 
+          {currentFollowUp?.kind === "tarla-plan" && (
+            <TarlaPlanDialog
+              key={currentFollowUp.path}
+              documentId={currentFollowUp.docId}
+              label={currentFollowUp.label}
+              reading={currentFollowUp.reading}
+              onDone={handleTarlaPlanDone}
+            />
+          )}
+
           <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-fade dark:text-zinc-400">
             {t("resultsTitle")}
           </h3>
@@ -6046,6 +6140,7 @@ function ResultRow({
     aiTitleKept,
     aiPrintedHeadingNoted,
     aiParties,
+    tarlaPlan,
     aiStatus,
     aiErrorDetail,
     // Slice #32.05 — present together, and only when they disagree.
@@ -6077,6 +6172,7 @@ function ResultRow({
     typeCatalogueTypeGone,
   } = result;
   const displayName = titleForEntry(entry);
+  const tarlaPlanNote = tarlaPlanRowNote(tarlaPlan);
   // Slice #34.23 — computed for every row and read only by the error branch,
   // which is what keeps the hook-free component hook-free and the cell one line.
   const failure = errorCell({ errorMsg, errorMsgTranslated }, t("errorShort"));
@@ -6525,6 +6621,8 @@ function ResultRow({
                 : (aiPartiesPending ?? 0) > 0
                   ? ` · ${t("interpretPartiesPending", { count: aiPartiesPending ?? 0 })}`
                   : ""}
+              {/* Slice #39.69 — a plan parcelar's tarla: to confirm, created, linked, skipped, or why not. */}
+              {tarlaPlanNote ? ` · ${t(tarlaPlanNote.key, tarlaPlanNote.values)}` : ""}
             </span>
           )}
           {/* ⚠️ Drawn only on a row the model actually read, and that is the

@@ -2433,7 +2433,9 @@
         "documentDocuments": "{count, plural, one {# Document–Document association} other {# Document–Document associations}}",
         "propertyTypeUses": "{count, plural, one {# use the type allows} other {# uses the type allows}}",
         "useTypeAllowed": "{count, plural, one {# property type that allows the use} other {# property types that allow the use}}",
-        "tarlaCorners": "{count, plural, one {# corner of its outline} other {# corners of its outline}}"
+        "tarlaCorners": "{count, plural, one {# corner of its outline} other {# corners of its outline}}",
+        "tarlaParcels": "{count, plural, one {# parcel of the tarla} other {# parcels of the tarla}}",
+        "tarlaPlans": "{count, plural, one {# linked plan parcelar} other {# linked plans parcelare}}"
       },
       "notes": {
         "versionSnapshots": "Version history is not counted above. Each saved version keeps the value as it was at the time — neither deleting nor moving alters a version that is already saved. Moving does add one new version to each object it changes."
@@ -2879,7 +2881,13 @@
           "typesStillWithoutFormPartial": "{count, plural, one {One document type is still without a form: {names}.} other {# document types are still without a form, of which this import could only name: {names}.}} You will find all of them in Reference Data → Document Types, ticking “Without a form”.",
           "typesCreatedEmpty": "{count, plural, one {One document type was created in this import and no document from this import ended up on it: {names}. Check in Reference Data → Document Types whether you still need it.} other {# document types were created in this import and no document from this import ended up on them: {names}. Check in Reference Data → Document Types whether you still need them.}}"
         },
-        "aiMultiIdentity": "This document holds more than one person's identity documents. The AI read was refused, so that two people's details do not end up on one record. No “Try again” is offered on this row: the answer would be the same, and the read is billed every time. Split the scan and import it again."
+        "aiMultiIdentity": "This document holds more than one person's identity documents. The AI read was refused, so that two people's details do not end up on one record. No “Try again” is offered on this row: the answer would be the same, and the read is billed every time. Split the scan and import it again.",
+        "tarlaPlanPending": "tarla {code} to confirm",
+        "tarlaPlanCreated": "{count, plural, =0 {tarla {code} created, no parcels} one {tarla {code} created, with one parcel} other {tarla {code} created, with # parcels}}",
+        "tarlaPlanLinked": "{count, plural, =0 {linked to tarla {code}, no new parcel} one {linked to tarla {code}, one new parcel} other {linked to tarla {code}, # new parcels}}",
+        "tarlaPlanSkipped": "tarla {code}: skipped",
+        "tarlaPlanNoCode": "the plan names no legible tarla",
+        "tarlaPlanFailed": "the plan's tarla could not be read"
       },
       "preflight": {
         "title": "Before you choose a folder",
@@ -3565,6 +3573,35 @@
       "reportFilePrefix": "import-report",
       "reportRowImported": "imported",
       "reportRowFailed": "not imported: {reason}"
+    },
+    "tarlaPlan": {
+      "title": "The tarla from the plan parcelar",
+      "close": "Close",
+      "intro": "The plan was read with AI. Check the tarla, the locality and the parcels; nothing is written until you press a button.",
+      "fields": {
+        "indicativ": "Tarla",
+        "locality": "Locality",
+        "county": "County"
+      },
+      "checking": "Looking for the tarla in the archive…",
+      "proposalLink": "Tarla {label} already exists: the plan will be linked to it and the parcels it does not have will be added. <open>Open the tarla's page</open>",
+      "proposalCreate": "Tarla {label} does not exist yet: it will be created with the parcels below, and the plan linked to it.",
+      "proposalNone": "Without the tarla's code nothing can be created or linked. Type it, or skip.",
+      "illegibleParcels": "{count, plural, one {One parcel drawn has no legible number and was not taken.} other {# parcels drawn have no legible number and were not taken.}}",
+      "duplicatesDropped": "{count, plural, one {One parcel number appeared twice; the first was kept.} other {# parcel numbers appeared twice; the first of each was kept.}}",
+      "noLocality": "The plan does not name its locality legibly.",
+      "parcels": "{count, plural, =0 {Parcels} one {One parcel} other {# parcels}}",
+      "parcelsNone": "The plan gave no legible parcel; the tarla can still be created or linked.",
+      "columns": {
+        "parcela": "Parcel",
+        "area": "Area (m²)",
+        "use": "Use"
+      },
+      "failed": "The tarla could not be saved. Try again, or skip.",
+      "skip": "Skip",
+      "saving": "Saving…",
+      "link": "Link the plan to the tarla",
+      "create": "Create the tarla and link the plan"
     }
   },
   "usersAccess": {
@@ -4934,9 +4971,18 @@
         "docCode": "Code",
         "docTitle": "Title",
         "docType": "Document Type",
-        "viaProperties": "Through the properties"
+        "viaProperties": "Through the properties",
+        "area": "Area (m²)",
+        "use": "Use",
+        "fromPlan": "From plan"
       },
-      "mapNone": "No outline: the tarla has no corners drawn, and its properties have no corners."
+      "mapNone": "No outline: the tarla has no corners drawn, and its properties have no corners.",
+      "plans": "{count, plural, =0 {Plans parcelare} one {One plan parcelar} other {# plans parcelare}}",
+      "plansHint": "The documents linked to this tarla at import, from the step „The tarla from the plan parcelar”.",
+      "plansNone": "No plan parcelar is linked to this tarla.",
+      "parcels": "{count, plural, =0 {Parcels} one {One parcel} other {# parcels}}",
+      "parcelsHint": "The parcels the tarla's plans draw: number, area and use, without owners.",
+      "parcelsNone": "No parcels yet: they come from imported plans parcelare."
     },
     "info": {
       "title": "About tarla boundaries",

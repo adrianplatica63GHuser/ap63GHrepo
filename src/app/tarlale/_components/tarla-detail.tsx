@@ -25,7 +25,7 @@ import type { Corner } from "@/app/properties/_components/form-schema";
 import { IconButton } from "@/lib/ui/icon-button";
 import { TARLA, boxStyle } from "@/lib/ui/field-widths";
 import { tarlaLabel } from "@/lib/tarla/label";
-import type { TarlaDocumentItem, TarlaFull, TarlaPropertyItem } from "@/lib/tarla/types";
+import type { TarlaDocumentItem, TarlaFull, TarlaParcelItem, TarlaPlanItem, TarlaPropertyItem } from "@/lib/tarla/types";
 import { TARLA_LIST_QUERY_KEY } from "./tarla-list";
 import { TarlaMap } from "./tarla-map";
 import { MAP_BOX_HEIGHT_REM } from "@/lib/ui/field-widths";
@@ -94,6 +94,15 @@ export function TarlaDetail({ id }: { id: string }) {
       getJson<{ items: { id: string; corners: { lat: number; lon: number }[] }[] }>(`/api/tarlale/${id}/corners`).then(
         (b) => b.items,
       ),
+  });
+  // Slice #39.69: the parcels its plans drew, and the plans linked to it.
+  const parcels = useQuery({
+    queryKey: ["tarla", id, "parcels"],
+    queryFn: () => getJson<{ items: TarlaParcelItem[] }>(`/api/tarlale/${id}/parcels`).then((b) => b.items),
+  });
+  const plans = useQuery({
+    queryKey: ["tarla", id, "plans"],
+    queryFn: () => getJson<{ items: TarlaPlanItem[] }>(`/api/tarlale/${id}/plans`).then((b) => b.items),
   });
   const documents = useQuery({
     queryKey: ["tarla", id, "documents"],
@@ -296,6 +305,76 @@ export function TarlaDetail({ id }: { id: string }) {
                   <td className="py-1.5 pr-4">{p.parcela ?? "–"}</td>
                   <td className="py-1.5 pr-4">{p.typeName ?? "–"}</td>
                   <td className="py-1.5 pr-4">{p.locality ?? "–"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
+
+      <section className={CARD} aria-labelledby="tarla-plans-title" data-tarla-plans="">
+        <h2 id="tarla-plans-title" className="text-base font-semibold text-ink dark:text-zinc-100">
+          {t("plans", { count: plans.data?.length ?? 0 })}
+        </h2>
+        <p className="mt-1 text-xs text-fade dark:text-zinc-400">{t("plansHint")}</p>
+        {plans.isPending ? (
+          <ActivityCue>{tc("loading")}</ActivityCue>
+        ) : plans.isError ? (
+          <p role="alert" className="text-sm text-red-700">{tc("loadError")}</p>
+        ) : plans.data.length === 0 ? (
+          <p className="mt-2 text-sm text-fade">{t("plansNone")}</p>
+        ) : (
+          <ul className="mt-2 space-y-1 text-sm">
+            {plans.data.map((d) => (
+              <li key={d.id} data-tarla-plan={d.code}>
+                <Link href={`/documents/${d.id}`} className={LINK}>
+                  {d.code}
+                </Link>
+                {` — ${d.title ?? d.typeName ?? "–"}`}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className={CARD} aria-labelledby="tarla-parcels-title" data-tarla-parcels="">
+        <h2 id="tarla-parcels-title" className="text-base font-semibold text-ink dark:text-zinc-100">
+          {t("parcels", { count: parcels.data?.length ?? 0 })}
+        </h2>
+        <p className="mt-1 text-xs text-fade dark:text-zinc-400">{t("parcelsHint")}</p>
+        {parcels.isPending ? (
+          <ActivityCue>{tc("loading")}</ActivityCue>
+        ) : parcels.isError ? (
+          <p role="alert" className="text-sm text-red-700">{tc("loadError")}</p>
+        ) : parcels.data.length === 0 ? (
+          <p className="mt-2 text-sm text-fade">{t("parcelsNone")}</p>
+        ) : (
+          <table className="mt-2 text-sm">
+            <thead>
+              <tr className="text-left text-xs font-medium uppercase tracking-wide text-fade">
+                <th className="py-2 pr-4">{t("columns.parcela")}</th>
+                <th className="py-2 pr-4 text-right">{t("columns.area")}</th>
+                <th className="py-2 pr-4">{t("columns.use")}</th>
+                <th className="py-2 pr-4">{t("columns.fromPlan")}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {parcels.data.map((p) => (
+                <tr key={p.id} className="border-t border-wire dark:border-zinc-700" data-tarla-parcel={p.parcela}>
+                  <td className="py-1.5 pr-4">{p.parcela}</td>
+                  <td className="py-1.5 pr-4 text-right tabular-nums">
+                    {p.areaSqm === null ? "–" : p.areaSqm.toLocaleString("ro-RO", { maximumFractionDigits: 2 })}
+                  </td>
+                  <td className="py-1.5 pr-4">{p.use ?? "–"}</td>
+                  <td className="py-1.5 pr-4">
+                    {p.sourceDocumentId && p.sourceDocumentCode ? (
+                      <Link href={`/documents/${p.sourceDocumentId}`} className={LINK}>
+                        {p.sourceDocumentCode}
+                      </Link>
+                    ) : (
+                      "–"
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>

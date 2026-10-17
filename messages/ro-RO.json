@@ -2433,7 +2433,9 @@
         "documentDocuments": "{count, plural, one {# asociere Document–Document} few {# asocieri Document–Document} other {# de asocieri Document–Document}}",
         "propertyTypeUses": "{count, plural, one {# folosință pe care o permite tipul} few {# folosințe pe care le permite tipul} other {# de folosințe pe care le permite tipul}}",
         "useTypeAllowed": "{count, plural, one {# tip de proprietate care permite folosința} few {# tipuri de proprietate care permit folosința} other {# de tipuri de proprietate care permit folosința}}",
-        "tarlaCorners": "{count, plural, one {# colț al conturului} few {# colțuri ale conturului} other {# de colțuri ale conturului}}"
+        "tarlaCorners": "{count, plural, one {# colț al conturului} few {# colțuri ale conturului} other {# de colțuri ale conturului}}",
+        "tarlaParcels": "{count, plural, one {# parcelă a tarlalei} few {# parcele ale tarlalei} other {# de parcele ale tarlalei}}",
+        "tarlaPlans": "{count, plural, one {# plan parcelar legat} few {# planuri parcelare legate} other {# de planuri parcelare legate}}"
       },
       "notes": {
         "versionSnapshots": "Istoricul versiunilor nu este numărat mai sus. Fiecare versiune salvată păstrează valoarea așa cum era atunci — nici ștergerea, nici mutarea nu modifică versiunile deja salvate. Mutarea adaugă însă câte o versiune nouă fiecărui obiect pe care îl modifică."
@@ -2879,7 +2881,13 @@
           "typesStillWithoutFormPartial": "{count, plural, one {Un tip de document a rămas fără formular: {names}.} few {# tipuri de documente au rămas fără formular, dintre care importul a putut numi doar: {names}.} other {# de tipuri de documente au rămas fără formular, dintre care importul a putut numi doar: {names}.}} Pe toate le găsiți în Date de referință → Tipuri de Document, bifând „Fără formular”.",
           "typesCreatedEmpty": "{count, plural, one {Un tip de document a fost creat în acest import și niciun document din acest import nu a rămas pe el: {names}. Verificați în Date de referință → Tipuri de Document dacă vă mai trebuie.} few {# tipuri de documente au fost create în acest import și niciun document din acest import nu a rămas pe ele: {names}. Verificați în Date de referință → Tipuri de Document dacă vă mai trebuie.} other {# de tipuri de documente au fost create în acest import și niciun document din acest import nu a rămas pe ele: {names}. Verificați în Date de referință → Tipuri de Document dacă vă mai trebuie.}}"
         },
-        "aiMultiIdentity": "Documentul conține actele de identitate ale mai multor persoane. Citirea AI a fost refuzată, ca să nu ajungă datele a două persoane în aceeași fișă. Pentru acest rând nu se oferă „Reîncearcă”: răspunsul ar fi același, iar citirea se plătește de fiecare dată. Împărțiți scanarea și importați-o din nou."
+        "aiMultiIdentity": "Documentul conține actele de identitate ale mai multor persoane. Citirea AI a fost refuzată, ca să nu ajungă datele a două persoane în aceeași fișă. Pentru acest rând nu se oferă „Reîncearcă”: răspunsul ar fi același, iar citirea se plătește de fiecare dată. Împărțiți scanarea și importați-o din nou.",
+        "tarlaPlanPending": "tarla {code} de confirmat",
+        "tarlaPlanCreated": "{count, plural, =0 {tarla {code} creată, fără parcele} one {tarla {code} creată, cu o parcelă} few {tarla {code} creată, cu # parcele} other {tarla {code} creată, cu # de parcele}}",
+        "tarlaPlanLinked": "{count, plural, =0 {legat de tarla {code}, nicio parcelă nouă} one {legat de tarla {code}, o parcelă nouă} few {legat de tarla {code}, # parcele noi} other {legat de tarla {code}, # de parcele noi}}",
+        "tarlaPlanSkipped": "tarla {code}: sărit peste",
+        "tarlaPlanNoCode": "planul nu numește lizibil o tarla",
+        "tarlaPlanFailed": "tarla planului nu a putut fi citită"
       },
       "preflight": {
         "title": "Înainte de a alege un folder",
@@ -3565,6 +3573,35 @@
       "reportFilePrefix": "raport-import",
       "reportRowImported": "importat",
       "reportRowFailed": "nu a fost importat: {reason}"
+    },
+    "tarlaPlan": {
+      "title": "Tarla din planul parcelar",
+      "close": "Închide",
+      "intro": "Planul a fost citit cu AI. Verifică tarlaua, localitatea și parcelele; nimic nu se scrie până nu apeși un buton.",
+      "fields": {
+        "indicativ": "Tarla",
+        "locality": "Localitate",
+        "county": "Județ"
+      },
+      "checking": "Se caută tarlaua în arhivă…",
+      "proposalLink": "Tarla {label} există deja: planul va fi legat de ea și parcelele pe care nu le are vor fi adăugate. <open>Deschide pagina tarlalei</open>",
+      "proposalCreate": "Tarla {label} nu există încă: va fi creată, cu parcelele de mai jos, iar planul va fi legat de ea.",
+      "proposalNone": "Fără codul tarlalei nu se poate crea sau lega nimic. Scrie-l, sau sari peste.",
+      "illegibleParcels": "{count, plural, one {O parcelă desenată nu are un număr lizibil și nu a fost preluată.} few {# parcele desenate nu au un număr lizibil și nu au fost preluate.} other {# de parcele desenate nu au un număr lizibil și nu au fost preluate.}}",
+      "duplicatesDropped": "{count, plural, one {Un număr de parcelă apărea de două ori; s-a păstrat prima apariție.} few {# numere de parcelă apăreau de două ori; s-a păstrat prima apariție.} other {# de numere de parcelă apăreau de două ori; s-a păstrat prima apariție.}}",
+      "noLocality": "Planul nu numește lizibil localitatea.",
+      "parcels": "{count, plural, =0 {Parcele} one {O parcelă} few {# parcele} other {# de parcele}}",
+      "parcelsNone": "Planul nu a dat nicio parcelă lizibilă; tarlaua poate fi totuși creată sau legată.",
+      "columns": {
+        "parcela": "Parcela",
+        "area": "Suprafață (m²)",
+        "use": "Folosință"
+      },
+      "failed": "Tarlaua nu a putut fi salvată. Încearcă din nou, sau sari peste.",
+      "skip": "Sari peste",
+      "saving": "Se salvează…",
+      "link": "Leagă planul de tarla",
+      "create": "Creează tarla și leagă planul"
     }
   },
   "usersAccess": {
@@ -4934,9 +4971,18 @@
         "docCode": "Cod",
         "docTitle": "Titlu",
         "docType": "Tip act",
-        "viaProperties": "Prin proprietățile"
+        "viaProperties": "Prin proprietățile",
+        "area": "Suprafață (m²)",
+        "use": "Folosință",
+        "fromPlan": "Din planul"
       },
-      "mapNone": "Niciun contur: tarlaua nu are colțuri desenate, iar proprietățile ei nu au colțuri."
+      "mapNone": "Niciun contur: tarlaua nu are colțuri desenate, iar proprietățile ei nu au colțuri.",
+      "plans": "{count, plural, =0 {Planuri parcelare} one {Un plan parcelar} few {# planuri parcelare} other {# de planuri parcelare}}",
+      "plansHint": "Actele legate de această tarla la import, din pasul „Tarla din planul parcelar”.",
+      "plansNone": "Niciun plan parcelar legat de această tarla.",
+      "parcels": "{count, plural, =0 {Parcele} one {O parcelă} few {# parcele} other {# de parcele}}",
+      "parcelsHint": "Parcelele desenate de planurile tarlalei: numărul, suprafața și folosința, fără proprietari.",
+      "parcelsNone": "Nicio parcelă încă: ele vin din planurile parcelare importate."
     },
     "info": {
       "title": "Despre limitele tarlalelor",
