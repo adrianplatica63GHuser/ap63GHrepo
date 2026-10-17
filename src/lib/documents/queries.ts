@@ -13,7 +13,9 @@
  * explicitly directed) — never auto-seeded by application code.
  */
 
-import { asc, and, count, desc, eq, ilike, inArray, isNotNull, lte, or, sql } from "drizzle-orm";
+import { asc, and, count, desc, eq, ilike, inArray, isNotNull, lte, or, sql, type SQL } from "drizzle-orm";
+import type { FilterState } from "@/lib/list/filter-bar";
+import { DOCUMENT_COUNT_SQL, documentFilterConditions } from "./list-filter-sql";
 import { perSearchTerms } from "@/lib/search/per-terms";
 import { db, type DbTransaction } from "@/db";
 import { appendVersionsIfChanged } from "@/lib/versioning/append";
@@ -80,20 +82,14 @@ export type DocumentFull = typeof document.$inferSelect;
 // ---------------------------------------------------------------------------
 
 
-export async function listDocument(
-  opts: DocumentListQuery,
-  expiringSoonDays = 30,
-): Promise<{
-  items: DocumentListItem[];
-  total: number;
-}> {
+/**
+ * The list's `where`: its type, group, metadata, „Expiră curând", search and „Câmp specific" conditions, and since
+ * #39.63 the bar's filters. Its own function so the institution checklist's counts (`listDocumentFilterValues`) are
+ * computed over the same list the rows are.
+ */
+export function documentListWhere(opts: DocumentListQuery & { filters?: FilterState }, expiringSoonDays = 30): SQL | undefined {
   const q   = opts.q?.trim();
   const pat = q ? `%${q}%` : null;
-
-  // Short-circuit: if documentTypeIds array is explicitly empty, return nothing.
-  if (opts.documentTypeIds !== undefined && opts.documentTypeIds.length === 0) {
-    return { items: [], total: 0 };
-  }
 
   // Slice #18.17: Groups filter.
   // groupCodes undefined → no filter.
@@ -160,7 +156,24 @@ export async function listDocument(
         )
       : undefined,
     customFieldFilter(opts),
+    // Slice #39.63: the shared bar's fields.
+    ...documentFilterConditions(opts.filters ?? {}),
   );
+  return where;
+}
+
+export async function listDocument(
+  opts: DocumentListQuery & { filters?: FilterState },
+  expiringSoonDays = 30,
+): Promise<{
+  items: DocumentListItem[];
+  total: number;
+}> {
+  // Short-circuit: if documentTypeIds array is explicitly empty, return nothing.
+  if (opts.documentTypeIds !== undefined && opts.documentTypeIds.length === 0) {
+    return { items: [], total: 0 };
+  }
+  const where = documentListWhere(opts, expiringSoonDays);
 
   const [items, totals] = await Promise.all([
     db
@@ -182,9 +195,10 @@ export async function listDocument(
         // counts once — „how many are associated", not how many links.
         institutionName:  lookupInstitution.name,
         subject:          document.subject,
-        pageCount:        sql<number>`(SELECT count(*)::int FROM document_page dp_c WHERE dp_c.document_id = document.id)`,
-        personCount:      sql<number>`(SELECT count(DISTINCT pd_c.person_id)::int FROM person_document pd_c WHERE pd_c.document_id = document.id)`,
-        propertyCount:    sql<number>`(SELECT count(DISTINCT prd_c.property_id)::int FROM property_document prd_c WHERE prd_c.document_id = document.id)`,
+        // Slice #39.63: one copy of the three, shared with the bar's filters on them.
+        pageCount:        DOCUMENT_COUNT_SQL.pageCount,
+        personCount:      DOCUMENT_COUNT_SQL.personCount,
+        propertyCount:    DOCUMENT_COUNT_SQL.propertyCount,
         createdAt:        document.createdAt,
         updatedAt:        document.updatedAt,
       })

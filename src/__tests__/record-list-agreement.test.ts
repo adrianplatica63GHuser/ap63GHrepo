@@ -146,7 +146,8 @@ const LIST_QUERIES = [
   // Slice #39.61: the Properties list's search is its own function, which `listProperties` and the filter bar's
   // counts (`listPropertyFilterValues`) both call — it was `listProperties` here until then.
   { fn: "propertySearchCondition", file: path.join("src", "lib", "properties", "queries.ts"), column: "property.code" },
-  { fn: "listDocument",        file: path.join("src", "lib", "documents",        "queries.ts"), column: "document.code" },
+  // Slice #39.63: Acte's `where` is its own function, which the list and the institution checklist's counts call.
+  { fn: "documentListWhere",   file: path.join("src", "lib", "documents",        "queries.ts"), column: "document.code" },
 ] as const;
 
 // --------------------------------------------------------------------------

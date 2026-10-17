@@ -234,7 +234,9 @@ describe("⚠️ the filter reaches the query the list actually runs", () => {
     // applies: the client sets `customFieldKey`, the route reads `fieldKey`,
     // zod drops the unknown member, and `listDocument` sees `undefined`.
     for (const [what, file] of [
-      ["route", join("src", "app", "api", "documents", "route.ts")],
+      // Slice #39.63: the route reads its parameters through `parseDocumentListRequest`, which the institution
+      // checklist's counts share — it read `join("src", "app", "api", "documents", "route.ts")` until then.
+      ["route", join("src", "lib", "documents", "list-request.ts")],
       ["list view", LIST_VIEW],
     ] as const) {
       const code = stripComments(read(file));
