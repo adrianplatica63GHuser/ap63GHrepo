@@ -20,7 +20,9 @@
  */
 
 import { alias } from "drizzle-orm/pg-core";
-import { and, count, eq, ilike, inArray, or, sql } from "drizzle-orm";
+import { and, count, eq, ilike, inArray, or, sql, type SQL } from "drizzle-orm";
+import type { FilterState } from "@/lib/list/filter-bar";
+import { personFilterConditions } from "@/lib/persons/list-filter-sql";
 import { db, type DbTransaction } from "@/db";
 import { appendVersionsIfChanged } from "@/lib/versioning/append";
 import {
@@ -75,12 +77,34 @@ export function firstFilledContact(slot1: string | null, slot2: string | null): 
   return slot1 ?? slot2 ?? null;
 }
 
-export async function listJudicialPersons(opts: JudicialListQuery): Promise<{
+/**
+ * The free-text search of the juridical persons list's box. Its own function since #39.62's filter bar: the list
+ * and its checklists' counts (`listPersonFilterValues`) both apply it.
+ */
+export function judicialPersonSearchCondition(q: string | undefined): SQL | undefined {
+  const t = q?.trim();
+  if (!t) return undefined;
+  const searchPattern = `%${t}%`;
+  return or(
+    ilike(person.displayName, searchPattern),
+    ilike(judicialPerson.nickname, searchPattern),
+    ilike(person.code, searchPattern),
+    // Slice #32.15, fixed in passing: the placeholder on this list has
+    // always said "or ID" and the list renders the CUI, but only
+    // listAllPersons actually matched it — so a CUI typed here found
+    // nothing while the same CUI resolved from the sidebar search.
+    ilike(judicialPerson.cuiNumber, searchPattern),
+    // Slice #38.31: the firm's own phone and e-mail find it too.
+    ilike(judicialPerson.phone, searchPattern),
+    ilike(judicialPerson.email, searchPattern),
+  );
+}
+
+export async function listJudicialPersons(opts: JudicialListQuery & { filters?: FilterState }): Promise<{
   items: JudicialPersonListItem[];
   total: number;
 }> {
   const q = opts.q?.trim();
-  const searchPattern = q ? `%${q}%` : null;
 
   // Slice #18.18: Groups filter for the /judicial-persons list page.
   // Mirrors listPersons — but target_type is always JUDICIAL_PERSON here.
@@ -117,21 +141,9 @@ export async function listJudicialPersons(opts: JudicialListQuery): Promise<{
   const where = and(
     eq(person.type, "JUDICIAL"),
     groupFilter,
-    searchPattern
-      ? or(
-          ilike(person.displayName, searchPattern),
-          ilike(judicialPerson.nickname, searchPattern),
-          ilike(person.code, searchPattern),
-          // Slice #32.15, fixed in passing: the placeholder on this list has
-          // always said "or ID" and the list renders the CUI, but only
-          // listAllPersons actually matched it — so a CUI typed here found
-          // nothing while the same CUI resolved from the sidebar search.
-          ilike(judicialPerson.cuiNumber, searchPattern),
-          // Slice #38.31: the firm's own phone and e-mail find it too.
-          ilike(judicialPerson.phone, searchPattern),
-          ilike(judicialPerson.email, searchPattern),
-        )
-      : undefined,
+    judicialPersonSearchCondition(q),
+    // Slice #39.62: the filter bar's fields.
+    ...personFilterConditions("JUDICIAL", opts.filters ?? {}),
   );
 
   const contact1 = alias(person, "contact1");

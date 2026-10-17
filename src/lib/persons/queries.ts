@@ -15,7 +15,9 @@
  * untouched.
  */
 
-import { and, count, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
+import { and, count, desc, eq, ilike, inArray, or, sql, type SQL } from "drizzle-orm";
+import type { FilterState } from "@/lib/list/filter-bar";
+import { personFilterConditions } from "@/lib/persons/list-filter-sql";
 import { db, type DbTransaction } from "@/db";
 import { appendVersionsIfChanged } from "@/lib/versioning/append";
 import { assertBaseVersion, latestVersionIn } from "@/lib/versioning/base-version";
@@ -111,12 +113,35 @@ export type PersonListItem = {
   updatedAt: Date;
 };
 
-export async function listPersons(opts: ListQuery): Promise<{
+/**
+ * The free-text search of the natural persons list's box. Its own function since #39.61's filter bar: the list
+ * and its checklists' counts (`listPersonFilterValues`) both apply it.
+ */
+export function naturalPersonSearchCondition(q: string | undefined): SQL | undefined {
+  const t = q?.trim();
+  if (!t) return undefined;
+  const searchPattern = `%${t}%`;
+  return or(
+    ilike(person.displayName, searchPattern),
+    // Slice #32.15: a PPERS code typed into the list search found nothing,
+    // while the sidebar quick search resolved it. listAllPersons and the
+    // three sibling lists all match their code; this one did not.
+    ilike(person.code, searchPattern),
+    ilike(naturalPerson.nickname, searchPattern),
+    ilike(naturalPerson.personalEmail1, searchPattern),
+    ilike(naturalPerson.personalEmail2, searchPattern),
+    ilike(naturalPerson.workEmail, searchPattern),
+    ilike(naturalPerson.personalPhone1, searchPattern),
+    ilike(naturalPerson.personalPhone2, searchPattern),
+    ilike(naturalPerson.workPhone, searchPattern),
+  );
+}
+
+export async function listPersons(opts: ListQuery & { filters?: FilterState }): Promise<{
   items: PersonListItem[];
   total: number;
 }> {
   const q = opts.q?.trim();
-  const searchPattern = q ? `%${q}%` : null;
 
   // Slice #18.18: Groups filter for the /natural-persons list page.
   // Mirrors listAllPersons — but target_type is always PHYSICAL_PERSON here.
@@ -158,22 +183,9 @@ export async function listPersons(opts: ListQuery): Promise<{
     // Slice #20.06: metadata filters.
     opts.importance ? eq(entityMetadata.importance, opts.importance) : undefined,
     opts.relevance  ? eq(entityMetadata.relevance,  opts.relevance)  : undefined,
-    searchPattern
-      ? or(
-          ilike(person.displayName, searchPattern),
-          // Slice #32.15: a PPERS code typed into the list search found nothing,
-          // while the sidebar quick search resolved it. listAllPersons and the
-          // three sibling lists all match their code; this one did not.
-          ilike(person.code, searchPattern),
-          ilike(naturalPerson.nickname, searchPattern),
-          ilike(naturalPerson.personalEmail1, searchPattern),
-          ilike(naturalPerson.personalEmail2, searchPattern),
-          ilike(naturalPerson.workEmail, searchPattern),
-          ilike(naturalPerson.personalPhone1, searchPattern),
-          ilike(naturalPerson.personalPhone2, searchPattern),
-          ilike(naturalPerson.workPhone, searchPattern),
-        )
-      : undefined,
+    naturalPersonSearchCondition(q),
+    // Slice #39.62: the filter bar's fields.
+    ...personFilterConditions("NATURAL", opts.filters ?? {}),
   );
 
   const [items, totals] = await Promise.all([

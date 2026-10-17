@@ -19,6 +19,7 @@ import {
 import { provenanceFromRequestBody } from "@/lib/metadata/provenance";
 import { setInitialProvenance } from "@/lib/metadata/queries";
 import { getCurrentUserEmail } from "@/lib/auth/current-user";
+import { parsePersonFilters } from "@/lib/persons/list-filters";
 
 export async function GET(request: NextRequest): Promise<Response> {
   const url = new URL(request.url);
@@ -49,7 +50,9 @@ export async function GET(request: NextRequest): Promise<Response> {
   }
 
   try {
-    const { items, total } = await listPersons(parsed.data);
+    // Slice #39.62: the filter bar's fields, whitelisted — none set, none passed, so the call is the one it was.
+    const filters = parsePersonFilters("NATURAL", url.searchParams);
+    const { items, total } = await listPersons(Object.keys(filters).length > 0 ? { ...parsed.data, filters } : parsed.data);
     return Response.json({
       items,
       total,
