@@ -69,7 +69,7 @@ fixed fixture where the existing one will do.
 | [TC-AUTH-02](cases/TC-AUTH-02.md) | Contul care era „user" are toată aplicația, ca administratorul | auth | authz | — | `draft` | — | — |
 | [TC-PROP-01](cases/TC-PROP-01.md) | Proprietate creată manual, vizibilă în listă | property | happy | — | `automated` | 2026-10-05 | `e2e/property/property-create.spec.ts` |
 | [TC-PROP-02](cases/TC-PROP-02.md) | Editare și salvare — contorul de versiuni avansează | property | happy | — | `automated` | 2026-09-23 | `e2e/versioning/property-versioning.spec.ts` |
-| [TC-PROP-03](cases/TC-PROP-03.md) | Proprietate creată dintr-un fișier cu coordonate | property | happy | `08.tc.coord.file` | `confirmed` | 2026-10-17 | `e2e/property/property-from-coord-file.spec.ts` |
+| [TC-PROP-03](cases/TC-PROP-03.md) | Proprietate creată dintr-un fișier cu coordonate | property | happy | `08.tc.coord.file` | `automated` | 2026-10-17 | `e2e/property/property-from-coord-file.spec.ts` |
 | [TC-PROP-04](cases/TC-PROP-04.md) | Un colț editat în „Puncte de contur”, văzut după salvare | property | happy | `08.tc.coord.file` | `automated` | 2026-09-26 | `e2e/property/property-corner-edit.spec.ts` |
 | [TC-PROP-05](cases/TC-PROP-05.md) | A doua proprietate pentru aceeași parcelă este refuzată | property | negative | — | `driven` | 2026-09-27 | — |
 | [TC-PROP-06](cases/TC-PROP-06.md) | Lista proprietăților: fără „Importanță" și „Relevanță", fără „Cod", Poreclă mereu afișată, „Câmpuri afișate" cu toate câmpurile cadastrale | property | happy | — | `automated` | 2026-10-05 | `e2e/property/property-list.spec.ts` |
@@ -81,7 +81,7 @@ fixed fixture where the existing one will do.
 | [TC-PROP-12](cases/TC-PROP-12.md) | Căsuțele fișelor pe care tipul proprietății nu le arată: inactive, în cursiv, neatinse de „Toate” și „Implicit” | property | happy | — | `automated` | 2026-10-05 | `e2e/property/property-tiles-by-type.spec.ts` |
 | [TC-PROP-13](cases/TC-PROP-13.md) | „Navighează”: linkul Google Maps și codul QR, spre parcelă sau spre adresă | property | happy | — | `automated` | 2026-10-14 | `e2e/property/navigate.spec.ts` |
 | [TC-PROP-14](cases/TC-PROP-14.md) | Lista proprietăților filtrată după „Tip proprietate” și „Categorie de folosință”: numărul de lângă fiecare valoare, adresa, „Șterge filtrele” | property | happy | — | `automated` | 2026-10-16 | `e2e/property/property-list-filters.spec.ts` |
-| [TC-PROP-15](cases/TC-PROP-15.md) | „Din fișier text" pe o parcelă care are deja o proprietate: nu se creează alta, mesajul și legătura spre ea | property | negative | — | `confirmed` | 2026-10-17 | `e2e/property/property-from-coord-file-parcel-exists.spec.ts` |
+| [TC-PROP-15](cases/TC-PROP-15.md) | „Din fișier text" pe o parcelă care are deja o proprietate: nu se creează alta, mesajul și legătura spre ea | property | negative | — | `automated` | 2026-10-17 | `e2e/property/property-from-coord-file-parcel-exists.spec.ts` |
 | [TC-PERS-01](cases/TC-PERS-01.md) | Persoană fizică creată manual | person | happy | — | `automated` | 2026-10-02 | `e2e/person/person-create.spec.ts` |
 | [TC-PERS-02](cases/TC-PERS-02.md) | Persoană juridică creată și modificată | person | happy | — | `automated` | 2026-10-02 | `e2e/person/company-create-edit.spec.ts` |
 | [TC-PERS-03](cases/TC-PERS-03.md) | CNP-ul salvat: nota despre blocare într-un balon, iar o schimbare salvată e refuzată în română | person | happy | — | `automated` | 2026-10-02 | `e2e/person/cnp-lock-bubble.spec.ts` |

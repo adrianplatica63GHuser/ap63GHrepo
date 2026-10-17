@@ -5,7 +5,7 @@
 | **Area** | property |
 | **Kind** | happy |
 | **Data** | `08.tc.coord.file` |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-17 |
 
 ## What this proves
@@ -108,3 +108,6 @@ disabled; step 5 enabled, then „Proprietatea a fost importată cu succes." wit
 the new row on top badged „Nou!" (run 3: 611 → 612; run 2 read the count before the list had refreshed after a
 cleanup). Run 2, step 6: „v 0", „Nr. tarla / sola" 40, „Nr. parcelă" TC03. Each property was deleted (204). The case
 no longer leaves its property behind for TC-GRP-01 by hand — the cleanup ran each time.
+
+**2026-10-17 — `automated` (Slice #39.65).** The test runner's targeted run 20261017T061748Z-9527 on a27b7c5 ran
+its spec green with TC-PROP-01's and the other's, lint, tsc and 20 jest suites.

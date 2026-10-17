@@ -5,7 +5,7 @@
 | **Area** | property |
 | **Kind** | negative |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-17 |
 
 ## What this proves
@@ -57,3 +57,6 @@ proprietății de mai jos. Nu s-a creat o proprietate nouă. | Deschide TC-E2E-P
 dialog gone and the existing property's screen headed `TC-E2E-PROP-15 Teren existent`; step 4 the count 612 before and
 after, and only the existing property under the marker. Deleted (204). `e2e/property/property-from-coord-file-parcel-exists.spec.ts`
 translates it.
+
+**2026-10-17 — `automated` (Slice #39.65).** The test runner's targeted run 20261017T061748Z-9527 on a27b7c5 ran
+its spec green with TC-PROP-01's and the other's, lint, tsc and 20 jest suites.
