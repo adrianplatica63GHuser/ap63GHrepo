@@ -196,7 +196,8 @@ describe("the modal is on the tied side of it", () => {
     // two independent substrings need not be in one condition, and a list
     // gaining or losing the filter is the thing worth a red.
     expect(modal.replace(/\s+/g, "")).toContain(
-      'listKey==="tarla"||listKey==="institutions"',
+      // Slice #39.72: „institutions" went with lookup_institution (migration_116); the tarla alone carries it now.
+      'listKey==="tarla"?',
     );
   });
 

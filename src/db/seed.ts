@@ -1565,7 +1565,7 @@ async function seed() {
 
     console.log(`Seeding ${DOCUMENTS.length} document records...`);
     // `createDocument` owns the code, the row, `updated_by` and version 0. The
-    // fields this file does not name — `institutionId`, `subject`,
+    // fields this file does not name — `issuerPersonId`, `subject`,
     // `dateValidUntil`, `surveyorId`, `customFields`, `importTitle` — are
     // nulled by `inputToValues` exactly as the INSERT here nulled them by
     // omission, so the rows are the same rows plus what they were missing.
@@ -1598,25 +1598,15 @@ async function seed() {
   }
 
   // ---- Judicial persons ----
-  // ⚠️ **NOT THE ONES AN INSTITUTION MADE.** (Slice #39.71) Every
-  // lookup_institution row has its own juridical person, made by the
-  // `lookup_institution_juridical_person_added` trigger the moment the row is
-  // inserted — so by the time this runs, a freshly rebuilt archive (and the
-  // Supabase project, which the sync fills with lookups first) already holds a
-  // dozen judicial_person rows the seed never wrote. Counting them would skip
-  // this section on every rebuild, in silence.
+  // (Slice #39.71 counted around the juridical persons its institutions' trigger made; #39.72's migration_116 dropped
+  // the list and the trigger, so a rebuilt archive holds none and the plain count is right again.)
   const judicialCount = (
-    await db.execute(sql`
-      select count(*)::int as count
-        from judicial_person jp
-       where not exists (
-         select 1 from lookup_institution li where li.juridical_person_id = jp.person_id
-       )`)
+    await db.execute(sql`select count(*)::int as count from judicial_person`)
   ).rows[0] as { count: number };
 
   if (judicialCount.count > 0) {
     console.log(
-      `judicial_person already has ${judicialCount.count} row(s) besides the institutions'; skipping judicial persons seed.`,
+      `judicial_person already has ${judicialCount.count} row(s); skipping judicial persons seed.`,
     );
   } else {
     console.log(`Seeding ${JUDICIAL_PERSONS.length} judicial persons...`);

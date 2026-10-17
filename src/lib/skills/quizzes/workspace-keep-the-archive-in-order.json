@@ -476,11 +476,11 @@
           "id": "b1",
           "section": "admin-example-merge",
           "ro": {
-            "question": "În „Instituții” stau „Primăria Bragadiru” și „Primaria Bragadiru”, aceeași instituție scrisă de două ori. Înainte de orice, ce citește Ciprian ca să hotărască pe care o păstrează?",
+            "question": "În „Categorii Folosință” stau „Pășune” și „Pasune”, aceeași categorie scrisă de două ori. Înainte de orice, ce citește Ciprian ca să hotărască pe care o păstrează?",
             "explanation": "Citiți „Folosit de” pe cele două rânduri și hotărâți care valoare rămâne; apoi apăsați „Unește” pe cealaltă."
           },
           "en": {
-            "question": "In „Instituții” (institutions) stand „Primăria Bragadiru” and „Primaria Bragadiru” (Bragadiru town hall), the same institution entered twice. Before anything else, what does Ciprian read to decide which to keep?",
+            "question": "In „Categorii Folosință” (land-use categories) stand „Pășune” and „Pasune” (pasture), the same category entered twice. Before anything else, what does Ciprian read to decide which to keep?",
             "explanation": "Read „Folosit de” (used by) on the two rows and decide which value stays; then press „Unește” on the other."
           },
           "options": [
@@ -505,8 +505,8 @@
             {
               "id": "o4",
               "correct": false,
-              "ro": "Lista instituțiilor din „Căutare globală”.",
-              "en": "The list of institutions in „Căutare globală” (global search)."
+              "ro": "Lista categoriilor din „Căutare globală”.",
+              "en": "The list of categories in „Căutare globală” (global search)."
             }
           ]
         },
@@ -514,12 +514,12 @@
           "id": "b2",
           "section": "admin-reference-data-values",
           "ro": {
-            "question": "Ciprian apasă „Unește” pe „Primaria Bragadiru”, iar fereastra spune „Un obiect se mută pe valoarea păstrată:”. Ce înseamnă?",
-            "explanation": "Fereastra spune câte obiecte se mută. După „Unește”, obiectul trece pe valoarea aleasă în „Valoarea păstrată”, iar „Primaria Bragadiru” dispare din listă."
+            "question": "Ciprian apasă „Unește” pe „Pasune”, iar fereastra spune „Un obiect se mută pe valoarea păstrată:”. Ce înseamnă?",
+            "explanation": "Fereastra spune câte obiecte se mută. După „Unește”, obiectul trece pe valoarea aleasă în „Valoarea păstrată”, iar „Pasune” dispare din listă."
           },
           "en": {
-            "question": "Ciprian presses „Unește” on „Primaria Bragadiru”, and the window says „Un obiect se mută pe valoarea păstrată:” (one object moves to the value kept). What does it mean?",
-            "explanation": "The window says how many objects move. After „Unește”, the object moves to the value chosen in „Valoarea păstrată”, and „Primaria Bragadiru” disappears from the list."
+            "question": "Ciprian presses „Unește” on „Pasune”, and the window says „Un obiect se mută pe valoarea păstrată:” (one object moves to the value kept). What does it mean?",
+            "explanation": "The window says how many objects move. After „Unește”, the object moves to the value chosen in „Valoarea păstrată”, and „Pasune” disappears from the list."
           },
           "options": [
             {
@@ -531,8 +531,8 @@
             {
               "id": "o2",
               "correct": false,
-              "ro": "Că obiectul se mută, dar „Primaria Bragadiru” rămâne în listă, „nefolosit”.",
-              "en": "That the object moves, but „Primaria Bragadiru” stays in the list, „nefolosit”."
+              "ro": "Că obiectul se mută, dar „Pasune” rămâne în listă, „nefolosit”.",
+              "en": "That the object moves, but „Pasune” stays in the list, „nefolosit”."
             },
             {
               "id": "o3",

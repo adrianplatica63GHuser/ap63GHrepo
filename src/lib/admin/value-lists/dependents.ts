@@ -151,7 +151,6 @@ import {
   lookupDocTypePersonRole,
   lookupDocumentDocumentRole,
   lookupDocumentType,
-  lookupInstitution,
   lookupJudicialPersonType,
   lookupPersonRole,
   lookupPersonType,
@@ -653,21 +652,6 @@ export const LIST_DEPENDENCIES: Record<ListKey, ListDependencies> = {
     snapshot: { keys: DOCUMENT_SNAPSHOT_KEYS, field: "documentTypeId" },
   },
 
-  institutions: {
-    table: lookupInstitution,
-    idColumn: lookupInstitution.id,
-    refs: [
-      {
-        kind: "column",
-        labelKey: "documents",
-        table: document,
-        column: document.institutionId,
-        enforcement: "clears",
-        versioned: { entity: "document", idColumn: document.id },
-      },
-    ],
-    snapshot: { keys: DOCUMENT_SNAPSHOT_KEYS, field: "institutionId" },
-  },
 
   // ── The two lists #29.05 did not reach ────────────────────────────────────
   //

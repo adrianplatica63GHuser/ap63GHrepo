@@ -126,7 +126,7 @@ function useFrameHeight(frameRef: RefObject<HTMLDivElement | null>): number | nu
 // ── Slice #37.37: the table's columns, and one card width for every list ──────
 
 /** The lists whose table carries a status column (`review`, below). */
-const REVIEWED_LISTS: ReadonlySet<ListKey> = new Set(["document-types", "tarla", "institutions"]);
+const REVIEWED_LISTS: ReadonlySet<ListKey> = new Set(["document-types", "tarla"]);
 
 /**
  * Slice #38.50: the lists whose names are short — „Garaj", „Română" — take a narrower name
@@ -473,7 +473,8 @@ async function reassignRows(
  *
  *   document-types                   documents/list-view.tsx,
  *                                    documents/_components/document-form.tsx
- *   institutions                     documents/_components/document-form.tsx
+ *   judicial-person-types            documents/_components/issuer-field.tsx  (["document-issuers"]: the
+ *                                    issuer picker lists the public-body types' persons, Slice #39.72)
  *   property-property-roles          properties/[id]/associate-reference/associate-reference-view.tsx
  *   document-document-roles          documents/[id]/associate-reference/associate-reference-view.tsx
  *   doc-distinct-roles               the two associate-document views
@@ -550,8 +551,9 @@ export function invalidateListCaches(
     // row that had just been renamed underneath it.
     qc.invalidateQueries({ queryKey: ["doc-type-person-roles"] });
   }
-  if (listKey === "institutions") {
-    qc.invalidateQueries({ queryKey: ["institutions"] });
+  // Slice #39.72: a type's „Autoritate publică” tick decides whom the document's issuer picker lists first.
+  if (listKey === "judicial-person-types") {
+    qc.invalidateQueries({ queryKey: ["document-issuers"] });
   }
   // Slice #33.05: the master role list. Renaming a role changes what other
   // caches print, and the ones that hold a BARE key have to be named here or
@@ -1399,7 +1401,7 @@ export function ValueListModal({
           colouredField: "name",
           alwaysOffered: true,
         }
-      : listKey === "tarla" || listKey === "institutions"
+      : listKey === "tarla"
       ? {
           labelKey: "onlyAwaitingReview",
           doneKey: "allReviewed",

@@ -46,7 +46,7 @@ describe("the categories (nothing disappears)", () => {
     expect(titles(en)).toEqual([
       ["Physical Person Types", "Judicial Person Types", "Property Types", "Document Types"],
       ["Person Roles", "Property → Property Links", "Document → Document Links"],
-      ["Tarla Codes", "Citizenship", "Relationship to the business", "Institutions"],
+      ["Tarla Codes", "Citizenship", "Relationship to the business"],
     ]);
   });
 
@@ -80,7 +80,6 @@ describe("the categories (nothing disappears)", () => {
     expect(categoryOfList("document-types")).toBe("objectTypes");
     expect(categoryOfList("tarla")).toBe("valueLists");
     expect(categoryOfList("citizenships")).toBe("valueLists");
-    expect(categoryOfList("institutions")).toBe("valueLists");
     expect(categoryOfList("person-roles")).toBe("rolesLinks");
     expect(categoryOfList("document-document-roles")).toBe("rolesLinks");
   });

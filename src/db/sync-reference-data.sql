@@ -39,7 +39,7 @@ TRUNCATE lookup_doc_type_person_role CASCADE;
 TRUNCATE lookup_property_type_use CASCADE;
 TRUNCATE lookup_person_role, lookup_property_type, lookup_tarla,
          lookup_use_category, lookup_person_type, lookup_person_relationship, lookup_citizenship,
-         lookup_document_type, lookup_institution,
+         lookup_document_type,
          lookup_judicial_person_type,
          lookup_property_property_role, lookup_document_document_role CASCADE;
 
@@ -128,20 +128,19 @@ INSERT INTO lookup_citizenship (name, sort_order) VALUES
 
 -- ── lookup_judicial_person_type (Slice #15.07) ───────────────────────────────
 -- Slice #39.71 (migration_115): the seven public-body types, at 21–27 so they list after the company forms, and
--- „Altele" moved to 100 so it stays last. They are here, before lookup_institution, because inserting an
--- institution makes its juridical person (the `lookup_institution_juridical_person_added` trigger) and takes the
--- person's type from these names — an institution inserted before its type exists gets a person with no type.
-INSERT INTO lookup_judicial_person_type (name, sort_order) VALUES
-  ('SRL', 1), ('SA', 2), ('SRL-D', 3), ('PFA', 4),
-  ('II',  5), ('IF', 6), ('ONG',   7),
-  ('Autoritate publică centrală',        21),
-  ('Instituție publică teritorială',     22),
-  ('Autoritate locală',                  23),
-  ('Instanță',                           24),
-  ('Birou notarial',                     25),
-  ('Birou de executor judecătoresc',     26),
-  ('Cabinet sau societate de avocatură', 27),
-  ('Altele', 100);
+-- „Altele" moved to 100 so it stays last. Slice #39.72 (migration_116): `public_body` marks them — the document's
+-- issuer picker lists their persons first.
+INSERT INTO lookup_judicial_person_type (name, sort_order, public_body) VALUES
+  ('SRL', 1, false), ('SA', 2, false), ('SRL-D', 3, false), ('PFA', 4, false),
+  ('II',  5, false), ('IF', 6, false), ('ONG',   7, false),
+  ('Autoritate publică centrală',        21, true),
+  ('Instituție publică teritorială',     22, true),
+  ('Autoritate locală',                  23, true),
+  ('Instanță',                           24, true),
+  ('Birou notarial',                     25, true),
+  ('Birou de executor judecătoresc',     26, true),
+  ('Cabinet sau societate de avocatură', 27, true),
+  ('Altele', 100, false);
 
 -- ── lookup_document_type ──────────────────────────────────────────────────────
 -- `key` (added by migration 020, Slice #15.05) is the immutable slug app code
@@ -389,19 +388,9 @@ UPDATE lookup_document_type AS t
 -- `scripts/verify-rebuild.ts` does exactly that on both of its databases, and
 -- `build-ciprian-image.ps1` sends the same SQL to Ciprian.
 
--- ── lookup_institution ────────────────────────────────────────────────────────
--- ⚠️ Each row inserted here also makes a juridical person — person, judicial_person, version 0 and its metadata —
--- through the `lookup_institution_juridical_person_added` trigger (migration_115, Slice #39.71). That is the same
--- thing migration_115 did to these rows on a migrated database, so the two still agree; seed.ts counts only the
--- juridical persons no institution made.
-INSERT INTO lookup_institution (name, institution_type, sort_order) VALUES
-  ('OCPI',                  'Cadastru',                1),
-  ('Primăria Municipiului', 'Administrație Locală',    2),
-  ('Consiliu Județean',     'Administrație Județeană', 3),
-  ('ANAF',                  'Fiscal',                  4),
-  ('Notariat',              'Juridic',                 5),
-  ('Judecătorie',           'Juridic',                 6),
-  ('Tribunal',              'Juridic',                 7);
+-- ── lookup_institution: gone (Slice #39.72, migration_116) ───────────────────
+-- Every institution became a juridical person (migration_115) and the list was dropped. A rebuilt database has no
+-- issuers until a person adds one — on the document's form, from the AI's reading, or as any juridical person.
 
 -- lookup_others: the table was dropped by migration_052 (its three categories
 -- moved to lookup_service / lookup_interest / stamps), so the INSERT that stood

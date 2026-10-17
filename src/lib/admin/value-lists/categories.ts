@@ -24,7 +24,7 @@ export const VALUE_LIST_CATEGORIES: readonly { id: Exclude<ValueListCategoryId, 
   { id: "rolesLinks", lists: ["person-roles", "property-property-roles", "document-document-roles"] },
   // Slice #39.66: „Categorii Folosință" left this group for the page of „Tipuri de proprietate și folosințe".
   // Slice #39.70: „Relația cu firma" beside „Cetățenie", the other list a natural person's form picks from.
-  { id: "valueLists", lists: ["tarla", "citizenships", "person-relationships", "institutions"] },
+  { id: "valueLists", lists: ["tarla", "citizenships", "person-relationships"] },
 ];
 
 /**

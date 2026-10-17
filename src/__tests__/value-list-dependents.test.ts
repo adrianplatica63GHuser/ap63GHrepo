@@ -1180,7 +1180,7 @@ describe("the sibling panels say their failures in Romanian", () => {
     //         screen that does not fetch the key.
     const BARE_KEYS: Partial<Record<ListKey, string[]>> = {
       "document-types":          ["document-types", "doc-type-person-roles"],
-      "institutions":            ["institutions"],
+      "judicial-person-types":   ["document-issuers"], // Slice #39.72: the „Autoritate publică" tick
       "property-property-roles": ["property-property-roles"],
       "document-document-roles": ["document-document-roles"],
       // ⚠️ **FIVE keys until Slice #34.04, and both halves of the shrink are
@@ -1200,7 +1200,7 @@ describe("the sibling panels say their failures in Romanian", () => {
     const CONSUMERS: Array<[string[], string]> = [
       [["app", "documents", "list-view.tsx"], "document-types"],
       [["app", "documents", "_components", "document-form.tsx"], "document-types"],
-      [["app", "documents", "_components", "document-form.tsx"], "institutions"],
+      [["app", "documents", "_components", "issuer-field.tsx"], "document-issuers"],
       [["app", "properties", "[id]", "associate-reference", "associate-reference-view.tsx"],
         "property-property-roles"],
       [["app", "documents", "[id]", "associate-reference", "associate-reference-view.tsx"],

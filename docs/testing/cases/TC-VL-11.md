@@ -33,7 +33,7 @@ The window is 1366 × 900.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens `/admin/value-lists?list=property-types` | „Tipuri de proprietate și folosințe” marked on the left, under „Tipuri de obiecte”; „Liste de valori” holds „Indicative Tarla”, „Cetățenie”, „Instituții”. On the right, one under the other: „Tipuri de Proprietate”, „Categorii Folosință”, „Folosințe permise pentru fiecare tip” |
+| 1 | Opens `/admin/value-lists?list=property-types` | „Tipuri de proprietate și folosințe” marked on the left, under „Tipuri de obiecte”; „Liste de valori” holds „Indicative Tarla”, „Cetățenie”, „Relația cu firma” (#39.72 retired „Instituții”). On the right, one under the other: „Tipuri de Proprietate”, „Categorii Folosință”, „Folosințe permise pentru fiecare tip” |
 | 2 | Reads „Tipuri de Proprietate” and „Categorii Folosință” | The nine types „Teren extravilan”, „Teren intravilan”, „Teren construit”, „Liniară”, „Casă”, „Apartament”, „Garaj”, „Spațiu comercial”, „Birou” — the tile puts the unused ones after the used (#38.35), the grid of step 3 lists them in this order. Among the uses „Curți-construcții” and „Drumuri”; no value in both lists |
 | 3 | Reads the grid | „Teren extravilan” ticked on „Arabil”, „Pășune”, „Fânețe”, „Vie”, „Livadă”, „Pădure”, „Ape”, „Neproductiv”; „Casă”, „Apartament”, „Garaj”, „Spațiu comercial”, „Birou” on „Curți-construcții” only; „Teren intravilan”, „Teren construit”, „Liniară” with no tick and „(toate)” after the name |
 | 4 | Opens `/admin/value-lists?list=use-categories` | The same page, „Tipuri de proprietate și folosințe” marked on the left |

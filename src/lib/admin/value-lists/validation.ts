@@ -425,13 +425,9 @@ export const documentTypeUpdateSchema = documentTypeSchema
   });
 
 export const judicialPersonTypeSchema = z.object({
-  name:      z.string().min(1, "required"),
-  sortOrder,
-});
-
-export const institutionSchema = z.object({
-  name:            z.string().min(1, "required"),
-  institutionType: z.string().nullish(),
+  name:       z.string().min(1, "required"),
+  // Slice #39.72: a public-body type (migration_116) — the edit form always sends its tick, as the property types'.
+  publicBody: boolField.default(false),
   sortOrder,
 });
 
@@ -449,7 +445,6 @@ export const LIST_SCHEMAS: Record<ListKey, z.ZodType<any>> = {
   "person-relationships": citizenshipSchema, // Slice #39.70: the same shape, a name and a place
   "judicial-person-types": judicialPersonTypeSchema,
   "document-types":  documentTypeSchema,
-  "institutions":    institutionSchema,
   "property-property-roles": relationshipRoleSchema,
   "document-document-roles": relationshipRoleSchema,
 };
@@ -633,7 +628,6 @@ export const LIST_UPDATE_SCHEMAS: Record<ListKey, z.ZodType<any>> = {
   // Already carries `sortOrderOnUpdate` — the omit-plus-extend is on the
   // exported schema itself, so the two cannot fall out of step.
   "document-types":        documentTypeUpdateSchema,
-  "institutions":          institutionSchema.extend({ sortOrder: sortOrderOnUpdate }),
   "property-property-roles": relationshipRoleSchema.extend({ sortOrder: sortOrderOnUpdate }),
   "document-document-roles": relationshipRoleSchema.extend({ sortOrder: sortOrderOnUpdate }),
 };

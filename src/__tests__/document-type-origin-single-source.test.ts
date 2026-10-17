@@ -713,7 +713,8 @@ describe("migration_077's two CHECKs are the same decision as the schema unions"
     // ALTERs and UPDATEs above them do run, as no-ops.)
     const sql = stripSqlComments(read("src/db/supabase_repair_missing_tables.sql"));
     expect(checkOn(sql, "lookup_tarla", "chk_lt_origin")).toEqual(ORIGIN_VALUES);
-    expect(checkOn(sql, "lookup_institution", "chk_li_origin")).toEqual(ORIGIN_VALUES);
+    // Slice #39.72: `chk_li_origin` left the repair file with its table (migration_116 dropped lookup_institution).
+    expect(sql).not.toContain("chk_li_origin");
     expect(checkOn(sql, "lookup_document_type", "chk_ldt_origin")).toEqual(ORIGIN_VALUES);
   });
 
@@ -729,7 +730,9 @@ describe("migration_077's two CHECKs are the same decision as the schema unions"
       "src/db/supabase_repair_missing_tables.sql",
     ]) {
       const sql = stripSqlComments(read(file));
-      for (const table of ["lookup_tarla", "lookup_institution"]) {
+      // Slice #39.72: the repair file no longer adds lookup_institution's column — the table is gone (migration_116).
+      const tables = file.includes("repair") ? ["lookup_tarla"] : ["lookup_tarla", "lookup_institution"];
+      for (const table of tables) {
         const found = new RegExp(
           `ALTER TABLE ${table}\\s+ADD COLUMN IF NOT EXISTS origin text NOT NULL DEFAULT '${DOCUMENT_TYPE_ORIGINS[0]}'`,
         ).test(sql);
@@ -740,7 +743,8 @@ describe("migration_077's two CHECKs are the same decision as the schema unions"
 
   it("the drizzle union on each table spells the same values, in the same order", () => {
     const schema = stripTsComments(read("src/db/schema/index.ts"));
-    for (const table of ["lookupDocumentType", "lookupTarla", "lookupInstitution"]) {
+    // Slice #39.72: `lookupInstitution` left the schema with its table (migration_116).
+    for (const table of ["lookupDocumentType", "lookupTarla"]) {
       // Slice the table's own pgTable block, so a union on a different table
       // can neither satisfy nor break this. The subject rides along in every
       // expectation, so a red names which of the three it was.

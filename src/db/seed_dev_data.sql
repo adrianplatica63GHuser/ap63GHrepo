@@ -841,7 +841,7 @@ JOIN property pr ON pr.code = v.code;
 INSERT INTO document (
   id, principal_object_id, code,
   document_type_id, title, nr_document, date_document,
-  institution_id, emitent, baza_legala,
+  issuer_person_id, emitent, baza_legala,
   uat_proprietate, uat_proprietar,
   suprafata, nr_dosar_succesoral, data_decesului, ultimul_domiciliu, nr_certificat_deces,
   date_start, date_end,
@@ -851,7 +851,8 @@ INSERT INTO document (
 SELECT gen_random_uuid(), po.id, v.code,
   (SELECT id FROM lookup_document_type  WHERE key  = v.dtype_key LIMIT 1),
   v.title, v.nr_doc, v.date_doc::date,
-  (SELECT id FROM lookup_institution WHERE name = v.inst LIMIT 1),
+  -- Slice #39.72: the issuer is a juridical person of that name (migration_115 made the institutions into them).
+  (SELECT p.id FROM person p WHERE p.type = 'JUDICIAL' AND p.display_name = v.inst ORDER BY p.code LIMIT 1),
   v.emitent, v.baza_legala,
   v.uat_prop, v.uat_propr,
   v.suprafata::numeric,

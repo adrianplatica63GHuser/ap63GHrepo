@@ -9,7 +9,8 @@
  * metadata and role whitelists behave exactly as they do from the screens):
  *   · Reference Data the scenarios need — person roles (and their „valid for
  *     property / person" flags and converse names), document-type ↔ role rows
- *     (with „holds share"), two tarla codes, two institutions, a person type.
+ *     (with „holds share"), two tarla codes, a person type — and the documents' four issuers, juridical persons
+ *     (Slice #39.72), where the archive lacks them.
  *     ADDITIVE ONLY: an existing row is never renamed or deleted, and a flag is
  *     only ever switched ON.
  *   · 10 natural persons, 5 judicial persons, 8 properties (4 corners each,
@@ -36,7 +37,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import { randomUUID } from "crypto";
-import { eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { db, pool } from "../../src/db";
 import {
   document,
@@ -50,7 +51,6 @@ import {
   lookupDocTypePersonRole,
   lookupDocumentDocumentRole,
   lookupDocumentType,
-  lookupInstitution,
   lookupJudicialPersonType,
   lookupPersonRole,
   lookupPersonType,
@@ -375,17 +375,6 @@ async function ensureReferenceData(): Promise<void> {
       added.push(`Tarla „${indicativ}"`);
     }
   }
-  const institutions: [string, string][] = [
-    ["Primăria Orașului Bragadiru", "Administrație Locală"],
-    ["Judecătoria Cornetu", "Juridic"],
-  ];
-  for (const [name, type] of institutions) {
-    const rows = await db.select().from(lookupInstitution).where(eq(lookupInstitution.name, name));
-    if (rows.length === 0) {
-      await db.insert(lookupInstitution).values({ name, institutionType: type, sortOrder: 100 });
-      added.push(`Instituție „${name}"`);
-    }
-  }
   for (const name of ["Notar"]) {
     const rows = await db.select().from(lookupPersonType).where(eq(lookupPersonType.name, name));
     if (rows.length === 0) {
@@ -399,10 +388,30 @@ async function ensureReferenceData(): Promise<void> {
   for (const r of await db.select().from(lookupPropertyType)) refIds.propType.set(r.name, r.id);
   for (const r of await db.select().from(lookupUseCategory)) refIds.useCat.set(r.name, r.id);
   for (const r of await db.select().from(lookupTarla)) refIds.tarla.set(r.indicativ, r.id);
-  for (const r of await db.select().from(lookupInstitution)) refIds.institution.set(r.name, r.id);
   for (const r of await db.select().from(lookupCitizenship)) refIds.citizenship.set(r.name, r.id);
   for (const r of await db.select().from(lookupJudicialPersonType)) refIds.jType.set(r.name, r.id);
   for (const r of await db.select().from(lookupPersonType)) refIds.pType.set(r.name, r.id);
+
+  // Slice #39.72: the documents' issuers are juridical persons (migration_115 made the archive's institutions into
+  // them; „Instituții" is gone). The four the plan names are found by name, and made — as any juridical person, with
+  // a public-body type — only where the archive does not hold them (a rebuilt database has none).
+  const issuers: [string, string][] = [
+    ["Notariat", "Birou notarial"],
+    ["OCPI", "Instituție publică teritorială"],
+    ["Primăria Orașului Bragadiru", "Autoritate locală"],
+    ["Judecătoria Cornetu", "Instanță"],
+  ];
+  const judicialNamed = async (name: string) =>
+    (await db.select({ id: person.id }).from(person).where(and(eq(person.type, "JUDICIAL"), eq(person.displayName, name))).orderBy(person.code))[0]?.id ?? null;
+  for (const [name, type] of issuers) {
+    let id = await judicialNamed(name);
+    if (id === null) {
+      const full = await createJudicialPerson(judicialPersonCreateSchema.parse({ name, judicialPersonTypeId: opt(refIds.jType, type) }), BY);
+      id = full.person.id;
+      added.push(`Emitent „${name}" (persoană juridică, ${type})`);
+    }
+    refIds.institution.set(name, id);
+  }
   saveManifest();
 }
 
@@ -879,7 +888,7 @@ async function createDocuments(): Promise<void> {
       title: d.title,
       nrDocument: d.nr,
       dateDocument: d.date,
-      institutionId: opt(refIds.institution, d.institution),
+      issuerPersonId: opt(refIds.institution, d.institution),
       emitent: d.emitent ?? null,
       subject: d.subject ?? null,
       dateValidUntil: d.validUntil ?? null,

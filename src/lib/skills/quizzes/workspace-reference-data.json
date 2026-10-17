@@ -438,11 +438,11 @@
           "id": "b2",
           "section": "admin-reference-data-values",
           "ro": {
-            "question": "Ciprian adaugă în „Instituții” valoarea „Primăria Snagov” și apasă „Salvează”. O caută apoi la începutul listei și nu o vede. Unde este?",
+            "question": "Ciprian adaugă în „Cetățenie” valoarea „Moldovenească” și apasă „Salvează”. O caută apoi la începutul listei și nu o vede. Unde este?",
             "explanation": "Valoarea nouă apare ultima în listă; o valoare pe care nu o folosește nimeni scrie „nefolosit” și stă după valorile folosite."
           },
           "en": {
-            "question": "Ciprian adds the value „Primăria Snagov” (Snagov town hall) to „Instituții” and presses „Salvează”. He then looks for it at the top of the list and does not see it. Where is it?",
+            "question": "Ciprian adds the value „Moldovenească” (Moldovan) to „Cetățenie” (citizenship) and presses „Salvează”. He then looks for it at the top of the list and does not see it. Where is it?",
             "explanation": "The new value appears last in the list; a value that nothing uses reads „nefolosit” (unused) and stands after the values in use."
           },
           "options": [
@@ -476,11 +476,11 @@
           "id": "b3",
           "section": "admin-reference-data-values",
           "ro": {
-            "question": "Ciprian șterge din „Instituții” o valoare „nefolosit”; fereastra spune „Nimic nu depinde de această valoare. …” și el apasă „Șterge”. A doua zi vrea valoarea înapoi. Ce poate face?",
+            "question": "Ciprian șterge din „Cetățenie” o valoare „nefolosit”; fereastra spune „Nimic nu depinde de această valoare. …” și el apasă „Șterge”. A doua zi vrea valoarea înapoi. Ce poate face?",
             "explanation": "La ștergere valoarea dispare definitiv, iar acțiunea nu poate fi anulată; dacă îi trebuie, o adaugă din nou cu „Adaugă”."
           },
           "en": {
-            "question": "Ciprian deletes an „nefolosit” value from „Instituții”; the window says „Nimic nu depinde de această valoare. …” and he presses „Șterge”. The next day he wants the value back. What can he do?",
+            "question": "Ciprian deletes an „nefolosit” value from „Cetățenie” (citizenship); the window says „Nimic nu depinde de această valoare. …” and he presses „Șterge”. The next day he wants the value back. What can he do?",
             "explanation": "Once deleted the value is gone for good, and the action cannot be undone; if he needs it, he adds it again with „Adaugă”."
           },
           "options": [

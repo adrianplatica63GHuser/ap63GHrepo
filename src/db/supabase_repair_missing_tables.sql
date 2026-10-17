@@ -39,8 +39,8 @@
 --   NOT PURELY ADDITIVE:
 --
 --     * `UPDATE <t> SET origin = 'MANUAL' WHERE origin IS NULL`, on
---       lookup_document_type, lookup_tarla and lookup_institution (#26.12,
---       extended to the other two by #34.02). It writes data. It touches ONLY
+--       lookup_document_type and lookup_tarla (#26.12, extended by #34.02;
+--       lookup_institution's went with the table, migration_116, #39.72). It writes data. It touches ONLY
 --       rows whose origin is NULL, which the application already reads as
 --       MANUAL, so it changes no behaviour - but it is a write, and this file
 --       used to promise there were none.
@@ -102,9 +102,9 @@
 --       that turns a failure into a skip has moved the problem rather than
 --       solved it unless something downstream says the skip happened.
 --
---     * the `chk_ldt_origin`, `chk_lt_origin` and `chk_li_origin` constraints
---       on lookup_document_type, lookup_tarla and lookup_institution (#26.12,
---       #34.02) - each one an ADD CONSTRAINT over the origin column. ACCESS
+--     * the `chk_ldt_origin` and `chk_lt_origin` constraints
+--       on lookup_document_type and lookup_tarla (#26.12,
+--       #34.02; `chk_li_origin` went with lookup_institution in #39.72) - each one an ADD CONSTRAINT over the origin column. ACCESS
 --       EXCLUSIVE and a full validation each. These DO count first and RAISE a
 --       WARNING rather than failing. (Described rather than quoted, because
 --       document-type-origin-single-source.test.ts records as measured fact
@@ -177,14 +177,14 @@
 --     an adversarial round pointed out it was assumed rather than stated)
 --   - table lookup_person_role (Slice #34.04's block in section 8 adds two
 --     columns to it; it is created by migration_013 and this file never has)
---   - tables lookup_person_type and lookup_institution, referenced by the FKs
---     in section 8's `natural_person` and `document` ALTERs. Neither is an
---     ALTER TARGET, so neither shows up in a sweep of statement heads - and
---     because each sits in a MULTI-CLAUSE `ALTER TABLE`, its absence takes the
---     unrelated columns beside it down too: no lookup_person_type means
---     natural_person gets neither physical_person_type_id NOR
---     correspondence_same_as_home. lookup_institution's absence at least ends
---     POST-FLIGHT FAILED; lookup_person_type's ends OK. (#34.31 round 5.)
+--   - table lookup_person_type, referenced by the FK in section 8's
+--     `natural_person` ALTER. It is not an ALTER TARGET, so it does not show up
+--     in a sweep of statement heads - and because it sits in a MULTI-CLAUSE
+--     `ALTER TABLE`, its absence takes the unrelated columns beside it down
+--     too: natural_person gets neither physical_person_type_id NOR
+--     correspondence_same_as_home, and the run ends OK. (#34.31 round 5;
+--     lookup_institution was the second such table until migration_116 dropped
+--     it with document.institution_id, #39.72.)
 --   - tables natural_person, person_version, property_version,
 --     document_version, property_address, property_corner. Each is an ALTER
 --     target in section 8 and none was ever stated here; on a database
@@ -1198,10 +1198,9 @@ ALTER TABLE natural_person
     REFERENCES lookup_person_type(id) ON DELETE SET NULL,
   ADD COLUMN IF NOT EXISTS correspondence_same_as_home boolean NOT NULL DEFAULT false;
 
--- migration_035 / 042 / 065 / 066 -- document additions
+-- migration_042 / 065 / 066 -- document additions (migration_035's institution_id went with lookup_institution in
+-- migration_116, Slice #39.72: the issuer is `issuer_person_id`, below)
 ALTER TABLE document
-  ADD COLUMN IF NOT EXISTS institution_id uuid
-    REFERENCES lookup_institution(id) ON DELETE SET NULL,
   ADD COLUMN IF NOT EXISTS subject           text,
   ADD COLUMN IF NOT EXISTS date_valid_until  date,
   ADD COLUMN IF NOT EXISTS surveyor_id       uuid REFERENCES person(id) ON DELETE SET NULL,
@@ -1306,8 +1305,7 @@ END $$;
 ALTER TABLE lookup_tarla
   ADD COLUMN IF NOT EXISTS origin text NOT NULL DEFAULT 'MANUAL';
 
-ALTER TABLE lookup_institution
-  ADD COLUMN IF NOT EXISTS origin text NOT NULL DEFAULT 'MANUAL';
+-- (lookup_institution had the same column until migration_116 dropped the table, Slice #39.72.)
 
 -- ⚠️ ADD COLUMN IF NOT EXISTS is a complete no-op when the column already
 -- exists, INCLUDING as a nullable column with no default -- so the three
@@ -1317,9 +1315,6 @@ ALTER TABLE lookup_institution
 UPDATE lookup_tarla       SET origin = 'MANUAL' WHERE origin IS NULL;
 ALTER TABLE lookup_tarla       ALTER COLUMN origin SET DEFAULT 'MANUAL';
 ALTER TABLE lookup_tarla       ALTER COLUMN origin SET NOT NULL;
-UPDATE lookup_institution SET origin = 'MANUAL' WHERE origin IS NULL;
-ALTER TABLE lookup_institution ALTER COLUMN origin SET DEFAULT 'MANUAL';
-ALTER TABLE lookup_institution ALTER COLUMN origin SET NOT NULL;
 
 DO $$
 DECLARE
@@ -1341,25 +1336,6 @@ BEGIN
       ALTER TABLE lookup_tarla
         ADD CONSTRAINT chk_lt_origin CHECK (origin IN ('MANUAL', 'IMPORT'));
       RAISE NOTICE 'chk_lt_origin added.';
-    END IF;
-  END IF;
-
-  IF EXISTS (
-    SELECT 1 FROM pg_constraint
-    WHERE conname = 'chk_li_origin' AND conrelid = 'lookup_institution'::regclass
-  ) THEN
-    RAISE NOTICE 'chk_li_origin already present -- left untouched.';
-  ELSE
-    SELECT count(*) INTO bad
-      FROM lookup_institution
-     WHERE origin IS NULL OR origin NOT IN ('MANUAL', 'IMPORT');
-    IF bad > 0 THEN
-      RAISE WARNING 'chk_li_origin NOT added: % row(s) hold a value outside '
-                    '(MANUAL, IMPORT). Fix those rows and re-run.', bad;
-    ELSE
-      ALTER TABLE lookup_institution
-        ADD CONSTRAINT chk_li_origin CHECK (origin IN ('MANUAL', 'IMPORT'));
-      RAISE NOTICE 'chk_li_origin added.';
     END IF;
   END IF;
 END $$;
@@ -1763,19 +1739,16 @@ CREATE TABLE IF NOT EXISTS document_tarla (
 );
 CREATE INDEX IF NOT EXISTS document_tarla_tarla_idx ON document_tarla (tarla_id);
 
--- migration_115 (Slice #39.71) -- every institution is a juridical person, and a document's issuer is one
--- The two columns and their indexes only. The function that makes an institution's juridical person, the
--- three triggers that keep the pair in step and the backfill are migration_115's and are NOT repeated here:
--- they write person, judicial_person and person_version, and a second copy of that body is a second
--- create path for juridical persons (object-writers-enumerated.test.ts counts them). A database repaired by
--- this file without migration_115 has the columns empty; applying migration_115 fills them.
-ALTER TABLE lookup_institution
-  ADD COLUMN IF NOT EXISTS juridical_person_id uuid REFERENCES person(id) ON DELETE SET NULL;
-CREATE UNIQUE INDEX IF NOT EXISTS lookup_institution_juridical_person_unique
-  ON lookup_institution (juridical_person_id);
+-- migration_115 / migration_116 (Slices #39.71, #39.72) -- a document's issuer is a juridical person
+-- The columns and the index. The conversion of the institutions into juridical persons and of the versions'
+-- `institutionId` is migration_115's and migration_116's, and is not repeated here: it is a data migration, and a
+-- database brought up by this file has no lookup_institution to convert.
 ALTER TABLE document
-  ADD COLUMN IF NOT EXISTS issuer_person_id uuid REFERENCES person(id) ON DELETE SET NULL;
+  ADD COLUMN IF NOT EXISTS issuer_person_id uuid REFERENCES person(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS issuer_read      text;
 CREATE INDEX IF NOT EXISTS document_issuer_person_idx ON document (issuer_person_id);
+ALTER TABLE lookup_judicial_person_type
+  ADD COLUMN IF NOT EXISTS public_body boolean NOT NULL DEFAULT false;
 
 -- migration_034 -- Street View street line on the property address
 ALTER TABLE property_address
@@ -1934,20 +1907,6 @@ BEGIN
     WHERE conname = 'chk_lt_origin' AND conrelid = 'lookup_tarla'::regclass
   ) THEN
     RAISE WARNING 'chk_lt_origin is absent -- a row holds an origin outside (MANUAL, IMPORT). Find it with: SELECT id, indicativ, origin FROM lookup_tarla WHERE origin NOT IN (''MANUAL'', ''IMPORT'');';
-  END IF;
-
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_schema = 'public'
-      AND table_name   = 'lookup_institution'
-      AND column_name  = 'origin'
-  ) THEN
-    faults := array_append(faults, 'lookup_institution.origin (column missing)');
-  ELSIF NOT EXISTS (
-    SELECT 1 FROM pg_constraint
-    WHERE conname = 'chk_li_origin' AND conrelid = 'lookup_institution'::regclass
-  ) THEN
-    RAISE WARNING 'chk_li_origin is absent -- a row holds an origin outside (MANUAL, IMPORT). Find it with: SELECT id, name, origin FROM lookup_institution WHERE origin NOT IN (''MANUAL'', ''IMPORT'');';
   END IF;
 
   -- Slice #34.03: the same question for property.tarla_id, and it is here for
@@ -2232,7 +2191,7 @@ BEGIN
   END IF;
 
   IF array_length(faults, 1) IS NULL THEN
-    RAISE NOTICE 'POST-FLIGHT OK: all 13 tables present; lookup_document_type.origin, lookup_tarla.origin, lookup_institution.origin, document.import_title, property.tarla_id, lookup_person_role.valid_for_property and lookup_person_role.valid_for_person present. A WARNING above about any of lookup_document_type_name_normalised_unique, lookup_property_type_key_unique, lookup_property_type itself, chk_em_importance, chk_em_relevance, chk_em_provenance, stamp_member_stamp_principal_object_unique, entity_tag_entity_tag_unique, property_corner_source_document_unique or lookup_tarla_indicativ_folded_unique is separate and is not a fault -- each names a statement that is not on this database, says the usual reason it was skipped and what to resolve before re-running.';
+    RAISE NOTICE 'POST-FLIGHT OK: all 13 tables present; lookup_document_type.origin, lookup_tarla.origin, document.import_title, property.tarla_id, lookup_person_role.valid_for_property and lookup_person_role.valid_for_person present. A WARNING above about any of lookup_document_type_name_normalised_unique, lookup_property_type_key_unique, lookup_property_type itself, chk_em_importance, chk_em_relevance, chk_em_provenance, stamp_member_stamp_principal_object_unique, entity_tag_entity_tag_unique, property_corner_source_document_unique or lookup_tarla_indicativ_folded_unique is separate and is not a fault -- each names a statement that is not on this database, says the usual reason it was skipped and what to resolve before re-running.';
   ELSE
     RAISE EXCEPTION 'POST-FLIGHT FAILED: %', array_to_string(faults, ' | ');
   END IF;

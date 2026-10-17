@@ -313,9 +313,10 @@ describe("§3 the origin-carrying lists, as the schema has them", () => {
    * guarded and this test is a record rather than a dependency. That is the
    * difference between a fact worth knowing and a list worth forgetting.
    */
-  it("is exactly tarla, document-types and institutions", () => {
+  // Slice #39.72: „institutions" was the third, until migration_116 dropped `lookup_institution`.
+  it("is exactly tarla and document-types", () => {
     expect(VALID_LIST_KEYS.filter(hasOriginColumn).sort()).toEqual(
-      ["document-types", "institutions", "tarla"],
+      ["document-types", "tarla"],
     );
   });
 
@@ -331,7 +332,7 @@ describe("§3 the origin-carrying lists, as the schema has them", () => {
    * and `lookupOriginStatus` — which reads all three — would render it as
    * „Adăugat manual" without anything going red.
    */
-  it.each([["tarla"], ["document-types"], ["institutions"]] as const)(
+  it.each([["tarla"], ["document-types"]] as const)(
     "%s declares it NOT NULL, defaulting to MANUAL",
     (key) => {
       const col = originColumn(key);

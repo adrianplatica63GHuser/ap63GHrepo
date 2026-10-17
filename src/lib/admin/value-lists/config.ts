@@ -48,7 +48,8 @@ export const VALID_LIST_KEYS = [
   "person-relationships",
   "judicial-person-types",
   "document-types",
-  "institutions",
+  // Slice #39.72: "institutions" left — every institution is a juridical person (migration_115), the list was dropped
+  // (migration_116).
   // Slice #29.13 — the two under "Relație între obiecte". See the header.
   "property-property-roles",
   "document-document-roles",
@@ -245,7 +246,11 @@ export const LIST_META: Record<ListKey, ListMeta> = {
   },
   "judicial-person-types": {
     titleKey: "judicialPersonTypes",
-    fields: [{ key: "name", labelKey: "name", required: true }],
+    fields: [
+      { key: "name", labelKey: "name", required: true },
+      // Slice #39.72 (migration_116): a public-body type — the document's issuer picker offers its persons first.
+      { key: "publicBody", labelKey: "publicBody", required: false, type: "checkbox" },
+    ],
   },
   // ── Slice #34.09: the key that is forever, chosen rather than inherited ────
   //
@@ -277,13 +282,6 @@ export const LIST_META: Record<ListKey, ListMeta> = {
       { key: "key",  labelKey: "key",  required: false, createOnly: true, nameTip: true },
       // Slice #37.95: the short name the Documents list shows; blank = the rule's.
       { key: "shortName", labelKey: "shortName", required: false },
-    ],
-  },
-  institutions: {
-    titleKey: "institutions",
-    fields: [
-      { key: "name",            labelKey: "name",            required: true  },
-      { key: "institutionType", labelKey: "institutionType", required: false },
     ],
   },
 

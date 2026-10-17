@@ -88,7 +88,7 @@ test.describe("TC-VL-02 — „Date de referință” pe o pagină, două valori
         ["Tipuri de Persoană Fizică", "Tipuri de Persoană Juridică", "Tipuri de proprietate și folosințe", "Tipuri de Document"],
         ["Roluri Persoane", "Legături Proprietate → Proprietate", "Legături Document → Document"],
         // #39.70: „Relația cu firma" after „Cetățenie".
-        ["Indicative Tarla", "Cetățenie", "Relația cu firma", "Instituții"],
+        ["Indicative Tarla", "Cetățenie", "Relația cu firma"],
       ]);
       expect(groups.flat().filter((b) => !b.oneLine || !b.whole).map((b) => b.name)).toEqual([]);
       await expect(nav.getByRole("button", { name: "Tipuri de proprietate și folosințe", exact: true })).toHaveAttribute("aria-current", "page");

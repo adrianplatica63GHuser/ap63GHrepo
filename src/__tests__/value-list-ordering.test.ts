@@ -131,7 +131,6 @@ import {
   lookupPersonRelationship,
   lookupJudicialPersonType,
   lookupDocumentType,
-  lookupInstitution,
   lookupPropertyPropertyRole,
   lookupDocumentDocumentRole,
 } from "@/db/schema";
@@ -153,7 +152,6 @@ const TABLES = {
   lookupPersonRelationship, // Slice #39.70
   lookupJudicialPersonType,
   lookupDocumentType,
-  lookupInstitution,
   lookupPropertyPropertyRole,
   lookupDocumentDocumentRole,
 } as unknown as Record<string, Record<string, unknown>>;
@@ -401,7 +399,7 @@ const FIXED_BY_34_01: ListKey[] = [
   "person-types",
   "citizenships",
   "judicial-person-types",
-  "institutions",
+  // "institutions" was the seventh, until Slice #39.72 retired the list (migration_116).
 ];
 
 describe("§3 the seven sort_order-only lists gained a second key, in that order", () => {

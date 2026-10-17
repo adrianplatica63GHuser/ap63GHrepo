@@ -119,7 +119,8 @@ const LOOKUPS: LookupTarget[] = [
   { screen: "PROP", field: "tarlaId", table: "lookup_tarla", column: "indicativ" },
   { screen: "PROP", field: "tarlaId.descriere", table: "lookup_tarla", column: "descriere" },
   { screen: "DOC", field: "documentTypeId", table: "lookup_document_type", column: "name" },
-  { screen: "DOC", field: "institutionId", table: "lookup_institution", column: "name" },
+  // Slice #39.72: the issuer picker lists juridical persons — their names are measured with the persons'
+  // (`personDisplayName`, above); „Instituții" is gone.
   // The role chips in the association tabs (#37.16).
   { screen: "LIST", field: "rolePerson", table: "lookup_person_role", column: "name" },
   { screen: "LIST", field: "rolePropertyProperty", table: "lookup_property_property_role", column: "name" },

@@ -64,7 +64,6 @@ import {
   lookupPersonRelationship,
   lookupJudicialPersonType,
   lookupDocumentType,
-  lookupInstitution,
   lookupPropertyPropertyRole,
   lookupDocumentDocumentRole,
 } from "@/db/schema";
@@ -393,13 +392,6 @@ export async function listValues(key: ListKey): Promise<LookupRow[]> {
           asc(lookupDocumentType.name),
           asc(lookupDocumentType.id),
         ) as Promise<LookupRow[]>;
-    case "institutions":
-      return db.select().from(lookupInstitution)
-        .orderBy(
-          asc(lookupInstitution.sortOrder),
-          asc(lookupInstitution.name),
-          asc(lookupInstitution.id),
-        ) as Promise<LookupRow[]>;
     // Slice #29.13: sort order then name — the ordering their own
     // `listPropertyPropertyRoles` / `listDocumentDocumentRoles` used, kept so
     // the rows do not rearrange themselves the day the modal changes.
@@ -668,10 +660,6 @@ export async function createValue(
         void _requested;
         return createDocumentTypeRow(tx, rest, requestedDocumentTypeKey(data.key));
       });
-    case "institutions": {
-      const [row] = await db.insert(lookupInstitution).values(data).returning();
-      return row as LookupRow;
-    }
     case "property-property-roles": {
       const [row] = await db.insert(lookupPropertyPropertyRole).values(data).returning();
       return row as LookupRow;
@@ -1210,10 +1198,6 @@ export async function updateValue(
           .returning();
         return (row as LookupRow) ?? null;
       });
-    }
-    case "institutions": {
-      const [row] = await db.update(lookupInstitution).set(data).where(eq(lookupInstitution.id, id)).returning();
-      return (row as LookupRow) ?? null;
     }
     case "property-property-roles": {
       const [row] = await db.update(lookupPropertyPropertyRole).set(data).where(eq(lookupPropertyPropertyRole.id, id)).returning();

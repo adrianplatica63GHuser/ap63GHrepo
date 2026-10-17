@@ -13,7 +13,7 @@ import { test, expect, type Page } from "../helpers/test";
 // screen the page scrolls to them by design; TC-VL-10 step 5 holds their header row. The longest of the rest is read here.
 const LISTS = [
   "property-types", "tarla", "use-categories", "person-types", "judicial-person-types", "citizenships",
-  "document-types", "institutions",
+  "document-types", // #39.72: „institutions" retired
 ];
 
 /** The frame, its header row and the page's scroll area, measured. */

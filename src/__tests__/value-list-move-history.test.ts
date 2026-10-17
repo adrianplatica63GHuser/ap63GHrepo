@@ -356,7 +356,6 @@ describe("which refs are versioned", () => {
         "citizenships:natural_person.citizenship_id→natural-person",
         "judicial-person-types:judicial_person.judicial_person_type_id→judicial-person",
         "document-types:document.document_type_id→document",
-        "institutions:document.institution_id→document",
       ].sort(),
     );
   });
@@ -412,7 +411,7 @@ describe("which refs are versioned", () => {
     // `versioned.idColumn` belonging to the right TABLE is not enough: naming
     // `property.code` would type-check, return codes from the UPDATE, find no
     // snapshots, and report `versions: 0` for a move that recorded nothing.
-    for (const list of ["property-types", "use-categories", "tarla", "document-types", "institutions"] as ListKey[]) {
+    for (const list of ["property-types", "use-categories", "tarla", "document-types"] as ListKey[]) {
       const ref = LIST_DEPENDENCIES[list].refs.find((r) => r.versioned);
       expect([list, ref?.versioned?.idColumn.name]).toEqual([list, "id"]);
     }
