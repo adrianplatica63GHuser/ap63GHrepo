@@ -11,14 +11,15 @@ A few of the map's gestures are not shown on any label: dragging a rectangle, th
 
 ## 8.1 What the map shows {#map-what}
 
-The screen is called „All Properties”. The map opens fitted so that every property it draws fits on it. Each property with corners appears as a blue shape, its sides joined in the order of its corners. A property without corners has no outline, so it does not appear on the map; corners can be added to it at any time, in „Corners” (section [[properties-corners-table]]).
+The screen is called „All Properties”. The map opens fitted so that every property it draws fits on it. Each property with corners appears as a blue shape, its sides joined in the order of its corners, and its corners are small dots of the same colour. When you zoom out and a shape becomes too small to read, a drop appears in its place (section [[map-what-drops]]). A property without corners has no outline, so it does not appear on the map; corners can be added to it at any time, in „Corners” (section [[properties-corners-table]]).
 
 At the top of the map are its buttons. „STR” and „SAT” choose the street map or the satellite image, as on a property's „Map” tile. The other buttons are the map's tools, explained below:
 
 - „Select” — picks several properties at once (section [[map-select]]);
 - „Ruler” and „Angles” — measure a distance and an angle (section [[map-ruler]]);
 - „Area of a delimited zone” and „Area of any zone” — calculate the area of a zone (section [[map-area]]);
-- „Groups” — chooses which properties are shown (section [[map-what-groups]]).
+- „Groups” — chooses which properties are shown (section [[map-what-groups]]);
+- „Map settings” — the distance at which drops merge (section [[map-what-drops]]).
 
 ### 8.1.1 Opening the map {#map-what-open}
 
@@ -47,6 +48,19 @@ On saving, the archive refuses from the start a second property with the same ta
 ### 8.1.4 The „Groups” filter {#map-what-groups}
 
 „Groups” opens a list with ticks: „All (in groups or not)”, „Not in a group” and the archive's groups of properties. With them you choose which properties the map draws — for example only the land of a group made for a valuation (section [[links-classify-groups]]). When the archive has no group with a description, the list says „No named groups”.
+
+### 8.1.5 Drops and numbered drops {#map-what-drops}
+
+While a property is large enough on screen, the map draws its shape. When you zoom out and the longer side of the shape falls under 24 pixels, a blue **drop** appears in its place, its tip at the middle of the property. Each property changes on its own size: a large field stays a shape long after a small lot beside it has become a drop. A drop stays the same size however far you zoom out.
+
+Drops that come too close to one another merge into a **numbered drop**, larger, with the number of properties it covers written in white. When numbered drops merge too, their numbers add up. When you zoom in, everything comes apart in reverse: numbered drops split, and drops become shapes again.
+
+- A click on a drop opens the same bubble as a click on the property's shape, with „Open” and „Navigate” (section [[map-what-bubble]]).
+- A click on a numbered drop zooms the map in until its properties fit. If the map cannot zoom in any further, the bubble opens with the list of them.
+
+The colours say what they say on the shapes: red, a selected property (section [[map-select]]); blinking pink, a duplicate property (section [[map-what-duplicates]]). Two duplicate properties have the same corners, so from afar they always end up in the same numbered drop, which blinks pink. A numbered drop is red when a selected property is in it.
+
+„Map settings”, on the map's toolbar, chooses the distance under which drops merge: „Drops merge under” between 20 and 80 pixels, 40 by default. A smaller distance shows more drops, a larger one fewer. The choice is kept in the browser where you made it; another computer or another browser starts from 40.
 
 ## 8.2 Selecting {#map-select}
 

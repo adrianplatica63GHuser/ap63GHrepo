@@ -11,14 +11,15 @@ Câteva gesturi ale hărții nu se văd pe nicio etichetă: tragerea unui dreptu
 
 ## 8.1 Ce arată harta {#map-what}
 
-Ecranul se numește „Toate Proprietățile”. Harta se deschide potrivită astfel încât să încapă toate proprietățile pe care le desenează. Fiecare proprietate cu colțuri apare ca o formă albastră, cu laturile unite în ordinea colțurilor ei. O proprietate fără colțuri nu are contur, deci nu apare pe hartă; colțurile i se pot adăuga oricând, în „Puncte de contur” (secțiunea [[properties-corners-table]]).
+Ecranul se numește „Toate Proprietățile”. Harta se deschide potrivită astfel încât să încapă toate proprietățile pe care le desenează. Fiecare proprietate cu colțuri apare ca o formă albastră, cu laturile unite în ordinea colțurilor ei, iar colțurile ei sunt puncte mici de aceeași culoare. Când micșorați harta și o formă devine prea mică pentru a se citi, în locul ei apare o picătură (secțiunea [[map-what-drops]]). O proprietate fără colțuri nu are contur, deci nu apare pe hartă; colțurile i se pot adăuga oricând, în „Puncte de contur” (secțiunea [[properties-corners-table]]).
 
 Sus, pe hartă, stau butoanele ei. „HARTĂ” și „SATELIT” aleg harta străzilor sau imaginea din satelit, ca pe fișa „Hartă” a unei proprietăți. Celelalte butoane sunt uneltele hărții, explicate mai jos:
 
 - „Selectează” — alege mai multe proprietăți deodată (secțiunea [[map-select]]);
 - „Riglă” și „Unghiuri” — măsoară o distanță și un unghi (secțiunea [[map-ruler]]);
 - „Suprafața unei zone delimitate” și „Suprafața unei zone oarecare” — calculează suprafața unei zone (secțiunea [[map-area]]);
-- „Grupuri” — alege ce proprietăți se văd (secțiunea [[map-what-groups]]).
+- „Grupuri” — alege ce proprietăți se văd (secțiunea [[map-what-groups]]);
+- „Setări hartă” — distanța la care picăturile se unesc (secțiunea [[map-what-drops]]).
 
 ### 8.1.1 Deschiderea hărții {#map-what-open}
 
@@ -47,6 +48,19 @@ La salvare, arhiva refuză de la început o a doua proprietate cu aceeași tarla
 ### 8.1.4 Filtrul „Grupuri” {#map-what-groups}
 
 „Grupuri” deschide o listă cu bife: „Toate (în grup sau nu)”, „Fără grup” și grupurile de proprietăți ale arhivei. Cu ele alegeți ce proprietăți desenează harta — de exemplu doar terenurile unui grup făcut pentru o evaluare (secțiunea [[links-classify-groups]]). Când arhiva nu are niciun grup cu descriere, lista spune „Niciun grup denumit”.
+
+### 8.1.5 Picăturile și picăturile cu număr {#map-what-drops}
+
+Cât timp o proprietate este destul de mare pe ecran, harta îi desenează forma. Când micșorați harta și latura cea mai lungă a formei ajunge sub 24 de pixeli, în locul ei apare o **picătură** albastră, cu vârful în mijlocul proprietății. Fiecare proprietate se schimbă după mărimea ei: un câmp mare rămâne formă mult timp după ce un lot mic de lângă el a devenit picătură. Picătura are aceeași mărime oricât ați micșora harta.
+
+Picăturile ajunse prea aproape una de alta se unesc într-o **picătură cu număr**, mai mare, cu numărul proprietăților pe care le acoperă scris cu alb. Când se unesc și picături cu număr, numerele lor se adună. Când măriți harta, totul se desface în ordine inversă: picăturile cu număr se despart, iar picăturile redevin forme.
+
+- Un clic pe o picătură deschide aceeași bulă ca un clic pe forma proprietății, cu „Deschide” și „Navighează” (secțiunea [[map-what-bubble]]).
+- Un clic pe o picătură cu număr mărește harta cât să încapă proprietățile ei. Dacă harta nu se mai poate mări, se deschide bula cu lista lor.
+
+Culorile spun ce spun și la forme: roșu, o proprietate selectată (secțiunea [[map-select]]); roz intermitent, o proprietate duplicată (secțiunea [[map-what-duplicates]]). Două proprietăți duplicate au aceleași colțuri, așa că, de departe, ajung mereu în aceeași picătură cu număr, care clipește în roz. O picătură cu număr este roșie dacă are în ea o proprietate selectată.
+
+„Setări hartă”, din bara hărții, alege distanța sub care picăturile se unesc: „Picăturile se unesc sub” între 20 și 80 de pixeli, implicit 40. O distanță mai mică arată mai multe picături, una mai mare mai puține. Alegerea se păstrează în browserul în care ați făcut-o; alt calculator sau alt browser pornește de la 40.
 
 ## 8.2 Selecția {#map-select}
 

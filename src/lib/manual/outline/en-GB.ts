@@ -125,6 +125,7 @@ export const OUTLINE: Readonly<Record<string, string>> = {
   "map-what-bubble": "How to open a property from the map: a click for the bubble with Open and Navigate, or a double-click to go straight to it.",
   "map-what-duplicates": "What a property blinking pink on the map means: a duplicate plot entered twice in the archive, and what to do about it.",
   "map-what-groups": "How to choose which properties the map shows with the Groups filter: all, those in no group, or only one group's plots.",
+  "map-what-drops": "What the drops and numbered drops on a zoomed-out map are, what a click on them does, and how Map settings chooses the distance at which they merge.",
   "map-select": "How to select several properties on the map with a rectangle, show them separately or delete them from the archive, and why that delete is risky.",
   "map-ruler": "How to measure distances and angles on the map, without changing or saving anything.",
   "map-ruler-distance": "How to measure the straight-line distance between two points or corners with the ruler, and how it snaps exactly to a plot's corner.",
