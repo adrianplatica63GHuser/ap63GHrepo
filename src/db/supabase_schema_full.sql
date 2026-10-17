@@ -4,7 +4,7 @@
 -- GENERATED FILE -- DO NOT EDIT BY HAND.
 -- Regenerate with:  .\scripts\Export-SupabaseSchema.ps1
 --
--- Generated : 2026-10-16 09:36
+-- Generated : 2026-10-17 07:44
 -- Source    : local Docker database (ga40db @ ga40prj-postgres)
 --
 -- Applies the complete schema from scratch after running
@@ -857,6 +857,24 @@ COMMENT ON COLUMN public.lookup_property_type.key IS 'DEAD SINCE Slice #34.03 (D
 
 
 --
+-- Name: lookup_property_type_use; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.lookup_property_type_use (
+    property_type_id uuid NOT NULL,
+    use_category_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: TABLE lookup_property_type_use; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.lookup_property_type_use IS 'Slice #39.66: the use categories allowed for a property type. A type with no rows allows every use.';
+
+
+--
 -- Name: lookup_tarla; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1686,6 +1704,14 @@ ALTER TABLE ONLY public.lookup_property_type
 
 ALTER TABLE ONLY public.lookup_property_type
     ADD CONSTRAINT lookup_property_type_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: lookup_property_type_use lookup_property_type_use_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lookup_property_type_use
+    ADD CONSTRAINT lookup_property_type_use_pkey PRIMARY KEY (property_type_id, use_category_id);
 
 
 --
@@ -2749,6 +2775,22 @@ ALTER TABLE ONLY public.lookup_doc_type_person_role
 
 ALTER TABLE ONLY public.lookup_doc_type_person_role
     ADD CONSTRAINT lookup_doc_type_person_role_person_role_id_fkey FOREIGN KEY (person_role_id) REFERENCES public.lookup_person_role(id) ON DELETE CASCADE;
+
+
+--
+-- Name: lookup_property_type_use lookup_property_type_use_property_type_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lookup_property_type_use
+    ADD CONSTRAINT lookup_property_type_use_property_type_id_fkey FOREIGN KEY (property_type_id) REFERENCES public.lookup_property_type(id) ON DELETE CASCADE;
+
+
+--
+-- Name: lookup_property_type_use lookup_property_type_use_use_category_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lookup_property_type_use
+    ADD CONSTRAINT lookup_property_type_use_use_category_id_fkey FOREIGN KEY (use_category_id) REFERENCES public.lookup_use_category(id) ON DELETE CASCADE;
 
 
 --
