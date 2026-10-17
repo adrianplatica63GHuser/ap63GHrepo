@@ -250,7 +250,7 @@ export const SKILLS: readonly Skill[] = [
     },
     predecessors: [],
     screens: ["judicial-persons-list", "judicial-person-detail"],
-    cases: ["TC-PERS-02", "TC-PERS-09"],
+    cases: ["TC-PERS-02", "TC-PERS-09", "TC-PERS-14"],
     manual: ["companies-add", "companies-add-contact", "companies-people-contact", "companies-add-edit", "companies-add-identity"],
   },
   {
