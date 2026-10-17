@@ -67,7 +67,7 @@ Prima fișă ține datele firmei:
 
 - „Denumire” — numele firmei, singurul câmp obligatoriu.
 - „Poreclă” — un nume scurt, al vostru, după care o găsiți mai ușor.
-- „Tip” — forma firmei: „Consiliu Local”, „Instituție”, „SRL”, „SA”, „SRL-D”, „PFA”, „II”, „IF”, „ONG” sau „Altele”; „—” înseamnă că nu e ales.
+- „Tip” — forma firmei: „Consiliu Local”, „Instituție”, „SRL”, „SA”, „SRL-D”, „PFA”, „II”, „IF”, „ONG”, unul dintre cele șapte tipuri de autoritate publică (secțiunea [[companies-add-public-bodies]]) sau „Altele”; „—” înseamnă că nu e ales.
 - „Nr. înregistrare (CUI)” — codul unic de înregistrare.
 - „Nr. registru comerțului” — numărul de la Registrul Comerțului.
 
@@ -118,6 +118,26 @@ Fereastra are câte un rând pentru fiecare câmp pe care ANAF îl știe: „Den
 O firmă inactivă fiscal apare cu un avertisment în fereastră, iar la „Note” se adaugă un rând cu data verificării și data de la care e inactivă. O firmă radiată are și ea avertismentul ei. Dacă ANAF nu cunoaște CUI-ul, fereastra o spune; dacă ANAF nu răspunde, spune „ANAF nu răspunde acum. Încercați din nou peste câteva minute.”.
 
 Instituțiile publice sunt și ele în registrul ANAF, după codul lor fiscal; butonul merge pentru ele la fel, odată ce codul este scris la CUI.
+
+### 4.2.7 Instituțiile sunt persoane juridice {#companies-add-public-bodies}
+
+O instituție care emite acte — un birou notarial, o instanță, o primărie, oficiul de cadastru, ANAF — este și ea o persoană juridică, de unul dintre cele șapte tipuri de autoritate publică:
+
+| Tip | De exemplu |
+|---|---|
+| „Autoritate publică centrală” | ANAF, agenția națională de cadastru, un minister |
+| „Instituție publică teritorială” | oficiul de cadastru al județului, administrația fiscală a județului, Instituția Prefectului |
+| „Autoritate locală” | o primărie, un consiliu local, consiliul județean |
+| „Instanță” | o judecătorie, un tribunal, o curte de apel |
+| „Birou notarial” | un birou individual notarial sau o societate profesională notarială |
+| „Birou de executor judecătoresc” | un birou de executor |
+| „Cabinet sau societate de avocatură” | un cabinet de avocat sau o societate de avocați |
+
+La „Tip” stau după formele de firmă, cu „Altele” la urmă. Fiecare are cod fiscal în registrul ANAF, așa că „Completează din ANAF” le completează ca pe orice firmă (secțiunea [[companies-add-anaf]]).
+
+Fiecare instituție din lista „Instituții” are persoana ei juridică, cu cod JPERS, în lista persoanelor juridice (secțiunea [[admin-reference-data-institutions]]). Un rând al listei care nu numește o instituție anume — „Notariat”, „Judecătorie”, „Tribunal” — are și el una, cu același nume și cu nota „generic — de înlocuit cu instituția exactă”. Deschideți-o, puneți numele și CUI-ul instituției exacte în locul celor generice și salvați.
+
+Emitentul unui act — câmpul din formularul actului a cărui etichetă se schimbă după tip — este acea persoană juridică, iar lista actelor arată numele ei. Deocamdată emitentul se alege încă, în formularul actului, din lista „Instituții”.
 
 ## 4.3 Persoanele unei firme {#companies-people}
 

@@ -85,6 +85,16 @@ A type's „Roles” tab and „Document” on a role's panel show the same pair
 
 The property form offers in „Use Category” only the uses the chosen type allows (section [[properties-add-cadastral]]). A property that already holds a use its type no longer allows keeps it; under the field it says the use is not among the ones its type allows.
 
+### 12.1.5 Institutions {#admin-reference-data-institutions}
+
+„Institutions” holds the institutions a document's issuer is chosen from — „OCPI”, „ANAF”, „Notariat” and the others. Each institution is also a judicial person, of a public-body type (section [[companies-add-public-bodies]]), and what you do to the list reaches it:
+
+- **An institution added.** Its judicial person is made at once, with a JPERS code and a type taken from the name — a court becomes „Instanță”, a town hall „Autoritate locală”.
+- **An institution renamed.** Its judicial person takes the new name, with a new version.
+- **Two institutions merged, or one deleted with its documents moved.** The documents' issuer moves to the judicial person of the institution kept. The judicial person of the institution that went stays in the list of judicial persons, where you can delete it.
+
+The seven public-body types stand in „Judicial Person Types”, after the company forms and before „Altele”.
+
 ## 12.2 Users and access {#admin-users}
 
 A colleague without an account asks for access from the sign-in page (section [[start-sign-in]]). The request arrives in „Administration” → „Users & Access”, where the screen says: „Review and act on account requests. Approving creates an account and emails the applicant their temporary password.”.

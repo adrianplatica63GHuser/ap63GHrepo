@@ -67,7 +67,7 @@ The first tile holds the firm's details:
 
 - „Name” — the firm's name, the only required field.
 - „Nickname” — a short name of your own, by which you find it more easily.
-- „Type” — the firm's form: „Consiliu Local”, „Instituție”, „SRL”, „SA”, „SRL-D”, „PFA”, „II”, „IF”, „ONG” or „Altele”; „—” means none is chosen.
+- „Type” — the firm's form: „Consiliu Local”, „Instituție”, „SRL”, „SA”, „SRL-D”, „PFA”, „II”, „IF”, „ONG”, one of the seven public-body types (section [[companies-add-public-bodies]]) or „Altele”; „—” means none is chosen.
 - „Registration No. (CUI)” — the unique registration code.
 - „Trade Register No.” — the Trade Register number.
 
@@ -118,6 +118,26 @@ The window has a row for each field ANAF knows: „Name”, „Trade Register No
 A firm that is inactive for tax shows a warning in the window, and „Notes” gets a line with the date of the check and the date it became inactive. A firm that has been struck off has its own warning. If ANAF does not know the CUI, the window says so; if ANAF is not answering, it says „ANAF is not answering right now. Try again in a few minutes.”.
 
 Public bodies are in ANAF's register too, by their tax code; the button works for them the same way once the code is typed in the CUI box.
+
+### 4.2.7 Institutions are judicial persons {#companies-add-public-bodies}
+
+An institution that issues documents — a notary's office, a court, a town hall, the cadastre office, ANAF — is a judicial person too, under one of seven public-body types:
+
+| Type | For instance |
+|---|---|
+| „Autoritate publică centrală” | ANAF, the national cadastre agency, a ministry |
+| „Instituție publică teritorială” | the county cadastre office, the county tax office, the Prefect's office |
+| „Autoritate locală” | a town hall, a local council, the county council |
+| „Instanță” | a court of first instance, a tribunal, a court of appeal |
+| „Birou notarial” | a notary's office, or a professional company of notaries |
+| „Birou de executor judecătoresc” | a bailiff's office |
+| „Cabinet sau societate de avocatură” | a lawyer's practice, or a law firm |
+
+In „Type” they stand after the company forms, with „Altele” last. Each has a tax code in ANAF's register, so „Fill in from ANAF” fills them in like any firm (section [[companies-add-anaf]]).
+
+Every institution of the „Institutions” list has its judicial person, with a JPERS code, in the list of judicial persons (section [[admin-reference-data-institutions]]). A row of that list that names no particular body — „Notariat”, „Judecătorie”, „Tribunal” — has one too, under the same name and with the note „generic — de înlocuit cu instituția exactă” (generic — to be replaced with the exact institution). Open it, put the exact institution's name and CUI in place of the generic ones, and save.
+
+A document's issuer — the field of the document's form whose label changes with its type — is that judicial person, and the list of documents shows its name. For now the issuer is still chosen on the document's form from the „Institutions” list.
 
 ## 4.3 A firm's people {#companies-people}
 

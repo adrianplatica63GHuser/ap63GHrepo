@@ -85,6 +85,16 @@ Fila „Roluri” a unui tip și „Act” din panoul unui rol arată aceleași 
 
 Formularul proprietății oferă la „Categorie de folosință” doar folosințele permise tipului ales (secțiunea [[properties-add-cadastral]]). O proprietate care are deja o folosință pe care tipul ei n-o mai permite o păstrează; sub câmp scrie că folosința nu este printre cele permise tipului.
 
+### 12.1.5 Instituțiile {#admin-reference-data-institutions}
+
+„Instituții” ține instituțiile din care se alege emitentul unui act — „OCPI”, „ANAF”, „Notariat” și celelalte. Fiecare instituție este și o persoană juridică, de un tip de autoritate publică (secțiunea [[companies-add-public-bodies]]), iar ce faceți în listă ajunge la ea:
+
+- **O instituție adăugată.** Persoana ei juridică se face pe loc, cu cod JPERS și cu tipul luat după nume — o judecătorie devine „Instanță”, o primărie „Autoritate locală”.
+- **O instituție redenumită.** Persoana ei juridică ia numele nou, cu o versiune nouă.
+- **Două instituții unite, sau una ștearsă cu actele mutate.** Emitentul actelor trece pe persoana juridică a instituției păstrate. Persoana juridică a instituției care a dispărut rămâne în lista persoanelor juridice, de unde o puteți șterge.
+
+Cele șapte tipuri de autoritate publică stau în „Tipuri de Persoană Juridică”, după formele de firmă și înainte de „Altele”.
+
 ## 12.2 Utilizatori și acces {#admin-users}
 
 Un coleg fără cont cere acces din pagina de conectare (secțiunea [[start-sign-in]]). Cererea lui ajunge în „Administrare” → „Utilizatori & Acces”, unde ecranul spune: „Revizuiți și gestionați cererile de cont. Aprobarea creează un cont și trimite solicitantului parola temporară pe email.”.
