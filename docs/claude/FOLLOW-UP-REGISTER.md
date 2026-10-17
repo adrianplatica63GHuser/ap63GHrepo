@@ -12,17 +12,17 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-10-17 — 347 entries (FU-044 superseded, FU-043 and FU-058 rewritten, in #39.72). Rows are status, columns are impact.
+As of 2026-10-17 — 348 entries (FU-044 superseded, FU-043 and FU-058 rewritten, FU-348 filed, in #39.72). Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
-| open | 18 | 79 | 76 | 22 | 195 |
+| open | 18 | 80 | 76 | 22 | 196 |
 | planned | 0 | 0 | 1 | 0 | 1 |
 | resolved | 38 | 59 | 31 | 3 | 131 |
 | ignored | 4 | 3 | 4 | 2 | 13 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 6 | 1 | 0 | 7 |
-| **total** | 60 | 147 | 113 | 27 | 347 |
+| **total** | 60 | 148 | 113 | 27 | 348 |
 <!-- summary:end -->
 
 `src/__tests__/follow-up-register.test.ts` recounts the table and fails when this block disagrees
@@ -431,3 +431,4 @@ Nothing is filed from memory: every row carries evidence someone actually looked
 | FU-345 | 2026-10-15 #39.47 Handover.39.47.md | recommendation | Help | The manual's 6.7 says an antecontract usually states the price, the date by which the contract is signed and the advance paid — Romanian practice the application does not record (the type has no form), written as an assumption for Adrian to confirm. | src/lib/manual/content/ro-RO/06-documents.ts §6.7 | user | XS | open | Confirm, or correct the sentence in both languages. | 2026-10-15 |
 | FU-346 | 2026-10-15 #39.48 Handover.39.48.md | copy/i18n | Help | The „?” proposal for „Asociază Document” still teaches the role list's empty choice as „— fără rol —”; the list reads „fără rol” in italics now. | src/lib/help/proposals-data.ts (associate-document, howToRo/howToEn) | user | XS | resolved | 8d3cd371: „fără rol” in both proposals that named it (associate-document and associate-person), both languages, before #39.52 accepted every proposal. | 2026-10-15 |
 | FU-347 | 2026-10-15 #39.52 Handover.39.52.md | copy/i18n | Help | The English „?” texts quote the Romanian screen with an English gloss — „„Persoane Fizice” (natural persons)”, „„Nume” (name)” — while the English screen reads „Natural Persons” and „Name”; since #39.46 the English manual quotes the English screen. Accepted as written in #39.52, which wrote no new texts. | help_content.background_en / how_to_en, from src/lib/help/proposals-data.ts | user | M | open | A slice that rewrites every proposal's backgroundEn and howToEn against the English screen, as new proposals written against the texts accepted in #39.52; then one „Acceptă toate”. | 2026-10-15 |
+| FU-348 | 2026-10-17 #39.72 7bbe4df | test gap | Import | No e2e case drives the AI's issuer proposal on a document — „Folosește «…»” for a matched juridical person, „Adaugă «…» ca persoană juridică” for a new one, and the link to fill it from ANAF. | src/app/documents/_components/issuer-field.tsx — IssuerProposal; covered only by src/__tests__/document-issuer.test.ts (the pure rules and the files) | user | S | open | Needs a document with `issuer_read` set: an imported one, or a PATCH in the spec's own setup. | 2026-10-17 |
