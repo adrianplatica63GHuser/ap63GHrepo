@@ -91,6 +91,8 @@ const RUN_KEYS = [
   "stepFiles",
   "stepInterpret",
   "costNote",
+  // Slice #39.69 — after `costNote`, only when the scan typed a plan parcelar: its second read, for its tarla.
+  "costNotePlans",
   "writesNote",
   // ⚠️ Slice #32.05 — drawn only when the user pressed "continue without forms"
   // on the stop screen. It sits beside `writesNote` because it is the same kind
