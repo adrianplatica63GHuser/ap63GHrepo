@@ -200,7 +200,9 @@ describe("the four lists keep their view in their address (#39.26)", () => {
     expect(view).toContain('useState(address.filters.expiring === "1")');
     expect(view).toContain('useState(address.filters.field ?? "")');
     expect(view).toContain('useState(address.filters.value ?? "")');
-    expect(view).toContain("carryListAddress(new URLSearchParams(window.location.search), DOCUMENT_ADDRESS_FILTERS)");
+    // Slice #39.63: and the shared bar's keys with them (`FILTER_KEYS`); it carried DOCUMENT_ADDRESS_FILTERS alone.
+    expect(view).toContain("const FILTER_KEYS = [...DOCUMENT_ADDRESS_FILTERS, ...DOCUMENT_FILTER_KEYS];");
+    expect(view).toContain("carryListAddress(new URLSearchParams(window.location.search), FILTER_KEYS)");
   });
 
   it("the scroll is kept by the Navigation API's history slot — a list opened from the menu is a new slot", () => {

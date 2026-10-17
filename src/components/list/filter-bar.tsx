@@ -53,12 +53,14 @@ type Props = {
   loadValues: (key: string) => Promise<FacetValue[]>;
   /** Their query key: the list's search and its filters — the field's own too, which names its ticked values. */
   valuesKey: (key: string) => readonly unknown[];
+  /** A list's own controls that stand first on the bar (#39.63: Acte's „Expiră curând" toggle). */
+  leading?: ReactNode;
 };
 
 const NUMBER = new Intl.NumberFormat("ro-RO", { maximumFractionDigits: 2 });
 
 /** The bar. */
-export function FilterBar({ fields, state, onChange, editing, onEditing, loadValues, valuesKey }: Props) {
+export function FilterBar({ fields, state, onChange, editing, onEditing, loadValues, valuesKey, leading }: Props) {
   const t = useTranslations("shared.filterBar");
   const ref = useRef<HTMLDivElement>(null);
   const active = activeFilterKeys(state, fields);
@@ -114,6 +116,7 @@ export function FilterBar({ fields, state, onChange, editing, onEditing, loadVal
 
   return (
     <div ref={ref} className="relative flex flex-wrap items-center gap-2" data-filter-bar="">
+      {leading}
       {active.map((key) => {
         const field = byKey.get(key)!;
         const value = state[key]!;

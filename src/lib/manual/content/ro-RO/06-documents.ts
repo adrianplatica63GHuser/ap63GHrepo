@@ -24,6 +24,17 @@ Bara de deasupra tabelului are două rânduri:
 
 **„Câmp specific:”** filtrează după unul dintre câmpurile proprii ale unui tip — de exemplu „Stare plată” a contractului de vânzare-cumpărare. Merge numai când la „Tip document:” este bifat un singur tip, iar acel tip are formular cu câmpuri cu listă închisă de valori. Semnul dintre cele două spune dacă îl puteți folosi: verde (un cerc cu o bifă) da, roșu (un cerc cu o bară) nu; țineți mouse-ul pe el și vă spune de ce. Alegeți câmpul, apoi una dintre valorile lui — fiecare cu numărul de acte care o au, de pildă „Achitat integral” — și rămân doar actele acelea. „Toate” renunță la filtru.
 
+### 6.1.1 Filtrele listei {#documents-list-filters}
+
+Sub cele două rânduri stă bara de filtre a listei, ca pe lista proprietăților (secțiunea [[properties-list-filters]]). Pe ea, primul vine „Expiră curând”: apăsat, lista păstrează doar actele a căror valabilitate se încheie în curând; apăsat din nou, renunță la filtru. Urmează „+ Filtru”, din care alegeți oricare dintre coloanele din „Câmpuri afișate”:
+
+- **„Instituție / Notariat”** — o listă cu bife, cu numărul de acte de lângă fiecare instituție, numărat cu celelalte filtre puse, cu „Tip document:” și „Câmp specific:” cu tot;
+- **„Data” și „Adăugat la”** — „De la” și „Până la” sau, din „Perioadă…”, „Anul acesta” ori „Ultimele 12 luni”;
+- **„Nr. pagini”, „Persoane” și „Proprietăți”** — „De la” și „Până la”, numărate ca în coloanele lor: o persoană legată de act de două ori se numără o dată;
+- **„Nr. document” și „Subiect”** — „Conține”.
+
+„Tip document:” și „Câmp specific:” rămân unde erau, pe al doilea rând, și se poartă la fel. Toate filtrele se adună: lista arată actele care trec de toate. „Șterge filtrele” scoate filtrele alese din „+ Filtru”; „Expiră curând”, tipurile bifate și câmpul specific rămân. Filtrele se păstrează în adresa paginii; un link făcut înainte deschide aceeași listă.
+
 ## 6.2 Un act nou și paginile lui {#documents-add}
 
 Apăsați „Adaugă act”. Se deschide „Act nou”, cu fișa „Identificarea actului”. Alegeți întâi „Tip document” (secțiunea [[documents-type]]), apoi completați câmpurile și apăsați „Salvează”. Actul se deschide pe ecranul lui, cu titlul în capul ecranului și cu starea „Neprocesat”. Fiecare salvare face o versiune nouă a actului (secțiunea [[links-versions]]).

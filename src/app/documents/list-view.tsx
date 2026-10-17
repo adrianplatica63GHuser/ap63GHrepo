@@ -27,6 +27,9 @@ import { FieldChooser, useFieldChooser, type ChooserField } from "@/components/l
 import { LIST_COLUMN_CHOICE } from "@/lib/ui/list-columns";
 import { HintBubble } from "@/lib/ui/hint-bubble";
 import { dmyFromIso } from "@/lib/persons/person-age";
+import { FilterBar, FilterFunnel, type FilterBarField } from "@/components/list/filter-bar";
+import { appendFilterParams, filterAddressPatch, filterSignature, type FacetValue, type FilterState } from "@/lib/list/filter-bar";
+import { DOCUMENT_FILTER_FIELDS, DOCUMENT_FILTER_KEYS, parseDocumentFilters } from "@/lib/documents/list-filters";
 
 const PAGE_SIZE   = 15;
 // Slice #37.94: the key and the defaults (none) are LIST_COLUMN_CHOICE.document.
@@ -119,11 +122,13 @@ async function fetchCustomFieldValues(
 
 /** Slice #39.26: Acte's own filters in its address — „Expiră curând" and the custom field's key and value. */
 const DOCUMENT_ADDRESS_FILTERS = ["expiring", "field", "value"] as const;
+/** Slice #39.63: and the shared bar's fields — every key the list reads from, and carries in, its address. */
+const FILTER_KEYS = [...DOCUMENT_ADDRESS_FILTERS, ...DOCUMENT_FILTER_KEYS];
 
 function buildDocumentsUrl(checkedIds: Set<string>, allTypeIds: string[]): string {
   // Slice #39.26: the search and the list's own filters ride along in the address — a new set of types keeps them,
   // as it did while they were React state; the page and the open tiles start over (`carryListAddress`).
-  const carried = carryListAddress(new URLSearchParams(window.location.search), DOCUMENT_ADDRESS_FILTERS);
+  const carried = carryListAddress(new URLSearchParams(window.location.search), FILTER_KEYS);
   if (checkedIds.size !== allTypeIds.length) carried.set("documentTypeIds", Array.from(checkedIds).join(","));
   const qs = carried.toString();
   return qs ? `/documents?${qs}` : "/documents";
@@ -335,8 +340,11 @@ async function fetchDocuments(
   expiringSoon: boolean,
   customFieldKey: string,
   customFieldValue: string,
+  filters: FilterState = {},
 ): Promise<ListResponse> {
   const url = new URL("/api/documents", window.location.origin);
+  // Slice #39.63: the shared bar's filters, in the address's words.
+  appendFilterParams(url.searchParams, filters, DOCUMENT_FILTER_FIELDS);
   if (q)                      url.searchParams.set("q",               q);
   if (documentTypeIds.length) url.searchParams.set("documentTypeIds", documentTypeIds.join(","));
   if (expiringSoon)           url.searchParams.set("expiringSoon",    "true");
@@ -353,6 +361,35 @@ async function fetchDocuments(
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Request failed (${res.status})`);
   return res.json();
+}
+
+/**
+ * Slice #39.63 — the institution checklist's values, counted over the list on screen: its types (the three-state
+ * `documentTypeIds`), „Expiră curând", the custom field and the search, and every other bar filter.
+ */
+async function fetchFilterValues(
+  field: string,
+  q: string,
+  documentTypeIds: string[] | undefined,
+  expiringSoon: boolean,
+  customFieldKey: string,
+  customFieldValue: string,
+  filters: FilterState,
+): Promise<FacetValue[]> {
+  const url = new URL("/api/documents/filter-values", window.location.origin);
+  url.searchParams.set("field", field);
+  if (q) url.searchParams.set("q", q);
+  if (documentTypeIds !== undefined) url.searchParams.set("documentTypeIds", documentTypeIds.join(","));
+  if (expiringSoon) url.searchParams.set("expiringSoon", "true");
+  if (customFieldKey && customFieldValue) {
+    url.searchParams.set("customFieldKey", customFieldKey);
+    url.searchParams.set("customFieldValue", customFieldValue);
+  }
+  appendFilterParams(url.searchParams, filters, DOCUMENT_FILTER_FIELDS);
+  const res = await fetch(url);
+  if (res.redirected || !res.ok) throw new Error(`Request failed (${res.status})`);
+  const body = (await res.json()) as { items?: FacetValue[] };
+  return body.items ?? [];
 }
 
 async function callBatchDelete(ids: string[]): Promise<void> {
@@ -456,7 +493,7 @@ export function DocumentListView({
   const queryClient = useQueryClient();
 
   // Slice #39.26: the view starts from the list's address — Back from a record brings it back as it was left.
-  const address = useListAddress(DOCUMENT_ADDRESS_FILTERS);
+  const address = useListAddress(FILTER_KEYS);
   const [searchInput,     setSearchInput]     = useState(address.search);
   const [debouncedSearch, setDebouncedSearch] = useState(address.search);
   const [currentPage,     setCurrentPage]     = useState(address.page);
@@ -472,6 +509,14 @@ export function DocumentListView({
   // delete then acting on records nobody can see.
   const [customFieldKey,   setCustomFieldKey]   = useState(address.filters.field ?? "");
   const [customFieldValue, setCustomFieldValue] = useState(address.filters.value ?? "");
+  // Slice #39.63: the shared bar — from the address, like the rest; a change goes back to the first page.
+  const [filters, setFilters] = useState<FilterState>(() => parseDocumentFilters({ get: (k) => address.filters[k] ?? null }));
+  const [editingFilter, setEditingFilter] = useState<string | null>(null);
+  const filterSig = filterSignature(filters, DOCUMENT_FILTER_FIELDS);
+  function changeFilters(next: FilterState) {
+    setFilters(next);
+    setCurrentPage(0);
+  }
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [confirmOpen,  setConfirmOpen]  = useState(false);
@@ -634,8 +679,8 @@ export function DocumentListView({
   const noTypesSelected = initialDocumentTypeIds !== undefined && initialDocumentTypeIds.length === 0;
 
   const query = useQuery<ListResponse>({
-    queryKey: ["documents", "list", debouncedSearch, typeFiltersKey, expiringSoon, customFieldKey, customFieldValue, currentPage],
-    queryFn:  () => fetchDocuments(debouncedSearch, initialDocumentTypeIds ?? [], currentPage, expiringSoon, customFieldKey, customFieldValue),
+    queryKey: ["documents", "list", debouncedSearch, typeFiltersKey, expiringSoon, customFieldKey, customFieldValue, filterSig, currentPage],
+    queryFn:  () => fetchDocuments(debouncedSearch, initialDocumentTypeIds ?? [], currentPage, expiringSoon, customFieldKey, customFieldValue, filters),
     enabled:  !noTypesSelected,
   });
 
@@ -647,11 +692,15 @@ export function DocumentListView({
   // Slice #32.15: this key must carry every value the query key above carries.
   // A filter that is missing here leaves ticks set on rows the filter has just
   // taken off the screen, and the bulk delete then acts on records nobody can see.
-  const pageKey = `${debouncedSearch}|${typeFiltersKey}|${expiringSoon}|${customFieldKey}|${customFieldValue}|${currentPage}`;
+  const pageKey = `${debouncedSearch}|${typeFiltersKey}|${expiringSoon}|${customFieldKey}|${customFieldValue}|${filterSig}|${currentPage}`;
   // Slice #39.26: the view, in the list's address; the scroll, in the session. The search as typed, not debounced:
   // the type filter carries it, and measured in TC-DOC-08 a box emptied just before a tick came back with its old word.
   useWriteListAddress(
-    { search: searchInput, page: currentPage, filters: { expiring: expiringSoon ? "1" : "", field: customFieldKey, value: customFieldValue } },
+    {
+      search: searchInput,
+      page: currentPage,
+      filters: { expiring: expiringSoon ? "1" : "", field: customFieldKey, value: customFieldValue, ...filterAddressPatch(filters, DOCUMENT_FILTER_FIELDS) },
+    },
     `${searchInput}|${pageKey}`,
   );
   useListScrollMemory(query.isSuccess);
@@ -756,6 +805,19 @@ export function DocumentListView({
   const shownCols = chooser.visible.flatMap((key) => optionalCols.filter((c) => c.key === key));
   // Slice #38.57: the list's own columns, one line each.
   const columns: ColumnName[] = ["selectNew", "listDocumentType", "listDocumentTitle", ...shownCols.map((c) => c.column), "listRowActions"];
+  // Slice #39.63: the bar's fields, labelled as their columns are.
+  const filterLabels: Record<string, string> = {
+    institution:   t("table.institution"),
+    dateDocument:  t("table.dateDocument"),
+    pageCount:     t("table.pageCount"),
+    personCount:   t("table.personCount"),
+    propertyCount: t("table.propertyCount"),
+    createdAt:     t("table.createdAt"),
+    nrDocument:    t("table.nrDocument"),
+    subject:       t("table.subject"),
+  };
+  const filterFields: FilterBarField[] = DOCUMENT_FILTER_FIELDS.map((f) => ({ key: f.key, kind: f.kind, label: filterLabels[f.key] }));
+
   // Slice #37.84: the toolbar's group ends at the table frame's right edge, not the window's.
   const edge = useListEdge(columns);
   const colCount = columns.length;
@@ -785,19 +847,6 @@ export function DocumentListView({
           placeholder={t("searchPlaceholder")}
           aria-label={t("searchPlaceholder")}
           className="w-64 rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm placeholder:text-fade focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:placeholder:text-zinc-500"
-        />
-
-        {/* Expiring-soon toggle */}
-        {/* #37.42 (A014): CalendarClock, a toggle. Pressed is the strong
-            `primary` fill and `aria-pressed`, so the state is a colour and a
-            name, not the amber tint the hand-written class used to carry. */}
-        <IconButton
-          icon={CalendarClock}
-          label={tFilter("expiringSoon")}
-          variant={expiringSoon ? "primary" : "secondary"}
-          size="md"
-          aria-pressed={expiringSoon}
-          onClick={() => { setExpiringSoon((v) => !v); setCurrentPage(0); }}
         />
 
         {/* Slice #37.62: the shared chooser, as on the other three lists — its list
@@ -975,6 +1024,30 @@ export function DocumentListView({
       </div>
       </div>
 
+      {/* Slice #39.63 — the shared filter bar, a row of its own under the toolbar (#39.61). „Expiră curând" stands first
+          on it, the toggle it always was, its address key unchanged (Ask first 2); „Tip document" and „Câmp specific"
+          stay on the toolbar's second row, just above, as they were (#38.18). */}
+      <FilterBar
+        fields={filterFields}
+        state={filters}
+        onChange={changeFilters}
+        editing={editingFilter}
+        onEditing={setEditingFilter}
+        loadValues={(key) => fetchFilterValues(key, debouncedSearch, initialDocumentTypeIds, expiringSoon, customFieldKey, customFieldValue, filters)}
+        valuesKey={(key) => ["documents", "filter-values", key, debouncedSearch, typeFiltersKey, expiringSoon, customFieldKey, customFieldValue, filterSig]}
+        leading={
+          // #37.42 (A014): CalendarClock, a toggle. Pressed is the strong `primary` fill and `aria-pressed`.
+          <IconButton
+            icon={CalendarClock}
+            label={tFilter("expiringSoon")}
+            variant={expiringSoon ? "primary" : "secondary"}
+            size="md"
+            aria-pressed={expiringSoon}
+            onClick={() => { setExpiringSoon((v) => !v); setCurrentPage(0); }}
+          />
+        }
+      />
+
       {deleteError && (
         <p className="text-sm text-red-600 dark:text-red-400" role="alert">
           {deleteError}
@@ -1013,6 +1086,10 @@ export function DocumentListView({
                     {shownCols.map((col) => (
                       <th key={col.key} className="px-4 py-2" {...columnHead(col.column)}>
                         {col.label}
+                        {/* Slice #39.63: every optional column is a filter; its funnel opens it in the bar. */}
+                        {filterLabels[col.key] && (
+                          <FilterFunnel label={filterLabels[col.key]} active={filters[col.key] !== undefined} onOpen={() => setEditingFilter(col.key)} />
+                        )}
                       </th>
                     ))}
                     <th className="px-4 py-2" {...columnHead("listRowActions")} />

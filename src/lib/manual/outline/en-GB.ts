@@ -84,6 +84,7 @@ export const OUTLINE: Readonly<Record<string, string>> = {
   "properties-example-navigate": "Worked example: start navigation to the plot on your phone by scanning the „Navigate” QR code, with „My location” as the start.",
   "properties-example-corner": "Worked example: fix a corner's wrong coordinate in the table, watch the area recalculate, and save, with the old corner kept in the earlier version.",
   "documents-list": "How to find a document or deed in the list: search by code, title or number, choose columns, filter by type and by a type's own field such as payment status.",
+  "documents-list-filters": "How to filter the list of documents by Expiring soon, institution, date, the number of pages, persons and properties, number and subject.",
   "documents-add": "How to add (create) a new document or deed: choose its type, fill it in and save, and where its attached scanned pages are shown.",
   "documents-add-pages": "How to upload or attach pages (scans, photos, PDF, Word, Excel) to a document, even before the first save, order them, and which files are refused.",
   "documents-add-read": "How to view and read a document's pages, enlarge them to the whole window, and what it means when a file cannot be previewed or is missing.",

@@ -22,14 +22,23 @@ function between(a: string, b: string): string {
 
 describe("the Documents toolbar in two rows (Slice #37.83)", () => {
   const first = between('data-toolbar-row="first"', 'data-toolbar-row="second"');
-  const second = between('data-toolbar-row="second"', "deleteError &&");
+  const second = between('data-toolbar-row="second"', "<FilterBar");
 
-  it("the first row: search, „Expiră curând”, „Câmpuri afișate”, then the group at its end — no „Tip document” (#38.18)", () => {
-    const order = ['type="search"', "icon={CalendarClock}", "<FieldChooser", 'className="ml-auto flex items-center gap-2"', 'href="/documents/new"'];
+  // Slice #39.63: „Expiră curând" moved to the first place on the shared filter bar under the toolbar (Ask first 2).
+  // It read `['type="search"', "icon={CalendarClock}", "<FieldChooser", …]` until then.
+  it("the first row: search, „Câmpuri afișate”, then the group at its end — no „Tip document” (#38.18), no „Expiră curând” (#39.63)", () => {
+    const order = ['type="search"', "<FieldChooser", 'className="ml-auto flex items-center gap-2"', 'href="/documents/new"'];
     const at = order.map((m) => first.indexOf(m));
     expect(at.every((i) => i >= 0)).toBe(true);
     expect([...at].sort((x, y) => x - y)).toEqual(at);
-    expect(first).not.toMatch(/customFieldKey|custom-field-hint|<DocumentTypeFilterDropdown|<CustomFieldSign/);
+    expect(first).not.toMatch(/customFieldKey|custom-field-hint|<DocumentTypeFilterDropdown|<CustomFieldSign|icon=\{CalendarClock\}/);
+  });
+
+  it("„Expiră curând” stands first on the filter bar, the toggle it was, its address key unchanged (#39.63)", () => {
+    const bar = code.slice(code.indexOf("<FilterBar"), code.indexOf("deleteError &&"));
+    expect(bar).toMatch(/leading=\{\s*<IconButton\s+icon=\{CalendarClock\}\s+label=\{tFilter\("expiringSoon"\)\}/);
+    expect(bar).toContain("aria-pressed={expiringSoon}");
+    expect(code).toContain('expiring: expiringSoon ? "1" : ""');
   });
 
   // #38.18: „Tip document:" → the sign → „Câmp specific:" → its values select → the ⓘ (the HintBubble's trigger, after its children).

@@ -84,6 +84,7 @@ export const OUTLINE: Readonly<Record<string, string>> = {
   "properties-example-navigate": "Exemplu: pornești navigarea spre teren pe telefon, scanând codul QR din „Navighează”, cu „Locația mea” ca punct de pornire.",
   "properties-example-corner": "Exemplu: corectezi coordonata greșită a unui colț în tabel, vezi suprafața recalculată și salvezi, iar colțul vechi rămâne în versiunea anterioară.",
   "documents-list": "Cum găsești un act în listă: căutare după cod, titlu sau număr, coloane alese, filtru pe tipul de act și filtru după un câmp al tipului (ex. stare plată).",
+  "documents-list-filters": "Cum filtrezi lista actelor după Expiră curând, instituție, dată, numărul de pagini, persoane și proprietăți, număr și subiect.",
   "documents-add": "Cum adaugi (creezi) un act sau document nou: alegi tipul, completezi, salvezi, și unde se văd paginile scanate atașate.",
   "documents-add-pages": "Cum încarci sau atașezi pagini (scanări, poze, PDF, Word, Excel) la un act, chiar înainte de prima salvare, cum le ordonezi și ce fișiere sunt refuzate.",
   "documents-add-read": "Cum vezi și citești paginile unui act, cum le mărești pe tot ecranul și ce înseamnă un fișier care nu se poate previzualiza sau care lipsește.",

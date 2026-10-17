@@ -1,6 +1,6 @@
 /**
  * Case:   TC-DOC-08 — Lista actelor: căutarea înaintea tipului, fără filtre de importanță și relevanță, „Câmpuri afișate" cu câmpurile oricărui act, „Câmp specific" explicat, doar cu liste închise
- * Source: docs/testing/cases/TC-DOC-08.md, „Last green" 2026-10-06 (steps 1, 6, 7 and 9 follow Slice #38.18)
+ * Source: docs/testing/cases/TC-DOC-08.md, „Last green" 2026-10-06 (steps 1, 6, 7 and 9 follow Slice #38.18; steps 1 and 7 also #39.63)
  *
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim.
@@ -63,13 +63,15 @@ test.describe("TC-DOC-08 — lista actelor", () => {
       await expect(main.getByText("Câmp specific:")).toBeVisible();
       const about = main.getByRole("button", { name: "Despre „Câmp specific”" });
       await expect(about).toBeVisible();
+      // #39.63: „Expiră curând" heads the filter bar, under the two rows — no longer on the first.
       const expiring = main.getByRole("button", { name: "Expiră curând" });
       await expect(expiring).toBeVisible();
+      await expect(main.locator('[data-toolbar-row="first"]').getByRole("button", { name: "Expiră curând" })).toHaveCount(0);
       const chooserButton = main.getByRole("button", { name: /^Câmpuri afișate \d\/4$/ });
       await expect(chooserButton).toBeVisible();
       // #37.83/#38.18: the first row, level and in order, „Adaugă act" at its end — no „Tip document" on it.
       const addNew = main.getByRole("link", { name: "Adaugă act" });
-      const firstRow = async () => Promise.all([search, expiring, chooserButton].map(async (l) => (await l.boundingBox())!));
+      const firstRow = async () => Promise.all([search, chooserButton].map(async (l) => (await l.boundingBox())!));
       const row1 = await firstRow();
       const add = (await addNew.boundingBox())!;
       const centres = row1.map((r) => r.y + r.height / 2);
@@ -84,6 +86,7 @@ test.describe("TC-DOC-08 — lista actelor", () => {
       expect([typeAt.x, signAt.x, field.x, aboutAt.x]).toEqual([typeAt.x, signAt.x, field.x, aboutAt.x].sort((a, b) => a - b));
       expect(typeAt.y).toBeGreaterThanOrEqual(row1[0].y + row1[0].height);
       expect(Math.abs(typeAt.x - row1[0].x)).toBeLessThanOrEqual(24);
+      expect((await expiring.boundingBox())!.y).toBeGreaterThanOrEqual(typeAt.y + typeAt.height);
       await expect(main.getByText(/Importanță|Relevanță/)).toHaveCount(0);
 
       // Step 2 — one row: „Adeverință", the title.

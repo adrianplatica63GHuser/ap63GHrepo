@@ -44,8 +44,9 @@ describe("the Documents list (Slice #37.62)", () => {
 
   it("has no importance or relevance filter, in its state, its query key or its page", () => {
     expect(VIEW).not.toMatch(/setImportance|setRelevance|importanceLabel|relevanceLabel|metadataValueLabel/);
-    expect(VIEW).toMatch(/queryKey: \["documents", "list", debouncedSearch, typeFiltersKey, expiringSoon, customFieldKey, customFieldValue, currentPage\]/);
-    expect(VIEW).toMatch(/const pageKey = `\$\{debouncedSearch\}\|\$\{typeFiltersKey\}\|\$\{expiringSoon\}\|\$\{customFieldKey\}\|\$\{customFieldValue\}\|\$\{currentPage\}`;/);
+    // Slice #39.63 added the shared bar's signature, before the page — and nothing else.
+    expect(VIEW).toMatch(/queryKey: \["documents", "list", debouncedSearch, typeFiltersKey, expiringSoon, customFieldKey, customFieldValue, filterSig, currentPage\]/);
+    expect(VIEW).toMatch(/const pageKey = `\$\{debouncedSearch\}\|\$\{typeFiltersKey\}\|\$\{expiringSoon\}\|\$\{customFieldKey\}\|\$\{customFieldValue\}\|\$\{filterSig\}\|\$\{currentPage\}`;/);
     expect(ro.shared.listFilters).not.toHaveProperty("importanceLabel");
   });
 

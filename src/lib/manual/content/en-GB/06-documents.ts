@@ -24,6 +24,17 @@ The bar above the table has two rows:
 
 **„Type-specific field:”** filters by one of a type's own fields — for example the sale contract's „Stare plată” (payment status). It works only when exactly one type is ticked under „Document type:”, and that type has a form with fields that have a closed list of values. The sign between the two says whether you can use it: green (a circle with a check) yes, red (a circle with a bar) no; rest the mouse on it and it tells you why. Choose the field, then one of its values — each with the number of documents that have it, for instance „Achitat integral” (paid in full) — and only those documents remain. „All” drops the filter.
 
+### 6.1.1 The list's filters {#documents-list-filters}
+
+Below the two rows is the list's filter bar, as on the list of properties (section [[properties-list-filters]]). On it, „Expiring soon” comes first: pressed, the list keeps only the documents whose validity ends soon; pressed again, it drops the filter. Then comes „+ Filter”, from which you choose any of the columns of „Choose fields”:
+
+- **„Institution / Notariat”** — a list with ticks, with the number of documents beside each institution, counted with the other filters set, „Document type:” and „Type-specific field:” included;
+- **„Date” and „Added on”** — „From” and „To”, or, from „Period…”, „This year” or „The last 12 months”;
+- **„Pages”, „Persons” and „Properties”** — „From” and „To”, counted as in their columns: a person linked to the document twice counts once;
+- **„Document No.” and „Subject”** — „Contains”.
+
+„Document type:” and „Type-specific field:” stay where they were, on the second row, and work the same. All the filters add up: the list shows the documents that pass every one. „Clear filters” removes the filters chosen from „+ Filter”; „Expiring soon”, the ticked types and the type-specific field stay. The filters are kept in the page's address; a link made before opens the same list.
+
 ## 6.2 A new document and its pages {#documents-add}
 
 Press „Add new Document”. „New Document” opens, with the tile „Document identification”. Choose „Document Type” first (section [[documents-type]]), then fill in the fields and press „Save”. The document opens on its own screen, its title at the head of the screen and its status „Not processed”. Every save makes a new version of the document (section [[links-versions]]).
