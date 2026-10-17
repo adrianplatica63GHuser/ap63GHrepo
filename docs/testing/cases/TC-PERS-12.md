@@ -5,7 +5,7 @@
 | **Area** | person |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-16 |
 
 ## What this proves
@@ -54,3 +54,6 @@ address `?q=TC-E2E-PERS-12`. This file was written from it.
 
 **2026-10-16 — run 2, `confirmed` (Slice #39.62).** The same, against the file unchanged. The persons were deleted
 (204). `e2e/person/person-list-filters.spec.ts` translates it.
+
+**2026-10-16 — `automated` (Slice #39.62).** The test runner's targeted run 20261017T035354Z-9515 on e0c28b0 ran its
+spec green, with the person and property lists' other specs (lint, tsc and jest green too).
