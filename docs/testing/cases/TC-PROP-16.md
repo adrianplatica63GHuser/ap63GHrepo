@@ -5,7 +5,7 @@
 | **Area** | property |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-17 |
 
 ## What this proves
@@ -64,3 +64,6 @@ tarlale (204 each). Nothing in this file needed correcting.
 
 **2026-10-17 — run 2, `confirmed` (Slice #39.67).** The same pane, the file unchanged, new rows: every step the
 same, word for word. Deleted (204 ×4). `e2e/property/tarla-two-localities.spec.ts` translates it.
+
+**2026-10-17 — `automated` (Slice #39.67).** The test runner's targeted run 20261017T125403Z-5977 on bbf132c ran
+`e2e/property/tarla-two-localities.spec.ts` green with six other specs and 40 jest suites (lint and tsc green too).
