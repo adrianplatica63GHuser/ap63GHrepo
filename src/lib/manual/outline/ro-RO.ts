@@ -68,6 +68,7 @@ export const OUTLINE: Readonly<Record<string, string>> = {
   "properties-add-address": "Cum completezi adresa unei proprietăți (stradă, localitate, județ, țară) și cum preiei automat adresa din Street View, căutare taxată de Google.",
   "properties-add-one-parcel": "De ce nu poți salva a doua proprietate pe aceeași tarla și parcelă, ce mesaj apare la un duplicat și cum deschizi proprietatea care există deja.",
   "properties-add-edit": "Cum modifici sau ștergi (elimini) o proprietate, ce înseamnă „Modificări nesalvate” și cum fiecare salvare creează o versiune nouă.",
+  "properties-tarla": "De ce o tarla aparține unei localități (T50 din Bragadiru nu este T50 din Cornetu), pagina unei tarlale cu note, contur, proprietăți și acte, ce surse există pentru limitele tarlalelor și cum un import dă localitatea.",
   "properties-type": "Ce schimbă tipul proprietății (teren arabil, teren construit etc.), cum îl alegi și ce spune ⓘ despre fișele pe care tipul le arată sau le ascunde.",
   "properties-type-tiles": "Ce fișe (panouri) are ecranul unei proprietăți — identificare cadastrală, adresă, legături, hartă, colțuri, Street View — și cum le arăți sau ascunzi.",
   "properties-type-hidden": "De ce „Adresă” și „Street View” sunt gri și nu se pot bifa la unele tipuri de proprietate, cum e terenul arabil fără adresă poștală.",

@@ -88,13 +88,28 @@ Unele tipuri de proprietate nu arată adresa deloc (secțiunea [[properties-type
 
 ### 5.2.3 O singură proprietate pentru o parcelă {#properties-add-one-parcel}
 
-Arhiva ține o singură proprietate pentru fiecare parcelă. Dacă salvați o proprietate nouă cu o tarla și o parcelă care au deja o proprietate — de mână sau dintr-un fișier cu coordonate —, aplicația o refuză: rămâneți pe „Proprietate nouă”, iar sub formular apare „Această parcelă are deja o proprietate”, cu explicația că nu s-a creat o proprietate nouă. Linkul „Deschide …” de sub mesaj vă duce la proprietatea care există. Nu se scrie nimic, iar lista are tot atâtea proprietăți ca înainte.
+Arhiva ține o singură proprietate pentru fiecare parcelă dintr-o localitate (secțiunea [[properties-tarla]]). Dacă salvați o proprietate nouă cu o tarla și o parcelă care au deja o proprietate — de mână sau dintr-un fișier cu coordonate —, aplicația o refuză: rămâneți pe „Proprietate nouă”, iar sub formular apare „Această parcelă are deja o proprietate”, cu explicația că nu s-a creat o proprietate nouă. Linkul „Deschide …” de sub mesaj vă duce la proprietatea care există. Nu se scrie nimic, iar lista are tot atâtea proprietăți ca înainte.
 
 ### 5.2.4 Modificarea și ștergerea {#properties-add-edit}
 
 Pe o proprietate deschisă, schimbați câmpurile și apăsați „Salvează”. Cât timp aveți schimbări nesalvate, sus în formular scrie „Modificări nesalvate”, iar „Salvează” este activ. Fiecare salvare adaugă o versiune, iar în capul ecranului apar „v …” și „… versiuni” (secțiunea [[links-versions]]).
 
 Coșul („Șterge”) întreabă întâi „Ștergeți proprietatea?”. „Nu” vă lasă pe ecran; „Da” șterge proprietatea și vă întoarce în listă.
+
+### 5.2.5 Tarla și localitatea ei {#properties-tarla}
+
+Numerele de tarla o iau de la capăt în fiecare localitate: T50 din Bragadiru nu este T50 din Cornetu. De aceea o tarla aparține unei localități, iar regula „o singură proprietate pentru o parcelă” (secțiunea [[properties-add-one-parcel]]) compară doar parcelele din aceeași localitate: parcela 1 pe T50 din Cornetu nu este refuzată pentru că există parcela 1 pe T50 din Bragadiru.
+
+În „Date de referință” → „Indicative Tarla”, fiecare tarla are „Localitate” și „Județ”, citite împreună pe rând, de exemplu „Bragadiru, Ilfov”. Același cod poate exista o dată în fiecare localitate. Pe „Nr. tarla / sola” al unei proprietăți, un cod pe care îl au două tarlale își arată localitatea între paranteze, iar butonul „Deschide pagina tarlalei” de sub listă deschide tarla aleasă.
+
+Fiecare tarla are o pagină a ei, „Tarlale” → tarla, deschisă cu „Deschide pagina tarlalei” din „Indicative Tarla” sau de pe proprietate. Pe pagină:
+
+- sus, chenarul „Despre limitele tarlalelor”: ce surse există pentru limitele tarlalelor și ce nu este disponibil. Stă și deasupra listei „Tarlale”, pentru că este informația de citit înainte de a căuta o limită;
+- „Indicativ”, „Localitate”, „Județ”, „Descriere” și „Note”, salvate cu „Salvează”;
+- „Contur”: opțional, colțurile tarlalei, introduse ca la o proprietate (secțiunea [[properties-corners-table]]);
+- proprietățile de pe tarla și actele legate de ele. O tarla nu are acte, grupuri sau etichete ale ei.
+
+Un import adaugă codurile de tarla în localitatea dată în pasul proprietăților: „Localitatea tarlalelor” este citită din numele dosarului ales, de exemplu „Clinceni” din „CLINCENI.3”, și se poate schimba (secțiunea [[import-overview]]).
 
 ## 5.3 Tipul proprietății și fișele lui {#properties-type}
 

@@ -88,13 +88,28 @@ Some property types do not show the address at all (section [[properties-type-hi
 
 ### 5.2.3 One property per parcel {#properties-add-one-parcel}
 
-The archive keeps one property per parcel. If you save a new property with a tarla and a parcela that already have a property — by hand or from a coordinate file — the application refuses it: you stay on „New Property”, and below the form appears „This parcel already has a property”, explaining that no new property was created. The link „Open …” under the message takes you to the property that exists. Nothing is written, and the list holds as many properties as before.
+The archive keeps one property per parcel in a locality (section [[properties-tarla]]). If you save a new property with a tarla and a parcela that already have a property — by hand or from a coordinate file — the application refuses it: you stay on „New Property”, and below the form appears „This parcel already has a property”, explaining that no new property was created. The link „Open …” under the message takes you to the property that exists. Nothing is written, and the list holds as many properties as before.
 
 ### 5.2.4 Changing and deleting {#properties-add-edit}
 
 On an open property, change the fields and press „Save”. While you have unsaved changes, the top of the form reads „Unsaved changes” and „Save” is active. Every save adds a version, and the header of the screen shows „v …” and „… versions” (section [[links-versions]]).
 
 The bin („Delete”) asks first: „Delete property?”. „No” leaves you on the screen; „Yes” deletes the property and takes you back to the list.
+
+### 5.2.5 A tarla and its locality {#properties-tarla}
+
+Tarla numbers restart in every locality: T50 in Bragadiru is not T50 in Cornetu. So a tarla belongs to a locality, and the rule „one property per parcel” (section [[properties-add-one-parcel]]) compares only parcels in the same locality: parcel 1 on T50 in Cornetu is not refused because parcel 1 on T50 in Bragadiru exists.
+
+In „Reference Data” → „Tarla Codes”, each tarla has a „Locality” and a „County”, read together on its row, for instance „Bragadiru, Ilfov”. The same code can exist once in each locality. In a property's „Tarla / Sola”, a code two tarlale share shows its locality in brackets, and the button „Open the tarla's page” under the list opens the chosen tarla.
+
+Each tarla has a page of its own, „Tarlale” → the tarla, opened with „Open the tarla's page” from „Tarla Codes” or from the property. On the page:
+
+- at the top, the box „About tarla boundaries”: which sources exist for tarla boundaries and what is not available. It also stands above the „Tarlale” list, because it is what to read before looking for a boundary;
+- „Code”, „Locality”, „County”, „Description” and „Notes”, saved with „Save”;
+- „Outline”: optional, the tarla's corners, entered as on a property (section [[properties-corners-table]]);
+- the properties on the tarla and the documents linked to them. A tarla has no documents, groups or tags of its own.
+
+An import adds its tarla codes in the locality given in the property step: „The tarlale's locality” is read from the name of the folder chosen, for instance „Clinceni” from „CLINCENI.3”, and can be changed (section [[import-overview]]).
 
 ## 5.3 The property's type and its tiles {#properties-type}
 
