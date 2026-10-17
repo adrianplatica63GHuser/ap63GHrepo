@@ -32,7 +32,9 @@ import {
   type FieldWidth,
 } from "@/lib/ui/field-widths";
 import { STACKED_FIELD_CLASS, STACKED_LABEL_CLASS, STACKED_ROW_CLASS } from "@/lib/ui/stacked";
-import { ArrowLeft, MousePointerClick, Pencil, Save, Trash2, UserMinus, UserPlus, X } from "lucide-react";
+import { ArrowLeft, Landmark, MousePointerClick, Pencil, Save, Trash2, UserMinus, UserPlus, X } from "lucide-react";
+import { AnafFillDialog, fetchAnaf, type AnafLookup } from "@/components/judicial-persons/anaf-fill";
+import type { AnafTarget } from "@/lib/anaf/fill";
 import { IconButton } from "@/lib/ui/icon-button";
 import { refusalCode, safeMutate } from "@/lib/api/safe-mutate";
 import { HintBubble } from "@/lib/ui/hint-bubble";
@@ -206,6 +208,10 @@ export function JudicialPersonForm({
 
   // Which contact-person picker is open: 1, 2, or null.
   const [pickerSlot, setPickerSlot] = useState<1 | 2 | null>(null);
+  // Slice #39.64: „Completează din ANAF" — the form's values when it was pressed, and ANAF's answer.
+  const [anaf, setAnaf] = useState<{ cui: string; current: AnafTarget; notes: string } | null>(null);
+  const [anafLookup, setAnafLookup] = useState<AnafLookup>({ status: "idle" });
+  const [anafApplied, setAnafApplied] = useState(false);
 
   const isCreate = mode === "create";
   // Subscribe to all values so the edit-dirty check recomputes live.
@@ -605,6 +611,40 @@ export function JudicialPersonForm({
   // Watch the "same as" flag so the correspondence block reacts live.
   const correspondenceSameAsHq = useWatch({ control, name: "correspondenceSameAsHq" });
 
+  // ── Slice #39.64: „Completează din ANAF" ──────────────────────────────────────────────────────────────────────
+  // One call per press (Ask first 3); the dialog shows what would change and „Preia bifele" puts the ticked values
+  // on the form — dirty, so „Salvează" is what writes them, and the unsaved-changes banner says so meanwhile.
+  const cuiValue = useWatch({ control, name: "cuiNumber" });
+  const openAnaf = () => {
+    const v = getValues();
+    const hq = v.addresses.HEADQUARTERS;
+    setAnafApplied(false);
+    setAnaf({
+      cui: v.cuiNumber.trim(),
+      current: {
+        name: v.name, tradeRegisterNumber: v.tradeRegisterNumber, phone: v.phone, judicialPersonTypeId: v.judicialPersonTypeId,
+        streetLine: hq.streetLine, postalCode: hq.postalCode, locality: hq.locality, county: hq.county, country: hq.country,
+      },
+      notes: v.notes,
+    });
+    setAnafLookup({ status: "loading" });
+    void fetchAnaf(v.cuiNumber).then(setAnafLookup);
+  };
+  const applyAnaf = (values: AnafTarget, notes: string) => {
+    const opts = { shouldDirty: true, shouldValidate: true } as const;
+    setValue("name", values.name, opts);
+    setValue("tradeRegisterNumber", values.tradeRegisterNumber, opts);
+    setValue("phone", values.phone, opts);
+    setValue("judicialPersonTypeId", values.judicialPersonTypeId, opts);
+    for (const k of ["streetLine", "postalCode", "locality", "county", "country"] as const) {
+      setValue(`addresses.HEADQUARTERS.${k}`, values[k], opts);
+    }
+    setValue("notes", notes, opts);
+    setAnaf(null);
+    setAnafApplied(true);
+  };
+  const typeName = (id: string) => judicialPersonTypeOptions.find((o) => o.id === id)?.name ?? id;
+
   const handleContactPersonSelected = (slot: 1 | 2, id: string, name: string) => {
     if (slot === 1) {
       setValue("contactPerson1Id", id, { shouldDirty: true, shouldValidate: true });
@@ -734,6 +774,22 @@ export function JudicialPersonForm({
               width={JP.tradeRegisterNumber}
             />
           </div>
+          {/* Slice #39.64: under the two registry numbers it reads from — on a form that can be changed. */}
+          {effectiveMode !== "view" && (
+            <div className="flex flex-wrap items-center gap-2" data-anaf-fill="">
+              <IconButton
+                icon={Landmark}
+                label={t("anaf.button")}
+                showLabel
+                variant="secondary"
+                size="sm"
+                disabled={!cuiValue?.trim()}
+                note={cuiValue?.trim() ? t("anaf.buttonNote") : t("anaf.needCui")}
+                onClick={openAnaf}
+              />
+              {anafApplied && <span className="text-xs text-fade" role="status">{t("anaf.applied")}</span>}
+            </div>
+          )}
           <Field
             label={t("fields.notes")}
             name="notes"
@@ -970,6 +1026,18 @@ export function JudicialPersonForm({
             disabled={submitting}
           />
         </div>
+      )}
+
+      {anaf && (
+        <AnafFillDialog
+          cui={anaf.cui}
+          lookup={anafLookup}
+          current={anaf.current}
+          notes={anaf.notes}
+          typeName={typeName}
+          onApply={applyAnaf}
+          onClose={() => setAnaf(null)}
+        />
       )}
 
       {confirmDelete && (

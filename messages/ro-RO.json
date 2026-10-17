@@ -1401,6 +1401,36 @@
     "filters": {
       "documentRole": "Rol în documente",
       "locality": "Localitate (sediu)"
+    },
+    "anaf": {
+      "button": "Completează din ANAF",
+      "buttonNote": "Întreabă ANAF după CUI și arată ce s-ar schimba. Nu se salvează nimic până nu apăsați „Salvează”.",
+      "needCui": "Scrieți întâi CUI-ul.",
+      "title": "Date din ANAF pentru CUI {cui}",
+      "loading": "Se întreabă ANAF…",
+      "notFound": "ANAF nu cunoaște CUI-ul {cui}.",
+      "down": "ANAF nu răspunde acum. Încercați din nou peste câteva minute.",
+      "badCui": "CUI-ul nu pare corect — de exemplu RO14399840 sau 14399840.",
+      "rule": "Câmpurile goale se completează. Unde înregistrarea are deja altceva, bifați ce preluați.",
+      "colField": "Câmp",
+      "colNow": "Acum",
+      "colAnaf": "ANAF",
+      "colTake": "Preia",
+      "takeOne": "Preia {field} din ANAF",
+      "empty": "(gol)",
+      "addressField": "Sediu: {field}",
+      "nothing": "Înregistrarea are deja tot ce știe ANAF.",
+      "inactive": "ANAF o arată inactivă fiscal.",
+      "inactiveSince": "ANAF o arată inactivă fiscal din {date}.",
+      "inactiveNote": "La „Note” se adaugă: „{line}”",
+      "inactiveNoRoom": "„Note” nu mai are loc pentru rândul acesta (300 de caractere); adăugați-l de mână.",
+      "deregistered": "ANAF o arată radiată din {date}.",
+      "source": "Sursa: ANAF, registrul contribuabililor, {date}.",
+      "apply": "Preia bifele",
+      "cancel": "Renunță",
+      "applied": "Câmpurile s-au completat din ANAF. Verificați-le și apăsați „Salvează”.",
+      "partyIntro": "Firma are CUI {cui}. ANAF poate completa restul înainte să o creați.",
+      "partyUsing": "La „Creează și asociază” se folosesc datele bifate."
     }
   },
   "nav": {

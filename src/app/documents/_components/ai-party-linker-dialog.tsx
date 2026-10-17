@@ -91,6 +91,21 @@ import {
   PersonResolutionDialog,
   type ResolutionSubject,
 } from "@/components/persons/person-resolution-dialog";
+import { Landmark } from "lucide-react";
+import { IconButton } from "@/lib/ui/icon-button";
+import { normalizeCui } from "@/lib/anaf/company";
+import {
+  anafRows,
+  anafTarget,
+  appendNoteLine,
+  applyAnafRows,
+  defaultTaken,
+  inactiveNoteLine,
+  type AnafField,
+  type AnafRow,
+  type AnafTarget,
+} from "@/lib/anaf/fill";
+import { AnafChanges, AnafStatus, AnafWarnings, fetchAnaf, todayIso, type AnafLookup } from "@/components/judicial-persons/anaf-fill";
 
 // ---------------------------------------------------------------------------
 // Types — mirror (but deliberately don't import from) the API route's response
@@ -238,6 +253,8 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
   // namespace here is cheaper and safer than a second copy of eleven strings
   // that would then be free to drift.
   const tCota = useTranslations("document.persons");
+  // Slice #39.64: the ANAF offer's words are the juridical person form's.
+  const tAnaf = useTranslations("judicialPerson.anaf");
   const [index, setIndex] = useState(0);
   const [counts, setCounts] = useState<AiPartyLinkerSummary>({
     linked: 0,
@@ -305,6 +322,48 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
 
   const party = parties[index];
   const total = parties.length;
+
+  /**
+   * Slice #39.64 — ANAF for a company about to be created: its lookup, the rows it would change against what the
+   * reader found, and the ticks. Keyed on the party like `createdPersonRef`, so an answer never outlives the party
+   * it was asked for; `advance` clears it too.
+   */
+  const [anaf, setAnaf] = useState<{ key: string; lookup: AnafLookup; rows: AnafRow[]; taken: Set<AnafField> } | null>(null);
+  const partyAnafCui = party && party.personType === "JUDICIAL" ? normalizeCui(party.cuiNumber) : null;
+  const offersAnaf = partyAnafCui !== null && (!party?.matchCandidate || forceCreate);
+  const partyAnaf = party && anaf?.key === partyKey(index, party) ? anaf : null;
+  /** What the reader found, in the shape ANAF's answer is compared with. */
+  const readerTarget = (p: AiExtractedParty): AnafTarget => ({
+    name: p.name ?? `${p.firstName ?? ""} ${p.lastName ?? ""}`.trim(),
+    tradeRegisterNumber: "",
+    phone: "",
+    judicialPersonTypeId: "",
+    streetLine: p.domiciliu?.trim() ?? "",
+    postalCode: "",
+    locality: "",
+    county: "",
+    country: p.domiciliu?.trim() ? "România" : "",
+  });
+  const askAnaf = () => {
+    if (!party || !partyAnafCui) return;
+    const key = partyKey(index, party);
+    setAnaf({ key, lookup: { status: "loading" }, rows: [], taken: new Set() });
+    void fetchAnaf(partyAnafCui).then((lookup) => {
+      const rows = lookup.status === "found"
+        ? anafRows(readerTarget(party), anafTarget(lookup.company, lookup.proposedType?.id ?? null))
+        : [];
+      setAnaf((a) => (a?.key === key ? { key, lookup, rows, taken: defaultTaken(rows) } : a));
+    });
+  };
+  const toggleAnaf = (f: AnafField) =>
+    setAnaf((a) => {
+      if (!a) return a;
+      const taken = new Set(a.taken);
+      if (taken.has(f)) taken.delete(f);
+      else taken.add(f);
+      return { ...a, taken };
+    });
+  const anafNoteLine = partyAnaf?.lookup.status === "found" ? inactiveNoteLine(partyAnaf.lookup.company, todayIso()) : null;
 
   /**
    * ⚠️ **LITERAL KEYS, NOT `t(`cotaMod.${v}`)`** — the same reason
@@ -432,6 +491,7 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
     setCotaErrors({});
     // This party is settled; whatever it created is no longer a retry to reuse.
     createdPersonRef.current = null;
+    setAnaf(null);
     if (index + 1 >= total) {
       onClose(next);
     } else {
@@ -562,6 +622,26 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
           addresses,
           provenance,
         };
+        // Slice #39.64: what ANAF said, as ticked — the reader's values where a row was not taken.
+        if (partyAnaf?.lookup.status === "found") {
+          const v = applyAnafRows(readerTarget(party), partyAnaf.rows, partyAnaf.taken);
+          payload.name = v.name || payload.name;
+          payload.cuiNumber = partyAnafCui ?? payload.cuiNumber;
+          payload.tradeRegisterNumber = orUndef(v.tradeRegisterNumber);
+          payload.phone = orUndef(v.phone);
+          payload.judicialPersonTypeId = orUndef(v.judicialPersonTypeId);
+          payload.addresses = v.country.trim()
+            ? [{
+                kind: "HEADQUARTERS",
+                streetLine: orUndef(v.streetLine),
+                postalCode: orUndef(v.postalCode),
+                locality: orUndef(v.locality),
+                county: orUndef(v.county),
+                country: v.country.trim(),
+              }]
+            : addresses;
+          if (anafNoteLine) payload.notes = appendNoteLine("", anafNoteLine) ?? undefined;
+        }
         const res = await fetch("/api/judicial-persons", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -673,6 +753,39 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
       onSkip={() => advance("skipped", party.personType)}
       onClose={() => onClose({ ...counts, skipped: counts.skipped + (total - index) })}
     >
+      {offersAnaf && partyAnafCui && (
+        <fieldset className="mt-3 flex flex-col gap-2 rounded-md border border-wire px-3 py-2 dark:border-zinc-700" data-party-anaf="">
+          <legend className="px-1 text-xs font-medium text-fade dark:text-zinc-400">{tAnaf("colAnaf")}</legend>
+          <p className="text-sm text-fade">{tAnaf("partyIntro", { cui: partyAnafCui })}</p>
+          <div>
+            <IconButton
+              icon={Landmark}
+              label={tAnaf("button")}
+              showLabel
+              variant="secondary"
+              size="sm"
+              disabled={busy || partyAnaf?.lookup.status === "loading"}
+              onClick={askAnaf}
+            />
+          </div>
+          {partyAnaf && <AnafStatus lookup={partyAnaf.lookup} cui={partyAnafCui} />}
+          {partyAnaf?.lookup.status === "found" && (
+            <>
+              <AnafWarnings company={partyAnaf.lookup.company} noteLine={anafNoteLine} noteFits />
+              <p className="text-sm text-fade">{tAnaf("rule")}</p>
+              <AnafChanges
+                rows={partyAnaf.rows}
+                taken={partyAnaf.taken}
+                onToggle={toggleAnaf}
+                typeName={(id) => (partyAnaf.lookup.status === "found" && partyAnaf.lookup.proposedType?.id === id ? partyAnaf.lookup.proposedType.name : id)}
+                disabled={busy}
+              />
+              <p className="text-xs text-fade">{tAnaf("partyUsing")}</p>
+            </>
+          )}
+        </fieldset>
+      )}
+
       {offersShare && (
       <fieldset className="mt-3 flex flex-wrap items-start gap-3 rounded-md border border-wire px-3 py-2 dark:border-zinc-700">
         <legend className="px-1 text-xs font-medium text-fade dark:text-zinc-400">

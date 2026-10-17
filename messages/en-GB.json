@@ -1401,6 +1401,36 @@
     "filters": {
       "documentRole": "Role in documents",
       "locality": "Locality (head office)"
+    },
+    "anaf": {
+      "button": "Fill in from ANAF",
+      "buttonNote": "Asks ANAF by CUI and shows what would change. Nothing is saved until you press „Save”.",
+      "needCui": "Type the CUI first.",
+      "title": "ANAF data for CUI {cui}",
+      "loading": "Asking ANAF…",
+      "notFound": "ANAF does not know the CUI {cui}.",
+      "down": "ANAF is not answering right now. Try again in a few minutes.",
+      "badCui": "The CUI does not look right — for example RO14399840 or 14399840.",
+      "rule": "Empty fields are filled. Where the record already holds something else, tick what to take.",
+      "colField": "Field",
+      "colNow": "Now",
+      "colAnaf": "ANAF",
+      "colTake": "Take",
+      "takeOne": "Take {field} from ANAF",
+      "empty": "(empty)",
+      "addressField": "Head office: {field}",
+      "nothing": "The record already holds everything ANAF knows.",
+      "inactive": "ANAF shows it as inactive for tax.",
+      "inactiveSince": "ANAF shows it as inactive for tax since {date}.",
+      "inactiveNote": "„Note” gets the line: „{line}”",
+      "inactiveNoRoom": "„Note” has no room left for this line (300 characters); add it by hand.",
+      "deregistered": "ANAF shows it as struck off since {date}.",
+      "source": "Source: ANAF, the taxpayers' register, {date}.",
+      "apply": "Take the ticked",
+      "cancel": "Cancel",
+      "applied": "The fields were filled in from ANAF. Check them and press „Save”.",
+      "partyIntro": "The company has CUI {cui}. ANAF can fill in the rest before you create it.",
+      "partyUsing": "„Create & link” uses the ticked values."
     }
   },
   "nav": {
