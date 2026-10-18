@@ -6,7 +6,7 @@
 | **Kind** | happy |
 | **Data** | — |
 | **State** | `automated` |
-| **Last green** | 2026-10-17 |
+| **Last green** | 2026-10-18 |
 
 ## What this proves
 
@@ -72,3 +72,6 @@ same, word for word. Deleted (204 ×4). `e2e/property/tarla-two-localities.spec.
 **2026-10-18 — step 8 added for #39.77.** Read in the browser pane on localhost:3000 at 1920 × 1080 on tarla 47/2 of
 Bragadiru (125 properties): the four thirds 476 px, the two halves 804 px; the properties' list 713 px tall (66 % of
 1080) over 4,096 px of rows, the documents' over 10,520, both headers sticky; no tile scrolls sideways. One map load.
+
+**2026-10-18 — `automated` with step 8, green on the runner (Slice #39.77).** `targeted` 20261018T062700Z-18619 on
+37c87d7.
