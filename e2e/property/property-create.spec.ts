@@ -65,7 +65,7 @@ test.describe("TC-PROP-01 — Proprietate creată manual, vizibilă în listă",
       await openFromSidebar(page, "Proprietăți");
       await expect(page.getByRole("heading", { name: "Proprietăți", exact: true })).toBeVisible({ timeout: 30_000 });
       await expect(
-        page.getByPlaceholder("caută după cod, poreclă, nr. cadastru, carte funciară, tarla sau parcelă"),
+        page.getByPlaceholder("caută după Cod, Poreclă, Nr. cadastru, Nr. CF, Tarla/Solă sau Parcelă"),
       ).toBeVisible();
       // #37.61: no „Importanță" or „Relevanță" filter.
       await expect(page.locator("main").getByText(/^Importanță:?$|^Relevanță:?$/)).toHaveCount(0);

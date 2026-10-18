@@ -26,6 +26,7 @@ import { IncursionTile } from "@/app/_components/incursion-tile";
 import { useListAddress, useListScrollMemory, useWriteListAddress } from "@/components/list/use-list-address";
 import { carryListAddress } from "@/lib/ui/list-address";
 import { FieldChooser, useFieldChooser, type ChooserField } from "@/components/list/field-chooser";
+import { LIST_ADD, ListSearchBox } from "@/components/list/list-search";
 import { LIST_COLUMN_CHOICE } from "@/lib/ui/list-columns";
 import { HintBubble } from "@/lib/ui/hint-bubble";
 import { dmyFromIso } from "@/lib/persons/person-age";
@@ -837,14 +838,8 @@ export function DocumentListView({
         {/* Slice #37.62: the search first — its placeholder no longer begins
             with „SAU", which only made sense after the type. Since #38.18 the
             type stands in front of „Câmp specific" — since #39.63 on the filter bar. */}
-        <input
-          type="search"
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          placeholder={t("searchPlaceholder")}
-          aria-label={t("searchPlaceholder")}
-          className="w-64 rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm placeholder:text-fade focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:placeholder:text-zinc-500"
-        />
+        {/* Slice #39.85: as wide as „Adaugă …", its whole explanation on hover. */}
+        <ListSearchBox value={searchInput} onChange={setSearchInput} explanation={t("searchPlaceholder")} />
 
         {/* Slice #37.62: the shared chooser, as on the other three lists — its list
             hanging from the right, the button being near the toolbar's end. */}
@@ -880,14 +875,17 @@ export function DocumentListView({
             />
           )}
           <HelpHint hintKey="select-all-page-only" />
-          <IconButton
-            href="/documents/new"
-            icon={Plus}
-            label={t("addNew")}
-            showLabel
-            variant="primary"
-            size="lg"
-          />
+          {/* Slice #39.85: measured, so the search box can take its width. */}
+          <span className="inline-flex" {...LIST_ADD}>
+            <IconButton
+              href="/documents/new"
+              icon={Plus}
+              label={t("addNew")}
+              showLabel
+              variant="primary"
+              size="lg"
+            />
+          </span>
         </div>
       </div>
       </div>

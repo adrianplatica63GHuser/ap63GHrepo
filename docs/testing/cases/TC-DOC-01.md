@@ -36,7 +36,7 @@ shows under TITLU, and the one TC-SRCH-01 finds by the `TC-` prefix.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Presses „Acte" in the left sidebar | The heading „Acte" and **every** document in one list — TIP · TITLU — with a search box („caută după cod, titlu sau nr. document") before the filter „Tip document: Toate tipurile", then „Câmp specific:" — no „Importanță" or „Relevanță" filter (#37.62) — and a button „Adaugă act". There is no sub-menu of document types: the type is chosen inside the form |
+| 1 | Presses „Acte" in the left sidebar | The heading „Acte" and **every** document in one list — TIP · TITLU — with a search box („caută după Cod, Titlu sau Nr. document") before the filter „Tip document: Toate tipurile", then „Câmp specific:" — no „Importanță" or „Relevanță" filter (#37.62) — and a button „Adaugă act". There is no sub-menu of document types: the type is chosen inside the form |
 | 2 | Presses „Adaugă act" | „Act nou" at `/documents/new`, with one section, „IDENTIFICAREA ACTULUI", holding „Tip document", „Emitent", „Nr. document" and „Data" (since #38.32; there is no „DATE DE EMITERE"). „Tip document" starts **empty** |
 | 3 | Chooses „Contract de Vânzare (are formular)" in „Tip document" | The form grows: the tabs „Preț și plată", „Obiectul vânzării", „Carte funciară", „Declarații și garanții", „Taxe și cheltuieli" appear (#38.33), the first page opening on the section „PREȚ" |
 | 4 | Types `TC-DOC-01 Contract de test` into **„Etichetă scurtă"** | The value appears. There is no field labelled „Titlu" on this form — „Etichetă scurtă" is the title |
@@ -183,3 +183,7 @@ pages are seen — TC-DOC-14) instead of returning to „Acte". The step reads s
 **2026-10-05 — Slice #37.95.** The Documents list's „Tip" shows
 each type by its short name, the full name in the cell's tooltip (TC-DOC-15); the steps name the
 short name. Nothing else in them changed. Adrian confirmed migration_092 the same day; the runner's e2e run 20261005T114448Z-6750 ran this case's spec green against the migrated database.
+
+**2026-10-18 — the search box's words updated for #39.85.** The box's explanation now names its fields as
+„Câmpuri afișate", the column headers or the form spell them; the box is as wide as „Adaugă …" and shows the whole
+explanation on hover. Only the quoted words changed in this file.

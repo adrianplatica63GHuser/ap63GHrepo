@@ -236,7 +236,7 @@
       "typeTarlaHidden": "Tarla/Solă and Parcelă do not appear in “{cadastral}”."
     },
     "listTitle": "Properties",
-    "searchPlaceholder": "search by code, nickname, cadastral no., carte funciara, tarla or parcela",
+    "searchPlaceholder": "search by Code, Nickname, Cadastral No., Carte Funciara, Tarla/Solă or Parcelă",
     "chooseFields": "Choose fields",
     "chooseFieldsHint": "Select up to {max} optional columns",
     "wholeMap": "Full map",
@@ -1108,7 +1108,7 @@
   "naturalPerson": {
     "listTitle": "Natural Person",
     "createTitle": "New Natural Person",
-    "searchPlaceholder": "search by code, name, email, or phone",
+    "searchPlaceholder": "search by ID, Name, Nickname, Personal Email 1, Personal Email 2, Work Email, Personal Phone 1, Personal Phone 2 or Work Phone",
     "chooseFields": "Choose fields",
     "chooseFieldsHint": "Select up to {max} optional columns",
     "filters": {
@@ -1274,7 +1274,7 @@
   "judicialPerson": {
     "listTitle": "Juridical Person",
     "createTitle": "New Juridical Person",
-    "searchPlaceholder": "search by code, name, nickname, or ID",
+    "searchPlaceholder": "search by ID, Name, Nickname, Registration No. (CUI), Firm's phone or Firm's e-mail",
     "addNew": "Add new Juridical Person",
     "open": "Open",
     "loading": "Loading…",
@@ -1677,7 +1677,7 @@
   "document": {
     "listTitle": "Documents",
     "createTitle": "New Document",
-    "searchPlaceholder": "search by code, title, or document no.",
+    "searchPlaceholder": "search by Code, Title or Document No.",
     "chooseFields": "Choose fields",
     "chooseFieldsHint": "Select up to {max} optional columns",
     "addNew": "Add new Document",

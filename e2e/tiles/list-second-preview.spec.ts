@@ -52,7 +52,7 @@ test.describe("TC-TILES-19 — previzualizarea unui rând, în coloana lui", () 
       await page.setViewportSize({ width: 1920, height: 1080 });
       await page.goto("/properties");
       const main = page.locator("main");
-      const search = main.getByPlaceholder("caută după cod, poreclă, nr. cadastru, carte funciară, tarla sau parcelă");
+      const search = main.getByPlaceholder("caută după Cod, Poreclă, Nr. cadastru, Nr. CF, Tarla/Solă sau Parcelă");
       await expect(search).toBeVisible({ timeout: 30_000 });
       await search.fill(MARK);
       const rows = main.locator("[data-list-edge] tbody tr");

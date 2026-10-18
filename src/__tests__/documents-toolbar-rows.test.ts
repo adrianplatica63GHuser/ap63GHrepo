@@ -32,7 +32,8 @@ describe("the Documents toolbar and the bar's fixed controls (Slices #37.83, #39
   // #39.84: it read `[… "<FieldChooser", "<CustomFieldSign", 'aria-label={tFilter("customFieldLabel")}',
   // "icon={CalendarClock}", …]` from #39.74; before that no „Câmp specific" or „Expiră curând" here.
   it("the first row: search, „Câmpuri afișate”, „Expiră curând”, then the group at its end — no „Tip document”, no „Câmp specific”", () => {
-    const order = ['type="search"', "<FieldChooser", "icon={CalendarClock}", 'className="ml-auto flex items-center gap-2"', 'href="/documents/new"'];
+    // #39.85: the search is the shared box, as wide as „Adaugă act" — was `'type="search"'`.
+    const order = ["<ListSearchBox", "<FieldChooser", "icon={CalendarClock}", 'className="ml-auto flex items-center gap-2"', 'href="/documents/new"'];
     const at = order.map((m) => first.indexOf(m));
     expect(at.every((i) => i >= 0)).toBe(true);
     expect([...at].sort((x, y) => x - y)).toEqual(at);

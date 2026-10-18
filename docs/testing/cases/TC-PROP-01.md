@@ -33,7 +33,7 @@ Properties list and can be removed by hand.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Presses „Proprietăți" in the left sidebar | The heading „Proprietăți", a search box („caută după cod, poreclă, nr. cadastru, carte funciară, tarla sau parcelă"), no „Importanță" or „Relevanță" filter (#37.61), „Câmpuri afișate 1/4" (#37.72, #37.94, #38.02), a button „Adaugă proprietate", and a table headed by **Poreclă, always, then the columns „Câmpuri afișate" holds for this browser** — in a browser that has never changed them: PORECLĂ · TIP PROPRIETATE |
+| 1 | Presses „Proprietăți" in the left sidebar | The heading „Proprietăți", a search box („caută după Cod, Poreclă, Nr. cadastru, Nr. CF, Tarla/Solă sau Parcelă"), no „Importanță" or „Relevanță" filter (#37.61), „Câmpuri afișate 1/4" (#37.72, #37.94, #38.02), a button „Adaugă proprietate", and a table headed by **Poreclă, always, then the columns „Câmpuri afișate" holds for this browser** — in a browser that has never changed them: PORECLĂ · TIP PROPRIETATE |
 | 2 | Presses „Câmpuri afișate" and makes the ticked columns „Localitate", „Tarla/Solă" and „Parcelă" (Poreclă is always shown, #37.72) — in a browser that has never changed them, untick „Tip proprietate", then tick „Localitate", „Tarla/Solă" and „Parcelă" in that order; otherwise **untick first** whatever else is ticked: the list („Selectați până la 4 coloane opționale") greys out every other box while four are on. Then presses anywhere outside it | The table is headed PORECLĂ · LOCALITATE · TARLA/SOLĂ · PARCELĂ. The choice is kept by this browser, so on a later run it is already made |
 | 3 | Notes the count at the foot of the list | „Se afișează N din N" — write N down, step 12 checks it |
 | 4 | Presses „Adaugă proprietate" | **A dialog** headed „Adaugă Proprietate", offering two ways in (#39.65): „Introducere manuală" and „Din fișier text" |
@@ -167,3 +167,7 @@ rest is unchanged; the spec follows.
 **2026-10-17 — step 4 rewritten for #39.65.** „Din imagine scanată" and „Din folder text" were retired (FU-217), so the
 dialog offers two ways in. Read in the browser pane on localhost:3000 the same day: „Anulează", „Introducere manuală
 | Completați detaliile proprietății manual", „Din fișier text | …" and nothing else. The rest of the case is unchanged.
+
+**2026-10-18 — the search box's words updated for #39.85.** The box's explanation now names its fields as
+„Câmpuri afișate", the column headers or the form spell them; the box is as wide as „Adaugă …" and shows the whole
+explanation on hover. Only the quoted words changed in this file.

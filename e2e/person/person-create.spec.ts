@@ -110,7 +110,7 @@ test.describe("TC-PERS-01 — Persoană fizică creată manual", () => {
       await expectStableColumns(page);
 
       // Step 7 — the list's search finds it by the prefix.
-      await page.getByPlaceholder("caută după cod, nume, email sau telefon").fill(`${E2E_MARKER}PERS`);
+      await page.getByPlaceholder("caută după ID, Nume, Poreclă, Email Personal 1, Email Personal 2, Email serviciu, Telefon Personal 1, Telefon Personal 2 sau Telefon serviciu").fill(`${E2E_MARKER}PERS`);
       await expect(page.getByRole("row").filter({ hasText: LISTED_AS })).toHaveCount(1, { timeout: 15_000 });
 
       // ── At the end — the case's cleanup, through the UI ──────────────────

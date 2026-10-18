@@ -11,7 +11,7 @@ A document is a deed held in the archive — a contract, a certificate, a permit
 
 In the sidebar, open „Domain”, then „Documents”. The list shows every document in the archive, in the columns „Type” and „Title”. The title is the document's „Short Label”. A document just added appears at the top, badged „New!”. Lists work the same everywhere (section [[start-lists]]).
 
-Above the table, on one row, stand the search box („search by code, title, or document no.”), „Choose fields”, a round sign with „Type-specific field:” and an ⓘ beside it, „Expiring soon” and, at the end, „Add new Document”. Under them is the list's filter bar, which always begins with „Document type:”; the rest of the bar is in section [[documents-list-filters]].
+Above the table, on one row, stand the search box („search by Code, Title or Document No.”), „Choose fields”, a round sign with „Type-specific field:” and an ⓘ beside it, „Expiring soon” and, at the end, „Add new Document”. Under them is the list's filter bar, which always begins with „Document type:”; the rest of the bar is in section [[documents-list-filters]].
 
 **„Type” shows the type's short name** — for example „CVC” for „Contract de Vânzare”, „Intabulare” for „Încheiere de Intabulare”. Rest the mouse on the cell and the bubble shows the full name. The short name is chosen for each type in „Reference Data”, under „Document Types”, in the field „Short name” (section [[admin-reference-data]]). Left empty, the list shortens the name by itself, dropping a leading „Contract de”, „Act de”, „Încheiere de”, „Certificat de”. Two types may not share a short name.
 

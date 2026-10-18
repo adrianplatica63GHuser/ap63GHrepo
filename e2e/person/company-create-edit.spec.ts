@@ -69,7 +69,7 @@ test.describe("TC-PERS-02 — Persoană juridică creată și modificată", () =
       await expect(page.getByRole("heading", { name: "Persoană juridică", exact: true })).toBeVisible({ timeout: 30_000 });
       // #37.71: no „Grupuri" filter on this list any more.
       await expect(page.getByText("Toate grupurile")).toHaveCount(0);
-      const search = page.getByPlaceholder("caută după cod, nume, poreclă sau ID");
+      const search = page.getByPlaceholder("caută după ID, Denumire, Poreclă, Nr. înregistrare (CUI), Telefon firmă sau E-mail firmă");
       await expect(search).toBeVisible();
       for (const col of ["DENUMIRE", "PORECLĂ"] /* #37.57: no „Cod" */) {
         await expect(page.getByRole("columnheader", { name: col }).first()).toBeVisible();

@@ -11,7 +11,7 @@ Un act este un înscris din arhivă — un contract, un certificat, o autorizaț
 
 În bara laterală, deschideți „Domeniu”, apoi „Acte”. Lista arată toate actele arhivei, în coloanele „Tip” și „Titlu”. Titlul este „Etichetă scurtă” a actului. Un act abia adăugat apare sus, cu semnul „Nou!”. Listele se folosesc la fel peste tot (secțiunea [[start-lists]]).
 
-Deasupra tabelului, pe un rând, stau caseta de căutare („caută după cod, titlu sau nr. document”), „Câmpuri afișate”, un semn rotund cu „Câmp specific:” și un ⓘ lângă el, „Expiră curând” și, la capăt, „Adaugă act”. Sub ele stă bara de filtre a listei, care începe mereu cu „Tip document:”; restul barei este în secțiunea [[documents-list-filters]].
+Deasupra tabelului, pe un rând, stau caseta de căutare („caută după Cod, Titlu sau Nr. document”), „Câmpuri afișate”, un semn rotund cu „Câmp specific:” și un ⓘ lângă el, „Expiră curând” și, la capăt, „Adaugă act”. Sub ele stă bara de filtre a listei, care începe mereu cu „Tip document:”; restul barei este în secțiunea [[documents-list-filters]].
 
 **„Tip” arată denumirea scurtă a tipului** — de exemplu „CVC” pentru „Contract de Vânzare”, „Intabulare” pentru „Încheiere de Intabulare”. Țineți mouse-ul pe celulă și bula arată denumirea întreagă. Denumirea scurtă se alege pentru fiecare tip în „Date de referință”, la „Tipuri de Document”, în câmpul „Denumire scurtă” (secțiunea [[admin-reference-data]]). Lăsată goală, lista scurtează singură denumirea, fără începutul „Contract de”, „Act de”, „Încheiere de”, „Certificat de”. Două tipuri nu pot avea aceeași denumire scurtă.
 

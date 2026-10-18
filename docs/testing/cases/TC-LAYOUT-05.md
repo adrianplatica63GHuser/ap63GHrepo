@@ -47,6 +47,7 @@ At 1366 and at 1920 px, on each of the four lists, searched for „TC-E2E-LAYOUT
 | 3 | „Persoane juridice" | The same, for the company's name |
 | 4 | „Acte" | The same, for the document's title |
 | 5 | On each list, looks at the band of column names (#39.83) | Every cell the same height, three rows; a filterable column's name on rows 1–2, bottom-aligned, its funnel alone on row 3; Poreclă, the name or title, Nr. cadastru, CNP, Nr. document and the juridical persons' CUI, register and contact person centred; „Categorie de / folosință", „Tip / proprietate", „Oficială / (m²)", „Data / nașterii", „Relația / cu firma", „Locul / nașterii", „Instituție / / Notariat", „Nr. / pagini", „Nr. / proprietăți" on two rows; no name on three |
+| 6 | On each list, holds the mouse over the search box (#39.85) | The box is exactly as wide as „Adaugă …" at its row's end; the whole explanation shows on hover, even where the box cuts it with „…" |
 
 ## At the end — leaving things as they were found
 
@@ -62,3 +63,6 @@ driven by hand: the spec, extended with it, is what checks it.
 
 **2026-10-18 — `automated` (Slice #39.83).** The test runner's targeted run 20261018T162356Z-3681 on 09705ab ran `e2e/layout/domain-lists-one-line.spec.ts` green
 with the band of names (lint, tsc and the slice's jest suites green too).
+
+**2026-10-18 — step 6 added for #39.85.** The search box as wide as „Adaugă …", its whole explanation on hover. Not
+driven by hand: the spec, extended with it, is what checks it.

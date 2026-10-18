@@ -35,7 +35,7 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Presses „Acte" in the left sidebar | The toolbar in one row (#39.63), level, in this order (#39.84): the search box („caută după cod, titlu sau nr. document" — no „SAU"), „Câmpuri afișate n/4", „Expiră curând" right after it, and at its end „Adaugă act". Under it, starting under the search box, the filter bar: „Tip document: Toate tipurile", then a red sign (a circle with a bar) and „Câmp specific:" with an ⓘ beside it — no „+ Filtru" (#39.82). No „Importanță" or „Relevanță" anywhere on the list |
+| 1 | Presses „Acte" in the left sidebar | The toolbar in one row (#39.63), level, in this order (#39.84): the search box („caută după Cod, Titlu sau Nr. document" — no „SAU"), „Câmpuri afișate n/4", „Expiră curând" right after it, and at its end „Adaugă act". Under it, starting under the search box, the filter bar: „Tip document: Toate tipurile", then a red sign (a circle with a bar) and „Câmp specific:" with an ⓘ beside it — no „+ Filtru" (#39.82). No „Importanță" or „Relevanță" anywhere on the list |
 | 2 | Types `TC-DOC-08` into the search | One row: „Adeverință", `TC-DOC-08 Act de test` |
 | 3 | Presses „Câmpuri afișate" | „Selectați până la 4 coloane opționale", then Nr. document, Data, Instituție / Notariat, Subiect, Nr. pagini, Nr. persoane, Nr. proprietăți, Adăugat la (#39.83) — no Importanță, Relevanță or Proveniență |
 | 4 | Ticks „Subiect" and „Adăugat la" (unticking another first if four are on) | Two more headers, SUBIECT · ADĂUGAT LA, after TIP · TITLU; under them `Subiect de test TC-DOC-08` and today's date, dd.mm.yyyy |
@@ -56,7 +56,7 @@ documents (`DELETE` on each route).
 interface in English) against `npm run dev` on 3000, read with a script. Your browser's stored
 choice was `[]`; it was `["subject","createdAt"]` during step 4 and `[]` again afterwards. This
 file was written from it.
-- Step 1: the toolbar in order — the search box („search by code, title, or document no."),
+- Step 1: the toolbar in order — the search box („search by Code, Title or Document No."),
   „Document type: All types", „Type-specific field:" and its ⓘ („About “Type-specific field”"),
   „Expiring soon", „Choose fields 0/4"; neither „Importance" nor „Relevance" in the list's text.
 - Step 2: one row, „Adeverință · TC-DOC-08 Act de test".
@@ -221,3 +221,7 @@ left close to field picker button". „Câmp specific" went back down to the fil
 
 **2026-10-18 — `automated` (Slice #39.84).** The test runner's targeted run 20261018T163815Z-24052 on 5f9e330 ran
 `e2e/document/document-list.spec.ts` green with the new toolbar and bar (lint, tsc and the slice's jest suites green too).
+
+**2026-10-18 — the search box's words updated for #39.85.** The box's explanation now names its fields as
+„Câmpuri afișate", the column headers or the form spell them; the box is as wide as „Adaugă …" and shows the whole
+explanation on hover. Only the quoted words changed in this file.

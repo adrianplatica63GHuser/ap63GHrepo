@@ -18,7 +18,7 @@ import {
 } from "../helpers/records";
 
 const MARK = `${E2E_MARKER}PERS-06`;
-const SEARCH = "caută după cod, nume, poreclă sau ID";
+const SEARCH = "caută după ID, Denumire, Poreclă, Nr. înregistrare (CUI), Telefon firmă sau E-mail firmă";
 
 test.describe("TC-PERS-06 — lista persoanelor juridice", () => {
   test("fără „Grupuri”; „Persoană de contact” arată primul contact, sau al doilea când primul lipsește", async ({ page }) => {

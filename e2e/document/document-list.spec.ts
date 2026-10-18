@@ -56,7 +56,7 @@ test.describe("TC-DOC-08 — lista actelor", () => {
       // Step 1 — the search box first, then „Tip document"; no „Importanță" or „Relevanță".
       await page.goto("/documents");
       const main = page.locator("main");
-      const search = main.getByRole("searchbox", { name: "caută după cod, titlu sau nr. document" });
+      const search = main.getByRole("searchbox", { name: "caută după Cod, Titlu sau Nr. document" });
       await expect(search).toBeVisible({ timeout: 30_000 });
       const typeFilter = main.getByRole("button", { name: /^Tip document:/ });
       await expect(main.getByRole("button", { name: /^Tip document:\s*Toate tipurile/ })).toBeVisible();

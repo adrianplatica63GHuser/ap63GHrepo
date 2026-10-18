@@ -167,7 +167,7 @@ test.describe("TC-DOC-01 — Act creat, pagină atașată, pagina se deschide", 
       }
       await expect(page.getByRole("button", { name: /^Tip document:\s*Toate tipurile/ })).toBeVisible();
       // #37.62: the search box first, without „SAU"; no „Importanță" or „Relevanță" filter.
-      await expect(page.getByRole("searchbox", { name: "caută după cod, titlu sau nr. document" })).toBeVisible();
+      await expect(page.getByRole("searchbox", { name: "caută după Cod, Titlu sau Nr. document" })).toBeVisible();
       await expect(page.getByText("Importanță:")).toHaveCount(0);
       await expect(page.getByText("Relevanță:")).toHaveCount(0);
       await expect(page.getByText("Câmp specific:")).toBeVisible();
@@ -219,7 +219,7 @@ test.describe("TC-DOC-01 — Act creat, pagină atașată, pagina se deschide", 
       // its pictures, narrowed to this spec's own row first — the other rows
       // are real documents, and no real title goes into a picture.
       await expectStableColumns(page);
-      const listSearch = page.getByRole("searchbox", { name: "caută după cod, titlu sau nr. document" });
+      const listSearch = page.getByRole("searchbox", { name: "caută după Cod, Titlu sau Nr. document" });
       await listSearch.fill(TITLE);
       await expect(page.getByRole("row")).toHaveCount(2, { timeout: 15_000 });
       await photograph(page, "list-documents");

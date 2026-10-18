@@ -266,7 +266,7 @@ test.describe("TC-NAV-01 — the sidebar draws only what exists", () => {
     const bar = page.getByRole("navigation", { name: "Fir de navigare" }).filter({ visible: true });
     const back = bar.getByRole("button", { name: "Înapoi", exact: true });
     const openRecord = async () => {
-      const search = page.locator("main").getByPlaceholder("caută după cod, nume, email sau telefon");
+      const search = page.locator("main").getByPlaceholder("caută după ID, Nume, Poreclă, Email Personal 1, Email Personal 2, Email serviciu, Telefon Personal 1, Telefon Personal 2 sau Telefon serviciu");
       await search.fill(MARK);
       const row = page.locator("main tbody tr").filter({ hasText: MARK });
       await expect(row).toHaveCount(1, { timeout: 30_000 });
@@ -276,7 +276,7 @@ test.describe("TC-NAV-01 — the sidebar draws only what exists", () => {
     try {
       // The list, then a record, both reached inside the app.
       await page.goto("/natural-persons");
-      await expect(page.locator("main").getByPlaceholder("caută după cod, nume, email sau telefon")).toBeVisible({ timeout: 30_000 });
+      await expect(page.locator("main").getByPlaceholder("caută după ID, Nume, Poreclă, Email Personal 1, Email Personal 2, Email serviciu, Telefon Personal 1, Telefon Personal 2 sau Telefon serviciu")).toBeVisible({ timeout: 30_000 });
       await openRecord();
       await expect(page.locator("h1").filter({ visible: true }).first()).toContainText(MARK, { timeout: 30_000 });
 
@@ -300,10 +300,10 @@ test.describe("TC-NAV-01 — the sidebar draws only what exists", () => {
       // Pressed: back on the list.
       await back.click();
       await expect(page).toHaveURL((u) => u.pathname === "/natural-persons", { timeout: 30_000 });
-      await expect(page.locator("main").getByPlaceholder("caută după cod, nume, email sau telefon")).toBeVisible({ timeout: 30_000 });
+      await expect(page.locator("main").getByPlaceholder("caută după ID, Nume, Poreclă, Email Personal 1, Email Personal 2, Email serviciu, Telefon Personal 1, Telefon Personal 2 sau Telefon serviciu")).toBeVisible({ timeout: 30_000 });
       // The picture shows the test person alone: the archive's other rows are real people
       // (C:\dev\.claude\rules\capture-and-personal-data.md).
-      await page.locator("main").getByPlaceholder("caută după cod, nume, email sau telefon").fill(MARK);
+      await page.locator("main").getByPlaceholder("caută după ID, Nume, Poreclă, Email Personal 1, Email Personal 2, Email serviciu, Telefon Personal 1, Telefon Personal 2 sau Telefon serviciu").fill(MARK);
       await expect(page.locator("main tbody tr")).toHaveCount(1, { timeout: 30_000 });
       await page.mouse.move(1356, 758);
       await page.waitForTimeout(400);

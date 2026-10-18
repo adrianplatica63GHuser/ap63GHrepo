@@ -19,10 +19,10 @@ const LONG = "cu o denumire mult prea lungă ca să încapă pe un singur rând 
 // the persons' lists (Adrian, 2026-10-13), Acte's as it was. #39.73: Proprietăți has no box any more (its delete went,
 // and its ticks with it), so there is no gap to measure there, and no header box to align with — `null`.
 const LISTS: { path: string; search: string; gap: number | null }[] = [
-  { path: "/properties", search: "caută după cod, poreclă, nr. cadastru, carte funciară, tarla sau parcelă", gap: null },
-  { path: "/natural-persons", search: "caută după cod, nume, email sau telefon", gap: 36 },
-  { path: "/judicial-persons", search: "caută după cod, nume, poreclă sau ID", gap: 36 },
-  { path: "/documents", search: "caută după cod, titlu sau nr. document", gap: 72 },
+  { path: "/properties", search: "caută după Cod, Poreclă, Nr. cadastru, Nr. CF, Tarla/Solă sau Parcelă", gap: null },
+  { path: "/natural-persons", search: "caută după ID, Nume, Poreclă, Email Personal 1, Email Personal 2, Email serviciu, Telefon Personal 1, Telefon Personal 2 sau Telefon serviciu", gap: 36 },
+  { path: "/judicial-persons", search: "caută după ID, Denumire, Poreclă, Nr. înregistrare (CUI), Telefon firmă sau E-mail firmă", gap: 36 },
+  { path: "/documents", search: "caută după Cod, Titlu sau Nr. document", gap: 72 },
 ];
 
 // #39.83: four columns on each list — a long name that always takes two rows, a filterable one, a multi-word name
@@ -145,6 +145,14 @@ test.describe("TC-LAYOUT-05 — cele patru liste, câte un rând pe linie", () =
             .toEqual({ width, list: list.path, rows: 1, notOneLine: [], buttonsOneLine: true, oneLineTall: true, overlap: false, frame: true, gap: list.gap, boxesAligned: list.gap === null ? null : true });
           // #39.83: the band of names — three rows on every cell, no name over two, the funnel alone on the third, a
           // name without one centred; Adrian's long names on two rows (three of `CHOICE` on each list but the juridical persons').
+          // #39.85: the search box as wide as „Adaugă …", its whole explanation on hover (the box's title).
+          const fit = await page.evaluate(() => {
+            const box = document.querySelector<HTMLInputElement>("main [data-list-search]")!;
+            const add = document.querySelector<HTMLElement>("main [data-list-add]")!;
+            return { widthsAgree: Math.abs(box.getBoundingClientRect().width - add.getBoundingClientRect().width) <= 1, hover: box.title === box.placeholder && box.title.length > 0 };
+          });
+          expect({ width, list: list.path, ...fit }).toEqual({ width, list: list.path, widthsAgree: true, hover: true });
+          await expect(search).toHaveAttribute("title", list.search);
           const h = await band(page);
           expect({ width, list: list.path, ...h }).toEqual({
             width, list: list.path, cells: list.path === "/properties" ? 5 : 6, wrong: [], forcedOnTwo: true,

@@ -36,7 +36,7 @@ to be decided. No CUI, name or address is copied out of the archive.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Presses „Persoane Juridice" in the left sidebar | The heading „Persoană juridică", no „Grupuri" filter (#37.71), a search box („caută după cod, nume, poreclă sau ID"), a button „Adaugă persoană juridică", and a table headed DENUMIRE · PORECLĂ. **There is no CUI column** in a browser that has never chosen one, no „Importanță" or „Relevanță", and a button „Câmpuri afișate 0/4" (#37.60, #37.71) |
+| 1 | Presses „Persoane Juridice" in the left sidebar | The heading „Persoană juridică", no „Grupuri" filter (#37.71), a search box („caută după ID, Denumire, Poreclă, Nr. înregistrare (CUI), Telefon firmă sau E-mail firmă"), a button „Adaugă persoană juridică", and a table headed DENUMIRE · PORECLĂ. **There is no CUI column** in a browser that has never chosen one, no „Importanță" or „Relevanță", and a button „Câmpuri afișate 0/4" (#37.60, #37.71) |
 | 2 | Presses „Adaugă persoană juridică" | **Straight to** „Persoană juridică nouă" at `/judicial-persons/new` — no chooser dialog, as for natural persons. Its sections are „PERSOANĂ JURIDICĂ", „PERSOANE DE CONTACT", „ADRESĂ SEDIU SOCIAL", a checkbox „Aceeași cu adresa sediului social", and „ADRESĂ CORESPONDENȚĂ" |
 | 3 | Types `TC-PERS-02 Firmă de test SRL` into „Denumire" | The value appears. „Denumire" is the only required field |
 | 4 | Chooses „SRL" in „Tip" | The select offers „—", „Consiliu Local", „Instituție", „SRL", „SA", „SRL-D", „PFA", „II", „IF", „ONG", „Altele" |
@@ -106,3 +106,7 @@ reads `0/4`. Step 1 now says so and `e2e/person/company-create-edit.spec.ts` fol
 drives the list's new shape.
 
 **2026-10-05 — Slice #37.89.** The company's first tile is „Identitate", as the Natural Person's is, and a fourth box, „Interacțiuni", stands at the right of the bar, ticked by default. Step 9 reads seven tile boxes. The spec follows.
+
+**2026-10-18 — the search box's words updated for #39.85.** The box's explanation now names its fields as
+„Câmpuri afișate", the column headers or the form spell them; the box is as wide as „Adaugă …" and shows the whole
+explanation on hover. Only the quoted words changed in this file.

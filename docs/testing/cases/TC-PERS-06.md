@@ -34,7 +34,7 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „Persoane Juridice" | The toolbar starts with the search box („caută după cod, nume, poreclă sau ID"), then „Câmpuri afișate 0/4"; no „Grupuri" anywhere on it |
+| 1 | Opens „Persoane Juridice" | The toolbar starts with the search box („caută după ID, Denumire, Poreclă, Nr. înregistrare (CUI), Telefon firmă sau E-mail firmă"), then „Câmpuri afișate 0/4"; no „Grupuri" anywhere on it |
 | 2 | Presses „Câmpuri afișate", ticks „Persoană de contact", presses outside, types `TC-PERS-06` into the search | „Câmpuri afișate 1/4"; a column „PERSOANĂ DE CONTACT"; „TC-PERS-06 Firma A SRL" shows „Unu TC-PERS-06 Contact" and „TC-PERS-06 Firma B SRL" shows „Doi TC-PERS-06 Contact" |
 | 3 | Unticks „Persoană de contact" | „Câmpuri afișate 0/4"; the column is gone |
 
@@ -48,7 +48,7 @@ on each route).
 **2026-10-03 — run 1, `driven` (Slice #37.71).** Driven in the desktop app's browser pane at its own
 width against `npm run dev` on 3000, the ticks and the search made by a script. The file was written
 from the code first and needed no correction.
-- Step 1: the toolbar's first child the search box („caută după cod, nume, poreclă sau ID"), then
+- Step 1: the toolbar's first child the search box („caută după ID, Denumire, Poreclă, Nr. înregistrare (CUI), Telefon firmă sau E-mail firmă"), then
   „Câmpuri afișate 0/4"; no „Grupuri" on it.
 - Step 2: the four fields Tip, Nr. înregistrare (CUI), Nr. registru comerțului, Persoană de contact;
   „Câmpuri afișate 1/4"; headings DENUMIRE · PORECLĂ · PERSOANĂ DE CONTACT; Firma A „Unu TC-PERS-06
@@ -64,3 +64,7 @@ translates it.
 **2026-10-04 — `automated` (Slice #37.71).** The test runner's full run 20261004T041635Z-19845 on
 efa4454 ran `e2e/person/company-list.spec.ts` green with the other 67 specs (lint, tsc, jest and
 forms-drift green too).
+
+**2026-10-18 — the search box's words updated for #39.85.** The box's explanation now names its fields as
+„Câmpuri afișate", the column headers or the form spell them; the box is as wide as „Adaugă …" and shows the whole
+explanation on hover. Only the quoted words changed in this file.

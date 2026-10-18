@@ -11,7 +11,7 @@ O persoană fizică este un om: numele, CNP-ul, data nașterii, actul de identit
 
 În bara laterală, deschideți „Domeniu”, apoi „Persoane Fizice”. Ecranul se numește „Persoană fizică” și arată un tabel cu coloanele „Nume” și „Poreclă”, 15 rânduri pe pagină (secțiunea [[start-lists]]). În coloana „Nume”, prenumele vine primul: o persoană cu numele Popescu și prenumele Ion apare ca „Ion Popescu”.
 
-Caseta de căutare („caută după cod, nume, email sau telefon”) păstrează în tabel doar persoanele care se potrivesc cu ce scrieți; ajunge o parte din nume. Sub ea, filtrele listei îngustează ce vedeți după tip, rol, localitate și celelalte câmpuri (secțiunea [[persons-list-filters]]). Lista nu are filtre de „Importanță” sau „Relevanță”.
+Caseta de căutare („caută după ID, Nume, Poreclă, Email Personal 1, Email Personal 2, Email serviciu, Telefon Personal 1, Telefon Personal 2 sau Telefon serviciu”) păstrează în tabel doar persoanele care se potrivesc cu ce scrieți; ajunge o parte din nume. Sub ea, filtrele listei îngustează ce vedeți după tip, rol, localitate și celelalte câmpuri (secțiunea [[persons-list-filters]]). Lista nu are filtre de „Importanță” sau „Relevanță”.
 
 „Câmpuri afișate” adaugă coloane la tabel, cel mult patru odată. Le puteți alege dintre:
 

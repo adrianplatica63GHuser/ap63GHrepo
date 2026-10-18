@@ -54,10 +54,11 @@ describe("the Documents list (Slice #37.62)", () => {
 
   it("puts the search box before „Tip document”, and its placeholder no longer begins with „SAU”", () => {
     const toolbar = VIEW.slice(VIEW.indexOf("{/* Toolbar"));
-    expect(toolbar.indexOf('type="search"')).toBeGreaterThan(-1);
-    expect(toolbar.indexOf('type="search"')).toBeLessThan(toolbar.indexOf("<DocumentTypeFilterDropdown"));
-    expect(ro.document.searchPlaceholder).toBe("caută după cod, titlu sau nr. document");
-    expect(en.document.searchPlaceholder).toBe("search by code, title, or document no.");
+    // #39.85: the shared box — was `'type="search"'`.
+    expect(toolbar.indexOf("<ListSearchBox")).toBeGreaterThan(-1);
+    expect(toolbar.indexOf("<ListSearchBox")).toBeLessThan(toolbar.indexOf("<DocumentTypeFilterDropdown"));
+    expect(ro.document.searchPlaceholder).toBe("caută după Cod, Titlu sau Nr. document");
+    expect(en.document.searchPlaceholder).toBe("search by Code, Title or Document No.");
   });
 
   it("explains „Câmp specific” in a bubble that describes its field select", () => {

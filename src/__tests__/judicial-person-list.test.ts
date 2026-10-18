@@ -29,7 +29,7 @@ describe("the Judicial Persons list has no „Grupuri” filter (Slice #37.71)",
 
   it("the toolbar starts with the search box, then „Câmpuri afișate”", () => {
     const toolbar = VIEW.slice(VIEW.indexOf("{/* Toolbar */}"));
-    const search = toolbar.indexOf('type="search"');
+    const search = toolbar.indexOf("<ListSearchBox"); // #39.85: the shared box — was `'type="search"'`
     const chooser = toolbar.indexOf("<FieldChooser");
     expect(search).toBeGreaterThan(-1);
     expect(chooser).toBeGreaterThan(search);

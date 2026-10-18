@@ -58,7 +58,7 @@ test.describe("TC-DOC-26 — „Șterge” pe un act abia creat", () => {
       // Step 4 — „Da": the list, without the act.
       await yes.click();
       await expect(page).toHaveURL(/\/documents$/, { timeout: 30_000 });
-      const search = page.getByRole("searchbox", { name: "caută după cod, titlu sau nr. document" });
+      const search = page.getByRole("searchbox", { name: "caută după Cod, Titlu sau Nr. document" });
       await search.fill(MARK);
       await expect(page.locator("main table tbody tr").filter({ hasText: MARK })).toHaveCount(0);
       expect(await countByMark(page)).toBe(0);

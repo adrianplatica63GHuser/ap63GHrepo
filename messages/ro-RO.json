@@ -236,7 +236,7 @@
       "typeTarlaHidden": "Tarla/Solă și Parcelă nu apar în „{cadastral}”."
     },
     "listTitle": "Proprietăți",
-    "searchPlaceholder": "caută după cod, poreclă, nr. cadastru, carte funciară, tarla sau parcelă",
+    "searchPlaceholder": "caută după Cod, Poreclă, Nr. cadastru, Nr. CF, Tarla/Solă sau Parcelă",
     "chooseFields": "Câmpuri afișate",
     "chooseFieldsHint": "Selectați până la {max} coloane opționale",
     "wholeMap": "Hartă completă",
@@ -1108,7 +1108,7 @@
   "naturalPerson": {
     "listTitle": "Persoană fizică",
     "createTitle": "Persoană fizică nouă",
-    "searchPlaceholder": "caută după cod, nume, email sau telefon",
+    "searchPlaceholder": "caută după ID, Nume, Poreclă, Email Personal 1, Email Personal 2, Email serviciu, Telefon Personal 1, Telefon Personal 2 sau Telefon serviciu",
     "chooseFields": "Câmpuri afișate",
     "chooseFieldsHint": "Selectați până la {max} coloane opționale",
     "filters": {
@@ -1274,7 +1274,7 @@
   "judicialPerson": {
     "listTitle": "Persoană juridică",
     "createTitle": "Persoană juridică nouă",
-    "searchPlaceholder": "caută după cod, nume, poreclă sau ID",
+    "searchPlaceholder": "caută după ID, Denumire, Poreclă, Nr. înregistrare (CUI), Telefon firmă sau E-mail firmă",
     "addNew": "Adaugă persoană juridică",
     "open": "Deschide",
     "loading": "Se încarcă…",
@@ -1677,7 +1677,7 @@
   "document": {
     "listTitle": "Acte",
     "createTitle": "Act nou",
-    "searchPlaceholder": "caută după cod, titlu sau nr. document",
+    "searchPlaceholder": "caută după Cod, Titlu sau Nr. document",
     "chooseFields": "Câmpuri afișate",
     "chooseFieldsHint": "Selectați până la {max} coloane opționale",
     "addNew": "Adaugă act",

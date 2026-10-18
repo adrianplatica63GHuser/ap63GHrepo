@@ -35,7 +35,7 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „Proprietăți" | The search box („caută după cod, poreclă, nr. cadastru, carte funciară, tarla sau parcelă") and „Câmpuri afișate 1/4" — the choice set aside, the list's default, Tip proprietate (#37.94, #38.02); no `<select>` on the list — „+ Filtru" is gone since #39.82, a filter opens from its column's funnel; no „Importanță" or „Relevanță" anywhere on the list |
+| 1 | Opens „Proprietăți" | The search box („caută după Cod, Poreclă, Nr. cadastru, Nr. CF, Tarla/Solă sau Parcelă") and „Câmpuri afișate 1/4" — the choice set aside, the list's default, Tip proprietate (#37.94, #38.02); no `<select>` on the list — „+ Filtru" is gone since #39.82, a filter opens from its column's funnel; no „Importanță" or „Relevanță" anywhere on the list |
 | 2 | Types `TC-PROP-06` into the search | One row, `TC-PROP-06 Teren de test`; the first header after the tick box is „PORECLĂ", then „TIP PROPRIETATE" — no „Cod" — and no system ID in the table |
 | 3 | Presses „Câmpuri afișate" | Tarla/Solă, Parcelă, Oficială (m²), Calculată (m²), Nr. CF, Nr. cadastru, Categorie de folosință, Tip proprietate, Localitate — and no Poreclă, Note, Importanță, Relevanță or Proveniență |
 | 4 | Unticks every ticked field | „Câmpuri afișate 0/4"; between the tick box and the buttons one header, „PORECLĂ", and the row still reads `TC-PROP-06 Teren de test` |
@@ -115,3 +115,7 @@ the case is unchanged. The bar's fields are TC-PROP-14's, not this case's.
 
 **2026-10-18 — `automated` (Slice #39.82).** The test runner's targeted run 20261018T160353Z-12564 on 9916957 ran `e2e/property/property-list.spec.ts` green
 with the rewritten steps (lint, tsc and the slice's jest suites green too).
+
+**2026-10-18 — the search box's words updated for #39.85.** The box's explanation now names its fields as
+„Câmpuri afișate", the column headers or the form spell them; the box is as wide as „Adaugă …" and shows the whole
+explanation on hover. Only the quoted words changed in this file.

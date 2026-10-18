@@ -20,11 +20,12 @@ import { IncursionButton, LinksButton } from "@/components/tiles/incursion-butto
 import { IncursionTile } from "@/app/_components/incursion-tile";
 import { useListAddress, useListScrollMemory, useWriteListAddress } from "@/components/list/use-list-address";
 import { FieldChooser, useFieldChooser, type ChooserField } from "@/components/list/field-chooser";
+import { LIST_ADD, ListSearchBox } from "@/components/list/list-search";
 import { LIST_COLUMN_CHOICE } from "@/lib/ui/list-columns";
 import { FilterBar, FilterFunnel, type FilterBarField } from "@/components/list/filter-bar";
 import { appendFilterParams, filterAddressPatch, filterSignature, type FacetValue, type FilterState } from "@/lib/list/filter-bar";
 import { JUDICIAL_PERSON_COLUMN_FILTERS, JUDICIAL_PERSON_FILTER_FIELDS, parsePersonFilters, personFilterKeys } from "@/lib/persons/list-filters";
-import { screenBox, type ColumnName } from "@/lib/ui/field-widths";
+import type { ColumnName } from "@/lib/ui/field-widths";
 
 const PAGE_SIZE = 15;
 /** Slice #37.16: the list's columns, each a fixed width from `COLUMN` — the optional ones (#37.60) between the nickname and the buttons. */
@@ -293,15 +294,8 @@ export function JudicialPersonListView() {
     >
       {/* Toolbar */}
       <div className={`flex flex-wrap items-center gap-3 ${LIST_TOOLBAR}`} {...edge.toolbar}>
-        <input
-          type="search"
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          placeholder={t("searchPlaceholder")}
-          aria-label={t("searchPlaceholder")}
-          {...screenBox("listSearch")}
-          className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm placeholder:text-fade focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:placeholder:text-zinc-500"
-        />
+        {/* Slice #39.85: as wide as „Adaugă …", its whole explanation on hover. */}
+        <ListSearchBox value={searchInput} onChange={setSearchInput} explanation={t("searchPlaceholder")} />
         <FieldChooser
           label={t("chooseFields")}
           hint={t("chooseFieldsHint", { max: MAX_OPT })}
@@ -322,14 +316,17 @@ export function JudicialPersonListView() {
             />
           )}
           <HelpHint hintKey="select-all-page-only" />
-          <IconButton
-            href="/judicial-persons/new"
-            icon={Plus}
-            label={t("addNew")}
-            showLabel
-            variant="primary"
-            size="lg"
-          />
+          {/* Slice #39.85: measured, so the search box can take its width. */}
+          <span className="inline-flex" {...LIST_ADD}>
+            <IconButton
+              href="/judicial-persons/new"
+              icon={Plus}
+              label={t("addNew")}
+              showLabel
+              variant="primary"
+              size="lg"
+            />
+          </span>
         </div>
       </div>
 

@@ -36,7 +36,7 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „Persoane Fizice" | A search box („caută după cod, nume, email sau telefon"), no „Importanță" or „Relevanță" filter, „Câmpuri afișate 0/4", and no `<select>` — „+ Filtru" is gone since #39.82, a filter opens from its column's funnel |
+| 1 | Opens „Persoane Fizice" | A search box („caută după ID, Nume, Poreclă, Email Personal 1, Email Personal 2, Email serviciu, Telefon Personal 1, Telefon Personal 2 sau Telefon serviciu"), no „Importanță" or „Relevanță" filter, „Câmpuri afișate 0/4", and no `<select>` — „+ Filtru" is gone since #39.82, a filter opens from its column's funnel |
 | 2 | Presses „Câmpuri afișate" | CNP, Data nașterii, Vârstă, Gen, Data decesului, Locul nașterii, Tip profesional, Relația cu firma — in that order |
 | 3 | Ticks CNP and Data nașterii, presses outside, types `TC-PERS-04` into the search | „Câmpuri afișate 2/4"; the table headed NUME · PORECLĂ · CNP · DATA NAȘTERII; one row: `Ion TC-PERS-04`, „Ionel TC", `1800101420045`, `01.01.1980` |
 | 4 | Presses „Previzualizare" on the row | A tile headed `TC-PERS-04 Ion` (Nume Prenume), then two lines: „Ionel TC, 1800101420045" and „născut: 01.01.1980, Localitatea Exemplu"; no system ID, no Nume or Prenume under the heading |
@@ -105,3 +105,7 @@ rest of the case is unchanged.
 
 **2026-10-18 — `automated` (Slice #39.82).** The test runner's targeted run 20261018T160701Z-15737 on a47c980 ran `e2e/person/person-lists.spec.ts` green
 with the rewritten steps (lint, tsc and the slice's jest suites green too).
+
+**2026-10-18 — the search box's words updated for #39.85.** The box's explanation now names its fields as
+„Câmpuri afișate", the column headers or the form spell them; the box is as wide as „Adaugă …" and shows the whole
+explanation on hover. Only the quoted words changed in this file.

@@ -39,7 +39,7 @@ record; the form does not require one for a save.
 | 4 | Types `Ion` into „Prenume" | The value appears |
 | 5 | Scrolls to the bottom and presses „Salvează" | **The screen returns to the list**, not to the new person |
 | 6 | Looks at the top of the list | A row badged **„Nou!"**, with no system ID, whose „NUME" reads **`Ion TC-PERS-01`** — prenume first — and whose „PORECLĂ" is „—" |
-| 7 | Types `TC-PERS` into the list's search box (placeholder „caută după cod, nume, email sau telefon") | The row is still there — the search matches on the name |
+| 7 | Types `TC-PERS` into the list's search box (placeholder „caută după ID, Nume, Poreclă, Email Personal 1, Email Personal 2, Email serviciu, Telefon Personal 1, Telefon Personal 2 sau Telefon serviciu") | The row is still there — the search matches on the name |
 
 ## At the end — leaving things as they were found
 
@@ -106,3 +106,7 @@ screen shows — the second section renders „CARTE DE IDENTITATE". Step 2 now 
 screen.
 
 **2026-10-02 — Slice #37.57 (the system ID in one place).** The record's code (PPERS/JPERS/PROP/DOC…) now stands only in the corner of its first panel (TC-SYSID-01); the lists, the pickers, the association tables, Căutare globală and the relation chips no longer show it — a related record is named by its name or title. The steps above that read a code or a „Cod" column were rewritten to match, the search boxes' placeholders („Cod…", „caută după cod…") unchanged — they still search by code. The spec follows, green in the runner's full `20261002T222558Z-906`.
+
+**2026-10-18 — the search box's words updated for #39.85.** The box's explanation now names its fields as
+„Câmpuri afișate", the column headers or the form spell them; the box is as wide as „Adaugă …" and shows the whole
+explanation on hover. Only the quoted words changed in this file.

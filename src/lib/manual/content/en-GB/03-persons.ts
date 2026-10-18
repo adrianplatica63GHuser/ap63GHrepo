@@ -11,7 +11,7 @@ A natural person is a human being: their name, CNP, date of birth, identity docu
 
 In the sidebar, open „Domain”, then „Natural Persons”. The screen is called „Natural Person” and shows a table with the columns „Name” and „Nickname”, 15 rows to a page (section [[start-lists]]). In the „Name” column the first name comes first: a person whose surname is Popescu and whose first name is Ion appears as „Ion Popescu”.
 
-The search box („search by code, name, email, or phone”) keeps in the table only the persons who match what you type; part of the name is enough. Below it, the list's filters narrow what you see by type, role, locality and the other fields (section [[persons-list-filters]]). The list has no „Importance” or „Relevance” filter.
+The search box („search by ID, Name, Nickname, Personal Email 1, Personal Email 2, Work Email, Personal Phone 1, Personal Phone 2 or Work Phone”) keeps in the table only the persons who match what you type; part of the name is enough. Below it, the list's filters narrow what you see by type, role, locality and the other fields (section [[persons-list-filters]]). The list has no „Importance” or „Relevance” filter.
 
 „Choose fields” adds columns to the table, at most four at a time. You can choose them from:
 

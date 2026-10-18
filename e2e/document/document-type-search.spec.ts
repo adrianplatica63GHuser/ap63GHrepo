@@ -29,7 +29,7 @@ test.describe("TC-DOC-21 — căutare în „Tip document”", () => {
       // Step 1 — both documents; the dropdown's search box empty and focused, under „Toate tipurile".
       await page.goto("/documents");
       const main = page.locator("main");
-      await main.getByPlaceholder("caută după cod, titlu sau nr. document").fill(MARK);
+      await main.getByPlaceholder("caută după Cod, Titlu sau Nr. document").fill(MARK);
       await expect(main.getByText(`${MARK} Certificat`)).toBeVisible({ timeout: 30_000 });
       await expect(main.getByText(`${MARK} Contract`)).toBeVisible();
       const typeFilter = main.getByRole("button", { name: /^Tip document:/ });

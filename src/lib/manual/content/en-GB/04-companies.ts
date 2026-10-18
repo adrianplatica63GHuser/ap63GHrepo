@@ -11,7 +11,7 @@ A juridical person is a firm, an institution, a local council or an association 
 
 The list opens from the sidebar: „Domain”, then „Juridical Persons”. The screen is called „Juridical Person” and, like every list (section [[start-lists]]), shows 15 firms a page, with the columns „Name” and „Nickname”.
 
-The search box at the top of the list („search by code, name, nickname, or ID”) finds a firm by its name, by its nickname and by its CUI: type the CUI and the firms that have it remain. When nothing is found, the list says „No juridical persons found”.
+The search box at the top of the list („search by ID, Name, Nickname, Registration No. (CUI), Firm's phone or Firm's e-mail”) finds a firm by its name, by its nickname and by its CUI: type the CUI and the firms that have it remain. When nothing is found, the list says „No juridical persons found”.
 
 „Choose fields” adds columns to the list. On the list of firms you can choose four:
 

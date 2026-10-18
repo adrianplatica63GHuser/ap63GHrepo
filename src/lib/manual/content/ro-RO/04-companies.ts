@@ -11,7 +11,7 @@ O persoană juridică este o firmă, o instituție, un consiliu local sau o asoc
 
 Lista se deschide din bara laterală: „Domeniu”, apoi „Persoane Juridice”. Ecranul se numește „Persoană juridică” și arată, ca orice listă (secțiunea [[start-lists]]), câte 15 firme pe pagină, cu coloanele „Denumire” și „Poreclă”.
 
-Caseta de căutare din capul listei („caută după cod, nume, poreclă sau ID”) găsește o firmă după denumire, după poreclă și după CUI: scrieți CUI-ul și rămân firmele care îl au. Când nu se găsește nimic, lista spune „Nu există persoane juridice”.
+Caseta de căutare din capul listei („caută după ID, Denumire, Poreclă, Nr. înregistrare (CUI), Telefon firmă sau E-mail firmă”) găsește o firmă după denumire, după poreclă și după CUI: scrieți CUI-ul și rămân firmele care îl au. Când nu se găsește nimic, lista spune „Nu există persoane juridice”.
 
 „Câmpuri afișate” adaugă coloane listei. Pe lista firmelor puteți alege patru:
 

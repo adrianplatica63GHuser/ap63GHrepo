@@ -51,7 +51,7 @@ test.describe("TC-PROP-06 — lista proprietăților", () => {
       // Step 1 — the search box and „Câmpuri afișate"; no „Importanță" or „Relevanță".
       await page.goto("/properties");
       const main = page.locator("main");
-      const search = main.getByPlaceholder("caută după cod, poreclă, nr. cadastru, carte funciară, tarla sau parcelă");
+      const search = main.getByPlaceholder("caută după Cod, Poreclă, Nr. cadastru, Nr. CF, Tarla/Solă sau Parcelă");
       await expect(search).toBeVisible({ timeout: 30_000 });
       // #38.02: nothing stored in this browser, so the list's default — Tip proprietate.
       await expect(main.getByRole("button", { name: "Câmpuri afișate 1/4", exact: true })).toBeVisible();

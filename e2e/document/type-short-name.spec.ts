@@ -37,7 +37,7 @@ async function typeOf(page: Page, key: string): Promise<DocType> {
 async function tipOf(page: Page, title: string): Promise<[string, string | null]> {
   await page.goto("/documents");
   const main = page.locator("main");
-  const search = main.getByRole("searchbox", { name: "caută după cod, titlu sau nr. document" });
+  const search = main.getByRole("searchbox", { name: "caută după Cod, Titlu sau Nr. document" });
   await expect(search).toBeVisible({ timeout: 30_000 });
   await search.fill(MARK);
   await expect(main.locator("tbody tr").filter({ hasText: MARK })).toHaveCount(2, { timeout: 30_000 });
