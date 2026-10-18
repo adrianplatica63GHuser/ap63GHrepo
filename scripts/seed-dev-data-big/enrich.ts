@@ -357,18 +357,18 @@ export function naturalExtras(r: Rng, plan: FamilyPlan, details: NaturalDetails[
 // A company's other addresses, and its type under the names migration_115 gave the offices
 // ---------------------------------------------------------------------------
 
-export type JudicialExtra = { sameAsHq: boolean; correspondence: Address | null; postal: Address | null; hqNotes: string | null };
+/** A company's addresses are its headquarters and, where it differs, its correspondence address — no post box. */
+export type JudicialExtra = { sameAsHq: boolean; correspondence: Address | null; hqNotes: string | null };
 
 export function judicialExtras(r: Rng, companies: CompanyPlan[]): Map<string, JudicialExtra> {
   const out = new Map<string, JudicialExtra>();
   for (const c of companies) {
-    const x: JudicialExtra = { sameAsHq: true, correspondence: null, postal: null, hqNotes: null };
+    const x: JudicialExtra = { sameAsHq: true, correspondence: null, hqNotes: null };
     if (r.chance(0.12)) {
       const loc = r.chance(0.6) ? LOCALITIES[6] : LOCALITIES[0];
       x.sameAsHq = false;
       x.correspondence = { streetLine: `${r.pick(loc.streets)} nr. ${r.int(1, 200)}, ${r.pick(["et. 2", "birou 5", "ap. 3", "parter"])}`, locality: loc.locality, county: loc.county, postalCode: loc.postalCode };
     }
-    if (r.chance(0.04)) x.postal = { streetLine: `C.P. ${r.int(1, 99)}, Oficiul Poștal ${c.hq.locality}`, locality: c.hq.locality, county: c.hq.county, postalCode: c.hq.postalCode };
     if (r.chance(0.05)) x.hqNotes = r.pick(["Sediu social; activitatea se desfășoară la punctul de lucru.", "Intrarea din curtea interioară.", "Sediul se află în incinta fermei."]);
     out.set(c.key, x);
   }

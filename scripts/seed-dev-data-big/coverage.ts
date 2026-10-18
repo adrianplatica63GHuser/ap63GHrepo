@@ -271,7 +271,7 @@ export type EnrichFacts = {
     withPhone: number; phone2: number; working: number; workPhone: number; workEmail: number; withEmail: number; email2: number;
     idCards: number; withMrz: number; cardNumber: number; passports: number; correspondence: number; postal: number; sameAsHome: number; addressNotes: number;
   };
-  judicial: { total: number; correspondence: number; postal: number };
+  judicial: { total: number; correspondence: number };
   /** properties with an address, and those whose address carries the Street View line */
   streetView: { addressed: number; withLine: number };
   documents: {
@@ -308,7 +308,7 @@ export function enrichLines(f: EnrichFacts): CoverageLine[] {
     atLeast("Cărți de identitate cu numărul cardului", n.cardNumber, 10),
     atLeast("Pașapoarte (copii)", n.passports, 3),
     atLeast("Adrese de corespondență", n.correspondence, 10),
-    atLeast("Adrese poștale", n.postal + f.judicial.postal, 5),
+    atLeast("Adrese poștale", n.postal, 5),
     atLeast("„Corespondență la domiciliu”", n.sameAsHome, 100),
     atLeast("Adrese cu note", n.addressNotes, 10),
     atLeast("Firme cu adresă de corespondență", f.judicial.correspondence, 20),

@@ -27,8 +27,9 @@
  *
  * REFERENCE DATA, ADDITIVE ONLY: person roles for ties the list lacks („Fost soț", „Fostă soție", „Frate vitreg",
  * „Soră vitregă", „Părinte vitreg", „Părinte adoptiv", „Bunic", „Bunică"), each with its kinship (migration_106) and its
- * converse; a missing kinship filled in, „valid for person" switched on; the person types „Notar" and „Expert"
- * and any company type that is missing; the property type „Teren intravilan" (#39.66; „Teren pentru Construcții",
+ * converse; a missing kinship filled in, „valid for person" switched on; migration_114's thirteen professions and
+ * seven „Relația cu firma" values (#39.81; „Notar" and „Expert" until then), and any company or public-body type that
+ * is missing; the property type „Teren intravilan" (#39.66; „Teren pentru Construcții",
  * its panels read from „Teren Construit" and „Teren Arabil", until then) and the use category „Curți
  * construcții" where they are missing, and any other type or category the mix uses; „valid for property" on
  * „Proprietar" and „Coproprietar"; every role a document type of the mix needs and its „Roluri pe Document"
@@ -645,7 +646,7 @@ async function createJudicialPersons(companies: CompanyPlan[], extras: Map<strin
   for (const c of companies) {
     const reps = c.representatives.map((k) => obj(k).id);
     const x = extras.get(c.key)!;
-    const where = (kind: "HEADQUARTERS" | "CORRESPONDENCE" | "POSTAL", a: { streetLine: string; postalCode: string; locality: string; county: string }, notes: string | null = null) =>
+    const where = (kind: "HEADQUARTERS" | "CORRESPONDENCE", a: { streetLine: string; postalCode: string; locality: string; county: string }, notes: string | null = null) =>
       ({ kind, streetLine: a.streetLine, postalCode: a.postalCode, locality: a.locality, county: a.county, country: "România", notes });
     const input = judicialPersonCreateSchema.parse({
       name: c.name,
@@ -663,7 +664,6 @@ async function createJudicialPersons(companies: CompanyPlan[], extras: Map<strin
       addresses: [
         where("HEADQUARTERS", c.hq, x.hqNotes),
         ...(x.correspondence ? [where("CORRESPONDENCE", x.correspondence)] : []),
-        ...(x.postal ? [where("POSTAL", x.postal)] : []),
       ],
     });
     const full = await createJudicialPerson(input, BY);
@@ -1393,7 +1393,7 @@ async function enrichCoverage(p: Plans): Promise<CoverageLine[]> {
       passports: num(n, "passports"), correspondence: num(na, "corr"), postal: num(na, "postal"), sameAsHome: num(n, "same_home"),
       addressNotes: num(na, "notes") + num(ja, "notes"),
     },
-    judicial: { total: jur.length, correspondence: num(ja, "corr"), postal: num(ja, "postal") },
+    judicial: { total: jur.length, correspondence: num(ja, "corr") },
     streetView: { addressed: num(sv, "addressed"), withLine: num(sv, "line") },
     documents: {
       issuerPlanned: dx.filter((e) => e.issuer).length, issuer: num(d, "issuer"), issuerRead: num(d, "issuer_read"),
