@@ -21,7 +21,7 @@
 #            targeted is what a slice runs; full is the whole regression — every two weeks, started
 #            by the runner itself when idle (auto-<time>-full), or when a header says „Regression: full"
 #            push (main, fast-forward, on a green targeted or full) · ci (read Actions for HEAD)
-#            migrate-local (Apply-Migration + Export-SupabaseSchema, confirmed migrations only)
+#            migrate-local (backup, Apply-Migration + Export-SupabaseSchema, committed migrations only)
 #            reconcile <folder> (what became of every file of that folder after an import; read-only)
 #            ai-score <corpus> <readCap> (paid: the app's own extraction over a labelled corpus, scored)
 #            ai-rescore <corpus> (free: the saved answers of every earlier run, scored again)

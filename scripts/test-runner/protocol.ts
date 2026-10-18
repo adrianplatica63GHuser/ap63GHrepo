@@ -36,8 +36,8 @@
  *   ci             reads the GitHub Actions runs for HEAD, read-only, and saves
  *                  the log of every failed job (`ciVerdict`).
  *   migrate-local  Apply-Migration.ps1, then Export-SupabaseSchema.ps1, and only
- *                  for migrations whose adding commit records Adrian's
- *                  confirmation (`decideMigrateLocal`).
+ *                  for migrations that are committed and unchanged since
+ *                  (`decideMigrateLocal`).
  *
  * Slice #36.22 added `reconcile`, the one sequence that takes an argument: a
  * `folder` NAME, which must be one of the folders the runner itself found
@@ -891,8 +891,7 @@ export type GuardCode =
   | "not-fast-forward"
   | "migration-in-range"
   | "migration-dirty"
-  | "migration-uncommitted"
-  | "migration-unconfirmed";
+  | "migration-uncommitted";
 
 export type GuardDecision<T> = ({ ok: true } & T) | { ok: false; code: GuardCode; message: string };
 
@@ -1252,19 +1251,12 @@ export function firstFailedStep(job: CiJob): string | null {
 // ---- migrate-local: Apply-Migration.ps1 and Export-SupabaseSchema.ps1 ----------------
 
 /**
- * ⚠️ **THE CONFIRMATION IS RECORDED IN GIT, AND THE RUNNER READS IT THERE.**
- * `C:\dev\CLAUDE.md` → The working contract: a migration is committed only
- * after Adrian confirms it, and the commit that adds it carries a trailer
- * quoting him:
- *
- *     Schema-Confirmed: Adrian, 2026-09-25 — „yes, go with the nullable column"
- *
- * So „a recorded confirmation" is a fact the runner can check without trusting
- * anybody's word, and it stays in the history beside the file it confirms.
+ * Until 2026-10-17 this guard also held any pending migration whose adding
+ * commit lacked a `Schema-Confirmed:` trailer quoting Adrian. He dropped the
+ * confirmation (`C:\dev\CLAUDE.md` → The working contract): every one was
+ * „yes, as written", so the trailer recorded trust, not review. What is left is
+ * the part that protects the database — only what is committed is applied.
  */
-export const SCHEMA_CONFIRMED_TRAILER = "Schema-Confirmed";
-export const SCHEMA_CONFIRMED_RE = /^Schema-Confirmed:[ \t]*\S.*$/m;
-
 export interface MigrateObservation {
   /** Migration file names in `src/db` that the local `schema_migrations` does not record. */
   pending: readonly string[];
@@ -1275,19 +1267,19 @@ export interface MigrateObservation {
 }
 
 /**
- * ⚠️ **ONLY WHAT IS COMMITTED AND CONFIRMED REACHES THE DATABASE.**
+ * ⚠️ **ONLY WHAT IS COMMITTED REACHES THE DATABASE.**
  * `Apply-Migration.ps1` applies every file in `src\db` that the database has not
- * recorded — including one that exists only in the working tree. Under Propus.3
- * the working tree is exactly where an UNCONFIRMED migration lives while Claude
- * builds on it, so the runner refuses the whole run while any migration file is
- * uncommitted or changed, and while any pending one lacks the trailer.
+ * recorded — including one that exists only in the working tree, half-written or
+ * waiting for a go-ahead (a destructive one does). So the runner refuses the
+ * whole run while any migration file is uncommitted or changed, and while any
+ * pending one was added by no commit in HEAD's history.
  */
 export function decideMigrateLocal(o: MigrateObservation): GuardDecision<{ apply: string[] }> {
   if (o.dirtyMigrations.length > 0) {
     return {
       ok: false,
       code: "migration-dirty",
-      message: `Migration files differ from HEAD (${o.dirtyMigrations.join(" · ")}). Apply-Migration.ps1 would apply the working tree, and an unconfirmed migration lives there. Commit it with its ${SCHEMA_CONFIRMED_TRAILER} trailer once Adrian confirms.`,
+      message: `Migration files differ from HEAD (${o.dirtyMigrations.join(" · ")}). Apply-Migration.ps1 would apply the working tree, and only what is committed may reach the database. Commit it first.`,
     };
   }
   const pending = [...o.pending].sort();
@@ -1298,14 +1290,6 @@ export function decideMigrateLocal(o: MigrateObservation): GuardDecision<{ apply
       ok: false,
       code: "migration-uncommitted",
       message: `No commit in HEAD's history adds ${notInHistory.join(", ")}.`,
-    };
-  }
-  const unconfirmed = pending.filter((f) => !SCHEMA_CONFIRMED_RE.test(o.addingCommitMessage[f] ?? ""));
-  if (unconfirmed.length > 0) {
-    return {
-      ok: false,
-      code: "migration-unconfirmed",
-      message: `The commit that adds ${unconfirmed.join(", ")} carries no ${SCHEMA_CONFIRMED_TRAILER}: trailer, so Adrian's confirmation is not recorded.`,
     };
   }
   return { ok: true, apply: pending };

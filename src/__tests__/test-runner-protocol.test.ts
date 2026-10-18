@@ -30,7 +30,6 @@ import {
   DATA_ROOT_SEGMENTS,
   DEPENDENT_STEPS,
   FOLDER_SEQUENCES,
-  SCHEMA_CONFIRMED_TRAILER,
   MAX_ONLY_ENTRIES,
   MAX_READ_CAP,
   MAX_REQUEST_BYTES,
@@ -542,7 +541,7 @@ const migrateObs = (over: Partial<MigrateObservation> = {}): MigrateObservation 
   pending: ["migration_087_x.sql"],
   dirtyMigrations: [],
   addingCommitMessage: {
-    "migration_087_x.sql": `feat(db): x\n\nBody.\n\n${SCHEMA_CONFIRMED_TRAILER}: Adrian, 2026-09-25 — „yes"\n`,
+    "migration_087_x.sql": "feat(db): x\n\nBody.\n",
   },
   ...over,
 });
@@ -728,9 +727,18 @@ describe("the whole regression, every two weeks — Adrian, 2026-10-12 (Slice #3
   });
 });
 
-describe("the migrate-local guard — only a committed, confirmed migration reaches the database", () => {
-  it("applies a committed migration whose adding commit carries the trailer", () => {
+describe("the migrate-local guard — only a committed migration reaches the database", () => {
+  it("applies a committed migration", () => {
     expect(decideMigrateLocal(migrateObs())).toEqual({ ok: true, apply: ["migration_087_x.sql"] });
+  });
+  // 2026-10-17: Adrian dropped the schema confirmation, so the trailer no longer
+  // gates anything. These three used to be held as `migration-unconfirmed`.
+  it.each([
+    ["a commit with no trailer", "feat(db): x\n\nAdrian said yes.\n"],
+    ["a commit with an old Schema-Confirmed trailer", "feat(db): x\n\nSchema-Confirmed: Adrian, 2026-09-25 — „yes”\n"],
+    ["a subject line only", "feat(db): x\n"],
+  ])("%s → applied", (_label, message) => {
+    expect(migrateOutcome(migrateObs({ addingCommitMessage: { "migration_087_x.sql": message } }))).toBe("apply");
   });
   it("nothing pending is a pass with nothing to apply", () => {
     expect(migrateOutcome(migrateObs({ pending: [] }))).toBe("nothing-pending");
@@ -740,9 +748,6 @@ describe("the migrate-local guard — only a committed, confirmed migration reac
     ["an untracked migration in the working tree", { dirtyMigrations: ["?? src/db/migration_088_y.sql"] }, "migration-dirty", null],
     ["an edited, committed migration", { dirtyMigrations: [" M src/db/migration_087_x.sql"] }, "migration-dirty", null],
     ["a pending file no commit added", { addingCommitMessage: { "migration_087_x.sql": null } }, "migration-uncommitted", null],
-    ["a commit with no trailer", { addingCommitMessage: { "migration_087_x.sql": "feat(db): x\n\nAdrian said yes.\n" } }, "migration-unconfirmed", null],
-    ["an empty trailer", { addingCommitMessage: { "migration_087_x.sql": `feat(db): x\n\n${SCHEMA_CONFIRMED_TRAILER}:\n` } }, "migration-unconfirmed", null],
-    ["the trailer quoted mid-line, not as a trailer", { addingCommitMessage: { "migration_087_x.sql": `feat(db): x — no ${SCHEMA_CONFIRMED_TRAILER}: yet\n` } }, "migration-unconfirmed", null],
   ];
   it.each(cases)("%s → held", (_label, over, code, _pad) => {
     expect(migrateOutcome(migrateObs(over))).toBe(code);
@@ -752,12 +757,12 @@ describe("the migrate-local guard — only a committed, confirmed migration reac
     expect(migrateOutcome(migrateObs({ pending: [], dirtyMigrations: ["?? src/db/migration_088_y.sql"] }))).toBe("migration-dirty");
   });
 
-  it("one unconfirmed file holds all of them", () => {
+  it("one uncommitted file holds all of them", () => {
     const o = migrateObs({
       pending: ["migration_087_x.sql", "migration_088_y.sql"],
-      addingCommitMessage: { ...migrateObs().addingCommitMessage, "migration_088_y.sql": "feat(db): y\n" },
+      addingCommitMessage: { ...migrateObs().addingCommitMessage, "migration_088_y.sql": null },
     });
-    expect(migrateOutcome(o)).toBe("migration-unconfirmed");
+    expect(migrateOutcome(o)).toBe("migration-uncommitted");
   });
 
   it("export-schema runs only after the step before it passed", () => {
@@ -774,7 +779,7 @@ describe("every GuardCode is reached by a case above", () => {
     const union = /export type GuardCode =([\s\S]*?);/.exec(src)?.[1] ?? "";
     const declared = [...union.matchAll(/"([a-z-]+)"/g)].map((m) => m[1]).sort();
     const pushCodes: GuardCode[] = ["not-on-main", "no-green-run", "green-run-dirty", "remote-unknown", "not-fast-forward", "migration-in-range"];
-    const migrateCodes: GuardCode[] = ["migration-dirty", "migration-uncommitted", "migration-unconfirmed"];
+    const migrateCodes: GuardCode[] = ["migration-dirty", "migration-uncommitted"];
     expect([...pushCodes, ...migrateCodes].sort()).toEqual(declared);
   });
 });
