@@ -6,7 +6,7 @@
 | **Kind** | happy |
 | **Data** | — |
 | **State** | `automated` |
-| **Last green** | 2026-10-17 |
+| **Last green** | 2026-10-18 |
 
 ## What this proves
 
@@ -82,3 +82,6 @@ the slice touched (lint and tsc green too).
 Folosințe” now, title case as its neighbours, and the three panels are tiles. Read in the browser pane on
 localhost:3000 at 1920 × 1080: „Tipuri de Proprietate” 804 px (5 units) at x 520, „Categorii Folosință” 476 px
 (3 units) at x 1340, both at y 95; the grid 804 px; the gaps either side of each list 50/50, 22/22 and 52/51 px.
+
+**2026-10-18 — `automated` with step 9, green on the runner (Slice #39.75).** `targeted` 20261018T052409Z-3577 on
+a6040c9.
