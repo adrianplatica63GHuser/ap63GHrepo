@@ -12,17 +12,17 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-10-18 — 350 entries (FU-048 resolved, FU-049 re-raised, FU-349 and FU-350 filed, in #39.73). Rows are status, columns are impact.
+As of 2026-10-18 — 352 entries (FU-351 and FU-352 filed, in #39.82). Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
-| open | 18 | 80 | 76 | 23 | 197 |
-| planned | 0 | 0 | 1 | 0 | 1 |
+| open | 18 | 80 | 77 | 23 | 198 |
+| planned | 0 | 0 | 2 | 0 | 2 |
 | resolved | 38 | 60 | 31 | 3 | 132 |
 | ignored | 4 | 3 | 4 | 2 | 13 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 6 | 1 | 0 | 7 |
-| **total** | 60 | 149 | 113 | 28 | 350 |
+| **total** | 60 | 149 | 115 | 28 | 352 |
 <!-- summary:end -->
 
 `src/__tests__/follow-up-register.test.ts` recounts the table and fails when this block disagrees
@@ -434,3 +434,5 @@ Nothing is filed from memory: every row carries evidence someone actually looked
 | FU-348 | 2026-10-17 #39.72 7bbe4df | test gap | Import | No e2e case drives the AI's issuer proposal on a document — „Folosește «…»” for a matched juridical person, „Adaugă «…» ca persoană juridică” for a new one, and the link to fill it from ANAF. | src/app/documents/_components/issuer-field.tsx — IssuerProposal; covered only by src/__tests__/document-issuer.test.ts (the pure rules and the files) | user | S | open | Needs a document with `issuer_read` set: an imported one, or a PATCH in the spec's own setup. | 2026-10-17 |
 | FU-349 | 2026-10-18 #39.73 TC-MAP-07 | defect | Map | Unverified: once, the first press of „Selectează” after the big map loaded did not turn the mode on (the second did), with the browser pane hidden; not seen in the other run or reproduced. | docs/testing/cases/TC-MAP-07.md — Notes from the runs, run 2 | user | XS | open | Unverified: watch for it in TC-MAP-07's first runner run in November. | 2026-10-18 |
 | FU-350 | 2026-10-18 #39.73 a3e1aecd | recommendation | Properties | The Properties list's first column is still sized for a tick box and #39.24's 30 % gap, but has no box since its delete went; on most rows it is an empty strip before „Poreclă”. | src/app/properties/list-view.tsx — `listBadges` column, badges only; src/lib/ui/field-widths.ts listBadges | cosmetic | XS | open | Narrow `listBadges` on this list to the badges, or let Adrian say the strip stays. | 2026-10-18 |
+| FU-351 | 2026-10-18 #39.82 99169576 | debt | UI shell | No list uses the „choice" filter kind since #39.82 retired „Decedat": `ChoiceEditor` in the filter bar and the `choice` branch of the filter library are dead code, kept only because `filter-bar.test.ts` covers them. | src/components/list/filter-bar.tsx — ChoiceEditor; src/lib/list/filter-bar.ts — `choice` in readFilterState/encodeFilter | dev | XS | open | Drop the kind, its editor and its tests, or keep it for the next yes / no column. | 2026-10-18 |
+| FU-352 | 2026-10-18 #39.82 99169576 | copy/i18n | i18n | Message keys only the retired filters read are left in both languages because the manual quotes them: shared.filterBar.add/addOption („+ Filtru”), naturalPerson.filters.documentRole/locality/alive/deceased/all, judicialPerson.filters.documentRole/locality. | messages/ro-RO.json — shared.filterBar, naturalPerson.filters, judicialPerson.filters; src/lib/manual/content/ro-RO/03-persons.ts:48 | dev | XS | planned | 39.86 rewrites the manual's list sections and removes them with it. | 2026-10-18 |

@@ -6,7 +6,7 @@
 | **Kind** | happy |
 | **Data** | — |
 | **State** | `automated` |
-| **Last green** | 2026-10-17 |
+| **Last green** | 2026-10-18 |
 
 ## What this proves
 
@@ -69,3 +69,6 @@ specific:" the filter bar's first, fixed chips; this case names no place for the
 
 **2026-10-18 — step 4 rewritten for #39.82.** „+ Filtru" is gone: „Data" is filtered from the funnel under its column,
 which opens the filter right under itself. Not yet driven by hand: the spec, rewritten with it, is what checks it.
+
+**2026-10-18 — `automated` (Slice #39.82).** The test runner's targeted run 20261018T160353Z-12564 on 9916957 ran `e2e/document/document-list-filters.spec.ts` green
+with the rewritten steps (lint, tsc and the slice's jest suites green too).

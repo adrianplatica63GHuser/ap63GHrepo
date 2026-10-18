@@ -6,7 +6,7 @@
 | **Kind** | happy |
 | **Data** | — |
 | **State** | `automated` |
-| **Last green** | 2026-10-02 |
+| **Last green** | 2026-10-18 |
 
 ## What this proves
 
@@ -102,3 +102,6 @@ the case stays `automated` — its spec ran with the new label in the slice's ta
 **2026-10-18 — steps 1 and 5 rewritten for #39.82.** „+ Filtru" left the list, so it holds no `<select>` again, as
 before #39.61/#39.62; and the juridical persons' chooser offers „Localitate" fifth, so its filter has a column. The
 rest of the case is unchanged.
+
+**2026-10-18 — `automated` (Slice #39.82).** The test runner's targeted run 20261018T160701Z-15737 on a47c980 ran `e2e/person/person-lists.spec.ts` green
+with the rewritten steps (lint, tsc and the slice's jest suites green too).

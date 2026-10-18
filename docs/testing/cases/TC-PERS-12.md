@@ -6,7 +6,7 @@
 | **Kind** | happy |
 | **Data** | — |
 | **State** | `automated` |
-| **Last green** | 2026-10-16 |
+| **Last green** | 2026-10-18 |
 
 ## What this proves
 
@@ -62,3 +62,6 @@ spec green, with the person and property lists' other specs (lint, tsc and jest 
 the columns that filter, and it is not among them — „Decedat" is the „†" after the name, not a column). Step 3 now
 filters „Data decesului" from 01.01.2020, which B alone passes. A filter opens from its column's funnel, right under
 it. Not yet driven by hand: the spec, rewritten with it, is what checks it.
+
+**2026-10-18 — `automated` (Slice #39.82).** The test runner's targeted run 20261018T160353Z-12564 on 9916957 ran `e2e/person/person-list-filters.spec.ts` green
+with the rewritten steps (lint, tsc and the slice's jest suites green too).

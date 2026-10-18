@@ -1,6 +1,6 @@
 /**
  * Case:   TC-DOC-27 — Lista actelor filtrată cu bara de filtre peste „Tip document” și „Câmp specific”
- * Source: docs/testing/cases/TC-DOC-27.md, „Last green" 2026-10-17 (Slice #39.63), step 4 rewritten for the column filters (#39.82)
+ * Source: docs/testing/cases/TC-DOC-27.md, „Last green" 2026-10-18 (Slice #39.63), step 4 rewritten for the column filters (#39.82)
  *
  * A translation of the case file, step for step. Every Romanian string below is quoted from it verbatim.
  *

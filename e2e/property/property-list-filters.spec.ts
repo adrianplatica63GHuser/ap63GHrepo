@@ -1,6 +1,6 @@
 /**
  * Case:   TC-PROP-14 — Lista proprietăților filtrată după „Tip proprietate” și „Categorie de folosință”
- * Source: docs/testing/cases/TC-PROP-14.md, „Last green" 2026-10-16 (Slice #39.61), rewritten for the column filters (#39.82)
+ * Source: docs/testing/cases/TC-PROP-14.md, „Last green" 2026-10-18 (Slice #39.61), rewritten for the column filters (#39.82)
  *
  * A translation of the case file, step for step. Every Romanian string below is quoted from it verbatim.
  *

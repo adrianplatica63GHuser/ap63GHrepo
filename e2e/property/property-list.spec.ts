@@ -1,6 +1,6 @@
 /**
  * Case:   TC-PROP-06 — Lista proprietăților: fără „Importanță" și „Relevanță", fără „Cod", Poreclă mereu afișată, „Câmpuri afișate" cu toate câmpurile cadastrale
- * Source: docs/testing/cases/TC-PROP-06.md, „Last green" 2026-10-04 (steps 1 and 2 follow Slice #38.02; step 1 Slice #39.61)
+ * Source: docs/testing/cases/TC-PROP-06.md, „Last green" 2026-10-18 (steps 1 and 2 follow Slice #38.02; step 1 Slice #39.61)
  *
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim.

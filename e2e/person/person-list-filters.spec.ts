@@ -1,6 +1,6 @@
 /**
  * Case:   TC-PERS-12 — Lista persoanelor fizice filtrată după „Tip profesional” și „Data decesului”
- * Source: docs/testing/cases/TC-PERS-12.md, „Last green" 2026-10-16 (Slice #39.62), rewritten for the column filters (#39.82)
+ * Source: docs/testing/cases/TC-PERS-12.md, „Last green" 2026-10-18 (Slice #39.62), rewritten for the column filters (#39.82)
  *
  * A translation of the case file, step for step. Every Romanian string below is quoted from it verbatim.
  *

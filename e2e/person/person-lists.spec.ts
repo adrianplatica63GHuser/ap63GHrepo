@@ -1,6 +1,6 @@
 /**
  * Case:   TC-PERS-04 — Listele de persoane: fără filtre de importanță și relevanță, câmpurile identității în „Câmpuri afișate", previzualizarea pe patru rânduri
- * Source: docs/testing/cases/TC-PERS-04.md, „Last green" 2026-10-02
+ * Source: docs/testing/cases/TC-PERS-04.md, „Last green" 2026-10-18
  *
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim.

@@ -6,7 +6,7 @@
 | **Kind** | happy |
 | **Data** | — |
 | **State** | `automated` |
-| **Last green** | 2026-10-16 |
+| **Last green** | 2026-10-18 |
 
 ## What this proves
 
@@ -69,3 +69,6 @@ it.
 functionality will be replaced by column filters". A filter now opens from its column's funnel, right under it, and a
 chip opens its filter under itself. The chips follow the columns' order. Not yet driven by hand: the spec, rewritten
 with it, is what checks it.
+
+**2026-10-18 — `automated` (Slice #39.82).** The test runner's targeted run 20261018T160353Z-12564 on 9916957 ran `e2e/property/property-list-filters.spec.ts` green
+with the rewritten steps (lint, tsc and the slice's jest suites green too).

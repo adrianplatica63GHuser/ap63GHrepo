@@ -6,7 +6,7 @@
 | **Kind** | happy |
 | **Data** | — |
 | **State** | `automated` |
-| **Last green** | 2026-10-05 |
+| **Last green** | 2026-10-18 |
 
 ## What this proves
 
@@ -112,3 +112,6 @@ the case is unchanged. The bar's fields are TC-PROP-14's, not this case's.
 
 **2026-10-18 — step 1 rewritten for #39.82.** „+ Filtru" left the list, so it holds no `<select>` again, as before
 #39.61/#39.62. The rest of the case is unchanged.
+
+**2026-10-18 — `automated` (Slice #39.82).** The test runner's targeted run 20261018T160353Z-12564 on 9916957 ran `e2e/property/property-list.spec.ts` green
+with the rewritten steps (lint, tsc and the slice's jest suites green too).
