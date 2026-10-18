@@ -1,9 +1,12 @@
 /**
- * Slice #37.83 — the Documents list's toolbar. Since #39.63 it is one row; since #39.74 that row is the search box,
- * „Câmpuri afișate", the green or red sign with „Câmp specific:", its values select and its ⓘ, „Expiră curând", and at
- * its end the group with „Adaugă act" (Adrian, 2026-10-17: „Move the Expiring Soon button and the filter control one
- * row up after the field chooser"). „Tip document:" alone is the shared filter bar's fixed chip, under it. Read from
- * the source, as `document-status.test.ts` reads this file; the browser half is TC-DOC-08, TC-DOC-16 and TC-DOC-27.
+ * Slice #37.83 — the Documents list's toolbar. Since #39.63 it is one row. Since #39.84 that row is the search box,
+ * „Câmpuri afișate", „Expiră curând" right after it, and at its end the group with „Adaugă act"; the filter bar under
+ * it opens with „Tip document:", then the green or red sign with „Câmp specific:", its values select and its ⓘ — where
+ * „+ Filtru" stood until #39.82 — then the chips (Adrian, 2026-10-18: „the icon with the stop sign or the check mark
+ * … to replace it followed by the type specific field and information button; The Expiring Soon button will slide
+ * left close to field picker button"). #39.74 had „Câmp specific" on the toolbar, between the chooser and „Expiră
+ * curând". Read from the source, as `document-status.test.ts` reads this file; the browser half is TC-DOC-08,
+ * TC-DOC-16 and TC-DOC-27.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -19,20 +22,24 @@ function between(a: string, b: string): string {
   return code.slice(i, j);
 }
 
-describe("the Documents toolbar and the bar's fixed chip (Slices #37.83, #39.63, #39.74)", () => {
+describe("the Documents toolbar and the bar's fixed controls (Slices #37.83, #39.63, #39.74, #39.84)", () => {
   const first = between('data-toolbar-row="first"', "<FilterBar");
-  // #39.74: „Câmp specific" — between „Câmpuri afișate" and „Expiră curând". It was the bar's `data-filter-fixed`
-  // region, after „Tip document:", from #39.63 to #39.74.
-  const field = between("<FieldChooser", "icon={CalendarClock}");
+  const bar = code.slice(code.indexOf("leading={", code.indexOf("<FilterBar")), code.indexOf("deleteError &&"));
+  // #39.84: „Câmp specific" on the bar, after „Tip document:". From #39.74 it was on the toolbar, between „Câmpuri
+  // afișate" and „Expiră curând"; from #39.63 to #39.74 on the bar, as now.
+  const field = bar.slice(bar.indexOf("{typeOptions.length > 0 &&"));
 
-  // #39.74: it read `['type="search"', "<FieldChooser", 'className="ml-auto …"', …]` and no „Câmp specific" or
-  // „Expiră curând" until then.
-  it("the first row: search, „Câmpuri afișate”, „Câmp specific”, „Expiră curând”, then the group at its end — no „Tip document”", () => {
-    const order = ['type="search"', "<FieldChooser", "<CustomFieldSign", 'aria-label={tFilter("customFieldLabel")}', "icon={CalendarClock}", 'className="ml-auto flex items-center gap-2"', 'href="/documents/new"'];
+  // #39.84: it read `[… "<FieldChooser", "<CustomFieldSign", 'aria-label={tFilter("customFieldLabel")}',
+  // "icon={CalendarClock}", …]` from #39.74; before that no „Câmp specific" or „Expiră curând" here.
+  it("the first row: search, „Câmpuri afișate”, „Expiră curând”, then the group at its end — no „Tip document”, no „Câmp specific”", () => {
+    const order = ['type="search"', "<FieldChooser", "icon={CalendarClock}", 'className="ml-auto flex items-center gap-2"', 'href="/documents/new"'];
     const at = order.map((m) => first.indexOf(m));
     expect(at.every((i) => i >= 0)).toBe(true);
     expect([...at].sort((x, y) => x - y)).toEqual(at);
     expect(first).not.toContain("<DocumentTypeFilterDropdown");
+    expect(first).not.toMatch(/<CustomFieldSign|customFieldLabel|data-custom-field-group/);
+    // „Expiră curând" right after „Câmpuri afișate": nothing drawn between them.
+    expect(first.slice(first.indexOf("<FieldChooser"), first.indexOf("icon={CalendarClock}")).match(/<[A-Z]\w+|<(div|span|select|input)\b/g)).toEqual(["<FieldChooser", "<IconButton"]);
   });
 
   it("no second row any more (#39.63)", () => {
@@ -45,11 +52,12 @@ describe("the Documents toolbar and the bar's fixed chip (Slices #37.83, #39.63,
     expect(code).toContain('expiring: expiringSoon ? "1" : ""');
   });
 
-  // #39.74: the bar's `leading` slot holds „Tip document:" alone.
-  it("the bar opens with „Tip document:” alone", () => {
-    const bar = code.slice(code.indexOf("leading={", code.indexOf("<FilterBar")), code.indexOf("deleteError &&"));
-    expect(bar).toMatch(/leading=\{\s*<>\s*<div className="flex flex-wrap items-center gap-2" data-filter-fixed="">\s*<DocumentTypeFilterDropdown[\s\S]*?\/>\s*<\/div>\s*<\/>\s*\}/);
-    expect(bar).not.toMatch(/<CustomFieldSign|icon=\{CalendarClock\}|customFieldKey/);
+  // #39.84: the bar's `leading` slot holds „Tip document:", then „Câmp specific" — where „+ Filtru" stood. #39.74 had
+  // „Tip document:" alone there.
+  it("the bar opens with „Tip document:”, then „Câmp specific” — no „Expiră curând”", () => {
+    expect(bar).toMatch(/leading=\{\s*<>\s*<div className="flex flex-wrap items-center gap-2" data-filter-fixed="">\s*<DocumentTypeFilterDropdown[\s\S]*?\/>\s*\{typeOptions\.length > 0 && \(\s*<div className="flex items-center gap-2" data-custom-field-group="">\s*<CustomFieldSign/);
+    expect(bar.indexOf("<DocumentTypeFilterDropdown")).toBeLessThan(bar.indexOf("<CustomFieldSign"));
+    expect(bar).not.toMatch(/icon=\{CalendarClock\}/);
   });
 
   // #38.18: the sign → „Câmp specific:" → its values select → the ⓘ (the HintBubble's trigger, after its children).

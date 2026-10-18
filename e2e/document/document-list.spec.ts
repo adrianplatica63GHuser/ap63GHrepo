@@ -63,7 +63,8 @@ test.describe("TC-DOC-08 — lista actelor", () => {
       await expect(main.getByText("Câmp specific:")).toBeVisible();
       const about = main.getByRole("button", { name: "Despre „Câmp specific”" });
       await expect(about).toBeVisible();
-      // #39.74: „Expiră curând" is on the toolbar's row, after „Câmp specific" (#39.63 had put it on the filter bar).
+      // #39.84: „Expiră curând" is on the toolbar's row, right after „Câmpuri afișate" (#39.74 had it after „Câmp
+      // specific", #39.63 on the filter bar).
       const expiring = main.getByRole("button", { name: "Expiră curând" });
       await expect(expiring).toBeVisible();
       await expect(main.locator('[data-toolbar-row="first"]').getByRole("button", { name: "Expiră curând" })).toHaveCount(1);
@@ -78,17 +79,24 @@ test.describe("TC-DOC-08 — lista actelor", () => {
       expect(Math.max(...centres) - Math.min(...centres)).toBeLessThanOrEqual(1);
       expect([...row1.map((r) => r.x), add.x]).toEqual([...row1.map((r) => r.x), add.x].sort((a, b) => a - b));
       await expect(main.locator('[data-toolbar-row="first"]').getByRole("button", { name: /^Tip document:/ })).toHaveCount(0);
-      // #39.74: after „Câmpuri afișate", on the same row, a red sign, „Câmp specific:" with its ⓘ, „Expiră curând"; under the
-      // search box, „Tip document: Toate tipurile" (#38.18 put them on a second row, #39.63 on the filter bar).
+      // #39.84: on the toolbar's row „Expiră curând" right after „Câmpuri afișate", then „Adaugă act" at its end; under the
+      // search box, on the filter bar, „Tip document: Toate tipurile", then a red sign and „Câmp specific:" with its ⓘ —
+      // where „+ Filtru" stood. (#39.74 had the sign and „Câmp specific:" on the toolbar's row, between the chooser and
+      // „Expiră curând"; #38.18 on a second row, #39.63 on the filter bar.)
       const sign = main.locator("[data-custom-field-sign]");
       await expect(sign).toHaveAttribute("data-custom-field-sign", "off");
       await expect(sign.locator("svg")).toHaveClass(/lucide-ban/);
       const [typeAt, signAt, field, aboutAt, expAt] = await Promise.all([typeFilter, sign, main.getByText("Câmp specific:"), about, expiring].map(async (l) => (await l.boundingBox())!));
-      expect([row1[1].x, signAt.x, field.x, aboutAt.x, expAt.x, add.x]).toEqual([row1[1].x, signAt.x, field.x, aboutAt.x, expAt.x, add.x].sort((a, b) => a - b));
-      for (const b of [signAt, expAt]) expect(Math.abs(b.y + b.height / 2 - (row1[0].y + row1[0].height / 2))).toBeLessThanOrEqual(2);
+      expect([row1[1].x, expAt.x, add.x]).toEqual([row1[1].x, expAt.x, add.x].sort((a, b) => a - b));
+      expect(expAt.x - (row1[1].x + row1[1].width)).toBeLessThanOrEqual(16);
+      expect(Math.abs(expAt.y + expAt.height / 2 - (row1[0].y + row1[0].height / 2))).toBeLessThanOrEqual(2);
       expect(typeAt.y).toBeGreaterThanOrEqual(row1[0].y + row1[0].height);
       expect(Math.abs(typeAt.x - row1[0].x)).toBeLessThanOrEqual(24);
+      expect([typeAt.x, signAt.x, field.x, aboutAt.x]).toEqual([typeAt.x, signAt.x, field.x, aboutAt.x].sort((a, b) => a - b));
+      for (const b of [signAt, aboutAt]) expect(Math.abs(b.y + b.height / 2 - (typeAt.y + typeAt.height / 2))).toBeLessThanOrEqual(3);
       await expect(main.locator("[data-filter-bar] [data-filter-fixed]").getByRole("button", { name: /^Tip document:/ })).toHaveCount(1);
+      await expect(main.locator("[data-filter-bar] [data-filter-fixed] [data-custom-field-group]")).toHaveCount(1);
+      await expect(main.locator('[data-toolbar-row="first"] [data-custom-field-group]')).toHaveCount(0);
       await expect(main.getByText(/Importanță|Relevanță/)).toHaveCount(0);
 
       // Step 2 — one row: „Adeverință", the title.
@@ -195,7 +203,7 @@ test.describe("TC-DOC-08 — lista actelor", () => {
       await tick("Contract de Vânzare");
       await tick("Adeverință");
       await expect(main.getByRole("button", { name: /^Tip document:\s*Adeverință/ })).toBeVisible({ timeout: 30_000 });
-      await expect(main.locator('[data-toolbar-row="first"] [data-custom-field-group]')).toHaveCount(1); // #39.74; #39.63 read `[data-filter-fixed]`
+      await expect(main.locator("[data-filter-bar] [data-filter-fixed] [data-custom-field-group]")).toHaveCount(1); // #39.84; #39.74 read `[data-toolbar-row="first"]`
       await expect(key).toBeDisabled();
       await expect(sign).toHaveAttribute("data-custom-field-sign", "off");
       await expect.poll(async () => new Set(await table.locator("tbody tr td:nth-child(2)").allTextContents()), { timeout: 30_000 }).toEqual(new Set(["Adeverință"]));

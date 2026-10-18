@@ -17,9 +17,9 @@ one type is ticked and that type has a form with closed-list fields — otherwis
 field already chosen is let go. Its ⓘ says so in italics. A button reading „n/N", or „Câmp specific"
 offering every type's fields at once, is the defect.
 
-Since Slice #38.18 a sign stands in front of „Câmp specific:" — since #39.74 on the toolbar, right after „Câmpuri
-afișate", while „Tip document:" is the filter bar's first chip under it (from #39.63 to #39.74 all three were the
-bar's fixed chips). The sign says whether the field can be used: a green circle with a check when it can, a red circle
+Since Slice #38.18 a sign stands in front of „Câmp specific:" — since #39.84 on the filter bar, right after „Tip
+document:", where „+ Filtru" stood (from #39.74 to #39.84 the sign and „Câmp specific:" were on the toolbar; from
+#39.63 to #39.74 all three were the bar's fixed chips, as now). The sign says whether the field can be used: a green circle with a check when it can, a red circle
 with a bar when it cannot. Its tooltip — on hover or keyboard focus — and its name say the state and
 why. A disabled „Câmp specific:" reads in italics, in a faded box with a dashed border. A green sign
 over a disabled field, a red one over an enabled field, or a reason that does not match the types
@@ -44,7 +44,7 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „Acte" | On the toolbar, after „Câmpuri afișate", in this order: the sign, „Câmp specific:"; first on the filter bar under it, „Tip document: Toate tipurile". The sign is red, its tooltip „„Câmp specific” nu se poate folosi" / „Sunt bifate toate tipurile — alegeți la „Tip document” un singur tip.". „Câmp specific:" drawn, its list disabled, offering only „Toate"; its label in italics, its box with a dashed border. Its ⓘ's bubble ends, in italics: „Câmpul specific este activ numai când la „Tip document” este ales un singur tip, iar acel tip are un formular cu câmpuri cu listă închisă de valori." |
+| 1 | Opens „Acte" | On the filter bar under the toolbar, in this order (#39.84): „Tip document: Toate tipurile", the sign, „Câmp specific:". The sign is red, its tooltip „„Câmp specific” nu se poate folosi" / „Sunt bifate toate tipurile — alegeți la „Tip document” un singur tip.". „Câmp specific:" drawn, its list disabled, offering only „Toate"; its label in italics, its box with a dashed border. Its ⓘ's bubble ends, in italics: „Câmpul specific este activ numai când la „Tip document” este ales un singur tip, iar acel tip are un formular cu câmpuri cu listă închisă de valori." |
 | 2 | Opens „Tip document" and unticks „Toate tipurile" | The button reads „Niciun tip", in italics; the list says „Selectați cel puțin un tip de document"; „Câmp specific:" disabled. The sign red: „Nu este bifat niciun tip — alegeți la „Tip document” un singur tip." |
 | 3 | Ticks „Contract de Vânzare" | The button reads „Contract de Vânzare" (not italic; the name is its tooltip). „Câmp specific:" enabled: „Toate", then the contract's closed-list fields — „Monedă", „Stare plată", „Modalitate plată" among them; its box with a solid border, its label not in italics. The sign green: „„Câmp specific” se poate folosi" / „Oferă câmpurile cu listă închisă ale tipului „Contract de Vânzare”." |
 | 4 | Chooses „Stare plată" in „Câmp specific:", then ticks „Adeverință" too | The button reads „2 tipuri afișate", in italics. „Câmp specific:" disabled, back on „Toate"; the second list gone. The sign red: „Sunt bifate 2 tipuri — alegeți la „Tip document” un singur tip." |
@@ -126,3 +126,7 @@ afișate"; „Tip document:" stays first on the filter bar. Nothing else in the 
 
 **2026-10-18 — `automated`, green on the runner (Slice #39.74).** `targeted` 20261018T044609Z-25587 on 5e9ab71 ran the
 corrected spec green.
+
+**2026-10-18 — step 1 rewritten for #39.84.** The sign and „Câmp specific:" are on the filter bar again, after „Tip
+document:", where „+ Filtru" stood until #39.82 (#39.74 had put them on the toolbar). The photographs now take the
+toolbar and the bar together.

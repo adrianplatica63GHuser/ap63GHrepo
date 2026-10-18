@@ -29,16 +29,19 @@ const OFF = "„Câmp specific” nu se poate folosi";
 const GREEN = "rgb(21, 128, 61)";
 const RED = "rgb(185, 28, 28)";
 
-/** The toolbar, and — #38.18 — the same with the sign's tooltip open, at 1366 and 1920 px. */
+/** The toolbar and the filter bar under it, and — #38.18 — the same with the sign's tooltip open, at 1366 and 1920 px. */
 async function photograph(page: Page, name: string): Promise<void> {
   const sign = page.locator("main [data-custom-field-sign]");
   for (const width of [1366, 1920]) {
     await page.setViewportSize({ width, height: 900 });
     await page.waitForTimeout(300);
-    await page.locator("main [data-toolbar]").screenshot({ path: `${SHOTS}/${name}-${width}.png` });
+    // #39.84: the toolbar and the filter bar under it, where the sign is now.
+    const top = (await page.locator("main [data-toolbar]").boundingBox())!;
+    const bar = (await page.locator("main [data-filter-bar]").boundingBox())!;
+    const box = { x: top.x, y: top.y, width: Math.max(top.width, bar.width), height: bar.y + bar.height - top.y };
+    await page.screenshot({ path: `${SHOTS}/${name}-${width}.png`, clip: { ...box, width: Math.min(box.width, width - box.x) } });
     await sign.hover();
     await expect(page.locator("[role=tooltip][data-icon-tooltip]")).toBeVisible();
-    const box = (await page.locator("main [data-toolbar]").boundingBox())!;
     await page.screenshot({ path: `${SHOTS}/${name}-tooltip-${width}.png`, clip: { x: box.x, y: box.y, width: Math.min(box.width, width - box.x), height: box.height + 90 } });
     await page.mouse.move(5, 5);
   }
@@ -80,11 +83,12 @@ test.describe("TC-DOC-16 — „Tip document:” și „Câmp specific”", () =
       const key = main.getByRole("combobox", { name: "Câmp specific:" });
       await expect(key).toBeDisabled();
       expect(await key.locator("option").allTextContents()).toEqual(["Toate"]);
-      // #38.18: the sign, then „Câmp specific:"; the field looks disabled. #39.74: both on the toolbar, after „Câmpuri
-      // afișate", and „Tip document:" first on the filter bar under it. From #39.63 to #39.74 all three were the bar's
-      // fixed chips (`[data-filter-bar] [data-filter-fixed]`); before that, `[data-toolbar-row="second"]`.
-      const row2 = main.locator('[data-toolbar-row="first"]');
-      const at = await Promise.all([row2.getByRole("button", { name: /^Câmpuri afișate/ }), row2.locator("[data-custom-field-sign]"), row2.getByText("Câmp specific:")].map(async (l) => (await l.boundingBox())!.x));
+      // #38.18: the sign, then „Câmp specific:"; the field looks disabled. #39.84: both on the filter bar, after „Tip
+      // document:" — where „+ Filtru" stood. #39.74 had them on the toolbar after „Câmpuri afișate"
+      // (`[data-toolbar-row="first"]`); from #39.63 to #39.74 they were on the bar too; before that,
+      // `[data-toolbar-row="second"]`.
+      const row2 = main.locator("[data-filter-bar] [data-filter-fixed]");
+      const at = await Promise.all([row2.getByRole("button", { name: /^Tip document:/ }), row2.locator("[data-custom-field-sign]"), row2.getByText("Câmp specific:")].map(async (l) => (await l.boundingBox())!.x));
       expect(at).toEqual([...at].sort((a, b) => a - b));
       await expect(main.locator("[data-filter-bar] [data-filter-fixed]").getByRole("button", { name: /^Tip document:/ })).toHaveCount(1);
       const fieldBox = main.locator("[data-custom-field-box]");
