@@ -108,7 +108,7 @@ function SearchBox<H extends { id: string }>({
                     setText("");
                     setOpen(false);
                   }}
-                  className={buttonClass({ variant: "bare", size: "sm", className: "w-full hover:bg-slate-50 disabled:opacity-60 dark:hover:bg-zinc-800" })}
+                  className={buttonClass({ variant: "bare", size: "sm", className: "w-full hover:bg-slate-50 dark:hover:bg-zinc-800" })}
                 >
                   <span className="min-w-0 flex-1 truncate text-left">{render(h)}</span>
                   {reason && <span className="shrink-0 text-xs text-fade dark:text-zinc-400">{reason}</span>}

@@ -67,6 +67,8 @@ export const ADMIN_ONLY_ROUTES_OUTSIDE_ADMIN_API: Readonly<Record<string, string
   "settings/system": "„Setări\" (/admin/settings): the backups, the AI models and „Despre\" (#38.40), read-only.",
   "calculation/commit": "„Calcul\" (/admin/calculation): commits the parcels, the road and their group.",
   "calculation/preview": "„Calcul\" (/admin/calculation): the preview before a commit.",
+  "calculation/properties": "„Calcul drum lateral\" (/admin/calculation): the property search of step 1 (#39.79).",
+  "calculation/properties/[id]": "„Calcul drum lateral\" (/admin/calculation): the chosen property's corners (#39.79).",
   "calculation/runs": "The calculation history (/admin/calculation/history).",
   "calculation/runs/[id]": "One calculation run (/admin/calculation/history/[id]).",
 };
