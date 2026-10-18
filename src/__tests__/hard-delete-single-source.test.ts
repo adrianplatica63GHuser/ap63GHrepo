@@ -165,9 +165,11 @@ describe("an entity delete removes its principal_object row", () => {
   });
 
   it("the batch routes delegate rather than writing their own delete", () => {
+    // Slice #39.73: Properties has no batch route any more — a property is deleted only from its own form, through
+    // DELETE /api/properties/[id] and so `deleteProperty` → `deleteProperties([id])` (above).
+    expect(fs.existsSync(path.join(SRC, "app", "api", "properties", "batch-delete", "route.ts"))).toBe(false);
     for (const [seg, fn] of [
       ["people", "deletePersons"],
-      ["properties", "deleteProperties"],
       ["documents", "deleteDocuments"],
     ] as const) {
       const route = code(read("app", "api", seg, "batch-delete", "route.ts"));

@@ -116,12 +116,19 @@ function code(source: string): string {
 }
 
 /** The four record lists, and the file each one lives in. */
-const LISTS = [
+const ALL_LISTS = [
   { name: "natural-persons",  file: path.join("src", "app", "natural-persons",  "list-view.tsx") },
   { name: "judicial-persons", file: path.join("src", "app", "judicial-persons", "list-view.tsx") },
   { name: "properties",       file: path.join("src", "app", "properties",       "list-view.tsx") },
   { name: "documents",        file: path.join("src", "app", "documents",        "list-view.tsx") },
 ] as const;
+
+/**
+ * The lists that still tick records. Slice #39.73 took the Properties list's ticks away with its „Șterge selecția"
+ * (Adrian, 2026-10-17: „a property should be deleted only from the property form"), so it has no selection for a
+ * filter change to clear.
+ */
+const LISTS = ALL_LISTS.filter((l) => l.name !== "properties");
 
 /** The four record forms, the namespace each binds to `tShared`, and its message prefix. */
 const FORMS = [
@@ -390,7 +397,7 @@ describe("delete confirmations say the delete cannot be undone", () => {
   it.each(LOCALES)("%s: every delete confirmation says so, and the four are all there", (locale) => {
     const bodies = confirmDeleteBodies(locale);
     // The four record kinds must be present. A FIFTH is welcome — the map's
-    // bulk delete is one — and is asserted by the loop below rather than
+    // bulk delete was one until #39.73 — and is asserted by the loop below rather than
     // failing this list, so adding a correctly-worded confirmation elsewhere
     // does not turn this suite red for the wrong reason.
     const found = bodies.map(([k]) => k);
@@ -399,7 +406,6 @@ describe("delete confirmations say the delete cannot be undone", () => {
       "judicialPerson.confirmDelete.body",
       "naturalPerson.confirmDelete.body",
       "property.confirmDelete.body",
-      "property.map.confirmDelete.body",
     ]) {
       expect([key, found.includes(key)]).toEqual([key, true]);
     }
@@ -420,13 +426,13 @@ describe("delete confirmations say the delete cannot be undone", () => {
 // 4b. The map is a fifth selection, and its group filter is a filter
 // --------------------------------------------------------------------------
 
-describe("the property map's drag selection", () => {
+describe("the property map's selection", () => {
   /**
-   * The map has tick-equivalent state (`selectedIds`, set by a drag) and a
-   * filter (the Groups panel's `uncheckedGroups`) that decides which polygons
-   * are drawn. Nothing connected the two, so unticking a group left the count
-   * on "Delete all selected" — and the delete itself — carrying properties that
-   * were no longer on the map. Same defect as S-05, different component.
+   * The map has tick-equivalent state (`selectedIds`, set by clicks since #39.73, by a drag before) and a filter (the
+   * Groups panel's `uncheckedGroups`) that decides which polygons are drawn. Nothing connected the two, so unticking a
+   * group left the selection carrying properties that were no longer on the map. Same defect as S-05, different
+   * component. Since #39.73 the selection goes to a group rather than to a delete; adding unseen properties to a
+   * group is the same mistake.
    */
   it("drops the ids the group filter has taken off the map, and only those", () => {
     const body = stripComments(read("src/app/properties/map/property-map.tsx"));
@@ -443,10 +449,8 @@ describe("the property map's drag selection", () => {
     );
     expect(body).toContain("setSelectedIds(kept);");
 
-    // Not while a delete is in flight: handleDeleteConfirm captured its ids at
-    // click time, so a prune could not change what that request deletes — only
-    // close the dialog the user is waiting on, and hide its error line.
-    expect(body).toContain("if (!deleting && selectedIds.size > 0) {");
+    // Not while an add is in flight: handleAddToGroup captured its ids at the click.
+    expect(body).toContain("if (!adding && selectedIds.size > 0) {");
 
     const pruneBlock = /if \(hiddenIds\.size > 0\) \{[\s\S]*?\n {4}\}/.exec(body);
     expect(pruneBlock).not.toBeNull();
@@ -457,32 +461,22 @@ describe("the property map's drag selection", () => {
     // It prunes; it must never clear. A wholesale reset here would undo
     // #21.10, which established that selectedIds is not owned by any one tool.
     expect(pruneBlock![0]).not.toContain("setSelectedIds(new Set");
-
-    // A dialog quoting a set the user did not agree to must not survive the
-    // change — but not at the cost of the error line inside it, which arrives
-    // in the very render this block stops being gated out of.
-    expect(pruneBlock![0]).toContain(
-      "if (deleteError === null || kept.size === 0) setShowDeleteConfirm(false);",
-    );
   });
 
   /**
-   * Its confirmation was hard-coded English ("This 3 of properties will be
-   * erased from the system."), so it was invisible to every message-file guard
-   * and said nothing about the delete being final.
+   * Slice #39.73 — nothing on the map deletes (Adrian, 2026-10-17: „This is very destructive and should not be
+   * possible"). The delete's messages are gone from both files, and the map calls no delete route.
    */
-  it("confirms through the message files", () => {
-    const raw = stripComments(read('src/app/properties/map/property-map.tsx'));
-    for (const key of [
-      "map.deleteAllSelected",
-      "map.confirmDelete.body",
-      "map.confirmDelete.cancel",
-      "map.confirmDelete.confirm",
-      "map.confirmDelete.deleting",
-    ]) {
-      expect([key, raw.includes(`t("${key}"`)]).toEqual([key, true]);
+  it("deletes nothing", () => {
+    const raw = stripComments(read("src/app/properties/map/property-map.tsx"));
+    expect(raw).not.toContain("batch-delete");
+    expect(raw).not.toMatch(/method:\s*"DELETE"/);
+    expect(raw).not.toContain("map.confirmDelete");
+    expect(raw).not.toContain("map.deleteAllSelected");
+    for (const locale of LOCALES) {
+      expect([locale, lookup(locale, "property.map.confirmDelete")]).toEqual([locale, undefined]);
+      expect([locale, lookup(locale, "property.map.deleteAllSelected")]).toEqual([locale, undefined]);
     }
-    expect(raw).not.toContain("will be erased from the system");
   });
 });
 
@@ -517,7 +511,7 @@ describe("the new hint exists in both languages", () => {
 // turns into one loud failure rather than four silent empty reads.
 describe("the files this suite reads", () => {
   it("all exist", () => {
-    for (const { file } of [...LISTS, ...FORMS, ...LIST_QUERIES]) {
+    for (const { file } of [...ALL_LISTS, ...FORMS, ...LIST_QUERIES]) {
       expect([file, fs.existsSync(path.join(ROOT, file))]).toEqual([file, true]);
     }
     expect(fs.existsSync(SRC)).toBe(true);
