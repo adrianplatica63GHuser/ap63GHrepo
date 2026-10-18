@@ -268,7 +268,8 @@ describe("companies, institutions and issuers", () => {
     let linked = 0;
     for (const d of docs) {
       const x = extras.get(d.key)!;
-      expect(!!x.importTitle).toBe(x.aiInterpreted);
+      // the title an import gave it, or an issuer only read, means the AI read it
+      expect(x.aiInterpreted).toBe(!!x.importTitle || !!x.issuerRead);
       if (x.cited.length) expect(d.type).toBe("CONTRACT_VANZARE");
       for (const c of x.cited) {
         if (c.status === "LINKED") {
@@ -303,6 +304,7 @@ describe("side-road runs and the last fields", () => {
   });
 
   it("a few co-owned drawn lots of four corners, each request one the screen would accept", () => {
+    expect(sideRoadRuns(makeRng(8), props, () => false)).toEqual([]);
     const runs = sideRoadRuns(makeRng(8), props);
     expect(runs.length).toBeGreaterThanOrEqual(1);
     expect(runs.length).toBeLessThanOrEqual(SIDE_ROAD_RUNS);

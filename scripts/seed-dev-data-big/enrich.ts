@@ -495,8 +495,11 @@ export function documentExtras(r: Rng, docs: DocPlan[], ctx: {
     const notary = d.parties.find((p) => p.role === "Notar")?.key;
     const issuerKey = (d.fields.emitent && ctx.institutionOf.get(d.fields.emitent)) || (notary ? (companyKeys.has(notary) ? notary : officeOf.get(notary)) : undefined) || null;
     const issuerName = d.fields.emitent ?? (issuerKey && companyKeys.has(issuerKey) ? ctx.companies.find((c) => c.key === issuerKey)!.name : null);
-    if (issuerKey && r.chance(0.04)) x.issuerRead = issuerName; // left for „Emitent citit" to propose
-    else x.issuer = issuerKey;
+    if (issuerKey && r.chance(0.04)) {
+      // left for „Emitent citit" to propose: the AI read it, nobody has picked it yet
+      x.issuerRead = issuerName;
+      x.aiInterpreted = true;
+    } else x.issuer = issuerKey;
     if (d.type === "TITLU_PROPRIETATE") {
       const owner = d.parties.find((p) => p.role === "Proprietar")?.key;
       x.uatProprietar = (owner && det.get(owner)?.address.locality) || "Bragadiru";
@@ -556,9 +559,13 @@ export function shareStrings(shares: [number, number][]): string[] | null {
   return h.map((x) => `${Math.floor(x / 100)},${String(x % 100).padStart(2, "0")}`);
 }
 
-/** A few co-owned drawn lots of four corners to divide: two or three owners in shares, 600 m² or more. */
-export function sideRoadRuns(r: Rng, props: PropertyPlan[]): SideRoadRunPlan[] {
-  const fit = props.filter((p) => p.corners?.length === 4 && p.surface >= 600 && p.owners.length >= 2 && p.owners.length <= 3 && p.owners.every((o) => o.share) && !p.cluster?.line);
+/**
+ * A few co-owned drawn lots of four corners to divide: two or three owners in shares, 600 m² or more. Each owner gets
+ * the slice the run creates as „Proprietar" — one more row on their „Legături" — so `room(key)` says whose tile can
+ * take it (seed.ts: fewer rows planned than the 15 allowed).
+ */
+export function sideRoadRuns(r: Rng, props: PropertyPlan[], room: (key: string) => boolean = () => true): SideRoadRunPlan[] {
+  const fit = props.filter((p) => p.corners?.length === 4 && p.surface >= 600 && p.owners.length >= 2 && p.owners.length <= 3 && p.owners.every((o) => o.share && room(o.key)) && !p.cluster?.line);
   return r.shuffle(fit).slice(0, SIDE_ROAD_RUNS).flatMap((p): SideRoadRunPlan[] => {
     const shares = shareStrings(p.owners.map((o) => o.share!));
     if (!shares) return [];

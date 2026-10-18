@@ -899,9 +899,8 @@ async function createDocuments(docs: DocPlan[], details: NaturalDetails[], plan:
       nrDocument: d.nr,
       dateDocument: d.date,
       ...d.fields,
-      // #39.81: the issuer, picked or only read; the owner's UAT; the surveyor; the title an import gave it
+      // #39.81: the issuer; the owner's UAT; the surveyor; the title an import gave it
       issuerPersonId: personId(x.issuer),
-      issuerRead: x.issuerRead,
       uatProprietar: x.uatProprietar,
       surveyorId: personId(x.surveyor),
       importTitle: x.importTitle,
@@ -924,7 +923,8 @@ async function createDocuments(docs: DocPlan[], details: NaturalDetails[], plan:
   }
   // links between documents, once every document exists: the holder is the viewed one
   for (const d of docs) for (const l of d.links) await associateDocumentToDocument(obj(d.key).id, [obj(l.to).id], docRef.ddRole.get(l.role)!);
-  // what an import's reading left: the instruments a contract cites, and the day the AI read it — neither a version
+  // what an AI reading left: the instruments a contract cites, the issuer it read, the day — none of them a version,
+  // and written as the import's run writes them, after the document exists
   for (const d of docs) {
     const x = extras.get(d.key)!;
     if (x.cited.length) {
@@ -941,7 +941,9 @@ async function createDocuments(docs: DocPlan[], details: NaturalDetails[], plan:
       }));
       await saveReferencedInstruments(obj(d.key).id, instruments);
     }
-    if (x.aiInterpreted) await updateDocument(obj(d.key).id, documentUpdateSchema.parse({ aiInterpretedAt: new Date().toISOString() }), BY);
+    if (x.aiInterpreted) {
+      await updateDocument(obj(d.key).id, documentUpdateSchema.parse({ aiInterpretedAt: new Date().toISOString(), ...(x.issuerRead ? { issuerRead: x.issuerRead } : {}) }), BY);
+    }
   }
 }
 
@@ -1595,10 +1597,9 @@ async function main(): Promise<void> {
   const jurExtras = judicialExtras(makeRng((SEED ^ 0x1ead) >>> 0), companies);
   const propExtras = propertyExtras(makeRng((SEED ^ 0x5717) >>> 0), props);
   const docExtras = documentExtras(makeRng((SEED ^ 0xd0c2) >>> 0), docs, { details, companies, properties: props, institutionOf: new Map(INSTITUTIONS.map((i) => [i.name, i.key])) });
-  const runPlans = sideRoadRuns(makeRng((SEED ^ 0x51de) >>> 0), props);
   console.log(`  plan: ${plan.persons.length} persons over ${MAX_GENERATION} generations, ${plan.unions.length} marriages, ${plan.ties.length} ties (attempt ${plan.attempt}); ${props.length} properties, ${existing.polys.length} existing lots kept clear of; ${docs.length} documents (${CONTRACTS} contracts, ${ACTS} acts)`);
 
-  console.log(`  and: ${tarlaPlans.length} tarlas (${tarlaPlans.map((t) => t.code).join(", ")}), ${INSTITUTIONS.length} institutions, ${runPlans.length} side-road runs`);
+  console.log(`  and: ${tarlaPlans.length} tarlas (${tarlaPlans.map((t) => t.code).join(", ")}), ${INSTITUTIONS.length} institutions`);
   console.log(`· ${details.length} natural persons`);
   await createNaturalPersons(plan, details, natExtras, relationships);
   console.log("· names changed on marriage and divorce");
@@ -1627,6 +1628,8 @@ async function main(): Promise<void> {
   const meta = planMetadata(makeRng((SEED ^ 0x7a65) >>> 0), manifest.objects.map((o) => ({ key: o.key, kind: o.kind, dead: !!plan.persons.find((p) => p.key === o.key)?.dod })));
   console.log(`· ${GROUPS.length} groups, ${STAMPS.length} stamps, ${TAGS.length} tags, classifications, provenance trails, „Vezi și"`);
   await writeMetadata(meta);
+  // the lots to divide: owners whose „Legături" can take the slice they are given
+  const runPlans = sideRoadRuns(makeRng((SEED ^ 0x51de) >>> 0), props, (k) => (planned.get(k) ?? 0) < MAX_LINKS);
   console.log(`· ${runPlans.length} side-road runs from a property`);
   const refused = await writeSideRoadRuns(runPlans);
   for (const why of refused) console.log(`  ! not divided — ${why}`);
