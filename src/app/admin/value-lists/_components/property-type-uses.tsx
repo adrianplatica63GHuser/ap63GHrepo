@@ -14,18 +14,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { MIN_TILE_UNITS, dialogCardStyle, dialogUnits } from "@/lib/ui/field-widths";
-
-/** The card's side padding (`px-5`), in rem. */
-const CARD_PADDING_REM = 1.25;
-
-/**
- * Slice #39.75: the grid's tile — the fewest units that hold the table as it reads (a column per use, so it grows with
- * the list), with the card's padding. `px` is the table's own width, measured at `max-content`.
- */
-export function typeUsesUnits(px: number): number {
-  return Math.max(MIN_TILE_UNITS, dialogUnits(px / 16, CARD_PADDING_REM));
-}
+import { dialogCardStyle } from "@/lib/ui/field-widths";
+import { typeUsesUnits } from "@/lib/admin/value-lists/reference-tiles";
 import { TYPE_USES_QUERY_KEY, fetchTypeUses, setTypeUse, type TypeUsePair } from "@/lib/properties/type-uses";
 import { fetchValueListRows, toLookupItems } from "./role-doc-types";
 

@@ -1265,7 +1265,8 @@ describe("the value-list editors and the Form editor on the unit (Slice #37.37)"
   it.each(FILES)("%s: no width from the window inside the card, and its card is whole units", (what, src) => {
     // The confirmations keep their max-w-sm / max-w-md cards; the editors' own cards do not cap.
     expect([what, src.match(/\bmin-w-48\b|(?<![\w-])w-full\b|(?<![\w-])w-(20|24|28|32|40|56)\b|max-w-\[240px\]|\btruncate\b|max-w-(2xl|3xl|5xl)/g) ?? []]).toEqual([what, []]);
-    expect(src).toMatch(/style=\{(\{ \.\.\.)?dialogCardStyle\(/);
+    // #39.75: a tile's card fills its tile (`fill`), every other card is whole units.
+    expect(src).toMatch(/style=\{(\{ \.\.\.)?(fill \? \{ width: "100%" \} : )?dialogCardStyle\(/);
     for (const m of src.matchAll(/<table\b/g)) {
       const table = region(src.slice(m.index), "<table", "</thead>");
       expect([what, /^<table \{\.\.\.fixedTable\(/.test(table)]).toEqual([what, true]);
@@ -1277,8 +1278,10 @@ describe("the value-list editors and the Form editor on the unit (Slice #37.37)"
 
   it("every value list shares one card width — the widest list's table, „Roluri Persoană”", () => {
     const src = code(read(...DIR, "value-list-modal.tsx"));
-    expect(src).toMatch(/export const VALUE_LIST_CARD_UNITS = Math\.max\(\s*\.\.\.VALID_LIST_KEYS\.map\(\(k\) => dialogUnits\(columnsRem\(listColumns\(k\)\), CARD_PADDING_REM\)\),\s*\);/);
-    expect(src).toMatch(/style=\{dialogCardStyle\(VALUE_LIST_CARD_UNITS\)\}/);
+    // #39.75: through `valueListCardUnits`, one list's own card — what a tiled page gives each list.
+    expect(src).toMatch(/export const VALUE_LIST_CARD_UNITS = Math\.max\(\s*\.\.\.VALID_LIST_KEYS\.map\(\(k\) => valueListCardUnits\(k\)\),\s*\);/);
+    expect(src).toContain("return dialogUnits(columnsRem(listColumns(listKey)), CARD_PADDING_REM);");
+    expect(src).toMatch(/style=\{fill \? \{ width: "100%" \} : dialogCardStyle\(VALUE_LIST_CARD_UNITS\)\}/);
     // The boxes of its form at their steps, labels above.
     expect(src).toMatch(/\{\.\.\.screenBox\(formBox\(f\)\)\}/);
     expect(src).toMatch(/\{\.\.\.screenBox\("valueDescription"\)\}/);

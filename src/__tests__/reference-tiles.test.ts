@@ -9,8 +9,7 @@
 import fs from "fs";
 import path from "path";
 import { columnsRem, dialogUnits, unitsRem } from "@/lib/ui/field-widths";
-import { referenceScreen } from "@/app/admin/value-lists/_components/reference-tiles";
-import { typeUsesUnits } from "@/app/admin/value-lists/_components/property-type-uses";
+import { referenceScreen, typeUsesUnits } from "@/lib/admin/value-lists/reference-tiles";
 
 const read = (...p: string[]) => fs.readFileSync(path.join(process.cwd(), ...p), "utf8");
 const code = (s: string) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:"'`])\/\/.*$/gm, "$1");

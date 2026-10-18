@@ -68,7 +68,8 @@ describe("one line per row (#38.50)", () => {
     expect(MODAL).toContain("${pad} py-2 align-bottom");
     expect(MODAL).toContain('const pad = COMPACT_LISTS.has(listKey) ? "px-2" : "px-4";');
     // #38.50: `<div className="w-fit max-w-full" data-value-list-frame="">`; #38.78 measures it (`columnRef`).
-    expect(MODAL).toContain('<div ref={columnRef} className="w-fit max-w-full" data-value-list-frame="">');
+    // #39.75: centred in a tile (`fill`).
+    expect(MODAL).toContain('<div ref={columnRef} className={fill ? "mx-auto w-fit max-w-full" : "w-fit max-w-full"} data-value-list-frame="">');
     expect(MODAL).toContain('fixedTable(columns, "text-sm min-w-full")');
   });
 });
@@ -177,7 +178,8 @@ describe("„Roluri Persoane” without a horizontal scroll bar at 1366 px (#38.
   it("reads the description in the name's tooltip, in the body's face, not in a column", () => {
     const description = LIST_META["person-roles"].fields.find((f) => f.key === "description");
     expect(description).toMatchObject({ nameTip: true, multiline: true });
-    expect(MODAL).toContain('const COMPACT_LISTS: ReadonlySet<ListKey> = new Set(["person-roles"]);');
+    // #39.75: „Categorii Folosință" too, so its tile is three units.
+    expect(MODAL).toContain('const COMPACT_LISTS: ReadonlySet<ListKey> = new Set(["person-roles", "use-categories"]);');
     expect(MODAL).toContain('"person-roles": { validForProperty: "valueRoleFlag", validForPerson: "valueRoleFlag" },');
   });
 });

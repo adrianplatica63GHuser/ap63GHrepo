@@ -131,7 +131,8 @@ test.describe("TC-VL-11 — tipurile de proprietate și folosințele", () => {
       // Step 9 — #39.75: tiles. At 1920 the types (5 units) and the uses (3) side by side, the grid (5) under the
       // types; each list with the same gap either side; „Implicit" above. At 1366 the three one under another.
       const tileOf = (k: string) => page.locator(`[data-tile="${k}"]`);
-      const at = async () =>
+      type TileAt = { x: number; y: number; w: number; units: number; left: number; right: number };
+      const at = async (): Promise<Record<string, TileAt>> =>
         page.evaluate(() =>
           Object.fromEntries(
             [...document.querySelectorAll<HTMLElement>("[data-reference-tiles] [data-tile]")].map((t) => {

@@ -151,8 +151,10 @@ describe("the page", () => {
     expect(panel).toContain('role="region"');
     expect(panel).not.toContain("aria-modal");
     expect(panel).not.toMatch(/fixed inset/);
-    // #39.66: one panel per list on the page, each keyed on its own list (was `key={selected}`).
-    expect(hub).toContain("{listsOnPage(selected).map((key) => (\n              <ValueListModal\n                key={key}");
+    // #39.66: one panel per list on the page, each keyed on its own list (was `key={selected}`). #39.75: through
+    // `listCard`, as a tile on a tiled page (`ReferenceTiles`) — the panels were `listsOnPage(selected).map(…)` inline.
+    expect(hub).toContain("const listCard = (key: ListKey, fill: boolean) => (\n    <ValueListModal\n      key={key}");
+    expect(hub).toContain("listsOnPage(selected).map((key) => listCard(key, false))");
   });
 
   it("moves between the lists with ↑ ↓ Home End", () => {

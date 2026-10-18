@@ -21,7 +21,7 @@ import type { ReactNode } from "react";
 import { TileUnitRow } from "@/components/screen/tile-unit-row";
 import { TilePositionsReset } from "@/components/screen/tile-positions-reset";
 import { unitStyle } from "@/lib/ui/field-widths";
-import type { ScreenTiles } from "@/lib/ui/screen-tiles";
+import { referenceScreen } from "@/lib/admin/value-lists/reference-tiles";
 
 export interface ReferenceTile {
   /** The tile's `data-tile`, the name its dragged place is kept under. */
@@ -29,17 +29,6 @@ export interface ReferenceTile {
   /** Its width in whole units. */
   units: number;
   node: ReactNode;
-}
-
-/** The page's screen: its key, its tiles in reading order, the widest, and the first two tiles across. */
-export function referenceScreen(page: string, tiles: readonly Pick<ReferenceTile, "key" | "units">[]): ScreenTiles {
-  const widest = Math.max(...tiles.map((t) => t.units));
-  return {
-    entity: `reference-${page}`,
-    tiles: tiles.map((t) => t.key),
-    units: widest,
-    flowUnits: tiles.length > 1 ? tiles[0].units + tiles[1].units : widest,
-  };
 }
 
 export function ReferenceTiles({ page, tiles }: { page: string; tiles: readonly ReferenceTile[] }) {
