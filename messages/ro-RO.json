@@ -1305,7 +1305,8 @@
       "name": "Denumire",
       "nickname": "Poreclă",
       "cui": "CUI",
-      "id": "ID"
+      "id": "ID",
+      "locality": "Localitate"
     },
     "groupsFilterLabel": "Grupuri",
     "groupsFilterAll": "Toate grupurile",

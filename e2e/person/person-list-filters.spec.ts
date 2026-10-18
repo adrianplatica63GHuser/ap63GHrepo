@@ -1,16 +1,18 @@
 /**
- * Case:   TC-PERS-12 — Lista persoanelor fizice filtrată după „Tip profesional” și „Decedat”
- * Source: docs/testing/cases/TC-PERS-12.md, „Last green" 2026-10-16 (Slice #39.62)
+ * Case:   TC-PERS-12 — Lista persoanelor fizice filtrată după „Tip profesional” și „Data decesului”
+ * Source: docs/testing/cases/TC-PERS-12.md, „Last green" 2026-10-16 (Slice #39.62), rewritten for the column filters (#39.82)
  *
  * A translation of the case file, step for step. Every Romanian string below is quoted from it verbatim.
  *
  * Divergences from the hand run, each for a reason the case cannot have:
  *   - The persons carry `TC-E2E-PERS-12` (records.ts); T1 and T2 are read from the value list the persons were
  *     given their ids from. A row is read by its name cell, the „†" left out.
+ *   - Step 3 fills the date box as a browser does — `2020-01-01`; the box shows it as the locale writes it.
  */
 
 import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createNaturalPerson, removeLeftovers, removeRecord } from "../helpers/records";
+import { expectUnder } from "../helpers/filter-editor";
 
 const MARK = `${E2E_MARKER}PERS-12`;
 
@@ -21,7 +23,7 @@ async function firstTwo(page: Page, list: string): Promise<{ id: string; name: s
 }
 
 test.describe("TC-PERS-12 — filtrele listei persoanelor fizice", () => {
-  test("„Tip profesional” și „Decedat”: numărul de lângă fiecare valoare, adresa, „Șterge filtrele”", async ({ page }) => {
+  test("„Tip profesional” și „Data decesului”: numărul de lângă fiecare valoare, adresa, „Șterge filtrele”", async ({ page }) => {
     test.slow();
     await removeLeftovers(page.request, MARK);
     await page.setViewportSize({ width: 1366, height: 900 });
@@ -44,25 +46,32 @@ test.describe("TC-PERS-12 — filtrele listei persoanelor fizice", () => {
       await page.goto(`/natural-persons?q=${MARK}`);
       await shows("A", "B", "C");
 
-      // Step 2 — „Tip profesional": T1 with 2, T2 with 1; T1 ticked: A and B.
-      await main.locator("[data-filter-add]").selectOption("professionalType");
+      // Step 2 — „Tip profesional" and „Data decesului" ticked in „Câmpuri afișate"; the funnel under „Tip profesional":
+      // T1 with 2, T2 with 1; T1 ticked: A and B.
+      await main.getByRole("button", { name: "Câmpuri afișate 0/4", exact: true }).click();
+      const picker = main.locator("[data-field-chooser]");
+      await picker.getByRole("checkbox", { name: "Tip profesional" }).check();
+      await picker.getByRole("checkbox", { name: "Data decesului" }).check();
+      await page.getByRole("heading", { level: 1 }).first().click();
+      await main.getByRole("button", { name: "Filtrează după „Tip profesional”", exact: true }).click();
+      await expectUnder(page, '[data-filter-funnel="professionalType"]', '[data-filter-editor="professionalType"]');
       await expect(value(t1.name).locator("[data-filter-count]")).toHaveText("2", { timeout: 15_000 });
       await expect(value(t2.name).locator("[data-filter-count]")).toHaveText("1");
       await value(t1.name).locator("input").check();
       await shows("A", "B");
 
-      // Step 3 — „Decedat": „Toți", „În viață", „Decedați"; „În viață": A.
-      await main.locator("[data-filter-add]").selectOption("deceased");
-      const choice = main.locator("[data-filter-choice] label");
-      await expect(choice).toHaveText(["Toți", "În viață", "Decedați"]);
-      await choice.filter({ hasText: "În viață" }).locator("input").check();
-      await shows("A");
-      await expect.poll(() => new URL(page.url()).searchParams.get("deceased")).toBe("alive");
+      // Step 3 — the funnel under „Data decesului", „De la" 01.01.2020: B; the address carries it.
+      await main.getByRole("button", { name: "Filtrează după „Data decesului”", exact: true }).click();
+      await expectUnder(page, '[data-filter-funnel="dateOfDeath"]', '[data-filter-editor="dateOfDeath"]');
+      await main.locator("[data-filter-from]").fill("2020-01-01");
+      await shows("B");
+      await expect.poll(() => new URL(page.url()).searchParams.get("dateOfDeath")).toBe("2020-01-01..");
 
-      // Step 4 — a reload: A and the two chips.
+      // Step 4 — a reload: B and the two chips; no „+ Filtru".
       await page.reload();
-      await shows("A");
-      await expect(main.locator("[data-filter-chip]")).toHaveText([`Tip profesional ${t1.name}`, "Decedat În viață"], { timeout: 15_000 });
+      await shows("B");
+      await expect(main.locator("[data-filter-chip]")).toHaveText(["Data decesului din 01.01.2020", `Tip profesional ${t1.name}`], { timeout: 15_000 });
+      await expect(main.locator("[data-filter-add]")).toHaveCount(0);
 
       // Step 5 — „Șterge filtrele": the three, the search alone in the address.
       await main.getByRole("button", { name: "Șterge filtrele", exact: true }).click();

@@ -1,4 +1,4 @@
-# TC-PERS-12 — Lista persoanelor fizice filtrată după „Tip profesional” și „Decedat”: numărul de lângă fiecare valoare, adresa, „Șterge filtrele”
+# TC-PERS-12 — Lista persoanelor fizice filtrată după „Tip profesional” și „Data decesului”: numărul de lângă fiecare valoare, adresa, „Șterge filtrele”
 
 | | |
 |---|---|
@@ -10,9 +10,9 @@
 
 ## What this proves
 
-„Persoane Fizice" filters with the 39.61 bar (Slice #39.62): „Tip profesional" is a checklist with each value's count,
-counted with the search and the other filters, and „Decedat" a choice of „Toți", „În viață" and „Decedați". The two AND
-together. The filters live in the address, survive a reload, and „Șterge filtrele" takes them off.
+„Persoane Fizice" filters with the 39.61 bar (Slice #39.62), by its columns since #39.82: a filter opens from the funnel
+under its column's name, right under it. „Tip profesional" is a checklist with each value's count, counted with the
+search and the other filters, and „Data decesului" a from / to. The two AND together. The filters live in the address, survive a reload, and „Șterge filtrele" takes them off.
 
 ## Before you start
 
@@ -36,14 +36,14 @@ Nothing.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Opens „Persoane Fizice" with `TC-PERS-12` in the search | A, B (with its „†") and C |
-| 2 | Chooses „Tip profesional" from „+ Filtru"; ticks T1 | T1 with 2, T2 with 1; after the tick, A and B |
-| 3 | Chooses „Decedat" from „+ Filtru"; chooses „În viață" | „Toți", „În viață", „Decedați"; after the choice, A alone; the address carries `deceased=alive` |
-| 4 | Reloads the page | A alone; the chips „Tip profesional T1" and „Decedat În viață" |
+| 2 | Ticks „Tip profesional" and „Data decesului" in „Câmpuri afișate"; presses the funnel beside „Tip profesional"; ticks T1 | The filter opens right under the funnel; T1 with 2, T2 with 1; after the tick, A and B |
+| 3 | Presses the funnel beside „Data decesului"; at „De la" writes 01.01.2020 | The filter opens right under that funnel; after the date, B alone; the address carries `dateOfDeath=2020-01-01..` |
+| 4 | Reloads the page | B alone; the chips „Data decesului din 01.01.2020" and „Tip profesional T1", in the columns' order; no „+ Filtru" |
 | 5 | Presses „Șterge filtrele" | A, B and C; the address keeps the search and no filter |
 
 ## At the end — leaving things as they were found
 
-Delete the three persons.
+Delete the three persons. Untick „Tip profesional" and „Data decesului" in „Câmpuri afișate".
 
 ## Notes from the runs
 
@@ -57,3 +57,8 @@ address `?q=TC-E2E-PERS-12`. This file was written from it.
 
 **2026-10-16 — `automated` (Slice #39.62).** The test runner's targeted run 20261017T035354Z-9515 on e0c28b0 ran its
 spec green, with the person and property lists' other specs (lint, tsc and jest green too).
+
+**2026-10-18 — steps 2 to 4 rewritten for #39.82.** „Decedat" is no longer a filter (Adrian's list of 2026-10-18 names
+the columns that filter, and it is not among them — „Decedat" is the „†" after the name, not a column). Step 3 now
+filters „Data decesului" from 01.01.2020, which B alone passes. A filter opens from its column's funnel, right under
+it. Not yet driven by hand: the spec, rewritten with it, is what checks it.

@@ -6,13 +6,15 @@
 import { PgDialect } from "drizzle-orm/pg-core";
 import { and } from "drizzle-orm";
 import {
+  JUDICIAL_PERSON_COLUMN_FILTERS,
   JUDICIAL_PERSON_FILTER_FIELDS,
+  NATURAL_PERSON_COLUMN_FILTERS,
   NATURAL_PERSON_FILTER_FIELDS,
   isPersonFacetField,
   parsePersonFilters,
   personFacetFields,
 } from "@/lib/persons/list-filters";
-import { personFacetSql, personFilterConditions } from "@/lib/persons/list-filter-sql";
+import { headOfficeLocality, personFacetSql, personFilterConditions } from "@/lib/persons/list-filter-sql";
 import { NONE_VALUE, type FilterState } from "@/lib/list/filter-bar";
 import type { PersonListKind } from "@/lib/persons/list-filters";
 
@@ -21,33 +23,44 @@ const dialect = new PgDialect();
 const render = (kind: PersonListKind, f: FilterState) => dialect.sqlToQuery(and(...personFilterConditions(kind, f))!);
 
 describe("the fields", () => {
-  // Slice #39.70: „Relația cu firma" after „Tip profesional" — was the four named, without `relationship`.
-  it("natural persons: the five named, then every optional column", () => {
-    expect(NATURAL_PERSON_FILTER_FIELDS.map((f) => f.key)).toEqual([
-      "professionalType", "relationship", "documentRole", "locality", "deceased", "gender", "age", "dateOfBirth", "dateOfDeath", "cnp", "placeOfBirth",
+  // Slice #39.82: Adrian's columns, in the chooser's order — was #39.62's named fields then every optional column.
+  it("natural persons: Adrian's seven columns (#39.82), Locul nașterii a checklist", () => {
+    expect(NATURAL_PERSON_FILTER_FIELDS.map((f) => `${f.key}:${f.kind}`)).toEqual([
+      "dateOfBirth:dates", "age:range", "gender:values", "dateOfDeath:dates", "placeOfBirth:values", "professionalType:values", "relationship:values",
     ]);
-    expect(personFacetFields("NATURAL")).toEqual(["professionalType", "relationship", "documentRole", "locality", "gender"]);
+    expect(personFacetFields("NATURAL")).toEqual(["gender", "placeOfBirth", "professionalType", "relationship"]);
   });
-  it("juridical persons: the three named, then every optional column", () => {
-    expect(JUDICIAL_PERSON_FILTER_FIELDS.map((f) => f.key)).toEqual([
-      "judicialPersonType", "documentRole", "locality", "cuiNumber", "tradeRegisterNumber", "contactPerson",
-    ]);
+  it("juridical persons: Tip and Localitate (#39.82)", () => {
+    expect(JUDICIAL_PERSON_FILTER_FIELDS.map((f) => `${f.key}:${f.kind}`)).toEqual(["judicialPersonType:values", "locality:values"]);
     expect(isPersonFacetField("JUDICIAL", "judicialPersonType")).toBe(true);
     expect(isPersonFacetField("JUDICIAL", "gender")).toBe(false);
+  });
+  it("each filter has its column, and only those columns show a funnel (#39.82)", () => {
+    expect(NATURAL_PERSON_COLUMN_FILTERS).toEqual({
+      dateOfBirth: "dateOfBirth", age: "age", gender: "gender", dateOfDeath: "dateOfDeath",
+      placeOfBirth: "placeOfBirth", professionalType: "professionalType", relationships: "relationship",
+    });
+    expect(Object.values(NATURAL_PERSON_COLUMN_FILTERS)).toEqual(NATURAL_PERSON_FILTER_FIELDS.map((f) => f.key));
+    expect(Object.values(JUDICIAL_PERSON_COLUMN_FILTERS)).toEqual(JUDICIAL_PERSON_FILTER_FIELDS.map((f) => f.key));
   });
 });
 
 describe("parsePersonFilters", () => {
   it("keeps uuids, genders and „(necompletat)”; drops the rest and the other list's keys", () => {
-    const f = parsePersonFilters("NATURAL", new URLSearchParams(`professionalType=${U1},nope&gender=MALE,X,${NONE_VALUE}&judicialPersonType=${U1}&deceased=deceased`));
+    const f = parsePersonFilters("NATURAL", new URLSearchParams(`professionalType=${U1},nope&gender=MALE,X,${NONE_VALUE}&judicialPersonType=${U1}`));
     expect(f).toEqual({
       professionalType: { kind: "values", ids: [U1] },
       gender: { kind: "values", ids: ["MALE", NONE_VALUE] },
-      deceased: { kind: "choice", value: "deceased" },
     });
   });
-  it("„Decedat” takes only alive or deceased; anything else is „toți”", () => {
-    expect(parsePersonFilters("NATURAL", new URLSearchParams("deceased=maybe"))).toEqual({});
+  it("a retired key opens the list without it (#39.82's Ask first 4)", () => {
+    expect(parsePersonFilters("NATURAL", new URLSearchParams(`deceased=deceased&cnp=1&documentRole=${U1}&locality=Bragadiru`))).toEqual({});
+    expect(parsePersonFilters("JUDICIAL", new URLSearchParams("cuiNumber=1&tradeRegisterNumber=J&contactPerson=Pop"))).toEqual({});
+  });
+  it("„Locul nașterii” is a checklist of places, kept as typed (#39.82's Ask first 2)", () => {
+    expect(parsePersonFilters("NATURAL", new URLSearchParams("placeOfBirth=Bucure%C8%99ti,Ploie%C8%99ti"))).toEqual({
+      placeOfBirth: { kind: "values", ids: ["București", "Ploiești"] },
+    });
   });
   it("dates are read as real calendar dates", () => {
     expect(parsePersonFilters("NATURAL", new URLSearchParams("dateOfBirth=1970-02-30..1980-01-01"))).toEqual({
@@ -57,27 +70,20 @@ describe("parsePersonFilters", () => {
 });
 
 describe("the SQL", () => {
-  it("„Rol în documente” holds on at least one document (Ask first 1); „(necompletat)” on none", () => {
-    const q = render("NATURAL", { documentRole: { kind: "values", ids: [U1, NONE_VALUE] } });
-    expect(q.sql).toMatch(/^\(EXISTS \(/);
-    expect(q.sql).toContain('pd_f.person_id = "person"."id"');
-    expect(q.sql).toContain("pd_f.person_role_id = ANY(ARRAY[$1]::uuid[])");
-    expect(q.sql).toContain("pd_n.person_role_id IS NOT NULL");
-    expect(q.params).toEqual([U1]);
-  });
-  it("„Localitate” is the HOME address for a natural person, the HEADQUARTERS for a juridical one (Ask first 3)", () => {
-    const n = render("NATURAL", { locality: { kind: "values", ids: ["Bragadiru"] } });
-    expect(n.sql).toContain("a_f.kind = $1");
-    expect(n.params).toEqual(["HOME", "Bragadiru"]);
+  it("„Localitate” on the juridical list is the HEADQUARTERS address — the column's own subquery (#39.82)", () => {
     const j = render("JUDICIAL", { locality: { kind: "values", ids: ["Bragadiru"] } });
+    expect(j.sql).toContain("a_f.kind = $1");
     expect(j.params).toEqual(["HEADQUARTERS", "Bragadiru"]);
+    expect(j.sql).toContain(dialect.sqlToQuery(headOfficeLocality()).sql);
+    // The home locality left the natural persons' list with #39.82.
+    expect(personFilterConditions("NATURAL", { locality: { kind: "values", ids: ["Bragadiru"] } })).toEqual([]);
   });
-  it("„Decedat” is the flag, a missing flag counted as alive (Ask first 2)", () => {
-    expect(render("NATURAL", { deceased: { kind: "choice", value: "deceased" } })).toMatchObject({
-      sql: 'coalesce("natural_person"."is_deceased", false) = $1',
-      params: [true],
-    });
-    expect(render("NATURAL", { deceased: { kind: "choice", value: "alive" } }).params).toEqual([false]);
+  it("„Locul nașterii” is IN the places, trimmed, OR empty with „(necompletat)”", () => {
+    const q = render("NATURAL", { placeOfBirth: { kind: "values", ids: ["București", NONE_VALUE] } });
+    expect(q.sql).toBe(`(nullif(trim("natural_person"."place_of_birth"), '') in ($1) or nullif(trim("natural_person"."place_of_birth"), '') IS NULL)`);
+    expect(q.params).toEqual(["București"]);
+    const facet = dialect.sqlToQuery(personFacetSql("NATURAL", "placeOfBirth", undefined)!);
+    expect(facet.sql).toContain(`nullif(trim("natural_person"."place_of_birth"), '') AS id`);
   });
   it("„Vârstă” is the age the list shows: at death for the deceased, none for a deceased person with no date", () => {
     const q = render("NATURAL", { age: { kind: "range", from: 30, to: 50 } });
@@ -91,13 +97,11 @@ describe("the SQL", () => {
       params: ["2020-01-01"],
     });
   });
-  it("„Persoană de contact” is either contact whose name contains the text", () => {
-    const q = render("JUDICIAL", { contactPerson: { kind: "text", text: "Pop" } });
-    expect(q.sql).toContain('c_f.id IN ("judicial_person"."contact_person_1_id", "judicial_person"."contact_person_2_id")');
-    expect(q.params).toEqual(["%Pop%"]);
-  });
   it("a natural-person field on the juridical list adds nothing", () => {
     expect(personFilterConditions("JUDICIAL", { cnp: { kind: "text", text: "1" }, gender: { kind: "values", ids: ["MALE"] } })).toEqual([]);
+    // Slice #39.82: the retired fields add nothing on either list.
+    expect(personFilterConditions("NATURAL", { deceased: { kind: "choice", value: "deceased" }, documentRole: { kind: "values", ids: [U1] } })).toEqual([]);
+    expect(personFilterConditions("JUDICIAL", { contactPerson: { kind: "text", text: "Pop" } })).toEqual([]);
   });
   it("„Relația cu firma” holds on any one ticked (Slice #39.70); „(necompletat)” on a person with none", () => {
     const q = render("NATURAL", { relationship: { kind: "values", ids: [U1, NONE_VALUE] } });
@@ -112,11 +116,12 @@ describe("the SQL", () => {
     expect(facet.sql).toContain("UNION ALL");
   });
   it("a facet query keeps to its kind of person and counts persons, not links", () => {
-    const q = dialect.sqlToQuery(personFacetSql("NATURAL", "documentRole", undefined)!);
+    const q = dialect.sqlToQuery(personFacetSql("NATURAL", "relationship", undefined)!);
     expect(q.sql).toContain('"person"."type" = $1');
     expect(q.sql).toContain('count(DISTINCT "person"."id")');
     expect(q.sql).toContain("UNION ALL");
     expect(q.params[0]).toBe("NATURAL");
     expect(personFacetSql("JUDICIAL", "gender", undefined)).toBeNull();
+    expect(personFacetSql("NATURAL", "documentRole", undefined)).toBeNull();
   });
 });

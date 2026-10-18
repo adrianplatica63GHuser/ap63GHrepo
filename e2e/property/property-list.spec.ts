@@ -55,9 +55,9 @@ test.describe("TC-PROP-06 — lista proprietăților", () => {
       await expect(search).toBeVisible({ timeout: 30_000 });
       // #38.02: nothing stored in this browser, so the list's default — Tip proprietate.
       await expect(main.getByRole("button", { name: "Câmpuri afișate 1/4", exact: true })).toBeVisible();
-      // #39.61: the filter bar's „+ Filtru" is the list's one select. It read `toHaveCount(0)` — „no filters" — until then.
-      await expect(main.locator("select")).toHaveCount(1);
-      await expect(main.locator("select option").first()).toHaveText("+ Filtru");
+      // #39.82: no select on the list again — „+ Filtru" is gone, a filter opens from its column's funnel. #39.61 had
+      // „one select, „+ Filtru"", and before it `toHaveCount(0)`.
+      await expect(main.locator("select")).toHaveCount(0);
       await expect(main.getByText(/Importanță|Relevanță/)).toHaveCount(0);
 
       // Step 2 — one row; „PORECLĂ" the first header after the tick box; no „Cod"; no system ID.

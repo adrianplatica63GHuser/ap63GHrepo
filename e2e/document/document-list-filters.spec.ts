@@ -1,6 +1,6 @@
 /**
  * Case:   TC-DOC-27 — Lista actelor filtrată cu bara de filtre peste „Tip document” și „Câmp specific”
- * Source: docs/testing/cases/TC-DOC-27.md, „Last green" 2026-10-17 (Slice #39.63)
+ * Source: docs/testing/cases/TC-DOC-27.md, „Last green" 2026-10-17 (Slice #39.63), step 4 rewritten for the column filters (#39.82)
  *
  * A translation of the case file, step for step. Every Romanian string below is quoted from it verbatim.
  *
@@ -12,6 +12,7 @@
 
 import { test, expect } from "../helpers/test";
 import { E2E_MARKER, createDocumentOfType, removeLeftovers, removeRecord } from "../helpers/records";
+import { expectUnder } from "../helpers/filter-editor";
 
 const MARK = `${E2E_MARKER}DOC-27`;
 
@@ -69,8 +70,13 @@ test.describe("TC-DOC-27 — filtrele listei actelor", () => {
       await value.selectOption({ label: (await paid.textContent())! });
       await shows("A", "B");
 
-      // Step 4 — „Data" from „+ Filtru", „De la" 01.01.2026: A; the address carries it beside the type and the field.
-      await main.locator("[data-filter-add]").selectOption("dateDocument");
+      // Step 4 — „Data" ticked in „Câmpuri afișate"; the funnel under it, „De la" 01.01.2026: A; the address carries it
+      // beside the type and the field.
+      await main.getByRole("button", { name: "Câmpuri afișate 0/4", exact: true }).click();
+      await main.locator("[data-field-chooser]").getByRole("checkbox", { name: "Data", exact: true }).check();
+      await page.getByRole("heading", { level: 1 }).first().click();
+      await main.getByRole("button", { name: "Filtrează după „Data”", exact: true }).click();
+      await expectUnder(page, '[data-filter-funnel="dateDocument"]', '[data-filter-editor="dateDocument"]');
       await main.locator("[data-filter-from]").fill("2026-01-01");
       await shows("A");
       await expect.poll(() => params().get("dateDocument")).toBe("2026-01-01..");

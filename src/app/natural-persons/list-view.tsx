@@ -22,7 +22,7 @@ import { FieldChooser, useFieldChooser, type ChooserField } from "@/components/l
 import { LIST_COLUMN_CHOICE } from "@/lib/ui/list-columns";
 import { FilterBar, FilterFunnel, type FilterBarField } from "@/components/list/filter-bar";
 import { appendFilterParams, filterAddressPatch, filterSignature, type FacetValue, type FilterState } from "@/lib/list/filter-bar";
-import { NATURAL_PERSON_FILTER_FIELDS, parsePersonFilters, personFilterKeys } from "@/lib/persons/list-filters";
+import { NATURAL_PERSON_COLUMN_FILTERS, NATURAL_PERSON_FILTER_FIELDS, parsePersonFilters, personFilterKeys } from "@/lib/persons/list-filters";
 import { dmyFromIso, personAgeText } from "@/lib/persons/person-age";
 import { DeceasedMark } from "@/components/persons/deceased-mark";
 
@@ -294,29 +294,15 @@ export function NaturalPersonListView() {
   const shownCols = chooser.visible.flatMap((key) => optionalCols.filter((c) => c.key === key));
   // Slice #38.57: the list's own columns, one line each.
   const columns: ColumnName[] = ["listSelectPerson", "listPersonName", "listPersonNickname", ...shownCols.map((c) => c.column), "listRowActions"];
-  // Slice #39.62: the bar's fields, labelled as the form and the columns label them, in the „+ Filtru" order.
-  const filterLabels: Record<string, string> = {
-    professionalType: t("fields.physicalPersonTypeId"),
-    relationship:     t("fields.relationships"),
-    documentRole:     t("filters.documentRole"),
-    locality:         t("filters.locality"),
-    deceased:         t("fields.isDeceased"),
-    gender:           t("fields.gender"),
-    age:              t("fields.age"),
-    dateOfBirth:      t("fields.dateOfBirth"),
-    dateOfDeath:      t("fields.dateOfDeath"),
-    cnp:              t("fields.cnp"),
-    placeOfBirth:     t("fields.placeOfBirth"),
-  };
+  // Slice #39.82: the bar's fields are the columns that filter (`NATURAL_PERSON_COLUMN_FILTERS`), each named as its
+  // column is in „Câmpuri afișate" — so a chip reads as the column it filters, shown or not.
   const filterFields: FilterBarField[] = NATURAL_PERSON_FILTER_FIELDS.map((f) => ({
     key: f.key,
     kind: f.kind,
-    label: filterLabels[f.key],
-    ...(f.key === "deceased"
-      ? { choices: [{ value: "alive", label: t("filters.alive") }, { value: "deceased", label: t("filters.deceased") }], allLabel: t("filters.all") }
-      : {}),
+    label: optionalCols.find((c) => NATURAL_PERSON_COLUMN_FILTERS[c.key] === f.key)?.label ?? f.key,
     ...(f.key === "gender" ? { valueLabel: (id: string) => (id === "MALE" ? t("options.gender.MALE") : id === "FEMALE" ? t("options.gender.FEMALE") : id) } : {}),
   }));
+  const filterLabel = (key: string) => filterFields.find((f) => f.key === key)?.label ?? key;
 
   // Slice #37.84: the toolbar's group ends at the table frame's right edge, not the window's.
   const edge = useListEdge(columns);
@@ -412,15 +398,18 @@ export function NaturalPersonListView() {
                 </th>
                 <th className="px-4 py-2" {...columnHead("listPersonName")}>{t("table.name")}</th>
                 <th className="px-4 py-2" {...columnHead("listPersonNickname")}>{t("table.nickname")}</th>
-                {shownCols.map((col) => (
-                  <th key={col.key} className="px-4 py-2" {...columnHead(col.column)}>
-                    {col.label}
-                    {/* Slice #39.62: every optional column is a filter; its funnel opens it in the bar. */}
-                    {filterLabels[col.key] && (
-                      <FilterFunnel label={filterLabels[col.key]} active={filters[col.key] !== undefined} onOpen={() => setEditingFilter(col.key)} />
-                    )}
-                  </th>
-                ))}
+                {shownCols.map((col) => {
+                  const filterKey = NATURAL_PERSON_COLUMN_FILTERS[col.key];
+                  return (
+                    <th key={col.key} className="px-4 py-2" {...columnHead(col.column)}>
+                      {col.label}
+                      {/* Slice #39.82: a funnel only on the columns that filter; it opens the filter under itself. */}
+                      {filterKey && (
+                        <FilterFunnel field={filterKey} label={filterLabel(filterKey)} active={filters[filterKey] !== undefined} onOpen={() => setEditingFilter(filterKey)} />
+                      )}
+                    </th>
+                  );
+                })}
                 <th className="px-4 py-2" {...columnHead("listRowActions")} />
               </tr>
             </thead>

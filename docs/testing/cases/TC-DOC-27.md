@@ -39,13 +39,13 @@ Nothing.
 | 1 | Opens „Acte" with `TC-DOC-27` in the search | A, B, C and D |
 | 2 | Opens „Tip document", unticks „Toate tipurile", ticks only „Contract de Vânzare" | A, B and C |
 | 3 | At „Câmp specific:" chooses „Stare plată", then „Achitat integral" | A and B |
-| 4 | Chooses „Data" from „+ Filtru"; at „De la" writes 01.01.2026 | A alone; the address carries `dateDocument=2026-01-01..` beside the type and the field |
+| 4 | Ticks „Data" in „Câmpuri afișate"; presses the funnel beside it; at „De la" writes 01.01.2026 | The filter opens right under the funnel (#39.82); after the date, A alone; the address carries `dateDocument=2026-01-01..` beside the type and the field |
 | 5 | Reloads the page | A alone; the chip „Data din 01.01.2026"; the type and the field as they were |
 | 6 | Presses „Șterge filtrele" | A and B; the address keeps the search, the type and the field, and no `dateDocument` |
 
 ## At the end — leaving things as they were found
 
-Delete the four documents.
+Delete the four documents. Untick „Data" in „Câmpuri afișate".
 
 ## Notes from the runs
 
@@ -66,3 +66,6 @@ deleted (204 ×4). `e2e/document/document-list-filters.spec.ts` translates it.
 spec green, with the Acte list's other specs, the list-layout specs, lint, tsc and 21 jest suites; 20261017T044339Z-16610
 on the same commit ran the other 20 suites that read the list. That commit also made „Tip document:" and „Câmp
 specific:" the filter bar's first, fixed chips; this case names no place for them, so nothing in it changed.
+
+**2026-10-18 — step 4 rewritten for #39.82.** „+ Filtru" is gone: „Data" is filtered from the funnel under its column,
+which opens the filter right under itself. Not yet driven by hand: the spec, rewritten with it, is what checks it.

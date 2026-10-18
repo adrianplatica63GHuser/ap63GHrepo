@@ -35,7 +35,7 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „Proprietăți" | The search box („caută după cod, poreclă, nr. cadastru, carte funciară, tarla sau parcelă") and „Câmpuri afișate 1/4" — the choice set aside, the list's default, Tip proprietate (#37.94, #38.02); the filter bar's „+ Filtru", the list's one `<select>` (#39.61); no „Importanță" or „Relevanță" anywhere on the list |
+| 1 | Opens „Proprietăți" | The search box („caută după cod, poreclă, nr. cadastru, carte funciară, tarla sau parcelă") and „Câmpuri afișate 1/4" — the choice set aside, the list's default, Tip proprietate (#37.94, #38.02); no `<select>` on the list — „+ Filtru" is gone since #39.82, a filter opens from its column's funnel; no „Importanță" or „Relevanță" anywhere on the list |
 | 2 | Types `TC-PROP-06` into the search | One row, `TC-PROP-06 Teren de test`; the first header after the tick box is „PORECLĂ", then „TIP PROPRIETATE" — no „Cod" — and no system ID in the table |
 | 3 | Presses „Câmpuri afișate" | Tarla/Solă, Parcelă, Oficială (m²), Calculată (m²), Nr. CF, Nr. cadastru, Categorie de folosință, Tip proprietate, Localitate — and no Poreclă, Note, Importanță, Relevanță or Proveniență |
 | 4 | Unticks every ticked field | „Câmpuri afișate 0/4"; between the tick box and the buttons one header, „PORECLĂ", and the row still reads `TC-PROP-06 Teren de test` |
@@ -109,3 +109,6 @@ PROPRIETATE. Steps 3–5 are unchanged: step 4 unticks it with the rest. The spe
 `<select>` on the list" became „one `<select>`, „+ Filtru"". Read in the browser pane on localhost:3000 the same day:
 one select whose first option is „+ Filtru", and no „Importanță" or „Relevanță" in the list's text. The rest of
 the case is unchanged. The bar's fields are TC-PROP-14's, not this case's.
+
+**2026-10-18 — step 1 rewritten for #39.82.** „+ Filtru" left the list, so it holds no `<select>` again, as before
+#39.61/#39.62. The rest of the case is unchanged.

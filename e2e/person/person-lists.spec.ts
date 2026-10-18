@@ -79,9 +79,9 @@ test.describe("TC-PERS-04 — listele de persoane", () => {
       await page.goto("/natural-persons");
       const main = page.locator("main");
       await expect(main.getByPlaceholder("caută după cod, nume, email sau telefon")).toBeVisible({ timeout: 30_000 });
-      // #39.62: the filter bar's „+ Filtru" is the list's one select. It read `toHaveCount(0)` — „no filters" — until then.
-      await expect(main.locator("select")).toHaveCount(1);
-      await expect(main.locator("select option").first()).toHaveText("+ Filtru");
+      // #39.82: no select on the list again — „+ Filtru" is gone, a filter opens from its column's funnel. #39.62 had
+      // „one select, „+ Filtru"", and before it `toHaveCount(0)`.
+      await expect(main.locator("select")).toHaveCount(0);
       await expect(main.getByText("Importanță")).toHaveCount(0);
       await expect(main.getByText("Relevanță")).toHaveCount(0);
       const npChooser = main.getByRole("button", { name: "Câmpuri afișate 0/4", exact: true });

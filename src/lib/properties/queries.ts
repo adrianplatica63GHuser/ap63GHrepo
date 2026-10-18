@@ -19,7 +19,7 @@ import { cadastralKey, cadastralValue } from "./cadastral-identity";
 import { perSearchTerms } from "@/lib/search/per-terms";
 import { NONE_VALUE, withoutFilter, type FacetValue, type FilterState } from "@/lib/list/filter-bar";
 import { isTextFacetField, type PropertyFacetField } from "./list-filters";
-import { inGroups, propertyFilterConditions } from "./list-filter-sql";
+import { propertyFilterConditions } from "./list-filter-sql";
 import { textValue } from "@/lib/list/filter-sql";
 // Slice #34.32 — migration_083's fold, so the auto-seed adopts under the same
 // rule the index enforces. See `findFolded` in `resolveTarlaForCreate`.
@@ -487,7 +487,7 @@ export function propertySearchCondition(q: string | undefined): SQL | undefined 
 /**
  * The values a checklist offers, with how many properties of the list hold each — counted over the list with the
  * search and every OTHER filter applied (#39.61's Ask first 3), so the counts say what ticking a value would show.
- * „(necompletat)" is `_none`. A group is named by its code and its description. A value ticked in the field's own
+ * „(necompletat)" is `_none`. A value ticked in the field's own
  * filter that the list no longer holds comes back too, with a count of 0 and its name, so its chip can still say
  * what it is and it can still be unticked.
  */
@@ -503,25 +503,20 @@ export async function listPropertyFilterValues(
   return [...held, ...missing.map((id) => ({ id, label: named.get(id) ?? id, count: 0 }))];
 }
 
-/** The names of values no row of the list holds just now: a value list's entries by id, groups by code. */
+/** The names of values no row of the list holds just now: a value list's entries by id. */
 async function namePropertyFilterValues(field: PropertyFacetField, ids: readonly string[]): Promise<Map<string, string>> {
   const out = new Map<string, string>();
-  // Slice #39.61: by `isTextFacetField`, not the two names — this file quotes no snapshot key (object-writers-enumerated).
+  // Slice #39.61: by `isTextFacetField`, not the name — this file quotes no snapshot key (object-writers-enumerated).
   if (isTextFacetField(field)) {
     for (const id of ids) out.set(id, id);
     return out;
   }
-  if (field === "group") {
-    const rows = await db.select({ code: groups.code, description: groups.description }).from(groups).where(inArray(groups.code, [...ids]));
-    for (const r of rows) out.set(r.code, `${r.code} — ${r.description}`);
-    return out;
-  }
-  const table = field === "propertyType" ? lookupPropertyType : lookupUseCategory;
   if (field === "tarla") {
     const rows = await db.select({ id: lookupTarla.id, name: lookupTarla.indicativ }).from(lookupTarla).where(inArray(lookupTarla.id, [...ids]));
     for (const r of rows) out.set(r.id, r.name);
     return out;
   }
+  const table = field === "propertyType" ? lookupPropertyType : lookupUseCategory;
   const rows = await db.select({ id: table.id, name: table.name }).from(table).where(inArray(table.id, [...ids]));
   for (const r of rows) out.set(r.id, r.name);
   return out;
@@ -542,29 +537,11 @@ async function countPropertyFilterValues(
   const read = (rows: Row[]): FacetValue[] =>
     rows.map((r) => ({ id: r.id ?? NONE_VALUE, label: r.id === null ? null : r.label, count: Number(r.n) }));
 
-  if (field === "group") {
-    const [inGroup, none] = await Promise.all([
-      db.execute<Row>(sql`
-        SELECT g_fv.code AS id, g_fv.code || ' — ' || g_fv.description AS label, count(DISTINCT ${property.id})::int AS n
-        FROM ${from}
-        JOIN ${groupMember} gm_fv ON gm_fv.principal_object_id = ${property.principalObjectId}
-        JOIN ${groups} g_fv ON g_fv.id = gm_fv.group_id AND g_fv.target_type = 'PROPERTY'
-        ${whereSql}
-        GROUP BY g_fv.code, g_fv.description`),
-      db.execute<{ n: number }>(sql`
-        SELECT count(DISTINCT ${property.id})::int AS n FROM ${from}
-        ${where ? sql`WHERE ${where} AND ${inGroups([NONE_VALUE])}` : sql`WHERE ${inGroups([NONE_VALUE])}`}`),
-    ]);
-    const noneCount = Number(none.rows[0]?.n ?? 0);
-    return [...read(inGroup.rows), ...(noneCount > 0 ? [{ id: NONE_VALUE, label: null, count: noneCount }] : [])];
-  }
-
-  const pick: Record<Exclude<PropertyFacetField, "group">, { id: SQL; label: SQL }> = {
+  const pick: Record<PropertyFacetField, { id: SQL; label: SQL }> = {
     propertyType: { id: sql`${property.propertyTypeId}::text`, label: sql`${lookupPropertyType.name}` },
     useCategory:  { id: sql`${property.useCategoryId}::text`,  label: sql`${lookupUseCategory.name}` },
     tarla:        { id: sql`${property.tarlaId}::text`,        label: sql`${lookupTarla.indicativ}` },
     locality:     { id: textValue(propertyAddress.locality),   label: textValue(propertyAddress.locality) },
-    county:       { id: textValue(propertyAddress.county),     label: textValue(propertyAddress.county) },
   };
   const { id, label } = pick[field];
   const res = await db.execute<Row>(sql`

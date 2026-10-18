@@ -27,7 +27,7 @@ import {
   type FacetValue,
   type FilterState,
 } from "@/lib/list/filter-bar";
-import { PROPERTY_FILTER_FIELDS, PROPERTY_FILTER_KEYS, parsePropertyFilters, type PropertyFilterKey } from "@/lib/properties/list-filters";
+import { PROPERTY_COLUMN_FILTERS, PROPERTY_FILTER_FIELDS, PROPERTY_FILTER_KEYS, parsePropertyFilters } from "@/lib/properties/list-filters";
 
 const PAGE_SIZE = 15;
 // Slice #37.94: the key and the defaults (Tarla/Solă, Parcelă) are LIST_COLUMN_CHOICE.property.
@@ -97,19 +97,6 @@ async function fetchFilterValues(field: string, q: string, filters: FilterState)
   const body = (await res.json()) as { items?: FacetValue[] };
   return body.items ?? [];
 }
-
-/** Slice #39.61 — which column's funnel opens which filter. */
-const COLUMN_FILTER: Readonly<Record<string, PropertyFilterKey>> = {
-  tarlaSola:        "tarla",
-  parcela:          "parcela",
-  surfaceAreaMp:    "surfaceAreaMp",
-  calculatedAreaMp: "calculatedAreaMp",
-  carteFunciara:    "carteFunciara",
-  cadastralNumber:  "cadastralNumber",
-  useCategory:      "useCategory",
-  propertyType:     "propertyType",
-  locality:         "locality",
-};
 
 function formatArea(raw: string | null): string {
   if (raw == null) return "";
@@ -223,21 +210,14 @@ export function PropertyListView() {
   const shownCols = chooser.visible.flatMap((key) => optionalCols.filter((c) => c.key === key));
   // Slice #37.72: Poreclă always, the first after the checkbox. Slice #38.57: the list's own columns, one line each.
   const columns: ColumnName[] = ["listBadges", "listPropertyNickname", ...shownCols.map((c) => c.column), "listRowActions"];
-  // Slice #39.61: the bar's fields, labelled as the form and the columns label them, in the „+ Filtru" order.
-  const filterLabels: Record<PropertyFilterKey, string> = {
-    propertyType:     t("fields.propertyType"),
-    useCategory:      t("fields.useCategory"),
-    tarla:            t("table.tarlaSola"),
-    locality:         t("table.locality"),
-    county:           t("address.county"),
-    group:            t("filters.group"),
-    surfaceAreaMp:    t("fields.surfaceAreaMp"),
-    calculatedAreaMp: t("fields.calculatedAreaMp"),
-    cadastralNumber:  t("fields.cadastralNumber"),
-    carteFunciara:    t("fields.carteFunciara"),
-    parcela:          t("fields.parcela"),
-  };
-  const filterFields: FilterBarField[] = PROPERTY_FILTER_FIELDS.map((f) => ({ key: f.key, kind: f.kind, label: filterLabels[f.key] }));
+  // Slice #39.82: the bar's fields are the columns that filter (`PROPERTY_COLUMN_FILTERS`), each named as its column
+  // is in „Câmpuri afișate" — so a chip reads as the column it filters, shown or not.
+  const filterFields: FilterBarField[] = PROPERTY_FILTER_FIELDS.map((f) => ({
+    key: f.key,
+    kind: f.kind,
+    label: optionalCols.find((c) => PROPERTY_COLUMN_FILTERS[c.key] === f.key)?.label ?? f.key,
+  }));
+  const filterLabel = (key: string) => filterFields.find((f) => f.key === key)?.label ?? key;
 
   // Slice #37.84: the toolbar's group ends at the table frame's right edge, not the window's.
   const edge = useListEdge(columns);
@@ -312,8 +292,8 @@ export function PropertyListView() {
         </div>
       </div>
 
-      {/* Slice #39.61 — the filter bar, a row of its own under the toolbar: a chip per filter, „+ Filtru",
-          „Șterge filtrele". Not in the toolbar, whose width is the table frame's (#37.84): chips that came and went
+      {/* Slice #39.61 — the filter bar, a row of its own under the toolbar: a chip per filter and „Șterge filtrele"
+          (since #39.82 no „+ Filtru" — a filter opens from its column's funnel). Not in the toolbar, whose width is the table frame's (#37.84): chips that came and went
           there would widen the frame and stretch the columns. */}
       <FilterBar
         fields={filterFields}
@@ -339,14 +319,15 @@ export function PropertyListView() {
                   {t("table.nickname")}
                 </th>
                 {shownCols.map((col) => {
-                  const filterKey = COLUMN_FILTER[col.key];
+                  const filterKey = PROPERTY_COLUMN_FILTERS[col.key];
                   return (
                     <th key={col.key} className="px-4 py-2" {...columnHead(col.column)}>
                       {col.label}
-                      {/* Slice #39.61: the column's funnel opens its filter in the bar. */}
+                      {/* Slice #39.82: a funnel only on the columns that filter; it opens the filter under itself. */}
                       {filterKey && (
                         <FilterFunnel
-                          label={filterLabels[filterKey]}
+                          field={filterKey}
+                          label={filterLabel(filterKey)}
                           active={filters[filterKey] !== undefined}
                           onOpen={() => setEditingFilter(filterKey)}
                         />

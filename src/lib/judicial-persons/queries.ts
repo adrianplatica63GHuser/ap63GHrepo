@@ -22,7 +22,7 @@
 import { alias } from "drizzle-orm/pg-core";
 import { and, count, eq, ilike, inArray, or, sql, type SQL } from "drizzle-orm";
 import type { FilterState } from "@/lib/list/filter-bar";
-import { personFilterConditions } from "@/lib/persons/list-filter-sql";
+import { headOfficeLocality, personFilterConditions } from "@/lib/persons/list-filter-sql";
 import { db, type DbTransaction } from "@/db";
 import { appendVersionsIfChanged } from "@/lib/versioning/append";
 import {
@@ -68,6 +68,8 @@ export type JudicialPersonListItem = {
    * this query itself (two LEFT JOINs), never a query per row.
    */
   contactPerson: string | null;
+  /** Slice #39.82 — „Localitate": the head office's locality, trimmed — the subquery its filter reads. */
+  locality: string | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -160,6 +162,7 @@ export async function listJudicialPersons(opts: JudicialListQuery & { filters?: 
         tradeRegisterNumber: judicialPerson.tradeRegisterNumber,
         contact1Name: contact1.displayName,
         contact2Name: contact2.displayName,
+        locality: sql<string | null>`${headOfficeLocality()}`,
         createdAt: person.createdAt,
         updatedAt: person.updatedAt,
       })

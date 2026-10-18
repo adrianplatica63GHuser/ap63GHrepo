@@ -10,7 +10,9 @@
 
 ## What this proves
 
-„Proprietăți" filters on its fields with multiple choice (Slice #39.61). „+ Filtru" opens a field's checklist. Beside
+„Proprietăți" filters on its fields with multiple choice (Slice #39.61). Since #39.82 a filter opens from the funnel
+under its column's name — a column chosen in „Câmpuri afișate" — and opens right under that funnel; „+ Filtru" is
+gone, and a chip opens its filter under itself. Beside
 each value is how many properties of the list hold it, counted with the search and the OTHER filters already set.
 Ticking a value narrows the list and leaves a chip naming the field and the value; two fields AND together. The
 filters are in the page's address, so a reload keeps them, and „Șterge filtrele" takes them all off. What this case
@@ -39,14 +41,14 @@ Nothing.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Opens „Proprietăți" with `TC-PROP-14` in the search | A, B and C |
-| 2 | Chooses „Tip proprietate" from „+ Filtru"; ticks T1 | The checklist offers T1 with 2 and T2 with 1; after the tick, A and B; the chip „Tip proprietate T1"; the address carries `propertyType=<T1's id>` |
-| 3 | Chooses „Categorie de folosință" from „+ Filtru"; ticks C1 | The checklist offers C1 with 1 and C2 with 1 — counted with the type filter set; after the tick, A alone |
-| 4 | Reloads the page | A alone; the two chips, named by the values' names |
+| 2 | Presses the funnel beside „Tip proprietate" (the list's default column, #38.02); ticks T1 | The filter opens right under the funnel; it offers T1 with 2 and T2 with 1; after the tick, A and B; the chip „Tip proprietate T1"; the address carries `propertyType=<T1's id>` |
+| 3 | Ticks „Categorie de folosință" in „Câmpuri afișate"; presses the funnel beside it; ticks C1 | The checklist offers C1 with 1 and C2 with 1 — counted with the type filter set; after the tick, A alone |
+| 4 | Reloads the page; presses the chip „Tip proprietate T1" | A alone; the two chips, named by the values' names, in the columns' order — „Categorie de folosință C1", „Tip proprietate T1"; no „+ Filtru"; the chip opens its filter right under itself |
 | 5 | Presses „Șterge filtrele" | A, B and C; no chip; the address keeps the search and no filter |
 
 ## At the end — leaving things as they were found
 
-Delete the three properties (`DELETE` on their route).
+Delete the three properties (`DELETE` on their route). Untick „Categorie de folosință" in „Câmpuri afișate".
 
 ## Notes from the runs
 
@@ -62,3 +64,8 @@ it.
 
 **2026-10-16 — `automated` (Slice #39.61).** The test runner's targeted run 20261017T030703Z-21013 on 9877d13 ran
 `e2e/property/property-list-filters.spec.ts` green, with the list's other specs (lint, tsc and jest green too).
+
+**2026-10-18 — steps 2 to 4 rewritten for #39.82.** Adrian, 2026-10-18: „we are removing the " + Filter" dropdown; its
+functionality will be replaced by column filters". A filter now opens from its column's funnel, right under it, and a
+chip opens its filter under itself. The chips follow the columns' order. Not yet driven by hand: the spec, rewritten
+with it, is what checks it.

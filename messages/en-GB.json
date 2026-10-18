@@ -1305,7 +1305,8 @@
       "name": "Name",
       "nickname": "Nickname",
       "cui": "CUI",
-      "id": "ID"
+      "id": "ID",
+      "locality": "Locality"
     },
     "groupsFilterLabel": "Groups",
     "groupsFilterAll": "All groups",

@@ -1,9 +1,13 @@
 /**
  * The Properties list's filterable fields                                                         (Slice #39.61)
  *
- * Every field the list shows or the property is found by, as #39.61's header names them: type, use category,
- * tarla, locality, county and group as checklists; the official and the calculated surface (m²) as from / to; the
- * cadastral number, the carte funciară and the parcel as „contains". The order is the bar's „+ Filtru" order.
+ * Since Slice #39.82 the list filters by its columns, not from „+ Filtru" (Adrian, 2026-10-18: „its functionality
+ * will be replaced by column filters for the columns that can be filtered"), and only the columns Adrian named
+ * filter: Tarla/Solă, Tip proprietate, Categorie de folosință and Localitate as checklists (multiple choice); the
+ * official and the calculated surface (m²) as from / to; Parcelă as „contains" — a parcel number is neither a value
+ * list nor an interval (#39.82's Ask first 3). The order is the chooser's („Câmpuri afișate"), so the chips read as
+ * the columns do. County, group, cadastral number and CF left the list with #39.82 (its Ask first 4): an old link
+ * carrying one opens the list without it.
  *
  * ⚠️ **THE ROUTE READS ONLY THESE KEYS** (`parsePropertyFilters`): a key the list did not declare is not a filter,
  * and an id that is not a uuid is dropped before it reaches SQL — a hand-edited address filters nothing it should
@@ -14,21 +18,32 @@
 import { NONE_VALUE, readFilterState, type FilterFieldDef, type FilterState, type FilterValue } from "@/lib/list/filter-bar";
 
 export const PROPERTY_FILTER_FIELDS = [
-  { key: "propertyType",     kind: "values" },
-  { key: "useCategory",      kind: "values" },
   { key: "tarla",            kind: "values" },
-  { key: "locality",         kind: "values" },
-  { key: "county",           kind: "values" },
-  { key: "group",            kind: "values" },
+  { key: "parcela",          kind: "text" },
   { key: "surfaceAreaMp",    kind: "range" },
   { key: "calculatedAreaMp", kind: "range" },
-  { key: "cadastralNumber",  kind: "text" },
-  { key: "carteFunciara",    kind: "text" },
-  { key: "parcela",          kind: "text" },
+  { key: "useCategory",      kind: "values" },
+  { key: "propertyType",     kind: "values" },
+  { key: "locality",         kind: "values" },
 ] as const satisfies readonly FilterFieldDef[];
 
 export type PropertyFilterKey = (typeof PROPERTY_FILTER_FIELDS)[number]["key"];
 export const PROPERTY_FILTER_KEYS: readonly PropertyFilterKey[] = PROPERTY_FILTER_FIELDS.map((f) => f.key);
+
+/**
+ * Slice #39.82 — the column whose funnel opens each filter: the chooser's key (what a browser stores) to the
+ * filter's. Every filter has its column, so every filter can be set; a column not named here shows no funnel.
+ * „tarlaSola" is the column's stored key, the filter is `tarla` (#34.03).
+ */
+export const PROPERTY_COLUMN_FILTERS: Readonly<Record<string, PropertyFilterKey>> = {
+  tarlaSola:        "tarla",
+  parcela:          "parcela",
+  surfaceAreaMp:    "surfaceAreaMp",
+  calculatedAreaMp: "calculatedAreaMp",
+  useCategory:      "useCategory",
+  propertyType:     "propertyType",
+  locality:         "locality",
+};
 
 /** The checklists, whose values come from `/api/properties/filter-values`. */
 export type PropertyFacetField = Extract<(typeof PROPERTY_FILTER_FIELDS)[number], { kind: "values" }>["key"];
@@ -36,8 +51,8 @@ export const PROPERTY_FACET_FIELDS: readonly PropertyFacetField[] = PROPERTY_FIL
   (f): f is Extract<(typeof PROPERTY_FILTER_FIELDS)[number], { kind: "values" }> => f.kind === "values",
 ).map((f) => f.key);
 
-/** The checklists whose values are the text itself (an address's locality, its county), not ids. */
-const TEXT_FACET_FIELDS: readonly string[] = ["locality", "county"];
+/** The checklists whose values are the text itself (an address's locality), not ids. */
+const TEXT_FACET_FIELDS: readonly string[] = ["locality"];
 export function isTextFacetField(key: PropertyFacetField): boolean {
   return TEXT_FACET_FIELDS.includes(key);
 }

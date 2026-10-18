@@ -167,7 +167,11 @@ export async function createCompany(
   request: APIRequestContext,
   // The rest since #37.60, for TC-PERS-04's columns and preview.
   // `phone`, `email`, `notes` since #39.28, for the preview's lines 3 and 4.
-  fields: { name: string; nickname?: string; cuiNumber?: string; tradeRegisterNumber?: string; judicialPersonTypeId?: string; phone?: string; email?: string; notes?: string },
+  // `addresses` since #39.82, for TC-PERS-13's „Localitate" (the head office's).
+  fields: {
+    name: string; nickname?: string; cuiNumber?: string; tradeRegisterNumber?: string; judicialPersonTypeId?: string; phone?: string; email?: string; notes?: string;
+    addresses?: { kind: "HEADQUARTERS" | "CORRESPONDENCE"; locality: string; country: string }[];
+  },
 ): Promise<string> {
   const body = await postJson<{ person: { id: string } }>(request, ROUTE.company, {
     ...fields,

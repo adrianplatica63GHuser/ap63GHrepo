@@ -1,16 +1,20 @@
 "use client";
 
 /**
- * A principal list's filter bar — chips above the list, „+ Filtru", „Șterge filtrele".             (Slice #39.61)
+ * A principal list's filter bar — the active filters' chips above the list, and „Șterge filtrele". (Slice #39.61)
  *
- * The design agreed in the research doc (section 7; Adrian: „agree"): each filter a chip; „+ Filtru" lists every
- * field of the list; a funnel in a column's header opens the same editor (`FilterFunnel`). A checklist shows how
- * many rows hold each value, counted with the list's other filters applied, and has a search box. Numbers are from
- * / to; free text is „contains". OR within a field, AND across fields. A chip does not depend on its column being
- * shown, so the list never filters invisibly. The state, its address and its route parameters are
+ * The design agreed in the research doc (section 7; Adrian: „agree"): each filter a chip. Since Slice #39.82 a filter
+ * is opened from its column — the funnel in the header of a column that can be filtered (`FilterFunnel`), shown
+ * when the column is chosen in „Câmpuri afișate" — or from its chip; there is no „+ Filtru" any more (Adrian,
+ * 2026-10-18: „we are removing the " + Filter" dropdown; its functionality will be replaced by column filters").
+ * The editor opens right under the funnel or the chip that opened it (#39.82's Ask first 5). A checklist shows how
+ * many rows hold each value, counted with the list's other filters applied, and has a search box. Numbers and
+ * dates are from / to; free text is „contains". OR within a field, AND across fields. A chip does not depend on its
+ * column being shown, so the list never filters invisibly — hiding a column keeps its filter, and its chip still
+ * says what it filters (#39.82's Ask first 1). The state, its address and its route parameters are
  * `@/lib/list/filter-bar`'s; this is the screen. Shared: Proprietăți (#39.61), then the person lists and Acte.
  */
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { Funnel, FunnelX, X } from "lucide-react";
@@ -46,7 +50,7 @@ type Props = {
   fields: readonly FilterBarField[];
   state: FilterState;
   onChange: (next: FilterState) => void;
-  /** The field whose editor is open — the bar's own „+ Filtru" and chips, or a column's funnel, set it. */
+  /** The field whose editor is open — a chip on the bar, or a column's funnel, sets it. */
   editing: string | null;
   onEditing: (key: string | null) => void;
   /** A checklist's values, counted over the list with every other filter applied. */
@@ -58,11 +62,23 @@ type Props = {
 };
 
 const NUMBER = new Intl.NumberFormat("ro-RO", { maximumFractionDigits: 2 });
+/** The editor's width — `w-80` — so it can be kept inside the window when its anchor is near the right edge. */
+const EDITOR_WIDTH = 320;
+/** The gap between the anchor and the editor under it. */
+const EDITOR_GAP = 4;
+
+/** The funnel of the column that filters `key`, if that column is on screen. */
+function funnelOf(key: string): Element | null {
+  return document.querySelector(`[data-filter-funnel="${CSS.escape(key)}"]`);
+}
 
 /** The bar. */
 export function FilterBar({ fields, state, onChange, editing, onEditing, loadValues, valuesKey, leading }: Props) {
   const t = useTranslations("shared.filterBar");
   const ref = useRef<HTMLDivElement>(null);
+  const editorRef = useRef<HTMLDivElement>(null);
+  // Slice #39.82: the chip that opened the editor, when a chip did — otherwise it opens under the column's funnel.
+  const [chipAnchor, setChipAnchor] = useState<string | null>(null);
   const active = activeFilterKeys(state, fields);
   const byKey = new Map(fields.map((f) => [f.key, f]));
 
@@ -73,14 +89,31 @@ export function FilterBar({ fields, state, onChange, editing, onEditing, loadVal
   });
   const facetsOf = new Map(activeValues.map((k, i) => [k, facets[i]?.data]));
 
+  function close() {
+    setChipAnchor(null);
+    onEditing(null);
+  }
+
   useEffect(() => {
     if (!editing) return;
     function outside(e: MouseEvent) {
       const target = e.target as Element | null;
-      if (ref.current && target && !ref.current.contains(target) && !target.closest?.("[data-filter-funnel]")) onEditing(null);
+      if (!ref.current || !target) return;
+      // A funnel opens its own column's filter (the list sets `editing`), under itself rather than under a chip.
+      if (target.closest?.("[data-filter-funnel]")) {
+        setChipAnchor(null);
+        return;
+      }
+      if (!ref.current.contains(target)) {
+        setChipAnchor(null);
+        onEditing(null);
+      }
     }
     function escape(e: KeyboardEvent) {
-      if (e.key === "Escape") onEditing(null);
+      if (e.key === "Escape") {
+        setChipAnchor(null);
+        onEditing(null);
+      }
     }
     document.addEventListener("mousedown", outside);
     document.addEventListener("keydown", escape);
@@ -89,6 +122,39 @@ export function FilterBar({ fields, state, onChange, editing, onEditing, loadVal
       document.removeEventListener("keydown", escape);
     };
   }, [editing, onEditing]);
+
+  // Slice #39.82 (Ask first 5): the editor opens right under the funnel or the chip that opened it — not under the
+  // bar. Placed before paint, and again when the window resizes or anything scrolls (the table's frame scrolls
+  // sideways, #37.16). Kept inside the window on the right. A filter opened with its column hidden and no chip yet
+  // has no anchor, and opens at the bar's start.
+  useLayoutEffect(() => {
+    const editor = editorRef.current;
+    if (!editing || !editor) return;
+    const key = editing;
+    function place() {
+      const bar = ref.current;
+      if (!bar || !editor) return;
+      const chip = bar.querySelector(`[data-filter-chip="${CSS.escape(key)}"]`);
+      const anchor = (chipAnchor === key ? chip : null) ?? funnelOf(key) ?? chip;
+      const b = bar.getBoundingClientRect();
+      if (!anchor) {
+        editor.style.left = "0px";
+        editor.style.top = `${b.height + EDITOR_GAP}px`;
+        return;
+      }
+      const a = anchor.getBoundingClientRect();
+      const maxLeft = document.documentElement.clientWidth - EDITOR_WIDTH - 8 - b.left;
+      editor.style.left = `${Math.max(0, Math.min(a.left - b.left, maxLeft))}px`;
+      editor.style.top = `${a.bottom - b.top + EDITOR_GAP}px`;
+    }
+    place();
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", place, true);
+    return () => {
+      window.removeEventListener("resize", place);
+      window.removeEventListener("scroll", place, true);
+    };
+  }, [editing, chipAnchor, state]);
 
   function summary(field: FilterBarField, value: FilterValue): string {
     if (value.kind === "values") {
@@ -128,7 +194,14 @@ export function FilterBar({ fields, state, onChange, editing, onEditing, loadVal
           >
             <button
               type="button"
-              onClick={() => onEditing(editing === key ? null : key)}
+              onClick={() => {
+                if (editing === key) {
+                  close();
+                } else {
+                  setChipAnchor(key);
+                  onEditing(key);
+                }
+              }}
               aria-expanded={editing === key}
               aria-haspopup="dialog"
               className="max-w-80 truncate text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-cta"
@@ -143,32 +216,14 @@ export function FilterBar({ fields, state, onChange, editing, onEditing, loadVal
               pill
               onClick={() => {
                 onChange(withoutFilter(state, key));
-                if (editing === key) onEditing(null);
+                if (editing === key) close();
               }}
             />
           </span>
         );
       })}
 
-      <select
-        value=""
-        onChange={(e) => {
-          if (e.target.value) onEditing(e.target.value);
-        }}
-        aria-label={t("add")}
-        data-filter-add=""
-        className="rounded-md border border-wire bg-white px-2 py-1.5 text-sm text-ink shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-      >
-        <option value="">{t("addOption")}</option>
-        {fields
-          .filter((f) => !active.includes(f.key))
-          .map((f) => (
-            <option key={f.key} value={f.key}>
-              {f.label}
-            </option>
-          ))}
-      </select>
-
+      {/* Slice #39.82: no „+ Filtru" here any more — a filter is opened from its column's funnel, or from its chip. */}
       {active.length > 0 && (
         <IconButton
           icon={FunnelX}
@@ -178,21 +233,22 @@ export function FilterBar({ fields, state, onChange, editing, onEditing, loadVal
           size="sm"
           onClick={() => {
             onChange({});
-            onEditing(null);
+            close();
           }}
         />
       )}
 
       {editingField && (
         <div
+          ref={editorRef}
           role="dialog"
           aria-label={editingField.label}
           data-filter-editor={editingField.key}
-          className="absolute left-0 top-full z-30 mt-1 w-80 rounded-md border border-wire bg-white p-3 shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
+          className="absolute left-0 top-full z-30 w-80 rounded-md border border-wire bg-white p-3 shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
         >
           <div className="mb-2 flex items-center justify-between gap-2">
             <span className="text-sm font-semibold text-ink dark:text-zinc-100">{editingField.label}</span>
-            <IconButton icon={X} label={t("close")} variant="secondary" size="xs" onClick={() => onEditing(null)} />
+            <IconButton icon={X} label={t("close")} variant="secondary" size="xs" onClick={close} />
           </div>
           {editingField.kind === "values" ? (
             <ValuesEditor
@@ -484,11 +540,15 @@ function Box({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-/** The funnel in a column's header: opens that column's filter in the bar. Filled while the column is filtered. */
-export function FilterFunnel({ label, active, onOpen }: { label: string; active: boolean; onOpen: () => void }) {
+/**
+ * The funnel in a column's header: opens that column's filter, right under itself (#39.82). Filled while the column
+ * is filtered. Drawn only on the columns that can be filtered — each list's `*_COLUMN_FILTERS` (#39.82). `field` is
+ * the filter's key, which the bar finds the funnel by.
+ */
+export function FilterFunnel({ field, label, active, onOpen }: { field: string; label: string; active: boolean; onOpen: () => void }) {
   const t = useTranslations("shared.filterBar");
   return (
-    <span data-filter-funnel="" className="ml-1 inline-flex align-middle normal-case">
+    <span data-filter-funnel={field} className="ml-1 inline-flex align-middle normal-case">
       <IconButton
         icon={Funnel}
         label={t("funnel", { field: label })}

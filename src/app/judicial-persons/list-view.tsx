@@ -21,13 +21,13 @@ import { FieldChooser, useFieldChooser, type ChooserField } from "@/components/l
 import { LIST_COLUMN_CHOICE } from "@/lib/ui/list-columns";
 import { FilterBar, FilterFunnel, type FilterBarField } from "@/components/list/filter-bar";
 import { appendFilterParams, filterAddressPatch, filterSignature, type FacetValue, type FilterState } from "@/lib/list/filter-bar";
-import { JUDICIAL_PERSON_FILTER_FIELDS, parsePersonFilters, personFilterKeys } from "@/lib/persons/list-filters";
+import { JUDICIAL_PERSON_COLUMN_FILTERS, JUDICIAL_PERSON_FILTER_FIELDS, parsePersonFilters, personFilterKeys } from "@/lib/persons/list-filters";
 import { screenBox, type ColumnName } from "@/lib/ui/field-widths";
 
 const PAGE_SIZE = 15;
 /** Slice #37.16: the list's columns, each a fixed width from `COLUMN` — the optional ones (#37.60) between the nickname and the buttons. */
 // Slice #37.94: the key and the defaults (none) are LIST_COLUMN_CHOICE.company.
-// Slice #37.71: four, so all four fields can be shown, as on the other lists.
+// Slice #37.71: four, as on the other lists. Since #39.82 the chooser offers five (Localitate added), four at once.
 const MAX_OPT = 4;
 
 type JudicialPersonListItem = {
@@ -41,6 +41,8 @@ type JudicialPersonListItem = {
   tradeRegisterNumber: string | null;
   /** Slice #37.71 — the first filled contact slot's name: slot 1, or slot 2 when the first is empty. */
   contactPerson:       string | null;
+  /** Slice #39.82 — „Localitate": the head office's locality, which its filter reads too. */
+  locality:            string | null;
   createdAt:   string;
   updatedAt:   string;
 };
@@ -253,21 +255,21 @@ export function JudicialPersonListView() {
     { key: "tradeRegisterNumber", label: t("fields.tradeRegisterNumber"), column: "listTradeRegister" },
     // Slice #37.71: the company's contact person — the first, when it has two.
     { key: "contactPerson",       label: t("fields.contactPerson"),       column: "listContactPerson" },
+    // Slice #39.82: the head office's locality, so its filter (Adrian's „Locality") has a column.
+    { key: "locality",            label: t("table.locality"),             column: "listLocality" },
   ];
   const chooser = useFieldChooser(LIST_COLUMN_CHOICE.company.storageKey, optionalCols.map((c) => c.key), MAX_OPT, LIST_COLUMN_CHOICE.company.defaults);
   const shownCols = chooser.visible.flatMap((key) => optionalCols.filter((c) => c.key === key));
   // Slice #38.57: the list's own columns, one line each — a company's name is longer than a person's.
   const COLUMNS: ColumnName[] = ["listSelectPerson", "listCompanyName", "listPersonNickname", ...shownCols.map((c) => c.column), "listRowActions"];
-  // Slice #39.62: the bar's fields, labelled as the form and the columns label them, in the „+ Filtru" order.
-  const filterLabels: Record<string, string> = {
-    judicialPersonType:  t("fields.judicialType"),
-    documentRole:        t("filters.documentRole"),
-    locality:            t("filters.locality"),
-    cuiNumber:           t("fields.cuiNumber"),
-    tradeRegisterNumber: t("fields.tradeRegisterNumber"),
-    contactPerson:       t("fields.contactPerson"),
-  };
-  const filterFields: FilterBarField[] = JUDICIAL_PERSON_FILTER_FIELDS.map((f) => ({ key: f.key, kind: f.kind, label: filterLabels[f.key] }));
+  // Slice #39.82: the bar's fields are the columns that filter (`JUDICIAL_PERSON_COLUMN_FILTERS`), each named as its
+  // column is in „Câmpuri afișate" — so a chip reads as the column it filters, shown or not.
+  const filterFields: FilterBarField[] = JUDICIAL_PERSON_FILTER_FIELDS.map((f) => ({
+    key: f.key,
+    kind: f.kind,
+    label: optionalCols.find((c) => JUDICIAL_PERSON_COLUMN_FILTERS[c.key] === f.key)?.label ?? f.key,
+  }));
+  const filterLabel = (key: string) => filterFields.find((f) => f.key === key)?.label ?? key;
 
   // Slice #37.84: the toolbar's group ends at the table frame's right edge, not the window's.
   const edge = useListEdge(COLUMNS);
@@ -277,7 +279,8 @@ export function JudicialPersonListView() {
       : key === "cuiNumber" ? item.cuiNumber
         : key === "tradeRegisterNumber" ? item.tradeRegisterNumber
           : key === "contactPerson" ? item.contactPerson
-            : null;
+            : key === "locality" ? item.locality
+              : null;
 
   return (
     // Slice #38.75: the whole list — toolbar to pagination — so its Incursiune is as tall as all of it.
@@ -367,15 +370,18 @@ export function JudicialPersonListView() {
                 </th>
                 <th className="px-4 py-2" {...columnHead("listCompanyName")}>{t("table.name")}</th>
                 <th className="px-4 py-2" {...columnHead("listPersonNickname")}>{t("table.nickname")}</th>
-                {shownCols.map((col) => (
-                  <th key={col.key} className="px-4 py-2" {...columnHead(col.column)}>
-                    {col.label}
-                    {/* Slice #39.62: every optional column is a filter; its funnel opens it in the bar. */}
-                    {filterLabels[col.key] && (
-                      <FilterFunnel label={filterLabels[col.key]} active={filters[col.key] !== undefined} onOpen={() => setEditingFilter(col.key)} />
-                    )}
-                  </th>
-                ))}
+                {shownCols.map((col) => {
+                  const filterKey = JUDICIAL_PERSON_COLUMN_FILTERS[col.key];
+                  return (
+                    <th key={col.key} className="px-4 py-2" {...columnHead(col.column)}>
+                      {col.label}
+                      {/* Slice #39.82: a funnel only on the columns that filter; it opens the filter under itself. */}
+                      {filterKey && (
+                        <FilterFunnel field={filterKey} label={filterLabel(filterKey)} active={filters[filterKey] !== undefined} onOpen={() => setEditingFilter(filterKey)} />
+                      )}
+                    </th>
+                  );
+                })}
                 <th className="px-4 py-2" {...columnHead("listRowActions")} />
               </tr>
             </thead>

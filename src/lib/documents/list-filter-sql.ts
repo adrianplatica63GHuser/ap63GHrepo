@@ -3,7 +3,8 @@
  *
  * One condition per filtered field, ANDed with the list's own (type, „Expiră curând", „Câmp specific", search). The
  * counts are the list's own columns' subqueries — a person or property linked twice counts once — so a filter on
- * „Persoane" means what the column shows. Also the issuer checklist's facet query (Slice #39.72: the issuer is a
+ * „Persoane" means what the column shows. Slice #39.82 kept only the columns Adrian named; the number's and the
+ * subject's „contains" went with their filters. Also the issuer checklist's facet query (Slice #39.72: the issuer is a
  * juridical person; the filter keeps its key, `institution`, and its label, „Instituție / Notariat”): `documents/queries.ts` may
  * quote no snapshot key (object-writers-enumerated), and these fields' names are snapshot keys.
  *
@@ -12,7 +13,7 @@
 import { sql, type SQL } from "drizzle-orm";
 import { document, entityMetadata, person } from "@/db/schema";
 import type { FilterState } from "@/lib/list/filter-bar";
-import { contains, oneOf } from "@/lib/list/filter-sql";
+import { oneOf } from "@/lib/list/filter-sql";
 
 /** The list's three count columns, as the list query reads them. */
 export const DOCUMENT_COUNT_SQL = {
@@ -40,9 +41,6 @@ export function documentFilterConditions(filters: FilterState): SQL[] {
       if (!col) continue;
       if (f.from !== null) out.push(sql`${col} >= ${f.from}::date`);
       if (f.to !== null) out.push(sql`${col} <= ${f.to}::date`);
-    } else if (f.kind === "text") {
-      if (key === "nrDocument") out.push(contains(document.nrDocument, f.text));
-      else if (key === "subject") out.push(contains(document.subject, f.text));
     }
   }
   return out;

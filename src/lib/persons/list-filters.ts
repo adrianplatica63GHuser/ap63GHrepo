@@ -2,14 +2,16 @@
  * The two person lists' filterable fields                                                        (Slice #39.62)
  *
  * Adrian, 2026-10-16: „I wish we could have the same level of functionality and convenience for natural persons
- * and judicial persons". Both lists take the 39.61 bar, with their named fields and every optional column:
- *   - Persoane fizice: Tip profesional, Rol în documente, Localitate (the HOME address), Decedat (toți / în viață /
- *     decedați), Gen, Vârstă, Data nașterii, Data decesului, CNP, Locul nașterii;
- *   - Persoane juridice: Tip, Rol în documente, Localitate (the HEADQUARTERS address), CUI, Nr. Registrul
- *     Comerțului, Persoană de contact.
- * „Tip profesional" and „Tip" read their value lists live, so 39.70's professions and 39.71's public-body types
- * reach the filters with no change here. Slice #39.70 adds „Relația cu firma" to the natural persons' bar, after
- * „Tip profesional": a person holds several, and is shown by any one ticked; „(necompletat)" is a person with none.
+ * and judicial persons". Both lists take the 39.61 bar. Since Slice #39.82 they filter by their columns, and only
+ * the columns Adrian named (2026-10-18) filter:
+ *   - Persoane fizice: Data nașterii, Vârstă, Gen, Data decesului, Locul nașterii, Tip profesional, Relația cu
+ *     firma — the dates and the age as from / to, the rest as checklists (multiple choice). Locul nașterii is a
+ *     checklist of the places in use, as a locality is (#39.82's Ask first 2; it was „contains");
+ *   - Persoane juridice: Tip and Localitate (the HEADQUARTERS address), both checklists.
+ * Rol în documente, Decedat, CNP and the home locality on natural persons, and Rol în documente, CUI, Nr. Registrul
+ * Comerțului and Persoană de contact on juridical persons, left with #39.82 (its Ask first 4): an old link carrying
+ * one opens the list without it. „Tip profesional" and „Tip" read their value lists live; „Relația cu firma"
+ * (#39.70): a person holds several, and is shown by any one ticked; „(necompletat)" is a person with none.
  *
  * ⚠️ **THE ROUTES READ ONLY THESE KEYS**, and a value-list id that is not a uuid is dropped before SQL.
  *
@@ -17,31 +19,41 @@
  */
 import { NONE_VALUE, readFilterState, type FilterFieldDef, type FilterState, type FilterValue } from "@/lib/list/filter-bar";
 
-export const DECEASED_OPTIONS = ["alive", "deceased"] as const;
 export const GENDER_VALUES = ["MALE", "FEMALE"] as const;
 
 export const NATURAL_PERSON_FILTER_FIELDS = [
+  { key: "dateOfBirth",      kind: "dates" },
+  { key: "age",              kind: "range" },
+  { key: "gender",           kind: "values" },
+  { key: "dateOfDeath",      kind: "dates" },
+  { key: "placeOfBirth",     kind: "values" }, // Slice #39.82: a checklist, as a locality
   { key: "professionalType", kind: "values" },
   { key: "relationship",     kind: "values" }, // Slice #39.70
-  { key: "documentRole",     kind: "values" },
-  { key: "locality",         kind: "values" },
-  { key: "deceased",         kind: "choice", options: DECEASED_OPTIONS },
-  { key: "gender",           kind: "values" },
-  { key: "age",              kind: "range" },
-  { key: "dateOfBirth",      kind: "dates" },
-  { key: "dateOfDeath",      kind: "dates" },
-  { key: "cnp",              kind: "text" },
-  { key: "placeOfBirth",     kind: "text" },
 ] as const satisfies readonly FilterFieldDef[];
 
 export const JUDICIAL_PERSON_FILTER_FIELDS = [
-  { key: "judicialPersonType",  kind: "values" },
-  { key: "documentRole",        kind: "values" },
-  { key: "locality",            kind: "values" },
-  { key: "cuiNumber",           kind: "text" },
-  { key: "tradeRegisterNumber", kind: "text" },
-  { key: "contactPerson",       kind: "text" },
+  { key: "judicialPersonType", kind: "values" },
+  { key: "locality",           kind: "values" }, // the HEADQUARTERS address; its column since #39.82
 ] as const satisfies readonly FilterFieldDef[];
+
+/**
+ * Slice #39.82 — the column whose funnel opens each filter: the chooser's key (what a browser stores) to the
+ * filter's. Every filter has its column; a column not named here shows no funnel. „relationships" is the column's
+ * stored key (#39.70), the filter is `relationship`.
+ */
+export const NATURAL_PERSON_COLUMN_FILTERS: Readonly<Record<string, string>> = {
+  dateOfBirth:      "dateOfBirth",
+  age:              "age",
+  gender:           "gender",
+  dateOfDeath:      "dateOfDeath",
+  placeOfBirth:     "placeOfBirth",
+  professionalType: "professionalType",
+  relationships:    "relationship",
+};
+export const JUDICIAL_PERSON_COLUMN_FILTERS: Readonly<Record<string, string>> = {
+  judicialPersonType: "judicialPersonType",
+  locality:           "locality",
+};
 
 export type PersonListKind = "NATURAL" | "JUDICIAL";
 
@@ -60,7 +72,7 @@ export function isPersonFacetField(kind: PersonListKind, key: string): boolean {
   return personFacetFields(kind).includes(key);
 }
 
-const UUID_FIELDS: readonly string[] = ["professionalType", "relationship", "judicialPersonType", "documentRole"];
+const UUID_FIELDS: readonly string[] = ["professionalType", "relationship", "judicialPersonType"];
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const GENDERS: readonly string[] = GENDER_VALUES;
 

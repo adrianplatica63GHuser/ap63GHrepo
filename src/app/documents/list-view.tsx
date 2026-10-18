@@ -29,7 +29,7 @@ import { HintBubble } from "@/lib/ui/hint-bubble";
 import { dmyFromIso } from "@/lib/persons/person-age";
 import { FilterBar, FilterFunnel, type FilterBarField } from "@/components/list/filter-bar";
 import { appendFilterParams, filterAddressPatch, filterSignature, type FacetValue, type FilterState } from "@/lib/list/filter-bar";
-import { DOCUMENT_FILTER_FIELDS, DOCUMENT_FILTER_KEYS, parseDocumentFilters } from "@/lib/documents/list-filters";
+import { DOCUMENT_COLUMN_FILTERS, DOCUMENT_FILTER_FIELDS, DOCUMENT_FILTER_KEYS, parseDocumentFilters } from "@/lib/documents/list-filters";
 
 const PAGE_SIZE   = 15;
 // Slice #37.94: the key and the defaults (none) are LIST_COLUMN_CHOICE.document.
@@ -803,18 +803,14 @@ export function DocumentListView({
   const shownCols = chooser.visible.flatMap((key) => optionalCols.filter((c) => c.key === key));
   // Slice #38.57: the list's own columns, one line each.
   const columns: ColumnName[] = ["selectNew", "listDocumentType", "listDocumentTitle", ...shownCols.map((c) => c.column), "listRowActions"];
-  // Slice #39.63: the bar's fields, labelled as their columns are.
-  const filterLabels: Record<string, string> = {
-    institution:   t("table.institution"),
-    dateDocument:  t("table.dateDocument"),
-    pageCount:     t("table.pageCount"),
-    personCount:   t("table.personCount"),
-    propertyCount: t("table.propertyCount"),
-    createdAt:     t("table.createdAt"),
-    nrDocument:    t("table.nrDocument"),
-    subject:       t("table.subject"),
-  };
-  const filterFields: FilterBarField[] = DOCUMENT_FILTER_FIELDS.map((f) => ({ key: f.key, kind: f.kind, label: filterLabels[f.key] }));
+  // Slice #39.63: the bar's fields, labelled as their columns are. Since #39.82 only the columns that filter
+  // (`DOCUMENT_COLUMN_FILTERS`), each named as its column is in „Câmpuri afișate".
+  const filterFields: FilterBarField[] = DOCUMENT_FILTER_FIELDS.map((f) => ({
+    key: f.key,
+    kind: f.kind,
+    label: optionalCols.find((c) => DOCUMENT_COLUMN_FILTERS[c.key] === f.key)?.label ?? f.key,
+  }));
+  const filterLabel = (key: string) => filterFields.find((f) => f.key === key)?.label ?? key;
 
   // Slice #37.84: the toolbar's group ends at the table frame's right edge, not the window's.
   const edge = useListEdge(columns);
@@ -1087,15 +1083,18 @@ export function DocumentListView({
                     </th>
                     <th className="px-4 py-2" {...columnHead("listDocumentType")}>{t("table.type")}</th>
                     <th className="px-4 py-2" {...columnHead("listDocumentTitle")}>{t("table.title")}</th>
-                    {shownCols.map((col) => (
-                      <th key={col.key} className="px-4 py-2" {...columnHead(col.column)}>
-                        {col.label}
-                        {/* Slice #39.63: every optional column is a filter; its funnel opens it in the bar. */}
-                        {filterLabels[col.key] && (
-                          <FilterFunnel label={filterLabels[col.key]} active={filters[col.key] !== undefined} onOpen={() => setEditingFilter(col.key)} />
-                        )}
-                      </th>
-                    ))}
+                    {shownCols.map((col) => {
+                      const filterKey = DOCUMENT_COLUMN_FILTERS[col.key];
+                      return (
+                        <th key={col.key} className="px-4 py-2" {...columnHead(col.column)}>
+                          {col.label}
+                          {/* Slice #39.82: a funnel only on the columns that filter; it opens the filter under itself. */}
+                          {filterKey && (
+                            <FilterFunnel field={filterKey} label={filterLabel(filterKey)} active={filters[filterKey] !== undefined} onOpen={() => setEditingFilter(filterKey)} />
+                          )}
+                        </th>
+                      );
+                    })}
                     <th className="px-4 py-2" {...columnHead("listRowActions")} />
                   </tr>
                 </thead>
