@@ -8,14 +8,19 @@
 import { MIN_TILE_UNITS, dialogUnits } from "@/lib/ui/field-widths";
 import type { ScreenTiles } from "@/lib/ui/screen-tiles";
 
-/** The page's screen: its key, its tiles in reading order, the widest, and the first two tiles across. */
-export function referenceScreen(page: string, tiles: readonly { key: string; units: number }[]): ScreenTiles {
-  const widest = Math.max(...tiles.map((t) => t.units));
+/**
+ * The page's screen: its key, its tiles in reading order, the widest, and the first two tiles across. A `full` tile —
+ * a line of its own across the row, the relationship triangle (#39.76) — sets neither the widest nor the flow: the
+ * row is never held wider than the window for it, and the two tiles across are the first two under it.
+ */
+export function referenceScreen(page: string, tiles: readonly { key: string; units: number; full?: boolean }[]): ScreenTiles {
+  const sized = tiles.filter((t) => !t.full);
+  const widest = Math.max(...sized.map((t) => t.units));
   return {
     entity: `reference-${page}`,
     tiles: tiles.map((t) => t.key),
     units: widest,
-    flowUnits: tiles.length > 1 ? tiles[0].units + tiles[1].units : widest,
+    flowUnits: sized.length > 1 ? sized[0].units + sized[1].units : widest,
   };
 }
 

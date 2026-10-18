@@ -78,9 +78,15 @@ describe("every page but „Indicative Tarla” as tiles (Slice #39.76)", () => 
     expect(HUB).toContain('selected === null || selected === "tarla"');
   });
 
-  it("on „Roluri și legături” the triangle is a tile of its own, five units, its card filling it (Ask first 1)", () => {
-    expect(HUB).toContain("const TRIANGLE_UNITS = 5;");
-    expect(HUB).toMatch(/\{ key: "triangle", units: TRIANGLE_UNITS, node: <RelationshipTriangle [^>]*fill \/> \}/);
+  it("on „Roluri și legături” the triangle is a line of its own across the row, at #38.77's width", () => {
+    expect(HUB).toMatch(/\{ key: "triangle", units: TRIANGLE_UNITS, full: true, node: <RelationshipTriangle [^>]*cardUnits=\{VALUE_LIST_CARD_UNITS\} \/> \}/);
+    const s = referenceScreen("person-roles", [
+      { key: "triangle", units: 8, full: true },
+      { key: "role-form", units: 5 },
+      { key: "person-roles", units: 6 },
+    ]);
+    // A full tile sets neither the row's widest (6, so 1366 px holds it) nor the flow (the two under it).
+    expect(s).toEqual({ entity: "reference-person-roles", tiles: ["triangle", "role-form", "person-roles"], units: 6, flowUnits: 11 });
   });
 
   it("a role's form — its fields, scope and document types — is a tile of its own while it is open (Ask first 1)", () => {

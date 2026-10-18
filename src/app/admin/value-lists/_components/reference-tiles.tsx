@@ -31,6 +31,11 @@ export interface ReferenceTile {
   node: ReactNode;
   /** Slice #39.76: kept in the page but not shown — the role form's tile while no form is open. */
   hidden?: boolean;
+  /**
+   * Slice #39.76: a line of its own across the row (`basis-full`, which the packing lays out full width and never
+   * drags) — the relationship triangle, at the width #38.77 gave it.
+   */
+  full?: boolean;
 }
 
 export function ReferenceTiles({ page, tiles }: { page: string; tiles: readonly ReferenceTile[] }) {
@@ -43,7 +48,15 @@ export function ReferenceTiles({ page, tiles }: { page: string; tiles: readonly 
       </div>
       <TileUnitRow screen={screen}>
         {tiles.map((t) => (
-          <div key={t.key} data-tile={t.key} data-tile-units={t.units} style={unitStyle(t.units)} hidden={t.hidden}>
+          <div
+            key={t.key}
+            data-tile={t.key}
+            data-tile-units={t.full ? undefined : t.units}
+            data-tile-full={t.full ? "" : undefined}
+            className={t.full ? "basis-full" : undefined}
+            style={t.full ? undefined : unitStyle(t.units)}
+            hidden={t.hidden}
+          >
             {t.node}
           </div>
         ))}

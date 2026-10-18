@@ -331,9 +331,7 @@ describe("„Vezi: …” on the name line, the six's column 20 % wider (Slice #
     const drawingColumn = DRAWING.w / 16 + 2.5; // the drawing and its px-5 either side
     const tile = parseFloat(String(triangleCardStyle(units).maxWidth));
     expect(tile - drawingColumn).toBeCloseTo(1.2 * (card - drawingColumn), 6);
-    // #39.76: on the page the triangle is a tile of its own (`ReferenceTiles`, 5 units), its card filling it; the width
-    // above is what it takes where it is not a tile.
-    expect(TILE).toContain('style={fill ? { width: "100%" } : triangleCardStyle(cardUnits)}');
+    expect(TILE).toContain("style={triangleCardStyle(cardUnits)}");
     expect(TILE).not.toContain("style={dialogCardStyle(");
     // The drawing keeps #38.67's size.
     expect(TILE).toContain("style={{ width: rem(DRAWING.w / 16) }}");

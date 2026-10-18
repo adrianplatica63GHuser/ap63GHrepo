@@ -356,19 +356,21 @@ test.describe("TC-VL-05 pasul 9 — listele ca fișe (#39.76)", () => {
           .map((t) => {
             const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
             const r = t.getBoundingClientRect();
-            const units = Number(t.dataset.tileUnits);
+            const full = t.dataset.tileFull !== undefined;
+            const units = full ? 0 : Number(t.dataset.tileUnits);
             const frame = t.querySelector<HTMLElement>("[data-value-list-frame]")?.getBoundingClientRect();
             return {
               tile: t.dataset.tile,
               units,
-              whole: Math.abs(r.width - (units * 9.25 + (units - 1)) * rem) <= 1,
+              // The triangle is a line of its own across the row (`data-tile-full`), at #38.77's width (TC-VL-10).
+              whole: full || Math.abs(r.width - (units * 9.25 + (units - 1)) * rem) <= 1,
               even: frame ? Math.abs(frame.left - r.left - (r.right - frame.right)) <= 2 : true,
             };
           }),
       );
       expect(tiles.map((t) => t.tile), list.key).toEqual(list.triangle ? ["triangle", list.key] : [list.key]);
       for (const t of tiles) expect({ list: list.key, ...t }).toEqual({ list: list.key, tile: t.tile, units: t.units, whole: true, even: true });
-      if (list.triangle) expect(tiles[0].units).toBe(5);
+      if (list.triangle) await expect(page.locator('[data-tile="triangle"]')).toHaveAttribute("data-tile-full", "");
       await expect(page.locator(`[data-tile-positions-reset="reference-${list.key}"]`)).toBeVisible();
     }
 

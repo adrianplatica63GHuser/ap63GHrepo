@@ -50,10 +50,12 @@ import { UnitRow } from "@/components/screen/unit-row";
 const LIST_MIN_UNITS = 6;
 
 /**
- * Slice #39.76 — the relationship triangle's tile: five units, 50.25rem, where its drawing (23.4rem with its padding)
- * and the six names stand side by side (from 42rem, its container query); narrower, the six go under the drawing.
+ * Slice #39.76 — the relationship triangle is a line of its own across the row (`full`), its card at the width #38.77
+ * gave it (`triangleCardStyle`, capped by the side). As a five-unit tile it measured 969 px tall at 1920 px against
+ * 699 px at its own width (TC-VL-10): #38.77 widened its six names precisely to make it shorter, so it keeps that width
+ * and stays where it stood, above the list. Its units only name it; a full tile is not sized by them.
  */
-const TRIANGLE_UNITS = 5;
+const TRIANGLE_UNITS = VALUE_LIST_CARD_UNITS;
 /** Slice #39.76 — the list whose add/edit form is a tile of its own: a role's fields, scope and document types. */
 const ROLE_FORM_LIST: ListKey = "person-roles";
 /** Its tile: five units — the fields wrap in it, its scope and its document types under them. */
@@ -130,7 +132,7 @@ export function ValueListHub({
       ? null
       : [
           ...(categoryOfList(selected) === "rolesLinks"
-            ? [{ key: "triangle", units: TRIANGLE_UNITS, node: <RelationshipTriangle marked={marking.links} onPress={pressLink} onOpenList={chooseList} cardUnits={VALUE_LIST_CARD_UNITS} fill /> }]
+            ? [{ key: "triangle", units: TRIANGLE_UNITS, full: true, node: <RelationshipTriangle marked={marking.links} onPress={pressLink} onOpenList={chooseList} cardUnits={VALUE_LIST_CARD_UNITS} /> }]
             : []),
           ...(listsOnPage(selected).includes(ROLE_FORM_LIST)
             ? [{ key: "role-form", units: ROLE_FORM_UNITS, hidden: !formOpen, node: <div ref={setFormSlot} data-role-form-slot="" /> }]
