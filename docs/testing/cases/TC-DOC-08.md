@@ -6,7 +6,7 @@
 | **Kind** | happy |
 | **Data** | — |
 | **State** | `automated` |
-| **Last green** | 2026-10-06 |
+| **Last green** | 2026-10-18 |
 
 ## What this proves
 
@@ -204,3 +204,6 @@ rest of the case is unchanged.
 after „Câmpuri afișate": the sign, „Câmp specific:" with its ⓘ and „Expiră curând" are on the toolbar now, and the
 filter bar keeps „Tip document:" first. Read in the browser pane on localhost:3000 the same day (Notes below the spec's
 run). The rest of the case is unchanged.
+
+**2026-10-18 — `automated`, green on the runner (Slice #39.74).** `targeted` 20261018T044609Z-25587 on 5e9ab71 ran the
+corrected spec green.

@@ -6,7 +6,7 @@
 | **Kind** | happy |
 | **Data** | — |
 | **State** | `automated` |
-| **Last green** | 2026-10-06 |
+| **Last green** | 2026-10-18 |
 
 ## What this proves
 
@@ -123,3 +123,6 @@ the case is unchanged.
 
 **2026-10-18 — step 1 rewritten for #39.74.** The sign and „Câmp specific:" went up to the toolbar, after „Câmpuri
 afișate"; „Tip document:" stays first on the filter bar. Nothing else in the case changed.
+
+**2026-10-18 — `automated`, green on the runner (Slice #39.74).** `targeted` 20261018T044609Z-25587 on 5e9ab71 ran the
+corrected spec green.
