@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useLayoutEffect, useRef, useState, type RefObject } from "react";
+import { createPortal } from "react-dom";
 import { ClipboardList, FolderInput, FolderOpen, Merge, Pencil, Plus, Save, Trash2, X } from "lucide-react";
 import { IconButton, IconTooltip } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
@@ -888,10 +889,19 @@ export function ValueListModal({
   onClose,
   titleMarked = false,
   fill = false,
+  formSlot = null,
+  onFormOpen,
 }: {
   listKey: ListKey;
   /** Slice #39.75: a tile's card — as wide as its tile (`ReferenceTiles` gives the tile its units), not capped. */
   fill?: boolean;
+  /**
+   * Slice #39.76: a tile of its own for the add/edit form — a role's fields, where it applies and its document types
+   * (Ask first 1). Given, the form is drawn there (a portal) instead of above the table; null, above the table.
+   */
+  formSlot?: HTMLElement | null;
+  /** Slice #39.76: the form opened or closed — so the page shows its tile only while it is open. */
+  onFormOpen?: (open: boolean) => void;
   /** Slice #38.68: the title in the heavy yellow — the chosen link's list, on „Roluri și legături". */
   titleMarked?: boolean;
   /**
@@ -941,6 +951,11 @@ export function ValueListModal({
     if (!("name" in values)) return null;
     return { id: null, values: { ...values, name } };
   });
+  // Slice #39.76: the page shows the form's tile only while the form is open.
+  const formOpen = form !== null;
+  useEffect(() => {
+    onFormOpen?.(formOpen);
+  }, [formOpen, onFormOpen]);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   // Slice #27.03: the id of the document type whose template-fields editor is
   // open, or null. Only ever set for listKey === "document-types".
@@ -1588,7 +1603,7 @@ export function ValueListModal({
           {/* Slice #38.78: 6 px under the divider, not 20 — the table starts right under it. */}
           <div className="px-5 pb-5 pt-1.5">
             {/* Add/Edit form — Slice #38.78: its own space under the divider, the body's top being tight now. */}
-            {form && (
+            {form && !formSlot && (
               <div className="pt-2">
               <EditForm
                 listKey={listKey}
@@ -1597,6 +1612,22 @@ export function ValueListModal({
                 onSaved={() => setForm(null)}
               />
               </div>
+            )}
+            {/* Slice #39.76: in its own tile, beside the list, when the page gives it one. */}
+            {form && formSlot && createPortal(
+              // A div, not a named section: a region named for the list would share its name with the list's card.
+              <div
+                className="rounded-xl border border-card-rim bg-card px-5 pb-5 pt-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+                data-value-list-form-tile={listKey}
+              >
+                <EditForm
+                  listKey={listKey}
+                  state={form}
+                  onClose={() => setForm(null)}
+                  onSaved={() => setForm(null)}
+                />
+              </div>,
+              formSlot,
             )}
 
             {/* Slice #38.50: the toolbar and the table in one column as wide as the wider of the two, so

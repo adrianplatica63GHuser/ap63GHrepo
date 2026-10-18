@@ -49,6 +49,16 @@ import { UnitRow } from "@/components/screen/unit-row";
  */
 const LIST_MIN_UNITS = 6;
 
+/**
+ * Slice #39.76 — the relationship triangle's tile: five units, 50.25rem, where its drawing (23.4rem with its padding)
+ * and the six names stand side by side (from 42rem, its container query); narrower, the six go under the drawing.
+ */
+const TRIANGLE_UNITS = 5;
+/** Slice #39.76 — the list whose add/edit form is a tile of its own: a role's fields, scope and document types. */
+const ROLE_FORM_LIST: ListKey = "person-roles";
+/** Its tile: five units — the fields wrap in it, its scope and its document types under them. */
+const ROLE_FORM_UNITS = 5;
+
 export function ValueListHub({
   /**
    * The list the address names — `?list=` — and a name to start adding (`?add=`,
@@ -92,25 +102,44 @@ export function ValueListHub({
   const [usesUnits, setUsesUnits] = useState(5);
 
   /** A list of the page, keyed on the list: each starts from its own state — a filter on one never filters the next. */
+  // Slice #39.76: the role form's tile — its element (the form is drawn into it), and whether a form is open.
+  const [formSlot, setFormSlot] = useState<HTMLElement | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
+
   const listCard = (key: ListKey, fill: boolean) => (
     <ValueListModal
       key={key}
       listKey={key}
       fill={fill}
+      formSlot={fill && key === ROLE_FORM_LIST ? formSlot : null}
+      onFormOpen={key === ROLE_FORM_LIST ? setFormOpen : undefined}
       initialAddName={key === arrival && !addNameUsed ? initialAddName : undefined}
       initialFormFilter={key === arrival && !addNameUsed ? initialFormFilter : undefined}
       titleMarked={marking.list === key}
     />
   );
 
-  /** Slice #39.75: a page whose lists are tiles (`ReferenceTiles`) — „Tipuri de Proprietate și Folosințe" for now. */
+  /**
+   * Slices #39.75, #39.76: every page's lists are tiles (`ReferenceTiles`) — but „Indicative Tarla", whose page is
+   * 39.77's. In reading order: on „Roluri și legături" the relationship triangle first, as it stood above the list; on
+   * „Roluri Persoane" the role's form, while one is open, where it stood above the table (Ask first 1); the page's
+   * lists; and on the property types' page the allowed-uses grid.
+   */
   const tiles: ReferenceTile[] | null =
-    selected === "property-types"
-      ? [
+    selected === null || selected === "tarla"
+      ? null
+      : [
+          ...(categoryOfList(selected) === "rolesLinks"
+            ? [{ key: "triangle", units: TRIANGLE_UNITS, node: <RelationshipTriangle marked={marking.links} onPress={pressLink} onOpenList={chooseList} cardUnits={VALUE_LIST_CARD_UNITS} fill /> }]
+            : []),
+          ...(listsOnPage(selected).includes(ROLE_FORM_LIST)
+            ? [{ key: "role-form", units: ROLE_FORM_UNITS, hidden: !formOpen, node: <div ref={setFormSlot} data-role-form-slot="" /> }]
+            : []),
           ...listsOnPage(selected).map((key) => ({ key, units: valueListCardUnits(key), node: listCard(key, true) })),
-          { key: "type-uses", units: usesUnits, node: <PropertyTypeUses cardUnits={VALUE_LIST_CARD_UNITS} fill onUnits={setUsesUnits} /> },
-        ]
-      : null;
+          ...(selected === "property-types"
+            ? [{ key: "type-uses", units: usesUnits, node: <PropertyTypeUses cardUnits={VALUE_LIST_CARD_UNITS} fill onUnits={setUsesUnits} /> }]
+            : []),
+        ];
 
   /** A list chosen — in the column, or from a step of the triangle's ⓘ (#38.69): its whole set is marked. */
   function chooseList(key: ListKey) {
@@ -217,7 +246,8 @@ export function ValueListHub({
                 #34.05's sentence, printed here above the two link lists until now, is its Document – Proprietate
                 entry. #38.68: a number on it, or a name among the six, presses that link (`pressLink`) — marked in
                 yellow in all four places, its list opened as the column on the left opens it. */}
-            {categoryOfList(selected) === "rolesLinks" && (
+            {/* #39.76: a tile of its own now (`tiles`, above), on every page but „Indicative Tarla". */}
+            {!tiles && categoryOfList(selected) === "rolesLinks" && (
               <RelationshipTriangle marked={marking.links} onPress={pressLink} onOpenList={chooseList} cardUnits={VALUE_LIST_CARD_UNITS} />
             )}
             {/* Keyed on the list: each list starts from its own state — a filter

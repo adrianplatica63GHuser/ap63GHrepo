@@ -29,10 +29,13 @@ export interface ReferenceTile {
   /** Its width in whole units. */
   units: number;
   node: ReactNode;
+  /** Slice #39.76: kept in the page but not shown — the role form's tile while no form is open. */
+  hidden?: boolean;
 }
 
 export function ReferenceTiles({ page, tiles }: { page: string; tiles: readonly ReferenceTile[] }) {
-  const screen = referenceScreen(page, tiles);
+  // The flow's two tiles are the first two SHOWN: a hidden tile takes no room (`findBoxes` skips it).
+  const screen = referenceScreen(page, tiles.filter((t) => !t.hidden));
   return (
     <div className="flex flex-col gap-3" data-reference-tiles={page}>
       <div className="flex justify-end">
@@ -40,7 +43,7 @@ export function ReferenceTiles({ page, tiles }: { page: string; tiles: readonly 
       </div>
       <TileUnitRow screen={screen}>
         {tiles.map((t) => (
-          <div key={t.key} data-tile={t.key} data-tile-units={t.units} style={unitStyle(t.units)}>
+          <div key={t.key} data-tile={t.key} data-tile-units={t.units} style={unitStyle(t.units)} hidden={t.hidden}>
             {t.node}
           </div>
         ))}

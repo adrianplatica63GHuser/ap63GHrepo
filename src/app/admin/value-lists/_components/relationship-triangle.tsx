@@ -114,6 +114,7 @@ export function RelationshipTriangle({
   onPress,
   onOpenList,
   cardUnits,
+  fill = false,
 }: {
   /**
    * Slice #38.68: the links marked in the heavy yellow — every link of the open list, or the one pressed
@@ -127,6 +128,8 @@ export function RelationshipTriangle({
   onOpenList: (key: ListKey) => void;
   /** The list card's width, so the tile above it lines up with it. */
   cardUnits: number;
+  /** Slice #39.76: a tile of its own — as wide as its tile (`ReferenceTiles`), not the list card's width. */
+  fill?: boolean;
 }) {
   const t = useTranslations("valueList");
   const titleId = useId();
@@ -188,7 +191,7 @@ export function RelationshipTriangle({
       aria-labelledby={titleId}
       data-relationship-triangle=""
       className="@container rounded-xl border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
-      style={triangleCardStyle(cardUnits)}
+      style={fill ? { width: "100%" } : triangleCardStyle(cardUnits)}
     >
       {/* Slice #38.67: the title and its sentence over the drawing, in a column as wide as the drawing; the six beside
           them from the tile's top edge, a divider between that runs the tile's full height. #38.62's full-width
