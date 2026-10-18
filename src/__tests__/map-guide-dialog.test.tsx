@@ -91,7 +91,7 @@ describe("the box", () => {
     render(<MapGuideDialog guide={guide} onClose={() => {}} onOpenMap={() => {}} />);
     const dialog = screen.getByRole("dialog", { name: at(RO, `nav.guides.${guide}.title`) });
     const rows = dialog.querySelectorAll("[data-map-guide-row]");
-    expect([...rows].map((r) => r.querySelector(".font-medium")?.textContent)).toEqual(names);
+    expect([...rows].map((r) => r.querySelector("[data-map-guide-name]")?.textContent)).toEqual(names);
     for (const row of rows) {
       const picture = row.querySelector("[data-map-guide-button]")!;
       // A picture of the button: hidden from a screen reader and out of reach, the name read from the row's text.

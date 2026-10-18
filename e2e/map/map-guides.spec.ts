@@ -34,7 +34,7 @@ async function openGuide(page: Page, name: string): Promise<Locator> {
 }
 
 async function rowNames(box: Locator): Promise<string[]> {
-  return (await box.locator("[data-map-guide-row] .font-medium").allInnerTexts()).map((t) => t.trim());
+  return (await box.locator("[data-map-guide-name]").allInnerTexts()).map((t) => t.trim());
 }
 
 /** The set pulsing: exactly these buttons carry the class, and none is pressed. */

@@ -104,7 +104,7 @@ export function MapGuideDialog({
                 <IconButton icon={row.icon} label={row.name} variant="secondary" size="sm" tabIndex={-1} />
               </span>
               <span className="flex min-w-0 flex-col text-sm">
-                <span className="font-medium text-ink dark:text-zinc-100">{row.name}</span>
+                <span className="font-medium text-ink dark:text-zinc-100" data-map-guide-name="">{row.name}</span>
                 <span className="text-fade dark:text-zinc-400">{row.text}</span>
               </span>
             </li>

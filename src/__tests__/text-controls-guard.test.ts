@@ -334,6 +334,7 @@ const ALLOW: Record<string, Allowed[]> = {
     ["A020", "{t(\"defaults\")}"], // #38.12: the forms' „Implicit", for a screen with no checkbox bar
   ],
   "src/components/sidebar/sidebar-nav.tsx": [
+    ["A001", "<Icon size={14} className=\"shrink-0\" aria-hidden=\"true\" "], // #39.78: a guide's button, a sidebar row like the link
     ["A001", "<Icon size={14} className=\"shrink-0\" aria-hidden=\"true\" "],
     ["A001", "<span className={`flex items-center ${isCollapsed ? \"\" :"],
     ["A001", "<span className={`flex items-center ${isCollapsed ? \"\" :"],
