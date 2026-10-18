@@ -66,3 +66,6 @@ with the band of names (lint, tsc and the slice's jest suites green too).
 
 **2026-10-18 — step 6 added for #39.85.** The search box as wide as „Adaugă …", its whole explanation on hover. Not
 driven by hand: the spec, extended with it, is what checks it.
+
+**2026-10-18 — `automated` (Slice #39.85).** The test runner's targeted run 20261018T165019Z-11827 on 4e824a7 ran `e2e/layout/domain-lists-one-line.spec.ts` green
+with the search box's new words (lint, tsc and the slice's jest suites green too).

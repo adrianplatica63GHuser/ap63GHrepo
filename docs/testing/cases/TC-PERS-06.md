@@ -6,7 +6,7 @@
 | **Kind** | happy |
 | **Data** | — |
 | **State** | `automated` |
-| **Last green** | 2026-10-03 |
+| **Last green** | 2026-10-18 |
 
 ## What this proves
 
@@ -68,3 +68,6 @@ forms-drift green too).
 **2026-10-18 — the search box's words updated for #39.85.** The box's explanation now names its fields as
 „Câmpuri afișate", the column headers or the form spell them; the box is as wide as „Adaugă …" and shows the whole
 explanation on hover. Only the quoted words changed in this file.
+
+**2026-10-18 — `automated` (Slice #39.85).** The test runner's targeted run 20261018T165019Z-11827 on 4e824a7 ran `e2e/person/company-list.spec.ts` green
+with the search box's new words (lint, tsc and the slice's jest suites green too).

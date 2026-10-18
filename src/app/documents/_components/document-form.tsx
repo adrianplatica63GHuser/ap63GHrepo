@@ -1271,10 +1271,7 @@ export function DocumentForm({
         error={errors.issuerPersonId?.message}
         options={issuer.options}
         highlight={displayHighlights?.issuerPersonId}
-        // Fixed in passing (#39.85): every juridical person is an option, so the longest is any firm's name — the big
-        // seed's „Comisia Județeană Ilfov pentru stabilirea dreptului de proprietate asupra terenurilor" needs 538 px.
-        // Capped at XXL like any open list: the box shows the name's start, its `title` the whole of it.
-        width={{ ...DOC.issuerPersonId, capped: true }}
+        width={DOC.issuerPersonId}
         watchValue={watchedValues.issuerPersonId}
         hint={
           <>

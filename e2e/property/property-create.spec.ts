@@ -1,6 +1,6 @@
 /**
  * Case:   TC-PROP-01 — Proprietate creată manual, vizibilă în listă
- * Source: docs/testing/cases/TC-PROP-01.md, „Last green" 2026-09-25 (steps 1 and 2 follow Slice #38.02)
+ * Source: docs/testing/cases/TC-PROP-01.md, „Last green" 2026-10-18 (steps 1 and 2 follow Slice #38.02)
  *
  * Un-parked in Slice #36.18, unchanged in its steps: it was written in #36.06
  * from the corrected case file, parked as `property-create.parked.ts` while

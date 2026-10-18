@@ -1,6 +1,6 @@
 /**
  * Case:   TC-PERS-06 — Lista persoanelor juridice: fără filtrul „Grupuri", „Persoană de contact" în „Câmpuri afișate"
- * Source: docs/testing/cases/TC-PERS-06.md, „Last green" 2026-10-03
+ * Source: docs/testing/cases/TC-PERS-06.md, „Last green" 2026-10-18
  *
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim.

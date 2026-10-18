@@ -1,6 +1,6 @@
 /**
  * Case:   TC-PERS-01 — Persoană fizică creată manual
- * Source: docs/testing/cases/TC-PERS-01.md, „Last green" 2026-09-22
+ * Source: docs/testing/cases/TC-PERS-01.md, „Last green" 2026-10-18
  *
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim.

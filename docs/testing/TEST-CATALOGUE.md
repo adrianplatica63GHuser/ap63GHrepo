@@ -67,7 +67,7 @@ fixed fixture where the existing one will do.
 |---|---|---|---|---|---|---|---|
 | [TC-AUTH-01](cases/TC-AUTH-01.md) | Conectare și tabloul de bord | auth | happy | — | `automated` | 2026-10-01 | `e2e/auth/login-dashboard.spec.ts` |
 | [TC-AUTH-02](cases/TC-AUTH-02.md) | Contul care era „user" are toată aplicația, ca administratorul | auth | authz | — | `draft` | — | — |
-| [TC-PROP-01](cases/TC-PROP-01.md) | Proprietate creată manual, vizibilă în listă | property | happy | — | `automated` | 2026-10-05 | `e2e/property/property-create.spec.ts` |
+| [TC-PROP-01](cases/TC-PROP-01.md) | Proprietate creată manual, vizibilă în listă | property | happy | — | `automated` | 2026-10-18 | `e2e/property/property-create.spec.ts` |
 | [TC-PROP-02](cases/TC-PROP-02.md) | Editare și salvare — contorul de versiuni avansează | property | happy | — | `automated` | 2026-09-23 | `e2e/versioning/property-versioning.spec.ts` |
 | [TC-PROP-03](cases/TC-PROP-03.md) | Proprietate creată dintr-un fișier cu coordonate | property | happy | `08.tc.coord.file` | `automated` | 2026-10-17 | `e2e/property/property-from-coord-file.spec.ts` |
 | [TC-PROP-04](cases/TC-PROP-04.md) | Un colț editat în „Puncte de contur”, văzut după salvare | property | happy | `08.tc.coord.file` | `automated` | 2026-09-26 | `e2e/property/property-corner-edit.spec.ts` |
@@ -83,12 +83,12 @@ fixed fixture where the existing one will do.
 | [TC-PROP-14](cases/TC-PROP-14.md) | Lista proprietăților filtrată după „Tip proprietate” și „Categorie de folosință”: numărul de lângă fiecare valoare, adresa, „Șterge filtrele” | property | happy | — | `automated` | 2026-10-18 | `e2e/property/property-list-filters.spec.ts` |
 | [TC-PROP-15](cases/TC-PROP-15.md) | „Din fișier text" pe o parcelă care are deja o proprietate: nu se creează alta, mesajul și legătura spre ea | property | negative | — | `automated` | 2026-10-17 | `e2e/property/property-from-coord-file-parcel-exists.spec.ts` |
 | [TC-PROP-16](cases/TC-PROP-16.md) | Aceeași tarla în două localități: două tarlale, două parcele 1, iar a treia parcelă 1 este refuzată | property | happy | — | `automated` | 2026-10-18 | `e2e/property/tarla-two-localities.spec.ts` |
-| [TC-PERS-01](cases/TC-PERS-01.md) | Persoană fizică creată manual | person | happy | — | `automated` | 2026-10-02 | `e2e/person/person-create.spec.ts` |
-| [TC-PERS-02](cases/TC-PERS-02.md) | Persoană juridică creată și modificată | person | happy | — | `automated` | 2026-10-02 | `e2e/person/company-create-edit.spec.ts` |
+| [TC-PERS-01](cases/TC-PERS-01.md) | Persoană fizică creată manual | person | happy | — | `automated` | 2026-10-18 | `e2e/person/person-create.spec.ts` |
+| [TC-PERS-02](cases/TC-PERS-02.md) | Persoană juridică creată și modificată | person | happy | — | `automated` | 2026-10-18 | `e2e/person/company-create-edit.spec.ts` |
 | [TC-PERS-03](cases/TC-PERS-03.md) | CNP-ul salvat: nota despre blocare într-un balon, iar o schimbare salvată e refuzată în română | person | happy | — | `automated` | 2026-10-02 | `e2e/person/cnp-lock-bubble.spec.ts` |
 | [TC-PERS-04](cases/TC-PERS-04.md) | Listele de persoane: fără filtre de importanță și relevanță, câmpurile identității în „Câmpuri afișate", previzualizarea pe trei rânduri | person | happy | — | `automated` | 2026-10-18 | `e2e/person/person-lists.spec.ts` |
 | [TC-PERS-05](cases/TC-PERS-05.md) | „Corelate" pe o persoană fizică și pe o firmă: persoanele, proprietățile și actele într-o singură fișă, rolul în act după „Relația" | person | happy | — | `automated` | 2026-10-03 | `e2e/person/related-tile.spec.ts` |
-| [TC-PERS-06](cases/TC-PERS-06.md) | Lista persoanelor juridice: fără filtrul „Grupuri", „Persoană de contact" în „Câmpuri afișate" | person | happy | — | `automated` | 2026-10-03 | `e2e/person/company-list.spec.ts` |
+| [TC-PERS-06](cases/TC-PERS-06.md) | Lista persoanelor juridice: fără filtrul „Grupuri", „Persoană de contact" în „Câmpuri afișate" | person | happy | — | `automated` | 2026-10-18 | `e2e/person/company-list.spec.ts` |
 | [TC-PERS-07](cases/TC-PERS-07.md) | „Interacțiuni”, o fișă fixă la dreapta pe persoane; prima fișă a persoanei juridice se numește „Identitate” | person | happy | — | `automated` | 2026-10-11 | `e2e/person/interactions-tile.spec.ts` |
 | [TC-PERS-08](cases/TC-PERS-08.md) | „Adaugă nou" cu o carte de identitate: tatăl și mama create și legate ca „Tată" și „Mamă" | person | happy | — | `automated` | 2026-10-07 | `e2e/person/parents-from-id-card.spec.ts` |
 | [TC-PERS-09](cases/TC-PERS-09.md) | O firmă cu telefonul și e-mailul ei, păstrate după reîncărcare și în istoric | person | happy | — | `automated` | 2026-10-07 | `e2e/person/firm-phone-email.spec.ts` |
@@ -97,7 +97,7 @@ fixed fixture where the existing one will do.
 | [TC-PERS-12](cases/TC-PERS-12.md) | Lista persoanelor fizice filtrată după „Tip profesional” și „Data decesului”: numărul de lângă fiecare valoare, adresa, „Șterge filtrele” | person | happy | — | `automated` | 2026-10-18 | `e2e/person/person-list-filters.spec.ts` |
 | [TC-PERS-13](cases/TC-PERS-13.md) | Lista persoanelor juridice filtrată după „Tip” și „Localitate”: numărul de lângă fiecare valoare, adresa, „Șterge filtrele” | person | happy | — | `automated` | 2026-10-18 | `e2e/person/company-list-filters.spec.ts` |
 | [TC-PERS-14](cases/TC-PERS-14.md) | „Completează din ANAF” pe o persoană juridică: un CUI necunoscut, ce s-ar schimba, „Preia bifele”, „Salvează” | person | happy | — | `automated` | 2026-10-17 | `e2e/person/company-anaf.spec.ts` |
-| [TC-DOC-01](cases/TC-DOC-01.md) | Act creat, pagină atașată, pagina se deschide | document | happy | `01.smoke.one.property` | `automated` | 2026-10-02 | `e2e/document/document-page.spec.ts` |
+| [TC-DOC-01](cases/TC-DOC-01.md) | Act creat, pagină atașată, pagina se deschide | document | happy | `01.smoke.one.property` | `automated` | 2026-10-18 | `e2e/document/document-page.spec.ts` |
 | [TC-DOC-02](cases/TC-DOC-02.md) | Un „Subiect" pe mai multe rânduri împinge „Note extinse" în jos, în vizualizare și în editare | document | happy | — | `automated` | 2026-10-02 | `e2e/document/subject-grows.spec.ts` |
 | [TC-DOC-03](cases/TC-DOC-03.md) | Un PAD: „Detalii act" fără panou de emitere; emitentul, numărul și data în „Identificarea actului", „Data" pe un rând | document | happy | — | `automated` | 2026-10-07 | `e2e/document/type-fields-tile.spec.ts` |
 | [TC-DOC-04](cases/TC-DOC-04.md) | Listele derulante ale unui CVC: cât cea mai lungă alegere, trei pe rând | document | happy | — | `automated` | 2026-10-02 | `e2e/document/template-dropdowns.spec.ts` |

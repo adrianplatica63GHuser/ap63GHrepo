@@ -117,6 +117,12 @@ export interface FieldWidth {
    * the step decides, as before.
    */
   fill?: true;
+  /**
+   * For a `select` whose options are open-ended — a name the archive holds, not a list somebody wrote: capped at its
+   * step, the box showing the start of a longer option and its `title` the whole of it. The e2e check
+   * (`expectFixedFieldsHold`) skips a capped box (#37.53's `templateSelectWidth`, the issuer since #39.85).
+   */
+  capped?: boolean;
 }
 
 // ---- styles -----------------------------------------------------------------------
@@ -459,7 +465,10 @@ export const DOCUMENT = {
   title: { step: "TILE", kind: "grows", fill: true }, //  Etichetă scurtă; m: 105 · 151 · 73; the panel's whole width (#37.31)
   subject: { step: "TILE", kind: "grows", fill: true }, // m: 48 · 428 · 301; the panel's whole width (#37.31)
   notes: { step: "TILE", kind: "lines", fold: NOTE_FOLD_LINES, rows: 1, fill: true }, // Note extinse; m: 50 · 2504 · 2283, at most 4000; whole width
-  issuerPersonId: { step: "XXL", kind: "select" }, //     #39.72: the issuer, a juridical person by name — „Biroul Individual Notarial …" passes 40
+  // #39.72: the issuer, a juridical person by name — „Biroul Individual Notarial …" passes 40. Fixed in passing (#39.85):
+  // capped — every juridical person is an option, and the big seed's „Comisia Județeană Ilfov pentru stabilirea
+  // dreptului de proprietate asupra terenurilor" needs 538 px; the box shows its start, its title the whole name.
+  issuerPersonId: { step: "XXL", kind: "select", capped: true },
   nrDocument: { step: "M", kind: "fixed", sample: "00/00.00.0000" }, // m: 24 · 13 · 6
   dateDocument: { step: "M", kind: "fixed" }, //         dd.mm.yyyy and the calendar button
 } as const satisfies Record<string, FieldWidth>;
