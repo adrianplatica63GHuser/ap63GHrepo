@@ -56,7 +56,8 @@ describe("the Properties list (Slice #37.61)", () => {
   it("has no „Cod” column; Poreclă is always the first after the checkbox (#37.72)", () => {
     // Slice #37.72 had ["selectBadges", "propertyNickname", …, "openPreview"]; Slice #38.57: the list's own columns.
     expect(VIEW).toMatch(/const columns: ColumnName\[\] = \["listBadges", "listPropertyNickname", \.\.\.shownCols\.map\(\(c\) => c\.column\), "listRowActions"\];/);
-    expect(VIEW).toMatch(/\{\.\.\.columnHead\("listPropertyNickname"\)\}>\s*\{t\("table\.nickname"\)\}/);
+    // #39.83: through the band's shared cell — was `<th … {...columnHead("listPropertyNickname")}>{t("table.nickname")}`.
+    expect(VIEW).toContain('<ListHeadCell column="listPropertyNickname" name={t("table.nickname")} />');
     expect(VIEW).not.toMatch(/columnHead\("code"\)/);
   });
 });

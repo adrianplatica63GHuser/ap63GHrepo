@@ -45,7 +45,8 @@ export function ListHeadCell({
     <span className="line-clamp-2 text-balance break-words" data-head-text="">
       {split ? (
         <>
-          {split[0]}
+          {/* The space keeps the name's words apart in its text — what a screen reader and a search read. */}
+          {split[0]}{" "}
           <br />
           {split[1]}
         </>
