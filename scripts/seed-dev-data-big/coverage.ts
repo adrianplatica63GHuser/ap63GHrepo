@@ -256,3 +256,84 @@ export function finishLines(f: FinishFacts): CoverageLine[] {
     around("Obiecte cu „Vezi și”", f.withXref, f.objects, 30),
   ];
 }
+
+// ---------------------------------------------------------------------------
+// Slice #39.81: what the archive gained since the seed was designed
+// ---------------------------------------------------------------------------
+
+export type EnrichFacts = {
+  tarlas: { planned: number; total: number; withPlace: number; withNotes: number; withOutline: number; withParcels: number; withPlan: number };
+  /** drawn lots on a seeded tarla, and how many stand inside its outline */
+  lotsOnTarla: { drawn: number; inside: number };
+  professions: { used: number; adults: number; withProfession: number };
+  relationships: { used: number; available: number; adults: number; withAny: number };
+  natural: {
+    withPhone: number; phone2: number; working: number; workPhone: number; workEmail: number; withEmail: number; email2: number;
+    idCards: number; withMrz: number; cardNumber: number; passports: number; correspondence: number; postal: number; sameAsHome: number; addressNotes: number;
+  };
+  judicial: { total: number; correspondence: number; postal: number };
+  /** properties with an address, and those whose address carries the Street View line */
+  streetView: { addressed: number; withLine: number };
+  documents: {
+    issuerPlanned: number; issuer: number; issuerRead: number; titles: number; uatProprietar: number; cadastral: number; surveyor: number;
+    imported: number; aiInterpreted: number; cited: number; cotaSurface: number; pageNotes: number; rotated: number; cornerSources: number;
+  };
+  institutions: { planned: number; total: number; publicBody: number; publicBodyPlanned: number };
+  runs: { planned: number; written: number; complete: number };
+};
+
+/** The lines for every field and table the seed fills since #39.81 — read back from the database, like the rest. */
+export function enrichLines(f: EnrichFacts): CoverageLine[] {
+  const t = f.tarlas;
+  const n = f.natural;
+  const d = f.documents;
+  return [
+    exactly("Tarlale ale seed-ului", t.total, t.planned),
+    atLeast("Tarlale planificate", t.planned, 5),
+    share("Tarlale cu localitate și județ", t.withPlace, t.total, 100),
+    share("Tarlale cu „Note extinse”", t.withNotes, t.total, 100),
+    share("Tarlale cu contur", t.withOutline, t.total, 100),
+    share("Tarlale cu parcele", t.withParcels, t.total, 100),
+    share("Tarlale cu plan parcelar", t.withPlan, t.total, 100),
+    share("Loturi desenate în conturul tarlalei lor", f.lotsOnTarla.inside, f.lotsOnTarla.drawn, 100),
+    atLeast("Profesii folosite, din cele 13", f.professions.used, 12),
+    share("Adulți cu „Tip profesional”", f.professions.withProfession, f.professions.adults, 100),
+    exactly("„Relația cu firma”: valori folosite", f.relationships.used, f.relationships.available),
+    share("Adulți cu o „Relația cu firma”", f.relationships.withAny, f.relationships.adults, 60),
+    share("Al doilea telefon (din cei cu telefon)", n.phone2, n.withPhone, 15),
+    share("Telefon de serviciu (din cei care lucrează)", n.workPhone, n.working, 25),
+    atLeast("E-mail de serviciu", n.workEmail, 20),
+    share("Al doilea e-mail (din cei cu e-mail)", n.email2, n.withEmail, 8),
+    share("Cărți de identitate cu MRZ", n.withMrz, n.idCards, 100),
+    atLeast("Cărți de identitate cu numărul cardului", n.cardNumber, 10),
+    atLeast("Pașapoarte (copii)", n.passports, 3),
+    atLeast("Adrese de corespondență", n.correspondence, 10),
+    atLeast("Adrese poștale", n.postal + f.judicial.postal, 5),
+    atLeast("„Corespondență la domiciliu”", n.sameAsHome, 100),
+    atLeast("Adrese cu note", n.addressNotes, 10),
+    atLeast("Firme cu adresă de corespondență", f.judicial.correspondence, 20),
+    share("Adrese de proprietăți cu rândul Street View", f.streetView.withLine, f.streetView.addressed, 15),
+    exactly("Instituții emitente (persoane juridice)", f.institutions.total, f.institutions.planned),
+    exactly("… dintre ele autorități publice", f.institutions.publicBody, f.institutions.publicBodyPlanned),
+    share("Documente cu emitent sau notar, cu „Emitent” ales", d.issuer, d.issuerPlanned, 90),
+    atLeast("Documente cu „Emitent citit” de confirmat", d.issuerRead, 10),
+    share("Titluri cu „UAT proprietar”", d.uatProprietar, d.titles, 100),
+    share("Acte de cadastru cu topograf", d.surveyor, d.cadastral, 100),
+    atLeast("Documente importate (titlu de import)", d.imported, 30),
+    atLeast("Documente citite de AI", d.aiInterpreted, 30),
+    atLeast("Contracte cu înscrisuri citate", d.cited, 15),
+    atLeast("Cote în m²", d.cotaSurface, 50),
+    atLeast("Pagini cu note", d.pageNotes, 30),
+    atLeast("Pagini rotite", d.rotated, 10),
+    atLeast("Loturi desenate dintr-un act de cadastru", d.cornerSources, 5),
+    exactly("Calcule de drum lateral din proprietate", f.runs.written, f.runs.planned),
+    atLeast("Calcule de drum lateral planificate", f.runs.planned, 1),
+    share("Calcule cu grup și proprietăți create", f.runs.complete, f.runs.written, 100),
+  ];
+}
+
+/** The column check (columns.ts): every column the map says the seed writes holds a value on one of its rows. */
+export function columnLine(checked: number, empty: string[]): CoverageLine {
+  const shown = empty.slice(0, 8).join(", ") + (empty.length > 8 ? `, … (${empty.length})` : "");
+  return { label: "Coloane scrise de seed, cu valoare", target: "= toate", value: `${checked - empty.length} / ${checked}${empty.length ? ` — goale: ${shown}` : ""}`, met: checked > 0 && empty.length === 0 };
+}

@@ -19,6 +19,7 @@ import { makeCnp } from "./identifiers";
 import { addDays, addYears, ageAt, yearOf } from "./dates";
 import { LOCALITIES, LOCALITY_WEIGHTS, OCCUPATIONS, STUDIES, TRAITS, type Locality } from "./names";
 import { TODAY, type FamilyPlan, type PlanPerson } from "./families";
+import { professionOf, type Profession } from "./professions";
 
 export type Address = { streetLine: string; locality: string; county: string; postalCode: string };
 
@@ -37,7 +38,8 @@ export type NaturalDetails = {
   address: Address;
   /** a profession the seed's companies can use: their notary, surveyor, lawyer */
   occupation: string | null;
-  personType: "Notar" | "Expert" | null;
+  /** „Tip profesional" (#39.81): the occupation's profession, „Persoană privată" for another adult, none for a child */
+  personType: Profession | null;
   notes: string;
 };
 
@@ -187,7 +189,7 @@ export function naturalDetails(plan: FamilyPlan, r: Rng, takenCnp: Set<string>):
       usedEmail.add(email);
     }
     const occupation = occupationFor(r, p);
-    const personType = occupation === "notar public" ? "Notar" : occupation === "expert cadastral autorizat" ? "Expert" : null;
+    const personType = professionOf(p, occupation);
     return {
       key: p.key,
       firstName: p.first,
