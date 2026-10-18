@@ -1106,7 +1106,7 @@
   "naturalPerson": {
     "listTitle": "Persoană fizică",
     "createTitle": "Persoană fizică nouă",
-    "searchPlaceholder": "caută după ID, Nume, Poreclă, Email Personal 1, Email Personal 2, Email serviciu, Telefon Personal 1, Telefon Personal 2 sau Telefon serviciu",
+    "searchPlaceholder": "caută după ID, Nume, Poreclă, CNP, Email Personal 1, Email Personal 2, Email serviciu, Telefon Personal 1, Telefon Personal 2 sau Telefon serviciu",
     "chooseFields": "Câmpuri afișate",
     "chooseFieldsHint": "Selectați până la {max} coloane opționale",
     "addNew": "Adaugă persoană",

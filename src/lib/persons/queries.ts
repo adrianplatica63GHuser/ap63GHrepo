@@ -131,6 +131,9 @@ export function naturalPersonSearchCondition(q: string | undefined): SQL | undef
     // three sibling lists all match their code; this one did not.
     ilike(person.code, searchPattern),
     ilike(naturalPerson.nickname, searchPattern),
+    // Adrian, 2026-10-18: „Please allow a natural person to be searched and found by CNP, but there should never be a
+    // filter on CNP". Found here, by the search box; never a column filter (person-list-filters.test.ts holds that).
+    ilike(naturalPerson.cnp, searchPattern),
     ilike(naturalPerson.personalEmail1, searchPattern),
     ilike(naturalPerson.personalEmail2, searchPattern),
     ilike(naturalPerson.workEmail, searchPattern),

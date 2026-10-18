@@ -78,7 +78,7 @@ test.describe("TC-PERS-04 — listele de persoane", () => {
       // Step 1 — „Persoane Fizice": the search box, no filters, „Câmpuri afișate 0/4".
       await page.goto("/natural-persons");
       const main = page.locator("main");
-      await expect(main.getByPlaceholder("caută după ID, Nume, Poreclă, Email Personal 1, Email Personal 2, Email serviciu, Telefon Personal 1, Telefon Personal 2 sau Telefon serviciu")).toBeVisible({ timeout: 30_000 });
+      await expect(main.getByPlaceholder("caută după ID, Nume, Poreclă, CNP, Email Personal 1, Email Personal 2, Email serviciu, Telefon Personal 1, Telefon Personal 2 sau Telefon serviciu")).toBeVisible({ timeout: 30_000 });
       // #39.82: no select on the list again — „+ Filtru" is gone, a filter opens from its column's funnel. #39.62 had
       // „one select, „+ Filtru"", and before it `toHaveCount(0)`.
       await expect(main.locator("select")).toHaveCount(0);
@@ -100,7 +100,7 @@ test.describe("TC-PERS-04 — listele de persoane", () => {
       await npPicker.getByRole("checkbox", { name: "Data nașterii" }).check();
       await page.getByRole("heading", { level: 1 }).first().click();
       await expect(main.getByRole("button", { name: "Câmpuri afișate 2/4", exact: true })).toBeVisible();
-      await main.getByPlaceholder("caută după ID, Nume, Poreclă, Email Personal 1, Email Personal 2, Email serviciu, Telefon Personal 1, Telefon Personal 2 sau Telefon serviciu").fill(MARK);
+      await main.getByPlaceholder("caută după ID, Nume, Poreclă, CNP, Email Personal 1, Email Personal 2, Email serviciu, Telefon Personal 1, Telefon Personal 2 sau Telefon serviciu").fill(MARK);
       const npRow = main.locator("tbody tr").filter({ hasText: MARK });
       await expect(npRow).toHaveCount(1, { timeout: 30_000 });
       for (const col of ["NUME", "PORECLĂ", "CNP", "DATA NAȘTERII"]) await expect(main.getByRole("columnheader", { name: col }).first()).toBeVisible();
@@ -108,6 +108,14 @@ test.describe("TC-PERS-04 — listele de persoane", () => {
       await expect(npRow).toContainText("Ionel TC");
       await expect(npRow).toContainText(CNP);
       await expect(npRow).toContainText("01.01.1980");
+      // Adrian, 2026-10-18: found by CNP with the search box — and never a filter on CNP: its column has no funnel.
+      const npSearch = main.getByPlaceholder("caută după ID, Nume, Poreclă, CNP, Email Personal 1, Email Personal 2, Email serviciu, Telefon Personal 1, Telefon Personal 2 sau Telefon serviciu");
+      await npSearch.fill(CNP.slice(0, 10));
+      await expect(main.locator("tbody tr").filter({ hasText: CNP })).toHaveCount(1, { timeout: 30_000 });
+      await expect(main.locator('[data-width-column="listCnp"] [data-filter-funnel]')).toHaveCount(0);
+      await expect(main.getByRole("button", { name: "Filtrează după „CNP”", exact: true })).toHaveCount(0);
+      await npSearch.fill(MARK);
+      await expect(npRow).toHaveCount(1, { timeout: 30_000 });
       await main.getByRole("button", { name: "Câmpuri afișate 2/4", exact: true }).click();
       await photograph(page, "natural-persons-chooser", main);
       await page.getByRole("heading", { level: 1 }).first().click();

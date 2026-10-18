@@ -62,7 +62,7 @@ test.describe("TC-ICON-01 — Butoanele cu pictogramă își arată numele", () 
 
       // Step 1 — „Persoane Fizice", the marker in the search box.
       await page.goto("/natural-persons");
-      await page.getByPlaceholder("caută după ID, Nume, Poreclă, Email Personal 1, Email Personal 2, Email serviciu, Telefon Personal 1, Telefon Personal 2 sau Telefon serviciu").fill(MARK);
+      await page.getByPlaceholder("caută după ID, Nume, Poreclă, CNP, Email Personal 1, Email Personal 2, Email serviciu, Telefon Personal 1, Telefon Personal 2 sau Telefon serviciu").fill(MARK);
       const main = page.locator("main");
       await expect(main.getByText("Se afișează 15 din 16")).toBeVisible({ timeout: 15_000 });
       await expect(main.getByText("Pagina 1 din 2")).toBeVisible();

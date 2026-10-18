@@ -40,6 +40,7 @@ const LISTS: Record<string, { ns: string; source: string[]; region: [string, str
       { label: "naturalPerson.fields.code", reads: "person.code" }, //                   no column: the form's „ID"
       { label: "naturalPerson.table.name", reads: "person.displayName" },
       { label: "naturalPerson.table.nickname", reads: "naturalPerson.nickname" },
+      { label: "naturalPerson.fields.cnp", reads: "naturalPerson.cnp" }, //            the chooser; searched, never filtered
       { label: "naturalPerson.fields.personalEmail1", reads: "naturalPerson.personalEmail1" },
       { label: "naturalPerson.fields.personalEmail2", reads: "naturalPerson.personalEmail2" },
       { label: "naturalPerson.fields.workEmail", reads: "naturalPerson.workEmail" },

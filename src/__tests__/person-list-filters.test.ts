@@ -13,6 +13,7 @@ import {
   isPersonFacetField,
   parsePersonFilters,
   personFacetFields,
+  personFilterFields,
 } from "@/lib/persons/list-filters";
 import { headOfficeLocality, personFacetSql, personFilterConditions } from "@/lib/persons/list-filter-sql";
 import { NONE_VALUE, type FilterState } from "@/lib/list/filter-bar";
@@ -35,6 +36,18 @@ describe("the fields", () => {
     expect(isPersonFacetField("JUDICIAL", "judicialPersonType")).toBe(true);
     expect(isPersonFacetField("JUDICIAL", "gender")).toBe(false);
   });
+  // Adrian, 2026-10-18: „Please allow a natural person to be searched and found by CNP, but there should never be a
+  // filter on CNP". The search box reads it (search-explanation.test.ts); no field, no funnel, no address key, no SQL.
+  it("never a filter on CNP — on either list, by field, by column, by address or by SQL", () => {
+    for (const kind of ["NATURAL", "JUDICIAL"] as const) {
+      expect(personFilterFields(kind).map((f) => f.key.toLowerCase())).not.toContain("cnp");
+      expect(parsePersonFilters(kind, new URLSearchParams("cnp=1960101123456"))).toEqual({});
+      expect(personFilterConditions(kind, { cnp: { kind: "text", text: "1" }, CNP: { kind: "values", ids: ["1"] } })).toEqual([]);
+    }
+    expect(Object.keys(NATURAL_PERSON_COLUMN_FILTERS)).not.toContain("cnp");
+    expect(Object.values(NATURAL_PERSON_COLUMN_FILTERS)).not.toContain("cnp");
+  });
+
   it("each filter has its column, and only those columns show a funnel (#39.82)", () => {
     expect(NATURAL_PERSON_COLUMN_FILTERS).toEqual({
       dateOfBirth: "dateOfBirth", age: "age", gender: "gender", dateOfDeath: "dateOfDeath",

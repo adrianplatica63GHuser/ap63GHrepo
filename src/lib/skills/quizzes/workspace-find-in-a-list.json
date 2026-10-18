@@ -275,30 +275,30 @@
           "section": "start-lists",
           "ro": {
             "question": "După ce caută caseta de căutare din capul listei persoanelor?",
-            "explanation": "Caseta de căutare din capul listei spune în ea după ce caută; pe lista persoanelor fizice: ID, nume, poreclă, adresele de e-mail și telefoanele. Ținând mouse-ul pe casetă, citiți textul întreg."
+            "explanation": "Caseta de căutare din capul listei spune în ea după ce caută; pe lista persoanelor fizice: ID, nume, poreclă, CNP, adresele de e-mail și telefoanele. Ținând mouse-ul pe casetă, citiți textul întreg."
           },
           "en": {
             "question": "What does the search box at the top of the list of persons search by?",
-            "explanation": "The search box at the top of the list says inside what it searches; on the list of natural persons: ID, name, nickname, the e-mail addresses and the phones. Resting the mouse on the box, you read the whole text."
+            "explanation": "The search box at the top of the list says inside what it searches; on the list of natural persons: ID, name, nickname, CNP, the e-mail addresses and the phones. Resting the mouse on the box, you read the whole text."
           },
           "options": [
             {
               "id": "o1",
               "correct": false,
-              "ro": "Numai după numele întreg, scris exact",
-              "en": "Only by the full name, typed exactly"
+              "ro": "Numai după numele întreg, scris exact, cu diacritice",
+              "en": "Only by the full name, typed exactly, with diacritics"
             },
             {
               "id": "o2",
               "correct": false,
-              "ro": "După nume, CNP și data nașterii",
-              "en": "By name, CNP and date of birth"
+              "ro": "După nume, data nașterii și adresă",
+              "en": "By name, date of birth and address"
             },
             {
               "id": "o3",
               "correct": true,
-              "ro": "După ID, nume, poreclă, e-mail sau telefon",
-              "en": "By ID, name, nickname, e-mail or phone"
+              "ro": "După ID, nume, poreclă, CNP, e-mail sau telefon",
+              "en": "By ID, name, nickname, CNP, e-mail or phone"
             },
             {
               "id": "o4",

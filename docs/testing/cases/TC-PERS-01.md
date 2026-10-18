@@ -39,7 +39,7 @@ record; the form does not require one for a save.
 | 4 | Types `Ion` into „Prenume" | The value appears |
 | 5 | Scrolls to the bottom and presses „Salvează" | **The screen returns to the list**, not to the new person |
 | 6 | Looks at the top of the list | A row badged **„Nou!"**, with no system ID, whose „NUME" reads **`Ion TC-PERS-01`** — prenume first — and whose „PORECLĂ" is „—" |
-| 7 | Types `TC-PERS` into the list's search box (placeholder „caută după ID, Nume, Poreclă, Email Personal 1, Email Personal 2, Email serviciu, Telefon Personal 1, Telefon Personal 2 sau Telefon serviciu") | The row is still there — the search matches on the name |
+| 7 | Types `TC-PERS` into the list's search box (placeholder „caută după ID, Nume, Poreclă, CNP, Email Personal 1, Email Personal 2, Email serviciu, Telefon Personal 1, Telefon Personal 2 sau Telefon serviciu") | The row is still there — the search matches on the name |
 
 ## At the end — leaving things as they were found
 
@@ -113,3 +113,6 @@ explanation on hover. Only the quoted words changed in this file.
 
 **2026-10-18 — `automated` (Slice #39.85).** The test runner's targeted run 20261018T165019Z-11827 on 4e824a7 ran `e2e/person/person-create.spec.ts` green
 with the search box's new words (lint, tsc and the slice's jest suites green too).
+
+**2026-10-18 — the search box's words updated: it reads the CNP too.** Adrian, 2026-10-18: „Please allow a natural
+person to be searched and found by CNP, but there should never be a filter on CNP". The explanation now names „CNP".

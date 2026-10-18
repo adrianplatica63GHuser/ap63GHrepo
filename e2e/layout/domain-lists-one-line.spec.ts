@@ -20,7 +20,7 @@ const LONG = "cu o denumire mult prea lungă ca să încapă pe un singur rând 
 // and its ticks with it), so there is no gap to measure there, and no header box to align with — `null`.
 const LISTS: { path: string; search: string; gap: number | null }[] = [
   { path: "/properties", search: "caută după Cod, Poreclă, Nr. cadastru, Nr. CF, Tarla/Solă sau Parcelă", gap: null },
-  { path: "/natural-persons", search: "caută după ID, Nume, Poreclă, Email Personal 1, Email Personal 2, Email serviciu, Telefon Personal 1, Telefon Personal 2 sau Telefon serviciu", gap: 36 },
+  { path: "/natural-persons", search: "caută după ID, Nume, Poreclă, CNP, Email Personal 1, Email Personal 2, Email serviciu, Telefon Personal 1, Telefon Personal 2 sau Telefon serviciu", gap: 36 },
   { path: "/judicial-persons", search: "caută după ID, Denumire, Poreclă, Nr. înregistrare (CUI), Telefon firmă sau E-mail firmă", gap: 36 },
   { path: "/documents", search: "caută după Cod, Titlu sau Nr. document", gap: 72 },
 ];

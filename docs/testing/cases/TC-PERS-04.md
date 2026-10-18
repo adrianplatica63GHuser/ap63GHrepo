@@ -36,9 +36,9 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „Persoane Fizice" | A search box („caută după ID, Nume, Poreclă, Email Personal 1, Email Personal 2, Email serviciu, Telefon Personal 1, Telefon Personal 2 sau Telefon serviciu"), no „Importanță" or „Relevanță" filter, „Câmpuri afișate 0/4", and no `<select>` — „+ Filtru" is gone since #39.82, a filter opens from its column's funnel |
+| 1 | Opens „Persoane Fizice" | A search box („caută după ID, Nume, Poreclă, CNP, Email Personal 1, Email Personal 2, Email serviciu, Telefon Personal 1, Telefon Personal 2 sau Telefon serviciu"), no „Importanță" or „Relevanță" filter, „Câmpuri afișate 0/4", and no `<select>` — „+ Filtru" is gone since #39.82, a filter opens from its column's funnel |
 | 2 | Presses „Câmpuri afișate" | CNP, Data nașterii, Vârstă, Gen, Data decesului, Locul nașterii, Tip profesional, Relația cu firma — in that order |
-| 3 | Ticks CNP and Data nașterii, presses outside, types `TC-PERS-04` into the search | „Câmpuri afișate 2/4"; the table headed NUME · PORECLĂ · CNP · DATA NAȘTERII; one row: `Ion TC-PERS-04`, „Ionel TC", `1800101420045`, `01.01.1980` |
+| 3 | Ticks CNP and Data nașterii, presses outside, types `TC-PERS-04` into the search | „Câmpuri afișate 2/4"; the table headed NUME · PORECLĂ · CNP · DATA NAȘTERII; one row: `Ion TC-PERS-04`, „Ionel TC", `1800101420045`, `01.01.1980`. Typing the CNP's first ten digits, `1800101420`, into the search instead finds the same person; the CNP column has no funnel — never a filter on CNP (Adrian, 2026-10-18). Then `TC-PERS-04` again |
 | 4 | Presses „Previzualizare" on the row | A tile headed `TC-PERS-04 Ion` (Nume Prenume), then two lines: „Ionel TC, 1800101420045" and „născut: 01.01.1980, Localitatea Exemplu"; no system ID, no Nume or Prenume under the heading |
 | 5 | Opens „Persoane Juridice" and presses „Câmpuri afișate" (it reads `0/4`) | Tip, Nr. înregistrare (CUI), Nr. registru comerțului, Persoană de contact, Localitate (#39.82) |
 | 6 | Ticks Nr. înregistrare (CUI), presses outside, types `TC-PERS-04` into the search | The table headed DENUMIRE · PORECLĂ · NR. ÎNREGISTRARE (CUI); one row with `RO99999990` |
@@ -112,3 +112,7 @@ explanation on hover. Only the quoted words changed in this file.
 
 **2026-10-18 — `automated` (Slice #39.85).** The test runner's targeted run 20261018T165019Z-11827 on 4e824a7 ran `e2e/person/person-lists.spec.ts` green
 with the search box's new words (lint, tsc and the slice's jest suites green too).
+
+**2026-10-18 — the search box's words updated: it reads the CNP too.** Adrian, 2026-10-18: „Please allow a natural
+person to be searched and found by CNP, but there should never be a filter on CNP". The explanation now names „CNP". Step
+3 also searches by the CNP, and checks that the CNP column has no funnel.
