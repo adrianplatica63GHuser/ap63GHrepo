@@ -178,6 +178,51 @@ function consumeRerunPayload(isRerun: boolean): RerunPayload | null {
   }
 }
 
+// ---------------------------------------------------------------------------
+// The screen's work, kept between visits  (2026-10-18)
+// ---------------------------------------------------------------------------
+
+/**
+ * Adrian, 2026-10-18: „the screen should keep its value until a new button reset is pressed" — he goes to the persons
+ * and properties lists to look up a code or a name and comes back. So everything typed and chosen, and how far the
+ * steps went (the division, the road, the group's description, what was created), is written to this browser's
+ * storage after every change and read back when the screen opens; „Resetează" (step 1), „Resetează" beside the
+ * summary, „Anulează" and „Reia" empty it. A re-run's payload wins over it. Storage that throws (a private window, a
+ * blocked site) only means the screen starts empty, as before.
+ */
+const DRAFT_KEY = "ga40.calculation.draft.v1";
+
+type Draft = {
+  start: StartState;
+  sent: SideRoadBody | null;
+  computation: Computation | null;
+  roadStep: RoadStep;
+  groupDescription: string;
+  roadNickname: string;
+  committed: CommitResult | null;
+};
+
+function readDraft(): Draft | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(DRAFT_KEY);
+    if (!raw) return null;
+    const d = JSON.parse(raw) as Partial<Draft> | null;
+    return d && d.start && Array.isArray(d.start.owners) && d.roadStep ? (d as Draft) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeDraft(d: Draft | null): void {
+  try {
+    if (d) window.localStorage.setItem(DRAFT_KEY, JSON.stringify(d));
+    else window.localStorage.removeItem(DRAFT_KEY);
+  } catch {
+    // storage unavailable: the screen simply does not remember
+  }
+}
+
 /** The side a corner's road runs along, as an index into `sides`: side i joins corner i to i + 1. */
 function sideIndex(corner: number, side: RoadSide, n: number): number {
   return side === "next" ? corner : (corner + n - 1) % n;
@@ -205,11 +250,14 @@ export function CalculationView() {
     consumeRerunPayload(searchParams.get("rerun") === "1"),
   );
 
+  // 2026-10-18: what the screen held when it was left, unless a re-run brings its own.
+  const [draft] = useState<Draft | null>(() => (rerunPayload ? null : readDraft()));
+
   // Step 1 (#39.79): what is typed, and what was last sent — every later preview and the commit send the same.
   const [start, setStart] = useState<StartState>(() =>
     rerunPayload
       ? { property: { ...rerunPayload.property, corners: null }, owners: rerunPayload.owners, width: rerunPayload.width }
-      : EMPTY_START,
+      : draft?.start ?? EMPTY_START,
   );
   const [sent, setSent] = useState<SideRoadBody | null>(() =>
     rerunPayload
@@ -219,10 +267,10 @@ export function CalculationView() {
           width: rerunPayload.width,
           rerunOf: rerunPayload.runId,
         }
-      : null,
+      : draft?.sent ?? null,
   );
 
-  const [computation, setComputation] = useState<Computation | null>(null);
+  const [computation, setComputation] = useState<Computation | null>(draft?.computation ?? null);
   /** What the server refused when step 1's checks had passed — the same codes, worded by step 1. */
   const [problems, setProblems] = useState<InputProblem[] | null>(null);
   const [previewing, setPreviewing] = useState(() => rerunPayload !== null);
@@ -230,19 +278,26 @@ export function CalculationView() {
   const [previewError, setPreviewError] = useState<string | null>(null);
   /** What the last reorder did, for the screen reader (aria-live). */
   const [announcement, setAnnouncement] = useState("");
-  const [roadStep, setRoadStep] = useState<RoadStep>({ phase: "corner" });
+  const [roadStep, setRoadStep] = useState<RoadStep>(draft?.roadStep ?? { phase: "corner" });
   /** Why the last click or reorder was refused (#38.24). */
   const [roadMessage, setRoadMessage] = useState<string | null>(null);
 
   // Step 4 (#38.25).
-  const [groupDescription, setGroupDescription] = useState(rerunPayload?.options?.groupDescription ?? "");
-  const [roadNickname, setRoadNickname] = useState(rerunPayload?.options?.roadNickname ?? t("road.defaultNickname"));
+  const [groupDescription, setGroupDescription] = useState(rerunPayload?.options?.groupDescription ?? draft?.groupDescription ?? "");
+  const [roadNickname, setRoadNickname] = useState(rerunPayload?.options?.roadNickname ?? draft?.roadNickname ?? t("road.defaultNickname"));
   const [committing, setCommitting] = useState(false);
   const [commitError, setCommitError] = useState<string | null>(null);
-  const [committed, setCommitted] = useState<CommitResult | null>(null);
+  const [committed, setCommitted] = useState<CommitResult | null>(draft?.committed ?? null);
+
+  // 2026-10-18: written after every change, so leaving the screen loses nothing; an empty screen keeps nothing.
+  useEffect(() => {
+    const empty = !start.property && start.owners.length === 0 && start.width.trim() === "" && !computation && !committed;
+    writeDraft(empty ? null : { start, sent, computation, roadStep, groupDescription, roadNickname, committed });
+  }, [start, sent, computation, roadStep, groupDescription, roadNickname, committed]);
 
 
   function resetAll() {
+    writeDraft(null);
     setStart(EMPTY_START);
     setSent(null);
     setComputation(null);
@@ -616,6 +671,7 @@ export function CalculationView() {
           canDivide={checked.ok && !previewing}
           dividing={previewing}
           onDivide={() => void divide()}
+          onReset={resetAll}
           onPropertyChosen={propertyChosen}
         />
       ) : (

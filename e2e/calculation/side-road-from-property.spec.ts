@@ -5,6 +5,9 @@
  * A translation of the case file, step for step (Slice #39.79). Every Romanian string below is quoted from it
  * verbatim.
  *
+ * 2026-10-18 (Adrian): an owner is found by code and by words in any order (steps 4), the screen keeps what was typed
+ * while another screen is open (step 7), and „Resetează" empties it (step 8).
+ *
  * No real maps: step 1 is a form, and steps 2 to 4 are reached without the map — the road is laid with the two
  * select boxes under the prompt, the keyboard's way to the same two clicks (#38.24). The preview map is TC-CALC-01's.
  *
@@ -40,6 +43,7 @@ const FIVE = [...FOUR, wgs([20, 318686.0, 573587.0])];
 const start = (page: Page) => page.locator('[data-calc-start]');
 const problems = (page: Page) => page.locator('[data-panel="input-problems"]');
 const divide = (page: Page) => page.getByRole("button", { name: "Împarte proprietatea", exact: true });
+const reset = (page: Page) => start(page).getByRole("button", { name: "Resetează", exact: true });
 const roadStatus = (page: Page) => page.locator('[data-panel="road-step"] p[role="status"]');
 
 async function search(page: Page, box: string, term: string) {
@@ -62,7 +66,33 @@ test.describe("TC-CALC-02 — calculul de la o proprietate și proprietarii ei",
     const bogdan = await createNaturalPerson(page.request, { lastName: MARK, firstName: "Bogdan" });
     const firma = await createCompany(page.request, { name: `${MARK} Firma SRL` });
     const people = new Map<string, string>();
-    for (const id of [ana, bogdan, firma]) people.set(id, ((await (await page.request.get(`/api/people/${id}`)).json()) as { person: { displayName: string } }).person.displayName);
+    const codes = new Map<string, string>();
+    for (const id of [ana, bogdan, firma]) {
+      const p = ((await (await page.request.get(`/api/people/${id}`)).json()) as { person: { displayName: string; code: string } }).person;
+      people.set(id, p.displayName);
+      codes.set(id, p.code);
+    }
+    // 2026-10-18: Ana by her code, Bogdan by his name's words reversed and in lower case, the company by its name
+    const owner = new Map<string, string>([
+      [ana, codes.get(ana)!],
+      [bogdan, people.get(bogdan)!.split(/\s+/).reverse().join(" ").toLowerCase()],
+      [firma, people.get(firma)!],
+    ]);
+    const share = (name: string) => start(page).getByRole("textbox", { name: `Cota-parte a lui ${name}`, exact: true });
+    const width = start(page).getByRole("textbox", { name: "Lățime drum", exact: true });
+    /** Steps 3, 4, 5 and 6 at once, as they end: the property, the three owners, 33,33 each, a 4 m road. */
+    const fillAll = async () => {
+      const found = await search(page, "Caută proprietatea", `${MARK} Teren`);
+      await found.locator("li").filter({ hasText: `${MARK} Teren` }).getByRole("button").click();
+      await expect(start(page).locator("[data-calc-property]")).toContainText("4 colțuri", { timeout: 30_000 });
+      for (const id of [ana, bogdan, firma]) {
+        const hits = await search(page, "Caută un proprietar", owner.get(id)!);
+        await hits.locator(`[data-calc-hit="${id}"]`).click({ timeout: 30_000 });
+      }
+      for (const id of [ana, bogdan, firma]) await share(people.get(id)!).fill("33,33");
+      await width.fill("4");
+      await expect(divide(page)).toBeEnabled();
+    };
     let runId: string | null = null;
 
     try {
@@ -87,9 +117,10 @@ test.describe("TC-CALC-02 — calculul de la o proprietate și proprietarii ei",
       await expect(start(page).locator("[data-calc-property]")).toContainText("4 colțuri", { timeout: 30_000 });
       await expect(problems(page)).toHaveCount(0);
 
-      // Step 4 — three owners, found by search, each with a badge in its own colour.
+      // Step 4 — three owners, found by search — Ana by her code, Bogdan by his name's words reversed, in lower case —
+      // each with a badge in its own colour.
       for (const id of [ana, bogdan, firma]) {
-        list = await search(page, "Caută un proprietar", people.get(id)!);
+        list = await search(page, "Caută un proprietar", owner.get(id)!);
         await list.locator(`[data-calc-hit="${id}"]`).click({ timeout: 30_000 });
       }
       const owners = start(page).locator("[data-calc-owner]");
@@ -99,7 +130,6 @@ test.describe("TC-CALC-02 — calculul de la o proprietate și proprietarii ei",
       await expect(problems(page)).toHaveCount(0);
 
       // Step 5 — 98%, then a third decimal: each refused, the button off.
-      const share = (name: string) => start(page).getByRole("textbox", { name: `Cota-parte a lui ${name}`, exact: true });
       await share(people.get(ana)!).fill("33,33");
       await share(people.get(bogdan)!).fill("33,33");
       await share(people.get(firma)!).fill("31,34");
@@ -110,14 +140,42 @@ test.describe("TC-CALC-02 — calculul de la o proprietate și proprietarii ei",
       await expect(divide(page)).toBeDisabled();
 
       // Step 6 — a 15 m road is refused; 4 m, and nothing is.
-      const width = start(page).getByRole("textbox", { name: "Lățime drum", exact: true });
       await width.fill("15");
       await expect(problems(page)).toContainText("Lățimea drumului este 15 m; trebuie să fie peste 0 și sub 15 m.");
       await width.fill("4");
       await expect(problems(page)).toHaveCount(0);
       await expect(divide(page)).toBeEnabled();
 
-      // Step 7 — „Împarte proprietatea": today's screen, the parcel and its three owners.
+      // Step 7 — another screen and back: everything typed is still there.
+      await page.goto("/natural-persons");
+      await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible({ timeout: 30_000 });
+      await page.goto("/admin/calculation");
+      await expect(start(page).locator("[data-calc-property]")).toContainText(`${MARK} Teren`, { timeout: 30_000 });
+      await expect(start(page).locator("[data-calc-owner]")).toHaveCount(3);
+      for (const id of [ana, bogdan]) await expect(share(people.get(id)!)).toHaveValue("33,33");
+      await expect(share(people.get(firma)!)).toHaveValue("33,33");
+      await expect(width).toHaveValue("4");
+      await expect(divide(page)).toBeEnabled();
+
+      // Step 8 — „Resetează", right of „Împarte proprietatea": the screen is empty, and stays empty after a visit
+      // elsewhere; then everything is chosen again.
+      const buttons = await start(page).locator("[data-calc-divide], [data-calc-reset]").evaluateAll((els) => els.map((e) => [e.hasAttribute("data-calc-reset"), Math.round(e.getBoundingClientRect().left)] as const));
+      expect(buttons.map(([isReset]) => isReset)).toEqual([false, true]);
+      expect(buttons[1][1]).toBeGreaterThan(buttons[0][1]);
+      await reset(page).click();
+      await expect(start(page).locator("[data-calc-property]")).toHaveCount(0);
+      await expect(start(page).locator("[data-calc-owner]")).toHaveCount(0);
+      await expect(width).toHaveValue("");
+      await expect(divide(page)).toBeDisabled();
+      await page.goto("/properties");
+      await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible({ timeout: 30_000 });
+      await page.goto("/admin/calculation");
+      await expect(start(page)).toBeVisible({ timeout: 30_000 });
+      await expect(start(page).locator("[data-calc-owner]")).toHaveCount(0);
+      await expect(width).toHaveValue("");
+      await fillAll();
+
+      // Step 9 — „Împarte proprietatea": today's screen, the parcel and its three owners.
       await divide(page).click();
       await expect(page.getByText("Pasul 3 — drumul", { exact: true })).toBeVisible({ timeout: 30_000 });
       await expect(page.locator('[data-calc-summary]')).toContainText("3 proprietari, drum de 4 m");
@@ -128,12 +186,12 @@ test.describe("TC-CALC-02 — calculul de la o proprietate și proprietarii ei",
       await expect(figure("Lățime drum")).toContainText("4,0 m");
       await expect(page.getByText(/^Cotele însumează 99,99%: ultima felie din ordine/)).toBeVisible();
 
-      // Step 8 — the road from corner 18 along 18–19, by the two select boxes.
+      // Step 10 — the road from corner 18 along 18–19, by the two select boxes.
       await page.getByRole("combobox", { name: "Colțul drumului" }).selectOption({ label: "18" });
       await page.getByRole("combobox", { name: "Latura drumului" }).selectOption({ label: "18–19" });
       await expect(roadStatus(page)).toContainText("Drumul pornește din colțul 18, pe latura 18–19.", { timeout: 30_000 });
 
-      // Step 9 — the group named after the property by default; „Creează proprietățile".
+      // Step 11 — the group named after the property by default; „Creează proprietățile".
       const description = page.getByRole("textbox", { name: "Descrierea grupului" });
       await expect(description).toHaveValue(/^Diviz — PROP\d+$/);
       await description.fill(GROUP);
@@ -145,7 +203,7 @@ test.describe("TC-CALC-02 — calculul de la o proprietate și proprietarii ei",
       const created = (await done.locator("ul a").evaluateAll((as) => as.map((a) => a.getAttribute("href") ?? ""))).map((h) => h.split("/").pop()!);
       expect(created).toHaveLength(4);
 
-      // Step 10 — each owner's property names its owner, as „Proprietar"; the road names nobody; the parcel is untouched.
+      // Step 12 — each owner's property names its owner, as „Proprietar"; the road names nobody; the parcel is untouched.
       const linked: string[] = [];
       for (const id of created) {
         const items = ((await (await page.request.get(`/api/properties/${id}/persons`)).json()) as { items: { id: string; roleName: string | null }[] }).items;
@@ -158,7 +216,7 @@ test.describe("TC-CALC-02 — calculul de la o proprietate și proprietarii ei",
       const parcel = (await (await page.request.get(`/api/properties/${parcelId}`)).json()) as { corners?: unknown[] };
       expect(JSON.stringify(parcel).match(/"originalIndex":\d+/g)?.length).toBe(4);
 
-      // Step 11 — the run names the property, and re-runs: the same road, the same figures, no „Modifică datele".
+      // Step 13 — the run names the property, and re-runs: the same road, the same figures, no „Modifică datele".
       await page.goto(`/admin/calculation/history/${runId}`);
       const run = page.locator('[data-panel="calculation-run"]');
       await expect(run.locator("[data-divided-property]")).toContainText(/Proprietatea împărțită: PROP\d+/, { timeout: 30_000 });

@@ -36,14 +36,16 @@ Nothing. The figures are TC-CALC-01's parcel (611,87 m²), checked there.
 | 1 | Opens „Instrumente" → „Calcul drum lateral" | „Calcul drum lateral"; „Împarte proprietatea" is off |
 | 2 | In „Caută proprietatea" types `TC-CALC-02`; chooses `TC-CALC-02 Cinci colțuri` | `TC-CALC-02 Fără colțuri` greyed out, saying „fără colțuri", and not choosable; after the choice „Datele nu pot fi folosite:" and „Proprietatea are 5 colțuri; trebuie să aibă exact 4."; the button stays off |
 | 3 | Finds and chooses `TC-CALC-02 Teren` | „… TC-CALC-02 Teren — 4 colțuri"; no refusal |
-| 4 | In „Caută un proprietar" finds and adds Ana, Bogdan and the company | Three rows, each with a badge in its own colour — blue, green, amber — and a „Cota-parte" box; still no refusal |
+| 4 | In „Caută un proprietar" finds and adds Ana by her code (`PPERS…`), Bogdan by his name's words reversed and in lower case, and the company by its name | Three rows, each with a badge in its own colour — blue, green, amber — and a „Cota-parte" box; still no refusal |
 | 5 | Types `33,33`, `33,33`, `31,34`; then `33,333` for the company; then `33,33` | „Cotele-părți însumează 98,00%; trebuie să fie 100% sau 99,99%."; then „Cota-parte a lui TC-CALC-02 Firma SRL („33,333”) nu se poate citi: …"; then nothing — the button still off, there is no width |
 | 6 | „Lățime drum" `15`; then `4` | „Lățimea drumului este 15 m; trebuie să fie peste 0 și sub 15 m."; then no refusal, and „Împarte proprietatea" on |
-| 7 | Presses „Împarte proprietatea" | „Pasul 3 — drumul"; above it „PROP… — 3 proprietari, drum de 4 m"; „Suprafața parcelei" **611,87 m²**, „Lățime drum" 4,0 m; three rows; „Cotele însumează 99,99%: ultima felie din ordine …" |
-| 8 | „Colțul drumului" 18, „Latura drumului" 18–19 | „Drumul pornește din colțul 18, pe latura 18–19. …" |
-| 9 | „Descrierea grupului" reads „Diviz — PROP…"; replaces it with `TC-CALC-02 Grup`, „Poreclă drum" `TC-CALC-02 Drum`; presses „Creează proprietățile" | „S-a creat grupul GRP-… cu următoarele proprietăți:" and four links |
-| 10 | Opens each owner's new property | Under its persons, its owner, „Proprietar"; the road's has no one. `TC-CALC-02 Teren` still has its four corners |
-| 11 | „Vezi istoricul calculului"; „Re-rulează cu acești parametri" | „Proprietatea împărțită: PROP…"; then „Calcul drum lateral" on the same corners and owners, the road from 18 along 18–19, **611,87 m²** — and no „Modifică datele", because the corners are the run's |
+| 7 | Opens „Persoane fizice", then „Instrumente" → „Calcul drum lateral" again | The property, the three owners with their shares and the 4 m road, as they were; „Împarte proprietatea" on |
+| 8 | Presses „Resetează", right of „Împarte proprietatea"; opens „Proprietăți" and comes back; then chooses the property, the three owners at `33,33` each and a 4 m road again | The screen empty — no property, no owner, no width, the button off — and still empty after the visit; then „Împarte proprietatea" on |
+| 9 | Presses „Împarte proprietatea" | „Pasul 3 — drumul"; above it „PROP… — 3 proprietari, drum de 4 m"; „Suprafața parcelei" **611,87 m²**, „Lățime drum" 4,0 m; three rows; „Cotele însumează 99,99%: ultima felie din ordine …" |
+| 10 | „Colțul drumului" 18, „Latura drumului" 18–19 | „Drumul pornește din colțul 18, pe latura 18–19. …" |
+| 11 | „Descrierea grupului" reads „Diviz — PROP…"; replaces it with `TC-CALC-02 Grup`, „Poreclă drum" `TC-CALC-02 Drum`; presses „Creează proprietățile" | „S-a creat grupul GRP-… cu următoarele proprietăți:" and four links |
+| 12 | Opens each owner's new property | Under its persons, its owner, „Proprietar"; the road's has no one. `TC-CALC-02 Teren` still has its four corners |
+| 13 | „Vezi istoricul calculului"; „Re-rulează cu acești parametri" | „Proprietatea împărțită: PROP…"; then „Calcul drum lateral" on the same corners and owners, the road from 18 along 18–19, **611,87 m²** — and no „Modifică datele", because the corners are the run's |
 
 ## At the end — leaving things as they were found
 
@@ -51,6 +53,10 @@ Nothing. The figures are TC-CALC-01's parcel (611,87 m²), checked there.
 properties and the three persons, each with „Șterge".
 
 ## Notes from the runs
+
+**2026-10-18 — the owner search and the screen's memory (Adrian, after #39.81).** Step 4 finds owners by code and by
+words in any order; steps 7 and 8 are new: the screen keeps what was typed while another screen is open, until
+„Resetează". Steps 7–11 became 9–13.
 
 **2026-10-18 — written and automated (Slice #39.79).** `e2e/calculation/side-road-from-property.spec.ts`. It needs
 no real maps: the road is laid with the two select boxes, the keyboard's way to the map's two clicks.

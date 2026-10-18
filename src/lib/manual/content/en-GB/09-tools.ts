@@ -81,8 +81,10 @@ The first step gathers three things, all already in the archive or typed there a
 | What | How | The rule |
 |---|---|---|
 | „The property” | you find it in „Find the property”, by code, nickname, cadastral number or CF | exactly 4 corners; one without corners is greyed out and cannot be chosen |
-| „The owners” | you find them one at a time in „Find an owner”, natural or juridical persons, and type each one's „Share” | at least 2, each only once; shares with at most two decimals, adding up to 100% or 99.99% |
+| „The owners” | you find them one at a time in „Find an owner”, natural or juridical persons — by name, its words in any order and with or without diacritics, or by code, CNP or CUI — and type each one's „Share” | at least 2, each only once; shares with at most two decimals, adding up to 100% or 99.99% |
 | „Road width” | you type it, in metres | above 0 and under 15 m |
+
+The screen keeps what you chose and typed while you look up a code or a name on another screen, until you press „Reset”, right of „Divide the property”.
 
 Each owner gets a colour, the same its slice will have on the map. Whatever breaks a rule is written under the form, after „The data cannot be used:”, and „Divide the property” stays off until everything is right. For example:
 

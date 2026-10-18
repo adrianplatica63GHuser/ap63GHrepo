@@ -111,6 +111,7 @@
       "width": "Road width",
       "divide": "Divide the property",
       "dividing": "Dividing…",
+      "reset": "Reset",
       "summary": "{code} — {owners, plural, one {# owner} other {# owners}}, a {width} m road",
       "edit": "Change the data"
     }

@@ -111,6 +111,7 @@
       "width": "Lățime drum",
       "divide": "Împarte proprietatea",
       "dividing": "Se împarte…",
+      "reset": "Resetează",
       "summary": "{code} — {owners, plural, one {un proprietar} few {# proprietari} other {# de proprietari}}, drum de {width} m",
       "edit": "Modifică datele"
     }

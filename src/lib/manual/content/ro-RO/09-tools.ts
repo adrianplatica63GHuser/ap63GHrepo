@@ -81,8 +81,10 @@ Primul pas strânge trei lucruri, toate deja în arhivă sau scrise pe loc:
 | Ce | Cum | Regula |
 |---|---|---|
 | „Proprietatea” | o căutați în „Caută proprietatea”, după cod, poreclă, nr. cadastral sau CF | exact 4 colțuri; una fără colțuri apare estompată și nu se poate alege |
-| „Proprietarii” | îi căutați pe rând în „Caută un proprietar”, persoane fizice sau juridice, și scrieți fiecăruia „Cota-parte” | cel puțin 2, fiecare o singură dată; cote cu cel mult două zecimale, care însumează 100% sau 99,99% |
+| „Proprietarii” | îi căutați pe rând în „Caută un proprietar”, persoane fizice sau juridice — după nume, în orice ordine a cuvintelor și cu sau fără diacritice, după cod, CNP sau CUI — și scrieți fiecăruia „Cota-parte” | cel puțin 2, fiecare o singură dată; cote cu cel mult două zecimale, care însumează 100% sau 99,99% |
 | „Lățime drum” | o scrieți, în metri | peste 0 și sub 15 m |
+
+Ecranul păstrează ce ați ales și ce ați scris cât timp căutați un cod sau un nume pe alt ecran, până apăsați „Resetează”, la dreapta lui „Împarte proprietatea”.
 
 Fiecare proprietar primește o culoare, aceeași pe care o va avea felia lui pe hartă. Ce nu respectă o regulă se scrie sub formular, după „Datele nu pot fi folosite:”, iar „Împarte proprietatea” rămâne inactiv până când totul e în regulă. De exemplu:
 

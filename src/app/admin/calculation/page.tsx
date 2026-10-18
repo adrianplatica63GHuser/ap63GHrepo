@@ -1,6 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import { HistoryLink } from "./_components/history-link";
-import { CalculationView } from "./_components/calculation-view";
+import { CalculationViewClient } from "./_components/calculation-view-client";
 
 export default async function CalculationPage() {
   const t  = await getTranslations("calculation");
@@ -24,7 +24,7 @@ export default async function CalculationPage() {
           </div>
         </header>
 
-        <CalculationView />
+        <CalculationViewClient />
       </main>
     </div>
   );

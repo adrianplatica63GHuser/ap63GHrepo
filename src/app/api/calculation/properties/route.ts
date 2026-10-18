@@ -2,7 +2,8 @@
  * GET /api/calculation/properties?q=…   (Slice #39.79)
  *
  * „Calcul drum lateral"'s property search: by code, nickname, cadastral number or CF (Ask first 9). Each hit says how
- * many corners the property has, so the screen can list one without four greyed out with its reason.
+ * many corners the property has, so the screen can list one without four greyed out with its reason. Since 2026-10-18
+ * every word typed is looked for, in any order, with or without diacritics (search-words.ts), as the owner search.
  *
  * Answers 200 { items: { id, code, nickname, cadastralNumber, carteFunciara, cornerCount }[] } — at most `limit`
  * (default 8), by code.
@@ -10,11 +11,12 @@
 
 import { z } from "zod/v4";
 import type { NextRequest } from "next/server";
-import { count, eq, ilike, or } from "drizzle-orm";
+import { count, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { property, propertyCorner } from "@/db/schema";
 import { unexpectedError, zodErrorToResponse } from "@/lib/api/errors";
 import { requireFullAccess } from "@/lib/auth/current-role";
+import { allWordsIn, searchWords } from "@/lib/calculation/search-words";
 
 const qs = z.object({
   q:     z.string().trim().min(1),
@@ -28,7 +30,8 @@ export async function GET(request: NextRequest): Promise<Response> {
   const url = new URL(request.url);
   const parsed = qs.safeParse({ q: url.searchParams.get("q") ?? undefined, limit: url.searchParams.get("limit") ?? undefined });
   if (!parsed.success) return zodErrorToResponse(parsed.error);
-  const pat = `%${parsed.data.q}%`;
+  const words = searchWords(parsed.data.q);
+  if (words.length === 0) return Response.json({ items: [] });
 
   try {
     const items = await db
@@ -42,7 +45,7 @@ export async function GET(request: NextRequest): Promise<Response> {
       })
       .from(property)
       .leftJoin(propertyCorner, eq(propertyCorner.propertyId, property.id))
-      .where(or(ilike(property.code, pat), ilike(property.nickname, pat), ilike(property.cadastralNumber, pat), ilike(property.carteFunciara, pat)))
+      .where(allWordsIn([property.code, property.nickname, property.cadastralNumber, property.carteFunciara], words))
       .groupBy(property.id)
       .orderBy(property.code)
       .limit(parsed.data.limit);

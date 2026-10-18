@@ -3,7 +3,7 @@
 import { useCallback, useId, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useFormatter, useTranslations } from "next-intl";
-import { Scissors, X } from "lucide-react";
+import { RotateCcw, Scissors, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { usePressAway } from "@/lib/ui/press-bubble";
@@ -22,6 +22,11 @@ import { OwnerSwatch } from "./preview-map";
  * the map (owner-colors.ts, in entry order — Ask first 7). Then the road's width. Every check is
  * `checkSideRoadInput`'s, the one the server applies: what it refuses is listed here, and „Împarte proprietatea" stays
  * off until nothing is.
+ *
+ * 2026-10-18 (Adrian): the owner search finds a person by any of the words typed, in any order, with or without
+ * diacritics — name, code, CNP, CUI or nickname (/api/calculation/persons) — and so does the property search; and
+ * „Resetează", right of „Împarte proprietatea", empties the screen, which otherwise keeps what was typed while the
+ * person looks up a code on another screen (calculation-view.tsx).
  */
 
 export type StartOwner = { personId: string; name: string; code: string; type: "NATURAL" | "JUDICIAL"; share: string };
@@ -31,7 +36,7 @@ export type StartState = { property: StartProperty | null; owners: StartOwner[];
 export const EMPTY_START: StartState = { property: null, owners: [], width: "" };
 
 type PropertyHit = { id: string; code: string; nickname: string | null; cadastralNumber: string | null; carteFunciara: string | null; cornerCount: number };
-type PersonHit = { id: string; code: string; type: "NATURAL" | "JUDICIAL"; displayName: string };
+type PersonHit = { id: string; code: string; type: "NATURAL" | "JUDICIAL"; displayName: string; isDeceased: boolean };
 
 /** A search box over one of the archive's searches, and the list of what it finds; choosing a hit hands it back. */
 function SearchBox<H extends { id: string }>({
@@ -129,7 +134,7 @@ async function searchProperties(term: string): Promise<PropertyHit[]> {
 }
 
 async function searchPersons(term: string): Promise<PersonHit[]> {
-  const res = await fetch(`/api/people/search?${new URLSearchParams({ name: term, limit: "8" }).toString()}`);
+  const res = await fetch(`/api/calculation/persons?${new URLSearchParams({ q: term, limit: "10" }).toString()}`);
   if (!res.ok || res.redirected) throw new Error(`people ${res.status}`);
   return ((await res.json()) as { items: PersonHit[] }).items;
 }
@@ -147,6 +152,7 @@ export function SideRoadStart({
   canDivide,
   dividing,
   onDivide,
+  onReset,
   onPropertyChosen,
 }: {
   state: StartState;
@@ -156,6 +162,8 @@ export function SideRoadStart({
   canDivide: boolean;
   dividing: boolean;
   onDivide: () => void;
+  /** „Resetează": everything typed goes, here and in the copy the screen keeps between visits. */
+  onReset: () => void;
   onPropertyChosen: (p: StartProperty) => void;
 }) {
   const t = useTranslations("calculation.start");
@@ -238,7 +246,7 @@ export function SideRoadStart({
           searching={t("searching")}
           noHits={t("noHits")}
           exclude={state.owners.map((o) => o.personId)}
-          render={(h) => `${h.displayName} · ${h.code} · ${t(h.type === "NATURAL" ? "natural" : "juridical")}`}
+          render={(h) => `${h.displayName}${h.isDeceased ? " †" : ""} · ${h.code} · ${t(h.type === "NATURAL" ? "natural" : "juridical")}`}
           onPick={(h) => onChange({ ...state, owners: [...state.owners, { personId: h.id, name: h.displayName, code: h.code, type: h.type, share: "" }] })}
         />
         {state.owners.length > 0 && (
@@ -308,7 +316,7 @@ export function SideRoadStart({
         </div>
       )}
 
-      <div>
+      <div className="flex flex-wrap items-center gap-2">
         <IconButton
           icon={Scissors}
           label={dividing ? t("dividing") : t("divide")}
@@ -319,6 +327,16 @@ export function SideRoadStart({
           disabled={!canDivide || dividing}
           onClick={onDivide}
           data-calc-divide=""
+        />
+        <IconButton
+          icon={RotateCcw}
+          label={t("reset")}
+          showLabel
+          variant="secondary"
+          size="md"
+          disabled={dividing}
+          onClick={onReset}
+          data-calc-reset=""
         />
       </div>
     </div>
