@@ -1538,7 +1538,7 @@ export function ValueListModal({
         <div className="border-b border-card-rim px-5 py-3 dark:border-zinc-800" data-value-list-head="">
           <div
             // Slice #39.75: a tile's card centres its title line over its table, as it centres the table (below).
-            className={`flex max-w-full flex-wrap items-center justify-between gap-3${fill ? " mx-auto" : ""}`}
+            className={`flex max-w-full flex-wrap items-center justify-between gap-3${fill ? " mx-auto" : ""}`} data-tile-centred={fill ? "" : undefined}
             style={columnWidth === null ? undefined : { minWidth: columnWidth, width: "fit-content" }}
           >
             <h2
@@ -1604,7 +1604,7 @@ export function ValueListModal({
                 right-hand side stands at the table's right edge. */}
             {/* Slice #39.75: in a tile the column is centred — the tile is whole units, so what its table does not use
                 is shared equally either side (Adrian: „same thickness of the gaps on the left and on the right"). */}
-            <div ref={columnRef} className={fill ? "mx-auto w-fit max-w-full" : "w-fit max-w-full"} data-value-list-frame="">
+            <div ref={columnRef} className={fill ? "mx-auto w-fit max-w-full" : "w-fit max-w-full"} data-value-list-frame="" data-tile-centred={fill ? "" : undefined}>
             {/* Slice #38.78: „+ Adaugă" and the count moved to the title's line (Ask first #1: every list in this card).
                 What stayed is the filters — Tipuri de Document's two checkboxes, the review checkbox — on a line of
                 their own above the table, only on the lists that have them (Ask first #2); a list without them has

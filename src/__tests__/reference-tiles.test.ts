@@ -44,7 +44,7 @@ describe("the widths — whole units, the fewest that hold each table (Ask first
   it("each list's card on a tiled page is its own (`valueListCardUnits`), filling its tile, its list centred", () => {
     expect(MODAL).toContain("return dialogUnits(columnsRem(listColumns(listKey)), CARD_PADDING_REM);");
     expect(MODAL).toContain('style={fill ? { width: "100%" } : dialogCardStyle(VALUE_LIST_CARD_UNITS)}');
-    expect(MODAL).toContain('className={fill ? "mx-auto w-fit max-w-full" : "w-fit max-w-full"} data-value-list-frame=""');
+    expect(MODAL).toContain('className={fill ? "mx-auto w-fit max-w-full" : "w-fit max-w-full"} data-value-list-frame="" data-tile-centred={fill ? "" : undefined}>');
   });
 
   it("the grid takes the units its table needs at its own width: 701 px measured is five, 62 % of eight", () => {

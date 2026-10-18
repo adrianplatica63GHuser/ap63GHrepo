@@ -69,7 +69,7 @@ describe("one line per row (#38.50)", () => {
     expect(MODAL).toContain('const pad = COMPACT_LISTS.has(listKey) ? "px-2" : "px-4";');
     // #38.50: `<div className="w-fit max-w-full" data-value-list-frame="">`; #38.78 measures it (`columnRef`).
     // #39.75: centred in a tile (`fill`).
-    expect(MODAL).toContain('<div ref={columnRef} className={fill ? "mx-auto w-fit max-w-full" : "w-fit max-w-full"} data-value-list-frame="">');
+    expect(MODAL).toContain('<div ref={columnRef} className={fill ? "mx-auto w-fit max-w-full" : "w-fit max-w-full"} data-value-list-frame="" data-tile-centred={fill ? "" : undefined}>');
     expect(MODAL).toContain('fixedTable(columns, "text-sm min-w-full")');
   });
 });

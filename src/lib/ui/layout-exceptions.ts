@@ -34,6 +34,11 @@ export interface LayoutException {
 
 export const LAYOUT_EXCEPTIONS: readonly LayoutException[] = [
   {
+    line: "data-tile-centred",
+    reason:
+      "A Reference Data tile (#39.75) is whole units and its list a little narrower; the list centred in the tile is what gives it the same gap to the tile's left and right edges (Adrian, 2026-10-17). The column is the tile, which is not capped — `max-w-full` only keeps the list inside it.",
+  },
+  {
     line: "fixed inset-",
     reason:
       "A dialog's card is fixed by design: its max-w-sm, -md or -lg — or, since #37.37, the value lists' editors' whole width units (`dialogCardStyle`) — holds it at one width over the page, and centring it over the page is what makes it a dialog.",
