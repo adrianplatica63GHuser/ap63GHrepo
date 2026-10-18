@@ -1,6 +1,6 @@
 /**
  * Case:   TC-LAYOUT-05 — Cele patru liste: înguste, câte un rând pe linie, butoanele unul lângă altul
- * Source: docs/testing/cases/TC-LAYOUT-05.md, „Last green" 2026-10-08
+ * Source: docs/testing/cases/TC-LAYOUT-05.md, „Last green" 2026-10-18
  *
  * A translation of the case file, step for step. The records carry `TC-E2E-LAYOUT-05` (records.ts), and each list is
  * searched for it, so nothing but invented records is read.

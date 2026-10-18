@@ -1,6 +1,6 @@
 /**
  * Case:   TC-DOC-08 — Lista actelor: căutarea înaintea tipului, fără filtre de importanță și relevanță, „Câmpuri afișate" cu câmpurile oricărui act, „Câmp specific" explicat, doar cu liste închise
- * Source: docs/testing/cases/TC-DOC-08.md, „Last green" 2026-10-06 (steps 1, 6, 7 and 9 follow Slice #38.18; steps 1 and 7 also #39.63)
+ * Source: docs/testing/cases/TC-DOC-08.md, „Last green" 2026-10-18 (steps 1, 6, 7 and 9 follow Slice #38.18; steps 1 and 7 also #39.63)
  *
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim.

@@ -210,3 +210,6 @@ corrected spec green.
 
 **2026-10-18 — step 3 rewritten for #39.83.** Two of the counts were renamed in Romanian („Nr. persoane",
 „Nr. proprietăți"), as Adrian's „No. of Persons", „No. of Properties"; „Nr. pagini" stays.
+
+**2026-10-18 — `automated` (Slice #39.83).** The test runner's targeted run 20261018T162356Z-3681 on 09705ab ran `e2e/document/document-list.spec.ts` green
+with the band of names (lint, tsc and the slice's jest suites green too).

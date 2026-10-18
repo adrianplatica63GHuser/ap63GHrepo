@@ -6,7 +6,7 @@
 | **Kind** | happy |
 | **Data** | — |
 | **State** | `automated` |
-| **Last green** | 2026-10-08 |
+| **Last green** | 2026-10-18 |
 
 ## What this proves
 
@@ -59,3 +59,6 @@ Delete the four records (`DELETE`). Set „Câmpuri afișate" back as it was on 
 
 **2026-10-18 — step 5 added for #39.83.** The three-row band of column names, read on four columns per list. Not
 driven by hand: the spec, extended with it, is what checks it.
+
+**2026-10-18 — `automated` (Slice #39.83).** The test runner's targeted run 20261018T162356Z-3681 on 09705ab ran `e2e/layout/domain-lists-one-line.spec.ts` green
+with the band of names (lint, tsc and the slice's jest suites green too).
