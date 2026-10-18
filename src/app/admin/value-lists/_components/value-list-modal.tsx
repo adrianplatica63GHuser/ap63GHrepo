@@ -277,8 +277,8 @@ function actionsColumn(listKey: ListKey): ColumnName {
     : listKey === "tarla"
       ? "valueActionsTarla"
       : COMPACT_LISTS.has(listKey)
-      ? "valueActionsRoles"
-      : "valueActions";
+        ? "valueActionsRoles"
+        : "valueActions";
 }
 
 /** The card's padding (`p-5`). */
