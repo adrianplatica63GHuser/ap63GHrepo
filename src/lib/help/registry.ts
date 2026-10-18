@@ -277,11 +277,10 @@ export const HELP_HINTS = [
     screens: ["admin-calculation"],
   },
 
-  // ── List views (all four share this) ────────────────────────────────────
+  // ── List views (the three that still select: Slice #39.73 took the Properties list's ticks with its delete) ──
   {
     hintKey: "select-all-page-only",
     screens: [
-      "properties-list",
       "documents-list",
       "natural-persons-list",
       "judicial-persons-list",

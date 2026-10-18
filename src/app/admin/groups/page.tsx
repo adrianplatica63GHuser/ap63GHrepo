@@ -5,8 +5,13 @@ import { screenPanel } from "@/lib/ui/field-widths";
 // Slice #20.17: BackLink removed — BreadcrumbBar shows the trail. Slice #38.20:
 // „Acasă › Administrare › Grupuri", the section as text (it has no screen).
 
-export default async function GroupsPage() {
+type PageProps = { searchParams: Promise<{ from?: string }> };
+
+export default async function GroupsPage({ searchParams }: PageProps) {
   const t = await getTranslations("group");
+  // Slice #39.73: the big map's „Grup nou…" arrives with ?from=map — the add form opens for a property group, and the
+  // screen offers the way back, where the selection waits.
+  const fromMap = (await searchParams).from === "map";
 
   return (
     <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-zinc-950">
@@ -19,6 +24,7 @@ export default async function GroupsPage() {
 
         {/* Info panel — what is a Group and when to use it. Slice #37.35: the first tile of the list's unit row (6 units). */}
         <GroupsListView
+          fromMap={fromMap}
           about={
             <section {...screenPanel("about-groups", 6)} className="rounded-lg border border-blue-200 bg-blue-50 px-5 py-4 dark:border-blue-900 dark:bg-blue-950/40">
           <h2 className="mb-3 text-base font-semibold text-blue-900 dark:text-blue-200">

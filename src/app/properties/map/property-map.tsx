@@ -1,7 +1,7 @@
 "use client";
 
 import { useNameOr } from "@/components/record/use-name-or";
-import { ArrowRight, Check, DraftingCompass, Fence, Group, RotateCcw, Ruler, ScanEye, Settings2, Square, SquareCheck, SquareDashedMousePointer, Trash2, X } from "lucide-react";
+import { ArrowRight, Check, DraftingCompass, Fence, FolderPlus, Group, Plus, RotateCcw, Ruler, ScanEye, Settings2, Square, SquareCheck, SquareDashedMousePointer, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -37,7 +37,6 @@ import {
 } from "@/lib/geo/angles";
 import { HelpHint } from "@/components/help/help-hint";
 import { MapCameraProbe } from "@/components/maps/map-camera-probe";
-import { buttonClass } from "@/lib/ui/button-styles";
 import { IconButton } from "@/lib/ui/icon-button";
 import { MAP_BOX_HEIGHT_REM, PANEL_UNIT_INNER_REM } from "@/lib/ui/field-widths";
 import { AREA_STROKE, addCorner, nextAreaMode, removeLastCorner, type AreaMode } from "@/lib/geo/area-tool";
@@ -75,6 +74,8 @@ import {
   type DropTone,
 } from "@/lib/geo/map-drops";
 import { useMergeDistance } from "@/components/maps/use-merge-distance";
+import { useToast } from "@/components/toast";
+import { GROUPS_FROM_MAP_PATH, forgetNewGroup, readMapSelection, readNewGroup, writeMapSelection } from "@/lib/groups/map-selection";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -126,17 +127,36 @@ async function fetchMapData(): Promise<MapResponse> {
   return res.json();
 }
 
-async function batchDeleteProperties(ids: string[]): Promise<{ deleted: number }> {
-  const res = await fetch("/api/properties/batch-delete", {
-    method:  "POST",
-    headers: { "Content-Type": "application/json" },
-    body:    JSON.stringify({ ids }),
-  });
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`Delete failed (${res.status})${text ? `: ${text}` : ""}`);
+// Slice #39.73 — the map deletes nothing. „Selectează" picks properties for a property group instead; a property is
+// deleted only from its own form (Adrian, 2026-10-17: „a property should be deleted only from the property form").
+
+type PickerGroup = { id: string; code: string; description: string; memberCount: number };
+
+async function fetchPropertyGroups(): Promise<PickerGroup[]> {
+  const res = await fetch("/api/groups?targetType=PROPERTY");
+  if (!res.ok) throw new Error(`Failed to load groups (${res.status})`);
+  const data = (await res.json()) as { items: PickerGroup[] };
+  return data.items;
+}
+
+/** Why an add failed: the three-groups cap (409), or anything else. */
+class AddToGroupError extends Error {
+  constructor(readonly status: number, detail: string) {
+    super(`Add to group failed (${status})${detail ? `: ${detail}` : ""}`);
+    this.name = "AddToGroupError";
   }
-  return res.json() as Promise<{ deleted: number }>;
+}
+
+/** PATCH /api/groups/[id] with `addMemberIds`: the selection joins the group; one already in it stays as it is. */
+async function addToGroup(groupId: string, ids: string[]): Promise<{ code: string; memberCount: number }> {
+  const res = await fetch(`/api/groups/${groupId}`, {
+    method:  "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body:    JSON.stringify({ addMemberIds: ids }),
+  });
+  if (!res.ok) throw new AddToGroupError(res.status, await res.text().catch(() => ""));
+  const detail = (await res.json()) as { code: string; members: unknown[] };
+  return { code: detail.code, memberCount: detail.members.length };
 }
 
 // ---------------------------------------------------------------------------
@@ -243,7 +263,7 @@ function findDuplicateIds(props: MapProperty[]): Set<string> {
 }
 
 // ---------------------------------------------------------------------------
-// Map pixel → LatLng conversion (for drag-to-select)
+// Map pixel → LatLng conversion (the ruler, the angles and the area tools)
 // ---------------------------------------------------------------------------
 
 function pixelToLatLng(
@@ -260,19 +280,6 @@ function pixelToLatLng(
     lat: ne.lat() - (y / container.clientHeight) * (ne.lat() - sw.lat()),
     lng: sw.lng() + (x / container.clientWidth)  * (ne.lng() - sw.lng()),
   };
-}
-
-/** True if at least one corner of `prop` lies within the lat/lng rectangle. */
-function propertyInRect(
-  prop:  MapProperty,
-  swLat: number,
-  swLng: number,
-  neLat: number,
-  neLng: number,
-): boolean {
-  return prop.corners.some(
-    (c) => c.lat >= swLat && c.lat <= neLat && c.lon >= swLng && c.lon <= neLng,
-  );
 }
 
 // ---------------------------------------------------------------------------
@@ -938,7 +945,7 @@ const DEFAULT_ZOOM            = 13;
 // PropertyMap — main component
 // ---------------------------------------------------------------------------
 
-export default function PropertyMap() {
+export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean }) {
   const t           = useTranslations("property");
   const nameOr      = useNameOr();
   const queryClient = useQueryClient();
@@ -948,11 +955,18 @@ export default function PropertyMap() {
   const [mapType,  setMapType]  = useState<MapTypeId>("roadmap");
   const [selected, setSelected] = useState<Selected | null>(null);
 
-  // Selection mode
-  const [selectMode,  setSelectMode]  = useState(false);
-  const [dragStart,   setDragStart]   = useState<PixelPoint | null>(null);
-  const [dragCurrent, setDragCurrent] = useState<PixelPoint | null>(null);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  // Selection mode — Slice #39.73: a click on a property adds it or takes it out; the selection goes to a group.
+  // Read once from this tab's storage (map-selection.ts), so the round trip to „Grupuri" keeps it. Client-only
+  // component (map-view.tsx), so `window` is there for the initialisers.
+  const [stored] = useState(readMapSelection);
+  const [selectMode,  setSelectMode]  = useState(stored.selecting);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set(stored.ids));
+  // The group picker — open on arrival when „Grup nou…" left it open; the group just made there, chosen.
+  const [pickerOpen, setPickerOpen] = useState(stored.selecting && stored.pickerOpen);
+  const [pickedGroup, setPickedGroup] = useState<string | null>(() => (stored.selecting ? readNewGroup() : null));
+  const [adding, setAdding] = useState(false);
+  const [addError, setAddError] = useState<string | null>(null);
+  const { toast, show: showToast } = useToast();
 
   // Tab state — showTabs becomes true when "Display all selected" is clicked
   const [showTabs,  setShowTabs]  = useState(false);
@@ -1008,11 +1022,6 @@ export default function PropertyMap() {
   const rulerCornersRef = useRef<LatLng[]>([]);
   const anglesSnapRef   = useRef<LatLng | null>(null);
 
-  // Delete flow
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleting,          setDeleting]          = useState(false);
-  const [deleteError,       setDeleteError]       = useState<string | null>(null);
-
   // Slice #39.60 — the map's zoom (what decides polygon or drop, and what merges) and the merge distance setting.
   const [zoom, setZoom] = useState(DEFAULT_ZOOM);
   const [mergeDistance, setMergeDistance] = useMergeDistance();
@@ -1053,6 +1062,7 @@ export default function PropertyMap() {
   // dependency array.
   const withGeometryRef = useRef<MapProperty[]>([]);
   const activeTabRef    = useRef<ActiveTab>("all");
+  const selectModeRef   = useRef(false);
 
   // -------------------------------------------------------------------------
   // Data
@@ -1086,26 +1096,12 @@ export default function PropertyMap() {
     isPropertyVisibleForGroups(p.groupCodes, uncheckedGroups),
   );
 
-  // Slice #32.15: a tick must correspond to a polygon that is actually drawn.
-  // Nothing connected the Groups panel to the selection, so unticking a group
-  // left "Delete all selected (8)" counting — and handleDeleteConfirm
-  // deleting — properties that were no longer on the map. That is the same
-  // defect three of the four record lists carried in their `pageKey`.
-  //
-  // It PRUNES rather than clears, and the difference is deliberate. #21.10
-  // (see toggleSelectMode below) established that `selectedIds` is not owned
-  // by any one tool, so unticking group G must cost the user only the ticks
-  // that were ON group G's properties, not every tick on the map. Unticking
-  // EVERY group therefore does drop every tick — that is the rule working,
-  // not an exception to it: a selection nothing on screen corresponds to is
-  // precisely what this block exists to prevent.
-  //
-  // Two carve-outs. An id that is not in `withGeometry` at all is left alone,
-  // so a refetch that briefly has no rows cannot be mistaken for a filter
-  // change. And nothing runs while a delete is in flight: `handleDeleteConfirm`
-  // captured its ids at click time, so pruning could not change what that
-  // request deletes — only dismiss the dialog the user is waiting on.
-  if (!deleting && selectedIds.size > 0) {
+  // Slice #32.15: a tick must correspond to a polygon that is actually drawn. Unticking a group in the Groups panel
+  // drops the selected properties it has taken off the map — and only those (#21.10: `selectedIds` is not owned by
+  // any one tool). An id that is not in `withGeometry` at all is left alone, so a refetch that briefly has no rows
+  // cannot be mistaken for a filter change. Since #39.73 the selection goes to a group, not to a delete, but adding
+  // properties nobody can see is the same mistake. Not while an add is in flight: it captured its ids at the click.
+  if (!adding && selectedIds.size > 0) {
     const hiddenIds = new Set(
       withGeometry
         .filter(
@@ -1118,24 +1114,9 @@ export default function PropertyMap() {
     if (hiddenIds.size > 0) {
       const kept = new Set([...selectedIds].filter((id) => !hiddenIds.has(id)));
       setSelectedIds(kept);
-      // The Groups checkboxes stay in the tab order behind the confirmation
-      // dialog, so it can be open when this runs. Its body re-reads
-      // `selectedIds` and would silently restate itself with the new count —
-      // which is not a confirmation of anything the user agreed to, so close
-      // it and make them press Delete again.
-      //
-      // Unless it is showing an error. `setDeleteError` and `setDeleting(false)`
-      // land in ONE render on the failure path, and that is the first render
-      // this block is no longer gated out of — so closing unconditionally would
-      // throw the error away before it ever reached the DOM, and a failed
-      // delete would read as a successful one. An error about a selection that
-      // is now empty describes nothing, though, and a dialog offering to delete
-      // zero properties has a live button that does nothing: close that one.
-      if (deleteError === null || kept.size === 0) setShowDeleteConfirm(false);
       if (kept.size === 0) {
-        // What the other two clear sites do with the tab bar: an empty
-        // "Selected" tab is a blank map with no way back except the other tab.
-        // Select mode is deliberately NOT exited — the user is still selecting.
+        // An empty "Selected" tab is a blank map with no way back except the other tab. Select mode is deliberately
+        // NOT exited — the user is still selecting.
         setShowTabs(false);
         setActiveTab("all");
       }
@@ -1220,6 +1201,7 @@ export default function PropertyMap() {
   useEffect(() => {
     withGeometryRef.current = displayItems;
     activeTabRef.current    = activeTab;
+    selectModeRef.current   = selectMode;
     rulerStartRef.current   = rulerStart;
     rulerEndRef.current     = rulerEnd;
     anglesSnapRef.current   = anglesSnap;
@@ -1245,6 +1227,19 @@ export default function PropertyMap() {
   // what single click already did (show/refresh the InfoWindow) — it must
   // never auto-navigate when more than one property overlaps the click.
 
+  // -------------------------------------------------------------------------
+  // Individual property select / unselect (a click in select mode, or the bubble of a numbered drop's list)
+  // -------------------------------------------------------------------------
+
+  const togglePropertySelected = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
   const handleMapClick = useCallback((pos: LatLng | null) => {
     if (!pos) {
       setSelected(null);
@@ -1255,24 +1250,32 @@ export default function PropertyMap() {
       setSelected(null);
       return;
     }
+    // Slice #39.73: selecting, a click adds the property under it, or takes it out. Where shapes overlap it is the
+    // smallest — the one the click is most surely on (`findOverlapping` sorts largest first).
+    if (selectModeRef.current && activeTabRef.current === "all") {
+      setSelected(null);
+      togglePropertySelected(overlapping[overlapping.length - 1].id);
+      return;
+    }
     setSelected({
       position: pos,
       // #37.57: a property by its nickname, or words — never its system ID.
       items:    overlapping.map((p) => ({ id: p.id, label: nameOr(p.nickname, "property") })),
     });
-  }, [nameOr]);
+  }, [nameOr, togglePropertySelected]);
 
   const handleMapDblClick = useCallback((pos: LatLng | null) => {
     if (!pos) return;
+    // Slice #39.73: selecting, the double click's two clicks have already done their work (each added or took out).
+    if (selectMode && activeTabRef.current === "all") return;
     const overlapping = findOverlapping(withGeometryRef.current, pos);
 
-    if (overlapping.length === 1 && !(selectMode && activeTabRef.current === "all")) {
+    if (overlapping.length === 1) {
       router.push(`/properties/${overlapping[0].id}`);
       return;
     }
 
-    // Ambiguous (0 or ≥2 matches), or navigation is suppressed in select
-    // mode — fall back to the same behaviour as a single click.
+    // Ambiguous (0 or ≥2 matches) — fall back to the same behaviour as a single click.
     handleMapClick(pos);
   }, [router, selectMode, handleMapClick]);
 
@@ -1286,6 +1289,12 @@ export default function PropertyMap() {
         items:    drop.items.map((p) => ({ id: p.id, label: nameOr(p.nickname, "property") })),
       });
     if (drop.items.length === 1) {
+      // Slice #39.73: selecting, a drop is its property — the click adds it or takes it out, as on its polygon.
+      if (selectModeRef.current && activeTabRef.current === "all") {
+        setSelected(null);
+        togglePropertySelected(drop.items[0].id);
+        return;
+      }
       openList();
       return;
     }
@@ -1301,7 +1310,7 @@ export default function PropertyMap() {
     setSelected(null);
     const c = boxCentre(all);
     map.moveCamera({ center: { lat: c.lat, lng: c.lon }, zoom: target });
-  }, [nameOr]);
+  }, [nameOr, togglePropertySelected]);
 
   // -------------------------------------------------------------------------
   // Selection mode toggle
@@ -1333,15 +1342,14 @@ export default function PropertyMap() {
         setAnglesDisplay(null);
       } else {
         // Exiting select mode via its own "Cancel select" button: this is the
-        // one legitimate place selection is cleared.
+        // one legitimate place selection is cleared — with the bar's „Anulează" (cancelSelection), which is the same.
         setShowTabs(false);
         setActiveTab("all");
         setSelectedIds(new Set());
+        setPickerOpen(false);
       }
       return !prev;
     });
-    setDragStart(null);
-    setDragCurrent(null);
   }, []);
 
   // -------------------------------------------------------------------------
@@ -1440,8 +1448,6 @@ export default function PropertyMap() {
         // toggleSelectMode above.
         setSelected(null);
         setSelectMode(false);
-        setDragStart(null);
-        setDragCurrent(null);
         setAnglesMode(false);
         setAnglesSnap(null);
         setAnglesDisplay(null);
@@ -1492,8 +1498,6 @@ export default function PropertyMap() {
         setRulerCursor(null);
         setRulerSnap(null);
         setSelectMode(false);
-        setDragStart(null);
-        setDragCurrent(null);
       }
       return next;
     });
@@ -1521,8 +1525,6 @@ export default function PropertyMap() {
       setAnglesSnap(null);
       setAnglesDisplay(null);
       setSelectMode(false);
-      setDragStart(null);
-      setDragCurrent(null);
       setGroupsPanelOpen(false);
     }
     setAreaCorners([]);
@@ -1717,19 +1719,6 @@ export default function PropertyMap() {
   }, [anglesMode, computeAnglesSnap, resetAngles]);
 
   // -------------------------------------------------------------------------
-  // Individual property select / unselect (via InfoWindow in select mode)
-  // -------------------------------------------------------------------------
-
-  const togglePropertySelected = useCallback((id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }, []);
-
-  // -------------------------------------------------------------------------
   // Groups filter — toggle a single code / select-all-deselect-all (Slice #18.08)
   // -------------------------------------------------------------------------
 
@@ -1759,116 +1748,58 @@ export default function PropertyMap() {
   }, [someGroupsChecked]);
 
   // -------------------------------------------------------------------------
-  // Drag-to-select — container-level DOM listeners
+  // The selection: kept for this tab, cancelled, added to a group (Slice #39.73)
   // -------------------------------------------------------------------------
-  //
-  // The overlay div is purely visual (pointer-events: none).  We listen on the
-  // container element directly so that clicks inside the Google Maps InfoWindow
-  // (which render at a high z-index inside the Maps DOM) are never intercepted.
-  // We skip drag initiation when the mousedown target is inside .gm-style-iw
-  // (InfoWindow wrapper) or any other Google Maps UI control.
 
+  // Written through on every change, so leaving for „Grupuri" (or anywhere) and coming back finds it. Not selecting
+  // and nothing selected removes it.
   useEffect(() => {
-    if (!selectMode) return;
+    writeMapSelection({ selecting: selectMode || selectedIds.size > 0, ids: [...selectedIds], pickerOpen });
+  }, [selectMode, selectedIds, pickerOpen]);
 
-    const container = containerRef.current;
-    if (!container) return;
+  /** The bar's „Anulează": no selection, no mode, nothing kept. */
+  const cancelSelection = () => {
+    setSelectMode(false);
+    setSelectedIds(new Set());
+    setPickerOpen(false);
+    setPickedGroup(null);
+    forgetNewGroup();
+    setAddError(null);
+    setShowTabs(false);
+    setActiveTab("all");
+  };
 
-    let startPx:  PixelPoint | null = null;
-    let isDrag = false;
+  const groupsQuery = useQuery<PickerGroup[]>({
+    queryKey: ["groups", "PROPERTY"],
+    queryFn:  fetchPropertyGroups,
+    enabled:  pickerOpen,
+    // Coming back from „Grup nou…", the list must hold the group just created.
+    refetchOnMount: "always",
+  });
 
-    const onMouseDown = (e: MouseEvent) => {
-      if (activeTabRef.current !== "all") return;
-      // Let InfoWindow button clicks pass through — never start a drag here.
-      if ((e.target as Element).closest?.(".gm-style-iw")) return;
-      const rect = container.getBoundingClientRect();
-      startPx   = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-      isDrag    = false;
-      setDragStart(startPx);
-      setDragCurrent(startPx);
-    };
+  /** „Grup nou…": „Grupuri" with its add form open; the selection and the open picker stay in this tab's storage. */
+  const goCreateGroup = () => {
+    writeMapSelection({ selecting: true, ids: [...selectedIds], pickerOpen: true });
+    router.push(GROUPS_FROM_MAP_PATH);
+  };
 
-    const onMouseMove = (e: MouseEvent) => {
-      if (!startPx) return;
-      const rect = container.getBoundingClientRect();
-      const cur  = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-      if (Math.hypot(cur.x - startPx.x, cur.y - startPx.y) > 5) isDrag = true;
-      if (isDrag) setDragCurrent(cur);
-    };
-
-    const onMouseUp = (e: MouseEvent) => {
-      if (!startPx) return;
-      if (isDrag && mapRef.current) {
-        const rect = container.getBoundingClientRect();
-        const end  = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-        const map  = mapRef.current;
-        const minX = Math.min(startPx.x, end.x);
-        const maxX = Math.max(startPx.x, end.x);
-        const minY = Math.min(startPx.y, end.y);
-        const maxY = Math.max(startPx.y, end.y);
-        const sw   = pixelToLatLng(map, container as HTMLDivElement, minX, maxY);
-        const ne   = pixelToLatLng(map, container as HTMLDivElement, maxX, minY);
-        const next = new Set<string>();
-        for (const prop of withGeometryRef.current) {
-          if (propertyInRect(prop, sw.lat, sw.lng, ne.lat, ne.lng)) next.add(prop.id);
-        }
-        setSelectedIds(next);
-      }
-      startPx = null;
-      isDrag  = false;
-      setDragStart(null);
-      setDragCurrent(null);
-    };
-
-    container.addEventListener("mousedown", onMouseDown);
-    document.addEventListener("mousemove",  onMouseMove);
-    document.addEventListener("mouseup",    onMouseUp);
-    return () => {
-      container.removeEventListener("mousedown", onMouseDown);
-      document.removeEventListener("mousemove",  onMouseMove);
-      document.removeEventListener("mouseup",    onMouseUp);
-    };
-  }, [selectMode]); // withGeometry always accessed via withGeometryRef
-
-  // -------------------------------------------------------------------------
-  // Batch delete
-  // -------------------------------------------------------------------------
-
-  // Plain function (not useCallback): with the React Compiler enabled, manual
-  // memoization here can't be preserved (react-hooks/preserve-manual-memoization)
-  // and the compiler memoizes it for us. Nothing depends on its identity.
-  const handleDeleteConfirm = async () => {
-    if (selectedIds.size === 0) return;
-    setDeleting(true);
-    setDeleteError(null);
+  const handleAddToGroup = async () => {
+    const group = groupsQuery.data?.find((g) => g.id === pickedGroup);
+    if (!group || selectedIds.size === 0) return;
+    setAdding(true);
+    setAddError(null);
     try {
-      await batchDeleteProperties([...selectedIds]);
-      setSelectedIds(new Set());
-      setShowDeleteConfirm(false);
-      setSelectMode(false);
-      setDragStart(null);
-      setDragCurrent(null);
-      setShowTabs(false);
-      setActiveTab("all");
+      const after = await addToGroup(group.id, [...selectedIds]);
+      showToast(t("map.addedToGroup", { added: Math.max(0, after.memberCount - group.memberCount), code: after.code }));
+      cancelSelection();
       await queryClient.invalidateQueries({ queryKey: ["properties"] });
+      await queryClient.invalidateQueries({ queryKey: ["groups"] });
     } catch (err) {
-      // Slice #32.16: this dialog's body, buttons and now its failure line all
-      // come from the message files. It used to render `err.message` — an
-      // English fetch/HTTP string, „Delete failed (400): …" — inside a dialog
-      // whose every other word had just been translated. #29.13 settled the
-      // same question for the three value-list panels, and
-      // `value-list-dependents.test.ts` guards it there.
-      //
-      // ⚠️ The exception is LOGGED, not swallowed. #29.13's panels keep which
-      // failure it was, through `FAILURE_CODES`; this one does not, so the
-      // console is the only place the status and the server's text survive,
-      // and a user reporting "it just says try again" has nothing else to
-      // stand on. Taking the message off the screen is not a licence to
-      // discard it.
-      console.error("[property-map] batch delete failed", err);
-      setDeleteError(t("map.confirmDelete.failed"));
+      // The message files say what happened; the console keeps the status and the server's own words.
+      console.error("[property-map] add to group failed", err);
+      setAddError(err instanceof AddToGroupError && err.status === 409 ? t("map.groupPicker.tooManyGroups") : t("map.groupPicker.failed"));
     } finally {
-      setDeleting(false);
+      setAdding(false);
     }
   };
 
@@ -1902,42 +1833,6 @@ export default function PropertyMap() {
       </div>
     );
   }
-
-  // -------------------------------------------------------------------------
-  // Delete-all-selected button — ONE element, rendered on both tabs
-  // -------------------------------------------------------------------------
-  //
-  // Slice #32.16: this was written out twice, identically, in the two tab
-  // branches below. The count in its label and the dialog it opens are the
-  // same on both tabs, so a change made to one copy and not the other is a
-  // difference the user meets and nothing here would report.
-
-  // #37.42 (A012): Trash2, the count a badge on its corner; the full text,
-  // count included, is the name and the tooltip.
-  const deleteAllSelectedButton = (
-    <IconButton
-      icon={Trash2}
-      label={t("map.deleteAllSelected", { count: selectedIds.size })}
-      count={selectedIds.size}
-      variant="danger"
-      size="lg"
-      onClick={() => { setDeleteError(null); setShowDeleteConfirm(true); }}
-    />
-  );
-
-  // -------------------------------------------------------------------------
-  // Selection rectangle CSS geometry
-  // -------------------------------------------------------------------------
-
-  const selectionRect =
-    dragStart && dragCurrent
-      ? {
-          left:   Math.min(dragStart.x, dragCurrent.x),
-          top:    Math.min(dragStart.y, dragCurrent.y),
-          width:  Math.abs(dragCurrent.x - dragStart.x),
-          height: Math.abs(dragCurrent.y - dragStart.y),
-        }
-      : null;
 
   // -------------------------------------------------------------------------
   // Ruler derived render values
@@ -2037,8 +1932,6 @@ export default function PropertyMap() {
               ? RULER_CURSOR
               : freeDraw.drawing
                 ? "crosshair"
-              : (selectMode && activeTab === "all")
-                ? "crosshair"
                 : undefined,
         }}
       >
@@ -2061,8 +1954,9 @@ export default function PropertyMap() {
           mapTypeId={mapType}
           disableDefaultUI
           streetViewControl
-          gestureHandling={selectMode && activeTab === "all" ? "none" : "greedy"}
-          draggableCursor={anglesMode ? ANGLES_CURSOR : rulerMode || areaMode === "delimited" ? RULER_CURSOR : freeDraw.drawing ? "crosshair" : undefined}
+          // Slice #39.73: selecting is by clicks, so the map pans and zooms as always; the pointer says a click picks.
+          gestureHandling="greedy"
+          draggableCursor={anglesMode ? ANGLES_CURSOR : rulerMode || areaMode === "delimited" ? RULER_CURSOR : freeDraw.drawing ? "crosshair" : selectMode && activeTab === "all" ? "pointer" : undefined}
           draggingCursor={anglesMode ? ANGLES_CURSOR : rulerMode || areaMode === "delimited" ? RULER_CURSOR : undefined}
           style={{ width: "100%", height: "100%" }}
           // Slice #39.07: and no InfoWindow while an area tool is pressed.
@@ -2325,31 +2219,6 @@ export default function PropertyMap() {
         </Map>
 
         {/* ---------------------------------------------------------------- */}
-        {/* Drag-to-select overlay — visual only (pointer-events: none)     */}
-        {/* Drag logic lives in a container-level useEffect so InfoWindow   */}
-        {/* button clicks are never intercepted by the overlay.             */}
-        {/* ---------------------------------------------------------------- */}
-        {selectionRect && activeTab === "all" && (
-          <div
-            className="absolute inset-0 z-10"
-            style={{ pointerEvents: "none" }}
-          >
-            <div
-              style={{
-                position:        "absolute",
-                left:            selectionRect.left,
-                top:             selectionRect.top,
-                width:           selectionRect.width,
-                height:          selectionRect.height,
-                border:          "2px dashed #ef4444",
-                backgroundColor: "rgba(239,68,68,0.07)",
-                pointerEvents:   "none",
-              }}
-            />
-          </div>
-        )}
-
-        {/* ---------------------------------------------------------------- */}
         {/* Toolbar — top-right: Select toggle + map-type toggle                   */}
         {/* Only shown on the "all properties" tab                           */}
         {/* ---------------------------------------------------------------- */}
@@ -2576,71 +2445,144 @@ export default function PropertyMap() {
         )}
 
         {/* ---------------------------------------------------------------- */}
-        {/* Bottom action buttons — visible when properties are selected      */}
+        {/* Slice #39.73 — the selection bar: while selecting, on both tabs.  */}
+        {/* The count, „Afișează selecția", „Adaugă la grup…", „Anulează".     */}
+        {/* Nothing here deletes.                                            */}
         {/* ---------------------------------------------------------------- */}
-        {selectedIds.size > 0 && activeTab === "all" && !areaOn && (
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3">
-            {deleteAllSelectedButton}
-
-            {/* Display all selected — shows / switches to the "selected" tab */}
-            {/* #37.45 (A065): ScanEye with the count as a badge; the name    */}
-            {/* and tooltip keep the words and the count.                     */}
+        {(selectMode || selectedIds.size > 0) && !areaOn && (
+          <div
+            data-map-ui
+            data-select-bar
+            className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3 rounded-xl border border-wire bg-white/95 px-4 py-2 shadow-lg"
+          >
+            <span data-select-count={selectedIds.size} className="text-sm font-medium text-ink whitespace-nowrap">
+              {t("map.selectBar.count", { count: selectedIds.size })}
+            </span>
+            {activeTab === "all" && (
+              <>
+                {/* #37.45 (A065): ScanEye with the count as a badge — today's „Proprietăți Selectate" tab. */}
+                <IconButton
+                  icon={ScanEye}
+                  label={t("map.displayAllSelected")}
+                  count={selectedIds.size}
+                  variant="secondary"
+                  size="lg"
+                  disabled={selectedIds.size === 0}
+                  onClick={() => { setShowTabs(true); setActiveTab("selected"); }}
+                />
+                <HelpHint hintKey="map-selected-tab" />
+              </>
+            )}
+            {/* Ask first 4: PATCH /api/groups/[id] is full access only, so without it the button is greyed and says why. */}
             <IconButton
-              icon={ScanEye}
-              label={`${t("map.displayAllSelected")} (${selectedIds.size})`}
-              count={selectedIds.size}
+              icon={FolderPlus}
+              label={t("map.addToGroup")}
+              note={canEditGroups ? undefined : t("map.addToGroupDenied")}
+              variant="primary"
+              size="lg"
+              disabled={!canEditGroups || selectedIds.size === 0}
+              onClick={() => { setAddError(null); setPickerOpen(true); }}
+            />
+            <IconButton
+              icon={X}
+              label={t("map.selectBar.cancel")}
               variant="secondary"
               size="lg"
-              onClick={() => { setShowTabs(true); setActiveTab("selected"); }}
+              onClick={cancelSelection}
             />
-            <HelpHint hintKey="map-selected-tab" />
-          </div>
-        )}
-
-        {/* Delete button also shown on the "selected" tab */}
-        {selectedIds.size > 0 && activeTab === "selected" && (
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
-            {deleteAllSelectedButton}
           </div>
         )}
 
         {/* ---------------------------------------------------------------- */}
-        {/* Delete confirmation dialog                                        */}
+        {/* Slice #39.73 — „Adaugă la grup…": the property groups, „Grup nou…" */}
+        {/* at their end. A property already in the group stays as it is.     */}
         {/* ---------------------------------------------------------------- */}
-        {showDeleteConfirm && (
+        {pickerOpen && canEditGroups && (
           <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/45">
-            <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full mx-4">
-              <p className="text-zinc-900 font-medium text-base leading-snug mb-4">
-                {t("map.confirmDelete.body", { count: selectedIds.size })}
-              </p>
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="map-group-picker-title"
+              data-group-picker
+              className="bg-white rounded-2xl shadow-2xl p-6 max-w-md w-full mx-4 flex flex-col gap-4"
+            >
+              <h2 id="map-group-picker-title" className="text-zinc-900 font-semibold text-base leading-snug">
+                {t("map.groupPicker.title", { count: selectedIds.size })}
+              </h2>
 
-              {deleteError && (
-                <p className="text-red-600 text-sm mb-3 rounded bg-red-50 px-3 py-2 border border-red-200">
-                  {deleteError}
+              {groupsQuery.isLoading && <p className="text-sm text-fade">{t("map.groupPicker.loading")}</p>}
+              {groupsQuery.isError && <p className="text-sm text-red-600">{t("map.groupPicker.loadError")}</p>}
+              {groupsQuery.data && (
+                <fieldset className="flex flex-col gap-1 max-h-72 overflow-y-auto">
+                  <legend className="sr-only">{t("map.groupPicker.title", { count: selectedIds.size })}</legend>
+                  {groupsQuery.data.length === 0 && <p className="text-sm text-fade">{t("map.groupPicker.empty")}</p>}
+                  {groupsQuery.data.map((g) => (
+                    <label
+                      key={g.id}
+                      className="flex items-start gap-2 rounded-md px-2 py-1.5 text-sm text-ink hover:bg-cta-pale cursor-pointer"
+                    >
+                      <input
+                        type="radio"
+                        name="map-group-picker"
+                        value={g.id}
+                        checked={pickedGroup === g.id}
+                        onChange={() => setPickedGroup(g.id)}
+                        className="mt-0.5"
+                      />
+                      <span className="flex flex-col">
+                        <span>
+                          <span className="font-mono font-semibold">{g.code}</span>{" "}
+                          <span className="text-fade">({t("map.groupPicker.members", { count: g.memberCount })})</span>
+                        </span>
+                        <span className="text-xs text-fade">{g.description}</span>
+                      </span>
+                    </label>
+                  ))}
+                </fieldset>
+              )}
+
+              <div>
+                <IconButton
+                  icon={Plus}
+                  label={t("map.groupPicker.newGroup")}
+                  variant="secondary"
+                  size="sm"
+                  showLabel
+                  onClick={goCreateGroup}
+                />
+              </div>
+
+              {addError && (
+                <p role="alert" className="text-red-600 text-sm rounded bg-red-50 px-3 py-2 border border-red-200">
+                  {addError}
                 </p>
               )}
 
               <div className="flex gap-3 justify-end">
-                <button
-                  type="button"
-                  disabled={deleting}
-                  onClick={() => { setShowDeleteConfirm(false); setDeleteError(null); }}
-                  className={buttonClass({ variant: "secondary", size: "lg" })}
-                >
-                  {t("map.confirmDelete.cancel")}
-                </button>
-                <button
-                  type="button"
-                  disabled={deleting}
-                  onClick={handleDeleteConfirm}
-                  className={buttonClass({ variant: "danger", size: "lg" })}
-                >
-                  {deleting ? t("map.confirmDelete.deleting") : t("map.confirmDelete.confirm")}
-                </button>
+                <IconButton
+                  icon={X}
+                  label={t("map.groupPicker.cancel")}
+                  variant="secondary"
+                  size="lg"
+                  disabled={adding}
+                  onClick={() => { setPickerOpen(false); setAddError(null); }}
+                />
+                <IconButton
+                  icon={FolderPlus}
+                  label={t("map.groupPicker.add")}
+                  busy={adding}
+                  busyLabel={t("map.groupPicker.adding")}
+                  variant="primary"
+                  size="lg"
+                  showLabel
+                  disabled={adding || selectedIds.size === 0 || !groupsQuery.data?.some((g) => g.id === pickedGroup)}
+                  onClick={handleAddToGroup}
+                />
               </div>
             </div>
           </div>
         )}
+        {toast}
       </div>
     </div>
   );

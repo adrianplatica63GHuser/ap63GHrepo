@@ -410,7 +410,7 @@ export async function updateGroup(
         .where(eq(groups.id, id));
     }
 
-    if (input.memberIds !== undefined) {
+    if (input.memberIds !== undefined || input.addMemberIds !== undefined) {
       const targetType = g.targetType as GroupTargetType;
 
       // ------------------------------------------------------------------
@@ -443,7 +443,10 @@ export async function updateGroup(
         current = rows.map((r) => r.entityId);
       }
 
-      const { toAdd, toRemove } = computeMemberDelta(current, input.memberIds);
+      // Slice #39.73: `addMemberIds` is the current members plus the new ones — so nothing is removed, and one
+      // already a member is not added twice.
+      const wanted = input.memberIds ?? [...new Set([...current, ...(input.addMemberIds ?? [])])];
+      const { toAdd, toRemove } = computeMemberDelta(current, wanted);
 
       // ------------------------------------------------------------------
       // Translate entity IDs → principal_object_ids for all affected rows.

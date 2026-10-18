@@ -245,15 +245,7 @@
       "selectedPropertiesTab": "Selected Properties",
       "selectLink": "Select",
       "unselectLink": "Unselect",
-      "displayAllSelected": "Display all selected",
-      "deleteAllSelected": "Delete all selected ({count, number})",
-      "confirmDelete": {
-        "body": "This will delete {count, plural, one {# selected property} other {# selected properties}}. This action cannot be undone.",
-        "cancel": "Cancel",
-        "confirm": "Delete",
-        "deleting": "Deleting…",
-        "failed": "The selected properties could not be deleted. Try again."
-      },
+      "displayAllSelected": "Show the selection",
       "groupsButton": "Groups",
       "groupsAll": "All (in groups or not)",
       "groupsNotInGroup": "Not in a group",
@@ -275,7 +267,7 @@
       "openLink": "Open",
       "select": "Select",
       "cancelSelect": "Cancel select",
-      "selectEnterTitle": "Enter selection mode — drag to select properties for deletion",
+      "selectEnterTitle": "Enter selection mode — a click on a property adds it to the selection or takes it out; then the selection is added to a group",
       "selectExitTitle": "Exit selection mode",
       "settingsButton": "Map settings",
       "settingsHint": "The distance at which drops merge into a numbered drop",
@@ -294,7 +286,27 @@
       },
       "loadingChunk": "Loading map…",
       "tarlaleButton": "Tarlale",
-      "tarlaleHint": "Each tarla's outline: its own corners when drawn, otherwise the shape around its properties. A click on the outline or the code opens the tarla."
+      "tarlaleHint": "Each tarla's outline: its own corners when drawn, otherwise the shape around its properties. A click on the outline or the code opens the tarla.",
+      "addToGroup": "Add to group…",
+      "addToGroupDenied": "Only an account with full access can change groups.",
+      "selectBar": {
+        "count": "{count, plural, =0 {No property selected} one {# property selected} other {# properties selected}}",
+        "cancel": "Cancel"
+      },
+      "groupPicker": {
+        "title": "Add {count, plural, one {the selected property} other {the # selected properties}} to a group",
+        "loading": "Loading the groups…",
+        "loadError": "The groups could not be loaded. Try again.",
+        "empty": "There is no property group yet.",
+        "members": "{count, plural, one {# property} other {# properties}}",
+        "newGroup": "New group…",
+        "add": "Add",
+        "adding": "Adding…",
+        "cancel": "Close",
+        "tooManyGroups": "At least one of the properties is already in 3 groups, the most the application allows. Take it out of the selection or out of another group.",
+        "failed": "The properties could not be added to the group. Try again."
+      },
+      "addedToGroup": "{added, plural, =0 {Every selected property was already in {code}} one {# property added to {code}} other {# properties added to {code}}}"
     },
     "createTitle": "New Property",
     "saveError": "Could not save",
@@ -1576,7 +1588,7 @@
         "tarla-detail": "Tarlale — Detail"
       },
       "hints": {
-        "drag-select": "Map — drag a rectangle to select many properties",
+        "drag-select": "Map — „Select”: click properties, to add them to a group",
         "ruler-two-clicks": "Map — ruler click sequence and corner snapping",
         "angles-click-corner": "Map — click a corner to read its angle",
         "map-double-click-open": "Map — double-click a plot to open it",
@@ -3844,6 +3856,11 @@
       "body2": "Elementele pot face parte din unul sau mai multe grupuri și pot fi eliminate oricând. Când un grup și-a îndeplinit misiunea, poate fi șters — elementele continuă să există independent.",
       "codeNote": "Fiecare grup primește un cod numeric unic (ex. GRP-001, GRP-002…) atribuit automat.",
       "seeAlso": "Pentru caracteristici pe termen lung sau permanente care se aplică pe mai multe tipuri de obiecte, folosește Ștampile."
+    },
+    "fromMap": {
+      "note": "Create the property group, then go back to the map: the selection is waiting and the new group will be in the list.",
+      "created": "Group {code} has been created. Go back to the map to add the selected properties to it.",
+      "back": "Back to the map"
     }
   },
   "globalSearch": {

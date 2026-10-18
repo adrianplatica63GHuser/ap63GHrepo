@@ -38,13 +38,22 @@ export type GroupCreate = z.infer<typeof groupCreateSchema>;
 // ids; the server diffs it against the current members (adds get new positions,
 // removed ones are deleted). Target type + code are immutable — never accepted.
 
+//
+// `addMemberIds` (Slice #39.73) ADDS to the members instead: the big map's „Adaugă la grup…" sends its selection, and
+// a property already in the group is left as it is. It is merged with the current members inside the update's own
+// transaction, so two adds never overwrite each other. Never together with `memberIds`.
+
 export const groupUpdateSchema = z
   .object({
-    description: description.optional(),
-    memberIds:   z.array(z.string().uuid()).optional(),
+    description:  description.optional(),
+    memberIds:    z.array(z.string().uuid()).optional(),
+    addMemberIds: z.array(z.string().uuid()).min(1).optional(),
   })
-  .refine((v) => v.description !== undefined || v.memberIds !== undefined, {
+  .refine((v) => v.description !== undefined || v.memberIds !== undefined || v.addMemberIds !== undefined, {
     message: "nothing to update",
+  })
+  .refine((v) => v.memberIds === undefined || v.addMemberIds === undefined, {
+    message: "memberIds and addMemberIds are exclusive",
   });
 export type GroupUpdate = z.infer<typeof groupUpdateSchema>;
 

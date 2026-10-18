@@ -1,7 +1,9 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Plus, Save, Trash2, X } from "lucide-react";
+import { ArrowLeft, Pencil, Plus, Save, Trash2, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { rememberNewGroup } from "@/lib/groups/map-selection";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
@@ -74,7 +76,7 @@ const DESCRIPTION_MAX = 500;
 
 // ── Add form ─────────────────────────────────────────────────────────────────
 
-function AddForm({ onClose }: { onClose: () => void }) {
+function AddForm({ onClose, onCreated }: { onClose: () => void; onCreated?: (group: GroupListItem) => void }) {
   const t = useTranslations("group");
   const qc = useQueryClient();
 
@@ -94,8 +96,9 @@ function AddForm({ onClose }: { onClose: () => void }) {
   const mutation = useMutation({
     mutationFn: () =>
       createGroup({ targetType, description: description.trim() }),
-    onSuccess: () => {
+    onSuccess: (group) => {
       qc.invalidateQueries({ queryKey: ["groups"] });
+      onCreated?.(group);
       onClose();
     },
     onError: (err: Error) => setError(err.message),
@@ -195,11 +198,15 @@ function AddForm({ onClose }: { onClose: () => void }) {
 
 // ── List ─────────────────────────────────────────────────────────────────────
 
-export function GroupsListView({ about }: { about?: ReactNode } = {}) {
+export function GroupsListView({ about, fromMap = false }: { about?: ReactNode; fromMap?: boolean } = {}) {
   const t = useTranslations("group");
   const qc = useQueryClient();
+  const router = useRouter();
 
-  const [adding, setAdding] = useState(false);
+  // Slice #39.73: from the big map's „Grup nou…" the add form is open on arrival (its target is „Proprietăți" by
+  // default), and the group it creates is remembered for the map's picker.
+  const [adding, setAdding] = useState(fromMap);
+  const [createdForMap, setCreatedForMap] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const query = useQuery<GroupListItem[]>({
@@ -216,9 +223,40 @@ export function GroupsListView({ about }: { about?: ReactNode } = {}) {
   });
 
   return (
+    <>
+    {/* Outside the row of tiles: a line about how the user got here, not a tile of the screen. */}
+    {fromMap && (
+      <section
+        data-from-map
+        className="flex flex-wrap items-center gap-3 rounded-md border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200"
+      >
+        <span>{createdForMap ? t("fromMap.created", { code: createdForMap }) : t("fromMap.note")}</span>
+        <IconButton
+          icon={ArrowLeft}
+          label={t("fromMap.back")}
+          variant={createdForMap ? "primary" : "secondary"}
+          size="sm"
+          showLabel
+          onClick={() => router.back()}
+        />
+      </section>
+    )}
     <UnitRow units={[ABOUT_UNITS, LIST_UNITS]}>
       {about}
-      {adding && <AddForm onClose={() => setAdding(false)} />}
+      {adding && (
+        <AddForm
+          onClose={() => setAdding(false)}
+          onCreated={
+            fromMap
+              ? (g) => {
+                  if (g.targetType !== "PROPERTY") return;
+                  rememberNewGroup(g.id);
+                  setCreatedForMap(g.code);
+                }
+              : undefined
+          }
+        />
+      )}
 
       <section {...screenPanel("groups", LIST_UNITS)} className="flex flex-col gap-3 rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
 
@@ -346,5 +384,6 @@ export function GroupsListView({ about }: { about?: ReactNode } = {}) {
         </>
       )}
     </UnitRow>
+    </>
   );
 }

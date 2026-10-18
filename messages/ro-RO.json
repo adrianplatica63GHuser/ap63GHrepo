@@ -245,15 +245,7 @@
       "selectedPropertiesTab": "Proprietăți Selectate",
       "selectLink": "Selectează",
       "unselectLink": "Deselectează",
-      "displayAllSelected": "Afișează selectate",
-      "deleteAllSelected": "Șterge selecția ({count, number})",
-      "confirmDelete": {
-        "body": "Această acțiune va șterge {count, plural, one {o proprietate selectată} few {# proprietăți selectate} other {# de proprietăți selectate}}. Acțiunea nu poate fi anulată.",
-        "cancel": "Anulează",
-        "confirm": "Șterge",
-        "deleting": "Se șterge…",
-        "failed": "Proprietățile selectate nu au putut fi șterse. Încercați din nou."
-      },
+      "displayAllSelected": "Afișează selecția",
       "groupsButton": "Grupuri",
       "groupsAll": "Toate (în grup sau nu)",
       "groupsNotInGroup": "Fără grup",
@@ -275,7 +267,7 @@
       "openLink": "Deschide",
       "select": "Selectează",
       "cancelSelect": "Anulează selecția",
-      "selectEnterTitle": "Intră în modul de selecție — trage un dreptunghi pentru a selecta proprietăți de șters",
+      "selectEnterTitle": "Intră în modul de selecție — un clic pe o proprietate o adaugă la selecție sau o scoate, apoi selecția se adaugă la un grup",
       "selectExitTitle": "Ieși din modul de selecție",
       "settingsButton": "Setări hartă",
       "settingsHint": "Distanța la care picăturile se unesc într-o picătură cu număr",
@@ -294,7 +286,27 @@
       },
       "loadingChunk": "Se încarcă harta…",
       "tarlaleButton": "Tarlale",
-      "tarlaleHint": "Conturul fiecărei tarlale: colțurile ei, dacă sunt desenate, altfel forma din jurul proprietăților ei. Un clic pe contur sau pe cod deschide tarlaua."
+      "tarlaleHint": "Conturul fiecărei tarlale: colțurile ei, dacă sunt desenate, altfel forma din jurul proprietăților ei. Un clic pe contur sau pe cod deschide tarlaua.",
+      "addToGroup": "Adaugă la grup…",
+      "addToGroupDenied": "Doar un cont cu acces complet poate modifica grupurile.",
+      "selectBar": {
+        "count": "{count, plural, =0 {Nicio proprietate selectată} one {O proprietate selectată} few {# proprietăți selectate} other {# de proprietăți selectate}}",
+        "cancel": "Anulează"
+      },
+      "groupPicker": {
+        "title": "Adaugă {count, plural, one {proprietatea selectată} few {cele # proprietăți selectate} other {cele # de proprietăți selectate}} la un grup",
+        "loading": "Se încarcă grupurile…",
+        "loadError": "Grupurile nu au putut fi încărcate. Încercați din nou.",
+        "empty": "Nu există încă niciun grup de proprietăți.",
+        "members": "{count, plural, one {# proprietate} few {# proprietăți} other {# de proprietăți}}",
+        "newGroup": "Grup nou…",
+        "add": "Adaugă",
+        "adding": "Se adaugă…",
+        "cancel": "Renunță",
+        "tooManyGroups": "Cel puțin una dintre proprietăți este deja în 3 grupuri, cât permite aplicația. Scoateți-o din selecție sau dintr-un alt grup.",
+        "failed": "Proprietățile nu au putut fi adăugate la grup. Încercați din nou."
+      },
+      "addedToGroup": "{added, plural, =0 {Toate proprietățile selectate erau deja în {code}} one {O proprietate adăugată la {code}} few {# proprietăți adăugate la {code}} other {# de proprietăți adăugate la {code}}}"
     },
     "createTitle": "Proprietate nouă",
     "saveError": "Salvarea a eșuat",
@@ -1576,7 +1588,7 @@
         "tarla-detail": "Tarlale — Detaliu"
       },
       "hints": {
-        "drag-select": "Hartă — trage un dreptunghi pentru a selecta mai multe proprietăți",
+        "drag-select": "Hartă — „Selectează”: clic pe proprietăți, pentru a le adăuga la un grup",
         "ruler-two-clicks": "Hartă — ordinea apăsărilor la riglă și fixarea pe colțuri",
         "angles-click-corner": "Hartă — apasă un colț pentru a-i citi unghiul",
         "map-double-click-open": "Hartă — apasă de două ori pe o proprietate pentru a o deschide",
@@ -3844,6 +3856,11 @@
       "body2": "Elementele pot face parte din unul sau mai multe grupuri și pot fi eliminate oricând. Când un grup și-a îndeplinit misiunea, poate fi șters — elementele continuă să existe independent.",
       "codeNote": "Fiecare grup primește un cod numeric unic (ex. GRP-001, GRP-002…) atribuit automat.",
       "seeAlso": "Pentru caracteristici pe termen lung sau permanente care se aplică pe mai multe tipuri de obiecte, folosește Ștampile."
+    },
+    "fromMap": {
+      "note": "Creați grupul de proprietăți, apoi reveniți la hartă: selecția vă așteaptă, iar grupul nou va fi în listă.",
+      "created": "Grupul {code} a fost creat. Reveniți la hartă pentru a-i adăuga proprietățile selectate.",
+      "back": "Înapoi la hartă"
     }
   },
   "globalSearch": {

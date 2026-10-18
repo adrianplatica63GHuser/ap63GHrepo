@@ -24,6 +24,6 @@ const PropertyMap = dynamic(() => import("./property-map"), {
   loading: () => <MapChunkLoading />,
 });
 
-export function MapView() {
-  return <PropertyMap />;
+export function MapView({ canEditGroups }: { canEditGroups: boolean }) {
+  return <PropertyMap canEditGroups={canEditGroups} />;
 }
