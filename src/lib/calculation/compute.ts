@@ -1,10 +1,12 @@
 /**
- * „Calcul drum lateral" — server-side orchestration  (Slice #18.10.diviz; #38.23)
+ * „Calcul drum lateral" — server-side orchestration  (Slice #18.10.diviz; #38.23; #39.79)
  *
- * Ties the pure parser and geometry together and converts every polygon from
- * Stereo 70 to WGS84 for the map. Server-only: transdatRO reads the Stereo 70
- * correction grid from disk, so the geometry stays authoritative on the server
- * and the client sends only the file's text and the order of the slices.
+ * Ties the checked input and the geometry together and converts every polygon
+ * from Stereo 70 to WGS84 for the map. Server-only: transdatRO reads the Stereo 70
+ * correction grid from disk, so the geometry stays authoritative on the server.
+ * Since #39.79 the input is a property's corners and the owners chosen on the
+ * screen (side-road-input.ts), no longer the three-section file — the slices,
+ * the road and every figure after them are cut exactly as before.
  *
  * #18.10's `Division*` types left with #38.25: a stored 'PARCEL_DIVISION' run
  * is read by the history screen's own mirror of them, and nothing here makes
@@ -24,7 +26,7 @@ import {
   type RoadSide,
   type S70Point,
 } from "./geometry";
-import { parseSideRoadFile } from "./parse";
+import type { SideRoadInput } from "./side-road-input";
 
 export type ComputedCorner = {
   lat: number;
@@ -52,10 +54,12 @@ export type ParcelSide = {
 };
 
 export type SliceComputation = {
-  /** The owner's place in the FILE (0-based) — what `order` lists. */
+  /** The owner's place in the entry order (0-based) — what `order` lists, and what picks its colour. */
   owner: number;
+  /** #39.79: the person — „Creează proprietățile" links each new property to its owner. */
+  personId: string;
   name: string;
-  /** As written in the file. */
+  /** As entered, two decimals at most. */
   percent: number;
   /**
    * The share the slice is cut to, as a fraction of 1: the file's percent —
@@ -133,20 +137,20 @@ function isRoadRequest(x: unknown): x is RoadRequest {
 }
 
 /**
- * Read the file and cut its parcel into slices in `order` — or, with no order,
+ * Cut the checked input's parcel into slices in `order` — or, with no order,
  * in a random one (the request: „the order of the slices is random") — and,
  * when `road` is given, lay the road along that corner's side and turn the
- * slices to meet it (#38.24). Throws `FileRejected` with every problem in the
- * file, `RoadRejected` for a road that cannot be built, or `DivisionError` for
- * a request that is not one.
+ * slices to meet it (#38.24). Throws `RoadRejected` for a road that cannot be
+ * built, or `DivisionError` for a request that is not one. The input has
+ * passed `checkSideRoadInput` (#39.79), so its corners, shares and width are
+ * already acceptable.
  */
-export function computeSlicesFromFile(
-  text: string,
+export function computeSlices(
+  file: SideRoadInput,
   order?: unknown,
   random: () => number = Math.random,
   road?: unknown,
 ): SlicesComputation {
-  const file = parseSideRoadFile(text);
   const n = file.owners.length;
   if (order !== undefined && order !== null && !isOrderOf(order, n)) {
     throw new DivisionError(`The order must list each of the ${n} owners exactly once.`);
@@ -180,6 +184,7 @@ export function computeSlicesFromFile(
     roadShare: number,
   ): SliceComputation => ({
     owner: chosen[k],
+    personId: file.owners[chosen[k]].personId,
     name: file.owners[chosen[k]].name,
     percent: file.owners[chosen[k]].percent,
     fraction: s.fraction,

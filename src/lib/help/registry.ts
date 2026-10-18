@@ -264,10 +264,7 @@ export const HELP_HINTS = [
   },
 
   // ── Calculation ─────────────────────────────────────────────────────────
-  {
-    hintKey: "calc-file-format",
-    screens: ["admin-calculation"],
-  },
+  // Slice #39.79: „calc-file-format" left with the data file; its help rows stay in the database, unused.
   {
     hintKey: "calc-preview-not-saved",
     screens: ["admin-calculation"],

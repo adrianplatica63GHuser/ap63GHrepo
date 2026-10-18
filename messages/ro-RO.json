@@ -1,15 +1,7 @@
 {
   "calculation": {
-    "pageTitle": "Calcul",
-    "intro": {
-      "lead": "Alegeți fișierul de date al parcelei. Are trei secțiuni, fiecare deschisă de un rând care începe cu „Secțiunea de”:",
-      "corners": "„Colțuri” — exact 4 colțuri, câte unul pe rând: numărul colțului, X (Nord) și Y (Est), în Stereo 70.",
-      "owners": "„Proprietari” — câte un proprietar pe rând: numele, apoi cota-parte („24,33%”). Cotele însumează 100% sau 99,99%, nimic altceva.",
-      "width": "„Lățime drum” — lățimea drumului, în metri: peste 0 și sub 15 m.",
-      "then": "Coloanele se despart prin tab sau spații, iar numerele pot avea virgulă sau punct zecimal. Parcela apare apoi pe hartă, cu colțurile numerotate, tăiată în câte o felie pentru fiecare proprietar, în ordine aleatorie."
-    },
+    "pageTitle": "Calcul drum lateral",
     "buttons": {
-      "chooseFile": "Alegeți fișierul de date…",
       "reset": "Resetează",
       "confirm": "Creează proprietățile",
       "creating": "Se creează…",
@@ -21,28 +13,16 @@
       "recomputing": "Se recalculează feliile…"
     },
     "problems": {
-      "title": "Fișierul nu poate fi folosit:",
-      "missingSection": "Lipsește secțiunea „{section}”.",
-      "repeatedSection": "Secțiunea „{section}” apare de două ori.",
-      "cornerCount": "Fișierul are {count, plural, one {un colț} few {# colțuri} other {# de colțuri}}; trebuie să aibă exact 4.",
-      "repeatedCorner": "Colțul {number} apare de două ori.",
-      "cornersCross": "Colțurile, în ordinea din fișier, nu formează un patrulater: laturile lui se intersectează. Scrieți colțurile în ordinea în care se parcurge conturul.",
-      "ownerCount": "Fișierul are {count, plural, one {un proprietar} few {# proprietari} other {# de proprietari}}; trebuie să aibă cel puțin 2.",
+      "title": "Datele nu pot fi folosite:",
+      "noCorners": "Proprietatea nu are colțuri; trebuie să aibă exact 4.",
+      "cornerCount": "Proprietatea are {count, plural, one {un colț} few {# colțuri} other {# de colțuri}}; trebuie să aibă exact 4.",
+      "cornersCross": "Colțurile proprietății, în ordinea lor, nu formează un patrulater: laturile lui se intersectează. Puneți colțurile în ordinea conturului pe ecranul proprietății.",
+      "ownerCount": "Este {count, plural, one {un proprietar} few {# proprietari} other {# de proprietari}}; trebuie să fie cel puțin 2.",
+      "repeatedOwner": "{name} apare de două ori printre proprietari.",
+      "shareFormat": "Cota-parte a lui {name} („{share}”) nu se poate citi: un număr peste 0, cu virgulă sau punct și cel mult două zecimale.",
       "percentTotal": "Cotele-părți însumează {total}%; trebuie să fie 100% sau 99,99%.",
-      "widthCount": "Secțiunea „Lățime drum” are {count, plural, one {o valoare} few {# valori} other {# de valori}}; trebuie să aibă exact una.",
-      "roadWidth": "Lățimea drumului este {width} m; trebuie să fie peste 0 și sub 15 m.",
-      "unreadableLine": "Rândul {lineNumber} nu se poate citi: „{line}”. {expected}",
-      "expected": {
-        "corners": "În „Colțuri” un rând este: numărul colțului, X (Nord) și Y (Est), în Stereo 70.",
-        "owners": "În „Proprietari” un rând este: numele, apoi o cotă-parte mai mare decât 0.",
-        "width": "În „Lățime drum” rândul este un număr de metri.",
-        "none": "Înaintea primei secțiuni pot fi doar rânduri goale sau de „*”."
-      },
-      "section": {
-        "corners": "Colțuri",
-        "owners": "Proprietari",
-        "width": "Lățime drum"
-      }
+      "widthFormat": "Lățimea drumului („{width}”) nu se poate citi: un număr de metri, cu cel mult două zecimale.",
+      "roadWidth": "Lățimea drumului este {width} m; trebuie să fie peste 0 și sub 15 m."
     },
     "figures": {
       "parcelArea": "Suprafața parcelei",
@@ -74,13 +54,10 @@
       "label": "Harta parcelei, cu colțurile numerotate și câte o felie pentru fiecare proprietar"
     },
     "commit": {
-      "ownersAreNicknames": "Numele proprietarilor din fișier se salvează doar ca poreclă a fiecărei proprietăți, ca text. Nu se creează persoane și nu se leagă nimeni de proprietăți — proprietarii se adaugă separat, din ecranul fiecărei proprietăți.",
+      "ownersAreNicknames": "Fiecare proprietate nouă primește ca poreclă numele proprietarului ei, iar proprietarul se leagă de ea ca „Proprietar”. Proprietatea împărțită rămâne cum era.",
       "title": "Creează {count} proprietăți — proprietarii și drumul — și un grup",
       "groupDescription": "Descrierea grupului",
       "roadNickname": "Poreclă drum"
-    },
-    "rerun": {
-      "fileName": "(re-rulare)"
     },
     "errors": {
       "session": "Sesiunea a expirat — autentificați-vă din nou și reîncercați."
@@ -104,12 +81,38 @@
       "defaultNickname": "Drum comun"
     },
     "group": {
-      "defaultDescription": "Diviz — {file}"
+      "defaultDescription": "Diviz — {code}"
     },
     "success": {
       "title": "S-a creat grupul {code} cu următoarele proprietăți:",
       "runCode": "Calculul înregistrat: {code}",
       "viewRun": "Vezi istoricul calculului"
+    },
+    "start": {
+      "lead": "Alegeți proprietatea de împărțit, proprietarii ei cu cotele-părți și lățimea drumului. Proprietatea și proprietarii sunt deja în arhivă.",
+      "propertyTitle": "Proprietatea",
+      "propertySearch": "Caută proprietatea",
+      "propertyPlaceholder": "cod, poreclă, nr. cadastral sau CF",
+      "searching": "Se caută…",
+      "noHits": "Nimic găsit.",
+      "noCornersHit": "fără colțuri",
+      "cadastral": "Nr. cad. {n}",
+      "cf": "CF {n}",
+      "propertyChosen": "{code} {name} — {corners, plural, =0 {fără colțuri} one {un colț} few {# colțuri} other {# de colțuri}}",
+      "ownersTitle": "Proprietarii",
+      "ownerSearch": "Caută un proprietar",
+      "ownerPlaceholder": "numele unei persoane fizice sau juridice",
+      "natural": "persoană fizică",
+      "juridical": "persoană juridică",
+      "share": "Cota-parte",
+      "shareOf": "Cota-parte a lui {name}",
+      "removeOwner": "Scoate pe {name}",
+      "roadTitle": "Drumul",
+      "width": "Lățime drum",
+      "divide": "Împarte proprietatea",
+      "dividing": "Se împarte…",
+      "summary": "{code} — {owners, plural, one {un proprietar} few {# proprietari} other {# de proprietari}}, drum de {width} m",
+      "edit": "Modifică datele"
     }
   },
   "calculationHistory": {
@@ -175,7 +178,9 @@
       "deleted": "(ștearsă)",
       "group": "Grup",
       "rerun": "Re-rulează cu acești parametri",
-      "oldRunNoRerun": "Calcul făcut cu fișierul vechi, în cinci secțiuni, pe care „Calcul drum lateral” nu îl mai citește: se poate consulta, dar nu se poate re-rula."
+      "oldRunNoRerun": "Calcul făcut cu fișierul vechi, în cinci secțiuni, pe care „Calcul drum lateral” nu îl mai citește: se poate consulta, dar nu se poate re-rula.",
+      "fileRunNoRerun": "Calculul a fost făcut dintr-un fișier de date, înainte ca împărțirea să pornească de la o proprietate din arhivă: se poate consulta, dar nu se mai poate re-rula.",
+      "dividedProperty": "Proprietatea împărțită: {code}"
     },
     "delete": {
       "action": "Șterge calculul",
@@ -1634,7 +1639,6 @@
         "stamp-staged-changes": "Ștampile — + / - sunt în așteptare până la Salvează ștampilele",
         "stamp-type-switch-keeps-changes": "Ștampile — schimbarea tipului păstrează modificările în așteptare",
         "tile-selector": "Părți afișate — ce arată bifele și unde se păstrează alegerea",
-        "calc-file-format": "Calcul — cele trei secțiuni ale fișierului de date și regulile lor",
         "calc-preview-not-saved": "Calcul — nu se creează nimic până la confirmare",
         "select-all-page-only": "Liste — bifa din antet selectează doar pagina curentă",
         "calc-group-description-autofill": "Calcul — încărcarea unui fișier suprascrie descrierea"

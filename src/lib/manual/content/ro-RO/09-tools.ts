@@ -66,34 +66,31 @@ Un formular se poate face sau corecta și de mână, pe pagina tipului din „Da
 
 ## 9.2 Calculul drumului lateral {#tools-side-road}
 
-„Calcul drum lateral” împarte o parcelă cu patru colțuri între proprietarii ei, după cotele-părți, cu un drum comun de acces pe o latură. Din fișierul de date vă arată împărțirea pe hartă, vă lasă să alegeți ordinea proprietarilor și locul drumului și, la sfârșit, creează câte o proprietate pentru fiecare proprietar, una pentru drum și un grup cu toate. Fiecare calcul se înregistrează în „Istoricul calculelor”.
+„Calcul drum lateral” împarte o proprietate cu patru colțuri, din arhivă, între proprietarii ei, după cotele-părți, cu un drum comun de acces pe o latură. Vă arată împărțirea pe hartă, vă lasă să alegeți ordinea proprietarilor și locul drumului și, la sfârșit, creează câte o proprietate pentru fiecare proprietar, una pentru drum și un grup cu toate. Fiecare calcul se înregistrează în „Istoricul calculelor”.
 
-În bara laterală, deschideți „Instrumente” → „Calcul drum lateral”. Se deschide ecranul „Calcul” (Figura [[fig-tools-calculation]]): explicația fișierului, pictograma istoricului și „Alegeți fișierul de date…”.
+În bara laterală, deschideți „Instrumente” → „Calcul drum lateral”. Se deschide ecranul „Calcul drum lateral” (Figura [[fig-tools-calculation]]): pictograma istoricului, apoi „Proprietatea”, „Proprietarii” și „Drumul”.
 
 ![9.2 Ecranul „Calcul drum lateral”](tools-calculation.png){#fig-tools-calculation}
 
 **Până la „Creează proprietățile” nu se creează nimic.** Tot ce vedeți pe hartă și în tabel este o previzualizare; puteți încerca oricâte ordini și oricâte drumuri.
 
-### 9.2.1 Fișierul de date {#tools-side-road-file}
+### 9.2.1 Proprietatea, proprietarii și drumul {#tools-side-road-file}
 
-Fișierul are trei secțiuni, fiecare deschisă de un rând care începe cu „Secțiunea de”:
+Primul pas strânge trei lucruri, toate deja în arhivă sau scrise pe loc:
 
-| Secțiunea | Ce conține | Regula |
+| Ce | Cum | Regula |
 |---|---|---|
-| „Colțuri” | câte un colț pe rând: numărul colțului, X (Nord) și Y (Est), în Stereo 70 | exact 4 colțuri, scrise în ordinea în care se parcurge conturul |
-| „Proprietari” | câte un proprietar pe rând: numele, apoi cota-parte („24,33%”) | cel puțin 2 proprietari; cotele însumează 100% sau 99,99%, nimic altceva |
-| „Lățime drum” | lățimea drumului, în metri | o singură valoare, peste 0 și sub 15 m |
+| „Proprietatea” | o căutați în „Caută proprietatea”, după cod, poreclă, nr. cadastral sau CF | exact 4 colțuri; una fără colțuri apare estompată și nu se poate alege |
+| „Proprietarii” | îi căutați pe rând în „Caută un proprietar”, persoane fizice sau juridice, și scrieți fiecăruia „Cota-parte” | cel puțin 2, fiecare o singură dată; cote cu cel mult două zecimale, care însumează 100% sau 99,99% |
+| „Lățime drum” | o scrieți, în metri | peste 0 și sub 15 m |
 
-Coloanele se despart prin tab sau spații, iar numerele pot avea virgulă sau punct zecimal. Înaintea primei secțiuni pot fi doar rânduri goale sau rânduri de „*”.
+Fiecare proprietar primește o culoare, aceeași pe care o va avea felia lui pe hartă. Ce nu respectă o regulă se scrie sub formular, după „Datele nu pot fi folosite:”, iar „Împarte proprietatea” rămâne inactiv până când totul e în regulă. De exemplu:
 
-Un fișier care încalcă o regulă este refuzat: ecranul scrie „Fișierul nu poate fi folosit:” și motivul, iar harta nu apare. De exemplu:
-
-- „Fișierul are 5 colțuri; trebuie să aibă exact 4.”
+- „Proprietatea are 5 colțuri; trebuie să aibă exact 4.”
 - „Cotele-părți însumează 98,00%; trebuie să fie 100% sau 99,99%.”
 - „Lățimea drumului este 15 m; trebuie să fie peste 0 și sub 15 m.”
-- o secțiune care lipsește sau apare de două ori, un colț scris de două ori, colțuri care, în ordinea din fișier, își intersectează laturile, ori un rând care nu se poate citi — atunci ecranul arată rândul și ce se aștepta pe el.
 
-Corectați fișierul și alegeți-l din nou.
+„Împarte proprietatea” deschide pașii de mai jos. „Modifică datele” vă întoarce la primul pas, cu tot ce ați scris.
 
 ### 9.2.2 Proprietarii pe hartă {#tools-side-road-owners}
 
@@ -173,8 +170,8 @@ Importul s-a oprit pentru că tipul „Certificat de Moștenitor” nu are formu
 
 Topograful v-a trimis colțurile terenului, iar cei trei moștenitori au câte o treime fiecare.
 
-1. Scrieți fișierul de date: cele patru colțuri, cei trei proprietari cu „33,33%” fiecare și lățimea drumului, de exemplu 3 (secțiunea [[tools-side-road-file]]).
-2. „Instrumente” → „Calcul drum lateral”, apoi „Alegeți fișierul de date…”.
+1. „Instrumente” → „Calcul drum lateral”.
+2. Alegeți terenul, adăugați cei trei moștenitori cu 33,33 fiecare și lățimea drumului, de exemplu 3, apoi „Împarte proprietatea” (secțiunea [[tools-side-road-file]]).
 3. Puneți proprietarii în ordinea dorită, trăgând feliile sau cu ↑ ↓ (secțiunea [[tools-side-road-owners]]).
 4. Faceți clic pe colțul de la drumul public, apoi pe latura pe care merge drumul; verificați că „Diferență” arată 0,00 pe fiecare rând (secțiunea [[tools-side-road-road]]).
 5. Scrieți „Descrierea grupului”, apoi apăsați „Creează proprietățile” (secțiunea [[tools-side-road-create]]).

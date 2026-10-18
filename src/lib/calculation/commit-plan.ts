@@ -4,9 +4,10 @@
  * The commit route's decisions, apart from its writes, so the suite can hold
  * them without a database:
  *
- * - **The server recomputes.** The body brings the file's text and the user's
- *   three choices — the order, the road's corner and its side — and nothing
- *   drawn: any polygon, area or corner in the body is never read.
+ * - **The server recomputes.** The body brings the property, the owners and
+ *   the width (#39.79; read from the archive by side-road-source.ts) and the
+ *   user's three choices — the order, the road's corner and its side — and
+ *   nothing drawn: any polygon, area or corner in the body is never read.
  * - **The road is always created**, beside one property per owner (the request:
  *   „the road plus the owners").
  * - **Corner numbers survive.** A new property's corner that IS one of the
@@ -15,22 +16,27 @@
  *   nothing is matched by distance. A number that is not a whole number
  *   („121a") cannot go in `originalIndex`, which is an integer, so that corner
  *   goes in without one.
- * - **The run can be read and re-run**: `inputParams` holds the text and the
- *   three choices, `stepsLog` the figures the screen showed, under
- *   algorithm_type 'SIDE_ROAD' — so the history tells new runs from #18.10's
- *   'PARCEL_DIVISION' ones without parsing anything.
+ * - **Each owner's property names its owner** (#39.79, Ask first 3): the plan
+ *   carries the person, and the route links them as „Proprietar". The nickname
+ *   stays the owner's name, as before.
+ * - **The run can be read and re-run**: `inputParams` holds the property, the
+ *   corners used, the owners and the width (`source: "property"`, Ask first 6)
+ *   and the three choices, `stepsLog` the figures the screen showed, under
+ *   algorithm_type 'SIDE_ROAD'. A run made from #38.23's file holds `text`
+ *   instead: the history reads it, and it re-runs no more (Ask first 1).
  */
 
-import { computeSlicesFromFile, type SlicesComputation } from "./compute";
+import { computeSlices, type SlicesComputation } from "./compute";
 import type { RoadSide } from "./geometry";
+import type { SideRoadInput } from "./side-road-input";
+import type { SideRoadSource } from "./side-road-source";
 
 export const SIDE_ROAD_ALGORITHM = "SIDE_ROAD";
 
 /** #18.10's default, kept. */
 export const DEFAULT_ROAD_NICKNAME = "Drum comun";
 
-export type SideRoadInputParams = {
-  text: string;
+export type SideRoadInputParams = SideRoadSource & {
   order: number[];
   road: { corner: number; side: RoadSide };
   options: { groupDescription: string; roadNickname: string };
@@ -40,6 +46,8 @@ export type PlannedCorner = { lat: number; lon: number; originalIndex: number | 
 
 export type PlannedProperty = {
   role: "OWNER_PARCEL" | "ROAD_PARCEL";
+  /** #39.79: the owner, linked to the new property as „Proprietar"; null for the road. */
+  personId: string | null;
   nickname: string;
   surfaceAreaMp: number;
   corners: PlannedCorner[];
@@ -71,15 +79,14 @@ export function originalIndexOf(number: string | null): number | null {
 }
 
 /**
- * Read the body, recompute, and say what to create. Throws `FileRejected`,
- * `RoadRejected` or `DivisionError` from the computation for choices that do
- * not fit the file, and `CommitRequestInvalid` for a body that is not one.
+ * Read the body's choices, recompute from the resolved input, and say what to
+ * create. Throws `RoadRejected` or `DivisionError` from the computation for
+ * choices that do not fit the parcel, and `CommitRequestInvalid` for a body
+ * that is not one. The input has been read and checked by
+ * `resolveSideRoadRequest` (side-road-source.ts).
  */
-export function planSideRoadCommit(body: unknown): CommitPlan {
+export function planSideRoadCommit(resolved: { input: SideRoadInput; source: SideRoadSource }, body: unknown): CommitPlan {
   const b = (body ?? {}) as Record<string, unknown>;
-  if (typeof b.text !== "string" || b.text.trim().length === 0) {
-    throw new CommitRequestInvalid("No file text provided");
-  }
   if (typeof b.groupDescription !== "string" || b.groupDescription.trim().length === 0) {
     throw new CommitRequestInvalid("A group description is required");
   }
@@ -88,7 +95,7 @@ export function planSideRoadCommit(body: unknown): CommitPlan {
   if (!Array.isArray(b.order)) throw new CommitRequestInvalid("The order of the owners is required");
   if (b.road === undefined || b.road === null) throw new CommitRequestInvalid("The road's corner and side are required");
 
-  const computation = computeSlicesFromFile(b.text, b.order, Math.random, b.road);
+  const computation = computeSlices(resolved.input, b.order, Math.random, b.road);
   const road = computation.road;
   if (!road) throw new CommitRequestInvalid("The road's corner and side are required");
 
@@ -102,12 +109,14 @@ export function planSideRoadCommit(body: unknown): CommitPlan {
   const properties: PlannedProperty[] = [
     ...computation.slices.map((s) => ({
       role: "OWNER_PARCEL" as const,
+      personId: s.personId,
       nickname: s.name,
       surfaceAreaMp: round2(s.area),
       corners: cornersOf(s.corners, s.cornerNumbers),
     })),
     {
       role: "ROAD_PARCEL" as const,
+      personId: null,
       nickname: roadNickname,
       surfaceAreaMp: round2(road.area),
       corners: cornersOf(road.corners, road.cornerNumbers),
@@ -118,7 +127,7 @@ export function planSideRoadCommit(body: unknown): CommitPlan {
     computation,
     properties,
     inputParams: {
-      text: b.text,
+      ...resolved.source,
       order: computation.order,
       road: { corner: road.corner, side: road.side },
       options: { groupDescription, roadNickname },

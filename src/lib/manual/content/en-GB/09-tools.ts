@@ -66,34 +66,30 @@ A form can also be built or corrected by hand, on the type's page under „Refer
 
 ## 9.2 The side-road calculation {#tools-side-road}
 
-„Calculation of a Side Road” splits a four-cornered parcel between its owners, by their shares, with a shared access road along one side. From the data file it shows you the split on the map, lets you choose the order of the owners and where the road goes and, at the end, creates one property for each owner, one for the road and a group holding them all. Every calculation is recorded in „Calculation History”.
+„Calculation of a Side Road” splits a four-cornered property in the archive between its owners, by their shares, with a shared access road along one side. It shows you the split on the map, lets you choose the order of the owners and where the road goes and, at the end, creates one property for each owner, one for the road and a group holding them all. Every calculation is recorded in „Calculation History”.
 
-In the sidebar, open „Tools” → „Calculation of a Side Road”. The „Calculation” screen opens (Figure [[fig-tools-calculation]]): the explanation of the file, the history icon and „Choose data file…”.
+In the sidebar, open „Tools” → „Calculation of a Side Road”. The „Calculation of a Side Road” screen opens (Figure [[fig-tools-calculation]]): the history icon, then „The property”, „The owners” and „The road”.
 
 ![9.2 The „Calculation of a Side Road” screen](tools-calculation.png){#fig-tools-calculation}
 
 **Nothing is created until „Create the properties”**. Everything you see on the map and in the table is a preview; you can try as many orders and as many roads as you like.
 
-### 9.2.1 The data file {#tools-side-road-file}
+### 9.2.1 The property, the owners and the road {#tools-side-road-file}
 
-The file has three sections, each opened by a line starting with „Secțiunea de”:
+The first step gathers three things, all already in the archive or typed there and then:
 
-| Section | What it holds | The rule |
+| What | How | The rule |
 |---|---|---|
-| „Colțuri” (corners) | one corner per line: the corner's number, X (North) and Y (East), in Stereo 70 | exactly 4 corners, written in the order the outline is walked |
-| „Proprietari” (owners) | one owner per line: the name, then the share („24,33%”) | at least 2 owners; the shares add up to 100% or 99.99%, nothing else |
-| „Lățime drum” (road width) | the width of the road, in metres | one single value, above 0 and below 15 m |
+| „The property” | you find it in „Find the property”, by code, nickname, cadastral number or CF | exactly 4 corners; one without corners is greyed out and cannot be chosen |
+| „The owners” | you find them one at a time in „Find an owner”, natural or juridical persons, and type each one's „Share” | at least 2, each only once; shares with at most two decimals, adding up to 100% or 99.99% |
+| „Road width” | you type it, in metres | above 0 and under 15 m |
 
-The columns are separated by a tab or spaces, and the numbers may have a decimal comma or point. Before the first section there may only be empty lines or lines of „*”.
+Each owner gets a colour, the same its slice will have on the map. Whatever breaks a rule is written under the form, after „The data cannot be used:”, and „Divide the property” stays off until everything is right. For example:
 
-A file that breaks a rule is rejected: the screen reads „The file cannot be used:” and the reason, and no map appears. For example:
-
-- „The file has 5 corners; it must have exactly 4.”
 - „The shares add up to 98.00%; they must add up to 100% or 99.99%.”
 - „The road is 15 m wide; it must be above 0 and under 15 m.”
-- a section missing or appearing twice, a corner written twice, corners whose sides, in the file's order, cross each other, or a line that cannot be read — the screen then shows the line and what was expected on it.
 
-Correct the file and choose it again.
+„Divide the property” opens the steps below. „Change the data” takes you back to the first step, with everything you typed.
 
 ### 9.2.2 The owners on the map {#tools-side-road-owners}
 
@@ -173,8 +169,8 @@ The import stopped because the „Certificat de Moștenitor” type has no form,
 
 The surveyor has sent you the plot's corners, and the three heirs each hold a third.
 
-1. Write the data file: the four corners, the three owners at „33,33%” each and the road width, for example 3 (section [[tools-side-road-file]]).
-2. „Tools” → „Calculation of a Side Road”, then „Choose data file…”.
+1. „Tools” → „Calculation of a Side Road”.
+2. Choose the plot, add the three heirs at 33.33 each and the road width, for example 3, then „Divide the property” (section [[tools-side-road-file]]).
 3. Put the owners in the order you want, by dragging the slices or with ↑ ↓ (section [[tools-side-road-owners]]).
 4. Click the corner by the public road, then the side the road runs along; check that „Difference (m²)” reads 0.00 on every row (section [[tools-side-road-road]]).
 5. Write „Group description”, then press „Create the properties” (section [[tools-side-road-create]]).

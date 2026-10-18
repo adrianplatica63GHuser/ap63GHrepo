@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ArrowDown, ArrowUp, History, PackagePlus, RotateCcw, Route, X } from "lucide-react";
+import { ArrowDown, ArrowUp, History, PackagePlus, Pencil, RotateCcw, Route, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useFormatter, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
@@ -9,37 +9,34 @@ import Link from "next/link";
 import { useNameOr } from "@/components/record/use-name-or";
 import { OwnerSwatch, PreviewMap } from "./preview-map";
 import { HelpHint } from "@/components/help/help-hint";
-// Slice #34.20 — the coordinate picker's offer, named once for the two
-// screens that make it. See `picker-accept.ts` for why it is not derived
-// from the file-kind registry.
-// Slice #34.23 — and the list the sentence beside it names, derived from that
-// same value so the copy cannot outlive it.
-import { COORDINATE_FILE_ACCEPT, COORDINATE_FILE_OFFER } from "@/lib/files/picker-accept";
 import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
 import { screenBox, screenPanel, stepGridStyle, tableUnits, type ColumnName } from "@/lib/ui/field-widths";
 import { UnitRow } from "@/components/screen/unit-row";
 // Pure, and the same rule the server applies: a drop is a swap (Ask first 2).
 import { swapped, type RoadRefusal, type RoadSide } from "@/lib/calculation/geometry";
 import { ownerColor } from "@/lib/calculation/owner-colors";
-import type { FileProblem } from "@/lib/calculation/parse";
+import { checkSideRoadInput, type InputProblem } from "@/lib/calculation/side-road-input";
+import { EMPTY_START, SideRoadStart, type StartProperty, type StartState } from "./side-road-start";
 
 /**
- * „Calcul drum lateral", steps 1 to 3                       (Slices #38.23, #38.24)
+ * „Calcul drum lateral", steps 1 to 4                       (Slices #38.23, #38.24, #39.79)
  *
- * Step 1 is the file picker, with the text above it describing the three-section
- * file. Step 2: the parcel drawn from its numbered corners, cut into one slice
+ * Step 1 (#39.79; #38.23's data file until then): the property, its owners and
+ * their shares, and the road's width — side-road-start.tsx; „Împarte
+ * proprietatea" opens step 2 once every check passes. Step 2: the parcel drawn from its numbered corners, cut into one slice
  * per owner in a random order, which the user rearranges by dropping one slice
  * on another — or, from the keyboard, with ↑ ↓ in the owners' table. Step 3
  * (#38.24): a click on a corner, then on one of its two sides, lays the road
  * along that side; the slices turn to meet it, and the order can still be
  * changed with the road in place. The two select boxes under the prompt are
  * the same two clicks from the keyboard. Step 4 (#38.25): „Creează proprietățile"
- * sends the file and the three choices — the server recomputes and creates one
- * property per owner and the road; „Anulează" starts over.
+ * sends the property, the owners, the width and the three choices — the server
+ * recomputes and creates one property per owner, linked to its owner, and the
+ * road; „Anulează" starts over.
  *
- * The geometry is the server's: every change posts the file's text, the order
- * and the road's corner and side to /api/calculation/preview and draws what
- * comes back. A road that cannot be built comes back as a refusal and is never
+ * The geometry is the server's: every change posts the property, the owners,
+ * the width, the order and the road's corner and side to
+ * /api/calculation/preview and draws what comes back. A road that cannot be built comes back as a refusal and is never
  * drawn.
  */
 
@@ -80,6 +77,7 @@ type Corner = { lat: number; lon: number; north: number; east: number };
 
 type Slice = {
   owner: number;
+  personId: string;
   name: string;
   percent: number;
   fraction: number;
@@ -126,8 +124,16 @@ type CommitResult = {
 
 type PreviewAnswer =
   | { kind: "ok"; computation: Computation }
-  | { kind: "rejected"; problems: FileProblem[] }
+  | { kind: "rejected"; problems: InputProblem[] }
   | { kind: "refused"; refusal: Refusal };
+
+/** What every preview and the commit send (#39.79): the property, the owners and the width; a re-run's run. */
+type SideRoadBody = {
+  propertyId: string;
+  owners: { personId: string; share: string }[];
+  width: string;
+  rerunOf?: string;
+};
 
 /** Where step 3 stands: choosing the corner, then the side; or the road is laid. */
 type RoadStep =
@@ -140,13 +146,18 @@ type RoadStep =
 // ---------------------------------------------------------------------------
 
 /**
- * „Istoricul calculelor" → a run → „Re-rulează" puts the run's file and its
- * three choices here (#38.25), and the screen opens on them: the same order,
- * the same road, the group description and the road's nickname. Only a
- * 'SIDE_ROAD' run offers it; #18.10's runs read a file this screen no longer does.
+ * „Istoricul calculelor" → a run → „Re-rulează" puts the run's property, owners,
+ * width and three choices here (#38.25; #39.79), and the screen opens on them:
+ * the same corners as the run stored, the same order, the same road, the group
+ * description and the road's nickname. Only a run made from a property offers
+ * it; a run made from #38.23's file, and #18.10's, read a file this screen no
+ * longer does.
  */
-type RerunPayload = {
-  text: string;
+export type RerunPayload = {
+  runId: string;
+  property: { id: string; code: string; nickname: string | null };
+  owners: { personId: string; name: string; code: string; type: "NATURAL" | "JUDICIAL"; share: string }[];
+  width: string;
   order?: number[];
   road?: { corner: number; side: RoadSide };
   options?: { groupDescription?: string; roadNickname?: string };
@@ -161,7 +172,7 @@ function consumeRerunPayload(isRerun: boolean): RerunPayload | null {
   sessionStorage.removeItem("calc_rerun");
   try {
     const parsed = JSON.parse(raw) as RerunPayload;
-    return typeof parsed.text === "string" ? parsed : null;
+    return typeof parsed.runId === "string" && parsed.property && Array.isArray(parsed.owners) ? parsed : null;
   } catch {
     return null;
   }
@@ -176,23 +187,10 @@ function sideIndex(corner: number, side: RoadSide, n: number): number {
 // Component
 // ---------------------------------------------------------------------------
 
-/**
- * The id joining this screen's picker to the sentence describing it.
- *                                                              (Slice #34.23)
- *
- * A constant rather than a literal in two places, for the ordinary reason: an
- * `aria-describedby` pointing at an id that no longer exists is silent, both to
- * the user and to every test that does not go looking for it.
- */
-const COORDINATE_PICKER_OFFER_ID = "calculation-coordinate-picker-offer";
-
 export function CalculationView() {
   const t = useTranslations("calculation");
   const format = useFormatter();
   const nameOr = useNameOr(); // #37.57: a name, or words — never the system ID
-  // Slice #34.23 — the picker sentence is `shared` because two screens make the
-  // same offer; see `picker-accept.ts`.
-  const tShared = useTranslations("shared");
   // In the application's language, like the shares beside them (#38.23).
   const fmtArea = (n: number) => format.number(n, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const fmtLen = (n: number) => format.number(n, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -207,11 +205,26 @@ export function CalculationView() {
     consumeRerunPayload(searchParams.get("rerun") === "1"),
   );
 
-  const [fileName, setFileName] = useState<string | null>(rerunPayload ? t("rerun.fileName") : null);
-  const [fileText, setFileText] = useState<string | null>(rerunPayload?.text ?? null);
+  // Step 1 (#39.79): what is typed, and what was last sent — every later preview and the commit send the same.
+  const [start, setStart] = useState<StartState>(() =>
+    rerunPayload
+      ? { property: { ...rerunPayload.property, corners: null }, owners: rerunPayload.owners, width: rerunPayload.width }
+      : EMPTY_START,
+  );
+  const [sent, setSent] = useState<SideRoadBody | null>(() =>
+    rerunPayload
+      ? {
+          propertyId: rerunPayload.property.id,
+          owners: rerunPayload.owners.map((o) => ({ personId: o.personId, share: o.share })),
+          width: rerunPayload.width,
+          rerunOf: rerunPayload.runId,
+        }
+      : null,
+  );
 
   const [computation, setComputation] = useState<Computation | null>(null);
-  const [problems, setProblems] = useState<FileProblem[] | null>(null);
+  /** What the server refused when step 1's checks had passed — the same codes, worded by step 1. */
+  const [problems, setProblems] = useState<InputProblem[] | null>(null);
   const [previewing, setPreviewing] = useState(() => rerunPayload !== null);
   const [busy, setBusy] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
@@ -230,8 +243,8 @@ export function CalculationView() {
 
 
   function resetAll() {
-    setFileName(null);
-    setFileText(null);
+    setStart(EMPTY_START);
+    setSent(null);
     setComputation(null);
     setProblems(null);
     setPreviewError(null);
@@ -245,19 +258,19 @@ export function CalculationView() {
   }
 
   async function preview(
-    text: string,
+    body: SideRoadBody,
     order?: number[],
     road?: { corner: number; side: RoadSide },
   ): Promise<PreviewAnswer> {
     const res = await fetch("/api/calculation/preview", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text, ...(order ? { order } : {}), ...(road ? { road } : {}) }),
+      body: JSON.stringify({ ...body, ...(order ? { order } : {}), ...(road ? { road } : {}) }),
     });
     if (res.redirected) throw new Error(t("errors.session"));
     const data = (await res.json().catch(() => ({}))) as {
       computation?: Computation;
-      problems?: FileProblem[];
+      problems?: InputProblem[];
       refusal?: Refusal;
       error?: string;
     };
@@ -267,8 +280,15 @@ export function CalculationView() {
     throw new Error(data.error ?? `Error ${res.status}`);
   }
 
-  /** Step 1 → 2: read the file; the server picks the random first order. */
-  async function readFile(text: string) {
+  /** Step 1 → 2: „Împarte proprietatea"; the server reads the property and the persons, and picks the random first order. */
+  async function divide() {
+    if (!start.property) return;
+    const body: SideRoadBody = {
+      propertyId: start.property.id,
+      owners: start.owners.map((o) => ({ personId: o.personId, share: o.share.trim() })),
+      width: start.width.trim(),
+    };
+    setSent(body);
     setPreviewing(true);
     setPreviewError(null);
     setProblems(null);
@@ -277,7 +297,7 @@ export function CalculationView() {
     setRoadStep({ phase: "corner" });
     setRoadMessage(null);
     try {
-      const answer = await preview(text);
+      const answer = await preview(body);
       if (answer.kind === "ok") setComputation(answer.computation);
       else if (answer.kind === "rejected") setProblems(answer.problems);
     } catch (err) {
@@ -287,9 +307,9 @@ export function CalculationView() {
     }
   }
 
-  /** Step 4: the server recomputes from the file and the three choices, and creates. */
+  /** Step 4: the server recomputes from what was sent and the three choices, and creates. */
   async function doCommit() {
-    if (!fileText || !computation || roadStep.phase !== "set") return;
+    if (!sent || !computation || roadStep.phase !== "set") return;
     setCommitting(true);
     setCommitError(null);
     try {
@@ -297,7 +317,7 @@ export function CalculationView() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          text: fileText,
+          ...sent,
           order: computation.order,
           road: { corner: roadStep.corner, side: roadStep.side },
           groupDescription: groupDescription.trim(),
@@ -307,11 +327,16 @@ export function CalculationView() {
       if (res.redirected) throw new Error(t("errors.session"));
       const data = (await res.json().catch(() => ({}))) as Partial<CommitResult> & {
         error?: string;
-        problems?: FileProblem[];
+        problems?: InputProblem[];
         refusal?: Refusal;
       };
       if (!res.ok) {
-        if (Array.isArray(data.problems)) throw new Error(data.problems.map(problemText).join(" "));
+        if (Array.isArray(data.problems)) {
+          // The archive changed under the screen (a person deleted, the corners edited): back to step 1, saying why.
+          setProblems(data.problems);
+          setComputation(null);
+          return;
+        }
         if (data.refusal) throw new Error(refusalText(data.refusal, { corner: roadStep.corner, side: roadStep.side }));
         throw new Error(data.error ?? `Error ${res.status}`);
       }
@@ -332,17 +357,19 @@ export function CalculationView() {
     order: number[],
     road: { corner: number; side: RoadSide } | undefined,
   ): Promise<{ ok: true; computation: Computation } | { ok: false }> {
-    if (!fileText) return { ok: false };
+    if (!sent) return { ok: false };
     setBusy(true);
     setPreviewError(null);
     try {
-      const answer = await preview(fileText, order, road);
+      const answer = await preview(sent, order, road);
       if (answer.kind === "ok") {
         setComputation(answer.computation);
         return { ok: true, computation: answer.computation };
       }
-      if (answer.kind === "rejected") setProblems(answer.problems);
-      else setRoadMessage(refusalText(answer.refusal, road));
+      if (answer.kind === "rejected") {
+        setProblems(answer.problems);
+        setComputation(null);
+      } else setRoadMessage(refusalText(answer.refusal, road));
       return { ok: false };
     } catch (err) {
       setPreviewError(err instanceof Error ? err.message : String(err));
@@ -403,50 +430,26 @@ export function CalculationView() {
     await recompute(computation.order, undefined);
   }
 
-  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = ""; // allow re-selecting the same file later
-    if (!file) return;
-    const text = await file.text();
-    setFileName(file.name);
-    setFileText(text);
-    setGroupDescription(t("group.defaultDescription", { file: file.name }));
-    await readFile(text);
+  /** A property chosen (#39.79, Ask first 4): the group's description names it — „Diviz — PROP00123". */
+  function propertyChosen(p: StartProperty) {
+    setProblems(null);
+    setGroupDescription(t("group.defaultDescription", { code: p.code }));
+  }
+
+  /** „Modifică datele": back to step 1 with everything typed kept; the order and the road start again. */
+  function editStart() {
+    setComputation(null);
+    setProblems(null);
+    setPreviewError(null);
+    setRoadStep({ phase: "corner" });
+    setRoadMessage(null);
+    setAnnouncement("");
   }
 
   /** „121–122": side i, by the numbers of its two corners. */
   function sideName(i: number): string {
     const s = computation?.sides[i];
     return s ? `${s.from}–${s.to}` : "";
-  }
-
-  /** One rejection, in the screen's language. */
-  function problemText(p: FileProblem): string {
-    const pct = (n: number) => format.number(n, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    const metres = (n: number) => format.number(n, { maximumFractionDigits: 2 });
-    switch (p.code) {
-      case "missingSection":
-      case "repeatedSection":
-        return t(`problems.${p.code}`, { section: t(`problems.section.${p.values.section}`) });
-      case "cornerCount":
-      case "ownerCount":
-      case "widthCount":
-        return t(`problems.${p.code}`, { count: p.values.count });
-      case "repeatedCorner":
-        return t("problems.repeatedCorner", { number: p.values.number });
-      case "cornersCross":
-        return t("problems.cornersCross");
-      case "percentTotal":
-        return t("problems.percentTotal", { total: pct(p.values.total) });
-      case "roadWidth":
-        return t("problems.roadWidth", { width: metres(p.values.width) });
-      case "unreadableLine":
-        return t("problems.unreadableLine", {
-          lineNumber: p.values.lineNumber,
-          line: p.values.line,
-          expected: t(`problems.expected.${p.values.section}`),
-        });
-    }
   }
 
   /** Why a road cannot be built, in the screen's language (#38.24). */
@@ -466,13 +469,14 @@ export function CalculationView() {
     }
   }
 
-  /** A re-run (#38.25): the file, and — when the run kept them — its order and its road. */
+  /** A re-run (#38.25; #39.79): the run's corners, owners and width, its order and its road. */
   async function rerun(payload: RerunPayload) {
+    if (!sent) return;
     // `previewing` starts true for a re-run (its useState), so nothing is set
     // before the first await — the effect below calls this, and a synchronous
     // setState in an effect is the cascade react-hooks/set-state-in-effect bans.
     try {
-      const answer = await preview(payload.text, payload.order, payload.road);
+      const answer = await preview(sent, payload.order, payload.road);
       if (answer.kind === "ok") {
         setComputation(answer.computation);
         if (payload.road) setRoadStep({ phase: "set", corner: payload.road.corner, side: payload.road.side });
@@ -480,7 +484,7 @@ export function CalculationView() {
         setProblems(answer.problems);
       } else {
         // The road no longer fits (it should, for a stored run): show the parcel and say why.
-        const plain = await preview(payload.text, payload.order);
+        const plain = await preview(sent, payload.order);
         if (plain.kind === "ok") setComputation(plain.computation);
         setRoadMessage(refusalText(answer.refusal, payload.road));
       }
@@ -499,6 +503,19 @@ export function CalculationView() {
     if (rerunPayload) queueMicrotask(() => void rerun(rerunPayload));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Step 1's checks, as the server will apply them (#39.79). Shown as they become true of what has been typed: no
+  // „at least two owners" before the first, no width complaint before anything is in the box.
+  const checked = checkSideRoadInput({ corners: start.property?.corners ?? null, owners: start.owners, width: start.width });
+  const shownProblems = checked.ok
+    ? []
+    : checked.problems.filter((p) =>
+        p.code === "ownerCount" ? start.owners.length > 0
+        : p.code === "widthFormat" ? start.width.trim().length > 0
+        : p.code === "percentTotal" ? start.owners.every((o) => o.share.trim().length > 0)
+        : p.code === "shareFormat" ? p.values.share.length > 0
+        : true,
+      );
 
   const lastName = computation?.slices[computation.slices.length - 1]?.name ?? "";
   const n = computation?.corners.length ?? 4;
@@ -587,65 +604,35 @@ export function CalculationView() {
   return (
     <UnitRow units={[CALC_UNITS]}>
     <section {...screenPanel("calculation", CALC_UNITS)} className="flex flex-col gap-5 rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-      {/* Step 1 — what the file is (#38.23: three sections, three rules) */}
-      <div className="flex flex-col gap-1 text-sm text-fade dark:text-zinc-400">
-        <p>{t("intro.lead")}</p>
-        <ul className="list-disc pl-5">
-          <li>{t("intro.corners")}</li>
-          <li>{t("intro.owners")}</li>
-          <li>{t("intro.width")}</li>
-        </ul>
-        <p>{t("intro.then")}</p>
-      </div>
-
-      {/* Upload */}
-      <div className="flex flex-wrap items-center gap-3">
-        <label className="inline-flex cursor-pointer items-center rounded-md bg-cta px-3 py-1.5 text-xs font-medium text-white hover:bg-cta-d">
-          {t("buttons.chooseFile")}
-          <input
-            type="file"
-            accept={COORDINATE_FILE_ACCEPT}
-            onChange={handleFile}
-            className="sr-only"
-            // Slice #34.23 — the input is `sr-only`, and its accessible name
-            // is the button text of the `<label>` wrapping it and NOTHING
-            // else; a paragraph sitting beside it is invisible to the one user
-            // most likely to be lost in a file dialog. `aria-describedby` is
-            // what makes the sentence part of the control. (In
-            // `add-property-dialog.tsx` the name comes from an `aria-label`
-            // instead, and the same argument applies — do NOT add one here,
-            // where it would override the label text.)
-            aria-describedby={COORDINATE_PICKER_OFFER_ID}
-          />
-        </label>
-        <HelpHint hintKey="calc-file-format" />
-        {fileName && (
-          <span className="text-xs text-fade dark:text-zinc-400">{fileName}</span>
-        )}
-        {(computation || fileName) && (
-          <IconButton
-            icon={RotateCcw}
-            label={t("buttons.reset")}
-            variant="secondary"
-            size="sm"
-            onClick={resetAll}
-          />
-        )}
-      </div>
-
-      {/*
-        Slice #34.23 — what the file window will and will not show. Worded as
-        what the WINDOW shows, never as what this screen accepts: `accept`
-        filters a dialog and decides nothing about the parse. See
-        `picker-accept.ts`.
-      */}
-      <p
-        id={COORDINATE_PICKER_OFFER_ID}
-        className="text-xs text-fade dark:text-zinc-400"
-        role="note"
-      >
-        {tShared("filePicker.offersExtensions", { list: COORDINATE_FILE_OFFER })}
-      </p>
+      {/* Step 1 (#39.79) — the property, its owners and their shares, the road; or, once divided, what was divided */}
+      {!computation ? (
+        <SideRoadStart
+          state={start}
+          onChange={(next) => {
+            setStart(next);
+            setProblems(null);
+          }}
+          problems={problems ?? shownProblems}
+          canDivide={checked.ok && !previewing}
+          dividing={previewing}
+          onDivide={() => void divide()}
+          onPropertyChosen={propertyChosen}
+        />
+      ) : (
+        <div className="flex flex-wrap items-center gap-3 text-sm text-ink dark:text-zinc-200" data-panel="side-road-summary">
+          <span>
+            {t("start.summary", {
+              code: start.property?.code ?? "",
+              owners: start.owners.length,
+              width: start.width.trim(),
+            })}
+          </span>
+          {!sent?.rerunOf && (
+            <IconButton icon={Pencil} label={t("start.edit")} variant="secondary" size="sm" onClick={editStart} disabled={busy} />
+          )}
+          <IconButton icon={RotateCcw} label={t("buttons.reset")} variant="secondary" size="sm" onClick={resetAll} />
+        </div>
+      )}
 
       {previewing && (
         <p className="text-sm text-fade dark:text-zinc-400" role="status">{t("status.computing")}</p>
@@ -654,18 +641,6 @@ export function CalculationView() {
         <p role="alert" className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
           {previewError}
         </p>
-      )}
-
-      {/* A rejected file: every reason at once (#38.23) */}
-      {problems && (
-        <div role="alert" data-panel="file-problems" className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
-          <p className="font-medium">{t("problems.title")}</p>
-          <ul className="mt-1 list-disc pl-5">
-            {problems.map((p, i) => (
-              <li key={i}>{problemText(p)}</li>
-            ))}
-          </ul>
-        </div>
       )}
 
       {computation && (

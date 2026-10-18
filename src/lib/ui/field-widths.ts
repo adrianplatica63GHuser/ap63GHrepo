@@ -1588,6 +1588,11 @@ export const SCREEN = {
   calcRoadNickname: { step: "XL", kind: "fixed" }, //  a property's nickname, as PROPERTY.nickname
   calcRoadCorner: { step: "S", kind: "select" }, //    the road's corner, by its number in the file — „121" (#38.24)
   calcRoadSide: { step: "M", kind: "select" }, //      the road's side, by its two corners — „121–122" (#38.24)
+  // #39.79: the first step — the property, the owners and their shares, the road's width
+  calcPropertySearch: { step: "XXL", kind: "fixed" }, // code, nickname, cadastral number or CF, typed to find it
+  calcOwnerSearch: { step: "XL", kind: "fixed" }, //   a person's name, typed to add them as an owner
+  calcShare: { step: "S", kind: "fixed", sample: "000,00" }, // a share, two decimals at most — „33,33"
+  calcRoadWidth: { step: "S", kind: "fixed", sample: "00,00" }, // the road's width in metres, under 15 — „4"
   // Motorul de tipuri
   documentType: { step: "XXL", kind: "select" }, //    the type to distil, as DOCUMENT.documentTypeId (max-w-lg before)
   matchPercent: { step: "M", kind: "select" }, //      „Matching %" (10rem and 8rem before)

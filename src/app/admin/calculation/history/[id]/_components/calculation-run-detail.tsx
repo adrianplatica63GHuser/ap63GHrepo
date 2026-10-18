@@ -12,6 +12,7 @@ import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/comp
 import { screenPanel, stepGridStyle, tableUnits, type ColumnName } from "@/lib/ui/field-widths";
 import { UnitRow } from "@/components/screen/unit-row";
 import { DeleteRunButton } from "@/app/admin/calculation/history/_components/delete-run";
+import type { RerunPayload } from "@/app/admin/calculation/_components/calculation-view";
 
 /** The run's two tables, at #37.16's column widths (Slice #37.22). */
 const OWNER_COLUMNS: readonly ColumnName[] = ["personName", "percent", "area", "area", "area", "area"];
@@ -82,12 +83,25 @@ type SideRoadComputation = {
   slices:          { owner: number; name: string; percent: number; originalArea: number; roadShare: number; area: number; corners: Corner[] }[];
 };
 
+/**
+ * A 'SIDE_ROAD' run's input (#38.25). Made from a property since #39.79 (`source: "property"`): the property, the
+ * corners it was cut from, the owners and the width — and it re-runs. Made from #38.23's file before: `text`, and it
+ * is read but no longer re-run (Ask first 1).
+ */
 type SideRoadInput = {
-  text:    string;
   order:   number[];
   road:    { corner: number; side: "next" | "previous" };
   options: { groupDescription: string; roadNickname: string };
-};
+} & (
+  | {
+      source:       "property";
+      propertyId:   string;
+      propertyCode: string;
+      owners:       { personId: string; name: string; code: string; type: "NATURAL" | "JUDICIAL"; share: number }[];
+      width:        number;
+    }
+  | { source?: undefined; text: string }
+);
 
 type OldInput = { text: string; options: { groupDescription: string; includeRoad: boolean; roadNickname: string } };
 
@@ -192,17 +206,24 @@ export function CalculationRunDetail({ runId }: { runId: string }) {
   }
 
   const isSideRoad = run.algorithmType === SIDE_ROAD;
+  const sideRoadInput = isSideRoad ? (run.inputParams as SideRoadInput) : null;
+  /** #39.79: a side-road run re-runs only when it was made from a property; one made from #38.23's file does not. */
+  const fromProperty = sideRoadInput?.source === "property" ? sideRoadInput : null;
 
-  /** Only a side-road run re-runs (#38.25): its file, its order, its road, its options. */
+  /** A property-made side-road run re-runs (#38.25; #39.79): its corners, owners, width, order, road and options. */
   function handleRerun() {
-    if (!run || !isSideRoad) return;
-    const input = run.inputParams as SideRoadInput;
-    if (typeof window !== "undefined") {
-      sessionStorage.setItem(
-        "calc_rerun",
-        JSON.stringify({ text: input.text, order: input.order, road: input.road, options: input.options }),
-      );
-    }
+    if (!run || !fromProperty) return;
+    const input = fromProperty;
+    const payload: RerunPayload = {
+      runId: run.id,
+      property: { id: input.propertyId, code: input.propertyCode, nickname: null },
+      owners: input.owners.map((o) => ({ personId: o.personId, name: o.name, code: o.code, type: o.type, share: String(o.share).replace(".", ",") })),
+      width: String(input.width).replace(".", ","),
+      order: input.order,
+      road: input.road,
+      options: input.options,
+    };
+    if (typeof window !== "undefined") sessionStorage.setItem("calc_rerun", JSON.stringify(payload));
     router.push("/admin/calculation?rerun=1");
   }
 
@@ -228,7 +249,7 @@ export function CalculationRunDetail({ runId }: { runId: string }) {
           </span>
         )}
         <div className="ml-auto flex items-center gap-2">
-          {isSideRoad && (
+          {fromProperty && (
             // #37.46 (A088): RotateCw + „Re-rulează cu acești parametri", on
             // buttonClass's primary rather than a hand-written cta class.
             <IconButton
@@ -250,6 +271,14 @@ export function CalculationRunDetail({ runId }: { runId: string }) {
       </div>
       {!isSideRoad && (
         <p data-old-run="" className="text-xs text-fade dark:text-zinc-400">{t("detail.oldRunNoRerun")}</p>
+      )}
+      {isSideRoad && !fromProperty && (
+        <p data-file-run="" className="text-xs text-fade dark:text-zinc-400">{t("detail.fileRunNoRerun")}</p>
+      )}
+      {fromProperty && (
+        <p data-divided-property={fromProperty.propertyCode} className="text-sm text-ink dark:text-zinc-200">
+          {t("detail.dividedProperty", { code: fromProperty.propertyCode })}
+        </p>
       )}
 
       {isSideRoad ? (

@@ -1468,9 +1468,10 @@ describe("the result screen's copy", () => {
     expect([...scanIcu(note).args].sort()).toEqual(["count", "folders"]);
     for (const form of needed) expect(note).toContain(`${form} {`);
 
-    // D-20(a) — the calculated owner names are nicknames and nothing more. No
-    // arguments, and it must not grow one: there is no count to give, because
-    // there are no Person rows to count.
+    // D-20(a) — the calculation's note on its owners. Until #39.79 the owner
+    // names were nicknames and nothing more; since then each owner is a person,
+    // linked to its new property. Still no arguments: the sentence names no
+    // count and no person.
     const owners = at(messages, "calculation.commit.ownersAreNicknames") as string;
     expect(typeof owners).toBe("string");
     expect(owners.trim()).not.toBe("");

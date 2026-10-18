@@ -1,15 +1,7 @@
 {
   "calculation": {
-    "pageTitle": "Calculation",
-    "intro": {
-      "lead": "Choose the parcel's data file. It has three sections, each opened by a line starting „Secțiunea de”:",
-      "corners": "„Colțuri” (corners) — exactly 4 corners, one per line: the corner's number, X (North) and Y (East), in Stereo 70.",
-      "owners": "„Proprietari” (owners) — one owner per line: the name, then the share („24,33%”). The shares add up to 100% or 99.99%, nothing else.",
-      "width": "„Lățime drum” (road width) — the road's width in metres: above 0 and under 15 m.",
-      "then": "Columns are separated by tabs or spaces, and numbers may use a decimal comma or point. The parcel then appears on the map with its corners numbered, cut into one slice per owner, in a random order."
-    },
+    "pageTitle": "Calculation of a Side Road",
     "buttons": {
-      "chooseFile": "Choose data file…",
       "reset": "Reset",
       "confirm": "Create the properties",
       "creating": "Creating…",
@@ -21,28 +13,16 @@
       "recomputing": "Recomputing the slices…"
     },
     "problems": {
-      "title": "The file cannot be used:",
-      "missingSection": "The „{section}” section is missing.",
-      "repeatedSection": "The „{section}” section appears twice.",
-      "cornerCount": "The file has {count, plural, one {one corner} other {# corners}}; it must have exactly 4.",
-      "repeatedCorner": "Corner {number} appears twice.",
-      "cornersCross": "In the file's order the corners do not draw a quadrilateral: its sides cross. List the corners in the order the outline is walked.",
-      "ownerCount": "The file has {count, plural, one {one owner} other {# owners}}; it must have at least 2.",
+      "title": "The data cannot be used:",
+      "noCorners": "The property has no corners; it must have exactly 4.",
+      "cornerCount": "The property has {count, plural, one {# corner} other {# corners}}; it must have exactly 4.",
+      "cornersCross": "The property's corners, in their order, do not form a quadrilateral: its sides cross. Put the corners in the outline's order on the property's screen.",
+      "ownerCount": "There {count, plural, one {is # owner} other {are # owners}}; there must be at least 2.",
+      "repeatedOwner": "{name} is among the owners twice.",
+      "shareFormat": "{name}'s share („{share}”) cannot be read: a number above 0, with a decimal comma or point and at most two decimals.",
       "percentTotal": "The shares add up to {total}%; they must add up to 100% or 99.99%.",
-      "widthCount": "The „Lățime drum” section has {count, plural, one {one value} other {# values}}; it must have exactly one.",
-      "roadWidth": "The road is {width} m wide; it must be above 0 and under 15 m.",
-      "unreadableLine": "Line {lineNumber} cannot be read: „{line}”. {expected}",
-      "expected": {
-        "corners": "In „Colțuri” a line is: the corner's number, X (North) and Y (East), in Stereo 70.",
-        "owners": "In „Proprietari” a line is: the name, then a share above 0.",
-        "width": "In „Lățime drum” the line is a number of metres.",
-        "none": "Before the first section there may only be blank lines or lines of „*”."
-      },
-      "section": {
-        "corners": "Colțuri",
-        "owners": "Proprietari",
-        "width": "Lățime drum"
-      }
+      "widthFormat": "The road's width („{width}”) cannot be read: a number of metres, with at most two decimals.",
+      "roadWidth": "The road is {width} m wide; it must be above 0 and under 15 m."
     },
     "figures": {
       "parcelArea": "Parcel area",
@@ -74,13 +54,10 @@
       "label": "Map of the parcel, with its corners numbered and one slice per owner"
     },
     "commit": {
-      "ownersAreNicknames": "The owner names in the file are saved only as each property's nickname, as text. No people are created and nobody is linked to a property — owners are added separately, from each property's own screen.",
+      "ownersAreNicknames": "Each new property takes its owner's name as its nickname, and the owner is linked to it as „Proprietar” (owner). The property divided stays as it was.",
       "title": "Create {count} properties — the owners and the road — and a group",
       "groupDescription": "Group description",
       "roadNickname": "Road nickname"
-    },
-    "rerun": {
-      "fileName": "(re-run)"
     },
     "errors": {
       "session": "Your session expired — please sign in again and retry."
@@ -104,12 +81,38 @@
       "defaultNickname": "Common road"
     },
     "group": {
-      "defaultDescription": "Diviz — {file}"
+      "defaultDescription": "Diviz — {code}"
     },
     "success": {
       "title": "Created group {code} with the following properties:",
       "runCode": "Calculation recorded: {code}",
       "viewRun": "View calculation history"
+    },
+    "start": {
+      "lead": "Choose the property to divide, its owners with their shares and the road's width. The property and the owners are already in the archive.",
+      "propertyTitle": "The property",
+      "propertySearch": "Find the property",
+      "propertyPlaceholder": "code, nickname, cadastral number or CF",
+      "searching": "Searching…",
+      "noHits": "Nothing found.",
+      "noCornersHit": "no corners",
+      "cadastral": "Cad. no. {n}",
+      "cf": "CF {n}",
+      "propertyChosen": "{code} {name} — {corners, plural, =0 {no corners} one {# corner} other {# corners}}",
+      "ownersTitle": "The owners",
+      "ownerSearch": "Find an owner",
+      "ownerPlaceholder": "the name of a natural or juridical person",
+      "natural": "natural person",
+      "juridical": "juridical person",
+      "share": "Share",
+      "shareOf": "{name}'s share",
+      "removeOwner": "Remove {name}",
+      "roadTitle": "The road",
+      "width": "Road width",
+      "divide": "Divide the property",
+      "dividing": "Dividing…",
+      "summary": "{code} — {owners, plural, one {# owner} other {# owners}}, a {width} m road",
+      "edit": "Change the data"
     }
   },
   "calculationHistory": {
@@ -175,7 +178,9 @@
       "deleted": "(deleted)",
       "group": "Group",
       "rerun": "Re-run with these parameters",
-      "oldRunNoRerun": "Made with the old five-section file, which „Calcul drum lateral” no longer reads: it can be read, not re-run."
+      "oldRunNoRerun": "Made with the old five-section file, which „Calcul drum lateral” no longer reads: it can be read, not re-run.",
+      "fileRunNoRerun": "This calculation was made from a data file, before the division started from a property in the archive: it can be read, but no longer re-run.",
+      "dividedProperty": "The property divided: {code}"
     },
     "delete": {
       "action": "Delete calculation",
@@ -1634,7 +1639,6 @@
         "stamp-staged-changes": "Stamps — + / - are staged until Save stamps",
         "stamp-type-switch-keeps-changes": "Stamps — switching type keeps pending changes",
         "tile-selector": "Shown parts — what the ticks do and where the choice is kept",
-        "calc-file-format": "Calculation — the data file's three sections and their rules",
         "calc-preview-not-saved": "Calculation — nothing is created until you confirm",
         "select-all-page-only": "Lists — the header tick box only selects the current page",
         "calc-group-description-autofill": "Calculation — loading a file overwrites the description"

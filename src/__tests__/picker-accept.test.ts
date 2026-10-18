@@ -112,14 +112,8 @@ const PICKERS: {
    */
   hintId?: string;
 }[] = [
-  {
-    file: "app/admin/calculation/_components/calculation-view.tsx",
-    anchor: "onChange={handleFile}",
-    constant: "COORDINATE_FILE_ACCEPT",
-    accept: COORDINATE_FILE_ACCEPT,
-    messageKey: "offersExtensions",
-    offerId: "COORDINATE_PICKER_OFFER_ID",
-  },
+  // Slice #39.79: the calculation screen's row went with its data file — „Calcul drum lateral" starts from a property
+  // in the archive, and picks no file at all.
   {
     file: "app/properties/_components/add-property-dialog.tsx",
     anchor: "ref={textInputRef}",
