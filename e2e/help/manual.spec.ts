@@ -331,8 +331,9 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     await page.screenshot({ path: `${dir}/record.png` });
 
     // Figura 2.3 — the list, searched by the seed person's surname, „Câmpuri afișate" open; rows not the seed's blurred.
-    // #39.86: three columns chosen first — two with a funnel, one without — so the band of names (#39.83) shows them.
-    await page.evaluate(() => localStorage.setItem("ga40-col-person-v3", JSON.stringify(["dateOfBirth", "age", "cnp"])));
+    // #39.86: three columns with a funnel chosen first, so the band of names (#39.83) shows them beside „Nume" and
+    // „Poreclă", which have none. Not „CNP": a figure shows no CNP, invented or not.
+    await page.evaluate(() => localStorage.setItem("ga40-col-person-v3", JSON.stringify(["dateOfBirth", "age", "gender"])));
     await page.goto("/natural-persons");
     const search = page.locator("main").getByPlaceholder(S.personSearch);
     await expect(search).toBeVisible({ timeout: 60_000 });
@@ -404,8 +405,20 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     await still(page);
     await tile("inheritanceTree").screenshot({ path: `${dir}/persons-tree.png` });
 
-    // Figura 7.3 — on the first seed person again.
-    await page.goto(`/natural-persons/${person.id}`);
+    // Figura 7.3 — on a seed person with a second version. #39.86: the first seed person had one in #39.80's seed, not
+    // since #39.81 rebuilt it, and the test then waited out its whole timeout for a „2 versiuni" chip that never came.
+    // So the first seed person that has two versions or more; with none, the figure is left as it was, and said so.
+    let versioned: string | null = null;
+    for (const n of naturals.slice(0, 40)) {
+      const res = await page.request.get(`/api/people/${n.id}/versions`);
+      if (res.ok() && (((await res.json()) as { items?: unknown[] }).items?.length ?? 0) >= 2) {
+        versioned = n.id;
+        break;
+      }
+    }
+    if (!versioned) console.log("[manual-figures] no seed person has two versions: links-versions.png left as it was");
+    if (versioned) {
+    await page.goto(`/natural-persons/${versioned}`);
     await expect(tile("identity")).toBeVisible({ timeout: 60_000 });
 
     // Figura 7.3 — the person's versions: „2 versiuni" opens the strip on the version before the current one (view
@@ -430,6 +443,7 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     await blurRecent(page, S.recent);
     await still(page);
     await page.screenshot({ path: `${dir}/links-versions.png` });
+    }
 
     // Figura 4.1 — a judicial person's screen.
     await page.goto(`/judicial-persons/${judicial.id}`);
