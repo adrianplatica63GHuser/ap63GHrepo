@@ -831,7 +831,10 @@ export function DocumentListView({
           curând", and at its end „Adaugă act"'s group. „Tip document" (#37.83, #38.18) is the filter bar's first chip,
           under it. Choosing a field in „Câmp specific" adds its value select beside it, which the row wraps if it must. */}
       <div className={`flex flex-col gap-3 ${LIST_TOOLBAR}`} data-toolbar="" {...edge.toolbar}>
-      <div className="flex flex-wrap items-center gap-3" data-toolbar-row="first">
+      {/* #39.74: top-aligned, not centred — choosing a field adds its value select here, which can wrap „Adaugă act"'s
+          group to a line of its own; centred, the first line would then shift by the 37-px button's height difference
+          and the search box would move under the cursor (TC-DOC-08 step 7). Every control on it is 33–37 px tall. */}
+      <div className="flex flex-wrap items-start gap-3" data-toolbar-row="first">
         {/* Slice #37.62: the search first — its placeholder no longer begins
             with „SAU", which only made sense after the type. Since #38.18 the
             type stands in front of „Câmp specific" — since #39.63 on the filter bar. */}
@@ -860,8 +863,8 @@ export function DocumentListView({
             „Câmpuri afișate" (Adrian, 2026-10-17: „Move the Expiring Soon button and the filter control one row up after
             the field chooser"). Same controls, same address keys (field, value, expiring); „Tip document:" stays first
             on the filter bar below. */}
+        {/* The sign and its box are one item, so the row never wraps between them. */}
         {typeOptions.length > 0 && (
-        // The sign and its box one item, so the row never wraps between them.
         <div className="flex items-center gap-2" data-custom-field-group="">
         <CustomFieldSign
           state={fieldState}

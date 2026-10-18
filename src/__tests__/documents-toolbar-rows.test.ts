@@ -47,7 +47,7 @@ describe("the Documents toolbar and the bar's fixed chip (Slices #37.83, #39.63,
 
   // #39.74: the bar's `leading` slot holds „Tip document:" alone.
   it("the bar opens with „Tip document:” alone", () => {
-    const bar = code.slice(code.indexOf("<FilterBar"), code.indexOf("deleteError &&"));
+    const bar = code.slice(code.indexOf("leading={", code.indexOf("<FilterBar")), code.indexOf("deleteError &&"));
     expect(bar).toMatch(/leading=\{\s*<>\s*<div className="flex flex-wrap items-center gap-2" data-filter-fixed="">\s*<DocumentTypeFilterDropdown[\s\S]*?\/>\s*<\/div>\s*<\/>\s*\}/);
     expect(bar).not.toMatch(/<CustomFieldSign|icon=\{CalendarClock\}|customFieldKey/);
   });
@@ -70,6 +70,6 @@ describe("the Documents toolbar and the bar's fixed chip (Slices #37.83, #39.63,
 
   it("the toolbar is one column, the list's toolbar box", () => {
     // Slice #37.84: the column is also the list's toolbar box, as wide as the table or its controls.
-    expect(code).toMatch(/<div className=\{`flex flex-col gap-3 \$\{LIST_TOOLBAR\}`\} data-toolbar="" \{\.\.\.edge\.toolbar\}>\s*<div className="flex flex-wrap items-center gap-3" data-toolbar-row="first">/);
+    expect(code).toMatch(/<div className=\{`flex flex-col gap-3 \$\{LIST_TOOLBAR\}`\} data-toolbar="" \{\.\.\.edge\.toolbar\}>\s*<div className="flex flex-wrap items-start gap-3" data-toolbar-row="first">/);
   });
 });
