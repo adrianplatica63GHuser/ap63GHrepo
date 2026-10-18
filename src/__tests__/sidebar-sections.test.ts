@@ -270,7 +270,7 @@ describe("breadcrumbs name the section, not „Admin”", () => {
     // #39.02: was ["Acasă", "Instrumente (text)", "Căutare globală"].
     expect(trail("/admin/global-search")).toEqual(["Acasă", "Rapoarte (text)", "Căutare globală"]);
     expect(trail("/admin/doc-type-engine")).toEqual(["Acasă", "Instrumente (text)", "Distilare Tipizate"]);
-    expect(trail("/admin/calculation")).toEqual(["Acasă", "Instrumente (text)", "Calcul"]);
+    expect(trail("/admin/calculation")).toEqual(["Acasă", "Instrumente (text)", "Calcul drum lateral"]); // #39.79–#39.80: was „Calcul"
     expect(trail("/admin/users")).toEqual(["Acasă", "Administrare (text)", "Utilizatori & Acces"]);
     expect(trail("/admin/groups")).toEqual(["Acasă", "Administrare (text)", "Grupuri"]);
     expect(trail("/admin/stamps")).toEqual(["Acasă", "Administrare (text)", "Ștampile"]);

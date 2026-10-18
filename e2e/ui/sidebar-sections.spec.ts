@@ -80,7 +80,7 @@ const LINKS: [string, string | null, string][] = [
   ["Proprietăți", "Domeniu", "Proprietăți"],
   ["Acte", "Domeniu", "Acte"],
   ["Distilare Tipizate", "Instrumente", "Distilare Tipizate"],
-  ["Calcul drum lateral", "Instrumente", "Calcul"],
+  ["Calcul drum lateral", "Instrumente", "Calcul drum lateral"], // #39.79: the page title was „Calcul"
   // #39.09's ["Calcul suprafață", "Instrumente", "Toate Proprietățile"] went in #39.78; its guides are step 2's.
   ["Dosare de proprietăți", "Import", "Import"],
   ["Interacțiuni", "Rapoarte", "Interacțiuni"], // #39.02: was under „Domeniu"
