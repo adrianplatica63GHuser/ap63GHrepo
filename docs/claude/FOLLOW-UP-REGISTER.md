@@ -12,13 +12,13 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-10-18 — 355 entries (FU-352 resolved, FU-354 and FU-355 filed, in #39.86). Rows are status, columns are impact.
+As of 2026-10-18 — 355 entries (FU-354 resolved, after #39.86). Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
-| open | 18 | 81 | 79 | 23 | 201 |
+| open | 18 | 80 | 79 | 23 | 200 |
 | planned | 0 | 0 | 1 | 0 | 1 |
-| resolved | 38 | 60 | 32 | 3 | 133 |
+| resolved | 38 | 61 | 32 | 3 | 134 |
 | ignored | 4 | 3 | 4 | 2 | 13 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 6 | 1 | 0 | 7 |
@@ -437,5 +437,5 @@ Nothing is filed from memory: every row carries evidence someone actually looked
 | FU-351 | 2026-10-18 #39.82 99169576 | debt | UI shell | No list uses the „choice" filter kind since #39.82 retired „Decedat": `ChoiceEditor` in the filter bar and the `choice` branch of the filter library are dead code, kept only because `filter-bar.test.ts` covers them. | src/components/list/filter-bar.tsx — ChoiceEditor; src/lib/list/filter-bar.ts — `choice` in readFilterState/encodeFilter | dev | XS | open | Drop the kind, its editor and its tests, or keep it for the next yes / no column. | 2026-10-18 |
 | FU-352 | 2026-10-18 #39.82 99169576 | copy/i18n | i18n | Message keys only the retired filters read are left in both languages because the manual quotes them: shared.filterBar.add/addOption („+ Filtru”), naturalPerson.filters.documentRole/locality/alive/deceased/all, judicialPerson.filters.documentRole/locality. | messages/ro-RO.json — shared.filterBar, naturalPerson.filters, judicialPerson.filters; src/lib/manual/content/ro-RO/03-persons.ts:48 | dev | XS | resolved | #39.86 f3ada7f0: the manual's list sections rewritten and the keys removed, both languages. | 2026-10-18 |
 | FU-353 | 2026-10-18 #39.85 20261018T171251Z-16897 | test gap | Tests & e2e | TC-ICON-01's hover over „Înapoi la listă” on a person's screen found no tooltip once, in a 22-spec run; the same spec alone passed at once on the same commit (20261018T171929Z-25013). | e2e/ui/icon-button.spec.ts:139 — `back.hover()` then `tooltip(page)` within 5 s | dev | XS | open | Unverified: watch it in the 2026-11-04 regression; if it recurs, wait for the tooltip's delay before reading it. | 2026-10-18 |
-| FU-354 | 2026-10-18 #39.85 Handover.39.85.md | recommendation | People | A natural person can no longer be found on the list by CNP: the list's search never read it, and since #39.82 the CNP is not a filter either (Adrian's list of 2026-10-18 does not name it). | src/lib/persons/queries.ts — naturalPersonSearchCondition; src/lib/persons/list-filters.ts — NATURAL_PERSON_FILTER_FIELDS | user | XS | open | Add `ilike(naturalPerson.cnp, …)` to the search and „CNP" to its explanation, if Adrian wants it. | 2026-10-18 |
+| FU-354 | 2026-10-18 #39.85 Handover.39.85.md | recommendation | People | A natural person can no longer be found on the list by CNP: the list's search never read it, and since #39.82 the CNP is not a filter either (Adrian's list of 2026-10-18 does not name it). | src/lib/persons/queries.ts — naturalPersonSearchCondition; src/lib/persons/list-filters.ts — NATURAL_PERSON_FILTER_FIELDS | user | XS | resolved | 2026-10-18 c2b0cd80: the list's search reads the CNP and its explanation names it; a test holds the CNP out of the filters (Adrian: „never a filter on CNP”). | 2026-10-18 |
 | FU-355 | 2026-10-18 #39.82 20261018T161101Z-22692; 2026-10-18 #39.86 20261018T175441Z-31765 | defect | Tests & e2e | Unverified: twice in one day an authenticated route answered 404 from its own code on the runner's server — `/api/auth/me` in the login setup, then `/api/admin/value-lists/document-types` five times in a row — and the same request again a minute later passed. | .test-runner/logs/20261018T175441Z-31765/dev-server.log:196 — „404 … application-code: 326ms"; e2e/auth.setup.ts:309 | dev | S | open | Unverified: log why those routes answer 404 (a session read as absent?) the next time it happens. | 2026-10-18 |

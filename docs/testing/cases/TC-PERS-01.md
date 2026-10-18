@@ -116,3 +116,6 @@ with the search box's new words (lint, tsc and the slice's jest suites green too
 
 **2026-10-18 — the search box's words updated: it reads the CNP too.** Adrian, 2026-10-18: „Please allow a natural
 person to be searched and found by CNP, but there should never be a filter on CNP". The explanation now names „CNP".
+
+**2026-10-18 — `automated`.** The test runner's targeted run 20261018T222203Z-30381 on c2b0cd8 ran `e2e/person/person-create.spec.ts` green with
+the CNP in the search (lint, tsc and jest green too).
