@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * „Folosințe permise pentru fiecare tip" — the third tile of „Tipuri de proprietate și folosințe".   (Slice #39.66)
+ * „Folosințe permise pentru fiecare tip" — the third tile of „Tipuri de Proprietate și Folosințe".   (Slice #39.66)
  *
  * A grid: a row per property type, a column per use category, a tick where the type allows the use. Each tick is
  * written at once (PUT /api/admin/property-type-uses), as the role panel's ticks are. ⚠️ A ROW WITH NO TICK ALLOWS
@@ -11,14 +11,35 @@
  * The two lists are read under the keys their own tiles use, so a type or a use added in the tile above appears here
  * as soon as that tile's write lands.
  */
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { dialogCardStyle } from "@/lib/ui/field-widths";
+import { MIN_TILE_UNITS, dialogCardStyle, dialogUnits } from "@/lib/ui/field-widths";
+
+/** The card's side padding (`px-5`), in rem. */
+const CARD_PADDING_REM = 1.25;
+
+/**
+ * Slice #39.75: the grid's tile — the fewest units that hold the table as it reads (a column per use, so it grows with
+ * the list), with the card's padding. `px` is the table's own width, measured at `max-content`.
+ */
+export function typeUsesUnits(px: number): number {
+  return Math.max(MIN_TILE_UNITS, dialogUnits(px / 16, CARD_PADDING_REM));
+}
 import { TYPE_USES_QUERY_KEY, fetchTypeUses, setTypeUse, type TypeUsePair } from "@/lib/properties/type-uses";
 import { fetchValueListRows, toLookupItems } from "./role-doc-types";
 
-export function PropertyTypeUses({ cardUnits }: { cardUnits: number }) {
+export function PropertyTypeUses({
+  cardUnits,
+  fill = false,
+  onUnits,
+}: {
+  cardUnits: number;
+  /** Slice #39.75: a tile's card, as wide as its tile; the table centred in it, so the gaps either side are equal. */
+  fill?: boolean;
+  /** Slice #39.75: the units the table needs, each time its width changes (a use added or renamed). */
+  onUnits?: (units: number) => void;
+}) {
   const t = useTranslations("valueList.typeUses");
   const qc = useQueryClient();
   const types = useQuery({ queryKey: ["value-list", "property-types"], queryFn: () => fetchValueListRows("property-types"), select: toLookupItems });
@@ -53,10 +74,24 @@ export function PropertyTypeUses({ cardUnits }: { cardUnits: number }) {
 
   const loading = types.isPending || uses.isPending || pairs.isPending;
 
+  // Slice #39.75: the table at its own width (`max-content`), measured whenever it changes, tells the tile its units.
+  const tableRef = useRef<HTMLTableElement | null>(null);
+  useEffect(() => {
+    const el = tableRef.current;
+    if (!el || !onUnits || typeof ResizeObserver === "undefined") return;
+    const report = () => {
+      if (el.offsetWidth > 0) onUnits(typeUsesUnits(el.offsetWidth));
+    };
+    report();
+    const ro = new ResizeObserver(report);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [onUnits, loading]);
+
   return (
     <section
       className="rounded-xl border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
-      style={dialogCardStyle(cardUnits)}
+      style={fill ? { width: "100%" } : dialogCardStyle(cardUnits)}
       data-property-type-uses=""
       aria-labelledby="property-type-uses-title"
     >
@@ -68,7 +103,7 @@ export function PropertyTypeUses({ cardUnits }: { cardUnits: number }) {
         {loading ? (
           <p className="text-sm text-fade" role="status">{t("loading")}</p>
         ) : (
-          <table className="text-sm">
+          <table ref={tableRef} className={fill ? "mx-auto w-max text-sm" : "text-sm"}>
             <thead>
               <tr>
                 <th className="py-1 pr-3 text-left text-xs font-medium text-fade">{t("colType")}</th>

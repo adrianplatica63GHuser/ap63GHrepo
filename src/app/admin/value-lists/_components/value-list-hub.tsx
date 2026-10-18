@@ -29,7 +29,8 @@ import { categoryOfList, listsByCategory, listsOnPage, pageListOf } from "@/lib/
 import { PropertyTypeUses } from "./property-type-uses";
 import { listOfLink, markedLinks, type PressedLink, type RelationshipId } from "@/lib/admin/value-lists/relationships";
 import { LINK_MARK_BOX } from "@/lib/ui/link-mark";
-import { VALUE_LIST_CARD_UNITS, ValueListModal } from "./value-list-modal";
+import { VALUE_LIST_CARD_UNITS, ValueListModal, valueListCardUnits } from "./value-list-modal";
+import { ReferenceTiles, type ReferenceTile } from "./reference-tiles";
 import { RelationshipTriangle } from "./relationship-triangle";
 import { REFERENCE_NAV_REM, rem, unitsRem } from "@/lib/ui/field-widths";
 import { UnitRow } from "@/components/screen/unit-row";
@@ -87,6 +88,29 @@ export function ValueListHub({
   // (`markedLinks`): the list's name here, the triangle, the six and the list card's title.
   const [pressed, setPressed] = useState<PressedLink | null>(null);
   const marking = markedLinks(selected, pressed);
+  // Slice #39.75: the allowed-uses grid's units, as its table reports them (a column per use); five until it does.
+  const [usesUnits, setUsesUnits] = useState(5);
+
+  /** A list of the page, keyed on the list: each starts from its own state — a filter on one never filters the next. */
+  const listCard = (key: ListKey, fill: boolean) => (
+    <ValueListModal
+      key={key}
+      listKey={key}
+      fill={fill}
+      initialAddName={key === arrival && !addNameUsed ? initialAddName : undefined}
+      initialFormFilter={key === arrival && !addNameUsed ? initialFormFilter : undefined}
+      titleMarked={marking.list === key}
+    />
+  );
+
+  /** Slice #39.75: a page whose lists are tiles (`ReferenceTiles`) — „Tipuri de Proprietate și Folosințe" for now. */
+  const tiles: ReferenceTile[] | null =
+    selected === "property-types"
+      ? [
+          ...listsOnPage(selected).map((key) => ({ key, units: valueListCardUnits(key), node: listCard(key, true) })),
+          { key: "type-uses", units: usesUnits, node: <PropertyTypeUses cardUnits={VALUE_LIST_CARD_UNITS} fill onUnits={setUsesUnits} /> },
+        ]
+      : null;
 
   /** A list chosen — in the column, or from a step of the triangle's ⓘ (#38.69): its whole set is marked. */
   function chooseList(key: ListKey) {
@@ -198,18 +222,9 @@ export function ValueListHub({
             )}
             {/* Keyed on the list: each list starts from its own state — a filter
                 ticked on one never filters the next (#27.07). Slice #39.66: a page may hold several lists, each its
-                own tile — „Tipuri de proprietate și folosințe" holds the types, the uses, and which uses each type
+                own tile — „Tipuri de Proprietate și Folosințe" holds the types, the uses, and which uses each type
                 allows. */}
-            {listsOnPage(selected).map((key) => (
-              <ValueListModal
-                key={key}
-                listKey={key}
-                initialAddName={key === arrival && !addNameUsed ? initialAddName : undefined}
-                initialFormFilter={key === arrival && !addNameUsed ? initialFormFilter : undefined}
-                titleMarked={marking.list === key}
-              />
-            ))}
-            {selected === "property-types" && <PropertyTypeUses cardUnits={VALUE_LIST_CARD_UNITS} />}
+            {tiles ? <ReferenceTiles page={selected} tiles={tiles} /> : listsOnPage(selected).map((key) => listCard(key, false))}
           </>
         )}
       </div>

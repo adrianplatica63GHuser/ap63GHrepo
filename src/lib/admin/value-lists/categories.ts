@@ -22,7 +22,7 @@ export const VALUE_LIST_CATEGORIES: readonly { id: Exclude<ValueListCategoryId, 
   { id: "objectTypes", lists: ["person-types", "judicial-person-types", "property-types", "document-types"] },
   // A role a person plays, and „Tip legătură": a link between two objects of the same kind.
   { id: "rolesLinks", lists: ["person-roles", "property-property-roles", "document-document-roles"] },
-  // Slice #39.66: „Categorii Folosință" left this group for the page of „Tipuri de proprietate și folosințe".
+  // Slice #39.66: „Categorii Folosință" left this group for the page of „Tipuri de Proprietate și Folosințe".
   // Slice #39.70: „Relația cu firma" beside „Cetățenie", the other list a natural person's form picks from.
   { id: "valueLists", lists: ["tarla", "citizenships", "person-relationships"] },
 ];
@@ -30,7 +30,7 @@ export const VALUE_LIST_CATEGORIES: readonly { id: Exclude<ValueListCategoryId, 
 /**
  * Lists that are shown on another list's page rather than on their own.                              (Slice #39.66)
  *
- * „Categorii Folosință" is the second tile of „Tipuri de proprietate și folosințe" (Adrian: „one page, Property types
+ * „Categorii Folosință" is the second tile of „Tipuri de Proprietate și Folosințe" (Adrian: „one page, Property types
  * and uses, with two tiles"). It has no line in the column and is not „Altele"; `?list=use-categories` — every old
  * link — opens the page it is on. The list key, its API and its table do not change.
  */

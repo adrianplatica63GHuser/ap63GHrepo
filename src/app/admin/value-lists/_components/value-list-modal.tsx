@@ -157,8 +157,11 @@ const OWN_COLUMNS: Partial<Record<ListKey, Readonly<Record<string, ColumnName>>>
 /**
  * Slice #38.70: the lists whose cells are drawn with half the side padding (`px-2`) — „Roluri Persoane", so its table
  * fits the 924 px its frame has at 1366 px. Every column it draws carries the same `pad` (field-widths.ts).
+ * Slice #39.75: „Categorii Folosință" too — at that padding its tile is three units (29.75rem, its 27rem table and the
+ * card's padding), not four, so it stands beside the five-unit types at 1920 px (Adrian: „about 35 %" of the eight
+ * units it had).
  */
-const COMPACT_LISTS: ReadonlySet<ListKey> = new Set(["person-roles"]);
+const COMPACT_LISTS: ReadonlySet<ListKey> = new Set(["person-roles", "use-categories"]);
 
 /** A field's column: its width from `COLUMN`, by what the field holds. */
 function fieldColumn(f: FieldMeta, listKey: ListKey): ColumnName {
@@ -283,8 +286,17 @@ const CARD_PADDING_REM = 1.25;
  * three converse names, #37.28).
  */
 export const VALUE_LIST_CARD_UNITS = Math.max(
-  ...VALID_LIST_KEYS.map((k) => dialogUnits(columnsRem(listColumns(k)), CARD_PADDING_REM)),
+  ...VALID_LIST_KEYS.map((k) => valueListCardUnits(k)),
 );
+
+/**
+ * Slice #39.75: one list's own card — the fewest units that hold ITS table and the card's padding — for a page whose
+ * lists are tiles (`ReferenceTiles`). The table fills the card (`min-w-full`), so the gap between the list and the
+ * card's edge is the padding on both sides (Adrian: „same thickness of the gaps on the left and on the right side").
+ */
+export function valueListCardUnits(listKey: ListKey): number {
+  return dialogUnits(columnsRem(listColumns(listKey)), CARD_PADDING_REM);
+}
 
 
 // ── API helpers ───────────────────────────────────────────────────────────────
@@ -875,8 +887,11 @@ export function ValueListModal({
   initialFormFilter,
   onClose,
   titleMarked = false,
+  fill = false,
 }: {
   listKey: ListKey;
+  /** Slice #39.75: a tile's card — as wide as its tile (`ReferenceTiles` gives the tile its units), not capped. */
+  fill?: boolean;
   /** Slice #38.68: the title in the heavy yellow — the chosen link's list, on „Roluri și legături". */
   titleMarked?: boolean;
   /**
@@ -1513,7 +1528,7 @@ export function ValueListModal({
         // documents as unreachable by Escape.)
         inert={!!formEditorRow || !!confirmDeleteRow}
         className="rounded-xl border border-card-rim bg-card shadow-sm focus-visible:outline-none dark:border-zinc-800 dark:bg-zinc-900"
-        style={dialogCardStyle(VALUE_LIST_CARD_UNITS)}
+        style={fill ? { width: "100%" } : dialogCardStyle(VALUE_LIST_CARD_UNITS)}
         data-value-list-card=""
       >
         {/* Header */}
@@ -1522,7 +1537,8 @@ export function ValueListModal({
             under the divider. */}
         <div className="border-b border-card-rim px-5 py-3 dark:border-zinc-800" data-value-list-head="">
           <div
-            className="flex max-w-full flex-wrap items-center justify-between gap-3"
+            // Slice #39.75: a tile's card centres its title line over its table, as it centres the table (below).
+            className={`flex max-w-full flex-wrap items-center justify-between gap-3${fill ? " mx-auto" : ""}`}
             style={columnWidth === null ? undefined : { minWidth: columnWidth, width: "fit-content" }}
           >
             <h2
@@ -1586,7 +1602,9 @@ export function ValueListModal({
             {/* Slice #38.50: the toolbar and the table in one column as wide as the wider of the two, so
                 the table is never narrower than its toolbar — its controls never meet — and the toolbar's
                 right-hand side stands at the table's right edge. */}
-            <div ref={columnRef} className="w-fit max-w-full" data-value-list-frame="">
+            {/* Slice #39.75: in a tile the column is centred — the tile is whole units, so what its table does not use
+                is shared equally either side (Adrian: „same thickness of the gaps on the left and on the right"). */}
+            <div ref={columnRef} className={fill ? "mx-auto w-fit max-w-full" : "w-fit max-w-full"} data-value-list-frame="">
             {/* Slice #38.78: „+ Adaugă" and the count moved to the title's line (Ask first #1: every list in this card).
                 What stayed is the filters — Tipuri de Document's two checkboxes, the review checkbox — on a line of
                 their own above the table, only on the lists that have them (Ask first #2); a list without them has
