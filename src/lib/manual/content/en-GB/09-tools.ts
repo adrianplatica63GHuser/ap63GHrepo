@@ -93,9 +93,9 @@ Each owner gets a colour, the same its slice will have on the map. Whatever brea
 
 ### 9.2.2 The owners on the map {#tools-side-road-owners}
 
-A good file brings the parcel onto the map, its corners numbered as in the file, cut into one slice per owner, in a random order. The screen shows „Parcel area”, „Road width”, the length of each side („Side 16–17” and so on) and the table of owners.
+„Divide the property” brings the parcel onto the map, its corners numbered as on the property, cut into one slice per owner, in a random order. Above it, a line says what was divided: the property's code, how many owners there are and the road's width. The screen shows „Parcel area”, „Road width”, the length of each side („Side 16–17” and so on) and the table of owners.
 
-You change the order of the slices in two ways: drag one slice onto another to swap them, or use the ↑ ↓ buttons in the table's „Move” column. Each slice keeps its area, and the cutting lines move. Each owner keeps its colour as well: the swatch beside its name in the table has the colour of its slice on the map, wherever it moves.
+You change the order of the slices in two ways: drag one slice onto another to swap them, or use the ↑ ↓ buttons in the table's „Move” column. Each slice keeps its area, and the cutting lines move. Each owner keeps its colour as well: the swatch beside its name in the table has the colour of its slice on the map, wherever it moves — the one it was given in the first step.
 
 If the shares add up to 99.99%, the line under the table says that the last slice in the order takes the missing 0.01%, and its figures include it.
 
@@ -103,7 +103,7 @@ If the shares add up to 99.99%, the line under the table says that the last slic
 
 At „Step 3 — the road”, click the corner the road starts from — its number on the map — or choose it further down, at „Road corner”. The screen then names the two sides that start from that corner; click the side's name, written at its middle, or choose it at „Road side”. A side that does not start from the chosen corner is refused, and the corner stays chosen.
 
-The road appears in white on the map: a strip as wide as the file says, inside the parcel, along the chosen side, starting from the chosen corner. The owners are laid out along it, the borders between them perpendicular to the road; the first sits at the corner where the road starts, and the last, beyond the road's end, reaches the road at its end. Each owner receives, by its share, its part of the parcel without the road and, also by its share, a part of the road. The road's length is worked out by itself, so that the areas come out right.
+The road appears in white on the map: a strip as wide as chosen in the first step, inside the parcel, along the chosen side, starting from the chosen corner. The owners are laid out along it, the borders between them perpendicular to the road; the first sits at the corner where the road starts, and the last, beyond the road's end, reaches the road at its end. Each owner receives, by its share, its part of the parcel without the road and, also by its share, a part of the road. The road's length is worked out by itself, so that the areas come out right.
 
 The screen shows „Road length” and „Road area”, and the table has the columns:
 
@@ -124,33 +124,32 @@ Sometimes the shape of the parcel does not allow the chosen road — the road wo
 
 Further down stands „Create … properties — the owners and the road — and a group”, with two fields:
 
-- „Group description” — filled in by itself with „Diviz —” followed by the file's name. Choosing another file writes it again, so write your own description after you have chosen the file.
+- „Group description” — filled in by itself with „Diviz —” followed by the divided property's code. Choosing another property writes it again, so write your own description after you have chosen the property.
 - „Road nickname” — starts as „Common road”.
 
-The owners' names from the file are saved only as each property's nickname, as text. No persons are created and nobody is linked to the properties: the owners are linked separately, from each property's screen (section [[links-associate]]).
+Each new property takes its owner's name as its nickname, and the owner is linked to it with the role „Proprietar” (section [[links-associate]]). The road has no owner. The property divided stays as it was: it is neither changed nor deleted.
 
-„Create the properties” creates the properties and the group. The screen reads „Created group GRP-… with the following properties:”, the calculation's code („Calculation recorded: CALC…”) and a link to each new property. Each property's corners carry, in „Orig. #”, the numbers of the parcel's corners from the file, where a corner of the parcel landed on it (section [[properties-corners-table]]). You find the group in „Groups” (section [[links-classify-groups]]). „View calculation history” opens the calculation's page.
+„Create the properties” creates the properties and the group. The screen reads „Created group GRP-… with the following properties:”, the calculation's code („Calculation recorded: CALC…”) and a link to each new property. Each property's corners carry, in „Orig. #”, the numbers of the divided property's corners, where a corner of the parcel landed on it (section [[properties-corners-table]]). You find the group in „Groups” (section [[links-classify-groups]]). „View calculation history” opens the calculation's page.
 
 ### 9.2.5 The calculation history {#tools-side-road-history}
 
-The history icon, on the „Calculation” screen, opens „Calculation History”: one row per calculation, with „Code”, „Algorithm” („Side road”), „Parcels” (how many properties it created), „Group”, „Status”, „Created by” and „Date”. „Back to Calculation” takes you back.
+The history icon, on the „Calculation of a Side Road” screen, opens „Calculation History”: one row per calculation, with „Code”, „Algorithm” („Side road”), „Parcels” (how many properties it created), „Group”, „Status”, „Created by” and „Date”. „Back to Calculation” takes you back.
 
-„Details”, on a row, opens „Calculation Detail”: „Calculation parameters”, „Group description”, „Calculation steps” (the table of owners), „Map preview” (the slices, in the owners' colours) and „Created parcels” — each property, with „Role” („Owner parcel” or „Common road”) and „View property”. A property deleted since shows „(deleted)”.
+„Details”, on a row, opens „Calculation Detail”: „Calculation parameters”, „Group description”, „Calculation steps” (the table of owners), „Map preview” (the slices, in the owners' colours) and „Created parcels” — each property, with „Role” („Owner parcel” or „Common road”) and „View property”. A property deleted since shows „(deleted)”. Under the header, the page says which property was divided.
 
-„Re-run with these parameters” reopens „Calculation” on the same file, with the owners in the same order and the road already set. An old calculation, made with the former five-section file, can be looked at but can no longer be re-run.
+„Re-run with these parameters” reopens „Calculation of a Side Road” on the same corners — those of the day of the calculation, even if the property's have changed since —, with the same owners, in the same order, and the road already set; „Change the data” does not appear then. A calculation made from a data file, before the division started from a property in the archive, can be looked at but can no longer be re-run; so can an even older one, made with the five-section file.
 
 „Delete calculation”, on a calculation's row, asks „Delete the calculation?” and says that the properties and the group it created stay. „Delete” removes the calculation from the history; the properties and the group are deleted separately, if need be. A deleted calculation's code is never given to another.
 
-## 9.3 The area calculation {#tools-area}
+## 9.3 The map's guides {#tools-area}
 
-„Tools” → „Measurements on map” shows, in a box, the map's four measuring buttons and what each does. „OK” opens the map of all properties, „All Properties”.
+„Tools” holds three guides to the buttons of the map of all properties. Each opens a box that shows the buttons, drawn as on the map, and says what each does. The box opens every time you press its item.
 
-To make them easy to find, the four buttons pulse together, in violet, three times, then settle. Two of them calculate areas:
+- „Measurements on map” — „Angles”, „Ruler”, „Area of a delimited zone” and „Area of any zone” (sections [[map-ruler]] and [[map-area]]).
+- „Groupings of properties” — „Tarlale”, „Groups” and „Select” (sections [[map-what-tarlale]], [[map-what-groups]] and [[map-select]]).
+- „Navigation” — „Navigate”, which is on the property's screen and in a property's bubble on the map (section [[properties-navigate]]).
 
-- „Area of a delimited zone” — you choose property corners, one after another;
-- „Area of any zone” — you draw the zone freely, corner by corner, as for a new property.
-
-Neither is pressed for you: press the one you need. How each one works is in section [[map-area]]. If you reload the page, the buttons are pointed out again.
+For the first two, „OK” opens the map of all properties, „All Properties”, with those buttons pulsing together, in violet, three times; then they settle. None is pressed for you: press the one you need. If you reload the page, the buttons are pointed out again. For „Navigation”, „OK” only closes the box. No guide writes anything to the archive.
 
 ## 9.4 Examples and use cases {#tools-examples}
 
@@ -173,14 +172,13 @@ The surveyor has sent you the plot's corners, and the three heirs each hold a th
 2. Choose the plot, add the three heirs at 33.33 each and the road width, for example 3, then „Divide the property” (section [[tools-side-road-file]]).
 3. Put the owners in the order you want, by dragging the slices or with ↑ ↓ (section [[tools-side-road-owners]]).
 4. Click the corner by the public road, then the side the road runs along; check that „Difference (m²)” reads 0.00 on every row (section [[tools-side-road-road]]).
-5. Write „Group description”, then press „Create the properties” (section [[tools-side-road-create]]).
-6. On each new property, link its heir (section [[links-associate]]).
+5. Write „Group description”, then press „Create the properties” (section [[tools-side-road-create]]). Each heir is linked to their property by itself.
 
 ### 9.4.3 Redo a calculation made with the owners in the wrong order {#tools-example-redo}
 
 You created the properties, but the owners stood in a different order from the one they should have.
 
-1. Open „Calculation History” from the „Calculation” screen, then „Delete calculation” on the wrong calculation's row, and „Delete” (section [[tools-side-road-history]]).
-2. Delete the properties and the group it created, which stayed (sections [[properties-add-edit]] and [[admin-groups]]).
-3. Choose the file again on „Calculation”, set the right order and the road, then „Create the properties” (section [[tools-side-road-create]]).
+1. Open „Calculation History” from the „Calculation of a Side Road” screen, then „Details” on the wrong calculation's row and „Re-run with these parameters”: the same property, the same owners, the same road (section [[tools-side-road-history]]).
+2. Set the right order, then „Create the properties” (section [[tools-side-road-create]]).
+3. In „Calculation History”, „Delete calculation” on the wrong calculation's row, and „Delete”; then delete the properties and the group it created, which stayed (sections [[properties-add-edit]] and [[admin-groups]]).
 `;

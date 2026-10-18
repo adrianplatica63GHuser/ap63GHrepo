@@ -13,6 +13,8 @@ This chapter is for whoever looks after the archive: the lists the other screens
 
 The screen is a single page (Figure [[fig-admin-value-lists]]). On the left are the lists, in three groups; on the right, the chosen list. Until you choose one, the right side reads „Choose a list on the left.”. The chosen list stays marked on the left, and the browser's back button takes you to the list you had before.
 
+A page with several lists shows them as tiles: they stand side by side as far as they fit, each as wide as its columns need, and can be dragged elsewhere, as on a property's screen. „Default”, at the top right, puts them back; where they stand is kept in your browser.
+
 ![12.1 „Reference Data”](admin-value-lists.png){#fig-admin-value-lists}
 
 | Group | The lists |
@@ -47,7 +49,7 @@ Old versions of the objects do not change: each keeps the value as it was when i
 - „Converse role (man, woman)” — how the role reads from the other end of the link, separated by commas, for instance „Vânzător, Vânzătoare” (section [[links-associate-role]]).
 - „Used by” — how many objects use it.
 
-„Edit” opens the role's panel. It holds the name, the converse names — „Converse role”, „Converse role — man”, „Converse role — woman” — and „Applies to”, with three buttons: „Document”, „Property” and „Person”. „Property” offers the role on the link between a person and a property, „Person” on the link between two persons. While „Person” is pressed, the panel also shows „Kinship”: „Parent”, „Child”, „Spouse”, „Sibling”, „Other relative” or „No family tie”. On a role that the import of an identity card looks for, the kinship cannot be changed, and the panel says why.
+„Edit” opens the role's panel, in a tile of its own, beside the list. It holds the name, the converse names — „Converse role”, „Converse role — man”, „Converse role — woman” — and „Applies to”, with three buttons: „Document”, „Property” and „Person”. „Property” offers the role on the link between a person and a property, „Person” on the link between two persons. While „Person” is pressed, the panel also shows „Kinship”: „Parent”, „Child”, „Spouse”, „Sibling”, „Other relative” or „No family tie”. On a role that the import of an identity card looks for, the kinship cannot be changed, and the panel says why.
 
 „Document” opens „Document types”: the types of document the role is offered on. Choose a type in „Add a document type” and press „Add the type”. Each type in the list has:
 
@@ -77,7 +79,7 @@ A type's „Roles” tab and „Document” on a role's panel show the same pair
 
 ### 12.1.4 Property Types and Uses {#admin-reference-data-property-types}
 
-„Property Types and Uses” is one page with three tiles, one under the other:
+„Property Types and Uses” is one page with three tiles, set side by side as far as they fit:
 
 - „Property Types” — what the property is: „Teren extravilan”, „Teren intravilan”, „Teren construit”, „Liniară”, „Casă”, „Apartament”, „Garaj”, „Spațiu comercial”, „Birou”. On each row three ticks say what the type shows: the tarla and parcel, the address and Street View (section [[properties-type]]).
 - „Use Categories” — the land's legal category of use: „Arabil”, „Pășune”, „Fânețe”, „Vie”, „Livadă”, „Pădure”, „Ape”, „Neproductiv”, „Curți-construcții”, „Drumuri”. A value sits in one list only: „Pășune” or „Vie” are uses, not types.

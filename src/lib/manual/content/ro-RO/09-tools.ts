@@ -94,9 +94,9 @@ Fiecare proprietar primește o culoare, aceeași pe care o va avea felia lui pe 
 
 ### 9.2.2 Proprietarii pe hartă {#tools-side-road-owners}
 
-Un fișier bun aduce parcela pe hartă, cu colțurile numerotate ca în fișier, tăiată în câte o felie pentru fiecare proprietar, într-o ordine aleatorie. Ecranul arată „Suprafața parcelei”, „Lățime drum”, lungimea fiecărei laturi („Latura 16–17” și așa mai departe) și tabelul proprietarilor.
+„Împarte proprietatea” aduce parcela pe hartă, cu colțurile numerotate ca pe proprietate, tăiată în câte o felie pentru fiecare proprietar, într-o ordine aleatorie. Deasupra, un rând spune ce s-a împărțit: codul proprietății, câți proprietari sunt și lățimea drumului. Ecranul arată „Suprafața parcelei”, „Lățime drum”, lungimea fiecărei laturi („Latura 16–17” și așa mai departe) și tabelul proprietarilor.
 
-Ordinea feliilor o schimbați în două feluri: trageți o felie peste alta, ca să le schimbați între ele, sau folosiți butoanele ↑ ↓ din coloana „Mută” a tabelului. Fiecare felie își păstrează suprafața, iar liniile de tăiere se mută. Fiecare proprietar își păstrează și culoarea: pătrățelul de lângă numele lui din tabel are culoarea feliei lui de pe hartă, oriunde s-ar muta.
+Ordinea feliilor o schimbați în două feluri: trageți o felie peste alta, ca să le schimbați între ele, sau folosiți butoanele ↑ ↓ din coloana „Mută” a tabelului. Fiecare felie își păstrează suprafața, iar liniile de tăiere se mută. Fiecare proprietar își păstrează și culoarea: pătrățelul de lângă numele lui din tabel are culoarea feliei lui de pe hartă, oriunde s-ar muta — aceeași pe care a primit-o la primul pas.
 
 Dacă cotele însumează 99,99%, sub tabel scrie că ultima felie din ordine preia diferența de 0,01%, iar cifrele ei o includ.
 
@@ -104,7 +104,7 @@ Dacă cotele însumează 99,99%, sub tabel scrie că ultima felie din ordine pre
 
 La „Pasul 3 — drumul”, faceți clic pe colțul din care pornește drumul — pe numărul lui de pe hartă — sau alegeți-l mai jos, la „Colțul drumului”. Ecranul vă spune apoi cele două laturi care pornesc din acel colț; faceți clic pe numele laturii, scris la mijlocul ei, sau alegeți-o la „Latura drumului”. O latură care nu pornește din colțul ales este refuzată, iar colțul rămâne ales.
 
-Drumul apare alb pe hartă: o fâșie de lățimea din fișier, în interiorul parcelei, de-a lungul laturii alese, pornind din colțul ales. Proprietarii se înșiră de-a lungul lui, cu granițele dintre ei perpendiculare pe drum; primul stă la colțul de unde pornește drumul, iar ultimul, dincolo de capătul drumului, ajunge la drum prin capătul lui. Fiecare proprietar primește, după cotă, partea lui din parcela fără drum și tot după cotă o parte din drum. Lungimea drumului se calculează singură, cât să iasă suprafețele.
+Drumul apare alb pe hartă: o fâșie de lățimea aleasă la primul pas, în interiorul parcelei, de-a lungul laturii alese, pornind din colțul ales. Proprietarii se înșiră de-a lungul lui, cu granițele dintre ei perpendiculare pe drum; primul stă la colțul de unde pornește drumul, iar ultimul, dincolo de capătul drumului, ajunge la drum prin capătul lui. Fiecare proprietar primește, după cotă, partea lui din parcela fără drum și tot după cotă o parte din drum. Lungimea drumului se calculează singură, cât să iasă suprafețele.
 
 Ecranul arată „Lungime drum” și „Suprafață drum”, iar tabelul are coloanele:
 
@@ -125,33 +125,32 @@ Uneori forma parcelei nu permite drumul ales — drumul ar fi mai lung decât la
 
 Mai jos stă „Creează … proprietăți — proprietarii și drumul — și un grup”, cu două câmpuri:
 
-- „Descrierea grupului” — se completează singură cu „Diviz —” urmat de numele fișierului. Alegerea unui alt fișier o scrie din nou, așa că scrieți descrierea dumneavoastră după ce ați ales fișierul.
+- „Descrierea grupului” — se completează singură cu „Diviz —” urmat de codul proprietății împărțite. Alegerea altei proprietăți o scrie din nou, așa că scrieți descrierea dumneavoastră după ce ați ales proprietatea.
 - „Poreclă drum” — pornește cu „Drum comun”.
 
-Numele proprietarilor din fișier se salvează doar ca poreclă a fiecărei proprietăți, ca text. Nu se creează persoane și nu se leagă nimeni de proprietăți: proprietarii se leagă separat, de pe ecranul fiecărei proprietăți (secțiunea [[links-associate]]).
+Fiecare proprietate nouă primește ca poreclă numele proprietarului ei, iar proprietarul se leagă de ea, cu rolul „Proprietar” (secțiunea [[links-associate]]). Drumul nu are proprietar. Proprietatea împărțită rămâne cum era: nu se schimbă și nu se șterge.
 
-„Creează proprietățile” creează proprietățile și grupul. Ecranul scrie „S-a creat grupul GRP-… cu următoarele proprietăți:”, codul calculului („Calculul înregistrat: CALC…”) și câte un link spre fiecare proprietate nouă. Colțurile fiecărei proprietăți poartă, în „Nr. orig.”, numerele colțurilor parcelei din fișier, acolo unde un colț al parcelei a ajuns pe ea (secțiunea [[properties-corners-table]]). Grupul îl găsiți în „Grupuri” (secțiunea [[links-classify-groups]]). „Vezi istoricul calculului” deschide pagina calculului.
+„Creează proprietățile” creează proprietățile și grupul. Ecranul scrie „S-a creat grupul GRP-… cu următoarele proprietăți:”, codul calculului („Calculul înregistrat: CALC…”) și câte un link spre fiecare proprietate nouă. Colțurile fiecărei proprietăți poartă, în „Nr. orig.”, numerele colțurilor proprietății împărțite, acolo unde un colț al parcelei a ajuns pe ea (secțiunea [[properties-corners-table]]). Grupul îl găsiți în „Grupuri” (secțiunea [[links-classify-groups]]). „Vezi istoricul calculului” deschide pagina calculului.
 
 ### 9.2.5 Istoricul calculelor {#tools-side-road-history}
 
-Pictograma istoricului, pe ecranul „Calcul”, deschide „Istoricul calculelor”: câte un rând pentru fiecare calcul, cu „Cod”, „Algoritm” („Drum lateral”), „Parcele” (câte proprietăți a creat), „Grup”, „Stare”, „Creat de” și „Data”. „Înapoi la Calcul” vă întoarce.
+Pictograma istoricului, pe ecranul „Calcul drum lateral”, deschide „Istoricul calculelor”: câte un rând pentru fiecare calcul, cu „Cod”, „Algoritm” („Drum lateral”), „Parcele” (câte proprietăți a creat), „Grup”, „Stare”, „Creat de” și „Data”. „Înapoi la Calcul” vă întoarce.
 
-„Detalii”, pe un rând, deschide „Detalii calcul”: „Parametrii calculului”, „Descriere grup”, „Pașii calculului” (tabelul proprietarilor), „Previzualizare hartă” (feliile, în culorile proprietarilor) și „Parcele create” — fiecare proprietate, cu „Rol” („Parcelă proprietar” sau „Drum comun”) și „Vezi proprietatea”. O proprietate ștearsă între timp apare cu „(ștearsă)”.
+„Detalii”, pe un rând, deschide „Detalii calcul”: „Parametrii calculului”, „Descriere grup”, „Pașii calculului” (tabelul proprietarilor), „Previzualizare hartă” (feliile, în culorile proprietarilor) și „Parcele create” — fiecare proprietate, cu „Rol” („Parcelă proprietar” sau „Drum comun”) și „Vezi proprietatea”. O proprietate ștearsă între timp apare cu „(ștearsă)”. Sub antet, pagina spune ce proprietate s-a împărțit.
 
-„Re-rulează cu acești parametri” redeschide „Calcul” pe același fișier, cu proprietarii în aceeași ordine și cu drumul deja pus. Un calcul vechi, făcut cu fișierul de odinioară, în cinci secțiuni, se poate consulta, dar nu se mai poate re-rula.
+„Re-rulează cu acești parametri” redeschide „Calcul drum lateral” pe aceleași colțuri — cele de la data calculului, chiar dacă ale proprietății s-au schimbat între timp —, cu aceiași proprietari, în aceeași ordine, și cu drumul deja pus; „Modifică datele” nu apare atunci. Un calcul făcut dintr-un fișier de date, înainte ca împărțirea să pornească de la o proprietate din arhivă, se poate consulta, dar nu se mai poate re-rula; la fel unul și mai vechi, făcut cu fișierul în cinci secțiuni.
 
 „Șterge calculul”, pe rândul unui calcul, întreabă „Ștergeți calculul?” și spune că proprietățile și grupul create rămân. „Șterge” scoate calculul din istoric; proprietățile și grupul se șterg separat, dacă e cazul. Codul unui calcul șters nu se mai dă altuia.
 
-## 9.3 Calculul suprafeței {#tools-area}
+## 9.3 Ghidurile hărții {#tools-area}
 
-„Instrumente” → „Măsurători pe hartă” arată, într-o casetă, cele patru butoane de măsurat ale hărții și ce face fiecare. „OK” deschide harta tuturor proprietăților, „Toate Proprietățile”.
+„Instrumente” ține trei ghiduri ale butoanelor hărții tuturor proprietăților. Fiecare deschide o casetă care arată butoanele, desenate ca pe hartă, și spune ce face fiecare. Caseta se deschide de fiecare dată când apăsați elementul din meniu.
 
-Ca să le găsiți ușor, cele patru butoane pâlpâie împreună, în violet, de trei ori, apoi se liniștesc. Două dintre ele calculează suprafețe:
+- „Măsurători pe hartă” — „Unghiuri”, „Riglă”, „Suprafața unei zone delimitate” și „Suprafața unei zone oarecare” (secțiunile [[map-ruler]] și [[map-area]]).
+- „Grupări de proprietăți” — „Tarlale”, „Grupuri” și „Selectează” (secțiunile [[map-what-tarlale]], [[map-what-groups]] și [[map-select]]).
+- „Navigare” — „Navighează”, care stă pe ecranul proprietății și în bula unei proprietăți de pe hartă (secțiunea [[properties-navigate]]).
 
-- „Suprafața unei zone delimitate” — alegeți colțuri de proprietăți, unul după altul;
-- „Suprafața unei zone oarecare” — desenați zona liber, colț cu colț, ca la o proprietate nouă.
-
-Niciunul nu este apăsat în locul dumneavoastră: apăsați-l pe cel de care aveți nevoie. Cum se lucrează cu fiecare găsiți în secțiunea [[map-area]]. Dacă reîncărcați pagina, butoanele sunt arătate din nou.
+La primele două, „OK” deschide harta tuturor proprietăților, „Toate Proprietățile”, cu butoanele acelea pulsând împreună, în violet, de trei ori; apoi se liniștesc. Niciunul nu este apăsat în locul dumneavoastră: apăsați-l pe cel de care aveți nevoie. Dacă reîncărcați pagina, butoanele sunt arătate din nou. La „Navigare”, „OK” doar închide caseta. Niciun ghid nu scrie ceva în arhivă.
 
 ## 9.4 Exemple și cazuri de utilizare {#tools-examples}
 
@@ -174,14 +173,13 @@ Topograful v-a trimis colțurile terenului, iar cei trei moștenitori au câte o
 2. Alegeți terenul, adăugați cei trei moștenitori cu 33,33 fiecare și lățimea drumului, de exemplu 3, apoi „Împarte proprietatea” (secțiunea [[tools-side-road-file]]).
 3. Puneți proprietarii în ordinea dorită, trăgând feliile sau cu ↑ ↓ (secțiunea [[tools-side-road-owners]]).
 4. Faceți clic pe colțul de la drumul public, apoi pe latura pe care merge drumul; verificați că „Diferență” arată 0,00 pe fiecare rând (secțiunea [[tools-side-road-road]]).
-5. Scrieți „Descrierea grupului”, apoi apăsați „Creează proprietățile” (secțiunea [[tools-side-road-create]]).
-6. Pe fiecare proprietate nouă, legați moștenitorul ei (secțiunea [[links-associate]]).
+5. Scrieți „Descrierea grupului”, apoi apăsați „Creează proprietățile” (secțiunea [[tools-side-road-create]]). Fiecare moștenitor se leagă singur de proprietatea lui.
 
 ### 9.4.3 Refaceți un calcul făcut cu proprietarii în altă ordine {#tools-example-redo}
 
 Ați creat proprietățile, dar proprietarii stăteau în altă ordine decât trebuia.
 
-1. Deschideți „Istoricul calculelor” de pe ecranul „Calcul”, apoi „Șterge calculul” pe rândul calculului greșit și „Șterge” (secțiunea [[tools-side-road-history]]).
-2. Ștergeți proprietățile și grupul create de el, care au rămas (secțiunile [[properties-add-edit]] și [[admin-groups]]).
-3. Alegeți din nou fișierul pe „Calcul”, puneți ordinea bună și drumul, apoi „Creează proprietățile” (secțiunea [[tools-side-road-create]]).
+1. Deschideți „Istoricul calculelor” de pe ecranul „Calcul drum lateral”, apoi „Detalii” pe rândul calculului greșit și „Re-rulează cu acești parametri”: aceeași proprietate, aceiași proprietari, același drum (secțiunea [[tools-side-road-history]]).
+2. Puneți ordinea bună, apoi „Creează proprietățile” (secțiunea [[tools-side-road-create]]).
+3. În „Istoricul calculelor”, „Șterge calculul” pe rândul calculului greșit și „Șterge”; apoi ștergeți proprietățile și grupul create de el, care au rămas (secțiunile [[properties-add-edit]] și [[admin-groups]]).
 `;

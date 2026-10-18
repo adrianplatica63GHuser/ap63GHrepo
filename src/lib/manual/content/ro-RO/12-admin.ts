@@ -13,6 +13,8 @@ Capitolul acesta este pentru cine îngrijește arhiva: listele din care aleg cel
 
 Ecranul este o singură pagină (Figura [[fig-admin-value-lists]]). În stânga stau listele, în trei grupe; în dreapta, lista aleasă. Până nu alegeți una, în dreapta scrie „Alegeți o listă din stânga.”. Lista aleasă rămâne marcată în stânga, iar butonul de întoarcere al browserului vă duce la lista de dinainte.
 
+O pagină cu mai multe liste le arată ca fișe: stau una lângă alta cât încap, fiecare cât îi cer coloanele, și se pot trage în alt loc, ca pe ecranul unei proprietăți. „Implicit”, din dreapta sus, le pune la loc; locul lor se păstrează în browserul vostru.
+
 ![12.1 „Date de referință”](admin-value-lists.png){#fig-admin-value-lists}
 
 | Grupa | Listele |
@@ -47,7 +49,7 @@ Versiunile vechi ale obiectelor nu se schimbă: fiecare păstrează valoarea aș
 - „Rol invers (bărbat, femeie)” — cum se citește rolul din celălalt capăt al legăturii, despărțit prin virgulă, de exemplu „Vânzător, Vânzătoare” (secțiunea [[links-associate-role]]).
 - „Folosit de” — câte obiecte îl folosesc.
 
-„Editează” deschide panoul rolului. Acolo stau numele, numele inverse — „Rol invers”, „Rol invers — bărbat”, „Rol invers — femeie” — și „Se aplică la”, cu trei butoane: „Act”, „Proprietate” și „Persoană”. „Proprietate” oferă rolul la legătura unei persoane cu o proprietate, „Persoană” la legătura dintre două persoane. Cât timp „Persoană” este apăsat, panoul arată și „Rudenie”: „Părinte”, „Copil”, „Soț/soție”, „Frate/soră”, „Altă rudă” sau „Nicio rudenie”. La un rol pe care îl caută importul unei cărți de identitate, rudenia nu se poate schimba, iar panoul spune de ce.
+„Editează” deschide panoul rolului, într-o fișă a lui, lângă listă. Acolo stau numele, numele inverse — „Rol invers”, „Rol invers — bărbat”, „Rol invers — femeie” — și „Se aplică la”, cu trei butoane: „Act”, „Proprietate” și „Persoană”. „Proprietate” oferă rolul la legătura unei persoane cu o proprietate, „Persoană” la legătura dintre două persoane. Cât timp „Persoană” este apăsat, panoul arată și „Rudenie”: „Părinte”, „Copil”, „Soț/soție”, „Frate/soră”, „Altă rudă” sau „Nicio rudenie”. La un rol pe care îl caută importul unei cărți de identitate, rudenia nu se poate schimba, iar panoul spune de ce.
 
 „Act” deschide „Tipuri de act”: tipurile de act pe care este oferit rolul. Alegeți un tip în „Adaugă un tip de act” și apăsați „Adaugă tipul”. Fiecare tip din listă are:
 
@@ -77,7 +79,7 @@ Fila „Roluri” a unui tip și „Act” din panoul unui rol arată aceleași 
 
 ### 12.1.4 Tipurile de proprietate și folosințele {#admin-reference-data-property-types}
 
-„Tipuri de Proprietate și Folosințe” este o pagină cu trei fișe, una sub alta:
+„Tipuri de Proprietate și Folosințe” este o pagină cu trei fișe, așezate una lângă alta cât încap:
 
 - „Tipuri de Proprietate” — ce este proprietatea: „Teren extravilan”, „Teren intravilan”, „Teren construit”, „Liniară”, „Casă”, „Apartament”, „Garaj”, „Spațiu comercial”, „Birou”. Pe fiecare rând, trei bife spun ce arată tipul: tarlaua și parcela, adresa și Street View-ul (secțiunea [[properties-type]]).
 - „Categorii Folosință” — categoria de folosință legală a terenului: „Arabil”, „Pășune”, „Fânețe”, „Vie”, „Livadă”, „Pădure”, „Ape”, „Neproductiv”, „Curți-construcții”, „Drumuri”. O valoare stă într-o singură listă: „Pășune” sau „Vie” sunt folosințe, nu tipuri.

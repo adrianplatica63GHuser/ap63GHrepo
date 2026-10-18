@@ -559,7 +559,8 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
       ["/admin/doc-type-engine", "tools-doc-type-engine"],
       ["/admin/calculation", "tools-calculation"],
       ["/admin/import", "import-steps"],
-      ["/admin/value-lists", "admin-value-lists"],
+      // #39.80: a page of Reference Data as tiles (#39.75), not the empty side the screen opens on.
+      ["/admin/value-lists?list=property-types", "admin-value-lists"],
       ["/admin/settings", "admin-settings"],
     ] as const) {
       await page.goto(url);

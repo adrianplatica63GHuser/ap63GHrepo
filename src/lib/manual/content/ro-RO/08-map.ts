@@ -7,19 +7,16 @@ export const CHAPTER = `
 
 Harta proprietăților arată, pe un singur ecran, toate terenurile din arhivă care au colțuri. Pe ea vedeți unde stau proprietățile una față de alta, deschideți una cu un dublu-clic, măsurați o distanță sau un unghi, aflați suprafața unei zone și găsiți proprietățile trecute de două ori. Pe harta aceasta nu se desenează și nu se mută colțuri: forma unei parcele se schimbă pe ecranul ei, în fișa „Hartă” (secțiunea [[properties-corners]]).
 
-Câteva gesturi ale hărții nu se văd pe nicio etichetă: tragerea unui dreptunghi, dublu-clicul, apăsarea unui colț. Becul mic de lângă locul lor le explică pe scurt (secțiunea [[start-help]]); capitolul acesta le explică pe larg.
+Câteva gesturi ale hărții nu se văd pe nicio etichetă: dublu-clicul, apăsarea unui colț. Becul mic de lângă locul lor le explică pe scurt (secțiunea [[start-help]]); capitolul acesta le explică pe larg.
 
 ## 8.1 Ce arată harta {#map-what}
 
 Ecranul se numește „Toate Proprietățile”. Harta se deschide potrivită astfel încât să încapă toate proprietățile pe care le desenează. Fiecare proprietate cu colțuri apare ca o formă albastră, cu laturile unite în ordinea colțurilor ei, iar colțurile ei sunt puncte mici de aceeași culoare. Când micșorați harta și o formă devine prea mică pentru a se citi, în locul ei apare o picătură (secțiunea [[map-what-drops]]). O proprietate fără colțuri nu are contur, deci nu apare pe hartă; colțurile i se pot adăuga oricând, în „Puncte de contur” (secțiunea [[properties-corners-table]]).
 
-Sus, pe hartă, stau butoanele ei. „HARTĂ” și „SATELIT” aleg harta străzilor sau imaginea din satelit, ca pe fișa „Hartă” a unei proprietăți. Celelalte butoane sunt uneltele hărții, explicate mai jos:
+Sus, pe hartă, stau butoanele ei. „HARTĂ” și „SATELIT” aleg harta străzilor sau imaginea din satelit, ca pe fișa „Hartă” a unei proprietăți. Celelalte butoane sunt uneltele hărții, în trei grupuri despărțite de un spațiu de două ori mai mare decât cel dintre butoane:
 
-- „Selectează” — alege mai multe proprietăți deodată (secțiunea [[map-select]]);
-- „Riglă” și „Unghiuri” — măsoară o distanță și un unghi (secțiunea [[map-ruler]]);
-- „Suprafața unei zone delimitate” și „Suprafața unei zone oarecare” — calculează suprafața unei zone (secțiunea [[map-area]]);
-- „Tarlale” — conturul fiecărei tarlale (secțiunea [[map-what-tarlale]]);
-- „Grupuri” — alege ce proprietăți se văd (secțiunea [[map-what-groups]]);
+- cele care măsoară: „Unghiuri” și „Riglă” — un unghi și o distanță (secțiunea [[map-ruler]]); „Suprafața unei zone delimitate” și „Suprafața unei zone oarecare” — suprafața unei zone (secțiunea [[map-area]]);
+- cele care grupează proprietățile: „Tarlale” — conturul fiecărei tarlale (secțiunea [[map-what-tarlale]]); „Grupuri” — alege ce proprietăți se văd (secțiunea [[map-what-groups]]); „Selectează” — alege proprietăți, ca să le puneți într-un grup (secțiunea [[map-select]]);
 - „Setări hartă” — distanța la care picăturile se unesc (secțiunea [[map-what-drops]]).
 
 ### 8.1.1 Deschiderea hărții {#map-what-open}
@@ -27,7 +24,9 @@ Sus, pe hartă, stau butoanele ei. „HARTĂ” și „SATELIT” aleg harta str
 Harta se deschide din două locuri:
 
 - din lista „Proprietăți”, cu butonul „Hartă completă”, din dreapta, de lângă „Adaugă proprietate” (secțiunea [[properties-list]]). Bara de navigare arată atunci „Acasă › Proprietăți › Hartă completă”, iar un clic pe „Proprietăți” vă întoarce la listă. În bara laterală rămâne aprins „Proprietăți”;
-- din bara laterală, „Instrumente” → „Măsurători pe hartă” sau „Grupări de proprietăți”. O casetă arată butoanele despre care e vorba și spune ce face fiecare; „OK” deschide aceeași hartă, cu ele pulsând împreună, de trei ori, într-un inel violet, ca să le găsiți ușor. Niciunul nu se apasă singur: alegeți-l pe cel de care aveți nevoie (secțiunea [[map-area]]).
+- din bara laterală, „Instrumente” → „Măsurători pe hartă” sau „Grupări de proprietăți”. Fiecare deschide o casetă cu butoanele despre care e vorba, desenate ca pe hartă, și ce face fiecare. „OK” deschide aceeași hartă, cu butoanele acelea pulsând împreună, de trei ori, într-un inel violet, ca să le găsiți ușor: „Unghiuri”, „Riglă” și cele două butoane de suprafață, respectiv „Tarlale”, „Grupuri” și „Selectează”. Niciunul nu se apasă singur: alegeți-l pe cel de care aveți nevoie (secțiunea [[tools-area]]).
+
+Al treilea ghid din „Instrumente”, „Navigare”, arată butonul „Navighează” și spune unde îl găsiți: pe ecranul proprietății și în bula unei proprietăți de pe hartă (secțiunea [[map-what-bubble]]). „OK” doar închide caseta.
 
 ### 8.1.2 Bula unei proprietăți și dublu-clicul {#map-what-bubble}
 

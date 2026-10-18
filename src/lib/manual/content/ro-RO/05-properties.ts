@@ -13,7 +13,7 @@ Deschideți „Domeniu” în bara laterală, apoi „Proprietăți”. Se desch
 
 Caseta de căutare din capul listei caută după cod, poreclă, nr. cadastru, carte funciară, tarla sau parcelă — așa scrie și în ea. Lângă ea, filtrele listei îngustează ce vedeți după orice câmp al proprietății (secțiunea [[properties-list-filters]]). Sub tabel, „Se afișează … din …” spune câte proprietăți vedeți din câte sunt.
 
-Prima coloană după bifă este mereu „Poreclă”, numele pe care îl dați proprietății. Ea se vede întotdeauna și nu apare printre opțiunile din „Câmpuri afișate”. Codul proprietății nu are coloană în listă; îl găsiți pe ecranul proprietății, în colțul primei fișe.
+Prima coloană este mereu „Poreclă”, numele pe care îl dați proprietății. Ea se vede întotdeauna și nu apare printre opțiunile din „Câmpuri afișate”. Codul proprietății nu are coloană în listă; îl găsiți pe ecranul proprietății, în colțul primei fișe.
 
 „Câmpuri afișate” adaugă până la patru coloane după „Poreclă”. Puteți alege dintre câmpurile cadastrale și localitate:
 
@@ -109,6 +109,8 @@ Fiecare tarla are o pagină a ei, „Tarlale” → tarla, deschisă cu „Desch
 - „Contur”: o hartă cu conturul tarlalei și proprietățile ei, apoi colțurile tarlalei, opționale, introduse ca la o proprietate (secțiunea [[properties-corners-table]]). Fără colțuri, conturul este forma din jurul proprietăților tarlalei (secțiunea [[map-what-tarlale]]);
 - planurile parcelare legate de tarla la import și parcelele desenate de ele: numărul, suprafața și folosința, fără proprietari (secțiunea [[import-scanning-tarla]]);
 - proprietățile de pe tarla și actele legate de ele. În afară de planuri, o tarla nu are acte, grupuri sau etichete ale ei.
+
+Aceste părți ale paginii sunt fișe, ca pe ecranul unei proprietăți: le trageți în alt loc, iar „Implicit”, din dreapta sus, le pune la loc; locul lor se păstrează în browserul vostru. Pe o fereastră mare, „Tarla”, „Contur”, planurile și parcelele stau câte trei pe rând, iar proprietățile și actele câte două. Lista proprietăților și cea a actelor se opresc la două treimi din înălțimea ferestrei și se derulează în fișa lor, cu rândul de titluri mereu sus. „Salvează” stă deasupra fișelor, pentru că salvează două dintre ele: datele tarlalei și colțurile ei.
 
 Un import adaugă codurile de tarla în localitatea dată în pasul proprietăților: „Localitatea tarlalelor” este citită din numele dosarului ales, de exemplu Clinceni dintr-un dosar numit CLINCENI.3, și se poate schimba (secțiunea [[import-overview]]).
 

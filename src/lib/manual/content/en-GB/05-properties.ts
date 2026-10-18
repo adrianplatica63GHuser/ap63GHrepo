@@ -13,7 +13,7 @@ Open „Domain” in the sidebar, then „Properties”. The list „Properties�
 
 The search box at the top of the list searches by code, nickname, cadastral number, land-registry number, tarla or parcela — as the box itself says. Beside it, the list's filters narrow what you see by any field of the property (section [[properties-list-filters]]). Below the table, „Showing … of …” says how many properties you are seeing out of how many there are.
 
-The first column after the tick box is always „Nickname”, the name you give the property. It is always shown and is not among the options in „Choose fields”. The property's code has no column in the list; you find it on the property's screen, in the corner of its first tile.
+The first column is always „Nickname”, the name you give the property. It is always shown and is not among the options in „Choose fields”. The property's code has no column in the list; you find it on the property's screen, in the corner of its first tile.
 
 „Choose fields” adds up to four columns after „Nickname”. You can choose from the cadastral fields and the locality:
 
@@ -109,6 +109,8 @@ Each tarla has a page of its own, „Tarlale” → the tarla, opened with „Op
 - „Outline”: a map with the tarla's outline and its properties, then the tarla's corners, optional, entered as on a property (section [[properties-corners-table]]). Without corners, the outline is the shape around the tarla's properties (section [[map-what-tarlale]]);
 - the plans parcelare linked to the tarla at import and the parcels they draw: number, area and use, without owners (section [[import-scanning-tarla]]);
 - the properties on the tarla and the documents linked to them. Apart from its plans, a tarla has no documents, groups or tags of its own.
+
+These parts of the page are tiles, as on a property's screen: you drag them elsewhere, and „Default”, at the top right, puts them back; where they stand is kept in your browser. On a large window, „Tarla”, „Outline”, the plans and the parcels stand three to a row, and the properties and the documents two. The list of properties and the list of documents stop at two thirds of the window's height and scroll inside their tile, with the row of headings always at the top. „Save” stands above the tiles, because it saves two of them: the tarla's data and its corners.
 
 An import adds its tarla codes in the locality given in the property step: „The tarlale's locality” is read from the name of the folder chosen, for instance Clinceni from a folder named CLINCENI.3, and can be changed (section [[import-overview]]).
 

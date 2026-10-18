@@ -7,19 +7,16 @@ export const CHAPTER = `
 
 The properties map shows, on a single screen, every piece of land in the archive that has corners. On it you see where the properties lie in relation to one another, open one with a double-click, measure a distance or an angle, find the area of a zone and spot the properties entered twice. Corners are not drawn or moved on this map: a parcel's shape is changed on its own screen, in the „Map” tile (section [[properties-corners]]).
 
-A few of the map's gestures are not shown on any label: dragging a rectangle, the double-click, clicking a corner. The small light bulb beside where they happen explains them briefly (section [[start-help]]); this chapter explains them in full.
+A few of the map's gestures are not shown on any label: the double-click, clicking a corner. The small light bulb beside where they happen explains them briefly (section [[start-help]]); this chapter explains them in full.
 
 ## 8.1 What the map shows {#map-what}
 
 The screen is called „All Properties”. The map opens fitted so that every property it draws fits on it. Each property with corners appears as a blue shape, its sides joined in the order of its corners, and its corners are small dots of the same colour. When you zoom out and a shape becomes too small to read, a drop appears in its place (section [[map-what-drops]]). A property without corners has no outline, so it does not appear on the map; corners can be added to it at any time, in „Corners” (section [[properties-corners-table]]).
 
-At the top of the map are its buttons. „STR” and „SAT” choose the street map or the satellite image, as on a property's „Map” tile. The other buttons are the map's tools, explained below:
+At the top of the map are its buttons. „STR” and „SAT” choose the street map or the satellite image, as on a property's „Map” tile. The other buttons are the map's tools, in three groups set apart by a space twice the one between the buttons:
 
-- „Select” — picks several properties at once (section [[map-select]]);
-- „Ruler” and „Angles” — measure a distance and an angle (section [[map-ruler]]);
-- „Area of a delimited zone” and „Area of any zone” — calculate the area of a zone (section [[map-area]]);
-- „Tarlale” — each tarla's outline (section [[map-what-tarlale]]);
-- „Groups” — chooses which properties are shown (section [[map-what-groups]]);
+- the ones that measure: „Angles” and „Ruler” — an angle and a distance (section [[map-ruler]]); „Area of a delimited zone” and „Area of any zone” — the area of a zone (section [[map-area]]);
+- the ones that group the properties: „Tarlale” — each tarla's outline (section [[map-what-tarlale]]); „Groups” — chooses which properties are shown (section [[map-what-groups]]); „Select” — picks properties, to put them in a group (section [[map-select]]);
 - „Map settings” — the distance at which drops merge (section [[map-what-drops]]).
 
 ### 8.1.1 Opening the map {#map-what-open}
@@ -27,7 +24,9 @@ At the top of the map are its buttons. „STR” and „SAT” choose the street
 The map opens from two places:
 
 - from the „Properties” list, with the „Full map” button, on the right, beside „Add new Property” (section [[properties-list]]). The navigation bar then reads „Home › Properties › Full map”, and a click on „Properties” takes you back to the list. In the sidebar, „Properties” stays lit;
-- from the sidebar, „Tools” → „Measurements on map” or „Groupings of properties”. A box shows the buttons it is about and says what each does; „OK” opens the same map, with them pulsing together, three times, in a violet ring, so that you find them easily. None is pressed for you: choose the one you need (section [[map-area]]).
+- from the sidebar, „Tools” → „Measurements on map” or „Groupings of properties”. Each opens a box with the buttons it is about, drawn as on the map, and what each does. „OK” opens the same map, with those buttons pulsing together, three times, in a violet ring, so that you find them easily: „Angles”, „Ruler” and the two area buttons, or „Tarlale”, „Groups” and „Select”. None is pressed for you: choose the one you need (section [[tools-area]]).
+
+The third guide under „Tools”, „Navigation”, shows the „Navigate” button and says where you find it: on the property's screen and in a property's bubble on the map (section [[map-what-bubble]]). „OK” only closes the box.
 
 ### 8.1.2 A property's bubble and the double-click {#map-what-bubble}
 
