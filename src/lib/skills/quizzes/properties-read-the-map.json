@@ -146,14 +146,14 @@
             {
               "id": "o2",
               "correct": false,
-              "ro": "„Selectează”, apoi „Afișează selectate”.",
-              "en": "„Selectează”, then „Afișează selectate”."
+              "ro": "„Selectează”, apoi „Afișează selecția”.",
+              "en": "„Selectează”, then „Afișează selecția”."
             },
             {
               "id": "o3",
               "correct": false,
-              "ro": "Tragerea unui dreptunghi peste ea.",
-              "en": "Dragging a rectangle over it."
+              "ro": "Un clic pe ea cu „Selectează” apăsat.",
+              "en": "A click on it with „Selectează” pressed."
             },
             {
               "id": "o4",
@@ -205,37 +205,37 @@
           "id": "a6",
           "section": "map-select",
           "ro": {
-            "question": "Ați apăsat „Selectează”, iar acum harta nu se mai mută când o trageți cu mouse-ul. De ce?",
-            "explanation": "În modul de selecție, o tragere nu mai mută harta, ci desenează un dreptunghi. „Anulează selecția” vă scoate din modul acesta, iar harta se mișcă din nou la tragere."
+            "question": "Ați apăsat „Selectează” și faceți clic pe un teren. Ce se întâmplă?",
+            "explanation": "În modul de selecție, un clic pe o proprietate o adaugă la selecție — devine roșie —, iar un al doilea clic o scoate. Harta se mișcă și se mărește ca de obicei, iar selecția nu șterge nimic: o puneți într-un grup cu „Adaugă la grup…”."
           },
           "en": {
-            "question": "You pressed „Selectează”, and now the map no longer moves when you drag it with the mouse. Why?",
-            "explanation": "In selection mode a drag no longer moves the map but draws a rectangle. „Anulează selecția” takes you out of this mode, and the map moves again when dragged."
+            "question": "You pressed „Selectează” and click on a plot. What happens?",
+            "explanation": "In selection mode, a click on a property adds it to the selection — it turns red —, and a second click takes it out. The map moves and zooms as usual, and the selection deletes nothing: you put it in a group with „Adaugă la grup…” (add to group)."
           },
           "options": [
             {
               "id": "o1",
               "correct": false,
-              "ro": "Harta s-a blocat; trebuie reîncărcată pagina.",
-              "en": "The map has frozen; the page must be reloaded."
+              "ro": "Terenul se șterge din arhivă, după o confirmare.",
+              "en": "The plot is deleted from the archive, after a confirmation."
             },
             {
               "id": "o2",
               "correct": false,
-              "ro": "Tragerea mută acum colțurile proprietăților, ca la „Desenează” pe fișa „Hartă”.",
-              "en": "Dragging now moves the properties' corners, as with „Desenează” on the „Hartă” tab."
+              "ro": "Se deschide ecranul terenului, ca la dublu-clic.",
+              "en": "The plot's screen opens, as with a double-click."
             },
             {
               "id": "o3",
               "correct": true,
-              "ro": "Tragerea desenează acum un dreptunghi; „Anulează selecția” o întoarce.",
-              "en": "Dragging now draws a rectangle; „Anulează selecția” turns it back."
+              "ro": "Terenul devine roșu și intră în selecție; al doilea clic îl scoate.",
+              "en": "The plot turns red and joins the selection; a second click takes it out."
             },
             {
               "id": "o4",
               "correct": false,
-              "ro": "Harta se mută doar după ce apăsați „SATELIT”.",
-              "en": "The map moves only after you press „SATELIT”."
+              "ro": "Harta se blochează până apăsați „Anulează selecția”.",
+              "en": "The map freezes until you press „Anulează selecția”."
             }
           ]
         }
@@ -309,8 +309,8 @@
             {
               "id": "o3",
               "correct": false,
-              "ro": "„Instrumente” → „Calcul suprafață”, în bara laterală.",
-              "en": "„Instrumente” → „Calcul suprafață”, in the sidebar."
+              "ro": "„Instrumente” → „Grupări de proprietăți”, în bara laterală.",
+              "en": "„Instrumente” → „Grupări de proprietăți”, in the sidebar."
             },
             {
               "id": "o4",

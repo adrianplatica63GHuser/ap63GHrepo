@@ -133,7 +133,7 @@
           },
           "en": {
             "question": "An object's system code begins with PROP. What kind of object is it?",
-            "explanation": "The code tells the kind of object: PPERS for a natural person, JPERS for a legal person, PROP for a property and DOC for a document."
+            "explanation": "The code tells the kind of object: PPERS for a natural person, JPERS for a juridical person, PROP for a property and DOC for a document."
           },
           "options": [
             {
@@ -152,7 +152,7 @@
               "id": "o3",
               "correct": false,
               "ro": "O persoană juridică",
-              "en": "A legal person"
+              "en": "A juridical person"
             },
             {
               "id": "o4",
@@ -392,14 +392,14 @@
           },
           "en": {
             "question": "An object's system code begins with JPERS. What kind of object is it?",
-            "explanation": "JPERS means a legal person — a company, an association, an institution; PPERS is a natural person, PROP a property, DOC a document."
+            "explanation": "JPERS means a juridical person — a company, an association, an institution; PPERS is a natural person, PROP a property, DOC a document."
           },
           "options": [
             {
               "id": "o1",
               "correct": true,
               "ro": "O persoană juridică",
-              "en": "A legal person"
+              "en": "A juridical person"
             },
             {
               "id": "o2",

@@ -26,8 +26,8 @@
             {
               "id": "o1",
               "correct": false,
-              "ro": "Cu „Selectează” trage un dreptunghi peste ele și citește suprafața selecției.",
-              "en": "With „Selectează” (select) he drags a rectangle over them and reads the selection's area."
+              "ro": "Cu „Selectează” alege cele două terenuri și citește suprafața selecției.",
+              "en": "With „Selectează” (select) he picks the two plots and reads the selection's area."
             },
             {
               "id": "o2",
@@ -319,12 +319,12 @@
           "id": "a9",
           "section": "tools-area",
           "ro": {
-            "question": "Ciprian deschide „Instrumente” → „Calcul suprafață”. Cele două butoane de suprafață pulsează de trei ori în violet, iar el așteaptă să înceapă calculul. Ce trebuie să știe?",
+            "question": "Ciprian deschide „Instrumente” → „Măsurători pe hartă” și apasă „OK”. Cele patru butoane de măsurat pulsează de trei ori în violet, iar el așteaptă să înceapă măsurătoarea. Ce trebuie să știe?",
             "explanation": "Niciunul dintre butoane nu este apăsat în locul dumneavoastră: apăsați-l pe cel de care aveți nevoie."
           },
           "en": {
-            "question": "Ciprian opens „Instrumente” → „Calcul suprafață” (tools, area calculation). The two area buttons pulse three times in violet, and he waits for the calculation to start. What should he know?",
-            "explanation": "Neither button is pressed for you: press the one you need."
+            "question": "Ciprian opens „Instrumente” → „Măsurători pe hartă” (tools, measurements on map) and presses „OK”. The four measuring buttons pulse three times in violet, and he waits for the measuring to start. What should he know?",
+            "explanation": "None of the buttons is pressed for you: press the one you need."
           },
           "options": [
             {
@@ -343,7 +343,7 @@
               "id": "o3",
               "correct": true,
               "ro": "Că niciunul nu se apasă singur: îl apasă el pe cel potrivit.",
-              "en": "That neither is pressed by itself: he presses the right one."
+              "en": "That none is pressed by itself: he presses the right one."
             },
             {
               "id": "o4",
@@ -569,8 +569,8 @@
             {
               "id": "o3",
               "correct": false,
-              "ro": "Cu „Selectează”, după ce trage un dreptunghi peste teren.",
-              "en": "With „Selectează”, after dragging a rectangle over the plot."
+              "ro": "Cu „Selectează”, după ce alege terenul cu un clic.",
+              "en": "With „Selectează”, after picking the plot with a click."
             },
             {
               "id": "o4",
@@ -698,25 +698,25 @@
           "id": "b9",
           "section": "tools-area",
           "ro": {
-            "question": "Ciprian deschide harta din „Instrumente” → „Calcul suprafață”, nu din „Hartă completă”. Ce este diferit?",
-            "explanation": "„Calcul suprafață” deschide aceeași hartă, „Toate Proprietățile”; doar cele două butoane de suprafață pâlpâie de trei ori în violet, iar în bara laterală rămâne marcat „Calcul suprafață”, nu „Proprietăți”."
+            "question": "Ciprian deschide harta din „Instrumente” → „Măsurători pe hartă”, cu „OK”, nu din „Hartă completă”. Ce este diferit?",
+            "explanation": "Ghidul deschide aceeași hartă, „Toate Proprietățile”; doar cele patru butoane de măsurat — „Unghiuri”, „Riglă” și cele două de suprafață — pâlpâie de trei ori în violet, ca să le găsiți ușor."
           },
           "en": {
-            "question": "Ciprian opens the map from „Instrumente” → „Calcul suprafață”, not from „Hartă completă”. What is different?",
-            "explanation": "„Calcul suprafață” opens the same map, „Toate Proprietățile”; only the two area buttons pulse three times in violet, and in the sidebar „Calcul suprafață” stays marked, not „Proprietăți”."
+            "question": "Ciprian opens the map from „Instrumente” → „Măsurători pe hartă” (measurements on map), with „OK”, not from „Hartă completă”. What is different?",
+            "explanation": "The guide opens the same map, „Toate Proprietățile”; only the four measuring buttons — „Unghiuri”, „Riglă” and the two area buttons — pulse three times in violet, so that you find them easily."
           },
           "options": [
             {
               "id": "o1",
               "correct": true,
-              "ro": "E aceeași hartă; doar butoanele de suprafață pulsează, iar bara laterală marchează „Calcul suprafață”.",
-              "en": "It is the same map; only the area buttons pulse, and the sidebar marks „Calcul suprafață”."
+              "ro": "E aceeași hartă; doar cele patru butoane de măsurat pulsează.",
+              "en": "It is the same map; only the four measuring buttons pulse."
             },
             {
               "id": "o2",
               "correct": false,
-              "ro": "E o hartă separată, care are doar cele două unelte de suprafață.",
-              "en": "It is a separate map, which has only the two area tools."
+              "ro": "E o hartă separată, care are doar uneltele de măsurat.",
+              "en": "It is a separate map, which has only the measuring tools."
             },
             {
               "id": "o3",

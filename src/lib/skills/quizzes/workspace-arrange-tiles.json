@@ -479,7 +479,7 @@
             "explanation": "Previzualizarea unei firme, lângă listă, arată denumirea ei, urmată de numărul persoanelor de contact între paranteze — de exemplu „(2 contacte)” —, apoi porecla."
           },
           "en": {
-            "question": "You want to learn how many contact persons a company has, without opening its screen. What do you do in the list of legal persons?",
+            "question": "You want to learn how many contact persons a company has, without opening its screen. What do you do in the list of juridical persons?",
             "explanation": "A company's preview, beside the list, shows its name, followed by the number of contact persons in brackets — for instance „(2 contacte)” —, then its nickname."
           },
           "options": [

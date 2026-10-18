@@ -32,8 +32,8 @@
             {
               "id": "o2",
               "correct": false,
-              "ro": "„Instrumente”, lângă „Calcul drum lateral” și „Calcul suprafață”",
-              "en": "„Instrumente” (tools), next to „Calcul drum lateral” and „Calcul suprafață”"
+              "ro": "„Instrumente”, lângă „Calcul drum lateral” și „Măsurători pe hartă”",
+              "en": "„Instrumente” (tools), next to „Calcul drum lateral” and „Măsurători pe hartă”"
             },
             {
               "id": "o3",
@@ -65,13 +65,13 @@
               "id": "o1",
               "correct": true,
               "ro": "Persoane fizice și juridice, proprietăți și acte",
-              "en": "Natural and legal persons, properties and documents"
+              "en": "Natural and juridical persons, properties and documents"
             },
             {
               "id": "o2",
               "correct": false,
               "ro": "Doar persoane fizice și persoane juridice",
-              "en": "Only natural persons and legal persons"
+              "en": "Only natural persons and juridical persons"
             },
             {
               "id": "o3",
@@ -328,7 +328,7 @@
             "explanation": "„Tip entitate” alege între „Orice”, „Persoană”, „Proprietate” și „Document”, iar „Subtip persoană” alege între „Persoană fizică” și „Persoană juridică”."
           },
           "en": {
-            "question": "Which filter chooses between „Persoană fizică” (natural person) and „Persoană juridică” (legal person)?",
+            "question": "Which filter chooses between „Persoană fizică” (natural person) and „Persoană juridică” (juridical person)?",
             "explanation": "„Tip entitate” chooses between „Orice”, „Persoană”, „Proprietate” and „Document”, and „Subtip persoană” (person subtype) chooses between „Persoană fizică” and „Persoană juridică”."
           },
           "options": [

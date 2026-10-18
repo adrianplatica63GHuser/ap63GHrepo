@@ -672,8 +672,8 @@ export const SKILLS: readonly Skill[] = [
     path: "links",
     name: { ro: "Strânge obiecte în grupuri și aplică-le ștampile", en: "Gather objects into groups and stamp them" },
     description: {
-      ro: "Faci un grup de proprietăți, vezi câți membri are și de ce o proprietate intră în cel mult trei grupuri, creezi o ștampilă și o aplici unei persoane, apoi le regăsești din ambele capete.",
-      en: "Make a group of properties, see how many members it has and why a property joins at most three groups, create a stamp and apply it to a person, then find both again from either end.",
+      ro: "Faci un grup de proprietăți — și de pe hartă, cu „Selectează” —, vezi câți membri are și de ce o proprietate intră în cel mult trei grupuri, creezi o ștampilă și o aplici unei persoane, apoi le regăsești din ambele capete.",
+      en: "Make a group of properties — from the map too, with „Selectează” —, see how many members it has and why a property joins at most three groups, create a stamp and apply it to a person, then find both again from either end.",
     },
     predecessors: ["workspace-find-in-a-list", "links-read-related-tile"],
     screens: ["admin-groups", "admin-group-editor", "admin-stamps", "admin-stamp-applicator"],
@@ -725,8 +725,8 @@ export const SKILLS: readonly Skill[] = [
       en: "Measure on the map: the ruler, the angles and an area",
     },
     description: {
-      ro: "Măsori o distanță cu rigla, citești unghiurile la colțuri și afli suprafața unei zone delimitate de colțurile unei proprietăți sau a unui poligon desenat liber, din „Instrumente → Calcul suprafață”.",
-      en: "Measure a distance with the ruler, read the angles at the corners, and find the area of a zone bounded by a property's corners or by a polygon drawn freely, from „Instrumente → Calcul suprafață”.",
+      ro: "Măsori o distanță cu rigla, citești unghiurile la colțuri și afli suprafața unei zone delimitate de colțurile unei proprietăți sau a unui poligon desenat liber, din „Instrumente → Măsurători pe hartă”.",
+      en: "Measure a distance with the ruler, read the angles at the corners, and find the area of a zone bounded by a property's corners or by a polygon drawn freely, from „Instrumente → Măsurători pe hartă”.",
     },
     predecessors: ["properties-read-the-map", "properties-draw-corners"],
     screens: ["properties-map"],
@@ -743,8 +743,8 @@ export const SKILLS: readonly Skill[] = [
       en: "Calculate a side road on a plot and read the calculation's history",
     },
     description: {
-      ro: "Încarci fișierul de împărțire, citești previzualizarea, care nu e încă salvată, salvezi calculul și îl regăsești în istoric.",
-      en: "Load the division file, read the preview, which is not saved yet, save the calculation and find it again in the history.",
+      ro: "Alegi o proprietate din arhivă, cu patru colțuri, și proprietarii ei cu cotele lor, citești previzualizarea, care nu e încă salvată, creezi proprietățile — fiecare legată de proprietarul ei — și regăsești calculul în istoric.",
+      en: "Choose a four-cornered property in the archive and its owners with their shares, read the preview, which is not saved yet, create the properties — each linked to its owner — and find the calculation again in the history.",
     },
     predecessors: ["properties-draw-corners", "properties-from-coordinate-file"],
     screens: ["admin-calculation", "admin-calculation-history", "admin-calculation-run"],
