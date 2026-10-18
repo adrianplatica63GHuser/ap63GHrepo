@@ -105,7 +105,8 @@ test.describe("TC-DOC-08 — lista actelor", () => {
       const picker = main.locator("[data-field-chooser]");
       await expect(picker.getByText("Selectați până la 4 coloane opționale")).toBeVisible();
       await expect(picker.locator("label")).toHaveText([
-        "Nr. document", "Data", "Instituție / Notariat", "Subiect", "Nr. pagini", "Persoane", "Proprietăți", "Adăugat la",
+        // #39.83: „Nr. persoane", „Nr. proprietăți" — were „Persoane", „Proprietăți".
+        "Nr. document", "Data", "Instituție / Notariat", "Subiect", "Nr. pagini", "Nr. persoane", "Nr. proprietăți", "Adăugat la",
       ]);
       for (const gone of ["Importanță", "Relevanță", "Proveniență"]) {
         await expect(picker.getByText(gone, { exact: true })).toHaveCount(0);

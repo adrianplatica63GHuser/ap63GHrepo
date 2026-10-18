@@ -542,13 +542,13 @@ function Box({ label, children }: { label: string; children: ReactNode }) {
 
 /**
  * The funnel in a column's header: opens that column's filter, right under itself (#39.82). Filled while the column
- * is filtered. Drawn only on the columns that can be filtered — each list's `*_COLUMN_FILTERS` (#39.82). `field` is
+ * is filtered. Since #39.83 it stands alone on the band's third row (`ListHeadCell`), under the name, not after it. Drawn only on the columns that can be filtered — each list's `*_COLUMN_FILTERS` (#39.82). `field` is
  * the filter's key, which the bar finds the funnel by.
  */
 export function FilterFunnel({ field, label, active, onOpen }: { field: string; label: string; active: boolean; onOpen: () => void }) {
   const t = useTranslations("shared.filterBar");
   return (
-    <span data-filter-funnel={field} className="ml-1 inline-flex align-middle normal-case">
+    <span data-filter-funnel={field} className="inline-flex normal-case">
       <IconButton
         icon={Funnel}
         label={t("funnel", { field: label })}

@@ -4,6 +4,9 @@
  *
  * A translation of the case file, step for step. The records carry `TC-E2E-LAYOUT-05` (records.ts), and each list is
  * searched for it, so nothing but invented records is read.
+ *
+ * Divergence from the hand run: „Câmpuri afișate" is set by writing each list's stored choice before the page loads
+ * (`CHOICE`), not by ticking — the case only needs the four columns on screen (#39.83).
  */
 
 import { test, expect, type Page } from "../helpers/test";
@@ -21,6 +24,45 @@ const LISTS: { path: string; search: string; gap: number | null }[] = [
   { path: "/judicial-persons", search: "caută după cod, nume, poreclă sau ID", gap: 36 },
   { path: "/documents", search: "caută după cod, titlu sau nr. document", gap: 72 },
 ];
+
+// #39.83: four columns on each list — a long name that always takes two rows, a filterable one, a multi-word name
+// without a filter, and one more — so the band of names is read with every kind of cell in it.
+const CHOICE: Record<string, string[]> = {
+  "ga40-col-property-v4": ["useCategory", "propertyType", "cadastralNumber", "surfaceAreaMp"],
+  "ga40-col-person-v3": ["dateOfBirth", "relationships", "cnp", "placeOfBirth"],
+  "ga40-col-company-v2": ["cuiNumber", "tradeRegisterNumber", "contactPerson", "locality"],
+  "ga40-col-document-v3": ["institution", "pageCount", "nrDocument", "propertyCount"],
+};
+
+/** #39.83 — the band of names: every cell's band, each name's rows, the funnel's place, a plain name's centring. */
+async function band(page: Page) {
+  return page.evaluate(() => {
+    const out: string[] = [];
+    const bands = [...document.querySelectorAll<HTMLElement>("main thead [data-head-band]")];
+    for (const b of bands) {
+      const col = b.closest("th")?.dataset.widthColumn ?? "?";
+      const box = b.getBoundingClientRect();
+      const name = b.querySelector<HTMLElement>("[data-head-text]")!;
+      const n = name.getBoundingClientRect();
+      const rows = Math.round(n.height / 16);
+      if (Math.round(box.height) !== 58) out.push(`${col}: band ${box.height}`);
+      if (rows < 1 || rows > 2 || name.scrollHeight > name.clientHeight + 1) out.push(`${col}: ${rows} rows`);
+      if (name.scrollWidth > name.clientWidth + 1) out.push(`${col}: cut sideways`);
+      if (b.dataset.headBand === "filter") {
+        const f = b.querySelector<HTMLElement>("[data-head-funnel] button")!.getBoundingClientRect();
+        if (f.top < n.bottom - 0.5) out.push(`${col}: funnel not under the name`);
+        if (Math.abs(n.bottom - (box.top + 32)) > 1) out.push(`${col}: name not on rows 1–2`);
+        if (Math.abs(f.bottom - box.bottom) > 1) out.push(`${col}: funnel not on row 3`);
+      } else if (Math.abs(n.top + n.height / 2 - (box.top + box.height / 2)) > 1) {
+        out.push(`${col}: not centred`);
+      }
+    }
+    const twoRows = bands
+      .filter((b) => b.querySelector("[data-head-text] br"))
+      .map((b) => Math.round(b.querySelector<HTMLElement>("[data-head-text]")!.getBoundingClientRect().height / 16));
+    return { cells: bands.length, wrong: out, forcedOnTwo: twoRows.every((r) => r === 2), forced: twoRows.length };
+  });
+}
 
 /** What the case reads off one list: its cells, its row's buttons and height, its toolbar's two sides. */
 async function reading(page: Page) {
@@ -78,6 +120,9 @@ test.describe("TC-LAYOUT-05 — cele patru liste, câte un rând pe linie", () =
     test.slow();
     await removeLeftovers(page.request, MARK);
     const made: [RecordKind, string][] = [];
+    await page.addInitScript((choice) => {
+      for (const [k, v] of Object.entries(choice)) localStorage.setItem(k, JSON.stringify(v));
+    }, CHOICE);
     try {
       made.push(["property", await createProperty(page.request, { nickname: `${MARK} Proprietate ${LONG}` })]);
       made.push(["person", await createNaturalPerson(page.request, { lastName: `${MARK} Popescu`, firstName: `Ion ${LONG}`, nickname: `${MARK} poreclă ${LONG}` })]);
@@ -98,6 +143,13 @@ test.describe("TC-LAYOUT-05 — cele patru liste, câte un rând pe linie", () =
           const r = await reading(page);
           expect({ width, list: list.path, rows: r.rows, notOneLine: r.notOneLine, buttonsOneLine: r.buttonsOneLine, oneLineTall: r.tallest < 56, overlap: r.overlap, frame: r.frameAtLeastToolbar, gap: r.gap, boxesAligned: r.boxesAligned })
             .toEqual({ width, list: list.path, rows: 1, notOneLine: [], buttonsOneLine: true, oneLineTall: true, overlap: false, frame: true, gap: list.gap, boxesAligned: list.gap === null ? null : true });
+          // #39.83: the band of names — three rows on every cell, no name over two, the funnel alone on the third, a
+          // name without one centred; Adrian's long names on two rows (three of `CHOICE` on each list but the juridical persons').
+          const h = await band(page);
+          expect({ width, list: list.path, ...h }).toEqual({
+            width, list: list.path, cells: list.path === "/properties" ? 5 : 6, wrong: [], forcedOnTwo: true,
+            forced: list.path === "/judicial-persons" ? 0 : 3,
+          });
         }
       }
     } finally {

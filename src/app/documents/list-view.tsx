@@ -13,6 +13,8 @@ import { ArrowRight, CalendarClock, ChevronDown, ChevronLeft, ChevronRight, Plus
 import { IconButton } from "@/lib/ui/icon-button";
 import { FixedColumns, ONE_LINE, TABLE_FRAME, cellTitle, columnHead, fixedTable } from "@/components/table/fixed-columns";
 import { LIST_TOOLBAR, useListEdge } from "@/components/table/list-edge";
+import { ListHeadCell } from "@/components/table/list-head";
+import { twoRowName } from "@/lib/ui/list-head";
 import type { ColumnName } from "@/lib/ui/field-widths";
 import { customFieldValueLabel } from "@/lib/documents/custom-field-options";
 import { customFieldFilter, customFieldState, typeFilterTrigger, typesMatching } from "@/lib/documents/type-filter";
@@ -1081,18 +1083,19 @@ export function DocumentListView({
                         className="h-4 w-4 rounded border-wire accent-cta"
                       />
                     </th>
-                    <th className="px-4 py-2" {...columnHead("listDocumentType")}>{t("table.type")}</th>
-                    <th className="px-4 py-2" {...columnHead("listDocumentTitle")}>{t("table.title")}</th>
+                    <ListHeadCell column="listDocumentType" name={t("table.type")} />
+                    <ListHeadCell column="listDocumentTitle" name={t("table.title")} />
                     {shownCols.map((col) => {
                       const filterKey = DOCUMENT_COLUMN_FILTERS[col.key];
                       return (
-                        <th key={col.key} className="px-4 py-2" {...columnHead(col.column)}>
-                          {col.label}
-                          {/* Slice #39.82: a funnel only on the columns that filter; it opens the filter under itself. */}
-                          {filterKey && (
-                            <FilterFunnel field={filterKey} label={filterLabel(filterKey)} active={filters[filterKey] !== undefined} onOpen={() => setEditingFilter(filterKey)} />
-                          )}
-                        </th>
+                        <ListHeadCell
+                          key={col.key}
+                          column={col.column}
+                          name={col.label}
+                          twoRows={twoRowName("document", col.key)}
+                          // Slice #39.82: a funnel only on the columns that filter; it opens the filter under itself. #39.83: on row 3.
+                          funnel={filterKey ? <FilterFunnel field={filterKey} label={filterLabel(filterKey)} active={filters[filterKey] !== undefined} onOpen={() => setEditingFilter(filterKey)} /> : undefined}
+                        />
                       );
                     })}
                     <th className="px-4 py-2" {...columnHead("listRowActions")} />

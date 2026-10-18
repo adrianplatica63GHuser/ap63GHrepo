@@ -1402,7 +1402,13 @@ export const COLUMN = {
   listCompanyName: { content: 16.25, kind: "fixed" }, //    a judicial person's name — longest 259 px
   listPersonNickname: { content: 6, kind: "fixed" }, //     Poreclă on the two persons' lists — values up to 92 px
   listCnp: { content: 6.5, kind: "fixed" }, //              13 digits (102 px)
-  listDate: { content: 4.5, kind: "fixed" }, //             dd.mm.yyyy (71 px) — a birth date, a document's date, „Adăugat la"
+  // Slice #39.83 — the band of names: a name takes at most two rows, so a column is as wide as the wider of its longest
+  // value and its name's longest row (two rows at most, broken most evenly), measured in the browser pane on
+  // 2026-10-18 (medium 12 px Arial, upper case, 0.3 px tracking). One column had to grow: „NR. ÎNREGISTRARE / (CUI)"
+  // (119.5 px) on 96, which wrapped to three rows; rounded up to the next quarter rem with at least 1 px to spare. No
+  // column was narrowed: every other was already held by its values, by a single word of its name, or by Adrian's
+  // own widths (#39.24). Sized for Romanian; an English name that does not fit is allowed to clip.
+  listDate: { content: 4.5, kind: "fixed" }, //             dd.mm.yyyy (71 px), „DECESULUI" (72.0) — a birth date, a document's date, „Adăugat la"
   listAge: { content: 3.25, kind: "fixed" }, //             „VÂRSTĂ" (52 px); values 16
   listGender: { content: 3.5, kind: "fixed" }, //           „Masculin" (56 px)
   listBirthPlace: { content: 7.75, kind: "fixed" }, //      Locul nașterii — values 121 px
@@ -1411,7 +1417,7 @@ export const COLUMN = {
   listProfessionalType: { content: 9, kind: "fixed" }, //   Tip profesional
   listRelationship: { content: 10, kind: "fixed" }, //      Relația cu firma (#39.70) — „Client, Vânzător de teren"; the rest on hover
   listCompanyType: { content: 5.5, kind: "fixed" }, //      a judicial person's „Tip" — values 88 px
-  listCui: { content: 6, kind: "fixed" }, //                „ÎNREGISTRARE" (95 px); values 92
+  listCui: { content: 7.75, kind: "fixed" }, //             „NR. ÎNREGISTRARE" (119.5 px) over „(CUI)"; values 92 — was 6
   listTradeRegister: { content: 6, kind: "fixed" }, //      „J40/12345/2020" (93 px)
   listContactPerson: { content: 6.5, kind: "fixed" }, //    Persoană de contact — values 104 px
   listDocumentType: { content: 6.5, kind: "fixed" }, //     „Tip", the short name — 90th percentile 100 px; the full name on hover
@@ -1424,8 +1430,8 @@ export const COLUMN = {
   // header's longest word, whichever is wider, measured in the browser pane (bold 12 px Arial, 0.3 px tracking), rounded
   // up to the next quarter rem with at least 1 px to spare — the header may take two lines, a word cannot.
   listPageCount: { content: 2.75, kind: "fixed" }, //       „Nr. pagini" on two lines: „PAGINI" 42.2 px, „PAGES" 42.6
-  listPersonCount: { content: 4.5, kind: "fixed" }, //      „PERSOANE" 69.8 px; „PERSONS" 60.8
-  listPropertyCount: { content: 5.25, kind: "fixed" }, //   „PROPRIETĂȚI" 84.0 px — one word, so no narrower than it was
+  listPersonCount: { content: 4.5, kind: "fixed" }, //      „NR. / PERSOANE" (#39.83) — „PERSOANE" 69.8 px; „PERSONS" 60.8
+  listPropertyCount: { content: 5.25, kind: "fixed" }, //   „NR. / PROPRIETĂȚI" (#39.83) — „PROPRIETĂȚI" 84.0 px, one word
   // Slice #37.37 — the Form editor's table (Formular pentru „{type}")
   feOrder: { content: 4, kind: "fixed" }, //                ↑ and ↓, two xs buttons
   feLabel: { content: "L", kind: "wraps" }, //              Etichetă (RO) / (EN), with the key under the RO one; grows downward

@@ -73,7 +73,7 @@ describe("the four lists, one line per row (#38.57)", () => {
     const word: Partial<Record<ColumnName, number>> = {
       listTarla: 80, listParcela: 60, listArea: 76, listUseCategory: 74, listPropertyType: 87, listLocality: 78,
       listPersonNickname: 61, listAge: 52, listProfessionalType: 90, listCui: 95, listTradeRegister: 83,
-      listContactPerson: 71, listNrDocument: 72, listDate: 62,
+      listContactPerson: 71, listNrDocument: 72, listDate: 72,
       // #39.24: listCount (84, „PROPRIETĂȚI”) became one column per count, each its own header's longest word.
       listPageCount: 43, listPersonCount: 70, listPropertyCount: 84,
     };
@@ -120,6 +120,31 @@ describe("the lists' columns (#39.24)", () => {
     expect(content("listPersonCount")).toBeLessThan(content("listPropertyCount"));
     expect(VIEW.documents).not.toMatch(/"listCount"/);
     expect("listCount" in COLUMN).toBe(false);
+  });
+});
+
+/**
+ * #39.83 — the band of names: a name takes at most two rows, so each column is at least as wide as its name's longest
+ * row — its longest word for a one-word name, the longer of its two rows, broken most evenly, for the rest. Measured
+ * in the browser pane on 2026-10-18 (medium 12 px Arial, upper case, 0.3 px tracking), Romanian, the version that
+ * matters (ga40prj/CLAUDE.md). A width equal to its row holds it — „PROPRIETĂȚI" has sat in exactly 84 px since #39.24.
+ */
+describe("the band of names, two rows at most (#39.83)", () => {
+  const ROW: Partial<Record<ColumnName, [string, number]>> = {
+    listTarla: ["TARLA/SOLĂ", 79.4], listParcela: ["PARCELĂ", 59.2], listArea: ["CALCULATĂ / (M²)", 75.8],
+    listCarteFunciara: ["NR. CF", 41.8], listCadastral: ["NR. / CADASTRU", 69.7], listUseCategory: ["CATEGORIE DE / FOLOSINȚĂ", 94.1],
+    listPropertyType: ["TIP / PROPRIETATE", 86.9], listLocality: ["LOCALITATE", 77.2], listPropertyNickname: ["PORECLĂ", 60.8],
+    listCnp: ["CNP", 26.2], listDate: ["DATA / DECESULUI", 72.0], listAge: ["VÂRSTĂ", 51.1], listGender: ["GEN", 26.9],
+    listBirthPlace: ["LOCUL / NAȘTERII", 58.4], listProfessionalType: ["TIP / PROFESIONAL", 90.0], listRelationship: ["RELAȚIA / CU FIRMA", 61.1],
+    listPersonName: ["NUME", 36.5], listPersonNickname: ["PORECLĂ", 60.8], listCompanyType: ["TIP", 19.6],
+    listCui: ["NR. ÎNREGISTRARE / (CUI)", 119.5], listTradeRegister: ["NR. REGISTRU / COMERȚULUI", 89.6],
+    listContactPerson: ["PERSOANĂ / DE CONTACT", 80.8], listCompanyName: ["DENUMIRE", 66.4], listNrDocument: ["NR. / DOCUMENT", 71.7],
+    listInstitution: ["INSTITUȚIE / | NOTARIAT", 75.6], listSubject: ["SUBIECT", 54.8], listPageCount: ["NR. / PAGINI", 42.2],
+    listPersonCount: ["NR. / PERSOANE", 69.8], listPropertyCount: ["NR. / PROPRIETĂȚI", 84.0], listDocumentType: ["TIP", 19.6],
+    listDocumentTitle: ["TITLU", 35.5],
+  };
+  it.each(Object.entries(ROW))("%s holds its name's longest row", (n, [, px]) => {
+    expect(content(n as ColumnName)).toBeGreaterThanOrEqual(px);
   });
 });
 

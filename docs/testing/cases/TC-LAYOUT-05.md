@@ -16,7 +16,10 @@ controls (like "add new") clash with the left top controls (like "fields picker"
 Persoane juridice and Acte follow #38.50's rule: each column as wide as its content, each row one line (a long cell
 cut with „…" and whole on hover), the row's buttons side by side, and the table never narrower than its toolbar, whose
 two sides never meet. A row two lines tall, a cut cell with no tooltip, stacked buttons, or „Adaugă …" over the
-controls on its left is the defect.
+controls on its left is the defect. Since #39.83 the band of column names above the rows is three rows tall on every
+cell: a column that filters has its name on rows 1–2 and its funnel alone on row 3, a column that does not has its
+name centred, no name takes more than two rows, and Adrian's long names always take two. A name on three rows, cut
+sideways, a funnel beside its name, or a band that changes height is the defect.
 
 ## Before you start
 
@@ -24,6 +27,10 @@ controls on its left is the defect.
 - **Created through the API**, each with a name far longer than its column: a property nicknamed „TC-E2E-LAYOUT-05
   Proprietate …", a natural person „TC-E2E-LAYOUT-05 Popescu Ion …", a company „TC-E2E-LAYOUT-05 SRL …" and a
   Contract de Vânzare titled „TC-E2E-LAYOUT-05 Act …".
+- **„Câmpuri afișate"** (#39.83), four columns on each list: Proprietăți — Categorie de folosință, Tip proprietate,
+  Nr. cadastru, Oficială (m²); Persoane fizice — Data nașterii, Relația cu firma, CNP, Locul nașterii; Persoane
+  juridice — Nr. înregistrare (CUI), Nr. registru comerțului, Persoană de contact, Localitate; Acte — Instituție /
+  Notariat, Nr. pagini, Nr. document, Nr. proprietăți.
 
 ## What Adrian is asked for
 
@@ -39,12 +46,16 @@ At 1366 and at 1920 px, on each of the four lists, searched for „TC-E2E-LAYOUT
 | 2 | „Persoane fizice" | The same, for the person's name and nickname |
 | 3 | „Persoane juridice" | The same, for the company's name |
 | 4 | „Acte" | The same, for the document's title |
+| 5 | On each list, looks at the band of column names (#39.83) | Every cell the same height, three rows; a filterable column's name on rows 1–2, bottom-aligned, its funnel alone on row 3; Poreclă, the name or title, Nr. cadastru, CNP, Nr. document and the juridical persons' CUI, register and contact person centred; „Categorie de / folosință", „Tip / proprietate", „Oficială / (m²)", „Data / nașterii", „Relația / cu firma", „Locul / nașterii", „Instituție / / Notariat", „Nr. / pagini", „Nr. / proprietăți" on two rows; no name on three |
 
 ## At the end — leaving things as they were found
 
-Delete the four records (`DELETE`).
+Delete the four records (`DELETE`). Set „Câmpuri afișate" back as it was on each list.
 
 ## Notes from the runs
 
 **2026-10-08 — `automated` (Slice #38.57).** Written with the change, and translated at once into
 `e2e/layout/domain-lists-one-line.spec.ts`, which the test runner ran green (the slice's handover names the run).
+
+**2026-10-18 — step 5 added for #39.83.** The three-row band of column names, read on four columns per list. Not
+driven by hand: the spec, extended with it, is what checks it.

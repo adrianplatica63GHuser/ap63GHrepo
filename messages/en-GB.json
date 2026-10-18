@@ -1749,9 +1749,9 @@
       "dateDocument": "Date",
       "institution": "Institution / Notariat",
       "subject": "Subject",
-      "pageCount": "Pages",
-      "personCount": "Persons",
-      "propertyCount": "Properties",
+      "pageCount": "No. of Pages",
+      "personCount": "No. of Persons",
+      "propertyCount": "No. of Properties",
       "createdAt": "Added on"
     },
     "sections": {

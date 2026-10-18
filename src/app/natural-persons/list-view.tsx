@@ -12,6 +12,8 @@ import { ArrowRight, ChevronLeft, ChevronRight, Plus, Trash2 } from "lucide-reac
 import { IconButton } from "@/lib/ui/icon-button";
 import { FixedColumns, ONE_LINE, TABLE_FRAME, cellTitle, columnHead, fixedTable } from "@/components/table/fixed-columns";
 import { LIST_TOOLBAR, useListEdge } from "@/components/table/list-edge";
+import { ListHeadCell } from "@/components/table/list-head";
+import { twoRowName } from "@/lib/ui/list-head";
 import type { ColumnName } from "@/lib/ui/field-widths";
 import { newTabIfAsked } from "@/lib/ui/row-link";
 import { ListPreviewRow, ListPreviews, PreviewButton } from "@/components/tiles/preview-tiles";
@@ -396,18 +398,19 @@ export function NaturalPersonListView() {
                     className="h-4 w-4 rounded border-wire accent-cta"
                   />
                 </th>
-                <th className="px-4 py-2" {...columnHead("listPersonName")}>{t("table.name")}</th>
-                <th className="px-4 py-2" {...columnHead("listPersonNickname")}>{t("table.nickname")}</th>
+                <ListHeadCell column="listPersonName" name={t("table.name")} />
+                <ListHeadCell column="listPersonNickname" name={t("table.nickname")} />
                 {shownCols.map((col) => {
                   const filterKey = NATURAL_PERSON_COLUMN_FILTERS[col.key];
                   return (
-                    <th key={col.key} className="px-4 py-2" {...columnHead(col.column)}>
-                      {col.label}
-                      {/* Slice #39.82: a funnel only on the columns that filter; it opens the filter under itself. */}
-                      {filterKey && (
-                        <FilterFunnel field={filterKey} label={filterLabel(filterKey)} active={filters[filterKey] !== undefined} onOpen={() => setEditingFilter(filterKey)} />
-                      )}
-                    </th>
+                    <ListHeadCell
+                      key={col.key}
+                      column={col.column}
+                      name={col.label}
+                      twoRows={twoRowName("person", col.key)}
+                      // Slice #39.82: a funnel only on the columns that filter; it opens the filter under itself. #39.83: on row 3.
+                      funnel={filterKey ? <FilterFunnel field={filterKey} label={filterLabel(filterKey)} active={filters[filterKey] !== undefined} onOpen={() => setEditingFilter(filterKey)} /> : undefined}
+                    />
                   );
                 })}
                 <th className="px-4 py-2" {...columnHead("listRowActions")} />
