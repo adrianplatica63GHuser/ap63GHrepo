@@ -677,7 +677,7 @@ export const SKILLS: readonly Skill[] = [
     },
     predecessors: ["workspace-find-in-a-list", "links-read-related-tile"],
     screens: ["admin-groups", "admin-group-editor", "admin-stamps", "admin-stamp-applicator"],
-    cases: ["TC-GRP-01", "TC-GRP-02", "TC-GRP-03", "TC-GRP-04", "TC-STAMP-01", "TC-STAMP-02"],
+    cases: ["TC-GRP-01", "TC-GRP-02", "TC-GRP-03", "TC-GRP-04", "TC-STAMP-01", "TC-STAMP-02", "TC-MAP-07"],
     manual: ["links-classify-groups", "links-classify-stamps", "admin-groups-groups", "admin-groups-stamps", "reports-search-filters"],
   },
 

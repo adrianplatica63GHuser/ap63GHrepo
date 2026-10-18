@@ -13,9 +13,10 @@ const MARK = `${E2E_MARKER}LAYOUT-05`;
 const LONG = "cu o denumire mult prea lungă ca să încapă pe un singur rând al listei, oricât de lată ar fi fereastra";
 
 // #39.24: `gap` is the space from a row's box to its name's first letter — 30 % of 144 px on Proprietăți, 50 % of 72 on
-// the persons' lists (Adrian, 2026-10-13), Acte's as it was.
-const LISTS: { path: string; search: string; gap: number }[] = [
-  { path: "/properties", search: "caută după cod, poreclă, nr. cadastru, carte funciară, tarla sau parcelă", gap: 43 },
+// the persons' lists (Adrian, 2026-10-13), Acte's as it was. #39.73: Proprietăți has no box any more (its delete went,
+// and its ticks with it), so there is no gap to measure there, and no header box to align with — `null`.
+const LISTS: { path: string; search: string; gap: number | null }[] = [
+  { path: "/properties", search: "caută după cod, poreclă, nr. cadastru, carte funciară, tarla sau parcelă", gap: null },
   { path: "/natural-persons", search: "caută după cod, nume, email sau telefon", gap: 36 },
   { path: "/judicial-persons", search: "caută după cod, nume, poreclă sau ID", gap: 36 },
   { path: "/documents", search: "caută după cod, titlu sau nr. document", gap: 72 },
@@ -54,11 +55,11 @@ async function reading(page: Page) {
       .some((b) => b.width > 0 && b.top < g.bottom && b.bottom > g.top && b.right > g.left + 1);
     const toolbar = document.querySelector<HTMLElement>("[data-list-toolbar]")!.getBoundingClientRect().width;
     // #39.24: the gap from the row's box to its name's first letter, and the header's box over the rows'.
-    const box = rows[0].querySelector<HTMLElement>("input[type=checkbox]")!.getBoundingClientRect();
+    const box = rows[0].querySelector<HTMLElement>("input[type=checkbox]")?.getBoundingClientRect() ?? null;
     const text = [...rows[0].cells[1].childNodes].find((n) => (n.textContent ?? "").trim())!;
     const range = document.createRange();
     range.selectNodeContents(text);
-    const headBox = table.querySelector<HTMLElement>("thead input[type=checkbox]")!.getBoundingClientRect();
+    const headBox = table.querySelector<HTMLElement>("thead input[type=checkbox]")?.getBoundingClientRect() ?? null;
     return {
       rows: rows.length,
       notOneLine,
@@ -66,8 +67,8 @@ async function reading(page: Page) {
       tallest: Math.max(...rows.map((r) => Math.round(r.getBoundingClientRect().height))),
       overlap,
       frameAtLeastToolbar: table.parentElement!.getBoundingClientRect().width + 1 >= toolbar - 1,
-      gap: Math.round(range.getBoundingClientRect().left - box.right),
-      boxesAligned: Math.abs(headBox.left - box.left) < 0.5,
+      gap: box ? Math.round(range.getBoundingClientRect().left - box.right) : null,
+      boxesAligned: box && headBox ? Math.abs(headBox.left - box.left) < 0.5 : null,
     };
   });
 }
@@ -96,7 +97,7 @@ test.describe("TC-LAYOUT-05 — cele patru liste, câte un rând pe linie", () =
           await expect(page.locator("main table[data-width-table] tbody tr").filter({ hasText: MARK })).toHaveCount(1, { timeout: 30_000 });
           const r = await reading(page);
           expect({ width, list: list.path, rows: r.rows, notOneLine: r.notOneLine, buttonsOneLine: r.buttonsOneLine, oneLineTall: r.tallest < 56, overlap: r.overlap, frame: r.frameAtLeastToolbar, gap: r.gap, boxesAligned: r.boxesAligned })
-            .toEqual({ width, list: list.path, rows: 1, notOneLine: [], buttonsOneLine: true, oneLineTall: true, overlap: false, frame: true, gap: list.gap, boxesAligned: true });
+            .toEqual({ width, list: list.path, rows: 1, notOneLine: [], buttonsOneLine: true, oneLineTall: true, overlap: false, frame: true, gap: list.gap, boxesAligned: list.gap === null ? null : true });
         }
       }
     } finally {
