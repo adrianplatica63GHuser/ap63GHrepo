@@ -310,6 +310,9 @@
         "adding": "Adding…",
         "cancel": "Close",
         "tooManyGroups": "At least one of the properties is already in 3 groups, the most the application allows. Take it out of the selection or out of another group.",
+        "overLimit": "{count, plural, one {The property below is already in {max} groups, the most the application allows. Take it out of one of its groups, or out of the selection.} other {The # properties below are each already in {max} groups, the most the application allows. Take them out of one of their groups, or out of the selection.}}",
+        "overLimitIn": "already in",
+        "removeOverLimit": "{count, plural, one {Take it out of the selection} other {Take them out of the selection}}",
         "failed": "The properties could not be added to the group. Try again."
       },
       "addedToGroup": "{added, plural, =0 {Every selected property was already in {code}} one {# property added to {code}} other {# properties added to {code}}}"

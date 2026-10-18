@@ -310,6 +310,9 @@
         "adding": "Se adaugă…",
         "cancel": "Renunță",
         "tooManyGroups": "Cel puțin una dintre proprietăți este deja în 3 grupuri, cât permite aplicația. Scoateți-o din selecție sau dintr-un alt grup.",
+        "overLimit": "{count, plural, one {Proprietatea de mai jos este deja în {max} grupuri, cât permite aplicația. Scoateți-o dintr-unul din grupurile ei sau din selecție.} few {Cele # proprietăți de mai jos sunt deja fiecare în {max} grupuri, cât permite aplicația. Scoateți-le dintr-unul din grupurile lor sau din selecție.} other {Cele # de proprietăți de mai jos sunt deja fiecare în {max} grupuri, cât permite aplicația. Scoateți-le dintr-unul din grupurile lor sau din selecție.}}",
+        "overLimitIn": "deja în",
+        "removeOverLimit": "{count, plural, one {Scoate-o din selecție} other {Scoate-le din selecție}}",
         "failed": "Proprietățile nu au putut fi adăugate la grup. Încercați din nou."
       },
       "addedToGroup": "{added, plural, =0 {Toate proprietățile selectate erau deja în {code}} one {O proprietate adăugată la {code}} few {# proprietăți adăugate la {code}} other {# de proprietăți adăugate la {code}}}"

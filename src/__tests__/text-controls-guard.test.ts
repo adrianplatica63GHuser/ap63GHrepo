@@ -292,6 +292,7 @@ const ALLOW: Record<string, Allowed[]> = {
     ["A056", "{id === \"roadmap\" ? t(\"map.typeStreet\") : t(\"map.typeSat"],
     ["A062", "{t(\"mapTitle\")}"],
     ["A062", "{t(\"map.selectedPropertiesTab\")} <span className=\"ml-1.5"],
+    ["A113", "{og.code}"], // 2026-10-18: the cap's list — a group's code opens the group, to take the property out
   ],
   "src/app/signup/signup-form.tsx": [
     ["A108", "{state === \"submitting\" ? buttonSubmitting : buttonSubmi"],

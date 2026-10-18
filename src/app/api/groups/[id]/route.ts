@@ -69,7 +69,11 @@ export async function PATCH(request: NextRequest, ctx: Ctx): Promise<Response> {
     return Response.json(result);
   } catch (err) {
     if (err instanceof GroupError) {
-      return Response.json({ error: err.message }, { status: err.status });
+      // The cap names every record over it (`overLimit`), so the screen can say which and where.
+      return Response.json(
+        err.overLimit ? { error: err.message, overLimit: err.overLimit } : { error: err.message },
+        { status: err.status },
+      );
     }
     const dbResponse = dbErrorToResponse(err);
     if (dbResponse) return dbResponse;

@@ -23,6 +23,7 @@ const MAP = code(read("src", "app", "properties", "map", "property-map.tsx"));
 const LIST = code(read("src", "app", "properties", "list-view.tsx"));
 const GROUPS = code(read("src", "app", "admin", "groups", "_components", "groups-list-view.tsx"));
 const QUERIES = code(read("src", "lib", "groups", "queries.ts"));
+const ROUTE = code(read("src", "app", "api", "groups", "[id]", "route.ts"));
 
 const A = "11111111-1111-4111-8111-111111111111";
 const B = "22222222-2222-4222-8222-222222222222";
@@ -108,5 +109,28 @@ describe("the Properties list deletes nothing either (Ask first 1)", () => {
     expect(LIST).not.toContain("selectedIds");
     expect(LIST).not.toContain('type="checkbox"');
     expect(LIST).not.toContain("shared.bulkDelete");
+  });
+});
+
+// 2026-10-18 — Adrian: „I would like to be told which one belongs to three groups already, so I can possibly go and
+// remove it from one of the pre-existing groups"; and the refused add showed up as an error in the dev server.
+describe("the three-groups cap names the properties over it", () => {
+  it("the server finds every one, with its groups, and sends them as `overLimit`", () => {
+    expect(QUERIES).toContain("membersOverLimit(");
+    expect(QUERIES).toContain("throw new GroupError(`${rule}: ${named}`, 409, overLimit);");
+    expect(ROUTE).toContain("{ error: err.message, overLimit: err.overLimit }");
+  });
+
+  it("the picker lists them, each group a link to its own screen, and can take them out of the selection", () => {
+    expect(MAP).toContain('t("map.groupPicker.overLimit", { count: err.overLimit.length, max: MAX_GROUPS_PER_PROPERTY })');
+    expect(MAP).toContain("href={`/admin/groups/${og.id}`}");
+    expect(MAP).toContain('t("map.groupPicker.removeOverLimit", { count: overLimit.length })');
+  });
+
+  it("the refused add is not logged as an error — only a real failure is", () => {
+    const catchBlock = MAP.slice(MAP.indexOf("if (err instanceof AddToGroupError && err.status === 409) {"));
+    const capBranch = catchBlock.slice(0, catchBlock.indexOf("} else {"));
+    expect(capBranch).not.toContain("console.error");
+    expect(catchBlock.slice(0, catchBlock.indexOf('setAddError(t("map.groupPicker.failed"))'))).toContain("console.error");
   });
 });

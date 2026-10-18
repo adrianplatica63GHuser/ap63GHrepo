@@ -24,10 +24,11 @@ import {
   groupMember,
   groups,
   person,
+  principalObject,
   property,
 } from "@/db/schema";
 import { encodeGroupCode } from "./code";
-import { computeMemberDelta } from "./members";
+import { computeMemberDelta, membersOverLimit, type OverLimitItem } from "./members";
 import {
   MAX_GROUPS_PER_ITEM,
   MAX_GROUPS_PER_PROPERTY,
@@ -38,6 +39,7 @@ import {
 
 // Re-export the pure member-set helper so consumers don't reach across files.
 export { computeMemberDelta };
+export type { OverLimitItem };
 
 // ---------------------------------------------------------------------------
 // Error type — lets API routes map domain failures to the right HTTP status.
@@ -45,10 +47,13 @@ export { computeMemberDelta };
 
 export class GroupError extends Error {
   status: number;
-  constructor(message: string, status: number) {
+  /** The group cap (409): every record the update would put over it, with the groups it is already in. */
+  overLimit?: OverLimitItem[];
+  constructor(message: string, status: number, overLimit?: OverLimitItem[]) {
     super(message);
     this.name = "GroupError";
     this.status = status;
+    if (overLimit) this.overLimit = overLimit;
   }
 }
 
@@ -486,76 +491,51 @@ export async function updateGroup(
       // Enforce the per-item group cap on new additions.
       // ------------------------------------------------------------------
       if (toAddPoIds.length > 0) {
-        if (targetType === "PROPERTY") {
-          const counts = await tx
-            .select({
-              poId: groupMember.principalObjectId,
-              n:    sql<number>`count(DISTINCT ${groupMember.groupId})::int`,
-            })
-            .from(groupMember)
-            .where(and(inArray(groupMember.principalObjectId, toAddPoIds), ne(groupMember.groupId, id)))
-            .groupBy(groupMember.principalObjectId);
-          const countByPoId = new Map(counts.map((c) => [c.poId, c.n]));
-
-          for (const eid of toAdd) {
+        // Persons count only groups of their own type (PHYSICAL and JUDICIAL namespaces are separate); properties and
+        // documents count every other group they are in, as before.
+        const isPerson = targetType === "PHYSICAL_PERSON" || targetType === "JUDICIAL_PERSON";
+        const memberships = await tx
+          .select({ poId: groupMember.principalObjectId, groupId: groups.id, groupCode: groups.code })
+          .from(groupMember)
+          .innerJoin(groups, eq(groups.id, groupMember.groupId))
+          .where(
+            and(
+              inArray(groupMember.principalObjectId, toAddPoIds),
+              ne(groupMember.groupId, id),
+              isPerson ? eq(groups.targetType, targetType) : undefined,
+            ),
+          );
+        const limit = targetType === "PROPERTY" ? MAX_GROUPS_PER_PROPERTY : MAX_GROUPS_PER_ITEM;
+        const over = membersOverLimit(
+          toAdd.flatMap((eid) => {
             const poId = entityPoMap.get(eid);
-            if ((countByPoId.get(poId ?? "") ?? 0) >= MAX_GROUPS_PER_PROPERTY) {
-              throw new GroupError(
-                `A property cannot belong to more than ${MAX_GROUPS_PER_PROPERTY} groups`,
-                409,
-              );
-            }
-          }
+            return poId ? [{ id: eid, poId }] : [];
+          }),
+          memberships,
+          limit,
+        );
 
-        } else if (targetType === "PHYSICAL_PERSON" || targetType === "JUDICIAL_PERSON") {
-          // Count only same-type groups (PHYSICAL and JUDICIAL namespaces are separate).
-          const counts = await tx
-            .select({
-              poId: groupMember.principalObjectId,
-              n:    sql<number>`count(DISTINCT ${groupMember.groupId})::int`,
-            })
-            .from(groupMember)
-            .innerJoin(groups, eq(groups.id, groupMember.groupId))
-            .where(
-              and(
-                inArray(groupMember.principalObjectId, toAddPoIds),
-                ne(groupMember.groupId, id),
-                eq(groups.targetType, targetType),
-              ),
-            )
-            .groupBy(groupMember.principalObjectId);
-          const countByPoId = new Map(counts.map((c) => [c.poId, c.n]));
-
-          for (const eid of toAdd) {
-            const poId = entityPoMap.get(eid);
-            if ((countByPoId.get(poId ?? "") ?? 0) >= MAX_GROUPS_PER_ITEM) {
-              throw new GroupError(
-                `A person cannot belong to more than ${MAX_GROUPS_PER_ITEM} groups of the same type`,
-                409,
-              );
-            }
-          }
-
-        } else if (targetType === "DOCUMENT") {
-          const counts = await tx
-            .select({
-              poId: groupMember.principalObjectId,
-              n:    sql<number>`count(DISTINCT ${groupMember.groupId})::int`,
-            })
-            .from(groupMember)
-            .where(and(inArray(groupMember.principalObjectId, toAddPoIds), ne(groupMember.groupId, id)))
-            .groupBy(groupMember.principalObjectId);
-          const countByPoId = new Map(counts.map((c) => [c.poId, c.n]));
-
-          for (const eid of toAdd) {
-            const poId = entityPoMap.get(eid);
-            if ((countByPoId.get(poId ?? "") ?? 0) >= MAX_GROUPS_PER_ITEM) {
-              throw new GroupError(
-                `A document cannot belong to more than ${MAX_GROUPS_PER_ITEM} groups`,
-                409,
-              );
-            }
-          }
+        if (over.length > 0) {
+          // Each record by its own code, so the screen can say which one and the message names it even where only
+          // the words are shown (the group editor).
+          const codeRows = await tx
+            .select({ poId: principalObject.id, code: principalObject.code })
+            .from(principalObject)
+            .where(inArray(principalObject.id, over.map((o) => o.poId)));
+          const codeByPo = new Map(codeRows.map((r) => [r.poId, r.code]));
+          const overLimit: OverLimitItem[] = over.map((o) => ({
+            id:     o.id,
+            code:   codeByPo.get(o.poId) ?? "",
+            groups: o.groups,
+          }));
+          const named = overLimit
+            .map((o) => `${o.code} (${o.groups.map((g) => g.code).join(", ")})`)
+            .join("; ");
+          const rule =
+            targetType === "PROPERTY" ? `A property cannot belong to more than ${limit} groups`
+            : isPerson                ? `A person cannot belong to more than ${limit} groups of the same type`
+            :                           `A document cannot belong to more than ${limit} groups`;
+          throw new GroupError(`${rule}: ${named}`, 409, overLimit);
         }
       }
 

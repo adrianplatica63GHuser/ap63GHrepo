@@ -2,6 +2,7 @@
 
 import { useNameOr } from "@/components/record/use-name-or";
 import { ArrowRight, Check, FolderPlus, Plus, RotateCcw, ScanEye, Settings2, Square, SquareCheck, X } from "lucide-react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -76,6 +77,7 @@ import {
 import { useMergeDistance } from "@/components/maps/use-merge-distance";
 import { useToast } from "@/components/toast";
 import { GROUPS_FROM_MAP_PATH, forgetNewGroup, readMapSelection, readNewGroup, writeMapSelection } from "@/lib/groups/map-selection";
+import { MAX_GROUPS_PER_PROPERTY } from "@/lib/groups/validation";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -139,11 +141,33 @@ async function fetchPropertyGroups(): Promise<PickerGroup[]> {
   return data.items;
 }
 
-/** Why an add failed: the three-groups cap (409), or anything else. */
+/** A selected property already in as many groups as it may, with those groups — the server's `overLimit`. */
+type OverLimitProperty = { id: string; code: string; groups: { id: string; code: string }[] };
+
+/** Why an add failed: the three-groups cap (409, naming each property over it), or anything else. */
 class AddToGroupError extends Error {
+  readonly overLimit: OverLimitProperty[];
   constructor(readonly status: number, detail: string) {
     super(`Add to group failed (${status})${detail ? `: ${detail}` : ""}`);
     this.name = "AddToGroupError";
+    this.overLimit = parseOverLimit(detail);
+  }
+}
+
+/** The 409's `overLimit`, read defensively: anything unreadable is no list, and the plain message stands. */
+function parseOverLimit(detail: string): OverLimitProperty[] {
+  try {
+    const body = JSON.parse(detail) as { overLimit?: unknown };
+    if (!Array.isArray(body.overLimit)) return [];
+    return body.overLimit.filter(
+      (o): o is OverLimitProperty =>
+        typeof o === "object" && o !== null &&
+        typeof (o as OverLimitProperty).id === "string" &&
+        typeof (o as OverLimitProperty).code === "string" &&
+        Array.isArray((o as OverLimitProperty).groups),
+    );
+  } catch {
+    return [];
   }
 }
 
@@ -966,6 +990,8 @@ export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean 
   const [pickedGroup, setPickedGroup] = useState<string | null>(() => (stored.selecting ? readNewGroup() : null));
   const [adding, setAdding] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
+  // The three-groups cap: which selected properties are over it, and the groups each is already in.
+  const [overLimit, setOverLimit] = useState<OverLimitProperty[]>([]);
   const { toast, show: showToast } = useToast();
 
   // Tab state — showTabs becomes true when "Display all selected" is clicked
@@ -1072,6 +1098,8 @@ export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean 
     queryKey: ["properties", "map"],
     queryFn:  fetchMapData,
   });
+  // The cap's list names a property by its nickname too, which the map already holds.
+  const propertyById = useMemo(() => new globalThis.Map((data?.items ?? []).map((p) => [p.id, p] as const)), [data?.items]);
 
   const items         = data?.items ?? [];
   const allGroupCodes = useMemo(() => data?.allGroupCodes ?? [], [data?.allGroupCodes]);
@@ -1765,6 +1793,7 @@ export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean 
     setPickedGroup(null);
     forgetNewGroup();
     setAddError(null);
+    setOverLimit([]);
     setShowTabs(false);
     setActiveTab("all");
   };
@@ -1788,6 +1817,7 @@ export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean 
     if (!group || selectedIds.size === 0) return;
     setAdding(true);
     setAddError(null);
+    setOverLimit([]);
     try {
       const after = await addToGroup(group.id, [...selectedIds]);
       // How many joined: the members after, less those the picker listed (a member already in it stays as it is).
@@ -1797,9 +1827,19 @@ export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean 
       await queryClient.invalidateQueries({ queryKey: ["properties"] });
       await queryClient.invalidateQueries({ queryKey: ["groups"] });
     } catch (err) {
-      // The message files say what happened; the console keeps the status and the server's own words.
-      console.error("[property-map] add to group failed", err);
-      setAddError(err instanceof AddToGroupError && err.status === 409 ? t("map.groupPicker.tooManyGroups") : t("map.groupPicker.failed"));
+      // The cap is an answer, not a fault: the picker names each property over it and the console stays quiet
+      // (a console.error is what the dev server's overlay shows as an error). Anything else is logged as before.
+      if (err instanceof AddToGroupError && err.status === 409) {
+        setOverLimit(err.overLimit);
+        setAddError(
+          err.overLimit.length > 0
+            ? t("map.groupPicker.overLimit", { count: err.overLimit.length, max: MAX_GROUPS_PER_PROPERTY })
+            : t("map.groupPicker.tooManyGroups"),
+        );
+      } else {
+        console.error("[property-map] add to group failed", err);
+        setAddError(t("map.groupPicker.failed"));
+      }
     } finally {
       setAdding(false);
     }
@@ -2566,9 +2606,50 @@ export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean 
               </div>
 
               {addError && (
-                <p role="alert" className="text-red-600 text-sm rounded bg-red-50 px-3 py-2 border border-red-200">
-                  {addError}
-                </p>
+                <div role="alert" className="text-red-600 text-sm rounded bg-red-50 px-3 py-2 border border-red-200 flex flex-col gap-2">
+                  <p>{addError}</p>
+                  {overLimit.length > 0 && (
+                    <>
+                      <ul className="flex flex-col gap-1 max-h-40 overflow-y-auto" data-over-limit>
+                        {overLimit.map((op) => {
+                          const nickname = propertyById.get(op.id)?.nickname;
+                          return (
+                            <li key={op.id} className="text-zinc-800">
+                              <span className="font-mono font-semibold">{op.code}</span>
+                              {nickname ? <span> · {nickname}</span> : null}
+                              <span className="text-fade"> — {t("map.groupPicker.overLimitIn")} </span>
+                              {op.groups.map((og, i) => (
+                                <span key={og.id}>
+                                  {i > 0 ? ", " : null}
+                                  {/* The group's own screen, where the property can be taken out; the selection and
+                                      the open picker are kept in this tab's storage, so „Înapoi" comes back to them. */}
+                                  <Link href={`/admin/groups/${og.id}`} className="font-mono underline hover:text-red-800">
+                                    {og.code}
+                                  </Link>
+                                </span>
+                              ))}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                      <div>
+                        <IconButton
+                          icon={X}
+                          label={t("map.groupPicker.removeOverLimit", { count: overLimit.length })}
+                          variant="secondary"
+                          size="sm"
+                          showLabel
+                          onClick={() => {
+                            const out = new Set(overLimit.map((o) => o.id));
+                            setSelectedIds((prev) => new Set([...prev].filter((sid) => !out.has(sid))));
+                            setOverLimit([]);
+                            setAddError(null);
+                          }}
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
               )}
 
               <div className="flex gap-3 justify-end">
@@ -2578,7 +2659,7 @@ export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean 
                   variant="secondary"
                   size="lg"
                   disabled={adding}
-                  onClick={() => { setPickerOpen(false); setAddError(null); }}
+                  onClick={() => { setPickerOpen(false); setAddError(null); setOverLimit([]); }}
                 />
                 <IconButton
                   icon={FolderPlus}

@@ -11,7 +11,7 @@
  */
 
 import { encodeGroupCode } from "@/lib/groups/code";
-import { computeMemberDelta } from "@/lib/groups/members";
+import { computeMemberDelta, membersOverLimit } from "@/lib/groups/members";
 import { isPropertyVisibleForGroups } from "@/lib/groups/map-filter";
 
 describe("encodeGroupCode", () => {
@@ -124,5 +124,35 @@ describe("isPropertyVisibleForGroups", () => {
 
   it("_ungrouped sentinel does not affect grouped items", () => {
     expect(isPropertyVisibleForGroups(["GRP-001"], new Set(["_ungrouped"]))).toBe(true);
+  });
+});
+
+// 2026-10-18 — the cap names every record over it, with the groups it is already in, instead of stopping at the first.
+describe("membersOverLimit", () => {
+  const m = (poId: string, groupId: string, groupCode: string) => ({ poId, groupId, groupCode });
+  const three = (poId: string) => [m(poId, "g3", "GRP-003"), m(poId, "g1", "GRP-001"), m(poId, "g2", "GRP-002")];
+
+  it("names each record at the limit, in the order asked for, its groups sorted by code", () => {
+    const out = membersOverLimit(
+      [{ id: "b", poId: "pb" }, { id: "a", poId: "pa" }, { id: "c", poId: "pc" }],
+      [...three("pa"), m("pc", "g1", "GRP-001"), ...three("pb")],
+      3,
+    );
+    expect(out.map((o) => o.id)).toEqual(["b", "a"]);
+    expect(out[1].groups).toEqual([
+      { id: "g1", code: "GRP-001" },
+      { id: "g2", code: "GRP-002" },
+      { id: "g3", code: "GRP-003" },
+    ]);
+  });
+
+  it("is empty when every record is under the limit", () => {
+    expect(membersOverLimit([{ id: "a", poId: "pa" }], [m("pa", "g1", "GRP-001"), m("pa", "g2", "GRP-002")], 3)).toEqual([]);
+  });
+
+  it("counts a repeated membership row once, and a repeated record once", () => {
+    const rows = [m("pa", "g1", "GRP-001"), m("pa", "g1", "GRP-001"), m("pa", "g2", "GRP-002")];
+    expect(membersOverLimit([{ id: "a", poId: "pa" }], rows, 3)).toEqual([]);
+    expect(membersOverLimit([{ id: "a", poId: "pa" }, { id: "a", poId: "pa" }], three("pa"), 3)).toHaveLength(1);
   });
 });
