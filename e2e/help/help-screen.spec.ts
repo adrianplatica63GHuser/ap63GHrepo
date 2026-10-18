@@ -51,6 +51,10 @@ const TC_TEXT = "TC-E2E-HELP-01 — text de ajutor scris de cazul de test.";
  */
 const HELP_TO_WRITE: readonly string[] = [
   // Slice #39.52: none left — every proposal was accepted, the four screens that had no text among them.
+  // Slice #39.67 registered the tarla's two screens with no text; #39.73's run found them „Lipsă". The batch's 39.80
+  // writes the help after 39.73–39.79, and the text is Adrian's on this screen.
+  "Tarlale — Listă",
+  "Tarlale — Detaliu",
 ];
 
 /** Slice #39.52: the screens whose proposals were written against no text, emptied to offer them again. */
