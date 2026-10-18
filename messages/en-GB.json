@@ -1641,7 +1641,7 @@
         "tile-selector": "Shown parts — what the ticks do and where the choice is kept",
         "calc-preview-not-saved": "Calculation — nothing is created until you confirm",
         "select-all-page-only": "Lists — the header tick box only selects the current page",
-        "calc-group-description-autofill": "Calculation — loading a file overwrites the description"
+        "calc-group-description-autofill": "Calculation — choosing another property rewrites the description"
       }
     }
   },
