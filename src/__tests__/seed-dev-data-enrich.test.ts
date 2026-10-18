@@ -1,7 +1,7 @@
 /**
  * What the big seed writes since #39.81 (scripts/seed-dev-data-big/enrich.ts, professions.ts) — its own tarlas, the
  * professions and „Relația cu firma", the institutions as issuers, the persons', companies' and documents' other
- * fields, and the side-road runs. Pure, like the rest of the seed's suite (seed-dev-data-big.test.ts); seed.ts writes
+ * fields. Pure, like the rest of the seed's suite (seed-dev-data-big.test.ts); seed.ts writes
  * what these plan, and the runner's `seed-rehearsal` reads it back from a database.
  */
 import fs from "fs";
@@ -29,14 +29,10 @@ import {
   PUBLIC_BODY_TYPES,
   RELATIONSHIPS,
   relationshipsOf,
-  shareStrings,
-  SIDE_ROAD_RUNS,
-  sideRoadRuns,
   streetViewLine,
   tarlaCodes,
   tarlaParcelLabel,
 } from "../../scripts/seed-dev-data-big/enrich";
-import { shareHundredths } from "@/lib/calculation/side-road-input";
 
 const SEED = 2026;
 const plan = generateFamilies(SEED);
@@ -297,48 +293,7 @@ describe("companies, institutions and issuers", () => {
   });
 });
 
-describe("side-road runs and the last fields", () => {
-  it("shares in hundredths that add up to exactly 100 %", () => {
-    expect(shareStrings([[1, 3], [1, 3], [1, 3]])).toEqual(["33,33", "33,33", "33,34"]);
-    expect(shareStrings([[1, 2], [1, 4], [1, 4]])).toEqual(["50,00", "25,00", "25,00"]);
-  });
-
-  it("a few co-owned drawn lots of four corners, each request one the screen would accept", () => {
-    const runs = sideRoadRuns(makeRng(8), props);
-    expect(runs.length).toBeGreaterThanOrEqual(1);
-    expect(runs.length).toBeLessThanOrEqual(SIDE_ROAD_RUNS);
-    for (const r of runs) {
-      const lot = props.find((p) => p.key === r.property)!;
-      expect(lot.corners).toHaveLength(4);
-      expect(r.owners.map((o) => o.key)).toEqual(lot.owners.map((o) => o.key));
-      expect(r.owners.reduce((s, o) => s + shareHundredths(o.share)!, 0)).toBe(10000);
-      expect([...r.order].sort()).toEqual(r.owners.map((_, i) => i));
-      expect(r.groupDescription).toContain("(date de test)");
-    }
-  });
-
-  it("an owner already at 15 rows on „Legături” gives back one top-up link for the slice — never a family tie", () => {
-    const fit = props.filter((p) => p.corners?.length === 4 && p.surface >= 600 && p.owners.length >= 2 && p.owners.length <= 3 && p.owners.every((o) => o.share) && !p.cluster?.line);
-    const owners = [...new Set(fit.flatMap((p) => p.owners.map((o) => o.key)))];
-    const rows = new Map(owners.map((k) => [k, 15]));
-    // every owner at 15, each with one representative link and one grandparent tie of its own
-    const extra = {
-      personPerson: owners.flatMap((k) => [
-        { holder: k, other: `X-${k}`, role: "Reprezentant legal / Mandatar" as const },
-        { holder: k, other: `Y-${k}`, role: "Bunic" as const },
-      ]),
-      personProperty: [], propertyProperty: [], documentDocument: [], documentProperty: [],
-    };
-    const runs = sideRoadRuns(makeRng(8), props, { rows, extra, max: 15 });
-    expect(runs.length).toBeGreaterThanOrEqual(1);
-    for (const r of runs) for (const o of r.owners) expect(rows.get(o.key)).toBeLessThanOrEqual(15);
-    expect(extra.personPerson.filter((l) => l.role === "Bunic")).toHaveLength(owners.length);
-    const taken = owners.length - extra.personPerson.filter((l) => l.role !== "Bunic").length;
-    expect(taken).toBe(new Set(runs.flatMap((r) => r.owners.map((o) => o.key))).size);
-    // with no link to give back, nobody at 15 is given a slice
-    expect(sideRoadRuns(makeRng(8), props, { rows: new Map(owners.map((k) => [k, 15])), extra: { personPerson: [], personProperty: [], propertyProperty: [], documentDocument: [], documentProperty: [] }, max: 15 })).toEqual([]);
-  });
-
+describe("the last fields", () => {
   it("the Street View line as Google gives it; only on a drawn lot's address", () => {
     expect(streetViewLine({ streetLine: "Str. Gării nr. 12", locality: "Bragadiru", county: "Ilfov", postalCode: "077025" })).toBe("Strada Gării 12, Bragadiru 077025");
     expect(streetViewLine({ streetLine: "Str. Aleea Florilor nr. 3", locality: "Bragadiru", county: "Ilfov", postalCode: "077025" })).toBe("Aleea Florilor 3, Bragadiru 077025");

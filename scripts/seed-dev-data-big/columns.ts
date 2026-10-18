@@ -35,6 +35,9 @@ const S = "seed" as const;
 const REF = "reference" as const;
 const I = "interactions" as const;
 
+/** The side-road runs the seed does not make. */
+const NR: Fill = { not: "No side-road run (Adrian, 2026-10-18): the commit names each slice after its owner, and a property named like a person confused." };
+
 const ACCOUNT = "Adrian's own operational state, not archive data — the seed never writes it.";
 
 export const SEED_COLUMNS: Record<string, TableFill> = {
@@ -142,14 +145,10 @@ export const SEED_COLUMNS: Record<string, TableFill> = {
   help_content: { never: "The help texts are Adrian's to accept (proposals-data.ts); nothing writes a row of them unasked." },
   help_hint: { never: "The help texts are Adrian's to accept (proposals-data.ts); nothing writes a row of them unasked." },
   calculation_run: {
-    scope: { column: "id", set: "runs" },
-    columns: {
-      code: APP, algorithm_type: S, input_params: S, steps_log: S, result_group_id: S, status: APP,
-      notes: { not: "No screen and no function writes a run's notes; the commit route leaves them empty, so the seed does too." },
-      created_by: S,
-    },
+    scope: null,
+    columns: { code: NR, algorithm_type: NR, input_params: NR, steps_log: NR, result_group_id: NR, status: NR, notes: NR, created_by: NR },
   },
-  calculation_run_output: { scope: { column: "calculation_run_id", set: "runs" }, columns: { calculation_run_id: S, principal_object_id: S, output_role: S } },
+  calculation_run_output: { scope: null, columns: { calculation_run_id: NR, principal_object_id: NR, output_role: NR } },
   time_frame_setting: { never: "Settings — Adrian's, not archive data." },
   property_corner_source: { scope: { column: "document_id", set: "documents" }, columns: { document_id: S, property_id: S, created_by: S } },
   ai_paid_read: { never: "The log of paid AI reads — money, not archive data; a seeded row would be a read nobody paid for." },

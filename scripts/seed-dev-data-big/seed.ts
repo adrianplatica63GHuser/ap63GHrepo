@@ -40,8 +40,9 @@
  * parcelare (its lots no longer borrow one of the archive's tarla codes); professions and „Relația cu firma"; the
  * documents' issuers as juridical persons the seed creates (the institutions „Emitent" names) or the notary's office;
  * the person's other phones, e-mails, addresses, MRZ and a child's passport; the company's correspondence address;
- * the Street View line; an import's traces on a few documents; and side-road runs from a co-owned lot, written as the
- * commit route writes them. columns.ts lists every table and column and whether the seed writes it, and the run
+ * the Street View line; and an import's traces on a few documents. No side-road run (2026-10-18, Adrian): the commit
+ * names each slice after its owner, and a property named like a person confused; a manifest that recorded runs still
+ * has them removed. columns.ts lists every table and column and whether the seed writes it, and the run
  * checks that every column it claims holds a value on one of its rows. All of it is in the manifest's `extra` and
  * goes with --remove; a manifest from before #39.81 has no `extra` and is removed as it always was.
  *
@@ -117,11 +118,7 @@ import { updateTarla } from "../../src/lib/tarla/queries";
 import { applyTarlaPlan } from "../../src/lib/tarla/plan-queries";
 import { PLAN_PARCELAR_KEY } from "../../src/lib/tarla/plan-read";
 import { claimCornerSource } from "../../src/lib/properties/corner-source";
-import { createCalculationRun, deleteCalculationRun } from "../../src/lib/calculation/runs";
-import { planSideRoadCommit, SIDE_ROAD_ALGORITHM } from "../../src/lib/calculation/commit-plan";
-import { resolveSideRoadRequest } from "../../src/lib/calculation/side-road-source";
-import { updateGroup } from "../../src/lib/groups/queries";
-import { setInitialProvenance } from "../../src/lib/metadata/queries";
+import { deleteCalculationRun } from "../../src/lib/calculation/runs";
 import { parseTemplateFields } from "../../src/lib/documents/template-fields";
 import { buildPdf, idCardBack, idCardFront, type IdCardData } from "../seed-dev-data/dummy-files";
 import { makeRng } from "./rng";
@@ -159,7 +156,6 @@ import {
   PUBLIC_BODY_TYPES,
   RELATIONSHIPS,
   relationshipsOf,
-  sideRoadRuns,
   TARLA_LOCALITY,
   tarlaCodes,
   type DocumentExtra,
@@ -167,7 +163,6 @@ import {
   type NaturalExtra,
   type PropertyExtra,
   type Relationship,
-  type SideRoadRunPlan,
   type TarlaPlan,
 } from "./enrich";
 import { PROFESSIONS } from "./professions";
@@ -1142,70 +1137,6 @@ async function relatedRows(idList: string[]): Promise<Map<string, number>> {
 }
 
 // ---------------------------------------------------------------------------
-// Side-road runs from a property (#39.79), written as POST /api/calculation/commit writes them
-// ---------------------------------------------------------------------------
-
-/**
- * Each run: the request the screen would send — the lot, its owners and shares, a width, an order — planned by the
- * route's own `planSideRoadCommit` over `resolveSideRoadRequest`, at the first corner and side whose road fits; then
- * the route's five steps: one property per owner linked as „Proprietar", the road, a group of them, the run with its
- * outputs, and provenance ALGORITHM. Every id goes into the manifest as it is made.
- */
-async function writeSideRoadRuns(runs: SideRoadRunPlan[]): Promise<string[]> {
-  const refused: string[] = [];
-  const ownerRole = roleId.get("Proprietar") ?? null;
-  for (const run of runs) {
-    const base = {
-      propertyId: obj(run.property).id,
-      owners: run.owners.map((o) => ({ personId: obj(o.key).id, share: o.share })),
-      width: run.width,
-      order: run.order,
-      groupDescription: run.groupDescription,
-    };
-    let plan: ReturnType<typeof planSideRoadCommit> | null = null;
-    let why = "";
-    for (let corner = 0; corner < 4 && !plan; corner++) {
-      for (const side of ["next", "previous"] as const) {
-        const body = { ...base, road: { corner, side } };
-        try {
-          plan = planSideRoadCommit(await resolveSideRoadRequest(body), body);
-          break;
-        } catch (err) {
-          why = err instanceof Error ? err.message : String(err);
-        }
-      }
-    }
-    if (!plan) {
-      refused.push(`${obj(run.property).code}: ${why}`);
-      continue;
-    }
-    const rec: RunRecord = { id: null, code: null, groupId: null, properties: [] };
-    extra().runs.push(rec);
-    const outputs: { principalObjectId: string; outputRole: string }[] = [];
-    for (const planned of plan.properties) {
-      const full = await createProperty({ nickname: planned.nickname, surfaceAreaMp: planned.surfaceAreaMp, corners: planned.corners }, BY);
-      rec.properties.push({ id: full.property.id, po: full.property.principalObjectId });
-      saveManifest();
-      if (planned.personId) await associatePersonsToProperty(full.property.id, [planned.personId], ownerRole);
-      outputs.push({ principalObjectId: full.property.principalObjectId, outputRole: planned.role });
-    }
-    const group = await createGroup({ targetType: "PROPERTY", description: plan.inputParams.options.groupDescription });
-    rec.groupId = group.id;
-    saveManifest();
-    await updateGroup(group.id, { memberIds: rec.properties.map((p) => p.id) });
-    const made = await createCalculationRun({ algorithmType: SIDE_ROAD_ALGORITHM, inputParams: plan.inputParams, stepsLog: plan.computation, resultGroupId: group.id, outputs, createdBy: BY });
-    rec.id = made.id;
-    rec.code = made.code;
-    saveManifest();
-    // as the route: each call guarded, so a metadata write that fails never undoes a run already written
-    for (const o of outputs) {
-      await setInitialProvenance(o.principalObjectId, "ALGORITHM", BY).catch((err) => console.log(`  ! provenance not recorded on ${o.principalObjectId}: ${err instanceof Error ? err.message : err}`));
-    }
-  }
-  return refused;
-}
-
-// ---------------------------------------------------------------------------
 // Coverage, read back from the database
 // ---------------------------------------------------------------------------
 
@@ -1313,7 +1244,6 @@ type Plans = {
   tarlas: TarlaPlan[];
   docExtras: Map<string, DocumentExtra>;
   docs: DocPlan[];
-  runs: SideRoadRunPlan[];
 };
 
 /** The lines for what #39.81 added, read back from the database. */
@@ -1374,14 +1304,6 @@ async function enrichCoverage(p: Plans): Promise<CoverageLine[]> {
   const [cs] = await rows<Count>("SELECT count(*) AS n FROM property_corner_source WHERE document_id = ANY($1::uuid[])", [docIds]);
   const [inst] = await rows<Count>(`SELECT count(*) AS total, count(*) FILTER (WHERE t.public_body) AS public_body
     FROM judicial_person j LEFT JOIN lookup_judicial_person_type t ON t.id = j.judicial_person_type_id WHERE j.person_id = ANY($1::uuid[])`, [x.institutions.map((o) => o.id)]);
-  const written = x.runs.filter((r) => r.id);
-  const runRows = await rows<{ id: string; group: string | null; outputs: string }>(`SELECT r.id, r.result_group_id AS "group",
-      (SELECT count(*) FROM calculation_run_output o WHERE o.calculation_run_id = r.id) AS outputs
-    FROM calculation_run r WHERE r.id = ANY($1::uuid[])`, [written.map((r) => r.id!)]);
-  const complete = runRows.filter((r) => {
-    const rec = written.find((w) => w.id === r.id)!;
-    return r.group === rec.groupId && Number(r.outputs) === rec.properties.length && rec.properties.length >= 3;
-  }).length;
 
   const dx = [...p.docExtras.values()];
   return enrichLines({
@@ -1405,7 +1327,6 @@ async function enrichCoverage(p: Plans): Promise<CoverageLine[]> {
       pageNotes: num(pages, "notes"), rotated: num(pages, "rotated"), cornerSources: num(cs, "n"),
     },
     institutions: { planned: INSTITUTIONS.length, total: num(inst, "total"), publicBody: num(inst, "public_body"), publicBodyPlanned: INSTITUTIONS.filter((i) => i.publicBody).length },
-    runs: { planned: p.runs.length, written: written.length, complete },
   });
 }
 
@@ -1489,7 +1410,6 @@ async function report(plan: FamilyPlan, tieCounts: Map<TieRole, number>, renamed
   if (sharesDropped) console.log(`! ${sharesDropped} cote nescrise: perechea tip–rol din baza de date nu deține cotă.`);
   const x = extra();
   console.log(`\nTarlalele seed-ului (${TARLA_LOCALITY.locality}): ${plans.tarlas.map((t) => t.code).join(", ") || "niciuna"}`);
-  console.log(`Calcule de drum lateral: ${x.runs.map((r) => r.code).filter(Boolean).join(", ") || "niciunul"}`);
   console.log(`Instituții emitente: ${x.institutions.map((o) => `${o.code} ${o.label}`).join("; ")}`);
   console.log(`\nDate de referință adăugate / completate (${manifest.referenceDataAdded.length}):\n  ${manifest.referenceDataAdded.join("\n  ") || "nimic"}`);
   return lines.every((l) => l.met);
@@ -1623,20 +1543,15 @@ async function main(): Promise<void> {
   const planned = tileRows(plan, props, docs, extra);
   const over = [...planned].filter(([, n]) => n > MAX_LINKS);
   if (over.length) throw new Error(`seed: the plan puts ${over.length} objects past ${MAX_LINKS} rows on „Legături" — a generator bug, nothing deleted to hide it`);
-  // #39.81: the lots to divide — an owner already at 15 rows gives back one top-up link for the slice the run gives them
-  const runPlans = sideRoadRuns(makeRng((SEED ^ 0x51de) >>> 0), props, { rows: planned, extra, max: MAX_LINKS });
   console.log(`· „Legături": ${Object.values(extra).reduce((s, x) => s + x.length, 0)} more links, so every object has 3–15 rows where the plan allows`);
   await writeExtraLinks(extra);
   const meta = planMetadata(makeRng((SEED ^ 0x7a65) >>> 0), manifest.objects.map((o) => ({ key: o.key, kind: o.kind, dead: !!plan.persons.find((p) => p.key === o.key)?.dod })));
   console.log(`· ${GROUPS.length} groups, ${STAMPS.length} stamps, ${TAGS.length} tags, classifications, provenance trails, „Vezi și"`);
   await writeMetadata(meta);
-  console.log(`· ${runPlans.length} side-road runs from a property`);
-  const refused = await writeSideRoadRuns(runPlans);
-  for (const why of refused) console.log(`  ! not divided — ${why}`);
 
   manifest.finishedAt = new Date().toISOString();
   saveManifest();
-  const ok = await report(plan, tieCounts, renamed, props, existing.polys, docs, companies, { plan, details, tarlas: tarlaPlans, docExtras, docs, runs: runPlans });
+  const ok = await report(plan, tieCounts, renamed, props, existing.polys, docs, companies, { plan, details, tarlas: tarlaPlans, docExtras, docs });
   console.log(`\nDone in ${Math.round((Date.now() - t0) / 1000)} s. Manifest: ${path.relative(ROOT, MANIFEST)} — undo with --remove.`);
   if (!ok) process.exitCode = 1;
 }

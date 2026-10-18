@@ -279,7 +279,6 @@ export type EnrichFacts = {
     imported: number; aiInterpreted: number; cited: number; cotaSurface: number; pageNotes: number; rotated: number; cornerSources: number;
   };
   institutions: { planned: number; total: number; publicBody: number; publicBodyPlanned: number };
-  runs: { planned: number; written: number; complete: number };
 };
 
 /** The lines for every field and table the seed fills since #39.81 — read back from the database, like the rest. */
@@ -326,9 +325,6 @@ export function enrichLines(f: EnrichFacts): CoverageLine[] {
     atLeast("Pagini cu note", d.pageNotes, 30),
     atLeast("Pagini rotite", d.rotated, 10),
     atLeast("Loturi desenate dintr-un act de cadastru", d.cornerSources, 5),
-    exactly("Calcule de drum lateral din proprietate", f.runs.written, f.runs.planned),
-    atLeast("Calcule de drum lateral planificate", f.runs.planned, 1),
-    share("Calcule cu grup și proprietăți create", f.runs.complete, f.runs.written, 100),
   ];
 }
 

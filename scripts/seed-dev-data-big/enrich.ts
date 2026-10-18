@@ -22,8 +22,8 @@
  *     correspondence address, the Street View line of a property's address, the owner's UAT on a title, the
  *     surveyor of a cadastral act, the share in m², a page's notes and turn, the cadastral act that drew a lot, and
  *     the traces an import leaves (its title, the AI's reading, the instruments a contract cites).
- *   - SIDE-ROAD RUNS FROM A PROPERTY (#39.79): a few co-owned drawn lots, divided as „Calcul drum lateral" divides
- *     them; seed.ts writes each through the commit route's own steps.
+ *   - NO SIDE-ROAD RUN (Adrian, 2026-10-18): „Creează proprietățile" names each owner's slice after the owner, and a
+ *     property named like a person confused; the seed leaves the calculation history empty.
  */
 import type { Rng } from "./rng";
 import { addDays, addYears, ageAt, dmy, yearOf } from "./dates";
@@ -34,7 +34,6 @@ import type { PropertyPlan, TypeFlags } from "./properties";
 import type { DocPlan } from "./documents";
 import { BRAGADIRU_RANGE, centroid, type Poly } from "./geometry";
 import { LOCALITIES } from "./names";
-import type { ExtraLinks } from "./links";
 import type { Profession } from "./professions";
 
 // ---------------------------------------------------------------------------
@@ -534,91 +533,6 @@ export function documentExtras(r: Rng, docs: DocPlan[], ctx: {
     if (r.chance(0.06)) x.pageNotes = r.pick(PAGE_NOTES);
     if (r.chance(0.03)) x.rotation = r.pick([90, 180, 270] as const);
     out.set(d.key, x);
-  }
-  return out;
-}
-
-// ---------------------------------------------------------------------------
-// Side-road runs
-// ---------------------------------------------------------------------------
-
-export const SIDE_ROAD_RUNS = 3;
-
-export type SideRoadRunPlan = {
-  property: string;
-  owners: { key: string; share: string }[];
-  width: string;
-  order: number[];
-  groupDescription: string;
-};
-
-/** Shares in hundredths that add up to exactly 100 %, the last taking the rest; null when one would be zero. */
-export function shareStrings(shares: [number, number][]): string[] | null {
-  const h = shares.map(([n, d]) => Math.floor((n / d) * 10000));
-  h[h.length - 1] = 10000 - h.slice(0, -1).reduce((s, x) => s + x, 0);
-  if (h.some((x) => x <= 0)) return null;
-  return h.map((x) => `${Math.floor(x / 100)},${String(x % 100).padStart(2, "0")}`);
-}
-
-/** The top-up links a run may take back to make room on an owner's „Legături" — never a family tie. */
-const DROPPABLE_PERSON_ROLES: ReadonlySet<string> = new Set(["Reprezentant legal / Mandatar", "Asociat / Acționar", "Angajat"]);
-
-export type RunRoom = {
-  /** each object's rows on „Legături" as planned (links.ts `tileRows`) — updated as runs are chosen */
-  rows: Map<string, number>;
-  /** the planned top-up links — one is taken back where an owner has no row to spare */
-  extra: ExtraLinks;
-  max: number;
-};
-
-/**
- * A few co-owned drawn lots of four corners to divide: two or three owners in shares, 600 m² or more. Each owner is
- * linked to the slice the run creates — one more row on their „Legături" — so with `room` an owner already at the
- * most rows gives back one top-up link of their own (a representative, associate, employee or neighbour link —
- * never a family tie); a lot whose owner has neither is skipped. MUTATES `room.extra` and `room.rows`.
- */
-export function sideRoadRuns(r: Rng, props: PropertyPlan[], room?: RunRoom): SideRoadRunPlan[] {
-  const fit = props.filter((p) => p.corners?.length === 4 && p.surface >= 600 && p.owners.length >= 2 && p.owners.length <= 3 && p.owners.every((o) => o.share) && !p.cluster?.line);
-  const out: SideRoadRunPlan[] = [];
-  const rowsOf = (k: string) => room?.rows.get(k) ?? 0;
-  const bump = (k: string, by: number) => room?.rows.set(k, rowsOf(k) + by);
-  /** the index of a top-up link of `k`'s that can go: [list, index], or null */
-  const droppable = (k: string): ["pp" | "pr", number] | null => {
-    if (!room) return null;
-    const i = room.extra.personPerson.findIndex((l) => (l.holder === k || l.other === k) && DROPPABLE_PERSON_ROLES.has(l.role));
-    if (i >= 0) return ["pp", i];
-    const j = room.extra.personProperty.findIndex((l) => l.person === k);
-    return j >= 0 ? ["pr", j] : null;
-  };
-  for (const p of r.shuffle(fit)) {
-    if (out.length >= SIDE_ROAD_RUNS) break;
-    const shares = shareStrings(p.owners.map((o) => o.share!));
-    if (!shares) continue;
-    if (room && !p.owners.every((o) => rowsOf(o.key) < room.max || droppable(o.key))) continue;
-    if (room) {
-      for (const o of p.owners) {
-        if (rowsOf(o.key) >= room.max) {
-          const [list, i] = droppable(o.key)!;
-          if (list === "pp") {
-            const [l] = room.extra.personPerson.splice(i, 1);
-            bump(l.holder, -1);
-            bump(l.other, -1);
-          } else {
-            const [l] = room.extra.personProperty.splice(i, 1);
-            bump(l.person, -1);
-            bump(l.property, -1);
-          }
-        }
-        bump(o.key, 1);
-      }
-    }
-    out.push({
-      property: p.key,
-      owners: p.owners.map((o, i) => ({ key: o.key, share: shares[i] })),
-      width: r.pick(["4", "4,5", "5", "6"]),
-      order: r.shuffle(p.owners.map((_, i) => i)),
-      groupDescription: `Drum lateral — ${p.nickname} (date de test)`,
-    });
   }
   return out;
 }

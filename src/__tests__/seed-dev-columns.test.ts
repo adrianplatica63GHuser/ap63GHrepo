@@ -54,7 +54,7 @@ describe("the seed's column map", () => {
     for (const [t, c] of [
       ["lookup_tarla", "locality"], ["lookup_tarla", "notes"], ["tarla_corner", "lat"], ["tarla_parcel", "parcela"], ["tarla_parcel", "use_printed"],
       ["document_tarla", "document_id"], ["natural_person_relationship", "relationship_id"], ["document", "issuer_person_id"], ["document", "issuer_read"],
-      ["calculation_run", "input_params"], ["calculation_run_output", "output_role"], ["natural_person", "physical_person_type_id"],
+      ["natural_person", "physical_person_type_id"],
     ] as const) expect([t, c, fill(t, c)]).toEqual([t, c, "seed"]);
   });
 
