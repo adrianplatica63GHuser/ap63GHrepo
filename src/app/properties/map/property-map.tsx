@@ -1790,7 +1790,9 @@ export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean 
     setAddError(null);
     try {
       const after = await addToGroup(group.id, [...selectedIds]);
-      showToast(t("map.addedToGroup", { added: Math.max(0, after.memberCount - group.memberCount), code: after.code }));
+      // How many joined: the members after, less those the picker listed (a member already in it stays as it is).
+      const added = after.memberCount - group.memberCount;
+      showToast(t("map.addedToGroup", { added: added > 0 ? added : 0, code: after.code }));
       cancelSelection();
       await queryClient.invalidateQueries({ queryKey: ["properties"] });
       await queryClient.invalidateQueries({ queryKey: ["groups"] });

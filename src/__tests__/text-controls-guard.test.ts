@@ -285,16 +285,10 @@ const ALLOW: Record<string, Allowed[]> = {
   "src/app/properties/_components/straighten-dialog.tsx": [
     ["A069", "{t(\"confirm\")}"],
   ],
-  "src/app/properties/list-view.tsx": [
-    ["A110", "{noLabel}"],
-    ["A110", "{yesLabel}"],
-  ],
   "src/app/properties/map/property-map.tsx": [
     ["A056", "{id === \"roadmap\" ? t(\"map.typeStreet\") : t(\"map.typeSat"],
     ["A062", "{t(\"mapTitle\")}"],
     ["A062", "{t(\"map.selectedPropertiesTab\")} <span className=\"ml-1.5"],
-    ["A110", "{t(\"map.confirmDelete.cancel\")}"],
-    ["A110", "{deleting ? t(\"map.confirmDelete.deleting\") : t(\"map.con"],
   ],
   "src/app/signup/signup-form.tsx": [
     ["A108", "{state === \"submitting\" ? buttonSubmitting : buttonSubmi"],

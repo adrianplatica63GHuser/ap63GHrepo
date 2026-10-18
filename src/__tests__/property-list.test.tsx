@@ -49,7 +49,8 @@ describe("the Properties list (Slice #37.61)", () => {
     // Slice #39.61 added the filter bar's signature — and only that — to both. It read
     // `["properties", "list", debouncedSearch, currentPage]` and `${debouncedSearch}|${currentPage}` until then.
     expect(VIEW).toMatch(/queryKey: \["properties", "list", debouncedSearch, currentPage, filterSig\]/);
-    expect(VIEW).toMatch(/const pageKey = `\$\{debouncedSearch\}\|\$\{currentPage\}\|\$\{filterSig\}`;/);
+    // Slice #39.73: no `pageKey` any more — it emptied the tick boxes, and the list has none since its delete went.
+    expect(VIEW).not.toContain("pageKey");
   });
 
   it("has no „Cod” column; Poreclă is always the first after the checkbox (#37.72)", () => {
