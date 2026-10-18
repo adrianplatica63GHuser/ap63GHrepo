@@ -841,8 +841,9 @@ export function DocumentListView({
         {/* Slice #39.85: as wide as „Adaugă …", its whole explanation on hover. */}
         <ListSearchBox value={searchInput} onChange={setSearchInput} explanation={t("searchPlaceholder")} />
 
-        {/* Slice #37.62: the shared chooser, as on the other three lists — its list
-            hanging from the right, the button being near the toolbar's end. */}
+        {/* Slice #37.62: the shared chooser, as on the other three lists. Its list hung from the right while the button
+            stood near the toolbar's end; since #39.85 the search box before it is as narrow as „Adaugă act", so a list
+            hung from the right would reach under the sidebar — it hangs from the left, as on the other lists. */}
         <FieldChooser
           label={t("chooseFields")}
           hint={t("chooseFieldsHint", { max: MAX_OPT })}
@@ -850,7 +851,6 @@ export function DocumentListView({
           visible={chooser.visible}
           max={MAX_OPT}
           onToggle={chooser.toggle}
-          align="right"
         />
 
         {/* #37.42 (A014): CalendarClock, a toggle. Pressed is the strong `primary` fill and `aria-pressed`. */}
