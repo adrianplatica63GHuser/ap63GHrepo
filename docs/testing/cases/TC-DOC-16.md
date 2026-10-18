@@ -130,3 +130,6 @@ corrected spec green.
 **2026-10-18 — step 1 rewritten for #39.84.** The sign and „Câmp specific:" are on the filter bar again, after „Tip
 document:", where „+ Filtru" stood until #39.82 (#39.74 had put them on the toolbar). The photographs now take the
 toolbar and the bar together.
+
+**2026-10-18 — `automated` (Slice #39.84).** The test runner's targeted run 20261018T163815Z-24052 on 5f9e330 ran
+`e2e/document/document-type-filter.spec.ts` green with the new toolbar and bar (lint, tsc and the slice's jest suites green too).

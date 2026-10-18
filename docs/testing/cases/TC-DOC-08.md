@@ -218,3 +218,6 @@ with the band of names (lint, tsc and the slice's jest suites green too).
 mark … to replace it followed by the type specific field and information button; The Expiring Soon button will slide
 left close to field picker button". „Câmp specific" went back down to the filter bar, after „Tip document:", where
 „+ Filtru" stood until #39.82; „Expiră curând" stays on the toolbar, now right after „Câmpuri afișate".
+
+**2026-10-18 — `automated` (Slice #39.84).** The test runner's targeted run 20261018T163815Z-24052 on 5f9e330 ran
+`e2e/document/document-list.spec.ts` green with the new toolbar and bar (lint, tsc and the slice's jest suites green too).

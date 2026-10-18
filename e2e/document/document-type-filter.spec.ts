@@ -1,6 +1,6 @@
 /**
  * Case:   TC-DOC-16 — „Tip document:" numește tipul ales; „Câmp specific" merge doar pentru un singur tip cu formular
- * Source: docs/testing/cases/TC-DOC-16.md, „Last green" 2026-10-06
+ * Source: docs/testing/cases/TC-DOC-16.md, „Last green" 2026-10-18
  *
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim.
