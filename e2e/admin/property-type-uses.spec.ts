@@ -1,5 +1,5 @@
 /**
- * Case:   TC-VL-11 — „Tipuri de proprietate și folosințe”: tipurile, folosințele și ce folosințe permite fiecare tip
+ * Case:   TC-VL-11 — „Tipuri de Proprietate și Folosințe”: tipurile, folosințele și ce folosințe permite fiecare tip
  * Source: docs/testing/cases/TC-VL-11.md, „Last green" 2026-10-17
  *
  * A translation of the case file, step for step. Every Romanian string below is quoted from it verbatim.
@@ -60,7 +60,7 @@ test.describe("TC-VL-11 — tipurile de proprietate și folosințele", () => {
       // Step 1 — the page, marked under „Tipuri de obiecte”; „Liste de valori” without the uses; the three tiles.
       await page.goto("/admin/value-lists?list=property-types");
       const nav = page.getByRole("navigation", { name: "Liste de referință" });
-      await expect(nav.getByRole("button", { name: "Tipuri de proprietate și folosințe", exact: true })).toHaveAttribute("aria-current", "page", { timeout: 30_000 });
+      await expect(nav.getByRole("button", { name: "Tipuri de Proprietate și Folosințe", exact: true })).toHaveAttribute("aria-current", "page", { timeout: 30_000 });
       const valueLists = nav.locator("[data-category]").nth(2).locator("button[data-list-key]");
       // #39.70: „Relația cu firma" after „Cetățenie" — was the three without it.
       await expect(valueLists).toHaveText(["Indicative Tarla", "Cetățenie", "Relația cu firma"]);
@@ -90,7 +90,7 @@ test.describe("TC-VL-11 — tipurile de proprietate și folosințele", () => {
 
       // Step 4 — the uses' address opens the same page.
       await page.goto("/admin/value-lists?list=use-categories");
-      await expect(nav.getByRole("button", { name: "Tipuri de proprietate și folosințe", exact: true })).toHaveAttribute("aria-current", "page", { timeout: 30_000 });
+      await expect(nav.getByRole("button", { name: "Tipuri de Proprietate și Folosințe", exact: true })).toHaveAttribute("aria-current", "page", { timeout: 30_000 });
       await expect(grid(page)).toBeVisible();
 
       // Step 5 — the property: its use kept, the type's one offered, the sentence.
@@ -127,6 +127,31 @@ test.describe("TC-VL-11 — tipurile de proprietate și folosințele", () => {
       await press(page, "Drumuri", "Teren intravilan");
       ticked = false;
       await expect(row(page, "Teren intravilan").locator("[data-allows-all]")).toHaveText("(toate)", { timeout: 15_000 });
+
+      // Step 9 — #39.75: tiles. At 1920 the types (5 units) and the uses (3) side by side, the grid (5) under the
+      // types; each list with the same gap either side; „Implicit" above. At 1366 the three one under another.
+      const tileOf = (k: string) => page.locator(`[data-tile="${k}"]`);
+      const at = async () =>
+        page.evaluate(() =>
+          Object.fromEntries(
+            [...document.querySelectorAll<HTMLElement>("[data-reference-tiles] [data-tile]")].map((t) => {
+              const r = t.getBoundingClientRect();
+              const list = (t.querySelector("table") as HTMLElement).getBoundingClientRect();
+              return [t.dataset.tile, { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), units: Number(t.dataset.tileUnits), left: list.x - r.x, right: r.right - list.right }];
+            }),
+          ),
+        );
+      await expect(page.locator('[data-reference-tiles] [data-tile-positions-reset="reference-property-types"]')).toBeVisible();
+      await page.setViewportSize({ width: 1920, height: 1080 });
+      await expect.poll(async () => { const t = await at(); return t["use-categories"]?.y === t["property-types"]?.y && t["use-categories"].x > t["property-types"].x; }, { timeout: 15_000 }).toBe(true);
+      const wide = await at();
+      expect([wide["property-types"].units, wide["use-categories"].units, wide["type-uses"].units]).toEqual([5, 3, 5]);
+      expect(wide["type-uses"].x).toBe(wide["property-types"].x);
+      expect(wide["type-uses"].y).toBeGreaterThan(wide["property-types"].y);
+      for (const [k, t] of Object.entries(wide)) expect({ k, even: Math.abs(t.left - t.right) <= 2 }).toEqual({ k, even: true });
+      await expect(tileOf("property-types")).toHaveCSS("width", "804px");
+      await page.setViewportSize({ width: 1366, height: 900 });
+      await expect.poll(async () => { const t = await at(); return new Set(Object.values(t).map((v) => v.x)).size; }, { timeout: 15_000 }).toBe(1);
     } finally {
       if (ticked) {
         await page.request.put("/api/admin/property-type-uses", {

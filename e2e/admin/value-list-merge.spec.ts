@@ -85,13 +85,13 @@ test.describe("TC-VL-02 — „Date de referință” pe o pagină, două valori
       );
       expect(groups.map((g) => g.map((b) => b.name))).toEqual([
         // #39.66: „Categorii Folosință" is a tile on the property types' page, named for both.
-        ["Tipuri de Persoană Fizică", "Tipuri de Persoană Juridică", "Tipuri de proprietate și folosințe", "Tipuri de Document"],
+        ["Tipuri de Persoană Fizică", "Tipuri de Persoană Juridică", "Tipuri de Proprietate și Folosințe", "Tipuri de Document"],
         ["Roluri Persoane", "Legături Proprietate → Proprietate", "Legături Document → Document"],
         // #39.70: „Relația cu firma" after „Cetățenie".
         ["Indicative Tarla", "Cetățenie", "Relația cu firma"],
       ]);
       expect(groups.flat().filter((b) => !b.oneLine || !b.whole).map((b) => b.name)).toEqual([]);
-      await expect(nav.getByRole("button", { name: "Tipuri de proprietate și folosințe", exact: true })).toHaveAttribute("aria-current", "page");
+      await expect(nav.getByRole("button", { name: "Tipuri de Proprietate și Folosințe", exact: true })).toHaveAttribute("aria-current", "page");
       const panel = page.getByRole("region", { name: "Categorii Folosință", exact: true });
       // Slice #38.59: the header is two lines, „Folosit de" over „(n obiecte)".
       await expect(panel.getByRole("columnheader", { name: /^folosit de\s*\(n obiecte\)$/i })).toBeVisible({ timeout: 30_000 });

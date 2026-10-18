@@ -58,8 +58,8 @@ describe("the categories (nothing disappears)", () => {
     expect(listsOnPage("property-types")).toEqual(["property-types", "use-categories"]);
     expect(listsOnPage("citizenships")).toEqual(["citizenships"]);
     expect(categoryOfList("use-categories")).toBe("objectTypes");
-    expect(ro.valueList.lists.propertyTypesPage).toBe("Tipuri de proprietate și folosințe");
-    expect(en.valueList.lists.propertyTypesPage).toBe("Property types and uses");
+    expect(ro.valueList.lists.propertyTypesPage).toBe("Tipuri de Proprietate și Folosințe");
+    expect(en.valueList.lists.propertyTypesPage).toBe("Property Types and Uses");
   });
 
   it("keep no category key that names a group the page no longer has", () => {

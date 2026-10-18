@@ -1,4 +1,4 @@
-# TC-VL-11 — „Tipuri de proprietate și folosințe”: tipurile, folosințele și ce folosințe permite fiecare tip
+# TC-VL-11 — „Tipuri de Proprietate și Folosințe”: tipurile, folosințele și ce folosințe permite fiecare tip
 
 | | |
 |---|---|
@@ -11,7 +11,7 @@
 ## What this proves
 
 Since Slice #39.66 the property types and the use categories are one page of „Date de referință”,
-„Tipuri de proprietate și folosințe”, with three tiles: the types, the uses, and a grid of which uses
+„Tipuri de Proprietate și Folosințe”, with three tiles: the types, the uses, and a grid of which uses
 each type allows. A type with no tick allows every use. The property form offers in „Categorie de
 folosință” only the uses the chosen type allows, and keeps a use saved before that the type no longer
 allows, saying so under the field. A grid tick that does not change the form's list, a type with no
@@ -33,14 +33,15 @@ The window is 1366 × 900.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens `/admin/value-lists?list=property-types` | „Tipuri de proprietate și folosințe” marked on the left, under „Tipuri de obiecte”; „Liste de valori” holds „Indicative Tarla”, „Cetățenie”, „Relația cu firma” (#39.72 retired „Instituții”). On the right, one under the other: „Tipuri de Proprietate”, „Categorii Folosință”, „Folosințe permise pentru fiecare tip” |
+| 1 | Opens `/admin/value-lists?list=property-types` | „Tipuri de Proprietate și Folosințe” marked on the left, under „Tipuri de obiecte”; „Liste de valori” holds „Indicative Tarla”, „Cetățenie”, „Relația cu firma” (#39.72 retired „Instituții”). On the right, one under the other: „Tipuri de Proprietate”, „Categorii Folosință”, „Folosințe permise pentru fiecare tip” |
 | 2 | Reads „Tipuri de Proprietate” and „Categorii Folosință” | The nine types „Teren extravilan”, „Teren intravilan”, „Teren construit”, „Liniară”, „Casă”, „Apartament”, „Garaj”, „Spațiu comercial”, „Birou” — the tile puts the unused ones after the used (#38.35), the grid of step 3 lists them in this order. Among the uses „Curți-construcții” and „Drumuri”; no value in both lists |
 | 3 | Reads the grid | „Teren extravilan” ticked on „Arabil”, „Pășune”, „Fânețe”, „Vie”, „Livadă”, „Pădure”, „Ape”, „Neproductiv”; „Casă”, „Apartament”, „Garaj”, „Spațiu comercial”, „Birou” on „Curți-construcții” only; „Teren intravilan”, „Teren construit”, „Liniară” with no tick and „(toate)” after the name |
-| 4 | Opens `/admin/value-lists?list=use-categories` | The same page, „Tipuri de proprietate și folosințe” marked on the left |
+| 4 | Opens `/admin/value-lists?list=use-categories` | The same page, „Tipuri de Proprietate și Folosințe” marked on the left |
 | 5 | Opens „TC-VL-11 Casă” and its „Categorie de folosință” | Offered: „niciunul”, „Arabil” (the value it holds) and „Curți-construcții”. Under the field: „Tipul „Casă” nu are această categorie de folosință printre cele permise. Rămâne până o schimbați.” |
 | 6 | Chooses „Teren intravilan” in „Tip proprietate”, without saving | Every use offered; the sentence under the field gone |
 | 7 | Back on the page, ticks „Drumuri” on „Teren intravilan”; reopens the property, chooses „Teren intravilan” again | The tick stays after a reload; „(toate)” gone from that row; the form offers „Drumuri” and „Arabil” (the value it holds) and the sentence under the field again |
 | 8 | Unticks „Drumuri” on „Teren intravilan” | The row reads „(toate)” again |
+| 9 | Widens the window to 1920 × 1080 (#39.75) | The three are tiles, with „Implicit” above them at the right: „Tipuri de Proprietate” (five units) and „Categorii Folosință” (three) side by side at the top, „Folosințe permise pentru fiecare tip” (five) under the types. In each, the list stands with the same gap to the tile's left and right edges. Back at 1366 × 900, the three stand one under another again |
 
 ## At the end — leaving things as they were found
 
@@ -53,7 +54,7 @@ Delete the property (`DELETE`). Step 8 puts the grid back as it was.
 **2026-10-17 — run 1, `driven` (Slice #39.66).** Driven in the desktop app's browser pane, its viewport
 emulated at 1366 × 900, against `npm run dev` on 3000, after the runner's `migrate-local`
 20261017T114352Z-7756; ticks pressed and the type chosen by script (FU-290).
-- Step 1: the three groups, „Tipuri de proprietate și folosințe” marked; the three tiles in order.
+- Step 1: the three groups, „Tipuri de Proprietate și Folosințe” marked; the three tiles in order.
 - Step 2: **the file was wrong and is corrected:** the tile lists the types in use first and the unused
   („Liniară”, „Garaj”, „Birou”) after them, as every list has since #38.35; the grid keeps the sort order.
   Both uses there; no value in both lists.
@@ -76,3 +77,8 @@ word for word. The property deleted (204); the grid back at 13 pairs. A spec tra
 **2026-10-17 — `automated` (Slice #39.66).** The test runner's targeted run 20261017T115938Z-16709 on
 be11515 ran `e2e/admin/property-type-uses.spec.ts` green, with the six other specs and 26 jest suites
 the slice touched (lint and tsc green too).
+
+**2026-10-18 — step 9 added, and the page renamed, for #39.75.** The menu item is „Tipuri de Proprietate și
+Folosințe” now, title case as its neighbours, and the three panels are tiles. Read in the browser pane on
+localhost:3000 at 1920 × 1080: „Tipuri de Proprietate” 804 px (5 units) at x 520, „Categorii Folosință” 476 px
+(3 units) at x 1340, both at y 95; the grid 804 px; the gaps either side of each list 50/50, 22/22 and 52/51 px.

@@ -32,7 +32,7 @@ The window is 1366 × 900.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens `/admin/value-lists?list=use-categories` | On the left three groups, in this order, each with its lists in this order, no list name on two lines (#38.61; #38.35 had „Proprietăți”, „Persoane”, „Acte”, „Roluri”, „Legături între obiecte”): „Tipuri de obiecte” — Tipuri de Persoană Fizică, Tipuri de Persoană Juridică, Tipuri de proprietate și folosințe, Tipuri de Document; „Roluri și legături” — Roluri Persoane, Legături Proprietate → Proprietate, Legături Document → Document; „Liste de valori” — Indicative Tarla, Cetățenie, Relația cu firma (#39.70; #39.72 retired „Instituții”; #39.66: „Categorii Folosință” moved onto the property types' page). „Tipuri de proprietate și folosințe” marked; on the right, among that page's tiles, the list „Categorii Folosință”, with a column „Folosit de” |
+| 1 | Opens `/admin/value-lists?list=use-categories` | On the left three groups, in this order, each with its lists in this order, no list name on two lines (#38.61; #38.35 had „Proprietăți”, „Persoane”, „Acte”, „Roluri”, „Legături între obiecte”): „Tipuri de obiecte” — Tipuri de Persoană Fizică, Tipuri de Persoană Juridică, Tipuri de Proprietate și Folosințe, Tipuri de Document; „Roluri și legături” — Roluri Persoane, Legături Proprietate → Proprietate, Legături Document → Document; „Liste de valori” — Indicative Tarla, Cetățenie, Relația cu firma (#39.70; #39.72 retired „Instituții”; #39.66: „Categorii Folosință” moved onto the property types' page). „Tipuri de Proprietate și Folosințe” marked; on the right, among that page's tiles, the list „Categorii Folosință”, with a column „Folosit de” |
 | 2 | Reads the three `TC-VL-02` rows | „Păstrată” — „2 obiecte”; „Unită” — „1 obiect”; „Nefolosită” — „nefolosit”, greyed, after the other two. The column is headed „Folosit de” over „(n obiecte)” (#38.59; #38.35 read „folosit de 2 înregistrări”) |
 | 3 | Presses „Unește” on „Unită” | „Unește „TC-VL-02 Unită” cu altă valoare”, „Un obiect se mută pe valoarea păstrată:”; picks „TC-VL-02 Păstrată” in „Valoarea păstrată” |
 | 4 | Presses „Unește” | The dialog closes; „Unită” is gone; „Păstrată” — „3 obiecte” |
@@ -62,7 +62,7 @@ side beside the title from just under the breadcrumbs bar. The test runner ran i
 **2026-10-10 — wording (Slice #38.73).** Step 3 reads „Un obiect se mută pe valoarea păstrată:”; the spec's locators changed in the same commit.
 
 **2026-10-17 — Slice #39.66, step 1 and step 5 changed.** „Categorii Folosință” left „Liste de valori”: it is a tile
-on the page „Tipuri de proprietate și folosințe”, beside the types and the allowed-uses grid, and `?list=use-categories`
+on the page „Tipuri de Proprietate și Folosințe”, beside the types and the allowed-uses grid, and `?list=use-categories`
 opens that page with the property-types button marked. The spec's step 1 and step 5 changed in the same commit; its runner
 result on them: targeted 20261017T115938Z-16709 on be11515, green. Measured in the pane: the new name is 194.7 px wide, under
 „Legături Proprietate → Proprietate” at 213.1, so step 7's column is unchanged.

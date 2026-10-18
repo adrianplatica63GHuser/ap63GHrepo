@@ -17,11 +17,11 @@ Ecranul este o singură pagină (Figura [[fig-admin-value-lists]]). În stânga 
 
 | Grupa | Listele |
 |---|---|
-| Tipuri de obiecte | „Tipuri de Persoană Fizică”, „Tipuri de Persoană Juridică”, „Tipuri de proprietate și folosințe”, „Tipuri de Document” |
+| Tipuri de obiecte | „Tipuri de Persoană Fizică”, „Tipuri de Persoană Juridică”, „Tipuri de Proprietate și Folosințe”, „Tipuri de Document” |
 | Roluri și legături | „Roluri Persoane”, „Legături Proprietate → Proprietate”, „Legături Document → Document” |
 | Liste de valori | „Indicative Tarla”, „Cetățenie”, „Relația cu firma” |
 
-„Categorii Folosință” nu are un buton al ei: este a doua fișă a paginii „Tipuri de proprietate și folosințe” (secțiunea [[admin-reference-data-property-types]]).
+„Categorii Folosință” nu are un buton al ei: este a doua fișă a paginii „Tipuri de Proprietate și Folosințe” (secțiunea [[admin-reference-data-property-types]]).
 
 Fiecare rând stă pe o singură linie. O valoare prea lungă pentru coloana ei se termină în „…”; țineți mouse-ul pe ea și o vedeți întreagă. La o listă lungă se derulează doar rândurile: titlurile coloanelor rămân sus.
 
@@ -77,7 +77,7 @@ Fila „Roluri” a unui tip și „Act” din panoul unui rol arată aceleași 
 
 ### 12.1.4 Tipurile de proprietate și folosințele {#admin-reference-data-property-types}
 
-„Tipuri de proprietate și folosințe” este o pagină cu trei fișe, una sub alta:
+„Tipuri de Proprietate și Folosințe” este o pagină cu trei fișe, una sub alta:
 
 - „Tipuri de Proprietate” — ce este proprietatea: „Teren extravilan”, „Teren intravilan”, „Teren construit”, „Liniară”, „Casă”, „Apartament”, „Garaj”, „Spațiu comercial”, „Birou”. Pe fiecare rând, trei bife spun ce arată tipul: tarlaua și parcela, adresa și Street View-ul (secțiunea [[properties-type]]).
 - „Categorii Folosință” — categoria de folosință legală a terenului: „Arabil”, „Pășune”, „Fânețe”, „Vie”, „Livadă”, „Pădure”, „Ape”, „Neproductiv”, „Curți-construcții”, „Drumuri”. O valoare stă într-o singură listă: „Pășune” sau „Vie” sunt folosințe, nu tipuri.
@@ -210,7 +210,7 @@ Acolo unde suma vine de pe o factură, o scrieți la „Sume introduse”: „De
 
 În „Categorii Folosință” stau două valori care spun același lucru, scrise diferit.
 
-1. Deschideți „Administrare” → „Date de referință” și alegeți „Tipuri de proprietate și folosințe”; „Categorii Folosință” este a doua fișă a paginii (secțiunea [[admin-reference-data-property-types]]).
+1. Deschideți „Administrare” → „Date de referință” și alegeți „Tipuri de Proprietate și Folosințe”; „Categorii Folosință” este a doua fișă a paginii (secțiunea [[admin-reference-data-property-types]]).
 2. Citiți „Folosit de” pe cele două rânduri și hotărâți care valoare rămâne.
 3. Apăsați „Unește” pe cealaltă, alegeți-o pe prima în „Valoarea păstrată” și apăsați „Unește” (secțiunea [[admin-reference-data-values]]).
 4. Verificați că valoarea unită a dispărut și că „Folosit de” al valorii păstrate a crescut.

@@ -214,7 +214,7 @@ export const OUTLINE: Readonly<Record<string, string>> = {
   "admin-reference-data-values": "Cum adaugi, redenumești, unești (fuzionezi) sau ștergi o valoare dintr-o listă și ce faci când e încă folosită de obiecte.",
   "admin-reference-data-roles": "Cum configurezi rolurile persoanelor (vânzător, cumpărător, rude): rolul invers, rudenia, pe ce tipuri de act se oferă și care deține cotă.",
   "admin-reference-data-document-types": "Cum vezi și editezi tipurile de document: care au formular, denumirea scurtă, câmpurile formularului și rolurile permise pe fiecare tip.",
-  "admin-reference-data-property-types": "Pagina „Tipuri de proprietate și folosințe”: tipurile, categoriile de folosință și ce folosințe permite fiecare tip, care se oferă apoi în formularul proprietății.",
+  "admin-reference-data-property-types": "Pagina „Tipuri de Proprietate și Folosințe”: tipurile, categoriile de folosință și ce folosințe permite fiecare tip, care se oferă apoi în formularul proprietății.",
   "admin-reference-data-public-bodies": "Bifa „Autoritate publică” a tipurilor de persoană juridică: ce tipuri sunt autorități publice și cum hotărăște ea pe cine ține lista emitentului unui act.",
   "admin-users": "Cum aprobi sau respingi cererile de cont ale colegilor, cum primesc parola temporară pe e-mail și unde vezi istoricul cererilor.",
   "admin-groups": "Unde gestionezi la un loc toate grupurile, ștampilele și etichetele puse pe obiecte.",

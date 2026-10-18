@@ -1,5 +1,5 @@
 /**
- * Property types and uses — the allowed pairs, the form's list, and the migration that made them. (Slice #39.66)
+ * Property Types and Uses — the allowed pairs, the form's list, and the migration that made them. (Slice #39.66)
  *
  * The pure part (src/lib/properties/type-uses.ts): a type with no pairs allows every use; the form offers only the
  * allowed uses, but never drops the value a record already holds. The files part: migration_111 and
