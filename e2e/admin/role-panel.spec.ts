@@ -36,7 +36,7 @@ async function openRole(page: Page): Promise<Locator> {
   const list = page.getByRole("region", { name: "Roluri Persoane", exact: true }) /* #38.61: was „Roluri" */;
   const row = list.locator("tbody tr").filter({ has: page.locator("td:first-child", { hasText: ROLE }) });
   await row.getByRole("button", { name: "Editează", exact: true }).click({ timeout: 30_000 });
-  const panel = list.locator("[data-role-scope]");
+  const panel = page.locator("[data-role-scope]") /* #39.76: the role form is a tile of its own, beside the list */;
   await expect(panel).toBeVisible();
   return panel;
 }

@@ -85,7 +85,7 @@ async function openRolePanel(page: Page, role: string): Promise<Locator> {
   // The name is the row's first cell, exactly — „Vânzător" is also Cumpărător's converse, in another cell.
   const row = list.locator("tbody tr").filter({ has: page.locator("td:first-child", { hasText: new RegExp(`^${role.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&")}$`) }) });
   await row.getByRole("button", { name: "Editează", exact: true }).click({ timeout: 30_000 });
-  const panel = list.locator("[data-role-scope]");
+  const panel = page.locator("[data-role-scope]") /* #39.76: the role form is a tile of its own, beside the list */;
   await expect(panel.locator("[data-role-doc-types]")).toBeVisible({ timeout: 30_000 });
   return panel;
 }

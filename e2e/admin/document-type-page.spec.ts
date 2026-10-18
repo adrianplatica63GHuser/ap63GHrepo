@@ -100,7 +100,7 @@ test.describe("TC-VL-04 — un tip de act pe pagina lui", () => {
       const roles = page.getByRole("region", { name: "Roluri Persoane", exact: true }) /* #38.61: was „Roluri" */;
       const roleRow = roles.locator("tbody tr").filter({ has: page.locator("td:first-child", { hasText: ROLE }) });
       await roleRow.getByRole("button", { name: "Editează", exact: true }).click({ timeout: 30_000 });
-      const panel = roles.locator("[data-role-scope]");
+      const panel = page.locator("[data-role-scope]") /* #39.76: the role form is a tile of its own, beside the list */;
       await expect(panel.locator(`[data-pair="${TYPE}"]`)).toBeVisible({ timeout: 15_000 });
       await expect(panel.getByRole("checkbox", { name: `Deține cotă — ${TYPE} — ${ROLE}`, exact: true })).toBeChecked();
     } finally {

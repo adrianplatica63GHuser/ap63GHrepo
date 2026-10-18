@@ -299,14 +299,14 @@ test.describe("TC-VL-05 pasul 8 — „Rudenie” pe „Roluri Persoane” (#39.
 
       // The test role's panel: „Rudenie" while „Persoană" is pressed, gone when it is not.
       await rowOf(KIN_ROLE).getByRole("button", { name: "Editează", exact: true }).click();
-      const panel = list.locator("[data-role-scope]");
+      const panel = page.locator("[data-role-scope]") /* #39.76: the role form is a tile of its own, beside the list */;
       const kinship = panel.getByRole("combobox", { name: "Rudenie", exact: true });
       await expect(kinship).toHaveValue("");
       await panel.getByRole("button", { name: "Persoană", exact: true }).click();
       await expect(kinship).toHaveCount(0);
       await panel.getByRole("button", { name: "Persoană", exact: true }).click();
       await kinship.selectOption({ label: "Altă rudă" });
-      await list.getByRole("button", { name: "Salvează", exact: true }).click();
+      await page.locator("[data-value-list-form-tile]").getByRole("button", { name: "Salvează", exact: true }).click(); // #39.76: the form's own tile
       await expect(await personCell(KIN_ROLE)).toHaveText("Altă rudă", { timeout: 15_000 });
       const saved = ((await (await page.request.get(KIN_ROLES)).json()) as { items: { name: string; kinship: string | null }[] }).items.find((r) => r.name === KIN_ROLE);
       expect(saved?.kinship).toBe("OTHER");
@@ -315,7 +315,7 @@ test.describe("TC-VL-05 pasul 8 — „Rudenie” pe „Roluri Persoane” (#39.
       await rowOf("Tată").getByRole("button", { name: "Editează", exact: true }).click();
       await expect(panel.getByRole("combobox", { name: "Rudenie", exact: true })).toBeDisabled();
       await expect(panel.getByRole("combobox", { name: "Rudenie", exact: true })).toHaveValue("PARENT");
-      await list.getByRole("button", { name: "Anulează", exact: true }).click();
+      await page.locator("[data-value-list-form-tile]").getByRole("button", { name: "Anulează", exact: true }).click(); // #39.76: the form's own tile
 
       // Still the whole table at 1366 px — no scroll bar (#38.70).
       const fit = await page.evaluate(() => {
@@ -328,5 +328,59 @@ test.describe("TC-VL-05 pasul 8 — „Rudenie” pe „Roluri Persoane” (#39.
     } finally {
       await leftovers();
     }
+  });
+});
+
+/** Slice #39.76 — every page's lists as tiles (step 9). */
+const TILED: { key: string; triangle: boolean }[] = [
+  { key: "person-types", triangle: false },
+  { key: "judicial-person-types", triangle: false },
+  { key: "document-types", triangle: false },
+  { key: "person-roles", triangle: true },
+  { key: "property-property-roles", triangle: true },
+  { key: "document-document-roles", triangle: true },
+  { key: "citizenships", triangle: false },
+  { key: "person-relationships", triangle: false },
+];
+
+test.describe("TC-VL-05 pasul 9 — listele ca fișe (#39.76)", () => {
+  test("la 1920 px: fiecare listă o fișă de unități întregi, cu același spațiu stânga și dreapta; triunghiul și formularul rolului fișe proprii", async ({ page }) => {
+    test.slow();
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    for (const list of TILED) {
+      await page.goto(`/admin/value-lists?list=${list.key}`);
+      await expect(page.locator(`[data-reference-tiles] [data-tile="${list.key}"] table[data-width-table] tbody tr`).first()).toBeVisible({ timeout: 30_000 });
+      const tiles = await page.evaluate(() =>
+        [...document.querySelectorAll<HTMLElement>("[data-reference-tiles] [data-tile]")]
+          .filter((t) => !t.hidden)
+          .map((t) => {
+            const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
+            const r = t.getBoundingClientRect();
+            const units = Number(t.dataset.tileUnits);
+            const frame = t.querySelector<HTMLElement>("[data-value-list-frame]")?.getBoundingClientRect();
+            return {
+              tile: t.dataset.tile,
+              units,
+              whole: Math.abs(r.width - (units * 9.25 + (units - 1)) * rem) <= 1,
+              even: frame ? Math.abs(frame.left - r.left - (r.right - frame.right)) <= 2 : true,
+            };
+          }),
+      );
+      expect(tiles.map((t) => t.tile), list.key).toEqual(list.triangle ? ["triangle", list.key] : [list.key]);
+      for (const t of tiles) expect({ list: list.key, ...t }).toEqual({ list: list.key, tile: t.tile, units: t.units, whole: true, even: true });
+      if (list.triangle) expect(tiles[0].units).toBe(5);
+      await expect(page.locator(`[data-tile-positions-reset="reference-${list.key}"]`)).toBeVisible();
+    }
+
+    // „Editează" on a role: its form in a tile of its own, before the list, with where it applies.
+    await page.goto("/admin/value-lists?list=person-roles");
+    const list = page.getByRole("region", { name: "Roluri Persoane", exact: true });
+    await list.locator("tbody tr").first().getByRole("button", { name: "Editează", exact: true }).click({ timeout: 30_000 });
+    const form = page.locator('[data-tile="role-form"]');
+    await expect(form).toBeVisible();
+    await expect(form.locator("[data-role-scope]")).toBeVisible();
+    await expect(list.locator("[data-role-scope]")).toHaveCount(0);
+    await form.getByRole("button", { name: "Anulează", exact: true }).click();
+    await expect(form).toBeHidden();
   });
 });

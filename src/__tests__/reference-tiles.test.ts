@@ -72,3 +72,31 @@ describe("one piece for every Reference Data page (Ask first 3)", () => {
     expect(HUB).toContain("<ReferenceTiles page={selected} tiles={tiles} />");
   });
 });
+
+describe("every page but „Indicative Tarla” as tiles (Slice #39.76)", () => {
+  it("the hub tiles every page but the tarla's (39.77's)", () => {
+    expect(HUB).toContain('selected === null || selected === "tarla"');
+  });
+
+  it("on „Roluri și legături” the triangle is a tile of its own, five units, its card filling it (Ask first 1)", () => {
+    expect(HUB).toContain("const TRIANGLE_UNITS = 5;");
+    expect(HUB).toMatch(/\{ key: "triangle", units: TRIANGLE_UNITS, node: <RelationshipTriangle [^>]*fill \/> \}/);
+  });
+
+  it("a role's form — its fields, scope and document types — is a tile of its own while it is open (Ask first 1)", () => {
+    expect(HUB).toContain('const ROLE_FORM_LIST: ListKey = "person-roles";');
+    expect(HUB).toContain('{ key: "role-form", units: ROLE_FORM_UNITS, hidden: !formOpen, node: <div ref={setFormSlot} data-role-form-slot="" /> }');
+    expect(MODAL).toContain("{form && formSlot && createPortal(");
+    expect(MODAL).toContain("{form && !formSlot && (");
+  });
+
+  it("a hidden tile takes no part in the flow", () => {
+    const tiles = read("src", "app", "admin", "value-lists", "_components", "reference-tiles.tsx");
+    expect(tiles).toContain("referenceScreen(page, tiles.filter((t) => !t.hidden))");
+    expect(tiles).toContain("hidden={t.hidden}");
+  });
+
+  it("English says „Natural Person Types”, as the menu says „Natural Persons” (Ask first 2)", () => {
+    expect(en.valueList.lists.personTypes).toBe("Natural Person Types");
+  });
+});

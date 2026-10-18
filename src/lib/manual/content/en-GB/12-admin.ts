@@ -17,7 +17,7 @@ The screen is a single page (Figure [[fig-admin-value-lists]]). On the left are 
 
 | Group | The lists |
 |---|---|
-| Object types | „Physical Person Types”, „Juridical Person Types”, „Property Types and Uses”, „Document Types” |
+| Object types | „Natural Person Types”, „Juridical Person Types”, „Property Types and Uses”, „Document Types” |
 | Roles and links | „Person Roles”, „Property → Property Links”, „Document → Document Links” |
 | Value lists | „Tarla Codes”, „Citizenship”, „Relationship to the business” |
 
