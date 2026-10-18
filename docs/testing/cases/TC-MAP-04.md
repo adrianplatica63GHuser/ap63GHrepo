@@ -1,4 +1,4 @@
-# TC-MAP-04 — „Instrumente → Calcul suprafață": harta tuturor proprietăților, cu cele două butoane de suprafață arătate
+# TC-MAP-04 — O legătură veche `?area=1`: harta tuturor proprietăților, cu cele două butoane de suprafață arătate
 
 | | |
 |---|---|
@@ -6,14 +6,16 @@
 | **Kind** | happy |
 | **Data** | — |
 | **State** | `automated` |
-| **Last green** | 2026-10-11 |
+| **Last green** | 2026-10-18 |
 
 ## What this proves
 
-„Calcul suprafață" (Slice #39.09), under „Instrumente" right after „Calcul drum lateral", opens the map of all
-properties on „Toate" and draws the eye to its two area buttons (#39.07, #39.08): both pulse in violet for three
-seconds, together, then settle. Nothing is pressed for the user. The item is the sidebar's active one there; a reload
-points the buttons out again.
+„Calcul suprafață" (Slice #39.09) opened the map of all properties at `/properties/map?area=1`, with its two area
+buttons (#39.07, #39.08) pulsing in violet for three seconds. Slice #39.78 took the item out of „Instrumente" — three
+guides to the map's buttons took its place (TC-MAP-08) — but a link to the old address, kept in a bookmark or a note,
+still works: the map opens on „Toate", both area buttons pulse together, and only they; nothing is pressed for the
+user; a reload points them out again. The sidebar's active item there is „Proprietăți", as on the map from any other
+door.
 
 ## Before you start
 
@@ -27,17 +29,20 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „Instrumente" in the sidebar | „Calcul suprafață", with the dotted-corner rectangle, right after „Calcul drum lateral" |
-| 2 | Presses it | „Toate Proprietățile", the map; „Calcul suprafață" is the active item, not „Proprietăți"; the address ends `?area=1` |
-| 3 | Looks at the map's toolbar | „Suprafața unei zone delimitate" and „Suprafața unei zone oarecare" pulse together — a violet ring and band, three times; neither is pressed |
-| 4 | Waits four seconds | Both settled, neither pressed |
-| 5 | Reloads the page | They pulse again |
+| 1 | Types `/properties/map?area=1` into the address bar | „Toate Proprietățile", the map; in the sidebar „Proprietăți" is the active item; „Instrumente" has no „Calcul suprafață" |
+| 2 | Looks at the map's toolbar | „Suprafața unei zone delimitate" and „Suprafața unei zone oarecare" pulse together — a violet ring and band, three times — and no other button does; neither is pressed |
+| 3 | Waits four seconds | Both settled, neither pressed, the address unchanged |
+| 4 | Reloads the page | They pulse again |
 
 ## At the end — leaving things as they were found
 
 Nothing to undo.
 
 ## Notes from the runs
+
+**2026-10-18 — rewritten (Slice #39.78).** The case was „Instrumente → Calcul suprafață", the item that opened this
+address; the item went, the address stays. Its spec (`e2e/map/area-calculation-nav.spec.ts`) now types the address,
+and no longer opts into real maps: the pulse is the toolbar's, which draws whether or not Google's map loads.
 
 **2026-10-11 — written and automated (Slice #39.09).** `e2e/map/area-calculation-nav.spec.ts`. The pulse is read as
 the class `ga-area-pulse` on each button.

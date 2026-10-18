@@ -23,7 +23,7 @@ The sidebar, on the left, opens any screen of the application (Figure [[fig-side
 |---|---|
 | Dashboard | The first screen: what is new and what needs attention. |
 | Domain | The four lists: Natural Persons, Juridical Persons, Properties, Documents. |
-| Tools | DocTypeEngine, Calculation of a Side Road, Area Calculation. |
+| Tools | DocTypeEngine, Calculation of a Side Road, Measurements on map, Groupings of properties, Navigation. |
 | Import | Property folders: bringing a whole folder into the archive. |
 | Reporting | Interactions, Inheritance trees, Global Search. |
 | Administration | Reference Data, Users & Access, Groups, Stamps, Tags. |

@@ -5,11 +5,11 @@
 export const CHAPTER = `
 # 9 Tools {#tools}
 
-The sidebar's „Tools” section holds three working tools: „DocTypeEngine”, „Calculation of a Side Road” and „Area Calculation”. Each does something different and costs something different, so it is worth knowing beforehand:
+The sidebar's „Tools” section holds two working tools, „DocTypeEngine” and „Calculation of a Side Road”, and three guides to the map's buttons: „Measurements on map”, „Groupings of properties” and „Navigation”. Each does something different and costs something different, so it is worth knowing beforehand:
 
 - „DocTypeEngine” builds the form of a document type from a few sample documents. The samples are read by the AI, and **that reading is paid for**.
 - „Calculation of a Side Road” splits a parcel between its owners, with a shared road, and **creates real properties** in the archive — but only when you confirm.
-- „Area Calculation” only opens the map of properties, with the area tools pointed out. It writes nothing.
+- „Measurements on map”, „Groupings of properties” and „Navigation” only explain the map's buttons; the first two then open the map, with the buttons pointed out. They write nothing.
 
 ## 9.1 DocTypeEngine {#tools-doc-type-engine}
 
@@ -147,9 +147,9 @@ The history icon, on the „Calculation” screen, opens „Calculation History�
 
 ## 9.3 The area calculation {#tools-area}
 
-„Tools” → „Area Calculation” opens the map of all properties, „All Properties”. In the sidebar „Area Calculation” stays marked, not „Properties”.
+„Tools” → „Measurements on map” shows, in a box, the map's four measuring buttons and what each does. „OK” opens the map of all properties, „All Properties”.
 
-To make them easy to find, the map toolbar's two area buttons pulse together, in violet, three times, then settle:
+To make them easy to find, the four buttons pulse together, in violet, three times, then settle. Two of them calculate areas:
 
 - „Area of a delimited zone” — you choose property corners, one after another;
 - „Area of any zone” — you draw the zone freely, corner by corner, as for a new property.

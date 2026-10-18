@@ -1464,7 +1464,9 @@
       "import": "Property folders",
       "docTypeEngine": "DocTypeEngine",
       "calculation": "Calculation of a Side Road",
-      "areaCalculation": "Area Calculation",
+      "mapMeasurements": "Measurements on map",
+      "mapGroupings": "Groupings of properties",
+      "mapNavigation": "Navigation",
       "globalSearch": "Global Search",
       "groups": "Groups",
       "stamps": "Stamps",
@@ -1492,7 +1494,32 @@
     "quickSearchPlaceholder": "Name, code…",
     "comingSoon": "Coming soon",
     "mainNavigation": "Main navigation",
-    "uatNoAccounts": "An installation without accounts (UAT): there is no password to change and no signing out."
+    "uatNoAccounts": "An installation without accounts (UAT): there is no password to change and no signing out.",
+    "guides": {
+      "ok": "OK",
+      "close": "Close",
+      "opensMap": "OK opens the map of all properties, with these buttons blinking.",
+      "measure": {
+        "title": "Measurements on map",
+        "intro": "On the map of all properties, these four buttons measure. None of them saves anything.",
+        "angles": "Shows the interior angle at the property corner you click. Pressing the button again turns it off.",
+        "ruler": "Measures the ground distance between two points: click the first point, then the second.",
+        "areaDelimited": "The area of a zone bounded by property corners: pick the corners one after another; Backspace removes the last.",
+        "areaFree": "The area of a zone drawn freely, as for a new property: a click for each corner, then a click on the first corner or „Done”; after that the corners can be dragged."
+      },
+      "groups": {
+        "title": "Groupings of properties",
+        "intro": "On the map of all properties, these three buttons show the properties by tarla and by group, and put them into groups.",
+        "tarlale": "Shows each tarla's outline; a click on the outline or the code opens the tarla. Pressing it again hides them.",
+        "groups": "Choose the groups whose properties the map shows: a property is hidden when all its groups are unticked.",
+        "select": "A click on a property adds it to the selection or takes it out; then „Add to group…” puts the selection into an existing group or a new one. It deletes nothing."
+      },
+      "navigation": {
+        "title": "Navigation",
+        "intro": "The way to a property, in Google Maps.",
+        "navigate": "Opens the route to the property in Google Maps, with a QR code for the phone. You find it on the property form, and in the window that opens when you click a property on the map of all properties."
+      }
+    }
   },
   "welcome": {
     "title": "GA40",

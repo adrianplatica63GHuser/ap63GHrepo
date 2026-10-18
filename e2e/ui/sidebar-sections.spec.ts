@@ -44,7 +44,7 @@ const ITEMS: Record<string, [string, string][]> = {
   Instrumente: [
     ["Distilare Tipizate", "/admin/doc-type-engine"],
     ["Calcul drum lateral", "/admin/calculation"],
-    ["Calcul suprafață", "/properties/map?area=1"], // #39.09
+    // #39.09's „Calcul suprafață" (/properties/map?area=1) gave way in #39.78 to three guides — buttons, GUIDES below.
   ],
   Import: [["Dosare de proprietăți", "/admin/import"]],
   // Slice #39.02: moved here from „Domeniu" and „Instrumente", their addresses unchanged.
@@ -69,6 +69,9 @@ const ITEMS: Record<string, [string, string][]> = {
   ],
 };
 
+/** Slice #39.78: „Instrumente"'s three guides to the big map's buttons — buttons that open a box, not links. */
+const GUIDES = ["Măsurători pe hartă", "Grupări de proprietăți", "Navigare"] as const;
+
 /** Step 3: the link's label, its section (none for a flat one), the title its screen shows. */
 const LINKS: [string, string | null, string][] = [
   ["Tablou de bord", null, "Tablou de bord"],
@@ -78,7 +81,7 @@ const LINKS: [string, string | null, string][] = [
   ["Acte", "Domeniu", "Acte"],
   ["Distilare Tipizate", "Instrumente", "Distilare Tipizate"],
   ["Calcul drum lateral", "Instrumente", "Calcul"],
-  ["Calcul suprafață", "Instrumente", "Toate Proprietățile"], // #39.09: the map of all properties, ?area=1
+  // #39.09's ["Calcul suprafață", "Instrumente", "Toate Proprietățile"] went in #39.78; its guides are step 2's.
   ["Dosare de proprietăți", "Import", "Import"],
   ["Interacțiuni", "Rapoarte", "Interacțiuni"], // #39.02: was under „Domeniu"
   ["Căutare globală", "Rapoarte", "Căutare globală"], // #39.02: was under „Instrumente"
@@ -166,6 +169,14 @@ test.describe("TC-NAV-01 — the sidebar draws only what exists", () => {
       for (const gone of GONE) await expect(nav.getByText(gone, { exact: true })).toHaveCount(0);
       // The open section's links, and the two flat ones („Tablou de bord", „Setări"): nothing else.
       await expect(rows).toHaveCount(items.length + 2);
+      // #39.78: „Instrumente" ends with its three guides, buttons after the links, in order.
+      const guides = nav.locator("[data-nav-guide]").filter({ visible: true });
+      if (section === "Instrumente") {
+        expect((await guides.allInnerTexts()).map((t) => t.trim())).toEqual([...GUIDES]);
+        for (const g of GUIDES) await expect(nav.getByRole("button", { name: g, exact: true })).toHaveAttribute("aria-haspopup", "dialog");
+      } else {
+        await expect(guides).toHaveCount(0);
+      }
       await photograph(page, `section-${section.normalize("NFD").replace(/[^A-Za-z]/g, "").toLowerCase()}`);
     }
 
@@ -174,7 +185,6 @@ test.describe("TC-NAV-01 — the sidebar draws only what exists", () => {
       if (section) await openSection(page, section);
       const link = nav.getByRole("link", { name: label, exact: true });
       const href = (await link.getAttribute("href"))!;
-      // #39.09: „Calcul suprafață"'s address carries its query; every other one has none.
       await link.click();
       await expect(page).toHaveURL((u) => u.pathname + u.search === href, { timeout: 30_000 });
       await expect(await title(page)).toHaveText(heading, { timeout: 30_000 });

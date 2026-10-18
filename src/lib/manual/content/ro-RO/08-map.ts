@@ -27,7 +27,7 @@ Sus, pe hartă, stau butoanele ei. „HARTĂ” și „SATELIT” aleg harta str
 Harta se deschide din două locuri:
 
 - din lista „Proprietăți”, cu butonul „Hartă completă”, din dreapta, de lângă „Adaugă proprietate” (secțiunea [[properties-list]]). Bara de navigare arată atunci „Acasă › Proprietăți › Hartă completă”, iar un clic pe „Proprietăți” vă întoarce la listă. În bara laterală rămâne aprins „Proprietăți”;
-- din bara laterală, „Instrumente” → „Calcul suprafață”. Se deschide aceeași hartă, dar cele două butoane de suprafață pulsează împreună, de trei ori, într-un inel violet, ca să le găsiți ușor. Niciunul nu se apasă singur: alegeți-l pe cel de care aveți nevoie (secțiunea [[map-area]]). În bara laterală rămâne aprins „Calcul suprafață”.
+- din bara laterală, „Instrumente” → „Măsurători pe hartă” sau „Grupări de proprietăți”. O casetă arată butoanele despre care e vorba și spune ce face fiecare; „OK” deschide aceeași hartă, cu ele pulsând împreună, de trei ori, într-un inel violet, ca să le găsiți ușor. Niciunul nu se apasă singur: alegeți-l pe cel de care aveți nevoie (secțiunea [[map-area]]).
 
 ### 8.1.2 Bula unei proprietăți și dublu-clicul {#map-what-bubble}
 
@@ -143,7 +143,7 @@ Aici desenați zona liber, oriunde pe hartă, ca la colțurile unei proprietăț
 
 ### 8.4.3 Din „Instrumente” {#map-area-tools}
 
-Același calcul îl găsiți în bara laterală, la „Instrumente” → „Calcul suprafață”: deschide harta cu cele două butoane arătate (secțiunea [[map-what-open]]). Instrumentul este descris, împreună cu celelalte, în secțiunea [[tools-area]].
+Butoanele de măsurat le arată și bara laterală, la „Instrumente” → „Măsurători pe hartă”: după „OK”, harta se deschide cu ele pulsând (secțiunea [[map-what-open]]). Instrumentul este descris, împreună cu celelalte, în secțiunea [[tools-area]].
 
 ## 8.5 Street View {#map-street-view}
 

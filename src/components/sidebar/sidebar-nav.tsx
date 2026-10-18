@@ -19,6 +19,8 @@ import {
   fetchMe,
 } from "@/lib/auth/me-query";
 import { NAV_SECTIONS, type NavItem, type NavSection } from "./nav-config";
+import { MapGuideDialog } from "./map-guide-dialog";
+import { askMapPulseAgain } from "@/lib/ui/area-pulse";
 import {
   getActiveHref,
   getActiveSectionKey,
@@ -66,6 +68,38 @@ function NavSubItem({
   const base =
     "flex items-center gap-2.5 rounded-md px-3 py-1.5 text-sm transition-colors";
   const { guardedNavigate } = useUnsavedChanges();
+  const [guideOpen, setGuideOpen] = useState(false);
+
+  if (item.guide) {
+    // Slice #39.78: a guide to some of the big map's buttons — a button that opens its box, every time it is
+    // pressed. OK on a map guide opens the map with those buttons pulsing; when the map already shows that
+    // address, nothing in it changes, so the map is asked to point them out again instead.
+    const guide = item.guide;
+    return (
+      <>
+        <button
+          type="button"
+          onClick={() => setGuideOpen(true)}
+          aria-haspopup="dialog"
+          data-nav-guide={guide}
+          className={`${base} w-full text-left text-ink hover:bg-or-light focus:outline-none focus-visible:ring-2 focus-visible:ring-focus`}
+        >
+          <Icon size={14} className="shrink-0" aria-hidden="true" />
+          <span className="truncate">{label}</span>
+        </button>
+        {guideOpen && (
+          <MapGuideDialog
+            guide={guide}
+            onClose={() => setGuideOpen(false)}
+            onOpenMap={(href) => {
+              if (window.location.pathname + window.location.search === href) askMapPulseAgain();
+              else guardedNavigate(href);
+            }}
+          />
+        )}
+      </>
+    );
+  }
 
   if (!item.href) {
     // Slice #38.20: a screen that does not exist yet — drawn disabled, „În curând" as its
@@ -254,7 +288,8 @@ export function SidebarNav() {
   const t = useTranslations("nav");
   const pathname = usePathname();
   const router   = useRouter();
-  // Slice #39.09: „Calcul suprafață" is /properties/map?area=1 — its query decides which item is active.
+  // Slice #39.09: an item whose address carries a query is active only with it (isItemActive). „Calcul suprafață",
+  // the one such item, went in #39.78; the reading stays for the next.
   const search   = useSearchParams()?.toString() ?? "";
   const { guardedAction, guardedNavigate } = useUnsavedChanges();
 
@@ -414,7 +449,10 @@ export function SidebarNav() {
     // sentence was asking for.
     docTypeEngine:             t("items.docTypeEngine"),
     calculation:               t("items.calculation"),
-    areaCalculation:           t("items.areaCalculation"),
+    // Slice #39.78: „Calcul suprafață" gave way to the three guides to the big map's buttons.
+    mapMeasurements:           t("items.mapMeasurements"),
+    mapGroupings:              t("items.mapGroupings"),
+    mapNavigation:             t("items.mapNavigation"),
     // Slice #38.20 — the new items; those with no href are placeholders.
     checkCorrelations:         t("items.checkCorrelations"),
     inheritanceTrees:          t("items.inheritanceTrees"),

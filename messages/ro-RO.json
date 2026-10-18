@@ -1464,7 +1464,9 @@
       "import": "Dosare de proprietăți",
       "docTypeEngine": "Distilare Tipizate",
       "calculation": "Calcul drum lateral",
-      "areaCalculation": "Calcul suprafață",
+      "mapMeasurements": "Măsurători pe hartă",
+      "mapGroupings": "Grupări de proprietăți",
+      "mapNavigation": "Navigare",
       "globalSearch": "Căutare globală",
       "groups": "Grupuri",
       "stamps": "Ștampile",
@@ -1492,7 +1494,32 @@
     "quickSearchPlaceholder": "Nume, cod…",
     "comingSoon": "În curând",
     "mainNavigation": "Navigare principală",
-    "uatNoAccounts": "Instalare fără conturi (UAT): nu există parolă de schimbat și nici ieșire din cont."
+    "uatNoAccounts": "Instalare fără conturi (UAT): nu există parolă de schimbat și nici ieșire din cont.",
+    "guides": {
+      "ok": "OK",
+      "close": "Închide",
+      "opensMap": "La OK se deschide harta tuturor proprietăților, cu aceste butoane clipind.",
+      "measure": {
+        "title": "Măsurători pe hartă",
+        "intro": "Pe harta tuturor proprietăților, aceste patru butoane măsoară. Niciunul nu salvează nimic.",
+        "angles": "Arată unghiul interior la colțul de proprietate pe care îl apăsați. Încă o apăsare pe buton îl oprește.",
+        "ruler": "Măsoară distanța pe teren dintre două puncte: apăsați primul punct, apoi al doilea.",
+        "areaDelimited": "Suprafața zonei delimitate de colțuri de proprietăți: alegeți colțurile unul după altul; Backspace îl scoate pe ultimul.",
+        "areaFree": "Suprafața unei zone desenate liber, ca la o proprietate nouă: un clic pentru fiecare colț, apoi un clic pe primul colț sau „Gata”; după aceea colțurile se pot trage."
+      },
+      "groups": {
+        "title": "Grupări de proprietăți",
+        "intro": "Pe harta tuturor proprietăților, aceste trei butoane arată proprietățile pe tarlale și pe grupuri și le pun în grupuri.",
+        "tarlale": "Arată conturul fiecărei tarlale; un clic pe contur sau pe cod deschide tarlaua. Încă o apăsare le ascunde.",
+        "groups": "Alegeți grupurile ale căror proprietăți se văd pe hartă: o proprietate se ascunde când toate grupurile ei sunt debifate.",
+        "select": "Un clic pe o proprietate o adaugă la selecție sau o scoate; apoi „Adaugă la grup…” pune selecția într-un grup existent sau într-unul nou. Nu șterge nimic."
+      },
+      "navigation": {
+        "title": "Navigare",
+        "intro": "Drumul până la o proprietate, în Google Maps.",
+        "navigate": "Deschide traseul până la proprietate în Google Maps, cu un cod QR pentru telefon. Îl găsiți pe fișa proprietății și în fereastra care se deschide la un clic pe o proprietate pe harta tuturor proprietăților."
+      }
+    }
   },
   "welcome": {
     "title": "GA40",

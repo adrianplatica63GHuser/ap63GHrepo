@@ -19,6 +19,9 @@ import { destinationOf, navigationLink, type NavStart, type NavTarget } from "@/
  *
  * The button is disabled, saying why, when the property has no shape and no address.
  */
+/** The button's icon — also drawn by „Instrumente → Navigare"'s box (#39.78), so the two never differ. */
+export const NAVIGATE_ICON = Navigation;
+
 export function NavigateButton({
   target,
   name,
@@ -36,7 +39,7 @@ export function NavigateButton({
   return (
     <>
       <IconButton
-        icon={Navigation}
+        icon={NAVIGATE_ICON}
         label={t("button")}
         variant="secondary"
         size={size}

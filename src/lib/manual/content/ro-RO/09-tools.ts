@@ -5,11 +5,11 @@
 export const CHAPTER = `
 # 9 Instrumente {#tools}
 
-Secțiunea „Instrumente” din bara laterală ține trei unelte de lucru: „Distilare Tipizate”, „Calcul drum lateral” și „Calcul suprafață”. Fiecare face altceva și costă altfel, așa că merită știut dinainte:
+Secțiunea „Instrumente” din bara laterală ține două unelte de lucru, „Distilare Tipizate” și „Calcul drum lateral”, și trei ghiduri ale butoanelor hărții: „Măsurători pe hartă”, „Grupări de proprietăți” și „Navigare”. Fiecare face altceva și costă altfel, așa că merită știut dinainte:
 
 - „Distilare Tipizate” face formularul unui tip de act din câteva acte-mostră. Citirea mostrelor o face AI-ul și **se plătește**.
 - „Calcul drum lateral” împarte o parcelă între proprietarii ei, cu un drum comun, și **creează proprietăți reale** în arhivă — dar numai când confirmați.
-- „Calcul suprafață” doar deschide harta proprietăților, cu uneltele de suprafață arătate. Nu scrie nimic.
+- „Măsurători pe hartă”, „Grupări de proprietăți” și „Navigare” doar explică butoanele hărții; primele două deschid apoi harta, cu butoanele arătate. Nu scriu nimic.
 
 ## 9.1 Distilare Tipizate {#tools-doc-type-engine}
 
@@ -147,9 +147,9 @@ Pictograma istoricului, pe ecranul „Calcul”, deschide „Istoricul calculelo
 
 ## 9.3 Calculul suprafeței {#tools-area}
 
-„Instrumente” → „Calcul suprafață” deschide harta tuturor proprietăților, „Toate Proprietățile”. În bara laterală rămâne marcat „Calcul suprafață”, nu „Proprietăți”.
+„Instrumente” → „Măsurători pe hartă” arată, într-o casetă, cele patru butoane de măsurat ale hărții și ce face fiecare. „OK” deschide harta tuturor proprietăților, „Toate Proprietățile”.
 
-Ca să le găsiți ușor, cele două butoane de suprafață din bara de unelte a hărții pâlpâie împreună, în violet, de trei ori, apoi se liniștesc:
+Ca să le găsiți ușor, cele patru butoane pâlpâie împreună, în violet, de trei ori, apoi se liniștesc. Două dintre ele calculează suprafețe:
 
 - „Suprafața unei zone delimitate” — alegeți colțuri de proprietăți, unul după altul;
 - „Suprafața unei zone oarecare” — desenați zona liber, colț cu colț, ca la o proprietate nouă.

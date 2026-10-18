@@ -52,8 +52,9 @@ describe("the eight sections in the config, in order, each with its items", () =
       // #39.02: was Domeniu … ["Acte", "/documents"], ["Interacțiuni", "/interactions"]]; Instrumente
       // [["Căutare globală", "/admin/global-search"], …, ["Arbori de moștenire", null]]; Rapoarte [["În lucru", "/reports"]].
       ["Domeniu", null, [["Persoane Fizice", "/natural-persons"], ["Persoane Juridice", "/judicial-persons"], ["Proprietăți", "/properties"], ["Acte", "/documents"]]],
-      // #39.09: „Calcul suprafață" after „Calcul drum lateral".
-      ["Instrumente", null, [["Distilare Tipizate", "/admin/doc-type-engine"], ["Verificare corelări", null], ["Calcul drum lateral", "/admin/calculation"], ["Calcul suprafață", "/properties/map?area=1"]]],
+      // #39.09: „Calcul suprafață" after „Calcul drum lateral" — /properties/map?area=1. #39.78: in its place the
+      // three guides to the big map's buttons, boxes rather than addresses (their `guide`, the next test).
+      ["Instrumente", null, [["Distilare Tipizate", "/admin/doc-type-engine"], ["Verificare corelări", null], ["Calcul drum lateral", "/admin/calculation"], ["Măsurători pe hartă", null], ["Grupări de proprietăți", null], ["Navigare", null]]],
       ["Import", null, [["Dosare de proprietăți", "/admin/import"], ["Dosare diverse", null], ["Fișier individual", null]]],
       // #39.11: „Arbori de moștenire" had no href.
       ["Rapoarte", null, [["Interacțiuni", "/interactions"], ["Arbori de moștenire", "/inheritance-tree"], ["Căutare globală", "/admin/global-search"]]],
@@ -61,6 +62,20 @@ describe("the eight sections in the config, in order, each with its items", () =
       ["Administrare", null, [["Date de referință", "/admin/value-lists"], ["Utilizatori & Acces", "/admin/users"], ["Grupuri", "/admin/groups"], ["Ștampile", "/admin/stamps"], ["Etichete", "/admin/tags"]]],
       ["Setări", "/admin/settings", []],
       ["Ajutor și învățare", null, [["Informații de ajutor", "/admin/help-content"], ["Manual de utilizare", "/manual"], ["Harta competențelor", "/skills-map"], ["Întreabă", "/ask"]]], // #39.42: + the map; #39.45: + „Întreabă”
+    ]);
+  });
+
+  it("#39.78: the three guides under „Instrumente” name their box, and only they carry one", () => {
+    const guides = NAV_SECTIONS.flatMap((s) => s.items.filter((i) => i.guide).map((i) => [s.key, i.key, i.guide, i.href ?? null]));
+    expect(guides).toEqual([
+      ["functions", "mapMeasurements", "measure", null],
+      ["functions", "mapGroupings", "groups", null],
+      ["functions", "mapNavigation", "navigation", null],
+    ]);
+    expect(NAV_SECTIONS.flatMap((s) => s.items).map((i) => i.key)).not.toContain("areaCalculation");
+    for (const m of [RO, EN]) expect(nav(m).items.areaCalculation).toBeUndefined();
+    expect([nav(EN).items.mapMeasurements, nav(EN).items.mapGroupings, nav(EN).items.mapNavigation]).toEqual([
+      "Measurements on map", "Groupings of properties", "Navigation",
     ]);
   });
 
@@ -94,7 +109,7 @@ describe("the eight sections in the config, in order, each with its items", () =
   it("every address opens a page that exists", () => {
     const hrefs = NAV_SECTIONS.flatMap((s) => [s.href, ...s.items.map((i) => i.href)]).filter((h): h is string => !!h);
     const missing = hrefs.filter((h) => {
-      // #39.09: „Calcul suprafață" carries a query (/properties/map?area=1) — the page is its path's.
+      // #39.09: an address may carry a query (#39.09's „Calcul suprafață", /properties/map?area=1) — the page is its path's.
       const p = h.split("?")[0]!;
       const dir = p === "/" ? [] : p.split("/").filter(Boolean);
       const candidates = [path.join(ROOT, "src", "app", ...dir, "page.tsx"), path.join(ROOT, "src", "app", "(all-roles)", ...dir, "page.tsx")];
@@ -119,7 +134,8 @@ describe("what is drawn (#38.42)", () => {
     expect(drawn.map(ro)).toEqual([
       ["Tablou de bord", []],
       ["Domeniu", ["Persoane Fizice", "Persoane Juridice", "Proprietăți", "Acte"]],
-      ["Instrumente", ["Distilare Tipizate", "Calcul drum lateral", "Calcul suprafață"]], // #39.09: + „Calcul suprafață"
+      // #39.09: + „Calcul suprafață"; #39.78: in its place the three guides, drawn though they have no href.
+      ["Instrumente", ["Distilare Tipizate", "Calcul drum lateral", "Măsurători pe hartă", "Grupări de proprietăți", "Navigare"]],
       ["Import", ["Dosare de proprietăți"]],
       ["Rapoarte", ["Interacțiuni", "Arbori de moștenire", "Căutare globală"]], // #39.11: + „Arbori de moștenire"
       ["Administrare", ["Date de referință", "Utilizatori & Acces", "Grupuri", "Ștampile", "Etichete"]],
@@ -128,10 +144,11 @@ describe("what is drawn (#38.42)", () => {
     ]);
   });
 
-  it("no item without an href, no `wip` item, and no section left empty", () => {
+  // #39.78: was „no item without an href" — a guide (a box about the map's buttons) has none, and is drawn.
+  it("no item without an href or a guide, no `wip` item, and no section left empty", () => {
     for (const s of drawn) {
       expect([s.key, s.items.length > 0 || !!s.href]).toEqual([s.key, true]);
-      for (const i of s.items) expect([i.key, !!i.href, !!i.wip]).toEqual([i.key, true, false]);
+      for (const i of s.items) expect([i.key, !!i.href || !!i.guide, !!i.wip]).toEqual([i.key, true, false]);
     }
   });
 
@@ -199,7 +216,7 @@ describe("an account without an app_users row sees what a `user` saw before #38.
   it("every other address is an /admin/ screen the layout refuses to an account without a row, or the static reports page", () => {
     const user = new Set(sectionsFor(NAV_SECTIONS, false).flatMap((s) => [s.href, ...s.items.map((i) => i.href)]));
     const rest = NAV_SECTIONS.flatMap((s) => [s.href, ...s.items.map((i) => i.href)]).filter((h): h is string => !!h && !user.has(h));
-    // #39.09: „Calcul suprafață" (/properties/map?area=1) is the map, which such an account reaches from „Proprietăți".
+    // #39.09: an address under a screen the account is shown (the old „Calcul suprafață", /properties/map?area=1) is not a reach it was denied.
     expect(
       rest
         .filter((h) => !h.startsWith("/admin/") && h !== "/reports")

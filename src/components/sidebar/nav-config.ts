@@ -13,13 +13,16 @@ import {
   FolderInput,
   Folders,
   GitCompareArrows,
+  Group,
   HelpCircle,
   LayoutDashboard,
   LifeBuoy,
   Lightbulb,
   Map,
   MessagesSquare,
+  Navigation,
   Network,
+  Ruler,
   Search,
   Settings,
   ShieldCheck,
@@ -31,8 +34,9 @@ import {
   Users,
   Workflow,
 } from "lucide-react";
-import { AreaDelimitedIcon } from "@/components/icons/area-icons";
-import { AREA_CALCULATION_HREF } from "@/lib/ui/area-pulse";
+
+/** Slice #39.78: the three guides to the big map's buttons, under „Instrumente". */
+export type MapGuideKey = "measure" | "groups" | "navigation";
 
 export type NavItem = {
   key: string;
@@ -43,6 +47,9 @@ export type NavItem = {
   // Slice #38.42: a screen that exists but is a „work in progress" page — drawn
   // nothing, like an item with no href, until the flag goes. Its URL still opens.
   wip?: true;
+  // Slice #39.78: not a screen but a box about some of the big map's buttons (map-guide-dialog.tsx). Such an item
+  // has no href, and is drawn: pressing it opens the box, whose OK may then open the map.
+  guide?: MapGuideKey;
   // Slice #32.19 removed the `devOnly` field that used to sit here. Adrian
   // asked for the developer-only screen items to be revealed, so Help
   // information and Settings are ordinary entries now and nothing in this
@@ -128,8 +135,11 @@ export const NAV_SECTIONS: NavSection[] = [
       { key: "docTypeEngine", href: "/admin/doc-type-engine", icon: Lightbulb },
       { key: "checkCorrelations", icon: GitCompareArrows },
       { key: "calculation", href: "/admin/calculation", icon: Calculator },
-      // Slice #39.09: „Calcul suprafață" — the map of all properties, its two area buttons pointed out (?area=1).
-      { key: "areaCalculation", href: AREA_CALCULATION_HREF, icon: AreaDelimitedIcon },
+      // Slice #39.78: „Calcul suprafață" (#39.09, /properties/map?area=1 — the address still works) gave way to three
+      // guides to the big map's buttons: each opens a box, and the first two's OK opens the map with them pulsing.
+      { key: "mapMeasurements", guide: "measure", icon: Ruler },
+      { key: "mapGroupings", guide: "groups", icon: Group },
+      { key: "mapNavigation", guide: "navigation", icon: Navigation },
     ],
   },
   {

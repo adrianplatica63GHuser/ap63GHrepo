@@ -1,7 +1,7 @@
 "use client";
 
 import { useNameOr } from "@/components/record/use-name-or";
-import { ArrowRight, Check, DraftingCompass, Fence, FolderPlus, Group, Plus, RotateCcw, Ruler, ScanEye, Settings2, Square, SquareCheck, SquareDashedMousePointer, X } from "lucide-react";
+import { ArrowRight, Check, FolderPlus, Plus, RotateCcw, ScanEye, Settings2, Square, SquareCheck, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -40,9 +40,9 @@ import { MapCameraProbe } from "@/components/maps/map-camera-probe";
 import { IconButton } from "@/lib/ui/icon-button";
 import { MAP_BOX_HEIGHT_REM, PANEL_UNIT_INNER_REM } from "@/lib/ui/field-widths";
 import { AREA_STROKE, addCorner, nextAreaMode, removeLastCorner, type AreaMode } from "@/lib/geo/area-tool";
-import { AreaDelimitedIcon, AreaFreeIcon } from "@/components/icons/area-icons";
+import { MAP_TOOL_ICON, MAP_TOOL_LABEL } from "@/components/maps/map-tool-icons";
 import { usePolygonDraw } from "@/components/maps/use-polygon-draw";
-import { AREA_PULSE_CLASS, readAreaPulse, useAreaPulse } from "@/lib/ui/area-pulse";
+import { AREA_PULSE_CLASS, PULSE_SETS, readMapPulse, useAreaPulse, type MapTool } from "@/lib/ui/area-pulse";
 import { AreaLayer } from "./area-layer";
 import { TarlaLayer } from "@/components/maps/tarla-layer";
 import { tarlaOutlines } from "@/lib/geo/tarla-outline";
@@ -1809,12 +1809,16 @@ export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean 
   // Loading / error states
   // -------------------------------------------------------------------------
 
-  // Slice #39.09 — „Instrumente → Calcul suprafață" opens this map with ?area=1: the „Toate" tab, where the toolbar
-  // is drawn, and the two area buttons pulse for three seconds (`useAreaPulse`) — counted from when the toolbar is
-  // drawn, not from the arrival, so a slow list does not eat the pulse. Nothing is pressed. The parameter stays in
-  // the address, so a reload points them out again.
-  const areaAsked = readAreaPulse(searchParams?.toString() ?? "");
-  const areaPulse = useAreaPulse(areaAsked && !isLoading);
+  // Slice #39.09, #39.78 — a guide under „Instrumente" opens this map with ?pulse=measure or ?pulse=groups (an old
+  // „Calcul suprafață" link with ?area=1): the „Toate" tab, where the toolbar is drawn, and the set's buttons pulse
+  // for three seconds (`useAreaPulse`) — counted from when the toolbar is drawn, not from the arrival, so a slow
+  // list does not eat the pulse. Nothing is pressed. The parameter stays in the address, so a reload points them
+  // out again.
+  const pulseSet = readMapPulse(searchParams?.toString() ?? "");
+  const areaAsked = pulseSet !== null;
+  const pulsing = useAreaPulse(isLoading ? null : pulseSet);
+  const pulseClass = (tool: MapTool): string | undefined =>
+    pulsing && pulseSet && PULSE_SETS[pulseSet].includes(tool) ? AREA_PULSE_CLASS : undefined;
   if (areaAsked !== areaTabSeen) {
     setAreaTabSeen(areaAsked);
     if (areaAsked) setActiveTab("all");
@@ -2245,13 +2249,14 @@ export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean 
             {/* aria-expanded) while on; the hints their `title` carried are  */}
             {/* the tooltip's second line.                                    */}
             <IconButton
-              icon={DraftingCompass}
-              label={t("map.anglesButton")}
+              icon={MAP_TOOL_ICON.angles}
+              label={t(MAP_TOOL_LABEL.angles)}
               note={t("map.anglesHint")}
               variant={anglesMode ? "primary" : "secondary"}
               size="sm"
               aria-pressed={anglesMode}
               disabled={areaOn}
+              className={pulseClass("angles")}
               onClick={toggleAnglesMode}
             />
             <HelpHint hintKey="angles-click-corner" />
@@ -2259,13 +2264,14 @@ export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean 
             {/* Ruler — measure real ground distance (Slice #18.14.ruler).      */}
             {/* Sits to the left of Groups; depressed while active.             */}
             <IconButton
-              icon={Ruler}
-              label={t("map.rulerButton")}
+              icon={MAP_TOOL_ICON.ruler}
+              label={t(MAP_TOOL_LABEL.ruler)}
               note={areaOn ? t("map.areaLocked") : t("map.rulerHint")}
               variant={rulerMode ? "primary" : "secondary"}
               size="sm"
               aria-pressed={rulerMode}
               disabled={areaOn}
+              className={pulseClass("ruler")}
               onClick={toggleRulerMode}
             />
             <HelpHint hintKey="ruler-two-clicks" />
@@ -2273,28 +2279,28 @@ export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean 
             {/* Slice #39.07 — „Suprafața unei zone delimitate": property corners, one after another, and the area of */}
             {/* the polygon through them. After the Ruler, before „Grupuri"; a toggle, like them.                   */}
             <IconButton
-              icon={AreaDelimitedIcon}
-              label={t("map.areaDelimitedButton")}
+              icon={MAP_TOOL_ICON.areaDelimited}
+              label={t(MAP_TOOL_LABEL.areaDelimited)}
               note={t("map.areaDelimitedHint")}
               variant={areaMode === "delimited" ? "primary" : "secondary"}
               size="sm"
               aria-pressed={areaMode === "delimited"}
               data-area-tool="delimited"
-              className={areaPulse ? AREA_PULSE_CLASS : undefined}
+              className={pulseClass("areaDelimited")}
               onClick={() => toggleAreaMode("delimited")}
             />
 
             {/* Slice #39.08 — „Suprafața unei zone oarecare": a polygon drawn freely, as a new property's is. Pressed, */}
             {/* it is drawing; „Gata" (the mini-map's) or a click on the first corner closes it, then corners drag.     */}
             <IconButton
-              icon={AreaFreeIcon}
-              label={t("map.areaFreeButton")}
+              icon={MAP_TOOL_ICON.areaFree}
+              label={t(MAP_TOOL_LABEL.areaFree)}
               note={t("map.areaFreeHint")}
               variant={areaMode === "free" ? "primary" : "secondary"}
               size="sm"
               aria-pressed={areaMode === "free"}
               data-area-tool="free"
-              className={areaPulse ? AREA_PULSE_CLASS : undefined}
+              className={pulseClass("areaFree")}
               onClick={() => toggleAreaMode("free")}
             />
             {areaMode === "free" && freeDraw.drawing && (
@@ -2314,15 +2320,18 @@ export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean 
               />
             )}
 
-            {/* Slice #39.68 — „Tarlale": the tarla outlines, a toggle beside Grupuri, off by default. */}
+            {/* Slice #39.68 — „Tarlale": the tarla outlines, a toggle beside Grupuri, off by default.            */}
+            {/* #39.78: the gap before it is twice the row's — the measuring buttons end here (`ml-2` on top of     */}
+            {/* the row's `gap-2`), and a guide's set ends at the same place.                                     */}
             <IconButton
-              icon={Fence}
-              label={t("map.tarlaleButton")}
+              icon={MAP_TOOL_ICON.tarlale}
+              label={t(MAP_TOOL_LABEL.tarlale)}
               note={t("map.tarlaleHint")}
               variant={showTarlale ? "primary" : "secondary"}
               size="sm"
               aria-pressed={showTarlale}
               data-map-layer="tarlale"
+              className={["ml-2", pulseClass("tarlale")].filter(Boolean).join(" ")}
               onClick={() => setShowTarlale((on) => !on)}
             />
 
@@ -2333,12 +2342,13 @@ export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean 
             {/* whose every group is unchecked.                                 */}
             <div className="relative">
               <IconButton
-                icon={Group}
-                label={t("map.groupsButton")}
+                icon={MAP_TOOL_ICON.groups}
+                label={t(MAP_TOOL_LABEL.groups)}
                 variant={groupsPanelOpen ? "primary" : "secondary"}
                 size="sm"
                 aria-expanded={groupsPanelOpen}
                 disabled={areaOn}
+                className={pulseClass("groups")}
                 onClick={() => setGroupsPanelOpen((o) => !o)}
               />
 
@@ -2401,18 +2411,20 @@ export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean 
             {/* „⬚" and „✕" were glyphs in the messages, standing in for     */}
             {/* the icons; the messages lost them, as #37.42's „→" did.        */}
             <IconButton
-              icon={selectMode ? X : SquareDashedMousePointer}
-              label={selectMode ? t("map.cancelSelect") : t("map.select")}
+              icon={selectMode ? X : MAP_TOOL_ICON.select}
+              label={selectMode ? t("map.cancelSelect") : t(MAP_TOOL_LABEL.select)}
               note={selectMode ? t("map.selectExitTitle") : t("map.selectEnterTitle")}
               variant={selectMode ? "danger" : "secondary"}
               size="sm"
               disabled={areaOn}
+              className={pulseClass("select")}
               onClick={toggleSelectMode}
             />
             <HelpHint hintKey="drag-select" />
 
-            {/* Slice #39.60 — „Setări hartă": the distance at which drops merge, kept per browser. */}
-            <div className="relative">
+            {/* Slice #39.60 — „Setări hartă": the distance at which drops merge, kept per browser.               */}
+            {/* #39.78: the gap before it is twice the row's — the grouping buttons end at „Selectează".           */}
+            <div className="relative ml-2">
               <IconButton
                 icon={Settings2}
                 label={t("map.settingsButton")}

@@ -6,7 +6,7 @@
 | **Kind** | happy |
 | **Data** | — |
 | **State** | `automated` |
-| **Last green** | 2026-10-06 |
+| **Last green** | 2026-10-18 |
 
 ## What this proves
 
@@ -46,8 +46,8 @@ Nothing.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Looks at the sidebar | Top to bottom: „Tablou de bord", „Domeniu", „Instrumente", „Import", „Rapoarte", „Administrare", „Setări", „Ajutor și învățare" (#39.37) — no „Funcții", „Studiu" or „Ajutor" |
-| 2 | Opens each section in turn | „Domeniu": Persoane Fizice, Persoane Juridice, Proprietăți, Acte. „Instrumente": Distilare Tipizate, Calcul drum lateral, Calcul suprafață (#39.09). „Import": Dosare de proprietăți. „Rapoarte": Interacțiuni, Arbori de moștenire (#39.11), Căutare globală (#39.02). „Administrare": Date de referință, Utilizatori & Acces, Grupuri, Ștampile, Etichete. „Ajutor și învățare": Informații de ajutor, Manual de utilizare (#39.37), Harta competențelor (#39.42), Întreabă (#39.45). No item is drawn faded, and nothing says „În curând" |
-| 3 | Presses each link in turn: „Tablou de bord", the four of „Domeniu", the three of „Instrumente", „Dosare de proprietăți", the three of „Rapoarte" („Arbori de moștenire" last: its screen covers the whole page, #39.11), the five of „Administrare", the four of „Ajutor și învățare", „Setări" | Each opens its screen — its title „Tablou de bord", „Persoană fizică", „Persoană juridică", „Proprietăți", „Acte", „Distilare Tipizate", „Calcul", „Toate Proprietățile" (the map, `?area=1`), „Import", „Interacțiuni", „Căutare globală", „Date de referință", „Utilizatori & Acces", „Grupuri", „Ștampile", „Etichete", „Informații de ajutor", „Manual de utilizare", „Harta competențelor", „Întreabă", „Setări", „Arbori de moștenire" — and the item pressed is the sidebar's active one |
+| 2 | Opens each section in turn | „Domeniu": Persoane Fizice, Persoane Juridice, Proprietăți, Acte. „Instrumente": Distilare Tipizate, Calcul drum lateral, then three buttons — „Măsurători pe hartă", „Grupări de proprietăți", „Navigare" (#39.78; each opens a box, TC-MAP-08). „Import": Dosare de proprietăți. „Rapoarte": Interacțiuni, Arbori de moștenire (#39.11), Căutare globală (#39.02). „Administrare": Date de referință, Utilizatori & Acces, Grupuri, Ștampile, Etichete. „Ajutor și învățare": Informații de ajutor, Manual de utilizare (#39.37), Harta competențelor (#39.42), Întreabă (#39.45). No item is drawn faded, and nothing says „În curând" |
+| 3 | Presses each link in turn: „Tablou de bord", the four of „Domeniu", the two links of „Instrumente", „Dosare de proprietăți", the three of „Rapoarte" („Arbori de moștenire" last: its screen covers the whole page, #39.11), the five of „Administrare", the four of „Ajutor și învățare", „Setări" | Each opens its screen — its title „Tablou de bord", „Persoană fizică", „Persoană juridică", „Proprietăți", „Acte", „Distilare Tipizate", „Calcul", „Import", „Interacțiuni", „Căutare globală", „Date de referință", „Utilizatori & Acces", „Grupuri", „Ștampile", „Etichete", „Informații de ajutor", „Manual de utilizare", „Harta competențelor", „Întreabă", „Setări", „Arbori de moștenire" — and the item pressed is the sidebar's active one |
 | 4 | Types `/reports` into the address bar | „Rapoarte — în lucru", then five paragraphs: „Aici veți putea pune arhivei întrebări de business și primi răspunsurile ca tabele și grafice." … „Nu e nevoie de cunoștințe tehnice: alegeți ce vreți să aflați, iar sistemul face analiza." The breadcrumb „Acasă › Rapoarte"; no link in the sidebar points at `/reports` |
 | 5 | „Setări" | „Setări" with „Praguri de timp" (#38.40; #38.41 put „Contul meu" first); no „Altele" and no links to Grupuri, Ștampile or Etichete. The breadcrumb „Acasă › Setări" |
 | 6 | „Restrânge bara laterală" | Eight icons, one per section, each named by its section; then „Extinde bara laterală" |
@@ -61,6 +61,8 @@ Nothing.
 Steps 1–7 create nothing. Steps 8–10's test person is removed at the end. The sidebar is left expanded.
 
 ## Notes from the runs
+
+**2026-10-18 — Slice #39.78, steps 2 and 3.** „Calcul suprafață" left „Instrumente"; in its place three guides to the big map's buttons — „Măsurători pe hartă", „Grupări de proprietăți", „Navigare" — buttons that open a box rather than links, so step 3 presses two links there, not three. The boxes are TC-MAP-08's. The spec follows.
 
 **2026-10-15 — Slice #39.45, steps 2, 3 and 7.** „Ajutor și învățare" gains its fourth item, „Întreabă" (`/ask`), its title „Întreabă" and its breadcrumb „Acasă › Ajutor și învățare › Întreabă". The spec follows.
 

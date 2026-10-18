@@ -215,9 +215,10 @@ body {
 }
 
 /* ───────────────────────────────────────────────────────────────────────────
-   Slice #39.09 — „Instrumente → Calcul suprafață" points out the map's two area
-   buttons (#39.07, #39.08): ga-note-pulse's three seconds, 1 s × 3, in the area
-   tools' violet. A ring and a pale violet band come and go; the button's size,
+   Slice #39.09 — the map points out some of its buttons: since #39.78 the set a
+   guide under „Instrumente" names (?pulse=measure|groups; ?area=1, the old
+   „Calcul suprafață" link, the two area buttons): ga-note-pulse's three seconds,
+   1 s × 3, in the area tools' violet. A ring and a pale violet band come and go; the button's size,
    its icon and the toolbar never move. Reduced motion: both held for the same
    three seconds (the class leaves after them, `@/lib/ui/area-pulse`).
    ─────────────────────────────────────────────────────────────────────────── */

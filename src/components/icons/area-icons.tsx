@@ -8,7 +8,7 @@
 import { forwardRef } from "react";
 import type { LucideProps } from "lucide-react";
 
-// Slice #39.09: forwardRef, as Lucide's own are, so the sidebar's „Calcul suprafață" (a LucideIcon slot) can carry one.
+// Slice #39.09: forwardRef, as Lucide's own are, so a LucideIcon slot can carry one (the sidebar's „Calcul suprafață" did until #39.78).
 const Glyph = forwardRef<SVGSVGElement, LucideProps & { name: string }>(function Glyph(
   { size = 24, className, strokeWidth = 2, absoluteStrokeWidth: _abs, name, children, ...rest },
   ref,

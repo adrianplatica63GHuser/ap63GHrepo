@@ -1,7 +1,7 @@
 // Pure route-matching helpers — no external dependencies so they are
 // trivially unit-testable without mocking lucide-react or next-intl.
 
-type NavItemMin = { key: string; href?: string; wip?: true };
+type NavItemMin = { key: string; href?: string; wip?: true; guide?: string };
 type NavSectionMin = { key: string; items: NavItemMin[]; href?: string };
 
 /**
@@ -11,7 +11,7 @@ type NavSectionMin = { key: string; items: NavItemMin[]; href?: string };
  * start with it.
  */
 export function isItemActive(href: string, pathname: string, search = ""): boolean {
-  // Slice #39.09: an address with a query („Calcul suprafață", /properties/map?area=1) is active on exactly its
+  // Slice #39.09: an address with a query (#39.09's „Calcul suprafață", /properties/map?area=1) is active on exactly its
   // path, and only while the current query carries every parameter it names, with its value.
   const q = href.indexOf("?");
   if (q >= 0) {
@@ -89,8 +89,8 @@ export function isFlatSectionActive(section: NavSectionMin, pathname: string): b
 export const USER_HREFS: readonly string[] = ["/", "/natural-persons", "/judicial-persons", "/properties", "/documents", "/interactions", "/inheritance-tree", "/manual", "/skills-map", "/ask"];
 
 /**
- * What the sidebar draws at all (Slice #38.42): an item with an `href` and no
- * `wip` mark; a section with such an item, or a flat section with its own
+ * What the sidebar draws at all (Slice #38.42): an item with an `href` (or,
+ * #39.78, a `guide` — a box about the map's buttons) and no `wip` mark; a section with such an item, or a flat section with its own
  * `href`. Nothing else — a placeholder costs attention every day, so it waits
  * in nav-config.ts, undrawn, until its screen exists.
  */
@@ -101,7 +101,8 @@ export function drawnSections<S extends NavSectionMin>(sections: readonly S[]): 
       if (s.href) out.push(s);
       continue;
     }
-    const items = s.items.filter((i) => i.href !== undefined && !i.wip);
+    // #39.78: a guide (a box about the map's buttons) has no href and is drawn.
+    const items = s.items.filter((i) => (i.href !== undefined || i.guide !== undefined) && !i.wip);
     if (items.length > 0) out.push({ ...s, items });
   }
   return out;

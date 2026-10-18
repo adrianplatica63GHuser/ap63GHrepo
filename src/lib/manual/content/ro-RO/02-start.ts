@@ -23,7 +23,7 @@ Bara laterală, în stânga, deschide orice ecran al aplicației (Figura [[fig-s
 |---|---|
 | Tablou de bord | Primul ecran: noutățile și ce cere atenție. |
 | Domeniu | Cele patru liste: Persoane Fizice, Persoane Juridice, Proprietăți, Acte. |
-| Instrumente | Distilare Tipizate, Calcul drum lateral, Calcul suprafață. |
+| Instrumente | Distilare Tipizate, Calcul drum lateral, Măsurători pe hartă, Grupări de proprietăți, Navigare. |
 | Import | Dosare de proprietăți: aducerea în arhivă a unui dosar întreg. |
 | Rapoarte | Interacțiuni, Arbori de moștenire, Căutare globală. |
 | Administrare | Date de referință, Utilizatori & Acces, Grupuri, Ștampile, Etichete. |

@@ -27,7 +27,7 @@ At the top of the map are its buttons. „STR” and „SAT” choose the street
 The map opens from two places:
 
 - from the „Properties” list, with the „Full map” button, on the right, beside „Add new Property” (section [[properties-list]]). The navigation bar then reads „Home › Properties › Full map”, and a click on „Properties” takes you back to the list. In the sidebar, „Properties” stays lit;
-- from the sidebar, „Tools” → „Area Calculation”. The same map opens, but its two area buttons pulse together, three times, in a violet ring, so that you find them easily. Neither is pressed for you: choose the one you need (section [[map-area]]). In the sidebar, „Area Calculation” stays lit.
+- from the sidebar, „Tools” → „Measurements on map” or „Groupings of properties”. A box shows the buttons it is about and says what each does; „OK” opens the same map, with them pulsing together, three times, in a violet ring, so that you find them easily. None is pressed for you: choose the one you need (section [[map-area]]).
 
 ### 8.1.2 A property's bubble and the double-click {#map-what-bubble}
 
@@ -143,7 +143,7 @@ Here you draw the zone freely, anywhere on the map, as with a property's corners
 
 ### 8.4.3 From „Tools” {#map-area-tools}
 
-You find the same calculation in the sidebar, under „Tools” → „Area Calculation”: it opens the map with the two buttons pointed out (section [[map-what-open]]). The tool is described, together with the others, in section [[tools-area]].
+The sidebar points out the measuring buttons too, under „Tools” → „Measurements on map”: after „OK”, the map opens with them pulsing (section [[map-what-open]]). The tool is described, together with the others, in section [[tools-area]].
 
 ## 8.5 Street View {#map-street-view}
 
