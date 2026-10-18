@@ -1623,13 +1623,13 @@ async function main(): Promise<void> {
   const planned = tileRows(plan, props, docs, extra);
   const over = [...planned].filter(([, n]) => n > MAX_LINKS);
   if (over.length) throw new Error(`seed: the plan puts ${over.length} objects past ${MAX_LINKS} rows on „Legături" — a generator bug, nothing deleted to hide it`);
+  // #39.81: the lots to divide — an owner already at 15 rows gives back one top-up link for the slice the run gives them
+  const runPlans = sideRoadRuns(makeRng((SEED ^ 0x51de) >>> 0), props, { rows: planned, extra, max: MAX_LINKS });
   console.log(`· „Legături": ${Object.values(extra).reduce((s, x) => s + x.length, 0)} more links, so every object has 3–15 rows where the plan allows`);
   await writeExtraLinks(extra);
   const meta = planMetadata(makeRng((SEED ^ 0x7a65) >>> 0), manifest.objects.map((o) => ({ key: o.key, kind: o.kind, dead: !!plan.persons.find((p) => p.key === o.key)?.dod })));
   console.log(`· ${GROUPS.length} groups, ${STAMPS.length} stamps, ${TAGS.length} tags, classifications, provenance trails, „Vezi și"`);
   await writeMetadata(meta);
-  // the lots to divide: owners whose „Legături" can take the slice they are given
-  const runPlans = sideRoadRuns(makeRng((SEED ^ 0x51de) >>> 0), props, (k) => (planned.get(k) ?? 0) < MAX_LINKS);
   console.log(`· ${runPlans.length} side-road runs from a property`);
   const refused = await writeSideRoadRuns(runPlans);
   for (const why of refused) console.log(`  ! not divided — ${why}`);

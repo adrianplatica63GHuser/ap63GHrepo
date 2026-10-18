@@ -34,6 +34,7 @@ import type { PropertyPlan, TypeFlags } from "./properties";
 import type { DocPlan } from "./documents";
 import { BRAGADIRU_RANGE, centroid, type Poly } from "./geometry";
 import { LOCALITIES } from "./names";
+import type { ExtraLinks } from "./links";
 import type { Profession } from "./professions";
 
 // ---------------------------------------------------------------------------
@@ -559,24 +560,67 @@ export function shareStrings(shares: [number, number][]): string[] | null {
   return h.map((x) => `${Math.floor(x / 100)},${String(x % 100).padStart(2, "0")}`);
 }
 
+/** The top-up links a run may take back to make room on an owner's „Legături" — never a family tie. */
+const DROPPABLE_PERSON_ROLES: ReadonlySet<string> = new Set(["Reprezentant legal / Mandatar", "Asociat / Acționar", "Angajat"]);
+
+export type RunRoom = {
+  /** each object's rows on „Legături" as planned (links.ts `tileRows`) — updated as runs are chosen */
+  rows: Map<string, number>;
+  /** the planned top-up links — one is taken back where an owner has no row to spare */
+  extra: ExtraLinks;
+  max: number;
+};
+
 /**
- * A few co-owned drawn lots of four corners to divide: two or three owners in shares, 600 m² or more. Each owner gets
- * the slice the run creates as „Proprietar" — one more row on their „Legături" — so `room(key)` says whose tile can
- * take it (seed.ts: fewer rows planned than the 15 allowed).
+ * A few co-owned drawn lots of four corners to divide: two or three owners in shares, 600 m² or more. Each owner is
+ * linked to the slice the run creates — one more row on their „Legături" — so with `room` an owner already at the
+ * most rows gives back one top-up link of their own (a representative, associate, employee or neighbour link —
+ * never a family tie); a lot whose owner has neither is skipped. MUTATES `room.extra` and `room.rows`.
  */
-export function sideRoadRuns(r: Rng, props: PropertyPlan[], room: (key: string) => boolean = () => true): SideRoadRunPlan[] {
-  const fit = props.filter((p) => p.corners?.length === 4 && p.surface >= 600 && p.owners.length >= 2 && p.owners.length <= 3 && p.owners.every((o) => o.share && room(o.key)) && !p.cluster?.line);
-  return r.shuffle(fit).slice(0, SIDE_ROAD_RUNS).flatMap((p): SideRoadRunPlan[] => {
+export function sideRoadRuns(r: Rng, props: PropertyPlan[], room?: RunRoom): SideRoadRunPlan[] {
+  const fit = props.filter((p) => p.corners?.length === 4 && p.surface >= 600 && p.owners.length >= 2 && p.owners.length <= 3 && p.owners.every((o) => o.share) && !p.cluster?.line);
+  const out: SideRoadRunPlan[] = [];
+  const rowsOf = (k: string) => room?.rows.get(k) ?? 0;
+  const bump = (k: string, by: number) => room?.rows.set(k, rowsOf(k) + by);
+  /** the index of a top-up link of `k`'s that can go: [list, index], or null */
+  const droppable = (k: string): ["pp" | "pr", number] | null => {
+    if (!room) return null;
+    const i = room.extra.personPerson.findIndex((l) => (l.holder === k || l.other === k) && DROPPABLE_PERSON_ROLES.has(l.role));
+    if (i >= 0) return ["pp", i];
+    const j = room.extra.personProperty.findIndex((l) => l.person === k);
+    return j >= 0 ? ["pr", j] : null;
+  };
+  for (const p of r.shuffle(fit)) {
+    if (out.length >= SIDE_ROAD_RUNS) break;
     const shares = shareStrings(p.owners.map((o) => o.share!));
-    if (!shares) return [];
-    return [{
+    if (!shares) continue;
+    if (room && !p.owners.every((o) => rowsOf(o.key) < room.max || droppable(o.key))) continue;
+    if (room) {
+      for (const o of p.owners) {
+        if (rowsOf(o.key) >= room.max) {
+          const [list, i] = droppable(o.key)!;
+          if (list === "pp") {
+            const [l] = room.extra.personPerson.splice(i, 1);
+            bump(l.holder, -1);
+            bump(l.other, -1);
+          } else {
+            const [l] = room.extra.personProperty.splice(i, 1);
+            bump(l.person, -1);
+            bump(l.property, -1);
+          }
+        }
+        bump(o.key, 1);
+      }
+    }
+    out.push({
       property: p.key,
       owners: p.owners.map((o, i) => ({ key: o.key, share: shares[i] })),
       width: r.pick(["4", "4,5", "5", "6"]),
       order: r.shuffle(p.owners.map((_, i) => i)),
       groupDescription: `Drum lateral — ${p.nickname} (date de test)`,
-    }];
-  });
+    });
+  }
+  return out;
 }
 
 /** The Street View line Google would give for a seeded address: „Strada Gării 12, Bragadiru 077025". */

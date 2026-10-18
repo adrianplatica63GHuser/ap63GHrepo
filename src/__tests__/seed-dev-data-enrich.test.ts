@@ -304,7 +304,6 @@ describe("side-road runs and the last fields", () => {
   });
 
   it("a few co-owned drawn lots of four corners, each request one the screen would accept", () => {
-    expect(sideRoadRuns(makeRng(8), props, () => false)).toEqual([]);
     const runs = sideRoadRuns(makeRng(8), props);
     expect(runs.length).toBeGreaterThanOrEqual(1);
     expect(runs.length).toBeLessThanOrEqual(SIDE_ROAD_RUNS);
@@ -316,6 +315,28 @@ describe("side-road runs and the last fields", () => {
       expect([...r.order].sort()).toEqual(r.owners.map((_, i) => i));
       expect(r.groupDescription).toContain("(date de test)");
     }
+  });
+
+  it("an owner already at 15 rows on „Legături” gives back one top-up link for the slice — never a family tie", () => {
+    const fit = props.filter((p) => p.corners?.length === 4 && p.surface >= 600 && p.owners.length >= 2 && p.owners.length <= 3 && p.owners.every((o) => o.share) && !p.cluster?.line);
+    const owners = [...new Set(fit.flatMap((p) => p.owners.map((o) => o.key)))];
+    const rows = new Map(owners.map((k) => [k, 15]));
+    // every owner at 15, each with one representative link and one grandparent tie of its own
+    const extra = {
+      personPerson: owners.flatMap((k) => [
+        { holder: k, other: `X-${k}`, role: "Reprezentant legal / Mandatar" as const },
+        { holder: k, other: `Y-${k}`, role: "Bunic" as const },
+      ]),
+      personProperty: [], propertyProperty: [], documentDocument: [], documentProperty: [],
+    };
+    const runs = sideRoadRuns(makeRng(8), props, { rows, extra, max: 15 });
+    expect(runs.length).toBeGreaterThanOrEqual(1);
+    for (const r of runs) for (const o of r.owners) expect(rows.get(o.key)).toBeLessThanOrEqual(15);
+    expect(extra.personPerson.filter((l) => l.role === "Bunic")).toHaveLength(owners.length);
+    const taken = owners.length - extra.personPerson.filter((l) => l.role !== "Bunic").length;
+    expect(taken).toBe(new Set(runs.flatMap((r) => r.owners.map((o) => o.key))).size);
+    // with no link to give back, nobody at 15 is given a slice
+    expect(sideRoadRuns(makeRng(8), props, { rows: new Map(owners.map((k) => [k, 15])), extra: { personPerson: [], personProperty: [], propertyProperty: [], documentDocument: [], documentProperty: [] }, max: 15 })).toEqual([]);
   });
 
   it("the Street View line as Google gives it; only on a drawn lot's address", () => {
