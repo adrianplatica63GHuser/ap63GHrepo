@@ -28,7 +28,10 @@ import { tarlaLabel } from "@/lib/tarla/label";
 import type { TarlaDocumentItem, TarlaFull, TarlaParcelItem, TarlaPlanItem, TarlaPropertyItem } from "@/lib/tarla/types";
 import { TARLA_LIST_QUERY_KEY } from "./tarla-list";
 import { TarlaMap } from "./tarla-map";
-import { MAP_BOX_HEIGHT_REM } from "@/lib/ui/field-widths";
+import { MAP_BOX_HEIGHT_REM, unitStyle } from "@/lib/ui/field-widths";
+import { TileUnitRow } from "@/components/screen/tile-unit-row";
+import { TilePositionsReset } from "@/components/screen/tile-positions-reset";
+import { TARLA_HALF_UNITS, TARLA_SCREEN, TARLA_THIRD_UNITS } from "@/lib/ui/screen-tiles";
 
 type Draft = {
   indicativ: string;
@@ -71,6 +74,15 @@ function sameDraft(a: Draft, b: Draft): boolean {
 
 const BOX = "rounded-md border border-wire bg-white px-2 py-1 text-sm dark:border-zinc-600 dark:bg-zinc-800";
 const CARD = "rounded-xl border border-card-rim bg-card px-5 py-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900";
+
+/**
+ * Slice #39.77 — the two big lists (properties, documents): never taller than two thirds of the window, scrolling inside
+ * their tile, their header row staying at the top (Ask first 2). Neither has a pagination of its own.
+ */
+const BIG_LIST_FRAME = "mt-2 max-h-[66vh] overflow-auto";
+const STICKY_HEAD = "sticky top-0 z-10 bg-card dark:bg-zinc-900";
+/** A list inside a third: it scrolls sideways rather than leaving its tile. */
+const SMALL_LIST_FRAME = "overflow-x-auto";
 const LINK = "text-blue-700 underline-offset-2 hover:underline dark:text-blue-400";
 
 export function TarlaDetail({ id }: { id: string }) {
@@ -165,12 +177,39 @@ export function TarlaDetail({ id }: { id: string }) {
 
   return (
     <>
-      <h1 className="text-2xl font-semibold text-ink dark:text-zinc-100" data-tarla-title="">
-        {t("title", { label: tarlaLabel(tarla.data) })}
-      </h1>
+      {/* Slice #39.77: „Implicit" at the top right puts the dragged tiles back in their places. */}
+      <header className="flex flex-wrap items-start justify-between gap-4">
+        <h1 className="text-2xl font-semibold text-ink dark:text-zinc-100" data-tarla-title="">
+          {t("title", { label: tarlaLabel(tarla.data) })}
+        </h1>
+        <TilePositionsReset entity={TARLA_SCREEN.entity} />
+      </header>
       <TarlaBoundariesInfo />
 
-      <section className={CARD} aria-labelledby="tarla-identity-title" data-tarla-identity="">
+      {/* Slice #39.77: the save is the page's — it writes the identity and the outline, two tiles — so it stands above them. */}
+      <div className="flex items-center gap-3" data-tarla-save="">
+        <IconButton
+          icon={Save}
+          label={t("save")}
+          variant="primary"
+          size="sm"
+          showLabel
+          onClick={() => save.mutate(current)}
+          disabled={!dirty || save.isPending || current.indicativ.trim() === ""}
+          busy={save.isPending}
+        />
+        {savedOnce && !dirty && <span className="text-sm text-fade" role="status">{t("saved")}</span>}
+        {saveError && (
+          <span role="alert" className="text-sm text-red-700 dark:text-red-400">
+            {saveError.takenBy !== null ? t("codeTaken", { takenBy: saveError.takenBy }) : t("saveError")}
+          </span>
+        )}
+      </div>
+
+      {/* Slice #39.77 — the panels as tiles, as on the record forms (`TileUnitRow`): dragged, lifted by a double-click,
+          kept per browser under „tarla". Thirds, and halves for the two big lists (`TARLA_SCREEN`). */}
+      <TileUnitRow screen={TARLA_SCREEN}>
+      <section className={CARD} aria-labelledby="tarla-identity-title" data-tarla-identity="" data-tile="identity" style={unitStyle(TARLA_THIRD_UNITS)}>
         <h2 id="tarla-identity-title" className="text-base font-semibold text-ink dark:text-zinc-100">
           {t("identity")}
         </h2>
@@ -229,7 +268,7 @@ export function TarlaDetail({ id }: { id: string }) {
         </label>
       </section>
 
-      <section className={CARD} aria-labelledby="tarla-outline-title" data-tarla-outline="">
+      <section className={CARD} aria-labelledby="tarla-outline-title" data-tarla-outline="" data-tile="outline" style={unitStyle(TARLA_THIRD_UNITS)}>
         <h2 id="tarla-outline-title" className="text-base font-semibold text-ink dark:text-zinc-100">
           {t("outline")}
         </h2>
@@ -248,31 +287,13 @@ export function TarlaDetail({ id }: { id: string }) {
             <ActivityCue>{tc("loading")}</ActivityCue>
           )}
         </div>
-        <div className="mt-3">
+        {/* Slice #39.77: in a third, the corners' table scrolls sideways rather than leaving the tile. */}
+        <div className={`mt-3 ${SMALL_LIST_FRAME}`}>
           <CornersManager corners={current.corners} onChange={(next) => set("corners", next)} />
         </div>
       </section>
 
-      <div className="flex items-center gap-3" data-tarla-save="">
-        <IconButton
-          icon={Save}
-          label={t("save")}
-          variant="primary"
-          size="sm"
-          showLabel
-          onClick={() => save.mutate(current)}
-          disabled={!dirty || save.isPending || current.indicativ.trim() === ""}
-          busy={save.isPending}
-        />
-        {savedOnce && !dirty && <span className="text-sm text-fade" role="status">{t("saved")}</span>}
-        {saveError && (
-          <span role="alert" className="text-sm text-red-700 dark:text-red-400">
-            {saveError.takenBy !== null ? t("codeTaken", { takenBy: saveError.takenBy }) : t("saveError")}
-          </span>
-        )}
-      </div>
-
-      <section className={CARD} aria-labelledby="tarla-properties-title" data-tarla-properties="">
+      <section className={CARD} aria-labelledby="tarla-properties-title" data-tarla-properties="" data-tile="properties" style={unitStyle(TARLA_HALF_UNITS)}>
         <h2 id="tarla-properties-title" className="text-base font-semibold text-ink dark:text-zinc-100">
           {t("properties", { count: properties.data?.length ?? tarla.data.propertyCount })}
         </h2>
@@ -283,8 +304,9 @@ export function TarlaDetail({ id }: { id: string }) {
         ) : properties.data.length === 0 ? (
           <p className="mt-2 text-sm text-fade">{t("propertiesNone")}</p>
         ) : (
-          <table className="mt-2 text-sm">
-            <thead>
+          <div className={BIG_LIST_FRAME} data-tarla-big-list="">
+          <table className="text-sm">
+            <thead className={STICKY_HEAD}>
               <tr className="text-left text-xs font-medium uppercase tracking-wide text-fade">
                 <th className="py-2 pr-4">{t("columns.code")}</th>
                 <th className="py-2 pr-4">{t("columns.nickname")}</th>
@@ -309,10 +331,11 @@ export function TarlaDetail({ id }: { id: string }) {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </section>
 
-      <section className={CARD} aria-labelledby="tarla-plans-title" data-tarla-plans="">
+      <section className={CARD} aria-labelledby="tarla-plans-title" data-tarla-plans="" data-tile="plans" style={unitStyle(TARLA_THIRD_UNITS)}>
         <h2 id="tarla-plans-title" className="text-base font-semibold text-ink dark:text-zinc-100">
           {t("plans", { count: plans.data?.length ?? 0 })}
         </h2>
@@ -337,7 +360,7 @@ export function TarlaDetail({ id }: { id: string }) {
         )}
       </section>
 
-      <section className={CARD} aria-labelledby="tarla-parcels-title" data-tarla-parcels="">
+      <section className={CARD} aria-labelledby="tarla-parcels-title" data-tarla-parcels="" data-tile="parcels" style={unitStyle(TARLA_THIRD_UNITS)}>
         <h2 id="tarla-parcels-title" className="text-base font-semibold text-ink dark:text-zinc-100">
           {t("parcels", { count: parcels.data?.length ?? 0 })}
         </h2>
@@ -349,6 +372,7 @@ export function TarlaDetail({ id }: { id: string }) {
         ) : parcels.data.length === 0 ? (
           <p className="mt-2 text-sm text-fade">{t("parcelsNone")}</p>
         ) : (
+          <div className={SMALL_LIST_FRAME}>
           <table className="mt-2 text-sm">
             <thead>
               <tr className="text-left text-xs font-medium uppercase tracking-wide text-fade">
@@ -379,10 +403,11 @@ export function TarlaDetail({ id }: { id: string }) {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </section>
 
-      <section className={CARD} aria-labelledby="tarla-documents-title" data-tarla-documents="">
+      <section className={CARD} aria-labelledby="tarla-documents-title" data-tarla-documents="" data-tile="documents" style={unitStyle(TARLA_HALF_UNITS)}>
         <h2 id="tarla-documents-title" className="text-base font-semibold text-ink dark:text-zinc-100">
           {t("documents", { count: documents.data?.length ?? 0 })}
         </h2>
@@ -394,8 +419,9 @@ export function TarlaDetail({ id }: { id: string }) {
         ) : documents.data.length === 0 ? (
           <p className="mt-2 text-sm text-fade">{t("documentsNone")}</p>
         ) : (
-          <table className="mt-2 text-sm">
-            <thead>
+          <div className={BIG_LIST_FRAME} data-tarla-big-list="">
+          <table className="text-sm">
+            <thead className={STICKY_HEAD}>
               <tr className="text-left text-xs font-medium uppercase tracking-wide text-fade">
                 <th className="py-2 pr-4">{t("columns.docCode")}</th>
                 <th className="py-2 pr-4">{t("columns.docTitle")}</th>
@@ -418,8 +444,10 @@ export function TarlaDetail({ id }: { id: string }) {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </section>
+      </TileUnitRow>
     </>
   );
 }

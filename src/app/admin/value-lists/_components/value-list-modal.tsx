@@ -151,6 +151,8 @@ const OWN_COLUMNS: Partial<Record<ListKey, Readonly<Record<string, ColumnName>>>
     showStreetView: "valueFlagStreetView",
   },
   "document-types": { name: "valueDocTypeName", shortName: "valueDocTypeShortName" },
+  // Slice #39.77: a tarla's code is short — its column is its header's width, so the gap to the locality is a cell's padding.
+  tarla: { indicativ: "valueTarlaCode" },
   // Slice #38.70: the roles' two checkmarks at the roles' tighter padding.
   "person-roles": { validForProperty: "valueRoleFlag", validForPerson: "valueRoleFlag" },
 };
@@ -269,10 +271,12 @@ function usageColumn(listKey: ListKey): ColumnName {
 
 /** The buttons' column: a document type has two more (#38.50); the roles' at their padding (#38.70). */
 function actionsColumn(listKey: ListKey): ColumnName {
-  // Slice #39.67: a tarla's row opens its page too, so it takes the document types' wider column.
-  return listKey === "document-types" || listKey === "tarla"
+  // Slice #39.67: a tarla's row opens its page too. #39.77: in a column of its own, as wide as its four buttons.
+  return listKey === "document-types"
     ? "valueActionsDocTypes"
-    : COMPACT_LISTS.has(listKey)
+    : listKey === "tarla"
+      ? "valueActionsTarla"
+      : COMPACT_LISTS.has(listKey)
       ? "valueActionsRoles"
       : "valueActions";
 }

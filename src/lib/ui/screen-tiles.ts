@@ -49,3 +49,19 @@ export const STAMP_SCREEN: ScreenTiles = {
   units: 3,
   flowUnits: 2 * 3,
 };
+
+/**
+ * Slice #39.77 — a tarla's page (/tarlale/[id]). Adrian, 2026-10-17: every panel a third of a maximized window, the
+ * properties and the documents half of it. In whole units (Ask first 1): at 1920 px with the sidebar open the page holds
+ * ten units (1624 px), a third of which rounds to 3 units (476 px) and a half to 5 (804 px). At 1366 px it holds six:
+ * two thirds side by side, or a half.
+ */
+export const TARLA_THIRD_UNITS = 3;
+export const TARLA_HALF_UNITS = 5;
+
+export const TARLA_SCREEN: ScreenTiles = {
+  entity: "tarla",
+  tiles: ["identity", "outline", "properties", "plans", "parcels", "documents"],
+  units: TARLA_HALF_UNITS,
+  flowUnits: 10,
+};

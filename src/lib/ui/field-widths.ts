@@ -1298,6 +1298,10 @@ export const COLUMN = {
   // „Formular (n)", „Unește", bin = 331 px.
   valueActions: { content: 9.25, kind: "fixed" },
   valueActionsDocTypes: { content: 21, kind: "fixed" },
+  // Slice #39.77 — „Indicative Tarla"'s buttons: „Deschide pagina tarlalei", pencil, „Unește", bin = 179 px, measured at
+  // 1920 px. It had the document types' 21rem (#39.67), and the list ran 157 px past its last button (Adrian: „it
+  // should only be as wide as to accommodate the last buttons").
+  valueActionsTarla: { content: 11.25, kind: "fixed" },
   groupCode: { content: "M", kind: "fixed" }, //            „AA 01 (12)", and the group's target under it
   description: { content: "XXL", kind: "wraps" }, //        a group's description; a stamp's code, short description and notes
   tag: { content: "L", kind: "wraps" }, //                  a tag, in mono
@@ -1319,6 +1323,9 @@ export const COLUMN = {
   valueName: { content: "XL", kind: "fixed" }, //           a list's „Denumire" — „Contract de Vânzare-Cumpărare" (252 px)
   valueNameShort: { content: "M", kind: "fixed" }, //       the same, on a list of short names — citizenships, use categories (the property types' 125 px until #38.66)
   valueText: { content: 10, kind: "fixed" }, //             any other text field — an indicativ, a short name, a type of institution (150 px)
+  // Slice #39.77 — a tarla's code, „47/2" (27 px), under „INDICATIV" (75 px): the header sets it. At valueText's 160 px
+  // the gap to „Localitate" was the one Adrian called „way too big".
+  valueTarlaCode: { content: "S", kind: "fixed" },
   // Slice #38.60 — the roles' own two: #38.50 gave „Roluri" the name column sized for the longest DOCUMENT type (XL, 252 px)
   // and #38.55 the converse names an XL too; both held much shorter text, which left the gaps Adrian saw. Each is now as
   // wide as its own longest value, measured at 1920 px on the archive after #38.58 shortened the converse cell.

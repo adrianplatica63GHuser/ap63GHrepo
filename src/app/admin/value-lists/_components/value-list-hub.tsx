@@ -122,13 +122,12 @@ export function ValueListHub({
   );
 
   /**
-   * Slices #39.75, #39.76: every page's lists are tiles (`ReferenceTiles`) — but „Indicative Tarla", whose page is
-   * 39.77's. In reading order: on „Roluri și legături" the relationship triangle first, as it stood above the list; on
+   * Slices #39.75, #39.76, #39.77: every page's lists are tiles (`ReferenceTiles`). In reading order: on „Roluri și legături" the relationship triangle first, as it stood above the list; on
    * „Roluri Persoane" the role's form, while one is open, where it stood above the table (Ask first 1); the page's
    * lists; and on the property types' page the allowed-uses grid.
    */
   const tiles: ReferenceTile[] | null =
-    selected === null || selected === "tarla"
+    selected === null
       ? null
       : [
           ...(categoryOfList(selected) === "rolesLinks"
