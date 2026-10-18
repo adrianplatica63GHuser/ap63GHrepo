@@ -45,7 +45,7 @@ describe("the categories (nothing disappears)", () => {
       ["Indicative Tarla", "Cetățenie", "Relația cu firma"],
     ]);
     expect(titles(en)).toEqual([
-      ["Physical Person Types", "Judicial Person Types", "Property Types", "Document Types"],
+      ["Physical Person Types", "Juridical Person Types", "Property Types", "Document Types"],
       ["Person Roles", "Property → Property Links", "Document → Document Links"],
       ["Tarla Codes", "Citizenship", "Relationship to the business"],
     ]);

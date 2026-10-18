@@ -80,11 +80,13 @@ test.describe("TC-DOC-16 — „Tip document:” și „Câmp specific”", () =
       const key = main.getByRole("combobox", { name: "Câmp specific:" });
       await expect(key).toBeDisabled();
       expect(await key.locator("option").allTextContents()).toEqual(["Toate"]);
-      // #38.18: „Tip document:", the sign, „Câmp specific:" — in that order; the field looks disabled. Since #39.63 they
-      // are the filter bar's fixed chips; this read `[data-toolbar-row="second"]`, the toolbar's second row, until then.
-      const row2 = main.locator("[data-filter-bar] [data-filter-fixed]");
-      const at = await Promise.all([row2.getByRole("button", { name: /^Tip document:/ }), row2.locator("[data-custom-field-sign]"), row2.getByText("Câmp specific:")].map(async (l) => (await l.boundingBox())!.x));
+      // #38.18: the sign, then „Câmp specific:"; the field looks disabled. #39.74: both on the toolbar, after „Câmpuri
+      // afișate", and „Tip document:" first on the filter bar under it. From #39.63 to #39.74 all three were the bar's
+      // fixed chips (`[data-filter-bar] [data-filter-fixed]`); before that, `[data-toolbar-row="second"]`.
+      const row2 = main.locator('[data-toolbar-row="first"]');
+      const at = await Promise.all([row2.getByRole("button", { name: /^Câmpuri afișate/ }), row2.locator("[data-custom-field-sign]"), row2.getByText("Câmp specific:")].map(async (l) => (await l.boundingBox())!.x));
       expect(at).toEqual([...at].sort((a, b) => a - b));
+      await expect(main.locator("[data-filter-bar] [data-filter-fixed]").getByRole("button", { name: /^Tip document:/ })).toHaveCount(1);
       const fieldBox = main.locator("[data-custom-field-box]");
       await expect(fieldBox).toHaveCSS("border-top-style", "dashed");
       await expect(row2.getByText("Câmp specific:")).toHaveCSS("font-style", "italic");
