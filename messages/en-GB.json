@@ -200,7 +200,7 @@
     },
     "buttons": {
       "naturalPerson": "Natural Person",
-      "judicialPerson": "Judicial Person",
+      "judicialPerson": "Juridical Person",
       "landList": "Land — List",
       "landMap": "Land — Map",
       "building": "Building",
@@ -518,7 +518,7 @@
       "colName": "Name",
       "colType": "Type",
       "typeNatural": "Natural",
-      "typeJudicial": "Judicial",
+      "typeJudicial": "Juridical",
       "resultsEmpty": "No persons found",
       "loading": "Searching…",
       "error": "Search failed",
@@ -761,7 +761,7 @@
       "colType": "Type",
       "colRole": "Role",
       "typeNatural": "Natural",
-      "typeJudicial": "Judicial",
+      "typeJudicial": "Juridical",
       "associate": "Associate",
       "dissociate": "Dissociate",
       "dissociating": "Removing…",
@@ -782,7 +782,7 @@
       "colName": "Name",
       "colType": "Type",
       "typeNatural": "Natural",
-      "typeJudicial": "Judicial",
+      "typeJudicial": "Juridical",
       "resultsEmpty": "No persons found",
       "loading": "Searching…",
       "error": "Search failed",
@@ -958,7 +958,7 @@
         "remove": "Remove link",
         "codePlaceholder": "Entity code",
         "notePlaceholder": "Why this link matters (optional)",
-        "codeHint": "Type the other object's code: PPERS (natural person), JPERS (judicial person), PROP (property) or DOC (document), followed by the number — e.g. PPERS00001.",
+        "codeHint": "Type the other object's code: PPERS (natural person), JPERS (juridical person), PROP (property) or DOC (document), followed by the number — e.g. PPERS00001.",
         "empty": "No cross-references added yet",
         "referencedBy": "referenced by",
         "typePerson": "Person",
@@ -1078,13 +1078,13 @@
       "empty": "Nothing related yet.",
       "group": {
         "natural": "Natural persons",
-        "judicial": "Judicial persons",
+        "judicial": "Juridical persons",
         "property": "Properties",
         "document": "Documents"
       },
       "kind": {
         "natural": "Natural person",
-        "judicial": "Judicial person",
+        "judicial": "Juridical person",
         "property": "Property",
         "document": "Document"
       },
@@ -1263,14 +1263,14 @@
     }
   },
   "judicialPerson": {
-    "listTitle": "Judicial Person",
-    "createTitle": "New Judicial Person",
+    "listTitle": "Juridical Person",
+    "createTitle": "New Juridical Person",
     "searchPlaceholder": "search by code, name, nickname, or ID",
-    "addNew": "Add new Judicial Person",
+    "addNew": "Add new Juridical Person",
     "open": "Open",
     "loading": "Loading…",
     "error": "Failed to load",
-    "empty": "No judicial persons found",
+    "empty": "No juridical persons found",
     "counts": "Showing {shown} of {total}",
     "saveError": "Could not save",
     "saveErrorSession": "Your session expired — please sign in again and retry.",
@@ -1348,12 +1348,12 @@
       "modify": "Modify"
     },
     "confirmDelete": {
-      "title": "Delete judicial person?",
-      "body": "Are you sure you want to delete this judicial person? This cannot be undone."
+      "title": "Delete juridical person?",
+      "body": "Are you sure you want to delete this juridical person? This cannot be undone."
     },
     "cannotDeleteAssociated": {
       "title": "Can't delete from here",
-      "body": "This judicial person can't be deleted from this screen. You must first disassociate it from the object you opened it from, then open it from the left navigation panel and delete it there.",
+      "body": "This juridical person can't be deleted from this screen. You must first disassociate it from the object you opened it from, then open it from the left navigation panel and delete it there.",
       "ok": "OK"
     },
     "hints": {
@@ -1375,7 +1375,7 @@
       "identity": "Name, tax ID (CUI), Trade Register",
       "contactPersons": "The firm's representatives and contact persons",
       "addresses": "Registered office and correspondence",
-      "related": "People, properties and documents linked to this judicial person",
+      "related": "People, properties and documents linked to this juridical person",
       "classification": "Importance, relevance, provenance",
       "connections": "Tags, groups, stamps, see also",
       "interactions": "History of interactions with this firm"
@@ -1438,7 +1438,7 @@
     },
     "items": {
       "naturalPerson": "Natural Person",
-      "judicialPerson": "Judicial Person",
+      "judicialPerson": "Juridical Person",
       "propertyType3": "Type 3",
       "actAdjudecare": "Adjudication Act",
       "actCadastru": "Cadastral Act",
@@ -1471,7 +1471,7 @@
       "tags": "Tags",
       "helpContent": "Help Information",
       "naturalPeople": "Natural Persons",
-      "judicialPeople": "Judicial Persons",
+      "judicialPeople": "Juridical Persons",
       "propertyList": "Properties",
       "document": "Documents",
       "interactions": "Interactions",
@@ -1558,8 +1558,8 @@
         "interactions": "Interactions — History",
         "natural-persons-list": "Persons — Natural Person List",
         "natural-person-detail": "Persons — Natural Person Detail / New",
-        "judicial-persons-list": "Persons — Judicial Person List",
-        "judicial-person-detail": "Persons — Judicial Person Detail / New",
+        "judicial-persons-list": "Persons — Juridical Person List",
+        "judicial-person-detail": "Persons — Juridical Person Detail / New",
         "associate-person": "Associate — Person",
         "associate-document": "Associate — Document",
         "associate-property": "Associate — Property",
@@ -1626,9 +1626,9 @@
     "allTypes": "All types",
     "noTypeSelected": "Please select at least one person type",
     "typeNatural": "Natural Person",
-    "typeJudicial": "Judicial Person",
+    "typeJudicial": "Juridical Person",
     "addNewNatural": "Add new Natural Person",
-    "addNewJudicial": "Add new Judicial Person",
+    "addNewJudicial": "Add new Juridical Person",
     "table": {
       "code": "Code",
       "name": "Name",
@@ -1788,7 +1788,7 @@
       "removeSurveyor": "Remove"
     },
     "hints": {
-      "surveyorNotInSystem": "If the surveyor is not yet in the system, add them first as a natural person or judicial person."
+      "surveyorNotInSystem": "If the surveyor is not yet in the system, add them first as a natural person or juridical person."
     },
     "typeForm": {
       "optionHasForm": "{name} (has a form)",
@@ -1798,7 +1798,7 @@
       "title": "Select Surveyor",
       "stepChooseType": "What type of person is the surveyor?",
       "btnNatural": "Natural Person",
-      "btnJudicial": "Judicial Person",
+      "btnJudicial": "Juridical Person",
       "labelName": "Name",
       "labelCode": "Code",
       "namePlaceholder": "Name…",
@@ -1908,7 +1908,7 @@
       "colName": "Name",
       "colType": "Type",
       "typeNatural": "Natural",
-      "typeJudicial": "Judicial",
+      "typeJudicial": "Juridical",
       "resultsEmpty": "No persons found",
       "loading": "Searching…",
       "error": "Search failed",
@@ -1922,7 +1922,7 @@
       "subtitle": "Person {current} of {total}",
       "close": "Close",
       "typeNatural": "Natural person",
-      "typeJudicial": "Judicial person",
+      "typeJudicial": "Juridical person",
       "fieldName": "Name",
       "fieldCnp": "CNP",
       "fieldCui": "CUI",
@@ -2004,7 +2004,7 @@
       "colName": "Name",
       "colType": "Type",
       "typeNatural": "Natural",
-      "typeJudicial": "Judicial",
+      "typeJudicial": "Juridical",
       "resultsEmpty": "No persons found",
       "loading": "Searching…",
       "error": "Search failed",
@@ -2198,20 +2198,20 @@
       "holderLinked": "The holder already existed and was linked to the document."
     },
     "issuer": {
-      "search": "Search for a judicial person",
-      "searchTitle": "The issuer: a judicial person",
+      "search": "Search for a juridical person",
+      "searchTitle": "The issuer: a juridical person",
       "close": "Close",
       "searchLabel": "Name, nickname, code or CUI",
       "searchPlaceholder": "e.g. Judecătoria Cornetu",
       "searchPrompt": "Type part of the name, the code or the CUI. Public bodies come first.",
       "loading": "Searching…",
       "error": "The search failed. Try again.",
-      "searchEmpty": "No judicial person matches.",
+      "searchEmpty": "No juridical person matches.",
       "read": "Read by the AI as the issuer: “{text}”",
       "use": "Use “{name}”",
-      "add": "Add “{name}” as a judicial person",
+      "add": "Add “{name}” as a juridical person",
       "adding": "Adding…",
-      "addError": "The judicial person could not be added.",
+      "addError": "The juridical person could not be added.",
       "made": "“{name}” was added and chosen as the issuer — save the document.",
       "openToFill": "Open it, for the CUI and “Fill in from ANAF”"
     }
@@ -2284,7 +2284,7 @@
       "personRoles": "Person Roles",
       "citizenships": "Citizenship",
       "personRelationships": "Relationship to the business",
-      "judicialPersonTypes": "Judicial Person Types",
+      "judicialPersonTypes": "Juridical Person Types",
       "documentTypes": "Document Types",
       "propertyToProperty": "Property → Property Links",
       "documentToDocument": "Document → Document Links",
@@ -2455,7 +2455,7 @@
         "documents": "{count, plural, one {# document} other {# documents}}",
         "properties": "{count, plural, one {# property} other {# properties}}",
         "naturalPersons": "{count, plural, one {# natural person} other {# natural persons}}",
-        "judicialPersons": "{count, plural, one {# judicial person} other {# judicial persons}}",
+        "judicialPersons": "{count, plural, one {# juridical person} other {# juridical persons}}",
         "propertyPersons": "{count, plural, one {# Property–Person association} other {# Property–Person associations}}",
         "personDocuments": "{count, plural, one {# Person–Document association} other {# Person–Document associations}}",
         "personPersons": "{count, plural, one {# Person–Person association} other {# Person–Person associations}}",
@@ -2781,7 +2781,7 @@
           "extractRefusedTitle": "A person cannot be created from this image",
           "extracting": "Reading the ID card…",
           "fInstitution": "Issuing institution",
-          "institutionUnmatched": "“{name}” is not among the issuing judicial persons yet.",
+          "institutionUnmatched": "“{name}” is not among the issuing juridical persons yet.",
           "citizenshipHiddenListFailed": "The citizenship list could not be read, so “—” does not mean “no citizenship”: the citizenship read off the card cannot be shown and is NOT saved along with the person. Try reading the list again, then create the person.",
           "citizenshipHiddenNotListed": "The citizenship read off the card is no longer in the citizenship list, so it cannot be shown and is NOT saved along with the person. Add it back under Reference Data → Citizenship, then fill it in on the person's record.",
           "citizenshipHiddenNotListedNamed": "The citizenship read off the card (printed there as “{name}”) is no longer in the citizenship list, so it cannot be shown and is NOT saved along with the person. Add the matching citizenship under Reference Data → Citizenship, then fill it in on the person's record.",
@@ -2795,9 +2795,9 @@
           "institutionRetry": "Try again",
           "institutionRetrying": "Trying again…",
           "institutionNearDuplicate": "The list already holds “{name}”. Choose it if it is the same institution.",
-          "institutionAdd": "Add “{name}” as a judicial person",
+          "institutionAdd": "Add “{name}” as a juridical person",
           "institutionAdding": "Adding…",
-          "institutionAddError": "The judicial person could not be added.",
+          "institutionAddError": "The juridical person could not be added.",
           "fieldCnp": "CNP",
           "fieldCui": "CUI",
           "fieldDomiciliu": "Address",
@@ -2828,7 +2828,7 @@
           "skip": "Skip",
           "subtitle": "Card {current} of {total}",
           "title": "Create person from ID card",
-          "typeJudicial": "Judicial person",
+          "typeJudicial": "Juridical person",
           "typeNatural": "Natural person",
           "unmappedHint": "These values have no matching field. Copy them across manually if needed.",
           "unmappedTitle": "Found on the card, not auto-filled"
@@ -2898,9 +2898,9 @@
           "personStepUnfinished": "the identity-card step did not finish — try again with the “Confirm the people” button",
           "personCardRefused": "this image holds more than one person's identity document, so no person was created from it — trying again will not help: split the file so that each identity card is in a file of its own, then import it again",
           "partyCreatedNatural": "{count, plural, one {one natural person was created from this document and linked to it} other {# natural people were created from this document and linked to it}}",
-          "partyCreatedJudicial": "{count, plural, one {one judicial person was created from this document and linked to it} other {# judicial persons were created from this document and linked to it}}",
+          "partyCreatedJudicial": "{count, plural, one {one juridical person was created from this document and linked to it} other {# juridical persons were created from this document and linked to it}}",
           "partyLinkedNatural": "{count, plural, one {one natural person was already in the system and was linked to this document} other {# natural people were already in the system and were linked to this document}}",
-          "partyLinkedJudicial": "{count, plural, one {one judicial person was already in the system and was linked to this document} other {# judicial persons were already in the system and were linked to this document}}",
+          "partyLinkedJudicial": "{count, plural, one {one juridical person was already in the system and was linked to this document} other {# juridical persons were already in the system and were linked to this document}}",
           "typeFormPending": "this document's type has no form yet, so the type-specific information went to Notes",
           "typeFormAdded": "this document's type gained a form during this import",
           "refillPending": "it was not read again, so its type-specific information is still in Notes",
@@ -3748,7 +3748,7 @@
     },
     "targets": {
       "PHYSICAL_PERSON": "Physical person",
-      "JUDICIAL_PERSON": "Judicial person",
+      "JUDICIAL_PERSON": "Juridical person",
       "PROPERTY": "Property",
       "DOCUMENT": "Document"
     },
@@ -3824,7 +3824,7 @@
     },
     "targets": {
       "PHYSICAL_PERSON": "Physical person",
-      "JUDICIAL_PERSON": "Judicial person",
+      "JUDICIAL_PERSON": "Juridical person",
       "PROPERTY": "Property",
       "DOCUMENT": "Document"
     },
@@ -3875,7 +3875,7 @@
     "truncatedFragment": "{count, plural, one {the first {type}} other {the first # {type}}}",
     "truncatedTypes": {
       "DOCUMENT": "documents",
-      "JUDICIAL_PERSON": "judicial persons",
+      "JUDICIAL_PERSON": "juridical persons",
       "NATURAL_PERSON": "natural persons",
       "PROPERTY": "properties"
     },
@@ -3907,7 +3907,7 @@
     },
     "personSubtypeValues": {
       "NATURAL": "Natural person",
-      "JUDICIAL": "Judicial person"
+      "JUDICIAL": "Juridical person"
     },
     "importanceValues": {
       "LOW": "Low",
@@ -4100,7 +4100,7 @@
         "loadError": "Your defaults could not be read.",
         "kinds": {
           "natural-person": "Natural person",
-          "judicial-person": "Judicial person",
+          "judicial-person": "Juridical person",
           "property": "Property",
           "document": "Document"
         },
@@ -4262,7 +4262,7 @@
     "breadcrumb": {
       "home": "Home",
       "naturalPersons": "Natural persons",
-      "judicialPersons": "Judicial persons",
+      "judicialPersons": "Juridical persons",
       "properties": "Properties",
       "propertiesMap": "Full map",
       "documents": "Documents",
@@ -4628,7 +4628,7 @@
       "close": "Close",
       "subtitle": "Parent {current} of {total}",
       "typeNatural": "Natural person",
-      "typeJudicial": "Judicial person",
+      "typeJudicial": "Juridical person",
       "fieldName": "Name",
       "fieldCnp": "CNP",
       "fieldCui": "CUI",

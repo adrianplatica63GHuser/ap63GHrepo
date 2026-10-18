@@ -827,9 +827,9 @@ export function DocumentListView({
       rowIds={query.data?.items.map((i) => i.id)}
       address={{ kind: "document", row: address.row, tiles: address.tiles }}
     >
-      {/* Toolbar — one row since Slice #39.63: the search, „Câmpuri afișate" and, at its end, „Adaugă act"'s group.
-          „Tip document", „Câmp specific" (#37.83, #38.18) and „Expiră curând" are the filter bar's first chips, under it;
-          choosing a field in „Câmp specific" still moves nothing on this row. */}
+      {/* Toolbar — one row since Slice #39.63: the search, „Câmpuri afișate", since #39.74 „Câmp specific" and „Expiră
+          curând", and at its end „Adaugă act"'s group. „Tip document" (#37.83, #38.18) is the filter bar's first chip,
+          under it. Choosing a field in „Câmp specific" adds its value select beside it, which the row wraps if it must. */}
       <div className={`flex flex-col gap-3 ${LIST_TOOLBAR}`} data-toolbar="" {...edge.toolbar}>
       <div className="flex flex-wrap items-center gap-3" data-toolbar-row="first">
         {/* Slice #37.62: the search first — its placeholder no longer begins
@@ -854,6 +854,143 @@ export function DocumentListView({
           max={MAX_OPT}
           onToggle={chooser.toggle}
           align="right"
+        />
+
+        {/* Slice #39.74 — „Câmp specific" (its sign and its two selects) and „Expiră curând" stand here, right after
+            „Câmpuri afișate" (Adrian, 2026-10-17: „Move the Expiring Soon button and the filter control one row up after
+            the field chooser"). Same controls, same address keys (field, value, expiring); „Tip document:" stays first
+            on the filter bar below. */}
+        {typeOptions.length > 0 && (
+        // The sign and its box one item, so the row never wraps between them.
+        <div className="flex items-center gap-2" data-custom-field-group="">
+        <CustomFieldSign
+          state={fieldState}
+          title={fieldState.enabled ? tFilter("customFieldSignOn") : tFilter("customFieldSignOff")}
+          note={
+            fieldState.enabled
+              ? tFilter("customFieldSignOffers", { type: fieldState.typeName ?? "" })
+              : fieldState.reason === "all"
+                ? tFilter("customFieldSignAll")
+                : fieldState.reason === "none"
+                  ? tFilter("customFieldSignNone")
+                  : fieldState.reason === "several"
+                    ? tFilter("customFieldSignSeveral", { count: fieldState.count })
+                    : fieldState.reason === "noForm"
+                      ? tFilter("customFieldSignNoForm", { type: fieldState.typeName ?? "" })
+                      : tFilter("customFieldSignNoClosedList", { type: fieldState.typeName ?? "" })
+          }
+        />
+        {/* Slice #37.62: no „Importanță" or „Relevanță" filter. The
+            Expiring-soon toggle beside it (#39.63) filters on the document's own
+            date_valid_until — a business question, not a curation value — and
+            stays; its threshold is in Settings → Time frames. */}
+        {/* ── Custom-field filter ─────────────── (Slice #34.10) ─────────
+            The half of D-01 that needs code. D-01 settled that
+            CONTRACT_VANZARE gets ONE union form plus one hand-written field
+            carrying the flavour — five descriptions, no subtype level — and
+            until this control the answer was on paper only: nothing anywhere
+            read `custom_fields` for search or for filtering, so a flavour could
+            be captured and never grouped by.
+
+            ⚠️ **ALWAYS DRAWN SINCE #38.07, DISABLED UNLESS EXACTLY ONE TYPE
+            WITH A CLOSED-LIST FIELD IS TICKED.** It used to be drawn only when
+            the types on screen had such a field, offering every type's at once;
+            Adrian asked for one type at a time, and for the control to stay in
+            sight, its ⓘ saying how to turn it on (the header's Ask first).
+
+            ⚠️ **TWO CONTROLS, THE SECOND APPEARING ONLY AFTER THE FIRST.** A
+            value alone is meaningless (which field?) and a key alone is a
+            different feature ("documents that HAVE this field"), which nothing
+            here offers — so the pair is the filter, and the schema, the fetch
+            and `listDocument` all apply the same `&&`. Revealing the values
+            only once a key is chosen is also what keeps the `GROUP BY` behind
+            them from running on every visit to this page.
+
+            ⚠️ **The value is a SELECT, not a text box, and that is the whole
+            usefulness of it.** "Minimise human effort" applies to a filter too:
+            a text box would be a control you can only use if you already know,
+            diacritic for diacritic, which of Adrian's five descriptions was
+            typed. The archive knows, so it is asked. The count beside each
+            option is not decoration either — a flavour with one document behind
+            it is almost always a typo, invisible in a bare list of strings. */}
+        {/* Slice #37.62 — Adrian asked how „Câmp specific" is meant to be used,
+            so the control says it itself: an ⓘ beside it opens the answer as a
+            bubble (HintBubble, #37.50), and the key select is described by it. */}
+          <HintBubble
+            id="custom-field-hint"
+            text={tFilter("customFieldHint")}
+            note={tFilter("customFieldWhenActive")}
+            triggerLabel={tFilter("customFieldHintTrigger")}
+          >
+          {/* #38.18: disabled, it looks it — the label greyed and in italics, as #38.04's
+              disabled boxes; the box faded, its border dashed, the cursor not-allowed. */}
+          <div
+            data-custom-field-box={customField.enabled ? "enabled" : "disabled"}
+            className={
+              customField.enabled
+                ? "inline-flex items-center gap-1.5 rounded-md border border-wire bg-white px-2 py-1.5 text-sm shadow-sm dark:border-zinc-700 dark:bg-zinc-900"
+                : "inline-flex cursor-not-allowed items-center gap-1.5 rounded-md border border-dashed border-wire bg-cta-pale px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800/60"
+            }
+          >
+            <span className={customField.enabled ? "text-fade" : "italic text-fade dark:text-zinc-500"}>{tFilter("customFieldLabel")}</span>
+            <select
+              value={customFieldKey}
+              aria-describedby="custom-field-hint"
+              onChange={(e) => {
+                setCustomFieldKey(e.target.value);
+                // ⚠️ The value belongs to the OLD key. Carrying it over would
+                // filter the new field for a string only the old one held, and
+                // the list would empty out with both controls looking right.
+                setCustomFieldValue("");
+                setCurrentPage(0);
+              }}
+              aria-label={tFilter("customFieldLabel")}
+              // Slice #38.07: works only for exactly one type with a closed-list field.
+              disabled={!customField.enabled}
+              data-custom-field-enabled={customField.enabled ? "true" : "false"}
+              className="bg-transparent text-sm font-medium text-ink focus:outline-none disabled:cursor-not-allowed disabled:italic disabled:text-fade dark:text-zinc-100 dark:disabled:text-zinc-500"
+            >
+              <option value="">{tFilter("allCustomFields")}</option>
+              {customFieldOptions.map((o) => (
+                <option key={o.key} value={o.key}>{o.label}</option>
+              ))}
+            </select>
+            {customFieldKey !== "" && (
+              <select
+                value={customFieldValue}
+                onChange={(e) => { setCustomFieldValue(e.target.value); setCurrentPage(0); }}
+                aria-label={tFilter("customFieldValueLabel")}
+                // ⚠️ Disabled while the values are still being read, rather
+                // than absent: a control that appears a beat after the one
+                // beside it moves the toolbar under the cursor.
+                disabled={valuesQuery.isPending}
+                className="bg-transparent text-sm font-medium text-ink focus:outline-none disabled:text-fade dark:text-zinc-100"
+              >
+                <option value="">
+                  {valuesQuery.isPending
+                    ? tFilter("customFieldValuesLoading")
+                    : tFilter("allCustomFieldValues")}
+                </option>
+                {valueOptions.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {/* Slice #37.73: the option's Romanian label, not its code; the value sent is unchanged. */}
+                    {tFilter("customFieldValueOption", { value: customFieldValueLabel(chosenCustomField, o.value), count: o.count })}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+          </HintBubble>
+        </div>
+        )}
+        {/* #37.42 (A014): CalendarClock, a toggle. Pressed is the strong `primary` fill and `aria-pressed`. */}
+        <IconButton
+          icon={CalendarClock}
+          label={tFilter("expiringSoon")}
+          variant={expiringSoon ? "primary" : "secondary"}
+          size="md"
+          aria-pressed={expiringSoon}
+          onClick={() => { setExpiringSoon((v) => !v); setCurrentPage(0); }}
         />
 
         <div className="ml-auto flex items-center gap-2">
@@ -895,6 +1032,7 @@ export function DocumentListView({
         valuesKey={(key) => ["documents", "filter-values", key, debouncedSearch, typeFiltersKey, expiringSoon, customFieldKey, customFieldValue, filterSig]}
         leading={
           <>
+            {/* Slice #39.74: „Tip document:" alone here now — „Câmp specific" and „Expiră curând" went up to the toolbar. */}
             <div className="flex flex-wrap items-center gap-2" data-filter-fixed="">
               <DocumentTypeFilterDropdown
                 types={typeOptions}
@@ -906,138 +1044,7 @@ export function DocumentListView({
                 searchPlaceholder={t("typeSearchPlaceholder")}
                 searchEmptyLabel={t("typeSearchEmpty")}
               />
-              {typeOptions.length > 0 && (
-              <>
-              <CustomFieldSign
-                state={fieldState}
-                title={fieldState.enabled ? tFilter("customFieldSignOn") : tFilter("customFieldSignOff")}
-                note={
-                  fieldState.enabled
-                    ? tFilter("customFieldSignOffers", { type: fieldState.typeName ?? "" })
-                    : fieldState.reason === "all"
-                      ? tFilter("customFieldSignAll")
-                      : fieldState.reason === "none"
-                        ? tFilter("customFieldSignNone")
-                        : fieldState.reason === "several"
-                          ? tFilter("customFieldSignSeveral", { count: fieldState.count })
-                          : fieldState.reason === "noForm"
-                            ? tFilter("customFieldSignNoForm", { type: fieldState.typeName ?? "" })
-                            : tFilter("customFieldSignNoClosedList", { type: fieldState.typeName ?? "" })
-                }
-              />
-              {/* Slice #37.62: no „Importanță" or „Relevanță" filter. The
-                  Expiring-soon toggle beside it (#39.63) filters on the document's own
-                  date_valid_until — a business question, not a curation value — and
-                  stays; its threshold is in Settings → Time frames. */}
-              {/* ── Custom-field filter ─────────────── (Slice #34.10) ─────────
-                  The half of D-01 that needs code. D-01 settled that
-                  CONTRACT_VANZARE gets ONE union form plus one hand-written field
-                  carrying the flavour — five descriptions, no subtype level — and
-                  until this control the answer was on paper only: nothing anywhere
-                  read `custom_fields` for search or for filtering, so a flavour could
-                  be captured and never grouped by.
-
-                  ⚠️ **ALWAYS DRAWN SINCE #38.07, DISABLED UNLESS EXACTLY ONE TYPE
-                  WITH A CLOSED-LIST FIELD IS TICKED.** It used to be drawn only when
-                  the types on screen had such a field, offering every type's at once;
-                  Adrian asked for one type at a time, and for the control to stay in
-                  sight, its ⓘ saying how to turn it on (the header's Ask first).
-
-                  ⚠️ **TWO CONTROLS, THE SECOND APPEARING ONLY AFTER THE FIRST.** A
-                  value alone is meaningless (which field?) and a key alone is a
-                  different feature ("documents that HAVE this field"), which nothing
-                  here offers — so the pair is the filter, and the schema, the fetch
-                  and `listDocument` all apply the same `&&`. Revealing the values
-                  only once a key is chosen is also what keeps the `GROUP BY` behind
-                  them from running on every visit to this page.
-
-                  ⚠️ **The value is a SELECT, not a text box, and that is the whole
-                  usefulness of it.** "Minimise human effort" applies to a filter too:
-                  a text box would be a control you can only use if you already know,
-                  diacritic for diacritic, which of Adrian's five descriptions was
-                  typed. The archive knows, so it is asked. The count beside each
-                  option is not decoration either — a flavour with one document behind
-                  it is almost always a typo, invisible in a bare list of strings. */}
-              {/* Slice #37.62 — Adrian asked how „Câmp specific" is meant to be used,
-                  so the control says it itself: an ⓘ beside it opens the answer as a
-                  bubble (HintBubble, #37.50), and the key select is described by it. */}
-                <HintBubble
-                  id="custom-field-hint"
-                  text={tFilter("customFieldHint")}
-                  note={tFilter("customFieldWhenActive")}
-                  triggerLabel={tFilter("customFieldHintTrigger")}
-                >
-                {/* #38.18: disabled, it looks it — the label greyed and in italics, as #38.04's
-                    disabled boxes; the box faded, its border dashed, the cursor not-allowed. */}
-                <div
-                  data-custom-field-box={customField.enabled ? "enabled" : "disabled"}
-                  className={
-                    customField.enabled
-                      ? "inline-flex items-center gap-1.5 rounded-md border border-wire bg-white px-2 py-1.5 text-sm shadow-sm dark:border-zinc-700 dark:bg-zinc-900"
-                      : "inline-flex cursor-not-allowed items-center gap-1.5 rounded-md border border-dashed border-wire bg-cta-pale px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800/60"
-                  }
-                >
-                  <span className={customField.enabled ? "text-fade" : "italic text-fade dark:text-zinc-500"}>{tFilter("customFieldLabel")}</span>
-                  <select
-                    value={customFieldKey}
-                    aria-describedby="custom-field-hint"
-                    onChange={(e) => {
-                      setCustomFieldKey(e.target.value);
-                      // ⚠️ The value belongs to the OLD key. Carrying it over would
-                      // filter the new field for a string only the old one held, and
-                      // the list would empty out with both controls looking right.
-                      setCustomFieldValue("");
-                      setCurrentPage(0);
-                    }}
-                    aria-label={tFilter("customFieldLabel")}
-                    // Slice #38.07: works only for exactly one type with a closed-list field.
-                    disabled={!customField.enabled}
-                    data-custom-field-enabled={customField.enabled ? "true" : "false"}
-                    className="bg-transparent text-sm font-medium text-ink focus:outline-none disabled:cursor-not-allowed disabled:italic disabled:text-fade dark:text-zinc-100 dark:disabled:text-zinc-500"
-                  >
-                    <option value="">{tFilter("allCustomFields")}</option>
-                    {customFieldOptions.map((o) => (
-                      <option key={o.key} value={o.key}>{o.label}</option>
-                    ))}
-                  </select>
-                  {customFieldKey !== "" && (
-                    <select
-                      value={customFieldValue}
-                      onChange={(e) => { setCustomFieldValue(e.target.value); setCurrentPage(0); }}
-                      aria-label={tFilter("customFieldValueLabel")}
-                      // ⚠️ Disabled while the values are still being read, rather
-                      // than absent: a control that appears a beat after the one
-                      // beside it moves the toolbar under the cursor.
-                      disabled={valuesQuery.isPending}
-                      className="bg-transparent text-sm font-medium text-ink focus:outline-none disabled:text-fade dark:text-zinc-100"
-                    >
-                      <option value="">
-                        {valuesQuery.isPending
-                          ? tFilter("customFieldValuesLoading")
-                          : tFilter("allCustomFieldValues")}
-                      </option>
-                      {valueOptions.map((o) => (
-                        <option key={o.value} value={o.value}>
-                          {/* Slice #37.73: the option's Romanian label, not its code; the value sent is unchanged. */}
-                          {tFilter("customFieldValueOption", { value: customFieldValueLabel(chosenCustomField, o.value), count: o.count })}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                </div>
-                </HintBubble>
-              </>
-              )}
             </div>
-            {/* #37.42 (A014): CalendarClock, a toggle. Pressed is the strong `primary` fill and `aria-pressed`. */}
-            <IconButton
-              icon={CalendarClock}
-              label={tFilter("expiringSoon")}
-              variant={expiringSoon ? "primary" : "secondary"}
-              size="md"
-              aria-pressed={expiringSoon}
-              onClick={() => { setExpiringSoon((v) => !v); setCurrentPage(0); }}
-            />
           </>
         }
       />

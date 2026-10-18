@@ -110,7 +110,7 @@ export function dbErrorToResponse(err: unknown): Response | null {
     }
     if (e.constraint?.includes("cui") || message.includes("CUI")) {
       return Response.json(
-        { error: "A judicial person with this CUI already exists" },
+        { error: "A juridical person with this CUI already exists" },
         { status: 409 },
       );
     }

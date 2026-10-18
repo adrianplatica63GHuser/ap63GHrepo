@@ -153,7 +153,7 @@ type JudicialPersonTypeOption = {
 // failure; it is not a hazard the slice introduced.
 async function fetchJudicialPersonTypes(): Promise<JudicialPersonTypeOption[]> {
   const res = await fetch("/api/admin/value-lists/judicial-person-types");
-  if (res.redirected || !res.ok) throw new Error(`Failed to load judicial person types (HTTP ${res.status})`);
+  if (res.redirected || !res.ok) throw new Error(`Failed to load juridical person types (HTTP ${res.status})`);
   const body = await res.json();
   return (body.items ?? []) as JudicialPersonTypeOption[];
 }
