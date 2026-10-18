@@ -1,14 +1,20 @@
 /**
  * Case:   TC-CALC-01 — Calculul cu drum lateral pe un teren cunoscut, și istoricul lui
- * Source: docs/testing/cases/TC-CALC-01.md, „Last green" 2026-10-07
+ * Source: docs/testing/cases/TC-CALC-01.md, „Last green" 2026-10-18
  *
  * A translation of the case file, step for step (Slice #38.43). Every Romanian
  * string and figure below is quoted from it verbatim; step 8's figures are
  * Adrian's, checked by hand (2026-10-07).
  *
+ * Since Slice #39.79 the calculation starts from a property in the archive and
+ * its owners, not from a data file: steps 1–3 choose them, and everything from
+ * step 4 is as it was. The files' refusals are TC-CALC-02's.
+ *
  * Divergences from the hand run, each for a reason the case cannot have:
- *   - The four data files are copies of the case's, in `e2e/fixtures/`, so the
- *     spec does not read a folder outside the repository.
+ *   - The property (TC-PROP-03's corners, converted to WGS84 by the app's own
+ *     transdatRO, with their numbers 16–19) and the three owners (companies,
+ *     so their names are exactly what is written) are made through the API
+ *     before step 1, marked `TC-E2E-CALC-01`.
  *   - Step 4 puts the owners in order with ↑ in the table, never by dragging:
  *     the order the file's slices come in is random, and ↑ is deterministic.
  *   - Step 5 compares the table's swatches (`data-owner-color`) before and
@@ -17,28 +23,33 @@
  *   - Step 14 (#38.43) deletes the run from „Istoricul calculelor”, which is
  *     what lets the spec exist: before it, every run of it left a run behind.
  *   - Everything it created is removed in `afterAll`, which runs after a red
- *     step too: the four properties, the group, and the run if step 14 never
- *     got to it — through the API, as every TC-E2E- record is.
+ *     step too: the four properties, the group, the run if step 14 never got
+ *     to it, and the property and owners made for it — through the API, as
+ *     every TC-E2E- record is.
  */
 
-import path from "node:path";
 import { test, expect, type Locator, type Page } from "../helpers/test";
 import { SUPERUSER_STATE } from "../helpers/auth-state";
+import { createCompany, createProperty, removeGroupLeftovers, removeLeftovers } from "../helpers/records";
+import { stereo70ToWgs84 } from "../../src/lib/geo/transdatRO";
 
 test.use({ realMaps: true }); // TC-CALC-01 clicks the slices' labels drawn on the preview map
 
-const FIXTURES = path.join(__dirname, "..", "fixtures");
-const file = (name: string) => path.join(FIXTURES, `TC-CALC-01 ${name}.txt`);
-const OWNERS = ["TC-CALC-01 A", "TC-CALC-01 B", "TC-CALC-01 C"] as const;
-const GROUP = "TC-CALC-01 Grup de test";
-const ROAD = "TC-CALC-01 Drum comun";
+const MARK = "TC-E2E-CALC-01";
+const OWNERS = [`${MARK} A`, `${MARK} B`, `${MARK} C`] as const;
+const GROUP = `${MARK} Grup de test`;
+const ROAD = `${MARK} Drum comun`;
+/** TC-PROP-03's corners, North / East, three decimals, with their numbers. */
+const CORNERS = ([[16, 318693.706, 573578.558], [17, 318675.77, 573554.698], [18, 318659.521, 573567.196], [19, 318677.456, 573591.056]] as const).map(
+  ([n, north, east]) => ({ ...stereo70ToWgs84(north, east), originalIndex: n }),
+);
 
 /** What this run created, for afterAll. */
 const made: { propertyIds: string[]; runId: string | null } = { propertyIds: [], runId: null };
 
 const map = (page: Page) => page.locator('[data-panel="preview-map"]');
 const roadStatus = (page: Page) => page.locator('[data-panel="road-step"] p[role="status"]');
-const fileInput = (page: Page) => page.locator('input[type="file"]');
+const start = (page: Page) => page.locator('[data-panel="side-road-start"]');
 // `data-width-table`, not any table: Google's map draws a keyboard-shortcuts table of its own
 // inside the panel once it takes focus (measured in 20261008T115334Z-12191).
 const ownerTable = (page: Page) => page.locator('[data-panel="calculation"] table[data-width-table]');
@@ -106,6 +117,8 @@ test.afterAll(async ({ playwright }) => {
       const r = await api.delete(`/api/calculation/runs/${made.runId}`);
       expect([200, 404]).toContain(r.status());
     }
+    await removeGroupLeftovers(api, MARK);
+    await removeLeftovers(api, MARK);
   } finally {
     await api.dispose();
   }
@@ -116,26 +129,30 @@ test.describe("TC-CALC-01 — calculul cu drum lateral, și istoricul lui", () =
     test.setTimeout(300_000);
     await page.setViewportSize({ width: 1920, height: 1080 });
 
-    // Step 1 — „Calcul", its three sections and their rules.
+    await removeLeftovers(page.request, MARK);
+    const parcelId = await createProperty(page.request, { nickname: `${MARK} Teren`, corners: CORNERS });
+    const ownerIds: string[] = [];
+    for (const name of OWNERS) ownerIds.push(await createCompany(page.request, { name }));
+
+    // Step 1 — „Calcul drum lateral": the property, the owners, the road.
     await page.goto("/admin/calculation");
-    await expect(page.getByRole("heading", { name: "Calcul", exact: true, level: 1 })).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByText("Alegeți fișierul de date al parcelei. Are trei secțiuni", { exact: false }).first()).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Calcul drum lateral", exact: true, level: 1 })).toBeVisible({ timeout: 30_000 });
+    const pick = async (box: string, term: string, hit: string) => {
+      await start(page).getByRole("combobox", { name: box, exact: true }).fill(term);
+      await page.locator(`[data-calc-search] [data-calc-hit="${hit}"]`).click({ timeout: 30_000 });
+    };
 
-    // Step 2 — the three rejected files, each with its one reason, and no map.
-    for (const [name, reason] of [
-      ["Respins 5 colturi", "Fișierul are 5 colțuri; trebuie să aibă exact 4."],
-      ["Respins 98 la suta", "Cotele-părți însumează 98,00%; trebuie să fie 100% sau 99,99%."],
-      ["Respins drum 15 m", "Lățimea drumului este 15 m; trebuie să fie peste 0 și sub 15 m."],
-    ] as const) {
-      await fileInput(page).setInputFiles(file(name));
-      const problems = page.locator('[data-panel="file-problems"]');
-      await expect(problems).toContainText("Fișierul nu poate fi folosit:", { timeout: 30_000 });
-      await expect(problems).toContainText(reason);
-      await expect(map(page)).toHaveCount(0);
+    // Step 2 — the property, found by its nickname, with its four corners.
+    await pick("Caută proprietatea", `${MARK} Teren`, parcelId);
+    await expect(start(page).locator("[data-calc-property]")).toContainText("4 colțuri", { timeout: 30_000 });
+
+    // Step 3 — A, B, C at 33,33% each, a 3 m road; „Împarte proprietatea".
+    for (let i = 0; i < OWNERS.length; i++) {
+      await pick("Caută un proprietar", OWNERS[i], ownerIds[i]!);
+      await start(page).getByRole("textbox", { name: `Cota-parte a lui ${OWNERS[i]}`, exact: true }).fill("33,33");
     }
-
-    // Step 3 — the good file: the road step, the map, the parcel's figures, the 0,01% note.
-    await fileInput(page).setInputFiles(file("Impartire cu drum"));
+    await start(page).getByRole("textbox", { name: "Lățime drum", exact: true }).fill("3");
+    await page.getByRole("button", { name: "Împarte proprietatea", exact: true }).click();
     await expect(page.getByText("Pasul 3 — drumul", { exact: true })).toBeVisible({ timeout: 30_000 });
     await expect(map(page).getByText("18", { exact: true })).toBeVisible({ timeout: 30_000 });
     expect([...(await order(page))].sort()).toEqual([...OWNERS]);
@@ -154,10 +171,10 @@ test.describe("TC-CALC-01 — calculul cu drum lateral, și istoricul lui", () =
     // Step 5 — each owner keeps its colour through a swap and back.
     const colours = await swatches(page);
     expect(new Set(Object.values(colours)).size).toBe(3);
-    await moveTo(page, "TC-CALC-01 B", 0);
-    expect(await order(page)).toEqual(["TC-CALC-01 B", "TC-CALC-01 A", "TC-CALC-01 C"]);
+    await moveTo(page, OWNERS[1], 0);
+    expect(await order(page)).toEqual([OWNERS[1], OWNERS[0], OWNERS[2]]);
     expect(await swatches(page)).toEqual(colours);
-    await moveTo(page, "TC-CALC-01 A", 0);
+    await moveTo(page, OWNERS[0], 0);
     expect(await order(page)).toEqual([...OWNERS]);
     expect(await swatches(page)).toEqual(colours);
 
@@ -183,14 +200,15 @@ test.describe("TC-CALC-01 — calculul cu drum lateral, și istoricul lui", () =
     await expect(figure(page, "Suprafață drum")).toContainText("62,45 m²");
     const rows = ownerTable(page).locator("tbody tr");
     await expect(rows).toHaveCount(3);
-    await expect.poll(() => rowText(rows.nth(0)), { timeout: 30_000 }).toBe("1 · TC-CALC-01 A · 33,33% · 203,94 · 20,81 · 183,12 · 203,94 · 0,00");
-    expect(await rowText(rows.nth(1))).toBe("2 · TC-CALC-01 B · 33,33% · 203,94 · 20,81 · 183,12 · 203,94 · 0,00");
-    expect(await rowText(rows.nth(2))).toBe("3 · TC-CALC-01 C · 33,33% · 204,00 · 20,82 · 183,18 · 204,00 · 0,00");
+    await expect.poll(() => rowText(rows.nth(0)), { timeout: 30_000 }).toBe(`1 · ${OWNERS[0]} · 33,33% · 203,94 · 20,81 · 183,12 · 203,94 · 0,00`);
+    expect(await rowText(rows.nth(1))).toBe(`2 · ${OWNERS[1]} · 33,33% · 203,94 · 20,81 · 183,12 · 203,94 · 0,00`);
+    expect(await rowText(rows.nth(2))).toBe(`3 · ${OWNERS[2]} · 33,33% · 204,00 · 20,82 · 183,18 · 204,00 · 0,00`);
     expect(await rowText(ownerTable(page).locator("tfoot tr"))).toBe(" · Total · 99,99% · 611,87 · 62,45 · 549,42 · 611,87 · 0,00");
 
     // Step 9 — the group's description and the road's nickname; „Creează proprietățile".
     const commit = page.locator('[data-panel="commit"]');
     await expect(commit.getByText("Creează 4 proprietăți — proprietarii și drumul — și un grup", { exact: true })).toBeVisible();
+    await expect(page.getByRole("textbox", { name: "Descrierea grupului" })).toHaveValue(/^Diviz — PROP\d+$/); // #39.79
     await page.getByRole("textbox", { name: "Descrierea grupului" }).fill(GROUP);
     await page.getByRole("textbox", { name: "Poreclă drum" }).fill(ROAD);
     await page.getByRole("button", { name: "Creează proprietățile", exact: true }).click();
@@ -218,7 +236,9 @@ test.describe("TC-CALC-01 — calculul cu drum lateral, și istoricul lui", () =
     await expect(run.getByText("Parcelă proprietar", { exact: true })).toHaveCount(3);
     await expect(run.getByText("Drum comun", { exact: true })).toHaveCount(1);
 
-    // Step 11 — property A: its computed area, and „Nr. orig." 17 on one corner.
+    // Step 11 — property A: its computed area, „Nr. orig." 17 on one corner, and (#39.79) A linked as „Proprietar".
+    const persons = ((await (await page.request.get(`/api/properties/${made.propertyIds[0]}/persons`)).json()) as { items: { id: string; roleName: string | null }[] }).items;
+    expect(persons.map((p) => [p.id, p.roleName])).toEqual([[ownerIds[0], "Proprietar"]]);
     const a = await (await page.request.get(`/api/properties/${made.propertyIds[0]}`)).json();
     const flat = JSON.stringify(a);
     expect(Number(/"surfaceAreaMp":"?([\d.]+)/.exec(flat)?.[1])).toBeCloseTo(183.12, 2);
@@ -233,7 +253,7 @@ test.describe("TC-CALC-01 — calculul cu drum lateral, și istoricul lui", () =
     await expect(row).toContainText(/GRP-\d+/);
     await expect(row).toContainText("Activ");
 
-    // Step 13 — re-run: the same file, A, B, C, the road from 18 along 18–19, step 8's figures.
+    // Step 13 — re-run: the same property's corners and owners, A, B, C, the road from 18 along 18–19, step 8's figures.
     await page.goto(`/admin/calculation/history/${made.runId}`);
     await page.getByRole("button", { name: "Re-rulează cu acești parametri" }).click({ timeout: 30_000 });
     await expect(roadStatus(page)).toContainText("Drumul pornește din colțul 18, pe latura 18–19.", { timeout: 30_000 });

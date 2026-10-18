@@ -117,7 +117,7 @@ export async function createProperty(
     tarlaId?: string;
     parcela?: string;
     surfaceAreaMp?: number;
-    corners?: { lat: number; lon: number }[];
+    corners?: { lat: number; lon: number; originalIndex?: number }[]; // originalIndex since #39.79 (TC-CALC-02: the corners keep their numbers)
     // Slice #37.72: TC-PROP-06 reads both lists' names on the Properties list.
     useCategoryId?: string;
     propertyTypeId?: string;

@@ -85,9 +85,9 @@ export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCa
   "/admin/stamps":                         ["TC-STAMP-01", "TC-LAYOUT-01", "TC-ICON-05"],
   "/admin/stamps/[id]":                    ["TC-STAMP-01", "TC-LAYOUT-01", "TC-ICON-05", "TC-STAMP-02"],
   "/admin/help-content":                   ["TC-HELP-01", "TC-LAYOUT-01"],
-  "/admin/calculation":                    ["TC-CALC-01", "TC-LAYOUT-01"],
+  "/admin/calculation":                    ["TC-CALC-01", "TC-LAYOUT-01", "TC-CALC-02"],
   "/admin/calculation/history":            ["TC-CALC-01", "TC-LAYOUT-01"],
-  "/admin/calculation/history/[id]":       ["TC-CALC-01", "TC-LAYOUT-01"],
+  "/admin/calculation/history/[id]":       ["TC-CALC-01", "TC-LAYOUT-01", "TC-CALC-02"],
   // Slice #37.08 — the last four that need a cleanup rule, each written into
   // its case file before the run.
   "/admin/users":                          ["TC-USERS-01", "TC-LAYOUT-01", "TC-AUTH-02"],

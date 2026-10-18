@@ -748,7 +748,7 @@ export const SKILLS: readonly Skill[] = [
     },
     predecessors: ["properties-draw-corners", "properties-from-coordinate-file"],
     screens: ["admin-calculation", "admin-calculation-history", "admin-calculation-run"],
-    cases: ["TC-CALC-01"],
+    cases: ["TC-CALC-01", "TC-CALC-02"],
     manual: ["tools-side-road", "tools-side-road-file", "tools-side-road-road", "tools-side-road-create", "tools-side-road-history"],
   },
   {

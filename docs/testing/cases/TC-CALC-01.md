@@ -4,15 +4,16 @@
 |---|---|
 | **Area** | calculation |
 | **Kind** | happy |
-| **Data** | `09.tc.calc.file` |
-| **State** | `automated` |
-| **Last green** | 2026-10-07 |
+| **Data** | — |
+| **State** | `confirmed` |
+| **Last green** | 2026-10-18 |
 
 ## What this proves
 
 „Calcul drum lateral", end to end, on a known four-corner property split between three owners
 with a side road:
-- the three-section file is read, and a file breaking any of the three rules is rejected with its reason;
+- (since #39.79) the property is one in the archive and the owners are persons in it, chosen on the screen; what
+  breaks a rule is TC-CALC-02's;
 - the owners are laid on the parcel and reordered, each owner keeping its colour (#38.27);
 - two clicks place the road;
 - the figures add up, and are the ones **a person computes by hand**;
@@ -26,49 +27,38 @@ person's, not the application's.
 ## Before you start
 
 - TC-AUTH-01 is green.
-- The four data files exist in `C:\dev\TEST.DATA\Test.Claude\09.tc.calc.file\`:
-  - `TC-CALC-01 Impartire cu drum.txt`;
-  - `TC-CALC-01 Respins 5 colturi.txt`;
-  - `TC-CALC-01 Respins 98 la suta.txt`;
-  - `TC-CALC-01 Respins drum 15 m.txt`.
+- A property `TC-CALC-01 Teren` with TC-PROP-03's four corners, numbered 16–19 — imported from
+  `08.tc.coord.file`, or typed — and three persons `TC-CALC-01 A`, `TC-CALC-01 B`, `TC-CALC-01 C`
+  (companies, so each name is exactly what is written).
 
 ## What Adrian is asked for
 
-**One figure, asked on 2026-10-07 in a message that did not wait (Slice #38.26):** for
-`TC-CALC-01 Impartire cu drum.txt`, with the road from **corner 18 along side 18–19** and the
-owners in the order **A, B, C**, the hand values of:
+**One figure, asked on 2026-10-07 in a message that did not wait (Slice #38.26):** for this parcel,
+with the road from **corner 18 along side 18–19** and the owners in the order **A, B, C**, the hand
+values of:
 - the road's length and area;
 - each owner's own area;
 - each owner's road share.
 
 **Answered on 2026-10-07: Adrian checked the result independently, and every figure is correct.**
-Step 7's figures are therefore no longer only the application's: they are the hand-checked
-assertion, and the row moved to `driven` the same day.
+Step 8's figures are therefore no longer only the application's: they are the hand-checked
+assertion.
 
-#36.21 asked the same of the old five-section file. That question is superseded by this one: the
-old file no longer exists.
-
-A hand figure must use the file's corners, which carry **three** decimals. The property screen
-shows two, and a hand check made from the screen comes out about 0.1 m² higher (see TC-PROP-04).
+A hand figure must use the corners with **three** decimals. The property screen shows two, and a
+hand check made from the screen comes out about 0.1 m² higher (see TC-PROP-04). Since #39.79 the
+calculation reads the property's stored corners back into Stereo 70 and rounds them to the
+millimetre, which gives back the file's three decimals.
 
 ## The data
 
-Typed for this case in the three-section format (`src/lib/calculation/parse.ts`):
-
-| Section | Holds | Why |
+| What | Holds | Why |
 |---|---|---|
-| Colțuri | TC-PROP-03's four corner lines from `08.tc.coord.file`, verbatim (16–19, three decimals) | A property already in the catalogue, so its area (611.87 m²) is known |
-| Proprietari | `TC-CALC-01 A`, `TC-CALC-01 B`, `TC-CALC-01 C`, each `33,33%` | Three equal owners summing to **99,99%**, so the rule that lets the last slice take the missing 0,01% is exercised. The names become the new properties' nicknames, so they carry `TC-` |
-| Lățime drum | `3` | A road width a person can multiply by |
+| The property | TC-PROP-03's four corners from `08.tc.coord.file`, numbered 16–19 | A property already in the catalogue, so its area (611.87 m²) is known |
+| The owners | `TC-CALC-01 A`, `TC-CALC-01 B`, `TC-CALC-01 C`, each `33,33` | Three equal owners summing to **99,99%**, so the rule that lets the last slice take the missing 0,01% is exercised. The names become the new properties' nicknames, so they carry `TC-` |
+| The road | `3` m | A road width a person can multiply by |
 
-**The three rejected files** each break exactly one rule, everything else being the good file:
-- `Respins 5 colturi`: a fifth corner, 20;
-- `Respins 98 la suta`: C at 31,34%, so 98,00% in total;
-- `Respins drum 15 m`: a 15 m road.
-
-The corners are cut from a real parcel (as TC-PROP-03 says); no name is in any file. The folder is
-`09.tc.calc.file`, beside `08.tc.coord.file`, which keeps TC-PROP-03's file unchanged (TC-PROP-03
-and TC-PROP-04 read it). The request's real sample is not copied here.
+Until #39.79 these were a three-section data file in `09.tc.calc.file`, with three more files each
+breaking one rule; that file is gone with the screen that read it, and the refusals are TC-CALC-02's.
 
 ## The split, in words — what the hand figure is of
 
@@ -101,7 +91,7 @@ The rules are the header of `src/lib/calculation/geometry.ts`.
 
 ## The records this case creates — and what is removed
 
-The run creates **four properties and a group**:
+The run creates **four properties and a group**, each owner's property linked to its owner as „Proprietar" (#39.79):
 - `TC-CALC-01 A`, `TC-CALC-01 B`, `TC-CALC-01 C`;
 - the road, `TC-CALC-01 Drum comun`;
 - and **a run** in „Istoricul calculelor".
@@ -114,19 +104,19 @@ again: the next run after `CALC00008` is `CALC00009` even if `CALC00008` was del
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „Instrumente" → „Calcul drum lateral" | „Calcul", the history icon, the text „Alegeți fișierul de date al parcelei. Are trei secțiuni, fiecare deschisă de un rând care începe cu „Secțiunea de”:" with the three sections and their rules, and „Alegeți fișierul de date…" |
-| 2 | Chooses `TC-CALC-01 Respins 5 colturi.txt`, then `… Respins 98 la suta.txt`, then `… Respins drum 15 m.txt` | Each time „Fișierul nu poate fi folosit:" and one reason: „Fișierul are 5 colțuri; trebuie să aibă exact 4." · „Cotele-părți însumează 98,00%; trebuie să fie 100% sau 99,99%." · „Lățimea drumului este 15 m; trebuie să fie peste 0 și sub 15 m." — and no map |
-| 3 | Chooses `TC-CALC-01 Impartire cu drum.txt` | „Pasul 3 — drumul" with „Faceți clic pe colțul din care pornește drumul …"; the map with the parcel, its corners numbered 16–19, three slices named `TC-CALC-01 A`, `B`, `C` in a random order; „Suprafața parcelei" **611,87 m²**, „Lățime drum" 3,0 m, „Latura 16–17" 29,8 m, „17–18" 20,5 m, „18–19" 29,8 m, „19–16" 20,5 m; the table, and under it „Cotele însumează 99,99%: ultima felie din ordine (…) preia diferența de 0,01% …" |
+| 1 | Opens „Instrumente" → „Calcul drum lateral" | „Calcul drum lateral", the history icon, „Proprietatea", „Proprietarii", „Drumul", and „Împarte proprietatea", off |
+| 2 | In „Caută proprietatea" types `TC-CALC-01 Teren` and chooses it | „… TC-CALC-01 Teren — 4 colțuri" |
+| 3 | In „Caută un proprietar" finds and adds `TC-CALC-01 A`, `B`, `C`, each with „Cota-parte" `33,33`; „Lățime drum" `3`; presses „Împarte proprietatea" | Each owner with a badge of its own colour; then „Pasul 3 — drumul" with „Faceți clic pe colțul din care pornește drumul …"; the map with the parcel, its corners numbered 16–19, three slices named `TC-CALC-01 A`, `B`, `C` in a random order; „Suprafața parcelei" **611,87 m²**, „Lățime drum" 3,0 m, „Latura 16–17" 29,8 m, „17–18" 20,5 m, „18–19" 29,8 m, „19–16" 20,5 m; the table, and under it „Cotele însumează 99,99%: ultima felie din ordine (…) preia diferența de 0,01% …" |
 | 4 | Puts the owners in the order A, B, C — by dragging one slice onto another, or with ↑ ↓ in the table | The table reads A, B, C from „Nr." 1 to 3; every slice keeps its area |
 | 5 | Notes each slice's colour on the map and the swatch beside each name in the table; drags slice `TC-CALC-01 A` onto `TC-CALC-01 B` (or ↓ on A's row); then swaps them back the same way | Each swatch is its slice's colour on the map. After the swap B stands first and A second, and **each owner has kept its colour** — A's slice, in B's old place, is the colour A's was, and so are both swatches; the first slice's colour has moved with A. The swap back returns the order A, B, C and the colours as they were |
 | 6 | Clicks the corner badge **18** on the map | „Colțul 18 este ales. Faceți clic pe latura pe care merge drumul: 18–19 sau 17–18."; each side's name at its middle, 18–19 and 17–18 in yellow |
 | 7 | Clicks the side name **16–17** | „Latura 16–17 nu pornește din colțul 18. Alegeți 18–19 sau 17–18."; corner 18 stays chosen |
 | 8 | Clicks the side name **18–19** | „Drumul pornește din colțul 18, pe latura 18–19. …"; the road drawn white along 18–19; „Colțul drumului" 18, „Latura drumului" 18–19, „Lungime drum" **20,8 m**, „Suprafață drum" **62,45 m²**; the table Nr. · Proprietar · Cotă · Cotă × parcelă · Cotă din drum · Suprafață proprie · Proprie + drum · Diferență: A **33,33% · 203,94 · 20,81 · 183,12 · 203,94 · 0,00**; B the same; C **33,33% · 204,00 · 20,82 · 183,18 · 204,00 · 0,00**; Total **99,99% · 611,87 · 62,45 · 549,42 · 611,87 · 0,00** |
-| 9 | Under „Creează 4 proprietăți — proprietarii și drumul — și un grup", replaces „Descrierea grupului" with `TC-CALC-01 Grup de test` and „Poreclă drum" with `TC-CALC-01 Drum comun`; presses „Creează proprietățile" | „S-a creat grupul GRP-… cu următoarele proprietăți:", „Calculul înregistrat: CALC…", and four links `TC-CALC-01 A`, `B`, `C`, `TC-CALC-01 Drum comun`, with no system ID |
+| 9 | Under „Creează 4 proprietăți — proprietarii și drumul — și un grup", where „Descrierea grupului" reads „Diviz — PROP…" (the property's code), replaces it with `TC-CALC-01 Grup de test` and „Poreclă drum" with `TC-CALC-01 Drum comun`; presses „Creează proprietățile" | „S-a creat grupul GRP-… cu următoarele proprietăți:", „Calculul înregistrat: CALC…", and four links `TC-CALC-01 A`, `B`, `C`, `TC-CALC-01 Drum comun`, with no system ID |
 | 10 | Presses „Vezi istoricul calculului" | „Detalii calcul" at `/admin/calculation/history/[id]`: CALC…, „Activ", „Re-rulează cu acești parametri", „Parametrii calculului" (step 8's figures), „Descriere grup: TC-CALC-01 Grup de test", „Pașii calculului" (step 8's table, each name with its owner's swatch), „Previzualizare hartă" (each slice in its owner's colour, as in step 5), and „Parcele create": three „Parcelă proprietar" and one „Drum comun" |
-| 11 | Presses „Vezi proprietatea" on `TC-CALC-01 A` | The property, „Suprafață calculată (m²)" **183.12** (the property screen's own format); of its corners, the one at 17 carries „Nr. orig." **17**, the others none. (The road carries 18; C carries 16 and 19.) |
+| 11 | Presses „Vezi proprietatea" on `TC-CALC-01 A` | The property, „Suprafață calculată (m²)" **183.12** (the property screen's own format); of its corners, the one at 17 carries „Nr. orig." **17**, the others none. (The road carries 18; C carries 16 and 19.) Under its persons, `TC-CALC-01 A` as „Proprietar" (#39.79) |
 | 12 | Opens „Istoricul calculelor" | The run's row: `CALC…`, „Drum lateral", 4, `GRP-…`, „Activ" |
-| 13 | Opens the run again and presses „Re-rulează cu acești parametri" | „Calcul" opens on the same file, the owners in the order A, B, C and the road already from 18 along 18–19, with step 8's figures |
+| 13 | Opens the run again and presses „Re-rulează cu acești parametri" | „Calcul drum lateral" opens on the same property's corners and owners, the owners in the order A, B, C and the road already from 18 along 18–19, with step 8's figures |
 | 14 | On „Istoricul calculelor", presses „Șterge calculul" on the run's row, then „Șterge" | „Ștergeți calculul?" and „Calculul CALC… se șterge; cele 4 proprietăți și grupul create rămân."; after „Șterge" the row is gone, the run's page no longer exists, and `TC-CALC-01 A` still opens |
 
 Step 8 is the assertion — Adrian's independently checked figure (2026-10-07) — and step 11 checks the corner
@@ -138,6 +128,13 @@ On „Grupuri", „Șterge" on `TC-CALC-01 Grup de test` and **„Șterge"**; th
 on each of the four properties. The run went at step 14.
 
 ## Notes from the runs
+
+**2026-10-18 — Slice #39.79, steps 1–3 rewritten; `confirmed`, not `automated`.** The calculation starts
+from a property in the archive and persons in it, so the data file and its three refusals left this
+case (the refusals are TC-CALC-02's); steps 9, 11 and 13 gained the property's code, the owner's link
+and the re-run's corners. Driven by hand in the browser pane on the new start the same day, with
+step 8's figures unchanged. The spec (`e2e/calculation/side-road.spec.ts`) follows, and needs real
+maps, which October's ceiling skips: its first run in November takes the row back to `automated`.
 
 **2026-10-08 — Slice #38.43, `automated`.** Runs can be deleted now, so the spec is committed:
 `e2e/calculation/side-road.spec.ts`, translated from this file, with step 14 added. It deletes the run
