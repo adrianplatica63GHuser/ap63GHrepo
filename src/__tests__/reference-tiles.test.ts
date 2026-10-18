@@ -74,8 +74,8 @@ describe("one piece for every Reference Data page (Ask first 3)", () => {
 });
 
 describe("every page but „Indicative Tarla” as tiles (Slice #39.76)", () => {
-  it("the hub tiles every page but the tarla's (39.77's)", () => {
-    expect(HUB).toContain('selected === null || selected === "tarla"');
+  it("the hub tiles every page — „Indicative Tarla” too since #39.77", () => {
+    expect(HUB).toMatch(/const tiles: ReferenceTile\[\] \| null =\s*selected === null\s*\? null/);
   });
 
   it("on „Roluri și legături” the triangle is a line of its own across the row, at #38.77's width", () => {

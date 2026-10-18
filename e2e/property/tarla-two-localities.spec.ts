@@ -124,6 +124,17 @@ test.describe("TC-PROP-16 — aceeași tarla în două localități", () => {
       await expect(page.locator("[data-tarla-properties] h2")).toHaveText("O proprietate", { timeout: 30_000 });
       await expect(page.locator("[data-tarla-property]")).toHaveCount(1);
       await expect(page.locator("[data-tarla-property]")).toContainText(`${MARK} Cornetu`);
+
+      // Step 8 — #39.77: at 1920 × 1080 the panels are tiles — thirds (476 px) and, for the two big lists, halves
+      // (804 px); „Implicit" at the top right; each big list at most two thirds of the window, its header on top.
+      await page.setViewportSize({ width: 1920, height: 1080 });
+      await expect(page.locator('[data-tile-positions-reset="tarla"]')).toBeVisible();
+      for (const [tile, px] of [["identity", 476], ["outline", 476], ["plans", 476], ["parcels", 476], ["properties", 804], ["documents", 804]] as const)
+        await expect(page.locator(`[data-tile-screen="tarla"] > [data-tile="${tile}"]`)).toHaveCSS("width", `${px}px`);
+      const big = page.locator("[data-tarla-big-list]");
+      await expect(big).toHaveCount(1); // Cornetu's TC16 has a property and no document, so only its properties' list
+      expect(Math.abs(parseFloat(await big.evaluate((el) => getComputedStyle(el).maxHeight)) - 0.66 * 1080)).toBeLessThan(2);
+      await expect(big.locator("thead")).toHaveCSS("position", "sticky");
     } finally {
       // At the end — the two properties, then the two tarlale.
       await page.waitForLoadState("networkidle").catch(() => {});

@@ -40,6 +40,7 @@ The window is 1366 × 900.
 | 5 | The same with `TC-PROP-16 Al doilea`, `TC16 (Bragadiru)`, parcel `1` | Refused: the form stays on „Proprietate nouă” with „Această parcelă are deja o proprietate”, „Tarla TC16, parcela 1 aparține deja proprietății de mai jos. Nu s-a creat o proprietate nouă.” and „Deschide TC-PROP-16 Bragadiru” |
 | 6 | Opens `/tarlale` | Above the list the box „Despre limitele tarlalelor” with six numbered facts; two rows `TC16`, „Bragadiru” and „Cornetu”, each with `1` under „Proprietăți” |
 | 7 | Opens `TC16` of Cornetu | The heading „Tarla TC16 — Cornetu”, the same box, „Localitate” `Cornetu`, and under „O proprietate” only `TC-PROP-16 Cornetu`, parcel `1` |
+| 8 | Widens the window to 1920 × 1080 (#39.77) | The panels are tiles, with „Implicit” at the top right: „Tarla”, „Contur”, „Planuri parcelare” and „Parcele” each a third of the page (476 px), the properties' list and the documents' list each a half (804 px). The properties' list is never taller than two thirds of the window: it scrolls inside its tile, its header row staying at the top |
 
 ## At the end — leaving things as they were found
 
@@ -67,3 +68,7 @@ same, word for word. Deleted (204 ×4). `e2e/property/tarla-two-localities.spec.
 
 **2026-10-17 — `automated` (Slice #39.67).** The test runner's targeted run 20261017T125403Z-5977 on bbf132c ran
 `e2e/property/tarla-two-localities.spec.ts` green with six other specs and 40 jest suites (lint and tsc green too).
+
+**2026-10-18 — step 8 added for #39.77.** Read in the browser pane on localhost:3000 at 1920 × 1080 on tarla 47/2 of
+Bragadiru (125 properties): the four thirds 476 px, the two halves 804 px; the properties' list 713 px tall (66 % of
+1080) over 4,096 px of rows, the documents' over 10,520, both headers sticky; no tile scrolls sideways. One map load.

@@ -42,8 +42,10 @@ describe("one line per row (#38.50)", () => {
     expect(MODAL).not.toMatch(/flex flex-wrap gap-2">\s*\{isDocumentTypes/);
     expect(columnRem("valueActions") * REM - 32).toBeGreaterThanOrEqual(146);
     expect(columnRem("valueActionsDocTypes") * REM - 32).toBeGreaterThanOrEqual(331);
-    // Slice #39.67: a tarla's row opens its page too, so it takes the document types' column (was document types only).
-    expect(MODAL).toContain('return listKey === "document-types" || listKey === "tarla"\n    ? "valueActionsDocTypes"\n    : COMPACT_LISTS.has(listKey)\n      ? "valueActionsRoles"\n      : "valueActions";');
+    // Slice #39.67: a tarla's row opens its page too, so it took the document types' column (was document types only).
+    // #39.77: a column of its own, as wide as its four buttons — 179 px measured.
+    expect(MODAL).toContain('return listKey === "document-types"\n    ? "valueActionsDocTypes"\n    : listKey === "tarla"\n      ? "valueActionsTarla"\n      : COMPACT_LISTS.has(listKey)\n        ? "valueActionsRoles"\n        : "valueActions";');
+    expect(columnRem("valueActionsTarla") * REM - 32).toBeGreaterThanOrEqual(179);
   });
 
   it("each column as wide as what it holds, measured: a checkmark as its header's longest word, „folosit de N” and the status their longest", () => {

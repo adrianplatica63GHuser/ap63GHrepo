@@ -341,6 +341,8 @@ const TILED: { key: string; triangle: boolean }[] = [
   { key: "document-document-roles", triangle: true },
   { key: "citizenships", triangle: false },
   { key: "person-relationships", triangle: false },
+  // #39.77: „Indicative Tarla" too — its code column its header's width, its buttons' column theirs.
+  { key: "tarla", triangle: false },
 ];
 
 test.describe("TC-VL-05 pasul 9 — listele ca fișe (#39.76)", () => {
