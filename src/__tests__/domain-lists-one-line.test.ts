@@ -59,11 +59,13 @@ describe("the four lists, one line per row (#38.57)", () => {
   // span `inline-flex flex-nowrap`, no `flex-wrap`, and `content("listBadges")` at least 127 px. #39.24 narrowed the
   // column to the box and 11 px (Adrian: the gap at 30 %), so „Nou!” stays beside the box in a nowrap span of its own
   // and „Încrucișat” wraps under them, on the rare row that has it.
-  it("the property list's badges: „Nou!” beside the box, „Încrucișat” on a line of its own (#39.24)", () => {
+  // #39.73: the box is gone (the list's delete went, and its ticks with it); „Nou!” keeps its nowrap span, first.
+  it("the property list's badges: „Nou!” first, „Încrucișat” on a line of its own (#39.24, #39.73)", () => {
     expect(VIEW.properties).toContain('<span className="inline-flex flex-wrap items-center" data-select-badges="">');
     expect(VIEW.properties).toMatch(
-      /<span className="inline-flex flex-nowrap items-center">\s*<input[\s\S]*?<RecencyBadge [^>]*\/>\s*<\/span>\s*<BowTieBadge /,
+      /<span className="inline-flex flex-nowrap items-center">[\s\S]*?<RecencyBadge [^>]*\/>\s*<\/span>\s*<BowTieBadge /,
     );
+    expect(VIEW.properties).not.toContain('type="checkbox"');
     expect(content("listBadges")).toBe(27);
   });
 

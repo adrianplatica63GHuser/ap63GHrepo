@@ -73,16 +73,16 @@ Codul tarlalei apare pe contur când apropiați harta la câțiva kilometri. Un 
 
 ## 8.2 Selecția {#map-select}
 
-Selecția alege mai multe proprietăți deodată, ca să le vedeți separat sau să le ștergeți.
+Selecția alege mai multe proprietăți, una câte una, ca să le puneți într-un grup. Nu șterge nimic: o proprietate se șterge doar de pe ecranul ei (secțiunea [[properties-add-edit]]).
 
-1. Apăsați „Selectează”. Harta intră în modul de selecție: de acum, o tragere cu mouse-ul nu mai mută harta, ci desenează un dreptunghi.
-2. Trageți un dreptunghi peste proprietățile pe care le vreți. Ele devin selectate.
-3. „Afișează selectate” deschide, lângă „Toate Proprietățile”, fila „Proprietăți Selectate”, cu doar proprietățile selectate.
-4. „Anulează selecția” vă scoate din modul de selecție, iar harta se mișcă din nou la tragere.
+1. Apăsați „Selectează”. Jos apare o bară cu numărul proprietăților selectate, „Afișează selecția”, „Adaugă la grup…” și „Anulează”. Harta se mișcă și se mărește ca de obicei.
+2. Faceți clic pe fiecare proprietate pe care o vreți — pe forma ei sau pe picătura ei. Ea devine roșie. Un al doilea clic o scoate din selecție.
+3. „Afișează selecția” deschide, lângă „Toate Proprietățile”, fila „Proprietăți Selectate”, cu doar proprietățile selectate.
+4. „Adaugă la grup…” arată grupurile de proprietăți. Alegeți unul și apăsați „Adaugă”. Un mesaj scurt spune câte proprietăți au intrat în grup și codul lui. O proprietate care era deja în grup rămâne cum era.
+5. Pentru un grup nou, apăsați „Grup nou…”: se deschide „Grupuri”, cu formularul de grup nou deschis. Salvați grupul, apoi apăsați „Înapoi la hartă” sau butonul Înapoi al browserului. Harta vă așteaptă cu aceeași selecție, iar grupul nou este ales în listă.
+6. „Anulează” (sau „Anulează selecția”, din bara hărții) golește selecția și iese din modul de selecție.
 
-Butonul „Șterge selecția” arată în paranteză câte proprietăți sunt selectate. **El șterge proprietățile din arhivă, nu doar selecția.** Înainte, aplicația întreabă: „Această acțiune va șterge … proprietăți selectate. Acțiunea nu poate fi anulată.” Citiți numărul, apoi alegeți „Șterge” sau „Anulează”. Dacă ștergerea nu reușește, apare „Proprietățile selectate nu au putut fi șterse. Încercați din nou.”
-
-Pentru o singură proprietate, ștergerea de pe ecranul ei este mai sigură: acolo vedeți ce ștergeți (secțiunea [[properties-add-edit]]).
+Selecția se păstrează în fila browserului până o adăugați la un grup sau o anulați. Un cont fără acces complet vede „Adaugă la grup…” inactiv.
 
 ## 8.3 Rigla și unghiurile {#map-ruler}
 

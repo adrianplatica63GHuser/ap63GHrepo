@@ -73,16 +73,16 @@ The tarla's code appears on the outline when you zoom the map in to a few kilome
 
 ## 8.2 Selecting {#map-select}
 
-Selecting picks several properties at once, so that you can see them separately or delete them.
+Selecting picks several properties, one by one, to put them in a group. It deletes nothing: a property is deleted only from its own screen (section [[properties-add-edit]]).
 
-1. Press „Select”. The map enters selection mode: from now on, a drag with the mouse no longer moves the map but draws a rectangle.
-2. Drag a rectangle over the properties you want. They become selected.
-3. „Display all selected” opens, beside „All Properties”, the tab „Selected Properties”, with only the selected properties.
-4. „Cancel select” takes you out of selection mode, and the map moves again when dragged.
+1. Press „Select”. A bar appears at the bottom with the number of selected properties, „Show the selection”, „Add to group…” and „Cancel”. The map moves and zooms as usual.
+2. Click each property you want — its shape or its drop. It turns red. A second click takes it out of the selection.
+3. „Show the selection” opens, beside „All Properties”, the tab „Selected Properties”, with only the selected properties.
+4. „Add to group…” shows the property groups. Choose one and press „Add”. A short message says how many properties joined the group, and its code. A property that was already in the group stays as it was.
+5. For a new group, press „New group…”: „Groups” opens, with the new group's form open. Save the group, then press „Back to the map” or the browser's Back button. The map is waiting with the same selection, and the new group is chosen in the list.
+6. „Cancel” (or „Cancel select”, on the map's bar) empties the selection and leaves selection mode.
 
-The „Delete all selected (…)” button shows in brackets how many properties are selected. **It deletes the properties from the archive, not just the selection.** First the application asks: „This will delete … selected properties. This action cannot be undone.” Read the number, then choose „Delete” or „Cancel”. If the deletion fails, „The selected properties could not be deleted. Try again.” appears.
-
-For a single property, deleting it from its own screen is safer: there you see what you are deleting (section [[properties-add-edit]]).
+The selection is kept in the browser tab until you add it to a group or cancel it. An account without full access sees „Add to group…” greyed out.
 
 ## 8.3 The ruler and the angles {#map-ruler}
 
