@@ -3,15 +3,15 @@
  * The source format is src/lib/manual/format.ts. Edited here, read by the screen and by the Word download alike.
  */
 export const CHAPTER = `
-# 4 Judicial persons {#companies}
+# 4 Juridical persons {#companies}
 
-A judicial person is a firm, an institution, a local council or an association — anyone who appears in a document or in a land book without being a natural person. This chapter shows you the list of firms, how to add and edit a firm, and how to link it to its people, to documents and to properties. A firm's screen reads like a natural person's (chapter [[persons]]), with tiles of its own.
+A juridical person is a firm, an institution, a local council or an association — anyone who appears in a document or in a land book without being a natural person. This chapter shows you the list of firms, how to add and edit a firm, and how to link it to its people, to documents and to properties. A firm's screen reads like a natural person's (chapter [[persons]]), with tiles of its own.
 
-## 4.1 The list of judicial persons {#companies-list}
+## 4.1 The list of juridical persons {#companies-list}
 
-The list opens from the sidebar: „Domain”, then „Judicial Persons”. The screen is called „Judicial Person” and, like every list (section [[start-lists]]), shows 15 firms a page, with the columns „Name” and „Nickname”.
+The list opens from the sidebar: „Domain”, then „Juridical Persons”. The screen is called „Juridical Person” and, like every list (section [[start-lists]]), shows 15 firms a page, with the columns „Name” and „Nickname”.
 
-The search box at the top of the list („search by code, name, nickname, or ID”) finds a firm by its name, by its nickname and by its CUI: type the CUI and the firms that have it remain. When nothing is found, the list says „No judicial persons found”.
+The search box at the top of the list („search by code, name, nickname, or ID”) finds a firm by its name, by its nickname and by its CUI: type the CUI and the firms that have it remain. When nothing is found, the list says „No juridical persons found”.
 
 „Choose fields” adds columns to the list. On the list of firms you can choose four:
 
@@ -41,7 +41,7 @@ The fields you filter by:
 
 ## 4.2 A firm added and edited {#companies-add}
 
-On the list of firms, press „Add new Judicial Person”. The form „New Judicial Person” opens straight away, with no other question. Fill in what you have; the rest can be added at any time, once the firm is saved.
+On the list of firms, press „Add new Juridical Person”. The form „New Juridical Person” opens straight away, with no other question. Fill in what you have; the rest can be added at any time, once the firm is saved.
 
 The only required field is „Name”. A firm that has only its name is a real object and is completed later. When you press „Save”, at the bottom, the application takes you back to the list, where the new firm stands at the top, marked „New!”. You open it with „Open”.
 
@@ -59,7 +59,7 @@ The screen of an open firm carries its name and its version at the top („v 0�
 
 The tiles are chosen with ticks, as on any object (section [[start-tiles]]). The choice made on a firm belongs to firms: it does not change the tiles you see on natural persons. Unlike a property, a firm has no „Persons” tile: the firm's people are seen in „Representatives and contact” and in „Links” (section [[companies-people]]).
 
-![4.1 A judicial person's screen](companies-record.png){#fig-companies-record}
+![4.1 A juridical person's screen](companies-record.png){#fig-companies-record}
 
 ### 4.2.1 The „Registration details” tile {#companies-add-identity}
 
@@ -99,7 +99,7 @@ A few things worth knowing:
 
 ### 4.2.5 Deleting a firm {#companies-add-delete}
 
-Press „Delete”, at the bottom of the firm's screen, and answer „Yes” to the question „Delete judicial person?”. A deletion cannot be undone.
+Press „Delete”, at the bottom of the firm's screen, and answer „Yes” to the question „Delete juridical person?”. A deletion cannot be undone.
 
 A firm opened from another object — from a document or from a property — is not deleted from there. The application tells you to dissociate it first from the object you opened it from, then to open it from the sidebar and delete it there.
 
@@ -119,9 +119,9 @@ A firm that is inactive for tax shows a warning in the window, and „Notes” g
 
 Public bodies are in ANAF's register too, by their tax code; the button works for them the same way once the code is typed in the CUI box.
 
-### 4.2.7 Institutions are judicial persons {#companies-add-public-bodies}
+### 4.2.7 Institutions are juridical persons {#companies-add-public-bodies}
 
-The bodies that issue documents — a notary's office, a court, a town hall, the cadastre office, ANAF — are judicial persons too, under one of seven public-body types:
+The bodies that issue documents — a notary's office, a court, a town hall, the cadastre office, ANAF — are juridical persons too, under one of seven public-body types:
 
 | Type | For instance |
 |---|---|
@@ -135,9 +135,9 @@ The bodies that issue documents — a notary's office, a court, a town hall, the
 
 In „Type” they stand after the company forms, with „Altele” last. Each has a tax code in ANAF's register, so „Fill in from ANAF” fills them in like any firm (section [[companies-add-anaf]]).
 
-A document's issuer — the field of its form whose label changes with its type — is chosen among them: its list holds the judicial persons of a public-body type, and its search finds any judicial person (section [[documents-identification]]). Which types count as public bodies is a tick in Reference Data (section [[admin-reference-data-public-bodies]]).
+A document's issuer — the field of its form whose label changes with its type — is chosen among them: its list holds the juridical persons of a public-body type, and its search finds any juridical person (section [[documents-identification]]). Which types count as public bodies is a tick in Reference Data (section [[admin-reference-data-public-bodies]]).
 
-The archive's former list of institutions became judicial persons of these types, each with a JPERS code. Those that named no particular body — the generic notary's office, court or town hall — carry the note „generic — de înlocuit cu instituția exactă” (generic — to be replaced with the exact institution). Open one, put the exact body's name and CUI in place of the generic ones, and save: every document it issued then names the exact body.
+The archive's former list of institutions became juridical persons of these types, each with a JPERS code. Those that named no particular body — the generic notary's office, court or town hall — carry the note „generic — de înlocuit cu instituția exactă” (generic — to be replaced with the exact institution). Open one, put the exact body's name and CUI in place of the generic ones, and save: every document it issued then names the exact body.
 
 ## 4.3 A firm's people {#companies-people}
 
@@ -185,7 +185,7 @@ The „Interactions” tile stands on the right of the screen, apart from the ot
 The situation: a firm sends you an offer for a piece of land, and the person you are talking to is not in the archive yet.
 
 1. First add the person in „Natural Persons” (chapter [[persons]]).
-2. On „Judicial Persons”, press „Add new Judicial Person”, type „Name”, choose „Type” and type the CUI, checked against the document (section [[companies-add-identity]]).
+2. On „Juridical Persons”, press „Add new Juridical Person”, type „Name”, choose „Type” and type the CUI, checked against the document (section [[companies-add-identity]]).
 3. Press „Save”; open the firm from the top of the list, where it is marked „New!”.
 4. In „Representatives and contact”, type „Firm's phone” and „Firm's e-mail” and choose the person as „Contact Person 1” (sections [[companies-add-contact]] and [[companies-people-contact]]).
 5. Press „Save”.
@@ -194,7 +194,7 @@ The situation: a firm sends you an offer for a piece of land, and the person you
 
 The situation: a document gives only a firm's CUI.
 
-1. Open „Judicial Persons”.
+1. Open „Juridical Persons”.
 2. Type the CUI into the search box (section [[companies-list]]).
 3. To see the CUI in the table as well, tick „Registration No. (CUI)” in „Choose fields”.
 4. Press „Open” on the firm's row.

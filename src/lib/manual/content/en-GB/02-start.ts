@@ -22,7 +22,7 @@ The sidebar, on the left, opens any screen of the application (Figure [[fig-side
 | Section | What it holds |
 |---|---|
 | Dashboard | The first screen: what is new and what needs attention. |
-| Domain | The four lists: Natural Persons, Judicial Persons, Properties, Documents. |
+| Domain | The four lists: Natural Persons, Juridical Persons, Properties, Documents. |
 | Tools | DocTypeEngine, Calculation of a Side Road, Area Calculation. |
 | Import | Property folders: bringing a whole folder into the archive. |
 | Reporting | Interactions, Inheritance trees, Global Search. |
@@ -50,7 +50,7 @@ At the right-hand end of the bar is „?”, the screen's help (section [[start-
 
 ## 2.5 The lists and their columns {#start-lists}
 
-Each of the four lists — Natural Persons, Judicial Persons, Properties, Documents — shows 15 objects a page, and the buttons under the table move from page to page. The search box at the top of the list searches by code, by name and, for persons, by e-mail or phone.
+Each of the four lists — Natural Persons, Juridical Persons, Properties, Documents — shows 15 objects a page, and the buttons under the table move from page to page. The search box at the top of the list searches by code, by name and, for persons, by e-mail or phone.
 
 „Choose fields” chooses the list's columns: tick what you want to see and untick what you do not need (Figure [[fig-list]]). „Open”, on a row, opens the object; „Add new …”, above the table, creates a new one.
 

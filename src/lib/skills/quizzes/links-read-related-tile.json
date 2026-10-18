@@ -95,7 +95,7 @@
           },
           "en": {
             "question": "In what order are the rows on the „Legături” tile?",
-            "explanation": "The rows always come in the same order — natural persons, judicial persons, properties, documents — with a thin line between two kinds."
+            "explanation": "The rows always come in the same order — natural persons, juridical persons, properties, documents — with a thin line between two kinds."
           },
           "options": [
             {
@@ -120,7 +120,7 @@
               "id": "o4",
               "correct": true,
               "ro": "Persoane fizice, persoane juridice, proprietăți, acte",
-              "en": "Natural persons, judicial persons, properties, documents"
+              "en": "Natural persons, juridical persons, properties, documents"
             }
           ]
         },

@@ -210,7 +210,7 @@
           },
           "en": {
             "question": "From a plot of land's screen, Ciprian wants to link the firm that owns it. Which button does he press, and how does he recognise the firm among the results?",
-            "explanation": "„Asociază persoană” searches natural and judicial persons in the same table; the „Tip” column says which is which: „Fizică” or „Juridică”."
+            "explanation": "„Asociază persoană” searches natural and juridical persons in the same table; the „Tip” column says which is which: „Fizică” or „Juridică”."
           },
           "options": [
             {
@@ -481,7 +481,7 @@
           },
           "en": {
             "question": "Linked to a plot of land are a sale contract, a co-owning firm, a natural person who owns it and a neighbouring parcel. In what order do the rows appear in „Legături”?",
-            "explanation": "The rows always come in the same order — natural persons, judicial persons, properties, documents —, with a thin line between two kinds."
+            "explanation": "The rows always come in the same order — natural persons, juridical persons, properties, documents —, with a thin line between two kinds."
           },
           "options": [
             {

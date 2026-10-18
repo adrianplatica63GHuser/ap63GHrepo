@@ -285,15 +285,15 @@
             "explanation": "Persoanele fizice și cele juridice stau în același tabel, iar coloana „Tip” spune care este care: „Fizică” sau „Juridică”. O rudă este o persoană fizică."
           },
           "en": {
-            "question": "In „Asociere persoană corelată”, Ciprian searches „Popescu” under „Nume”. Under „Rezultate” both natural and judicial persons appear. How does he recognise the relative he ticks?",
-            "explanation": "Natural and judicial persons stand in the same table, and the „Tip” column says which is which: „Fizică” (natural) or „Juridică” (judicial). A relative is a natural person."
+            "question": "In „Asociere persoană corelată”, Ciprian searches „Popescu” under „Nume”. Under „Rezultate” both natural and juridical persons appear. How does he recognise the relative he ticks?",
+            "explanation": "Natural and juridical persons stand in the same table, and the „Tip” column says which is which: „Fizică” (natural) or „Juridică” (judicial). A relative is a natural person."
           },
           "options": [
             {
               "id": "o1",
               "correct": false,
               "ro": "Persoanele juridice apar cu gri și nu se pot bifa.",
-              "en": "Judicial persons appear in grey and cannot be ticked."
+              "en": "Juridical persons appear in grey and cannot be ticked."
             },
             {
               "id": "o2",

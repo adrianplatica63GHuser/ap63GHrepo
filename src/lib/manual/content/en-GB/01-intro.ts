@@ -19,13 +19,13 @@ The first screen after signing in is the **Dashboard** (Figure [[fig-dashboard]]
 
 Everything in the archive starts from three kinds of object:
 
-- **Persons** — natural persons, that is people, and judicial persons: firms, associations, institutions.
+- **Persons** — natural persons, that is people, and juridical persons: firms, associations, institutions.
 - **Properties** — land and buildings, with their shape on the map when the corners are known.
 - **Documents** — any document: a contract, a certificate, a permit, an identity card, with its pages.
 
 They are linked. A person is a party to a document, with a role — „Vânzător” (seller), „Cumpărător” (buyer), „Moștenitor” (heir). A property is the object of a document. A person owns a property, with a share. Links read from both ends: on the document you see the property, and on the property you see the document. Chapter [[links]] shows them all.
 
-Every object has a system code that says what kind of object it is: **PPERS** for a natural person, **JPERS** for a judicial person, **PROP** for a property and **DOC** for a document.
+Every object has a system code that says what kind of object it is: **PPERS** for a natural person, **JPERS** for a juridical person, **PROP** for a property and **DOC** for a document.
 
 ## 1.3 What a version is {#intro-versions}
 

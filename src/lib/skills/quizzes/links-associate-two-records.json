@@ -291,7 +291,7 @@
           },
           "en": {
             "question": "In „Rezultate” both natural persons and companies appear. How do you tell them apart?",
-            "explanation": "Natural and judicial persons stand in the same table, and the „Tip” column says which is which: „Fizică” (natural) or „Juridică” (judicial)."
+            "explanation": "Natural and juridical persons stand in the same table, and the „Tip” column says which is which: „Fizică” (natural) or „Juridică” (judicial)."
           },
           "options": [
             {

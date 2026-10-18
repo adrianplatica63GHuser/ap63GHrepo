@@ -17,7 +17,7 @@ The screen is a single page (Figure [[fig-admin-value-lists]]). On the left are 
 
 | Group | The lists |
 |---|---|
-| Object types | „Physical Person Types”, „Judicial Person Types”, „Property types and uses”, „Document Types” |
+| Object types | „Physical Person Types”, „Juridical Person Types”, „Property types and uses”, „Document Types” |
 | Roles and links | „Person Roles”, „Property → Property Links”, „Document → Document Links” |
 | Value lists | „Tarla Codes”, „Citizenship”, „Relationship to the business” |
 
@@ -87,9 +87,9 @@ The property form offers in „Use Category” only the uses the chosen type all
 
 ### 12.1.5 Public bodies {#admin-reference-data-public-bodies}
 
-On „Judicial Person Types”, every type has the tick „Public body”. The seven public-body types have it — „Autoritate publică centrală”, „Instituție publică teritorială”, „Autoritate locală”, „Instanță”, „Birou notarial”, „Birou de executor judecătoresc”, „Cabinet sau societate de avocatură” (section [[companies-add-public-bodies]]) — and the company forms do not. The list of a document's issuer holds the judicial persons whose type is ticked (section [[documents-identification]]): tick a type of your own and its firms join that list; untick one and they leave it, though a document that names one keeps it.
+On „Juridical Person Types”, every type has the tick „Public body”. The seven public-body types have it — „Autoritate publică centrală”, „Instituție publică teritorială”, „Autoritate locală”, „Instanță”, „Birou notarial”, „Birou de executor judecătoresc”, „Cabinet sau societate de avocatură” (section [[companies-add-public-bodies]]) — and the company forms do not. The list of a document's issuer holds the juridical persons whose type is ticked (section [[documents-identification]]): tick a type of your own and its firms join that list; untick one and they leave it, though a document that names one keeps it.
 
-The archive no longer has a list of institutions: its institutions became judicial persons of these types.
+The archive no longer has a list of institutions: its institutions became juridical persons of these types.
 
 ## 12.2 Users and access {#admin-users}
 
@@ -112,7 +112,7 @@ Groups, stamps and tags are put on objects from each object's „Tags and groups
 
 „Administration” → „Groups” shows the panel „Ce este un Grup?” (what is a group?), „Add”, the number of groups, for instance „4 groups”, and the table „Code” · „Description”. Each row has the group's code, with the number of members in brackets, the kind of objects it gathers, the description, „Edit” and „Delete”.
 
-1. „Add” opens „Add new group”. Choose „Target” — „Property”, „Physical person”, „Judicial person” or „Document” —, write „Description” and press „Save”. You stay on the list, with the new group first; the code, of the form GRP-001, is given on saving.
+1. „Add” opens „Add new group”. Choose „Target” — „Property”, „Physical person”, „Juridical person” or „Document” —, write „Description” and press „Save”. You stay on the list, with the new group first; the code, of the form GRP-001, is given on saving.
 2. „Edit” opens „Group GRP-…”, with three tiles: „Group identity” („Target” and „Code” read-only, „Description”), „Members available to include” and „In Group already”.
 3. Search in „Search…”, tick the objects and press „Add to Group”; to take one out, tick it in „In Group already” and press „Remove from Group”. Members added carry „[new]”, and the screen shows „Unsaved changes”: nothing has been written yet.
 4. „Save group” writes the changes; „[new]” becomes the member's position in the group, „[01]”, „[02]”.
@@ -170,7 +170,7 @@ The texts behind the „?” button and the light-bulb hints on the screens (sec
 
 - **The password.** Type the new password in „New password” — at least 8 characters — and once more in „Confirm password”, then press „Change password”. The application confirms with „Password changed!”. If the two do not match, it says „The passwords do not match.”.
 - **The language.** Under „Language” choose „Română” or „English”.
-- **„My defaults”**. For each kind of object — „Natural person”, „Judicial person”, „Property”, „Document” — tick the tiles you want „Default” to show on its screen and press „Save”; „Saved.” appears. The set belongs to the account, not to the browser, so it stays after a reload, and in any browser. „Back to default” forgets your set and brings back the application's usual one: „Back to default.”. At least one tile stays ticked.
+- **„My defaults”**. For each kind of object — „Natural person”, „Juridical person”, „Property”, „Document” — tick the tiles you want „Default” to show on its screen and press „Save”; „Saved.” appears. The set belongs to the account, not to the browser, so it stays after a reload, and in any browser. „Back to default” forgets your set and brings back the application's usual one: „Back to default.”. At least one tile stays ticked.
 
 „Sign out” is at the bottom of the sidebar.
 

@@ -16,7 +16,7 @@ A link between two objects is called an association. It is made once, from eithe
 On an object's „Links” tile (section [[links-related]]) there are three buttons: „Associate person”, „Associate property” and „Associate document”. Each opens an association screen, with three tiles one under another (Figure [[fig-links-associate]]):
 
 - „Search” — the filters. For persons they are „Name” and „Code”; for properties and documents there is a single box, „Search”, which searches by code and by name or title.
-- „Results” — the objects found. Tick the row or rows you want to link. Natural and judicial persons stand in the same table, and the „Type” column says which is which: „Natural” or „Judicial”.
+- „Results” — the objects found. Tick the row or rows you want to link. Natural and juridical persons stand in the same table, and the „Type” column says which is which: „Natural” or „Judicial”.
 - „Association” — „Role” or „Link type”, where the link has one, then „Associate Selected” and „Cancel”. The tile stays in sight at the bottom of the screen, even under a long list of results.
 
 Until you tick something, the line under the buttons says what is missing — for instance „Select at least one person”. „Associate Selected” takes you back to the object you started from, with the new link in „Links”. „Cancel” takes you back without linking anything.
@@ -55,7 +55,7 @@ On „Links”, choose the row with the round button at its left, then press „
 
 Every natural person, company, property and document has the „Links” tile: everything linked to the object, in one place (Figure [[fig-links-related]]). If you do not see it, tick „Links” among the tiles at the top of the screen (section [[start-tiles]]). When nothing is linked, the tile says „Nothing related yet.”.
 
-The rows always come in the same order — natural persons, judicial persons, properties, documents — with a thin line between two kinds and the kind's icon at the start of the row. Each row stays on one line:
+The rows always come in the same order — natural persons, juridical persons, properties, documents — with a thin line between two kinds and the kind's icon at the start of the row. Each row stays on one line:
 
 - a person or a company: the name and, in brackets, the role;
 - a property: the name and, when the link has a role, the role in brackets;

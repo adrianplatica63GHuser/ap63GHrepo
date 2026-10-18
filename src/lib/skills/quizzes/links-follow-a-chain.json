@@ -318,7 +318,7 @@
           },
           "en": {
             "question": "On a plot with fourteen links, Ciprian is looking only for the documents. Where does he look on „Legături”?",
-            "explanation": "The rows always come in the same order — natural persons, judicial persons, properties, documents — and a document reads as its short label and, in brackets, the document's type."
+            "explanation": "The rows always come in the same order — natural persons, juridical persons, properties, documents — and a document reads as its short label and, in brackets, the document's type."
           },
           "options": [
             {

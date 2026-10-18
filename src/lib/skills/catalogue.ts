@@ -61,7 +61,7 @@ export const SKILL_PATHS: readonly SkillPath[] = [
     name: { ro: "Persoane", en: "Persons" },
     description: {
       ro: "Persoanele fizice și juridice, identitatea lor, rudele și moștenirile.",
-      en: "Natural and judicial persons, their identity, their relatives and inheritances.",
+      en: "Natural and juridical persons, their identity, their relatives and inheritances.",
     },
   },
   {
@@ -243,7 +243,7 @@ export const SKILLS: readonly Skill[] = [
     number: "1.6",
     level: 1,
     path: "persons",
-    name: { ro: "Adaugă și modifică o persoană juridică", en: "Add and edit a judicial person" },
+    name: { ro: "Adaugă și modifică o persoană juridică", en: "Add and edit a juridical person" },
     description: {
       ro: "Creezi o firmă, îi scrii telefonul, e-mailul și persoana de contact și o modifici mai târziu.",
       en: "Create a firm, record its phone, e-mail and contact person, and edit it later.",

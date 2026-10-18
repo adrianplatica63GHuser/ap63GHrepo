@@ -134,7 +134,7 @@ From the middle level, each person who appears on documents carries a badge with
 Fill in one or more filters, then press „Search”. All the filters set apply together: a result must meet every one of them.
 
 - „Name / code search” — part of a name or of a code, for instance „Popescu”.
-- „Entity type” — „Any”, „Person”, „Property” or „Document”. „Person subtype” chooses between „Natural person” and „Judicial person”.
+- „Entity type” — „Any”, „Person”, „Property” or „Document”. „Person subtype” chooses between „Natural person” and „Juridical person”.
 - „Importance”, „Relevance” and „Provenance” — the values in the object's „Classification” tile (section [[links-classify-classification]]). „Provenance” says how the object came into the archive, for instance „Manual (Add new)” for one typed in by hand.
 - „Group code”, „Stamp code” and „Tag” — the groups, stamps and tags in the „Tags and groups” tile (sections [[links-classify-groups]], [[links-classify-stamps]] and [[links-classify-tags]]).
 - „Has metadata”, with „Metadata updated from” and „Metadata updated to”.
