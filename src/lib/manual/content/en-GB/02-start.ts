@@ -50,7 +50,7 @@ At the right-hand end of the bar is „?”, the screen's help (section [[start-
 
 ## 2.5 The lists and their columns {#start-lists}
 
-Each of the four lists — Natural Persons, Juridical Persons, Properties, Documents — shows 15 objects a page, and the buttons under the table move from page to page. The search box at the top of the list searches by code, by name and, for persons, by e-mail or phone.
+Each of the four lists — Natural Persons, Juridical Persons, Properties, Documents — shows 15 objects a page, and the buttons under the table move from page to page. The search box at the top of the list is as wide as the „Add new …” button at the row's end and says inside what it searches; if the text does not fit, rest the mouse on the box and you read it whole. A list is filtered by its columns: a column that can be filtered has a funnel under its name (section [[properties-list-filters]]). The table's header is three rows tall: the name on the first two, the funnel on the third, and the name of a column with no filter stands in the middle.
 
 „Choose fields” chooses the list's columns: tick what you want to see and untick what you do not need (Figure [[fig-list]]). „Open”, on a row, opens the object; „Add new …”, above the table, creates a new one.
 

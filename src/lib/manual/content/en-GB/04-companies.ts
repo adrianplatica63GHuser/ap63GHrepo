@@ -11,9 +11,9 @@ A juridical person is a firm, an institution, a local council or an association 
 
 The list opens from the sidebar: „Domain”, then „Juridical Persons”. The screen is called „Juridical Person” and, like every list (section [[start-lists]]), shows 15 firms a page, with the columns „Name” and „Nickname”.
 
-The search box at the top of the list („search by ID, Name, Nickname, Registration No. (CUI), Firm's phone or Firm's e-mail”) finds a firm by its name, by its nickname and by its CUI: type the CUI and the firms that have it remain. When nothing is found, the list says „No juridical persons found”.
+The search box at the top of the list („search by ID, Name, Nickname, Registration No. (CUI), Firm's phone or Firm's e-mail”), as wide as „Add new Juridical Person”, finds a firm by its ID, name, nickname, CUI, phone and e-mail: type the CUI and the firms that have it remain. Rest the mouse on the box to read its whole text. When nothing is found, the list says „No juridical persons found”.
 
-„Choose fields” adds columns to the list. On the list of firms you can choose four:
+„Choose fields” adds columns to the list. On the list of firms you can choose four of five:
 
 | Field | What the column shows |
 |---|---|
@@ -21,6 +21,7 @@ The search box at the top of the list („search by ID, Name, Nickname, Registra
 | Registration No. (CUI) | The unique registration code. |
 | Trade Register No. | The Trade Register number. |
 | Contact person | The name of the firm's contact person. |
+| Locality | The locality of the head office's address. |
 
 The button shows how many fields you chose, for instance „Choose fields 1/4”. The CUI column does not appear until you tick it, but searching by CUI works regardless. Under „Contact person” you see the firm's first contact person; if the first slot is empty, you see the second (section [[companies-people-contact]]).
 
@@ -30,14 +31,14 @@ A firm added recently stands at the top of the list, marked „New!”.
 
 ### 4.1.1 The list's filters {#companies-list-filters}
 
-Below the search box, the list's filters are set and removed as on the list of properties: „+ Filter”, a label for each filter, the funnel in a column's header and „Clear filters” (section [[properties-list-filters]]). Beside each value is how many firms hold it, counted with the other filters already set.
+The list is filtered like the list of properties: from the funnel under a column's name, with a label for each filter and „Clear filters” (section [[properties-list-filters]]). Beside each value is how many firms hold it, counted with the other filters already set.
 
-The fields you filter by:
+On the list of firms two columns filter, both with ticks:
 
-- **„Type”** — the values of the list of judicial-person types, as they stand in the archive now;
-- **„Role in documents”** — the roles firms hold on documents; a firm passes the filter when it holds the role on at least one document;
-- **„Locality (head office)”** — the locality of the head office's address;
-- **„Registration No. (CUI)”**, „Trade Register No.” and „Contact person” — „Contains”. For „Contact person”, either of the firm's two contact persons counts.
+- **„Type”** — the values of the list of juridical-person types, as they stand in the archive now;
+- **„Locality”** — the locality of the head office's address.
+
+„Registration No. (CUI)”, „Trade Register No.” and „Contact person” have no funnel; a firm is found by its CUI with the search box.
 
 ## 4.2 A firm added and edited {#companies-add}
 

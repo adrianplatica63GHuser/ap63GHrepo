@@ -162,8 +162,8 @@ export const SKILLS: readonly Skill[] = [
     path: "workspace",
     name: { ro: "Găsește un obiect într-o listă", en: "Find an object in a list" },
     description: {
-      ro: "Cauți în lista persoanelor, a proprietăților sau a actelor, treci de la o pagină la alta, alegi coloanele din „Câmpuri afișate” și selectezi rânduri.",
-      en: "Search the list of persons, properties or documents, page through it, choose its columns in „Câmpuri afișate” and select rows.",
+      ro: "Cauți în lista persoanelor, a proprietăților sau a actelor, treci de la o pagină la alta, alegi coloanele din „Câmpuri afișate”, filtrezi din pâlnia unei coloane și selectezi rânduri.",
+      en: "Search the list of persons, properties or documents, page through it, choose its columns in „Câmpuri afișate”, filter from a column's funnel and select rows.",
     },
     predecessors: [],
     screens: ["natural-persons-list", "judicial-persons-list", "properties-list", "documents-list"],

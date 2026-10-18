@@ -1013,8 +1013,6 @@
       "FUTURE": "De perspectivă"
     },
     "filterBar": {
-      "add": "Adaugă un filtru",
-      "addOption": "+ Filtru",
       "clearAll": "Șterge filtrele",
       "remove": "Scoate filtrul „{field}”",
       "close": "Închide",
@@ -1111,13 +1109,6 @@
     "searchPlaceholder": "caută după ID, Nume, Poreclă, Email Personal 1, Email Personal 2, Email serviciu, Telefon Personal 1, Telefon Personal 2 sau Telefon serviciu",
     "chooseFields": "Câmpuri afișate",
     "chooseFieldsHint": "Selectați până la {max} coloane opționale",
-    "filters": {
-      "documentRole": "Rol în documente",
-      "locality": "Localitate (domiciliu)",
-      "alive": "În viață",
-      "deceased": "Decedați",
-      "all": "Toți"
-    },
     "addNew": "Adaugă persoană",
     "open": "Deschide",
     "loading": "Se încarcă…",
@@ -1400,10 +1391,6 @@
     },
     "chooseFields": "Câmpuri afișate",
     "chooseFieldsHint": "Selectați până la {max} coloane opționale",
-    "filters": {
-      "documentRole": "Rol în documente",
-      "locality": "Localitate (sediu)"
-    },
     "anaf": {
       "button": "Completează din ANAF",
       "buttonNote": "Întreabă ANAF după CUI și arată ce s-ar schimba. Nu se salvează nimic până nu apăsați „Salvează”.",

@@ -50,7 +50,7 @@ La capătul din dreapta al barei stă „?”, ajutorul ecranului (secțiunea [[
 
 ## 2.5 Listele și coloanele lor {#start-lists}
 
-Fiecare dintre cele patru liste — Persoane Fizice, Persoane Juridice, Proprietăți, Acte — arată câte 15 obiecte pe pagină, iar butoanele de sub tabel trec de la o pagină la alta. Caseta de căutare din capul listei caută după cod, nume și, la persoane, după e-mail sau telefon.
+Fiecare dintre cele patru liste — Persoane Fizice, Persoane Juridice, Proprietăți, Acte — arată câte 15 obiecte pe pagină, iar butoanele de sub tabel trec de la o pagină la alta. Caseta de căutare din capul listei este cât butonul „Adaugă …” de la capătul rândului și spune în ea după ce caută; dacă textul nu încape, țineți mouse-ul pe casetă și îl citiți întreg. O listă se filtrează după coloanele ei: o coloană care se poate filtra are, sub nume, o pâlnie (secțiunea [[properties-list-filters]]). Capul tabelului are înălțimea a trei rânduri: numele pe primele două, pâlnia pe al treilea, iar numele unei coloane fără filtru stă la mijloc.
 
 „Câmpuri afișate” alege coloanele listei: bifați ce vreți să vedeți și debifați ce nu vă trebuie (Figura [[fig-list]]). „Deschide”, pe un rând, deschide obiectul; „Adaugă …”, deasupra tabelului, creează unul nou.
 

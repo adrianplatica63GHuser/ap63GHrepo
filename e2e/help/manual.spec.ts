@@ -331,6 +331,8 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     await page.screenshot({ path: `${dir}/record.png` });
 
     // Figura 2.3 — the list, searched by the seed person's surname, „Câmpuri afișate" open; rows not the seed's blurred.
+    // #39.86: three columns chosen first — two with a funnel, one without — so the band of names (#39.83) shows them.
+    await page.evaluate(() => localStorage.setItem("ga40-col-person-v3", JSON.stringify(["dateOfBirth", "age", "cnp"])));
     await page.goto("/natural-persons");
     const search = page.locator("main").getByPlaceholder(S.personSearch);
     await expect(search).toBeVisible({ timeout: 60_000 });
@@ -437,16 +439,22 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     await still(page);
     await page.screenshot({ path: `${dir}/companies-record.png` });
 
-    // Figura 5.1 — the list of properties, searched for the seed's building plots; rows not the seed's blurred.
+    // Figura 5.1 — the list of properties, searched for the seed's building plots; rows not the seed's blurred. #39.86:
+    // four columns, three with a funnel (#39.82) and „Nr. cadastru" without, and the funnel under „Tip proprietate"
+    // pressed, so the figure shows a column filter open under its funnel (Ask first 1: invented records only).
+    await page.evaluate(() => localStorage.setItem("ga40-col-property-v4", JSON.stringify(["tarlaSola", "parcela", "propertyType", "cadastralNumber"])));
     await page.goto("/properties");
     const psearch = page.locator("main").getByRole("searchbox").or(page.locator("main input[type=search], main input[placeholder]")).first();
     await expect(psearch).toBeVisible({ timeout: 60_000 });
     await psearch.fill("Teren curți construcții");
     await page.waitForTimeout(2500);
     await blurNotSeed("/properties/");
+    await page.locator('main [data-filter-funnel="propertyType"] button').click();
+    await expect(page.locator('main [data-filter-editor="propertyType"] [data-filter-value]').first()).toBeVisible({ timeout: 30_000 });
     await blurRecent(page, S.recent);
     await still(page);
     await page.screenshot({ path: `${dir}/properties-list.png` });
+    await page.keyboard.press("Escape");
 
     // Figura 5.2 — a property's screen, the map tiles hidden (no map load), and Figura 7.2 — its „Legături".
     await page.goto(`/properties/${property.id}`);

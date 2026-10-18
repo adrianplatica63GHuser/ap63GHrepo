@@ -11,7 +11,7 @@ A natural person is a human being: their name, CNP, date of birth, identity docu
 
 In the sidebar, open „Domain”, then „Natural Persons”. The screen is called „Natural Person” and shows a table with the columns „Name” and „Nickname”, 15 rows to a page (section [[start-lists]]). In the „Name” column the first name comes first: a person whose surname is Popescu and whose first name is Ion appears as „Ion Popescu”.
 
-The search box („search by ID, Name, Nickname, Personal Email 1, Personal Email 2, Work Email, Personal Phone 1, Personal Phone 2 or Work Phone”) keeps in the table only the persons who match what you type; part of the name is enough. Below it, the list's filters narrow what you see by type, role, locality and the other fields (section [[persons-list-filters]]). The list has no „Importance” or „Relevance” filter.
+The search box („search by ID, Name, Nickname, Personal Email 1, Personal Email 2, Work Email, Personal Phone 1, Personal Phone 2 or Work Phone”), as wide as „Add new Person”, keeps in the table only the persons who match what you type; part of the name is enough. Its text does not fit whole: rest the mouse on the box to read it. The list's filters are set from its columns (section [[persons-list-filters]]). The list has no „Importance” or „Relevance” filter.
 
 „Choose fields” adds columns to the table, at most four at a time. You can choose them from:
 
@@ -45,16 +45,18 @@ A second click on the same button closes what it opened.
 
 ### 3.1.1 The list's filters {#persons-list-filters}
 
-Filters are set and removed as on the list of properties: „+ Filter”, a label for each filter, the funnel in a column's header and „Clear filters” (section [[properties-list-filters]]). Beside each value in a list with ticks is how many persons hold it, counted with the other filters already set. The filters are kept in the page's address.
+The list is filtered like the list of properties: from the funnel under a column's name, with a label for each filter and „Clear filters” (section [[properties-list-filters]]). Beside each value in a list with ticks is how many persons hold it, counted with the other filters already set. The filters are kept in the page's address.
 
-The fields you filter by:
+The columns that can be filtered, chosen in „Choose fields”:
 
-- **„Professional type”** — the professions in the list, as they stand in the archive now (section [[persons-add-profession]]);
+- **„Professional type”** — the professions on the list, as they stand in the archive now (section [[persons-add-profession]]);
 - **„Relationship to the business”** — a person passes the filter when they hold at least one of the ticked relationships; „(empty)” shows the persons with none;
-- **„Role in documents”** — the roles persons hold on documents, for example owner, seller, heir or notary. A person passes the filter when they hold the chosen role on at least one document; „(empty)” shows the persons who hold no role on any document;
-- **„Locality (home)”** — the locality of the home address;
-- **„Deceased”** — „All”, „Alive” or the deceased only;
-- **„Gender”**, „Age”, „Date of Birth”, „Date of death”, „CNP” and „Place of Birth” — the columns of „Choose fields”. „Age” is the age the list shows: for a deceased person, the age at death. For dates, choose „From” and „To”, or, from „Period…”, „This year” or „The last 12 months”.
+- **„Gender”** — „Male” and „Female”;
+- **„Place of Birth”** — the places written in the archive, with ticks, like a locality;
+- **„Date of Birth” and „Date of death”** — „From” and „To”, or, from „Period…”, „This year” or „The last 12 months”;
+- **„Age”** — „From” and „To”. It is the age the list shows: for a deceased person, the age at death.
+
+„Name”, „Nickname” and „CNP” have no funnel.
 
 ## 3.2 A person added by hand {#persons-add}
 

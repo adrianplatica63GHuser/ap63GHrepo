@@ -1013,8 +1013,6 @@
       "FUTURE": "Future"
     },
     "filterBar": {
-      "add": "Add a filter",
-      "addOption": "+ Filter",
       "clearAll": "Clear filters",
       "remove": "Remove the „{field}” filter",
       "close": "Close",
@@ -1111,13 +1109,6 @@
     "searchPlaceholder": "search by ID, Name, Nickname, Personal Email 1, Personal Email 2, Work Email, Personal Phone 1, Personal Phone 2 or Work Phone",
     "chooseFields": "Choose fields",
     "chooseFieldsHint": "Select up to {max} optional columns",
-    "filters": {
-      "documentRole": "Role in documents",
-      "locality": "Locality (home)",
-      "alive": "Alive",
-      "deceased": "Deceased",
-      "all": "All"
-    },
     "addNew": "Add new Person",
     "open": "Open",
     "loading": "Loading…",
@@ -1400,10 +1391,6 @@
     },
     "chooseFields": "Choose fields",
     "chooseFieldsHint": "Select up to {max} optional columns",
-    "filters": {
-      "documentRole": "Role in documents",
-      "locality": "Locality (head office)"
-    },
     "anaf": {
       "button": "Fill in from ANAF",
       "buttonNote": "Asks ANAF by CUI and shows what would change. Nothing is saved until you press „Save”.",
