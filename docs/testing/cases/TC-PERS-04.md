@@ -40,7 +40,7 @@ Nothing.
 | 2 | Presses „Câmpuri afișate" | CNP, Data nașterii, Vârstă, Gen, Data decesului, Locul nașterii, Tip profesional, Relația cu firma — in that order |
 | 3 | Ticks CNP and Data nașterii, presses outside, types `TC-PERS-04` into the search | „Câmpuri afișate 2/4"; the table headed NUME · PORECLĂ · CNP · DATA NAȘTERII; one row: `Ion TC-PERS-04`, „Ionel TC", `1800101420045`, `01.01.1980` |
 | 4 | Presses „Previzualizare" on the row | A tile headed `TC-PERS-04 Ion` (Nume Prenume), then two lines: „Ionel TC, 1800101420045" and „născut: 01.01.1980, Localitatea Exemplu"; no system ID, no Nume or Prenume under the heading |
-| 5 | Opens „Persoane Juridice" and presses „Câmpuri afișate" (it reads `0/4`) | Tip, Nr. înregistrare (CUI), Nr. registru comerțului, Persoană de contact |
+| 5 | Opens „Persoane Juridice" and presses „Câmpuri afișate" (it reads `0/4`) | Tip, Nr. înregistrare (CUI), Nr. registru comerțului, Persoană de contact, Localitate (#39.82) |
 | 6 | Ticks Nr. înregistrare (CUI), presses outside, types `TC-PERS-04` into the search | The table headed DENUMIRE · PORECLĂ · NR. ÎNREGISTRARE (CUI); one row with `RO99999990` |
 | 7 | Presses „Previzualizare" on the row | A tile headed `TC-PERS-04 Firmă de test SRL` followed by „(niciun contact)", then „Firma TC, SRL" and „RO99999990, J99/9999/2026"; no system ID |
 
@@ -99,5 +99,6 @@ its first option „+ Filtru". The rest of the case is unchanged.
 **2026-10-17 — step 2 widened (Slice #39.70).** „Relația cu firma” joined „Câmpuri afișate” after „Tip profesional”;
 the case stays `automated` — its spec ran with the new label in the slice's targeted run.
 
-**2026-10-18 — step 1 rewritten for #39.82.** „+ Filtru" left the list, so it holds no `<select>` again, as before
-#39.61/#39.62. The rest of the case is unchanged.
+**2026-10-18 — steps 1 and 5 rewritten for #39.82.** „+ Filtru" left the list, so it holds no `<select>` again, as
+before #39.61/#39.62; and the juridical persons' chooser offers „Localitate" fifth, so its filter has a column. The
+rest of the case is unchanged.

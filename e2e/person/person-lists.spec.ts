@@ -140,7 +140,8 @@ test.describe("TC-PERS-04 — listele de persoane", () => {
       await expect(main.getByPlaceholder("caută după cod, nume, poreclă sau ID")).toBeVisible({ timeout: 30_000 });
       await main.getByRole("button", { name: "Câmpuri afișate 0/4", exact: true }).click();
       const jpPicker = main.locator("[data-field-chooser]");
-      await expect(jpPicker.locator("label")).toHaveText(["Tip", "Nr. înregistrare (CUI)", "Nr. registru comerțului", "Persoană de contact"]);
+      // #39.82: „Localitate" after them — the head office's, so its filter has a column.
+      await expect(jpPicker.locator("label")).toHaveText(["Tip", "Nr. înregistrare (CUI)", "Nr. registru comerțului", "Persoană de contact", "Localitate"]);
 
       // Step 6 — Nr. înregistrare (CUI); the search; the row.
       await jpPicker.getByRole("checkbox", { name: "Nr. înregistrare (CUI)" }).check();
