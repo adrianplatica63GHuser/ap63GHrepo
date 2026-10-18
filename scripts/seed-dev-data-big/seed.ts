@@ -1195,7 +1195,10 @@ async function writeSideRoadRuns(runs: SideRoadRunPlan[]): Promise<string[]> {
     rec.id = made.id;
     rec.code = made.code;
     saveManifest();
-    for (const o of outputs) await setInitialProvenance(o.principalObjectId, "ALGORITHM", BY);
+    // as the route: each call guarded, so a metadata write that fails never undoes a run already written
+    for (const o of outputs) {
+      await setInitialProvenance(o.principalObjectId, "ALGORITHM", BY).catch((err) => console.log(`  ! provenance not recorded on ${o.principalObjectId}: ${err instanceof Error ? err.message : err}`));
+    }
   }
   return refused;
 }

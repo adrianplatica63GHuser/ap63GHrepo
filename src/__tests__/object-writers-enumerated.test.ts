@@ -535,7 +535,7 @@ describe("every initial-provenance write is guarded at its call site", () => {
     ).map(rel);
   }
 
-  it("finds the callers by scanning, and there are eight", () => {
+  it("finds the callers by scanning, and there are nine", () => {
     // A hand-written list cannot fail for the case that matters — a brand-new
     // caller in a brand-new file. This one can.
     // (#38.23 took the calculation commit out while it refused everything;
@@ -560,6 +560,9 @@ describe("every initial-provenance write is guarded at its call site", () => {
         // document whose scans are not uploaded yet is page-less too.
         "src/lib/documents/queries.ts",
         "src/lib/properties/import-property.ts",
+        // The ninth, from Slice #39.81: the big dev seed's side-road runs, written with the commit route's own
+        // steps — so the properties a run creates carry ALGORITHM exactly as the route's do.
+        "scripts/seed-dev-data-big/seed.ts",
       ].sort(),
     );
   });
