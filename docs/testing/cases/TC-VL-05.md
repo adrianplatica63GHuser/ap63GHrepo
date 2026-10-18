@@ -6,7 +6,7 @@
 | **Kind** | happy |
 | **Data** | — |
 | **State** | `automated` |
-| **Last green** | 2026-10-09 |
+| **Last green** | 2026-10-18 |
 
 ## What this proves
 
@@ -76,3 +76,6 @@ checkboxes on their own line, the table under the divider. The test runner ran i
 6 units (968 px), the role's form 5 when open (the triangle, tried at 5 units, stood 969 px tall against its 699 —
 TC-VL-10 — and is a line across the row at #38.77's width instead); „Tipuri de Document” 7 units (1132 px), its
 frame 56/56 px from the tile's edges; „Legături Document → Document” 6 units, 32/32 px.
+
+**2026-10-18 — `automated` with step 9, green on the runner (Slice #39.76).** `targeted` 20261018T060231Z-9721 on
+42723d7.
