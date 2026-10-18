@@ -619,7 +619,7 @@ export function CalculationView() {
           onPropertyChosen={propertyChosen}
         />
       ) : (
-        <div className="flex flex-wrap items-center gap-3 text-sm text-ink dark:text-zinc-200" data-panel="side-road-summary">
+        <div className="flex flex-wrap items-center gap-3 text-sm text-ink dark:text-zinc-200" data-calc-summary="">
           <span>
             {t("start.summary", {
               code: start.property?.code ?? "",

@@ -117,6 +117,9 @@ const ALLOW: Record<string, Allowed[]> = {
   "src/app/admin/calculation/_components/calculation-view.tsx": [
     ["A113", "{nameOr(p.nickname, \"property\")}"], // #37.57: no system ID; back with #38.25's commit
   ],
+  "src/app/admin/calculation/_components/side-road-start.tsx": [
+    ["A113", "<span className=\"min-w-0 flex-1 truncate text-left\">{render(h)}</span>"], // #39.79: a property or a person found, by name
+  ],
   // Slice #38.43: „Ștergeți calculul?" — „Șterge" / „Anulează".
   "src/app/admin/calculation/history/_components/delete-run.tsx": [
     ["A110", "{busy ? t(\"deleting\") : t(\"confirm\")}"],

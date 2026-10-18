@@ -200,7 +200,7 @@ export function SideRoadStart({
     onChange({ ...state, owners: state.owners.map((o, k) => (k === i ? { ...o, ...patch } : o)) });
 
   return (
-    <div className="flex flex-col gap-4" data-panel="side-road-start">
+    <div className="flex flex-col gap-4" data-calc-start="">
       <p className="text-sm text-fade dark:text-zinc-400">{t("lead")}</p>
 
       {/* The property */}

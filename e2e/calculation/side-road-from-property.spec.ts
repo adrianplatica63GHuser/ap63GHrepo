@@ -37,7 +37,7 @@ const FOUR = S70.map(wgs);
 /** A fifth corner on the 19–16 side, nudged out: a five-corner property the calculation refuses. */
 const FIVE = [...FOUR, wgs([20, 318686.0, 573587.0])];
 
-const start = (page: Page) => page.locator('[data-panel="side-road-start"]');
+const start = (page: Page) => page.locator('[data-calc-start]');
 const problems = (page: Page) => page.locator('[data-panel="input-problems"]');
 const divide = (page: Page) => page.getByRole("button", { name: "Împarte proprietatea", exact: true });
 const roadStatus = (page: Page) => page.locator('[data-panel="road-step"] p[role="status"]');
@@ -120,7 +120,7 @@ test.describe("TC-CALC-02 — calculul de la o proprietate și proprietarii ei",
       // Step 7 — „Împarte proprietatea": today's screen, the parcel and its three owners.
       await divide(page).click();
       await expect(page.getByText("Pasul 3 — drumul", { exact: true })).toBeVisible({ timeout: 30_000 });
-      await expect(page.locator('[data-panel="side-road-summary"]')).toContainText("3 proprietari, drum de 4 m");
+      await expect(page.locator('[data-calc-summary]')).toContainText("3 proprietari, drum de 4 m");
       const table = page.locator('[data-panel="calculation"] table[data-width-table]');
       await expect(table.locator("tbody tr")).toHaveCount(3);
       const figure = (label: string) => page.locator('[data-panel="calculation"] div.rounded-md').filter({ has: page.getByText(label, { exact: true }) }).last();

@@ -49,7 +49,7 @@ const made: { propertyIds: string[]; runId: string | null } = { propertyIds: [],
 
 const map = (page: Page) => page.locator('[data-panel="preview-map"]');
 const roadStatus = (page: Page) => page.locator('[data-panel="road-step"] p[role="status"]');
-const start = (page: Page) => page.locator('[data-panel="side-road-start"]');
+const start = (page: Page) => page.locator('[data-calc-start]');
 // `data-width-table`, not any table: Google's map draws a keyboard-shortcuts table of its own
 // inside the panel once it takes focus (measured in 20261008T115334Z-12191).
 const ownerTable = (page: Page) => page.locator('[data-panel="calculation"] table[data-width-table]');
