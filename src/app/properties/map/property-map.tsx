@@ -2515,8 +2515,7 @@ export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean 
               {groupsQuery.isLoading && <p className="text-sm text-fade">{t("map.groupPicker.loading")}</p>}
               {groupsQuery.isError && <p className="text-sm text-red-600">{t("map.groupPicker.loadError")}</p>}
               {groupsQuery.data && (
-                <fieldset className="flex flex-col gap-1 max-h-72 overflow-y-auto">
-                  <legend className="sr-only">{t("map.groupPicker.title", { count: selectedIds.size })}</legend>
+                <fieldset aria-labelledby="map-group-picker-title" className="flex flex-col gap-1 max-h-72 overflow-y-auto">
                   {groupsQuery.data.length === 0 && <p className="text-sm text-fade">{t("map.groupPicker.empty")}</p>}
                   {groupsQuery.data.map((g) => (
                     <label
