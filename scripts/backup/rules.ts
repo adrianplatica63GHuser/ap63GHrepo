@@ -576,8 +576,12 @@ export interface SeedRehearsalObservation {
 /**
  * Passed when the seed ran clean with every coverage line met, a second seed was refused, and `--remove` brought
  * every table back to its count — the lookup tables excepted, which may only GROW (the seed's Reference Data is
- * additive and kept on purpose).
+ * additive and kept on purpose). Except `lookup_tarla` (#39.81): it holds the seed's own tarlas, which --remove
+ * deletes with everything else the seed made, so it must come back to its count like any object table.
  */
+/** Lookup tables whose rows the seed creates as its own and --remove deletes — never allowed to grow (#39.81). */
+export const SEED_OWNED_LOOKUPS: ReadonlySet<string> = new Set(["public.lookup_tarla"]);
+
 export function seedRehearsalVerdict(o: SeedRehearsalObservation): { verdict: "passed" | "failed"; line: string; problems: string[] } {
   const problems: string[] = [];
   for (const e of o.restoreErrors.slice(0, 3)) problems.push(`restore: ${e}`);
@@ -594,7 +598,7 @@ export function seedRehearsalVerdict(o: SeedRehearsalObservation): { verdict: "p
   for (const t of o.after) {
     const was = a.get(t.table);
     if (was === t.rows) continue;
-    if (/^public\.lookup_/.test(t.table) && was !== undefined && t.rows > was) {
+    if (/^public\.lookup_/.test(t.table) && !SEED_OWNED_LOOKUPS.has(t.table) && was !== undefined && t.rows > was) {
       kept += t.rows - was;
       continue;
     }

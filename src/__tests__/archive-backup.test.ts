@@ -489,6 +489,12 @@ describe("the big dev seed's rehearsal on a restored copy (Slice #39.21)", () =>
     expect(seedRehearsalVerdict({ ...ok, removeExit: 2 }).problems).toEqual(["--remove exited 2"]);
   });
 
+  it("fails on a seeded tarla left behind — lookup_tarla holds the seed's own tarlas and must come back (#39.81)", () => {
+    const withTarla = { ...ok, before: [...before, t("public.lookup_tarla", 30)] };
+    expect(seedRehearsalVerdict({ ...withTarla, after: [...ok.after, t("public.lookup_tarla", 30)] }).verdict).toBe("passed");
+    expect(seedRehearsalVerdict({ ...withTarla, after: [...ok.after, t("public.lookup_tarla", 55)] }).problems).toEqual(["public.lookup_tarla: 30 → 55 after --remove"]);
+  });
+
   describe("with the deaths backfill first (Slice #39.30)", () => {
     const backfill = {
       dryExit: 0,
