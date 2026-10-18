@@ -64,15 +64,14 @@ nothing. Approved by Adrian on 2026-09-24: do not ask whether this applies.
   so in a message that does not wait — one line: what was taken, and why — and record it in the
   handover under „Decisions taken", worded so Adrian can overturn it in one line. A later answer
   from him redirects the work from there; the session never waits for it.
-- **Three things still stop a session, and only three:**
-  1. **The migration stop** — The working contract, below. Since Propus.3 it holds the
-     **commit**, not the session: the question goes out in a message that does not wait, and the
-     work that depends on the schema carries on, uncommitted.
-  2. **A domain fact only Adrian or Ciprian knows, that the rest of the slice depends on.** Even
+- **Two things still stop a session, and only two.** (There were three until 2026-10-17; the
+  migration stop that was first is withdrawn — The working contract, below.)
+  1. **A domain fact only Adrian or Ciprian knows, that the rest of the slice depends on.** Even
      then only the dependent part waits, and everything else is built. A fact the slice does not
      depend on is recorded as an assumption and asked in the handover.
-  3. **The go-ahead list** — Autonomy, below. That is where the irreversible lives: a push outside
-     the runner's guard, history rewrites, anything of Adrian's, destructive database work.
+  2. **The go-ahead list** — Autonomy, below. That is where the irreversible lives: a push outside
+     the runner's guard, history rewrites, anything of Adrian's, destructive database work —
+     which includes a migration that destroys data already stored.
 
   Everything else is a decision — including an `Ask first:` line in the header whose answer the
   slice can build around: take the recommended answer, build, and put it first under „Decisions
@@ -201,27 +200,31 @@ suspended, the self-review of your own diff is the last word on the slice, not t
 - **One vertical slice at a time.** If which slice is meant is genuinely ambiguous, say which
   one you are taking and take it. Do not ask.
 - **Plan first, then build the whole thing.** Present the plan and start building. Do not
-  wait for a go-ahead unless the slice destroys data or changes a migration — a plan Adrian
+  wait for a go-ahead unless the slice destroys data — a plan Adrian
   disagrees with costs one message to redirect, and a plan he never had time to read costs
   the whole session. Do not stop for per-file approval.
-- **One exception: migrations — the confirmation stays Adrian's, and the session does not idle on
-  it.** (Propus.3, 2026-09-24.) When a slice adds or changes a migration, write the migration file
-  and the matching `schema/index.ts` change, then **ask the schema question in a message that does
-  not wait** — the file, what it changes, the recommended answer — and keep building on the
-  proposed schema **in the working tree**. A wrong schema caught at the confirmation costs the
-  rework built on it; Adrian picks the recommended option almost every time, so that price is paid
-  rarely, and an idle session was paying its own price every time.
-  **Nothing that depends on the schema is committed, pushed or applied before the confirmation
-  lands** — a schema in a commit is one Claude has told git is settled. Commit what does not depend
-  on it as usual. When the confirmation lands, commit the migration first, with a trailer quoting
-  him — `Schema-Confirmed: Adrian, <date> — „<his words>"` (`C:\dev\.claude\rules\git-and-commits.md`)
-  — then what was built on it; then request the runner's `migrate-local`, which applies the
-  migration to the local database and regenerates `src\db\supabase_schema_full.sql` only for a
-  migration whose adding commit carries that trailer, and commit the regenerated file. **This is the
-  one place the contract still holds work back**, and it is the first of the three stops in „Never
-  wait" above, and the exception to the slice-end definition below. A slice whose confirmation has
-  not landed by the handover ends with the dependent work uncommitted, and the question at the top.
-  `npm run supabase:migrate` stays Adrian's, always: the handover names it, as its own line.
+- **Migrations are Claude's, like any other file — no schema question, no confirmation, no wait.**
+  (Adrian, 2026-10-17: „the fact that I need to confirm every migration is just a bottleneck …
+  please let's drop this requirement".) The Propus.3 stop put a schema question to him on every
+  migration and held the commit until he answered. For months the answer was „yes, as written",
+  given on trust without reading the SQL — so the stop bought no review, and cost a held commit and
+  an unfinished slice every time he was away. Do not ask whether this applies, and do not bring the
+  question back „just for this one".
+  So when a slice adds or changes a migration, Claude writes it and the matching `schema/index.ts`
+  change, commits the migration first and what is built on it after — slice order, below — and
+  requests the runner's `migrate-local`, which takes a backup, applies the migration to the local
+  database and regenerates `src\db\supabase_schema_full.sql`; Claude commits the regenerated file.
+  No `Schema-Confirmed:` trailer is written. The handover lists each migration under „Decisions
+  taken" with one line on what it changes, so Adrian can read one whenever he wants to.
+  **One kind still waits: a migration that destroys data already stored** — drops a table or a
+  column that holds rows, deletes or rewrites existing rows, or narrows a type so values are lost.
+  That is „any destructive database operation" on the go-ahead list (Autonomy, below), which this
+  change does not touch. Its question goes out in a message that does not wait, the rest of the
+  slice is built, and that migration and what depends on it stay uncommitted until he answers.
+  Adding a table, a column, an index, a constraint the data already satisfies, or seed rows is not
+  destructive, and neither is a rename that keeps every value.
+  `npm run supabase:migrate` stays Adrian's, always: the handover names it, as its own line, and
+  the runner's push guard still holds a push whose range adds a migration until he has run it.
 - **Slice order:** DB schema/migration → API routes → UI components → tests. A slice ends when
   Claude has committed it, **the test runner has run the slice's `targeted` sequence on that commit
   and come back green** („Tests run targeted", above; Delivering work, below), **the runner has
@@ -240,9 +243,9 @@ suspended, the self-review of your own diff is the last word on the slice, not t
   anything but the runner's `push` and `ci` results** — the sandbox runs none of those, and a runner
   result is the runner's, never Adrian's. **Each slice leaves a clean history, and clean here means
   forward-only:** each commit compiles, is scoped to one thing, and lands in the order above. Claude
-  does not promise a history it could only produce by rewriting one — with one exception: a migration
-  slice awaiting confirmation ends with the migration, the schema change and everything built on
-  them uncommitted.
+  does not promise a history it could only produce by rewriting one — with one exception: a slice
+  whose destructive migration is waiting for Adrian's go-ahead ends with that migration and
+  everything built on it uncommitted.
 - **A slice queue: the session takes the next header itself.** (Propus.3.) When a slice has ended
   — handover written — and `C:\dev.docs\01.Slice.Inputs\Queue\` holds a header, the same session
   starts it. **One header per file** (`.md`, `.txt` or `.docx`; a name starting with `_` is not a
@@ -251,7 +254,7 @@ suspended, the self-review of your own diff is the last word on the slice, not t
   runs once and the queue shows what is left. Each slice keeps its own commits, its own runner
   results and its own handover. **The queue never picks work by itself**: an empty queue ends the
   session as before, and Claude never writes a header into it. A queued slice that meets one of
-  the three stops above holds only its own dependent work; the next header waits behind it.
+  the two stops above holds only its own dependent work; the next header waits behind it.
 - **Complete, ready-to-copy code.** No stubs or placeholders unless explicitly asked. Types,
   error handling, loading states and accessibility on every component.
 - **Minimise human effort — always.** Compute and storage are cheap; Adrian's time is not.
@@ -333,7 +336,8 @@ under it, is the whole list:**
 - Any destructive database operation, and any command against a UAT or production box — Supabase
   included, so `npm run supabase:migrate` is always Adrian's. **The one exception is the runner's
   `migrate-local`**: `Apply-Migration.ps1` and `Export-SupabaseSchema.ps1` against the local
-  container only, and only for migrations committed with a `Schema-Confirmed:` trailer.
+  container only, and only for migrations committed in HEAD's history — a destructive one is
+  committed only after his go-ahead (The working contract, above).
 
 **The one carve-out on that list:** `commit --amend` on the **tip** commit, when Claude made it this
 session and no remote ref holds it yet — test with `git branch -r --contains HEAD`, which prints

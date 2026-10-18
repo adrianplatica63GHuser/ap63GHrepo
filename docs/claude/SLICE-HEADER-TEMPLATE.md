@@ -93,7 +93,7 @@ drifting apart:
 | Sandbox can run `tsc` and `eslint`, not `jest`/`next` | `C:\dev\.claude\rules\sandbox-and-toolchain.md` |
 | "Never dismiss an error as pre-existing" | `C:\dev\CLAUDE.md` → The working contract |
 | Conventional commits, PowerShell 7, chain with `&&`, Claude commits and the runner pushes behind its guard (Adrian pushes what the guard holds) | `C:\dev\CLAUDE.md` → Delivering work / Autonomy; mechanics in `C:\dev\.claude\rules\git-and-commits.md` |
-| "Wait for my approval before writing any code" | Withdrawn — `C:\dev\CLAUDE.md` → „Never wait": Claude plans and builds without waiting; the migration stop holds the commit, never the session (The working contract) |
+| "Wait for my approval before writing any code" | Withdrawn — `C:\dev\CLAUDE.md` → „Never wait": Claude plans and builds without waiting; migrations included since 2026-10-17 — only a destructive one waits for a go-ahead, and it holds that migration's commit, never the session (The working contract) |
 | "Existing UI code is the source of truth" | `ga40prj/CLAUDE.md` → Where the rest of the knowledge lives |
 | "Skip everything else / don't re-read" | Withdrawn — replaced by the autonomy section |
 

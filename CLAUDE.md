@@ -151,8 +151,8 @@ Both halves now have a runner, and both record what they applied in that databas
 | Local | `.\scripts\Apply-Migration.ps1` | the `ga40prj-postgres` container |
 | Cloud | `npm run supabase:migrate` | the project in `SUPABASE_SYNC_URL` |
 
-- **The local half is the runner's; the cloud half is Adrian's, always.** (Propus.3.) Once the
-  migration is committed with its `Schema-Confirmed:` trailer, Claude requests the runner's
+- **The local half is the runner's; the cloud half is Adrian's, always.** (Propus.3; no
+  confirmation since 2026-10-17.) Once the migration is committed, Claude requests the runner's
   `migrate-local`, which runs `Apply-Migration.ps1` and then `Export-SupabaseSchema.ps1`, and
   commits the regenerated `supabase_schema_full.sql`. Since #37.11 `migrate-local` takes a
   backup of the archive first and applies nothing when that backup did not pass. The handover then names

@@ -192,17 +192,12 @@ decisions taken under "Never wait" (`C:\dev\CLAUDE.md`), anything listed as "Fix
 says that detail lives in git history; Claude writes that history now, so the body is the only place
 it exists.
 
-**A commit that adds a migration carries Adrian's confirmation as a trailer**, the last paragraph of
-the body, before the attribution lines:
-
-```
-Schema-Confirmed: Adrian, 2026-09-25 — „yes, the nullable column"
-```
-
-It is written only once he has confirmed, and it quotes him. The runner's `migrate-local` reads it
-from the commit that ADDED the file and holds without it (`C:\dev\CLAUDE.md` → The working
-contract; `C:\dev\.claude\rules\sandbox-and-toolchain.md` → The test runner). A migration
-committed without it is not a bypass: it is a local apply that waits for Adrian.
+**A commit that adds a migration needs no trailer since 2026-10-17.** The `Schema-Confirmed:` trailer
+recorded Adrian's answer to a schema question that is no longer asked (`C:\dev\CLAUDE.md` → The
+working contract), and the runner's `migrate-local` no longer reads it. Older commits keep theirs;
+write no new one. The body says what the migration changes, as for any commit. **A destructive
+migration** — one the go-ahead list holds — is committed only after his go-ahead, and its body
+quotes that go-ahead in a line of its own, so the history shows who decided.
 
 **A commit the runner has pushed is pushed.** The amend carve-out's test, `git branch -r --contains
 HEAD`, prints `origin/main` from then on, and the fix goes forward in a new commit.

@@ -25,8 +25,9 @@
  * WHY AN ADVISORY LOCK AND NOT A UNIQUE INDEX
  * ───────────────────────────────────────────
  * A partial unique index on the normalised pair is the stronger answer and is
- * the one to reach for when this next moves. It is also a MIGRATION, and a
- * migration stops a slice at its first file while a confirmation is waited on.
+ * the one to reach for when this next moves. It is also a MIGRATION, and when
+ * this was written a migration stopped a slice while a confirmation was waited
+ * on (no longer, since 2026-10-17 — so that reason has lapsed).
  * `pg_advisory_xact_lock` needs no schema change, is released by the
  * transaction however it ends — including a crash, which is what a lock table
  * gets wrong — and serialises exactly the region that has to be serialised.

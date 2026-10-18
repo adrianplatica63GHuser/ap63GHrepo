@@ -95,10 +95,11 @@ this fixed sequence. Do not ask again.
   committed, and taken round `targeted` → `push` → `ci` again. `migrate-local` takes a `backup` first
   (next bullet) and applies nothing when it did not pass, then runs `Apply-Migration.ps1`
   and then `Export-SupabaseSchema.ps1` against the local container, and holds while any migration
-  file differs from HEAD (`migration-dirty` — the script would apply the working tree, where an
-  unconfirmed migration lives), while a pending one was added by no commit
-  (`migration-uncommitted`), and while its adding commit lacks the `Schema-Confirmed:` trailer
-  (`migration-unconfirmed`). Export runs only when the apply step applied something; its summary
+  file differs from HEAD (`migration-dirty` — the script would apply the working tree, and only
+  what is committed reaches the database), and while a pending one was added by no commit
+  (`migration-uncommitted`). Since 2026-10-17 it reads no `Schema-Confirmed:` trailer — Adrian
+  dropped the confirmation (`C:\dev\CLAUDE.md` → The working contract), and
+  `migration-unconfirmed` is gone with it. Export runs only when the apply step applied something; its summary
   says whether `src\db\supabase_schema_full.sql` changed, and Claude commits it.
   **Git on that side runs with `GIT_TERMINAL_PROMPT=0` and `GCM_INTERACTIVE=never`**, so a
   credential that needs a sign-in fails the step instead of opening a window nobody is watching.
