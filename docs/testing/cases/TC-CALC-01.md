@@ -132,8 +132,12 @@ on each of the four properties. The run went at step 14.
 **2026-10-18 — Slice #39.79, steps 1–3 rewritten; `confirmed`, not `automated`.** The calculation starts
 from a property in the archive and persons in it, so the data file and its three refusals left this
 case (the refusals are TC-CALC-02's); steps 9, 11 and 13 gained the property's code, the owner's link
-and the re-run's corners. Driven by hand in the browser pane on the new start the same day, with
-step 8's figures unchanged. The spec (`e2e/calculation/side-road.spec.ts`) follows, and needs real
+and the re-run's corners. Driven by hand in the browser pane on the new start the same day (run
+`CALC00097`, group `GRP-1542`, everything removed after): steps 1–5 and 8–13 as written, step 8's
+figures unchanged to the hundredth (road 20,8 m, 62,45 m²; A and B 183,12 + 20,81; C 183,18 + 20,82),
+A's corner 17 and its „Proprietar" link; steps 6–7's corner and side were chosen with the two select
+boxes, because the hidden pane did not draw the map's markers — the clicks themselves are unchanged
+code. The spec (`e2e/calculation/side-road.spec.ts`) follows, and needs real
 maps, which October's ceiling skips: its first run in November takes the row back to `automated`.
 
 **2026-10-08 — Slice #38.43, `automated`.** Runs can be deleted now, so the spec is committed:
