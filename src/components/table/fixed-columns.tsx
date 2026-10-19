@@ -23,6 +23,9 @@ export function FixedColumns({ columns, fill }: { columns: readonly ColumnName[]
         <col
           key={`${name}-${i}`}
           style={fill && name === fill.column ? { width: rem(fillWidthRem(columns, fill)) } : columnStyle(name)}
+          // Slice #39.88: what the fill column gained over its own width, in rem — for the e2e checks that measure how
+          // closely a column follows its text (TC-VL-05 step 5).
+          data-fill-gain={fill && name === fill.column ? fillWidthRem(columns, fill) - columnRem(name) : undefined}
         />
       ))}
     </colgroup>

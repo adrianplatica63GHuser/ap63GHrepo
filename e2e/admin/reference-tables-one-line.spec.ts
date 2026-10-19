@@ -185,6 +185,8 @@ async function nameGap(page: Page) {
   return page.evaluate(() => {
     const table = document.querySelector<HTMLElement>("table[data-width-table]")!;
     const heads = [...table.querySelectorAll<HTMLElement>("thead th")];
+    // #39.88: in a tile the name may take the width its list gains to reach the standard gap; that width is not waste.
+    const gain = parseFloat(table.querySelector<HTMLElement>("col")?.dataset.fillGain ?? "0") * parseFloat(getComputedStyle(document.documentElement).fontSize);
     const rows = [...table.querySelectorAll<HTMLTableRowElement>("tbody tr")].filter((r) => r.cells.length === heads.length);
     let gap = Infinity;
     const cut: string[] = [];
@@ -204,7 +206,7 @@ async function nameGap(page: Page) {
       range.selectNodeContents(words);
       streetLines = new Set([...range.getClientRects()].filter((q) => q.width > 0).map((q) => Math.round(q.top))).size;
     }
-    return { rows: rows.length, gap: Math.round(gap * 10) / 10, cut, streetLines };
+    return { rows: rows.length, gap: Math.round((gap - gain) * 10) / 10, cut, streetLines };
   });
 }
 
