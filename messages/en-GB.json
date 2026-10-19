@@ -5018,6 +5018,8 @@
       "save": "Save",
       "saved": "Saved.",
       "saveError": "The tarla could not be saved. Try again.",
+      "delete": "Delete",
+      "cancel": "Cancel",
       "codeTaken": "This locality already has a tarla „{takenBy}”.",
       "notFound": "The tarla does not exist or could not be loaded.",
       "properties": "{count, plural, =0 {Properties} one {One property} other {# properties}}",

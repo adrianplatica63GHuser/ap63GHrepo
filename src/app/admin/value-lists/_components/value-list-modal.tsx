@@ -306,9 +306,9 @@ export function valueListCardUnits(listKey: ListKey): number {
 
 // ── API helpers ───────────────────────────────────────────────────────────────
 
-type Row = Record<string, unknown> & { id: string };
+export type Row = Record<string, unknown> & { id: string };
 
-async function fetchRows(listKey: ListKey): Promise<Row[]> {
+export async function fetchRows(listKey: ListKey): Promise<Row[]> {
   const res = await fetch(`/api/admin/value-lists/${listKey}`);
   // ⚠️ **`res.redirected` as well as `!res.ok`, and an adversarial round
   // measured why it matters HERE and not only in the fetcher that first had
@@ -2134,8 +2134,11 @@ export function ValueListModal({
  * same reasoning is why the 409 the server may still return is folded back
  * into this query instead of shown as a stray message — see the delete
  * mutation's `onError`.
+ *
+ * Slice #39.87: exported — a tarla's page deletes the tarla through this same dialog and route, so its in-use answer is
+ * this one, word for word (`tarla-detail.tsx`).
  */
-function DeleteDialog({
+export function DeleteDialog({
   mode = "delete",
   listKey,
   row,

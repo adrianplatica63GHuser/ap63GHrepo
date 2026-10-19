@@ -9,6 +9,8 @@
  *     by an interrupted run are deleted first.
  *   - Steps 3–5 open „Proprietate nouă" at `/properties/new`, the page „Introducere manuală" opens, rather than
  *     through the list's dialog (TC-PROP-01 and TC-PROP-15 walk that).
+ *   - Step 11's third tarla, TC16 in Domnești, and its three corners are made through the API (POST, then PUT
+ *     /api/tarlale/<id>), as the case's „Before you start" makes the first two.
  */
 
 import { test, expect, type APIRequestContext, type Page } from "../helpers/test";
@@ -129,12 +131,84 @@ test.describe("TC-PROP-16 — aceeași tarla în două localități", () => {
       // (804 px); „Implicit" at the top right; each big list at most two thirds of the window, its header on top.
       await page.setViewportSize({ width: 1920, height: 1080 });
       await expect(page.locator('[data-tile-positions-reset="tarla"]')).toBeVisible();
-      for (const [tile, px] of [["identity", 476], ["outline", 476], ["plans", 476], ["parcels", 476], ["properties", 804], ["documents", 804]] as const)
+      // #39.87: „Despre limitele tarlalelor" is a tile too, the first, a third.
+      for (const [tile, px] of [["facts", 476], ["identity", 476], ["outline", 476], ["plans", 476], ["parcels", 476], ["properties", 804], ["documents", 804]] as const)
         await expect(page.locator(`[data-tile-screen="tarla"] > [data-tile="${tile}"]`)).toHaveCSS("width", `${px}px`);
       const big = page.locator("[data-tarla-big-list]");
       await expect(big).toHaveCount(1); // Cornetu's TC16 has a property and no document, so only its properties' list
       expect(Math.abs(parseFloat(await big.evaluate((el) => getComputedStyle(el).maxHeight)) - 0.66 * 1080)).toBeLessThan(2);
       await expect(big.locator("thead")).toHaveCSS("position", "sticky");
+      await expect(page.locator('[data-tile-screen="tarla"] > [data-tile="facts"] li')).toHaveCount(6);
+      // #39.87: the page's buttons under the last tile, a divider above them.
+      const buttons = page.locator("[data-tarla-save]");
+      const tilesBottom = await page.locator('[data-tile-screen="tarla"]').evaluate((el) => el.getBoundingClientRect().bottom);
+      expect((await buttons.boundingBox())!.y).toBeGreaterThanOrEqual(tilesBottom);
+      await expect(buttons).toHaveCSS("border-top-style", "solid");
+      for (const name of ["Salvează", "Șterge", "Anulează"]) await expect(buttons.getByRole("button", { name, exact: true })).toBeVisible();
+
+      // Step 9 — #39.87: „Descriere" typed, then „Anulează": what was saved comes back, on the same page.
+      const save = buttons.getByRole("button", { name: "Salvează", exact: true });
+      const cancel = buttons.getByRole("button", { name: "Anulează", exact: true });
+      await expect(save).toBeDisabled();
+      await expect(cancel).toBeDisabled();
+      const descriere = page.locator("[data-tarla-identity] input").nth(3);
+      await descriere.fill(MARK);
+      await expect(save).toBeEnabled();
+      await expect(cancel).toBeEnabled();
+      await cancel.click();
+      await expect(descriere).toHaveValue("");
+      await expect(save).toBeDisabled();
+      await expect(cancel).toBeDisabled();
+      await expect(page).toHaveURL(new RegExp(`/tarlale/${cornetu}$`));
+
+      // Step 10 — „Șterge" on a tarla a property stands on: Reference Data's own refusal, nothing deleted.
+      await buttons.getByRole("button", { name: "Șterge", exact: true }).click();
+      const dialog = page.getByRole("alertdialog");
+      await expect(dialog.getByRole("heading", { name: "Ștergeți „TC16”?" })).toBeVisible();
+      await expect(dialog).toContainText("1 obiect depinde de această valoare, așa că ștergerea nu este posibilă acum:", { timeout: 15_000 });
+      await expect(dialog.locator("li")).toHaveText(["1 proprietate"]);
+      await expect(dialog.getByRole("button", { name: "Șterge", exact: true })).toHaveCount(0);
+      await dialog.getByRole("button", { name: "Anulează", exact: true }).click();
+      await expect(dialog).toHaveCount(0);
+      expect((await tarlale(page.request)).map((t) => t.id)).toContain(cornetu);
+
+      // Step 11 — a third TC16, in Domnești, with three corners: one line per corner at 1366 and at 1920, nothing
+      // scrolling sideways; then „Șterge" deletes it and the page goes back to the tarla list.
+      const domnesti = await addTarla(page.request, "Domnești");
+      const put = await page.request.put(`/api/tarlale/${domnesti}`, {
+        data: {
+          indicativ: CODE, locality: "Domnești", county: "Ilfov", descriere: "", notes: "",
+          corners: [
+            { lat: 44.3912345, lon: 25.9112345, originalIndex: 1 },
+            { lat: 44.3922345, lon: 25.9132345, originalIndex: 2 },
+            { lat: 44.3902345, lon: 25.9142345, originalIndex: 3 },
+          ],
+        },
+      });
+      expect(put.ok(), `PUT /api/tarlale/${domnesti}: ${put.status()}`).toBeTruthy();
+      await page.goto(`/tarlale/${domnesti}`);
+      const corners = page.locator("[data-tarla-outline] [data-corner-buttons]");
+      for (const width of [1366, 1920]) {
+        await page.setViewportSize({ width, height: 1080 });
+        await expect(corners).toHaveCount(3, { timeout: 30_000 });
+        for (const row of await corners.all()) {
+          const tops = await row.locator("button").evaluateAll((bs) => bs.map((b) => Math.round(b.getBoundingClientRect().top)));
+          expect(tops, `${width} px: the four buttons on one line`).toHaveLength(4);
+          expect(new Set(tops).size, `${width} px: the four buttons on one line`).toBe(1);
+        }
+        const sideways = await page.locator("[data-tarla-outline] table").evaluate((el) => {
+          const frame = el.parentElement!;
+          return frame.scrollWidth - frame.clientWidth;
+        });
+        expect(sideways, `${width} px: the corners' table does not scroll sideways`).toBeLessThanOrEqual(0);
+        await expect(page.locator('[data-tile-screen="tarla"] > [data-tile="outline"]')).toHaveCSS("width", "476px");
+      }
+      await page.locator("[data-tarla-save]").getByRole("button", { name: "Șterge", exact: true }).click();
+      await expect(dialog).toContainText("Nimic nu depinde de această valoare.", { timeout: 15_000 });
+      await dialog.getByRole("button", { name: "Șterge", exact: true }).click();
+      await expect(page).toHaveURL(/\/tarlale$/, { timeout: 30_000 });
+      await expect(page.locator(`[data-tarla-row="${CODE}"]`)).toHaveCount(2, { timeout: 30_000 });
+      expect((await tarlale(page.request)).map((t) => t.id)).not.toContain(domnesti);
     } finally {
       // At the end — the two properties, then the two tarlale.
       await page.waitForLoadState("networkidle").catch(() => {});

@@ -21,7 +21,8 @@ defect.
 
 - TC-AUTH-01 is green.
 - **Created through the API** (`POST /api/admin/value-lists/tarla`): tarla `TC16` with „Localitate” `Bragadiru` and
-  „Județ” `Ilfov`, and tarla `TC16` with „Localitate” `Cornetu` and „Județ” `Ilfov`.
+  „Județ” `Ilfov`, and tarla `TC16` with „Localitate” `Cornetu` and „Județ” `Ilfov`. Before step 11, a third: `TC16`
+  in `Domnești`, „Județ” `Ilfov`, given three corners by `PUT /api/tarlale/<id>`.
 
 ## What Adrian is asked for
 
@@ -40,11 +41,15 @@ The window is 1366 × 900.
 | 5 | The same with `TC-PROP-16 Al doilea`, `TC16 (Bragadiru)`, parcel `1` | Refused: the form stays on „Proprietate nouă” with „Această parcelă are deja o proprietate”, „Tarla TC16, parcela 1 aparține deja proprietății de mai jos. Nu s-a creat o proprietate nouă.” and „Deschide TC-PROP-16 Bragadiru” |
 | 6 | Opens `/tarlale` | Above the list the box „Despre limitele tarlalelor” with six numbered facts; two rows `TC16`, „Bragadiru” and „Cornetu”, each with `1` under „Proprietăți” |
 | 7 | Opens `TC16` of Cornetu | The heading „Tarla TC16 — Cornetu”, the same box, „Localitate” `Cornetu`, and under „O proprietate” only `TC-PROP-16 Cornetu`, parcel `1` |
-| 8 | Widens the window to 1920 × 1080 (#39.77) | The panels are tiles, with „Implicit” at the top right: „Tarla”, „Contur”, „Planuri parcelare” and „Parcele” each a third of the page (476 px), the properties' list and the documents' list each a half (804 px). The properties' list is never taller than two thirds of the window: it scrolls inside its tile, its header row staying at the top |
+| 8 | Widens the window to 1920 × 1080 (#39.77, #39.87) | The panels are tiles, with „Implicit” at the top right: „Despre limitele tarlalelor” (its six facts), „Tarla”, „Contur”, „Planuri parcelare” and „Parcele” each a third of the page (476 px), the properties' list and the documents' list each a half (804 px). The properties' list is never taller than two thirds of the window: it scrolls inside its tile, its header row staying at the top. Under the last tile, across the page and under a divider: „Salvează”, „Șterge” and „Anulează” |
+| 9 | Types `TC-PROP-16` in „Descriere”, then presses „Anulează” (#39.87) | While typed, „Salvează” and „Anulează” can be pressed; after „Anulează”, „Descriere” is empty again, both are idle, and the page is still Cornetu's TC16 |
+| 10 | Presses „Șterge” | The dialog „Ștergeți „TC16”?”: „1 obiect depinde de această valoare, așa că ștergerea nu este posibilă acum:” over „1 proprietate”, and no „Șterge” in it; „Anulează” closes it and the tarla is still there |
+| 11 | Opens a third tarla `TC16`, in Domnești, with three corners (made through the API); at 1366 and at 1920 px wide looks at „Contur”; then presses „Șterge” and, in the dialog, „Șterge” | Each corner on one line, its four buttons („Mută mai sus”, „Mută mai jos”, „Editează”, „Șterge”) side by side; „Contur” still 476 px and its table not scrolling sideways. The dialog says „Nimic nu depinde de această valoare. …”; after „Șterge”, the tarla list, with the two TC16 rows of Bragadiru and Cornetu only |
 
 ## At the end — leaving things as they were found
 
-Delete the two properties (`DELETE` on each), then the two tarlale (`DELETE /api/admin/value-lists/tarla/<id>`).
+Delete the two properties (`DELETE` on each), then the two tarlale (`DELETE /api/admin/value-lists/tarla/<id>`) — and
+the Domnești one, if step 11 did not.
 
 ## Notes from the runs
 
@@ -75,3 +80,6 @@ Bragadiru (125 properties): the four thirds 476 px, the two halves 804 px; the p
 
 **2026-10-18 — `automated` with step 8, green on the runner (Slice #39.77).** `targeted` 20261018T062700Z-18619 on
 37c87d7.
+
+**2026-10-18 — steps 8–11 for #39.87** (the facts a tile, the buttons at the bottom, „Anulează”, „Șterge”, one line
+per corner), written from the code and the message files; the spec carries them.

@@ -11,10 +11,16 @@
  *
  * Saving goes through PUT /api/tarlale/[id], which uses Reference Data's own write door: a code already held IN THIS
  * LOCALITY is refused by name (`tarla_code_taken`) and said here.
+ *
+ * Slice #39.87 — the facts are the first tile, a third wide; „Parcele" scrolls like the two big lists; and „Salvează",
+ * „Șterge" and „Anulează" stand at the bottom of the page under a divider, as on the record forms. „Anulează" puts back
+ * what was last saved and stays on the page; „Șterge" is Reference Data's own delete — the same dialog, the same route,
+ * the same in-use answer — and goes back to the tarla list.
  */
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Save } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Save, Trash2, X } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { ActivityCue } from "@/components/activity-cue";
@@ -32,6 +38,7 @@ import { MAP_BOX_HEIGHT_REM, unitStyle } from "@/lib/ui/field-widths";
 import { TileUnitRow } from "@/components/screen/tile-unit-row";
 import { TilePositionsReset } from "@/components/screen/tile-positions-reset";
 import { TARLA_HALF_UNITS, TARLA_SCREEN, TARLA_THIRD_UNITS } from "@/lib/ui/screen-tiles";
+import { DeleteDialog, fetchRows } from "@/app/admin/value-lists/_components/value-list-modal";
 
 type Draft = {
   indicativ: string;
@@ -83,13 +90,22 @@ const BIG_LIST_FRAME = "mt-2 max-h-[66vh] overflow-auto";
 const STICKY_HEAD = "sticky top-0 z-10 bg-card dark:bg-zinc-900";
 /** A list inside a third: it scrolls sideways rather than leaving its tile. */
 const SMALL_LIST_FRAME = "overflow-x-auto";
+// Slice #39.87: „Parcele" moved into BIG_LIST_FRAME (Adrian: „the same scroll bar like the properties tile and the
+// documents tile"); SMALL_LIST_FRAME is the corners' table's alone now.
 const LINK = "text-blue-700 underline-offset-2 hover:underline dark:text-blue-400";
 
 export function TarlaDetail({ id }: { id: string }) {
   const t = useTranslations("tarla.detail");
   const tc = useTranslations("tarla");
   const qc = useQueryClient();
+  const router = useRouter();
   const { registerPage } = useNavigationHistory();
+  // Slice #39.87: „Șterge" opens Reference Data's own delete dialog; „Anulează" remounts the corner editor so a corner
+  // left open for editing closes with the rest.
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [cancelled, setCancelled] = useState(0);
+  // The rows the dialog may move dependents onto — every tarla, under Reference Data's own key and fetcher.
+  const tarlaRows = useQuery({ queryKey: ["value-list", "tarla"], queryFn: () => fetchRows("tarla"), enabled: confirmDelete });
 
   const tarla = useQuery({
     queryKey: ["tarla", id],
@@ -184,31 +200,15 @@ export function TarlaDetail({ id }: { id: string }) {
         </h1>
         <TilePositionsReset entity={TARLA_SCREEN.entity} />
       </header>
-      <TarlaBoundariesInfo />
-
-      {/* Slice #39.77: the save is the page's — it writes the identity and the outline, two tiles — so it stands above them. */}
-      <div className="flex items-center gap-3" data-tarla-save="">
-        <IconButton
-          icon={Save}
-          label={t("save")}
-          variant="primary"
-          size="sm"
-          showLabel
-          onClick={() => save.mutate(current)}
-          disabled={!dirty || save.isPending || current.indicativ.trim() === ""}
-          busy={save.isPending}
-        />
-        {savedOnce && !dirty && <span className="text-sm text-fade" role="status">{t("saved")}</span>}
-        {saveError && (
-          <span role="alert" className="text-sm text-red-700 dark:text-red-400">
-            {saveError.takenBy !== null ? t("codeTaken", { takenBy: saveError.takenBy }) : t("saveError")}
-          </span>
-        )}
-      </div>
 
       {/* Slice #39.77 — the panels as tiles, as on the record forms (`TileUnitRow`): dragged, lifted by a double-click,
           kept per browser under „tarla". Thirds, and halves for the two big lists (`TARLA_SCREEN`). */}
       <TileUnitRow screen={TARLA_SCREEN}>
+      {/* Slice #39.87: the six facts, a third wide and first in the row (Ask first 2); on the tarla list they stay across. */}
+      <div data-tarla-facts="" data-tile="facts" style={unitStyle(TARLA_THIRD_UNITS)}>
+        <TarlaBoundariesInfo />
+      </div>
+
       <section className={CARD} aria-labelledby="tarla-identity-title" data-tarla-identity="" data-tile="identity" style={unitStyle(TARLA_THIRD_UNITS)}>
         <h2 id="tarla-identity-title" className="text-base font-semibold text-ink dark:text-zinc-100">
           {t("identity")}
@@ -287,9 +287,11 @@ export function TarlaDetail({ id }: { id: string }) {
             <ActivityCue>{tc("loading")}</ActivityCue>
           )}
         </div>
-        {/* Slice #39.77: in a third, the corners' table scrolls sideways rather than leaving the tile. */}
+        {/* Slice #39.77: in a third, the corners' table scrolls sideways rather than leaving the tile.
+            #39.87: `tight` — narrower gaps between its columns, so a corner's four buttons share one line and nothing
+            scrolls (Ask first 1). */}
         <div className={`mt-3 ${SMALL_LIST_FRAME}`}>
-          <CornersManager corners={current.corners} onChange={(next) => set("corners", next)} />
+          <CornersManager key={cancelled} tight corners={current.corners} onChange={(next) => set("corners", next)} />
         </div>
       </section>
 
@@ -372,9 +374,9 @@ export function TarlaDetail({ id }: { id: string }) {
         ) : parcels.data.length === 0 ? (
           <p className="mt-2 text-sm text-fade">{t("parcelsNone")}</p>
         ) : (
-          <div className={SMALL_LIST_FRAME}>
-          <table className="mt-2 text-sm">
-            <thead>
+          <div className={BIG_LIST_FRAME} data-tarla-big-list="">
+          <table className="text-sm">
+            <thead className={STICKY_HEAD}>
               <tr className="text-left text-xs font-medium uppercase tracking-wide text-fade">
                 <th className="py-2 pr-4">{t("columns.parcela")}</th>
                 <th className="py-2 pr-4 text-right">{t("columns.area")}</th>
@@ -448,6 +450,70 @@ export function TarlaDetail({ id }: { id: string }) {
         )}
       </section>
       </TileUnitRow>
+
+      {/* Slice #39.87 — the page's buttons, under the last tile and across the page, a divider above them: the record
+          forms' footer (property-form.tsx), its icons and its order (Ask first 3). The save writes two tiles — the
+          identity and the outline — so it is the page's, not a tile's. */}
+      <div
+        className="flex flex-wrap items-center justify-center gap-3 border-t border-crease pt-6 dark:border-zinc-800"
+        data-tarla-save=""
+      >
+        <IconButton
+          icon={Save}
+          label={t("save")}
+          variant="primary"
+          size="lg"
+          onClick={() => save.mutate(current)}
+          disabled={!dirty || save.isPending || current.indicativ.trim() === ""}
+          busy={save.isPending}
+        />
+        <IconButton
+          icon={Trash2}
+          label={t("delete")}
+          variant="danger"
+          size="lg"
+          onClick={() => setConfirmDelete(true)}
+          disabled={save.isPending}
+          data-tarla-delete=""
+        />
+        {/* Ask first 4: back to what was last saved, on this page; nothing to put back, nothing to press. */}
+        <IconButton
+          icon={X}
+          label={t("cancel")}
+          variant="secondary"
+          size="lg"
+          onClick={() => {
+            setDraft(null);
+            setSavedOnce(false);
+            save.reset();
+            setCancelled((n) => n + 1);
+          }}
+          disabled={!dirty || save.isPending}
+          data-tarla-cancel=""
+        />
+        {savedOnce && !dirty && <span className="text-sm text-fade" role="status">{t("saved")}</span>}
+        {saveError && (
+          <span role="alert" className="text-sm text-red-700 dark:text-red-400">
+            {saveError.takenBy !== null ? t("codeTaken", { takenBy: saveError.takenBy }) : t("saveError")}
+          </span>
+        )}
+      </div>
+
+      {/* Ask first 5: Reference Data's own delete — DELETE /api/admin/value-lists/tarla/[id], its in-use answer naming
+          what still hangs on the tarla, and its offer to move that onto another tarla. Once deleted, the tarla list. */}
+      {confirmDelete && tarlaRows.data && (
+        <DeleteDialog
+          listKey="tarla"
+          row={tarlaRows.data.find((r) => r.id === id) ?? { id, indicativ: current.indicativ }}
+          rows={tarlaRows.data}
+          labelField="indicativ"
+          onClose={() => setConfirmDelete(false)}
+          onDeleted={() => {
+            setConfirmDelete(false);
+            router.push("/tarlale");
+          }}
+        />
+      )}
     </>
   );
 }

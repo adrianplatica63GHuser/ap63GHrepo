@@ -13,7 +13,7 @@ import {
 } from "@/lib/geo/convert-client";
 import type { Corner, CornerDiffEntry } from "./form-schema";
 import { HelpHint } from "@/components/help/help-hint";
-import { CORNER_COLUMNS } from "@/lib/ui/field-widths";
+import { CORNER_COLUMNS, tightCornerColumn } from "@/lib/ui/field-widths";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -46,6 +46,10 @@ type Props = {
   // renders from this diff: added/changed corners framed red, removed corners
   // shown as a thick red line at their former position.
   cornerDiff?:       CornerDiffEntry[];
+  // Slice #39.87 — the tarla page's „Contur" only: 6-px cell padding instead of 12 and each column narrower by what that
+  // saves (`tightCornerColumn`), so a corner's four buttons share one line in a third. The property form and a
+  // document's pages leave it off and do not change (Ask first 1).
+  tight?:            boolean;
 };
 
 // ---------------------------------------------------------------------------
@@ -363,7 +367,7 @@ function displayFmtToInputMode(fmt: DisplayFormat): InputMode {
 // Main manager
 // ---------------------------------------------------------------------------
 
-export function CornersManager({ corners, onChange, readOnly = false, hoveredCornerIdx, onCornerHover, streetView = false, onToggleStreetView, cornerDiff }: Props) {
+export function CornersManager({ corners, onChange, readOnly = false, hoveredCornerIdx, onCornerHover, streetView = false, onToggleStreetView, cornerDiff, tight = false }: Props) {
   const t = useTranslations("property.corners");
 
   const [displayFmt,  setDisplayFmt]  = useState<DisplayFormat>("S70");
@@ -419,7 +423,9 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
     onChange(next);
   };
 
-  const cellCls   = "px-3 py-2 text-sm";
+  const padX      = tight ? "px-1.5" : "px-3";
+  const cellCls   = `${padX} py-2 text-sm`;
+  const colWidth  = (w: string) => (tight ? tightCornerColumn(w) : w);
   const monoLight = "font-mono text-xs text-fade dark:text-zinc-400";
 
   const col1Label = displayFmt === "S70" ? t("stereoN") : t("lat");
@@ -535,19 +541,19 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
             left of the panel. */}
         <table className="w-full table-fixed text-sm" data-width-field="corners" data-width-kind="fixed">
           <colgroup>
-            <col style={{ width: CORNER_COLUMNS.seq }} />
-            <col style={{ width: CORNER_COLUMNS.originalIndex }} />
-            <col style={{ width: CORNER_COLUMNS.north }} />
-            <col style={{ width: CORNER_COLUMNS.east }} />
+            <col style={{ width: colWidth(CORNER_COLUMNS.seq) }} />
+            <col style={{ width: colWidth(CORNER_COLUMNS.originalIndex) }} />
+            <col style={{ width: colWidth(CORNER_COLUMNS.north) }} />
+            <col style={{ width: colWidth(CORNER_COLUMNS.east) }} />
             {!readOnly && <col />}
           </colgroup>
           <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-ink dark:bg-zinc-800 dark:text-zinc-300">
             <tr>
-              <th className="px-3 py-2">{t("seq")}</th>
-              <th className="px-3 py-2">{t("originalIndex")}</th>
-              <th className="px-3 py-2">{col1Label}</th>
-              <th className="px-3 py-2">{col2Label}</th>
-              {!readOnly && <th className="px-3 py-2 text-right" />}
+              <th className={`${padX} py-2`}>{t("seq")}</th>
+              <th className={`${padX} py-2`}>{t("originalIndex")}</th>
+              <th className={`${padX} py-2`}>{col1Label}</th>
+              <th className={`${padX} py-2`}>{col2Label}</th>
+              {!readOnly && <th className={`${padX} py-2 text-right`} />}
             </tr>
           </thead>
           <tbody className="divide-y divide-crease dark:divide-zinc-800">
@@ -599,10 +605,11 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
                   {!readOnly && (
                   // Slice #37.14: the buttons wrap onto a second line when the fixed
                   // columns leave them too little room — the row grows downward.
-                  // #37.77: right-aligned, so „Șterge" stands against the table's edge;
-                  // at 3 units the four (116 px) fit the cell's 120 px on one line.
+                  // #37.77: right-aligned, so „Șterge" stands against the table's edge.
+                  // #39.87: in a third the four (116 px) did NOT fit — the cell held 104 —
+                  // and the bin wrapped; the tarla page's `tight` gives it 164.
                   <td className={cellCls}>
-                    <div className="flex flex-wrap justify-end gap-1 items-center">
+                    <div className="flex flex-wrap justify-end gap-1 items-center" data-corner-buttons="">
                       {/* #37.45 (A068): ArrowUp / ArrowDown. The bare „↑" / „↓"
                           were the names; the hint they carried („Mută mai sus" /
                           „Mută mai jos") is the name and the tooltip now. */}

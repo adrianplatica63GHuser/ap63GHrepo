@@ -59,9 +59,14 @@ export const STAMP_SCREEN: ScreenTiles = {
 export const TARLA_THIRD_UNITS = 3;
 export const TARLA_HALF_UNITS = 5;
 
+/**
+ * Slice #39.87 — „Despre limitele tarlalelor" is a tile of the page too, the first, a third wide (Adrian, 2026-10-18: „the
+ * same width as the "outline" and "one plan parcelar" tiles; of course it will become much taller"). On the tarla list
+ * it stays across the page.
+ */
 export const TARLA_SCREEN: ScreenTiles = {
   entity: "tarla",
-  tiles: ["identity", "outline", "properties", "plans", "parcels", "documents"],
+  tiles: ["facts", "identity", "outline", "properties", "plans", "parcels", "documents"],
   units: TARLA_HALF_UNITS,
   flowUnits: 10,
 };

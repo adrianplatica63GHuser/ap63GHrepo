@@ -449,6 +449,24 @@ export const CORNER_COLUMNS = {
   east: rem(6.5),
 } as const;
 
+/**
+ * Slice #39.87 — the tarla page's corner table, TIGHTER (`CornersManager`'s `tight`). Adrian, 2026-10-18: „the columns on
+ * the corners table must be squeezed a little bit … by decreasing the gap between the columns and not by widening the list
+ * or the tile". Each cell's side padding drops from 12 px to 6 (px-3 → px-1.5), and each column narrows by exactly what
+ * that saves (0.75rem), so every value keeps the room it had and the buttons' cell gains 4 × 12 = 48 px.
+ *
+ * Measured against a third (3 units, 476 px; the card's px-5 and the frame's border leave the table 432 px): the four
+ * buttons need 116 px (4 × 26 and 3 gaps of 4). Before: 432 − 304 = 128, less 24 of padding = 104 — the bin wrapped to a
+ * second line. After: 432 − 256 = 176, less 12 = 164. Units are rem, so 1366 px is the same arithmetic. The property form
+ * and a document's pages keep `CORNER_COLUMNS` as it is (Ask first 1).
+ */
+export const CORNER_TIGHT_SAVING_REM = 0.75;
+
+/** A corner column's width in the tight table: the same content width, less the padding it no longer has. */
+export function tightCornerColumn(width: string): string {
+  return rem(parseFloat(width) - CORNER_TIGHT_SAVING_REM);
+}
+
 // ---- the Document (#37.15) -------------------------------------------------------------
 
 /**

@@ -5018,6 +5018,8 @@
       "save": "Salvează",
       "saved": "Salvat.",
       "saveError": "Tarla nu s-a putut salva. Încercați din nou.",
+      "delete": "Șterge",
+      "cancel": "Anulează",
       "codeTaken": "În această localitate există deja tarla „{takenBy}”.",
       "notFound": "Tarla nu există sau nu s-a putut încărca.",
       "properties": "{count, plural, =0 {Proprietăți} one {O proprietate} few {# proprietăți} other {# de proprietăți}}",
