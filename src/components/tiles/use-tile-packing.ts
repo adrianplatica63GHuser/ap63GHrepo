@@ -77,6 +77,20 @@
  * afresh. While the column is wrapped under the left area there are no fixed
  * boxes and the row is the left area, so a place under the column falls back.
  *
+ * A TILE HELD OVER ANOTHER MAKES ROOM (Slice 39.91). While a tile is
+ * dragged, an outline whose snapped place stands still over other tiles for
+ * the make-room delay (`makeRoomDelayMs()`; a move that changes the snapped
+ * place starts the count again) makes those tiles slide down out of its way
+ * (`makeRoom`), animated over `MAKE_ROOM_SLIDE_MS` — at once under
+ * prefers-reduced-motion — and the outline then shows the place free. A tile
+ * that slid stays slid while the drag goes on elsewhere; nothing slides back up
+ * under the pointer. A drop keeps them where they slid and stores them with the
+ * dropped tile, as one arrangement; Esc, or a release where nothing can drop,
+ * puts every one of them back. The banners, the right column's tiles and the
+ * action bar never slide. Every screen whose tiles are dragged has this through
+ * this hook alone — `tile-drag-guard.test.ts` fails a component that grows a
+ * drag of its own.
+ *
  * THE FLOW HELD TO `flowUnits` (Slice #38.12). An administration screen with no
  * checkbox bar (`TileUnitRow`, the group screen) opens in fixed columns — two
  * tiles across, the third under the first — however wide the window: the flow
@@ -88,11 +102,13 @@ import { UNIT_GAP_REM, UNIT_REM } from "@/lib/ui/field-widths";
 import { columnsIn, fitsBeside, grow, packedHeight, settle, unitsOf, type PackBox, type Placed } from "@/lib/ui/tile-packing";
 import {
   FIXED_PREFIX,
+  MAKE_ROOM_SLIDE_MS,
   TILE_POSITIONS_RESET,
   WRAPPED_PREFIX,
   canDrop,
   dropAt,
   isStorable,
+  makeRoom,
   parseStoredPlaces,
   placeWithStored,
   placesToStore,
@@ -103,6 +119,7 @@ import {
   type StoredPlace,
   type StoredPlaces,
 } from "@/lib/ui/tile-positions";
+import { makeRoomDelayMs } from "./make-room-delay";
 import { isDragSurface } from "./tile-drag-surface";
 
 /** How long after a layout the row still settles afresh on a height change, unless the user acts first. */
@@ -323,6 +340,12 @@ export function useTilePacking(
       active: boolean;
       place: StoredPlace | null;
       free: boolean;
+      /** 39.91: the snapped place the make-room count runs on (`col:top`), or none yet. */
+      held: string | null;
+      /** 39.91: the arrangement before the first tile made room — what Esc or a refused release puts back. */
+      before: Placed[] | null;
+      /** 39.91: every tile that made room during this drag. */
+      slid: string[];
     }
     let drag: Drag | null = null;
 
@@ -570,21 +593,59 @@ export function useTilePacking(
     let outline: HTMLDivElement | null = null;
     let edge = 0;
     let hovered: HTMLElement | null = null;
+    // 39.91: the make-room count, and the slide's end.
+    let hold = 0;
+    let slideEnd = 0;
+    let sliding: HTMLElement[] = [];
 
     const boxAt = (target: EventTarget | null): FoundBox | undefined =>
       target instanceof Node ? boxes.find((b) => !b.rowEnd && !b.full && b.el.contains(target)) : undefined;
 
-    // Box `id` now stands where the user put it: store the arrangement — a preview's place for this visit only.
-    const store = (id: string) => {
+    // Box `id` now stands where the user put it — and `slid`, the tiles that made room for it (39.91):
+    // store the arrangement, as one — a preview's place for this visit only.
+    const store = (id: string, slid: readonly string[] = []) => {
       const { gap } = metrics();
-      if (isStorable(id)) {
-        stored = placesToStore(placed, stored, fallback, id, lead, gap);
-        fallback = fallback.filter((f) => f !== id);
+      const moved = [id, ...slid];
+      const lasting = moved.filter(isStorable);
+      if (lasting.length > 0) {
+        stored = placesToStore(placed, stored, fallback, lasting, lead, gap);
+        fallback = fallback.filter((f) => !lasting.includes(f));
         writePlaces(key, stored);
-        return;
       }
-      const at = placed.find((p) => p.id === id);
-      if (at) visit = { ...visit, [id]: storedPlaceOf(placed, at, gap, lead) };
+      for (const m of moved.filter((x) => !isStorable(x))) {
+        const at = placed.find((p) => p.id === m);
+        if (at) visit = { ...visit, [m]: storedPlaceOf(placed, at, gap, lead) };
+      }
+    };
+
+    // 39.91: the tiles named slide to their places over MAKE_ROOM_SLIDE_MS, the action bar with them; at once under reduced motion.
+    const slide = (ids: readonly string[]) => {
+      const still = typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (still) return;
+      const byId = new Map([...boxes, ...rightBoxes].map((b) => [b.id, b]));
+      const els = [...ids, ...placed.filter((p) => p.rowEnd).map((p) => p.id)].map((id) => byId.get(id)?.el).filter((el): el is HTMLElement => !!el);
+      for (const el of els) styles.set(el, "transition", `top ${MAKE_ROOM_SLIDE_MS}ms ease`);
+      sliding = [...new Set([...sliding, ...els])];
+      window.clearTimeout(slideEnd);
+      slideEnd = window.setTimeout(() => {
+        for (const el of sliding) styles.set(el, "transition", "");
+        sliding = [];
+      }, MAKE_ROOM_SLIDE_MS + 50);
+    };
+
+    // 39.91: the outline has stood still over other tiles for the delay — they make room, and it shows the place free.
+    const makeRoomNow = () => {
+      const d = drag;
+      if (!d?.active || !d.place) return;
+      const still = new Set([...boxes.filter((b) => b.full).map((b) => b.id), ...rightBoxes.map((b) => b.id)]);
+      const r = makeRoom(placed, d.box.id, d.place, columns, metrics().gap, still);
+      if (!r) return;
+      d.before ??= placed;
+      d.slid = [...new Set([...d.slid, ...r.slid])];
+      placed = r.placed;
+      slide(r.slid);
+      apply();
+      follow();
     };
 
     const follow = () => {
@@ -598,6 +659,13 @@ export function useTilePacking(
       const place = snapPlace(left, top, unit, gap);
       drag.place = place;
       drag.free = canDrop(placed, drag.box.id, place, columns, gap);
+      // 39.91: the count runs while the snapped place stands still over other tiles; a new place starts it again.
+      const at = `${place.col}:${place.top}`;
+      if (at !== drag.held) {
+        drag.held = at;
+        window.clearTimeout(hold);
+        if (!drag.free) hold = window.setTimeout(makeRoomNow, makeRoomDelayMs());
+      }
       if (outline) {
         Object.assign(outline.style, {
           left: `${place.col * (unit + gap)}px`,
@@ -643,6 +711,7 @@ export function useTilePacking(
       window.removeEventListener("pointerup", onUp, true);
       window.removeEventListener("pointercancel", onCancel, true);
       window.removeEventListener("keydown", onKey, true);
+      window.clearTimeout(hold);
       const d = drag;
       drag = null;
       if (!d?.active) return;
@@ -658,8 +727,13 @@ export function useTilePacking(
       if (keep && d.place && d.free) {
         const { gap } = metrics();
         // #38.45: the dropped tile stands where it was released; nothing rises — the space it left stays empty.
+        // 39.91: the tiles that made room stay where they slid, and are stored with it.
         placed = dropAt(placed, d.box.id, d.place, gap);
-        store(d.box.id);
+        store(d.box.id, d.slid);
+      } else if (d.before) {
+        // 39.91: Esc, or a release where nothing can drop — every tile that made room goes back.
+        placed = d.before;
+        slide(d.slid);
       }
       // Dropped: where it now stands. Refused or Esc: back where it was.
       apply();
@@ -699,7 +773,7 @@ export function useTilePacking(
       const from = box && placed.find((p) => p.id === box.id);
       if (!box || !from || !isDragSurface(e.target, e.clientX, e.clientY, box.el)) return;
       const scroller = scrollerOf(container);
-      drag = { box, from, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, scroller, scroll0: scroller.scrollTop, active: false, place: null, free: false };
+      drag = { box, from, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, scroller, scroll0: scroller.scrollTop, active: false, place: null, free: false, held: null, before: null, slid: [] };
       window.addEventListener("pointermove", onMove, true);
       window.addEventListener("pointerup", onUp, true);
       window.addEventListener("pointercancel", onCancel, true);
@@ -748,6 +822,7 @@ export function useTilePacking(
     fresh();
     return () => {
       end(false);
+      window.clearTimeout(slideEnd);
       cancelAnimationFrame(frame);
       sizes.disconnect();
       width.disconnect();

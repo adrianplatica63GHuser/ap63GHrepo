@@ -6,10 +6,14 @@
  *
  * THE FREE-SPACE RULE (`canDrop`). A tile is dropped only where its whole
  * rectangle is free: inside the row's units, at or below the top, and at
- * least PANEL_GAP from every other tile. It never pushes another — to put
- * it where another tile stands, the user first moves that one away. The
- * space under the lowest tile is always free; the form's action bar is not a
- * tile, it stands under everything wherever the tiles are.
+ * least PANEL_GAP from every other tile. A drop never pushes another: to put
+ * it where another tile stands, the user HOLDS it there — the outline still
+ * for `MAKE_ROOM_DELAY_MS` — and that tile slides down out of the way
+ * (`makeRoom`, Slice 39.91), or first moves that one away by hand. Until
+ * 39.91 this read: „It never pushes another — to put it where another tile
+ * stands, the user first moves that one away." The space under the lowest
+ * tile is always free; the form's action bar is not a tile, it stands under
+ * everything wherever the tiles are.
  *
  * SNAPPED (`snapPlace`): whole units across, `ROW_STEP` down.
  *
@@ -76,6 +80,22 @@
  * DOUBLE-CLICK on a tile's unused space rises that one tile, alone, to its
  * ceiling (`riseOne`); nothing else moves, and it is stored like a drop.
  *
+ * A TILE HELD OVER ANOTHER MAKES ROOM (Slice 39.91). Adrian: „that tile
+ * should slide down until it finds an available spot, large enough, to make
+ * room for me to drop off the tile I am moving". While a tile is dragged and
+ * its snapped outline has stood still over other tiles for the make-room
+ * delay (`MAKE_ROOM_DELAY_MS`, read by the hook through one function), every
+ * tile the outline overlaps slides DOWN, top to bottom, never sideways, each
+ * to the first place below it in its own columns where its whole rectangle is
+ * free — at least PANEL_GAP from every other tile and from the outline —
+ * jumping past the tiles under it rather than pushing them (`makeRoom`). The
+ * dragged tile's own place counts as taken, so nothing slides into it and Esc
+ * still sends it home. A fixed box — a right-column tile, a banner, a wrapped
+ * column tile (`still`) — never slides: an outline over one stays red however
+ * long it is held. The row ends go under everything, as after a drop. The
+ * hook undoes every slide of a drag on Esc or a refused release, and stores
+ * them with the drop.
+ *
  * PURE — no DOM, no React; `tile-positions.test.ts` covers it.
  */
 import { endsTop, fixedBoxes, freeUnder, overlaps, packTiles, topUnder, type PackBox, type Placed } from "./tile-packing";
@@ -96,6 +116,16 @@ export type StoredPlaces = Readonly<Record<string, StoredPlace>>;
 
 /** The step a dragged tile snaps to down the screen, in px (half a PANEL_GAP). */
 export const ROW_STEP = 8;
+
+/**
+ * How long a dragged tile's outline must stand still over other tiles before
+ * they make room (Slice 39.91), in ms. Read only through `makeRoomDelayMs()`
+ * (`src/components/tiles/make-room-delay.ts`), which 39.92 points at „Setări".
+ */
+export const MAKE_ROOM_DELAY_MS = 1000;
+
+/** How long a tile takes to slide out of the way, or back (ms); instant under prefers-reduced-motion. */
+export const MAKE_ROOM_SLIDE_MS = 200;
 
 /** The largest top a stored place may have, in px: past it the entry is out of range. */
 export const MAX_TOP = 100_000;
@@ -236,6 +266,43 @@ export function riseOne(placed: readonly Placed[], id: string, gap: number, lead
   return dropAt(placed, id, { col: me.col, top }, gap);
 }
 
+/**
+ * A TILE HELD OVER ANOTHER MAKES ROOM (Slice 39.91): the arrangement after
+ * the tiles under box `id`'s outline at `place` slide down out of its way —
+ * each, top to bottom, in its own columns, to the first place below it where
+ * its whole rectangle is free of every other box, of the outline and of the
+ * dragged box's own place (PANEL_GAP from each), jumping past the boxes under
+ * it rather than pushing them. Nothing slides sideways or up; the row ends go
+ * under everything. `still` names boxes that never slide beside the fixed
+ * ones (the banners, the wrapped column's tiles). `null` when there is no room
+ * to make: the outline overlaps nothing, reaches past the row's units, or
+ * overlaps a box that never slides.
+ */
+export function makeRoom(
+  placed: readonly Placed[],
+  id: string,
+  place: StoredPlace,
+  columns: number,
+  gap: number,
+  still: ReadonlySet<string> = new Set(),
+): { placed: Placed[]; slid: string[] } | null {
+  const me = placed.find((p) => p.id === id);
+  if (!me || me.fixed || me.rowEnd) return null;
+  if (place.col < 0 || place.top < 0 || place.col + me.units > columns) return null;
+  const outline: Placed = { id: "(outline)", col: place.col, units: me.units, top: place.top, height: me.height };
+  const under = placed.filter((p) => p.id !== id && !p.rowEnd && overlaps(p, outline, gap));
+  if (under.length === 0 || under.some((p) => p.fixed || still.has(p.id))) return null;
+  const next = placed.map((p) => ({ ...p }));
+  // Taken while it slides: every other box where it now stands — the dragged one at its own place — and the outline.
+  const taken: Placed[] = [...next.filter((p) => !p.rowEnd), outline];
+  const order = [...under].sort((a, b) => a.top - b.top || a.col - b.col);
+  for (const u of order) {
+    const box = next.find((p) => p.id === u.id)!;
+    box.top = firstFree(taken.filter((p) => p !== box), box.col, box.units, box.height, box.top, gap);
+  }
+  return { placed: withRowEnds(next, gap), slid: order.map((u) => u.id) };
+}
+
 /** The first top at or below `from` where a box of `units` × `height` at `col` is free. */
 function firstFree(placed: readonly Placed[], col: number, units: number, height: number, from: number, gap: number): number {
   const tops = [...new Set([from, ...placed.map((p) => p.top + p.height + gap).filter((t) => t >= from)])].sort((a, b) => a - b);
@@ -358,20 +425,23 @@ export function storedPlaceOf(placed: readonly Placed[], p: Placed, gap: number,
  * What a drop — or a double-click's rise — writes: every storable box's place
  * as it now stands (`storedPlaceOf`), but an entry this visit could not use is kept
  * as it was (`fallback`), and an entry for a tile not on screen (unticked) is
- * kept too.
+ * kept too. `dropped` is the box the user moved — or, since 39.91, the boxes:
+ * the dropped one and every tile that made room for it, all written as they
+ * stand, a fallback among them too.
  */
 export function placesToStore(
   placed: readonly Placed[],
   previous: StoredPlaces,
   fallback: readonly string[],
-  dropped: string,
+  dropped: string | readonly string[],
   lead = 0,
   gap = DEFAULT_GAP_PX,
 ): Record<string, StoredPlace> {
   const out: Record<string, StoredPlace> = { ...previous };
+  const moved: readonly string[] = typeof dropped === "string" ? [dropped] : dropped;
   for (const p of placed) {
     if (p.rowEnd || p.fixed || !isStorable(p.id)) continue;
-    if (fallback.includes(p.id) && p.id !== dropped) continue;
+    if (fallback.includes(p.id) && !moved.includes(p.id)) continue;
     out[p.id] = storedPlaceOf(placed, p, gap, lead);
   }
   return out;

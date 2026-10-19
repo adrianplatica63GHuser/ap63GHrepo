@@ -11,12 +11,15 @@ import path from "node:path";
 import { grow, packTiles, settle, type PackBox, type Placed } from "@/lib/ui/tile-packing";
 import {
   FIXED_PREFIX,
+  MAKE_ROOM_DELAY_MS,
+  MAKE_ROOM_SLIDE_MS,
   ROW_STEP,
   WRAPPED_PREFIX,
   canDrop,
   ceilingOf,
   dropAt,
   isStorable,
+  makeRoom,
   parseStoredPlaces,
   placeWithStored,
   placesToStore,
@@ -641,5 +644,144 @@ describe("a tile dropped under „Interacțiuni”, beside or wrapped (#38.46)",
     expect(src).toContain("under: true");
     // Never dragged: the drag looks only among the left area's boxes.
     expect(src).toContain("boxes.find((b) => !b.rowEnd && !b.full && b.el.contains(target))");
+  });
+});
+
+/**
+ * Slice 39.91 — a tile held over another makes room. A 10-unit row: A over B
+ * over C in the first three units, 100 px each, PANEL_GAP apart; D beside
+ * them at col 6. Adrian: „that tile should slide down until it finds an
+ * available spot, large enough, to make room for me to drop off the tile I am
+ * moving".
+ */
+describe("a tile held over another makes room: the tile under it slides down to the first free place (39.91)", () => {
+  const box = (id: string, height = 100, units = 3): PackBox => ({ id, units, height });
+  const BAR: PackBox = { id: "actions", units: 1, height: 63, rowEnd: true };
+  const STACK = { a: { col: 0, top: 0 }, b: { col: 0, top: 116 }, c: { col: 0, top: 232 }, d: { col: 6, top: 0 } };
+  const lay = (extra: PackBox[] = [], stored: Record<string, { col: number; top: number; space?: number }> = STACK) =>
+    placeWithStored([box("a"), box("b"), box("c"), box("d"), ...extra, BAR], stored, 10, GAP).placed;
+
+  it("the tile under the outline slides down in its own columns, past the tiles under it, to where it fits whole", () => {
+    const placed = lay();
+    expect(canDrop(placed, "d", { col: 0, top: 0 }, 10, GAP)).toBe(false);
+    const r = makeRoom(placed, "d", { col: 0, top: 0 }, 10, GAP);
+    expect(r?.slid).toEqual(["a"]);
+    const after = r!.placed;
+    // Not pushed onto B or C: it jumps past both, to under C.
+    expect(at(after, "a")).toMatchObject({ col: 0, top: 348 });
+    expect(at(after, "b")).toMatchObject({ col: 0, top: 116 });
+    expect(at(after, "c")).toMatchObject({ col: 0, top: 232 });
+    expect(at(after, "d")).toMatchObject({ col: 6, top: 0 }); // the dragged tile itself moves only on its drop
+    // The outline now shows the place free, and the drop is accepted.
+    expect(canDrop(after, "d", { col: 0, top: 0 }, 10, GAP)).toBe(true);
+    // The action bar under everything, as after a drop.
+    expect(at(after, "actions").top).toBe(348 + 100 + GAP);
+  });
+
+  it("it takes the first free place below, not the lowest: a hole large enough is used", () => {
+    // C lower, leaving a 216-px hole under B (kept on purpose, #38.45's space): A slides into it, under B.
+    const placed = lay([], { ...STACK, c: { col: 0, top: 448, space: 216 } });
+    expect(at(placed, "c").top).toBe(448);
+    const after = makeRoom(placed, "d", { col: 0, top: 0 }, 10, GAP)!.placed;
+    expect(at(after, "a")).toMatchObject({ col: 0, top: 232 });
+    // A hole one pixel too small is not used.
+    const tight = lay([], { ...STACK, c: { col: 0, top: 347, space: 115 } });
+    expect(at(makeRoom(tight, "d", { col: 0, top: 0 }, 10, GAP)!.placed, "a").top).toBe(347 + 100 + GAP);
+  });
+
+  it("every tile the outline overlaps slides, top to bottom, each keeping its column and its order", () => {
+    const placed = lay([box("e", 200)], { ...STACK, e: { col: 6, top: 116 } });
+    const r = makeRoom(placed, "e", { col: 0, top: 0 }, 10, GAP)!;
+    expect(r.slid).toEqual(["a", "b"]);
+    expect(at(r.placed, "a")).toMatchObject({ col: 0, top: 348 });
+    expect(at(r.placed, "b")).toMatchObject({ col: 0, top: 464 });
+    expect(at(r.placed, "c")).toMatchObject({ col: 0, top: 232 });
+    expect(canDrop(r.placed, "e", { col: 0, top: 0 }, 10, GAP)).toBe(true);
+  });
+
+  it("never sideways, never up: a tile reaching only partly under the outline still slides straight down", () => {
+    // A 3-unit outline at col 2 overlaps A (cols 0–2) by one unit.
+    const placed = lay();
+    const after = makeRoom(placed, "d", { col: 2, top: 0 }, 10, GAP)!.placed;
+    expect(at(after, "a").col).toBe(0);
+    expect(at(after, "a").top).toBeGreaterThan(0);
+    for (const p of after) expect(p.top).toBeGreaterThanOrEqual(at(placed, p.id).top);
+  });
+
+  it("the dragged tile's own place counts as taken: nothing slides into it, so Esc still has it to go back to", () => {
+    // B dragged up over A: A would fit at 116, where B stood — it jumps past that too.
+    const placed = lay();
+    const after = makeRoom(placed, "b", { col: 0, top: 0 }, 10, GAP)!.placed;
+    expect(at(after, "a").top).toBe(348);
+    expect(at(after, "b")).toMatchObject({ col: 0, top: 116 });
+  });
+
+  it("a fixed box, a banner or a wrapped column tile never slides: the outline stays red", () => {
+    const fixed: PackBox = { id: `${FIXED_PREFIX}map`, units: 3, height: 300, fixed: { col: 7, top: 0 } };
+    const placed = placeWithStored([box("a"), box("d"), box("f"), fixed, BAR], { a: { col: 0, top: 0 }, d: { col: 0, top: 116 }, f: { col: 4, top: 0 } }, 10, GAP).placed;
+    expect(at(placed, "f")).toMatchObject({ col: 4, top: 0 });
+    expect(makeRoom(placed, "d", { col: 7, top: 0 }, 10, GAP)).toBeNull();
+    // Over a tile and a fixed box at once: neither slides, since the place could not be freed.
+    expect(makeRoom(placed, "d", { col: 5, top: 0 }, 10, GAP)).toBeNull();
+    // Over the tile alone, it does.
+    expect(makeRoom(placed, "d", { col: 4, top: 0 }, 10, GAP)?.slid).toEqual(["f"]);
+    expect(makeRoom(lay(), "d", { col: 0, top: 0 }, 10, GAP, new Set(["a"]))).toBeNull();
+  });
+
+  it("no room to make where the place is free, past the row's units, or for a fixed or row-end box", () => {
+    const placed = lay();
+    expect(makeRoom(placed, "d", { col: 6, top: 500 }, 10, GAP)).toBeNull();
+    expect(makeRoom(placed, "d", { col: 8, top: 0 }, 10, GAP)).toBeNull(); // 8 + 3 > 10
+    expect(makeRoom(placed, "actions", { col: 0, top: 0 }, 10, GAP)).toBeNull();
+    expect(makeRoom(placed, "nobody", { col: 0, top: 0 }, 10, GAP)).toBeNull();
+  });
+
+  it("held again over the tile that slid, it slides again; nothing slides back up", () => {
+    const placed = lay();
+    const once = makeRoom(placed, "d", { col: 0, top: 0 }, 10, GAP)!.placed;
+    const twice = makeRoom(once, "d", { col: 0, top: 348 }, 10, GAP)!.placed;
+    expect(at(twice, "a").top).toBe(348 + 100 + GAP);
+    expect(at(twice, "b").top).toBe(116);
+  });
+
+  it("a drop stores the dropped tile and every tile that made room, as one — a fallback among them too", () => {
+    const placed = lay();
+    const after = dropAt(makeRoom(placed, "d", { col: 0, top: 0 }, 10, GAP)!.placed, "d", { col: 0, top: 0 }, GAP);
+    const stored = placesToStore(after, STACK, ["a"], ["d", "a"], 0, GAP);
+    expect(stored.d).toEqual({ col: 0, top: 0 });
+    expect(stored.a).toEqual({ col: 0, top: 348 });
+    const back = placeWithStored([box("a"), box("b"), box("c"), box("d"), BAR], parseStoredPlaces(JSON.stringify(stored)), 10, GAP).placed;
+    expect(back.filter((p) => !p.rowEnd).map((p) => [p.id, p.col, p.top]).sort()).toEqual(
+      [["a", 0, 348], ["b", 0, 116], ["c", 0, 232], ["d", 0, 0]],
+    );
+    // A single id still works as before (#38.45): a fallback that was not moved is kept.
+    expect(placesToStore(after, STACK, ["a"], "d", 0, GAP).a).toEqual(STACK.a);
+  });
+
+  it("the delay is one value, 1,0 s, read through one function; the slide is 200 ms", () => {
+    expect(MAKE_ROOM_DELAY_MS).toBe(1000);
+    expect(MAKE_ROOM_SLIDE_MS).toBe(200);
+    const fn = code(read("src", "components", "tiles", "make-room-delay.ts"));
+    expect(fn).toContain("export function makeRoomDelayMs(): number");
+    // Nothing else reads the constant: 39.92 points the one function at „Setări".
+    const hook = code(read("src", "components", "tiles", "use-tile-packing.ts"));
+    expect(hook).not.toContain("MAKE_ROOM_DELAY_MS");
+    expect(hook).toContain("window.setTimeout(makeRoomNow, makeRoomDelayMs())");
+  });
+
+  it("the hook counts on the snapped place, undoes on Esc or a refused release, and stores with the drop", () => {
+    const src = code(read("src", "components", "tiles", "use-tile-packing.ts"));
+    expect(src).toMatch(/if \(at !== drag\.held\) \{[\s\S]*?window\.clearTimeout\(hold\);[\s\S]*?if \(!drag\.free\) hold = /);
+    expect(src).toContain("const r = makeRoom(placed, d.box.id, d.place, columns, metrics().gap, still);");
+    expect(src).toContain("d.before ??= placed;");
+    expect(src).toContain("store(d.box.id, d.slid);");
+    expect(src).toMatch(/\} else if \(d\.before\) \{[\s\S]*?placed = d\.before;/);
+    expect(src).toContain('"(prefers-reduced-motion: reduce)"');
+    // The banners and the wrapped column never slide.
+    expect(src).toContain("const still = new Set([...boxes.filter((b) => b.full).map((b) => b.id), ...rightBoxes.map((b) => b.id)]);");
+    // The rule's header says the new rule and quotes the old one.
+    const pure = read("src", "lib", "ui", "tile-positions.ts");
+    expect(pure).toContain("„It never pushes another — to put it where another tile");
+    expect(pure).toContain("`makeRoom`, Slice 39.91");
   });
 });

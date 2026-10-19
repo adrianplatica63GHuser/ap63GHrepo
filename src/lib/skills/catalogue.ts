@@ -647,6 +647,7 @@ export const SKILLS: readonly Skill[] = [
       "TC-TILES-20",
       "TC-TILES-21",
       "TC-TILES-22",
+      "TC-TILES-24",
     ],
     manual: ["start-tiles", "start-preview", "links-related", "admin-settings-account"],
   },
