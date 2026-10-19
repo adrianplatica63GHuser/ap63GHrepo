@@ -330,40 +330,38 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     await still(page);
     await page.screenshot({ path: `${dir}/record.png` });
 
-    // Figura 2.5 (#39.93) — a tile held over another (#39.91): the tile under it has slid down and the outline shows the
-    // place free. Taller window, so the tile that slid stays in the picture. Nothing is dropped: Esc puts it all back, so
-    // no arrangement is stored. On the same seed person, the CNP and „Recente" blurred again before the shot.
-    await page.setViewportSize({ width: 1366, height: 1200 });
+    // Figura 2.5 (#39.93) — a tile held over another (#39.91): „Act de identitate" held over „Identitate", which has slid
+    // down to the first place in its columns that holds it whole — on a person's full columns, the bottom of the row —
+    // and the outline shows the place free. A window tall enough for the whole row, the picture cut at the row's bottom.
+    // Nothing is dropped: Esc puts it all back, so no arrangement is stored. The CNP and „Recente" blurred again.
+    await page.setViewportSize({ width: 1366, height: 3000 });
     await page.waitForTimeout(2500);
     const delayRes = await page.request.get("/api/time-frames");
     const delayItems = delayRes.ok() ? ((await delayRes.json()) as { items: { key: string; value: number }[] }).items : [];
     const holdMs = Math.max(1_500, (delayItems.find((i) => i.key === "tile_make_room_delay")?.value ?? 1_000) + 750);
-    // The pair: a tile T nothing stands under in its columns (so it slides just past the outline and stays in view), and
-    // a tile D, no wider, from other columns, dragged until its top-left corner is T's.
-    const pair = await page.evaluate(() => {
-      const tiles = [...document.querySelectorAll<HTMLElement>("[data-tile-row] [data-packed-col][data-tile]")]
-        .filter((e) => e.offsetParent !== null && !e.classList.contains("order-last") && !e.dataset.tile!.startsWith("fixed"))
-        .map((e) => ({ id: e.dataset.tile!, r: e.getBoundingClientRect() }));
-      const across = (a: DOMRect, b: DOMRect) => a.left < b.right - 1 && b.left < a.right - 1;
-      const lowest = tiles.filter((t) => t.r.bottom < 900 && !tiles.some((u) => u !== t && across(u.r, t.r) && u.r.top > t.r.top));
-      for (const t of lowest.sort((a, b) => a.r.top - b.r.top)) {
-        const d = tiles.find((u) => u !== t && !across(u.r, t.r) && u.r.width <= t.r.width + 1 && u.r.top >= 0 && u.r.top < 700);
-        if (d) return { t: { x: t.r.left, y: t.r.top }, d: { x: d.r.left, y: d.r.top, h: d.r.height } };
-      }
-      return null;
-    });
-    if (!pair) throw new Error("No pair of tiles on the seed person's screen to show a tile making room.");
-    const from = { x: pair.d.x + 5, y: pair.d.y + Math.min(pair.d.h / 2, 120) };
+    const rectOf = (tile: string) =>
+      page.evaluate((t) => {
+        const r = document.querySelector<HTMLElement>(`[data-tile-row] [data-tile="${t}"]`)?.getBoundingClientRect();
+        return r ? { x: r.left, y: r.top, h: r.height } : null;
+      }, tile);
+    const [held, under] = await Promise.all([rectOf("idCard"), rectOf("identity")]);
+    if (!held || !under) throw new Error("„Act de identitate” or „Identitate” is not on the seed person's screen.");
+    const from = { x: held.x + 5, y: held.y + Math.min(held.h / 2, 120) };
     await page.mouse.move(from.x, from.y);
     await page.mouse.down();
     await page.mouse.move(from.x + 10, from.y + 10, { steps: 3 });
-    await page.mouse.move(from.x + (pair.t.x - pair.d.x), from.y + (pair.t.y - pair.d.y), { steps: 12 });
+    await page.mouse.move(from.x + (under.x - held.x), from.y + (under.y - held.y), { steps: 12 });
     await page.waitForTimeout(holdMs);
     await expect.poll(() => page.evaluate(() => document.querySelector<HTMLElement>("[data-tile-outline]")?.dataset.free ?? null)).toBe("true");
     await page.waitForTimeout(400); // past the 200-ms slide
+    const slid = await rectOf("identity");
+    expect(slid!.y).toBeGreaterThan(under.y);
     await blurCnp(page);
     await blurRecent(page, S.recent);
-    await page.screenshot({ path: `${dir}/make-room.png` });
+    const rowBottom = await page.evaluate(() =>
+      Math.max(...[...document.querySelectorAll<HTMLElement>("[data-tile-row] [data-packed-col]")].map((e) => e.getBoundingClientRect().bottom)),
+    );
+    await page.screenshot({ path: `${dir}/make-room.png`, clip: { x: 0, y: 0, width: 1366, height: Math.min(3000, Math.ceil(rowBottom) + 24) } });
     await page.keyboard.press("Escape");
     await page.mouse.up();
     await page.setViewportSize({ width: 1366, height: 768 });
