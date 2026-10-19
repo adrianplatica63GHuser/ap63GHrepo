@@ -12,10 +12,15 @@ import {
   MAX_BACK_STACK,
   backTarget,
   currentBackStack,
+  currentForwardStack,
+  forwardEnabled,
   nextBackStack,
+  nextForwardStack,
+  noForwardStack,
   parentCrumbHref,
   recordScreen,
   resetBackStack,
+  subscribeForwardStack,
 } from "@/lib/ui/back-stack";
 
 const ROOT = process.cwd();
@@ -110,5 +115,84 @@ describe("the bar", () => {
   it("„Înapoi” / „Back”", () => {
     expect(RO.navigation.breadcrumb.back).toBe("Înapoi");
     expect(EN.navigation.breadcrumb.back).toBe("Back");
+  });
+});
+
+describe("„Înainte” (#39.97)", () => {
+  const LIST = "/natural-persons";
+  const P1 = "/natural-persons/p1";
+  const DOCS = "/documents";
+
+  it("a step back puts the screen left on the forward record; going forward to it takes it off", () => {
+    expect(nextForwardStack([LIST, P1], [], LIST)).toEqual([P1]);
+    expect(nextForwardStack([LIST], [P1], P1)).toEqual([]);
+  });
+
+  it("several steps back, then forward one at a time, in order", () => {
+    resetBackStack();
+    for (const p of ["/", LIST, P1, "/natural-persons/p1/edit"]) recordScreen(p);
+    recordScreen(P1);
+    recordScreen(LIST);
+    expect(currentForwardStack()).toEqual(["/natural-persons/p1/edit", P1]);
+    recordScreen(P1);
+    expect(currentForwardStack()).toEqual(["/natural-persons/p1/edit"]);
+    expect(currentBackStack()).toEqual(["/", LIST, P1]);
+    resetBackStack();
+  });
+
+  it("a new screen empties it, as a browser's forward does; the same screen again changes nothing", () => {
+    expect(nextForwardStack([LIST], [P1], DOCS)).toEqual([]);
+    const f = [P1];
+    expect(nextForwardStack([LIST], f, LIST)).toBe(f);
+  });
+
+  it("„Înapoi” to the parent crumb (nothing in the tab under the screen) is a new navigation: nothing forward", () => {
+    // A fresh tab on the record: the record is all the tab holds; „Înapoi" goes to the list as a new screen.
+    expect(nextForwardStack([P1], [], LIST)).toEqual([]);
+  });
+
+  it("enabled with a screen to return to — unless the browser's Navigation API says there is no forward step", () => {
+    expect(forwardEnabled([], undefined)).toBe(false);
+    expect(forwardEnabled([], true)).toBe(false);
+    expect(forwardEnabled([P1], undefined)).toBe(true);
+    expect(forwardEnabled([P1], true)).toBe(true);
+    // A → B → A by a LINK reads as a pop: the record holds B, the browser has nothing forward.
+    expect(forwardEnabled([P1], false)).toBe(false);
+  });
+
+  it("tells its subscribers when the record changes, and only then", () => {
+    resetBackStack();
+    let calls = 0;
+    const off = subscribeForwardStack(() => {
+      calls += 1;
+    });
+    recordScreen(LIST);
+    recordScreen(P1);
+    expect(calls).toBe(0);
+    recordScreen(LIST);
+    expect(calls).toBe(1);
+    recordScreen(LIST);
+    expect(calls).toBe(1);
+    recordScreen(DOCS);
+    expect(calls).toBe(2);
+    off();
+    recordScreen(LIST);
+    expect(calls).toBe(2);
+    expect(noForwardStack()).toBe(noForwardStack());
+    resetBackStack();
+  });
+
+  it("the bar draws it right of „Înapoi”, in the same form, inside the same span, before the rule", () => {
+    const span = BAR.slice(BAR.indexOf('data-breadcrumb-back=""'), BAR.indexOf('<span aria-hidden="true" className="h-4 w-px'));
+    expect(span.indexOf("icon={ArrowLeft}")).toBeLessThan(span.indexOf("<ForwardButton />"));
+    expect(BAR).toMatch(/<IconButton\s+icon=\{ArrowRight\}\s+label=\{t\("forward"\)\}\s+variant="secondary"\s+size="xs"\s+showLabel/);
+    expect(BAR).toContain("onClick={() => guardedAction(() => router.forward())}");
+    expect(BAR).toContain("disabled={!forwardEnabled(forward, canGoForward)}");
+    expect(BAR).toContain("useSyncExternalStore(subscribeForwardStack, currentForwardStack, noForwardStack)");
+  });
+
+  it("„Înainte” / „Forward”", () => {
+    expect(RO.navigation.breadcrumb.forward).toBe("Înainte");
+    expect(EN.navigation.breadcrumb.forward).toBe("Forward");
   });
 });

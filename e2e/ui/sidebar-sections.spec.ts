@@ -16,7 +16,7 @@
 
 import fs from "node:fs";
 import { test, expect, type Locator, type Page } from "../helpers/test";
-import { openSection, sidebar } from "../helpers/sidebar";
+import { openFromSidebar, openSection, sidebar } from "../helpers/sidebar";
 import { E2E_MARKER, createNaturalPerson, removeLeftovers, removeRecord } from "../helpers/records";
 
 const SHOTS = "playwright-report/sidebar-sections";
@@ -265,6 +265,8 @@ test.describe("TC-NAV-01 — the sidebar draws only what exists", () => {
     const personId = await createNaturalPerson(page.request, { lastName: MARK, firstName: "Înapoi" });
     const bar = page.getByRole("navigation", { name: "Fir de navigare" }).filter({ visible: true });
     const back = bar.getByRole("button", { name: "Înapoi", exact: true });
+    // Slice #39.97 — step 8a: „Înainte", right of „Înapoi".
+    const forward = bar.getByRole("button", { name: "Înainte", exact: true });
     const openRecord = async () => {
       const search = page.locator("main").getByPlaceholder("caută după ID, Nume, Poreclă, CNP, Email Personal 1, Email Personal 2, Email serviciu, Telefon Personal 1, Telefon Personal 2 sau Telefon serviciu");
       await search.fill(MARK);
@@ -283,6 +285,7 @@ test.describe("TC-NAV-01 — the sidebar draws only what exists", () => {
       // „Înapoi" is the bar's first item, left of the first crumb, a gap and a rule between; the „?" stays right.
       await expect(back).toBeVisible();
       await expect(back).toBeEnabled();
+      await expect(forward).toBeDisabled();
       await expect(bar.locator(":scope > *").first()).toHaveAttribute("data-breadcrumb-back", "");
       expect(await back.locator("svg").first().getAttribute("class")).toContain("lucide-arrow-left");
       const home = bar.getByRole("link", { name: "Acasă", exact: true });
@@ -308,6 +311,25 @@ test.describe("TC-NAV-01 — the sidebar draws only what exists", () => {
       await page.mouse.move(1356, 758);
       await page.waitForTimeout(400);
       await page.screenshot({ path: `${SHOTS}/back-list-1366.png`, mask: [recent(page)] });
+
+      // Step 8a (#39.97) — after the step back, „Înainte" (a right arrow, right of „Înapoi") is enabled and returns to
+      // the person; „Înapoi" again, then a new screen — „Acte" from the sidebar — disables it.
+      await expect(forward).toBeEnabled({ timeout: 15_000 });
+      expect(await forward.locator("svg").first().getAttribute("class")).toContain("lucide-arrow-right");
+      const [b8, f8] = [(await back.boundingBox())!, (await forward.boundingBox())!];
+      expect(f8.x).toBeGreaterThan(b8.x + b8.width);
+      expect(Math.abs(f8.y - b8.y)).toBeLessThanOrEqual(2);
+      await forward.click();
+      await expect(page).toHaveURL((u) => u.pathname === `/natural-persons/${personId}`, { timeout: 30_000 });
+      await expect(page.locator("h1").filter({ visible: true }).first()).toContainText(MARK, { timeout: 30_000 });
+      await expect(forward).toBeDisabled();
+      await back.click();
+      await expect(page).toHaveURL((u) => u.pathname === "/natural-persons", { timeout: 30_000 });
+      await expect(forward).toBeEnabled({ timeout: 15_000 });
+      await openFromSidebar(page, "Acte", "Domeniu");
+      await expect(page).toHaveURL((u) => u.pathname === "/documents", { timeout: 30_000 });
+      await expect(forward).toBeDisabled({ timeout: 15_000 });
+      await page.goto("/natural-persons");
 
       // A changed field, then „Înapoi": the unsaved-changes dialog; „Anulează" keeps the form, as it was typed.
       await openRecord();

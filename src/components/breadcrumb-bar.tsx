@@ -28,14 +28,22 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Suspense, useEffect } from "react";
-import { ArrowLeft } from "lucide-react";
+import { Suspense, useEffect, useSyncExternalStore } from "react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useNavigationHistory } from "@/components/providers/navigation-history-provider";
 import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
 import { ScreenHelpButton } from "@/components/help/screen-help-button";
 import { NAV_SECTIONS } from "@/components/sidebar/nav-config";
 import { IconButton } from "@/lib/ui/icon-button";
-import { backTarget, currentBackStack, recordScreen } from "@/lib/ui/back-stack";
+import {
+  backTarget,
+  currentBackStack,
+  currentForwardStack,
+  forwardEnabled,
+  noForwardStack,
+  recordScreen,
+  subscribeForwardStack,
+} from "@/lib/ui/back-stack";
 
 // ---------------------------------------------------------------------------
 // Route segment map
@@ -312,17 +320,48 @@ function BackButton({ segments, pathname }: { segments: Segment[]; pathname: str
   };
   return (
     <span className="mr-3 flex shrink-0 items-center gap-4" data-breadcrumb-back="">
-      <IconButton
-        icon={ArrowLeft}
-        label={t("back")}
-        variant="secondary"
-        size="xs"
-        showLabel
-        onClick={goBack}
-        disabled={backTarget(currentBackStack(), segments, pathname) === null}
-      />
+      <span className="flex items-center gap-1.5">
+        <IconButton
+          icon={ArrowLeft}
+          label={t("back")}
+          variant="secondary"
+          size="xs"
+          showLabel
+          onClick={goBack}
+          disabled={backTarget(currentBackStack(), segments, pathname) === null}
+        />
+        <ForwardButton />
+      </span>
       <span aria-hidden="true" className="h-4 w-px bg-zinc-200 dark:bg-zinc-700" />
     </span>
+  );
+}
+
+/**
+ * Slice #39.97 — „Înainte", right of „Înapoi", in the same form. Disabled until a step back is taken (this button's
+ * „Înapoi" or the browser's own back), then it returns to the screen just left; a new navigation disables it again.
+ * The rules are `@/lib/ui/back-stack` (`nextForwardStack`, `forwardEnabled`). Through the unsaved-changes guard, as
+ * „Înapoi" is.
+ */
+function ForwardButton() {
+  const t = useTranslations("navigation.breadcrumb");
+  const router = useRouter();
+  const { guardedAction } = useUnsavedChanges();
+  const forward = useSyncExternalStore(subscribeForwardStack, currentForwardStack, noForwardStack);
+  const canGoForward =
+    typeof window === "undefined"
+      ? undefined
+      : (window as unknown as { navigation?: { canGoForward?: boolean } }).navigation?.canGoForward;
+  return (
+    <IconButton
+      icon={ArrowRight}
+      label={t("forward")}
+      variant="secondary"
+      size="xs"
+      showLabel
+      onClick={() => guardedAction(() => router.forward())}
+      disabled={!forwardEnabled(forward, canGoForward)}
+    />
   );
 }
 

@@ -4331,6 +4331,7 @@
       "entity": "Entitate",
       "ariaLabel": "Fir de navigare",
       "back": "Înapoi",
+      "forward": "Înainte",
       "associatePersonOfPerson": "Asociere persoană corelată",
       "associatePropertyOfPerson": "Asociere proprietate",
       "associateDocumentOfPerson": "Asociere act",

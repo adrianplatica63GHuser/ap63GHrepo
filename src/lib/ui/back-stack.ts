@@ -58,22 +58,83 @@ export function backTarget(stack: BackStack, crumbs: readonly { href: string | n
   return href ? { kind: "href", href } : null;
 }
 
+// ── „Înainte" ───────────────────────────────────────────────────────────────
+//                                                                  (Slice #39.97)
+// Adrian, 2026-10-19: „Usually the forward button is disabled But once I click back button to go back the forward
+// button becomes enabled to allow clicking and allow me to come where I was previously". Kept beside the back record,
+// by pathname too: a pop pushes the screen left onto it; going forward to its top takes it off; any other new pathname
+// empties it — as a browser's own forward does. The browser's back is the same pop, so it enables „Înainte" as well.
+
+/** The screens „Înainte" can return to, the next one LAST. */
+export type ForwardStack = readonly string[];
+
+const NO_FORWARD: ForwardStack = [];
+
+/** The forward record once the screen shown is `pathname`, `back` being the back record BEFORE it. */
+export function nextForwardStack(back: BackStack, forward: ForwardStack, pathname: string): ForwardStack {
+  const top = back[back.length - 1];
+  if (top === pathname) return forward;
+  if (back.length >= 2 && back[back.length - 2] === pathname && top !== undefined) {
+    const next = [...forward, top];
+    return next.length > MAX_BACK_STACK ? next.slice(next.length - MAX_BACK_STACK) : next;
+  }
+  if (forward.length > 0 && forward[forward.length - 1] === pathname) return forward.slice(0, -1);
+  return NO_FORWARD;
+}
+
+/**
+ * Whether „Înainte" is enabled: the record has a screen to return to, and — where the browser has the Navigation API
+ * (Chrome, Edge) — the browser has a forward step too. The second rules out the record's one imprecision: A → B → A by
+ * a LINK reads as a pop, so the record holds B while the browser has nothing forward. `canGoForward` undefined (no API)
+ * trusts the record.
+ */
+export function forwardEnabled(forward: ForwardStack, canGoForward: boolean | undefined): boolean {
+  return forward.length > 0 && canGoForward !== false;
+}
+
 // ── The tab's own record ────────────────────────────────────────────────────
 // Module state, not React state: the bar is remounted under Suspense, and the
 // button reads the record when it is pressed, so nothing needs to re-render.
 
 let tabStack: BackStack = [];
+let tabForward: ForwardStack = NO_FORWARD;
+// Slice #39.97: „Înainte" is drawn enabled or not from the forward record, which changes AFTER the bar has rendered
+// the new screen (the bar records in an effect) — so the button subscribes to it and re-renders.
+const listeners = new Set<() => void>();
 
 /** Called by the bar whenever the pathname changes. */
 export function recordScreen(pathname: string): void {
+  const forward = nextForwardStack(tabStack, tabForward, pathname);
   tabStack = nextBackStack(tabStack, pathname);
+  if (forward !== tabForward) {
+    tabForward = forward;
+    for (const l of listeners) l();
+  }
 }
 
 export function currentBackStack(): BackStack {
   return tabStack;
 }
 
+export function currentForwardStack(): ForwardStack {
+  return tabForward;
+}
+
+/** The empty record, the same array every time — the server's snapshot for `useSyncExternalStore`. */
+export function noForwardStack(): ForwardStack {
+  return NO_FORWARD;
+}
+
+/** Told whenever the forward record changes. Returns the unsubscribe. */
+export function subscribeForwardStack(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
 /** For tests only. */
 export function resetBackStack(): void {
   tabStack = [];
+  tabForward = NO_FORWARD;
 }

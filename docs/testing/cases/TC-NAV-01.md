@@ -53,6 +53,7 @@ Nothing.
 | 6 | „Restrânge bara laterală" | Eight icons, one per section, each named by its section; then „Extinde bara laterală" |
 | 7 | „Administrare" → „Etichete"; „Rapoarte" → „Căutare globală"; „Rapoarte" → „Interacțiuni"; „Administrare" → „Date de referință"; „Import" → „Dosare de proprietăți"; „Ajutor și învățare" → „Informații de ajutor"; „Ajutor și învățare" → „Manual de utilizare"; „Ajutor și învățare" → „Harta competențelor"; „Ajutor și învățare" → „Întreabă" | The breadcrumb names the section: „Acasă › Administrare › Etichete", „Acasă › Rapoarte › Căutare globală", „Acasă › Rapoarte › Interacțiuni", „Acasă › Administrare › Date de referință", „Acasă › Ajutor și învățare › Informații de ajutor", „Acasă › Ajutor și învățare › Manual de utilizare", „Acasă › Ajutor și învățare › Harta competențelor", „Acasă › Ajutor și învățare › Întreabă" — the section as plain text, not a link (it has no screen); „Acasă › Import" (the section is not said twice) |
 | 8 | (Slice #39.03, a test person `TC-E2E-NAV-01-BACK` „Înapoi" of its own, at 1366 × 768) From „Persoane Fizice" opens the person, then presses „Înapoi" | „Înapoi" with a left arrow is the bar's first item, at its left edge, then a rule and a gap, then „Acasă › …"; the „?" stays at the right. Pressed: back on „Persoane Fizice" |
+| 8a | (Slice #39.97) Looks at „Înainte", right of „Înapoi", then presses it; „Înapoi" again; then „Domeniu" → „Acte" | Disabled on the person before the step back; on „Persoane Fizice" after it, enabled — a right arrow and „Înainte", on the same line as „Înapoi". Pressed: the person again, and „Înainte" disabled. „Înapoi": the list, „Înainte" enabled; „Acte": disabled — a new screen ends the way forward |
 | 9 | Opens the person again, changes „Prenume", presses „Înapoi"; „Anulează"; „Înapoi" again, „Renunță" | „Modificări nesalvate"; „Anulează" keeps the person's screen with what was typed; „Renunță" goes back to the list, nothing saved |
 | 10 | Types the person's address into the bar, then presses „Înapoi" | Nothing in the tab to go back to: the parent crumb, „Persoane Fizice" |
 
@@ -61,6 +62,12 @@ Nothing.
 Steps 1–7 create nothing. Steps 8–10's test person is removed at the end. The sidebar is left expanded.
 
 ## Notes from the runs
+
+**2026-10-19 — Slice #39.97, step 8a written and driven.** Adrian: a „forward" button right of „Înapoi", disabled until
+a step back. Driven in the browser pane on localhost:3000 (Etichete → Proprietăți → a property, by the app's router):
+„Înainte" disabled on the record; after „Înapoi", on the list, enabled (`navigation.canGoForward` true); pressed, the
+property again and disabled; the browser's own back enabled it as well; „Acte" then disabled it. The spec's step 8
+carries 8a with the test person instead, as the rest of step 8 does.
 
 **2026-10-18 — Slice #39.80, step 3.** „Calcul drum lateral"'s screen is titled „Calcul drum lateral" since #39.79 (it was „Calcul"), and its breadcrumb follows. The spec follows.
 
