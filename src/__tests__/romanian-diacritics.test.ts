@@ -44,9 +44,12 @@
  *    then every Romanian-column `UPDATE time_frame_setting` in filename order —
  *    and compares the whole result against the repair script's seed. A future
  *    migration that corrects one and not the other fails here rather than on
- *    somebody's screen. A migration that INSERTs or DELETEs a row is a shape
- *    this replay does not model, so it fails here too, deliberately and with a
- *    message saying which file did it.
+ *    somebody's screen. Since Slice 39.92 the replay also models a migration
+ *    that ADDS settings — `INSERT … ON CONFLICT (key) DO NOTHING`, a key 063 did
+ *    not seed (migration_117, the make-room delay) — so the repair script must
+ *    seed that row too. A migration that DELETEs, TRUNCATEs or upserts over a row
+ *    is still a shape this replay does not model, so it fails here,
+ *    deliberately and with a message saying which file did it.
  */
 
 import fs from "node:fs";
@@ -536,6 +539,18 @@ function effectiveRows(): Map<string, SeedRow> {
       shape.match(
         /(?:INSERT\s+INTO|DELETE\s+FROM|TRUNCATE(?:\s+TABLE)?)\s+(?:ONLY\s+)?(?:public\.)?(?:ONLY\s+)?time_frame_setting\b/gi,
       ) ?? [];
+    // Slice 39.92: a migration that only ADDS settings — one INSERT, ON CONFLICT (key) DO NOTHING, every key new —
+    // is replayed as the database runs it: the new rows join the state. Anything else that writes rows still fails below.
+    const adds =
+      rowShape.length === 1 &&
+      /^INSERT/i.test(rowShape[0]) &&
+      /\bON\s+CONFLICT\s*\(\s*key\s*\)\s*DO\s+NOTHING\b/i.test(shape) &&
+      !/\bDO\s+UPDATE\b/i.test(shape);
+    if (adds) {
+      const added = seedRows(sql);
+      expect({ file, alreadySeeded: [...added.keys()].filter((k) => state.has(k)) }).toEqual({ file, alreadySeeded: [] });
+      for (const [key, row] of added) state.set(key, row);
+    }
     // A dollar-quoted body — or a string literal holding SQL for `EXECUTE` — is
     // blanked by `structure`, so anything it does to this table is invisible to
     // every check above. The tell is the name surviving a comments-only reading
@@ -546,7 +561,7 @@ function effectiveRows(): Map<string, SeedRow> {
       (structure(sql, "comments").match(/\btime_frame_setting\b/g) ?? []).length >
       (shape.match(/\btime_frame_setting\b/g) ?? []).length;
 
-    expect({ file, addsOrRemovesRows: rowShape, hiddenInBody }).toEqual({
+    expect({ file, addsOrRemovesRows: adds ? [] : rowShape, hiddenInBody }).toEqual({
       file,
       addsOrRemovesRows: [],
       hiddenInBody: false,
@@ -581,15 +596,17 @@ describe("the seeded time-frame rows", () => {
     expect(Object.fromEntries(repair)).toEqual(Object.fromEntries(migrated));
   });
 
-  it("cover all ten settings, and none of the Romanian is left un-accented", () => {
+  it("cover all eleven settings, and none of the Romanian is left un-accented", () => {
+    // Ten seeded by 063; the eleventh, the make-room delay, added by migration_117 (Slice 39.92).
     const migrated = effectiveRows();
-    expect(migrated.size).toBe(10);
+    expect(migrated.size).toBe(11);
+    expect(migrated.has("tile_make_room_delay")).toBe(true);
 
     const romanian = [...migrated.entries()].flatMap(([key, r]) => [
       [`${key}.label_ro`, r.labelRo] as const,
       [`${key}.description_ro`, r.descriptionRo] as const,
     ]);
-    expect(romanian).toHaveLength(20);
+    expect(romanian).toHaveLength(22);
 
     // Every one of the twenty strings carries at least one Romanian diacritic.
     // That is what a reversion to the 063 spelling would fail — those strings
@@ -628,7 +645,9 @@ describe("the seeded time-frame rows", () => {
         .replace(/[șşȘŞ]/g, (c) => (c === c.toLowerCase() ? "s" : "S"))
         .replace(/[țţȚŢ]/g, (c) => (c === c.toLowerCase() ? "t" : "T"));
 
+    // Only 063's ten: a setting a later migration added (migration_117) has no 063 wording to keep.
     const drift = [...migrated.entries()]
+      .filter(([key]) => original.has(key))
       .flatMap(([key, row]) => {
         const was = original.get(key)!;
         return [
