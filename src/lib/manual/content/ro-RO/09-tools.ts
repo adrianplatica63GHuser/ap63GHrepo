@@ -136,7 +136,7 @@ Fiecare proprietate nouă primește ca poreclă numele proprietarului ei, iar pr
 
 ### 9.2.5 Istoricul calculelor {#tools-side-road-history}
 
-Pictograma istoricului, pe ecranul „Calcul drum lateral”, deschide „Istoricul calculelor”: câte un rând pentru fiecare calcul, cu „Cod”, „Algoritm” („Drum lateral”), „Parcele” (câte proprietăți a creat), „Grup”, „Stare”, „Creat de” și „Data”. „Înapoi la Calcul” vă întoarce.
+Pictograma istoricului, singura de pe ecranul „Calcul drum lateral”, lângă titlu, deschide „Istoricul calculelor”: câte un rând pentru fiecare calcul, cu „Cod”, „Algoritm” („Drum lateral”), „Parcele” (câte proprietăți a creat), „Grup”, „Stare”, „Creat de” și „Data”. „Înapoi la Calcul” vă întoarce.
 
 „Detalii”, pe un rând, deschide „Detalii calcul”: „Parametrii calculului”, „Descriere grup”, „Pașii calculului” (tabelul proprietarilor), „Previzualizare hartă” (feliile, în culorile proprietarilor) și „Parcele create” — fiecare proprietate, cu „Rol” („Parcelă proprietar” sau „Drum comun”) și „Vezi proprietatea”. O proprietate ștearsă între timp apare cu „(ștearsă)”. Sub antet, pagina spune ce proprietate s-a împărțit.
 

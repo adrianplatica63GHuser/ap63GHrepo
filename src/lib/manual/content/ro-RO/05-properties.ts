@@ -184,6 +184,8 @@ Fișa „Hartă” desenează parcela. Sus, în dreapta, are pe un rând:
 - „Arată Unghiuri” — arată unghiurile colțurilor; apăsat din nou, devine „Ascunde Unghiuri”;
 - „HARTĂ” și „SATELIT” — harta străzilor sau imaginea din satelit.
 
+Colțurile proprietății sunt puncte mici, albastre, de culoarea laturilor, ca pe harta completă (secțiunea [[map-what]]). Când treceți cu mouse-ul peste un rând din „Puncte de contur”, colțul lui primește un cerc în jur.
+
 Sub hartă stă „Navighează” (secțiunea [[properties-navigate]]).
 
 ### 5.4.3 Desenarea și tragerea colțurilor {#properties-corners-draw}
@@ -197,7 +199,9 @@ Un colț așezat greșit se corectează trăgându-l cu mouse-ul pe hartă. Tabe
 
 ### 5.4.4 Harta extinsă {#properties-corners-expanded}
 
-„Hartă extinsă” deschide aceeași hartă pe tot ecranul, cu „Desenează”, „Arată Unghiuri” și „HARTĂ” / „SATELIT”. Un colț desenat aici este colțul proprietății. „Restrânge” sau tasta Escape închide harta extinsă și vă întoarce la fișă, cu desenul păstrat.
+„Hartă extinsă” deschide harta pe tot ecranul, centrată pe proprietate și la scara de pe fișă, așa că proprietatea are aceeași mărime ca acolo. Proprietatea este roșie, cu colțurile ei roșii, iar în jurul ei stau toate celelalte proprietăți din arhivă, albastre, cum le arată harta completă — de departe, picături (secțiunea [[map-what]]). Celelalte proprietăți sunt doar de privit: un clic pe ele nu face nimic.
+
+Harta extinsă are „Desenează”, „Arată Unghiuri” și „HARTĂ” / „SATELIT”. Un colț desenat sau tras aici este colțul acestei proprietăți. „Restrânge” sau tasta Escape închide harta extinsă și vă întoarce la fișă, cu desenul păstrat.
 
 ### 5.4.5 Fișa „Street View” {#properties-corners-street-view}
 

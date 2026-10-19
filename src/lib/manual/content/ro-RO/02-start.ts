@@ -40,9 +40,11 @@ Deasupra fiecărui ecran, bara de navigare arată unde vă aflați: „Acasă”
 
 Primul buton al barei, „Înapoi”, vă întoarce la ecranul de dinainte. Dacă ați schimbat ceva și nu ați salvat, aplicația vă întreabă întâi: „Anulează” vă lasă pe ecran cu ce ați scris, iar „Renunță” pleacă fără să salveze.
 
+Imediat în dreapta lui, „Înainte” face drumul invers. După ce v-ați întors cu „Înapoi” — sau cu butonul Înapoi al browserului —, vă duce din nou la ecranul de pe care ați plecat. Până atunci este gri și nu se poate apăsa, iar un ecran nou deschis îl face din nou gri, ca butonul Înainte al browserului. Și el vă întreabă întâi, dacă aveți modificări nesalvate.
+
 La capătul din dreapta al barei stă „?”, ajutorul ecranului (secțiunea [[start-help]]).
 
-![2.2 Bara de navigare: „Înapoi”, drumul până la ecran și „?”](breadcrumb.png){#fig-breadcrumb}
+![2.2 Bara de navigare: „Înapoi”, „Înainte”, drumul până la ecran și „?”](breadcrumb.png){#fig-breadcrumb}
 
 ## 2.4 „Recente” {#start-recent}
 

@@ -135,7 +135,7 @@ Each new property takes its owner's name as its nickname, and the owner is linke
 
 ### 9.2.5 The calculation history {#tools-side-road-history}
 
-The history icon, on the „Calculation of a Side Road” screen, opens „Calculation History”: one row per calculation, with „Code”, „Algorithm” („Side road”), „Parcels” (how many properties it created), „Group”, „Status”, „Created by” and „Date”. „Back to Calculation” takes you back.
+The history icon, the only one on the „Calculation of a Side Road” screen, beside the title, opens „Calculation History”: one row per calculation, with „Code”, „Algorithm” („Side road”), „Parcels” (how many properties it created), „Group”, „Status”, „Created by” and „Date”. „Back to Calculation” takes you back.
 
 „Details”, on a row, opens „Calculation Detail”: „Calculation parameters”, „Group description”, „Calculation steps” (the table of owners), „Map preview” (the slices, in the owners' colours) and „Created parcels” — each property, with „Role” („Owner parcel” or „Common road”) and „View property”. A property deleted since shows „(deleted)”. Under the header, the page says which property was divided.
 

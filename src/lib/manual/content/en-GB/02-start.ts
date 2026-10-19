@@ -40,9 +40,11 @@ Above every screen, the navigation bar shows where you are: „Home”, then the
 
 The bar's first button, „Back”, returns you to the screen before. If you changed something and did not save it, the application asks first: „Cancel” keeps you on the screen with what you typed, and „Discard” leaves without saving.
 
+Right beside it, „Forward” goes the other way. Once you have gone back with „Back” — or with the browser's own back button —, it takes you again to the screen you left. Until then it is grey and cannot be pressed, and a new screen you open makes it grey again, like the browser's forward button. It too asks first when you have unsaved changes.
+
 At the right-hand end of the bar is „?”, the screen's help (section [[start-help]]).
 
-![2.2 The navigation bar: „Back”, the way to the screen, and „?”](breadcrumb.png){#fig-breadcrumb}
+![2.2 The navigation bar: „Back”, „Forward”, the way to the screen, and „?”](breadcrumb.png){#fig-breadcrumb}
 
 ## 2.4 „Recently viewed” {#start-recent}
 

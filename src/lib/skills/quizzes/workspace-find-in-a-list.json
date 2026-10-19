@@ -264,6 +264,38 @@
               "en": "The list cannot be filtered by tarla"
             }
           ]
+        },
+        {
+          "id": "a8",
+          "section": "documents-list",
+          "ro": {
+            "question": "Pe „Acte”, la „Tip document:”, vreți să vedeți doar două tipuri. Cum faceți, fără să debifați zeci de tipuri?",
+            "explanation": "Lista de bife rămâne deschisă cât bifați și debifați, chiar și după ce debifați „Toate tipurile”, iar lista actelor urmează fiecare bifă."
+          },
+          "en": {
+            "question": "On „Acte”, at „Tip document:”, you want to see only two types. How do you do it without unticking dozens of types?",
+            "explanation": "The list of tick boxes stays open while you tick and untick, also after you untick „Toate tipurile”, and the list of documents follows each tick."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Debifați „Toate tipurile”, apoi bifați cele două",
+              "en": "You untick „Toate tipurile”, then tick the two"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Debifați „Toate tipurile”; lista se închide, așa că o redeschideți la fiecare tip",
+              "en": "You untick „Toate tipurile”; the list closes, so you reopen it for each type"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Scrieți cele două nume în caseta de căutare a actelor",
+              "en": "You type the two names in the documents' search box"
+            }
+          ]
         }
       ]
     },
@@ -527,6 +559,38 @@
               "correct": false,
               "ro": "Lista cere mai întâi să confirmați",
               "en": "The list first asks you to confirm"
+            }
+          ]
+        },
+        {
+          "id": "b8",
+          "section": "documents-list",
+          "ro": {
+            "question": "Lista de bife de la „Tip document:” este deschisă, iar tipurile sunt bifate cum vă trebuie. Cum o închideți?",
+            "explanation": "Lista de bife se închide la un clic în afara ei, la tasta Escape sau la butonul ei; o bifă n-o închide."
+          },
+          "en": {
+            "question": "The tick boxes of „Tip document:” are open, and the types are ticked as you need. How do you close them?",
+            "explanation": "The list of tick boxes closes on a click outside it, the Escape key or its button; a tick does not close it."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Bifați încă un tip: orice bifă o închide",
+              "en": "You tick one more type: any tick closes it"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Un clic în afara ei, Escape sau butonul ei",
+              "en": "A click outside it, Escape or its button"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Reîncărcați pagina; altfel rămâne deschisă până plecați de pe „Acte”",
+              "en": "You reload the page; otherwise it stays open until you leave „Acte”"
             }
           ]
         }

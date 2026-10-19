@@ -184,6 +184,8 @@ The „Map” tile draws the parcel. At its top right, on one line, it has:
 - „Show Angles” — shows the corners' angles; pressed again, it becomes „Hide Angles”;
 - „STR” and „SAT” — the street map or the satellite image.
 
+The property's corners are small blue dots, the colour of its sides, as on the full map (section [[map-what]]). When you move the mouse over a row of „Corners”, its corner gets a ring around it.
+
 Below the map is „Navigate” (section [[properties-navigate]]).
 
 ### 5.4.3 Drawing and dragging corners {#properties-corners-draw}
@@ -197,7 +199,9 @@ A corner placed wrongly is corrected by dragging it with the mouse on the map. T
 
 ### 5.4.4 The expanded map {#properties-corners-expanded}
 
-„Expand map” opens the same map on the whole screen, with „Draw”, „Show Angles” and „STR” / „SAT”. A corner drawn here is the property's corner. „Collapse” or the Escape key closes the expanded map and takes you back to the tile, with the drawing kept.
+„Expand map” opens the map on the whole screen, centred on the property and at the tile's scale, so the property is the same size as there. The property is red, with its corners red, and around it stand all the other properties in the archive, blue, as the full map shows them — from afar, drops (section [[map-what]]). The other properties are only to look at: a click on them does nothing.
+
+The expanded map has „Draw”, „Show Angles” and „STR” / „SAT”. A corner drawn or dragged here is this property's corner. „Collapse” or the Escape key closes the expanded map and takes you back to the tile, with the drawing kept.
 
 ### 5.4.5 The „Street View” tile {#properties-corners-street-view}
 

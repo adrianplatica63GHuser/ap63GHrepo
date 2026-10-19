@@ -368,8 +368,8 @@
             {
               "id": "o1",
               "correct": false,
-              "ro": "„Vezi istoricul calculului”, care îl lasă să mute drumul pe pagina calculului.",
-              "en": "„Vezi istoricul calculului”, which lets him move the road on the calculation's page."
+              "ro": "„Istoricul calculelor”, unde mută drumul chiar pe rândul calculului.",
+              "en": "„Istoricul calculelor”, where he moves the road right on the calculation's row."
             },
             {
               "id": "o2",

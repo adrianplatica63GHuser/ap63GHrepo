@@ -232,6 +232,38 @@
               "en": "He requests access from the sign-in page, and the administrator approves"
             }
           ]
+        },
+        {
+          "id": "a7",
+          "section": "start-breadcrumb",
+          "ro": {
+            "question": "Ați deschis o persoană din listă, apoi v-ați întors la listă cu „Înapoi”. Cum ajungeți din nou la persoană, fără s-o căutați?",
+            "explanation": "După un pas înapoi, „Înainte”, chiar în dreapta lui „Înapoi”, devine activ și vă duce la ecranul de pe care ați plecat; până atunci este gri."
+          },
+          "en": {
+            "question": "You opened a person from the list, then went back to the list with „Înapoi”. How do you get to the person again without searching for her?",
+            "explanation": "After a step back, „Înainte” (forward), right beside „Înapoi”, becomes active and takes you to the screen you left; until then it is grey."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Apăsați „Înainte”, în dreapta lui „Înapoi”",
+              "en": "You press „Înainte”, right of „Înapoi”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Apăsați din nou „Înapoi”, care acum merge înainte",
+              "en": "You press „Înapoi” again, which now goes forward"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "O alegeți din „Recente”: alt drum înapoi la ea nu există",
+              "en": "You pick her from „Recente”: there is no other way back to her"
+            }
+          ]
         }
       ]
     },
@@ -451,6 +483,38 @@
               "correct": false,
               "ro": "Se arată obiectele schimbate azi de toți utilizatorii arhivei",
               "en": "The objects changed today by all the archive's users are shown"
+            }
+          ]
+        },
+        {
+          "id": "b7",
+          "section": "start-breadcrumb",
+          "ro": {
+            "question": "„Înainte” este activ, după un „Înapoi”. Deschideți din bara laterală „Acte”. Ce se întâmplă cu „Înainte”?",
+            "explanation": "Ca butonul Înainte al browserului, „Înainte” se face gri când deschideți un ecran nou: drumul înainte s-a încheiat."
+          },
+          "en": {
+            "question": "„Înainte” is active, after an „Înapoi”. You open „Acte” from the sidebar. What happens to „Înainte”?",
+            "explanation": "Like the browser's forward button, „Înainte” turns grey when you open a new screen: the way forward has ended."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Rămâne activ și duce tot la ecranul de dinainte",
+              "en": "It stays active and still leads to the earlier screen"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Se face gri: un ecran nou încheie drumul înainte",
+              "en": "It turns grey: a new screen ends the way forward"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Dispare din bară până când reîncărcați pagina",
+              "en": "It disappears from the bar until you reload the page"
             }
           ]
         }

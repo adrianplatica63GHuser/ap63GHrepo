@@ -302,6 +302,38 @@
               "en": "The tarla you chose with the tarla shown on the map."
             }
           ]
+        },
+        {
+          "id": "a9",
+          "section": "properties-corners-map",
+          "ro": {
+            "question": "Cum arată colțurile unei proprietăți pe fișa „Hartă”?",
+            "explanation": "Colțurile sunt puncte mici, albastre, de culoarea laturilor, ca pe harta completă; colțul al cărui rând îl atingeți cu mouse-ul în „Puncte de contur” primește un cerc în jur."
+          },
+          "en": {
+            "question": "What do a property's corners look like on the „Hartă” tile?",
+            "explanation": "The corners are small blue dots, the colour of the sides, as on the full map; the corner whose row you touch with the mouse in „Puncte de contur” gets a ring around it."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Puncte roșii mari, cu margine albă",
+              "en": "Large red dots with a white border"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Puncte mici albastre, de culoarea laturilor",
+              "en": "Small blue dots, the colour of the sides"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Cercuri verzi, cu unghiul scris mereu lângă fiecare",
+              "en": "Green circles, each always with its angle written beside it"
+            }
+          ]
         }
       ]
     },
@@ -603,6 +635,38 @@
               "correct": false,
               "ro": "În câmpul „Note”, unde aplicația o scrie singură.",
               "en": "In the „Note” field, where the application writes it by itself."
+            }
+          ]
+        },
+        {
+          "id": "b9",
+          "section": "properties-corners-expanded",
+          "ro": {
+            "question": "Pe fișa „Hartă” a unei proprietăți apăsați „Hartă extinsă”. Ce vedeți?",
+            "explanation": "„Hartă extinsă” deschide harta pe tot ecranul, centrată pe proprietate și la scara de pe fișă; proprietatea este roșie, iar toate celelalte proprietăți stau în jur, albastre, doar de privit."
+          },
+          "en": {
+            "question": "On a property's „Hartă” tile you press „Hartă extinsă”. What do you see?",
+            "explanation": "„Hartă extinsă” opens the map on the whole screen, centred on the property and at the tile's scale; the property is red, and every other property stands around it, blue, only to look at."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Doar această proprietate, mărită cât tot ecranul",
+              "en": "Only this property, enlarged to fill the screen"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Proprietatea roșie la mijloc, la aceeași scară, cu celelalte în jur",
+              "en": "The property red in the middle, at the same scale, the others around it"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Harta completă a tuturor proprietăților, cu aceasta clipind verde de trei ori",
+              "en": "The full map of every property, with this one blinking green three times"
             }
           ]
         }
