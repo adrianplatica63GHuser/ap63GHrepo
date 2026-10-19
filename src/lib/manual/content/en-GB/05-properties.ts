@@ -108,13 +108,19 @@ In „Reference Data” → „Tarla Codes”, each tarla has a „Locality” a
 
 Each tarla has a page of its own, „Tarlale” → the tarla, opened with „Open the tarla's page” from „Tarla Codes” or from the property. On the page:
 
-- at the top, the box „About tarla boundaries”: which sources exist for tarla boundaries and what is not available. It also stands above the „Tarlale” list, because it is what to read before looking for a boundary;
-- „Code”, „Locality”, „County”, „Description” and „Notes”, saved with „Save”;
-- „Outline”: a map with the tarla's outline and its properties, then the tarla's corners, optional, entered as on a property (section [[properties-corners-table]]). Without corners, the outline is the shape around the tarla's properties (section [[map-what-tarlale]]);
+- the first tile, „About tarla boundaries”: which sources exist for tarla boundaries and what is not available. On the „Tarlale” list the same box stands above the list, as wide as the list, because it is what to read before looking for a boundary;
+- „Code”, „Locality”, „County”, „Description” and „Notes”;
+- „Outline”: a map with the tarla's outline and its properties, then the tarla's corners, optional, entered as on a property (section [[properties-corners-table]]). Each corner stands on a single row, with its four buttons — „Move up”, „Move down”, „Edit”, „Delete” — side by side. Without corners, the outline is the shape around the tarla's properties (section [[map-what-tarlale]]);
 - the plans parcelare linked to the tarla at import and the parcels they draw: number, area and use, without owners (section [[import-scanning-tarla]]);
 - the properties on the tarla and the documents linked to them. Apart from its plans, a tarla has no documents, groups or tags of its own.
 
-These parts of the page are tiles, as on a property's screen: you drag them elsewhere, and „Default”, at the top right, puts them back; where they stand is kept in your browser. On a large window, „Tarla”, „Outline”, the plans and the parcels stand three to a row, and the properties and the documents two. The list of properties and the list of documents stop at two thirds of the window's height and scroll inside their tile, with the row of headings always at the top. „Save” stands above the tiles, because it saves two of them: the tarla's data and its corners.
+These parts of the page are tiles, as on a property's screen: you drag them elsewhere, and „Default”, at the top right, puts them back; where they stand is kept in your browser. On a large window, „About tarla boundaries”, „Tarla”, „Outline”, the plans and the parcels stand three to a row, and the properties and the documents two. The list of properties, the list of parcels and the list of documents stop at two thirds of the window's height and scroll inside their tile, with the row of headings always at the top.
+
+At the bottom, under the last tile and under a line, stand „Save”, „Delete” and „Cancel”, as on a property's screen — a floppy disk, a bin, an X:
+
+- „Save” writes the tarla's data and its corners together; beside the buttons appears „Saved.”, or why the save was refused;
+- „Cancel” puts back what was saved and leaves you on the page. While you have changed nothing, it cannot be pressed;
+- „Delete” opens the same window as „Reference Data” → „Tarla Codes” (section [[admin-reference-data-values]]): a tarla with properties, plans or parcels on it cannot be deleted until you move them onto another tarla; one nothing depends on is deleted, and the page takes you back to the „Tarlale” list.
 
 An import adds its tarla codes in the locality given in the property step: „The tarlale's locality” is read from the name of the folder chosen, for instance Clinceni from a folder named CLINCENI.3, and can be changed (section [[import-overview]]).
 

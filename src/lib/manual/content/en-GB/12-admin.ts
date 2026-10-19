@@ -15,6 +15,8 @@ The screen is a single page (Figure [[fig-admin-value-lists]]). On the left are 
 
 A page with several lists shows them as tiles: they stand side by side as far as they fit, each as wide as its columns need, and can be dragged elsewhere, as on a property's screen. „Default”, at the top right, puts them back; where they stand is kept in your browser.
 
+Every list stands the same distance from its tile's edges — left, right and bottom —, that of „Use Categories”. Where the tile is wider than its columns need, the list widens to it, and the width gained goes to the description or, where the list has none, to the name; on „Citizenship” and „Relationship to the business” the tile narrows around the list. „Person Roles” and the two „Links” pages keep their tiles.
+
 ![12.1 „Reference Data”](admin-value-lists.png){#fig-admin-value-lists}
 
 | Group | The lists |
@@ -112,7 +114,9 @@ Groups, stamps and tags are put on objects from each object's „Tags and groups
 
 ### 12.3.1 Groups {#admin-groups-groups}
 
-„Administration” → „Groups” shows the panel „Ce este un Grup?” (what is a group?), „Add”, the number of groups, for instance „4 groups”, and the table „Code” · „Description”. Each row has the group's code, with the number of members in brackets, the kind of objects it gathers, the description, „Edit” and „Delete”.
+„Administration” → „Groups” shows the panel „Ce este un Grup?” (what is a group?), „Add”, the search box, the number of groups, for instance „4 groups”, and the table „Code” · „Description”. Each row has the group's code, with the number of members in brackets, the kind of objects it gathers, the description, „Edit” and „Delete”. The list stops at two thirds of the window's height and scrolls inside its tile, with the row of headings always at the top.
+
+The box beside „Add”, „search by Code or Description”, finds a group by its code or by the words of its description — every word typed, in any order, with or without diacritics; a code typed whole comes first. While you type, the count says how many groups show out of how many there are, for instance „1 of 4”; when none matches, the table says „No group matches the search.”.
 
 1. „Add” opens „Add new group”. Choose „Target” — „Property”, „Physical person”, „Juridical person” or „Document” —, write „Description” and press „Save”. You stay on the list, with the new group first; the code, of the form GRP-001, is given on saving.
 2. „Edit” opens „Group GRP-…”, with three tiles: „Group identity” („Target” and „Code” read-only, „Description”), „Members available to include” and „In Group already”.
@@ -123,7 +127,9 @@ The screen's tiles can be moved by dragging them by an empty spot, and „Defaul
 
 ### 12.3.2 Stamps {#admin-groups-stamps}
 
-„Administration” → „Stamps” shows the panel „Ce este o Ștampilă?” (what is a stamp?), the number of stamps and the table „Stamp” · „Members”: each row has the stamp's code and description, its note, how many objects carry it, „Apply” and „Delete”.
+„Administration” → „Stamps” shows the panel „Ce este o Ștampilă?” (what is a stamp?), the search box, the number of stamps and the table „Stamp” · „Members”: each row has the stamp's code and description, its note, how many objects carry it, „Apply” and „Delete”. The list stops at two thirds of the window's height and scrolls inside its tile, with the row of headings always at the top.
+
+The box „search by Code or Short description” finds a stamp by its code or by the words of its short description, as with groups: every word, in any order, with or without diacritics, and the count says how many show out of how many there are; when none matches, „No stamp matches the search.”.
 
 1. The „+” button, „Create stamp”, opens the form: „Short description” (required, at most 200 characters) and „Notes”. The code, of the form STMP-AAA, is given on saving. „Save” leaves you on the list, with the new stamp first.
 2. „Apply” opens „Apply stamp: …”, with four tiles: „Stamp description”, „Object type”, „Objects available to stamp” and „Objects already stamped”.

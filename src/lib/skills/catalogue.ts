@@ -267,7 +267,8 @@ export const SKILLS: readonly Skill[] = [
     // Slice #39.67: a tarla belongs to a locality — its pages and the case of two T50.
     screens: ["properties-list", "property-detail", "tarla-list", "tarla-detail"],
     cases: ["TC-PROP-01", "TC-PROP-05", "TC-PROP-11", "TC-PROP-12", "TC-PROP-16"],
-    manual: ["properties-add", "properties-type", "properties-add-one-parcel", "properties-add-cadastral", "properties-type-hidden"],
+    // #39.90: and the tarla page's buttons at the bottom („Anulează", „Șterge"), asked in quiz 1.7.
+    manual: ["properties-add", "properties-type", "properties-add-one-parcel", "properties-add-cadastral", "properties-type-hidden", "properties-tarla"],
   },
   {
     key: "properties-read-the-map",
@@ -672,8 +673,8 @@ export const SKILLS: readonly Skill[] = [
     path: "links",
     name: { ro: "Strânge obiecte în grupuri și aplică-le ștampile", en: "Gather objects into groups and stamp them" },
     description: {
-      ro: "Faci un grup de proprietăți — și de pe hartă, cu „Selectează” —, vezi câți membri are și de ce o proprietate intră în cel mult trei grupuri, creezi o ștampilă și o aplici unei persoane, apoi le regăsești din ambele capete.",
-      en: "Make a group of properties — from the map too, with „Selectează” —, see how many members it has and why a property joins at most three groups, create a stamp and apply it to a person, then find both again from either end.",
+      ro: "Faci un grup de proprietăți — și de pe hartă, cu „Selectează” —, vezi câți membri are și de ce o proprietate intră în cel mult trei grupuri, creezi o ștampilă și o aplici unei persoane, apoi le regăsești din ambele capete și din căutarea listelor lor, după cod sau cuvinte.",
+      en: "Make a group of properties — from the map too, with „Selectează” —, see how many members it has and why a property joins at most three groups, create a stamp and apply it to a person, then find both again from either end and from their lists' search, by code or words.",
     },
     predecessors: ["workspace-find-in-a-list", "links-read-related-tile"],
     screens: ["admin-groups", "admin-group-editor", "admin-stamps", "admin-stamp-applicator"],

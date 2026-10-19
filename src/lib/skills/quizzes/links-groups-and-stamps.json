@@ -296,6 +296,44 @@
               "en": "Nothing: the stamp has gone from every object"
             }
           ]
+        },
+        {
+          "id": "a9",
+          "section": "admin-groups-groups",
+          "ro": {
+            "question": "Pe „Grupuri” căutați grupul cu descrierea „Dosare succesorale. Certificate de moștenitor”, dar vă amintiți doar două cuvinte din ea. Ce scrieți în „caută după Cod sau Descriere”?",
+            "explanation": "Caseta găsește un grup după cod sau după cuvintele descrierii: toate cuvintele scrise, în orice ordine, cu sau fără diacritice. „mostenitor dosare” îl găsește."
+          },
+          "en": {
+            "question": "On „Grupuri” (groups) you look for the group described „Dosare succesorale. Certificate de moștenitor”, but you remember only two words of it. What do you type in „caută după Cod sau Descriere” (search by code or description)?",
+            "explanation": "The box finds a group by its code or by the words of its description: every word typed, in any order, with or without diacritics. „mostenitor dosare” finds it."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Doar codul grupului: descrierea nu se caută",
+              "en": "Only the group's code: the description is not searched"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "„mostenitor dosare”, în orice ordine, fără diacritice",
+              "en": "„mostenitor dosare”, in any order, without diacritics"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Descrierea întreagă, exact cum a fost scrisă, cu diacritice",
+              "en": "The whole description, exactly as it was written"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Dosare” în „Căutare globală”, la „Cod grup”",
+              "en": "„Dosare” in „Căutare globală” (global search), under „Cod grup” (group code)"
+            }
+          ]
         }
       ]
     },
@@ -597,6 +635,38 @@
               "correct": false,
               "ro": "2, doar persoanele, care au fost ștampilate primele",
               "en": "2, only the persons, who were stamped first"
+            }
+          ]
+        },
+        {
+          "id": "b9",
+          "section": "admin-groups-stamps",
+          "ro": {
+            "question": "Pe „Ștampile”, după ce scrieți ceva în caseta de căutare, lângă tabel scrie „2 din 26”. Ce înseamnă?",
+            "explanation": "Cât timp scrieți în casetă, numărul spune câte ștampile se văd din câte sunt: 2 se potrivesc căutării, din 26. Ștergeți textul și apare iar „26 ștampile”."
+          },
+          "en": {
+            "question": "On „Ștampile” (stamps), after you type something in the search box, beside the table it reads „2 din 26” (2 of 26). What does it mean?",
+            "explanation": "While you type in the box, the count says how many stamps show out of how many there are: 2 match the search, out of 26. Clear the text and „26 ștampile” (26 stamps) appears again."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Două ștampile sunt puse pe 26 de obiecte",
+              "en": "Two stamps are put on 26 objects"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Pagina 2 din 26 a listei",
+              "en": "Page 2 of the list's 26"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Se văd 2 ștampile din cele 26",
+              "en": "2 stamps of the 26 show"
             }
           ]
         }

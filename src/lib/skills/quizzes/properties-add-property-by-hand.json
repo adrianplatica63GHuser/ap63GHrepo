@@ -5,7 +5,8 @@
     "properties-type",
     "properties-add-one-parcel",
     "properties-add-cadastral",
-    "properties-type-hidden"
+    "properties-type-hidden",
+    "properties-tarla"
   ],
   "variants": [
     {
@@ -230,6 +231,44 @@
               "correct": false,
               "ro": "Se deschide „Hartă completă”, cu proprietatea nouă în centru și numărul ei de cadastru deasupra.",
               "en": "„Hartă completă” (the full map) opens, with the new property in the centre and its cadastral number above it."
+            }
+          ]
+        },
+        {
+          "id": "a7",
+          "section": "properties-tarla",
+          "ro": {
+            "question": "Pe pagina tarlalei TC16 schimbați „Descriere”, apoi vă răzgândiți. Ce apăsați, ca să rămână cum era salvată?",
+            "explanation": "Jos, sub ultima fișă, „Anulează” pune la loc ce era salvat — datele tarlalei și colțurile ei — și vă lasă pe pagină. Cât timp nu ați schimbat nimic, nu se poate apăsa."
+          },
+          "en": {
+            "question": "On tarla TC16's page you change „Descriere” (description), then change your mind. What do you press, so that it stays as it was saved?",
+            "explanation": "At the bottom, under the last tile, „Anulează” (cancel) puts back what was saved — the tarla's data and its corners — and leaves you on the page. While you have changed nothing, it cannot be pressed."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Salvează”, cu „Descriere” golită de mână",
+              "en": "„Salvează” (save), with „Descriere” emptied by hand"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "„Anulează”, jos, sub ultima fișă",
+              "en": "„Anulează” (cancel), at the bottom, under the last tile"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Implicit”, din dreapta sus",
+              "en": "„Implicit” (default), at the top right"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Șterge”, care șterge doar schimbarea nesalvată",
+              "en": "„Șterge” (delete), which deletes only the unsaved change"
             }
           ]
         }
@@ -457,6 +496,38 @@
               "correct": true,
               "ro": "Jos de tot, sub hartă: o dischetă, un coș și un X.",
               "en": "At the very bottom, below the map: a floppy disk, a bin and an X."
+            }
+          ]
+        },
+        {
+          "id": "b7",
+          "section": "properties-tarla",
+          "ro": {
+            "question": "Pe pagina unei tarlale pe care stă o proprietate apăsați „Șterge”. Ce se întâmplă?",
+            "explanation": "„Șterge” deschide aceeași fereastră ca în „Indicative Tarla”: tarla nu se poate șterge cât timp o proprietate, un plan sau o parcelă stă pe ea; le mutați întâi pe altă tarla, la „Mutați-le pe:”."
+          },
+          "en": {
+            "question": "On the page of a tarla a property stands on you press „Șterge” (delete). What happens?",
+            "explanation": "„Șterge” opens the same window as in „Indicative Tarla” (tarla codes): the tarla cannot be deleted while a property, plan or parcel stands on it; you first move them onto another tarla, at „Mutați-le pe:” (move them to)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Nu se poate: întâi mutați proprietatea pe altă tarla",
+              "en": "It cannot: first move the property onto another tarla"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Tarla se șterge, iar proprietatea rămâne fără nicio tarla",
+              "en": "The tarla is deleted, and the property is left without a tarla"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Tarla se șterge împreună cu proprietatea de pe ea",
+              "en": "The tarla is deleted together with the property on it"
             }
           ]
         }

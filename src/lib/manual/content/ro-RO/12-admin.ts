@@ -15,6 +15,8 @@ Ecranul este o singură pagină (Figura [[fig-admin-value-lists]]). În stânga 
 
 O pagină cu mai multe liste le arată ca fișe: stau una lângă alta cât încap, fiecare cât îi cer coloanele, și se pot trage în alt loc, ca pe ecranul unei proprietăți. „Implicit”, din dreapta sus, le pune la loc; locul lor se păstrează în browserul vostru.
 
+Fiecare listă stă la aceeași distanță de marginile fișei ei — stânga, dreapta și jos —, cea a „Categorii Folosință”. Unde fișa e mai lată decât îi cer coloanele, lista se lărgește până acolo, iar lățimea câștigată o primește descrierea sau, unde lista nu are descriere, denumirea; la „Cetățenie” și „Relația cu firma” fișa se îngustează în jurul listei. „Roluri Persoane” și cele două „Legături” își păstrează fișele.
+
 ![12.1 „Date de referință”](admin-value-lists.png){#fig-admin-value-lists}
 
 | Grupa | Listele |
@@ -112,7 +114,9 @@ Grupurile, ștampilele și etichetele se pun pe obiecte din fișa „Etichete ș
 
 ### 12.3.1 Grupurile {#admin-groups-groups}
 
-„Administrare” → „Grupuri” arată panoul „Ce este un Grup?”, „Adaugă”, numărul grupurilor, de exemplu „4 grupuri”, și tabelul „Cod” · „Descriere”. Fiecare rând are codul grupului, cu numărul membrilor în paranteză, felul obiectelor pe care le strânge, descrierea, „Editează” și „Șterge”.
+„Administrare” → „Grupuri” arată panoul „Ce este un Grup?”, „Adaugă”, caseta de căutare, numărul grupurilor, de exemplu „4 grupuri”, și tabelul „Cod” · „Descriere”. Fiecare rând are codul grupului, cu numărul membrilor în paranteză, felul obiectelor pe care le strânge, descrierea, „Editează” și „Șterge”. Lista se oprește la două treimi din înălțimea ferestrei și se derulează în fișa ei, cu rândul de titluri mereu sus.
+
+Caseta de lângă „Adaugă”, „caută după Cod sau Descriere”, găsește un grup după cod sau după cuvintele descrierii — toate cuvintele scrise, în orice ordine, cu sau fără diacritice; un cod scris întreg vine primul. Cât timp scrieți, numărul spune câte grupuri se văd din câte sunt, de exemplu „1 din 4”; dacă nu se potrivește niciunul, tabelul spune „Niciun grup nu se potrivește căutării.”.
 
 1. „Adaugă” deschide „Adaugă grup nou”. Alegeți „Țintă” — „Proprietate”, „Persoană fizică”, „Persoană juridică” sau „Document” —, scrieți „Descriere” și apăsați „Salvează”. Rămâneți pe listă, cu grupul nou primul; codul, de forma GRP-001, se dă la salvare.
 2. „Editează” deschide „Grup GRP-…”, cu trei fișe: „Identitatea grupului” („Țintă” și „Cod” doar de citit, „Descriere”), „Membri disponibili pentru includere” și „Deja în grup”.
@@ -123,7 +127,9 @@ Fișele ecranului se pot muta trăgându-le de un loc gol, iar „Implicit”, s
 
 ### 12.3.2 Ștampilele {#admin-groups-stamps}
 
-„Administrare” → „Ștampile” arată panoul „Ce este o Ștampilă?”, numărul ștampilelor și tabelul „Ștampilă” · „Elemente”: fiecare rând are codul și descrierea ștampilei, nota ei, câte obiecte o poartă, „Aplică” și „Șterge”.
+„Administrare” → „Ștampile” arată panoul „Ce este o Ștampilă?”, caseta de căutare, numărul ștampilelor și tabelul „Ștampilă” · „Elemente”: fiecare rând are codul și descrierea ștampilei, nota ei, câte obiecte o poartă, „Aplică” și „Șterge”. Lista se oprește la două treimi din înălțimea ferestrei și se derulează în fișa ei, cu rândul de titluri mereu sus.
+
+Caseta „caută după Cod sau Descriere scurtă” găsește o ștampilă după cod sau după cuvintele descrierii scurte, ca la grupuri: toate cuvintele, în orice ordine, cu sau fără diacritice, iar numărul spune câte se văd din câte sunt; dacă nu se potrivește niciuna, „Nicio ștampilă nu se potrivește căutării.”.
 
 1. Butonul cu „+”, „Creare ștampilă”, deschide formularul: „Descriere scurtă” (obligatorie, cel mult 200 de caractere) și „Note”. Codul, de forma STMP-AAA, se dă la salvare. „Salvează” vă lasă pe listă, cu ștampila nouă prima.
 2. „Aplică” deschide „Aplică ștampila: …”, cu patru fișe: „Descrierea ștampilei”, „Tip element”, „Elemente disponibile pentru ștampilare” și „Elemente deja ștampilate”.

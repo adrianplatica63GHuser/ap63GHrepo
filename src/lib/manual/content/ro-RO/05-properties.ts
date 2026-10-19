@@ -108,13 +108,19 @@ Numerele de tarla o iau de la capăt în fiecare localitate: T50 din Bragadiru n
 
 Fiecare tarla are o pagină a ei, „Tarlale” → tarla, deschisă cu „Deschide pagina tarlalei” din „Indicative Tarla” sau de pe proprietate. Pe pagină:
 
-- sus, chenarul „Despre limitele tarlalelor”: ce surse există pentru limitele tarlalelor și ce nu este disponibil. Stă și deasupra listei „Tarlale”, pentru că este informația de citit înainte de a căuta o limită;
-- „Indicativ”, „Localitate”, „Județ”, „Descriere” și „Note”, salvate cu „Salvează”;
-- „Contur”: o hartă cu conturul tarlalei și proprietățile ei, apoi colțurile tarlalei, opționale, introduse ca la o proprietate (secțiunea [[properties-corners-table]]). Fără colțuri, conturul este forma din jurul proprietăților tarlalei (secțiunea [[map-what-tarlale]]);
+- prima fișă, „Despre limitele tarlalelor”: ce surse există pentru limitele tarlalelor și ce nu este disponibil. Pe lista „Tarlale” același chenar stă deasupra listei, cât lista de lat, pentru că este informația de citit înainte de a căuta o limită;
+- „Indicativ”, „Localitate”, „Județ”, „Descriere” și „Note”;
+- „Contur”: o hartă cu conturul tarlalei și proprietățile ei, apoi colțurile tarlalei, opționale, introduse ca la o proprietate (secțiunea [[properties-corners-table]]). Fiecare colț stă pe un singur rând, cu cele patru butoane ale lui — „Mută mai sus”, „Mută mai jos”, „Editează”, „Șterge” — unul lângă altul. Fără colțuri, conturul este forma din jurul proprietăților tarlalei (secțiunea [[map-what-tarlale]]);
 - planurile parcelare legate de tarla la import și parcelele desenate de ele: numărul, suprafața și folosința, fără proprietari (secțiunea [[import-scanning-tarla]]);
 - proprietățile de pe tarla și actele legate de ele. În afară de planuri, o tarla nu are acte, grupuri sau etichete ale ei.
 
-Aceste părți ale paginii sunt fișe, ca pe ecranul unei proprietăți: le trageți în alt loc, iar „Implicit”, din dreapta sus, le pune la loc; locul lor se păstrează în browserul vostru. Pe o fereastră mare, „Tarla”, „Contur”, planurile și parcelele stau câte trei pe rând, iar proprietățile și actele câte două. Lista proprietăților și cea a actelor se opresc la două treimi din înălțimea ferestrei și se derulează în fișa lor, cu rândul de titluri mereu sus. „Salvează” stă deasupra fișelor, pentru că salvează două dintre ele: datele tarlalei și colțurile ei.
+Aceste părți ale paginii sunt fișe, ca pe ecranul unei proprietăți: le trageți în alt loc, iar „Implicit”, din dreapta sus, le pune la loc; locul lor se păstrează în browserul vostru. Pe o fereastră mare, „Despre limitele tarlalelor”, „Tarla”, „Contur”, planurile și parcelele stau câte trei pe rând, iar proprietățile și actele câte două. Lista proprietăților, cea a parcelelor și cea a actelor se opresc la două treimi din înălțimea ferestrei și se derulează în fișa lor, cu rândul de titluri mereu sus.
+
+Jos, sub ultima fișă și sub o linie, stau „Salvează”, „Șterge” și „Anulează”, ca pe ecranul unei proprietăți — o dischetă, un coș, un X:
+
+- „Salvează” scrie datele tarlalei și colțurile ei împreună; lângă butoane apare „Salvat.”, sau motivul pentru care salvarea a fost refuzată;
+- „Anulează” pune la loc ce era salvat și vă lasă pe pagină. Cât timp nu ați schimbat nimic, nu se poate apăsa;
+- „Șterge” deschide aceeași fereastră ca în „Date de referință” → „Indicative Tarla” (secțiunea [[admin-reference-data-values]]): o tarla pe care stau proprietăți, planuri sau parcele nu se poate șterge până nu le mutați pe altă tarla; una de care nu depinde nimic se șterge, iar pagina vă întoarce la lista „Tarlale”.
 
 Un import adaugă codurile de tarla în localitatea dată în pasul proprietăților: „Localitatea tarlalelor” este citită din numele dosarului ales, de exemplu Clinceni dintr-un dosar numit CLINCENI.3, și se poate schimba (secțiunea [[import-overview]]).
 
