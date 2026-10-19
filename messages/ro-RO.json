@@ -3817,7 +3817,7 @@
       "title": "Ce este o Ștampilă?",
       "body1": "O ștampilă definește o caracteristică pe termen lung sau permanentă a obiectelor — persoane, proprietăți sau documente, indiferent de tip. De exemplu, o inițiativă de doi ani care implică multe persoane, proprietăți și documente primește o ștampilă specifică.",
       "body2": "Spre deosebire de grupuri, o ștampilă poate fi aplicată simultan pe orice combinație de tipuri de entități.",
-      "body3": "Ștampilele pot descrie și calificatori subiectivi: nivelul de încredere ATT, potențialul unui obiect, prioritatea sau orice altă etichetă de evaluare personală. Este o practică recomandată să aplici cât mai multe ștampile și să creezi ștampile variate — aceasta adaugă valoare și bogăție utilizării datelor.",
+      "body3": "Ștampilele pot descrie și calificatori subiectivi: nivelul de încredere, potențialul unui obiect, prioritatea sau orice altă etichetă de evaluare personală. Este o practică recomandată să aplici cât mai multe ștampile și să creezi ștampile variate — aceasta adaugă valoare și bogăție utilizării datelor.",
       "codeNote": "Fiecare ștampilă primește un cod unic de trei litere (ex. STMP-AAA) atribuit automat.",
       "seeAlso": "Pentru acțiuni temporare pe un singur tip de obiect, folosește Grupuri."
     }

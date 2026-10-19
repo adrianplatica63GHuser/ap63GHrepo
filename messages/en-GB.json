@@ -3814,12 +3814,12 @@
       "cancel": "Cancel"
     },
     "infoPanel": {
-      "title": "Ce este o Ștampilă?",
-      "body1": "O ștampilă definește o caracteristică pe termen lung sau permanentă a obiectelor — persoane, proprietăți sau documente, indiferent de tip. De exemplu, o inițiativă de doi ani care implică multe persoane, proprietăți și documente primește o ștampilă specifică.",
-      "body2": "Spre deosebire de grupuri, o ștampilă poate fi aplicată simultan pe orice combinație de tipuri de entități.",
-      "body3": "Ștampilele pot descrie și calificatori subiectivi: nivelul de încredere ATT, potențialul unui obiect, prioritatea sau orice altă etichetă de evaluare personală. Este o practică recomandată să aplici cât mai multe ștampile și să creezi ștampile variate — aceasta adaugă valoare și bogăție utilizării datelor.",
-      "codeNote": "Fiecare ștampilă primește un cod unic de trei litere (ex. STMP-AAA) atribuit automat.",
-      "seeAlso": "Pentru acțiuni temporare pe un singur tip de obiect, folosește Grupuri."
+      "title": "What is a Stamp?",
+      "body1": "A stamp marks a long-term or permanent characteristic of objects — people, properties or documents, whatever their type. For example, a two-year initiative involving many people, properties and documents gets a stamp of its own.",
+      "body2": "Unlike groups, a stamp can be applied to any mix of entity types at the same time.",
+      "body3": "Stamps can also describe subjective qualifiers: the level of trust, an object's potential, a priority or any other personal assessment label. It is good practice to apply as many stamps as you can and to create varied ones — it adds value and richness to how the data is used.",
+      "codeNote": "Each stamp gets a unique three-letter code (e.g. STMP-AAA), assigned automatically.",
+      "seeAlso": "For temporary actions on a single type of object, use Groups."
     }
   },
   "group": {
