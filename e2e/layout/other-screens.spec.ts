@@ -224,7 +224,9 @@ test.describe("TC-LAYOUT-01 — Celelalte ecrane, la lățimi fixe", () => {
         mask: (p) => [p.locator('[data-panel="available"] ul'), p.locator('[data-panel="stamped"] ul')],
         unitGrid: true,
       });
-      await screen(page, "tags", "/admin/tags", heading, {
+      // Fixed in passing (#39.89): the cloud, not the heading — the heading is drawn while the tags still load, and a
+      // read then found no width mark at all (runner 20261019T004755Z-646).
+      await screen(page, "tags", "/admin/tags", (p) => p.locator('[data-panel="tag-cloud"]'), {
         // #38.14: the cloud alone — its chips are everyone's tags.
         mask: (p) => [p.locator("[data-tag-chip]")],
         unitGrid: true,

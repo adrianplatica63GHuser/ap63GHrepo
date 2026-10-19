@@ -975,14 +975,17 @@ describe("EVERY OTHER SCREEN FOLLOWS THE SAME RULE (#37.22)", () => {
   it.each(VIEWS.filter(([, src]) => /<table\b/.test(src)))("%s: every table is #37.16's — fixed, from COLUMN, every header marked", (_what, src) => {
     for (const m of src.matchAll(/<table\b/g)) {
       const table = region(src.slice(m.index), "<table", "</table>");
-      expect(table).toMatch(/^<table \{\.\.\.fixedTable\(/);
-      expect(table).toContain("<FixedColumns columns={");
+      // Slice #39.89: „Grupuri" and „Ștampile" draw theirs through `adminListTable` / `AdminListColumns`
+      // (src/components/list/admin-list.tsx) — every column from COLUMN but the description, which takes what the frame
+      // leaves, so a scroll bar comes out of it rather than pushing the buttons out sideways.
+      expect(table).toMatch(/^<table \{\.\.\.(fixedTable|adminListTable)\(/);
+      expect(table).toMatch(/<(FixedColumns|AdminListColumns) columns=\{/);
       expect(table).not.toMatch(/\bw-full\b|whitespace-nowrap/);
       const head = region(table, "<thead", "</thead>");
       const ths = head.match(/<th\b/g) ?? [];
       expect(head.match(/<th\b[^>]*\{\.\.\.columnHead\(/g) ?? []).toHaveLength(ths.length);
     }
-    expect(src).toMatch(/TABLE_FRAME/);
+    expect(src).toMatch(/TABLE_FRAME|ADMIN_LIST_FRAME/);
   });
 
   it("a view is a column as wide as its widest fixed piece, whose prose wraps inside it", () => {
@@ -1219,6 +1222,11 @@ describe("the administration screens on the unit (Slice #37.35)", () => {
   // #38.14: „Etichete" is the cloud alone — no table.
   const LISTS = ["Utilizatori & Acces", "Grupuri", "Ștampile", "Istoricul calculelor"];
   it.each(ADMIN.filter(([w]) => LISTS.includes(w)))("%s: its table fills its tile", (what, src) => {
+    // Slice #39.89: „Grupuri" and „Ștampile" fill theirs as the frame's whole width (`adminListTable`, admin-list.tsx).
+    if (/<table \{\.\.\.adminListTable\(COLUMNS\)\}>/.test(src)) {
+      expect(src).toContain("<AdminListColumns columns={COLUMNS} fill={LIST_FILL} />");
+      return;
+    }
     expect(src).toMatch(/<table \{\.\.\.fixedTable\(/);
     for (const m of src.matchAll(/<table \{\.\.\.fixedTable\(([^)]*)\)\}/g)) {
       expect([what, m[1].split(",").length]).toEqual([what, 3]);
