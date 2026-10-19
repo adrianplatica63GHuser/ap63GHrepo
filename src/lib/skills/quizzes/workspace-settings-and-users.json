@@ -390,6 +390,44 @@
               "en": "The request went to „Istoric” as „Respins”"
             }
           ]
+        },
+        {
+          "id": "a11",
+          "section": "admin-settings-thresholds",
+          "ro": {
+            "question": "Ciprian vrea ca fișele să-i facă loc mai repede când ține una peste alta: după o jumătate de secundă. Ce scrie la „Timp de ținere peste altă fișă”?",
+            "explanation": "„Timp de ținere peste altă fișă” se scrie în secunde, cu virgulă sau punct și cel mult două zecimale, între 0,2 și 10."
+          },
+          "en": {
+            "question": "Ciprian wants tiles to make room sooner when he holds one over another: after half a second. What does he type in „Timp de ținere peste altă fișă”?",
+            "explanation": "„Timp de ținere peste altă fișă” (hold time over another tile) is written in seconds, with a comma or a full stop and at most two decimals, between 0.2 and 10."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "0,5",
+              "en": "0.5"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "500, adică milisecunde",
+              "en": "500, that is milliseconds"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "1, cel mai mic număr întreg permis",
+              "en": "1, the smallest whole number allowed"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "0, ca fișa să facă loc pe loc",
+              "en": "0, so that the tile makes room at once"
+            }
+          ]
         }
       ]
     },
@@ -773,6 +811,44 @@
               "correct": false,
               "ro": "Să-și facă singur contul din „Setări” → „Contul meu”",
               "en": "To make his own account from „Setări” → „Contul meu”"
+            }
+          ]
+        },
+        {
+          "id": "b11",
+          "section": "admin-settings-thresholds",
+          "ro": {
+            "question": "În ce grupă din „Praguri de timp” găsește Ciprian cât timp trebuie ținută o fișă peste alta până când aceea îi face loc?",
+            "explanation": "Al unsprezecelea prag, „Timp de ținere peste altă fișă”, stă în grupa „Fișe”."
+          },
+          "en": {
+            "question": "In which group of „Praguri de timp” does Ciprian find how long a tile must be held over another before that one makes room?",
+            "explanation": "The eleventh threshold, „Timp de ținere peste altă fișă” (hold time over another tile), is in the „Fișe” (tiles) group."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Tablou de bord”",
+              "en": "„Tablou de bord”"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "„Fișe”",
+              "en": "„Fișe”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Insigna „Nou!””",
+              "en": "„Insigna „Nou!””"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Persoane”",
+              "en": "„Persoane”"
             }
           ]
         }

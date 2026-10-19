@@ -184,16 +184,17 @@ The texts behind the „?” button and the light-bulb hints on the screens (sec
 
 ### 12.5.2 „Time thresholds” {#admin-settings-thresholds}
 
-„Time thresholds” holds ten numbers that decide when something is „new”, „soon” or „old”, in four groups: „Dashboard”, „Documents”, „Persons” and „The „New!” badge”. Each threshold has a name, a sentence, a number with its unit and an example. The example changes at once, with the number you type: on „Expiring-soon filter window”, with 30 it reads „Example: A document shows «expiring soon» 30 days ahead.”, and with 45, „… 45 days ahead.”.
+„Time thresholds” holds eleven numbers, in five groups: „Dashboard”, „Documents”, „Persons”, „The „New!” badge” and „Tiles”. Ten decide when something is „new”, „soon” or „old”; the eleventh, „Hold time over another tile”, in „Tiles”, says how long you hold a dragged tile over another before that one makes room (section [[start-tiles]]). Each threshold has a name, a sentence, a number with its unit and an example. The example changes at once, with the number you type: on „Expiring-soon filter window”, with 30 it reads „Example: A document shows «expiring soon» 30 days ahead.”, and with 45, „… 45 days ahead.”.
 
 Among other things, the thresholds decide:
 
 - how many days back „Recent” counts on „Dashboard”, and how many days ahead it shows the documents that expire;
 - how long before a document shows „expiring soon”;
 - how long before its expiry an identity card is flagged („ID card expiring soon threshold”);
-- how long a changed object carries the „New!” badge, red and then amber, and after how long the badge disappears.
+- how long a changed object carries the „New!” badge, red and then amber, and after how long the badge disappears;
+- how long you hold a tile over another before that one slides down to make room.
 
-As soon as you change a number, „Cancel” appears beside „Save” and brings back the saved value. „Save” confirms with „Saved successfully.”. The values are whole numbers between 1 and 3650. The thresholds belong to the archive, not to an account: a change is seen by every user.
+As soon as you change a number, „Cancel” appears beside „Save” and brings back the saved value. „Save” confirms with „Saved successfully.”. The values are whole numbers between 1 and 3650, except „Hold time over another tile”, which is written in seconds, with a comma or a full stop and at most two decimals, between 0.2 and 10: „1.5” means one and a half seconds. A value outside these is refused on „Save”, with a message that says why. The thresholds belong to the archive, not to an account: a change is seen by every user.
 
 ### 12.5.3 „Costs” {#admin-settings-costs}
 

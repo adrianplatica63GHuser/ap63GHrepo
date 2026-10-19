@@ -313,6 +313,44 @@
               "en": "A double-click on the „Identitate” tile opens its links."
             }
           ]
+        },
+        {
+          "id": "a9",
+          "section": "start-tiles",
+          "ro": {
+            "question": "Pe ecranul unei persoane, vreți să puneți „Clasificare” exact unde stă acum „Contact”. Ce faceți?",
+            "explanation": "Trageți fișa peste cealaltă și o țineți nemișcată: după timpul din „Setări” (o secundă, dacă nu l-ați schimbat), fișa de dedesubt alunecă în jos la primul loc liber, iar conturul arată locul liber; acolo lăsați fișa."
+          },
+          "en": {
+            "question": "On a person's screen, you want to put „Clasificare” exactly where „Contact” now stands. What do you do?",
+            "explanation": "Drag the tile over the other and hold it still: after the time set in „Setări” (one second, unless you changed it), the tile underneath slides down to the first free place, and the outline shows the place free; drop the tile there."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "O lăsați peste „Contact”; aplicația le schimbă între ele.",
+              "en": "Drop it on top of „Contact”; the application swaps the two."
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "O țineți peste „Contact” până aceea alunecă, apoi o lăsați.",
+              "en": "Hold it over „Contact” until that one slides down, then drop it."
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Debifați „Contact”, puneți „Clasificare” în locul ei, apoi bifați „Contact” la loc.",
+              "en": "Untick „Contact”, put „Clasificare” in its place, then tick „Contact” back on."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nu se poate: o fișă se pune doar într-un loc deja liber pe ecran.",
+              "en": "You cannot: a tile can only be put into a place that is already free."
+            }
+          ]
         }
       ]
     },
@@ -620,6 +658,44 @@
               "correct": false,
               "ro": "Doar în lista „Acte”, cu „Previzualizare” pe rândul contractului.",
               "en": "Only in the „Acte” list, with „Previzualizare” on the contract's row."
+            }
+          ]
+        },
+        {
+          "id": "b9",
+          "section": "start-tiles",
+          "ro": {
+            "question": "Ați ținut o fișă peste alta, iar aceea a alunecat în jos, dar vă răzgândiți înainte să lăsați butonul mouse-ului. Ce faceți ca totul să revină cum era?",
+            "explanation": "Esc pune totul înapoi: fișa trasă se întoarce la locul ei, iar fișele care au alunecat urcă înapoi unde erau."
+          },
+          "en": {
+            "question": "You held a tile over another and that one slid down, but you change your mind before letting go of the mouse button. What do you do so that everything goes back as it was?",
+            "explanation": "Esc puts everything back: the dragged tile returns to its place, and the tiles that slid go back up where they were."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Apăsați „Implicit”, care pune toate fișele la locul lor obișnuit.",
+              "en": "Press „Implicit”, which puts every tile back in its usual place."
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Lăsați fișa oriunde, apoi dați dublu-clic pe fiecare fișă mutată.",
+              "en": "Drop the tile anywhere, then double-click each tile that moved."
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Apăsați Esc înainte să lăsați butonul.",
+              "en": "Press Esc before letting go of the button."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Țineți fișa nemișcată încă o secundă; cea de dedesubt urcă la loc.",
+              "en": "Hold the tile still another second; the one underneath comes back up."
             }
           ]
         }

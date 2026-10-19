@@ -64,11 +64,14 @@ An open object shows its data in tiles — panels with a name each (Figure [[fig
 
 - The tick boxes at the top of the screen choose which tiles show; „All” shows them all, and „Default” returns to the usual set. Your own set is saved in „Settings”, under „My defaults”.
 - A tile is dragged by its empty space into a free place; a double-click raises it under the tile above.
+- To put a tile where another stands, drag it over that one and hold it still: after a second — as long as „Hold time over another tile” in „Settings” says (section [[admin-settings-thresholds]]) — the tile underneath slides down, in its own columns, to the first free place large enough, and the outline shows that the place is free (Figure [[fig-make-room]]). Drop the tile there; Esc puts everything back. The light purple tiles do not move aside.
 - The light purple tiles — the map, the corners, Street View, a document's pages — stay where they are.
 - The object's system ID sits in the top right-hand corner of the first tile.
 - The button bar, the last thing on the screen, holds the pencil (edit), the save and the bin (delete). An icon button shows its name when the mouse passes over it.
 
 ![2.4 A natural person's screen, with its tiles](record.png){#fig-record}
+
+![2.5 A tile held over another: the tile underneath has slid down, and the outline shows the free place](make-room.png){#fig-make-room}
 
 ## 2.7 The preview {#start-preview}
 
@@ -78,7 +81,7 @@ A linked object can be opened beside the one you are working on, with „Preview
 
 The „?” button at the end of the navigation bar opens the screen's help: what the screen is for and how it is worked (Figure [[fig-help]]). Where a gesture cannot be seen — a drag, a double-click — a small light bulb beside that place explains it. The help texts are written by the administrator, in „Help Information” (section [[admin-help]]).
 
-![2.5 A screen's help, opened from „?”](help.png){#fig-help}
+![2.6 A screen's help, opened from „?”](help.png){#fig-help}
 
 ## 2.9 Examples and use cases {#start-examples}
 

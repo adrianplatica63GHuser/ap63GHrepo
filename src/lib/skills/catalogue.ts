@@ -630,8 +630,8 @@ export const SKILLS: readonly Skill[] = [
     path: "workspace",
     name: { ro: "Așază fișele și previzualizează alături", en: "Arrange the tiles and preview side by side" },
     description: {
-      ro: "Tragi o fișă într-un loc liber, o urci cu dublu-clic, deschizi un obiect legat ca previzualizare lângă cel pe care lucrezi și, dintr-o listă, lângă tabel.",
-      en: "Drag a tile into a free place, raise it with a double-click, open a linked object as a preview beside the one you are working on and, from a list, beside the table.",
+      ro: "Tragi o fișă într-un loc liber, o urci cu dublu-clic, îi faci loc ținând-o peste alta, deschizi un obiect legat ca previzualizare lângă cel pe care lucrezi și, dintr-o listă, lângă tabel.",
+      en: "Drag a tile into a free place, raise it with a double-click, make room by holding it over another, open a linked object as a preview beside the one you are working on and, from a list, beside the table.",
     },
     predecessors: ["workspace-sign-in-and-navigate", "workspace-find-in-a-list", "workspace-read-a-record-screen"],
     screens: DETAIL_SCREENS,

@@ -184,16 +184,17 @@ Textele din spatele butonului „?” și sfaturile cu bec de pe ecrane (secțiu
 
 ### 12.5.2 „Praguri de timp” {#admin-settings-thresholds}
 
-„Praguri de timp” ține zece numere care hotărăsc când ceva este „nou”, „curând” sau „vechi”, în patru grupe: „Tablou de bord”, „Acte”, „Persoane” și „Insigna „Nou!””. Fiecare prag are un nume, o propoziție, un număr cu unitatea lui și un exemplu. Exemplul se schimbă pe loc, după numărul pe care îl scrieți: la „Fereastră filtru expiră curând”, cu 30 scrie „Exemplu: Un act apare «expiră curând» cu 30 de zile înainte.”, iar cu 45, „… cu 45 de zile înainte.”.
+„Praguri de timp” ține unsprezece numere, în cinci grupe: „Tablou de bord”, „Acte”, „Persoane”, „Insigna „Nou!”” și „Fișe”. Zece hotărăsc când ceva este „nou”, „curând” sau „vechi”; al unsprezecelea, „Timp de ținere peste altă fișă”, din „Fișe”, spune cât timp țineți o fișă trasă peste alta până când aceea îi face loc (secțiunea [[start-tiles]]). Fiecare prag are un nume, o propoziție, un număr cu unitatea lui și un exemplu. Exemplul se schimbă pe loc, după numărul pe care îl scrieți: la „Fereastră filtru expiră curând”, cu 30 scrie „Exemplu: Un act apare «expiră curând» cu 30 de zile înainte.”, iar cu 45, „… cu 45 de zile înainte.”.
 
 Pragurile hotărăsc, printre altele:
 
 - câte zile în urmă numără „Recente” pe „Tablou de bord” și câte zile înainte arată acolo actele care expiră;
 - cu cât timp înainte un act apare „expiră curând”;
 - cu cât timp înainte de expirare este semnalată o carte de identitate („Prag CI expiră curând”);
-- cât timp poartă un obiect schimbat insigna „Nou!”, roșie și apoi chihlimbar, și după cât timp insigna dispare.
+- cât timp poartă un obiect schimbat insigna „Nou!”, roșie și apoi chihlimbar, și după cât timp insigna dispare;
+- cât timp țineți o fișă peste alta până când aceea alunecă în jos, ca să-i facă loc.
 
-Cum schimbați un număr, lângă „Salvează” apare „Anulează”, care readuce valoarea salvată. „Salvează” confirmă cu „Salvat cu succes.”. Valorile sunt numere întregi între 1 și 3650. Pragurile sunt ale arhivei, nu ale unui cont: o schimbare se vede la toți utilizatorii.
+Cum schimbați un număr, lângă „Salvează” apare „Anulează”, care readuce valoarea salvată. „Salvează” confirmă cu „Salvat cu succes.”. Valorile sunt numere întregi între 1 și 3650, afară de „Timp de ținere peste altă fișă”, care se scrie în secunde, cu virgulă sau punct și cel mult două zecimale, între 0,2 și 10: „1,5” înseamnă o secundă și jumătate. O valoare în afara acestora este refuzată la „Salvează”, cu un mesaj care spune de ce. Pragurile sunt ale arhivei, nu ale unui cont: o schimbare se vede la toți utilizatorii.
 
 ### 12.5.3 „Costuri” {#admin-settings-costs}
 

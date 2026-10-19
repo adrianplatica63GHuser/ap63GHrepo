@@ -64,11 +64,14 @@ Un obiect deschis își arată datele în fișe — panouri cu câte un nume (Fi
 
 - Bifele din capul ecranului aleg ce fișe se văd; „Toate” le arată pe toate, iar „Implicit” revine la setul obișnuit. Setul vostru se salvează în „Setări”, la „Implicitele mele”.
 - O fișă se trage de spațiul ei gol într-un loc liber; un dublu-clic pe ea o urcă sub fișa de deasupra.
+- Ca să puneți o fișă unde stă alta, trageți-o peste aceea și țineți-o nemișcată: după o secundă — cât spune „Timp de ținere peste altă fișă”, în „Setări” (secțiunea [[admin-settings-thresholds]]) — fișa de dedesubt alunecă în jos, în coloanele ei, la primul loc liber destul de mare, iar conturul arată că locul e liber (Figura [[fig-make-room]]). Lăsați fișa acolo; Esc pune totul înapoi. Fișele mov deschis nu se dau la o parte.
 - Fișele mov deschis — harta, colțurile, Street View, paginile unui act — stau pe loc.
 - ID-ul de sistem al obiectului stă în colțul din dreapta-sus al primei fișe.
 - Bara de butoane, ultimul lucru de pe ecran, ține creionul (modificați), salvarea și coșul (ștergeți). Un buton cu pictogramă își arată numele când treceți cu mouse-ul peste el.
 
 ![2.4 Ecranul unei persoane fizice, cu fișele ei](record.png){#fig-record}
+
+![2.5 O fișă ținută peste alta: fișa de dedesubt a alunecat în jos, iar conturul arată locul liber](make-room.png){#fig-make-room}
 
 ## 2.7 Previzualizarea {#start-preview}
 
@@ -78,7 +81,7 @@ Un obiect legat se poate deschide alături, cu „Previzualizare”, fără să 
 
 Butonul „?” din capătul barei de navigare deschide ajutorul ecranului: la ce folosește ecranul și cum se lucrează pe el (Figura [[fig-help]]). Acolo unde un gest nu se vede — o tragere, un dublu-clic — un bec mic, lângă locul acela, îl explică. Textele de ajutor le scrie administratorul, în „Informații de ajutor” (secțiunea [[admin-help]]).
 
-![2.5 Ajutorul unui ecran, deschis din „?”](help.png){#fig-help}
+![2.6 Ajutorul unui ecran, deschis din „?”](help.png){#fig-help}
 
 ## 2.9 Exemple și cazuri de utilizare {#start-examples}
 
