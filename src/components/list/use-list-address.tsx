@@ -37,14 +37,31 @@ export function replaceListAddress(patch: Partial<ListAddress>): void {
   const { pathname, search } = window.location;
   const next = queryOf(writeListAddress(new URLSearchParams(search), patch));
   if (next === search) return;
-  written.push(next.replace(/^\?/, ""));
-  if (written.length > MAX_WRITTEN) written.shift();
+  remember(next);
   window.history.replaceState(null, "", `${pathname}${next}`);
 }
 
+function remember(query: string): void {
+  written.push(query.replace(/^\?/, ""));
+  if (written.length > MAX_WRITTEN) written.shift();
+}
+
 /**
- * Starts the list over when its address changes from OUTSIDE — the menu's or a crumb's link to the list it is on,
- * Acte's type filter — and not when the list wrote it itself. Without it a link to the bare list would leave the
+ * Slice #39.96: `href` — a list's own address, which the list then goes to with the router (a new history entry, so
+ * Back steps through it) — counted as the list's own write, so `ListAddressScope` does not start the list over under
+ * it. Acte's „Tip document:" goes through here: started over, the list lost the checklist that was open on screen,
+ * and every tick closed it (Adrian, 2026-10-19: „I want it to stay so I can select one or more types").
+ */
+export function ownListAddress(href: string): string {
+  const at = href.indexOf("?");
+  remember(at >= 0 ? href.slice(at) : "");
+  return href;
+}
+
+/**
+ * Starts the list over when its address changes from OUTSIDE — the menu's or a crumb's link to the list it is on —
+ * and not when the list wrote it itself (`replaceListAddress`) or went to it itself (`ownListAddress`: Acte's type
+ * filter, since #39.96). Without it a link to the bare list would leave the
  * page, the search and the tiles on screen with an address that no longer says so (Ask first #2: from the menu, a
  * list opens clean).
  */

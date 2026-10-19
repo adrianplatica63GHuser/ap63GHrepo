@@ -106,17 +106,24 @@ test.describe("TC-DOC-16 — „Tip document:” și „Câmp specific”", () =
         await box.click();
       };
 
-      // Step 2 — „Toate tipurile" unticked: „Niciun tip", italic; the list's message; disabled.
+      // Step 2 — „Toate tipurile" unticked: „Niciun tip", italic; the list's message; disabled. #39.96: the checklist
+      // stays open, its types still there to tick.
       await tick("Toate tipurile");
       await expect(words).toHaveText("Niciun tip", { timeout: 30_000 });
+      await expect(typeFilter).toHaveAttribute("aria-expanded", "true");
+      await expect(main.getByRole("checkbox", { name: "Contract de Vânzare", exact: true })).toBeVisible();
       await expect(words).toHaveCSS("font-style", "italic");
       await expect(main.getByText("Selectați cel puțin un tip de document")).toBeVisible();
       await expect(key).toBeDisabled();
       await expectSign(page, false, "Nu este bifat niciun tip — alegeți la „Tip document” un singur tip.");
 
-      // Step 3 — „Contract de Vânzare": its name, its tooltip; „Câmp specific:" enabled with its closed lists.
+      // Step 3 — „Contract de Vânzare", ticked in the checklist still open: its name, its tooltip; „Câmp specific:"
+      // enabled with its closed lists. #39.96: still open after the tick; a click outside closes it.
+      await expect(main.getByRole("checkbox", { name: "Contract de Vânzare", exact: true })).toBeVisible();
       await tick("Contract de Vânzare");
       await expect(words).toHaveText("Contract de Vânzare", { timeout: 30_000 });
+      await expect(typeFilter).toHaveAttribute("aria-expanded", "true");
+      await expect(main.getByText(`${MARK} Contract de test`)).toBeVisible({ timeout: 30_000 });
       await expect(words).toHaveCSS("font-style", "normal");
       await expect(words).toHaveAttribute("title", "Contract de Vânzare");
       await expect(key).toBeEnabled({ timeout: 30_000 });
@@ -126,6 +133,7 @@ test.describe("TC-DOC-16 — „Tip document:” și „Câmp specific”", () =
       await expect(fieldBox).toHaveCSS("border-top-style", "solid");
       await expect(row2.getByText("Câmp specific:")).toHaveCSS("font-style", "normal");
       await page.getByRole("heading", { level: 1 }).first().click();
+      await expect(typeFilter).toHaveAttribute("aria-expanded", "false");
       await expectSign(page, true, "Oferă câmpurile cu listă închisă ale tipului „Contract de Vânzare”.");
       await photograph(page, "one-type");
 

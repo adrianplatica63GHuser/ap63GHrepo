@@ -45,8 +45,8 @@ Nothing.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Opens „Acte" | On the filter bar under the toolbar, in this order (#39.84): „Tip document: Toate tipurile", the sign, „Câmp specific:". The sign is red, its tooltip „„Câmp specific” nu se poate folosi" / „Sunt bifate toate tipurile — alegeți la „Tip document” un singur tip.". „Câmp specific:" drawn, its list disabled, offering only „Toate"; its label in italics, its box with a dashed border. Its ⓘ's bubble ends, in italics: „Câmpul specific este activ numai când la „Tip document” este ales un singur tip, iar acel tip are un formular cu câmpuri cu listă închisă de valori." |
-| 2 | Opens „Tip document" and unticks „Toate tipurile" | The button reads „Niciun tip", in italics; the list says „Selectați cel puțin un tip de document"; „Câmp specific:" disabled. The sign red: „Nu este bifat niciun tip — alegeți la „Tip document” un singur tip." |
-| 3 | Ticks „Contract de Vânzare" | The button reads „Contract de Vânzare" (not italic; the name is its tooltip). „Câmp specific:" enabled: „Toate", then the contract's closed-list fields — „Monedă", „Stare plată", „Modalitate plată" among them; its box with a solid border, its label not in italics. The sign green: „„Câmp specific” se poate folosi" / „Oferă câmpurile cu listă închisă ale tipului „Contract de Vânzare”." |
+| 2 | Opens „Tip document" and unticks „Toate tipurile" | The button reads „Niciun tip", in italics; the list says „Selectați cel puțin un tip de document"; „Câmp specific:" disabled. The sign red: „Nu este bifat niciun tip — alegeți la „Tip document” un singur tip." The checklist stays open, its types there to tick (#39.96) |
+| 3 | Ticks „Contract de Vânzare" in the checklist still open, then clicks outside it | The checklist stays open after the tick, and the list shows the contract; the click outside closes it. The button reads „Contract de Vânzare" (not italic; the name is its tooltip). „Câmp specific:" enabled: „Toate", then the contract's closed-list fields — „Monedă", „Stare plată", „Modalitate plată" among them; its box with a solid border, its label not in italics. The sign green: „„Câmp specific” se poate folosi" / „Oferă câmpurile cu listă închisă ale tipului „Contract de Vânzare”." |
 | 4 | Chooses „Stare plată" in „Câmp specific:", then ticks „Adeverință" too | The button reads „2 tipuri afișate", in italics. „Câmp specific:" disabled, back on „Toate"; the second list gone. The sign red: „Sunt bifate 2 tipuri — alegeți la „Tip document” un singur tip." |
 | 5 | Unticks „Contract de Vânzare" | The button reads „Adeverință"; „Câmp specific:" disabled — Adeverință has no form. The sign red: „Tipul „Adeverință” nu are formular." |
 
@@ -133,3 +133,10 @@ toolbar and the bar together.
 
 **2026-10-18 — `automated` (Slice #39.84).** The test runner's targeted run 20261018T163815Z-24052 on 5f9e330 ran
 `e2e/document/document-type-filter.spec.ts` green with the new toolbar and bar (lint, tsc and the slice's jest suites green too).
+
+**2026-10-19 — steps 2 and 3 extended (Slice #39.96).** Adrian: unticking „Toate tipurile" closed the checklist; it
+stays open now, through every tick, until a click outside, Esc or its button. Driven by hand in the browser pane on
+localhost:3000 before the spec was extended: unticked „Toate tipurile" — open, „Niciun tip", the list's message; ticked
+„Act Adițional", then „Act Cadastru", then „Toate tipurile" — open each time, the button „Act Adițional", „2 tipuri
+afișate", „Toate tipurile", the list following; the search box's „act" kept; a click outside closed it. The spec's
+steps 2 and 3 assert the same (`aria-expanded`, the contract's row).

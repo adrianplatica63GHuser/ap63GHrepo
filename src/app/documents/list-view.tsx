@@ -23,8 +23,8 @@ import { newTabIfAsked } from "@/lib/ui/row-link";
 import { ListPreviewRow, ListPreviews, PreviewButton } from "@/components/tiles/preview-tiles";
 import { IncursionButton, LinksButton } from "@/components/tiles/incursion-button";
 import { IncursionTile } from "@/app/_components/incursion-tile";
-import { useListAddress, useListScrollMemory, useWriteListAddress } from "@/components/list/use-list-address";
-import { carryListAddress } from "@/lib/ui/list-address";
+import { ownListAddress, useListAddress, useListScrollMemory, useWriteListAddress } from "@/components/list/use-list-address";
+import { LIST_PARAM, carryListAddress } from "@/lib/ui/list-address";
 import { FieldChooser, useFieldChooser, type ChooserField } from "@/components/list/field-chooser";
 import { LIST_ADD, ListSearchBox } from "@/components/list/list-search";
 import { LIST_COLUMN_CHOICE } from "@/lib/ui/list-columns";
@@ -130,11 +130,20 @@ const FILTER_KEYS = [...DOCUMENT_ADDRESS_FILTERS, ...DOCUMENT_FILTER_KEYS];
 
 function buildDocumentsUrl(checkedIds: Set<string>, allTypeIds: string[]): string {
   // Slice #39.26: the search and the list's own filters ride along in the address — a new set of types keeps them,
-  // as it did while they were React state; the page and the open tiles start over (`carryListAddress`).
+  // as it did while they were React state; the page starts over (`carryListAddress`, and the list's own reset on
+  // `typeFiltersKey`).
   const carried = carryListAddress(new URLSearchParams(window.location.search), FILTER_KEYS);
+  const current = new URLSearchParams(window.location.search);
+  // Slice #39.96: the list is no longer started over under a tick (`ownListAddress`, below), so a preview open beside
+  // it stays open — and stays in the address, which says so.
+  for (const k of [LIST_PARAM.row, LIST_PARAM.tiles]) {
+    const v = current.get(k);
+    if (v) carried.set(k, v);
+  }
   if (checkedIds.size !== allTypeIds.length) carried.set("documentTypeIds", Array.from(checkedIds).join(","));
   const qs = carried.toString();
-  return qs ? `/documents?${qs}` : "/documents";
+  // Slice #39.96: the list's own navigation, not one from outside — so the „Tip document:" checklist stays open.
+  return ownListAddress(qs ? `/documents?${qs}` : "/documents");
 }
 
 function DocumentTypeFilterDropdown({
