@@ -79,7 +79,7 @@
  *
  * A TILE HELD OVER ANOTHER MAKES ROOM (Slice 39.91). While a tile is
  * dragged, an outline whose snapped place stands still over other tiles for
- * the make-room delay (`makeRoomDelayMs()`; a move that changes the snapped
+ * the make-room delay (`makeRoomDelayMs()` — „Setări" since 39.92; a move that changes the snapped
  * place starts the count again) makes those tiles slide down out of its way
  * (`makeRoom`), animated over `MAKE_ROOM_SLIDE_MS` — at once under
  * prefers-reduced-motion — and the outline then shows the place free. A tile
@@ -119,7 +119,7 @@ import {
   type StoredPlace,
   type StoredPlaces,
 } from "@/lib/ui/tile-positions";
-import { makeRoomDelayMs } from "./make-room-delay";
+import { loadMakeRoomDelay, makeRoomDelayMs } from "./make-room-delay";
 import { isDragSurface } from "./tile-drag-surface";
 
 /** How long after a layout the row still settles afresh on a height change, unless the user acts first. */
@@ -306,6 +306,8 @@ export function useTilePacking(
     const container = ref.current;
     // jsdom (jest) has no layout and no ResizeObserver: the row stays a flex-wrap there.
     if (!container || typeof ResizeObserver === "undefined") return;
+    // 39.92: the make-room delay saved in „Setări", read once per page load — long before anyone holds a tile.
+    void loadMakeRoomDelay();
     const key = entity ? tilePositionsKey(entity) : null;
     let placed: Placed[] = [];
     let boxes: FoundBox[] = [];

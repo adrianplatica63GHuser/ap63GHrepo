@@ -4031,23 +4031,27 @@
       "saved": "Saved successfully.",
       "saveError": "Save failed. Please try again.",
       "validationError": "All values must be whole numbers between 1 and 3650.",
+      "validationErrorSeconds": "The hold time over another tile is written in seconds, with at most two decimals, between 0.2 and 10 — for example 1.5.",
       "unit": {
         "days": "days",
         "hours": "hours",
         "minutes": "minutes",
-        "months": "months"
+        "months": "months",
+        "seconds": "seconds"
       },
       "groups": {
         "dashboard": "Dashboard",
         "documents": "Documents",
         "persons": "Persons",
-        "recency": "The „New!” badge"
+        "recency": "The „New!” badge",
+        "tiles": "Tiles"
       },
       "duration": {
         "days": "{count, plural, one {one day} other {# days}}",
         "hours": "{count, plural, one {one hour} other {# hours}}",
         "minutes": "{count, plural, one {one minute} other {# minutes}}",
-        "months": "{count, plural, one {one month} other {# months}}"
+        "months": "{count, plural, one {one month} other {# months}}",
+        "seconds": "{count, plural, one {one second} other {# seconds}}"
       },
       "examples": {
         "dashboard_recent_days": "On the Dashboard, «Recent» counts what was added or changed in the last {duration}.",
@@ -4059,7 +4063,8 @@
         "id_card_expiring_soon": "An identity card is flagged «expiring soon» {duration} before it expires.",
         "recency_badge_red": "An object changed at most {duration} ago carries the red «New!» badge.",
         "recency_badge_amber": "An object changed at most {duration} ago carries the amber «New!» badge.",
-        "recency_badge_window": "{duration} after the last change, the «New!» badge goes."
+        "recency_badge_window": "{duration} after the last change, the «New!» badge goes.",
+        "tile_make_room_delay": "A tile dragged over another and held there for {duration} makes that one slide down to make room."
       },
       "example": "Example:"
     },

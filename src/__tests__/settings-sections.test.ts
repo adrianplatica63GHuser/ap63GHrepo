@@ -31,7 +31,8 @@ function say(locale: string, template: string, values: Record<string, unknown>):
     const n = Number(values[plural[1]]);
     const arms = new Map([...plural[2].matchAll(/(=\d+|\w+) \{([^{}]*)\}/g)].map((m) => [m[1], m[2]]));
     const arm = arms.get(`=${n}`) ?? arms.get(new Intl.PluralRules(locale).select(n)) ?? arms.get("other") ?? "";
-    return arm.replace(/#/g, String(n));
+    // Slice 39.92: a fraction is printed as ICU prints it, with the locale's separator („1,5"); a whole number as before.
+    return arm.replace(/#/g, Number.isInteger(n) ? String(n) : new Intl.NumberFormat(locale).format(n));
   }
   return template.replace(/\{(\w+)\}/g, (_m, k: string) => String(values[k]));
 }
@@ -41,12 +42,14 @@ function exampleRo(key: string, unit: string, count: number): string {
   return say("ro-RO", ro.timeFrames.examples[key], { duration });
 }
 
-describe("the four groups", () => {
-  it("are Tablou de bord, Acte, Persoane and the „Nou!” badge, in that order", () => {
-    expect(TIME_FRAME_GROUPS.map((g) => g.id)).toEqual(["dashboard", "documents", "persons", "recency"]);
+describe("the five groups", () => {
+  // Slice 39.92: a fifth, „Fișe" — the screen's own word for a tile — for the make-room delay.
+  it("are Tablou de bord, Acte, Persoane, the „Nou!” badge and Fișe, in that order", () => {
+    expect(TIME_FRAME_GROUPS.map((g) => g.id)).toEqual(["dashboard", "documents", "persons", "recency", "tiles"]);
     expect(ro.timeFrames.groups).toEqual({
-      dashboard: "Tablou de bord", documents: "Acte", persons: "Persoane", recency: "Insigna „Nou!”",
+      dashboard: "Tablou de bord", documents: "Acte", persons: "Persoane", recency: "Insigna „Nou!”", tiles: "Fișe",
     });
+    expect(TIME_FRAME_GROUPS.find((g) => g.id === "tiles")?.keys).toEqual(["tile_make_room_delay"]);
   });
 
   it("hold every threshold exactly once", () => {
@@ -235,5 +238,22 @@ describe("the paid reads (migration_100)", () => {
     expect(say("ro-RO", ro.ai.paidReads, { count: 1 })).toBe("O citire plătită luna aceasta");
     expect(say("ro-RO", ro.ai.paidReads, { count: 7 })).toBe("7 citiri plătite luna aceasta");
     expect(say("ro-RO", ro.ai.paidReads, { count: 20 })).toBe("20 de citiri plătite luna aceasta");
+  });
+});
+
+describe("the make-room delay's example, in seconds (39.92)", () => {
+  it.each([
+    [1, "O fișă trasă peste alta și ținută acolo o secundă o face pe aceea să alunece în jos, ca să-i facă loc."],
+    [1.5, "O fișă trasă peste alta și ținută acolo 1,5 secunde o face pe aceea să alunece în jos, ca să-i facă loc."],
+    [0.25, "O fișă trasă peste alta și ținută acolo 0,25 secunde o face pe aceea să alunece în jos, ca să-i facă loc."],
+    [10, "O fișă trasă peste alta și ținută acolo 10 secunde o face pe aceea să alunece în jos, ca să-i facă loc."],
+  ])("at %s s reads „%s”", (count, sentence) => {
+    expect(exampleRo("tile_make_room_delay", "seconds", count)).toBe(sentence);
+  });
+
+  it("the unit beside the box is seconds, in both languages", () => {
+    expect(ro.timeFrames.unit.seconds).toBe("secunde");
+    expect(en.timeFrames.unit.seconds).toBe("seconds");
+    expect(say("en-GB", en.timeFrames.duration.seconds, { count: 1.5 })).toBe("1.5 seconds");
   });
 });

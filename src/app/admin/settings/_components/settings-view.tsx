@@ -6,7 +6,8 @@ import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { TimeFrameRow } from "@/lib/time-frames/config";
-import { parseTimeFrameDraft } from "@/lib/time-frames/config";
+import { formatSeconds, isTypedInSeconds, parseSecondsDraft, parseTimeFrameDraft } from "@/lib/time-frames/config";
+import { forgetMakeRoomDelay } from "@/components/tiles/make-room-delay";
 import { TIME_FRAME_GROUPS, exampleValue } from "@/lib/time-frames/groups";
 import type { SystemStatus } from "@/lib/settings/system-status";
 import { useLocale } from "next-intl";
@@ -25,7 +26,7 @@ import { CostTile, useCosts } from "./cost-tiles";
 
 /** Slice #37.35: Setări's tiles, 3 units each. Slice #39.17: ticked on and off like a record's (`settings-tiles.ts`). */
 const SETTINGS_TILE_UNITS = 3;
-/** Slice #38.40: „Praguri de timp" is four groups with an example under each threshold — one unit wider. */
+/** Slice #38.40: „Praguri de timp" is four groups (five since 39.92) with an example under each threshold — one unit wider. */
 const TIME_FRAMES_UNITS = 4;
 
 // ---------------------------------------------------------------------------
@@ -72,8 +73,13 @@ function TimeFramesPanel() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
-  function draftValue(key: string, serverValue: number): string {
-    return key in drafts ? drafts[key] : String(serverValue);
+  // Slice 39.92: a row stored in ms (the make-room delay) is typed and shown in seconds, with the locale's separator.
+  function shown(row: TimeFrameRow): string {
+    return isTypedInSeconds(row.unit) ? formatSeconds(row.value, locale) : String(row.value);
+  }
+
+  function draftValue(row: TimeFrameRow): string {
+    return row.key in drafts ? drafts[row.key] : shown(row);
   }
 
   function handleChange(key: string, raw: string) {
@@ -96,6 +102,16 @@ function TimeFramesPanel() {
   async function handleSave() {
     const settings: { key: string; value: number }[] = [];
     for (const [key, raw] of Object.entries(drafts)) {
+      // Slice 39.92: seconds with decimals — „1,5" or „1.5" — saved as ms, in their own range and with their own error.
+      if (isTypedInSeconds(rows?.find((r) => r.key === key)?.unit ?? "days")) {
+        const ms = parseSecondsDraft(raw);
+        if (ms === null) {
+          setSaveError(t("timeFrames.validationErrorSeconds"));
+          return;
+        }
+        settings.push({ key, value: ms });
+        continue;
+      }
       // parseTimeFrameDraft, not parseInt: `parseInt("7.9")` is 7, so the
       // fraction was silently dropped and the save reported success on a value
       // the user never typed. The rule lives beside TIME_FRAME_KEYS so it can
@@ -138,6 +154,8 @@ function TimeFramesPanel() {
       await queryClient.invalidateQueries({ queryKey: ["time-frames"] });
       await queryClient.invalidateQueries({ queryKey: ["time-frames-list"] });
       await queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      // Slice 39.92: the tile screens read the make-room delay once per page load — the next one reads it afresh.
+      forgetMakeRoomDelay();
       setDrafts({});
       setSaved(true);
     } catch {
@@ -174,8 +192,14 @@ function TimeFramesPanel() {
             {group.rows.map((row) => {
               const label = isRo ? row.labelRo : row.labelEn;
               const desc  = isRo ? row.descriptionRo : row.descriptionEn;
-              const val   = draftValue(row.key, row.value);
-              const isChanged = row.key in drafts && drafts[row.key] !== String(row.value);
+              const val   = draftValue(row);
+              const isChanged = row.key in drafts && drafts[row.key] !== shown(row);
+              const seconds = isTypedInSeconds(row.unit);
+              // The example's number: the draft while it reads, the saved value otherwise — in seconds for the delay.
+              const count = seconds
+                ? exampleValue(row.key in drafts ? drafts[row.key] : undefined, row.value, parseSecondsDraft) / 1000
+                : exampleValue(row.key in drafts ? drafts[row.key] : undefined, row.value, parseTimeFrameDraft);
+              const unitKey = seconds ? "seconds" : row.unit;
 
               return (
                 // Slice #37.35: the label (and what it counts) above its S box, the unit beside the box.
@@ -188,9 +212,7 @@ function TimeFramesPanel() {
                     <input
                       id={`time-frame-${row.key}`}
                       {...screenBox("timeFrameDays")}
-                      type="number"
-                      min={1}
-                      max={3650}
+                      {...(seconds ? { type: "text", inputMode: "decimal" as const } : { type: "number", min: 1, max: 3650 })}
                       value={val}
                       onChange={(e) => handleChange(row.key, e.target.value)}
                       className={[
@@ -202,16 +224,14 @@ function TimeFramesPanel() {
                       ].join(" ")}
                     />
                     <span className="text-xs text-fade w-14 text-left">
-                      {t(`timeFrames.unit.${row.unit}` as Parameters<typeof t>[0])}
+                      {t(`timeFrames.unit.${unitKey}` as Parameters<typeof t>[0])}
                     </span>
                   </div>
                   {/* Slice #38.40: what the value does, with the value being edited. */}
                   <p className="text-xs text-ink dark:text-zinc-300" data-time-frame-example={row.key}>
                     <span className="text-fade">{t("timeFrames.example")}</span>{" "}
                     {t(`timeFrames.examples.${row.key}` as Parameters<typeof t>[0], {
-                      duration: t(`timeFrames.duration.${row.unit}` as Parameters<typeof t>[0], {
-                        count: exampleValue(row.key in drafts ? drafts[row.key] : undefined, row.value, parseTimeFrameDraft),
-                      }),
+                      duration: t(`timeFrames.duration.${unitKey}` as Parameters<typeof t>[0], { count }),
                     })}
                   </p>
                 </div>

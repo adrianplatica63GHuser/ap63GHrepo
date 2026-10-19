@@ -14,8 +14,8 @@ Slice 39.91, Adrian, 2026-10-19: „If: on a screen with tiles I am dragging any
 and stopping on top for more than a time interval that I can set in Settings (seconds with decimals), that
 tile should slide down until it finds an available spot, large enough, to make room for me to drop off the
 tile I am moving ; applies to all screens with tiles, now and in the future". So a tile dragged until its
-outline stands over another tile, and held there past the make-room delay (1,0 s until 39.92 puts it in
-„Setări"), makes that tile slide straight down, in its own columns, to the first place below where it fits
+outline stands over another tile, and held there past the make-room delay („Timp de ținere peste altă fișă”
+in „Setări” → „Praguri de timp” → „Fișe” since 39.92; 1,0 s unless changed), makes that tile slide straight down, in its own columns, to the first place below where it fits
 whole; the outline then shows the place free, and the dragged tile is dropped there. Both places hold after
 a reload; Esc puts every tile back. It is checked on a record screen (through `TileAreas`) and on an
 administration screen (through `TileUnitRow`), the two ways a screen's tiles are dragged. A tile that does
@@ -29,7 +29,7 @@ not move, moves sideways or up, lands on another, or a place lost on reload, is 
   it, „TC-TILES-24 Teren A" and „TC-TILES-24 Teren B".
 - This browser has no stored arrangement for a Natural Person (`ga40-tile-positions-natural-person-v1`) nor
   for a group's screen (`ga40-tile-positions-admin-group-v1`), and no tile choice for a Natural Person.
-- „Held" is the pointer kept still, the button down, for 1,5 s. „A box's place" is its rectangle relative to
+- „Held" is the pointer kept still, the button down, for the saved delay plus 0,75 s, and never under 1,5 s. „A box's place" is its rectangle relative to
   the tile row.
 
 ## What Adrian is asked for
@@ -53,6 +53,8 @@ Remove both stored arrangements and the tile choice; delete the person, the grou
 (`DELETE`).
 
 ## Notes from the runs
+
+**2026-10-19 — Slice 39.92.** The hold is read from the saved delay, so the case holds whatever „Setări” says.
 
 **2026-10-19 — `automated` (Slice 39.91).** Written with the behaviour, and translated at once into
 `e2e/tiles/tiles-make-room.spec.ts`, which the test runner ran green (the slice's handover names the run).

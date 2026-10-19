@@ -6,8 +6,9 @@
  * string below is quoted from it verbatim.
  *
  * Divergences from the hand run, each for a reason the case cannot have:
- *   - Nothing is saved: the threshold is typed and then „Anulează” — the case
- *     changes no setting, so it has nothing to put back.
+ *   - Step 4 saves nothing: the threshold is typed and then „Anulează”. Step 8
+ *     (Slice 39.92) saves the make-room delay, and the value it found is put
+ *     back through the API in `finally`, whatever happened.
  *   - Slice #38.40's pictures, not steps of the case: „Setări” at 1366 and
  *     1920 px, into `playwright-report/settings-sections/`.
  */
@@ -46,8 +47,8 @@ test.describe("TC-SET-02 — „Setări” în patru secțiuni", () => {
       await expect(main.getByRole("heading", { name: title, exact: true, level: 2 })).toBeVisible({ timeout: 30_000 });
     }
 
-    // Step 2 — the thresholds in four groups.
-    for (const group of ["Tablou de bord", "Acte", "Persoane", "Insigna „Nou!”"]) {
+    // Step 2 — the thresholds in five groups (39.92: „Fișe").
+    for (const group of ["Tablou de bord", "Acte", "Persoane", "Insigna „Nou!”", "Fișe"]) {
       await expect(main.getByRole("heading", { name: group, exact: true, level: 3 })).toBeVisible();
     }
 
@@ -100,5 +101,31 @@ test.describe("TC-SET-02 — „Setări” în patru secțiuni", () => {
     await expect(page.locator("aside").getByRole("link", { name: "Schimbă parola" })).toHaveCount(0);
     await expect(page.locator("aside").getByRole("button", { name: "Ieșire", exact: true })).toBeVisible();
     await photograph(page, "settings");
+
+    // Step 8 (39.92) — „Timp de ținere peste altă fișă", in seconds with decimals: 0,1 refused; 1,25 saved and kept.
+    const delayOf = async (): Promise<number> => {
+      const items = ((await (await page.request.get("/api/time-frames")).json()) as { items: { key: string; value: number }[] }).items;
+      return items.find((i) => i.key === "tile_make_room_delay")?.value ?? 1000;
+    };
+    const before = await delayOf();
+    try {
+      const panel = main.locator('[data-panel="time-frames"]');
+      const delay = panel.getByLabel("Timp de ținere peste altă fișă", { exact: true });
+      const delayExample = panel.locator('[data-time-frame-example="tile_make_room_delay"]');
+      const save = panel.getByRole("button", { name: "Salvează", exact: true });
+      await delay.fill("0,1");
+      await save.click();
+      await expect(panel.getByText("Timpul de ținere peste altă fișă se scrie în secunde, cu cel mult două zecimale, între 0,2 și 10 — de exemplu 1,5.", { exact: true })).toBeVisible();
+      const value = before === 1250 ? "1,5" : "1,25";
+      await delay.fill(value);
+      await expect(delayExample).toHaveText(`Exemplu: O fișă trasă peste alta și ținută acolo ${value} secunde o face pe aceea să alunece în jos, ca să-i facă loc.`);
+      await save.click();
+      await expect(panel.getByText("Salvat cu succes.", { exact: true })).toBeVisible({ timeout: 15_000 });
+      expect(await delayOf()).toBe(value === "1,25" ? 1250 : 1500);
+      await page.reload();
+      await expect(main.locator('[data-panel="time-frames"]').getByLabel("Timp de ținere peste altă fișă", { exact: true })).toHaveValue(value, { timeout: 30_000 });
+    } finally {
+      await page.request.patch("/api/time-frames", { data: { settings: [{ key: "tile_make_room_delay", value: before }] } }).catch(() => undefined);
+    }
   });
 });

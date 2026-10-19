@@ -3,7 +3,8 @@
 // Pure types and utilities for the time_frame_setting feature (Slice #20.19).
 // Safe to import from both client and server modules.
 
-export type TimeFrameUnit = "days" | "hours" | "minutes" | "months";
+/** Slice 39.92: "milliseconds" — the make-room delay, typed and shown in seconds with decimals. */
+export type TimeFrameUnit = "days" | "hours" | "minutes" | "months" | "milliseconds";
 
 export interface TimeFrameRow {
   key: string;
@@ -28,6 +29,7 @@ export const TIME_FRAME_KEYS = [
   "recency_badge_red",
   "recency_badge_amber",
   "recency_badge_window",
+  "tile_make_room_delay",
 ] as const;
 
 export type TimeFrameKey = (typeof TIME_FRAME_KEYS)[number];
@@ -45,12 +47,14 @@ export function toMs(value: number, unit: TimeFrameUnit): number {
     case "hours":   return value * 60 * 60 * 1000;
     case "days":    return value * 24 * 60 * 60 * 1000;
     case "months":  return value * 30 * 24 * 60 * 60 * 1000;
+    case "milliseconds": return value;
   }
 }
 
 /**
  * Fallback values used when the DB is unreachable or a key is missing.
- * Must match the seeded defaults in migration_063.
+ * Must match the seeded defaults in migration_063 — and migration_117 for the
+ * make-room delay (Slice 39.92).
  */
 export const TIME_FRAME_DEFAULTS: Record<TimeFrameKey, { value: number; unit: TimeFrameUnit }> = {
   dashboard_recent_days:    { value: 7,  unit: "days" },
@@ -63,6 +67,7 @@ export const TIME_FRAME_DEFAULTS: Record<TimeFrameKey, { value: number; unit: Ti
   recency_badge_red:        { value: 5,  unit: "minutes" },
   recency_badge_amber:      { value: 15, unit: "minutes" },
   recency_badge_window:     { value: 30, unit: "minutes" },
+  tile_make_room_delay:     { value: 1000, unit: "milliseconds" },
 };
 
 /** Read a numeric day-value from a TimeFrameMap (falls back to default). */
@@ -118,4 +123,38 @@ export function parseTimeFrameDraft(raw: string): number | null {
   if (!Number.isInteger(n)) return null;
   if (n < TIME_FRAME_MIN || n > TIME_FRAME_MAX) return null;
   return n;
+}
+
+// ---------------------------------------------------------------------------
+// Seconds with decimals                                          (Slice 39.92)
+// ---------------------------------------------------------------------------
+
+/** The make-room delay's key: how long a dragged tile is held over another before that one makes room (39.91). */
+export const MAKE_ROOM_DELAY_KEY = "tile_make_room_delay" satisfies TimeFrameKey;
+
+/** The range the editor and the API both accept for a value typed in seconds, in ms: 0,2 s to 10 s. */
+export const SECONDS_MIN_MS = 200;
+export const SECONDS_MAX_MS = 10_000;
+
+/** Is a row of this unit typed and shown in seconds, with decimals? Stored in ms, so the column stays an integer. */
+export function isTypedInSeconds(unit: TimeFrameUnit): boolean {
+  return unit === "milliseconds";
+}
+
+/**
+ * Read seconds typed with a comma or a dot — „1,5" or „1.5" — up to two
+ * decimals, as ms; `null` if it is not one, or outside 0,2 s – 10 s. Whole
+ * seconds („2") are accepted; „1e3", a sign, a third decimal or a space inside
+ * are not: the field says seconds, and anything else is a mistyping.
+ */
+export function parseSecondsDraft(raw: string): number | null {
+  const trimmed = raw.trim();
+  if (!/^\d{1,2}(?:[.,]\d{1,2})?$/.test(trimmed)) return null;
+  const ms = Math.round(Number(trimmed.replace(",", ".")) * 1000);
+  return ms >= SECONDS_MIN_MS && ms <= SECONDS_MAX_MS ? ms : null;
+}
+
+/** A value in ms as the editor shows it: seconds, one or two decimals, the locale's separator („1,5" / „1.5"). */
+export function formatSeconds(ms: number, locale: string): string {
+  return new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 2, useGrouping: false }).format(ms / 1000);
 }

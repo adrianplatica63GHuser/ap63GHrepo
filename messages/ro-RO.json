@@ -4031,23 +4031,27 @@
       "saved": "Salvat cu succes.",
       "saveError": "Salvarea a eșuat. Reîncercați.",
       "validationError": "Toate valorile trebuie să fie numere întregi între 1 și 3650.",
+      "validationErrorSeconds": "Timpul de ținere peste altă fișă se scrie în secunde, cu cel mult două zecimale, între 0,2 și 10 — de exemplu 1,5.",
       "unit": {
         "days": "zile",
         "hours": "ore",
         "minutes": "minute",
-        "months": "luni"
+        "months": "luni",
+        "seconds": "secunde"
       },
       "groups": {
         "dashboard": "Tablou de bord",
         "documents": "Acte",
         "persons": "Persoane",
-        "recency": "Insigna „Nou!”"
+        "recency": "Insigna „Nou!”",
+        "tiles": "Fișe"
       },
       "duration": {
         "days": "{count, plural, one {o zi} few {# zile} other {# de zile}}",
         "hours": "{count, plural, one {o oră} few {# ore} other {# de ore}}",
         "minutes": "{count, plural, one {un minut} few {# minute} other {# de minute}}",
-        "months": "{count, plural, one {o lună} few {# luni} other {# de luni}}"
+        "months": "{count, plural, one {o lună} few {# luni} other {# de luni}}",
+        "seconds": "{count, plural, one {o secundă} few {# secunde} other {# de secunde}}"
       },
       "examples": {
         "dashboard_recent_days": "Pe Tablou de bord, «Recente» numără ce s-a adăugat sau schimbat în ultimele {duration}.",
@@ -4059,7 +4063,8 @@
         "id_card_expiring_soon": "O carte de identitate e semnalată «expiră curând» cu {duration} înainte de data expirării.",
         "recency_badge_red": "Un obiect schimbat acum cel mult {duration} poartă insigna «Nou!» roșie.",
         "recency_badge_amber": "Un obiect schimbat acum cel mult {duration} poartă insigna «Nou!» chihlimbar.",
-        "recency_badge_window": "La {duration} după ultima schimbare, insigna «Nou!» dispare."
+        "recency_badge_window": "La {duration} după ultima schimbare, insigna «Nou!» dispare.",
+        "tile_make_room_delay": "O fișă trasă peste alta și ținută acolo {duration} o face pe aceea să alunece în jos, ca să-i facă loc."
       },
       "example": "Exemplu:"
     },

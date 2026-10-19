@@ -31,7 +31,14 @@ import {
   parseTimeFrameDraft,
   TIME_FRAME_MIN,
   TIME_FRAME_MAX,
+  TIME_FRAME_DEFAULTS,
+  SECONDS_MIN_MS,
+  SECONDS_MAX_MS,
+  formatSeconds,
+  isTypedInSeconds,
+  parseSecondsDraft,
 } from "@/lib/time-frames/config";
+import { MAKE_ROOM_DELAY_MS } from "@/lib/ui/tile-positions";
 
 const read = (...p: string[]) => fs.readFileSync(path.join(process.cwd(), ...p), "utf8");
 
@@ -139,5 +146,60 @@ describe("the error message now refuses what the check now refuses", () => {
     expect(text).toMatch(locale === "en-GB" ? /whole numbers/ : /numere întregi/);
     expect(text).toContain(String(TIME_FRAME_MIN));
     expect(text).toContain(String(TIME_FRAME_MAX));
+  });
+});
+
+describe("seconds with decimals — the make-room delay (39.92)", () => {
+  it.each([
+    ["1,5", 1500], ["1.5", 1500], ["1", 1000], ["0,2", 200], ["10", 10_000], ["2,25", 2250], [" 1,0 ", 1000], ["10,00", 10_000],
+  ])("accepts %s as %i ms", (raw, ms) => {
+    expect(parseSecondsDraft(raw as string)).toBe(ms);
+  });
+
+  it.each(["", "abc", "0,1", "0,19", "10,5", "11", "1,234", "-1", "+1", "1e3", "1 ,5", ",5", "1,", "1.5.0"])(
+    "refuses %p",
+    (raw) => {
+      expect(parseSecondsDraft(raw)).toBeNull();
+    },
+  );
+
+  it("shows the value in seconds with the locale's separator", () => {
+    expect(formatSeconds(1000, "ro-RO")).toBe("1,0");
+    expect(formatSeconds(1500, "ro-RO")).toBe("1,5");
+    expect(formatSeconds(1250, "ro-RO")).toBe("1,25");
+    expect(formatSeconds(1500, "en-GB")).toBe("1.5");
+    // What it shows, it reads back.
+    for (const ms of [200, 1000, 1500, 2250, 10_000]) expect(parseSecondsDraft(formatSeconds(ms, "ro-RO"))).toBe(ms);
+  });
+
+  it("is stored in ms under its own unit, and only that unit is typed in seconds", () => {
+    expect(TIME_FRAME_DEFAULTS.tile_make_room_delay).toEqual({ value: 1000, unit: "milliseconds" });
+    expect(isTypedInSeconds("milliseconds")).toBe(true);
+    for (const u of ["days", "hours", "minutes", "months"] as const) expect(isTypedInSeconds(u)).toBe(false);
+    // The built-in delay 39.91 shipped is the seeded one.
+    expect(MAKE_ROOM_DELAY_MS).toBe(TIME_FRAME_DEFAULTS.tile_make_room_delay.value);
+  });
+
+  it("the route holds the delay to the same range, and every other key to 1..3650", () => {
+    const route = read("src", "app", "api", "time-frames", "route.ts");
+    expect(route).toContain("key:   z.literal(MAKE_ROOM_DELAY_KEY),");
+    expect(route).toContain("value: z.number().int().min(SECONDS_MIN_MS).max(SECONDS_MAX_MS),");
+    expect(route).toContain(".refine((k) => k !== MAKE_ROOM_DELAY_KEY)");
+    expect(SECONDS_MIN_MS).toBe(200);
+    expect(SECONDS_MAX_MS).toBe(10_000);
+  });
+
+  it("the editor saves it through its own parser and error, and tells the tile screens to read it afresh", () => {
+    const view = codeOnly(read("src", "app", "admin", "settings", "_components", "settings-view.tsx"));
+    expect(view).toMatch(/const ms = parseSecondsDraft\(raw\);\s*if \(ms === null\) \{\s*setSaveError\(t\("timeFrames\.validationErrorSeconds"\)\)/);
+    expect(view).toContain("forgetMakeRoomDelay();");
+    expect(view).toContain('inputMode: "decimal"');
+  });
+
+  it.each(["en-GB", "ro-RO"])("%s: the seconds error names the range it refuses", (locale) => {
+    const messages = JSON.parse(read("messages", `${locale}.json`)) as { settings: { timeFrames: { validationErrorSeconds: string } } };
+    const text = messages.settings.timeFrames.validationErrorSeconds;
+    expect(text).toContain(locale === "en-GB" ? "0.2" : "0,2");
+    expect(text).toContain("10");
   });
 });

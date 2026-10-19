@@ -7,9 +7,11 @@
  *
  * Divergences from a hand run, each for a reason the case cannot have:
  *   - The records carry `TC-E2E-TILES-24` (records.ts).
- *   - Playwright's mouse drags and holds; the hold is 1,5 s, past the built-in
- *     1,0 s delay (MAKE_ROOM_DELAY_MS). Each reading is polled until it holds,
- *     so the 200-ms slide has ended before a place is read.
+ *   - Playwright's mouse drags and holds; the hold is the delay saved in
+ *     „Setări" (39.92, `tile_make_room_delay`, read through the API) plus 0,75 s,
+ *     and never under 1,5 s — so a TC-SET-02 run saving 1,25 s beside it
+ *     cannot cut a hold short. Each reading is polled until it holds, so the
+ *     200-ms slide has ended before a place is read.
  *   - Which tiles the outline overlaps is computed from the places read in step
  *     1 and the outline's own rectangle, not written down.
  */
@@ -23,8 +25,15 @@ const KEY = "ga40-tile-positions-natural-person-v1";
 const CHOICE = "ga40-tiles-natural-person-v1";
 const GROUP_KEY = "ga40-tile-positions-admin-group-v1";
 const GAP = 16;
-/** Past the make-room delay, 1,0 s (39.91). */
-const HOLD_MS = 1_500;
+/** Past the make-room delay: the saved one (39.92) plus 0,75 s, at least 1,5 s. Set by each test from the API. */
+let HOLD_MS = 1_500;
+
+async function holdFor(page: Page): Promise<number> {
+  const res = await page.request.get("/api/time-frames");
+  const items = res.ok() ? ((await res.json()) as { items: { key: string; value: number }[] }).items : [];
+  const delay = items.find((i) => i.key === "tile_make_room_delay")?.value ?? 1_000;
+  return Math.max(1_500, delay + 750);
+}
 
 type Box = { x: number; y: number; w: number; h: number };
 
@@ -86,6 +95,7 @@ test.describe("TC-TILES-24 — o fișă ținută peste alta îi face loc", () =>
     await removeLeftovers(page.request, MARK);
     await page.setViewportSize({ width: 1920, height: 1300 });
     const person = await createNaturalPerson(page.request, { lastName: `${MARK} Unu`, firstName: "Ion" });
+    HOLD_MS = await holdFor(page);
     try {
       await page.goto(`/natural-persons/${person}`);
       await page.evaluate(([k, c]) => {
@@ -164,6 +174,7 @@ test.describe("TC-TILES-24 — o fișă ținută peste alta îi face loc", () =>
     await removeGroupLeftovers(page.request, MARK);
     const ids: string[] = [];
     let groupId = "";
+    HOLD_MS = await holdFor(page);
     try {
       const g = await page.request.post("/api/groups", { data: { targetType: "PROPERTY", description: `${MARK} Grup de test` } });
       expect(g.status()).toBe(201);
