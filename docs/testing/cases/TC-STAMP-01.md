@@ -50,7 +50,7 @@ delete `Ion TC-STAMP-01` if it is still there.
 | 5 | Presses „Aplică" on that row | „Aplică ștampila: STMP-… - TC-STAMP-01 Ștampilă de test" at `/admin/stamps/[id]`: „Cod" and „Note" in the tile „Descrierea ștampilei"; the tile **„Tip element"**, its select (Persoană fizică · Persoană juridică · Proprietate · Document) named by that title, and the note „Sunt afișate doar elementele de tipul selectat…"; and two list tiles — „Elemente disponibile pentru ștampilare", with „Caută…", „Aplică ștampila (0)", and „Elemente deja ștampilate", „Niciun element ștampilat încă", „Elimină ștampila (0)" — and „Salvează ștampilele" |
 | 6 | With „Persoană fizică", ticks `Ion TC-STAMP-01` in „Elemente disponibile pentru ștampilare" and presses „Aplică ștampila (1)" | It moves to „Elemente deja ștampilate", and „Modificări nesalvate" appears — **nothing is written yet** |
 | 7 | Presses „Salvează ștampilele" | „Modificări nesalvate" goes away |
-| 8 | Returns to „Ștampile" | The row's „Elemente" reads **1** |
+| 8 | Returns to „Ștampile"; then (#39.89) types the stamp's code in lower case in the search box beside „+ Creare ștampilă”, then `test stampila TC-E2E-STAMP-01`, then `nimic-de-gasit-xyz`, then clears it | The row's „Elemente" reads **1**. The list stands 21 px from its tile's edges, left, right and bottom, and is never taller than two thirds of the window — it scrolls inside its tile, its header row on top. The box reads „caută după Cod sau Descriere scurtă”, the same on hover. The code finds the stamp, first; the three words, without diacritics and in another order, find it alone, the count reading „1 din …”; the third finds nothing: „Nicio ștampilă nu se potrivește căutării.” |
 | 9 | Opens `Ion TC-STAMP-01`, tile **„Etichete și grupuri"** | „Ștampile": „+ Aplică ștampilă" and a chip `STMP-… TC-STAMP-01 Ștampilă de test` with „×" |
 
 Step 9 is the other end: the record knows it carries the stamp, not only the stamp knows.
@@ -87,3 +87,5 @@ Grupuri, Ștampile, Vezi și); each item's explanation is a bubble on its title.
 above keep the old name, as they were run.
 
 **2026-10-06 — Slice #38.20.** The sidebar is nine sections now; the way to this screen reads „Administrare" → „Ștampile". The screen and every step on it are unchanged, and the spec follows (`e2e/helpers/sidebar.ts` opens the section that holds an item).
+
+**2026-10-18 — step 8 extended for #39.89** (the gap, the scroll, the search), written from the code and the message files and read in the browser pane on localhost:3000 at 1920 × 1080; the spec carries it.

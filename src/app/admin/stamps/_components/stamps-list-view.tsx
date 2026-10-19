@@ -6,7 +6,9 @@ import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { buttonClass } from "@/lib/ui/button-styles";
-import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
+import { WRAPS, columnHead } from "@/components/table/fixed-columns";
+import { ADMIN_LIST_FRAME, ADMIN_LIST_HEAD, ADMIN_LIST_PANEL, AdminListColumns, AdminListToolbar, adminListTable } from "@/components/list/admin-list";
+import { filterByWords } from "@/lib/search/fold-words";
 import { SCREEN, screenBox, screenPanel, tableUnits, type ColumnName } from "@/lib/ui/field-widths";
 import { GrowingText } from "@/components/forms/growing-text";
 import { UnitRow } from "@/components/screen/unit-row";
@@ -22,7 +24,8 @@ const COLUMNS: readonly ColumnName[] = ["description", "count", "rowActions"];
 const ABOUT_UNITS = 6;
 const FORM_UNITS = 3;
 const LIST_UNITS = tableUnits(COLUMNS);
-const LIST_FILL = { units: LIST_UNITS, column: "description" } as const;
+// Slice #39.89: the list fills its tile at Reference Data's standard gap, the description taking what the others leave.
+const LIST_FILL: ColumnName = "description";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -204,11 +207,14 @@ export function StampsListView({ about }: { about?: ReactNode } = {}) {
 
   const [creating, setCreating] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  // Slice #39.89: the search — by code, or by every word typed in the short description.
+  const [search, setSearch] = useState("");
 
   const query = useQuery<StampListItem[]>({
     queryKey: ["stamps"],
     queryFn: fetchStamps,
   });
+  const shown = query.data ? filterByWords(query.data, search, (s) => s.code, (s) => s.shortDescription) : undefined;
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteStamp(id),
@@ -223,32 +229,39 @@ export function StampsListView({ about }: { about?: ReactNode } = {}) {
       {about}
       {creating && <CreateForm onClose={() => setCreating(false)} />}
 
-      <section {...screenPanel("stamps", LIST_UNITS)} className="flex flex-col gap-3 rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <section {...screenPanel("stamps", LIST_UNITS)} className={ADMIN_LIST_PANEL}>
 
-      {/* Toolbar */}
-      <div className="flex items-center justify-between">
-        {/* #37.46 (A082): Plus, icon-only. The name keeps its „+": e2e
-            finds the button by „+ Creare ștampilă", as #37.44 kept „+ Adaugă". */}
-        <IconButton
-          icon={Plus}
-          label={`+ ${t("create")}`}
-          variant="primary"
-          size="sm"
-          onClick={() => setCreating(true)}
-          disabled={creating}
-        />
-        {query.data && (
-          <span className="text-xs text-fade dark:text-zinc-400">
-            {t("count", { count: query.data.length })}
-          </span>
-        )}
-      </div>
+      {/* Toolbar — Slice #39.89: the search beside „+ Creare ștampilă"; the count „n din m" while something is typed. */}
+      <AdminListToolbar
+        add={
+          // #37.46 (A082): Plus, icon-only. The name keeps its „+": e2e
+          // finds the button by „+ Creare ștampilă", as #37.44 kept „+ Adaugă".
+          <IconButton
+            icon={Plus}
+            label={`+ ${t("create")}`}
+            variant="primary"
+            size="sm"
+            onClick={() => setCreating(true)}
+            disabled={creating}
+          />
+        }
+        search={search}
+        onSearch={setSearch}
+        explanation={t("listSearchPlaceholder")}
+        count={
+          query.data && shown
+            ? search.trim()
+              ? t("countFiltered", { shown: shown.length, total: query.data.length })
+              : t("count", { count: query.data.length })
+            : null
+        }
+      />
 
-      {/* Table */}
-      <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900`}>
-        <table {...fixedTable(COLUMNS, undefined, LIST_FILL)}>
-          <FixedColumns columns={COLUMNS} fill={LIST_FILL} />
-          <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-ink dark:bg-zinc-800 dark:text-zinc-300">
+      {/* Table — Slice #39.89: two thirds of the window at most, scrolling inside, its header on top. */}
+      <div className={ADMIN_LIST_FRAME} data-admin-list-frame="">
+        <table {...adminListTable(COLUMNS)}>
+          <AdminListColumns columns={COLUMNS} fill={LIST_FILL} />
+          <thead className={ADMIN_LIST_HEAD}>
             <tr>
               <th className="px-4 py-2" {...columnHead("description")}>{t("table.stamp")}</th>
               <th className="px-4 py-2" {...columnHead("count")}>{t("table.members")}</th>
@@ -277,7 +290,14 @@ export function StampsListView({ about }: { about?: ReactNode } = {}) {
                 </td>
               </tr>
             )}
-            {query.data?.map((s) => (
+            {query.data && query.data.length > 0 && shown?.length === 0 && (
+              <tr>
+                <td colSpan={3} className="px-4 py-6 text-center text-fade" data-admin-list-none="">
+                  {t("table.noMatch")}
+                </td>
+              </tr>
+            )}
+            {shown?.map((s) => (
               <tr key={s.id} className="hover:bg-cta-pale dark:hover:bg-zinc-800/50">
                 <td className={`px-4 py-2 ${WRAPS}`}>
                   <span className="font-mono font-semibold text-ink dark:text-zinc-100">

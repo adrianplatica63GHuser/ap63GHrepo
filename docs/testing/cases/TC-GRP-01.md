@@ -43,7 +43,7 @@ description is `TC-GRP-01 Grup de test`, answer „Șterge". The properties are 
 | 5 | Types `TC-PROP` into „Caută…" over „Membri disponibili pentru includere" | Two rows: `TC-PROP-01 Teren de test`, `TC-PROP-03 Teren din fisier` |
 | 6 | Ticks both and presses „Adaugă în grup (2)" | Both move to „Deja în grup", each marked „[nou]", and „Modificări nesalvate" appears beside „Salvează grupul" — **nothing is written yet** |
 | 7 | Presses „Salvează grupul" | „[nou]" becomes „[01]" and „[02]"; „Modificări nesalvate" goes away |
-| 8 | Returns to „Grupuri" | The row now reads „(2)" |
+| 8 | Returns to „Grupuri"; then (#39.89) types the group's code in lower case in the search box beside „+ Adaugă”, then `test TC-E2E-GRP-01 grup`, then `nimic-de-gasit-xyz`, then clears it | The row now reads „(2)". The list stands 21 px from its tile's edges, left, right and bottom, and is never taller than two thirds of the window — it scrolls inside its tile, its header row on top. The box reads „caută după Cod sau Descriere”, the same on hover. The code finds the group, first; the three words, in another order and lower case, find it alone, the count reading „1 din …”; the third finds nothing: „Niciun grup nu se potrivește căutării.” |
 | 9 | On Căutare globală, types the group's code into „Cod grup" and presses „Caută" | „2 rezultate": both properties, each with „Grupuri" = the code and its position, 01 and 02 |
 
 Step 9 is the other end: the group is found from the records it holds, not only from itself.
@@ -79,3 +79,5 @@ form** on the list, not a page, and saving stays on the list; membership changes
 (`group-staged-members`), and the case now names both states.
 
 **2026-10-06 — Slice #38.20.** The sidebar is nine sections now; the way to this screen reads „Administrare" → „Grupuri". The screen and every step on it are unchanged, and the spec follows (`e2e/helpers/sidebar.ts` opens the section that holds an item).
+
+**2026-10-18 — step 8 extended for #39.89** (the gap, the scroll, the search), written from the code and the message files and read in the browser pane on localhost:3000 at 1920 × 1080; the spec carries it.

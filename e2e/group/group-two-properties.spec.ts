@@ -119,6 +119,33 @@ test.describe("TC-GRP-01 — Grup cu două proprietăți", () => {
       await page.goto("/admin/groups");
       await expect(page.getByRole("row").filter({ hasText: DESCRIPTION })).toContainText("(2)", { timeout: 30_000 });
 
+      // Step 8, #39.89 — the list at Reference Data's standard gap (21 px), scrolling inside its tile under its header row;
+      // the search finds the row by its code, lower case, and by the words of its description in another order.
+      const panel = page.locator('[data-panel="groups"]');
+      const gaps = await panel.evaluate((p) => {
+        const t = p.getBoundingClientRect();
+        const f = p.querySelector("[data-admin-list-frame]")!.getBoundingClientRect();
+        return [f.left - t.left, t.right - f.right, t.bottom - f.bottom].map(Math.round);
+      });
+      expect(gaps, "the gap left, right and bottom").toEqual([21, 21, 21]);
+      const frame = panel.locator("[data-admin-list-frame]");
+      const viewport = page.viewportSize()!;
+      expect(Math.abs(parseFloat(await frame.evaluate((el) => getComputedStyle(el).maxHeight)) - 0.66 * viewport.height)).toBeLessThan(2);
+      await expect(frame.locator("thead")).toHaveCSS("position", "sticky");
+      expect(await frame.evaluate((el) => el.scrollWidth - el.clientWidth), "no sideways scroll").toBeLessThanOrEqual(0);
+      const search = panel.getByRole("searchbox", { name: "caută după Cod sau Descriere", exact: true });
+      await expect(search).toHaveAttribute("title", "caută după Cod sau Descriere");
+      await search.fill(code.toLowerCase());
+      await expect(panel.locator("tbody tr").first()).toContainText(DESCRIPTION);
+      await expect(panel.locator("[data-admin-list-count]")).toHaveText(/^\d+ din \d+$/);
+      await search.fill(`test ${MARK.toLowerCase()} grup`);
+      await expect(panel.locator("tbody tr")).toHaveCount(1);
+      await expect(panel.locator("tbody tr")).toContainText(DESCRIPTION);
+      await expect(panel.locator("[data-admin-list-count]")).toHaveText(/^1 din \d+$/);
+      await search.fill("nimic-de-gasit-xyz");
+      await expect(panel.getByText("Niciun grup nu se potrivește căutării.", { exact: true })).toBeVisible();
+      await search.fill("");
+
       // Step 9 — Căutare globală, „Cod grup": „2 rezultate", positions 01 and 02.
       await page.goto("/admin/global-search");
       await page.getByPlaceholder("ex. GRP-001").fill(code);

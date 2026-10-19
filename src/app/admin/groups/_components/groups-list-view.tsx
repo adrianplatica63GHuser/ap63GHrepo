@@ -12,8 +12,10 @@ import {
   type GroupTargetType,
 } from "@/lib/groups/validation";
 import { buttonClass } from "@/lib/ui/button-styles";
-import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
+import { WRAPS, columnHead } from "@/components/table/fixed-columns";
 import { screenBox, screenPanel, tableUnits, type ColumnName } from "@/lib/ui/field-widths";
+import { ADMIN_LIST_FRAME, ADMIN_LIST_HEAD, ADMIN_LIST_PANEL, AdminListColumns, AdminListToolbar, adminListTable } from "@/components/list/admin-list";
+import { filterByWords } from "@/lib/search/fold-words";
 import { UnitRow } from "@/components/screen/unit-row";
 
 /** The groups, at #37.16's column widths (Slice #37.22). */
@@ -27,7 +29,8 @@ const COLUMNS: readonly ColumnName[] = ["groupCode", "description", "rowActions"
 const ABOUT_UNITS = 6;
 const FORM_UNITS = 3;
 const LIST_UNITS = tableUnits(COLUMNS);
-const LIST_FILL = { units: LIST_UNITS, column: "description" } as const;
+// Slice #39.89: the list fills its tile at Reference Data's standard gap, the description taking what the others leave.
+const LIST_FILL: ColumnName = "description";
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -208,11 +211,14 @@ export function GroupsListView({ about, fromMap = false }: { about?: ReactNode; 
   const [adding, setAdding] = useState(fromMap);
   const [createdForMap, setCreatedForMap] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  // Slice #39.89: the search — by code, or by every word typed in the description.
+  const [search, setSearch] = useState("");
 
   const query = useQuery<GroupListItem[]>({
     queryKey: ["groups"],
     queryFn: fetchGroups,
   });
+  const shown = query.data ? filterByWords(query.data, search, (g) => g.code, (g) => g.description) : undefined;
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteGroup(id),
@@ -258,32 +264,39 @@ export function GroupsListView({ about, fromMap = false }: { about?: ReactNode; 
         />
       )}
 
-      <section {...screenPanel("groups", LIST_UNITS)} className="flex flex-col gap-3 rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <section {...screenPanel("groups", LIST_UNITS)} className={ADMIN_LIST_PANEL}>
 
-      {/* Toolbar */}
-      <div className="flex items-center justify-between">
-        {/* #37.44 (A040/A041): the icon in place of „+"; the words keep their „+" so the name
-            stays the one every locator knows. */}
-        <IconButton
-          icon={Plus}
-          label={`+ ${t("add")}`}
-          variant="primary"
-          size="sm"
-          onClick={() => setAdding(true)}
-          disabled={adding}
-        />
-        {query.data && (
-          <span className="text-xs text-fade dark:text-zinc-400">
-            {t("count", { count: query.data.length })}
-          </span>
-        )}
-      </div>
+      {/* Toolbar — Slice #39.89: the search beside „+ Adaugă"; the count „n din m" while something is typed. */}
+      <AdminListToolbar
+        add={
+          // #37.44 (A040/A041): the icon in place of „+"; the words keep their „+" so the name
+          // stays the one every locator knows.
+          <IconButton
+            icon={Plus}
+            label={`+ ${t("add")}`}
+            variant="primary"
+            size="sm"
+            onClick={() => setAdding(true)}
+            disabled={adding}
+          />
+        }
+        search={search}
+        onSearch={setSearch}
+        explanation={t("listSearchPlaceholder")}
+        count={
+          query.data && shown
+            ? search.trim()
+              ? t("countFiltered", { shown: shown.length, total: query.data.length })
+              : t("count", { count: query.data.length })
+            : null
+        }
+      />
 
-      {/* Table */}
-      <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900`}>
-        <table {...fixedTable(COLUMNS, undefined, LIST_FILL)}>
-          <FixedColumns columns={COLUMNS} fill={LIST_FILL} />
-          <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-ink dark:bg-zinc-800 dark:text-zinc-300">
+      {/* Table — Slice #39.89: two thirds of the window at most, scrolling inside, its header on top. */}
+      <div className={ADMIN_LIST_FRAME} data-admin-list-frame="">
+        <table {...adminListTable(COLUMNS)}>
+          <AdminListColumns columns={COLUMNS} fill={LIST_FILL} />
+          <thead className={ADMIN_LIST_HEAD}>
             <tr>
               <th className="px-4 py-2" {...columnHead("groupCode")}>{t("table.code")}</th>
               <th className="px-4 py-2" {...columnHead("description")}>{t("table.description")}</th>
@@ -312,7 +325,14 @@ export function GroupsListView({ about, fromMap = false }: { about?: ReactNode; 
                 </td>
               </tr>
             )}
-            {query.data?.map((g) => (
+            {query.data && query.data.length > 0 && shown?.length === 0 && (
+              <tr>
+                <td colSpan={3} className="px-4 py-6 text-center text-fade" data-admin-list-none="">
+                  {t("table.noMatch")}
+                </td>
+              </tr>
+            )}
+            {shown?.map((g) => (
               <tr key={g.id} className="hover:bg-cta-pale dark:hover:bg-zinc-800/50">
                 <td className="px-4 py-2">
                   <span className="font-mono font-semibold text-ink dark:text-zinc-100">

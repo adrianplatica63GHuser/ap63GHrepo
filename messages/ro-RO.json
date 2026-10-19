@@ -3764,6 +3764,8 @@
     "unsavedChanges": "Modificări nesalvate",
     "saveErrorSession": "Sesiunea a expirat. Autentifică-te din nou și reîncearcă.",
     "count": "{count} ștampile",
+    "countFiltered": "{shown} din {total}",
+    "listSearchPlaceholder": "caută după Cod sau Descriere scurtă",
     "fields": {
       "code": "Cod",
       "shortDescription": "Descriere scurtă",
@@ -3782,7 +3784,8 @@
       "delete": "Șterge",
       "loading": "Se încarcă…",
       "error": "Eroare la încărcare",
-      "empty": "Nicio ștampilă încă"
+      "empty": "Nicio ștampilă încă",
+      "noMatch": "Nicio ștampilă nu se potrivește căutării."
     },
     "applicator": {
       "pageTitle": "Aplică ștampila: {stamp}",
@@ -3826,6 +3829,8 @@
     "add": "Adaugă",
     "addTitle": "Adaugă grup nou",
     "count": "{count} grupuri",
+    "countFiltered": "{shown} din {total}",
+    "listSearchPlaceholder": "caută după Cod sau Descriere",
     "save": "Salvează",
     "saving": "Se salvează…",
     "cancel": "Anulează",
@@ -3858,7 +3863,8 @@
       "delete": "Șterge",
       "loading": "Se încarcă…",
       "error": "Eroare la încărcare",
-      "empty": "Niciun grup încă"
+      "empty": "Niciun grup încă",
+      "noMatch": "Niciun grup nu se potrivește căutării."
     },
     "panels": {
       "identity": "Identitatea grupului",

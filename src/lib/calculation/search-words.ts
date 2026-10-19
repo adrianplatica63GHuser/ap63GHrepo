@@ -10,19 +10,8 @@
  */
 import { sql, type SQL } from "drizzle-orm";
 
-/** The most words a search keeps; the rest are dropped. */
-export const MAX_SEARCH_WORDS = 6;
-
-/** „Ștefan  POPESCU" → „stefan popescu": no diacritics, lower case, one space. */
-export function foldSearch(s: string): string {
-  return s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
-}
-
-/** The typed text as folded words, at most MAX_SEARCH_WORDS; none for blank text. */
-export function searchWords(q: string): string[] {
-  const f = foldSearch(q);
-  return f ? f.split(" ").slice(0, MAX_SEARCH_WORDS) : [];
-}
+// Slice #39.89: the folding moved to a module with no database in it, so a client list can use it too.
+export { MAX_SEARCH_WORDS, foldSearch, searchWords } from "@/lib/search/fold-words";
 
 /** A word as a LIKE pattern that finds it anywhere: `%`, `_` and `\` typed by the person are literal. */
 export function containsPattern(word: string): string {

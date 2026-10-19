@@ -3764,6 +3764,8 @@
     "unsavedChanges": "Unsaved changes",
     "saveErrorSession": "Your session expired. Please sign in again and retry.",
     "count": "{count} stamps",
+    "countFiltered": "{shown} of {total}",
+    "listSearchPlaceholder": "search by Code or Short description",
     "fields": {
       "code": "Code",
       "shortDescription": "Short description",
@@ -3782,7 +3784,8 @@
       "delete": "Delete",
       "loading": "Loading…",
       "error": "Failed to load",
-      "empty": "No stamps yet"
+      "empty": "No stamps yet",
+      "noMatch": "No stamp matches the search."
     },
     "applicator": {
       "pageTitle": "Apply stamp: {stamp}",
@@ -3826,6 +3829,8 @@
     "add": "Add",
     "addTitle": "Add new group",
     "count": "{count} groups",
+    "countFiltered": "{shown} of {total}",
+    "listSearchPlaceholder": "search by Code or Description",
     "save": "Save",
     "saving": "Saving…",
     "cancel": "Cancel",
@@ -3858,7 +3863,8 @@
       "delete": "Delete",
       "loading": "Loading…",
       "error": "Failed to load",
-      "empty": "No groups yet"
+      "empty": "No groups yet",
+      "noMatch": "No group matches the search."
     },
     "panels": {
       "identity": "Group identity",
