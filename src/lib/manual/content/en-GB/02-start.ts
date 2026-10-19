@@ -71,7 +71,7 @@ An open object shows its data in tiles — panels with a name each (Figure [[fig
 
 ![2.4 A natural person's screen, with its tiles](record.png){#fig-record}
 
-![2.5 A tile held over another: the tile underneath has slid down, and the outline shows the free place](make-room.png){#fig-make-room}
+![2.5 A tile held over another: the one underneath has slid down to the first place it fits whole](make-room.png){#fig-make-room}
 
 ## 2.7 The preview {#start-preview}
 

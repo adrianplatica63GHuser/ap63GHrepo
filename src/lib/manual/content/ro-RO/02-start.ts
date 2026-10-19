@@ -71,7 +71,7 @@ Un obiect deschis își arată datele în fișe — panouri cu câte un nume (Fi
 
 ![2.4 Ecranul unei persoane fizice, cu fișele ei](record.png){#fig-record}
 
-![2.5 O fișă ținută peste alta: fișa de dedesubt a alunecat în jos, iar conturul arată locul liber](make-room.png){#fig-make-room}
+![2.5 O fișă ținută peste alta: cea de dedesubt a alunecat în jos, la primul loc în care încape întreagă](make-room.png){#fig-make-room}
 
 ## 2.7 Previzualizarea {#start-preview}
 

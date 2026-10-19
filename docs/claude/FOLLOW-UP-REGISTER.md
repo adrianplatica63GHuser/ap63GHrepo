@@ -12,17 +12,17 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-10-19 — 357 entries (FU-357 filed by #39.91). Rows are status, columns are impact.
+As of 2026-10-19 — 358 entries (FU-358 filed by #39.93). Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
-| open | 18 | 82 | 79 | 23 | 202 |
+| open | 18 | 83 | 79 | 23 | 203 |
 | planned | 0 | 0 | 1 | 0 | 1 |
 | resolved | 38 | 61 | 32 | 3 | 134 |
 | ignored | 4 | 3 | 4 | 2 | 13 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 6 | 1 | 0 | 7 |
-| **total** | 60 | 152 | 117 | 28 | 357 |
+| **total** | 60 | 153 | 117 | 28 | 358 |
 <!-- summary:end -->
 
 `src/__tests__/follow-up-register.test.ts` recounts the table and fails when this block disagrees
@@ -441,3 +441,4 @@ Nothing is filed from memory: every row carries evidence someone actually looked
 | FU-355 | 2026-10-18 #39.82 20261018T161101Z-22692; 2026-10-18 #39.86 20261018T175441Z-31765; 2026-10-19 #39.92 20261019T120819Z-4648 | defect | Tests & e2e | Unverified: twice in one day an authenticated route answered 404 from its own code on the runner's server — `/api/auth/me` in the login setup, then `/api/admin/value-lists/document-types` five times in a row — and the same request again a minute later passed. | .test-runner/logs/20261018T175441Z-31765/dev-server.log:196 — „404 … application-code: 326ms"; e2e/auth.setup.ts:309 | dev | S | open | Unverified: log why those routes answer 404 (a session read as absent?) the next time it happens. | 2026-10-19 |
 | FU-356 | 2026-10-18 #39.88 Handover.39.88.md | defect | Reference data | A Reference Data list whose frame scrolls down (Indicative Tarla, Tipuri de Document, Tipuri de Proprietate, Categorii Folosință at 1366 × 900) also scrolls sideways by its vertical scroll bar's width — 14 px measured on Indicative Tarla (scrollWidth 1088, clientWidth 1074): the table is as wide as the frame and the bar takes from it. Already so before #39.88 (Categorii Folosință, which #39.88 did not widen). | src/app/admin/value-lists/_components/value-list-modal.tsx — `data-value-list-table-frame`, `overflow-auto` at `frameHeight` | user | XS | open | Reserve the bar's width (`scrollbar-gutter: stable` on the frame, the table that much narrower), or let the frame grow by it. | 2026-10-18 |
 | FU-357 | 2026-10-19 #39.91 Handover.39.91.md | next-slice idea | UI shell | The screens that draw tiles with `UnitRow` alone cannot have their tiles dragged, so a tile held over another makes no room there (39.91 covers every screen through `TileAreas` or `TileUnitRow`): „Setări”, the dashboard, the calculation screens, the Reference Data hub, the groups’ and the stamps’ lists, „Etichete”, users, help content, the type engine, the password page. Moving one to `TileUnitRow` (a `ScreenTiles` entry and a `data-tile` per tile) gives it dragging, the double-click rise and making room at once. | src/components/screen/tile-unit-row.tsx; src/lib/ui/screen-tiles.ts | user | S | open | One slice per screen family, at Adrian’s word: he asked for „all screens with tiles”, and these have no dragging today. | 2026-10-19 |
+| FU-358 | 2026-10-19 #39.93 Handover.39.93.md | recommendation | Help | No light bulb explains the tile gestures — dragging by empty space, the double-click rise, and holding a tile over another so it makes room (#39.91) — although the manual's 2.8 says a gesture that does not show is explained by one; only the „?” texts and the manual do. A bulb is a registered hint (HELP_HINTS) placed on the tile screens, plus its text in „Informații de ajutor”, which is code, so #39.93 did not add it. | src/lib/help/registry.ts — HELP_HINTS „Tiles” holds only tile-selector; src/lib/manual/content/ro-RO/02-start.ts — 2.8 | user | S | open | One hint, „tile-drag”, on the screens through TileAreas and TileUnitRow, beside the tick boxes; its text proposed in the handover. | 2026-10-19 |
