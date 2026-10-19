@@ -9,7 +9,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import {
   AdvancedMarker,
-  AdvancedMarkerAnchorPoint,
   Circle,
   InfoWindow,
   Map,
@@ -57,24 +56,19 @@ import {
   zoomToFitCorners,
 } from "@/lib/geo/map-focus";
 import {
-  CORNER_DOT_PX,
-  DROP_SIZE,
   MERGE_DISTANCE,
   boxCentre,
   dropTone,
-  isDrop,
-  mergeDrops,
   numberedDropAction,
   numberedDropZoom,
+  placeShapes,
   shapeBox,
   unionBox,
-  worldPoint,
-  worldToLatLon,
   type DropBox,
-  type DropPoint,
   type DropTone,
 } from "@/lib/geo/map-drops";
 import { useMergeDistance } from "@/components/maps/use-merge-distance";
+import { PropertyCornerDot, PropertyDrop, SHAPE_COLOR, type PlacedDrop as PlacedDropOf } from "@/components/maps/property-shapes";
 import { useToast } from "@/components/toast";
 import { GROUPS_FROM_MAP_PATH, forgetNewGroup, readMapSelection, readNewGroup, writeMapSelection } from "@/lib/groups/map-selection";
 import { MAX_GROUPS_PER_PROPERTY } from "@/lib/groups/validation";
@@ -533,110 +527,10 @@ function CornerMarker({
 // The big map's corners, drops and numbered drops  (Slice #39.60)
 // ---------------------------------------------------------------------------
 //
-// Adrian, 2026-10-16: corners „much smaller … with the colour of the sides (Blue, not red and white)" — 4 px, the
-// polygon's own colour, no ring, drawn only while the polygon is; and, zoomed out, „each Polygon replaced with the
-// symbol of an upside down drop … just one solid colour", the same size at every zoom, crowded drops merged into
-// one „that has a number inside (in white fonts)". What is a drop, and what merges, is `src/lib/geo/map-drops.ts`.
+// Drawn by `@/components/maps/property-shapes` since #39.94, which the property form's „Hartă extinsă" draws with too.
 // The Ruler keeps its own green corners (CornerMarker, above).
 
-const SHAPE_COLOR: Record<DropTone, string> = { selected: "#ef4444", duplicate: "#ec4899", normal: "#3b82f6" };
-
-/** A property polygon's corner: a dot centred ON the corner. `data-corner-marker` is where TC-MAP-02 clicks. */
-function PropertyCornerDot({ corner, color }: { corner: Corner; color: string }) {
-  return (
-    <AdvancedMarker position={{ lat: corner.lat, lng: corner.lon }} anchorPoint={AdvancedMarkerAnchorPoint.CENTER}>
-      <div
-        data-corner-marker={`${corner.lat},${corner.lon}`}
-        style={{
-          width:           CORNER_DOT_PX,
-          height:          CORNER_DOT_PX,
-          borderRadius:    "50%",
-          backgroundColor: color,
-          pointerEvents:   "none",
-        }}
-      />
-    </AdvancedMarker>
-  );
-}
-
-/** A drop placed on the map: the properties it covers (one, or a numbered drop's many) and where its tip stands. */
-type PlacedDrop = { key: string; items: MapProperty[]; position: LatLng; tone: DropTone };
-
-/**
- * A drop, its tip on the property's centre (AdvancedMarker's own bottom-centre anchor), or a numbered drop with the
- * count in white. Clickable only when no tool that takes clicks is pressed; otherwise a click goes through to the map.
- */
-function PropertyDrop({
-  drop,
-  title,
-  blinkOn,
-  clickable,
-  onClick,
-}: {
-  drop:      PlacedDrop;
-  title:     string;
-  blinkOn:   boolean;
-  clickable: boolean;
-  onClick:   (drop: PlacedDrop) => void;
-}) {
-  const count = drop.items.length;
-  const size = count > 1 ? DROP_SIZE.numbered : DROP_SIZE.single;
-  const fontPx = count >= 100 ? 11 : count >= 10 ? 13 : 14;
-  return (
-    <AdvancedMarker
-      position={drop.position}
-      title={title}
-      zIndex={count > 1 ? 3 : 2}
-      onClick={clickable ? () => onClick(drop) : undefined}
-    >
-      <div
-        data-map-drop={count}
-        // The properties it covers — TC-MAP-05 finds its own lots' drops by id.
-        data-map-drop-ids={drop.items.map((p) => p.id).join(" ")}
-        data-map-drop-tone={drop.tone}
-        style={{
-          position:      "relative",
-          width:         size.w,
-          height:        size.h,
-          cursor:        clickable ? "pointer" : undefined,
-          pointerEvents: clickable ? "auto" : "none",
-          filter:        "drop-shadow(0 1px 1.5px rgba(0,0,0,0.35))",
-        }}
-      >
-        <svg width={size.w} height={size.h} viewBox="0 0 24 32" aria-hidden="true" style={{ display: "block" }}>
-          <path
-            d="M12 0.8C5.8 0.8 0.8 5.8 0.8 12c0 8.4 11.2 19.2 11.2 19.2S23.2 20.4 23.2 12C23.2 5.8 18.2 0.8 12 0.8z"
-            fill={SHAPE_COLOR[drop.tone]}
-            // A duplicate blinks as its polygon does (#39.60: „pink applies to the drop as it does to the polygon").
-            fillOpacity={drop.tone === "duplicate" && !blinkOn ? 0.35 : 1}
-            stroke="#fff"
-            strokeWidth={1.4}
-          />
-        </svg>
-        {count > 1 && (
-          <span
-            aria-hidden="true"
-            style={{
-              position:      "absolute",
-              left:          0,
-              top:           0,
-              width:         size.w,
-              height:        size.w,
-              lineHeight:    `${size.w}px`,
-              textAlign:     "center",
-              color:         "#fff",
-              fontWeight:    700,
-              fontSize:      fontPx,
-              pointerEvents: "none",
-            }}
-          >
-            {count}
-          </span>
-        )}
-      </div>
-    </AdvancedMarker>
-  );
-}
+type PlacedDrop = PlacedDropOf<MapProperty>;
 
 /**
  * „Setări hartă" — the merge distance, kept per browser (#39.60's Ask first 2). A slider on the 5 px step, the value
@@ -1174,26 +1068,14 @@ export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean 
   // its own size on screen; the drops then merge (map-drops.ts). Recomputed on every zoom, so zooming in undoes it.
   const toneOf = (ids: readonly string[]): DropTone =>
     dropTone(ids, (id) => selectedIds.has(id) && activeTab === "all", (id) => duplicateIds.has(id));
-  const polygonIds = new Set<string>();
-  const dropPoints: DropPoint<MapProperty>[] = [];
-  for (const prop of displayItems) {
-    const box = shapeBox(prop.corners);
-    if (!box) continue;
-    if (!isDrop(box, zoom)) {
-      polygonIds.add(prop.id);
-      continue;
-    }
-    const c = boxCentre(box);
-    const w = worldPoint(c.lat, c.lon, zoom);
-    dropPoints.push({ x: w.x, y: w.y, item: prop });
-  }
-  const drops: PlacedDrop[] = mergeDrops(dropPoints, mergeDistance).map((cl) => {
+  const placed = placeShapes(displayItems, zoom, mergeDistance);
+  const polygonIds = new Set<string>(placed.polygons.map((p) => p.id));
+  const drops: PlacedDrop[] = placed.drops.map((cl) => {
     const ids = cl.items.map((p) => p.id);
-    const at = worldToLatLon(cl, zoom);
     return {
       key:      `${[...ids].sort()[0]}:${ids.length}`,
       items:    cl.items,
-      position: { lat: at.lat, lng: at.lon },
+      position: { lat: cl.at.lat, lng: cl.at.lon },
       tone:     toneOf(ids),
     };
   });

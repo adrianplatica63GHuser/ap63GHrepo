@@ -1,7 +1,9 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import type { ReactNode } from "react";
 import { useTranslations } from "next-intl";
+import type { MapView } from "@/lib/geo/map-focus";
 import type { Corner } from "./form-schema";
 
 /**
@@ -38,9 +40,17 @@ type Props = {
   onFullScreen?:     () => void;
   /** Slice #38.09 — see property-mini-map-inner.tsx. Both maps. */
   onToggleAngles?:   () => void;
+  /** Slice #39.94 — see property-mini-map-inner.tsx. „Hartă extinsă" draws the property red. */
+  tone?:             "normal" | "selected";
+  /** Slice #39.94 — see property-mini-map-inner.tsx. Where „Hartă extinsă" opens. */
+  initialView?:      MapView | null;
+  /** Slice #39.94 — see property-mini-map-inner.tsx. The form's tile only. */
+  onCenterChange?:   (center: { lat: number; lng: number } | null) => void;
+  /** Slice #39.94 — layers drawn inside the map, under the property: „Hartă extinsă"'s other properties. */
+  children?:         ReactNode;
 };
 
-export function PropertyMiniMap({ corners, onChange, readOnly, hoveredCornerIdx, onCornerHover, showAngles, onZoomChange, onFullScreen, onToggleAngles }: Props) {
+export function PropertyMiniMap({ corners, onChange, readOnly, hoveredCornerIdx, onCornerHover, showAngles, onZoomChange, onFullScreen, onToggleAngles, tone, initialView, onCenterChange, children }: Props) {
   return (
     <Inner
       corners={corners}
@@ -52,6 +62,11 @@ export function PropertyMiniMap({ corners, onChange, readOnly, hoveredCornerIdx,
       onZoomChange={onZoomChange}
       onFullScreen={onFullScreen}
       onToggleAngles={onToggleAngles}
-    />
+      tone={tone}
+      initialView={initialView}
+      onCenterChange={onCenterChange}
+    >
+      {children}
+    </Inner>
   );
 }

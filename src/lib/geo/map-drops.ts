@@ -212,3 +212,34 @@ export function numberedDropAction(currentZoom: number, targetZoom: number | nul
   if (targetZoom === null || targetZoom <= currentZoom + 1e-6) return "list";
   return "zoom";
 }
+
+/** What `placeShapes` decides at one zoom: the properties drawn as polygons, and the drops, each at its tip. */
+export type PlacedShapes<T> = { polygons: T[]; drops: { items: T[]; at: DropCorner }[] };
+
+/**
+ * At `zoom`, which properties are polygons and where the drops stand — the decision the big map makes on every zoom
+ * (#39.60), and since #39.94 the property form's „Hartă extinsă" too, for every property but the one on the form.
+ * Each property is decided on its own size on screen (`isDrop`); the drops then merge (`mergeDrops`). A property
+ * with no corners is neither.
+ */
+export function placeShapes<T extends { corners: readonly DropCorner[] }>(
+  items: readonly T[],
+  zoom: number,
+  distancePx: number,
+): PlacedShapes<T> {
+  const polygons: T[] = [];
+  const points: DropPoint<T>[] = [];
+  for (const item of items) {
+    const box = shapeBox(item.corners);
+    if (!box) continue;
+    if (!isDrop(box, zoom)) {
+      polygons.push(item);
+      continue;
+    }
+    const c = boxCentre(box);
+    const w = worldPoint(c.lat, c.lon, zoom);
+    points.push({ x: w.x, y: w.y, item });
+  }
+  const drops = mergeDrops(points, distancePx).map((cl) => ({ items: cl.items, at: worldToLatLon(cl, zoom) }));
+  return { polygons, drops };
+}

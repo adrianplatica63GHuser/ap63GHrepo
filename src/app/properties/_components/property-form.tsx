@@ -8,6 +8,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import dynamic from "next/dynamic";
 import type { RightColumn } from "@/components/tiles/tile-areas";
 import { tileSurface } from "@/lib/ui/tile-surface";
 import {
@@ -65,7 +66,10 @@ import { CornersManager } from "./corners-manager";
 import { NavigateButton } from "@/components/maps/navigate-dialog";
 import { StraightenDialog } from "./straighten-dialog";
 import { PropertyMiniMap } from "./property-mini-map";
-import { setMapFocusSource } from "@/lib/geo/map-focus";
+import { setMapFocusSource, theaterOpenView, type MapView } from "@/lib/geo/map-focus";
+
+// Slice #39.94: „Hartă extinsă"'s every other property — loaded with the overlay, never with the form.
+const TheaterOthersLayer = dynamic(() => import("./theater-others-layer"), { ssr: false });
 import { StreetViewPanel } from "./street-view-panel";
 import { HelpHint } from "@/components/help/help-hint";
 import { ErrorBoundary, PanelError } from "@/components/error-boundary";
@@ -393,7 +397,14 @@ export function PropertyForm({
   // No layout shift; the inline right-column map stays at 440px always.
   // Slice #37.91: its one door is the „Hartă" tile's own top row
   // (`onFullScreen`); the corners tile's „Hartă extinsă" is gone.
-  const handleOpenTheaterMap = () => { setBigMap(true); onBigMapChange?.(true); };
+  // Slice #39.94: it opens centred on the property, at the zoom the tile shows when the button is pressed, so the
+  // polygon is the same size on screen (`theaterOpenView`) — the corners as they are on the form, unsaved ones too.
+  const [theaterView, setTheaterView] = useState<MapView | null>(null);
+  const handleOpenTheaterMap = () => {
+    setTheaterView(theaterOpenView(corners, { center: miniMapCenterRef.current, zoom: miniMapZoomRef.current }));
+    setBigMap(true);
+    onBigMapChange?.(true);
+  };
   const handleCloseTheaterMap = () => { setBigMap(false); onBigMapChange?.(false); };
 
   // Close theater overlay on Escape key.
@@ -674,6 +685,11 @@ export function PropertyForm({
   const miniMapZoomRef = useRef<number | null>(null);
   const handleMiniMapZoom = useCallback((zoom: number | null) => {
     miniMapZoomRef.current = zoom;
+  }, []);
+  // Slice #39.94: and its centre — where „Hartă extinsă" opens a property with no corners.
+  const miniMapCenterRef = useRef<{ lat: number; lng: number } | null>(null);
+  const handleMiniMapCenter = useCallback((center: { lat: number; lng: number } | null) => {
+    miniMapCenterRef.current = center;
   }, []);
   const latestCornersRef = useRef<Corner[]>(baseline.corners);
   useEffect(() => {
@@ -1540,6 +1556,7 @@ export function PropertyForm({
                   showAngles={showAngles}
                   onToggleAngles={toggleAngles}
                   onZoomChange={handleMiniMapZoom}
+                  onCenterChange={handleMiniMapCenter}
                   onFullScreen={handleOpenTheaterMap}
                 />
               </ErrorBoundary>
@@ -1623,7 +1640,12 @@ export function PropertyForm({
                     onCornerHover={setHoveredCornerIdx}
                     showAngles={showAngles}
                     onToggleAngles={toggleAngles}
-                  />
+                    // Slice #39.94: this property red, centred at the tile's zoom, over every other property in blue.
+                    tone="selected"
+                    initialView={theaterView}
+                  >
+                    <TheaterOthersLayer excludeId={propertyId} />
+                  </PropertyMiniMap>
                 </ErrorBoundary>
               </div>
             </div>

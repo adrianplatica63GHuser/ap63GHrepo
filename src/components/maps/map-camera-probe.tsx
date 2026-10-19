@@ -14,13 +14,19 @@ import { useMap } from "@vis.gl/react-google-maps";
  * reaching into Google's objects — and it hands the zoom to `onZoom` on every
  * change, which is how the mini-map's live zoom reaches the sidebar link.
  * `onZoom(null)` on unmount: a tile that is off has no zoom to offer.
+ *
+ * Slice #39.94: `onCenter` is handed the centre each time the map comes to
+ * rest, and `null` on unmount — where „Hartă extinsă" opens a property that
+ * has no corners to centre on.
  */
 export function MapCameraProbe({
   target,
   onZoom,
+  onCenter,
 }: {
-  target?: RefObject<HTMLElement | null>;
-  onZoom?: (zoom: number | null) => void;
+  target?:   RefObject<HTMLElement | null>;
+  onZoom?:   (zoom: number | null) => void;
+  onCenter?: (center: { lat: number; lng: number } | null) => void;
 }) {
   const map = useMap();
 
@@ -32,6 +38,7 @@ export function MapCameraProbe({
       const el = target?.current;
       if (el && c) el.dataset.mapCenter = `${c.lat().toFixed(7)},${c.lng().toFixed(7)}`;
       if (el && z !== undefined) el.dataset.mapZoom = String(z);
+      if (c) onCenter?.({ lat: c.lat(), lng: c.lng() });
     };
     const report = () => onZoom?.(map.getZoom() ?? null);
     report();
@@ -41,8 +48,9 @@ export function MapCameraProbe({
       idle.remove();
       zoom.remove();
       onZoom?.(null);
+      onCenter?.(null);
     };
-  }, [map, target, onZoom]);
+  }, [map, target, onZoom, onCenter]);
 
   return null;
 }

@@ -405,6 +405,7 @@
       "empty": "No corners yet",
       "theaterTitle": "Map — expanded",
       "theaterClose": "Collapse",
+      "theaterOthers": "{count, plural, one {# property} other {# properties}}",
       "versionLabel": "v {n}",
       "historyChip": "{n} versions",
       "prevVersion": "Previous version",

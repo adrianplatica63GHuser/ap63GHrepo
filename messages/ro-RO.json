@@ -405,6 +405,7 @@
       "empty": "Niciun punct de contur",
       "theaterTitle": "Hartă extinsă",
       "theaterClose": "Restrânge",
+      "theaterOthers": "{count, plural, one {o proprietate} few {# proprietăți} other {# de proprietăți}}",
       "versionLabel": "v {n}",
       "historyChip": "{n} versiuni",
       "prevVersion": "Versiunea anterioară",

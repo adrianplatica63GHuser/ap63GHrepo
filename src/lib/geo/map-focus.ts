@@ -232,3 +232,27 @@ export function propertyMapHref(pathname: string | null | undefined): string {
     source.miniMapZoom() ?? zoomToFitCorners(corners, source.boxPx.width, source.boxPx.height);
   return mapFocusHref(id, zoom);
 }
+
+// ---------------------------------------------------------------------------
+// „Hartă extinsă" — where the form's full-screen map opens          (Slice #39.94)
+// ---------------------------------------------------------------------------
+
+/** A map's camera: what it looks at, and how close. */
+export type MapView = { center: LatLngLiteral; zoom: number };
+
+/**
+ * Where „Hartă extinsă" opens. Adrian, 2026-10-19: the property „should be in the middle and should have the same size
+ * like when I opened the property form" — so it is centred on the corners' box (`cornersBoundsCenter`, the centre the
+ * big map's focus uses), at the zoom the „Hartă" tile shows when the button is pressed: the same zoom draws the same
+ * polygon at the same size, however much larger the window. A property with no corners opens where the tile looks.
+ * `null` when the tile has reported no camera yet — the overlay then fits the corners itself, as before #39.94.
+ */
+export function theaterOpenView(
+  corners: readonly FocusCorner[],
+  tile: { center: LatLngLiteral | null; zoom: number | null },
+): MapView | null {
+  if (tile.zoom === null || !Number.isFinite(tile.zoom)) return null;
+  const center = cornersBoundsCenter(corners) ?? tile.center;
+  if (!center || !Number.isFinite(center.lat) || !Number.isFinite(center.lng)) return null;
+  return { center, zoom: tile.zoom };
+}

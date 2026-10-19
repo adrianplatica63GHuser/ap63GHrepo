@@ -18,6 +18,7 @@ import {
   mergeDrops,
   numberedDropAction,
   numberedDropZoom,
+  placeShapes,
   shapeBox,
   unionBox,
   worldPoint,
@@ -234,5 +235,44 @@ describe("a numbered drop's click", () => {
     expect(numberedDropZoom([box, box], 1366, 800)).toBeLessThanOrEqual(MAX_FOCUS_ZOOM);
     const point = shapeBox([{ lat: 44.38, lon: 25.99 }])!;
     expect(numberedDropAction(MAX_FOCUS_ZOOM, numberedDropZoom([point, point], 1366, 800))).toBe("list");
+  });
+});
+
+describe("placeShapes — polygons and drops at one zoom (#39.94: the big map and „Hartă extinsă\" alike)", () => {
+  const lot = { id: "lot", corners: LOT };
+  const field = { id: "field", corners: FIELD };
+  const none = { id: "none", corners: [] };
+  const lot2 = { id: "lot2", corners: LOT.map((c) => ({ lat: c.lat, lon: c.lon + 0.001 })) };
+
+  it("decides each property on its own size: at zoom 14 the field is a polygon, the lot a drop at its box's centre", () => {
+    const placed = placeShapes([lot, field, none], 14, MERGE_DISTANCE.default);
+    expect(placed.polygons.map((p) => p.id)).toEqual(["field"]);
+    expect(placed.drops).toHaveLength(1);
+    expect(placed.drops[0].items.map((p) => p.id)).toEqual(["lot"]);
+    const centre = boxCentre(shapeBox(LOT)!);
+    expect(placed.drops[0].at.lat).toBeCloseTo(centre.lat, 8);
+    expect(placed.drops[0].at.lon).toBeCloseTo(centre.lon, 8);
+  });
+
+  it("merges drops that crowd each other, and zooming in undoes it", () => {
+    const far = placeShapes([lot, lot2], 14, MERGE_DISTANCE.default);
+    expect(far.drops).toHaveLength(1);
+    expect(far.drops[0].items.map((p) => p.id).sort()).toEqual(["lot", "lot2"]);
+    const near = placeShapes([lot, lot2], 19, MERGE_DISTANCE.default);
+    expect(near.drops).toHaveLength(0);
+    expect(near.polygons.map((p) => p.id)).toEqual(["lot", "lot2"]);
+  });
+
+  it("gives what isDrop and mergeDrops give, item for item", () => {
+    for (const zoom of [8, 12, 14, 16, 19]) {
+      const placed = placeShapes([lot, lot2, field], zoom, 40);
+      for (const p of [lot, lot2, field]) {
+        expect([zoom, p.id, placed.polygons.includes(p)]).toEqual([zoom, p.id, !isDrop(shapeBox(p.corners)!, zoom)]);
+      }
+    }
+  });
+
+  it("places nothing for properties with no corners", () => {
+    expect(placeShapes([none], 14, 40)).toEqual({ polygons: [], drops: [] });
   });
 });

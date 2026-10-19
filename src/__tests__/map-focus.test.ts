@@ -19,6 +19,7 @@ import {
   propertyIdFromPath,
   propertyMapHref,
   setMapFocusSource,
+  theaterOpenView,
   zoomToFitCorners,
   type FocusCorner,
   type MapFocusSource,
@@ -225,5 +226,28 @@ describe("the blink — the same pulse as .ga-vpulse-green, three times", () => 
     expect(peak![1]).toContain(`rgba(34, 197, 94, ${FOCUS_BLINK.peakFill})`);
     expect(FOCUS_BLINK.rgb).toBe("rgb(34, 197, 94)");
     expect(css).toMatch(/prefers-reduced-motion: reduce\)\s*\{\s*\.ga-vpulse-green\s*\{\s*animation:\s*none/);
+  });
+});
+
+describe("theaterOpenView — where „Hartă extinsă\" opens (#39.94)", () => {
+  const tileCenter = { lat: 44.6, lng: 26.2 };
+
+  it("is centred on the corners' box, at the tile's zoom, so the polygon keeps its size on screen", () => {
+    const view = theaterOpenView([...PARCEL, { lat: 44.5001, lon: 26.1001 }], { center: tileCenter, zoom: 18.5 });
+    expect(view).not.toBeNull();
+    expect(view!.zoom).toBe(18.5);
+    expect(view!.center.lat).toBeCloseTo(44.5002, 10);
+    expect(view!.center.lng).toBeCloseTo(26.1004, 10);
+    expect(view!.center).toEqual(cornersBoundsCenter(PARCEL));
+  });
+
+  it("opens a property with no corners where the tile looks", () => {
+    expect(theaterOpenView([], { center: tileCenter, zoom: 14 })).toEqual({ center: tileCenter, zoom: 14 });
+  });
+
+  it("is null when the tile has reported no camera — the overlay then fits the corners, as before", () => {
+    expect(theaterOpenView(PARCEL, { center: tileCenter, zoom: null })).toBeNull();
+    expect(theaterOpenView(PARCEL, { center: null, zoom: Number.NaN })).toBeNull();
+    expect(theaterOpenView([], { center: null, zoom: 14 })).toBeNull();
   });
 });

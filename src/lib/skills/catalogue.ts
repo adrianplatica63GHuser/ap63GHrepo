@@ -281,7 +281,7 @@ export const SKILLS: readonly Skill[] = [
     },
     predecessors: [],
     screens: ["properties-map"],
-    cases: ["TC-MAP-01", "TC-PROP-10", "TC-PROP-13", "TC-MAP-05", "TC-MAP-06"],
+    cases: ["TC-MAP-01", "TC-PROP-10", "TC-PROP-13", "TC-MAP-05", "TC-MAP-06", "TC-MAP-09"],
     manual: ["map-what-open", "map-what-bubble", "map-what", "properties-navigate", "map-select"],
   },
   {

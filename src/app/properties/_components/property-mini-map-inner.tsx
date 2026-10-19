@@ -2,10 +2,11 @@
 
 import { Check, DraftingCompass, Maximize, PenTool } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import {
   AdvancedMarker,
+  AdvancedMarkerAnchorPoint,
   Map,
   Polygon,
   Polyline,
@@ -23,6 +24,9 @@ import {
 import { HelpHint } from "@/components/help/help-hint";
 import { MapCameraProbe } from "@/components/maps/map-camera-probe";
 import { usePolygonDraw } from "@/components/maps/use-polygon-draw";
+import { SHAPE_COLOR } from "@/components/maps/property-shapes";
+import { CORNER_DOT_PX } from "@/lib/geo/map-drops";
+import type { MapView } from "@/lib/geo/map-focus";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -36,6 +40,17 @@ type MapTypeId = "roadmap" | "hybrid";
 
 const DEFAULT_CENTER = { lat: 44.37, lng: 25.98 };
 const DEFAULT_ZOOM   = 14;
+
+/**
+ * Slice #39.94 — a corner is the big map's dot (Adrian, 2026-10-19: „just the smaller blue dot like on the expanded
+ * map"): CORNER_DOT_PX, centred on the corner, in the polygon's colour. Around it a transparent box of the old 14 px
+ * dot's size takes the hover, the drag and the closing click, so a 4 px dot is no harder to hit; and a ring of this
+ * size, in the dot's colour, singles out the corner whose row is hovered in the corners table.
+ */
+const CORNER_GRAB_PX = 14;
+const CORNER_RING_PX = 12;
+/** The polygon's fill, as the big map fills a normal and a selected property. */
+const FILL_OPACITY = { normal: 0.15, selected: 0.3 } as const;
 
 // ---------------------------------------------------------------------------
 // FitBounds — auto-fits the viewport to the initial corner set on first render
@@ -167,13 +182,27 @@ type Props = {
    * three corners, and in view mode too: it changes no data.
    */
   onToggleAngles?:   () => void;
+  /**
+   * Slice #39.94: the polygon's and its corners' colour — blue on the tile, red („selected", the big map's colour for
+   * the property picked out) in „Hartă extinsă", where every other property is drawn blue around it.
+   */
+  tone?:             "normal" | "selected";
+  /**
+   * Slice #39.94: where the map opens — „Hartă extinsă" opens on the property at the tile's zoom (`theaterOpenView`).
+   * Without it the map fits the corners, as the tile always has.
+   */
+  initialView?:      MapView | null;
+  /** Slice #39.94: the tile's centre each time it comes to rest, `null` when it unmounts. The form's tile only. */
+  onCenterChange?:   (center: { lat: number; lng: number } | null) => void;
+  /** Slice #39.94: more layers inside the map, drawn under this property — „Hartă extinsă"'s other properties. */
+  children?:         ReactNode;
 };
 
 // ---------------------------------------------------------------------------
 // Mini-map inner
 // ---------------------------------------------------------------------------
 
-export default function PropertyMiniMapInner({ corners, onChange, readOnly = false, hoveredCornerIdx, onCornerHover, showAngles = false, onZoomChange, onFullScreen, onToggleAngles }: Props) {
+export default function PropertyMiniMapInner({ corners, onChange, readOnly = false, hoveredCornerIdx, onCornerHover, showAngles = false, onZoomChange, onFullScreen, onToggleAngles, tone = "normal", initialView, onCenterChange, children }: Props) {
   // Slice #32.16: this file had no translator at all, so every one of its
   // controls was English on the Romanian interface. The namespace is
   // `property` rather than `property.map.miniMap` because the STR/SAT toggle
@@ -190,6 +219,7 @@ export default function PropertyMiniMapInner({ corners, onChange, readOnly = fal
   const positions = corners.map((c) => ({ lat: c.lat, lng: c.lon }));
   // Slice #37.38: the box the camera probe writes the centre and zoom onto.
   const boxRef = useRef<HTMLDivElement>(null);
+  const shapeColor = SHAPE_COLOR[tone];
 
   // -------------------------------------------------------------------------
   // Render
@@ -198,8 +228,8 @@ export default function PropertyMiniMapInner({ corners, onChange, readOnly = fal
   return (
     <div ref={boxRef} className="relative w-full h-full" data-mini-map>
       <Map
-        defaultCenter={DEFAULT_CENTER}
-        defaultZoom={DEFAULT_ZOOM}
+        defaultCenter={initialView?.center ?? DEFAULT_CENTER}
+        defaultZoom={initialView?.zoom ?? DEFAULT_ZOOM}
         mapTypeId={mapType}
         // mapId is required for AdvancedMarker; use the official Google placeholder in dev
         mapId={process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID ?? "DEMO_MAP_ID"}
@@ -213,28 +243,36 @@ export default function PropertyMiniMapInner({ corners, onChange, readOnly = fal
         onClick={readOnly ? undefined : draw.onMapClick}
         onMousemove={readOnly ? undefined : draw.onMouseMove}
       >
-        <FitBounds corners={corners} />
-        <MapCameraProbe target={boxRef} onZoom={onZoomChange} />
+        {!initialView && <FitBounds corners={corners} />}
+        <MapCameraProbe target={boxRef} onZoom={onZoomChange} onCenter={onCenterChange} />
+
+        {/* Slice #39.94: other layers first, so this property is drawn over them. */}
+        {children}
 
         {/* Closed polygon fill */}
         {corners.length >= 3 && (
           <Polygon
             paths={positions}
-            strokeColor="#3b82f6"
+            strokeColor={shapeColor}
             strokeOpacity={1}
             strokeWeight={2}
-            fillColor="#3b82f6"
-            fillOpacity={0.15}
+            fillColor={shapeColor}
+            fillOpacity={FILL_OPACITY[tone]}
+            // A click passes through to the map: while drawing it adds a corner, as before.
+            clickable={false}
           />
         )}
 
-        {/* Corner markers — draggable when not drawing, clickable to close polygon when drawing */}
+        {/* Corner markers — draggable when not drawing, clickable to close polygon when drawing.
+            Slice #39.94: the big map's 4 px dot, centred on the corner, in a 14 px grab area. */}
         {corners.map((c, idx) => {
           const isHighlighted = hoveredCornerIdx === idx;
           return (
             <AdvancedMarker
               key={idx}
               position={{ lat: c.lat, lng: c.lon }}
+              anchorPoint={AdvancedMarkerAnchorPoint.CENTER}
+              zIndex={10}
               // Disable dragging in draw mode or read-only view
               draggable={!readOnly && !drawing}
               onDragEnd={(e) => draw.onDragEnd(idx, e)}
@@ -242,38 +280,41 @@ export default function PropertyMiniMapInner({ corners, onChange, readOnly = fal
               // map adds no corner on top of an existing one.
               onClick={(e) => draw.onCornerClick(idx, e)}
             >
-              {/* Custom dot marker: red normally, blue + ring when highlighted */}
               <div
+                data-mini-map-corner={idx}
                 onMouseEnter={() => onCornerHover?.(idx)}
                 onMouseLeave={() => onCornerHover?.(null)}
-                style={{ position: "relative", width: 14, height: 14, cursor: "pointer" }}
+                style={{ position: "relative", width: CORNER_GRAB_PX, height: CORNER_GRAB_PX, cursor: "pointer" }}
               >
-                {/* Emphasis ring — same blue, fades in on highlight */}
+                {/* Emphasis ring — the dot's colour, fades in while the corner's row is hovered */}
                 <div
                   style={{
-                    position:     "absolute",
-                    top:          "50%",
-                    left:         "50%",
-                    transform:    "translate(-50%, -50%)",
-                    width:        28,
-                    height:       28,
-                    borderRadius: "50%",
-                    border:       "2.5px solid #3b82f6",
-                    opacity:      isHighlighted ? 1 : 0,
-                    transition:   "opacity 0.15s",
+                    position:      "absolute",
+                    top:           "50%",
+                    left:          "50%",
+                    transform:     "translate(-50%, -50%)",
+                    width:         CORNER_RING_PX,
+                    height:        CORNER_RING_PX,
+                    borderRadius:  "50%",
+                    border:        `2px solid ${shapeColor}`,
+                    opacity:       isHighlighted ? 1 : 0,
+                    transition:    "opacity 0.15s",
                     pointerEvents: "none",
                   }}
                 />
                 {/* Dot */}
                 <div
+                  data-mini-map-dot=""
                   style={{
-                    width:           14,
-                    height:          14,
+                    position:        "absolute",
+                    top:             "50%",
+                    left:            "50%",
+                    transform:       "translate(-50%, -50%)",
+                    width:           CORNER_DOT_PX,
+                    height:          CORNER_DOT_PX,
                     borderRadius:    "50%",
-                    backgroundColor: isHighlighted ? "#3b82f6" : "#ef4444",
-                    border:          "2px solid white",
-                    boxShadow:       "0 1px 4px rgba(0,0,0,0.5)",
-                    transition:      "background-color 0.15s",
+                    backgroundColor: shapeColor,
+                    pointerEvents:   "none",
                   }}
                 />
               </div>
@@ -292,7 +333,7 @@ export default function PropertyMiniMapInner({ corners, onChange, readOnly = fal
         {previewPath && (
           <Polyline
             path={previewPath}
-            strokeColor="#3b82f6"
+            strokeColor={shapeColor}
             strokeOpacity={0.6}
             strokeWeight={2}
           />
