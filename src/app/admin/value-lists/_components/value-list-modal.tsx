@@ -12,8 +12,8 @@ import {
 } from "@tanstack/react-query";
 import { LIST_META, VALID_LIST_KEYS, type FieldMeta, type ListKey } from "@/lib/admin/value-lists/config";
 import { LINK_MARK_BOX } from "@/lib/ui/link-mark";
-import { FixedColumns, ONE_LINE, columnHead, fixedTable } from "@/components/table/fixed-columns";
-import { columnsRem, dialogCardStyle, dialogUnits, screenBox, type ColumnName } from "@/lib/ui/field-widths";
+import { FixedColumns, ONE_LINE, columnHead, fixedTable, type TileFill } from "@/components/table/fixed-columns";
+import { columnsRem, dialogCardStyle, dialogUnits, referenceTableRem, referenceTileRem, screenBox, unitsFor, unitsRem, type ColumnName } from "@/lib/ui/field-widths";
 import {
   isInUseBody,
   type InUseBody,
@@ -301,6 +301,44 @@ export const VALUE_LIST_CARD_UNITS = Math.max(
  */
 export function valueListCardUnits(listKey: ListKey): number {
   return dialogUnits(columnsRem(listColumns(listKey)), CARD_PADDING_REM);
+}
+
+/**
+ * Slice #39.88 — every list at „Categorii Folosință"'s gap from its tile's edges (`REFERENCE_GAP_REM`, 21 px), in one of
+ * two ways (Adrian: „for the "Tarla codes" tile … we should make the list wider … donate the extra width … to the
+ * description field; however for the citizenship tile and for the relationship to business tile we should make the tile
+ * narrower … and leave the list with unchanged").
+ *
+ * - The roles' and the two links' pages are „fine" and are not touched (Ask first 1).
+ * - „Cetățenie" and „Relația cu firma" keep their list; their tile is the list and two gaps — whole units where that
+ *   lands exactly, otherwise off the grid (Ask first 3). Neither lands: 464 px in 476 or 640, 600 in 640 or 804.
+ * - Every other list keeps its tile's units and grows to the gap, the width going to its description, or to its name
+ *   where it has none (Ask first 2).
+ */
+export const REFERENCE_LISTS_UNTOUCHED: ReadonlySet<ListKey> = new Set(["person-roles", "property-property-roles", "document-document-roles"]);
+export const REFERENCE_TILE_FOLLOWS_LIST: ReadonlySet<ListKey> = new Set(["citizenships", "person-relationships"]);
+
+/** The column that takes the width a list gains: its description, else its first column, the name. */
+export function referenceFillColumn(listKey: ListKey): ColumnName {
+  const columns = listColumns(listKey);
+  return columns.includes("valueText") ? "valueText" : columns[0];
+}
+
+/** A list's tile on a Reference Data page: its units, and — when it is off the grid — its width. */
+export function referenceTileWidth(listKey: ListKey): { units: number; widthRem?: number } {
+  const units = valueListCardUnits(listKey);
+  if (!REFERENCE_TILE_FOLLOWS_LIST.has(listKey)) return { units };
+  const table = columnsRem(listColumns(listKey));
+  for (let n = 1; n <= units; n++) if (referenceTableRem(unitsRem(n)) === table) return { units: n };
+  const widthRem = referenceTileRem(table);
+  return { units: unitsFor(widthRem), widthRem };
+}
+
+/** The table's fill in its tile, or nothing for a list whose table keeps its own width. */
+export function referenceTileFill(listKey: ListKey): TileFill | undefined {
+  if (REFERENCE_LISTS_UNTOUCHED.has(listKey) || REFERENCE_TILE_FOLLOWS_LIST.has(listKey)) return undefined;
+  const units = valueListCardUnits(listKey);
+  return { units, column: referenceFillColumn(listKey), tableRem: referenceTableRem(unitsRem(units)) };
 }
 
 
@@ -1165,6 +1203,8 @@ export function ValueListModal({
   // list. (Since Slice #37.37 every column is `COLUMN`'s and the card is whole
   // units, the same for every list — `VALUE_LIST_CARD_UNITS`.)
   const columns = listColumns(listKey);
+  // Slice #39.88: in a tile, the list grows to the standard gap (`referenceTileFill`).
+  const tileFill = fill ? referenceTileFill(listKey) : undefined;
   const cells = listCells(listKey);
   const nameTip = nameTipField(listKey);
   // Slice #38.70: the cells' side padding — `px-2` on a compact list, `px-4` elsewhere.
@@ -1728,9 +1768,10 @@ export function ValueListModal({
               ref={frameRef}
               className="max-w-full overflow-auto rounded-md border border-card-rim dark:border-zinc-800"
               style={frameHeight === null ? undefined : { maxHeight: frameHeight }}
+              data-value-list-table-frame=""
             >
-              <table {...fixedTable(columns, "text-sm min-w-full")}>
-                <FixedColumns columns={columns} />
+              <table {...fixedTable(columns, "text-sm min-w-full", tileFill)}>
+                <FixedColumns columns={columns} fill={tileFill} />
                 <thead className="sticky top-0 z-10 bg-cap text-left text-xs font-medium uppercase tracking-wide text-ink dark:bg-zinc-800 dark:text-zinc-300">
                   <tr>
                     {/* Slice #38.50: a header may take two lines; a row never does. */}

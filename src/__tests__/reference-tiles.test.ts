@@ -8,7 +8,7 @@
  */
 import fs from "fs";
 import path from "path";
-import { columnsRem, dialogUnits, unitsRem } from "@/lib/ui/field-widths";
+import { PANEL_BORDER_REM, REFERENCE_GAP_REM, columnsRem, dialogUnits, referenceTableRem, referenceTileRem, unitsRem } from "@/lib/ui/field-widths";
 import { referenceScreen, typeUsesUnits } from "@/lib/admin/value-lists/reference-tiles";
 
 const read = (...p: string[]) => fs.readFileSync(path.join(process.cwd(), ...p), "utf8");
@@ -67,7 +67,7 @@ describe("one piece for every Reference Data page (Ask first 3)", () => {
 
   it("the property types' page draws its lists and the grid through it", () => {
     expect(HUB).toContain('selected === "property-types"');
-    expect(HUB).toContain("units: valueListCardUnits(key), node: listCard(key, true)");
+    expect(HUB).toContain("...referenceTileWidth(key), node: listCard(key, true)"); // #39.88: was `units: valueListCardUnits(key)`
     expect(HUB).toContain('{ key: "type-uses", units: usesUnits, node: <PropertyTypeUses cardUnits={VALUE_LIST_CARD_UNITS} fill onUnits={setUsesUnits} /> }');
     expect(HUB).toContain("<ReferenceTiles page={selected} tiles={tiles} />");
   });
@@ -104,5 +104,45 @@ describe("every page but „Indicative Tarla” as tiles (Slice #39.76)", () => 
 
   it("English says „Natural Person Types”, as the menu says „Natural Persons” (Ask first 2)", () => {
     expect(en.valueList.lists.personTypes).toBe("Natural Person Types");
+  });
+});
+
+describe("one gap on every page: „Categorii Folosință”'s (Slice #39.88)", () => {
+  // Adrian, 2026-10-18: „The gap between the list edge and the tile edge has a proper size … all the others must be
+  // modified to have the same size as the use categories tile". The browser half is TC-VL-05 and TC-VL-11 step 9.
+  it("is the card's border and its p-5 — 21 px — and „Categorii Folosință”'s list already stands at it", () => {
+    expect(REFERENCE_GAP_REM * 16).toBe(21);
+    expect(referenceTableRem(unitsRem(3))).toBe(columnsRem(["valueNameShort", "valueUsageRoles", "valueActionsRoles"]));
+    expect(referenceTileRem(referenceTableRem(unitsRem(7)))).toBe(unitsRem(7));
+    expect(PANEL_BORDER_REM).toBe(1 / 16);
+  });
+
+  it("the roles' and the links' pages are not touched (Ask first 1)", () => {
+    expect(MODAL).toContain('export const REFERENCE_LISTS_UNTOUCHED: ReadonlySet<ListKey> = new Set(["person-roles", "property-property-roles", "document-document-roles"]);');
+  });
+
+  it("„Cetățenie” and „Relația cu firma” keep their list and narrow their tile, off the grid where units miss (Ask first 3)", () => {
+    expect(MODAL).toContain('export const REFERENCE_TILE_FOLLOWS_LIST: ReadonlySet<ListKey> = new Set(["citizenships", "person-relationships"]);');
+    // Their tables, measured at 1920 px when the slice started: 464 and 600 px.
+    for (const [table, tile] of [[29, 508], [37.5, 644]] as const) {
+      expect(columnsRem(table === 29 ? ["valueNameShort", "valueUsage", "valueActions"] : ["valueName", "valueUsage", "valueActions"])).toBe(table);
+      expect(referenceTileRem(table) * 16).toBe(tile);
+      for (let n = 1; n <= 6; n++) expect(referenceTableRem(unitsRem(n))).not.toBe(table); // no whole units land on it
+    }
+  });
+
+  it("every other list grows to the gap in its tile, the width going to its description or its name (Ask first 2)", () => {
+    expect(MODAL).toContain('return columns.includes("valueText") ? "valueText" : columns[0];');
+    expect(MODAL).toContain('<table {...fixedTable(columns, "text-sm min-w-full", tileFill)}>');
+    expect(MODAL).toContain("<FixedColumns columns={columns} fill={tileFill} />");
+    // „Indicative Tarla": 964 px in 1132 before, 1088 after — the 124 px to „Descriere".
+    expect(referenceTableRem(unitsRem(7)) * 16).toBe(1088);
+  });
+
+  it("the allowed-uses grid too: its bottom at the gap, and what it gains to „Tip”", () => {
+    const USES = code(read("src", "app", "admin", "value-lists", "_components", "property-type-uses.tsx"));
+    expect(USES).toContain('fill ? "pb-5 pt-3" : "py-3"');
+    expect(USES).toContain("const own = el.offsetWidth - extraRef.current;");
+    expect((USES.match(/style=\{namePad\}/g) ?? []).length).toBe(2);
   });
 });

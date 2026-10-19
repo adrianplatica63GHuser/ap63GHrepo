@@ -1743,6 +1743,29 @@ export function tableUnits(columns: readonly ColumnName[]): number {
  * `fill` — a `wraps` column — taking the rest, so the table is exactly
  * `tileTableRem(units)` wide and its columns still the same at every window.
  */
+/**
+ * THE STANDARD GAP ON „DATE DE REFERINȚĂ".                        (Slice #39.88)
+ *
+ * Adrian, 2026-10-18: „if we look at tile use categories under Reference Data The gap between the list edge and the tile
+ * edge has a proper size This applies stood left right and bottom". Measured at 1920 px when the slice started:
+ * „Categorii Folosință" 21 px left, right and bottom — the card's 1-px border and its p-5, with the list filling the card.
+ * So the standard is that: a list's frame stands `REFERENCE_GAP_REM` inside its tile on each side, and the table inside
+ * that frame is the tile less two gaps and the frame's two borders. The other pages measured 48–101 px either side
+ * (bottom 21 everywhere but the allowed-uses grid, 13).
+ */
+export const REFERENCE_CARD_PADDING_REM = 1.25;
+export const REFERENCE_GAP_REM = PANEL_BORDER_REM + REFERENCE_CARD_PADDING_REM;
+
+/** A Reference Data list's table in a tile `tileRem` wide, at the standard gap. */
+export function referenceTableRem(tileRem: number): number {
+  return tileRem - 2 * REFERENCE_GAP_REM - 2 * PANEL_BORDER_REM;
+}
+
+/** The tile a table `tableRem` wide needs to stand at the standard gap — off the unit grid where it falls between. */
+export function referenceTileRem(tableRem: number): number {
+  return tableRem + 2 * REFERENCE_GAP_REM + 2 * PANEL_BORDER_REM;
+}
+
 export function fillColumnRem(columns: readonly ColumnName[], units: number, fill: ColumnName): number {
   const others = columns.filter((n) => n !== fill).reduce((sum, n) => sum + columnRem(n), 0);
   return tileTableRem(units) - others;

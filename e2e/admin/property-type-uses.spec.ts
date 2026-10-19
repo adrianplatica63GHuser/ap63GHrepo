@@ -131,14 +131,15 @@ test.describe("TC-VL-11 — tipurile de proprietate și folosințele", () => {
       // Step 9 — #39.75: tiles. At 1920 the types (5 units) and the uses (3) side by side, the grid (5) under the
       // types; each list with the same gap either side; „Implicit" above. At 1366 the three one under another.
       const tileOf = (k: string) => page.locator(`[data-tile="${k}"]`);
-      type TileAt = { x: number; y: number; w: number; units: number; left: number; right: number };
+      type TileAt = { x: number; y: number; w: number; units: number; left: number; right: number; bottom: number };
       const at = async (): Promise<Record<string, TileAt>> =>
         page.evaluate(() =>
           Object.fromEntries(
             [...document.querySelectorAll<HTMLElement>("[data-reference-tiles] [data-tile]")].map((t) => {
               const r = t.getBoundingClientRect();
-              const list = (t.querySelector("table") as HTMLElement).getBoundingClientRect();
-              return [t.dataset.tile, { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), units: Number(t.dataset.tileUnits), left: list.x - r.x, right: r.right - list.right }];
+              // #39.88: a list's own frame, or the grid's table, which has none.
+              const list = ((t.querySelector("[data-value-list-table-frame]") ?? t.querySelector("table")) as HTMLElement).getBoundingClientRect();
+              return [t.dataset.tile, { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), units: Number(t.dataset.tileUnits), left: list.x - r.x, right: r.right - list.right, bottom: r.bottom - list.bottom }];
             }),
           ),
         );
@@ -150,6 +151,9 @@ test.describe("TC-VL-11 — tipurile de proprietate și folosințele", () => {
       expect(wide["type-uses"].x).toBe(wide["property-types"].x);
       expect(wide["type-uses"].y).toBeGreaterThan(wide["property-types"].y);
       for (const [k, t] of Object.entries(wide)) expect({ k, even: Math.abs(t.left - t.right) <= 2 }).toEqual({ k, even: true });
+      // #39.88: each at „Categorii Folosință"'s gap — 21 px left, right and bottom — the grid included.
+      for (const [k, t] of Object.entries(wide))
+        expect({ k, left: t.left, right: t.right, bottom: t.bottom, near: [t.left, t.right, t.bottom].every((n) => Math.abs(n - 21) <= 1.5) }).toMatchObject({ k, near: true });
       await expect(tileOf("property-types")).toHaveCSS("width", "804px");
       await page.setViewportSize({ width: 1366, height: 900 });
       await expect.poll(async () => { const t = await at(); return new Set(Object.values(t).map((v) => v.x)).size; }, { timeout: 15_000 }).toBe(1);

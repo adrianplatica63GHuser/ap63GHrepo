@@ -11,7 +11,8 @@
  *
  * WIDTHS ARE UNITS, NEVER PERCENTAGES (Ask first 2): each tile is the fewest whole units its table needs
  * (`valueListCardUnits`, `typeUsesUnits`), and its list fills it, so the gap between the list and the tile's edge is
- * the card's padding on both sides. The flow takes the first two tiles across (`flowUnits`): at 1920 px — the side is
+ * the card's padding on both sides — since #39.88 one standard gap on every page but the roles' and the links'
+ * (`REFERENCE_GAP_REM`, `referenceTileFill`, `referenceTileWidth`). The flow takes the first two tiles across (`flowUnits`): at 1920 px — the side is
  * eight units there — „Tipuri de Proprietate” (5) and „Categorii Folosință” (3) stand side by side, and the grid under
  * the first. At 1366 px the side holds five units and the tiles stand one under another.
  *
@@ -20,7 +21,7 @@
 import type { ReactNode } from "react";
 import { TileUnitRow } from "@/components/screen/tile-unit-row";
 import { TilePositionsReset } from "@/components/screen/tile-positions-reset";
-import { unitStyle } from "@/lib/ui/field-widths";
+import { rem, unitStyle } from "@/lib/ui/field-widths";
 import { referenceScreen } from "@/lib/admin/value-lists/reference-tiles";
 
 export interface ReferenceTile {
@@ -28,6 +29,11 @@ export interface ReferenceTile {
   key: string;
   /** Its width in whole units. */
   units: number;
+  /**
+   * Slice #39.88: a width off the unit grid — „Cetățenie" and „Relația cu firma", whose tile is their list and two
+   * standard gaps (`referenceTileWidth`). `units` is then the whole units that hold it, for the flow.
+   */
+  widthRem?: number;
   node: ReactNode;
   /** Slice #39.76: kept in the page but not shown — the role form's tile while no form is open. */
   hidden?: boolean;
@@ -54,7 +60,7 @@ export function ReferenceTiles({ page, tiles }: { page: string; tiles: readonly 
             data-tile-units={t.full ? undefined : t.units}
             data-tile-full={t.full ? "" : undefined}
             className={t.full ? "basis-full" : undefined}
-            style={t.full ? undefined : unitStyle(t.units)}
+            style={t.full ? undefined : t.widthRem !== undefined ? { width: rem(t.widthRem) } : unitStyle(t.units)}
             hidden={t.hidden}
           >
             {t.node}

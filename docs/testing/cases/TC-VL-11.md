@@ -41,7 +41,7 @@ The window is 1366 × 900.
 | 6 | Chooses „Teren intravilan” in „Tip proprietate”, without saving | Every use offered; the sentence under the field gone |
 | 7 | Back on the page, ticks „Drumuri” on „Teren intravilan”; reopens the property, chooses „Teren intravilan” again | The tick stays after a reload; „(toate)” gone from that row; the form offers „Drumuri” and „Arabil” (the value it holds) and the sentence under the field again |
 | 8 | Unticks „Drumuri” on „Teren intravilan” | The row reads „(toate)” again |
-| 9 | Widens the window to 1920 × 1080 (#39.75) | The three are tiles, with „Implicit” above them at the right: „Tipuri de Proprietate” (five units) and „Categorii Folosință” (three) side by side at the top, „Folosințe permise pentru fiecare tip” (five) under the types. In each, the list stands with the same gap to the tile's left and right edges. Back at 1366 × 900, the three stand one under another again |
+| 9 | Widens the window to 1920 × 1080 (#39.75) | The three are tiles, with „Implicit” above them at the right: „Tipuri de Proprietate” (five units) and „Categorii Folosință” (three) side by side at the top, „Folosințe permise pentru fiecare tip” (five) under the types. In each, the list stands with the same gap to the tile's left and right edges — since #39.88 the standard one, 21 px, left, right and bottom, the grid included. Back at 1366 × 900, the three stand one under another again |
 
 ## At the end — leaving things as they were found
 
@@ -85,3 +85,5 @@ localhost:3000 at 1920 × 1080: „Tipuri de Proprietate” 804 px (5 units) at 
 
 **2026-10-18 — `automated` with step 9, green on the runner (Slice #39.75).** `targeted` 20261018T052409Z-3577 on
 a6040c9.
+
+**2026-10-18 — step 9's gap for #39.88.** Measured in the browser pane on localhost:3000 at 1920 and 1366 px: the three tiles 21 px from their lists left, right and bottom (the types' list 760 px in 804, „Categorii Folosință” 432 in 476, the grid 762 in 804, the width it gained going to „Tip”).

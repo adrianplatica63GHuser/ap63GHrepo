@@ -19,6 +19,11 @@ import { typeUsesUnits } from "@/lib/admin/value-lists/reference-tiles";
 import { TYPE_USES_QUERY_KEY, fetchTypeUses, setTypeUse, type TypeUsePair } from "@/lib/properties/type-uses";
 import { fetchValueListRows, toLookupItems } from "./role-doc-types";
 
+/** The grid's frame: `px-5` either side (Slice #39.88 — with the card's border, the standard 21-px gap). */
+const TYPE_USES_PAD_PX = 20;
+/** „Tip"'s column's own right padding (`pr-3`), to which the width the grid gains in a tile is added. */
+const TYPE_USES_NAME_PAD_PX = 12;
+
 export function PropertyTypeUses({
   cardUnits,
   fill = false,
@@ -65,18 +70,35 @@ export function PropertyTypeUses({
   const loading = types.isPending || uses.isPending || pairs.isPending;
 
   // Slice #39.75: the table at its own width (`max-content`), measured whenever it changes, tells the tile its units.
+  // Slice #39.88: in a tile the grid then fills it to the standard gap (21 px), the width it gains going to „Tip" — the
+  // type's name (Ask first 2). That extra is a padding on every cell of the name's column — a column is as wide as its
+  // widest cell, so on the header alone it changed nothing — and the table's own width is what it reads
+  // less the extra, and the units never follow the extra round.
   const tableRef = useRef<HTMLTableElement | null>(null);
+  const extraRef = useRef(0);
+  const [extra, setExtra] = useState(0);
+  const namePad = fill && extra > 0 ? { paddingRight: TYPE_USES_NAME_PAD_PX + extra } : undefined;
   useEffect(() => {
     const el = tableRef.current;
-    if (!el || !onUnits || typeof ResizeObserver === "undefined") return;
+    if (!el || typeof ResizeObserver === "undefined") return;
     const report = () => {
-      if (el.offsetWidth > 0) onUnits(typeUsesUnits(el.offsetWidth));
+      if (el.offsetWidth <= 0) return;
+      const own = el.offsetWidth - extraRef.current;
+      onUnits?.(typeUsesUnits(own));
+      if (!fill || !el.parentElement) return;
+      const inner = el.parentElement.clientWidth - 2 * TYPE_USES_PAD_PX;
+      const next = Math.max(0, Math.floor(inner - own));
+      if (Math.abs(next - extraRef.current) >= 1) {
+        extraRef.current = next;
+        setExtra(next);
+      }
     };
     report();
     const ro = new ResizeObserver(report);
     ro.observe(el);
+    if (el.parentElement) ro.observe(el.parentElement);
     return () => ro.disconnect();
-  }, [onUnits, loading]);
+  }, [onUnits, loading, fill]);
 
   return (
     <section
@@ -89,14 +111,20 @@ export function PropertyTypeUses({
         <h2 id="property-type-uses-title" className="text-base font-semibold text-ink dark:text-zinc-100">{t("title")}</h2>
         <p className="mt-1 text-xs text-fade dark:text-zinc-400">{t("hint")}</p>
       </div>
-      <div className="overflow-x-auto px-5 py-3">
+      <div className={`overflow-x-auto px-5 ${fill ? "pb-5 pt-3" : "py-3"}`} data-type-uses-frame="">
         {loading ? (
           <p className="text-sm text-fade" role="status">{t("loading")}</p>
         ) : (
-          <table ref={tableRef} className={fill ? "mx-auto w-max text-sm" : "text-sm"}>
+          <table ref={tableRef} className={fill ? "w-max text-sm" : "text-sm"}>
             <thead>
               <tr>
-                <th className="py-1 pr-3 text-left text-xs font-medium text-fade">{t("colType")}</th>
+                <th
+                  className="py-1 pr-3 text-left text-xs font-medium text-fade"
+                  style={namePad}
+                  data-type-uses-name=""
+                >
+                  {t("colType")}
+                </th>
                 {(uses.data ?? []).map((u) => (
                   <th key={u.id} className="px-1 py-1 text-xs font-medium text-fade" data-use-column={u.name}>
                     <span className="inline-block max-w-[6rem] whitespace-normal">{u.name}</span>
@@ -109,7 +137,7 @@ export function PropertyTypeUses({
                 const any = (uses.data ?? []).some((u) => allowed({ propertyTypeId: ty.id, useCategoryId: u.id }));
                 return (
                   <tr key={ty.id} className="border-t border-wire dark:border-zinc-700" data-type-row={ty.name}>
-                    <td className="whitespace-nowrap py-1 pr-3 font-medium text-ink dark:text-zinc-100">
+                    <td className="whitespace-nowrap py-1 pr-3 font-medium text-ink dark:text-zinc-100" style={namePad}>
                       {ty.name}
                       {!any && <span className="ml-2 text-xs italic text-fade" data-allows-all="">({t("allowsAll")})</span>}
                     </td>

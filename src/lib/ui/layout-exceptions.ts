@@ -36,7 +36,7 @@ export const LAYOUT_EXCEPTIONS: readonly LayoutException[] = [
   {
     line: "data-tile-centred",
     reason:
-      "A Reference Data tile (#39.75) is whole units and its list a little narrower; the list centred in the tile is what gives it the same gap to the tile's left and right edges (Adrian, 2026-10-17). The column is the tile, which is not capped — `max-w-full` only keeps the list inside it.",
+      "A Reference Data tile (#39.75) is whole units and its list a little narrower; the list centred in the tile is what gives it the same gap to the tile's left and right edges (Adrian, 2026-10-17) — since #39.88 the list fills it at the standard gap, and the centring is what keeps the roles' and the links' lists, which keep their own width, even. The column is the tile, which is not capped — `max-w-full` only keeps the list inside it.",
   },
   {
     line: "fixed inset-",

@@ -29,7 +29,7 @@ import { categoryOfList, listsByCategory, listsOnPage, pageListOf } from "@/lib/
 import { PropertyTypeUses } from "./property-type-uses";
 import { listOfLink, markedLinks, type PressedLink, type RelationshipId } from "@/lib/admin/value-lists/relationships";
 import { LINK_MARK_BOX } from "@/lib/ui/link-mark";
-import { VALUE_LIST_CARD_UNITS, ValueListModal, valueListCardUnits } from "./value-list-modal";
+import { VALUE_LIST_CARD_UNITS, ValueListModal, referenceTileWidth } from "./value-list-modal";
 import { ReferenceTiles, type ReferenceTile } from "./reference-tiles";
 import { RelationshipTriangle } from "./relationship-triangle";
 import { REFERENCE_NAV_REM, rem, unitsRem } from "@/lib/ui/field-widths";
@@ -136,7 +136,8 @@ export function ValueListHub({
           ...(listsOnPage(selected).includes(ROLE_FORM_LIST)
             ? [{ key: "role-form", units: ROLE_FORM_UNITS, hidden: !formOpen, node: <div ref={setFormSlot} data-role-form-slot="" /> }]
             : []),
-          ...listsOnPage(selected).map((key) => ({ key, units: valueListCardUnits(key), node: listCard(key, true) })),
+          // Slice #39.88: „Cetățenie" and „Relația cu firma" narrower, off the grid where whole units miss the gap.
+          ...listsOnPage(selected).map((key) => ({ key, ...referenceTileWidth(key), node: listCard(key, true) })),
           ...(selected === "property-types"
             ? [{ key: "type-uses", units: usesUnits, node: <PropertyTypeUses cardUnits={VALUE_LIST_CARD_UNITS} fill onUnits={setUsesUnits} /> }]
             : []),

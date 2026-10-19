@@ -361,17 +361,25 @@ test.describe("TC-VL-05 pasul 9 — listele ca fișe (#39.76)", () => {
             const full = t.dataset.tileFull !== undefined;
             const units = full ? 0 : Number(t.dataset.tileUnits);
             const frame = t.querySelector<HTMLElement>("[data-value-list-frame]")?.getBoundingClientRect();
+            // #39.88: the list's own frame, and the standard gap — „Categorii Folosință"'s 21 px — on every page but the
+            // roles' and the links'.
+            const list = t.querySelector<HTMLElement>("[data-value-list-table-frame]")?.getBoundingClientRect();
+            const standard = !["triangle", "person-roles", "property-property-roles", "document-document-roles"].includes(t.dataset.tile ?? "");
+            const near21 = (n: number) => Math.abs(n - 21) <= 1.5;
+            // #39.88: „Cetățenie" and „Relația cu firma" are their list and two gaps, off the unit grid.
+            const offGrid = t.dataset.tile === "citizenships" || t.dataset.tile === "person-relationships";
             return {
               tile: t.dataset.tile,
               units,
               // The triangle is a line of its own across the row (`data-tile-full`), at #38.77's width (TC-VL-10).
-              whole: full || Math.abs(r.width - (units * 9.25 + (units - 1)) * rem) <= 1,
+              whole: full || offGrid || Math.abs(r.width - (units * 9.25 + (units - 1)) * rem) <= 1,
               even: frame ? Math.abs(frame.left - r.left - (r.right - frame.right)) <= 2 : true,
+              gap: !standard || (list !== undefined && near21(list.left - r.left) && near21(r.right - list.right) && near21(r.bottom - list.bottom)),
             };
           }),
       );
       expect(tiles.map((t) => t.tile), list.key).toEqual(list.triangle ? ["triangle", list.key] : [list.key]);
-      for (const t of tiles) expect({ list: list.key, ...t }).toEqual({ list: list.key, tile: t.tile, units: t.units, whole: true, even: true });
+      for (const t of tiles) expect({ list: list.key, ...t }).toEqual({ list: list.key, tile: t.tile, units: t.units, whole: true, even: true, gap: true });
       if (list.triangle) await expect(page.locator('[data-tile="triangle"]')).toHaveAttribute("data-tile-full", "");
       await expect(page.locator(`[data-tile-positions-reset="reference-${list.key}"]`)).toBeVisible();
     }
