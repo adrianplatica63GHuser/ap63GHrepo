@@ -147,8 +147,8 @@ export const SKILLS: readonly Skill[] = [
       en: "Sign in and find your way through the sidebar",
     },
     description: {
-      ro: "Te conectezi, citești tabloul de bord, deschizi orice ecran din bara laterală și revii la ce ai văzut în „Recente”; îți schimbi parola și ieși.",
-      en: "Sign in, read the dashboard, open any screen from the sidebar and go back to what you saw in „Recente”; change your password and sign out.",
+      ro: "Te conectezi, citești tabloul de bord, deschizi orice ecran din bara laterală, te întorci cu „Înapoi” și revii cu „Înainte”, regăsești ce ai văzut în „Recente”; îți schimbi parola și ieși.",
+      en: "Sign in, read the dashboard, open any screen from the sidebar, go back with „Înapoi” and return with „Înainte”, find what you saw in „Recente”; change your password and sign out.",
     },
     predecessors: [],
     screens: ["dashboard"],
@@ -479,8 +479,8 @@ export const SKILLS: readonly Skill[] = [
     path: "properties",
     name: { ro: "Desenează și corectează colțurile unei parcele", en: "Draw and correct a parcel's corners" },
     description: {
-      ro: "Desenezi forma pe „Hartă”, închizi poligonul, tragi un colț, editezi un punct în „Puncte de contur” și vezi suprafața calculată după salvare.",
-      en: "Draw the shape on „Hartă”, close the polygon, drag a corner, edit a point in „Puncte de contur” and see the calculated area after saving.",
+      ro: "Desenezi forma pe „Hartă”, închizi poligonul, tragi un colț, editezi un punct în „Puncte de contur”, o vezi printre celelalte în „Hartă extinsă” și vezi suprafața calculată după salvare.",
+      en: "Draw the shape on „Hartă”, close the polygon, drag a corner, edit a point in „Puncte de contur”, see it among the others in „Hartă extinsă” and see the calculated area after saving.",
     },
     predecessors: ["properties-add-property-by-hand", "properties-read-the-map"],
     screens: ["property-detail"],
