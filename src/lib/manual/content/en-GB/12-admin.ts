@@ -127,7 +127,7 @@ The screen's tiles can be moved by dragging them by an empty spot, and „Defaul
 
 ### 12.3.2 Stamps {#admin-groups-stamps}
 
-„Administration” → „Stamps” shows the panel „Ce este o Ștampilă?” (what is a stamp?), the search box, the number of stamps and the table „Stamp” · „Members”: each row has the stamp's code and description, its note, how many objects carry it, „Apply” and „Delete”. The list stops at two thirds of the window's height and scrolls inside its tile, with the row of headings always at the top.
+„Administration” → „Stamps” shows the panel „What is a Stamp?”, the search box, the number of stamps and the table „Stamp” · „Members”: each row has the stamp's code and description, its note, how many objects carry it, „Apply” and „Delete”. The list stops at two thirds of the window's height and scrolls inside its tile, with the row of headings always at the top.
 
 The box „search by Code or Short description” finds a stamp by its code or by the words of its short description, as with groups: every word, in any order, with or without diacritics, and the count says how many show out of how many there are; when none matches, „No stamp matches the search.”.
 
