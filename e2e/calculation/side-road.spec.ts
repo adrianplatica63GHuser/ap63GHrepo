@@ -211,20 +211,30 @@ test.describe("TC-CALC-01 — calculul cu drum lateral, și istoricul lui", () =
     await expect(page.getByRole("textbox", { name: "Descrierea grupului" })).toHaveValue(/^Diviz — PROP\d+$/); // #39.79
     await page.getByRole("textbox", { name: "Descrierea grupului" }).fill(GROUP);
     await page.getByRole("textbox", { name: "Poreclă drum" }).fill(ROAD);
+    // #39.98: the run's id from the answer — the success panel no longer links to the run.
+    const committedRun = page.waitForResponse((r) => r.url().endsWith("/api/calculation/commit") && r.request().method() === "POST");
     await page.getByRole("button", { name: "Creează proprietățile", exact: true }).click();
+    made.runId = ((await (await committedRun).json()) as { runId: string }).runId;
     const done = page.locator('[data-panel="committed"]');
     await expect(done).toBeVisible({ timeout: 60_000 });
     const links = done.locator("ul a");
     made.propertyIds = (await links.evaluateAll((as) => as.map((a) => a.getAttribute("href") ?? ""))).map((h) => h.split("/").pop()!);
-    const runLink = done.locator('a[href^="/admin/calculation/history/"]');
-    made.runId = (await runLink.getAttribute("href"))!.split("/").pop()!;
     await expect(done).toContainText(/S-a creat grupul GRP-\d+ cu următoarele proprietăți:/);
     const runCode = /Calculul înregistrat: (CALC\d+)/.exec(await done.innerText())?.[1];
     expect(runCode).toMatch(/^CALC\d{5}$/);
     await expect(links).toHaveText([...OWNERS, ROAD]);
 
-    // Step 10 — „Vezi istoricul calculului": the run's own page.
-    await runLink.click();
+    // Step 10 (#39.98) — one history button on the screen, the heading's „Istoricul calculelor"; it opens the list, the
+    // new run its first row; the row's „Detalii": the run's own page. The success panel had a second one until #39.98.
+    const main = page.locator("main");
+    await expect(main.locator('a[href^="/admin/calculation/history"]')).toHaveCount(1);
+    await expect(main.locator("svg.lucide-history")).toHaveCount(1);
+    await expect(done.locator("svg.lucide-history")).toHaveCount(0);
+    await main.getByRole("link", { name: "Istoricul calculelor", exact: true }).click();
+    await expect(page).toHaveURL(/\/admin\/calculation\/history$/, { timeout: 30_000 });
+    const newest = page.locator("tbody tr").first();
+    await expect(newest).toContainText(runCode!, { timeout: 30_000 });
+    await newest.getByRole("link", { name: "Detalii", exact: true }).click();
     await expect(page).toHaveURL(new RegExp(`/admin/calculation/history/${made.runId}$`), { timeout: 30_000 });
     const run = page.locator('[data-panel="calculation-run"]');
     await expect(run).toContainText(runCode!, { timeout: 30_000 });

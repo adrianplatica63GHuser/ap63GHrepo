@@ -131,7 +131,7 @@ Further down stands „Create … properties — the owners and the road — and
 
 Each new property takes its owner's name as its nickname, and the owner is linked to it with the role „Proprietar” (section [[links-associate]]). The road has no owner. The property divided stays as it was: it is neither changed nor deleted.
 
-„Create the properties” creates the properties and the group. The screen reads „Created group GRP-… with the following properties:”, the calculation's code („Calculation recorded: CALC…”) and a link to each new property. Each property's corners carry, in „Orig. #”, the numbers of the divided property's corners, where a corner of the parcel landed on it (section [[properties-corners-table]]). You find the group in „Groups” (section [[links-classify-groups]]). „View calculation history” opens the calculation's page.
+„Create the properties” creates the properties and the group. The screen reads „Created group GRP-… with the following properties:”, the calculation's code („Calculation recorded: CALC…”) and a link to each new property. Each property's corners carry, in „Orig. #”, the numbers of the divided property's corners, where a corner of the parcel landed on it (section [[properties-corners-table]]). You find the group in „Groups” (section [[links-classify-groups]]). The calculation is the first row of „Calculation History”, which the history icon beside the title opens (section [[tools-side-road-history]]).
 
 ### 9.2.5 The calculation history {#tools-side-road-history}
 

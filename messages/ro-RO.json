@@ -85,8 +85,7 @@
     },
     "success": {
       "title": "S-a creat grupul {code} cu următoarele proprietăți:",
-      "runCode": "Calculul înregistrat: {code}",
-      "viewRun": "Vezi istoricul calculului"
+      "runCode": "Calculul înregistrat: {code}"
     },
     "start": {
       "lead": "Alegeți proprietatea de împărțit, proprietarii ei cu cotele-părți și lățimea drumului. Proprietatea și proprietarii sunt deja în arhivă.",

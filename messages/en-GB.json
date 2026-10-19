@@ -85,8 +85,7 @@
     },
     "success": {
       "title": "Created group {code} with the following properties:",
-      "runCode": "Calculation recorded: {code}",
-      "viewRun": "View calculation history"
+      "runCode": "Calculation recorded: {code}"
     },
     "start": {
       "lead": "Choose the property to divide, its owners with their shares and the road's width. The property and the owners are already in the archive.",

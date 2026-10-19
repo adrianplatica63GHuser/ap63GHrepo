@@ -54,6 +54,9 @@ properties and the three persons, each with „Șterge".
 
 ## Notes from the runs
 
+**2026-10-19 — Slice #39.98.** The spec reads the run's id from the commit's answer — the success panel no longer
+links to the run — and counts one history button on the screen, the heading's. No step of this case changed.
+
 **2026-10-18 — the owner search and the screen's memory (Adrian, after #39.81).** Step 4 finds owners by code and by
 words in any order; steps 7 and 8 are new: the screen keeps what was typed while another screen is open, until
 „Resetează". Steps 7–11 became 9–13.

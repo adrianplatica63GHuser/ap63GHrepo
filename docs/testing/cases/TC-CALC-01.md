@@ -113,7 +113,7 @@ again: the next run after `CALC00008` is `CALC00009` even if `CALC00008` was del
 | 7 | Clicks the side name **16–17** | „Latura 16–17 nu pornește din colțul 18. Alegeți 18–19 sau 17–18."; corner 18 stays chosen |
 | 8 | Clicks the side name **18–19** | „Drumul pornește din colțul 18, pe latura 18–19. …"; the road drawn white along 18–19; „Colțul drumului" 18, „Latura drumului" 18–19, „Lungime drum" **20,8 m**, „Suprafață drum" **62,45 m²**; the table Nr. · Proprietar · Cotă · Cotă × parcelă · Cotă din drum · Suprafață proprie · Proprie + drum · Diferență: A **33,33% · 203,94 · 20,81 · 183,12 · 203,94 · 0,00**; B the same; C **33,33% · 204,00 · 20,82 · 183,18 · 204,00 · 0,00**; Total **99,99% · 611,87 · 62,45 · 549,42 · 611,87 · 0,00** |
 | 9 | Under „Creează 4 proprietăți — proprietarii și drumul — și un grup", where „Descrierea grupului" reads „Diviz — PROP…" (the property's code), replaces it with `TC-CALC-01 Grup de test` and „Poreclă drum" with `TC-CALC-01 Drum comun`; presses „Creează proprietățile" | „S-a creat grupul GRP-… cu următoarele proprietăți:", „Calculul înregistrat: CALC…", and four links `TC-CALC-01 A`, `B`, `C`, `TC-CALC-01 Drum comun`, with no system ID |
-| 10 | Presses „Vezi istoricul calculului" | „Detalii calcul" at `/admin/calculation/history/[id]`: CALC…, „Activ", „Re-rulează cu acești parametri", „Parametrii calculului" (step 8's figures), „Descriere grup: TC-CALC-01 Grup de test", „Pașii calculului" (step 8's table, each name with its owner's swatch), „Previzualizare hartă" (each slice in its owner's colour, as in step 5), and „Parcele create": three „Parcelă proprietar" and one „Drum comun" |
+| 10 | (Slice #39.98) Counts the history buttons, then presses „Istoricul calculelor" beside the title, and „Detalii" on the first row | One history button on the screen — the heading's; the success panel has none. „Istoricul calculelor", the new CALC… the first row. „Detalii": „Detalii calcul" at `/admin/calculation/history/[id]`: CALC…, „Activ", „Re-rulează cu acești parametri", „Parametrii calculului" (step 8's figures), „Descriere grup: TC-CALC-01 Grup de test", „Pașii calculului" (step 8's table, each name with its owner's swatch), „Previzualizare hartă" (each slice in its owner's colour, as in step 5), and „Parcele create": three „Parcelă proprietar" and one „Drum comun" |
 | 11 | Presses „Vezi proprietatea" on `TC-CALC-01 A` | The property, „Suprafață calculată (m²)" **183.12** (the property screen's own format); of its corners, the one at 17 carries „Nr. orig." **17**, the others none. (The road carries 18; C carries 16 and 19.) Under its persons, `TC-CALC-01 A` as „Proprietar" (#39.79) |
 | 12 | Opens „Istoricul calculelor" | The run's row: `CALC…`, „Drum lateral", 4, `GRP-…`, „Activ" |
 | 13 | Opens the run again and presses „Re-rulează cu acești parametri" | „Calcul drum lateral" opens on the same property's corners and owners, the owners in the order A, B, C and the road already from 18 along 18–19, with step 8's figures |
@@ -128,6 +128,13 @@ On „Grupuri", „Șterge" on `TC-CALC-01 Grup de test` and **„Șterge"**; th
 on each of the four properties. The run went at step 14.
 
 ## Notes from the runs
+
+**2026-10-19 — Slice #39.98, step 10 rewritten.** Adrian: „There should be only one button" that shows the
+calculation's history. The success panel's „Vezi istoricul calculului" is gone; the heading's „Istoricul calculelor"
+stays, and step 10 now counts one history button and reaches the run through the list's first row and „Detalii". The
+spec reads the run's id from the commit's answer instead of the panel's link. Written from the code, not driven by
+hand: a run needs a property with three owners, and the spec, which makes one, is skipped under October's maps ceiling
+— its first run in November drives step 10. The state stays `confirmed` for the steps it was confirmed on.
 
 **2026-10-18 — Slice #39.79, steps 1–3 rewritten; `confirmed`, not `automated`.** The calculation starts
 from a property in the archive and persons in it, so the data file and its three refusals left this

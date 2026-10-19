@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ArrowDown, ArrowUp, History, PackagePlus, Pencil, RotateCcw, Route, X } from "lucide-react";
+import { ArrowDown, ArrowUp, PackagePlus, Pencil, RotateCcw, Route, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useFormatter, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
@@ -604,7 +604,9 @@ export function CalculationView() {
       )
     : null;
 
-  // ---- Created (success) — as #18.10's, with the run's history link ---------
+  // ---- Created (success) — as #18.10's -----------------------------------------
+  // Slice #39.98: no history button of its own. Adrian, 2026-10-19: „There should be only one button" — the heading's
+  // „Istoricul calculelor" stays, always in the same place, and the new run is the first row there.
 
   if (committed) {
     return (
@@ -616,17 +618,6 @@ export function CalculationView() {
           </p>
           <p className="mt-1 text-xs text-green-700 dark:text-green-400">
             {t("success.runCode", { code: committed.runCode })}
-            {" · "}
-            {/* #37.46 (A087): History, icon-only; „Vezi istoricul calculului"
-                is its name and tooltip. */}
-            <IconButton
-              href={`/admin/calculation/history/${committed.runId}`}
-              icon={History}
-              label={t("success.viewRun")}
-              variant="secondary"
-              size="xs"
-              className="ml-1 align-middle"
-            />
           </p>
           <ul className="mt-2 flex flex-col gap-1">
             {committed.properties.map((p) => (

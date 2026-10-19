@@ -196,10 +196,14 @@ test.describe("TC-CALC-02 — calculul de la o proprietate și proprietarii ei",
       await expect(description).toHaveValue(/^Diviz — PROP\d+$/);
       await description.fill(GROUP);
       await page.getByRole("textbox", { name: "Poreclă drum" }).fill(ROAD);
+      // #39.98: the run's id from the answer — the success panel no longer links to the run.
+      const committedRun = page.waitForResponse((r) => r.url().endsWith("/api/calculation/commit") && r.request().method() === "POST");
       await page.getByRole("button", { name: "Creează proprietățile", exact: true }).click();
+      runId = ((await (await committedRun).json()) as { runId: string }).runId;
       const done = page.locator('[data-panel="committed"]');
       await expect(done).toBeVisible({ timeout: 60_000 });
-      runId = (await done.locator('a[href^="/admin/calculation/history/"]').getAttribute("href"))!.split("/").pop()!;
+      // #39.98: one history button on the screen, the heading's — none in the success panel.
+      await expect(page.locator("main svg.lucide-history")).toHaveCount(1);
       const created = (await done.locator("ul a").evaluateAll((as) => as.map((a) => a.getAttribute("href") ?? ""))).map((h) => h.split("/").pop()!);
       expect(created).toHaveLength(4);
 
