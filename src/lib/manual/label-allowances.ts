@@ -118,7 +118,6 @@ export const MANUAL_QUOTES_NOT_LABELS: Readonly<Record<ManualLocale, Readonly<Re
     "soon": "the manual's own word for a state of the thresholds („new”, „soon”, „old”)",
     "old": "the manual's own word for a state of the thresholds („new”, „soon”, „old”)",
     "Expiring-soon filter window": "a threshold's name — data (time_frame_setting.label_en), not a message",
-    "Hold time over another tile": "a threshold's name — data (time_frame_setting.label_en, migration_117), not a message",
     "1.5": "an example of what a person types in seconds (#39.92)",
     "ID card expiring soon threshold": "a threshold's name — data (time_frame_setting.label_en), not a message",
     "… 45 days ahead.": "the threshold's example with another value, cut",
