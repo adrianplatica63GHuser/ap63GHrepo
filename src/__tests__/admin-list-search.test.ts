@@ -83,8 +83,11 @@ describe("the gap, the scroll (Ask first 1, 4)", () => {
   });
 
   it("the description takes what the frame leaves, so a scroll bar never pushes the buttons out sideways", () => {
-    expect(SHARED).toContain('className: "w-full table-fixed text-sm"');
-    expect(SHARED).toContain("style={name === fill ? undefined : columnStyle(name)}");
+    // Slice 40.12: `AdminListTable`, which also keeps a width the user dragged — taken from the description, never
+    // under 3 rem, so the table stays the frame's width.
+    expect(SHARED).toContain("className={`w-full table-fixed text-sm ${COLUMN_LINES}`}");
+    expect(SHARED).toContain("style={name === fill ? undefined : { width: rem(rems[i] ?? columnRem(name)) }}");
+    expect(SHARED).toContain("roomRem={() => measuredRoomRem(ref.current, columns, fill)}");
   });
 });
 
