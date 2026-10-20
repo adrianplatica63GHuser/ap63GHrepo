@@ -30,7 +30,7 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens Elena's screen as from the list | „Arbore de moștenire", light blue: Ion on top, Elena under him, Radu under her; no Dan; the drawing square; under it one large button, „Adaugă sau scoate o rudă" |
+| 1 | Opens Elena's screen as from the list | „Arbore de moștenire", light blue: Ion on top, Elena under him, Radu under her; no Dan; the drawing square; under it one large button, „Adaugă sau scoate o rudă". The tile's title in capitals, the size and colour of „Identitate"'s, its grey subtitle on one line under it (Slice 40.06) |
 | 2 | „Rapoarte" → „Arbori de moștenire", finds Elena, clicks her name | Elena's screen with the panel expanded: „Legăturile de familie ale persoanei" lists Ion |
 | 3 | „Ruda": types Dan, picks him; „Ce este pentru Elena…": „Frate"; „Adaugă legătura" | Dan in the tile, on Elena's row; the list reads „Frate — Dan …" |
 | 4 | „Scoate legătura cu Dan …", then „Scoate" | Dan gone from the tile and the list |

@@ -18,6 +18,10 @@
  *
  * `children` sit in the title's line after the text — the system ID's corner
  * (#37.57) on the first tile of each record.
+ *
+ * Slice 40.06: every record and dashboard tile draws its title through this piece — the inheritance tree tile and
+ * Tarla's tiles included — so one class string changes them all. `tile-heading-one-piece.test.ts` keeps it so. `id`
+ * is the `h2`'s, for a tile that names itself with `aria-labelledby`.
  */
 import type { ReactNode } from "react";
 
@@ -44,6 +48,7 @@ export function TileTitle({
   title,
   subtitle,
   className = "mb-2",
+  id,
   children,
 }: {
   title: ReactNode;
@@ -51,11 +56,13 @@ export function TileTitle({
   subtitle?: string;
   /** The block's margin — `mb-2` like the headings it replaces, `mb-3` where those had it. */
   className?: string;
+  /** The heading's id, for a tile labelled by it (`aria-labelledby`). */
+  id?: string;
   children?: ReactNode;
 }) {
   return (
     <div className={`min-w-0 ${className}`} data-tile-title="">
-      <h2 className={TILE_TITLE_CLASS}>
+      <h2 id={id} className={TILE_TITLE_CLASS}>
         {title}
         {children}
       </h2>

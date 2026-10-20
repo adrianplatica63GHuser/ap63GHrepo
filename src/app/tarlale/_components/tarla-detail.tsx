@@ -36,6 +36,7 @@ import { TARLA_LIST_QUERY_KEY } from "./tarla-list";
 import { TarlaMap } from "./tarla-map";
 import { MAP_BOX_HEIGHT_REM, unitStyle } from "@/lib/ui/field-widths";
 import { TileUnitRow } from "@/components/screen/tile-unit-row";
+import { TileTitle } from "@/components/tiles/tile-title";
 import { TilePositionsReset } from "@/components/screen/tile-positions-reset";
 import { TARLA_HALF_UNITS, TARLA_SCREEN, TARLA_THIRD_UNITS } from "@/lib/ui/screen-tiles";
 import { DeleteDialog, fetchRows } from "@/app/admin/value-lists/_components/value-list-modal";
@@ -210,9 +211,7 @@ export function TarlaDetail({ id }: { id: string }) {
       </div>
 
       <section className={CARD} aria-labelledby="tarla-identity-title" data-tarla-identity="" data-tile="identity" style={unitStyle(TARLA_THIRD_UNITS)}>
-        <h2 id="tarla-identity-title" className="text-base font-semibold text-ink dark:text-zinc-100">
-          {t("identity")}
-        </h2>
+        <TileTitle id="tarla-identity-title" title={t("identity")} className="" />
         <div className="mt-3 flex flex-wrap gap-4">
           <label className="block text-sm">
             <span className="block text-xs font-medium text-fade">{t("fields.indicativ")}</span>
@@ -269,9 +268,7 @@ export function TarlaDetail({ id }: { id: string }) {
       </section>
 
       <section className={CARD} aria-labelledby="tarla-outline-title" data-tarla-outline="" data-tile="outline" style={unitStyle(TARLA_THIRD_UNITS)}>
-        <h2 id="tarla-outline-title" className="text-base font-semibold text-ink dark:text-zinc-100">
-          {t("outline")}
-        </h2>
+        <TileTitle id="tarla-outline-title" title={t("outline")} className="" />
         <p className="mt-1 text-xs text-fade dark:text-zinc-400">{t("outlineHint")}</p>
         {/* Slice #39.68: the outline on a map — the corners below when drawn, else the shape around the properties. */}
         <div className="mt-3 overflow-hidden rounded-md border border-wire" style={{ height: `${MAP_BOX_HEIGHT_REM}rem` }}>
@@ -296,9 +293,7 @@ export function TarlaDetail({ id }: { id: string }) {
       </section>
 
       <section className={CARD} aria-labelledby="tarla-properties-title" data-tarla-properties="" data-tile="properties" style={unitStyle(TARLA_HALF_UNITS)}>
-        <h2 id="tarla-properties-title" className="text-base font-semibold text-ink dark:text-zinc-100">
-          {t("properties", { count: properties.data?.length ?? tarla.data.propertyCount })}
-        </h2>
+        <TileTitle id="tarla-properties-title" title={t("properties", { count: properties.data?.length ?? tarla.data.propertyCount })} className="" />
         {properties.isPending ? (
           <ActivityCue>{tc("loading")}</ActivityCue>
         ) : properties.isError ? (
@@ -338,9 +333,7 @@ export function TarlaDetail({ id }: { id: string }) {
       </section>
 
       <section className={CARD} aria-labelledby="tarla-plans-title" data-tarla-plans="" data-tile="plans" style={unitStyle(TARLA_THIRD_UNITS)}>
-        <h2 id="tarla-plans-title" className="text-base font-semibold text-ink dark:text-zinc-100">
-          {t("plans", { count: plans.data?.length ?? 0 })}
-        </h2>
+        <TileTitle id="tarla-plans-title" title={t("plans", { count: plans.data?.length ?? 0 })} className="" />
         <p className="mt-1 text-xs text-fade dark:text-zinc-400">{t("plansHint")}</p>
         {plans.isPending ? (
           <ActivityCue>{tc("loading")}</ActivityCue>
@@ -363,9 +356,7 @@ export function TarlaDetail({ id }: { id: string }) {
       </section>
 
       <section className={CARD} aria-labelledby="tarla-parcels-title" data-tarla-parcels="" data-tile="parcels" style={unitStyle(TARLA_THIRD_UNITS)}>
-        <h2 id="tarla-parcels-title" className="text-base font-semibold text-ink dark:text-zinc-100">
-          {t("parcels", { count: parcels.data?.length ?? 0 })}
-        </h2>
+        <TileTitle id="tarla-parcels-title" title={t("parcels", { count: parcels.data?.length ?? 0 })} className="" />
         <p className="mt-1 text-xs text-fade dark:text-zinc-400">{t("parcelsHint")}</p>
         {parcels.isPending ? (
           <ActivityCue>{tc("loading")}</ActivityCue>
@@ -410,9 +401,7 @@ export function TarlaDetail({ id }: { id: string }) {
       </section>
 
       <section className={CARD} aria-labelledby="tarla-documents-title" data-tarla-documents="" data-tile="documents" style={unitStyle(TARLA_HALF_UNITS)}>
-        <h2 id="tarla-documents-title" className="text-base font-semibold text-ink dark:text-zinc-100">
-          {t("documents", { count: documents.data?.length ?? 0 })}
-        </h2>
+        <TileTitle id="tarla-documents-title" title={t("documents", { count: documents.data?.length ?? 0 })} className="" />
         <p className="mt-1 text-xs text-fade dark:text-zinc-400">{t("documentsHint")}</p>
         {documents.isPending ? (
           <ActivityCue>{tc("loading")}</ActivityCue>

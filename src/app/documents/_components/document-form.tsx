@@ -97,7 +97,7 @@ import { forgetRecentlyViewed } from "@/components/providers/navigation-history-
 import { firstErrorPath } from "@/lib/ui/tiles";
 import { panelSubtitle } from "@/lib/ui/panel-subtitle";
 import { hasPartiesTile } from "@/lib/documents/sale-parties";
-import { TILE_TITLE_CLASS, TileSubtitle, TileTitle } from "@/components/tiles/tile-title";
+import { TileTitle } from "@/components/tiles/tile-title";
 import { tileOfTabIndex, type DocumentLayout } from "./document-tiles";
 import { RecordSyncNotice, useRecordSaveSync } from "@/components/record-save-sync";
 import { DeceasedMark } from "@/components/persons/deceased-mark";
@@ -2005,16 +2005,13 @@ function Section({
   // Slice #37.20: as tiles, a panel takes its tile's place in the row.
   const order = useContext(PanelOrderContext);
   const framed = useContext(FrameContext);
+  // Slice 40.06: through TileTitle, as every tile's heading — the same markup it wrote out by hand.
   const heading = title === undefined ? null : (
-    <div className="mb-2 min-w-0" data-tile-title="">
-      <h2 className={TILE_TITLE_CLASS}>
-        {/* Slice #37.90: inside a tile, a panel's subtitle reads in square brackets. */}
-        {framed ? panelSubtitle(title) : title}
-        {/* Slice #37.57: the system ID's one place — this corner. */}
-        {code && <SystemIdCorner code={code} />}
-      </h2>
-      <TileSubtitle text={framed ? undefined : subtitle} />
-    </div>
+    // Slice #37.90: inside a tile, a panel's subtitle reads in square brackets.
+    <TileTitle title={framed ? panelSubtitle(title) : title} subtitle={framed ? undefined : subtitle}>
+      {/* Slice #37.57: the system ID's one place — this corner. */}
+      {code && <SystemIdCorner code={code} />}
+    </TileTitle>
   );
   if (framed) {
     return (

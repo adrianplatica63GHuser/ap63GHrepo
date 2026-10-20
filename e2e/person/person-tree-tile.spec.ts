@@ -60,6 +60,15 @@ test.describe("TC-INHER-02 — arborele persoanei", () => {
       await expect(tile(page).locator('[data-tree-panel="collapsed"]')).toBeVisible();
       const box = (await tile(page).locator("[data-tree-tile-canvas]").boundingBox())!;
       expect(Math.abs(box.width - box.height), `the drawing ${box.width} × ${box.height}`).toBeLessThanOrEqual(2);
+      // Slice 40.06: the tile's title is every tile's — in capitals, the size and the colour of „Identitate"'s.
+      const look = (h: ReturnType<Page["locator"]>) =>
+        h.evaluate((el) => { const s = getComputedStyle(el); return [s.textTransform, s.fontSize, s.fontWeight, s.color]; });
+      const treeTitle = tile(page).locator("[data-tile-title] h2");
+      await expect(treeTitle).toHaveText("Arbore de moștenire");
+      const identityTitle = page.locator('[data-tile="identity"] [data-tile-title] h2').first();
+      expect(await look(treeTitle)).toEqual(await look(identityTitle));
+      expect((await look(treeTitle))[0]).toBe("uppercase");
+      await expect(tile(page).locator("[data-tile-subtitle]")).toHaveCount(1);
 
       // Step 2 — from the whole tree, Elena's name: her screen with C expanded.
       await page.goto("/inheritance-tree");

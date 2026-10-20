@@ -20,6 +20,7 @@ import { useEffect, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { useNavigationHistory } from "@/components/providers/navigation-history-provider";
 import { PANEL_GAP, screenRowStyle, unitStyle } from "@/lib/ui/field-widths";
+import { TileTitle } from "@/components/tiles/tile-title";
 
 export type AssociateTileName = "search" | "results" | "association";
 
@@ -51,7 +52,8 @@ export function AssociateTile({ tile, units, children }: { tile: AssociateTileNa
       style={unitStyle(units)}
       className={`flex flex-col gap-3 rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${tile === "association" ? STICKY : ""}`}
     >
-      <h2 className="text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">{t(tile)}</h2>
+      {/* Slice 40.06: every tile's title piece — the classes it wrote out by hand. */}
+      <TileTitle title={t(tile)} className="" />
       {children}
     </section>
   );

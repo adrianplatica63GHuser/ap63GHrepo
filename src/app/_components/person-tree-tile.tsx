@@ -36,6 +36,7 @@ import { roleHeldBy, personRoleShown } from "@/lib/persons/relation-roles";
 import { TreeCanvas } from "@/components/inheritance/tree-canvas";
 import { fetchTree } from "@/app/inheritance-tree/_components/inheritance-tree-screen";
 import { unitStyle } from "@/lib/ui/field-widths";
+import { TileTitle } from "@/components/tiles/tile-title";
 
 type Role = { id: string; name: string; validForPerson?: boolean | null; kinship?: string | null };
 type Found = { id: string; displayName: string };
@@ -77,11 +78,10 @@ export function PersonTreeTile({
 
   return (
     <section data-tile="inheritanceTree" aria-label={title} className={`max-w-full ${surface}`} style={unitStyle(units)}>
+      {/* Slice 40.06: the title and its one-line subtitle are every tile's (TileTitle); „Deschide arborele întreg"
+          stays at the right of the title's line, beside the heading rather than inside it. */}
       <div className="mb-2 flex items-start justify-between gap-2">
-        <div>
-          <h2 className="text-sm font-semibold text-ink dark:text-zinc-100">{title}</h2>
-          {subtitle && <p className="text-xs text-fade dark:text-zinc-400">{subtitle}</p>}
-        </div>
+        <TileTitle title={title} subtitle={subtitle} className="flex-1" />
         <IconButton href={wholeTreeHref(personId)} icon={Maximize2} label={t("wholeTree")} variant="secondary" size="sm" data-tree-whole="" />
       </div>
       <div className="relative aspect-square w-full overflow-hidden rounded-md border border-card-family-rim bg-white/70 dark:border-card-family-rim-dark dark:bg-zinc-950" data-tree-tile-canvas="">
