@@ -164,21 +164,14 @@ describe("an entity delete removes its principal_object row", () => {
     expect(functionBody(read("lib", "documents", "queries.ts"), "deleteDocument")).toContain("deleteDocuments([id])");
   });
 
-  it("the batch routes delegate rather than writing their own delete", () => {
+  it("no batch route is left: a record is deleted from its own screen only", () => {
     // Slice #39.73: Properties has no batch route any more — a property is deleted only from its own form, through
     // DELETE /api/properties/[id] and so `deleteProperty` → `deleteProperties([id])` (above).
-    expect(fs.existsSync(path.join(SRC, "app", "api", "properties", "batch-delete", "route.ts"))).toBe(false);
-    for (const [seg, fn] of [
-      ["people", "deletePersons"],
-      ["documents", "deleteDocuments"],
-    ] as const) {
-      const route = code(read("app", "api", seg, "batch-delete", "route.ts"));
-      expect(route).toContain(`await ${fn}(ids)`);
-      // Whitespace-insensitive: the first version hard-coded six spaces of
-      // indentation, so a 2-space or tab-indented `db\n  .update(...)` walked
-      // straight past it.
-      expect(route).not.toMatch(/\.update\s*\(/);
-      expect(route).not.toMatch(/\.set\s*\(/);
+    // Slice 40.10: the people's and the documents' went the same way, with the lists' tick boxes. Until then this test
+    // read them for `await deletePersons(ids)` / `await deleteDocuments(ids)` and no `.update(` / `.set(` of their own;
+    // the single delete above is now the only caller of both, and goes through them as it did.
+    for (const seg of ["properties", "people", "documents"]) {
+      expect([seg, fs.existsSync(path.join(SRC, "app", "api", seg, "batch-delete", "route.ts"))]).toEqual([seg, false]);
     }
   });
 });

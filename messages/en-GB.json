@@ -839,16 +839,6 @@
       "interactionsMore": "The first {count} are shown; all of them in Interactions.",
       "interactionsDocs": "{count, plural, one {# linked document} other {# linked documents}}"
     },
-    "bulkDelete": {
-      "selectAll": "Select all on this page",
-      "deleteSelected": "Delete Selected ({count})",
-      "confirmTitle": "Delete selected items",
-      "confirmBody": "This will delete {count} selected item(s). This action cannot be undone.",
-      "cancel": "Cancel",
-      "delete": "Delete",
-      "deleting": "Deleting…",
-      "error": "Could not delete the selected items"
-    },
     "entityReferences": {
       "loading": "Loading…",
       "error": "Failed to load references",
@@ -1635,7 +1625,6 @@
         "stamp-type-switch-keeps-changes": "Stamps — switching type keeps pending changes",
         "tile-selector": "Shown parts — what the ticks do and where the choice is kept",
         "calc-preview-not-saved": "Calculation — nothing is created until you confirm",
-        "select-all-page-only": "Lists — the header tick box only selects the current page",
         "calc-group-description-autofill": "Calculation — choosing another property rewrites the description"
       }
     }

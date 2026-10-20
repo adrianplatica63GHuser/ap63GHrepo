@@ -1,15 +1,13 @@
 "use client";
 
 import { documentTypeShortName } from "@/lib/documents/type-short-name";
-import { useNameOr } from "@/components/record/use-name-or";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { RecencyBadge } from "@/components/recency-badge";
-import { HelpHint } from "@/components/help/help-hint";
 import { buttonClass } from "@/lib/ui/button-styles";
-import { ArrowRight, CalendarClock, ChevronDown, ChevronLeft, ChevronRight, Plus, Trash2 } from "lucide-react";
+import { ArrowRight, CalendarClock, ChevronDown, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { FixedColumns, ONE_LINE, cellTitle, columnHead, fixedTable } from "@/components/table/fixed-columns";
 import { LIST_FRAME, LIST_HEAD, useListFit } from "@/components/list/list-fit";
@@ -409,68 +407,6 @@ async function fetchFilterValues(
   return body.items ?? [];
 }
 
-async function callBatchDelete(ids: string[]): Promise<void> {
-  const res = await fetch("/api/documents/batch-delete", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ids }),
-  });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error((body as { error?: string }).error ?? `HTTP ${res.status}`);
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Confirm dialog
-// ---------------------------------------------------------------------------
-
-function ConfirmDialog({
-  title, body, yesLabel, noLabel, onYes, onNo, busy,
-}: {
-  title:    string;
-  body:     string;
-  yesLabel: string;
-  noLabel:  string;
-  onYes:    () => void;
-  onNo:     () => void;
-  busy:     boolean;
-}) {
-  return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="confirm-title"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-    >
-      <div className="w-full max-w-sm rounded-lg bg-card p-6 shadow-xl dark:bg-zinc-900">
-        <h3 id="confirm-title" className="text-base font-semibold text-ink dark:text-zinc-100">
-          {title}
-        </h3>
-        <p className="mt-2 text-sm text-fade dark:text-zinc-400">{body}</p>
-        <div className="mt-5 flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={onNo}
-            disabled={busy}
-            className={buttonClass({ variant: "secondary", size: "lg" })}
-          >
-            {noLabel}
-          </button>
-          <button
-            type="button"
-            onClick={onYes}
-            disabled={busy}
-            className={buttonClass({ variant: "danger", size: "lg" })}
-          >
-            {yesLabel}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -502,12 +438,9 @@ export function DocumentListView({
   initialDocumentTypeIds?: string[];
 }) {
   const t       = useTranslations("document");
-  const nameOr      = useNameOr(); // #37.57: a name, or words — never the system ID
   const tPag    = useTranslations("shared.pagination");
-  const tBulk   = useTranslations("shared.bulkDelete");
   const tFilter = useTranslations("shared.listFilters");
   const router = useRouter();
-  const queryClient = useQueryClient();
 
   // Slice #39.26: the view starts from the list's address — Back from a record brings it back as it was left.
   const address = useListAddress(FILTER_KEYS);
@@ -517,13 +450,9 @@ export function DocumentListView({
   const [expiringSoon,    setExpiringSoon]    = useState(address.filters.expiring === "1");
   // ── Slice #34.10: the custom-field filter, the half of D-01 that needs code.
   //
-  // ⚠️ **TWO pieces of state and not one `{key, value}` object**, because
-  // `record-list-agreement.test.ts` requires every entry in this list's
-  // `queryKey` to be a bare identifier, and requires each of them to appear in
-  // `pageKey` below. That rule is not bureaucracy: `pageKey` is what clears the
-  // tick boxes when a filter changes, and a filter missing from it leaves rows
-  // selected that the filter has just taken off the screen — with the bulk
-  // delete then acting on records nobody can see.
+  // TWO pieces of state and not one `{key, value}` object: until Slice 40.10 `record-list-agreement.test.ts` required
+  // every `queryKey` entry to be a bare identifier found in `pageKey`, because `pageKey` cleared the tick boxes when a
+  // filter changed. The tick boxes and that rule are gone; the two values stay apart, and both are in the address.
   const [customFieldKey,   setCustomFieldKey]   = useState(address.filters.field ?? "");
   const [customFieldValue, setCustomFieldValue] = useState(address.filters.value ?? "");
   // Slice #39.63: the shared bar — from the address, like the rest; a change goes back to the first page.
@@ -535,10 +464,6 @@ export function DocumentListView({
     setCurrentPage(0);
   }
 
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
-  const [confirmOpen,  setConfirmOpen]  = useState(false);
-  const [deleting,     setDeleting]     = useState(false);
-  const [deleteError,  setDeleteError]  = useState<string | null>(null);
 
   const { data: documentTypes } = useQuery({
     queryKey: ["document-types"],
@@ -706,9 +631,8 @@ export function DocumentListView({
   const paginate   = total > PAGE_SIZE;
   const items      = query.data?.items ?? [];
 
-  // Slice #32.15: this key must carry every value the query key above carries.
-  // A filter that is missing here leaves ticks set on rows the filter has just
-  // taken off the screen, and the bulk delete then acts on records nobody can see.
+  // Slice #32.15 made this key carry every value the query key carries, for the ticks it cleared; since 40.10
+  // there are no ticks, and it is the list's address key alone.
   const pageKey = `${debouncedSearch}|${typeFiltersKey}|${expiringSoon}|${customFieldKey}|${customFieldValue}|${filterSig}|${currentPage}`;
   // Slice #39.26: the view, in the list's address; the scroll, in the session. The search as typed, not debounced:
   // the type filter carries it, and measured in TC-DOC-08 a box emptied just before a tick came back with its old word.
@@ -719,57 +643,6 @@ export function DocumentListView({
     `${searchInput}|${pageKey}`,
   );
   useListScrollMemory(query.isSuccess);
-  const [prevPageKey, setPrevPageKey] = useState(pageKey);
-  if (prevPageKey !== pageKey) {
-    setPrevPageKey(pageKey);
-    if (selectedIds.size > 0) setSelectedIds(new Set());
-  }
-
-  const allOnPageSelected = items.length > 0 && items.every((it) => selectedIds.has(it.id));
-  const someOnPageSelected = items.some((it) => selectedIds.has(it.id));
-
-  const headerCheckboxRef = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    if (headerCheckboxRef.current) {
-      headerCheckboxRef.current.indeterminate = someOnPageSelected && !allOnPageSelected;
-    }
-  }, [someOnPageSelected, allOnPageSelected]);
-
-  function toggleAllOnPage() {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (allOnPageSelected) {
-        for (const it of items) next.delete(it.id);
-      } else {
-        for (const it of items) next.add(it.id);
-      }
-      return next;
-    });
-  }
-
-  function toggleOne(id: string) {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
-
-  async function handleConfirmDelete() {
-    setDeleting(true);
-    setDeleteError(null);
-    try {
-      await callBatchDelete(Array.from(selectedIds));
-      await queryClient.invalidateQueries({ queryKey: ["documents"] });
-      setSelectedIds(new Set());
-      setConfirmOpen(false);
-    } catch (err) {
-      setDeleteError(err instanceof Error ? err.message : tBulk("error"));
-    } finally {
-      setDeleting(false);
-    }
-  }
 
   // Optional column definitions (ordered).
   //
@@ -1029,17 +902,6 @@ export function DocumentListView({
         </div>
 
         <div className="ml-auto flex shrink-0 items-center gap-2">
-          {selectedIds.size > 0 && (
-            <IconButton
-              icon={Trash2}
-              label={tBulk("deleteSelected", { count: selectedIds.size })}
-              count={selectedIds.size}
-              variant="danger"
-              size="lg"
-              onClick={() => setConfirmOpen(true)}
-            />
-          )}
-          <HelpHint hintKey="select-all-page-only" />
           {/* Slice #39.85: measured, so the search box can take its width. */}
           <span className="inline-flex" {...LIST_ADD}>
             <IconButton
@@ -1069,11 +931,6 @@ export function DocumentListView({
         valuesKey={(key) => ["documents", "filter-values", key, debouncedSearch, typeFiltersKey, expiringSoon, customFieldKey, customFieldValue, filterSig]}
       />
 
-      {deleteError && (
-        <p className="text-sm text-red-600 dark:text-red-400" role="alert">
-          {deleteError}
-        </p>
-      )}
 
       {/* No types selected — prompt the user to pick at least one */}
       {noTypesSelected ? (
@@ -1093,17 +950,8 @@ export function DocumentListView({
                 <FixedColumns columns={columns} />
                 <thead className={LIST_HEAD}>
                   <tr>
-                    <th className="px-4 py-2" {...columnHead("selectNew")}>
-                      <input
-                        ref={headerCheckboxRef}
-                        type="checkbox"
-                        checked={allOnPageSelected}
-                        onChange={toggleAllOnPage}
-                        disabled={items.length === 0}
-                        aria-label={tBulk("selectAll")}
-                        className="h-4 w-4 rounded border-wire accent-cta"
-                      />
-                    </th>
+                    {/* Slice 40.10: the badges\' column, without the select-all box — nothing on this list acts on a selection. */}
+                    <th className="px-4 py-2" {...columnHead("selectNew")} />
                     <ListHeadCell column="listDocumentType" name={t("table.type")} />
                     <ListHeadCell column="listDocumentTitle" name={t("table.title")} />
                     {shownCols.map((col) => {
@@ -1157,13 +1005,7 @@ export function DocumentListView({
                     >
                       <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
                         <span className="inline-flex items-center">
-                          <input
-                            type="checkbox"
-                            checked={selectedIds.has(item.id)}
-                            onChange={() => toggleOne(item.id)}
-                            aria-label={nameOr(item.title, "document")}
-                            className="h-4 w-4 rounded border-wire accent-cta"
-                          />
+                          {/* Slice 40.10: no tick box — a record is deleted from its own screen only. */}
                           <RecencyBadge createdAt={item.createdAt} updatedAt={item.updatedAt} />
                         </span>
                       </td>
@@ -1242,17 +1084,6 @@ export function DocumentListView({
         </>
       )}
 
-      {confirmOpen && (
-        <ConfirmDialog
-          title={tBulk("confirmTitle")}
-          body={tBulk("confirmBody", { count: selectedIds.size })}
-          yesLabel={deleting ? tBulk("deleting") : tBulk("delete")}
-          noLabel={tBulk("cancel")}
-          busy={deleting}
-          onYes={handleConfirmDelete}
-          onNo={() => setConfirmOpen(false)}
-        />
-      )}
     </ListPreviews>
   );
 }

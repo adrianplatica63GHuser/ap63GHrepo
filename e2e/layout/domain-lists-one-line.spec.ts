@@ -25,12 +25,14 @@ const LONG = "cu o denumire mult prea lungă ca să încapă pe un singur rând 
 
 // #39.24: `gap` is the space from a row's box to its name's first letter — 30 % of 144 px on Proprietăți, 50 % of 72 on
 // the persons' lists (Adrian, 2026-10-13), Acte's as it was. #39.73: Proprietăți has no box any more (its delete went,
-// and its ticks with it), so there is no gap to measure there, and no header box to align with — `null`.
+// and its ticks with it), so there is no gap to measure there, and no header box to align with — `null`. Slice 40.10:
+// the other three lists' boxes went the same way (were 36, 36 and 72), so every gap is `null`; their first columns keep
+// their widths, so the names stay where the boxes left them.
 const LISTS: { path: string; search: string; gap: number | null }[] = [
   { path: "/properties", search: "caută după Cod, Poreclă, Nr. cadastru, Nr. CF, Tarla/Solă sau Parcelă", gap: null },
-  { path: "/natural-persons", search: "caută după ID, Nume, Poreclă, CNP, Email Personal 1, Email Personal 2, Email serviciu, Telefon Personal 1, Telefon Personal 2 sau Telefon serviciu", gap: 36 },
-  { path: "/judicial-persons", search: "caută după ID, Denumire, Poreclă, Nr. înregistrare (CUI), Telefon firmă sau E-mail firmă", gap: 36 },
-  { path: "/documents", search: "caută după Cod, Titlu sau Nr. document", gap: 72 },
+  { path: "/natural-persons", search: "caută după ID, Nume, Poreclă, CNP, Email Personal 1, Email Personal 2, Email serviciu, Telefon Personal 1, Telefon Personal 2 sau Telefon serviciu", gap: null },
+  { path: "/judicial-persons", search: "caută după ID, Denumire, Poreclă, Nr. înregistrare (CUI), Telefon firmă sau E-mail firmă", gap: null },
+  { path: "/documents", search: "caută după Cod, Titlu sau Nr. document", gap: null },
 ];
 
 // #39.83: four columns on each list — a long name that always takes two rows, a filterable one, a multi-word name
@@ -148,6 +150,9 @@ test.describe("TC-LAYOUT-05 — cele patru liste, câte un rând pe linie", () =
           // single „loading" row would pass a count of one), not just for the record.
           await expect(page.locator("main table[data-width-table] tbody tr").filter({ hasNotText: MARK })).toHaveCount(0, { timeout: 30_000 });
           await expect(page.locator("main table[data-width-table] tbody tr").filter({ hasText: MARK })).toHaveCount(1, { timeout: 30_000 });
+          // Slice 40.10: no tick box in the frame — the band or a row — and no „Șterge selecția".
+          await expect(page.locator("main table[data-width-table] input[type=checkbox]")).toHaveCount(0);
+          await expect(page.getByRole("button", { name: /^Șterge selecția/ })).toHaveCount(0);
           const r = await reading(page);
           expect({ width, list: list.path, rows: r.rows, notOneLine: r.notOneLine, buttonsOneLine: r.buttonsOneLine, oneLineTall: r.tallest < 56, overlap: r.overlap, frame: r.frameAtLeastToolbar, gap: r.gap, boxesAligned: r.boxesAligned })
             .toEqual({ width, list: list.path, rows: 1, notOneLine: [], buttonsOneLine: true, oneLineTall: true, overlap: false, frame: true, gap: list.gap, boxesAligned: list.gap === null ? null : true });

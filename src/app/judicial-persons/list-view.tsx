@@ -1,14 +1,11 @@
 "use client";
 
-import { useNameOr } from "@/components/record/use-name-or";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { RecencyBadge } from "@/components/recency-badge";
-import { HelpHint } from "@/components/help/help-hint";
-import { buttonClass } from "@/lib/ui/button-styles";
-import { ArrowRight, ChevronLeft, ChevronRight, Plus, Trash2 } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { FixedColumns, ONE_LINE, cellTitle, columnHead, fixedTable } from "@/components/table/fixed-columns";
 import { LIST_FRAME, LIST_HEAD, useListFit } from "@/components/list/list-fit";
@@ -87,71 +84,10 @@ async function fetchFilterValues(field: string, q: string, filters: FilterState)
 /** Slice #39.62 — the filter keys, read from the address. */
 const FILTER_KEYS = personFilterKeys("JUDICIAL");
 
-async function callBatchDelete(ids: string[]): Promise<void> {
-  const res = await fetch("/api/people/batch-delete", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ids }),
-  });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error((body as { error?: string }).error ?? `HTTP ${res.status}`);
-  }
-}
-
-function ConfirmDialog({
-  title, body, yesLabel, noLabel, onYes, onNo, busy,
-}: {
-  title:    string;
-  body:     string;
-  yesLabel: string;
-  noLabel:  string;
-  onYes:    () => void;
-  onNo:     () => void;
-  busy:     boolean;
-}) {
-  return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="confirm-title"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-    >
-      <div className="w-full max-w-sm rounded-lg bg-card p-6 shadow-xl dark:bg-zinc-900">
-        <h3 id="confirm-title" className="text-base font-semibold text-ink dark:text-zinc-100">
-          {title}
-        </h3>
-        <p className="mt-2 text-sm text-fade dark:text-zinc-400">{body}</p>
-        <div className="mt-5 flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={onNo}
-            disabled={busy}
-            className={buttonClass({ variant: "secondary", size: "lg" })}
-          >
-            {noLabel}
-          </button>
-          <button
-            type="button"
-            onClick={onYes}
-            disabled={busy}
-            className={buttonClass({ variant: "danger", size: "lg" })}
-          >
-            {yesLabel}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export function JudicialPersonListView() {
   const t     = useTranslations("judicialPerson");
-  const nameOr      = useNameOr(); // #37.57: a name, or words — never the system ID
   const tPag  = useTranslations("shared.pagination");
-  const tBulk = useTranslations("shared.bulkDelete");
   const router = useRouter();
-  const queryClient = useQueryClient();
 
   // Slice #39.26: the view starts from the list's address — Back from a record brings it back as it was left.
   const address = useListAddress(FILTER_KEYS);
@@ -167,10 +103,6 @@ export function JudicialPersonListView() {
   const [debouncedSearch, setDebouncedSearch] = useState(address.search);
   const [currentPage,     setCurrentPage]     = useState(address.page);
 
-  const [selectedIds,  setSelectedIds]  = useState<Set<string>>(() => new Set());
-  const [confirmOpen,  setConfirmOpen]  = useState(false);
-  const [deleting,     setDeleting]     = useState(false);
-  const [deleteError,  setDeleteError]  = useState<string | null>(null);
 
   // Slice #39.26: only a search that changed goes back to the first page — on mount the address's page stands.
   useEffect(() => {
@@ -193,7 +125,6 @@ export function JudicialPersonListView() {
   const paginate   = total > PAGE_SIZE;
   const items      = query.data?.items ?? [];
 
-  const pageKey = `${debouncedSearch}|${currentPage}|${filterSig}`;
   // Slice #39.26: the view, in the list's address; the scroll, in the session. The search as typed, not debounced:
   // a link that carries it (Acte's type filter) must not find the box's last word missing.
   useWriteListAddress(
@@ -201,57 +132,6 @@ export function JudicialPersonListView() {
     `${searchInput}|${currentPage}|${filterSig}`,
   );
   useListScrollMemory(query.isSuccess);
-  const [prevPageKey, setPrevPageKey] = useState(pageKey);
-  if (prevPageKey !== pageKey) {
-    setPrevPageKey(pageKey);
-    if (selectedIds.size > 0) setSelectedIds(new Set());
-  }
-
-  const allOnPageSelected  = items.length > 0 && items.every((it) => selectedIds.has(it.id));
-  const someOnPageSelected = items.some((it) => selectedIds.has(it.id));
-
-  const headerCheckboxRef = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    if (headerCheckboxRef.current) {
-      headerCheckboxRef.current.indeterminate = someOnPageSelected && !allOnPageSelected;
-    }
-  }, [someOnPageSelected, allOnPageSelected]);
-
-  function toggleAllOnPage() {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (allOnPageSelected) {
-        for (const it of items) next.delete(it.id);
-      } else {
-        for (const it of items) next.add(it.id);
-      }
-      return next;
-    });
-  }
-
-  function toggleOne(id: string) {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
-
-  async function handleConfirmDelete() {
-    setDeleting(true);
-    setDeleteError(null);
-    try {
-      await callBatchDelete(Array.from(selectedIds));
-      await queryClient.invalidateQueries({ queryKey: ["judicial-persons"] });
-      setSelectedIds(new Set());
-      setConfirmOpen(false);
-    } catch (err) {
-      setDeleteError(err instanceof Error ? err.message : tBulk("error"));
-    } finally {
-      setDeleting(false);
-    }
-  }
 
   // Slice #37.60 — „Câmpuri afișate", the same chooser the Natural Persons list draws.
   const optionalCols: ChooserField[] = [
@@ -310,17 +190,6 @@ export function JudicialPersonListView() {
           onToggle={chooser.toggle}
         />
         <div className="ml-auto flex items-center gap-2">
-          {selectedIds.size > 0 && (
-            <IconButton
-              icon={Trash2}
-              label={tBulk("deleteSelected", { count: selectedIds.size })}
-              count={selectedIds.size}
-              variant="danger"
-              size="lg"
-              onClick={() => setConfirmOpen(true)}
-            />
-          )}
-          <HelpHint hintKey="select-all-page-only" />
           {/* Slice #39.85: measured, so the search box can take its width. */}
           <span className="inline-flex" {...LIST_ADD}>
             <IconButton
@@ -346,11 +215,6 @@ export function JudicialPersonListView() {
         valuesKey={(key) => ["judicial-persons", "filter-values", key, debouncedSearch, filterSig]}
       />
 
-      {deleteError && (
-        <p className="text-sm text-red-600 dark:text-red-400" role="alert">
-          {deleteError}
-        </p>
-      )}
 
       {/* Results table — Slice #37.16: fixed columns from `COLUMN`, the table
           as wide as they are. */}
@@ -363,17 +227,8 @@ export function JudicialPersonListView() {
             <FixedColumns columns={COLUMNS} />
             <thead className={LIST_HEAD}>
               <tr>
-                <th className="px-4 py-2" {...columnHead("listSelectPerson")}>
-                  <input
-                    ref={headerCheckboxRef}
-                    type="checkbox"
-                    checked={allOnPageSelected}
-                    onChange={toggleAllOnPage}
-                    disabled={items.length === 0}
-                    aria-label={tBulk("selectAll")}
-                    className="h-4 w-4 rounded border-wire accent-cta"
-                  />
-                </th>
+                {/* Slice 40.10: the badges\' column, without the select-all box — nothing on this list acts on a selection. */}
+                <th className="px-4 py-2" {...columnHead("listSelectPerson")} />
                 <ListHeadCell column="listCompanyName" name={t("table.name")} />
                 <ListHeadCell column="listPersonNickname" name={t("table.nickname")} />
                 {shownCols.map((col) => {
@@ -429,13 +284,7 @@ export function JudicialPersonListView() {
                       the e2e width guard so (`expectStableColumns`, Slice #39.64). */}
                   <td className="px-4 py-2" onClick={(e) => e.stopPropagation()} data-spills-into-padding="">
                     <span className="inline-flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.has(item.id)}
-                        onChange={() => toggleOne(item.id)}
-                        aria-label={nameOr(item.displayName, "person")}
-                        className="h-4 w-4 rounded border-wire accent-cta"
-                      />
+                      {/* Slice 40.10: no tick box — a record is deleted from its own screen only. */}
                       <RecencyBadge createdAt={item.createdAt} updatedAt={item.updatedAt} />
                     </span>
                   </td>
@@ -510,17 +359,6 @@ export function JudicialPersonListView() {
         </div>
       )}
 
-      {confirmOpen && (
-        <ConfirmDialog
-          title={tBulk("confirmTitle")}
-          body={tBulk("confirmBody", { count: selectedIds.size })}
-          yesLabel={deleting ? tBulk("deleting") : tBulk("delete")}
-          noLabel={tBulk("cancel")}
-          onYes={handleConfirmDelete}
-          onNo={() => { setConfirmOpen(false); setDeleteError(null); }}
-          busy={deleting}
-        />
-      )}
     </ListPreviews>
   );
 }

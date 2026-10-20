@@ -123,12 +123,6 @@ const ALL_LISTS = [
   { name: "documents",        file: path.join("src", "app", "documents",        "list-view.tsx") },
 ] as const;
 
-/**
- * The lists that still tick records. Slice #39.73 took the Properties list's ticks away with its „Șterge selecția"
- * (Adrian, 2026-10-17: „a property should be deleted only from the property form"), so it has no selection for a
- * filter change to clear.
- */
-const LISTS = ALL_LISTS.filter((l) => l.name !== "properties");
 
 /** The four record forms, the namespace each binds to `tShared`, and its message prefix. */
 const FORMS = [
@@ -160,38 +154,6 @@ const LIST_QUERIES = [
 // --------------------------------------------------------------------------
 // Helpers
 // --------------------------------------------------------------------------
-
-/**
- * The non-literal entries of the list's own react-query key — the one keyed on
- * `debouncedSearch`, which is the paged list itself rather than the little
- * lookup queries (document types, group codes) that sit beside it.
- *
- * Entries are returned as written, NOT filtered down to the ones that look like
- * identifiers. Filtering here is what would make this guard useless: a future
- * `queryKey: [… , statuses.join(","), …]` would be dropped, `missing` would come
- * back empty, and the suite would certify a `pageKey` that had never seen the
- * new filter. The caller fails on anything that is not a bare identifier
- * instead, which is loud and asks for a hoisted `const` — the shape Documents
- * already uses for `typeFiltersKey`.
- */
-function listQueryKeyParts(source: string): string[] {
-  const blanked = code(source);
-  for (const m of blanked.matchAll(/queryKey:\s*\[([^\]]*)\]/g)) {
-    const parts = m[1]
-      .split(",")
-      .map((p) => p.trim())
-      .filter((p) => p !== "" && p !== '""');
-    if (parts.includes("debouncedSearch")) return parts;
-  }
-  return [];
-}
-
-/** The `${…}` expressions inside `const pageKey = \`…\``. */
-function pageKeyIdentifiers(source: string): string[] {
-  const m = /const pageKey = `([^`]*)`/.exec(code(source));
-  if (!m) return [];
-  return [...m[1].matchAll(/\$\{([^}]*)\}/g)].map((x) => x[1].trim());
-}
 
 /** The body of one exported function, up to the next top-level `export`. */
 function functionBody(source: string, name: string): string {
@@ -230,41 +192,25 @@ function lookup(locale: string, keyPath: string): unknown {
 }
 
 // --------------------------------------------------------------------------
-// 1. pageKey carries everything the query key carries
+// 1. No list ticks records
 // --------------------------------------------------------------------------
+//
+// Until Slice 40.10 this section held two checks on the lists that still ticked records: every value in the list's
+// query key was also in `pageKey`, and a change of `pageKey` emptied `selectedIds` — so a filter change could not
+// leave ticks on rows it had taken off the screen for „Șterge selecția" to delete unseen (#32.15). Slice #39.73 took
+// the Properties list's ticks with its delete; 40.10 took the other three's (Adrian, 2026-10-20: „on all 4 principal
+// objects list remove the checkboxes and that will include removing the delete button"). With no selection there is
+// nothing for a filter change to clear, and what is asserted instead is that none comes back.
 
-describe("a filter change clears the list's selection", () => {
-  it.each(LISTS.map((l) => [l.name, l.file] as const))(
-    "%s: every value in the query key is also in pageKey",
-    (_name, file) => {
-      const source = read(file);
-      const queryKey = listQueryKeyParts(source);
-      const pageKey = pageKeyIdentifiers(source);
-
-      // Guard the extraction itself: an empty set would make the subset check
-      // below pass vacuously against a file this test can no longer read.
-      expect(queryKey.length).toBeGreaterThan(1);
-      expect(pageKey.length).toBeGreaterThan(1);
-
-      // Every query-key entry must be a bare identifier, so that comparing it
-      // against `pageKey` means something. Hoist an expression into a `const`
-      // first, the way Documents does with `typeFiltersKey`.
-      expect(queryKey.filter((k) => !/^[A-Za-z_$][\w$]*$/.test(k))).toEqual([]);
-
-      const missing = queryKey.filter((k) => !pageKey.includes(k));
-      expect(missing).toEqual([]);
-    },
-  );
-
-  it.each(LISTS.map((l) => [l.name, l.file] as const))(
-    "%s: still empties selectedIds when pageKey changes",
-    (_name, file) => {
-      const body = code(read(file));
-      expect(body).toMatch(
-        /const \[prevPageKey, setPrevPageKey\] = useState\(pageKey\);\s*if \(prevPageKey !== pageKey\) \{\s*setPrevPageKey\(pageKey\);\s*if \(selectedIds\.size > 0\) setSelectedIds\(new Set\(\)\);\s*\}/,
-      );
-    },
-  );
+describe("no list ticks records (Slice 40.10; Properties since #39.73)", () => {
+  it.each(ALL_LISTS.map((l) => [l.name, l.file] as const))("%s: no selection, no tick box in a row, no batch delete", (_name, file) => {
+    const body = code(read(file));
+    expect(body).not.toContain("selectedIds");
+    expect(body).not.toContain("batch-delete");
+    expect(body).not.toContain("shared.bulkDelete");
+    expect(body).not.toMatch(/checked=\{selectedIds/);
+    expect(body).not.toContain('hintKey="select-all-page-only"');
+  });
 });
 
 // --------------------------------------------------------------------------
@@ -415,10 +361,9 @@ describe("delete confirmations say the delete cannot be undone", () => {
     }
   });
 
-  it.each(LOCALES)("%s: the bulk delete says it too", (locale) => {
-    const body = lookup(locale, "shared.bulkDelete.confirmBody");
-    expect(typeof body).toBe("string");
-    expect(FINAL[locale].test(body as string)).toBe(true);
+  // Slice 40.10: was „the bulk delete says it too" — its confirmation went with the lists' tick boxes.
+  it.each(LOCALES)("%s: no bulk delete is left to confirm", (locale) => {
+    expect(lookup(locale, "shared.bulkDelete")).toBeUndefined();
   });
 });
 

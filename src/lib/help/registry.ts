@@ -274,15 +274,7 @@ export const HELP_HINTS = [
     screens: ["admin-calculation"],
   },
 
-  // ── List views (the three that still select: Slice #39.73 took the Properties list's ticks with its delete) ──
-  {
-    hintKey: "select-all-page-only",
-    screens: [
-      "documents-list",
-      "natural-persons-list",
-      "judicial-persons-list",
-    ],
-  },
+  // ── List views: „select-all-page-only" went with the lists' tick boxes (Slice 40.10; Properties' in #39.73) ──
 ] as const satisfies readonly {
   hintKey: string;
   screens: readonly HelpScreenKey[];

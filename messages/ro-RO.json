@@ -839,16 +839,6 @@
       "interactionsMore": "Se văd primele {count}; toate, în „Interacțiuni”.",
       "interactionsDocs": "{count, plural, one {un act legat} few {# acte legate} other {# de acte legate}}"
     },
-    "bulkDelete": {
-      "selectAll": "Selectează tot pe această pagină",
-      "deleteSelected": "Șterge selecția ({count})",
-      "confirmTitle": "Ștergere elemente selectate",
-      "confirmBody": "Această acțiune va șterge {count} element(e) selectat(e). Acțiunea nu poate fi anulată.",
-      "cancel": "Anulează",
-      "delete": "Șterge",
-      "deleting": "Se șterge…",
-      "error": "Ștergerea elementelor selectate a eșuat"
-    },
     "entityReferences": {
       "loading": "Se încarcă…",
       "error": "Referințele nu au putut fi încărcate",
@@ -1635,7 +1625,6 @@
         "stamp-type-switch-keeps-changes": "Ștampile — schimbarea tipului păstrează modificările în așteptare",
         "tile-selector": "Părți afișate — ce arată bifele și unde se păstrează alegerea",
         "calc-preview-not-saved": "Calcul — nu se creează nimic până la confirmare",
-        "select-all-page-only": "Liste — bifa din antet selectează doar pagina curentă",
         "calc-group-description-autofill": "Calcul — alegerea altei proprietăți rescrie descrierea"
       }
     }

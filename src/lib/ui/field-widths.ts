@@ -1409,7 +1409,9 @@ export const COLUMN = {
   // Slice #39.24 — Adrian: „decrease the space between checkbox and name to 50% of Current", on both persons' lists.
   // Measured: 72 px (selectNew's spare 56 px and both cells' padding). 50 % is 36 px: 16 (the box) + 4 spare = 20 px.
   // „Nou!" (30 px with its margin) runs into the padding beside the box, 6 px clear of the name. Acte keeps selectNew.
-  listSelectPerson: { content: 20 / 16, kind: "fixed" }, // the two persons' lists' checkbox — the gap to the name 36 px
+  // Slice 40.10: the box went (no list ticks records); the column holds „Nou!", which the width was already measured
+  // around, so it keeps it — the name stays where it was.
+  listSelectPerson: { content: 20 / 16, kind: "fixed" }, // the two persons' lists' badge column — the gap to the name 36 px
   // Slice #38.72: three xs buttons side by side — the magnifier, the eye („Incursiune") and the arrow — 3 × 26 + 2 × 8 =
   // 94 px; it was 4 for two (60 px), and the third button was cut at the table's edge.
   // Slice #38.76: four — the chain link („Legături") after the eye — 4 × 26 + 3 × 8 = 128 px, 8 rem; it was 6 for three.
