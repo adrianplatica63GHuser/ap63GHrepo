@@ -424,7 +424,7 @@ export function AssociateDocumentView({ personId, personName, backBase, canConfi
         ) : items.length === 0 ? (
           <p className="px-4 py-6 text-sm text-fade dark:text-zinc-400">{t("resultsEmpty")}</p>
         ) : (
-          <FixedTable id="judicial-persons/associate-document" columns={COLUMNS} fill={RESULTS_FILL}>
+          <FixedTable id="persons/associate-document" columns={COLUMNS} fill={RESULTS_FILL}>
             <thead>
               <tr className="border-b border-card-rim dark:border-zinc-800">
                 <th className="px-3 py-2" aria-label="select" {...columnHead("select")} />

@@ -128,10 +128,12 @@ describe("one piece for every list-like table (Ask first 1, 9)", () => {
     return out;
   })();
 
-  it("29 tables, each named once in the store", () => {
+  it("29 tables, each named once in the store — but the two person-side associate-document screens, one file twice", () => {
     expect(tables).toHaveLength(29);
     const ids = tables.map(([, id]) => id);
-    expect(new Set(ids).size).toBe(ids.length);
+    // role-stranding.test keeps those two screens byte-identical, so they share one name, and one set of widths.
+    expect(ids.filter((id) => id === "persons/associate-document")).toHaveLength(2);
+    expect(new Set(ids).size).toBe(ids.length - 1);
   });
   it("no table of that family is drawn without it", () => {
     for (const [file] of tables) expect([file, /fixedTable\(|FixedColumns|adminListTable\(|AdminListColumns/.test(read(file))]).toEqual([file, false]);
