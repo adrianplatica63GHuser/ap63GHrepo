@@ -312,7 +312,7 @@ function FilterForm({ filters, onChange, onSearch, onReset, loading }: FilterFor
         <div className={FILTER_CLASS} data-search-filter="">
           <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("filters.entityType")}</label>
           <select
-            className="w-full min-w-0 truncate rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
+            className="w-44 truncate rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
             value={filters.entityType}
             onChange={(e) => {
               // Clear personSubtype when switching away from PERSON
@@ -336,7 +336,7 @@ function FilterForm({ filters, onChange, onSearch, onReset, loading }: FilterFor
           <div className={FILTER_CLASS} data-search-filter="">
             <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("filters.personSubtype")}</label>
             <select
-              className="w-full min-w-0 truncate rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
+              className="w-44 truncate rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
               value={filters.personSubtype}
               onChange={set("personSubtype")}
             >
@@ -353,7 +353,7 @@ function FilterForm({ filters, onChange, onSearch, onReset, loading }: FilterFor
           <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("filters.search")}</label>
           <input
             type="text"
-            className="w-full min-w-0 truncate rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
+            className="w-44 truncate rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
             placeholder={t("filters.searchPlaceholder")}
             title={t("filters.searchHint")}
             value={filters.search}
@@ -366,7 +366,7 @@ function FilterForm({ filters, onChange, onSearch, onReset, loading }: FilterFor
           <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("filters.groupCode")}</label>
           <input
             type="text"
-            className="w-full min-w-0 truncate rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm font-mono uppercase dark:border-zinc-600 dark:bg-zinc-800"
+            className="w-44 truncate rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm font-mono uppercase dark:border-zinc-600 dark:bg-zinc-800"
             placeholder={t("filters.groupCodePlaceholder")}
             title={t("filters.groupCodeHint")}
             value={filters.groupCode}
@@ -379,7 +379,7 @@ function FilterForm({ filters, onChange, onSearch, onReset, loading }: FilterFor
           <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("filters.stampCode")}</label>
           <input
             type="text"
-            className="w-full min-w-0 truncate rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm font-mono uppercase dark:border-zinc-600 dark:bg-zinc-800"
+            className="w-44 truncate rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm font-mono uppercase dark:border-zinc-600 dark:bg-zinc-800"
             placeholder={t("filters.stampCodePlaceholder")}
             title={t("filters.stampCodeHint")}
             value={filters.stampCode}
@@ -397,7 +397,7 @@ function FilterForm({ filters, onChange, onSearch, onReset, loading }: FilterFor
         <div className={FILTER_CLASS} data-search-filter="">
           <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("filters.importance")}</label>
           <select
-            className="w-full min-w-0 truncate rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
+            className="w-44 truncate rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
             value={filters.importance}
             onChange={set("importance")}
           >
@@ -412,7 +412,7 @@ function FilterForm({ filters, onChange, onSearch, onReset, loading }: FilterFor
         <div className={FILTER_CLASS} data-search-filter="">
           <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("filters.relevance")}</label>
           <select
-            className="w-full min-w-0 truncate rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
+            className="w-44 truncate rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
             value={filters.relevance}
             onChange={set("relevance")}
           >
@@ -427,7 +427,7 @@ function FilterForm({ filters, onChange, onSearch, onReset, loading }: FilterFor
         <div className={FILTER_CLASS} data-search-filter="">
           <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("filters.provenance")}</label>
           <select
-            className="w-full min-w-0 truncate rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
+            className="w-44 truncate rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
             value={filters.provenance}
             onChange={set("provenance")}
           >
@@ -442,7 +442,7 @@ function FilterForm({ filters, onChange, onSearch, onReset, loading }: FilterFor
         <div className={FILTER_CLASS} data-search-filter="">
           <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("filters.hasMetadata")}</label>
           <select
-            className="w-full min-w-0 truncate rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
+            className="w-44 truncate rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
             value={filters.hasMetadata}
             onChange={set("hasMetadata")}
           >
@@ -457,7 +457,7 @@ function FilterForm({ filters, onChange, onSearch, onReset, loading }: FilterFor
           <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("filters.tag")}</label>
           <input
             type="text"
-            className="w-full min-w-0 truncate rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
+            className="w-44 truncate rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
             placeholder={t("filters.tagPlaceholder")}
             title={t("filters.tagHint")}
             value={filters.tag}
@@ -470,7 +470,7 @@ function FilterForm({ filters, onChange, onSearch, onReset, loading }: FilterFor
           <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("filters.updatedFrom")}</label>
           <input
             type="date"
-            className="w-full min-w-0 truncate rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
+            className="w-44 truncate rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
             value={filters.updatedFrom}
             onChange={set("updatedFrom")}
           />
@@ -481,7 +481,7 @@ function FilterForm({ filters, onChange, onSearch, onReset, loading }: FilterFor
           <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("filters.updatedTo")}</label>
           <input
             type="date"
-            className="w-full min-w-0 truncate rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
+            className="w-44 truncate rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
             value={filters.updatedTo}
             onChange={set("updatedTo")}
           />

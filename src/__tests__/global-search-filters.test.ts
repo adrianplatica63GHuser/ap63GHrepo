@@ -57,8 +57,8 @@ describe("every filter one width, a third of its old one", () => {
     expect(FORM).not.toContain("mt-5 flex items-center gap-3");
   });
 
-  it("each box fills its filter and cuts a long value with an ellipsis", () => {
-    expect(FORM.match(/"w-full min-w-0 truncate rounded border/g) ?? []).toHaveLength(12);
+  it("each box as wide as its filter, a fixed width of its own (layout-guard), a long value cut with an ellipsis", () => {
+    expect(FORM.match(/"w-44 truncate rounded border/g) ?? []).toHaveLength(12);
   });
 
   it.each([
