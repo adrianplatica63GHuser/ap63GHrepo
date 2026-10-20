@@ -23,11 +23,18 @@ import { isPropertyVisibleForGroups } from "@/lib/groups/map-filter";
 import { wgs84ToStereo70Batch } from "@/lib/geo/convert-client";
 import {
   fitAffine,
-  rulerDistanceM,
-  formatMeters,
   nearestCornerWithinPx,
   SNAP_PX,
+  EMPTY_RULER_PATH,
+  addRulerPoint,
+  fillPendingLengths,
+  finishRulerPath,
+  rulerClickKind,
+  rulerLabelMessage,
+  rulerLiveLabel,
+  rulerSegmentLabels,
   type AffineWgs84ToStereo70,
+  type RulerPath,
 } from "@/lib/geo/ruler";
 import {
   computeVertexAngles,
@@ -718,14 +725,15 @@ const RULER_GREEN = "#22c55e";
 const RULER_LINE  = "#15803d";
 
 /**
- * 2-point polyline for the ruler segment. The library's <Polyline> keeps the
+ * The ruler's line through its points. The library's <Polyline> keeps the
  * line latLng-anchored so it tracks pan/zoom automatically — no pixel-space
- * recompute needed.
+ * recompute needed. Slice 40.07: any number of points — the fixed zigzag, or
+ * the live segment's two.
  */
-function RulerSegment({ start, end }: { start: LatLng; end: LatLng }) {
+function RulerSegment({ path }: { path: LatLng[] }) {
   return (
     <Polyline
-      path={[start, end]}
+      path={path}
       strokeColor={RULER_LINE}
       strokeOpacity={1}
       strokeWeight={2}
@@ -812,6 +820,8 @@ function RulerDistanceLabel({
     <AdvancedMarker position={position}>
       <div style={{ position: "relative", width: 0, height: 0, pointerEvents: "none" }}>
         <div
+          // Slice 40.07: what the ruler's spec reads — each fixed segment's label, and the live one by the cursor.
+          data-ruler-label={frozen ? "segment" : "live"}
           style={{
             position:        "absolute",
             left:            frozen ? 0 : 14,
@@ -905,13 +915,13 @@ export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean 
   const mapGroupsMasterRef = useRef<HTMLInputElement>(null);
 
   // Ruler tool (Slice #18.14.ruler) — mutually exclusive with select mode.
-  // rulerStart/rulerEnd are committed endpoints; rulerCursor is the live
+  // rulerPath (Slice 40.07) is the zigzag: the points clicked, each fixed segment's kept length, and whether the
+  // last point was clicked again; rulerCursor is the live
   // (uncommitted) endpoint that follows the mouse; rulerSnap is the corner the
   // cursor is currently snapping to (drives the green ring). rulerAffine is the
   // local WGS84 -> Stereo 70 transform used to measure the distance.
   const [rulerMode,   setRulerMode]   = useState(false);
-  const [rulerStart,  setRulerStart]  = useState<LatLng | null>(null);
-  const [rulerEnd,    setRulerEnd]    = useState<LatLng | null>(null);
+  const [rulerPath,   setRulerPath]   = useState<RulerPath>(EMPTY_RULER_PATH);
   const [rulerCursor, setRulerCursor] = useState<LatLng | null>(null);
   const [rulerSnap,   setRulerSnap]   = useState<LatLng | null>(null);
   const [rulerAffine, setRulerAffine] = useState<AffineWgs84ToStereo70 | null>(null);
@@ -937,8 +947,8 @@ export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean 
 
   // Refs read inside the container-level ruler listeners so their closures
   // always see the latest values without re-binding on every change.
-  const rulerStartRef   = useRef<LatLng | null>(null);
-  const rulerEndRef     = useRef<LatLng | null>(null);
+  const rulerPathRef    = useRef<RulerPath>(EMPTY_RULER_PATH);
+  const rulerAffineRef  = useRef<AffineWgs84ToStereo70 | null>(null);
   const rulerCornersRef = useRef<LatLng[]>([]);
   const anglesSnapRef   = useRef<LatLng | null>(null);
 
@@ -1112,8 +1122,8 @@ export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean 
     withGeometryRef.current = displayItems;
     activeTabRef.current    = activeTab;
     selectModeRef.current   = selectMode;
-    rulerStartRef.current   = rulerStart;
-    rulerEndRef.current     = rulerEnd;
+    rulerPathRef.current    = rulerPath;
+    rulerAffineRef.current  = rulerAffine;
     anglesSnapRef.current   = anglesSnap;
     rulerCornersRef.current = displayItems.flatMap((p) =>
       p.corners.map((c) => ({ lat: c.lat, lng: c.lon })),
@@ -1243,8 +1253,7 @@ export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean 
         // modes. Property selection is preserved.
         setSelected(null);
         setRulerMode(false);
-        setRulerStart(null);
-        setRulerEnd(null);
+        setRulerPath(EMPTY_RULER_PATH);
         setRulerCursor(null);
         setRulerSnap(null);
         setAnglesMode(false);
@@ -1291,7 +1300,12 @@ export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean 
           east:  s70[i].east,
         })),
       );
-      if (aff) setRulerAffine(aff);
+      if (aff) {
+        setRulerAffine(aff);
+        // Slice 40.07: a segment fixed before the first fit arrived is measured by it (it showed „…" until then);
+        // a segment already measured keeps its length.
+        setRulerPath((p) => fillPendingLengths(p, aff));
+      }
     } catch {
       // Leave the previous transform in place; the read-out shows "…" until the
       // next successful fit.
@@ -1314,23 +1328,36 @@ export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean 
 
   const resetRuler = useCallback(() => {
     setRulerMode(false);
-    setRulerStart(null);
-    setRulerEnd(null);
+    setRulerPath(EMPTY_RULER_PATH);
     setRulerCursor(null);
     setRulerSnap(null);
   }, []);
 
-  // A genuine click on the map while the ruler is active. Placement order:
-  // none -> start; start -> end (freeze); frozen -> reset (and exit ruler mode).
+  // A genuine click on the map while the ruler is active (Slice 40.07, `rulerClickKind`): the first point; each
+  // further click a point, fixing a segment; the last point clicked again ends the zigzag; after it, a click clears
+  // it and leaves ruler mode, as a click after the frozen segment did.
   const handleRulerClick = useCallback((px: PixelPoint) => {
-    // Frozen: any further click clears the segment and leaves ruler mode.
-    if (rulerEndRef.current) {
+    const map       = mapRef.current;
+    const container = containerRef.current;
+    const path      = rulerPathRef.current;
+    if (!map || !container) return;
+
+    const last   = path.points[path.points.length - 1];
+    const lastPx = last ? latLngToPixel(map, container, last.lat, last.lon) : null;
+    const kind   = rulerClickKind(path, lastPx, px, SNAP_PX);
+    if (kind === "clear") {
       resetRuler();
       return;
     }
-    const map       = mapRef.current;
-    const container = containerRef.current;
-    if (!map || !container) return;
+    if (kind === "ignore") return;
+    if (kind === "finish") {
+      const done = finishRulerPath(path);
+      rulerPathRef.current = done;
+      setRulerPath(done);
+      setRulerSnap(null);
+      setRulerCursor(null);
+      return;
+    }
 
     const snap = computeRulerSnap(px);
     const point: LatLng =
@@ -1339,14 +1366,11 @@ export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean 
         const ll = pixelToLatLng(map, container, px.x, px.y);
         return { lat: ll.lat, lng: ll.lng };
       })();
-
-    if (!rulerStartRef.current) {
-      setRulerStart(point);
-      setRulerCursor(point);
-    } else {
-      setRulerEnd(point);
-      setRulerSnap(null);
-    }
+    // The new segment is measured now, with the fit in force, and keeps that length (Ask first 4).
+    const next = addRulerPoint(path, { lat: point.lat, lon: point.lng }, rulerAffineRef.current);
+    rulerPathRef.current = next;
+    setRulerPath(next);
+    setRulerCursor(point);
   }, [computeRulerSnap, resetRuler]);
 
   const toggleRulerMode = useCallback(() => {
@@ -1365,8 +1389,7 @@ export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean 
       return next;
     });
     // Clear any previous measurement on either toggle direction.
-    setRulerStart(null);
-    setRulerEnd(null);
+    setRulerPath(EMPTY_RULER_PATH);
     setRulerCursor(null);
     setRulerSnap(null);
   }, []);
@@ -1403,8 +1426,7 @@ export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean 
         // toggleSelectMode above.
         setSelected(null);
         setRulerMode(false);
-        setRulerStart(null);
-        setRulerEnd(null);
+        setRulerPath(EMPTY_RULER_PATH);
         setRulerCursor(null);
         setRulerSnap(null);
         setSelectMode(false);
@@ -1427,8 +1449,7 @@ export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean 
       // Nothing else works while it is pressed: leave every other tool, close the InfoWindow and the groups panel.
       setSelected(null);
       setRulerMode(false);
-      setRulerStart(null);
-      setRulerEnd(null);
+      setRulerPath(EMPTY_RULER_PATH);
       setRulerCursor(null);
       setRulerSnap(null);
       setAnglesMode(false);
@@ -1525,8 +1546,8 @@ export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean 
       const rect = container.getBoundingClientRect();
       const px = { x: e.clientX - rect.left, y: e.clientY - rect.top };
       if (downPx && Math.hypot(px.x - downPx.x, px.y - downPx.y) > 5) moved = true;
-      // Frozen: the segment stays put — ignore movement entirely.
-      if (rulerEndRef.current) return;
+      // Ended: the zigzag stays put — ignore movement entirely.
+      if (rulerPathRef.current.done) return;
       if (isUi(e)) return;
       const snap = computeRulerSnap(px);
       const ll   = pixelToLatLng(map, container, px.x, px.y);
@@ -1766,35 +1787,21 @@ export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean 
   // Ruler derived render values
   // -------------------------------------------------------------------------
   //
-  // liveEnd is the second endpoint: the frozen end once set, otherwise the live
-  // cursor. The distance read-out uses the affine transform (shown as "…" while
-  // calibration is pending). The label sits at the segment midpoint when frozen,
-  // else near the cursor.
-  const rulerLiveEnd = rulerEnd ?? rulerCursor;
-  const rulerHasSegment = rulerMode && !!rulerStart && !!rulerLiveEnd;
-
-  const rulerDistanceText =
-    rulerHasSegment && rulerStart && rulerLiveEnd
-      ? rulerAffine
-        ? formatMeters(
-            rulerDistanceM(
-              rulerAffine,
-              { lat: rulerStart.lat, lon: rulerStart.lng },
-              { lat: rulerLiveEnd.lat, lon: rulerLiveEnd.lng },
-            ),
-          )
-        : "…"
-      : null;
-
-  const rulerLabelPos: LatLng | null =
-    rulerHasSegment && rulerStart && rulerLiveEnd
-      ? rulerEnd
-        ? {
-            lat: (rulerStart.lat + rulerEnd.lat) / 2,
-            lng: (rulerStart.lng + rulerEnd.lng) / 2,
-          }
-        : rulerLiveEnd
-      : null;
+  // Slice 40.07: the fixed zigzag, the live segment from its last point to the cursor while drawing, a label above
+  // each fixed segment's midpoint (its own length while drawing; „x din y" once ended with two or more) and one by
+  // the cursor („+ x · total y"). Lengths read „…" while the fit is pending.
+  const rulerPoints: LatLng[] = rulerMode ? rulerPath.points.map((p) => ({ lat: p.lat, lng: p.lon })) : [];
+  const rulerLast = rulerPoints[rulerPoints.length - 1] ?? null;
+  const rulerLiveSegment: LatLng[] | null =
+    rulerMode && !rulerPath.done && rulerLast && rulerCursor ? [rulerLast, rulerCursor] : null;
+  const rulerFixedLabels = rulerMode ? rulerSegmentLabels(rulerPath) : [];
+  const rulerCursorLabel = rulerMode
+    ? rulerLiveLabel(rulerPath, rulerCursor ? { lat: rulerCursor.lat, lon: rulerCursor.lng } : null, rulerAffine)
+    : null;
+  const rulerText = (label: Parameters<typeof rulerLabelMessage>[0]): string => {
+    const { key, values } = rulerLabelMessage(label);
+    return t(`map.${key}`, values);
+  };
 
   // -------------------------------------------------------------------------
   // Render
@@ -1884,6 +1891,9 @@ export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean 
           streetViewControl
           // Slice #39.73: selecting is by clicks, so the map pans and zooms as always; the pointer says a click picks.
           gestureHandling="greedy"
+          // Slice 40.07: ending the ruler is a second click on the last point, so Google's double-click zoom is off
+          // while the ruler is on, and back when it is released.
+          disableDoubleClickZoom={rulerMode}
           draggableCursor={anglesMode ? ANGLES_CURSOR : rulerMode || areaMode === "delimited" ? RULER_CURSOR : freeDraw.drawing ? "crosshair" : selectMode && activeTab === "all" ? "pointer" : undefined}
           draggingCursor={anglesMode ? ANGLES_CURSOR : rulerMode || areaMode === "delimited" ? RULER_CURSOR : undefined}
           style={{ width: "100%", height: "100%" }}
@@ -2051,29 +2061,27 @@ export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean 
             <Polyline path={freeDraw.previewPath} strokeColor={AREA_STROKE} strokeOpacity={0.6} strokeWeight={2} clickable={false} />
           )}
           {areaMode === "delimited" && areaSnap && <RulerSnapRing corner={areaSnap} />}
-          {rulerHasSegment && rulerStart && rulerLiveEnd && (
-            <RulerSegment start={rulerStart} end={rulerLiveEnd} />
-          )}
-          {rulerMode && !rulerEnd && rulerSnap && (
+          {rulerPoints.length >= 2 && <RulerSegment path={rulerPoints} />}
+          {rulerLiveSegment && <RulerSegment path={rulerLiveSegment} />}
+          {rulerMode && !rulerPath.done && rulerSnap && (
             <RulerSnapRing corner={rulerSnap} />
           )}
-          {rulerMode && rulerStart && (
-            <CornerMarker
-              corner={{ lat: rulerStart.lat, lon: rulerStart.lng }}
-              color={RULER_GREEN}
-            />
-          )}
-          {rulerMode && rulerEnd && (
-            <CornerMarker
-              corner={{ lat: rulerEnd.lat, lon: rulerEnd.lng }}
-              color={RULER_GREEN}
-            />
-          )}
-          {rulerDistanceText && rulerLabelPos && (
+          {rulerPoints.map((p, i) => (
+            <CornerMarker key={`ruler-${i}`} corner={{ lat: p.lat, lon: p.lng }} color={RULER_GREEN} />
+          ))}
+          {rulerFixedLabels.map((label, i) => (
             <RulerDistanceLabel
-              position={rulerLabelPos}
-              text={rulerDistanceText}
-              frozen={!!rulerEnd}
+              key={`ruler-label-${i}`}
+              position={{ lat: label.at.lat, lng: label.at.lon }}
+              text={rulerText(label)}
+              frozen
+            />
+          ))}
+          {rulerCursorLabel && (
+            <RulerDistanceLabel
+              position={{ lat: rulerCursorLabel.at.lat, lng: rulerCursorLabel.at.lon }}
+              text={rulerText(rulerCursorLabel)}
+              frozen={false}
             />
           )}
 

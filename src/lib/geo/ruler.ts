@@ -240,3 +240,119 @@ export function nearestCornerWithinPx(
   }
   return best;
 }
+
+// ---------------------------------------------------------------------------
+// The zigzag (Slice 40.07)
+// ---------------------------------------------------------------------------
+//
+// Adrian, 2026-10-20: after the first segment „we should allow to pick a 3rd corner … a 4th corner a 5th corner and so
+// on until we pick a corner that is not a new corner but is the last corner that we picked", and each segment's label
+// gives „the size of the segment of total size which … is the sum of all the segments".
+//
+// A click adds a point; a click on the LAST point again (within SNAP_PX of it, a corner or a free point alike) ends
+// the measurement and adds nothing. A segment's length is computed with the transform in force when its end is fixed
+// and kept: a later re-fit (a pan, a zoom) changes only the live segment, never a label already drawn. A length is
+// `null` only while the first fit is still pending; `fillPendingLengths` gives it one as soon as a fit arrives.
+
+/** The points clicked so far, each fixed segment's kept length, and whether the last point was clicked again. */
+export type RulerPath = {
+  points: LatLon[];
+  /** `lengths[i]` is the segment from `points[i]` to `points[i + 1]`; `null` while the fit was pending. */
+  lengths: (number | null)[];
+  done: boolean;
+};
+
+export const EMPTY_RULER_PATH: RulerPath = { points: [], lengths: [], done: false };
+
+/**
+ * What a click does to the path:
+ *   - `clear` — the path was ended: the click clears it (and the ruler is released, as after today's frozen segment);
+ *   - `start` — the first point;
+ *   - `finish` — the last point clicked again, with at least one segment fixed: the measurement ends;
+ *   - `ignore` — the only point clicked again: there is no segment to end on;
+ *   - `add` — anything else, an earlier point included: a new point.
+ */
+export type RulerClick = "clear" | "start" | "finish" | "ignore" | "add";
+
+export function rulerClickKind(
+  path: RulerPath,
+  lastPointPx: PixelPoint | null,
+  clickPx: PixelPoint,
+  thresholdPx: number = SNAP_PX,
+): RulerClick {
+  if (path.done) return "clear";
+  if (path.points.length === 0) return "start";
+  const onLast = lastPointPx !== null && Math.hypot(clickPx.x - lastPointPx.x, clickPx.y - lastPointPx.y) <= thresholdPx;
+  if (onLast) return path.points.length >= 2 ? "finish" : "ignore";
+  return "add";
+}
+
+/** The path with one more point, the new segment's length measured now (null with no fit yet). */
+export function addRulerPoint(path: RulerPath, point: LatLon, aff: AffineWgs84ToStereo70 | null): RulerPath {
+  const last = path.points[path.points.length - 1];
+  const lengths = last ? [...path.lengths, aff ? rulerDistanceM(aff, last, point) : null] : path.lengths;
+  return { points: [...path.points, point], lengths, done: false };
+}
+
+export function finishRulerPath(path: RulerPath): RulerPath {
+  return path.points.length >= 2 ? { ...path, done: true } : path;
+}
+
+/** Lengths still pending get the fit that has just arrived; the same object back when none is pending. */
+export function fillPendingLengths(path: RulerPath, aff: AffineWgs84ToStereo70 | null): RulerPath {
+  if (!aff || !path.lengths.includes(null)) return path;
+  return {
+    ...path,
+    lengths: path.lengths.map((l, i) => l ?? rulerDistanceM(aff, path.points[i], path.points[i + 1])),
+  };
+}
+
+/** The sum of the fixed segments (plus `extra`), or null while any of them is still pending. */
+export function rulerTotalM(path: RulerPath, extra: number | null = 0): number | null {
+  if (extra === null || path.lengths.includes(null)) return null;
+  return path.lengths.reduce<number>((sum, l) => sum + (l ?? 0), extra);
+}
+
+const lengthText = (m: number | null): string => (m === null ? "…" : formatMeters(m));
+
+/**
+ * One label on the map:
+ *   - `segment` — a length alone: a fixed segment while drawing, the only segment of an ended measurement, or the
+ *     live segment before any is fixed — „x din x" would say nothing;
+ *   - `segmentOfTotal` — a segment of an ended measurement of two or more: „{segment} din {total}";
+ *   - `live` — by the cursor, with segments fixed: „+ {segment} · total {total}", the total so far with the live one.
+ */
+export type RulerLabel =
+  | { kind: "segment"; at: LatLon; segment: string }
+  | { kind: "segmentOfTotal"; at: LatLon; segment: string; total: string }
+  | { kind: "live"; at: LatLon; segment: string; total: string };
+
+const midpoint = (a: LatLon, b: LatLon): LatLon => ({ lat: (a.lat + b.lat) / 2, lon: (a.lon + b.lon) / 2 });
+
+/** Each fixed segment's label, above its midpoint. */
+export function rulerSegmentLabels(path: RulerPath): RulerLabel[] {
+  const total = rulerTotalM(path);
+  const many = path.done && path.lengths.length >= 2;
+  return path.lengths.map((len, i) => {
+    const at = midpoint(path.points[i], path.points[i + 1]);
+    return many
+      ? { kind: "segmentOfTotal", at, segment: lengthText(len), total: lengthText(total) }
+      : { kind: "segment", at, segment: lengthText(len) };
+  });
+}
+
+/** The label by the cursor while drawing; null once ended, before the first point, or with no cursor. */
+export function rulerLiveLabel(path: RulerPath, cursor: LatLon | null, aff: AffineWgs84ToStereo70 | null): RulerLabel | null {
+  const last = path.points[path.points.length - 1];
+  if (path.done || !last || !cursor) return null;
+  const live = aff ? rulerDistanceM(aff, last, cursor) : null;
+  if (path.lengths.length === 0) return { kind: "segment", at: cursor, segment: lengthText(live) };
+  return { kind: "live", at: cursor, segment: lengthText(live), total: lengthText(rulerTotalM(path, live)) };
+}
+
+/** The message key and values each label kind reads (`map.*` in messages/*.json). */
+export function rulerLabelMessage(label: RulerLabel): { key: "rulerSegment" | "rulerSegmentOf" | "rulerLive"; values: Record<string, string> } {
+  if (label.kind === "segment") return { key: "rulerSegment", values: { segment: label.segment } };
+  if (label.kind === "segmentOfTotal") return { key: "rulerSegmentOf", values: { segment: label.segment, total: label.total } };
+  return { key: "rulerLive", values: { segment: label.segment, total: label.total } };
+}
