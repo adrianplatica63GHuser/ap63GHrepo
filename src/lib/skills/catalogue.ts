@@ -731,7 +731,7 @@ export const SKILLS: readonly Skill[] = [
     },
     predecessors: ["properties-read-the-map", "properties-draw-corners"],
     screens: ["properties-map"],
-    cases: ["TC-MAP-02", "TC-MAP-03", "TC-MAP-04", "TC-MAP-08"],
+    cases: ["TC-MAP-02", "TC-MAP-03", "TC-MAP-04", "TC-MAP-08", "TC-MAP-10"],
     manual: ["map-area-delimited", "map-area-free", "map-area", "map-ruler-distance", "map-ruler-angles"],
   },
   {
