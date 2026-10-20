@@ -33,6 +33,8 @@
  *  - ICONBUTTON IconButton itself, whose children are its icon and words;
  *  - INFO the ⓘ's „i" (#38.08): a glyph drawn as a letter, aria-hidden — the
  *    button is named by its aria-label, so it shows no words.
+ *  - SIGN a list's red „>" / „<" (Slice 40.11): three chevrons drawn as glyphs,
+ *    aria-hidden — the button is named by its aria-label, so it shows no words.
  * A text link carrying `LeadingIcon` / `TrailingIcon` has its icon and is not
  * listed (#37.46, #37.47).
  */
@@ -339,6 +341,9 @@ const ALLOW: Record<string, Allowed[]> = {
     ["A020", "{t(\"all\")}"],
     ["A020", "{t(\"defaults\")}"],
   ],
+  "src/components/list/hidden-column-signs.tsx": [
+    ["SIGN", "<span aria-hidden=\"true\">{glyph}</span>"], // Slice 40.11: the sign is a button, read by its aria-label
+  ],
   "src/lib/ui/hint-bubble.tsx": [
     ["INFO", "<span aria-hidden=\"true\" data-info-glyph=\"\" className={INFO_GLYPH} style={INFO_G"], // #38.08
   ],
@@ -376,7 +381,7 @@ describe("every control showing words is on the list (#37.48)", () => {
   });
 
   it("every entry names a decision", () => {
-    const known = /^(A0(01|15|20|43|54|55|56|62|69|70|71|75|85|91|96)|A10[78]|A11[0-3]|FOLD|ICONBUTTON|INFO)$/;
+    const known = /^(A0(01|15|20|43|54|55|56|62|69|70|71|75|85|91|96)|A10[78]|A11[0-3]|FOLD|ICONBUTTON|INFO|SIGN)$/;
     for (const entries of Object.values(ALLOW)) for (const [id] of entries) expect(id).toMatch(known);
   });
 });

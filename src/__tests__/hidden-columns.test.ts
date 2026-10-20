@@ -37,7 +37,8 @@ describe("hiddenSides", () => {
 });
 
 describe("a press on a sign (Slice 40.11, Ask first 3)", () => {
-  const W = { clientWidth: 697, scrollWidth: 1300 };
+  // 697 px in view of 2000: the far end is at 1303.
+  const W = { clientWidth: 697, scrollWidth: 2000 };
   it("scrolls by the visible width less 4 rem — a little of what was in view stays", () => {
     expect(SIGN_KEEP_REM).toBe(4);
     expect(signScrollPx(697)).toBe(697 - 64);
@@ -47,15 +48,15 @@ describe("a press on a sign (Slice 40.11, Ask first 3)", () => {
     expect(signScrollTarget({ ...W, scrollLeft: 0 }, "right")).toBe(633);
     expect(signScrollTarget({ ...W, scrollLeft: 0 }, "left")).toBe(0);
   });
-  it("in the middle: a step either way", () => {
-    expect(signScrollTarget({ ...W, scrollLeft: 300 }, "right")).toBe(603); // the end: 1300 - 697
+  it("in the middle: a step either way, never past either end", () => {
+    expect(signScrollTarget({ ...W, scrollLeft: 300 }, "right")).toBe(933);
     expect(signScrollTarget({ ...W, scrollLeft: 300 }, "left")).toBe(0);
-    expect(signScrollTarget({ ...W, scrollLeft: 100 }, "right")).toBe(603);
-    expect(signScrollTarget({ scrollLeft: 100, clientWidth: 300, scrollWidth: 2000 }, "right")).toBe(100 + 300 - 64);
+    expect(signScrollTarget({ ...W, scrollLeft: 1000 }, "left")).toBe(367);
+    expect(signScrollTarget({ ...W, scrollLeft: 1000 }, "right")).toBe(1303);
   });
   it("at the end: never past it", () => {
-    expect(signScrollTarget({ ...W, scrollLeft: 603 }, "right")).toBe(603);
-    expect(signScrollTarget({ ...W, scrollLeft: 603 }, "left")).toBe(0);
+    expect(signScrollTarget({ ...W, scrollLeft: 1303 }, "right")).toBe(1303);
+    expect(signScrollTarget({ ...W, scrollLeft: 1303 }, "left")).toBe(670);
   });
   it("in rem: a larger root font keeps more in view", () => {
     expect(signScrollTarget({ ...W, scrollLeft: 0 }, "right", 20)).toBe(697 - 80);
