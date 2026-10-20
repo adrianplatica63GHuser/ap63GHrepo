@@ -32,7 +32,7 @@ export async function openSection(page: Page, name: string): Promise<void> {
 /**
  * Press a sidebar entry by its visible Romanian label — an item inside a
  * section (opened first: `section`, or each closed one in turn), or a section
- * that is itself a link („Tablou de bord", „Setări").
+ * that is itself a link („Tablou de bord"; „Setări" was one until 40.08, an item of „Administrare" since).
  */
 export async function openFromSidebar(page: Page, label: string, section?: string): Promise<void> {
   const nav = sidebar(page);

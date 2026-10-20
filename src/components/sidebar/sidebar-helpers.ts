@@ -66,7 +66,7 @@ export function getActiveSectionKey(
   );
 }
 
-/** Is a flat-link section („Tablou de bord", „Setări") the one for `pathname`? (#38.20) */
+/** Is a flat-link section („Tablou de bord"; „Setări" was one until 40.08) the one for `pathname`? (#38.20) */
 export function isFlatSectionActive(section: NavSectionMin, pathname: string): boolean {
   return !!section.href && section.items.length === 0 && isItemActive(section.href, pathname);
 }

@@ -63,7 +63,7 @@ PowerShell window.**
 | 5 | Waits | The address becomes `http://localhost:3000/` and the login form is gone |
 | 6 | Looks at the page | „Tablou de bord", and under it „Ce necesită atenția dumneavoastră azi" |
 | 6a | In „Părți afișate" above the sections, unticks „Metadate care necesită atenție", reloads the page, then ticks it again (Slice #37.36) | The section leaves the page when unticked; after the reload its box is still unticked and the section still gone; ticked again, it is back |
-| 7 | Looks at the left sidebar | The seven sections drawn since #39.02 „Tablou de bord", „Domeniu", „Instrumente", „Import", „Rapoarte", „Administrare" and „Setări" (no „Studiu" or „Ajutor") — and below them, directly above „Ieșire" (#38.41), one folded bar „Recente" (#38.28; its records unfold above it on a click — TC-LAYOUT-04) |
+| 7 | Looks at the left sidebar | The seven sections „Tablou de bord", „Domeniu", „Instrumente", „Import", „Rapoarte", „Administrare" and „Ajutor și învățare" (40.08: „Setări" is an item of „Administrare"; no „Studiu" or „Ajutor") — and below them, directly above „Ieșire" (#38.41), one folded bar „Recente" (#38.28; its records unfold above it on a click — TC-LAYOUT-04) |
 | 8 | Looks at the **top** of the sidebar, above the „Nume, cod…" quick-search box | „Autentificat ca", and the account's name |
 | 9 | Presses „Ieșire" at the bottom of the sidebar | The address becomes `http://localhost:3000/login` and the form from step 1 is back |
 | 10 | In the same tab, without reloading, signs in again with the same account (steps 2–4) | The address becomes `http://localhost:3000/` and „Tablou de bord" is back |

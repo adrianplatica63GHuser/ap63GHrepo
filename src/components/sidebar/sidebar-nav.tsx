@@ -388,7 +388,8 @@ export function SidebarNav() {
   // A flat-link section highlights as active for its list page and any of
   // its detail/sub-pages, independent of the accordion-driven
   // activeSectionKey above.
-  // Slice #38.20: the flat sections are „Tablou de bord" (/ alone) and „Setări". The four lists
+  // Slice #38.20: the flat sections were „Tablou de bord" (/ alone) and „Setări"; since 40.08 only the first —
+  // „Setări" is an item of „Administrare", active by its own href like any other. The four lists
   // are items of „Domeniu" now; „Proprietăți" stays active on every /properties page — the map's
   // included (#37.92) — by the item's own prefix match.
   function isFlatSectionActive(section: NavSection): boolean {
@@ -419,7 +420,7 @@ export function SidebarNav() {
   );
 
   // ── i18n label maps (explicit keys — required for next-intl type safety) ──
-  // Slice #38.20: the sections (nav-config.ts); #39.37 — eight.
+  // Slice #38.20: the sections (nav-config.ts); #39.37 — eight; 40.08 — seven („Setări" an item of „Administrare").
   const sectionLabels: Record<string, string> = {
     dashboard:      t("sections.dashboard"),
     domain:         t("sections.domain"),
@@ -427,7 +428,6 @@ export function SidebarNav() {
     importSection:  t("sections.importSection"),
     reports:        t("sections.reports"),
     administration: t("sections.administration"),
-    settings:       t("sections.settings"),
     helpLearning:   t("sections.helpLearning"), // Slice #39.37
   };
 
@@ -467,6 +467,7 @@ export function SidebarNav() {
     stamps:                    t("items.stamps"),
     tags:                      t("items.tags"),
     helpContent:               t("items.helpContent"),
+    settings:                  t("items.settings"), // Slice 40.08: an item of „Administrare", no longer a section
   };
 
   // ── Render ────────────────────────────────────────────────────────────────

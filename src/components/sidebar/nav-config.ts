@@ -62,12 +62,16 @@ export type NavSection = {
   items: NavItem[];
   // When set (and items is empty), the section header itself is a direct
   // link — no accordion/chevron, no expandable children. Since #38.20:
-  // „Tablou de bord" and „Setări".
+  // „Tablou de bord" (and „Setări" until Slice 40.08 made it an item of „Administrare").
   href?: string;
 };
 
 /**
- * THE LEFT NAVIGATION IN EIGHT SECTIONS, ALL DRAWN.  (Slice #38.20, #38.42, #39.02, #39.37)
+ * THE LEFT NAVIGATION IN SEVEN SECTIONS, ALL DRAWN.  (Slice #38.20, #38.42, #39.02, #39.37, 40.08)
+ *
+ * Slice 40.08: „Setări" is the last item of „Administrare" (Adrian, 2026-10-20: „settings from the left navigation
+ * panel must be under administration - the last item under administration"), no longer a section of its own; its
+ * URL, /admin/settings, did not move, and who sees it did not change (`USER_HREFS` still does not list it).
  *
  * Slice #39.37: „Ajutor și învățare" replaces the two placeholders „Studiu" and „Ajutor" at the bottom,
  * holding „Informații de ajutor" (from „Administrare", its URL unchanged) and „Manual de utilizare".
@@ -181,13 +185,9 @@ export const NAV_SECTIONS: NavSection[] = [
       { key: "stamps", href: "/admin/stamps", icon: Stamp },
       { key: "tags", href: "/admin/tags", icon: Tags },
       // Slice #39.37: „Informații de ajutor" moved to „Ajutor și învățare", its URL unchanged.
+      // Slice 40.08: „Setări", last — a section of its own (a flat link) until then; its URL unchanged.
+      { key: "settings", href: "/admin/settings", icon: Settings },
     ],
-  },
-  {
-    key: "settings",
-    icon: Settings,
-    href: "/admin/settings",
-    items: [],
   },
   {
     // Slice #39.37: „Ajutor și învățare" — the help, the manual and (#39.42) the skills map with its quizzes,

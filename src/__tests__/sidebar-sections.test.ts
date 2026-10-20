@@ -2,6 +2,8 @@
  * Slice #38.20 — the left navigation in nine sections: Tablou de bord,
  * Domeniu, Funcții, Import, Rapoarte, Administrare, Setări, Studiu, Ajutor.
  *
+ * Slice 40.08 — seven sections: „Setări" is the last item of „Administrare", no longer a section of its own.
+ *
  * Slice #38.42 — six of them drawn: what is not built is not drawn
  * (`drawnSections`). „Rapoarte", „Studiu" and „Ajutor" hold nothing built, so
  * they draw nothing; „Date de referință" moved to Administrare; „Funcții" is
@@ -38,11 +40,15 @@ const EN = JSON.parse(read("messages", "en-GB.json")) as Msgs;
 const nav = (m: Msgs) => m.nav as { sections: Record<string, string>; items: Record<string, string>; comingSoon: string };
 
 // #39.37: was „the nine sections" — „Studiu" and „Ajutor" (placeholders) last; „Ajutor și învățare" replaces both.
-describe("the eight sections in the config, in order, each with its items", () => {
+// 40.08: was „the eight sections", „Setări" between „Administrare" and „Ajutor și învățare".
+describe("the seven sections in the config, in order, each with its items", () => {
   it("top to bottom", () => {
     expect(NAV_SECTIONS.map((s) => nav(RO).sections[s.key])).toEqual([
-      "Tablou de bord", "Domeniu", "Instrumente", "Import", "Rapoarte", "Administrare", "Setări", "Ajutor și învățare",
+      "Tablou de bord", "Domeniu", "Instrumente", "Import", "Rapoarte", "Administrare", "Ajutor și învățare",
     ]);
+    // 40.08: no section is called „Setări" any more, in either language.
+    expect(nav(RO).sections.settings).toBeUndefined();
+    expect(nav(EN).sections.settings).toBeUndefined();
   });
 
   it("each section's items, by their Romanian names; a placeholder has no address, a placeholder page is `wip`", () => {
@@ -59,8 +65,8 @@ describe("the eight sections in the config, in order, each with its items", () =
       // #39.11: „Arbori de moștenire" had no href.
       ["Rapoarte", null, [["Interacțiuni", "/interactions"], ["Arbori de moștenire", "/inheritance-tree"], ["Căutare globală", "/admin/global-search"]]],
       // #39.37: „Informații de ajutor" moved to „Ajutor și învățare"; „Studiu" and „Ajutor" are gone.
-      ["Administrare", null, [["Date de referință", "/admin/value-lists"], ["Utilizatori & Acces", "/admin/users"], ["Grupuri", "/admin/groups"], ["Ștampile", "/admin/stamps"], ["Etichete", "/admin/tags"]]],
-      ["Setări", "/admin/settings", []],
+      // 40.08: + „Setări", last — was ["Setări", "/admin/settings", []], a section of its own, after this one.
+      ["Administrare", null, [["Date de referință", "/admin/value-lists"], ["Utilizatori & Acces", "/admin/users"], ["Grupuri", "/admin/groups"], ["Ștampile", "/admin/stamps"], ["Etichete", "/admin/tags"], ["Setări", "/admin/settings"]]],
       ["Ajutor și învățare", null, [["Informații de ajutor", "/admin/help-content"], ["Manual de utilizare", "/manual"], ["Harta competențelor", "/skills-map"], ["Întreabă", "/ask"]]], // #39.42: + the map; #39.45: + „Întreabă”
     ]);
   });
@@ -130,7 +136,8 @@ describe("what is drawn (#38.42)", () => {
 
   // #39.02: was „six sections" — Domeniu ending „Acte", „Interacțiuni"; Instrumente opening „Căutare globală"; no Rapoarte.
   // #39.37: was „seven sections", ending „Administrare" [… „Etichete", „Informații de ajutor"], „Setări".
-  it("eight sections, each with only built screens — „Ajutor și învățare” last", () => {
+  // 40.08: was „eight sections", with ["Setări", []] after „Administrare".
+  it("seven sections, each with only built screens — „Setări” last in „Administrare”, „Ajutor și învățare” last", () => {
     expect(drawn.map(ro)).toEqual([
       ["Tablou de bord", []],
       ["Domeniu", ["Persoane Fizice", "Persoane Juridice", "Proprietăți", "Acte"]],
@@ -138,8 +145,7 @@ describe("what is drawn (#38.42)", () => {
       ["Instrumente", ["Distilare Tipizate", "Calcul drum lateral", "Măsurători pe hartă", "Grupări de proprietăți", "Navigare"]],
       ["Import", ["Dosare de proprietăți"]],
       ["Rapoarte", ["Interacțiuni", "Arbori de moștenire", "Căutare globală"]], // #39.11: + „Arbori de moștenire"
-      ["Administrare", ["Date de referință", "Utilizatori & Acces", "Grupuri", "Ștampile", "Etichete"]],
-      ["Setări", []],
+      ["Administrare", ["Date de referință", "Utilizatori & Acces", "Grupuri", "Ștampile", "Etichete", "Setări"]],
       ["Ajutor și învățare", ["Informații de ajutor", "Manual de utilizare", "Harta competențelor", "Întreabă"]], // #39.42, #39.45
     ]);
   });
@@ -299,7 +305,8 @@ describe("breadcrumbs name the section, not „Admin”", () => {
 
   it("a section named as its screen is not said twice; a screen that is a section has none", () => {
     expect(trail("/admin/import")).toEqual(["Acasă", "Import"]);
-    expect(trail("/admin/settings")).toEqual(["Acasă", "Setări"]);
+    // 40.08: was ["Acasă", "Setări"] while „Setări" was a section of its own; now its section is named, as text.
+    expect(trail("/admin/settings")).toEqual(["Acasă", "Administrare (text)", "Setări"]);
     expect(trail("/reports")).toEqual(["Acasă", "Rapoarte"]);
   });
 

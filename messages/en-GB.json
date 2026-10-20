@@ -1433,7 +1433,6 @@
       "importSection": "Import",
       "reports": "Reporting",
       "administration": "Administration",
-      "settings": "Settings",
       "helpLearning": "Help & learning"
     },
     "items": {
@@ -1483,7 +1482,8 @@
       "singleFile": "Single file",
       "userManual": "User manual",
       "skillsMap": "Skills map",
-      "ask": "Ask"
+      "ask": "Ask",
+      "settings": "Settings"
     },
     "collapse": "Collapse sidebar",
     "expand": "Expand sidebar",

@@ -1433,7 +1433,6 @@
       "importSection": "Import",
       "reports": "Rapoarte",
       "administration": "Administrare",
-      "settings": "Setări",
       "helpLearning": "Ajutor și învățare"
     },
     "items": {
@@ -1483,7 +1482,8 @@
       "singleFile": "Fișier individual",
       "userManual": "Manual de utilizare",
       "skillsMap": "Harta competențelor",
-      "ask": "Întreabă"
+      "ask": "Întreabă",
+      "settings": "Setări"
     },
     "collapse": "Restrânge bara laterală",
     "expand": "Extinde bara laterală",

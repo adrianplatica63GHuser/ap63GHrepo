@@ -75,7 +75,8 @@ test.describe("TC-AUTH-01 — Conectare și tabloul de bord", () => {
     const nav = sidebar(page);
     // #38.20: the sections, in order; #38.42: those that hold a built screen; #39.02: „Rapoarte" again
     // (was six, and „Rapoarte" among the hidden).
-    const SEVEN = ["Tablou de bord", "Domeniu", "Instrumente", "Import", "Rapoarte", "Administrare", "Setări"];
+    // 40.08: „Setări" left the list — it is an item of „Administrare"; „Ajutor și învățare" (#39.37) takes its place.
+    const SEVEN = ["Tablou de bord", "Domeniu", "Instrumente", "Import", "Rapoarte", "Administrare", "Ajutor și învățare"];
     for (const section of SEVEN) {
       await expect(nav.getByText(section, { exact: true })).toBeVisible();
     }
@@ -100,7 +101,8 @@ test.describe("TC-AUTH-01 — Conectare și tabloul de bord", () => {
 // #38.20: the sections that were a superuser's until #38.21 — every account's since.
 // #38.42: those still drawn („Studiu" and „Ajutor" hold no built screen; „Rapoarte" is drawn again
 // since #39.02 and is not needed here — a subset is enough).
-const ADMIN_SECTIONS = ["Instrumente", "Import", "Administrare", "Setări"] as const;
+// 40.08: „Setări" left it — an item of „Administrare" now, not a section.
+const ADMIN_SECTIONS = ["Instrumente", "Import", "Administrare"] as const;
 
 /** The sidebar's own <nav> — present for every role (#38.20: `data-sidebar-nav`). */
 function mainNav(page: Page) {
