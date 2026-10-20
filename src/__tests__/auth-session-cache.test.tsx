@@ -94,9 +94,11 @@ const PLAIN_USER = { username: "test-user", fullAccess: false };
 
 // Slice #38.20: the two administration sections („Operațiuni" and „Configurare") became
 // „Administrare" and „Setări" — the two an account without an app_users row never sees.
+// Slice 40.08: „Setări" is an item of „Administrare" now, not a section, so the second is „Import" — like
+// „Administrare", a section an account without a row never sees (USER_HREFS lists none of its items).
 const ADMIN_SECTIONS = [
   "sections.administration",
-  "sections.settings",
+  "sections.importSection",
 ] as const;
 
 function answer(status: number, body: unknown): Response {
