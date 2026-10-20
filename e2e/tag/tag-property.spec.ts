@@ -99,7 +99,8 @@ test.describe("TC-TAG-01 — Etichetă aplicată unei proprietăți și găsită
 
       // Step 5 — Căutare globală, „Etichetă": „1 rezultat", the property.
       await page.goto("/admin/global-search");
-      await page.getByPlaceholder("ex. prioritar").fill(STORED);
+      // Slice 40.09: the placeholder is its example alone, „prioritar" (was „ex. prioritar", now the tooltip).
+      await page.getByPlaceholder("prioritar", { exact: true }).fill(STORED);
       await page.getByRole("button", { name: "Caută", exact: true }).click();
       await expect(page.getByText("1 rezultat", { exact: true })).toBeVisible({ timeout: 30_000 });
       const hit = page.locator("tbody tr");

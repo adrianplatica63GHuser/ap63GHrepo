@@ -148,7 +148,8 @@ test.describe("TC-GRP-01 — Grup cu două proprietăți", () => {
 
       // Step 9 — Căutare globală, „Cod grup": „2 rezultate", positions 01 and 02.
       await page.goto("/admin/global-search");
-      await page.getByPlaceholder("ex. GRP-001").fill(code);
+      // Slice 40.09: the placeholder is its example alone, „GRP-001" (was „ex. GRP-001", now the tooltip).
+      await page.getByPlaceholder("GRP-001", { exact: true }).fill(code);
       await page.getByRole("button", { name: "Caută", exact: true }).click();
       await expect(page.getByText("2 rezultate", { exact: true })).toBeVisible({ timeout: 30_000 });
       const hits = page.locator("tbody tr");
