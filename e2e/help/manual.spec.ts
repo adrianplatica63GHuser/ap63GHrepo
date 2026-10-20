@@ -506,6 +506,28 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     await page.screenshot({ path: `${dir}/properties-list.png` });
     await page.keyboard.press("Escape");
 
+    // Figura 2.4 — #40.04: the list of properties in a short, narrow window — the band of names at the frame's top,
+    // „Pagina x din y" under the frame, and the red „<" and „>" of the hidden columns (#40.02, #40.03) — scrolled
+    // half-way sideways and down; the same seed search as 5.1, rows not the seed's blurred.
+    await page.setViewportSize({ width: 980, height: 560 });
+    await page.evaluate(() => localStorage.setItem("ga40-col-property-v4", JSON.stringify(["useCategory", "propertyType", "cadastralNumber", "surfaceAreaMp"])));
+    await page.goto("/properties");
+    const fsearch = page.locator("main").getByRole("searchbox").first();
+    await expect(fsearch).toBeVisible({ timeout: 60_000 });
+    await fsearch.fill("Teren curți construcții");
+    await page.waitForTimeout(2500);
+    await blurNotSeed("/properties/");
+    await page.locator("main [data-list-frame]").evaluate((f) => {
+      f.scrollLeft = Math.round((f.scrollWidth - f.clientWidth) / 2);
+      f.scrollTop = Math.round((f.scrollHeight - f.clientHeight) / 2);
+    });
+    await expect(page.locator("main [data-hidden-left]")).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator("main [data-hidden-right]")).toBeVisible({ timeout: 10_000 });
+    await blurRecent(page, S.recent);
+    await still(page);
+    await page.screenshot({ path: `${dir}/list-fit.png` });
+    await page.setViewportSize({ width: 1366, height: 768 });
+
     // Figura 5.2 — a property's screen, the map tiles hidden (no map load), and Figura 7.2 — its „Legături".
     await page.goto(`/properties/${property.id}`);
     await expect(tile("cadastral")).toBeVisible({ timeout: 60_000 });
@@ -668,7 +690,7 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     }
 
     for (const f of [
-      "dashboard", "sidebar", "breadcrumb", "list", "record", "make-room", "help",
+      "dashboard", "sidebar", "breadcrumb", "list", "list-fit", "record", "make-room", "help",
       "persons-new", "persons-tree", "companies-record", "properties-list", "properties-record",
       "documents-pages", "documents-sale", "documents-antecontract", "links-associate", "links-related", "links-versions",
       "tools-doc-type-engine", "tools-calculation", "import-steps", "reports-search", "admin-value-lists", "admin-settings",
