@@ -11,6 +11,10 @@
  * Steps 7–10 (Slice #40.02) are the second test: each list unsearched, so it holds a page of rows, at 1280 × 600 and at
  * 1920 × 1080. They read the archive's own rows' boxes only — no text — and on Proprietăți open a record whose maps are
  * blocked (e2e/README.md): no map loads, no Street View, no address look-up.
+ *
+ * Steps 11–14 (Slice #40.03) are the third test: Acte with four columns chosen at 1100 px, so its columns are wider
+ * than the frame — the red „>" and „<" at the band's edges as the list scrolls sideways; a funnel under the right-hand
+ * signs still opens its editor; at 1920 px with no column chosen, neither sign.
  */
 
 import { test, expect, type Page } from "../helpers/test";
@@ -232,5 +236,103 @@ test.describe("TC-LAYOUT-05 — cele patru liste, câte un rând pe linie", () =
         expect((await fits()).page).toBeLessThanOrEqual(0);
       });
     }
+  });
+  // Slice #40.03 — steps 11–14: three red „>" at the band's right edge while columns are hidden to the right, three red
+  // „<" at its left edge while columns are hidden to the left; signs, not buttons.
+  test("semnele roșii „>” și „<” la marginile benzii cât timp sunt coloane ascunse", async ({ page }) => {
+    test.slow();
+    await page.addInitScript(() => {
+      localStorage.setItem("ga40-col-document-v3", JSON.stringify(["dateDocument", "institution", "pageCount", "createdAt"]));
+    });
+    const main = page.locator("main");
+    const frame = main.locator("[data-list-frame]");
+    const right = frame.locator("[data-hidden-right]");
+    const left = frame.locator("[data-hidden-left]");
+    const read = () =>
+      frame.evaluate((f) => {
+        const box = (sel: string) => {
+          const e = f.querySelector<HTMLElement>(sel);
+          if (!e) return null;
+          const b = e.getBoundingClientRect();
+          return { left: b.left, right: b.right, top: b.top, height: b.height };
+        };
+        const fr = f.getBoundingClientRect();
+        const head = f.querySelector("thead")!.getBoundingClientRect();
+        return { frame: { left: fr.left + f.clientLeft, right: fr.left + f.clientLeft + f.clientWidth }, head: { top: head.top, height: head.height }, left: box("[data-hidden-left]"), right: box("[data-hidden-right]") };
+      });
+
+    // Step 11 — at the start: the „>" only, three of them, red, at the visible part's right edge, the band's height.
+    await page.setViewportSize({ width: 1100, height: 800 });
+    await page.goto("/documents");
+    await expect(main.getByRole("columnheader", { name: /Adăugat la/ })).toBeVisible({ timeout: 30_000 });
+    await expect(right).toBeVisible({ timeout: 10_000 });
+    await expect(left).toHaveCount(0);
+    await expect(right.locator("span")).toHaveText([">", ">", ">"]);
+    // The danger red, as the browser computes `text-red-600` (Tailwind v4 writes it in oklch; Chromium reads it back as lab).
+    const red = await page.evaluate(() => {
+      const probe = document.createElement("span");
+      probe.className = "text-red-600";
+      document.body.append(probe);
+      const c = getComputedStyle(probe).color;
+      probe.remove();
+      return c;
+    });
+    await expect(right).toHaveCSS("color", red);
+    await expect(frame.locator("[data-hidden-columns]")).toHaveCSS("pointer-events", "none");
+    await expect(frame.locator("[data-hidden-columns]")).toHaveAttribute("aria-hidden", "true");
+    const r11 = await read();
+    expect(Math.abs(r11.right!.right - r11.frame.right)).toBeLessThanOrEqual(1);
+    expect(Math.abs(r11.right!.top - r11.head.top)).toBeLessThanOrEqual(1);
+    expect(Math.abs(r11.right!.height - r11.head.height)).toBeLessThanOrEqual(1);
+
+    // Step 12 — scrolled to the middle: both; scrolled down too, both still at the band's height.
+    await frame.evaluate((f) => { f.scrollLeft = Math.round((f.scrollWidth - f.clientWidth) / 2); f.scrollTop = 120; });
+    await expect(left).toBeVisible();
+    await expect(right).toBeVisible();
+    await expect(left.locator("span")).toHaveText(["<", "<", "<"]);
+    const r12 = await read();
+    expect(Math.abs(r12.left!.left - r12.frame.left)).toBeLessThanOrEqual(1);
+    expect(Math.abs(r12.right!.right - r12.frame.right)).toBeLessThanOrEqual(1);
+    expect(Math.abs(r12.left!.top - r12.head.top)).toBeLessThanOrEqual(1);
+
+    // Step 13 — at the end: the „<" only. Then back to where a funnel stands under the right-hand signs: pressed through
+    // them, it opens its editor.
+    await frame.evaluate((f) => { f.scrollLeft = f.scrollWidth; f.scrollTop = 0; });
+    await expect(right).toHaveCount(0);
+    await expect(left).toBeVisible();
+    const at = await frame.evaluate((f) => {
+      f.scrollLeft = 0;
+      const edge = f.getBoundingClientRect().left + f.clientLeft + f.clientWidth;
+      // The first funnel whose centre the list can bring under the signs' 20-px strip.
+      for (const b of Array.from(f.querySelectorAll<HTMLElement>("[data-filter-funnel] button"))) {
+        const r = b.getBoundingClientRect();
+        const shift = r.left + r.width / 2 - (edge - 10);
+        if (shift >= 0 && shift <= f.scrollWidth - f.clientWidth) {
+          f.scrollLeft = shift;
+          const after = b.getBoundingClientRect();
+          return { x: after.left + after.width / 2, y: after.top + after.height / 2, key: b.closest("[data-filter-funnel]")!.getAttribute("data-filter-funnel") };
+        }
+      }
+      return null;
+    });
+    expect(at, "a funnel the list can bring under the right-hand signs").not.toBeNull();
+    await expect(right).toBeVisible();
+    const sign = await read();
+    expect(at!.x).toBeGreaterThanOrEqual(sign.right!.left);
+    await page.waitForTimeout(200);
+    await page.mouse.click(at!.x, at!.y);
+    await expect(page.locator(`[data-filter-editor="${at!.key}"]`)).toBeVisible({ timeout: 10_000 });
+    await page.keyboard.press("Escape");
+
+    // Step 14 — at 1920 px with no column chosen, every column fits: neither sign; the horizontal scroll bar stays the
+    // frame's own.
+    await page.evaluate(() => localStorage.setItem("ga40-col-document-v3", JSON.stringify([])));
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await page.addInitScript(() => localStorage.setItem("ga40-col-document-v3", JSON.stringify([])));
+    await page.goto("/documents");
+    await expect(frame.locator("tbody tr").first()).toBeVisible({ timeout: 30_000 });
+    await page.waitForTimeout(500);
+    await expect(right).toHaveCount(0);
+    await expect(left).toHaveCount(0);
   });
 });

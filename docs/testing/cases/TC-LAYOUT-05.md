@@ -52,6 +52,10 @@ At 1366 and at 1920 px, on each of the four lists, searched for „TC-E2E-LAYOUT
 | 8 | Scrolls the frame to its last row | The band of column names still at the frame's top, the last row at its bottom, and the „Se afișează … / Pagina x din y" row under the frame, inside the window; the page has not moved |
 | 9 | Scrolls the frame half-way, presses „Deschide" on a row in sight, then the browser's Back | The list comes back with its frame scrolled where it was (±2 px), the row in sight |
 | 10 | Makes the window 1920 × 1080 | A page of rows fits: the frame draws no scroll bar, and the page none either |
+| 11 | At 1100 × 800 px (#40.03), on „Acte" with „Data", „Instituție / Notariat", „Nr. pagini" and „Adăugat la" chosen, looks at the band of names | Its columns are wider than the frame. At the band's right edge — the visible part's, just left of the frame's vertical scroll bar — three red „>" one over another, as tall as the band; none at its left |
+| 12 | Scrolls the list half-way sideways, then a little down | Three red „<" at the band's left edge too, both kept at the band as the rows scroll |
+| 13 | Scrolls to the right end; then back, until a column's funnel stands under the „>" signs, and presses it | Only the „<" at the end. The funnel, pressed through the signs, opens its filter |
+| 14 | At 1920 × 1080 px with no column chosen | Every column fits: no sign at either edge |
 
 ## At the end — leaving things as they were found
 
@@ -81,3 +85,11 @@ same day, on „Persoane fizice" at 1280 × 600: the page 600 of 600 (no scroll)
 of rows; scrolled to its end, the band at 189 (the frame's 1-px border under 188) and the last row's bottom at 524 in a
 frame ending at 525; the pagination row at 541–567; „Adaugă persoană", the frame and the pagination row all ending at
 x 765 (the frame's 16-px scroll bar counted in the edge). The spec translates steps 7–10 as a second test.
+
+**2026-10-20 — steps 11–14 added for #40.03.** Adrian, 2026-10-20: „if there columns that are not shown on the right side
+we will display 3 greater than signs in red One on top of each other At the right edge of the visible part of the title
+bar … similarly … 3 smaller than sign in red … at the left side". Read in the browser pane on localhost:3000 the same
+day, on „Acte" at 1000 × 800 (no column chosen; the table 800 px in a frame showing 697): the three „>" at x 925–945,
+y 231–305 — the band's height, against the frame's vertical scroll bar — and still there with the list scrolled 40 and
+103 px sideways and 200 px down; `pointer-events: none`. The pane's emulated viewport dispatches no scroll events, so the
+„<" appearing is the spec's to read (40.03's handover). The spec translates steps 11–14 as a third test.

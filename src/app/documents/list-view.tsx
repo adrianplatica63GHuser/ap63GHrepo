@@ -13,6 +13,7 @@ import { ArrowRight, CalendarClock, ChevronDown, ChevronLeft, ChevronRight, Plus
 import { IconButton } from "@/lib/ui/icon-button";
 import { FixedColumns, ONE_LINE, cellTitle, columnHead, fixedTable } from "@/components/table/fixed-columns";
 import { LIST_FRAME, LIST_HEAD, useListFit } from "@/components/list/list-fit";
+import { HiddenColumnSigns } from "@/components/list/hidden-column-signs";
 import { LIST_TOOLBAR, useListEdge } from "@/components/table/list-edge";
 import { ListHeadCell } from "@/components/table/list-head";
 import { twoRowName } from "@/lib/ui/list-head";
@@ -1085,6 +1086,8 @@ export function DocumentListView({
         <>
           <ListPreviewRow>
             <div className={`${LIST_FRAME} rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900`} {...edge.frame} {...fit.frame}>
+              {/* Slice #40.03: red „<" / „>" at the band's visible edges while columns are hidden that way. */}
+              <HiddenColumnSigns />
               {/* Slice #38.57: the table fills its frame, which the toolbar may hold wider than the columns. */}
               <table {...fixedTable(columns, "text-sm min-w-full")}>
                 <FixedColumns columns={columns} />
