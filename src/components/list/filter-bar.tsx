@@ -119,11 +119,25 @@ export function FilterBar({ fields, state, onChange, editing, onEditing, loadVal
         onEditing(null);
       }
     }
+    // Slice #40.02 (Ask first 7): the list's frame scrolls both ways now. Down, the band of names — and the funnel —
+    // stays put, so the editor stays open; sideways the funnel moves away from under it, so it closes.
+    const lefts = new Map<Element, number>();
+    for (const f of Array.from(document.querySelectorAll("[data-list-frame]"))) lefts.set(f, f.scrollLeft);
+    function scrolled(e: Event) {
+      const el = e.target;
+      if (!(el instanceof Element) || !el.matches("[data-list-frame]")) return;
+      if (Math.abs(el.scrollLeft - (lefts.get(el) ?? 0)) > 1) {
+        setChipAnchor(null);
+        onEditing(null);
+      }
+    }
     document.addEventListener("mousedown", outside);
     document.addEventListener("keydown", escape);
+    document.addEventListener("scroll", scrolled, true);
     return () => {
       document.removeEventListener("mousedown", outside);
       document.removeEventListener("keydown", escape);
+      document.removeEventListener("scroll", scrolled, true);
     };
   }, [editing, onEditing]);
 

@@ -7,6 +7,10 @@
  *
  * Divergence from the hand run: „Câmpuri afișate" is set by writing each list's stored choice before the page loads
  * (`CHOICE`), not by ticking — the case only needs the four columns on screen (#39.83).
+ *
+ * Steps 7–10 (Slice #40.02) are the second test: each list unsearched, so it holds a page of rows, at 1280 × 600 and at
+ * 1920 × 1080. They read the archive's own rows' boxes only — no text — and on Proprietăți open a record whose maps are
+ * blocked (e2e/README.md): no map loads, no Street View, no address look-up.
  */
 
 import { test, expect, type Page } from "../helpers/test";
@@ -162,6 +166,71 @@ test.describe("TC-LAYOUT-05 — cele patru liste, câte un rând pe linie", () =
       }
     } finally {
       for (const [kind, id] of made) await removeRecord(page.request, kind, id);
+    }
+  });
+  // Slice #40.02 — steps 7–10: the list fits the window. Short, the page does not scroll: the frame does, the band of
+  // names and the „Se afișează … / Pagina x din y" row staying in sight; Back from a record puts the frame's scroll back;
+  // tall, a page of rows fits and the frame draws no scroll bar.
+  test("la 1280 × 600 lista încape în fereastră: rândurile se derulează în chenarul lor", async ({ page }) => {
+    test.slow();
+    for (const list of LISTS) {
+      await test.step(list.path, async () => {
+        // Step 7 — short: the page has no vertical scroll; the frame has one.
+        await page.setViewportSize({ width: 1280, height: 600 });
+        await page.goto(list.path);
+        const main = page.locator("main");
+        await expect(main.getByRole("searchbox", { name: list.search })).toBeVisible({ timeout: 30_000 });
+        const frame = main.locator("[data-list-frame]");
+        await expect.poll(async () => frame.locator("tbody tr").count(), { timeout: 30_000 }).toBeGreaterThanOrEqual(10);
+        const fits = () =>
+          page.evaluate(() => {
+            const ps = document.querySelector<HTMLElement>("[data-page-scroll]")!;
+            const f = document.querySelector<HTMLElement>("main [data-list-frame]")!;
+            return { page: ps.scrollHeight - ps.clientHeight, frame: f.scrollHeight - f.clientHeight };
+          });
+        await expect.poll(async () => (await fits()).page, { timeout: 10_000, message: `${list.path}: the page does not scroll` }).toBeLessThanOrEqual(0);
+        expect((await fits()).frame, `${list.path}: the frame scrolls`).toBeGreaterThan(0);
+
+        // Step 8 — the frame scrolled to its last row: the band at the frame's top, the last row and the pagination row
+        // inside the window.
+        const atEnd = await page.evaluate(() => {
+          const f = document.querySelector<HTMLElement>("main [data-list-frame]")!;
+          f.scrollTop = f.scrollHeight;
+          const fr = f.getBoundingClientRect();
+          const head = f.querySelector("thead")!.getBoundingClientRect();
+          const last = [...f.querySelectorAll("tbody tr")].at(-1)!.getBoundingClientRect();
+          const pag = [...document.querySelectorAll<HTMLElement>("main [data-list-edge]")].at(-1)!.getBoundingClientRect();
+          return { scrolled: f.scrollTop > 0, head: Math.round(head.top - fr.top), last: last.bottom <= fr.bottom + 1, pag: pag.bottom <= window.innerHeight, page: document.querySelector<HTMLElement>("[data-page-scroll]")!.scrollTop };
+        });
+        expect({ list: list.path, ...atEnd }).toEqual({ list: list.path, scrolled: true, head: 1, last: true, pag: true, page: 0 });
+
+        // Step 9 — a row half-way down opened, then Back: the frame's scroll as it was (±2 px), the row in sight.
+        const middle = await page.evaluate(() => {
+          const f = document.querySelector<HTMLElement>("main [data-list-frame]")!;
+          f.scrollTop = Math.round((f.scrollHeight - f.clientHeight) / 2);
+          const band = f.querySelector("thead")!.getBoundingClientRect().bottom;
+          const rows = [...f.querySelectorAll<HTMLTableRowElement>("tbody tr")];
+          const i = rows.findIndex((r) => r.getBoundingClientRect().top >= band);
+          return { top: f.scrollTop, row: i };
+        });
+        expect(middle.top, `${list.path}: scrolled half-way`).toBeGreaterThan(0);
+        await page.waitForTimeout(400); // the scroll is kept 100 ms after it stops
+        const row = frame.locator("tbody tr").nth(middle.row);
+        await row.getByRole("link", { name: "Deschide", exact: true }).click();
+        await expect(page).toHaveURL((u) => u.pathname.startsWith(`${list.path}/`), { timeout: 30_000 });
+        await page.waitForTimeout(1_000);
+        await page.goBack();
+        await expect(page).toHaveURL((u) => u.pathname === list.path, { timeout: 30_000 });
+        await expect
+          .poll(async () => Math.abs((await frame.evaluate((el) => el.scrollTop)) - middle.top), { timeout: 8_000, message: `${list.path}: the frame's scroll comes back` })
+          .toBeLessThanOrEqual(2);
+        await expect(row).toBeInViewport();
+
+        // Step 10 — tall: a page of rows fits, and the frame draws no scroll bar.
+        await page.setViewportSize({ width: 1920, height: 1080 });
+        await expect.poll(async () => (await fits()).frame, { timeout: 10_000, message: `${list.path}: no scroll bar at 1080 px` }).toBeLessThanOrEqual(0);
+        expect((await fits()).page).toBeLessThanOrEqual(0);
+      });
     }
   });
 });

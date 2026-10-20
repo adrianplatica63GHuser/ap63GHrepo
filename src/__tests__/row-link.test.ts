@@ -140,7 +140,8 @@ describe('a list row\'s „Previzualizare" (#37.25)', () => {
     // The table and the previews share one wrapping row, inside the opener.
     // #37.25 pinned a bare `<ListPreviews>`; #38.72 passes it the Incursiune tile; #38.75 moves that round the
     // whole list and gives the table and its previews `ListPreviewRow`.
-    expect(src).toMatch(/<ListPreviewRow>\s*<div className=\{`\$\{TABLE_FRAME\}/);
+    // #40.02: `LIST_FRAME`, which scrolls both ways — was `TABLE_FRAME`.
+    expect(src).toMatch(/<ListPreviewRow>\s*<div className=\{`\$\{LIST_FRAME\}/);
   });
 });
 

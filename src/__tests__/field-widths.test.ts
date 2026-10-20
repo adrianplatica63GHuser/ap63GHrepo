@@ -859,8 +859,9 @@ describe("tables at fixed column widths (#37.16)", () => {
     const ths = head.match(/<th\b/g) ?? [];
     expect(ths.length).toBeGreaterThan(1);
     expect(head.match(/<th\b[^>]*\{\.\.\.columnHead\(/g) ?? []).toHaveLength(ths.length);
-    // Its frame is as wide as the table, scrolling past the window.
-    expect(src).toMatch(/TABLE_FRAME/);
+    // Its frame is as wide as the table, scrolling past the window — on the four lists since #40.02 `LIST_FRAME`, which
+    // scrolls down too.
+    expect(src).toMatch(/TABLE_FRAME|LIST_FRAME/);
   });
 
   it("no list page caps or centres the list", () => {
@@ -985,7 +986,7 @@ describe("EVERY OTHER SCREEN FOLLOWS THE SAME RULE (#37.22)", () => {
       const ths = head.match(/<th\b/g) ?? [];
       expect(head.match(/<th\b[^>]*\{\.\.\.columnHead\(/g) ?? []).toHaveLength(ths.length);
     }
-    expect(src).toMatch(/TABLE_FRAME|ADMIN_LIST_FRAME/);
+    expect(src).toMatch(/TABLE_FRAME|ADMIN_LIST_FRAME|LIST_FRAME/); // #40.02: the four lists' `LIST_FRAME`
   });
 
   it("a view is a column as wide as its widest fixed piece, whose prose wraps inside it", () => {

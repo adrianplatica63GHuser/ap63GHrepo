@@ -188,7 +188,8 @@ describe("a look, not an edit (#38.72)", () => {
     expect(TILE).not.toContain("export const INCURSION_MIN_REM");
     const tiles = read("src", "components", "tiles", "preview-tiles.tsx");
     expect(tiles).toContain("export const ROW_TILES_STYLE: CSSProperties = { width: rem(PAGES_PANEL_REM) };");
-    expect(tiles).toContain('<div data-list-row-tiles className="flex max-w-full shrink-0 flex-col gap-4 self-stretch" style={ROW_TILES_STYLE}>');
+    // #40.02: and, beside the list, capped at the window's bottom (`useRowTilesFit`) — it read `style={ROW_TILES_STYLE}>`.
+    expect(tiles).toContain('<div ref={columnRef} data-list-row-tiles className="flex max-w-full shrink-0 flex-col gap-4 self-stretch" style={columnFit ? { ...ROW_TILES_STYLE, ...columnFit } : ROW_TILES_STYLE}>');
   });
 
   it("the four lists draw magnifier, eye, chain link, arrow, and offer the tile", () => {
@@ -207,7 +208,7 @@ describe("a look, not an edit (#38.72)", () => {
       const open = openMatch![0];
       // Slice #38.75: around the whole list, its first child the toolbar; the table frame in `ListPreviewRow`.
       expect([dir, view.slice(view.indexOf(open) + open.length).trimStart().startsWith("{/* Toolbar")]).toEqual([dir, true]);
-      expect([dir, /<ListPreviewRow>\s*<div className=\{`\$\{TABLE_FRAME\}/.test(view)]).toEqual([dir, true]);
+      expect([dir, /<ListPreviewRow>\s*<div className=\{`\$\{LIST_FRAME\}/.test(view)]).toEqual([dir, true]);
       expect([dir, /<\/ListPreviews>\s*\);\s*\}\s*$/.test(view)]).toEqual([dir, true]);
     }
   });

@@ -48,6 +48,10 @@ At 1366 and at 1920 px, on each of the four lists, searched for „TC-E2E-LAYOUT
 | 4 | „Acte" | The same, for the document's title |
 | 5 | On each list, looks at the band of column names (#39.83) | Every cell the same height, three rows; a filterable column's name on rows 1–2, bottom-aligned, its funnel alone on row 3; Poreclă, the name or title, Nr. cadastru, CNP, Nr. document and the juridical persons' CUI, register and contact person centred; „Categorie de / folosință", „Tip / proprietate", „Oficială / (m²)", „Data / nașterii", „Relația / cu firma", „Locul / nașterii", „Instituție / / Notariat", „Nr. / pagini", „Nr. / proprietăți" on two rows; no name on three |
 | 6 | On each list, holds the mouse over the search box (#39.85) | The box is exactly as wide as „Adaugă …" at its row's end; the whole explanation shows on hover, even where the box cuts it with „…" |
+| 7 | At 1280 × 600 px (#40.02), opens each list unsearched — a page of rows | The browser page has no vertical scroll bar; the list's frame has one, and its rows scroll inside it |
+| 8 | Scrolls the frame to its last row | The band of column names still at the frame's top, the last row at its bottom, and the „Se afișează … / Pagina x din y" row under the frame, inside the window; the page has not moved |
+| 9 | Scrolls the frame half-way, presses „Deschide" on a row in sight, then the browser's Back | The list comes back with its frame scrolled where it was (±2 px), the row in sight |
+| 10 | Makes the window 1920 × 1080 | A page of rows fits: the frame draws no scroll bar, and the page none either |
 
 ## At the end — leaving things as they were found
 
@@ -69,3 +73,11 @@ driven by hand: the spec, extended with it, is what checks it.
 
 **2026-10-18 — `automated` (Slice #39.85).** The test runner's targeted run 20261018T165019Z-11827 on 4e824a7 ran `e2e/layout/domain-lists-one-line.spec.ts` green
 with the search box's new words (lint, tsc and the slice's jest suites green too).
+
+**2026-10-20 — steps 7–10 added for #40.02.** Adrian, 2026-10-20: „if the browser is not tall enough to accommodate the
+entire list I want the list itself to have a vertical scroll bar … I also want the titles row of the list to always be
+visible … we don't want the browser page to have a vertical scroll bar". Read in the browser pane on localhost:3000 the
+same day, on „Persoane fizice" at 1280 × 600: the page 600 of 600 (no scroll); the frame at y 188, 337 px tall, 715 px
+of rows; scrolled to its end, the band at 189 (the frame's 1-px border under 188) and the last row's bottom at 524 in a
+frame ending at 525; the pagination row at 541–567; „Adaugă persoană", the frame and the pagination row all ending at
+x 765 (the frame's 16-px scroll bar counted in the edge). The spec translates steps 7–10 as a second test.

@@ -208,7 +208,8 @@ describe("the four lists keep their view in their address (#39.26)", () => {
   it("the scroll is kept by the Navigation API's history slot — a list opened from the menu is a new slot", () => {
     const hook = read("src", "components", "list", "use-list-address.tsx");
     expect(hook).toContain("nav?.currentEntry?.key ?? null");
-    expect(hook).toContain('querySelector<HTMLElement>("[data-page-scroll]")');
+    // #40.02: the list's frame, which scrolls now — was `querySelector<HTMLElement>("[data-page-scroll]")`.
+    expect(hook).toContain('querySelector<HTMLElement>("main [data-list-frame]")');
     expect(hook).toContain("window.history.replaceState(null, \"\", `${pathname}${next}`);");
     expect(hook).not.toMatch(/router\.(push|replace)/);
   });

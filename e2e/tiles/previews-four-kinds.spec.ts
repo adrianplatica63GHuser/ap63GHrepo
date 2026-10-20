@@ -691,7 +691,11 @@ test.describe("TC-TILES-11 — „Legături” beside the list, as tall as its r
 /** Step 12's own records. Its own marker, which neither holds the others' nor is held by them. */
 const BACK = `${E2E_MARKER}INAPOI-12`;
 
-/** What step 12 reads off a list: its search, the tiles' column, the row's pressed buttons, the page's scroll. */
+/**
+ * What step 12 reads off a list: its search, the tiles' column, the row's pressed buttons, the list's scroll — since
+ * #40.02 its frame's, which is what scrolls there (`useListScrollMemory`); it was the page's. TC-LAYOUT-05 step 9 checks
+ * a frame scrolled half-way down a page of rows comes back; here the list holds one row.
+ */
 async function listState(page: Page, name: string) {
   return page.evaluate((n) => {
     const row = [...document.querySelectorAll<HTMLTableRowElement>("main [data-list-body] [data-list-edge] tbody tr")].find((r) => (r.textContent ?? "").includes(n));
@@ -701,11 +705,11 @@ async function listState(page: Page, name: string) {
         c.hasAttribute("data-preview") ? "preview" : c.getAttribute("data-incursion-view"),
       ),
       pressed: row ? [...row.querySelectorAll('[aria-pressed="true"]')].map((b) => b.getAttribute("aria-label")) : null,
-      scroll: Math.round(document.querySelector<HTMLElement>("[data-page-scroll]")!.scrollTop),
+      scroll: Math.round(document.querySelector<HTMLElement>("main [data-list-frame]")!.scrollTop),
       // What the scroll is kept by — said in a failure's message, never compared.
       slot: (window as unknown as { navigation?: { currentEntry?: { key?: string } } }).navigation?.currentEntry?.key ?? null,
       memory: sessionStorage.getItem("ga:list-scroll"),
-      max: Math.round(document.querySelector<HTMLElement>("[data-page-scroll]")!.scrollHeight - document.querySelector<HTMLElement>("[data-page-scroll]")!.clientHeight),
+      max: Math.round(document.querySelector<HTMLElement>("main [data-list-frame]")!.scrollHeight - document.querySelector<HTMLElement>("main [data-list-frame]")!.clientHeight),
       load: (performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined)?.type ?? null,
     };
   }, name);

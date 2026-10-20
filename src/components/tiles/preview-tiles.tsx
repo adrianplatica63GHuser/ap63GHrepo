@@ -31,7 +31,7 @@
  */
 import { useNameOr } from "@/components/record/use-name-or";
 import type { UnnamedKind } from "@/lib/ui/unnamed";
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
@@ -44,6 +44,7 @@ import { nextPreviews, previewHref, previewKey, type PreviewTarget } from "@/lib
 import { NO_ROW_TILES, closeRowTile, isLocked, isRowTileOpen, toggleRowTile, type RowTile, type RowTiles } from "@/lib/ui/row-tiles";
 import { IncursionContext, type Incursion, type IncursionTileComponent } from "./incursion-context";
 import { replaceListAddress } from "@/components/list/use-list-address";
+import { useRowTilesFit } from "@/components/list/list-fit";
 import { DECEASED_MARK } from "@/lib/persons/person-age";
 
 // ── Which previews are open ───────────────────────────────────────────────────
@@ -220,18 +221,23 @@ export function ListPreviews({
     [tiles, toggle, close, offersIncursion],
   );
   const row = tiles.row;
+  // Slice #40.02 (Ask first 6): beside the list the column goes down to the window's bottom at most, its tiles
+  // scrolling inside it, so the page does not scroll for them; wrapped under the list it is not capped.
+  const bodyRef = useRef<HTMLDivElement | null>(null);
+  const columnRef = useRef<HTMLDivElement | null>(null);
+  const columnFit = useRowTilesFit(columnRef, bodyRef, row !== null);
   return (
     <IncursionContext.Provider value={incursion}>
       <div data-list-incursion-row className="flex flex-wrap items-start gap-4">
         {/* The whole page's width while nothing stands beside it, as the list's own column always was. */}
-        <div data-list-body className={row ? "flex min-w-0 max-w-full flex-col gap-4" : "flex w-full flex-col gap-4"}>
+        <div ref={bodyRef} data-list-body className={row ? "flex min-w-0 max-w-full flex-col gap-4" : "flex w-full flex-col gap-4"}>
           {children}
         </div>
         {row && (
           // Slice #39.04: one column, 40 rem (the person screen's „Interacțiuni" tile), as tall as the list; the
           // tiles in the fixed order, whatever order they were pressed in. A narrow window drops it under the list,
           // still 40 rem (Ask first 3).
-          <div data-list-row-tiles className="flex max-w-full shrink-0 flex-col gap-4 self-stretch" style={ROW_TILES_STYLE}>
+          <div ref={columnRef} data-list-row-tiles className="flex max-w-full shrink-0 flex-col gap-4 self-stretch" style={columnFit ? { ...ROW_TILES_STYLE, ...columnFit } : ROW_TILES_STYLE}>
             {tiles.open.map((tile) =>
               tile === "preview" ? (
                 <PreviewTile key={`preview:${previewKey(row)}`} target={row} onClose={() => close("preview")} style={FILL_COLUMN} />

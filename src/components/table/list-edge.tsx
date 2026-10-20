@@ -24,6 +24,11 @@
  *
  * The open previews do not count: they stand beside the frame in `ListPreviews`
  * and nothing here reads them, so opening one never moves the group.
+ *
+ * Slice #40.02: the frame scrolls down too (`useListFit`), and while it does its
+ * vertical scroll bar stands beside the table, inside the frame — `gutterPx`,
+ * measured there. It counts as part of the columns' width, so the group and the
+ * pagination row still end at the frame's right edge.
  */
 import { useLayoutEffect, useRef, useState, type CSSProperties, type RefObject } from "react";
 import { columnsRem, type ColumnName } from "@/lib/ui/field-widths";
@@ -34,22 +39,22 @@ export const FRAME_BORDERS_PX = 2;
 /** The toolbar's own class: as wide as its controls, not the page. */
 export const LIST_TOOLBAR = "w-fit max-w-full";
 
-/** The width the table's columns make, frame included, as a CSS length. */
-export function columnsEdge(columns: readonly ColumnName[]): string {
-  return `calc(${columnsRem(columns)}rem + ${FRAME_BORDERS_PX}px)`;
+/** The width the table's columns make, frame included — and its vertical scroll bar, when it has one — as a CSS length. */
+export function columnsEdge(columns: readonly ColumnName[], gutterPx = 0): string {
+  return `calc(${columnsRem(columns)}rem + ${FRAME_BORDERS_PX + Math.max(0, gutterPx)}px)`;
 }
 
 /** The toolbar: never narrower than the columns, never wider than the page. */
-export function toolbarEdgeStyle(columns: readonly ColumnName[]): CSSProperties {
-  return { minWidth: `min(${columnsEdge(columns)}, 100%)` };
+export function toolbarEdgeStyle(columns: readonly ColumnName[], gutterPx = 0): CSSProperties {
+  return { minWidth: `min(${columnsEdge(columns, gutterPx)}, 100%)` };
 }
 
 /**
  * The frame and the pagination row: never narrower than the toolbar as drawn
  * (`toolbarPx`), or — before it is measured — than the columns.
  */
-export function frameEdgeStyle(columns: readonly ColumnName[], toolbarPx: number | null): CSSProperties {
-  const edge = toolbarPx && toolbarPx > 0 ? `max(${toolbarPx}px, ${columnsEdge(columns)})` : columnsEdge(columns);
+export function frameEdgeStyle(columns: readonly ColumnName[], toolbarPx: number | null, gutterPx = 0): CSSProperties {
+  const edge = toolbarPx && toolbarPx > 0 ? `max(${toolbarPx}px, ${columnsEdge(columns, gutterPx)})` : columnsEdge(columns, gutterPx);
   return { minWidth: `min(${edge}, 100%)` };
 }
 
@@ -60,8 +65,11 @@ export type ListEdge = {
   frame: { style: CSSProperties; "data-list-edge": "" };
 };
 
-/** One list's edge: the toolbar's ref and the styles above, kept up to date. */
-export function useListEdge(columns: readonly ColumnName[]): ListEdge {
+/**
+ * One list's edge: the toolbar's ref and the styles above, kept up to date. `gutterPx` is the frame's vertical scroll
+ * bar (`useListFit`'s `gutter`, #40.02), 0 while it has none.
+ */
+export function useListEdge(columns: readonly ColumnName[], gutterPx = 0): ListEdge {
   const ref = useRef<HTMLDivElement | null>(null);
   const [toolbarPx, setToolbarPx] = useState<number | null>(null);
 
@@ -78,7 +86,7 @@ export function useListEdge(columns: readonly ColumnName[]): ListEdge {
   }, []);
 
   return {
-    toolbar: { ref, style: toolbarEdgeStyle(columns), "data-list-toolbar": "" },
-    frame: { style: frameEdgeStyle(columns, toolbarPx), "data-list-edge": "" },
+    toolbar: { ref, style: toolbarEdgeStyle(columns, gutterPx), "data-list-toolbar": "" },
+    frame: { style: frameEdgeStyle(columns, toolbarPx, gutterPx), "data-list-edge": "" },
   };
 }

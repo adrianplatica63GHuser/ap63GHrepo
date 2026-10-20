@@ -10,7 +10,8 @@ import { HelpHint } from "@/components/help/help-hint";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { ArrowRight, ChevronLeft, ChevronRight, Plus, Trash2 } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
-import { FixedColumns, ONE_LINE, TABLE_FRAME, cellTitle, columnHead, fixedTable } from "@/components/table/fixed-columns";
+import { FixedColumns, ONE_LINE, cellTitle, columnHead, fixedTable } from "@/components/table/fixed-columns";
+import { LIST_FRAME, LIST_HEAD, useListFit } from "@/components/list/list-fit";
 import { LIST_TOOLBAR, useListEdge } from "@/components/table/list-edge";
 import { ListHeadCell } from "@/components/table/list-head";
 import { twoRowName } from "@/lib/ui/list-head";
@@ -275,7 +276,10 @@ export function JudicialPersonListView() {
   const filterLabel = (key: string) => filterFields.find((f) => f.key === key)?.label ?? key;
 
   // Slice #37.84: the toolbar's group ends at the table frame's right edge, not the window's.
-  const edge = useListEdge(COLUMNS);
+  // Slice #40.02: the frame takes what is left of the window and scrolls its rows; the band of names sticks. Its
+  // vertical scroll bar counts in the list's edge, so „Adaugă …" and the pagination row still end where the frame does.
+  const fit = useListFit();
+  const edge = useListEdge(COLUMNS, fit.gutter);
   const colCount = COLUMNS.length;
   const cellValue = (item: JudicialPersonListItem, key: string): string | null =>
     key === "judicialPersonType" ? item.judicialPersonType
@@ -350,11 +354,11 @@ export function JudicialPersonListView() {
       {/* Results table — Slice #37.16: fixed columns from `COLUMN`, the table
           as wide as they are. */}
       <ListPreviewRow>
-        <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900`} {...edge.frame}>
+        <div className={`${LIST_FRAME} rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900`} {...edge.frame} {...fit.frame}>
           {/* Slice #38.57: the table fills its frame, which the toolbar may hold wider than the columns. */}
           <table {...fixedTable(COLUMNS, "text-sm min-w-full")}>
             <FixedColumns columns={COLUMNS} />
-            <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-ink dark:bg-zinc-800 dark:text-zinc-300">
+            <thead className={LIST_HEAD}>
               <tr>
                 <th className="px-4 py-2" {...columnHead("listSelectPerson")}>
                   <input

@@ -54,3 +54,55 @@ export function frameMaxHeight(s: FrameSpace, min = FRAME_MIN_PX): number {
   if (fits >= min && fits >= ownScreen / 2) return Math.floor(fits);
   return Math.floor(Math.max(ownScreen, min));
 }
+
+// ── Slice #40.02: the four principal lists fit the window ─────────────────────
+
+/**
+ * How tall a principal list's frame may be — Persoane fizice, Persoane juridice, Proprietăți, Acte.  (Slice #40.02)
+ *
+ * Adrian, 2026-10-20: „if the browser is not tall enough to accommodate the entire list I want the list itself to have
+ * a vertical scroll bar … the titles row of the list to always be visible … we don't want the browser page to have a
+ * vertical scroll bar". So the frame takes the height from its top to the window's bottom, less what stands under it
+ * (`below`: the gap, the „Se afișează … / Pagina x din y" row and the page's bottom padding), and only its rows scroll;
+ * a page whose rows fit is shorter than that and draws no scroll bar (`max-height`, not `height`).
+ *
+ * One floor (Ask first 3): never shorter than the band of column names and three rows (`listFrameFloor`). A window
+ * shorter than that — or a filters row wrapped over several lines — brings the page's own scroll back, rather than a
+ * list with no rows in sight. Unlike `frameMaxHeight` above, there is no „screen of its own": the four lists stand at
+ * the page's top, so what is left of the window is always the frame's.
+ *
+ * The same space as `FrameSpace`, in the page's scroll container's coordinates; PURE — `list-frame-height.test.ts`.
+ */
+export interface ListFrameSpace {
+  viewport: number;
+  frameTop: number;
+  below: number;
+  /** `listFrameFloor`'s answer. */
+  floor: number;
+}
+
+/** The rows the frame always shows, whatever the window (Ask first 3). */
+export const LIST_FRAME_FLOOR_ROWS = 3;
+
+/** A list row's height before one is drawn: a one-line row, `py-2` around a 20-px line and its 1-px rule (measured 37). */
+export const LIST_ROW_PX = 37;
+
+/** The floor: the band of names, three rows and the frame's two 1-px borders. */
+export function listFrameFloor(bandPx: number, rowPx: number = LIST_ROW_PX): number {
+  const row = rowPx > 0 ? rowPx : LIST_ROW_PX;
+  return Math.ceil(Math.max(0, bandPx) + LIST_FRAME_FLOOR_ROWS * row + 2);
+}
+
+/** The frame's `max-height`, in whole px — rounded down, so the page never overflows by a fraction. */
+export function listFrameMaxHeight(s: ListFrameSpace): number {
+  return Math.max(Math.ceil(s.floor), Math.floor(s.viewport - s.frameTop - s.below));
+}
+
+/**
+ * The row tiles' column beside a list (`ListPreviews`, #39.04): at most down to the window's bottom, less the page's
+ * bottom padding, so its tiles — not the page — scroll (Ask first 6). Never under `min`. Wrapped under the list (a
+ * narrow window) it is not capped at all and the page scrolls to reach it, as before — the caller says which.
+ */
+export function rowTilesMaxHeight(s: { viewport: number; columnTop: number; below: number }, min = FRAME_MIN_PX): number {
+  return Math.max(min, Math.floor(s.viewport - s.columnTop - s.below));
+}

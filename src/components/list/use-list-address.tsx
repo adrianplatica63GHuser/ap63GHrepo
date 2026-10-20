@@ -7,7 +7,8 @@
  *   - `useListAddress` — what the address held when the list mounted, for its `useState`s to start from;
  *   - `useWriteListAddress` — writes a part of the view into the address whenever it changes, REPLACING the history
  *     entry (`window.history.replaceState`, which Next's router follows): typing a search makes no Back step;
- *   - `useListScrollMemory` — keeps the page's scroll (`[data-page-scroll]`, the app shell's) in the session as it
+ *   - `useListScrollMemory` — keeps the LIST's scroll (its frame, `[data-list-frame]` — down and sideways; the page's,
+ *     `[data-page-scroll]`, until Slice #40.02 made the frame the thing that scrolls) in the session as it
  *     moves, BY HISTORY ENTRY, and puts it back once the list's rows are on screen. The entry is the Navigation API's
  *     `navigation.currentEntry.key`: the same slot after a Back, a forward or a reload, a new one for every list opened
  *     from the menu or a crumb — so only coming back restores it (Ask first #2). A browser without the API keeps none.
@@ -110,10 +111,24 @@ const USER_SCROLL = ["wheel", "touchstart", "keydown", "pointerdown"] as const;
 const HOLD_TRIES = 100;
 const HOLD_AT = 10;
 
-/** The app shell's scroll area. */
+/**
+ * The list's frame — since Slice #40.02 the thing that scrolls on the four lists (`useListFit`), down and sideways
+ * (Ask first 5). It was the app shell's scroll area, `[data-page-scroll]`, which no longer scrolls there.
+ */
+function listScroll(): HTMLElement | null {
+  return document.querySelector<HTMLElement>("main [data-list-frame]");
+}
+
+/**
+ * The app shell's scroll area — still the one a list started over from a link is put back to the top of: below the
+ * frame's floor (#40.02's Ask first 3) the page scrolls again. The list's own frame is drawn anew, at its top.
+ */
 function pageScroll(): HTMLElement | null {
   return document.querySelector<HTMLElement>("[data-page-scroll]");
 }
+
+/** The sideways position's own key beside the vertical one, so `ScrollMemory` keeps its one number per key. */
+const leftKey = (at: string) => `${at}|left`;
 
 const SCROLL_KEY = "ga:list-scroll";
 
@@ -142,15 +157,16 @@ function writeMemory(memory: ScrollMemory): void {
 }
 
 /**
- * The page's scroll, kept for this history slot while the list is shown, and put back on the slot's next showing
- * once `ready` (the list's rows are on screen). The page may still be growing — a tile beside the list reads its
+ * The list's scroll (its frame's, down and sideways — #40.02), kept for this history slot while the list is shown, and
+ * put back on the slot's next showing once `ready` (the list's rows are on screen). The frame may still be growing — a
+ * tile beside the list reads its
  * rows after the list — so the scroll is set again for a moment until it holds.
  */
 export function useListScrollMemory(ready: boolean): void {
   const pathname = usePathname();
-  const wanted = useRef<number | null>(null);
+  const wanted = useRef<{ top: number; left: number } | null>(null);
   useEffect(() => {
-    const el = pageScroll();
+    const el = listScroll();
     const slot = historySlot();
     if (!el || slot === null) {
       wanted.current = null;
@@ -161,7 +177,9 @@ export function useListScrollMemory(ready: boolean): void {
     // Read on EVERY showing, not once: Next 16 keeps a page left by a link hidden (React's Activity) and shows it
     // again on Back — its effects run again, its refs do not start over. Measured in the runner: read once, the
     // second showing kept the first's „nothing to restore", and the list came back at 46 px of 228.
-    wanted.current = scrollFor(readMemory(), at);
+    const memory = readMemory();
+    const top = scrollFor(memory, at);
+    wanted.current = top === null ? null : { top, left: scrollFor(memory, leftKey(at)) ?? 0 };
     // Timers, not animation frames: a frame never comes in a tab that is not painted, and the write must.
     let timer = 0;
     const onScroll = () => {
@@ -171,7 +189,7 @@ export function useListScrollMemory(ready: boolean): void {
         // list, kept hidden, lets go of the scroll area — measured in the runner, that wrote the record's 36 px over the
         // list's 349 under the list's own slot.
         if (wanted.current != null || historySlot() !== slot || window.location.pathname !== pathname) return;
-        writeMemory(keepScroll(readMemory(), at, el.scrollTop));
+        writeMemory(keepScroll(keepScroll(readMemory(), leftKey(at), el.scrollLeft), at, el.scrollTop));
       }, 100);
     };
     el.addEventListener("scroll", onScroll, { passive: true });
@@ -182,9 +200,9 @@ export function useListScrollMemory(ready: boolean): void {
   }, [pathname]);
   useEffect(() => {
     if (!ready) return;
-    const top = wanted.current;
-    const el = pageScroll();
-    if (top === null || !el) return;
+    const want = wanted.current;
+    const el = listScroll();
+    if (want === null || !el) return;
     // Held, not set once: the tiles beside the list read their rows after it, and the page grows under the scroll
     // (`HOLD_TRIES`). The moment Adrian scrolls, clicks or types, it is his.
     let tries = 0;
@@ -202,9 +220,10 @@ export function useListScrollMemory(ready: boolean): void {
     }
     for (const e of USER_SCROLL) el.addEventListener(e, done, { passive: true, once: true });
     const put = () => {
-      el.scrollTop = top;
+      el.scrollTop = want.top;
+      el.scrollLeft = want.left;
       tries += 1;
-      held = Math.abs(el.scrollTop - top) <= 1 ? held + 1 : 0;
+      held = Math.abs(el.scrollTop - want.top) <= 1 && Math.abs(el.scrollLeft - want.left) <= 1 ? held + 1 : 0;
       if (held < HOLD_AT && tries < HOLD_TRIES) timer = window.setTimeout(put, 50);
       else done();
     };

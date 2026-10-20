@@ -60,7 +60,8 @@ describe("a list's right edge (Slice #37.84)", () => {
       const src = fs.readFileSync(path.join(process.cwd(), "src", "app", list, "list-view.tsx"), "utf8");
       expect(src).toContain("useListEdge(");
       expect(src).toContain("{...edge.toolbar}");
-      expect(src).toMatch(/\$\{TABLE_FRAME\}[^`]*`\}\s*\{\.\.\.edge\.frame\}/);
+      // #40.02: `LIST_FRAME` (was `TABLE_FRAME`), and the frame's height after the edge's width.
+      expect(src).toMatch(/\$\{LIST_FRAME\}[^`]*`\}\s*\{\.\.\.edge\.frame\}\s*\{\.\.\.fit\.frame\}/);
       // The pagination row, under the table.
       expect(src.split("{...edge.frame}").length - 1).toBeGreaterThanOrEqual(2);
     }
