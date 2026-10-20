@@ -24,8 +24,10 @@ describe("listFrameFloor", () => {
 describe("listFrameMaxHeight", () => {
   const floor = listFrameFloor(74, 37); // 187
 
-  it("takes what the window leaves under the frame's top, less what stands under it — measured: 337 at 1280 × 600", () => {
-    expect(listFrameMaxHeight({ viewport: 600, frameTop: 188, below: 16 + 26 + 32, floor })).toBe(338 - 1);
+  // The pane measured 337 at 1280 × 600: its frame's top and the rows under it were fractional (188.4, 74.3).
+  it("takes what the window leaves under the frame's top, less what stands under it", () => {
+    expect(listFrameMaxHeight({ viewport: 600, frameTop: 188, below: 16 + 26 + 32, floor })).toBe(338);
+    expect(listFrameMaxHeight({ viewport: 600, frameTop: 188.4, below: 74.3, floor })).toBe(337);
   });
 
   it("rounds down, so the page never overflows by a fraction", () => {
