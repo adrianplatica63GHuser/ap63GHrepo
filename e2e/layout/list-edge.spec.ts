@@ -14,7 +14,9 @@
  *     document" list writes when „Toate tipurile" is unticked — instead of
  *     unticking it in the open list.
  *   - Step 2's „the table widens" is read on the table, not its frame: the
- *     frame stops at the window and scrolls (step 2's „unless").
+ *     frame stops at the window and scrolls (step 2's „unless"). Since #40.01
+ *     it is the width the table's columns ask for: on Acte the toolbar can be
+ *     wider than the columns, and the table then fills the frame it widened.
  */
 
 import { test, expect, type Locator, type Page } from "../helpers/test";
@@ -45,11 +47,17 @@ async function rightOf(box: Locator): Promise<number> {
   return b.x + b.width;
 }
 
-/** A box's width, in px. */
-async function widthOf(box: Locator): Promise<number> {
-  const b = await box.boundingBox();
-  if (!b) throw new Error("not on screen");
-  return b.width;
+/**
+ * The width the table's columns ask for, in px — its own `style.width` (`fixedTable`), in rem. Slice #40.01: on Acte the
+ * toolbar can be wider than the columns, the frame follows it (#37.84) and the `min-w-full` table fills the frame, so one
+ * more column can leave the drawn table as wide as before; what grows is what the columns ask for.
+ */
+async function columnsWidthOf(table: Locator): Promise<number> {
+  return table.evaluate((el) => {
+    const w = (el as HTMLElement).style.width;
+    const px = parseFloat(getComputedStyle(document.documentElement).fontSize);
+    return w.endsWith("rem") ? parseFloat(w) * px : parseFloat(w);
+  });
 }
 
 function addOf(page: Page, name: string): Locator {
@@ -102,17 +110,18 @@ async function oneList(page: Page, url: string, add: string, width: number): Pro
   await page.waitForTimeout(300);
   await expectAtEdge(page, add);
   const table = main.locator("[data-list-previews] table").first();
-  const tableWidth = await widthOf(table);
+  const tableWidth = await columnsWidthOf(table);
 
   // Step 2 — one more column, then back.
   const label = await firstUnticked(page);
   await setColumn(page, label, true);
-  // The table itself widens; its frame only as far as the window allows (then it scrolls).
-  await expect.poll(async () => widthOf(table)).toBeGreaterThan(tableWidth + 10);
+  // The table itself widens; its frame only as far as the window allows (then it scrolls). #40.01: read as the width its
+  // columns ask for — on Acte the drawn table can already be as wide as the toolbar.
+  await expect.poll(async () => columnsWidthOf(table)).toBeGreaterThan(tableWidth + 10);
   await page.waitForTimeout(300);
   await expectAtEdge(page, add);
   await setColumn(page, label, false);
-  await expect.poll(async () => Math.round(await widthOf(table))).toBe(Math.round(tableWidth));
+  await expect.poll(async () => Math.round(await columnsWidthOf(table))).toBe(Math.round(tableWidth));
   await page.waitForTimeout(300);
   await expectAtEdge(page, add);
 
