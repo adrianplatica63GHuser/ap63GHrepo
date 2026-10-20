@@ -11,7 +11,7 @@ A document is a deed held in the archive — a contract, a certificate, a permit
 
 In the sidebar, open „Domain”, then „Documents”. The list shows every document in the archive, in the columns „Type” and „Title”. The title is the document's „Short Label”. A document just added appears at the top, badged „New!”. Lists work the same everywhere (section [[start-lists]]).
 
-Above the table, on one row, stand the search box („search by Code, Title or Document No.”), as wide as „Add new Document”, „Choose fields”, right after it „Expiring soon” and, at the end, „Add new Document”. Under them is the list's filter bar: „Document type:”, then a round sign with „Type-specific field:” and an ⓘ beside it, then the labels of the filters set (section [[documents-list-filters]]).
+Above the table, on one row, stand the search box („search by Code, Title or Document No.”), as wide as „Add new Document”, „Choose fields”, right after it „Expiring soon”, then „Document type:”, a round sign with „Type-specific field:” and an ⓘ beside it, and, at the end, „Add new Document”. In a window too narrow for them all, „Document type:”, the sign, „Type-specific field:” and the ⓘ move together onto a row of their own, under the search box, and „Add new Document” stays at the end of the first row. Under them a row with the labels of the filters set from the columns and „Clear filters” appears, only while such a filter is set (section [[documents-list-filters]]).
 
 **„Type” shows the type's short name** — for example „CVC” for „Contract de Vânzare”, „Intabulare” for „Încheiere de Intabulare”. Rest the mouse on the cell and the bubble shows the full name. The short name is chosen for each type in „Reference Data”, under „Document Types”, in the field „Short name” (section [[admin-reference-data]]). Left empty, the list shortens the name by itself, dropping a leading „Contract de”, „Act de”, „Încheiere de”, „Certificat de”. Two types may not share a short name.
 
@@ -23,7 +23,7 @@ Above the table, on one row, stand the search box („search by Code, Title or D
 
 ### 6.1.1 The list's filters {#documents-list-filters}
 
-The list of documents is filtered like the list of properties, from the funnel under a column's name (section [[properties-list-filters]]). The filter bar under the search box opens with „Document type:” and „Type-specific field:”, which are always there and work as above; after them come the labels of the filters set from the columns. „Expiring soon”, on the row above, beside „Choose fields”, is a filter too: pressed, the list keeps only the documents whose validity ends soon; pressed again, it drops the filter.
+The list of documents is filtered like the list of properties, from the funnel under a column's name (section [[properties-list-filters]]). „Document type:” and „Type-specific field:”, on the top row, are always there and work as above; the filters set from the columns become labels on the row under it, which appears only while one is set. „Expiring soon”, on the same top row, beside „Choose fields”, is a filter too: pressed, the list keeps only the documents whose validity ends soon; pressed again, it drops the filter.
 
 The columns that can be filtered, chosen in „Choose fields”:
 

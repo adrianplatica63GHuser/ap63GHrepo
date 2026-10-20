@@ -45,9 +45,9 @@ On the list of properties seven columns filter:
 
 „Nickname”, „Cadastral No.” and „Carte Funciara” have no funnel; a property is found by them with the search box.
 
-Each filter set becomes a rounded label under the search box, with the column's name and what you chose, for instance „Property Type” House. A click on the label opens the window again, right under the label, and its X removes the filter. A filled funnel shows that the list is filtered by that column. A filter stays when you hide its column: its label still stands under the search box, so the list is never filtered without your seeing it.
+Each filter set becomes a rounded label under the search box, on a row that appears only while a filter is set, with the column's name and what you chose, for instance „Property Type” House. A click on the label opens the window again, right under the label, and its X removes the filter. A filled funnel shows that the list is filtered by that column. A filter stays when you hide its column: its label still stands under the search box, so the list is never filtered without your seeing it.
 
-„Clear filters” removes them all at once. The filters are kept in the page's address, like the search: they stay after you reload the page, after you come back to the list with „Back”, and when you send the address to someone.
+„Clear filters” removes them all at once, and the row of labels goes. The filters are kept in the page's address, like the search: they stay after you reload the page, after you come back to the list with „Back”, and when you send the address to someone.
 
 The table's header is three rows tall, the same on the four lists, however many columns you chose. On a column that can be filtered the name stands on the first two rows — on the second, when it fits on one — and the funnel, alone, on the third. The name of a column with no filter, like „Nickname”, stands at mid-height. A long name breaks over two rows where they come out most even; no name takes three rows.
 

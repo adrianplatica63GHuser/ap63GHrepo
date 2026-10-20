@@ -15,37 +15,37 @@
           "id": "a1",
           "section": "start-lists",
           "ro": {
-            "question": "Câte obiecte arată o listă pe o pagină, de exemplu lista „Persoane Fizice”?",
-            "explanation": "Fiecare dintre cele patru liste arată câte 15 obiecte pe pagină, iar butoanele de sub tabel trec de la o pagină la alta."
+            "question": "Fereastra este scundă și nu încape toată pagina de rânduri a listei. Ce se derulează când coborâți?",
+            "explanation": "Pagina nu se mai derulează: rândurile se derulează în chenarul listei, cu bara lui. Capul tabelului rămâne sus, iar rândul „Pagina x din y” stă sub chenar, la vedere."
           },
           "en": {
-            "question": "How many objects does a list show on one page, for instance the „Persoane Fizice” list?",
-            "explanation": "Each of the four lists shows 15 objects a page, and the buttons under the table move from page to page."
+            "question": "The window is short and the list's whole page of rows does not fit. What scrolls when you go down?",
+            "explanation": "The page no longer scrolls: the rows scroll inside the list's frame, by its own bar. The table's header stays at the top, and the row „Page x of y” stands under the frame, in sight."
           },
           "options": [
             {
               "id": "o1",
               "correct": false,
-              "ro": "10",
-              "en": "10"
+              "ro": "Toată pagina, iar capul tabelului iese din fereastră",
+              "en": "The whole page, and the table's header leaves the window"
             },
             {
               "id": "o2",
-              "correct": false,
-              "ro": "25",
-              "en": "25"
+              "correct": true,
+              "ro": "Doar rândurile, în chenarul listei",
+              "en": "Only the rows, inside the list's frame"
             },
             {
               "id": "o3",
-              "correct": true,
-              "ro": "15",
-              "en": "15"
+              "correct": false,
+              "ro": "Nimic: lista arată mai puține rânduri pe pagină",
+              "en": "Nothing: the list shows fewer rows a page"
             },
             {
               "id": "o4",
               "correct": false,
-              "ro": "50",
-              "en": "50"
+              "ro": "Bara laterală, ca să facă loc listei",
+              "en": "The sidebar, to make room for the list"
             }
           ]
         },
@@ -121,39 +121,39 @@
         },
         {
           "id": "a4",
-          "section": "persons-list",
+          "section": "start-lists",
           "ro": {
-            "question": "Pe lista persoanelor fizice, câte coloane puteți adăuga odată din „Câmpuri afișate”?",
-            "explanation": "„Câmpuri afișate” adaugă coloane la tabel, cel mult patru odată; butonul arată câte ați ales, de exemplu „Câmpuri afișate 2/4”."
+            "question": "La marginea dreaptă a capului tabelului stau trei semne roșii „>”, unul sub altul. Ce vă spun?",
+            "explanation": "Cât timp în dreapta sunt coloane care nu se văd, la marginea dreaptă a capului tabelului stau trei „>” roșii; derulați lista spre dreapta ca să le vedeți. Sunt doar semne: o pâlnie de sub ele se apasă ca de obicei."
           },
           "en": {
-            "question": "On the list of natural persons, how many columns can you add at a time from „Câmpuri afișate” (displayed fields)?",
-            "explanation": "„Câmpuri afișate” adds columns to the table, at most four at a time; the button shows how many you chose, for instance „Câmpuri afișate 2/4”."
+            "question": "Three red „>” stand one over another at the right edge of the table's header. What do they tell you?",
+            "explanation": "While there are columns out of sight on the right, three red „>” stand at the right edge of the table's header; scroll the list to the right to see them. They are only signs: a funnel under them is pressed as usual."
           },
           "options": [
             {
               "id": "o1",
               "correct": false,
-              "ro": "Cel mult două",
-              "en": "At most two"
+              "ro": "Că lista are o pagină următoare",
+              "en": "That the list has a next page"
             },
             {
               "id": "o2",
               "correct": false,
-              "ro": "Cel mult opt",
-              "en": "At most eight"
+              "ro": "Că în coloana aceea este o eroare",
+              "en": "That there is an error in that column"
             },
             {
               "id": "o3",
-              "correct": false,
-              "ro": "Oricâte, fără limită",
-              "en": "As many as you like"
+              "correct": true,
+              "ro": "Că în dreapta mai sunt coloane ascunse",
+              "en": "That more columns are hidden on the right"
             },
             {
               "id": "o4",
-              "correct": true,
-              "ro": "Cel mult patru",
-              "en": "At most four"
+              "correct": false,
+              "ro": "Că lista este filtrată după ultima coloană",
+              "en": "That the list is filtered by its last column"
             }
           ]
         },
@@ -344,37 +344,37 @@
           "id": "b2",
           "section": "start-lists",
           "ro": {
-            "question": "Obiectul căutat nu este pe prima pagină a listei. Cum treceți la următoarea?",
-            "explanation": "Listele arată câte 15 obiecte pe pagină, iar butoanele de sub tabel trec de la o pagină la alta."
+            "question": "Ați derulat lista spre dreapta, iar la marginea stângă a capului tabelului au apărut trei „<” roșii. Ce înseamnă?",
+            "explanation": "Trei „<” roșii la marginea stângă arată că în stânga sunt coloane ascunse; derulați lista înapoi spre stânga ca să le vedeți. Când toate coloanele încap, nu apare niciun semn."
           },
           "en": {
-            "question": "The object you want is not on the list's first page. How do you move to the next one?",
-            "explanation": "The lists show 15 objects a page, and the buttons under the table move from page to page."
+            "question": "You scrolled the list to the right, and three red „<” appeared at the left edge of the table's header. What does that mean?",
+            "explanation": "Three red „<” at the left edge show that columns are hidden on the left; scroll the list back to the left to see them. When every column fits, no sign appears."
           },
           "options": [
             {
               "id": "o1",
               "correct": true,
-              "ro": "Cu butoanele de sub tabel",
-              "en": "With the buttons under the table"
+              "ro": "Că în stânga sunt coloane ascunse",
+              "en": "That columns are hidden on the left"
             },
             {
               "id": "o2",
               "correct": false,
-              "ro": "Cu butoanele de lângă „Adaugă …”, deasupra tabelului",
-              "en": "With the buttons beside „Adaugă …”, above the table"
+              "ro": "Că ați ajuns la prima pagină a listei",
+              "en": "That you reached the list's first page"
             },
             {
               "id": "o3",
               "correct": false,
-              "ro": "Derulând în jos: lista încarcă singură restul",
-              "en": "By scrolling down: the list loads the rest by itself"
+              "ro": "Că primele coloane au fost scoase din „Câmpuri afișate”",
+              "en": "That the first columns were removed from „Choose fields”"
             },
             {
               "id": "o4",
               "correct": false,
-              "ro": "Scriind numărul paginii în caseta de căutare",
-              "en": "By typing the page number in the search box"
+              "ro": "Că lista se întoarce la pagina de dinainte",
+              "en": "That the list goes back to the page before"
             }
           ]
         },
@@ -412,39 +412,39 @@
         },
         {
           "id": "b4",
-          "section": "persons-list",
+          "section": "documents-list",
           "ro": {
-            "question": "Căutați ID-ul de sistem al unei persoane fizice. Unde îl găsiți?",
-            "explanation": "ID-ul de sistem al persoanei nu apare în listă; îl vedeți pe ecranul ei, în colțul fișei „Identitate”."
+            "question": "Pe „Acte” nu ați pus niciun filtru din pâlnia unei coloane. Ce stă între rândul de sus și tabel?",
+            "explanation": "Rândul cu etichetele filtrelor și „Șterge filtrele” apare doar cât timp este pus un filtru din coloane; fără el, tabelul începe chiar sub rândul de sus, unde stau și „Tip document:” și „Câmp specific:”."
           },
           "en": {
-            "question": "You are looking for a natural person's system ID. Where do you find it?",
-            "explanation": "The person's system ID does not appear in the list; you see it on their screen, in the corner of the „Identitate” tile."
+            "question": "On „Acte” (documents) you have set no filter from a column's funnel. What stands between the top row and the table?",
+            "explanation": "The row with the filters' labels and „Clear filters” appears only while a filter from the columns is set; without one, the table starts right under the top row, where „Document type:” and „Type-specific field:” stand too."
           },
           "options": [
             {
               "id": "o1",
               "correct": false,
-              "ro": "În listă, adăugându-l ca coloană din „Câmpuri afișate”",
-              "en": "In the list, by adding it as a column from „Câmpuri afișate”"
+              "ro": "Un rând gol, păstrat pentru filtre",
+              "en": "An empty row, kept for filters"
             },
             {
               "id": "o2",
               "correct": false,
-              "ro": "În rezumatul pe care îl arată „Previzualizare” pe rând",
-              "en": "In the summary that „Previzualizare” shows on the row"
+              "ro": "„Tip document:” și „Câmp specific:”, pe un rând al lor",
+              "en": "„Document type:” and „Type-specific field:”, on a row of their own"
             },
             {
               "id": "o3",
               "correct": false,
-              "ro": "În prima coloană a listei, înaintea numelui",
-              "en": "In the list's first column, before the name"
+              "ro": "Un rând cu „Șterge filtrele”, inactiv",
+              "en": "A row with „Clear filters”, disabled"
             },
             {
               "id": "o4",
               "correct": true,
-              "ro": "Pe ecranul persoanei, în colțul fișei „Identitate”",
-              "en": "On the person's screen, in the corner of the „Identitate” tile"
+              "ro": "Nimic: tabelul începe sub rândul de sus",
+              "en": "Nothing: the table starts under the top row"
             }
           ]
         },

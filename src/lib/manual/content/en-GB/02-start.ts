@@ -60,6 +60,16 @@ The tick box at the head of the table selects the rows of the current page, not 
 
 ![2.3 The list of natural persons, with „Choose fields” open](list.png){#fig-list}
 
+Under the list's top bar stands a row with the labels of the filters set and „Clear filters” — but only while a filter is set; with no filter, the table starts right under the bar.
+
+**The list fits the window.** When the window is not tall enough for the whole page of rows, the page no longer scrolls up and down: only the rows scroll, inside the list's frame, by its own scroll bar. The table's header, with the column names, the tick box and the funnels, stays at the top, and the row „Showing … of …” with „Page x of y” stands right under the frame, in sight. Only in a very short window, where not even the header and three rows would fit, does the page scroll again.
+
+**Hidden columns.** When the columns chosen are wider than the window, the list also scrolls sideways, by the scroll bar at the frame's bottom. While there are columns out of sight on the right, three red „>” stand one over another at the right edge of the table's header; while there are columns hidden on the left, three „<” stand at its left edge (Figure [[fig-list-fit]]). They are only signs: a funnel under them is pressed as usual. When every column fits, neither appears.
+
+When you open an object from the list and come back with „Back”, the list is scrolled where you left it, down and sideways.
+
+![2.4 The list of properties in a short, narrow window: the header at the top, „Page x of y” under the frame, and the red signs of the hidden columns at both edges](list-fit.png){#fig-list-fit}
+
 ## 2.6 An object's screen: its tiles {#start-tiles}
 
 An open object shows its data in tiles — panels with a name each (Figure [[fig-record]]). A natural person has, for instance, their identity, „Links”, „Classification”, „Tags and groups” and „Interactions”.
@@ -71,9 +81,9 @@ An open object shows its data in tiles — panels with a name each (Figure [[fig
 - The object's system ID sits in the top right-hand corner of the first tile.
 - The button bar, the last thing on the screen, holds the pencil (edit), the save and the bin (delete). An icon button shows its name when the mouse passes over it.
 
-![2.4 A natural person's screen, with its tiles](record.png){#fig-record}
+![2.5 A natural person's screen, with its tiles](record.png){#fig-record}
 
-![2.5 A tile held over another: the one underneath has slid down to the first place it fits whole](make-room.png){#fig-make-room}
+![2.6 A tile held over another: the one underneath has slid down to the first place it fits whole](make-room.png){#fig-make-room}
 
 ## 2.7 The preview {#start-preview}
 
@@ -83,7 +93,7 @@ A linked object can be opened beside the one you are working on, with „Preview
 
 The „?” button at the end of the navigation bar opens the screen's help: what the screen is for and how it is worked (Figure [[fig-help]]). Where a gesture cannot be seen — a drag, a double-click — a small light bulb beside that place explains it. The help texts are written by the administrator, in „Help Information” (section [[admin-help]]).
 
-![2.6 A screen's help, opened from „?”](help.png){#fig-help}
+![2.7 A screen's help, opened from „?”](help.png){#fig-help}
 
 ## 2.9 Examples and use cases {#start-examples}
 

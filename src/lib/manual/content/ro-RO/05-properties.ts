@@ -45,9 +45,9 @@ Pe lista proprietăților se filtrează șapte coloane:
 
 „Poreclă”, „Nr. cadastru” și „Nr. CF” nu au pâlnie; o proprietate se găsește după ele cu caseta de căutare.
 
-Fiecare filtru pus devine o etichetă rotunjită sub caseta de căutare, cu numele coloanei și ce ați ales, de exemplu „Tip proprietate” Casă. Un clic pe etichetă redeschide fereastra, chiar sub etichetă, iar X-ul ei scoate filtrul. O pâlnie plină arată că lista este filtrată după acea coloană. Un filtru rămâne și dacă îi ascundeți coloana: eticheta lui stă mai departe sub caseta de căutare, așa că lista nu este niciodată filtrată fără să vedeți asta.
+Fiecare filtru pus devine o etichetă rotunjită sub caseta de căutare, pe un rând care apare doar cât timp este pus un filtru, cu numele coloanei și ce ați ales, de exemplu „Tip proprietate” Casă. Un clic pe etichetă redeschide fereastra, chiar sub etichetă, iar X-ul ei scoate filtrul. O pâlnie plină arată că lista este filtrată după acea coloană. Un filtru rămâne și dacă îi ascundeți coloana: eticheta lui stă mai departe sub caseta de căutare, așa că lista nu este niciodată filtrată fără să vedeți asta.
 
-„Șterge filtrele” le scoate pe toate deodată. Filtrele se păstrează în adresa paginii, ca și căutarea: rămân după ce reîncărcați pagina, după ce vă întoarceți la listă cu „Înapoi” și când trimiteți adresa cuiva.
+„Șterge filtrele” le scoate pe toate deodată, iar rândul etichetelor dispare. Filtrele se păstrează în adresa paginii, ca și căutarea: rămân după ce reîncărcați pagina, după ce vă întoarceți la listă cu „Înapoi” și când trimiteți adresa cuiva.
 
 Capul tabelului are înălțimea a trei rânduri, la fel pe cele patru liste, oricâte coloane ați ales. La o coloană care se poate filtra, numele stă pe primele două rânduri — pe al doilea, când încape pe unul —, iar pâlnia, singură, pe al treilea. Numele unei coloane fără filtru, ca „Poreclă”, stă la mijlocul înălțimii. Un nume lung, ca „Categorie de folosință” sau „Tip proprietate”, se rupe pe două rânduri, acolo unde ies cât mai egale; niciun nume nu ia trei rânduri.
 

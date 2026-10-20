@@ -60,6 +60,16 @@ Bifa din capul tabelului selectează rândurile paginii curente, nu ale întregi
 
 ![2.3 Lista persoanelor fizice, cu „Câmpuri afișate” deschis](list.png){#fig-list}
 
+Sub bara de sus a listei stă un rând cu etichetele filtrelor puse și „Șterge filtrele” — dar numai cât timp este pus un filtru; fără niciun filtru, tabelul începe chiar sub bară.
+
+**Lista încape în fereastră.** Când fereastra nu este destul de înaltă pentru toată pagina de rânduri, pagina nu se mai derulează în sus și în jos: se derulează doar rândurile, în chenarul listei, cu bara lui de derulare. Capul tabelului, cu numele coloanelor, bifa și pâlniile, rămâne sus, iar rândul „Se afișează … din …” cu „Pagina x din y” stă chiar sub chenar, la vedere. Numai într-o fereastră foarte scundă, în care n-ar mai încăpea nici capul tabelului și trei rânduri, se derulează iar pagina.
+
+**Coloanele ascunse.** Când coloanele alese sunt mai late decât fereastra, lista se derulează și în lateral, cu bara de derulare de la baza chenarului. Cât timp în dreapta sunt coloane care nu se văd, la marginea dreaptă a capului tabelului stau trei semne roșii „>”, unul sub altul; cât timp sunt coloane ascunse în stânga, trei „<” stau la marginea stângă (Figura [[fig-list-fit]]). Sunt doar semne: o pâlnie de sub ele se apasă ca de obicei. Când toate coloanele încap, nu apare niciunul.
+
+Când deschideți un obiect din listă și vă întoarceți cu „Înapoi”, lista este derulată unde o lăsaserăți, în jos și în lateral.
+
+![2.4 Lista proprietăților într-o fereastră scundă și îngustă: capul tabelului sus, „Pagina x din y” sub chenar și semnele roșii ale coloanelor ascunse la ambele margini](list-fit.png){#fig-list-fit}
+
 ## 2.6 Ecranul unui obiect: fișele {#start-tiles}
 
 Un obiect deschis își arată datele în fișe — panouri cu câte un nume (Figura [[fig-record]]). Pe o persoană fizică sunt, de exemplu, identitatea ei, „Legături”, „Clasificare”, „Etichete și grupuri” și „Interacțiuni”.
@@ -71,9 +81,9 @@ Un obiect deschis își arată datele în fișe — panouri cu câte un nume (Fi
 - ID-ul de sistem al obiectului stă în colțul din dreapta-sus al primei fișe.
 - Bara de butoane, ultimul lucru de pe ecran, ține creionul (modificați), salvarea și coșul (ștergeți). Un buton cu pictogramă își arată numele când treceți cu mouse-ul peste el.
 
-![2.4 Ecranul unei persoane fizice, cu fișele ei](record.png){#fig-record}
+![2.5 Ecranul unei persoane fizice, cu fișele ei](record.png){#fig-record}
 
-![2.5 O fișă ținută peste alta: cea de dedesubt a alunecat în jos, la primul loc în care încape întreagă](make-room.png){#fig-make-room}
+![2.6 O fișă ținută peste alta: cea de dedesubt a alunecat în jos, la primul loc în care încape întreagă](make-room.png){#fig-make-room}
 
 ## 2.7 Previzualizarea {#start-preview}
 
@@ -83,7 +93,7 @@ Un obiect legat se poate deschide alături, cu „Previzualizare”, fără să 
 
 Butonul „?” din capătul barei de navigare deschide ajutorul ecranului: la ce folosește ecranul și cum se lucrează pe el (Figura [[fig-help]]). Acolo unde un gest nu se vede — o tragere, un dublu-clic — un bec mic, lângă locul acela, îl explică. Textele de ajutor le scrie administratorul, în „Informații de ajutor” (secțiunea [[admin-help]]).
 
-![2.6 Ajutorul unui ecran, deschis din „?”](help.png){#fig-help}
+![2.7 Ajutorul unui ecran, deschis din „?”](help.png){#fig-help}
 
 ## 2.9 Exemple și cazuri de utilizare {#start-examples}
 
