@@ -27,8 +27,8 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Presses „Rapoarte" → „Căutare globală" in the left sidebar („Instrumente" until #39.02) | The heading „Căutare globală" and, under it, „Căutați printre toate entitățile după nume, cod, adresă sau combinând filtre de metadate, grupuri, ștampile și etichete. …" |
-| 2 | Types `TC-` into „Căutare nume / cod" (placeholder „ex. Popescu sau PPERS00012") | The value appears |
+| 1 | At 1920 × 1080, presses „Rapoarte" → „Căutare globală" in the left sidebar („Instrumente" until #39.02) | The heading „Căutare globală" and, under it, „Căutați printre toate entitățile după nume, cod, adresă sau combinând filtre de metadate, grupuri, ștampile și etichete. …", with the example „De exemplu, „Tip entitate: Proprietate” împreună cu „Etichetă: prioritar” găsesc doar proprietățile cu eticheta „prioritar” — nu și persoanele cu această etichetă, nici proprietățile fără ea." (Slice 40.09). The twelve filter boxes one width, a third of their old 525 px, in at most two rows, „Caută" and „Resetează" after the last |
+| 2 | Types `TC-` into „Căutare nume / cod" (placeholder „Popescu", its tooltip „ex. Popescu sau PPERS00012" — Slice 40.09) | The value appears |
 | 3 | Leaves „Tip entitate" at „Orice" | No entity type is excluded |
 | 4 | Presses „Caută" | „3 rezultate", and the address bar carries `?search=TC-` |
 | 5 | Reads the results — columns Tip · Nume · Grupuri · Ștampile · Importanță · Relevanță · Proveniență · Actualizat de · Metadate actualizate | Three rows, none with a system ID. The document — „Tip" **„Document"**, „Nume" `TC-DOC-01 Contract de test`. The person — „Tip" **„Persoană"** with the badge „Fizic", „Nume" `Ion TC-PERS-01` (prenume first, see TC-PERS-01). The property — „Tip" **„Proprietate"**, „Nume" **`40 / TC01(TC-PROP-01 Teren de test)`**: a property's name here is tarla / parcelă with the nickname in brackets |

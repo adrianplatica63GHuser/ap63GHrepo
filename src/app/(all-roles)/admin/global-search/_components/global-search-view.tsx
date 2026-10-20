@@ -272,6 +272,13 @@ function formatList(locale: string, parts: string[]): string {
 // Filter form
 // ---------------------------------------------------------------------------
 
+/**
+ * One filter: its label over its box, a third as wide as a box at a 1920-px window before Slice 40.09 (525 px →
+ * 11 rem), the same at every window. Wide enough for a date and its picker; a long label takes a second line inside
+ * this width, and `justify-end` keeps its box on the row's line.
+ */
+export const FILTER_CLASS = "flex w-44 shrink-0 flex-col justify-end gap-1";
+
 type FilterFormProps = {
   filters:  Filters;
   onChange: (f: Filters) => void;
@@ -296,13 +303,16 @@ function FilterForm({ filters, onChange, onSearch, onReset, loading }: FilterFor
       className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900"
       onSubmit={(e) => { e.preventDefault(); onSearch(); }}
     >
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {/* Slice 40.09: every filter a third of a 1920-px window's box (FILTER_CLASS), as many to a row as the window
+          holds; the boxes of a row aligned at their bottoms, so a label on two lines never pushes its box out of line;
+          „Caută" and „Resetează" after the last. */}
+      <div className="flex flex-wrap items-end gap-x-4 gap-y-3" data-search-filters="">
 
         {/* Entity type */}
-        <div className="flex flex-col gap-1">
+        <div className={FILTER_CLASS} data-search-filter="">
           <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("filters.entityType")}</label>
           <select
-            className="rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
+            className="w-full min-w-0 truncate rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
             value={filters.entityType}
             onChange={(e) => {
               // Clear personSubtype when switching away from PERSON
@@ -323,10 +333,10 @@ function FilterForm({ filters, onChange, onSearch, onReset, loading }: FilterFor
 
         {/* Person subtype — shown when entity type is PERSON or "any" */}
         {showPersonSubtype && (
-          <div className="flex flex-col gap-1">
+          <div className={FILTER_CLASS} data-search-filter="">
             <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("filters.personSubtype")}</label>
             <select
-              className="rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
+              className="w-full min-w-0 truncate rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
               value={filters.personSubtype}
               onChange={set("personSubtype")}
             >
@@ -339,36 +349,39 @@ function FilterForm({ filters, onChange, onSearch, onReset, loading }: FilterFor
         )}
 
         {/* Search */}
-        <div className="flex flex-col gap-1">
+        <div className={FILTER_CLASS} data-search-filter="">
           <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("filters.search")}</label>
           <input
             type="text"
-            className="rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
+            className="w-full min-w-0 truncate rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
             placeholder={t("filters.searchPlaceholder")}
+            title={t("filters.searchHint")}
             value={filters.search}
             onChange={set("search")}
           />
         </div>
 
         {/* Group code */}
-        <div className="flex flex-col gap-1">
+        <div className={FILTER_CLASS} data-search-filter="">
           <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("filters.groupCode")}</label>
           <input
             type="text"
-            className="rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm font-mono uppercase dark:border-zinc-600 dark:bg-zinc-800"
+            className="w-full min-w-0 truncate rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm font-mono uppercase dark:border-zinc-600 dark:bg-zinc-800"
             placeholder={t("filters.groupCodePlaceholder")}
+            title={t("filters.groupCodeHint")}
             value={filters.groupCode}
             onChange={set("groupCode")}
           />
         </div>
 
         {/* Stamp code */}
-        <div className="flex flex-col gap-1">
+        <div className={FILTER_CLASS} data-search-filter="">
           <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("filters.stampCode")}</label>
           <input
             type="text"
-            className="rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm font-mono uppercase dark:border-zinc-600 dark:bg-zinc-800"
+            className="w-full min-w-0 truncate rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm font-mono uppercase dark:border-zinc-600 dark:bg-zinc-800"
             placeholder={t("filters.stampCodePlaceholder")}
+            title={t("filters.stampCodeHint")}
             value={filters.stampCode}
             onChange={set("stampCode")}
           />
@@ -381,10 +394,10 @@ function FilterForm({ filters, onChange, onSearch, onReset, loading }: FilterFor
             the gate from the tab, so the filters and the columns come back with
             it: a value a user can set is a value they can search on. */}
         {/* Importance */}
-        <div className="flex flex-col gap-1">
+        <div className={FILTER_CLASS} data-search-filter="">
           <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("filters.importance")}</label>
           <select
-            className="rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
+            className="w-full min-w-0 truncate rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
             value={filters.importance}
             onChange={set("importance")}
           >
@@ -396,10 +409,10 @@ function FilterForm({ filters, onChange, onSearch, onReset, loading }: FilterFor
         </div>
 
         {/* Relevance */}
-        <div className="flex flex-col gap-1">
+        <div className={FILTER_CLASS} data-search-filter="">
           <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("filters.relevance")}</label>
           <select
-            className="rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
+            className="w-full min-w-0 truncate rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
             value={filters.relevance}
             onChange={set("relevance")}
           >
@@ -411,10 +424,10 @@ function FilterForm({ filters, onChange, onSearch, onReset, loading }: FilterFor
         </div>
 
         {/* Provenance */}
-        <div className="flex flex-col gap-1">
+        <div className={FILTER_CLASS} data-search-filter="">
           <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("filters.provenance")}</label>
           <select
-            className="rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
+            className="w-full min-w-0 truncate rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
             value={filters.provenance}
             onChange={set("provenance")}
           >
@@ -426,10 +439,10 @@ function FilterForm({ filters, onChange, onSearch, onReset, loading }: FilterFor
         </div>
 
         {/* Has metadata */}
-        <div className="flex flex-col gap-1">
+        <div className={FILTER_CLASS} data-search-filter="">
           <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("filters.hasMetadata")}</label>
           <select
-            className="rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
+            className="w-full min-w-0 truncate rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
             value={filters.hasMetadata}
             onChange={set("hasMetadata")}
           >
@@ -440,43 +453,43 @@ function FilterForm({ filters, onChange, onSearch, onReset, loading }: FilterFor
         </div>
 
         {/* Tag */}
-        <div className="flex flex-col gap-1">
+        <div className={FILTER_CLASS} data-search-filter="">
           <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("filters.tag")}</label>
           <input
             type="text"
-            className="rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
+            className="w-full min-w-0 truncate rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
             placeholder={t("filters.tagPlaceholder")}
+            title={t("filters.tagHint")}
             value={filters.tag}
             onChange={set("tag")}
           />
         </div>
 
         {/* Updated from */}
-        <div className="flex flex-col gap-1">
+        <div className={FILTER_CLASS} data-search-filter="">
           <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("filters.updatedFrom")}</label>
           <input
             type="date"
-            className="rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
+            className="w-full min-w-0 truncate rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
             value={filters.updatedFrom}
             onChange={set("updatedFrom")}
           />
         </div>
 
         {/* Updated to */}
-        <div className="flex flex-col gap-1">
+        <div className={FILTER_CLASS} data-search-filter="">
           <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{t("filters.updatedTo")}</label>
           <input
             type="date"
-            className="rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
+            className="w-full min-w-0 truncate rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800"
             value={filters.updatedTo}
             onChange={set("updatedTo")}
           />
         </div>
 
-      </div>
 
-      {/* Actions */}
-      <div className="mt-5 flex items-center gap-3">
+        {/* Actions — after the last filter, in the same row (Slice 40.09). */}
+        <div className="flex items-end gap-3" data-search-actions="">
         {/* #37.46 (A090): Search, icon-only; „Caută" is its name and tooltip,
             „Se caută…" while it works, with the spinner in the icon's place. */}
         <IconButton
@@ -496,6 +509,7 @@ function FilterForm({ filters, onChange, onSearch, onReset, loading }: FilterFor
           size="lg"
           onClick={onReset}
         />
+        </div>
       </div>
     </form>
   );

@@ -55,7 +55,9 @@ test.describe("TC-SRCH-01 — Cele trei obiecte găsite prin Căutare globală",
     const documentId = await createSaleContract(page.request, `${MARK} Contract de test`);
 
     try {
-      // Step 1 — „Rapoarte" → „Căutare globală" (#39.02: was „Instrumente").
+      // Step 1 — „Rapoarte" → „Căutare globală" (#39.02: was „Instrumente"). Slice 40.09: at 1920 × 1080, where the
+      // filters' widths were measured.
+      await page.setViewportSize({ width: 1920, height: 1080 });
       await page.goto("/");
       const nav = sidebar(page);
       const searchLink = nav.getByRole("link", { name: "Căutare globală" });
@@ -68,9 +70,22 @@ test.describe("TC-SRCH-01 — Cele trei obiecte găsite prin Căutare globală",
       await expect(
         page.getByText("Căutați printre toate entitățile după nume, cod, adresă sau combinând filtre de metadate, grupuri, ștampile și etichete."),
       ).toBeVisible();
+      // Slice 40.09: the explanation's example of AND.
+      await expect(page.locator("main p").first()).toContainText(
+        "De exemplu, „Tip entitate: Proprietate” împreună cu „Etichetă: prioritar” găsesc doar proprietățile cu eticheta „prioritar” — nu și persoanele cu această etichetă, nici proprietățile fără ea.",
+      );
+      // Slice 40.09: every filter's box one width — a third of the 525 px it was at this window (± 1 rem) — and all
+      // of them in at most two rows, „Caută" and „Resetează" after the last.
+      const boxes = page.locator("[data-search-filter] select, [data-search-filter] input");
+      await expect(boxes).toHaveCount(12);
+      const rects = await boxes.evaluateAll((els) => els.map((e) => { const r = e.getBoundingClientRect(); return [r.width, r.bottom]; }));
+      for (const [w] of rects) expect(Math.abs(w - 525 / 3), `a box ${w} px wide`).toBeLessThanOrEqual(16);
+      expect(new Set(rects.map(([w]) => Math.round(w))).size).toBe(1);
+      expect(new Set(rects.map(([, b]) => Math.round(b))).size).toBeLessThanOrEqual(2);
 
-      // Step 2 — „Căutare nume / cod" (placeholder „ex. Popescu sau PPERS00012").
-      const nameOrCode = page.getByPlaceholder("ex. Popescu sau PPERS00012");
+      // Step 2 — „Căutare nume / cod" (placeholder „Popescu", its tooltip „ex. Popescu sau PPERS00012" — Slice 40.09).
+      const nameOrCode = page.getByPlaceholder("Popescu", { exact: true });
+      await expect(nameOrCode).toHaveAttribute("title", "ex. Popescu sau PPERS00012");
       await nameOrCode.fill(MARK);
       await expect(nameOrCode).toHaveValue(MARK);
 
