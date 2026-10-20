@@ -24,7 +24,10 @@ describe("the Judicial Persons list has no „Grupuri” filter (Slice #37.71)",
       expect([String(gone), gone.test(VIEW)]).toEqual([String(gone), false]);
     }
     expect(VIEW).toMatch(/queryKey: \["judicial-persons", "list", debouncedSearch, currentPage, filterSig\]/); // #39.62 added the bar's signature; it read `…, currentPage]`
-    expect(VIEW).toMatch(/const pageKey = `\$\{debouncedSearch\}\|\$\{currentPage\}\|\$\{filterSig\}`;/);
+    // Slice 40.10: `pageKey` went with the tick boxes it cleared; the list's address key carries the same three, the
+    // search as typed (it read `const pageKey = \`${debouncedSearch}|${currentPage}|${filterSig}\``).
+    expect(VIEW).not.toContain("pageKey");
+    expect(VIEW).toContain("`${searchInput}|${currentPage}|${filterSig}`");
   });
 
   it("the toolbar starts with the search box, then „Câmpuri afișate”", () => {

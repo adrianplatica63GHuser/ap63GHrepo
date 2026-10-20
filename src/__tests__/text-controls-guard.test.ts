@@ -243,27 +243,19 @@ const ALLOW: Record<string, Allowed[]> = {
   ],
   "src/app/documents/list-view.tsx": [
     ["A015", "<span className=\"text-fade\">{label}</span> {trigger.kind"], // #38.07: the trigger names one type, or says how many
-    ["A110", "{noLabel}"],
-    ["A110", "{yesLabel}"],
+    // Slice 40.10: the bulk delete's „Anulează" / „Șterge" (A110) went with the list's tick boxes.
   ],
   "src/app/judicial-persons/_components/judicial-person-form.tsx": [
     ["A113", "{(personName as string) || personId}"],
     ["A110", "{noLabel}"],
     ["A110", "{yesLabel}"],
   ],
-  "src/app/judicial-persons/list-view.tsx": [
-    ["A110", "{noLabel}"],
-    ["A110", "{yesLabel}"],
-  ],
+  // Slice 40.10: the Judicial and Natural Persons lists' bulk-delete answers (A110) went with their tick boxes.
   "src/app/login/login-form.tsx": [
     ["A108", "{loading ? buttonSigningIn : buttonSignIn}"],
   ],
   "src/app/natural-persons/_components/natural-person-form.tsx": [
     ["A113", "{nameOr(linkedIdCard.title, \"document\")} →"], // #37.57: the card by its title
-    ["A110", "{noLabel}"],
-    ["A110", "{yesLabel}"],
-  ],
-  "src/app/natural-persons/list-view.tsx": [
     ["A110", "{noLabel}"],
     ["A110", "{yesLabel}"],
   ],
