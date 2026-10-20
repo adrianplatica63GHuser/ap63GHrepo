@@ -237,8 +237,9 @@ with the search box's new words (lint, tsc and the slice's jest suites green too
 fields Document Type, the icon, specific fields, and the information button to the right of the Expiring Soon button; a
 second row is only needed if we have filters". So „Tip document:", the sign and „Câmp specific:" with its ⓘ are on the
 toolbar's row, after „Expiră curând", and the filters row is drawn only while a filter is active. Read in the browser
-pane on localhost:3000 the same day: at 1920 px the toolbar at y 135 — the search box at x 248, the group at 480–939,
-„Adaugă act" at 951 — the list's frame at y 188, no filters row; with `?pageCount=1..3` the row at y 188 („Nr. pagini
-1 – 3", „Scoate filtrul „Nr. pagini”", „Șterge filtrele") and the frame at 236; at 1000 px the group at x 248, y 181,
-under the search box, „Adaugă act" still at y 135, the page 1000 px wide. The spec translates steps 10–13 as a second
-test.
+pane on localhost:3000 the same day, with „Tip document:"'s words one width in every state (14 rem — „Toate tipurile",
+„Niciun tip" or a name — so a tick never moves the row): at 1366 px the toolbar at y 135 — the search box at x 248, the
+group at 480–1083, „Adaugă act" at 1096 with every type and with none — the list's frame at y 188, no filters row; at
+1920 px, with `?pageCount=1..3`, the row at y 188 („Nr. pagini 1 – 3", „Scoate filtrul „Nr. pagini”", „Șterge
+filtrele") and the frame at 236; at 1000 px the group at x 248, y 181, under the search box, „Adaugă act" still at
+y 135, the page 1000 px wide. The spec translates steps 10–13 as a second test.
