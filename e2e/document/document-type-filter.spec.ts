@@ -35,10 +35,9 @@ async function photograph(page: Page, name: string): Promise<void> {
   for (const width of [1366, 1920]) {
     await page.setViewportSize({ width, height: 900 });
     await page.waitForTimeout(300);
-    // #39.84: the toolbar and the filter bar under it, where the sign is now.
-    const top = (await page.locator("main [data-toolbar]").boundingBox())!;
-    const bar = (await page.locator("main [data-filter-bar]").boundingBox())!;
-    const box = { x: top.x, y: top.y, width: Math.max(top.width, bar.width), height: bar.y + bar.height - top.y };
+    // #40.01: the toolbar, where the sign is now — on its row, after „Expiră curând". (#39.84 took the filter bar
+    // under it too; it is drawn only while a filter is active, and no filter is set here.)
+    const box = (await page.locator("main [data-toolbar]").boundingBox())!;
     await page.screenshot({ path: `${SHOTS}/${name}-${width}.png`, clip: { ...box, width: Math.min(box.width, width - box.x) } });
     await sign.hover();
     await expect(page.locator("[role=tooltip][data-icon-tooltip]")).toBeVisible();
@@ -83,14 +82,14 @@ test.describe("TC-DOC-16 — „Tip document:” și „Câmp specific”", () =
       const key = main.getByRole("combobox", { name: "Câmp specific:" });
       await expect(key).toBeDisabled();
       expect(await key.locator("option").allTextContents()).toEqual(["Toate"]);
-      // #38.18: the sign, then „Câmp specific:"; the field looks disabled. #39.84: both on the filter bar, after „Tip
-      // document:" — where „+ Filtru" stood. #39.74 had them on the toolbar after „Câmpuri afișate"
-      // (`[data-toolbar-row="first"]`); from #39.63 to #39.74 they were on the bar too; before that,
-      // `[data-toolbar-row="second"]`.
-      const row2 = main.locator("[data-filter-bar] [data-filter-fixed]");
+      // #38.18: the sign, then „Câmp specific:"; the field looks disabled. #40.01: both on the toolbar's row, after „Tip
+      // document:", after „Expiră curând". From #39.84 they were on the filter bar (`[data-filter-bar]
+      // [data-filter-fixed]`); #39.74 had them on the toolbar after „Câmpuri afișate"; from #39.63 to #39.74 on the
+      // bar; before that, `[data-toolbar-row="second"]`.
+      const row2 = main.locator('[data-toolbar-row="first"] [data-filter-fixed]');
       const at = await Promise.all([row2.getByRole("button", { name: /^Tip document:/ }), row2.locator("[data-custom-field-sign]"), row2.getByText("Câmp specific:")].map(async (l) => (await l.boundingBox())!.x));
       expect(at).toEqual([...at].sort((a, b) => a - b));
-      await expect(main.locator("[data-filter-bar] [data-filter-fixed]").getByRole("button", { name: /^Tip document:/ })).toHaveCount(1);
+      await expect(main.locator('[data-toolbar-row="first"] [data-filter-fixed]').getByRole("button", { name: /^Tip document:/ })).toHaveCount(1);
       const fieldBox = main.locator("[data-custom-field-box]");
       await expect(fieldBox).toHaveCSS("border-top-style", "dashed");
       await expect(row2.getByText("Câmp specific:")).toHaveCSS("font-style", "italic");

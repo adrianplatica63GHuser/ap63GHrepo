@@ -1,6 +1,7 @@
 /**
  * Case:   TC-DOC-08 — Lista actelor: căutarea înaintea tipului, fără filtre de importanță și relevanță, „Câmpuri afișate" cu câmpurile oricărui act, „Câmp specific" explicat, doar cu liste închise
  * Source: docs/testing/cases/TC-DOC-08.md, „Last green" 2026-10-18 (steps 1, 6, 7 and 9 follow Slice #38.18; steps 1 and 7 also #39.63)
+ *         Steps 1 and 9 follow Slice #40.01, and steps 10–13 — the toolbar's row and the filters row — are the second test.
  *
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim.
@@ -78,25 +79,24 @@ test.describe("TC-DOC-08 — lista actelor", () => {
       const centres = row1.map((r) => r.y + r.height / 2);
       expect(Math.max(...centres) - Math.min(...centres)).toBeLessThanOrEqual(1);
       expect([...row1.map((r) => r.x), add.x]).toEqual([...row1.map((r) => r.x), add.x].sort((a, b) => a - b));
-      await expect(main.locator('[data-toolbar-row="first"]').getByRole("button", { name: /^Tip document:/ })).toHaveCount(0);
-      // #39.84: on the toolbar's row „Expiră curând" right after „Câmpuri afișate", then „Adaugă act" at its end; under the
-      // search box, on the filter bar, „Tip document: Toate tipurile", then a red sign and „Câmp specific:" with its ⓘ —
-      // where „+ Filtru" stood. (#39.74 had the sign and „Câmp specific:" on the toolbar's row, between the chooser and
-      // „Expiră curând"; #38.18 on a second row, #39.63 on the filter bar.)
+      // #40.01: on the toolbar's row „Expiră curând" right after „Câmpuri afișate", then „Tip document: Toate tipurile",
+      // a red sign and „Câmp specific:" with its ⓘ, and „Adaugă act" at its end; no filters row while no filter is
+      // active. (#39.84 had „Tip document:" and „Câmp specific" on the filter bar under the search box; #39.74 the sign
+      // and „Câmp specific:" on the toolbar's row, between the chooser and „Expiră curând"; #38.18 on a second row.)
       const sign = main.locator("[data-custom-field-sign]");
       await expect(sign).toHaveAttribute("data-custom-field-sign", "off");
       await expect(sign.locator("svg")).toHaveClass(/lucide-ban/);
       const [typeAt, signAt, field, aboutAt, expAt] = await Promise.all([typeFilter, sign, main.getByText("Câmp specific:"), about, expiring].map(async (l) => (await l.boundingBox())!));
-      expect([row1[1].x, expAt.x, add.x]).toEqual([row1[1].x, expAt.x, add.x].sort((a, b) => a - b));
+      const xs = [row1[0].x, row1[1].x, expAt.x, typeAt.x, signAt.x, field.x, aboutAt.x, add.x];
+      expect(xs).toEqual([...xs].sort((a, b) => a - b));
       expect(expAt.x - (row1[1].x + row1[1].width)).toBeLessThanOrEqual(16);
+      expect(typeAt.x - (expAt.x + expAt.width)).toBeLessThanOrEqual(16);
       expect(Math.abs(expAt.y + expAt.height / 2 - (row1[0].y + row1[0].height / 2))).toBeLessThanOrEqual(2);
-      expect(typeAt.y).toBeGreaterThanOrEqual(row1[0].y + row1[0].height);
-      expect(Math.abs(typeAt.x - row1[0].x)).toBeLessThanOrEqual(24);
-      expect([typeAt.x, signAt.x, field.x, aboutAt.x]).toEqual([typeAt.x, signAt.x, field.x, aboutAt.x].sort((a, b) => a - b));
-      for (const b of [signAt, aboutAt]) expect(Math.abs(b.y + b.height / 2 - (typeAt.y + typeAt.height / 2))).toBeLessThanOrEqual(3);
-      await expect(main.locator("[data-filter-bar] [data-filter-fixed]").getByRole("button", { name: /^Tip document:/ })).toHaveCount(1);
-      await expect(main.locator("[data-filter-bar] [data-filter-fixed] [data-custom-field-group]")).toHaveCount(1);
-      await expect(main.locator('[data-toolbar-row="first"] [data-custom-field-group]')).toHaveCount(0);
+      for (const b of [typeAt, signAt, aboutAt]) expect(Math.abs(b.y + b.height / 2 - (row1[0].y + row1[0].height / 2))).toBeLessThanOrEqual(4);
+      await expect(main.locator('[data-toolbar-row="first"] [data-filter-fixed]').getByRole("button", { name: /^Tip document:/ })).toHaveCount(1);
+      await expect(main.locator('[data-toolbar-row="first"] [data-filter-fixed] [data-custom-field-group]')).toHaveCount(1);
+      await expect(main.locator("[data-filter-bar] [data-filter-fixed]")).toHaveCount(0);
+      await expect(main.locator("[data-filter-bar]")).toHaveAttribute("data-filter-bar-shown", "false");
       await expect(main.getByText(/Importanță|Relevanță/)).toHaveCount(0);
 
       // Step 2 — one row: „Adeverință", the title.
@@ -203,7 +203,7 @@ test.describe("TC-DOC-08 — lista actelor", () => {
       await tick("Contract de Vânzare");
       await tick("Adeverință");
       await expect(main.getByRole("button", { name: /^Tip document:\s*Adeverință/ })).toBeVisible({ timeout: 30_000 });
-      await expect(main.locator("[data-filter-bar] [data-filter-fixed] [data-custom-field-group]")).toHaveCount(1); // #39.84; #39.74 read `[data-toolbar-row="first"]`
+      await expect(main.locator('[data-toolbar-row="first"] [data-filter-fixed] [data-custom-field-group]')).toHaveCount(1); // #40.01; #39.84 read `[data-filter-bar] [data-filter-fixed]`
       await expect(key).toBeDisabled();
       await expect(sign).toHaveAttribute("data-custom-field-sign", "off");
       await expect.poll(async () => new Set(await table.locator("tbody tr td:nth-child(2)").allTextContents()), { timeout: 30_000 }).toEqual(new Set(["Adeverință"]));
@@ -211,5 +211,69 @@ test.describe("TC-DOC-08 — lista actelor", () => {
       await removeRecord(page.request, "document", documentId);
       await removeRecord(page.request, "document", contractId);
     }
+  });
+  // Slice #40.01 — steps 10–13: „Tip document:" and „Câmp specific" on the toolbar's row when the window allows it,
+  // whole on a line of their own when it does not, and the filters row only while a filter is active. No record is
+  // made: the steps read the toolbar, and the filter set is the address's.
+  test("pe rândul barei: „Tip document” și „Câmp specific” după „Expiră curând”, rândul filtrelor doar cu un filtru activ", async ({ page }) => {
+    const main = page.locator("main");
+    const box = async (l: Locator) => (await l.boundingBox())!;
+    const search = main.getByRole("searchbox", { name: "caută după Cod, Titlu sau Nr. document" });
+    const expiring = main.getByRole("button", { name: "Expiră curând" });
+    const group = main.locator('[data-toolbar-row="first"] [data-filter-fixed]');
+    const addNew = main.getByRole("link", { name: "Adaugă act" });
+    const bar = main.locator("[data-filter-bar]");
+
+    // Step 10 — at 1920 px: the group on the first row, right after „Expiră curând"; no filters row, and the list
+    // right under the toolbar.
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await page.goto("/documents");
+    await expect(search).toBeVisible({ timeout: 30_000 });
+    await expect(group.locator("[data-custom-field-group]")).toHaveCount(1, { timeout: 30_000 });
+    const [s10, e10, g10, a10] = await Promise.all([search, expiring, group, addNew].map(box));
+    expect(Math.abs(g10.y - s10.y)).toBeLessThanOrEqual(4);
+    expect(g10.x).toBeGreaterThan(e10.x + e10.width);
+    expect(g10.x - (e10.x + e10.width)).toBeLessThanOrEqual(16);
+    expect(a10.x).toBeGreaterThan(g10.x + g10.width);
+    await expect(bar).toHaveAttribute("data-filter-bar-shown", "false");
+    await expect(bar.locator("[data-filter-chip]")).toHaveCount(0);
+    await expect(main.getByRole("button", { name: "Șterge filtrele" })).toHaveCount(0);
+    const toolbar = await box(main.locator("[data-toolbar]"));
+    const frame = await box(main.locator("[data-list-edge]").first());
+    expect(frame.y - (toolbar.y + toolbar.height)).toBeLessThanOrEqual(20); // one gap, no empty row
+
+    // Step 11 — a column filter set („Nr. pagini" 1–3): the filters row appears, its chip and „Șterge filtrele".
+    await page.goto("/documents?pageCount=1..3");
+    await expect(bar).toHaveAttribute("data-filter-bar-shown", "true", { timeout: 30_000 });
+    await expect(bar.locator('[data-filter-chip="pageCount"]')).toContainText("Nr. pagini");
+    const clear = main.getByRole("button", { name: "Șterge filtrele" });
+    await expect(clear).toBeVisible();
+    const b11 = await box(bar);
+    const t11 = await box(main.locator("[data-toolbar]"));
+    expect(b11.y).toBeGreaterThanOrEqual(t11.y + t11.height);
+    await expect(group.locator("[data-custom-field-group]")).toHaveCount(1);
+
+    // Step 12 — „Șterge filtrele": the row is gone again.
+    await clear.click();
+    await expect(bar).toHaveAttribute("data-filter-bar-shown", "false", { timeout: 30_000 });
+    await expect(bar.locator("[data-filter-chip]")).toHaveCount(0);
+
+    // Step 13 — at 1000 px the group does not fit beside „Expiră curând": it goes whole onto a line of its own, at the
+    // left, and „Adaugă act" stays at the first line's end. The page does not scroll sideways.
+    await page.setViewportSize({ width: 1000, height: 900 });
+    await expect
+      .poll(async () => {
+        const [s, g] = await Promise.all([search, group].map(box));
+        return g.y >= s.y + s.height;
+      }, { timeout: 10_000 })
+      .toBe(true);
+    const [s13, g13, a13] = await Promise.all([search, group, addNew].map(box));
+    expect(Math.abs(g13.x - s13.x)).toBeLessThanOrEqual(2);
+    expect(Math.abs(a13.y - s13.y)).toBeLessThanOrEqual(4);
+    expect(a13.x).toBeGreaterThan(s13.x + s13.width);
+    for (const part of ["[data-custom-field-sign]", "[data-custom-field-box]"]) {
+      expect(Math.abs((await box(group.locator(part))).y + (await box(group.locator(part))).height / 2 - (g13.y + g13.height / 2))).toBeLessThanOrEqual(4);
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
   });
 });

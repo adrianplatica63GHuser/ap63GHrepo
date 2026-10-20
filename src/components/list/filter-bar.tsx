@@ -13,6 +13,12 @@
  * column being shown, so the list never filters invisibly — hiding a column keeps its filter, and its chip still
  * says what it filters (#39.82's Ask first 1). The state, its address and its route parameters are
  * `@/lib/list/filter-bar`'s; this is the screen. Shared: Proprietăți (#39.61), then the person lists and Acte.
+ *
+ * Since Slice #40.01 the bar is a row only while a filter is active (Adrian, 2026-10-20: „a second row is only needed
+ * if we have filters and we need to show their description and button "clear filters""). With none, it takes no
+ * space at all — not an empty gap — on all four lists: it is drawn out of the flow (`absolute`), where it is still the
+ * box an editor opened from a funnel hangs from, placed under that funnel as before. Acte's „Tip document:" and
+ * „Câmp specific", which stood first on it from #39.63, are on Acte's toolbar row, so the bar has no `leading` slot.
  */
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { useQueries, useQuery } from "@tanstack/react-query";
@@ -57,8 +63,6 @@ type Props = {
   loadValues: (key: string) => Promise<FacetValue[]>;
   /** Their query key: the list's search and its filters — the field's own too, which names its ticked values. */
   valuesKey: (key: string) => readonly unknown[];
-  /** A list's own controls that stand first on the bar (#39.63: Acte's „Expiră curând" toggle). */
-  leading?: ReactNode;
 };
 
 const NUMBER = new Intl.NumberFormat("ro-RO", { maximumFractionDigits: 2 });
@@ -73,7 +77,7 @@ function funnelOf(key: string): Element | null {
 }
 
 /** The bar. */
-export function FilterBar({ fields, state, onChange, editing, onEditing, loadValues, valuesKey, leading }: Props) {
+export function FilterBar({ fields, state, onChange, editing, onEditing, loadValues, valuesKey }: Props) {
   const t = useTranslations("shared.filterBar");
   const ref = useRef<HTMLDivElement>(null);
   const editorRef = useRef<HTMLDivElement>(null);
@@ -180,9 +184,18 @@ export function FilterBar({ fields, state, onChange, editing, onEditing, loadVal
 
   const editingField = editing ? byKey.get(editing) : undefined;
 
+  // Slice #40.01 (Ask first 3): a row only while a filter is active. With none it is out of the flow — no height, and
+  // no gap in the list's column either, which a zero-height item in a flex column would still get — and holds only the
+  // editor a funnel opened, placed under that funnel.
+  const shown = active.length > 0;
+
   return (
-    <div ref={ref} className="relative flex flex-wrap items-center gap-2" data-filter-bar="">
-      {leading}
+    <div
+      ref={ref}
+      className={shown ? "relative flex flex-wrap items-center gap-2" : "absolute"}
+      data-filter-bar=""
+      data-filter-bar-shown={shown ? "true" : "false"}
+    >
       {active.map((key) => {
         const field = byKey.get(key)!;
         const value = state[key]!;
