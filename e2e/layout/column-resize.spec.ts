@@ -1,6 +1,6 @@
 /**
  * Case:   TC-LAYOUT-06 — Linia dintre coloane: trasă în banda numelor, schimbă lățimea coloanei
- * Source: docs/testing/cases/TC-LAYOUT-06.md, „Last green" —
+ * Source: docs/testing/cases/TC-LAYOUT-06.md, „Last green" 2026-10-20
  *
  * A translation of the case file, step for step (Slice 40.12). Acte reads the archive's own rows' boxes only — no text;
  * „Grupuri" reads its band; the associate screen reads one invented person, `TC-E2E-LAYOUT-06`.
