@@ -1094,6 +1094,10 @@
       "dissociate": "Dezasociază",
       "dissociating": "Se elimină…",
       "noRole": "Fără rol"
+    },
+    "hiddenColumns": {
+      "right": "Mai sunt coloane la dreapta. Derulați spre dreapta ca să le vedeți.",
+      "left": "Mai sunt coloane la stânga. Derulați spre stânga ca să le vedeți."
     }
   },
   "naturalPerson": {

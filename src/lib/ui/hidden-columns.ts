@@ -12,6 +12,9 @@
  * wide list; neither when every column fits.
  *
  * PURE — `hidden-columns.test.ts` covers it; `HiddenColumnSigns` reads the frame and draws.
+ *
+ * Slice 40.11: a press on a sign scrolls the frame that way (`signScrollTarget`) — its visible width less 4 rem, so a
+ * little of what was in view stays in view, and never past an end.
  */
 
 export interface FrameScroll {
@@ -39,4 +42,19 @@ export function hiddenSides(s: FrameScroll): HiddenSides {
 
 export function sameSides(a: HiddenSides, b: HiddenSides): boolean {
   return a.left === b.left && a.right === b.right;
+}
+
+/** What a press on a sign keeps of the view: 4 rem of what was visible stays visible (Slice 40.11, Ask first 3). */
+export const SIGN_KEEP_REM = 4;
+
+/** How far a press on a sign scrolls: the visible width less `SIGN_KEEP_REM`, never less than a rem. */
+export function signScrollPx(clientWidth: number, remPx = 16): number {
+  return Math.max(remPx, clientWidth - SIGN_KEEP_REM * remPx);
+}
+
+/** Where a press on a side's sign takes the frame's `scrollLeft`: that far towards the side, never past an end. */
+export function signScrollTarget(s: FrameScroll, side: "left" | "right", remPx = 16): number {
+  const end = Math.max(0, s.scrollWidth - s.clientWidth);
+  const step = signScrollPx(s.clientWidth, remPx);
+  return Math.min(end, Math.max(0, s.scrollLeft + (side === "right" ? step : -step)));
 }

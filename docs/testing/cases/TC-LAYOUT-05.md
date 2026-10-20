@@ -53,8 +53,9 @@ At 1366 and at 1920 px, on each of the four lists, searched for „TC-E2E-LAYOUT
 | 9 | Scrolls the frame half-way, presses „Deschide" on a row in sight, then the browser's Back | The list comes back with its frame scrolled where it was (±2 px), the row in sight |
 | 10 | Makes the window 1920 × 1080 | A page of rows fits: the frame draws no scroll bar, and the page none either |
 | 11 | At 1100 × 800 px (#40.03), on „Acte" with „Data", „Instituție / Notariat", „Nr. pagini" and „Adăugat la" chosen, looks at the band of names | Its columns are wider than the frame. At the band's right edge — the visible part's, just left of the frame's vertical scroll bar — three red „>" one over another, as tall as the band; none at its left |
+| 11a | (Slice 40.11) Rests the mouse on the „>"; presses it; then, from the keyboard, focuses the „<" | A bubble under the band: „Mai sunt coloane la dreapta. Derulați spre dreapta ca să le vedeți.". Pressed, the list scrolls right — by its visible width less 4 rem — and three red „<" appear at the left edge. Focused from the keyboard, the „<" shows „Mai sunt coloane la stânga. Derulați spre stânga ca să le vedeți." |
 | 12 | Scrolls the list half-way sideways, then a little down | Three red „<" at the band's left edge too, both kept at the band as the rows scroll |
-| 13 | Scrolls to the right end; then back, until a column's funnel stands under the „>" signs, and presses it | Only the „<" at the end. The funnel, pressed through the signs, opens its filter |
+| 13 | Scrolls to the right end; then back, until a column's funnel stands under the „>" signs, and presses there; then presses the funnel | Only the „<" at the end. The press lands on the sign (40.11; #40.03 let it through to the funnel) and scrolls the list right, bringing the funnel out from under it; the funnel, pressed, opens its filter |
 | 14 | At 1920 × 1080 px with no column chosen | Every column fits: no sign at either edge |
 
 ## At the end — leaving things as they were found

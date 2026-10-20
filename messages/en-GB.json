@@ -1094,6 +1094,10 @@
       "dissociate": "Dissociate",
       "dissociating": "Removing…",
       "noRole": "No role"
+    },
+    "hiddenColumns": {
+      "right": "More columns to the right. Scroll right to see them.",
+      "left": "More columns to the left. Scroll left to see them."
     }
   },
   "naturalPerson": {

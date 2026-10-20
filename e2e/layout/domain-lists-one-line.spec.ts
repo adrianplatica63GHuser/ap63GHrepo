@@ -243,7 +243,8 @@ test.describe("TC-LAYOUT-05 — cele patru liste, câte un rând pe linie", () =
     }
   });
   // Slice #40.03 — steps 11–14: three red „>" at the band's right edge while columns are hidden to the right, three red
-  // „<" at its left edge while columns are hidden to the left; signs, not buttons.
+  // „<" at its left edge while columns are hidden to the left. Slice 40.11: each sign a button that explains itself — a
+  // bubble with its sentence on hover or keyboard focus, a press scrolling the list that way (step 11a, step 13).
   test("semnele roșii „>” și „<” la marginile benzii cât timp sunt coloane ascunse", async ({ page }) => {
     test.slow();
     await page.addInitScript(() => {
@@ -283,12 +284,29 @@ test.describe("TC-LAYOUT-05 — cele patru liste, câte un rând pe linie", () =
       return c;
     });
     await expect(right).toHaveCSS("color", red);
+    // The strip between the signs takes no pointer; since 40.11 the signs do, and are named by their sentence.
     await expect(frame.locator("[data-hidden-columns]")).toHaveCSS("pointer-events", "none");
-    await expect(frame.locator("[data-hidden-columns]")).toHaveAttribute("aria-hidden", "true");
+    await expect(right).toHaveAttribute("aria-label", "Mai sunt coloane la dreapta. Derulați spre dreapta ca să le vedeți.");
     const r11 = await read();
     expect(Math.abs(r11.right!.right - r11.frame.right)).toBeLessThanOrEqual(1);
     expect(Math.abs(r11.right!.top - r11.head.top)).toBeLessThanOrEqual(1);
     expect(Math.abs(r11.right!.height - r11.head.height)).toBeLessThanOrEqual(1);
+
+    // Step 11a (Slice 40.11) — the mouse over the „>": a bubble under the band with its sentence; a press: the frame
+    // scrolls right — by its visible width less 4 rem — and the „<" appear; a keyboard focus on the „<": its bubble.
+    await right.hover();
+    const bubble = page.getByRole("tooltip").filter({ hasText: "Mai sunt coloane la dreapta. Derulați spre dreapta ca să le vedeți." });
+    await expect(bubble).toBeVisible({ timeout: 5_000 });
+    expect((await bubble.boundingBox())!.y).toBeGreaterThanOrEqual(r11.head.top + r11.head.height - 1);
+    const before = await frame.evaluate((f) => f.scrollLeft);
+    await right.click();
+    await expect.poll(() => frame.evaluate((f) => f.scrollLeft), { timeout: 5_000 }).toBeGreaterThan(before + 100);
+    await expect(left).toBeVisible();
+    await page.mouse.move(5, 5);
+    await page.keyboard.press("Shift");
+    await left.focus();
+    await expect(page.getByRole("tooltip").filter({ hasText: "Mai sunt coloane la stânga. Derulați spre stânga ca să le vedeți." })).toBeVisible({ timeout: 5_000 });
+    await left.blur();
 
     // Step 12 — scrolled to the middle: both; scrolled down too, both still at the band's height.
     await frame.evaluate((f) => { f.scrollLeft = Math.round((f.scrollWidth - f.clientWidth) / 2); f.scrollTop = 120; });
@@ -300,8 +318,9 @@ test.describe("TC-LAYOUT-05 — cele patru liste, câte un rând pe linie", () =
     expect(Math.abs(r12.right!.right - r12.frame.right)).toBeLessThanOrEqual(1);
     expect(Math.abs(r12.left!.top - r12.head.top)).toBeLessThanOrEqual(1);
 
-    // Step 13 — at the end: the „<" only. Then back to where a funnel stands under the right-hand signs: pressed through
-    // them, it opens its editor.
+    // Step 13 — at the end: the „<" only. Then back to where a funnel stands under the right-hand signs. Slice 40.11: was
+    // „pressed through them, it opens its editor" — the sign catches the press now and scrolls the list right, which
+    // brings the funnel out from under it; then the funnel is pressed.
     await frame.evaluate((f) => { f.scrollLeft = f.scrollWidth; f.scrollTop = 0; });
     await expect(right).toHaveCount(0);
     await expect(left).toBeVisible();
@@ -325,7 +344,10 @@ test.describe("TC-LAYOUT-05 — cele patru liste, câte un rând pe linie", () =
     const sign = await read();
     expect(at!.x).toBeGreaterThanOrEqual(sign.right!.left);
     await page.waitForTimeout(200);
+    const under = await frame.evaluate((f) => f.scrollLeft);
     await page.mouse.click(at!.x, at!.y);
+    await expect.poll(() => frame.evaluate((f) => f.scrollLeft), { timeout: 5_000 }).toBeGreaterThan(under);
+    await page.locator(`[data-filter-funnel="${at!.key}"] button`).click();
     await expect(page.locator(`[data-filter-editor="${at!.key}"]`)).toBeVisible({ timeout: 10_000 });
     await page.keyboard.press("Escape");
 
