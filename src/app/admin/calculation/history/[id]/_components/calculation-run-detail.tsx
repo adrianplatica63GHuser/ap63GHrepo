@@ -8,7 +8,8 @@ import { IconButton } from "@/lib/ui/icon-button";
 import { useRouter } from "next/navigation";
 import { OwnerSwatch, PreviewMap } from "@/app/admin/calculation/_components/preview-map";
 import { ownerColor } from "@/lib/calculation/owner-colors";
-import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
+import { TABLE_FRAME, WRAPS, columnHead } from "@/components/table/fixed-columns";
+import { FixedTable } from "@/components/table/column-resize";
 import { screenPanel, stepGridStyle, tableUnits, type ColumnName } from "@/lib/ui/field-widths";
 import { UnitRow } from "@/components/screen/unit-row";
 import { DeleteRunButton } from "@/app/admin/calculation/history/_components/delete-run";
@@ -293,8 +294,7 @@ export function CalculationRunDetail({ runId }: { runId: string }) {
           <p className="text-sm text-fade dark:text-zinc-400">{t("detail.parcelsEmpty")}</p>
         ) : (
           <div className={TABLE_FRAME}>
-            <table {...fixedTable(PARCEL_COLUMNS)}>
-              <FixedColumns columns={PARCEL_COLUMNS} />
+            <FixedTable id="calculation-run/parcels" columns={PARCEL_COLUMNS}>
               <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-fade dark:bg-zinc-800 dark:text-zinc-400">
                 <tr>
                   <th className="px-3 py-2" {...columnHead("propertyNickname")}>{t("detail.parcelsCol.nickname")}</th>
@@ -330,7 +330,7 @@ export function CalculationRunDetail({ runId }: { runId: string }) {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </FixedTable>
           </div>
         )}
       </SectionCard>
@@ -370,8 +370,7 @@ function OldRunBody({ comp, input, t }: { comp: DivisionComputation; input: OldI
       {/* ── Steps log — owner breakdown ────────────────────────────── */}
       <SectionCard title={t("detail.stepsTitle")}>
         <div className={TABLE_FRAME}>
-          <table {...fixedTable(OWNER_COLUMNS)}>
-            <FixedColumns columns={OWNER_COLUMNS} />
+          <FixedTable id="calculation-run/owners" columns={OWNER_COLUMNS}>
             <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-fade dark:bg-zinc-800 dark:text-zinc-400">
               <tr>
                 <th className="px-3 py-2" {...columnHead("personName")}>{t("detail.stepsCol.owner")}</th>
@@ -399,7 +398,7 @@ function OldRunBody({ comp, input, t }: { comp: DivisionComputation; input: OldI
                 </tr>
               ))}
             </tbody>
-          </table>
+          </FixedTable>
         </div>
         {/* PDF notice — Phase C placeholder */}
         <p className="mt-3 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
@@ -457,8 +456,7 @@ function SideRoadRunBody({ comp, input, t, tc }: { comp: SideRoadComputation; in
 
       <SectionCard title={t("detail.stepsTitle")}>
         <div className={TABLE_FRAME}>
-          <table {...fixedTable(SIDE_ROAD_COLUMNS)}>
-            <FixedColumns columns={SIDE_ROAD_COLUMNS} />
+          <FixedTable id="calculation-run/side-roads" columns={SIDE_ROAD_COLUMNS}>
             <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-fade dark:bg-zinc-800 dark:text-zinc-400">
               <tr>
                 <th className="px-3 py-2 text-right" {...columnHead("count")}>{tc("table.order")}</th>
@@ -500,7 +498,7 @@ function SideRoadRunBody({ comp, input, t, tc }: { comp: SideRoadComputation; in
                 <td className="px-3 py-2 text-right tabular-nums">{diff(totals.area + totals.roadShare - totals.originalArea)}</td>
               </tr>
             </tfoot>
-          </table>
+          </FixedTable>
         </div>
       </SectionCard>
 

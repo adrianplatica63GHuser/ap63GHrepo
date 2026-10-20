@@ -9,7 +9,8 @@ import Link from "next/link";
 import { useNameOr } from "@/components/record/use-name-or";
 import { OwnerSwatch, PreviewMap } from "./preview-map";
 import { HelpHint } from "@/components/help/help-hint";
-import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
+import { TABLE_FRAME, WRAPS, columnHead } from "@/components/table/fixed-columns";
+import { FixedTable } from "@/components/table/column-resize";
 import { screenBox, screenPanel, stepGridStyle, tableUnits, type ColumnName } from "@/lib/ui/field-widths";
 import { UnitRow } from "@/components/screen/unit-row";
 // Pure, and the same rule the server applies: a drop is a swap (Ask first 2).
@@ -791,8 +792,7 @@ export function CalculationView() {
 
           {/* The owners' slices, in order — with the keyboard's reorder */}
           <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900`}>
-            <table {...fixedTable(OWNER_COLUMNS)}>
-              <FixedColumns columns={OWNER_COLUMNS} />
+            <FixedTable id="calculation/owners" columns={OWNER_COLUMNS}>
               <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-ink dark:bg-zinc-800 dark:text-zinc-300">
                 <tr>
                   <th className="px-3 py-2 text-right" {...columnHead("count")}>{t("table.order")}</th>
@@ -865,7 +865,7 @@ export function CalculationView() {
                   </tr>
                 </tfoot>
               )}
-            </table>
+            </FixedTable>
           </div>
 
           {computation.remainderToLast && (

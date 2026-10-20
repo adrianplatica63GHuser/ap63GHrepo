@@ -5,7 +5,8 @@ import { useTranslations } from "next-intl";
 import { useNameOr } from "@/components/record/use-name-or";
 import Link from "next/link";
 import { useTimeFrames, tfDays } from "@/hooks/use-time-frames";
-import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
+import { TABLE_FRAME, WRAPS, columnHead } from "@/components/table/fixed-columns";
+import { FixedTable } from "@/components/table/column-resize";
 import { stepGridStyle, tableUnits, type ColumnName } from "@/lib/ui/field-widths";
 import { ListTile } from "@/components/tiles/list-tile";
 import { TileSelector } from "@/components/tiles/tile-selector";
@@ -362,8 +363,7 @@ export function ExpiringDocumentsSection({
         </p>
       ) : (
         <div className={`${TABLE_FRAME} rounded-md border border-card-rim dark:border-zinc-800`}>
-          <table {...fixedTable(EXPIRING_COLUMNS, undefined, EXPIRING_FILL)}>
-            <FixedColumns columns={EXPIRING_COLUMNS} fill={EXPIRING_FILL} />
+          <FixedTable id="dashboard/expiring" columns={EXPIRING_COLUMNS} fill={EXPIRING_FILL}>
             <thead>
               <tr className="text-left text-xs text-zinc-500 dark:text-zinc-400 border-b border-zinc-100 dark:border-zinc-800">
                 <th className="px-4 pb-2 font-medium" {...columnHead("documentType")}>{t("expiringDocuments.colType")}</th>
@@ -402,7 +402,7 @@ export function ExpiringDocumentsSection({
                 </tr>
               ))}
             </tbody>
-          </table>
+          </FixedTable>
         </div>
       )}
     </SectionCard>

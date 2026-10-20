@@ -12,7 +12,8 @@ import {
 } from "@tanstack/react-query";
 import { LIST_META, VALID_LIST_KEYS, type FieldMeta, type ListKey } from "@/lib/admin/value-lists/config";
 import { LINK_MARK_BOX } from "@/lib/ui/link-mark";
-import { FixedColumns, ONE_LINE, columnHead, fixedTable, type TileFill } from "@/components/table/fixed-columns";
+import { ONE_LINE, columnHead, type TileFill } from "@/components/table/fixed-columns";
+import { FixedTable } from "@/components/table/column-resize";
 import { columnsRem, dialogCardStyle, dialogUnits, referenceTableRem, referenceTileRem, screenBox, unitsFor, unitsRem, type ColumnName } from "@/lib/ui/field-widths";
 import {
   isInUseBody,
@@ -1770,8 +1771,7 @@ export function ValueListModal({
               style={frameHeight === null ? undefined : { maxHeight: frameHeight }}
               data-value-list-table-frame=""
             >
-              <table {...fixedTable(columns, "text-sm min-w-full", tileFill)}>
-                <FixedColumns columns={columns} fill={tileFill} />
+              <FixedTable id={`value-list/${listKey}`} columns={columns} className="text-sm min-w-full" fill={tileFill}>
                 <thead className="sticky top-0 z-10 bg-cap text-left text-xs font-medium uppercase tracking-wide text-ink dark:bg-zinc-800 dark:text-zinc-300">
                   <tr>
                     {/* Slice #38.50: a header may take two lines; a row never does. */}
@@ -2093,7 +2093,7 @@ export function ValueListModal({
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </FixedTable>
             </div>
             </div>
           </div>

@@ -133,8 +133,8 @@ describe("one gap on every page: „Categorii Folosință”'s (Slice #39.88)", 
 
   it("every other list grows to the gap in its tile, the width going to its description or its name (Ask first 2)", () => {
     expect(MODAL).toContain('return columns.includes("valueText") ? "valueText" : columns[0];');
-    expect(MODAL).toContain('<table {...fixedTable(columns, "text-sm min-w-full", tileFill)}>');
-    expect(MODAL).toContain("<FixedColumns columns={columns} fill={tileFill} />");
+    // Slice 40.12: one piece, `FixedTable`, which also keeps a width the user dragged — taken from the fill column.
+    expect(MODAL).toContain('<FixedTable id={`value-list/${listKey}`} columns={columns} className="text-sm min-w-full" fill={tileFill}>');
     // „Indicative Tarla": 964 px in 1132 before, 1088 after — the 124 px to „Descriere".
     expect(referenceTableRem(unitsRem(7)) * 16).toBe(1088);
   });

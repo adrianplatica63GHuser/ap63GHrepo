@@ -73,7 +73,7 @@ describe("one line per row (#38.50)", () => {
     // #39.75: centred in a tile (`fill`).
     expect(MODAL).toContain('<div ref={columnRef} className={fill ? "mx-auto w-fit max-w-full" : "w-fit max-w-full"} data-value-list-frame="" data-tile-centred={fill ? "" : undefined}>');
     // #39.88: and, in a tile, filled to the standard gap (`tileFill`, reference-tiles.test.ts).
-    expect(MODAL).toContain('fixedTable(columns, "text-sm min-w-full", tileFill)');
+    expect(MODAL).toContain('<FixedTable id={`value-list/${listKey}`} columns={columns} className="text-sm min-w-full" fill={tileFill}>');
   });
 });
 

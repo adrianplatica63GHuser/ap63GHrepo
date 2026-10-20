@@ -1098,6 +1098,11 @@
     "hiddenColumns": {
       "right": "Mai sunt coloane la dreapta. Derulați spre dreapta ca să le vedeți.",
       "left": "Mai sunt coloane la stânga. Derulați spre stânga ca să le vedeți."
+    },
+    "columnWidth": {
+      "label": "Lățimea coloanei {name}",
+      "labelNumber": "Lățimea coloanei nr. {n}",
+      "hint": "Trageți ca să lățiți sau să îngustați coloana; dublu-clic îi dă înapoi lățimea obișnuită."
     }
   },
   "naturalPerson": {

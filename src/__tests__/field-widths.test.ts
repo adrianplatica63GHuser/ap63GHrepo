@@ -850,9 +850,10 @@ describe("tables at fixed column widths (#37.16)", () => {
   ];
 
   it.each(TABLES)("%s: a fixed table from COLUMN, as wide as its columns, every header marked", (_what, src) => {
-    const table = region(src, "<table", "</table>");
-    expect(table).toMatch(/^<table \{\.\.\.fixedTable\(/);
-    expect(table).toContain("<FixedColumns columns={");
+    // Slice 40.12: #37.16's `fixedTable` and `FixedColumns` are one piece, `FixedTable`, which also keeps the widths the
+    // user dragged (column-resize.tsx) — named per table in the browser's store.
+    const table = region(src, "<FixedTable", "</FixedTable>");
+    expect(table).toMatch(/^<FixedTable id="[a-z-/]+" columns=\{/);
     expect(table).not.toMatch(STRETCH);
     expect(table).not.toMatch(/whitespace-nowrap/);
     const head = region(table, "<thead", "</thead>");
@@ -973,14 +974,14 @@ describe("EVERY OTHER SCREEN FOLLOWS THE SAME RULE (#37.22)", () => {
     expect(outsideCards).not.toMatch(/grid-cols-\d|md:grid-cols|lg:grid-cols/);
   });
 
-  it.each(VIEWS.filter(([, src]) => /<table\b/.test(src)))("%s: every table is #37.16's — fixed, from COLUMN, every header marked", (_what, src) => {
-    for (const m of src.matchAll(/<table\b/g)) {
-      const table = region(src.slice(m.index), "<table", "</table>");
-      // Slice #39.89: „Grupuri" and „Ștampile" draw theirs through `adminListTable` / `AdminListColumns`
-      // (src/components/list/admin-list.tsx) — every column from COLUMN but the description, which takes what the frame
-      // leaves, so a scroll bar comes out of it rather than pushing the buttons out sideways.
-      expect(table).toMatch(/^<table \{\.\.\.(fixedTable|adminListTable)\(/);
-      expect(table).toMatch(/<(FixedColumns|AdminListColumns) columns=\{/);
+  it.each(VIEWS.filter(([, src]) => /<(table|FixedTable|AdminListTable)\b/.test(src)))("%s: every table is #37.16's — fixed, from COLUMN, every header marked", (_what, src) => {
+    for (const m of src.matchAll(/<(table|FixedTable|AdminListTable)\b/g)) {
+      const table = region(src.slice(m.index), `<${m[1]}`, `</${m[1]}>`);
+      // Slice #39.89: „Grupuri" and „Ștampile" draw theirs through `AdminListTable` (src/components/list/admin-list.tsx)
+      // — every column from COLUMN but the description, which takes what the frame leaves, so a scroll bar comes out of
+      // it rather than pushing the buttons out sideways. Slice 40.12: a bare `<table>` is none of these — both pieces
+      // draw the line between the columns and keep the widths the user dragged.
+      expect(table).toMatch(/^<(FixedTable|AdminListTable) id=(\{`[a-z-/${}A-Za-z]+`\}|"[a-z-/]+") columns=\{/);
       expect(table).not.toMatch(/\bw-full\b|whitespace-nowrap/);
       const head = region(table, "<thead", "</thead>");
       const ths = head.match(/<th\b/g) ?? [];
@@ -1152,8 +1153,7 @@ describe("the thirteen „Asociază …” screens: Căutare, Rezultate and Asoc
     expect(src).toMatch(/const SEARCH_UNITS = boxesUnits\(\["search(Name", "searchCode|Text)"\]\);/);
     expect(src).toMatch(/const RESULTS_UNITS = tableUnits\(COLUMNS\);/);
     expect(src).toMatch(/const ASSOCIATION_UNITS = boxesUnits\(\[("role")?\]\);/);
-    expect(src).toMatch(/fixedTable\(COLUMNS, undefined, RESULTS_FILL\)/);
-    expect(src).toMatch(/<FixedColumns columns=\{COLUMNS\} fill=\{RESULTS_FILL\} \/>/);
+    expect(src).toMatch(/<FixedTable id="[a-z-]+\/associate-[a-z]+" columns=\{COLUMNS\} fill=\{RESULTS_FILL\}>/);
     // Labels above: no 5.5rem label beside a box, no #37.22 column.
     expect(src).not.toMatch(/LABEL_STYLE|SCREEN_COLUMN/);
     expect(src).toMatch(/className=\{STACKED_FIELD_CLASS\} style=\{screenFieldStyle\("search(Name|Text)"\)\}/);
@@ -1223,14 +1223,14 @@ describe("the administration screens on the unit (Slice #37.35)", () => {
   // #38.14: „Etichete" is the cloud alone — no table.
   const LISTS = ["Utilizatori & Acces", "Grupuri", "Ștampile", "Istoricul calculelor"];
   it.each(ADMIN.filter(([w]) => LISTS.includes(w)))("%s: its table fills its tile", (what, src) => {
-    // Slice #39.89: „Grupuri" and „Ștampile" fill theirs as the frame's whole width (`adminListTable`, admin-list.tsx).
-    if (/<table \{\.\.\.adminListTable\(COLUMNS\)\}>/.test(src)) {
-      expect(src).toContain("<AdminListColumns columns={COLUMNS} fill={LIST_FILL} />");
+    // Slice #39.89: „Grupuri" and „Ștampile" fill theirs as the frame's whole width (`AdminListTable`, admin-list.tsx).
+    if (/<AdminListTable /.test(src)) {
+      expect(src).toMatch(/<AdminListTable id="(groups|stamps)" columns=\{COLUMNS\} fill=\{LIST_FILL\}>/);
       return;
     }
-    expect(src).toMatch(/<table \{\.\.\.fixedTable\(/);
-    for (const m of src.matchAll(/<table \{\.\.\.fixedTable\(([^)]*)\)\}/g)) {
-      expect([what, m[1].split(",").length]).toEqual([what, 3]);
+    expect(src).toMatch(/<FixedTable /);
+    for (const m of src.matchAll(/<FixedTable ([^>]*)>/g)) {
+      expect([what, / fill=\{[A-Za-z_]+\}$/.test(m[1])]).toEqual([what, true]);
     }
   });
 
@@ -1248,7 +1248,7 @@ describe("the home page as unit tiles, in the detail screens' frame (Slice #37.3
     expect(src).toMatch(/<UnitRow units=\{choice\.shown\.map\(\(k\) => HOME_UNITS\[k\]\)\}>/);
     expect(src).toMatch(/useTileChoice<HomeTile>\(HOME_TILE_REGISTRY\)/);
     expect(src).toMatch(/<TileSelector all=\{HOME_TILES\}/);
-    expect(src).toMatch(/fixedTable\(EXPIRING_COLUMNS, undefined, EXPIRING_FILL\)/);
+    expect(src).toMatch(/<FixedTable id="dashboard\/expiring" columns=\{EXPIRING_COLUMNS\} fill=\{EXPIRING_FILL\}>/);
     // The old card (rounded-xl, a grey header band) and #37.22's widths are gone.
     expect(src).not.toMatch(/rounded-xl|PANEL_REM|screenPanel\(|data-panel-row/);
     expect(3 * SCALE.M + 2).toBeLessThanOrEqual(unitsInnerRem(3));
@@ -1276,10 +1276,9 @@ describe("the value-list editors and the Form editor on the unit (Slice #37.37)"
     expect([what, src.match(/\bmin-w-48\b|(?<![\w-])w-full\b|(?<![\w-])w-(20|24|28|32|40|56)\b|max-w-\[240px\]|\btruncate\b|max-w-(2xl|3xl|5xl)/g) ?? []]).toEqual([what, []]);
     // #39.75: a tile's card fills its tile (`fill`), every other card is whole units.
     expect(src).toMatch(/style=\{(\{ \.\.\.)?(fill \? \{ width: "100%" \} : )?dialogCardStyle\(/);
-    for (const m of src.matchAll(/<table\b/g)) {
-      const table = region(src.slice(m.index), "<table", "</thead>");
-      expect([what, /^<table \{\.\.\.fixedTable\(/.test(table)]).toEqual([what, true]);
-      expect(table).toContain("<FixedColumns columns={");
+    expect([what, /<table\b/.test(src)]).toEqual([what, false]); // Slice 40.12: every table is `FixedTable`
+    for (const m of src.matchAll(/<FixedTable\b/g)) {
+      const table = region(src.slice(m.index), "<FixedTable", "</thead>");
       const ths = table.match(/<th\b/g) ?? [];
       expect([what, (table.match(/columnHead\(/g) ?? []).length >= ths.length]).toEqual([what, true]);
     }

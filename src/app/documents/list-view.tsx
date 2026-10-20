@@ -9,7 +9,8 @@ import { RecencyBadge } from "@/components/recency-badge";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { ArrowRight, CalendarClock, ChevronDown, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
-import { FixedColumns, ONE_LINE, cellTitle, columnHead, fixedTable } from "@/components/table/fixed-columns";
+import { ONE_LINE, cellTitle, columnHead } from "@/components/table/fixed-columns";
+import { FixedTable } from "@/components/table/column-resize";
 import { LIST_FRAME, LIST_HEAD, useListFit } from "@/components/list/list-fit";
 import { HiddenColumnSigns } from "@/components/list/hidden-column-signs";
 import { LIST_TOOLBAR, useListEdge } from "@/components/table/list-edge";
@@ -946,8 +947,7 @@ export function DocumentListView({
               {/* Slice #40.03: red „<" / „>" at the band's visible edges while columns are hidden that way. */}
               <HiddenColumnSigns />
               {/* Slice #38.57: the table fills its frame, which the toolbar may hold wider than the columns. */}
-              <table {...fixedTable(columns, "text-sm min-w-full")}>
-                <FixedColumns columns={columns} />
+              <FixedTable id="documents" columns={columns} className="text-sm min-w-full">
                 <thead className={LIST_HEAD}>
                   <tr>
                     {/* Slice 40.10: the badges\' column, without the select-all box — nothing on this list acts on a selection. */}
@@ -1048,7 +1048,7 @@ export function DocumentListView({
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </FixedTable>
             </div>
           </ListPreviewRow>
 

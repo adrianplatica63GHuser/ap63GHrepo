@@ -8,7 +8,8 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { PaginationControls } from "@/components/pagination-controls";
 import { NoRolesForTypeNote } from "@/components/forms/no-roles-for-type-note";
-import { FixedColumns, TABLE_FRAME, columnHead, fixedTable } from "@/components/table/fixed-columns";
+import { TABLE_FRAME, columnHead } from "@/components/table/fixed-columns";
+import { FixedTable } from "@/components/table/column-resize";
 import { AssociateRow, AssociateTile, useRecordCrumb } from "@/components/associate/associate-tiles";
 import { STACKED_FIELD_CLASS, STACKED_LABEL_CLASS, STACKED_ROW_CLASS } from "@/lib/ui/stacked";
 import { boxesUnits, screenBox, screenFieldStyle, tableUnits, type ColumnName } from "@/lib/ui/field-widths";
@@ -253,8 +254,7 @@ export function AssociatePersonView({ documentId, documentName, canConfigureRole
         ) : items.length === 0 ? (
           <p className="px-4 py-6 text-sm text-fade dark:text-zinc-400">{t("resultsEmpty")}</p>
         ) : (
-          <table {...fixedTable(COLUMNS, undefined, RESULTS_FILL)}>
-            <FixedColumns columns={COLUMNS} fill={RESULTS_FILL} />
+          <FixedTable id="documents/associate-person" columns={COLUMNS} fill={RESULTS_FILL}>
             <thead>
               <tr className="border-b border-card-rim dark:border-zinc-800">
                 <th className="px-3 py-2" aria-label="select" {...columnHead("select")} />
@@ -283,7 +283,7 @@ export function AssociatePersonView({ documentId, documentName, canConfigureRole
                 </tr>
               ))}
             </tbody>
-          </table>
+          </FixedTable>
         )}
       </div>
 

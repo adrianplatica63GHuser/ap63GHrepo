@@ -117,7 +117,8 @@ import {
   type ReclaimableKey,
   type TemplateEditorRow,
 } from "@/lib/documents/template-editor-rows";
-import { FixedColumns, columnHead, fixedTable } from "@/components/table/fixed-columns";
+import { columnHead } from "@/components/table/fixed-columns";
+import { FixedTable } from "@/components/table/column-resize";
 import { columnBoxStyle, columnsRem, dialogCardStyle, dialogUnits, type ColumnName } from "@/lib/ui/field-widths";
 
 /**
@@ -722,8 +723,7 @@ export function DocumentTypeFormEditor({
                     `overflow-y` to `auto` as well, which would make IT the
                     sticky containing block instead of the dialog body, and the
                     header below would stick to a box that never scrolls. */}
-                <table {...fixedTable(FE_COLUMNS, "border-collapse text-sm")}>
-                  <FixedColumns columns={FE_COLUMNS} />
+                <FixedTable id="document-type-form" columns={FE_COLUMNS} className="border-collapse text-sm">
                   <caption className="sr-only">{t("tableCaption", { type: typeName })}</caption>
                   <thead>
                     {/* Sticky: eight columns of near-identical text inputs, and
@@ -959,7 +959,7 @@ export function DocumentTypeFormEditor({
                       );
                     })}
                   </tbody>
-                </table>
+                </FixedTable>
               </div>
             )}
 

@@ -17,7 +17,8 @@ import {
   pageSlice,
   type SearchEntityType,
 } from "@/lib/search/interleave";
-import { FixedColumns, TABLE_FRAME, columnHead, fixedTable, wrapsIf } from "@/components/table/fixed-columns";
+import { TABLE_FRAME, columnHead, wrapsIf } from "@/components/table/fixed-columns";
+import { FixedTable } from "@/components/table/column-resize";
 import type { ColumnName } from "@/lib/ui/field-widths";
 
 /** Slice #37.16: the results' columns, each a fixed width from `COLUMN`. */
@@ -615,8 +616,7 @@ function ResultsTable({ results, truncatedTypes, searched, page, onPageChange }:
       <TruncationNotice types={truncatedTypes} />
 
       <div className={TABLE_FRAME}>
-        <table {...fixedTable(RESULT_COLUMNS)}>
-          <FixedColumns columns={RESULT_COLUMNS} />
+        <FixedTable id="global-search" columns={RESULT_COLUMNS}>
           <thead>
             <tr className="border-b border-zinc-100 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/50">
               <th className="px-4 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400" {...columnHead("entityType")}>{t("table.type")}</th>
@@ -710,7 +710,7 @@ function ResultsTable({ results, truncatedTypes, searched, page, onPageChange }:
               </tr>
             ))}
           </tbody>
-        </table>
+        </FixedTable>
       </div>
 
       {/* Slice #23.11.search — paging is over the already-fetched capped set

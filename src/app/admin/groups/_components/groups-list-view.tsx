@@ -14,7 +14,7 @@ import {
 import { buttonClass } from "@/lib/ui/button-styles";
 import { WRAPS, columnHead } from "@/components/table/fixed-columns";
 import { screenBox, screenPanel, tableUnits, type ColumnName } from "@/lib/ui/field-widths";
-import { ADMIN_LIST_FRAME, ADMIN_LIST_HEAD, ADMIN_LIST_PANEL, AdminListColumns, AdminListToolbar, adminListTable } from "@/components/list/admin-list";
+import { ADMIN_LIST_FRAME, ADMIN_LIST_HEAD, ADMIN_LIST_PANEL, AdminListTable, AdminListToolbar } from "@/components/list/admin-list";
 import { filterByWords } from "@/lib/search/fold-words";
 import { UnitRow } from "@/components/screen/unit-row";
 
@@ -294,8 +294,7 @@ export function GroupsListView({ about, fromMap = false }: { about?: ReactNode; 
 
       {/* Table — Slice #39.89: two thirds of the window at most, scrolling inside, its header on top. */}
       <div className={ADMIN_LIST_FRAME} data-admin-list-frame="">
-        <table {...adminListTable(COLUMNS)}>
-          <AdminListColumns columns={COLUMNS} fill={LIST_FILL} />
+        <AdminListTable id="groups" columns={COLUMNS} fill={LIST_FILL}>
           <thead className={ADMIN_LIST_HEAD}>
             <tr>
               <th className="px-4 py-2" {...columnHead("groupCode")}>{t("table.code")}</th>
@@ -369,7 +368,7 @@ export function GroupsListView({ about, fromMap = false }: { about?: ReactNode; 
               </tr>
             ))}
           </tbody>
-        </table>
+        </AdminListTable>
       </div>
 
       </section>

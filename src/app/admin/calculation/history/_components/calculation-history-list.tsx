@@ -5,7 +5,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { ArrowRight } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
-import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
+import { TABLE_FRAME, WRAPS, columnHead } from "@/components/table/fixed-columns";
+import { FixedTable } from "@/components/table/column-resize";
 import { screenPanel, tableUnits, type ColumnName } from "@/lib/ui/field-widths";
 import { UnitRow } from "@/components/screen/unit-row";
 import { DeleteRunButton } from "./delete-run";
@@ -102,8 +103,7 @@ export function CalculationHistoryList() {
   return (
     <ListTile>
     <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-white dark:border-zinc-800 dark:bg-zinc-900`}>
-      <table {...fixedTable(COLUMNS, undefined, LIST_FILL)}>
-        <FixedColumns columns={COLUMNS} fill={LIST_FILL} />
+      <FixedTable id="calculation-history" columns={COLUMNS} fill={LIST_FILL}>
         <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-fade dark:bg-zinc-800 dark:text-zinc-400">
           <tr>
             <th className="px-3 py-2" {...columnHead("code")}>{t("col.code")}</th>
@@ -170,7 +170,7 @@ export function CalculationHistoryList() {
             </tr>
           ))}
         </tbody>
-      </table>
+      </FixedTable>
     </div>
     </ListTile>
   );

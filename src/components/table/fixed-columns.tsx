@@ -9,28 +9,15 @@
  * instead of squeezing the rest. Its frame is `w-fit max-w-full
  * overflow-x-auto`: as wide as the table, scrolling when the window is not.
  *
+ * Slice 40.12: the table itself is `FixedTable` (`src/components/table/column-resize.tsx`), which also draws the line
+ * between the columns and lets the user drag a column wider or narrower in the band of names — #37.16's
+ * `fixedTable` and `FixedColumns` became that one piece. This file keeps the marks and classes the cells use.
+ *
  * Every header cell spreads `columnHead(name)`, which marks it for
  * `expectStableColumns` (`e2e/helpers/field-widths.ts`). A cell in a `wraps`
  * column carries `WRAPS` so a long name breaks inside its width.
  */
-import { COLUMN, columnRem, columnStyle, columnsStyle, fillColumnRem, rem, tileTableRem, type ColumnName } from "@/lib/ui/field-widths";
-
-/** The `<colgroup>`: one `<col>` per column shown, in order. */
-export function FixedColumns({ columns, fill }: { columns: readonly ColumnName[]; fill?: TileFill }) {
-  return (
-    <colgroup>
-      {columns.map((name, i) => (
-        <col
-          key={`${name}-${i}`}
-          style={fill && name === fill.column ? { width: rem(fillWidthRem(columns, fill)) } : columnStyle(name)}
-          // Slice #39.88: what the fill column gained over its own width, in rem — for the e2e checks that measure how
-          // closely a column follows its text (TC-VL-05 step 5).
-          data-fill-gain={fill && name === fill.column ? fillWidthRem(columns, fill) - columnRem(name) : undefined}
-        />
-      ))}
-    </colgroup>
-  );
-}
+import { COLUMN, type ColumnName } from "@/lib/ui/field-widths";
 
 /**
  * A table that fills a unit tile (Slice #37.34): `units` wide inside its frame,
@@ -42,21 +29,6 @@ export type TileFill = {
   /** Slice #39.88: the table's own width, where the tile's padding is not the panels' p-3 (Reference Data's p-5). */
   tableRem?: number;
 };
-
-/** The fill column's width: what the table's width leaves after the other columns. */
-function fillWidthRem(columns: readonly ColumnName[], fill: TileFill): number {
-  if (fill.tableRem === undefined) return fillColumnRem(columns, fill.units, fill.column);
-  return fill.tableRem - columns.filter((n) => n !== fill.column).reduce((sum, n) => sum + columnRem(n), 0);
-}
-
-/** The `<table>`'s own props: fixed layout, exactly as wide as `columns`. */
-export function fixedTable(columns: readonly ColumnName[], className = "text-sm", fill?: TileFill) {
-  return {
-    className: `table-fixed ${className}`,
-    style: fill ? { width: rem(fill.tableRem ?? tileTableRem(fill.units)) } : columnsStyle(columns),
-    "data-width-table": columns.join(" "),
-  };
-}
 
 /** A header cell's marks, for the e2e width check. */
 export function columnHead(name: ColumnName) {

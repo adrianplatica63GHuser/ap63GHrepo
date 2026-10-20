@@ -5,7 +5,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslations, useLocale } from "next-intl";
 import { CheckCircle, Clock, UserCheck, UserX, XCircle } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
-import { FixedColumns, TABLE_FRAME, WRAPS, columnHead, fixedTable } from "@/components/table/fixed-columns";
+import { TABLE_FRAME, WRAPS, columnHead } from "@/components/table/fixed-columns";
+import { FixedTable } from "@/components/table/column-resize";
 import { screenPanel, tableUnits, type ColumnName } from "@/lib/ui/field-widths";
 import { UnitRow } from "@/components/screen/unit-row";
 
@@ -296,8 +297,7 @@ function RequestTable({
 
   return (
     <div className={`${TABLE_FRAME} rounded-lg border border-wire`}>
-      <table {...fixedTable(columns, undefined, fill)}>
-        <FixedColumns columns={columns} fill={fill} />
+      <FixedTable id="users" columns={columns} fill={fill}>
         <thead className="bg-surface border-b border-wire">
           <tr>
             <th className="text-left px-4 py-2 font-semibold text-fade" {...columnHead("username")}>{t("table.username")}</th>
@@ -362,7 +362,7 @@ function RequestTable({
             </tr>
           ))}
         </tbody>
-      </table>
+      </FixedTable>
     </div>
   );
 }

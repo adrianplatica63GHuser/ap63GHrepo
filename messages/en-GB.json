@@ -1098,6 +1098,11 @@
     "hiddenColumns": {
       "right": "More columns to the right. Scroll right to see them.",
       "left": "More columns to the left. Scroll left to see them."
+    },
+    "columnWidth": {
+      "label": "Width of the column {name}",
+      "labelNumber": "Width of column {n}",
+      "hint": "Drag to widen or narrow the column; a double-click gives it its usual width back."
     }
   },
   "naturalPerson": {
