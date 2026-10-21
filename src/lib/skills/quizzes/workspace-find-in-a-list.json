@@ -53,37 +53,37 @@
           "id": "a2",
           "section": "start-lists",
           "ro": {
-            "question": "Bifați căsuța din capul tabelului unei liste. Ce rânduri ați selectat?",
-            "explanation": "Bifa din capul tabelului selectează rândurile paginii curente, nu ale întregii liste."
+            "question": "Pe „Acte”, coloana „Titlu” e prea îngustă pentru titlurile lungi. Cum o lățiți?",
+            "explanation": "Între coloane stă o linie subțire; în capul tabelului ea se poate trage. Trasă spre dreapta, lățește coloana din stânga ei, iar lățimea se păstrează pentru lista aceea în browserul acesta. Un dublu-clic pe linie îi dă înapoi lățimea obișnuită."
           },
           "en": {
-            "question": "You tick the box at the head of a list's table. Which rows have you selected?",
-            "explanation": "The tick box at the head of the table selects the rows of the current page, not of the whole list."
+            "question": "On „Acte”, the „Titlu” column is too narrow for the long titles. How do you widen it?",
+            "explanation": "A thin line stands between the columns; in the table's header it can be dragged. Dragged to the right, it widens the column on its left, and the width is kept for that list in this browser. A double-click on the line gives the column its usual width back."
           },
           "options": [
             {
               "id": "o1",
               "correct": true,
-              "ro": "Rândurile paginii curente",
-              "en": "The rows of the current page"
+              "ro": "Trageți spre dreapta, în capul tabelului, linia din dreapta coloanei",
+              "en": "Drag the line on the column's right to the right, in the table's header"
             },
             {
               "id": "o2",
               "correct": false,
-              "ro": "Toate rândurile listei, de pe toate paginile",
-              "en": "Every row of the list, on every page"
+              "ro": "Lărgiți fereastra: coloanele se lățesc singure",
+              "en": "Widen the window: the columns widen by themselves"
             },
             {
               "id": "o3",
               "correct": false,
-              "ro": "Rândurile găsite de căutare, pe toate paginile",
-              "en": "The rows the search found, on every page"
+              "ro": "Debifați celelalte coloane în „Câmpuri afișate”",
+              "en": "Untick the other columns in „Câmpuri afișate”"
             },
             {
               "id": "o4",
               "correct": false,
-              "ro": "Coloanele bifate în „Câmpuri afișate”",
-              "en": "The columns ticked in „Câmpuri afișate”"
+              "ro": "Nu se poate: lățimea coloanelor este fixă",
+              "en": "You cannot: the columns' widths are fixed"
             }
           ]
         },
@@ -124,11 +124,11 @@
           "section": "start-lists",
           "ro": {
             "question": "La marginea dreaptă a capului tabelului stau trei semne roșii „>”, unul sub altul. Ce vă spun?",
-            "explanation": "Cât timp în dreapta sunt coloane care nu se văd, la marginea dreaptă a capului tabelului stau trei „>” roșii; derulați lista spre dreapta ca să le vedeți. Sunt doar semne: o pâlnie de sub ele se apasă ca de obicei."
+            "explanation": "Cât timp în dreapta sunt coloane care nu se văd, la marginea dreaptă a capului tabelului stau trei „>” roșii. Țineți mouse-ul pe ele și un balon spune „Mai sunt coloane la dreapta. Derulați spre dreapta ca să le vedeți.”; un clic pe ele derulează lista spre dreapta."
           },
           "en": {
             "question": "Three red „>” stand one over another at the right edge of the table's header. What do they tell you?",
-            "explanation": "While there are columns out of sight on the right, three red „>” stand at the right edge of the table's header; scroll the list to the right to see them. They are only signs: a funnel under them is pressed as usual."
+            "explanation": "While there are columns out of sight on the right, three red „>” stand at the right edge of the table's header. Rest the mouse on them and a bubble says „Mai sunt coloane la dreapta. Derulați spre dreapta ca să le vedeți.” (more columns to the right; scroll right to see them); a click on them scrolls the list to the right."
           },
           "options": [
             {

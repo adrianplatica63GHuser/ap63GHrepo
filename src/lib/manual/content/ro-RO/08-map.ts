@@ -15,7 +15,7 @@ Ecranul se numește „Toate Proprietățile”. Harta se deschide potrivită as
 
 Sus, pe hartă, stau butoanele ei. „HARTĂ” și „SATELIT” aleg harta străzilor sau imaginea din satelit, ca pe fișa „Hartă” a unei proprietăți. Celelalte butoane sunt uneltele hărții, în trei grupuri despărțite de un spațiu de două ori mai mare decât cel dintre butoane:
 
-- cele care măsoară: „Unghiuri” și „Riglă” — un unghi și o distanță (secțiunea [[map-ruler]]); „Suprafața unei zone delimitate” și „Suprafața unei zone oarecare” — suprafața unei zone (secțiunea [[map-area]]);
+- cele care măsoară: „Unghiuri” și „Riglă” — un unghi și o distanță, dreaptă sau în zigzag (secțiunea [[map-ruler]]); „Suprafața unei zone delimitate” și „Suprafața unei zone oarecare” — suprafața unei zone (secțiunea [[map-area]]);
 - cele care grupează proprietățile: „Tarlale” — conturul fiecărei tarlale (secțiunea [[map-what-tarlale]]); „Grupuri” — alege ce proprietăți se văd (secțiunea [[map-what-groups]]); „Selectează” — alege proprietăți, ca să le puneți într-un grup (secțiunea [[map-select]]);
 - „Setări hartă” — distanța la care picăturile se unesc (secțiunea [[map-what-drops]]).
 
@@ -89,13 +89,16 @@ Rigla și unghiurile doar măsoară: nu schimbă nimic, iar ce măsurați nu se 
 
 ### 8.3.1 „Riglă” {#map-ruler-distance}
 
-„Riglă” măsoară distanța în linie dreaptă dintre două puncte.
+„Riglă” măsoară un drum în linie frântă — un zigzag — din punct în punct: câte un punct la fiecare clic, cu lungimea fiecărei laturi și totalul.
 
 1. Apăsați „Riglă”.
-2. Apăsați pe hartă în primul punct.
-3. Apăsați în al doilea punct. Pe hartă apare distanța dintre ele.
+2. Apăsați pe hartă în primul punct, apoi, pe rând, în fiecare punct al drumului. Cât mutați mouse-ul, lângă el se vede latura care se trage și totalul de până acum, de exemplu „+ 120.40 m · total 340.15 m”.
+3. Apăsați încă o dată ultimul punct ca să terminați. Fiecare latură își arată lungimea din total, de exemplu „120.40 m din 340.15 m”.
+4. Apăsați din nou „Riglă” ca să ștergeți măsurătoarea.
 
-Când apăsați aproape de colțul unei proprietăți, capătul riglei se fixează pe colț. Așa, o măsurătoare de la un colț la altul este exactă, nu cât de sigură v-a fost mâna.
+Pentru distanța dintre două puncte, apăsați primul punct, apoi de două ori al doilea. Cât timp rigla este apăsată, un dublu-clic pe hartă nu o mai mărește.
+
+Când apăsați aproape de colțul unei proprietăți, punctul riglei se fixează pe colț. Așa, o măsurătoare de la un colț la altul este exactă, nu cât de sigură v-a fost mâna.
 
 ### 8.3.2 „Unghiuri” {#map-ruler-angles}
 
@@ -167,7 +170,7 @@ Vreți să știți cât au împreună două terenuri alăturate, înainte de o o
 1. Deschideți harta proprietăților și apăsați „SATELIT”, ca să vedeți drumul.
 2. Apăsați „Riglă” (secțiunea [[map-ruler-distance]]).
 3. Apăsați colțul terenului cel mai apropiat de drum: rigla se fixează pe el.
-4. Apăsați pe marginea drumului și citiți distanța.
+4. Apăsați pe marginea drumului, apoi încă o dată în același punct, ca să terminați, și citiți distanța.
 
 ### 8.6.3 Găsiți o proprietate trecută de două ori {#map-example-duplicate}
 

@@ -1502,7 +1502,7 @@
         "title": "Measurements on map",
         "intro": "On the map of all properties, these four buttons measure. None of them saves anything.",
         "angles": "Shows the interior angle at the property corner you click. Pressing the button again turns it off.",
-        "ruler": "Measures the ground distance between two points: click the first point, then the second.",
+        "ruler": "Measures a zigzag on the ground: click the points in turn, then the last one again to finish; each side shows its length out of the total.",
         "areaDelimited": "The area of a zone bounded by property corners: pick the corners one after another; Backspace removes the last.",
         "areaFree": "The area of a zone drawn freely, as for a new property: a click for each corner, then a click on the first corner or „Done”; after that the corners can be dragged."
       },

@@ -528,6 +528,32 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     await page.screenshot({ path: `${dir}/list-fit.png` });
     await page.setViewportSize({ width: 1366, height: 768 });
 
+    // Figura 2.5 — 40.13: the line between two columns (40.12) dragged in the band of names, the picture taken while the
+    // mouse still holds it — the column on its left wider, the line darker. The same seed search; rows not the seed's
+    // blurred. The width is given back with a double-click, so nothing stays stored.
+    await page.evaluate(() => localStorage.setItem("ga40-col-property-v4", JSON.stringify(["tarlaSola", "parcela", "propertyType", "cadastralNumber"])));
+    await page.goto("/properties");
+    const rsearch = page.locator("main").getByRole("searchbox").first();
+    await expect(rsearch).toBeVisible({ timeout: 60_000 });
+    await rsearch.fill("Teren curți construcții");
+    await page.waitForTimeout(2500);
+    await blurNotSeed("/properties/");
+    // The line right of the second column — whichever it is in this column choice.
+    const handle = page.locator("main table [data-column-handle]").nth(1);
+    await expect(handle).toBeVisible({ timeout: 30_000 });
+    const hb = (await handle.boundingBox())!;
+    await page.mouse.move(hb.x + hb.width / 2, hb.y + hb.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(hb.x + hb.width / 2 + 60, hb.y + hb.height / 2, { steps: 6 });
+    await expect(handle).toHaveAttribute("data-dragging", "");
+    await blurRecent(page, S.recent);
+    // Not `still`: it moves the mouse away, which would drag the line with it.
+    await page.addStyleTag({ content: "nextjs-portal { display: none !important; }" });
+    await page.waitForTimeout(400);
+    await page.screenshot({ path: `${dir}/list-resize.png` });
+    await page.mouse.up();
+    await handle.dblclick();
+
     // Figura 5.2 — a property's screen, the map tiles hidden (no map load), and Figura 7.2 — its „Legături".
     await page.goto(`/properties/${property.id}`);
     await expect(tile("cadastral")).toBeVisible({ timeout: 60_000 });
@@ -690,7 +716,7 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     }
 
     for (const f of [
-      "dashboard", "sidebar", "breadcrumb", "list", "list-fit", "record", "make-room", "help",
+      "dashboard", "sidebar", "breadcrumb", "list", "list-fit", "list-resize", "record", "make-room", "help",
       "persons-new", "persons-tree", "companies-record", "properties-list", "properties-record",
       "documents-pages", "documents-sale", "documents-antecontract", "links-associate", "links-related", "links-versions",
       "tools-doc-type-engine", "tools-calculation", "import-steps", "reports-search", "admin-value-lists", "admin-settings",

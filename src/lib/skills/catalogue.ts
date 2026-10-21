@@ -162,8 +162,8 @@ export const SKILLS: readonly Skill[] = [
     path: "workspace",
     name: { ro: "Găsește un obiect într-o listă", en: "Find an object in a list" },
     description: {
-      ro: "Cauți în lista persoanelor, a proprietăților sau a actelor, treci de la o pagină la alta, alegi coloanele din „Câmpuri afișate”, filtrezi din pâlnia unei coloane, derulezi rândurile în chenarul listei, citești semnele roșii ale coloanelor ascunse și selectezi rânduri.",
-      en: "Search the list of persons, properties or documents, page through it, choose its columns in „Câmpuri afișate”, filter from a column's funnel, scroll the rows in the list's frame, read the red signs of hidden columns and select rows.",
+      ro: "Cauți în lista persoanelor, a proprietăților sau a actelor, treci de la o pagină la alta, alegi coloanele din „Câmpuri afișate”, filtrezi din pâlnia unei coloane, derulezi rândurile în chenarul listei, citești și apeși semnele roșii ale coloanelor ascunse și lățești sau îngustezi o coloană trăgând linia dintre coloane.",
+      en: "Search the list of persons, properties or documents, page through it, choose its columns in „Câmpuri afișate”, filter from a column's funnel, scroll the rows in the list's frame, read and press the red signs of hidden columns, and widen or narrow a column by dragging the line between the columns.",
     },
     predecessors: [],
     screens: ["natural-persons-list", "judicial-persons-list", "properties-list", "documents-list"],
@@ -399,8 +399,8 @@ export const SKILLS: readonly Skill[] = [
     path: "workspace",
     name: { ro: "Găsește orice cu „Căutare globală”", en: "Find anything with „Căutare globală”" },
     description: {
-      ro: "Cauți într-un singur loc persoanele, proprietățile și actele și deschizi ce ai găsit.",
-      en: "Search persons, properties and documents in one place and open what you found.",
+      ro: "Cauți într-un singur loc persoanele, proprietățile și actele, cu filtre care lucrează împreună (ȘI), și deschizi ce ai găsit.",
+      en: "Search persons, properties and documents in one place, with filters that work together (AND), and open what you found.",
     },
     predecessors: [],
     screens: ["admin-global-search"],
@@ -726,8 +726,8 @@ export const SKILLS: readonly Skill[] = [
       en: "Measure on the map: the ruler, the angles and an area",
     },
     description: {
-      ro: "Măsori o distanță cu rigla, citești unghiurile la colțuri și afli suprafața unei zone delimitate de colțurile unei proprietăți sau a unui poligon desenat liber, din „Instrumente → Măsurători pe hartă”.",
-      en: "Measure a distance with the ruler, read the angles at the corners, and find the area of a zone bounded by a property's corners or by a polygon drawn freely, from „Instrumente → Măsurători pe hartă”.",
+      ro: "Măsori cu rigla o distanță sau un drum în zigzag, punct cu punct, citești unghiurile la colțuri și afli suprafața unei zone delimitate de colțurile unei proprietăți sau a unui poligon desenat liber, din „Instrumente → Măsurători pe hartă”.",
+      en: "Measure a distance or a zigzag, point by point, with the ruler, read the angles at the corners, and find the area of a zone bounded by a property's corners or by a polygon drawn freely, from „Instrumente → Măsurători pe hartă”.",
     },
     predecessors: ["properties-read-the-map", "properties-draw-corners"],
     screens: ["properties-map"],

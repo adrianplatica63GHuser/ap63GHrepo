@@ -26,8 +26,7 @@ The sidebar, on the left, opens any screen of the application (Figure [[fig-side
 | Tools | DocTypeEngine, Calculation of a Side Road, Measurements on map, Groupings of properties, Navigation. |
 | Import | Property folders: bringing a whole folder into the archive. |
 | Reporting | Interactions, Inheritance trees, Global Search. |
-| Administration | Reference Data, Users & Access, Groups, Stamps, Tags. |
-| Settings | The application's thresholds, defaults and costs. |
+| Administration | Reference Data, Users & Access, Groups, Stamps, Tags and, last, Settings — the application's thresholds, defaults and costs. |
 | Help & learning | Help Information and this user manual. |
 
 A click on a section shows its screens, and a click on a screen opens it; the open screen stays marked in the bar. „Collapse sidebar” narrows the bar to one icon per section, to leave the screen more room, and „Expand sidebar” brings it back.
@@ -56,19 +55,27 @@ Each of the four lists — Natural Persons, Juridical Persons, Properties, Docum
 
 „Choose fields” chooses the list's columns: tick what you want to see and untick what you do not need (Figure [[fig-list]]). „Open”, on a row, opens the object; „Add new …”, above the table, creates a new one.
 
-The tick box at the head of the table selects the rows of the current page, not of the whole list.
+The lists have no tick boxes, neither on the rows nor at the head of the table: an object is opened from the list and deleted from its own screen.
 
 ![2.3 The list of natural persons, with „Choose fields” open](list.png){#fig-list}
 
 Under the list's top bar stands a row with the labels of the filters set and „Clear filters” — but only while a filter is set; with no filter, the table starts right under the bar.
 
-**The list fits the window.** When the window is not tall enough for the whole page of rows, the page no longer scrolls up and down: only the rows scroll, inside the list's frame, by its own scroll bar. The table's header, with the column names, the tick box and the funnels, stays at the top, and the row „Showing … of …” with „Page x of y” stands right under the frame, in sight. Only in a very short window, where not even the header and three rows would fit, does the page scroll again.
+**The list fits the window.** When the window is not tall enough for the whole page of rows, the page no longer scrolls up and down: only the rows scroll, inside the list's frame, by its own scroll bar. The table's header, with the column names and the funnels, stays at the top, and the row „Showing … of …” with „Page x of y” stands right under the frame, in sight. Only in a very short window, where not even the header and three rows would fit, does the page scroll again.
 
-**Hidden columns.** When the columns chosen are wider than the window, the list also scrolls sideways, by the scroll bar at the frame's bottom. While there are columns out of sight on the right, three red „>” stand one over another at the right edge of the table's header; while there are columns hidden on the left, three „<” stand at its left edge (Figure [[fig-list-fit]]). They are only signs: a funnel under them is pressed as usual. When every column fits, neither appears.
+**Hidden columns.** When the columns chosen are wider than the window, the list also scrolls sideways, by the scroll bar at the frame's bottom. While there are columns out of sight on the right, three red „>” stand one over another at the right edge of the table's header; while there are columns hidden on the left, three „<” stand at its left edge (Figure [[fig-list-fit]]). Rest the mouse on them and a bubble, under the table's header, says what they mean: „More columns to the right. Scroll right to see them.” or „More columns to the left. Scroll left to see them.”. A click on them scrolls the list that way, by nearly as much as shows of it — a little of what was in sight stays in sight —, so a funnel under the signs comes out from under them. They can be reached from the keyboard too, with Tab, and Enter presses them. When every column fits, neither appears.
 
 When you open an object from the list and come back with „Back”, the list is scrolled where you left it, down and sideways.
 
 ![2.4 The list of properties in a short, narrow window: the header at the top, „Page x of y” under the frame, and the red signs of the hidden columns at both edges](list-fit.png){#fig-list-fit}
+
+**The columns' widths.** A thin line stands between the columns, from the table's header down to the last row, in the colour of the lines between the rows. In the header the line can be grabbed: rest the mouse on it and the pointer becomes a two-headed arrow, and a bubble says „Drag to widen or narrow the column; a double-click gives it its usual width back.”. Dragged to the right, the line widens the column on its left; dragged to the left, it narrows it, as the mouse moves (Figure [[fig-list-resize]]). The table widens or narrows with it; no column gets narrower than room for the funnel and a few letters. While you drag, nothing under the mouse is pressed.
+
+The width chosen is kept for that list, in this browser, also after the page is reloaded; a column taken out in „Choose fields” finds its width again when you put it back. A double-click on the line gives the column its usual width back. From the keyboard, reach the line with Tab; the left and right arrows narrow or widen it a little at a time, and Home gives it its usual width back.
+
+The line is dragged the same way in every table of this kind: the association screens, „Global Search”, „Users & Access”, „Groups”, „Stamps”, the side-road calculation, the lists in „Reference Data” and the dashboard. Where the table fills a tile or a frame — „Groups”, „Stamps”, the association screens —, what one column gains the wide column, the description or the name, loses, and the table stays as wide as the tile; the wide column has no line of its own to drag.
+
+![2.5 The line between two columns, dragged in the table's header: the column on its left widens](list-resize.png){#fig-list-resize}
 
 ## 2.6 An object's screen: its tiles {#start-tiles}
 
@@ -81,9 +88,9 @@ An open object shows its data in tiles — panels with a name each (Figure [[fig
 - The object's system ID sits in the top right-hand corner of the first tile.
 - The button bar, the last thing on the screen, holds the pencil (edit), the save and the bin (delete). An icon button shows its name when the mouse passes over it.
 
-![2.5 A natural person's screen, with its tiles](record.png){#fig-record}
+![2.6 A natural person's screen, with its tiles](record.png){#fig-record}
 
-![2.6 A tile held over another: the one underneath has slid down to the first place it fits whole](make-room.png){#fig-make-room}
+![2.7 A tile held over another: the one underneath has slid down to the first place it fits whole](make-room.png){#fig-make-room}
 
 ## 2.7 The preview {#start-preview}
 
@@ -93,7 +100,7 @@ A linked object can be opened beside the one you are working on, with „Preview
 
 The „?” button at the end of the navigation bar opens the screen's help: what the screen is for and how it is worked (Figure [[fig-help]]). Where a gesture cannot be seen — a drag, a double-click — a small light bulb beside that place explains it. The help texts are written by the administrator, in „Help Information” (section [[admin-help]]).
 
-![2.7 A screen's help, opened from „?”](help.png){#fig-help}
+![2.8 A screen's help, opened from „?”](help.png){#fig-help}
 
 ## 2.9 Examples and use cases {#start-examples}
 

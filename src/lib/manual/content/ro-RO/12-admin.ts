@@ -5,7 +5,7 @@
 export const CHAPTER = `
 # 12 Administrare și Setări {#admin}
 
-Capitolul acesta este pentru cine îngrijește arhiva: listele din care aleg celelalte ecrane, conturile colegilor, grupurile, ștampilele și etichetele, textele de ajutor și setările aplicației. Ecranele lui stau în bara laterală: în secțiunea „Administrare” — „Date de referință”, „Utilizatori & Acces”, „Grupuri”, „Ștampile”, „Etichete” —, în „Setări” și, pentru textele de ajutor, în „Ajutor și învățare”.
+Capitolul acesta este pentru cine îngrijește arhiva: listele din care aleg celelalte ecrane, conturile colegilor, grupurile, ștampilele și etichetele, textele de ajutor și setările aplicației. Ecranele lui stau în bara laterală: în secțiunea „Administrare” — „Date de referință”, „Utilizatori & Acces”, „Grupuri”, „Ștampile”, „Etichete” și, ultimul, „Setări” — și, pentru textele de ajutor, în „Ajutor și învățare”.
 
 ## 12.1 Date de referință {#admin-reference-data}
 
@@ -168,7 +168,7 @@ Textele din spatele butonului „?” și sfaturile cu bec de pe ecrane (secțiu
 
 ## 12.5 Setări {#admin-settings}
 
-„Setări” se deschide din bara laterală (Figura [[fig-admin-settings]]). Ca pe ecranul unui obiect, căsuțele de sus aleg ce părți se văd, iar „Implicit” le aduce înapoi (secțiunea [[start-tiles]]). Părțile sunt „Contul meu”, „Praguri de timp”, „Copii de siguranță”, „Despre” și, în grupa „Costuri”, câte una pentru fiecare furnizor care poate costa bani.
+„Setări” se deschide din bara laterală, ultimul în secțiunea „Administrare” (Figura [[fig-admin-settings]]). Ca pe ecranul unui obiect, căsuțele de sus aleg ce părți se văd, iar „Implicit” le aduce înapoi (secțiunea [[start-tiles]]). Părțile sunt „Contul meu”, „Praguri de timp”, „Copii de siguranță”, „Despre” și, în grupa „Costuri”, câte una pentru fiecare furnizor care poate costa bani.
 
 ![12.2 „Setări”](admin-settings.png){#fig-admin-settings}
 

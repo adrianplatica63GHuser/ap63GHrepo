@@ -131,7 +131,9 @@ De la nivelul din mijloc, fiecare persoană care apare pe acte poartă o insign�
 
 ### 11.3.1 Filtrele {#reports-search-filters}
 
-Completați unul sau mai multe filtre, apoi apăsați „Caută”. Toate filtrele puse se aplică împreună: un rezultat trebuie să le îndeplinească pe toate.
+Completați unul sau mai multe filtre, apoi apăsați „Caută”. Toate filtrele puse se aplică împreună (ȘI): un rezultat trebuie să le îndeplinească pe toate. De exemplu, „Tip entitate: Proprietate” împreună cu „Etichetă: prioritar” găsesc doar proprietățile cu eticheta „prioritar” — nu și persoanele cu această etichetă, nici proprietățile fără ea. Explicația de sub titlul ecranului dă același exemplu.
+
+Casetele filtrelor sunt înguste, câte mai multe pe un rând. Fiecare arată în ea un exemplu scurt, de pildă „Popescu”; țineți mouse-ul pe casetă și îl citiți întreg, de pildă „ex. Popescu sau PPERS00012”.
 
 - „Căutare nume / cod” — o parte din nume sau din cod, de exemplu „Popescu”.
 - „Tip entitate” — „Orice”, „Persoană”, „Proprietate” sau „Document”. „Subtip persoană” alege între „Persoană fizică” și „Persoană juridică”.

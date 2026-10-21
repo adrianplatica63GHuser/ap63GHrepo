@@ -131,7 +131,9 @@ From the middle level, each person who appears on documents carries a badge with
 
 ### 11.3.1 The filters {#reports-search-filters}
 
-Fill in one or more filters, then press „Search”. All the filters set apply together: a result must meet every one of them.
+Fill in one or more filters, then press „Search”. All the filters set apply together (AND): a result must meet every one of them. For example, „Entity type: Property” together with „Tag: priority” finds only the properties tagged „priority” — not the persons with that tag, nor the properties without it. The explanation under the screen's title gives the same example.
+
+The filter boxes are narrow, several to a row. Each shows a short example inside it, for instance „Popescu”; rest the mouse on the box and you read it whole, for instance „e.g. Popescu or PPERS00012”.
 
 - „Name / code search” — part of a name or of a code, for instance „Popescu”.
 - „Entity type” — „Any”, „Person”, „Property” or „Document”. „Person subtype” chooses between „Natural person” and „Juridical person”.

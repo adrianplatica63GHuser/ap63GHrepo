@@ -5,7 +5,7 @@
 export const CHAPTER = `
 # 12 Administration and Settings {#admin}
 
-This chapter is for whoever looks after the archive: the lists the other screens choose from, colleagues' accounts, groups, stamps and tags, the help texts and the application's settings. Its screens are in the sidebar: in the „Administration” section — „Reference Data”, „Users & Access”, „Groups”, „Stamps”, „Tags” —, in „Settings” and, for the help texts, in „Help & learning”.
+This chapter is for whoever looks after the archive: the lists the other screens choose from, colleagues' accounts, groups, stamps and tags, the help texts and the application's settings. Its screens are in the sidebar: in the „Administration” section — „Reference Data”, „Users & Access”, „Groups”, „Stamps”, „Tags” and, last, „Settings” — and, for the help texts, in „Help & learning”.
 
 ## 12.1 Reference data {#admin-reference-data}
 
@@ -168,7 +168,7 @@ The texts behind the „?” button and the light-bulb hints on the screens (sec
 
 ## 12.5 Settings {#admin-settings}
 
-„Settings” opens from the sidebar (Figure [[fig-admin-settings]]). As on an object's screen, the boxes at the top choose which parts are shown, and „Default” brings them back (section [[start-tiles]]). The parts are „My account”, „Time thresholds”, „Backups”, „About” and, in the „Costs” group, one for each provider that can cost money.
+„Settings” opens from the sidebar, the last item of the „Administration” section (Figure [[fig-admin-settings]]). As on an object's screen, the boxes at the top choose which parts are shown, and „Default” brings them back (section [[start-tiles]]). The parts are „My account”, „Time thresholds”, „Backups”, „About” and, in the „Costs” group, one for each provider that can cost money.
 
 ![12.2 „Settings”](admin-settings.png){#fig-admin-settings}
 

@@ -1502,7 +1502,7 @@
         "title": "Măsurători pe hartă",
         "intro": "Pe harta tuturor proprietăților, aceste patru butoane măsoară. Niciunul nu salvează nimic.",
         "angles": "Arată unghiul interior la colțul de proprietate pe care îl apăsați. Încă o apăsare pe buton îl oprește.",
-        "ruler": "Măsoară distanța pe teren dintre două puncte: apăsați primul punct, apoi al doilea.",
+        "ruler": "Măsoară pe teren un drum în zigzag: apăsați punctele pe rând, apoi încă o dată pe ultimul ca să terminați; fiecare latură își arată lungimea din total.",
         "areaDelimited": "Suprafața zonei delimitate de colțuri de proprietăți: alegeți colțurile unul după altul; Backspace îl scoate pe ultimul.",
         "areaFree": "Suprafața unei zone desenate liber, ca la o proprietate nouă: un clic pentru fiecare colț, apoi un clic pe primul colț sau „Gata”; după aceea colțurile se pot trage."
       },

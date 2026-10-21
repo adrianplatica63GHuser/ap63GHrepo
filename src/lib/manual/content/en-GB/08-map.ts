@@ -15,7 +15,7 @@ The screen is called „All Properties”. The map opens fitted so that every pr
 
 At the top of the map are its buttons. „STR” and „SAT” choose the street map or the satellite image, as on a property's „Map” tile. The other buttons are the map's tools, in three groups set apart by a space twice the one between the buttons:
 
-- the ones that measure: „Angles” and „Ruler” — an angle and a distance (section [[map-ruler]]); „Area of a delimited zone” and „Area of any zone” — the area of a zone (section [[map-area]]);
+- the ones that measure: „Angles” and „Ruler” — an angle and a distance, straight or zigzag (section [[map-ruler]]); „Area of a delimited zone” and „Area of any zone” — the area of a zone (section [[map-area]]);
 - the ones that group the properties: „Tarlale” — each tarla's outline (section [[map-what-tarlale]]); „Groups” — chooses which properties are shown (section [[map-what-groups]]); „Select” — picks properties, to put them in a group (section [[map-select]]);
 - „Map settings” — the distance at which drops merge (section [[map-what-drops]]).
 
@@ -89,13 +89,16 @@ The ruler and the angles only measure: they change nothing, and what you measure
 
 ### 8.3.1 „Ruler” {#map-ruler-distance}
 
-„Ruler” measures the straight-line distance between two points.
+„Ruler” measures a broken line — a zigzag — from point to point: a point at each click, with each side's length and the total.
 
 1. Press „Ruler”.
-2. Click the map at the first point.
-3. Click at the second point. The distance between them appears on the map.
+2. Click the map at the first point, then at each point of the way in turn. As you move the mouse, beside it you see the side being drawn and the total so far, for instance „+ 120.40 m · 340.15 m in all”.
+3. Click the last point once more to finish. Each side shows its length out of the total, for instance „120.40 m of 340.15 m”.
+4. Press „Ruler” again to clear the measurement.
 
-When you click close to a property's corner, the end of the ruler snaps to the corner. That way a measurement from one corner to another is exact, not as steady as your hand was.
+For the distance between two points, click the first point, then twice the second. While the ruler is pressed, a double-click on the map no longer zooms in.
+
+When you click close to a property's corner, the ruler's point snaps to the corner. That way a measurement from one corner to another is exact, not as steady as your hand was.
 
 ### 8.3.2 „Angles” {#map-ruler-angles}
 
@@ -167,7 +170,7 @@ You want to know how much two adjoining plots measure together, before an offer.
 1. Open the properties map and press „SAT”, to see the road.
 2. Press „Ruler” (section [[map-ruler-distance]]).
 3. Click the plot's corner nearest the road: the ruler snaps to it.
-4. Click the edge of the road and read the distance.
+4. Click the edge of the road, then once more at the same point, to finish, and read the distance.
 
 ### 8.6.3 Find a property entered twice {#map-example-duplicate}
 

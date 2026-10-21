@@ -514,19 +514,19 @@
           "id": "b4",
           "section": "map-ruler-distance",
           "ro": {
-            "question": "Ciprian vrea lungimea exactă a laturii dinspre drum a terenului lui Andrei Munteanu, de la un colț la celălalt. Cum lucrează cu „Riglă”?",
-            "explanation": "Apăsați „Riglă”, apoi lângă primul colț și lângă al doilea: capetele riglei se fixează pe colțuri, așa că măsurătoarea de la colț la colț este exactă."
+            "question": "Ciprian vrea lungimea gardului de pe două laturi ale terenului lui Andrei Munteanu, din colț în colț până la al treilea colț. Cum lucrează cu „Riglă”?",
+            "explanation": "„Riglă” măsoară un zigzag: câte un punct la fiecare clic, iar încă un clic pe ultimul punct îl termină. Punctele apăsate lângă colțuri se fixează pe ele, iar fiecare latură își arată lungimea din total, de exemplu „120.40 m din 340.15 m”."
           },
           "en": {
-            "question": "Ciprian wants the exact length of the road-side boundary of Andrei Munteanu's plot, from one corner to the other. How does he work with „Riglă”?",
-            "explanation": "Press „Riglă”, then near the first corner and near the second: the ruler's ends snap to the corners, so the corner-to-corner measurement is exact."
+            "question": "Ciprian wants the length of the fence on two sides of Andrei Munteanu's plot, from corner to corner to the third corner. How does he work with „Riglă”?",
+            "explanation": "„Riglă” (ruler) measures a zigzag: a point at each click, and the last point clicked again finishes it. Points clicked near corners snap to them, and each side shows its length out of the total, for instance „120.40 m din 340.15 m”."
           },
           "options": [
             {
               "id": "o1",
               "correct": false,
-              "ro": "Trage cu mouse-ul de-a lungul laturii, de la un capăt la altul.",
-              "en": "He drags the mouse along the side, from one end to the other."
+              "ro": "Trage cu mouse-ul de-a lungul laturilor, de la un capăt la altul.",
+              "en": "He drags the mouse along the sides, from one end to the other."
             },
             {
               "id": "o2",
@@ -537,8 +537,14 @@
             {
               "id": "o3",
               "correct": true,
-              "ro": "Apasă lângă un colț, apoi lângă celălalt; rigla se fixează pe ele.",
-              "en": "He clicks near one corner, then near the other; the ruler snaps to them."
+              "ro": "Apasă cele trei colțuri pe rând, apoi încă o dată pe ultimul; fiecare latură își arată lungimea din total.",
+              "en": "He clicks the three corners in turn, then the last one again; each side shows its length out of the total."
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Măsoară fiecare latură separat: rigla ține doar două puncte.",
+              "en": "He measures each side separately: the ruler holds only two points."
             }
           ]
         },
