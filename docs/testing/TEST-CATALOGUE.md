@@ -46,11 +46,13 @@ just been written stays at `confirmed`, with its `Spec` column filled in; it mov
 is never marked `automated` on the strength of a spec that has not run. If the run is
 red, fixing the spec comes before any new case.
 
-**One stated exception, and only one: TC-AUTH-01 is promoted without being driven.**
+**Two stated exceptions, and only two: TC-AUTH-01 and TC-LAYOUT-07 are promoted without being driven.**
 Claude is not allowed to type a password into a field, so its login steps can never be
 driven by hand; `e2e/auth.setup.ts` performs them on every run from `.env`, and the spec
-asserts what the case asserts after login. Its green run is its own proof. The exception
-is also written, with its reason, in `PROMOTED_WITHOUT_DRIVING` in
+asserts what the case asserts after login. Its green run is its own proof. TC-LAYOUT-07
+(Slice 40.14) asserts that a scroll bar never blinks for a paint or two after a resize —
+16–33 ms, which an eye sees and no reading by hand afterwards can; its spec reads every
+paint. Each exception is also written, with its reason, in `PROMOTED_WITHOUT_DRIVING` in
 `src/lib/testing/catalogue-map.ts` — the guard below refuses a spec on any other row that
 is not `confirmed` — so it cannot become a precedent by accident.
 
@@ -193,6 +195,7 @@ fixed fixture where the existing one will do.
 | [TC-LAYOUT-04](cases/TC-LAYOUT-04.md) | „Recente": o singură bară, pliată, deasupra „Schimbă parola" / „Ieșire" | layout | happy | — | `automated` | 2026-10-09 | `e2e/layout/recent-one-bar.spec.ts` |
 | [TC-LAYOUT-05](cases/TC-LAYOUT-05.md) | Cele patru liste: înguste, câte un rând pe linie, butoanele unul lângă altul | layout | happy | — | `automated` | 2026-10-18 | `e2e/layout/domain-lists-one-line.spec.ts` |
 | [TC-LAYOUT-06](cases/TC-LAYOUT-06.md) | Linia dintre coloane: trasă în banda numelor, schimbă lățimea coloanei | layout | happy | — | `confirmed` | 2026-10-20 | `e2e/layout/column-resize.spec.ts` |
+| [TC-LAYOUT-07](cases/TC-LAYOUT-07.md) | Barele de derulare ale listelor nu clipesc când fereastra e mărită, maximizată sau micșorată | layout | happy | — | `automated` | 2026-10-21 | `e2e/layout/list-scrollbars-settle.spec.ts` |
 | [TC-TILES-05](cases/TC-TILES-05.md) | Previzualizare: cumpărătorul alături de act, cel mult două, edit nesalvat neatins | tiles | happy | — | `driven` | 2026-10-01 | — |
 | [TC-TILES-06](cases/TC-TILES-06.md) | Previzualizare din liste: înregistrarea alături de tabel, cel mult două | tiles | happy | — | `driven` | 2026-09-29 | — |
 | [TC-TILES-07](cases/TC-TILES-07.md) | Unde stau părțile la deschidere: pagina actului la dreapta; harta, colțurile și Street View ale proprietății într-o coloană la dreapta | tiles | happy | — | `automated` | 2026-10-04 | `e2e/tiles/tile-placement.spec.ts` |
