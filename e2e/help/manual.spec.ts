@@ -26,6 +26,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { test, expect, type Page } from "../helpers/test";
 import { openSection, sidebar } from "../helpers/sidebar";
+import { setLook } from "../helpers/theme";
 import { readZipStore } from "../../src/lib/docx/zip-store";
 import {
   E2E_MARKER,
@@ -299,6 +300,22 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     await still(page);
     await sidebar(page).locator("xpath=ancestor::aside").screenshot({ path: `${dir}/sidebar.png` });
 
+    // Figura 2.2 — 40.27: the dashboard with „Mod întunecat" ticked (40.19); its lists blurred as in Figura 1.1. The
+    // look is put back to light at once, so every other figure is light.
+    await page.goto("/");
+    await expect(page.getByText(S.recentActivity, { exact: false }).first()).toBeVisible({ timeout: 60_000 });
+    await setLook(page, "dark");
+    await page.waitForTimeout(1000);
+    await page.evaluate((f) => {
+      document
+        .querySelectorAll<HTMLElement>('[data-panel="expiring-documents"] tbody, [data-panel="recent-activity"] li')
+        .forEach((el) => (el.style.filter = f));
+    }, BLUR);
+    await blurRecent(page, S.recent);
+    await still(page);
+    await page.screenshot({ path: `${dir}/dark.png` });
+    await setLook(page, "light");
+
     // Figura 2.2 — the navigation bar, on a seed person's screen.
     await page.goto(`/natural-persons/${person.id}`);
     const bar = page.getByRole("navigation", { name: S.breadcrumb }).filter({ visible: true });
@@ -554,6 +571,20 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     await page.screenshot({ path: `${dir}/list-resize.png` });
     await page.mouse.up();
     await handle.dblclick();
+
+    // Figura 2.7 — 40.27: a column moved by its name (40.25), the picture taken while the mouse holds it: the name
+    // half-transparent under the pointer and the navy line where it will land. Escape then cancels, so no order is kept.
+    const nick = page.locator('main thead th[data-col-drag="nickname"]');
+    const nb = (await nick.boundingBox())!;
+    const pb = (await page.locator('main thead th[data-col-drag="parcela"]').boundingBox())!;
+    await page.mouse.move(nb.x + nb.width / 2, nb.y + nb.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(pb.x + pb.width - 4, nb.y + nb.height / 2 + 6, { steps: 10 });
+    await expect(page.locator("[data-column-drop-line]")).toBeVisible({ timeout: 5_000 });
+    await page.waitForTimeout(300);
+    await page.screenshot({ path: `${dir}/list-drag.png` });
+    await page.keyboard.press("Escape");
+    await page.mouse.up();
 
     // Figura 5.2 — a property's screen, the map tiles hidden (no map load), and Figura 7.2 — its „Legături".
     await page.goto(`/properties/${property.id}`);
