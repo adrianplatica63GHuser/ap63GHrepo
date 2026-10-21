@@ -199,6 +199,7 @@ fixed fixture where the existing one will do.
 | [TC-LAYOUT-05](cases/TC-LAYOUT-05.md) | Cele patru liste: înguste, câte un rând pe linie, butoanele unul lângă altul | layout | happy | — | `automated` | 2026-10-18 | `e2e/layout/domain-lists-one-line.spec.ts` |
 | [TC-LAYOUT-06](cases/TC-LAYOUT-06.md) | Linia dintre coloane: trasă în banda numelor, schimbă lățimea coloanei | layout | happy | — | `confirmed` | 2026-10-20 | `e2e/layout/column-resize.spec.ts` |
 | [TC-LAYOUT-07](cases/TC-LAYOUT-07.md) | Barele de derulare ale listelor nu clipesc când fereastra e mărită, maximizată sau micșorată | layout | happy | — | `automated` | 2026-10-21 | `e2e/layout/list-scrollbars-settle.spec.ts` |
+| [TC-LAYOUT-08](cases/TC-LAYOUT-08.md) | O coloană trasă de nume în banda gri: rândurile o urmează, ordinea rămâne, „Ordinea implicită” o pune la loc | layout | happy | — | `confirmed` | 2026-10-21 | `e2e/layout/column-order.spec.ts` |
 | [TC-TILES-05](cases/TC-TILES-05.md) | Previzualizare: cumpărătorul alături de act, cel mult două, edit nesalvat neatins | tiles | happy | — | `driven` | 2026-10-01 | — |
 | [TC-TILES-06](cases/TC-TILES-06.md) | Previzualizare din liste: înregistrarea alături de tabel, cel mult două | tiles | happy | — | `driven` | 2026-09-29 | — |
 | [TC-TILES-07](cases/TC-TILES-07.md) | Unde stau părțile la deschidere: pagina actului la dreapta; harta, colțurile și Street View ale proprietății într-o coloană la dreapta | tiles | happy | — | `automated` | 2026-10-04 | `e2e/tiles/tile-placement.spec.ts` |

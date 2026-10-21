@@ -57,9 +57,11 @@ describe("the Properties list (Slice #37.61)", () => {
   it("has no „Cod” column; Poreclă is always the first after the checkbox (#37.72)", () => {
     // Slice #37.72 had ["selectBadges", "propertyNickname", …, "openPreview"]; Slice #38.57: the list's own columns.
     // Slice 40.24: no badges' column — Poreclă is the first column (was `["listBadges", "listPropertyNickname", …]`).
-    expect(VIEW).toMatch(/const columns: ColumnName\[\] = \["listPropertyNickname", \.\.\.shownCols\.map\(\(c\) => c\.column\), "listRowActions"\];/);
+    // Slice 40.25: first by default — the columns follow the order dragged (`useColumnOrder`), Poreclă its fixed one.
+    expect(VIEW).toContain('const FIXED_COLUMNS: ColumnName[] = ["listPropertyNickname"];');
+    expect(VIEW).toContain('const columns: ColumnName[] = [...order.keys.map(columnOf), "listRowActions"];');
     // #39.83: through the band's shared cell — was `<th … {...columnHead("listPropertyNickname")}>{t("table.nickname")}`.
-    expect(VIEW).toContain('<ListHeadCell column="listPropertyNickname" name={tHead("nickname")} full={t("table.nickname")} />');
+    expect(VIEW).toContain('<ListHeadCell key={key} column="listPropertyNickname" name={tHead("nickname")} full={t("table.nickname")} drag={drag.headProps(key)} />');
     expect(VIEW).not.toMatch(/columnHead\("code"\)/);
   });
 });

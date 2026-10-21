@@ -67,7 +67,8 @@ describe("the four lists, one line per row (#38.57)", () => {
   it("no badges' column on the four lists; the badges after the first named column's text (40.24)", () => {
     const FIRST = { "natural-persons": "listPersonName", "judicial-persons": "listCompanyName", properties: "listPropertyNickname", documents: "listDocumentType" } as const;
     for (const [l, first] of Object.entries(FIRST) as [keyof typeof FIRST, string][]) {
-      expect([l, VIEW[l]]).toEqual([l, expect.stringMatching(new RegExp(`(columns|COLUMNS): ColumnName\\[\\] = \\["${first}"`))]);
+      // Slice 40.25: first by default — the order can be dragged since, so the list's fixed columns are what is pinned.
+      expect([l, VIEW[l]]).toEqual([l, expect.stringMatching(new RegExp(`const FIXED_COLUMNS: ColumnName\\[\\] = \\["${first}"`))]);
       expect(VIEW[l]).not.toMatch(/listSelectPerson|listBadges|"selectNew"|data-spills-into-padding|data-select-badges/);
       expect(VIEW[l]).toMatch(/<FirstCellText\s+badges=/);
     }
