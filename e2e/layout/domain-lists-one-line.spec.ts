@@ -129,10 +129,10 @@ async function reading(page: Page) {
       .some((b) => b.width > 0 && b.top < g.bottom && b.bottom > g.top && b.right > g.left + 1);
     const toolbar = document.querySelector<HTMLElement>("[data-list-toolbar]")!.getBoundingClientRect().width;
     // #39.24: the gap from the row's box to its name's first letter, and the header's box over the rows'.
+    // Slice 40.24: no box and no badges' column any more — the gap is measured only where a box is.
     const box = rows[0].querySelector<HTMLElement>("input[type=checkbox]")?.getBoundingClientRect() ?? null;
-    const text = [...rows[0].cells[1].childNodes].find((n) => (n.textContent ?? "").trim())!;
     const range = document.createRange();
-    range.selectNodeContents(text);
+    if (box) range.selectNodeContents([...rows[0].cells[1].childNodes].find((n) => (n.textContent ?? "").trim())!);
     const headBox = table.querySelector<HTMLElement>("thead input[type=checkbox]")?.getBoundingClientRect() ?? null;
     return {
       rows: rows.length,
@@ -188,6 +188,14 @@ test.describe("TC-LAYOUT-05 — cele patru liste, câte un rând pe linie", () =
           });
           expect({ width, list: list.path, ...fit }).toEqual({ width, list: list.path, widthsAgree: true, hover: true });
           await expect(search).toHaveAttribute("title", list.search);
+          // Step 1a (Slice 40.24): no column before the first named one — the band's first cell has a name — and this
+          // fresh record's „Nou!" sits in its row's first cell, after the text.
+          const first = await page.evaluate(() => {
+            const th = document.querySelector("main table[data-width-table] thead th")!;
+            const td = document.querySelector("main table[data-width-table] tbody tr td")!;
+            return { named: th.querySelector("[data-head-text]") !== null, badge: td.querySelector("[data-row-badges]")?.textContent ?? "" };
+          });
+          expect({ width, list: list.path, ...first }).toEqual({ width, list: list.path, named: true, badge: expect.stringContaining("Nou!") });
           const h = await band(page);
           expect({ width, list: list.path, ...h }).toEqual({
             width, list: list.path, cells: list.path === "/properties" ? 5 : 6, wrong: [], forcedOnTwo: true,

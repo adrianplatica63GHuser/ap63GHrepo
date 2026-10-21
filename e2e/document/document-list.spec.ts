@@ -191,7 +191,7 @@ test.describe("TC-DOC-08 — lista actelor", () => {
       // „Achitat integral": only such contracts; nothing on the first row moved (#37.83).
       await value.selectOption({ label: (await value.locator("option").filter({ hasText: /^Achitat integral/ }).textContent())! });
       await expect(table.locator("tbody tr").first()).toContainText("CVC", { timeout: 30_000 }); // #37.95: the short name
-      expect(new Set(await table.locator("tbody tr td:nth-child(2)").allTextContents())).toEqual(new Set(["CVC"]));
+      expect(new Set(await table.locator("tbody tr td:nth-child(1) [data-first-cell] > span:first-child").allTextContents())).toEqual(new Set(["CVC"]));
       const moved = await firstRow();
       expect(moved.map((r) => [Math.round(r.x), Math.round(r.y)])).toEqual(row6.map((r) => [Math.round(r.x), Math.round(r.y)]));
 
@@ -206,7 +206,7 @@ test.describe("TC-DOC-08 — lista actelor", () => {
       await expect(main.locator('[data-toolbar-row="first"] [data-filter-fixed] [data-custom-field-group]')).toHaveCount(1); // #40.01; #39.84 read `[data-filter-bar] [data-filter-fixed]`
       await expect(key).toBeDisabled();
       await expect(sign).toHaveAttribute("data-custom-field-sign", "off");
-      await expect.poll(async () => new Set(await table.locator("tbody tr td:nth-child(2)").allTextContents()), { timeout: 30_000 }).toEqual(new Set(["Adeverință"]));
+      await expect.poll(async () => new Set(await table.locator("tbody tr td:nth-child(1) [data-first-cell] > span:first-child").allTextContents()), { timeout: 30_000 }).toEqual(new Set(["Adeverință"]));
     } finally {
       await removeRecord(page.request, "document", documentId);
       await removeRecord(page.request, "document", contractId);

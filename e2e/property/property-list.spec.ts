@@ -64,7 +64,7 @@ test.describe("TC-PROP-06 — lista proprietăților", () => {
       await search.fill(MARK);
       const table = main.locator("table").first();
       await expect(table.locator("tbody tr").filter({ hasText: NAME })).toHaveCount(1, { timeout: 30_000 });
-      await expect(table.locator("thead th")).toHaveText(["", "Poreclă", "Tip Prop.", ""]); // 40.20: short names
+      await expect(table.locator("thead th")).toHaveText(["Poreclă", "Tip Prop.", ""]); // 40.20: short names; 40.24: no empty first column
       await expect(table.getByRole("columnheader", { name: /^cod$/i })).toHaveCount(0);
       expect((await table.innerText()).match(/\bPROP\d{3,}\b/g) ?? []).toEqual([]);
 
@@ -86,7 +86,7 @@ test.describe("TC-PROP-06 — lista proprietăților", () => {
         if (await boxes.nth(i).isChecked()) await boxes.nth(i).uncheck();
       }
       await expect(main.getByRole("button", { name: "Câmpuri afișate 0/4", exact: true })).toBeVisible();
-      await expect(table.locator("thead th")).toHaveText(["", "Poreclă", ""]);
+      await expect(table.locator("thead th")).toHaveText(["Poreclă", ""]);
       await expect(table.locator("tbody tr").filter({ hasText: NAME })).toHaveCount(1);
 
       // Step 5 — the two new fields ticked: „2/4", their headers, the values' names.
@@ -94,7 +94,7 @@ test.describe("TC-PROP-06 — lista proprietăților", () => {
       await picker.getByRole("checkbox", { name: "Tip Prop." }).check();
       await page.getByRole("heading", { level: 1 }).first().click();
       await expect(main.getByRole("button", { name: "Câmpuri afișate 2/4", exact: true })).toBeVisible();
-      await expect(table.locator("thead th")).toHaveText(["", "Poreclă", "Categ.Folos.", "Tip Prop.", ""]);
+      await expect(table.locator("thead th")).toHaveText(["Poreclă", "Categ.Folos.", "Tip Prop.", ""]);
       const row = table.locator("tbody tr").filter({ hasText: NAME });
       await expect(row.locator("td").nth(2)).toHaveText(useCategory.name);
       await expect(row.locator("td").nth(3)).toHaveText(propertyType.name);

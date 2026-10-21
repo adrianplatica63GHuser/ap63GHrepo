@@ -32,22 +32,22 @@ test.describe("TC-LAYOUT-03 — „Câmpuri afișate” fără o alegere memorat
 
     // Step 1 — „Proprietăți": 1/4, Tip proprietate after „Poreclă" (#38.02).
     await openFromSidebar(page, "Proprietăți");
-    await expectList(page, "Câmpuri afișate 1/4", ["", "Poreclă", "Tip Prop.", ""] /* 40.20: short names */);
+    await expectList(page, "Câmpuri afișate 1/4", ["Poreclă", "Tip Prop.", ""] /* 40.20: short names; 40.24: no empty first column */);
 
     // Steps 2–4 — the other three lists: 0/4, their fixed columns only.
     await openFromSidebar(page, "Acte");
-    await expectList(page, "Câmpuri afișate 0/4", ["", "Tip", "Titlu", ""]);
+    await expectList(page, "Câmpuri afișate 0/4", ["Tip", "Titlu", ""]);
     await openFromSidebar(page, "Persoane Fizice");
-    await expectList(page, "Câmpuri afișate 0/4", ["", "Nume", "Poreclă", ""]);
+    await expectList(page, "Câmpuri afișate 0/4", ["Nume", "Poreclă", ""]);
     await openFromSidebar(page, "Persoane Juridice");
-    await expectList(page, "Câmpuri afișate 0/4", ["", "Denumire", "Poreclă", ""]);
+    await expectList(page, "Câmpuri afișate 0/4", ["Denumire", "Poreclă", ""]);
 
     // Step 5 — „Localitate" ticked on „Proprietăți", kept across a reload.
     await openFromSidebar(page, "Proprietăți");
     await page.locator("main").getByRole("button", { name: "Câmpuri afișate 1/4", exact: true }).click();
     await page.locator("[data-field-chooser]").getByRole("checkbox", { name: "Localitate" }).check();
     await page.reload();
-    await expectList(page, "Câmpuri afișate 2/4", ["", "Poreclă", "Tip Prop.", "Localitate", ""]);
+    await expectList(page, "Câmpuri afișate 2/4", ["Poreclă", "Tip Prop.", "Localitate", ""]);
 
     // At the end — the keys removed (the context goes with the test too).
     await page.evaluate((keys) => keys.forEach((k) => localStorage.removeItem(k)), KEYS);

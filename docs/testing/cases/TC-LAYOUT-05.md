@@ -43,6 +43,7 @@ At 1366 and at 1920 px, on each of the four lists, searched for „TC-E2E-LAYOUT
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Opens „Proprietăți" | No tick box in the band or the rows, and no „Șterge selecția" (since #39.73; the other three lists too since 40.10). The record on one line; its long nickname cut with „…", whole on hover; „Deschide" and „Previzualizare" side by side; „Adaugă proprietate" clear of „Câmpuri afișate"; the table at least as wide as the toolbar |
+| 1a | (Slice 40.24) On each list, looks at the first column | No column before the first named one (Poreclă, Nume, Denumire, Tip) — the narrow empty one is gone; the fresh record's „Nou!” after its text in that first cell, the text cut with „…” before it if it must be |
 | 2 | „Persoane fizice" | The same, for the person's name and nickname |
 | 3 | „Persoane juridice" | The same, for the company's name |
 | 4 | „Acte" | The same, for the document's title |

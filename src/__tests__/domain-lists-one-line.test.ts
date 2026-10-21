@@ -60,13 +60,21 @@ describe("the four lists, one line per row (#38.57)", () => {
   // column to the box and 11 px (Adrian: the gap at 30 %), so „Nou!” stays beside the box in a nowrap span of its own
   // and „Încrucișat” wraps under them, on the rare row that has it.
   // #39.73: the box is gone (the list's delete went, and its ticks with it); „Nou!” keeps its nowrap span, first.
-  it("the property list's badges: „Nou!” first, „Încrucișat” on a line of its own (#39.24, #39.73)", () => {
-    expect(VIEW.properties).toContain('<span className="inline-flex flex-wrap items-center" data-select-badges="">');
-    expect(VIEW.properties).toMatch(
-      /<span className="inline-flex flex-nowrap items-center">[\s\S]*?<RecencyBadge [^>]*\/>\s*<\/span>\s*<BowTieBadge /,
-    );
-    expect(VIEW.properties).not.toContain('type="checkbox"');
-    expect(content("listBadges")).toBe(27);
+  // Slice 40.24 inverts it: Adrian, „the column is still there taking up space for nothing; Please remove the column".
+  // The badges' column is gone from all four lists; „Nou!” — and on Proprietăți „Încrucișat” after it — sit in the
+  // first named column, after its text, which truncates before them (`FirstCellText`). Was: „„Nou!” first, „Încrucișat”
+  // on a line of its own (#39.24, #39.73)”, `data-select-badges` and `content("listBadges")` 27.
+  it("no badges' column on the four lists; the badges after the first named column's text (40.24)", () => {
+    const FIRST = { "natural-persons": "listPersonName", "judicial-persons": "listCompanyName", properties: "listPropertyNickname", documents: "listDocumentType" } as const;
+    for (const [l, first] of Object.entries(FIRST) as [keyof typeof FIRST, string][]) {
+      expect([l, VIEW[l]]).toEqual([l, expect.stringMatching(new RegExp(`(columns|COLUMNS): ColumnName\\[\\] = \\["${first}"`))]);
+      expect(VIEW[l]).not.toMatch(/listSelectPerson|listBadges|"selectNew"|data-spills-into-padding|data-select-badges/);
+      expect(VIEW[l]).toMatch(/<FirstCellText\s+badges=/);
+    }
+    expect(VIEW.properties).toMatch(/<RecencyBadge [^>]*\/>\s*<BowTieBadge /);
+    expect("listBadges" in COLUMN).toBe(false);
+    expect("listSelectPerson" in COLUMN).toBe(false);
+    expect("selectNew" in COLUMN).toBe(true); // other tables keep theirs
   });
 
   it("each column at least as wide as its header's longest word, measured", () => {
@@ -93,18 +101,10 @@ describe("the lists' columns (#39.24)", () => {
   const gap = (n: ColumnName) => content(n) - BOX + 2 * 16;
   const width = (n: ColumnName) => content(n) + 2 * REM;
 
-  it("the persons' lists: their own select column, the gap at 50 % of 72 px; Acte keeps selectNew", () => {
-    for (const l of ["natural-persons", "judicial-persons"] as const) {
-      expect(columnsOf(VIEW[l])).toContain("listSelectPerson");
-      expect(columnsOf(VIEW[l])).not.toContain("selectNew");
-    }
-    expect(columnsOf(VIEW.documents)).toContain("selectNew");
+  // Slice 40.24: the persons' lists' select column (gap 36 px) and Proprietăți's (43 px) are gone with the badges'
+  // column; `selectNew` keeps its 72 px on the tables that still have it.
+  it("selectNew keeps its gap where it is still drawn", () => {
     expect(gap("selectNew")).toBe(72);
-    expect(gap("listSelectPerson")).toBe(36);
-  });
-
-  it("Proprietăți: the gap at 30 % of 144 px, rounded to a whole pixel", () => {
-    expect(gap("listBadges")).toBe(Math.round(0.3 * 144));
   });
 
   it("Tip proprietate and Categorie de folosință at 150 % of their width, padding included", () => {
