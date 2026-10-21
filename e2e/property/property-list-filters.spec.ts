@@ -36,7 +36,8 @@ test.describe("TC-PROP-14 — filtrele listei proprietăților", () => {
         ids.push(await createProperty(page.request, { nickname: `${MARK} ${n}`, propertyTypeId: t.id, useCategoryId: c.id }));
       }
       const main = page.locator("main");
-      const rows = main.locator("table tbody [data-col=\"nickname\"]");
+      // Slice 40.24: the nickname is its cell's text — „Nou!" sits after it in the same cell.
+      const rows = main.locator("table tbody [data-col=\"nickname\"] [data-first-cell] > span:first-child");
       // The list is newest first; the case names the rows, not their order.
       const shows = (...ns: string[]) =>
         expect.poll(async () => (await rows.allInnerTexts()).map((t) => t.trim()).sort(), { timeout: 30_000 }).toEqual(ns.map((n) => `${MARK} ${n}`));

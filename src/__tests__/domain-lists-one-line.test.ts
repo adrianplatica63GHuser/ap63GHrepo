@@ -43,7 +43,8 @@ describe("the four lists, one line per row (#38.57)", () => {
   });
 
   it.each(LISTS)("%s: every text cell is ONE_LINE with its whole text as a tooltip", (l) => {
-    expect(VIEW[l]).toMatch(/\$\{ONE_LINE\}`\} title=\{cellTitle\(cellValue\(item, col\.key\)\)\}|\$\{ONE_LINE\}`\}\s+title=\{cellTitle\(cellValue\(item, col\.key\)\)\}/);
+    // Slice 40.25: the chosen columns' cells are drawn by their key, in the order dragged (`cellValue(item, key)`).
+    expect(VIEW[l]).toMatch(/\$\{ONE_LINE\}`\}\s+title=\{cellTitle\(cellValue\(item, key\)\)\}/);
     expect((VIEW[l].match(/\bONE_LINE\b/g) ?? []).length).toBeGreaterThanOrEqual(3);
   });
 

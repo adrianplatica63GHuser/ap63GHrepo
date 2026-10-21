@@ -34,7 +34,8 @@ test.describe("TC-PERS-12 — filtrele listei persoanelor fizice", () => {
       ids.push(await createNaturalPerson(page.request, { lastName: MARK, firstName: "B", physicalPersonTypeId: t1.id, isDeceased: true, dateOfDeath: "2020-05-01" }));
       ids.push(await createNaturalPerson(page.request, { lastName: MARK, firstName: "C", physicalPersonTypeId: t2.id }));
       const main = page.locator("main");
-      const names = main.locator("table tbody tr td:nth-child(2)");
+      // Slice 40.24: the name is the first cell's text — „Nou!" sits after it in the same cell.
+      const names = main.locator("table tbody tr [data-first-cell] > span:first-child");
       const shows = (...ns: string[]) =>
         expect
           .poll(async () => (await names.allInnerTexts()).map((t) => t.replace("†", "").trim()).filter((t) => t.includes(MARK)).sort(), { timeout: 30_000 })

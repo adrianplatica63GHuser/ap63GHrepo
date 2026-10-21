@@ -95,7 +95,8 @@ describe("the four lists draw their names through the one cell", () => {
   it("the band is two 18-px rows, the name and its funnel one centred group, on every cell", () => {
     expect(HEAD_BAND_PX).toBe(36);
     const cell = read("src", "components", "table", "list-head.tsx");
-    expect(cell).toContain('<th className="px-4 py-2 align-middle" {...columnHead(column)}>');
+    // Slice 40.25: the <th> is also the handle its column is dragged by (`drag`).
+    expect(cell).toMatch(/<th\s+className=\{`px-4 py-2 align-middle\$\{drag \? [^}]*\}`\}\s+\{\.\.\.columnHead\(column\)\}\s+\{\.\.\.drag\}\s+>/);
     expect(cell).toContain('className="flex items-center justify-center" style={{ height: HEAD_BAND_PX }}');
     expect(cell).toContain('className="flex min-w-0 items-end justify-center gap-1" data-head-name=""');
     expect(cell).toContain('className="line-clamp-2 min-w-0 text-balance break-words text-center" data-head-text=""');

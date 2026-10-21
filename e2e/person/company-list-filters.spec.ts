@@ -30,7 +30,8 @@ test.describe("TC-PERS-13 — filtrele listei persoanelor juridice", () => {
       ids.push(await createCompany(page.request, { name: `${MARK} B`, judicialPersonTypeId: srl.id, addresses: seat("Măgurele") }));
       ids.push(await createCompany(page.request, { name: `${MARK} C`, judicialPersonTypeId: sa.id, addresses: seat("Bragadiru") }));
       const main = page.locator("main");
-      const names = main.locator("table tbody tr td:nth-child(2)");
+      // Slice 40.24: the name is the first cell's text — „Nou!" sits after it in the same cell.
+      const names = main.locator("table tbody tr [data-first-cell] > span:first-child");
       const shows = (...ns: string[]) =>
         expect
           .poll(async () => (await names.allInnerTexts()).map((t) => t.trim()).filter((t) => t.includes(MARK)).sort(), { timeout: 30_000 })
