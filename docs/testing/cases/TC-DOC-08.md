@@ -243,3 +243,8 @@ group at 480–1083, „Adaugă act" at 1096 with every type and with none — t
 1920 px, with `?pageCount=1..3`, the row at y 188 („Nr. pagini 1 – 3", „Scoate filtrul „Nr. pagini”", „Șterge
 filtrele") and the frame at 236; at 1000 px the group at x 248, y 181, under the search box, „Adaugă act" still at
 y 135, the page 1000 px wide. The spec translates steps 10–13 as a second test.
+
+**2026-10-21 — names shortened (Slice 40.20).** The band of names and „Câmpuri afișate" show Adrian's short names
+(„Născut pe", „Tip Prop.", „#Document", „Contact" …), the field's whole label on hover; a filter's chip and the
+forms keep the whole labels. Where a step above quotes a column or a box in „Câmpuri afișate" by its whole label, it
+now reads the short one; the spec's locators follow.

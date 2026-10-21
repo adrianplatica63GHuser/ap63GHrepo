@@ -64,7 +64,7 @@ test.describe("TC-PROP-06 — lista proprietăților", () => {
       await search.fill(MARK);
       const table = main.locator("table").first();
       await expect(table.locator("tbody tr").filter({ hasText: NAME })).toHaveCount(1, { timeout: 30_000 });
-      await expect(table.locator("thead th")).toHaveText(["", "Poreclă", "Tip proprietate", ""]);
+      await expect(table.locator("thead th")).toHaveText(["", "Poreclă", "Tip Prop.", ""]); // 40.20: short names
       await expect(table.getByRole("columnheader", { name: /^cod$/i })).toHaveCount(0);
       expect((await table.innerText()).match(/\bPROP\d{3,}\b/g) ?? []).toEqual([]);
 
@@ -72,7 +72,8 @@ test.describe("TC-PROP-06 — lista proprietăților", () => {
       await main.getByRole("button", { name: /^Câmpuri afișate \d\/4$/ }).click();
       const picker = main.locator("[data-field-chooser]");
       await expect(picker.locator("label")).toHaveText([
-        "Tarla/Solă", "Parcelă", "Oficială (m²)", "Calculată (m²)", "Nr. CF", "Nr. cadastru", "Categorie de folosință", "Tip proprietate", "Localitate",
+        // Slice 40.20: Adrian's short names.
+        "Tarla", "Parcelă", "Supr. Ofic.", "Supr. Calc.", "# CF", "# Cadastru", "Categ.Folos.", "Tip Prop.", "Localitate",
       ]);
       for (const gone of ["Poreclă", "Note", "Importanță", "Relevanță", "Proveniență"]) {
         await expect(picker.getByText(gone, { exact: true })).toHaveCount(0);
@@ -89,11 +90,11 @@ test.describe("TC-PROP-06 — lista proprietăților", () => {
       await expect(table.locator("tbody tr").filter({ hasText: NAME })).toHaveCount(1);
 
       // Step 5 — the two new fields ticked: „2/4", their headers, the values' names.
-      await picker.getByRole("checkbox", { name: "Categorie de folosință" }).check();
-      await picker.getByRole("checkbox", { name: "Tip proprietate" }).check();
+      await picker.getByRole("checkbox", { name: "Categ.Folos." }).check();
+      await picker.getByRole("checkbox", { name: "Tip Prop." }).check();
       await page.getByRole("heading", { level: 1 }).first().click();
       await expect(main.getByRole("button", { name: "Câmpuri afișate 2/4", exact: true })).toBeVisible();
-      await expect(table.locator("thead th")).toHaveText(["", "Poreclă", "Categorie de folosință", "Tip proprietate", ""]);
+      await expect(table.locator("thead th")).toHaveText(["", "Poreclă", "Categ.Folos.", "Tip Prop.", ""]);
       const row = table.locator("tbody tr").filter({ hasText: NAME });
       await expect(row.locator("td").nth(2)).toHaveText(useCategory.name);
       await expect(row.locator("td").nth(3)).toHaveText(propertyType.name);

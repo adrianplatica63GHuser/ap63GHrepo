@@ -25,7 +25,8 @@ describe("the Documents list (Slice #37.62)", () => {
   });
 
   it("each field has a column width, and a label in both languages", () => {
-    const columns = [...VIEW.matchAll(/\{ key: "\w+",\s+label: t\("table\.(\w+)"\),\s+column: "(\w+)" \}/g)];
+    // Slice 40.20: the band's short name (`tHead`), the whole label (`full`) the form's.
+    const columns = [...VIEW.matchAll(/\{ key: "\w+",\s+label: tHead\("\w+"\), full: t\("table\.(\w+)"\),\s+column: "(\w+)" \}/g)];
     expect(columns).toHaveLength(KEYS.length);
     for (const [, label, column] of columns) {
       expect(COLUMN).toHaveProperty(column);

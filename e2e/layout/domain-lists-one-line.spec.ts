@@ -12,6 +12,8 @@
  * 1920 × 1080. They read the archive's own rows' boxes only — no text — and on Proprietăți open a record whose maps are
  * blocked (e2e/README.md): no map loads, no Street View, no address look-up.
  *
+ * Step 17 (Slice 40.20) is the fifth test: every column's short name in the band, in Romanian and in English.
+ *
  * Steps 15–16 (Slice 40.18) are the fourth test: a column name is drawn in Roboto Condensed and in ink, a tile's title
  * in Roboto Slab and in navy — read off the styles and the loaded font faces, no text — in light and in dark.
  *
@@ -181,7 +183,8 @@ test.describe("TC-LAYOUT-05 — cele patru liste, câte un rând pe linie", () =
           const h = await band(page);
           expect({ width, list: list.path, ...h }).toEqual({
             width, list: list.path, cells: list.path === "/properties" ? 5 : 6, wrong: [], forcedOnTwo: true,
-            forced: list.path === "/judicial-persons" ? 0 : 3,
+            // Slice 40.20: Adrian's short names need no forced break — none is on two rows by force.
+            forced: 0,
           });
         }
       }
@@ -416,4 +419,48 @@ test.describe("TC-LAYOUT-05 — cele patru liste, câte un rând pe linie", () =
       expect(tile.loaded.some((f) => /Roboto[ _]Slab/.test(f))).toBe(true);
     }
   });
+
+  // Step 17 (Slice 40.20): Adrian's short names in the band, in both languages, every column of each list — four at a
+  // time, as „Câmpuri afișate" allows — with the field's whole label on hover. Only the band is read: no record's text.
+  test("numele scurte ale coloanelor, în română și în engleză", async ({ page }) => {
+    const fs = await import("node:fs");
+    const msgs = {
+      "ro-RO": JSON.parse(fs.readFileSync("messages/ro-RO.json", "utf8")),
+      "en-GB": JSON.parse(fs.readFileSync("messages/en-GB.json", "utf8")),
+    } as const;
+    const LISTS2 = [
+      { path: "/natural-persons", ns: "naturalPerson", store: "ga40-col-person-v3", fixed: ["name", "nickname"],
+        groups: [["cnp", "dateOfBirth", "age", "gender"], ["dateOfDeath", "placeOfBirth", "professionalType", "relationships"]] },
+      { path: "/judicial-persons", ns: "judicialPerson", store: "ga40-col-company-v2", fixed: ["name", "nickname"],
+        groups: [["judicialPersonType", "cuiNumber", "tradeRegisterNumber", "contactPerson"], ["locality"]] },
+      { path: "/properties", ns: "property", store: "ga40-col-property-v4", fixed: ["nickname"],
+        groups: [["tarlaSola", "parcela", "surfaceAreaMp", "calculatedAreaMp"], ["carteFunciara", "cadastralNumber", "useCategory", "propertyType"], ["locality"]] },
+      { path: "/documents", ns: "document", store: "ga40-col-document-v3", fixed: ["type", "title"],
+        groups: [["nrDocument", "dateDocument", "institution", "subject"], ["pageCount", "personCount", "propertyCount", "createdAt"]] },
+    ];
+    const base = test.info().project.use.baseURL ?? "http://localhost:3000";
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    try {
+      for (const locale of ["ro-RO", "en-GB"] as const) {
+        await page.context().addCookies([{ name: "NEXT_LOCALE", value: locale, url: base }]);
+        for (const list of LISTS2) {
+          for (const group of list.groups) {
+            await page.goto(list.path);
+            await page.evaluate(([k, v]) => localStorage.setItem(k, v), [list.store, JSON.stringify(group)] as const);
+            await page.reload();
+            const names = page.locator("main thead [data-head-text]");
+            await expect(names).toHaveCount(list.fixed.length + group.length, { timeout: 30_000 });
+            const heads = msgs[locale][list.ns].listHeads as Record<string, string>;
+            await expect(names).toHaveText([...list.fixed, ...group].map((k) => heads[k]));
+            // The whole label on hover: a title on every name.
+            const titles = await names.evaluateAll((els) => els.map((e) => e.getAttribute("title") ?? ""));
+            expect(titles.every((t) => t.length > 0)).toBe(true);
+          }
+        }
+      }
+    } finally {
+      await page.context().addCookies([{ name: "NEXT_LOCALE", value: "ro-RO", url: base }]);
+    }
+  });
 });
+

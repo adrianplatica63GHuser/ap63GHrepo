@@ -83,8 +83,8 @@ test.describe("TC-PROP-01 — Proprietate creată manual, vizibilă în listă",
       await chooseFields.click({ force: true });
       const picker = page.getByText("Selectați până la 4 coloane opționale").locator("..");
       await expect(picker).toBeVisible();
-      await picker.getByRole("checkbox", { name: "Tip proprietate" }).uncheck({ force: true });
-      for (const box of ["Localitate", "Tarla/Solă", "Parcelă"]) await picker.getByRole("checkbox", { name: box }).check({ force: true });
+      await picker.getByRole("checkbox", { name: "Tip Prop." }).uncheck({ force: true }); // 40.20: short names
+      for (const box of ["Localitate", "Tarla", "Parcelă"]) await picker.getByRole("checkbox", { name: box }).check({ force: true });
       await page.getByRole("heading", { name: "Proprietăți", exact: true }).click({ force: true });
       await expect(picker).toHaveCount(0);
       for (const col of ["PORECLĂ", "LOCALITATE", "TARLA/SOLĂ", "PARCELĂ"]) {

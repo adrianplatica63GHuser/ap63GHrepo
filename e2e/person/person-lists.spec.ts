@@ -92,12 +92,13 @@ test.describe("TC-PERS-04 — listele de persoane", () => {
       const npPicker = main.locator("[data-field-chooser]");
       // #39.30: + „Data decesului", after „Gen" — the panel's order. #39.70: + „Relația cu firma", last.
       await expect(npPicker.locator("label")).toHaveText([
-        "CNP", "Data nașterii", "Vârstă", "Gen", "Data decesului", "Locul nașterii", "Tip profesional", "Relația cu firma",
+        // Slice 40.20: Adrian's short names.
+        "CNP", "Născut pe", "Vârstă", "Gen", "Decedat pe", "Născut la", "Tip prof.", "Rel.cu VM",
       ]);
 
       // Step 3 — CNP and Data nașterii; the search; the row.
       await npPicker.getByRole("checkbox", { name: "CNP" }).check();
-      await npPicker.getByRole("checkbox", { name: "Data nașterii" }).check();
+      await npPicker.getByRole("checkbox", { name: "Născut pe" }).check();
       await page.getByRole("heading", { level: 1 }).first().click();
       await expect(main.getByRole("button", { name: "Câmpuri afișate 2/4", exact: true })).toBeVisible();
       await main.getByPlaceholder("caută după ID, Nume, Poreclă, CNP, Email Personal 1, Email Personal 2, Email serviciu, Telefon Personal 1, Telefon Personal 2 sau Telefon serviciu").fill(MARK);
@@ -149,10 +150,10 @@ test.describe("TC-PERS-04 — listele de persoane", () => {
       await main.getByRole("button", { name: "Câmpuri afișate 0/4", exact: true }).click();
       const jpPicker = main.locator("[data-field-chooser]");
       // #39.82: „Localitate" after them — the head office's, so its filter has a column.
-      await expect(jpPicker.locator("label")).toHaveText(["Tip", "Nr. înregistrare (CUI)", "Nr. registru comerțului", "Persoană de contact", "Localitate"]);
+      await expect(jpPicker.locator("label")).toHaveText(["Tip", "CUI", "#Reg. Com.", "Contact", "Localitate"]); // 40.20: short names
 
       // Step 6 — Nr. înregistrare (CUI); the search; the row.
-      await jpPicker.getByRole("checkbox", { name: "Nr. înregistrare (CUI)" }).check();
+      await jpPicker.getByRole("checkbox", { name: "CUI", exact: true }).check();
       await page.getByRole("heading", { level: 1 }).first().click();
       await main.getByPlaceholder("caută după ID, Denumire, Poreclă, Nr. înregistrare (CUI), Telefon firmă sau E-mail firmă").fill(MARK);
       const jpRow = main.locator("tbody tr").filter({ hasText: MARK });

@@ -119,3 +119,8 @@ person to be searched and found by CNP, but there should never be a filter on CN
 
 **2026-10-18 — `automated`.** The test runner's targeted run 20261018T222203Z-30381 on c2b0cd8 ran `e2e/person/person-lists.spec.ts` green with
 the CNP in the search (lint, tsc and jest green too).
+
+**2026-10-21 — names shortened (Slice 40.20).** The band of names and „Câmpuri afișate" show Adrian's short names
+(„Născut pe", „Tip Prop.", „#Document", „Contact" …), the field's whole label on hover; a filter's chip and the
+forms keep the whole labels. Where a step above quotes a column or a box in „Câmpuri afișate" by its whole label, it
+now reads the short one; the spec's locators follow.

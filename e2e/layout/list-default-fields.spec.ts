@@ -32,7 +32,7 @@ test.describe("TC-LAYOUT-03 — „Câmpuri afișate” fără o alegere memorat
 
     // Step 1 — „Proprietăți": 1/4, Tip proprietate after „Poreclă" (#38.02).
     await openFromSidebar(page, "Proprietăți");
-    await expectList(page, "Câmpuri afișate 1/4", ["", "Poreclă", "Tip proprietate", ""]);
+    await expectList(page, "Câmpuri afișate 1/4", ["", "Poreclă", "Tip Prop.", ""] /* 40.20: short names */);
 
     // Steps 2–4 — the other three lists: 0/4, their fixed columns only.
     await openFromSidebar(page, "Acte");
@@ -47,7 +47,7 @@ test.describe("TC-LAYOUT-03 — „Câmpuri afișate” fără o alegere memorat
     await page.locator("main").getByRole("button", { name: "Câmpuri afișate 1/4", exact: true }).click();
     await page.locator("[data-field-chooser]").getByRole("checkbox", { name: "Localitate" }).check();
     await page.reload();
-    await expectList(page, "Câmpuri afișate 2/4", ["", "Poreclă", "Tip proprietate", "Localitate", ""]);
+    await expectList(page, "Câmpuri afișate 2/4", ["", "Poreclă", "Tip Prop.", "Localitate", ""]);
 
     // At the end — the keys removed (the context goes with the test too).
     await page.evaluate((keys) => keys.forEach((k) => localStorage.removeItem(k)), KEYS);

@@ -59,7 +59,8 @@ describe("„Persoană de contact” (Slice #37.71)", () => {
   // Slice #37.71 had „… in a column that wraps like a name" (`COLUMN.contactPerson`, L, wraps). Slice #38.57: the list's
   // own column, one line, cut with „…" and whole on hover.
   it("is offered fourth, with room for all four, labelled in both languages, in a one-line column of the list's own", () => {
-    expect(VIEW).toMatch(/\{ key: "contactPerson",\s+label: t\("fields\.contactPerson"\),\s+column: "listContactPerson" \}/);
+    // Slice 40.20: the band's short name, the form's whole label beside it.
+    expect(VIEW).toMatch(/\{ key: "contactPerson",\s+label: tHead\("contactPerson"\), full: t\("fields\.contactPerson"\),\s+column: "listContactPerson" \}/);
     expect(VIEW).toMatch(/const MAX_OPT = 4;/);
     expect(VIEW).toMatch(/key === "contactPerson" \? item\.contactPerson/);
     expect(ro.judicialPerson.fields.contactPerson).toBe("Persoană de contact");

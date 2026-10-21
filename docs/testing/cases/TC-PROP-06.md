@@ -122,3 +122,8 @@ explanation on hover. Only the quoted words changed in this file.
 
 **2026-10-18 — `automated` (Slice #39.85).** The test runner's targeted run 20261018T165019Z-11827 on 4e824a7 ran `e2e/property/property-list.spec.ts` green
 with the search box's new words (lint, tsc and the slice's jest suites green too).
+
+**2026-10-21 — names shortened (Slice 40.20).** The band of names and „Câmpuri afișate" show Adrian's short names
+(„Născut pe", „Tip Prop.", „#Document", „Contact" …), the field's whole label on hover; a filter's chip and the
+forms keep the whole labels. Where a step above quotes a column or a box in „Câmpuri afișate" by its whole label, it
+now reads the short one; the spec's locators follow.

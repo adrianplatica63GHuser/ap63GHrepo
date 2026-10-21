@@ -46,7 +46,7 @@ At 1366 and at 1920 px, on each of the four lists, searched for „TC-E2E-LAYOUT
 | 2 | „Persoane fizice" | The same, for the person's name and nickname |
 | 3 | „Persoane juridice" | The same, for the company's name |
 | 4 | „Acte" | The same, for the document's title |
-| 5 | On each list, looks at the band of column names (#39.83) | Every cell the same height, three rows; a filterable column's name on rows 1–2, bottom-aligned, its funnel alone on row 3; Poreclă, the name or title, Nr. cadastru, CNP, Nr. document and the juridical persons' CUI, register and contact person centred; „Categorie de / folosință", „Tip / proprietate", „Oficială / (m²)", „Data / nașterii", „Relația / cu firma", „Locul / nașterii", „Instituție / / Notariat", „Nr. / pagini", „Nr. / proprietăți" on two rows; no name on three |
+| 5 | On each list, looks at the band of column names (#39.83) | Every cell the same height, three rows; a filterable column's name on rows 1–2, bottom-aligned, its funnel alone on row 3; Poreclă, the name or title, # Cadastru, CNP, #Document and the juridical persons' CUI, register and contact person centred; since 40.20 the names are Adrian's short ones and none is broken onto two rows by force; no name on three |
 | 6 | On each list, holds the mouse over the search box (#39.85) | The box is exactly as wide as „Adaugă …" at its row's end; the whole explanation shows on hover, even where the box cuts it with „…" |
 | 7 | At 1280 × 600 px (#40.02), opens each list unsearched — a page of rows | The browser page has no vertical scroll bar; the list's frame has one, and its rows scroll inside it |
 | 8 | Scrolls the frame to its last row | The band of column names still at the frame's top, the last row at its bottom, and the „Se afișează … / Pagina x din y" row under the frame, inside the window; the page has not moved |
@@ -59,6 +59,7 @@ At 1366 and at 1920 px, on each of the four lists, searched for „TC-E2E-LAYOUT
 | 14 | At 1920 × 1080 px with no column chosen | Every column fits: no sign at either edge |
 | 15 | (Slice 40.18) At 1366 px, on „Persoane fizice", looks at a column name — in the light look, then with „Mod întunecat" ticked (40.19; it was the system's setting) | Roboto Condensed, 13.5 px, semibold, upper case, in today's black (#3C4149; dark zinc-300); the band 62 px tall |
 | 16 | Opens the home page and looks at a tile's title, light and dark | Roboto Slab, 16 px, semibold, upper case, in navy #1E3A8A (dark #BFDBFE) |
+| 17 | (Slice 40.20) On each list, at 1920 px, chooses its columns four at a time until each has been shown — in Romanian, then with the English flag | Every name in the band is Adrian's short one for that language — „Nume, Poreclă, CNP, Născut pe …” / „Name, Nickname, CNP, DoB …”, and so on for the four lists — and holding the mouse over a name shows the field's whole label |
 
 ## At the end — leaving things as they were found
 

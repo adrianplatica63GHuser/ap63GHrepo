@@ -49,7 +49,7 @@ test.describe("TC-PERS-06 — lista persoanelor juridice", () => {
       // Step 2 — „Persoană de contact" ticked; the search; Firma A „Unu …", Firma B „Doi …".
       await toolbar.getByRole("button", { name: "Câmpuri afișate 0/4", exact: true }).click();
       const picker = main.locator("[data-field-chooser]");
-      await picker.getByRole("checkbox", { name: "Persoană de contact" }).check();
+      await picker.getByRole("checkbox", { name: "Contact" }).check(); // 40.20: the short name
       await page.getByRole("heading", { level: 1 }).first().click();
       await expect(main.getByRole("button", { name: "Câmpuri afișate 1/4", exact: true })).toBeVisible();
       await search.fill(MARK);
@@ -60,7 +60,7 @@ test.describe("TC-PERS-06 — lista persoanelor juridice", () => {
 
       // Step 3 — unticked: „0/4", the column gone.
       await main.getByRole("button", { name: "Câmpuri afișate 1/4", exact: true }).click();
-      await picker.getByRole("checkbox", { name: "Persoană de contact" }).uncheck();
+      await picker.getByRole("checkbox", { name: "Contact" }).uncheck();
       await page.getByRole("heading", { level: 1 }).first().click();
       await expect(main.getByRole("button", { name: "Câmpuri afișate 0/4", exact: true })).toBeVisible();
       await expect(main.getByRole("columnheader", { name: "PERSOANĂ DE CONTACT" })).toHaveCount(0);

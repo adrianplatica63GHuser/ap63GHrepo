@@ -50,8 +50,8 @@ test.describe("TC-PERS-12 — filtrele listei persoanelor fizice", () => {
       // T1 with 2, T2 with 1; T1 ticked: A and B.
       await main.getByRole("button", { name: "Câmpuri afișate 0/4", exact: true }).click();
       const picker = main.locator("[data-field-chooser]");
-      await picker.getByRole("checkbox", { name: "Tip profesional" }).check();
-      await picker.getByRole("checkbox", { name: "Data decesului" }).check();
+      await picker.getByRole("checkbox", { name: "Tip prof." }).check(); // 40.20: the short names; the chips keep the whole ones
+      await picker.getByRole("checkbox", { name: "Decedat pe" }).check();
       await page.getByRole("heading", { level: 1 }).first().click();
       await main.getByRole("button", { name: "Filtrează după „Tip profesional”", exact: true }).click();
       await expectUnder(page, '[data-filter-funnel="professionalType"]', '[data-filter-editor="professionalType"]');

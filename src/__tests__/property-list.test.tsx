@@ -27,8 +27,9 @@ describe("the Properties list (Slice #37.61)", () => {
   it("the two new fields: labelled as on the form, their own columns, the API's names (#37.72)", () => {
     // Slice #37.72 had `column: "useCategory"` / `column: "propertyType"`, both `wraps`. Slice #38.57: the list's own
     // columns, one line each, cut with „…" and whole on hover.
-    expect(VIEW).toMatch(/\{ key: "useCategory",\s+label: t\("fields\.useCategory"\),\s+column: "listUseCategory" \}/);
-    expect(VIEW).toMatch(/\{ key: "propertyType",\s+label: t\("fields\.propertyType"\),\s+column: "listPropertyType" \}/);
+    // Slice 40.20: labelled in the band by Adrian's short names; the form's label is the whole one beside it.
+    expect(VIEW).toMatch(/\{ key: "useCategory",\s+label: tHead\("useCategory"\), full: t\("fields\.useCategory"\),\s+column: "listUseCategory" \}/);
+    expect(VIEW).toMatch(/\{ key: "propertyType",\s+label: tHead\("propertyType"\), full: t\("fields\.propertyType"\),\s+column: "listPropertyType" \}/);
     expect(COLUMN.listUseCategory.kind).toBe("fixed");
     expect(COLUMN.listPropertyType.kind).toBe("fixed");
     const q = QUERIES.slice(QUERIES.indexOf("export async function listProperties"));
@@ -57,7 +58,7 @@ describe("the Properties list (Slice #37.61)", () => {
     // Slice #37.72 had ["selectBadges", "propertyNickname", …, "openPreview"]; Slice #38.57: the list's own columns.
     expect(VIEW).toMatch(/const columns: ColumnName\[\] = \["listBadges", "listPropertyNickname", \.\.\.shownCols\.map\(\(c\) => c\.column\), "listRowActions"\];/);
     // #39.83: through the band's shared cell — was `<th … {...columnHead("listPropertyNickname")}>{t("table.nickname")}`.
-    expect(VIEW).toContain('<ListHeadCell column="listPropertyNickname" name={t("table.nickname")} />');
+    expect(VIEW).toContain('<ListHeadCell column="listPropertyNickname" name={tHead("nickname")} full={t("table.nickname")} />');
     expect(VIEW).not.toMatch(/columnHead\("code"\)/);
   });
 });

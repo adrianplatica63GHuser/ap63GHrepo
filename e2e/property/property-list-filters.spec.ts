@@ -62,7 +62,7 @@ test.describe("TC-PROP-14 — filtrele listei proprietăților", () => {
       // type set; C1 ticked: A.
       await page.getByRole("heading", { level: 1 }).first().click();
       await main.getByRole("button", { name: "Câmpuri afișate 1/4", exact: true }).click();
-      await main.locator("[data-field-chooser]").getByRole("checkbox", { name: "Categorie de folosință" }).check();
+      await main.locator("[data-field-chooser]").getByRole("checkbox", { name: "Categ.Folos." }).check(); // 40.20: the short name; the chip keeps the whole one
       await page.getByRole("heading", { level: 1 }).first().click();
       await main.getByRole("button", { name: "Filtrează după „Categorie de folosință”", exact: true }).click();
       await expect(value(c1.name).locator("[data-filter-count]")).toHaveText("1", { timeout: 15_000 });

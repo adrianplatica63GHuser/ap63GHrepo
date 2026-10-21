@@ -1,71 +1,80 @@
 /**
- * #39.83 — the band of column names on the four principal lists: three rows, a long name on two, the funnel on the
- * third, a name without a filter centred. Which names always take two rows, where they break, and that every list
- * draws its names through the one shared cell.
+ * #39.83 — the band of column names on the four principal lists: three rows, the funnel on the third, a name without
+ * a filter centred; every list draws its names through the one shared cell.
+ *
+ * Slice 40.20 — Adrian's short names (2026-10-21), the band's and „Câmpuri afișate"'s, in both languages, with the
+ * field's whole label on hover; #39.83's forced two-row breaks (`TWO_ROW_NAMES`, `splitName`) are gone, no short
+ * name needing one.
  */
 import fs from "node:fs";
 import path from "node:path";
 
-import { TWO_ROW_NAMES, splitName, twoRowName } from "@/lib/ui/list-head";
 import { HEAD_BAND_PX } from "@/components/table/list-head";
 
 const read = (...p: string[]) => fs.readFileSync(path.join(process.cwd(), ...p), "utf8");
+const exists = (...p: string[]) => fs.existsSync(path.join(process.cwd(), ...p));
 const ro = JSON.parse(read("messages", "ro-RO.json"));
 const en = JSON.parse(read("messages", "en-GB.json"));
 
-describe("which names always take two rows (Adrian's list, 2026-10-18)", () => {
-  it("is his thirteen, by their columns' chooser keys", () => {
-    expect(TWO_ROW_NAMES).toEqual({
-      property: ["surfaceAreaMp", "calculatedAreaMp", "useCategory", "propertyType"],
-      person: ["dateOfBirth", "dateOfDeath", "placeOfBirth", "professionalType", "relationships"],
-      company: [],
-      document: ["institution", "pageCount", "personCount", "propertyCount"],
-    });
-    expect(Object.values(TWO_ROW_NAMES).flat()).toHaveLength(13);
-    expect(twoRowName("person", "relationships")).toBe(true);
-    expect(twoRowName("person", "cnp")).toBe(false);
+/** Adrian's list, in the order of the list and the chooser: [key, English, Romanian]. „Nascut" takes its ă. */
+const SHORT: Record<string, readonly (readonly [string, string, string])[]> = {
+  naturalPerson: [
+    ["name", "Name", "Nume"], ["nickname", "Nickname", "Poreclă"], ["cnp", "CNP", "CNP"], ["dateOfBirth", "DoB", "Născut pe"],
+    ["age", "Age", "Vârstă"], ["gender", "Gender", "Gen"], ["dateOfDeath", "DoD", "Decedat pe"], ["placeOfBirth", "Born in", "Născut la"],
+    ["professionalType", "Prof.type", "Tip prof."], ["relationships", "Rel.to VM", "Rel.cu VM"],
+  ],
+  judicialPerson: [
+    ["name", "Name", "Denumire"], ["nickname", "Nickname", "Poreclă"], ["judicialPersonType", "Type", "Tip"], ["cuiNumber", "CUI", "CUI"],
+    ["tradeRegisterNumber", "Trade Reg#", "#Reg. Com."], ["contactPerson", "Contact", "Contact"], ["locality", "Locality", "Localitate"],
+  ],
+  property: [
+    ["nickname", "Nickname", "Poreclă"], ["tarlaSola", "Tarla", "Tarla"], ["parcela", "Parcelă", "Parcelă"],
+    ["surfaceAreaMp", "Supr.Ofic.", "Supr. Ofic."], ["calculatedAreaMp", "Supr.Calc.", "Supr. Calc."], ["carteFunciara", "C.F.#", "# CF"],
+    ["cadastralNumber", "Cadastru #", "# Cadastru"], ["useCategory", "Use Categ.", "Categ.Folos."], ["propertyType", "Prop. Type", "Tip Prop."],
+    ["locality", "Locality", "Localitate"],
+  ],
+  document: [
+    ["type", "Type", "Tip"], ["title", "Title", "Titlu"], ["nrDocument", "Doc.#", "#Document"], ["dateDocument", "Date", "Data"],
+    ["institution", "Inst./Notar", "Inst./Notar"], ["subject", "Subject", "Subiect"], ["pageCount", "Pages", "Pagini"],
+    ["personCount", "Persons", "Persoane"], ["propertyCount", "Properties", "Proprietăți"], ["createdAt", "Added on", "Adăugat la"],
+  ],
+};
+
+describe("Adrian's short names (Slice 40.20)", () => {
+  it.each(Object.entries(SHORT))("%s: listHeads in both languages, in his order", (ns, rows) => {
+    expect(Object.entries(en[ns].listHeads)).toEqual(rows.map(([k, e]) => [k, e]));
+    expect(Object.entries(ro[ns].listHeads)).toEqual(rows.map(([k, , r]) => [k, r]));
   });
 
-  it("each is a name of more than one word in both languages, so it can break", () => {
-    const names: Record<string, (m: typeof ro) => string> = {
-      surfaceAreaMp: (m) => m.property.table.surfaceAreaMp,
-      calculatedAreaMp: (m) => m.property.table.calculatedAreaMp,
-      useCategory: (m) => m.property.fields.useCategory,
-      propertyType: (m) => m.property.fields.propertyType,
-      dateOfBirth: (m) => m.naturalPerson.fields.dateOfBirth,
-      dateOfDeath: (m) => m.naturalPerson.fields.dateOfDeath,
-      placeOfBirth: (m) => m.naturalPerson.fields.placeOfBirth,
-      professionalType: (m) => m.naturalPerson.fields.physicalPersonTypeId,
-      relationships: (m) => m.naturalPerson.fields.relationships,
-      institution: (m) => m.document.table.institution,
-      pageCount: (m) => m.document.table.pageCount,
-      personCount: (m) => m.document.table.personCount,
-      propertyCount: (m) => m.document.table.propertyCount,
-    };
-    for (const [key, of] of Object.entries(names)) {
-      for (const m of [ro, en]) expect([key, splitName(of(m)) !== null]).toEqual([key, true]);
+  it("the forms keep today's whole labels", () => {
+    expect(ro.naturalPerson.fields.dateOfBirth).toBe("Data nașterii");
+    expect(ro.property.fields.useCategory).toBe("Categorie de folosință");
+    expect(ro.document.table.institution).toBe("Instituție / Notariat");
+    expect(en.judicialPerson.fields.tradeRegisterNumber).not.toBe(en.judicialPerson.listHeads.tradeRegisterNumber);
+  });
+
+  const LISTS = { "natural-persons": "naturalPerson", "judicial-persons": "judicialPerson", properties: "property", documents: "document" } as const;
+  it.each(Object.entries(LISTS))("%s: every chooser column and every fixed name is a short name, with its whole label beside it", (dir, ns) => {
+    const src = read("src", "app", dir, "list-view.tsx");
+    expect(src).toContain(`const tHead   = useTranslations("${ns}.listHeads");`);
+    const chooser = [...src.matchAll(/\{ key: "(\w+)",\s+label: tHead\("(\w+)"\), full: t\("[\w.]+"\),\s+column:/g)];
+    for (const [, key, head] of chooser) expect(head).toBe(key);
+    const keys = new Set(SHORT[ns].map(([k]) => k));
+    for (const [, key] of chooser) expect([key, keys.has(key)]).toEqual([key, true]);
+    expect(src).not.toMatch(/label: t\("(fields|table)\.\w+"\),\s+column:/);
+    for (const m of src.matchAll(/<ListHeadCell column="\w+" name=\{(\w+)\("(\w+)"\)\} full=\{t\("table\.\w+"\)\} \/>/g)) {
+      expect([m[1], keys.has(m[2])]).toEqual(["tHead", true]);
     }
+    // A filter keeps the whole label; the band and the chooser show the short one.
+    expect(src).toMatch(/\?\.full \?\? f\.key,/);
   });
-});
 
-describe("splitName — where the two rows come out most even", () => {
-  it.each([
-    ["Date of Birth", ["Date of", "Birth"]],
-    ["Data nașterii", ["Data", "nașterii"]],
-    // A tie (12 characters either way) keeps the longer row first.
-    ["Categorie de folosință", ["Categorie de", "folosință"]],
-    ["Relationship to the business", ["Relationship to", "the business"]],
-    ["Instituție / Notariat", ["Instituție /", "Notariat"]],
-    ["Institution / Notariat", ["Institution /", "Notariat"]],
-    ["No. of Properties", ["No. of", "Properties"]],
-    ["Nr. proprietăți", ["Nr.", "proprietăți"]],
-    ["Oficială (m²)", ["Oficială", "(m²)"]],
-  ] as const)("%s", (name, rows) => {
-    expect(splitName(name)).toEqual(rows);
-  });
-  it("a one-word name does not break", () => {
-    expect(splitName("Vârstă")).toBeNull();
-    expect(splitName("  Tarla/Solă ")).toBeNull();
+  it("the forced two-row breaks are gone", () => {
+    expect(exists("src", "lib", "ui", "list-head.ts")).toBe(false);
+    const cell = read("src", "components", "table", "list-head.tsx").replace(/\/\*[\s\S]*?\*\//g, "");
+    expect(cell).not.toMatch(/twoRows|splitName/);
+    expect(cell).toContain('data-head-text="" title={full}');
+    expect(read("src", "components", "list", "field-chooser.tsx")).toContain('title={f.full}');
   });
 });
 
@@ -74,7 +83,7 @@ describe("the four lists draw their names through the one cell", () => {
   it.each(Object.entries(LISTS))("%s", (dir, kind) => {
     const src = read("src", "app", dir, "list-view.tsx");
     expect(src).toContain('import { ListHeadCell } from "@/components/table/list-head";');
-    expect(src).toContain(`twoRows={twoRowName("${kind}", col.key)}`);
+    expect([kind, src]).toEqual([kind, expect.stringContaining("full={col.full}")]);
     // A header cell that draws a name is the shared cell; only the tick box's and the row buttons' <th> are left.
     const rawHeads = [...src.matchAll(/<th\b[^>]*\{\.\.\.columnHead\("(\w+)"\)\}/g)].map((m) => m[1]);
     expect(rawHeads.filter((n) => !["listBadges", "listSelectPerson", "selectNew", "listRowActions"].includes(n))).toEqual([]);

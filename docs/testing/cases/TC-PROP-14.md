@@ -72,3 +72,8 @@ with it, is what checks it.
 
 **2026-10-18 — `automated` (Slice #39.82).** The test runner's targeted run 20261018T160353Z-12564 on 9916957 ran `e2e/property/property-list-filters.spec.ts` green
 with the rewritten steps (lint, tsc and the slice's jest suites green too).
+
+**2026-10-21 — names shortened (Slice 40.20).** The band of names and „Câmpuri afișate" show Adrian's short names
+(„Născut pe", „Tip Prop.", „#Document", „Contact" …), the field's whole label on hover; a filter's chip and the
+forms keep the whole labels. Where a step above quotes a column or a box in „Câmpuri afișate" by its whole label, it
+now reads the short one; the spec's locators follow.
