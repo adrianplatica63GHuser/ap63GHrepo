@@ -16,16 +16,18 @@
  * A name never takes more than two rows: Adrian's long names always break, where the two rows come out most even
  * (`splitName`); any other wraps only when its column is narrower than it, balanced by the browser.
  *
- * The rows: two text rows of the header's 16-px line, then the funnel's own — an xs button, 26 px. The band is
- * `HEAD_BAND_PX` tall inside the cell's padding.
+ * The rows: two text rows of the header's 18-px line, then the funnel's own — an xs button, 26 px. The band is
+ * `HEAD_BAND_PX` tall inside the cell's padding. Slice 40.18: the names are Roboto Condensed 13.5 px on an 18-px line
+ * (alternative 13), so the text rows went from 16 to 18 px and the band from 58 to 62 — `LIST_HEAD_PX`, the frame's
+ * floor and the red signs follow.
  */
 import type { ReactNode } from "react";
 import { columnHead } from "@/components/table/fixed-columns";
 import type { ColumnName } from "@/lib/ui/field-widths";
 import { splitName } from "@/lib/ui/list-head";
 
-/** Two 16-px text rows and the funnel's 26-px row. */
-export const HEAD_BAND_PX = 16 + 16 + 26;
+/** Two 18-px text rows and the funnel's 26-px row. */
+export const HEAD_BAND_PX = 18 + 18 + 26;
 
 export function ListHeadCell({
   column,
@@ -57,7 +59,7 @@ export function ListHeadCell({
   );
   return (
     <th className="px-4 py-2 align-top" {...columnHead(column)}>
-      <div className="grid grid-rows-[1rem_1rem_1.625rem]" style={{ height: HEAD_BAND_PX }} data-head-band={funnel ? "filter" : "plain"}>
+      <div className="grid grid-rows-[1.125rem_1.125rem_1.625rem]" style={{ height: HEAD_BAND_PX }} data-head-band={funnel ? "filter" : "plain"}>
         {funnel ? (
           <>
             <span className="row-span-2 flex min-w-0 items-end" data-head-name="">

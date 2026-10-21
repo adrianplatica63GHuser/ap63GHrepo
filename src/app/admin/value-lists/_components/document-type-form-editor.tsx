@@ -120,6 +120,7 @@ import {
 import { columnHead } from "@/components/table/fixed-columns";
 import { FixedTable } from "@/components/table/column-resize";
 import { columnBoxStyle, columnsRem, dialogCardStyle, dialogUnits, type ColumnName } from "@/lib/ui/field-widths";
+import { COLUMN_NAMES_TYPE } from "@/lib/ui/title-type";
 
 /**
  * Slice #37.37 (Ask first, as recommended: keep the table): every column at a
@@ -732,7 +733,7 @@ export function DocumentTypeFormEditor({
                         background sit on the cells rather than the row, because
                         a `<tr>` cannot carry either under `border-collapse`
                         once its cells are positioned. */}
-                    <tr className="text-left text-xs uppercase tracking-wide text-fade dark:text-zinc-400">
+                    <tr className={`text-left ${COLUMN_NAMES_TYPE}`}>
                       {[
                         ["colOrder", "pr-2", "feOrder"],
                         ["colLabelRo", "pr-3", "feLabel"],

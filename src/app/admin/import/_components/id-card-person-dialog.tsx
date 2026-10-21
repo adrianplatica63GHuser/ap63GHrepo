@@ -144,6 +144,7 @@ import {
   type IdCardDialogField,
 } from "@/lib/ui/field-widths";
 import { STACKED_FIELD_CLASS, STACKED_LABEL_CLASS, STACKED_ROW_CLASS } from "@/lib/ui/stacked";
+import { TILE_TITLE_TYPE } from "@/lib/ui/title-type";
 
 // ---------------------------------------------------------------------------
 // Wire shapes
@@ -475,8 +476,7 @@ type Phase = "extracting" | "resolving" | "ready";
 /** Slice #37.32 — a review panel, as the Natural Person's: its frame and its title. */
 const PANEL_CLASS =
   "rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900";
-const PANEL_TITLE_CLASS =
-  "mb-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400";
+const PANEL_TITLE_CLASS = `mb-2 ${TILE_TITLE_TYPE}`;
 
 /** Instituție takes the Carte de identitate panel's whole width (`ID_CARD_INSTITUTION`). */
 const INSTITUTION_BOX = stackedBoxStyle(ID_CARD_INSTITUTION, NP_PANEL_INNER_REM.idCard);

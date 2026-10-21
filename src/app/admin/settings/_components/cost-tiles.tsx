@@ -28,6 +28,7 @@ import { groupSurface } from "@/lib/ui/tile-surface";
 import { CAD_PER, PROVIDER_FACTS, type CostProvider } from "@/lib/costs/catalogue";
 import { ENTERED_CURRENCIES, formatCad, parseTypedAmount, type DayCost, type EnteredCurrency } from "@/lib/costs/compute";
 import type { CostSummary, EnteredAmount, ProviderSummary } from "@/lib/costs/summary";
+import { PANEL_TITLE_TYPE } from "@/lib/ui/title-type";
 
 /** The cost tiles are as wide as Setări's own tiles. */
 const COST_TILE_UNITS = 3;
@@ -149,7 +150,7 @@ function EnteredAmounts({ p }: { p: ProviderSummary }) {
   const label = "text-xs text-fade";
   return (
     <div className="flex flex-col gap-2" data-cost-entered="">
-      <h3 className="text-xs font-semibold uppercase tracking-widest text-ink">{t("heading")}</h3>
+      <h3 className={PANEL_TITLE_TYPE}>{t("heading")}</h3>
       {p.entered.length > 0 && (
         <ul className="flex flex-col gap-1 text-xs">
           {p.entered.map((e) => (
@@ -284,7 +285,7 @@ function Details({ p }: { p: ProviderSummary }) {
           ? "allowance"
           : "entered";
   const total = p.chart.reduce((n, d) => n + d.cad, 0);
-  const h3 = "text-xs font-semibold uppercase tracking-widest text-ink";
+  const h3 = PANEL_TITLE_TYPE;
   return (
     <div className="flex flex-col gap-3 text-sm" data-cost-details="">
       <Figures p={p} />

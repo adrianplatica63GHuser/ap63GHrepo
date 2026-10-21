@@ -45,6 +45,7 @@ import { DocumentTypeFormEditor, type FormLock } from "./document-type-form-edit
 import { TypeRoles } from "./type-roles";
 import { fetchValueListRows, type ValueListRow } from "./role-doc-types";
 import { invalidateListCaches, saveRow } from "./value-list-modal";
+import { COLUMN_NAMES_FACE } from "@/lib/ui/title-type";
 
 const INPUT_CLASS =
   "rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100";
@@ -197,10 +198,10 @@ function FormTab({ row }: { row: ValueListRow }) {
       ) : (
         <table className="w-full text-sm" aria-label={tf("tableCaption", { type: String(row.name ?? "") })}>
           <thead>
-            <tr className="border-b border-card-rim text-left text-fade dark:border-zinc-800 dark:text-zinc-400">
-              <th className="px-2 py-1.5 font-semibold">{tf("colLabelRo")}</th>
-              <th className="px-2 py-1.5 font-semibold">{tf("colType")}</th>
-              <th className="px-2 py-1.5 font-semibold">{tf("colGroup")}</th>
+            <tr className={`border-b border-card-rim text-left dark:border-zinc-800 ${COLUMN_NAMES_FACE}`}>
+              <th className="px-2 py-1.5">{tf("colLabelRo")}</th>
+              <th className="px-2 py-1.5">{tf("colType")}</th>
+              <th className="px-2 py-1.5">{tf("colGroup")}</th>
             </tr>
           </thead>
           <tbody>

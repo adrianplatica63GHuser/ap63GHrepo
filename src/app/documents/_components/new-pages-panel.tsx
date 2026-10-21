@@ -23,6 +23,7 @@ import { UPLOAD_ACCEPT_ATTRIBUTE } from "@/lib/files/file-kinds";
 import { contentTypeOf } from "@/lib/files/file-mime";
 import { MAX_UPLOAD_MB } from "@/lib/import/constraint-rules";
 import { movePage, pageRefusal, type StagedPage } from "@/lib/documents/new-document-pages";
+import { TILE_TITLE_TYPE } from "@/lib/ui/title-type";
 
 type Props = {
   pages:    StagedPage[];
@@ -80,7 +81,7 @@ export function NewPagesPanel({ pages, onChange, surface, disabled = false }: Pr
   return (
     <section className={`${surface} flex h-full flex-col`} aria-label={t("sectionTitle")} data-new-pages>
       <div className="mb-3 flex items-center justify-between gap-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400">{t("sectionTitle")}</h2>
+        <h2 className={TILE_TITLE_TYPE}>{t("sectionTitle")}</h2>
         <input
           ref={inputRef}
           type="file"

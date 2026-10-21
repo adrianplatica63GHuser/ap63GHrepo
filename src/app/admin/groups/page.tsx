@@ -1,6 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import { GroupsListView } from "./_components/groups-list-view";
 import { screenPanel } from "@/lib/ui/field-widths";
+import { PAGE_HEADING_TYPE } from "@/lib/ui/title-type";
 
 // Slice #20.17: BackLink removed — BreadcrumbBar shows the trail. Slice #38.20:
 // „Acasă › Administrare › Grupuri", the section as text (it has no screen).
@@ -27,7 +28,7 @@ export default async function GroupsPage({ searchParams }: PageProps) {
           fromMap={fromMap}
           about={
             <section {...screenPanel("about-groups", 6)} className="rounded-lg border border-blue-200 bg-blue-50 px-5 py-4 dark:border-blue-900 dark:bg-blue-950/40">
-          <h2 className="mb-3 text-base font-semibold text-blue-900 dark:text-blue-200">
+          <h2 className={`mb-3 ${PAGE_HEADING_TYPE}`}>
             {t("infoPanel.title")}
           </h2>
           <div className="flex flex-col gap-2 text-sm text-blue-800 dark:text-blue-300">

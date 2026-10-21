@@ -18,6 +18,7 @@
  *     something is typed the count reads „n din m".
  */
 import { useRef, type ReactNode } from "react";
+import { LIST_HEAD } from "@/components/list/list-fit";
 import { ListSearchBox } from "@/components/list/list-search";
 import { COLUMN_LINES, ColumnHandles, measuredRoomRem, useColumnWidths } from "@/components/table/column-resize";
 import { columnRem, rem, type ColumnName } from "@/lib/ui/field-widths";
@@ -30,9 +31,8 @@ export const ADMIN_LIST_PANEL =
 export const ADMIN_LIST_FRAME =
   "w-full max-h-[66vh] overflow-auto rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900";
 
-/** The header row, kept at the top of the frame as it scrolls. */
-export const ADMIN_LIST_HEAD =
-  "sticky top-0 z-10 bg-cap text-left text-xs font-medium uppercase tracking-wide text-ink dark:bg-zinc-800 dark:text-zinc-300";
+/** The header row, kept at the top of the frame as it scrolls — the four lists' band (Slice 40.18: one class, not two). */
+export const ADMIN_LIST_HEAD = LIST_HEAD;
 
 /**
  * The table: fixed layout, the frame's whole width, each column at its `COLUMN` width — or the width the user dragged

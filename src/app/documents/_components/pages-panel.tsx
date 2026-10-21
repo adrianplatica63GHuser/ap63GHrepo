@@ -56,6 +56,7 @@ import { IncursionClose, IncursionName } from "@/components/tiles/incursion-head
 import { pageRefusal, takeUnsavedPages } from "@/lib/documents/new-document-pages";
 import { nextRotation, rotationOf, type PageRotation } from "@/lib/documents/page-rotation";
 import { RotatedImage } from "@/components/documents/rotated-image";
+import { TILE_TITLE_TYPE } from "@/lib/ui/title-type";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -756,7 +757,7 @@ export function PagesPanel({
       <div className="mb-3 min-w-0">
       <div className="flex items-center justify-between gap-3">
         <div className={peekHead ? "flex min-w-0 items-center gap-3" : "flex items-center gap-3"}>
-          <h2 className={peekHead ? "flex min-w-0 items-center gap-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400" : "text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400"}>
+          <h2 className={peekHead ? `flex min-w-0 items-center gap-2 ${TILE_TITLE_TYPE}` : TILE_TITLE_TYPE}>
             {peekHead ? <span className="shrink-0">{t("sectionTitle")}</span> : t("sectionTitle")}
             {peekHead && <IncursionName name={peekHead.name} />}
           </h2>

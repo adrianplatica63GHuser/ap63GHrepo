@@ -1,6 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import { StampsListView } from "./_components/stamps-list-view";
 import { screenPanel } from "@/lib/ui/field-widths";
+import { PAGE_HEADING_TYPE } from "@/lib/ui/title-type";
 
 // Slice #20.17: BackLink removed — BreadcrumbBar shows the trail. Slice #38.20:
 // „Acasă › Administrare › Ștampile", the section as text (it has no screen).
@@ -21,7 +22,7 @@ export default async function StampsPage() {
         <StampsListView
           about={
             <section {...screenPanel("about-stamps", 6)} className="rounded-lg border border-amber-200 bg-amber-50 px-5 py-4 dark:border-amber-900 dark:bg-amber-950/40">
-          <h2 className="mb-3 text-base font-semibold text-amber-900 dark:text-amber-200">
+          <h2 className={`mb-3 ${PAGE_HEADING_TYPE}`}>
             {t("infoPanel.title")}
           </h2>
           <div className="flex flex-col gap-2 text-sm text-amber-800 dark:text-amber-300">

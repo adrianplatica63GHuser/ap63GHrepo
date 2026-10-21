@@ -18,6 +18,7 @@ import { dialogCardStyle } from "@/lib/ui/field-widths";
 import { typeUsesUnits } from "@/lib/admin/value-lists/reference-tiles";
 import { TYPE_USES_QUERY_KEY, fetchTypeUses, setTypeUse, type TypeUsePair } from "@/lib/properties/type-uses";
 import { fetchValueListRows, toLookupItems } from "./role-doc-types";
+import { COLUMN_NAMES_FACE } from "@/lib/ui/title-type";
 
 /** The grid's frame: `px-5` either side (Slice #39.88 — with the card's border, the standard 21-px gap). */
 const TYPE_USES_PAD_PX = 20;
@@ -119,14 +120,14 @@ export function PropertyTypeUses({
             <thead>
               <tr>
                 <th
-                  className="py-1 pr-3 text-left text-xs font-medium text-fade"
+                  className={`py-1 pr-3 text-left ${COLUMN_NAMES_FACE}`}
                   style={namePad}
                   data-type-uses-name=""
                 >
                   {t("colType")}
                 </th>
                 {(uses.data ?? []).map((u) => (
-                  <th key={u.id} className="px-1 py-1 text-xs font-medium text-fade" data-use-column={u.name}>
+                  <th key={u.id} className={`px-1 py-1 ${COLUMN_NAMES_FACE}`} data-use-column={u.name}>
                     <span className="inline-block max-w-[6rem] whitespace-normal">{u.name}</span>
                   </th>
                 ))}

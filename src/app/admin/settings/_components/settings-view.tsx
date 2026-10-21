@@ -23,6 +23,7 @@ import { groupedTiles } from "@/lib/ui/tiles";
 import { COST_PROVIDERS } from "@/lib/costs/catalogue";
 import { SETTINGS_TILES, SETTINGS_TILE_REGISTRY, type SettingsTile } from "./settings-tiles";
 import { CostTile, useCosts } from "./cost-tiles";
+import { PANEL_TITLE_TYPE } from "@/lib/ui/title-type";
 
 /** Slice #37.35: Setări's tiles, 3 units each. Slice #39.17: ticked on and off like a record's (`settings-tiles.ts`). */
 const SETTINGS_TILE_UNITS = 3;
@@ -186,7 +187,7 @@ function TimeFramesPanel() {
         <>
           {grouped.map((group) => (
           <div key={group.id} className="flex flex-col gap-3" data-time-frame-group={group.id}>
-            <h3 className="text-xs font-semibold uppercase tracking-widest text-ink dark:text-zinc-400">
+            <h3 className={PANEL_TITLE_TYPE}>
               {t(`timeFrames.groups.${group.id}`)}
             </h3>
             {group.rows.map((row) => {
@@ -402,7 +403,7 @@ function SystemTiles({ choice }: { choice: TileChoice<SettingsTile> }) {
             ) : (
               <>
                 <div className="flex flex-col gap-0.5" data-backups="last">
-                  <h3 className="text-xs font-semibold uppercase tracking-widest text-ink">{t("backups.lastBackup")}</h3>
+                  <h3 className={PANEL_TITLE_TYPE}>{t("backups.lastBackup")}</h3>
                   {backups.lastBackup ? (
                     <>
                       <p className="text-ink">{when(backups.lastBackup.at)}</p>
@@ -419,7 +420,7 @@ function SystemTiles({ choice }: { choice: TileChoice<SettingsTile> }) {
                   )}
                 </div>
                 <div className="flex flex-col gap-0.5" data-backups="drill">
-                  <h3 className="text-xs font-semibold uppercase tracking-widest text-ink">{t("backups.lastDrill")}</h3>
+                  <h3 className={PANEL_TITLE_TYPE}>{t("backups.lastDrill")}</h3>
                   {backups.lastDrill ? (
                     <>
                       <p className="text-ink">
@@ -478,7 +479,7 @@ function LanguageChoice() {
   const router = useRouter();
   return (
     <fieldset className="flex flex-col gap-1.5" data-account-language="">
-      <legend className="mb-1 text-xs font-semibold uppercase tracking-widest text-ink">{t("language")}</legend>
+      <legend className={`mb-1 ${PANEL_TITLE_TYPE}`}>{t("language")}</legend>
       {SUPPORTED_LOCALES.map((l) => (
         <label key={l} className="flex cursor-pointer items-center gap-2 text-sm text-ink">
           <input
@@ -505,7 +506,7 @@ function AccountTile({ uat }: { uat: boolean }) {
   return (
     <Tile name="settings-account" title={t("sections.account")}>
       <div className="flex flex-col gap-2" data-account-password="">
-        <h3 className="text-xs font-semibold uppercase tracking-widest text-ink">{t("account.password")}</h3>
+        <h3 className={PANEL_TITLE_TYPE}>{t("account.password")}</h3>
         {uat ? (
           <p className="text-sm text-fade" role="note" data-uat-no-accounts="password">{tPwd("uatNoAccounts")}</p>
         ) : (

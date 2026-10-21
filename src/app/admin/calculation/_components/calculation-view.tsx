@@ -18,6 +18,7 @@ import { swapped, type RoadRefusal, type RoadSide } from "@/lib/calculation/geom
 import { ownerColor } from "@/lib/calculation/owner-colors";
 import { checkSideRoadInput, type InputProblem } from "@/lib/calculation/side-road-input";
 import { EMPTY_START, SideRoadStart, type StartProperty, type StartState } from "./side-road-start";
+import { COLUMN_NAMES_BAND } from "@/lib/ui/title-type";
 
 /**
  * „Calcul drum lateral", steps 1 to 4                       (Slices #38.23, #38.24, #39.79)
@@ -793,7 +794,7 @@ export function CalculationView() {
           {/* The owners' slices, in order — with the keyboard's reorder */}
           <div className={`${TABLE_FRAME} rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900`}>
             <FixedTable id="calculation/owners" columns={OWNER_COLUMNS}>
-              <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-ink dark:bg-zinc-800 dark:text-zinc-300">
+              <thead className={COLUMN_NAMES_BAND}>
                 <tr>
                   <th className="px-3 py-2 text-right" {...columnHead("count")}>{t("table.order")}</th>
                   <th className="px-3 py-2" {...columnHead("personName")}>{t("table.owner")}</th>

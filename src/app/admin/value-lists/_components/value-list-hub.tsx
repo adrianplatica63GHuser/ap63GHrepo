@@ -34,6 +34,7 @@ import { ReferenceTiles, type ReferenceTile } from "./reference-tiles";
 import { RelationshipTriangle } from "./relationship-triangle";
 import { REFERENCE_NAV_REM, rem, unitsRem } from "@/lib/ui/field-widths";
 import { UnitRow } from "@/components/screen/unit-row";
+import { PANEL_TITLE_TYPE } from "@/lib/ui/title-type";
 
 /**
  * The categories' column: as wide as its longest name, the gap after it equal to the gap before it — 16rem
@@ -194,7 +195,7 @@ export function ValueListHub({
         >
           {listsByCategory().map((category) => (
             <div key={category.id} className="flex flex-col gap-1" data-category={category.id}>
-              <h2 className="px-2 text-xs font-semibold uppercase tracking-widest text-ink dark:text-zinc-400">
+              <h2 className={`px-2 ${PANEL_TITLE_TYPE}`}>
                 {t(`categories.${category.id}`)}
               </h2>
               <ul className="flex flex-col">

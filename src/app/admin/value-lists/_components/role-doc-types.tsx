@@ -39,6 +39,7 @@ import {
   setPairHoldsShare,
   type DocTypePersonRolePair,
 } from "@/lib/admin/doc-type-person-roles/client";
+import { PANEL_TITLE_TYPE } from "@/lib/ui/title-type";
 
 type LookupItem = { id: string; name: string };
 /** A value-list row AS THE API SENDS IT — the cache keeps it whole. */
@@ -122,7 +123,7 @@ export function RoleDocTypes({ roleId, roleName }: { roleId: string; roleName: s
 
   return (
     <section className="flex flex-col gap-2" aria-label={t("docTypesTitle", { role: roleName })} data-role-doc-types="">
-      <h4 className="text-xs font-semibold uppercase tracking-wide text-ink dark:text-zinc-300">{t("docTypes")}</h4>
+      <h4 className={PANEL_TITLE_TYPE}>{t("docTypes")}</h4>
       {loading ? (
         <p className="text-sm text-fade">{t("loading")}</p>
       ) : pairs.length === 0 ? (

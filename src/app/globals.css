@@ -16,6 +16,9 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  /* Slice 40.18 — the titles (src/lib/ui/title-type.ts): font-title, font-colhead. */
+  --font-title: var(--font-roboto-slab), Arial, Helvetica, sans-serif;
+  --font-colhead: var(--font-roboto-condensed), Arial, Helvetica, sans-serif;
 
   /* ── 6-colour palette ──────────────────────────────────────────────────── */
   --color-or-strong: #334155;   /* strong slate   — primary CTA / accent       */

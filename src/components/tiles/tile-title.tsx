@@ -24,10 +24,14 @@
  * is the `h2`'s, for a tile that names itself with `aria-labelledby`.
  */
 import type { ReactNode } from "react";
+import { TILE_TITLE_TYPE } from "@/lib/ui/title-type";
 
-/** The title's classes — those of every tile heading before #38.30. */
-export const TILE_TITLE_CLASS =
-  "flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-ink dark:text-zinc-400";
+/**
+ * The title's classes. Slice 40.18: set in Roboto Slab, navy, as alternative 13 draws kinds 1, 2 and 4
+ * (`TILE_TITLE_TYPE`, src/lib/ui/title-type.ts) — before it, 14-px Arial semibold in ink (zinc-400 in dark). The line
+ * is 24 px, so a tile's title is 4 px taller than it was.
+ */
+export const TILE_TITLE_CLASS = `flex items-center gap-2 ${TILE_TITLE_TYPE}`;
 
 /** The subtitle's classes: one grey line, cut with an ellipsis, adding no width. */
 export const TILE_SUBTITLE_CLASS =

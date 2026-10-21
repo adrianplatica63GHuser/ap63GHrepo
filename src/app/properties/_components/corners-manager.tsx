@@ -14,6 +14,7 @@ import {
 import type { Corner, CornerDiffEntry } from "./form-schema";
 import { HelpHint } from "@/components/help/help-hint";
 import { CORNER_COLUMNS, tightCornerColumn } from "@/lib/ui/field-widths";
+import { COLUMN_NAMES_BAND } from "@/lib/ui/title-type";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -547,7 +548,7 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
             <col style={{ width: colWidth(CORNER_COLUMNS.east) }} />
             {!readOnly && <col />}
           </colgroup>
-          <thead className="bg-cap text-left text-xs font-medium uppercase tracking-wide text-ink dark:bg-zinc-800 dark:text-zinc-300">
+          <thead className={COLUMN_NAMES_BAND}>
             <tr>
               <th className={`${padX} py-2`}>{t("seq")}</th>
               <th className={`${padX} py-2`}>{t("originalIndex")}</th>

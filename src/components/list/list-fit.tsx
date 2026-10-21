@@ -28,6 +28,7 @@
  */
 import { useCallback, useLayoutEffect, useRef, useState, type CSSProperties, type RefObject } from "react";
 import { listFrameFloor, listFrameMaxHeight, rowTilesMaxHeight } from "@/lib/ui/frame-height";
+import { COLUMN_NAMES_BAND } from "@/lib/ui/title-type";
 
 /**
  * The frame around a principal list's table: as wide as the table, scrolling both ways inside the window.
@@ -46,9 +47,13 @@ import { listFrameFloor, listFrameMaxHeight, rowTilesMaxHeight } from "@/lib/ui/
  */
 export const LIST_FRAME = "w-fit max-w-full overflow-auto [scrollbar-gutter:stable]";
 
-/** The band of column names, kept at the frame's top as the rows scroll. */
-export const LIST_HEAD =
-  "sticky top-0 z-10 bg-cap text-left text-xs font-medium uppercase tracking-wide text-ink dark:bg-zinc-800 dark:text-zinc-300";
+/**
+ * The band of column names, kept at the frame's top as the rows scroll. Slice 40.18: the names in Roboto Condensed
+ * 13.5 px, 600, ink — alternative 13's kind 3 (`COLUMN_NAMES_BAND`, src/lib/ui/title-type.ts); they were `text-xs
+ * font-medium uppercase tracking-wide`. „Grupuri"'s and „Ștampile"'s lists (`ADMIN_LIST_HEAD`) and a reference list's
+ * band (value-list-modal.tsx) read this one.
+ */
+export const LIST_HEAD = `sticky top-0 z-10 ${COLUMN_NAMES_BAND}`;
 
 /** The page's scroll area (`app-shell.tsx`, by name — #38.56 says why not the nearest scrolling ancestor). */
 function pageScrollOf(el: HTMLElement): HTMLElement | null {

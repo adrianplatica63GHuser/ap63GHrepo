@@ -49,6 +49,7 @@ import { formFilterFrom, formFilterKeeps, formFilterNarrows, type FormFilter } f
 import { documentTypeHasForm } from "@/lib/documents/status";
 import { joinedCellText } from "@/lib/admin/value-lists/joined-cell";
 import { frameMaxHeight } from "@/lib/ui/frame-height";
+import { LIST_HEAD } from "@/components/list/list-fit";
 
 /**
  * Slice #38.56: the frame's height — the window's remaining height, or a screen of its own where the list
@@ -1772,7 +1773,7 @@ export function ValueListModal({
               data-value-list-table-frame=""
             >
               <FixedTable id={`value-list/${listKey}`} columns={columns} className="text-sm min-w-full" fill={tileFill}>
-                <thead className="sticky top-0 z-10 bg-cap text-left text-xs font-medium uppercase tracking-wide text-ink dark:bg-zinc-800 dark:text-zinc-300">
+                <thead className={LIST_HEAD}>
                   <tr>
                     {/* Slice #38.50: a header may take two lines; a row never does. */}
                     {cells.map((cell) => (
