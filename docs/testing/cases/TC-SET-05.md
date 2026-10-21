@@ -5,7 +5,7 @@
 | **Area** | settings |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-21 |
 
 ## What this proves
@@ -45,3 +45,6 @@ localhost:3000, signed in as admin. Run 1 ticked the sidebar's box: `<html>` dar
 `ga40-theme=dark`, the body rgb(10, 10, 10); a fetch of „Setări" returned `<html class="… dark">`; „Aspect" stood
 under „Limba", ticked; unticked there, the page turned light and the sidebar's box unticked. Run 2 the same, with a
 reload in between. The flags measured 24 × 16. Nothing changed between the runs, so the case is confirmed.
+
+**2026-10-21 — `automated`.** `e2e/settings/dark-mode.spec.ts` translates the case. Its first green run is the
+runner's `20261021T202447Z-24740` (Slice 40.19); the row moved in Slice 40.20's first commit.
