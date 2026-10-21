@@ -5,7 +5,7 @@
 | **Area** | layout |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-21 |
 
 ## What this proves
@@ -46,3 +46,6 @@ At 1600 × 900 px.
 localhost:3000, a real mouse drag each time. Run 1, Proprietăți: steps 1, 3 and 4 as written (`said` read off the
 live region), the order stored under `ga40-colorder-property-v1`. Run 2, Acte: step 6, a reload kept it, the funnel
 under „Data" opened its filter and moved nothing. The stores were cleared afterwards.
+
+**2026-10-21 — `automated`.** `e2e/layout/column-order.spec.ts` translates the case. Its first green run is the
+runner's `20261021T215743Z-16325` (Slice 40.25); the row moved in Slice 40.26's first commit.
