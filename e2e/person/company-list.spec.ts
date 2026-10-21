@@ -54,7 +54,7 @@ test.describe("TC-PERS-06 — lista persoanelor juridice", () => {
       await expect(main.getByRole("button", { name: "Câmpuri afișate 1/4", exact: true })).toBeVisible();
       await search.fill(MARK);
       await expect(main.locator("tbody tr").filter({ hasText: MARK })).toHaveCount(2, { timeout: 30_000 });
-      await expect(main.getByRole("columnheader", { name: "CONTACT", exact: true })).toBeVisible();
+      await expect(main.getByRole("columnheader", { name: "Contact", exact: true })).toBeVisible();
       await expect(main.locator("tbody tr").filter({ hasText: `${MARK} Firma A SRL` })).toContainText(`Unu ${MARK} Contact`);
       await expect(main.locator("tbody tr").filter({ hasText: `${MARK} Firma B SRL` })).toContainText(`Doi ${MARK} Contact`);
 
@@ -63,7 +63,7 @@ test.describe("TC-PERS-06 — lista persoanelor juridice", () => {
       await picker.getByRole("checkbox", { name: "Contact" }).uncheck();
       await page.getByRole("heading", { level: 1 }).first().click();
       await expect(main.getByRole("button", { name: "Câmpuri afișate 0/4", exact: true })).toBeVisible();
-      await expect(main.getByRole("columnheader", { name: "CONTACT", exact: true })).toHaveCount(0);
+      await expect(main.getByRole("columnheader", { name: "Contact", exact: true })).toHaveCount(0);
     } finally {
       await removeRecord(page.request, "company", a);
       await removeRecord(page.request, "company", b);
