@@ -20,6 +20,13 @@
 import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createCompany, createDocumentOfType, createNaturalPerson, createProperty, removeLeftovers, removeRecord, type RecordKind } from "../helpers/records";
 
+// Slice 40.14: the scroll bars shown, as Adrian's Windows Chrome draws them. Since the lists' frame keeps its vertical
+// bar's room (`scrollbar-gutter: stable`, `LIST_FRAME`), headless Chromium's hidden bars (Playwright passes
+// `--hide-scrollbars`) disagree with themselves: the frame's clientWidth leaves the 15-px room out, the furthest the
+// frame scrolls sideways does not — measured on Acte at 1100 px, clientWidth 811, scrollWidth 1292, scrollLeft stopped
+// at 466 — so step 13's end of the list kept its „>". No window a person uses hides the bars that way.
+test.use({ launchOptions: { ignoreDefaultArgs: ["--hide-scrollbars"] } });
+
 const MARK = `${E2E_MARKER}LAYOUT-05`;
 const LONG = "cu o denumire mult prea lungă ca să încapă pe un singur rând al listei, oricât de lată ar fi fereastra";
 
