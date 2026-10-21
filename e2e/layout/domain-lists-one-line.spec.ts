@@ -330,6 +330,9 @@ test.describe("TC-LAYOUT-05 — cele patru liste, câte un rând pe linie", () =
         const g = getComputedStyle(b.querySelector("span")!);
         return { name: g.animationName, duration: g.animationDuration, count: g.animationIterationCount, strip: getComputedStyle(b).animationName };
       });
+    // The mouse away from the signs and nothing focused, so the first reading is the sign left alone.
+    await page.mouse.move(5, 5);
+    await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
     expect(await pulse()).toEqual({ name: "ga-sign-pulse", duration: "2.4s", count: "infinite", strip: "none" });
     await right.hover();
     expect((await pulse()).name).toBe("none");

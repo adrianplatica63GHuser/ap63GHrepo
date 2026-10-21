@@ -858,7 +858,10 @@ describe("tables at fixed column widths (#37.16)", () => {
     expect(table).not.toMatch(/whitespace-nowrap/);
     const head = region(table, "<thead", "</thead>");
     const ths = head.match(/<th\b/g) ?? [];
-    expect(ths.length).toBeGreaterThan(1);
+    // Slice 40.24: the four lists' only literal <th> is the row buttons' — every name is the band's shared cell, which
+    // marks its own <th> with `columnHead` (list-head.tsx); so a header is a <th> or a ListHeadCell.
+    const cells = head.match(/<ListHeadCell\b/g) ?? [];
+    expect(ths.length + cells.length).toBeGreaterThan(1);
     expect(head.match(/<th\b[^>]*\{\.\.\.columnHead\(/g) ?? []).toHaveLength(ths.length);
     // Its frame is as wide as the table, scrolling past the window — on the four lists since #40.02 `LIST_FRAME`, which
     // scrolls down too.

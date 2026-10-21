@@ -96,8 +96,9 @@ test.describe("TC-PROP-06 — lista proprietăților", () => {
       await expect(main.getByRole("button", { name: "Câmpuri afișate 2/4", exact: true })).toBeVisible();
       await expect(table.locator("thead th")).toHaveText(["Poreclă", "Categ.Folos.", "Tip Prop.", ""]);
       const row = table.locator("tbody tr").filter({ hasText: NAME });
-      await expect(row.locator("td").nth(2)).toHaveText(useCategory.name);
-      await expect(row.locator("td").nth(3)).toHaveText(propertyType.name);
+      // Slice 40.24: no badges' column before Poreclă — the chosen columns are the second and third cells.
+      await expect(row.locator("td").nth(1)).toHaveText(useCategory.name);
+      await expect(row.locator("td").nth(2)).toHaveText(propertyType.name);
     } finally {
       await removeRecord(page.request, "property", propertyId);
     }
