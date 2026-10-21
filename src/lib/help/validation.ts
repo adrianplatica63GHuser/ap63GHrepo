@@ -14,6 +14,11 @@ export const helpContentUpsertSchema = z.object({
   backgroundRo: z.string().nullish(),
   howToEn: z.string().nullish(),
   howToRo: z.string().nullish(),
+  /**
+   * Slice 40.15: a proposal's „Acceptă" sends the fingerprint of the text it was written against (`helpFingerprint`,
+   * eight hex digits); the route saves only while the screen still holds that text. The editor's „Salvează" sends none.
+   */
+  against: z.string().regex(/^[0-9a-f]{8}$/).optional(),
 });
 
 export type HelpContentUpsertInput = z.infer<typeof helpContentUpsertSchema>;

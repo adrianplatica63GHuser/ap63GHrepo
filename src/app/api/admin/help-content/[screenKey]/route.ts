@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { helpContentUpsertSchema } from "@/lib/help/validation";
 import { isHelpScreenKey } from "@/lib/help/registry";
 import { getHelpContent, upsertHelpContent } from "@/lib/help/queries";
+import { helpFingerprint } from "@/lib/help/proposals";
+import { HELP_SAVE_CODE } from "@/lib/help/save-failure";
 
 /**
  * GET /api/admin/help-content/[screenKey]
@@ -13,6 +15,11 @@ import { getHelpContent, upsertHelpContent } from "@/lib/help/queries";
  * registered may receive content; everything else is a 400, since a typo'd
  * key would otherwise silently create an orphaned row that no <HelpButton>
  * could ever read back.
+ *
+ * Slice 40.15: every refusal carries a `code` beside its `error`, which the editor turns into a sentence that says
+ * why (`src/lib/help/save-failure.ts`) — the screen never shows the raw text. A proposal's „Acceptă" sends `against`,
+ * the fingerprint of the text it was written against; when the screen's text is another one now the PUT is refused
+ * with 409 `text_changed` and nothing is overwritten. The editor's own „Salvează" sends none, and saves.
  */
 export async function GET(
   _req: Request,
@@ -43,19 +50,24 @@ export async function PUT(
   try {
     const { screenKey } = await params;
     if (!isHelpScreenKey(screenKey)) {
-      return NextResponse.json({ error: "Unknown screen key" }, { status: 400 });
+      return NextResponse.json({ error: "Unknown screen key", code: HELP_SAVE_CODE.unknownScreen }, { status: 400 });
     }
 
-    const body = await req.json();
+    const body = await req.json().catch(() => undefined);
     const parsed = helpContentUpsertSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+      return NextResponse.json({ error: "Invalid input", code: HELP_SAVE_CODE.invalid }, { status: 400 });
     }
 
-    const row = await upsertHelpContent(screenKey, parsed.data);
+    const { against, ...texts } = parsed.data;
+    if (against !== undefined && helpFingerprint(await getHelpContent(screenKey)) !== against) {
+      return NextResponse.json({ error: "The screen's text changed since the proposal was written", code: HELP_SAVE_CODE.textChanged }, { status: 409 });
+    }
+
+    const row = await upsertHelpContent(screenKey, texts);
     return NextResponse.json({ item: row });
   } catch (err) {
     console.error("PUT /api/admin/help-content/[screenKey]", err);
-    return NextResponse.json({ error: "Failed to save" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to save", code: HELP_SAVE_CODE.database }, { status: 500 });
   }
 }

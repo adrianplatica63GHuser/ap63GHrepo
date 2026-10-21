@@ -22,6 +22,8 @@ import {
   type HelpTexts,
 } from "@/lib/help/proposals";
 import { HELP_PROPOSALS } from "@/lib/help/proposals-data";
+import { HelpSaveError, failureOf, helpSaveFailure, type HelpSaveFailure } from "@/lib/help/save-failure";
+import { saveHelpContent } from "@/lib/help/save-help-content";
 import { UnitRow } from "@/components/screen/unit-row";
 
 /**
@@ -78,6 +80,19 @@ async function fetchContentList(): Promise<ContentRow[]> {
   if (!res.ok) throw new Error("Failed to load");
   const data = await res.json();
   return data.items;
+}
+
+/** Slice 40.15: „Acceptă toate"'s fresh read, failing with the reason as its PUTs do. */
+async function fetchContentListOrFail(): Promise<ContentRow[]> {
+  let res: Response;
+  try {
+    res = await fetch("/api/admin/help-content", { redirect: "manual" });
+  } catch {
+    throw new HelpSaveError("network", null);
+  }
+  const body: unknown = await res.json().catch(() => null);
+  if (!res.ok || res.type === "opaqueredirect") throw new HelpSaveError(helpSaveFailure(res, body), res.type === "opaqueredirect" ? null : res.status);
+  return ((body as { items?: ContentRow[] } | null)?.items ?? []) as ContentRow[];
 }
 
 async function fetchHintsList(): Promise<HintRow[]> {
@@ -163,6 +178,18 @@ function PreviewBlock({ heading, text }: { heading: string; text: string }) {
   );
 }
 
+/**
+ * Slice 40.15: the sentence that says why a save failed (`help.admin.saveFailed.*`), from what the mutation threw —
+ * never the server's own text.
+ */
+function useSaveFailureText(): (err: unknown) => string {
+  const t = useTranslations("help.admin.saveFailed");
+  return (err) => {
+    const { failure, status } = failureOf(err);
+    return failure === "other" ? t("other", { status: status ?? 0 }) : t(failure as Exclude<HelpSaveFailure, "other">);
+  };
+}
+
 function SaveBar({
   onSave,
   pending,
@@ -228,16 +255,10 @@ function ScreenEditor({
     howToRo: start?.howToRo ?? "",
   });
 
+  const because = useSaveFailureText();
   const mutation = useMutation({
-    mutationFn: async () => {
-      const res = await fetch(`/api/admin/help-content/${screenKey}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
-      });
-      if (!res.ok) throw new Error("save failed");
-      return res.json();
-    },
+    // Slice 40.15: one PUT for the editor and the proposals, which keeps what it needs to say why it failed.
+    mutationFn: () => saveHelpContent(screenKey, values),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-help-content"] });
       qc.invalidateQueries({ queryKey: ["help", screenKey] });
@@ -281,7 +302,7 @@ function ScreenEditor({
         saveLabel={t("save")}
         savingLabel={t("saving")}
         savedLabel={t("saved")}
-        errorLabel={t("saveError")}
+        errorLabel={mutation.isError ? t("saveErrorBecause", { reason: because(mutation.error) }) : t("saveError")}
       />
 
       <div className="rounded-md border border-dashed border-card-rim p-3 dark:border-zinc-700">
@@ -335,16 +356,10 @@ function ProposalPanel({
 }) {
   const t = useTranslations("help.admin");
   const qc = useQueryClient();
+  const because = useSaveFailureText();
   const mutation = useMutation({
-    mutationFn: async () => {
-      const res = await fetch(`/api/admin/help-content/${screenKey}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(proposalTexts(proposal)),
-      });
-      if (!res.ok) throw new Error("save failed");
-      return res.json();
-    },
+    // Slice 40.15: with the fingerprint it was written against, so a text changed since is refused, not overwritten.
+    mutationFn: () => saveHelpContent(screenKey, proposalTexts(proposal), proposal.against),
     onSuccess: async () => {
       onAccepted();
       await qc.invalidateQueries({ queryKey: ["admin-help-content"] });
@@ -386,7 +401,11 @@ function ProposalPanel({
         />
         <IconButton icon={Pencil} label={t("proposal.edit")} showLabel variant="secondary" onClick={onEdit} disabled={mutation.isPending} />
         <IconButton icon={Clock} label={t("proposal.later")} showLabel variant="secondary" onClick={onLater} disabled={mutation.isPending} />
-        {mutation.isError && <span className="text-xs text-red-600 dark:text-red-400">{t("proposal.acceptError")}</span>}
+        {mutation.isError && (
+          <span role="alert" className="text-xs text-red-600 dark:text-red-400" data-help-save-failed={failureOf(mutation.error).failure}>
+            {t("proposal.acceptError", { reason: because(mutation.error) })}
+          </span>
+        )}
       </div>
     </section>
   );
@@ -406,19 +425,21 @@ function AcceptAllProposals({ screenKeys }: { screenKeys: readonly HelpScreenKey
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const titleId = "help-accept-all-title";
+  const because = useSaveFailureText();
   const mutation = useMutation({
     mutationFn: async () => {
-      const fresh = await fetchContentList();
+      const fresh = await fetchContentListOrFail();
       const todo = offeredProposals(screenKeys, new Map(fresh.map((r) => [r.screenKey, r])), HELP_PROPOSALS);
       const accepted: HelpScreenKey[] = [];
-      const failed: HelpScreenKey[] = [];
+      // Slice 40.15: each failed screen with the reason it failed — the same PUT as one „Acceptă".
+      const failed: { screenKey: HelpScreenKey; error: unknown }[] = [];
       for (const { screenKey, proposal } of todo) {
-        const res = await fetch(`/api/admin/help-content/${screenKey}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(proposalTexts(proposal)),
-        });
-        (res.ok ? accepted : failed).push(screenKey);
+        try {
+          await saveHelpContent(screenKey, proposalTexts(proposal), proposal.against);
+          accepted.push(screenKey);
+        } catch (error) {
+          failed.push({ screenKey, error });
+        }
       }
       return { accepted, failed, skipped: screenKeys.length - todo.length };
     },
@@ -452,13 +473,20 @@ function AcceptAllProposals({ screenKeys }: { screenKeys: readonly HelpScreenKey
         </p>
       )}
       {result && result.failed.length > 0 && (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400" data-help-accept-all-failed>
-          {t("proposal.acceptAllFailed", { screens: result.failed.map((k) => t(helpScreenLabelKey(k))).join(", ") })}
-        </p>
+        <div role="alert" className="text-sm text-red-600 dark:text-red-400" data-help-accept-all-failed>
+          <p>{t("proposal.acceptAllFailed", { count: result.failed.length })}</p>
+          <ul className="list-disc pl-5">
+            {result.failed.map(({ screenKey, error }) => (
+              <li key={screenKey} data-help-save-failed={failureOf(error).failure}>
+                {t("proposal.acceptAllFailedScreen", { screen: t(helpScreenLabelKey(screenKey)), reason: because(error) })}
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
       {mutation.isError && (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
-          {t("proposal.acceptError")}
+        <p role="alert" className="text-sm text-red-600 dark:text-red-400" data-help-save-failed={failureOf(mutation.error).failure}>
+          {t("proposal.acceptError", { reason: because(mutation.error) })}
         </p>
       )}
       {open && (
