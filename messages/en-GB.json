@@ -623,6 +623,18 @@
       "title": "This parcel already has a property",
       "body": "Tarla {tarla}, parcel {parcela} already belongs to the property below. No new property was created.",
       "open": "Open {name}"
+    },
+    "listHeads": {
+      "nickname": "Nickname",
+      "tarlaSola": "Tarla",
+      "parcela": "Parcelă",
+      "surfaceAreaMp": "Supr.Ofic.",
+      "calculatedAreaMp": "Supr.Calc.",
+      "carteFunciara": "C.F.#",
+      "cadastralNumber": "Cadastru #",
+      "useCategory": "Use Categ.",
+      "propertyType": "Prop. Type",
+      "locality": "Locality"
     }
   },
   "address": {
@@ -1276,6 +1288,18 @@
       "connections": "Tags, groups, stamps, see also",
       "inheritanceTree": "The person's family: great-grandparents, parents, siblings, spouse, children, great-grandchildren",
       "interactions": "History of interactions with this person"
+    },
+    "listHeads": {
+      "name": "Name",
+      "nickname": "Nickname",
+      "cnp": "CNP",
+      "dateOfBirth": "DoB",
+      "age": "Age",
+      "gender": "Gender",
+      "dateOfDeath": "DoD",
+      "placeOfBirth": "Born in",
+      "professionalType": "Prof.type",
+      "relationships": "Rel.to VM"
     }
   },
   "judicialPerson": {
@@ -1436,6 +1460,15 @@
       "applied": "The fields were filled in from ANAF. Check them and press „Save”.",
       "partyIntro": "The company has CUI {cui}. ANAF can fill in the rest before you create it.",
       "partyUsing": "„Create & link” uses the ticked values."
+    },
+    "listHeads": {
+      "name": "Name",
+      "nickname": "Nickname",
+      "judicialPersonType": "Type",
+      "cuiNumber": "CUI",
+      "tradeRegisterNumber": "Trade Reg#",
+      "contactPerson": "Contact",
+      "locality": "Locality"
     }
   },
   "nav": {
@@ -2265,6 +2298,18 @@
       "addError": "The juridical person could not be added.",
       "made": "“{name}” was added and chosen as the issuer — save the document.",
       "openToFill": "Open it, for the CUI and “Fill in from ANAF”"
+    },
+    "listHeads": {
+      "type": "Type",
+      "title": "Title",
+      "nrDocument": "Doc.#",
+      "dateDocument": "Date",
+      "institution": "Inst./Notar",
+      "subject": "Subject",
+      "pageCount": "Pages",
+      "personCount": "Persons",
+      "propertyCount": "Properties",
+      "createdAt": "Added on"
     }
   },
   "valueList": {

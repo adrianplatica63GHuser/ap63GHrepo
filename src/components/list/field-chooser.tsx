@@ -22,7 +22,12 @@ import { Columns3 } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import type { ColumnName } from "@/lib/ui/field-widths";
 
-export type ChooserField = { key: string; label: string; column: ColumnName };
+/**
+ * One column the chooser offers. Slice 40.20: `label` is the column's short name (Adrian's list of 2026-10-21) — the
+ * band's and the chooser's — and `full` the field's whole label, as the form names it: the tooltip over the short one,
+ * and what a filter on that column says.
+ */
+export type ChooserField = { key: string; label: string; full?: string; column: ColumnName };
 
 /** The stored choice, filtered to the fields offered; `defaults` when none is stored or it cannot be read. Exported for its test. */
 export function readStored(storageKey: string, offered: readonly string[], defaults: readonly string[]): string[] {
@@ -124,7 +129,7 @@ export function FieldChooser({
             const checked = visible.includes(f.key);
             const disabled = !checked && visible.length >= max;
             return (
-              <label key={f.key} className="flex cursor-pointer items-center gap-2 py-0.5">
+              <label key={f.key} className="flex cursor-pointer items-center gap-2 py-0.5" title={f.full}>
                 <input
                   type="checkbox"
                   checked={checked}

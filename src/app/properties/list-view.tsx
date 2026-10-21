@@ -14,7 +14,6 @@ import { LIST_FRAME, LIST_HEAD, useListFit } from "@/components/list/list-fit";
 import { HiddenColumnSigns } from "@/components/list/hidden-column-signs";
 import { LIST_TOOLBAR, useListEdge } from "@/components/table/list-edge";
 import { ListHeadCell } from "@/components/table/list-head";
-import { twoRowName } from "@/lib/ui/list-head";
 import type { ColumnName } from "@/lib/ui/field-widths";
 import { AddPropertyDialog } from "./_components/add-property-dialog";
 import { newTabIfAsked } from "@/lib/ui/row-link";
@@ -116,6 +115,8 @@ function formatArea(raw: string | null): string {
 
 export function PropertyListView() {
   const t       = useTranslations("property");
+  // Slice 40.20: the band's and „Câmpuri afișate"'s short names (Adrian, 2026-10-21); the forms keep `t`'s.
+  const tHead   = useTranslations("property.listHeads");
   const tPag    = useTranslations("shared.pagination");
   const router = useRouter();
 
@@ -180,16 +181,16 @@ export function PropertyListView() {
     // persisted per user in localStorage (`LIST_COLUMN_CHOICE.property`), so renaming one
     // silently drops that column from the saved choices of anyone who had it
     // on. The key is a UI identifier; the field is the data.  (Slice #34.03)
-    { key: "tarlaSola",        label: t("table.tarlaSola"),        column: "listTarla" },
-    { key: "parcela",          label: t("table.parcela"),          column: "listParcela" },
-    { key: "surfaceAreaMp",    label: t("table.surfaceAreaMp"),    column: "listArea" },
-    { key: "calculatedAreaMp", label: t("table.calculatedAreaMp"), column: "listArea" },
-    { key: "carteFunciara",    label: t("table.carteFunciara"),    column: "listCarteFunciara" },
-    { key: "cadastralNumber",  label: t("table.cadastralNumber"),  column: "listCadastral" },
+    { key: "tarlaSola",        label: tHead("tarlaSola"), full: t("table.tarlaSola"),        column: "listTarla" },
+    { key: "parcela",          label: tHead("parcela"), full: t("table.parcela"),          column: "listParcela" },
+    { key: "surfaceAreaMp",    label: tHead("surfaceAreaMp"), full: t("table.surfaceAreaMp"),    column: "listArea" },
+    { key: "calculatedAreaMp", label: tHead("calculatedAreaMp"), full: t("table.calculatedAreaMp"), column: "listArea" },
+    { key: "carteFunciara",    label: tHead("carteFunciara"), full: t("table.carteFunciara"),    column: "listCarteFunciara" },
+    { key: "cadastralNumber",  label: tHead("cadastralNumber"), full: t("table.cadastralNumber"),  column: "listCadastral" },
     // Slice #37.72: the two the chooser lacked, labelled as on the form.
-    { key: "useCategory",      label: t("fields.useCategory"),     column: "listUseCategory" },
-    { key: "propertyType",     label: t("fields.propertyType"),    column: "listPropertyType" },
-    { key: "locality",         label: t("table.locality"),         column: "listLocality" },
+    { key: "useCategory",      label: tHead("useCategory"), full: t("fields.useCategory"),     column: "listUseCategory" },
+    { key: "propertyType",     label: tHead("propertyType"), full: t("fields.propertyType"),    column: "listPropertyType" },
+    { key: "locality",         label: tHead("locality"), full: t("table.locality"),         column: "listLocality" },
     // Slice #37.61: importance, relevance and provenance are no longer offered; a
     // browser that remembers one simply loses it (`field-chooser.tsx`).
   ];
@@ -221,7 +222,8 @@ export function PropertyListView() {
   const filterFields: FilterBarField[] = PROPERTY_FILTER_FIELDS.map((f) => ({
     key: f.key,
     kind: f.kind,
-    label: optionalCols.find((c) => PROPERTY_COLUMN_FILTERS[c.key] === f.key)?.label ?? f.key,
+    // Slice 40.20: a filter keeps the field's whole label, not the band's short one.
+    label: optionalCols.find((c) => PROPERTY_COLUMN_FILTERS[c.key] === f.key)?.full ?? f.key,
   }));
   const filterLabel = (key: string) => filterFields.find((f) => f.key === key)?.label ?? key;
 
@@ -322,7 +324,7 @@ export function PropertyListView() {
               <tr>
                 {/* Slice #39.73: the badges' column, without the select-all box — nothing on this list acts on a selection. */}
                 <th className="px-4 py-2" {...columnHead("listBadges")} />
-                <ListHeadCell column="listPropertyNickname" name={t("table.nickname")} />
+                <ListHeadCell column="listPropertyNickname" name={tHead("nickname")} full={t("table.nickname")} />
                 {shownCols.map((col) => {
                   const filterKey = PROPERTY_COLUMN_FILTERS[col.key];
                   return (
@@ -330,7 +332,7 @@ export function PropertyListView() {
                       key={col.key}
                       column={col.column}
                       name={col.label}
-                      twoRows={twoRowName("property", col.key)}
+                      full={col.full}
                       // Slice #39.82: a funnel only on the columns that filter; it opens the filter under itself. #39.83: on row 3.
                       funnel={
                         filterKey ? (

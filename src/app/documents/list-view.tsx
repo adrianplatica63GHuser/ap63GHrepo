@@ -15,7 +15,6 @@ import { LIST_FRAME, LIST_HEAD, useListFit } from "@/components/list/list-fit";
 import { HiddenColumnSigns } from "@/components/list/hidden-column-signs";
 import { LIST_TOOLBAR, useListEdge } from "@/components/table/list-edge";
 import { ListHeadCell } from "@/components/table/list-head";
-import { twoRowName } from "@/lib/ui/list-head";
 import type { ColumnName } from "@/lib/ui/field-widths";
 import { customFieldValueLabel } from "@/lib/documents/custom-field-options";
 import { customFieldFilter, customFieldState, typeFilterTrigger, typesMatching } from "@/lib/documents/type-filter";
@@ -439,6 +438,8 @@ export function DocumentListView({
   initialDocumentTypeIds?: string[];
 }) {
   const t       = useTranslations("document");
+  // Slice 40.20: the band's and „Câmpuri afișate"'s short names (Adrian, 2026-10-21); the forms keep `t`'s.
+  const tHead   = useTranslations("document.listHeads");
   const tPag    = useTranslations("shared.pagination");
   const tFilter = useTranslations("shared.listFilters");
   const router = useRouter();
@@ -661,14 +662,14 @@ export function DocumentListView({
   // ⚠️ The keys are persisted per browser (`LIST_COLUMN_CHOICE.document`); renaming one silently
   // drops it from every stored choice.
   const optionalCols: ChooserField[] = [
-    { key: "nrDocument",    label: t("table.nrDocument"),    column: "listNrDocument" },
-    { key: "dateDocument",  label: t("table.dateDocument"),  column: "listDate" },
-    { key: "institution",   label: t("table.institution"),   column: "listInstitution" },
-    { key: "subject",       label: t("table.subject"),       column: "listSubject" },
-    { key: "pageCount",     label: t("table.pageCount"),     column: "listPageCount" },
-    { key: "personCount",   label: t("table.personCount"),   column: "listPersonCount" },
-    { key: "propertyCount", label: t("table.propertyCount"), column: "listPropertyCount" },
-    { key: "createdAt",     label: t("table.createdAt"),     column: "listDate" },
+    { key: "nrDocument",    label: tHead("nrDocument"), full: t("table.nrDocument"),    column: "listNrDocument" },
+    { key: "dateDocument",  label: tHead("dateDocument"), full: t("table.dateDocument"),  column: "listDate" },
+    { key: "institution",   label: tHead("institution"), full: t("table.institution"),   column: "listInstitution" },
+    { key: "subject",       label: tHead("subject"), full: t("table.subject"),       column: "listSubject" },
+    { key: "pageCount",     label: tHead("pageCount"), full: t("table.pageCount"),     column: "listPageCount" },
+    { key: "personCount",   label: tHead("personCount"), full: t("table.personCount"),   column: "listPersonCount" },
+    { key: "propertyCount", label: tHead("propertyCount"), full: t("table.propertyCount"), column: "listPropertyCount" },
+    { key: "createdAt",     label: tHead("createdAt"), full: t("table.createdAt"),     column: "listDate" },
   ];
 
   function cellValue(item: DocumentListItem, key: string): React.ReactNode {
@@ -699,7 +700,8 @@ export function DocumentListView({
   const filterFields: FilterBarField[] = DOCUMENT_FILTER_FIELDS.map((f) => ({
     key: f.key,
     kind: f.kind,
-    label: optionalCols.find((c) => DOCUMENT_COLUMN_FILTERS[c.key] === f.key)?.label ?? f.key,
+    // Slice 40.20: a filter keeps the field's whole label, not the band's short one.
+    label: optionalCols.find((c) => DOCUMENT_COLUMN_FILTERS[c.key] === f.key)?.full ?? f.key,
   }));
   const filterLabel = (key: string) => filterFields.find((f) => f.key === key)?.label ?? key;
 
@@ -952,8 +954,8 @@ export function DocumentListView({
                   <tr>
                     {/* Slice 40.10: the badges\' column, without the select-all box — nothing on this list acts on a selection. */}
                     <th className="px-4 py-2" {...columnHead("selectNew")} />
-                    <ListHeadCell column="listDocumentType" name={t("table.type")} />
-                    <ListHeadCell column="listDocumentTitle" name={t("table.title")} />
+                    <ListHeadCell column="listDocumentType" name={tHead("type")} full={t("table.type")} />
+                    <ListHeadCell column="listDocumentTitle" name={tHead("title")} full={t("table.title")} />
                     {shownCols.map((col) => {
                       const filterKey = DOCUMENT_COLUMN_FILTERS[col.key];
                       return (
@@ -961,7 +963,7 @@ export function DocumentListView({
                           key={col.key}
                           column={col.column}
                           name={col.label}
-                          twoRows={twoRowName("document", col.key)}
+                          full={col.full}
                           // Slice #39.82: a funnel only on the columns that filter; it opens the filter under itself. #39.83: on row 3.
                           funnel={filterKey ? <FilterFunnel field={filterKey} label={filterLabel(filterKey)} active={filters[filterKey] !== undefined} onOpen={() => setEditingFilter(filterKey)} /> : undefined}
                         />

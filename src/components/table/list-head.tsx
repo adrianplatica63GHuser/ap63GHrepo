@@ -13,8 +13,11 @@
  *   - with a filter: the name on rows 1–2, bottom-aligned (a one-line name sits on row 2), the funnel alone on row 3;
  *   - without one — Poreclă, Cod, the name or title, any column that does not filter (Ask first 4): the name centred
  *     vertically in the band.
- * A name never takes more than two rows: Adrian's long names always break, where the two rows come out most even
- * (`splitName`); any other wraps only when its column is narrower than it, balanced by the browser.
+ * A name never takes more than two rows; it wraps only when its column is narrower than it, balanced by the browser.
+ *
+ * Slice 40.20: the names are Adrian's short ones (the lists' `listHeads` keys), so none needs #39.83's forced break
+ * any more — `TWO_ROW_NAMES` and `splitName` are gone. `full` is the field's whole label, as the form names it, shown
+ * on hover over the short name („Data nașterii" over „Născut pe"), so an abbreviation is never a riddle.
  *
  * The rows: two text rows of the header's 18-px line, then the funnel's own — an xs button, 26 px. The band is
  * `HEAD_BAND_PX` tall inside the cell's padding. Slice 40.18: the names are Roboto Condensed 13.5 px on an 18-px line
@@ -24,7 +27,6 @@
 import type { ReactNode } from "react";
 import { columnHead } from "@/components/table/fixed-columns";
 import type { ColumnName } from "@/lib/ui/field-widths";
-import { splitName } from "@/lib/ui/list-head";
 
 /** Two 18-px text rows and the funnel's 26-px row. */
 export const HEAD_BAND_PX = 18 + 18 + 26;
@@ -32,29 +34,19 @@ export const HEAD_BAND_PX = 18 + 18 + 26;
 export function ListHeadCell({
   column,
   name,
-  twoRows = false,
+  full,
   funnel,
 }: {
   column: ColumnName;
   name: string;
-  /** One of Adrian's long names: always on two rows, broken where they come out most even. */
-  twoRows?: boolean;
+  /** The field's whole label, shown on hover over the short name (Slice 40.20). */
+  full?: string;
   /** The column's funnel, when it can be filtered. */
   funnel?: ReactNode;
 }) {
-  const split = twoRows ? splitName(name) : null;
   const text = (
-    <span className="line-clamp-2 text-balance break-words" data-head-text="">
-      {split ? (
-        <>
-          {/* The space keeps the name's words apart in its text — what a screen reader and a search read. */}
-          {split[0]}{" "}
-          <br />
-          {split[1]}
-        </>
-      ) : (
-        name
-      )}
+    <span className="line-clamp-2 text-balance break-words" data-head-text="" title={full}>
+      {name}
     </span>
   );
   return (

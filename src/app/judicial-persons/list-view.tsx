@@ -13,7 +13,6 @@ import { LIST_FRAME, LIST_HEAD, useListFit } from "@/components/list/list-fit";
 import { HiddenColumnSigns } from "@/components/list/hidden-column-signs";
 import { LIST_TOOLBAR, useListEdge } from "@/components/table/list-edge";
 import { ListHeadCell } from "@/components/table/list-head";
-import { twoRowName } from "@/lib/ui/list-head";
 import { newTabIfAsked } from "@/lib/ui/row-link";
 import { ListPreviewRow, ListPreviews, PreviewButton } from "@/components/tiles/preview-tiles";
 import { IncursionButton, LinksButton } from "@/components/tiles/incursion-button";
@@ -87,6 +86,8 @@ const FILTER_KEYS = personFilterKeys("JUDICIAL");
 
 export function JudicialPersonListView() {
   const t     = useTranslations("judicialPerson");
+  // Slice 40.20: the band's and „Câmpuri afișate"'s short names (Adrian, 2026-10-21); the forms keep `t`'s.
+  const tHead   = useTranslations("judicialPerson.listHeads");
   const tPag  = useTranslations("shared.pagination");
   const router = useRouter();
 
@@ -136,13 +137,13 @@ export function JudicialPersonListView() {
 
   // Slice #37.60 — „Câmpuri afișate", the same chooser the Natural Persons list draws.
   const optionalCols: ChooserField[] = [
-    { key: "judicialPersonType",  label: t("fields.judicialType"),        column: "listCompanyType" },
-    { key: "cuiNumber",           label: t("fields.cuiNumber"),           column: "listCui" },
-    { key: "tradeRegisterNumber", label: t("fields.tradeRegisterNumber"), column: "listTradeRegister" },
+    { key: "judicialPersonType",  label: tHead("judicialPersonType"), full: t("fields.judicialType"),        column: "listCompanyType" },
+    { key: "cuiNumber",           label: tHead("cuiNumber"), full: t("fields.cuiNumber"),           column: "listCui" },
+    { key: "tradeRegisterNumber", label: tHead("tradeRegisterNumber"), full: t("fields.tradeRegisterNumber"), column: "listTradeRegister" },
     // Slice #37.71: the company's contact person — the first, when it has two.
-    { key: "contactPerson",       label: t("fields.contactPerson"),       column: "listContactPerson" },
+    { key: "contactPerson",       label: tHead("contactPerson"), full: t("fields.contactPerson"),       column: "listContactPerson" },
     // Slice #39.82: the head office's locality, so its filter (Adrian's „Locality") has a column.
-    { key: "locality",            label: t("table.locality"),             column: "listLocality" },
+    { key: "locality",            label: tHead("locality"), full: t("table.locality"),             column: "listLocality" },
   ];
   const chooser = useFieldChooser(LIST_COLUMN_CHOICE.company.storageKey, optionalCols.map((c) => c.key), MAX_OPT, LIST_COLUMN_CHOICE.company.defaults);
   const shownCols = chooser.visible.flatMap((key) => optionalCols.filter((c) => c.key === key));
@@ -153,7 +154,8 @@ export function JudicialPersonListView() {
   const filterFields: FilterBarField[] = JUDICIAL_PERSON_FILTER_FIELDS.map((f) => ({
     key: f.key,
     kind: f.kind,
-    label: optionalCols.find((c) => JUDICIAL_PERSON_COLUMN_FILTERS[c.key] === f.key)?.label ?? f.key,
+    // Slice 40.20: a filter keeps the field's whole label, not the band's short one.
+    label: optionalCols.find((c) => JUDICIAL_PERSON_COLUMN_FILTERS[c.key] === f.key)?.full ?? f.key,
   }));
   const filterLabel = (key: string) => filterFields.find((f) => f.key === key)?.label ?? key;
 
@@ -229,8 +231,8 @@ export function JudicialPersonListView() {
               <tr>
                 {/* Slice 40.10: the badges\' column, without the select-all box — nothing on this list acts on a selection. */}
                 <th className="px-4 py-2" {...columnHead("listSelectPerson")} />
-                <ListHeadCell column="listCompanyName" name={t("table.name")} />
-                <ListHeadCell column="listPersonNickname" name={t("table.nickname")} />
+                <ListHeadCell column="listCompanyName" name={tHead("name")} full={t("table.name")} />
+                <ListHeadCell column="listPersonNickname" name={tHead("nickname")} full={t("table.nickname")} />
                 {shownCols.map((col) => {
                   const filterKey = JUDICIAL_PERSON_COLUMN_FILTERS[col.key];
                   return (
@@ -238,7 +240,7 @@ export function JudicialPersonListView() {
                       key={col.key}
                       column={col.column}
                       name={col.label}
-                      twoRows={twoRowName("company", col.key)}
+                      full={col.full}
                       // Slice #39.82: a funnel only on the columns that filter; it opens the filter under itself. #39.83: on row 3.
                       funnel={filterKey ? <FilterFunnel field={filterKey} label={filterLabel(filterKey)} active={filters[filterKey] !== undefined} onOpen={() => setEditingFilter(filterKey)} /> : undefined}
                     />

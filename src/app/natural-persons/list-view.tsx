@@ -13,7 +13,6 @@ import { LIST_FRAME, LIST_HEAD, useListFit } from "@/components/list/list-fit";
 import { HiddenColumnSigns } from "@/components/list/hidden-column-signs";
 import { LIST_TOOLBAR, useListEdge } from "@/components/table/list-edge";
 import { ListHeadCell } from "@/components/table/list-head";
-import { twoRowName } from "@/lib/ui/list-head";
 import type { ColumnName } from "@/lib/ui/field-widths";
 import { newTabIfAsked } from "@/lib/ui/row-link";
 import { ListPreviewRow, ListPreviews, PreviewButton } from "@/components/tiles/preview-tiles";
@@ -91,6 +90,8 @@ const FILTER_KEYS = personFilterKeys("NATURAL");
 
 export function NaturalPersonListView() {
   const t       = useTranslations("naturalPerson");
+  // Slice 40.20: the band's and „Câmpuri afișate"'s short names (Adrian, 2026-10-21); the forms keep `t`'s.
+  const tHead   = useTranslations("naturalPerson.listHeads");
   const tPag    = useTranslations("shared.pagination");
   const router = useRouter();
 
@@ -111,16 +112,16 @@ export function NaturalPersonListView() {
 
   // Slice #37.60 — „Câmpuri afișate", the shared chooser (`field-chooser.tsx`).
   const optionalCols: ChooserField[] = [
-    { key: "cnp",              label: t("fields.cnp"),                  column: "listCnp" },
-    { key: "dateOfBirth",      label: t("fields.dateOfBirth"),          column: "listDate" },
-    { key: "age",              label: t("fields.age"),                  column: "listAge" },
-    { key: "gender",           label: t("fields.gender"),               column: "listGender" },
+    { key: "cnp",              label: tHead("cnp"), full: t("fields.cnp"),                  column: "listCnp" },
+    { key: "dateOfBirth",      label: tHead("dateOfBirth"), full: t("fields.dateOfBirth"),          column: "listDate" },
+    { key: "age",              label: tHead("age"), full: t("fields.age"),                  column: "listAge" },
+    { key: "gender",           label: tHead("gender"), full: t("fields.gender"),               column: "listGender" },
     // Slice #39.30: „Data decesului" — „Decedat" itself is the „†" after the name.
-    { key: "dateOfDeath",      label: t("fields.dateOfDeath"),          column: "listDate" },
-    { key: "placeOfBirth",     label: t("fields.placeOfBirth"),         column: "listBirthPlace" },
-    { key: "professionalType", label: t("fields.physicalPersonTypeId"), column: "listProfessionalType" },
+    { key: "dateOfDeath",      label: tHead("dateOfDeath"), full: t("fields.dateOfDeath"),          column: "listDate" },
+    { key: "placeOfBirth",     label: tHead("placeOfBirth"), full: t("fields.placeOfBirth"),         column: "listBirthPlace" },
+    { key: "professionalType", label: tHead("professionalType"), full: t("fields.physicalPersonTypeId"), column: "listProfessionalType" },
     // Slice #39.70
-    { key: "relationships",    label: t("fields.relationships"),        column: "listRelationship" },
+    { key: "relationships",    label: tHead("relationships"), full: t("fields.relationships"),        column: "listRelationship" },
   ];
   const chooser = useFieldChooser(LIST_COLUMN_CHOICE.person.storageKey, optionalCols.map((c) => c.key), MAX_OPT, LIST_COLUMN_CHOICE.person.defaults);
 
@@ -181,7 +182,8 @@ export function NaturalPersonListView() {
   const filterFields: FilterBarField[] = NATURAL_PERSON_FILTER_FIELDS.map((f) => ({
     key: f.key,
     kind: f.kind,
-    label: optionalCols.find((c) => NATURAL_PERSON_COLUMN_FILTERS[c.key] === f.key)?.label ?? f.key,
+    // Slice 40.20: a filter keeps the field's whole label, not the band's short one.
+    label: optionalCols.find((c) => NATURAL_PERSON_COLUMN_FILTERS[c.key] === f.key)?.full ?? f.key,
     ...(f.key === "gender" ? { valueLabel: (id: string) => (id === "MALE" ? t("options.gender.MALE") : id === "FEMALE" ? t("options.gender.FEMALE") : id) } : {}),
   }));
   const filterLabel = (key: string) => filterFields.find((f) => f.key === key)?.label ?? key;
@@ -254,8 +256,8 @@ export function NaturalPersonListView() {
               <tr>
                 {/* Slice 40.10: the badges\' column, without the select-all box — nothing on this list acts on a selection. */}
                 <th className="px-4 py-2" {...columnHead("listSelectPerson")} />
-                <ListHeadCell column="listPersonName" name={t("table.name")} />
-                <ListHeadCell column="listPersonNickname" name={t("table.nickname")} />
+                <ListHeadCell column="listPersonName" name={tHead("name")} full={t("table.name")} />
+                <ListHeadCell column="listPersonNickname" name={tHead("nickname")} full={t("table.nickname")} />
                 {shownCols.map((col) => {
                   const filterKey = NATURAL_PERSON_COLUMN_FILTERS[col.key];
                   return (
@@ -263,7 +265,7 @@ export function NaturalPersonListView() {
                       key={col.key}
                       column={col.column}
                       name={col.label}
-                      twoRows={twoRowName("person", col.key)}
+                      full={col.full}
                       // Slice #39.82: a funnel only on the columns that filter; it opens the filter under itself. #39.83: on row 3.
                       funnel={filterKey ? <FilterFunnel field={filterKey} label={filterLabel(filterKey)} active={filters[filterKey] !== undefined} onOpen={() => setEditingFilter(filterKey)} /> : undefined}
                     />

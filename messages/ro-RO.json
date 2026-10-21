@@ -623,6 +623,18 @@
       "title": "Această parcelă are deja o proprietate",
       "body": "Tarla {tarla}, parcela {parcela} aparține deja proprietății de mai jos. Nu s-a creat o proprietate nouă.",
       "open": "Deschide {name}"
+    },
+    "listHeads": {
+      "nickname": "Poreclă",
+      "tarlaSola": "Tarla",
+      "parcela": "Parcelă",
+      "surfaceAreaMp": "Supr. Ofic.",
+      "calculatedAreaMp": "Supr. Calc.",
+      "carteFunciara": "# CF",
+      "cadastralNumber": "# Cadastru",
+      "useCategory": "Categ.Folos.",
+      "propertyType": "Tip Prop.",
+      "locality": "Localitate"
     }
   },
   "address": {
@@ -1276,6 +1288,18 @@
       "connections": "Etichete, grupuri, ștampile, vezi și",
       "inheritanceTree": "Familia persoanei: străbunici, părinți, frați, soț sau soție, copii, strănepoți",
       "interactions": "Istoricul interacțiunilor cu această persoană"
+    },
+    "listHeads": {
+      "name": "Nume",
+      "nickname": "Poreclă",
+      "cnp": "CNP",
+      "dateOfBirth": "Născut pe",
+      "age": "Vârstă",
+      "gender": "Gen",
+      "dateOfDeath": "Decedat pe",
+      "placeOfBirth": "Născut la",
+      "professionalType": "Tip prof.",
+      "relationships": "Rel.cu VM"
     }
   },
   "judicialPerson": {
@@ -1436,6 +1460,15 @@
       "applied": "Câmpurile s-au completat din ANAF. Verificați-le și apăsați „Salvează”.",
       "partyIntro": "Firma are CUI {cui}. ANAF poate completa restul înainte să o creați.",
       "partyUsing": "La „Creează și asociază” se folosesc datele bifate."
+    },
+    "listHeads": {
+      "name": "Denumire",
+      "nickname": "Poreclă",
+      "judicialPersonType": "Tip",
+      "cuiNumber": "CUI",
+      "tradeRegisterNumber": "#Reg. Com.",
+      "contactPerson": "Contact",
+      "locality": "Localitate"
     }
   },
   "nav": {
@@ -2265,6 +2298,18 @@
       "addError": "Persoana juridică nu a putut fi adăugată.",
       "made": "„{name}” a fost adăugată și aleasă ca emitent — salvați actul.",
       "openToFill": "Deschide-o, pentru CUI și „Completează din ANAF”"
+    },
+    "listHeads": {
+      "type": "Tip",
+      "title": "Titlu",
+      "nrDocument": "#Document",
+      "dateDocument": "Data",
+      "institution": "Inst./Notar",
+      "subject": "Subiect",
+      "pageCount": "Pagini",
+      "personCount": "Persoane",
+      "propertyCount": "Proprietăți",
+      "createdAt": "Adăugat la"
     }
   },
   "valueList": {
