@@ -92,6 +92,16 @@ Chestionarul unei competențe" are emptied.
 
 At the end of steps 12–14: both screens' four fields put back as they were read.
 
+### The PUT behind „Acceptă” (Slice 40.15)
+
+Through the route, as „Acceptă” sends it — so it runs while proposals wait on the database, when steps 12–14 skip.
+Nothing is changed.
+
+| # | A person does | And sees |
+|---|---|---|
+| 15 | Sends „Administrare — Etichete”'s four texts as they are, with `against` = their own fingerprint | 200; the four texts unchanged |
+| 16 | Sends them with „Cum se folosește (Română)” changed, `against` = `00000000` | 409, `code` `text_changed`; the four texts unchanged |
+
 ## At the end — leaving things as they were found
 
 Back on „Informații de ajutor" → „Administrare — Etichete", put the text above back into „Cum se
@@ -99,6 +109,8 @@ folosește (Română)", empty line included, and press „Salvează". On „Etic
 original sentence again.
 
 ## Notes from the runs
+
+**2026-10-21 — Slice 40.15.** Steps 15–16 added with the route's fingerprint check, and written into the spec in the same commit. Run by the test runner, not by hand: the case stays `automated`, and the 40.15 handover says so.
 
 **2026-10-15 — Slice #39.52.** Every proposal was accepted with the new „Acceptă toate", so none waits and steps 8–11, written against „Administrare — Etichete", would only ever skip. They now seed their own proposal on „Harta competențelor" and put its text back; steps 12–14 add „Acceptă toate", seeded the same way on two screens. Step 1 reads „Complet" on every screen. Written into the spec in the same slice and run by the test runner, not by hand, as #39.40's steps were: the case stays `automated`, and the #39.52 handover says so.
 

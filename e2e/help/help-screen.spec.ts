@@ -33,12 +33,18 @@
  * steps 12–14, does the same for two screens and accepts them with „Acceptă toate”. It never accepts a proposal
  * it did not seed: when any other proposal waits on the database, it skips and says so. And every screen must
  * read „Complet” now — the list of screens allowed to read „Lipsă” is empty.
+ *
+ * Slice 40.15 adds a fourth test, steps 15–16: the PUT „Acceptă” sends, on „Administrare — Etichete”, with the text it
+ * already holds — so it runs while proposals wait, when the third test skips, and changes nothing. Adrian: „I have
+ * tried to accept the new changes inside the help information as I usually do; I get an error cannot save"; no run had
+ * pressed „Acceptă toate” since 40.04, because the third test skips while proposals wait.
  */
 
 import { test, expect } from "../helpers/test";
 import { readHelp, writeHelp } from "../helpers/records";
 import { sidebar } from "../helpers/sidebar";
 import { HELP_PROPOSALS } from "../../src/lib/help/proposals-data";
+import { helpFingerprint } from "../../src/lib/help/proposals";
 
 const SCREEN = "admin-tags";
 /** The manual section „Administrare — Etichete” points at (HELP_SCREENS in src/lib/help/registry.ts). */
@@ -266,5 +272,22 @@ test.describe("TC-HELP-01 — Text de ajutor scris pentru un ecran și citit în
         expect(await readHelp(page.request, s.key)).toEqual(before[i]);
       }
     }
+  });
+
+  // Slice 40.15 — steps 15–16: „Acceptă”'s own PUT, which carries the fingerprint the proposal was written against.
+  test("„Acceptă” salvează cu amprenta textului; pe un text schimbat refuză, fără să suprascrie", async ({ page }) => {
+    const before = await readHelp(page.request, SCREEN);
+    const url = `/api/admin/help-content/${SCREEN}`;
+
+    // Step 15 — the text the screen holds, with its own fingerprint: saved (200), and the text is what it was.
+    const same = await page.request.put(url, { data: { ...before, against: helpFingerprint(before) } });
+    expect(same.status(), `PUT ${url} with the text it holds`).toBe(200);
+    expect(await readHelp(page.request, SCREEN)).toEqual(before);
+
+    // Step 16 — another text, against a fingerprint the screen does not hold: refused (409, `text_changed`), nothing
+    // overwritten.
+    const stale = await page.request.put(url, { data: { ...before, howToRo: TC_TEXT, against: "00000000" } });
+    expect({ status: stale.status(), code: ((await stale.json()) as { code?: string }).code }).toEqual({ status: 409, code: "text_changed" });
+    expect(await readHelp(page.request, SCREEN)).toEqual(before);
   });
 });
