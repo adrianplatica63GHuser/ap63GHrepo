@@ -1,7 +1,7 @@
 {
   "$comment": [
     "Slice #38.37: the person-role clean-up. Each merge folds roles into a survivor: their links move to it, their document-type pairs join it, their rows are deleted.",
-    "Drafted by Claude as Role.Merge.List.docx (C:\\dev.docs\\01.Slice.Inputs\\Slices.01--38\\Slices.38\\Slices.38.30-38.44\\38.37.Role.Cleanup). Adrian and Ciprian strike out what is wrong; the session that finds Role.Merge.List.marked.docx drops the struck merges and folds here, sets approved and approvedBy, and re-runs the dry run.",
+    "Drafted by Claude as Role.Merge.List.docx (C:\\dev.docs\\01.Slice.Inputs\\Slices.01--39\\Slices.38\\Slices.38.30-38.44\\38.37.Role.Cleanup). Adrian and Ciprian strike out what is wrong; the session that finds Role.Merge.List.marked.docx drops the struck merges and folds here, sets approved and approvedBy, and re-runs the dry run.",
     "src/db/sync-reference-data.sql seeds the list AFTER these merges, and verify-rebuild proves it: it applies this file to the database built from the migrations and requires the same role names as the one built from the seed.",
     "npm run roles:merge is the dry run; npm run roles:merge:apply refuses while approved is false."
   ],

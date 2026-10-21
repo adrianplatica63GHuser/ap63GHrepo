@@ -1,7 +1,7 @@
 /**
  * Writes the skills inventory's review copy from the catalogue.                             (Slice #39.36)
  *
- *   npm run skills:render -- --out "C:\dev.docs\01.Slice.Inputs\Slices.39.36-39.45\39.36.Skills.Inventory"
+ *   npm run skills:render -- --out "C:\dev.docs\01.Slice.Inputs\Slices.01--39\Slices.39.36-39.45\39.36.Skills.Inventory"
  *
  * Into `--out`: Skills.Inventory.docx (English, the Romanian names beside, one table per level, each skill's
  * predecessors and successors) and Skills.Graph.svg (a plain drawing in four columns, straight arrows) — both from

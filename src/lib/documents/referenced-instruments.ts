@@ -392,7 +392,7 @@ export function foldDocumentNumber(value: string | null | undefined): string {
  *
  * ⚠️ **MEASURED, NOT CHOSEN.** The corpus is the instrument citations of the
  * six deeds transcribed in full in
- * `dev.docs\01.Slice.Inputs\Slices.01--38\Slices.36.nn.CVC.etc\Grok.CVC-semantic-template-filled-examples-v01.docx`
+ * `dev.docs\01.Slice.Inputs\Slices.01--39\Slices.36.nn.CVC.etc\Grok.CVC-semantic-template-filled-examples-v01.docx`
  * — six of the thirty-two deed folders under
  * `C:\dev\TEST.DATA\Modele.Acte\ZZZ Modele acte`, chosen there as one of
  * each of the six kinds. **45 citations, 43 distinct instruments.** The corpus

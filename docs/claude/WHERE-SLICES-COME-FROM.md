@@ -21,7 +21,7 @@ only Adrian fills.
 
 The application exists for these slices. Examples are the CVC and Act Adițional work of
 #36.01–#36.03 (`b586698`, `dd51555`, `d0893d7`) and the document-type engine that
-`01.Slice.Inputs\Slices.01--38\Slices.36.nn.CVC.etc\Grok.Doc.Type.Engine.docx` sketches. Whatever Ciprian's
+`01.Slice.Inputs\Slices.01--39\Slices.36.nn.CVC.etc\Grok.Doc.Type.Engine.docx` sketches. Whatever Ciprian's
 use asks for next belongs here too. Adrian writes the Goal. When he writes a request instead,
 Claude turns it into a header in `docs/claude/SLICE-HEADER-TEMPLATE.md`'s shape, as it did for
 this slice.
@@ -172,7 +172,7 @@ harvested into the register by #36.10 as FU-001 … FU-207, each checked against
 row.** Claude does not intend to reopen the decision document. The table below is the proof that
 nothing fell through. It lists each decision against the slice and commit that built it and,
 where something was left, the register row that holds it. It was built from the #34.nn headers
-under `01.Slice.Inputs\Slices.01--38\Slices.30.to.35\Slices.34.nn.Decisions\`, from `git log`, and from the register at
+under `01.Slice.Inputs\Slices.01--39\Slices.30.to.35\Slices.34.nn.Decisions\`, from `git log`, and from the register at
 `42b8e85`.
 
 | D | Question | Answer | Built in | Left over, and where it lives |

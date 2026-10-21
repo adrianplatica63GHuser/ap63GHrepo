@@ -289,7 +289,7 @@ describe("the scale", () => {
   });
 
   it("Adrian's cadastral widths: Nr. parcelă M (his later note, #37.30); Nr. tarla / sola M, because its empty option is the longest value (rule 10)", () => {
-    // 01.Slice.Inputs\Slices.01--38\Slices.37.nn\Stacked.txt, 2026-09-29: „Nr. tarla / sola back to S, Nr. parcelă back to M".
+    // 01.Slice.Inputs\Slices.01--39\Slices.37.nn\Stacked.txt, 2026-09-29: „Nr. tarla / sola back to S, Nr. parcelă back to M".
     expect(PROPERTY.parcela.step).toBe("M");
     expect(PROPERTY.parcela.sample).toBe("000/00/00");
     // „47/2" would fit S; „niciunul", the dropdown's own empty option, does not — so M.
