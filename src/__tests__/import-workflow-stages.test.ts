@@ -820,9 +820,8 @@ describe("the indicator's copy", () => {
     expect(light).toBeGreaterThan(-1);
     expect(balancedBlock(css, light)).toMatch(CHANNELS);
 
-    const darkAt = css.search(
-      /@media\s*\(prefers-color-scheme:\s*dark\)\s*\{\s*:root\s*\{[^}]*--ga-stage-halo:/,
-    );
+    // Slice 40.19: dark mode is the `dark` class on <html>, not the OS setting — a `.dark` block.
+    const darkAt = css.search(/\.dark\s*\{[^}]*--ga-stage-halo:/);
     expect(darkAt).toBeGreaterThan(light);
     expect(balancedBlock(css, darkAt)).toMatch(CHANNELS);
 

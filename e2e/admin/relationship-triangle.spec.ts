@@ -6,6 +6,7 @@
  */
 
 import { test, expect, type Locator } from "../helpers/test";
+import { setLook } from "../helpers/theme";
 
 // Slice #38.77: the third cell was the status in words („configurat în aplicație" / „neconfigurat, intenționat");
 // it is the where-sentence now, which stands after „Vezi:" on the name line.
@@ -134,11 +135,11 @@ test.describe("TC-VL-10 — triunghiul legăturilor", () => {
       }
       // The slice's pictures, light and dark — not a step of the case.
       for (const scheme of ["light", "dark"] as const) {
-        await page.emulateMedia({ colorScheme: scheme });
+        await setLook(page, scheme);
         await page.waitForTimeout(300);
         await tile.screenshot({ path: `playwright-report/value-list-page/triangle-${width}-${scheme}.png` });
       }
-      await page.emulateMedia({ colorScheme: "light" });
+      await setLook(page, "light");
 
       // Step 3 — the Proprietate → Proprietate corner opens its list; the tile stays above it.
       await tile.locator('a[data-relationship="propertyProperty"]').click();
@@ -193,11 +194,11 @@ test.describe("TC-VL-10 — triunghiul legăturilor", () => {
         // The page scrolls in its own area (`data-page-scroll`), not the window: to its top, so the column shows.
         await page.evaluate(() => document.querySelector("[data-page-scroll]")?.scrollTo(0, 0));
         for (const scheme of ["light", "dark"] as const) {
-          await page.emulateMedia({ colorScheme: scheme });
+          await setLook(page, scheme);
           await page.waitForTimeout(300);
           await page.screenshot({ path: `playwright-report/value-list-page/yellow-4-1366-${scheme}.png` });
         }
-        await page.emulateMedia({ colorScheme: "light" });
+        await setLook(page, "light");
       }
 
       // The column: „Legături Document → Document" marks 3, and itself.
@@ -237,12 +238,12 @@ test.describe("TC-VL-10 — triunghiul legăturilor", () => {
       if (width === 1366) {
         await panel5.scrollIntoViewIfNeeded();
         for (const scheme of ["light", "dark"] as const) {
-          await page.emulateMedia({ colorScheme: scheme });
+          await setLook(page, scheme);
           await page.waitForTimeout(300);
           // The window, not the tile: the explanation hangs over the tile's bottom edge.
           await page.screenshot({ path: `playwright-report/value-list-page/magenta-info-1366-${scheme}.png` });
         }
-        await page.emulateMedia({ colorScheme: "light" });
+        await setLook(page, "light");
       }
       await page.keyboard.press("Escape");
       await expect(panel5).toHaveCount(0);

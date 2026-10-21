@@ -21,6 +21,7 @@
  */
 
 import { test, expect, type Page } from "../helpers/test";
+import { lookOnLoad } from "../helpers/theme";
 import { E2E_MARKER, createCompany, createDocumentOfType, createNaturalPerson, createProperty, removeLeftovers, removeRecord, type RecordKind } from "../helpers/records";
 
 // Slice 40.14: the scroll bars shown, as Adrian's Windows Chrome draws them. Since the lists' frame keeps its vertical
@@ -392,10 +393,11 @@ test.describe("TC-LAYOUT-05 — cele patru liste, câte un rând pe linie", () =
       }, selector);
 
     for (const scheme of ["light", "dark"] as const) {
-      await page.emulateMedia({ colorScheme: scheme });
+      // Slice 40.19: the look is the ga40-theme cookie („Mod întunecat"), not the OS setting.
+      await lookOnLoad(page, scheme);
       await page.setViewportSize({ width: 1366, height: 900 });
 
-      // Step 15 — a column name on „Persoane fizice".
+      // Step 15 — a column name on „Persoane fizice" (step 15: the dark look is „Mod întunecat" ticked, since 40.19).
       await page.goto("/natural-persons");
       await expect(page.locator("main thead [data-head-text]").first()).toBeVisible({ timeout: 30_000 });
       const col = await look("main thead [data-head-text]");

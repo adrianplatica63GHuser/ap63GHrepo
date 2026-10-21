@@ -217,7 +217,7 @@ describe("the nav is the same on a build without developer tools", () => {
     // everywhere; the panel's hard-coded English note was for developers, so it is gone from
     // every build and lives in docs/claude/DEVELOPER-NOTES.md.
     expect(SIDEBAR).not.toContain("<DevOnly>");
-    expect(SIDEBAR).toContain("<LocaleToggle />");
+    expect(SIDEBAR).toContain("<LocaleToggle small />"); // Slice 40.19: smaller, „Mod întunecat" under them
     for (const page of ["login", "signup"]) {
       expect([page, stripComments(source("app", page, "page.tsx")).includes("<DevOnly>")])
         .toEqual([page, false]);

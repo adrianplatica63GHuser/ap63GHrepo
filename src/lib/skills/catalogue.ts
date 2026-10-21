@@ -898,7 +898,7 @@ export const SKILLS: readonly Skill[] = [
     },
     predecessors: ["workspace-sign-in-and-navigate", "workspace-arrange-tiles"],
     screens: ["admin-settings", "admin-users"],
-    cases: ["TC-SET-01", "TC-SET-02", "TC-SET-03", "TC-SET-04", "TC-USERS-01", "TC-AUTH-02"],
+    cases: ["TC-SET-01", "TC-SET-02", "TC-SET-03", "TC-SET-04", "TC-SET-05", "TC-USERS-01", "TC-AUTH-02"],
     manual: ["admin-settings-thresholds", "admin-settings-account", "admin-settings-costs", "admin-users", "admin-example-threshold"],
   },
   {

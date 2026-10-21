@@ -57,7 +57,7 @@ At 1366 and at 1920 px, on each of the four lists, searched for „TC-E2E-LAYOUT
 | 12 | Scrolls the list half-way sideways, then a little down | Three red „<" at the band's left edge too, both kept at the band as the rows scroll |
 | 13 | Scrolls to the right end; then back, until a column's funnel stands under the „>" signs, and presses there; then presses the funnel | Only the „<" at the end. The press lands on the sign (40.11; #40.03 let it through to the funnel) and scrolls the list right, bringing the funnel out from under it; the funnel, pressed, opens its filter |
 | 14 | At 1920 × 1080 px with no column chosen | Every column fits: no sign at either edge |
-| 15 | (Slice 40.18) At 1366 px, on „Persoane fizice", looks at a column name — in the light look, then in the dark one (the system's setting) | Roboto Condensed, 13.5 px, semibold, upper case, in today's black (#3C4149; dark zinc-300); the band 62 px tall |
+| 15 | (Slice 40.18) At 1366 px, on „Persoane fizice", looks at a column name — in the light look, then with „Mod întunecat" ticked (40.19; it was the system's setting) | Roboto Condensed, 13.5 px, semibold, upper case, in today's black (#3C4149; dark zinc-300); the band 62 px tall |
 | 16 | Opens the home page and looks at a tile's title, light and dark | Roboto Slab, 16 px, semibold, upper case, in navy #1E3A8A (dark #BFDBFE) |
 
 ## At the end — leaving things as they were found
