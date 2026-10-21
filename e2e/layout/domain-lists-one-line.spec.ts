@@ -382,7 +382,13 @@ test.describe("TC-LAYOUT-05 — cele patru liste, câte un rând pe linie", () =
         const el = document.querySelector<HTMLElement>(sel)!;
         const cs = getComputedStyle(el);
         const loaded = [...document.fonts].filter((f) => f.status === "loaded").map((f) => `${f.family} ${f.weight}`);
-        return { family: cs.fontFamily, size: cs.fontSize, weight: cs.fontWeight, transform: cs.textTransform, color: cs.color, loaded };
+        // Today's dark column names are Tailwind 4's zinc-300, an oklch colour: read it off the page's own variable.
+        const probe = document.createElement("span");
+        probe.style.color = "var(--color-zinc-300)";
+        document.body.append(probe);
+        const zinc300 = getComputedStyle(probe).color;
+        probe.remove();
+        return { family: cs.fontFamily, size: cs.fontSize, weight: cs.fontWeight, transform: cs.textTransform, color: cs.color, loaded, zinc300 };
       }, selector);
 
     for (const scheme of ["light", "dark"] as const) {
@@ -395,7 +401,7 @@ test.describe("TC-LAYOUT-05 — cele patru liste, câte un rând pe linie", () =
       const col = await look("main thead [data-head-text]");
       expect(col.family).toMatch(/Roboto[ _]Condensed/);
       expect([col.size, col.weight, col.transform]).toEqual(["13.5px", "600", "uppercase"]);
-      expect(col.color).toBe(scheme === "light" ? "rgb(60, 65, 73)" : "rgb(212, 212, 216)");
+      expect(col.color).toBe(scheme === "light" ? "rgb(60, 65, 73)" : col.zinc300);
       expect(col.loaded.some((f) => /Roboto[ _]Condensed/.test(f))).toBe(true);
 
       // Step 16 — a tile's title on the dashboard.

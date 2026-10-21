@@ -30,11 +30,11 @@ const tokens = (cls: string) => cls.split(/\s+/).filter(Boolean);
 
 describe("each kind is alternative 13's, in Adrian's colour", () => {
   it.each([
-    ["1, 2, 4 — a tile's title", TILE_TITLE_TYPE, ["font-title", "text-base", "font-semibold", "uppercase", "tracking-[0.04em]", "text-navy", "dark:text-blue-200"]],
+    ["1, 2, 4 — a tile's title", TILE_TITLE_TYPE, ["font-title", "text-base", "font-semibold", "uppercase", "tracking-[0.04em]", "text-navy", "dark:text-[#BFDBFE]"]],
     ["3, 6 — column names", COLUMN_NAMES_TYPE, ["font-colhead", "text-[13.5px]", "leading-[18px]", "font-semibold", "[&_th]:font-semibold", "uppercase", "tracking-[0.04em]", "text-ink", "dark:text-zinc-300"]],
-    ["5 — a panel's heading", PANEL_TITLE_TYPE, ["font-title", "text-[13px]", "leading-[18px]", "font-semibold", "uppercase", "tracking-[0.08em]", "text-navy", "dark:text-blue-200"]],
-    ["7a — Grupuri's and Ștampile's heading", PAGE_HEADING_TYPE, ["font-title", "text-xl", "font-semibold", "text-navy", "dark:text-blue-200"]],
-    ["7b — a screen tile's title", SCREEN_TILE_TITLE_TYPE, ["font-title", "text-base", "font-medium", "text-navy", "dark:text-blue-200"]],
+    ["5 — a panel's heading", PANEL_TITLE_TYPE, ["font-title", "text-[13px]", "leading-[18px]", "font-semibold", "uppercase", "tracking-[0.08em]", "text-navy", "dark:text-[#BFDBFE]"]],
+    ["7a — Grupuri's and Ștampile's heading", PAGE_HEADING_TYPE, ["font-title", "text-xl", "font-semibold", "text-navy", "dark:text-[#BFDBFE]"]],
+    ["7b — a screen tile's title", SCREEN_TILE_TITLE_TYPE, ["font-title", "text-base", "font-medium", "text-navy", "dark:text-[#BFDBFE]"]],
   ])("%s", (_kind, cls, want) => {
     expect(tokens(cls).sort()).toEqual([...want].sort());
   });

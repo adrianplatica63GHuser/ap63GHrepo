@@ -19,14 +19,14 @@
  *   7b a group's and a stamp's screen tiles           Roboto Slab       16 px    500     Sentence  0        navy
  *
  * Navy is `--color-navy` (#1E3A8A), ink `--color-ink` (#3C4149, today's black). In dark mode the navy titles take
- * #BFDBFE (`blue-200`, 13's dark colour for 7a, readable on zinc-900) and the column names today's zinc-300 (Ask
+ * #BFDBFE (13's dark colour for 7a, readable on zinc-900 — written out: Tailwind 4's `blue-200` is an oklch near it, not it) and the column names today's zinc-300 (Ask
  * first 2). Line heights are 13's: 24 px at 16 px, 18 px at 13 and 13.5 px, 28 px at 20 px. 13.5 px is written out,
  * not rounded (Ask first 3). The two families are `font-title` and `font-colhead` (globals.css's @theme), loaded by
  * next/font in src/app/layout.tsx — latin and latin-ext, so ă â î ș ț come from their own files.
  */
 
 /** Kinds 1, 2 and 4: a tile's title. */
-export const TILE_TITLE_TYPE = "font-title text-base font-semibold uppercase tracking-[0.04em] text-navy dark:text-blue-200";
+export const TILE_TITLE_TYPE = "font-title text-base font-semibold uppercase tracking-[0.04em] text-navy dark:text-[#BFDBFE]";
 
 /**
  * Kinds 3 and 6 without their case: the family, size, line, weight and colour. A plainer head with no band (three of
@@ -45,10 +45,10 @@ export const COLUMN_NAMES_TYPE = `${COLUMN_NAMES_FACE} uppercase tracking-[0.04e
 export const COLUMN_NAMES_BAND = `bg-cap text-left ${COLUMN_NAMES_TYPE} dark:bg-zinc-800`;
 
 /** Kind 5: a panel's heading — Date de referință's left column, and the Settings page's headings that copy it. */
-export const PANEL_TITLE_TYPE = "font-title text-[13px] leading-[18px] font-semibold uppercase tracking-[0.08em] text-navy dark:text-blue-200";
+export const PANEL_TITLE_TYPE = "font-title text-[13px] leading-[18px] font-semibold uppercase tracking-[0.08em] text-navy dark:text-[#BFDBFE]";
 
 /** Kind 7a: the heading of „Grupuri" and of „Ștampile". */
-export const PAGE_HEADING_TYPE = "font-title text-xl font-semibold text-navy dark:text-blue-200";
+export const PAGE_HEADING_TYPE = "font-title text-xl font-semibold text-navy dark:text-[#BFDBFE]";
 
 /** Kind 7b: a group's and a stamp's screen tiles. */
-export const SCREEN_TILE_TITLE_TYPE = "font-title text-base font-medium text-navy dark:text-blue-200";
+export const SCREEN_TILE_TITLE_TYPE = "font-title text-base font-medium text-navy dark:text-[#BFDBFE]";
