@@ -86,7 +86,8 @@ describe("where the choice is read and drawn", () => {
   });
 
   it("`dark:` follows the class, and no rule follows Windows' setting any more (Ask first 2)", () => {
-    const css = read("src", "app", "globals.css");
+    // A BEHAVIOUR guard: the comments are stripped first — globals.css's own comment says what the blocks were.
+    const css = read("src", "app", "globals.css").replace(/\/\*[\s\S]*?\*\//g, "");
     expect(css).toContain("@custom-variant dark (&:where(.dark, .dark *));");
     expect(css).not.toMatch(/@media\s*\(prefers-color-scheme/);
   });
