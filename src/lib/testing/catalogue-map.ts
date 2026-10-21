@@ -49,24 +49,24 @@ export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCa
   // Slice #37.38: the map opened on a Property from its form. Needs a Google
   // Maps key in .env — the laptop and the runner have one.
   "/properties/map":                       ["TC-MAP-01", "TC-PROP-10", "TC-MAP-02", "TC-MAP-03", "TC-MAP-04", "TC-MAP-05", "TC-MAP-06", "TC-MAP-07", "TC-MAP-08", "TC-MAP-10"],
-  "/properties/[id]":                      ["TC-PROP-02", "TC-ASSOC-02", "TC-ASSOC-04", "TC-ASSOC-05", "TC-ASSOC-06", "TC-PROP-03", "TC-TAG-01", "TC-ASSOC-08", "TC-PROP-04", "TC-CALC-01", "TC-TILES-03", "TC-MAP-01", "TC-FOLD-01", "TC-ICON-02", "TC-ICON-03", "TC-ICON-04", "TC-ICON-07", "TC-TILES-07", "TC-SYSID-01", "TC-TILES-08", "TC-TILES-09", "TC-PROP-07", "TC-PROP-08", "TC-TILES-14", "TC-TILES-15", "TC-TILES-18", "TC-PROP-09", "TC-PROP-11", "TC-PROP-12", "TC-GRP-02", "TC-GRP-03", "TC-TILES-23", "TC-PROP-13", "TC-MAP-09"],
+  "/properties/[id]":                      ["TC-PROP-02", "TC-ASSOC-02", "TC-ASSOC-04", "TC-ASSOC-05", "TC-ASSOC-06", "TC-PROP-03", "TC-TAG-01", "TC-ASSOC-08", "TC-PROP-04", "TC-CALC-01", "TC-TILES-03", "TC-MAP-01", "TC-FOLD-01", "TC-ICON-02", "TC-ICON-03", "TC-ICON-04", "TC-ICON-07", "TC-TILES-07", "TC-SYSID-01", "TC-TILES-08", "TC-TILES-09", "TC-PROP-07", "TC-PROP-08", "TC-TILES-14", "TC-TILES-15", "TC-TILES-18", "TC-PROP-09", "TC-PROP-11", "TC-PROP-12", "TC-GRP-02", "TC-GRP-03", "TC-TILES-23", "TC-PROP-13", "TC-MAP-09", "TC-ASSOC-15"],
   // Slice #37.42: the list's icon buttons — tooltips by mouse and keyboard, an inactive one too.
   "/natural-persons":                      ["TC-PERS-01", "TC-VER-01", "TC-TILES-06", "TC-ICON-01", "TC-SYSID-01", "TC-PERS-04", "TC-TILES-11", "TC-LAYOUT-02", "TC-LAYOUT-03", "TC-LAYOUT-05", "TC-PERS-11", "TC-PERS-12", "TC-LAYOUT-07"],
   "/natural-persons/new":                  ["TC-PERS-01", "TC-ASSOC-11", "TC-ASSOC-12", "TC-STAMP-01", "TC-VER-01", "TC-PERS-08"],
-  "/natural-persons/[id]":                 ["TC-PERS-01", "TC-ASSOC-03", "TC-ASSOC-04", "TC-ASSOC-09", "TC-ASSOC-11", "TC-ASSOC-12", "TC-STAMP-01", "TC-VER-01", "TC-TILES-01", "TC-FOLD-01", "TC-ICON-07", "TC-PERS-03", "TC-SYSID-01", "TC-TILES-08", "TC-TILES-09", "TC-PERS-05", "TC-TILES-10", "TC-TILES-12", "TC-TILES-13", "TC-TILES-16", "TC-TILES-17", "TC-TILES-18", "TC-PERS-07", "TC-TILES-20", "TC-TILES-21", "TC-TILES-22", "TC-SET-03", "TC-TILES-23", "TC-INT-06", "TC-INHER-02", "TC-PERS-11", "TC-INT-07", "TC-TILES-24"],
+  "/natural-persons/[id]":                 ["TC-PERS-01", "TC-ASSOC-03", "TC-ASSOC-04", "TC-ASSOC-09", "TC-ASSOC-11", "TC-ASSOC-12", "TC-STAMP-01", "TC-VER-01", "TC-TILES-01", "TC-FOLD-01", "TC-ICON-07", "TC-PERS-03", "TC-SYSID-01", "TC-TILES-08", "TC-TILES-09", "TC-PERS-05", "TC-TILES-10", "TC-TILES-12", "TC-TILES-13", "TC-TILES-16", "TC-TILES-17", "TC-TILES-18", "TC-PERS-07", "TC-TILES-20", "TC-TILES-21", "TC-TILES-22", "TC-SET-03", "TC-TILES-23", "TC-INT-06", "TC-INHER-02", "TC-PERS-11", "TC-INT-07", "TC-TILES-24", "TC-ASSOC-15"],
   "/documents":                            ["TC-DOC-01", "TC-VER-02", "TC-TILES-06", "TC-SYSID-01", "TC-DOC-08", "TC-TILES-11", "TC-LAYOUT-02", "TC-LAYOUT-03", "TC-DOC-15", "TC-DOC-16", "TC-DOC-21", "TC-LAYOUT-05", "TC-DOC-23", "TC-DOC-27", "TC-LAYOUT-06", "TC-LAYOUT-07"],
   // Slice #38.84: „Interacțiuni".
   "/interactions":                         ["TC-INT-01", "TC-NAV-01", "TC-INT-02", "TC-INT-03", "TC-INT-04", "TC-INT-05", "TC-INT-06"],
   "/inheritance-tree":                     ["TC-INHER-01", "TC-NAV-01", "TC-INHER-02", "TC-INHER-03"], // Slices #39.11, #39.12, #39.13
   "/documents/new":                        ["TC-DOC-01", "TC-ASSOC-07", "TC-ASSOC-10", "TC-ASSOC-12", "TC-VER-02", "TC-DOC-13", "TC-DOC-14", "TC-DOC-26"],
-  "/documents/[id]":                       ["TC-DOC-01", "TC-ASSOC-01", "TC-AI-01", "TC-ASSOC-03", "TC-ASSOC-05", "TC-ASSOC-07", "TC-ASSOC-10", "TC-ASSOC-12", "TC-VER-02", "TC-TILES-04", "TC-TABS-01", "TC-TILES-05", "TC-FOLD-01", "TC-ICON-07", "TC-DOC-02", "TC-DOC-03", "TC-DOC-04", "TC-DOC-05", "TC-DOC-06", "TC-TILES-07", "TC-SYSID-01", "TC-ASSOC-13", "TC-DOC-07", "TC-TILES-08", "TC-TILES-09", "TC-DOC-09", "TC-DOC-10", "TC-DOC-11", "TC-TILES-14", "TC-TILES-15", "TC-DOC-12", "TC-TILES-16", "TC-TILES-17", "TC-DOC-13", "TC-TILES-18", "TC-DOC-17", "TC-DOC-18", "TC-DOC-19", "TC-DOC-20", "TC-PERS-10", "TC-TILES-23", "TC-DOC-22", "TC-DOC-24", "TC-DOC-25", "TC-DOC-26", "TC-ASSOC-14"],
+  "/documents/[id]":                       ["TC-DOC-01", "TC-ASSOC-01", "TC-AI-01", "TC-ASSOC-03", "TC-ASSOC-05", "TC-ASSOC-07", "TC-ASSOC-10", "TC-ASSOC-12", "TC-VER-02", "TC-TILES-04", "TC-TABS-01", "TC-TILES-05", "TC-FOLD-01", "TC-ICON-07", "TC-DOC-02", "TC-DOC-03", "TC-DOC-04", "TC-DOC-05", "TC-DOC-06", "TC-TILES-07", "TC-SYSID-01", "TC-ASSOC-13", "TC-DOC-07", "TC-TILES-08", "TC-TILES-09", "TC-DOC-09", "TC-DOC-10", "TC-DOC-11", "TC-TILES-14", "TC-TILES-15", "TC-DOC-12", "TC-TILES-16", "TC-TILES-17", "TC-DOC-13", "TC-TILES-18", "TC-DOC-17", "TC-DOC-18", "TC-DOC-19", "TC-DOC-20", "TC-PERS-10", "TC-TILES-23", "TC-DOC-22", "TC-DOC-24", "TC-DOC-25", "TC-DOC-26", "TC-ASSOC-14", "TC-ASSOC-15"],
   "/documents/[id]/associate-person":      ["TC-ASSOC-01", "TC-LAYOUT-01", "TC-ASSOC-13", "TC-DOC-19", "TC-VL-03", "TC-LAYOUT-06"],
   "/documents/[id]/associate-property":    ["TC-ASSOC-02", "TC-LAYOUT-01", "TC-ASSOC-13"],
   "/admin/import":                         ["TC-IMP-01", "TC-IMP-02", "TC-IMP-03", "TC-IMP-04", "TC-ICON-06", "TC-IMP-05", "TC-IMP-06"],
   "/admin/global-search":                  ["TC-SRCH-01", "TC-PROP-03", "TC-GRP-01", "TC-TAG-01"],
   "/judicial-persons":                     ["TC-PERS-02", "TC-TILES-06", "TC-SYSID-01", "TC-PERS-04", "TC-TILES-11", "TC-PERS-06", "TC-LAYOUT-02", "TC-LAYOUT-03", "TC-LAYOUT-05", "TC-PERS-13", "TC-LAYOUT-07"],
   "/judicial-persons/new":                 ["TC-PERS-02", "TC-ASSOC-10", "TC-ASSOC-11", "TC-PERS-14"],
-  "/judicial-persons/[id]":                ["TC-PERS-02", "TC-ASSOC-06", "TC-ASSOC-10", "TC-ASSOC-11", "TC-TILES-02", "TC-ICON-07", "TC-SYSID-01", "TC-TILES-08", "TC-TILES-09", "TC-PERS-05", "TC-TILES-12", "TC-TILES-18", "TC-PERS-07", "TC-PERS-09", "TC-TILES-22", "TC-PERS-14"],
+  "/judicial-persons/[id]":                ["TC-PERS-02", "TC-ASSOC-06", "TC-ASSOC-10", "TC-ASSOC-11", "TC-TILES-02", "TC-ICON-07", "TC-SYSID-01", "TC-TILES-08", "TC-TILES-09", "TC-PERS-05", "TC-TILES-12", "TC-TILES-18", "TC-PERS-07", "TC-PERS-09", "TC-TILES-22", "TC-PERS-14", "TC-ASSOC-15"],
   "/natural-persons/[id]/associate-document": ["TC-ASSOC-03", "TC-LAYOUT-01", "TC-LAYOUT-07"],
   "/properties/[id]/associate-person":     ["TC-ASSOC-04", "TC-LAYOUT-01", "TC-ICON-03"],
   "/natural-persons/[id]/associate-property": ["TC-ASSOC-04", "TC-LAYOUT-01"],
@@ -157,6 +157,10 @@ export const PROMOTED_WITHOUT_DRIVING: Readonly<Record<CatalogueCaseId, string>>
     "Slice 40.14: the case asserts that a list's scroll bar never blinks after a resize — one or two paints, 16–33 ms, " +
     "which an eye sees and no reading by hand afterwards can catch. Its spec reads the frame after every paint for a " +
     "second; that run is its only possible proof.",
+  "TC-ASSOC-15":
+    "Slice 40.16: the case reads „Legături” on a person's, a company's, a property's and a document's form; three of them " +
+    "draw a Google map, and October 2026's maps ceiling is spent. The spec blocks the maps and reads the same tile, so " +
+    "its run is the case's proof.",
 };
 
 /** Strips a trailing slash and any query/hash, and guarantees a leading slash. */

@@ -46,13 +46,14 @@ just been written stays at `confirmed`, with its `Spec` column filled in; it mov
 is never marked `automated` on the strength of a spec that has not run. If the run is
 red, fixing the spec comes before any new case.
 
-**Two stated exceptions, and only two: TC-AUTH-01 and TC-LAYOUT-07 are promoted without being driven.**
+**Three stated exceptions, and only three: TC-AUTH-01, TC-LAYOUT-07 and TC-ASSOC-15 are promoted without being driven.**
 Claude is not allowed to type a password into a field, so its login steps can never be
 driven by hand; `e2e/auth.setup.ts` performs them on every run from `.env`, and the spec
 asserts what the case asserts after login. Its green run is its own proof. TC-LAYOUT-07
 (Slice 40.14) asserts that a scroll bar never blinks for a paint or two after a resize —
 16–33 ms, which an eye sees and no reading by hand afterwards can; its spec reads every
-paint. Each exception is also written, with its reason, in `PROMOTED_WITHOUT_DRIVING` in
+paint. TC-ASSOC-15 (Slice 40.16) reads „Legături" on four forms, three of which draw a
+Google map that October 2026's billing ceiling has spent; its spec blocks the maps. Each exception is also written, with its reason, in `PROMOTED_WITHOUT_DRIVING` in
 `src/lib/testing/catalogue-map.ts` — the guard below refuses a spec on any other row that
 is not `confirmed` — so it cannot become a precedent by accident.
 
@@ -140,6 +141,7 @@ fixed fixture where the existing one will do.
 | [TC-ASSOC-12](cases/TC-ASSOC-12.md) | Defunctul și doi moștenitori adăugați pe un Certificat de Moștenitor | association | happy | — | `automated` | 2026-10-03 | `e2e/association/certificate-parties.spec.ts` |
 | [TC-ASSOC-13](cases/TC-ASSOC-13.md) | Ecranele de asociere: „Căutare", „Rezultate" și „Asociere" una sub alta; numele proprietății pe un rând | association | happy | — | `automated` | 2026-10-03 | `e2e/association/associate-stacked.spec.ts` |
 | [TC-ASSOC-14](cases/TC-ASSOC-14.md) | Promitentul vânzător și promitentul cumpărător în „Părți" pe un Antecontract | association | happy | — | `automated` | 2026-10-15 | `e2e/association/antecontract-parties.spec.ts` |
+| [TC-ASSOC-15](cases/TC-ASSOC-15.md) | „Legături" se încarcă pe fișa unei persoane, a unei firme, a unei proprietăți și a unui act | association | happy | — | `automated` | 2026-10-21 | `e2e/association/related-tile-loads.spec.ts` |
 | [TC-IMP-01](cases/TC-IMP-01.md) | Import cap-coadă al unui folder mic | import | happy | `07.smoke.tc.marker` | `driven` | 2026-10-01 | — |
 | [TC-IMP-02](cases/TC-IMP-02.md) | Același folder importat a doua oară — „Deja în sistem" | import | happy | `02.rerun` | `driven` | 2026-09-23 | — |
 | [TC-IMP-03](cases/TC-IMP-03.md) | Import lung: cinci proprietăți, 59 de fișiere, fiecare regăsit | import | happy | `10.big.tc.marker` | `driven` | 2026-09-25 | — |

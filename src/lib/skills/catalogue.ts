@@ -547,7 +547,7 @@ export const SKILLS: readonly Skill[] = [
     },
     predecessors: ["persons-add-judicial-person", "links-associate-two-records", "workspace-global-search"],
     screens: ["associate-person", "associate-document", "associate-property"],
-    cases: ["TC-ASSOC-02", "TC-ASSOC-03", "TC-ASSOC-04", "TC-ASSOC-05", "TC-ASSOC-06", "TC-ASSOC-11"],
+    cases: ["TC-ASSOC-02", "TC-ASSOC-03", "TC-ASSOC-04", "TC-ASSOC-05", "TC-ASSOC-06", "TC-ASSOC-11", "TC-ASSOC-15"],
     manual: ["links-associate-kinds", "links-associate-screen", "links-related", "links-example-owner", "companies-people-representatives"],
   },
   {
