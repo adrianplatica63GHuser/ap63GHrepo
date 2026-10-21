@@ -12,6 +12,9 @@
  * 1920 × 1080. They read the archive's own rows' boxes only — no text — and on Proprietăți open a record whose maps are
  * blocked (e2e/README.md): no map loads, no Street View, no address look-up.
  *
+ * Steps 15–16 (Slice 40.18) are the fourth test: a column name is drawn in Roboto Condensed and in ink, a tile's title
+ * in Roboto Slab and in navy — read off the styles and the loaded font faces, no text — in light and in dark.
+ *
  * Steps 11–14 (Slice #40.03) are the third test: Acte with four columns chosen at 1100 px, so its columns are wider
  * than the frame — the red „>" and „<" at the band's edges as the list scrolls sideways; a funnel under the right-hand
  * signs still opens its editor; at 1920 px with no column chosen, neither sign.
@@ -61,14 +64,15 @@ async function band(page: Page) {
       const box = b.getBoundingClientRect();
       const name = b.querySelector<HTMLElement>("[data-head-text]")!;
       const n = name.getBoundingClientRect();
-      const rows = Math.round(n.height / 16);
-      if (Math.round(box.height) !== 58) out.push(`${col}: band ${box.height}`);
+      // Slice 40.18: the names are on an 18-px line (Roboto Condensed 13.5 px), so the band is 18 + 18 + 26 = 62.
+      const rows = Math.round(n.height / 18);
+      if (Math.round(box.height) !== 62) out.push(`${col}: band ${box.height}`);
       if (rows < 1 || rows > 2 || name.scrollHeight > name.clientHeight + 1) out.push(`${col}: ${rows} rows`);
       if (name.scrollWidth > name.clientWidth + 1) out.push(`${col}: cut sideways`);
       if (b.dataset.headBand === "filter") {
         const f = b.querySelector<HTMLElement>("[data-head-funnel] button")!.getBoundingClientRect();
         if (f.top < n.bottom - 0.5) out.push(`${col}: funnel not under the name`);
-        if (Math.abs(n.bottom - (box.top + 32)) > 1) out.push(`${col}: name not on rows 1–2`);
+        if (Math.abs(n.bottom - (box.top + 36)) > 1) out.push(`${col}: name not on rows 1–2`);
         if (Math.abs(f.bottom - box.bottom) > 1) out.push(`${col}: funnel not on row 3`);
       } else if (Math.abs(n.top + n.height / 2 - (box.top + box.height / 2)) > 1) {
         out.push(`${col}: not centred`);
@@ -76,7 +80,7 @@ async function band(page: Page) {
     }
     const twoRows = bands
       .filter((b) => b.querySelector("[data-head-text] br"))
-      .map((b) => Math.round(b.querySelector<HTMLElement>("[data-head-text]")!.getBoundingClientRect().height / 16));
+      .map((b) => Math.round(b.querySelector<HTMLElement>("[data-head-text]")!.getBoundingClientRect().height / 18));
     return { cells: bands.length, wrong: out, forcedOnTwo: twoRows.every((r) => r === 2), forced: twoRows.length };
   });
 }
@@ -368,5 +372,40 @@ test.describe("TC-LAYOUT-05 — cele patru liste, câte un rând pe linie", () =
     await page.waitForTimeout(500);
     await expect(right).toHaveCount(0);
     await expect(left).toHaveCount(0);
+  });
+
+  // Steps 15–16 (Slice 40.18): alternative 13 in Adrian's colours. Only styles are read — no record's text.
+  test("titlurile: numele coloanelor în Roboto Condensed, negru; titlul unei dale în Roboto Slab, bleumarin", async ({ page }) => {
+    const look = (selector: string) =>
+      page.evaluate(async (sel) => {
+        await document.fonts.ready;
+        const el = document.querySelector<HTMLElement>(sel)!;
+        const cs = getComputedStyle(el);
+        const loaded = [...document.fonts].filter((f) => f.status === "loaded").map((f) => `${f.family} ${f.weight}`);
+        return { family: cs.fontFamily, size: cs.fontSize, weight: cs.fontWeight, transform: cs.textTransform, color: cs.color, loaded };
+      }, selector);
+
+    for (const scheme of ["light", "dark"] as const) {
+      await page.emulateMedia({ colorScheme: scheme });
+      await page.setViewportSize({ width: 1366, height: 900 });
+
+      // Step 15 — a column name on „Persoane fizice".
+      await page.goto("/natural-persons");
+      await expect(page.locator("main thead [data-head-text]").first()).toBeVisible({ timeout: 30_000 });
+      const col = await look("main thead [data-head-text]");
+      expect(col.family).toMatch(/Roboto[ _]Condensed/);
+      expect([col.size, col.weight, col.transform]).toEqual(["13.5px", "600", "uppercase"]);
+      expect(col.color).toBe(scheme === "light" ? "rgb(60, 65, 73)" : "rgb(212, 212, 216)");
+      expect(col.loaded.some((f) => /Roboto[ _]Condensed/.test(f))).toBe(true);
+
+      // Step 16 — a tile's title on the dashboard.
+      await page.goto("/");
+      await expect(page.locator("[data-tile-title] h2").first()).toBeVisible({ timeout: 30_000 });
+      const tile = await look("[data-tile-title] h2");
+      expect(tile.family).toMatch(/Roboto[ _]Slab/);
+      expect([tile.size, tile.weight, tile.transform]).toEqual(["16px", "600", "uppercase"]);
+      expect(tile.color).toBe(scheme === "light" ? "rgb(30, 58, 138)" : "rgb(191, 219, 254)");
+      expect(tile.loaded.some((f) => /Roboto[ _]Slab/.test(f))).toBe(true);
+    }
   });
 });

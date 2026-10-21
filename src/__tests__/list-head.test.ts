@@ -81,10 +81,11 @@ describe("the four lists draw their names through the one cell", () => {
     expect(src).not.toMatch(/<th key=\{col\.key\}/);
   });
 
-  it("the band is two 16-px text rows and the funnel's 26-px row, on every cell", () => {
-    expect(HEAD_BAND_PX).toBe(58);
+  // Slice 40.18: the names are Roboto Condensed 13.5 px on an 18-px line (alternative 13), so the band went 58 → 62.
+  it("the band is two 18-px text rows and the funnel's 26-px row, on every cell", () => {
+    expect(HEAD_BAND_PX).toBe(62);
     const cell = read("src", "components", "table", "list-head.tsx");
-    expect(cell).toContain('className="grid grid-rows-[1rem_1rem_1.625rem]" style={{ height: HEAD_BAND_PX }}');
+    expect(cell).toContain('className="grid grid-rows-[1.125rem_1.125rem_1.625rem]" style={{ height: HEAD_BAND_PX }}');
     expect(cell).toContain('className="row-span-2 flex min-w-0 items-end" data-head-name=""');
     expect(cell).toContain('className="row-start-3 flex items-end" data-head-funnel=""');
     expect(cell).toContain('className="row-span-3 flex min-w-0 items-center" data-head-name=""');

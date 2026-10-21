@@ -75,6 +75,7 @@ describe("the four lists use the shared piece (Ask first 9)", () => {
     const src = fs.readFileSync(path.join(process.cwd(), "src", "components", "list", "list-fit.tsx"), "utf8");
     // Slice 40.14: and keeps its vertical bar's room while the rows fit, so the bar coming or going moves no width.
     expect(src).toContain('export const LIST_FRAME = "w-fit max-w-full overflow-auto [scrollbar-gutter:stable]";');
-    expect(src).toMatch(/export const LIST_HEAD =\s*"sticky top-0 z-10 bg-cap /);
+    // Slice 40.18: the band's colours and type are `COLUMN_NAMES_BAND` (src/lib/ui/title-type.ts), kept at the top.
+    expect(src).toContain("export const LIST_HEAD = `sticky top-0 z-10 ${COLUMN_NAMES_BAND}`;");
   });
 });

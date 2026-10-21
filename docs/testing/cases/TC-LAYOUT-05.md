@@ -57,6 +57,8 @@ At 1366 and at 1920 px, on each of the four lists, searched for „TC-E2E-LAYOUT
 | 12 | Scrolls the list half-way sideways, then a little down | Three red „<" at the band's left edge too, both kept at the band as the rows scroll |
 | 13 | Scrolls to the right end; then back, until a column's funnel stands under the „>" signs, and presses there; then presses the funnel | Only the „<" at the end. The press lands on the sign (40.11; #40.03 let it through to the funnel) and scrolls the list right, bringing the funnel out from under it; the funnel, pressed, opens its filter |
 | 14 | At 1920 × 1080 px with no column chosen | Every column fits: no sign at either edge |
+| 15 | (Slice 40.18) At 1366 px, on „Persoane fizice", looks at a column name — in the light look, then in the dark one (the system's setting) | Roboto Condensed, 13.5 px, semibold, upper case, in today's black (#3C4149; dark zinc-300); the band 62 px tall |
+| 16 | Opens the home page and looks at a tile's title, light and dark | Roboto Slab, 16 px, semibold, upper case, in navy #1E3A8A (dark #BFDBFE) |
 
 ## At the end — leaving things as they were found
 
@@ -94,3 +96,8 @@ day, on „Acte" at 1000 × 800 (no column chosen; the table 800 px in a frame s
 y 231–305 — the band's height, against the frame's vertical scroll bar — and still there with the list scrolled 40 and
 103 px sideways and 200 px down; `pointer-events: none`. The pane's emulated viewport dispatches no scroll events, so the
 „<" appearing is the spec's to read (40.03's handover). The spec translates steps 11–14 as a third test.
+
+**2026-10-21 — steps 15–16 added (Slice 40.18).** Adrian chose alternative 13 of 40.05: the titles in Roboto Slab, the
+column names in Roboto Condensed, navy for the tiles' titles and today's black for the column names. The band grew
+from 58 to 62 px (two 18-px text rows and the funnel's 26). The spec's fourth test reads the styles and the loaded font
+faces, in both colour schemes; step 5's check now measures 62 and 18-px rows.
