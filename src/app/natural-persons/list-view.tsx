@@ -13,6 +13,7 @@ import { LIST_FRAME, LIST_HEAD, useListFit } from "@/components/list/list-fit";
 import { HiddenColumnSigns } from "@/components/list/hidden-column-signs";
 import { LIST_TOOLBAR, useListEdge } from "@/components/table/list-edge";
 import { ListHeadCell } from "@/components/table/list-head";
+import { FirstCellText } from "@/components/list/first-cell";
 import type { ColumnName } from "@/lib/ui/field-widths";
 import { newTabIfAsked } from "@/lib/ui/row-link";
 import { ListPreviewRow, ListPreviews, PreviewButton } from "@/components/tiles/preview-tiles";
@@ -176,7 +177,8 @@ export function NaturalPersonListView() {
   // A stored key this build has no column for stays in storage and is not drawn.
   const shownCols = chooser.visible.flatMap((key) => optionalCols.filter((c) => c.key === key));
   // Slice #38.57: the list's own columns, one line each.
-  const columns: ColumnName[] = ["listSelectPerson", "listPersonName", "listPersonNickname", ...shownCols.map((c) => c.column), "listRowActions"];
+  // Slice 40.24: no badges' column before the name — „Nou!" is in the name's cell (`FirstCellText`).
+  const columns: ColumnName[] = ["listPersonName", "listPersonNickname", ...shownCols.map((c) => c.column), "listRowActions"];
   // Slice #39.82: the bar's fields are the columns that filter (`NATURAL_PERSON_COLUMN_FILTERS`), each named as its
   // column is in „Câmpuri afișate" — so a chip reads as the column it filters, shown or not.
   const filterFields: FilterBarField[] = NATURAL_PERSON_FILTER_FIELDS.map((f) => ({
@@ -254,8 +256,6 @@ export function NaturalPersonListView() {
           <FixedTable id="natural-persons" columns={columns} className="text-sm min-w-full">
             <thead className={LIST_HEAD}>
               <tr>
-                {/* Slice 40.10: the badges\' column, without the select-all box — nothing on this list acts on a selection. */}
-                <th className="px-4 py-2" {...columnHead("listSelectPerson")} />
                 <ListHeadCell column="listPersonName" name={tHead("name")} full={t("table.name")} />
                 <ListHeadCell column="listPersonNickname" name={tHead("nickname")} full={t("table.nickname")} />
                 {shownCols.map((col) => {
@@ -307,19 +307,13 @@ export function NaturalPersonListView() {
                   onAuxClick={(e) => newTabIfAsked(e, `/natural-persons/${item.id}`)}
                   className="align-top hover:bg-cta-pale dark:hover:bg-zinc-800/50 cursor-pointer"
                 >
-                  {/* #39.24: „Nou!" runs past this narrow column into the name cell's padding, on purpose; the attribute tells
-                      the e2e width guard so (`expectStableColumns`, Slice #39.64). */}
-                  <td className="px-4 py-2" onClick={(e) => e.stopPropagation()} data-spills-into-padding="">
-                    <span className="inline-flex items-center">
-                      {/* Slice 40.10: no tick box — a record is deleted from its own screen only. */}
-                      <RecencyBadge createdAt={item.createdAt} updatedAt={item.updatedAt} />
-                    </span>
-                  </td>
                   <td className={`px-4 py-2 font-medium ${ONE_LINE}`} title={cellTitle(item.displayName)}>
-                    {item.displayName || (
-                      <span className="text-fade italic">—</span>
-                    )}
-                    {item.isDeceased && <DeceasedMark />}
+                    <FirstCellText badges={<RecencyBadge createdAt={item.createdAt} updatedAt={item.updatedAt} />}>
+                      {item.displayName || (
+                        <span className="text-fade italic">—</span>
+                      )}
+                      {item.isDeceased && <DeceasedMark />}
+                    </FirstCellText>
                   </td>
                   <td className={`px-4 py-2 text-fade dark:text-zinc-400 ${ONE_LINE}`} title={cellTitle(item.nickname)}>
                     {item.nickname || <span className="italic">—</span>}

@@ -14,6 +14,7 @@ import { LIST_FRAME, LIST_HEAD, useListFit } from "@/components/list/list-fit";
 import { HiddenColumnSigns } from "@/components/list/hidden-column-signs";
 import { LIST_TOOLBAR, useListEdge } from "@/components/table/list-edge";
 import { ListHeadCell } from "@/components/table/list-head";
+import { FirstCellText } from "@/components/list/first-cell";
 import type { ColumnName } from "@/lib/ui/field-widths";
 import { AddPropertyDialog } from "./_components/add-property-dialog";
 import { newTabIfAsked } from "@/lib/ui/row-link";
@@ -216,7 +217,8 @@ export function PropertyListView() {
   const chooser = useFieldChooser(LIST_COLUMN_CHOICE.property.storageKey, optionalCols.map((c) => c.key), MAX_OPT, LIST_COLUMN_CHOICE.property.defaults);
   const shownCols = chooser.visible.flatMap((key) => optionalCols.filter((c) => c.key === key));
   // Slice #37.72: Poreclă always, the first after the checkbox. Slice #38.57: the list's own columns, one line each.
-  const columns: ColumnName[] = ["listBadges", "listPropertyNickname", ...shownCols.map((c) => c.column), "listRowActions"];
+  // Slice 40.24: no badges' column before the nickname — „Nou!" and „Încrucișat" are in its cell (`FirstCellText`).
+  const columns: ColumnName[] = ["listPropertyNickname", ...shownCols.map((c) => c.column), "listRowActions"];
   // Slice #39.82: the bar's fields are the columns that filter (`PROPERTY_COLUMN_FILTERS`), each named as its column
   // is in „Câmpuri afișate" — so a chip reads as the column it filters, shown or not.
   const filterFields: FilterBarField[] = PROPERTY_FILTER_FIELDS.map((f) => ({
@@ -322,8 +324,6 @@ export function PropertyListView() {
           <FixedTable id="properties" columns={columns} className="text-sm min-w-full">
             <thead className={LIST_HEAD}>
               <tr>
-                {/* Slice #39.73: the badges' column, without the select-all box — nothing on this list acts on a selection. */}
-                <th className="px-4 py-2" {...columnHead("listBadges")} />
                 <ListHeadCell column="listPropertyNickname" name={tHead("nickname")} full={t("table.nickname")} />
                 {shownCols.map((col) => {
                   const filterKey = PROPERTY_COLUMN_FILTERS[col.key];
@@ -383,22 +383,17 @@ export function PropertyListView() {
                   onAuxClick={(e) => newTabIfAsked(e, `/properties/${item.id}`)}
                   className="align-top hover:bg-cta-pale dark:hover:bg-zinc-800/50 cursor-pointer"
                 >
-                  <td className="px-4 py-2" onClick={(e) => e.stopPropagation()} data-spills-into-padding="">
-                    {/* Slice #37.16 had „the badges wrap — „Încrucișat" takes a line of its own rather than widening
-                        the column". Slice #38.57: one line per row — the column holds all three (`listBadges`).
-                        Slice #39.24: the column is the box and 11 px (the gap to the nickname at 30 %, Adrian). „Nou!"
-                        stays beside the box and runs into the padding — `data-spills-into-padding` tells the e2e width
-                        guard so (#39.64); „Încrucișat", on the rare row that has it, takes a line under them again. */}
-                    <span className="inline-flex flex-wrap items-center" data-select-badges="">
-                      <span className="inline-flex flex-nowrap items-center">
-                        {/* Slice #39.73: no tick box — the list's delete is gone (above). */}
-                        <RecencyBadge createdAt={item.createdAt} updatedAt={item.updatedAt} />
-                      </span>
-                      <BowTieBadge selfIntersects={item.cornerOrderSelfIntersects} />
-                    </span>
-                  </td>
                   <td className={`px-4 py-2 text-fade dark:text-zinc-400 ${ONE_LINE}`} data-col="nickname" title={cellTitle(item.nickname)}>
-                    {item.nickname ?? <span className="text-fade italic">—</span>}
+                    <FirstCellText
+                      badges={
+                        <>
+                          <RecencyBadge createdAt={item.createdAt} updatedAt={item.updatedAt} />
+                          <BowTieBadge selfIntersects={item.cornerOrderSelfIntersects} />
+                        </>
+                      }
+                    >
+                      {item.nickname ?? <span className="text-fade italic">—</span>}
+                    </FirstCellText>
                   </td>
                   {shownCols.map((col) => (
                     <td

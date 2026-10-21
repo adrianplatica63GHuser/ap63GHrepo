@@ -15,6 +15,7 @@ import { LIST_FRAME, LIST_HEAD, useListFit } from "@/components/list/list-fit";
 import { HiddenColumnSigns } from "@/components/list/hidden-column-signs";
 import { LIST_TOOLBAR, useListEdge } from "@/components/table/list-edge";
 import { ListHeadCell } from "@/components/table/list-head";
+import { FirstCellText } from "@/components/list/first-cell";
 import type { ColumnName } from "@/lib/ui/field-widths";
 import { customFieldValueLabel } from "@/lib/documents/custom-field-options";
 import { customFieldFilter, customFieldState, typeFilterTrigger, typesMatching } from "@/lib/documents/type-filter";
@@ -694,7 +695,8 @@ export function DocumentListView({
   const chooser = useFieldChooser(LIST_COLUMN_CHOICE.document.storageKey, optionalCols.map((c) => c.key), MAX_OPT, LIST_COLUMN_CHOICE.document.defaults);
   const shownCols = chooser.visible.flatMap((key) => optionalCols.filter((c) => c.key === key));
   // Slice #38.57: the list's own columns, one line each.
-  const columns: ColumnName[] = ["selectNew", "listDocumentType", "listDocumentTitle", ...shownCols.map((c) => c.column), "listRowActions"];
+  // Slice 40.24: no badges' column before the type — „Nou!" is in its cell (`FirstCellText`).
+  const columns: ColumnName[] = ["listDocumentType", "listDocumentTitle", ...shownCols.map((c) => c.column), "listRowActions"];
   // Slice #39.63: the bar's fields, labelled as their columns are. Since #39.82 only the columns that filter
   // (`DOCUMENT_COLUMN_FILTERS`), each named as its column is in „Câmpuri afișate".
   const filterFields: FilterBarField[] = DOCUMENT_FILTER_FIELDS.map((f) => ({
@@ -952,8 +954,6 @@ export function DocumentListView({
               <FixedTable id="documents" columns={columns} className="text-sm min-w-full">
                 <thead className={LIST_HEAD}>
                   <tr>
-                    {/* Slice 40.10: the badges\' column, without the select-all box — nothing on this list acts on a selection. */}
-                    <th className="px-4 py-2" {...columnHead("selectNew")} />
                     <ListHeadCell column="listDocumentType" name={tHead("type")} full={t("table.type")} />
                     <ListHeadCell column="listDocumentTitle" name={tHead("title")} full={t("table.title")} />
                     {shownCols.map((col) => {
@@ -1005,21 +1005,17 @@ export function DocumentListView({
                       onAuxClick={(e) => newTabIfAsked(e, `/documents/${item.id}`)}
                       className="align-top hover:bg-cta-pale dark:hover:bg-zinc-800/50 cursor-pointer"
                     >
-                      <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
-                        <span className="inline-flex items-center">
-                          {/* Slice 40.10: no tick box — a record is deleted from its own screen only. */}
-                          <RecencyBadge createdAt={item.createdAt} updatedAt={item.updatedAt} />
-                        </span>
-                      </td>
                       {/* Slice #37.95: the type by its short name (CVC, PAD…, or the rule's),
                           the full name in its tooltip. */}
                       <td
                         className={`px-4 py-2 text-fade dark:text-zinc-400 ${ONE_LINE}`}
                         title={item.documentTypeName ?? undefined}
                       >
-                        {item.documentTypeName
-                          ? documentTypeShortName({ name: item.documentTypeName, shortName: item.documentTypeShortName })
-                          : "—"}
+                        <FirstCellText badges={<RecencyBadge createdAt={item.createdAt} updatedAt={item.updatedAt} />}>
+                          {item.documentTypeName
+                            ? documentTypeShortName({ name: item.documentTypeName, shortName: item.documentTypeShortName })
+                            : "—"}
+                        </FirstCellText>
                       </td>
                       <td className={`px-4 py-2 font-medium ${ONE_LINE}`} title={cellTitle(item.title)}>
                         {item.title ?? (
