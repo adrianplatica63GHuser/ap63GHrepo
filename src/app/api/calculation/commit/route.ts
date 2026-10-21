@@ -12,7 +12,7 @@
  * „Creează proprietățile" (#38.25). The server recomputes from the property,
  * the owners, the width and the three choices — never from polygons in the
  * body — and then, in one pass:
- *   1. one Property per owner (nickname = the owner's name, the computed area
+ *   1. one Property per owner (nickname = the owner's name and „(după divizare)" — Slice 40.26 — the computed area
  *      as its surface, every corner that is one of the parcel's keeping that
  *      corner's number), and — #39.79, Ask first 3 — the owner linked to it as
  *      „Proprietar";

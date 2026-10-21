@@ -36,6 +36,19 @@ export const SIDE_ROAD_ALGORITHM = "SIDE_ROAD";
 /** #18.10's default, kept. */
 export const DEFAULT_ROAD_NICKNAME = "Drum comun";
 
+/**
+ * Slice 40.26 — Adrian, 2026-10-21: „the nickname assigned to the property should be the name of the person (like
+ * today) followed by "(dupa divizare)" (which means "after split"); please use romanian diacritics". One space, lower
+ * case, with its ă, and in Romanian whatever the interface's language: it is data in the archive, not a label (Ask
+ * first 1). Only properties created from now on carry it; none is renamed (Ask first 3).
+ */
+export const AFTER_SPLIT_SUFFIX = " (după divizare)";
+
+/** An owner's new property's nickname: the owner's name, then „(după divizare)". */
+export function ownerParcelNickname(ownerName: string): string {
+  return `${ownerName}${AFTER_SPLIT_SUFFIX}`;
+}
+
 export type SideRoadInputParams = SideRoadSource & {
   order: number[];
   road: { corner: number; side: RoadSide };
@@ -110,7 +123,7 @@ export function planSideRoadCommit(resolved: { input: SideRoadInput; source: Sid
     ...computation.slices.map((s) => ({
       role: "OWNER_PARCEL" as const,
       personId: s.personId,
-      nickname: s.name,
+      nickname: ownerParcelNickname(s.name), // Slice 40.26: „<owner> (după divizare)"
       surfaceAreaMp: round2(s.area),
       corners: cornersOf(s.corners, s.cornerNumbers),
     })),

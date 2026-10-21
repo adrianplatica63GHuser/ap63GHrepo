@@ -222,7 +222,8 @@ test.describe("TC-CALC-01 — calculul cu drum lateral, și istoricul lui", () =
     await expect(done).toContainText(/S-a creat grupul GRP-\d+ cu următoarele proprietăți:/);
     const runCode = /Calculul înregistrat: (CALC\d+)/.exec(await done.innerText())?.[1];
     expect(runCode).toMatch(/^CALC\d{5}$/);
-    await expect(links).toHaveText([...OWNERS, ROAD]);
+    // Slice 40.26: each owner's new property is named after the owner, then „(după divizare)"; the road keeps its name.
+    await expect(links).toHaveText([...OWNERS.map((o) => `${o} (după divizare)`), ROAD]);
 
     // Step 10 (#39.98) — one history button on the screen, the heading's „Istoricul calculelor"; it opens the list, the
     // new run its first row; the row's „Detalii": the run's own page. The success panel had a second one until #39.98.

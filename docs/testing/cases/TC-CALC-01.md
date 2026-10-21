@@ -186,3 +186,8 @@ headless map. The spec stayed temporary for one reason. Every committed run of i
 `calculation_run` row to the local database that no route can remove, and a run per `full` is
 dozens a day. It is a translation of this case, ready for the day runs can be deleted (#38.25's
 handover).
+
+**2026-10-21 — names after the split (Slice 40.26).** Adrian: „the nickname assigned to the property should be the
+name of the person (like today) followed by "(dupa divizare)"". Each owner's new property is now „<owner> (după
+divizare)"; the road keeps „Drum comun" or the name typed. The success panel's links read so; the spec follows.
+

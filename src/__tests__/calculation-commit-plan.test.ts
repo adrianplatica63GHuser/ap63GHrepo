@@ -12,7 +12,9 @@
 
 import {
   CommitRequestInvalid,
+  AFTER_SPLIT_SUFFIX,
   DEFAULT_ROAD_NICKNAME,
+  ownerParcelNickname,
   originalIndexOf,
   planSideRoadCommit,
 } from "@/lib/calculation/commit-plan";
@@ -75,7 +77,10 @@ describe.each([0, 1, 2, 3])("a road from corner %i of the sample", (corner) => {
 
   it("plans one property per owner, in the order chosen, and the road, always", () => {
     expect(plan.properties.map((p) => p.role)).toEqual(["OWNER_PARCEL", "OWNER_PARCEL", "OWNER_PARCEL", "OWNER_PARCEL", "ROAD_PARCEL"]);
-    expect(plan.properties.slice(0, 4).map((p) => p.nickname)).toEqual(["TC-Delta", "TC-Beta", "TC-Alfa", "TC-Gama"]);
+    // Slice 40.26: each owner's property named after the owner, then „(după divizare)" — „TC-Delta", … before.
+    expect(plan.properties.slice(0, 4).map((p) => p.nickname)).toEqual(
+      ["TC-Delta", "TC-Beta", "TC-Alfa", "TC-Gama"].map((n) => `${n} (după divizare)`),
+    );
     // #39.79, Ask first 3: each owner's property names its person, for the „Proprietar" link; the road names nobody.
     expect(plan.properties.map((p) => p.personId)).toEqual(["p-delta", "p-beta", "p-alfa", "p-gama", null]);
     expect(plan.properties[4].nickname).toBe(DEFAULT_ROAD_NICKNAME);
@@ -187,5 +192,13 @@ describe("originalIndexOf", () => {
     ["1234567890", null],
   ])("%s → %s", (n, expected) => {
     expect(originalIndexOf(n)).toBe(expected);
+  });
+});
+
+describe("„(după divizare)” (Slice 40.26)", () => {
+  it("one space, lower case, with its ă; the road keeps its own name", () => {
+    expect(AFTER_SPLIT_SUFFIX).toBe(" (după divizare)");
+    expect(ownerParcelNickname("Popescu Ion")).toBe("Popescu Ion (după divizare)");
+    expect(DEFAULT_ROAD_NICKNAME).toBe("Drum comun");
   });
 });
