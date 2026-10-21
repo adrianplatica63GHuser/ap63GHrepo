@@ -28,7 +28,7 @@ import { HEAD_BAND_PX } from "@/components/table/list-head";
 import { IconTooltip } from "@/lib/ui/icon-button";
 import { NOTHING_HIDDEN, hiddenSides, sameSides, signScrollTarget, type HiddenSides } from "@/lib/ui/hidden-columns";
 
-/** The band of names' row: the band and its cell's `py-2`. */
+/** The band of names' row: the band and its cell's `py-2` — 52 px since Slice 40.21 (two rows; it was 78). */
 export const LIST_HEAD_PX = HEAD_BAND_PX + 16;
 
 const SIGN =

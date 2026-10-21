@@ -1418,7 +1418,7 @@ export const COLUMN = {
   listRowActions: { content: 8, kind: "fixed" },
   listPropertyNickname: { content: 14, kind: "fixed" }, //  PROP.nickname — 90th percentile 213 px, longest 278
   listTarla: { content: 5, kind: "fixed" }, //              Tarla/Solă — the header's word, „TARLA/SOLĂ" (80 px); values 28
-  listParcela: { content: 4, kind: "fixed" }, //            Parcelă — „PARCELĂ" (60 px); values 47
+  listParcela: { content: 5.5, kind: "fixed" }, //          Parcelă — 40.21: „PARCELĂ" (54.5) and its funnel (30) on one line, 84.5 px; was 4
   listArea: { content: 5, kind: "fixed" }, //               the two areas, „1234567.89" — „CALCULATĂ" (76 px); values 55
   listCarteFunciara: { content: 3, kind: "fixed" }, //      Nr. CF — values 47 px
   listCadastral: { content: 6.5, kind: "fixed" }, //        Nr. cadastru — values 104 px
@@ -1426,7 +1426,7 @@ export const COLUMN = {
   // width as it shows, padding included: 7 rem (112 px) → 10.5 (168), and 8.75 rem (140 px) → 13.125 (210).
   listUseCategory: { content: 8.5, kind: "fixed" }, //      Categorie de folosință — was 5 („FOLOSINȚĂ", 74 px; values 48)
   listPropertyType: { content: 11.125, kind: "fixed" }, //  Tip proprietate — was 6.75 (values 107 px)
-  listLocality: { content: 6, kind: "fixed" }, //           Localitate, „Clinceni, Ilfov" — values 95 px
+  listLocality: { content: 6.5, kind: "fixed" }, //         Localitate — 40.21: „LOCALITATE" and its funnel, 102.7 px; values 95; was 6
   listPersonName: { content: 8, kind: "fixed" }, //         a natural person's name — 90th percentile 116 px, longest 123
   listCompanyName: { content: 16.25, kind: "fixed" }, //    a judicial person's name — longest 259 px
   listPersonNickname: { content: 6, kind: "fixed" }, //     Poreclă on the two persons' lists — values up to 92 px
@@ -1437,8 +1437,8 @@ export const COLUMN = {
   // (119.5 px) on 96, which wrapped to three rows; rounded up to the next quarter rem with at least 1 px to spare. No
   // column was narrowed: every other was already held by its values, by a single word of its name, or by Adrian's
   // own widths (#39.24). Sized for Romanian; an English name that does not fit is allowed to clip.
-  listDate: { content: 4.5, kind: "fixed" }, //             dd.mm.yyyy (71 px), „DECESULUI" (72.0) — a birth date, a document's date, „Adăugat la"
-  listAge: { content: 3.25, kind: "fixed" }, //             „VÂRSTĂ" (52 px); values 16
+  listDate: { content: 5.5, kind: "fixed" }, //             40.21: „ADĂUGAT" and its funnel, 87.5 px; dd.mm.yyyy 71 — a birth date, a document's date, „Adăugat la"; was 4.5
+  listAge: { content: 5, kind: "fixed" }, //                40.21: „VÂRSTĂ" and its funnel, 78.4 px; values 16; was 3.25
   listGender: { content: 3.5, kind: "fixed" }, //           „Masculin" (56 px)
   listBirthPlace: { content: 7.75, kind: "fixed" }, //      Locul nașterii — values 121 px
   // Slice #39.70: the professions are longer — „Executor judecătoresc", „Contabil / consultant fiscal" — so 9 rem
@@ -1458,9 +1458,13 @@ export const COLUMN = {
   // Properties". They shared listCount, 5.25 rem for „PROPRIETĂȚI". Each is now as wide as three digits (23.4 px) or its
   // header's longest word, whichever is wider, measured in the browser pane (bold 12 px Arial, 0.3 px tracking), rounded
   // up to the next quarter rem with at least 1 px to spare — the header may take two lines, a word cannot.
-  listPageCount: { content: 2.75, kind: "fixed" }, //       „Nr. pagini" on two lines: „PAGINI" 42.2 px, „PAGES" 42.6
-  listPersonCount: { content: 4.5, kind: "fixed" }, //      „NR. / PERSOANE" (#39.83) — „PERSOANE" 69.8 px; „PERSONS" 60.8
-  listPropertyCount: { content: 5.25, kind: "fixed" }, //   „NR. / PROPRIETĂȚI" (#39.83) — „PROPRIETĂȚI" 84.0 px, one word
+  // Slice 40.21 — the band's funnel sits beside the name on its line (it had a row of its own), so a column that filters
+  // holds its name's longest word, a 4-px gap and the 26-px funnel: else the word breaks between its letters. Measured
+  // in the browser pane on 2026-10-21 (Roboto Condensed 13.5 px, 600, upper case, 0.04 em), Romanian; rounded up to the
+  // next quarter rem with at least 1 px to spare. The seven columns this grew are the only ones short of it.
+  listPageCount: { content: 4.5, kind: "fixed" }, //        „PAGINI" and its funnel, 71.0 px; was 2.75
+  listPersonCount: { content: 6, kind: "fixed" }, //        „PERSOANE" and its funnel, 94.1 px; was 4.5
+  listPropertyCount: { content: 7, kind: "fixed" }, //      „PROPRIETĂȚI" and its funnel, 109.8 px; was 5.25
   // Slice #37.37 — the Form editor's table (Formular pentru „{type}")
   feOrder: { content: 4, kind: "fixed" }, //                ↑ and ↓, two xs buttons
   feLabel: { content: "L", kind: "wraps" }, //              Etichetă (RO) / (EN), with the key under the RO one; grows downward
