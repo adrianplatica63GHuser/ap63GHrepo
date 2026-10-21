@@ -1132,7 +1132,7 @@
     }
   },
   "naturalPerson": {
-    "listTitle": "Persoană fizică",
+    "listTitle": "Persoane fizice",
     "createTitle": "Persoană fizică nouă",
     "searchPlaceholder": "caută după ID, Nume, Poreclă, CNP, Email Personal 1, Email Personal 2, Email serviciu, Telefon Personal 1, Telefon Personal 2 sau Telefon serviciu",
     "chooseFields": "Câmpuri afișate",
@@ -1303,7 +1303,7 @@
     }
   },
   "judicialPerson": {
-    "listTitle": "Persoană juridică",
+    "listTitle": "Persoane juridice",
     "createTitle": "Persoană juridică nouă",
     "searchPlaceholder": "caută după ID, Denumire, Poreclă, Nr. înregistrare (CUI), Telefon firmă sau E-mail firmă",
     "addNew": "Adaugă persoană juridică",

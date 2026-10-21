@@ -65,7 +65,7 @@ test.describe("TC-PERS-01 — Persoană fizică creată manual", () => {
       // Step 1 — „Persoane Fizice" in the left sidebar.
       await page.goto("/");
       await openFromSidebar(page, "Persoane Fizice");
-      await expect(page.getByRole("heading", { name: "Persoană fizică", exact: true })).toBeVisible({ timeout: 30_000 });
+      await expect(page.getByRole("heading", { name: "Persoane fizice", exact: true })).toBeVisible({ timeout: 30_000 }); // 40.22: plural
       for (const col of ["NUME", "PORECLĂ"] /* #37.57: no „Cod" */) {
         await expect(page.getByRole("columnheader", { name: col, exact: false }).first()).toBeVisible();
       }

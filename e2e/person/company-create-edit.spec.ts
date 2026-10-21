@@ -66,7 +66,7 @@ test.describe("TC-PERS-02 — Persoană juridică creată și modificată", () =
       // Step 1 — „Persoane Juridice": no CUI column; „Câmpuri afișate 0/4" (#37.60, #37.71).
       await page.goto("/");
       await openFromSidebar(page, "Persoane Juridice");
-      await expect(page.getByRole("heading", { name: "Persoană juridică", exact: true })).toBeVisible({ timeout: 30_000 });
+      await expect(page.getByRole("heading", { name: "Persoane juridice", exact: true })).toBeVisible({ timeout: 30_000 }); // 40.22: plural
       // #37.71: no „Grupuri" filter on this list any more.
       await expect(page.getByText("Toate grupurile")).toHaveCount(0);
       const search = page.getByPlaceholder("caută după ID, Denumire, Poreclă, Nr. înregistrare (CUI), Telefon firmă sau E-mail firmă");

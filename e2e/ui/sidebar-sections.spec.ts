@@ -77,8 +77,8 @@ const GUIDES = ["Măsurători pe hartă", "Grupări de proprietăți", "Navigare
 /** Step 3: the link's label, its section (none for a flat one), the title its screen shows. */
 const LINKS: [string, string | null, string][] = [
   ["Tablou de bord", null, "Tablou de bord"],
-  ["Persoane Fizice", "Domeniu", "Persoană fizică"],
-  ["Persoane Juridice", "Domeniu", "Persoană juridică"],
+  ["Persoane Fizice", "Domeniu", "Persoane fizice"], // 40.22: the lists' titles in the plural
+  ["Persoane Juridice", "Domeniu", "Persoane juridice"],
   ["Proprietăți", "Domeniu", "Proprietăți"],
   ["Acte", "Domeniu", "Acte"],
   ["Distilare Tipizate", "Instrumente", "Distilare Tipizate"],

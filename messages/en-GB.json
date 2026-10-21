@@ -1132,7 +1132,7 @@
     }
   },
   "naturalPerson": {
-    "listTitle": "Natural Person",
+    "listTitle": "Natural Persons",
     "createTitle": "New Natural Person",
     "searchPlaceholder": "search by ID, Name, Nickname, CNP, Personal Email 1, Personal Email 2, Work Email, Personal Phone 1, Personal Phone 2 or Work Phone",
     "chooseFields": "Choose fields",
@@ -1303,7 +1303,7 @@
     }
   },
   "judicialPerson": {
-    "listTitle": "Juridical Person",
+    "listTitle": "Juridical Persons",
     "createTitle": "New Juridical Person",
     "searchPlaceholder": "search by ID, Name, Nickname, Registration No. (CUI), Firm's phone or Firm's e-mail",
     "addNew": "Add new Juridical Person",

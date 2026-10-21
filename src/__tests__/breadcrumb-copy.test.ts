@@ -21,6 +21,19 @@ describe("the breadcrumb's words", () => {
   });
 });
 
+// Slice 40.22 — Adrian: „when I display the natural persons list The title is singular should be plural; Same goes for
+// juridical persons". The two persons' lists are titled as their crumbs already were, in both languages.
+describe("the persons' lists are titled in the plural (40.22)", () => {
+  it("„Persoane fizice”, „Persoane juridice”; „Natural Persons”, „Juridical Persons”", () => {
+    expect([ro.naturalPerson.listTitle, ro.judicialPerson.listTitle]).toEqual(["Persoane fizice", "Persoane juridice"]);
+    expect([en.naturalPerson.listTitle, en.judicialPerson.listTitle]).toEqual(["Natural Persons", "Juridical Persons"]);
+    expect(ro.navigation.breadcrumb.naturalPersons).toBe(ro.naturalPerson.listTitle);
+    expect(ro.navigation.breadcrumb.judicialPersons).toBe(ro.judicialPerson.listTitle);
+    // Proprietăți and Acte were plural already, and stay.
+    expect([ro.property.listTitle, ro.document.listTitle]).toEqual(["Proprietăți", "Acte"]);
+  });
+});
+
 describe("the breadcrumb's segments", () => {
   it("FU-064: names /account/change-password, and skips the bare /account", () => {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
