@@ -90,15 +90,17 @@ describe("the four lists draw their names through the one cell", () => {
     expect(src).not.toMatch(/<th key=\{col\.key\}/);
   });
 
-  // Slice 40.18: the names are Roboto Condensed 13.5 px on an 18-px line (alternative 13), so the band went 58 → 62.
-  it("the band is two 18-px text rows and the funnel's 26-px row, on every cell", () => {
-    expect(HEAD_BAND_PX).toBe(62);
+  // Slice 40.21: two rows of the names' 18-px line (40.18's band was 62 with the funnel's own row); the name and the
+  // funnel one group, centred both ways; the funnel on the name's line, its 26-px button taking only that line.
+  it("the band is two 18-px rows, the name and its funnel one centred group, on every cell", () => {
+    expect(HEAD_BAND_PX).toBe(36);
     const cell = read("src", "components", "table", "list-head.tsx");
-    expect(cell).toContain('className="grid grid-rows-[1.125rem_1.125rem_1.625rem]" style={{ height: HEAD_BAND_PX }}');
-    expect(cell).toContain('className="row-span-2 flex min-w-0 items-end" data-head-name=""');
-    expect(cell).toContain('className="row-start-3 flex items-end" data-head-funnel=""');
-    expect(cell).toContain('className="row-span-3 flex min-w-0 items-center" data-head-name=""');
-    expect(cell).toContain("line-clamp-2 text-balance");
+    expect(cell).toContain('<th className="px-4 py-2 align-middle" {...columnHead(column)}>');
+    expect(cell).toContain('className="flex items-center justify-center" style={{ height: HEAD_BAND_PX }}');
+    expect(cell).toContain('className="flex min-w-0 items-end justify-center gap-1" data-head-name=""');
+    expect(cell).toContain('className="line-clamp-2 min-w-0 text-balance break-words text-center" data-head-text=""');
+    expect(cell).toContain('className="-my-1 inline-flex shrink-0" data-head-funnel=""');
+    expect(cell).not.toMatch(/grid-rows|row-span|row-start/);
   });
 });
 

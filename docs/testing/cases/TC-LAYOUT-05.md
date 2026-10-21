@@ -16,8 +16,8 @@ controls (like "add new") clash with the left top controls (like "fields picker"
 Persoane juridice and Acte follow #38.50's rule: each column as wide as its content, each row one line (a long cell
 cut with „…" and whole on hover), the row's buttons side by side, and the table never narrower than its toolbar, whose
 two sides never meet. A row two lines tall, a cut cell with no tooltip, stacked buttons, or „Adaugă …" over the
-controls on its left is the defect. Since #39.83 the band of column names above the rows is three rows tall on every
-cell: a column that filters has its name on rows 1–2 and its funnel alone on row 3, a column that does not has its
+controls on its left is the defect. Since #39.83 the band of column names above the rows was three rows tall on every
+cell (since 40.21 it is two, the name and its funnel one group centred both ways): a column that filters has its name on rows 1–2 and its funnel alone on row 3, a column that does not has its
 name centred, no name takes more than two rows, and Adrian's long names always take two. A name on three rows, cut
 sideways, a funnel beside its name, or a band that changes height is the defect.
 
@@ -46,7 +46,7 @@ At 1366 and at 1920 px, on each of the four lists, searched for „TC-E2E-LAYOUT
 | 2 | „Persoane fizice" | The same, for the person's name and nickname |
 | 3 | „Persoane juridice" | The same, for the company's name |
 | 4 | „Acte" | The same, for the document's title |
-| 5 | On each list, looks at the band of column names (#39.83) | Every cell the same height, three rows; a filterable column's name on rows 1–2, bottom-aligned, its funnel alone on row 3; Poreclă, the name or title, # Cadastru, CNP, #Document and the juridical persons' CUI, register and contact person centred; since 40.20 the names are Adrian's short ones and none is broken onto two rows by force; no name on three |
+| 5 | On each list, looks at the band of column names (#39.83; two rows since 40.21) | Every cell the same height, two rows of the names' line (36 px); in every cell the name — and, where the column filters, its funnel right after it, on the name's last line — one group centred across and down (within 1 px); no name on three rows, none cut sideways, none broken onto two by force (40.20) |
 | 6 | On each list, holds the mouse over the search box (#39.85) | The box is exactly as wide as „Adaugă …" at its row's end; the whole explanation shows on hover, even where the box cuts it with „…" |
 | 7 | At 1280 × 600 px (#40.02), opens each list unsearched — a page of rows | The browser page has no vertical scroll bar; the list's frame has one, and its rows scroll inside it |
 | 8 | Scrolls the frame to its last row | The band of column names still at the frame's top, the last row at its bottom, and the „Se afișează … / Pagina x din y" row under the frame, inside the window; the page has not moved |
@@ -102,3 +102,7 @@ y 231–305 — the band's height, against the frame's vertical scroll bar — a
 column names in Roboto Condensed, navy for the tiles' titles and today's black for the column names. The band grew
 from 58 to 62 px (two 18-px text rows and the funnel's 26). The spec's fourth test reads the styles and the loaded font
 faces, in both colour schemes; step 5's check now measures 62 and 18-px rows.
+
+**2026-10-21 — step 5 rewritten (Slice 40.21).** Adrian: „only two rows tall … horizontal centering and vertical
+centering of whatever the content of the title is". The band is 36 px; the spec's step-5 check measures it, and the
+centre of every name-and-funnel group against its cell's, both ways.

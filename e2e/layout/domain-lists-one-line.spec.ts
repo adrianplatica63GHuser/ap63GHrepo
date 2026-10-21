@@ -57,34 +57,42 @@ const CHOICE: Record<string, string[]> = {
   "ga40-col-document-v3": ["institution", "pageCount", "nrDocument", "propertyCount"],
 };
 
-/** #39.83 — the band of names: every cell's band, each name's rows, the funnel's place, a plain name's centring. */
+/**
+ * The band of names: every cell's band, each name's rows, and — Slice 40.21 — the name and its funnel as one group
+ * centred in the cell both ways (within 1 px), the funnel beside the name's last line.
+ */
 async function band(page: Page) {
   return page.evaluate(() => {
     const out: string[] = [];
     const bands = [...document.querySelectorAll<HTMLElement>("main thead [data-head-band]")];
     for (const b of bands) {
-      const col = b.closest("th")?.dataset.widthColumn ?? "?";
+      const th = b.closest("th")!;
+      const col = th.dataset.widthColumn ?? "?";
       const box = b.getBoundingClientRect();
+      const cell = th.getBoundingClientRect();
       const name = b.querySelector<HTMLElement>("[data-head-text]")!;
       const n = name.getBoundingClientRect();
-      // Slice 40.18: the names are on an 18-px line (Roboto Condensed 13.5 px), so the band is 18 + 18 + 26 = 62.
+      const group = b.querySelector<HTMLElement>("[data-head-name]")!.getBoundingClientRect();
+      // Slice 40.21: two rows of the names' 18-px line (40.18's Roboto Condensed 13.5 px) — 36 px; it was 62.
       const rows = Math.round(n.height / 18);
-      if (Math.round(box.height) !== 62) out.push(`${col}: band ${box.height}`);
+      if (Math.round(box.height) !== 36) out.push(`${col}: band ${box.height}`);
       if (rows < 1 || rows > 2 || name.scrollHeight > name.clientHeight + 1) out.push(`${col}: ${rows} rows`);
       if (name.scrollWidth > name.clientWidth + 1) out.push(`${col}: cut sideways`);
+      // The group — the name, and the funnel where there is one — centred in its cell, both ways.
+      let left = group.left, right = group.right, top = group.top, bottom = group.bottom;
       if (b.dataset.headBand === "filter") {
         const f = b.querySelector<HTMLElement>("[data-head-funnel] button")!.getBoundingClientRect();
-        if (f.top < n.bottom - 0.5) out.push(`${col}: funnel not under the name`);
-        if (Math.abs(n.bottom - (box.top + 36)) > 1) out.push(`${col}: name not on rows 1–2`);
-        if (Math.abs(f.bottom - box.bottom) > 1) out.push(`${col}: funnel not on row 3`);
-      } else if (Math.abs(n.top + n.height / 2 - (box.top + box.height / 2)) > 1) {
-        out.push(`${col}: not centred`);
+        if (f.left < n.right - 0.5) out.push(`${col}: funnel not after the name`);
+        if (Math.abs(f.top + f.height / 2 - (n.bottom - 9)) > 1) out.push(`${col}: funnel not on the name's last line`);
+        left = Math.min(left, n.left); right = Math.max(right, f.right);
+        top = Math.min(n.top, top); bottom = Math.max(n.bottom, bottom);
       }
+      if (Math.abs((left + right) / 2 - (cell.left + cell.right) / 2) > 1) out.push(`${col}: not centred across`);
+      if (Math.abs((top + bottom) / 2 - (cell.top + cell.bottom) / 2) > 1) out.push(`${col}: not centred down`);
     }
-    const twoRows = bands
-      .filter((b) => b.querySelector("[data-head-text] br"))
-      .map((b) => Math.round(b.querySelector<HTMLElement>("[data-head-text]")!.getBoundingClientRect().height / 18));
-    return { cells: bands.length, wrong: out, forcedOnTwo: twoRows.every((r) => r === 2), forced: twoRows.length };
+    // Slice 40.20: no name is broken onto two rows by force any more.
+    const forced = bands.filter((b) => b.querySelector("[data-head-text] br")).length;
+    return { cells: bands.length, wrong: out, forcedOnTwo: true, forced };
   });
 }
 

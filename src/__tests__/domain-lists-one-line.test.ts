@@ -157,3 +157,21 @@ describe("cellTitle (#38.57)", () => {
     expect(cellTitle({})).toBeUndefined();
   });
 });
+
+/**
+ * Slice 40.21 — the band's funnel sits beside its name, so a column that filters holds its name's longest word, the 4-px
+ * gap and the 26-px funnel — or the word breaks between its letters. Measured in the browser pane on 2026-10-21
+ * (Roboto Condensed 13.5 px, 600, upper case, 0.04 em), Romanian, every column of the four lists.
+ */
+describe("a filtering column holds its longest word and its funnel on one line (40.21)", () => {
+  const NEED: Partial<Record<ColumnName, number>> = {
+    listPageCount: 71.0, listPersonCount: 94.1, listPropertyCount: 109.8, listDate: 87.5, listAge: 78.4,
+    listParcela: 84.5, listLocality: 102.7, listInstitution: 107.0, listGender: 54.5, listTarla: 69.2, listArea: 66.5,
+    listUseCategory: 116.8, listPropertyType: 64.8, listBirthPlace: 79.4, listProfessionalType: 64.4,
+    listRelationship: 72.9, listCompanyType: 50.1,
+  };
+  it.each(Object.entries(NEED))("%s", (n, px) => {
+    expect(content(n as ColumnName)).toBeGreaterThanOrEqual((px as number) + 1);
+  });
+});
+
