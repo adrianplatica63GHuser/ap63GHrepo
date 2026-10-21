@@ -1437,7 +1437,7 @@ export const COLUMN = {
   // (119.5 px) on 96, which wrapped to three rows; rounded up to the next quarter rem with at least 1 px to spare. No
   // column was narrowed: every other was already held by its values, by a single word of its name, or by Adrian's
   // own widths (#39.24). Sized for Romanian; an English name that does not fit is allowed to clip.
-  listDate: { content: 5.5, kind: "fixed" }, //             40.21: „ADĂUGAT" and its funnel, 87.5 px; dd.mm.yyyy 71 — a birth date, a document's date, „Adăugat la"; was 4.5
+  listDate: { content: 5.75, kind: "fixed" }, //            40.21: „ADĂUGAT" and its funnel, 87.5 px; dd.mm.yyyy 71 — a birth date, a document's date, „Adăugat la"; was 4.5
   listAge: { content: 5, kind: "fixed" }, //                40.21: „VÂRSTĂ" and its funnel, 78.4 px; values 16; was 3.25
   listGender: { content: 3.5, kind: "fixed" }, //           „Masculin" (56 px)
   listBirthPlace: { content: 7.75, kind: "fixed" }, //      Locul nașterii — values 121 px
