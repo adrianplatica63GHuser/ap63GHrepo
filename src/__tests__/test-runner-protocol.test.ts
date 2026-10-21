@@ -53,6 +53,8 @@ import {
   RUNNER_PORT,
   SEQUENCES,
   SEQUENCE_NAMES,
+  API_PROBE_PATH,
+  apiProbeTell,
   ciVerdict,
   classifyDevServerOutput,
   classifyTscOutput,
@@ -366,6 +368,20 @@ describe("what next dev's output says", () => {
     ["✓ Ready in 2.1s\n...\nos error 1450", true, "os-error-1450"],
   ])("%s", (text, ready, tell) => {
     expect(classifyDevServerOutput(text)).toEqual({ ready, tell });
+  });
+});
+
+describe("a server up on a cache that lost its routes (Slice 40.15)", () => {
+  it("asks a public route, and reads only a 404 as „api-missing”", () => {
+    expect(API_PROBE_PATH).toBe("/api/auth/me");
+    expect(apiProbeTell(404)).toBe("api-missing");
+    for (const status of [200, 401, 307, 500, null]) expect(apiProbeTell(status)).toBeNull();
+  });
+
+  it("is recovered as a corrupt cache is: cleared and restarted", () => {
+    const src = fs.readFileSync(path.join(process.cwd(), "scripts", "test-runner", "runner.ts"), "utf8");
+    expect(src).toContain('if (startTell === "os-error-1450" || startTell === "corrupt-cache" || startTell === "api-missing") {');
+    expect(src).toContain("tell = apiProbeTell(await probeStatus(`http://localhost:${RUNNER_PORT}${API_PROBE_PATH}`));");
   });
 });
 

@@ -84,6 +84,8 @@ import {
   PUSH_REMOTE,
   ciVerdict,
   classifyDevServerOutput,
+  apiProbeTell,
+  API_PROBE_PATH,
   classifyTscOutput,
   decideMigrateLocal,
   devServerCompiled,
@@ -435,7 +437,19 @@ async function startDevServer(logFile: string, webpack: boolean): Promise<DevSer
       break;
     }
   }
+  // Slice 40.15: up is not enough — a warm cache can serve every page and 404 every /api/ route (`api-missing`).
+  if (ready && !tell) tell = apiProbeTell(await probeStatus(`http://localhost:${RUNNER_PORT}${API_PROBE_PATH}`));
   return { pid: child.pid, ready, tell, output: () => text, exited: () => exited };
+}
+
+/** One GET's status, or null for no answer; a cold route compiles on this request, so it is given a minute. */
+async function probeStatus(url: string): Promise<number | null> {
+  try {
+    const res = await fetch(url, { redirect: "manual", signal: AbortSignal.timeout(60_000) });
+    return res.status;
+  } catch {
+    return null;
+  }
 }
 
 async function stopDevServer(server: DevServer | null): Promise<void> {
@@ -521,7 +535,7 @@ async function stepE2e(files: string[] | null, logFile: string): Promise<StepOut
     for (let attempt = 0; attempt < 2; attempt++) {
       server = await startDevServer(devLog, webpack);
       const startTell = server.tell;
-      if (startTell === "os-error-1450" || startTell === "corrupt-cache") {
+      if (startTell === "os-error-1450" || startTell === "corrupt-cache" || startTell === "api-missing") {
         await stopDevServer(server);
         server = null;
         if (attempt === 1) {

@@ -583,7 +583,7 @@ export function stripAnsi(s: string): string {
   return s.replace(ANSI_RE, "");
 }
 
-export type DevServerTell = "lock-held" | "port-in-use" | "os-error-1450" | "corrupt-cache";
+export type DevServerTell = "lock-held" | "port-in-use" | "os-error-1450" | "corrupt-cache" | "api-missing";
 
 /**
  * What `next dev`'s own output says about it. The tells, and why each one has
@@ -602,6 +602,11 @@ export type DevServerTell = "lock-held" | "port-in-use" | "os-error-1450" | "cor
  *                  runner's own distDir that should never be Adrian's, so it
  *                  is reported, never worked around.
  *   port-in-use    something else listens on the runner's port. Reported.
+ *   api-missing    (Slice 40.15, `apiProbeTell` — not read from the output) the server came up „✓ Ready" on a warm
+ *                  cache and served every page, and every `/api/` route answered 404: runner
+ *                  20261021T175309Z-18617, `GET /api/auth/me 404`, `POST /api/properties 404`, the setup failing
+ *                  „check E2E_EMAIL/E2E_PASSWORD". The cache had lost the route handlers. Stop, clear, restart —
+ *                  the corrupt-cache remedy; the very next run, on a cleared cache, was green.
  *
  * Ordered: the two that cannot be recovered from are checked first.
  */
@@ -621,6 +626,17 @@ export function classifyDevServerOutput(text: string): { ready: boolean; tell: D
     tell = "corrupt-cache";
   }
   return { ready, tell };
+}
+
+/** The route the runner asks once the server is up. Public (`middleware.ts`), so it answers 200 or 401 — never 404. */
+export const API_PROBE_PATH = "/api/auth/me";
+
+/**
+ * Slice 40.15: what the probe of `API_PROBE_PATH` says. A 404 from a route that exists is a server whose cache lost the
+ * route handlers (`api-missing`, above); any other answer, or none, is not this slice's to judge.
+ */
+export function apiProbeTell(status: number | null): DevServerTell | null {
+  return status === 404 ? "api-missing" : null;
 }
 
 export type CacheRoot = "runner" | "dev" | "types" | "other";

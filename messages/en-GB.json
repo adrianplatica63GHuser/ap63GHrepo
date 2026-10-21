@@ -1556,6 +1556,7 @@
         "invalid": "The text sent is not in the expected shape, so it was not saved.",
         "textChanged": "The screen's text has changed since the proposal was written, so it was not overwritten. Reload the page.",
         "database": "The database did not answer. Check that it is running, then try again.",
+        "notFound": "The application's server cannot find the save function. Stop the server, clear its cache (.next) and start it again.",
         "network": "The application's server did not answer. Check that it is running, then try again.",
         "other": "The server answered with code {status}. Please try again."
       },

@@ -105,6 +105,7 @@ describe("helpSaveFailure — the reason from the status and the body's code, ne
     [{ status: 500 }, { code: "database" }, "database"],
     [{ status: 500 }, null, "database"],
     [{ status: 503 }, { code: "role_unavailable" }, "database"],
+    [{ status: 404 }, null, "notFound"],
     [{ status: 418 }, { error: "I'm a teapot" }, "other"],
   ] as const)("%j %j → %s", (res, body, failure) => {
     expect(helpSaveFailure(res, body)).toBe(failure);
@@ -164,6 +165,7 @@ describe("„Acceptă” on one proposal", () => {
     [{ status: 400, body: { error: "Invalid input", code: "invalid_input" } }, "invalid"],
     [{ status: 409, body: { code: "text_changed" } }, "textChanged"],
     [{ status: 500, body: { error: "Failed to save", code: "database" } }, "database"],
+    [{ status: 404, body: "<!DOCTYPE html>" }, "notFound"],
     ["network", "network"],
   ] as const)("a PUT answered %j says %s, not the server's text", async (answer, failure) => {
     mockFetch([answer as Answer]);

@@ -13,13 +13,26 @@
  *   - `textChanged`   — 409 `text_changed`: a proposal sent the fingerprint it was written against, and the screen's text
  *                       is another one now — nothing was overwritten;
  *   - `database`      — 500 `database`, or 503 `role_unavailable` (the account's row could not be read);
+ *   - `notFound`      — 404 with no code: the route itself was not found. The route exists, so it is the server that
+ *                       lost it — measured in this slice on the test runner's `next dev`, whose cache had lost every
+ *                       /api/ route while every page still rendered (runner 20261021T175309Z-18617). A restart of the
+ *                       server on a cleared cache is the remedy, and the sentence says so;
  *   - `network`       — no answer at all: the fetch itself failed;
  *   - `other`         — anything else, with its status.
  *
  * PURE — `help-save.test.ts`. The fetch that uses it is `save-help-content.ts`.
  */
 
-export type HelpSaveFailure = "signedOut" | "forbidden" | "unknownScreen" | "invalid" | "textChanged" | "database" | "network" | "other";
+export type HelpSaveFailure =
+  | "signedOut"
+  | "forbidden"
+  | "unknownScreen"
+  | "invalid"
+  | "textChanged"
+  | "database"
+  | "notFound"
+  | "network"
+  | "other";
 
 /** The codes the help routes put in an error body, beside `error` (which is for a reader of the log, not the screen). */
 export const HELP_SAVE_CODE = {
@@ -66,6 +79,7 @@ export function helpSaveFailure(res: HelpSaveResponse, body: unknown): HelpSaveF
   if (res.status === 409 || code === HELP_SAVE_CODE.textChanged) return "textChanged";
   if (res.status === 503 || code === "role_unavailable" || code === HELP_SAVE_CODE.database) return "database";
   if (res.status === 500) return "database";
+  if (res.status === 404) return "notFound";
   return "other";
 }
 

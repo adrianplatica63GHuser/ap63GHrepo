@@ -1556,6 +1556,7 @@
         "invalid": "Textul trimis nu are forma așteptată, așa că nu a fost salvat.",
         "textChanged": "Textul ecranului s-a schimbat de când a fost scrisă propunerea, așa că nu a fost suprascris. Reîncărcați pagina.",
         "database": "Baza de date nu a răspuns. Verificați că rulează, apoi încercați din nou.",
+        "notFound": "Serverul aplicației nu găsește funcția de salvare. Opriți serverul, ștergeți-i memoria temporară (.next) și porniți-l din nou.",
         "network": "Serverul aplicației nu a răspuns. Verificați că rulează, apoi încercați din nou.",
         "other": "Serverul a răspuns cu codul {status}. Încercați din nou."
       },
