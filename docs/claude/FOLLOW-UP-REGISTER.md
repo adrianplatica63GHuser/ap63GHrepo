@@ -16,13 +16,13 @@ As of 2026-10-21 — 361 entries (FU-360 filed by 40.18, FU-361 by 40.27). Rows 
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
-| open | 18 | 84 | 79 | 24 | 205 |
+| open | 18 | 84 | 79 | 25 | 206 |
 | planned | 0 | 0 | 1 | 0 | 1 |
 | resolved | 38 | 61 | 32 | 3 | 134 |
 | ignored | 4 | 3 | 4 | 2 | 13 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 6 | 1 | 0 | 7 |
-| **total** | 60 | 154 | 117 | 29 | 360 |
+| **total** | 60 | 154 | 117 | 30 | 361 |
 <!-- summary:end -->
 
 `src/__tests__/follow-up-register.test.ts` recounts the table and fails when this block disagrees
