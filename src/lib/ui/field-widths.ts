@@ -1420,7 +1420,7 @@ export const COLUMN = {
   listPropertyNickname: { content: 14, kind: "fixed" }, //  PROP.nickname — 90th percentile 213 px, longest 278
   listTarla: { content: 5, kind: "fixed" }, //              Tarla/Solă — the header's word, „TARLA/SOLĂ" (80 px); values 28
   listParcela: { content: 5.5, kind: "fixed" }, //          Parcelă — 40.21: „PARCELĂ" (54.5) and its funnel (30) on one line, 84.5 px; was 4
-  listArea: { content: 5, kind: "fixed" }, //               the two areas, „1234567.89" — „CALCULATĂ" (76 px); values 55
+  listArea: { content: 6.5, kind: "fixed" }, //             the two areas — 40.27: English „SUPR.CALC." is one word, 72.4 px, and its funnel, 102.4; was 5
   listCarteFunciara: { content: 3, kind: "fixed" }, //      Nr. CF — values 47 px
   listCadastral: { content: 6.5, kind: "fixed" }, //        Nr. cadastru — values 104 px
   // Slice #39.24 — Adrian: „add 50% to the width of these columns: Property Type, and Use Category". The column's
@@ -1437,10 +1437,11 @@ export const COLUMN = {
   // 2026-10-18 (medium 12 px Arial, upper case, 0.3 px tracking). One column had to grow: „NR. ÎNREGISTRARE / (CUI)"
   // (119.5 px) on 96, which wrapped to three rows; rounded up to the next quarter rem with at least 1 px to spare. No
   // column was narrowed: every other was already held by its values, by a single word of its name, or by Adrian's
-  // own widths (#39.24). Sized for Romanian; an English name that does not fit is allowed to clip.
+  // own widths (#39.24). Sized for Romanian; an English name that does not fit is allowed to clip — but not to break
+  // between its letters beside a funnel (40.27, below).
   listDate: { content: 5.75, kind: "fixed" }, //            40.21: „ADĂUGAT" and its funnel, 87.5 px; dd.mm.yyyy 71 — a birth date, a document's date, „Adăugat la"; was 4.5
   listAge: { content: 5, kind: "fixed" }, //                40.21: „VÂRSTĂ" and its funnel, 78.4 px; values 16; was 3.25
-  listGender: { content: 3.5, kind: "fixed" }, //           „Masculin" (56 px)
+  listGender: { content: 5, kind: "fixed" }, //             40.27: English „GENDER" and its funnel, 77.8 px; „Masculin" 56; was 3.5
   listBirthPlace: { content: 7.75, kind: "fixed" }, //      Locul nașterii — values 121 px
   // Slice #39.70: the professions are longer — „Executor judecătoresc", „Contabil / consultant fiscal" — so 9 rem
   // (144 px), the longest on hover; was 5.75 („PROFESIONAL", 90 px; values 41).

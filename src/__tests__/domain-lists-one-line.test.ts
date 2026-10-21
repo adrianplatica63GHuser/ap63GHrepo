@@ -175,5 +175,12 @@ describe("a filtering column holds its longest word and its funnel on one line (
   it.each(Object.entries(NEED))("%s", (n, px) => {
     expect(content(n as ColumnName)).toBeGreaterThanOrEqual((px as number) + 1);
   });
+
+  // 40.27 — the English short names (40.20), measured the same way on 2026-10-21. Every other English word fits its
+  // column; these two broke between their letters in the manual's figures, „GEN|DER" and „SUPR.CA|LC.".
+  const NEED_EN: Partial<Record<ColumnName, number>> = { listGender: 77.8, listArea: 102.4 };
+  it.each(Object.entries(NEED_EN))("%s (English)", (n, px) => {
+    expect(content(n as ColumnName)).toBeGreaterThanOrEqual((px as number) + 1);
+  });
 });
 
