@@ -104,7 +104,7 @@ test.describe("TC-PERS-04 — listele de persoane", () => {
       await main.getByPlaceholder("caută după ID, Nume, Poreclă, CNP, Email Personal 1, Email Personal 2, Email serviciu, Telefon Personal 1, Telefon Personal 2 sau Telefon serviciu").fill(MARK);
       const npRow = main.locator("tbody tr").filter({ hasText: MARK });
       await expect(npRow).toHaveCount(1, { timeout: 30_000 });
-      for (const col of ["NUME", "PORECLĂ", "CNP", "DATA NAȘTERII"]) await expect(main.getByRole("columnheader", { name: col }).first()).toBeVisible();
+      for (const col of ["NUME", "PORECLĂ", "CNP", "NĂSCUT PE"] /* 40.20: short names */) await expect(main.getByRole("columnheader", { name: col }).first()).toBeVisible();
       await expect(npRow).toContainText(`Ion ${MARK}`);
       await expect(npRow).toContainText("Ionel TC");
       await expect(npRow).toContainText(CNP);
@@ -158,7 +158,7 @@ test.describe("TC-PERS-04 — listele de persoane", () => {
       await main.getByPlaceholder("caută după ID, Denumire, Poreclă, Nr. înregistrare (CUI), Telefon firmă sau E-mail firmă").fill(MARK);
       const jpRow = main.locator("tbody tr").filter({ hasText: MARK });
       await expect(jpRow).toHaveCount(1, { timeout: 30_000 });
-      await expect(main.getByRole("columnheader", { name: "NR. ÎNREGISTRARE (CUI)" })).toBeVisible();
+      await expect(main.getByRole("columnheader", { name: "CUI", exact: true })).toBeVisible();
       await expect(jpRow).toContainText("RO99999990");
       await main.getByRole("button", { name: "Câmpuri afișate 1/4", exact: true }).click();
       await photograph(page, "judicial-persons-chooser", main);

@@ -75,7 +75,7 @@ test.describe("TC-PROP-01 — Proprietate creată manual, vizibilă în listă",
       // Headers are rendered upper-case by CSS; role-name matching ignores case.
       // A Playwright browser has never changed „Câmpuri afișate", so step 1's
       // columns are the defaults the case names.
-      for (const col of ["PORECLĂ", "TIP PROPRIETATE"]) {
+      for (const col of ["PORECLĂ", "TIP PROP."] /* 40.20: short names */) {
         await expect(page.getByRole("columnheader", { name: col })).toBeVisible();
       }
 
@@ -87,7 +87,7 @@ test.describe("TC-PROP-01 — Proprietate creată manual, vizibilă în listă",
       for (const box of ["Localitate", "Tarla", "Parcelă"]) await picker.getByRole("checkbox", { name: box }).check({ force: true });
       await page.getByRole("heading", { name: "Proprietăți", exact: true }).click({ force: true });
       await expect(picker).toHaveCount(0);
-      for (const col of ["PORECLĂ", "LOCALITATE", "TARLA/SOLĂ", "PARCELĂ"]) {
+      for (const col of ["PORECLĂ", "LOCALITATE", "TARLA", "PARCELĂ"]) {
         await expect(page.getByRole("columnheader", { name: col })).toBeVisible();
       }
 
