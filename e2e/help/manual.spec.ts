@@ -584,9 +584,9 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     const pb = (await page.locator('main thead th[data-col-drag="parcela"]').boundingBox())!;
     await page.mouse.move(nb.x + nb.width / 2, nb.y + nb.height / 2);
     await page.mouse.down();
-    // Three-quarters into „Parcelă": past its middle, so the line is at its right edge — and off the width handle
-    // there, whose own hint would otherwise sit over the picture.
-    await page.mouse.move(pb.x + pb.width * 0.75, nb.y + nb.height / 2 + 6, { steps: 10 });
+    // Three-quarters into „Parcelă" and low in the band: past its middle, so the line is at its right edge — and off
+    // both the width handle at that edge and the funnel, whose own hints would otherwise sit over the picture.
+    await page.mouse.move(pb.x + pb.width * 0.75, nb.y + nb.height - 5, { steps: 10 });
     await expect(page.locator("[data-column-drop-line]")).toBeVisible({ timeout: 5_000 });
     await page.waitForTimeout(300);
     await page.screenshot({ path: `${dir}/list-drag.png` });
