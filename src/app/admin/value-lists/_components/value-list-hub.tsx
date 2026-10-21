@@ -233,9 +233,13 @@ export function ValueListHub({
         </nav>
       </div>
 
+      {/* Slice 40.14: sideways only. `overflow-x-auto` alone computes `overflow-y: auto`, and for the paint before the
+          list's frame took its new height (`useFrameHeight`) this column drew a vertical bar of its own, 15 px, which
+          then went — on Roluri persoane and Tipuri acte, from 1280 × 600 to 1366 × 768 (TC-LAYOUT-07). Its height is
+          always its content's, so nothing is hidden by keeping that bar off. */}
       <div
         data-value-list-side=""
-        className="flex flex-1 flex-col gap-3 overflow-x-auto"
+        className="flex flex-1 flex-col gap-3 overflow-x-auto overflow-y-hidden"
         style={{ flexBasis: 0, minWidth: rem(unitsRem(LIST_MIN_UNITS)) }}
       >
         {selected === null ? (

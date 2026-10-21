@@ -28,7 +28,10 @@
  * Slice #40.02: the frame scrolls down too (`useListFit`), and while it does its
  * vertical scroll bar stands beside the table, inside the frame — `gutterPx`,
  * measured there. It counts as part of the columns' width, so the group and the
- * pagination row still end at the frame's right edge.
+ * pagination row still end at the frame's right edge. Slice 40.14: the frame
+ * keeps that room whether its rows overflow or not (`LIST_FRAME`), so `gutterPx`
+ * no longer changes when the bar comes or goes — it did, and the frame's width
+ * with it, which is what made the bars flicker on a maximise.
  */
 import { useLayoutEffect, useRef, useState, type CSSProperties, type RefObject } from "react";
 import { columnsRem, type ColumnName } from "@/lib/ui/field-widths";

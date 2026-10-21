@@ -71,9 +71,10 @@ describe("the four lists use the shared piece (Ask first 9)", () => {
     });
   }
 
-  it("the frame scrolls both ways and the band sticks to its top", () => {
+  it("the frame scrolls both ways, keeps its bar's room, and the band sticks to its top", () => {
     const src = fs.readFileSync(path.join(process.cwd(), "src", "components", "list", "list-fit.tsx"), "utf8");
-    expect(src).toContain('export const LIST_FRAME = "w-fit max-w-full overflow-auto";');
+    // Slice 40.14: and keeps its vertical bar's room while the rows fit, so the bar coming or going moves no width.
+    expect(src).toContain('export const LIST_FRAME = "w-fit max-w-full overflow-auto [scrollbar-gutter:stable]";');
     expect(src).toMatch(/export const LIST_HEAD =\s*"sticky top-0 z-10 bg-cap /);
   });
 });

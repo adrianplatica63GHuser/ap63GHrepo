@@ -29,8 +29,22 @@
 import { useCallback, useLayoutEffect, useRef, useState, type CSSProperties, type RefObject } from "react";
 import { listFrameFloor, listFrameMaxHeight, rowTilesMaxHeight } from "@/lib/ui/frame-height";
 
-/** The frame around a principal list's table: as wide as the table, scrolling both ways inside the window. */
-export const LIST_FRAME = "w-fit max-w-full overflow-auto";
+/**
+ * The frame around a principal list's table: as wide as the table, scrolling both ways inside the window.
+ *
+ * Slice 40.14: the vertical scroll bar's room is always kept (`scrollbar-gutter: stable`), whether the rows overflow or
+ * not. Adrian, 2026-10-21: „flickering of scroll bars … happens when I maximize the browser". Measured (TC-LAYOUT-07,
+ * Windows' classic 15-px bars): from 1280 × 600 to 1920 × 1080 the rows stop overflowing, the bar goes, and the frame
+ * was then 15 px wider than its table for a paint — `gutter` (below) still held the bar, and the toolbar's and the
+ * frame's min-width (`useListEdge`) with it — then 15 px narrower, while the table had not yet caught up, so a
+ * horizontal bar blinked in and out under the rows before the width settled two or three paints later. On Persoane
+ * fizice, Persoane juridice and Proprietăți, at every height either side of where the rows just fit; not on Acte, whose
+ * toolbar is wider than its columns and so sets the frame's width alone. The loop was the frame's own vertical bar
+ * changing the width that is measured to place it. With the room kept, the bar coming or going changes no width at
+ * all, `gutter` is the same number from the first measure on, and nothing downstream moves. The price: while the rows
+ * fit, the frame keeps an empty strip the bar's width at its right.
+ */
+export const LIST_FRAME = "w-fit max-w-full overflow-auto [scrollbar-gutter:stable]";
 
 /** The band of column names, kept at the frame's top as the rows scroll. */
 export const LIST_HEAD =
@@ -76,7 +90,9 @@ export type ListFit = {
   /** Spread on the table's frame, after `edge.frame`. Its `max-height` is set on the element itself, so the edge's
    *  style (its min-width, #37.84) is left as React draws it. */
   frame: { ref: (el: HTMLDivElement | null) => void; "data-list-frame": "" };
-  /** The frame's vertical scroll bar, in px — 0 while the rows fit — for `useListEdge(columns, fit.gutter)`. */
+  /** The frame's vertical scroll bar's room, in px, for `useListEdge(columns, fit.gutter)`. Since 40.14 the room is
+   *  kept while the rows fit too (`LIST_FRAME`), so this is the bar's width from the first measure on — 0 in jsdom and
+   *  where the bars take no room (an overlay scroll bar). */
   gutter: number;
 };
 
