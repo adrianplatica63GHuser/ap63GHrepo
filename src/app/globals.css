@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+/* Slice 40.19 — dark mode is a choice, not Windows' setting. Adrian, 2026-10-21: „I should be able to switch to this
+   dark mode with a checkbox". Every `dark:` class follows the `dark` class on <html>, which the root layout writes
+   from the ga40-theme cookie (src/lib/ui/theme.ts) — so a dark load is dark from the first byte, and no cookie is
+   light, even on a dark Windows. The five blocks below that were `@media (prefers-color-scheme: dark)` are `.dark`
+   rules for the same reason. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* ── Base palette ─────────────────────────────────────────────────────────────
    Avoid pure black / white: use soft off-white (#F3F1ED) and deep charcoal.
    6 core palette colours: strong/light orange, blue, grey.
@@ -95,12 +102,35 @@
   --color-cap:       #DEE6EF;   /* bg-cap — table header background            */
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  color-scheme: dark;
 }
+
+/* ───────────────────────────────────────────────────────────────────────────
+   Slice 40.19 — the dark look's safety net. Until a checkbox chose it, dark was Windows' setting, which Adrian's
+   laptop never had, so nobody looked: the walk of every screen in dark (the run's Ask first 4) found the sidebar and
+   its search box, „Setări"'s tiles, the cost tiles' text, the manual's links and the help hub's tabs still in the
+   light palette — a palette class with no `dark:` twin beside it. Each rule below gives such an element the twin
+   the rest of the app uses, and ONLY such an element: `:not([class*="dark:…"])` leaves alone every element that
+   says what it wants in dark, so nothing that was right moves. Unlayered on purpose — it must outrank Tailwind's
+   utilities layer, which holds the light class it corrects.
+   ─────────────────────────────────────────────────────────────────────────── */
+.dark .text-ink:not([class*="dark:text-"]),
+.dark .text-gy-strong:not([class*="dark:text-"]) { color: #e4e4e7; }                   /* zinc-200 */
+.dark .text-fade:not([class*="dark:text-"]) { color: #a1a1aa; }                         /* zinc-400 */
+.dark .text-cta:not([class*="dark:text-"]) { color: #cbd5e1; }                          /* slate-300 */
+.dark .bg-card:not([class*="dark:bg-"]),
+.dark .bg-white:not([class*="dark:bg-"]),
+.dark .bg-bl-light:not([class*="dark:bg-"]) { background-color: #18181b; }              /* zinc-900 */
+.dark .bg-canvas:not([class*="dark:bg-"]) { background-color: #0a0a0a; }                /* the page's own */
+.dark .bg-cap:not([class*="dark:bg-"]),
+.dark .bg-cta-pale:not([class*="dark:bg-"]),
+.dark .bg-or-light:not([class*="dark:bg-"]) { background-color: #27272a; }              /* zinc-800 */
+.dark .border-wire:not([class*="dark:border-"]) { border-color: #3f3f46; }              /* zinc-700 */
+.dark .border-card-rim:not([class*="dark:border-"]),
+.dark .border-crease:not([class*="dark:border-"]) { border-color: #27272a; }            /* zinc-800 */
 
 body {
   background: var(--background);
@@ -209,9 +239,7 @@ body {
   animation: ga-note-pulse 1s ease-in-out 3;
 }
 
-@media (prefers-color-scheme: dark) {
-  .ga-note-pulse { --ga-note-band: #4a044e; } /* fuchsia-950 */
-}
+.dark .ga-note-pulse { --ga-note-band: #4a044e; } /* fuchsia-950 */
 
 @media (prefers-reduced-motion: reduce) {
   .ga-note-pulse { animation: none; background-color: var(--ga-note-band); }
@@ -245,9 +273,7 @@ body {
 }
 .ga-area-pulse > button { animation: ga-area-pulse-fill 1s ease-in-out 3; }
 
-@media (prefers-color-scheme: dark) {
-  .ga-area-pulse { --ga-area-band: #4c1d95; } /* violet-900 */
-}
+.dark .ga-area-pulse { --ga-area-band: #4c1d95; } /* violet-900 */
 
 @media (prefers-reduced-motion: reduce) {
   .ga-area-pulse { animation: none; box-shadow: 0 0 0 3px var(--ga-area-ring); }
@@ -351,11 +377,9 @@ body {
   --ga-stage-halo: 180 83 9;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* amber-400 #FBBF24 — amber-700 measures 2.5 : 1 on zinc-900. */
-    --ga-stage-halo: 251 191 36;
-  }
+.dark {
+  /* amber-400 #FBBF24 — amber-700 measures 2.5 : 1 on zinc-900. */
+  --ga-stage-halo: 251 191 36;
 }
 
 /* ⚠️ **THE SPREAD IS 2px, LITERALLY, AND IT IS A RATIO RATHER THAN A FREE
@@ -434,13 +458,13 @@ select:has(option[data-blank]) option:not([data-blank]) {
   to { background-color: transparent; }
 }
 .ga-row-flash > td { animation: ga-row-flash 1.4s ease-out 1; }
-@media (prefers-color-scheme: dark) {
-  @keyframes ga-row-flash-dark {
-    from { background-color: #3a4a8f; }
-    to { background-color: transparent; }
-  }
-  .ga-row-flash > td { animation-name: ga-row-flash-dark; }
+@keyframes ga-row-flash-dark {
+  from { background-color: #3a4a8f; }
+  to { background-color: transparent; }
 }
+.dark .ga-row-flash > td { animation-name: ga-row-flash-dark; }
 @media (prefers-reduced-motion: reduce) {
   .ga-row-flash > td { animation: none; background-color: #e0e7ff; }
+  /* 40.19: `.dark …` outranks the rule above, so reduced motion says it again for the dark rows. */
+  .dark .ga-row-flash > td { animation: none; }
 }

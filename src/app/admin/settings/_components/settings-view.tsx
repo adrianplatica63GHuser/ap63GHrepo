@@ -24,6 +24,7 @@ import { COST_PROVIDERS } from "@/lib/costs/catalogue";
 import { SETTINGS_TILES, SETTINGS_TILE_REGISTRY, type SettingsTile } from "./settings-tiles";
 import { CostTile, useCosts } from "./cost-tiles";
 import { PANEL_TITLE_TYPE } from "@/lib/ui/title-type";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 /** Slice #37.35: Setări's tiles, 3 units each. Slice #39.17: ticked on and off like a record's (`settings-tiles.ts`). */
 const SETTINGS_TILE_UNITS = 3;
@@ -500,6 +501,17 @@ function LanguageChoice() {
   );
 }
 
+/** Slice 40.19: „Aspect" under „Limba" — the same „Mod întunecat" box as under the flags, showing the same choice. */
+function AppearanceChoice() {
+  const t = useTranslations("theme");
+  return (
+    <fieldset className="flex flex-col gap-1.5" data-account-appearance="">
+      <legend className={`mb-1 ${PANEL_TITLE_TYPE}`}>{t("appearance")}</legend>
+      <ThemeToggle />
+    </fieldset>
+  );
+}
+
 function AccountTile({ uat }: { uat: boolean }) {
   const t = useTranslations("settings");
   const tPwd = useTranslations("auth.changePassword");
@@ -514,6 +526,7 @@ function AccountTile({ uat }: { uat: boolean }) {
         )}
       </div>
       <LanguageChoice />
+      <AppearanceChoice />
       <MyTileDefaults />
     </Tile>
   );

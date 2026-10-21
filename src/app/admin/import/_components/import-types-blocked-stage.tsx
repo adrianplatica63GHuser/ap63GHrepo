@@ -630,8 +630,8 @@ export function ImportTypesBlockedStage({
                   // ⚠️ **`dark:text-amber-200`, AND IT IS NOT DECORATION.** An
                   // adversarial round measured the four sibling disclosures'
                   // bare `text-cta` at 1.65:1 in dark mode: `--color-cta` is
-                  // `#334155` and `globals.css` never redefines it under
-                  // `prefers-color-scheme: dark`, so this control — the whole
+                  // `#334155` and `globals.css` never redefines it in dark
+                  // mode (`.dark`, since 40.19), so this control — the whole
                   // screen half of the slice, repeated once per row on a tinted
                   // card — would have been a near-black smear on near-black
                   // while every static line around it carries its own `dark:`

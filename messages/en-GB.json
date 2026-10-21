@@ -5102,5 +5102,9 @@
       "f5": "Bolintin-Deal belongs to Giurgiu county, so its land sits with OCPI Giurgiu, not OCPI Ilfov.",
       "f6": "Tarla numbers restart in every locality: T50 in Bragadiru is not T50 in Cornetu."
     }
+  },
+  "theme": {
+    "darkMode": "Dark mode",
+    "appearance": "Appearance"
   }
 }

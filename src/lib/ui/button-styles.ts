@@ -210,9 +210,9 @@ const BARE_DISABLED = "disabled:text-wire dark:disabled:text-zinc-700";
 /**
  * The enabled state per variant.
  *
- * Dark mode note: the app has no dark-mode toggle — `dark:` resolves purely off
- * `prefers-color-scheme` (globals.css only redefines --background/--foreground
- * there). `bg-cta` (#334155) against a zinc-900 page is a 1.69:1 contrast, so a
+ * Dark mode note: since Slice 40.19 `dark:` follows the `dark` class on <html>,
+ * which the „Mod întunecat" checkbox sets (globals.css only redefines
+ * --background/--foreground there). `bg-cta` (#334155) against a zinc-900 page is a 1.69:1 contrast, so a
  * dark-mode primary painted in the light-mode fill would be nearly invisible.
  * Primary therefore lightens to slate-400 in dark (6.9:1 against the page, and
  * 7.1:1 for its slate-900 label) rather than keeping a fill that cannot be seen.

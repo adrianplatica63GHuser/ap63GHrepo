@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
+import { cookies } from "next/headers";
 import { Geist, Geist_Mono, Roboto_Condensed, Roboto_Slab } from "next/font/google";
 import { ConditionalAppShell } from "@/components/conditional-app-shell";
 import { MapsProvider } from "@/components/providers/maps-provider";
@@ -9,6 +10,8 @@ import { QueryProvider } from "@/components/providers/query-provider";
 import { UnsavedChangesProvider } from "@/components/providers/unsaved-changes-provider";
 import "./globals.css";
 import { RecordSyncProvider } from "@/components/providers/record-sync-provider";
+import { ThemeProvider } from "@/components/providers/theme-provider";
+import { THEME_COOKIE_NAME, themeClass, themeOf } from "@/lib/ui/theme";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -46,14 +49,18 @@ export default async function RootLayout({
 }>) {
   const locale = await getLocale();
   const messages = await getMessages();
+  // Slice 40.19: the look from the ga40-theme cookie, on <html> from the first byte — a dark load is never white first.
+  const theme = themeOf((await cookies()).get(THEME_COOKIE_NAME)?.value);
 
   return (
     <html
       lang={locale}
-      className={`${geistSans.variable} ${geistMono.variable} ${robotoSlab.variable} ${robotoCondensed.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${robotoSlab.variable} ${robotoCondensed.variable} h-full antialiased ${themeClass(theme)}`.trim()}
+      style={{ colorScheme: theme }}
     >
       <body className="h-full flex flex-col">
         <NextIntlClientProvider locale={locale} messages={messages}>
+          <ThemeProvider initial={theme}>
           <MapsProvider>
             <QueryProvider>
               <RecordSyncProvider>
@@ -65,6 +72,7 @@ export default async function RootLayout({
               </RecordSyncProvider>
             </QueryProvider>
           </MapsProvider>
+          </ThemeProvider>
         </NextIntlClientProvider>
       </body>
     </html>

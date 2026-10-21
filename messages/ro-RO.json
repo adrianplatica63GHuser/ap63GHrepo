@@ -5102,5 +5102,9 @@
       "f5": "Bolintin-Deal ține de județul Giurgiu, deci terenurile lui sunt la OCPI Giurgiu, nu la OCPI Ilfov.",
       "f6": "Numerele de tarla o iau de la capăt în fiecare localitate: T50 din Bragadiru nu este T50 din Cornetu."
     }
+  },
+  "theme": {
+    "darkMode": "Mod întunecat",
+    "appearance": "Aspect"
   }
 }

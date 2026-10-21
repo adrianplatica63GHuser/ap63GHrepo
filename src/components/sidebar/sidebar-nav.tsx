@@ -9,6 +9,7 @@ import { ChevronDown, LogOut, PanelLeftClose, PanelLeftOpen, Search } from "luci
 import { IconButton, IconTooltip } from "@/lib/ui/icon-button";
 import { createClient } from "@/lib/supabase/client";
 import { LocaleToggle } from "@/components/locale-toggle";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
 import { RecentlyViewedPanel } from "@/components/recently-viewed-panel";
 import { clearRecentlyViewed } from "@/components/providers/navigation-history-provider";
@@ -502,8 +503,15 @@ export function SidebarNav() {
 
             Collapsed sidebars still hide them: two flags do not fit a 3rem
             rail, which is why the original carried the same !isCollapsed. */}
-        {/* Slice #38.22: the language toggle is shown on every build (it was developer-only). */}
-        {!isCollapsed && <LocaleToggle />}
+        {/* Slice #38.22: the language toggle is shown on every build (it was developer-only).
+            Slice 40.19: the flags smaller, and „Mod întunecat" on a line of its own under them; both hidden with the
+            sidebar collapsed, as the flags always were. */}
+        {!isCollapsed && (
+          <div className="flex flex-col items-center gap-0.5" data-sidebar-look="">
+            <LocaleToggle small />
+            <ThemeToggle compact />
+          </div>
+        )}
         {/* #37.42 (A002): PanelLeftOpen / PanelLeftClose. */}
         <IconButton
           icon={isCollapsed ? PanelLeftOpen : PanelLeftClose}
