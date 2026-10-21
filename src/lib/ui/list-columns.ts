@@ -24,3 +24,14 @@ export const LIST_COLUMN_CHOICE = {
   person:   { storageKey: "ga40-col-person-v3",   defaults: [] },
   company:  { storageKey: "ga40-col-company-v2",  defaults: [] },
 } as const satisfies Record<string, { storageKey: string; defaults: readonly string[] }>;
+
+/**
+ * Slice 40.25 — each list's column order, as dragged (`src/lib/ui/column-order.ts`): a key of its own beside the
+ * chooser's ticks and the widths, in this browser.
+ */
+export const LIST_COLUMN_ORDER = {
+  property: "ga40-colorder-property-v1",
+  document: "ga40-colorder-document-v1",
+  person:   "ga40-colorder-person-v1",
+  company:  "ga40-colorder-company-v1",
+} as const satisfies Record<keyof typeof LIST_COLUMN_CHOICE, string>;

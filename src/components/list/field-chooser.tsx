@@ -18,7 +18,7 @@
  * choice of none and is kept as one.
  */
 import { useEffect, useRef, useState } from "react";
-import { Columns3 } from "lucide-react";
+import { Columns3, RotateCcw } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import type { ColumnName } from "@/lib/ui/field-widths";
 
@@ -83,6 +83,8 @@ export function FieldChooser({
   max,
   onToggle,
   align = "left",
+  onResetOrder,
+  resetOrderLabel,
 }: {
   label: string;
   hint: string;
@@ -97,6 +99,12 @@ export function FieldChooser({
    * past its right edge.
    */
   align?: "left" | "right";
+  /**
+   * Slice 40.25: „Ordinea implicită" as the list's last line — the columns back where today's rule puts them. Given
+   * only while an order is stored, so the line is there when it has something to undo.
+   */
+  onResetOrder?: () => void;
+  resetOrderLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -141,6 +149,11 @@ export function FieldChooser({
               </label>
             );
           })}
+          {onResetOrder && resetOrderLabel && (
+            <div className="mt-2 border-t border-crease pt-2 dark:border-zinc-800" data-reset-order="">
+              <IconButton icon={RotateCcw} label={resetOrderLabel} showLabel variant="secondary" size="xs" onClick={onResetOrder} />
+            </div>
+          )}
         </div>
       )}
     </div>

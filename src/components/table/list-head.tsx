@@ -21,10 +21,14 @@
  *
  * `data-head-band` (filter | plain), `data-head-name` (the group), `data-head-text` and `data-head-funnel` mark the
  * parts for TC-LAYOUT-05.
+ *
+ * Slice 40.25: with `drag`, the cell is the handle its column is moved by — grabbed anywhere but its funnel
+ * (`src/components/list/column-order.tsx`).
  */
 import type { ReactNode } from "react";
 import { columnHead } from "@/components/table/fixed-columns";
 import type { ColumnName } from "@/lib/ui/field-widths";
+import type { HeadDragProps } from "@/components/list/column-order";
 
 /** Two rows of the names' 18-px line (Slice 40.21; it was two text rows and the funnel's 26-px row, 62 px). */
 export const HEAD_BAND_PX = 18 + 18;
@@ -34,6 +38,7 @@ export function ListHeadCell({
   name,
   full,
   funnel,
+  drag,
 }: {
   column: ColumnName;
   name: string;
@@ -41,9 +46,15 @@ export function ListHeadCell({
   full?: string;
   /** The column's funnel, when it can be filtered. */
   funnel?: ReactNode;
+  /** Slice 40.25: the cell as the handle its column is dragged by (`useColumnDrag`). */
+  drag?: HeadDragProps;
 }) {
   return (
-    <th className="px-4 py-2 align-middle" {...columnHead(column)}>
+    <th
+      className={`px-4 py-2 align-middle${drag ? " cursor-grab select-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus" : ""}`}
+      {...columnHead(column)}
+      {...drag}
+    >
       <div className="flex items-center justify-center" style={{ height: HEAD_BAND_PX }} data-head-band={funnel ? "filter" : "plain"}>
         <span className="flex min-w-0 items-end justify-center gap-1" data-head-name="">
           <span className="line-clamp-2 min-w-0 text-balance break-words text-center" data-head-text="" title={full}>

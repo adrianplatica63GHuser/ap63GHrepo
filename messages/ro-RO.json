@@ -1129,6 +1129,12 @@
       "label": "Lățimea coloanei {name}",
       "labelNumber": "Lățimea coloanei nr. {n}",
       "hint": "Trageți ca să lățiți sau să îngustați coloana; dublu-clic îi dă înapoi lățimea obișnuită."
+    },
+    "columnOrder": {
+      "defaultOrder": "Ordinea implicită",
+      "announceFirst": "Coloana {name}, prima din {total}",
+      "announce": "Coloana {name}, a {n}-a din {total}",
+      "hint": "Trageți numele coloanei ca s-o mutați; Alt + ← / → o mută cu un loc."
     }
   },
   "naturalPerson": {

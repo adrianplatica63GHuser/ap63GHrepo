@@ -24,7 +24,8 @@ import { IncursionTile } from "@/app/_components/incursion-tile";
 import { useListAddress, useListScrollMemory, useWriteListAddress } from "@/components/list/use-list-address";
 import { FieldChooser, useFieldChooser, type ChooserField } from "@/components/list/field-chooser";
 import { LIST_ADD, ListSearchBox } from "@/components/list/list-search";
-import { LIST_COLUMN_CHOICE } from "@/lib/ui/list-columns";
+import { LIST_COLUMN_CHOICE, LIST_COLUMN_ORDER } from "@/lib/ui/list-columns";
+import { useColumnDrag, useColumnOrder } from "@/components/list/column-order";
 import { FilterBar, FilterFunnel, type FilterBarField } from "@/components/list/filter-bar";
 import {
   appendFilterParams,
@@ -118,6 +119,7 @@ export function PropertyListView() {
   const t       = useTranslations("property");
   // Slice 40.20: the band's and „Câmpuri afișate"'s short names (Adrian, 2026-10-21); the forms keep `t`'s.
   const tHead   = useTranslations("property.listHeads");
+  const tOrder  = useTranslations("shared.columnOrder");
   const tPag    = useTranslations("shared.pagination");
   const router = useRouter();
 
@@ -218,7 +220,15 @@ export function PropertyListView() {
   const shownCols = chooser.visible.flatMap((key) => optionalCols.filter((c) => c.key === key));
   // Slice #37.72: Poreclă always, the first after the checkbox. Slice #38.57: the list's own columns, one line each.
   // Slice 40.24: no badges' column before the nickname — „Nou!" and „Încrucișat" are in its cell (`FirstCellText`).
-  const columns: ColumnName[] = ["listPropertyNickname", ...shownCols.map((c) => c.column), "listRowActions"];
+  // Slice 40.25: every named column in the order dragged, Poreclă included; the row buttons' column stays last.
+  const FIXED_COLUMNS: ColumnName[] = ["listPropertyNickname"];
+  const fixedKeys = ["nickname"];
+  const order = useColumnOrder(LIST_COLUMN_ORDER.property, [...fixedKeys, ...shownCols.map((c) => c.key)]);
+  const headName = (key: string) => (fixedKeys.includes(key) ? tHead(key) : shownCols.find((c) => c.key === key)?.label ?? key);
+  const drag = useColumnDrag({ keys: order.keys, names: Object.fromEntries(order.keys.map((k) => [k, headName(k)])), onMove: order.move });
+  const columnOf = (key: string): ColumnName =>
+    fixedKeys.includes(key) ? FIXED_COLUMNS[fixedKeys.indexOf(key)] : (shownCols.find((c) => c.key === key)?.column ?? "listRowActions");
+  const columns: ColumnName[] = [...order.keys.map(columnOf), "listRowActions"];
   // Slice #39.82: the bar's fields are the columns that filter (`PROPERTY_COLUMN_FILTERS`), each named as its column
   // is in „Câmpuri afișate" — so a chip reads as the column it filters, shown or not.
   const filterFields: FilterBarField[] = PROPERTY_FILTER_FIELDS.map((f) => ({
@@ -256,7 +266,10 @@ export function PropertyListView() {
           fields={optionalCols}
           visible={chooser.visible}
           max={MAX_OPT}
-          onToggle={chooser.toggle}
+          // Slice 40.25: an unticked column leaves the dragged order, so it comes back at the end.
+          onToggle={(key) => { if (chooser.visible.includes(key)) order.forget(key); chooser.toggle(key); }}
+          onResetOrder={order.custom ? order.reset : undefined}
+          resetOrderLabel={tOrder("defaultOrder")}
         />
 
         <div className="ml-auto flex items-center gap-2">
@@ -320,12 +333,16 @@ export function PropertyListView() {
         <div className={`${LIST_FRAME} rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900`} {...edge.frame} {...fit.frame}>
           {/* Slice #40.03: red „<" / „>" at the band's visible edges while columns are hidden that way. */}
           <HiddenColumnSigns />
+          {drag.layer}
           {/* Slice #38.57: the table fills its frame, which the toolbar may hold wider than the columns. */}
           <FixedTable id="properties" columns={columns} className="text-sm min-w-full">
             <thead className={LIST_HEAD}>
               <tr>
-                <ListHeadCell column="listPropertyNickname" name={tHead("nickname")} full={t("table.nickname")} />
-                {shownCols.map((col) => {
+                {/* Slice 40.25: in the order dragged, each name cell its column's handle. */}
+                {order.keys.map((key) => {
+                  if (key === "nickname") return <ListHeadCell key={key} column="listPropertyNickname" name={tHead("nickname")} full={t("table.nickname")} drag={drag.headProps(key)} />;
+                  const col = shownCols.find((c) => c.key === key);
+                  if (!col) return null;
                   const filterKey = PROPERTY_COLUMN_FILTERS[col.key];
                   return (
                     <ListHeadCell
@@ -344,6 +361,7 @@ export function PropertyListView() {
                           />
                         ) : undefined
                       }
+                      drag={drag.headProps(col.key)}
                     />
                   );
                 })}
@@ -383,27 +401,26 @@ export function PropertyListView() {
                   onAuxClick={(e) => newTabIfAsked(e, `/properties/${item.id}`)}
                   className="align-top hover:bg-cta-pale dark:hover:bg-zinc-800/50 cursor-pointer"
                 >
-                  <td className={`px-4 py-2 text-fade dark:text-zinc-400 ${ONE_LINE}`} data-col="nickname" title={cellTitle(item.nickname)}>
-                    <FirstCellText
-                      badges={
-                        <>
-                          <RecencyBadge createdAt={item.createdAt} updatedAt={item.updatedAt} />
-                          <BowTieBadge selfIntersects={item.cornerOrderSelfIntersects} />
-                        </>
-                      }
-                    >
-                      {item.nickname ?? <span className="text-fade italic">—</span>}
-                    </FirstCellText>
-                  </td>
-                  {shownCols.map((col) => (
-                    <td
-                      key={col.key}
-                      className={`px-4 py-2 text-fade dark:text-zinc-400 ${ONE_LINE}`}
-                      title={cellTitle(cellValue(item, col.key))}
-                    >
-                      {cellValue(item, col.key)}
-                    </td>
-                  ))}
+                  {order.keys.map((key) =>
+                    key === "nickname" ? (
+                      <td key={key} className={`px-4 py-2 text-fade dark:text-zinc-400 ${ONE_LINE}`} data-col="nickname" title={cellTitle(item.nickname)}>
+                        <FirstCellText
+                          badges={
+                            <>
+                              <RecencyBadge createdAt={item.createdAt} updatedAt={item.updatedAt} />
+                              <BowTieBadge selfIntersects={item.cornerOrderSelfIntersects} />
+                            </>
+                          }
+                        >
+                          {item.nickname ?? <span className="text-fade italic">—</span>}
+                        </FirstCellText>
+                      </td>
+                    ) : (
+                      <td key={key} className={`px-4 py-2 text-fade dark:text-zinc-400 ${ONE_LINE}`} title={cellTitle(cellValue(item, key))}>
+                        {cellValue(item, key)}
+                      </td>
+                    ),
+                  )}
                   <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
                     {/* Slice #38.57: side by side, always. */}
                     <span className="flex flex-nowrap gap-2" data-row-actions="">

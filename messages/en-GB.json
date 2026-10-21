@@ -1129,6 +1129,12 @@
       "label": "Width of the column {name}",
       "labelNumber": "Width of column {n}",
       "hint": "Drag to widen or narrow the column; a double-click gives it its usual width back."
+    },
+    "columnOrder": {
+      "defaultOrder": "Default order",
+      "announceFirst": "Column {name}, 1 of {total}",
+      "announce": "Column {name}, {n} of {total}",
+      "hint": "Drag a column's name to move it; Alt + ← / → moves it one place."
     }
   },
   "naturalPerson": {
