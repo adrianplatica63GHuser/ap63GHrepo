@@ -104,3 +104,22 @@ describe("the signs (Ask first 2, 6; 40.11's Ask first 2, 4)", () => {
     });
   }
 });
+
+/**
+ * Slice 40.23 — Adrian: „Should have a slow blinking to draw attention but not be annoying - so: slower and less
+ * intense than usual blinking". The glyphs only, 1 → 0.45 → 1 every 2.4 s, still on hover and focus, never under
+ * „reduce motion". (TC-LAYOUT-05 step 11b reads it in the browser.)
+ */
+describe("the signs' slow pulse (40.23)", () => {
+  const css = fs.readFileSync(path.join(process.cwd(), "src", "app", "globals.css"), "utf8");
+  const signs = fs.readFileSync(path.join(process.cwd(), "src", "components", "list", "hidden-column-signs.tsx"), "utf8");
+  it("the sign carries the class; the keyframe dims to 0.45, never off", () => {
+    expect(signs).toMatch(/const SIGN =\s*"ga-sign-pulse /);
+    expect(css).toMatch(/@keyframes ga-sign-pulse \{\s*0%, 100% \{ opacity: 1; \}\s*50%\s+\{ opacity: 0\.45; \}\s*\}/);
+  });
+  it("on the glyphs, 2.4 s, ease-in-out, endless; still on hover and focus; none under reduced motion", () => {
+    expect(css).toContain(".ga-sign-pulse > span { animation: ga-sign-pulse 2.4s ease-in-out infinite; }");
+    expect(css).toMatch(/\.ga-sign-pulse:hover > span,\s*\.ga-sign-pulse:focus > span,\s*\.ga-sign-pulse:focus-visible > span \{ animation: none; opacity: 1; \}/);
+    expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\) \{\s*\.ga-sign-pulse > span \{ animation: none; \}\s*\}/);
+  });
+});

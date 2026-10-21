@@ -525,7 +525,8 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     await expect(page.locator("main [data-hidden-right]")).toBeVisible({ timeout: 10_000 });
     await blurRecent(page, S.recent);
     await still(page);
-    await page.screenshot({ path: `${dir}/list-fit.png` });
+    // Slice 40.23: the signs breathe — the figure is taken with animations stopped, so it is steady (full strength).
+    await page.screenshot({ path: `${dir}/list-fit.png`, animations: "disabled" });
     await page.setViewportSize({ width: 1366, height: 768 });
 
     // Figura 2.5 — 40.13: the line between two columns (40.12) dragged in the band of names, the picture taken while the

@@ -453,6 +453,25 @@ select:has(option[data-blank]) option:not([data-blank]) {
 /* Slice #38.85 — „Interacțiuni": a row just saved flashes once where it landed (spec §4: „The row flashes
    once so the user can see where it landed"). Indigo-200 fading to nothing; with reduced motion it holds
    indigo-100 for as long as the screen keeps the mark (1.5 s), without moving. */
+/* ───────────────────────────────────────────────────────────────────────────
+   Slice 40.23 — the red „<" / „>" of hidden columns breathe. Adrian, 2026-10-21: „Should have a slow blinking to
+   draw attention but not be annoying - so: slower and less intense than usual blinking". The glyphs only, never the
+   strip behind them: their opacity from 1 to 0.45 and back, ease-in-out, one cycle every 2.4 s — never off, no
+   change of colour or size (Ask first 1). Still, at full strength, while the mouse rests on a sign or it has the
+   keyboard's focus — its bubble is being read — and never under the system's „reduce motion" (Ask first 2).
+   ─────────────────────────────────────────────────────────────────────────── */
+@keyframes ga-sign-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.45; }
+}
+.ga-sign-pulse > span { animation: ga-sign-pulse 2.4s ease-in-out infinite; }
+.ga-sign-pulse:hover > span,
+.ga-sign-pulse:focus > span,
+.ga-sign-pulse:focus-visible > span { animation: none; opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .ga-sign-pulse > span { animation: none; }
+}
+
 @keyframes ga-row-flash {
   from { background-color: #c7d2fe; }
   to { background-color: transparent; }

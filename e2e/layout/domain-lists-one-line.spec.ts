@@ -17,7 +17,7 @@
  * Steps 15–16 (Slice 40.18) are the fourth test: a column name is drawn in Roboto Condensed and in ink, a tile's title
  * in Roboto Slab and in navy — read off the styles and the loaded font faces, no text — in light and in dark.
  *
- * Steps 11–14 (Slice #40.03) are the third test: Acte with four columns chosen at 1100 px, so its columns are wider
+ * Steps 11–14 (Slice #40.03) are the third test (11b, Slice 40.23: the glyphs' slow pulse): Acte with four columns chosen at 1100 px, so its columns are wider
  * than the frame — the red „>" and „<" at the band's edges as the list scrolls sideways; a funnel under the right-hand
  * signs still opens its editor; at 1920 px with no column chosen, neither sign.
  */
@@ -314,6 +314,22 @@ test.describe("TC-LAYOUT-05 — cele patru liste, câte un rând pe linie", () =
     expect(Math.abs(r11.right!.right - r11.frame.right)).toBeLessThanOrEqual(1);
     expect(Math.abs(r11.right!.top - r11.head.top)).toBeLessThanOrEqual(1);
     expect(Math.abs(r11.right!.height - r11.head.height)).toBeLessThanOrEqual(1);
+
+    // Step 11b (Slice 40.23) — the glyphs breathe: one 2.4-s cycle, endlessly, on the glyphs and not on the strip;
+    // still while the mouse rests on the sign; never under „reduce motion".
+    const pulse = () =>
+      right.evaluate((b) => {
+        const g = getComputedStyle(b.querySelector("span")!);
+        return { name: g.animationName, duration: g.animationDuration, count: g.animationIterationCount, strip: getComputedStyle(b).animationName };
+      });
+    expect(await pulse()).toEqual({ name: "ga-sign-pulse", duration: "2.4s", count: "infinite", strip: "none" });
+    await right.hover();
+    expect((await pulse()).name).toBe("none");
+    await page.mouse.move(5, 5);
+    expect((await pulse()).name).toBe("ga-sign-pulse");
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    expect((await pulse()).name).toBe("none");
+    await page.emulateMedia({ reducedMotion: "no-preference" });
 
     // Step 11a (Slice 40.11) — the mouse over the „>": a bubble under the band with its sentence; a press: the frame
     // scrolls right — by its visible width less 4 rem — and the „<" appear; a keyboard focus on the „<": its bubble.

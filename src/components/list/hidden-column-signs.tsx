@@ -31,8 +31,9 @@ import { NOTHING_HIDDEN, hiddenSides, sameSides, signScrollTarget, type HiddenSi
 /** The band of names' row: the band and its cell's `py-2` — 52 px since Slice 40.21 (two rows; it was 78). */
 export const LIST_HEAD_PX = HEAD_BAND_PX + 16;
 
+// Slice 40.23: `ga-sign-pulse` (globals.css) — the glyphs breathe, slowly and faintly, while the sign shows.
 const SIGN =
-  "flex w-5 cursor-pointer flex-col items-center justify-center bg-cap text-base font-bold leading-4 text-red-600 " +
+  "ga-sign-pulse flex w-5 cursor-pointer flex-col items-center justify-center bg-cap text-base font-bold leading-4 text-red-600 " +
   "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus dark:bg-zinc-800 dark:text-red-400";
 
 /** One side's sign: three glyphs, a button named by its sentence, the sentence in a bubble on hover or keyboard focus. */
