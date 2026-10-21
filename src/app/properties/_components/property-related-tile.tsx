@@ -30,7 +30,8 @@ export function PropertyRelatedTile({ propertyId, label, readOnly = false }: { p
       readOnly={readOnly}
       label={label}
       rows={[...persons.rows, ...properties.rows, ...documents.rows]}
-      loading={persons.isLoading || properties.isLoading || documents.isLoading}
+      // Slice 40.16: the loading line only while every kind still loads — one kind failing or slow never blanks the rest.
+      loading={persons.isLoading && properties.isLoading && documents.isLoading}
       associate={[
         { label: t("associatePerson"), onClick: persons.associate },
         { label: t("associateProperty"), onClick: properties.associate },

@@ -26,6 +26,7 @@ import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provid
 import { PreviewButton } from "@/components/tiles/preview-tiles";
 import { personPreview } from "@/lib/ui/previews";
 import { isPartyLink } from "@/lib/documents/sale-parties";
+import { RelatedLoadError } from "@/components/tiles/related-load-error";
 
 /**
  * Which of a document's person links a list draws.             (Slice #38.33)
@@ -165,7 +166,7 @@ export function useDocumentPersonRows(documentId: string, scope: PersonLinkScope
       ?.focus();
   }, [shareOpenId]);
 
-  const { data: allItems, isLoading, isError } = useQuery({
+  const { data: allItems, isLoading, isError, error, refetch, isFetching } = useQuery({
     queryKey: ["document-persons", documentId],
     queryFn:  () => fetchDocumentPersons(documentId),
   });
@@ -547,9 +548,8 @@ export function useDocumentPersonRows(documentId: string, scope: PersonLinkScope
         })}
       </div>
 
-      {isError && (
-        <p className="text-sm text-red-600 dark:text-red-400" role="alert">{t("error")}</p>
-      )}
+      {/* Slice 40.16: which list, why, and „Reîncearcă". */}
+      {isError && <RelatedLoadError line={t("error")} error={error} onRetry={() => void refetch()} retrying={isFetching} />}
       {savingId !== null && (
         <p className="text-sm text-fade dark:text-zinc-400">{t("cotaSaving")}</p>
       )}

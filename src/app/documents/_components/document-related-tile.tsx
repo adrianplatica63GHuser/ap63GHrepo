@@ -79,7 +79,8 @@ export function DocumentRelatedTile({
       label={label}
       aboveRows={partiesNote}
       rows={[...persons.rows, ...properties.rows, ...references.rows]}
-      loading={persons.isLoading || properties.isLoading || references.isLoading}
+      // Slice 40.16: the loading line only while every kind still loads — one kind failing or slow never blanks the rest.
+      loading={persons.isLoading && properties.isLoading && references.isLoading}
       associate={[
         { label: t("associatePerson"), onClick: persons.associate },
         { label: t("associateProperty"), onClick: properties.associate },

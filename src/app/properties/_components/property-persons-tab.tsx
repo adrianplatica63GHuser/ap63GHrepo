@@ -11,6 +11,7 @@ import { openThroughGuard, personPath } from "@/lib/ui/row-link";
 import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
 import { PreviewButton } from "@/components/tiles/preview-tiles";
 import { personPreview } from "@/lib/ui/previews";
+import { RelatedLoadError } from "@/components/tiles/related-load-error";
 
 /**
  * A Property's persons, as „Corelate"'s rows (Slice #37.66, the Document's
@@ -56,7 +57,7 @@ export function usePropertyPersonRows(propertyId: string): PropertyPersonRows {
   const { guardedNavigate } = useUnsavedChanges();
   const queryClient = useQueryClient();
 
-  const { data: persons, isLoading, isError } = useQuery({
+  const { data: persons, isLoading, isError, error, refetch, isFetching } = useQuery({
     queryKey: ["property-persons", propertyId],
     queryFn:  () => fetchPropertyPersons(propertyId),
   });
@@ -109,7 +110,7 @@ export function usePropertyPersonRows(propertyId: string): PropertyPersonRows {
   return {
     isLoading,
     rows,
-    below: isError ? <p className="text-sm text-red-600 dark:text-red-400" role="alert">{t("error")}</p> : null,
+    below: isError ? <RelatedLoadError line={t("error")} error={error} onRetry={() => void refetch()} retrying={isFetching} /> : null, // Slice 40.16
     associate: () => router.push(`/properties/${encodeURIComponent(propertyId)}/associate-person`),
   };
 }

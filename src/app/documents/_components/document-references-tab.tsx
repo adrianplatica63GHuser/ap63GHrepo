@@ -17,6 +17,7 @@ import {
 import { openThroughGuard } from "@/lib/ui/row-link";
 import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
 import { PreviewButton } from "@/components/tiles/preview-tiles";
+import { RelatedLoadError } from "@/components/tiles/related-load-error";
 
 /**
  * A Document's related documents, as „Corelate"'s rows (Slice #37.65; one line
@@ -91,7 +92,7 @@ export function useDocumentReferenceRows(documentId: string): DocumentReferenceR
   const queryClient = useQueryClient();
 
 
-  const { data: items, isLoading, isError } = useQuery({
+  const { data: items, isLoading, isError, error, refetch, isFetching } = useQuery({
     queryKey: ["document-references", documentId],
     queryFn:  () => fetchDocumentReferences(documentId),
   });
@@ -360,7 +361,7 @@ export function useDocumentReferenceRows(documentId: string): DocumentReferenceR
   return {
     isLoading,
     rows,
-    below: isError ? <p className="text-sm text-red-600 dark:text-red-400" role="alert">{t("error")}</p> : null,
+    below: isError ? <RelatedLoadError line={t("error")} error={error} onRetry={() => void refetch()} retrying={isFetching} /> : null, // Slice 40.16
     associate: () => router.push(`/documents/${encodeURIComponent(documentId)}/associate-reference`),
     instrumentsButton,
     instrumentsPanel,

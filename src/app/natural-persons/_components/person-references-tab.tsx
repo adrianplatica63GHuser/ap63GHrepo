@@ -13,6 +13,7 @@ import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provid
 import { PreviewButton } from "@/components/tiles/preview-tiles";
 import { personPreview } from "@/lib/ui/previews";
 import type { PersonRoleShown } from "@/lib/persons/relation-roles";
+import { RelatedLoadError } from "@/components/tiles/related-load-error";
 
 /**
  * A person's related persons, as „Corelate"'s rows (Slice #37.67, the
@@ -67,7 +68,7 @@ export function usePersonReferenceRows(personId: string, backBase: string): Pers
   const { guardedNavigate } = useUnsavedChanges();
   const queryClient = useQueryClient();
 
-  const { data: items, isLoading, isError } = useQuery({
+  const { data: items, isLoading, isError, error, refetch, isFetching } = useQuery({
     queryKey: ["person-references", personId],
     queryFn:  () => fetchPersonReferences(personId),
   });
@@ -122,7 +123,7 @@ export function usePersonReferenceRows(personId: string, backBase: string): Pers
   return {
     isLoading,
     rows,
-    below: isError ? <p className="text-sm text-red-600 dark:text-red-400" role="alert">{t("error")}</p> : null,
+    below: isError ? <RelatedLoadError line={t("error")} error={error} onRetry={() => void refetch()} retrying={isFetching} /> : null, // Slice 40.16
     associate: () => router.push(`${backBase}/${encodeURIComponent(personId)}/associate-person`),
   };
 }

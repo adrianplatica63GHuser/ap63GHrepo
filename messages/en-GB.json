@@ -1095,6 +1095,20 @@
       "dissociating": "Removing…",
       "noRole": "No role"
     },
+    "relatedLoad": {
+      "failed": "{line}: {reason}",
+      "retry": "Try again",
+      "retrying": "Trying again…",
+      "reasons": {
+        "signedOut": "your session has ended; sign in again.",
+        "forbidden": "this account may not see these links.",
+        "notFound": "the server did not find what was asked for (404). If every record says so, stop the server, clear its cache (.next) and start it again.",
+        "database": "the database did not answer.",
+        "network": "the application's server did not answer.",
+        "unreadable": "the server's answer could not be read; reload the page.",
+        "other": "the server answered with code {status}."
+      }
+    },
     "hiddenColumns": {
       "right": "More columns to the right. Scroll right to see them.",
       "left": "More columns to the left. Scroll left to see them."

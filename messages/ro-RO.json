@@ -1095,6 +1095,20 @@
       "dissociating": "Se elimină…",
       "noRole": "Fără rol"
     },
+    "relatedLoad": {
+      "failed": "{line}: {reason}",
+      "retry": "Reîncearcă",
+      "retrying": "Se reîncarcă…",
+      "reasons": {
+        "signedOut": "sesiunea s-a încheiat; intrați din nou în cont.",
+        "forbidden": "contul nu are dreptul să vadă aceste legături.",
+        "notFound": "serverul nu a găsit ce i s-a cerut (404). Dacă se întâmplă pe fiecare fișă, opriți serverul, ștergeți-i memoria temporară (.next) și porniți-l din nou.",
+        "database": "baza de date nu a răspuns.",
+        "network": "serverul aplicației nu a răspuns.",
+        "unreadable": "răspunsul serverului nu a putut fi citit; reîncărcați pagina.",
+        "other": "serverul a răspuns cu codul {status}."
+      }
+    },
     "hiddenColumns": {
       "right": "Mai sunt coloane la dreapta. Derulați spre dreapta ca să le vedeți.",
       "left": "Mai sunt coloane la stânga. Derulați spre stânga ca să le vedeți."
