@@ -43,6 +43,7 @@ describe("the frame and its header (#38.56)", () => {
   });
 
   it("holds the header row at its top", () => {
-    expect(MODAL).toMatch(/<thead className="sticky top-0 z-10 bg-cap /);
+    // Slice 40.18: the four lists' band (`LIST_HEAD`, `sticky top-0 z-10` and kind 6's type), not a copy of it.
+    expect(MODAL).toContain("<thead className={LIST_HEAD}>");
   });
 });

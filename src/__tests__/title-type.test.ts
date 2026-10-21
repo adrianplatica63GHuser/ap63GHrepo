@@ -23,7 +23,6 @@ import {
 } from "@/lib/ui/title-type";
 import { TILE_TITLE_CLASS } from "@/components/tiles/tile-title";
 import { LIST_HEAD } from "@/components/list/list-fit";
-import { ADMIN_LIST_HEAD } from "@/components/list/admin-list";
 
 const ROOT = process.cwd();
 const read = (rel: string) => fs.readFileSync(path.join(ROOT, rel), "utf8");
@@ -32,7 +31,7 @@ const tokens = (cls: string) => cls.split(/\s+/).filter(Boolean);
 describe("each kind is alternative 13's, in Adrian's colour", () => {
   it.each([
     ["1, 2, 4 — a tile's title", TILE_TITLE_TYPE, ["font-title", "text-base", "font-semibold", "uppercase", "tracking-[0.04em]", "text-navy", "dark:text-blue-200"]],
-    ["3, 6 — column names", COLUMN_NAMES_TYPE, ["font-colhead", "text-[13.5px]", "leading-[18px]", "font-semibold", "uppercase", "tracking-[0.04em]", "text-ink", "dark:text-zinc-300"]],
+    ["3, 6 — column names", COLUMN_NAMES_TYPE, ["font-colhead", "text-[13.5px]", "leading-[18px]", "font-semibold", "[&_th]:font-semibold", "uppercase", "tracking-[0.04em]", "text-ink", "dark:text-zinc-300"]],
     ["5 — a panel's heading", PANEL_TITLE_TYPE, ["font-title", "text-[13px]", "leading-[18px]", "font-semibold", "uppercase", "tracking-[0.08em]", "text-navy", "dark:text-blue-200"]],
     ["7a — Grupuri's and Ștampile's heading", PAGE_HEADING_TYPE, ["font-title", "text-xl", "font-semibold", "text-navy", "dark:text-blue-200"]],
     ["7b — a screen tile's title", SCREEN_TILE_TITLE_TYPE, ["font-title", "text-base", "font-medium", "text-navy", "dark:text-blue-200"]],
@@ -53,7 +52,8 @@ describe("each kind is alternative 13's, in Adrian's colour", () => {
   it("the pieces compose their kind's constant", () => {
     expect(TILE_TITLE_CLASS).toBe(`flex items-center gap-2 ${TILE_TITLE_TYPE}`);
     expect(LIST_HEAD).toBe(`sticky top-0 z-10 ${COLUMN_NAMES_BAND}`);
-    expect(ADMIN_LIST_HEAD).toBe(LIST_HEAD);
+    // admin-list.tsx pulls in next-intl's ESM build, which jest cannot load here: its source is read instead.
+    expect(read("src/components/list/admin-list.tsx")).toContain("export const ADMIN_LIST_HEAD = LIST_HEAD;");
   });
 
   it("navy and ink are the palette's", () => {

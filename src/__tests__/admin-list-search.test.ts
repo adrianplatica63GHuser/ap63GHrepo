@@ -79,7 +79,8 @@ describe("the gap, the scroll (Ask first 1, 4)", () => {
 
   it("the list stops at two thirds of the window and scrolls inside, its header row on top", () => {
     expect(SHARED).toContain('"w-full max-h-[66vh] overflow-auto');
-    expect(SHARED).toContain('"sticky top-0 z-10');
+    // Slice 40.18: the header row is the four lists' band (`LIST_HEAD`), which sticks to the frame's top.
+    expect(SHARED).toContain("export const ADMIN_LIST_HEAD = LIST_HEAD;");
   });
 
   it("the description takes what the frame leaves, so a scroll bar never pushes the buttons out sideways", () => {
