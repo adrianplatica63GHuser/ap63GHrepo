@@ -12,17 +12,17 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-10-20 — 359 entries (FU-359 filed by #40.01). Rows are status, columns are impact.
+As of 2026-10-21 — 360 entries (FU-360 filed by 40.18). Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
-| open | 18 | 84 | 79 | 23 | 204 |
+| open | 18 | 84 | 79 | 24 | 205 |
 | planned | 0 | 0 | 1 | 0 | 1 |
 | resolved | 38 | 61 | 32 | 3 | 134 |
 | ignored | 4 | 3 | 4 | 2 | 13 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 6 | 1 | 0 | 7 |
-| **total** | 60 | 154 | 117 | 28 | 359 |
+| **total** | 60 | 154 | 117 | 29 | 360 |
 <!-- summary:end -->
 
 `src/__tests__/follow-up-register.test.ts` recounts the table and fails when this block disagrees
@@ -443,3 +443,4 @@ Nothing is filed from memory: every row carries evidence someone actually looked
 | FU-357 | 2026-10-19 #39.91 Handover.39.91.md | next-slice idea | UI shell | The screens that draw tiles with `UnitRow` alone cannot have their tiles dragged, so a tile held over another makes no room there (39.91 covers every screen through `TileAreas` or `TileUnitRow`): „Setări”, the dashboard, the calculation screens, the Reference Data hub, the groups’ and the stamps’ lists, „Etichete”, users, help content, the type engine, the password page. Moving one to `TileUnitRow` (a `ScreenTiles` entry and a `data-tile` per tile) gives it dragging, the double-click rise and making room at once. | src/components/screen/tile-unit-row.tsx; src/lib/ui/screen-tiles.ts | user | S | open | One slice per screen family, at Adrian’s word: he asked for „all screens with tiles”, and these have no dragging today. | 2026-10-19 |
 | FU-358 | 2026-10-19 #39.93 Handover.39.93.md | recommendation | Help | No light bulb explains the tile gestures — dragging by empty space, the double-click rise, and holding a tile over another so it makes room (#39.91) — although the manual's 2.8 says a gesture that does not show is explained by one; only the „?” texts and the manual do. A bulb is a registered hint (HELP_HINTS) placed on the tile screens, plus its text in „Informații de ajutor”, which is code, so #39.93 did not add it. | src/lib/help/registry.ts — HELP_HINTS „Tiles” holds only tile-selector; src/lib/manual/content/ro-RO/02-start.ts — 2.8 | user | S | open | One hint, „tile-drag”, on the screens through TileAreas and TileUnitRow, beside the tick boxes; its text proposed in the handover. | 2026-10-19 |
 | FU-359 | 2026-10-20 #40.01 Handover.40.01.md | defect | Documents | On „Acte" at a narrow window the filter group („Tip document:", the sign, „Câmp specific:" and its ⓘ — 603 px, one item that never wraps apart) is wider than the space the toolbar's controls leave beside „Adaugă act": at 1000 px it wraps onto its own line as asked, but ends 30 px past the controls' box (nothing overlaps); about 100 px narrower it would reach past the toolbar and scroll the page sideways. | src/app/documents/list-view.tsx — `data-toolbar-controls`, `data-filter-fixed` (flex-nowrap, shrink-0); measured in the browser pane at 1000 × 900 | user | XS | open | Let the group's „Câmp specific" part wrap under „Tip document:" (still together) below the width where the group fits a line, or narrow the type button's 14 rem there. | 2026-10-20 |
+| FU-360 | 2026-10-21 40.18 Handover.40.18.md | recommendation | UI shell | Six tables outside the seven kinds 40.05 pictured still draw their column names in 12-px Arial, medium, in fade (zinc-400 dark) on today's band or none: „Calcul → Istoric" (the history list and three tables of a run) and „Tarla" (its list and three tables of a tarla). Giving them `COLUMN_NAMES_BAND` (or `COLUMN_NAMES_TYPE` where there is no band) would make every column name in the app alternative 13's. | src/app/admin/calculation/history/_components/calculation-history-list.tsx:107; src/app/admin/calculation/history/[id]/_components/calculation-run-detail.tsx:298, 374, 460; src/app/tarlale/_components/tarla-list.tsx:44; src/app/tarlale/_components/tarla-detail.tsx:307, 371, 416 | cosmetic | XS | open | Read `COLUMN_NAMES_BAND` from src/lib/ui/title-type.ts in the eight theads; ask Adrian first whether the fade was deliberate. | 2026-10-21 |
