@@ -199,11 +199,11 @@
           "section": "persons-list",
           "ro": {
             "question": "După ce a notat câteva decese, Ciprian vrea să vadă în lista „Persoane Fizice” cine a murit și când. Ce folosește?",
-            "explanation": "În listă, „†” după nume înseamnă că persoana a murit (cu mouse-ul peste el scrie „Decedat”), iar „Câmpuri afișate” poate adăuga coloana „Data decesului”."
+            "explanation": "În listă, „†” după nume înseamnă că persoana a murit (cu mouse-ul peste el scrie „Decedat”), iar „Câmpuri afișate” poate adăuga coloana „Decedat pe”."
           },
           "en": {
             "question": "Having recorded a few deaths, Ciprian wants to see in the „Persoane Fizice” list who has died and when. What does he use?",
-            "explanation": "In the list, „†” after the name means the person has died (with the mouse over it, it reads „Decedat”), and „Câmpuri afișate” (the columns shown) can add the „Data decesului” column."
+            "explanation": "In the list, „†” after the name means the person has died (with the mouse over it, it reads „Decedat”), and „Câmpuri afișate” (the columns shown) can add the „Decedat pe” column."
           },
           "options": [
             {
@@ -215,8 +215,8 @@
             {
               "id": "o2",
               "correct": true,
-              "ro": "„†” după nume și coloana „Data decesului”, adăugată din „Câmpuri afișate”.",
-              "en": "The „†” after the name and the „Data decesului” column, added from „Câmpuri afișate”."
+              "ro": "„†” după nume și coloana „Decedat pe”, adăugată din „Câmpuri afișate”.",
+              "en": "The „†” after the name and the „Decedat pe” column, added from „Câmpuri afișate”."
             },
             {
               "id": "o3",
@@ -422,8 +422,8 @@
             {
               "id": "o4",
               "correct": false,
-              "ro": "Să adauge coloana „Data decesului” din „Câmpuri afișate”.",
-              "en": "Adding the „Data decesului” column from „Câmpuri afișate”."
+              "ro": "Să adauge coloana „Decedat pe” din „Câmpuri afișate”.",
+              "en": "Adding the „Decedat pe” column from „Câmpuri afișate”."
             }
           ]
         },
@@ -524,8 +524,8 @@
             {
               "id": "o2",
               "correct": false,
-              "ro": "Lista adaugă singură coloana „Data decesului”.",
-              "en": "The list adds the „Data decesului” column by itself."
+              "ro": "Lista adaugă singură coloana „Decedat pe”.",
+              "en": "The list adds the „Decedat pe” column by itself."
             },
             {
               "id": "o3",

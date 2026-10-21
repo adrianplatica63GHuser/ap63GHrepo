@@ -178,6 +178,7 @@ The texts behind the „?” button and the light-bulb hints on the screens (sec
 
 - **The password.** Type the new password in „New password” — at least 8 characters — and once more in „Confirm password”, then press „Change password”. The application confirms with „Password changed!”. If the two do not match, it says „The passwords do not match.”.
 - **The language.** Under „Language” choose „Română” or „English”.
+- **Appearance.** Under „Language”, at „Appearance”, the box „Dark mode” turns the whole application dark; it is the same box as under the flags in the sidebar, so each shows the other ticked (section [[start-sidebar]]).
 - **„My defaults”**. For each kind of object — „Natural person”, „Juridical person”, „Property”, „Document” — tick the tiles you want „Default” to show on its screen and press „Save”; „Saved.” appears. The set belongs to the account, not to the browser, so it stays after a reload, and in any browser. „Back to default” forgets your set and brings back the application's usual one: „Back to default.”. At least one tile stays ticked.
 
 „Sign out” is at the bottom of the sidebar.

@@ -13,17 +13,17 @@ Deschideți „Domeniu” în bara laterală, apoi „Proprietăți”. Se desch
 
 Caseta de căutare din capul listei, cât butonul „Adaugă proprietate”, caută după „Cod”, „Poreclă”, „Nr. cadastru”, „Nr. CF”, „Tarla/Solă” și „Parcelă” — așa scrie și în ea; țineți mouse-ul pe ea ca să citiți textul întreg. Filtrele listei se pun din coloane (secțiunea [[properties-list-filters]]). Sub tabel, „Se afișează … din …” spune câte proprietăți vedeți din câte sunt.
 
-Prima coloană este mereu „Poreclă”, numele pe care îl dați proprietății. Ea se vede întotdeauna și nu apare printre opțiunile din „Câmpuri afișate”. Codul proprietății nu are coloană în listă; îl găsiți pe ecranul proprietății, în colțul primei fișe.
+Prima coloană este „Poreclă”, numele pe care îl dați proprietății; „Nou!” stă în ea, după poreclă, și „Încrucișat” după el, la o proprietate cu colțurile încrucișate. Ea se vede întotdeauna și nu apare printre opțiunile din „Câmpuri afișate”; o puteți muta, ca orice coloană, trăgând-o de nume (secțiunea [[start-lists]]). Codul proprietății nu are coloană în listă; îl găsiți pe ecranul proprietății, în colțul primei fișe.
 
-„Câmpuri afișate” adaugă până la patru coloane după „Poreclă”. Puteți alege dintre câmpurile cadastrale și localitate:
+„Câmpuri afișate” adaugă până la patru coloane după „Poreclă”. Puteți alege dintre câmpurile cadastrale și localitate, cu numele lor scurte:
 
-- „Tarla/Solă” și „Parcelă”;
-- „Oficială (m²)” și „Calculată (m²)” — cele două suprafețe;
-- „Nr. CF” și „Nr. cadastru”;
-- „Categorie de folosință” și „Tip proprietate”, arătate cu numele lor;
+- „Tarla” și „Parcelă”;
+- „Supr. Ofic.” și „Supr. Calc.” — cele două suprafețe, oficială și calculată;
+- „# CF” și „# Cadastru” — numărul de carte funciară și numărul cadastral;
+- „Categ.Folos.” și „Tip Prop.” — categoria de folosință și tipul proprietății, arătate cu numele lor;
 - „Localitate”.
 
-Butonul arată câte coloane ați ales, de exemplu „Câmpuri afișate 2/4”. Când ați bifat patru, celelalte căsuțe devin gri până debifați una. La început lista arată doar „Tip proprietate”. Alegerea se păstrează în browserul acesta, așa că o regăsiți data viitoare.
+Butonul arată câte coloane ați ales, de exemplu „Câmpuri afișate 2/4”. Când ați bifat patru, celelalte căsuțe devin gri până debifați una. La început lista arată doar „Tip Prop.”. Alegerea se păstrează în browserul acesta, așa că o regăsiți data viitoare.
 
 În dreapta, deasupra tabelului, stau două butoane: „Hartă completă” deschide harta tuturor proprietăților (capitolul [[map]]), iar „Adaugă proprietate” creează una nouă (secțiunea [[properties-add]]). Cât timp harta completă e deschisă, bara de navigare arată „Acasă › Proprietăți › Hartă completă”, iar un clic pe „Proprietăți” vă întoarce la listă.
 
@@ -31,10 +31,10 @@ Butonul arată câte coloane ați ales, de exemplu „Câmpuri afișate 2/4”. 
 
 ### 5.1.1 Filtrele listei {#properties-list-filters}
 
-Lista se filtrează după coloanele ei. O coloană aleasă în „Câmpuri afișate” care se poate filtra are, sub numele ei, o pâlnie mică; un clic pe pâlnie deschide, chiar sub ea, fereastra filtrului coloanei. Lista arată doar proprietățile care trec de toate filtrele odată.
+Lista se filtrează după coloanele ei. O coloană aleasă în „Câmpuri afișate” care se poate filtra are, lângă numele ei, o pâlnie mică; un clic pe pâlnie deschide, chiar sub ea, fereastra filtrului coloanei. Lista arată doar proprietățile care trec de toate filtrele odată.
 
 1. Bifați coloana în „Câmpuri afișate”, dacă nu este deja în tabel.
-2. Apăsați pâlnia de sub numele ei și alegeți ce vreți să vedeți. Lista se schimbă pe loc, fără niciun buton de aplicat.
+2. Apăsați pâlnia de lângă numele ei și alegeți ce vreți să vedeți. Lista se schimbă pe loc, fără niciun buton de aplicat.
 3. Apăsați în afara ferestrei sau tasta Esc ca s-o închideți.
 
 Pe lista proprietăților se filtrează șapte coloane:
@@ -43,13 +43,13 @@ Pe lista proprietăților se filtrează șapte coloane:
 - **„Oficială (m²)” și „Calculată (m²)”** — „De la” și „Până la”, oricare dintre ele, sau amândouă;
 - **„Parcelă”** — „Conține”: rămân proprietățile a căror parcelă conține ce ați scris.
 
-„Poreclă”, „Nr. cadastru” și „Nr. CF” nu au pâlnie; o proprietate se găsește după ele cu caseta de căutare.
+„Poreclă”, „# Cadastru” și „# CF” nu au pâlnie; o proprietate se găsește după ele cu caseta de căutare.
 
 Fiecare filtru pus devine o etichetă rotunjită sub caseta de căutare, pe un rând care apare doar cât timp este pus un filtru, cu numele coloanei și ce ați ales, de exemplu „Tip proprietate” Casă. Un clic pe etichetă redeschide fereastra, chiar sub etichetă, iar X-ul ei scoate filtrul. O pâlnie plină arată că lista este filtrată după acea coloană. Un filtru rămâne și dacă îi ascundeți coloana: eticheta lui stă mai departe sub caseta de căutare, așa că lista nu este niciodată filtrată fără să vedeți asta.
 
 „Șterge filtrele” le scoate pe toate deodată, iar rândul etichetelor dispare. Filtrele se păstrează în adresa paginii, ca și căutarea: rămân după ce reîncărcați pagina, după ce vă întoarceți la listă cu „Înapoi” și când trimiteți adresa cuiva.
 
-Capul tabelului are înălțimea a trei rânduri, la fel pe cele patru liste, oricâte coloane ați ales. La o coloană care se poate filtra, numele stă pe primele două rânduri — pe al doilea, când încape pe unul —, iar pâlnia, singură, pe al treilea. Numele unei coloane fără filtru, ca „Poreclă”, stă la mijlocul înălțimii. Un nume lung, ca „Categorie de folosință” sau „Tip proprietate”, se rupe pe două rânduri, acolo unde ies cât mai egale; niciun nume nu ia trei rânduri.
+Capul tabelului are înălțimea a două rânduri, la fel pe cele patru liste, oricâte coloane ați ales. Numele coloanei și, la o coloană care se poate filtra, pâlnia de după el stau împreună la mijloc, pe orizontală și pe verticală. Un nume prea lung pentru coloana lui trece pe al doilea rând, iar pâlnia rămâne lângă ultimul rând; niciun nume nu ia trei rânduri.
 
 ## 5.2 O proprietate adăugată de mână {#properties-add}
 

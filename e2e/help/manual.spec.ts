@@ -110,7 +110,7 @@ test.describe("TC-HELP-02 — „Manual de utilizare”", () => {
     // Step 5 — a figure by its address.
     await page.goto("/manual?s=fig-list");
     await expect(byId(page, "fig-list").locator("figcaption")).toHaveText(
-      "Figura 2.3 — Lista persoanelor fizice, cu „Câmpuri afișate” deschis",
+      "Figura 2.4 — Lista persoanelor fizice, cu „Câmpuri afișate” deschis",
       { timeout: 30_000 },
     );
     await expect(byId(page, "fig-list")).toBeInViewport();
@@ -304,7 +304,10 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     // look is put back to light at once, so every other figure is light.
     await page.goto("/");
     await expect(page.getByText(S.recentActivity, { exact: false }).first()).toBeVisible({ timeout: 60_000 });
-    await setLook(page, "dark");
+    // The box itself, as the reader does it: ticked, it writes the look's cookie and the class on <html>.
+    const darkBox = page.locator('[data-theme-toggle="sidebar"] input[type="checkbox"]');
+    await darkBox.check();
+    await expect(page.locator("html")).toHaveClass(/(^|\s)dark(\s|$)/);
     await page.waitForTimeout(1000);
     await page.evaluate((f) => {
       document
@@ -314,16 +317,18 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     await blurRecent(page, S.recent);
     await still(page);
     await page.screenshot({ path: `${dir}/dark.png` });
+    await darkBox.uncheck();
+    await expect(page.locator("html")).not.toHaveClass(/(^|\s)dark(\s|$)/);
     await setLook(page, "light");
 
-    // Figura 2.2 — the navigation bar, on a seed person's screen.
+    // Figura 2.3 — the navigation bar, on a seed person's screen.
     await page.goto(`/natural-persons/${person.id}`);
     const bar = page.getByRole("navigation", { name: S.breadcrumb }).filter({ visible: true });
     await expect(bar).toContainText(person.label.split(" ")[0], { timeout: 60_000 });
     await still(page);
     await bar.screenshot({ path: `${dir}/breadcrumb.png` });
 
-    // Figura 2.4 — the person's screen and its tiles; the CNP blurred, „Recente" blurred.
+    // Figura 2.8 — the person's screen and its tiles; the CNP blurred, „Recente" blurred.
     await page.waitForTimeout(1500);
     await page.evaluate(
       ([f, any, start]) => {
@@ -347,7 +352,7 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     await still(page);
     await page.screenshot({ path: `${dir}/record.png` });
 
-    // Figura 2.5 (#39.93) — a tile held over another (#39.91): „Act de identitate" held over „Identitate", which has slid
+    // Figura 2.9 (#39.93) — a tile held over another (#39.91): „Act de identitate" held over „Identitate", which has slid
     // down to the first place in its columns that holds it whole — on a person's full columns, the bottom of the row —
     // and the outline shows the place free. A window tall enough for the whole row, the picture cut at the row's bottom.
     // Nothing is dropped: Esc puts it all back, so no arrangement is stored. The CNP and „Recente" blurred again.
@@ -383,7 +388,7 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     await page.mouse.up();
     await page.setViewportSize({ width: 1366, height: 768 });
 
-    // Figura 2.3 — the list, searched by the seed person's surname, „Câmpuri afișate" open; rows not the seed's blurred.
+    // Figura 2.4 — the list, searched by the seed person's surname, „Câmpuri afișate" open; rows not the seed's blurred.
     // #39.86: three columns with a funnel chosen first, so the band of names (#39.83) shows them beside „Nume" and
     // „Poreclă", which have none. Not „CNP": a figure shows no CNP, invented or not.
     await page.evaluate(() => localStorage.setItem("ga40-col-person-v3", JSON.stringify(["dateOfBirth", "age", "gender"])));
@@ -408,7 +413,7 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     await page.screenshot({ path: `${dir}/list.png` });
     await page.keyboard.press("Escape");
 
-    // Figura 2.5 — the „?" of the list, open.
+    // Figura 2.10 — the „?" of the list, open.
     await page.goto("/natural-persons");
     await expect(search).toBeVisible({ timeout: 60_000 });
     const help = page.getByRole("navigation", { name: S.breadcrumb }).filter({ visible: true }).locator(":scope > span.ml-auto button").first();
@@ -523,7 +528,7 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     await page.screenshot({ path: `${dir}/properties-list.png` });
     await page.keyboard.press("Escape");
 
-    // Figura 2.4 — #40.04: the list of properties in a short, narrow window — the band of names at the frame's top,
+    // Figura 2.5 — #40.04: the list of properties in a short, narrow window — the band of names at the frame's top,
     // „Pagina x din y" under the frame, and the red „<" and „>" of the hidden columns (#40.02, #40.03) — scrolled
     // half-way sideways and down; the same seed search as 5.1, rows not the seed's blurred.
     await page.setViewportSize({ width: 980, height: 560 });
@@ -546,7 +551,7 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     await page.screenshot({ path: `${dir}/list-fit.png`, animations: "disabled" });
     await page.setViewportSize({ width: 1366, height: 768 });
 
-    // Figura 2.5 — 40.13: the line between two columns (40.12) dragged in the band of names, the picture taken while the
+    // Figura 2.6 — 40.13: the line between two columns (40.12) dragged in the band of names, the picture taken while the
     // mouse still holds it — the column on its left wider, the line darker. The same seed search; rows not the seed's
     // blurred. The width is given back with a double-click, so nothing stays stored.
     await page.evaluate(() => localStorage.setItem("ga40-col-property-v4", JSON.stringify(["tarlaSola", "parcela", "propertyType", "cadastralNumber"])));
@@ -579,7 +584,9 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     const pb = (await page.locator('main thead th[data-col-drag="parcela"]').boundingBox())!;
     await page.mouse.move(nb.x + nb.width / 2, nb.y + nb.height / 2);
     await page.mouse.down();
-    await page.mouse.move(pb.x + pb.width - 4, nb.y + nb.height / 2 + 6, { steps: 10 });
+    // Three-quarters into „Parcelă": past its middle, so the line is at its right edge — and off the width handle
+    // there, whose own hint would otherwise sit over the picture.
+    await page.mouse.move(pb.x + pb.width * 0.75, nb.y + nb.height / 2 + 6, { steps: 10 });
     await expect(page.locator("[data-column-drop-line]")).toBeVisible({ timeout: 5_000 });
     await page.waitForTimeout(300);
     await page.screenshot({ path: `${dir}/list-drag.png` });

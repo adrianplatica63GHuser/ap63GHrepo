@@ -9,20 +9,20 @@ O persoană fizică este un om: numele, CNP-ul, data nașterii, actul de identit
 
 ## 3.1 Lista persoanelor fizice {#persons-list}
 
-În bara laterală, deschideți „Domeniu”, apoi „Persoane Fizice”. Ecranul se numește „Persoană fizică” și arată un tabel cu coloanele „Nume” și „Poreclă”, 15 rânduri pe pagină (secțiunea [[start-lists]]). În coloana „Nume”, prenumele vine primul: o persoană cu numele Popescu și prenumele Ion apare ca „Ion Popescu”.
+În bara laterală, deschideți „Domeniu”, apoi „Persoane Fizice”. Ecranul se numește „Persoane fizice” și arată un tabel cu coloanele „Nume” și „Poreclă”, 15 rânduri pe pagină (secțiunea [[start-lists]]). În coloana „Nume”, prenumele vine primul: o persoană cu numele Popescu și prenumele Ion apare ca „Ion Popescu”.
 
 Caseta de căutare („caută după ID, Nume, Poreclă, CNP, Email Personal 1, Email Personal 2, Email serviciu, Telefon Personal 1, Telefon Personal 2 sau Telefon serviciu”), cât butonul „Adaugă persoană”, păstrează în tabel doar persoanele care se potrivesc cu ce scrieți; ajunge o parte din nume. Textul ei nu încape întreg: țineți mouse-ul pe casetă ca să-l citiți. Filtrele listei se pun din coloane (secțiunea [[persons-list-filters]]). Lista nu are filtre de „Importanță” sau „Relevanță”.
 
-„Câmpuri afișate” adaugă coloane la tabel, cel mult patru odată. Le puteți alege dintre:
+„Câmpuri afișate” adaugă coloane la tabel, cel mult patru odată. Numele sunt scurte; țineți mouse-ul pe unul și vedeți numele întreg al câmpului. Le puteți alege dintre:
 
 - „CNP”
-- „Data nașterii”
+- „Născut pe” — data nașterii
 - „Vârstă”
 - „Gen”
-- „Data decesului”
-- „Locul nașterii”
-- „Tip profesional”
-- „Relația cu firma”
+- „Decedat pe” — data decesului
+- „Născut la” — locul nașterii
+- „Tip prof.” — tipul profesional
+- „Rel.cu VM” — relația cu firma
 
 Butonul arată câte coloane ați ales, de exemplu „Câmpuri afișate 2/4”. Alegerea rămâne până o schimbați.
 
@@ -45,7 +45,7 @@ Un al doilea clic pe același buton închide ce a deschis.
 
 ### 3.1.1 Filtrele listei {#persons-list-filters}
 
-Lista se filtrează ca lista proprietăților: din pâlnia de sub numele unei coloane, cu o etichetă pentru fiecare filtru și „Șterge filtrele” (secțiunea [[properties-list-filters]]). Lângă fiecare valoare dintr-o listă cu bife stă câte persoane o au, numărate cu celelalte filtre deja puse. Filtrele se păstrează în adresa paginii.
+Lista se filtrează ca lista proprietăților: din pâlnia de lângă numele unei coloane, cu o etichetă pentru fiecare filtru și „Șterge filtrele” (secțiunea [[properties-list-filters]]). Lângă fiecare valoare dintr-o listă cu bife stă câte persoane o au, numărate cu celelalte filtre deja puse. Filtrele se păstrează în adresa paginii.
 
 Coloanele care se pot filtra, alese în „Câmpuri afișate”:
 

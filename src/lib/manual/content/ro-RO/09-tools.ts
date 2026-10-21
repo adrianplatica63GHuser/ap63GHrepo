@@ -130,7 +130,7 @@ Mai jos stă „Creează … proprietăți — proprietarii și drumul — și u
 - „Descrierea grupului” — se completează singură cu „Diviz —” urmat de codul proprietății împărțite. Alegerea altei proprietăți o scrie din nou, așa că scrieți descrierea dumneavoastră după ce ați ales proprietatea.
 - „Poreclă drum” — pornește cu „Drum comun”.
 
-Fiecare proprietate nouă primește ca poreclă numele proprietarului ei, iar proprietarul se leagă de ea, cu rolul „Proprietar” (secțiunea [[links-associate]]). Drumul nu are proprietar. Proprietatea împărțită rămâne cum era: nu se schimbă și nu se șterge.
+Fiecare proprietate nouă primește ca poreclă numele proprietarului ei urmat de „(după divizare)” — de pildă „Ion Popescu (după divizare)” —, iar proprietarul se leagă de ea, cu rolul „Proprietar” (secțiunea [[links-associate]]). Drumul nu are proprietar. Proprietatea împărțită rămâne cum era: nu se schimbă și nu se șterge.
 
 „Creează proprietățile” creează proprietățile și grupul. Ecranul scrie „S-a creat grupul GRP-… cu următoarele proprietăți:”, codul calculului („Calculul înregistrat: CALC…”) și câte un link spre fiecare proprietate nouă. Colțurile fiecărei proprietăți poartă, în „Nr. orig.”, numerele colțurilor proprietății împărțite, acolo unde un colț al parcelei a ajuns pe ea (secțiunea [[properties-corners-table]]). Grupul îl găsiți în „Grupuri” (secțiunea [[links-classify-groups]]). Calculul apare primul în „Istoricul calculelor”, pe care îl deschide pictograma istoricului de lângă titlu (secțiunea [[tools-side-road-history]]).
 

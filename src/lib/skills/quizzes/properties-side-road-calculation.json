@@ -244,11 +244,11 @@
           "section": "tools-side-road-create",
           "ro": {
             "question": "După „Creează proprietățile”, Ciprian deschide proprietatea nouă a lui Mihai Stan și îl caută printre persoanele ei. Ce găsește?",
-            "explanation": "Fiecare proprietate nouă primește ca poreclă numele proprietarului ei, iar proprietarul se leagă de ea cu rolul „Proprietar”. Proprietarii sunt persoane din arhivă, alese la primul pas, așa că nu se creează persoane noi."
+            "explanation": "Fiecare proprietate nouă primește ca poreclă numele proprietarului ei urmat de „(după divizare)”, iar proprietarul se leagă de ea cu rolul „Proprietar”. Proprietarii sunt persoane din arhivă, alese la primul pas, așa că nu se creează persoane noi."
           },
           "en": {
             "question": "After „Creează proprietățile” (create the properties), Ciprian opens Mihai Stan's new property and looks for him among its persons. What does he find?",
-            "explanation": "Each new property takes its owner's name as its nickname, and the owner is linked to it with the role „Proprietar” (owner). The owners are persons in the archive, chosen in the first step, so no new persons are created."
+            "explanation": "Each new property takes as its nickname its owner's name followed by „(după divizare)” (after the split), and the owner is linked to it with the role „Proprietar” (owner). The owners are persons in the archive, chosen in the first step, so no new persons are created."
           },
           "options": [
             {
@@ -266,8 +266,8 @@
             {
               "id": "o3",
               "correct": false,
-              "ro": "Nimic legat: numele lui e doar porecla proprietății.",
-              "en": "Nothing linked: his name is only the property's nickname."
+              "ro": "Nimic legat: numele lui, cu „(după divizare)” după el, e doar porecla proprietății.",
+              "en": "Nothing linked: his name, with „(după divizare)” after it, is only the property's nickname."
             },
             {
               "id": "o4",

@@ -13,17 +13,17 @@ Open „Domain” in the sidebar, then „Properties”. The list „Properties�
 
 The search box at the top of the list, as wide as „Add new Property”, searches by „Code”, „Nickname”, „Cadastral No.”, „Carte Funciara”, „Tarla/Solă” and „Parcelă” — as the box itself says; rest the mouse on it to read the whole text. The list's filters are set from its columns (section [[properties-list-filters]]). Below the table, „Showing … of …” says how many properties you are seeing out of how many there are.
 
-The first column is always „Nickname”, the name you give the property. It is always shown and is not among the options in „Choose fields”. The property's code has no column in the list; you find it on the property's screen, in the corner of its first tile.
+The first column is „Nickname”, the name you give the property; „New!” stands in it, after the nickname, and „Crossed” after that on a property whose corners cross. It is always shown and is not among the options in „Choose fields”; you can move it, like any column, by dragging its name (section [[start-lists]]). The property's code has no column in the list; you find it on the property's screen, in the corner of its first tile.
 
-„Choose fields” adds up to four columns after „Nickname”. You can choose from the cadastral fields and the locality:
+„Choose fields” adds up to four columns after „Nickname”. You can choose from the cadastral fields and the locality, by their short names:
 
-- „Tarla/Solă” and „Parcelă”;
-- „Official (m²)” and „Calculated (m²)” — the two areas, official and calculated;
-- „Carte Funciara” and „Cadastral No.” — the land-registry and cadastral numbers;
-- „Use Category” and „Property Type”, shown by their names;
+- „Tarla” and „Parcelă”;
+- „Supr.Ofic.” and „Supr.Calc.” — the two areas, official and calculated;
+- „C.F.#” and „Cadastru #” — the land-registry and cadastral numbers;
+- „Use Categ.” and „Prop. Type” — the use category and the property type, shown by their names;
 - „Locality”.
 
-The button shows how many columns you have chosen, for instance „Choose fields 2/4”. Once four are ticked, the other boxes turn grey until you untick one. At first the list shows only „Property Type”. The choice is kept in this browser, so you find it again next time.
+The button shows how many columns you have chosen, for instance „Choose fields 2/4”. Once four are ticked, the other boxes turn grey until you untick one. At first the list shows only „Prop. Type”. The choice is kept in this browser, so you find it again next time.
 
 On the right, above the table, are two buttons: „Full map” opens the map of all properties (chapter [[map]]), and „Add new Property” creates a new one (section [[properties-add]]). While the full map is open, the navigation bar reads „Home › Properties › Full map”, and a click on „Properties” takes you back to the list.
 
@@ -31,10 +31,10 @@ On the right, above the table, are two buttons: „Full map” opens the map of 
 
 ### 5.1.1 The list's filters {#properties-list-filters}
 
-The list is filtered by its columns. A column chosen in „Choose fields” that can be filtered has a small funnel under its name; a click on the funnel opens the column's filter window right under it. The list shows only the properties that pass every filter at once.
+The list is filtered by its columns. A column chosen in „Choose fields” that can be filtered has a small funnel beside its name; a click on the funnel opens the column's filter window right under it. The list shows only the properties that pass every filter at once.
 
 1. Tick the column in „Choose fields”, if it is not in the table already.
-2. Press the funnel under its name and choose what you want to see. The list changes at once, with no button to apply.
+2. Press the funnel beside its name and choose what you want to see. The list changes at once, with no button to apply.
 3. Click outside the window, or press Esc, to close it.
 
 On the list of properties seven columns filter:
@@ -43,13 +43,13 @@ On the list of properties seven columns filter:
 - **„Official (m²)” and „Calculated (m²)”** — „From” and „To”, either or both;
 - **„Parcelă”** — „Contains”: the properties whose parcela contains what you typed remain.
 
-„Nickname”, „Cadastral No.” and „Carte Funciara” have no funnel; a property is found by them with the search box.
+„Nickname”, „Cadastru #” and „C.F.#” have no funnel; a property is found by them with the search box.
 
 Each filter set becomes a rounded label under the search box, on a row that appears only while a filter is set, with the column's name and what you chose, for instance „Property Type” House. A click on the label opens the window again, right under the label, and its X removes the filter. A filled funnel shows that the list is filtered by that column. A filter stays when you hide its column: its label still stands under the search box, so the list is never filtered without your seeing it.
 
 „Clear filters” removes them all at once, and the row of labels goes. The filters are kept in the page's address, like the search: they stay after you reload the page, after you come back to the list with „Back”, and when you send the address to someone.
 
-The table's header is three rows tall, the same on the four lists, however many columns you chose. On a column that can be filtered the name stands on the first two rows — on the second, when it fits on one — and the funnel, alone, on the third. The name of a column with no filter, like „Nickname”, stands at mid-height. A long name breaks over two rows where they come out most even; no name takes three rows.
+The table's header is two rows tall, the same on the four lists, however many columns you chose. A column's name and, on a column that can be filtered, the funnel after it stand together in the middle, across and down. A name too long for its column goes on to the second row, and the funnel stays beside the last row; no name takes three rows.
 
 ## 5.2 A property added by hand {#properties-add}
 

@@ -9,21 +9,21 @@ O persoană juridică este o firmă, o instituție, un consiliu local sau o asoc
 
 ## 4.1 Lista persoanelor juridice {#companies-list}
 
-Lista se deschide din bara laterală: „Domeniu”, apoi „Persoane Juridice”. Ecranul se numește „Persoană juridică” și arată, ca orice listă (secțiunea [[start-lists]]), câte 15 firme pe pagină, cu coloanele „Denumire” și „Poreclă”.
+Lista se deschide din bara laterală: „Domeniu”, apoi „Persoane Juridice”. Ecranul se numește „Persoane juridice” și arată, ca orice listă (secțiunea [[start-lists]]), câte 15 firme pe pagină, cu coloanele „Denumire” și „Poreclă”.
 
 Caseta de căutare din capul listei („caută după ID, Denumire, Poreclă, Nr. înregistrare (CUI), Telefon firmă sau E-mail firmă”), cât butonul „Adaugă persoană juridică”, găsește o firmă după ID, denumire, poreclă, CUI, telefon și e-mail: scrieți CUI-ul și rămân firmele care îl au. Țineți mouse-ul pe casetă ca să citiți textul întreg. Când nu se găsește nimic, lista spune „Nu există persoane juridice”.
 
-„Câmpuri afișate” adaugă coloane listei. Pe lista firmelor puteți alege patru dintre cinci:
+„Câmpuri afișate” adaugă coloane listei. Pe lista firmelor puteți alege patru dintre cinci; în capul tabelului coloanele au numele scurte din prima coloană a tabelului de mai jos, iar mouse-ul ținut pe un nume arată numele întreg:
 
-| Câmpul | Ce arată coloana |
-|---|---|
-| Tip | Forma firmei: SRL, SA, PFA, Instituție și celelalte. |
-| Nr. înregistrare (CUI) | Codul unic de înregistrare. |
-| Nr. registru comerțului | Numărul de la Registrul Comerțului. |
-| Persoană de contact | Numele persoanei de contact a firmei. |
-| Localitate | Localitatea din adresa sediului. |
+| Coloana | Câmpul | Ce arată coloana |
+|---|---|---|
+| Tip | Tip | Forma firmei: SRL, SA, PFA, Instituție și celelalte. |
+| CUI | Nr. înregistrare (CUI) | Codul unic de înregistrare. |
+| #Reg. Com. | Nr. registru comerțului | Numărul de la Registrul Comerțului. |
+| Contact | Persoană de contact | Numele persoanei de contact a firmei. |
+| Localitate | Localitate | Localitatea din adresa sediului. |
 
-Butonul arată câte câmpuri ați ales, de exemplu „Câmpuri afișate 1/4”. Coloana CUI nu apare până nu o bifați, dar căutarea după CUI merge oricum. La „Persoană de contact” se vede prima persoană de contact a firmei; dacă primul loc e gol, se vede a doua (secțiunea [[companies-people-contact]]).
+Butonul arată câte câmpuri ați ales, de exemplu „Câmpuri afișate 1/4”. Coloana CUI nu apare până nu o bifați, dar căutarea după CUI merge oricum. La „Contact” se vede prima persoană de contact a firmei; dacă primul loc e gol, se vede a doua (secțiunea [[companies-people-contact]]).
 
 Pe fiecare rând stau „Previzualizare”, „Incursiune”, „Legături” și „Deschide”. Previzualizarea unei firme arată denumirea ei, apoi porecla. „Incursiune” arată, alături de listă, fișa „Interacțiuni” a firmei, iar „Legături” arată, tot alături, cu cine este legată firma, fără să o deschideți.
 
@@ -31,14 +31,14 @@ O firmă adăugată de curând apare în capul listei, marcată „Nou!”.
 
 ### 4.1.1 Filtrele listei {#companies-list-filters}
 
-Lista se filtrează ca lista proprietăților: din pâlnia de sub numele unei coloane, cu o etichetă pentru fiecare filtru și „Șterge filtrele” (secțiunea [[properties-list-filters]]). Lângă fiecare valoare stă câte firme o au, numărate cu celelalte filtre deja puse.
+Lista se filtrează ca lista proprietăților: din pâlnia de lângă numele unei coloane, cu o etichetă pentru fiecare filtru și „Șterge filtrele” (secțiunea [[properties-list-filters]]). Lângă fiecare valoare stă câte firme o au, numărate cu celelalte filtre deja puse.
 
 Pe lista firmelor se filtrează două coloane, amândouă cu bife:
 
 - **„Tip”** — valorile listei de tipuri de persoană juridică, așa cum sunt acum în arhivă;
 - **„Localitate”** — localitatea din adresa sediului.
 
-„Nr. înregistrare (CUI)”, „Nr. registru comerțului” și „Persoană de contact” nu au pâlnie; o firmă se găsește după CUI cu caseta de căutare.
+„CUI”, „#Reg. Com.” și „Contact” nu au pâlnie; o firmă se găsește după CUI cu caseta de căutare.
 
 ## 4.2 O firmă adăugată și modificată {#companies-add}
 
@@ -197,7 +197,7 @@ Situația: pe un act scrie doar CUI-ul unei firme.
 
 1. Deschideți „Persoane Juridice”.
 2. Scrieți CUI-ul în caseta de căutare (secțiunea [[companies-list]]).
-3. Ca să vedeți CUI-ul și în tabel, bifați „Nr. înregistrare (CUI)” în „Câmpuri afișate”.
+3. Ca să vedeți CUI-ul și în tabel, bifați „CUI” în „Câmpuri afișate”.
 4. Apăsați „Deschide” pe rândul firmei.
 
 ### 4.4.3 Notați administratorul unei firme {#companies-example-representative}

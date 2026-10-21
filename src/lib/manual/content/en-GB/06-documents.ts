@@ -9,13 +9,13 @@ A document is a deed held in the archive — a contract, a certificate, a permit
 
 ## 6.1 The list of documents {#documents-list}
 
-In the sidebar, open „Domain”, then „Documents”. The list shows every document in the archive, in the columns „Type” and „Title”. The title is the document's „Short Label”. A document just added appears at the top, badged „New!”. Lists work the same everywhere (section [[start-lists]]).
+In the sidebar, open „Domain”, then „Documents”. The list shows every document in the archive, in the columns „Type” and „Title”. The title is the document's „Short Label”. A document just added appears at the top, badged „New!” after its type. Lists work the same everywhere (section [[start-lists]]).
 
 Above the table, on one row, stand the search box („search by Code, Title or Document No.”), as wide as „Add new Document”, „Choose fields”, right after it „Expiring soon”, then „Document type:”, a round sign with „Type-specific field:” and an ⓘ beside it, and, at the end, „Add new Document”. In a window too narrow for them all, „Document type:”, the sign, „Type-specific field:” and the ⓘ move together onto a row of their own, under the search box, and „Add new Document” stays at the end of the first row. Under them a row with the labels of the filters set from the columns and „Clear filters” appears, only while such a filter is set (section [[documents-list-filters]]).
 
 **„Type” shows the type's short name** — for example „CVC” for „Contract de Vânzare”, „Intabulare” for „Încheiere de Intabulare”. Rest the mouse on the cell and the bubble shows the full name. The short name is chosen for each type in „Reference Data”, under „Document Types”, in the field „Short name” (section [[admin-reference-data]]). Left empty, the list shortens the name by itself, dropping a leading „Contract de”, „Act de”, „Încheiere de”, „Certificat de”. Two types may not share a short name.
 
-**„Choose fields”** adds up to four columns: „Document No.”, „Date”, „Institution / Notariat”, „Subject”, „No. of Pages”, „No. of Persons”, „No. of Properties”, „Added on”.
+**„Choose fields”** adds up to four columns, by their short names: „Doc.#” (the document's number), „Date”, „Inst./Notar” (the institution or the notary), „Subject”, „Pages”, „Persons”, „Properties” (how many pages, persons and properties the document has), „Added on”.
 
 **„Document type:”** opens a list of tick boxes, one per type. The button says what you chose: „All types”, the type's name when exactly one is ticked, „2 types shown” when several are, „No type” when none is — the list then asks „Please select at least one document type”. There are many types, so under „All types” there is a search box: type part of the name, even without diacritics („mostenitor” finds „Certificat de Moștenitor”), and only the matching types remain. The search only hides rows; it never changes a tick. The list of tick boxes stays open while you tick and untick — also after you untick „All types”, so that you can then choose one or more types —, and the list of documents below follows each tick. It closes on a click outside it, the Escape key or its button.
 
@@ -23,7 +23,7 @@ Above the table, on one row, stand the search box („search by Code, Title or D
 
 ### 6.1.1 The list's filters {#documents-list-filters}
 
-The list of documents is filtered like the list of properties, from the funnel under a column's name (section [[properties-list-filters]]). „Document type:” and „Type-specific field:”, on the top row, are always there and work as above; the filters set from the columns become labels on the row under it, which appears only while one is set. „Expiring soon”, on the same top row, beside „Choose fields”, is a filter too: pressed, the list keeps only the documents whose validity ends soon; pressed again, it drops the filter.
+The list of documents is filtered like the list of properties, from the funnel beside a column's name (section [[properties-list-filters]]). „Document type:” and „Type-specific field:”, on the top row, are always there and work as above; the filters set from the columns become labels on the row under it, which appears only while one is set. „Expiring soon”, on the same top row, beside „Choose fields”, is a filter too: pressed, the list keeps only the documents whose validity ends soon; pressed again, it drops the filter.
 
 The columns that can be filtered, chosen in „Choose fields”:
 
@@ -31,7 +31,7 @@ The columns that can be filtered, chosen in „Choose fields”:
 - **„Date” and „Added on”** — „From” and „To”, or, from „Period…”, „This year” or „The last 12 months”;
 - **„No. of Pages”, „No. of Persons” and „No. of Properties”** — „From” and „To”, counted as in their columns: a person linked to the document twice counts once.
 
-„Document No.” and „Subject” have no funnel; a document is found by its number with the search box.
+„Doc.#” and „Subject” have no funnel; a document is found by its number with the search box.
 
 All the filters add up, „Document type:” and „Type-specific field:” included: the list shows the documents that pass every one. „Clear filters” removes the filters set from the columns; „Expiring soon”, the ticked types and the type-specific field stay. The filters are kept in the page's address; a link made before opens the same list.
 

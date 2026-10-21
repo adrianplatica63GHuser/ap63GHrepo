@@ -9,13 +9,13 @@ Un act este un înscris din arhivă — un contract, un certificat, o autorizaț
 
 ## 6.1 Lista actelor {#documents-list}
 
-În bara laterală, deschideți „Domeniu”, apoi „Acte”. Lista arată toate actele arhivei, în coloanele „Tip” și „Titlu”. Titlul este „Etichetă scurtă” a actului. Un act abia adăugat apare sus, cu semnul „Nou!”. Listele se folosesc la fel peste tot (secțiunea [[start-lists]]).
+În bara laterală, deschideți „Domeniu”, apoi „Acte”. Lista arată toate actele arhivei, în coloanele „Tip” și „Titlu”. Titlul este „Etichetă scurtă” a actului. Un act abia adăugat apare sus, cu semnul „Nou!” după tipul lui. Listele se folosesc la fel peste tot (secțiunea [[start-lists]]).
 
 Deasupra tabelului, pe un rând, stau caseta de căutare („caută după Cod, Titlu sau Nr. document”), cât butonul „Adaugă act”, „Câmpuri afișate”, imediat după el „Expiră curând”, apoi „Tip document:”, un semn rotund cu „Câmp specific:” și un ⓘ lângă el, iar la capăt „Adaugă act”. Într-o fereastră prea îngustă pentru toate, „Tip document:”, semnul, „Câmp specific:” și ⓘ-ul trec împreună pe un rând al lor, sub caseta de căutare, iar „Adaugă act” rămâne la capătul primului rând. Sub ele apare un rând cu etichetele filtrelor puse din coloane și „Șterge filtrele”, numai cât timp este pus un astfel de filtru (secțiunea [[documents-list-filters]]).
 
 **„Tip” arată denumirea scurtă a tipului** — de exemplu „CVC” pentru „Contract de Vânzare”, „Intabulare” pentru „Încheiere de Intabulare”. Țineți mouse-ul pe celulă și bula arată denumirea întreagă. Denumirea scurtă se alege pentru fiecare tip în „Date de referință”, la „Tipuri de Document”, în câmpul „Denumire scurtă” (secțiunea [[admin-reference-data]]). Lăsată goală, lista scurtează singură denumirea, fără începutul „Contract de”, „Act de”, „Încheiere de”, „Certificat de”. Două tipuri nu pot avea aceeași denumire scurtă.
 
-**„Câmpuri afișate”** adaugă cel mult patru coloane: „Nr. document”, „Data”, „Instituție / Notariat”, „Subiect”, „Nr. pagini”, „Nr. persoane”, „Nr. proprietăți”, „Adăugat la”.
+**„Câmpuri afișate”** adaugă cel mult patru coloane, cu numele lor scurte: „#Document” (numărul actului), „Data”, „Inst./Notar” (instituția sau notariatul), „Subiect”, „Pagini”, „Persoane”, „Proprietăți” (câte pagini, persoane și proprietăți are actul), „Adăugat la”.
 
 **„Tip document:”** deschide o listă de bife, câte una pentru fiecare tip. Butonul spune ce ați ales: „Toate tipurile”, numele tipului când este bifat unul singur, „2 tipuri afișate” când sunt mai multe, „Niciun tip” când nu e bifat niciunul — atunci lista cere „Selectați cel puțin un tip de document”. Tipurile sunt multe, așa că sub „Toate tipurile” stă o casetă de căutare: scrieți o parte din nume, chiar fără diacritice („mostenitor” găsește „Certificat de Moștenitor”), și rămân doar tipurile potrivite. Căutarea doar ascunde rânduri, nu schimbă nicio bifă. Lista de bife rămâne deschisă cât bifați și debifați — și după ce debifați „Toate tipurile”, ca să alegeți apoi unul sau mai multe tipuri —, iar lista actelor de dedesubt urmează fiecare bifă. Se închide la un clic în afara ei, la tasta Escape sau la butonul ei.
 
@@ -23,7 +23,7 @@ Deasupra tabelului, pe un rând, stau caseta de căutare („caută după Cod, T
 
 ### 6.1.1 Filtrele listei {#documents-list-filters}
 
-Lista actelor se filtrează ca lista proprietăților, din pâlnia de sub numele unei coloane (secțiunea [[properties-list-filters]]). „Tip document:” și „Câmp specific:”, de pe rândul de sus, sunt mereu acolo și se poartă ca mai sus; filtrele puse din coloane devin etichete pe rândul de sub el, care apare doar cât timp este pus unul. „Expiră curând”, de pe același rând de sus, lângă „Câmpuri afișate”, este tot un filtru: apăsat, lista păstrează doar actele a căror valabilitate se încheie în curând; apăsat din nou, renunță la filtru.
+Lista actelor se filtrează ca lista proprietăților, din pâlnia de lângă numele unei coloane (secțiunea [[properties-list-filters]]). „Tip document:” și „Câmp specific:”, de pe rândul de sus, sunt mereu acolo și se poartă ca mai sus; filtrele puse din coloane devin etichete pe rândul de sub el, care apare doar cât timp este pus unul. „Expiră curând”, de pe același rând de sus, lângă „Câmpuri afișate”, este tot un filtru: apăsat, lista păstrează doar actele a căror valabilitate se încheie în curând; apăsat din nou, renunță la filtru.
 
 Coloanele care se pot filtra, alese în „Câmpuri afișate”:
 
@@ -31,7 +31,7 @@ Coloanele care se pot filtra, alese în „Câmpuri afișate”:
 - **„Data” și „Adăugat la”** — „De la” și „Până la” sau, din „Perioadă…”, „Anul acesta” ori „Ultimele 12 luni”;
 - **„Nr. pagini”, „Nr. persoane” și „Nr. proprietăți”** — „De la” și „Până la”, numărate ca în coloanele lor: o persoană legată de act de două ori se numără o dată.
 
-„Nr. document” și „Subiect” nu au pâlnie; un act se găsește după număr cu caseta de căutare.
+„#Document” și „Subiect” nu au pâlnie; un act se găsește după număr cu caseta de căutare.
 
 Toate filtrele se adună, „Tip document:” și „Câmp specific:” cu tot: lista arată actele care trec de toate. „Șterge filtrele” scoate filtrele puse din coloane; „Expiră curând”, tipurile bifate și câmpul specific rămân. Filtrele se păstrează în adresa paginii; un link făcut înainte deschide aceeași listă.
 

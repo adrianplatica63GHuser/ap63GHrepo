@@ -232,11 +232,11 @@
           "section": "start-lists",
           "ro": {
             "question": "Vreți să vedeți doar proprietățile din tarlaua T12. Cum puneți filtrul pe lista proprietăților?",
-            "explanation": "O listă se filtrează după coloanele ei: bifați „Tarla/Solă” în „Câmpuri afișate”, apoi apăsați pâlnia de sub numele coloanei și bifați T12. Filtrul pus devine o etichetă sub caseta de căutare."
+            "explanation": "O listă se filtrează după coloanele ei: bifați „Tarla” în „Câmpuri afișate”, apoi apăsați pâlnia de lângă numele coloanei și bifați T12. Filtrul pus devine o etichetă sub caseta de căutare."
           },
           "en": {
             "question": "You want to see only the properties in tarla T12. How do you set the filter on the list of properties?",
-            "explanation": "A list is filtered by its columns: tick „Tarla/Solă” in „Câmpuri afișate” (the columns shown), then press the funnel under the column's name and tick T12. The filter set becomes a label under the search box."
+            "explanation": "A list is filtered by its columns: tick „Tarla” in „Câmpuri afișate” (the columns shown), then press the funnel beside the column's name and tick T12. The filter set becomes a label under the search box."
           },
           "options": [
             {
@@ -248,8 +248,8 @@
             {
               "id": "o2",
               "correct": true,
-              "ro": "Cu pâlnia coloanei „Tarla/Solă”",
-              "en": "With the „Tarla/Solă” column's funnel"
+              "ro": "Cu pâlnia coloanei „Tarla”",
+              "en": "With the „Tarla” column's funnel"
             },
             {
               "id": "o3",
@@ -528,11 +528,11 @@
           "id": "b7",
           "section": "start-lists",
           "ro": {
-            "question": "Ați filtrat lista după „Tip proprietate”, apoi ați debifat coloana în „Câmpuri afișate”. Ce se întâmplă cu filtrul?",
+            "question": "Ați filtrat lista după „Tip Prop.”, apoi ați debifat coloana în „Câmpuri afișate”. Ce se întâmplă cu filtrul?",
             "explanation": "Un filtru rămâne și dacă îi ascundeți coloana: eticheta lui stă mai departe sub caseta de căutare, așa că lista nu este niciodată filtrată fără să vedeți asta. X-ul etichetei sau „Șterge filtrele” îl scot."
           },
           "en": {
-            "question": "You filtered the list by „Tip proprietate” (property type), then unticked the column in „Câmpuri afișate”. What happens to the filter?",
+            "question": "You filtered the list by „Tip Prop.” (property type), then unticked the column in „Câmpuri afișate”. What happens to the filter?",
             "explanation": "A filter stays when you hide its column: its label still stands under the search box, so the list is never filtered without your seeing it. The label's X or „Șterge filtrele” (clear filters) removes it."
           },
           "options": [

@@ -9,20 +9,20 @@ A natural person is a human being: their name, CNP, date of birth, identity docu
 
 ## 3.1 The list of natural persons {#persons-list}
 
-In the sidebar, open „Domain”, then „Natural Persons”. The screen is called „Natural Person” and shows a table with the columns „Name” and „Nickname”, 15 rows to a page (section [[start-lists]]). In the „Name” column the first name comes first: a person whose surname is Popescu and whose first name is Ion appears as „Ion Popescu”.
+In the sidebar, open „Domain”, then „Natural Persons”. The screen is called „Natural Persons” and shows a table with the columns „Name” and „Nickname”, 15 rows to a page (section [[start-lists]]). In the „Name” column the first name comes first: a person whose surname is Popescu and whose first name is Ion appears as „Ion Popescu”.
 
 The search box („search by ID, Name, Nickname, CNP, Personal Email 1, Personal Email 2, Work Email, Personal Phone 1, Personal Phone 2 or Work Phone”), as wide as „Add new Person”, keeps in the table only the persons who match what you type; part of the name is enough. Its text does not fit whole: rest the mouse on the box to read it. The list's filters are set from its columns (section [[persons-list-filters]]). The list has no „Importance” or „Relevance” filter.
 
-„Choose fields” adds columns to the table, at most four at a time. You can choose them from:
+„Choose fields” adds columns to the table, at most four at a time. The names are short; rest the mouse on one and you see the field's whole name. You can choose them from:
 
 - „CNP”
-- „Date of Birth”
+- „DoB” — the date of birth
 - „Age”
 - „Gender”
-- „Date of death”
-- „Place of Birth”
-- „Professional type”
-- „Relationship to the business”
+- „DoD” — the date of death
+- „Born in” — the place of birth
+- „Prof.type” — the professional type
+- „Rel.to VM” — the relationship to the business
 
 The button shows how many columns you have chosen, for instance „Choose fields 2/4”. The choice stays until you change it.
 
@@ -45,7 +45,7 @@ A second click on the same button closes what it opened.
 
 ### 3.1.1 The list's filters {#persons-list-filters}
 
-The list is filtered like the list of properties: from the funnel under a column's name, with a label for each filter and „Clear filters” (section [[properties-list-filters]]). Beside each value in a list with ticks is how many persons hold it, counted with the other filters already set. The filters are kept in the page's address.
+The list is filtered like the list of properties: from the funnel beside a column's name, with a label for each filter and „Clear filters” (section [[properties-list-filters]]). Beside each value in a list with ticks is how many persons hold it, counted with the other filters already set. The filters are kept in the page's address.
 
 The columns that can be filtered, chosen in „Choose fields”:
 

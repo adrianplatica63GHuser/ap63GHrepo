@@ -162,8 +162,8 @@ export const SKILLS: readonly Skill[] = [
     path: "workspace",
     name: { ro: "Găsește un obiect într-o listă", en: "Find an object in a list" },
     description: {
-      ro: "Cauți în lista persoanelor, a proprietăților sau a actelor, treci de la o pagină la alta, alegi coloanele din „Câmpuri afișate”, filtrezi din pâlnia unei coloane, derulezi rândurile în chenarul listei, citești și apeși semnele roșii ale coloanelor ascunse și lățești sau îngustezi o coloană trăgând linia dintre coloane.",
-      en: "Search the list of persons, properties or documents, page through it, choose its columns in „Câmpuri afișate”, filter from a column's funnel, scroll the rows in the list's frame, read and press the red signs of hidden columns, and widen or narrow a column by dragging the line between the columns.",
+      ro: "Cauți în lista persoanelor, a proprietăților sau a actelor, treci de la o pagină la alta, alegi coloanele din „Câmpuri afișate”, filtrezi din pâlnia unei coloane, derulezi rândurile în chenarul listei, citești și apeși semnele roșii ale coloanelor ascunse lățești sau îngustezi o coloană trăgând linia dintre coloane și muți o coloană în alt loc trăgând-o de nume.",
+      en: "Search the list of persons, properties or documents, page through it, choose its columns in „Câmpuri afișate”, filter from a column's funnel, scroll the rows in the list's frame, read and press the red signs of hidden columns, widen or narrow a column by dragging the line between the columns, and move a column to another place by dragging its name.",
     },
     predecessors: [],
     screens: ["natural-persons-list", "judicial-persons-list", "properties-list", "documents-list"],
@@ -893,8 +893,8 @@ export const SKILLS: readonly Skill[] = [
     path: "workspace",
     name: { ro: "Ajustează aplicația: setări, implicite și utilizatori", en: "Fit the application: settings, defaults and users" },
     description: {
-      ro: "Schimbi o setare și o pui la loc exact, salvezi setul tău de fișe în „Implicitele mele”, alegi furnizorii din „Costuri” și răspunzi unei cereri de acces.",
-      en: "Change a setting and put it back exactly, save your own set of tiles in „Implicitele mele”, choose the providers in „Costuri”, and answer an access request.",
+      ro: "Schimbi o setare și o pui la loc exact, treci aplicația pe „Mod întunecat”, salvezi setul tău de fișe în „Implicitele mele”, alegi furnizorii din „Costuri” și răspunzi unei cereri de acces.",
+      en: "Change a setting and put it back exactly, turn the application to „Mod întunecat” (dark mode), save your own set of tiles in „Implicitele mele”, choose the providers in „Costuri”, and answer an access request.",
     },
     predecessors: ["workspace-sign-in-and-navigate", "workspace-arrange-tiles"],
     screens: ["admin-settings", "admin-users"],

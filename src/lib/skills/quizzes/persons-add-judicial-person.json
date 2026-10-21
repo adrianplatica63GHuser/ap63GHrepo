@@ -307,24 +307,24 @@
           "section": "companies-list",
           "ro": {
             "question": "Vreți să vedeți, direct în lista firmelor, persoana de contact a fiecăreia. Ce faceți?",
-            "explanation": "„Câmpuri afișate” adaugă coloane listei; una dintre ele este „Persoană de contact”, care arată prima persoană de contact a firmei."
+            "explanation": "„Câmpuri afișate” adaugă coloane listei; una dintre ele este „Contact”, care arată prima persoană de contact a firmei."
           },
           "en": {
             "question": "You want to see each firm's contact person directly in the list of firms. What do you do?",
-            "explanation": "„Câmpuri afișate” adds columns to the list; one of them is „Persoană de contact”, which shows the firm's first contact person."
+            "explanation": "„Câmpuri afișate” adds columns to the list; one of them is „Contact”, which shows the firm's first contact person."
           },
           "options": [
             {
               "id": "o1",
               "correct": true,
-              "ro": "Bifați „Persoană de contact” în „Câmpuri afișate”.",
-              "en": "Tick „Persoană de contact” in „Câmpuri afișate” (the columns shown)."
+              "ro": "Bifați „Contact” în „Câmpuri afișate”.",
+              "en": "Tick „Contact” in „Câmpuri afișate” (the columns shown)."
             },
             {
               "id": "o2",
               "correct": false,
-              "ro": "Nimic: coloana „Persoană de contact” se vede de la început, după „Poreclă”.",
-              "en": "Nothing: the „Persoană de contact” column is shown from the start, after „Poreclă”."
+              "ro": "Nimic: coloana „Contact” se vede de la început, după „Poreclă”.",
+              "en": "Nothing: the „Contact” column is shown from the start, after „Poreclă”."
             },
             {
               "id": "o3",
