@@ -70,6 +70,8 @@ A row can carry a few buttons:
 
 Under the rows are „Associate person”, „Associate property”, „Associate document” and „Dissociate”; on a document, after them, also „Cited instruments” (section [[links-references]]). On a sale contract, an addendum or a certificate of inheritance, the parties stand in the „Parties” tile, grouped by role, and „Links” holds the document's other links and, above them, a line saying how many parties are in „Parties” (section [[documents-parties]]).
 
+If one kind of link cannot be loaded, the others stay in sight, and under the rows a red line says which list did not load and why — for instance that the database did not answer or that your session has ended —, with the „Try again” button, which asks for it again.
+
 ![7.2 An object's „Links” tile](links-related.png){#fig-links-related}
 
 ## 7.3 Cited deeds and included properties {#links-references}

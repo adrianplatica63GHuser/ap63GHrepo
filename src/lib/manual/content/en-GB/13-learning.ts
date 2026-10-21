@@ -40,7 +40,9 @@ Open the screen: the current text and the proposal stand side by side, field by 
 
 To accept them all at once, press the „Accept all” button above the list, which also shows how many there are. A confirmation, „Accept every proposal?”, names the screens: „Accept all” saves them one after another, and „Cancel” changes nothing. At the end, a line says how many texts were saved.
 
-Your text is never changed without your choosing. A proposal is tied to the text it found: if you write something else over it, the proposal disappears by itself, because it no longer answers the text you have. „Accept all” does not write over a text changed in the meantime either: that screen is skipped.
+Your text is never changed without your choosing. A proposal is tied to the text it found: if you write something else over it, the proposal disappears by itself, because it no longer answers the text you have. „Accept all” does not write over a text changed in the meantime either: that screen is skipped. A single „Accept” does the same: if the screen's text has changed since the proposal was written, nothing is saved, and the message says so.
+
+When a save does not succeed — „Accept”, „Accept all” or „Save” —, the message says why: your session has ended, the account may not, the text has changed in the meantime, or the database or the application's server did not answer. „Accept all” gives the reason for each screen that was not saved, and the others stay saved.
 
 ## 13.3 The skills map {#learning-skills}
 

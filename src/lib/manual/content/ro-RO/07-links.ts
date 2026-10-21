@@ -70,6 +70,8 @@ Pe rânduri pot sta câteva butoane:
 
 Sub rânduri stau „Asociază persoană”, „Asociază proprietate”, „Asociază act” și „Dezasociază”; pe un act, după ele, și „Înscrisuri citate” (secțiunea [[links-references]]). Pe un contract de vânzare-cumpărare, un act adițional sau un certificat de moștenitor, părțile stau în fișa „Părți”, grupate pe rol, iar „Legături” ține celelalte legături ale actului și, deasupra lor, un rând care spune câte părți sunt în „Părți” (secțiunea [[documents-parties]]).
 
+Dacă un fel de legături nu se poate încărca, celelalte rămân la vedere, iar sub rânduri un rând roșu spune care listă nu s-a încărcat și de ce — de pildă că baza de date nu a răspuns sau că sesiunea s-a încheiat —, cu butonul „Reîncearcă”, care o cere din nou.
+
 ![7.2 Fișa „Legături” a unui obiect](links-related.png){#fig-links-related}
 
 ## 7.3 Înscrisuri citate și proprietăți incluse {#links-references}

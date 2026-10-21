@@ -162,7 +162,7 @@ The texts behind the „?” button and the light-bulb hints on the screens (sec
 | Background (English) | the same background, in English |
 | How To (English) | the same instructions, in English |
 
-„Preview” shows the text as it will appear, as you type. „Save” saves it, and the screen confirms with „Saved”. From then on, the „?” on that screen opens the „Help” panel, with „Background” and „How To”, as you wrote them, and under them „See in the manual: …”, with the section of this manual that describes the screen. A screen marked „Proposal” has a text proposed from the manual, which you accept, edit or set aside (section [[learning-help-proposals]]).
+„Preview” shows the text as it will appear, as you type. „Save” saves it, and the screen confirms with „Saved”; if the save does not succeed, the message says why (section [[learning-help-proposals]]). From then on, the „?” on that screen opens the „Help” panel, with „Background” and „How To”, as you wrote them, and under them „See in the manual: …”, with the section of this manual that describes the screen. A screen marked „Proposal” has a text proposed from the manual, which you accept, edit or set aside (section [[learning-help-proposals]]).
 
 „Micro-hints” holds the light-bulb hints: choose a hint from the list and write its text in „Hint text (Romanian)” and „Hint text (English)”. A hint that stands on several screens says „Appears on … screens — saving writes to all of them.”.
 

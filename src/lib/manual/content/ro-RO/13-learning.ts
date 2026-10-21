@@ -40,7 +40,9 @@ Deschideți ecranul: textul de acum și propunerea stau unul lângă altul, câm
 
 Ca să le acceptați pe toate deodată, apăsați butonul „Acceptă toate” de deasupra listei, care arată și câte sunt. O confirmare, „Acceptați toate propunerile?”, numește ecranele: „Acceptă toate” le salvează pe rând, iar „Anulează” nu schimbă nimic. La sfârșit, un rând spune câte texte s-au salvat.
 
-Textul dumneavoastră nu este schimbat niciodată fără să alegeți. O propunere este legată de textul pe care l-a găsit: dacă scrieți altceva peste el, propunerea dispare singură, pentru că nu mai răspunde textului pe care îl aveți. Nici „Acceptă toate” nu scrie peste un text schimbat între timp: ecranul acela este sărit.
+Textul dumneavoastră nu este schimbat niciodată fără să alegeți. O propunere este legată de textul pe care l-a găsit: dacă scrieți altceva peste el, propunerea dispare singură, pentru că nu mai răspunde textului pe care îl aveți. Nici „Acceptă toate” nu scrie peste un text schimbat între timp: ecranul acela este sărit. Un singur „Acceptă” face la fel: dacă textul ecranului s-a schimbat de când a fost scrisă propunerea, nu se salvează nimic, iar mesajul o spune.
+
+Când o salvare nu reușește — „Acceptă”, „Acceptă toate” sau „Salvează” —, mesajul spune de ce: sesiunea s-a încheiat, contul nu are dreptul, textul s-a schimbat între timp, baza de date sau serverul aplicației nu a răspuns. „Acceptă toate” arată motivul pentru fiecare ecran care nu s-a salvat, iar celelalte rămân salvate.
 
 ## 13.3 Harta competențelor {#learning-skills}
 
