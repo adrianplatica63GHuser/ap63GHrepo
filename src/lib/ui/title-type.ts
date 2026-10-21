@@ -31,8 +31,12 @@ export const TILE_TITLE_TYPE = "font-title text-base font-semibold uppercase tra
 /**
  * Kinds 3 and 6 without their case: the family, size, line, weight and colour. A plainer head with no band (three of
  * Date de referință's editors) takes this and keeps its own case.
+ *
+ * ⚠️ `[&_th]:font-semibold` is not a repeat: a `<th>` is bold by the browser's own style sheet, so a weight set on the
+ * `thead` or the `tr` never reaches it — measured on the runner's first run of TC-LAYOUT-05 step 15, the names came out
+ * at 700 (they had been 700 Arial all along, whatever `font-medium` said). 600 is 13's, and the only weight loaded.
  */
-export const COLUMN_NAMES_FACE = "font-colhead text-[13.5px] leading-[18px] font-semibold text-ink dark:text-zinc-300";
+export const COLUMN_NAMES_FACE = "font-colhead text-[13.5px] leading-[18px] font-semibold [&_th]:font-semibold text-ink dark:text-zinc-300";
 
 /** Kinds 3 and 6: a list's column names. */
 export const COLUMN_NAMES_TYPE = `${COLUMN_NAMES_FACE} uppercase tracking-[0.04em]`;
