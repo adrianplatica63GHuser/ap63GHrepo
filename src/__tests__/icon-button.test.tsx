@@ -20,7 +20,7 @@ import { act, createEvent, fireEvent, render, screen } from "@testing-library/re
 import { ArrowLeft, ExternalLink, LogIn, Trash2 } from "lucide-react";
 
 import { buttonClass, linkClass, BUTTON_SIZES } from "@/lib/ui/button-styles";
-import { IconButton, ICON_PX, LeadingIcon, TrailingIcon } from "@/lib/ui/icon-button";
+import { IconButton, ICON_PX, LeadingIcon, SQUARE_ICON_PX, TrailingIcon } from "@/lib/ui/icon-button";
 
 function pointer(el: Element, type: "pointerOver" | "pointerOut", pointerType: string) {
   const ev = createEvent[type](el);
@@ -243,6 +243,24 @@ describe("buttonClass — the icon-only square (#37.42)", () => {
     expect(keys).toContain(HEIGHT[size].replace("h-", "w-"));
     expect(keys).toContain("p-0");
     expect(keys.filter((k) => /^p[xy]-/.test(k))).toEqual([]);
+  });
+
+  // Slice 40.29: the list funnel's corner square — 13 × 13, a 9-px icon, a 20 × 20 pressable area inside its cell.
+  it("the corner square is 13 px, its ::before reaching 5 px left and up and 2 px right and down", () => {
+    const keys = buttonClass({ variant: "secondary", size: "xs", iconOnly: true, square: "corner" }).split(" ");
+    expect(keys).toEqual(expect.arrayContaining(["h-[13px]", "w-[13px]", "p-0", "before:absolute", "before:-top-[5px]", "before:-left-[5px]", "before:-right-[2px]", "before:-bottom-[2px]"]));
+    expect(keys).not.toContain("h-6.5");
+    expect(13 + 5 + 2).toBe(20);
+    // Not a size: a text button never takes it.
+    expect(buttonClass({ variant: "secondary", size: "xs", square: "corner" })).toBe(buttonClass({ variant: "secondary", size: "xs" }));
+    expect(SQUARE_ICON_PX.corner).toBe(9);
+  });
+
+  it("an IconButton with square=\"corner\" draws the 9-px icon in the 13-px square", () => {
+    render(<IconButton icon={ArrowLeft} label="Filtrează" variant="secondary" size="xs" square="corner" />);
+    const button = screen.getByRole("button", { name: "Filtrează" });
+    expect(button.className.split(" ")).toContain("h-[13px]");
+    expect(button.querySelector("svg")?.getAttribute("width")).toBe("9");
   });
 
   it("changes nothing but the geometry", () => {

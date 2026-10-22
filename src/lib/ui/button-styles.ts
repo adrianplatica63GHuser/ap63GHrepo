@@ -107,6 +107,11 @@ export interface ButtonClassOptions {
    * reliably beat the size's own `px-…`.
    */
   iconOnly?: boolean;
+  /**
+   * With `iconOnly`: one of the squares smaller than `xs`, in place of the size's own (`SMALL_SQUARE`, Slice 40.29).
+   * The size still gives the text size; the variant its colours.
+   */
+  square?: SmallSquare;
   /** Non-conflicting layout extras only. See the warning above. */
   className?: string;
 }
@@ -161,6 +166,22 @@ const SIZE_SQUARE: Record<ButtonSize, string> = {
   sm: "h-7.5 w-7.5 p-0",
   md: "h-8.5 w-8.5 p-0",
   lg: "h-9.5 w-9.5 p-0",
+};
+
+/**
+ * Icon-only squares smaller than `xs`, each for one place, chosen with `square` (Slice 40.29). They are not sizes:
+ * no text button is drawn at them, so they stand outside `ButtonSize` and `BUTTON_SIZES`.
+ *   corner — a list's column funnel in its name cell's bottom-right corner, 13 × 13 px (half of xs's 26 each way;
+ *            Adrian, 2026-10-22: „50% narrower 50% shorter so it's just one quarter what it is now"). Its pressable
+ *            area is kept at 20 × 20 by a transparent `::before` reaching 5 px left and up and 2 px right and down —
+ *            asymmetric, because the button stands 2 px from the cell's right and bottom edges and the area must
+ *            stay inside the cell.
+ */
+export type SmallSquare = "corner";
+export const SMALL_SQUARES: readonly SmallSquare[] = ["corner"] as const;
+const SMALL_SQUARE: Record<SmallSquare, string> = {
+  corner:
+    "h-[13px] w-[13px] p-0 before:absolute before:-top-[5px] before:-left-[5px] before:-right-[2px] before:-bottom-[2px]",
 };
 
 /** Text size per size. Split from padding so `bare` can take one without the other. */
@@ -379,6 +400,7 @@ export function buttonClass({
   size = "md",
   pill = false,
   iconOnly = false,
+  square,
   className,
 }: ButtonClassOptions): string {
   const isBare = variant === "bare" || variant === "bare-danger";
@@ -389,7 +411,7 @@ export function buttonClass({
     // only the text size, which still drives the glyph's own scale. An
     // icon-only square takes the square's geometry instead, bare or not: a
     // bare icon still needs a target as big as its neighbours.
-    iconOnly ? SIZE_SQUARE[size] : isBare ? "p-0" : "",
+    iconOnly ? (square ? SMALL_SQUARE[square] : SIZE_SQUARE[size]) : isBare ? "p-0" : "",
     isBare ? "" : pill ? "rounded-full" : "rounded-md",
     iconOnly || isBare ? "" : SIZE_PADDING[size],
     SIZE_TEXT[size],

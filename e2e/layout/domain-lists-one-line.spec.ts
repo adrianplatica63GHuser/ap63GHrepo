@@ -58,8 +58,9 @@ const CHOICE: Record<string, string[]> = {
 };
 
 /**
- * The band of names: every cell's band, each name's rows, and — Slice 40.21 — the name and its funnel as one group
- * centred in the cell both ways (within 1 px), the funnel beside the name's last line.
+ * The band of names: every cell's band, each name's rows, and — Slice 40.29 — the name ALONE centred in the cell both
+ * ways (within 1 px), the funnel 13 × 13 in the cell's bottom-right corner, 2 px in, pressable 5 px beyond its
+ * top-left (40.21 had the name and the funnel as one centred group).
  */
 async function band(page: Page) {
   return page.evaluate(() => {
@@ -72,23 +73,28 @@ async function band(page: Page) {
       const cell = th.getBoundingClientRect();
       const name = b.querySelector<HTMLElement>("[data-head-text]")!;
       const n = name.getBoundingClientRect();
-      const group = b.querySelector<HTMLElement>("[data-head-name]")!.getBoundingClientRect();
       // Slice 40.21: two rows of the names' 18-px line (40.18's Roboto Condensed 13.5 px) — 36 px; it was 62.
       const rows = Math.round(n.height / 18);
       if (Math.round(box.height) !== 36) out.push(`${col}: band ${box.height}`);
       if (rows < 1 || rows > 2 || name.scrollHeight > name.clientHeight + 1) out.push(`${col}: ${rows} rows`);
       if (name.scrollWidth > name.clientWidth + 1) out.push(`${col}: cut sideways`);
-      // The group — the name, and the funnel where there is one — centred in its cell, both ways.
-      let left = group.left, right = group.right, top = group.top, bottom = group.bottom;
+      // The name alone, centred in its cell, both ways — the funnel takes no part in it.
+      if (Math.abs((n.left + n.right) / 2 - (cell.left + cell.right) / 2) > 1) out.push(`${col}: not centred across`);
+      if (Math.abs((n.top + n.bottom) / 2 - (cell.top + cell.bottom) / 2) > 1) out.push(`${col}: not centred down`);
       if (b.dataset.headBand === "filter") {
-        const f = b.querySelector<HTMLElement>("[data-head-funnel] button")!.getBoundingClientRect();
-        if (f.left < n.right - 0.5) out.push(`${col}: funnel not after the name`);
-        if (Math.abs(f.top + f.height / 2 - (n.bottom - 9)) > 1) out.push(`${col}: funnel not on the name's last line`);
-        left = Math.min(left, n.left); right = Math.max(right, f.right);
-        top = Math.min(n.top, top); bottom = Math.max(n.bottom, bottom);
+        const button = th.querySelector<HTMLElement>("[data-head-funnel] button")!;
+        const f = button.getBoundingClientRect();
+        if (Math.round(f.width) !== 13 || Math.round(f.height) !== 13) out.push(`${col}: funnel ${f.width} × ${f.height}`);
+        if (Math.abs(cell.right - 2 - f.right) > 1 || Math.abs(cell.bottom - 2 - f.bottom) > 1) out.push(`${col}: funnel not in the corner`);
+        if (f.left < n.right - 0.5 && f.top < n.bottom - 0.5) out.push(`${col}: funnel over the name`);
+        // A smaller funnel is not harder to hit: 4 px above and left of its box still presses it — read where the point
+        // is on screen, inside the frame and clear of its red „<" / „>" signs at the two edges.
+        const frame = th.closest("table")!.parentElement!.getBoundingClientRect();
+        if (f.left - 4 > frame.left + 40 && f.right < frame.right - 40 && f.bottom < window.innerHeight) {
+          const hit = document.elementFromPoint(f.left - 4, f.top - 4);
+          if (!hit || !button.contains(hit)) out.push(`${col}: funnel's pressable area under 20 px`);
+        }
       }
-      if (Math.abs((left + right) / 2 - (cell.left + cell.right) / 2) > 1) out.push(`${col}: not centred across`);
-      if (Math.abs((top + bottom) / 2 - (cell.top + cell.bottom) / 2) > 1) out.push(`${col}: not centred down`);
     }
     // Slice 40.20: no name is broken onto two rows by force any more.
     const forced = bands.filter((b) => b.querySelector("[data-head-text] br")).length;

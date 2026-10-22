@@ -90,18 +90,31 @@ describe("the four lists draw their names through the one cell", () => {
     expect(src).not.toMatch(/<th key=\{col\.key\}/);
   });
 
-  // Slice 40.21: two rows of the names' 18-px line (40.18's band was 62 with the funnel's own row); the name and the
-  // funnel one group, centred both ways; the funnel on the name's line, its 26-px button taking only that line.
-  it("the band is two 18-px rows, the name and its funnel one centred group, on every cell", () => {
+  // Slice 40.21: two rows of the names' 18-px line (40.18's band was 62 with the funnel's own row). Slice 40.29: the name
+  // alone centred both ways; the funnel out of the flow, in the <th>'s bottom-right corner, 2 px in.
+  it("the band is two 18-px rows, the name alone centred, the funnel in the cell's corner, on every cell", () => {
     expect(HEAD_BAND_PX).toBe(36);
     const cell = read("src", "components", "table", "list-head.tsx");
-    // Slice 40.25: the <th> is also the handle its column is dragged by (`drag`).
-    expect(cell).toMatch(/<th\s+className=\{`px-4 py-2 align-middle\$\{drag \? [^}]*\}`\}\s+\{\.\.\.columnHead\(column\)\}\s+\{\.\.\.drag\}\s+>/);
+    // Slice 40.25: the <th> is also the handle its column is dragged by (`drag`); 40.29: the funnel's positioning box.
+    expect(cell).toMatch(/<th\s+className=\{`relative px-4 py-2 align-middle\$\{drag \? [^}]*\}`\}\s+\{\.\.\.columnHead\(column\)\}\s+\{\.\.\.drag\}\s+>/);
     expect(cell).toContain('className="flex items-center justify-center" style={{ height: HEAD_BAND_PX }}');
-    expect(cell).toContain('className="flex min-w-0 items-end justify-center gap-1" data-head-name=""');
+    expect(cell).toContain('className="flex min-w-0 items-center justify-center" data-head-name=""');
     expect(cell).toContain('className="line-clamp-2 min-w-0 text-balance break-words text-center" data-head-text=""');
-    expect(cell).toContain('className="-my-1 inline-flex shrink-0" data-head-funnel=""');
+    expect(cell).toContain('className="absolute bottom-0.5 right-0.5 inline-flex" data-head-funnel=""');
+    // The funnel is the <th>'s child, not the name's: it cannot push the name off the middle.
+    const code = cell.replace(/\/\*[\s\S]*?\*\//g, "");
+    expect(code.indexOf("data-head-funnel")).toBeGreaterThan(code.lastIndexOf("</div>"));
+    expect(code).not.toContain("-my-1");
     expect(cell).not.toMatch(/grid-rows|row-span|row-start/);
+  });
+
+  it("the funnel is the 13-px corner square, its variants and name unchanged (40.29 Ask first 1)", () => {
+    const bar = read("src", "components", "list", "filter-bar.tsx");
+    const funnel = bar.slice(bar.indexOf("export function FilterFunnel"));
+    expect(funnel).toContain('size="xs"\n        square="corner"');
+    expect(funnel).toContain('variant={active ? "primary" : "secondary"}');
+    expect(funnel).toContain("aria-pressed={active}");
+    expect(funnel).toContain('label={t("funnel", { field: label })}');
   });
 });
 

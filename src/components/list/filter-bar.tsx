@@ -572,6 +572,10 @@ function Box({ label, children }: { label: string; children: ReactNode }) {
  * is filtered. Since #39.83 it stands alone on the band's third row (`ListHeadCell`), under the name, not after it. Drawn only on the columns that can be filtered — each list's `*_COLUMN_FILTERS` (#39.82). `field` is
  * the filter's key, which the bar finds the funnel by.
  */
+/**
+ * A column's funnel, in its name cell's bottom-right corner (`ListHeadCell`). Slice 40.29: 13 × 13 px with a 9-px icon
+ * — a quarter of xs's 26 × 26 — still pressable over 20 × 20 (`square="corner"`); the same variants, name and tooltip.
+ */
 export function FilterFunnel({ field, label, active, onOpen }: { field: string; label: string; active: boolean; onOpen: () => void }) {
   const t = useTranslations("shared.filterBar");
   return (
@@ -581,6 +585,7 @@ export function FilterFunnel({ field, label, active, onOpen }: { field: string; 
         label={t("funnel", { field: label })}
         variant={active ? "primary" : "secondary"}
         size="xs"
+        square="corner"
         aria-pressed={active}
         onClick={(e) => {
           e.stopPropagation();

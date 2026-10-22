@@ -61,6 +61,7 @@ import {
   linkClass,
   type ButtonSize,
   type ButtonVariant,
+  type SmallSquare,
 } from "@/lib/ui/button-styles";
 import { useTooltipTriggers } from "@/lib/ui/use-tooltip";
 
@@ -71,6 +72,9 @@ import { useTooltipTriggers } from "@/lib/ui/use-tooltip";
  * label alone.
  */
 export const ICON_PX: Record<ButtonSize, number> = { xs: 16, sm: 16, md: 18, lg: 18 };
+
+/** The icon's size in each of the squares smaller than xs (`square`, Slice 40.29): the funnel's 9 px in its 13. */
+export const SQUARE_ICON_PX: Record<SmallSquare, number> = { corner: 9 };
 
 /** The gap between the icon and the label of an icon + label button. */
 const LABEL_GAP = "gap-1.5";
@@ -195,6 +199,11 @@ type Common = {
   variant: ButtonVariant;
   /** Defaults to "md", as `buttonClass` does. */
   size?: ButtonSize;
+  /**
+   * An icon-only square smaller than `xs` (`SMALL_SQUARE` in button-styles.ts) — the list funnel's 13 px (Slice
+   * 40.29). Ignored with `showLabel`.
+   */
+  square?: SmallSquare;
   /** Icon + label: the icon before the visible label, and no tooltip (A011). */
   showLabel?: boolean;
   /**
@@ -254,6 +263,7 @@ export function IconButton(props: IconButtonProps) {
     label,
     variant,
     size = "md",
+    square,
     showLabel = false,
     iconEnd = false,
     busy = false,
@@ -271,13 +281,15 @@ export function IconButton(props: IconButtonProps) {
   const callerDescribedBy = (rest as { "aria-describedby"?: string })["aria-describedby"];
   const describedBy = [callerDescribedBy, note ? noteId : undefined].filter(Boolean).join(" ") || undefined;
   const name = busy && busyLabel ? busyLabel : label;
-  const px = ICON_PX[size];
+  const small = showLabel ? undefined : square;
+  const px = small ? SQUARE_ICON_PX[small] : ICON_PX[size];
   const badge = count !== undefined && count > 0 ? count : null;
   const options = {
     variant,
     size,
     pill,
     iconOnly: !showLabel,
+    square: small,
     className: [
       "relative",
       showLabel ? LABEL_GAP : "",
