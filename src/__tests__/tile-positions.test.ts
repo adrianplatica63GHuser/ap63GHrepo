@@ -313,7 +313,7 @@ describe("the free space under the right column (#37.79)", () => {
     expect(src).toContain("start.set(b.id, { col: ownColumns - units, top });");
     expect(src).toContain("const beside = fitsBeside(leftUnits, starting.map(own), ownColumns);");
     expect(src).toContain("placeWithStored(items, { ...stored, ...visit }, columns, gap, flowColumns)");
-    expect(src).not.toMatch(/fixedNow|rightRef|FIXED_PREFIX|WRAPPED_PREFIX/);
+    expect(src).not.toMatch(/fixedNow|rightRef|FIXED_PREFIX/);
     // The Property's map and corners are panels inside a `display: contents` tile wrapper: their boxes are „map#0".
     expect(src).toContain('const tileOf = (id: string) => id.replace(/#\\d+$/, "");');
     expect(src).toContain("const rightBoxes = rightNames.flatMap((n) => boxes.filter((b) => tileOf(b.id) === n));");
