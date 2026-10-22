@@ -179,7 +179,8 @@ test.describe("TC-TILES-15 — sub coloana din dreapta", () => {
       await expect.poll(async () => (await place(page, map)).x, { timeout: 10_000 }).toBe(0);
       const m9 = await place(page, map);
       expect(m9.y).toBeGreaterThan(m8.y);
-      expect(await page.evaluate(() => JSON.parse(localStorage.getItem("ga40-tile-positions-property-v1") ?? "{}").map ?? null)).not.toBeNull();
+      // Stored under its box's id — the map is a panel in a `display: contents` tile, so „map#0".
+      expect(await page.evaluate(() => Object.keys(JSON.parse(localStorage.getItem("ga40-tile-positions-property-v1") ?? "{}")).some((k) => k === "map" || k.startsWith("map#")))).toBe(true);
 
       // Step 10 — after a reload, where step 9 left it; „Implicit" sends it back to the right edge.
       await page.reload();

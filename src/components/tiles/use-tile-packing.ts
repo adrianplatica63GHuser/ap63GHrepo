@@ -323,6 +323,10 @@ export function useTilePacking(
     void loadMakeRoomDelay();
     const key = entity ? tilePositionsKey(entity) : null;
     const rightNames = rightKey ? rightKey.split("|") : [];
+    // A box's tile: its id, or — a panel inside a `display: contents` tile wrapper, the Property's map and corners —
+    // the tile's name before its place inside it („map#0").
+    const tileOf = (id: string) => id.replace(/#\d+$/, "");
+    const isRight = (b: FoundBox) => rightNames.includes(tileOf(b.id));
     let placed: Placed[] = [];
     let boxes: FoundBox[] = [];
     // The row's units, and the flow's (40.32: left of the right-hand tiles at their starting places).
@@ -335,6 +339,9 @@ export function useTilePacking(
     let frame = 0;
     let stored: StoredPlaces = {};
     let fallback: string[] = [];
+    // 40.32: the right-hand tiles standing at their starting places in the last layout — never stored by another
+    // tile's drop, so they keep starting at the right edge until the user moves one of them.
+    let startIds: string[] = [];
     let lead = 0;
     // Previews dragged this visit: their places are never stored.
     let visit: Record<string, StoredPlace> = {};
@@ -369,7 +376,7 @@ export function useTilePacking(
 
     /** A box's width in units, as the flow takes it: a right-hand tile may reach past the flow's units (40.32). */
     const unitsFor = (b: FoundBox, unit: number, gap: number) =>
-      Math.min(unitsOf(ownWidth(b.el), unit, gap), rightNames.includes(b.id) ? columns : flowColumns);
+      Math.min(unitsOf(ownWidth(b.el), unit, gap), isRight(b) ? columns : flowColumns);
 
     const apply = () => {
       const { unit, gap } = metrics();
@@ -407,7 +414,7 @@ export function useTilePacking(
       // 40.32: the right-hand tiles, in `right`'s order; those with nothing stored (this visit or before) start at the
       // row's right edge, one under another — or, when they and the widest left tile do not fit side by side
       // (#38.46), under the left tiles.
-      const rightBoxes = rightNames.map((n) => boxes.find((b) => b.id === n)).filter((b): b is FoundBox => !!b);
+      const rightBoxes = rightNames.flatMap((n) => boxes.filter((b) => tileOf(b.id) === n));
       const own = (b: FoundBox) => unitsOf(ownWidth(b.el), unit, gap);
       const leftUnits = boxes.filter((b) => !b.full && !b.rowEnd && !rightBoxes.includes(b)).map(own);
       const starting = rightBoxes.filter((b) => !stored[b.id] && !visit[b.id]);
@@ -423,6 +430,7 @@ export function useTilePacking(
         flowColumns = Math.max(1, Math.min(flowColumns, ownColumns - Math.max(...starting.map(own))));
       }
       const under = new Set(beside ? [] : starting.map((b) => b.id));
+      startIds = starting.map((b) => b.id);
       const items: PackBox[] = boxes.map((b) => ({
         id: b.id,
         units: b.rowEnd || b.full ? flowColumns : unitsFor(b, unit, gap),
@@ -520,7 +528,10 @@ export function useTilePacking(
       const moved = [id, ...slid];
       const lasting = moved.filter(isStorable);
       if (lasting.length > 0) {
-        stored = placesToStore(placed, stored, fallback, lasting, lead, gap);
+        const unmoved = startIds.filter((s) => !lasting.includes(s) && !(s in stored));
+        const next = placesToStore(placed, stored, fallback, lasting, lead, gap);
+        for (const s of unmoved) delete next[s];
+        stored = next;
         fallback = fallback.filter((f) => !lasting.includes(f));
         writePlaces(key, stored);
       }
