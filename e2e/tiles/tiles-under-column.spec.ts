@@ -88,9 +88,9 @@ test.describe("TC-TILES-15 — sub coloana din dreapta", () => {
       // The tile's own section: once Google draws the panorama, its scene is a second region named „Street View" (#38.16, a strict-mode violation).
       const sv = page.locator('section[data-tile="streetView"]');
       await expect.poll(async () => {
-        const [c, s, k] = await Promise.all([place(page, conn), place(page, sv), place(page, corners)]);
-        return { gap: c.y - s.b, conn: c, sv: s, corners: k };
-      }, { timeout: 20_000 }).toMatchObject({ gap: GAP });
+        const [c, s, k, m] = await Promise.all([place(page, conn), place(page, sv), place(page, corners), place(page, map)]);
+        return `gap ${c.y - s.b} — conn ${JSON.stringify(c)} sv ${JSON.stringify(s)} corners ${JSON.stringify(k)} map ${JSON.stringify(m)}`;
+      }, { timeout: 20_000 }).toMatch(new RegExp(`^gap ${GAP} `));
       await hideTile(page, "Street View");
       await expect.poll(async () => place(page, conn), { timeout: 20_000 }).toEqual(c2);
 

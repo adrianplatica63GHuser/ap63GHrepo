@@ -79,6 +79,8 @@ type AsyncSelectProps<T extends FieldValues> = {
   title?: string;
   /** Slice #37.12: the field's name for the width checks (`data-width-field`). */
   widthField?: string;
+  /** Its options are open-ended — archive data — so its width is capped (`FieldWidth.capped`, `data-width-capped`). */
+  capped?: boolean;
   /** Slice #37.32: for a `<label htmlFor>` that cannot wrap the select (the ID-card dialog's citizenship). */
   id?: string;
 };
@@ -149,6 +151,7 @@ export function AsyncSelect<T extends FieldValues>({
   style,
   title,
   widthField,
+  capped = false,
   id,
 }: AsyncSelectProps<T>) {
   // Slice #34.03: `useWatch` and the once-captured `openedWith` went with
@@ -167,6 +170,7 @@ export function AsyncSelect<T extends FieldValues>({
       title={title}
       data-width-field={widthField}
       data-width-kind={widthField ? "select" : undefined}
+      data-width-capped={widthField && capped ? "true" : undefined}
       // Last on purpose: `register` can itself return `disabled` (from
       // `useForm({ disabled })` or `register(name, { disabled })`), and nothing
       // this component accepts may quietly override what the form said.

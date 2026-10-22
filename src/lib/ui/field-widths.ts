@@ -401,14 +401,16 @@ export const LABEL_INDENT = rem(LABEL_REM + LABEL_GAP_REM);
  * #37.57 the system ID is the heading's corner and the row is the two numbers.
  */
 export const PROPERTY = {
-  tarlaId: { step: "M", kind: "select" }, //                    M: „niciunul" needs about 90 px (see above); m: 3 options, longest „47/2"
+  // Capped since 40.32's run: a tarla's option carries its description since #39.67 („T201 — Sola din nord-vestul
+  // orașului Bragadiru", 319 px) — archive data, open-ended, so its whole text is on hover, as the issuer's.
+  tarlaId: { step: "M", kind: "select", capped: true }, //      M: „niciunul" needs about 90 px (see above); m: 3 options, longest „47/2"
   parcela: { step: "M", kind: "fixed", sample: "000/00/00" }, // Adrian's M (Stacked.txt); m: 3 · 6 · 6
   nickname: { step: "XL", kind: "grows" }, //                   m: 8 · 38 · 38 — p95 is past L (27), so XL; longer wraps
   surfaceAreaMp: { step: "M", kind: "fixed", sample: "0000000.00" }, //  the box shows 1234567.89, no separators; m: 3 · 6
   calculatedAreaMp: { step: "M", kind: "fixed", sample: "0000000.00" }, // toFixed(2), in the mono font; m: 3 · 6
   carteFunciara: { step: "M", kind: "fixed", sample: "000000" }, //       m: 0
   cadastralNumber: { step: "M", kind: "fixed", sample: "HHHHH-00.00-H" }, // m: 1 · 13
-  useCategoryId: { step: "M", kind: "select" }, //              m: 8 options, longest „Neproductiv" (11) — v02 guessed L
+  useCategoryId: { step: "L", kind: "select" }, //              „Curți-construcții" needs 121 px, M holds 118 (40.32's run); was M, longest „Neproductiv" (11)
   propertyTypeId: { step: "L", kind: "select" }, //             m: 9 agreed options since #39.66, longest „Spațiu comercial" (16); was 14, „Vegetație Forestieră" (20)
   notes: { step: "TILE", kind: "lines", fold: NOTE_FOLD_LINES, rows: 1, fill: true }, // m: 1 · 72, at most 300; the panel's whole width (#37.30)
   /** The Street View address row: the box, then „Preia" and its hint, in the panel's width. */

@@ -2060,6 +2060,7 @@ function SelectField({
           style={boxStyle(width)}
           title={chosenLabel}
           widthField={name}
+          capped={width.capped}
         />
         {error && (
           <span className="text-xs text-red-600 dark:text-red-400">{error}</span>
