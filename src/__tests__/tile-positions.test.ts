@@ -315,7 +315,7 @@ describe("the free space under the right column (#37.79)", () => {
     expect(src).toContain("placeWithStored(items, { ...stored, ...visit }, columns, gap, flowColumns)");
     expect(src).not.toMatch(/fixedNow|rightRef|FIXED_PREFIX/);
     // The Property's map and corners are panels inside a `display: contents` tile wrapper: their boxes are „map#0".
-    expect(src).toContain('const tileOf = (id: string) => id.replace(/#\\d+$/, "");');
+    expect(src).toContain('const tileOf = (id: string) => id.replace(/^wrapped:/, "").replace(/#\\d+$/, "");');
     expect(src).toContain("const rightBoxes = rightNames.flatMap((n) => boxes.filter((b) => tileOf(b.id) === n));");
     // Another tile's drop stores every tile as it stands — but not a right-hand tile still at its start (TC-TILES-15
     // step 4: stored there, it no longer started, and „Street View" ticked later took its place).
