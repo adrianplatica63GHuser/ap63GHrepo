@@ -13,7 +13,7 @@
 
 import { test, expect, type Locator, type Page } from "../helpers/test";
 import { E2E_MARKER, createCompany, createDocumentOfType, createNaturalPerson, removeLeftovers, removeRecord } from "../helpers/records";
-import { tileBox } from "../helpers/tiles";
+import { showTile, tileBox } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}PERS-07`;
 const PURPLE = "rgb(246, 240, 254)";
@@ -80,14 +80,25 @@ test.describe("TC-PERS-07 — „Interacțiuni” pe cele două fișe de persoan
       await expect(tile.getByRole("button", { name: "Deschide în „Interacțiuni”", exact: true })).toBeVisible();
       await expect(tile.getByRole("button", { name: "Interacțiune nouă", exact: true })).toBeVisible();
       expect(await tile.evaluate((e) => [getComputedStyle(e).backgroundColor, getComputedStyle(e).borderTopColor])).toEqual([PURPLE, RIM]);
-      // Slice #39.05: the history (B) keeps „Pagini"'s height — its box plus the tile's padding and rim, 26 px — and
-      // the action panel (C) stands under it, so the tile is taller. It read `hClose: Math.abs(s.h - pages1920.h) <= 4`.
+      // Slice 40.33: a person with no interaction — the tile at „Pagini"'s place and width, but only as tall as an
+      // empty „Legături" on the same screen, within 8 px (#39.05 held B at „Pagini"'s height whatever it held); its
+      // „Înregistrează o interacțiune" the kind of button „Asociază persoană" is: the same height and colour.
+      await expect(tile).toHaveAttribute("data-interactions-state", "empty", { timeout: 30_000 });
+      await showTile(page, "Legături");
+      const links = page.locator('[data-tile="related"]');
+      await expect(links).toBeVisible({ timeout: 30_000 });
       await expect.poll(async () => {
-        const s = await size(tile);
-        const b = await size(tile.locator("[data-interactions-history]"));
-        return { x: s.x, y: s.y, w: s.w, hClose: Math.abs(b.h + 26 - pages1920.h) <= 4, grows: s.h > pages1920.h };
-      }, { timeout: 15_000 }).toEqual({ x: pages1920.x, y: pages1920.y, w: pages1920.w, hClose: true, grows: true });
+        const [s, l] = await Promise.all([size(tile), size(links)]);
+        return { x: s.x, y: s.y, w: s.w, asLinks: Math.abs(s.h - l.h) <= 8 };
+      }, { timeout: 15_000 }).toEqual({ x: pages1920.x, y: pages1920.y, w: pages1920.w, asLinks: true });
       await expect(tile.locator('[data-person-log="collapsed"]')).toBeVisible();
+      const log = tile.locator("[data-log-expand]");
+      const associate = links.getByRole("button", { name: "Asociază persoană", exact: true });
+      const look = (l: Locator) => l.evaluate((e) => ({ h: Math.round(e.getBoundingClientRect().height), bg: getComputedStyle(e).backgroundColor }));
+      expect(await look(log)).toEqual(await look(associate));
+      // As wide as its words, at the tile's left — not stretched across it.
+      const [lb, tb] = await Promise.all([size(log), size(tile)]);
+      expect(lb.w).toBeLessThan(tb.w / 2);
 
       // Step 3 — unticked, the tile and the column go; ticked, it is back.
       await tileBox(page, "Interacțiuni").click();
@@ -109,8 +120,9 @@ test.describe("TC-PERS-07 — „Interacțiuni” pe cele două fișe de persoan
       }, { timeout: 15_000 }).toEqual({ underTiles: true, barUnder: true });
       const at1366 = await size(tile);
       expect(at1366.w).toBe(640);
-      // #39.05: the history's height, not the tile's (it read `Math.abs(at1366.h - pages1920.h)`).
-      expect(Math.abs((await size(tile.locator("[data-interactions-history]"))).h + 26 - pages1920.h)).toBeLessThanOrEqual(4);
+      // #39.05 read the history at „Pagini"'s height; 40.33: empty, it is short — under 200 px with C.
+      await expect(tile).toHaveAttribute("data-interactions-state", "empty");
+      expect(at1366.h).toBeLessThan(200);
       expect(await tile.evaluate((e) => getComputedStyle(e).backgroundColor)).toBe(PURPLE);
 
       // Step 5 — the company: „Identitate" first, „Interacțiuni" at the right, the same size.
@@ -122,13 +134,13 @@ test.describe("TC-PERS-07 — „Interacțiuni” pe cele două fișe de persoan
       await expect(page.locator('[data-panel="identity"] h2').first()).toContainText("Date de înregistrare");
       // FU-312: read once, the tile was now and then 9 px higher than „Pagini" — measured before the company's
       // screen had settled (green alone each time; again in full 20261010T234115Z-18004). Polled, as step 4 is.
-      // #39.05: the history's height, as step 2 (it read the tile's, `Math.abs(jpTile.h - pages1920.h) <= 4`).
+      // #39.05 read the history at „Pagini"'s height; 40.33: no interaction, so as tall as the company's empty „Legături".
+      await showTile(page, "Legături");
       await expect.poll(async () => {
         const jpTileLoc = page.getByRole("region", { name: "Interacțiuni", exact: true });
-        const jpTile = await size(jpTileLoc);
-        const b = await size(jpTileLoc.locator("[data-interactions-history]"));
-        return { x: jpTile.x, y: jpTile.y, w: jpTile.w, hClose: Math.abs(b.h + 26 - pages1920.h) <= 4 };
-      }, { timeout: 15_000 }).toEqual({ x: pages1920.x, y: pages1920.y, w: pages1920.w, hClose: true });
+        const [jpTile, l] = await Promise.all([size(jpTileLoc), size(page.locator('[data-tile="related"]'))]);
+        return { x: jpTile.x, y: jpTile.y, w: jpTile.w, asLinks: Math.abs(jpTile.h - l.h) <= 8 };
+      }, { timeout: 15_000 }).toEqual({ x: pages1920.x, y: pages1920.y, w: pages1920.w, asLinks: true });
     } finally {
       await clearChoices(page).catch(() => undefined);
       await removeRecord(page.request, "person", np);

@@ -17,6 +17,14 @@ the purple strip, ticked by default; unticking it hides the tile. The Judicial P
 panel are called „Identitate". A tile of another size, in the left area, of another colour, or the old
 name „Persoană juridică" on the first tile is the defect this case exists to catch.
 
+Slice 40.33, Adrian, 2026-10-22: „An empty Interactions tile is very tall, too tall; It should be as tall as the
+Links tile; also the "log interaction" button should have a size very similar to the "associate person" or "associate
+property" on the Links tile; should be the same type of button with these "associate" buttons including the size and
+the colour". Since then a person with no interaction has a short „Interacțiuni": as tall as an empty „Legături" on the
+same screen, within 8 px, its „Înregistrează o interacțiune" button the height and colour of „Asociază persoană", as
+wide as its words. Steps 2, 4 and 5 read that where they read „Pagini"'s 436 px before; the width and place are
+unchanged. With an interaction the history keeps „Pagini"'s height.
+
 ## Before you start
 
 - TC-AUTH-01 is green.

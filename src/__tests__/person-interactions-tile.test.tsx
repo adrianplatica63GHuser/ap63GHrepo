@@ -67,15 +67,17 @@ describe("the address and C (#39.05)", () => {
     expect(readLog("i9")).toEqual({ expanded: true, select: "i9" });
   });
 
-  it("without the parameter C is collapsed to one large button, „Înregistrează o interacțiune”", () => {
+  it("without the parameter C is collapsed to one button, „Înregistrează o interacțiune”, like „Asociază …”", () => {
     renderTile();
     expect(panel()).toHaveAttribute("data-person-log", "collapsed");
     expect(stub()).toBeNull();
     expect(document.querySelector("[data-log-expand]")).toHaveTextContent("screen.logTitle");
-    // The spec's indigo is the app's „accent" variant (#38.85); stretched by its flex column.
+    // Slice 40.33: „Asociază …"'s kind — primary, sm, as wide as its words (it was #38.85's large indigo, stretched).
     const src = readFileSync(join(process.cwd(), "src", "app", "_components", "person-interactions-tile.tsx"), "utf8");
-    expect(src).toMatch(/label=\{t\("screen\.logTitle"\)\}\s+showLabel\s+variant="accent"\s+size="lg"/);
-    expect(document.querySelector("[data-person-log]")!.className).toContain("flex-col");
+    expect(src).toMatch(/label=\{t\("screen\.logTitle"\)\}\s+showLabel\s+variant="primary"\s+size="sm"/);
+    expect(document.querySelector("[data-person-log]")!.className).toContain("items-start");
+    const related = readFileSync(join(process.cwd(), "src", "components", "tiles", "related-tile.tsx"), "utf8");
+    expect(related).toMatch(/icon=\{LinkIcon\}\s+label=\{a\.label\}\s+showLabel\s+variant="primary"\s+size="sm"/);
   });
 
   it("?log=new opens C expanded on a new record; ?log=<id> on that row, which reads selected in B", async () => {

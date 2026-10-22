@@ -20,6 +20,12 @@
  * selected. B keeps today's height and the tile grows by C's. „Deschide în „Interacțiuni”" still opens the module,
  * scoped. In an Incursiune there is no C and no „Interacțiune nouă" (no `onNew`): a row opens the person's screen with
  * C expanded on it (#39.05's Ask first 4).
+ *
+ * Slice 40.33 — SHORT WHEN EMPTY (Adrian, 2026-10-22: „An empty Interactions tile is very tall, too tall; It should
+ * be as tall as the Links tile"). On a person's screen, once the history has loaded and holds no interaction, B takes
+ * its content's height — the title row and „Nicio interacțiune înregistrată cu această persoană." — and the tile is
+ * that plus C, about as tall as an empty „Legături" (Ask first 1). With one interaction or more B keeps today's 436 px,
+ * so the tile grows to it as the first one is saved (Ask first 2). While it loads it is as tall as with rows, as before.
  */
 import { useQuery } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
@@ -87,6 +93,8 @@ export function InteractionsTile({
   const day = new Intl.DateTimeFormat(locale, { day: "2-digit", month: "2-digit", year: "numeric" });
   const time = new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" });
   const items = history.data?.items ?? [];
+  // Slice 40.33: loaded and holding nothing — B takes its content's height instead of „Pagini"'s.
+  const empty = !peek && history.isSuccess && items.length === 0;
 
   const head = peek ? peek.head : (
       <div className="flex items-start gap-2">
@@ -197,7 +205,7 @@ export function InteractionsTile({
   );
   // Slice #39.25: beside a list the rows take their own height in the tile's flow and scroll once it reaches the
   // ceiling; on a person's screen they fill the tile's fixed height, as before.
-  const rows = peek ? (
+  const rows = peek || empty ? (
       <div className="min-h-0 overflow-y-auto" data-interactions-rows="">
         {body}
       </div>
@@ -218,14 +226,18 @@ export function InteractionsTile({
       style={
         peek
           ? peek.style
-          : footer
-            ? { ...INTERACTIONS_TILE_STYLE }
-            : { ...INTERACTIONS_TILE_STYLE, height: PAGES_TILE_EMPTY_HEIGHT_PX }
+          : empty
+            ? { ...INTERACTIONS_TILE_STYLE, minHeight: undefined }
+            : footer
+              ? { ...INTERACTIONS_TILE_STYLE }
+              : { ...INTERACTIONS_TILE_STYLE, height: PAGES_TILE_EMPTY_HEIGHT_PX }
       }
+      data-interactions-state={empty ? "empty" : "rows"}
     >
       {footer ? (
         // Slice #39.05: B at today's height — the section's own 436 px less its p-3 and 1 px border — and C under it.
-        <div className="flex flex-col" style={{ height: B_CONTENT_PX }} data-interactions-history="">
+        // 40.33: empty, B is as tall as its title row and its one line.
+        <div className="flex flex-col" style={empty ? undefined : { height: B_CONTENT_PX }} data-interactions-history="">
           {head}
           {rows}
         </div>

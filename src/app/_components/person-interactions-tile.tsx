@@ -131,14 +131,17 @@ export function PersonInteractionsTile({
       />
     </div>
   ) : (
-    // One large button, the spec's indigo („accent", #38.85), stretched across the tile by the column it stands in.
-    <div className="mt-3 flex flex-col" data-person-log="collapsed">
+    // Slice 40.33 (Adrian: „the "log interaction" button should have a size very similar to the "associate person" or
+    // "associate property" on the Links tile; should be the same type of button … including the size and the colour"):
+    // „Asociază …"'s kind — primary, sm, as wide as its words, at the tile's left (Ask first 3). It was one large indigo
+    // („accent", #38.85) button stretched across the tile.
+    <div className="mt-3 flex flex-col items-start" data-person-log="collapsed">
       <IconButton
         icon={SquarePen}
         label={t("screen.logTitle")}
         showLabel
-        variant="accent"
-        size="lg"
+        variant="primary"
+        size="sm"
         data-log-expand=""
         onClick={() => {
           setSelectedId(null);
