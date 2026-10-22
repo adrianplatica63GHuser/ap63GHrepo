@@ -79,9 +79,11 @@ test.describe("TC-TILES-15 — sub coloana din dreapta", () => {
       expect(c2.y - c1.b).toBeGreaterThanOrEqual(GAP);
       expect([await place(page, map), await place(page, corners), await place(page, cad)]).toEqual([m1, c1, k1]);
 
-      // Step 3 — after a reload, where step 2 put it.
+      // Step 3 — after a reload, where step 2 put it. Its place, not its bottom: „Etichete și grupuri" grows as its four
+      // parts load (measured 142 px, then 387 — 40.35's run), and a place read before that is still the place.
+      const at = async () => { const p = await place(page, conn); return { x: p.x, y: p.y }; };
       await page.reload();
-      await expect.poll(async () => place(page, conn), { timeout: 30_000 }).toEqual(c2);
+      await expect.poll(at, { timeout: 30_000 }).toEqual({ x: c2.x, y: c2.y });
 
       // Step 4 — „Street View" pushes it under itself; unticked, it is back.
       await showTile(page, "Street View");
@@ -92,19 +94,13 @@ test.describe("TC-TILES-15 — sub coloana din dreapta", () => {
         return `gap ${c.y - s.b} — conn ${JSON.stringify(c)} sv ${JSON.stringify(s)} corners ${JSON.stringify(k)} map ${JSON.stringify(m)}`;
       }, { timeout: 20_000 }).toMatch(new RegExp(`^gap ${GAP} `));
       await hideTile(page, "Street View");
-      // 40.35: the place, and the tile's own width and height when it is not c2's (diagnostic).
-      await expect.poll(async () => {
-        const p = await place(page, conn);
-        if (JSON.stringify(p) === JSON.stringify(c2)) return p;
-        const r = (await conn.boundingBox())!;
-        return { ...p, w: Math.round(r.width), h: Math.round(r.height) };
-      }, { timeout: 20_000 }).toEqual(c2);
+      await expect.poll(at, { timeout: 20_000 }).toEqual({ x: c2.x, y: c2.y });
 
       // Step 5 — at 1366 in the left area, the column beside it; at 1920 back under the column.
       await page.setViewportSize({ width: 1366, height: 1200 });
       await expect.poll(async () => (await place(page, conn)).x < (await place(page, map)).x, { timeout: 20_000 }).toBe(true);
       await page.setViewportSize({ width: 1920, height: 1200 });
-      await expect.poll(async () => place(page, conn), { timeout: 20_000 }).toEqual(c2);
+      await expect.poll(at, { timeout: 20_000 }).toEqual({ x: c2.x, y: c2.y });
 
       // Step 6 — the document: „Clasificări" 40 px under „Pagini", on its left edge.
       await page.goto(`/documents/${docId}`);
