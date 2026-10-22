@@ -263,6 +263,14 @@ describe("buttonClass — the icon-only square (#37.42)", () => {
     expect(button.querySelector("svg")?.getAttribute("width")).toBe("9");
   });
 
+  // Slice 40.30: a principal list's row buttons — 24 × 24 with a 14-px icon.
+  it("the row square is 24 px with a 14-px icon", () => {
+    const keys = buttonClass({ variant: "secondary", size: "xs", iconOnly: true, square: "row" }).split(" ");
+    expect(keys).toEqual(expect.arrayContaining(["h-6", "w-6", "p-0"]));
+    expect(keys).not.toContain("h-6.5");
+    expect(SQUARE_ICON_PX.row).toBe(14);
+  });
+
   it("changes nothing but the geometry", () => {
     const text = buttonClass({ variant: "danger", size: "sm" }).split(" ").filter((k) => !/^p[xy]?-/.test(k));
     const icon = buttonClass({ variant: "danger", size: "sm", iconOnly: true }).split(" ").filter((k) => !/^(p|h|w)-/.test(k));

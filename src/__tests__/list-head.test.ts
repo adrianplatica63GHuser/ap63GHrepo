@@ -9,7 +9,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import { HEAD_BAND_PX } from "@/components/table/list-head";
+import { HEAD_BAND_PX, HEAD_PAD_PX } from "@/components/table/list-head";
 
 const read = (...p: string[]) => fs.readFileSync(path.join(process.cwd(), ...p), "utf8");
 const exists = (...p: string[]) => fs.existsSync(path.join(process.cwd(), ...p));
@@ -93,13 +93,19 @@ describe("the four lists draw their names through the one cell", () => {
   // Slice 40.21: two rows of the names' 18-px line (40.18's band was 62 with the funnel's own row). Slice 40.29: the name
   // alone centred both ways; the funnel out of the flow, in the <th>'s bottom-right corner, 2 px in.
   it("the band is two 18-px rows, the name alone centred, the funnel in the cell's corner, on every cell", () => {
-    expect(HEAD_BAND_PX).toBe(36);
+    // Slice 40.30: two 17-px lines in 2.5 px of padding each way — 39 px, ¾ of 52.
+    expect(HEAD_BAND_PX).toBe(34);
+    expect(HEAD_BAND_PX + 2 * HEAD_PAD_PX).toBe(39);
+    // The red signs are the band's height with it (`LIST_HEAD_PX`), their glyphs on a 12-px line so three fit.
+    const signs = read("src", "components", "list", "hidden-column-signs.tsx");
+    expect(signs).toContain("export const LIST_HEAD_PX = HEAD_BAND_PX + 2 * HEAD_PAD_PX;");
+    expect(signs).toContain("text-base font-bold leading-3 text-red-600");
     const cell = read("src", "components", "table", "list-head.tsx");
     // Slice 40.25: the <th> is also the handle its column is dragged by (`drag`); 40.29: the funnel's positioning box.
-    expect(cell).toMatch(/<th\s+className=\{`relative px-4 py-2 align-middle\$\{drag \? [^}]*\}`\}\s+\{\.\.\.columnHead\(column\)\}\s+\{\.\.\.drag\}\s+>/);
+    expect(cell).toMatch(/<th\s+className=\{`relative px-4 py-\[2\.5px\] align-middle\$\{drag \? [^}]*\}`\}\s+\{\.\.\.columnHead\(column\)\}\s+\{\.\.\.drag\}\s+>/);
     expect(cell).toContain('className="flex items-center justify-center" style={{ height: HEAD_BAND_PX }}');
     expect(cell).toContain('className="flex min-w-0 items-center justify-center" data-head-name=""');
-    expect(cell).toContain('className="line-clamp-2 min-w-0 text-balance break-words text-center" data-head-text=""');
+    expect(cell).toContain('className="line-clamp-2 min-w-0 text-balance break-words text-center leading-[17px]" data-head-text=""');
     expect(cell).toContain('className="absolute bottom-0.5 right-0.5 inline-flex" data-head-funnel=""');
     // The funnel is the <th>'s child, not the name's: it cannot push the name off the middle.
     const code = cell.replace(/\/\*[\s\S]*?\*\//g, "");

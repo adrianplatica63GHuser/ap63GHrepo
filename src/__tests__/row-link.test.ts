@@ -132,7 +132,8 @@ describe('a list row\'s „Previzualizare" (#37.25)', () => {
   it.each(LISTS.map((f) => [f.join("/"), f]))("%s: opens the record in a tile beside the list", (_n, f) => {
     const src = read("src", "app", ...(f as string[]));
     const kind = KIND[(f as string[])[0]];
-    expect(src).toMatch(new RegExp(`<PreviewButton target=\\{\\{ kind: "${kind}", id: item\\.id \\}\\} />`));
+    // Slice 40.30: at the lists' row size.
+    expect(src).toMatch(new RegExp(`<PreviewButton target=\\{\\{ kind: "${kind}", id: item\\.id \\}\\} square="row" />`));
     // Slice #37.25 had `columnHead("openPreview")` (13 rem, a tile's two labelled buttons). Slice #38.57: the four
     // lists' own `listRowActions`, as wide as their xs buttons side by side (three since #38.72).
     expect(src).toMatch(/\bcolumnHead\("listRowActions"\)/);

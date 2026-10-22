@@ -193,9 +193,10 @@ export function JudicialPersonListView() {
       address={{ kind: "company", row: address.row, tiles: address.tiles }}
     >
       {/* Toolbar */}
-      <div className={`flex flex-wrap items-center gap-3 ${LIST_TOOLBAR}`} {...edge.toolbar}>
+      {/* Slice 40.30: the toolbar one step down — „Adaugă …" md, the other buttons sm, the search box 30 px, 8-px gaps. */}
+      <div className={`flex flex-wrap items-center gap-2 ${LIST_TOOLBAR}`} {...edge.toolbar}>
         {/* Slice #39.85: as wide as „Adaugă …", its whole explanation on hover. */}
-        <ListSearchBox value={searchInput} onChange={setSearchInput} explanation={t("searchPlaceholder")} />
+        <ListSearchBox value={searchInput} onChange={setSearchInput} explanation={t("searchPlaceholder")} small />
         <FieldChooser
           label={t("chooseFields")}
           hint={t("chooseFieldsHint", { max: MAX_OPT })}
@@ -216,7 +217,7 @@ export function JudicialPersonListView() {
               label={t("addNew")}
               showLabel
               variant="primary"
-              size="lg"
+              size="md"
             />
           </span>
         </div>
@@ -264,7 +265,7 @@ export function JudicialPersonListView() {
                     />
                   );
                 })}
-                <th className="px-4 py-2" {...columnHead("listRowActions")} />
+                <th className="px-4 py-[2.5px]" {...columnHead("listRowActions")} />
               </tr>
             </thead>
             <tbody className="divide-y divide-crease dark:divide-zinc-800">
@@ -302,7 +303,7 @@ export function JudicialPersonListView() {
                 >
                   {order.keys.map((key) =>
                     key === "name" ? (
-                      <td key={key} className={`px-4 py-2 font-medium ${ONE_LINE}`} title={cellTitle(item.displayName)}>
+                      <td key={key} className={`px-4 py-1 font-medium ${ONE_LINE}`} title={cellTitle(item.displayName)}>
                         <FirstCellText badges={<RecencyBadge createdAt={item.createdAt} updatedAt={item.updatedAt} />}>
                           {item.displayName || (
                             <span className="text-fade italic">—</span>
@@ -310,28 +311,29 @@ export function JudicialPersonListView() {
                         </FirstCellText>
                       </td>
                     ) : key === "nickname" ? (
-                      <td key={key} className={`px-4 py-2 text-fade dark:text-zinc-400 ${ONE_LINE}`} title={cellTitle(item.nickname)}>
+                      <td key={key} className={`px-4 py-1 text-fade dark:text-zinc-400 ${ONE_LINE}`} title={cellTitle(item.nickname)}>
                         {item.nickname || <span className="italic">—</span>}
                       </td>
                     ) : (
-                      <td key={key} className={`px-4 py-2 text-fade dark:text-zinc-400 ${ONE_LINE}`} title={cellTitle(cellValue(item, key))}>
+                      <td key={key} className={`px-4 py-1 text-fade dark:text-zinc-400 ${ONE_LINE}`} title={cellTitle(cellValue(item, key))}>
                         {cellValue(item, key) ?? <span className="italic">—</span>}
                       </td>
                     ),
                   )}
-                  <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
+                  <td className="px-4 py-1" onClick={(e) => e.stopPropagation()}>
                     {/* Slice #38.57: side by side, always. */}
-                    <span className="flex flex-nowrap gap-2" data-row-actions="">
+                    <span className="flex flex-nowrap gap-1.5" data-row-actions="">
                       {/* Slice #38.71/#38.72/#38.76: the magnifier („Previzualizare"), the eye („Incursiune"), the chain link („Legături"), the arrow („Deschide"). */}
-                      <PreviewButton target={{ kind: "company", id: item.id }} />
-                      <IncursionButton target={{ kind: "company", id: item.id }} />
-                      <LinksButton target={{ kind: "company", id: item.id }} />
+                      <PreviewButton target={{ kind: "company", id: item.id }} square="row" />
+                      <IncursionButton target={{ kind: "company", id: item.id }} square="row" />
+                      <LinksButton target={{ kind: "company", id: item.id }} square="row" />
                       <IconButton
                         href={`/judicial-persons/${item.id}`}
                         icon={ArrowRight}
                         label={t("open")}
                         variant="secondary"
                         size="xs"
+                        square="row"
                       />
                     </span>
                   </td>

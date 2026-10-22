@@ -1,5 +1,5 @@
 /**
- * One cell of a principal list's band of column names.                                  (Slices #39.83, 40.20, 40.21, 40.29)
+ * One cell of a principal list's band of column names.                                  (Slices #39.83, 40.20, 40.21, 40.29, 40.30)
  *
  * Adrian, 2026-10-21 (Slice 40.21, replacing #39.83's three rows): „I would like the title bar to be only two rows
  * tall - not three rows like now; I would like to have horizontal centering and vertical centering of whatever the
@@ -7,8 +7,8 @@
  *
  * So every name cell of the four lists is this one component, and every one is the band's full height whatever
  * columns are chosen — the table does not jump as a funnel comes and goes:
- *   - the band is two rows of the names' line (40.18's Roboto Condensed 13.5 px on 18 px), `HEAD_BAND_PX`, inside the
- *     cell's `px-4 py-2` as before (Ask first 1);
+ *   - the band is two rows of the names' line (40.18's Roboto Condensed 13.5 px; on 17 px since 40.30, 18 before),
+ *     `HEAD_BAND_PX`, inside the cell's `px-4 py-[2.5px]` (py-2 until 40.30) — 39 px in all, ¾ of 40.21's 52;
  *   - the name ALONE is centred both ways in the cell (Ask first 2, 3). A name too wide for its column wraps onto the
  *     second row, balanced (`text-balance`), never a third (`line-clamp-2`), its lines centred;
  *   - Slice 40.29 (Adrian, 2026-10-22: „the funnel button will become 50% narrower 50% shorter … and it will move to
@@ -33,8 +33,15 @@ import { columnHead } from "@/components/table/fixed-columns";
 import type { ColumnName } from "@/lib/ui/field-widths";
 import type { HeadDragProps } from "@/components/list/column-order";
 
-/** Two rows of the names' 18-px line (Slice 40.21; it was two text rows and the funnel's 26-px row, 62 px). */
-export const HEAD_BAND_PX = 18 + 18;
+/**
+ * Two rows of the names' line: 17 px since Slice 40.30 (18 in 40.21; before it two text rows and the funnel's 26-px
+ * row, 62 px). With the cell's 2.5-px padding above and below, the band is 39 px — three quarters of 40.21's 52
+ * (Adrian, 2026-10-22: „The height of the title bar should be 3/4 of what it is now").
+ */
+export const HEAD_LINE_PX = 17;
+export const HEAD_BAND_PX = HEAD_LINE_PX + HEAD_LINE_PX;
+/** The cell's padding above and below the band (`py-[2.5px]`, Slice 40.30; it was py-2). */
+export const HEAD_PAD_PX = 2.5;
 
 export function ListHeadCell({
   column,
@@ -54,13 +61,13 @@ export function ListHeadCell({
 }) {
   return (
     <th
-      className={`relative px-4 py-2 align-middle${drag ? " cursor-grab select-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus" : ""}`}
+      className={`relative px-4 py-[2.5px] align-middle${drag ? " cursor-grab select-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus" : ""}`}
       {...columnHead(column)}
       {...drag}
     >
       <div className="flex items-center justify-center" style={{ height: HEAD_BAND_PX }} data-head-band={funnel ? "filter" : "plain"}>
         <span className="flex min-w-0 items-center justify-center" data-head-name="">
-          <span className="line-clamp-2 min-w-0 text-balance break-words text-center" data-head-text="" title={full}>
+          <span className="line-clamp-2 min-w-0 text-balance break-words text-center leading-[17px]" data-head-text="" title={full}>
             {name}
           </span>
         </span>

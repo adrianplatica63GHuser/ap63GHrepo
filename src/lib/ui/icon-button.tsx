@@ -73,8 +73,9 @@ import { useTooltipTriggers } from "@/lib/ui/use-tooltip";
  */
 export const ICON_PX: Record<ButtonSize, number> = { xs: 16, sm: 16, md: 18, lg: 18 };
 
-/** The icon's size in each of the squares smaller than xs (`square`, Slice 40.29): the funnel's 9 px in its 13. */
-export const SQUARE_ICON_PX: Record<SmallSquare, number> = { corner: 9 };
+/** The icon's size in each of the squares smaller than xs (`square`): the funnel's 9 px in its 13 (Slice 40.29), a
+ *  list row's 14 in its 24 (Slice 40.30). */
+export const SQUARE_ICON_PX: Record<SmallSquare, number> = { corner: 9, row: 14 };
 
 /** The gap between the icon and the label of an icon + label button. */
 const LABEL_GAP = "gap-1.5";

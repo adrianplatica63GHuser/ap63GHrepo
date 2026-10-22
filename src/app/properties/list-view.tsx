@@ -254,9 +254,10 @@ export function PropertyListView() {
       address={{ kind: "property", row: address.row, tiles: address.tiles }}
     >
       {/* Toolbar */}
-      <div className={`flex flex-wrap items-center gap-3 ${LIST_TOOLBAR}`} {...edge.toolbar}>
+      {/* Slice 40.30: the toolbar one step down — „Adaugă …" md, the other buttons sm, the search box 30 px, 8-px gaps. */}
+      <div className={`flex flex-wrap items-center gap-2 ${LIST_TOOLBAR}`} {...edge.toolbar}>
         {/* Slice #39.85: as wide as „Adaugă …", its whole explanation on hover. */}
-        <ListSearchBox value={searchInput} onChange={setSearchInput} explanation={t("searchPlaceholder")} />
+        <ListSearchBox value={searchInput} onChange={setSearchInput} explanation={t("searchPlaceholder")} small />
 
         {/* Slice #37.61: no „Importanță" or „Relevanță" filter; „Câmpuri afișate" is the
             shared chooser, its fields today's less importance, relevance and provenance. */}
@@ -281,7 +282,7 @@ export function PropertyListView() {
             label={t("wholeMap")}
             showLabel
             variant="secondary"
-            size="lg"
+            size="md"
             onClick={() => router.push("/properties/map")}
           />
           {/* Slice #39.73: no „Șterge selecția" here any more — a property is deleted only from its own form (Adrian,
@@ -308,7 +309,7 @@ export function PropertyListView() {
               label={t("addNew")}
               showLabel
               variant="primary"
-              size="lg"
+              size="md"
               onClick={() => setAddOpen(true)}
             />
           </span>
@@ -365,7 +366,7 @@ export function PropertyListView() {
                     />
                   );
                 })}
-                <th className="px-4 py-2" {...columnHead("listRowActions")} />
+                <th className="px-4 py-[2.5px]" {...columnHead("listRowActions")} />
               </tr>
             </thead>
             <tbody className="divide-y divide-crease dark:divide-zinc-800">
@@ -403,7 +404,7 @@ export function PropertyListView() {
                 >
                   {order.keys.map((key) =>
                     key === "nickname" ? (
-                      <td key={key} className={`px-4 py-2 text-fade dark:text-zinc-400 ${ONE_LINE}`} data-col="nickname" title={cellTitle(item.nickname)}>
+                      <td key={key} className={`px-4 py-1 text-fade dark:text-zinc-400 ${ONE_LINE}`} data-col="nickname" title={cellTitle(item.nickname)}>
                         <FirstCellText
                           badges={
                             <>
@@ -416,24 +417,25 @@ export function PropertyListView() {
                         </FirstCellText>
                       </td>
                     ) : (
-                      <td key={key} className={`px-4 py-2 text-fade dark:text-zinc-400 ${ONE_LINE}`} title={cellTitle(cellValue(item, key))}>
+                      <td key={key} className={`px-4 py-1 text-fade dark:text-zinc-400 ${ONE_LINE}`} title={cellTitle(cellValue(item, key))}>
                         {cellValue(item, key)}
                       </td>
                     ),
                   )}
-                  <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
+                  <td className="px-4 py-1" onClick={(e) => e.stopPropagation()}>
                     {/* Slice #38.57: side by side, always. */}
-                    <span className="flex flex-nowrap gap-2" data-row-actions="">
+                    <span className="flex flex-nowrap gap-1.5" data-row-actions="">
                       {/* Slice #38.71/#38.72/#38.76: the magnifier („Previzualizare"), the eye („Incursiune"), the chain link („Legături"), the arrow („Deschide"). */}
-                      <PreviewButton target={{ kind: "property", id: item.id }} />
-                      <IncursionButton target={{ kind: "property", id: item.id }} />
-                      <LinksButton target={{ kind: "property", id: item.id }} />
+                      <PreviewButton target={{ kind: "property", id: item.id }} square="row" />
+                      <IncursionButton target={{ kind: "property", id: item.id }} square="row" />
+                      <LinksButton target={{ kind: "property", id: item.id }} square="row" />
                       <IconButton
                         href={`/properties/${item.id}`}
                         icon={ArrowRight}
                         label={t("open")}
                         variant="secondary"
                         size="xs"
+                        square="row"
                       />
                     </span>
                   </td>
@@ -444,7 +446,7 @@ export function PropertyListView() {
         </div>
       </ListPreviewRow>
 
-      {/* Pagination */}
+      {/* Pagination — Slice 40.30: „‹" and „›" xs (they were sm), as on the person lists. */}
       <div className="flex w-fit max-w-full items-center justify-between gap-4" {...edge.frame}>
         <div className="text-xs text-fade dark:text-zinc-400">
           {query.data
@@ -456,7 +458,7 @@ export function PropertyListView() {
             icon={ChevronLeft}
             label={tPag("previous")}
             variant="secondary"
-            size="sm"
+            size="xs"
             onClick={() => setCurrentPage((p) => p - 1)}
             disabled={!paginate || currentPage === 0}
           />
@@ -467,7 +469,7 @@ export function PropertyListView() {
             icon={ChevronRight}
             label={tPag("next")}
             variant="secondary"
-            size="sm"
+            size="xs"
             onClick={() => setCurrentPage((p) => p + 1)}
             disabled={!paginate || currentPage >= totalPages - 1}
           />

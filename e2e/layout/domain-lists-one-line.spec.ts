@@ -73,9 +73,10 @@ async function band(page: Page) {
       const cell = th.getBoundingClientRect();
       const name = b.querySelector<HTMLElement>("[data-head-text]")!;
       const n = name.getBoundingClientRect();
-      // Slice 40.21: two rows of the names' 18-px line (40.18's Roboto Condensed 13.5 px) — 36 px; it was 62.
-      const rows = Math.round(n.height / 18);
-      if (Math.round(box.height) !== 36) out.push(`${col}: band ${box.height}`);
+      // Slice 40.21: two rows of the names' line (40.18's Roboto Condensed 13.5 px); 17 px since 40.30 (18 before) —
+      // 34 px; it was 36, and 62 before 40.21.
+      const rows = Math.round(n.height / 17);
+      if (Math.round(box.height) !== 34) out.push(`${col}: band ${box.height}`);
       if (rows < 1 || rows > 2 || name.scrollHeight > name.clientHeight + 1) out.push(`${col}: ${rows} rows`);
       if (name.scrollWidth > name.clientWidth + 1) out.push(`${col}: cut sideways`);
       // The name alone, centred in its cell, both ways — the funnel takes no part in it.
@@ -202,6 +203,25 @@ test.describe("TC-LAYOUT-05 — cele patru liste, câte un rând pe linie", () =
             return { named: th.querySelector("[data-head-text]") !== null, badge: td.querySelector("[data-row-badges]")?.textContent ?? "" };
           });
           expect({ width, list: list.path, ...first }).toEqual({ width, list: list.path, named: true, badge: expect.stringContaining("Nou!") });
+          // Slice 40.30 — three quarters as tall: the band 39 px (it was 52), the row 32 (about 43); the row's buttons
+          // 24 × 24, 6 px apart; the search box 30 px, as an sm button; „Adaugă …" md, 34; „Câmpuri afișate" sm, 30.
+          const size = await page.evaluate(() => {
+            const table = document.querySelector<HTMLElement>("main table[data-width-table]")!;
+            const h = (el: Element | null) => (el ? Math.round(el.getBoundingClientRect().height * 2) / 2 : -1);
+            const buttons = [...table.querySelectorAll<HTMLElement>("tbody tr [data-row-actions] a, tbody tr [data-row-actions] button")];
+            const gaps = buttons.slice(1).map((b, i) => Math.round(b.getBoundingClientRect().left - buttons[i].getBoundingClientRect().right));
+            return {
+              band: h(table.querySelector("thead tr")),
+              row: h(table.querySelector("tbody tr")),
+              buttons: [...new Set(buttons.map((b) => `${Math.round(b.getBoundingClientRect().width)}×${Math.round(b.getBoundingClientRect().height)}`))],
+              gaps: [...new Set(gaps)],
+              search: h(document.querySelector("main [data-list-search]")),
+              add: h(document.querySelector("main [data-list-add] a, main [data-list-add] button")),
+              chooser: h(document.querySelector("main [data-field-chooser] > span > button, main [data-field-chooser] button")),
+            };
+          });
+          expect({ width, list: list.path, band: Math.abs(size.band - 39) <= 1, row: Math.abs(size.row - 32) <= 1, buttons: size.buttons, gaps: size.gaps, search: size.search, add: size.add, chooser: size.chooser })
+            .toEqual({ width, list: list.path, band: true, row: true, buttons: ["24×24"], gaps: [6], search: 30, add: 34, chooser: 30 });
           const h = await band(page);
           expect({ width, list: list.path, ...h }).toEqual({
             width, list: list.path, cells: list.path === "/properties" ? 5 : 6, wrong: [], forcedOnTwo: true,

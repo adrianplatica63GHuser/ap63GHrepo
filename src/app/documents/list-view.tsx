@@ -234,7 +234,7 @@ function DocumentTypeFilterDropdown({
         onClick={() => (open ? close() : setOpen(true))}
         aria-haspopup="listbox"
         aria-expanded={open}
-        className={buttonClass({ variant: "secondary", size: "md", className: "gap-1.5" })}
+        className={buttonClass({ variant: "secondary", size: "sm", className: "gap-1.5" })}
       >
         <span className="text-fade">{label}</span>
         {/* Slice #40.01: the words one width in every state — the 14 rem a type's name had — so ticking types never
@@ -735,19 +735,20 @@ export function DocumentListView({
           Adrian, 2026-10-18: „The Expiring Soon button will slide left close to field picker button"), then — since
           #40.01 — „Tip document:" and „Câmp specific" with its ⓘ, and at its end „Adaugă act"'s group. The filter bar
           under it is drawn only while a filter is active. */}
-      <div className={`flex flex-col gap-3 ${LIST_TOOLBAR}`} data-toolbar="" {...edge.toolbar}>
+      {/* Slice 40.30: the toolbar one step down — „Adaugă act" md, the other controls 30 px (sm), 8-px gaps. */}
+      <div className={`flex flex-col gap-2 ${LIST_TOOLBAR}`} data-toolbar="" {...edge.toolbar}>
       {/* #39.74: top-aligned, not centred — choosing a field adds its value select here, and centred, the row would
           move under the cursor (TC-DOC-08 step 7). From #39.84 to #40.01 that select was on the bar below; it is back on
-          this row, which stays top-aligned, every control on it 33–37 px tall (Ask first 4). */}
-      <div className="flex items-start gap-3" data-toolbar-row="first">
+          this row, which stays top-aligned, every control on it 33–37 px tall (Ask first 4) — 30–34 since 40.30. */}
+      <div className="flex items-start gap-2" data-toolbar-row="first">
         {/* Slice #40.01: the controls on the left wrap among themselves, so the group at the right — „Adaugă act" —
             always ends the first line and is never pushed under them (Ask first 2). */}
-        <div className="flex min-w-0 flex-1 flex-wrap items-start gap-3" data-toolbar-controls="">
+        <div className="flex min-w-0 flex-1 flex-wrap items-start gap-2" data-toolbar-controls="">
           {/* Slice #37.62: the search first — its placeholder no longer begins
               with „SAU", which only made sense after the type. Since #38.18 the
               type stands in front of „Câmp specific" — since #40.01 after „Expiră curând". */}
           {/* Slice #39.85: as wide as „Adaugă …", its whole explanation on hover. */}
-          <ListSearchBox value={searchInput} onChange={setSearchInput} explanation={t("searchPlaceholder")} />
+          <ListSearchBox value={searchInput} onChange={setSearchInput} explanation={t("searchPlaceholder")} small />
 
           {/* Slice #37.62: the shared chooser, as on the other three lists. Its list hung from the right while the button
               stood near the toolbar's end; since #39.85 the search box before it is as narrow as „Adaugă act", so a list
@@ -769,7 +770,7 @@ export function DocumentListView({
             icon={CalendarClock}
             label={tFilter("expiringSoon")}
             variant={expiringSoon ? "primary" : "secondary"}
-            size="md"
+            size="sm"
             aria-pressed={expiringSoon}
             onClick={() => { setExpiringSoon((v) => !v); setCurrentPage(0); }}
           />
@@ -861,8 +862,8 @@ export function DocumentListView({
                 data-custom-field-box={customField.enabled ? "enabled" : "disabled"}
                 className={
                   customField.enabled
-                    ? "inline-flex items-center gap-1.5 rounded-md border border-wire bg-white px-2 py-1.5 text-sm shadow-sm dark:border-zinc-700 dark:bg-zinc-900"
-                    : "inline-flex cursor-not-allowed items-center gap-1.5 rounded-md border border-dashed border-wire bg-cta-pale px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800/60"
+                    ? "inline-flex items-center gap-1.5 rounded-md border border-wire bg-white px-2 py-1.5 text-xs shadow-sm dark:border-zinc-700 dark:bg-zinc-900"
+                    : "inline-flex cursor-not-allowed items-center gap-1.5 rounded-md border border-dashed border-wire bg-cta-pale px-2 py-1.5 text-xs dark:border-zinc-600 dark:bg-zinc-800/60"
                 }
               >
                 <span className={customField.enabled ? "text-fade" : "italic text-fade dark:text-zinc-500"}>{tFilter("customFieldLabel")}</span>
@@ -881,7 +882,7 @@ export function DocumentListView({
                   // Slice #38.07: works only for exactly one type with a closed-list field.
                   disabled={!customField.enabled}
                   data-custom-field-enabled={customField.enabled ? "true" : "false"}
-                  className="bg-transparent text-sm font-medium text-ink focus:outline-none disabled:cursor-not-allowed disabled:italic disabled:text-fade dark:text-zinc-100 dark:disabled:text-zinc-500"
+                  className="bg-transparent text-xs font-medium text-ink focus:outline-none disabled:cursor-not-allowed disabled:italic disabled:text-fade dark:text-zinc-100 dark:disabled:text-zinc-500"
                 >
                   <option value="">{tFilter("allCustomFields")}</option>
                   {customFieldOptions.map((o) => (
@@ -897,7 +898,7 @@ export function DocumentListView({
                     // than absent: a control that appears a beat after the one
                     // beside it moves the toolbar under the cursor.
                     disabled={valuesQuery.isPending}
-                    className="bg-transparent text-sm font-medium text-ink focus:outline-none disabled:text-fade dark:text-zinc-100"
+                    className="bg-transparent text-xs font-medium text-ink focus:outline-none disabled:text-fade dark:text-zinc-100"
                   >
                     <option value="">
                       {valuesQuery.isPending
@@ -928,7 +929,7 @@ export function DocumentListView({
               label={t("addNew")}
               showLabel
               variant="primary"
-              size="lg"
+              size="md"
             />
           </span>
         </div>
@@ -987,7 +988,7 @@ export function DocumentListView({
                         />
                       );
                     })}
-                    <th className="px-4 py-2" {...columnHead("listRowActions")} />
+                    <th className="px-4 py-[2.5px]" {...columnHead("listRowActions")} />
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-crease dark:divide-zinc-800">
@@ -1026,7 +1027,7 @@ export function DocumentListView({
                       {order.keys.map((key) =>
                         key === "type" ? (
                           // Slice #37.95: the type by its short name (CVC, PAD…, or the rule's), the full name in its tooltip.
-                          <td key={key} className={`px-4 py-2 text-fade dark:text-zinc-400 ${ONE_LINE}`} title={item.documentTypeName ?? undefined}>
+                          <td key={key} className={`px-4 py-1 text-fade dark:text-zinc-400 ${ONE_LINE}`} title={item.documentTypeName ?? undefined}>
                             <FirstCellText badges={<RecencyBadge createdAt={item.createdAt} updatedAt={item.updatedAt} />}>
                               {item.documentTypeName
                                 ? documentTypeShortName({ name: item.documentTypeName, shortName: item.documentTypeShortName })
@@ -1034,30 +1035,31 @@ export function DocumentListView({
                             </FirstCellText>
                           </td>
                         ) : key === "title" ? (
-                          <td key={key} className={`px-4 py-2 font-medium ${ONE_LINE}`} title={cellTitle(item.title)}>
+                          <td key={key} className={`px-4 py-1 font-medium ${ONE_LINE}`} title={cellTitle(item.title)}>
                             {item.title ?? (
                               <span className="text-fade italic">—</span>
                             )}
                           </td>
                         ) : (
-                          <td key={key} className={`px-4 py-2 text-fade dark:text-zinc-400 ${ONE_LINE}`} title={cellTitle(cellValue(item, key))}>
+                          <td key={key} className={`px-4 py-1 text-fade dark:text-zinc-400 ${ONE_LINE}`} title={cellTitle(cellValue(item, key))}>
                             {cellValue(item, key)}
                           </td>
                         ),
                       )}
-                      <td className="px-4 py-2" onClick={(e) => e.stopPropagation()}>
+                      <td className="px-4 py-1" onClick={(e) => e.stopPropagation()}>
                         {/* Slice #38.57: side by side, always. */}
-                        <span className="flex flex-nowrap gap-2" data-row-actions="">
+                        <span className="flex flex-nowrap gap-1.5" data-row-actions="">
                           {/* Slice #38.71/#38.72/#38.76: the magnifier („Previzualizare"), the eye („Incursiune"), the chain link („Legături"), the arrow („Deschide"). */}
-                          <PreviewButton target={{ kind: "document", id: item.id }} />
-                          <IncursionButton target={{ kind: "document", id: item.id }} />
-                          <LinksButton target={{ kind: "document", id: item.id }} />
+                          <PreviewButton target={{ kind: "document", id: item.id }} square="row" />
+                          <IncursionButton target={{ kind: "document", id: item.id }} square="row" />
+                          <LinksButton target={{ kind: "document", id: item.id }} square="row" />
                           <IconButton
                             href={`/documents/${item.id}`}
                             icon={ArrowRight}
                             label={t("open")}
                             variant="secondary"
                             size="xs"
+                            square="row"
                           />
                         </span>
                       </td>
@@ -1068,7 +1070,7 @@ export function DocumentListView({
             </div>
           </ListPreviewRow>
 
-          {/* Pagination */}
+          {/* Pagination — Slice 40.30: „‹" and „›" xs (they were sm), as on the person lists. */}
           <div className="flex w-fit max-w-full items-center justify-between gap-4" {...edge.frame}>
             <div className="text-xs text-fade dark:text-zinc-400">
               {query.data
@@ -1080,7 +1082,7 @@ export function DocumentListView({
                 icon={ChevronLeft}
                 label={tPag("previous")}
                 variant="secondary"
-                size="sm"
+                size="xs"
                 onClick={() => setCurrentPage((p) => p - 1)}
                 disabled={!paginate || currentPage === 0}
               />
@@ -1091,7 +1093,7 @@ export function DocumentListView({
                 icon={ChevronRight}
                 label={tPag("next")}
                 variant="secondary"
-                size="sm"
+                size="xs"
                 onClick={() => setCurrentPage((p) => p + 1)}
                 disabled={!paginate || currentPage >= totalPages - 1}
               />

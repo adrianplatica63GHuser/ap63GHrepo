@@ -176,12 +176,16 @@ const SIZE_SQUARE: Record<ButtonSize, string> = {
  *            area is kept at 20 × 20 by a transparent `::before` reaching 5 px left and up and 2 px right and down —
  *            asymmetric, because the button stands 2 px from the cell's right and bottom edges and the area must
  *            stay inside the cell.
+ *   row    — a principal list's row buttons (the magnifier, the eye, the chain link, „Deschide"), 24 × 24 px — two
+ *            px under xs, about 8 % (Slice 40.30, Adrian: „the buttons on the Each row will become maybe 10% smaller"),
+ *            so a row is three quarters of its old height.
  */
-export type SmallSquare = "corner";
-export const SMALL_SQUARES: readonly SmallSquare[] = ["corner"] as const;
+export type SmallSquare = "corner" | "row";
+export const SMALL_SQUARES: readonly SmallSquare[] = ["corner", "row"] as const;
 const SMALL_SQUARE: Record<SmallSquare, string> = {
   corner:
     "h-[13px] w-[13px] p-0 before:absolute before:-top-[5px] before:-left-[5px] before:-right-[2px] before:-bottom-[2px]",
+  row: "h-6 w-6 p-0",
 };
 
 /** Text size per size. Split from padding so `bare` can take one without the other. */

@@ -15,6 +15,9 @@
  *   - the explanation names its fields as „Câmpuri afișate", the column headers or the form spell them
  *     (`search-explanation.test.ts` holds the four to that, and to what each list's route searches).
  * Until the button is measured — the first render, on the server — the box is `w-64`, as all four were.
+ *
+ * Slice 40.30: `small` is the four principal lists' — 30 px tall, an sm button's height (`py-1`; it was `py-1.5`, 34),
+ * with the rest of their toolbar one step down. The admin lists keep the 34-px box.
  */
 import { useLayoutEffect, useRef } from "react";
 
@@ -25,11 +28,14 @@ export function ListSearchBox({
   value,
   onChange,
   explanation,
+  small = false,
 }: {
   value: string;
   onChange: (next: string) => void;
   /** The list's searchPlaceholder: what the search reads, in the chooser's words. */
   explanation: string;
+  /** Slice 40.30: the principal lists' 30-px box. */
+  small?: boolean;
 }) {
   const box = useRef<HTMLInputElement>(null);
   useLayoutEffect(() => {
@@ -55,7 +61,7 @@ export function ListSearchBox({
       aria-label={explanation}
       title={explanation}
       data-list-search=""
-      className="w-64 shrink-0 text-ellipsis rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm placeholder:text-fade focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:placeholder:text-zinc-500"
+      className={`w-64 shrink-0 text-ellipsis rounded-md border border-wire bg-white px-3 ${small ? "py-1" : "py-1.5"} text-sm shadow-sm placeholder:text-fade focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:placeholder:text-zinc-500`}
     />
   );
 }

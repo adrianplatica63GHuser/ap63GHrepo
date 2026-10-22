@@ -19,19 +19,21 @@
 import { Eye, Link as LinkIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { IconButton } from "@/lib/ui/icon-button";
+import type { SmallSquare } from "@/lib/ui/button-styles";
 import type { PreviewTarget } from "@/lib/ui/previews";
 import { isLocked, isRowTileOpen } from "@/lib/ui/row-tiles";
 import { useIncursion, type IncursionView } from "./incursion-context";
 
-export function IncursionButton({ target }: { target: PreviewTarget }) {
+/** Slice 40.30: `square="row"` on the four lists' rows (24 px); elsewhere today's xs. */
+export function IncursionButton({ target, square }: { target: PreviewTarget; square?: SmallSquare }) {
   const t = useTranslations("shared.incursion");
-  return <ToggleButton target={target} view="peek" icon={Eye} label={t("button")} />;
+  return <ToggleButton target={target} view="peek" icon={Eye} label={t("button")} square={square} />;
 }
 
 /** Slice #38.76: the chain link — the object's „Legături" beside the list. */
-export function LinksButton({ target }: { target: PreviewTarget }) {
+export function LinksButton({ target, square }: { target: PreviewTarget; square?: SmallSquare }) {
   const t = useTranslations("shared.incursion");
-  return <ToggleButton target={target} view="links" icon={LinkIcon} label={t("links")} />;
+  return <ToggleButton target={target} view="links" icon={LinkIcon} label={t("links")} square={square} />;
 }
 
 function ToggleButton({
@@ -39,11 +41,13 @@ function ToggleButton({
   view,
   icon,
   label,
+  square,
 }: {
   target: PreviewTarget;
   view: IncursionView;
   icon: typeof Eye;
   label: string;
+  square?: SmallSquare;
 }) {
   const t = useTranslations("shared.incursion");
   const incursion = useIncursion();
@@ -56,6 +60,7 @@ function ToggleButton({
       label={label}
       variant={pressed ? "primary" : "secondary"}
       size="xs"
+      square={square}
       aria-pressed={pressed}
       disabled={locked}
       note={locked ? t("lockedNote") : undefined}

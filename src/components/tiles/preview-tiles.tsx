@@ -37,6 +37,7 @@ import { useTranslations } from "next-intl";
 import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
 import { Search } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
+import type { SmallSquare } from "@/lib/ui/button-styles";
 import { PreviewTileBody, type PreviewField } from "./preview-tile-body";
 import { loadPreview } from "./preview-data";
 import { PAGES_PANEL_REM, PREVIEW_LINES, PREVIEW_ROWS, PREVIEW_WIDTHS, rem, type PreviewKind, type PreviewLinesKind } from "@/lib/ui/field-widths";
@@ -84,7 +85,8 @@ export function PreviewOpenerProvider({ previews, children }: { previews: Previe
  * pressed exactly while its preview is open, so when a third preview replaces the oldest, the oldest row's
  * magnifier is released with it (Ask first #3), and „Închide" on the tile releases it as well.
  */
-export function PreviewButton({ target }: { target: PreviewTarget }) {
+/** Slice 40.30: `square="row"` on the four lists' rows (24 px), only in the list branch; elsewhere today's xs. */
+export function PreviewButton({ target, square }: { target: PreviewTarget; square?: SmallSquare }) {
   const previews = useContext(OpenerContext);
   // Slice #39.04: on a list the magnifier is one of the row's three toggles (`@/lib/ui/row-tiles`) — pressed it
   // opens the row's preview at the top of the column; on another row with tiles open it is disabled.
@@ -100,6 +102,7 @@ export function PreviewButton({ target }: { target: PreviewTarget }) {
         label={t("openPreview")}
         variant={pressed ? "primary" : "secondary"}
         size="xs"
+        square={square}
         aria-pressed={pressed}
         disabled={locked}
         note={locked ? tIncursion("lockedNote") : undefined}

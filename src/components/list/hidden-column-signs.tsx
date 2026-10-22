@@ -10,7 +10,8 @@
  *     band's height as the rows scroll down and at the visible part's edges as the list scrolls sideways — and at its
  *     two ends the signs, each the band's height (`LIST_HEAD_PX`), three glyphs centred in it, on a narrow strip of the
  *     band's own background so they read over a column's name (Ask first 2);
- *   - in the danger red, `text-red-600`, `dark:text-red-400`, bold, at the band's 16-px line;
+ *   - in the danger red, `text-red-600`, `dark:text-red-400`, bold, the glyphs on a 12-px line since 40.30 (16 before),
+ *     so three fit the 39-px band;
  *   - a sign that explains itself (Slice 40.11, Adrian: „the three red greater than or smaller than signs … should on
  *     Information when the mouse hover on top of them that will invite a user to scroll left or scroll right"): each
  *     sign is a button — the strip between them still takes no pointer — named by its sentence, „Mai sunt coloane la
@@ -24,16 +25,16 @@
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { HEAD_BAND_PX } from "@/components/table/list-head";
+import { HEAD_BAND_PX, HEAD_PAD_PX } from "@/components/table/list-head";
 import { IconTooltip } from "@/lib/ui/icon-button";
 import { NOTHING_HIDDEN, hiddenSides, sameSides, signScrollTarget, type HiddenSides } from "@/lib/ui/hidden-columns";
 
-/** The band of names' row: the band and its cell's `py-2` — 52 px since Slice 40.21 (two rows; it was 78). */
-export const LIST_HEAD_PX = HEAD_BAND_PX + 16;
+/** The band of names' row: the band and its cell's padding — 39 px since Slice 40.30 (52 in 40.21; it was 78). */
+export const LIST_HEAD_PX = HEAD_BAND_PX + 2 * HEAD_PAD_PX;
 
 // Slice 40.23: `ga-sign-pulse` (globals.css) — the glyphs breathe, slowly and faintly, while the sign shows.
 const SIGN =
-  "ga-sign-pulse flex w-5 cursor-pointer flex-col items-center justify-center bg-cap text-base font-bold leading-4 text-red-600 " +
+  "ga-sign-pulse flex w-5 cursor-pointer flex-col items-center justify-center bg-cap text-base font-bold leading-3 text-red-600 " +
   "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus dark:bg-zinc-800 dark:text-red-400";
 
 /** One side's sign: three glyphs, a button named by its sentence, the sentence in a bubble on hover or keyboard focus. */

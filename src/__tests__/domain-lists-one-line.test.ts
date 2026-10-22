@@ -49,7 +49,9 @@ describe("the four lists, one line per row (#38.57)", () => {
   });
 
   it.each(LISTS)("%s: the row's buttons on one line, in a column as wide as they make (128 px, four since #38.76)", (l) => {
-    expect(VIEW[l]).toContain('<span className="flex flex-nowrap gap-2" data-row-actions="">');
+    // Slice 40.30: 24-px buttons (`square="row"`) 6 px apart — 4 × 24 + 3 × 6 = 114 px, inside the column's 128.
+    expect(VIEW[l]).toContain('<span className="flex flex-nowrap gap-1.5" data-row-actions="">');
+    expect((VIEW[l].match(/square="row"/g) ?? []).length).toBe(4);
     // #38.57 held two xs buttons (60 px); #38.72 adds the eye between them — three side by side, 94 px
     // („(94 px, three since #38.72)", `toBeGreaterThanOrEqual(94)`). #38.76 adds the chain link after the eye:
     // four, 4 × 26 + 3 × 8 = 128 px.

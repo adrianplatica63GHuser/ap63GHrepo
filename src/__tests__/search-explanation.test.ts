@@ -102,7 +102,8 @@ describe("the box (#39.85)", () => {
   });
   it.each(["properties", "natural-persons", "judicial-persons", "documents"])("%s draws it, matched to its „Adaugă …”", (dir) => {
     const view = read("src", "app", dir, "list-view.tsx");
-    expect(view).toContain('<ListSearchBox value={searchInput} onChange={setSearchInput} explanation={t("searchPlaceholder")} />');
+    // Slice 40.30: the principal lists' 30-px box.
+    expect(view).toContain('<ListSearchBox value={searchInput} onChange={setSearchInput} explanation={t("searchPlaceholder")} small />');
     expect(view).toMatch(/<span className="inline-flex" \{\.\.\.LIST_ADD\}>\s*<IconButton[\s\S]*?label=\{t\("addNew"\)\}/);
     expect(view).not.toMatch(/type="search"\s+value=\{searchInput\}/);
   });

@@ -56,8 +56,9 @@ describe("the Documents toolbar and its filter group (Slices #37.83, #39.63, #39
   // Ask first 2: the controls wrap among themselves, inside their own box; the row itself does not wrap, so „Adaugă
   // act"'s group always ends the first line; the filter group never wraps apart.
   it("the controls wrap, the row does not, and the group never wraps apart", () => {
-    expect(code).toContain('<div className="flex items-start gap-3" data-toolbar-row="first">');
-    expect(code).toContain('<div className="flex min-w-0 flex-1 flex-wrap items-start gap-3" data-toolbar-controls="">');
+    // Slice 40.30: the toolbar's gaps 12 → 8 px.
+    expect(code).toContain('<div className="flex items-start gap-2" data-toolbar-row="first">');
+    expect(code).toContain('<div className="flex min-w-0 flex-1 flex-wrap items-start gap-2" data-toolbar-controls="">');
     expect(code).toContain('<div className="flex shrink-0 flex-nowrap items-center gap-2" data-filter-fixed="">');
     expect(controls).toContain("<DocumentTypeFilterDropdown");
     expect(controls).toContain("<CustomFieldSign");
@@ -97,6 +98,6 @@ describe("the Documents toolbar and its filter group (Slices #37.83, #39.63, #39
 
   it("the toolbar is one column, the list's toolbar box", () => {
     // Slice #37.84: the column is also the list's toolbar box, as wide as the table or its controls.
-    expect(code).toMatch(/<div className=\{`flex flex-col gap-3 \$\{LIST_TOOLBAR\}`\} data-toolbar="" \{\.\.\.edge\.toolbar\}>\s*<div className="flex items-start gap-3" data-toolbar-row="first">/);
+    expect(code).toMatch(/<div className=\{`flex flex-col gap-2 \$\{LIST_TOOLBAR\}`\} data-toolbar="" \{\.\.\.edge\.toolbar\}>\s*<div className="flex items-start gap-2" data-toolbar-row="first">/);
   });
 });

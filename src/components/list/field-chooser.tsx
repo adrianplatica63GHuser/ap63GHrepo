@@ -125,7 +125,8 @@ export function FieldChooser({
         icon={Columns3}
         label={`${label} ${visible.length}/${max}`}
         variant="secondary"
-        size="md"
+        // Slice 40.30: one step down, with the rest of the lists' toolbar (it was md).
+        size="sm"
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="true"
         aria-expanded={open}
