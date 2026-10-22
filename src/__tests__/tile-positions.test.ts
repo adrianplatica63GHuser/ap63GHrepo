@@ -210,7 +210,7 @@ describe("the screens", () => {
     for (const f of ["src/app/natural-persons/_components/person-detail-tiles.tsx", "src/app/judicial-persons/_components/person-detail-tiles.tsx"]) {
       expect(code(read(...f.split("/")))).toMatch(/<TileAreas[^>]*entity=\{[A-Z_]+_TILE_REGISTRY\.entity\}/);
     }
-    expect(code(read("src", "components", "tiles", "tile-areas.tsx"))).toContain("useTilePacking(leftRef, { fitWidest: true, entity, rightRef })");
+    expect(code(read("src", "components", "tiles", "tile-areas.tsx"))).toContain("useTilePacking(areaRef, { fitWidest: true, entity, right })");
     expect(code(read("src", "app", "properties", "_components", "property-detail-tiles.tsx"))).toMatch(/<TileAreas[^>]*entity=\{/);
     expect(code(read("src", "app", "documents", "_components", "document-detail-tiles.tsx"))).toMatch(/<TileAreas[^>]*entity=\{reg\.entity\}/);
   });
@@ -306,11 +306,14 @@ describe("the free space under the right column (#37.79)", () => {
     expect(placeOf(read.placed, "connections")).toMatchObject({ col: 7, top: 750 + 378 + GAP });
   });
 
-  it("the hook measures the column's tiles as fixed boxes while the column stands beside the left area", () => {
+  // Slice 40.32: the right-hand tiles are boxes like the others, starting at the right edge while nothing is stored.
+  it("the hook gives the right-hand tiles a starting place at the right edge, and no fixed boxes any more", () => {
     const src = code(read("src", "components", "tiles", "use-tile-packing.ts"));
-    expect(src).toMatch(/r\.left < c\.right - 0\.5\) return \[\]/);
+    expect(src).toContain("const starting = rightBoxes.filter((b) => !stored[b.id] && !visit[b.id]);");
+    expect(src).toContain("start.set(b.id, { col: ownColumns - units, top });");
+    expect(src).toContain("const beside = fitsBeside(leftUnits, starting.map(own), ownColumns);");
     expect(src).toContain("placeWithStored(items, { ...stored, ...visit }, columns, gap, flowColumns)");
-    expect(code(read("src", "components", "tiles", "tile-areas.tsx"))).toMatch(/ref=\{rightRef\}[\s\S]*?data-tile-area="right"/);
+    expect(src).not.toMatch(/fixedNow|rightRef|FIXED_PREFIX|WRAPPED_PREFIX/);
   });
 });
 
@@ -785,3 +788,57 @@ describe("a tile held over another makes room: the tile under it slides down to 
     expect(pure).toContain("`makeRoom`, Slice 39.91");
   });
 });
+
+/**
+ * Slice 40.32 — the right-hand tiles start at the right edge and move like any tile (`PackBox.start`).
+ * A property at 10 units: two left tiles in the flow's 7, the map and the corners starting at column 7.
+ */
+describe("the right-hand tiles start at the right edge, and move (40.32)", () => {
+  const GAP40 = 16;
+  const BOXES: PackBox[] = [
+    { id: "identity", units: 4, height: 300 },
+    { id: "related", units: 3, height: 200 },
+    { id: "map", units: 3, height: 378, start: { col: 7, top: 0 } },
+    { id: "corners", units: 3, height: 341, start: { col: 7, top: 394 } },
+  ];
+  const at = (placed: readonly { id: string; col: number; top: number }[], id: string) => placed.find((p) => p.id === id)!;
+
+  it("with nothing stored they stand at their starting places, the flow left of them — as the column stood", () => {
+    const { placed } = placeWithStored(BOXES, {}, 10, GAP40, 7);
+    expect(at(placed, "map")).toMatchObject({ col: 7, top: 0 });
+    expect(at(placed, "corners")).toMatchObject({ col: 7, top: 394 });
+    expect(at(placed, "identity")).toMatchObject({ col: 0, top: 0 });
+    expect(at(placed, "related")).toMatchObject({ col: 4, top: 0 });
+    expect(placed.some((p) => p.fixed)).toBe(false);
+  });
+
+  it("a stored place wins over the start: dragged left, the map stays there, and its place is stored", () => {
+    const { placed } = placeWithStored(BOXES, { map: { col: 0, top: 316 } }, 10, GAP40, 7);
+    expect(at(placed, "map")).toMatchObject({ col: 0, top: 316 });
+    expect(at(placed, "corners")).toMatchObject({ col: 7, top: 394 });
+    expect(isStorable("map")).toBe(true);
+    const stored = placesToStore(placed, {}, [], "map", 0, GAP40);
+    expect(stored.map).toMatchObject({ col: 0, top: 316 });
+  });
+
+  it("they can be dropped and can make room, like any tile — a fixed box could do neither", () => {
+    const { placed } = placeWithStored(BOXES, {}, 10, GAP40, 7);
+    expect(canDrop(placed, "map", { col: 7, top: 800 }, 10, GAP40)).toBe(true);
+    expect(canDrop(placed, "corners", { col: 4, top: 300 }, 10, GAP40)).toBe(true);
+    expect(makeRoom(placed, "identity", { col: 7, top: 0 }, 10, GAP40)).not.toBeNull();
+  });
+
+  it("an arrangement stored before 40.32 names none of them: they open at their starts, nothing is lost", () => {
+    const { placed, fallback } = placeWithStored(BOXES, { related: { col: 0, top: 316 }, [`${FIXED_PREFIX}map`]: { col: 2, top: 2 } }, 10, GAP40, 7);
+    expect(at(placed, "related")).toMatchObject({ col: 0, top: 316 });
+    expect(at(placed, "map")).toMatchObject({ col: 7, top: 0 });
+    expect(fallback).toEqual([]);
+  });
+
+  it("packTiles places a start too, and the flow never into it", () => {
+    const placed = packTiles(BOXES, 10, GAP40, 7);
+    expect(at(placed, "map")).toMatchObject({ col: 7, top: 0 });
+    expect(placed.filter((p) => p.col + p.units > 7).map((p) => p.id).sort()).toEqual(["corners", "map"]);
+  });
+});
+

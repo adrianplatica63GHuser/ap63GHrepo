@@ -45,11 +45,11 @@ async function steps(page: Page, id: string, width: number): Promise<void> {
   await tile.getByRole("button", { name: "Stereo 70", exact: true }).click();
   const map = page.locator('[data-panel="map"]');
   const sv = page.locator('[data-panel="street-view"]');
-  const right = page.locator('[data-tile-area="right"]');
+  // Slice 40.32: no column of their own any more — the three start one under another against the row's right edge.
   await expect.poll(async () => {
-    const [m, c, s, r] = await Promise.all([boxOf(map), boxOf(tile), boxOf(sv), boxOf(right)]);
-    return { corners: c.w === m.w, streetView: s.w === m.w, column: r.w === m.w, rightEdges: new Set([m.r, c.r, s.r]).size };
-  }, { timeout: 20_000 }).toEqual({ corners: true, streetView: true, column: true, rightEdges: 1 });
+    const [m, c, s] = await Promise.all([boxOf(map), boxOf(tile), boxOf(sv)]);
+    return { corners: c.w === m.w, streetView: s.w === m.w, rightEdges: new Set([m.r, c.r, s.r]).size };
+  }, { timeout: 20_000 }).toEqual({ corners: true, streetView: true, rightEdges: 1 });
 
   // Step 2 — the four buttons on one line, „Șterge" against the table's edge.
   const row = tile.locator("tbody tr").first();

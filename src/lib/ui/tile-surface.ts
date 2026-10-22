@@ -3,9 +3,11 @@
  *
  * The tiles of the right column (the registry's `placement.right`,
  * `src/lib/ui/tiles.ts`: the Property's „Hartă", „Puncte de contur" and
- * „Street View"; the Document's „Pagini") never move: #37.76's drag never
- * starts on them. They are tinted a light purple so the user sees at a glance
- * that they stay where they are. Every other tile keeps the card's grey-blue.
+ * „Street View"; the Document's „Pagini"; a person's „Interacțiuni") were
+ * tinted a light purple because they never moved. Since Slice 40.32 they move
+ * like any tile, starting at the right edge; the purple stays as their group's
+ * colour („the peek-inside tiles", 40.32's Ask first 5). Every other tile keeps
+ * its group's.
  *
  * WHICH TILES is the registry's answer, never a second list: a form asks
  * `RightColumn.has(tile)` (`src/components/tiles/tile-areas.tsx`), so a tile
@@ -41,7 +43,7 @@ import type { TileGroup } from "@/lib/ui/tiles";
 export const TILE_SURFACE =
   "rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900";
 
-/** A right-column tile, which never moves: the same box, tinted purple. */
+/** A right-hand tile (`placement.right`): the same box, tinted purple — its group's colour, since 40.32 movable. */
 export const PINNED_TILE_SURFACE =
   "rounded-md border border-card-pinned-rim bg-card-pinned p-3 shadow-sm dark:border-card-pinned-rim-dark dark:bg-card-pinned-dark";
 

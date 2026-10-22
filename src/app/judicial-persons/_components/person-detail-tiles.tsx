@@ -41,7 +41,7 @@ import { ListTile } from "@/components/tiles/list-tile";
 import { groupSurface } from "@/lib/ui/tile-surface";
 import { TileSelector } from "@/components/tiles/tile-selector";
 import { useTileChoice } from "@/components/tiles/use-tile-choice";
-import { groupedTiles, splitTiles, tileGroupOf, tilesOfTab } from "@/lib/ui/tiles";
+import { groupedTiles, tileGroupOf, tilesOfTab } from "@/lib/ui/tiles";
 import { LIST_UNITS, unitRowStyle } from "@/lib/ui/field-widths";
 import { type FormValues } from "./form-schema";
 import { JP_TILES, JP_TILE_OF_TAB, JP_TILE_REGISTRY, type JpTile } from "./person-tiles";
@@ -77,10 +77,9 @@ export function JudicialPersonDetailTiles({
   const choice = useTileChoice<JpTile>(JP_TILE_REGISTRY, urlTiles);
   // Slice #37.24 — related records open beside this one, read-only.
   const previews = usePreviews();
-  // Slice #37.89: „Interacțiuni" stands in the right-hand column (`placement.right`), as „Hartă" and „Pagini" do.
+  // Slice #37.89: „Interacțiuni" is a right-hand tile (`placement.right`), as „Hartă" and „Pagini" are — since 40.32 it starts at the right edge and moves like any tile.
   const rightAll = JP_TILE_REGISTRY.placement?.right ?? [];
   const { column, slotRefs } = useRightColumn(rightAll);
-  const shownRight = splitTiles(choice.shown, JP_TILE_REGISTRY).right.length;
   const interactionsSlot = column.slot("interactions");
   const previewEntries = usePreviewSelectorEntries(previews);
   // Slice #18.05: the details form portals its version-nav controls into this
@@ -126,7 +125,7 @@ export function JudicialPersonDetailTiles({
 
         <PreviewOpenerProvider previews={previews}>
         {/* Slice #37.75: each box right under the box above it; #37.89: the right-hand column (`TileAreas`). */}
-        <TileAreas right={rightAll} shownRight={shownRight} slotRefs={slotRefs} entity={JP_TILE_REGISTRY.entity}>
+        <TileAreas right={rightAll} slotRefs={slotRefs} entity={JP_TILE_REGISTRY.entity}>
           <JudicialPersonForm
             mode={readonly ? "view" : "edit"}
             personId={personId}

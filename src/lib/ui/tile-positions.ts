@@ -96,9 +96,18 @@
  * hook undoes every slide of a drag on Esc or a refused release, and stores
  * them with the drop.
  *
+ * THE RIGHT-HAND TILES MOVE (Slice 40.32). The tiles #37.79 made fixed are,
+ * on the four record screens, boxes with a starting place (`PackBox.start`):
+ * with nothing stored for one, it stands there — against the row's right edge,
+ * as the column stood — and the flow keeps to the units left of it; once it is
+ * dropped somewhere, that place is stored under its own tile name like any
+ * other, and „Implicit" sends it back. An arrangement stored before 40.32 has
+ * no entry for them, so they open at their starting places and nothing stored
+ * is lost.
+ *
  * PURE — no DOM, no React; `tile-positions.test.ts` covers it.
  */
-import { endsTop, fixedBoxes, freeUnder, overlaps, packTiles, topUnder, type PackBox, type Placed } from "./tile-packing";
+import { endsTop, fixedBoxes, freeUnder, overlaps, packTiles, startBoxes, topUnder, type PackBox, type Placed } from "./tile-packing";
 
 /** A box's stored place: its first column (0-based) and its top in px. */
 export interface StoredPlace {
@@ -347,6 +356,8 @@ export function placeWithStored(
   }
   // The right column's tiles, where they stand: nothing moves them (#37.79).
   placed.push(...fixedBoxes(boxes));
+  // 40.32: a right-hand tile with nothing stored (or nothing this visit can hold) at its starting place.
+  placed.push(...startBoxes(boxes.filter((b) => b.start && !usable.includes(b))));
   // The stored ones first, top to bottom: each at its place, pushed down when a taller tile above now reaches into it.
   for (const box of [...usable].sort((a, b) => stored[a.id].top - stored[b.id].top || stored[a.id].col - stored[b.id].col)) {
     const units = Math.max(1, Math.min(Math.round(box.units), cols));

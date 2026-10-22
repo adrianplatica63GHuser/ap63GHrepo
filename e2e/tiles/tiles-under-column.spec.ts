@@ -124,4 +124,86 @@ test.describe("TC-TILES-15 — sub coloana din dreapta", () => {
       await removeRecord(page.request, "property", propId);
     }
   });
+
+  // Slice 40.32 — steps 8–11: the right-hand tiles move. „Hartă" starts at the right edge, is dragged to the left
+  // under every tile, stays there after a reload, and „Implicit" sends it back; „Pagini" on the document the same.
+  // The Street View tile is not ticked here.
+  test("„Hartă” și „Pagini” se mută ca orice fișă și rămân unde au fost lăsate; „Implicit” le pune înapoi", async ({ page }) => {
+    test.slow();
+    const M = `${MARK}-MOVE`;
+    await removeLeftovers(page.request, M);
+    await page.setViewportSize({ width: 1920, height: 1600 });
+    const propId = await createProperty(page.request, {
+      nickname: `${M} Teren`,
+      corners: [{ lat: 44.43512, lon: 26.10234 }, { lat: 44.43561, lon: 26.10301 }, { lat: 44.43527, lon: 26.10372 }, { lat: 44.4347, lon: 26.10335 }],
+    });
+    const docId = await createSaleContract(page.request, `${M} Act`);
+    const forget = () => page.evaluate(() => {
+      for (const k of Object.keys(localStorage)) if (k.startsWith("ga40-tile-positions-")) localStorage.removeItem(k);
+    });
+    /** The row's right edge and the lowest bottom of every tile but the action bar, relative to the row. */
+    const rowFacts = () => page.evaluate(() => {
+      const row = document.querySelector<HTMLElement>("[data-tile-row]")!.getBoundingClientRect();
+      const tiles = [...document.querySelectorAll<HTMLElement>("[data-tile-row] [data-packed-col]:not(.order-last)")];
+      return { w: Math.round(row.width), lowest: Math.round(Math.max(...tiles.map((t) => t.getBoundingClientRect().bottom - row.top))) };
+    });
+    /** Drag `tile` to the row's left edge, 48 px under every tile; the outline's verdict. */
+    const toTheLeft = async (tile: Locator) => {
+      const row = (await page.locator("[data-tile-row]").boundingBox())!;
+      const { lowest } = await rowFacts();
+      return dragTo(page, tile, row.x, row.y + lowest + 48);
+    };
+    try {
+      const up = await page.request.post(`/api/documents/${docId}/pages`, {
+        multipart: { file: { name: "tc-e2e-pagina.png", mimeType: "image/png", buffer: fs.readFileSync(PAGE_FILE) }, pageNumber: "1" },
+      });
+      expect(up.ok(), `the page upload failed (${up.status()})`).toBeTruthy();
+
+      // Step 8 — the property, nothing stored: „Hartă" against the row's right edge, at its top.
+      await page.goto(`/properties/${propId}`);
+      await forget();
+      await page.reload();
+      await expect(page.locator('[data-panel="corners"] tbody tr')).toHaveCount(4, { timeout: 30_000 });
+      await page.waitForTimeout(2500); // past the first layout's settling
+      const map = page.locator('[data-tile="map"]');
+      const { w } = await rowFacts();
+      const m8 = await place(page, map);
+      expect(m8.y).toBe(0);
+      expect(Math.abs(w - (m8.x + Math.round((await map.boundingBox())!.width)))).toBeLessThanOrEqual(1);
+
+      // Step 9 — grabbed by its free space and dropped at the left, under every tile: free, and it stays.
+      expect(await toTheLeft(map)).toBe("true");
+      await expect.poll(async () => (await place(page, map)).x, { timeout: 10_000 }).toBe(0);
+      const m9 = await place(page, map);
+      expect(m9.y).toBeGreaterThan(m8.y);
+      expect(await page.evaluate(() => JSON.parse(localStorage.getItem("ga40-tile-positions-property-v1") ?? "{}").map ?? null)).not.toBeNull();
+
+      // Step 10 — after a reload, where step 9 left it; „Implicit" sends it back to the right edge.
+      await page.reload();
+      await expect(page.locator('[data-panel="corners"] tbody tr')).toHaveCount(4, { timeout: 30_000 });
+      await expect.poll(async () => place(page, map), { timeout: 30_000 }).toEqual(m9);
+      await page.getByRole("button", { name: "Implicit", exact: true }).click();
+      await expect.poll(async () => (await place(page, map)).y, { timeout: 20_000 }).toBe(0);
+      expect((await place(page, map)).x).toBe(m8.x);
+
+      // Step 11 — the document: „Pagini" at the right edge, dragged to the left, kept after a reload.
+      await page.goto(`/documents/${docId}`);
+      const pages = page.locator('[data-tile="pages"]');
+      await expect(pages).toBeVisible({ timeout: 30_000 });
+      await page.waitForTimeout(2500);
+      const p11 = await place(page, pages);
+      expect(p11.y).toBe(0);
+      expect(await toTheLeft(pages)).toBe("true");
+      await expect.poll(async () => (await place(page, pages)).x, { timeout: 10_000 }).toBe(0);
+      const p11b = await place(page, pages);
+      await page.reload();
+      await expect(pages).toBeVisible({ timeout: 30_000 });
+      await expect.poll(async () => place(page, pages), { timeout: 30_000 }).toEqual(p11b);
+    } finally {
+      await forget().catch(() => undefined);
+      await removeRecord(page.request, "document", docId);
+      await removeRecord(page.request, "property", propId);
+    }
+  });
 });
+

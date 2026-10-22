@@ -18,6 +18,12 @@ cannot stand beside the left area the tile is placed as the screen places it, wi
 place for the wider window. „Implicit" forgets it. A drop refused under the column, a column tile
 that moves, or a place lost on reload is the defect this case exists to catch.
 
+Slice 40.32, Adrian, 2026-10-22: „Currently, we have a rule that the "peek inside" tiles … cannot be moved from the
+right edge; I would like them to be movable and to start as default position on the right edge; But they can be
+movable and clickable like any other tile". Steps 8–11: „Hartă" and „Pagini" start where the column stood, are
+dragged like any tile, keep their place after a reload, and go back with „Implicit". The Street View tile is not
+ticked in them. A right-hand tile that cannot be grabbed, or loses its place on reload, is the defect.
+
 ## Before you start
 
 - TC-AUTH-01 is green.
@@ -44,6 +50,10 @@ Nothing.
 | 5 | Narrows the window to 1366 px; then widens it to 1920 | At 1366 „Etichete și grupuri" stands in the left area, the column beside it; at 1920 it is back under „Puncte de contur" |
 | 6 | Opens „TC-TILES-15 Act", ticks „Clasificare", drags it by its padding until its top-left corner is 40 px under „Pagini", on its left edge; releases | „Clasificare" stays there, its left edge on „Pagini"'s; „Pagini" where it was |
 | 7 | Back on the property: „Implicit", then ticks „Etichete și grupuri" | „Etichete și grupuri" under „Identificare cadastrală", where step 1 had it; the browser holds no arrangement for the property |
+| 8 | (Slice 40.32 — a second property „TC-TILES-15-MOVE Teren" and act, at 1920 × 1600, nothing stored) Opens the property | „Hartă" against the row's right edge, at its top |
+| 9 | Drags „Hartă" by its free space to the row's left edge, 48 px under every tile | The outline free; released, „Hartă" stays there, and its place is stored |
+| 10 | Reloads; then presses „Implicit" | After the reload, „Hartă" where step 9 left it; after „Implicit", back at the right edge, at the top |
+| 11 | Opens the act; drags „Pagini" the same way; reloads | „Pagini" starts at the right edge, at the top; dropped, it stays; after the reload, the same place |
 
 ## At the end — leaving things as they were found
 

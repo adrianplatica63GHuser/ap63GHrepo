@@ -17,6 +17,9 @@ purple when a narrow window puts the column under the left area. Inside them not
 map's frame keeps the card's rim, the corner table its white body. A right tile drawn as a card, or a
 left tile drawn purple, is the defect this case exists to catch.
 
+Slice 40.32: these tiles move now, like any other, starting at the right edge (TC-TILES-15 steps 8–11, TC-TILES-22
+steps 7–8). The purple stays as their group's colour (40.32's Ask first 5), so this case still holds as written.
+
 ## Before you start
 
 - TC-AUTH-01 is green.

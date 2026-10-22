@@ -49,7 +49,7 @@ import { groupSurface } from "@/lib/ui/tile-surface";
 import { TileSelector } from "@/components/tiles/tile-selector";
 import { useTileChoice } from "@/components/tiles/use-tile-choice";
 import { TileAreas, useRightColumn } from "@/components/tiles/tile-areas";
-import { groupedTiles, splitTiles, tileGroupOf, tilesOfTab } from "@/lib/ui/tiles";
+import { groupedTiles, tileGroupOf, tilesOfTab } from "@/lib/ui/tiles";
 import { LIST_UNITS, unitRowStyle } from "@/lib/ui/field-widths";
 import {
   DOCUMENT_STATUS_CLASS,
@@ -159,7 +159,6 @@ export function DocumentDetailTiles({
 
   const order = (tile: string): number => reg.all.indexOf(tile);
   const marked = markedTiles(highlighted, choice.shown, reg.all);
-  const shownRight = splitTiles(choice.shown, reg).right.length;
 
   return (
     <>
@@ -202,7 +201,7 @@ export function DocumentDetailTiles({
         )}
 
         <PreviewOpenerProvider previews={previews}>
-        <TileAreas right={rightAll} shownRight={shownRight} slotRefs={slotRefs} entity={reg.entity}>
+        <TileAreas right={rightAll} slotRefs={slotRefs} entity={reg.entity}>
           <DocumentForm
             mode={readonly ? "view" : "edit"}
             documentId={documentId}

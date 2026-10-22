@@ -72,13 +72,15 @@ describe("the split", () => {
 });
 
 describe("the screens draw it", () => {
-  it("both detail screens draw their row as two areas, the column from the registry's placement", () => {
-    for (const [dir, file] of [["properties", "property-detail-tiles.tsx"], ["documents", "document-detail-tiles.tsx"]]) {
+  // Slice 40.32: one area — the right-hand tiles are its boxes, starting at the right edge, movable.
+  it("the four detail screens draw their row as one area, the right-hand tiles from the registry's placement", () => {
+    for (const [dir, file] of [["properties", "property-detail-tiles.tsx"], ["documents", "document-detail-tiles.tsx"], ["natural-persons", "person-detail-tiles.tsx"], ["judicial-persons", "person-detail-tiles.tsx"]]) {
       const page = code(read("src", "app", dir, "_components", file));
-      expect([file, /<TileAreas right=\{rightAll\} shownRight=\{shownRight\} slotRefs=\{slotRefs\}( entity=\{[\w.]+\})?>/.test(page)]).toEqual([file, true]);
-      // Slice #38.04: the Property splits what is on screen — its choice less what its type cannot show (`shown`).
-      const split = file === "property-detail-tiles.tsx" ? /splitTiles\(shown,/ : /splitTiles\(choice\.shown,/;
-      expect([file, /placement\?\.right/.test(page), split.test(page), /right: column,/.test(page)]).toEqual([file, true, true, true]);
+      expect([dir, /<TileAreas right=\{rightAll\} slotRefs=\{slotRefs\}( entity=\{[\w.]+\})?>/.test(page)]).toEqual([dir, true]);
+      expect([dir, /placement\?\.right/.test(page), /shownRight/.test(page)]).toEqual([dir, true, false]);
+    }
+    for (const [dir, file] of [["properties", "property-detail-tiles.tsx"], ["documents", "document-detail-tiles.tsx"]]) {
+      expect([file, /right: column,/.test(code(read("src", "app", dir, "_components", file)))]).toEqual([file, true]);
     }
   });
 
@@ -91,11 +93,11 @@ describe("the screens draw it", () => {
     for (const f of [prop, doc]) expect(f).toMatch(/return slot \? createPortal\(node, slot\) : null;/);
   });
 
-  it("the column's slots are in placement order and take no room of their own; the left area never narrower than its widest tile", () => {
+  it("the slots are in placement order and take no room of their own; the area never narrower than its widest tile", () => {
     const areas = code(read("src", "components", "tiles", "tile-areas.tsx"));
     expect(areas).toMatch(/right\.map\(\(tile\) => \(\s*<div key=\{tile\} className="contents" data-tile-slot=\{tile\}/);
     expect(areas).toMatch(/minWidth: "min-content"/);
-    expect(areas).toMatch(/hidden=\{shownRight === 0\}/);
+    expect(areas).not.toMatch(/shownRight/);
     expect(areas).toMatch(/data-tile-row/);
   });
 });

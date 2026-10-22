@@ -79,8 +79,12 @@ for (const kind of ["Persoană fizică", "Persoană juridică"] as const) {
         await page.reload();
         await page.getByRole("button", { name: "Toate", exact: true }).click({ timeout: 30_000 });
         await ready();
-        const left = await rect(page, "[data-tile-area=left]");
-        expect((await rect(page, INTER)).x).toBeGreaterThanOrEqual(left.x + left.w);
+        // 40.32: one area — „Interacțiuni" starts against the row's right edge, every other tile left of it.
+        const row1 = await rect(page, "[data-tile-row]");
+        const i1 = await rect(page, INTER);
+        expect(Math.abs(i1.x + i1.w - (row1.x + row1.w))).toBeLessThanOrEqual(1);
+        const others = await page.evaluate(() => Math.max(...[...document.querySelectorAll<HTMLElement>("[data-tile-row] [data-packed-col][data-tile]:not([data-tile=interactions])")].map((t) => t.getBoundingClientRect().right)));
+        expect(others).toBeLessThanOrEqual(i1.x);
 
         // Step 2 — dropped under it: it stays there.
         let name = await dropUnder(page);
@@ -121,3 +125,48 @@ for (const kind of ["Persoană fizică", "Persoană juridică"] as const) {
     });
   });
 }
+
+// Slice 40.32 — steps 7–8: „Interacțiuni" itself moves, like any tile, and stays where it was dropped.
+test.describe("TC-TILES-22 — „Interacțiuni” se mută ca orice fișă (Persoană fizică)", () => {
+  test("trasă la stânga, sub toate fișele: rămâne acolo, și după reîncărcare", async ({ page }) => {
+    test.slow();
+    const M = `${MARK}-MOVE`;
+    await removeLeftovers(page.request, M);
+    const id = await createNaturalPerson(page.request, { lastName: `${M} Doi`, firstName: "Ana" });
+    const forget = () => page.evaluate(() => {
+      localStorage.removeItem("ga40-tile-positions-natural-person-v1");
+      localStorage.removeItem("ga40-tiles-natural-person-v1");
+    });
+    try {
+      await page.setViewportSize({ width: 1920, height: 2400 });
+      await page.goto(`/natural-persons/${id}`);
+      await forget();
+      await page.reload();
+      await expect(page.locator(INTER)).toBeVisible({ timeout: 30_000 });
+      await page.waitForTimeout(2500);
+      // Step 7 — grabbed by its padding and dropped at the row's left edge, 48 px under every tile: free.
+      const row = await rect(page, "[data-tile-row]");
+      const i = await rect(page, INTER);
+      const lowest = await page.evaluate(() => Math.max(...[...document.querySelectorAll<HTMLElement>("[data-tile-row] [data-packed-col]:not(.order-last)")].map((t) => t.getBoundingClientRect().bottom)));
+      await page.mouse.move(i.x + 5, i.y + 5);
+      await page.mouse.down();
+      await page.mouse.move(i.x + 15, i.y + 15, { steps: 3 });
+      await page.mouse.move(row.x + 5, Math.round(lowest) + 48 + 5, { steps: 12 });
+      const free = await page.evaluate(() => document.querySelector<HTMLElement>("[data-tile-outline]")?.dataset.free ?? null);
+      await page.mouse.up();
+      await page.mouse.move(1, 1);
+      expect(free).toBe("true");
+      await expect.poll(async () => (await rect(page, INTER)).x, { timeout: 10_000 }).toBe(row.x);
+      const moved = await rect(page, INTER);
+      expect(moved.y).toBeGreaterThan(i.y);
+      // Step 8 — after a reload, the same place.
+      await page.reload();
+      await expect(page.locator(INTER)).toBeVisible({ timeout: 30_000 });
+      await expect.poll(() => rect(page, INTER), { timeout: 20_000 }).toEqual(moved);
+    } finally {
+      await forget().catch(() => undefined);
+      await removeRecord(page.request, "person", id).catch(() => undefined);
+    }
+  });
+});
+

@@ -63,6 +63,15 @@
  * stood under the whole left area before — and the action bar under them.
  * The space under them is then free for a dragged tile like any other.
  *
+ * A STARTING BOX (Slice 40.32). Adrian, 2026-10-22: the tiles that stood fixed
+ * at the right edge — „Interacțiuni", a property's map, corners and Street
+ * View, a document's „Pagini" — „to be movable and to start as default
+ * position on the right edge". So the screens no longer draw them as fixed
+ * boxes (the fixed box stays here, a rule for any screen that needs one): each
+ * is an ordinary box with a `start` — its place against the row's right edge,
+ * one under another — at which it stands while nothing is stored for it, as it
+ * stood before; dragged, it is stored like any tile (`placeWithStored`).
+ *
  * POSITIONS ARE DATA: a column in units and a place down the screen in px.
  * The screens measure and draw (`use-tile-packing.ts`); #37.76 stores
  * positions in place of what this computes, and falls back to it.
@@ -89,6 +98,12 @@ export interface PackBox {
    * them — as the whole column stood under the whole left area before.
    */
   under?: boolean;
+  /**
+   * Slice 40.32: a right-hand tile's starting place — against the row's right
+   * edge, one under another — taken while nothing is stored for it. Unlike
+   * `fixed` it is a box like any other: dragged, pushed, stored.
+   */
+  start?: { col: number; top: number };
 }
 
 /**
@@ -153,12 +168,12 @@ export function freeUnder(placed: readonly Placed[], anchor: Placed, units: numb
  */
 export function packTiles(boxes: readonly PackBox[], columns: number, gap: number, flowColumns = columns): Placed[] {
   const cols = Math.max(1, Math.floor(Math.min(flowColumns, columns)));
-  const placed: Placed[] = fixedBoxes(boxes);
+  const placed: Placed[] = [...fixedBoxes(boxes), ...startBoxes(boxes)];
   const ends: PackBox[] = [];
   let next = 0; // the first free column of the current line
   let floor = -1; // #38.46: under every tile, once the wrapped column's line has started
   for (const box of boxes) {
-    if (box.fixed) continue;
+    if (box.fixed || box.start) continue;
     if (box.rowEnd) {
       ends.push(box);
       continue;
@@ -195,6 +210,13 @@ export function fixedBoxes(boxes: readonly PackBox[]): Placed[] {
   return boxes
     .filter((b) => b.fixed)
     .map((b) => ({ id: b.id, col: b.fixed!.col, units: Math.max(1, Math.round(b.units)), top: b.fixed!.top, height: b.height, fixed: true }));
+}
+
+/** The starting boxes, at their starting places (Slice 40.32) — boxes like any other from then on. */
+export function startBoxes(boxes: readonly PackBox[]): Placed[] {
+  return boxes
+    .filter((b) => b.start && !b.fixed && !b.rowEnd)
+    .map((b) => ({ id: b.id, col: b.start!.col, units: Math.max(1, Math.round(b.units)), top: b.start!.top, height: b.height }));
 }
 
 /** Where the row-end boxes start: under every box, the fixed ones too (#38.47), but the row ends. */

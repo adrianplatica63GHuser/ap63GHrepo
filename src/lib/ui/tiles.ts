@@ -23,8 +23,9 @@
  *
  * `record` — the record's own data, in the cards' grey-blue; `related` —
  * „Corelate" (and the previews it opens), light green; `meta` — „Clasificări"
- * and „Conexiuni", light yellow; `fixed` — the right-hand column that never
- * moves, light purple (#37.78). The checkbox bar draws each group in a strip of
+ * and „Conexiuni", light yellow; `fixed` — the right-hand tiles, light purple
+ * (#37.78), which never moved until Slice 40.32 and now start at the right
+ * edge and move like any other (the group keeps its name). The checkbox bar draws each group in a strip of
  * its colour, and a tile wears its group's colour wherever it is dragged
  * (`src/lib/ui/tile-surface.ts`).
  */
@@ -52,7 +53,8 @@ export interface TileRegistry<K extends string> {
   renamed?: Readonly<Record<string, K | readonly K[]>>;
   /**
    * Where the tiles stand when the screen opens (Slice #37.56). `right` names
-   * the tiles that stand in a column at the right of the screen, top to
+   * the tiles that start at the right of the screen (since 40.32 only start:
+   * each moves like any tile once dragged, `PackBox.start`), top to
    * bottom, top-aligned with the row; every other tile flows and wraps in the
    * left area as before. Absent, every tile is in the left area. It is data,
    * not a layout, so a later slice can store a user's own arrangement in its

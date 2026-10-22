@@ -20,6 +20,9 @@ tile under „Interacțiuni" with the column beside (1920 px) and wrapped (1366 
 Judicial Person, and reloads. A tile that lands above „Interacțiuni", a place lost on reload, or the
 action bar above „Interacțiuni" is the defect.
 
+Slice 40.32: „Interacțiuni" is no longer a column of its own — it starts against the row's right edge (step 1 now
+reads its right edge on the row's, every other tile left of it) and moves like any tile (steps 7–8).
+
 ## Before you start
 
 - TC-AUTH-01 is green.
@@ -44,6 +47,8 @@ Each step on the natural person, then on the company.
 | 4 | The stored arrangement removed; the window at **1366 px**; reloads | „Interacțiuni" under the left tiles, from the left edge; the action bar under it |
 | 5 | Drags the second tile as in step 2 | Released, the tile stands under „Interacțiuni"; the action bar under the tile |
 | 6 | Reloads | The tile still under „Interacțiuni", at the same place; „Interacțiuni" where step 4 had it |
+| 7 | (Slice 40.32 — a second person „TC-TILES-22-MOVE Doi", 1920 × 2400, nothing stored) Drags „Interacțiuni" by its padding to the row's left edge, 48 px under every tile | The outline free; released, „Interacțiuni" stays there |
+| 8 | Reloads | „Interacțiuni" at the same place |
 
 ## At the end — leaving things as they were found
 

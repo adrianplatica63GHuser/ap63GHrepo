@@ -179,7 +179,7 @@ test.describe("TC-ASSOC-07 — Act legat manual de înscrisul pe care îl citeaz
       // test waited out its 90 s on „Da" (green on the re-run). Settle the page, and press again if it
       // still did not open.
       await page.waitForLoadState("networkidle").catch(() => {});
-      const remove = page.locator('[data-tile-area="left"]').getByRole("button", { name: "Șterge", exact: true }).last();
+      const remove = page.locator('[data-tile-area="left"] div.order-last').getByRole("button", { name: "Șterge", exact: true }).last();
       const confirm = page.getByRole("dialog", { name: "Ștergeți actul?" });
       await expect(async () => {
         if (!(await confirm.isVisible())) await remove.click();

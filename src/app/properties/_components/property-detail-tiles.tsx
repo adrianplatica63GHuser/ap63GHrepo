@@ -41,7 +41,7 @@ import { groupSurface } from "@/lib/ui/tile-surface";
 import { TileSelector } from "@/components/tiles/tile-selector";
 import { useTileChoice } from "@/components/tiles/use-tile-choice";
 import { TileAreas, useRightColumn } from "@/components/tiles/tile-areas";
-import { groupedTiles, splitTiles, tileGroupOf, tilesOfTab } from "@/lib/ui/tiles";
+import { groupedTiles, tileGroupOf, tilesOfTab } from "@/lib/ui/tiles";
 import { LIST_UNITS, unitRowStyle } from "@/lib/ui/field-widths";
 import { type FormValues, type Corner } from "./form-schema";
 import { PROP_TILES, PROP_TILE_OF_TAB, PROP_TILE_REGISTRY, type PropTile } from "./property-tiles";
@@ -96,7 +96,6 @@ export function PropertyDetailTiles({
   // Slice #37.56 — the right-hand column, and the slots the form places its tiles in.
   const rightAll = PROP_TILE_REGISTRY.placement?.right ?? NO_RIGHT;
   const { column, slotRefs } = useRightColumn(rightAll);
-  const shownRight = splitTiles(shown, PROP_TILE_REGISTRY).right.length;
   // Slice #18.UX.04: the details form portals its version-nav controls into
   // this header slot.
   const [navSlot, setNavSlot] = useState<HTMLDivElement | null>(null);
@@ -141,7 +140,7 @@ export function PropertyDetailTiles({
         <TileSelector all={PROP_TILES} groups={groupedTiles(PROP_TILE_REGISTRY)} labels={labels} choice={choice} extra={previewEntries} disabled={offReasons} />
 
         <PreviewOpenerProvider previews={previews}>
-        <TileAreas right={rightAll} shownRight={shownRight} slotRefs={slotRefs} entity={PROP_TILE_REGISTRY.entity}>
+        <TileAreas right={rightAll} slotRefs={slotRefs} entity={PROP_TILE_REGISTRY.entity}>
           <PropertyForm
             mode={readonly ? "view" : "edit"}
             propertyId={propertyId}

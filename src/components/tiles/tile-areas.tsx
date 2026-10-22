@@ -1,54 +1,51 @@
 "use client";
 
 /**
- * A detail screen's tile row in two areas.                     (Slice #37.56)
+ * A detail screen's tile row.                         (Slices #37.56, 40.32)
  *
- * The left area is the row as it was: every tile flows and wraps, in the
- * registry's order. The right column holds the tiles the registry's
- * `placement.right` names (`src/lib/ui/tiles.ts`), one under another,
- * top-aligned with the row — a Document's page image; a Property's map, its
- * corners and Street View. It is as wide as its widest shown tile, and each
- * tile stands against the row's right edge (the 3-unit map over the 4-unit
- * corners), so a narrower one leaves its gap on the left, on a unit line.
- *
- * ⚠️ **A COLUMN, NOT A REORDERED ROW.** Putting the page image last in one
- * wrapping row would put it at the right only when it happened to end a line.
+ * Slice 40.32 (Adrian, 2026-10-22: „Currently, we have a rule that the "peek
+ * inside" tiles … cannot be moved from the right edge; I would like them to be
+ * movable and to start as default position on the right edge"): ONE AREA. The
+ * tiles the registry's `placement.right` names (`src/lib/ui/tiles.ts`) — a
+ * person's „Interacțiuni", a property's map, corners and Street View, a
+ * document's „Pagini" — are boxes of the same packed area as every other tile
+ * (`useTilePacking`'s `right`): each starts against the row's right edge, one
+ * under another, top-aligned with the row, as the column stood — and is
+ * grabbed, dragged, dropped and stored like any other. „Implicit" sends them
+ * back. Until 40.32 they stood in a column of their own beside the left area,
+ * fixed boxes nothing could move (#37.56, #37.79); the description below of
+ * how they reach the area is still true.
  *
  * ⚠️ **THE FORM'S TILES ARE PORTALLED INTO IT, NOT MOVED OUT OF THE FORM.** The
- * form is `display: contents` in the left area, so its right-hand tiles are
+ * form is `display: contents` in the area, so its right-hand tiles are
  * rendered by the form, as before — with its state, hidden rather than
  * unmounted when unticked — and placed here through `createPortal` into a
- * slot per tile. The slots are `display: contents` in placement order, so the
- * column reads in that order whatever order the form renders them in, and an
- * empty slot takes no room and no gap. A tile renders nothing until its slot
- * exists (the first commit), so a map is never mounted twice.
+ * slot per tile. The slots are `display: contents`, in placement order, inside
+ * the area, so the packing finds each tile as a box of its own; an empty slot
+ * takes no room. A tile renders nothing until its slot exists (the first
+ * commit), so a map is never mounted twice.
  *
- * A NARROW WINDOW: the left area is never narrower than its widest tile
- * (`min-width: min-content`), so when that tile and the column no longer fit
- * side by side the column wraps under the left area — the form first (#37.56's
- * Ask first). The row is still `unitRowStyle`'s whole units, and so, since the
- * column is whole units, is the left area. Since #38.46 the packing hook makes
- * that call itself (`fitsBeside`) and, wrapped, takes the column out of the
- * flow and places its tiles as boxes of the row, under the left tiles: a
- * column wrapped as a flex line of its own was outside the packing, so nothing
- * could be dropped under it.
+ * A NARROW WINDOW: the area is never narrower than its widest tile
+ * (`min-width`, `fitWidest`); when the widest left tile and the widest
+ * right-hand one no longer fit side by side, the right-hand tiles start under
+ * the left ones instead (#38.46's `fitsBeside`, made by the packing hook).
  */
 import { useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { useTilePacking } from "./use-tile-packing";
 import { PANEL_GAP } from "@/lib/ui/field-widths";
 
-/** What a form needs to place a tile in the right column. */
+/** What a form needs to place a right-hand tile in its slot. */
 export interface RightColumn {
-  /** The tile stands in the right column. */
+  /** The tile is a right-hand one (`placement.right`): portalled into its slot. */
   has: (tile: string) => boolean;
   /** Its slot, once the column has been committed; null before. */
   slot: (tile: string) => HTMLElement | null;
 }
 
-/** The left area: what is left of the row, never narrower than its widest tile. */
+/** The area: the whole row, never narrower than its widest tile. */
 const LEFT_AREA_STYLE: CSSProperties = { gap: PANEL_GAP, flex: "1 1 0%", minWidth: "min-content" };
 
-/** The right column's slots for the tiles `right` names, and what a form reads them through. */
+/** The slots for the tiles `right` names, and what a form reads them through. */
 export function useRightColumn(right: readonly string[]): {
   column: RightColumn;
   slotRefs: Readonly<Record<string, (el: HTMLElement | null) => void>>;
@@ -82,46 +79,35 @@ export function useRightColumn(right: readonly string[]): {
 
 export function TileAreas({
   right,
-  shownRight,
   slotRefs,
   entity,
   children,
 }: {
-  /** Every tile that may stand in the right column, top to bottom. */
+  /** Every right-hand tile, top to bottom at its starting place (`placement.right`). */
   right: readonly string[];
-  /** How many of them are shown; none, and the column is not drawn. */
-  shownRight: number;
   slotRefs: Readonly<Record<string, (el: HTMLElement | null) => void>>;
   /** The tile choice's entity (per document type): the dragged arrangement is stored under it (#37.76). */
   entity: string;
-  /** The left area's tiles. */
+  /** The other tiles. */
   children: ReactNode;
 }) {
-  // Slice #37.75: the left area's boxes each stand right under the box above
-  // them (`useTilePacking`); out of the flow, they no longer give the area its
-  // min-content width, so the hook gives it its widest box's.
-  const leftRef = useRef<HTMLDivElement>(null);
-  // Slice #37.79: the column's tiles are fixed boxes of the row, and the space under them is free.
-  const rightRef = useRef<HTMLDivElement>(null);
-  useTilePacking(leftRef, { fitWidest: true, entity, rightRef });
+  // Slice #37.75: each box stands right under the box above it (`useTilePacking`); out of the flow, the boxes no
+  // longer give the area its min-content width, so the hook gives it its widest box's. 40.32: the right-hand tiles
+  // are boxes of it too.
+  const areaRef = useRef<HTMLDivElement>(null);
+  useTilePacking(areaRef, { fitWidest: true, entity, right });
   return (
     <div className="flex flex-wrap items-start" style={{ gap: PANEL_GAP }} data-tile-row>
-      <div ref={leftRef} className="flex flex-wrap items-start" style={LEFT_AREA_STYLE} data-tile-area="left">
+      <div ref={areaRef} className="flex flex-wrap items-start" style={LEFT_AREA_STYLE} data-tile-area="left">
         {children}
+        {right.length > 0 && (
+          <div className="contents" data-tile-area="right">
+            {right.map((tile) => (
+              <div key={tile} className="contents" data-tile-slot={tile} ref={slotRefs[tile]} />
+            ))}
+          </div>
+        )}
       </div>
-      {right.length > 0 && (
-        <div
-          ref={rightRef}
-          className={shownRight > 0 ? "flex flex-col items-end" : "hidden"}
-          hidden={shownRight === 0}
-          style={{ gap: PANEL_GAP }}
-          data-tile-area="right"
-        >
-          {right.map((tile) => (
-            <div key={tile} className="contents" data-tile-slot={tile} ref={slotRefs[tile]} />
-          ))}
-        </div>
-      )}
     </div>
   );
 }

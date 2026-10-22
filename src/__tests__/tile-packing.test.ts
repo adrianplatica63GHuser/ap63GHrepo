@@ -183,11 +183,13 @@ describe("the screens", () => {
     }
   });
 
-  it("the Property and the Document pack their left area (`TileAreas`), the right column kept", () => {
+  it("the Property and the Document pack their one area (`TileAreas`), the right-hand tiles in it since 40.32", () => {
     const src = code(read("src", "components", "tiles", "tile-areas.tsx"));
-    expect(src).toContain("useTilePacking(leftRef, { fitWidest: true");
-    expect(src).toMatch(/<div ref=\{leftRef\}[^>]*data-tile-area="left"/);
-    expect(src).toContain('data-tile-area="right"');
+    expect(src).toContain("useTilePacking(areaRef, { fitWidest: true, entity, right })");
+    expect(src).toMatch(/<div ref=\{areaRef\}[^>]*data-tile-area="left"/);
+    // The slots are inside the area, not a column beside it.
+    expect(src).toMatch(/data-tile-area="left">\s*\{children\}\s*\{right\.length > 0 && \(\s*<div className="contents" data-tile-area="right">/);
+    expect(src).not.toContain("rightRef");
     for (const f of ["src/app/properties/_components/property-detail-tiles.tsx", "src/app/documents/_components/document-detail-tiles.tsx"]) {
       expect(code(read(...f.split("/")))).toContain("<TileAreas");
     }
