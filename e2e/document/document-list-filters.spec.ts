@@ -31,7 +31,8 @@ test.describe("TC-DOC-27 — filtrele listei actelor", () => {
       ids.push(await createDocumentOfType(page.request, "ADEVERINTA", `${MARK} D`, { dateDocument: "2026-03-15" }));
 
       const main = page.locator("main");
-      const titles = main.locator("table tbody tr td:nth-child(3)");
+      // „Titlu" is the second cell since 40.24 took away the empty first column (it was the third).
+      const titles = main.locator("table tbody tr td:nth-child(2)");
       const shows = (...ns: string[]) =>
         expect
           .poll(async () => (await titles.allInnerTexts()).map((t) => t.trim()).filter((t) => t.includes(MARK)).sort(), { timeout: 30_000 })
