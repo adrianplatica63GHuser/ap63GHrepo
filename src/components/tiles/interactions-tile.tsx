@@ -24,7 +24,8 @@
  * Slice 40.33 — SHORT WHEN EMPTY (Adrian, 2026-10-22: „An empty Interactions tile is very tall, too tall; It should
  * be as tall as the Links tile"). On a person's screen, once the history has loaded and holds no interaction, B takes
  * its content's height — the title row and „Nicio interacțiune înregistrată cu această persoană." — and the tile is
- * that plus C, about as tall as an empty „Legături" (Ask first 1). With one interaction or more B keeps today's 436 px,
+ * that plus C, held at an empty „Legături"'s 188 px (`INTERACTIONS_TILE_EMPTY_HEIGHT_PX`; it came out 136 without the
+ * floor — Ask first 1). With one interaction or more B keeps today's 436 px,
  * so the tile grows to it as the first one is saved (Ask first 2). While it loads it is as tall as with rows, as before.
  */
 import { useQuery } from "@tanstack/react-query";
@@ -32,7 +33,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { type CSSProperties, type ReactNode } from "react";
 import { ArrowRight, Paperclip, Plus } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
-import { INTERACTIONS_TILE_STYLE, PAGES_TILE_EMPTY_HEIGHT_PX, ROW_TILE_EMPTY_CLASS } from "@/lib/ui/field-widths";
+import { INTERACTIONS_TILE_EMPTY_HEIGHT_PX, INTERACTIONS_TILE_STYLE, PAGES_TILE_EMPTY_HEIGHT_PX, ROW_TILE_EMPTY_CLASS } from "@/lib/ui/field-widths";
 import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
 import { ChannelPill, DirectionMark, StatusPill } from "@/components/interactions/interaction-pills";
 import { PAGE_MAX, type InteractionListItem } from "@/lib/interactions/model";
@@ -227,7 +228,7 @@ export function InteractionsTile({
         peek
           ? peek.style
           : empty
-            ? { ...INTERACTIONS_TILE_STYLE, minHeight: undefined }
+            ? { ...INTERACTIONS_TILE_STYLE, minHeight: INTERACTIONS_TILE_EMPTY_HEIGHT_PX }
             : footer
               ? { ...INTERACTIONS_TILE_STYLE }
               : { ...INTERACTIONS_TILE_STYLE, height: PAGES_TILE_EMPTY_HEIGHT_PX }

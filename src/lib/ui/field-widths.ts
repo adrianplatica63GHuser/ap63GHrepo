@@ -514,6 +514,12 @@ export const PAGES_PANEL_STYLE: CSSProperties = { width: rem(PAGES_PANEL_REM) };
  */
 export const PAGES_TILE_EMPTY_HEIGHT_PX = 436;
 export const INTERACTIONS_TILE_STYLE: CSSProperties = { ...PAGES_PANEL_STYLE, minHeight: PAGES_TILE_EMPTY_HEIGHT_PX };
+/**
+ * Slice 40.33: a person's „Interacțiuni" with no interaction is as tall as an empty „Legături" on the same screen —
+ * 188 px, measured (TC-PERS-07, runner 20261022T203635Z-13194: the tile at its content's height was 136). The floor
+ * the whole tile keeps while empty; with an interaction it is `INTERACTIONS_TILE_STYLE`'s again.
+ */
+export const INTERACTIONS_TILE_EMPTY_HEIGHT_PX = 188;
 
 // Slice #37.31: `documentRowStyle` and `fieldsBesidePagesStyle` gave way to
 // `unitRowStyle("document")` — the page image is a 4-unit tile like any other.
