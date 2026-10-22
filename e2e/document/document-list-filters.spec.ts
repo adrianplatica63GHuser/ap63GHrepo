@@ -104,4 +104,73 @@ test.describe("TC-DOC-27 — filtrele listei actelor", () => {
       for (const id of ids) await removeRecord(page.request, "document", id);
     }
   });
+
+  // Slice 40.31 — steps 7–10: a funnel on „Tip", the first column. It opens, under itself, the checklist of „Tip
+  // document:" — the same control, writing the same documentTypeIds — so the two always show one choice.
+  test("pâlnia de pe „Tip”: aceeași listă de tipuri ca „Tip document:”, păstrată la reîncărcare", async ({ page }) => {
+    test.slow();
+    const TMARK = `${MARK}-T`;
+    await removeLeftovers(page.request, TMARK);
+    await page.setViewportSize({ width: 1366, height: 900 });
+    const ids: string[] = [];
+    try {
+      ids.push(await createDocumentOfType(page.request, "CONTRACT_VANZARE", `${TMARK} V`, {}));
+      ids.push(await createDocumentOfType(page.request, "ADEVERINTA", `${TMARK} A`, {}));
+      const main = page.locator("main");
+      const titles = main.locator("table tbody tr td:nth-child(2)");
+      const shows = (...ns: string[]) =>
+        expect
+          .poll(async () => (await titles.allInnerTexts()).map((t) => t.trim()).filter((t) => t.includes(TMARK)).sort(), { timeout: 30_000 })
+          .toEqual(ns.map((n) => `${TMARK} ${n}`));
+      const funnel = main.locator('[data-filter-funnel="documentType"] button');
+      const editor = page.locator('[data-filter-editor="documentType"]');
+      const tick = async (name: string, want: boolean) => {
+        const box = editor.getByRole("checkbox", { name, exact: true });
+        await expect(async () => {
+          if (!(await editor.isVisible())) await funnel.click();
+          if ((await box.isChecked()) !== want) await box.click();
+          await expect(box).toBeChecked({ checked: want, timeout: 2_000 });
+        }).toPass({ timeout: 30_000 });
+      };
+
+      // Step 7 — the funnel on „Tip", like the others: 13 × 13 in the cell's corner, not pressed; it opens the
+      // checklist right under itself, „Toate tipurile" first.
+      await page.goto(`/documents?q=${TMARK}`);
+      await shows("A", "V");
+      await expect(funnel).toHaveAttribute("aria-pressed", "false");
+      const box = await funnel.boundingBox();
+      expect([Math.round(box!.width), Math.round(box!.height)]).toEqual([13, 13]);
+      await expect(funnel).toHaveAccessibleName("Filtrează după „Tip”");
+      await funnel.click();
+      await expectUnder(page, '[data-filter-funnel="documentType"]', '[data-filter-editor="documentType"]');
+      await expect(editor.getByRole("checkbox", { name: "Toate tipurile", exact: true })).toBeChecked();
+
+      // Step 8 — „Adeverință" unticked there: the list narrows; the address and „Tip document:" say the same; the
+      // funnel is filled; the bar shows no chip for it.
+      await tick("Adeverință", false);
+      await shows("V");
+      await expect.poll(() => new URL(page.url()).searchParams.get("documentTypeIds")).toBeTruthy();
+      await expect(funnel).toHaveAttribute("aria-pressed", "true");
+      await expect(main.getByRole("button", { name: /^Tip document:/ })).not.toContainText("Toate tipurile");
+      await expect(main.locator("[data-filter-chip]")).toHaveCount(0);
+      await page.keyboard.press("Escape");
+      await expect(editor).toHaveCount(0);
+      await main.getByRole("button", { name: /^Tip document:/ }).click();
+      await expect(main.getByRole("checkbox", { name: "Adeverință", exact: true })).not.toBeChecked();
+      await expect(main.getByRole("checkbox", { name: "Contract de Vânzare", exact: true })).toBeChecked();
+      await page.getByRole("heading", { level: 1 }).first().click();
+
+      // Step 9 — a reload keeps it.
+      await page.reload();
+      await shows("V");
+      await expect(funnel).toHaveAttribute("aria-pressed", "true", { timeout: 30_000 });
+
+      // Step 10 — „Toate tipurile" under the funnel: both again, the funnel plain.
+      await tick("Toate tipurile", true);
+      await shows("A", "V");
+      await expect(funnel).toHaveAttribute("aria-pressed", "false");
+    } finally {
+      for (const id of ids) await removeRecord(page.request, "document", id);
+    }
+  });
 });

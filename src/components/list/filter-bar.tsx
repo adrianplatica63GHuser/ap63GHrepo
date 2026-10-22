@@ -63,6 +63,12 @@ type Props = {
   loadValues: (key: string) => Promise<FacetValue[]>;
   /** Their query key: the list's search and its filters — the field's own too, which names its ticked values. */
   valuesKey: (key: string) => readonly unknown[];
+  /**
+   * Slice 40.31: an editor the list draws itself, opened from a funnel like the others (`editing` set to its key) and
+   * placed under it the same way, but holding the list's own control — Acte's „Tip": the very checklist of
+   * „Tip document:", writing the address as that does. Not a field of `state`, so it has no chip.
+   */
+  own?: { key: string; label: string; content: ReactNode };
 };
 
 const NUMBER = new Intl.NumberFormat("ro-RO", { maximumFractionDigits: 2 });
@@ -77,7 +83,7 @@ function funnelOf(key: string): Element | null {
 }
 
 /** The bar. */
-export function FilterBar({ fields, state, onChange, editing, onEditing, loadValues, valuesKey }: Props) {
+export function FilterBar({ fields, state, onChange, editing, onEditing, loadValues, valuesKey, own }: Props) {
   const t = useTranslations("shared.filterBar");
   const ref = useRef<HTMLDivElement>(null);
   const editorRef = useRef<HTMLDivElement>(null);
@@ -197,6 +203,7 @@ export function FilterBar({ fields, state, onChange, editing, onEditing, loadVal
   }
 
   const editingField = editing ? byKey.get(editing) : undefined;
+  const editingOwn = own && editing === own.key ? own : undefined;
 
   // Slice #40.01 (Ask first 3): a row only while a filter is active. With none it is out of the flow — no height, and
   // no gap in the list's column either, which a zero-height item in a flex column would still get — and holds only the
@@ -265,19 +272,21 @@ export function FilterBar({ fields, state, onChange, editing, onEditing, loadVal
         />
       )}
 
-      {editingField && (
+      {(editingField || editingOwn) && (
         <div
           ref={editorRef}
           role="dialog"
-          aria-label={editingField.label}
-          data-filter-editor={editingField.key}
+          aria-label={editingField?.label ?? editingOwn?.label}
+          data-filter-editor={editingField?.key ?? editingOwn?.key}
           className="absolute left-0 top-full z-30 w-80 rounded-md border border-wire bg-white p-3 shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
         >
           <div className="mb-2 flex items-center justify-between gap-2">
-            <span className="text-sm font-semibold text-ink dark:text-zinc-100">{editingField.label}</span>
+            <span className="text-sm font-semibold text-ink dark:text-zinc-100">{editingField?.label ?? editingOwn?.label}</span>
             <IconButton icon={X} label={t("close")} variant="secondary" size="xs" onClick={close} />
           </div>
-          {editingField.kind === "values" ? (
+          {editingOwn ? (
+            editingOwn.content
+          ) : !editingField ? null : editingField.kind === "values" ? (
             <ValuesEditor
               field={editingField}
               state={state}

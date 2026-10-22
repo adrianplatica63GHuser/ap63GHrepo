@@ -125,6 +125,9 @@ async function fetchCustomFieldValues(
   return body.items ?? [];
 }
 
+/** Slice 40.31: the „Tip" column's funnel — its `data-filter-funnel` and the filter bar's `editing` while open. */
+const TYPE_FUNNEL = "documentType";
+
 /** Slice #39.26: Acte's own filters in its address — „Expiră curând" and the custom field's key and value. */
 const DOCUMENT_ADDRESS_FILTERS = ["expiring", "field", "value"] as const;
 /** Slice #39.63: and the shared bar's fields — every key the list reads from, and carries in, its address. */
@@ -146,6 +149,125 @@ function buildDocumentsUrl(checkedIds: Set<string>, allTypeIds: string[]): strin
   const qs = carried.toString();
   // Slice #39.96: the list's own navigation, not one from outside — so the „Tip document:" checklist stays open.
   return ownListAddress(qs ? `/documents?${qs}` : "/documents");
+}
+
+/**
+ * The checklist of document types — „Toate tipurile", the search box, a box per type — writing `documentTypeIds`
+ * into the address (`buildDocumentsUrl`). Slice 40.31: its own component, so the toolbar's „Tip document:" and the
+ * funnel on the „Tip" column open the very same control: the two always show the one choice.
+ */
+function TypeChecklist({
+  types,
+  initialDocumentTypeIds,
+  allTypesLabel,
+  searchPlaceholder,
+  searchEmptyLabel,
+  onEscape,
+}: {
+  types: DocumentTypeOption[];
+  initialDocumentTypeIds?: string[];
+  allTypesLabel: string;
+  searchPlaceholder: string;
+  searchEmptyLabel: string;
+  /** Esc in the search box (the toolbar's dropdown closes on it; under the funnel the filter bar does). */
+  onEscape?: () => void;
+}) {
+  const router = useRouter();
+  // Slice #38.48: the search box — focused when the checklist opens; a fresh one each time it does.
+  const [query, setQuery] = useState("");
+  const searchRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    searchRef.current?.focus();
+  }, []);
+  const shownTypes = typesMatching(types, query);
+
+  const allTypeIds = types.map((ty) => ty.id);
+  const checkedIds = new Set(
+    initialDocumentTypeIds === undefined ? allTypeIds : initialDocumentTypeIds,
+  );
+  const allChecked  = types.length > 0 && checkedIds.size === allTypeIds.length;
+  const someChecked = checkedIds.size > 0 && !allChecked;
+
+  const selectAllRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate = someChecked;
+    }
+  }, [someChecked]);
+
+  function handleSelectAllToggle() {
+    const next = allChecked ? new Set<string>() : new Set(allTypeIds);
+    router.push(buildDocumentsUrl(next, allTypeIds));
+  }
+
+  function handleToggleType(id: string) {
+    const next = new Set(checkedIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    router.push(buildDocumentsUrl(next, allTypeIds));
+  }
+
+  return (
+    <>
+      {/* The two top rows stay in view while the checklist scrolls under them. */}
+      <div className="sticky top-0 z-10 bg-white dark:bg-zinc-900">
+      <label className="flex items-center gap-2 px-3 py-2 text-sm font-medium cursor-pointer hover:bg-cta-pale dark:hover:bg-zinc-800/50">
+        <input
+          ref={selectAllRef}
+          type="checkbox"
+          checked={allChecked}
+          onChange={handleSelectAllToggle}
+          className="h-4 w-4 rounded border-wire accent-cta"
+        />
+        {allTypesLabel}
+      </label>
+      {/* Slice #38.48: under „Toate tipurile", above the divider (this row's border-b), as wide as the
+          dropdown's w-64 less its px-3 — a fixed width, never w-full (layout-guard). Searching
+          only hides rows; „Toate tipurile" still ticks and unticks the whole list. Esc closes. */}
+      <div className="border-b border-crease px-3 pb-2 dark:border-zinc-800">
+        <input
+          ref={searchRef}
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") onEscape?.();
+          }}
+          placeholder={searchPlaceholder}
+          aria-label={searchPlaceholder}
+          autoComplete="off"
+          data-type-search=""
+          className="w-[13.5rem] rounded-md border border-wire bg-white px-2 py-1 text-sm text-ink placeholder:text-fade focus:outline-none focus:ring-2 focus:ring-cta dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+        />
+      </div>
+      </div>
+      {/* Only once there are types to search: while they load, the list is simply empty. */}
+      {types.length > 0 && shownTypes.length === 0 && (
+        <p className="px-3 py-2 text-sm italic text-fade" data-type-search-empty="">
+          {searchEmptyLabel}
+        </p>
+      )}
+      {shownTypes.map((ty) => (
+        <label
+          key={ty.id}
+          className="flex items-center gap-2 px-3 py-2 text-sm cursor-pointer hover:bg-cta-pale dark:hover:bg-zinc-800/50"
+        >
+          <input
+            type="checkbox"
+            checked={checkedIds.has(ty.id)}
+            onChange={() => handleToggleType(ty.id)}
+            className="h-4 w-4 rounded border-wire accent-cta"
+          />
+          {ty.name}
+        </label>
+      ))}
+    </>
+  );
+}
+
+/** Slice 40.31: every type ticked — the address names none — or not; the funnel on „Tip" is filled while not. */
+function typesNarrowed(types: DocumentTypeOption[], initialDocumentTypeIds?: string[]): boolean {
+  return initialDocumentTypeIds !== undefined && !(types.length > 0 && types.every((ty) => initialDocumentTypeIds.includes(ty.id)));
 }
 
 function DocumentTypeFilterDropdown({
@@ -171,58 +293,20 @@ function DocumentTypeFilterDropdown({
   /** Slice #38.48: „Niciun tip nu se potrivește." */
   searchEmptyLabel: string;
 }) {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  // Slice #38.48: the search box — focused when the dropdown opens, emptied when it closes.
-  const [query, setQuery] = useState("");
-  const searchRef = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    if (open) searchRef.current?.focus();
-  }, [open]);
-  const close = () => {
-    setOpen(false);
-    setQuery("");
-  };
-  const shownTypes = typesMatching(types, query);
-
-  const allTypeIds = types.map((ty) => ty.id);
-  const checkedIds = new Set(
-    initialDocumentTypeIds === undefined ? allTypeIds : initialDocumentTypeIds,
-  );
-  const allChecked  = types.length > 0 && checkedIds.size === allTypeIds.length;
-  const someChecked = checkedIds.size > 0 && !allChecked;
-
-  const selectAllRef = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    if (selectAllRef.current) {
-      selectAllRef.current.indeterminate = someChecked;
-    }
-  }, [someChecked]);
+  const close = () => setOpen(false);
 
   useEffect(() => {
     if (!open) return;
     function handleClickOutside(e: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setOpen(false);
-        setQuery("");
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [open]);
-
-  function handleSelectAllToggle() {
-    const next = allChecked ? new Set<string>() : new Set(allTypeIds);
-    router.push(buildDocumentsUrl(next, allTypeIds));
-  }
-
-  function handleToggleType(id: string) {
-    const next = new Set(checkedIds);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
-    router.push(buildDocumentsUrl(next, allTypeIds));
-  }
 
   // Slice #38.07: all — „Toate tipurile"; one — its name; several — „{n} tipuri afișate"; none — „Niciun tip".
   const trigger = typeFilterTrigger(types, initialDocumentTypeIds);
@@ -258,58 +342,14 @@ function DocumentTypeFilterDropdown({
 
       {open && (
         <div className="absolute z-20 mt-1 w-64 max-h-80 overflow-y-auto rounded-md border border-wire bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
-          {/* The two top rows stay in view while the checklist scrolls under them. */}
-          <div className="sticky top-0 z-10 bg-white dark:bg-zinc-900">
-          <label className="flex items-center gap-2 px-3 py-2 text-sm font-medium cursor-pointer hover:bg-cta-pale dark:hover:bg-zinc-800/50">
-            <input
-              ref={selectAllRef}
-              type="checkbox"
-              checked={allChecked}
-              onChange={handleSelectAllToggle}
-              className="h-4 w-4 rounded border-wire accent-cta"
-            />
-            {allTypesLabel}
-          </label>
-          {/* Slice #38.48: under „Toate tipurile", above the divider (this row's border-b), as wide as the
-              dropdown's w-64 less its px-3 — a fixed width, never w-full (layout-guard). Searching
-              only hides rows; „Toate tipurile" still ticks and unticks the whole list. Esc closes. */}
-          <div className="border-b border-crease px-3 pb-2 dark:border-zinc-800">
-            <input
-              ref={searchRef}
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Escape") close();
-              }}
-              placeholder={searchPlaceholder}
-              aria-label={searchPlaceholder}
-              autoComplete="off"
-              data-type-search=""
-              className="w-[13.5rem] rounded-md border border-wire bg-white px-2 py-1 text-sm text-ink placeholder:text-fade focus:outline-none focus:ring-2 focus:ring-cta dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-            />
-          </div>
-          </div>
-          {/* Only once there are types to search: while they load, the list is simply empty. */}
-          {types.length > 0 && shownTypes.length === 0 && (
-            <p className="px-3 py-2 text-sm italic text-fade" data-type-search-empty="">
-              {searchEmptyLabel}
-            </p>
-          )}
-          {shownTypes.map((ty) => (
-            <label
-              key={ty.id}
-              className="flex items-center gap-2 px-3 py-2 text-sm cursor-pointer hover:bg-cta-pale dark:hover:bg-zinc-800/50"
-            >
-              <input
-                type="checkbox"
-                checked={checkedIds.has(ty.id)}
-                onChange={() => handleToggleType(ty.id)}
-                className="h-4 w-4 rounded border-wire accent-cta"
-              />
-              {ty.name}
-            </label>
-          ))}
+          <TypeChecklist
+            types={types}
+            initialDocumentTypeIds={initialDocumentTypeIds}
+            allTypesLabel={allTypesLabel}
+            searchPlaceholder={searchPlaceholder}
+            searchEmptyLabel={searchEmptyLabel}
+            onEscape={close}
+          />
         </div>
       )}
     </div>
@@ -948,6 +988,23 @@ export function DocumentListView({
         onEditing={setEditingFilter}
         loadValues={(key) => fetchFilterValues(key, debouncedSearch, initialDocumentTypeIds, expiringSoon, customFieldKey, customFieldValue, filters)}
         valuesKey={(key) => ["documents", "filter-values", key, debouncedSearch, typeFiltersKey, expiringSoon, customFieldKey, customFieldValue, filterSig]}
+        // Slice 40.31: the funnel on „Tip" opens, under itself, the checklist of „Tip document:" — the same control,
+        // the same documentTypeIds in the address; no chip, the toolbar already says it (Ask first 1–3).
+        own={{
+          key: TYPE_FUNNEL,
+          label: t("table.type"),
+          content: (
+            <div className="-mx-3 max-h-80 overflow-y-auto" data-type-checklist="funnel">
+              <TypeChecklist
+                types={typeOptions}
+                initialDocumentTypeIds={initialDocumentTypeIds}
+                allTypesLabel={t("allTypes")}
+                searchPlaceholder={t("typeSearchPlaceholder")}
+                searchEmptyLabel={t("typeSearchEmpty")}
+              />
+            </div>
+          ),
+        }}
       />
 
 
@@ -971,7 +1028,8 @@ export function DocumentListView({
                   <tr>
                     {/* Slice 40.25: in the order dragged, each name cell its column's handle. */}
                     {order.keys.map((key) => {
-                      if (key === "type") return <ListHeadCell key={key} column="listDocumentType" name={tHead("type")} full={t("table.type")} drag={drag.headProps(key)} />;
+                      // Slice 40.31: „Tip" has a funnel too — the checklist of „Tip document:", filled while not every type is ticked.
+                      if (key === "type") return <ListHeadCell key={key} column="listDocumentType" name={tHead("type")} full={t("table.type")} funnel={<FilterFunnel field={TYPE_FUNNEL} label={t("table.type")} active={typesNarrowed(typeOptions, initialDocumentTypeIds)} onOpen={() => setEditingFilter(TYPE_FUNNEL)} />} drag={drag.headProps(key)} />;
                       if (key === "title") return <ListHeadCell key={key} column="listDocumentTitle" name={tHead("title")} full={t("table.title")} drag={drag.headProps(key)} />;
                       const col = shownCols.find((c) => c.key === key);
                       if (!col) return null;
