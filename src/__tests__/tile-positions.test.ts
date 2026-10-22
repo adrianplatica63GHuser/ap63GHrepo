@@ -647,11 +647,11 @@ describe("a tile dropped under „Interacțiuni”, beside or wrapped (#38.46)",
 
   it("the hook decides beside or wrapped itself, takes the wrapped column out of the flow, and watches the row's width", () => {
     const src = code(read("src", "components", "tiles", "use-tile-packing.ts"));
-    expect(src).toContain("let wrap = els.length > 0 && !fitsBeside(left, column, rowUnits);");
-    expect(src).toContain('styles.set(right, "position", "absolute");');
-    expect(src).toContain("width.observe(container.parentElement)");
+    // Slice 40.32: one area — the right-hand tiles that start wrapped are boxes `wrapped:<id>`, under the left ones.
+    expect(src).toContain("const beside = fitsBeside(leftUnits, starting.map(own), ownColumns);");
+    expect(src).toContain("const id = `${WRAPPED_PREFIX}${b.id}`;");
     expect(src).toContain("under: true");
-    // Never dragged: the drag looks only among the left area's boxes.
+    // Dragged like any tile since 40.32: the drag looks among every box of the area.
     expect(src).toContain("boxes.find((b) => !b.rowEnd && !b.full && b.el.contains(target))");
   });
 });
@@ -786,8 +786,8 @@ describe("a tile held over another makes room: the tile under it slides down to 
     expect(src).toContain("store(d.box.id, d.slid);");
     expect(src).toMatch(/\} else if \(d\.before\) \{[\s\S]*?placed = d\.before;/);
     expect(src).toContain('"(prefers-reduced-motion: reduce)"');
-    // The banners and the wrapped column never slide.
-    expect(src).toContain("const still = new Set([...boxes.filter((b) => b.full).map((b) => b.id), ...rightBoxes.map((b) => b.id)]);");
+    // The banners never slide; since 40.32 the right-hand tiles do, like any tile.
+    expect(src).toContain("const still = new Set(boxes.filter((b) => b.full).map((b) => b.id));");
     // The rule's header says the new rule and quotes the old one.
     const pure = read("src", "lib", "ui", "tile-positions.ts");
     expect(pure).toContain("„It never pushes another — to put it where another tile");
@@ -821,7 +821,8 @@ describe("the right-hand tiles start at the right edge, and move (40.32)", () =>
   it("a stored place wins over the start: dragged left, the map stays there, and its place is stored", () => {
     const { placed } = placeWithStored(BOXES, { map: { col: 0, top: 316 } }, 10, GAP40, 7);
     expect(at(placed, "map")).toMatchObject({ col: 0, top: 316 });
-    expect(at(placed, "corners")).toMatchObject({ col: 7, top: 394 });
+    // The corners keep their column; with the map gone from above them they rise (the hook starts them at 0 then).
+    expect(at(placed, "corners")).toMatchObject({ col: 7, top: 0 });
     expect(isStorable("map")).toBe(true);
     const stored = placesToStore(placed, {}, [], "map", 0, GAP40);
     expect(stored.map).toMatchObject({ col: 0, top: 316 });
@@ -831,7 +832,7 @@ describe("the right-hand tiles start at the right edge, and move (40.32)", () =>
     const { placed } = placeWithStored(BOXES, {}, 10, GAP40, 7);
     expect(canDrop(placed, "map", { col: 7, top: 800 }, 10, GAP40)).toBe(true);
     expect(canDrop(placed, "corners", { col: 4, top: 300 }, 10, GAP40)).toBe(true);
-    expect(makeRoom(placed, "identity", { col: 7, top: 0 }, 10, GAP40)).not.toBeNull();
+    expect(makeRoom(placed, "identity", { col: 6, top: 0 }, 10, GAP40)).not.toBeNull();
   });
 
   it("an arrangement stored before 40.32 names none of them: they open at their starts, nothing is lost", () => {

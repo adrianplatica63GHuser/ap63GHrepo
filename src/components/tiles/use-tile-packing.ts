@@ -114,6 +114,7 @@ import { columnsIn, fitsBeside, grow, packedHeight, unitsOf, type PackBox, type 
 import {
   MAKE_ROOM_SLIDE_MS,
   TILE_POSITIONS_RESET,
+  WRAPPED_PREFIX,
   canDrop,
   dropAt,
   isStorable,
@@ -324,8 +325,9 @@ export function useTilePacking(
     const key = entity ? tilePositionsKey(entity) : null;
     const rightNames = rightKey ? rightKey.split("|") : [];
     // A box's tile: its id, or — a panel inside a `display: contents` tile wrapper, the Property's map and corners —
-    // the tile's name before its place inside it („map#0").
-    const tileOf = (id: string) => id.replace(/#\d+$/, "");
+    // the tile's name before its place inside it („map#0"); a right-hand tile started under the left ones is
+    // `wrapped:<id>` (below).
+    const tileOf = (id: string) => id.replace(/^wrapped:/, "").replace(/#\d+$/, "");
     const isRight = (b: FoundBox) => rightNames.includes(tileOf(b.id));
     let placed: Placed[] = [];
     let boxes: FoundBox[] = [];
@@ -429,8 +431,20 @@ export function useTilePacking(
         }
         flowColumns = Math.max(1, Math.min(flowColumns, ownColumns - Math.max(...starting.map(own))));
       }
-      const under = new Set(beside ? [] : starting.map((b) => b.id));
-      startIds = starting.map((b) => b.id);
+      // Beside: a tile at its start is not stored by another tile's drop (`store`), so it keeps starting there.
+      // Wrapped (#38.46): it is `wrapped:<id>` — placed under the left tiles, and stored like a tile under that id,
+      // so a tile dropped under it keeps its place after a reload — and never read at a width where it starts beside.
+      startIds = beside ? starting.map((b) => b.id) : [];
+      const under = new Set<string>();
+      if (!beside) {
+        boxes = boxes.map((b) => {
+          if (!starting.includes(b)) return b;
+          const id = `${WRAPPED_PREFIX}${b.id}`;
+          h.set(id, h.get(b.id) ?? 0);
+          under.add(id);
+          return { ...b, id };
+        });
+      }
       const items: PackBox[] = boxes.map((b) => ({
         id: b.id,
         units: b.rowEnd || b.full ? flowColumns : unitsFor(b, unit, gap),
@@ -490,7 +504,7 @@ export function useTilePacking(
     // A box came or went, or React replaced one: lay the row out afresh.
     const changes = new MutationObserver(() => {
       const now = findBoxes(container);
-      const same = now.length === boxes.length && now.every((b, i) => b.el === boxes[i].el && b.id === boxes[i].id);
+      const same = now.length === boxes.length && now.every((b, i) => b.el === boxes[i].el && b.id === boxes[i].id.replace(/^wrapped:/, ""));
       if (!same) fresh();
     });
     changes.observe(container, { childList: true, subtree: true, attributes: true, attributeFilter: ["hidden", "class"] });
