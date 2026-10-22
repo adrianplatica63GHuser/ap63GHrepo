@@ -199,11 +199,11 @@
           "section": "start-tiles",
           "ro": {
             "question": "Ce au deosebit fișele mov deschis — harta, colțurile, Street View, paginile unui act?",
-            "explanation": "Fișele mov deschis — harta, colțurile, Street View, paginile unui act — stau pe loc; celelalte se pot trage într-un loc liber."
+            "explanation": "Fișele mov deschis — harta, colțurile, Street View, paginile unui act — pornesc lângă marginea dreaptă, una sub alta; de acolo se trag ca orice altă fișă."
           },
           "en": {
             "question": "What is special about the light purple tiles — the map, the corners, Street View, a document's pages?",
-            "explanation": "The light purple tiles — the map, the corners, Street View, a document's pages — stay where they are; the others can be dragged into a free place."
+            "explanation": "The light purple tiles — the map, the corners, Street View, a document's pages — start by the right edge, one under another; from there they are dragged like any other tile."
           },
           "options": [
             {
@@ -221,8 +221,8 @@
             {
               "id": "o3",
               "correct": true,
-              "ro": "Stau pe loc: nu se mută",
-              "en": "They stay where they are: they do not move"
+              "ro": "Pornesc în dreapta, una sub alta",
+              "en": "They start on the right, one under another"
             },
             {
               "id": "o4",

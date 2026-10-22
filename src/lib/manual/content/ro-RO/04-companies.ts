@@ -31,7 +31,7 @@ O firmă adăugată de curând apare în capul listei, marcată „Nou!”.
 
 ### 4.1.1 Filtrele listei {#companies-list-filters}
 
-Lista se filtrează ca lista proprietăților: din pâlnia de lângă numele unei coloane, cu o etichetă pentru fiecare filtru și „Șterge filtrele” (secțiunea [[properties-list-filters]]). Lângă fiecare valoare stă câte firme o au, numărate cu celelalte filtre deja puse.
+Lista se filtrează ca lista proprietăților: din pâlnia din colțul numelui unei coloane, cu o etichetă pentru fiecare filtru și „Șterge filtrele” (secțiunea [[properties-list-filters]]). Lângă fiecare valoare stă câte firme o au, numărate cu celelalte filtre deja puse.
 
 Pe lista firmelor se filtrează două coloane, amândouă cu bife:
 

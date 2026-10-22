@@ -23,7 +23,7 @@ Deasupra tabelului, pe un rând, stau caseta de căutare („caută după Cod, T
 
 ### 6.1.1 Filtrele listei {#documents-list-filters}
 
-Lista actelor se filtrează ca lista proprietăților, din pâlnia de lângă numele unei coloane (secțiunea [[properties-list-filters]]). „Tip document:” și „Câmp specific:”, de pe rândul de sus, sunt mereu acolo și se poartă ca mai sus; filtrele puse din coloane devin etichete pe rândul de sub el, care apare doar cât timp este pus unul. „Expiră curând”, de pe același rând de sus, lângă „Câmpuri afișate”, este tot un filtru: apăsat, lista păstrează doar actele a căror valabilitate se încheie în curând; apăsat din nou, renunță la filtru.
+Lista actelor se filtrează ca lista proprietăților, din pâlnia din colțul numelui unei coloane (secțiunea [[properties-list-filters]]). Pâlnia de pe „Tip” deschide aceeași listă de bife ca „Tip document:”, iar cele două arată mereu aceeași alegere. „Tip document:” și „Câmp specific:”, de pe rândul de sus, sunt mereu acolo și se poartă ca mai sus; filtrele puse din coloane devin etichete pe rândul de sub el, care apare doar cât timp este pus unul. „Expiră curând”, de pe același rând de sus, lângă „Câmpuri afișate”, este tot un filtru: apăsat, lista păstrează doar actele a căror valabilitate se încheie în curând; apăsat din nou, renunță la filtru.
 
 Coloanele care se pot filtra, alese în „Câmpuri afișate”:
 

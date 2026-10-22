@@ -31,10 +31,10 @@ Butonul arată câte coloane ați ales, de exemplu „Câmpuri afișate 2/4”. 
 
 ### 5.1.1 Filtrele listei {#properties-list-filters}
 
-Lista se filtrează după coloanele ei. O coloană aleasă în „Câmpuri afișate” care se poate filtra are, lângă numele ei, o pâlnie mică; un clic pe pâlnie deschide, chiar sub ea, fereastra filtrului coloanei. Lista arată doar proprietățile care trec de toate filtrele odată.
+Lista se filtrează după coloanele ei. O coloană aleasă în „Câmpuri afișate” care se poate filtra are o pâlnie mică în colțul din dreapta jos al numelui; un clic pe pâlnie deschide, chiar sub ea, fereastra filtrului coloanei. Lista arată doar proprietățile care trec de toate filtrele odată.
 
 1. Bifați coloana în „Câmpuri afișate”, dacă nu este deja în tabel.
-2. Apăsați pâlnia de lângă numele ei și alegeți ce vreți să vedeți. Lista se schimbă pe loc, fără niciun buton de aplicat.
+2. Apăsați pâlnia din colțul numelui ei și alegeți ce vreți să vedeți. Lista se schimbă pe loc, fără niciun buton de aplicat.
 3. Apăsați în afara ferestrei sau tasta Esc ca s-o închideți.
 
 Pe lista proprietăților se filtrează șapte coloane:
@@ -49,7 +49,7 @@ Fiecare filtru pus devine o etichetă rotunjită sub caseta de căutare, pe un r
 
 „Șterge filtrele” le scoate pe toate deodată, iar rândul etichetelor dispare. Filtrele se păstrează în adresa paginii, ca și căutarea: rămân după ce reîncărcați pagina, după ce vă întoarceți la listă cu „Înapoi” și când trimiteți adresa cuiva.
 
-Capul tabelului are înălțimea a două rânduri, la fel pe cele patru liste, oricâte coloane ați ales. Numele coloanei și, la o coloană care se poate filtra, pâlnia de după el stau împreună la mijloc, pe orizontală și pe verticală. Un nume prea lung pentru coloana lui trece pe al doilea rând, iar pâlnia rămâne lângă ultimul rând; niciun nume nu ia trei rânduri.
+Capul tabelului are înălțimea a două rânduri, la fel pe cele patru liste, oricâte coloane ați ales. Numele coloanei stă singur la mijloc, pe orizontală și pe verticală, iar pâlnia, la o coloană care se poate filtra, stă în colțul din dreapta jos. Un nume prea lung pentru coloana lui trece pe al doilea rând; niciun nume nu ia trei rânduri.
 
 ## 5.2 O proprietate adăugată de mână {#properties-add}
 
@@ -145,7 +145,7 @@ Bifele din capul ecranului („Părți afișate”) aleg fișele, ca pe orice ob
 | Puncte de contur | Colțurile parcelei, în ordine (secțiunea [[properties-corners-table]]). |
 | Street View | Imaginea străzii de lângă parcelă (secțiunea [[properties-corners-street-view]]). |
 
-„Implicit” arată „Identificare cadastrală”, „Adresă”, „Hartă” și „Puncte de contur”. Fișele „Hartă”, „Puncte de contur” și „Street View” stau într-o coloană în dreapta, una sub alta, sunt mov deschis și nu se mută. Pe un ecran îngust, coloana coboară sub celelalte fișe.
+„Implicit” arată „Identificare cadastrală”, „Adresă”, „Hartă” și „Puncte de contur”. Fișele „Hartă”, „Puncte de contur” și „Street View” pornesc din dreapta, una sub alta, sunt mov deschis și se trag în alt loc ca orice fișă (secțiunea [[start-tiles]]). Pe un ecran îngust, coboară sub celelalte fișe.
 
 Când debifați fișele de hartă, ecranul arată doar datele: identificarea cadastrală și adresa (Figura [[fig-properties-record]]).
 
@@ -169,7 +169,7 @@ Fiecare rând are patru butoane:
 - „Editează” — face din rând câmpuri de scris, cu „Salvează” și „Anulează” pe rând;
 - „Șterge” — scoate colțul.
 
-Sub tabel, „+ Adaugă punct” adaugă un colț nou la sfârșit.
+„+ Adaugă punct”, pe rândul titlului fișei, în dreapta, adaugă un colț nou la sfârșit.
 
 „Suprafață calculată (m²)” urmează colțurile pe loc: schimbați un colț și suprafața se schimbă imediat. „Salvează” de pe un rând nu scrie încă nimic în arhivă: colțurile se salvează abia cu „Salvează” de jos, împreună cu restul proprietății, iar versiunea de dinainte păstrează colțurile vechi.
 
@@ -182,11 +182,10 @@ Fișa „Hartă” desenează parcela. Sus, în dreapta, are pe un rând:
 - „Hartă extinsă” — deschide harta pe tot ecranul;
 - „Desenează” — pune colțuri cu clicuri pe hartă;
 - „Arată Unghiuri” — arată unghiurile colțurilor; apăsat din nou, devine „Ascunde Unghiuri”;
+- „Navighează” — traseul până la proprietate (secțiunea [[properties-navigate]]);
 - „HARTĂ” și „SATELIT” — harta străzilor sau imaginea din satelit.
 
 Colțurile proprietății sunt puncte mici, albastre, de culoarea laturilor, ca pe harta completă (secțiunea [[map-what]]). Când treceți cu mouse-ul peste un rând din „Puncte de contur”, colțul lui primește un cerc în jur.
-
-Sub hartă stă „Navighează” (secțiunea [[properties-navigate]]).
 
 ### 5.4.3 Desenarea și tragerea colțurilor {#properties-corners-draw}
 
@@ -233,7 +232,7 @@ Restul datelor cadastrale — numărul cadastral, cartea funciară, suprafața d
 
 ## 5.6 „Navighează” {#properties-navigate}
 
-„Navighează”, sub fișa „Hartă”, vă ajută să ajungeți la proprietate cu mașina. Se deschide o fereastră cu traseul în Google Maps și cu același traseu sub forma unui cod QR, pentru telefon.
+„Navighează”, pe rândul de sus al fișei „Hartă”, vă ajută să ajungeți la proprietate cu mașina. Se deschide o fereastră cu traseul în Google Maps și cu același traseu sub forma unui cod QR, pentru telefon.
 
 Destinația o alege aplicația:
 
@@ -268,7 +267,7 @@ Scanați codul QR cu telefonul, iar Google Maps pornește navigarea. Pe calculat
 
 ### 5.7.3 Mergeți la teren cu telefonul {#properties-example-navigate}
 
-1. Deschideți proprietatea și apăsați „Navighează”, sub hartă (secțiunea [[properties-navigate]]).
+1. Deschideți proprietatea și apăsați „Navighează”, pe rândul de sus al hărții (secțiunea [[properties-navigate]]).
 2. Lăsați „Locația mea” la „Pornire”.
 3. Scanați codul QR cu telefonul: Google Maps pornește navigarea de unde vă aflați.
 

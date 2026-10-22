@@ -34,7 +34,7 @@ Un clic pe un rând îl selectează și arată descrierea interacțiunii sub sub
 
 ### 11.1.2 Înregistrarea unei interacțiuni {#reports-interactions-log}
 
-Pe ecranul persoanei, sub istoricul din fișa „Interacțiuni”, apăsați butonul mare „Înregistrează o interacțiune”. Formularul nu are căsuță pentru persoană: interacțiunea este a persoanei de pe ecran. Formularul are cinci secțiuni, fiecare cu un titlu urmat de o săgeată; un clic pe titlu deschide secțiunea, al doilea o închide. Când formularul se deschide, doar „Introducere manuală” este deschisă.
+Pe ecranul persoanei, sub istoricul din fișa „Interacțiuni”, apăsați butonul „Înregistrează o interacțiune”. Formularul nu are căsuță pentru persoană: interacțiunea este a persoanei de pe ecran. Formularul are cinci secțiuni, fiecare cu un titlu urmat de o săgeată; un clic pe titlu deschide secțiunea, al doilea o închide. Când formularul se deschide, doar „Introducere manuală” este deschisă.
 
 - „Conturi conectate” — Gmail și WhatsApp Business, fiecare „Neconectat”. Butoanele „Conectează” nu fac încă nimic: o interacțiune se înregistrează de mână, fără niciun cont conectat, iar „Nimic nu se trimite fără confirmare.”.
 - „Introducere manuală” — „Canal”, „Sens”, „Stare”, „Data și ora” (implicit acum), „Subiect” și „Descriere”. Subiectul este ce apare în istoric și ce se folosește la filtrare, deci păstrați-l scurt. Descrierea ține restul; întrebarea scrisă în ea se schimbă după canal — la „Telefon”, de exemplu, „Ce s-a convenit?”.
@@ -53,7 +53,7 @@ Starea poate fi „Înregistrată”, „Așteaptă răspuns”, „Trimisă”,
 - „Renunță” — dacă ați scris ceva, întâi întreabă „Renunți la interacțiunea nesalvată?”: „Renunță la ea” golește formularul, „Continuă” vă lasă să scrieți mai departe.
 - Ctrl+S face același lucru ca „Salvează”.
 
-„Restrânge” strânge formularul la loc, în butonul mare.
+„Restrânge” strânge formularul la loc, în butonul lui.
 
 ### 11.1.3 Acte legate, etichete și o proprietate {#reports-interactions-links}
 

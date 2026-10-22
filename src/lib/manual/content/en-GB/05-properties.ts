@@ -31,10 +31,10 @@ On the right, above the table, are two buttons: „Full map” opens the map of 
 
 ### 5.1.1 The list's filters {#properties-list-filters}
 
-The list is filtered by its columns. A column chosen in „Choose fields” that can be filtered has a small funnel beside its name; a click on the funnel opens the column's filter window right under it. The list shows only the properties that pass every filter at once.
+The list is filtered by its columns. A column chosen in „Choose fields” that can be filtered has a small funnel in the bottom right corner of its name; a click on the funnel opens the column's filter window right under it. The list shows only the properties that pass every filter at once.
 
 1. Tick the column in „Choose fields”, if it is not in the table already.
-2. Press the funnel beside its name and choose what you want to see. The list changes at once, with no button to apply.
+2. Press the funnel in the corner of its name and choose what you want to see. The list changes at once, with no button to apply.
 3. Click outside the window, or press Esc, to close it.
 
 On the list of properties seven columns filter:
@@ -49,7 +49,7 @@ Each filter set becomes a rounded label under the search box, on a row that appe
 
 „Clear filters” removes them all at once, and the row of labels goes. The filters are kept in the page's address, like the search: they stay after you reload the page, after you come back to the list with „Back”, and when you send the address to someone.
 
-The table's header is two rows tall, the same on the four lists, however many columns you chose. A column's name and, on a column that can be filtered, the funnel after it stand together in the middle, across and down. A name too long for its column goes on to the second row, and the funnel stays beside the last row; no name takes three rows.
+The table's header is two rows tall, the same on the four lists, however many columns you chose. A column's name stands alone in the middle, across and down, and the funnel, on a column that can be filtered, stands in the bottom right corner. A name too long for its column goes on to the second row; no name takes three rows.
 
 ## 5.2 A property added by hand {#properties-add}
 
@@ -145,7 +145,7 @@ The ticks at the top of the screen („Parts shown”) choose the tiles, as on a
 | Corners | The parcel's corners, in order (section [[properties-corners-table]]). |
 | Street View | The street view next to the parcel (section [[properties-corners-street-view]]). |
 
-„Default” shows „Cadastral identification”, „Address”, „Map” and „Corners”. The tiles „Map”, „Corners” and „Street View” stand in a column on the right, one under another, are light purple and do not move. On a narrow screen the column drops below the other tiles.
+„Default” shows „Cadastral identification”, „Address”, „Map” and „Corners”. The tiles „Map”, „Corners” and „Street View” start on the right, one under another, are light purple and are dragged elsewhere like any tile (section [[start-tiles]]). On a narrow screen they drop below the other tiles.
 
 When you untick the map tiles, the screen shows only the data: the cadastral identification and the address (Figure [[fig-properties-record]]).
 
@@ -169,7 +169,7 @@ Each row has four buttons:
 - „Edit” — turns the row into fields to type in, with „Save” and „Cancel” on the row;
 - „Delete” — removes the corner.
 
-Below the table, „+ Add Corner” adds a new corner at the end.
+„+ Add Corner”, on the tile's title row, on the right, adds a new corner at the end.
 
 „Calculated Area (m²)” follows the corners at once: change a corner and the area changes immediately. A row's „Save” does not yet write anything to the archive: the corners are saved only with the „Save” at the bottom, together with the rest of the property, and the version before keeps the old corners.
 
@@ -182,11 +182,10 @@ The „Map” tile draws the parcel. At its top right, on one line, it has:
 - „Expand map” — opens the map on the whole screen;
 - „Draw” — places corners by clicks on the map;
 - „Show Angles” — shows the corners' angles; pressed again, it becomes „Hide Angles”;
+- „Navigate” — the route to the property (section [[properties-navigate]]);
 - „STR” and „SAT” — the street map or the satellite image.
 
 The property's corners are small blue dots, the colour of its sides, as on the full map (section [[map-what]]). When you move the mouse over a row of „Corners”, its corner gets a ring around it.
-
-Below the map is „Navigate” (section [[properties-navigate]]).
 
 ### 5.4.3 Drawing and dragging corners {#properties-corners-draw}
 
@@ -233,7 +232,7 @@ The rest of the cadastral data — the cadastral number, the land book, the area
 
 ## 5.6 „Navigate” {#properties-navigate}
 
-„Navigate”, below the „Map” tile, helps you get to the property by car. It opens a window with the route in Google Maps and the same route as a QR code, for the phone.
+„Navigate”, on the top row of the „Map” tile, helps you get to the property by car. It opens a window with the route in Google Maps and the same route as a QR code, for the phone.
 
 The application chooses the destination:
 
@@ -268,7 +267,7 @@ Scan the QR code with the phone, and Google Maps starts the navigation. On the c
 
 ### 5.7.3 Go to the plot with your phone {#properties-example-navigate}
 
-1. Open the property and press „Navigate”, below the map (section [[properties-navigate]]).
+1. Open the property and press „Navigate”, on the map's top row (section [[properties-navigate]]).
 2. Leave „My location” at „Start”.
 3. Scan the QR code with the phone: Google Maps starts the navigation from where you are.
 

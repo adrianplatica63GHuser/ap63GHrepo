@@ -45,7 +45,7 @@ Un al doilea clic pe același buton închide ce a deschis.
 
 ### 3.1.1 Filtrele listei {#persons-list-filters}
 
-Lista se filtrează ca lista proprietăților: din pâlnia de lângă numele unei coloane, cu o etichetă pentru fiecare filtru și „Șterge filtrele” (secțiunea [[properties-list-filters]]). Lângă fiecare valoare dintr-o listă cu bife stă câte persoane o au, numărate cu celelalte filtre deja puse. Filtrele se păstrează în adresa paginii.
+Lista se filtrează ca lista proprietăților: din pâlnia din colțul numelui unei coloane, cu o etichetă pentru fiecare filtru și „Șterge filtrele” (secțiunea [[properties-list-filters]]). Lângă fiecare valoare dintr-o listă cu bife stă câte persoane o au, numărate cu celelalte filtre deja puse. Filtrele se păstrează în adresa paginii.
 
 Coloanele care se pot filtra, alese în „Câmpuri afișate”:
 
@@ -176,7 +176,7 @@ Fișa „Arbore de moștenire”, albastru deschis, desenează familia persoanei
 
 În arbore intră doar legăturile cu un rol de rudenie — rolurile marcate „Rudenie” în „Roluri Persoane”. O persoană fără astfel de legături arată „Nicio legătură de familie încă.”.
 
-Sub desen, un singur buton mare, „Adaugă sau scoate o rudă”, deschide panoul legăturilor de familie. Când ajungeți la persoană din „Rapoarte” → „Arbori de moștenire”, cu un clic pe numele ei (secțiunea [[reports-inheritance]]), panoul este deja deschis.
+Sub desen, butonul „Adaugă sau scoate” deschide panoul legăturilor de familie; țineți mouse-ul pe el și vedeți numele lui întreg, „Adaugă sau scoate o rudă”. Când ajungeți la persoană din „Rapoarte” → „Arbori de moștenire”, cu un clic pe numele ei (secțiunea [[reports-inheritance]]), panoul este deja deschis.
 
 - „Legăturile de familie ale persoanei” arată rudele ei, fiecare cu rolul.
 - Ca să adăugați o rudă: la „Ruda”, scrieți numele și alegeți persoana; la „Ce este pentru …”, alegeți rudenia; apăsați „Adaugă legătura”. Ruda apare în desen.
@@ -186,9 +186,9 @@ Legăturile adăugate aici sunt aceleași cu cele din „Legături”: o rudă l
 
 ## 3.6 Interacțiunile unei persoane {#persons-interactions}
 
-Fișa „Interacțiuni” este istoricul a ce s-a petrecut cu persoana: telefoane, e-mailuri, întâlniri. Stă fixă în dreapta ecranului, mov deschis, și este bifată de la început; bifa ei este ultima din capul ecranului. O persoană fără interacțiuni arată „Nicio interacțiune înregistrată cu această persoană.”. „Deschide în „Interacțiuni”” duce la ecranul cu toate interacțiunile.
+Fișa „Interacțiuni” este istoricul a ce s-a petrecut cu persoana: telefoane, e-mailuri, întâlniri. Pornește din dreapta ecranului, mov deschis, se trage în alt loc ca orice fișă și este bifată de la început; bifa ei este ultima din capul ecranului. O persoană fără interacțiuni arată „Nicio interacțiune înregistrată cu această persoană.”, într-o fișă scundă. „Deschide în „Interacțiuni”” duce la ecranul cu toate interacțiunile.
 
-Sub istoric, butonul mare „Înregistrează o interacțiune” deschide formularul, deja legat de persoana aceasta:
+Sub istoric, butonul „Înregistrează o interacțiune” deschide formularul, deja legat de persoana aceasta:
 
 1. Apăsați „Înregistrează o interacțiune”.
 2. Alegeți canalul, de exemplu „Telefon”, și scrieți subiectul.
@@ -197,6 +197,10 @@ Sub istoric, butonul mare „Înregistrează o interacțiune” deschide formula
 Un clic pe o interacțiune din istoric o deschide în formular: schimbați ce trebuie și apăsați „Salvează modificările”, sau apăsați „Șterge interacțiunea”, apoi „Șterge”. „Restrânge” strânge formularul la loc.
 
 Din lista persoanelor, „Incursiune” arată doar istoricul; un clic pe o interacțiune de acolo deschide ecranul persoanei, cu interacțiunea în formular. Ecranul „Interacțiuni”, cu filtrele lui, este descris în secțiunea [[reports-interactions]].
+
+Fișa „Interacțiuni” se poate pune și în stânga, sub celelalte fișe: apucați-o de spațiul ei gol și trageți-o acolo (Figura [[fig-persons-interactions-moved]]). Locul ei se păstrează pentru toate persoanele.
+
+![3.3 Fișa „Interacțiuni” trasă din dreapta în stânga ecranului, sub celelalte fișe](persons-interactions-moved.png){#fig-persons-interactions-moved}
 
 ## 3.7 Exemple și cazuri de utilizare {#persons-examples}
 
@@ -225,7 +229,7 @@ Aflați dintr-un certificat de moștenitor că o persoană din arhivă a murit.
 Două persoane sunt în arhivă, dar nimic nu spune că sunt tată și fiu.
 
 1. Deschideți fiul.
-2. În „Arbore de moștenire”, apăsați „Adaugă sau scoate o rudă” (secțiunea [[persons-relatives-tree]]).
+2. În „Arbore de moștenire”, apăsați „Adaugă sau scoate” (secțiunea [[persons-relatives-tree]]).
 3. La „Ruda”, alegeți tatăl; la „Ce este pentru …”, alegeți „Tată”; apăsați „Adaugă legătura”.
 4. Tatăl apare în desen deasupra fiului, iar în „Legături” fiecare îl vede pe celălalt (secțiunea [[persons-relatives-link]]).
 

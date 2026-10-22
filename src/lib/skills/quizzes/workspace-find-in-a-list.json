@@ -232,11 +232,11 @@
           "section": "start-lists",
           "ro": {
             "question": "Vreți să vedeți doar proprietățile din tarlaua T12. Cum puneți filtrul pe lista proprietăților?",
-            "explanation": "O listă se filtrează după coloanele ei: bifați „Tarla” în „Câmpuri afișate”, apoi apăsați pâlnia de lângă numele coloanei și bifați T12. Filtrul pus devine o etichetă sub caseta de căutare."
+            "explanation": "O listă se filtrează după coloanele ei: bifați „Tarla” în „Câmpuri afișate”, apoi apăsați pâlnia din colțul din dreapta jos al numelui coloanei și bifați T12. Filtrul pus devine o etichetă sub caseta de căutare."
           },
           "en": {
             "question": "You want to see only the properties in tarla T12. How do you set the filter on the list of properties?",
-            "explanation": "A list is filtered by its columns: tick „Tarla” in „Câmpuri afișate” (the columns shown), then press the funnel beside the column's name and tick T12. The filter set becomes a label under the search box."
+            "explanation": "A list is filtered by its columns: tick „Tarla” in „Câmpuri afișate” (the columns shown), then press the funnel in the bottom right corner of the column's name and tick T12. The filter set becomes a label under the search box."
           },
           "options": [
             {

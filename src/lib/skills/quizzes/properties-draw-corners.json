@@ -497,11 +497,11 @@
           "section": "properties-corners-table",
           "ro": {
             "question": "Terenul are patru colțuri, iar topograful vă dă un al cincilea, care vine după ultimul. Cum îl adăugați din tabel?",
-            "explanation": "Sub tabel, „+ Adaugă punct” adaugă un colț nou la sfârșit; harta și suprafața calculată îl urmează imediat."
+            "explanation": "„+ Adaugă punct”, pe rândul titlului fișei, adaugă un colț nou la sfârșit; harta și suprafața calculată îl urmează imediat."
           },
           "en": {
             "question": "The plot has four corners, and the surveyor gives you a fifth, which comes after the last. How do you add it from the table?",
-            "explanation": "Below the table, „+ Adaugă punct” adds a new corner at the end; the map and the calculated area follow it at once."
+            "explanation": "„+ Adaugă punct”, on the tile's title row, adds a new corner at the end; the map and the calculated area follow it at once."
           },
           "options": [
             {
@@ -513,8 +513,8 @@
             {
               "id": "o2",
               "correct": true,
-              "ro": "„+ Adaugă punct”, sub tabel, care îl pune la sfârșit.",
-              "en": "„+ Adaugă punct”, below the table, which puts it at the end."
+              "ro": "„+ Adaugă punct”, pe rândul titlului, care îl pune la sfârșit.",
+              "en": "„+ Adaugă punct”, on the title row, which puts it at the end."
             },
             {
               "id": "o3",

@@ -45,7 +45,7 @@ A second click on the same button closes what it opened.
 
 ### 3.1.1 The list's filters {#persons-list-filters}
 
-The list is filtered like the list of properties: from the funnel beside a column's name, with a label for each filter and „Clear filters” (section [[properties-list-filters]]). Beside each value in a list with ticks is how many persons hold it, counted with the other filters already set. The filters are kept in the page's address.
+The list is filtered like the list of properties: from the funnel in the corner of a column's name, with a label for each filter and „Clear filters” (section [[properties-list-filters]]). Beside each value in a list with ticks is how many persons hold it, counted with the other filters already set. The filters are kept in the page's address.
 
 The columns that can be filtered, chosen in „Choose fields”:
 
@@ -176,7 +176,7 @@ The „Inheritance tree” tile, light blue, draws the person's family: parents 
 
 Only links with a kinship role go into the tree — the roles marked „Kinship” in „Person Roles”. A person with no such links shows „No family ties yet.”
 
-Under the drawing, a single large button, „Add or remove a relative”, opens the panel of family ties. When you reach the person from „Reporting” → „Inheritance trees”, with a click on their name (section [[reports-inheritance]]), the panel is already open.
+Under the drawing, the button „Add or remove” opens the panel of family ties; rest the mouse on it and you see its whole name, „Add or remove a relative”. When you reach the person from „Reporting” → „Inheritance trees”, with a click on their name (section [[reports-inheritance]]), the panel is already open.
 
 - „The person's family ties” shows their relatives, each with the role.
 - To add a relative: under „Relative”, type the name and choose the person; under „What they are to …”, choose the kinship; press „Add the tie”. The relative appears in the drawing.
@@ -186,9 +186,9 @@ The ties added here are the same as those in „Links”: a relative linked in o
 
 ## 3.6 A person's interactions {#persons-interactions}
 
-The „Interactions” tile is the history of what has happened with the person: calls, e-mails, meetings. It stands fixed at the right of the screen, light purple, and is ticked from the start; its tick is the last at the top of the screen. A person with no interactions shows „No interaction logged with this person.” „Open in Interactions” takes you to the screen with all the interactions.
+The „Interactions” tile is the history of what has happened with the person: calls, e-mails, meetings. It starts at the right of the screen, light purple, is dragged elsewhere like any tile, and is ticked from the start; its tick is the last at the top of the screen. A person with no interactions shows „No interaction logged with this person.”, in a short tile. „Open in Interactions” takes you to the screen with all the interactions.
 
-Under the history, the large button „Log interaction” opens the form, already tied to this person:
+Under the history, the button „Log interaction” opens the form, already tied to this person:
 
 1. Press „Log interaction”.
 2. Choose the channel, for instance „Phone”, and type the subject.
@@ -197,6 +197,10 @@ Under the history, the large button „Log interaction” opens the form, alread
 A click on an interaction in the history opens it in the form: change what is needed and press „Save changes”, or press „Delete interaction”, then „Delete”. „Collapse” folds the form away again.
 
 From the list of persons, „Peek inside” shows the history only; a click on an interaction there opens the person's screen, with the interaction in the form. The „Interactions” screen, with its filters, is described in section [[reports-interactions]].
+
+The „Interactions” tile can also go on the left, under the other tiles: grab it by its empty space and drag it there (Figure [[fig-persons-interactions-moved]]). Its place is kept for every person.
+
+![3.3 The „Interactions” tile dragged from the right to the left of the screen, under the other tiles](persons-interactions-moved.png){#fig-persons-interactions-moved}
 
 ## 3.7 Examples and use cases {#persons-examples}
 
@@ -225,7 +229,7 @@ You learn from a certificate of inheritance that a person in the archive has die
 Two persons are in the archive, but nothing says they are father and son.
 
 1. Open the son.
-2. In „Inheritance tree”, press „Add or remove a relative” (section [[persons-relatives-tree]]).
+2. In „Inheritance tree”, press „Add or remove” (section [[persons-relatives-tree]]).
 3. Under „Relative”, choose the father; under „What they are to …”, choose „Tată”; press „Add the tie”.
 4. The father appears in the drawing above the son, and in „Links” each sees the other (section [[persons-relatives-link]]).
 

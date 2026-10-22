@@ -34,7 +34,7 @@ A click on a row selects it and shows the interaction's description under its su
 
 ### 11.1.2 Recording an interaction {#reports-interactions-log}
 
-On the person's screen, under the history in the „Interactions” tile, press the large button „Log interaction”. The form has no box for the person: the interaction belongs to the person on the screen. The form has five sections, each a title followed by an arrow; a click on the title opens the section, a second click closes it. When the form opens, only „Manual entry” is open.
+On the person's screen, under the history in the „Interactions” tile, press the button „Log interaction”. The form has no box for the person: the interaction belongs to the person on the screen. The form has five sections, each a title followed by an arrow; a click on the title opens the section, a second click closes it. When the form opens, only „Manual entry” is open.
 
 - „Connected accounts” — Gmail and WhatsApp Business, each „Not connected”. The „Connect” buttons do nothing yet: an interaction is recorded by hand, with no account connected, and „Nothing is sent without confirmation.”.
 - „Manual entry” — „Channel”, „Direction”, „Status”, „Date and time” (now, by default), „Subject” and „Description”. The subject is what appears in the history and what filtering uses, so keep it short. The description holds the rest; the question written in it changes with the channel — for „Phone”, for instance, „What was agreed?”.
@@ -53,7 +53,7 @@ The status can be „Logged”, „Needs reply”, „Sent”, „Completed” o
 - „Cancel” — if you typed something, it first asks „Discard the interaction you have not saved?”: „Discard it” empties the form, „Keep editing” lets you carry on typing.
 - Ctrl+S does the same as „Save”.
 
-„Collapse” folds the form back into the large button.
+„Collapse” folds the form back into its button.
 
 ### 11.1.3 Linked documents, tags and a property {#reports-interactions-links}
 

@@ -31,7 +31,7 @@ A firm added recently stands at the top of the list, marked „New!”.
 
 ### 4.1.1 The list's filters {#companies-list-filters}
 
-The list is filtered like the list of properties: from the funnel beside a column's name, with a label for each filter and „Clear filters” (section [[properties-list-filters]]). Beside each value is how many firms hold it, counted with the other filters already set.
+The list is filtered like the list of properties: from the funnel in the corner of a column's name, with a label for each filter and „Clear filters” (section [[properties-list-filters]]). Beside each value is how many firms hold it, counted with the other filters already set.
 
 On the list of firms two columns filter, both with ticks:
 

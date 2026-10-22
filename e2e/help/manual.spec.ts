@@ -300,7 +300,7 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     await still(page);
     await sidebar(page).locator("xpath=ancestor::aside").screenshot({ path: `${dir}/sidebar.png` });
 
-    // Figura 2.2 — 40.27: the dashboard with „Mod întunecat" ticked (40.19); its lists blurred as in Figura 1.1. The
+    // Figura 2.2 — 40.27: the dashboard with „Noapte" ticked (40.19, named so in 40.28); its lists blurred as in Figura 1.1. The
     // look is put back to light at once, so every other figure is light.
     await page.goto("/");
     await expect(page.getByText(S.recentActivity, { exact: false }).first()).toBeVisible({ timeout: 60_000 });
@@ -462,6 +462,68 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     await page.waitForTimeout(2000);
     await still(page);
     await tile("inheritanceTree").screenshot({ path: `${dir}/persons-tree.png` });
+
+    // Figura 3.3 — 40.36: the same seed person's „Interacțiuni" (40.32: it starts on the right and moves like any tile)
+    // dragged by its free space to the left, under every other tile. A window tall enough for the whole row, the
+    // picture cut at the row's bottom; the CNP, the identity fields and „Recente" blurred. The arrangement is forgotten
+    // straight after, so no other figure, and no later run, sees it.
+    const forgetPlaces = () =>
+      page.evaluate(() => {
+        for (const k of Object.keys(localStorage)) if (k.startsWith("ga40-tile-positions-")) localStorage.removeItem(k);
+      });
+    await forgetPlaces();
+    await page.setViewportSize({ width: 1366, height: 2400 });
+    await page.reload();
+    await expect(tile("interactions")).toBeVisible({ timeout: 60_000 });
+    await page.waitForTimeout(2500); // past the first layout's settling
+    try {
+      const rowBox = (await page.locator("[data-tile-row]").filter({ visible: true }).first().boundingBox())!;
+      const lowestLeft = await page.evaluate(() =>
+        Math.max(
+          ...[...document.querySelectorAll<HTMLElement>("[data-tile-row] [data-packed-col]:not(.order-last)")]
+            .filter((e) => !e.querySelector('[data-tile="interactions"]') && e.dataset.tile !== "interactions")
+            .map((e) => e.getBoundingClientRect().bottom),
+        ),
+      );
+      const inter = (await tile("interactions").boundingBox())!;
+      const to = { x: rowBox.x, y: lowestLeft + 48 };
+      await page.mouse.move(inter.x + 5, inter.y + 5);
+      await page.mouse.down();
+      for (let i = 1; i <= 12; i++) await page.mouse.move(inter.x + 5 + ((to.x - inter.x) * i) / 12, inter.y + 5 + ((to.y - inter.y) * i) / 12);
+      await page.mouse.up();
+      await expect.poll(async () => Math.round((await tile("interactions").boundingBox())!.x - rowBox.x), { timeout: 10_000 }).toBeLessThanOrEqual(1);
+      await page.waitForTimeout(600); // past the slide
+      await page.evaluate(
+        ([f, any, start]) => {
+          const label1 = new RegExp(any, "i");
+          const label2 = new RegExp(start);
+          for (const el of document.querySelectorAll<HTMLElement>("input, [data-width-field]")) {
+            const label = el.getAttribute("aria-label") ?? el.closest("label")?.textContent ?? "";
+            if (label1.test(label)) el.style.filter = f;
+          }
+          for (const lbl of document.querySelectorAll<HTMLLabelElement>("label")) {
+            if (label2.test(lbl.textContent ?? "") && lbl.htmlFor) {
+              const box = document.getElementById(lbl.htmlFor);
+              if (box) box.style.filter = f;
+            }
+          }
+        },
+        [BLUR, S.idLabel.source, S.idLabelStart.source] as const,
+      );
+      await blurCnp(page);
+      await blurRecent(page, S.recent);
+      await still(page);
+      const movedBottom = await page.evaluate(() =>
+        Math.max(...[...document.querySelectorAll<HTMLElement>("[data-tile-row] [data-packed-col]")].map((e) => e.getBoundingClientRect().bottom)),
+      );
+      await page.screenshot({
+        path: `${dir}/persons-interactions-moved.png`,
+        clip: { x: 0, y: 0, width: 1366, height: Math.min(2400, Math.ceil(movedBottom) + 24) },
+      });
+    } finally {
+      await forgetPlaces();
+      await page.setViewportSize({ width: 1366, height: 768 });
+    }
 
     // Figura 7.3 — on a seed person with a second version. #39.86: the first seed person had one in #39.80's seed, not
     // since #39.81 rebuilt it, and the test then waited out its whole timeout for a „2 versiuni" chip that never came.
@@ -756,7 +818,7 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
 
     for (const f of [
       "dashboard", "sidebar", "breadcrumb", "list", "list-fit", "list-resize", "record", "make-room", "help",
-      "persons-new", "persons-tree", "companies-record", "properties-list", "properties-record",
+      "persons-new", "persons-tree", "persons-interactions-moved", "companies-record", "properties-list", "properties-record",
       "documents-pages", "documents-sale", "documents-antecontract", "links-associate", "links-related", "links-versions",
       "tools-doc-type-engine", "tools-calculation", "import-steps", "reports-search", "admin-value-lists", "admin-settings",
     ]) {

@@ -23,7 +23,7 @@ Above the table, on one row, stand the search box („search by Code, Title or D
 
 ### 6.1.1 The list's filters {#documents-list-filters}
 
-The list of documents is filtered like the list of properties, from the funnel beside a column's name (section [[properties-list-filters]]). „Document type:” and „Type-specific field:”, on the top row, are always there and work as above; the filters set from the columns become labels on the row under it, which appears only while one is set. „Expiring soon”, on the same top row, beside „Choose fields”, is a filter too: pressed, the list keeps only the documents whose validity ends soon; pressed again, it drops the filter.
+The list of documents is filtered like the list of properties, from the funnel in the corner of a column's name (section [[properties-list-filters]]). The funnel on „Type” opens the same tick boxes as „Document type:”, and the two always show the same choice. „Document type:” and „Type-specific field:”, on the top row, are always there and work as above; the filters set from the columns become labels on the row under it, which appears only while one is set. „Expiring soon”, on the same top row, beside „Choose fields”, is a filter too: pressed, the list keeps only the documents whose validity ends soon; pressed again, it drops the filter.
 
 The columns that can be filtered, chosen in „Choose fields”:
 

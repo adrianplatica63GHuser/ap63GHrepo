@@ -325,11 +325,11 @@
           "section": "persons-relatives-tree",
           "ro": {
             "question": "Pe ecranul lui Mihai Popescu, Ciprian vrea să-i lege tatăl din fișa „Arbore de moștenire”. Ce apasă ca să se deschidă panoul legăturilor de familie?",
-            "explanation": "Sub desen, un singur buton mare, „Adaugă sau scoate o rudă”, deschide panoul legăturilor de familie. Dacă fișa nu se vede, bifați „Arbore de moștenire” în capul ecranului."
+            "explanation": "Sub desen, butonul „Adaugă sau scoate” deschide panoul legăturilor de familie; numele lui întreg, „Adaugă sau scoate o rudă”, apare când țineți mouse-ul pe el. Dacă fișa nu se vede, bifați „Arbore de moștenire” în capul ecranului."
           },
           "en": {
             "question": "On Mihai Popescu's screen, Ciprian wants to link his father from the „Arbore de moștenire” tile. What does he press so that the panel of family ties opens?",
-            "explanation": "Under the drawing, a single large button, „Adaugă sau scoate o rudă” (add or remove a relative), opens the panel of family ties. If the tile is not showing, tick „Arbore de moștenire” at the top of the screen."
+            "explanation": "Under the drawing, the button „Adaugă sau scoate” (add or remove) opens the panel of family ties; its whole name, „Adaugă sau scoate o rudă” (add or remove a relative), shows when you rest the mouse on it. If the tile is not showing, tick „Arbore de moștenire” at the top of the screen."
           },
           "options": [
             {
@@ -353,8 +353,8 @@
             {
               "id": "o4",
               "correct": true,
-              "ro": "„Adaugă sau scoate o rudă”, sub desen.",
-              "en": "„Adaugă sau scoate o rudă”, under the drawing."
+              "ro": "„Adaugă sau scoate”, sub desen.",
+              "en": "„Adaugă sau scoate”, under the drawing."
             }
           ]
         },

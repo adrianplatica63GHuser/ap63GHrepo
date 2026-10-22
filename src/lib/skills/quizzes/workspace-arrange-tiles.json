@@ -14,25 +14,25 @@
           "id": "a1",
           "section": "properties-type-tiles",
           "ro": {
-            "question": "Pe ecranul unei proprietăți, vreți să trageți fișa „Hartă” în stânga, lângă „Adresă”, dar ea nu se mișcă. De ce?",
-            "explanation": "Fișele mov deschis stau pe loc; pe o proprietate, „Hartă”, „Puncte de contur” și „Street View” stau într-o coloană în dreapta și nu se mută."
+            "question": "Pe ecranul unei proprietăți, vreți fișa „Hartă” în stânga, lângă „Adresă”, nu în dreapta, unde pornește. Ce faceți?",
+            "explanation": "Fișele mov deschis — pe o proprietate, „Hartă”, „Puncte de contur” și „Street View” — pornesc lângă marginea dreaptă, una sub alta, dar se trag ca orice altă fișă: o apucați de spațiul ei gol și o lăsați acolo. Locul în care o lăsați se păstrează."
           },
           "en": {
-            "question": "On a property's screen, you want to drag the „Hartă” (map) tile to the left, beside „Adresă”, but it does not move. Why?",
-            "explanation": "The light purple tiles stay where they are; on a property, „Hartă”, „Puncte de contur” and „Street View” sit in a column on the right and do not move."
+            "question": "On a property's screen, you want the „Hartă” (map) tile on the left, beside „Adresă”, not on the right, where it starts. What do you do?",
+            "explanation": "The light purple tiles — on a property, „Hartă”, „Puncte de contur” and „Street View” — start by the right edge, one under another, but are dragged like any other tile: grab it by its empty space and drop it there. The place you leave it in is kept."
           },
           "options": [
             {
               "id": "o1",
               "correct": false,
-              "ro": "Ați apucat-o de nume; o fișă se trage doar de bara ei de titlu.",
-              "en": "You grabbed it by its name; a tile can be dragged only by its title bar."
+              "ro": "Nu se poate: fișele mov deschis stau mereu în dreapta.",
+              "en": "You cannot: the light purple tiles always stay on the right."
             },
             {
               "id": "o2",
               "correct": true,
-              "ro": "Este o fișă mov deschis; ca harta și colțurile, stă pe loc.",
-              "en": "It is a light purple tile; like the map and the corners, it stays put."
+              "ro": "O trageți de spațiul ei gol și o lăsați lângă „Adresă”, ca orice fișă.",
+              "en": "Drag it by its empty space and drop it beside „Adresă”, like any tile."
             },
             {
               "id": "o3",
@@ -438,18 +438,18 @@
           "section": "properties-type-tiles",
           "ro": {
             "question": "Pe laptop, cu fereastra îngustă, coloana cu „Hartă” și „Puncte de contur” a unui teren apare sub celelalte fișe, nu în dreapta. Ce înseamnă?",
-            "explanation": "Fișele „Hartă”, „Puncte de contur” și „Street View” stau într-o coloană în dreapta; pe un ecran îngust, coloana coboară sub celelalte fișe."
+            "explanation": "Fișele „Hartă”, „Puncte de contur” și „Street View” pornesc din dreapta, una sub alta; pe un ecran îngust, coboară sub celelalte fișe."
           },
           "en": {
             "question": "On a laptop, with a narrow window, a plot's column with „Hartă” and „Puncte de contur” appears under the other tiles, not on the right. What does it mean?",
-            "explanation": "The „Hartă”, „Puncte de contur” and „Street View” tiles sit in a column on the right; on a narrow screen, the column moves down under the other tiles."
+            "explanation": "The „Hartă”, „Puncte de contur” and „Street View” tiles start on the right, one under another; on a narrow screen, they move down under the other tiles."
           },
           "options": [
             {
               "id": "o1",
               "correct": false,
-              "ro": "Cineva le-a tras acolo; trageți-le înapoi în dreapta, de spațiul lor gol.",
-              "en": "Someone dragged them there; drag them back to the right by their empty space."
+              "ro": "Fereastra e prea îngustă pentru hartă, așa că harta nu se mai încarcă.",
+              "en": "The window is too narrow for the map, so the map no longer loads."
             },
             {
               "id": "o2",
