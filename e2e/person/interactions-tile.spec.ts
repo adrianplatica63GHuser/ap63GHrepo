@@ -89,7 +89,7 @@ test.describe("TC-PERS-07 — „Interacțiuni” pe cele două fișe de persoan
       await expect(links).toBeVisible({ timeout: 30_000 });
       await expect.poll(async () => {
         const [s, l] = await Promise.all([size(tile), size(links)]);
-        return { x: s.x, y: s.y, w: s.w, asLinks: Math.abs(s.h - l.h) <= 8 };
+        return { x: s.x, y: s.y, w: s.w, asLinks: Math.abs(s.h - l.h) <= 8 ? true : `${s.h} against ${l.h}` };
       }, { timeout: 15_000 }).toEqual({ x: pages1920.x, y: pages1920.y, w: pages1920.w, asLinks: true });
       await expect(tile.locator('[data-person-log="collapsed"]')).toBeVisible();
       const log = tile.locator("[data-log-expand]");

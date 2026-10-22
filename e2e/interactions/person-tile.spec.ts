@@ -53,7 +53,8 @@ test.describe("TC-INT-06 — istoricul și panoul de acțiune pe fișa persoanei
       const offer = await log(page.request, ana, "Ofertă de preț", "EMAIL", 3);
       await page.setViewportSize({ width: 1366, height: 1000 });
 
-      // Step 1 — the person's screen: B lists „Ofertă de preț"; C is one large button, „Înregistrează o interacțiune".
+      // Step 1 — the person's screen: B lists „Ofertă de preț", at „Pagini"'s height (40.33: a person with one); C is
+      // one button, „Înregistrează o interacțiune" — since 40.33 „Asociază …"'s kind, as wide as its words.
       await page.goto(`/natural-persons/${ana}`);
       const tile = page.getByRole("region", { name: "Interacțiuni", exact: true });
       const subjects = tile.locator("[data-person-interaction] [data-subject]");
@@ -63,7 +64,8 @@ test.describe("TC-INT-06 — istoricul și panoul de acțiune pe fișa persoanei
       const expand = tile.getByRole("button", { name: "Înregistrează o interacțiune", exact: true });
       await expect(expand).toBeVisible();
       const [e, t] = [(await expand.boundingBox())!, (await tile.boundingBox())!];
-      expect(t.width - e.width, "the button spans the tile, inside its padding").toBeLessThanOrEqual(30);
+      expect(e.width, "the button as wide as its words, not across the tile (40.33)").toBeLessThan(t.width / 2);
+      await expect(tile).toHaveAttribute("data-interactions-state", "rows");
       await tile.scrollIntoViewIfNeeded();
       await picture(page, "person-collapsed-1366");
 
