@@ -11,6 +11,7 @@
  *   - The picture is the tile alone, at 1366 px: only the test family is in it.
  */
 
+import { showTile } from "../helpers/tiles";
 import { test, expect, type APIRequestContext, type Page } from "../helpers/test";
 import { E2E_MARKER, createNaturalPerson, removeLeftovers, removeRecord } from "../helpers/records";
 
@@ -69,6 +70,20 @@ test.describe("TC-INHER-02 — arborele persoanei", () => {
       expect(await look(treeTitle)).toEqual(await look(identityTitle));
       expect((await look(treeTitle))[0]).toBe("uppercase");
       await expect(tile(page).locator("[data-tile-subtitle]")).toHaveCount(1);
+
+      // Step 1a (Slice 40.34) — the button reads „Adaugă sau scoate", named and tooltipped „Adaugă sau scoate o rudă";
+      // „Asociază persoană"'s kind: its height and its colour, as wide as its words, at the tile's left.
+      const open = tile(page).locator("[data-tree-expand]");
+      await expect(open).toHaveText("Adaugă sau scoate");
+      await expect(open).toHaveAccessibleName("Adaugă sau scoate o rudă");
+      await showTile(page, "Legături");
+      const associate = page.locator('[data-tile="related"]').getByRole("button", { name: "Asociază persoană", exact: true });
+      const looks = (l: ReturnType<Page["locator"]>) =>
+        l.evaluate((e) => ({ h: Math.round(e.getBoundingClientRect().height), bg: getComputedStyle(e).backgroundColor }));
+      expect(await looks(open)).toEqual(await looks(associate));
+      const [ob, tb] = [(await open.boundingBox())!, (await tile(page).boundingBox())!];
+      expect(ob.width).toBeLessThan(tb.width / 2);
+      expect(ob.x - tb.x).toBeLessThanOrEqual(16);
 
       // Step 2 — from the whole tree, Elena's name: her screen with C expanded.
       await page.goto("/inheritance-tree");

@@ -5025,6 +5025,7 @@
       "error": "Could not load or save. Try again.",
       "empty": "No family ties yet.",
       "open": "Add or remove a relative",
+      "openShort": "Add or remove",
       "collapse": "Collapse",
       "tiesTitle": "The person's family ties",
       "noTies": "None yet.",

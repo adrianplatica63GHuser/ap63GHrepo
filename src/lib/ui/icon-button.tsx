@@ -208,6 +208,12 @@ type Common = {
   /** Icon + label: the icon before the visible label, and no tooltip (A011). */
   showLabel?: boolean;
   /**
+   * Slice 40.34: with `showLabel`, the accessible name and the tooltip when they say more than the words on screen —
+   * the family tree's „Adaugă sau scoate" is named „Adaugă sau scoate o rudă", so a screen reader and a hover still
+   * say whose. Ignored on an icon-only button, whose `label` is already its name.
+   */
+  fullName?: string;
+  /**
    * With `showLabel`: the icon AFTER the words instead of before them — a
    * forward arrow („Continuă →", #37.47 A099/A105) reads in the direction it
    * points. Ignored on an icon-only button, which has no words to follow.
@@ -266,6 +272,7 @@ export function IconButton(props: IconButtonProps) {
     size = "md",
     square,
     showLabel = false,
+    fullName,
     iconEnd = false,
     busy = false,
     busyLabel,
@@ -281,7 +288,8 @@ export function IconButton(props: IconButtonProps) {
   // are both kept: the attribute takes a list of ids.
   const callerDescribedBy = (rest as { "aria-describedby"?: string })["aria-describedby"];
   const describedBy = [callerDescribedBy, note ? noteId : undefined].filter(Boolean).join(" ") || undefined;
-  const name = busy && busyLabel ? busyLabel : label;
+  const longer = showLabel ? fullName : undefined;
+  const name = busy && busyLabel ? busyLabel : (longer ?? label);
   const small = showLabel ? undefined : square;
   const px = small ? SQUARE_ICON_PX[small] : ICON_PX[size];
   const badge = count !== undefined && count > 0 ? count : null;
@@ -329,8 +337,8 @@ export function IconButton(props: IconButtonProps) {
   // Icon + label at rest: the words are the name, so no aria-label and no
   // tooltip. Busy, the words on screen stay (the width holds) but the name is
   // the busy text, which the tooltip shows.
-  const ariaLabel = showLabel && !busy ? undefined : name;
-  const tooltip = !showLabel || (busy && name !== label) || Boolean(note);
+  const ariaLabel = showLabel && !busy && !longer ? undefined : name;
+  const tooltip = !showLabel || (busy && name !== label) || Boolean(note) || Boolean(longer);
 
   let control: ReactNode;
   if (rest.href !== undefined) {

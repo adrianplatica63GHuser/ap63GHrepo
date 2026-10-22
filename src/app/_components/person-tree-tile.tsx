@@ -95,9 +95,12 @@ export function PersonTreeTile({
       {expanded ? (
         <FamilyPanel personId={personId} personName={personName} onCollapse={() => guardedAction(() => setExpanded(false))} />
       ) : (
-        // One large button, as „Interacțiuni"'s C (#39.05), stretched across the tile.
-        <div className="mt-3 flex flex-col" data-tree-panel="collapsed">
-          <IconButton icon={Users} label={t("open")} showLabel variant="accent" size="lg" data-tree-expand="" onClick={() => setExpanded(true)} />
+        // Slice 40.34 (Adrian: „the caption is too long It should just read add or remove, because the icon in front of
+        // it gets the information across that it's a person"): „Adaugă sau scoate" on screen, the whole „Adaugă sau
+        // scoate o rudă" as its name and tooltip (Ask first 1); „Asociază …"'s kind — primary, sm, as wide as its
+        // words, at the tile's left (Ask first 2). It was one large indigo button stretched across the tile (#39.05).
+        <div className="mt-3 flex flex-col items-start" data-tree-panel="collapsed">
+          <IconButton icon={Users} label={t("openShort")} fullName={t("open")} showLabel variant="primary" size="sm" data-tree-expand="" onClick={() => setExpanded(true)} />
         </div>
       )}
     </section>

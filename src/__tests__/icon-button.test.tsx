@@ -263,6 +263,13 @@ describe("buttonClass — the icon-only square (#37.42)", () => {
     expect(button.querySelector("svg")?.getAttribute("width")).toBe("9");
   });
 
+  // Slice 40.34: the words on screen shorter than the name — the tree's „Adaugă sau scoate" („… o rudă").
+  it("with fullName, an icon + label button shows its label and is named by the longer words", () => {
+    render(<IconButton icon={ArrowLeft} label="Adaugă sau scoate" fullName="Adaugă sau scoate o rudă" showLabel variant="primary" size="sm" />);
+    const button = screen.getByRole("button", { name: "Adaugă sau scoate o rudă" });
+    expect(button).toHaveTextContent(/^Adaugă sau scoate$/);
+  });
+
   // Slice 40.30: a principal list's row buttons — 24 × 24 with a 14-px icon.
   it("the row square is 24 px with a 14-px icon", () => {
     const keys = buttonClass({ variant: "secondary", size: "xs", iconOnly: true, square: "row" }).split(" ");

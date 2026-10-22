@@ -5025,6 +5025,7 @@
       "error": "Nu s-a putut încărca sau salva. Încercați din nou.",
       "empty": "Nicio legătură de familie încă.",
       "open": "Adaugă sau scoate o rudă",
+      "openShort": "Adaugă sau scoate",
       "collapse": "Restrânge",
       "tiesTitle": "Legăturile de familie ale persoanei",
       "noTies": "Niciuna încă.",
