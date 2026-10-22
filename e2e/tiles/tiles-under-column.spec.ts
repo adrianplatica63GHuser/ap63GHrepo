@@ -92,7 +92,13 @@ test.describe("TC-TILES-15 — sub coloana din dreapta", () => {
         return `gap ${c.y - s.b} — conn ${JSON.stringify(c)} sv ${JSON.stringify(s)} corners ${JSON.stringify(k)} map ${JSON.stringify(m)}`;
       }, { timeout: 20_000 }).toMatch(new RegExp(`^gap ${GAP} `));
       await hideTile(page, "Street View");
-      await expect.poll(async () => place(page, conn), { timeout: 20_000 }).toEqual(c2);
+      // 40.35: the place, and the tile's own width and height when it is not c2's (diagnostic).
+      await expect.poll(async () => {
+        const p = await place(page, conn);
+        if (JSON.stringify(p) === JSON.stringify(c2)) return p;
+        const r = (await conn.boundingBox())!;
+        return { ...p, w: Math.round(r.width), h: Math.round(r.height) };
+      }, { timeout: 20_000 }).toEqual(c2);
 
       // Step 5 — at 1366 in the left area, the column beside it; at 1920 back under the column.
       await page.setViewportSize({ width: 1366, height: 1200 });

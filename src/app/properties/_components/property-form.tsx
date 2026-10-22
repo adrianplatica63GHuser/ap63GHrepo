@@ -1388,10 +1388,8 @@ export function PropertyForm({
         >
           {/* Slice 40.35: „+ Adaugă punct" (and, on „Adaugă proprietate", the Street View toggle) in the title row, at the
               right — CornersManager portals its toolbar into this slot; the line under the table is gone. */}
-          <div className="flex items-start gap-2">
-            <div className="min-w-0 flex-1">
-              <TileTitle title={t("tiles.corners")} subtitle={t("tileSubtitles.corners")} />
-            </div>
+          <div className="flex items-start justify-between gap-2">
+            <TileTitle title={t("tiles.corners")} subtitle={t("tileSubtitles.corners")} />
             <div ref={setCornersToolbar} className="flex shrink-0 items-center" data-corners-toolbar="" />
           </div>
           <CornersManager
