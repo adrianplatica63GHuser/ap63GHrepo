@@ -481,35 +481,31 @@ export function SidebarNav() {
         isCollapsed ? "w-14" : "w-56",
       ].join(" ")}
     >
-      {/* ── App name + locale toggle + collapse button ────────────────── */}
+      {/* ── App name + „Noapte" | the flags | collapse button ──────────── */}
+      {/* Slice 40.28 — three parts (Adrian, 2026-10-22: „GA40 … higher and the checkbox … under this name and aligned
+          at the left with it"; the flags „on top of each other, and aligned horizontally to the middle of the left
+          navigation panel"; the collapse button „keeps its position"). At the left a column, „GA40" over the „Noapte"
+          box, both on the header's left padding; the two flags stacked and centred on the panel's own width — absolute,
+          so the columns beside them do not pull them off the middle; the collapse button where it always was. All of
+          it but the button stays hidden on the collapsed rail, as the flags always were (#23.10.dev, #38.22, 40.19). */}
       <div
         className={[
-          "flex items-center h-14 px-3 border-b border-wire shrink-0",
+          "relative flex items-center h-14 px-3 border-b border-wire shrink-0",
           isCollapsed ? "justify-center" : "justify-between",
         ].join(" ")}
+        data-sidebar-look=""
       >
         {!isCollapsed && (
-          <span className="text-sm font-bold tracking-tight text-ink select-none">
-            GA40
-          </span>
-        )}
-        {/* Slice #23.10.dev — the EN/RO flags are back, exactly where Slice
-            #20.10 took them from (the header comment above never stopped
-            claiming they were here), but now only on a developer build.
-            #20.10 replaced them with a "Use English language" checkbox on the
-            Settings page; that checkbox is gone again in this slice, because
-            Settings is itself dev-only now and a Romanian user must never have
-            a control that can put the whole UI into English.
-
-            Collapsed sidebars still hide them: two flags do not fit a 3rem
-            rail, which is why the original carried the same !isCollapsed. */}
-        {/* Slice #38.22: the language toggle is shown on every build (it was developer-only).
-            Slice 40.19: the flags smaller, and „Mod întunecat" on a line of its own under them; both hidden with the
-            sidebar collapsed, as the flags always were. */}
-        {!isCollapsed && (
-          <div className="flex flex-col items-center gap-0.5" data-sidebar-look="">
-            <LocaleToggle small />
+          <div className="flex flex-col items-start gap-0.5" data-sidebar-brand="">
+            <span className="text-sm font-bold tracking-tight text-ink select-none" data-sidebar-name="">
+              GA40
+            </span>
             <ThemeToggle compact />
+          </div>
+        )}
+        {!isCollapsed && (
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" data-sidebar-flags="">
+            <LocaleToggle small stacked />
           </div>
         )}
         {/* #37.42 (A002): PanelLeftOpen / PanelLeftClose. */}

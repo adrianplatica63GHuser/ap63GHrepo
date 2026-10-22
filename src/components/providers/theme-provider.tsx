@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * The one theme the two „Mod întunecat" boxes show and change.                                       (Slice 40.19)
+ * The one theme the two „Noapte" boxes show and change.                                       (Slice 40.19)
  *
  * The root layout passes the theme it read from the cookie, so the first paint and the boxes agree; ticking either
  * box goes through `setTheme`, which stores the cookie, turns <html> and re-renders both boxes — the other one shows

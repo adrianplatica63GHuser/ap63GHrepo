@@ -25,12 +25,14 @@ const LOCALE_META: Record<string, { flagSrc: string; label: string }> = {
  * Clicking writes the locale cookie and calls router.refresh() so server
  * components re-render with the new locale.
  *
- * Slice 40.19: `small` is the sidebar's — 24 × 16 px, so „Mod întunecat" fits on a line under them (Adrian: „we have
- * to make the flags a little bit smaller"); the login and signup pages keep 30 × 20.
+ * Slice 40.19: `small` is the sidebar's — 24 × 16 px (Adrian: „we have to make the flags a little bit smaller"); the
+ * login and signup pages keep 30 × 20.
+ * Slice 40.28: `stacked` is the sidebar's too — the two flags one above the other, in SUPPORTED_LOCALES' order (English
+ * on top), 2 px apart; the login and signup pages keep them side by side.
  */
 export const FLAG_PX = { regular: { width: 30, height: 20 }, small: { width: 24, height: 16 } } as const;
 
-export function LocaleToggle({ small = false }: { small?: boolean }) {
+export function LocaleToggle({ small = false, stacked = false }: { small?: boolean; stacked?: boolean }) {
   const flag = small ? FLAG_PX.small : FLAG_PX.regular;
   const currentLocale = useLocale();
   const router = useRouter();
@@ -42,7 +44,7 @@ export function LocaleToggle({ small = false }: { small?: boolean }) {
   };
 
   return (
-    <div className="inline-flex items-center gap-1">
+    <div className={stacked ? "flex flex-col items-center gap-0.5" : "inline-flex items-center gap-1"}>
       {SUPPORTED_LOCALES.map((locale) => {
         const meta = LOCALE_META[locale] ?? { flagSrc: "", label: locale };
         const isActive = currentLocale === locale;

@@ -33,9 +33,9 @@ Un clic pe o secțiune îi arată ecranele, iar un clic pe un ecran îl deschide
 
 ![2.1 Bara laterală, cu secțiunea „Domeniu” deschisă](sidebar.png){#fig-sidebar}
 
-Sus, lângă „GA40”, două steaguri schimbă limba ecranelor, iar sub ele stă căsuța „Mod întunecat”: bifată, toată aplicația trece pe fundal închis, pe loc, fără să reîncărcați pagina; debifată, revine luminoasă (Figura [[fig-dark]]). Alegerea se păstrează în browserul acesta, și după ce îl închideți, și se schimbă la fel din „Setări”, la „Aspect” (secțiunea [[admin-settings-account]]). Setarea de culori a calculatorului nu mai contează: fără bifă, aplicația este luminoasă. Cu bara laterală strânsă, steagurile și căsuța nu se văd.
+Sus, la mijlocul barei, două steaguri, unul sub altul, schimbă limba ecranelor; în stânga, sub „GA40”, stă căsuța „Noapte”: bifată, toată aplicația trece pe fundal închis, pe loc, fără să reîncărcați pagina; debifată, revine luminoasă (Figura [[fig-dark]]). Alegerea se păstrează în browserul acesta, și după ce îl închideți, și se schimbă la fel din „Setări”, la „Aspect” (secțiunea [[admin-settings-account]]). Setarea de culori a calculatorului nu mai contează: fără bifă, aplicația este luminoasă. Cu bara laterală strânsă, steagurile și căsuța nu se văd.
 
-![2.2 Tabloul de bord cu „Mod întunecat” bifat](dark.png){#fig-dark}
+![2.2 Tabloul de bord cu „Noapte” bifat](dark.png){#fig-dark}
 
 ## 2.3 Bara de navigare și „Înapoi” {#start-breadcrumb}
 

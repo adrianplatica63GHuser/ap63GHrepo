@@ -1,4 +1,4 @@
-# TC-SET-05 — „Mod întunecat”: bifat sub steaguri, păstrat la reîncărcare, același în „Setări”
+# TC-SET-05 — „Noapte”: bifat sub „GA40”, păstrat la reîncărcare, același în „Setări”
 
 | | |
 |---|---|
@@ -18,6 +18,13 @@ dark from the first byte, the other box shows it, and unticking turns it light. 
 decides. A box that changes only its own page, a reload that comes back light (or white first), the two boxes
 disagreeing, or the flags still 30 × 20 in the sidebar is the defect.
 
+Slice 40.28, Adrian (2026-10-22): „the GA40 application Name should be higher and the checkbox should be under this
+name and aligned at the left with it; the label of the checkbox should be "Night" for English and "Noapte" for
+Romanian … The British flag, and the Romanian flag are also on top of each other, and aligned horizontally to the
+middle of the left navigation panel. The button that will collapse the left navigation panel keeps its position".
+„Setări"'s box reads „Noapte (Mod Întunecat)". A box off „GA40"'s left edge, flags side by side or off the panel's
+middle, or a collapse button that moved is the defect.
+
 ## Before you start
 
 - TC-AUTH-01 is green.
@@ -31,11 +38,11 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „Persoane fizice" at 1366 × 900 and looks at the sidebar's header | The two flags 24 × 16 px; under them, on a line of its own, an unticked box „Mod întunecat"; the page light |
-| 2 | Ticks „Mod întunecat" | At once, without a reload: `<html>` carries `dark`, the page's background is dark, the sidebar too |
+| 1 | Opens „Persoane fizice" at 1366 × 900 and looks at the sidebar's header | The header 56 px tall. At its left „GA40", level with the top flag, and under it, its left edge on „GA40"'s within 1 px, an unticked box „Noapte" whose tooltip reads „Noapte (Mod Întunecat)"; the two flags 24 × 16 px, one above the other, their centre within 1 px of the panel's; the collapse button 30 × 30 on the header's right padding, in its middle; nothing overlapping; the page light |
+| 2 | Ticks „Noapte" | At once, without a reload: `<html>` carries `dark`, the page's background is dark, the sidebar too |
 | 3 | Reloads the page | The page arrives dark — the server's first answer already carries `dark` on `<html>` — and the box is ticked |
-| 4 | Opens „Setări" | Under „Limba", a group „Aspect" with the box „Mod întunecat", ticked |
-| 5 | Unticks it there | At once the page is light, and the box under the flags is unticked too |
+| 4 | Opens „Setări" | Under „Limba", a group „Aspect" with the box „Noapte (Mod Întunecat)", ticked |
+| 5 | Unticks it there | At once the page is light, and the sidebar's box is unticked too |
 | 6 | Reloads | Light, both boxes unticked |
 
 ## Notes from the runs

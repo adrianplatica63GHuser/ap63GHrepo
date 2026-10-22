@@ -501,7 +501,7 @@ function LanguageChoice() {
   );
 }
 
-/** Slice 40.19: „Aspect" under „Limba" — the same „Mod întunecat" box as under the flags, showing the same choice. */
+/** Slice 40.19: „Aspect" under „Limba" — the same box as the sidebar's, showing the same choice; 40.28: labelled „Noapte (Mod Întunecat)". */
 function AppearanceChoice() {
   const t = useTranslations("theme");
   return (

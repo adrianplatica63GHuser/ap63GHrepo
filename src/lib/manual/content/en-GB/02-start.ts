@@ -33,9 +33,9 @@ A click on a section shows its screens, and a click on a screen opens it; the op
 
 ![2.1 The sidebar, with the „Domain” section open](sidebar.png){#fig-sidebar}
 
-At the top, beside „GA40”, two flags change the screens' language, and under them stands the box „Dark mode”: ticked, the whole application turns dark at once, without reloading the page; unticked, it is light again (Figure [[fig-dark]]). The choice is kept in this browser, also after you close it, and is changed the same way in „Settings”, under „Appearance” (section [[admin-settings-account]]). The computer's own colour setting no longer counts: unticked, the application is light. With the sidebar collapsed, the flags and the box do not show.
+At the top, in the middle of the bar, two flags, one above the other, change the screens' language; at the left, under „GA40”, stands the box „Night”: ticked, the whole application turns dark at once, without reloading the page; unticked, it is light again (Figure [[fig-dark]]). The choice is kept in this browser, also after you close it, and is changed the same way in „Settings”, under „Appearance” (section [[admin-settings-account]]). The computer's own colour setting no longer counts: unticked, the application is light. With the sidebar collapsed, the flags and the box do not show.
 
-![2.2 The dashboard with „Dark mode” ticked](dark.png){#fig-dark}
+![2.2 The dashboard with „Night” ticked](dark.png){#fig-dark}
 
 ## 2.3 The navigation bar and „Back” {#start-breadcrumb}
 

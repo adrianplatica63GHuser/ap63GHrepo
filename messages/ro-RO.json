@@ -5155,7 +5155,8 @@
     }
   },
   "theme": {
-    "darkMode": "Mod întunecat",
+    "night": "Noapte",
+    "nightLong": "Noapte (Mod Întunecat)",
     "appearance": "Aspect"
   }
 }

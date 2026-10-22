@@ -893,8 +893,8 @@ export const SKILLS: readonly Skill[] = [
     path: "workspace",
     name: { ro: "Ajustează aplicația: setări, implicite și utilizatori", en: "Fit the application: settings, defaults and users" },
     description: {
-      ro: "Schimbi o setare și o pui la loc exact, treci aplicația pe „Mod întunecat”, salvezi setul tău de fișe în „Implicitele mele”, alegi furnizorii din „Costuri” și răspunzi unei cereri de acces.",
-      en: "Change a setting and put it back exactly, turn the application to „Mod întunecat” (dark mode), save your own set of tiles in „Implicitele mele”, choose the providers in „Costuri”, and answer an access request.",
+      ro: "Schimbi o setare și o pui la loc exact, treci aplicația pe „Noapte”, salvezi setul tău de fișe în „Implicitele mele”, alegi furnizorii din „Costuri” și răspunzi unei cereri de acces.",
+      en: "Change a setting and put it back exactly, turn the application to „Noapte” (dark mode), save your own set of tiles in „Implicitele mele”, choose the providers in „Costuri”, and answer an access request.",
     },
     predecessors: ["workspace-sign-in-and-navigate", "workspace-arrange-tiles"],
     screens: ["admin-settings", "admin-users"],

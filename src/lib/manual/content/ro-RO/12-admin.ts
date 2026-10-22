@@ -178,7 +178,7 @@ Textele din spatele butonului „?” și sfaturile cu bec de pe ecrane (secțiu
 
 - **Parola.** Scrieți parola nouă în „Parola nouă” — cel puțin 8 caractere — și încă o dată în „Confirmă parola”, apoi apăsați „Schimbă parola”. Aplicația confirmă cu „Parola a fost schimbată!”. Dacă cele două nu se potrivesc, spune „Parolele nu coincid.”.
 - **Limba.** La „Limba” alegeți „Română” sau „English”.
-- **Aspect.** Sub „Limba”, la „Aspect”, căsuța „Mod întunecat” trece toată aplicația pe fundal închis; e aceeași căsuță ca sub steagurile din bara laterală, așa că una o arată bifată pe cealaltă (secțiunea [[start-sidebar]]).
+- **Aspect.** Sub „Limba”, la „Aspect”, căsuța „Noapte (Mod Întunecat)” trece toată aplicația pe fundal închis; e aceeași căsuță ca sub „GA40” în bara laterală, așa că una o arată bifată pe cealaltă (secțiunea [[start-sidebar]]).
 - **„Implicitele mele”.** Pentru fiecare fel de obiect — „Persoană fizică”, „Persoană juridică”, „Proprietate”, „Act” — bifați fișele pe care vreți să le arate „Implicit” pe ecranul lui și apăsați „Salvează”; apare „Salvat.”. Setul este al contului, nu al browserului, așa că rămâne și după o reîncărcare, și în orice browser. „Revino la implicit” uită setul dumneavoastră și readuce setul obișnuit al aplicației: „Revenit la implicit.”. Cel puțin o fișă rămâne bifată.
 
 „Ieșire” stă jos în bara laterală.

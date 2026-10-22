@@ -1,9 +1,11 @@
 /**
- * Dark mode is one choice, switched by „Mod întunecat" under the flags and in „Setări".             (Slice 40.19)
+ * Dark mode is one choice, switched by „Noapte" in the sidebar and in „Setări".               (Slices 40.19, 40.28)
  *
  * Adrian, 2026-10-21: „I should be able to switch to this dark mode with a checkbox that shows up in two places".
  * Pinned here: the cookie and what it means; the class on <html> from the server's first byte; the `dark` variant
- * following that class, not Windows' setting; the two boxes showing and changing the one choice.
+ * following that class, not Windows' setting; the two boxes showing and changing the one choice. 40.28 (Adrian,
+ * 2026-10-22): the sidebar's box under „GA40", labelled „Noapte" / „Night", the flags stacked; „Setări"'s labelled
+ * „Noapte (Mod Întunecat)" / „Night (Dark Mode)".
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -56,7 +58,8 @@ describe("the two boxes are one choice", () => {
         <ThemeToggle />
       </ThemeProvider>,
     );
-    const [sidebar, settings] = screen.getAllByRole("checkbox", { name: "darkMode" }) as HTMLInputElement[];
+    const sidebar = screen.getByRole("checkbox", { name: "night" }) as HTMLInputElement;
+    const settings = screen.getByRole("checkbox", { name: "nightLong" }) as HTMLInputElement;
     expect([sidebar.checked, settings.checked]).toEqual([false, false]);
     fireEvent.click(sidebar);
     expect([sidebar.checked, settings.checked]).toEqual([true, true]);
@@ -92,12 +95,15 @@ describe("where the choice is read and drawn", () => {
     expect(css).not.toMatch(/@media\s*\(prefers-color-scheme/);
   });
 
-  it("under the flags, smaller, in the sidebar's header; in „Setări” under „Limba” (Ask first 3)", () => {
+  it("the sidebar's under „GA40”, the flags stacked apart from it; in „Setări” under „Limba” (40.19 Ask first 3, 40.28)", () => {
     const sidebar = read("src", "components", "sidebar", "sidebar-nav.tsx");
-    expect(sidebar).toMatch(/<LocaleToggle small \/>\s*<ThemeToggle compact \/>/);
+    expect(sidebar).toMatch(/GA40\s*<\/span>\s*<ThemeToggle compact \/>\s*<\/div>/);
+    expect(sidebar).toMatch(/data-sidebar-flags="">\s*<LocaleToggle small stacked \/>/);
+    expect(sidebar).toContain('"absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"');
     const flags = read("src", "components", "locale-toggle.tsx");
     expect(flags).toContain("small: { width: 24, height: 16 }");
     expect(flags).toContain("regular: { width: 30, height: 20 }");
+    expect(flags).toContain('stacked ? "flex flex-col items-center gap-0.5" : "inline-flex items-center gap-1"');
     const settings = read("src", "app", "admin", "settings", "_components", "settings-view.tsx");
     expect(settings).toMatch(/<LanguageChoice \/>\s*<AppearanceChoice \/>/);
   });
@@ -105,7 +111,17 @@ describe("where the choice is read and drawn", () => {
   it("the words, in both languages", () => {
     const ro = JSON.parse(read("messages", "ro-RO.json")) as { theme: Record<string, string> };
     const en = JSON.parse(read("messages", "en-GB.json")) as { theme: Record<string, string> };
-    expect(ro.theme).toEqual({ darkMode: "Mod întunecat", appearance: "Aspect" });
-    expect(en.theme).toEqual({ darkMode: "Dark mode", appearance: "Appearance" });
+    expect(ro.theme).toEqual({ night: "Noapte", nightLong: "Noapte (Mod Întunecat)", appearance: "Aspect" });
+    expect(en.theme).toEqual({ night: "Night", nightLong: "Night (Dark Mode)", appearance: "Appearance" });
+  });
+
+  it("the sidebar's box says the long words on hover; its name is the short one (40.28 Ask first 4)", () => {
+    render(
+      <ThemeProvider initial="light">
+        <ThemeToggle compact />
+      </ThemeProvider>,
+    );
+    const box = screen.getByRole("checkbox", { name: "night" });
+    expect(box.closest("label")?.getAttribute("title")).toBe("nightLong");
   });
 });
