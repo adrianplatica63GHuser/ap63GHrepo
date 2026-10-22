@@ -86,7 +86,7 @@ test.describe("TC-PROP-09 — „Hartă”: rândul de sus și harta extinsă", 
       await expect(open).toBeVisible({ timeout: 30_000 });
       expect(await iconOf(open)).toBe("lucide-maximize");
       expect(await iconOf(map.getByRole("button", { name: "Desenează", exact: true }))).toBe("lucide-pen-tool");
-      await expectTopRow(map, ["Hartă extinsă", "Desenează", "Arată Unghiuri", "HARTĂ", "SATELIT"]);
+      await expectTopRow(map, ["Hartă extinsă", "Desenează", "Arată Unghiuri", "Navighează", "HARTĂ", "SATELIT"]); // 40.35: „Navighează"
       await noButtonBottomLeft(map);
       await expect(corners.getByRole("button", { name: "Hartă extinsă", exact: true })).toHaveCount(0);
       // Slice #38.09: the corners tile keeps only „+ Adaugă punct"; the angles toggle is the map's.
@@ -98,7 +98,7 @@ test.describe("TC-PROP-09 — „Hartă”: rândul de sus și harta extinsă", 
       // Step 2 — 1366: the same three, on one line at the top right.
       await page.setViewportSize({ width: 1366, height: 900 });
       await map.scrollIntoViewIfNeeded();
-      await expectTopRow(map, ["Hartă extinsă", "Desenează", "Arată Unghiuri", "HARTĂ", "SATELIT"]);
+      await expectTopRow(map, ["Hartă extinsă", "Desenează", "Arată Unghiuri", "Navighează", "HARTĂ", "SATELIT"]); // 40.35: „Navighează"
 
       // Step 3 — „Hartă extinsă": the full-screen map, „Restrânge" (Minimize), „Desenează" and the toggle, no second door.
       await open.click();
@@ -107,6 +107,8 @@ test.describe("TC-PROP-09 — „Hartă”: rândul de sus și harta extinsă", 
       expect(await iconOf(big.restore)).toBe("lucide-minimize");
       await expectTopRow(big.dialog, ["Desenează", "Arată Unghiuri", "HARTĂ", "SATELIT"]);
       await expect(big.dialog.getByRole("button", { name: "Hartă extinsă", exact: true })).toHaveCount(0);
+      // Slice 40.35: „Navighează" is the tile's map's only, not „Hartă extinsă"'s.
+      await expect(big.dialog.getByRole("button", { name: "Navighează", exact: true })).toHaveCount(0);
 
       // Step 4 — „Restrânge": gone; the tile's map in place.
       await big.restore.click();
