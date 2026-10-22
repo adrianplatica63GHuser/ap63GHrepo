@@ -196,13 +196,19 @@ type Props = {
   onCenterChange?:   (center: { lat: number; lng: number } | null) => void;
   /** Slice #39.94: more layers inside the map, drawn under this property — „Hartă extinsă"'s other properties. */
   children?:         ReactNode;
+  /**
+   * Slice 40.35: „Navighează", on the top row after „Arată unghiuri" (or „Desenează" while there are fewer than three
+   * corners) and before „HARTĂ | SATELIT" — it had a row of its own under the map. Given by the form's tile only, not
+   * by „Hartă extinsă".
+   */
+  navigate?:         ReactNode;
 };
 
 // ---------------------------------------------------------------------------
 // Mini-map inner
 // ---------------------------------------------------------------------------
 
-export default function PropertyMiniMapInner({ corners, onChange, readOnly = false, hoveredCornerIdx, onCornerHover, showAngles = false, onZoomChange, onFullScreen, onToggleAngles, tone = "normal", initialView, onCenterChange, children }: Props) {
+export default function PropertyMiniMapInner({ corners, onChange, readOnly = false, hoveredCornerIdx, onCornerHover, showAngles = false, onZoomChange, onFullScreen, onToggleAngles, tone = "normal", initialView, onCenterChange, children, navigate }: Props) {
   // Slice #32.16: this file had no translator at all, so every one of its
   // controls was English on the Romanian interface. The namespace is
   // `property` rather than `property.map.miniMap` because the STR/SAT toggle
@@ -342,7 +348,7 @@ export default function PropertyMiniMapInner({ corners, onChange, readOnly = fal
 
       {/* ------------------------------------------------------------------ */}
       {/* The top row, right-aligned (Slice #37.91): [full screen] [draw]     */}
-      {/* [angles] (#38.09)                                                   */}
+      {/* [angles] (#38.09) [navigate] (40.35)                                */}
       {/* [Străzi | Satelit]. While drawing, „Gata" takes „Desenează"'s place */}
       {/* and its hint stands right under the row, which a 440 px tile could  */}
       {/* not hold on one line with it.                                       */}
@@ -399,6 +405,8 @@ export default function PropertyMiniMapInner({ corners, onChange, readOnly = fal
               onClick={onToggleAngles}
             />
           )}
+          {/* Slice 40.35: „Navighează", icon-only and sm like its neighbours, before the map-type switch. */}
+          {navigate}
           <div className="flex overflow-hidden rounded shadow border border-wire">
             {/* The loop variable is `id`, not `t`: `t` is the translator now, and a
                 `t("…")` written in here against the old name would have compiled

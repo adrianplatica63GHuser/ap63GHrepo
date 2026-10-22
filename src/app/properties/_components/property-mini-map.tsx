@@ -48,9 +48,11 @@ type Props = {
   onCenterChange?:   (center: { lat: number; lng: number } | null) => void;
   /** Slice #39.94 — layers drawn inside the map, under the property: „Hartă extinsă"'s other properties. */
   children?:         ReactNode;
+  /** Slice 40.35 — see property-mini-map-inner.tsx. „Navighează" on the top row; the form's tile only. */
+  navigate?:         ReactNode;
 };
 
-export function PropertyMiniMap({ corners, onChange, readOnly, hoveredCornerIdx, onCornerHover, showAngles, onZoomChange, onFullScreen, onToggleAngles, tone, initialView, onCenterChange, children }: Props) {
+export function PropertyMiniMap({ corners, onChange, readOnly, hoveredCornerIdx, onCornerHover, showAngles, onZoomChange, onFullScreen, onToggleAngles, tone, initialView, onCenterChange, children, navigate }: Props) {
   return (
     <Inner
       corners={corners}
@@ -65,6 +67,7 @@ export function PropertyMiniMap({ corners, onChange, readOnly, hoveredCornerIdx,
       tone={tone}
       initialView={initialView}
       onCenterChange={onCenterChange}
+      navigate={navigate}
     >
       {children}
     </Inner>

@@ -33,6 +33,7 @@ Once, on a phone: scan the code on „Livada" and see Google Maps start navigati
 
 | # | A person does | And sees |
 |---|---|---|
+| 0 | (Slice 40.35) Opens „Livada", „Hartă" | „Navighează" an icon on the map's top row, right after „Arată unghiuri" and before „HARTĂ \| SATELIT"; no row under the map, the tile ending under the map's box; „+ Adaugă punct" in „Puncte de contur"'s title row, at the right |
 | 1 | Opens „Livada", „Hartă", presses „Navighează" | „Spre parcelă: centrul ei pe hartă."; „Locația mea" chosen; „Deschide în Google Maps" opens `…/maps/dir/?api=1&destination=44.371000%2C25.972000&travelmode=driving` in a new tab; the QR code carries the same link with `&dir_action=navigate` |
 | 2 | Chooses „De la o adresă", types „Piața Unirii, București" | Before typing: „Scrieți adresa de pornire, ca să apară linkul și codul QR."; after: the link carries `origin=Pia%C8%9Ba%20Unirii%2C%20Bucure%C8%99ti` |
 | 3 | Opens „Casa", „Navighează" | „Spre adresa: Strada Școlii 5, Bragadiru, Ilfov, România"; the link's destination is that text |

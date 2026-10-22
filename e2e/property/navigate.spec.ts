@@ -8,7 +8,8 @@
  * Divergences from the hand run, each for a reason the case cannot have:
  *   - The properties carry `TC-E2E-PROP-13` (records.ts) and are removed in `finally`.
  *   - „Hartă" is ticked through `showTile`. The Google map stays blocked (the spec opts in for nothing): „Navighează"
- *     is under the map, not on it, and builds its link without Google — which is the point.
+ *     builds its link without Google — which is the point. Since 40.35 it stands on the map's top row, which is drawn
+ *     over the map's box whether Google loads or not.
  *   - Scanning the code with a phone is Adrian's (the slice's handover); here the code's own text is read.
  */
 
@@ -54,6 +55,36 @@ test.describe("TC-PROP-13 — „Navighează”", () => {
       ids.push(((await addressed.json()) as { property: { id: string } }).property.id);
       const bare = await createProperty(page.request, { nickname: `${MARK} Nimic` });
       ids.push(bare);
+
+      // Step 0 (Slice 40.35) — „Navighează" on the map's top row, after „Arată unghiuri" and before „HARTĂ | SATELIT";
+      // no row of its own under the map, so the tile ends under the map's box; „+ Adaugă punct" in the corners
+      // tile's title row, at the right.
+      await page.goto(`/properties/${parcel}`);
+      const mapTile = await showTile(page, "Hartă");
+      const top = mapTile.locator("[data-map-top-row]");
+      await expect(top.getByRole("button", { name: "Navighează", exact: true })).toBeVisible({ timeout: 30_000 });
+      await expect(mapTile.locator("[data-navigate-row]")).toHaveCount(0);
+      const order = await top.evaluate((row) => {
+        const els = [...row.querySelectorAll<HTMLElement>("button")];
+        const at = (f: (b: HTMLElement) => boolean) => els.findIndex(f);
+        return {
+          angles: at((b) => /unghiuri/i.test(b.getAttribute("aria-label") ?? "")),
+          navigate: at((b) => b.getAttribute("aria-label") === "Navighează"),
+          switch: at((b) => /HARTĂ|STR/i.test(b.textContent ?? "")),
+        };
+      });
+      expect(order.angles).toBeGreaterThanOrEqual(0);
+      expect(order.navigate).toBe(order.angles + 1);
+      expect(order.switch).toBe(order.navigate + 1);
+      await expect(top.getByRole("button", { name: "Navighează", exact: true })).not.toHaveText(/Navighează/);
+      const [tileBox, mapBox] = [(await mapTile.boundingBox())!, (await mapTile.locator('[data-width-field="map"]').boundingBox())!];
+      expect(tileBox.y + tileBox.height - (mapBox.y + mapBox.height)).toBeLessThanOrEqual(14);
+      const corners = page.locator('[data-tile="corners"]');
+      const add = corners.getByRole("button", { name: "+ Adaugă punct" });
+      await expect(add).toBeVisible();
+      const [a, title, c] = [(await add.boundingBox())!, (await corners.locator("[data-tile-title]").first().boundingBox())!, (await corners.boundingBox())!];
+      expect(a.y).toBeLessThan(title.y + title.height);
+      expect(c.x + c.width - (a.x + a.width)).toBeLessThanOrEqual(16);
 
       // Step 1 — „Livada": the parcel's centre, from „Locația mea"; the link in a new tab, the phone's as a QR code.
       let dialog = await openDialog(page, parcel);

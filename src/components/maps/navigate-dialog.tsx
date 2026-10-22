@@ -49,7 +49,8 @@ export function NavigateButton({
         onClick={() => setOpen(true)}
         data-navigate-button=""
       />
-      {open && <NavigateDialog target={target} name={name} onClose={() => setOpen(false)} />}
+      {/* Slice 40.35: in <body>, since the button may stand on a map's top row, inside the map's own stacking context. */}
+      {open && createPortal(<NavigateDialog target={target} name={name} onClose={() => setOpen(false)} />, document.body)}
     </>
   );
 }

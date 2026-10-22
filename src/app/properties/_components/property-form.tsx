@@ -365,6 +365,8 @@ export function PropertyForm({
 
   const [corners,          setCorners]          = useState<Corner[]>(initialCorners);
   const [hoveredCornerIdx, setHoveredCornerIdx] = useState<number | null>(null);
+  // Slice 40.35: the corners tile's title row slot, where CornersManager puts „+ Adaugă punct".
+  const [cornersToolbar,   setCornersToolbar]   = useState<HTMLDivElement | null>(null);
   const [submitting,       setSubmitting]       = useState(false);
   const [submitError,      setSubmitError]      = useState<string | null>(null);
   // Slice #37.04 (FU-016): „Adaugă nou" named a parcel that already has a
@@ -1384,8 +1386,16 @@ export function PropertyForm({
             tileShown("corners") ? "" : "hidden",
           ].join(" ")}
         >
-          <TileTitle title={t("tiles.corners")} subtitle={t("tileSubtitles.corners")} />
+          {/* Slice 40.35: „+ Adaugă punct" (and, on „Adaugă proprietate", the Street View toggle) in the title row, at the
+              right — CornersManager portals its toolbar into this slot; the line under the table is gone. */}
+          <div className="flex items-start gap-2">
+            <div className="min-w-0 flex-1">
+              <TileTitle title={t("tiles.corners")} subtitle={t("tileSubtitles.corners")} />
+            </div>
+            <div ref={setCornersToolbar} className="flex shrink-0 items-center" data-corners-toolbar="" />
+          </div>
           <CornersManager
+            toolbarSlot={cornersToolbar}
             corners={corners}
             onChange={setCorners}
             readOnly={effectiveMode === "view"}
@@ -1558,18 +1568,19 @@ export function PropertyForm({
                   onZoomChange={handleMiniMapZoom}
                   onCenterChange={handleMiniMapCenter}
                   onFullScreen={handleOpenTheaterMap}
+                  // Slice #39.35 (Ask first 4): „Navighează" beside the map that shows where the property is — directions
+                  // in Google Maps and a QR code for the phone, from the corners on screen or, without them, the address.
+                  // Slice 40.35: on the map's top row, icon-only, named and tooltipped „Navighează"; the row of its own
+                  // under the map is gone, so the tile is shorter by it.
+                  navigate={
+                    <NavigateButton
+                      target={{ corners, address: typeConfig.hideAddress ? null : watchedValues.address ?? null }}
+                      name={watchedValues.nickname?.trim() || propertyCode || ""}
+                    />
+                  }
                 />
               </ErrorBoundary>
             </div>
-          </div>
-          {/* Slice #39.35 (Ask first 4): „Navighează" beside the map that shows where the property is — directions
-              in Google Maps and a QR code for the phone, from the corners on screen or, without them, the address. */}
-          <div className="flex justify-end pt-2" data-navigate-row="">
-            <NavigateButton
-              target={{ corners, address: typeConfig.hideAddress ? null : watchedValues.address ?? null }}
-              name={watchedValues.nickname?.trim() || propertyCode || ""}
-              showLabel
-            />
           </div>
         </section>,
         )}
