@@ -36,8 +36,9 @@ const colour = (l: Locator) =>
  */
 const columnUnderLeft = (page: Page) =>
   page.evaluate(() => {
+    // 40.32: the right-hand tiles are boxes of the one area too — the left tiles are the others.
     const lowest = Math.max(...[...document.querySelectorAll<HTMLElement>('[data-tile-area="left"] [data-packed-col]')]
-      .filter((e) => !e.classList.contains("order-last")).map((e) => e.getBoundingClientRect().bottom));
+      .filter((e) => !e.classList.contains("order-last") && !e.closest('[data-tile-area="right"]')).map((e) => e.getBoundingClientRect().bottom));
     const tiles = [...document.querySelectorAll<HTMLElement>('[data-tile-area="right"] [data-tile-slot] > *')].filter((t) => !t.hidden && t.getClientRects().length > 0);
     return tiles.length > 0 && tiles.every((t) => t.getBoundingClientRect().top >= lowest - 1);
   });

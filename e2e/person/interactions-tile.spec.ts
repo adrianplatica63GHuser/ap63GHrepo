@@ -101,8 +101,9 @@ test.describe("TC-PERS-07 — „Interacțiuni” pe cele două fișe de persoan
       await page.setViewportSize({ width: 1366, height: 1080 });
       await expect.poll(async () => {
         const t = await size(tile);
+        // 40.32: the right-hand tiles are boxes of the one area too — the left tiles are the others.
         const bottoms = await page.evaluate(() => [...document.querySelectorAll<HTMLElement>('[data-tile-area="left"] [data-packed-col]')]
-          .filter((e) => !e.classList.contains("order-last")).map((e) => e.getBoundingClientRect().bottom));
+          .filter((e) => !e.classList.contains("order-last") && !e.closest('[data-tile-area="right"]')).map((e) => e.getBoundingClientRect().bottom));
         const bar = await size(page.locator("[data-tile-row] [data-packed-col].order-last"));
         return { underTiles: t.y >= Math.max(...bottoms), barUnder: bar.y >= t.y + t.h };
       }, { timeout: 15_000 }).toEqual({ underTiles: true, barUnder: true });

@@ -76,6 +76,9 @@ test.describe("TC-PROP-04 — Un colț editat în „Puncte de contur”, văzut
       const dialog = page.getByRole("dialog", { name: "Adaugă Proprietate" });
       await dialog.getByRole("button", { name: /^Din fișier text/ }).click();
       await dialog.locator('input[type="file"]').setInputFiles(upload);
+      // #39.65: „Importă" waits for „Tarla și parcelă", as in TC-PROP-03 — a parcel no other case uses.
+      await dialog.getByRole("combobox", { name: "Nr. tarla / sola" }).selectOption({ label: "40" });
+      await dialog.getByRole("textbox", { name: "Nr. parcelă" }).fill("TC04");
       await dialog.getByRole("button", { name: "Importă" }).click();
       await expect(dialog.getByText("Proprietatea a fost importată cu succes.")).toBeVisible({ timeout: 30_000 });
       await dialog.getByRole("button", { name: "Închide" }).click();
