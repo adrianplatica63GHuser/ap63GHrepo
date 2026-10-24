@@ -5,7 +5,7 @@
 | **Area** | layout |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-24 |
 
 ## What this proves
@@ -61,3 +61,9 @@ emulated at 1366 × 900; the buttons pressed by script, each list's answer read 
   opened and Back, then a reload: „Vechi întâi" and the same first row each time); the sidebar's „Proprietăți" then
   opened the list at „Recente întâi" with no `sort` in the address. Nothing in the file changed, so the case is
   confirmed, and `e2e/layout/list-order.spec.ts` translates it.
+
+**2026-10-24 — `automated`.** `e2e/layout/list-order.spec.ts` translates the case. Its first green run is the runner's
+`20261024T165517Z-30216` on `b51ad9b` (Slice 40.46); the row moved in Slice 40.47's first commit.
+
+**2026-10-24 — Slice 40.47.** The button also reads „Ordonat după „<the column's short name>”" while a column's sort
+icon orders the list, and takes it back to „Recente întâi" (TC-LAYOUT-10); nothing in the steps above changed.
