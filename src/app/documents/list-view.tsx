@@ -34,6 +34,8 @@ import { useColumnDrag, useColumnOrder } from "@/components/list/column-order";
 import { HintBubble } from "@/lib/ui/hint-bubble";
 import { addedOn, dmyFromIso } from "@/lib/persons/person-age";
 import { FilterBar, FilterFunnel, type FilterBarField } from "@/components/list/filter-bar";
+import { ListSortButton } from "@/components/list/list-sort-button";
+import { DEFAULT_LIST_ORDER, LIST_SORTS, ORDER_KEYS, appendOrderParams, orderAddressPatch, orderSignature, readListOrder, type ListOrder } from "@/lib/list/list-order";
 import { appendFilterParams, filterAddressPatch, filterSignature, type FacetValue, type FilterState } from "@/lib/list/filter-bar";
 import { DOCUMENT_COLUMN_FILTERS, DOCUMENT_FILTER_FIELDS, DOCUMENT_FILTER_KEYS, parseDocumentFilters } from "@/lib/documents/list-filters";
 
@@ -132,7 +134,8 @@ const TYPE_FUNNEL = "documentType";
 /** Slice #39.26: Acte's own filters in its address — „Expiră curând" and the custom field's key and value. */
 const DOCUMENT_ADDRESS_FILTERS = ["expiring", "field", "value"] as const;
 /** Slice #39.63: and the shared bar's fields — every key the list reads from, and carries in, its address. */
-const FILTER_KEYS = [...DOCUMENT_ADDRESS_FILTERS, ...DOCUMENT_FILTER_KEYS];
+// Slice 40.46: and the list's order (`sort`, `order`) — carried by a new set of types like the filters.
+const FILTER_KEYS = [...DOCUMENT_ADDRESS_FILTERS, ...DOCUMENT_FILTER_KEYS, ...ORDER_KEYS];
 
 function buildDocumentsUrl(checkedIds: Set<string>, allTypeIds: string[]): string {
   // Slice #39.26: the search and the list's own filters ride along in the address — a new set of types keeps them,
@@ -399,10 +402,13 @@ async function fetchDocuments(
   customFieldKey: string,
   customFieldValue: string,
   filters: FilterState = {},
+  order: ListOrder = DEFAULT_LIST_ORDER,
 ): Promise<ListResponse> {
   const url = new URL("/api/documents", window.location.origin);
   // Slice #39.63: the shared bar's filters, in the address's words.
   appendFilterParams(url.searchParams, filters, DOCUMENT_FILTER_FIELDS);
+  // Slice 40.46: the order, only when it is not the default.
+  appendOrderParams(url.searchParams, order);
   if (q)                      url.searchParams.set("q",               q);
   if (documentTypeIds.length) url.searchParams.set("documentTypeIds", documentTypeIds.join(","));
   if (expiringSoon)           url.searchParams.set("expiringSoon",    "true");
@@ -497,6 +503,13 @@ export function DocumentListView({
   const filterSig = filterSignature(filters, DOCUMENT_FILTER_FIELDS);
   function changeFilters(next: FilterState) {
     setFilters(next);
+    setCurrentPage(0);
+  }
+  // Slice 40.46: the list's order — the server's, from the address like the filters; a change goes back to the first page.
+  const [listOrder, setListOrder] = useState<ListOrder>(() => readListOrder((k) => address.filters[k], LIST_SORTS.document));
+  const orderSig = orderSignature(listOrder);
+  function changeListOrder(next: ListOrder) {
+    setListOrder(next);
     setCurrentPage(0);
   }
 
@@ -657,8 +670,8 @@ export function DocumentListView({
   const noTypesSelected = initialDocumentTypeIds !== undefined && initialDocumentTypeIds.length === 0;
 
   const query = useQuery<ListResponse>({
-    queryKey: ["documents", "list", debouncedSearch, typeFiltersKey, expiringSoon, customFieldKey, customFieldValue, filterSig, currentPage],
-    queryFn:  () => fetchDocuments(debouncedSearch, initialDocumentTypeIds ?? [], currentPage, expiringSoon, customFieldKey, customFieldValue, filters),
+    queryKey: ["documents", "list", debouncedSearch, typeFiltersKey, expiringSoon, customFieldKey, customFieldValue, filterSig, orderSig, currentPage],
+    queryFn:  () => fetchDocuments(debouncedSearch, initialDocumentTypeIds ?? [], currentPage, expiringSoon, customFieldKey, customFieldValue, filters, listOrder),
     enabled:  !noTypesSelected,
   });
 
@@ -669,12 +682,12 @@ export function DocumentListView({
 
   // Slice #32.15 made this key carry every value the query key carries, for the ticks it cleared; since 40.10
   // there are no ticks, and it is the list's address key alone.
-  const pageKey = `${debouncedSearch}|${typeFiltersKey}|${expiringSoon}|${customFieldKey}|${customFieldValue}|${filterSig}|${currentPage}`;
+  const pageKey = `${debouncedSearch}|${typeFiltersKey}|${expiringSoon}|${customFieldKey}|${customFieldValue}|${filterSig}|${orderSig}|${currentPage}`;
   // Slice #39.26: the view, in the list's address; the scroll, in the session. The search as typed, not debounced:
   // the type filter carries it, and measured in TC-DOC-08 a box emptied just before a tick came back with its old word.
   useWriteListAddress(
     { search: searchInput, page: currentPage, filters: {
-      expiring: expiringSoon ? "1" : "", field: customFieldKey, value: customFieldValue, ...filterAddressPatch(filters, DOCUMENT_FILTER_FIELDS),
+      expiring: expiringSoon ? "1" : "", field: customFieldKey, value: customFieldValue, ...filterAddressPatch(filters, DOCUMENT_FILTER_FIELDS), ...orderAddressPatch(listOrder),
     } },
     `${searchInput}|${pageKey}`,
   );
@@ -948,6 +961,9 @@ export function DocumentListView({
               </HintBubble>
             </div>
             )}
+            {/* Slice 40.46: the sort button, right after „Câmp specific"'s ⓘ — and, with no types (no ⓘ drawn), right
+                after „Tip document:" (Ask first 5). Inside the group, so the two never part. */}
+            <ListSortButton order={listOrder} onChange={changeListOrder} />
           </div>
         </div>
 

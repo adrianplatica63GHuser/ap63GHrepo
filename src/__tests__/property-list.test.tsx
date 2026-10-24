@@ -50,7 +50,8 @@ describe("the Properties list (Slice #37.61)", () => {
     expect(VIEW).not.toMatch(/setImportance|setRelevance|importanceLabel|relevanceLabel|metadataValueLabel/);
     // Slice #39.61 added the filter bar's signature — and only that — to both. It read
     // `["properties", "list", debouncedSearch, currentPage]` and `${debouncedSearch}|${currentPage}` until then.
-    expect(VIEW).toMatch(/queryKey: \["properties", "list", debouncedSearch, currentPage, filterSig\]/);
+    // Slice 40.46: and the order's signature after it (it read `…, currentPage, filterSig]`).
+    expect(VIEW).toMatch(/queryKey: \["properties", "list", debouncedSearch, currentPage, filterSig, orderSig\]/);
     // Slice #39.73: no `pageKey` any more — it emptied the tick boxes, and the list has none since its delete went.
     expect(VIEW).not.toContain("pageKey");
   });

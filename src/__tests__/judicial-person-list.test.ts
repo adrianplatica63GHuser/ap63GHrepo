@@ -23,11 +23,13 @@ describe("the Judicial Persons list has no „Grupuri” filter (Slice #37.71)",
     for (const gone of [/GroupsFilterDropdown/, /GroupsFilter\b/, /groupFilter/, /groupDropdownOpen/, /availableGroupCodes/, /fetchJudicialPersonGroupCodes/, /groupCodes/, /includeUngrouped/, /groupsFilterLabel/]) {
       expect([String(gone), gone.test(VIEW)]).toEqual([String(gone), false]);
     }
-    expect(VIEW).toMatch(/queryKey: \["judicial-persons", "list", debouncedSearch, currentPage, filterSig\]/); // #39.62 added the bar's signature; it read `…, currentPage]`
+    // #39.62 added the bar's signature (it read `…, currentPage]`); 40.46 the order's (it read `…, filterSig]`).
+    expect(VIEW).toMatch(/queryKey: \["judicial-persons", "list", debouncedSearch, currentPage, filterSig, orderSig\]/);
     // Slice 40.10: `pageKey` went with the tick boxes it cleared; the list's address key carries the same three, the
     // search as typed (it read `const pageKey = \`${debouncedSearch}|${currentPage}|${filterSig}\``).
     expect(VIEW).not.toContain("pageKey");
-    expect(VIEW).toContain("`${searchInput}|${currentPage}|${filterSig}`");
+    // 40.46: and the order's (it read `${searchInput}|${currentPage}|${filterSig}`).
+    expect(VIEW).toContain("`${searchInput}|${currentPage}|${filterSig}|${orderSig}`");
   });
 
   it("the toolbar starts with the search box, then „Câmpuri afișate”", () => {

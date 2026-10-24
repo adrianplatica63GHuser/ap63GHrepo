@@ -648,6 +648,13 @@
     "notes": "Notes"
   },
   "shared": {
+    "sort": {
+      "recent": "Recent first",
+      "older": "Older first",
+      "sortedBy": "Sorted by {column}",
+      "changedHint": "Ordered by the last change — adding a record counts as one. Press for the reverse order.",
+      "backHint": "Press to go back to the order by the last change."
+    },
     "fold": {
       "showMore": "Show more…",
       "showLess": "Show less…"

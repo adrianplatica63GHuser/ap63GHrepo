@@ -61,11 +61,13 @@ describe("„Câmpuri afișate” on the two persons' lists (Slice #37.60)", () 
     const view = read("src", "app", "natural-persons", "list-view.tsx");
     expect(view).not.toMatch(/useState\(""\);[^\n]*\n?[^\n]*(setImportance|setRelevance)/);
     expect(view).not.toMatch(/setImportance|setRelevance|importanceLabel|relevanceLabel/);
-    expect(view).toMatch(/queryKey: \["people", "list", debouncedSearch, currentPage, filterSig\]/); // #39.62 added the bar's signature; it read `…, currentPage]`
+    // #39.62 added the bar's signature (it read `…, currentPage]`); 40.46 the order's (it read `…, filterSig]`).
+    expect(view).toMatch(/queryKey: \["people", "list", debouncedSearch, currentPage, filterSig, orderSig\]/);
     // Slice 40.10: `pageKey` went with the tick boxes it cleared; the list's address key carries the same three, the
     // search as typed (it read `const pageKey = \`${debouncedSearch}|${currentPage}|${filterSig}\``).
     expect(view).not.toContain("pageKey");
-    expect(view).toContain("`${searchInput}|${currentPage}|${filterSig}`");
+    // 40.46: and the order's (it read `${searchInput}|${currentPage}|${filterSig}`).
+    expect(view).toContain("`${searchInput}|${currentPage}|${filterSig}|${orderSig}`");
   });
 
   it("the lists' API returns the values the new columns need", () => {

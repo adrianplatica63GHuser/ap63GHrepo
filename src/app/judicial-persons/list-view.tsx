@@ -25,6 +25,8 @@ import { domainIcon } from "@/components/sidebar/nav-config";
 import { LIST_COLUMN_CHOICE, LIST_COLUMN_ORDER } from "@/lib/ui/list-columns";
 import { useColumnDrag, useColumnOrder } from "@/components/list/column-order";
 import { FilterBar, FilterFunnel, type FilterBarField } from "@/components/list/filter-bar";
+import { ListSortButton } from "@/components/list/list-sort-button";
+import { DEFAULT_LIST_ORDER, LIST_SORTS, ORDER_KEYS, appendOrderParams, orderAddressPatch, orderSignature, readListOrder, type ListOrder } from "@/lib/list/list-order";
 import { appendFilterParams, filterAddressPatch, filterSignature, type FacetValue, type FilterState } from "@/lib/list/filter-bar";
 import { JUDICIAL_PERSON_COLUMN_FILTERS, JUDICIAL_PERSON_FILTER_FIELDS, parsePersonFilters, personFilterKeys } from "@/lib/persons/list-filters";
 import type { ColumnName } from "@/lib/ui/field-widths";
@@ -62,9 +64,10 @@ type ListResponse = {
 
 // Slice #37.71: no „Grupuri" filter — the search box is the list's only filter.
 // Slice #39.62: the filter bar's filters, in the address's words (`appendFilterParams`).
-async function fetchJudicialPersons(q: string, page: number, filters: FilterState): Promise<ListResponse> {
+async function fetchJudicialPersons(q: string, page: number, filters: FilterState, order: ListOrder = DEFAULT_LIST_ORDER): Promise<ListResponse> {
   const url = new URL("/api/judicial-persons", window.location.origin);
   appendFilterParams(url.searchParams, filters, JUDICIAL_PERSON_FILTER_FIELDS);
+  appendOrderParams(url.searchParams, order);
   if (q) url.searchParams.set("q", q);
   url.searchParams.set("limit",  String(PAGE_SIZE));
   url.searchParams.set("offset", String(page * PAGE_SIZE));
@@ -86,7 +89,7 @@ async function fetchFilterValues(field: string, q: string, filters: FilterState)
 }
 
 /** Slice #39.62 — the filter keys, read from the address. */
-const FILTER_KEYS = personFilterKeys("JUDICIAL");
+const FILTER_KEYS = [...personFilterKeys("JUDICIAL"), ...ORDER_KEYS];
 
 export function JudicialPersonListView() {
   const t     = useTranslations("judicialPerson");
@@ -107,6 +110,13 @@ export function JudicialPersonListView() {
     setFilters(next);
     setCurrentPage(0);
   }
+  // Slice 40.46: the list's order — the server's, from the address like the filters; a change goes back to the first page.
+  const [listOrder, setListOrder] = useState<ListOrder>(() => readListOrder((k) => address.filters[k], LIST_SORTS.company));
+  const orderSig = orderSignature(listOrder);
+  function changeListOrder(next: ListOrder) {
+    setListOrder(next);
+    setCurrentPage(0);
+  }
   const [debouncedSearch, setDebouncedSearch] = useState(address.search);
   const [currentPage,     setCurrentPage]     = useState(address.page);
 
@@ -123,8 +133,8 @@ export function JudicialPersonListView() {
   }, [searchInput, debouncedSearch]);
 
   const query = useQuery<ListResponse>({
-    queryKey: ["judicial-persons", "list", debouncedSearch, currentPage, filterSig],
-    queryFn:  () => fetchJudicialPersons(debouncedSearch, currentPage, filters),
+    queryKey: ["judicial-persons", "list", debouncedSearch, currentPage, filterSig, orderSig],
+    queryFn:  () => fetchJudicialPersons(debouncedSearch, currentPage, filters, listOrder),
   });
 
   const total      = query.data?.total ?? 0;
@@ -135,8 +145,8 @@ export function JudicialPersonListView() {
   // Slice #39.26: the view, in the list's address; the scroll, in the session. The search as typed, not debounced:
   // a link that carries it (Acte's type filter) must not find the box's last word missing.
   useWriteListAddress(
-    { search: searchInput, page: currentPage, filters: filterAddressPatch(filters, JUDICIAL_PERSON_FILTER_FIELDS) },
-    `${searchInput}|${currentPage}|${filterSig}`,
+    { search: searchInput, page: currentPage, filters: { ...filterAddressPatch(filters, JUDICIAL_PERSON_FILTER_FIELDS), ...orderAddressPatch(listOrder) } },
+    `${searchInput}|${currentPage}|${filterSig}|${orderSig}`,
   );
   useListScrollMemory(query.isSuccess);
 
@@ -213,6 +223,9 @@ export function JudicialPersonListView() {
           onResetOrder={order.custom ? order.reset : undefined}
           resetOrderLabel={tOrder("defaultOrder")}
         />
+
+        {/* Slice 40.46: the sort button, right after „Câmpuri afișate" — the record changed last first by default. */}
+        <ListSortButton order={listOrder} onChange={changeListOrder} />
         <div className="ml-auto flex items-center gap-2">
           {/* Slice #39.85: measured, so the search box could take its width; 40.37: „+ Nou" and the list's Domeniu icon, its
               name and tooltip the whole „Adaugă …", the search box pinned at the old width (LIST_SEARCH_REM). */}

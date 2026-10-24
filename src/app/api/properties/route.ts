@@ -18,6 +18,8 @@ import {
   propertyListQuerySchema,
 } from "@/lib/properties/validation";
 import { parsePropertyFilters } from "@/lib/properties/list-filters";
+import { LIST_SORTS } from "@/lib/list/list-order";
+import { parseListOrderQuery } from "@/lib/list/order-sql";
 import type { FilterState } from "@/lib/list/filter-bar";
 import { provenanceFromRequestBody } from "@/lib/metadata/provenance";
 import { setInitialProvenance } from "@/lib/metadata/queries";
@@ -70,9 +72,14 @@ export async function GET(request: NextRequest): Promise<Response> {
   if (!parsed.success) {
     return zodErrorToResponse(parsed.error);
   }
+  // Slice 40.46: the list's order, whitelisted; none given is the order it always had.
+  const order = parseListOrderQuery(url.searchParams, LIST_SORTS.property);
+  if (!order.success) {
+    return zodErrorToResponse(order.error);
+  }
 
   try {
-    const { items, total } = await listProperties(parsed.data);
+    const { items, total } = await listProperties({ ...parsed.data, order: order.data });
     return Response.json({
       items,
       total,

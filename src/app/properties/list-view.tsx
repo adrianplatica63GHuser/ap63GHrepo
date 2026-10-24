@@ -29,6 +29,8 @@ import { domainIcon } from "@/components/sidebar/nav-config";
 import { LIST_COLUMN_CHOICE, LIST_COLUMN_ORDER } from "@/lib/ui/list-columns";
 import { useColumnDrag, useColumnOrder } from "@/components/list/column-order";
 import { FilterBar, FilterFunnel, type FilterBarField } from "@/components/list/filter-bar";
+import { ListSortButton } from "@/components/list/list-sort-button";
+import { DEFAULT_LIST_ORDER, LIST_SORTS, ORDER_KEYS, appendOrderParams, orderAddressPatch, orderSignature, readListOrder, type ListOrder } from "@/lib/list/list-order";
 import {
   appendFilterParams,
   filterAddressPatch,
@@ -81,10 +83,11 @@ type ListResponse = {
 // Slice #37.61: no importance or relevance filter any more — the route still
 // takes both parameters, and nothing here sends them.
 // Slice #39.61: the filter bar's filters, in the address's words (`appendFilterParams`).
-async function fetchProperties(q: string, page: number, filters: FilterState): Promise<ListResponse> {
+async function fetchProperties(q: string, page: number, filters: FilterState, order: ListOrder = DEFAULT_LIST_ORDER): Promise<ListResponse> {
   const url = new URL("/api/properties", window.location.origin);
   if (q)          url.searchParams.set("q",          q);
   appendFilterParams(url.searchParams, filters, PROPERTY_FILTER_FIELDS);
+  appendOrderParams(url.searchParams, order);
   url.searchParams.set("limit",  String(PAGE_SIZE));
   url.searchParams.set("offset", String(page * PAGE_SIZE));
   const res = await fetch(url);
@@ -126,7 +129,7 @@ export function PropertyListView() {
   const router = useRouter();
 
   // Slice #39.26: the view starts from the list's address — Back from a record brings it back as it was left.
-  const address = useListAddress(PROPERTY_FILTER_KEYS);
+  const address = useListAddress([...PROPERTY_FILTER_KEYS, ...ORDER_KEYS]);
   const [searchInput,     setSearchInput]     = useState(address.search);
   // Slice #39.61: the filter bar — from the address, like the search; a change goes back to the first page.
   const [filters, setFilters] = useState<FilterState>(() => parsePropertyFilters({ get: (k) => address.filters[k] ?? null }));
@@ -134,6 +137,13 @@ export function PropertyListView() {
   const filterSig = filterSignature(filters, PROPERTY_FILTER_FIELDS);
   function changeFilters(next: FilterState) {
     setFilters(next);
+    setCurrentPage(0);
+  }
+  // Slice 40.46: the list's order — the server's, from the address like the filters; a change goes back to the first page.
+  const [listOrder, setListOrder] = useState<ListOrder>(() => readListOrder((k) => address.filters[k], LIST_SORTS.property));
+  const orderSig = orderSignature(listOrder);
+  function changeListOrder(next: ListOrder) {
+    setListOrder(next);
     setCurrentPage(0);
   }
   const [debouncedSearch, setDebouncedSearch] = useState(address.search);
@@ -154,8 +164,8 @@ export function PropertyListView() {
   }, [searchInput, debouncedSearch]);
 
   const query = useQuery<ListResponse>({
-    queryKey: ["properties", "list", debouncedSearch, currentPage, filterSig],
-    queryFn:  () => fetchProperties(debouncedSearch, currentPage, filters),
+    queryKey: ["properties", "list", debouncedSearch, currentPage, filterSig, orderSig],
+    queryFn:  () => fetchProperties(debouncedSearch, currentPage, filters, listOrder),
   });
 
   const total      = query.data?.total ?? 0;
@@ -166,8 +176,8 @@ export function PropertyListView() {
   // Slice #39.26: the view, in the list's address; the scroll, in the session. The search as typed, not debounced:
   // a link that carries it (Acte's type filter) must not find the box's last word missing.
   useWriteListAddress(
-    { search: searchInput, page: currentPage, filters: filterAddressPatch(filters, PROPERTY_FILTER_FIELDS) },
-    `${searchInput}|${currentPage}|${filterSig}`,
+    { search: searchInput, page: currentPage, filters: { ...filterAddressPatch(filters, PROPERTY_FILTER_FIELDS), ...orderAddressPatch(listOrder) } },
+    `${searchInput}|${currentPage}|${filterSig}|${orderSig}`,
   );
   useListScrollMemory(query.isSuccess);
   // Optional column definitions (ordered)
@@ -277,6 +287,9 @@ export function PropertyListView() {
           onResetOrder={order.custom ? order.reset : undefined}
           resetOrderLabel={tOrder("defaultOrder")}
         />
+
+        {/* Slice 40.46: the sort button, right after „Câmpuri afișate" — the record changed last first by default. */}
+        <ListSortButton order={listOrder} onChange={changeListOrder} />
 
         <div className="ml-auto flex items-center gap-2">
           {/* Slice #37.92: the whole-properties map's door, now the sidebar

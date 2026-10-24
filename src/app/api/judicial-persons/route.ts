@@ -7,6 +7,8 @@
 
 import type { NextRequest } from "next/server";
 import { parsePersonFilters } from "@/lib/persons/list-filters";
+import { LIST_SORTS } from "@/lib/list/list-order";
+import { parseListOrderQuery } from "@/lib/list/order-sql";
 import {
   dbErrorToResponse,
   unexpectedError,
@@ -48,11 +50,16 @@ export async function GET(request: NextRequest): Promise<Response> {
   if (!parsed.success) {
     return zodErrorToResponse(parsed.error);
   }
+  // Slice 40.46: the list's order, whitelisted; none given is the order it always had.
+  const order = parseListOrderQuery(url.searchParams, LIST_SORTS.company);
+  if (!order.success) {
+    return zodErrorToResponse(order.error);
+  }
 
   try {
     // Slice #39.62: the filter bar's fields, whitelisted — none set, none passed, so the call is the one it was.
     const filters = parsePersonFilters("JUDICIAL", url.searchParams);
-    const { items, total } = await listJudicialPersons(Object.keys(filters).length > 0 ? { ...parsed.data, filters } : parsed.data);
+    const { items, total } = await listJudicialPersons({ ...(Object.keys(filters).length > 0 ? { ...parsed.data, filters } : parsed.data), order: order.data });
     return Response.json({
       items,
       total,

@@ -18,6 +18,8 @@ import { deletePrincipalObjects } from "@/lib/entities/delete";
 import { cadastralKey, cadastralValue } from "./cadastral-identity";
 import { perSearchTerms } from "@/lib/search/per-terms";
 import { NONE_VALUE, withoutFilter, type FacetValue, type FilterState } from "@/lib/list/filter-bar";
+import type { ListOrder } from "@/lib/list/list-order";
+import { changedAt, listOrderBy } from "@/lib/list/order-sql";
 import { isTextFacetField, type PropertyFacetField } from "./list-filters";
 import { propertyFilterConditions } from "./list-filter-sql";
 import { textValue } from "@/lib/list/filter-sql";
@@ -552,7 +554,7 @@ async function countPropertyFilterValues(
   return read(res.rows);
 }
 
-export async function listProperties(opts: PropertyListQuery & { filters?: FilterState }): Promise<{
+export async function listProperties(opts: PropertyListQuery & { filters?: FilterState; order?: ListOrder }): Promise<{
   items: PropertyListItem[];
   total: number;
 }> {
@@ -648,8 +650,8 @@ export async function listProperties(opts: PropertyListQuery & { filters?: Filte
         eq(entityMetadata.principalObjectId, property.principalObjectId),
       )
       .where(where)
-      // Slice #16.UX.01: most-recently modified/created first.
-      .orderBy(sql`greatest(${property.updatedAt}, ${property.createdAt}) desc`)
+      // Slice #16.UX.01: most-recently modified/created first — 40.46: the default of the list's order, then the id.
+      .orderBy(...listOrderBy(opts.order, { changed: changedAt(property.updatedAt, property.createdAt) }, property.id))
       .limit(opts.limit)
       .offset(opts.offset),
 

@@ -19,6 +19,8 @@ import { getCurrentUserEmail } from "@/lib/auth/current-user";
 import { getTimeFrameSettings } from "@/lib/time-frames/queries";
 import { parseDocumentListRequest } from "@/lib/documents/list-request";
 import { getDays } from "@/lib/time-frames/config";
+import { LIST_SORTS } from "@/lib/list/list-order";
+import { parseListOrderQuery } from "@/lib/list/order-sql";
 
 export async function GET(request: NextRequest): Promise<Response> {
   const url = new URL(request.url);
@@ -27,11 +29,17 @@ export async function GET(request: NextRequest): Promise<Response> {
   if (!parsed.ok) {
     return zodErrorToResponse(parsed.error!);
   }
+  // Slice 40.46: the list's order, whitelisted; none given is the order it always had. Read here, not in
+  // `parseDocumentListRequest`, which the checklists' counts share and which no order changes.
+  const order = parseListOrderQuery(url.searchParams, LIST_SORTS.document);
+  if (!order.success) {
+    return zodErrorToResponse(order.error);
+  }
 
   try {
     const tf = await getTimeFrameSettings();
     const expiringSoonDays = getDays(tf, "documents_expiring_soon");
-    const { items, total } = await listDocument(parsed.query, expiringSoonDays);
+    const { items, total } = await listDocument({ ...parsed.query, order: order.data }, expiringSoonDays);
     return Response.json({
       items,
       total,

@@ -648,6 +648,13 @@
     "notes": "Note"
   },
   "shared": {
+    "sort": {
+      "recent": "Recente întâi",
+      "older": "Vechi întâi",
+      "sortedBy": "Ordonat după „{column}”",
+      "changedHint": "Ordinea după ultima modificare — adăugarea unei înregistrări contează ca modificare. Apăsați pentru ordinea inversă.",
+      "backHint": "Apăsați pentru a reveni la ordinea după ultima modificare."
+    },
     "fold": {
       "showMore": "Arată mai mult…",
       "showLess": "Arată mai puțin…"

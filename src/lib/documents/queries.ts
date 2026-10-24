@@ -16,6 +16,8 @@
 import { asc, and, count, desc, eq, ilike, inArray, isNotNull, lte, or, sql, type SQL } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import type { FilterState } from "@/lib/list/filter-bar";
+import type { ListOrder } from "@/lib/list/list-order";
+import { changedAt, listOrderBy } from "@/lib/list/order-sql";
 import { DOCUMENT_COUNT_SQL, documentFilterConditions } from "./list-filter-sql";
 import { perSearchTerms } from "@/lib/search/per-terms";
 import { db, type DbTransaction } from "@/db";
@@ -167,7 +169,7 @@ export function documentListWhere(opts: DocumentListQuery & { filters?: FilterSt
 }
 
 export async function listDocument(
-  opts: DocumentListQuery & { filters?: FilterState },
+  opts: DocumentListQuery & { filters?: FilterState; order?: ListOrder },
   expiringSoonDays = 30,
 ): Promise<{
   items: DocumentListItem[];
@@ -212,8 +214,8 @@ export async function listDocument(
       .leftJoin(issuerPerson, eq(document.issuerPersonId, issuerPerson.id))
       .leftJoin(entityMetadata, eq(entityMetadata.principalObjectId, document.principalObjectId))
       .where(where)
-      // Slice #16.UX.01: most-recently modified/created first.
-      .orderBy(sql`greatest(${document.updatedAt}, ${document.createdAt}) desc`)
+      // Slice #16.UX.01: most-recently modified/created first — 40.46: the default of the list's order, then the id.
+      .orderBy(...listOrderBy(opts.order, { changed: changedAt(document.updatedAt, document.createdAt) }, document.id))
       .limit(opts.limit)
       .offset(opts.offset),
 
