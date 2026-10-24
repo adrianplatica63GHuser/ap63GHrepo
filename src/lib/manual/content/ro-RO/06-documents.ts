@@ -15,7 +15,7 @@ Deasupra tabelului, pe un rând, stau caseta de căutare („caută după Cod, T
 
 **„Tip” arată denumirea scurtă a tipului** — de exemplu „CVC” pentru „Contract de Vânzare”, „Intabulare” pentru „Încheiere de Intabulare”. Țineți mouse-ul pe celulă și bula arată denumirea întreagă. Denumirea scurtă se alege pentru fiecare tip în „Date de referință”, la „Tipuri de Document”, în câmpul „Denumire scurtă” (secțiunea [[admin-reference-data]]). Lăsată goală, lista scurtează singură denumirea, fără începutul „Contract de”, „Act de”, „Încheiere de”, „Certificat de”. Două tipuri nu pot avea aceeași denumire scurtă.
 
-**„Câmpuri afișate”** adaugă cel mult patru coloane, cu numele lor scurte: „#Document” (numărul actului), „Data”, „Inst./Notar” (instituția sau notariatul), „Subiect”, „Pagini”, „Persoane”, „Proprietăți” (câte pagini, persoane și proprietăți are actul), „Adăugat la”.
+**„Câmpuri afișate”** adaugă cel mult patru coloane, cu numele lor scurte: „#Document” (numărul actului), „Data”, „Inst./Notar” (instituția sau notariatul), „Subiect”, „Pagini”, „Persoane”, „Proprietăți” (câte pagini, persoane și proprietăți are actul), „Adăugat la” (ziua în care actul a intrat în arhivă) și „Modificat la” (ziua în care a fost schimbat ultima oară).
 
 **„Tip document:”** deschide o listă de bife, câte una pentru fiecare tip. Butonul spune ce ați ales: „Toate tipurile”, numele tipului când este bifat unul singur, „2 tipuri afișate” când sunt mai multe, „Niciun tip” când nu e bifat niciunul — atunci lista cere „Selectați cel puțin un tip de document”. Tipurile sunt multe, așa că sub „Toate tipurile” stă o casetă de căutare: scrieți o parte din nume, chiar fără diacritice („mostenitor” găsește „Certificat de Moștenitor”), și rămân doar tipurile potrivite. Căutarea doar ascunde rânduri, nu schimbă nicio bifă. Lista de bife rămâne deschisă cât bifați și debifați — și după ce debifați „Toate tipurile”, ca să alegeți apoi unul sau mai multe tipuri —, iar lista actelor de dedesubt urmează fiecare bifă. Se închide la un clic în afara ei, la tasta Escape sau la butonul ei.
 
@@ -33,7 +33,7 @@ Coloanele care se pot filtra, alese în „Câmpuri afișate”:
 
 „#Document” și „Subiect” nu au pâlnie; un act se găsește după număr cu caseta de căutare.
 
-Toate filtrele se adună, „Tip document:” și „Câmp specific:” cu tot: lista arată actele care trec de toate. „Șterge filtrele” le scoate pe toate: filtrele puse din coloane, „Expiră curând”, câmpul specific și tipurile bifate — lista arată din nou toate tipurile; căutarea și ordinea rămân. Cât timp nu e pus niciunul, butonul este gri. „Adăugat la”, „Data”, „Pagini”, „Persoane” și „Proprietăți” ordonează și lista (secțiunea [[start-lists]]). Filtrele se păstrează în adresa paginii; un link făcut înainte deschide aceeași listă.
+Toate filtrele se adună, „Tip document:” și „Câmp specific:” cu tot: lista arată actele care trec de toate. „Șterge filtrele” le scoate pe toate: filtrele puse din coloane, „Expiră curând”, câmpul specific și tipurile bifate — lista arată din nou toate tipurile; căutarea și ordinea rămân. Cât timp nu e pus niciunul, butonul este gri. „Modificat la”, „Adăugat la”, „Data”, „Pagini”, „Persoane” și „Proprietăți” ordonează și lista (secțiunea [[start-lists]]). Filtrele se păstrează în adresa paginii; un link făcut înainte deschide aceeași listă.
 
 ## 6.2 Un act nou și paginile lui {#documents-add}
 

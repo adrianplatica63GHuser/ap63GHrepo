@@ -43,8 +43,8 @@
             {
               "id": "o4",
               "correct": false,
-              "ro": "Cele mai vechi primele, după „Adăugat la”",
-              "en": "The oldest first, by „Adăugat la”"
+              "ro": "Cele mai vechi primele, după „Modificat la”",
+              "en": "The oldest first, by „Modificat la”"
             }
           ]
         },
@@ -324,11 +324,11 @@
           "section": "start-lists",
           "ro": {
             "question": "Pe „Persoane juridice”, după ce coloane se poate ordona lista?",
-            "explanation": "Pe lista firmelor doar „Adăugat la” are pictograma cu două săgeți; altfel lista stă în ordinea după ultima modificare, „Recente întâi” sau „Vechi întâi”."
+            "explanation": "Pe lista firmelor doar „Modificat la” are pictograma cu două săgeți — și ea este chiar ordinea după ultima modificare: un clic întoarce lista, „Vechi întâi”, ca butonul „Recente întâi”."
           },
           "en": {
             "question": "On „Persoane juridice”, which columns can the list be sorted by?",
-            "explanation": "On the list of firms only „Adăugat la” (added on) has the two-arrow icon; otherwise the list stands in the order by the last change, „Recente întâi” or „Vechi întâi”."
+            "explanation": "On the list of firms only „Modificat la” (modified on) has the two-arrow icon — and it is the order by the last change itself: a click turns the list round, „Vechi întâi”, as the „Recente întâi” button does."
           },
           "options": [
             {
@@ -352,8 +352,8 @@
             {
               "id": "o4",
               "correct": true,
-              "ro": "Doar „Adăugat la”",
-              "en": "Only „Adăugat la”"
+              "ro": "Doar „Modificat la”",
+              "en": "Only „Modificat la”"
             }
           ]
         },
@@ -437,11 +437,11 @@
           "id": "b4",
           "section": "start-lists",
           "ro": {
-            "question": "Apăsați pictograma de ordine a coloanei „Adăugat la”. Ce rânduri vin întâi?",
+            "question": "Pe „Acte”, apăsați pictograma de ordine a coloanei „Adăugat la”. Ce rânduri vin întâi?",
             "explanation": "„Adăugat la” ordonează de la cel mai nou; un al doilea clic întoarce ordinea, de la cel mai vechi. Celelalte coloane încep de la cel mai mic număr sau de la cea mai veche dată."
           },
           "en": {
-            "question": "You press the sort icon of the „Adăugat la” (added on) column. Which rows come first?",
+            "question": "On „Acte”, you press the sort icon of the „Adăugat la” (added on) column. Which rows come first?",
             "explanation": "„Adăugat la” sorts from the newest; a second click turns the order round, from the oldest. The other columns start from the smallest number or the oldest date."
           },
           "options": [
@@ -551,12 +551,12 @@
           "id": "b7",
           "section": "start-lists",
           "ro": {
-            "question": "De unde aduceți în listă ziua în care un obiect a intrat în arhivă?",
-            "explanation": "Pe toate cele patru liste, „Câmpuri afișate” oferă „Adăugat la”, ziua în care obiectul a fost adăugat; coloana are și pictograma de ordine."
+            "question": "De unde aduceți în listă ziua în care un obiect a fost schimbat ultima oară?",
+            "explanation": "Pe toate cele patru liste, „Câmpuri afișate” oferă „Modificat la”, ziua ultimei schimbări — adăugarea contează ca schimbare, așa că e chiar data după care stă lista când se deschide; coloana are și pictograma de ordine."
           },
           "en": {
-            "question": "Where do you bring the day an object came into the archive into the list from?",
-            "explanation": "On all four lists, „Câmpuri afișate” offers „Adăugat la” (added on), the day the object was added; the column also has the sort icon."
+            "question": "Where do you bring the day an object was last changed into the list from?",
+            "explanation": "On all four lists, „Câmpuri afișate” offers „Modificat la” (modified on), the day of the last change — the adding counts as a change, so it is the very date the list opens ordered by; the column also has the sort icon."
           },
           "options": [
             {
@@ -568,8 +568,8 @@
             {
               "id": "o2",
               "correct": true,
-              "ro": "Din „Câmpuri afișate”, bifând „Adăugat la” — pe toate cele patru liste",
-              "en": "From „Câmpuri afișate”, by ticking „Adăugat la” — on all four lists"
+              "ro": "Din „Câmpuri afișate”, bifând „Modificat la” — pe toate cele patru liste",
+              "en": "From „Câmpuri afișate”, by ticking „Modificat la” — on all four lists"
             },
             {
               "id": "o3",
@@ -590,11 +590,11 @@
           "section": "start-lists",
           "ro": {
             "question": "Vreți lista proprietăților în ordinea poreclelor. Ce faceți?",
-            "explanation": "Nu toate coloanele ordonează lista: doar cele cu pictograma cu două săgeți — pe „Proprietăți”, „Adăugat la”, „Tarla”, „Parcelă”, „Supr. Ofic.” și „Supr. Calc.”. „Poreclă” nu o are; o proprietate se găsește după poreclă cu caseta de căutare."
+            "explanation": "Nu toate coloanele ordonează lista: doar cele cu pictograma cu două săgeți — pe „Proprietăți”, „Modificat la”, „Tarla”, „Parcelă”, „Supr. Ofic.” și „Supr. Calc.”. „Poreclă” nu o are; o proprietate se găsește după poreclă cu caseta de căutare."
           },
           "en": {
             "question": "You want the list of properties in the order of their nicknames. What do you do?",
-            "explanation": "Not every column sorts the list: only those with the two-arrow icon — on „Proprietăți”, „Adăugat la”, „Tarla”, „Parcelă”, „Supr. Ofic.” and „Supr. Calc.”. „Poreclă” has none; a property is found by its nickname with the search box."
+            "explanation": "Not every column sorts the list: only those with the two-arrow icon — on „Proprietăți”, „Modificat la”, „Tarla”, „Parcelă”, „Supr. Ofic.” and „Supr. Calc.”. „Poreclă” has none; a property is found by its nickname with the search box."
           },
           "options": [
             {

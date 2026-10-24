@@ -23,7 +23,7 @@ The search box („search by ID, Name, Nickname, CNP, Personal Email 1, Personal
 - „Born in” — the place of birth
 - „Prof.type” — the professional type
 - „Rel.to VM” — the relationship to the business
-- „Added on” — the day the person was added to the archive
+- „Modified on” — the day the person was last changed (their adding counts as a change)
 
 The button shows how many columns you have chosen, for instance „Choose fields 2/4”. The choice stays until you change it.
 
@@ -57,7 +57,7 @@ The columns that can be filtered, chosen in „Choose fields”:
 - **„Date of Birth” and „Date of death”** — „From” and „To”, or, from „Period…”, „This year” or „The last 12 months”;
 - **„Age”** — „From” and „To”. It is the age the list shows: for a deceased person, the age at death.
 
-„Name”, „Nickname”, „CNP” and „Added on” have no funnel; „Added on”, „DoB”, „Age” and „DoD” sort the list (section [[start-lists]]). A person is found by CNP with the search box: type the CNP, or part of it.
+„Name”, „Nickname”, „CNP” and „Modified on” have no funnel; „Modified on”, „DoB”, „Age” and „DoD” sort the list (section [[start-lists]]). A person is found by CNP with the search box: type the CNP, or part of it.
 
 ## 3.2 A person added by hand {#persons-add}
 

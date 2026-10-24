@@ -22,7 +22,7 @@ The first column is „Nickname”, the name you give the property; „New!” s
 - „C.F.#” and „Cadastru #” — the land-registry and cadastral numbers;
 - „Use Categ.” and „Prop. Type” — the use category and the property type, shown by their names;
 - „Locality”;
-- „Added on” — the day the property was added to the archive.
+- „Modified on” — the day the property was last changed (its adding counts as a change).
 
 The button shows how many columns you have chosen, for instance „Choose fields 2/4”. Once four are ticked, the other boxes turn grey until you untick one. At first the list shows only „Prop. Type”. The choice is kept in this browser, so you find it again next time.
 
@@ -44,13 +44,13 @@ On the list of properties seven columns filter:
 - **„Official (m²)” and „Calculated (m²)”** — „From” and „To”, either or both;
 - **„Parcelă”** — „Contains”: the properties whose parcela contains what you typed remain.
 
-„Nickname”, „Cadastru #”, „C.F.#” and „Added on” have no funnel; a property is found by them with the search box.
+„Nickname”, „Cadastru #”, „C.F.#” and „Modified on” have no funnel; a property is found by them with the search box.
 
 Each filter set becomes a rounded label under the search box, on a row that appears only while a filter is set, with the column's name and what you chose, for instance „Property Type” House. A click on the label opens the window again, right under the label, and its X removes the filter. A filled funnel, dark blue, in a circle, shows that the list is filtered by that column. A filter stays when you hide its column: its label still stands under the search box, so the list is never filtered without your seeing it.
 
 „Clear filters”, on the top bar, removes them all at once, and the row of labels goes; the search and the list's order stay. While no filter is set, the button is grey. The filters are kept in the page's address, like the search: they stay after you reload the page, after you come back to the list with „Back”, and when you send the address to someone.
 
-The table's header is two rows tall, the same on the four lists, however many columns you chose. A column's name stands alone in the middle, across and down, and the funnel, on a column that can be filtered, stands in the bottom right corner; on a column that sorts the list — „Added on”, „Tarla”, „Parcelă”, „Supr.Ofic.”, „Supr.Calc.” —, the sort icon stands left of it (section [[start-lists]]). A name too long for its column goes on to the second row; no name takes three rows.
+The table's header is two rows tall, the same on the four lists, however many columns you chose. A column's name stands alone in the middle, across and down, and the funnel, on a column that can be filtered, stands in the bottom right corner; on a column that sorts the list — „Modified on”, „Tarla”, „Parcelă”, „Supr.Ofic.”, „Supr.Calc.” —, the sort icon stands left of it (section [[start-lists]]). A name too long for its column goes on to the second row; no name takes three rows.
 
 ## 5.2 A property added by hand {#properties-add}
 

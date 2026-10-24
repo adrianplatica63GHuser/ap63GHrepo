@@ -689,8 +689,8 @@ export const SKILLS: readonly Skill[] = [
     path: "workspace",
     name: { ro: "Ordonează o listă", en: "Sort a list" },
     description: {
-      ro: "Citești în ce ordine se deschide o listă — cele schimbate cel mai de curând primele —, o întorci cu „Recente întâi”, o ordonezi după o coloană din pictograma cu două săgeți de lângă pâlnie și revii, aduci „Adăugat la” din „Câmpuri afișate”, recunoști o pâlnie și o pictogramă folosite și scoți filtrele cu „Șterge filtrele”, fără să pierzi căutarea și ordinea.",
-      en: "Read the order a list opens in — those changed most recently first —, turn it round with „Recente întâi”, sort it by a column from the two-arrow icon beside the funnel and go back, bring „Adăugat la” in from „Câmpuri afișate”, recognise a funnel and an icon in use, and clear the filters with „Șterge filtrele” without losing the search or the order.",
+      ro: "Citești în ce ordine se deschide o listă — cele schimbate cel mai de curând primele —, o întorci cu „Recente întâi”, o ordonezi după o coloană din pictograma cu două săgeți de lângă pâlnie și revii, aduci „Modificat la” din „Câmpuri afișate”, recunoști o pâlnie și o pictogramă folosite și scoți filtrele cu „Șterge filtrele”, fără să pierzi căutarea și ordinea.",
+      en: "Read the order a list opens in — those changed most recently first —, turn it round with „Recente întâi”, sort it by a column from the two-arrow icon beside the funnel and go back, bring „Modificat la” in from „Câmpuri afișate”, recognise a funnel and an icon in use, and clear the filters with „Șterge filtrele” without losing the search or the order.",
     },
     predecessors: ["workspace-sign-in-and-navigate", "workspace-find-in-a-list"],
     screens: ["natural-persons-list", "judicial-persons-list", "properties-list", "documents-list"],

@@ -22,7 +22,7 @@ The search box at the top of the list („search by ID, Name, Nickname, Registra
 | Trade Reg# | Trade Register No. | The Trade Register number. |
 | Contact | Contact person | The name of the firm's contact person. |
 | Locality | Locality | The locality of the head office's address. |
-| Added on | Added on | The day the firm was added to the archive; it sorts the list (section [[start-lists]]). |
+| Modified on | Modified on | The day the firm was last changed — its adding counts as a change; it sorts the list (section [[start-lists]]). |
 
 The button shows how many fields you chose, for instance „Choose fields 1/4”. The CUI column does not appear until you tick it, but searching by CUI works regardless. Under „Contact” you see the firm's first contact person; if the first slot is empty, you see the second (section [[companies-people-contact]]).
 
@@ -39,7 +39,7 @@ On the list of firms two columns filter, both with ticks:
 - **„Type”** — the values of the list of juridical-person types, as they stand in the archive now;
 - **„Locality”** — the locality of the head office's address.
 
-„CUI”, „Trade Reg#”, „Contact” and „Added on” have no funnel; a firm is found by its CUI with the search box.
+„CUI”, „Trade Reg#”, „Contact” and „Modified on” have no funnel; a firm is found by its CUI with the search box.
 
 ## 4.2 A firm added and edited {#companies-add}
 

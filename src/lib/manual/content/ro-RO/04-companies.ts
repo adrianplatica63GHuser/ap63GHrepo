@@ -22,7 +22,7 @@ Caseta de căutare din capul listei („caută după ID, Denumire, Poreclă, Nr.
 | #Reg. Com. | Nr. registru comerțului | Numărul de la Registrul Comerțului. |
 | Contact | Persoană de contact | Numele persoanei de contact a firmei. |
 | Localitate | Localitate | Localitatea din adresa sediului. |
-| Adăugat la | Adăugat la | Ziua în care firma a fost adăugată în arhivă; ordonează lista (secțiunea [[start-lists]]). |
+| Modificat la | Modificat la | Ziua în care firma a fost schimbată ultima oară — adăugarea contează ca schimbare; ordonează lista (secțiunea [[start-lists]]). |
 
 Butonul arată câte câmpuri ați ales, de exemplu „Câmpuri afișate 1/4”. Coloana CUI nu apare până nu o bifați, dar căutarea după CUI merge oricum. La „Contact” se vede prima persoană de contact a firmei; dacă primul loc e gol, se vede a doua (secțiunea [[companies-people-contact]]).
 
@@ -39,7 +39,7 @@ Pe lista firmelor se filtrează două coloane, amândouă cu bife:
 - **„Tip”** — valorile listei de tipuri de persoană juridică, așa cum sunt acum în arhivă;
 - **„Localitate”** — localitatea din adresa sediului.
 
-„CUI”, „#Reg. Com.”, „Contact” și „Adăugat la” nu au pâlnie; o firmă se găsește după CUI cu caseta de căutare.
+„CUI”, „#Reg. Com.”, „Contact” și „Modificat la” nu au pâlnie; o firmă se găsește după CUI cu caseta de căutare.
 
 ## 4.2 O firmă adăugată și modificată {#companies-add}
 
