@@ -327,15 +327,17 @@ function DocumentTypeFilterDropdown({
         <span className="text-fade">{label}</span>
         {/* Slice #40.01: the words one width in every state — the 14 rem a type's name had — so ticking types never
             moves the toolbar's row, now that the button stands on it, nor the frame that follows the toolbar (#37.84;
-            TC-LAYOUT-02 step 8). */}
+            TC-LAYOUT-02 step 8). Slice 40.46: 12 rem, so the row, with the sort button after „Câmp specific", is still
+            narrow enough at 1920 px for the 640-px Incursiune beside the list (TC-TILES-11 step 9); a longer name ends
+            in „…", whole on hover. */}
         {trigger.kind === "one" ? (
-          <span className="w-56 truncate text-left font-medium text-ink dark:text-zinc-100" title={trigger.name} data-type-trigger="one">
+          <span className="w-48 truncate text-left font-medium text-ink dark:text-zinc-100" title={trigger.name} data-type-trigger="one">
             {trigger.name}
           </span>
         ) : trigger.kind === "all" ? (
-          <span className="w-56 truncate text-left font-medium text-ink dark:text-zinc-100" data-type-trigger="all">{allTypesLabel}</span>
+          <span className="w-48 truncate text-left font-medium text-ink dark:text-zinc-100" data-type-trigger="all">{allTypesLabel}</span>
         ) : (
-          <span className="w-56 truncate text-left font-medium italic text-ink dark:text-zinc-100" data-type-trigger={trigger.kind}>
+          <span className="w-48 truncate text-left font-medium italic text-ink dark:text-zinc-100" data-type-trigger={trigger.kind}>
             {trigger.kind === "none" ? noTypesLabel : typesShownLabel(trigger.count)}
           </span>
         )}

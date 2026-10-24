@@ -104,10 +104,12 @@ describe("GET /api/people", () => {
       limit: 50,
       offset: 0,
     });
+    // 40.46: and the list's order, today's when none is asked for.
     expect(mocks.listPersons).toHaveBeenCalledWith({
       q: "adrian",
       limit: 50,
       offset: 0,
+      order: { sort: "changed", order: "desc" },
     });
   });
 

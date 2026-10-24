@@ -92,13 +92,14 @@ describe("GET /api/properties", () => {
 
     const body = await res.json();
     expect(body).toMatchObject({ total: 1, limit: 50, offset: 0 });
-    expect(mocks.listProperties).toHaveBeenCalledWith({ limit: 50, offset: 0 });
+    // 40.46: and the list's order, today's when none is asked for.
+    expect(mocks.listProperties).toHaveBeenCalledWith({ limit: 50, offset: 0, order: { sort: "changed", order: "desc" } });
   });
 
   it("forwards the search query to listProperties", async () => {
     mocks.listProperties.mockResolvedValueOnce({ items: [], total: 0 });
     await listGet(req("http://localhost/api/properties?q=bragadiru&limit=10"));
-    expect(mocks.listProperties).toHaveBeenCalledWith({ q: "bragadiru", limit: 10, offset: 0 });
+    expect(mocks.listProperties).toHaveBeenCalledWith({ q: "bragadiru", limit: 10, offset: 0, order: { sort: "changed", order: "desc" } });
   });
 
   it("forwards the filter bar's fields, whitelisted (#39.61)", async () => {
@@ -108,7 +109,18 @@ describe("GET /api/properties", () => {
       limit: 50,
       offset: 0,
       filters: { surfaceAreaMp: { kind: "range", from: 100, to: 500 }, parcela: { kind: "text", text: "7" } },
+      order: { sort: "changed", order: "desc" },
     });
+  });
+
+  it("passes the list's order, and refuses one it does not offer with a 400 (40.46)", async () => {
+    mocks.listProperties.mockResolvedValueOnce({ items: [], total: 0 });
+    await listGet(req("http://localhost/api/properties?sort=changed&order=asc"));
+    expect(mocks.listProperties).toHaveBeenCalledWith({ limit: 50, offset: 0, order: { sort: "changed", order: "asc" } });
+    mocks.listProperties.mockClear();
+    const res = await listGet(req("http://localhost/api/properties?sort=bogus"));
+    expect(res.status).toBe(400);
+    expect(mocks.listProperties).not.toHaveBeenCalled();
   });
 
   it("rejects limit above 200 with 400", async () => {

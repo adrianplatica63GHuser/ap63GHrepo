@@ -58,9 +58,10 @@ describe("„Tip document:” — the button's words (#38.07)", () => {
 
   it("the screen: one name cut with an ellipsis and its tooltip; several and none in italics; no more „n/N”", () => {
     // #40.01: one width in every state — `w-56` (was `max-w-56` on a name only), so a tick never moves the toolbar's row.
-    expect(VIEW).toMatch(/className="w-56 truncate text-left[^"]*" title=\{trigger\.name\} data-type-trigger="one"/);
-    expect(VIEW).toMatch(/className="w-56 truncate text-left[^"]*" data-type-trigger="all"/);
-    expect(VIEW).toMatch(/className="w-56 truncate text-left font-medium italic[^"]*" data-type-trigger=\{trigger\.kind\}/);
+    // 40.46: `w-48` (it read `w-56`), so the row with the sort button still leaves room at 1920 px for the Incursiune.
+    expect(VIEW).toMatch(/className="w-48 truncate text-left[^"]*" title=\{trigger\.name\} data-type-trigger="one"/);
+    expect(VIEW).toMatch(/className="w-48 truncate text-left[^"]*" data-type-trigger="all"/);
+    expect(VIEW).toMatch(/className="w-48 truncate text-left font-medium italic[^"]*" data-type-trigger=\{trigger\.kind\}/);
     expect(VIEW).not.toMatch(/\$\{checkedIds\.size\}\/\$\{allTypeIds\.length\}/);
   });
 });
