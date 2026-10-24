@@ -182,7 +182,7 @@ describe("the button on the four lists", () => {
   it.each(LISTS)("%s: right after „Câmpuri afișate”, and the order in the address, the request and the query key", (dir) => {
     const src = read("src", "app", dir, "list-view.tsx");
     const chooser = src.indexOf("<FieldChooser");
-    const button = src.indexOf("<ListSortButton order={listOrder} onChange={changeListOrder} />");
+    const button = src.indexOf("<ListSortButton order={listOrder} onChange={changeListOrder} columnName={sortName} />");
     expect(button).toBeGreaterThan(chooser);
     expect(src.slice(chooser, button).match(/<[A-Z]\w+/g)).toEqual(["<FieldChooser"]);
     expect(src).toMatch(/ORDER_KEYS\]/);
@@ -196,7 +196,7 @@ describe("the button on the four lists", () => {
     const src = read("src", "app", "documents", "list-view.tsx");
     const group = src.slice(src.indexOf('data-filter-fixed=""'), src.indexOf('className="ml-auto flex shrink-0 items-center gap-2"'));
     const end = group.lastIndexOf("</HintBubble>");
-    const button = group.indexOf("<ListSortButton order={listOrder} onChange={changeListOrder} />");
+    const button = group.indexOf("<ListSortButton order={listOrder} onChange={changeListOrder} columnName={sortName} />");
     expect(end).toBeGreaterThan(-1);
     expect(button).toBeGreaterThan(end);
     // Outside the `typeOptions.length > 0 &&` block, so it is drawn with no types too.

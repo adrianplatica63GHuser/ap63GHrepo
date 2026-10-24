@@ -70,7 +70,7 @@ test.describe("TC-LAYOUT-10 — pictograma de ordonare din banda de nume", () =>
     await expect.poll(() => heads(page), { timeout: 30_000 }).toEqual(["Nume:-", "Poreclă:-", "Născut pe:none", "Vârstă:none", "Decedat pe:none", "Adăugat la:none"]);
     await expect(icon(page, "dateOfBirth").locator("svg")).toHaveClass(/lucide-arrow-up-down/);
     // Left of the funnel, 2 px from it.
-    const gap = await page.locator("main thead th").filter({ has: icon(page, "dateOfBirth") }).evaluate((th) => {
+    const gap = await page.locator('main thead th:has([data-column-sort="dateOfBirth"])').evaluate((th) => {
       const s = th.querySelector("[data-head-sort]")!.getBoundingClientRect();
       const f = th.querySelector("[data-head-funnel]")!.getBoundingClientRect();
       return Math.round(f.left - s.right);
@@ -82,7 +82,7 @@ test.describe("TC-LAYOUT-10 — pictograma de ordonare din banda de nume", () =>
     expectOrdered(asc, dateOf("dateOfBirth"), "asc");
     await expect(icon(page, "dateOfBirth")).toHaveAttribute("data-sort-state", "asc");
     await expect(icon(page, "dateOfBirth").locator("svg")).toHaveClass(/lucide-arrow-up(?!-)/);
-    await expect(page.locator("main thead th").filter({ has: icon(page, "dateOfBirth") })).toHaveAttribute("aria-sort", "ascending");
+    await expect(page.locator('main thead th:has([data-column-sort="dateOfBirth"])')).toHaveAttribute("aria-sort", "ascending");
     await expect(sortButton(page)).toHaveText("Ordonat după „Născut pe”");
     await expect(page).toHaveURL(/[?&]sort=dateOfBirth&order=asc\b/);
     await expect(firstRowLink(page, "/natural-persons")).toHaveAttribute("href", `/natural-persons/${asc[0].id}`);
@@ -91,7 +91,7 @@ test.describe("TC-LAYOUT-10 — pictograma de ordonare din banda de nume", () =>
     const desc = await answer(page, "/api/people", () => icon(page, "dateOfBirth").locator("button").click());
     expectOrdered(desc, dateOf("dateOfBirth"), "desc");
     await expect(icon(page, "dateOfBirth")).toHaveAttribute("data-sort-state", "desc");
-    await expect(page.locator("main thead th").filter({ has: icon(page, "dateOfBirth") })).toHaveAttribute("aria-sort", "descending");
+    await expect(page.locator('main thead th:has([data-column-sort="dateOfBirth"])')).toHaveAttribute("aria-sort", "descending");
     await expect(firstRowLink(page, "/natural-persons")).toHaveAttribute("href", `/natural-persons/${desc[0].id}`);
 
     // Step 4 — the first row's record, then Back: still sorted, the same first row.

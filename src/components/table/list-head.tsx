@@ -82,15 +82,16 @@ export function ListHeadCell({
           </span>
         </span>
       </div>
-      {funnel && (
-        <span className="absolute bottom-0.5 right-0.5 inline-flex" data-head-funnel="">
-          {funnel}
-        </span>
-      )}
-      {/* Slice 40.47: 2 px left of the funnel's 13 px (2 + 13 + 2 = 17 px from the edge), or in its place. */}
+      {/* Slice 40.47: 2 px left of the funnel's 13 px (2 + 13 + 2 = 17 px from the edge), or in its place. Drawn
+          BEFORE the funnel, so the funnel's 20-px pressable area, which reaches 5 px left over the gap, stays on top. */}
       {sort && (
         <span className={`absolute bottom-0.5 ${funnel ? "right-[17px]" : "right-0.5"} inline-flex`} data-head-sort="">
           {sort}
+        </span>
+      )}
+      {funnel && (
+        <span className="absolute bottom-0.5 right-0.5 inline-flex" data-head-funnel="">
+          {funnel}
         </span>
       )}
     </th>

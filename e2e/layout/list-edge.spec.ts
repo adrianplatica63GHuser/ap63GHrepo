@@ -165,7 +165,9 @@ async function rightEdge(page: Page, url: string, add: string, size: { width: nu
   await page.setViewportSize(size);
   await page.goto(url);
   const main = page.locator("main");
-  await expect.poll(async () => main.locator("[data-list-frame] tbody tr").count(), { timeout: 30_000 }).toBeGreaterThanOrEqual(1);
+  // 40.47: rows with their buttons — the „Se încarcă…" row has none, and a slow first answer leaves it on screen (it
+  // counted any `tbody tr`).
+  await expect.poll(async () => main.locator("[data-list-frame] tbody tr [data-row-actions]").count(), { timeout: 30_000 }).toBeGreaterThanOrEqual(1);
   await page.waitForTimeout(500);
   const m = await main.locator("[data-list-frame]").evaluate((el) => {
     const fr = el as HTMLElement;

@@ -35,7 +35,9 @@ test.describe("TC-LAYOUT-08 — o coloană mutată de nume", () => {
       localStorage.removeItem("ga40-colorder-property-v1");
     });
     await page.goto("/properties");
-    await expect(page.locator("main tbody tr").first()).toBeVisible({ timeout: 30_000 });
+    // 40.47: a row of the list's own, not the „Se încarcă…" row, which a slow first answer leaves on screen (it read
+    // `main tbody tr` first, visible).
+    await expect(page.locator("main tbody tr td[data-col]").first()).toBeVisible({ timeout: 30_000 });
     await expect.poll(() => heads(page), { timeout: 10_000 }).toEqual(["nickname", "tarlaSola", "parcela", "propertyType"]);
 
     // Step 1 — Poreclă dragged two places right, past Parcelă: the band and the rows in the new order.

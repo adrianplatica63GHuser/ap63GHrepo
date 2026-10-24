@@ -106,7 +106,8 @@ describe("the four lists draw their names through the one cell", () => {
     expect(signs).toContain("text-base font-bold leading-3 text-red-600");
     const cell = read("src", "components", "table", "list-head.tsx");
     // Slice 40.25: the <th> is also the handle its column is dragged by (`drag`); 40.29: the funnel's positioning box.
-    expect(cell).toMatch(/<th\s+className=\{`relative px-4 py-\[2\.5px\] align-middle\$\{drag \? [^}]*\}`\}\s+\{\.\.\.columnHead\(column\)\}\s+\{\.\.\.drag\}\s+>/);
+    // 40.47: and the sort's aria-sort after the drag's props (it ended `{...drag}\s+>`).
+    expect(cell).toMatch(/<th\s+className=\{`relative px-4 py-\[2\.5px\] align-middle\$\{drag \? [^}]*\}`\}\s+\{\.\.\.columnHead\(column\)\}\s+\{\.\.\.drag\}\s+aria-sort=\{sort \? ariaSort : undefined\}\s+>/);
     expect(cell).toContain('className="flex items-center justify-center" style={{ height: HEAD_BAND_PX }}');
     expect(cell).toContain('className="flex min-w-0 items-center justify-center" data-head-name=""');
     expect(cell).toContain('className="line-clamp-2 min-w-0 text-balance break-words text-center leading-[17px]" data-head-text=""');
