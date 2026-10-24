@@ -652,6 +652,7 @@
       "recent": "Recente întâi",
       "older": "Vechi întâi",
       "sortedBy": "Ordonat după „{column}”",
+      "sortBy": "Ordonează după „{column}”",
       "changedHint": "Ordinea după ultima modificare — adăugarea unei înregistrări contează ca modificare. Apăsați pentru ordinea inversă.",
       "backHint": "Apăsați pentru a reveni la ordinea după ultima modificare."
     },

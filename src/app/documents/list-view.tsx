@@ -35,6 +35,7 @@ import { HintBubble } from "@/lib/ui/hint-bubble";
 import { addedOn, dmyFromIso } from "@/lib/persons/person-age";
 import { FilterBar, FilterFunnel, type FilterBarField } from "@/components/list/filter-bar";
 import { ListSortButton } from "@/components/list/list-sort-button";
+import { ColumnSort, ariaSortOf } from "@/components/list/column-sort";
 import { DEFAULT_LIST_ORDER, LIST_SORTS, ORDER_KEYS, appendOrderParams, orderAddressPatch, orderSignature, readListOrder, type ListOrder } from "@/lib/list/list-order";
 import { appendFilterParams, filterAddressPatch, filterSignature, type FacetValue, type FilterState } from "@/lib/list/filter-bar";
 import { DOCUMENT_COLUMN_FILTERS, DOCUMENT_FILTER_FIELDS, DOCUMENT_FILTER_KEYS, parseDocumentFilters } from "@/lib/documents/list-filters";
@@ -514,6 +515,13 @@ export function DocumentListView({
     setListOrder(next);
     setCurrentPage(0);
   }
+  // Slice 40.47: the columns that sort (`LIST_SORTS.document`) — a sort icon in the name cell, left of the funnel; the
+  // sort button names the column by its short name. A sorted column unticked keeps the order (Ask first 5).
+  const sortHead = (c: ChooserField) =>
+    (LIST_SORTS.document as readonly string[]).includes(c.key)
+      ? { sort: <ColumnSort sort={c.key} label={c.full ?? c.label} order={listOrder} onChange={changeListOrder} />, ariaSort: ariaSortOf(listOrder, c.key) }
+      : {};
+  const sortName = (key: string) => optionalCols.find((c) => c.key === key)?.label ?? key;
 
 
   const { data: documentTypes } = useQuery({
@@ -965,7 +973,7 @@ export function DocumentListView({
             )}
             {/* Slice 40.46: the sort button, right after „Câmp specific"'s ⓘ — and, with no types (no ⓘ drawn), right
                 after „Tip document:" (Ask first 5). Inside the group, so the two never part. */}
-            <ListSortButton order={listOrder} onChange={changeListOrder} />
+            <ListSortButton order={listOrder} onChange={changeListOrder} columnName={sortName} />
           </div>
         </div>
 
@@ -1055,6 +1063,7 @@ export function DocumentListView({
                           // Slice #39.82: a funnel only on the columns that filter; it opens the filter under itself. #39.83: on row 3.
                           funnel={filterKey ? <FilterFunnel field={filterKey} label={filterLabel(filterKey)} active={filters[filterKey] !== undefined} onOpen={() => setEditingFilter(filterKey)} /> : undefined}
                           drag={drag.headProps(col.key)}
+                          {...sortHead(col)}
                         />
                       );
                     })}

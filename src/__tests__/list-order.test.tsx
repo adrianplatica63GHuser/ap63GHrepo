@@ -51,9 +51,10 @@ describe("the order model (list-order.ts)", () => {
     expect(isDefaultOrder({ sort: CHANGED, order: "asc" })).toBe(false);
   });
 
-  it("every list may be ordered by `changed`, and — until 40.47 — by nothing else", () => {
+  // 40.47: and by the columns that sort, Adrian's list (it read „by `changed`, and — until 40.47 — by nothing else").
+  it("every list may be ordered by `changed` first, then by the columns that sort", () => {
     expect(Object.keys(LIST_SORTS).sort()).toEqual(["company", "document", "person", "property"]);
-    for (const sorts of Object.values(LIST_SORTS)) expect([...sorts]).toEqual([CHANGED]);
+    for (const sorts of Object.values(LIST_SORTS)) expect(sorts[0]).toBe(CHANGED);
   });
 
   it("reads an address: nothing is the default, a malformed one is the default whole", () => {
@@ -62,7 +63,7 @@ describe("the order model (list-order.ts)", () => {
     expect(readListOrder(at({ sort: "changed", order: "asc" }), s)).toEqual({ sort: "changed", order: "asc" });
     expect(readListOrder(at({ order: "asc" }), s)).toEqual({ sort: "changed", order: "asc" });
     expect(readListOrder(at({ sort: "changed" }), s)).toEqual(DEFAULT_LIST_ORDER);
-    expect(readListOrder(at({ sort: "createdAt", order: "asc" }), s)).toEqual(DEFAULT_LIST_ORDER);
+    expect(readListOrder(at({ sort: "gender", order: "asc" }), s)).toEqual(DEFAULT_LIST_ORDER); // 40.47: was „createdAt"
     expect(readListOrder(at({ sort: "changed", order: "up" }), s)).toEqual(DEFAULT_LIST_ORDER);
   });
 
@@ -102,7 +103,7 @@ describe("the order on the server (order-sql.ts)", () => {
     expect(q("").data).toEqual({ sort: "changed", order: "desc" });
     expect(q("sort=changed&order=asc").data).toEqual({ sort: "changed", order: "asc" });
     expect(q("order=asc").data).toEqual({ sort: "changed", order: "asc" });
-    for (const bad of ["sort=createdAt", "sort=changed&order=up", "sort=", "sort=changed;drop"]) {
+    for (const bad of ["sort=locality", "sort=changed&order=up", "sort=", "sort=changed;drop"]) { // 40.47: was „sort=createdAt"
       expect([bad, q(bad).success]).toEqual([bad, false]);
     }
   });
@@ -145,7 +146,9 @@ describe("the four routes and their queries", () => {
     const body = src.slice(src.indexOf(`export async function ${fn}(`));
     const head = body.slice(0, body.indexOf("\n}\n"));
     expect(head).toContain(`order?: ListOrder`);
-    expect(head).toContain(`.orderBy(...listOrderBy(opts.order, { changed: changedAt(${table}.updatedAt, ${table}.createdAt) }, ${table}.id))`);
+    // 40.47: through the list's own sort map (it read `{ changed: changedAt(…) }` inline).
+    expect(head).toContain(".orderBy(...listOrderBy(opts.order, ");
+    expect(head).toContain(`, ${table}.id))`);
     expect(head).not.toMatch(/\.orderBy\(sql`greatest/);
   });
 });

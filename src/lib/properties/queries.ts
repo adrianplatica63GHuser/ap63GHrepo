@@ -19,7 +19,7 @@ import { cadastralKey, cadastralValue } from "./cadastral-identity";
 import { perSearchTerms } from "@/lib/search/per-terms";
 import { NONE_VALUE, withoutFilter, type FacetValue, type FilterState } from "@/lib/list/filter-bar";
 import type { ListOrder } from "@/lib/list/list-order";
-import { changedAt, listOrderBy } from "@/lib/list/order-sql";
+import { changedAt, listOrderBy, naturalOrder } from "@/lib/list/order-sql";
 import { isTextFacetField, type PropertyFacetField } from "./list-filters";
 import { propertyFilterConditions } from "./list-filter-sql";
 import { textValue } from "@/lib/list/filter-sql";
@@ -554,6 +554,20 @@ async function countPropertyFilterValues(
   return read(res.rows);
 }
 
+/**
+ * Slice 40.47: what the Properties list sorts by (`LIST_SORTS.property`) — the last change, „Adăugat la", Tarla (its
+ * indicativ) and Parcelă in natural order, the two surfaces as numbers. The keys are the chooser's: `tarlaSola` for
+ * the Tarla column.
+ */
+const PROPERTY_SORTS = {
+  changed: changedAt(property.updatedAt, property.createdAt),
+  createdAt: sql`${property.createdAt}`,
+  tarlaSola: naturalOrder(sql`${lookupTarla.indicativ}`),
+  parcela: naturalOrder(sql`${property.parcela}`),
+  surfaceAreaMp: sql`${property.surfaceAreaMp}`,
+  calculatedAreaMp: sql`${property.calculatedAreaMp}`,
+};
+
 export async function listProperties(opts: PropertyListQuery & { filters?: FilterState; order?: ListOrder }): Promise<{
   items: PropertyListItem[];
   total: number;
@@ -651,7 +665,7 @@ export async function listProperties(opts: PropertyListQuery & { filters?: Filte
       )
       .where(where)
       // Slice #16.UX.01: most-recently modified/created first — 40.46: the default of the list's order, then the id.
-      .orderBy(...listOrderBy(opts.order, { changed: changedAt(property.updatedAt, property.createdAt) }, property.id))
+      .orderBy(...listOrderBy(opts.order, PROPERTY_SORTS, property.id))
       .limit(opts.limit)
       .offset(opts.offset),
 

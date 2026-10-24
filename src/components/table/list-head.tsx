@@ -27,6 +27,10 @@
  *
  * Slice 40.25: with `drag`, the cell is the handle its column is moved by — grabbed anywhere but its funnel
  * (`src/components/list/column-order.tsx`).
+ *
+ * Slice 40.47: with `sort`, the column's sort icon (`ColumnSort`) in the same corner, 2 px left of the funnel — or where
+ * the funnel would be, on a column that sorts and does not filter (Ask first 2) — out of the flow like it, so the name
+ * never moves; `ariaSort` is the <th>'s `aria-sort`. `data-head-sort` marks it.
  */
 import type { ReactNode } from "react";
 import { columnHead } from "@/components/table/fixed-columns";
@@ -49,6 +53,8 @@ export function ListHeadCell({
   full,
   funnel,
   drag,
+  sort,
+  ariaSort,
 }: {
   column: ColumnName;
   name: string;
@@ -58,12 +64,16 @@ export function ListHeadCell({
   funnel?: ReactNode;
   /** Slice 40.25: the cell as the handle its column is dragged by (`useColumnDrag`). */
   drag?: HeadDragProps;
+  /** Slice 40.47: the column's sort icon, when it sorts, and the <th>'s `aria-sort`. */
+  sort?: ReactNode;
+  ariaSort?: "ascending" | "descending" | "none";
 }) {
   return (
     <th
       className={`relative px-4 py-[2.5px] align-middle${drag ? " cursor-grab select-none focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus" : ""}`}
       {...columnHead(column)}
       {...drag}
+      aria-sort={sort ? ariaSort : undefined}
     >
       <div className="flex items-center justify-center" style={{ height: HEAD_BAND_PX }} data-head-band={funnel ? "filter" : "plain"}>
         <span className="flex min-w-0 items-center justify-center" data-head-name="">
@@ -75,6 +85,12 @@ export function ListHeadCell({
       {funnel && (
         <span className="absolute bottom-0.5 right-0.5 inline-flex" data-head-funnel="">
           {funnel}
+        </span>
+      )}
+      {/* Slice 40.47: 2 px left of the funnel's 13 px (2 + 13 + 2 = 17 px from the edge), or in its place. */}
+      {sort && (
+        <span className={`absolute bottom-0.5 ${funnel ? "right-[17px]" : "right-0.5"} inline-flex`} data-head-sort="">
+          {sort}
         </span>
       )}
     </th>

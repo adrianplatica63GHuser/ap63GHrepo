@@ -176,7 +176,7 @@ export async function listJudicialPersons(opts: JudicialListQuery & { filters?: 
       .where(where)
       // Slice #18.18: most-recently modified/created first (consistent with
       // natural persons — previously ordered by code). 40.46: the default of the list's order, then the id.
-      .orderBy(...listOrderBy(opts.order, { changed: changedAt(person.updatedAt, person.createdAt) }, person.id))
+      .orderBy(...listOrderBy(opts.order, { changed: changedAt(person.updatedAt, person.createdAt), createdAt: sql`${person.createdAt}` }, person.id))
       .limit(opts.limit)
       .offset(opts.offset),
     db

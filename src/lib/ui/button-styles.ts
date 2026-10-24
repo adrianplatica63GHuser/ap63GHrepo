@@ -188,6 +188,14 @@ const SMALL_SQUARE: Record<SmallSquare, string> = {
   row: "h-6 w-6 p-0",
 };
 
+/**
+ * Slice 40.47 — a corner square „in use" (Adrian, 2026-10-24: „a thick, solid Navy blue arrow with the circle around
+ * it"): navy on white in a navy circle; in dark mode a lighter blue that reads on zinc. Important, so it wins over its
+ * variant's own colours, hover included. One constant, for the column's sort icon now and 40.48's funnel after.
+ */
+export const IN_USE_CORNER =
+  "rounded-full! border! border-navy! bg-white! text-navy! dark:border-blue-400! dark:bg-zinc-900! dark:text-blue-400!";
+
 /** Text size per size. Split from padding so `bare` can take one without the other. */
 const SIZE_TEXT: Record<ButtonSize, string> = {
   xs: "text-xs",

@@ -168,6 +168,19 @@ export function documentListWhere(opts: DocumentListQuery & { filters?: FilterSt
   return where;
 }
 
+/**
+ * Slice 40.47: what the Documents list sorts by (`LIST_SORTS.document`) — the last change, „Adăugat la", „Data" and
+ * the three counts the list computes (`DOCUMENT_COUNT_SQL`, the count filters' own).
+ */
+const DOCUMENT_SORTS = {
+  changed: changedAt(document.updatedAt, document.createdAt),
+  createdAt: sql`${document.createdAt}`,
+  dateDocument: sql`${document.dateDocument}`,
+  pageCount: DOCUMENT_COUNT_SQL.pageCount,
+  personCount: DOCUMENT_COUNT_SQL.personCount,
+  propertyCount: DOCUMENT_COUNT_SQL.propertyCount,
+};
+
 export async function listDocument(
   opts: DocumentListQuery & { filters?: FilterState; order?: ListOrder },
   expiringSoonDays = 30,
@@ -215,7 +228,7 @@ export async function listDocument(
       .leftJoin(entityMetadata, eq(entityMetadata.principalObjectId, document.principalObjectId))
       .where(where)
       // Slice #16.UX.01: most-recently modified/created first — 40.46: the default of the list's order, then the id.
-      .orderBy(...listOrderBy(opts.order, { changed: changedAt(document.updatedAt, document.createdAt) }, document.id))
+      .orderBy(...listOrderBy(opts.order, DOCUMENT_SORTS, document.id))
       .limit(opts.limit)
       .offset(opts.offset),
 

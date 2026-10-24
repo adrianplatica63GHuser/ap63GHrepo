@@ -27,6 +27,7 @@ import { LIST_COLUMN_CHOICE, LIST_COLUMN_ORDER } from "@/lib/ui/list-columns";
 import { useColumnDrag, useColumnOrder } from "@/components/list/column-order";
 import { FilterBar, FilterFunnel, type FilterBarField } from "@/components/list/filter-bar";
 import { ListSortButton } from "@/components/list/list-sort-button";
+import { ColumnSort, ariaSortOf } from "@/components/list/column-sort";
 import { DEFAULT_LIST_ORDER, LIST_SORTS, ORDER_KEYS, appendOrderParams, orderAddressPatch, orderSignature, readListOrder, type ListOrder } from "@/lib/list/list-order";
 import { appendFilterParams, filterAddressPatch, filterSignature, type FacetValue, type FilterState } from "@/lib/list/filter-bar";
 import { NATURAL_PERSON_COLUMN_FILTERS, NATURAL_PERSON_FILTER_FIELDS, parsePersonFilters, personFilterKeys } from "@/lib/persons/list-filters";
@@ -120,6 +121,13 @@ export function NaturalPersonListView() {
     setListOrder(next);
     setCurrentPage(0);
   }
+  // Slice 40.47: the columns that sort (`LIST_SORTS.person`) — a sort icon in the name cell, left of the funnel; the
+  // sort button names the column by its short name. A sorted column unticked keeps the order (Ask first 5).
+  const sortHead = (c: ChooserField) =>
+    (LIST_SORTS.person as readonly string[]).includes(c.key)
+      ? { sort: <ColumnSort sort={c.key} label={c.full ?? c.label} order={listOrder} onChange={changeListOrder} />, ariaSort: ariaSortOf(listOrder, c.key) }
+      : {};
+  const sortName = (key: string) => optionalCols.find((c) => c.key === key)?.label ?? key;
   const [debouncedSearch, setDebouncedSearch] = useState(address.search);
   const [currentPage,     setCurrentPage]     = useState(address.page);
 
@@ -249,7 +257,7 @@ export function NaturalPersonListView() {
         />
 
         {/* Slice 40.46: the sort button, right after „Câmpuri afișate" — the record changed last first by default. */}
-        <ListSortButton order={listOrder} onChange={changeListOrder} />
+        <ListSortButton order={listOrder} onChange={changeListOrder} columnName={sortName} />
 
         <div className="ml-auto flex items-center gap-2">
           {/* Slice #39.85: measured, so the search box could take its width; 40.37: „+ Nou" and the list's Domeniu icon, its
@@ -307,6 +315,7 @@ export function NaturalPersonListView() {
                       // Slice #39.82: a funnel only on the columns that filter; it opens the filter under itself. #39.83: on row 3.
                       funnel={filterKey ? <FilterFunnel field={filterKey} label={filterLabel(filterKey)} active={filters[filterKey] !== undefined} onOpen={() => setEditingFilter(filterKey)} /> : undefined}
                       drag={drag.headProps(col.key)}
+                      {...sortHead(col)}
                     />
                   );
                 })}

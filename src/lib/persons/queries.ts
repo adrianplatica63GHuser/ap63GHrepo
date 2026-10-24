@@ -19,7 +19,7 @@ import { and, count, desc, eq, ilike, inArray, or, sql, type SQL } from "drizzle
 import type { FilterState } from "@/lib/list/filter-bar";
 import type { ListOrder } from "@/lib/list/list-order";
 import { changedAt, listOrderBy } from "@/lib/list/order-sql";
-import { personFilterConditions } from "@/lib/persons/list-filter-sql";
+import { AGE_SQL, personFilterConditions } from "@/lib/persons/list-filter-sql";
 import { db, type DbTransaction } from "@/db";
 import { appendVersionsIfChanged } from "@/lib/versioning/append";
 import { assertBaseVersion, latestVersionIn } from "@/lib/versioning/base-version";
@@ -145,6 +145,18 @@ export function naturalPersonSearchCondition(q: string | undefined): SQL | undef
   );
 }
 
+/**
+ * Slice 40.47: what the Natural Persons list sorts by (`LIST_SORTS.person`) — the last change, „Adăugat la", and the
+ * three dates' columns; „Vârstă" by the age shown, at death for the deceased (`AGE_SQL`, the age filter's own).
+ */
+const NATURAL_PERSON_SORTS = {
+  changed: changedAt(person.updatedAt, person.createdAt),
+  createdAt: sql`${person.createdAt}`,
+  dateOfBirth: sql`${naturalPerson.dateOfBirth}`,
+  age: AGE_SQL,
+  dateOfDeath: sql`${naturalPerson.dateOfDeath}`,
+};
+
 export async function listPersons(opts: ListQuery & { filters?: FilterState; order?: ListOrder }): Promise<{
   items: PersonListItem[];
   total: number;
@@ -230,7 +242,7 @@ export async function listPersons(opts: ListQuery & { filters?: FilterState; ord
       .leftJoin(lookupPersonType, eq(lookupPersonType.id, naturalPerson.physicalPersonTypeId))
       .where(where)
       // Slice #16.UX.01: most-recently modified/created first — 40.46: the default of the list's order, then the id.
-      .orderBy(...listOrderBy(opts.order, { changed: changedAt(person.updatedAt, person.createdAt) }, person.id))
+      .orderBy(...listOrderBy(opts.order, NATURAL_PERSON_SORTS, person.id))
       .limit(opts.limit)
       .offset(opts.offset),
     db

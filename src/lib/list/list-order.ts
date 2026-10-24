@@ -9,7 +9,9 @@
  *   - The order is the SERVER's (`sort`, `order` on the four routes — `order-sql.ts`), across every page: a list pages
  *     15 at a time, so an order applied in the browser would sort one page.
  *   - Each list may be ordered by the names in `LIST_SORTS` and nothing else; a route refuses any other (Ask first 1).
- *     40.47 adds the columns that sort.
+ *   - Slice 40.47: the columns that sort, by their chooser keys — a column's sort icon in its name cell names one
+ *     (`sortByColumn`): „Adăugat la" starts newest first, every other column ascending, as on „Interacțiuni"; the same
+ *     column again flips it; the sort button takes any of them back to the default.
  *   - In the list's address as `sort` and `order`, written only when they are not the default (Ask first 4), so a list
  *     opened from the menu or a link with neither opens as it always has; anything malformed there reads as the
  *     default — a list never refuses to open over its address (`list-address.ts`).
@@ -34,29 +36,46 @@ export const DEFAULT_LIST_ORDER: ListOrder = Object.freeze({ sort: CHANGED, orde
 export const ORDER_PARAM = { sort: "sort", order: "order" } as const;
 export const ORDER_KEYS: readonly string[] = [ORDER_PARAM.sort, ORDER_PARAM.order];
 
-/** What each list may be ordered by. Anything else is refused by its route, and read as the default from its address. */
+/** „Adăugat la" — the timestamp a record was created, by its column's chooser key on every list (40.45). */
+export const ADDED_ON = "createdAt";
+
+/**
+ * What each list may be ordered by: the last change, then the columns that sort (40.47, Adrian's list, by their
+ * chooser keys). Anything else is refused by its route, and read as the default from its address.
+ */
 export const LIST_SORTS = {
-  person: [CHANGED],
-  company: [CHANGED],
-  property: [CHANGED],
-  document: [CHANGED],
+  person: [CHANGED, ADDED_ON, "dateOfBirth", "age", "dateOfDeath"],
+  company: [CHANGED, ADDED_ON],
+  property: [CHANGED, ADDED_ON, "tarlaSola", "parcela", "surfaceAreaMp", "calculatedAreaMp"],
+  document: [CHANGED, ADDED_ON, "dateDocument", "pageCount", "personCount", "propertyCount"],
 } as const satisfies Record<string, readonly [string, ...string[]]>;
 
 export type OrderedList = keyof typeof LIST_SORTS;
 
 const DIRECTIONS: readonly string[] = ["asc", "desc"];
 
+/** A sort's first direction: the last change and „Adăugat la" newest first, every column ascending (Ask first 3). */
+export function firstDirection(sort: string): SortDirection {
+  return sort === CHANGED || sort === ADDED_ON ? "desc" : "asc";
+}
+
+/** A column's sort icon pressed: that column again flips its direction; another column starts at its first one. */
+export function sortByColumn(o: ListOrder, sort: string): ListOrder {
+  if (o.sort === sort) return { sort, order: o.order === "desc" ? "asc" : "desc" };
+  return { sort, order: firstDirection(sort) };
+}
+
 export function isDefaultOrder(o: ListOrder): boolean {
   return o.sort === DEFAULT_LIST_ORDER.sort && o.order === DEFAULT_LIST_ORDER.order;
 }
 
 /**
- * The order an address holds. No `sort` is `changed`; no `order` is `desc`. A `sort` the list does not offer, or an
- * `order` that is neither word, reads as the default whole.
+ * The order an address holds. No `sort` is `changed`; no `order` is the sort's first direction. A `sort` the list
+ * does not offer, or an `order` that is neither word, reads as the default whole.
  */
 export function readListOrder(get: (key: string) => string | null | undefined, sorts: readonly string[]): ListOrder {
   const sort = get(ORDER_PARAM.sort) || CHANGED;
-  const order = get(ORDER_PARAM.order) || "desc";
+  const order = get(ORDER_PARAM.order) || firstDirection(sort);
   if (!sorts.includes(sort) || !DIRECTIONS.includes(order)) return DEFAULT_LIST_ORDER;
   return { sort, order: order as SortDirection };
 }

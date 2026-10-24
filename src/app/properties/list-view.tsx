@@ -30,6 +30,7 @@ import { LIST_COLUMN_CHOICE, LIST_COLUMN_ORDER } from "@/lib/ui/list-columns";
 import { useColumnDrag, useColumnOrder } from "@/components/list/column-order";
 import { FilterBar, FilterFunnel, type FilterBarField } from "@/components/list/filter-bar";
 import { ListSortButton } from "@/components/list/list-sort-button";
+import { ColumnSort, ariaSortOf } from "@/components/list/column-sort";
 import { DEFAULT_LIST_ORDER, LIST_SORTS, ORDER_KEYS, appendOrderParams, orderAddressPatch, orderSignature, readListOrder, type ListOrder } from "@/lib/list/list-order";
 import {
   appendFilterParams,
@@ -149,6 +150,13 @@ export function PropertyListView() {
     setListOrder(next);
     setCurrentPage(0);
   }
+  // Slice 40.47: the columns that sort (`LIST_SORTS.property`) — a sort icon in the name cell, left of the funnel; the
+  // sort button names the column by its short name. A sorted column unticked keeps the order (Ask first 5).
+  const sortHead = (c: ChooserField) =>
+    (LIST_SORTS.property as readonly string[]).includes(c.key)
+      ? { sort: <ColumnSort sort={c.key} label={c.full ?? c.label} order={listOrder} onChange={changeListOrder} />, ariaSort: ariaSortOf(listOrder, c.key) }
+      : {};
+  const sortName = (key: string) => optionalCols.find((c) => c.key === key)?.label ?? key;
   const [debouncedSearch, setDebouncedSearch] = useState(address.search);
   const [currentPage,     setCurrentPage]     = useState(address.page);
 
@@ -292,7 +300,7 @@ export function PropertyListView() {
         />
 
         {/* Slice 40.46: the sort button, right after „Câmpuri afișate" — the record changed last first by default. */}
-        <ListSortButton order={listOrder} onChange={changeListOrder} />
+        <ListSortButton order={listOrder} onChange={changeListOrder} columnName={sortName} />
 
         <div className="ml-auto flex items-center gap-2">
           {/* Slice #37.92: the whole-properties map's door, now the sidebar
@@ -387,6 +395,7 @@ export function PropertyListView() {
                         ) : undefined
                       }
                       drag={drag.headProps(col.key)}
+                      {...sortHead(col)}
                     />
                   );
                 })}
