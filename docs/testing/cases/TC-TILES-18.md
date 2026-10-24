@@ -50,7 +50,7 @@ Nothing.
 | 6 | „Persoane Fizice", „Previzualizare" on „TC-TILES-18 Ion"'s row | The preview is green |
 | 7 | On „TC-TILES-18 Ion", unticks „Interacțiuni" (#37.89), drags „Etichete și grupuri" by its empty space to under „Legături" | It stands there, still yellow |
 | 8 | (40.41) In steps 1–5, looks at the bar itself | Two rows: no group's boxes on both (unless the group alone is wider than a row — then split at a box, both halves in its colour); „Toate sus", „Toate" and „Implicit" the last thing on the second row; the first row the wider of the two. The strips stand in whatever order makes the rows come out even — steps 1–4's groups are read in any order |
-| 9 | (40.42) In steps 1–5, looks right of the bar | A small diagram: one plain rectangle per tile on screen (not the action bar), each in its tile's group colour, all the same height; from the record header's top to the bar's bottom; clear of the version controls |
+| 9 | (40.42) In steps 1–5, looks right of the bar | A small diagram: one plain rectangle per tile on screen (not the action bar), each in its tile's group colour, all the same height; from the record header's top to the bar's bottom; clear of the version controls. Where the bar leaves no room before the version controls — „TC-TILES-18 Act" at 1366, whose seven record boxes fill the first row — it is not drawn at all |
 
 ## At the end — leaving things as they were found
 

@@ -26,6 +26,13 @@ import { TILES_PLACED, lastPlaced, type PlacedSnapshot } from "./tiles-placed";
 /** The gap kept between the diagram and the version controls, in px. */
 const CLEAR_PX = 12;
 
+/**
+ * The narrowest room it is drawn in, in px. Less — a sale contract at 1366, whose seven record boxes fill the bar's
+ * first row up to the version controls — and it is not drawn at all (`data-room="none"`): narrower, never over them,
+ * never taller.
+ */
+export const DIAGRAM_MIN_ROOM_PX = 48;
+
 type Frame = { left: number; top: number; width: number; height: number };
 
 /** Where the diagram may stand, relative to `wrap` (the bar's positioned box) — or `null` while there is no header. */
@@ -97,7 +104,8 @@ export function TilesDiagram({ entity, groupOf }: { entity: string; groupOf: (id
   });
 
   let diagram: Diagram = { rects: [], width: 0, height: 0 };
-  if (snapshot && frame && frame.width > 0 && frame.height > 0) {
+  const room = !!frame && frame.width >= DIAGRAM_MIN_ROOM_PX && frame.height > 0;
+  if (snapshot && frame && room) {
     const tiles: DiagramTile[] = [];
     for (const b of snapshot.boxes) {
       const group = groupOf(b.id);
@@ -111,8 +119,9 @@ export function TilesDiagram({ entity, groupOf }: { entity: string; groupOf: (id
       ref={ref}
       aria-hidden="true"
       data-tiles-diagram=""
+      data-room={!frame ? "pending" : room ? "yes" : "none"}
       className="pointer-events-none absolute"
-      style={frame ? { left: frame.left, top: frame.top, width: diagram.width, height: frame.height } : { display: "none" }}
+      style={frame && room ? { left: frame.left, top: frame.top, width: diagram.width, height: frame.height } : { display: "none" }}
     >
       {diagram.rects.map((r) => (
         <div

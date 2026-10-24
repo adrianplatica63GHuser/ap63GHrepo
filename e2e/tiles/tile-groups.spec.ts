@@ -75,7 +75,16 @@ async function expectTwoRows(page: Page, url: string): Promise<void> {
  * Step 9 (40.42): the diagram right of the bar — one rectangle per tile box on screen (not the action bar), each in its
  * group's fill, all the same height; inside the header's top and the bar's bottom; clear of the version controls.
  */
-async function expectDiagram(page: Page, url: string): Promise<void> {
+async function expectDiagram(page: Page, url: string, width: number): Promise<void> {
+  // No room before the version controls (a sale contract at 1366: its record boxes fill the first row) — then it is not
+  // drawn at all, and that is all there is to read. At 1920 every form has the room.
+  await expect.poll(async () => page.locator("[data-tiles-diagram]").getAttribute("data-room"), { timeout: 15_000 }).not.toBe("pending");
+  const none = await page.locator("[data-tiles-diagram]").getAttribute("data-room");
+  if (none === "none") {
+    expect({ url, width, room: "none" }).toEqual({ url, width: 1366, room: "none" });
+    await expect(page.locator("[data-tiles-diagram]")).toBeHidden();
+    return;
+  }
   await expect.poll(async () => {
     const d = await page.evaluate(() => {
       const R = (e: Element) => e.getBoundingClientRect();
@@ -109,13 +118,13 @@ async function expectDiagram(page: Page, url: string): Promise<void> {
   for (const [group, fill] of d.fills) expect({ url, group, fill }).toEqual({ url, group, fill: FILL[group as Group] });
 }
 
-async function expectForm(page: Page, url: string, expected: [Group, string[]][]): Promise<void> {
+async function expectForm(page: Page, url: string, expected: [Group, string[]][], width = 1920): Promise<void> {
   await page.goto(url);
   await page.getByRole("button", { name: "Toate", exact: true }).click({ timeout: 30_000 });
   // Slice 40.41: in any order — was the registry's, left to right.
   await expect.poll(async () => byGroup(await strips(page)), { timeout: 30_000 }).toEqual(byGroup(expected));
   await expectTwoRows(page, url);
-  await expectDiagram(page, url);
+  await expectDiagram(page, url, width);
   for (const [group, names] of expected) {
     expect({ group, fill: await fill(page.locator(`[data-tile-group="${group}"]`)) }).toEqual({ group, fill: FILL[group] });
     for (const name of names) {
@@ -143,26 +152,26 @@ test.describe("TC-TILES-18 — bifele în patru grupuri colorate", () => {
           ["related", ["Legături"]],
           ["meta", ["Clasificare", "Etichete și grupuri"]],
           ["fixed", ["Hartă", "Puncte de contur", "Street View"]],
-        ]);
+        ], width);
         await expectForm(page, `/natural-persons/${np}`, [
           ["record", ["Identitate", "Act de identitate", "Contact", "Adrese"]],
           ["related", ["Legături"]],
           ["meta", ["Clasificare", "Etichete și grupuri"]],
           ["family", ["Arbore de moștenire"]], // #39.12
           ["fixed", ["Interacțiuni"]], // #37.89
-        ]);
+        ], width);
         await expectForm(page, `/judicial-persons/${jp}`, [
           ["record", ["Date de înregistrare", "Reprezentanți și contact", "Adrese"]], // #37.89: „Identitate"; #38.30: „Date de înregistrare"
           ["related", ["Legături"]],
           ["meta", ["Clasificare", "Etichete și grupuri"]],
           ["fixed", ["Interacțiuni"]], // #37.89
-        ]);
+        ], width);
         await expectForm(page, `/documents/${doc}`, [
           ["record", ["Identificarea actului", "Preț și plată", "Obiectul vânzării", "Carte funciară", "Declarații și garanții", "Taxe și cheltuieli", "Părți"]], // #38.33
           ["related", ["Legături"]],
           ["meta", ["Clasificare", "Etichete și grupuri"]],
           ["fixed", ["Pagini"]],
-        ]);
+        ], width);
       }
 
       // Step 6 — a preview from „Persoane Fizice" is green.
