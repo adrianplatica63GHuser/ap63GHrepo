@@ -9,6 +9,7 @@
  *   - The record carries `TC-E2E-TILES-21` (records.ts).
  *   - Playwright's mouse drags and double-clicks. Each reading is polled until it holds.
  *   - A box is ticked or unticked until it STAYS so for a second (tiles-rise.spec.ts → setTile).
+ *   - Steps 6–9 (40.40, „Toate sus") are a second test on a fresh person, so the first test's arrangement is not theirs.
  */
 
 import { test, expect, type Locator, type Page } from "../helpers/test";
@@ -141,6 +142,80 @@ test.describe("TC-TILES-21 — un dublu-clic urcă o fișă; o fișă trasă las
         const now = await boxes(page);
         return now.idCard && now[CORR] ? { card: [now.idCard.x, now.idCard.y], corr: [now[CORR].x, now[CORR].y] } : null;
       }, { timeout: 20_000 }).toEqual({ card: [risen.idCard.x, risen.idCard.y], corr: [risen[CORR].x, risen[CORR].y] });
+    } finally {
+      await page.evaluate(([k, c]) => {
+        localStorage.removeItem(k);
+        localStorage.removeItem(c);
+      }, [KEY, CHOICE]).catch(() => undefined);
+      await removeRecord(page.request, "person", person);
+    }
+  });
+
+  // Steps 6–9 (Slice 40.40) — „Toate sus": every tile up, then the columns evened; kept after a reload.
+  test("„Toate sus” urcă toate fișele și echilibrează coloanele; după reîncărcare", async ({ page }) => {
+    test.slow();
+    await page.setViewportSize({ width: 1920, height: 1300 });
+    const person = await createNaturalPerson(page.request, { lastName: `${MARK} Doi`, firstName: "Ana" });
+    try {
+      await page.goto(`/natural-persons/${person}`);
+      await page.evaluate(([k, c]) => {
+        localStorage.removeItem(k);
+        localStorage.removeItem(c);
+      }, [KEY, CHOICE]);
+      await page.reload();
+      const region = (name: string) => page.getByRole("region", { name, exact: true });
+
+      // Step 6 — „Toate", „Interacțiuni" and „Arbore de moștenire" unticked; „Act de identitate" dragged 60 px under
+      // „Corelate", leaving a gap above „Adresă corespondență".
+      await page.getByRole("button", { name: "Toate", exact: true }).click({ timeout: 30_000 });
+      await expect(region("Etichete și grupuri")).toBeVisible({ timeout: 30_000 });
+      await setTile(page, "Interacțiuni", false);
+      await setTile(page, "Arbore de moștenire", false);
+      await page.waitForTimeout(2500);
+      const rule = await boxes(page);
+      const card = region("Act de identitate");
+      const p = await padding(card);
+      const [r0, row] = await Promise.all([card.boundingBox(), page.locator("[data-tile-row]").boundingBox()]);
+      const tx = (row?.x ?? 0) + rule.related.x + (p.x - (r0?.x ?? 0));
+      const ty = (row?.y ?? 0) + rule.related.y + rule.related.h + 60 + (p.y - (r0?.y ?? 0));
+      await page.mouse.move(p.x, p.y);
+      await page.mouse.down();
+      await page.mouse.move(p.x + 10, p.y + 10, { steps: 3 });
+      await page.mouse.move(tx, ty, { steps: 12 });
+      await page.mouse.up();
+      await expect.poll(async () => (await boxes(page)).idCard.x).toBe(rule.related.x);
+      const apart = await boxes(page);
+      expect(Object.keys(apart).some((id) => apart[id].y > rightUnder(apart, id))).toBe(true);
+
+      // Step 7 — „Toate sus", left of „Toate": every box right under the one above it (or at the row's top) …
+      const allUp = page.getByRole("button", { name: "Toate sus", exact: true });
+      const all = page.getByRole("button", { name: "Toate", exact: true });
+      expect((await allUp.boundingBox())!.x).toBeLessThan((await all.boundingBox())!.x);
+      await allUp.click();
+      await expect.poll(async () => {
+        const now = await boxes(page);
+        return Object.keys(now).filter((id) => now[id].y !== rightUnder(now, id));
+      }, { timeout: 5_000 }).toEqual([]);
+      // … and the columns' bottoms within one tile's height of each other.
+      const up = await boxes(page);
+      const cols = new Map<number, number>();
+      for (const b of Object.values(up)) cols.set(b.x, Math.max(cols.get(b.x) ?? 0, b.y + b.h));
+      const bottoms = [...cols.values()];
+      const tallestTile = Math.max(...Object.values(up).map((b) => b.h));
+      expect(Math.max(...bottoms) - Math.min(...bottoms)).toBeLessThanOrEqual(tallestTile + GAP);
+
+      // Step 8 — pressed again: nothing moves.
+      await allUp.click();
+      await page.waitForTimeout(500);
+      expect(await boxes(page)).toEqual(up);
+
+      // Step 9 — after a reload, the same places.
+      await page.reload();
+      await expect(region("Etichete și grupuri")).toBeVisible({ timeout: 30_000 });
+      await expect.poll(async () => {
+        const now = await boxes(page);
+        return Object.fromEntries(Object.entries(now).map(([k, b]) => [k, [b.x, b.y]]));
+      }, { timeout: 20_000 }).toEqual(Object.fromEntries(Object.entries(up).map(([k, b]) => [k, [b.x, b.y]])));
     } finally {
       await page.evaluate(([k, c]) => {
         localStorage.removeItem(k);

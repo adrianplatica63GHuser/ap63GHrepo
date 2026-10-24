@@ -37,6 +37,7 @@ function fakeChoice(shown: K[]): TileChoice<K> {
     showAll: jest.fn(),
     reset: jest.fn(),
     reveal: jest.fn(),
+    allUp: jest.fn(), // 40.40
   };
 }
 const box = (name: string) => screen.getByRole("checkbox", { name }) as HTMLInputElement;

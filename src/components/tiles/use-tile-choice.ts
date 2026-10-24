@@ -22,7 +22,7 @@
  * caller's (`shown` still says what is stored).
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { TILE_POSITIONS_RESET, tilePositionsKey } from "@/lib/ui/tile-positions";
+import { TILES_ALL_UP, TILE_POSITIONS_RESET, tilePositionsKey } from "@/lib/ui/tile-positions";
 import {
   parseStoredTiles,
   shownTiles,
@@ -53,6 +53,8 @@ export interface TileChoice<K extends string> {
   reset: () => void;
   /** Show a tile for this visit (an error in it, a `?tab=`). */
   reveal: (key: K) => void;
+  /** Slice 40.40 „Toate sus": tells this kind of record's tile row to rise every tile and even its columns. */
+  allUp: () => void;
 }
 
 const NONE: readonly never[] = [];
@@ -129,5 +131,10 @@ export function useTileChoice<K extends string>(
 
   const isShown = useCallback((key: K) => shown.includes(key), [shown]);
 
-  return { shown, isShown, toggle, showAll, reset, reveal };
+  // Slice 40.40: the packing hook (use-tile-packing.ts) does the moving; the bar does not need it.
+  const allUp = useCallback(() => {
+    window.dispatchEvent(new CustomEvent(TILES_ALL_UP, { detail: reg.entity }));
+  }, [reg.entity]);
+
+  return { shown, isShown, toggle, showAll, reset, reveal, allUp };
 }

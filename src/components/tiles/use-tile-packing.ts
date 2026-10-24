@@ -114,6 +114,8 @@ import { columnsIn, fitsBeside, grow, packedHeight, unitsOf, type PackBox, type 
 import {
   MAKE_ROOM_SLIDE_MS,
   TILE_POSITIONS_RESET,
+  TILES_ALL_UP,
+  allUp,
   WRAPPED_PREFIX,
   canDrop,
   dropAt,
@@ -561,7 +563,8 @@ export function useTilePacking(
       if (still) return;
       const byId = new Map(boxes.map((b) => [b.id, b]));
       const els = [...ids, ...placed.filter((p) => p.rowEnd).map((p) => p.id)].map((id) => byId.get(id)?.el).filter((el): el is HTMLElement => !!el);
-      for (const el of els) styles.set(el, "transition", `top ${MAKE_ROOM_SLIDE_MS}ms ease`);
+      // 40.40: `left` too — „Toate sus" moves a tile across to the shortest column.
+      for (const el of els) styles.set(el, "transition", `top ${MAKE_ROOM_SLIDE_MS}ms ease, left ${MAKE_ROOM_SLIDE_MS}ms ease`);
       sliding = [...new Set([...sliding, ...els])];
       window.clearTimeout(slideEnd);
       slideEnd = window.setTimeout(() => {
@@ -756,6 +759,20 @@ export function useTilePacking(
     };
     window.addEventListener(TILE_POSITIONS_RESET, onReset);
 
+    // 40.40 „Toate sus": every tile up, then the columns evened (`allUp`); the tiles slide there, and the arrangement is
+    // stored as one, as a drop is. The banners never move; a press with nothing to move moves nothing.
+    const onAllUp = (e: Event) => {
+      if ((e as CustomEvent<string>).detail !== entity || drag?.active) return;
+      const still = new Set(boxes.filter((b) => b.full).map((b) => b.id));
+      const r = allUp(placed, columns, metrics().gap, lead, still);
+      if (!r) return;
+      placed = r.placed;
+      slide(r.moved);
+      store(r.moved[0], r.moved.slice(1));
+      apply();
+    };
+    window.addEventListener(TILES_ALL_UP, onAllUp);
+
     fresh();
     return () => {
       end(false);
@@ -773,6 +790,7 @@ export function useTilePacking(
       container.removeEventListener("pointerleave", onLeave);
       container.removeEventListener("dblclick", onDouble);
       window.removeEventListener(TILE_POSITIONS_RESET, onReset);
+      window.removeEventListener(TILES_ALL_UP, onAllUp);
       document.removeEventListener("visibilitychange", shown);
     };
   }, [ref, fitWidest, entity, rightKey, flowUnits]);

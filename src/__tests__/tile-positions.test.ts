@@ -11,6 +11,10 @@ import path from "node:path";
 import { grow, packTiles, settle, type PackBox, type Placed } from "@/lib/ui/tile-packing";
 import {
   FIXED_PREFIX,
+  TILES_ALL_UP,
+  allUp,
+  evenColumns,
+  tileColumns,
   MAKE_ROOM_DELAY_MS,
   MAKE_ROOM_SLIDE_MS,
   ROW_STEP,
@@ -849,3 +853,75 @@ describe("the right-hand tiles start at the right edge, and move (40.32)", () =>
   });
 });
 
+describe("„Toate sus”: every tile up, then the columns evened (40.40)", () => {
+  // Two columns of 3 units in a 6-unit row; heights in px; GAP is PANEL_GAP.
+  const tile = (id: string, col: number, top: number, height: number, units = 3): Placed => ({ id, col, units, top, height });
+  const bar: Placed = { id: "actions", col: 0, units: 6, top: 2000, height: 63, rowEnd: true };
+
+  it("the rise closes the gap above every tile, top to bottom, each under the one risen before it", () => {
+    const placed = [tile("a", 0, 100, 200), tile("b", 0, 500, 100), tile("c", 3, 40, 150), bar];
+    const r = allUp(placed, 6, GAP)!;
+    expect(at(r.placed, "a").top).toBe(0);
+    expect(at(r.placed, "b").top).toBe(200 + GAP);
+    expect(at(r.placed, "c").top).toBe(0);
+    expect(r.moved.sort()).toEqual(["a", "b", "c"]);
+    // The action bar under everything.
+    expect(at(r.placed, "actions").top).toBe(200 + GAP + 100 + GAP);
+  });
+
+  it("two columns 600 / 300 px: the tall one's bottom tile goes under the short one — one move", () => {
+    const placed = [tile("t1", 0, 0, 400), tile("t2", 0, 416, 184), tile("u1", 3, 0, 300), bar];
+    expect(tileColumns(placed).map((c) => c.bottom)).toEqual([600, 300]);
+    const even = evenColumns(placed, 6, GAP);
+    expect(at(even, "t2")).toMatchObject({ col: 3, top: 300 + GAP });
+    expect(at(even, "t1")).toMatchObject({ col: 0, top: 0 });
+    expect(at(even, "u1")).toMatchObject({ col: 3, top: 0 });
+    expect(tileColumns(even).map((c) => c.bottom)).toEqual([400, 500]);
+    // Moving it back would make the lowest bottom lower again: the evening stopped after one move.
+    expect(allUp(placed, 6, GAP)!.moved).toEqual(["t2"]);
+  });
+
+  it("a tile too wide for the short column is left where it is", () => {
+    const placed = [tile("t1", 0, 0, 400), tile("t2", 0, 416, 184, 4), tile("u1", 4, 0, 300, 2), bar];
+    expect(evenColumns(placed, 6, GAP).map(({ id, col, top }) => ({ id, col, top }))).toEqual(
+      placed.map(({ id, col, top }) => ({ id, col, top })),
+    );
+  });
+
+  it("no move when it would not make the lowest bottom higher; a press with nothing to move moves nothing", () => {
+    const placed = [tile("t", 0, 0, 600), tile("u", 3, 0, 300), bar];
+    expect(at(evenColumns(placed, 6, GAP), "t")).toMatchObject({ col: 0, top: 0 });
+    expect(allUp(placed, 6, GAP)).toBeNull();
+  });
+
+  it("tries the next shortest column when the shortest has no room across", () => {
+    // Three columns: the shortest (col 4, 2 units) cannot take a 3-unit tile; the next shortest (col 2) can.
+    const placed = [
+      tile("t1", 0, 0, 500, 2),
+      tile("t2", 0, 516, 200, 3),
+      tile("m", 2, 0, 250, 2),
+      tile("s", 4, 0, 100, 2),
+      bar,
+    ];
+    const even = evenColumns(placed, 6, GAP);
+    expect(at(even, "t2")).toMatchObject({ col: 2, top: 250 + GAP });
+  });
+
+  it("the banners never move, and every tile rises to under them", () => {
+    const placed = [{ id: "box#0", col: 0, units: 6, top: 0, height: 40 }, tile("a", 0, 300, 100), bar];
+    const r = allUp(placed, 6, GAP, 40 + GAP, new Set(["box#0"]))!;
+    expect(at(r.placed, "box#0").top).toBe(0);
+    expect(at(r.placed, "a").top).toBe(40 + GAP);
+    expect(r.moved).toEqual(["a"]);
+  });
+
+  it("is a window event like „Implicit”'s, heard by the packing hook, slid and stored like a drop", () => {
+    expect(TILES_ALL_UP).toBe("ga40-tiles-all-up");
+    const hook = code(read("src", "components", "tiles", "use-tile-packing.ts"));
+    expect(hook).toContain("window.addEventListener(TILES_ALL_UP, onAllUp);");
+    expect(hook).toContain("const r = allUp(placed, columns, metrics().gap, lead, still);");
+    expect(hook).toMatch(/slide\(r\.moved\);\s*store\(r\.moved\[0\], r\.moved\.slice\(1\)\);\s*apply\(\);/);
+    const choice = code(read("src", "components", "tiles", "use-tile-choice.ts"));
+    expect(choice).toContain("window.dispatchEvent(new CustomEvent(TILES_ALL_UP, { detail: reg.entity }));");
+  });
+});

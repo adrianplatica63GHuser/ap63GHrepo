@@ -840,6 +840,7 @@
     },
     "tiles": {
       "groupLabel": "Parts shown",
+      "allUp": "All up",
       "all": "All",
       "defaults": "Default",
       "lastOne": "At least one part stays shown.",

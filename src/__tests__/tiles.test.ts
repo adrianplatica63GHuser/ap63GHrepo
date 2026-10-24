@@ -156,6 +156,9 @@ describe("the Natural Person's tiles", () => {
     ]);
     expect(ro.shared.tiles.all).toBe("Toate");
     expect(ro.shared.tiles.defaults).toBe("Implicit");
+    // Slice 40.40: „Toate sus", left of „Toate".
+    expect(ro.shared.tiles.allUp).toBe("Toate sus");
+    expect(JSON.parse(read("messages", "en-GB.json")).shared.tiles.allUp).toBe("All up");
     expect(read("e2e", "helpers", "tiles.ts")).toContain(`TILE_GROUP = "${ro.shared.tiles.groupLabel}"`);
   });
 

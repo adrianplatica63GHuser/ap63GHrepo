@@ -18,6 +18,9 @@
  * its label greyed and in italics, the reason its tooltip; „Toate" and
  * „Implicit" leave it alone (`useTileChoice`), and it never counts as the last
  * ticked box.
+ *
+ * Slice 40.40: `allUp` draws „Toate sus" left of „Toate" — on the four record screens only, not on Setări's bar nor
+ * the home page's. Pressed, every tile slides up and the tile columns are evened (`allUp` in tile-positions.ts).
  */
 import { useTranslations } from "next-intl";
 import { HelpHint } from "@/components/help/help-hint";
@@ -34,6 +37,7 @@ export function TileSelector<K extends string>({
   marked = [],
   extra = [],
   disabled,
+  allUp = false,
 }: {
   all: readonly K[];
   /**
@@ -54,6 +58,8 @@ export function TileSelector<K extends string>({
   extra?: readonly { key: string; label: string; onRemove: () => void }[];
   /** Slice #38.04: tiles the record cannot show now, each with its reason (the tooltip). */
   disabled?: Readonly<Partial<Record<K, string>>>;
+  /** Slice 40.40: draw „Toate sus" (the four record screens). */
+  allUp?: boolean;
 }) {
   const t = useTranslations("shared.tiles");
   const isOff = (key: K): boolean => disabled?.[key] !== undefined;
@@ -125,6 +131,11 @@ export function TileSelector<K extends string>({
         {/* Slice #37.23 — what the choice does and where it is kept. The text is
             Adrian's, in Texte de ajutor; until he writes it the hint draws nothing. */}
         <HelpHint hintKey="tile-selector" />
+        {allUp && (
+          <button type="button" onClick={choice.allUp} className={buttonClass({ variant: "secondary", size: "sm" })} data-tiles-all-up="">
+            {t("allUp")}
+          </button>
+        )}
         <button type="button" onClick={choice.showAll} className={buttonClass({ variant: "secondary", size: "sm" })}>
           {t("all")}
         </button>

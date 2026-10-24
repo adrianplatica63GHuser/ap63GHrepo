@@ -840,6 +840,7 @@
     },
     "tiles": {
       "groupLabel": "Părți afișate",
+      "allUp": "Toate sus",
       "all": "Toate",
       "defaults": "Implicit",
       "lastOne": "Cel puțin o parte rămâne afișată.",

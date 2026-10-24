@@ -105,6 +105,8 @@
  * no entry for them, so they open at their starting places and nothing stored
  * is lost.
  *
+ * „TOATE SUS" (Slice 40.40): every tile risen, then the tile columns evened — `allUp`, at the end of this file.
+ *
  * PURE — no DOM, no React; `tile-positions.test.ts` covers it.
  */
 import { endsTop, fixedBoxes, freeUnder, overlaps, packTiles, startBoxes, topUnder, type PackBox, type Placed } from "./tile-packing";
@@ -456,4 +458,111 @@ export function placesToStore(
     out[p.id] = storedPlaceOf(placed, p, gap, lead);
   }
   return out;
+}
+
+/**
+ * „TOATE SUS" (Slice 40.40). Adrian, 2026-10-23: „all the tiles - starting from the top - will slide up until they
+ * reach either the edge of the screen, or the tile above; after this action, if we still have a big difference in the
+ * height of the tile columns please take the bottom tiles from the tallest tile column and move it to the shortest tile
+ * column, so we can obtain a balanced height of the tile columns on the screen".
+ *
+ * THE RISE (Ask first 1) is `riseIntoGaps` with no space kept: every tile that is not a banner (`still`) nor the action
+ * bar, taken by its top edge (then left to right), rises in its own columns — never sideways — to right under the
+ * lowest tile already settled above it, or the top under the banners; so a tile risen first is the ceiling of those
+ * under it. The right-hand tiles rise like the rest (40.32 made them boxes).
+ *
+ * THE EVENING (Ask first 2, `evenColumns`): a tile column is the set of tiles sharing a left edge, its height its lowest
+ * tile's bottom. While there are two columns or more, the tallest column's bottom tile goes to the bottom of the
+ * shortest column (PANEL_GAP under it) where it fits across — its units at that column's left edge, inside the row,
+ * overlapping nothing — or, when it does not, of the next shortest; the move is made only when it leaves the lowest
+ * bottom on the screen strictly higher than before, and the evening stops at the first step that cannot do that. A
+ * tile that fits nowhere stays.
+ *
+ * The result is stored as one arrangement, as a drop is (the hook's `store`), and „Implicit" still goes back to the
+ * default. A press with nothing to move moves nothing (`allUp` gives `null`).
+ */
+
+/** The window event „Toate sus" sends, the record kind's entity as its detail (like `TILE_POSITIONS_RESET`). */
+export const TILES_ALL_UP = "ga40-tiles-all-up";
+
+/** The tiles that share a left edge, and how low the lowest of them reaches. */
+export interface TileColumn {
+  col: number;
+  bottom: number;
+  boxes: Placed[];
+}
+
+/** The tile columns of an arrangement, left to right — every box but the row ends. */
+export function tileColumns(placed: readonly Placed[]): TileColumn[] {
+  const byCol = new Map<number, Placed[]>();
+  for (const p of placed) {
+    if (p.rowEnd) continue;
+    const list = byCol.get(p.col) ?? [];
+    list.push(p);
+    byCol.set(p.col, list);
+  }
+  return [...byCol.entries()]
+    .map(([col, boxes]) => ({ col, boxes, bottom: Math.max(...boxes.map((b) => b.top + b.height)) }))
+    .sort((a, b) => a.col - b.col);
+}
+
+/** The lowest bottom on the screen, the row ends left out. */
+function lowestBottom(placed: readonly Placed[]): number {
+  return placed.reduce((m, p) => (p.rowEnd ? m : Math.max(m, p.top + p.height)), 0);
+}
+
+/** The columns evened, as above. `columns`: the row's units. Fixed boxes, `still` ones and the row ends never move. */
+export function evenColumns(placed: readonly Placed[], columns: number, gap: number, still: ReadonlySet<string> = new Set()): Placed[] {
+  let out = placed.map((p) => ({ ...p }));
+  const moves = (p: Placed): boolean => !p.fixed && !p.rowEnd && !still.has(p.id);
+  // Each step moves one tile and lowers the lowest bottom; there cannot be more steps than tiles.
+  for (let step = 0; step < out.length; step++) {
+    const cols = tileColumns(out);
+    if (cols.length < 2) break;
+    const tallest = cols.reduce((a, b) => (b.bottom > a.bottom ? b : a));
+    const me = tallest.boxes.reduce((a, b) => (b.top + b.height > a.top + a.height ? b : a));
+    if (!moves(me)) break;
+    const before = lowestBottom(out);
+    let next: Placed[] | null = null;
+    for (const target of cols.filter((c) => c !== tallest).sort((a, b) => a.bottom - b.bottom || a.col - b.col)) {
+      if (target.col + me.units > columns) continue;
+      const rect = { col: target.col, units: me.units, top: target.bottom + gap, height: me.height };
+      if (out.some((p) => p.id !== me.id && !p.rowEnd && overlaps(p, rect, gap))) continue;
+      const moved = out.map((p) => (p.id === me.id ? { ...p, col: rect.col, top: rect.top } : p));
+      if (lowestBottom(moved) < before - 0.5) {
+        next = moved;
+        break;
+      }
+    }
+    if (!next) break;
+    out = next;
+  }
+  return withRowEnds(out, gap);
+}
+
+/**
+ * „Toate sus": the rise, then the evening. `null` when nothing would move. `moved` names every box whose place
+ * changed — the hook slides them and stores them as one arrangement.
+ */
+export function allUp(
+  placed: readonly Placed[],
+  columns: number,
+  gap: number,
+  lead = 0,
+  still: ReadonlySet<string> = new Set(),
+): { placed: Placed[]; moved: string[] } | null {
+  const even = evenColumns(riseIntoGaps(placed, gap, lead, still), columns, gap, still);
+  const was = new Map(placed.map((p) => [p.id, p]));
+  const moved = even
+    .filter((p) => !p.rowEnd)
+    .filter((p) => {
+      const w = was.get(p.id);
+      return !w || w.col !== p.col || Math.abs(w.top - p.top) > 0.5;
+    })
+    .map((p) => p.id);
+  if (moved.length === 0) return null;
+  // Back in the arrangement's own order, so the DOM's order and the placed order agree.
+  const order = new Map(placed.map((p, i) => [p.id, i]));
+  even.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+  return { placed: even, moved };
 }
