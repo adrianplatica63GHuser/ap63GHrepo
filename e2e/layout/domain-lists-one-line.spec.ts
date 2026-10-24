@@ -41,11 +41,13 @@ const LONG = "cu o denumire mult prea lungă ca să încapă pe un singur rând 
 // and its ticks with it), so there is no gap to measure there, and no header box to align with — `null`. Slice 40.10:
 // the other three lists' boxes went the same way (were 36, 36 and 72), so every gap is `null`; their first columns keep
 // their widths, so the names stay where the boxes left them.
-const LISTS: { path: string; search: string; gap: number | null }[] = [
-  { path: "/properties", search: "caută după Cod, Poreclă, Nr. cadastru, Nr. CF, Tarla/Solă sau Parcelă", gap: null },
-  { path: "/natural-persons", search: "caută după ID, Nume, Poreclă, CNP, Email Personal 1, Email Personal 2, Email serviciu, Telefon Personal 1, Telefon Personal 2 sau Telefon serviciu", gap: null },
-  { path: "/judicial-persons", search: "caută după ID, Denumire, Poreclă, Nr. înregistrare (CUI), Telefon firmă sau E-mail firmă", gap: null },
-  { path: "/documents", search: "caută după Cod, Titlu sau Nr. document", gap: null },
+// Slice 40.37: `searchPx` — the search box's width, pinned at what it took from „Adaugă …" before the button became
+// „+ Nou" (LIST_SEARCH_REM: 10.5, 10, 13 and 7.5 rem).
+const LISTS: { path: string; search: string; gap: number | null; searchPx: number }[] = [
+  { path: "/properties", search: "caută după Cod, Poreclă, Nr. cadastru, Nr. CF, Tarla/Solă sau Parcelă", gap: null, searchPx: 168 },
+  { path: "/natural-persons", search: "caută după ID, Nume, Poreclă, CNP, Email Personal 1, Email Personal 2, Email serviciu, Telefon Personal 1, Telefon Personal 2 sau Telefon serviciu", gap: null, searchPx: 160 },
+  { path: "/judicial-persons", search: "caută după ID, Denumire, Poreclă, Nr. înregistrare (CUI), Telefon firmă sau E-mail firmă", gap: null, searchPx: 208 },
+  { path: "/documents", search: "caută după Cod, Titlu sau Nr. document", gap: null, searchPx: 120 },
 ];
 
 // #39.83: four columns on each list — a long name that always takes two rows, a filterable one, a multi-word name
@@ -187,13 +189,14 @@ test.describe("TC-LAYOUT-05 — cele patru liste, câte un rând pe linie", () =
             .toEqual({ width, list: list.path, rows: 1, notOneLine: [], buttonsOneLine: true, oneLineTall: true, overlap: false, frame: true, gap: list.gap, boxesAligned: list.gap === null ? null : true });
           // #39.83: the band of names — three rows on every cell, no name over two, the funnel alone on the third, a
           // name without one centred; Adrian's long names on two rows (three of `CHOICE` on each list but the juridical persons').
-          // #39.85: the search box as wide as „Adaugă …", its whole explanation on hover (the box's title).
-          const fit = await page.evaluate(() => {
+          // #39.85: the search box as wide as „Adaugă …", its whole explanation on hover (the box's title). Slice 40.37:
+          // the button is „+ Nou" now, and the box keeps the width it took from the old one (`searchPx`) — was
+          // „widthsAgree": the box's width within 1 px of the button's.
+          const fit = await page.evaluate((px) => {
             const box = document.querySelector<HTMLInputElement>("main [data-list-search]")!;
-            const add = document.querySelector<HTMLElement>("main [data-list-add]")!;
-            return { widthsAgree: Math.abs(box.getBoundingClientRect().width - add.getBoundingClientRect().width) <= 1, hover: box.title === box.placeholder && box.title.length > 0 };
-          });
-          expect({ width, list: list.path, ...fit }).toEqual({ width, list: list.path, widthsAgree: true, hover: true });
+            return { pinned: Math.abs(box.getBoundingClientRect().width - px) <= 1, hover: box.title === box.placeholder && box.title.length > 0 };
+          }, list.searchPx);
+          expect({ width, list: list.path, ...fit }).toEqual({ width, list: list.path, pinned: true, hover: true });
           await expect(search).toHaveAttribute("title", list.search);
           // Step 1a (Slice 40.24): no column before the first named one — the band's first cell has a name — and this
           // fresh record's „Nou!" sits in its row's first cell, after the text.
