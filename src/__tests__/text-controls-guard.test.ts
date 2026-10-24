@@ -21,7 +21,7 @@
  *  - A043, A054, A055 choices between values and dialog decisions;
  *  - A056 „HARTĂ" / „SATELIT"; A062 the map's two tabs; A069 „Îndreaptă";
  *    A070 the coordinate formats; A071 the add-property choice tiles and their
- *    drop zones; A020 „Toate" / „Implicit"; A075 the users' tabs; A085 the
+ *    drop zones; A020 „Toate sus" / „Toate" / „Implicit"; A075 the users' tabs; A085 the
  *    reference-data hub; A091 help content's tabs and list; A111 form tabs;
  *    A112 breadcrumbs;
  *  - A001 the sidebar's rows and A015 a filter's dropdown trigger: icon AND
@@ -338,6 +338,7 @@ const ALLOW: Record<string, Allowed[]> = {
     ["A001", "<span className={`flex items-center ${isCollapsed ? \"\" :"],
   ],
   "src/components/tiles/tile-selector.tsx": [
+    ["A020", "{t(\"allUp\")}"], // Slice 40.40: „Toate sus", left of „Toate", words like it
     ["A020", "{t(\"all\")}"],
     ["A020", "{t(\"defaults\")}"],
   ],
