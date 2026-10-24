@@ -222,6 +222,7 @@ fixed fixture where the existing one will do.
 | [TC-TILES-22](cases/TC-TILES-22.md) | O fișă trasă sub „Interacțiuni” rămâne acolo, și după reîncărcare, pe ambele fișe de persoană | tiles | happy | — | `automated` | 2026-10-08 | `e2e/tiles/tiles-under-interactions.spec.ts` |
 | [TC-TILES-23](cases/TC-TILES-23.md) | Bara de butoane e ultimul lucru de pe ecran, la orice lățime, pe persoană, act și proprietate | tiles | happy | — | `automated` | 2026-10-08 | `e2e/tiles/action-bar-lowest.spec.ts` |
 | [TC-TILES-24](cases/TC-TILES-24.md) | O fișă ținută peste alta îi face loc: fișa de dedesubt alunecă în jos, la primul loc liber | tiles | happy | — | `automated` | 2026-10-19 | `e2e/tiles/tiles-make-room.spec.ts` |
+| [TC-TILES-25](cases/TC-TILES-25.md) | Un dreptunghi din harta fișelor se trage ca fișa lui: cele de dedesubt alunecă, fișa se mută | tiles | happy | — | `automated` | 2026-10-24 | `e2e/tiles/tiles-diagram-drag.spec.ts` |
 | [TC-MAP-01](cases/TC-MAP-01.md) | Harta proprietăților deschisă pe proprietatea de pe care vii | map | happy | — | `automated` | 2026-10-05 | `e2e/map/property-map-focus.spec.ts` |
 | [TC-MAP-02](cases/TC-MAP-02.md) | „Suprafața unei zone delimitate": colțurile unei proprietăți alese pe hartă, aria ei în poligon | map | happy | — | `automated` | 2026-10-11 | `e2e/map/area-tools.spec.ts` |
 | [TC-MAP-03](cases/TC-MAP-03.md) | „Suprafața unei zone oarecare": un poligon desenat liber pe hartă, aria lui în el | map | happy | — | `automated` | 2026-10-11 | `e2e/map/area-free.spec.ts` |

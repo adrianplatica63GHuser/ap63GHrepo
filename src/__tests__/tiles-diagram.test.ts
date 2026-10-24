@@ -129,7 +129,8 @@ describe("the tiles diagram's geometry (40.42)", () => {
     const c = read("src", "components", "tiles", "tiles-diagram.tsx");
     expect(c).toContain('aria-hidden="true"');
     expect(c).toContain("pointer-events-none");
-    // The packing hook publishes after a layout, not while a tile is dragged.
-    expect(read("src", "components", "tiles", "use-tile-packing.ts")).toContain("if (entity && !drag?.active) {");
+    // The packing hook publishes after a layout, not while a tile is dragged — except a drag the diagram started (40.53:
+    // it read `toContain("if (entity && !drag?.active) {")`; tiles-diagram-drag.test.ts pins the diagram's drag).
+    expect(read("src", "components", "tiles", "use-tile-packing.ts")).toContain("if (!entity || (drag?.active && !drag.fromDiagram)) return;");
   });
 });

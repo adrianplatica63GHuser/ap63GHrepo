@@ -51,6 +51,58 @@ export interface Diagram {
   rects: DiagramRect[];
   width: number;
   height: number;
+  /** Slice 40.53: a unit's width and the gap between two units, across, in the diagram's px. */
+  unit: number;
+  across: number;
+  /** Slice 40.53: the diagram's px per screen px, down (40.52's one scale); 0 where the floor took over. */
+  scale: number;
+}
+
+/**
+ * Slice 40.53 — how far a tile moves on the screen when its rectangle, which stood at `from` in the diagram, is moved to
+ * `at` (the rectangle's top-left, in the diagram's px). Across: the screen's unit-and-gap per the diagram's. Down, by
+ * the diagram as it stood at the press — not one scale, since the diagram's gaps are 40.52's px and not scaled: in the
+ * columns the rectangle now covers, a top inside a rectangle lands in proportion inside that tile, a top in a gap lands
+ * in proportion in the gap between those tiles on the screen, and a top under them all goes on at the diagram's scale.
+ * So the rectangle laid on another's top-left puts its tile on that tile's, which is the drop the user sees.
+ */
+export function moveOnScreen(
+  at: { x: number; y: number },
+  moving: { id: string },
+  diagram: Pick<Diagram, "rects" | "unit" | "across" | "scale">,
+  tiles: readonly { id: string; col: number; units: number; top: number; height: number }[],
+  screen: { unit: number; gap: number },
+): { dx: number; dy: number } {
+  const byId = new Map(tiles.map((t) => [t.id, t]));
+  const me = byId.get(moving.id);
+  const mine = diagram.rects.find((r) => r.id === moving.id);
+  if (!me || !mine) return { dx: 0, dy: 0 };
+  const pitch = Math.max(0.01, diagram.unit + diagram.across);
+  const left = (at.x / pitch) * (screen.unit + screen.gap);
+  // Down past every rectangle: the diagram's scale, or where the floor took over, the rectangle's own over its tile's.
+  const down = diagram.scale > 0 ? 1 / diagram.scale : Math.max(1, me.height) / Math.max(0.5, mine.h);
+  const col = Math.max(0, Math.round(at.x / pitch));
+  const refs = diagram.rects
+    .map((r) => ({ r, t: byId.get(r.id) }))
+    .filter((x): x is { r: DiagramRect; t: NonNullable<typeof x.t> } => !!x.t && x.t.col < col + me.units && col < x.t.col + x.t.units)
+    .sort((a, b) => a.r.y - b.r.y);
+  let top: number | null = null;
+  if (at.y <= 0) top = at.y * down;
+  let prevD = 0;
+  let prevS = 0;
+  for (const { r, t } of refs) {
+    if (top !== null) break;
+    if (at.y < r.y) {
+      top = prevS + ((at.y - prevD) * (t.top - prevS)) / Math.max(0.01, r.y - prevD);
+    } else if (at.y <= r.y + r.h) {
+      top = t.top + ((at.y - r.y) * t.height) / Math.max(0.5, r.h);
+    } else {
+      prevD = Math.max(prevD, r.y + r.h);
+      prevS = Math.max(prevS, t.top + t.height);
+    }
+  }
+  if (top === null) top = prevS + (at.y - prevD) * down;
+  return { dx: left - me.col * (screen.unit + screen.gap), dy: top - me.top };
 }
 
 /** The diagram's own sizes, in px. */
@@ -90,7 +142,7 @@ export function tilesDiagram(
   tiles: readonly DiagramTile[],
   { tileGap, height, maxWidth, columns }: { tileGap: number; height: number; maxWidth: number; columns: number },
 ): Diagram {
-  if (tiles.length === 0 || height <= 0 || maxWidth <= 0) return { rects: [], width: 0, height: 0 };
+  if (tiles.length === 0 || height <= 0 || maxWidth <= 0) return { rects: [], width: 0, height: 0, unit: 0, across: 0, scale: 0 };
   const cols = Math.max(1, columns, ...tiles.map((t) => t.col + t.units));
   // Across: a unit and the gap between units, both shrunk together when the room is short.
   const across0 = tileGap / 2;
@@ -151,5 +203,5 @@ export function tilesDiagram(
     }
   }
   const rects = place(scale, f, floor);
-  return { rects, width: cols * unit + (cols - 1) * across, height: tall(rects) };
+  return { rects, width: cols * unit + (cols - 1) * across, height: tall(rects), unit, across, scale };
 }

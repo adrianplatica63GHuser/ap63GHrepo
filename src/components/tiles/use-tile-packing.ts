@@ -133,7 +133,7 @@ import {
 } from "@/lib/ui/tile-positions";
 import { loadMakeRoomDelay, makeRoomDelayMs } from "./make-room-delay";
 import { isDragSurface } from "./tile-drag-surface";
-import { publishPlaced } from "./tiles-placed";
+import { TILE_DIAGRAM_DRAG, publishPlaced, type DiagramDrag } from "./tiles-placed";
 
 /** How long after a layout the row still settles afresh on a height change, unless the user acts first. */
 export const SETTLE_MS = 2000;
@@ -369,6 +369,8 @@ export function useTilePacking(
       before: Placed[] | null;
       /** 39.91: every tile that made room during this drag. */
       slid: string[];
+      /** 40.53: started from the tiles diagram — no pointer of its own on the row, no scrolling at the window's edges. */
+      fromDiagram?: boolean;
     }
     let drag: Drag | null = null;
 
@@ -403,17 +405,26 @@ export function useTilePacking(
         box.el.dataset.packedCol = String(p.col);
       }
       if (fitWidest) styles.set(container, "min-width", `${widest}px`);
-      // Slice 40.42: tell the tiles diagram where the tiles now stand — not while a tile is dragged (the drop does).
-      if (entity && !drag?.active) {
-        publishPlaced({
-          entity,
-          columns,
-          gap,
-          boxes: placed
-            .filter((p) => !p.rowEnd && byId.has(p.id) && !byId.get(p.id)!.full)
-            .map((p) => ({ id: p.id.replace(/^wrapped:/, ""), col: p.col, units: p.units, top: p.top, height: p.height })),
-        });
-      }
+      publish();
+    };
+
+    // Slice 40.42: tell the tiles diagram where the tiles now stand — not while a tile is dragged (the drop does), except
+    // a drag the diagram started (40.53): it redraws from this as the tiles make room, and rims the tile red where it
+    // cannot drop.
+    const publish = () => {
+      if (!entity || (drag?.active && !drag.fromDiagram)) return;
+      const { unit, gap } = metrics();
+      const byId = new Map(boxes.map((b) => [b.id, b]));
+      publishPlaced({
+        entity,
+        columns,
+        gap,
+        unit,
+        boxes: placed
+          .filter((p) => !p.rowEnd && byId.has(p.id) && !byId.get(p.id)!.full)
+          .map((p) => ({ id: p.id.replace(/^wrapped:/, ""), col: p.col, units: p.units, top: p.top, height: p.height })),
+        ...(drag?.active && drag.fromDiagram ? { drag: { id: drag.box.id.replace(/^wrapped:/, ""), free: drag.free } } : {}),
+      });
     };
 
     const heights = () => new Map(boxes.map((b) => [b.id, b.el.offsetHeight]));
@@ -631,6 +642,8 @@ export function useTilePacking(
       }
       // The space under the lowest tile is always free: the row grows to hold the outline.
       styles.set(container, "height", `${Math.max(packedHeight(placed), place.top + drag.from.height)}px`);
+      // 40.53: the diagram rims its rectangle red where the tile cannot drop.
+      if (drag.fromDiagram) publish();
     };
 
     const start = () => {
@@ -648,9 +661,9 @@ export function useTilePacking(
       outline.setAttribute("aria-hidden", "true");
       Object.assign(outline.style, { position: "absolute", border: "2px dashed", borderRadius: "0.375rem", pointerEvents: "none", zIndex: "20" });
       container.appendChild(outline);
-      // Near the window's top or bottom the page scrolls, and the tile with it.
+      // Near the window's top or bottom the page scrolls, and the tile with it — not for a drag the diagram runs (40.53).
       edge = window.setInterval(() => {
-        if (!drag?.active) return;
+        if (!drag?.active || drag.fromDiagram) return;
         const by = drag.y < EDGE_PX ? -16 : drag.y > window.innerHeight - EDGE_PX ? 16 : 0;
         if (by === 0) return;
         drag.scroller.scrollTop += by;
@@ -763,6 +776,34 @@ export function useTilePacking(
     container.addEventListener("pointerleave", onLeave);
     container.addEventListener("dblclick", onDouble);
 
+    // Slice 40.53 — a drag started from the tiles diagram, run as this hook's own: the diagram tells how far the tile has
+    // moved from where it stood, in the screen's px, so `follow` places it, snaps the outline, starts the make-room count
+    // and makes room exactly as for a drag on the screen; a drop stores it as any drop; Esc (onKey) or a cancel puts
+    // everything back.
+    const onDiagram = (e: Event) => {
+      const d = (e as CustomEvent<DiagramDrag>).detail;
+      if (d.entity !== entity) return;
+      if (d.phase === "start") {
+        if (drag) return;
+        const box = boxes.find((b) => b.id.replace(/^wrapped:/, "") === d.id && !b.rowEnd && !b.full);
+        const from = box && placed.find((p) => p.id === box.id);
+        if (!box || !from) return;
+        const scroller = scrollerOf(container);
+        drag = { box, from, x0: 0, y0: 0, x: d.dx, y: d.dy, scroller, scroll0: scroller.scrollTop, active: false, place: null, free: false, held: null, before: null, slid: [], fromDiagram: true };
+        window.addEventListener("keydown", onKey, true);
+        start();
+        follow();
+        return;
+      }
+      if (!drag?.fromDiagram) return;
+      if (d.phase === "move") {
+        drag.x = d.dx;
+        drag.y = d.dy;
+        follow();
+      } else end(d.phase === "drop");
+    };
+    window.addEventListener(TILE_DIAGRAM_DRAG, onDiagram);
+
     // „Implicit" forgot the arrangement: lay the row out afresh even if no tile came or went.
     const onReset = (e: Event) => {
       if ((e as CustomEvent<string>).detail !== entity) return;
@@ -803,6 +844,7 @@ export function useTilePacking(
       container.removeEventListener("dblclick", onDouble);
       window.removeEventListener(TILE_POSITIONS_RESET, onReset);
       window.removeEventListener(TILES_ALL_UP, onAllUp);
+      window.removeEventListener(TILE_DIAGRAM_DRAG, onDiagram);
       document.removeEventListener("visibilitychange", shown);
     };
   }, [ref, fitWidest, entity, rightKey, flowUnits]);

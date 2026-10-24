@@ -60,6 +60,19 @@ describe("the drag's pieces are put together in useTilePacking alone (39.91)", (
     for (const n of PIECES) expect(hook!.names).toContain(n);
   });
 
+  // Slice 40.53: the tiles diagram drags tiles too — only by telling the hook (`dragFromDiagram`), never with a piece.
+  it("the tiles diagram imports none of the pieces, and drags through dragFromDiagram", () => {
+    const diagram = all.find((f) => f.rel === "src/components/tiles/tiles-diagram.tsx");
+    expect(diagram).toBeDefined();
+    expect(diagram!.names.filter((n) => PIECES.includes(n))).toEqual([]);
+    expect(diagram!.names).toContain("dragFromDiagram");
+  });
+
+  it("only the hook listens for a drag the diagram starts", () => {
+    const listeners = all.filter((f) => f.names.includes("TILE_DIAGRAM_DRAG")).map((f) => f.rel);
+    expect(listeners).toEqual(ALLOWED);
+  });
+
   it("the parser reads aliases, type imports and re-exports", () => {
     expect(importedNames('import { canDrop as c, type X } from "@/lib/ui/tile-positions";\nexport { dropAt } from "./x";')).toEqual(["canDrop", "X", "dropAt"]);
   });

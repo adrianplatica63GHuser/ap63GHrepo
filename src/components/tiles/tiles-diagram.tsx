@@ -15,13 +15,26 @@
  *
  * WHEN (Ask first 4): it redraws from the packing hook's snapshot (`TILES_PLACED`) — after a layout, a drop, a
  * double-click, „Toate sus", a tick — and when the bar or the header changes size.
+ *
+ * Slice 40.53 (Adrian, 2026-10-24: „The rectangles inside this tiles map can be moved in the same way that the tiles can
+ * be moved … while moving it, the rectangles that come under this moving rectangle will also be sliding down"): a
+ * rectangle pressed and moved past the drag threshold drags its tile — the packing hook's own drag, told through
+ * `dragFromDiagram` (Ask first 1), so the same free-space rule, make-room delay, drop and store run. The rectangle
+ * follows the pointer; the others redraw from the hook's live snapshot as their tiles make room; red where the tile
+ * cannot drop (Ask first 2). A click does nothing; Esc, or a release outside the diagram, puts everything back. Only
+ * the rectangles take the pointer, „grab" over them; the diagram stays `aria-hidden` — no keyboard path, as the tiles
+ * have none (Ask first 3). Every rectangle's tile can be dragged, previews too (Ask first 4).
  */
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 
-import { tilesDiagram, type Diagram, type DiagramTile } from "@/lib/ui/tiles-diagram";
+import { moveOnScreen, tilesDiagram, type Diagram, type DiagramRect, type DiagramTile } from "@/lib/ui/tiles-diagram";
 import { groupColours } from "@/lib/ui/tile-surface";
 import type { TileGroup } from "@/lib/ui/tiles";
-import { TILES_PLACED, lastPlaced, type PlacedSnapshot } from "./tiles-placed";
+import { TILES_PLACED, dragFromDiagram, lastPlaced, type PlacedSnapshot } from "./tiles-placed";
+import { DRAG_THRESHOLD_PX } from "./use-tile-packing";
+
+/** Slice 40.53: a rectangle being dragged — where it stood at the press, and how far the pointer has moved it. */
+type Held = { id: string; rect: DiagramRect; x0: number; y0: number; dx: number; dy: number; active: boolean; toScreen: (dx: number, dy: number) => { dx: number; dy: number } };
 
 /** The gap kept between the diagram and the version controls, in px. */
 const CLEAR_PX = 12;
@@ -103,7 +116,7 @@ export function TilesDiagram({ entity, groupOf }: { entity: string; groupOf: (id
     };
   });
 
-  let diagram: Diagram = { rects: [], width: 0, height: 0 };
+  let diagram: Diagram = { rects: [], width: 0, height: 0, unit: 0, across: 0, scale: 0 };
   const room = !!frame && frame.width >= DIAGRAM_MIN_ROOM_PX && frame.height > 0;
   if (snapshot && frame && room) {
     const tiles: DiagramTile[] = [];
@@ -113,6 +126,66 @@ export function TilesDiagram({ entity, groupOf }: { entity: string; groupOf: (id
     }
     diagram = tilesDiagram(tiles, { tileGap: snapshot.gap, height: frame.height, maxWidth: frame.width, columns: snapshot.columns });
   }
+  const [held, setHeld] = useState<Held | null>(null);
+  const heldRef = useRef<Held | null>(null);
+
+  // Slice 40.53: the drag — window listeners while a rectangle is held; the hook does the rest.
+  useEffect(() => {
+    if (!held) return;
+    const update = (next: Held | null) => {
+      heldRef.current = next;
+      setHeld(next);
+    };
+    const onMove = (e: PointerEvent) => {
+      const h = heldRef.current;
+      if (!h) return;
+      const dx = e.clientX - h.x0;
+      const dy = e.clientY - h.y0;
+      if (!h.active && Math.hypot(dx, dy) < DRAG_THRESHOLD_PX) return;
+      e.preventDefault();
+      const on = h.toScreen(dx, dy);
+      dragFromDiagram({ entity, id: h.id, phase: h.active ? "move" : "start", dx: on.dx, dy: on.dy });
+      update({ ...h, dx, dy, active: true });
+    };
+    const onUp = (e: PointerEvent) => {
+      const h = heldRef.current;
+      update(null);
+      if (!h?.active) return;
+      const box = ref.current?.getBoundingClientRect();
+      const inside = !!box && e.clientX >= box.left && e.clientX <= box.right && e.clientY >= box.top - 8 && e.clientY <= box.bottom + 8;
+      dragFromDiagram({ entity, id: h.id, phase: inside ? "drop" : "cancel", dx: 0, dy: 0 });
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      const h = heldRef.current;
+      update(null);
+      if (h?.active) dragFromDiagram({ entity, id: h.id, phase: "cancel", dx: 0, dy: 0 });
+    };
+    window.addEventListener("pointermove", onMove, true);
+    window.addEventListener("pointerup", onUp, true);
+    window.addEventListener("pointercancel", onUp, true);
+    window.addEventListener("keydown", onKey, true);
+    return () => {
+      window.removeEventListener("pointermove", onMove, true);
+      window.removeEventListener("pointerup", onUp, true);
+      window.removeEventListener("pointercancel", onUp, true);
+      window.removeEventListener("keydown", onKey, true);
+    };
+  }, [held !== null, entity]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const press = (r: DiagramRect) => (e: ReactPointerEvent) => {
+    if (e.button !== 0 || !e.isPrimary || !snapshot) return;
+    e.preventDefault();
+    // The diagram and the tiles as they stood at the press: the rectangles that slide meanwhile do not change the map.
+    const shape = { rects: diagram.rects, unit: diagram.unit, across: diagram.across, scale: diagram.scale };
+    const tiles = snapshot.boxes;
+    const screen = { unit: snapshot.unit, gap: snapshot.gap };
+    const next: Held = { id: r.id, rect: r, x0: e.clientX, y0: e.clientY, dx: 0, dy: 0, active: false, toScreen: (dx, dy) => moveOnScreen({ x: r.x + dx, y: r.y + dy }, r, shape, tiles, screen) };
+    heldRef.current = next;
+    setHeld(next);
+  };
+  const dragged = held?.active ? held : null;
+  const refused = dragged && snapshot?.drag?.id === dragged.id && snapshot.drag.free === false;
 
   return (
     <div
@@ -123,15 +196,21 @@ export function TilesDiagram({ entity, groupOf }: { entity: string; groupOf: (id
       className="pointer-events-none absolute"
       style={frame && room ? { left: frame.left, top: frame.top, width: diagram.width, height: frame.height } : { display: "none" }}
     >
-      {diagram.rects.map((r) => (
-        <div
-          key={r.id}
-          data-diagram-rect={r.id}
-          data-group={r.group}
-          className={`absolute rounded-[2px] border ${groupColours(r.group)}`}
-          style={{ left: r.x, top: r.y, width: r.w, height: r.h }}
-        />
-      ))}
+      {diagram.rects.map((r) => {
+        // 40.53: the rectangle dragged follows the pointer from where it stood at the press, above the rest.
+        const at = dragged?.id === r.id ? { ...dragged.rect, x: dragged.rect.x + dragged.dx, y: dragged.rect.y + dragged.dy } : r;
+        return (
+          <div
+            key={r.id}
+            data-diagram-rect={r.id}
+            data-group={r.group}
+            data-diagram-dragged={dragged?.id === r.id ? (refused ? "refused" : "free") : undefined}
+            className={`pointer-events-auto absolute rounded-[2px] border ${groupColours(r.group)} ${dragged?.id === r.id ? "z-10 cursor-grabbing shadow" : "cursor-grab"}${refused && dragged?.id === r.id ? " !border-red-600 ring-1 ring-red-600" : ""}`}
+            style={{ left: at.x, top: at.y, width: at.w, height: at.h, touchAction: "none" }}
+            onPointerDown={press(r)}
+          />
+        );
+      })}
     </div>
   );
 }
