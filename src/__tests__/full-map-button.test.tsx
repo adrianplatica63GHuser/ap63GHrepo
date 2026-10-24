@@ -23,7 +23,8 @@ describe("„Hartă completă” (40.50)", () => {
     expect(block.indexOf("<ArrowRight")).toBeGreaterThan(-1);
     expect(block.indexOf("<ArrowRight")).toBeLessThan(block.indexOf("<GlobePinsIcon"));
     // No words inside the button: only the two icons.
-    const inner = block.slice(block.indexOf(">", block.indexOf("<button")) + 1, block.indexOf("</button>"));
+    // The opening tag ends at the `>` on its own line (an attribute's `=>` is not its end).
+    const inner = /<button[\s\S]*?\n\s*>([\s\S]*?)<\/button>/.exec(block)![1];
     expect(inner.replace(/<[^>]+\/>/g, "").trim()).toBe("");
     expect(VIEW).not.toMatch(/Map as MapIcon/);
   });
