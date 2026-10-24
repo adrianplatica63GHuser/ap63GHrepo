@@ -201,7 +201,8 @@ describe("the four lists keep their view in their address (#39.26)", () => {
     expect(view).toContain('useState(address.filters.field ?? "")');
     expect(view).toContain('useState(address.filters.value ?? "")');
     // Slice #39.63: and the shared bar's keys with them (`FILTER_KEYS`); it carried DOCUMENT_ADDRESS_FILTERS alone.
-    expect(view).toContain("const FILTER_KEYS = [...DOCUMENT_ADDRESS_FILTERS, ...DOCUMENT_FILTER_KEYS];");
+    // Slice 40.46: and the list's order (`sort`, `order`), carried too (it read `[…, ...DOCUMENT_FILTER_KEYS]`).
+    expect(view).toContain("const FILTER_KEYS = [...DOCUMENT_ADDRESS_FILTERS, ...DOCUMENT_FILTER_KEYS, ...ORDER_KEYS];");
     expect(view).toContain("carryListAddress(new URLSearchParams(window.location.search), FILTER_KEYS)");
   });
 

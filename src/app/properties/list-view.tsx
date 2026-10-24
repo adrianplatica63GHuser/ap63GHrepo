@@ -120,6 +120,9 @@ function formatArea(raw: string | null): string {
   }).format(n);
 }
 
+/** Slice 40.46: the filter bar's keys and the list's order (`sort`, `order`) — what the list reads from its address. */
+const FILTER_KEYS = [...PROPERTY_FILTER_KEYS, ...ORDER_KEYS];
+
 export function PropertyListView() {
   const t       = useTranslations("property");
   // Slice 40.20: the band's and „Câmpuri afișate"'s short names (Adrian, 2026-10-21); the forms keep `t`'s.
@@ -129,7 +132,7 @@ export function PropertyListView() {
   const router = useRouter();
 
   // Slice #39.26: the view starts from the list's address — Back from a record brings it back as it was left.
-  const address = useListAddress([...PROPERTY_FILTER_KEYS, ...ORDER_KEYS]);
+  const address = useListAddress(FILTER_KEYS);
   const [searchInput,     setSearchInput]     = useState(address.search);
   // Slice #39.61: the filter bar — from the address, like the search; a change goes back to the first page.
   const [filters, setFilters] = useState<FilterState>(() => parsePropertyFilters({ get: (k) => address.filters[k] ?? null }));
