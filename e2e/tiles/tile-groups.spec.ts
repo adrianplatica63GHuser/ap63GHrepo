@@ -73,7 +73,8 @@ async function expectTwoRows(page: Page, url: string): Promise<void> {
 
 /**
  * Step 9 (40.42): the diagram right of the bar — one rectangle per tile box on screen (not the action bar), each in its
- * group's fill, all the same height; inside the header's top and the bar's bottom; clear of the version controls.
+ * group's fill; inside the header's top and the bar's bottom; clear of the version controls. Step 9a (40.52): each
+ * rectangle as tall as its tile in proportion — one scale for all, none under 3 px (it read „all the same height").
  */
 async function expectDiagram(page: Page, url: string, width: number): Promise<void> {
   // No room before the version controls (a sale contract at 1366: its record boxes fill the first row) — then it is not
@@ -101,14 +102,25 @@ async function expectDiagram(page: Page, url: string, width: number): Promise<vo
         hidden: dg.getAttribute("aria-hidden"),
         rects: rects.length,
         boxes: boxes.length,
-        heights: [...new Set(rects.map((r) => Math.round(R(r).height * 10) / 10))].length,
+        // 40.52: each rectangle's height over its tile's — one scale for all above the 3-px floor (it read the number
+        // of distinct heights, 1).
+        ratios: rects
+          .map((r) => {
+            const id = r.dataset.diagramRect!;
+            const box = boxes.find((b) => b.dataset.tile === id || b.querySelector(`:scope > [data-tile="${CSS.escape(id)}"]`));
+            return box ? { h: R(r).height, ratio: R(r).height / R(box).height } : null;
+          })
+          .filter((x): x is { h: number; ratio: number } => x !== null),
         fills: rects.map((r) => [r.dataset.group ?? "", getComputedStyle(r).backgroundColor]),
         inside: R(dg).top >= R(header).top - 1 && R(dg).bottom <= R(bar).bottom + 1,
         clear: slot ? R(dg).right <= R(slot).left : true,
       };
     });
-    return d;
-  }, { timeout: 15_000 }).toMatchObject({ hidden: "true", heights: 1, inside: true, clear: true });
+    if (!d) return null;
+    const scaled = d.ratios.filter((x) => x.h > 3.5).map((x) => x.ratio);
+    const spread = scaled.length > 1 ? Math.max(...scaled) / Math.min(...scaled) : 1;
+    return { hidden: d.hidden, inside: d.inside, clear: d.clear, matched: d.ratios.length === d.rects, floor: d.ratios.every((x) => x.h >= 2.9), oneScale: spread <= 1.06 };
+  }, { timeout: 15_000 }).toMatchObject({ hidden: "true", inside: true, clear: true, matched: true, floor: true, oneScale: true });
   const d = await page.evaluate(() => ({
     rects: document.querySelectorAll("[data-tiles-diagram] [data-diagram-rect]").length,
     boxes: [...document.querySelectorAll<HTMLElement>("[data-tile-row] [data-packed-col]")].filter((e) => e.offsetParent !== null && !e.classList.contains("order-last")).length,

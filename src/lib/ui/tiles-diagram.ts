@@ -14,11 +14,15 @@
  *     each unit `unit` px and the gap between two units `across` px — half the minimum gap between tiles (8 px) unless
  *     the room is short, when both shrink; so two or three columns read as on the screen, and a tile two units wide is
  *     twice a one-unit tile and the gap.
- *   - DOWN, every rectangle the same height; above each, half the gap above its tile — between the minimum gap's half
- *     (8 px) and double the minimum gap (32 px) — under the lowest rectangle above it in its units, or the diagram's top
- *     (half the space above a tile with nothing above it, at most 32 px). The height is the largest that fits the
- *     tallest stack into the room; when even the smallest rectangles with those gaps do not fit, the gaps shrink with
- *     them.
+ *   - DOWN, since Slice 40.52 (Adrian, 2026-10-24: „The height of the small rectangles will be proportional to the
+ *     actual height of the tile; Of course, we must make sure that any manner of stacking these rectangles will still
+ *     fit in the space allocated for this tiles map"): each rectangle its tile's height × one scale for all — the
+ *     largest that fits the deepest stack into the room — and never under `DIAGRAM.minHeight` (3 px), so a one-line
+ *     tile beside a tall one stays visible (Ask first 1, 2). Above each, half the gap above its tile — between the
+ *     minimum gap's half (8 px) and double the minimum gap (32 px), in px, not scaled with the tiles — under the lowest
+ *     rectangle above it in its units, or the diagram's top (half the space above a tile with nothing above it, at most
+ *     32 px). When even the floor with those gaps does not fit, the gaps shrink first, then the floor (40.42's order).
+ *     40.42 gave every rectangle one height, the largest that fitted.
  *
  * PURE — no DOM; `tiles-diagram.test.ts` covers it. The component is `src/components/tiles/tiles-diagram.tsx`.
  */
@@ -55,8 +59,8 @@ export const DIAGRAM = {
   unit: 12,
   /** The smallest a unit is drawn, however short the room. */
   minUnit: 3,
-  /** The smallest rectangle height before the gaps shrink too. */
-  minHeight: 4,
+  /** The smallest a rectangle is drawn, however short its tile (40.52; 40.42's equal heights had 4 before the gaps shrank). */
+  minHeight: 3,
 } as const;
 
 /** The gap above a rectangle: half the gap above its tile, between half the minimum tile gap and double it. */
@@ -95,50 +99,56 @@ export function tilesDiagram(
   const unit = Math.max(DIAGRAM.minUnit, Math.floor(DIAGRAM.unit * k * 100) / 100);
   const across = Math.max(1, Math.floor(across0 * k * 100) / 100);
   const stack = stacking(tiles);
-  const place = (h: number, f: number): DiagramRect[] => {
+  // A rectangle's height: its tile's × the scale `sc`, never under the floor `floor` (40.52).
+  const place = (sc: number, f: number, floor: number = DIAGRAM.minHeight): DiagramRect[] => {
     const at = new Map<string, DiagramRect>();
     for (const { tile, above, gap } of stack) {
       const g = diagramGap(gap, tileGap, above.length === 0) * f;
-      const y = above.length ? Math.max(...above.map((p) => at.get(p.id)!.y + h)) + g : g;
+      const y = above.length ? Math.max(...above.map((p) => at.get(p.id)!.y + at.get(p.id)!.h)) + g : g;
       at.set(tile.id, {
         id: tile.id,
         group: tile.group,
         x: tile.col * (unit + across),
         y,
         w: tile.units * unit + (tile.units - 1) * across,
-        h,
+        h: Math.max(floor, Math.max(0, tile.height) * sc),
       });
     }
     return tiles.map((t) => at.get(t.id)!);
   };
   const tall = (rs: readonly DiagramRect[]) => rs.reduce((m, r) => Math.max(m, r.y + r.h), 0);
-  // The tallest rectangles that fit, the gaps as the rule gives them…
-  let lo = 0;
-  let hi = height;
-  for (let i = 0; i < 40; i++) {
-    const mid = (lo + hi) / 2;
-    if (tall(place(mid, 1)) <= height) lo = mid;
-    else hi = mid;
-  }
-  let h = Math.floor(lo * 100) / 100;
+  const fits = (rs: readonly DiagramRect[]) => tall(rs) <= height;
+  // The largest scale that fits the deepest stack, the gaps as the rule gives them: no rectangle can be taller than the
+  // room, so the scale is at most the room over the tallest tile.
+  const tallest = Math.max(1, ...tiles.map((t) => t.height));
+  let scale = 0;
   let f = 1;
-  // …and when even the smallest do not fit, the gaps shrink with them.
-  if (h < DIAGRAM.minHeight) {
-    h = DIAGRAM.minHeight;
+  let floor: number = DIAGRAM.minHeight;
+  if (fits(place(0, 1))) {
+    let lo = 0;
+    let hi = height / tallest;
+    for (let i = 0; i < 40; i++) {
+      const mid = (lo + hi) / 2;
+      if (fits(place(mid, 1))) lo = mid;
+      else hi = mid;
+    }
+    scale = Math.floor(lo * 1e6) / 1e6;
+  } else {
+    // Even the floor with those gaps does not fit: the gaps shrink first…
     let a = 0;
     let b = 1;
     for (let i = 0; i < 40; i++) {
       const mid = (a + b) / 2;
-      if (tall(place(h, mid)) <= height) a = mid;
+      if (fits(place(0, mid))) a = mid;
       else b = mid;
     }
     f = a;
-    // Not even with no gaps: the rectangles share the height among the deepest stack.
-    if (tall(place(h, f)) > height) {
+    // …then, with no gaps at all, the floor: the rectangles share the height among the deepest stack.
+    if (!fits(place(0, f))) {
       f = 0;
-      h = Math.max(1, Math.floor((height / Math.max(1, tall(place(1, 0)))) * 100) / 100);
+      floor = Math.max(0.5, Math.floor((height / Math.max(1, tall(place(0, 0, 1)))) * 100) / 100);
     }
   }
-  const rects = place(h, f);
+  const rects = place(scale, f, floor).map((r) => ({ ...r, h: Math.floor(r.h * 100) / 100 }));
   return { rects, width: cols * unit + (cols - 1) * across, height: tall(rects) };
 }
