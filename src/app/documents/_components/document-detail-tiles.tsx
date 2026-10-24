@@ -197,7 +197,7 @@ export function DocumentDetailTiles({
         {/* Drawn once the type is known (`ready`, see document-tiles.ts): a tick
             made before would be stored under a key the type then replaces. */}
         {layout.ready !== false && (
-          <TileSelector all={reg.all} groups={groupedTiles(reg)} labels={labels} choice={choice} marked={marked} extra={previewEntries} allUp />
+          <TileSelector all={reg.all} groups={groupedTiles(reg)} labels={labels} choice={choice} marked={marked} extra={previewEntries} allUp twoRows />
         )}
 
         <PreviewOpenerProvider previews={previews}>

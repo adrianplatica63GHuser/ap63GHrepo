@@ -137,7 +137,7 @@ export function PropertyDetailTiles({
       </header>
 
       <div className="flex flex-col gap-4" style={unitRowStyle("property")}>
-        <TileSelector all={PROP_TILES} groups={groupedTiles(PROP_TILE_REGISTRY)} labels={labels} choice={choice} extra={previewEntries} disabled={offReasons} allUp />
+        <TileSelector all={PROP_TILES} groups={groupedTiles(PROP_TILE_REGISTRY)} labels={labels} choice={choice} extra={previewEntries} disabled={offReasons} allUp twoRows />
 
         <PreviewOpenerProvider previews={previews}>
         <TileAreas right={rightAll} slotRefs={slotRefs} entity={PROP_TILE_REGISTRY.entity}>

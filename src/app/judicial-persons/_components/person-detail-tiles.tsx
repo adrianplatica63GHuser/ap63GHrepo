@@ -121,7 +121,7 @@ export function JudicialPersonDetailTiles({
       </header>
 
       <div className="flex flex-col gap-4" style={unitRowStyle("judicialPerson")}>
-        <TileSelector all={JP_TILES} groups={groupedTiles(JP_TILE_REGISTRY)} labels={labels} choice={choice} extra={previewEntries} allUp />
+        <TileSelector all={JP_TILES} groups={groupedTiles(JP_TILE_REGISTRY)} labels={labels} choice={choice} extra={previewEntries} allUp twoRows />
 
         <PreviewOpenerProvider previews={previews}>
         {/* Slice #37.75: each box right under the box above it; #37.89: the right-hand column (`TileAreas`). */}

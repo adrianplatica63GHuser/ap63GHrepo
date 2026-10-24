@@ -72,8 +72,8 @@ test.describe("TC-PERS-07 — „Interacțiuni” pe cele două fișe de persoan
       const tile = page.getByRole("region", { name: "Interacțiuni", exact: true });
       await expect(tileBox(page, "Interacțiuni")).toBeChecked({ timeout: 30_000 });
       await expect(tile).toBeVisible({ timeout: 30_000 });
-      const boxes = page.locator("[data-tile-selector] label");
-      await expect(boxes.last()).toHaveText("Interacțiuni");
+      // Slice 40.41: the bar's groups stand in whatever order evens its two rows, so the box is read in its purple strip
+      // alone — was also „the bar's last box" (`[data-tile-selector] label` .last()).
       await expect(page.locator('[data-tile-group="fixed"] label')).toHaveText(["Interacțiuni"]);
       expect(await page.locator('[data-tile-group="fixed"]').evaluate((e) => getComputedStyle(e).backgroundColor)).toBe(PURPLE);
       await expect(tile.locator("[data-interactions-empty]")).toHaveText(EMPTY, { timeout: 30_000 });
@@ -130,7 +130,9 @@ test.describe("TC-PERS-07 — „Interacțiuni” pe cele două fișe de persoan
       await page.goto(`/judicial-persons/${jp}`);
       await expect(page.getByRole("region", { name: "Interacțiuni", exact: true })).toBeVisible({ timeout: 30_000 });
       // Slice #38.30: „Date de înregistrare" (was „Identitate"), „Reprezentanți și contact"; the Judicial Person keeps „Interacțiuni" ticked.
-      await expect(boxes).toHaveText(["Date de înregistrare", "Reprezentanți și contact", "Adrese", "Legături", "Clasificare", "Etichete și grupuri", "Interacțiuni"]);
+      // Slice 40.41: in any order — the two-row bar orders its groups to even its rows.
+      const names = ["Date de înregistrare", "Reprezentanți și contact", "Adrese", "Legături", "Clasificare", "Etichete și grupuri", "Interacțiuni"];
+      await expect.poll(async () => (await page.locator("[data-tile-selector] label").allTextContents()).map((t) => t.trim()).sort()).toEqual([...names].sort());
       await expect(page.locator('[data-panel="identity"] h2').first()).toContainText("Date de înregistrare");
       // FU-312: read once, the tile was now and then 9 px higher than „Pagini" — measured before the company's
       // screen had settled (green alone each time; again in full 20261010T234115Z-18004). Polled, as step 4 is.

@@ -63,7 +63,7 @@ describe("„Toate sus” (40.40)", () => {
       ["src", "app", "properties", "_components", "property-detail-tiles.tsx"],
       ["src", "app", "documents", "_components", "document-detail-tiles.tsx"],
     ]) {
-      expect([f.join("/"), /<TileSelector [^>]*\ballUp \/>/.test(read(...f))]).toEqual([f.join("/"), true]);
+      expect([f.join("/"), /<TileSelector [^>]*\ballUp\b/.test(read(...f))]).toEqual([f.join("/"), true]);
     }
     expect(read("src", "app", "_components", "dashboard-client.tsx")).not.toMatch(/<TileSelector [^>]*\ballUp\b/);
     expect(read("src", "app", "admin", "settings", "_components", "settings-view.tsx")).not.toMatch(/<TileSelector [^>]*\ballUp\b/);

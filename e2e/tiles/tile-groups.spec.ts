@@ -39,10 +39,41 @@ async function fill(el: Locator): Promise<string> {
   });
 }
 
+/** Slice 40.41: the strips' groups in any order — the two-row bar puts them where the rows come out even. */
+const byGroup = (s: [string, string[]][]) => [...s].sort((a, b) => a[0].localeCompare(b[0]));
+
+/**
+ * Step 8 (40.41): the bar on two rows — no group's boxes on both rows (unless the group alone is wider than a row), the
+ * buttons the last thing on the second row, the first row the wider.
+ */
+async function expectTwoRows(page: Page, url: string): Promise<void> {
+  const r = await page.locator("[data-tile-selector]").evaluate((bar) => {
+    const rows = [...bar.querySelectorAll<HTMLElement>("[data-tile-bar-row]")];
+    const R = (e: Element) => e.getBoundingClientRect();
+    const widthOf = (row: HTMLElement) => R(row.lastElementChild!).right - R(row.firstElementChild!).left;
+    const keys = (row: HTMLElement) => [...row.querySelectorAll<HTMLElement>("[data-tile-group]")].map((g) => g.dataset.tileGroup ?? "");
+    return {
+      mode: (bar as HTMLElement).dataset.tileRows,
+      keys: rows.map(keys),
+      lastIsButtons: rows[1]?.lastElementChild?.hasAttribute("data-tile-bar-buttons") ?? false,
+      widths: rows.map(widthOf),
+      room: bar.parentElement!.clientWidth,
+      split: [...bar.querySelectorAll<HTMLElement>("[data-tile-group]")].map((g) => g.dataset.tileGroup).filter((k, i, a) => a.indexOf(k) !== i),
+    };
+  });
+  expect({ url, mode: r.mode, rows: r.keys.length, lastIsButtons: r.lastIsButtons }).toEqual({ url, mode: "2", rows: 2, lastIsButtons: true });
+  const onBoth = r.keys[0].filter((k) => r.keys[1].includes(k));
+  expect({ url, onBoth }).toEqual({ url, onBoth: r.split });
+  expect(r.widths[0]).toBeGreaterThanOrEqual(r.widths[1] - 1);
+  expect(r.widths[0]).toBeLessThanOrEqual(r.room + 1);
+}
+
 async function expectForm(page: Page, url: string, expected: [Group, string[]][]): Promise<void> {
   await page.goto(url);
   await page.getByRole("button", { name: "Toate", exact: true }).click({ timeout: 30_000 });
-  await expect.poll(() => strips(page), { timeout: 30_000 }).toEqual(expected);
+  // Slice 40.41: in any order — was the registry's, left to right.
+  await expect.poll(async () => byGroup(await strips(page)), { timeout: 30_000 }).toEqual(byGroup(expected));
+  await expectTwoRows(page, url);
   for (const [group, names] of expected) {
     expect({ group, fill: await fill(page.locator(`[data-tile-group="${group}"]`)) }).toEqual({ group, fill: FILL[group] });
     for (const name of names) {

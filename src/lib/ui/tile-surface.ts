@@ -91,7 +91,7 @@ export function groupSurface(group: TileGroup): string {
  * The narrow strip a group's checkboxes stand in on the bar (Slice #37.88):
  * the group's fill and rim, rounded like the tiles.
  */
-export function groupStrip(group: TileGroup): string {
+export function groupStrip(group: TileGroup, oneLine = false): string {
   const colours: Record<TileGroup, string> = {
     record:  "border-card-rim bg-card dark:border-zinc-800 dark:bg-zinc-900",
     related: "border-card-related-rim bg-card-related dark:border-card-related-rim-dark dark:bg-card-related-dark",
@@ -99,5 +99,7 @@ export function groupStrip(group: TileGroup): string {
     family:  "border-card-family-rim bg-card-family dark:border-card-family-rim-dark dark:bg-card-family-dark",
     fixed:   "border-card-pinned-rim bg-card-pinned dark:border-card-pinned-rim-dark dark:bg-card-pinned-dark",
   };
-  return `flex flex-wrap items-center gap-x-4 gap-y-1 rounded-md border px-2.5 py-1 ${colours[group]}`;
+  // Slice 40.41: `oneLine` — a strip of the two-row bar never wraps inside: its boxes are measured whole, and a group
+  // too wide for a row is split into two strips instead (tile-bar-rows.ts).
+  return `flex ${oneLine ? "flex-nowrap whitespace-nowrap" : "flex-wrap"} items-center gap-x-4 gap-y-1 rounded-md border px-2.5 py-1 ${colours[group]}`;
 }
