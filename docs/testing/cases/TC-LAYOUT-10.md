@@ -5,7 +5,7 @@
 | **Area** | layout |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `confirmed` |
+| **State** | `automated` |
 | **Last green** | 2026-10-24 |
 
 ## What this proves
@@ -47,6 +47,7 @@ The window is 1366 × 900.
 | 6 | Opens „Proprietăți", presses „Supr. Calc."'s arrows | Icons on Tarla, Parcelă, Supr. Ofic. and Supr. Calc.; Supr. Calc. in use; the rows smallest calculated surface first, as numbers |
 | 7 | Opens „Persoane Juridice", presses „Adăugat la"'s arrows | An icon on „Adăugat la" alone, „Tip" a funnel only; in use, arrow down; the rows newest added first |
 | 8 | Opens „Acte", presses „Pagini"'s arrows | Icons on Data, Pagini, Persoane and Adăugat la, none on Tip or Titlu; „Pagini" in use; the rows fewest pages first |
+| 9 | Opens „Persoane Fizice" with „Gen" among its columns (`gender`, before „Născut pe") and `?gender=MALE` in the address | „Gen"'s funnel in use: navy (`#1E3A8A`) in a navy circle, the funnel filled; every other funnel and every sort icon not in use: the glyph alone — no border, no fill (40.48) |
 
 ## At the end — leaving things as they were found
 
@@ -63,3 +64,11 @@ emulated at 1366 × 900; the four lists' chosen columns written to `localStorage
   which has no funnel, in the funnel's place. `GET /api/people?sort=gender` answered 400.
 - Run 2, Acte → Persoane fizice: steps 8, 7, 6, then 1–5, as written. Nothing in the file changed, so the case is
   confirmed, and `e2e/layout/column-sort.spec.ts` translates it.
+
+**2026-10-24 — `automated`.** `e2e/layout/column-sort.spec.ts` translates the case. Its first green run is the runner's
+`20261024T172744Z-15854` on `9742450` (Slice 40.47); the row moved in Slice 40.48.
+
+**2026-10-24 — Slice 40.48.** Step 9 added: a funnel and a sort icon not in use are the glyph alone (step 1's „two
+arrows, no circle" now with no box either), in use navy in a navy circle. Seen in the pane on localhost:3000 at 1366 px:
+„Gen"'s funnel with `?gender=MALE` white with a navy border and radius, its icon filled navy; „Născut pe"'s funnel and
+the two sort icons with no border and a transparent fill.

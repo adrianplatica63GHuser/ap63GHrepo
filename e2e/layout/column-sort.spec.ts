@@ -1,6 +1,6 @@
 /**
  * Case:   TC-LAYOUT-10 — Pictograma de ordonare din banda de nume: pe coloanele care ordonează, două săgeți; apăsată, o săgeată bleumarin în cerc, toată lista ordonată după coloană
- * Source: docs/testing/cases/TC-LAYOUT-10.md, „Last green" 2026-10-24
+ * Source: docs/testing/cases/TC-LAYOUT-10.md, „Last green" 2026-10-24 (step 9 is 40.48's)
  *
  * A translation of the case file, step for step (Slice 40.47). The columns are chosen by writing each list's stored
  * choice before the page loads, as TC-LAYOUT-05 does. „The rows' order" is read from the list's own answer by the
@@ -59,8 +59,11 @@ test.describe("TC-LAYOUT-10 — pictograma de ordonare din banda de nume", () =>
   test("două săgeți pe coloanele care ordonează; apăsată, o săgeată în cerc, toată lista ordonată după coloană", async ({ page }) => {
     test.setTimeout(180_000);
     await page.setViewportSize({ width: 1366, height: 900 });
+    // Once per tab, before the first page's scripts: step 9 writes a choice of its own, which a later load must keep.
     await page.addInitScript((choices) => {
+      if (sessionStorage.getItem("tc-layout-10")) return;
       for (const [k, v] of Object.entries(choices)) localStorage.setItem(k, JSON.stringify(v));
+      sessionStorage.setItem("tc-layout-10", "1");
     }, CHOICES);
     await page.goto("/");
 
@@ -130,5 +133,29 @@ test.describe("TC-LAYOUT-10 — pictograma de ordonare din banda de nume", () =>
     expectOrdered(pages, numberOf("pageCount"), "asc");
     await expect(icon(page, "pageCount")).toHaveAttribute("data-sort-state", "asc");
     await expect(sortButton(page)).toHaveText("Ordonat după „Pagini”");
+
+    // Step 9 (40.48) — the two looks: „Gen"'s funnel in use, navy in a circle and filled; the rest the glyph alone.
+    await page.evaluate(() => localStorage.setItem("ga40-col-person-v3", JSON.stringify(["gender", "dateOfBirth", "createdAt"])));
+    await page.goto("/natural-persons?gender=MALE");
+    const gender = page.locator('main [data-filter-funnel="gender"] button');
+    await expect(gender).toHaveAttribute("data-in-use", "true", { timeout: 30_000 });
+    const looks = await page.locator("main thead").evaluate((band) =>
+      [...band.querySelectorAll<HTMLButtonElement>("[data-filter-funnel] button, [data-column-sort] button")].map((b) => {
+        const cs = getComputedStyle(b);
+        return {
+          key: b.closest<HTMLElement>("[data-filter-funnel]")?.dataset.filterFunnel ?? `sort:${b.closest<HTMLElement>("[data-column-sort]")!.dataset.columnSort}`,
+          inUse: b.dataset.inUse,
+          border: cs.borderTopStyle === "none" || parseFloat(cs.borderTopWidth) === 0 ? "none" : cs.borderTopColor,
+          bg: cs.backgroundColor,
+          round: parseFloat(cs.borderTopLeftRadius) >= 6,
+          fill: getComputedStyle(b.querySelector("svg")!).fill,
+        };
+      }),
+    );
+    const NAVY = "rgb(30, 58, 138)";
+    expect(looks.find((l) => l.key === "gender")).toEqual({ key: "gender", inUse: "true", border: NAVY, bg: "rgb(255, 255, 255)", round: true, fill: NAVY });
+    const rest = looks.filter((l) => l.key !== "gender");
+    expect(rest.map((l) => l.key)).toEqual(expect.arrayContaining(["dateOfBirth", "sort:dateOfBirth", "sort:createdAt"]));
+    for (const l of rest) expect(l).toEqual({ key: l.key, inUse: "false", border: "none", bg: "rgba(0, 0, 0, 0)", round: false, fill: "none" });
   });
 });
