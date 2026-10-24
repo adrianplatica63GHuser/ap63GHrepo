@@ -635,7 +635,8 @@
       "cadastralNumber": "Cadastru #",
       "useCategory": "Use Categ.",
       "propertyType": "Prop. Type",
-      "locality": "Locality"
+      "locality": "Locality",
+      "createdAt": "Added on"
     }
   },
   "address": {
@@ -1308,7 +1309,8 @@
       "dateOfDeath": "DoD",
       "placeOfBirth": "Born in",
       "professionalType": "Prof.type",
-      "relationships": "Rel.to VM"
+      "relationships": "Rel.to VM",
+      "createdAt": "Added on"
     }
   },
   "judicialPerson": {
@@ -1478,7 +1480,8 @@
       "cuiNumber": "CUI",
       "tradeRegisterNumber": "Trade Reg#",
       "contactPerson": "Contact",
-      "locality": "Locality"
+      "locality": "Locality",
+      "createdAt": "Added on"
     }
   },
   "nav": {

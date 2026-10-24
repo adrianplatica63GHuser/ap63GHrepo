@@ -28,7 +28,7 @@ import { useColumnDrag, useColumnOrder } from "@/components/list/column-order";
 import { FilterBar, FilterFunnel, type FilterBarField } from "@/components/list/filter-bar";
 import { appendFilterParams, filterAddressPatch, filterSignature, type FacetValue, type FilterState } from "@/lib/list/filter-bar";
 import { NATURAL_PERSON_COLUMN_FILTERS, NATURAL_PERSON_FILTER_FIELDS, parsePersonFilters, personFilterKeys } from "@/lib/persons/list-filters";
-import { dmyFromIso, personAgeText } from "@/lib/persons/person-age";
+import { addedOn, dmyFromIso, personAgeText } from "@/lib/persons/person-age";
 import { DeceasedMark } from "@/components/persons/deceased-mark";
 
 const PAGE_SIZE = 15;
@@ -126,6 +126,8 @@ export function NaturalPersonListView() {
     { key: "professionalType", label: tHead("professionalType"), full: t("fields.physicalPersonTypeId"), column: "listProfessionalType" },
     // Slice #39.70
     { key: "relationships",    label: tHead("relationships"), full: t("fields.relationships"),        column: "listRelationship" },
+    // Slice 40.45: „Adăugat la", as on Acte — the day the record was added; its short name is its whole one.
+    { key: "createdAt",        label: tHead("createdAt"), full: tHead("createdAt"),            column: "listDate" },
   ];
   const chooser = useFieldChooser(LIST_COLUMN_CHOICE.person.storageKey, optionalCols.map((c) => c.key), MAX_OPT, LIST_COLUMN_CHOICE.person.defaults);
 
@@ -170,6 +172,7 @@ export function NaturalPersonListView() {
       case "placeOfBirth":     return item.placeOfBirth;
       case "professionalType": return item.professionalType;
       case "relationships":    return item.relationships;
+      case "createdAt":        return addedOn(item.createdAt);
       default:                 return null;
     }
   }

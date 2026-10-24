@@ -635,7 +635,8 @@
       "cadastralNumber": "# Cadastru",
       "useCategory": "Categ.Folos.",
       "propertyType": "Tip Prop.",
-      "locality": "Localitate"
+      "locality": "Localitate",
+      "createdAt": "Adăugat la"
     }
   },
   "address": {
@@ -1308,7 +1309,8 @@
       "dateOfDeath": "Decedat pe",
       "placeOfBirth": "Născut la",
       "professionalType": "Tip prof.",
-      "relationships": "Rel.cu VM"
+      "relationships": "Rel.cu VM",
+      "createdAt": "Adăugat la"
     }
   },
   "judicialPerson": {
@@ -1478,7 +1480,8 @@
       "cuiNumber": "CUI",
       "tradeRegisterNumber": "#Reg. Com.",
       "contactPerson": "Contact",
-      "locality": "Localitate"
+      "locality": "Localitate",
+      "createdAt": "Adăugat la"
     }
   },
   "nav": {

@@ -41,6 +41,9 @@ The window is 1366 × 900. „The headers" are the list table's column headers, 
 | 3 | Opens „Persoane Fizice" | „Câmpuri afișate 0/4"; the headers „", „Nume", „Poreclă", „" |
 | 4 | Opens „Persoane Juridice" | „Câmpuri afișate 0/4"; the headers „", „Denumire", „Poreclă", „" |
 | 5 | Opens „Proprietăți", „Câmpuri afișate", ticks „Localitate", reloads | „Câmpuri afișate 2/4"; the headers „", „Poreclă", „Tip proprietate", „Localitate", „" |
+| 6 | Still on „Proprietăți", opens „Câmpuri afișate" | „Adăugat la" is the last field offered; ticked, „Câmpuri afișate 3/4" and the headers „Poreclă", „Tip Prop.", „Localitate", „Adăugat la", „"; the first row's „Adăugat la" a day, dd.mm.yyyy (40.45) |
+| 7 | Opens „Persoane Fizice", „Câmpuri afișate", ticks „Adăugat la" — the last field offered | „Câmpuri afișate 1/4"; the headers „Nume", „Poreclă", „Adăugat la", „"; the first row's „Adăugat la" a day, dd.mm.yyyy (40.45) |
+| 8 | Opens „Persoane Juridice", „Câmpuri afișate", ticks „Adăugat la" — the last field offered | „Câmpuri afișate 1/4"; the headers „Denumire", „Poreclă", „Adăugat la", „"; the first row's „Adăugat la" a day, dd.mm.yyyy (40.45) |
 
 ## At the end — leaving things as they were found
 
@@ -80,3 +83,8 @@ headed „Poreclă" · „Tip proprietate". The spec follows.
 („Născut pe", „Tip Prop.", „#Document", „Contact" …), the field's whole label on hover; a filter's chip and the
 forms keep the whole labels. Where a step above quotes a column or a box in „Câmpuri afișate" by its whole label, it
 now reads the short one; the spec's locators follow.
+
+**2026-10-24 — Slice 40.45.** Steps 6–8 added: „Adăugat la" — the day the record was added, in the reader's time
+zone, as on Acte since #37.62 — offered last in „Câmpuri afișate" on Proprietăți, Persoane fizice and Persoane
+juridice, ticked by nobody by default (steps 1–4 unchanged). The spec reads the first row's day for its shape alone,
+never a name beside it.

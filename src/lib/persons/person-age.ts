@@ -85,3 +85,15 @@ export function dmyFromIso(iso: string | null | undefined): string | null {
   const [y, m, d] = iso.slice(0, 10).split("-");
   return d && m && y ? `${d}.${m}.${y}` : iso;
 }
+
+/**
+ * „Adăugat la": the day a record was created, dd.mm.yyyy in the reader's own time zone — `createdAt` is a timestamp,
+ * not a date, so the ISO digits would be the UTC day; "" for a value that is not one. Acte's since #37.62, moved here
+ * in 40.45 so the four lists show the field alike.
+ */
+export function addedOn(createdAt: string): string {
+  const d = new Date(createdAt);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
+}

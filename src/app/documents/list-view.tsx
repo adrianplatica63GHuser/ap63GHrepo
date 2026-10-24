@@ -32,7 +32,7 @@ import { domainIcon } from "@/components/sidebar/nav-config";
 import { LIST_COLUMN_CHOICE, LIST_COLUMN_ORDER } from "@/lib/ui/list-columns";
 import { useColumnDrag, useColumnOrder } from "@/components/list/column-order";
 import { HintBubble } from "@/lib/ui/hint-bubble";
-import { dmyFromIso } from "@/lib/persons/person-age";
+import { addedOn, dmyFromIso } from "@/lib/persons/person-age";
 import { FilterBar, FilterFunnel, type FilterBarField } from "@/components/list/filter-bar";
 import { appendFilterParams, filterAddressPatch, filterSignature, type FacetValue, type FilterState } from "@/lib/list/filter-bar";
 import { DOCUMENT_COLUMN_FILTERS, DOCUMENT_FILTER_FIELDS, DOCUMENT_FILTER_KEYS, parseDocumentFilters } from "@/lib/documents/list-filters";
@@ -454,17 +454,7 @@ async function fetchFilterValues(
 // Helpers
 // ---------------------------------------------------------------------------
 
-/**
- * „Adăugat la": the day a document was created, dd.mm.yyyy in the reader's own
- * time zone — `createdAt` is a timestamp, not a date, so the ISO digits would
- * be the UTC day.                                             (Slice #37.62)
- */
-function addedOn(createdAt: string): string {
-  const d = new Date(createdAt);
-  if (Number.isNaN(d.getTime())) return "";
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
-}
+// „Adăugat la" (#37.62) is `addedOn`, shared with the other three lists since 40.45 (`person-age.ts`).
 
 // ---------------------------------------------------------------------------
 // Main view
