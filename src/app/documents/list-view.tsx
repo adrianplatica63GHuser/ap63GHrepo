@@ -13,7 +13,7 @@ import { ONE_LINE, cellTitle, columnHead } from "@/components/table/fixed-column
 import { FixedTable } from "@/components/table/column-resize";
 import { LIST_FRAME, LIST_HEAD, useListFit } from "@/components/list/list-fit";
 import { HiddenColumnSigns } from "@/components/list/hidden-column-signs";
-import { LIST_TOOLBAR, useListEdge } from "@/components/table/list-edge";
+import { LIST_TOOLBAR, columnsEdge, useListEdge } from "@/components/table/list-edge";
 import { ListHeadCell } from "@/components/table/list-head";
 import { FirstCellText } from "@/components/list/first-cell";
 import type { ColumnName } from "@/lib/ui/field-widths";
@@ -33,7 +33,7 @@ import { LIST_COLUMN_CHOICE, LIST_COLUMN_ORDER } from "@/lib/ui/list-columns";
 import { useColumnDrag, useColumnOrder } from "@/components/list/column-order";
 import { HintBubble } from "@/lib/ui/hint-bubble";
 import { addedOn, dmyFromIso } from "@/lib/persons/person-age";
-import { FilterBar, FilterFunnel, type FilterBarField } from "@/components/list/filter-bar";
+import { ClearFiltersButton, FilterBar, FilterFunnel, type FilterBarField } from "@/components/list/filter-bar";
 import { ListSortButton } from "@/components/list/list-sort-button";
 import { ColumnSort, ariaSortOf } from "@/components/list/column-sort";
 import { DEFAULT_LIST_ORDER, LIST_SORTS, ORDER_KEYS, appendOrderParams, orderAddressPatch, orderSignature, readListOrder, type ListOrder } from "@/lib/list/list-order";
@@ -778,12 +778,33 @@ export function DocumentListView({
   const edge = useListEdge(columns, fit.gutter);
   const colCount = columns.length;
 
+  // Slice 40.49 — what „Șterge filtrele" counts and clears on Acte (Ask first 1): the bar's column filters, „Expiră
+  // curând" when pressed, „Câmp specific" when chosen, and „Tip document:" when not every type is ticked — back to every
+  // type, through the address it lives in. The search, the order and the open tiles stay.
+  const typesNarrowedNow = typesNarrowed(typeOptions, initialDocumentTypeIds);
+  const anyFilter = Object.keys(filters).length > 0 || expiringSoon || customFieldKey !== "" || typesNarrowedNow;
+  function clearAllFilters() {
+    changeFilters({});
+    setEditingFilter(null);
+    setExpiringSoon(false);
+    setCustomFieldKey("");
+    setCustomFieldValue("");
+    if (typesNarrowedNow) {
+      const next = new URLSearchParams(window.location.search);
+      for (const k of ["documentTypeIds", LIST_PARAM.page, ...DOCUMENT_ADDRESS_FILTERS, ...DOCUMENT_FILTER_KEYS]) next.delete(k);
+      const qs = next.toString();
+      router.push(ownListAddress(qs ? `/documents?${qs}` : "/documents"));
+    }
+  }
+
   return (
     // Slice #38.75: the whole list — toolbar to pagination — so its Incursiune is as tall as all of it.
     <ListPreviews
       incursion={IncursionTile}
       rowIds={query.data?.items.map((i) => i.id)}
       address={{ kind: "document", row: address.row, tiles: address.tiles }}
+      // Slice 40.49: the columns' width, so an open tile stays beside the list when they leave room for it.
+      columnsEdge={columnsEdge(columns, fit.gutter)}
     >
       {/* Toolbar — one row since Slice #39.63: the search, „Câmpuri afișate", „Expiră curând" right after it (#39.84;
           Adrian, 2026-10-18: „The Expiring Soon button will slide left close to field picker button"), then — since
@@ -974,6 +995,8 @@ export function DocumentListView({
             {/* Slice 40.46: the sort button, right after „Câmp specific"'s ⓘ — and, with no types (no ⓘ drawn), right
                 after „Tip document:" (Ask first 5). Inside the group, so the two never part. */}
             <ListSortButton order={listOrder} onChange={changeListOrder} columnName={sortName} />
+            {/* Slice 40.49: „Șterge filtrele", right of the sort button, in the same group. */}
+            <ClearFiltersButton active={anyFilter} onClear={clearAllFilters} />
           </div>
         </div>
 

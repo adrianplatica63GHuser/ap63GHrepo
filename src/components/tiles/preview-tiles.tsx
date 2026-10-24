@@ -190,6 +190,7 @@ export function ListPreviews({
   incursion: IncursionTile,
   rowIds,
   address,
+  columnsEdge,
 }: {
   children: ReactNode;
   incursion?: IncursionTileComponent;
@@ -205,6 +206,12 @@ export function ListPreviews({
    * that is not one of the four lists), the tiles start closed and touch no address.
    */
   address?: { kind: PreviewKind; row: string | null; tiles: readonly RowTile[] };
+  /**
+   * Slice 40.49: the width the list's columns make (`columnsEdge`, a CSS length). With it, while a tile is open and
+   * the columns leave room for it beside them, the list's body is capped at that room, so a toolbar wider than its
+   * columns wraps rather than pushing the tile under the list (`bodyBesideTiles`).
+   */
+  columnsEdge?: string;
 }) {
   const [tiles, setTiles] = useState<RowTiles>(() =>
     address && address.row !== null && address.tiles.length > 0
@@ -233,7 +240,12 @@ export function ListPreviews({
     <IncursionContext.Provider value={incursion}>
       <div data-list-incursion-row className="flex flex-wrap items-start gap-4">
         {/* The whole page's width while nothing stands beside it, as the list's own column always was. */}
-        <div ref={bodyRef} data-list-body className={row ? "flex min-w-0 max-w-full flex-col gap-4" : "flex w-full flex-col gap-4"}>
+        <div
+          ref={bodyRef}
+          data-list-body
+          className={row ? "flex min-w-0 max-w-full flex-col gap-4" : "flex w-full flex-col gap-4"}
+          style={row && columnsEdge ? bodyBesideTiles(columnsEdge) : undefined}
+        >
           {children}
         </div>
         {row && (
@@ -253,6 +265,18 @@ export function ListPreviews({
       </div>
     </IncursionContext.Provider>
   );
+}
+
+/**
+ * Slice 40.49 — the list's body while a tile is open: at most the room beside the tile (the row less the tiles'
+ * column and the 1-rem gap) when the columns fit in it, so the toolbar — 1105 px on Acte at 1920 with the sort button
+ * and „Șterge filtrele" — wraps its controls instead of dropping the tile under the list; and the whole row, as before,
+ * when they do not, so a narrow window's toolbar never reflows for a tile that goes under the list anyway. CSS has no
+ * „if": `min(100%, (C − X) × 1000)` is negative when the room X is at least the columns C, and 100% when it is not.
+ */
+export function bodyBesideTiles(columns: string): CSSProperties {
+  const room = `(100% - ${PAGES_PANEL_REM + 1}rem)`;
+  return { maxWidth: `max(calc${room}, min(100%, calc((${columns} - ${room}) * 1000)))` };
 }
 
 /** Slice #39.04: the row tiles' column — the person screen's „Interacțiuni" width, `PAGES_PANEL_REM` (40 rem). */

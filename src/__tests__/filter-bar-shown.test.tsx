@@ -52,11 +52,12 @@ describe("the filter bar while nothing is active", () => {
 });
 
 describe("the filter bar while a filter is active", () => {
-  it("is a row: the chip, naming its field, and „Șterge filtrele”", () => {
+  // 40.49: „Șterge filtrele" is the toolbar's now (`ClearFiltersButton`); it read „the chip … and „Șterge filtrele””.
+  it("is a row: the chip, naming its field — and no „Șterge filtrele” of its own", () => {
     const bar = draw({ cad: { kind: "text", text: "1234" } });
     expect(bar.dataset.filterBarShown).toBe("true");
     expect(bar.className).toBe("relative flex flex-wrap items-center gap-2");
     expect(bar.querySelector('[data-filter-chip="cad"]')?.textContent).toContain("Nr. cadastral");
-    expect(screen.getByRole("button", { name: "clearAll" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "clearAll" })).toBeNull();
   });
 });

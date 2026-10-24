@@ -258,20 +258,9 @@ export function FilterBar({ fields, state, onChange, editing, onEditing, loadVal
         );
       })}
 
-      {/* Slice #39.82: no „+ Filtru" here any more — a filter is opened from its column's funnel, or from its chip. */}
-      {active.length > 0 && (
-        <IconButton
-          icon={FunnelX}
-          label={t("clearAll")}
-          showLabel
-          variant="secondary"
-          size="sm"
-          onClick={() => {
-            onChange({});
-            close();
-          }}
-        />
-      )}
+      {/* Slice #39.82: no „+ Filtru" here any more — a filter is opened from its column's funnel, or from its chip.
+          Slice 40.49: no „Șterge filtrele" either — it is on the toolbar, right of the sort button, always drawn
+          (`ClearFiltersButton`); one button for one job (Ask first 3). The chips and their ✕ stay. */}
 
       {(editingField || editingOwn) && (
         <div
@@ -582,6 +571,31 @@ function Box({ label, children }: { label: string; children: ReactNode }) {
  * is filtered. Since #39.83 it stands alone on the band's third row (`ListHeadCell`), under the name, not after it. Drawn only on the columns that can be filtered — each list's `*_COLUMN_FILTERS` (#39.82). `field` is
  * the filter's key, which the bar finds the funnel by.
  */
+/**
+ * „Șterge filtrele" on a principal list's toolbar, right of the sort button.                              (Slice 40.49)
+ *
+ * Adrian, 2026-10-24: „At the right of the sorting button there should be a "remove filters" button - that is enabled
+ * only if at least one filter is in use and disabled otherwise". Always drawn, so the toolbar never moves; disabled it
+ * looks it (the shared disabled state) and says why on hover (Ask first 2). What counts as a filter, and what a press
+ * clears, is the list's: every column filter, and on Acte its own three (Ask first 1) — never the search or the order.
+ */
+export function ClearFiltersButton({ active, onClear }: { active: boolean; onClear: () => void }) {
+  const t = useTranslations("shared.filterBar");
+  return (
+    <IconButton
+      icon={FunnelX}
+      label={t("clearAll")}
+      showLabel
+      variant="secondary"
+      size="sm"
+      disabled={!active}
+      note={active ? undefined : t("clearAllNone")}
+      data-clear-filters=""
+      onClick={onClear}
+    />
+  );
+}
+
 /**
  * A column's funnel, in its name cell's bottom-right corner (`ListHeadCell`). Slice 40.29: 13 × 13 px with a 9-px icon
  * — a quarter of xs's 26 × 26 — still pressable over 20 × 20 (`square="corner"`). Slice 40.48: its two looks are the

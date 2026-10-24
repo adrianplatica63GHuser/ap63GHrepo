@@ -1030,6 +1030,7 @@
     },
     "filterBar": {
       "clearAll": "Clear filters",
+      "clearAllNone": "No filter is on.",
       "remove": "Remove the „{field}” filter",
       "close": "Close",
       "none": "(empty)",

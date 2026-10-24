@@ -11,7 +11,7 @@ import { ONE_LINE, cellTitle, columnHead } from "@/components/table/fixed-column
 import { FixedTable } from "@/components/table/column-resize";
 import { LIST_FRAME, LIST_HEAD, useListFit } from "@/components/list/list-fit";
 import { HiddenColumnSigns } from "@/components/list/hidden-column-signs";
-import { LIST_TOOLBAR, useListEdge } from "@/components/table/list-edge";
+import { LIST_TOOLBAR, columnsEdge, useListEdge } from "@/components/table/list-edge";
 import { ListHeadCell } from "@/components/table/list-head";
 import { FirstCellText } from "@/components/list/first-cell";
 import { newTabIfAsked } from "@/lib/ui/row-link";
@@ -24,7 +24,7 @@ import { LIST_ADD, ListSearchBox } from "@/components/list/list-search";
 import { domainIcon } from "@/components/sidebar/nav-config";
 import { LIST_COLUMN_CHOICE, LIST_COLUMN_ORDER } from "@/lib/ui/list-columns";
 import { useColumnDrag, useColumnOrder } from "@/components/list/column-order";
-import { FilterBar, FilterFunnel, type FilterBarField } from "@/components/list/filter-bar";
+import { ClearFiltersButton, FilterBar, FilterFunnel, type FilterBarField } from "@/components/list/filter-bar";
 import { ListSortButton } from "@/components/list/list-sort-button";
 import { ColumnSort, ariaSortOf } from "@/components/list/column-sort";
 import { DEFAULT_LIST_ORDER, LIST_SORTS, ORDER_KEYS, appendOrderParams, orderAddressPatch, orderSignature, readListOrder, type ListOrder } from "@/lib/list/list-order";
@@ -214,6 +214,8 @@ export function JudicialPersonListView() {
       incursion={IncursionTile}
       rowIds={query.data?.items.map((i) => i.id)}
       address={{ kind: "company", row: address.row, tiles: address.tiles }}
+      // Slice 40.49: the columns' width, so an open tile stays beside the list when they leave room for it.
+      columnsEdge={columnsEdge(COLUMNS, fit.gutter)}
     >
       {/* Toolbar */}
       {/* Slice 40.30: the toolbar one step down — „Adaugă …" md, the other buttons sm, the search box 30 px, 8-px gaps. */}
@@ -234,6 +236,10 @@ export function JudicialPersonListView() {
 
         {/* Slice 40.46: the sort button, right after „Câmpuri afișate" — the record changed last first by default. */}
         <ListSortButton order={listOrder} onChange={changeListOrder} columnName={sortName} />
+
+        {/* Slice 40.49: „Șterge filtrele", right of the sort button — enabled while a column filter is on; the search and
+            the order stay. */}
+        <ClearFiltersButton active={Object.keys(filters).length > 0} onClear={() => { changeFilters({}); setEditingFilter(null); }} />
         <div className="ml-auto flex items-center gap-2">
           {/* Slice #39.85: measured, so the search box could take its width; 40.37: „+ Nou" and the list's Domeniu icon, its
               name and tooltip the whole „Adaugă …", the search box pinned at the old width (LIST_SEARCH_REM). */}

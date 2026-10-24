@@ -1030,6 +1030,7 @@
     },
     "filterBar": {
       "clearAll": "Șterge filtrele",
+      "clearAllNone": "Niciun filtru nu este activ.",
       "remove": "Scoate filtrul „{field}”",
       "close": "Închide",
       "none": "(necompletat)",
