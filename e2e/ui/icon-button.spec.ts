@@ -72,8 +72,9 @@ test.describe("TC-ICON-01 — Butoanele cu pictogramă își arată numele", () 
       const chooseFields = main.getByRole("button", { name: "Câmpuri afișate 0/4" });
       await expect(chooseFields).toBeVisible();
       const add = main.getByRole("link", { name: "Adaugă persoană" });
-      // Slice 40.37: „+ Nouă 👤" on screen, „Adaugă persoană" its name.
-      await expect(add).toHaveText("Nouă");
+      // Slice 40.37: „+ Nouă 👤" on screen, „Adaugă persoană" its name. 40.51: no word — „+" and the icon, sparkling
+      // (it read `toHaveText("Nouă")`).
+      await expect(add).toHaveText("");
       const previous = main.getByRole("button", { name: "Anterior" });
       const next = main.getByRole("button", { name: "Următor" });
       await expect(previous).toBeDisabled();

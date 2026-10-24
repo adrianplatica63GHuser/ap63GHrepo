@@ -44,7 +44,7 @@ Nothing.
 | 6 | Steps 1–4 on „Proprietăți" („Adaugă proprietate") | The same |
 | 7 | Steps 1–4 on „Acte" („Adaugă act") | The same |
 | 8 | On „Acte", unticks „Toate tipurile" in „Tip document" and presses outside | „Selectați cel puțin un tip"; „Adaugă act" stands where it stood over the table, to the pixel |
-| 9 | At 1920 px, on each of the four lists, looks at the add button and the search box | The button reads „+ Nouă" („+ Nou" on „Acte"): a +, the word, then the icon the sidebar's „Domeniu" item for that list draws; its name is still „Adaugă persoană" („… persoană juridică", „… proprietate", „… act"); the search box is as wide as it was beside „Adaugă …" — 160, 208, 168 and 120 px, ± 1 (40.37) |
+| 9 | At 1920 px, on each of the four lists, looks at the add button and the search box | The button has no word (40.51): a +, then the icon the sidebar's „Domeniu" item for that list draws, with three small rays off its top-right corner; its name is still „Adaugă persoană" („… persoană juridică", „… proprietate", „… act"); the search box is as wide as it was beside „Adaugă …" — 160, 208, 168 and 120 px, ± 1 (40.37) |
 | 10 | At 1920 × 1080, then 1280 × 600, opens each of the four lists without searching | The grey band of column names ends past „Deschide" by the gap the magnifier keeps from the divider on its left (16 px, ± 1) — not on „Acte", whose toolbar is wider than its columns, so the band widens with the frame; past the band's columns only the scroll bar's room, with the band's grey drawn across it to the frame's right border, so the band and the frame end together; „+ Nou…" and the row under the table end on that border (40.39) |
 
 ## At the end — leaving things as they were found
@@ -97,3 +97,9 @@ frame as wide as the toolbar, the band's grey across the rest (step 10's „past
 the columns are the wider). And on Acte at 1920 px the toolbar is wider than the room beside an open tile: there it
 wraps so the tile stays beside the list, and „Adaugă act", moved with it, still ends at the frame's edge (step 3's
 „does not move" holds elsewhere). The spec follows.
+
+**2026-10-24 — Slice 40.51.** The add buttons show „+" and the list's Domeniu icon „sparkling new" — three short rays
+off its top-right corner — and no word (Adrian, 2026-10-24); their names are still the whole „Adaugă …". Step 9 says
+so; it read „The button reads „+ Nouă" („+ Nou" on „Acte"): a +, the word, then the icon". The search boxes keep
+their widths, and the button still ends at the frame's right edge (measured in the pane on Persoane fizice at 1366:
+search 160 px, the button's right edge the frame's).

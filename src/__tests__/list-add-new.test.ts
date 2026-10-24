@@ -33,18 +33,19 @@ describe("domainIcon (40.37)", () => {
   });
 });
 
-describe("the four lists' add button (40.37)", () => {
-  it.each(LISTS)("$dir: Plus, „+ $ro”, then the list's Domeniu icon; named „$old”", ({ dir, ns, nav, ro, old }) => {
+describe("the four lists' add button (40.37; 40.51)", () => {
+  // 40.51: „+" and the Domeniu icon, sparkling new — no word (Adrian, 2026-10-24). It read: an IconButton with
+  // `icon={Plus} label={t("newCaption")} fullName={t("addNew")} trailingIcon={domainIcon(nav)} showLabel`, and
+  // `newCaption` „Nouă" / „Nou", which went with it.
+  it.each(LISTS)("$dir: „+” then the list's Domeniu icon, sparkling; named „$old”", ({ dir, ns, nav, old }) => {
     const view = read("src", "app", dir, "list-view.tsx");
     expect(view).toMatch(
-      new RegExp(
-        String.raw`<span className="inline-flex" \{\.\.\.LIST_ADD\}>\s*<IconButton[\s\S]*?icon=\{Plus\}\s*label=\{t\("newCaption"\)\}\s*fullName=\{t\("addNew"\)\}\s*trailingIcon=\{domainIcon\("${nav}"\)\}\s*showLabel\s*variant="primary"\s*size="md"`,
-      ),
+      new RegExp(String.raw`<span className="inline-flex" \{\.\.\.LIST_ADD\}>\s*\{/\*[^*]*\*/\}\s*<AddNewButton name=\{t\("addNew"\)\} icon=\{domainIcon\("${nav}"\)\} (href="/${dir}/new"|onClick=\{\(\) => setAddOpen\(true\)\}) />`),
     );
     const ROns = RO as unknown as Record<string, Record<string, string>>;
     const ENns = EN as unknown as Record<string, Record<string, string>>;
-    expect(ROns[ns].newCaption).toBe(ro);
-    expect(ENns[ns].newCaption).toBe("New");
+    expect(ROns[ns].newCaption).toBeUndefined();
+    expect(ENns[ns].newCaption).toBeUndefined();
     expect(ROns[ns].addNew).toBe(old);
   });
 

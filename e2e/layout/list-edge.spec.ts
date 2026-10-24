@@ -38,10 +38,11 @@ import {
 const MARK = `${E2E_MARKER}LAYOUT-02`;
 
 const LISTS = [
-  { url: "/natural-persons", add: "Adaugă persoană", caption: "Nouă", icon: "lucide-user", search: 160 },
-  { url: "/judicial-persons", add: "Adaugă persoană juridică", caption: "Nouă", icon: "lucide-building-2", search: 208 },
-  { url: "/properties", add: "Adaugă proprietate", caption: "Nouă", icon: "lucide-map", search: 168 },
-  { url: "/documents", add: "Adaugă act", caption: "Nou", icon: "lucide-file-text", search: 120 },
+  // 40.51: no word on the button (it read „Nouă" / „Nou").
+  { url: "/natural-persons", add: "Adaugă persoană", caption: "", icon: "lucide-user", search: 160 },
+  { url: "/judicial-persons", add: "Adaugă persoană juridică", caption: "", icon: "lucide-building-2", search: 208 },
+  { url: "/properties", add: "Adaugă proprietate", caption: "", icon: "lucide-map", search: 168 },
+  { url: "/documents", add: "Adaugă act", caption: "", icon: "lucide-file-text", search: 120 },
 ] as const;
 
 /**
@@ -53,10 +54,12 @@ async function expectNewCaption(page: Page, add: string, caption: string, icon: 
   const main = page.locator("main");
   const button = addOf(page, add);
   await expect(button).toHaveText(caption);
-  const icons = await button.evaluate((el) => [...el.querySelectorAll("svg")].map((s) => s.getAttribute("class") ?? ""));
-  expect(icons.length).toBe(2);
+  // 40.51: „+", the Domeniu icon, then its sparkles (it read two icons, the word between them).
+  const icons = await button.evaluate((el) => [...el.querySelectorAll("svg")].map((s) => (s.hasAttribute("data-sparkles") ? "sparkles" : (s.getAttribute("class") ?? ""))));
+  expect(icons.length).toBe(3);
   expect(icons[0].split(" ")).toContain("lucide-plus");
   expect(icons[1].split(" ")).toContain(icon);
+  expect(icons[2]).toBe("sparkles");
   const box = await main.locator("[data-list-search]").first().boundingBox();
   expect(Math.abs(box!.width - search)).toBeLessThanOrEqual(1);
 }

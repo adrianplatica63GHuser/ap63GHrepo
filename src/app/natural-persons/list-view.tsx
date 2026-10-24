@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { RecencyBadge } from "@/components/recency-badge";
-import { ArrowRight, ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { ONE_LINE, cellTitle, columnHead } from "@/components/table/fixed-columns";
 import { FixedTable } from "@/components/table/column-resize";
@@ -22,6 +22,7 @@ import { IncursionTile } from "@/app/_components/incursion-tile";
 import { useListAddress, useListScrollMemory, useWriteListAddress } from "@/components/list/use-list-address";
 import { FieldChooser, useFieldChooser, type ChooserField } from "@/components/list/field-chooser";
 import { LIST_ADD, ListSearchBox } from "@/components/list/list-search";
+import { AddNewButton } from "@/components/list/add-new-button";
 import { domainIcon } from "@/components/sidebar/nav-config";
 import { LIST_COLUMN_CHOICE, LIST_COLUMN_ORDER } from "@/lib/ui/list-columns";
 import { useColumnDrag, useColumnOrder } from "@/components/list/column-order";
@@ -269,16 +270,8 @@ export function NaturalPersonListView() {
           {/* Slice #39.85: measured, so the search box could take its width; 40.37: „+ Nou" and the list's Domeniu icon, its
               name and tooltip the whole „Adaugă …", the search box pinned at the old width (LIST_SEARCH_REM). */}
           <span className="inline-flex" {...LIST_ADD}>
-            <IconButton
-              href="/natural-persons/new"
-              icon={Plus}
-              label={t("newCaption")}
-              fullName={t("addNew")}
-              trailingIcon={domainIcon("naturalPeople")}
-              showLabel
-              variant="primary"
-              size="md"
-            />
+            {/* Slice 40.51: „+" and the list's Domeniu icon, sparkling new — no word; named the whole „Adaugă …". */}
+            <AddNewButton name={t("addNew")} icon={domainIcon("naturalPeople")} href="/natural-persons/new" />
           </span>
         </div>
       </div>

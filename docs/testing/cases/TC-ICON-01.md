@@ -40,9 +40,9 @@ can clip it) and exists only while it is shown.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „Persoane Fizice" and types `TC-ICON-01` in the search box | 15 rows, newest first; „Se afișează 15 din 16", „Pagina 1 din 2". On every row „Deschide" is an arrow (→) and „Previzualizare" an eye; the toolbar has a columns icon and „Nouă" with a + before it and a person after it (40.37), named „Adaugă persoană". „Anterior" (←) is inactive, „Următor" (→) is not |
+| 1 | Opens „Persoane Fizice" and types `TC-ICON-01` in the search box | 15 rows, newest first; „Se afișează 15 din 16", „Pagina 1 din 2". On every row „Deschide" is an arrow (→) and „Previzualizare" an eye; the toolbar has a columns icon and a + and a person after it (40.37), named „Adaugă persoană". „Anterior" (←) is inactive, „Următor" (→) is not |
 | 2 | Moves the mouse over the columns icon, then away | A tooltip `Câmpuri afișate 0/4` under it, centred on it; it goes when the mouse leaves |
-| 3 | Moves the mouse over „+ Nouă" | A tooltip `Adaugă persoană` — its name says more than its words (40.37); it goes when the mouse leaves |
+| 3 | Moves the mouse over the add button („+" and the person icon, 40.51) | A tooltip `Adaugă persoană` — its name — the button has no words since 40.51; it goes when the mouse leaves |
 | 4 | Moves the mouse over „Anterior", which is inactive | A tooltip `Anterior` |
 | 5 | Brings the keyboard focus to „Următor" (Tab from the last row's last button — „Deschide" since #38.71, which put the magnifier, „Previzualizare", first) | A tooltip `Următor`; Escape closes it |
 | 6 | Presses „Următor" | „Pagina 2 din 2", one row, `Persoana 01 TC-ICON-01`, „Se afișează 16 din 16"; no tooltip is left on the screen |
@@ -61,3 +61,7 @@ real mouse and keyboard, and takes #37.42's pictures. Green on its first runner 
 
 **2026-10-23 — Slice 40.37.** „Adaugă persoană" shows „+ Nouă" and the list's person icon; its name is still „Adaugă
 persoană", so step 3 now sees that name as a tooltip. Steps 1 and 3 changed with it.
+
+**2026-10-24 — Slice 40.51.** The add button shows „+" and the person icon sparkling new, no word; its name and tooltip
+are still „Adaugă persoană". Steps 1 and 3 say so; they read „„Nouă" with a + before it" and „Moves the mouse over
+„+ Nouă"".
