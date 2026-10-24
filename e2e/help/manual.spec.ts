@@ -225,6 +225,9 @@ function figureStrings(locale: "ro-RO" | "en-GB") {
     newPerson: m("naturalPerson.createTitle"),
     all: m("shared.tiles.all"),
     allUp: m("shared.tiles.allUp"), // 40.44
+    // 40.54: the sort icon of the list's „Vârstă" column, by its name („Ordonează după „{column}”").
+    age: m("naturalPerson.listHeads.age"),
+    sortByAge: new RegExp(`^${esc(m("shared.sort.sortBy").split("{column}")[0])}`),
     versions: new RegExp(`^${esc(m("naturalPerson.version.historyChip")).replace("\\{n\\}", "\\d+")}$`),
     makeCurrent: m("naturalPerson.version.makeCurrent"),
     mapTiles: [m("property.tiles.map"), m("property.tiles.corners"), m("property.tiles.streetView")],
@@ -330,7 +333,7 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     await still(page);
     await bar.screenshot({ path: `${dir}/breadcrumb.png` });
 
-    // Figura 2.8 — the person's screen and its tiles; the CNP blurred, „Recente" blurred.
+    // Figura 2.9 — the person's screen and its tiles; the CNP blurred, „Recente" blurred.
     await page.waitForTimeout(1500);
     await page.evaluate(
       ([f, any, start]) => {
@@ -354,7 +357,7 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     await still(page);
     await page.screenshot({ path: `${dir}/record.png` });
 
-    // Figura 2.9 (#39.93) — a tile held over another (#39.91): „Act de identitate" held over „Identitate", which has slid
+    // Figura 2.10 (#39.93) — a tile held over another (#39.91): „Act de identitate" held over „Identitate", which has slid
     // down to the first place in its columns that holds it whole — on a person's full columns, the bottom of the row —
     // and the outline shows the place free. A window tall enough for the whole row, the picture cut at the row's bottom.
     // Nothing is dropped: Esc puts it all back, so no arrangement is stored. The CNP and „Recente" blurred again.
@@ -415,7 +418,27 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     await page.screenshot({ path: `${dir}/list.png` });
     await page.keyboard.press("Escape");
 
-    // Figura 2.12 (2.10 until 40.44 added two before it) — the „?" of the list, open.
+    // Figura 2.5 — 40.54, for 40.46–40.47: the same search sorted by „Vârstă" from its column's icon — one thick arrow
+    // in a circle, and the toolbar's button reading „Ordonat după „Vârstă”". Rows not the seed's blurred again, as the
+    // sort reloads them.
+    await page.locator("main th:has([data-head-sort])").filter({ hasText: S.age }).getByRole("button", { name: S.sortByAge }).click();
+    await expect(page.locator('[data-sort-control][data-sort="age:asc"]')).toBeVisible({ timeout: 30_000 });
+    await page.waitForTimeout(1500);
+    await page.evaluate(
+      ([ids, f]) => {
+        for (const tr of document.querySelectorAll<HTMLElement>("main tbody tr")) {
+          const href = tr.querySelector("a[href^='/natural-persons/']")?.getAttribute("href") ?? "";
+          const id = href.split("/").pop() ?? "";
+          tr.style.filter = (ids as string[]).includes(id) ? "" : (f as string);
+        }
+      },
+      [[...seedIds], BLUR] as const,
+    );
+    await blurRecent(page, S.recent);
+    await still(page);
+    await page.screenshot({ path: `${dir}/list-sorted.png` });
+
+    // Figura 2.13 (2.10 until 40.44 added two before it, 2.12 until 40.54 added 2.5) — the „?" of the list, open.
     await page.goto("/natural-persons");
     await expect(search).toBeVisible({ timeout: 60_000 });
     const help = page.getByRole("navigation", { name: S.breadcrumb }).filter({ visible: true }).locator(":scope > span.ml-auto button").first();
@@ -527,7 +550,7 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
       await page.setViewportSize({ width: 1366, height: 768 });
     }
 
-    // Figurile 2.10 and 2.11 — 40.44, for 40.40–40.42: the same seed person at 1366 × 3600, „Toate" pressed, „Clasificare"
+    // Figurile 2.11 and 2.12 (2.10 and 2.11 until 40.54) — 40.44, for 40.40–40.42: the same seed person at 1366 × 3600, „Toate" pressed, „Clasificare"
     // dragged by its free space far down under every tile — shot; then „Toate sus" — shot: the tiles risen and the
     // columns evened, the small sketch of the tiles (40.42) right of the bar's two rows (40.41). The CNP, the identity
     // fields and „Recente" blurred; the arrangement forgotten straight after, as Figura 3.3's is.
@@ -664,7 +687,7 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     await page.screenshot({ path: `${dir}/properties-list.png` });
     await page.keyboard.press("Escape");
 
-    // Figura 2.5 — #40.04: the list of properties in a short, narrow window — the band of names at the frame's top,
+    // Figura 2.6 — #40.04: the list of properties in a short, narrow window — the band of names at the frame's top,
     // „Pagina x din y" under the frame, and the red „<" and „>" of the hidden columns (#40.02, #40.03) — scrolled
     // half-way sideways and down; the same seed search as 5.1, rows not the seed's blurred.
     await page.setViewportSize({ width: 980, height: 560 });
@@ -687,7 +710,7 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     await page.screenshot({ path: `${dir}/list-fit.png`, animations: "disabled" });
     await page.setViewportSize({ width: 1366, height: 768 });
 
-    // Figura 2.6 — 40.13: the line between two columns (40.12) dragged in the band of names, the picture taken while the
+    // Figura 2.7 — 40.13: the line between two columns (40.12) dragged in the band of names, the picture taken while the
     // mouse still holds it — the column on its left wider, the line darker. The same seed search; rows not the seed's
     // blurred. The width is given back with a double-click, so nothing stays stored.
     await page.evaluate(() => localStorage.setItem("ga40-col-property-v4", JSON.stringify(["tarlaSola", "parcela", "propertyType", "cadastralNumber"])));
@@ -713,7 +736,7 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     await page.mouse.up();
     await handle.dblclick();
 
-    // Figura 2.7 — 40.27: a column moved by its name (40.25), the picture taken while the mouse holds it: the name
+    // Figura 2.8 — 40.27: a column moved by its name (40.25), the picture taken while the mouse holds it: the name
     // half-transparent under the pointer and the navy line where it will land. Escape then cancels, so no order is kept.
     const nick = page.locator('main thead th[data-col-drag="nickname"]');
     const nb = (await nick.boundingBox())!;

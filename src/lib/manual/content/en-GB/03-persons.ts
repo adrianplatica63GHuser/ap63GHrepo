@@ -23,6 +23,7 @@ The search box („search by ID, Name, Nickname, CNP, Personal Email 1, Personal
 - „Born in” — the place of birth
 - „Prof.type” — the professional type
 - „Rel.to VM” — the relationship to the business
+- „Added on” — the day the person was added to the archive
 
 The button shows how many columns you have chosen, for instance „Choose fields 2/4”. The choice stays until you change it.
 
@@ -56,11 +57,11 @@ The columns that can be filtered, chosen in „Choose fields”:
 - **„Date of Birth” and „Date of death”** — „From” and „To”, or, from „Period…”, „This year” or „The last 12 months”;
 - **„Age”** — „From” and „To”. It is the age the list shows: for a deceased person, the age at death.
 
-„Name”, „Nickname” and „CNP” have no funnel. A person is found by CNP with the search box: type the CNP, or part of it.
+„Name”, „Nickname”, „CNP” and „Added on” have no funnel; „Added on”, „DoB”, „Age” and „DoD” sort the list (section [[start-lists]]). A person is found by CNP with the search box: type the CNP, or part of it.
 
 ## 3.2 A person added by hand {#persons-add}
 
-On the list of natural persons, press „New” — the button on the right, above the table, with a + before it and a person after it, the list's icon in the sidebar; under the mouse it shows its whole name, „Add new Person”. The screen „New Natural Person” opens straight away: an empty form divided into tiles (Figure [[fig-persons-new]]).
+On the list of natural persons, press „Add new Person” — the button on the right, above the table, with no words: a + and a person, the list's icon in the sidebar, with a few rays; under the mouse it shows its whole name. The screen „New Natural Person” opens straight away: an empty form divided into tiles (Figure [[fig-persons-new]]).
 
 ![3.1 The form of a new natural person](persons-new.png){#fig-persons-new}
 
@@ -208,7 +209,7 @@ The „Interactions” tile can also go on the left, under the other tiles: grab
 
 You have in front of you the identity card of a person who is not yet in the archive.
 
-1. „Natural Persons” → „New” (section [[persons-add]]).
+1. „Natural Persons” → „Add new Person” (section [[persons-add]]).
 2. Fill in the surname, first name, gender, CNP and date of birth from the card.
 3. Under „ID Type”, choose „ID Card”; tick „Also create the father” and „Also create the mother” and type their first names (section [[persons-id-card-manual]]).
 4. Check the mother's surname: it may be her maiden name.

@@ -11,7 +11,7 @@ A document is a deed held in the archive — a contract, a certificate, a permit
 
 In the sidebar, open „Domain”, then „Documents”. The list shows every document in the archive, in the columns „Type” and „Title”. The title is the document's „Short Label”. A document just added appears at the top, badged „New!” after its type. Lists work the same everywhere (section [[start-lists]]).
 
-Above the table, on one row, stand the search box („search by Code, Title or Document No.”), „Choose fields”, right after it „Expiring soon”, then „Document type:”, a round sign with „Type-specific field:” and an ⓘ beside it, and, at the end, „New”, with a + before it and a page after it — under the mouse, „Add new Document”. In a window too narrow for them all, „Document type:”, the sign, „Type-specific field:” and the ⓘ move together onto a row of their own, under the search box, and „Add new Document” stays at the end of the first row. Under them a row with the labels of the filters set from the columns and „Clear filters” appears, only while such a filter is set (section [[documents-list-filters]]).
+Above the table, on one row, stand the search box („search by Code, Title or Document No.”), „Choose fields”, right after it „Expiring soon”, then „Document type:”, a round sign with „Type-specific field:” and an ⓘ beside it, the order button and „Clear filters” (section [[start-lists]]), and, at the end, „Add new Document” — a + and a page, with a few rays, no words; under the mouse it shows its name. In a window too narrow for them all, „Document type:”, the sign, „Type-specific field:”, the ⓘ, the order button and „Clear filters” move together onto a row of their own, under the search box, and „Add new Document” stays at the end of the first row. Under them a row with the labels of the filters set from the columns appears, only while such a filter is set (section [[documents-list-filters]]).
 
 **„Type” shows the type's short name** — for example „CVC” for „Contract de Vânzare”, „Intabulare” for „Încheiere de Intabulare”. Rest the mouse on the cell and the bubble shows the full name. The short name is chosen for each type in „Reference Data”, under „Document Types”, in the field „Short name” (section [[admin-reference-data]]). Left empty, the list shortens the name by itself, dropping a leading „Contract de”, „Act de”, „Încheiere de”, „Certificat de”. Two types may not share a short name.
 
@@ -33,11 +33,11 @@ The columns that can be filtered, chosen in „Choose fields”:
 
 „Doc.#” and „Subject” have no funnel; a document is found by its number with the search box.
 
-All the filters add up, „Document type:” and „Type-specific field:” included: the list shows the documents that pass every one. „Clear filters” removes the filters set from the columns; „Expiring soon”, the ticked types and the type-specific field stay. The filters are kept in the page's address; a link made before opens the same list.
+All the filters add up, „Document type:” and „Type-specific field:” included: the list shows the documents that pass every one. „Clear filters” removes them all: the filters set from the columns, „Expiring soon”, the type-specific field and the ticked types — the list shows every type again; the search and the order stay. While none is set, the button is grey. „Added on”, „Date”, „Pages”, „Persons” and „Properties” also sort the list (section [[start-lists]]). The filters are kept in the page's address; a link made before opens the same list.
 
 ## 6.2 A new document and its pages {#documents-add}
 
-Press „New”. „New Document” opens, with the tile „Document identification”. Choose „Document Type” first (section [[documents-type]]), then fill in the fields and press „Save”. The document opens on its own screen, its title at the head of the screen and its status „Not processed”. Every save makes a new version of the document (section [[links-versions]]).
+Press „Add new Document”. „New Document” opens, with the tile „Document identification”. Choose „Document Type” first (section [[documents-type]]), then fill in the fields and press „Save”. The document opens on its own screen, its title at the head of the screen and its status „Not processed”. Every save makes a new version of the document (section [[links-versions]]).
 
 The pages are shown in the „Pages” tile, purple, to the right of the form — on a narrow screen, below it (Figure [[fig-documents-pages]]). A document with no pages reads „No pages yet”.
 
@@ -187,7 +187,7 @@ The certificate follows the contract's rule (section [[documents-parties]]): the
 
 You have a scanned sale contract for a plot of land in Bragadiru.
 
-1. „Documents” → „New”; under „Document Type” choose „Contract de Vânzare (has a form)” (section [[documents-type]]).
+1. „Documents” → „Add new Document”; under „Document Type” choose „Contract de Vânzare (has a form)” (section [[documents-type]]).
 2. With „+ Add Page” choose the scans, put them in order, and fill in „Short Label”, „Notary Office”, „Authentic Deed No.” and „Authentication date” (sections [[documents-add]] and [[documents-identification]]).
 3. Press „Save”; rotate the page that was scanned the wrong way round and save the rotation.
 4. Tick „Parties” and associate the seller and the buyer with their roles, then type in their shares (section [[documents-parties]]).
@@ -197,7 +197,7 @@ You have a scanned sale contract for a plot of land in Bragadiru.
 
 The seller and the buyer of a plot in Bragadiru first signed a preliminary contract, and a few months later the sale contract.
 
-1. „Documents” → „New”; under „Document Type” choose „Antecontract”, add the pages, fill in „Short Label”, „Document No.” and „Date” and press „Save” (section [[documents-antecontract]]).
+1. „Documents” → „Add new Document”; under „Document Type” choose „Antecontract”, add the pages, fill in „Short Label”, „Document No.” and „Date” and press „Save” (section [[documents-antecontract]]).
 2. On „Parties”, associate the seller with the role „Promitent vânzător” and the buyer with „Promitent cumpărător”, then enter their shares (section [[documents-parties]]).
 3. File the sale contract (section [[documents-example-sale]]). If the price was paid under the preliminary contract, choose „Achitat la antecontract” for „Stare plată” in „[Plată]”.
 4. Open the preliminary contract, press „Associate document”, tick the contract, choose „Antecontract al” and press „Associate Selected”. On the contract, „Relationship” reads: the preliminary contract, „Antecontract al”, „this document” (section [[links-references-documents]]).

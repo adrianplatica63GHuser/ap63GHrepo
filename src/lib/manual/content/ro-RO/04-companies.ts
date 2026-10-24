@@ -13,7 +13,7 @@ Lista se deschide din bara laterală: „Domeniu”, apoi „Persoane Juridice�
 
 Caseta de căutare din capul listei („caută după ID, Denumire, Poreclă, Nr. înregistrare (CUI), Telefon firmă sau E-mail firmă”) găsește o firmă după ID, denumire, poreclă, CUI, telefon și e-mail: scrieți CUI-ul și rămân firmele care îl au. Țineți mouse-ul pe casetă ca să citiți textul întreg. Când nu se găsește nimic, lista spune „Nu există persoane juridice”.
 
-„Câmpuri afișate” adaugă coloane listei. Pe lista firmelor puteți alege patru dintre cinci; în capul tabelului coloanele au numele scurte din prima coloană a tabelului de mai jos, iar mouse-ul ținut pe un nume arată numele întreg:
+„Câmpuri afișate” adaugă coloane listei. Pe lista firmelor puteți alege patru dintre șase; în capul tabelului coloanele au numele scurte din prima coloană a tabelului de mai jos, iar mouse-ul ținut pe un nume arată numele întreg:
 
 | Coloana | Câmpul | Ce arată coloana |
 |---|---|---|
@@ -22,6 +22,7 @@ Caseta de căutare din capul listei („caută după ID, Denumire, Poreclă, Nr.
 | #Reg. Com. | Nr. registru comerțului | Numărul de la Registrul Comerțului. |
 | Contact | Persoană de contact | Numele persoanei de contact a firmei. |
 | Localitate | Localitate | Localitatea din adresa sediului. |
+| Adăugat la | Adăugat la | Ziua în care firma a fost adăugată în arhivă; ordonează lista (secțiunea [[start-lists]]). |
 
 Butonul arată câte câmpuri ați ales, de exemplu „Câmpuri afișate 1/4”. Coloana CUI nu apare până nu o bifați, dar căutarea după CUI merge oricum. La „Contact” se vede prima persoană de contact a firmei; dacă primul loc e gol, se vede a doua (secțiunea [[companies-people-contact]]).
 
@@ -38,7 +39,7 @@ Pe lista firmelor se filtrează două coloane, amândouă cu bife:
 - **„Tip”** — valorile listei de tipuri de persoană juridică, așa cum sunt acum în arhivă;
 - **„Localitate”** — localitatea din adresa sediului.
 
-„CUI”, „#Reg. Com.” și „Contact” nu au pâlnie; o firmă se găsește după CUI cu caseta de căutare.
+„CUI”, „#Reg. Com.”, „Contact” și „Adăugat la” nu au pâlnie; o firmă se găsește după CUI cu caseta de căutare.
 
 ## 4.2 O firmă adăugată și modificată {#companies-add}
 

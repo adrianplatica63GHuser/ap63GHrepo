@@ -178,8 +178,8 @@
             {
               "id": "o1",
               "correct": false,
-              "ro": "Din „Persoane Fizice” → „Nouă”, alegând „Carte de identitate”.",
-              "en": "From „Persoane Fizice” → „Nouă”, choosing „Carte de identitate”."
+              "ro": "Din „Persoane Fizice” → „Adaugă persoană”, alegând „Carte de identitate”.",
+              "en": "From „Persoane Fizice” → „Adaugă persoană”, choosing „Carte de identitate”."
             },
             {
               "id": "o2",

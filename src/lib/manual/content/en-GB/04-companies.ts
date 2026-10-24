@@ -13,7 +13,7 @@ The list opens from the sidebar: „Domain”, then „Juridical Persons”. The
 
 The search box at the top of the list („search by ID, Name, Nickname, Registration No. (CUI), Firm's phone or Firm's e-mail”) finds a firm by its ID, name, nickname, CUI, phone and e-mail: type the CUI and the firms that have it remain. Rest the mouse on the box to read its whole text. When nothing is found, the list says „No juridical persons found”.
 
-„Choose fields” adds columns to the list. On the list of firms you can choose four of five; in the table's header the columns carry the short names of the first column below, and the mouse rested on a name shows the whole one:
+„Choose fields” adds columns to the list. On the list of firms you can choose four of six; in the table's header the columns carry the short names of the first column below, and the mouse rested on a name shows the whole one:
 
 | Column | Field | What the column shows |
 |---|---|---|
@@ -22,6 +22,7 @@ The search box at the top of the list („search by ID, Name, Nickname, Registra
 | Trade Reg# | Trade Register No. | The Trade Register number. |
 | Contact | Contact person | The name of the firm's contact person. |
 | Locality | Locality | The locality of the head office's address. |
+| Added on | Added on | The day the firm was added to the archive; it sorts the list (section [[start-lists]]). |
 
 The button shows how many fields you chose, for instance „Choose fields 1/4”. The CUI column does not appear until you tick it, but searching by CUI works regardless. Under „Contact” you see the firm's first contact person; if the first slot is empty, you see the second (section [[companies-people-contact]]).
 
@@ -38,11 +39,11 @@ On the list of firms two columns filter, both with ticks:
 - **„Type”** — the values of the list of juridical-person types, as they stand in the archive now;
 - **„Locality”** — the locality of the head office's address.
 
-„CUI”, „Trade Reg#” and „Contact” have no funnel; a firm is found by its CUI with the search box.
+„CUI”, „Trade Reg#”, „Contact” and „Added on” have no funnel; a firm is found by its CUI with the search box.
 
 ## 4.2 A firm added and edited {#companies-add}
 
-On the list of firms, press „New” — with a + before it and a building after it; under the mouse it shows its whole name, „Add new Juridical Person”. The form „New Juridical Person” opens straight away, with no other question. Fill in what you have; the rest can be added at any time, once the firm is saved.
+On the list of firms, press „Add new Juridical Person” — a + and a building, with a few rays, no words; under the mouse it shows its whole name. The form „New Juridical Person” opens straight away, with no other question. Fill in what you have; the rest can be added at any time, once the firm is saved.
 
 The only required field is „Name”. A firm that has only its name is a real object and is completed later. When you press „Save”, at the bottom, the application takes you back to the list, where the new firm stands at the top, marked „New!”. You open it with „Open”.
 
@@ -186,7 +187,7 @@ The „Interactions” tile starts on the right of the screen, is dragged elsewh
 The situation: a firm sends you an offer for a piece of land, and the person you are talking to is not in the archive yet.
 
 1. First add the person in „Natural Persons” (chapter [[persons]]).
-2. On „Juridical Persons”, press „New”, type „Name”, choose „Type” and type the CUI, checked against the document (section [[companies-add-identity]]).
+2. On „Juridical Persons”, press „Add new Juridical Person”, type „Name”, choose „Type” and type the CUI, checked against the document (section [[companies-add-identity]]).
 3. Press „Save”; open the firm from the top of the list, where it is marked „New!”.
 4. In „Representatives and contact”, type „Firm's phone” and „Firm's e-mail” and choose the person as „Contact Person 1” (sections [[companies-add-contact]] and [[companies-people-contact]]).
 5. Press „Save”.

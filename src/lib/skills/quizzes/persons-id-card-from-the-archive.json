@@ -25,8 +25,8 @@
             {
               "id": "o1",
               "correct": false,
-              "ro": "Din „Persoane Fizice” → „Nouă”, alegând „Carte de identitate” la „Tip document”.",
-              "en": "From „Persoane Fizice” → „Nouă” (new), choosing „Carte de identitate” under „Tip document”."
+              "ro": "Din „Persoane Fizice” → „Adaugă persoană”, alegând „Carte de identitate” la „Tip document”.",
+              "en": "From „Persoane Fizice” → „Adaugă persoană” (add person), choosing „Carte de identitate” under „Tip document”."
             },
             {
               "id": "o2",
@@ -151,8 +151,8 @@
             {
               "id": "o3",
               "correct": false,
-              "ro": "Creează doar titularul; părinții se pot adăuga numai cu „Nouă”.",
-              "en": "He creates only the holder; the parents can only be added with „Nouă”."
+              "ro": "Creează doar titularul; părinții se pot adăuga numai cu „Adaugă persoană”.",
+              "en": "He creates only the holder; the parents can only be added with „Adaugă persoană”."
             },
             {
               "id": "o4",
@@ -676,8 +676,8 @@
             {
               "id": "o1",
               "correct": true,
-              "ro": "„Nouă”, „Carte de identitate” la „Tip document” și bifele pentru tată și mamă.",
-              "en": "„Nouă”, „Carte de identitate” under „Tip document” and the ticks for father and mother."
+              "ro": "„Adaugă persoană”, „Carte de identitate” la „Tip document” și bifele pentru tată și mamă.",
+              "en": "„Adaugă persoană”, „Carte de identitate” under „Tip document” and the ticks for father and mother."
             },
             {
               "id": "o2",
@@ -694,8 +694,8 @@
             {
               "id": "o4",
               "correct": false,
-              "ro": "„Nouă”, cu „Pașaport” la „Tip document”, ca să apară „Părinții titularului”.",
-              "en": "„Nouă”, with „Pașaport” (passport) under „Tip document”, so that „Părinții titularului” appears."
+              "ro": "„Adaugă persoană”, cu „Pașaport” la „Tip document”, ca să apară „Părinții titularului”.",
+              "en": "„Adaugă persoană”, with „Pașaport” (passport) under „Tip document”, so that „Părinții titularului” appears."
             }
           ]
         },

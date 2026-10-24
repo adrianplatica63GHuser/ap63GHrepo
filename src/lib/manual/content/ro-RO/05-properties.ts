@@ -21,11 +21,12 @@ Prima coloană este „Poreclă”, numele pe care îl dați proprietății; „
 - „Supr. Ofic.” și „Supr. Calc.” — cele două suprafețe, oficială și calculată;
 - „# CF” și „# Cadastru” — numărul de carte funciară și numărul cadastral;
 - „Categ.Folos.” și „Tip Prop.” — categoria de folosință și tipul proprietății, arătate cu numele lor;
-- „Localitate”.
+- „Localitate”;
+- „Adăugat la” — ziua în care proprietatea a fost adăugată în arhivă.
 
 Butonul arată câte coloane ați ales, de exemplu „Câmpuri afișate 2/4”. Când ați bifat patru, celelalte căsuțe devin gri până debifați una. La început lista arată doar „Tip Prop.”. Alegerea se păstrează în browserul acesta, așa că o regăsiți data viitoare.
 
-În dreapta, deasupra tabelului, stau două butoane: „Hartă completă” deschide harta tuturor proprietăților (capitolul [[map]]), iar „Adaugă proprietate” — un + și harta, cu câteva raze, fără cuvinte; ținut sub mouse, își arată numele — creează una nouă (secțiunea [[properties-add]]). Cât timp harta completă e deschisă, bara de navigare arată „Acasă › Proprietăți › Hartă completă”, iar un clic pe „Proprietăți” vă întoarce la listă.
+În dreapta, deasupra tabelului, stau două butoane: „Hartă completă” — o săgeată spre dreapta și un glob cu meridiane și două repere, fără cuvinte; ținut sub mouse, își arată numele — deschide harta tuturor proprietăților (capitolul [[map]]), iar „Adaugă proprietate” — un + și harta, cu câteva raze, fără cuvinte; ținut sub mouse, își arată numele — creează una nouă (secțiunea [[properties-add]]). Cât timp harta completă e deschisă, bara de navigare arată „Acasă › Proprietăți › Hartă completă”, iar un clic pe „Proprietăți” vă întoarce la listă.
 
 ![5.1 Lista proprietăților](properties-list.png){#fig-properties-list}
 
@@ -43,13 +44,13 @@ Pe lista proprietăților se filtrează șapte coloane:
 - **„Oficială (m²)” și „Calculată (m²)”** — „De la” și „Până la”, oricare dintre ele, sau amândouă;
 - **„Parcelă”** — „Conține”: rămân proprietățile a căror parcelă conține ce ați scris.
 
-„Poreclă”, „# Cadastru” și „# CF” nu au pâlnie; o proprietate se găsește după ele cu caseta de căutare.
+„Poreclă”, „# Cadastru”, „# CF” și „Adăugat la” nu au pâlnie; o proprietate se găsește după ele cu caseta de căutare.
 
-Fiecare filtru pus devine o etichetă rotunjită sub caseta de căutare, pe un rând care apare doar cât timp este pus un filtru, cu numele coloanei și ce ați ales, de exemplu „Tip proprietate” Casă. Un clic pe etichetă redeschide fereastra, chiar sub etichetă, iar X-ul ei scoate filtrul. O pâlnie plină arată că lista este filtrată după acea coloană. Un filtru rămâne și dacă îi ascundeți coloana: eticheta lui stă mai departe sub caseta de căutare, așa că lista nu este niciodată filtrată fără să vedeți asta.
+Fiecare filtru pus devine o etichetă rotunjită sub caseta de căutare, pe un rând care apare doar cât timp este pus un filtru, cu numele coloanei și ce ați ales, de exemplu „Tip proprietate” Casă. Un clic pe etichetă redeschide fereastra, chiar sub etichetă, iar X-ul ei scoate filtrul. O pâlnie plină, albastru închis, într-un cerc, arată că lista este filtrată după acea coloană. Un filtru rămâne și dacă îi ascundeți coloana: eticheta lui stă mai departe sub caseta de căutare, așa că lista nu este niciodată filtrată fără să vedeți asta.
 
-„Șterge filtrele” le scoate pe toate deodată, iar rândul etichetelor dispare. Filtrele se păstrează în adresa paginii, ca și căutarea: rămân după ce reîncărcați pagina, după ce vă întoarceți la listă cu „Înapoi” și când trimiteți adresa cuiva.
+„Șterge filtrele”, pe bara de sus, le scoate pe toate deodată, iar rândul etichetelor dispare; căutarea și ordinea listei rămân. Cât timp nu e pus niciun filtru, butonul este gri. Filtrele se păstrează în adresa paginii, ca și căutarea: rămân după ce reîncărcați pagina, după ce vă întoarceți la listă cu „Înapoi” și când trimiteți adresa cuiva.
 
-Capul tabelului are înălțimea a două rânduri, la fel pe cele patru liste, oricâte coloane ați ales. Numele coloanei stă singur la mijloc, pe orizontală și pe verticală, iar pâlnia, la o coloană care se poate filtra, stă în colțul din dreapta jos. Un nume prea lung pentru coloana lui trece pe al doilea rând; niciun nume nu ia trei rânduri.
+Capul tabelului are înălțimea a două rânduri, la fel pe cele patru liste, oricâte coloane ați ales. Numele coloanei stă singur la mijloc, pe orizontală și pe verticală, iar pâlnia, la o coloană care se poate filtra, stă în colțul din dreapta jos; la o coloană care ordonează lista — „Adăugat la”, „Tarla”, „Parcelă”, „Supr. Ofic.”, „Supr. Calc.” —, pictograma de ordine stă la stânga ei (secțiunea [[start-lists]]). Un nume prea lung pentru coloana lui trece pe al doilea rând; niciun nume nu ia trei rânduri.
 
 ## 5.2 O proprietate adăugată de mână {#properties-add}
 

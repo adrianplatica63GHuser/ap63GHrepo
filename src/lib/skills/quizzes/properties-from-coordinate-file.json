@@ -14,11 +14,11 @@
           "section": "properties-coord-file",
           "ro": {
             "question": "Topograful v-a trimis colțurile Stereo 70 ale unui teren într-un fișier .txt. Ce cale alegeți în fereastra „Adaugă Proprietate”?",
-            "explanation": "În „Proprietăți” apăsați „Nouă”, apoi „Din fișier text”: fișierul cu coordonatele colțurilor devine o proprietate întreagă, fără să scrieți colțurile de mână."
+            "explanation": "În „Proprietăți” apăsați „Adaugă proprietate”, apoi „Din fișier text”: fișierul cu coordonatele colțurilor devine o proprietate întreagă, fără să scrieți colțurile de mână."
           },
           "en": {
             "question": "The surveyor sent you a plot's Stereo 70 corners in a .txt file. Which path do you choose in the „Adaugă Proprietate” (add property) window?",
-            "explanation": "In „Proprietăți” you press „Nouă”, then „Din fișier text” (from a text file): the file with the corners' coordinates becomes a whole property, without typing the corners by hand."
+            "explanation": "In „Proprietăți” you press „Adaugă proprietate”, then „Din fișier text” (from a text file): the file with the corners' coordinates becomes a whole property, without typing the corners by hand."
           },
           "options": [
             {

@@ -16,11 +16,11 @@
           "section": "map-what-open",
           "ro": {
             "question": "Sunteți în lista „Proprietăți”. Cum deschideți harta tuturor proprietăților?",
-            "explanation": "Din lista „Proprietăți”, harta se deschide cu butonul „Hartă completă”, din dreapta, de lângă „Nouă”."
+            "explanation": "Din lista „Proprietăți”, harta se deschide cu butonul „Hartă completă”, din dreapta, de lângă „Adaugă proprietate”."
           },
           "en": {
             "question": "You are in the „Proprietăți” list. How do you open the map of all properties?",
-            "explanation": "From the „Proprietăți” list, the map opens with the „Hartă completă” button, on the right, beside „Nouă”."
+            "explanation": "From the „Proprietăți” list, the map opens with the „Hartă completă” button, on the right, beside „Adaugă proprietate”."
           },
           "options": [
             {
@@ -32,8 +32,8 @@
             {
               "id": "o2",
               "correct": true,
-              "ro": "Apăsați „Hartă completă”, în dreapta, lângă „Nouă”.",
-              "en": "Press „Hartă completă” (full map), on the right, beside „Nouă”."
+              "ro": "Apăsați „Hartă completă”, în dreapta, lângă „Adaugă proprietate”.",
+              "en": "Press „Hartă completă” (full map), on the right, beside „Adaugă proprietate”."
             },
             {
               "id": "o3",

@@ -23,6 +23,7 @@ Caseta de căutare („caută după ID, Nume, Poreclă, CNP, Email Personal 1, E
 - „Născut la” — locul nașterii
 - „Tip prof.” — tipul profesional
 - „Rel.cu VM” — relația cu firma
+- „Adăugat la” — ziua în care persoana a fost adăugată în arhivă
 
 Butonul arată câte coloane ați ales, de exemplu „Câmpuri afișate 2/4”. Alegerea rămâne până o schimbați.
 
@@ -56,7 +57,7 @@ Coloanele care se pot filtra, alese în „Câmpuri afișate”:
 - **„Data nașterii” și „Data decesului”** — „De la” și „Până la” sau, din „Perioadă…”, „Anul acesta” ori „Ultimele 12 luni”;
 - **„Vârstă”** — „De la” și „Până la”. Este vârsta din listă: la o persoană decedată, vârsta la deces.
 
-„Nume”, „Poreclă” și „CNP” nu au pâlnie. O persoană se găsește după CNP cu caseta de căutare: scrieți CNP-ul sau o parte din el.
+„Nume”, „Poreclă”, „CNP” și „Adăugat la” nu au pâlnie; „Adăugat la”, „Născut pe”, „Vârstă” și „Decedat pe” ordonează lista (secțiunea [[start-lists]]). O persoană se găsește după CNP cu caseta de căutare: scrieți CNP-ul sau o parte din el.
 
 ## 3.2 O persoană adăugată de mână {#persons-add}
 

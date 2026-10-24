@@ -15,11 +15,11 @@
           "id": "a1",
           "section": "properties-add",
           "ro": {
-            "question": "Ați apăsat „Nouă”. Ce alegeți în fereastra „Adaugă Proprietate” ca să completați proprietatea de mână?",
+            "question": "Ați apăsat „Adaugă proprietate”. Ce alegeți în fereastra „Adaugă Proprietate” ca să completați proprietatea de mână?",
             "explanation": "„Introducere manuală” este calea în care completați detaliile proprietății manual; se deschide ecranul „Proprietate nouă”."
           },
           "en": {
-            "question": "You pressed „Nouă”. What do you choose in the window „Adaugă Proprietate” to fill in the property by hand?",
+            "question": "You pressed „Adaugă proprietate”. What do you choose in the window „Adaugă Proprietate” to fill in the property by hand?",
             "explanation": "„Introducere manuală” is the way in which you fill in the property's details by hand; the screen „Proprietate nouă” opens."
           },
           "options": [

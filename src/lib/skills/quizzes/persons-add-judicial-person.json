@@ -16,30 +16,30 @@
           "section": "companies-add",
           "ro": {
             "question": "Cum adăugați o firmă nouă în arhivă?",
-            "explanation": "Pe lista firmelor, „Persoane Juridice”, apăsați „Nouă”. Se deschide direct formularul „Persoană juridică nouă”, fără altă întrebare."
+            "explanation": "Pe lista firmelor, „Persoane Juridice”, apăsați „Adaugă persoană juridică”. Se deschide direct formularul „Persoană juridică nouă”, fără altă întrebare."
           },
           "en": {
             "question": "How do you add a new firm to the archive?",
-            "explanation": "On the list of firms, „Persoane Juridice”, press „Nouă”. The form „Persoană juridică nouă” opens straight away, with no other question."
+            "explanation": "On the list of firms, „Persoane Juridice”, press „Adaugă persoană juridică”. The form „Persoană juridică nouă” opens straight away, with no other question."
           },
           "options": [
             {
               "id": "o1",
               "correct": true,
-              "ro": "Pe „Persoane Juridice”, apăsați „Nouă”; formularul se deschide direct.",
-              "en": "On „Persoane Juridice”, press „Nouă” (new); the form opens straight away."
+              "ro": "Pe „Persoane Juridice”, apăsați „Adaugă persoană juridică”; formularul se deschide direct.",
+              "en": "On „Persoane Juridice”, press „Adaugă persoană juridică” (add juridical person); the form opens straight away."
             },
             {
               "id": "o2",
               "correct": false,
-              "ro": "Pe „Persoane Fizice”, apăsați „Nouă” și alegeți „Tip” „SRL”.",
-              "en": "On „Persoane Fizice”, press „Nouă” and choose „Tip” „SRL”."
+              "ro": "Pe „Persoane Fizice”, apăsați „Adaugă persoană” și alegeți „Tip” „SRL”.",
+              "en": "On „Persoane Fizice”, press „Adaugă persoană” and choose „Tip” „SRL”."
             },
             {
               "id": "o3",
               "correct": false,
-              "ro": "Pe „Persoane Juridice”, apăsați „Nouă” și alegeți întâi forma firmei („Tip”) într-o fereastră separată.",
-              "en": "On „Persoane Juridice”, press „Nouă” and first choose the firm's form („Tip”) in a separate window."
+              "ro": "Pe „Persoane Juridice”, apăsați „Adaugă persoană juridică” și alegeți întâi forma firmei („Tip”) într-o fereastră separată.",
+              "en": "On „Persoane Juridice”, press „Adaugă persoană juridică” and first choose the firm's form („Tip”) in a separate window."
             }
           ]
         },

@@ -1,0 +1,629 @@
+{
+  "skill": "workspace-sort-a-list",
+  "manual": [
+    "start-lists",
+    "properties-list-filters",
+    "documents-list",
+    "documents-list-filters"
+  ],
+  "variants": [
+    {
+      "id": "a",
+      "questions": [
+        {
+          "id": "a1",
+          "section": "start-lists",
+          "ro": {
+            "question": "Deschideți „Persoane fizice”, fără să schimbați nimic. În ce ordine stau rândurile?",
+            "explanation": "O listă se deschide cu obiectele schimbate cel mai de curând primele, iar o adăugare contează ca schimbare; butonul de după „Câmpuri afișate” spune „Recente întâi”."
+          },
+          "en": {
+            "question": "You open „Persoane fizice” without changing anything. In what order do the rows stand?",
+            "explanation": "A list opens with the objects changed most recently first, and an addition counts as a change; the button after „Câmpuri afișate” says „Recente întâi” (recent first)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "În ordinea alfabetică a numelor de familie, de la A la Z, pe toate paginile",
+              "en": "In the alphabetical order of the surnames, from A to Z, across every page"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Cele schimbate cel mai de curând primele — butonul spune „Recente întâi”",
+              "en": "Those changed most recently first — the button says „Recente întâi”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "După ID, de la cel mai mic",
+              "en": "By ID, from the smallest"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Cele mai vechi primele, după „Adăugat la”",
+              "en": "The oldest first, by „Adăugat la”"
+            }
+          ]
+        },
+        {
+          "id": "a2",
+          "section": "start-lists",
+          "ro": {
+            "question": "Pe lista proprietăților apăsați „Recente întâi”. Ce se întâmplă?",
+            "explanation": "Butonul întoarce ordinea: lista arată întâi proprietățile schimbate de cel mai mult timp, iar butonul spune „Vechi întâi”. Apăsat din nou, readuce „Recente întâi”."
+          },
+          "en": {
+            "question": "On the list of properties you press „Recente întâi”. What happens?",
+            "explanation": "The button turns the order round: the list first shows the properties changed longest ago, and the button says „Vechi întâi” (older first). Pressed again, it brings back „Recente întâi”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Se deschide lista coloanelor, ca „Câmpuri afișate”",
+              "en": "The list of columns opens, like „Câmpuri afișate”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Lista se ordonează după „Poreclă”",
+              "en": "The list is sorted by „Poreclă”"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Lista se întoarce — butonul spune „Vechi întâi”",
+              "en": "The list turns round — the button says „Vechi întâi”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Se scot toate filtrele puse",
+              "en": "Every filter set is removed"
+            }
+          ]
+        },
+        {
+          "id": "a3",
+          "section": "start-lists",
+          "ro": {
+            "question": "Pe „Persoane fizice” ați bifat „Vârstă” în „Câmpuri afișate”. Cum vedeți întâi persoanele cele mai tinere?",
+            "explanation": "Coloanele care ordonează lista au, în colțul din dreapta jos al numelui, la stânga pâlniei, o pictogramă cu două săgeți. Un prim clic ordonează de la cel mai mic număr — aici, de la cea mai mică vârstă —, al doilea întoarce ordinea. Pâlnia filtrează, nu ordonează."
+          },
+          "en": {
+            "question": "On „Persoane fizice” you have ticked „Vârstă” (age) in „Câmpuri afișate”. How do you see the youngest persons first?",
+            "explanation": "The columns that sort the list have, in the bottom right corner of their name, left of the funnel, an icon with two arrows. A first click sorts from the smallest number — here, from the youngest age —, the second turns the order round. The funnel filters; it does not sort."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Un clic pe pictograma cu două săgeți din colțul lui „Vârstă”, la stânga pâlniei",
+              "en": "A click on the two-arrow icon in the corner of „Vârstă”, left of the funnel"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Un clic pe pâlnia lui „Vârstă”",
+              "en": "A click on the funnel of „Vârstă”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Trag coloana „Vârstă” de nume până la începutul tabelului, apoi apăs „Recente întâi”",
+              "en": "I drag the „Vârstă” column by its name to the start of the table, then press „Recente întâi”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Apăs de două ori „Recente întâi”",
+              "en": "I press „Recente întâi” twice"
+            }
+          ]
+        },
+        {
+          "id": "a4",
+          "section": "start-lists",
+          "ro": {
+            "question": "Ați ordonat lista după „Născut pe”. Cum arată acum pictograma de ordine a coloanei?",
+            "explanation": "Cât timp lista este ordonată după o coloană, pictograma ei are o singură săgeată, groasă, albastru închis, într-un cerc albastru închis, în sus sau în jos după sens. Celelalte coloane își păstrează cele două săgeți subțiri."
+          },
+          "en": {
+            "question": "You have sorted the list by „Născut pe” (date of birth). What does the column's sort icon look like now?",
+            "explanation": "While the list is sorted by a column, its icon has a single thick arrow, dark blue, in a dark blue circle, up or down by the direction. The other columns keep their two thin arrows."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Tot cele două săgeți subțiri, doar puțin mai mari și colorate în roșu",
+              "en": "Still the two thin arrows, only a little larger and coloured red"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "O pâlnie plină în locul ei",
+              "en": "A filled funnel in its place"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Dispare până scoateți ordinea",
+              "en": "It disappears until you remove the order"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "O singură săgeată, groasă, albastru închis, într-un cerc",
+              "en": "A single thick arrow, dark blue, in a circle"
+            }
+          ]
+        },
+        {
+          "id": "a5",
+          "section": "start-lists",
+          "ro": {
+            "question": "Lista e ordonată după „Vârstă”, iar butonul de pe bară spune „Ordonat după „Vârstă””. Cum reveniți la ordinea obișnuită?",
+            "explanation": "Apăsați butonul de pe bară: readuce ordinea după ultima modificare, „Recente întâi”. Ordinea stă în adresa paginii, așa că o reîncărcare o păstrează, iar „Șterge filtrele” lasă ordinea neatinsă."
+          },
+          "en": {
+            "question": "The list is sorted by „Vârstă”, and the button on the bar says „Ordonat după „Vârstă”” (sorted by age). How do you go back to the usual order?",
+            "explanation": "Press the button on the bar: it brings back the order by the last change, „Recente întâi”. The order is kept in the page's address, so a reload keeps it, and „Șterge filtrele” leaves the order alone."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Apăs „Șterge filtrele”",
+              "en": "I press „Șterge filtrele”"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Apăs butonul de pe bară, „Ordonat după „Vârstă””",
+              "en": "I press the button on the bar, „Ordonat după „Vârstă””"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Reîncarc pagina",
+              "en": "I reload the page"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Aleg „Ordinea implicită” din „Câmpuri afișate”",
+              "en": "I choose „Ordinea implicită” in „Câmpuri afișate”"
+            }
+          ]
+        },
+        {
+          "id": "a6",
+          "section": "properties-list-filters",
+          "ro": {
+            "question": "Pe bara de sus a listei, „Șterge filtrele” este gri și nu se apasă. De ce?",
+            "explanation": "„Șterge filtrele” stă mereu pe bară, în dreapta butonului de ordine, dar se poate apăsa doar cât timp este pus un filtru. Ținut sub mouse, spune „Niciun filtru nu este activ.”."
+          },
+          "en": {
+            "question": "On the list's top bar, „Șterge filtrele” (clear filters) is grey and cannot be pressed. Why?",
+            "explanation": "„Șterge filtrele” always stands on the bar, right of the order button, but it can be pressed only while a filter is set. Under the mouse it says „Niciun filtru nu este activ.” (no filter is on)."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Nu este pus niciun filtru",
+              "en": "No filter is set"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Lista este ordonată după o coloană",
+              "en": "The list is sorted by a column"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Caseta de căutare nu e goală",
+              "en": "The search box is not empty"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Contul vostru nu are voie să scoată filtre",
+              "en": "Your account may not remove filters"
+            }
+          ]
+        },
+        {
+          "id": "a7",
+          "section": "properties-list-filters",
+          "ro": {
+            "question": "Pe „Proprietăți” ați pus un filtru pe „Tarla”, ați scris o poreclă în caseta de căutare și ați ordonat după „Supr. Ofic.”. Apăsați „Șterge filtrele”. Ce rămâne?",
+            "explanation": "„Șterge filtrele” scoate filtrele puse din coloane, iar rândul etichetelor dispare; căutarea și ordinea listei rămân."
+          },
+          "en": {
+            "question": "On „Proprietăți” you have set a filter on „Tarla”, typed a nickname in the search box and sorted by „Supr. Ofic.” (official area). You press „Șterge filtrele”. What remains?",
+            "explanation": "„Șterge filtrele” removes the filters set from the columns, and the row of labels goes; the search and the list's order stay."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Nimic: lista revine cum se deschide",
+              "en": "Nothing: the list goes back to how it opens"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Doar filtrul pe „Tarla”",
+              "en": "Only the filter on „Tarla”"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Căutarea și ordinea după „Supr. Ofic.”; filtrul pe „Tarla” dispare",
+              "en": "The search and the order by „Supr. Ofic.”; the filter on „Tarla” goes"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Doar căutarea; ordinea revine singură la „Recente întâi”, ca la deschiderea listei",
+              "en": "Only the search; the order goes back by itself to „Recente întâi”, as when the list opens"
+            }
+          ]
+        },
+        {
+          "id": "a8",
+          "section": "start-lists",
+          "ro": {
+            "question": "În capul tabelului, pâlnia de pe „Gen” e plină, albastru închis, într-un cerc, iar celelalte pâlnii sunt subțiri, fără cerc. Ce înseamnă?",
+            "explanation": "O pâlnie are două înfățișări: nefolosită, doar pâlnia, subțire; cu un filtru pus pe coloana ei, plină, albastru închis, într-un cerc albastru închis — la fel ca pictograma de ordine a unei coloane după care e ordonată lista."
+          },
+          "en": {
+            "question": "In the table's header the funnel on „Gen” (gender) is filled, dark blue, in a circle, and the other funnels are thin, with no circle. What does it mean?",
+            "explanation": "A funnel has two looks: unused, the funnel alone, thin; with a filter set on its column, filled, dark blue, in a dark blue circle — like the sort icon of a column the list is sorted by."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Lista e ordonată după „Gen”",
+              "en": "The list is sorted by „Gen”"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Lista e filtrată după „Gen”",
+              "en": "The list is filtered by „Gen”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Coloana „Gen” a fost mutată",
+              "en": "The „Gen” column has been moved"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Gen” este coloana cea mai lată",
+              "en": "„Gen” is the widest column"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "questions": [
+        {
+          "id": "b1",
+          "section": "start-lists",
+          "ro": {
+            "question": "Pe „Persoane juridice”, după ce coloane se poate ordona lista?",
+            "explanation": "Pe lista firmelor doar „Adăugat la” are pictograma cu două săgeți; altfel lista stă în ordinea după ultima modificare, „Recente întâi” sau „Vechi întâi”."
+          },
+          "en": {
+            "question": "On „Persoane juridice”, which columns can the list be sorted by?",
+            "explanation": "On the list of firms only „Adăugat la” (added on) has the two-arrow icon; otherwise the list stands in the order by the last change, „Recente întâi” or „Vechi întâi”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Denumire” și „Poreclă”",
+              "en": "„Denumire” and „Poreclă”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Orice coloană aleasă în „Câmpuri afișate”",
+              "en": "Any column chosen in „Câmpuri afișate”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„CUI” și „Localitate”",
+              "en": "„CUI” and „Localitate”"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Doar „Adăugat la”",
+              "en": "Only „Adăugat la”"
+            }
+          ]
+        },
+        {
+          "id": "b2",
+          "section": "documents-list",
+          "ro": {
+            "question": "Ciprian a adăugat un act acum un minut și deschide lista „Acte”. Unde îl găsește?",
+            "explanation": "Lista se deschide cu actele schimbate cel mai de curând primele, iar o adăugare contează ca schimbare: actul abia adăugat stă sus, cu „Nou!” după tipul lui."
+          },
+          "en": {
+            "question": "Ciprian added a document a minute ago and opens the „Acte” list. Where does he find it?",
+            "explanation": "The list opens with the documents changed most recently first, and an addition counts as a change: the document just added stands at the top, with „Nou!” after its type."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Sus, cu „Nou!” după tipul lui",
+              "en": "At the top, with „Nou!” after its type"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Pe ultima pagină, pentru că e cel mai nou",
+              "en": "On the last page, because it is the newest"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Nicăieri, până nu bifează „Adăugat la”",
+              "en": "Nowhere, until he ticks „Adăugat la”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Doar după ce apasă „Vechi întâi”",
+              "en": "Only after he presses „Vechi întâi”"
+            }
+          ]
+        },
+        {
+          "id": "b3",
+          "section": "documents-list",
+          "ro": {
+            "question": "Pe lista „Acte”, unde stă butonul de ordine?",
+            "explanation": "Pe „Acte” butonul de ordine stă după ⓘ-ul lui „Câmp specific:”, iar „Șterge filtrele” îl urmează; într-o fereastră îngustă trec toate împreună pe un rând al lor, cu „Tip document:”."
+          },
+          "en": {
+            "question": "On the „Acte” list, where does the order button stand?",
+            "explanation": "On „Acte” the order button stands after the ⓘ of „Câmp specific:”, and „Șterge filtrele” follows it; in a narrow window they all move together onto a row of their own, with „Tip document:”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Imediat după caseta de căutare",
+              "en": "Right after the search box"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Sub tabel, lângă „Pagina x din y”",
+              "en": "Under the table, beside „Pagina x din y”"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "După ⓘ-ul lui „Câmp specific:”, urmat de „Șterge filtrele”",
+              "en": "After the ⓘ of „Câmp specific:”, followed by „Șterge filtrele”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "La capătul rândului de sus, după „Adaugă act”, lângă marginea din dreapta",
+              "en": "At the end of the top row, after „Adaugă act”, by the right-hand edge"
+            }
+          ]
+        },
+        {
+          "id": "b4",
+          "section": "start-lists",
+          "ro": {
+            "question": "Apăsați pictograma de ordine a coloanei „Adăugat la”. Ce rânduri vin întâi?",
+            "explanation": "„Adăugat la” ordonează de la cel mai nou; un al doilea clic întoarce ordinea, de la cel mai vechi. Celelalte coloane încep de la cel mai mic număr sau de la cea mai veche dată."
+          },
+          "en": {
+            "question": "You press the sort icon of the „Adăugat la” (added on) column. Which rows come first?",
+            "explanation": "„Adăugat la” sorts from the newest; a second click turns the order round, from the oldest. The other columns start from the smallest number or the oldest date."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Cele adăugate cel mai demult",
+              "en": "Those added longest ago"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Cele adăugate cel mai de curând",
+              "en": "Those added most recently"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Cele schimbate cel mai de curând",
+              "en": "Those changed most recently"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Cele fără „Adăugat la”",
+              "en": "Those with no „Adăugat la”"
+            }
+          ]
+        },
+        {
+          "id": "b5",
+          "section": "start-lists",
+          "ro": {
+            "question": "Ați ordonat „Proprietăți” după „Parcelă”, ați deschis o proprietate și v-ați întors cu „Înapoi”. Cum stă lista?",
+            "explanation": "Ordinea stă în adresa paginii, ca filtrele: rămâne după „Înapoi” și după ce reîncărcați pagina."
+          },
+          "en": {
+            "question": "You have sorted „Proprietăți” by „Parcelă”, opened a property and come back with „Înapoi” (back). How does the list stand?",
+            "explanation": "The order is kept in the page's address, like the filters: it stays after „Înapoi” and after you reload the page."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": true,
+              "ro": "Tot ordonată după „Parcelă”",
+              "en": "Still sorted by „Parcelă”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Din nou „Recente întâi”",
+              "en": "„Recente întâi” again"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "„Vechi întâi”",
+              "en": "„Vechi întâi”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Ordonată după „Poreclă”",
+              "en": "Sorted by „Poreclă”"
+            }
+          ]
+        },
+        {
+          "id": "b6",
+          "section": "documents-list-filters",
+          "ro": {
+            "question": "Pe „Acte” ați bifat un singur tip la „Tip document:”, ați apăsat „Expiră curând” și ați pus un filtru pe „Data”. Ce scoate „Șterge filtrele”?",
+            "explanation": "Pe „Acte”, „Șterge filtrele” le scoate pe toate: filtrele puse din coloane, „Expiră curând”, câmpul specific și tipurile bifate — lista arată din nou toate tipurile. Căutarea și ordinea rămân."
+          },
+          "en": {
+            "question": "On „Acte” you have ticked a single type under „Tip document:”, pressed „Expiră curând” (expiring soon) and set a filter on „Data” (date). What does „Șterge filtrele” remove?",
+            "explanation": "On „Acte”, „Șterge filtrele” removes them all: the filters set from the columns, „Expiră curând”, the type-specific field and the ticked types — the list shows every type again. The search and the order stay."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Doar filtrul pe „Data”",
+              "en": "Only the filter on „Data”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Filtrul pe „Data” și „Expiră curând”; tipul bifat rămâne",
+              "en": "The filter on „Data” and „Expiră curând”; the ticked type stays"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "Toate trei — lista arată din nou toate tipurile",
+              "en": "All three — the list shows every type again"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Toate trei, și ordinea listei",
+              "en": "All three, and the list's order"
+            }
+          ]
+        },
+        {
+          "id": "b7",
+          "section": "start-lists",
+          "ro": {
+            "question": "De unde aduceți în listă ziua în care un obiect a intrat în arhivă?",
+            "explanation": "Pe toate cele patru liste, „Câmpuri afișate” oferă „Adăugat la”, ziua în care obiectul a fost adăugat; coloana are și pictograma de ordine."
+          },
+          "en": {
+            "question": "Where do you bring the day an object came into the archive into the list from?",
+            "explanation": "On all four lists, „Câmpuri afișate” offers „Adăugat la” (added on), the day the object was added; the column also has the sort icon."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Doar de pe ecranul obiectului, din colțul primei fișe",
+              "en": "Only from the object's screen, from the first tile's corner"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Din „Câmpuri afișate”, bifând „Adăugat la” — pe toate cele patru liste",
+              "en": "From „Câmpuri afișate”, by ticking „Adăugat la” — on all four lists"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Din „Câmpuri afișate”, dar doar pe „Acte”",
+              "en": "From „Câmpuri afișate”, but only on „Acte”"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Din pâlnia primei coloane",
+              "en": "From the first column's funnel"
+            }
+          ]
+        },
+        {
+          "id": "b8",
+          "section": "start-lists",
+          "ro": {
+            "question": "Vreți lista proprietăților în ordinea poreclelor. Ce faceți?",
+            "explanation": "Nu toate coloanele ordonează lista: doar cele cu pictograma cu două săgeți — pe „Proprietăți”, „Adăugat la”, „Tarla”, „Parcelă”, „Supr. Ofic.” și „Supr. Calc.”. „Poreclă” nu o are; o proprietate se găsește după poreclă cu caseta de căutare."
+          },
+          "en": {
+            "question": "You want the list of properties in the order of their nicknames. What do you do?",
+            "explanation": "Not every column sorts the list: only those with the two-arrow icon — on „Proprietăți”, „Adăugat la”, „Tarla”, „Parcelă”, „Supr. Ofic.” and „Supr. Calc.”. „Poreclă” has none; a property is found by its nickname with the search box."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Apăs pictograma de ordine a lui „Poreclă”",
+              "en": "I press the sort icon of „Poreclă”"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Apăs de două ori „Recente întâi”",
+              "en": "I press „Recente întâi” twice"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Pun un filtru pe „Poreclă” și aleg ordinea alfabetică din fereastra filtrului",
+              "en": "I set a filter on „Poreclă” and choose the alphabetical order in the filter's window"
+            },
+            {
+              "id": "o4",
+              "correct": true,
+              "ro": "Nu se poate: „Poreclă” nu ordonează lista; o caut cu caseta de căutare",
+              "en": "It cannot be done: „Poreclă” does not sort the list; I find it with the search box"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

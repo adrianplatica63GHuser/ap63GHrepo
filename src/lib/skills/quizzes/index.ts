@@ -46,6 +46,7 @@ import propertiesParcelDossier from "./properties-parcel-dossier.json";
 import propertiesReadTheMap from "./properties-read-the-map.json";
 import propertiesSideRoadCalculation from "./properties-side-road-calculation.json";
 import workspaceArrangeTiles from "./workspace-arrange-tiles.json";
+import workspaceSortAList from "./workspace-sort-a-list.json";
 import workspaceFindInAList from "./workspace-find-in-a-list.json";
 import workspaceGlobalSearch from "./workspace-global-search.json";
 import workspaceInteractionsLinksAndExport from "./workspace-interactions-links-and-export.json";
@@ -100,6 +101,7 @@ export const QUIZZES: Readonly<Record<string, QuizFile>> = {
   "properties-read-the-map": propertiesReadTheMap as QuizFile,
   "properties-side-road-calculation": propertiesSideRoadCalculation as QuizFile,
   "workspace-arrange-tiles": workspaceArrangeTiles as QuizFile,
+  "workspace-sort-a-list": workspaceSortAList as QuizFile,
   "workspace-find-in-a-list": workspaceFindInAList as QuizFile,
   "workspace-global-search": workspaceGlobalSearch as QuizFile,
   "workspace-interactions-links-and-export": workspaceInteractionsLinksAndExport as QuizFile,

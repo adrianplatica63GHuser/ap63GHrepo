@@ -21,11 +21,12 @@ The first column is „Nickname”, the name you give the property; „New!” s
 - „Supr.Ofic.” and „Supr.Calc.” — the two areas, official and calculated;
 - „C.F.#” and „Cadastru #” — the land-registry and cadastral numbers;
 - „Use Categ.” and „Prop. Type” — the use category and the property type, shown by their names;
-- „Locality”.
+- „Locality”;
+- „Added on” — the day the property was added to the archive.
 
 The button shows how many columns you have chosen, for instance „Choose fields 2/4”. Once four are ticked, the other boxes turn grey until you untick one. At first the list shows only „Prop. Type”. The choice is kept in this browser, so you find it again next time.
 
-On the right, above the table, are two buttons: „Full map” opens the map of all properties (chapter [[map]]), and „New” — with a + before it and the map after it; under the mouse, „Add new Property” — creates a new one (section [[properties-add]]). While the full map is open, the navigation bar reads „Home › Properties › Full map”, and a click on „Properties” takes you back to the list.
+On the right, above the table, are two buttons: „Full map” — an arrow pointing right and a globe with meridians and two pins, no words; under the mouse it shows its name — opens the map of all properties (chapter [[map]]), and „Add new Property” — a + and the map, with a few rays, no words; under the mouse it shows its name — creates a new one (section [[properties-add]]). While the full map is open, the navigation bar reads „Home › Properties › Full map”, and a click on „Properties” takes you back to the list.
 
 ![5.1 The list of properties](properties-list.png){#fig-properties-list}
 
@@ -43,17 +44,17 @@ On the list of properties seven columns filter:
 - **„Official (m²)” and „Calculated (m²)”** — „From” and „To”, either or both;
 - **„Parcelă”** — „Contains”: the properties whose parcela contains what you typed remain.
 
-„Nickname”, „Cadastru #” and „C.F.#” have no funnel; a property is found by them with the search box.
+„Nickname”, „Cadastru #”, „C.F.#” and „Added on” have no funnel; a property is found by them with the search box.
 
-Each filter set becomes a rounded label under the search box, on a row that appears only while a filter is set, with the column's name and what you chose, for instance „Property Type” House. A click on the label opens the window again, right under the label, and its X removes the filter. A filled funnel shows that the list is filtered by that column. A filter stays when you hide its column: its label still stands under the search box, so the list is never filtered without your seeing it.
+Each filter set becomes a rounded label under the search box, on a row that appears only while a filter is set, with the column's name and what you chose, for instance „Property Type” House. A click on the label opens the window again, right under the label, and its X removes the filter. A filled funnel, dark blue, in a circle, shows that the list is filtered by that column. A filter stays when you hide its column: its label still stands under the search box, so the list is never filtered without your seeing it.
 
-„Clear filters” removes them all at once, and the row of labels goes. The filters are kept in the page's address, like the search: they stay after you reload the page, after you come back to the list with „Back”, and when you send the address to someone.
+„Clear filters”, on the top bar, removes them all at once, and the row of labels goes; the search and the list's order stay. While no filter is set, the button is grey. The filters are kept in the page's address, like the search: they stay after you reload the page, after you come back to the list with „Back”, and when you send the address to someone.
 
-The table's header is two rows tall, the same on the four lists, however many columns you chose. A column's name stands alone in the middle, across and down, and the funnel, on a column that can be filtered, stands in the bottom right corner. A name too long for its column goes on to the second row; no name takes three rows.
+The table's header is two rows tall, the same on the four lists, however many columns you chose. A column's name stands alone in the middle, across and down, and the funnel, on a column that can be filtered, stands in the bottom right corner; on a column that sorts the list — „Added on”, „Tarla”, „Parcelă”, „Supr.Ofic.”, „Supr.Calc.” —, the sort icon stands left of it (section [[start-lists]]). A name too long for its column goes on to the second row; no name takes three rows.
 
 ## 5.2 A property added by hand {#properties-add}
 
-Press „New”. The window „Add Property” opens, with two ways in:
+Press „Add new Property”. The window „Add Property” opens, with two ways in:
 
 | The way | What it does |
 |---|---|
@@ -210,7 +211,7 @@ The „Street View” tile shows the street view next to the parcel. It is off u
 
 A text file with the Stereo 70 coordinates of the corners — from a surveyor, for instance — becomes a whole property, without typing the corners by hand.
 
-1. In „Properties”, press „New”, then „From a text file”.
+1. In „Properties”, press „Add new Property”, then „From a text file”.
 2. In the window „Upload coordinate file”, choose the file at „Select the coordinate file”. The file window shows only .txt files.
 3. Under the file, at „Tarla and parcel”, choose the tarla at „Tarla / Sola” and type the parcel at „Parcela”. Until both are filled in, „Import” stays grey.
 4. Press „Import”.
@@ -253,7 +254,7 @@ Scan the QR code with the phone, and Google Maps starts the navigation. On the c
 
 ### 5.7.1 Add a plot in Bragadiru and draw it on the map {#properties-example-draw}
 
-1. In „Properties”, press „New”, then „Manual data entry” (section [[properties-add]]).
+1. In „Properties”, press „Add new Property”, then „Manual data entry” (section [[properties-add]]).
 2. Type the nickname, for instance „Bragadiru plot”, choose the tarla in „Tarla / Sola”, and type the parcela and the area from the papers.
 3. On the map, press „Draw” and place the corners; close the shape on the first point (section [[properties-corners-draw]]).
 4. Compare „Calculated Area (m²)” with „Official Surface Area (m²)”.
@@ -261,7 +262,7 @@ Scan the QR code with the phone, and Google Maps starts the navigation. On the c
 
 ### 5.7.2 Bring in a parcel from a surveyor's file {#properties-example-file}
 
-1. „New”, then „From a text file”; choose the .txt file, the tarla and the parcel, and press „Import” (section [[properties-coord-file]]).
+1. „Add new Property”, then „From a text file”; choose the .txt file, the tarla and the parcel, and press „Import” (section [[properties-coord-file]]).
 2. Open the new property and check on the map that the sides do not cross; if they do, use „Straighten the order” (section [[properties-corners-table]]).
 3. Fill in what else the deeds tell you in „Cadastral identification” — the cadastral number, the land book — and save.
 

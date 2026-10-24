@@ -15,24 +15,24 @@
           "section": "persons-add",
           "ro": {
             "question": "Sunteți pe lista persoanelor fizice și vreți să adăugați de mână o persoană nouă. Ce faceți?",
-            "explanation": "Pe lista persoanelor fizice apăsați „Nouă”. Se deschide direct ecranul „Persoană fizică nouă”, un formular gol împărțit în fișe."
+            "explanation": "Pe lista persoanelor fizice apăsați „Adaugă persoană”. Se deschide direct ecranul „Persoană fizică nouă”, un formular gol împărțit în fișe."
           },
           "en": {
             "question": "You are on the list of natural persons and want to add a new person by hand. What do you do?",
-            "explanation": "On the list of natural persons you press „Nouă” (new). The screen „Persoană fizică nouă” opens straight away: an empty form divided into tiles."
+            "explanation": "On the list of natural persons you press „Adaugă persoană” (add person). The screen „Persoană fizică nouă” opens straight away: an empty form divided into tiles."
           },
           "options": [
             {
               "id": "o1",
               "correct": false,
-              "ro": "Apăsați „Nouă”, apoi alegeți „Introducere manuală” în fereastra care se deschide.",
-              "en": "Press „Nouă”, then choose „Introducere manuală” (manual entry) in the window that opens."
+              "ro": "Apăsați „Adaugă persoană”, apoi alegeți „Introducere manuală” în fereastra care se deschide.",
+              "en": "Press „Adaugă persoană”, then choose „Introducere manuală” (manual entry) in the window that opens."
             },
             {
               "id": "o2",
               "correct": true,
-              "ro": "Apăsați „Nouă”; se deschide direct formularul „Persoană fizică nouă”.",
-              "en": "Press „Nouă”; the form „Persoană fizică nouă” (new natural person) opens straight away."
+              "ro": "Apăsați „Adaugă persoană”; se deschide direct formularul „Persoană fizică nouă”.",
+              "en": "Press „Adaugă persoană”; the form „Persoană fizică nouă” (new natural person) opens straight away."
             },
             {
               "id": "o3",

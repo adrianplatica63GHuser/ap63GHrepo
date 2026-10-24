@@ -167,7 +167,7 @@ export const SKILLS: readonly Skill[] = [
     },
     predecessors: [],
     screens: ["natural-persons-list", "judicial-persons-list", "properties-list", "documents-list"],
-    cases: ["TC-PROP-06", "TC-PERS-04", "TC-PERS-06", "TC-DOC-08", "TC-LAYOUT-02", "TC-LAYOUT-03", "TC-LAYOUT-05", "TC-LAYOUT-06", "TC-LAYOUT-07", "TC-LAYOUT-08", "TC-LAYOUT-09", "TC-LAYOUT-10", "TC-PROP-14", "TC-PERS-12", "TC-PERS-13", "TC-DOC-27"],
+    cases: ["TC-PROP-06", "TC-PERS-04", "TC-PERS-06", "TC-DOC-08", "TC-LAYOUT-02", "TC-LAYOUT-03", "TC-LAYOUT-05", "TC-LAYOUT-06", "TC-LAYOUT-07", "TC-LAYOUT-08", "TC-PROP-14", "TC-PERS-12", "TC-PERS-13", "TC-DOC-27"],
     manual: ["start-lists", "start-example-find", "persons-list", "properties-list", "documents-list"],
   },
   {
@@ -230,8 +230,8 @@ export const SKILLS: readonly Skill[] = [
     path: "persons",
     name: { ro: "Adaugă o persoană fizică de mână", en: "Add a natural person by hand" },
     description: {
-      ro: "Creezi o persoană fizică din „Nouă”, pe lista persoanelor, îi completezi identitatea și o regăsești în listă.",
-      en: "Create a natural person from „Nouă” (new), on the list of persons, fill in their identity and find them again in the list.",
+      ro: "Creezi o persoană fizică din „Adaugă persoană”, pe lista persoanelor, îi completezi identitatea și o regăsești în listă.",
+      en: "Create a natural person from „Adaugă persoană” (add person), on the list of persons, fill in their identity and find them again in the list.",
     },
     predecessors: [],
     screens: ["natural-persons-list", "natural-person-detail"],
@@ -431,8 +431,8 @@ export const SKILLS: readonly Skill[] = [
     path: "persons",
     name: { ro: "Adaugă o persoană fizică dintr-o carte de identitate", en: "Add a natural person from an identity card" },
     description: {
-      ro: "Din „Nouă”, pe lista persoanelor, citești o carte de identitate și primești persoana completată, cu tatăl și mama create și legate ca „Tată” și „Mamă”.",
-      en: "From „Nouă” (new), on the list of persons, read an identity card and get the person filled in, with the father and mother created and linked as „Tată” and „Mamă”.",
+      ro: "Din „Adaugă persoană”, pe lista persoanelor, citești o carte de identitate și primești persoana completată, cu tatăl și mama create și legate ca „Tată” și „Mamă”.",
+      en: "From „Adaugă persoană” (add person), on the list of persons, read an identity card and get the person filled in, with the father and mother created and linked as „Tată” and „Mamă”.",
     },
     predecessors: ["persons-add-natural-person-by-hand", "documents-read-pages"],
     screens: ["natural-persons-list", "natural-person-detail"],
@@ -630,8 +630,8 @@ export const SKILLS: readonly Skill[] = [
     path: "workspace",
     name: { ro: "Așază fișele și previzualizează alături", en: "Arrange the tiles and preview side by side" },
     description: {
-      ro: "Tragi o fișă într-un loc liber — și pe cele mov deschis, care pornesc din dreapta —, o urci cu dublu-clic, le urci pe toate cu „Toate sus”, îi faci loc ținând-o peste alta, citești schița fișelor de lângă bife, deschizi un obiect legat ca previzualizare lângă cel pe care lucrezi și, dintr-o listă, lângă tabel.",
-      en: "Drag a tile into a free place — the light purple ones too, which start on the right —, raise it with a double-click, raise them all with „Toate sus”, make room by holding it over another, read the sketch of the tiles beside the tick boxes, open a linked object as a preview beside the one you are working on and, from a list, beside the table.",
+      ro: "Tragi o fișă într-un loc liber — și pe cele mov deschis, care pornesc din dreapta —, o urci cu dublu-clic, le urci pe toate cu „Toate sus”, îi faci loc ținând-o peste alta, citești schița fișelor de lângă bife și le muți trăgându-i dreptunghiurile, deschizi un obiect legat ca previzualizare lângă cel pe care lucrezi și, dintr-o listă, lângă tabel.",
+      en: "Drag a tile into a free place — the light purple ones too, which start on the right —, raise it with a double-click, raise them all with „Toate sus”, make room by holding it over another, read the sketch of the tiles beside the tick boxes and move the tiles by dragging its rectangles, open a linked object as a preview beside the one you are working on and, from a list, beside the table.",
     },
     predecessors: ["workspace-sign-in-and-navigate", "workspace-find-in-a-list", "workspace-read-a-record-screen"],
     screens: DETAIL_SCREENS,
@@ -681,6 +681,21 @@ export const SKILLS: readonly Skill[] = [
     screens: ["admin-groups", "admin-group-editor", "admin-stamps", "admin-stamp-applicator"],
     cases: ["TC-GRP-01", "TC-GRP-02", "TC-GRP-03", "TC-GRP-04", "TC-STAMP-01", "TC-STAMP-02", "TC-MAP-07"],
     manual: ["links-classify-groups", "links-classify-stamps", "admin-groups-groups", "admin-groups-stamps", "reports-search-filters"],
+  },
+  {
+    key: "workspace-sort-a-list",
+    number: "2.16",
+    level: 2,
+    path: "workspace",
+    name: { ro: "Ordonează o listă", en: "Sort a list" },
+    description: {
+      ro: "Citești în ce ordine se deschide o listă — cele schimbate cel mai de curând primele —, o întorci cu „Recente întâi”, o ordonezi după o coloană din pictograma cu două săgeți de lângă pâlnie și revii, aduci „Adăugat la” din „Câmpuri afișate”, recunoști o pâlnie și o pictogramă folosite și scoți filtrele cu „Șterge filtrele”, fără să pierzi căutarea și ordinea.",
+      en: "Read the order a list opens in — those changed most recently first —, turn it round with „Recente întâi”, sort it by a column from the two-arrow icon beside the funnel and go back, bring „Adăugat la” in from „Câmpuri afișate”, recognise a funnel and an icon in use, and clear the filters with „Șterge filtrele” without losing the search or the order.",
+    },
+    predecessors: ["workspace-sign-in-and-navigate", "workspace-find-in-a-list"],
+    screens: ["natural-persons-list", "judicial-persons-list", "properties-list", "documents-list"],
+    cases: ["TC-LAYOUT-09", "TC-LAYOUT-10"],
+    manual: ["start-lists", "properties-list-filters", "documents-list", "documents-list-filters"],
   },
 
   // ── Level 3 — Advanced ──────────────────────────────────────────────────────────────────────────────────────
@@ -816,7 +831,7 @@ export const SKILLS: readonly Skill[] = [
       ro: "Deschizi același obiect în două ferestre, vezi cum cealaltă urmează și înțelegi de ce o salvare învechită este refuzată în loc să șteargă munca altcuiva.",
       en: "Open the same object in two windows, watch the other one follow, and understand why a stale save is refused rather than wiping out someone else's work.",
     },
-    predecessors: ["links-restore-a-version", "workspace-arrange-tiles"],
+    predecessors: ["links-restore-a-version", "workspace-arrange-tiles", "workspace-sort-a-list"],
     screens: DETAIL_SCREENS,
     cases: ["TC-TABS-01", "TC-INT-04"],
     manual: ["links-two-windows", "reports-interactions-edit", "start-preview", "links-versions"],

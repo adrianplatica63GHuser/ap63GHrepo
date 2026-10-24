@@ -23,7 +23,7 @@ At the top of the map are its buttons. „STR” and „SAT” choose the street
 
 The map opens from two places:
 
-- from the „Properties” list, with the „Full map” button, on the right, beside „New” (section [[properties-list]]). The navigation bar then reads „Home › Properties › Full map”, and a click on „Properties” takes you back to the list. In the sidebar, „Properties” stays lit;
+- from the „Properties” list, with the „Full map” button — an arrow and a globe with two pins —, on the right, beside „Add new Property” (section [[properties-list]]). The navigation bar then reads „Home › Properties › Full map”, and a click on „Properties” takes you back to the list. In the sidebar, „Properties” stays lit;
 - from the sidebar, „Tools” → „Measurements on map” or „Groupings of properties”. Each opens a box with the buttons it is about, drawn as on the map, and what each does. „OK” opens the same map, with those buttons pulsing together, three times, in a violet ring, so that you find them easily: „Angles”, „Ruler” and the two area buttons, or „Tarlale”, „Groups” and „Select”. None is pressed for you: choose the one you need (section [[tools-area]]).
 
 The third guide under „Tools”, „Navigation”, shows the „Navigate” button and says where you find it: on the property's screen and in a property's bubble on the map (section [[map-what-bubble]]). „OK” only closes the box.

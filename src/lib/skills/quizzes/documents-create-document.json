@@ -16,11 +16,11 @@
           "section": "documents-list",
           "ro": {
             "question": "Vreți să adăugați în arhivă un act nou. De unde porniți?",
-            "explanation": "Pe lista „Acte” („Domeniu” → „Acte”), butonul „Nou” stă la capătul primului rând al barei de deasupra tabelului."
+            "explanation": "Pe lista „Acte” („Domeniu” → „Acte”), butonul „Adaugă act” stă la capătul primului rând al barei de deasupra tabelului."
           },
           "en": {
             "question": "You want to add a new document to the archive. Where do you start?",
-            "explanation": "On the „Acte” (Documents) list („Domeniu” → „Acte”), the button „Nou” (new) sits at the end of the first row of the bar above the table."
+            "explanation": "On the „Acte” (Documents) list („Domeniu” → „Acte”), the button „Adaugă act” (add document) sits at the end of the first row of the bar above the table."
           },
           "options": [
             {
@@ -32,8 +32,8 @@
             {
               "id": "o2",
               "correct": true,
-              "ro": "Pe „Acte”, cu „Nou” din bara de deasupra tabelului",
-              "en": "On „Acte”, with „Nou” in the bar above the table"
+              "ro": "Pe „Acte”, cu „Adaugă act” din bara de deasupra tabelului",
+              "en": "On „Acte”, with „Adaugă act” in the bar above the table"
             },
             {
               "id": "o3",

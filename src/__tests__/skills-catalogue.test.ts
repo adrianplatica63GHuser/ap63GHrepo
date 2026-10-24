@@ -61,6 +61,7 @@ const STABLE_KEYS = [
   "workspace-arrange-tiles",
   "workspace-read-interaction-history",
   "links-groups-and-stamps",
+  "workspace-sort-a-list",
   "persons-id-card-from-the-archive",
   "persons-read-inheritance-tree",
   "properties-measure-on-the-map",
