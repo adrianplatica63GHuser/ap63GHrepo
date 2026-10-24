@@ -112,7 +112,8 @@ describe("the box (#39.85)", () => {
     const view = read("src", "app", dir, "list-view.tsx");
     // Slice 40.30: the principal lists' 30-px box. Slice 40.37: pinned, the button being „+ Nou" now.
     expect(view).toContain(`<ListSearchBox value={searchInput} onChange={setSearchInput} explanation={t("searchPlaceholder")} small list="${list}" />`);
-    expect(view).toMatch(/<span className="inline-flex" \{\.\.\.LIST_ADD\}>\s*<IconButton[\s\S]*?fullName=\{t\("addNew"\)\}/);
+    // 40.51: the button is `AddNewButton`, still named the whole „Adaugă …" (it read `<IconButton … fullName={t("addNew")}`).
+    expect(view).toMatch(/<span className="inline-flex" \{\.\.\.LIST_ADD\}>[\s\S]*?<AddNewButton name=\{t\("addNew"\)\}/);
     expect(view).not.toMatch(/type="search"\s+value=\{searchInput\}/);
   });
 });
