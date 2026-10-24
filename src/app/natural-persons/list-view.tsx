@@ -205,7 +205,7 @@ export function NaturalPersonListView() {
   // Slice #40.02: the frame takes what is left of the window and scrolls its rows; the band of names sticks. Its
   // vertical scroll bar counts in the list's edge, so „Adaugă …" and the pagination row still end where the frame does.
   const fit = useListFit();
-  const edge = useListEdge(columns, fit.gutter);
+  const edge = useListEdge(columns);
   const colCount = columns.length;
 
   return (

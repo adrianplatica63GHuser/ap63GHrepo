@@ -48,14 +48,16 @@ describe("the four lists, one line per row (#38.57)", () => {
     expect((VIEW[l].match(/\bONE_LINE\b/g) ?? []).length).toBeGreaterThanOrEqual(3);
   });
 
-  it.each(LISTS)("%s: the row's buttons on one line, in a column as wide as they make (128 px, four since #38.76)", (l) => {
+  it.each(LISTS)("%s: the row's buttons on one line, in a column exactly as wide as they make (114 px, 40.39)", (l) => {
     // Slice 40.30: 24-px buttons (`square="row"`) 6 px apart — 4 × 24 + 3 × 6 = 114 px, inside the column's 128.
+    // Slice 40.39: the column is those 114 px (`ROW_ACTIONS_REM`), so the band ends 16 px past „Deschide".
     expect(VIEW[l]).toContain('<span className="flex flex-nowrap gap-1.5" data-row-actions="">');
     expect((VIEW[l].match(/square="row"/g) ?? []).length).toBe(4);
     // #38.57 held two xs buttons (60 px); #38.72 adds the eye between them — three side by side, 94 px
     // („(94 px, three since #38.72)", `toBeGreaterThanOrEqual(94)`). #38.76 adds the chain link after the eye:
     // four, 4 × 26 + 3 × 8 = 128 px.
-    expect(content("listRowActions")).toBeGreaterThanOrEqual(128);
+    // four, 4 × 26 + 3 × 8 = 128 px (`toBeGreaterThanOrEqual(128)` until 40.39).
+    expect(content("listRowActions")).toBe(114);
   });
 
   // #38.57 had „the property list's badges side by side — „Încrucișat” no longer on a line of its own”, with the outer

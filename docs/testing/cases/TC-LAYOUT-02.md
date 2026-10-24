@@ -45,6 +45,7 @@ Nothing.
 | 7 | Steps 1–4 on „Acte" („Adaugă act") | The same |
 | 8 | On „Acte", unticks „Toate tipurile" in „Tip document" and presses outside | „Selectați cel puțin un tip"; „Adaugă act" stands where it stood over the table, to the pixel |
 | 9 | At 1920 px, on each of the four lists, looks at the add button and the search box | The button reads „+ Nouă" („+ Nou" on „Acte"): a +, the word, then the icon the sidebar's „Domeniu" item for that list draws; its name is still „Adaugă persoană" („… persoană juridică", „… proprietate", „… act"); the search box is as wide as it was beside „Adaugă …" — 160, 208, 168 and 120 px, ± 1 (40.37) |
+| 10 | At 1920 × 1080, then 1280 × 600, opens each of the four lists without searching | The grey band of column names ends past „Deschide" by the gap the magnifier keeps from the divider on its left (16 px, ± 1) — not on „Acte", whose toolbar is wider than its columns, so the band widens with the frame; the frame's right border is at the band's end while the rows fit, and past it only by the vertical scroll bar while they overflow; „+ Nou…" and the row under the table end on that border (40.39) |
 
 ## At the end — leaving things as they were found
 
@@ -84,3 +85,8 @@ green too).
 **2026-10-23 — Slice 40.37.** Step 9 added: the add buttons read „+ Nouă" / „+ Nou" with the list's „Domeniu" icon, their
 names unchanged, and the search boxes pinned at the widths they took from „Adaugă …" (measured that evening in the
 pane at 1920: 160.0, 208.3, 168.6, 120.4 px). Steps 1–8 still name each button by its name, which did not change.
+
+**2026-10-23 — Slice 40.39.** Step 10 added. Measured in the pane before the change (1920 × 1080, Persoane fizice):
+the band ended 30.4 px past „Deschide" (16 of padding and 14.4 spare in the 8-rem column) and the frame 15.75 px past
+the band (the bar's room, kept since 40.14 while the rows fit). After it: 16.2 px, and 0.8 (the border); at 1280 × 600
+the bar is there and the frame 15.75 px past the band.

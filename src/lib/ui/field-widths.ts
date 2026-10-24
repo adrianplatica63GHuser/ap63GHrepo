@@ -1264,6 +1264,14 @@ export function columnPadRem(name: ColumnName): number {
   return (COLUMN[name] as ColumnWidth).pad ?? CELL_PADDING_REM;
 }
 
+/**
+ * Slice 40.39: a principal list row's buttons — the magnifier, the eye, the chain link, „Deschide": how many, their
+ * square (button-styles' `row`, `h-6 w-6`, 24 px) and the gap between them (`gap-1.5`, 6 px). `listRowActions` is
+ * exactly as wide as they are: 4 × 24 + 3 × 6 = 114 px.
+ */
+export const ROW_ACTIONS = { count: 4, squarePx: 24, gapPx: 6 } as const;
+export const ROW_ACTIONS_REM = (ROW_ACTIONS.count * ROW_ACTIONS.squarePx + (ROW_ACTIONS.count - 1) * ROW_ACTIONS.gapPx) / 16;
+
 export const COLUMN = {
   // Controls
   select: { content: 1, kind: "fixed" }, //                 a checkbox or radio
@@ -1424,7 +1432,11 @@ export const COLUMN = {
   // Slice #38.72: three xs buttons side by side — the magnifier, the eye („Incursiune") and the arrow — 3 × 26 + 2 × 8 =
   // 94 px; it was 4 for two (60 px), and the third button was cut at the table's edge.
   // Slice #38.76: four — the chain link („Legături") after the eye — 4 × 26 + 3 × 8 = 128 px, 8 rem; it was 6 for three.
-  listRowActions: { content: 8, kind: "fixed" },
+  // Slice 40.39: Adrian, „the grey titles row … should only go past the last button as the size of the gap between the
+  // first button and the column divider at the left". Since 40.30 the buttons are 24 px (`square="row"`), 6 px apart:
+  // as wide as they measure, computed (`ROW_ACTIONS_REM`, 114 px), so „Deschide" ends the cell's 16-px padding before
+  // the band's end, as the magnifier starts 16 px after the divider. Was 8 rem (128 px), 14 px of it spare.
+  listRowActions: { content: ROW_ACTIONS_REM, kind: "fixed" },
   listPropertyNickname: { content: 14, kind: "fixed" }, //  PROP.nickname — 90th percentile 213 px, longest 278
   listTarla: { content: 5, kind: "fixed" }, //              Tarla/Solă — the header's word, „TARLA/SOLĂ" (80 px); values 28
   listParcela: { content: 5.5, kind: "fixed" }, //          Parcelă — 40.21: „PARCELĂ" (54.5) and its funnel (30) on one line, 84.5 px; was 4

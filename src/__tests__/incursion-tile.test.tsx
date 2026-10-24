@@ -213,10 +213,12 @@ describe("a look, not an edit (#38.72)", () => {
     }
   });
 
-  it("the four lists' button column holds the four buttons side by side (128 px, #38.76)", () => {
+  it("the four lists' button column holds the four buttons side by side (114 px, 40.39)", () => {
     const widths = read("src", "lib", "ui", "field-widths.ts");
-    // #38.72: „three buttons side by side (94 px)", `content: 6`. #38.76 adds the chain link: 4 × 26 + 3 × 8 = 128 px.
-    expect(widths).toContain('listRowActions: { content: 8, kind: "fixed" },');
+    // #38.72: „three buttons side by side (94 px)", `content: 6`. #38.76 adds the chain link: 4 × 26 + 3 × 8 = 128 px,
+    // `content: 8`. 40.39: as wide as the four 24-px buttons and their 6-px gaps measure, computed.
+    expect(widths).toContain('listRowActions: { content: ROW_ACTIONS_REM, kind: "fixed" },');
+    expect(widths).toContain("export const ROW_ACTIONS = { count: 4, squarePx: 24, gapPx: 6 } as const;");
   });
 
   it("is named „Incursiune” in Romanian and „Peek inside” in English (Ask first #3)", () => {

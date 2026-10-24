@@ -13,6 +13,8 @@
  *   - Step 8 opens `/documents?documentTypeIds=` — the address the „Tip
  *     document" list writes when „Toate tipurile" is unticked — instead of
  *     unticking it in the open list.
+ *   - Step 10 is its own test, on the archive's rows unsearched (only boxes are read), so that at 1280 × 600 they
+ *     overflow the frame and the vertical bar is there.
  *   - Step 9 reads the add button's last icon by its Lucide class (`lucide-user` …) rather than looking in the
  *     sidebar, whose „Domeniu" may be folded; it runs after step 3, the preview open, which moves none of it.
  *   - Step 2's „the table widens" is read on the table, not its frame: the
@@ -153,7 +155,50 @@ async function oneList(page: Page, url: string, add: string, width: number): Pro
   return before;
 }
 
+/**
+ * Step 10 (40.39) — the list's right edge, on the archive's own rows, unsearched: the band ends past „Deschide" by the
+ * gap the magnifier keeps from its divider (± 1 px — not on Acte, whose toolbar is wider than its columns and widens
+ * the band with the frame); the frame's border at the band's end, or, while the rows overflow, past it by the vertical
+ * bar alone; „+ Nou…" and the row under the table end on the frame's border.
+ */
+async function rightEdge(page: Page, url: string, add: string, size: { width: number; height: number }): Promise<void> {
+  await page.setViewportSize(size);
+  await page.goto(url);
+  const main = page.locator("main");
+  await expect.poll(async () => main.locator("[data-list-frame] tbody tr").count(), { timeout: 30_000 }).toBeGreaterThanOrEqual(1);
+  await page.waitForTimeout(500);
+  const m = await main.locator("[data-list-frame]").evaluate((el) => {
+    const fr = el as HTMLElement;
+    const R = (e: Element) => e.getBoundingClientRect();
+    const band = fr.querySelector("thead")!;
+    const buttons = [...fr.querySelector("tbody tr [data-row-actions]")!.querySelectorAll("a, button")];
+    const cs = getComputedStyle(fr);
+    const borders = (parseFloat(cs.borderLeftWidth) || 0) + (parseFloat(cs.borderRightWidth) || 0);
+    return {
+      past: R(band).right - R(buttons[buttons.length - 1]).right,
+      lead: R(buttons[0]).left - R(buttons[0].closest("td")!).left,
+      beyond: R(fr).right - R(band).right,
+      bar: fr.offsetWidth - fr.clientWidth - borders,
+      border: parseFloat(cs.borderRightWidth) || 0,
+      frame: R(fr).right,
+    };
+  });
+  if (url !== "/documents") expect(Math.abs(m.past - m.lead)).toBeLessThanOrEqual(1);
+  expect(Math.abs(m.beyond - m.bar - m.border)).toBeLessThanOrEqual(1);
+  expect(Math.abs((await rightOf(addOf(page, add))) - m.frame)).toBeLessThanOrEqual(1);
+  expect(Math.abs((await rightOf(main.locator("[data-list-edge]").last())) - m.frame)).toBeLessThanOrEqual(1);
+}
+
 test.describe("TC-LAYOUT-02 — „Adaugă …” la marginea tabelului", () => {
+  test("pasul 10 — banda, rama și „+ Nou” se termină împreună (40.39)", async ({ page }) => {
+    test.slow();
+    for (const { url, add } of LISTS) {
+      for (const size of [{ width: 1920, height: 1080 }, { width: 1280, height: 600 }]) {
+        await test.step(`${url} at ${size.width} × ${size.height}`, async () => rightEdge(page, url, add, size));
+      }
+    }
+  });
+
   test("pe cele patru liste, la 1366 și 1920 px", async ({ page }) => {
     test.slow();
     test.setTimeout(360_000);
