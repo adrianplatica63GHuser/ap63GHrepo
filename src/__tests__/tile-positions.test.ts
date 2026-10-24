@@ -859,14 +859,24 @@ describe("„Toate sus”: every tile up, then the columns evened (40.40)", () =
   const bar: Placed = { id: "actions", col: 0, units: 6, top: 2000, height: 63, rowEnd: true };
 
   it("the rise closes the gap above every tile, top to bottom, each under the one risen before it", () => {
-    const placed = [tile("a", 0, 100, 200), tile("b", 0, 500, 100), tile("c", 3, 40, 150), bar];
-    const r = allUp(placed, 6, GAP)!;
+    // One column (a 3-unit row), so there is nothing to even.
+    const placed = [tile("a", 0, 100, 200), tile("b", 0, 500, 100), tile("c", 0, 700, 150), bar];
+    const r = allUp(placed, 3, GAP)!;
     expect(at(r.placed, "a").top).toBe(0);
     expect(at(r.placed, "b").top).toBe(200 + GAP);
-    expect(at(r.placed, "c").top).toBe(0);
+    expect(at(r.placed, "c").top).toBe(200 + GAP + 100 + GAP);
     expect(r.moved.sort()).toEqual(["a", "b", "c"]);
     // The action bar under everything.
-    expect(at(r.placed, "actions").top).toBe(200 + GAP + 100 + GAP);
+    expect(at(r.placed, "actions").top).toBe(200 + GAP + 100 + GAP + 150 + GAP);
+  });
+
+  it("then evens: a column left taller than another after the rise gives up its bottom tile", () => {
+    const placed = [tile("a", 0, 100, 200), tile("b", 0, 500, 100), tile("c", 3, 40, 150), bar];
+    const r = allUp(placed, 6, GAP)!;
+    expect(at(r.placed, "a")).toMatchObject({ col: 0, top: 0 });
+    expect(at(r.placed, "c")).toMatchObject({ col: 3, top: 0 });
+    // After the rise „b" stood at 216 under „a" (bottom 316, against 150): under „c" its bottom is 266.
+    expect(at(r.placed, "b")).toMatchObject({ col: 3, top: 150 + GAP });
   });
 
   it("two columns 600 / 300 px: the tall one's bottom tile goes under the short one — one move", () => {
@@ -883,9 +893,8 @@ describe("„Toate sus”: every tile up, then the columns evened (40.40)", () =
 
   it("a tile too wide for the short column is left where it is", () => {
     const placed = [tile("t1", 0, 0, 400), tile("t2", 0, 416, 184, 4), tile("u1", 4, 0, 300, 2), bar];
-    expect(evenColumns(placed, 6, GAP).map(({ id, col, top }) => ({ id, col, top }))).toEqual(
-      placed.map(({ id, col, top }) => ({ id, col, top })),
-    );
+    const tiles = (ps: readonly Placed[]) => ps.filter((p) => !p.rowEnd).map(({ id, col, top }) => ({ id, col, top }));
+    expect(tiles(evenColumns(placed, 6, GAP))).toEqual(tiles(placed));
   });
 
   it("no move when it would not make the lowest bottom higher; a press with nothing to move moves nothing", () => {
