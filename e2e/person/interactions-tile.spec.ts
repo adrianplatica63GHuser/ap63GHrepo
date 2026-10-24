@@ -190,14 +190,15 @@ test.describe("TC-PERS-07 — „Interacțiuni” pe cele două fișe de persoan
           const R = (x: Element) => x.getBoundingClientRect();
           const history = e.querySelector("[data-interactions-history]")!;
           const button = e.querySelector("[data-log-expand]")!;
-          return { h: Math.round(R(e).height), buttonUnderHistory: Math.round(R(button).top - R(history).bottom) };
+          return { h: Math.round(R(e).height), history: Math.round(R(history).height), buttonUnderHistory: Math.round(R(button).top - R(history).bottom) };
         });
         return { ...at, under: await underLowestButton(t) };
       };
       const withOne = await tileOf(one, 1);
       const withTen = await tileOf(ten, 10);
       expect(withOne.h).toBeLessThan(withTen.h - 100);
-      expect(withTen.h).toBeLessThanOrEqual(pages1920.h + 2);
+      // The history's ceiling: „Pagini"'s height less the tile's padding and border (410 px); the button panel under it.
+      expect(withTen.history).toBeLessThanOrEqual(pages1920.h - 26 + 2);
       for (const t of [withOne, withTen]) {
         expect(t.buttonUnderHistory).toBeLessThanOrEqual(13); // C's own 12-px top margin
         expect(Math.abs(t.under - withOne.under)).toBeLessThanOrEqual(2);

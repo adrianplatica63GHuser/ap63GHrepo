@@ -121,7 +121,8 @@ describe("as tall as what it holds (40.43)", () => {
     expect(SRC).toContain("const B_MAX_PX = ROW_TILE_CEILING_PX - 26;");
     expect(SRC).toContain('style={{ maxHeight: B_MAX_PX }} data-interactions-history=""');
     expect(SRC).toContain("const rows = peek || empty || footer ? (");
-    expect(SRC).toMatch(/: footer\s*\?[^:]*\{ \.\.\.PAGES_PANEL_STYLE \}/);
+    expect(SRC).toMatch(/: footer\s*\?/);
+    expect(SRC).toContain("{ ...PAGES_PANEL_STYLE }");
     expect(SRC).not.toMatch(/minHeight: INTERACTIONS_TILE_EMPTY_HEIGHT_PX/);
     expect("INTERACTIONS_TILE_EMPTY_HEIGHT_PX" in FW).toBe(false);
     expect(FW.ROW_TILE_CEILING_PX - 26).toBe(410);
