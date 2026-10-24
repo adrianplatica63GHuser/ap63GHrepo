@@ -15,7 +15,8 @@ Since Slice #37.42 the list toolbars, the row actions and the pagination are ico
 tooltip opens when the mouse is over the button and when the keyboard brings focus to it; it
 opens over a DISABLED button too, because there it is the only way to learn what the greyed
 icon is; it closes when the mouse leaves, on Escape, and when the button is pressed. An icon +
-label button („Adaugă persoană") has its words on it, so it shows no tooltip.
+label button shows its words and no tooltip — unless its name says more than its words, as
+„+ Nouă" (named „Adaugă persoană") does since 40.37.
 
 ## Before you start
 
@@ -39,9 +40,9 @@ can clip it) and exists only while it is shown.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „Persoane Fizice" and types `TC-ICON-01` in the search box | 15 rows, newest first; „Se afișează 15 din 16", „Pagina 1 din 2". On every row „Deschide" is an arrow (→) and „Previzualizare" an eye; the toolbar has a columns icon and „Adaugă persoană" with a + before its words. „Anterior" (←) is inactive, „Următor" (→) is not |
+| 1 | Opens „Persoane Fizice" and types `TC-ICON-01` in the search box | 15 rows, newest first; „Se afișează 15 din 16", „Pagina 1 din 2". On every row „Deschide" is an arrow (→) and „Previzualizare" an eye; the toolbar has a columns icon and „Nouă" with a + before it and a person after it (40.37), named „Adaugă persoană". „Anterior" (←) is inactive, „Următor" (→) is not |
 | 2 | Moves the mouse over the columns icon, then away | A tooltip `Câmpuri afișate 0/4` under it, centred on it; it goes when the mouse leaves |
-| 3 | Moves the mouse over „Adaugă persoană" | No tooltip — the words are on the button |
+| 3 | Moves the mouse over „+ Nouă" | A tooltip `Adaugă persoană` — its name says more than its words (40.37); it goes when the mouse leaves |
 | 4 | Moves the mouse over „Anterior", which is inactive | A tooltip `Anterior` |
 | 5 | Brings the keyboard focus to „Următor" (Tab from the last row's last button — „Deschide" since #38.71, which put the magnifier, „Previzualizare", first) | A tooltip `Următor`; Escape closes it |
 | 6 | Presses „Următor" | „Pagina 2 din 2", one row, `Persoana 01 TC-ICON-01`, „Se afișează 16 din 16"; no tooltip is left on the screen |
@@ -57,3 +58,6 @@ real mouse and keyboard, and takes #37.42's pictures. Green on its first runner 
 `20261001T165018Z-30877`.
 
 **2026-10-10 — `automated` (Slice #38.71).** Step 5 tabs from the last row's „Deschide": the magnifier now comes first.
+
+**2026-10-23 — Slice 40.37.** „Adaugă persoană" shows „+ Nouă" and the list's person icon; its name is still „Adaugă
+persoană", so step 3 now sees that name as a tooltip. Steps 1 and 3 changed with it.

@@ -24,6 +24,7 @@ import { IncursionTile } from "@/app/_components/incursion-tile";
 import { useListAddress, useListScrollMemory, useWriteListAddress } from "@/components/list/use-list-address";
 import { FieldChooser, useFieldChooser, type ChooserField } from "@/components/list/field-chooser";
 import { LIST_ADD, ListSearchBox } from "@/components/list/list-search";
+import { domainIcon } from "@/components/sidebar/nav-config";
 import { LIST_COLUMN_CHOICE, LIST_COLUMN_ORDER } from "@/lib/ui/list-columns";
 import { useColumnDrag, useColumnOrder } from "@/components/list/column-order";
 import { FilterBar, FilterFunnel, type FilterBarField } from "@/components/list/filter-bar";
@@ -257,7 +258,7 @@ export function PropertyListView() {
       {/* Slice 40.30: the toolbar one step down — „Adaugă …" md, the other buttons sm, the search box 30 px, 8-px gaps. */}
       <div className={`flex flex-wrap items-center gap-2 ${LIST_TOOLBAR}`} {...edge.toolbar}>
         {/* Slice #39.85: as wide as „Adaugă …", its whole explanation on hover. */}
-        <ListSearchBox value={searchInput} onChange={setSearchInput} explanation={t("searchPlaceholder")} small />
+        <ListSearchBox value={searchInput} onChange={setSearchInput} explanation={t("searchPlaceholder")} small list="property" />
 
         {/* Slice #37.61: no „Importanță" or „Relevanță" filter; „Câmpuri afișate" is the
             shared chooser, its fields today's less importance, relevance and provenance. */}
@@ -302,11 +303,14 @@ export function PropertyListView() {
             buttonClass() — :enabled / :disabled do not match an anchor, so the
             hand-rolled class it used to carry had no focus ring.
           */}
-          {/* Slice #39.85: measured, so the search box can take its width. */}
+          {/* Slice #39.85: measured, so the search box could take its width; 40.37: „+ Nou" and the list's Domeniu icon, its
+              name and tooltip the whole „Adaugă …", the search box pinned at the old width (LIST_SEARCH_REM). */}
           <span className="inline-flex" {...LIST_ADD}>
             <IconButton
               icon={Plus}
-              label={t("addNew")}
+              label={t("newCaption")}
+              fullName={t("addNew")}
+              trailingIcon={domainIcon("propertyList")}
               showLabel
               variant="primary"
               size="md"

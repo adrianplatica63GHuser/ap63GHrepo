@@ -44,6 +44,7 @@ Nothing.
 | 6 | Steps 1–4 on „Proprietăți" („Adaugă proprietate") | The same |
 | 7 | Steps 1–4 on „Acte" („Adaugă act") | The same |
 | 8 | On „Acte", unticks „Toate tipurile" in „Tip document" and presses outside | „Selectați cel puțin un tip"; „Adaugă act" stands where it stood over the table, to the pixel |
+| 9 | At 1920 px, on each of the four lists, looks at the add button and the search box | The button reads „+ Nouă" („+ Nou" on „Acte"): a +, the word, then the icon the sidebar's „Domeniu" item for that list draws; its name is still „Adaugă persoană" („… persoană juridică", „… proprietate", „… act"); the search box is as wide as it was beside „Adaugă …" — 160, 208, 168 and 120 px, ± 1 (40.37) |
 
 ## At the end — leaving things as they were found
 
@@ -79,3 +80,7 @@ translates it.
 **2026-10-04 — `automated` (Slice #37.84).** The test runner's full run 20261004T223457Z-20391 on
 cc1b438 ran `e2e/layout/list-edge.spec.ts` green with the other 79 (lint, tsc, jest and forms-drift
 green too).
+
+**2026-10-23 — Slice 40.37.** Step 9 added: the add buttons read „+ Nouă" / „+ Nou" with the list's „Domeniu" icon, their
+names unchanged, and the search boxes pinned at the widths they took from „Adaugă …" (measured that evening in the
+pane at 1920: 160.0, 208.3, 168.6, 120.4 px). Steps 1–8 still name each button by its name, which did not change.

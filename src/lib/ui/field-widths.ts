@@ -1822,3 +1822,17 @@ export function columnsRem(names: readonly ColumnName[]): number {
 export function columnBoxStyle(name: ColumnName): CSSProperties {
   return { width: rem(columnRem(name) - columnPadRem(name)) };
 }
+
+/**
+ * Slice 40.37: a principal list's search box, pinned at the width it took from „Adaugă …" (#39.85) before 40.37 made
+ * the button „+ Nou" — a narrower box was not asked for (40.37's Ask first 4). Measured at 1920 × 1080 in Romanian, in
+ * the app's Arial, on 2026-10-23: „Adaugă persoană" 160.0 px, „Adaugă persoană juridică" 208.3, „Adaugă proprietate"
+ * 168.6, „Adaugă act" 120.4 — each within 0.6 px of the rem below.
+ */
+export const LIST_SEARCH_REM = {
+  naturalPerson: 10,
+  judicialPerson: 13,
+  property: 10.5,
+  document: 7.5,
+} as const;
+export type ListSearchKey = keyof typeof LIST_SEARCH_REM;

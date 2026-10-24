@@ -13,6 +13,8 @@
  *   - Step 8 opens `/documents?documentTypeIds=` — the address the „Tip
  *     document" list writes when „Toate tipurile" is unticked — instead of
  *     unticking it in the open list.
+ *   - Step 9 reads the add button's last icon by its Lucide class (`lucide-user` …) rather than looking in the
+ *     sidebar, whose „Domeniu" may be folded; it runs after step 3, the preview open, which moves none of it.
  *   - Step 2's „the table widens" is read on the table, not its frame: the
  *     frame stops at the window and scrolls (step 2's „unless"). Since #40.01
  *     it is the width the table's columns ask for: on Acte the toolbar can be
@@ -34,11 +36,28 @@ import {
 const MARK = `${E2E_MARKER}LAYOUT-02`;
 
 const LISTS = [
-  { url: "/natural-persons", add: "Adaugă persoană" },
-  { url: "/judicial-persons", add: "Adaugă persoană juridică" },
-  { url: "/properties", add: "Adaugă proprietate" },
-  { url: "/documents", add: "Adaugă act" },
+  { url: "/natural-persons", add: "Adaugă persoană", caption: "Nouă", icon: "lucide-user", search: 160 },
+  { url: "/judicial-persons", add: "Adaugă persoană juridică", caption: "Nouă", icon: "lucide-building-2", search: 208 },
+  { url: "/properties", add: "Adaugă proprietate", caption: "Nouă", icon: "lucide-map", search: 168 },
+  { url: "/documents", add: "Adaugă act", caption: "Nou", icon: "lucide-file-text", search: 120 },
 ] as const;
+
+/**
+ * Step 9 (40.37) — „+ Nouă" / „+ Nou": a +, the word, then the sidebar's „Domeniu" icon for the list (its Lucide
+ * class — that it IS the sidebar's is list-add-new.test.ts's domainIcon check); found by the whole „Adaugă …" name;
+ * the search box as wide as beside the old button (LIST_SEARCH_REM), ± 1 px.
+ */
+async function expectNewCaption(page: Page, add: string, caption: string, icon: string, search: number): Promise<void> {
+  const main = page.locator("main");
+  const button = addOf(page, add);
+  await expect(button).toHaveText(caption);
+  const icons = await button.evaluate((el) => [...el.querySelectorAll("svg")].map((s) => s.getAttribute("class") ?? ""));
+  expect(icons.length).toBe(2);
+  expect(icons[0].split(" ")).toContain("lucide-plus");
+  expect(icons[1].split(" ")).toContain(icon);
+  const box = await main.locator("[data-list-search]").first().boundingBox();
+  expect(Math.abs(box!.width - search)).toBeLessThanOrEqual(1);
+}
 
 /** A box's right edge, in px. */
 async function rightOf(box: Locator): Promise<number> {
@@ -147,10 +166,11 @@ test.describe("TC-LAYOUT-02 — „Adaugă …” la marginea tabelului", () => 
       made.push(["document", await createDocumentOfType(page.request, "ADEVERINTA", `${MARK} Act`)]);
 
       // Steps 1–7 — each list, at 1366 and at 1920 px.
-      for (const { url, add } of LISTS) {
+      for (const { url, add, caption, icon, search } of LISTS) {
         for (const width of [1366, 1920]) {
           await test.step(`${url} at ${width}`, async () => {
             const at = await oneList(page, url, add, width);
+            if (width === 1920) await expectNewCaption(page, add, caption, icon, search);
             // Step 8 — „Acte" with no type: the group stands where it stood.
             if (url === "/documents") {
               await page.goto("/documents?documentTypeIds=");

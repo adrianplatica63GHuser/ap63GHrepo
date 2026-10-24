@@ -270,6 +270,25 @@ describe("buttonClass — the icon-only square (#37.42)", () => {
     expect(button).toHaveTextContent(/^Adaugă sau scoate$/);
   });
 
+  // Slice 40.37: a principal list's „+ Nouă 👤" — Plus, the words, then the list's own icon; named by the longer words.
+  it("with trailingIcon, an icon + label button draws a second icon after its words", () => {
+    render(<IconButton icon={ArrowLeft} trailingIcon={LogIn} label="Nouă" fullName="Adaugă persoană" showLabel variant="primary" size="md" />);
+    const button = screen.getByRole("button", { name: "Adaugă persoană" });
+    expect(button).toHaveTextContent(/^Nouă$/);
+    const kids = Array.from(button.children);
+    const words = kids.findIndex((k) => k.tagName === "SPAN" && k.textContent === "Nouă");
+    const after = kids.findIndex((k) => k.hasAttribute("data-icon-after"));
+    expect(kids[0].tagName.toLowerCase()).toBe("svg");
+    expect(after).toBeGreaterThan(words);
+    expect(kids[after].getAttribute("aria-hidden")).toBe("true");
+    expect(kids[after].getAttribute("width")).toBe(String(ICON_PX.md));
+  });
+
+  it("trailingIcon changes nothing on an icon-only button", () => {
+    render(<IconButton icon={ArrowLeft} trailingIcon={LogIn} label="Înapoi" variant="secondary" />);
+    expect(screen.getByRole("button", { name: "Înapoi" }).querySelector("[data-icon-after]")).toBeNull();
+  });
+
   // Slice 40.30: a principal list's row buttons — 24 × 24 with a 14-px icon.
   it("the row square is 24 px with a 14-px icon", () => {
     const keys = buttonClass({ variant: "secondary", size: "xs", iconOnly: true, square: "row" }).split(" ");

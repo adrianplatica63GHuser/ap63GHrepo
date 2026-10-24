@@ -58,7 +58,8 @@ describe('„Hartă completă" (#37.92)', () => {
   it('opens the whole map from the list\'s group, at the left of „Adaugă proprietate"', () => {
     const list = read("src/app/properties/list-view.tsx");
     const opener = list.indexOf('label={t("wholeMap")}');
-    const add = list.indexOf('label={t("addNew")}');
+    // Slice 40.37: the button shows „+ Nouă", its name the whole „Adaugă proprietate" (fullName).
+    const add = list.indexOf('fullName={t("addNew")}');
     expect(opener).toBeGreaterThan(-1);
     expect(opener).toBeLessThan(add);
     expect(list).toContain('onClick={() => router.push("/properties/map")}');

@@ -16,10 +16,16 @@
  *     (`search-explanation.test.ts` holds the four to that, and to what each list's route searches).
  * Until the button is measured — the first render, on the server — the box is `w-64`, as all four were.
  *
+ * Slice 40.37: the four principal lists' „Adaugă …" became „+ Nou", much shorter, and a narrower box was not asked for —
+ * so their box is pinned at the width it took from the old button (`list`, `LIST_SEARCH_REM` in field-widths.ts) and no
+ * longer measures. The admin lists, which pass no `list`, still take their button's width as #39.85 wrote.
+ *
  * Slice 40.30: `small` is the four principal lists' — 30 px tall, an sm button's height (`py-1`; it was `py-1.5`, 34),
  * with the rest of their toolbar one step down. The admin lists keep the 34-px box.
  */
 import { useLayoutEffect, useRef } from "react";
+
+import { LIST_SEARCH_REM, rem, type ListSearchKey } from "@/lib/ui/field-widths";
 
 /** Marks a list's „Adaugă …" button (the element around it) for the search box to take its width. */
 export const LIST_ADD = { "data-list-add": "" } as const;
@@ -29,6 +35,7 @@ export function ListSearchBox({
   onChange,
   explanation,
   small = false,
+  list,
 }: {
   value: string;
   onChange: (next: string) => void;
@@ -36,9 +43,12 @@ export function ListSearchBox({
   explanation: string;
   /** Slice 40.30: the principal lists' 30-px box. */
   small?: boolean;
+  /** Slice 40.37: a principal list — its box pinned at `LIST_SEARCH_REM[list]`, not measured. */
+  list?: ListSearchKey;
 }) {
   const box = useRef<HTMLInputElement>(null);
   useLayoutEffect(() => {
+    if (list) return;
     const input = box.current;
     const source = input?.closest("[data-list-toolbar]")?.querySelector<HTMLElement>("[data-list-add]");
     if (!source || !input) return;
@@ -50,7 +60,7 @@ export function ListSearchBox({
     const watch = new ResizeObserver(fit);
     watch.observe(source);
     return () => watch.disconnect();
-  }, []);
+  }, [list]);
   return (
     <input
       ref={box}
@@ -61,6 +71,7 @@ export function ListSearchBox({
       aria-label={explanation}
       title={explanation}
       data-list-search=""
+      style={list ? { width: rem(LIST_SEARCH_REM[list]) } : undefined}
       className={`w-64 shrink-0 text-ellipsis rounded-md border border-wire bg-white px-3 ${small ? "py-1" : "py-1.5"} text-sm shadow-sm placeholder:text-fade focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:placeholder:text-zinc-500`}
     />
   );

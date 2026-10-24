@@ -206,3 +206,16 @@ export const NAV_SECTIONS: NavSection[] = [
     ],
   },
 ];
+
+/** Slice 40.37: the four principal lists, by their „Domeniu" item's key. */
+export type DomainListKey = "naturalPeople" | "judicialPeople" | "propertyList" | "document";
+
+/**
+ * Slice 40.37: a principal list's icon — the one its „Domeniu" item draws in the sidebar. Read from NAV_SECTIONS rather
+ * than imported a second time, so the list's „+ Nou" and the sidebar cannot drift apart (40.37's Ask first 2).
+ */
+export function domainIcon(key: DomainListKey): LucideIcon {
+  const item = NAV_SECTIONS.find((s) => s.key === "domain")?.items.find((i) => i.key === key);
+  if (!item) throw new Error(`nav-config: no „Domeniu" item ${key}`);
+  return item.icon;
+}

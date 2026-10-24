@@ -22,6 +22,7 @@ import { IncursionTile } from "@/app/_components/incursion-tile";
 import { useListAddress, useListScrollMemory, useWriteListAddress } from "@/components/list/use-list-address";
 import { FieldChooser, useFieldChooser, type ChooserField } from "@/components/list/field-chooser";
 import { LIST_ADD, ListSearchBox } from "@/components/list/list-search";
+import { domainIcon } from "@/components/sidebar/nav-config";
 import { LIST_COLUMN_CHOICE, LIST_COLUMN_ORDER } from "@/lib/ui/list-columns";
 import { useColumnDrag, useColumnOrder } from "@/components/list/column-order";
 import { FilterBar, FilterFunnel, type FilterBarField } from "@/components/list/filter-bar";
@@ -218,7 +219,7 @@ export function NaturalPersonListView() {
       {/* Slice 40.30: the toolbar one step down — „Adaugă …" md, the other buttons sm, the search box 30 px, 8-px gaps. */}
       <div className={`flex flex-wrap items-center gap-2 ${LIST_TOOLBAR}`} {...edge.toolbar}>
         {/* Slice #39.85: as wide as „Adaugă …", its whole explanation on hover. */}
-        <ListSearchBox value={searchInput} onChange={setSearchInput} explanation={t("searchPlaceholder")} small />
+        <ListSearchBox value={searchInput} onChange={setSearchInput} explanation={t("searchPlaceholder")} small list="naturalPerson" />
 
         {/* Slice #37.60: no „Importanță" or „Relevanță" filter; „Câmpuri afișate" offers
             the „Identitate" fields. */}
@@ -235,12 +236,15 @@ export function NaturalPersonListView() {
         />
 
         <div className="ml-auto flex items-center gap-2">
-          {/* Slice #39.85: measured, so the search box can take its width. */}
+          {/* Slice #39.85: measured, so the search box could take its width; 40.37: „+ Nou" and the list's Domeniu icon, its
+              name and tooltip the whole „Adaugă …", the search box pinned at the old width (LIST_SEARCH_REM). */}
           <span className="inline-flex" {...LIST_ADD}>
             <IconButton
               href="/natural-persons/new"
               icon={Plus}
-              label={t("addNew")}
+              label={t("newCaption")}
+              fullName={t("addNew")}
+              trailingIcon={domainIcon("naturalPeople")}
               showLabel
               variant="primary"
               size="md"

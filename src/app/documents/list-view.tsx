@@ -28,6 +28,7 @@ import { ownListAddress, useListAddress, useListScrollMemory, useWriteListAddres
 import { LIST_PARAM, carryListAddress } from "@/lib/ui/list-address";
 import { FieldChooser, useFieldChooser, type ChooserField } from "@/components/list/field-chooser";
 import { LIST_ADD, ListSearchBox } from "@/components/list/list-search";
+import { domainIcon } from "@/components/sidebar/nav-config";
 import { LIST_COLUMN_CHOICE, LIST_COLUMN_ORDER } from "@/lib/ui/list-columns";
 import { useColumnDrag, useColumnOrder } from "@/components/list/column-order";
 import { HintBubble } from "@/lib/ui/hint-bubble";
@@ -788,7 +789,7 @@ export function DocumentListView({
               with „SAU", which only made sense after the type. Since #38.18 the
               type stands in front of „Câmp specific" — since #40.01 after „Expiră curând". */}
           {/* Slice #39.85: as wide as „Adaugă …", its whole explanation on hover. */}
-          <ListSearchBox value={searchInput} onChange={setSearchInput} explanation={t("searchPlaceholder")} small />
+          <ListSearchBox value={searchInput} onChange={setSearchInput} explanation={t("searchPlaceholder")} small list="document" />
 
           {/* Slice #37.62: the shared chooser, as on the other three lists. Its list hung from the right while the button
               stood near the toolbar's end; since #39.85 the search box before it is as narrow as „Adaugă act", so a list
@@ -961,12 +962,15 @@ export function DocumentListView({
         </div>
 
         <div className="ml-auto flex shrink-0 items-center gap-2">
-          {/* Slice #39.85: measured, so the search box can take its width. */}
+          {/* Slice #39.85: measured, so the search box could take its width; 40.37: „+ Nou" and the list's Domeniu icon, its
+              name and tooltip the whole „Adaugă …", the search box pinned at the old width (LIST_SEARCH_REM). */}
           <span className="inline-flex" {...LIST_ADD}>
             <IconButton
               href="/documents/new"
               icon={Plus}
-              label={t("addNew")}
+              label={t("newCaption")}
+              fullName={t("addNew")}
+              trailingIcon={domainIcon("document")}
               showLabel
               variant="primary"
               size="md"

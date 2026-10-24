@@ -72,7 +72,8 @@ test.describe("TC-ICON-01 — Butoanele cu pictogramă își arată numele", () 
       const chooseFields = main.getByRole("button", { name: "Câmpuri afișate 0/4" });
       await expect(chooseFields).toBeVisible();
       const add = main.getByRole("link", { name: "Adaugă persoană" });
-      await expect(add).toHaveText("Adaugă persoană");
+      // Slice 40.37: „+ Nouă 👤" on screen, „Adaugă persoană" its name.
+      await expect(add).toHaveText("Nouă");
       const previous = main.getByRole("button", { name: "Anterior" });
       const next = main.getByRole("button", { name: "Următor" });
       await expect(previous).toBeDisabled();
@@ -93,8 +94,10 @@ test.describe("TC-ICON-01 — Butoanele cu pictogramă își arată numele", () 
       await moveAway(page);
       await expect(tooltip(page)).toHaveCount(0);
 
-      // Step 3 — „Adaugă persoană": its words are on it, so no tooltip.
+      // Step 3 — „+ Nouă": its name says more than its words (40.37), so its tooltip is the name.
       await add.hover();
+      await expect(tooltip(page)).toHaveText("Adaugă persoană");
+      await moveAway(page);
       await expect(tooltip(page)).toHaveCount(0);
 
       // Step 4 — „Anterior", inactive: its tooltip all the same.

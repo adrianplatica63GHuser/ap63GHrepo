@@ -94,17 +94,25 @@ describe.each(Object.entries(LISTS))("%s", (_list, { ns, source, region, fields 
 describe("the box (#39.85)", () => {
   const box = read("src", "components", "list", "list-search.tsx");
   it("takes the button's width, measured, and shows the whole explanation on hover", () => {
+    // Slice 40.37: only where no `list` pins it (the admin lists); a principal list's box is LIST_SEARCH_REM[list].
+    expect(box).toContain("if (list) return;");
+    expect(box).toContain("style={list ? { width: rem(LIST_SEARCH_REM[list]) } : undefined}");
     expect(box).toContain("new ResizeObserver(fit)");
     expect(box).toContain('input?.closest("[data-list-toolbar]")?.querySelector<HTMLElement>("[data-list-add]")');
     expect(box).toContain("input.style.width = `${w}px`");
     expect(box).toMatch(/placeholder=\{explanation\}\s+aria-label=\{explanation\}\s+title=\{explanation\}/);
     expect(box).toContain("text-ellipsis");
   });
-  it.each(["properties", "natural-persons", "judicial-persons", "documents"])("%s draws it, matched to its „Adaugă …”", (dir) => {
+  it.each([
+    ["properties", "property"],
+    ["natural-persons", "naturalPerson"],
+    ["judicial-persons", "judicialPerson"],
+    ["documents", "document"],
+  ])("%s draws it at the width of its old „Adaugă …” (40.37)", (dir, list) => {
     const view = read("src", "app", dir, "list-view.tsx");
-    // Slice 40.30: the principal lists' 30-px box.
-    expect(view).toContain('<ListSearchBox value={searchInput} onChange={setSearchInput} explanation={t("searchPlaceholder")} small />');
-    expect(view).toMatch(/<span className="inline-flex" \{\.\.\.LIST_ADD\}>\s*<IconButton[\s\S]*?label=\{t\("addNew"\)\}/);
+    // Slice 40.30: the principal lists' 30-px box. Slice 40.37: pinned, the button being „+ Nou" now.
+    expect(view).toContain(`<ListSearchBox value={searchInput} onChange={setSearchInput} explanation={t("searchPlaceholder")} small list="${list}" />`);
+    expect(view).toMatch(/<span className="inline-flex" \{\.\.\.LIST_ADD\}>\s*<IconButton[\s\S]*?fullName=\{t\("addNew"\)\}/);
     expect(view).not.toMatch(/type="search"\s+value=\{searchInput\}/);
   });
 });

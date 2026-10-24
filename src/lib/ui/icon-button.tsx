@@ -220,6 +220,12 @@ type Common = {
    */
   iconEnd?: boolean;
   /**
+   * Slice 40.37: with `showLabel`, a second icon AFTER the words, besides `icon` before them — a principal list's
+   * „+ Nouă 👤", whose trailing icon is the list's own from the sidebar's „Domeniu". Decoration, like the first: the
+   * name is still `fullName` or the words. Ignored on an icon-only button.
+   */
+  trailingIcon?: ComponentType<LucideProps>;
+  /**
    * Working: a spinning LoaderCircle in place of the icon, and `busyLabel`
    * („Se salvează…") as the name and the tooltip. An icon + label button
    * keeps its label on screen, so it keeps its width.
@@ -274,6 +280,7 @@ export function IconButton(props: IconButtonProps) {
     showLabel = false,
     fullName,
     iconEnd = false,
+    trailingIcon: After,
     busy = false,
     busyLabel,
     count,
@@ -322,6 +329,7 @@ export function IconButton(props: IconButtonProps) {
       {!(showLabel && iconEnd) && glyph}
       {showLabel && <span>{label}</span>}
       {showLabel && iconEnd && glyph}
+      {showLabel && After && <After size={px} aria-hidden="true" data-icon-after="" className="shrink-0" />}
       {badge !== null && (
         <span
           aria-hidden="true"
