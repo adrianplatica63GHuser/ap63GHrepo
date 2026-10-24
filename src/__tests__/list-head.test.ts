@@ -119,13 +119,14 @@ describe("the four lists draw their names through the one cell", () => {
     expect(cell).not.toMatch(/grid-rows|row-span|row-start/);
   });
 
-  it("the funnel is the 13-px corner square, its variants and name unchanged (40.29 Ask first 1)", () => {
+  // 40.48: the corner button's two looks, shared with the sort icon (it read `variant={active ? "primary" :
+  // "secondary"}`, `size="xs"` and `square="corner"` on an IconButton) — the square, the name and aria-pressed unchanged.
+  it("the funnel is the 13-px corner square, its name and aria-pressed unchanged (40.29 Ask first 1, 40.48)", () => {
     const bar = read("src", "components", "list", "filter-bar.tsx");
     const funnel = bar.slice(bar.indexOf("export function FilterFunnel"));
-    expect(funnel).toContain('size="xs"\n        square="corner"');
-    expect(funnel).toContain('variant={active ? "primary" : "secondary"}');
-    expect(funnel).toContain("aria-pressed={active}");
-    expect(funnel).toContain('label={t("funnel", { field: label })}');
+    expect(funnel).toContain('<CornerButton icon={Funnel} label={t("funnel", { field: label })} inUse={active} solid="fill" pressed={active} onPress={onOpen} />');
+    const corner = read("src", "components", "list", "corner-button.tsx");
+    expect(corner).toContain('size: "xs",\n          iconOnly: true,\n          square: "corner",');
   });
 });
 

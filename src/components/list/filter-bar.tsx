@@ -25,6 +25,7 @@ import { useQueries, useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { Funnel, FunnelX, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
+import { CornerButton } from "@/components/list/corner-button";
 import {
   NONE_VALUE,
   activeFilterKeys,
@@ -583,24 +584,15 @@ function Box({ label, children }: { label: string; children: ReactNode }) {
  */
 /**
  * A column's funnel, in its name cell's bottom-right corner (`ListHeadCell`). Slice 40.29: 13 × 13 px with a 9-px icon
- * — a quarter of xs's 26 × 26 — still pressable over 20 × 20 (`square="corner"`); the same variants, name and tooltip.
+ * — a quarter of xs's 26 × 26 — still pressable over 20 × 20 (`square="corner"`). Slice 40.48: its two looks are the
+ * corner button's (`CornerButton`) — not in use the funnel alone, in use filled navy in a navy circle, as the sort icon
+ * beside it (40.47); the name, the tooltip and `aria-pressed` unchanged. It was `primary` on, `secondary` off.
  */
 export function FilterFunnel({ field, label, active, onOpen }: { field: string; label: string; active: boolean; onOpen: () => void }) {
   const t = useTranslations("shared.filterBar");
   return (
     <span data-filter-funnel={field} className="inline-flex normal-case">
-      <IconButton
-        icon={Funnel}
-        label={t("funnel", { field: label })}
-        variant={active ? "primary" : "secondary"}
-        size="xs"
-        square="corner"
-        aria-pressed={active}
-        onClick={(e) => {
-          e.stopPropagation();
-          onOpen();
-        }}
-      />
+      <CornerButton icon={Funnel} label={t("funnel", { field: label })} inUse={active} solid="fill" pressed={active} onPress={onOpen} />
     </span>
   );
 }

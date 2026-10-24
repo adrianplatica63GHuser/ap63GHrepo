@@ -12,8 +12,7 @@
  */
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { IN_USE_CORNER, buttonClass } from "@/lib/ui/button-styles";
-import { IconTooltip, SQUARE_ICON_PX } from "@/lib/ui/icon-button";
+import { CornerButton } from "@/components/list/corner-button";
 import { sortByColumn, type ListOrder } from "@/lib/list/list-order";
 
 /** The <th>'s `aria-sort` for a column: its direction while the list is sorted by it, „none" otherwise. */
@@ -40,19 +39,9 @@ export function ColumnSort({
   const name = t("sortBy", { column: label });
   return (
     <span data-column-sort={sort} data-sort-state={inUse ? order.order : "none"} className="inline-flex normal-case">
-      <IconTooltip label={name}>
-        <button
-          type="button"
-          aria-label={name}
-          className={buttonClass({ variant: "secondary", size: "xs", iconOnly: true, square: "corner", className: `relative${inUse ? ` ${IN_USE_CORNER}` : ""}` })}
-          onClick={(e) => {
-            e.stopPropagation();
-            onChange(sortByColumn(order, sort));
-          }}
-        >
-          <Icon size={SQUARE_ICON_PX.corner} strokeWidth={inUse ? 3.25 : 2} aria-hidden="true" className="shrink-0" />
-        </button>
-      </IconTooltip>
+      {/* Slice 40.48: the corner button's two looks, shared with the funnel — not in use the arrows alone (it was the
+          funnel's then resting box, `secondary`). */}
+      <CornerButton icon={Icon} label={name} inUse={inUse} solid="stroke" onPress={() => onChange(sortByColumn(order, sort))} />
     </span>
   );
 }
