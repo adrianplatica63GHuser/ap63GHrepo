@@ -48,19 +48,22 @@ const byGroup = (s: [string, string[]][]) => [...s].sort((a, b) => a[0].localeCo
  */
 async function expectTwoRows(page: Page, url: string): Promise<void> {
   const r = await page.locator("[data-tile-selector]").evaluate((bar) => {
-    const rows = [...bar.querySelectorAll<HTMLElement>("[data-tile-bar-row]")];
+    // Slice 40.42: one wrapping container; each piece (and the buttons) says its row in `data-bar-row`.
     const R = (e: Element) => e.getBoundingClientRect();
-    const widthOf = (row: HTMLElement) => R(row.lastElementChild!).right - R(row.firstElementChild!).left;
-    const keys = (row: HTMLElement) => [...row.querySelectorAll<HTMLElement>("[data-tile-group]")].map((g) => g.dataset.tileGroup ?? "");
+    const on = (n: string) => [...bar.querySelectorAll<HTMLElement>(`:scope > [data-bar-row="${n}"]`)];
+    const widthOf = (els: HTMLElement[]) => (els.length ? Math.max(...els.map((e) => R(e).right)) - Math.min(...els.map((e) => R(e).left)) : 0);
+    const keys = (els: HTMLElement[]) => els.filter((e) => e.dataset.tileGroup).map((e) => e.dataset.tileGroup ?? "");
     return {
       mode: (bar as HTMLElement).dataset.tileRows,
-      keys: rows.map(keys),
-      lastIsButtons: rows[1]?.lastElementChild?.hasAttribute("data-tile-bar-buttons") ?? false,
-      widths: rows.map(widthOf),
+      keys: [keys(on("1")), keys(on("2"))],
+      lastIsButtons: (bar.lastElementChild as HTMLElement | null)?.hasAttribute("data-tile-bar-buttons") === true && (bar.lastElementChild as HTMLElement).dataset.barRow === "2",
+      widths: [widthOf(on("1")), widthOf(on("2"))],
+      sameLine: [on("1"), on("2")].map((els) => new Set(els.map((e) => Math.round((R(e).top + R(e).bottom) / 2))).size),
       room: bar.parentElement!.clientWidth,
       split: [...bar.querySelectorAll<HTMLElement>("[data-tile-group]")].map((g) => g.dataset.tileGroup).filter((k, i, a) => a.indexOf(k) !== i),
     };
   });
+  expect(r.sameLine).toEqual([1, 1]);
   expect({ url, mode: r.mode, rows: r.keys.length, lastIsButtons: r.lastIsButtons }).toEqual({ url, mode: "2", rows: 2, lastIsButtons: true });
   const onBoth = r.keys[0].filter((k) => r.keys[1].includes(k));
   expect({ url, onBoth }).toEqual({ url, onBoth: r.split });

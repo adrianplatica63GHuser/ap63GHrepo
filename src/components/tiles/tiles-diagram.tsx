@@ -45,8 +45,8 @@ function frameOf(wrap: HTMLElement): Frame | null {
   const R = (e: Element) => e.getBoundingClientRect();
   const w = R(wrap);
   const h = R(header);
-  const rows = [...bar.querySelectorAll<HTMLElement>("[data-tile-bar-row]")];
-  const rowRight = rows.reduce((m, r) => (r.lastElementChild ? Math.max(m, R(r.lastElementChild).right) : m), R(bar).left);
+  // The bar's longer row ends where its furthest piece (or the buttons) ends.
+  const rowRight = [...bar.querySelectorAll<HTMLElement>("[data-bar-row]")].reduce((m, e) => Math.max(m, R(e).right), R(bar).left);
   const labels = [...bar.querySelectorAll("label")].map((l) => R(l).width).filter((x) => x > 0);
   const average = labels.length ? labels.reduce((s, x) => s + x, 0) / labels.length : 80;
   const slot = header.querySelector<HTMLElement>("[data-version-slot]");
@@ -87,7 +87,8 @@ export function TilesDiagram({ entity, groupOf }: { entity: string; groupOf: (id
     observer.observe(wrap);
     const header = headerOf(wrap);
     if (header) observer.observe(header);
-    for (const row of wrap.querySelectorAll("[data-tile-bar-row]")) observer.observe(row);
+    const bar = wrap.querySelector("[data-tile-selector]");
+    if (bar) observer.observe(bar);
     window.addEventListener("resize", measure);
     return () => {
       observer.disconnect();

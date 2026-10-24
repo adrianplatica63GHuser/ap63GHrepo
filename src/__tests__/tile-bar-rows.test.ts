@@ -88,13 +88,18 @@ describe("the tile bar on two rows (40.41)", () => {
       ["src", "app", "properties", "_components", "property-detail-tiles.tsx"],
       ["src", "app", "documents", "_components", "document-detail-tiles.tsx"],
     ]) {
-      expect([f.join("/"), /<TileSelector [^>]*\btwoRows \/>/.test(read(...f))]).toEqual([f.join("/"), true]);
+      expect([f.join("/"), /<TileSelector [^>]*\btwoRows\b/.test(read(...f))]).toEqual([f.join("/"), true]);
     }
     expect(read("src", "app", "_components", "dashboard-client.tsx")).not.toMatch(/\btwoRows\b/);
     expect(read("src", "app", "admin", "settings", "_components", "settings-view.tsx")).not.toMatch(/\btwoRows\b/);
     const bar = read("src", "components", "tiles", "tile-selector.tsx");
-    expect(bar).toContain('data-tile-bar-row="1"');
-    expect(bar).toContain('data-tile-bar-row="2"');
-    expect(bar).toMatch(/\{row2\.map\(piece\)\}\s*\{loose\}\s*\{buttonsGroup\}/);
+    // Slice 40.42: one wrapping container, a break of no height between the rows, the pieces and the break in ONE keyed
+    // array and the buttons always its last child — so a new arrangement never remounts them (TC-TILES-18 lost a click
+    // on „Toate" when the buttons moved from one row's element to another's). Was two row elements,
+    // `data-tile-bar-row="1"` / `"2"`, the buttons the second's last child.
+    expect(bar).toContain('data-tile-bar-break=""');
+    expect(bar).toContain('[...row1.map((p) => piece("1", p)), <span key="break"');
+    expect(bar).toMatch(/\{loose\}\s*\{buttonsGroup\}\s*<\/div>/);
+    expect(bar).not.toContain("data-tile-bar-row");
   });
 });

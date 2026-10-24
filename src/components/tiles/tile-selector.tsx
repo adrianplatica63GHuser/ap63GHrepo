@@ -55,7 +55,6 @@ function measureBar(bar: HTMLElement, keys: readonly string[]): BarMeasures | nu
   const boxGap = parseFloat(cs.columnGap) || 0;
   const first = [...strips[0].children];
   const stripPad = w(strips[0]) - first.reduce((s, c) => s + w(c), 0) - boxGap * Math.max(0, first.length - 1);
-  const row = bar.querySelector<HTMLElement>("[data-tile-bar-row]") ?? bar;
   const hcs = getComputedStyle(host);
   return {
     groups: keys.map((key) => ({
@@ -64,7 +63,7 @@ function measureBar(bar: HTMLElement, keys: readonly string[]): BarMeasures | nu
     })),
     stripPad,
     boxGap,
-    gap: parseFloat(getComputedStyle(row).columnGap) || 0,
+    gap: parseFloat(getComputedStyle(bar).columnGap) || 0,
     buttons: w(buttons),
     width: host.clientWidth - (parseFloat(hcs.paddingLeft) || 0) - (parseFloat(hcs.paddingRight) || 0),
   };
@@ -185,7 +184,7 @@ export function TileSelector<K extends string>({
   });
 
   const buttonsGroup = (
-    <span className="flex items-center gap-2" data-tile-bar-buttons="">
+    <span className="my-1 flex items-center gap-2" data-tile-bar-buttons="" data-bar-row={two && layout?.rows ? "2" : ""}>
       {/* Slice #37.23 — what the choice does and where it is kept. The text is
           Adrian's, in Texte de ajutor; until he writes it the hint draws nothing. */}
       <HelpHint hintKey="tile-selector" />
@@ -209,8 +208,9 @@ export function TileSelector<K extends string>({
       const g = groups.find((x) => x.group === key);
       return g ? [...g.tiles.map(box), ...(key === "related" ? extras : [])] : [];
     };
-    const piece = (p: BarPiece) => (
-      <span key={`${p.key}:${p.from}`} className={groupStrip(p.key as TileGroup, true)} data-tile-group={p.key}>
+    // `row`: which of the two rows the piece is on ("" while the bar wraps) — read by the measuring and the specs.
+    const piece = (row: string, p: BarPiece) => (
+      <span key={`${p.key}:${p.from}`} className={`my-1 ${groupStrip(p.key as TileGroup, true)}`} data-tile-group={p.key} data-bar-row={row}>
         {itemsOf(p.key).slice(p.from, p.to)}
       </span>
     );
@@ -219,33 +219,25 @@ export function TileSelector<K extends string>({
     const whole: BarPiece[] = keys.map((key) => ({ key, from: 0, to: counts[key] }));
     const [row1, row2] = layout?.rows ? fitPieces(layout.rows, counts) : [[], []];
     const [flat] = layout ? fitPieces([layout.pieces], counts) : [whole];
-    const rowClass = "flex flex-wrap items-center gap-x-4 gap-y-2";
     // Slice 40.42: a box's group — a panel `tile#n` its tile's, a preview „Corelate"'s.
     const groupOf = (id: string): TileGroup | null => {
       if (id.startsWith("preview")) return "related";
       const tile = id.replace(/#\d+$/, "");
       return groups.find((g) => (g.tiles as readonly string[]).includes(tile))?.group ?? null;
     };
+    // ONE wrapping container in both modes, the two rows parted by a line break of no height (`basis-full`), so a new
+    // arrangement only moves keyed pieces and never remounts the buttons — a click landing while the bar settles is
+    // a click (TC-TILES-18 found one lost when the buttons moved from one row's element to another's). The pieces'
+    // `my-1` is the 8 px between the rows; the break adds none.
+    const twoUp = !!layout?.rows;
     const barEl = (
-      <div role="group" aria-label={t("groupLabel")} ref={barRef} className="flex w-fit max-w-full flex-col gap-y-2" data-tile-selector data-tile-rows={layout?.rows ? "2" : "wrap"}>
-        {layout?.rows ? (
-          <>
-            <div className={rowClass} data-tile-bar-row="1">
-              {row1.map(piece)}
-            </div>
-            <div className={rowClass} data-tile-bar-row="2">
-              {row2.map(piece)}
-              {loose}
-              {buttonsGroup}
-            </div>
-          </>
-        ) : (
-          <div className={rowClass} data-tile-bar-row="">
-            {flat.map(piece)}
-            {loose}
-            {buttonsGroup}
-          </div>
-        )}
+      <div role="group" aria-label={t("groupLabel")} ref={barRef} className="flex max-w-full flex-wrap items-center gap-x-4" data-tile-selector data-tile-rows={twoUp ? "2" : "wrap"}>
+        {/* One keyed array, the break inside it: a piece changing rows moves, it is not drawn anew. */}
+        {twoUp
+          ? [...row1.map((p) => piece("1", p)), <span key="break" aria-hidden="true" className="h-0 basis-full" data-tile-bar-break="" />, ...row2.map((p) => piece("2", p))]
+          : flat.map((p) => piece("", p))}
+        {loose}
+        {buttonsGroup}
       </div>
     );
     if (!diagram) return barEl;
