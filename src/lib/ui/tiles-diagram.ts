@@ -111,7 +111,8 @@ export function tilesDiagram(
         x: tile.col * (unit + across),
         y,
         w: tile.units * unit + (tile.units - 1) * across,
-        h: Math.max(floor, Math.max(0, tile.height) * sc),
+        // Rounded here, before the next one is placed under it, so the gaps stay exactly the rule's.
+        h: Math.floor(Math.max(floor, Math.max(0, tile.height) * sc) * 100) / 100,
       });
     }
     return tiles.map((t) => at.get(t.id)!);
@@ -149,6 +150,6 @@ export function tilesDiagram(
       floor = Math.max(0.5, Math.floor((height / Math.max(1, tall(place(0, 0, 1)))) * 100) / 100);
     }
   }
-  const rects = place(scale, f, floor).map((r) => ({ ...r, h: Math.floor(r.h * 100) / 100 }));
+  const rects = place(scale, f, floor);
   return { rects, width: cols * unit + (cols - 1) * across, height: tall(rects) };
 }

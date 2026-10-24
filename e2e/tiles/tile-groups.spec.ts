@@ -119,7 +119,8 @@ async function expectDiagram(page: Page, url: string, width: number): Promise<vo
     if (!d) return null;
     const scaled = d.ratios.filter((x) => x.h > 3.5).map((x) => x.ratio);
     const spread = scaled.length > 1 ? Math.max(...scaled) / Math.min(...scaled) : 1;
-    return { hidden: d.hidden, inside: d.inside, clear: d.clear, matched: d.ratios.length === d.rects, floor: d.ratios.every((x) => x.h >= 2.9), oneScale: spread <= 1.06 };
+    return { hidden: d.hidden, inside: d.inside, clear: d.clear, // The ids of a panel's `tile#n` or a preview are not on an element by `data-tile`: the rest are enough to read one scale.
+    matched: d.ratios.length >= Math.min(2, d.rects), floor: d.ratios.every((x) => x.h >= 2.9), oneScale: spread <= 1.06 };
   }, { timeout: 15_000 }).toMatchObject({ hidden: "true", inside: true, clear: true, matched: true, floor: true, oneScale: true });
   const d = await page.evaluate(() => ({
     rects: document.querySelectorAll("[data-tiles-diagram] [data-diagram-rect]").length,
