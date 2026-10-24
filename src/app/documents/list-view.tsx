@@ -328,17 +328,18 @@ function DocumentTypeFilterDropdown({
         <span className="text-fade">{label}</span>
         {/* Slice #40.01: the words one width in every state — the 14 rem a type's name had — so ticking types never
             moves the toolbar's row, now that the button stands on it, nor the frame that follows the toolbar (#37.84;
-            TC-LAYOUT-02 step 8). Slice 40.46: 12 rem, so the row, with the sort button after „Câmp specific", is still
-            narrow enough at 1920 px for the 640-px Incursiune beside the list (TC-TILES-11 step 9); a longer name ends
-            in „…", whole on hover. */}
+            TC-LAYOUT-02 step 8). Slice 40.46: 12 rem, so the row, with the sort button after „Câmp specific", was still
+            narrow enough at 1920 px for the 640-px Incursiune beside the list (TC-TILES-11 step 9). Slice 40.49: 11 rem,
+            so with „Șterge filtrele" too the row stays one row at 1366 px (1089 of 1094; TC-DOC-08 step 1); a longer
+            name ends in „…", whole on hover. */}
         {trigger.kind === "one" ? (
-          <span className="w-48 truncate text-left font-medium text-ink dark:text-zinc-100" title={trigger.name} data-type-trigger="one">
+          <span className="w-44 truncate text-left font-medium text-ink dark:text-zinc-100" title={trigger.name} data-type-trigger="one">
             {trigger.name}
           </span>
         ) : trigger.kind === "all" ? (
-          <span className="w-48 truncate text-left font-medium text-ink dark:text-zinc-100" data-type-trigger="all">{allTypesLabel}</span>
+          <span className="w-44 truncate text-left font-medium text-ink dark:text-zinc-100" data-type-trigger="all">{allTypesLabel}</span>
         ) : (
-          <span className="w-48 truncate text-left font-medium italic text-ink dark:text-zinc-100" data-type-trigger={trigger.kind}>
+          <span className="w-44 truncate text-left font-medium italic text-ink dark:text-zinc-100" data-type-trigger={trigger.kind}>
             {trigger.kind === "none" ? noTypesLabel : typesShownLabel(trigger.count)}
           </span>
         )}
@@ -783,18 +784,14 @@ export function DocumentListView({
   // type, through the address it lives in. The search, the order and the open tiles stay.
   const typesNarrowedNow = typesNarrowed(typeOptions, initialDocumentTypeIds);
   const anyFilter = Object.keys(filters).length > 0 || expiringSoon || customFieldKey !== "" || typesNarrowedNow;
+  // ONE navigation, to the address with every filter taken out, and the list starts over from it (`ListAddressScope`
+  // sees an address it did not write): clearing the state beside a push raced the list's own address write, which put
+  // `documentTypeIds` back (the runner's TC-DOC-27, 20261024T175634Z-7851).
   function clearAllFilters() {
-    changeFilters({});
-    setEditingFilter(null);
-    setExpiringSoon(false);
-    setCustomFieldKey("");
-    setCustomFieldValue("");
-    if (typesNarrowedNow) {
-      const next = new URLSearchParams(window.location.search);
-      for (const k of ["documentTypeIds", LIST_PARAM.page, ...DOCUMENT_ADDRESS_FILTERS, ...DOCUMENT_FILTER_KEYS]) next.delete(k);
-      const qs = next.toString();
-      router.push(ownListAddress(qs ? `/documents?${qs}` : "/documents"));
-    }
+    const next = new URLSearchParams(window.location.search);
+    for (const k of ["documentTypeIds", LIST_PARAM.page, ...DOCUMENT_ADDRESS_FILTERS, ...DOCUMENT_FILTER_KEYS]) next.delete(k);
+    const qs = next.toString();
+    router.push(qs ? `/documents?${qs}` : "/documents");
   }
 
   return (

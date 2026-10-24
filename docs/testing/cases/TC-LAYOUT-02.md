@@ -90,3 +90,10 @@ pane at 1920: 160.0, 208.3, 168.6, 120.4 px). Steps 1–8 still name each button
 the band ended 30.4 px past „Deschide" (16 of padding and 14.4 spare in the 8-rem column) and the frame 15.75 px past
 the band (the bar's room, kept since 40.14 while the rows fit). After it: 16.4 px; the room is still there (a bar only
 while the rows overflow was tried and TC-LAYOUT-07 caught it flickering), and the band's grey is drawn across it.
+
+**2026-10-24 — Slice 40.49.** With the sort button (40.46) and „Șterge filtrele" (40.49) on every toolbar, a list whose
+columns are fewer than its toolbar is wide — Acte as before, and Persoane fizice on its two default columns — has its
+frame as wide as the toolbar, the band's grey across the rest (step 10's „past »Deschide« by the gap" holds only where
+the columns are the wider). And on Acte at 1920 px the toolbar is wider than the room beside an open tile: there it
+wraps so the tile stays beside the list, and „Adaugă act", moved with it, still ends at the frame's edge (step 3's
+„does not move" holds elsewhere). The spec follows.

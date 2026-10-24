@@ -72,7 +72,9 @@ describe("on the four lists", () => {
     expect(group.indexOf("<ClearFiltersButton active={anyFilter} onClear={clearAllFilters} />")).toBeGreaterThan(group.indexOf("<ListSortButton"));
     expect(src).toContain('const anyFilter = Object.keys(filters).length > 0 || expiringSoon || customFieldKey !== "" || typesNarrowedNow;');
     const fn = src.slice(src.indexOf("function clearAllFilters()"), src.indexOf("\n  }\n", src.indexOf("function clearAllFilters()")));
-    for (const s of ["changeFilters({});", "setExpiringSoon(false);", 'setCustomFieldKey("");', 'setCustomFieldValue("");', '"documentTypeIds"', "router.push(ownListAddress("]) expect([s, fn.includes(s)]).toEqual([s, true]);
+    // One navigation to the address with every filter out, and the list starts over from it.
+    for (const s of ['"documentTypeIds"', "LIST_PARAM.page", "...DOCUMENT_ADDRESS_FILTERS", "...DOCUMENT_FILTER_KEYS", "router.push("]) expect([s, fn.includes(s)]).toEqual([s, true]);
+    expect(fn).not.toContain("ownListAddress");
     // Never the search or the order.
     expect(fn).not.toMatch(/setSearchInput|setListOrder|LIST_PARAM\.search|ORDER_PARAM/);
   });

@@ -203,7 +203,8 @@ describe("a look, not an edit (#38.72)", () => {
       // #39.04: and the ids of the rows it shows (was `<ListPreviews incursion={IncursionTile}>`).
       // #39.26: and the list's address, over several lines — it was the one line
       // `<ListPreviews incursion={IncursionTile} rowIds={query.data?.items.map((i) => i.id)}>`.
-      const openMatch = view.match(/<ListPreviews\s+incursion=\{IncursionTile\}\s+rowIds=\{query\.data\?\.items\.map\(\(i\) => i\.id\)\}\s+address=\{\{[^}]*\}\}\s*>/);
+      // 40.49: then the columns' width (`columnsEdge`), so a tile stays beside the list; the regex took it ending at `address`.
+      const openMatch = view.match(/<ListPreviews\s+incursion=\{IncursionTile\}\s+rowIds=\{query\.data\?\.items\.map\(\(i\) => i\.id\)\}\s+address=\{\{[^}]*\}\}(?:\s+\/\/[^\n]*\n\s+columnsEdge=\{columnsEdge\(\w+, fit\.gutter\)\})?\s*>/);
       expect([dir, openMatch !== null]).toEqual([dir, true]);
       const open = openMatch![0];
       // Slice #38.75: around the whole list, its first child the toolbar; the table frame in `ListPreviewRow`.

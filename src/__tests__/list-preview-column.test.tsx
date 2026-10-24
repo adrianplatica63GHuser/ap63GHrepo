@@ -115,7 +115,8 @@ describe("a list's preview stands in the row tiles' column, beside the whole lis
       const view = readFileSync(join(process.cwd(), "src", "app", dir, "list-view.tsx"), "utf8");
       // #38.05 matched a bare `<ListPreviews>`; #38.72 passes it the Incursiune tile; #39.04 its loaded rows' ids.
       // #39.26: and its address — it read `<ListPreviews incursion={IncursionTile} rowIds={query.data?.items.map((i) => i.id)}>`.
-      expect([dir, /<ListPreviews\s+incursion=\{IncursionTile\}\s+rowIds=\{query\.data\?\.items\.map\(\(i\) => i\.id\)\}\s+address=\{\{ kind: "\w+", row: address\.row, tiles: address\.tiles \}\}\s*>/.test(view)]).toEqual([dir, true]);
+      // 40.49: then the columns' width (`columnsEdge`); the regex took it ending at `address`.
+      expect([dir, /<ListPreviews\s+incursion=\{IncursionTile\}\s+rowIds=\{query\.data\?\.items\.map\(\(i\) => i\.id\)\}\s+address=\{\{ kind: "\w+", row: address\.row, tiles: address\.tiles \}\}(?:\s+\/\/[^\n]*\n\s+columnsEdge=\{columnsEdge\(\w+, fit\.gutter\)\})?\s*>/.test(view)]).toEqual([dir, true]);
       expect([dir, /<ListPreviewRow>\s*<div className=\{`\$\{LIST_FRAME\}/.test(view)]).toEqual([dir, true]);
     }
   });

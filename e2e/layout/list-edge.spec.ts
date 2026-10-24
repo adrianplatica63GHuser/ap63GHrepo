@@ -146,12 +146,17 @@ async function oneList(page: Page, url: string, add: string, width: number): Pro
   await page.waitForTimeout(300);
   await expectAtEdge(page, add);
 
-  // Step 3 — a preview opens beside the table; the group does not move.
+  // Step 3 — a preview opens beside the table; the group does not move. 40.49: unless the toolbar is wider than the room
+  // beside the tile (Acte at 1920, with the sort button and „Șterge filtrele"): then it wraps so the tile stays beside
+  // the list, and the group, moved with it, still ends at the edge.
   const before = await rightOf(addOf(page, add));
+  const toolbarBefore = await main.locator("[data-list-toolbar]").evaluate((el) => el.getBoundingClientRect().width);
   await main.locator("tbody tr").filter({ hasText: MARK }).getByRole("button", { name: "Previzualizare", exact: true }).click();
   await expect(page.locator("[data-preview]").getByRole("link", { name: "Deschide", exact: true })).toBeVisible({ timeout: 30_000 });
   await page.waitForTimeout(300);
-  expect(Math.abs((await rightOf(addOf(page, add))) - before)).toBeLessThanOrEqual(0.5);
+  const toolbarAfter = await main.locator("[data-list-toolbar]").evaluate((el) => el.getBoundingClientRect().width);
+  if (toolbarAfter < toolbarBefore - 1) await expectAtEdge(page, add);
+  else expect(Math.abs((await rightOf(addOf(page, add))) - before)).toBeLessThanOrEqual(0.5);
   return before;
 }
 
@@ -185,9 +190,13 @@ async function rightEdge(page: Page, url: string, add: string, size: { width: nu
       frame: R(fr).right,
       painted: cs.backgroundImage.startsWith("linear-gradient(") ? parseFloat(fr.style.getPropertyValue("--list-band")) : 0,
       bandHeight: R(band).height,
+      // 40.49: the frame as wide as the toolbar — wider than its columns, which widens the band with it.
+      byToolbar: Math.abs(R(document.querySelector("main [data-list-toolbar]")!).width - R(fr).width) <= 1,
     };
   });
-  if (url !== "/documents") expect(Math.abs(m.past - m.lead)).toBeLessThanOrEqual(1);
+  // Not where the toolbar is wider than the columns (Acte; since 40.49 also a list with few columns, its toolbar holding
+  // the sort button and „Șterge filtrele"): the band widens with the frame (it read `url !== "/documents"`).
+  if (!m.byToolbar) expect(Math.abs(m.past - m.lead)).toBeLessThanOrEqual(1);
   expect(Math.abs(m.beyond - m.bar - m.border)).toBeLessThanOrEqual(1);
   // The bar's room is kept (40.14), and the band's grey is drawn across it, down to the band's height.
   expect(Math.abs(m.painted - m.bandHeight)).toBeLessThanOrEqual(1);
