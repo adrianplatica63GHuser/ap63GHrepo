@@ -35,7 +35,7 @@ within 2 px.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | The window 1920 × 1080; presses „Proprietăți" in the sidebar | The list „Proprietăți" (`/properties`). In the sidebar one property item, „Proprietăți" (the map icon), active; no „Proprietăți — Listă", no „Proprietăți — Hartă" |
-| 2 | Looks at the list's toolbar | „Hartă completă" (the map icon, its words shown) and „Adaugă proprietate" on one line, „Hartă completă" to its left |
+| 2 | Looks at the list's toolbar | „Hartă completă" — no words, an arrow pointing right (`lucide-arrow-right`) then a globe with map pins (`lucide-globe-pins`), named „Hartă completă" (40.50) — and „Adaugă proprietate" on one line, „Hartă completă" to its left |
 | 3 | The window 1366 × 900 | The same: one „Proprietăți" in the sidebar; „Hartă completă" left of „Adaugă proprietate" on one line |
 | 4 | Presses „Hartă completă" | The address is `/properties/map` and the map draws; „Proprietăți" in the sidebar is active; the breadcrumb reads „Acasă", „Proprietăți", „Hartă completă" |
 | 5 | Presses „Proprietăți" in the breadcrumb | The list „Proprietăți" (`/properties`) again |
@@ -68,3 +68,8 @@ confirmed, and `e2e/property/properties-nav.spec.ts` translates it.
 
 **2026-10-05 — `automated`.** `e2e/property/properties-nav.spec.ts` translates the case; green on the runner,
 `20261005T070356Z-19469` on `7a65f19` with the slice's tree (with TC-AUTH-01's, TC-PROP-01's, TC-PROP-03's, TC-VER's, TC-ICON-07's and TC-PROP-06's specs).
+
+**2026-10-24 — Slice 40.50.** „Hartă completă" shows two icons and no words (Adrian, 2026-10-24: „Replace the caption on
+the "full map" button with two icons"): „Deschide"'s arrow, then a globe with two map pins drawn after Big.Icons.docx;
+its name and tooltip are still „Hartă completă", so every step that finds it by name still does. Step 2 says so; it read
+„(the map icon, its words shown)".

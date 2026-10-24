@@ -6,8 +6,10 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { RecencyBadge } from "@/components/recency-badge";
 import { BowTieBadge } from "@/components/bow-tie-badge";
-import { ArrowRight, ChevronLeft, ChevronRight, Map as MapIcon, Plus } from "lucide-react";
-import { IconButton } from "@/lib/ui/icon-button";
+import { ArrowRight, ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ICON_PX, IconButton, IconTooltip } from "@/lib/ui/icon-button";
+import { buttonClass } from "@/lib/ui/button-styles";
+import { GlobePinsIcon } from "@/components/icons/list-icons";
 import { ONE_LINE, cellTitle, columnHead } from "@/components/table/fixed-columns";
 import { FixedTable } from "@/components/table/column-resize";
 import { LIST_FRAME, LIST_HEAD, useListFit } from "@/components/list/list-fit";
@@ -310,16 +312,21 @@ export function PropertyListView() {
 
         <div className="ml-auto flex items-center gap-2">
           {/* Slice #37.92: the whole-properties map's door, now the sidebar
-              has one „Proprietăți" — at the left of the group, the Map icon
-              with its words shown, like „Adaugă proprietate". */}
-          <IconButton
-            icon={MapIcon}
-            label={t("wholeMap")}
-            showLabel
-            variant="secondary"
-            size="md"
-            onClick={() => router.push("/properties/map")}
-          />
+              has one „Proprietăți" — at the left of the group. Slice 40.50 (Adrian, 2026-10-24: „Replace the caption on
+              the "full map" button with two icons"): no words — „Deschide"'s arrow, the door to another screen, then the
+              globe with its pins; the same variant and size, its name and tooltip „Hartă completă" (Ask first 1–3). */}
+          <IconTooltip label={t("wholeMap")}>
+            <button
+              type="button"
+              aria-label={t("wholeMap")}
+              data-full-map=""
+              className={buttonClass({ variant: "secondary", size: "md", className: "h-8.5 gap-1.5" })}
+              onClick={() => router.push("/properties/map")}
+            >
+              <ArrowRight size={ICON_PX.md} aria-hidden="true" className="shrink-0" />
+              <GlobePinsIcon size={ICON_PX.md} aria-hidden="true" className="shrink-0" />
+            </button>
+          </IconTooltip>
           {/* Slice #39.73: no „Șterge selecția" here any more — a property is deleted only from its own form (Adrian,
               2026-10-17: „a property should be deleted only from the property form"), so the ticks went with it. */}
           {/*

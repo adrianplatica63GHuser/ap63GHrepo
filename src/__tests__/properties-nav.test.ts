@@ -57,7 +57,8 @@ describe("the sidebar's one property item (#37.92)", () => {
 describe('„Hartă completă" (#37.92)', () => {
   it('opens the whole map from the list\'s group, at the left of „Adaugă proprietate"', () => {
     const list = read("src/app/properties/list-view.tsx");
-    const opener = list.indexOf('label={t("wholeMap")}');
+    // 40.50: two icons and no words, named „Hartă completă" (it read `label={t("wholeMap")}` on an IconButton).
+    const opener = list.indexOf('<IconTooltip label={t("wholeMap")}>');
     // Slice 40.37: the button shows „+ Nouă", its name the whole „Adaugă proprietate" (fullName).
     const add = list.indexOf('fullName={t("addNew")}');
     expect(opener).toBeGreaterThan(-1);

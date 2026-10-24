@@ -68,3 +68,21 @@ export const PagesIcon = forwardRef<SVGSVGElement, LucideProps>(function PagesIc
     </Glyph>
   );
 });
+
+/**
+ * Slice 40.50 — „Hartă completă": a globe of meridians and parallels with two map pins on it, after the „Full Map"
+ * picture Adrian added to Big.Icons.docx (2026-10-24), drawn by hand in the same `Glyph` as the four above, inspired
+ * rather than traced (Ask first 2): a globe low and left, a pin standing off its upper right, a small one on it.
+ */
+export const GlobePinsIcon = forwardRef<SVGSVGElement, LucideProps>(function GlobePinsIcon(props, ref) {
+  return (
+    <Glyph ref={ref} name="globe-pins" {...props}>
+      <circle cx="10" cy="14" r="8" />
+      <path d="M10 6a12 12 0 0 0 0 16 12 12 0 0 0 0-16" />
+      <path d="M2 14h16M3.1 10h13.8M3.1 18h13.8" />
+      <path d="M18.5 11s-3-2.9-3-5.3a3 3 0 0 1 6 0c0 2.4-3 5.3-3 5.3z" />
+      <circle cx="18.5" cy="5.7" r=".6" />
+      <path d="M6.5 13.5S4.5 11.6 4.5 10a2 2 0 0 1 4 0c0 1.6-2 3.5-2 3.5z" />
+    </Glyph>
+  );
+});

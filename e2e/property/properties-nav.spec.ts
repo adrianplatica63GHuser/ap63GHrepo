@@ -37,7 +37,10 @@ async function mapLeftOfAdd(page: Page): Promise<Locator> {
   const full = page.getByRole("button", { name: "Hartă completă", exact: true });
   const add = page.getByRole("button", { name: "Adaugă proprietate", exact: true });
   await expect(full).toBeVisible({ timeout: 30_000 });
-  expect(await iconOf(full)).toBe("lucide-map");
+  // 40.50: no words — the arrow, then the globe with its pins (it read `iconOf(full)` „lucide-map", its words shown).
+  const icons = await full.locator("svg").evaluateAll((svgs) => svgs.map((s) => (s.getAttribute("class") ?? "").split(" ").find((c) => c.startsWith("lucide-") && c !== "lucide")));
+  expect(icons).toEqual(["lucide-arrow-right", "lucide-globe-pins"]);
+  await expect(full).toHaveText("");
   // Polled, not read once (#38.24): in a full run the first read came 9 px off
   // while the row was still settling, and passed on its own a minute later
   // (runner 20261007T010242Z-12558, then 20261007T011905Z-31822).
