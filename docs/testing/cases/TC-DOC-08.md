@@ -44,8 +44,8 @@ Nothing.
 | 7 | Clears the search, chooses „Stare plată", then „Achitat integral" | A second list of its values, each by its label with a count — „Achitat integral (n documente)" among them — and no code such as `ACHITAT_INTEGRAL`; chosen, the list holds only such contracts. Nothing on the first row moved: the search box and „Câmpuri afișate" where step 1 had them |
 | 8 | Chooses „Toate" in „Câmp specific:" again | The second list is gone |
 | 9 | Opens „Tip document", unticks „Contract de Vânzare" and ticks only „Adeverință" | The button reads „Adeverință"; the sign is red; „Câmp specific:" is still drawn, on the toolbar's row (#40.01), its list disabled — Adeverință has no form (#38.07); the table lists only „Adeverință" rows |
-| 10 | Sets the window to 1920 px wide and opens „Acte" again (#40.01) | „Tip document:", the sign, „Câmp specific:" and its ⓘ on the toolbar's row, right after „Expiră curând"; „Adaugă act" at the row's end; no filters row — the list starts right under the toolbar |
-| 11 | Opens `/documents?pageCount=1..3` (a column filter: „Nr. pagini" 1 – 3) | Under the toolbar, a row: the chip „Nr. pagini 1 – 3" and „Șterge filtrele" |
+| 10 | Sets the window to 1920 px wide and opens „Acte" again (#40.01) | „Tip document:", the sign, „Câmp specific:" and its ⓘ on the toolbar's row, right after „Expiră curând"; „Adaugă act" at the row's end; no filters row — the list starts right under the toolbar; „Șterge filtrele" on the toolbar, after the sort button, disabled (40.49) |
+| 11 | Opens `/documents?pageCount=1..3` (a column filter: „Nr. pagini" 1 – 3) | Under the toolbar, a row: the chip „Nr. pagini 1 – 3"; the toolbar's „Șterge filtrele" enabled (40.49: the row's own went) |
 | 12 | Presses „Șterge filtrele" | The row is gone; the list starts right under the toolbar again |
 | 13 | Narrows the window to 1000 px | „Tip document:", the sign, „Câmp specific:" and its ⓘ go together onto a line of their own under the search box, starting at its left; „Adaugă act" stays at the end of the first line; the page does not scroll sideways |
 
@@ -248,3 +248,7 @@ y 135, the page 1000 px wide. The spec translates steps 10–13 as a second test
 („Născut pe", „Tip Prop.", „#Document", „Contact" …), the field's whole label on hover; a filter's chip and the
 forms keep the whole labels. Where a step above quotes a column or a box in „Câmpuri afișate" by its whole label, it
 now reads the short one; the spec's locators follow.
+
+**2026-10-24 — Slice 40.49.** „Șterge filtrele" is always on the toolbar, right of the sort button — disabled with no
+filter, enabled with one — and the filters row holds only the chips. Steps 10 and 11 say so; step 12 presses the
+toolbar's. They read „no „Șterge filtrele"" and „the chip … and „Șterge filtrele"" on the row.

@@ -1,6 +1,6 @@
 /**
  * Case:   TC-LAYOUT-09 — Butonul de ordine pe cele patru liste: „Recente întâi" la deschidere, „Vechi întâi" la apăsare, păstrat la Înapoi și la reîncărcare
- * Source: docs/testing/cases/TC-LAYOUT-09.md, „Last green" 2026-10-24
+ * Source: docs/testing/cases/TC-LAYOUT-09.md, „Last green" 2026-10-24 (step 9 is 40.49's)
  *
  * A translation of the case file, step for step (Slice 40.46). „The rows' order" is read from the list's own answer,
  * `GET /api/<list>`, by each row's last change — the later of `updatedAt` and `createdAt` — and the first row on
@@ -117,5 +117,35 @@ test.describe("TC-LAYOUT-09 — butonul de ordine pe cele patru liste", () => {
     await flipTwice(page, "Persoane Juridice", "/judicial-persons", "/api/judicial-persons", "chooser");
     await flipTwice(page, "Proprietăți", "/properties", "/api/properties", "chooser");
     await flipTwice(page, "Acte", "/documents", "/api/documents", "custom-field-group");
+
+    // Step 9 (40.49) — „Șterge filtrele" right of the sort button: disabled with no filter, enabled with one; a press
+    // clears the filters and keeps the search and the order.
+    const LISTS = [
+      ["Persoane Fizice", "/natural-persons", "gender", "MALE"],
+      ["Persoane Juridice", "/judicial-persons", "locality", "_none"],
+      ["Proprietăți", "/properties", "parcela", "1"],
+      ["Acte", "/documents", "pageCount", "0..3"],
+    ] as const;
+    const clear = page.locator("main [data-clear-filters]");
+    for (const [label, path, key, value] of LISTS) {
+      await openFromSidebar(page, label);
+      await expect(clear).toBeDisabled({ timeout: 30_000 });
+      // Right after the sort button: the next item of the toolbar (or of Acte's group).
+      expect(await sortButton(page).evaluate((b) => {
+        let el: Element = b;
+        while (el.parentElement && !el.parentElement.className.includes("flex-wrap") && !el.parentElement.hasAttribute("data-filter-fixed")) el = el.parentElement;
+        return !!el.nextElementSibling?.querySelector("[data-clear-filters]") || el.nextElementSibling?.hasAttribute("data-clear-filters") === true;
+      }), `${label}: „Șterge filtrele” right after the sort button`).toBe(true);
+      await page.goto(`${path}?q=a&sort=changed&order=asc&${key}=${encodeURIComponent(value)}`);
+      await expect(clear).toBeEnabled({ timeout: 30_000 });
+      await expect(page.locator(`main [data-filter-chip="${key}"]`)).toHaveCount(1);
+      await clear.click();
+      await expect(page.locator(`main [data-filter-chip="${key}"]`)).toHaveCount(0, { timeout: 30_000 });
+      await expect.poll(() => new URL(page.url()).searchParams.has(key), `${label}: the filter gone from the address`).toBe(false);
+      const p = new URL(page.url()).searchParams;
+      expect([label, p.get("q"), p.get("sort"), p.get("order")]).toEqual([label, "a", "changed", "asc"]);
+      await expect(sortButton(page)).toHaveText("Vechi întâi");
+      await expect(clear).toBeDisabled();
+    }
   });
 });

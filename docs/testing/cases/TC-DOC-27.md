@@ -41,7 +41,7 @@ Nothing.
 | 3 | At „Câmp specific:" chooses „Stare plată", then „Achitat integral" | A and B |
 | 4 | Ticks „Data" in „Câmpuri afișate"; presses the funnel beside it; at „De la" writes 01.01.2026 | The filter opens right under the funnel (#39.82); after the date, A alone; the address carries `dateDocument=2026-01-01..` beside the type and the field |
 | 5 | Reloads the page | A alone; the chip „Data din 01.01.2026"; the type and the field as they were |
-| 6 | Presses „Șterge filtrele" | A and B; the address keeps the search, the type and the field, and no `dateDocument` |
+| 6 | Presses „Șterge filtrele" — on the toolbar since 40.49, right of the sort button | A, B, C and D; the address keeps the search, and has no `dateDocument`, no type and no field; „Tip document:" reads „Toate tipurile"; „Șterge filtrele" disabled |
 | 7 | (Slice 40.31) Opens „Acte" with `TC-DOC-27-T` in the search — one „Contract de Vânzare" (V), one „Adeverință" (A) — and presses the funnel on „Tip" | A and V; the funnel 13 × 13 in the cell's corner, named „Filtrează după „Tip”", not pressed; under it the checklist of „Tip document:", „Toate tipurile" ticked |
 | 8 | Unticks „Adeverință" there | V alone; `documentTypeIds` in the address; the funnel filled; no chip; „Tip document:" no longer „Toate tipurile", and opened it shows „Adeverință" unticked |
 | 9 | Reloads | V alone, the funnel filled |
@@ -76,3 +76,9 @@ which opens the filter right under itself. Not yet driven by hand: the spec, rew
 
 **2026-10-18 — `automated` (Slice #39.82).** The test runner's targeted run 20261018T160353Z-12564 on 9916957 ran `e2e/document/document-list-filters.spec.ts` green
 with the rewritten steps (lint, tsc and the slice's jest suites green too).
+
+**2026-10-24 — Slice 40.49.** „Șterge filtrele" is the toolbar's, right of the sort button, and on Acte it clears every
+filter — the column filters, „Tip document:" back to every type, „Expiră curând" and „Câmp specific" (Adrian,
+2026-10-24: „a "remove filters" button - that is enabled only if at least one filter is in use"). Step 6 now ends with
+all four documents and an address that keeps only the search; it read „A and B; the address keeps the search, the type
+and the field". The spec follows.

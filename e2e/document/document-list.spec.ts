@@ -237,7 +237,8 @@ test.describe("TC-DOC-08 — lista actelor", () => {
     expect(a10.x).toBeGreaterThan(g10.x + g10.width);
     await expect(bar).toHaveAttribute("data-filter-bar-shown", "false");
     await expect(bar.locator("[data-filter-chip]")).toHaveCount(0);
-    await expect(main.getByRole("button", { name: "Șterge filtrele" })).toHaveCount(0);
+    // 40.49: on the toolbar, always — disabled with no filter (it read `toHaveCount(0)`).
+    await expect(main.getByRole("button", { name: "Șterge filtrele" })).toBeDisabled();
     const toolbar = await box(main.locator("[data-toolbar]"));
     const frame = await box(main.locator("[data-list-edge]").first());
     expect(frame.y - (toolbar.y + toolbar.height)).toBeLessThanOrEqual(20); // one gap, no empty row
@@ -247,7 +248,7 @@ test.describe("TC-DOC-08 — lista actelor", () => {
     await expect(bar).toHaveAttribute("data-filter-bar-shown", "true", { timeout: 30_000 });
     await expect(bar.locator('[data-filter-chip="pageCount"]')).toContainText("Nr. pagini");
     const clear = main.getByRole("button", { name: "Șterge filtrele" });
-    await expect(clear).toBeVisible();
+    await expect(clear).toBeEnabled(); // 40.49: the toolbar's (it read `toBeVisible()`, on the row)
     const b11 = await box(bar);
     const t11 = await box(main.locator("[data-toolbar]"));
     expect(b11.y).toBeGreaterThanOrEqual(t11.y + t11.height);

@@ -44,6 +44,7 @@ The window is 1366 × 900.
 | 6 | Opens „Persoane Juridice", presses „Recente întâi", then presses again | Right after „Câmpuri afișate"; „Vechi întâi" and the rows oldest change first; then „Recente întâi" and newest first |
 | 7 | Opens „Proprietăți", the same | As in step 6 |
 | 8 | Opens „Acte", the same | The button right after „Câmp specific"'s ⓘ, inside its group; otherwise as in step 6 |
+| 9 | (40.49) On each list: opens it from the sidebar; then opens it with a search, `sort=changed&order=asc` and one filter in the address (Persoane fizice `gender=MALE`, Persoane juridice `locality=_none`, Proprietăți `parcela=1`, Acte `pageCount=0..3`), and presses „Șterge filtrele" | From the sidebar: „Șterge filtrele" right after the sort button, disabled, its hover „Niciun filtru nu este activ."; with the filter: enabled, the filter's chip shown; pressed: the chip gone, the filter gone from the address, the search and the order still there, „Vechi întâi" still on the button, „Șterge filtrele" disabled |
 
 ## At the end — leaving things as they were found
 
@@ -67,3 +68,6 @@ emulated at 1366 × 900; the buttons pressed by script, each list's answer read 
 
 **2026-10-24 — Slice 40.47.** The button also reads „Ordonat după „<the column's short name>”" while a column's sort
 icon orders the list, and takes it back to „Recente întâi" (TC-LAYOUT-10); nothing in the steps above changed.
+
+**2026-10-24 — Slice 40.49.** Step 9 added: „Șterge filtrele", right of the sort button on every list — disabled with
+no filter, enabled with one; a press clears the filters and keeps the search and the order.

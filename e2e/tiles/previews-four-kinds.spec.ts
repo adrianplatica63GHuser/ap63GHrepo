@@ -327,7 +327,7 @@ test.describe("TC-TILES-11 — cele patru previzualizări", () => {
 // ── Step 9 (Slice #38.75): the Incursiune as tall as the list, in its own purple ─────────────────────────────
 
 type Box = { top: number; bottom: number; height: number };
-type Measure = { list: Box; tile: Box; wrapped: boolean; surface: string; pinned: string; card: string };
+type Measure = { list: Box; frame: Box; tile: Box; wrapped: boolean; surface: string; pinned: string; card: string };
 
 /** The list's body (toolbar to pagination) and the Incursiune beside it; the reused tile's fill and the two fills it may wear. */
 async function measure(page: Page): Promise<Measure> {
@@ -337,6 +337,8 @@ async function measure(page: Page): Promise<Measure> {
       return { top: r.top, bottom: r.bottom, height: r.height };
     };
     const list = box(document.querySelector("[data-list-body]")!);
+    // 40.49: the table's frame alone — the toolbar above it may wrap when a tile opens beside the list.
+    const frame = box(document.querySelector("[data-list-frame]")!);
     const tile = box(document.querySelector("[data-incursion]")!);
     const fill = (cls: string) => {
       const probe = document.createElement("div");
@@ -348,6 +350,7 @@ async function measure(page: Page): Promise<Measure> {
     };
     return {
       list,
+      frame,
       tile,
       wrapped: tile.top >= list.bottom - 1,
       surface: getComputedStyle(document.querySelector("[data-incursion] > section")!).backgroundColor,
@@ -382,7 +385,9 @@ async function asTall(page: Page, list: string, kind: string, shot: string): Pro
   await expect(page.locator("main").locator('input[placeholder^="caută"]').first()).toBeVisible({ timeout: 30_000 });
   const one = `${TALL} Rând 01`;
   await searchFor(page, one, 1);
-  const before = await page.locator("[data-list-body]").evaluate((el) => el.getBoundingClientRect().height);
+  // 40.49: the frame's height, not the body's: beside a tile the toolbar may wrap onto a second line (Acte at 1920, with
+  // the sort button and „Șterge filtrele"), which grows the body without stretching the list (it read [data-list-body]).
+  const before = await page.locator("[data-list-frame]").evaluate((el) => el.getBoundingClientRect().height);
   await listRows(page).first().getByRole("button", { name: "Incursiune", exact: true }).click();
   await expect(page.locator(`[data-incursion="${kind}"] > section`)).toBeVisible({ timeout: 30_000 });
   for (const width of [1920, 1366]) {
@@ -409,7 +414,7 @@ async function asTall(page: Page, list: string, kind: string, shot: string): Pro
     expect(short.surface, `${at}: not the card's grey-blue`).not.toBe(short.card);
     if (width === 1920) {
       expect(short.wrapped, `${at}: the tile stands beside the list`).toBe(false);
-      expect(Math.abs(short.list.height - before), `${at}: the one-row list was stretched`).toBeLessThanOrEqual(1);
+      expect(Math.abs(short.frame.height - before), `${at}: the one-row list was stretched`).toBeLessThanOrEqual(1);
     }
     if (!short.wrapped) {
       expect(Math.abs(short.tile.top - short.list.top), `${at}, one row: tops`).toBeLessThanOrEqual(2);

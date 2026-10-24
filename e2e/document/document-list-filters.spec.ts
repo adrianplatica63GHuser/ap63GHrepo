@@ -92,14 +92,19 @@ test.describe("TC-DOC-27 — filtrele listei actelor", () => {
       await expect(main.getByRole("button", { name: /^Tip document:\s*Contract de Vânzare/ })).toBeVisible();
       await expect(key).toHaveValue("starePlata");
 
-      // Step 6 — „Șterge filtrele": A and B; the type and the field kept, no `dateDocument`.
-      await main.getByRole("button", { name: "Șterge filtrele", exact: true }).click();
-      await shows("A", "B");
+      // Step 6 — „Șterge filtrele", the toolbar's since 40.49: every filter off — the four, the search kept, no type, no
+      // field, no `dateDocument`. (It read „A and B; the type and the field kept".)
+      const clear = main.getByRole("button", { name: "Șterge filtrele", exact: true });
+      await expect(clear).toBeEnabled();
+      await clear.click();
+      await shows("A", "B", "C", "D");
       await expect.poll(() => params().has("dateDocument")).toBe(false);
+      await expect.poll(() => params().has("documentTypeIds")).toBe(false);
       expect(params().get("q")).toBe(MARK);
-      expect(params().get("field")).toBe("starePlata");
-      expect(params().get("value")).toBe("ACHITAT_INTEGRAL");
-      expect(params().get("documentTypeIds")).toBeTruthy();
+      expect(params().has("field")).toBe(false);
+      expect(params().has("value")).toBe(false);
+      await expect(main.getByRole("button", { name: /^Tip document:\s*Toate tipurile/ })).toBeVisible();
+      await expect(clear).toBeDisabled();
     } finally {
       for (const id of ids) await removeRecord(page.request, "document", id);
     }
