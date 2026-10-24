@@ -15,7 +15,8 @@ const QUERIES = readFileSync(join(ROOT, "src", "lib", "documents", "queries.ts")
 // Slice #39.63: the three counts moved into DOCUMENT_COUNT_SQL, shared by the list and its range filters.
 const FILTER_SQL = readFileSync(join(ROOT, "src", "lib", "documents", "list-filter-sql.ts"), "utf8");
 
-const KEYS = ["nrDocument", "dateDocument", "institution", "subject", "pageCount", "personCount", "propertyCount", "createdAt"];
+// Slice 40.55: „Modificat la" ("changed") after „Adăugat la".
+const KEYS = ["nrDocument", "dateDocument", "institution", "subject", "pageCount", "personCount", "propertyCount", "createdAt", "changed"];
 
 describe("the Documents list (Slice #37.62)", () => {
   it("„Câmpuri afișate” offers Nr. document and Data, then the fields every document has — no importance, relevance or provenance", () => {

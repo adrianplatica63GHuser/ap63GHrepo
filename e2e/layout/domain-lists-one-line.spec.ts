@@ -494,13 +494,13 @@ test.describe("TC-LAYOUT-05 — cele patru liste, câte un rând pe linie", () =
     } as const;
     const LISTS2 = [
       { path: "/natural-persons", ns: "naturalPerson", store: "ga40-col-person-v3", fixed: ["name", "nickname"],
-        groups: [["cnp", "dateOfBirth", "age", "gender"], ["dateOfDeath", "placeOfBirth", "professionalType", "relationships"]] },
+        groups: [["cnp", "dateOfBirth", "age", "gender"], ["dateOfDeath", "placeOfBirth", "professionalType", "relationships"], ["changed"]] }, // 40.55
       { path: "/judicial-persons", ns: "judicialPerson", store: "ga40-col-company-v2", fixed: ["name", "nickname"],
-        groups: [["judicialPersonType", "cuiNumber", "tradeRegisterNumber", "contactPerson"], ["locality"]] },
+        groups: [["judicialPersonType", "cuiNumber", "tradeRegisterNumber", "contactPerson"], ["locality", "changed"]] }, // 40.55
       { path: "/properties", ns: "property", store: "ga40-col-property-v4", fixed: ["nickname"],
-        groups: [["tarlaSola", "parcela", "surfaceAreaMp", "calculatedAreaMp"], ["carteFunciara", "cadastralNumber", "useCategory", "propertyType"], ["locality"]] },
+        groups: [["tarlaSola", "parcela", "surfaceAreaMp", "calculatedAreaMp"], ["carteFunciara", "cadastralNumber", "useCategory", "propertyType"], ["locality", "changed"]] }, // 40.55
       { path: "/documents", ns: "document", store: "ga40-col-document-v3", fixed: ["type", "title"],
-        groups: [["nrDocument", "dateDocument", "institution", "subject"], ["pageCount", "personCount", "propertyCount", "createdAt"]] },
+        groups: [["nrDocument", "dateDocument", "institution", "subject"], ["pageCount", "personCount", "propertyCount", "createdAt"], ["changed"]] }, // 40.55
     ];
     const base = test.info().project.use.baseURL ?? "http://localhost:3000";
     await page.setViewportSize({ width: 1920, height: 1080 });

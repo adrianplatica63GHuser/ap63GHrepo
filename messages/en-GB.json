@@ -635,7 +635,7 @@
       "useCategory": "Use Categ.",
       "propertyType": "Prop. Type",
       "locality": "Locality",
-      "createdAt": "Added on"
+      "changed": "Modified on"
     }
   },
   "address": {
@@ -1317,7 +1317,7 @@
       "placeOfBirth": "Born in",
       "professionalType": "Prof.type",
       "relationships": "Rel.to VM",
-      "createdAt": "Added on"
+      "changed": "Modified on"
     }
   },
   "judicialPerson": {
@@ -1487,7 +1487,7 @@
       "tradeRegisterNumber": "Trade Reg#",
       "contactPerson": "Contact",
       "locality": "Locality",
-      "createdAt": "Added on"
+      "changed": "Modified on"
     }
   },
   "nav": {
@@ -1819,7 +1819,8 @@
       "pageCount": "No. of Pages",
       "personCount": "No. of Persons",
       "propertyCount": "No. of Properties",
-      "createdAt": "Added on"
+      "createdAt": "Added on",
+      "changed": "Modified on"
     },
     "sections": {
       "typeSelect": "Document Type",
@@ -2328,7 +2329,8 @@
       "pageCount": "Pages",
       "personCount": "Persons",
       "propertyCount": "Properties",
-      "createdAt": "Added on"
+      "createdAt": "Added on",
+      "changed": "Modified on"
     }
   },
   "valueList": {

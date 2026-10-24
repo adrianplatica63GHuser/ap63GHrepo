@@ -97,3 +97,13 @@ export function addedOn(createdAt: string): string {
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}`;
 }
+
+/**
+ * Slice 40.55 — „Modificat la": the day a record was last changed, its adding counting as a change — the later of the
+ * two timestamps, which is what the lists' default order sorts by (`changedAt`, order-sql.ts) — dd.mm.yyyy in the
+ * reader's time zone, as `addedOn`; "" when neither is a date.
+ */
+export function modifiedOn(createdAt: string, updatedAt: string | null | undefined): string {
+  const t = [createdAt, updatedAt].map((x) => (x ? new Date(x).getTime() : NaN)).filter((n) => !Number.isNaN(n));
+  return t.length ? addedOn(new Date(Math.max(...t)).toISOString()) : "";
+}

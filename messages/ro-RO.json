@@ -635,7 +635,7 @@
       "useCategory": "Categ.Folos.",
       "propertyType": "Tip Prop.",
       "locality": "Localitate",
-      "createdAt": "Adăugat la"
+      "changed": "Modificat la"
     }
   },
   "address": {
@@ -1317,7 +1317,7 @@
       "placeOfBirth": "Născut la",
       "professionalType": "Tip prof.",
       "relationships": "Rel.cu VM",
-      "createdAt": "Adăugat la"
+      "changed": "Modificat la"
     }
   },
   "judicialPerson": {
@@ -1487,7 +1487,7 @@
       "tradeRegisterNumber": "#Reg. Com.",
       "contactPerson": "Contact",
       "locality": "Localitate",
-      "createdAt": "Adăugat la"
+      "changed": "Modificat la"
     }
   },
   "nav": {
@@ -1819,7 +1819,8 @@
       "pageCount": "Nr. pagini",
       "personCount": "Nr. persoane",
       "propertyCount": "Nr. proprietăți",
-      "createdAt": "Adăugat la"
+      "createdAt": "Adăugat la",
+      "changed": "Modificat la"
     },
     "sections": {
       "typeSelect": "Tip document",
@@ -2328,7 +2329,8 @@
       "pageCount": "Pagini",
       "personCount": "Persoane",
       "propertyCount": "Proprietăți",
-      "createdAt": "Adăugat la"
+      "createdAt": "Adăugat la",
+      "changed": "Modificat la"
     }
   },
   "valueList": {

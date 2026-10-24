@@ -22,23 +22,24 @@ const SHORT: Record<string, readonly (readonly [string, string, string])[]> = {
     ["name", "Name", "Nume"], ["nickname", "Nickname", "Poreclă"], ["cnp", "CNP", "CNP"], ["dateOfBirth", "DoB", "Născut pe"],
     ["age", "Age", "Vârstă"], ["gender", "Gender", "Gen"], ["dateOfDeath", "DoD", "Decedat pe"], ["placeOfBirth", "Born in", "Născut la"],
     ["professionalType", "Prof.type", "Tip prof."], ["relationships", "Rel.to VM", "Rel.cu VM"],
-    ["createdAt", "Added on", "Adăugat la"], // 40.45
+    ["changed", "Modified on", "Modificat la"], // 40.55 — was 40.45's ["createdAt", "Added on", "Adăugat la"]
   ],
   judicialPerson: [
     ["name", "Name", "Denumire"], ["nickname", "Nickname", "Poreclă"], ["judicialPersonType", "Type", "Tip"], ["cuiNumber", "CUI", "CUI"],
     ["tradeRegisterNumber", "Trade Reg#", "#Reg. Com."], ["contactPerson", "Contact", "Contact"], ["locality", "Locality", "Localitate"],
-    ["createdAt", "Added on", "Adăugat la"], // 40.45
+    ["changed", "Modified on", "Modificat la"], // 40.55 — was 40.45's ["createdAt", "Added on", "Adăugat la"]
   ],
   property: [
     ["nickname", "Nickname", "Poreclă"], ["tarlaSola", "Tarla", "Tarla"], ["parcela", "Parcelă", "Parcelă"],
     ["surfaceAreaMp", "Supr.Ofic.", "Supr. Ofic."], ["calculatedAreaMp", "Supr.Calc.", "Supr. Calc."], ["carteFunciara", "C.F.#", "# CF"],
     ["cadastralNumber", "Cadastru #", "# Cadastru"], ["useCategory", "Use Categ.", "Categ.Folos."], ["propertyType", "Prop. Type", "Tip Prop."],
-    ["locality", "Locality", "Localitate"], ["createdAt", "Added on", "Adăugat la"], // 40.45
+    ["locality", "Locality", "Localitate"], ["changed", "Modified on", "Modificat la"], // 40.55 — was 40.45's ["createdAt", …]
   ],
   document: [
     ["type", "Type", "Tip"], ["title", "Title", "Titlu"], ["nrDocument", "Doc.#", "#Document"], ["dateDocument", "Date", "Data"],
     ["institution", "Inst./Notar", "Inst./Notar"], ["subject", "Subject", "Subiect"], ["pageCount", "Pages", "Pagini"],
     ["personCount", "Persons", "Persoane"], ["propertyCount", "Properties", "Proprietăți"], ["createdAt", "Added on", "Adăugat la"],
+    ["changed", "Modified on", "Modificat la"], // 40.55
   ],
 };
 
@@ -59,7 +60,8 @@ describe("Adrian's short names (Slice 40.20)", () => {
   it.each(Object.entries(LISTS))("%s: every chooser column and every fixed name is a short name, with its whole label beside it", (dir, ns) => {
     const src = read("src", "app", dir, "list-view.tsx");
     expect(src).toContain(`const tHead   = useTranslations("${ns}.listHeads");`);
-    // 40.45: „Adăugat la"'s whole name is its short one on the three lists that gained it, `full: tHead("createdAt")`.
+    // 40.55: „Modificat la"'s whole name is its short one on the three lists, `full: tHead("changed")` (40.45's „Adăugat la"
+    // was `full: tHead("createdAt")` there); on Acte its whole name is the table's, `t("table.changed")`.
     const chooser = [...src.matchAll(/\{ key: "(\w+)",\s+label: tHead\("(\w+)"\), full: t(?:Head)?\("[\w.]+"\),\s+column:/g)];
     expect(chooser.length).toBe([...src.matchAll(/\{ key: "\w+",\s+label:/g)].length);
     for (const [, key, head] of chooser) expect(head).toBe(key);

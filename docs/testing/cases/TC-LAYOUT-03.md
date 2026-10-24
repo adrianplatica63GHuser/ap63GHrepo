@@ -41,9 +41,10 @@ The window is 1366 × 900. „The headers" are the list table's column headers, 
 | 3 | Opens „Persoane Fizice" | „Câmpuri afișate 0/4"; the headers „", „Nume", „Poreclă", „" |
 | 4 | Opens „Persoane Juridice" | „Câmpuri afișate 0/4"; the headers „", „Denumire", „Poreclă", „" |
 | 5 | Opens „Proprietăți", „Câmpuri afișate", ticks „Localitate", reloads | „Câmpuri afișate 2/4"; the headers „", „Poreclă", „Tip proprietate", „Localitate", „" |
-| 6 | Still on „Proprietăți", opens „Câmpuri afișate" | „Adăugat la" is the last field offered; ticked, „Câmpuri afișate 3/4" and the headers „Poreclă", „Tip Prop.", „Localitate", „Adăugat la", „"; the first row's „Adăugat la" a day, dd.mm.yyyy (40.45) |
-| 7 | Opens „Persoane Fizice", „Câmpuri afișate", ticks „Adăugat la" — the last field offered | „Câmpuri afișate 1/4"; the headers „Nume", „Poreclă", „Adăugat la", „"; the first row's „Adăugat la" a day, dd.mm.yyyy (40.45) |
-| 8 | Opens „Persoane Juridice", „Câmpuri afișate", ticks „Adăugat la" — the last field offered | „Câmpuri afișate 1/4"; the headers „Denumire", „Poreclă", „Adăugat la", „"; the first row's „Adăugat la" a day, dd.mm.yyyy (40.45) |
+| 6 | Still on „Proprietăți", opens „Câmpuri afișate" | „Modificat la" is the last field offered; ticked, „Câmpuri afișate 3/4" and the headers „Poreclă", „Tip Prop.", „Localitate", „Modificat la", „"; the first row's „Modificat la" a day, dd.mm.yyyy (40.55) |
+| 7 | Opens „Persoane Fizice", „Câmpuri afișate", ticks „Modificat la" — the last field offered | „Câmpuri afișate 1/4"; the headers „Nume", „Poreclă", „Modificat la", „"; the first row's „Modificat la" a day, dd.mm.yyyy (40.55) |
+| 8 | Opens „Persoane Juridice", „Câmpuri afișate", ticks „Modificat la" — the last field offered | „Câmpuri afișate 1/4"; the headers „Denumire", „Poreclă", „Modificat la", „"; the first row's „Modificat la" a day, dd.mm.yyyy (40.55) |
+| 9 | Opens „Acte", „Câmpuri afișate", ticks „Modificat la" — the last field offered, after „Adăugat la" | „Câmpuri afișate 1/4"; the headers „Tip", „Titlu", „Modificat la", „"; the first row's „Modificat la" a day, dd.mm.yyyy (40.55) |
 
 ## At the end — leaving things as they were found
 
@@ -88,3 +89,9 @@ now reads the short one; the spec's locators follow.
 zone, as on Acte since #37.62 — offered last in „Câmpuri afișate" on Proprietăți, Persoane fizice and Persoane
 juridice, ticked by nobody by default (steps 1–4 unchanged). The spec reads the first row's day for its shape alone,
 never a name beside it.
+
+**2026-10-24 — Slice 40.55.** Adrian: „I have made a mistake by asking you to add the field "added on" to the field
+chooser; The field I was looking for was "Last Modified On" and the label can be shorter: "modified on"". Steps 6–8
+read „Modificat la" where they read „Adăugat la" — the day of the record's last change, its adding counting as one,
+the date the list's default order goes by — and step 9 is new: Acte offers it too, after its own „Adăugat la"
+(#37.62, which stays). The spec follows.

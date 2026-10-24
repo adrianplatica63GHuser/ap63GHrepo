@@ -10,7 +10,8 @@
  *     15 at a time, so an order applied in the browser would sort one page.
  *   - Each list may be ordered by the names in `LIST_SORTS` and nothing else; a route refuses any other (Ask first 1).
  *   - Slice 40.47: the columns that sort, by their chooser keys — a column's sort icon in its name cell names one
- *     (`sortByColumn`): „Adăugat la" starts newest first, every other column ascending, as on „Interacțiuni"; the same
+ *     (`sortByColumn`): „Modificat la" (the last change, 40.55) and Acte's „Adăugat la" start newest first, every other
+ *     column ascending, as on „Interacțiuni"; the same
  *     column again flips it; the sort button takes any of them back to the default.
  *   - In the list's address as `sort` and `order`, written only when they are not the default (Ask first 4), so a list
  *     opened from the menu or a link with neither opens as it always has; anything malformed there reads as the
@@ -36,17 +37,25 @@ export const DEFAULT_LIST_ORDER: ListOrder = Object.freeze({ sort: CHANGED, orde
 export const ORDER_PARAM = { sort: "sort", order: "order" } as const;
 export const ORDER_KEYS: readonly string[] = [ORDER_PARAM.sort, ORDER_PARAM.order];
 
-/** „Adăugat la" — the timestamp a record was created, by its column's chooser key on every list (40.45). */
+/** „Adăugat la" — the timestamp a record was created, by its column's chooser key on Acte (since #37.62). */
 export const ADDED_ON = "createdAt";
+
+/**
+ * Slice 40.55: „Modificat la" — the column of the day a record was last changed, its chooser key the default order's
+ * own, so its sort icon is that order's: in use while the list stands in it, and a press flips it as the sort button
+ * does (Adrian, 2026-10-24: „The field I was looking for was "Last Modified On" and the label can be shorter:
+ * "modified on"" — it replaces 40.45's „Adăugat la" on Persoane fizice, Persoane juridice and Proprietăți).
+ */
+export const MODIFIED_ON = CHANGED;
 
 /**
  * What each list may be ordered by: the last change, then the columns that sort (40.47, Adrian's list, by their
  * chooser keys). Anything else is refused by its route, and read as the default from its address.
  */
 export const LIST_SORTS = {
-  person: [CHANGED, ADDED_ON, "dateOfBirth", "age", "dateOfDeath"],
-  company: [CHANGED, ADDED_ON],
-  property: [CHANGED, ADDED_ON, "tarlaSola", "parcela", "surfaceAreaMp", "calculatedAreaMp"],
+  person: [CHANGED, "dateOfBirth", "age", "dateOfDeath"],
+  company: [CHANGED],
+  property: [CHANGED, "tarlaSola", "parcela", "surfaceAreaMp", "calculatedAreaMp"],
   document: [CHANGED, ADDED_ON, "dateDocument", "pageCount", "personCount", "propertyCount"],
 } as const satisfies Record<string, readonly [string, ...string[]]>;
 

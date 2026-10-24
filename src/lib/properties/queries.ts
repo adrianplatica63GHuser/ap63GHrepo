@@ -555,13 +555,12 @@ async function countPropertyFilterValues(
 }
 
 /**
- * Slice 40.47: what the Properties list sorts by (`LIST_SORTS.property`) — the last change, „Adăugat la", Tarla (its
+ * Slice 40.47: what the Properties list sorts by (`LIST_SORTS.property`) — the last change (its column „Modificat la", 40.55), Tarla (its
  * indicativ) and Parcelă in natural order, the two surfaces as numbers. The keys are the chooser's: `tarlaSola` for
  * the Tarla column.
  */
 const PROPERTY_SORTS = {
   changed: changedAt(property.updatedAt, property.createdAt),
-  createdAt: sql`${property.createdAt}`,
   tarlaSola: naturalOrder(sql`${lookupTarla.indicativ}`),
   parcela: naturalOrder(sql`${property.parcela}`),
   surfaceAreaMp: sql`${property.surfaceAreaMp}`,

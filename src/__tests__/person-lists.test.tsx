@@ -29,8 +29,8 @@ describe("„Câmpuri afișate” on the two persons' lists (Slice #37.60)", () 
     expect(panel).toEqual(["cnp", "dateOfBirth", "age", "gender", "dateOfDeath", "placeOfBirth", "professionalType"]);
     // Slice #39.70: and „Relația cu firma" after them — a column the list offers that is not in the panel's rows
     // (it is a group of boxes under them, outside the snapshot). Was `.toEqual(panel)`.
-    // Slice 40.45: then „Adăugat la", last, as on Acte. Was `[...panel, "relationships"]`.
-    expect(keysOf(read("src", "app", "natural-persons", "list-view.tsx"))).toEqual([...panel, "relationships", "createdAt"]);
+    // Slice 40.55: then „Modificat la", last (40.45's „Adăugat la", `"createdAt"`, was there). Was `[...panel, "relationships"]`.
+    expect(keysOf(read("src", "app", "natural-persons", "list-view.tsx"))).toEqual([...panel, "relationships", "changed"]);
   });
 
   it("the Judicial Persons list offers its own, through the same chooser", () => {
@@ -41,8 +41,8 @@ describe("„Câmpuri afișate” on the two persons' lists (Slice #37.60)", () 
     const src = read("src", "app", "judicial-persons", "list-view.tsx");
     // Slice #37.71: then „Persoană de contact", and room for all four. Slice #39.82: then „Localitate", the head office's,
     // so its filter has a column — five offered, four at once. Was `[...panel, "contactPerson"]`.
-    // Slice 40.45: then „Adăugat la", last, as on Acte. Was `[...panel, "contactPerson", "locality"]`.
-    expect(keysOf(src)).toEqual([...panel, "contactPerson", "locality", "createdAt"]);
+    // Slice 40.55: then „Modificat la", last (40.45's „Adăugat la", `"createdAt"`, was there). Was `[...panel, "contactPerson", "locality"]`.
+    expect(keysOf(src)).toEqual([...panel, "contactPerson", "locality", "changed"]);
     expect(src).toMatch(/const MAX_OPT = 4;/);
     for (const f of ["natural-persons", "judicial-persons"]) {
       const view = read("src", "app", f, "list-view.tsx");

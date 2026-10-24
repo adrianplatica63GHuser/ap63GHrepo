@@ -18,7 +18,7 @@ import { LIST_TOOLBAR, columnsEdge, useListEdge } from "@/components/table/list-
 import { ListHeadCell } from "@/components/table/list-head";
 import { FirstCellText } from "@/components/list/first-cell";
 import type { ColumnName } from "@/lib/ui/field-widths";
-import { addedOn } from "@/lib/persons/person-age";
+import { modifiedOn } from "@/lib/persons/person-age";
 import { AddPropertyDialog } from "./_components/add-property-dialog";
 import { newTabIfAsked } from "@/lib/ui/row-link";
 import { ListPreviewRow, ListPreviews, PreviewButton } from "@/components/tiles/preview-tiles";
@@ -220,8 +220,8 @@ export function PropertyListView() {
     { key: "useCategory",      label: tHead("useCategory"), full: t("fields.useCategory"),     column: "listUseCategory" },
     { key: "propertyType",     label: tHead("propertyType"), full: t("fields.propertyType"),    column: "listPropertyType" },
     { key: "locality",         label: tHead("locality"), full: t("table.locality"),         column: "listLocality" },
-    // Slice 40.45: „Adăugat la", as on Acte — the day the record was added; its short name is its whole one.
-    { key: "createdAt",        label: tHead("createdAt"), full: tHead("createdAt"),        column: "listDate" },
+    // Slice 40.55: „Modificat la", the day of the last change — the list's default order, so its sort icon is that order's.
+    { key: "changed",          label: tHead("changed"), full: tHead("changed"),      column: "listDate" },
     // Slice #37.61: importance, relevance and provenance are no longer offered; a
     // browser that remembers one simply loses it (`field-chooser.tsx`).
   ];
@@ -237,7 +237,7 @@ export function PropertyListView() {
       case "useCategory":      return item.useCategory ?? "";
       case "propertyType":     return item.propertyType ?? "";
       case "locality":         return [item.locality, item.county].filter(Boolean).join(", ");
-      case "createdAt":        return addedOn(item.createdAt);
+      case "changed":          return modifiedOn(item.createdAt, item.updatedAt);
       default:                 return null;
     }
   }

@@ -9,7 +9,7 @@
  *   - This test's browser context is new, so nothing is stored under the four
  *     keys; the spec removes them anyway, and the context is thrown away after.
  *   - The lists show whatever the database holds; the case reads the headers
- *     and the chooser, and from a row only the shape of „Adăugat la" (40.45).
+ *     and the chooser, and from a row only the shape of „Modificat la" (40.55; 40.45's „Adăugat la" before it).
  *   - Playwright's mouse; the hand run pressed by script (FU-290).
  */
 
@@ -24,15 +24,18 @@ async function expectList(page: Page, chooser: string, headers: string[]): Promi
   await expect(main.locator("table").first().locator("thead th")).toHaveText(headers, { timeout: 30_000 });
 }
 
-/** 40.45 — „Adăugat la" is the chooser's last field; ticked, its column follows and the first row's day is dd.mm.yyyy. */
-async function tickAddedOn(page: Page, chooser: string, after: string, headers: string[]): Promise<void> {
+/**
+ * 40.55 — „Modificat la" is the chooser's last field; ticked, its column follows and the first row's day is dd.mm.yyyy.
+ * (40.45's „Adăugat la", asked for by mistake, stood there on the three lists before.)
+ */
+async function tickModifiedOn(page: Page, chooser: string, after: string, headers: string[]): Promise<void> {
   const main = page.locator("main");
   await main.getByRole("button", { name: chooser, exact: true }).click();
   const boxes = page.locator("[data-field-chooser]").getByRole("checkbox");
-  await expect(boxes.last()).toHaveAccessibleName("Adăugat la");
+  await expect(boxes.last()).toHaveAccessibleName("Modificat la");
   await boxes.last().check();
   await expectList(page, after, headers);
-  const cell = main.locator("table").first().locator("tbody tr").first().locator("td").nth(headers.indexOf("Adăugat la"));
+  const cell = main.locator("table").first().locator("tbody tr").first().locator("td").nth(headers.indexOf("Modificat la"));
   await expect(cell).toHaveText(/^\d{2}\.\d{2}\.\d{4}$/, { timeout: 30_000 });
 }
 
@@ -61,12 +64,14 @@ test.describe("TC-LAYOUT-03 — „Câmpuri afișate” fără o alegere memorat
     await page.reload();
     await expectList(page, "Câmpuri afișate 2/4", ["Poreclă", "Tip Prop.", "Localitate", ""]);
 
-    // Steps 6–8 — „Adăugat la" on the three lists that lacked it (40.45).
-    await tickAddedOn(page, "Câmpuri afișate 2/4", "Câmpuri afișate 3/4", ["Poreclă", "Tip Prop.", "Localitate", "Adăugat la", ""]);
+    // Steps 6–9 — „Modificat la" on the four lists (40.55; steps 6–8 read „Adăugat la" on the first three, 40.45).
+    await tickModifiedOn(page, "Câmpuri afișate 2/4", "Câmpuri afișate 3/4", ["Poreclă", "Tip Prop.", "Localitate", "Modificat la", ""]);
     await openFromSidebar(page, "Persoane Fizice");
-    await tickAddedOn(page, "Câmpuri afișate 0/4", "Câmpuri afișate 1/4", ["Nume", "Poreclă", "Adăugat la", ""]);
+    await tickModifiedOn(page, "Câmpuri afișate 0/4", "Câmpuri afișate 1/4", ["Nume", "Poreclă", "Modificat la", ""]);
     await openFromSidebar(page, "Persoane Juridice");
-    await tickAddedOn(page, "Câmpuri afișate 0/4", "Câmpuri afișate 1/4", ["Denumire", "Poreclă", "Adăugat la", ""]);
+    await tickModifiedOn(page, "Câmpuri afișate 0/4", "Câmpuri afișate 1/4", ["Denumire", "Poreclă", "Modificat la", ""]);
+    await openFromSidebar(page, "Acte");
+    await tickModifiedOn(page, "Câmpuri afișate 0/4", "Câmpuri afișate 1/4", ["Tip", "Titlu", "Modificat la", ""]);
 
     // At the end — the keys removed (the context goes with the test too).
     await page.evaluate((keys) => keys.forEach((k) => localStorage.removeItem(k)), KEYS);

@@ -4,7 +4,8 @@
  * Adrian, 2026-10-24: a second icon left of the funnel in the cell that holds the column's title; not in use
  * „Interacțiuni"'s two arrows, in use one thick, solid navy arrow in a circle; a press sorts the whole list by the
  * column. His columns: Persoane fizice — Adăugat la, Născut pe, Vârstă, Decedat pe; Persoane juridice — Adăugat la;
- * Proprietăți — Adăugat la, Tarla, Parcelă, Supr. Ofic., Supr. Calc.; Acte (his fourth list, headed „Natural
+ * Proprietăți — Adăugat la, Tarla, Parcelă, Supr. Ofic., Supr. Calc.; — and since 40.55 „Modificat la” in „Adăugat la”'s
+ * place on those three (the field he had meant), its icon the default order's („changed”); Acte (his fourth list, headed „Natural
  * Persons" by a slip — Ask first 1) — Adăugat la, Data, Pagini, Persoane, Proprietăți. The browser half is TC-LAYOUT-10.
  */
 import { readFileSync } from "node:fs";
@@ -35,16 +36,19 @@ const read = (...p: string[]) => readFileSync(join(ROOT, ...p), "utf8");
 
 describe("the columns that sort — Adrian's list", () => {
   it("each list's, by its chooser keys, after the last change", () => {
-    expect([...LIST_SORTS.person]).toEqual([CHANGED, "createdAt", "dateOfBirth", "age", "dateOfDeath"]);
-    expect([...LIST_SORTS.company]).toEqual([CHANGED, "createdAt"]);
-    expect([...LIST_SORTS.property]).toEqual([CHANGED, "createdAt", "tarlaSola", "parcela", "surfaceAreaMp", "calculatedAreaMp"]);
+    // 40.55: „Adăugat la” („createdAt”) left the three — it read [CHANGED, "createdAt", …] on each; „Modificat la” is
+    // the column of CHANGED itself.
+    expect([...LIST_SORTS.person]).toEqual([CHANGED, "dateOfBirth", "age", "dateOfDeath"]);
+    expect([...LIST_SORTS.company]).toEqual([CHANGED]);
+    expect([...LIST_SORTS.property]).toEqual([CHANGED, "tarlaSola", "parcela", "surfaceAreaMp", "calculatedAreaMp"]);
     expect([...LIST_SORTS.document]).toEqual([CHANGED, "createdAt", "dateDocument", "pageCount", "personCount", "propertyCount"]);
   });
 
   const VIEWS = [["natural-persons", "person"], ["judicial-persons", "company"], ["properties", "property"], ["documents", "document"]] as const;
   it.each(VIEWS)("%s: every column it sorts by is one its chooser offers", (dir, list) => {
     const keys = [...read("src", "app", dir, "list-view.tsx").matchAll(/\{ key: "(\w+)",\s+label:/g)].map((m) => m[1]);
-    for (const k of LIST_SORTS[list].slice(1)) expect([k, keys.includes(k)]).toEqual([k, true]);
+    // 40.55: the default order too — it is „Modificat la”'s (it read `LIST_SORTS[list].slice(1)`).
+    for (const k of LIST_SORTS[list]) expect([k, keys.includes(k)]).toEqual([k, true]);
   });
 
   it.each(VIEWS)("%s: the name cells take the sort icon from LIST_SORTS, and the button names the column", (dir, list) => {
@@ -65,9 +69,10 @@ describe("the columns that sort — Adrian's list", () => {
     expect(src).toContain(`.orderBy(...listOrderBy(opts.order, ${map}, `);
   });
 
-  it("Persoane juridice sorts by the last change and „Adăugat la”", () => {
+  // 40.55: it read „by the last change and „Adăugat la”” — `createdAt: sql\`${person.createdAt}\`` beside `changed`.
+  it("Persoane juridice sorts by the last change alone — „Modificat la”", () => {
     expect(read("src", "lib", "judicial-persons", "queries.ts")).toContain(
-      ".orderBy(...listOrderBy(opts.order, { changed: changedAt(person.updatedAt, person.createdAt), createdAt: sql`${person.createdAt}` }, person.id))",
+      ".orderBy(...listOrderBy(opts.order, { changed: changedAt(person.updatedAt, person.createdAt) }, person.id))",
     );
   });
 
@@ -89,10 +94,18 @@ describe("the first press and the next (Ask first 3)", () => {
     expect(sortByColumn({ sort: "dateOfBirth", order: "desc" }, "age")).toEqual({ sort: "age", order: "asc" });
   });
 
+  it("„Modificat la”'s icon (40.55) is the default order's: on the default it flips it, from another column it brings it back", () => {
+    expect(sortByColumn(DEFAULT_LIST_ORDER, CHANGED)).toEqual({ sort: CHANGED, order: "asc" });
+    expect(sortByColumn({ sort: CHANGED, order: "asc" }, CHANGED)).toEqual(DEFAULT_LIST_ORDER);
+    expect(sortByColumn({ sort: "age", order: "asc" }, CHANGED)).toEqual(DEFAULT_LIST_ORDER);
+  });
+
   it("a column's order with no direction given takes its first one, in the address and on the route", () => {
     expect(readListOrder((k) => ({ sort: "parcela" })[k as "sort"] ?? null, LIST_SORTS.property)).toEqual({ sort: "parcela", order: "asc" });
     expect(parseListOrderQuery(new URLSearchParams("sort=parcela"), LIST_SORTS.property).data).toEqual({ sort: "parcela", order: "asc" });
-    expect(parseListOrderQuery(new URLSearchParams("sort=createdAt"), LIST_SORTS.company).data).toEqual({ sort: "createdAt", order: "desc" });
+    // 40.55: Acte's „Adăugat la” — it read `LIST_SORTS.company`, which no longer takes it.
+    expect(parseListOrderQuery(new URLSearchParams("sort=createdAt"), LIST_SORTS.document).data).toEqual({ sort: "createdAt", order: "desc" });
+    expect(parseListOrderQuery(new URLSearchParams("sort=createdAt"), LIST_SORTS.company).success).toBe(false);
     expect(parseListOrderQuery(new URLSearchParams("sort=parcela"), LIST_SORTS.company).success).toBe(false);
   });
 });
@@ -141,6 +154,22 @@ describe("the icon and its cell", () => {
     expect(b.querySelector("svg")?.getAttribute("class")).toContain("lucide-arrow-down");
     expect(IN_USE_CORNER).toContain("text-navy!");
     expect(IN_USE_CORNER).toContain("rounded-full!");
+  });
+
+  it("„Modificat la” (40.55): the default order shows the two arrows; „Vechi întâi” puts it in use; a press flips it", () => {
+    const onChange = jest.fn();
+    const { rerender } = render(<ColumnSort sort={CHANGED} label="Modificat la" order={DEFAULT_LIST_ORDER} onChange={onChange} />);
+    let b = screen.getByRole("button", { name: "Ordonează după „Modificat la”" });
+    expect(b.querySelector("svg")?.getAttribute("class")).toContain("lucide-arrow-up-down");
+    expect(b.closest("[data-column-sort]")).toHaveAttribute("data-sort-state", "none");
+    fireEvent.click(b);
+    expect(onChange).toHaveBeenCalledWith({ sort: CHANGED, order: "asc" });
+    rerender(<ColumnSort sort={CHANGED} label="Modificat la" order={{ sort: CHANGED, order: "asc" }} onChange={onChange} />);
+    b = screen.getByRole("button", { name: "Ordonează după „Modificat la”" });
+    expect(b.closest("[data-column-sort]")).toHaveAttribute("data-sort-state", "asc");
+    for (const c of IN_USE_CORNER.split(" ")) expect(b.className).toContain(c);
+    // aria-sort tells the truth even when the look says „not sorted by a column”.
+    expect(ariaSortOf(DEFAULT_LIST_ORDER, CHANGED)).toBe("descending");
   });
 
   it("aria-sort follows the list's order", () => {

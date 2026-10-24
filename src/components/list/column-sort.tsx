@@ -13,7 +13,7 @@
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { CornerButton } from "@/components/list/corner-button";
-import { sortByColumn, type ListOrder } from "@/lib/list/list-order";
+import { isDefaultOrder, sortByColumn, type ListOrder } from "@/lib/list/list-order";
 
 /** The <th>'s `aria-sort` for a column: its direction while the list is sorted by it, „none" otherwise. */
 export function ariaSortOf(order: ListOrder, sort: string): "ascending" | "descending" | "none" {
@@ -34,7 +34,10 @@ export function ColumnSort({
   onChange: (next: ListOrder) => void;
 }) {
   const t = useTranslations("shared.sort");
-  const inUse = order.sort === sort;
+  // 40.55: „Modificat la"'s icon names the default order itself (`changed`); in that order the list is, to the reader,
+  // not sorted by any column, so it keeps the two arrows — Adrian's „default (unsorted) state" — and only „Vechi întâi"
+  // puts it in use. A press flips the order as the sort button does. `aria-sort` (`ariaSortOf`) still says the truth.
+  const inUse = order.sort === sort && !isDefaultOrder(order);
   const Icon = !inUse ? ArrowUpDown : order.order === "asc" ? ArrowUp : ArrowDown;
   const name = t("sortBy", { column: label });
   return (

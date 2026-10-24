@@ -16,8 +16,8 @@ const QUERIES = readFileSync(join(ROOT, "src", "lib", "properties", "queries.ts"
 describe("the Properties list (Slice #37.61)", () => {
   it("„Câmpuri afișate” offers every field of „Date cadastrale” but Poreclă and Note, in that panel's order, then Localitate (#37.72)", () => {
     const keys = [...VIEW.matchAll(/\{ key: "(\w+)",\s+label:/g)].map((m) => m[1]);
-    // Slice 40.45: then „Adăugat la", last, as on Acte (it ended at "locality").
-    expect(keys).toEqual(["tarlaSola", "parcela", "surfaceAreaMp", "calculatedAreaMp", "carteFunciara", "cadastralNumber", "useCategory", "propertyType", "locality", "createdAt"]);
+    // Slice 40.55: then „Modificat la", last (it ended at "locality"; 40.45 put „Adăugat la", "createdAt", there).
+    expect(keys).toEqual(["tarlaSola", "parcela", "surfaceAreaMp", "calculatedAreaMp", "carteFunciara", "cadastralNumber", "useCategory", "propertyType", "locality", "changed"]);
     // „Date cadastrale"'s own order, less Poreclă and Note (the keys are the stored ones: tarlaSola for tarlaId).
     const panel = SCREEN_ROWS.property.cadastral.flat().filter((f) => f !== "nickname" && f !== "notes");
     expect(panel).toEqual(["tarlaId", "parcela", "surfaceAreaMp", "calculatedAreaMp", "carteFunciara", "cadastralNumber", "useCategoryId", "propertyTypeId"]);

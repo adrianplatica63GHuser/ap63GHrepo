@@ -37,7 +37,7 @@ Nothing.
 |---|---|---|
 | 1 | Presses „Acte" in the left sidebar | The toolbar in one row (#39.63), level, in this order (#40.01): the search box („caută după Cod, Titlu sau Nr. document" — no „SAU"), „Câmpuri afișate n/4", „Expiră curând" right after it, then „Tip document: Toate tipurile", a red sign (a circle with a bar) and „Câmp specific:" with an ⓘ beside it — no „+ Filtru" (#39.82) — and at its end „Adaugă act". No filters row under it while no filter is set. No „Importanță" or „Relevanță" anywhere on the list |
 | 2 | Types `TC-DOC-08` into the search | One row: „Adeverință", `TC-DOC-08 Act de test` |
-| 3 | Presses „Câmpuri afișate" | „Selectați până la 4 coloane opționale", then Nr. document, Data, Instituție / Notariat, Subiect, Nr. pagini, Nr. persoane, Nr. proprietăți, Adăugat la (#39.83) — no Importanță, Relevanță or Proveniență |
+| 3 | Presses „Câmpuri afișate" | „Selectați până la 4 coloane opționale", then Nr. document, Data, Instituție / Notariat, Subiect, Nr. pagini, Nr. persoane, Nr. proprietăți, Adăugat la (#39.83), Modificat la (40.55) — no Importanță, Relevanță or Proveniență |
 | 4 | Ticks „Subiect" and „Adăugat la" (unticking another first if four are on) | Two more headers, SUBIECT · ADĂUGAT LA, after TIP · TITLU; under them `Subiect de test TC-DOC-08` and today's date, dd.mm.yyyy |
 | 5 | Presses anywhere outside the list, then rests the mouse on „Câmp specific:" | A bubble: „Filtrează după unul dintre câmpurile proprii ale unui tip de act — de exemplu clauzele unui contract de vânzare-cumpărare. Alegeți câmpul (…), apoi una dintre valorile pe care le are în arhivă: rămân doar actele în care câmpul are acea valoare." Moving the mouse away closes it. (On a touch screen the ⓘ beside it opens and closes it.) |
 | 6 | With „Tip document: Toate tipurile", looks at „Câmp specific:", then opens „Tip document", unticks „Toate tipurile" and ticks only „Contract de Vânzare" | With every type the field list is disabled, offering only „Toate" (#38.07), and the sign is red. With only „Contract de Vânzare" the button reads „Contract de Vânzare", the sign turns green (a circle with a check), and the list is enabled: „Toate", then fields with a closed list of values — „Monedă", „Stare plată" and „Modalitate plată" among them — and none of the Antecontract's („CNP 1", „Anul", „luna", „suma de") and no „Temei preț" |
@@ -64,7 +64,7 @@ file was written from it.
   „Document type: All types", „Type-specific field:" and its ⓘ („About “Type-specific field”"),
   „Expiring soon", „Choose fields 0/4"; neither „Importance" nor „Relevance" in the list's text.
 - Step 2: one row, „Adeverință · TC-DOC-08 Act de test".
-- Step 3: Document No., Date, Institution / Notariat, Subject, Pages, Persons, Properties, Added on.
+- Step 3: Document No., Date, Institution / Notariat, Subject, Pages, Persons, Properties, Added on, Modified on.
 - Step 4: headers TYPE · TITLE · SUBJECT · ADDED ON; the cells `Subiect de test TC-DOC-08` and
   `02.10.2026`; „Choose fields 2/4".
 - Step 5: the bubble visible (224 × 149 px), the English text; the field select described by it.

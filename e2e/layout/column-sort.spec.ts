@@ -17,9 +17,9 @@ import { openFromSidebar } from "../helpers/sidebar";
 type Row = Record<string, unknown> & { id: string };
 
 const CHOICES: Record<string, string[]> = {
-  "ga40-col-person-v3": ["dateOfBirth", "age", "dateOfDeath", "createdAt"],
+  "ga40-col-person-v3": ["dateOfBirth", "age", "dateOfDeath", "changed"], // 40.55: „Modificat la" (was "createdAt")
   "ga40-col-property-v4": ["tarlaSola", "parcela", "surfaceAreaMp", "calculatedAreaMp"],
-  "ga40-col-company-v2": ["judicialPersonType", "createdAt"],
+  "ga40-col-company-v2": ["judicialPersonType", "changed"], // 40.55: „Modificat la" (was "createdAt")
   "ga40-col-document-v3": ["dateDocument", "pageCount", "personCount", "createdAt"],
 };
 
@@ -70,7 +70,7 @@ test.describe("TC-LAYOUT-10 — pictograma de ordonare din banda de nume", () =>
     // Step 1 — „Persoane Fizice": the four columns' two arrows; none on Nume and Poreclă.
     await openFromSidebar(page, "Persoane Fizice");
     await expect(sortButton(page)).toHaveText("Recente întâi", { timeout: 30_000 });
-    await expect.poll(() => heads(page), { timeout: 30_000 }).toEqual(["Nume:-", "Poreclă:-", "Născut pe:none", "Vârstă:none", "Decedat pe:none", "Adăugat la:none"]);
+    await expect.poll(() => heads(page), { timeout: 30_000 }).toEqual(["Nume:-", "Poreclă:-", "Născut pe:none", "Vârstă:none", "Decedat pe:none", "Modificat la:none"]);
     await expect(icon(page, "dateOfBirth").locator("svg")).toHaveClass(/lucide-arrow-up-down/);
     // Left of the funnel, 2 px from it.
     const gap = await page.locator('main thead th:has([data-column-sort="dateOfBirth"])').evaluate((th) => {
@@ -118,13 +118,17 @@ test.describe("TC-LAYOUT-10 — pictograma de ordonare din banda de nume", () =>
     await expect(icon(page, "calculatedAreaMp")).toHaveAttribute("data-sort-state", "asc");
     await expect(sortButton(page)).toHaveText("Ordonat după „Supr. Calc.”");
 
-    // Step 7 — „Persoane Juridice", „Adăugat la": newest added first; „Tip" a funnel only.
+    // Step 7 — „Persoane Juridice", „Modificat la" (40.55; it was „Adăugat la", newest added first): the two arrows in
+    // the default order; pressed, it flips it — the change longest ago first, „Vechi întâi"; „Tip" a funnel only.
     await openFromSidebar(page, "Persoane Juridice");
-    await expect.poll(() => heads(page), { timeout: 30_000 }).toEqual(["Denumire:-", "Poreclă:-", "Tip:-", "Adăugat la:none"]);
-    const added = await answer(page, "/api/judicial-persons", () => icon(page, "createdAt").locator("button").click());
-    expectOrdered(added, (r) => Date.parse(String(r.createdAt)), "desc");
-    await expect(icon(page, "createdAt")).toHaveAttribute("data-sort-state", "desc");
-    await expect(icon(page, "createdAt").locator("svg")).toHaveClass(/lucide-arrow-down(?!-)/);
+    await expect.poll(() => heads(page), { timeout: 30_000 }).toEqual(["Denumire:-", "Poreclă:-", "Tip:-", "Modificat la:none"]);
+    await expect(page.locator('main thead th:has([data-column-sort="changed"])')).toHaveAttribute("aria-sort", "descending");
+    const changed = await answer(page, "/api/judicial-persons", () => icon(page, "changed").locator("button").click());
+    expectOrdered(changed, (r) => Math.max(Date.parse(String(r.createdAt)), r.updatedAt ? Date.parse(String(r.updatedAt)) : 0), "asc");
+    await expect(icon(page, "changed")).toHaveAttribute("data-sort-state", "asc");
+    await expect(icon(page, "changed").locator("svg")).toHaveClass(/lucide-arrow-up(?!-)/);
+    await expect(sortButton(page)).toHaveText("Vechi întâi");
+    await expect(page).toHaveURL(/[?&]sort=changed&order=asc\b/);
 
     // Step 8 — „Acte", „Pagini": fewest first; none on Tip or Titlu.
     await openFromSidebar(page, "Acte");
@@ -135,7 +139,7 @@ test.describe("TC-LAYOUT-10 — pictograma de ordonare din banda de nume", () =>
     await expect(sortButton(page)).toHaveText("Ordonat după „Pagini”");
 
     // Step 9 (40.48) — the two looks: „Gen"'s funnel in use, navy in a circle and filled; the rest the glyph alone.
-    await page.evaluate(() => localStorage.setItem("ga40-col-person-v3", JSON.stringify(["gender", "dateOfBirth", "createdAt"])));
+    await page.evaluate(() => localStorage.setItem("ga40-col-person-v3", JSON.stringify(["gender", "dateOfBirth", "changed"])));
     await page.goto("/natural-persons?gender=MALE");
     const gender = page.locator('main [data-filter-funnel="gender"] button');
     await expect(gender).toHaveAttribute("data-in-use", "true", { timeout: 30_000 });
@@ -155,7 +159,7 @@ test.describe("TC-LAYOUT-10 — pictograma de ordonare din banda de nume", () =>
     const NAVY = "rgb(30, 58, 138)";
     expect(looks.find((l) => l.key === "gender")).toEqual({ key: "gender", inUse: "true", border: NAVY, bg: "rgb(255, 255, 255)", round: true, fill: NAVY });
     const rest = looks.filter((l) => l.key !== "gender");
-    expect(rest.map((l) => l.key)).toEqual(expect.arrayContaining(["dateOfBirth", "sort:dateOfBirth", "sort:createdAt"]));
+    expect(rest.map((l) => l.key)).toEqual(expect.arrayContaining(["dateOfBirth", "sort:dateOfBirth", "sort:changed"]));
     for (const l of rest) expect(l).toEqual({ key: l.key, inUse: "false", border: "none", bg: "rgba(0, 0, 0, 0)", round: false, fill: "none" });
   });
 });

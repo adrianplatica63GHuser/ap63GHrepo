@@ -32,7 +32,7 @@ import { DEFAULT_LIST_ORDER, LIST_SORTS, ORDER_KEYS, appendOrderParams, orderAdd
 import { appendFilterParams, filterAddressPatch, filterSignature, type FacetValue, type FilterState } from "@/lib/list/filter-bar";
 import { JUDICIAL_PERSON_COLUMN_FILTERS, JUDICIAL_PERSON_FILTER_FIELDS, parsePersonFilters, personFilterKeys } from "@/lib/persons/list-filters";
 import type { ColumnName } from "@/lib/ui/field-widths";
-import { addedOn } from "@/lib/persons/person-age";
+import { modifiedOn } from "@/lib/persons/person-age";
 
 const PAGE_SIZE = 15;
 /** Slice #37.16: the list's columns, each a fixed width from `COLUMN` — the optional ones (#37.60) between the nickname and the buttons. */
@@ -168,8 +168,8 @@ export function JudicialPersonListView() {
     { key: "contactPerson",       label: tHead("contactPerson"), full: t("fields.contactPerson"),       column: "listContactPerson" },
     // Slice #39.82: the head office's locality, so its filter (Adrian's „Locality") has a column.
     { key: "locality",            label: tHead("locality"), full: t("table.locality"),             column: "listLocality" },
-    // Slice 40.45: „Adăugat la", as on Acte — the day the record was added; its short name is its whole one.
-    { key: "createdAt",           label: tHead("createdAt"), full: tHead("createdAt"),             column: "listDate" },
+    // Slice 40.55: „Modificat la", the day of the last change — the list's default order, so its sort icon is that order's.
+    { key: "changed",             label: tHead("changed"), full: tHead("changed"),           column: "listDate" },
   ];
   const chooser = useFieldChooser(LIST_COLUMN_CHOICE.company.storageKey, optionalCols.map((c) => c.key), MAX_OPT, LIST_COLUMN_CHOICE.company.defaults);
   const shownCols = chooser.visible.flatMap((key) => optionalCols.filter((c) => c.key === key));
@@ -206,7 +206,7 @@ export function JudicialPersonListView() {
         : key === "tradeRegisterNumber" ? item.tradeRegisterNumber
           : key === "contactPerson" ? item.contactPerson
             : key === "locality" ? item.locality
-              : key === "createdAt" ? addedOn(item.createdAt)
+              : key === "changed" ? modifiedOn(item.createdAt, item.updatedAt)
                 : null;
 
   return (

@@ -108,13 +108,14 @@ test.describe("TC-DOC-08 — lista actelor", () => {
       expect((await table.innerText()).match(/\bDOC\d{3,}\b/g) ?? []).toEqual([]);
       await photograph(page, "documents-toolbar", search.locator(".."));
 
-      // Step 3 — the eight fields, and none of the three.
+      // Step 3 — the nine fields (eight until 40.55), and none of the three.
       await chooserButton.click();
       const picker = main.locator("[data-field-chooser]");
       await expect(picker.getByText("Selectați până la 4 coloane opționale")).toBeVisible();
       await expect(picker.locator("label")).toHaveText([
         // Slice 40.20: Adrian's short names (#39.83's „Nr. document", „Instituție / Notariat", „Nr. pagini", … before).
         "#Document", "Data", "Inst./Notar", "Subiect", "Pagini", "Persoane", "Proprietăți", "Adăugat la",
+        "Modificat la", // 40.55
       ]);
       for (const gone of ["Importanță", "Relevanță", "Proveniență"]) {
         await expect(picker.getByText(gone, { exact: true })).toHaveCount(0);

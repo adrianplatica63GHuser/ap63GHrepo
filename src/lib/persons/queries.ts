@@ -146,12 +146,11 @@ export function naturalPersonSearchCondition(q: string | undefined): SQL | undef
 }
 
 /**
- * Slice 40.47: what the Natural Persons list sorts by (`LIST_SORTS.person`) — the last change, „Adăugat la", and the
- * three dates' columns; „Vârstă" by the age shown, at death for the deceased (`AGE_SQL`, the age filter's own).
+ * Slice 40.47: what the Natural Persons list sorts by (`LIST_SORTS.person`) — the last change (its column „Modificat la"
+ * since 40.55, which took „Adăugat la"'s place), and the three dates' columns; „Vârstă" by the age shown, at death for the deceased (`AGE_SQL`, the age filter's own).
  */
 const NATURAL_PERSON_SORTS = {
   changed: changedAt(person.updatedAt, person.createdAt),
-  createdAt: sql`${person.createdAt}`,
   dateOfBirth: sql`${naturalPerson.dateOfBirth}`,
   age: AGE_SQL,
   dateOfDeath: sql`${naturalPerson.dateOfDeath}`,

@@ -33,7 +33,7 @@ import { domainIcon } from "@/components/sidebar/nav-config";
 import { LIST_COLUMN_CHOICE, LIST_COLUMN_ORDER } from "@/lib/ui/list-columns";
 import { useColumnDrag, useColumnOrder } from "@/components/list/column-order";
 import { HintBubble } from "@/lib/ui/hint-bubble";
-import { addedOn, dmyFromIso } from "@/lib/persons/person-age";
+import { addedOn, dmyFromIso, modifiedOn } from "@/lib/persons/person-age";
 import { ClearFiltersButton, FilterBar, FilterFunnel, type FilterBarField } from "@/components/list/filter-bar";
 import { ListSortButton } from "@/components/list/list-sort-button";
 import { ColumnSort, ariaSortOf } from "@/components/list/column-sort";
@@ -729,6 +729,8 @@ export function DocumentListView({
     { key: "personCount",   label: tHead("personCount"), full: t("table.personCount"),   column: "listPersonCount" },
     { key: "propertyCount", label: tHead("propertyCount"), full: t("table.propertyCount"), column: "listPropertyCount" },
     { key: "createdAt",     label: tHead("createdAt"), full: t("table.createdAt"),     column: "listDate" },
+    // Slice 40.55: „Modificat la", the day of the last change — the list's default order, so its sort icon is that order's.
+    { key: "changed",       label: tHead("changed"), full: t("table.changed"),     column: "listDate" },
   ];
 
   function cellValue(item: DocumentListItem, key: string): React.ReactNode {
@@ -741,6 +743,7 @@ export function DocumentListView({
       case "personCount":   return item.personCount;
       case "propertyCount": return item.propertyCount;
       case "createdAt":     return addedOn(item.createdAt);
+      case "changed":       return modifiedOn(item.createdAt, item.updatedAt);
       default:              return null;
     }
   }
