@@ -527,7 +527,7 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
       await page.setViewportSize({ width: 1366, height: 768 });
     }
 
-    // Figurile 2.10 and 2.11 — 40.44, for 40.40–40.42: the same seed person at 1366 × 2400, „Toate" pressed, „Clasificare"
+    // Figurile 2.10 and 2.11 — 40.44, for 40.40–40.42: the same seed person at 1366 × 3600, „Toate" pressed, „Clasificare"
     // dragged by its free space far down under every tile — shot; then „Toate sus" — shot: the tiles risen and the
     // columns evened, the small sketch of the tiles (40.42) right of the bar's two rows (40.41). The CNP, the identity
     // fields and „Recente" blurred; the arrangement forgotten straight after, as Figura 3.3's is.
@@ -552,12 +552,21 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
       await blurCnp(page);
       await blurRecent(page, S.recent);
     };
+    // Measured on the page, not the viewport, and shot from the top: the drag can scroll the page under the pointer, which
+    // cut the header and the bar off the first run's „before" picture. The viewport is tall enough for every tile.
+    const TALL = 3600;
     const rowBottom2 = () =>
       page.evaluate(() =>
-        Math.max(...[...document.querySelectorAll<HTMLElement>("[data-tile-row] [data-packed-col]")].map((e) => e.getBoundingClientRect().bottom)),
+        Math.max(...[...document.querySelectorAll<HTMLElement>("[data-tile-row] [data-packed-col]")].map((e) => e.getBoundingClientRect().bottom + window.scrollY)),
       );
+    const shoot = async (name: string) => {
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await blurPerson();
+      await still(page);
+      await page.screenshot({ path: `${dir}/${name}.png`, clip: { x: 0, y: 0, width: 1366, height: Math.min(TALL, Math.ceil(await rowBottom2()) + 24) } });
+    };
     await forgetPlaces();
-    await page.setViewportSize({ width: 1366, height: 2400 });
+    await page.setViewportSize({ width: 1366, height: TALL });
     await page.reload();
     try {
       await page.getByRole("button", { name: S.all, exact: true }).click({ timeout: 60_000 });
@@ -571,23 +580,20 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
         ),
       );
       const cls = (await tile("classification").boundingBox())!;
-      const to = { x: cls.x + 5, y: lowest + 160 };
+      const to = { x: cls.x + 5, y: lowest + 80 };
       await page.mouse.move(cls.x + 5, cls.y + 5);
       await page.mouse.down();
       for (let i = 1; i <= 12; i++) await page.mouse.move(cls.x + 5 + ((to.x - cls.x - 5) * i) / 12, cls.y + 5 + ((to.y - cls.y - 5) * i) / 12);
       await page.mouse.up();
       await expect.poll(async () => (await tile("classification").boundingBox())!.y, { timeout: 10_000 }).toBeGreaterThan(lowest);
       await page.waitForTimeout(600); // past the slide
+      await page.evaluate(() => window.scrollTo(0, 0));
       const dropped = (await tile("classification").boundingBox())!.y;
-      await blurPerson();
-      await still(page);
-      await page.screenshot({ path: `${dir}/all-up-before.png`, clip: { x: 0, y: 0, width: 1366, height: Math.min(2400, Math.ceil(await rowBottom2()) + 24) } });
+      await shoot("all-up-before");
       await page.getByRole("button", { name: S.allUp, exact: true }).click();
       await expect.poll(async () => (await tile("classification").boundingBox())!.y, { timeout: 10_000 }).toBeLessThan(dropped - 100);
       await page.waitForTimeout(800); // past the slide, the sketch redrawn
-      await blurPerson();
-      await still(page);
-      await page.screenshot({ path: `${dir}/all-up-after.png`, clip: { x: 0, y: 0, width: 1366, height: Math.min(2400, Math.ceil(await rowBottom2()) + 24) } });
+      await shoot("all-up-after");
     } finally {
       await forgetPlaces();
       await page.setViewportSize({ width: 1366, height: 768 });
