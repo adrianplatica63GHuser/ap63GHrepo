@@ -133,7 +133,13 @@ async function expectDiagram(page: Page, url: string, width: number): Promise<vo
 
 async function expectForm(page: Page, url: string, expected: [Group, string[]][], width = 1920): Promise<void> {
   await page.goto(url);
-  await page.getByRole("button", { name: "Toate", exact: true }).click({ timeout: 30_000 });
+  // 40.53: „Toate" pressed until every box it can tick is ticked — on a busy dev server the first press can land before
+  // the bar has hydrated and do nothing (run 20261024T192206Z-10638: „Legături" never shown). It is idempotent.
+  const all = page.getByRole("button", { name: "Toate", exact: true });
+  await expect.poll(async () => {
+    await all.click({ timeout: 30_000 });
+    return page.locator("[data-tile-selector] input[type=checkbox]:not(:checked):not(:disabled)").count();
+  }, { timeout: 30_000, intervals: [500, 1_000, 2_000] }).toBe(0);
   // Slice 40.41: in any order — was the registry's, left to right.
   await expect.poll(async () => byGroup(await strips(page)), { timeout: 30_000 }).toEqual(byGroup(expected));
   await expectTwoRows(page, url);
