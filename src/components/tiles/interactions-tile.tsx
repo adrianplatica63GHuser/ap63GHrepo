@@ -27,21 +27,34 @@
  * that plus C, held at an empty „Legături"'s 188 px (`INTERACTIONS_TILE_EMPTY_HEIGHT_PX`; it came out 136 without the
  * floor — Ask first 1). With one interaction or more B keeps today's 436 px,
  * so the tile grows to it as the first one is saved (Ask first 2). While it loads it is as tall as with rows, as before.
+ *
+ * Slice 40.43 — AS TALL AS WHAT IT HOLDS, LIKE „LEGĂTURI" (Adrian, 2026-10-23: „in some cases the interactions Tile has
+ * one or two interactions but is as tall as another case with 10 interactions; in other cases the interactions tile has
+ * no interactions at all but there is still a big gap between the "log interaction" button and the lower edge … the
+ * Links tile … is never taller than it should be"). On a person's screen nothing holds a height any more: the history
+ * (B) is as tall as its title row and its rows, up to `B_MAX_PX` — the tile then 436 px, „Pagini"'s, `ROW_TILE_CEILING_PX`
+ * — its rows scrolling past it; the action panel (C) right under it; under C only the surface's p-3 („Legături"'s
+ * way: no height of its own). Empty, the title row, its line and the button; loading, its loading line — the packing
+ * lays the row out again as the rows arrive. 40.33's floor (`INTERACTIONS_TILE_EMPTY_HEIGHT_PX`, an empty „Legături"'s
+ * 188 px) left some 50 px under the button and is gone, and so is B's fixed 410 px with one row or ten.
  */
 import { useQuery } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
 import { type CSSProperties, type ReactNode } from "react";
 import { ArrowRight, Paperclip, Plus } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
-import { INTERACTIONS_TILE_EMPTY_HEIGHT_PX, INTERACTIONS_TILE_STYLE, PAGES_TILE_EMPTY_HEIGHT_PX, ROW_TILE_EMPTY_CLASS } from "@/lib/ui/field-widths";
+import { INTERACTIONS_TILE_STYLE, PAGES_PANEL_STYLE, PAGES_TILE_EMPTY_HEIGHT_PX, ROW_TILE_CEILING_PX, ROW_TILE_EMPTY_CLASS } from "@/lib/ui/field-widths";
 import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
 import { ChannelPill, DirectionMark, StatusPill } from "@/components/interactions/interaction-pills";
 import { PAGE_MAX, type InteractionListItem } from "@/lib/interactions/model";
 import { interactionsHref } from "@/lib/interactions/links";
 import { TileTitle } from "./tile-title";
 
-/** Slice #39.05: B's height inside a tile that also holds C — today's tile height less the surface's p-3 and border. */
-const B_CONTENT_PX = PAGES_TILE_EMPTY_HEIGHT_PX - 26;
+/**
+ * Slice 40.43: the most B is, inside a tile that also holds C — the ceiling (436 px, „Pagini"'s) less the surface's p-3
+ * and border, so with C collapsed the tile is never taller than „Pagini". Was B_CONTENT_PX, B's fixed height (#39.05).
+ */
+const B_MAX_PX = ROW_TILE_CEILING_PX - 26;
 
 /**
  * Slice #38.72: `fill` — beside a list, in an „Incursiune", the tile takes the width it is given rather than its
@@ -205,8 +218,8 @@ export function InteractionsTile({
         </>
   );
   // Slice #39.25: beside a list the rows take their own height in the tile's flow and scroll once it reaches the
-  // ceiling; on a person's screen they fill the tile's fixed height, as before.
-  const rows = peek || empty ? (
+  // ceiling. Slice 40.43: on a person's screen too (`footer`) — B is as tall as they are, up to B_MAX_PX.
+  const rows = peek || empty || footer ? (
       <div className="min-h-0 overflow-y-auto" data-interactions-rows="">
         {body}
       </div>
@@ -227,18 +240,18 @@ export function InteractionsTile({
       style={
         peek
           ? peek.style
-          : empty
-            ? { ...INTERACTIONS_TILE_STYLE, minHeight: INTERACTIONS_TILE_EMPTY_HEIGHT_PX }
-            : footer
-              ? { ...INTERACTIONS_TILE_STYLE }
-              : { ...INTERACTIONS_TILE_STYLE, height: PAGES_TILE_EMPTY_HEIGHT_PX }
+          : footer
+            ? // Slice 40.43: a person's screen — its width, no height of its own (was `INTERACTIONS_TILE_STYLE`'s 436-px
+              // floor, and 40.33's 188 px while empty).
+              { ...PAGES_PANEL_STYLE }
+            : { ...INTERACTIONS_TILE_STYLE, height: PAGES_TILE_EMPTY_HEIGHT_PX }
       }
       data-interactions-state={empty ? "empty" : "rows"}
     >
       {footer ? (
-        // Slice #39.05: B at today's height — the section's own 436 px less its p-3 and 1 px border — and C under it.
-        // 40.33: empty, B is as tall as its title row and its one line.
-        <div className="flex flex-col" style={empty ? undefined : { height: B_CONTENT_PX }} data-interactions-history="">
+        // Slice #39.05: B, and C under it. 40.43: B as tall as its title row and its rows, up to B_MAX_PX — was held at
+        // B_CONTENT_PX (410 px) whenever it held a row (40.33: as tall as its content only while empty).
+        <div className="flex flex-col" style={{ maxHeight: B_MAX_PX }} data-interactions-history="">
           {head}
           {rows}
         </div>

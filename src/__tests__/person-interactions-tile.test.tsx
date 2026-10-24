@@ -127,12 +127,17 @@ describe("B reaches C (#39.05)", () => {
     expect(row("i1")).toHaveAttribute("aria-selected", "true");
   });
 
-  it("B keeps its height, C under it, the tile 40 rem wide", () => {
+  // Slice 40.43: B as tall as its rows up to 410 px (the tile then 436), no height and no floor of the tile's own — it
+  // read „B keeps its height", `[data-interactions-history]`'s `style.height` „410px".
+  it("B as tall as its rows up to 410 px, C under it, the tile 40 rem wide with no height of its own", () => {
     renderTile();
     const tile = document.querySelector<HTMLElement>('[data-tile="interactions"]')!;
     expect(tile.style.width).toBe("40rem");
     expect(tile.style.height).toBe("");
-    expect(tile.querySelector<HTMLElement>("[data-interactions-history]")!.style.height).toBe("410px");
+    expect(tile.style.minHeight).toBe("");
+    const b = tile.querySelector<HTMLElement>("[data-interactions-history]")!;
+    expect(b.style.height).toBe("");
+    expect(b.style.maxHeight).toBe("410px");
     expect(tile.lastElementChild).toBe(panel());
   });
 });

@@ -47,6 +47,7 @@ Nothing.
 | 3 | Unticks „Interacțiuni" | The tile goes, and the right-hand column with it. Ticks it again: it is back |
 | 4 | At 1366 px | The column stands under the left tiles, and the action bar under it; „Interacțiuni" still 640 px wide and purple, its history 436 px tall as „Pagini" is on „TC-PERS-07 Act" at 1366, the action panel's button under it (#39.05; it read „still 640 × 436 px") |
 | 5 | Opens „TC-PERS-07 SRL" at 1920 px | The bar reads „Date de înregistrare", „Reprezentanți și contact", „Adrese", „Legături", „Clasificare", „Etichete și grupuri", „Interacțiuni"; the first panel is headed „Date de înregistrare"; „Interacțiuni" at the right, 640 px wide, its history 436 px tall (#39.05; it read „640 × 436 px") |
+| 6 | (40.43) Opens a person with one interaction, then one with ten (made through the API), at 1920 px | The history as tall as its rows: the tile with one visibly shorter than the tile with ten, which is never taller than „Pagini"; „Înregistrează o interacțiune" right under the history; under it nothing but the tile's padding — as under „Legături"'s buttons, within 2 px. With no interaction (steps 2 and 5) the same: the title row, its line, the button, the padding |
 
 ## At the end — leaving things as they were found
 
@@ -82,3 +83,6 @@ says so; nothing else changed. The spec follows.
 6310565 ran the changed spec green with the other 90 (lint, tsc, jest and forms-drift green too).
 
 **2026-10-08 — Slice #38.46.** Step 4 read „The column stands under the left area". Since #38.46 a wrapped column's tiles are boxes of the row: „Interacțiuni" stands under the left tiles and the action bar under it, where before it stood under the bar. Rewritten in place, and the spec with it.
+
+**2026-10-23 — Slice 40.43.** Step 6 added; steps 2 and 5 compare what stands under the button with „Legături" (within
+2 px), not the tiles' heights (40.33's within 8 px, whose 188-px floor left some 50 px under the button).

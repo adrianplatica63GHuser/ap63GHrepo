@@ -9,6 +9,7 @@
  *   - The records carry `TC-E2E-PERS-07` (records.ts).
  *   - The sizes are compared with the document's „Pagini" as measured in this
  *     run, not with the case's 640 × 420 written as numbers alone; both are asserted.
+ *   - Step 6 (40.43) makes its two persons and their interactions through the API, as the other records are made.
  */
 
 import { test, expect, type Locator, type Page } from "../helpers/test";
@@ -41,6 +42,31 @@ async function settledSize(l: Locator): Promise<{ x: number; y: number; w: numbe
   }
   return last;
 }
+/**
+ * Slice 40.43: what stands under a tile's lowest button — the tile's bottom less the lowest button's bottom, in px.
+ * „Legături" has only its padding there; „Interacțiuni" must have the same.
+ */
+async function underLowestButton(tile: Locator): Promise<number> {
+  return tile.evaluate((t) => {
+    const buttons = [...t.querySelectorAll("button, a")].filter((b) => (b as HTMLElement).offsetParent !== null);
+    const lowest = Math.max(...buttons.map((b) => b.getBoundingClientRect().bottom));
+    return Math.round(t.getBoundingClientRect().bottom - lowest);
+  });
+}
+
+/** Slice 40.43: `n` interactions for a person, through the route the module's „Salvează" sends; their ids. */
+async function logMany(page: Page, personId: string, n: number): Promise<string[]> {
+  const ids: string[] = [];
+  for (let i = 0; i < n; i++) {
+    const res = await page.request.post("/api/interactions", {
+      data: { personId, subject: `${MARK} ${i + 1}`, channel: "EMAIL", direction: "OUTBOUND", status: "LOGGED", occurredAt: new Date(Date.now() - (i + 1) * 86_400_000).toISOString() },
+    });
+    expect(res.status(), await res.text()).toBe(201);
+    ids.push(((await res.json()) as { id: string }).id);
+  }
+  return ids;
+}
+
 const clearChoices = (page: Page) =>
   page.evaluate(() => { localStorage.removeItem("ga40-tiles-natural-person-v1"); localStorage.removeItem("ga40-tiles-judicial-person-v1"); });
 
@@ -51,6 +77,8 @@ test.describe("TC-PERS-07 — „Interacțiuni” pe cele două fișe de persoan
     const np = await createNaturalPerson(page.request, { lastName: MARK, firstName: "Ion" });
     const jp = await createCompany(page.request, { name: `${MARK} SRL` });
     const doc = await createDocumentOfType(page.request, "CONTRACT_VANZARE", `${MARK} Act`);
+    // Slice 40.43: the two persons step 6 makes, removed with their interactions.
+    const made: string[] = [];
     try {
       await page.setViewportSize({ width: 1920, height: 1080 });
       // Step 1 — the document's „Pagini", no page: 640 × 436 (420 before #38.30's subtitle line).
@@ -80,17 +108,18 @@ test.describe("TC-PERS-07 — „Interacțiuni” pe cele două fișe de persoan
       await expect(tile.getByRole("button", { name: "Deschide în „Interacțiuni”", exact: true })).toBeVisible();
       await expect(tile.getByRole("button", { name: "Interacțiune nouă", exact: true })).toBeVisible();
       expect(await tile.evaluate((e) => [getComputedStyle(e).backgroundColor, getComputedStyle(e).borderTopColor])).toEqual([PURPLE, RIM]);
-      // Slice 40.33: a person with no interaction — the tile at „Pagini"'s place and width, but only as tall as an
-      // empty „Legături" on the same screen, within 8 px (#39.05 held B at „Pagini"'s height whatever it held); its
-      // „Înregistrează o interacțiune" the kind of button „Asociază persoană" is: the same height and colour.
+      // Slice 40.33: a person with no interaction — the tile at „Pagini"'s place and width; its „Înregistrează o
+      // interacțiune" the kind of button „Asociază persoană" is: the same height and colour. Slice 40.43: nothing under
+      // that button but the tile's padding, as under „Legături"'s buttons, within 2 px — it read „only as tall as an
+      // empty „Legături" on the same screen, within 8 px" (40.33's 188-px floor, which left some 50 px there).
       await expect(tile).toHaveAttribute("data-interactions-state", "empty", { timeout: 30_000 });
       await showTile(page, "Legături");
       const links = page.locator('[data-tile="related"]');
       await expect(links).toBeVisible({ timeout: 30_000 });
       await expect.poll(async () => {
-        const [s, l] = await Promise.all([size(tile), size(links)]);
-        return { x: s.x, y: s.y, w: s.w, asLinks: Math.abs(s.h - l.h) <= 8 ? true : `${s.h} against ${l.h}` };
-      }, { timeout: 15_000 }).toEqual({ x: pages1920.x, y: pages1920.y, w: pages1920.w, asLinks: true });
+        const [s, under, linksUnder] = await Promise.all([size(tile), underLowestButton(tile), underLowestButton(links)]);
+        return { x: s.x, y: s.y, w: s.w, under: Math.abs(under - linksUnder) <= 2 ? true : `${under} against ${linksUnder}` };
+      }, { timeout: 15_000 }).toEqual({ x: pages1920.x, y: pages1920.y, w: pages1920.w, under: true });
       await expect(tile.locator('[data-person-log="collapsed"]')).toBeVisible();
       const log = tile.locator("[data-log-expand]");
       const associate = links.getByRole("button", { name: "Asociază persoană", exact: true });
@@ -136,18 +165,49 @@ test.describe("TC-PERS-07 — „Interacțiuni” pe cele două fișe de persoan
       await expect(page.locator('[data-panel="identity"] h2').first()).toContainText("Date de înregistrare");
       // FU-312: read once, the tile was now and then 9 px higher than „Pagini" — measured before the company's
       // screen had settled (green alone each time; again in full 20261010T234115Z-18004). Polled, as step 4 is.
-      // #39.05 read the history at „Pagini"'s height; 40.33: no interaction, so as tall as the company's empty „Legături".
+      // #39.05 read the history at „Pagini"'s height; 40.33: no interaction, so as tall as the company's empty „Legături"
+      // (within 8 px); 40.43: nothing under its button but the padding, as under „Legături"'s, within 2 px.
       await showTile(page, "Legături");
       await expect.poll(async () => {
         const jpTileLoc = page.getByRole("region", { name: "Interacțiuni", exact: true });
-        const [jpTile, l] = await Promise.all([size(jpTileLoc), size(page.locator('[data-tile="related"]'))]);
-        return { x: jpTile.x, y: jpTile.y, w: jpTile.w, asLinks: Math.abs(jpTile.h - l.h) <= 8 };
-      }, { timeout: 15_000 }).toEqual({ x: pages1920.x, y: pages1920.y, w: pages1920.w, asLinks: true });
+        const [jpTile, under, linksUnder] = await Promise.all([size(jpTileLoc), underLowestButton(jpTileLoc), underLowestButton(page.locator('[data-tile="related"]'))]);
+        return { x: jpTile.x, y: jpTile.y, w: jpTile.w, under: Math.abs(under - linksUnder) <= 2 };
+      }, { timeout: 15_000 }).toEqual({ x: pages1920.x, y: pages1920.y, w: pages1920.w, under: true });
+
+      // Step 6 (40.43) — one interaction against ten: the history as tall as its rows, so the tile with one is visibly
+      // shorter; with ten never taller than „Pagini"; the button right under the history; under it only the padding.
+      const one = await createNaturalPerson(page.request, { lastName: MARK, firstName: "Unu" });
+      const ten = await createNaturalPerson(page.request, { lastName: MARK, firstName: "Zece" });
+      made.push(one, ten);
+      await logMany(page, one, 1);
+      await logMany(page, ten, 10);
+      const tileOf = async (id: string, rows: number) => {
+        await page.goto(`/natural-persons/${id}`);
+        const t = page.getByRole("region", { name: "Interacțiuni", exact: true });
+        await expect(t.locator("[data-person-interaction]")).toHaveCount(rows, { timeout: 30_000 });
+        await page.waitForTimeout(500);
+        const at = await t.evaluate((e) => {
+          const R = (x: Element) => x.getBoundingClientRect();
+          const history = e.querySelector("[data-interactions-history]")!;
+          const button = e.querySelector("[data-log-expand]")!;
+          return { h: Math.round(R(e).height), buttonUnderHistory: Math.round(R(button).top - R(history).bottom) };
+        });
+        return { ...at, under: await underLowestButton(t) };
+      };
+      const withOne = await tileOf(one, 1);
+      const withTen = await tileOf(ten, 10);
+      expect(withOne.h).toBeLessThan(withTen.h - 100);
+      expect(withTen.h).toBeLessThanOrEqual(pages1920.h + 2);
+      for (const t of [withOne, withTen]) {
+        expect(t.buttonUnderHistory).toBeLessThanOrEqual(13); // C's own 12-px top margin
+        expect(Math.abs(t.under - withOne.under)).toBeLessThanOrEqual(2);
+      }
     } finally {
       await clearChoices(page).catch(() => undefined);
       await removeRecord(page.request, "person", np);
       await removeRecord(page.request, "company", jp);
       await removeRecord(page.request, "document", doc);
+      for (const id of made) await removeRecord(page.request, "person", id);
     }
   });
 });

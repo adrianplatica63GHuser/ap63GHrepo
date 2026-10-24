@@ -8,6 +8,7 @@ import path from "path";
 import { NP_TILE_REGISTRY } from "@/app/natural-persons/_components/person-tiles";
 import { JP_TILE_REGISTRY } from "@/app/judicial-persons/_components/person-tiles";
 import { tileGroupOf } from "@/lib/ui/tiles";
+import * as FW from "@/lib/ui/field-widths";
 import { INTERACTIONS_TILE_STYLE, PAGES_PANEL_STYLE } from "@/lib/ui/field-widths";
 import { interactionsHref } from "@/lib/interactions/links";
 
@@ -107,5 +108,22 @@ describe("the person's history, read-only (#38.89)", () => {
     expect(screen).toContain('const forwardNew = params.get("new") === "1";');
     expect(screen).toContain("router.replace(personLogHref(personBase(forwarded.data.personType), forwarded.data.personId, forwardSelect));");
     expect(screen).toContain("router.replace(personLogHref(personBase(scopeType), scope));");
+  });
+});
+
+/**
+ * Slice 40.43 — „Interacțiuni" as tall as what it holds, as „Legături" is. On a person's screen the tile has no height
+ * of its own (it had `INTERACTIONS_TILE_STYLE`'s 436-px floor, and 40.33's 188 px while empty); the history is as tall
+ * as its rows up to the ceiling less the tile's padding, its rows in the tile's flow, scrolling past it.
+ */
+describe("as tall as what it holds (40.43)", () => {
+  it("no height of its own on a person's screen; B up to 410 px; 40.33's floor gone", () => {
+    expect(SRC).toContain("const B_MAX_PX = ROW_TILE_CEILING_PX - 26;");
+    expect(SRC).toContain('style={{ maxHeight: B_MAX_PX }} data-interactions-history=""');
+    expect(SRC).toContain("const rows = peek || empty || footer ? (");
+    expect(SRC).toMatch(/: footer\s*\?[^:]*\{ \.\.\.PAGES_PANEL_STYLE \}/);
+    expect(SRC).not.toMatch(/minHeight: INTERACTIONS_TILE_EMPTY_HEIGHT_PX/);
+    expect("INTERACTIONS_TILE_EMPTY_HEIGHT_PX" in FW).toBe(false);
+    expect(FW.ROW_TILE_CEILING_PX - 26).toBe(410);
   });
 });
