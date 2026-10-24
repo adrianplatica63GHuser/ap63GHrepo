@@ -49,16 +49,17 @@ describe("the tile bar on two rows (40.41)", () => {
   });
 
   it("a group wider than a row is split at a box boundary, both halves its own; the rest stays whole", () => {
-    const m = M({ groups: [{ key: "D", boxes: [200, 200, 200] }, { key: "C", boxes: [78] }], width: 500 });
+    const m = M({ groups: [{ key: "D", boxes: [200, 200, 200] }, { key: "C", boxes: [78] }], width: 500, buttons: 40 });
     expect(pieceWidth(m.groups[0], 0, 3, m)).toBe(654);
     expect(barPieces(m)).toEqual([
       { key: "D", from: 0, to: 1 },
       { key: "D", from: 1, to: 3 },
       { key: "C", from: 0, to: 1 },
     ]);
+    // The wider half (438) alone on the first row; the narrower (222), „C" (100) and the buttons (40) under it: 394.
     const r = pickTwoRows(m)!;
-    expect(r.widths[0]).toBeLessThanOrEqual(500);
-    expect(r.widths[1]).toBeLessThanOrEqual(500);
+    expect(r.rows).toEqual([[{ key: "D", from: 1, to: 3 }], [{ key: "D", from: 0, to: 1 }, { key: "C", from: 0, to: 1 }]]);
+    expect(r.widths).toEqual([438, 394]);
   });
 
   it("when no way has the first row the longer, the rows that differ least", () => {
