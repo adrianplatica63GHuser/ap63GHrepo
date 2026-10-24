@@ -45,21 +45,19 @@ export function SparklingIcon({ icon: Icon, size }: { icon: LucideIcon; size: nu
 const CLASS = { variant: "primary", size: "md", className: "h-8.5 gap-2" } as const;
 
 export function AddNewButton({ name, icon, href, onClick }: { name: string; icon: LucideIcon; href?: string; onClick?: () => void }) {
-  const inner = (
-    <>
-      <Plus size={ICON_PX.md} aria-hidden="true" className="shrink-0" />
-      <SparklingIcon icon={icon} size={ICON_PX.md} />
-    </>
-  );
+  // The two icons written out in each branch, not passed as one `{…}`: no words, which the controls guard
+  // (text-controls-guard.test.ts) can then see.
   return (
     <IconTooltip label={name}>
       {href !== undefined ? (
         <Link href={href} aria-label={name} data-add-new="" className={linkClass(CLASS)}>
-          {inner}
+          <Plus size={ICON_PX.md} aria-hidden="true" className="shrink-0" />
+          <SparklingIcon icon={icon} size={ICON_PX.md} />
         </Link>
       ) : (
         <button type="button" aria-label={name} data-add-new="" className={buttonClass(CLASS)} onClick={onClick}>
-          {inner}
+          <Plus size={ICON_PX.md} aria-hidden="true" className="shrink-0" />
+          <SparklingIcon icon={icon} size={ICON_PX.md} />
         </button>
       )}
     </IconTooltip>

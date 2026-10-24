@@ -60,7 +60,7 @@ Coloanele care se pot filtra, alese în „Câmpuri afișate”:
 
 ## 3.2 O persoană adăugată de mână {#persons-add}
 
-Pe lista persoanelor fizice, apăsați „Nouă” — butonul din dreapta, deasupra tabelului, cu un + înainte și persoana după, pictograma listei din bara laterală; ținut sub mouse, își arată numele întreg, „Adaugă persoană”. Se deschide direct ecranul „Persoană fizică nouă”, un formular gol împărțit în fișe (Figura [[fig-persons-new]]).
+Pe lista persoanelor fizice, apăsați „Adaugă persoană” — butonul din dreapta, deasupra tabelului, fără cuvinte: un + și persoana, pictograma listei din bara laterală, cu câteva raze; ținut sub mouse, își arată numele întreg. Se deschide direct ecranul „Persoană fizică nouă”, un formular gol împărțit în fișe (Figura [[fig-persons-new]]).
 
 ![3.1 Formularul unei persoane fizice noi](persons-new.png){#fig-persons-new}
 
@@ -208,7 +208,7 @@ Fișa „Interacțiuni” se poate pune și în stânga, sub celelalte fișe: ap
 
 Aveți în față cartea de identitate a unei persoane care nu este încă în arhivă.
 
-1. „Persoane Fizice” → „Nouă” (secțiunea [[persons-add]]).
+1. „Persoane Fizice” → „Adaugă persoană” (secțiunea [[persons-add]]).
 2. Completați numele, prenumele, genul, CNP-ul și data nașterii de pe carte.
 3. La „Tip document”, alegeți „Carte de identitate”; bifați „Creează și tatăl” și „Creează și mama” și scrieți prenumele lor (secțiunea [[persons-id-card-manual]]).
 4. Verificați numele de familie al mamei: poate fi cel de dinainte de căsătorie.

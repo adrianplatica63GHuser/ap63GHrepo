@@ -25,7 +25,7 @@ Prima coloană este „Poreclă”, numele pe care îl dați proprietății; „
 
 Butonul arată câte coloane ați ales, de exemplu „Câmpuri afișate 2/4”. Când ați bifat patru, celelalte căsuțe devin gri până debifați una. La început lista arată doar „Tip Prop.”. Alegerea se păstrează în browserul acesta, așa că o regăsiți data viitoare.
 
-În dreapta, deasupra tabelului, stau două butoane: „Hartă completă” deschide harta tuturor proprietăților (capitolul [[map]]), iar „Nouă” — cu un + înainte și harta după; ținut sub mouse, „Adaugă proprietate” — creează una nouă (secțiunea [[properties-add]]). Cât timp harta completă e deschisă, bara de navigare arată „Acasă › Proprietăți › Hartă completă”, iar un clic pe „Proprietăți” vă întoarce la listă.
+În dreapta, deasupra tabelului, stau două butoane: „Hartă completă” deschide harta tuturor proprietăților (capitolul [[map]]), iar „Adaugă proprietate” — un + și harta, cu câteva raze, fără cuvinte; ținut sub mouse, își arată numele — creează una nouă (secțiunea [[properties-add]]). Cât timp harta completă e deschisă, bara de navigare arată „Acasă › Proprietăți › Hartă completă”, iar un clic pe „Proprietăți” vă întoarce la listă.
 
 ![5.1 Lista proprietăților](properties-list.png){#fig-properties-list}
 
@@ -53,7 +53,7 @@ Capul tabelului are înălțimea a două rânduri, la fel pe cele patru liste, o
 
 ## 5.2 O proprietate adăugată de mână {#properties-add}
 
-Apăsați „Nouă”. Se deschide fereastra „Adaugă Proprietate”, cu două căi:
+Apăsați „Adaugă proprietate”. Se deschide fereastra „Adaugă Proprietate”, cu două căi:
 
 | Calea | Ce face |
 |---|---|
@@ -210,7 +210,7 @@ Fișa „Street View” arată imaginea străzii de lângă parcelă. Este oprit
 
 Un fișier text cu coordonatele Stereo 70 ale colțurilor — de pildă de la un topograf — devine o proprietate întreagă, fără să scrieți colțurile de mână.
 
-1. În „Proprietăți”, apăsați „Nouă”, apoi „Din fișier text”.
+1. În „Proprietăți”, apăsați „Adaugă proprietate”, apoi „Din fișier text”.
 2. În fereastra „Încarcă fișier cu coordonate”, alegeți fișierul la „Selectați fișierul cu coordonate”. Fereastra de alegere arată doar fișiere .txt.
 3. Sub fișier, la „Tarla și parcelă”, alegeți tarlaua la „Nr. tarla / sola” și scrieți parcela la „Nr. parcelă”. Până nu le completați pe amândouă, „Importă” rămâne gri.
 4. Apăsați „Importă”.
@@ -253,7 +253,7 @@ Scanați codul QR cu telefonul, iar Google Maps pornește navigarea. Pe calculat
 
 ### 5.7.1 Adăugați un teren din Bragadiru și desenați-l pe hartă {#properties-example-draw}
 
-1. În „Proprietăți”, apăsați „Nouă”, apoi „Introducere manuală” (secțiunea [[properties-add]]).
+1. În „Proprietăți”, apăsați „Adaugă proprietate”, apoi „Introducere manuală” (secțiunea [[properties-add]]).
 2. Scrieți porecla, de pildă „Teren Bragadiru”, alegeți tarlaua din „Nr. tarla / sola”, scrieți parcela și suprafața din acte.
 3. Pe hartă, apăsați „Desenează” și puneți colțurile; închideți forma pe primul punct (secțiunea [[properties-corners-draw]]).
 4. Comparați „Suprafață calculată (m²)” cu „Suprafață oficială (m²)”.
@@ -261,7 +261,7 @@ Scanați codul QR cu telefonul, iar Google Maps pornește navigarea. Pe calculat
 
 ### 5.7.2 Aduceți o parcelă din fișierul unui topograf {#properties-example-file}
 
-1. „Nouă”, apoi „Din fișier text”; alegeți fișierul .txt, tarlaua și parcela, și apăsați „Importă” (secțiunea [[properties-coord-file]]).
+1. „Adaugă proprietate”, apoi „Din fișier text”; alegeți fișierul .txt, tarlaua și parcela, și apăsați „Importă” (secțiunea [[properties-coord-file]]).
 2. Deschideți proprietatea nouă și verificați pe hartă că laturile nu se încrucișează; dacă se încrucișează, folosiți „Îndreaptă ordinea” (secțiunea [[properties-corners-table]]).
 3. Completați în „Identificare cadastrală” ce mai știți din acte — numărul cadastral, cartea funciară — și salvați.
 

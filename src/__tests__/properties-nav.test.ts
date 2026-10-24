@@ -60,7 +60,8 @@ describe('„Hartă completă" (#37.92)', () => {
     // 40.50: two icons and no words, named „Hartă completă" (it read `label={t("wholeMap")}` on an IconButton).
     const opener = list.indexOf('<IconTooltip label={t("wholeMap")}>');
     // Slice 40.37: the button shows „+ Nouă", its name the whole „Adaugă proprietate" (fullName).
-    const add = list.indexOf('fullName={t("addNew")}');
+    // 40.51: the add button is AddNewButton, named the whole „Adaugă proprietate" (it read `fullName={t("addNew")}`).
+    const add = list.indexOf('<AddNewButton name={t("addNew")}');
     expect(opener).toBeGreaterThan(-1);
     expect(opener).toBeLessThan(add);
     expect(list).toContain('onClick={() => router.push("/properties/map")}');

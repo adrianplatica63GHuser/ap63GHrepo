@@ -23,7 +23,7 @@ Sus, pe hartă, stau butoanele ei. „HARTĂ” și „SATELIT” aleg harta str
 
 Harta se deschide din două locuri:
 
-- din lista „Proprietăți”, cu butonul „Hartă completă”, din dreapta, de lângă „Nouă” (secțiunea [[properties-list]]). Bara de navigare arată atunci „Acasă › Proprietăți › Hartă completă”, iar un clic pe „Proprietăți” vă întoarce la listă. În bara laterală rămâne aprins „Proprietăți”;
+- din lista „Proprietăți”, cu butonul „Hartă completă”, din dreapta, de lângă „Adaugă proprietate” (secțiunea [[properties-list]]). Bara de navigare arată atunci „Acasă › Proprietăți › Hartă completă”, iar un clic pe „Proprietăți” vă întoarce la listă. În bara laterală rămâne aprins „Proprietăți”;
 - din bara laterală, „Instrumente” → „Măsurători pe hartă” sau „Grupări de proprietăți”. Fiecare deschide o casetă cu butoanele despre care e vorba, desenate ca pe hartă, și ce face fiecare. „OK” deschide aceeași hartă, cu butoanele acelea pulsând împreună, de trei ori, într-un inel violet, ca să le găsiți ușor: „Unghiuri”, „Riglă” și cele două butoane de suprafață, respectiv „Tarlale”, „Grupuri” și „Selectează”. Niciunul nu se apasă singur: alegeți-l pe cel de care aveți nevoie (secțiunea [[tools-area]]).
 
 Al treilea ghid din „Instrumente”, „Navigare”, arată butonul „Navighează” și spune unde îl găsiți: pe ecranul proprietății și în bula unei proprietăți de pe hartă (secțiunea [[map-what-bubble]]). „OK” doar închide caseta.

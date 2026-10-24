@@ -42,7 +42,7 @@ Pe lista firmelor se filtrează două coloane, amândouă cu bife:
 
 ## 4.2 O firmă adăugată și modificată {#companies-add}
 
-Pe lista firmelor, apăsați „Nouă” — cu un + înainte și clădirea după; ținut sub mouse, își arată numele întreg, „Adaugă persoană juridică”. Se deschide direct formularul „Persoană juridică nouă”, fără altă întrebare. Completați ce aveți; restul se adaugă oricând, după ce firma este salvată.
+Pe lista firmelor, apăsați „Adaugă persoană juridică” — un + și clădirea, cu câteva raze, fără cuvinte; ținut sub mouse, își arată numele întreg. Se deschide direct formularul „Persoană juridică nouă”, fără altă întrebare. Completați ce aveți; restul se adaugă oricând, după ce firma este salvată.
 
 Singurul câmp obligatoriu este „Denumire”. O firmă care are doar denumirea este un obiect adevărat și se completează mai târziu. Când apăsați „Salvează”, jos, aplicația vă întoarce la listă, unde firma nouă stă sus, marcată „Nou!”. O deschideți cu „Deschide”.
 
@@ -186,7 +186,7 @@ Fișa „Interacțiuni” pornește din dreapta ecranului, se trage în alt loc 
 Situația: o firmă vă trimite o ofertă pentru un teren, iar omul cu care vorbiți nu este încă în arhivă.
 
 1. Adăugați întâi omul în „Persoane Fizice” (capitolul [[persons]]).
-2. Pe „Persoane Juridice”, apăsați „Nouă”, scrieți „Denumire”, alegeți „Tip” și scrieți CUI-ul, verificat pe act (secțiunea [[companies-add-identity]]).
+2. Pe „Persoane Juridice”, apăsați „Adaugă persoană juridică”, scrieți „Denumire”, alegeți „Tip” și scrieți CUI-ul, verificat pe act (secțiunea [[companies-add-identity]]).
 3. Apăsați „Salvează”; deschideți firma din capul listei, unde e marcată „Nou!”.
 4. În „Reprezentanți și contact”, scrieți „Telefon firmă” și „E-mail firmă” și alegeți omul la „Persoană de contact 1” (secțiunile [[companies-add-contact]] și [[companies-people-contact]]).
 5. Apăsați „Salvează”.
