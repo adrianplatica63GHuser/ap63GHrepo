@@ -64,23 +64,23 @@ describe("the four lists use the shared piece (Ask first 9)", () => {
     it(list, () => {
       const src = fs.readFileSync(path.join(process.cwd(), "src", "app", list, "list-view.tsx"), "utf8");
       expect(src).toContain("const fit = useListFit();");
-      // Slice 40.39: the bar's width reaches the edge through LIST_GUTTER_VAR, not `fit.gutter`.
-      expect(src).toMatch(/const edge = useListEdge\((columns|COLUMNS)\);/);
+      expect(src).toMatch(/const edge = useListEdge\((columns|COLUMNS), fit\.gutter\);/);
       expect(src).toMatch(/<div className=\{`\$\{LIST_FRAME\} [^`]*`\} \{\.\.\.edge\.frame\} \{\.\.\.fit\.frame\}>/);
       expect(src).toContain("<thead className={LIST_HEAD}>");
       expect(src).toContain("useListScrollMemory(query.isSuccess);");
     });
   }
 
-  it("the frame scrolls both ways, has a vertical bar only while its rows overflow, and the band sticks to its top", () => {
+  it("the frame scrolls both ways, keeps its bar's room, and the band sticks to its top", () => {
     const src = fs.readFileSync(path.join(process.cwd(), "src", "components", "list", "list-fit.tsx"), "utf8");
-    // Slice 40.14 kept the bar's room while the rows fit (`overflow-auto [scrollbar-gutter:stable]`); 40.39 inverts it —
-    // the room only with the bar, `data-list-bar="on"`, decided from heights in the measure that sets the frame's height.
-    expect(src).toContain(
-      '"w-fit max-w-full overflow-x-auto overflow-y-hidden data-[list-bar=on]:overflow-y-auto data-[list-bar=on]:[scrollbar-gutter:stable]"',
-    );
-    expect(src).toContain('const bar = frame.scrollHeight > frame.clientHeight + 0.5 ? "on" : "off";');
-    expect(src).toContain("host.style.setProperty(LIST_GUTTER_VAR, `${gutter}px`)");
+    // Slice 40.14: and keeps its vertical bar's room while the rows fit, so the bar coming or going moves no width.
+    expect(src).toContain('"w-fit max-w-full overflow-auto [scrollbar-gutter:stable] " +');
+    // Slice 40.39: the band's grey drawn across that room, down to the band's height (light and dark), so the band and
+    // the frame end together; the height is measured onto the frame as LIST_BAND_VAR.
+    expect(src).toContain('"bg-[linear-gradient(to_bottom,var(--color-cap)_var(--list-band,0px),transparent_var(--list-band,0px))] " +');
+    expect(src).toContain('"dark:bg-[linear-gradient(to_bottom,var(--color-zinc-800)_var(--list-band,0px),transparent_var(--list-band,0px))]"');
+    expect(src).toContain('export const LIST_BAND_VAR = "--list-band";');
+    expect(src).toContain("frame.style.setProperty(LIST_BAND_VAR, bandPx)");
     // Slice 40.18: the band's colours and type are `COLUMN_NAMES_BAND` (src/lib/ui/title-type.ts), kept at the top.
     expect(src).toContain("export const LIST_HEAD = `sticky top-0 z-10 ${COLUMN_NAMES_BAND}`;");
   });

@@ -29,7 +29,6 @@
 import { useCallback, useLayoutEffect, useRef, useState, type CSSProperties, type RefObject } from "react";
 import { listFrameFloor, listFrameMaxHeight, rowTilesMaxHeight } from "@/lib/ui/frame-height";
 import { COLUMN_NAMES_BAND } from "@/lib/ui/title-type";
-import { LIST_GUTTER_VAR } from "@/components/table/list-edge";
 
 /**
  * The frame around a principal list's table: as wide as the table, scrolling both ways inside the window.
@@ -46,17 +45,18 @@ import { LIST_GUTTER_VAR } from "@/components/table/list-edge";
  * all, `gutter` is the same number from the first measure on, and nothing downstream moves. The price: while the rows
  * fit, the frame keeps an empty strip the bar's width at its right.
  *
- * Slice 40.39 takes that price back. Adrian, 2026-10-23: „The right edge of the list is even longer than that grey
- * band … This right edge of the list should match the end of the grey band". So the frame has a vertical bar only while
- * its rows overflow it — `data-list-bar="on"`, its room kept as 40.14 kept it — and none at all while they fit
- * (`"off"`: no strip). Which of the two holds is decided in `useListFit`'s measure from the rows' height against the
- * frame's height, never from a width, and in that same measure, before the paint, the bar's width goes to every width
- * that depends on it (`LIST_GUTTER_VAR`, list-edge.tsx). The bar's coming changes no row's height — the frame grows by
- * the bar instead of squeezing the table — so it cannot change its own decision: the loop 40.14 removed has nothing to
- * feed on.
+ * Slice 40.39: Adrian, 2026-10-23: „The right edge of the list is even longer than that grey band … This right edge of
+ * the list should match the end of the grey band". The strip stays — a bar only while the rows overflow was tried
+ * (`9d7551c`) and TC-LAYOUT-07 caught it oscillating at the height where the rows just fit, on the three lists whose
+ * columns set the width (36–40 changes in a second at 1920 × 793, runner `20261024T005512Z-1562`) — and the band's grey
+ * is drawn across it instead (40.39's Ask first 2, its fallback): `useListFit` paints the frame's own background, which
+ * lies under the scroll bar's room too, in the band's colour down to the band's height (`LIST_BAND_VAR`). The band and the
+ * frame then end together; while the rows overflow, the bar stands over that strip, as on any scrolling list.
  */
 export const LIST_FRAME =
-  "w-fit max-w-full overflow-x-auto overflow-y-hidden data-[list-bar=on]:overflow-y-auto data-[list-bar=on]:[scrollbar-gutter:stable]";
+  "w-fit max-w-full overflow-auto [scrollbar-gutter:stable] " +
+  "bg-[linear-gradient(to_bottom,var(--color-cap)_var(--list-band,0px),transparent_var(--list-band,0px))] " +
+  "dark:bg-[linear-gradient(to_bottom,var(--color-zinc-800)_var(--list-band,0px),transparent_var(--list-band,0px))]";
 
 /**
  * The band of column names, kept at the frame's top as the rows scroll. Slice 40.18: the names in Roboto Condensed
@@ -65,6 +65,13 @@ export const LIST_FRAME =
  * band (value-list-modal.tsx) read this one.
  */
 export const LIST_HEAD = `sticky top-0 z-10 ${COLUMN_NAMES_BAND}`;
+
+/**
+ * Slice 40.39: the band's height on its frame, for `LIST_FRAME`'s background — the band's colour from the frame's top
+ * down to it, then nothing — so the band reaches the frame's border across the scroll bar's kept room. The colour is in
+ * the class (light and dark, so the night switch repaints it); only the height is measured.
+ */
+export const LIST_BAND_VAR = "--list-band";
 
 /** The page's scroll area (`app-shell.tsx`, by name — #38.56 says why not the nearest scrolling ancestor). */
 function pageScrollOf(el: HTMLElement): HTMLElement | null {
@@ -106,8 +113,10 @@ export type ListFit = {
   /** Spread on the table's frame, after `edge.frame`. Its `max-height` is set on the element itself, so the edge's
    *  style (its min-width, #37.84) is left as React draws it. */
   frame: { ref: (el: HTMLDivElement | null) => void; "data-list-frame": "" };
-  // Slice 40.39: `gutter` (the bar's room, React state, for `useListEdge(columns, fit.gutter)`) is gone — the bar's width
-  // is `LIST_GUTTER_VAR`, written on `main` in the measure below, so it lands before the same paint as the bar.
+  /** The frame's vertical scroll bar's room, in px, for `useListEdge(columns, fit.gutter)`. Since 40.14 the room is
+   *  kept while the rows fit too (`LIST_FRAME`), so this is the bar's width from the first measure on — 0 in jsdom and
+   *  where the bars take no room (an overlay scroll bar). */
+  gutter: number;
 };
 
 /**
@@ -123,6 +132,7 @@ export function useListFit(): ListFit {
     ref.current = el;
     setDrawn(el);
   }, []);
+  const [gutter, setGutter] = useState(0);
   const measure = () => {
     const frame = ref.current;
     if (!frame) return;
@@ -132,17 +142,14 @@ export function useListFit(): ListFit {
     // What stands under the frame inside the list's column — the gap and the pagination row — then the page's padding.
     const below = Math.max(0, (body ? body.getBoundingClientRect().bottom : f.bottom) - f.bottom) + pageBottomPad(frame);
     const band = frame.querySelector("thead")?.getBoundingClientRect().height ?? 0;
+    const bandPx = `${Math.round(band * 100) / 100}px`;
+    if (frame.style.getPropertyValue(LIST_BAND_VAR) !== bandPx) frame.style.setProperty(LIST_BAND_VAR, bandPx);
     const row = frame.querySelector("tbody tr")?.getBoundingClientRect().height ?? 0;
     const max = `${listFrameMaxHeight({ viewport, frameTop: f.top - base, below, floor: listFrameFloor(band, row) })}px`;
     if (frame.style.maxHeight !== max) frame.style.maxHeight = max;
-    // Slice 40.39: a vertical bar only while the rows overflow the height just set — read from heights, which the bar
-    // does not change (the frame widens by it; the table keeps its width and its rows their height).
-    const bar = frame.scrollHeight > frame.clientHeight + 0.5 ? "on" : "off";
-    if (frame.dataset.listBar !== bar) frame.dataset.listBar = bar;
     const cs = getComputedStyle(frame);
-    const gutter = bar === "on" ? Math.max(0, frame.offsetWidth - frame.clientWidth - (parseFloat(cs.borderLeftWidth) || 0) - (parseFloat(cs.borderRightWidth) || 0)) : 0;
-    const host = frame.closest<HTMLElement>("main") ?? frame.parentElement;
-    if (host && host.style.getPropertyValue(LIST_GUTTER_VAR) !== `${gutter}px`) host.style.setProperty(LIST_GUTTER_VAR, `${gutter}px`);
+    const next = Math.max(0, frame.offsetWidth - frame.clientWidth - (parseFloat(cs.borderLeftWidth) || 0) - (parseFloat(cs.borderRightWidth) || 0));
+    setGutter((prev) => (prev === next ? prev : next));
   };
   useMeasured(
     measure,
@@ -155,7 +162,7 @@ export function useListFit(): ListFit {
     },
     [drawn],
   );
-  return { frame: { ref: attach, "data-list-frame": "" } };
+  return { frame: { ref: attach, "data-list-frame": "" }, gutter };
 }
 
 /**

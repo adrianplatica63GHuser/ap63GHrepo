@@ -158,8 +158,8 @@ async function oneList(page: Page, url: string, add: string, width: number): Pro
 /**
  * Step 10 (40.39) — the list's right edge, on the archive's own rows, unsearched: the band ends past „Deschide" by the
  * gap the magnifier keeps from its divider (± 1 px — not on Acte, whose toolbar is wider than its columns and widens
- * the band with the frame); the frame's border at the band's end, or, while the rows overflow, past it by the vertical
- * bar alone; „+ Nou…" and the row under the table end on the frame's border.
+ * the band with the frame); past the band only the scroll bar's kept room (40.14), with the band's grey drawn across it
+ * to the frame's border; „+ Nou…" and the row under the table end on that border.
  */
 async function rightEdge(page: Page, url: string, add: string, size: { width: number; height: number }): Promise<void> {
   await page.setViewportSize(size);
@@ -181,10 +181,14 @@ async function rightEdge(page: Page, url: string, add: string, size: { width: nu
       bar: fr.offsetWidth - fr.clientWidth - borders,
       border: parseFloat(cs.borderRightWidth) || 0,
       frame: R(fr).right,
+      painted: cs.backgroundImage.startsWith("linear-gradient(") ? parseFloat(fr.style.getPropertyValue("--list-band")) : 0,
+      bandHeight: R(band).height,
     };
   });
   if (url !== "/documents") expect(Math.abs(m.past - m.lead)).toBeLessThanOrEqual(1);
   expect(Math.abs(m.beyond - m.bar - m.border)).toBeLessThanOrEqual(1);
+  // The bar's room is kept (40.14), and the band's grey is drawn across it, down to the band's height.
+  expect(Math.abs(m.painted - m.bandHeight)).toBeLessThanOrEqual(1);
   expect(Math.abs((await rightOf(addOf(page, add))) - m.frame)).toBeLessThanOrEqual(1);
   expect(Math.abs((await rightOf(main.locator("[data-list-edge]").last())) - m.frame)).toBeLessThanOrEqual(1);
 }
