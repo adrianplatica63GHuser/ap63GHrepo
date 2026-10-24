@@ -133,6 +133,7 @@ import {
 } from "@/lib/ui/tile-positions";
 import { loadMakeRoomDelay, makeRoomDelayMs } from "./make-room-delay";
 import { isDragSurface } from "./tile-drag-surface";
+import { publishPlaced } from "./tiles-placed";
 
 /** How long after a layout the row still settles afresh on a height change, unless the user acts first. */
 export const SETTLE_MS = 2000;
@@ -402,6 +403,17 @@ export function useTilePacking(
         box.el.dataset.packedCol = String(p.col);
       }
       if (fitWidest) styles.set(container, "min-width", `${widest}px`);
+      // Slice 40.42: tell the tiles diagram where the tiles now stand — not while a tile is dragged (the drop does).
+      if (entity && !drag?.active) {
+        publishPlaced({
+          entity,
+          columns,
+          gap,
+          boxes: placed
+            .filter((p) => !p.rowEnd && byId.has(p.id) && !byId.get(p.id)!.full)
+            .map((p) => ({ id: p.id.replace(/^wrapped:/, ""), col: p.col, units: p.units, top: p.top, height: p.height })),
+        });
+      }
     };
 
     const heights = () => new Map(boxes.map((b) => [b.id, b.el.offsetHeight]));

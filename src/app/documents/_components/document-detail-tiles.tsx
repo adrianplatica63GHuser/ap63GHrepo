@@ -165,7 +165,7 @@ export function DocumentDetailTiles({
       {/* The header #26.12 settled (see its note in git history): the version
           strip is IN FLOW at the end of the row, so the title yields to it
           rather than running underneath. */}
-      <header className="relative flex min-h-[2.5rem] items-center gap-3">
+      <header className="relative flex min-h-[2.5rem] items-center gap-3" data-record-header="">
         <RecordHeading
           icon={FileText}
           name={documentName}
@@ -186,6 +186,7 @@ export function DocumentDetailTiles({
         )}
         <div
           ref={setNavSlot}
+          data-version-slot=""
           className="pointer-events-none ml-auto flex shrink-0 items-center"
         />
       </header>
@@ -197,7 +198,7 @@ export function DocumentDetailTiles({
         {/* Drawn once the type is known (`ready`, see document-tiles.ts): a tick
             made before would be stored under a key the type then replaces. */}
         {layout.ready !== false && (
-          <TileSelector all={reg.all} groups={groupedTiles(reg)} labels={labels} choice={choice} marked={marked} extra={previewEntries} allUp twoRows />
+          <TileSelector all={reg.all} groups={groupedTiles(reg)} labels={labels} choice={choice} marked={marked} extra={previewEntries} allUp twoRows diagram={reg.entity} />
         )}
 
         <PreviewOpenerProvider previews={previews}>

@@ -112,16 +112,17 @@ export function JudicialPersonDetailTiles({
     <>
       {/* Slice #19.07: name on the left, version controls right-aligned on the
           same line (portalled in by the details form via navSlot). */}
-      <header className="relative flex min-h-[2.5rem] items-center">
+      <header className="relative flex min-h-[2.5rem] items-center" data-record-header="">
         <RecordHeading icon={Building2} name={personName} />
         <div
           ref={setNavSlot}
+          data-version-slot=""
           className="pointer-events-none absolute inset-y-0 right-0 flex items-center"
         />
       </header>
 
       <div className="flex flex-col gap-4" style={unitRowStyle("judicialPerson")}>
-        <TileSelector all={JP_TILES} groups={groupedTiles(JP_TILE_REGISTRY)} labels={labels} choice={choice} extra={previewEntries} allUp twoRows />
+        <TileSelector all={JP_TILES} groups={groupedTiles(JP_TILE_REGISTRY)} labels={labels} choice={choice} extra={previewEntries} allUp twoRows diagram={JP_TILE_REGISTRY.entity} />
 
         <PreviewOpenerProvider previews={previews}>
         {/* Slice #37.75: each box right under the box above it; #37.89: the right-hand column (`TileAreas`). */}

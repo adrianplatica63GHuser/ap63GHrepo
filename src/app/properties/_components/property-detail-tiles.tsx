@@ -127,17 +127,18 @@ export function PropertyDetailTiles({
     <>
       {/* Slice #19.07: name on the left, version controls right-aligned on the
           same line (portalled in by the details form via navSlot). */}
-      <header className="relative flex min-h-[2.5rem] items-center">
+      <header className="relative flex min-h-[2.5rem] items-center" data-record-header="">
         <RecordHeading icon={MapIcon} name={propertyName} />
         <PropertyTypeHeading type={type} />
         <div
           ref={setNavSlot}
+          data-version-slot=""
           className="pointer-events-none absolute inset-y-0 right-0 flex items-center"
         />
       </header>
 
       <div className="flex flex-col gap-4" style={unitRowStyle("property")}>
-        <TileSelector all={PROP_TILES} groups={groupedTiles(PROP_TILE_REGISTRY)} labels={labels} choice={choice} extra={previewEntries} disabled={offReasons} allUp twoRows />
+        <TileSelector all={PROP_TILES} groups={groupedTiles(PROP_TILE_REGISTRY)} labels={labels} choice={choice} extra={previewEntries} disabled={offReasons} allUp twoRows diagram={PROP_TILE_REGISTRY.entity} />
 
         <PreviewOpenerProvider previews={previews}>
         <TileAreas right={rightAll} slotRefs={slotRefs} entity={PROP_TILE_REGISTRY.entity}>

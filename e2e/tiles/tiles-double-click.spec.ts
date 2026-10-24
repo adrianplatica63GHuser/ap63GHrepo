@@ -187,6 +187,15 @@ test.describe("TC-TILES-21 — un dublu-clic urcă o fișă; o fișă trasă las
       const apart = await boxes(page);
       expect(Object.keys(apart).some((id) => apart[id].y > rightUnder(apart, id))).toBe(true);
 
+      // Step 6a (40.42) — „Clasificare" unticked takes its rectangle away from the diagram; ticked, it comes back.
+      const rects = page.locator("[data-tiles-diagram] [data-diagram-rect]");
+      await expect.poll(async () => rects.count()).toBe(Object.keys(apart).length);
+      await setTile(page, "Clasificare", false);
+      await expect.poll(async () => rects.count()).toBe(Object.keys(apart).length - 1);
+      await expect(page.locator('[data-tiles-diagram] [data-diagram-rect="classification"]')).toHaveCount(0);
+      await setTile(page, "Clasificare", true);
+      await expect.poll(async () => rects.count()).toBe(Object.keys(apart).length);
+
       // Step 7 — „Toate sus", left of „Toate": every box right under the one above it (or at the row's top) …
       const allUp = page.getByRole("button", { name: "Toate sus", exact: true });
       const all = page.getByRole("button", { name: "Toate", exact: true });
@@ -203,6 +212,9 @@ test.describe("TC-TILES-21 — un dublu-clic urcă o fișă; o fișă trasă las
       const bottoms = [...cols.values()];
       const tallestTile = Math.max(...Object.values(up).map((b) => b.h));
       expect(Math.max(...bottoms) - Math.min(...bottoms)).toBeLessThanOrEqual(tallestTile + GAP);
+
+      // Step 7a (40.42) — the diagram redrew: one rectangle per box, its stacks as the tiles' after „Toate sus".
+      await expect.poll(async () => page.locator("[data-tiles-diagram] [data-diagram-rect]").count()).toBe(Object.keys(up).length);
 
       // Step 8 — pressed again: nothing moves.
       await allUp.click();

@@ -36,6 +36,7 @@ import type { TileChoice } from "./use-tile-choice";
 import type { TileGroup } from "@/lib/ui/tiles";
 import { groupStrip } from "@/lib/ui/tile-surface";
 import { barPieces, fitPieces, pickTwoRows, type BarMeasures, type BarPiece } from "@/lib/ui/tile-bar-rows";
+import { TilesDiagram } from "./tiles-diagram";
 
 /** Slice 40.41: what the bar measured and chose — two rows, or (too narrow) its pieces in one wrapping row. */
 type BarLayout = { rows: [BarPiece[], BarPiece[]] | null; pieces: BarPiece[] };
@@ -79,6 +80,7 @@ export function TileSelector<K extends string>({
   disabled,
   allUp = false,
   twoRows = false,
+  diagram,
 }: {
   all: readonly K[];
   /**
@@ -103,6 +105,8 @@ export function TileSelector<K extends string>({
   allUp?: boolean;
   /** Slice 40.41: stand the bar on two rows (the four record screens; needs `groups`). */
   twoRows?: boolean;
+  /** Slice 40.42: the record kind's entity — draw the tiles diagram right of the two rows (`TilesDiagram`). */
+  diagram?: string;
 }) {
   const t = useTranslations("shared.tiles");
   const isOff = (key: K): boolean => disabled?.[key] !== undefined;
@@ -216,7 +220,13 @@ export function TileSelector<K extends string>({
     const [row1, row2] = layout?.rows ? fitPieces(layout.rows, counts) : [[], []];
     const [flat] = layout ? fitPieces([layout.pieces], counts) : [whole];
     const rowClass = "flex flex-wrap items-center gap-x-4 gap-y-2";
-    return (
+    // Slice 40.42: a box's group — a panel `tile#n` its tile's, a preview „Corelate"'s.
+    const groupOf = (id: string): TileGroup | null => {
+      if (id.startsWith("preview")) return "related";
+      const tile = id.replace(/#\d+$/, "");
+      return groups.find((g) => (g.tiles as readonly string[]).includes(tile))?.group ?? null;
+    };
+    const barEl = (
       <div role="group" aria-label={t("groupLabel")} ref={barRef} className="flex w-fit max-w-full flex-col gap-y-2" data-tile-selector data-tile-rows={layout?.rows ? "2" : "wrap"}>
         {layout?.rows ? (
           <>
@@ -236,6 +246,13 @@ export function TileSelector<K extends string>({
             {buttonsGroup}
           </div>
         )}
+      </div>
+    );
+    if (!diagram) return barEl;
+    return (
+      <div className="relative" data-tile-bar-wrap="">
+        {barEl}
+        <TilesDiagram entity={diagram} groupOf={groupOf} />
       </div>
     );
   }

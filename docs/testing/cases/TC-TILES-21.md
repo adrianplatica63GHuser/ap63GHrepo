@@ -43,7 +43,9 @@ Nothing.
 | 4 | Double-clicks it again | Nothing moves |
 | 5 | Reloads the page | „Act de identitate" where step 2 left it, „Adresă corespondență" where step 3 put it, every other box as in step 3 |
 | 6 | (40.40) On a second person, „TC-TILES-21 Doi" („Ana"): „Toate", „Interacțiuni" and „Arbore de moștenire" unticked; drags „Act de identitate" 60 px under „Corelate" | Some box stands lower than right under the box above it |
+| 6a | (40.42) Unticks „Clasificare", then ticks it again | The diagram right of the bar loses its rectangle, then has it back — one rectangle per tile box on screen |
 | 7 | Presses „Toate sus", left of „Toate" | Every box slides to right under the lowest box above it in its columns, or the row's top; then the bottom tiles of the tallest column go under the shortest while that makes the lowest bottom higher — the columns' bottoms end within one tile's height (and a gap) of each other |
+| 7a | (40.42) Looks at the diagram | Redrawn: one rectangle per tile box, stacked as the tiles now stand |
 | 8 | Presses „Toate sus" again | Nothing moves |
 | 9 | Reloads the page | Every box where step 7 put it |
 
@@ -59,3 +61,5 @@ the run).
 
 **2026-10-23 — Slice 40.40.** Steps 6–9 added: „Toate sus" rises every tile and evens the tile columns, stored like a
 drop. Its spec is the second test in `e2e/tiles/tiles-double-click.spec.ts`.
+
+**2026-10-23 — Slice 40.42.** Steps 6a and 7a: the tiles diagram follows a tick and „Toate sus".

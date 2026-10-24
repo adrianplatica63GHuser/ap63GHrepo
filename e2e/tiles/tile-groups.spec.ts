@@ -68,12 +68,51 @@ async function expectTwoRows(page: Page, url: string): Promise<void> {
   expect(r.widths[0]).toBeLessThanOrEqual(r.room + 1);
 }
 
+/**
+ * Step 9 (40.42): the diagram right of the bar — one rectangle per tile box on screen (not the action bar), each in its
+ * group's fill, all the same height; inside the header's top and the bar's bottom; clear of the version controls.
+ */
+async function expectDiagram(page: Page, url: string): Promise<void> {
+  await expect.poll(async () => {
+    const d = await page.evaluate(() => {
+      const R = (e: Element) => e.getBoundingClientRect();
+      const dg = document.querySelector<HTMLElement>("[data-tiles-diagram]");
+      const header = document.querySelector("[data-record-header]");
+      const bar = document.querySelector("[data-tile-selector]");
+      const slot = document.querySelector("[data-version-slot]")?.firstElementChild ?? null;
+      if (!dg || !header || !bar) return null;
+      const rects = [...dg.querySelectorAll<HTMLElement>("[data-diagram-rect]")];
+      const boxes = [...document.querySelectorAll<HTMLElement>("[data-tile-row] [data-packed-col]")].filter(
+        (e) => e.offsetParent !== null && !e.classList.contains("order-last"),
+      );
+      return {
+        hidden: dg.getAttribute("aria-hidden"),
+        rects: rects.length,
+        boxes: boxes.length,
+        heights: [...new Set(rects.map((r) => Math.round(R(r).height * 10) / 10))].length,
+        fills: rects.map((r) => [r.dataset.group ?? "", getComputedStyle(r).backgroundColor]),
+        inside: R(dg).top >= R(header).top - 1 && R(dg).bottom <= R(bar).bottom + 1,
+        clear: slot ? R(dg).right <= R(slot).left : true,
+      };
+    });
+    return d;
+  }, { timeout: 15_000 }).toMatchObject({ hidden: "true", heights: 1, inside: true, clear: true });
+  const d = await page.evaluate(() => ({
+    rects: document.querySelectorAll("[data-tiles-diagram] [data-diagram-rect]").length,
+    boxes: [...document.querySelectorAll<HTMLElement>("[data-tile-row] [data-packed-col]")].filter((e) => e.offsetParent !== null && !e.classList.contains("order-last")).length,
+    fills: [...document.querySelectorAll<HTMLElement>("[data-tiles-diagram] [data-diagram-rect]")].map((r) => [r.dataset.group ?? "", getComputedStyle(r).backgroundColor]),
+  }));
+  expect({ url, rects: d.rects }).toEqual({ url, rects: d.boxes });
+  for (const [group, fill] of d.fills) expect({ url, group, fill }).toEqual({ url, group, fill: FILL[group as Group] });
+}
+
 async function expectForm(page: Page, url: string, expected: [Group, string[]][]): Promise<void> {
   await page.goto(url);
   await page.getByRole("button", { name: "Toate", exact: true }).click({ timeout: 30_000 });
   // Slice 40.41: in any order — was the registry's, left to right.
   await expect.poll(async () => byGroup(await strips(page)), { timeout: 30_000 }).toEqual(byGroup(expected));
   await expectTwoRows(page, url);
+  await expectDiagram(page, url);
   for (const [group, names] of expected) {
     expect({ group, fill: await fill(page.locator(`[data-tile-group="${group}"]`)) }).toEqual({ group, fill: FILL[group] });
     for (const name of names) {
