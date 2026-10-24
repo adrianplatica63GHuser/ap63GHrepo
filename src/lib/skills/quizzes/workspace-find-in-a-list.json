@@ -162,11 +162,11 @@
           "section": "start-lists",
           "ro": {
             "question": "Ați găsit rândul căutat. Ce buton de pe rând deschide ecranul obiectului?",
-            "explanation": "„Deschide”, pe un rând, deschide obiectul; „Adaugă …”, deasupra tabelului, creează unul nou."
+            "explanation": "„Deschide”, pe un rând, deschide obiectul; „Nouă” (pe „Acte”, „Nou”), deasupra tabelului, creează unul nou."
           },
           "en": {
             "question": "You have found the row you wanted. Which button on the row opens the object's screen?",
-            "explanation": "„Deschide” (open), on a row, opens the object; „Adaugă …”, above the table, creates a new one."
+            "explanation": "„Deschide” (open), on a row, opens the object; „Nouă” (new; „Nou” on „Acte”), above the table, creates a new one."
           },
           "options": [
             {

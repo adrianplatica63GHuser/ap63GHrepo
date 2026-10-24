@@ -223,6 +223,8 @@ function figureStrings(locale: "ro-RO" | "en-GB") {
     personSearch: m("naturalPerson.searchPlaceholder"),
     chooseFields: m("naturalPerson.chooseFields"),
     newPerson: m("naturalPerson.createTitle"),
+    all: m("shared.tiles.all"),
+    allUp: m("shared.tiles.allUp"), // 40.44
     versions: new RegExp(`^${esc(m("naturalPerson.version.historyChip")).replace("\\{n\\}", "\\d+")}$`),
     makeCurrent: m("naturalPerson.version.makeCurrent"),
     mapTiles: [m("property.tiles.map"), m("property.tiles.corners"), m("property.tiles.streetView")],
@@ -413,7 +415,7 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     await page.screenshot({ path: `${dir}/list.png` });
     await page.keyboard.press("Escape");
 
-    // Figura 2.10 — the „?" of the list, open.
+    // Figura 2.12 (2.10 until 40.44 added two before it) — the „?" of the list, open.
     await page.goto("/natural-persons");
     await expect(search).toBeVisible({ timeout: 60_000 });
     const help = page.getByRole("navigation", { name: S.breadcrumb }).filter({ visible: true }).locator(":scope > span.ml-auto button").first();
@@ -520,6 +522,72 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
         path: `${dir}/persons-interactions-moved.png`,
         clip: { x: 0, y: 0, width: 1366, height: Math.min(2400, Math.ceil(movedBottom) + 24) },
       });
+    } finally {
+      await forgetPlaces();
+      await page.setViewportSize({ width: 1366, height: 768 });
+    }
+
+    // Figurile 2.10 and 2.11 — 40.44, for 40.40–40.42: the same seed person at 1366 × 2400, „Toate" pressed, „Clasificare"
+    // dragged by its free space far down under every tile — shot; then „Toate sus" — shot: the tiles risen and the
+    // columns evened, the small sketch of the tiles (40.42) right of the bar's two rows (40.41). The CNP, the identity
+    // fields and „Recente" blurred; the arrangement forgotten straight after, as Figura 3.3's is.
+    const blurPerson = async () => {
+      await page.evaluate(
+        ([f, any, start]) => {
+          const label1 = new RegExp(any, "i");
+          const label2 = new RegExp(start);
+          for (const el of document.querySelectorAll<HTMLElement>("input, [data-width-field]")) {
+            const label = el.getAttribute("aria-label") ?? el.closest("label")?.textContent ?? "";
+            if (label1.test(label)) el.style.filter = f;
+          }
+          for (const lbl of document.querySelectorAll<HTMLLabelElement>("label")) {
+            if (label2.test(lbl.textContent ?? "") && lbl.htmlFor) {
+              const box = document.getElementById(lbl.htmlFor);
+              if (box) box.style.filter = f;
+            }
+          }
+        },
+        [BLUR, S.idLabel.source, S.idLabelStart.source] as const,
+      );
+      await blurCnp(page);
+      await blurRecent(page, S.recent);
+    };
+    const rowBottom2 = () =>
+      page.evaluate(() =>
+        Math.max(...[...document.querySelectorAll<HTMLElement>("[data-tile-row] [data-packed-col]")].map((e) => e.getBoundingClientRect().bottom)),
+      );
+    await forgetPlaces();
+    await page.setViewportSize({ width: 1366, height: 2400 });
+    await page.reload();
+    try {
+      await page.getByRole("button", { name: S.all, exact: true }).click({ timeout: 60_000 });
+      await expect(tile("classification")).toBeVisible({ timeout: 60_000 });
+      await page.waitForTimeout(2500); // past the first layout's settling
+      const lowest = await page.evaluate(() =>
+        Math.max(
+          ...[...document.querySelectorAll<HTMLElement>("[data-tile-row] [data-packed-col]:not(.order-last)")]
+            .filter((e) => e.dataset.tile !== "classification" && !e.querySelector('[data-tile="classification"]'))
+            .map((e) => e.getBoundingClientRect().bottom),
+        ),
+      );
+      const cls = (await tile("classification").boundingBox())!;
+      const to = { x: cls.x + 5, y: lowest + 160 };
+      await page.mouse.move(cls.x + 5, cls.y + 5);
+      await page.mouse.down();
+      for (let i = 1; i <= 12; i++) await page.mouse.move(cls.x + 5 + ((to.x - cls.x - 5) * i) / 12, cls.y + 5 + ((to.y - cls.y - 5) * i) / 12);
+      await page.mouse.up();
+      await expect.poll(async () => (await tile("classification").boundingBox())!.y, { timeout: 10_000 }).toBeGreaterThan(lowest);
+      await page.waitForTimeout(600); // past the slide
+      const dropped = (await tile("classification").boundingBox())!.y;
+      await blurPerson();
+      await still(page);
+      await page.screenshot({ path: `${dir}/all-up-before.png`, clip: { x: 0, y: 0, width: 1366, height: Math.min(2400, Math.ceil(await rowBottom2()) + 24) } });
+      await page.getByRole("button", { name: S.allUp, exact: true }).click();
+      await expect.poll(async () => (await tile("classification").boundingBox())!.y, { timeout: 10_000 }).toBeLessThan(dropped - 100);
+      await page.waitForTimeout(800); // past the slide, the sketch redrawn
+      await blurPerson();
+      await still(page);
+      await page.screenshot({ path: `${dir}/all-up-after.png`, clip: { x: 0, y: 0, width: 1366, height: Math.min(2400, Math.ceil(await rowBottom2()) + 24) } });
     } finally {
       await forgetPlaces();
       await page.setViewportSize({ width: 1366, height: 768 });
@@ -817,7 +885,7 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     }
 
     for (const f of [
-      "dashboard", "sidebar", "breadcrumb", "list", "list-fit", "list-resize", "record", "make-room", "help",
+      "dashboard", "sidebar", "breadcrumb", "list", "list-fit", "list-resize", "record", "make-room", "all-up-before", "all-up-after", "help",
       "persons-new", "persons-tree", "persons-interactions-moved", "companies-record", "properties-list", "properties-record",
       "documents-pages", "documents-sale", "documents-antecontract", "links-associate", "links-related", "links-versions",
       "tools-doc-type-engine", "tools-calculation", "import-steps", "reports-search", "admin-value-lists", "admin-settings",

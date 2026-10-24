@@ -351,6 +351,44 @@
               "en": "You cannot: a tile can only be put into a place that is already free."
             }
           ]
+        },
+        {
+          "id": "a10",
+          "section": "start-tiles",
+          "ro": {
+            "question": "Pe ecranul unei persoane ați tras fișele în mai multe locuri și acum între ele stau goluri mari, iar o coloană de fișe coboară mult mai jos decât celelalte. Ce le strânge pe toate dintr-o apăsare?",
+            "explanation": "„Toate sus”, la stânga lui „Toate”, urcă toate fișele, de sus în jos, fiecare în coloanele ei, până sub fișa de deasupra sau până sus; apoi, cât timp o coloană se termină mult mai jos decât alta, fișa ei de jos trece sub coloana cea mai scurtă, dacă încape. Așezarea se păstrează ca după o tragere, iar „Implicit” o anulează."
+          },
+          "en": {
+            "question": "On a person's screen you have dragged the tiles to several places, and now there are large gaps between them and one column of tiles reaches much lower than the others. What closes them all up in one press?",
+            "explanation": "„Toate sus” (all up), left of „Toate” (all), raises every tile, from the top down, each in its own columns, to right under the tile above it or to the top; then, while one column ends much lower than another, its bottom tile moves under the shortest column, if it fits. The arrangement is kept as after a drag, and „Implicit” (default) undoes it."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Implicit”, care păstrează locurile trase",
+              "en": "„Implicit” (default), which keeps the dragged places"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "„Toate sus”, la stânga lui „Toate”",
+              "en": "„Toate sus” (all up), left of „Toate”"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Un dublu-clic pe fiecare fișă, una câte una, de jos în sus",
+              "en": "A double-click on every tile, one by one, from the bottom up"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Toate”, care urcă fișele și le aliniază",
+              "en": "„Toate” (all), which raises the tiles and lines them up"
+            }
+          ]
         }
       ]
     },
@@ -696,6 +734,44 @@
               "correct": false,
               "ro": "Țineți fișa nemișcată încă o secundă; cea de dedesubt urcă la loc.",
               "en": "Hold the tile still another second; the one underneath comes back up."
+            }
+          ]
+        },
+        {
+          "id": "b10",
+          "section": "start-tiles",
+          "ro": {
+            "question": "În dreapta bifelor, pe ecranul unei proprietăți, vedeți câteva dreptunghiuri mici colorate, fără nume. Ce sunt?",
+            "explanation": "Schița din dreapta bifelor arată fișele de pe ecran: câte un dreptunghi pentru fiecare fișă afișată, în culoarea ei, așezat cum stă fișa. Nu are nume și nu se apasă; se schimbă odată cu fișele — o fișă debifată își pierde dreptunghiul."
+          },
+          "en": {
+            "question": "Right of the tick boxes, on a property's screen, you see a few small coloured rectangles with no names. What are they?",
+            "explanation": "The sketch right of the tick boxes shows the tiles on the screen: one rectangle for each tile shown, in its colour, placed as the tile stands. It has no names and is not pressed; it changes with the tiles — a tile unticked loses its rectangle."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Butoane care deschid fiecare fișă",
+              "en": "Buttons that open each tile"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "Fișele debifate, ca să le bifați la loc dintr-un clic",
+              "en": "The unticked tiles, to tick them again with one click"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "O schiță a fișelor afișate, cum stau pe ecran",
+              "en": "A sketch of the tiles shown, as they stand"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Versiunile proprietății, cea mai nouă sus",
+              "en": "The property's versions, the newest at the top"
             }
           ]
         }

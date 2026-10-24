@@ -11,7 +11,7 @@ O persoană juridică este o firmă, o instituție, un consiliu local sau o asoc
 
 Lista se deschide din bara laterală: „Domeniu”, apoi „Persoane Juridice”. Ecranul se numește „Persoane juridice” și arată, ca orice listă (secțiunea [[start-lists]]), câte 15 firme pe pagină, cu coloanele „Denumire” și „Poreclă”.
 
-Caseta de căutare din capul listei („caută după ID, Denumire, Poreclă, Nr. înregistrare (CUI), Telefon firmă sau E-mail firmă”), cât butonul „Adaugă persoană juridică”, găsește o firmă după ID, denumire, poreclă, CUI, telefon și e-mail: scrieți CUI-ul și rămân firmele care îl au. Țineți mouse-ul pe casetă ca să citiți textul întreg. Când nu se găsește nimic, lista spune „Nu există persoane juridice”.
+Caseta de căutare din capul listei („caută după ID, Denumire, Poreclă, Nr. înregistrare (CUI), Telefon firmă sau E-mail firmă”) găsește o firmă după ID, denumire, poreclă, CUI, telefon și e-mail: scrieți CUI-ul și rămân firmele care îl au. Țineți mouse-ul pe casetă ca să citiți textul întreg. Când nu se găsește nimic, lista spune „Nu există persoane juridice”.
 
 „Câmpuri afișate” adaugă coloane listei. Pe lista firmelor puteți alege patru dintre cinci; în capul tabelului coloanele au numele scurte din prima coloană a tabelului de mai jos, iar mouse-ul ținut pe un nume arată numele întreg:
 
@@ -42,7 +42,7 @@ Pe lista firmelor se filtrează două coloane, amândouă cu bife:
 
 ## 4.2 O firmă adăugată și modificată {#companies-add}
 
-Pe lista firmelor, apăsați „Adaugă persoană juridică”. Se deschide direct formularul „Persoană juridică nouă”, fără altă întrebare. Completați ce aveți; restul se adaugă oricând, după ce firma este salvată.
+Pe lista firmelor, apăsați „Nouă” — cu un + înainte și clădirea după; ținut sub mouse, își arată numele întreg, „Adaugă persoană juridică”. Se deschide direct formularul „Persoană juridică nouă”, fără altă întrebare. Completați ce aveți; restul se adaugă oricând, după ce firma este salvată.
 
 Singurul câmp obligatoriu este „Denumire”. O firmă care are doar denumirea este un obiect adevărat și se completează mai târziu. Când apăsați „Salvează”, jos, aplicația vă întoarce la listă, unde firma nouă stă sus, marcată „Nou!”. O deschideți cu „Deschide”.
 
@@ -177,7 +177,7 @@ De pe act sau de pe proprietate, „Vizualizare” pe rândul firmei deschide ec
 
 ### 4.3.4 Interacțiunile firmei {#companies-people-interactions}
 
-Fișa „Interacțiuni” stă în dreapta ecranului, separată de celelalte fișe, și este bifată de la început. Ea arată istoricul interacțiunilor cu firma. Debifată, fișa dispare; bifată din nou, revine. Cum se înregistrează o interacțiune, vedeți secțiunea [[persons-interactions]]; toate interacțiunile, la un loc, sunt în raportul „Interacțiuni” (secțiunea [[reports-interactions]]).
+Fișa „Interacțiuni” pornește din dreapta ecranului, se trage în alt loc ca orice fișă și este bifată de la început; este cât ce ține, ca „Legături”. Ea arată istoricul interacțiunilor cu firma. Debifată, fișa dispare; bifată din nou, revine. Cum se înregistrează o interacțiune, vedeți secțiunea [[persons-interactions]]; toate interacțiunile, la un loc, sunt în raportul „Interacțiuni” (secțiunea [[reports-interactions]]).
 
 ## 4.4 Exemple și cazuri de utilizare {#companies-examples}
 
@@ -186,7 +186,7 @@ Fișa „Interacțiuni” stă în dreapta ecranului, separată de celelalte fi�
 Situația: o firmă vă trimite o ofertă pentru un teren, iar omul cu care vorbiți nu este încă în arhivă.
 
 1. Adăugați întâi omul în „Persoane Fizice” (capitolul [[persons]]).
-2. Pe „Persoane Juridice”, apăsați „Adaugă persoană juridică”, scrieți „Denumire”, alegeți „Tip” și scrieți CUI-ul, verificat pe act (secțiunea [[companies-add-identity]]).
+2. Pe „Persoane Juridice”, apăsați „Nouă”, scrieți „Denumire”, alegeți „Tip” și scrieți CUI-ul, verificat pe act (secțiunea [[companies-add-identity]]).
 3. Apăsați „Salvează”; deschideți firma din capul listei, unde e marcată „Nou!”.
 4. În „Reprezentanți și contact”, scrieți „Telefon firmă” și „E-mail firmă” și alegeți omul la „Persoană de contact 1” (secțiunile [[companies-add-contact]] și [[companies-people-contact]]).
 5. Apăsați „Salvează”.

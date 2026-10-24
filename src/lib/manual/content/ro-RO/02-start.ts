@@ -55,9 +55,9 @@ La capătul din dreapta al barei stă „?”, ajutorul ecranului (secțiunea [[
 
 ## 2.5 Listele și coloanele lor {#start-lists}
 
-Fiecare dintre cele patru liste — Persoane fizice, Persoane juridice, Proprietăți, Acte — arată câte 15 obiecte pe pagină, iar butoanele de sub tabel trec de la o pagină la alta. Caseta de căutare din capul listei este cât butonul „Adaugă …” de la capătul rândului și spune în ea după ce caută; dacă textul nu încape, țineți mouse-ul pe casetă și îl citiți întreg. O listă se filtrează după coloanele ei: o coloană care se poate filtra are o pâlnie mică în colțul din dreapta jos al numelui (secțiunea [[properties-list-filters]]). Capul tabelului are înălțimea a două rânduri de nume. Numele coloanei stă singur la mijloc, pe orizontală și pe verticală; un nume prea lung pentru coloana lui trece pe al doilea rând. Capul, rândurile și butoanele de pe ele sunt strânse, ca pe pagină să încapă cât mai multe rânduri. Numele coloanelor sunt scurte — „Născut pe”, „Tip Prop.”, „#Document” —; țineți mouse-ul pe un nume și vedeți numele întreg al câmpului, cel de pe formular.
+Fiecare dintre cele patru liste — Persoane fizice, Persoane juridice, Proprietăți, Acte — arată câte 15 obiecte pe pagină, iar butoanele de sub tabel trec de la o pagină la alta. Înaintea titlului fiecărei liste stă o pictogramă cu mai multe obiecte de felul ei: un grup de oameni, trei clădiri, o hartă cu trei repere, trei pagini. Caseta de căutare din capul listei spune în ea după ce caută; dacă textul nu încape, țineți mouse-ul pe casetă și îl citiți întreg. O listă se filtrează după coloanele ei: o coloană care se poate filtra are o pâlnie mică în colțul din dreapta jos al numelui (secțiunea [[properties-list-filters]]). Capul tabelului are înălțimea a două rânduri de nume. Numele coloanei stă singur la mijloc, pe orizontală și pe verticală; un nume prea lung pentru coloana lui trece pe al doilea rând. Capul, rândurile și butoanele de pe ele sunt strânse, ca pe pagină să încapă cât mai multe rânduri. Numele coloanelor sunt scurte — „Născut pe”, „Tip Prop.”, „#Document” —; țineți mouse-ul pe un nume și vedeți numele întreg al câmpului, cel de pe formular.
 
-„Câmpuri afișate” alege coloanele listei: bifați ce vreți să vedeți și debifați ce nu vă trebuie (Figura [[fig-list]]). „Deschide”, pe un rând, deschide obiectul; „Adaugă …”, deasupra tabelului, creează unul nou.
+„Câmpuri afișate” alege coloanele listei: bifați ce vreți să vedeți și debifați ce nu vă trebuie (Figura [[fig-list]]). „Deschide”, pe un rând, deschide obiectul; „Nouă” (pe „Acte”, „Nou”), deasupra tabelului, în dreapta, creează unul nou. Are un + înainte și, după cuvânt, pictograma listei din bara laterală; ținut sub mouse, își arată numele întreg — „Adaugă persoană”, „Adaugă persoană juridică”, „Adaugă proprietate”, „Adaugă act”.
 
 Listele nu au bife, nici pe rânduri, nici în capul tabelului: un obiect se deschide din listă și se șterge de pe ecranul lui. Tabelul începe chiar cu prima coloană cu nume; „Nou!” stă în ea, după text, pe rândurile obiectelor adăugate sau schimbate de curând.
 
@@ -65,7 +65,7 @@ Listele nu au bife, nici pe rânduri, nici în capul tabelului: un obiect se des
 
 Sub bara de sus a listei stă un rând cu etichetele filtrelor puse și „Șterge filtrele” — dar numai cât timp este pus un filtru; fără niciun filtru, tabelul începe chiar sub bară.
 
-**Lista încape în fereastră.** Când fereastra nu este destul de înaltă pentru toată pagina de rânduri, pagina nu se mai derulează în sus și în jos: se derulează doar rândurile, în chenarul listei, cu bara lui de derulare. Capul tabelului, cu numele coloanelor și pâlniile, rămâne sus, iar rândul „Se afișează … din …” cu „Pagina x din y” stă chiar sub chenar, la vedere. Numai într-o fereastră foarte scundă, în care n-ar mai încăpea nici capul tabelului și trei rânduri, se derulează iar pagina. Chenarul își păstrează locul barei de derulare și când rândurile încap — o fâșie îngustă la dreapta —, așa că lista nu-și schimbă lățimea când bara apare sau dispare, de pildă când maximizați fereastra.
+**Lista încape în fereastră.** Când fereastra nu este destul de înaltă pentru toată pagina de rânduri, pagina nu se mai derulează în sus și în jos: se derulează doar rândurile, în chenarul listei, cu bara lui de derulare. Capul tabelului, cu numele coloanelor și pâlniile, rămâne sus, iar rândul „Se afișează … din …” cu „Pagina x din y” stă chiar sub chenar, la vedere. Numai într-o fereastră foarte scundă, în care n-ar mai încăpea nici capul tabelului și trei rânduri, se derulează iar pagina. Chenarul își păstrează locul barei de derulare și când rândurile încap — o fâșie îngustă la dreapta —, așa că lista nu-și schimbă lățimea când bara apare sau dispare, de pildă când maximizați fereastra. Banda gri cu numele coloanelor merge până la marginea chenarului, și peste fâșia aceea; după ultimul buton al rândurilor, „Deschide”, ea lasă doar cât lasă primul buton față de linia din stânga lui. „Nouă” se termină la aceeași margine din dreapta.
 
 **Coloanele ascunse.** Când coloanele alese sunt mai late decât fereastra, lista se derulează și în lateral, cu bara de derulare de la baza chenarului. Cât timp în dreapta sunt coloane care nu se văd, la marginea dreaptă a capului tabelului stau trei semne roșii „>”, unul sub altul; cât timp sunt coloane ascunse în stânga, trei „<” stau la marginea stângă (Figura [[fig-list-fit]]). Semnele pulsează încet — se estompează puțin și revin, cam o dată la două secunde și jumătate —, ca să le observați fără să vă deranjeze; cât țineți mouse-ul pe ele stau pe loc. Țineți mouse-ul pe ele și un balon, sub capul tabelului, spune ce înseamnă: „Mai sunt coloane la dreapta. Derulați spre dreapta ca să le vedeți.” sau „Mai sunt coloane la stânga. Derulați spre stânga ca să le vedeți.”. Un clic pe ele derulează lista într-acolo, cu aproape cât se vede din ea — puțin din ce era la vedere rămâne la vedere —, așa că o pâlnie aflată sub semne iese de sub ele. Se ajunge la ele și din tastatură, cu Tab, iar Enter le apasă. Când toate coloanele încap, nu apare niciunul.
 
@@ -91,7 +91,9 @@ Ordinea se păstrează pentru lista aceea, în browserul acesta. O coloană bifa
 
 Un obiect deschis își arată datele în fișe — panouri cu câte un nume, scris sus cu majuscule, în albastru închis (Figura [[fig-record]]). Pe o persoană fizică sunt, de exemplu, identitatea ei, „Legături”, „Clasificare”, „Etichete și grupuri” și „Interacțiuni”.
 
-- Bifele din capul ecranului aleg ce fișe se văd; „Toate” le arată pe toate, iar „Implicit” revine la setul obișnuit. Setul vostru se salvează în „Setări”, la „Implicitele mele”.
+- Bifele din capul ecranului aleg ce fișe se văd; „Toate” le arată pe toate, iar „Implicit” revine la setul obișnuit. Setul vostru se salvează în „Setări”, la „Implicitele mele”. Bifele stau pe două rânduri: cele de aceeași culoare împreună, butoanele la capătul rândului al doilea, iar primul rând puțin mai lung decât al doilea.
+- „Toate sus”, la stânga lui „Toate”, urcă toate fișele, de sus în jos, fiecare în coloanele ei, până sub fișa de deasupra sau până sus. Apoi, cât timp o coloană de fișe se termină mult mai jos decât alta, fișa ei de jos trece sub coloana cea mai scurtă — dacă încape acolo și dacă așa ecranul se termină mai sus (Figurile [[fig-all-up-before]] și [[fig-all-up-after]]). Fișele alunecă la locul nou, iar așezarea se păstrează ca după o tragere; „Implicit” o anulează.
+- În dreapta bifelor, o schiță mică arată fișele de pe ecran: câte un dreptunghi pentru fiecare, în culoarea ei, așezat cum stă fișa, fără nume și fără clic. Se schimbă odată cu fișele. Când bifele umplu rândul până la butoanele versiunilor, schița nu mai are loc și nu apare.
 - O fișă se trage de spațiul ei gol într-un loc liber; un dublu-clic pe ea o urcă sub fișa de deasupra.
 - Ca să puneți o fișă unde stă alta, trageți-o peste aceea și țineți-o nemișcată: după o secundă — cât spune „Timp de ținere peste altă fișă”, în „Setări” (secțiunea [[admin-settings-thresholds]]) — fișa de dedesubt alunecă în jos, în coloanele ei, la primul loc liber destul de mare, iar conturul arată că locul e liber (Figura [[fig-make-room]]). Lăsați fișa acolo; Esc pune totul înapoi.
 - Fișele mov deschis — harta, colțurile, Street View, paginile unui act, interacțiunile unei persoane — pornesc lângă marginea dreaptă, una sub alta, și se trag ca orice altă fișă; locul în care le lăsați se păstrează, iar „Implicit” le pune înapoi în dreapta.
@@ -102,6 +104,10 @@ Un obiect deschis își arată datele în fișe — panouri cu câte un nume, sc
 
 ![2.9 O fișă ținută peste alta: cea de dedesubt a alunecat în jos, la primul loc în care încape întreagă](make-room.png){#fig-make-room}
 
+![2.10 Înainte de „Toate sus”: o fișă trasă departe de celelalte](all-up-before.png){#fig-all-up-before}
+
+![2.11 După „Toate sus”: fișele urcate și coloanele echilibrate; în dreapta bifelor, schița fișelor](all-up-after.png){#fig-all-up-after}
+
 ## 2.7 Previzualizarea {#start-preview}
 
 Un obiect legat se poate deschide alături, cu „Previzualizare”, fără să plecați de pe ecranul pe care lucrați — de exemplu cumpărătorul, lângă contractul de vânzare. Se deschid cel mult două previzualizări odată, iar o modificare nesalvată pe ecranul principal rămâne neatinsă. Dintr-o listă, previzualizarea unui rând se deschide lângă tabel.
@@ -110,7 +116,7 @@ Un obiect legat se poate deschide alături, cu „Previzualizare”, fără să 
 
 Butonul „?” din capătul barei de navigare deschide ajutorul ecranului: la ce folosește ecranul și cum se lucrează pe el (Figura [[fig-help]]). Acolo unde un gest nu se vede — o tragere, un dublu-clic — un bec mic, lângă locul acela, îl explică. Textele de ajutor le scrie administratorul, în „Informații de ajutor” (secțiunea [[admin-help]]).
 
-![2.10 Ajutorul unui ecran, deschis din „?”](help.png){#fig-help}
+![2.12 Ajutorul unui ecran, deschis din „?”](help.png){#fig-help}
 
 ## 2.9 Exemple și cazuri de utilizare {#start-examples}
 

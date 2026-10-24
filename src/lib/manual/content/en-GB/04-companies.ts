@@ -11,7 +11,7 @@ A juridical person is a firm, an institution, a local council or an association 
 
 The list opens from the sidebar: „Domain”, then „Juridical Persons”. The screen is called „Juridical Persons” and, like every list (section [[start-lists]]), shows 15 firms a page, with the columns „Name” and „Nickname”.
 
-The search box at the top of the list („search by ID, Name, Nickname, Registration No. (CUI), Firm's phone or Firm's e-mail”), as wide as „Add new Juridical Person”, finds a firm by its ID, name, nickname, CUI, phone and e-mail: type the CUI and the firms that have it remain. Rest the mouse on the box to read its whole text. When nothing is found, the list says „No juridical persons found”.
+The search box at the top of the list („search by ID, Name, Nickname, Registration No. (CUI), Firm's phone or Firm's e-mail”) finds a firm by its ID, name, nickname, CUI, phone and e-mail: type the CUI and the firms that have it remain. Rest the mouse on the box to read its whole text. When nothing is found, the list says „No juridical persons found”.
 
 „Choose fields” adds columns to the list. On the list of firms you can choose four of five; in the table's header the columns carry the short names of the first column below, and the mouse rested on a name shows the whole one:
 
@@ -42,7 +42,7 @@ On the list of firms two columns filter, both with ticks:
 
 ## 4.2 A firm added and edited {#companies-add}
 
-On the list of firms, press „Add new Juridical Person”. The form „New Juridical Person” opens straight away, with no other question. Fill in what you have; the rest can be added at any time, once the firm is saved.
+On the list of firms, press „New” — with a + before it and a building after it; under the mouse it shows its whole name, „Add new Juridical Person”. The form „New Juridical Person” opens straight away, with no other question. Fill in what you have; the rest can be added at any time, once the firm is saved.
 
 The only required field is „Name”. A firm that has only its name is a real object and is completed later. When you press „Save”, at the bottom, the application takes you back to the list, where the new firm stands at the top, marked „New!”. You open it with „Open”.
 
@@ -177,7 +177,7 @@ From the document or the property, „View” on the firm's row opens the firm's
 
 ### 4.3.4 The firm's interactions {#companies-people-interactions}
 
-The „Interactions” tile stands on the right of the screen, apart from the other tiles, and is ticked from the start. It shows the history of interactions with the firm. Unticked, the tile goes; ticked again, it comes back. For how an interaction is recorded, see section [[persons-interactions]]; all interactions, in one place, are in the „Interactions” report (section [[reports-interactions]]).
+The „Interactions” tile starts on the right of the screen, is dragged elsewhere like any tile and is ticked from the start; it is as tall as what it holds, as „Links” is. It shows the history of interactions with the firm. Unticked, the tile goes; ticked again, it comes back. For how an interaction is recorded, see section [[persons-interactions]]; all interactions, in one place, are in the „Interactions” report (section [[reports-interactions]]).
 
 ## 4.4 Examples and use cases {#companies-examples}
 
@@ -186,7 +186,7 @@ The „Interactions” tile stands on the right of the screen, apart from the ot
 The situation: a firm sends you an offer for a piece of land, and the person you are talking to is not in the archive yet.
 
 1. First add the person in „Natural Persons” (chapter [[persons]]).
-2. On „Juridical Persons”, press „Add new Juridical Person”, type „Name”, choose „Type” and type the CUI, checked against the document (section [[companies-add-identity]]).
+2. On „Juridical Persons”, press „New”, type „Name”, choose „Type” and type the CUI, checked against the document (section [[companies-add-identity]]).
 3. Press „Save”; open the firm from the top of the list, where it is marked „New!”.
 4. In „Representatives and contact”, type „Firm's phone” and „Firm's e-mail” and choose the person as „Contact Person 1” (sections [[companies-add-contact]] and [[companies-people-contact]]).
 5. Press „Save”.

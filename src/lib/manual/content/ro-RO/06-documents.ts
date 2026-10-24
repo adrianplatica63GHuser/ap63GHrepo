@@ -11,7 +11,7 @@ Un act este un înscris din arhivă — un contract, un certificat, o autorizaț
 
 În bara laterală, deschideți „Domeniu”, apoi „Acte”. Lista arată toate actele arhivei, în coloanele „Tip” și „Titlu”. Titlul este „Etichetă scurtă” a actului. Un act abia adăugat apare sus, cu semnul „Nou!” după tipul lui. Listele se folosesc la fel peste tot (secțiunea [[start-lists]]).
 
-Deasupra tabelului, pe un rând, stau caseta de căutare („caută după Cod, Titlu sau Nr. document”), cât butonul „Adaugă act”, „Câmpuri afișate”, imediat după el „Expiră curând”, apoi „Tip document:”, un semn rotund cu „Câmp specific:” și un ⓘ lângă el, iar la capăt „Adaugă act”. Într-o fereastră prea îngustă pentru toate, „Tip document:”, semnul, „Câmp specific:” și ⓘ-ul trec împreună pe un rând al lor, sub caseta de căutare, iar „Adaugă act” rămâne la capătul primului rând. Sub ele apare un rând cu etichetele filtrelor puse din coloane și „Șterge filtrele”, numai cât timp este pus un astfel de filtru (secțiunea [[documents-list-filters]]).
+Deasupra tabelului, pe un rând, stau caseta de căutare („caută după Cod, Titlu sau Nr. document”), „Câmpuri afișate”, imediat după el „Expiră curând”, apoi „Tip document:”, un semn rotund cu „Câmp specific:” și un ⓘ lângă el, iar la capăt „Nou”, cu un + înainte și pagina după — ținut sub mouse, „Adaugă act”. Într-o fereastră prea îngustă pentru toate, „Tip document:”, semnul, „Câmp specific:” și ⓘ-ul trec împreună pe un rând al lor, sub caseta de căutare, iar „Adaugă act” rămâne la capătul primului rând. Sub ele apare un rând cu etichetele filtrelor puse din coloane și „Șterge filtrele”, numai cât timp este pus un astfel de filtru (secțiunea [[documents-list-filters]]).
 
 **„Tip” arată denumirea scurtă a tipului** — de exemplu „CVC” pentru „Contract de Vânzare”, „Intabulare” pentru „Încheiere de Intabulare”. Țineți mouse-ul pe celulă și bula arată denumirea întreagă. Denumirea scurtă se alege pentru fiecare tip în „Date de referință”, la „Tipuri de Document”, în câmpul „Denumire scurtă” (secțiunea [[admin-reference-data]]). Lăsată goală, lista scurtează singură denumirea, fără începutul „Contract de”, „Act de”, „Încheiere de”, „Certificat de”. Două tipuri nu pot avea aceeași denumire scurtă.
 
@@ -37,7 +37,7 @@ Toate filtrele se adună, „Tip document:” și „Câmp specific:” cu tot: 
 
 ## 6.2 Un act nou și paginile lui {#documents-add}
 
-Apăsați „Adaugă act”. Se deschide „Act nou”, cu fișa „Identificarea actului”. Alegeți întâi „Tip document” (secțiunea [[documents-type]]), apoi completați câmpurile și apăsați „Salvează”. Actul se deschide pe ecranul lui, cu titlul în capul ecranului și cu starea „Neprocesat”. Fiecare salvare face o versiune nouă a actului (secțiunea [[links-versions]]).
+Apăsați „Nou”. Se deschide „Act nou”, cu fișa „Identificarea actului”. Alegeți întâi „Tip document” (secțiunea [[documents-type]]), apoi completați câmpurile și apăsați „Salvează”. Actul se deschide pe ecranul lui, cu titlul în capul ecranului și cu starea „Neprocesat”. Fiecare salvare face o versiune nouă a actului (secțiunea [[links-versions]]).
 
 Paginile se văd în fișa „Pagini”, mov, în dreapta formularului — pe un ecran îngust, sub el (Figura [[fig-documents-pages]]). Un act fără pagini arată „Nicio pagină adăugată”.
 
@@ -187,7 +187,7 @@ Certificatul urmează regula contractului (secțiunea [[documents-parties]]): mo
 
 Aveți scanat un contract de vânzare-cumpărare pentru un teren din Bragadiru.
 
-1. „Acte” → „Adaugă act”; la „Tip document” alegeți „Contract de Vânzare (are formular)” (secțiunea [[documents-type]]).
+1. „Acte” → „Nou”; la „Tip document” alegeți „Contract de Vânzare (are formular)” (secțiunea [[documents-type]]).
 2. Cu „+ Adaugă pagină” alegeți scanările, puneți-le în ordine și completați „Etichetă scurtă”, „Notariat”, „Nr. act autentic” și „Data autentificării” (secțiunile [[documents-add]] și [[documents-identification]]).
 3. Apăsați „Salvează”; rotiți și salvați pagina care a fost scanată întoarsă.
 4. Bifați „Părți” și asociați vânzătorul și cumpărătorul cu rolul lor, apoi scrieți-le cota (secțiunea [[documents-parties]]).
@@ -197,7 +197,7 @@ Aveți scanat un contract de vânzare-cumpărare pentru un teren din Bragadiru.
 
 Vânzătorul și cumpărătorul unui teren din Bragadiru au semnat întâi un antecontract, iar după câteva luni contractul de vânzare-cumpărare.
 
-1. „Acte” → „Adaugă act”; la „Tip document” alegeți „Antecontract”, adăugați paginile, completați „Etichetă scurtă”, „Nr. document” și „Data” și apăsați „Salvează” (secțiunea [[documents-antecontract]]).
+1. „Acte” → „Nou”; la „Tip document” alegeți „Antecontract”, adăugați paginile, completați „Etichetă scurtă”, „Nr. document” și „Data” și apăsați „Salvează” (secțiunea [[documents-antecontract]]).
 2. Pe „Părți”, asociați vânzătorul cu rolul „Promitent vânzător” și cumpărătorul cu rolul „Promitent cumpărător”, apoi scrieți-le cota (secțiunea [[documents-parties]]).
 3. Arhivați contractul de vânzare-cumpărare (secțiunea [[documents-example-sale]]). Dacă prețul s-a plătit la antecontract, alegeți în „[Plată]”, la „Stare plată”, „Achitat la antecontract”.
 4. Deschideți antecontractul, apăsați „Asociază act”, bifați contractul, alegeți „Antecontract al” și apăsați „Asociază selecția”. Pe contract, „Relația” citește: antecontractul, „Antecontract al”, „acest document” (secțiunea [[links-references-documents]]).

@@ -11,7 +11,7 @@ A property is a parcel: a piece of land, built on or not. In the archive it is i
 
 Open „Domain” in the sidebar, then „Properties”. The list „Properties” opens (Figure [[fig-properties-list]]).
 
-The search box at the top of the list, as wide as „Add new Property”, searches by „Code”, „Nickname”, „Cadastral No.”, „Carte Funciara”, „Tarla/Solă” and „Parcelă” — as the box itself says; rest the mouse on it to read the whole text. The list's filters are set from its columns (section [[properties-list-filters]]). Below the table, „Showing … of …” says how many properties you are seeing out of how many there are.
+The search box at the top of the list searches by „Code”, „Nickname”, „Cadastral No.”, „Carte Funciara”, „Tarla/Solă” and „Parcelă” — as the box itself says; rest the mouse on it to read the whole text. The list's filters are set from its columns (section [[properties-list-filters]]). Below the table, „Showing … of …” says how many properties you are seeing out of how many there are.
 
 The first column is „Nickname”, the name you give the property; „New!” stands in it, after the nickname, and „Crossed” after that on a property whose corners cross. It is always shown and is not among the options in „Choose fields”; you can move it, like any column, by dragging its name (section [[start-lists]]). The property's code has no column in the list; you find it on the property's screen, in the corner of its first tile.
 
@@ -25,7 +25,7 @@ The first column is „Nickname”, the name you give the property; „New!” s
 
 The button shows how many columns you have chosen, for instance „Choose fields 2/4”. Once four are ticked, the other boxes turn grey until you untick one. At first the list shows only „Prop. Type”. The choice is kept in this browser, so you find it again next time.
 
-On the right, above the table, are two buttons: „Full map” opens the map of all properties (chapter [[map]]), and „Add new Property” creates a new one (section [[properties-add]]). While the full map is open, the navigation bar reads „Home › Properties › Full map”, and a click on „Properties” takes you back to the list.
+On the right, above the table, are two buttons: „Full map” opens the map of all properties (chapter [[map]]), and „New” — with a + before it and the map after it; under the mouse, „Add new Property” — creates a new one (section [[properties-add]]). While the full map is open, the navigation bar reads „Home › Properties › Full map”, and a click on „Properties” takes you back to the list.
 
 ![5.1 The list of properties](properties-list.png){#fig-properties-list}
 
@@ -53,7 +53,7 @@ The table's header is two rows tall, the same on the four lists, however many co
 
 ## 5.2 A property added by hand {#properties-add}
 
-Press „Add new Property”. The window „Add Property” opens, with two ways in:
+Press „New”. The window „Add Property” opens, with two ways in:
 
 | The way | What it does |
 |---|---|
@@ -210,7 +210,7 @@ The „Street View” tile shows the street view next to the parcel. It is off u
 
 A text file with the Stereo 70 coordinates of the corners — from a surveyor, for instance — becomes a whole property, without typing the corners by hand.
 
-1. In „Properties”, press „Add new Property”, then „From a text file”.
+1. In „Properties”, press „New”, then „From a text file”.
 2. In the window „Upload coordinate file”, choose the file at „Select the coordinate file”. The file window shows only .txt files.
 3. Under the file, at „Tarla and parcel”, choose the tarla at „Tarla / Sola” and type the parcel at „Parcela”. Until both are filled in, „Import” stays grey.
 4. Press „Import”.
@@ -253,7 +253,7 @@ Scan the QR code with the phone, and Google Maps starts the navigation. On the c
 
 ### 5.7.1 Add a plot in Bragadiru and draw it on the map {#properties-example-draw}
 
-1. In „Properties”, press „Add new Property”, then „Manual data entry” (section [[properties-add]]).
+1. In „Properties”, press „New”, then „Manual data entry” (section [[properties-add]]).
 2. Type the nickname, for instance „Bragadiru plot”, choose the tarla in „Tarla / Sola”, and type the parcela and the area from the papers.
 3. On the map, press „Draw” and place the corners; close the shape on the first point (section [[properties-corners-draw]]).
 4. Compare „Calculated Area (m²)” with „Official Surface Area (m²)”.
@@ -261,7 +261,7 @@ Scan the QR code with the phone, and Google Maps starts the navigation. On the c
 
 ### 5.7.2 Bring in a parcel from a surveyor's file {#properties-example-file}
 
-1. „Add new Property”, then „From a text file”; choose the .txt file, the tarla and the parcel, and press „Import” (section [[properties-coord-file]]).
+1. „New”, then „From a text file”; choose the .txt file, the tarla and the parcel, and press „Import” (section [[properties-coord-file]]).
 2. Open the new property and check on the map that the sides do not cross; if they do, use „Straighten the order” (section [[properties-corners-table]]).
 3. Fill in what else the deeds tell you in „Cadastral identification” — the cadastral number, the land book — and save.
 

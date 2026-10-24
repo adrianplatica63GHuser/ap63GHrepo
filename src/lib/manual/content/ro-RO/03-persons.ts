@@ -11,7 +11,7 @@ O persoană fizică este un om: numele, CNP-ul, data nașterii, actul de identit
 
 În bara laterală, deschideți „Domeniu”, apoi „Persoane Fizice”. Ecranul se numește „Persoane fizice” și arată un tabel cu coloanele „Nume” și „Poreclă”, 15 rânduri pe pagină (secțiunea [[start-lists]]). În coloana „Nume”, prenumele vine primul: o persoană cu numele Popescu și prenumele Ion apare ca „Ion Popescu”.
 
-Caseta de căutare („caută după ID, Nume, Poreclă, CNP, Email Personal 1, Email Personal 2, Email serviciu, Telefon Personal 1, Telefon Personal 2 sau Telefon serviciu”), cât butonul „Adaugă persoană”, păstrează în tabel doar persoanele care se potrivesc cu ce scrieți; ajunge o parte din nume. Textul ei nu încape întreg: țineți mouse-ul pe casetă ca să-l citiți. Filtrele listei se pun din coloane (secțiunea [[persons-list-filters]]). Lista nu are filtre de „Importanță” sau „Relevanță”.
+Caseta de căutare („caută după ID, Nume, Poreclă, CNP, Email Personal 1, Email Personal 2, Email serviciu, Telefon Personal 1, Telefon Personal 2 sau Telefon serviciu”) păstrează în tabel doar persoanele care se potrivesc cu ce scrieți; ajunge o parte din nume. Textul ei nu încape întreg: țineți mouse-ul pe casetă ca să-l citiți. Filtrele listei se pun din coloane (secțiunea [[persons-list-filters]]). Lista nu are filtre de „Importanță” sau „Relevanță”.
 
 „Câmpuri afișate” adaugă coloane la tabel, cel mult patru odată. Numele sunt scurte; țineți mouse-ul pe unul și vedeți numele întreg al câmpului. Le puteți alege dintre:
 
@@ -60,7 +60,7 @@ Coloanele care se pot filtra, alese în „Câmpuri afișate”:
 
 ## 3.2 O persoană adăugată de mână {#persons-add}
 
-Pe lista persoanelor fizice, apăsați „Adaugă persoană”. Se deschide direct ecranul „Persoană fizică nouă”, un formular gol împărțit în fișe (Figura [[fig-persons-new]]).
+Pe lista persoanelor fizice, apăsați „Nouă” — butonul din dreapta, deasupra tabelului, cu un + înainte și persoana după, pictograma listei din bara laterală; ținut sub mouse, își arată numele întreg, „Adaugă persoană”. Se deschide direct ecranul „Persoană fizică nouă”, un formular gol împărțit în fișe (Figura [[fig-persons-new]]).
 
 ![3.1 Formularul unei persoane fizice noi](persons-new.png){#fig-persons-new}
 
@@ -186,7 +186,7 @@ Legăturile adăugate aici sunt aceleași cu cele din „Legături”: o rudă l
 
 ## 3.6 Interacțiunile unei persoane {#persons-interactions}
 
-Fișa „Interacțiuni” este istoricul a ce s-a petrecut cu persoana: telefoane, e-mailuri, întâlniri. Pornește din dreapta ecranului, mov deschis, se trage în alt loc ca orice fișă și este bifată de la început; bifa ei este ultima din capul ecranului. O persoană fără interacțiuni arată „Nicio interacțiune înregistrată cu această persoană.”, într-o fișă scundă. „Deschide în „Interacțiuni”” duce la ecranul cu toate interacțiunile.
+Fișa „Interacțiuni” este istoricul a ce s-a petrecut cu persoana: telefoane, e-mailuri, întâlniri. Pornește din dreapta ecranului, mov deschis, se trage în alt loc ca orice fișă și este bifată de la început; bifa ei este ultima din capul ecranului. Fișa este cât ce ține, ca „Legături”: o persoană fără interacțiuni arată doar „Nicio interacțiune înregistrată cu această persoană.” și butonul de sub ea; cu câteva, istoricul are înălțimea rândurilor lor, iar de la o vreme nu mai crește și se derulează în el. „Deschide în „Interacțiuni”” duce la ecranul cu toate interacțiunile.
 
 Sub istoric, butonul „Înregistrează o interacțiune” deschide formularul, deja legat de persoana aceasta:
 
@@ -208,7 +208,7 @@ Fișa „Interacțiuni” se poate pune și în stânga, sub celelalte fișe: ap
 
 Aveți în față cartea de identitate a unei persoane care nu este încă în arhivă.
 
-1. „Persoane Fizice” → „Adaugă persoană” (secțiunea [[persons-add]]).
+1. „Persoane Fizice” → „Nouă” (secțiunea [[persons-add]]).
 2. Completați numele, prenumele, genul, CNP-ul și data nașterii de pe carte.
 3. La „Tip document”, alegeți „Carte de identitate”; bifați „Creează și tatăl” și „Creează și mama” și scrieți prenumele lor (secțiunea [[persons-id-card-manual]]).
 4. Verificați numele de familie al mamei: poate fi cel de dinainte de căsătorie.

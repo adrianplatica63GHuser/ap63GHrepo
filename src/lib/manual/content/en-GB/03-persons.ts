@@ -11,7 +11,7 @@ A natural person is a human being: their name, CNP, date of birth, identity docu
 
 In the sidebar, open „Domain”, then „Natural Persons”. The screen is called „Natural Persons” and shows a table with the columns „Name” and „Nickname”, 15 rows to a page (section [[start-lists]]). In the „Name” column the first name comes first: a person whose surname is Popescu and whose first name is Ion appears as „Ion Popescu”.
 
-The search box („search by ID, Name, Nickname, CNP, Personal Email 1, Personal Email 2, Work Email, Personal Phone 1, Personal Phone 2 or Work Phone”), as wide as „Add new Person”, keeps in the table only the persons who match what you type; part of the name is enough. Its text does not fit whole: rest the mouse on the box to read it. The list's filters are set from its columns (section [[persons-list-filters]]). The list has no „Importance” or „Relevance” filter.
+The search box („search by ID, Name, Nickname, CNP, Personal Email 1, Personal Email 2, Work Email, Personal Phone 1, Personal Phone 2 or Work Phone”) keeps in the table only the persons who match what you type; part of the name is enough. Its text does not fit whole: rest the mouse on the box to read it. The list's filters are set from its columns (section [[persons-list-filters]]). The list has no „Importance” or „Relevance” filter.
 
 „Choose fields” adds columns to the table, at most four at a time. The names are short; rest the mouse on one and you see the field's whole name. You can choose them from:
 
@@ -60,7 +60,7 @@ The columns that can be filtered, chosen in „Choose fields”:
 
 ## 3.2 A person added by hand {#persons-add}
 
-On the list of natural persons, press „Add new Person”. The screen „New Natural Person” opens straight away: an empty form divided into tiles (Figure [[fig-persons-new]]).
+On the list of natural persons, press „New” — the button on the right, above the table, with a + before it and a person after it, the list's icon in the sidebar; under the mouse it shows its whole name, „Add new Person”. The screen „New Natural Person” opens straight away: an empty form divided into tiles (Figure [[fig-persons-new]]).
 
 ![3.1 The form of a new natural person](persons-new.png){#fig-persons-new}
 
@@ -186,7 +186,7 @@ The ties added here are the same as those in „Links”: a relative linked in o
 
 ## 3.6 A person's interactions {#persons-interactions}
 
-The „Interactions” tile is the history of what has happened with the person: calls, e-mails, meetings. It starts at the right of the screen, light purple, is dragged elsewhere like any tile, and is ticked from the start; its tick is the last at the top of the screen. A person with no interactions shows „No interaction logged with this person.”, in a short tile. „Open in Interactions” takes you to the screen with all the interactions.
+The „Interactions” tile is the history of what has happened with the person: calls, e-mails, meetings. It starts at the right of the screen, light purple, is dragged elsewhere like any tile, and is ticked from the start; its tick is the last at the top of the screen. The tile is as tall as what it holds, as „Links” is: a person with no interactions shows only „No interaction logged with this person.” and the button under it; with a few, the history is as tall as their rows, and past a point it grows no more and scrolls. „Open in Interactions” takes you to the screen with all the interactions.
 
 Under the history, the button „Log interaction” opens the form, already tied to this person:
 
@@ -208,7 +208,7 @@ The „Interactions” tile can also go on the left, under the other tiles: grab
 
 You have in front of you the identity card of a person who is not yet in the archive.
 
-1. „Natural Persons” → „Add new Person” (section [[persons-add]]).
+1. „Natural Persons” → „New” (section [[persons-add]]).
 2. Fill in the surname, first name, gender, CNP and date of birth from the card.
 3. Under „ID Type”, choose „ID Card”; tick „Also create the father” and „Also create the mother” and type their first names (section [[persons-id-card-manual]]).
 4. Check the mother's surname: it may be her maiden name.
