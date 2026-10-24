@@ -12,6 +12,7 @@
  *     the long-named act, whose name is the case's with the marker swapped.
  *   - The hand run read the sizes with a script on the page; here they are
  *     Playwright's bounding boxes of the same elements.
+ *   - Step 7 (40.38) compares each list's icon with the Natural Person's, opened again at 1920, by the same reading.
  *   - Slice #37.49's pictures, not steps of the case: the top of each of the
  *     four records and of the long-named act, at 1366 and 1920 px, into
  *     `playwright-report/record-heading/`. The sidebar's „Recente" list is
@@ -89,6 +90,23 @@ function expectIcon(m: Measured, icon: string): void {
   expect(m.gap / m.fontSize).toBeLessThanOrEqual(0.6);
   expect(Math.abs(m.dy)).toBeLessThanOrEqual(1);
   expect(m.sameColour).toBe(true);
+}
+
+/** Step 7 (40.38): the four lists, their titles and their many-records icons. */
+const LIST_TITLES = [
+  ["/natural-persons", "Persoane fizice", "lucide-people-group"],
+  ["/judicial-persons", "Persoane juridice", "lucide-buildings"],
+  ["/properties", "Proprietăți", "lucide-map-pins"],
+  ["/documents", "Acte", "lucide-pages"],
+] as const;
+
+/** Where the heading's icon starts, from the page's left edge, and its gap to the words. */
+async function place(heading: Locator): Promise<{ left: number; gap: number }> {
+  return heading.evaluate((h) => {
+    const ir = (h.querySelector("svg") as SVGElement).getBoundingClientRect();
+    const nr = (h.querySelector("span") as HTMLElement).getBoundingClientRect();
+    return { left: ir.left, gap: nr.left - ir.right };
+  });
 }
 
 async function openHeading(page: Page, url: string, name: string): Promise<Locator> {
@@ -172,6 +190,27 @@ test.describe("TC-ICON-07 — pictograma înregistrării înaintea numelui", () 
         expect(layout.navInside).toBe(true);
       }
       await photograph(page, "document-long-name");
+
+      // Step 7 (40.38) — the four lists: a many-records icon before the title, 1.25 × a record's (30 px ± 1), its left
+      // edge and its gap to the title a record screen's within 1 px; the heading still named by the title alone.
+      await page.setViewportSize({ width: 1920, height: 1080 });
+      const record = await openHeading(page, `/natural-persons/${personId}`, PERSON);
+      const at = await place(record);
+      for (const [url, title, icon] of LIST_TITLES) {
+        const heading = await openHeading(page, url, title);
+        const m = await measure(heading);
+        expect(m.icon).toBe(icon);
+        expect(m.first).toBe(true);
+        expect(m.ariaHidden).toBe("true");
+        expect(Math.abs(m.iconH - 30)).toBeLessThanOrEqual(1);
+        expect(Math.abs(m.iconW - 30)).toBeLessThanOrEqual(1);
+        expect(Math.abs(m.dy)).toBeLessThanOrEqual(1);
+        expect(m.sameColour).toBe(true);
+        const p = await place(heading);
+        expect(Math.abs(p.left - at.left)).toBeLessThanOrEqual(1);
+        expect(Math.abs(m.gap - at.gap)).toBeLessThanOrEqual(1);
+      }
+      await page.setViewportSize({ width: 1366, height: 900 });
     } finally {
       // At the end — leaving things as they were found.
       for (const [kind, id] of made.reverse()) await removeRecord(page.request, kind, id);

@@ -9,7 +9,8 @@ import { forwardRef } from "react";
 import type { LucideProps } from "lucide-react";
 
 // Slice #39.09: forwardRef, as Lucide's own are, so a LucideIcon slot can carry one (the sidebar's „Calcul suprafață" did until #39.78).
-const Glyph = forwardRef<SVGSVGElement, LucideProps & { name: string }>(function Glyph(
+// Slice 40.38: exported, so the lists' many-records icons (list-icons.tsx) are drawn in the same shape.
+export const Glyph = forwardRef<SVGSVGElement, LucideProps & { name: string }>(function Glyph(
   { size = 24, className, strokeWidth = 2, absoluteStrokeWidth: _abs, name, children, ...rest },
   ref,
 ) {

@@ -47,6 +47,7 @@ size.
 | 4 | Opens the Document `TC-ICON-07 Act` | The heading `TC-ICON-07 Act`, whole; the icon `lucide-file-text`, the same size, gap and hiding |
 | 5 | Opens the Document with the long name | The heading named by the whole long name, its tooltip (`title`) the whole name; on screen the name ends in „…"; the icon whole (as tall and as wide as the font size); after the name „Neprocesat", then the version controls, inside the header |
 | 6 | Widens the window to 1920 × 1080 | Still „…" at the end of the name; the icon still whole, the gap still two spaces |
+| 7 | At 1920 × 1080 opens „Persoane fizice", „Persoane juridice", „Proprietăți" and „Acte" | Before each title an icon of several records — `lucide-people-group`, `lucide-buildings`, `lucide-map-pins`, `lucide-pages` — hidden, 30 px (a quarter larger than a record's 24), centred on the title and in its colour; its left edge and its gap to the title the Natural Person's, within 1 px; each heading named by its title alone (40.38) |
 
 ## At the end — leaving things as they were found
 
@@ -91,3 +92,6 @@ reached it — the setup's login timed out on a cold server (FU-256).
 **2026-10-05 — Slice #37.92.** The sidebar's „Proprietăți — Listă" and „Proprietăți — Hartă" are one item,
 „Proprietăți"; the whole map opens from the list's „Hartă completă" (TC-PROP-10). The steps above name
 the sidebar item by its new name; nothing else in them changed.
+
+**2026-10-23 — Slice 40.38.** Step 7 added: the four lists' many-records icons, drawn by hand after Big.Icons.docx, at
+1.25em of the title with a record screen's left edge and gap.

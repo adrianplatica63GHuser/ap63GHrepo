@@ -60,3 +60,24 @@ export function RecordHeading({ icon: Icon, name, truncate = false, className, t
     </h1>
   );
 }
+
+/**
+ * ListHeading — a principal list's title after its many-records icon.                              (Slice 40.38)
+ *
+ * Adrian, 2026-10-23: the spacing from the screen's left edge and between the icon and the title „should be the same
+ * as the similar spacing for Principal object form; the size of the icon for the lists should about 25% bigger". So
+ * the same `<h1>` as RecordHeading — a flex row, the icon `aria-hidden` and centred on the title's line, then the
+ * title — with the icon at 1.25em (30 px at text-2xl, against a record's 24) and the record's gap kept in PIXELS: the
+ * margin is 0.55em of the heading's font size (13.2 px), not of the bigger icon (40.38's Ask first 2). Both screens'
+ * `main` are px-6, so the icon starts 24 px from the content's left edge on both.
+ *
+ * The heading's accessible name stays the title, so every `getByRole("heading", { name })` keeps passing (Ask first 3).
+ */
+export function ListHeading({ icon: Icon, title }: { icon: ComponentType<LucideProps>; title: string }) {
+  return (
+    <h1 className="flex min-w-0 items-center text-2xl font-semibold tracking-tight">
+      <Icon aria-hidden="true" focusable="false" data-list-icon="" className="mr-[0.55em] h-[1.25em] w-[1.25em] shrink-0" />
+      <span className="min-w-0">{title}</span>
+    </h1>
+  );
+}
