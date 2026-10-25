@@ -56,7 +56,15 @@ test.describe("TC-LAYOUT-04 — „Recente” într-o singură bară", () => {
       await expect(aside(page).getByText(TWO)).toHaveCount(0);
       // The ten specs' mask still finds it.
       await expect(page.locator("aside div.border-t").filter({ has: page.getByRole("button", { name: /Recente/i }) })).toHaveCount(1);
-      const folded = await footerTop(page);
+      // Read once the footer has settled: the account entry (40.59) is drawn before the user's name arrives, and the
+      // runner measured it 6 px lower for that moment (866, then 860).
+      let folded = -1;
+      await expect.poll(async () => {
+        const before = await footerTop(page);
+        await page.waitForTimeout(300);
+        folded = await footerTop(page);
+        return folded === before;
+      }, { timeout: 15_000 }).toBe(true);
       const barTop = (await bar(page).boundingBox())!.y;
 
       // Step 3 — a click: both names UNDER the bar, like an accordion (#38.63; #38.28 had them above it, the

@@ -34,9 +34,9 @@ function expectOrdered(items: Row[], value: (r: Row) => number | string | null, 
 }
 
 /**
- * The list's answer to `action`. `want` names the order it must carry: a list whose default order is the one pressed
- * („Modificat la" on Persoane juridice) may refetch its first page in that order while the click is on its way, and
- * that answer — still newest first — was read for the pressed one (40.66's runs, step 7).
+ * The list's answer to `action`, in the order `want` names: a list still settling when the arrow is pressed (its first
+ * page refetched in the default order, newest first) answered before the pressed order did, and that answer was read
+ * for it — measured in 40.66's runs, on step 7 and then on step 6.
  */
 async function answer(page: Page, api: string, action: () => Promise<unknown>, want?: { sort: string; order: string }): Promise<Row[]> {
   const isList = (r: Response) => {
@@ -90,7 +90,7 @@ test.describe("TC-LAYOUT-10 — pictograma de ordonare din banda de nume", () =>
     expect(gap).toBe(2);
 
     // Step 2 — pressed: one arrow up, in use; earliest birth first, empty last.
-    const asc = await answer(page, "/api/people", () => icon(page, "dateOfBirth").locator("button").click());
+    const asc = await answer(page, "/api/people", () => icon(page, "dateOfBirth").locator("button").click(), { sort: "dateOfBirth", order: "asc" });
     expectOrdered(asc, dateOf("dateOfBirth"), "asc");
     await expect(icon(page, "dateOfBirth")).toHaveAttribute("data-sort-state", "asc");
     await expect(icon(page, "dateOfBirth").locator("svg")).toHaveClass(/lucide-arrow-up(?!-)/);
@@ -100,7 +100,7 @@ test.describe("TC-LAYOUT-10 — pictograma de ordonare din banda de nume", () =>
     await expect(firstRowLink(page, "/natural-persons")).toHaveAttribute("href", `/natural-persons/${asc[0].id}`);
 
     // Step 3 — again: latest first.
-    const desc = await answer(page, "/api/people", () => icon(page, "dateOfBirth").locator("button").click());
+    const desc = await answer(page, "/api/people", () => icon(page, "dateOfBirth").locator("button").click(), { sort: "dateOfBirth", order: "desc" });
     expectOrdered(desc, dateOf("dateOfBirth"), "desc");
     await expect(icon(page, "dateOfBirth")).toHaveAttribute("data-sort-state", "desc");
     await expect(page.locator('main thead th:has([data-column-sort="dateOfBirth"])')).toHaveAttribute("aria-sort", "descending");
@@ -122,7 +122,7 @@ test.describe("TC-LAYOUT-10 — pictograma de ordonare din banda de nume", () =>
     // Step 6 — „Proprietăți", „Supr. Calc.": smallest first, as numbers.
     await openFromSidebar(page, "Proprietăți");
     await expect.poll(() => heads(page), { timeout: 30_000 }).toEqual(["Poreclă:-", "Tarla:none", "Parcelă:none", "Supr. Ofic.:none", "Supr. Calc.:none"]);
-    const areas = await answer(page, "/api/properties", () => icon(page, "calculatedAreaMp").locator("button").click());
+    const areas = await answer(page, "/api/properties", () => icon(page, "calculatedAreaMp").locator("button").click(), { sort: "calculatedAreaMp", order: "asc" });
     expectOrdered(areas, numberOf("calculatedAreaMp"), "asc");
     await expect(icon(page, "calculatedAreaMp")).toHaveAttribute("data-sort-state", "asc");
     await expect(sortButton(page)).toHaveText("Ordonat după „Supr. Calc.”");
@@ -142,7 +142,7 @@ test.describe("TC-LAYOUT-10 — pictograma de ordonare din banda de nume", () =>
     // Step 8 — „Acte", „Pagini": fewest first; none on Tip or Titlu.
     await openFromSidebar(page, "Acte");
     await expect.poll(() => heads(page), { timeout: 30_000 }).toEqual(["Tip:-", "Titlu:-", "Data:none", "Pagini:none", "Persoane:none", "Adăugat la:none"]);
-    const pages = await answer(page, "/api/documents", () => icon(page, "pageCount").locator("button").click());
+    const pages = await answer(page, "/api/documents", () => icon(page, "pageCount").locator("button").click(), { sort: "pageCount", order: "asc" });
     expectOrdered(pages, numberOf("pageCount"), "asc");
     await expect(icon(page, "pageCount")).toHaveAttribute("data-sort-state", "asc");
     await expect(sortButton(page)).toHaveText("Ordonat după „Pagini”");
