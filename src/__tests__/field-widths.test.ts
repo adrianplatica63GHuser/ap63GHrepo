@@ -980,6 +980,10 @@ describe("EVERY OTHER SCREEN FOLLOWS THE SAME RULE (#37.22)", () => {
   it.each(VIEWS.filter(([, src]) => /<(table|FixedTable|AdminListTable)\b/.test(src)))("%s: every table is #37.16's — fixed, from COLUMN, every header marked", (_what, src) => {
     for (const m of src.matchAll(/<(table|FixedTable|AdminListTable)\b/g)) {
       const table = region(src.slice(m.index), `<${m[1]}`, `</${m[1]}>`);
+      // Slice 40.62: the one exception — the dashboard's „Acte cu valabilitate limitată" is two columns, a fixed status
+      // and the title, as wide as its tile and never wider (Adrian, chapter 10: „nothing off-screen"). A FixedTable is
+      // as wide as its columns' rems, which is what pushed „Stare" off the tile; expiring-documents.test.tsx pins it.
+      if (table.includes('data-expiring-table=""')) continue;
       // Slice #39.89: „Grupuri" and „Ștampile" draw theirs through `AdminListTable` (src/components/list/admin-list.tsx)
       // — every column from COLUMN but the description, which takes what the frame leaves, so a scroll bar comes out of
       // it rather than pushing the buttons out sideways. Slice 40.12: a bare `<table>` is none of these — both pieces
