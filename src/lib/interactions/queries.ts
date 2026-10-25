@@ -175,7 +175,9 @@ export async function getInteraction(id: string): Promise<InteractionRecord | nu
     .from(interactionDocument)
     .innerJoin(document, eq(document.id, interactionDocument.documentId))
     .where(eq(interactionDocument.interactionId, id))
-    .orderBy(asc(interactionDocument.createdAt));
+    // Links saved together share one `created_at`, so the title then the id break the tie — the order was the database's
+    // whim (TC-INT-03's popover read „Extras CF" first one run in two, 2026-10-25).
+    .orderBy(asc(interactionDocument.createdAt), asc(document.title), asc(interactionDocument.documentId));
   const tags = await db.select({ tag: interactionTag.tag }).from(interactionTag).where(eq(interactionTag.interactionId, id)).orderBy(asc(interactionTag.tag));
   return {
     ...toListItem(row),
