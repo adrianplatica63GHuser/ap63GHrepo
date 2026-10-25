@@ -119,7 +119,8 @@ test.describe("TC-PROP-03 — Proprietate creată dintr-un fișier cu coordonate
       await expect(page.locator('[name="tarlaId"] option:checked')).toHaveText("40");
       await expect(page.locator('[name="parcela"]')).toHaveValue("TC03");
       await expect(page.getByRole("group", { name: "Suprafață calculată (m²)" })).toContainText("600.00", { timeout: 30_000 });
-      await expect(page.getByText("PUNCTE DE CONTUR").first()).toBeVisible();
+      // 40.57: by its region — the first „Puncte de contur" text is now the box in the closed „Panouri" panel.
+      await expect(page.getByRole("region", { name: "Puncte de contur", exact: true })).toBeVisible();
       for (const [i, [orig, north, east]] of CORNERS.entries()) {
         const row = page.getByRole("row").filter({ hasText: north }).filter({ hasText: east });
         await expect(row).toHaveCount(1);

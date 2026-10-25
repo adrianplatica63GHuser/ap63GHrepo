@@ -152,8 +152,9 @@ async function three(page: Page, list: string, name: string, other: string, shot
     await expect(button(second, n), `${list}: another row's ${n}`).toBeDisabled();
     await expect(button(second, n)).toHaveAttribute("aria-pressed", "false");
   }
-  await expect(second.getByRole("link", { name: "Deschide", exact: true })).toBeVisible();
-  await expect(second.getByRole("link", { name: "Deschide", exact: true })).not.toHaveAttribute("aria-disabled", "true");
+  // 40.60: the row's way in is its name (it was „Deschide"), and it stays a link while the three are taken.
+  await expect(second.locator("a[data-row-name-link]")).toBeVisible();
+  await expect(second.locator("a[data-row-name-link]")).not.toHaveAttribute("aria-disabled", "true");
   for (const width of [1366, 1920]) {
     await page.setViewportSize({ width, height: 900 });
     await page.waitForTimeout(400);
