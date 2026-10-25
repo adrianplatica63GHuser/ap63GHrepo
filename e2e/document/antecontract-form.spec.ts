@@ -13,7 +13,6 @@
 import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createDocumentOfType, removeLeftovers, removeRecord } from "../helpers/records";
 import { showEmptyFields } from "../helpers/empty-fields";
-import { openEmptyTiles } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}DOC-11`;
 const FOURTEEN = [
@@ -29,7 +28,10 @@ async function visibleLabels(page: Page, id: string): Promise<string[]> {
   const names = page.locator("main label, main div.row-span-3.grid-rows-subgrid > span:first-child");
   await expect(names.filter({ hasText: /^Etichetă scurtă$/ }).first()).toBeVisible({ timeout: 30_000 });
   await page.waitForTimeout(1000);
-  await openEmptyTiles(page); // a type's tiles with nothing in them are one line each (40.64)
+  // A type's tiles with nothing in them are one line each (40.64): the ones on screen opened. Not `openEmptyTiles`,
+  // which presses every one, a hidden tile's too, and waits for ever on it.
+  const adds = page.locator("[data-empty-tile] [data-empty-tile-add]:visible");
+  while ((await adds.count()) > 0) await adds.first().click();
   await showEmptyFields(page);
   return names.evaluateAll((els) =>
     els.filter((e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; }).map((e) => (e.textContent ?? "").trim()));
@@ -38,7 +40,6 @@ async function visibleLabels(page: Page, id: string): Promise<string[]> {
 test.describe("TC-DOC-11 — Antecontractul fără câmpurile făcute de „discover”", () => {
   test("antecontractul: doar câmpurile generale; contractul de vânzare: formularul lui", async ({ page }) => {
     test.slow();
-    test.setTimeout(240_000); // 40.75: each tile opened and its empty fields shown, on two documents
     await removeLeftovers(page.request, MARK);
     await page.setViewportSize({ width: 1366, height: 900 });
     const antecontract = await createDocumentOfType(page.request, "ANTECONTRACT", `${MARK} Antecontract de test`);
