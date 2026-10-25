@@ -1228,7 +1228,7 @@ function CalculationSourceLink({
       <span className="text-xs text-fade dark:text-zinc-400">{labelSource}:</span>
       <span className="font-mono text-xs font-medium text-ink dark:text-zinc-100">{src.runCode}</span>
       {src.status === "superseded" && (
-        <span className="rounded-full bg-zinc-200 px-1.5 py-0.5 text-[10px] text-zinc-600 dark:bg-zinc-700 dark:text-zinc-400">
+        <span className="rounded-full bg-zinc-200 px-1.5 py-0.5 text-xs text-zinc-600 dark:bg-zinc-700 dark:text-zinc-400">
           superseded
         </span>
       )}

@@ -63,7 +63,7 @@ export function RecencyBadge({
   return (
     <span
       className="ml-1.5 font-semibold whitespace-nowrap"
-      style={{ color, fontSize: "0.75em" }}
+      style={{ color, fontSize: "max(12px, 0.75em)" /* 40.63: never under 12 px */ }}
     >
       {t("label")}
     </span>

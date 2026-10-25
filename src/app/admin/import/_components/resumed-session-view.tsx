@@ -63,7 +63,7 @@ function DoneBadges({ entry }: { entry: SavedImportEntry }) {
           points at a real document (the archive's own), and without this badge
           the row is indistinguishable from one this run wrote. */}
       {entry.preexisting !== undefined && (
-        <span className="text-[10px] font-medium text-sky-700 dark:text-sky-400">
+        <span className="text-xs font-medium text-sky-700 dark:text-sky-400">
           {entry.preexisting === "linked"
             ? tD("preexistingLinked")
             : tD("preexistingSkipped")}
@@ -71,7 +71,7 @@ function DoneBadges({ entry }: { entry: SavedImportEntry }) {
       )}
       {entry.aiProcessed && (
         <span
-          className="inline-flex items-center rounded border border-indigo-200 bg-indigo-50 px-1.5 py-0.5 text-[10px] font-medium text-indigo-600 dark:border-indigo-800 dark:bg-indigo-950/30 dark:text-indigo-300"
+          className="inline-flex items-center rounded border border-indigo-200 bg-indigo-50 px-1.5 py-0.5 text-xs font-medium text-indigo-600 dark:border-indigo-800 dark:bg-indigo-950/30 dark:text-indigo-300"
           title={tD("aiProcessedBadge")}
         >
           ✓ AI
@@ -405,7 +405,7 @@ export function ResumedSessionView({ session, audit, onClear }: Props) {
                   >
                     {entry.displayName}
                   </span>
-                  <span className="text-[10px] text-fade">{entry.path}</span>
+                  <span className="text-xs text-fade">{entry.path}</span>
                 </td>
 
                 {/* AI scan description */}

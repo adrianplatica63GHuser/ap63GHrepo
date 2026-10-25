@@ -5630,7 +5630,7 @@ export function BulkImportDialog({
                 // none, with `saveDone` showing so nobody saves again.
                 disabled={currentFollowUp !== null || readRunning || recheckingPath !== null}
               />
-              <p className="mt-1 text-[10px] text-fade dark:text-zinc-400">
+              <p className="mt-1 text-xs text-fade dark:text-zinc-400">
                 {reportSaved ? tres("saveDone") : tres("saveHint")}
               </p>
             </div>
@@ -6186,7 +6186,7 @@ function ResultRow({
         >
           {displayName}
         </span>
-        <span className="text-[10px] text-fade">{entry.path}</span>
+        <span className="text-xs text-fade">{entry.path}</span>
       </td>
 
       <td className="py-2 pr-3">

@@ -127,7 +127,7 @@ function StatusBadge({ complete, completeLabel, missingLabel }: { complete: bool
   return (
     <span
       className={[
-        "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium",
+        "shrink-0 rounded-full px-2 py-0.5 text-xs font-medium",
         complete
           ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400"
           : "bg-zinc-100 text-fade dark:bg-zinc-800",
@@ -172,7 +172,7 @@ function Field({
 function PreviewBlock({ heading, text }: { heading: string; text: string }) {
   return (
     <div>
-      <p className="text-[10px] font-semibold uppercase tracking-wide text-fade">{heading}</p>
+      <p className="text-xs font-semibold uppercase tracking-wide text-fade">{heading}</p>
       <p className="text-sm text-ink dark:text-zinc-200 whitespace-pre-wrap">{text}</p>
     </div>
   );
@@ -379,8 +379,8 @@ function ProposalPanel({
         <p className="text-xs text-fade">{t("proposal.intro")}</p>
       </div>
       <div style={stepGridStyle("XXL", 2, 1)}>
-        <p className="text-[10px] font-semibold uppercase tracking-wide text-fade">{t("proposal.current")}</p>
-        <p className="text-[10px] font-semibold uppercase tracking-wide text-fade">{t("proposal.proposed")}</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-fade">{t("proposal.current")}</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-fade">{t("proposal.proposed")}</p>
         {PROPOSAL_FIELDS.map(([field, label]) => (
           <div key={field} className="contents" data-proposal-field={field}>
             <PreviewBlock heading={t(label)} text={row?.[field] || "—"} />
@@ -738,7 +738,7 @@ export function HelpContentHub() {
                   <span className="flex shrink-0 items-center gap-1">
                     {/* Slice #39.40: a text proposed from the manual waits for this screen. */}
                     {proposals.has(s.key) && (
-                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-950 dark:text-amber-300">
                         {t("statusProposal")}
                       </span>
                     )}

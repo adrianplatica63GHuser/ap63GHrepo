@@ -576,7 +576,7 @@ function MapSettingsPanel({ value, onChange }: { value: number; onChange: (px: n
           />
         </span>
       </label>
-      <p className="text-[11px] leading-snug text-fade">{t("map.mergeDistanceHelp")}</p>
+      <p className="text-xs leading-snug text-fade">{t("map.mergeDistanceHelp")}</p>
     </div>
   );
 }
@@ -1844,7 +1844,7 @@ export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean 
               ].join(" ")}
             >
               {t("map.selectedPropertiesTab")}
-              <span className="ml-1.5 text-[10px] font-bold bg-red-600 text-white rounded-full px-1.5 py-0.5">
+              <span className="ml-1.5 text-xs font-bold bg-red-600 text-white rounded-full px-1.5 py-0.5">
                 {selectedIds.size}
               </span>
             </button>
@@ -2293,7 +2293,7 @@ export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean 
                       onChange={toggleAllGroups}
                       className="h-3.5 w-3.5 shrink-0 rounded border-wire accent-cta"
                     />
-                    <span className="text-[11px] font-semibold text-ink truncate">
+                    <span className="text-xs font-semibold text-ink truncate">
                       {t("map.groupsAll")}
                     </span>
                   </label>
@@ -2306,14 +2306,14 @@ export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean 
                       onChange={() => toggleGroupChecked("_ungrouped")}
                       className="h-3.5 w-3.5 shrink-0 rounded border-wire accent-cta"
                     />
-                    <span className="text-[11px] italic text-fade truncate">
+                    <span className="text-xs italic text-fade truncate">
                       {t("map.groupsNotInGroup")}
                     </span>
                   </label>
 
                   {/* Group code list — scrollable */}
                   {allGroupCodes.length === 0 ? (
-                    <div className="px-2 py-1.5 text-[11px] text-fade">
+                    <div className="px-2 py-1.5 text-xs text-fade">
                       {t("map.groupsEmpty")}
                     </div>
                   ) : (

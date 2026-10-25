@@ -936,7 +936,7 @@ export function ImportStructureStage({
                 className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 dark:border-amber-700/60 dark:bg-amber-950/30"
               >
                 <div className="flex items-baseline gap-2">
-                  <span className="shrink-0 font-mono text-[10px] uppercase tracking-wide text-amber-700 dark:text-amber-400">
+                  <span className="shrink-0 font-mono text-xs uppercase tracking-wide text-amber-700 dark:text-amber-400">
                     {v.ruleId}
                   </span>
                   {/* The culprit, named — the line the user takes to Explorer.
@@ -1158,7 +1158,7 @@ export function ImportStructureStage({
                     className="border-b border-crease pb-2 last:border-0 dark:border-zinc-800"
                   >
                     <div className="flex items-baseline gap-2">
-                      <span className="shrink-0 font-mono text-[10px] uppercase tracking-wide text-fade">
+                      <span className="shrink-0 font-mono text-xs uppercase tracking-wide text-fade">
                         {rule.id}
                       </span>
                       <p className="text-sm text-ink dark:text-zinc-200">{rule.requirement}</p>

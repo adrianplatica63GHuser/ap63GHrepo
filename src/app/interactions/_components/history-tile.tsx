@@ -503,7 +503,7 @@ function HistoryRow({
         )}
         {/* Under the pill, out of the flow, so the pill stays in the row's middle like its neighbours. */}
         {!selected && !followUp && (
-          <span className="invisible absolute bottom-0.5 left-2 whitespace-nowrap text-[11px] text-fade group-hover:visible dark:text-zinc-400" data-select-hint="">
+          <span className="invisible absolute bottom-0.5 left-2 whitespace-nowrap text-xs text-fade group-hover:visible dark:text-zinc-400" data-select-hint="">
             {t("screen.selectHint")}
           </span>
         )}

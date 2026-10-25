@@ -67,7 +67,7 @@ function CostChart({ days, label }: { days: readonly DayCost[]; label: string })
             ) : null,
           )}
       </svg>
-      <figcaption className="flex justify-between text-[11px] text-fade">
+      <figcaption className="flex justify-between text-xs text-fade">
         <span>{days[0] ? shortDay(days[0].day) : ""}</span>
         <span>{days.length ? shortDay(days[days.length - 1].day) : ""}</span>
       </figcaption>

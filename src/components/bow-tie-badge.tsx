@@ -25,7 +25,7 @@ export function BowTieBadge({ selfIntersects }: { selfIntersects: boolean }) {
   return (
     <span
       className="ml-1.5 font-semibold whitespace-nowrap text-amber-600 dark:text-amber-500"
-      style={{ fontSize: "0.75em" }}
+      style={{ fontSize: "max(12px, 0.75em)" /* 40.63: never under 12 px */ }}
       title={t("title")}
     >
       {t("label")}

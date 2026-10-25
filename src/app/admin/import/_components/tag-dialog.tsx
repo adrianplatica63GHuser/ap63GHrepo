@@ -210,7 +210,7 @@ function FolderRow({ fi }: { fi: TagFolderInfo }) {
           {aliases.map((alias) => (
             <span
               key={alias}
-              className="inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-mono bg-cta-pale text-cta dark:bg-cta/15 dark:text-cta border border-cta/20"
+              className="inline-flex items-center rounded px-1.5 py-0.5 text-xs font-mono bg-cta-pale text-cta dark:bg-cta/15 dark:text-cta border border-cta/20"
             >
               {alias}
             </span>

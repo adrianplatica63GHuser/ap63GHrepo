@@ -288,7 +288,7 @@ function ScanRow({ entry, result, t, stripPrefix }: RowProps) {
           {displayPath}
         </span>
         {entry.kind === "page-group" && (
-          <span className="mt-0.5 inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-medium text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+          <span className="mt-0.5 inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
             {t("pageGroupLabel", { count: entry.handles.length })}
           </span>
         )}
@@ -343,7 +343,7 @@ function ConfidenceBadge({
   return (
     <span
       className={[
-        "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium",
+        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
         styles[confidence],
       ].join(" ")}
     >

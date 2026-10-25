@@ -97,7 +97,7 @@ function BoxFace({ skill, name, state, pathLabel }: { skill: Pick<Skill, "level"
       >
         <span className="text-sm font-bold">{skill.number}</span>
         <span className="line-clamp-2 text-[13px] font-semibold">{name}</span>
-        <span className="text-[10px] uppercase tracking-wide opacity-80">{pathLabel}</span>
+        <span className="text-xs uppercase tracking-wide opacity-80">{pathLabel}</span>
       </span>
       <span
         aria-hidden="true"

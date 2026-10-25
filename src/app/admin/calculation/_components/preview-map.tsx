@@ -319,7 +319,7 @@ export function PreviewMap({
                   style={{
                     background: "rgba(17,24,39,0.85)",
                     color: "white",
-                    fontSize: 11,
+                    fontSize: 12, // 40.63: nothing under 12 px
                     fontWeight: 600,
                     padding: "2px 6px",
                     borderRadius: 4,
@@ -378,7 +378,7 @@ export function PreviewMap({
                       background: offered ? "#facc15" : "rgba(255,255,255,0.85)",
                       color: "#111827",
                       border: "1px solid #111827",
-                      fontSize: 11,
+                      fontSize: 12, // 40.63: nothing under 12 px
                       fontWeight: 700,
                       padding: "1px 6px",
                       borderRadius: 4,
@@ -409,7 +409,7 @@ export function PreviewMap({
                     background: chosen ? "#facc15" : "white",
                     color: "#111827",
                     border: `${chosen ? 3 : 2}px solid #111827`,
-                    fontSize: 11,
+                    fontSize: 12, // 40.63: nothing under 12 px
                     fontWeight: 700,
                     padding: "1px 5px",
                     borderRadius: 9999,

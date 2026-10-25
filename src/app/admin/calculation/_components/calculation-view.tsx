@@ -960,7 +960,7 @@ export function CalculationView() {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-md border border-card-rim bg-card px-3 py-2 dark:border-zinc-700 dark:bg-zinc-800">
-      <div className="text-[11px] uppercase tracking-wide text-fade dark:text-zinc-500">
+      <div className="text-xs uppercase tracking-wide text-fade dark:text-zinc-500">
         {label}
       </div>
       <div className="text-sm font-medium text-ink dark:text-zinc-100">{value}</div>

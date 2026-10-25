@@ -101,7 +101,7 @@ function FindingRow({ finding }: { finding: Finding }) {
       <div className="flex items-baseline gap-2">
         <span
           className={[
-            "shrink-0 font-mono text-[10px] uppercase tracking-wide",
+            "shrink-0 font-mono text-xs uppercase tracking-wide",
             loud ? "text-amber-700 dark:text-amber-400" : "text-fade",
           ].join(" ")}
         >

@@ -803,7 +803,7 @@ export function ImportPreexistingStage({
                 className="border-b border-crease pb-2 last:border-0 dark:border-zinc-800"
               >
                 <div className="flex items-baseline gap-2">
-                  <span className="shrink-0 font-mono text-[10px] uppercase tracking-wide text-fade">
+                  <span className="shrink-0 font-mono text-xs uppercase tracking-wide text-fade">
                     {note.id}
                   </span>
                   <p className="text-sm text-ink dark:text-zinc-200">{note.requirement}</p>

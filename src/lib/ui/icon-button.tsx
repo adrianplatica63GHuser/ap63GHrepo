@@ -334,7 +334,7 @@ export function IconButton(props: IconButtonProps) {
         <span
           aria-hidden="true"
           data-icon-badge=""
-          className="pointer-events-none absolute -right-1.5 -top-1.5 min-w-4 rounded-full bg-white px-1 text-center text-[10px] leading-4 font-semibold text-ink shadow-sm ring-1 ring-card-rim dark:bg-zinc-900 dark:text-zinc-100 dark:ring-zinc-600"
+          className="pointer-events-none absolute -right-1.5 -top-1.5 min-w-4 rounded-full bg-white px-1 text-center text-xs leading-4 font-semibold text-ink shadow-sm ring-1 ring-card-rim dark:bg-zinc-900 dark:text-zinc-100 dark:ring-zinc-600"
         >
           {badge}
         </span>
