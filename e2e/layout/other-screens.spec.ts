@@ -287,7 +287,8 @@ test.describe("TC-LAYOUT-01 — o fereastră îngustă (40.69)", () => {
       // Step 7 — the dashboard, the person and the property at 700 × 900: no sideways scroll; each record's tiles in
       // one column.
       await page.goto("/");
-      await expect(page.locator("main h1").first()).toBeVisible({ timeout: 30_000 });
+      // The dashboard's title is in its banner, not in <main>.
+      await expect(page.getByRole("heading", { level: 1, name: "Tablou de bord" })).toBeVisible({ timeout: 30_000 });
       await page.waitForTimeout(800);
       expect(await sideways(), "the dashboard").toBeLessThanOrEqual(1);
       for (const [path, what] of [[`/natural-persons/${personId}`, "the person"], [`/properties/${propertyId}`, "the property"]] as const) {

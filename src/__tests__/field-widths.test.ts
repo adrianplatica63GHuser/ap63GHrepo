@@ -446,7 +446,7 @@ describe("the Natural Person: every label above its box, every panel as wide as 
     expect(NP_FORM).not.toMatch(/LABEL_STYLE/);
     expect(ADDRESS_BLOCK).not.toMatch(/LABEL_STYLE/);
     // #37.67: the widest tile is 4 units („Corelate"), where Proprietăți made it 5.
-    expect(String(npRowStyle().width)).toBe("min(100%, max(40rem, calc(round(down, 100% + 1rem, 10.25rem) - 1rem)))");
+    expect(String(npRowStyle().width)).toBe("min(var(--row-cap), max(40rem, calc(round(down, 100% + 1rem, 10.25rem) - 1rem)))");
   });
 });
 
@@ -553,7 +553,7 @@ describe("the Judicial Person: labels above, rows by meaning, every tile on the 
     expect(NP_PANEL_UNITS).toEqual({ identity: 3, idCard: 3, contact: 2, address: 3 });
     expect(PANEL_UNITS.naturalPerson).toBe(NP_PANEL_UNITS);
     expect(String(unitRowStyle("naturalPerson").width)).toBe(String(npRowStyle().width));
-    expect(String(unitRowStyle("judicialPerson").width)).toBe("min(100%, max(40rem, calc(round(down, 100% + 1rem, 10.25rem) - 1rem)))"); // #37.67: 4 units; #40.69: never wider than the window
+    expect(String(unitRowStyle("judicialPerson").width)).toBe("min(var(--row-cap), max(40rem, calc(round(down, 100% + 1rem, 10.25rem) - 1rem)))"); // #37.67: 4 units; #40.69: never wider than a narrow window
     // No JP_ twins of the unit shape.
     expect(code(read("src", "lib", "ui", "field-widths.ts"))).not.toMatch(/export const JP_(ROWS|PANEL|LIST|META)/);
   });
@@ -1195,7 +1195,7 @@ describe("the thirteen „Asociază …” screens: Căutare, Rezultate and Asoc
   it("screenPanel and the screen row learn the unit, by opt-in", () => {
     expect(screenPanel("x", 3).style).toEqual({ width: "29.75rem" });
     expect(screenPanel("x").style).toEqual(PANEL_STYLE);
-    expect(String(screenRowStyle(6).width)).toBe("min(100%, max(60.5rem, calc(round(down, 100% + 1rem, 10.25rem) - 1rem)))");
+    expect(String(screenRowStyle(6).width)).toBe("min(var(--row-cap), max(60.5rem, calc(round(down, 100% + 1rem, 10.25rem) - 1rem)))");
   });
 });
 

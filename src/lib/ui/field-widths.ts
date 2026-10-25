@@ -998,10 +998,11 @@ function packAt(items: readonly PackItem[], units: number): { units: number; row
 export function unitRowStyle(screen: Screen): CSSProperties {
   const step = UNIT_REM + UNIT_GAP_REM;
   const widest = unitsRem(Math.max(...Object.values(PANEL_UNITS[screen]), ...Object.values(LIST_UNITS[screen])));
-  // Slice 40.69: never wider than the window (`min(100%, …)`): narrower than the widest tile, the tiles stand in one
-  // column and shrink to it; at 1366 px the row is what it was.
+  // Slice 40.69: on a narrow window never wider than the window — `--row-cap` is 100% below 1024 px and no cap above
+  // it (globals.css): narrower than the widest tile, the tiles stand in one column and shrink to it. At 1024 px and
+  // wider the row is what it was.
   return {
-    width: `min(100%, max(${rem(widest)}, calc(round(down, 100% + ${rem(UNIT_GAP_REM)}, ${rem(step)}) - ${rem(UNIT_GAP_REM)})))`,
+    width: `min(var(--row-cap), max(${rem(widest)}, calc(round(down, 100% + ${rem(UNIT_GAP_REM)}, ${rem(step)}) - ${rem(UNIT_GAP_REM)})))`,
   };
 }
 
@@ -1715,9 +1716,11 @@ export function screenPanel(name: string, wide: boolean | number = false) {
  */
 export function screenRowStyle(widestUnits: number): CSSProperties {
   const step = UNIT_REM + UNIT_GAP_REM;
-  // Slice 40.69: never wider than the window — the dashboard's sections go to one column at the same point.
+  // Slice 40.69: on a narrow window never wider than the window (`--row-cap`, globals.css) — the dashboard's sections
+  // go to one column at the same point. At 1024 px and wider a row still keeps its widest tile and the page scrolls
+  // sideways (#37.35: „Utilizatori"'s „Istoric" is 9 units at 1366).
   return {
-    width: `min(100%, max(${rem(unitsRem(widestUnits))}, calc(round(down, 100% + ${rem(UNIT_GAP_REM)}, ${rem(step)}) - ${rem(UNIT_GAP_REM)})))`,
+    width: `min(var(--row-cap), max(${rem(unitsRem(widestUnits))}, calc(round(down, 100% + ${rem(UNIT_GAP_REM)}, ${rem(step)}) - ${rem(UNIT_GAP_REM)})))`,
   };
 }
 

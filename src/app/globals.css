@@ -14,8 +14,17 @@
    ─────────────────────────────────────────────────────────────────────────── */
 
 :root {
+  /* Slice 40.69 — a narrow window: a unit row is never wider than the window (unitRowStyle and screenRowStyle in
+     src/lib/ui/field-widths.ts take min(var(--row-cap), …)). From 1024 px up there is no cap: a row keeps its widest
+     tile and the page scrolls sideways, as #37.35 set. The breakpoint is NARROW_WINDOW_QUERY's
+     (src/lib/ui/use-narrow-window.ts). A custom property is substituted where it is used, so 100% is the row's own. */
+  --row-cap: 100000px;
   --background: #F3F1ED;   /* light grey / soft off-white — page canvas       */
   --foreground: #2C2F33;   /* deep charcoal — body text (≈ 12 : 1 on canvas)  */
+}
+
+@media (max-width: 1023.98px) {
+  :root { --row-cap: 100%; }
 }
 
 @theme inline {
