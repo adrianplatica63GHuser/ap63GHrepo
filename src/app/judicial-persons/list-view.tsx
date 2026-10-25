@@ -37,7 +37,7 @@ import { modifiedOn } from "@/lib/persons/person-age";
 
 const PAGE_SIZE = 15;
 /** Slice #37.16: the list's columns, each a fixed width from `COLUMN` — the optional ones (#37.60) between the nickname and the buttons. */
-// Slice #37.94: the key and the defaults (none) are LIST_COLUMN_CHOICE.company.
+// Slice #37.94: the key and the defaults are LIST_COLUMN_CHOICE.company (four since 40.66).
 // Slice #37.71: four, as on the other lists. Since #39.82 the chooser offers five (Localitate added), four at once.
 const MAX_OPT = 4;
 

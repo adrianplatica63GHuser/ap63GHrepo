@@ -37,7 +37,7 @@ import { dmyFromIso, modifiedOn, personAgeText } from "@/lib/persons/person-age"
 import { DeceasedMark } from "@/components/persons/deceased-mark";
 
 const PAGE_SIZE = 15;
-// Slice #37.94: the key and the defaults (none) are LIST_COLUMN_CHOICE.person.
+// Slice #37.94: the key and the defaults are LIST_COLUMN_CHOICE.person (four since 40.66).
 const MAX_OPT   = 4;
 
 type NaturalPersonListItem = {

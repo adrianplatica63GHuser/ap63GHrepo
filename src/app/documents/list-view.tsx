@@ -43,7 +43,7 @@ import { appendFilterParams, filterAddressPatch, filterSignature, type FacetValu
 import { DOCUMENT_COLUMN_FILTERS, DOCUMENT_FILTER_FIELDS, DOCUMENT_FILTER_KEYS, parseDocumentFilters } from "@/lib/documents/list-filters";
 
 const PAGE_SIZE   = 15;
-// Slice #37.94: the key and the defaults (none) are LIST_COLUMN_CHOICE.document.
+// Slice #37.94: the key and the defaults are LIST_COLUMN_CHOICE.document (four since 40.66).
 const MAX_OPT     = 4;
 
 // ---------------------------------------------------------------------------

@@ -46,7 +46,7 @@ import {
 import { PROPERTY_COLUMN_FILTERS, PROPERTY_FILTER_FIELDS, PROPERTY_FILTER_KEYS, parsePropertyFilters } from "@/lib/properties/list-filters";
 
 const PAGE_SIZE = 15;
-// Slice #37.94: the key and the defaults (Tarla/Solă, Parcelă) are LIST_COLUMN_CHOICE.property.
+// Slice #37.94: the key and the defaults are LIST_COLUMN_CHOICE.property (four since 40.66).
 const MAX_OPT   = 4;
 // Slice #37.72: Poreclă is always shown, so it is no longer a default — or a choice.
 

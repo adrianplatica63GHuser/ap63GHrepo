@@ -17,12 +17,21 @@
  * **#38.02 moved the Properties key once more** (`-v3` → `-v4`, its Ask first),
  * so every browser opens that list on Tip proprietate; the other three keys
  * stayed as #37.94 left them.
+ *
+ * **Slice 40.66 moved all four once more** (Adrian: „please pick the best default yourself"), so every browser opens
+ * each list on the columns a person scans it for — the most „Câmpuri afișate" holds, `MAX_OPT`, 4:
+ *  - Proprietăți: Tarla, Parcelă, Tip proprietate, Localitate — what a field is found by. „Modificat la" has no room.
+ *  - Persoane fizice: CNP, Născut pe, Tip profesional, Modificat la.
+ *  - Persoane juridice: Tip, CUI, Localitate, Modificat la.
+ *  - Acte: Nr. document, Data, Instituție, Modificat la.
+ * „Modificat la" stands where there is room because it is the column every list opens sorted by (40.46, 40.55).
+ * Each list draws them in the order its chooser offers them; a choice made afterwards is kept as before.
  */
 export const LIST_COLUMN_CHOICE = {
-  property: { storageKey: "ga40-col-property-v4", defaults: ["propertyType"] },
-  document: { storageKey: "ga40-col-document-v3", defaults: [] },
-  person:   { storageKey: "ga40-col-person-v3",   defaults: [] },
-  company:  { storageKey: "ga40-col-company-v2",  defaults: [] },
+  property: { storageKey: "ga40-col-property-v5", defaults: ["tarlaSola", "parcela", "propertyType", "locality"] },
+  document: { storageKey: "ga40-col-document-v4", defaults: ["nrDocument", "dateDocument", "institution", "changed"] },
+  person:   { storageKey: "ga40-col-person-v4",   defaults: ["cnp", "dateOfBirth", "professionalType", "changed"] },
+  company:  { storageKey: "ga40-col-company-v3",  defaults: ["judicialPersonType", "cuiNumber", "locality", "changed"] },
 } as const satisfies Record<string, { storageKey: string; defaults: readonly string[] }>;
 
 /**
