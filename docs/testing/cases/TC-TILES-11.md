@@ -65,6 +65,10 @@ in the browser session (`ga:list-scroll`), which a closed tab forgets.
 
 ## Notes from the runs
 
+**2026-10-25 — Slice 40.66.** The lists open on four default columns (TC-LAYOUT-03). This case's steps read the lists
+as they opened before — Proprietăți on Tip proprietate, the other three on their fixed columns — so its spec stores
+that choice first (`listsOnTheirEarlierColumns`, e2e/helpers/list-columns.ts); a hand run unticks the defaults first.
+
 **2026-10-13 — Slice #39.26, step 12 added.** Back from a record returns to the list as it was left. The four lists
 keep their search, page, own filters and open row tiles in their address, and the page's scroll in the session by
 history slot. Before it, Back brought back a bare list.
