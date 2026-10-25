@@ -169,7 +169,7 @@ export function DocumentDetailTiles({
       {/* The header #26.12 settled (see its note in git history): the version
           strip is IN FLOW at the end of the row, so the title yields to it
           rather than running underneath. */}
-      <header className="relative flex min-h-[2.5rem] items-center gap-3" data-record-header="">
+      <header className="relative flex min-h-[2.5rem] flex-wrap items-center gap-x-4 gap-y-2" data-record-header="">
         <RecordHeading
           icon={ENTITY_ICON.document}
           name={documentName}
@@ -189,7 +189,7 @@ export function DocumentDetailTiles({
           </span>
         )}
         {/* Slice 40.57: „Panouri" right after the version controls; its panel is where the tile bar stood. */}
-        <div className="pointer-events-none ml-auto flex shrink-0 items-center gap-3" data-record-controls="">
+        <div className="ml-auto flex shrink-0 items-center gap-3" data-record-controls="">
           <div ref={setNavSlot} data-version-slot="" className="flex items-center" />
           <TilesMenuButton menu={tilesMenu} badge={hiddenMarked(marked, choice.shown)} />
         </div>

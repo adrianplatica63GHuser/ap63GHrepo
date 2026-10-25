@@ -275,6 +275,33 @@ export function packedHeight(placed: readonly Placed[], withFixed = false): numb
   return placed.reduce((m, p) => (p.fixed && !withFixed ? m : Math.max(m, bottom(p))), 0);
 }
 
+/**
+ * Slice 40.69: under this many units a row draws its tiles in ONE COLUMN — a 700-px window holds 3 (with the
+ * sidebar's rail, 40.68), 1366 px holds 7 and keeps its layout exactly. Two tiles of the common widths (3 and 2–4
+ * units) need 5 to stand side by side.
+ */
+export const ONE_COLUMN_BELOW_UNITS = 5;
+
+/**
+ * Slice 40.69: the arrangement drawn as one column — ONLY a way of drawing it (Ask first 2): the tiles in the order the
+ * arrangement places them, top to bottom, the left column first, each under the one before, PANEL_GAP apart; the
+ * row-end boxes (the action bar) under them all. Nothing here is stored: the arrangement itself is untouched.
+ */
+export function oneColumn(placed: readonly Placed[], gap: number): Placed[] {
+  const body = placed.filter((p) => !p.rowEnd).sort((a, b) => a.col - b.col || a.top - b.top);
+  const out: Placed[] = [];
+  let top = 0;
+  for (const p of body) {
+    out.push({ ...p, col: 0, top, fixed: undefined });
+    top += p.height + gap;
+  }
+  for (const p of placed.filter((x) => x.rowEnd)) {
+    out.push({ ...p, col: 0, top });
+    top += p.height + gap;
+  }
+  return out;
+}
+
 /** How many whole units a row of `width` px holds, a unit being `unitPx` and the gap `gapPx`. */
 export function columnsIn(width: number, unitPx: number, gapPx: number): number {
   return Math.max(1, Math.floor((width + gapPx + 0.5) / (unitPx + gapPx)));

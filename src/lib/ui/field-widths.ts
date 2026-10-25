@@ -998,8 +998,10 @@ function packAt(items: readonly PackItem[], units: number): { units: number; row
 export function unitRowStyle(screen: Screen): CSSProperties {
   const step = UNIT_REM + UNIT_GAP_REM;
   const widest = unitsRem(Math.max(...Object.values(PANEL_UNITS[screen]), ...Object.values(LIST_UNITS[screen])));
+  // Slice 40.69: never wider than the window (`min(100%, …)`): narrower than the widest tile, the tiles stand in one
+  // column and shrink to it; at 1366 px the row is what it was.
   return {
-    width: `max(${rem(widest)}, calc(round(down, 100% + ${rem(UNIT_GAP_REM)}, ${rem(step)}) - ${rem(UNIT_GAP_REM)}))`,
+    width: `min(100%, max(${rem(widest)}, calc(round(down, 100% + ${rem(UNIT_GAP_REM)}, ${rem(step)}) - ${rem(UNIT_GAP_REM)})))`,
   };
 }
 
@@ -1713,8 +1715,9 @@ export function screenPanel(name: string, wide: boolean | number = false) {
  */
 export function screenRowStyle(widestUnits: number): CSSProperties {
   const step = UNIT_REM + UNIT_GAP_REM;
+  // Slice 40.69: never wider than the window — the dashboard's sections go to one column at the same point.
   return {
-    width: `max(${rem(unitsRem(widestUnits))}, calc(round(down, 100% + ${rem(UNIT_GAP_REM)}, ${rem(step)}) - ${rem(UNIT_GAP_REM)}))`,
+    width: `min(100%, max(${rem(unitsRem(widestUnits))}, calc(round(down, 100% + ${rem(UNIT_GAP_REM)}, ${rem(step)}) - ${rem(UNIT_GAP_REM)})))`,
   };
 }
 

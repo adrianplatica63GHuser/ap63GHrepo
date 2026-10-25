@@ -131,11 +131,12 @@ export function PropertyDetailTiles({
     <>
       {/* Slice #19.07: name on the left, version controls right-aligned on the
           same line (portalled in by the details form via navSlot). */}
-      <header className="relative flex min-h-[2.5rem] items-center" data-record-header="">
+      <header className="relative flex min-h-[2.5rem] flex-wrap items-center gap-x-4 gap-y-2" data-record-header="">
         <RecordHeading icon={ENTITY_ICON.property} name={propertyName} />
         <PropertyTypeHeading type={type} />
-        {/* Slice 40.57: „Panouri" right after the version controls; its panel is where the tile bar stood. */}
-        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center gap-3" data-record-controls="">
+        {/* Slice 40.57: „Panouri" right after the version controls; its panel is where the tile bar stood.
+            Slice 40.69: in the flow, at the right — under a long name on a narrow window, never over it. */}
+        <div className="ml-auto flex shrink-0 items-center gap-3" data-record-controls="">
           <div ref={setNavSlot} data-version-slot="" className="flex items-center" />
           <TilesMenuButton menu={tilesMenu} />
         </div>

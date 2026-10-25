@@ -110,7 +110,7 @@
  */
 import { useLayoutEffect, type RefObject } from "react";
 import { UNIT_GAP_REM, UNIT_REM } from "@/lib/ui/field-widths";
-import { columnsIn, fitsBeside, grow, packedHeight, unitsOf, type PackBox, type Placed } from "@/lib/ui/tile-packing";
+import { columnsIn, fitsBeside, grow, packedHeight, unitsOf, type PackBox, type Placed, ONE_COLUMN_BELOW_UNITS, oneColumn } from "@/lib/ui/tile-packing";
 import {
   MAKE_ROOM_SLIDE_MS,
   TILE_POSITIONS_RESET,
@@ -339,6 +339,8 @@ export function useTilePacking(
     let flowColumns = 0;
     // The units this row's own width holds (#38.12: `flowColumns` may be fewer).
     let ownColumns = 0;
+    // Slice 40.69: the row is too narrow for two columns — its tiles drawn one under another (`oneColumn`).
+    let single = false;
     let settleUntil = 0;
     let interacted = false;
     let frame = 0;
@@ -394,6 +396,11 @@ export function useTilePacking(
       for (const p of placed) {
         const box = byId.get(p.id);
         if (!box) continue;
+        // Slice 40.69: in one column a tile is never wider than the row — one whose content cannot shrink (a wide
+        // table, a fixed-width form) scrolls inside itself, never the page (Ask first 3).
+        const tooWide = single && ownWidth(box.el) > container.clientWidth + 0.5;
+        styles.set(box.el, "max-width", tooWide ? "100%" : "");
+        styles.set(box.el, "overflow-x", tooWide ? "auto" : "");
         styles.set(box.el, "position", "absolute");
         styles.set(box.el, "left", `${p.col * (unit + gap)}px`);
         styles.set(box.el, "top", `${p.top}px`);
@@ -404,7 +411,8 @@ export function useTilePacking(
         else widest = Math.max(widest, ownWidth(box.el));
         box.el.dataset.packedCol = String(p.col);
       }
-      if (fitWidest) styles.set(container, "min-width", `${widest}px`);
+      // Slice 40.69: in one column the row holds no tile wider than itself, so it is not stretched to the widest.
+      if (fitWidest) styles.set(container, "min-width", single ? "" : `${widest}px`);
       publish();
     };
 
@@ -481,7 +489,9 @@ export function useTilePacking(
         ...(under.has(b.id) ? { under: true } : {}),
       }));
       const r = placeWithStored(items, { ...stored, ...visit }, columns, gap, flowColumns);
-      placed = r.placed;
+      // Slice 40.69: too narrow for two columns, the same arrangement is DRAWN as one; what is stored is untouched.
+      single = ownColumns < ONE_COLUMN_BELOW_UNITS;
+      placed = single ? oneColumn(r.placed, gap) : r.placed;
       fallback = r.fallback;
       lead = r.lead;
       apply();
@@ -563,6 +573,8 @@ export function useTilePacking(
     // Box `id` now stands where the user put it — and `slid`, the tiles that made room for it (39.91):
     // store the arrangement, as one — a preview's place for this visit only.
     const store = (id: string, slid: readonly string[] = []) => {
+      // Slice 40.69: one column is a way of drawing, never an arrangement — nothing dragged there is stored.
+      if (single) return;
       const { gap } = metrics();
       const moved = [id, ...slid];
       const lasting = moved.filter(isStorable);
@@ -733,7 +745,8 @@ export function useTilePacking(
 
     const onPress = (e: PointerEvent) => {
       interacted = true;
-      if (drag || e.button !== 0 || !e.isPrimary) return;
+      // Slice 40.69: in one column the tiles are not dragged (Ask first 2: the arrangement is not touched there).
+      if (drag || single || e.button !== 0 || !e.isPrimary) return;
       const box = boxAt(e.target);
       const from = box && placed.find((p) => p.id === box.id);
       if (!box || !from || !isDragSurface(e.target, e.clientX, e.clientY, box.el)) return;
