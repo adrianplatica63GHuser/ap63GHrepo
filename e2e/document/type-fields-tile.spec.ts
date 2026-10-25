@@ -19,6 +19,7 @@
 
 import { test, expect, type Locator, type Page } from "../helpers/test";
 import { E2E_MARKER, createDocumentOfType, removeLeftovers, removeRecord } from "../helpers/records";
+import { openEmptyTiles, pressTileButton, tileBox } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}DOC-03`;
 const SHOTS = "playwright-report/type-fields-tile";
@@ -47,7 +48,9 @@ async function photograph(page: Page, name: string, target: () => Locator): Prom
 }
 
 async function allTiles(page: Page, word: "Toate" | "All"): Promise<void> {
-  await page.getByRole("button", { name: word, exact: true }).click();
+  // 40.57: the button is in the „Panouri" panel; 40.64: a new contract's empty tiles are one line — „Adaugă" opens them.
+  await pressTileButton(page, word);
+  await openEmptyTiles(page);
 }
 
 test.describe("TC-DOC-03 — un PAD: „Detalii act” fără panou de emitere; „Identificarea actului”", () => {
@@ -67,7 +70,8 @@ test.describe("TC-DOC-03 — un PAD: „Detalii act” fără panou de emitere; 
       await page.goto(`/documents/${padId}`);
       let tile = page.getByRole("region", { name: "Detalii act", exact: true });
       await expect(tile).toBeVisible({ timeout: 30_000 });
-      await expect(page.getByRole("checkbox", { name: "Detalii act", exact: true })).toBeVisible();
+      // 40.57: the tile's box is in the „Panouri" panel, closed.
+      await expect(tileBox(page, "Detalii act")).toBeAttached();
       await expect(tile.getByRole("heading", { name: "[Date de emitere]", exact: true })).toHaveCount(0);
       await expect(tile.locator('[data-width-field="dateDocument"]')).toHaveCount(0);
       await expect(page.getByText("Câmpuri specifice")).toHaveCount(0);

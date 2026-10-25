@@ -81,6 +81,10 @@ back. `C:\dev\TEST.DATA\` is read-only to this catalogue.
 
 ## Notes from the runs
 
+**2026-10-25 — Slice 40.64.** On a saved record a form tile with nothing in it is one line — its title, „necompletat" and
+„Adaugă". Where a step reads or fills a field in such a tile, the person presses „Adaugă" on it first; the spec does it
+through `openEmptyTile` / `openEmptyTiles` (e2e/helpers/tiles.ts). Not driven by hand first.
+
 **2026-09-25 (Slice #36.18) — steps 1–9 held, to create the document the second runs
 needed.** `DOC01898`, „Se afișează 15 din 105" → „15 din 106"; `530.jpg` in through
 `file_upload` exactly as step 8 says; „Pagini" showed it with „Vizualizare", „Tipărire",

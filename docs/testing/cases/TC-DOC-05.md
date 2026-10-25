@@ -52,6 +52,10 @@ document (`DELETE /api/documents/<id>`). Căutare globală for `TC-DOC-05` finds
 
 ## Notes from the runs
 
+**2026-10-25 — Slice 40.64.** On a saved record a form tile with nothing in it is one line — its title, „necompletat" and
+„Adaugă". Where a step reads or fills a field in such a tile, the person presses „Adaugă" on it first; the spec does it
+through `openEmptyTile` / `openEmptyTiles` (e2e/helpers/tiles.ts). Not driven by hand first.
+
 **2026-10-02 — run 1, `driven` (Slice #37.54).** Driven in the Claude desktop app's browser pane
 against `npm run dev` on 3000, after the CVC form was saved with the new names and order; this
 file was written from it. The pane's own remembered CVC tiles were the old keys — all four

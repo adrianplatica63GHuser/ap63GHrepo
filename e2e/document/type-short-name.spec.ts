@@ -43,7 +43,8 @@ async function tipOf(page: Page, title: string): Promise<[string, string | null]
   await expect(main.locator("tbody tr").filter({ hasText: MARK })).toHaveCount(2, { timeout: 30_000 });
   // 40.60: the badges' column is gone, so „Tip" is the first cell.
   const cell = main.locator("tbody tr").filter({ hasText: title }).locator("td").nth(0);
-  return [(await cell.textContent())?.trim() ?? "", await cell.getAttribute("title")];
+  // A record made in the last days carries „Nou!" after its first cell's text (the recency badge): not the type's name.
+  return [(await cell.textContent())?.replace(/Nou!\s*$/, "").trim() ?? "", await cell.getAttribute("title")];
 }
 
 /** Date de referință → „Tipuri de Document", the row's „Deschide": the type's page, „General" (#38.39). */

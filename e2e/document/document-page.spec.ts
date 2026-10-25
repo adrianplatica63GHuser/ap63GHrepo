@@ -63,7 +63,7 @@ import { test, expect, type Locator, type Page } from "../helpers/test";
 import { E2E_MARKER, createDocumentOfType, removeLeftovers, removeRecord } from "../helpers/records";
 import { openFromSidebar } from "../helpers/sidebar";
 import { expectFixedFieldsHold, expectStableColumns, expectStableWidths, expectUnitGrid, photograph } from "../helpers/field-widths";
-import { pressTileButton, showTile, TILE_GROUP, tileBox } from "../helpers/tiles";
+import { openEmptyTiles, pressTileButton, showTile, TILE_GROUP, tileBox } from "../helpers/tiles";
 import { DOCUMENT, PAGES_PANEL_REM, TEMPLATE_FIELD, UNIT_GAP_REM, UNIT_REM } from "../../src/lib/ui/field-widths";
 
 /** The widest value each FIXED box on the Document must hold (`field-widths.ts`). */
@@ -94,6 +94,8 @@ async function expectDocumentWidths(page: Page): Promise<void> {
   await expectStableWidths(page);
   await pressTileButton(page, "Toate");
   await expect(page.getByRole("region", { name: "Etichete și grupuri", exact: true })).toBeVisible({ timeout: 30_000 });
+  // 40.64: a new act's empty tiles are one line each; opened, so every box below is measured.
+  await openEmptyTiles(page);
   await expectStableWidths(page);
   // Slice #37.31 — every tile on the width unit: the row is 6 units at 1366 px, 10 at 1920,
   // 14 at 2560, and each tile — a notebook tile is one frame — a whole number of units.

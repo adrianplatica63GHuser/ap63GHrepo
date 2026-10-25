@@ -51,6 +51,10 @@ The interface back in Romanian (the cookie removed, as it was). Delete both docu
 
 ## Notes from the runs
 
+**2026-10-25 — Slice 40.64.** On a saved record a form tile with nothing in it is one line — its title, „necompletat" and
+„Adaugă". Where a step reads or fills a field in such a tile, the person presses „Adaugă" on it first; the spec does it
+through `openEmptyTile` / `openEmptyTiles` (e2e/helpers/tiles.ts). Not driven by hand first.
+
 **2026-10-02 — run 1, `driven` (Slice #37.52).** Driven in the Claude desktop app's browser pane
 against `npm run dev` on 3000; the records posted from the page with `fetch`, the language
 switched with the `NEXT_LOCALE` cookie and a reload (the pane had none before — Romanian is the
