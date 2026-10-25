@@ -134,7 +134,7 @@ test.describe("TC-DOC-06 — „fără valoare” în cursive, fără liniuțe",
       // Step 6 — English, „All": „no value" in italics, the same rows.
       await language(page, "en-GB");
       await page.goto(`/documents/${id}`);
-      await page.getByRole("button", { name: "All", exact: true }).click({ timeout: 30_000 });
+      await pressTileButton(page, "All", { timeout: 30_000 });
       await expect(dropdowns(page)).toHaveCount(36, { timeout: 30_000 });
       for (const box of await closedBoxes(page)) {
         expect(box).toEqual({ shown: "no value", style: "italic", blank: "no value" });

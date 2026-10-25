@@ -51,7 +51,8 @@ export async function openTiles(page: Page): Promise<boolean> {
   if ((await button.getAttribute("aria-expanded")) === "true") return false;
   await expect(async () => {
     if ((await button.getAttribute("aria-expanded")) !== "true") await button.click();
-    await expect(page.getByRole("group", { name: TILE_GROUP })).toBeVisible({ timeout: 2_000 });
+    // The panel's box, not the group's name: the same in either language.
+    await expect(page.locator("[data-tiles-panel] > div")).toBeVisible({ timeout: 2_000 });
   }).toPass({ timeout: 30_000 });
   return true;
 }
@@ -65,10 +66,13 @@ export async function closeTiles(page: Page): Promise<void> {
   await expect(button).toHaveAttribute("aria-expanded", "false");
 }
 
-/** Press the bar's „Toate", „Toate sus" or „Implicit" — the panel opened for it, and closed after if this opened it. */
-export async function pressTileButton(page: Page, name: "Toate" | "Toate sus" | "Implicit", options?: { timeout?: number }): Promise<void> {
+/**
+ * Press the bar's „Toate", „Toate sus" or „Implicit" (in English „All", „All up", „Default") — the panel opened for it,
+ * and closed after if this opened it.
+ */
+export async function pressTileButton(page: Page, name: string, options?: { timeout?: number }): Promise<void> {
   const opened = await openTiles(page);
-  await page.getByRole("group", { name: TILE_GROUP }).getByRole("button", { name, exact: true }).click(options);
+  await page.locator("[data-tile-bar-buttons]").first().getByRole("button", { name, exact: true }).click(options);
   if (opened) await closeTiles(page);
 }
 
