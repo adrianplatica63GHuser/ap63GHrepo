@@ -151,7 +151,8 @@ test.describe("TC-PERS-03 — nota CNP-ului într-un balon, refuzul în română
       await lastName.focus();
       const red = await validUntil.evaluate((el) => getComputedStyle(el).borderTopColor);
       expect(red).not.toBe(CLEAR);
-      expect(red).toMatch(/oklch\(0\.637 0\.237 25\.3|rgb\(239, 68, 68\)/);
+      // Tailwind 4's red-500, as Chromium reports it (lab), or as oklch / sRGB elsewhere.
+      expect(red).toMatch(/lab\(55\.48|oklch\(0\.637 0\.237 25\.3|rgb\(239, 68, 68\)/);
       await expect(page.locator('[data-panel="id-card"]').getByText("Expirat", { exact: false })).toBeVisible();
     } finally {
       // At the end — leaving without saving, then deleting the person.
