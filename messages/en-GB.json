@@ -987,8 +987,7 @@
         "codeHint": "Type the other object's code: PPERS (natural person), JPERS (juridical person), PROP (property) or DOC (document), followed by the number — e.g. PPERS00001.",
         "empty": "No cross-references added yet",
         "referencedBy": "referenced by",
-        "typeNatural": "Natural person",
-        "typeJudicial": "Juridical person",
+        "typePerson": "Person",
         "typeProp": "Property",
         "typeDoc": "Document"
       },
@@ -4116,7 +4115,8 @@
         "days": "{count, plural, one {a day ago} other {# days ago}}",
         "weeks": "{count, plural, one {a week ago} other {# weeks ago}}"
       },
-      "typePerson": "Person",
+      "typeNatural": "Natural person",
+      "typeJudicial": "Juridical person",
       "typeProperty": "Property",
       "typeDocument": "Document"
     }

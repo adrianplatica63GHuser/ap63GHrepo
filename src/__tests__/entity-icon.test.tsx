@@ -11,7 +11,6 @@ import { render, screen } from "@testing-library/react";
 import { Building2, FileText, Map as MapIcon, User } from "lucide-react";
 
 import { EntityMark } from "@/components/record/entity-mark";
-import { RELATED_ICON } from "@/components/tiles/related-tile";
 import { NAV_SECTIONS } from "@/components/sidebar/nav-config";
 import { ENTITY_ICON } from "@/lib/ui/entity-icon";
 
@@ -24,7 +23,10 @@ describe("one mark for each kind (40.61)", () => {
   });
 
   it("Legături's icons are the same map (Ask first 1)", () => {
-    expect(RELATED_ICON).toBe(ENTITY_ICON);
+    // Read, not imported: related-tile.tsx pulls next-intl's ESM build, which jest does not transform.
+    expect(code(read("src", "components", "tiles", "related-tile.tsx"))).toContain(
+      "export const RELATED_ICON: Readonly<Record<RelatedKind, ComponentType<LucideProps>>> = ENTITY_ICON;",
+    );
   });
 
   it("the sidebar's four entries draw them", () => {
@@ -71,6 +73,13 @@ describe("where the marks replaced words and colours", () => {
     expect(search).not.toMatch(/function (badgeClass|personTypeBadge)\b/);
     expect(search).toMatch(/font-mono text-xs font-medium text-indigo-800/); // a group's code
     expect(search).toMatch(/font-mono text-xs font-medium text-teal-800/); // a stamp's code
+  });
+
+  it("every key the dashboard's marks read is in both message files", () => {
+    for (const f of ["ro-RO.json", "en-GB.json"]) {
+      const ra = JSON.parse(read("messages", f)).dashboard.recentActivity;
+      for (const k of ["typeNatural", "typeJudicial", "typeProperty", "typeDocument"]) expect([f, k, typeof ra[k]]).toEqual([f, k, "string"]);
+    }
   });
 
   it("the kinds' words, in both languages", () => {

@@ -74,7 +74,7 @@ const ALLOW: Record<string, Allowed[]> = {
     ["A096", "{chunks}"],
   ],
   "src/app/_components/dashboard-client.tsx": [
-    ["A113", "{data === undefined ? ( <Skeleton className=\"h-8 w-12\" /"],
+    ["A113", "<Icon size={20} aria-hidden=\"true\" className=\"text-fade dark:text-zinc-400\" /> {"], // 40.61: the count under its kind's mark
     ["A113", "{nameOr(doc.title, \"document\")}"], // #37.57: the title is the link
     ["A113", "<span className=\"font-bold\">{data.persons}</span> <span>"],
     ["A113", "<span className=\"font-bold\">{data.properties}</span> <sp"],
