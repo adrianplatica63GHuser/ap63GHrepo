@@ -1,78 +1,81 @@
 /**
- * Case:   TC-SET-05 — „Noapte”: bifat sub „GA40”, păstrat la reîncărcare, același în „Setări”
+ * Case:   TC-SET-05 — „Noapte”: în meniul contului, păstrat la reîncărcare, același în „Setări”
  * Source: docs/testing/cases/TC-SET-05.md, „Last green" 2026-10-21
  *
  * A translation of the case file, step for step (Slice 40.19). Slice 40.28: the box is „Noapte" under „GA40", the
  * flags stacked in the panel's middle, „Setări"'s box „Noapte (Mod Întunecat)"; step 1 measures the header. Slice 40.58:
- * the flags are „RO | EN", one two-part control in the panel's middle; step 7 switches the language with it. It changes only this browser context's cookie, and
+ * the flags are „RO | EN", one two-part control in the panel's middle; step 7 switches the language with it. Slice 40.59
+ * (Figura 8.3): „Noapte" and „RO | EN" are in the account menu at the bottom of the sidebar; the header holds GA40 and
+ * the collapse button only. It changes only this browser context's cookie, and
  * puts the look back to light in `finally`, so a red run leaves nothing dark behind.
  */
 import { test, expect, type Page } from "../helpers/test";
+import { accountEntry, accountMenu, closeAccountMenu, openAccountMenu } from "../helpers/sidebar";
 import { lookOnLoad } from "../helpers/theme";
 
-const sidebarBox = (page: Page) => page.locator('[data-theme-toggle="sidebar"]').getByRole("checkbox", { name: "Noapte", exact: true });
+// 40.59: the sidebar's „Noapte" is the account menu's „Zi | Noapte" (it was a checkbox under „GA40", 40.19/40.28).
+const segment = (page: Page, sw: string, value: string) => accountMenu(page).locator(`[data-segmented="${sw}"] [data-segment="${value}"]`);
 const settingsBox = (page: Page) =>
   page.locator('[data-account-appearance]').getByRole("checkbox", { name: "Noapte (Mod Întunecat)", exact: true });
 const isDark = (page: Page) => page.evaluate(() => document.documentElement.classList.contains("dark"));
 const bodyBg = (page: Page) => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
 
 test.describe("TC-SET-05 — „Noapte”", () => {
-  test("bifat sub „GA40”, păstrat la reîncărcare, același în „Setări”", async ({ page }) => {
+  test("în meniul contului, păstrat la reîncărcare, același în „Setări”", async ({ page }) => {
     await lookOnLoad(page, "light");
     await page.setViewportSize({ width: 1366, height: 900 });
     try {
-      // Step 1 — the header (40.28): „GA40" over the box, both on the left padding; the two flags one above the other,
-      // smaller, their centre on the panel's; the collapse button where it was; the box unticked, the page light.
+      // Step 1 (40.59) — the header holds GA40, in Roboto Slab navy like a tile title, and the collapse button, nothing
+      // else: no box, no „RO | EN", no „Autentificat ca"; the collapse button where it always stood. The page light.
       await page.goto("/natural-persons");
-      await expect(sidebarBox(page)).toBeVisible({ timeout: 30_000 });
-      await expect(sidebarBox(page)).not.toBeChecked();
-      await expect(page.locator('[data-theme-toggle="sidebar"]')).toHaveAttribute("title", "Noapte (Mod Întunecat)");
+      const head = page.locator("[data-sidebar-look]");
+      await expect(head.locator("[data-sidebar-name]")).toHaveText("GA40", { timeout: 30_000 });
+      await expect(head.locator("input, [data-segmented]")).toHaveCount(0);
+      await expect(head.getByText(/Autentificat ca/)).toHaveCount(0);
+      await expect(head.getByRole("button")).toHaveCount(1);
+      const name = head.locator("[data-sidebar-name]");
+      expect(await name.evaluate((e) => getComputedStyle(e).fontFamily)).toMatch(/Roboto Slab/);
+      expect(await name.evaluate((e) => getComputedStyle(e).color)).toBe("rgb(30, 58, 138)"); // navy
       const g = await page.evaluate(() => {
         const r = (el: Element | null) => {
           const b = el!.getBoundingClientRect();
           return { l: b.left, r: b.right, t: b.top, b: b.bottom, w: b.width, h: b.height };
         };
-        const head = document.querySelector("[data-sidebar-look]")!;
-        return {
-          aside: r(document.querySelector("aside")),
-          head: r(head),
-          name: r(document.querySelector("[data-sidebar-name]")),
-          box: r(document.querySelector('[data-theme-toggle="sidebar"]')),
-          sw: r(head.querySelector('[data-segmented="locale"]')),
-          parts: [...head.querySelectorAll('[data-segmented="locale"] button')].map((b) => ({ ...r(b), text: b.textContent })),
-          collapse: r(head.querySelector('button[aria-label="Restrânge bara laterală"]')),
-        };
+        const h = document.querySelector("[data-sidebar-look]")!;
+        return { head: r(h), collapse: r(h.querySelector('button[aria-label="Restrânge bara laterală"]')) };
       });
       expect(Math.round(g.head.h)).toBe(56);
-      expect(Math.abs(g.box.l - g.name.l)).toBeLessThanOrEqual(1);
-      expect(g.box.t).toBeGreaterThanOrEqual(g.name.b - 0.5);
-      // 40.58: „RO | EN" side by side, RO first, its centre on the panel's (it was two flags, one above the other).
-      expect(g.parts.map((p) => p.text)).toEqual(["RO", "EN"]);
-      expect(g.parts[1].l).toBeGreaterThanOrEqual(g.parts[0].r - 1);
-      expect(Math.abs(g.parts[0].t - g.parts[1].t)).toBeLessThanOrEqual(0.5);
-      const mid = (g.aside.l + g.aside.r) / 2;
-      expect(Math.abs((g.sw.l + g.sw.r) / 2 - mid)).toBeLessThanOrEqual(1);
-      // The collapse button as it always stood: 30 × 30, on the header's right padding, in its middle.
       expect([Math.round(g.collapse.w), Math.round(g.collapse.h)]).toEqual([30, 30]);
       expect(Math.abs(g.head.r - 12 - g.collapse.r)).toBeLessThanOrEqual(1);
       expect(Math.abs((g.head.t + g.head.b) / 2 - (g.collapse.t + g.collapse.b) / 2)).toBeLessThanOrEqual(1);
-      // Nothing overlaps: the left column ends before the flags start, the flags before the button.
-      expect(Math.max(g.name.r, g.box.r)).toBeLessThan(g.sw.l);
-      expect(g.sw.r).toBeLessThan(g.collapse.l);
       expect(await isDark(page)).toBe(false);
       const light = await bodyBg(page);
 
-      // Step 2 — ticked: dark at once, no reload.
-      await sidebarBox(page).check();
+      // Step 2 (40.59) — the account entry at the bottom opens the menu upward: „Autentificat ca" first, Limba, Aspect
+      // („Zi" pressed), Ieșire. „Noapte": dark at once, no reload.
+      const menu = await openAccountMenu(page);
+      const [entryBox, menuBox] = [await accountEntry(page).boundingBox(), await menu.boundingBox()];
+      expect((menuBox?.y ?? 0) + (menuBox?.height ?? 0)).toBeLessThanOrEqual((entryBox?.y ?? 0) + 1);
+      await expect(menu.locator("[data-account-signed-in]")).toHaveText(/^Autentificat ca \S+/);
+      await expect(menu.getByRole("group", { name: "Limba", exact: true })).toBeVisible();
+      await expect(menu.getByRole("group", { name: "Aspect", exact: true })).toBeVisible();
+      await expect(menu.getByRole("button", { name: "Ieșire", exact: true })).toBeVisible();
+      await expect(segment(page, "theme", "light")).toHaveAttribute("aria-pressed", "true");
+      await segment(page, "theme", "dark").click();
+      await expect(segment(page, "theme", "dark")).toHaveAttribute("aria-pressed", "true");
       expect(await isDark(page)).toBe(true);
       expect(await bodyBg(page)).not.toBe(light);
       expect(await page.evaluate(() => getComputedStyle(document.querySelector("aside")!).backgroundColor)).toBe("rgb(24, 24, 27)");
+      // Esc closes it, the focus back on the entry.
+      await page.keyboard.press("Escape");
+      await expect(menu).toBeHidden();
+      await expect(accountEntry(page)).toBeFocused();
 
-      // Step 3 — a reload arrives dark: the server's own answer carries the class.
+      // Step 3 — a reload arrives dark: the server's own answer carries the class; „Noapte" is the one pressed.
       const html = await (await page.request.get("/natural-persons")).text();
       expect(html).toMatch(/<html[^>]*class="[^"]*\bdark\b/);
       await page.reload();
-      await expect(sidebarBox(page)).toBeChecked({ timeout: 30_000 });
+      await expect(segment(page, "theme", "dark")).toHaveAttribute("aria-pressed", "true", { timeout: 30_000 });
       expect(await isDark(page)).toBe(true);
 
       // Step 4 — „Setări": „Aspect" under „Limba", ticked.
@@ -87,27 +90,27 @@ test.describe("TC-SET-05 — „Noapte”", () => {
       expect(below).toBe(true);
       await expect(settingsBox(page)).toBeChecked();
 
-      // Step 5 — unticked there: light at once, and the sidebar's box with it.
+      // Step 5 — unticked there: light at once, and the menu's „Zi" pressed with it.
       await settingsBox(page).uncheck();
       expect(await isDark(page)).toBe(false);
-      await expect(sidebarBox(page)).not.toBeChecked();
+      await expect(segment(page, "theme", "light")).toHaveAttribute("aria-pressed", "true");
 
       // Step 6 — a reload stays light.
       await page.reload();
       await expect(settingsBox(page)).not.toBeChecked({ timeout: 30_000 });
-      await expect(sidebarBox(page)).not.toBeChecked();
+      await expect(segment(page, "theme", "light")).toHaveAttribute("aria-pressed", "true");
       expect(await isDark(page)).toBe(false);
 
-      // Step 7 (40.58) — „RO | EN": RO pressed and filled, EN outlined; EN turns the screen English; RO back; nothing is
-      // asked of flagcdn.com.
+      // Step 7 (40.58; in the menu since 40.59) — „RO | EN": RO pressed and filled, EN outlined; EN turns the screen
+      // English; RO back; nothing is asked of flagcdn.com.
       const asked: string[] = [];
       page.on("request", (r) => {
         if (r.url().includes("flagcdn.com")) asked.push(r.url());
       });
       await page.goto("/natural-persons");
-      const sw = page.locator('[data-sidebar-look] [data-segmented="locale"]');
-      const ro = sw.getByRole("button", { name: "Română", exact: true });
-      const en = sw.getByRole("button", { name: "English", exact: true });
+      await openAccountMenu(page);
+      const ro = accountMenu(page).getByRole("button", { name: "Română", exact: true });
+      const en = accountMenu(page).getByRole("button", { name: "English", exact: true });
       await expect(ro).toHaveAttribute("aria-pressed", "true", { timeout: 30_000 });
       await expect(en).toHaveAttribute("aria-pressed", "false");
       await expect(ro).toBeEnabled();
@@ -115,10 +118,13 @@ test.describe("TC-SET-05 — „Noapte”", () => {
       expect(await en.evaluate((e) => getComputedStyle(e).backgroundColor)).toBe("rgba(0, 0, 0, 0)");
       await en.click();
       await expect(en).toHaveAttribute("aria-pressed", "true", { timeout: 30_000 });
-      await expect(page.locator('[data-theme-toggle="sidebar"]').getByRole("checkbox", { name: "Night", exact: true })).toBeVisible({ timeout: 30_000 });
+      await expect(accountMenu(page).getByRole("group", { name: "Language", exact: true })).toBeAttached({ timeout: 30_000 });
+      await expect(segment(page, "theme", "dark")).toHaveText("Night");
+      await openAccountMenu(page);
       await ro.click();
       await expect(ro).toHaveAttribute("aria-pressed", "true", { timeout: 30_000 });
-      await expect(sidebarBox(page)).toBeVisible({ timeout: 30_000 });
+      await expect(segment(page, "theme", "dark")).toHaveText("Noapte", { timeout: 30_000 });
+      await closeAccountMenu(page);
       expect(asked).toEqual([]);
       expect(await page.locator("aside img").count()).toBe(0);
     } finally {

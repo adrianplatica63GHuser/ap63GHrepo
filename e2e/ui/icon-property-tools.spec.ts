@@ -177,7 +177,8 @@ test.describe("TC-ICON-04 — Unghiurile, un punct adăugat și mutat mai sus, c
       expect(await iconOf(addPage)).toBe("lucide-file-plus");
       // The pages panel and the sidebar's menus load after the form.
       await expect(page.getByText("Se încarcă…")).toHaveCount(0, { timeout: 30_000 });
-      await expect(page.getByText("Autentificat ca", { exact: false })).toBeVisible({ timeout: 30_000 });
+      // 40.59: the signed-in name is on the account entry at the bottom (it was „Autentificat ca" at the top).
+      await expect(page.locator("[data-account-entry]")).toHaveText(/\S+/, { timeout: 30_000 });
       await photograph(page, "document-pages", async () => {
         await addPage.scrollIntoViewIfNeeded();
         await moveAway(page);

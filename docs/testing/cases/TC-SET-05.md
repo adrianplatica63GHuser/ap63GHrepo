@@ -1,4 +1,4 @@
-# TC-SET-05 — „Noapte”: bifat sub „GA40”, păstrat la reîncărcare, același în „Setări”
+# TC-SET-05 — „Noapte”: în meniul contului, păstrat la reîncărcare, același în „Setări”
 
 | | |
 |---|---|
@@ -38,15 +38,19 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „Persoane fizice" at 1366 × 900 and looks at the sidebar's header | The header 56 px tall. At its left „GA40", and under it, its left edge on „GA40"'s within 1 px, an unticked box „Noapte" whose tooltip reads „Noapte (Mod Întunecat)"; „RO | EN" (40.58: it was the two flags) side by side, RO first, its centre within 1 px of the panel's; the collapse button 30 × 30 on the header's right padding, in its middle; nothing overlapping; the page light |
-| 2 | Ticks „Noapte" | At once, without a reload: `<html>` carries `dark`, the page's background is dark, the sidebar too |
-| 3 | Reloads the page | The page arrives dark — the server's first answer already carries `dark` on `<html>` — and the box is ticked |
+| 1 | Opens „Persoane fizice" at 1366 × 900 and looks at the sidebar's header | (40.59) The header 56 px tall, holding „GA40" — Roboto Slab, navy, like a tile title — and the collapse button, nothing else: no box, no „RO \| EN", no „Autentificat ca". The collapse button 30 × 30 px on the header's right padding, in its middle. The page light |
+| 2 | Presses the account entry at the bottom of the sidebar (the account's name), then „Noapte", then Esc | The menu opens upward, above the entry: „Autentificat ca <name>", „Limba" with RO \| EN, „Aspect" with Zi \| Noapte („Zi" pressed), „Ieșire". „Noapte": at once, without a reload, `<html>` carries `dark`, the page's background is dark, the sidebar too. Esc closes the menu and the focus is on the entry |
+| 3 | Reloads the page | The page arrives dark — the server's first answer already carries `dark` on `<html>` — and the menu's „Noapte" is the one pressed |
 | 4 | Opens „Setări" | Under „Limba", a group „Aspect" with the box „Noapte (Mod Întunecat)", ticked |
-| 5 | Unticks it there | At once the page is light, and the sidebar's box is unticked too |
-| 6 | Reloads | Light, both boxes unticked |
-| 7 | (40.58) Opens „Persoane fizice" and looks at „RO \| EN", presses „EN", then „RO" | RO filled in slate and pressed, EN outlined. „EN": the screen in English (the box reads „Night"), EN the one pressed. „RO": Romanian again. Nothing is asked of flagcdn.com and the sidebar shows no image |
+| 5 | Unticks it there | At once the page is light, and the menu's „Zi" is the one pressed |
+| 6 | Reloads | Light: the box unticked, „Zi" pressed |
+| 7 | (40.58; in the menu since 40.59) Opens „Persoane fizice", opens the menu, looks at „RO \| EN", presses „EN", then „RO" | RO filled in slate and pressed, EN outlined. „EN": the screen in English („Aspect"'s switch reads „Day \| Night"), EN the one pressed. „RO": Romanian again. Nothing is asked of flagcdn.com and the sidebar shows no image |
 
 ## Notes from the runs
+
+**2026-10-25 — the account menu (Slice 40.59, Figura 8.3).** „Noapte" and „RO | EN" left the header for the account
+menu at the bottom of the sidebar; steps 1–3 and 5–7 rewritten for it. Written from the slice's own change and added to
+the spec; not driven by hand first.
 
 **2026-10-25 — „RO | EN" (Slice 40.58).** Step 1 reads the switch where it read the flags; step 7 is new. Written from
 the slice's own change and added to the spec; not driven by hand first.

@@ -38,7 +38,7 @@
 
 import fs from "fs";
 import { test, expect, type Page } from "../helpers/test";
-import { openSection, sidebar } from "../helpers/sidebar";
+import { accountEntry, accountMenu, closeAccountMenu, openAccountMenu, openSection, sidebar, signOutFromMenu } from "../helpers/sidebar";
 import { USER_STATE } from "../helpers/auth-state";
 import { fillLoginForm } from "../helpers/login-form";
 import { tileBox } from "../helpers/tiles";
@@ -89,10 +89,14 @@ test.describe("TC-AUTH-01 — Conectare și tabloul de bord", () => {
     // opened (#38.28). What it unfolds is TC-LAYOUT-04's.
     await expect(page.locator("aside").getByRole("button", { name: "Recente", exact: true })).toHaveAttribute("aria-expanded", "false");
 
-    // Step 8 — at the TOP of the sidebar: „Autentificat ca", and the account's
-    // name. The name is whatever the account is called, so the spec asserts
-    // that one follows, not which.
-    await expect(page.getByText("Autentificat ca")).toHaveText(/^Autentificat ca \S+/);
+    // Step 8 — „Autentificat ca", and the account's name: since 40.59 the first line of the account menu at the
+    // BOTTOM of the sidebar, whose entry shows the name. The name is whatever the account is called, so the spec
+    // asserts that one follows, not which.
+    const menu = await openAccountMenu(page);
+    await expect(menu.locator("[data-account-signed-in]")).toHaveText(/^Autentificat ca \S+/);
+    await expect(accountEntry(page)).toHaveText(/\S+/);
+    await expect(page.locator("[data-sidebar-look]").getByText(/Autentificat ca/)).toHaveCount(0);
+    await closeAccountMenu(page);
   });
 });
 
@@ -141,7 +145,7 @@ async function signInHere(page: Page, email: string, password: string): Promise<
 }
 
 async function signOutHere(page: Page): Promise<void> {
-  await page.getByRole("button", { name: "Ieșire", exact: true }).click();
+  await signOutFromMenu(page); // 40.59: „Ieșire" is in the account menu
   await page.waitForURL(/\/login$/, { timeout: 20_000, waitUntil: "commit" });
   await expect(page.getByRole("button", { name: "Conectare", exact: true })).toBeVisible({ timeout: 30_000 });
 }
@@ -176,7 +180,7 @@ test.describe("TC-AUTH-01 — ieșire și conectare din nou, în aceeași filă"
     for (const section of ADMIN_SECTIONS) {
       await expect(mainNav(page).getByText(section, { exact: true })).toBeVisible();
     }
-    await expect(page.getByText("Autentificat ca")).toHaveText(/^Autentificat ca \S+/);
+    await expect(accountMenu(page).locator("[data-account-signed-in]")).toHaveText(/^Autentificat ca \S+/);
   });
 
   test("după administrator, contul care era „user” vede toate cele șase secțiuni și Utilizatori & Acces", async ({ page }) => {

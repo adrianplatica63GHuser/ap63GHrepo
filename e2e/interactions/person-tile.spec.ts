@@ -39,7 +39,7 @@ async function picture(page: Page, name: string): Promise<void> {
     path: `${SHOTS}/${name}.png`,
     mask: [
       page.locator("aside div.border-t").filter({ has: page.getByRole("button", { name: /Recente/i }) }),
-      page.locator("aside").getByText(/^Autentificat ca/),
+      page.locator("[data-account-entry]"), // 40.59: the signed-in name is the account entry's
     ],
   });
 }

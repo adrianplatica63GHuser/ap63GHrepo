@@ -45,7 +45,7 @@ else in this catalogue starts here, so when this fails, nothing else is worth ru
 - `.env` holds `E2E_EMAIL` and `E2E_PASSWORD` for an **already-approved** account. The
   application does not sign up from here; it logs in.
 - The browser has no live session. If one screen already shows the application, use
-  „Ieșire" in the sidebar footer first.
+  „Ieșire" in the account menu at the bottom of the sidebar first (40.59).
 
 ## What Adrian is asked for
 
@@ -64,8 +64,8 @@ PowerShell window.**
 | 6 | Looks at the page | „Tablou de bord", and under it „Ce necesită atenția dumneavoastră azi" |
 | 6a | In „Părți afișate" above the sections, unticks „Metadate care necesită atenție", reloads the page, then ticks it again (Slice #37.36) | The section leaves the page when unticked; after the reload its box is still unticked and the section still gone; ticked again, it is back |
 | 7 | Looks at the left sidebar | The seven sections „Tablou de bord", „Domeniu", „Instrumente", „Import", „Rapoarte", „Administrare" and „Ajutor și învățare" (40.08: „Setări" is an item of „Administrare"; no „Studiu" or „Ajutor") — and below them, directly above „Ieșire" (#38.41), one folded bar „Recente" (#38.28; its records unfold above it on a click — TC-LAYOUT-04) |
-| 8 | Looks at the **top** of the sidebar, above the „Nume, cod…" quick-search box | „Autentificat ca", and the account's name |
-| 9 | Presses „Ieșire" at the bottom of the sidebar | The address becomes `http://localhost:3000/login` and the form from step 1 is back |
+| 8 | (40.59) Presses the account entry at the **bottom** of the sidebar — it shows the account's name — and closes the menu again | The menu's first line: „Autentificat ca", and the account's name. The top of the sidebar no longer says it |
+| 9 | Opens the account menu at the bottom of the sidebar and presses „Ieșire" (40.59) | The address becomes `http://localhost:3000/login` and the form from step 1 is back |
 | 10 | In the same tab, without reloading, signs in again with the same account (steps 2–4) | The address becomes `http://localhost:3000/` and „Tablou de bord" is back |
 | 11 | Looks at the left sidebar | All nine sections are there, as in step 7, and „Autentificat ca" still names the account — no reload needed |
 
@@ -83,6 +83,10 @@ Nothing to clean up. The session cookie is the only thing created and every late
 wants it.
 
 ## Notes from the runs
+
+**2026-10-25 — the account menu (Slice 40.59).** „Autentificat ca" and „Ieșire" moved into the account menu at the
+bottom of the sidebar: step 8 opens it, and every sign-out goes through it. Written from the slice's change, not driven
+by hand first.
 
 **2026-10-07 — Slice #38.28.** Step 7's „Recente" is one folded bar now, there even in a browser
 that has opened nothing, so the 2026-09-22 correction below no longer holds: the spec asserts the

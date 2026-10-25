@@ -59,7 +59,7 @@ test.describe("TC-DOC-24 — notițele unei pagini", () => {
         // Synthetic data only in pictures: the signed-in name and „Recente" are painted over.
         mask: [
           page.locator("aside div.border-t").filter({ has: page.getByRole("button", { name: /Recente/i }) }),
-          page.locator("aside").getByText(/^Autentificat ca/),
+          page.locator("[data-account-entry]"), // 40.59: the signed-in name is the account entry's
         ],
       });
       let saved = page.waitForResponse((r) => r.request().method() === "PATCH" && /\/pages\//.test(r.url()));

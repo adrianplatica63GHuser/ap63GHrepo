@@ -49,3 +49,37 @@ export async function openFromSidebar(page: Page, label: string, section?: strin
   }
   await link.click();
 }
+
+/** Slice 40.59: the account entry at the bottom of the sidebar — the username, or on the rail its icon. */
+export function accountEntry(page: Page): Locator {
+  return page.locator("[data-account-entry]");
+}
+
+/** Slice 40.59: the account menu — „Autentificat ca", Limba, Aspect, Ieșire. */
+export function accountMenu(page: Page): Locator {
+  return page.locator("[data-account-menu]");
+}
+
+/** Open the account menu if it is closed; repeated until it holds, as a press before hydration does nothing. */
+export async function openAccountMenu(page: Page): Promise<Locator> {
+  const entry = accountEntry(page);
+  await expect(entry).toBeVisible({ timeout: 30_000 });
+  await expect(async () => {
+    if ((await entry.getAttribute("aria-expanded")) !== "true") await entry.click();
+    await expect(accountMenu(page)).toBeVisible({ timeout: 2_000 });
+  }).toPass({ timeout: 30_000 });
+  return accountMenu(page);
+}
+
+/** Close the account menu if it is open — by its entry. */
+export async function closeAccountMenu(page: Page): Promise<void> {
+  const entry = accountEntry(page);
+  if ((await entry.getAttribute("aria-expanded")) === "true") await entry.click();
+  await expect(accountMenu(page)).toBeHidden();
+}
+
+/** „Ieșire", from the account menu (40.59; it stood alone in the bottom strip until then, #38.41). */
+export async function signOutFromMenu(page: Page): Promise<void> {
+  const menu = await openAccountMenu(page);
+  await menu.getByRole("button", { name: "Ieșire", exact: true }).click();
+}

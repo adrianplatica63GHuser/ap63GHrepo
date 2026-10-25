@@ -25,7 +25,7 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { test, expect, type Page } from "../helpers/test";
-import { openSection, sidebar } from "../helpers/sidebar";
+import { accountMenu, closeAccountMenu, openAccountMenu, openSection, sidebar } from "../helpers/sidebar";
 import { setLook } from "../helpers/theme";
 import { readZipStore } from "../../src/lib/docx/zip-store";
 import {
@@ -309,9 +309,11 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     // look is put back to light at once, so every other figure is light.
     await page.goto("/");
     await expect(page.getByText(S.recentActivity, { exact: false }).first()).toBeVisible({ timeout: 60_000 });
-    // The box itself, as the reader does it: ticked, it writes the look's cookie and the class on <html>.
-    const darkBox = page.locator('[data-theme-toggle="sidebar"] input[type="checkbox"]');
-    await darkBox.check();
+    // „Noapte" itself, as the reader does it — in the account menu since 40.59 (it was the box under „GA40"): pressed,
+    // it writes the look's cookie and the class on <html>. The menu is closed again before the picture.
+    await openAccountMenu(page);
+    await accountMenu(page).locator('[data-segmented="theme"] [data-segment="dark"]').click();
+    await closeAccountMenu(page);
     await expect(page.locator("html")).toHaveClass(/(^|\s)dark(\s|$)/);
     await page.waitForTimeout(1000);
     await page.evaluate((f) => {
@@ -322,7 +324,9 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     await blurRecent(page, S.recent);
     await still(page);
     await page.screenshot({ path: `${dir}/dark.png` });
-    await darkBox.uncheck();
+    await openAccountMenu(page);
+    await accountMenu(page).locator('[data-segmented="theme"] [data-segment="light"]').click();
+    await closeAccountMenu(page);
     await expect(page.locator("html")).not.toHaveClass(/(^|\s)dark(\s|$)/);
     await setLook(page, "light");
 
