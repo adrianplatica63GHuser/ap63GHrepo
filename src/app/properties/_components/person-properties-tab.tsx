@@ -84,9 +84,10 @@ export function usePersonPropertyRows(personId: string, backBase: string): Perso
       content: (
         <>
           <span className="font-medium text-ink dark:text-zinc-100">{name}</span>
-          {item.roleName && <span className="text-fade dark:text-zinc-400"> ({item.roleName})</span>}
         </>
       ),
+      // Slice 40.65: the role as a tag, not „(Rol)" after the name.
+      role: item.roleName || null,
       href: `/properties/${encodeURIComponent(item.id)}?readonly=true`,
       dissociate: () => dissociate(item.id),
       buttons: {

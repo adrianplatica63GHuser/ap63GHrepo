@@ -98,9 +98,10 @@ export function usePersonReferenceRows(personId: string, backBase: string): Pers
       content: (
         <>
           <span className="font-medium text-ink dark:text-zinc-100">{item.displayName}</span>
-          {role && <span className="text-fade dark:text-zinc-400" data-role-shown="role"> ({role})</span>}
         </>
       ),
+      // Slice 40.65: the role as a tag, not „(Rol)" after the name.
+      role,
       href: `${personPath(item.type, item.id)}?readonly=true`,
       dissociate: () => dissociate(item.id),
       buttons: {

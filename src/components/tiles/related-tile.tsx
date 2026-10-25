@@ -15,9 +15,15 @@
  *
  *  - **The order and the groups.** Natural persons, judicial persons,
  *    properties, documents; within a group, the order the screen gave. A group
- *    with no rows draws nothing; a thin line between two groups; no heading
- *    over them — the icon tells the kind (`RELATED_ICON`, the record
- *    headings' icons, #37.49), and its word is read to a screen reader.
+ *    with no rows draws nothing. Slice 40.65 (Adrian's Option A, overturning
+ *    #37.65's „no heading"): each group opens with a slim heading — the
+ *    sidebar's name for the kind, and its count on the right — where a thin
+ *    line used to stand between two groups. The icon still marks each row
+ *    (`RELATED_ICON`), and its word is read to a screen reader.
+ *  - **The role as a tag** (40.65): a row's role is a small neutral tag at the
+ *    content's right edge, not „(Rol)" after the name, so the tags line up and a
+ *    long name is cut before its role is. The brackets are still in the row's
+ *    text, visually hidden, so a screen reader and a copy read „Nume (Rol)".
  *  - **One slot set.** `RELATED_SLOTS` for every group, so „Cotă", the
  *    relationship, „Vizualizare" and „Previzualizare" stand in the same place
  *    down the whole tile, across the four groups.
@@ -79,6 +85,8 @@ export interface RelatedRow {
   href: string;
   /** Slice #38.33: the row's group when the tile groups by role („Părți") — the role's name, or none. */
   group?: string | null;
+  /** Slice 40.65: the row's role, drawn as a tag at the content's right edge (`RoleTag`); none, no tag. */
+  role?: string | null;
   /** `data-*` marks for the specs (`data-share`). */
   data?: { [k: `data-${string}`]: string | undefined };
   /** Remove this row's link, through the route its kind uses; throws with the reason. */
@@ -108,6 +116,29 @@ function kindLabel(t: (key: string) => string, kind: RelatedKind): string {
     case "document": return t("kind.document");
   }
 }
+
+/**
+ * Slice 40.65: the role, a small neutral tag. Its brackets are in the text but visually hidden, so the row reads
+ * „Nume (Rol)" to a screen reader and to `textContent`, as it did when they were on screen.
+ */
+export function RoleTag({ role }: { role: string }) {
+  return (
+    <span
+      data-row-role=""
+      data-role-shown="role"
+      className="ml-auto max-w-[10rem] shrink-0 truncate rounded-full border border-wire bg-card px-2 text-xs leading-5 text-ink dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200"
+      title={role}
+    >
+      <span className="sr-only"> (</span>
+      {role}
+      <span className="sr-only">)</span>
+    </span>
+  );
+}
+
+/** Slice 40.65: a kind group's heading — the kind's name, and its count on the right in tabular figures. */
+export const RELATED_HEADING_CLASS =
+  "flex items-baseline justify-between gap-2 px-3 pb-0.5 pt-2 font-colhead text-xs font-normal tracking-[0.02em] text-fade dark:text-zinc-400";
 
 export function RelatedTile({
   label,
@@ -207,10 +238,18 @@ export function RelatedTile({
             <div
               key={g.kind}
               data-related-group={g.kind}
-              // The thin line between two groups — no heading: the icon tells the kind.
-              className={i > 0 ? "border-t border-wire dark:border-zinc-600" : undefined}
+              // Slice 40.65: a kind group opens with its heading, so the thin line between groups is gone; „Părți"'s
+              // role groups (#38.33) keep theirs.
+              className={groupByRole && i > 0 ? "border-t border-wire dark:border-zinc-600" : undefined}
             >
-              {/* Slice #38.33: a role group is headed by its role; a kind group by nothing — the icon tells it. */}
+              {/* Slice 40.65: a kind group's heading — the sidebar's name for the kind, and how many rows. */}
+              {g.heading === null && (
+                <h3 className={RELATED_HEADING_CLASS} data-related-heading={g.kind}>
+                  <span>{groupLabel(t, g.kind as RelatedKind)}</span>
+                  <span className="tabular-nums" data-related-count="">{g.rows.length}</span>
+                </h3>
+              )}
+              {/* Slice #38.33: a role group is headed by its role. */}
               {g.heading !== null && (
                 <p className="px-3 pt-2 text-xs font-semibold uppercase tracking-wide text-fade dark:text-zinc-400" data-party-group-heading="">
                   {g.heading}
@@ -231,6 +270,7 @@ export function RelatedTile({
                       kindLabel={kindLabel(t, row.kind)}
                       content={row.content}
                       title={row.title}
+                      tag={row.role ? <RoleTag role={row.role} /> : undefined}
                       buttons={readOnly ? readOnlyButtons(row.buttons) : row.buttons}
                       // Slice #37.21: Ctrl/⌘+click or a middle-click opens the record in a new tab.
                       onClick={(e) => {

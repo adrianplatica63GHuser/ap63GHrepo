@@ -79,6 +79,7 @@ export function OneLineRow({
   kindLabel,
   content,
   title,
+  tag,
   buttons,
   onClick,
   onAuxClick,
@@ -101,6 +102,11 @@ export function OneLineRow({
   content: ReactNode;
   /** The content as plain text: shown whole on hover. */
   title: string;
+  /**
+   * Slice 40.65: a small tag at the content's right edge — „Legături"'s role. The content is cut with „…" before
+   * the tag is, and every row's tag ends at the same place, the content's right edge, so they line up down the tile.
+   */
+  tag?: ReactNode;
   /** The row's buttons, by slot. A slot the row leaves out stays empty. */
   buttons: Partial<Record<RowSlot, ReactNode>>;
   onClick: (e: MouseEvent<HTMLLIElement>) => void;
@@ -136,8 +142,15 @@ export function OneLineRow({
       )}
       {Icon && <Icon size={16} aria-hidden="true" className="shrink-0 text-fade dark:text-zinc-400" />}
       {kindLabel && <span className="sr-only">{kindLabel}: </span>}
-      <span data-row-content="" className="min-w-0 flex-1 truncate" title={title}>
-        {content}
+      <span data-row-content="" className={tag ? "flex min-w-0 flex-1 items-center gap-2" : "min-w-0 flex-1 truncate"} title={title}>
+        {tag ? (
+          <>
+            <span className="min-w-0 truncate">{content}</span>
+            {tag}
+          </>
+        ) : (
+          content
+        )}
       </span>
       {/* `div`s, not `span`s: a slot may hold a block (the share panel, a bubble). */}
       <div

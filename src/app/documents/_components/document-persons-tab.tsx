@@ -482,13 +482,14 @@ export function useDocumentPersonRows(documentId: string, scope: PersonLinkScope
       kind: item.type === "JUDICIAL" ? "judicial" : "natural",
       // Slice #38.33: „Părți" groups its rows by role.
       group: item.roleName,
+      // Slice 40.65: the role as a tag, not „(Rol)" after the name.
+      role: hasRole ? roleLabel : null,
       data: { "data-share": cells },
       radioLabel: `${item.displayName} — ${roleLabel}`,
       title: text,
       content: (
         <>
           <span className="font-medium text-ink dark:text-zinc-100">{item.displayName}</span>
-          {hasRole && <span className="text-fade dark:text-zinc-400"> ({roleLabel})</span>}
         </>
       ),
       href: `${personPath(item.type, item.id)}?readonly=true`,

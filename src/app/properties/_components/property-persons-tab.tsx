@@ -86,9 +86,10 @@ export function usePropertyPersonRows(propertyId: string): PropertyPersonRows {
       content: (
         <>
           <span className="font-medium text-ink dark:text-zinc-100">{p.displayName}</span>
-          {p.roleName && <span className="text-fade dark:text-zinc-400"> ({p.roleName})</span>}
         </>
       ),
+      // Slice 40.65: the role as a tag, not „(Rol)" after the name.
+      role: p.roleName || null,
       href: `${personPath(p.type, p.id)}?readonly=true`,
       dissociate: () => dissociate(p.id),
       buttons: {
