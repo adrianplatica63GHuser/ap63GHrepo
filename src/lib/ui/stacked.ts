@@ -1,3 +1,5 @@
+import { FIELD_LABEL } from "@/lib/ui/field-box";
+
 /**
  * Labels above their boxes: the classes every stacked form shares.
  *                                                   (Slice #37.26; #37.29, rule 16)
@@ -46,5 +48,8 @@ export const STACKED_ROW_CLASS =
 /** One field — label, box, hint — spanning a row's three tracks. Its width is the box's, an inline style. */
 export const STACKED_FIELD_CLASS = "row-span-3 grid grid-rows-subgrid items-start gap-y-0.5 text-sm";
 
-/** The label: at the bottom of the row's label track, next to its box. */
-export const STACKED_LABEL_CLASS = "self-end font-medium text-ink dark:text-zinc-300";
+/**
+ * The label: at the bottom of the row's label track, next to its box. Its face — Roboto Condensed, 12 px, muted, so it
+ * is told apart from the value under it — is `FIELD_LABEL` (Slice 40.56, src/lib/ui/field-box.ts).
+ */
+export const STACKED_LABEL_CLASS = "self-end " + FIELD_LABEL;

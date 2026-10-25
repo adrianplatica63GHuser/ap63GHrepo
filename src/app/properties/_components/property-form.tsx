@@ -92,6 +92,7 @@ import {
   type FieldWidth,
 } from "@/lib/ui/field-widths";
 import { STACKED_FIELD_CLASS, STACKED_LABEL_CLASS, STACKED_ROW_CLASS } from "@/lib/ui/stacked";
+import { EMPTY_MARK, FIELD_BOX, FIELD_READONLY, fieldBorder } from "@/lib/ui/field-box";
 import { SnapshotValue } from "@/components/versioning/snapshot-value";
 import {
   snapshotReplacesPicker,
@@ -1443,10 +1444,11 @@ export function PropertyForm({
                       registration={register("address.streetViewStreetLine")}
                       width={String(boxStyle(PROP.streetViewStreetLineBox).width)}
                       className={[
-                        BOX_CLASS,
-                        "border-wire focus:border-focus dark:border-zinc-700",
+                        FIELD_BOX,
+                        fieldBorder(false),
                         highlightRingClass(displayHighlights?.address.streetViewStreetLine, pulsing),
                       ].join(" ")}
+                      placeholder={EMPTY_MARK}
                       data-width-field="address.streetViewStreetLine"
                       data-width-kind={PROP.streetViewStreetLineBox.kind}
                     />
@@ -1922,17 +1924,12 @@ type FieldProps = {
   fillRem?: number;
 };
 
-/** The box's own look; its width is never a class here — it comes from `boxStyle`. */
-const BOX_CLASS =
-  "rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none disabled:bg-canvas disabled:text-fade disabled:cursor-default dark:bg-zinc-950 dark:disabled:bg-zinc-800";
 
 function Field({ label, name, type = "text", register, error, hint, highlight, width, maxLength, fillRem }: FieldProps) {
   const ring = usePulseRing(highlight);
   const className = [
-    BOX_CLASS,
-    error
-      ? "border-red-500 focus:border-red-600"
-      : "border-wire focus:border-focus dark:border-zinc-700",
+    FIELD_BOX,
+    fieldBorder(Boolean(error)),
     ring,
   ].join(" ");
   const grows = width.kind === "grows" || width.kind === "lines";
@@ -1952,6 +1949,7 @@ function Field({ label, name, type = "text", register, error, hint, highlight, w
           maxLength={maxLength}
           aria-invalid={error ? true : undefined}
           className={className}
+          placeholder={EMPTY_MARK}
           data-width-field={name}
           data-width-kind={width.kind}
         />
@@ -1962,6 +1960,7 @@ function Field({ label, name, type = "text", register, error, hint, highlight, w
           maxLength={maxLength}
           aria-invalid={error ? true : undefined}
           className={className}
+          placeholder={EMPTY_MARK}
           style={box}
           data-width-field={name}
           data-width-kind={width.kind}
@@ -2060,10 +2059,8 @@ function SelectField({
           options={options}
           aria-invalid={error ? true : undefined}
           className={[
-            BOX_CLASS,
-            error
-              ? "border-red-500 focus:border-red-600"
-              : "border-wire focus:border-focus dark:border-zinc-700",
+            FIELD_BOX,
+            fieldBorder(Boolean(error)),
             ring,
           ].join(" ")}
           style={boxStyle(width)}
@@ -2136,7 +2133,7 @@ function ReadOnlyField({
         {hint}
       </span>
       <div
-        className="rounded-md border border-wire bg-canvas px-2 py-1 font-mono text-sm text-ink dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-300"
+        className={FIELD_READONLY}
         style={boxStyle(width)}
         data-width-field={field}
         data-width-kind={width.kind}

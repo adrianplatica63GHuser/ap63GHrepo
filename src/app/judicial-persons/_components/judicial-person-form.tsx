@@ -32,6 +32,7 @@ import {
   type FieldWidth,
 } from "@/lib/ui/field-widths";
 import { STACKED_FIELD_CLASS, STACKED_LABEL_CLASS, STACKED_ROW_CLASS } from "@/lib/ui/stacked";
+import { EMPTY_MARK, FIELD_BOX, fieldBorder } from "@/lib/ui/field-box";
 import { ArrowLeft, Landmark, MousePointerClick, Pencil, Save, Trash2, UserMinus, UserPlus, X } from "lucide-react";
 import { AnafFillDialog, fetchAnaf, type AnafLookup } from "@/components/judicial-persons/anaf-fill";
 import type { AnafTarget } from "@/lib/anaf/fill";
@@ -1434,9 +1435,6 @@ type FieldProps = {
   fillRem?: number;
 };
 
-/** The box's own look; its width is never a class here — it comes from `boxStyle`. */
-const BOX_CLASS =
-  "rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none disabled:bg-canvas disabled:text-fade disabled:cursor-default dark:bg-zinc-950 dark:disabled:bg-zinc-800";
 
 function Field({
   label,
@@ -1451,10 +1449,8 @@ function Field({
 }: FieldProps) {
   const ring = usePulseRing(highlight);
   const className = [
-    BOX_CLASS,
-    error
-      ? "border-red-500 focus:border-red-600"
-      : "border-wire focus:border-focus dark:border-zinc-700",
+    FIELD_BOX,
+    fieldBorder(Boolean(error)),
     ring,
   ].join(" ");
   const grows = width.kind === "grows" || width.kind === "lines";
@@ -1478,6 +1474,7 @@ function Field({
       aria-describedby={describedBy}
       aria-labelledby={labelledBy}
       className={className}
+      placeholder={EMPTY_MARK}
       data-width-field={name}
       data-width-kind={width.kind}
     />
@@ -1489,6 +1486,7 @@ function Field({
       aria-describedby={describedBy}
       aria-labelledby={labelledBy}
       className={className}
+      placeholder={EMPTY_MARK}
       style={box}
       data-width-field={name}
       data-width-kind={width.kind}
@@ -1610,10 +1608,8 @@ function SelectField({
           options={options}
           aria-invalid={error ? true : undefined}
           className={[
-            BOX_CLASS,
-            error
-              ? "border-red-500 focus:border-red-600"
-              : "border-wire focus:border-focus dark:border-zinc-700",
+            FIELD_BOX,
+            fieldBorder(Boolean(error)),
             ring,
           ].join(" ")}
           style={boxStyle(width)}

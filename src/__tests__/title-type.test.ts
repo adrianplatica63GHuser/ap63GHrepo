@@ -69,7 +69,8 @@ describe("the two families are loaded by next/font, with latin-ext, only in 13's
   const layout = read("src/app/layout.tsx");
   it.each([
     ["Roboto_Slab", "--font-roboto-slab", '["500", "600"]'],
-    ["Roboto_Condensed", "--font-roboto-condensed", '["600"]'],
+    // 40.56: 400 too, for the fields' labels (`FIELD_LABEL`); the column names keep 600.
+    ["Roboto_Condensed", "--font-roboto-condensed", '["400", "600"]'],
   ])("%s", (fn, variable, weights) => {
     const m = layout.match(new RegExp(`= ${fn}\\(\\{([^}]*)\\}\\)`));
     expect(m).not.toBeNull();

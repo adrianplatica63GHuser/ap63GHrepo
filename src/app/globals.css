@@ -425,6 +425,24 @@ body {
   }
 }
 
+/* Slice 40.56 — an empty calm field (`FIELD_BOX`, src/lib/ui/field-box.ts) at rest: a dashed grey underline, so it
+   still looks fillable instead of disappearing. A text box or text area is empty while its one-space placeholder
+   (`EMPTY_MARK`) shows; a drop-down while its blank choice is the chosen one. Not on hover or in focus, where the
+   whole box takes over; not on a field marked invalid, whose red border is the message; not on a disabled one, which
+   cannot be filled. Unlayered, so it wins over the box's transparent border — which is why every state it must not
+   touch is excluded here rather than left to the utilities. */
+.ga-field:enabled:not(:hover):not(:focus):not([aria-invalid="true"]):placeholder-shown,
+select.ga-field:enabled:not(:hover):not(:focus):not([aria-invalid="true"]):has(option[value=""]:checked) {
+  border-bottom-color: #C0C4CC; /* wire */
+  border-bottom-style: dashed;
+}
+.dark .ga-field:enabled:not(:hover):not(:focus):not([aria-invalid="true"]):placeholder-shown,
+.dark select.ga-field:enabled:not(:hover):not(:focus):not([aria-invalid="true"]):has(option[value=""]:checked) {
+  border-bottom-color: #52525b; /* zinc-600 */
+}
+/* The one-space placeholder is never seen; this keeps a caret-coloured space from ever being drawn. */
+.ga-field::placeholder { color: transparent; }
+
 /* Slice #37.55 — „no value" reads one way everywhere: „fără valoare",
    „fără rol", „niciunul" … in italics, without the long dashes that used to
    wrap them, and every real choice in the regular font.

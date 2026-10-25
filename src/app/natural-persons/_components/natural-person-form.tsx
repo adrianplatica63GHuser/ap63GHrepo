@@ -46,6 +46,7 @@ import {
   type VersionNavView,
 } from "@/components/version-nav-controls";
 import { STACKED_FIELD_CLASS, STACKED_LABEL_CLASS, STACKED_ROW_CLASS } from "@/lib/ui/stacked";
+import { EMPTY_MARK, FIELD_BOX, FIELD_LABEL, FIELD_READONLY, fieldBorder } from "@/lib/ui/field-box";
 import { FieldPulseContext, usePulseRing } from "@/components/versioning/field-pulse";
 import { SnapshotValue } from "@/components/versioning/snapshot-value";
 import {
@@ -1035,7 +1036,7 @@ export function NaturalPersonForm({
           )}
           {mode !== "create" && (
             <div className="flex flex-col gap-0.5 text-sm">
-              <span className="font-medium text-ink dark:text-zinc-300">
+              <span className={FIELD_LABEL}>
                 {t("fields.idLink")}
               </span>
               {linkedIdCard ? (
@@ -1417,19 +1418,12 @@ type FieldProps = {
 // Slice #37.29 (rule 16): the stacked classes are shared (`@/lib/ui/stacked`), so a row's
 // boxes start on one line whatever its labels wrap to — the Judicial Person draws the same.
 
-/** The box's own look; its width is never a class here — it comes from `stackedBoxStyle`. */
-const BOX_CLASS =
-  "rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none disabled:bg-canvas disabled:text-fade disabled:cursor-default dark:bg-zinc-950 dark:disabled:bg-zinc-800";
 
 function Field({ label, name, type = "text", register, error, bubble, highlight, expired, expiringSoon, width, mono, fillRem, disabled }: FieldProps) {
   const ring = usePulseRing(highlight);
   const className = [
-    BOX_CLASS,
-    error || expired
-      ? "border-red-500 focus:border-red-600"
-      : expiringSoon
-        ? "border-orange-500 focus:border-orange-600"
-        : "border-wire focus:border-focus dark:border-zinc-700",
+    FIELD_BOX,
+    fieldBorder(Boolean(error || expired), Boolean(expiringSoon)),
     mono ? "font-mono" : "",
     ring,
   ].join(" ");
@@ -1452,6 +1446,7 @@ function Field({ label, name, type = "text", register, error, bubble, highlight,
       aria-describedby={describedBy}
       aria-labelledby={labelledBy}
       className={className}
+      placeholder={EMPTY_MARK}
       data-width-field={name}
       data-width-kind={width.kind}
     />
@@ -1464,6 +1459,7 @@ function Field({ label, name, type = "text", register, error, bubble, highlight,
       aria-describedby={describedBy}
       aria-labelledby={labelledBy}
       className={className}
+      placeholder={EMPTY_MARK}
       style={box}
       data-width-field={name}
       data-width-kind={width.kind}
@@ -1511,7 +1507,7 @@ function RelationshipsField({
   return (
     <div className="flex flex-col gap-y-0.5 text-sm" role="group" aria-labelledby={labelId} data-np-relationships="">
       {/* The stacked label's look without its `self-end`, which in a column would push it to the right. */}
-      <span id={labelId} className="font-medium text-ink dark:text-zinc-300">
+      <span id={labelId} className={FIELD_LABEL}>
         {label}
       </span>
       <div className="flex flex-wrap gap-x-4 gap-y-1">
@@ -1632,10 +1628,8 @@ function SelectField({
           options={options}
           aria-invalid={error ? true : undefined}
           className={[
-            BOX_CLASS,
-            error
-              ? "border-red-500 focus:border-red-600"
-              : "border-wire focus:border-focus dark:border-zinc-700",
+            FIELD_BOX,
+            fieldBorder(Boolean(error)),
             ring,
           ].join(" ")}
           style={box}
@@ -1712,7 +1706,7 @@ function ReadOnlyField({ label, value, width, field }: { label: string; value: s
     <div className={STACKED_FIELD_CLASS} style={boxStyle(width)}>
       <span className={STACKED_LABEL_CLASS}>{label}</span>
       <div
-        className="rounded-md border border-wire bg-canvas px-2 py-1 font-mono text-sm text-ink dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-300"
+        className={FIELD_READONLY}
         style={boxStyle(width)}
         data-width-field={field}
         data-width-kind={width.kind}

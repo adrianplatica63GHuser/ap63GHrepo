@@ -144,6 +144,7 @@ import {
   type IdCardDialogField,
 } from "@/lib/ui/field-widths";
 import { STACKED_FIELD_CLASS, STACKED_LABEL_CLASS, STACKED_ROW_CLASS } from "@/lib/ui/stacked";
+import { EMPTY_MARK, FIELD_BOX, fieldBorder } from "@/lib/ui/field-box";
 import { TILE_TITLE_TYPE } from "@/lib/ui/title-type";
 
 // ---------------------------------------------------------------------------
@@ -1909,7 +1910,7 @@ export function IdCardPersonDialog({
                   // Frozen once the submit has captured its value, so what is on
                   // screen and what is being written cannot diverge.
                   disabled={busy || addingInstitution}
-                  className="rounded-md border border-wire bg-white px-2 py-1 text-sm text-ink disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+                  className={`${FIELD_BOX} ${fieldBorder(false)} text-sm`}
                   style={INSTITUTION_BOX}
                   data-width-field="institutionId"
                   data-width-kind={ID_CARD_INSTITUTION.kind}
@@ -2100,10 +2101,7 @@ export function IdCardPersonDialog({
 // its label.
 // ---------------------------------------------------------------------------
 
-const BOX_CLASS =
-  "rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none dark:bg-zinc-950";
-const boxBorder = (error?: string) =>
-  error ? "border-red-500 focus:border-red-600" : "border-wire focus:border-focus dark:border-zinc-700";
+const boxBorder = (error?: string) => fieldBorder(Boolean(error));
 
 type FieldProps = {
   label: string;
@@ -2154,7 +2152,7 @@ function FieldLabel({ label, warn, htmlFor }: { label: string; warn?: boolean; h
 function Field({ label, name, type = "text", register, error, warn, width }: FieldProps) {
   const grows = width.kind === "grows" || width.kind === "lines";
   const box = stackedBoxStyle(width, boxRem(width));
-  const className = [BOX_CLASS, boxBorder(error)].join(" ");
+  const className = [FIELD_BOX, boxBorder(error)].join(" ");
   return (
     <label className={STACKED_FIELD_CLASS} style={box}>
       <FieldLabel label={label} warn={warn} />
@@ -2168,6 +2166,7 @@ function Field({ label, name, type = "text", register, error, warn, width }: Fie
           spellCheck={false}
           aria-invalid={error ? true : undefined}
           className={className}
+          placeholder={EMPTY_MARK}
           data-width-field={name}
           data-width-kind={width.kind}
         />
@@ -2178,6 +2177,7 @@ function Field({ label, name, type = "text", register, error, warn, width }: Fie
           {...register(name)}
           aria-invalid={error ? true : undefined}
           className={className}
+          placeholder={EMPTY_MARK}
           style={box}
           data-width-field={name}
           data-width-kind={width.kind}
@@ -2245,7 +2245,7 @@ function SelectField({
         options={options}
         aria-invalid={error ? true : undefined}
         aria-describedby={showHint ? hintId : undefined}
-        className={[BOX_CLASS, boxBorder(error)].join(" ")}
+        className={[FIELD_BOX, boxBorder(error)].join(" ")}
         style={box}
         title={chosenLabel}
         widthField={name}

@@ -34,7 +34,8 @@ const robotoSlab = Roboto_Slab({
 const robotoCondensed = Roboto_Condensed({
   variable: "--font-roboto-condensed",
   subsets: ["latin", "latin-ext"],
-  weight: ["600"],
+  // Slice 40.56: 400 for the fields' labels (`FIELD_LABEL`, src/lib/ui/field-box.ts) beside the column names' 600.
+  weight: ["400", "600"],
 });
 
 export const metadata: Metadata = {

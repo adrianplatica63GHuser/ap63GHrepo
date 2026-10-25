@@ -92,6 +92,7 @@ import {
   type FieldWidth,
 } from "@/lib/ui/field-widths";
 import { STACKED_FIELD_CLASS, STACKED_LABEL_CLASS, STACKED_ROW_CLASS } from "@/lib/ui/stacked";
+import { EMPTY_MARK, FIELD_BOX, fieldBorder } from "@/lib/ui/field-box";
 import { deleteFailureMessage } from "@/lib/documents/delete-failure";
 import { forgetRecentlyViewed } from "@/components/providers/navigation-history-provider";
 import { firstErrorPath } from "@/lib/ui/tiles";
@@ -2054,9 +2055,6 @@ type FieldProps = {
   fillRem?:   number;
 };
 
-/** The box's own look; its width is never a class here — it comes from `boxStyle`. */
-const BOX_CLASS =
-  "rounded-md border bg-white px-2 py-1 shadow-sm focus:outline-none disabled:bg-canvas disabled:text-fade disabled:cursor-default dark:bg-zinc-950 dark:disabled:bg-zinc-800";
 
 function Field({
   label,
@@ -2072,10 +2070,8 @@ function Field({
 }: FieldProps & { maxLength?: number }) {
   const ring = usePulseRing(highlight);
   const className = [
-    BOX_CLASS,
-    error
-      ? "border-red-500 focus:border-red-600"
-      : "border-wire focus:border-focus dark:border-zinc-700",
+    FIELD_BOX,
+    fieldBorder(Boolean(error)),
     ring,
   ].join(" ");
   const grows = width.kind === "grows" || width.kind === "lines";
@@ -2099,6 +2095,7 @@ function Field({
           spellCheck={false}
           aria-invalid={error ? true : undefined}
           className={className}
+          placeholder={EMPTY_MARK}
           data-width-field={name}
           data-width-kind={width.kind}
         />
@@ -2111,6 +2108,7 @@ function Field({
           spellCheck={false}
           aria-invalid={error ? true : undefined}
           className={className}
+          placeholder={EMPTY_MARK}
           style={box}
           data-width-field={name}
           data-width-kind={width.kind}
@@ -2227,10 +2225,8 @@ function SelectField({
           data-width-kind="select"
           data-width-capped={width.capped ? "true" : undefined}
           className={[
-            BOX_CLASS,
-            error
-              ? "border-red-500 focus:border-red-600"
-              : "border-wire focus:border-focus dark:border-zinc-700",
+            FIELD_BOX,
+            fieldBorder(Boolean(error)),
             ring,
           ].join(" ")}
         >
