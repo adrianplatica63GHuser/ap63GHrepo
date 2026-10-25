@@ -54,6 +54,8 @@ replaced one is still in the history, and the list agrees with the record.
 
 ## Notes from the runs
 
+**2026-10-25 — Slice 40.72.** A saved person reads as text and has no record-level „Salvează”: steps 3 and 4 open „Identitate” with „Editează”, write „Prenume” and press the tile's „Salvează”; steps 5–9 read „Prenume” as text, and a version being viewed shows no „Editează”. The spec follows; not driven by hand first.
+
 **2026-09-26 — `automated` (Slice #37.02).** Its spec is named in the catalogue's `Spec` column; green in the test runner's e2e runs of the slice, and in its `full` run (the #37.02 handover quotes the ids).
 
 **2026-09-26 — driven a second time, unchanged, green (Slice #37.02) → `confirmed`.** `PPERS02365`, v0 → v3 exactly as the steps say, the dialog word for word, the list row `Unu TC-VER-01`; deleted. What was typed into the new form the moment it appeared was lost (the form was not interactive yet — the note below); typed again, it saved.

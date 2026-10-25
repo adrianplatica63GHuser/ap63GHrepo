@@ -55,6 +55,8 @@ Delete the three records: on each, „Șterge" and „Da".
 
 ## Notes from the runs
 
+**2026-10-25 — Slice 40.72.** A saved person reads as text; the MRZ folds in its box, so steps 6–7 open „Act de identitate” with „Editează” first. The spec follows; not driven by hand first.
+
 **2026-10-01 — run 1, `driven` (Slice #37.40).** Driven in the Claude desktop app's browser pane
 at 1920 × 1080, against `npm run dev` on 3000.
 - **The first attempt found a defect, fixed before the run below.** The fold measured itself in

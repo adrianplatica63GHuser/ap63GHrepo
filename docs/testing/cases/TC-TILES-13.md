@@ -37,7 +37,7 @@ Nothing.
 | 1 | Opens the person; „Toate" in „Părți afișate" | Every tile, each where #37.75 places it; „Legături" reads „Nimic corelat încă." |
 | 2 | Points at „Etichete și grupuri"'s left padding, presses, drags until the tile's top-left corner is 60 px under „Legături" on its left edge, releases | Over the padding the pointer is „grab"; while dragging an outline shows the place, marked free. „Etichete și grupuri" stays there: its left edge on „Legături"'s, its top at least 16 px under „Legături"'s bottom. Every other box where it was in step 1 |
 | 3 | Drags „Etichete și grupuri" the same way until the pointer is over „Legături", releases | The outline is marked not free; released, „Etichete și grupuri" goes back to where step 2 put it |
-| 4 | Presses on the „Nume" field of „Identitate", moves 200 px with the button held, releases; then the same on its label „Nume" | No outline, no tile moves; the field has the focus |
+| 4 | Presses on the „Nume" field of „Identitate" (since 40.72 its value, read as text), moves 200 px with the button held, releases; then the same on its label „Nume" | No outline, no tile moves |
 | 5 | Reloads the page | „Etichete și grupuri" where step 2 put it |
 | 6 | „Implicit"; then „Toate" | „Implicit" shows the default tiles; after „Toate", „Etichete și grupuri" is where step 1 had it, and the browser holds no arrangement |
 
@@ -47,6 +47,8 @@ Delete the person (`DELETE`); remove `ga40-tile-positions-natural-person-v1` fro
 localStorage („Implicit" in step 6 already does).
 
 ## Notes from the runs
+
+**2026-10-25 — Slice 40.72.** A saved person reads as text: step 4's press lands on „Nume”'s value, which is never a tile's free space (`data-no-tile-drag`), and nothing takes the focus. The spec follows; not driven by hand first.
 
 **2026-10-04 — run 1, `driven` (Slice #37.76).** Driven in the desktop app's browser pane, its
 viewport emulated at 1920 × 1300, against `npm run dev` on 3000. The pane's emulated viewport drops

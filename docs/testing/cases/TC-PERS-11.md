@@ -39,3 +39,7 @@ Nothing.
 ## At the end — leaving things as they were found
 
 Ion is deleted.
+
+## Notes from the runs
+
+**2026-10-25 — Slice 40.72.** A saved person reads as text: steps 1 and 5 open „Identitate” with „Editează” (every field drawn), and „Salvează” is the tile's. The spec follows; not driven by hand first.

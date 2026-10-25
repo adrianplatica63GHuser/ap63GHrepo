@@ -66,6 +66,8 @@ Steps 1–7 create nothing. Steps 8–10's test person is removed at the end. Th
 
 ## Notes from the runs
 
+**2026-10-25 — Slice 40.72.** The changed-form step opens „Identitate” with „Editează” before writing „Prenume”: a saved person reads as text. The spec follows; not driven by hand first.
+
 **2026-10-25 — steps 11–13 added (Slice 40.68).** Under 1024 px the sidebar is its rail whatever is stored, and its
 expand button opens it over the page. Written from the slice's own change and put in the spec as a test of its own;
 not driven by hand first. Seen in the pane at 800 × 800: the rail 56 px, the overlay 224 px over a dimmed page that

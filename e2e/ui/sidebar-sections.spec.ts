@@ -20,6 +20,7 @@ import fs from "node:fs";
 import { test, expect, type Locator, type Page } from "../helpers/test";
 import { openFromSidebar, openSection, sidebar } from "../helpers/sidebar";
 import { E2E_MARKER, createNaturalPerson, removeLeftovers, removeRecord } from "../helpers/records";
+import { editTile } from "../helpers/tiles";
 
 const SHOTS = "playwright-report/sidebar-sections";
 
@@ -343,6 +344,8 @@ test.describe("TC-NAV-01 — the sidebar draws only what exists", () => {
 
       // A changed field, then „Înapoi": the unsaved-changes dialog; „Anulează" keeps the form, as it was typed.
       await openRecord();
+      // Slice 40.72: the person reads as text; „Editează" opens „Identitate".
+      await editTile(page, "identity");
       const firstName = page.getByRole("textbox", { name: "Prenume", exact: true });
       await expect(firstName).toHaveValue("Înapoi", { timeout: 30_000 });
       await firstName.fill("Schimbat");

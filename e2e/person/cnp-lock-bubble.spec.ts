@@ -19,9 +19,10 @@
  *     case says what a person sees.
  *   - Steps 10–12 (Slice 40.64) read „one line" as the tile's height: at most 64 px, a filled tile being several
  *     times that.
- *   - Since Slice 40.71 the identity tile's empty fields hide behind „Arată N câmpuri goale"; steps 4 and 9 use two
- *     of them, so the first test shows them after step 1 (e2e/helpers/empty-fields.ts). Steps 14–16 are the second
- *     test, on a person of its own whose „Contact" holds two of its six.
+ *   - Since Slice 40.72 a saved person reads as text; the first test opens „Identitate" with „Editează" before step 1
+ *     (an open tile shows every field, 40.71's hidden ones too), puts it back with „Renunță" after step 9 so step 11's
+ *     „Adaugă" opens „Contact" without the guard asking, and puts „Adrese" back before step 13 for the same reason.
+ *     Steps 14–16 are the second test, on a person of its own whose „Contact" holds two of its six, read as text.
  *   - Slice #37.50's pictures, not steps of the case: the identity tile at
  *     rest and with the bubble open, at 1366 and 1920 px, into
  *     `playwright-report/cnp-lock-bubble/`. The sidebar's „Recente" list is
@@ -30,8 +31,8 @@
 
 import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createNaturalPerson, removeLeftovers, removeRecord } from "../helpers/records";
-import { emptyTileLine, openEmptyTile } from "../helpers/tiles";
-import { emptyFieldsLink, showEmptyFields } from "../helpers/empty-fields";
+import { editTile, emptyTileLine, openEmptyTile } from "../helpers/tiles";
+import { emptyFieldsLink } from "../helpers/empty-fields";
 
 const MARK = `${E2E_MARKER}PERS-03`;
 const SAVED_CNP = "1800101420045";
@@ -64,6 +65,8 @@ test.describe("TC-PERS-03 — nota CNP-ului într-un balon, refuzul în română
       // Step 1 — the person: the CNP editable, nothing under it, named `CNP`, described by the sentence.
       await page.goto(`/natural-persons/${personId}`);
       await expect(page.getByRole("heading", { level: 1, name: `Persoană ${MARK}`, exact: true })).toBeVisible({ timeout: 30_000 });
+      // Slice 40.72: the person reads as text; „Editează" opens „Identitate", every field drawn.
+      await editTile(page, "identity");
       const cnp = page.getByRole("textbox", { name: "CNP", exact: true });
       await expect(cnp).toHaveValue(SAVED_CNP);
       await expect(cnp).toBeEditable();
@@ -76,8 +79,6 @@ test.describe("TC-PERS-03 — nota CNP-ului într-un balon, refuzul în română
       await expect(bubble).toHaveText(SENTENCE);
       await expect(bubble).toHaveAttribute("role", "tooltip");
       await expect(bubble).toHaveClass(/(^|\s)sr-only(\s|$)/);
-      // Slice 40.71: steps 4 and 9 use „Data nașterii" and „Poreclă", empty on this person — shown first.
-      await showEmptyFields(page, "identity");
       await photograph(page, "identity-at-rest", async () => {
         await page.mouse.move(5, 5);
         await expect(bubble).toHaveClass(/(^|\s)sr-only(\s|$)/);
@@ -153,6 +154,10 @@ test.describe("TC-PERS-03 — nota CNP-ului într-un balon, refuzul în română
       await expect(nickname).toHaveCSS("border-top-color", "rgb(26, 82, 150)");
       expect(await nickname.evaluate((el) => getComputedStyle(el).boxShadow)).not.toMatch(/^(none|(rgba\(0, 0, 0, 0\) 0px 0px 0px 0px(, )?)+)$/);
 
+      // Slice 40.72: „Renunță" puts „Identitate" back (the refused CNP with it), so step 11 opens „Contact" unasked.
+      await page.locator('[data-tile-cancel="identity"]').click();
+      await expect(page.locator('[data-tile-edit-bar="identity"]')).toHaveCount(0);
+
       // Step 10 — Slice 40.64: the four empty tiles, each one line — its title, its state, „Adaugă".
       const lines = {
         contact: ["Contact", "necompletat"],
@@ -181,7 +186,8 @@ test.describe("TC-PERS-03 — nota CNP-ului într-un balon, refuzul în română
       await page.getByRole("checkbox", { name: "Adresa de corespondență aceeași cu domiciliul" }).check();
       await expect(emptyTileLine(page, "correspondence").locator("[data-empty-tile-state]")).toHaveText("aceeași cu domiciliul");
 
-      // Step 13 — „Până la" a past date: its red border at rest, and „EXPIRAT".
+      // Step 13 — „Până la" a past date: its red border at rest, and „EXPIRAT". (40.72: „Adrese" put back first.)
+      await page.locator('[data-tile-cancel="addresses"]').click();
       await openEmptyTile(page, "idCard");
       const validUntil = page.locator('input[name="idValidUntil"]');
       await validUntil.fill("2020-01-01");
@@ -216,26 +222,29 @@ test.describe("TC-PERS-03 — nota CNP-ului într-un balon, refuzul în română
       await expect(link).toHaveText("Arată 4 câmpuri goale");
       await expect(contact.locator("[data-empty-fields-names]")).toHaveText(HIDDEN.join(", "));
       await expect(link).toHaveAttribute("title", `Câmpuri goale: ${HIDDEN.join(", ")}`);
-      await expect(contact.getByRole("textbox", { name: "Telefon Personal 2", exact: true })).toHaveValue("0700 000 002");
-      await expect(contact.getByRole("textbox", { name: "Email serviciu", exact: true })).toHaveValue("goale@example.invalid");
+      // Slice 40.72: read as text.
+      await expect(contact.locator('[data-read-value="personalPhone2"]')).toHaveText("0700 000 002");
+      await expect(contact.locator('[data-read-value="workEmail"]')).toHaveText("goale@example.invalid");
       for (const name of ["personalPhone1", "workPhone", "personalEmail1", "personalEmail2"]) {
-        await expect(contact.locator(`input[name="${name}"]`)).toBeHidden();
+        await expect(contact.locator(`[data-read-value="${name}"]`)).toBeHidden();
       }
 
       // Step 15 — „Identitate": the CNP shows, empty; the other empty fields are behind its own link.
       const identity = page.locator('[data-panel="identity"]');
-      await expect(identity.getByRole("textbox", { name: "CNP", exact: true })).toBeVisible();
-      await expect(identity.getByRole("textbox", { name: "CNP", exact: true })).toHaveValue("");
+      await expect(identity.locator('[data-read-value="cnp"]')).toBeVisible();
+      await expect(identity.locator('[data-read-value="cnp"]')).toHaveText("—");
       await expect(emptyFieldsLink(identity, "identity")).toHaveText("Arată 8 câmpuri goale");
-      await expect(identity.locator('input[name="nickname"]')).toBeHidden();
+      await expect(identity.locator('[data-read-value="nickname"]')).toBeHidden();
 
       // Step 16 — the link pressed: all six boxes, no link; a box typed into and emptied again stays; „Identitate" is
       // still behind its own.
       await link.click();
       await expect(link).toHaveCount(0);
-      for (const name of [...HIDDEN, "Telefon Personal 2", "Email serviciu"]) {
-        await expect(contact.getByRole("textbox", { name, exact: true })).toBeVisible();
+      for (const name of ["personalPhone1", "personalPhone2", "workPhone", "personalEmail1", "personalEmail2", "workEmail"]) {
+        await expect(contact.locator(`[data-read-value="${name}"]`)).toBeVisible();
       }
+      // 40.72: typed into in the open tile.
+      await editTile(page, "contact");
       const workPhone = contact.getByRole("textbox", { name: "Telefon serviciu", exact: true });
       await workPhone.fill("021 000 0000");
       await workPhone.fill("");

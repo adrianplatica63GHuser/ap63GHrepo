@@ -103,16 +103,16 @@ test.describe("TC-TILES-13 — o fișă trasă de spațiul ei gol", () => {
       expect(await drag(page, q.x, q.y, (onto?.x ?? 0) + 20, (onto?.y ?? 0) + 20)).toBe("false");
       await expect.poll(async () => (await boxes(page)).connections).toEqual(dropped.connections);
 
-      // Step 4 — a press on a field, or on a label, starts no drag; the field takes focus.
-      const nume = region("Identitate").getByLabel("Nume", { exact: true });
+      // Step 4 — a press on a field's value, or on a label, starts no drag. (Slice 40.72: a saved person reads as
+      // text, so the field is its value, read; nothing takes the focus.)
+      const nume = region("Identitate").locator('[data-read-value="lastName"]');
       const f = await nume.boundingBox();
       await page.mouse.move((f?.x ?? 0) + 10, (f?.y ?? 0) + 5);
       await page.mouse.down();
       await page.mouse.move((f?.x ?? 0) + 200, (f?.y ?? 0) + 150, { steps: 8 });
       await expect(page.locator("[data-tile-outline]")).toHaveCount(0);
       await page.mouse.up();
-      await expect(nume).toBeFocused();
-      const label = region("Identitate").locator("label", { hasText: /^Nume$/ }).first();
+      const label = region("Identitate").locator("span", { hasText: /^Nume$/ }).first();
       const l = await label.boundingBox();
       expect(await drag(page, (l?.x ?? 0) + 4, (l?.y ?? 0) + 4, (l?.x ?? 0) + 300, (l?.y ?? 0) + 200)).toBeNull();
       expect((await boxes(page)).identity).toEqual(rule.identity);

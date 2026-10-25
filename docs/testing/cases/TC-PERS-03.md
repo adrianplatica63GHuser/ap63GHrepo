@@ -69,6 +69,11 @@ Leave the person without saving (navigate away, discarding the change), then del
 
 ## Notes from the runs
 
+**2026-10-25 — Slice 40.72.** A saved person reads as text. Steps 1–9 happen with „Identitate" opened by „Editează"
+(an open tile shows every field); after step 9 „Renunță" puts it back, so step 11's „Adaugă" opens „Contact"
+without „Modificări nesalvate" asking, and „Adrese" is put back the same way before step 13. Steps 14–16 read the
+values as text; step 16's box is typed into after „Editează" on „Contact".
+
 **2026-10-25 — steps 14–16 added (Slice 40.71).** A partly filled tile's empty fields behind „Arată N câmpuri goale",
 the CNP always shown. Written from the slice's own change and added to the spec; not driven by hand first. Delete the
 second person at the end as the first.

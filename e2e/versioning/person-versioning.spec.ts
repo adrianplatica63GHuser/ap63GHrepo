@@ -20,6 +20,7 @@
 import { test, expect } from "../helpers/test";
 import { E2E_MARKER, removeLeftovers, removeRecord } from "../helpers/records";
 import { openFromSidebar } from "../helpers/sidebar";
+import { editTile, saveTile } from "../helpers/tiles";
 
 const LAST_NAME = `${E2E_MARKER}VER-01`;
 const named = (first: string) => `${first} ${LAST_NAME}`; // prenume first, as the list renders it
@@ -54,15 +55,18 @@ test.describe("TC-VER-01 — Versiunile unei persoane fizice: salvare, înapoi, 
       await expect(page.getByRole("button", { name: "Versiunea anterioară" })).toBeDisabled();
       await expect(page.getByRole("button", { name: "Versiunea următoare" })).toBeDisabled();
       await expect(page.getByRole("button", { name: "Fă curentă" })).toBeDisabled();
+      // Slice 40.72: the person reads as text — no record-level „Salvează", „Editează" on each tile.
       const save = page.getByRole("button", { name: "Salvează", exact: true });
-      await expect(save).toBeDisabled();
+      await expect(save).toHaveCount(0);
+      await expect(page.locator('[data-tile-edit="identity"]')).toBeVisible();
       await expect(page.getByRole("button", { name: "Șterge", exact: true })).toBeVisible();
       await expect(page.getByRole("button", { name: "Anulează", exact: true })).toBeVisible();
 
       // Step 3 — „Prenume" `Doi`, „Salvează": stays, `Doi …`, „v 1", chip „2 versiuni", no arrows.
-      const firstName = page.locator('[name="firstName"]');
-      await firstName.fill("Doi");
-      await save.click();
+      const firstName = page.locator('[data-read-value="firstName"]');
+      await editTile(page, "identity");
+      await page.locator('[name="firstName"]').fill("Doi");
+      await saveTile(page, "identity");
       await expect(page.getByRole("heading", { name: named("Doi") })).toBeVisible({ timeout: 30_000 });
       await expect(page).toHaveURL(new RegExp(`/natural-persons/${personId}$`));
       await expect(page.getByText("v 1", { exact: true })).toBeAttached();
@@ -70,8 +74,9 @@ test.describe("TC-VER-01 — Versiunile unei persoane fizice: salvare, înapoi, 
       await expect(page.getByRole("button", { name: "Versiunea următoare" })).toHaveCount(0);
 
       // Step 4 — `Trei`: „v 2", „3 versiuni".
-      await firstName.fill("Trei");
-      await save.click();
+      await editTile(page, "identity");
+      await page.locator('[name="firstName"]').fill("Trei");
+      await saveTile(page, "identity");
       await expect(page.getByRole("heading", { name: named("Trei") })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText("v 2", { exact: true })).toBeAttached();
       await expect(page.getByRole("button", { name: "3 versiuni" })).toBeVisible();
@@ -80,7 +85,8 @@ test.describe("TC-VER-01 — Versiunile unei persoane fizice: salvare, înapoi, 
       // „Salvează" gone; the heading still reads the current name.
       await page.getByRole("button", { name: "3 versiuni" }).click();
       await expect(page.getByText("v 1", { exact: true })).toBeVisible({ timeout: 15_000 });
-      await expect(firstName).toHaveValue("Doi");
+      await expect(firstName).toHaveText("Doi");
+      await expect(page.locator("[data-tile-edit]")).toHaveCount(0); // 40.72: a version is read, never edited
       await expect(page.getByRole("button", { name: "Versiunea anterioară" })).toBeEnabled();
       await expect(page.getByRole("button", { name: "Versiunea următoare" })).toBeEnabled();
       await expect(page.getByRole("button", { name: "Fă curentă" })).toBeEnabled();
@@ -90,7 +96,7 @@ test.describe("TC-VER-01 — Versiunile unei persoane fizice: salvare, înapoi, 
       // Step 6 — „Versiunea anterioară": „v 0", `Unu`; that arrow disabled.
       await page.getByRole("button", { name: "Versiunea anterioară" }).click();
       await expect(page.getByText("v 0", { exact: true })).toBeVisible({ timeout: 15_000 });
-      await expect(firstName).toHaveValue("Unu");
+      await expect(firstName).toHaveText("Unu");
       await expect(page.getByRole("button", { name: "Versiunea anterioară" })).toBeDisabled();
 
       // Step 7 — „Fă curentă": the question, its sentence, „Anulează" / „OK".
@@ -108,12 +114,12 @@ test.describe("TC-VER-01 — Versiunile unei persoane fizice: salvare, înapoi, 
       await expect(page.getByRole("heading", { name: named("Unu") })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText("v 3", { exact: true })).toBeAttached();
       await expect(page.getByRole("button", { name: "4 versiuni" })).toBeVisible();
-      await expect(firstName).toHaveValue("Unu");
+      await expect(firstName).toHaveText("Unu");
 
       // Step 9 — „4 versiuni": „v 2" still reads `Trei` — the replaced version is kept.
       await page.getByRole("button", { name: "4 versiuni" }).click();
       await expect(page.getByText("v 2", { exact: true })).toBeVisible({ timeout: 15_000 });
-      await expect(firstName).toHaveValue("Trei");
+      await expect(firstName).toHaveText("Trei");
 
       // Step 10 — the list agrees with the record.
       await openFromSidebar(page, "Persoane Fizice");

@@ -18,6 +18,7 @@
 
 import { test, expect, type Locator, type Page } from "../helpers/test";
 import { removeLeftovers, removeRecord } from "../helpers/records";
+import { editTile } from "../helpers/tiles";
 
 const MARK = "TC-E2E-FOLD-01";
 const SHOTS = "playwright-report/note-fold";
@@ -127,6 +128,8 @@ test.describe("TC-FOLD-01 — „Note” și MRZ lungi se strâng la cinci rând
 
       // Steps 6–7 — the MRZ: five of seven lines; the empty „Note" has no link.
       await page.goto(`/natural-persons/${ids[2].id}`);
+      // Slice 40.72: a saved person reads as text; the MRZ folds in its box, so „Act de identitate" is opened.
+      await editTile(page, "idCard");
       await expectFolds(page, "MRZ (text brut)", 150, "natural-person-mrz");
       // Its own „Note" and the address block's are both empty: no link under either.
       await expect(fold(page, "Note").links).toHaveCount(0);
