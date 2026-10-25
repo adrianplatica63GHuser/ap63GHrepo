@@ -101,7 +101,8 @@ describe("the screen and the route (#38.49)", () => {
   it("„Recompune” is a change to save; the empty field filled on opening is not", () => {
     const form = read("src/app/documents/_components/document-form.tsx");
     expect(form).toContain('{ shouldDirty: how === "recompose" }');
-    expect(form).toMatch(/if \(f\.key === SALE_OBJECT_FIELD_KEY && documentId\)[\s\S]*?<SaleObjectRecompose[\s\S]*?editable=\{effectiveMode === "edit"\}/);
+    // 40.75: „Recompune" while its tile is open; the empty field is filled for the read view too.
+    expect(form).toMatch(/if \(f\.key === SALE_OBJECT_FIELD_KEY && documentId\)[\s\S]*?<SaleObjectRecompose[\s\S]*?editable=\{effectiveMode === "edit" && !readMode\.reading\(name\)\}\s*fill=\{effectiveMode === "edit"\}/);
     const button = read("src/components/documents/sale-object-recompose.tsx");
     expect(button).toContain('onText(text, "recompose")');
     expect(button).toContain('onText(text, "auto")');

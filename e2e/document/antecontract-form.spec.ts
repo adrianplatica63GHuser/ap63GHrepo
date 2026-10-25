@@ -13,6 +13,7 @@
 import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createDocumentOfType, removeLeftovers, removeRecord } from "../helpers/records";
 import { showEmptyFields } from "../helpers/empty-fields";
+import { openEmptyTiles } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}DOC-11`;
 const FOURTEEN = [
@@ -28,6 +29,7 @@ async function visibleLabels(page: Page, id: string): Promise<string[]> {
   const names = page.locator("main label, main div.row-span-3.grid-rows-subgrid > span:first-child");
   await expect(names.filter({ hasText: /^Etichetă scurtă$/ }).first()).toBeVisible({ timeout: 30_000 });
   await page.waitForTimeout(1000);
+  await openEmptyTiles(page); // a type's tiles with nothing in them are one line each (40.64)
   await showEmptyFields(page);
   return names.evaluateAll((els) =>
     els.filter((e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; }).map((e) => (e.textContent ?? "").trim()));
