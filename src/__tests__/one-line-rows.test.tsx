@@ -91,7 +91,11 @@ describe("one line a row", () => {
     const content = row.querySelector("[data-row-content]") as HTMLElement;
     expect(content.textContent).toBe("Maria Proiectant (Proiectant / Consultant)");
     expect(content).toHaveAttribute("title", "Maria Proiectant (Proiectant / Consultant)");
-    expect(content.className).toContain("truncate");
+    // Slice 40.65: the role is a tag at the content's right edge, its brackets visually hidden; the name is what is
+    // cut with „…" (was: the content span itself truncated, the role in brackets after the name).
+    expect(content.querySelector("[data-row-role]")).toHaveTextContent("Proiectant / Consultant");
+    expect(content.querySelector("[data-row-role]")?.className).toContain("shrink-0");
+    expect(content.firstElementChild?.className).toContain("truncate");
     // A link with no role reads as the name alone.
     expect((rowOf("Fără Rol").querySelector("[data-row-content]") as HTMLElement).textContent).toBe("Fără Rol");
   });

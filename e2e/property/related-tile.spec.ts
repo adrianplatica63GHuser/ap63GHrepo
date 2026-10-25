@@ -27,6 +27,9 @@ import {
 } from "../helpers/records";
 import { expectOneLine, showTile } from "../helpers/tiles";
 
+/** Slice 40.65: each group's heading — the sidebar's name for the kind. */
+const GROUP_NAME: Readonly<Record<string, string>> = { natural: "Persoane fizice", judicial: "Persoane juridice", property: "Proprietăți", document: "Acte" };
+
 const MARK = `${E2E_MARKER}PROP-07`;
 const PERSON = `Ion ${MARK}`;
 const COMPANY = `${MARK} Firmă SRL`;
@@ -95,10 +98,13 @@ test.describe("TC-PROP-07 — „Corelate” pe o proprietate", () => {
         await expect(row.locator("[data-row-content]")).toHaveText(text);
         await expect(row.locator("svg").first()).toHaveAttribute("class", icon);
         await expectOneLine(row);
-        if (i > 0) await expect(group).toHaveClass(/border-t/);
+        // Slice 40.65: the group opens with its heading — the kind's name, its count — and no line above it.
+        await expect(group.locator("[data-related-heading] > span").first()).toHaveText(GROUP_NAME[kind]);
+        await expect(group.locator("[data-related-count]")).toHaveText("1");
+        await expect(group).not.toHaveClass(/border-t/);
       }
       await expect(tile.getByRole("button", { name: "Cotă", exact: true })).toHaveCount(0);
-      await expect(tile.getByRole("heading")).toHaveCount(1); // the tile's own title, nothing over the groups
+      await expect(tile.getByRole("heading")).toHaveCount(5); // 40.65: the tile's own title and the four groups' headings
       const names = ["Asociază persoană", "Asociază proprietate", "Asociază act", "Dezasociază"];
       const tops = await Promise.all(names.map(async (name) => Math.round((await tile.getByRole("button", { name, exact: true }).boundingBox())?.y ?? -1)));
       expect(new Set(tops).size, `one row: ${tops.join(", ")}`).toBe(1);

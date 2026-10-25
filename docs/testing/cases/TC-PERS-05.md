@@ -39,7 +39,7 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens `Ion TC-PERS-05`, tile „Legături" | Four rows, each on one line, in this order, no headings, a thin line between two kinds — `Maria TC-PERS-05 (Soț)` with the person icon, `TC-PERS-05 Firmă SRL (Reprezentat(ă) / Mandant(ă))` with the building, `TC-PERS-05 Teren (Proprietar)` with the map, `TC-PERS-05 CVC (Contract de Vânzare)` with the document and a „Relația" button. No „Cotă" on any row. Under them „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" in one row |
+| 1 | Opens `Ion TC-PERS-05`, tile „Legături" | Four rows, each on one line, in this order, each kind under a slim heading — „Persoane fizice", „Persoane juridice", „Proprietăți", „Acte" — with its count on the right, a role as a small tag at the right of its row (Slice 40.65) — `Maria TC-PERS-05 (Soț)` with the person icon, `TC-PERS-05 Firmă SRL (Reprezentat(ă) / Mandant(ă))` with the building, `TC-PERS-05 Teren (Proprietar)` with the map, `TC-PERS-05 CVC (Contract de Vânzare)` with the document and a „Relația" button. No „Cotă" on any row. Under them „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" in one row |
 | 2 | Presses „Relația" on `TC-PERS-05 CVC` | A bubble: `Rol: „Vânzător”` |
 | 3 | Clicks the tile's title, outside the bubble | It goes |
 | 4 | Selects Maria's radio | Only hers is selected; the three „Asociază …" are not offered |
@@ -58,6 +58,10 @@ Delete the five records (`DELETE` on their routes); their links go with them. C�
 `TC-PERS-05` finds nothing.
 
 ## Notes from the runs
+
+**2026-10-25 — step 1 changed (Slice 40.65).** Adrian's Option A: a heading and a count over each kind, where the case
+said „no headings, a thin line between two kinds"; the role a tag at the row's right, its brackets still in the row's
+text for a screen reader. Written from the slice's own change and put in the spec; not driven by hand first.
 
 **2026-10-03 — run 1, `driven` (Slice #37.67).** Driven in the Claude desktop app's browser pane on
 Windows against `npm run dev` on 3000, at the pane's own width, a screenshot before each click

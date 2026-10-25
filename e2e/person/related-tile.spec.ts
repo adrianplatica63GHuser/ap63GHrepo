@@ -27,6 +27,9 @@ import {
 } from "../helpers/records";
 import { expectOneLine, showTile } from "../helpers/tiles";
 
+/** Slice 40.65: each group's heading — the sidebar's name for the kind. */
+const GROUP_NAME: Readonly<Record<string, string>> = { natural: "Persoane fizice", judicial: "Persoane juridice", property: "Proprietăți", document: "Acte" };
+
 const MARK = `${E2E_MARKER}PERS-05`;
 const ION = `Ion ${MARK}`;
 const MARIA = `Maria ${MARK}`;
@@ -65,7 +68,10 @@ async function expectRows(tile: Locator, expected: readonly (readonly [string, s
     await expect(row.locator("[data-row-content]")).toHaveText(text);
     await expect(row.locator("svg").first()).toHaveAttribute("class", icon);
     await expectOneLine(row);
-    if (i > 0) await expect(group).toHaveClass(/border-t/);
+    // Slice 40.65: the group opens with its heading — the kind's name, its count — and no line above it.
+    await expect(group.locator("[data-related-heading] > span").first()).toHaveText(GROUP_NAME[kind]);
+    await expect(group.locator("[data-related-count]")).toHaveText("1");
+    await expect(group).not.toHaveClass(/border-t/);
   }
 }
 
@@ -120,7 +126,14 @@ test.describe("TC-PERS-05 — „Corelate” pe o persoană fizică și pe o fir
         ["document", `${CVC} (Contract de Vânzare)`, /lucide-file-text/],
       ]);
       await expect(tile.getByRole("button", { name: "Cotă", exact: true })).toHaveCount(0);
-      await expect(tile.getByRole("heading")).toHaveCount(1); // the tile's own title, nothing over the groups
+      await expect(tile.getByRole("heading")).toHaveCount(5); // 40.65: the tile's own title and the four groups' headings
+      // 40.65: the role a small tag at the content's right edge, the three tags' right edges in line.
+      const tags = tile.locator("[data-row-role]");
+      await expect(tags).toHaveCount(3);
+      await expect(tags.nth(0)).toContainText("Soț");
+      await expect(tags.nth(2)).toContainText(OWNER);
+      const rights = await tags.evaluateAll((ts) => ts.map((t) => Math.round(t.getBoundingClientRect().right)));
+      expect(new Set(rights).size, `the tags' right edges: ${rights.join(", ")}`).toBe(1);
       const names = ["Asociază persoană", "Asociază proprietate", "Asociază act", "Dezasociază"];
       const tops = await Promise.all(names.map(async (name) => Math.round((await tile.getByRole("button", { name, exact: true }).boundingBox())?.y ?? -1)));
       expect(new Set(tops).size, `one row: ${tops.join(", ")}`).toBe(1);

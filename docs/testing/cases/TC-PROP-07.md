@@ -36,7 +36,7 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens `TC-PROP-07 Teren`, tile „Legături" | On the left, beside the map column: four rows, each on one line, in this order, no headings, a thin line between two kinds — `Ion TC-PROP-07 (Proprietar)` with the person icon, `TC-PROP-07 Firmă SRL (Proprietar)` with the building, `TC-PROP-07 Teren întreg` with the map and a „Relația" button, `TC-PROP-07 CVC (Contract de Vânzare)` with the document. No „Cotă" on any row. Under them „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" in one row |
+| 1 | Opens `TC-PROP-07 Teren`, tile „Legături" | On the left, beside the map column: four rows, each on one line, in this order, each kind under a slim heading — „Persoane fizice", „Persoane juridice", „Proprietăți", „Acte" — with its count on the right, a role as a small tag at the right of its row (Slice 40.65) — `Ion TC-PROP-07 (Proprietar)` with the person icon, `TC-PROP-07 Firmă SRL (Proprietar)` with the building, `TC-PROP-07 Teren întreg` with the map and a „Relația" button, `TC-PROP-07 CVC (Contract de Vânzare)` with the document. No „Cotă" on any row. Under them „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" in one row |
 | 2 | Presses „Relația" on `TC-PROP-07 Teren întreg` | A bubble: `această proprietate „Inclus în” TC-PROP-07 Teren întreg` |
 | 3 | Clicks outside the bubble | It goes |
 | 4 | Selects the company's radio, presses „Dezasociază" | The company's row goes, and with it its group; the person, the other property and the contract stay |
@@ -50,6 +50,10 @@ Delete the five records (`DELETE` on their routes); their links go with them. C�
 `TC-PROP-07` finds nothing.
 
 ## Notes from the runs
+
+**2026-10-25 — step 1 changed (Slice 40.65).** Adrian's Option A: a heading and a count over each kind, where the case
+said „no headings, a thin line between two kinds"; the role a tag at the row's right, its brackets still in the row's
+text for a screen reader. Written from the slice's own change and put in the spec; not driven by hand first.
 
 **2026-10-03 — run 1, `driven` (Slice #37.66).** Driven in the Claude desktop app's browser pane on
 Windows against `npm run dev` on 3000, at the pane's own width, a screenshot before each click

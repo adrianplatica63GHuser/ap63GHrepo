@@ -92,10 +92,16 @@ describe("„Corelate”", () => {
     // The icon is decoration; the kind is read out with the row.
     expect(groups[1].querySelector("li svg")).toHaveAttribute("aria-hidden", "true");
     expect(groups[1].querySelector("li .sr-only")?.textContent).toBe("kind.judicial: ");
-    // A thin line between two groups, no heading over them.
-    expect(groups[0].className).not.toContain("border-t");
-    expect(groups[1].className).toContain("border-t");
-    expect(screen.queryByRole("heading")).toBeNull();
+    // Slice 40.65 (Option A, overturning #37.65's „a thin line between two groups, no heading over them"): each group
+    // opens with its heading — the kind's name and its count — and the thin line is gone.
+    for (const g of groups) expect(g.className).not.toContain("border-t");
+    expect(screen.getAllByRole("heading", { level: 3 }).map((h) => h.textContent)).toEqual([
+      "group.natural2",
+      "group.judicial1",
+      "group.property1",
+      "group.document1",
+    ]);
+    expect(groups[0].querySelector("[data-related-count]")?.className).toContain("tabular-nums");
   });
 
   it("one selection across the tile, whatever the kind", async () => {

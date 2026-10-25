@@ -38,7 +38,7 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens `TC-DOC-10 CVC`, tile „Legături" | Four rows, each on one line, in this order, with no headings over them and a thin line between two kinds: `Ion TC-DOC-10 (Notar)` with the person icon, `TC-DOC-10 Firmă SRL (Reprezentant legal / Mandatar)` with the building, `TC-DOC-10 Teren` with the map, `TC-DOC-10 PAD (Plan de Amplasament și Delimitare)` with the document. Under them „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" in one row, „Înscrisuri citate" after them |
+| 1 | Opens `TC-DOC-10 CVC`, tile „Legături" | Four rows, each on one line, in this order, each kind under a slim heading — „Persoane fizice", „Persoane juridice", „Proprietăți", „Acte" — with its count on the right, a role as a small tag at the right of its row (Slice 40.65): `Ion TC-DOC-10 (Notar)` with the person icon, `TC-DOC-10 Firmă SRL (Reprezentant legal / Mandatar)` with the building, `TC-DOC-10 Teren` with the map, `TC-DOC-10 PAD (Plan de Amplasament și Delimitare)` with the document. Under them „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" in one row, „Înscrisuri citate" after them |
 | 2 | Selects the property's radio, then the company's | Only the company's is selected; „Dezasociază" is active and the three „Asociază …" are not |
 | 3 | Presses „Dezasociază" | The company's row goes, and with it its group; the person, the property and the PAD stay; nothing is selected and the three „Asociază …" are active again |
 | 4 | Presses „Asociază persoană", then „Anulează" | „Asociere persoană"; back on the CVC with „Legături" on screen |
@@ -51,6 +51,10 @@ Delete the five records (`DELETE` on their routes); their links go with them. C�
 `TC-DOC-10` finds nothing.
 
 ## Notes from the runs
+
+**2026-10-25 — step 1 changed (Slice 40.65).** Adrian's Option A: a heading and a count over each kind, where the case
+said „no headings, a thin line between two kinds"; the role a tag at the row's right, its brackets still in the row's
+text for a screen reader. Written from the slice's own change and put in the spec; not driven by hand first.
 
 **2026-10-07 — Slice #38.33.** A CVC's sellers and buyers moved to „Părți", so the person and
 the company are now the CVC's „Notar" and „Reprezentant legal / Mandatar", which hold no share and
