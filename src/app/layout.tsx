@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import { cookies } from "next/headers";
-import { Geist, Geist_Mono, Roboto_Condensed, Roboto_Slab } from "next/font/google";
+import { Geist_Mono, Roboto, Roboto_Condensed, Roboto_Slab } from "next/font/google";
 import { ConditionalAppShell } from "@/components/conditional-app-shell";
 import { MapsProvider } from "@/components/providers/maps-provider";
 import { NavigationHistoryProvider } from "@/components/providers/navigation-history-provider";
@@ -13,9 +13,14 @@ import { RecordSyncProvider } from "@/components/providers/record-sync-provider"
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { THEME_COOKIE_NAME, themeClass, themeOf } from "@/lib/ui/theme";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+// Slice 40.70: the body text — the plain member of the titles' family. The variable file, one per style and subset,
+// carries every weight the app asks for (font-medium 500, font-semibold 600, font-bold 700) where static files would
+// need one each and would draw 600 as 700; the italic is for the blank choices („fără valoare", globals.css). latin-ext
+// so ă â î ș ț come from the same file. Geist is no longer loaded; Geist Mono stays for codes.
+const roboto = Roboto({
+  variable: "--font-roboto",
+  subsets: ["latin", "latin-ext"],
+  style: ["normal", "italic"],
 });
 
 const geistMono = Geist_Mono({
@@ -56,7 +61,7 @@ export default async function RootLayout({
   return (
     <html
       lang={locale}
-      className={`${geistSans.variable} ${geistMono.variable} ${robotoSlab.variable} ${robotoCondensed.variable} h-full antialiased ${themeClass(theme)}`.trim()}
+      className={`${roboto.variable} ${geistMono.variable} ${robotoSlab.variable} ${robotoCondensed.variable} h-full antialiased ${themeClass(theme)}`.trim()}
       style={{ colorScheme: theme }}
     >
       <body className="h-full flex flex-col">

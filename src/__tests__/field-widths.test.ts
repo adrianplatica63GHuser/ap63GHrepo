@@ -785,11 +785,11 @@ describe("a document type's own fields are sized by rule (#37.15)", () => {
     expect(templateFieldWidth({ type: "date", width: "L" }).kind).toBe("fixed");
   });
 
-  it("measures text in Arial: diacritics as their letter, an em dash wide, a capital wider than a small letter", () => {
+  it("measures text in Roboto (40.70): diacritics as their letter, an em dash wide, a capital wider than a small letter", () => {
     expect(textPx("ăîșț")).toBe(textPx("aist"));
     expect(textPx("—")).toBeGreaterThan(textPx("-") * 2);
     expect(textPx("H")).toBeGreaterThan(textPx("n"));
-    expect(textPx("0000")).toBeCloseTo(4 * 7.784, 2);
+    expect(textPx("0000")).toBeCloseTo(4 * 7.868, 2); // Roboto's digit, 562 thousandths of 14 px (Arial's was 556)
   });
 
   it("every dropdown on every seeded form fits without the cap, its blank choice included", () => {

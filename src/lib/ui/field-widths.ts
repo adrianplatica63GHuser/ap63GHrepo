@@ -31,8 +31,10 @@
  * parcelă at L) may be widened by a measurement and never narrowed. After this
  * slice this file is the source of truth and the docx is history.
  *
- * Widths are in the font the app renders today — Arial at 14 px (FU-123: Geist
- * is loaded and never used). A digit is about 7.8 px, a capital 9.3 px, a
+ * Widths were measured in Arial at 14 px (FU-123: Geist was loaded and never
+ * used); since Slice 40.70 the body is Roboto, whose letters are within a few
+ * per cent of Arial's (digits 562 thousandths of the size against 556), so the
+ * steps stand and the layout specs measure what is drawn. A digit is about 7.8 px, a capital 9.3 px, a
  * lower-case letter 6.5 px; a box adds about 18 px of padding and border, a
  * dropdown about 24 px more for its arrow.
  */
@@ -561,32 +563,33 @@ export const SELECT_STEPS: readonly Step[] = ["S", "M", "L", "XL", "XXL"];
 export const SELECT_CHROME_PX = 42;
 
 /**
- * Arial's advance widths, in thousandths of the font size — the font the app
- * renders (FU-123). Enough to size a dropdown before it is drawn; the e2e check
- * measures the real thing in the browser.
+ * Roboto's advance widths at its regular weight, in thousandths of the font
+ * size — the body's font since Slice 40.70, read off the latin file next/font
+ * serves (2048 units to the em, rounded). Enough to size a dropdown before it
+ * is drawn; the e2e check measures the real thing in the browser.
  */
-const ARIAL: Record<string, number> = {
-  a: 556, b: 556, c: 500, d: 556, e: 556, f: 278, g: 556, h: 556, i: 222, j: 222, k: 500, l: 222, m: 833,
-  n: 556, o: 556, p: 556, q: 556, r: 333, s: 500, t: 278, u: 556, v: 500, w: 722, x: 500, y: 500, z: 500,
-  A: 667, B: 667, C: 722, D: 722, E: 667, F: 611, G: 778, H: 722, I: 278, J: 500, K: 667, L: 556, M: 833,
-  N: 722, O: 778, P: 667, Q: 778, R: 722, S: 667, T: 611, U: 722, V: 667, W: 944, X: 667, Y: 667, Z: 611,
-  " ": 278, ".": 278, ",": 278, ":": 278, ";": 278, "/": 278, "-": 333, "(": 333, ")": 333, "'": 191,
-  "„": 333, "”": 333, "\"": 355, "–": 556, "—": 1000, "%": 889, "&": 667,
+const ROBOTO: Record<string, number> = {
+  a: 544, b: 562, c: 523, d: 564, e: 530, f: 348, g: 562, h: 551, i: 243, j: 239, k: 507, l: 243, m: 877,
+  n: 552, o: 570, p: 562, q: 568, r: 339, s: 516, t: 327, u: 551, v: 484, w: 751, x: 496, y: 473, z: 496,
+  A: 652, B: 623, C: 651, D: 656, E: 568, F: 553, G: 681, H: 713, I: 272, J: 552, K: 627, L: 539, M: 873,
+  N: 713, O: 688, P: 631, Q: 688, R: 616, S: 594, T: 597, U: 648, V: 637, W: 887, X: 627, Y: 601, Z: 599,
+  " ": 248, ".": 264, ",": 197, ":": 242, ";": 211, "/": 413, "-": 276, "(": 342, ")": 348, "'": 175,
+  "„": 345, "”": 357, "\"": 320, "–": 656, "—": 781, "%": 732, "&": 622,
 };
 
-/** About how wide `text` draws in 14 px Arial, in px. Diacritics count as their base letter. */
+/** About how wide `text` draws in 14 px Roboto, in px. Diacritics count as their base letter. */
 export function textPx(text: string, fontPx = 14): number {
   let units = 0;
   for (const ch of text) {
     const base = ch.normalize("NFD")[0] ?? ch;
-    units += ARIAL[ch] ?? ARIAL[base] ?? 556; // digits are 556 too
+    units += ROBOTO[ch] ?? ROBOTO[base] ?? 562; // digits are 562 too
   }
   return (units * fontPx) / 1000;
 }
 
 /**
  * The px a dropdown needs to show every one of `labels` whole: the widest in
- * Arial, a 5% margin, and its padding, border and arrow. The margin and the
+ * Roboto (Arial until 40.70), a 5% margin, and its padding, border and arrow. The margin and the
  * chrome are #37.15's, set against Arial; since #37.53 nothing rounds them up
  * to a step, so TC-DOC-04 measures every CVC dropdown in the browser with its
  * widest choice selected.
@@ -606,7 +609,8 @@ export function selectStepFor(labels: readonly string[]): { step: Step; capped: 
  * A document type's own dropdown: as wide as `labels` need, rounded up to the
  * next 0.5rem, never narrower than S; past XXL, XXL and `capped`. (#37.53)
  * „Nu e menționat" needs 142 px → 9rem; the blank „fără valoare" (#37.55, in
- * italics — Arial Italic has Arial's widths) 120 px → 7.5rem.
+ * italics, which Roboto draws about 3% narrower than its upright) 120 px →
+ * 7.5rem — the same two numbers in Roboto (40.70) as they were in Arial.
  * The step is the one that would have held it — what the box is, not its width.
  */
 export function templateSelectWidth(labels: readonly string[]): FieldWidth & { capped?: boolean } {
@@ -1743,7 +1747,10 @@ export const MIN_TILE_UNITS = 2;
  * „Document → Document Links", is 186.0 px; the widest heading, „ROLURI ȘI
  * LEGĂTURI", 162.9 px with its padding; the page title, which now sits above the
  * column at its width, 179.2 px. The open list's `font-medium` is no wider:
- * Arial has no 500. Re-measure when a list is renamed or added — TC-VL-02 step 1
+ * Arial has no 500. Since Slice 40.70 the body is Roboto, which draws the
+ * longest name a little narrower (199.7 px at 400 and 202.1 at 500 without its
+ * arrow, read off the font file), so the number stands and the gap after it is
+ * at most a few px wider. Re-measure when a list is renamed or added — TC-VL-02 step 1
  * reads the two gaps and fails first, and the nav's `min-width: max-content`
  * widens it rather than wrap a name meanwhile.
  *
