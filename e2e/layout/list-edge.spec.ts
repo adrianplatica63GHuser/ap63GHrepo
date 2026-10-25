@@ -34,6 +34,7 @@ import {
   removeRecord,
   type RecordKind,
 } from "../helpers/records";
+import { listsOnTheirEarlierColumns } from "../helpers/list-columns";
 
 const MARK = `${E2E_MARKER}LAYOUT-02`;
 
@@ -209,6 +210,8 @@ async function rightEdge(page: Page, url: string, add: string, size: { width: nu
 
 test.describe("TC-LAYOUT-02 — „Adaugă …” la marginea tabelului", () => {
   test("pasul 10 — banda, rama și „+ Nou” se termină împreună (40.39)", async ({ page }) => {
+    // 40.66: the lists open on four default columns; these steps were written against the earlier ones.
+    await listsOnTheirEarlierColumns(page);
     test.slow();
     for (const { url, add } of LISTS) {
       for (const size of [{ width: 1920, height: 1080 }, { width: 1280, height: 600 }]) {
@@ -218,6 +221,10 @@ test.describe("TC-LAYOUT-02 — „Adaugă …” la marginea tabelului", () => 
   });
 
   test("pe cele patru liste, la 1366 și 1920 px", async ({ page }) => {
+
+    // 40.66: the lists open on four default columns; these steps were written against the earlier ones.
+
+    await listsOnTheirEarlierColumns(page);
     test.slow();
     test.setTimeout(360_000);
     await removeLeftovers(page.request, MARK);

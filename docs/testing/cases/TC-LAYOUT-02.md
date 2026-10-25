@@ -53,6 +53,10 @@ Put „Câmpuri afișate" and „Tip document" back as they were. Delete the fou
 
 ## Notes from the runs
 
+**2026-10-25 — Slice 40.66.** The lists open on four default columns (TC-LAYOUT-03). This case's steps read the lists
+as they opened before — Proprietăți on Tip proprietate, the other three on their fixed columns — so its spec stores
+that choice first (`listsOnTheirEarlierColumns`, e2e/helpers/list-columns.ts); a hand run unticks the defaults first.
+
 **2026-10-04 — run 1, `driven` (Slice #37.84).** Driven in the desktop app's browser pane, its
 viewport emulated at 1366 × 900 and 1920 × 900, against `npm run dev` on 3000; the four records made
 through the routes the „Adaugă" forms send; a script read the edges (right edge, px).

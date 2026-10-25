@@ -112,8 +112,11 @@ describe("„Modificat la” on the four lists (40.55)", () => {
     expect([...LIST_SORTS.document]).toContain("createdAt");
   });
 
-  it.each(LISTS)("%s: no browser opens with it ticked — the defaults did not change", (_dir, _ns, choice) => {
-    expect(LIST_COLUMN_CHOICE[choice].defaults).not.toContain("changed");
+  // Was (40.55): „no browser opens with it ticked — the defaults did not change". Since 40.66 „Modificat la" is a
+  // default wherever there is room (list-default-fields.test.ts): every list but Proprietăți, which has four already.
+  it.each(LISTS)("%s: a browser with no choice opens with it ticked wherever there is room (40.66)", (_dir, _ns, choice) => {
+    if (choice === "property") expect(LIST_COLUMN_CHOICE[choice].defaults).not.toContain("changed");
+    else expect(LIST_COLUMN_CHOICE[choice].defaults).toContain("changed");
   });
 
   it.each(LISTS)("%s: „Modificat la” / „Modified on”", (_dir, ns) => {

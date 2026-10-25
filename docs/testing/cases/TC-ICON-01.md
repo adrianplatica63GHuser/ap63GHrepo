@@ -54,6 +54,10 @@ Delete the sixteen persons (on each, „Șterge" and „Da", or `DELETE /api/peo
 
 ## Notes from the runs
 
+**2026-10-25 — Slice 40.66.** The lists open on four default columns (TC-LAYOUT-03). This case's steps read the lists
+as they opened before — Proprietăți on Tip proprietate, the other three on their fixed columns — so its spec stores
+that choice first (`listsOnTheirEarlierColumns`, e2e/helpers/list-columns.ts); a hand run unticks the defaults first.
+
 **2026-10-25 — step 7 (Slice 40.60).** The name is the row's link and the buttons are quiet at rest. Written from the
 slice's change and added to the spec; not driven by hand first.
 

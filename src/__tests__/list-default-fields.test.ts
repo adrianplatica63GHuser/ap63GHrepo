@@ -21,13 +21,17 @@ const LISTS = [
 
 describe("each list's default fields (#37.94)", () => {
   // Was (#38.02): „Tip proprietate on Properties, none on the other three".
-  it("are four on each list since 40.66 — „Modificat la” wherever there is room", () => {
+  it("are four on three lists since 40.66, three on Acte — „Modificat la” wherever there is room", () => {
     expect(LIST_COLUMN_CHOICE.property.defaults).toEqual(["tarlaSola", "parcela", "propertyType", "locality"]);
-    expect(LIST_COLUMN_CHOICE.document.defaults).toEqual(["nrDocument", "dateDocument", "institution", "changed"]);
+    // Instituție was the fourth: at 1366 px it made the table scroll sideways, so it dropped (Ask first 3).
+    expect(LIST_COLUMN_CHOICE.document.defaults).toEqual(["nrDocument", "dateDocument", "changed"]);
     expect(LIST_COLUMN_CHOICE.person.defaults).toEqual(["cnp", "dateOfBirth", "professionalType", "changed"]);
     expect(LIST_COLUMN_CHOICE.company.defaults).toEqual(["judicialPersonType", "cuiNumber", "locality", "changed"]);
     // No more than „Câmpuri afișate" holds.
-    for (const [entry, dir] of LISTS) expect([entry, /const MAX_OPT\s*=\s*4;/.test(VIEW(dir)), LIST_COLUMN_CHOICE[entry].defaults.length]).toEqual([entry, true, 4]);
+    for (const [entry, dir] of LISTS) {
+      expect([entry, /const MAX_OPT\s*=\s*4;/.test(VIEW(dir))]).toEqual([entry, true]);
+      expect(LIST_COLUMN_CHOICE[entry].defaults.length).toBe(entry === "document" ? 3 : 4);
+    }
   });
 
   // Was (#38.02): „Tarla/Solă and Parcelă are still offered, unticked" — since 40.66 they are two of the defaults.

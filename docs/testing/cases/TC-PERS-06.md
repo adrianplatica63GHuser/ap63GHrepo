@@ -45,6 +45,10 @@ on each route).
 
 ## Notes from the runs
 
+**2026-10-25 — Slice 40.66.** The lists open on four default columns (TC-LAYOUT-03). This case's steps read the lists
+as they opened before — Proprietăți on Tip proprietate, the other three on their fixed columns — so its spec stores
+that choice first (`listsOnTheirEarlierColumns`, e2e/helpers/list-columns.ts); a hand run unticks the defaults first.
+
 **2026-10-03 — run 1, `driven` (Slice #37.71).** Driven in the desktop app's browser pane at its own
 width against `npm run dev` on 3000, the ticks and the search made by a script. The file was written
 from the code first and needed no correction.

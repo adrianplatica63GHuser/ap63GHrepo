@@ -19,6 +19,7 @@
 
 import { test, expect, type Locator, type Page } from "../helpers/test";
 import { E2E_MARKER, createProperty, removeLeftovers, removeRecord } from "../helpers/records";
+import { listsOnTheirEarlierColumns } from "../helpers/list-columns";
 
 const MARK = `${E2E_MARKER}PROP-06`;
 const NAME = `${MARK} Teren de test`;
@@ -41,6 +42,8 @@ async function firstOf(page: Page, list: string): Promise<{ id: string; name: st
 
 test.describe("TC-PROP-06 — lista proprietăților", () => {
   test("fără „Importanță” și „Relevanță”, fără „Cod”, Poreclă mereu, „Câmpuri afișate” cu toate câmpurile cadastrale", async ({ page }) => {
+    // 40.66: the lists open on four default columns; these steps were written against the earlier ones.
+    await listsOnTheirEarlierColumns(page);
     test.slow();
     await removeLeftovers(page.request, MARK);
     await page.setViewportSize({ width: 1366, height: 900 });

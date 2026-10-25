@@ -21,6 +21,7 @@
 
 import { test, expect, type Locator, type Page } from "../helpers/test";
 import { E2E_MARKER, createCompany, createNaturalPerson, removeLeftovers, removeRecord } from "../helpers/records";
+import { listsOnTheirEarlierColumns } from "../helpers/list-columns";
 
 const MARK = `${E2E_MARKER}PERS-04`;
 /** #39.28: notes too long for the preview's line, so it is cut. Invented. */
@@ -59,6 +60,8 @@ async function previewOf(page: Page): Promise<{ title: string; lines: string[]; 
 
 test.describe("TC-PERS-04 — listele de persoane", () => {
   test("fără filtre; „Câmpuri afișate” cu câmpurile identității; previzualizarea pe patru rânduri", async ({ page }) => {
+    // 40.66: the lists open on four default columns; these steps were written against the earlier ones.
+    await listsOnTheirEarlierColumns(page);
     test.slow();
     await removeLeftovers(page.request, MARK);
     await page.setViewportSize({ width: 1366, height: 900 });

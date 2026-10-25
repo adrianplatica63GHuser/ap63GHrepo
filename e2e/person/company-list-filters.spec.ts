@@ -11,11 +11,14 @@
 import { test, expect } from "../helpers/test";
 import { E2E_MARKER, createCompany, removeLeftovers, removeRecord } from "../helpers/records";
 import { expectUnder } from "../helpers/filter-editor";
+import { listsOnTheirEarlierColumns } from "../helpers/list-columns";
 
 const MARK = `${E2E_MARKER}PERS-13`;
 
 test.describe("TC-PERS-13 — filtrele listei persoanelor juridice", () => {
   test("„Tip” și „Localitate”: numărul de lângă fiecare valoare, adresa, „Șterge filtrele”", async ({ page }) => {
+    // 40.66: the lists open on four default columns; these steps were written against the earlier ones.
+    await listsOnTheirEarlierColumns(page);
     test.slow();
     await removeLeftovers(page.request, MARK);
     await page.setViewportSize({ width: 1366, height: 900 });

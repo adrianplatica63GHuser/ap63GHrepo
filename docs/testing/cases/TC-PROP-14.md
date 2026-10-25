@@ -52,6 +52,10 @@ Delete the three properties (`DELETE` on their route). Untick „Categorie de fo
 
 ## Notes from the runs
 
+**2026-10-25 — Slice 40.66.** The lists open on four default columns (TC-LAYOUT-03). This case's steps read the lists
+as they opened before — Proprietăți on Tip proprietate, the other three on their fixed columns — so its spec stores
+that choice first (`listsOnTheirEarlierColumns`, e2e/helpers/list-columns.ts); a hand run unticks the defaults first.
+
 **2026-10-16 — run 1, `driven` (Slice #39.61).** Claude, in the browser pane on localhost:3000, read with a script.
 T1 Garaj, T2 Teren Arabil, C1 Arabil, C2 Pășune. Step 2: „Garaj 2", „Teren Arabil 1"; then A, B; the chip
 „Tip proprietate Garaj". Step 3: „Arabil 1", „Pășune 1"; then A. Step 4: A, with the chips „Tip proprietate Garaj"

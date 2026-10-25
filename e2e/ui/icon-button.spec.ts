@@ -23,6 +23,7 @@
 
 import { test, expect, type Locator, type Page } from "../helpers/test";
 import { E2E_MARKER, createNaturalPerson, removeLeftovers, removeRecord } from "../helpers/records";
+import { listsOnTheirEarlierColumns } from "../helpers/list-columns";
 
 const MARK = `${E2E_MARKER}ICON-01`;
 const SHOTS = "playwright-report/icon-button";
@@ -51,6 +52,8 @@ function tooltip(page: Page): Locator {
 
 test.describe("TC-ICON-01 — Butoanele cu pictogramă își arată numele", () => {
   test("la mouse, la tastatură, și când sunt inactive", async ({ page }) => {
+    // 40.66: the lists open on four default columns; these steps were written against the earlier ones.
+    await listsOnTheirEarlierColumns(page);
     test.slow();
     await removeLeftovers(page.request, MARK);
     await page.setViewportSize({ width: 1920, height: 1080 });

@@ -56,6 +56,10 @@ persoane juridice". A company still linked to a property must be dissociated fir
 
 ## Notes from the runs
 
+**2026-10-25 — Slice 40.66.** The lists open on four default columns (TC-LAYOUT-03). This case's steps read the lists
+as they opened before — Proprietăți on Tip proprietate, the other three on their fixed columns — so its spec stores
+that choice first (`listsOnTheirEarlierColumns`, e2e/helpers/list-columns.ts); a hand run unticks the defaults first.
+
 **2026-10-03 — Slice #37.67: „Persoane corelate", „Proprietăți" and „Acte" are one tile, „Corelate".** Step 9 reads six tile boxes, not eight. The spec follows.
 
 **2026-09-30 — `automated`, green (Slice #37.29).** Labels above their boxes and every tile on the width unit: the spec checks the unit grid at 1366, 1920 and 2560 px and photographs the new company, the saved one and „Toate". Green in the test runner's `full` `20261001T004412Z-9331` on `f872ab3` (e2e 38 passed). Step 9's „tabs" were the tile row since #37.18; the step now says so.

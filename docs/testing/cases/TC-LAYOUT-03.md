@@ -37,7 +37,7 @@ The window is 1366 × 900. „The headers" are the list table's column headers, 
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Opens „Proprietăți" (Slice 40.66) | „Câmpuri afișate 4/4"; the headers „Poreclă", „Tarla", „Parcelă", „Tip Prop.", „Localitate", „"; the table does not scroll sideways |
-| 2 | Opens „Acte" | „Câmpuri afișate 4/4"; the headers „Tip", „Titlu", „#Document", „Data", „Inst./Notar", „Modificat la", „"; the first row's „Modificat la" a day, dd.mm.yyyy; no sideways scroll |
+| 2 | Opens „Acte" | „Câmpuri afișate 3/4"; the headers „Tip", „Titlu", „#Document", „Data", „Modificat la", „"; the first row's „Modificat la" a day, dd.mm.yyyy; no sideways scroll |
 | 3 | Opens „Persoane Fizice" | „Câmpuri afișate 4/4"; the headers „Nume", „Poreclă", „CNP", „Născut pe", „Tip prof.", „Modificat la", „"; „Modificat la" a day; no sideways scroll |
 | 4 | Opens „Persoane Juridice" | „Câmpuri afișate 4/4"; the headers „Denumire", „Poreclă", „Tip", „CUI", „Localitate", „Modificat la", „"; „Modificat la" a day; no sideways scroll |
 | 5 | Opens „Proprietăți", „Câmpuri afișate", unticks „Localitate", ticks „Modificat la", reloads | „Câmpuri afișate 4/4"; the headers „Poreclă", „Tarla", „Parcelă", „Tip Prop.", „Modificat la", „"; the first row's „Modificat la" a day |

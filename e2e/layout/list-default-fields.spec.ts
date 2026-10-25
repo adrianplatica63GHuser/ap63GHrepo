@@ -1,6 +1,6 @@
 /**
  * Case:   TC-LAYOUT-03 — „Câmpuri afișate" fără o alegere memorată: fiecare listă pe cele patru coloane alese (40.66)
- * Source: docs/testing/cases/TC-LAYOUT-03.md, rewritten by Slice 40.66 (it read #38.02's Tip proprietate and three lists of fixed columns only)
+ * Source: docs/testing/cases/TC-LAYOUT-03.md, „Last green" 2026-10-05 — rewritten by Slice 40.66 (it read #38.02's Tip proprietate and three lists of fixed columns only)
  *
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim.
@@ -41,7 +41,7 @@ async function expectModifiedOn(page: Page, headers: string[]): Promise<void> {
 }
 
 const PROPERTIES = ["Poreclă", "Tarla", "Parcelă", "Tip Prop.", "Localitate", ""]; // 40.20: short names; 40.24: no empty first column
-const DOCUMENTS = ["Tip", "Titlu", "#Document", "Data", "Inst./Notar", "Modificat la", ""];
+const DOCUMENTS = ["Tip", "Titlu", "#Document", "Data", "Modificat la", ""]; // Inst./Notar dropped: it scrolled sideways
 const PERSONS = ["Nume", "Poreclă", "CNP", "Născut pe", "Tip prof.", "Modificat la", ""];
 const COMPANIES = ["Denumire", "Poreclă", "Tip", "CUI", "Localitate", "Modificat la", ""];
 
@@ -56,10 +56,10 @@ test.describe("TC-LAYOUT-03 — „Câmpuri afișate” fără o alegere memorat
     await expectList(page, "Câmpuri afișate 4/4", PROPERTIES);
     expect(await sideways(page)).toBeLessThanOrEqual(1);
 
-    // Steps 2–4 — the other three: 4/4 each, „Modificat la" last, a day in it; nothing to scroll sideways.
-    for (const [list, headers] of [["Acte", DOCUMENTS], ["Persoane Fizice", PERSONS], ["Persoane Juridice", COMPANIES]] as const) {
+    // Steps 2–4 — the other three: 3/4 on Acte, 4/4 on the persons, „Modificat la" last, a day in it; nothing to scroll.
+    for (const [list, count, headers] of [["Acte", "3/4", DOCUMENTS], ["Persoane Fizice", "4/4", PERSONS], ["Persoane Juridice", "4/4", COMPANIES]] as const) {
       await openFromSidebar(page, list);
-      await expectList(page, "Câmpuri afișate 4/4", [...headers]);
+      await expectList(page, `Câmpuri afișate ${count}`, [...headers]);
       await expectModifiedOn(page, [...headers]);
       expect(await sideways(page), list).toBeLessThanOrEqual(1);
     }

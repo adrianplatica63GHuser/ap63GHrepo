@@ -43,6 +43,7 @@ import { openFromSidebar } from "../helpers/sidebar";
 import { expectFixedFieldsHold, expectStableColumns, expectStableWidths, expectUnitGrid, photograph } from "../helpers/field-widths";
 import { closeTiles, openTiles, pressTileButton, TILE_GROUP, tileBox } from "../helpers/tiles";
 import { ADDRESS, JUDICIAL_PERSON, UNIT_GAP_REM, UNIT_REM } from "../../src/lib/ui/field-widths";
+import { listsOnTheirEarlierColumns } from "../helpers/list-columns";
 
 /** Each FIXED box's widest value, by the name its box carries (Slice #37.13). */
 const SAMPLES: Record<string, string> = {};
@@ -57,6 +58,8 @@ const CUI = "0000000002";
 
 test.describe("TC-PERS-02 — Persoană juridică creată și modificată", () => {
   test("creare, găsire după nume și CUI, modificare → v 1, apoi ștergere", async ({ page }) => {
+    // 40.66: the lists open on four default columns; these steps were written against the earlier ones.
+    await listsOnTheirEarlierColumns(page);
     // Room for the `finally` (see the TC-PERS-01 spec).
     test.slow();
     await removeLeftovers(page.request, MARK);

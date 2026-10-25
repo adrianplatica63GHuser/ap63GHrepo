@@ -14,6 +14,7 @@
 import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createProperty, removeLeftovers, removeRecord } from "../helpers/records";
 import { expectUnder } from "../helpers/filter-editor";
+import { listsOnTheirEarlierColumns } from "../helpers/list-columns";
 
 const MARK = `${E2E_MARKER}PROP-14`;
 
@@ -25,6 +26,8 @@ async function firstTwo(page: Page, list: string): Promise<{ id: string; name: s
 
 test.describe("TC-PROP-14 — filtrele listei proprietăților", () => {
   test("tip și categorie de folosință: numărul de lângă fiecare valoare, adresa, „Șterge filtrele”", async ({ page }) => {
+    // 40.66: the lists open on four default columns; these steps were written against the earlier ones.
+    await listsOnTheirEarlierColumns(page);
     test.slow();
     await removeLeftovers(page.request, MARK);
     await page.setViewportSize({ width: 1366, height: 900 });
