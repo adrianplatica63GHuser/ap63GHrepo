@@ -15,7 +15,7 @@ import { ThemeProvider } from "@/components/providers/theme-provider";
 
 jest.mock("next-intl", () => ({ useTranslations: () => (key: string) => key }));
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { ThemeToggle } = require("@/components/theme-toggle") as typeof import("@/components/theme-toggle");
+const { ThemeSwitch, ThemeToggle } = require("@/components/theme-toggle") as typeof import("@/components/theme-toggle");
 
 const read = (...p: string[]) => fs.readFileSync(path.join(process.cwd(), ...p), "utf8");
 
@@ -50,33 +50,35 @@ describe("the cookie (Ask first 1)", () => {
   });
 });
 
-describe("the two boxes are one choice", () => {
-  it("ticking one turns the page dark and ticks the other; unticking the other turns it light", () => {
+describe("the account menu's „Zi | Noapte” and Setări's box are one choice (40.59; were two boxes, 40.19)", () => {
+  it("„Noapte” turns the page dark and ticks the box; unticking the box turns it light and presses „Zi”", () => {
     render(
       <ThemeProvider initial="light">
-        <ThemeToggle compact />
+        <ThemeSwitch />
         <ThemeToggle />
       </ThemeProvider>,
     );
-    const sidebar = screen.getByRole("checkbox", { name: "night" }) as HTMLInputElement;
+    const day = screen.getByRole("button", { name: "day" });
+    const night = screen.getByRole("button", { name: "night" });
     const settings = screen.getByRole("checkbox", { name: "nightLong" }) as HTMLInputElement;
-    expect([sidebar.checked, settings.checked]).toEqual([false, false]);
-    fireEvent.click(sidebar);
-    expect([sidebar.checked, settings.checked]).toEqual([true, true]);
+    expect([day.getAttribute("aria-pressed"), night.getAttribute("aria-pressed"), settings.checked]).toEqual(["true", "false", false]);
+    fireEvent.click(night);
+    expect([night.getAttribute("aria-pressed"), settings.checked]).toEqual(["true", true]);
     expect(document.documentElement.classList.contains("dark")).toBe(true);
     fireEvent.click(settings);
-    expect([sidebar.checked, settings.checked]).toEqual([false, false]);
+    expect([day.getAttribute("aria-pressed"), settings.checked]).toEqual(["true", false]);
     expect(document.documentElement.classList.contains("dark")).toBe(false);
   });
 
-  it("a dark load shows both ticked", () => {
+  it("a dark load shows „Noapte” pressed and the box ticked", () => {
     render(
       <ThemeProvider initial="dark">
-        <ThemeToggle compact />
+        <ThemeSwitch />
         <ThemeToggle />
       </ThemeProvider>,
     );
-    expect((screen.getAllByRole("checkbox") as HTMLInputElement[]).map((b) => b.checked)).toEqual([true, true]);
+    expect(screen.getByRole("button", { name: "night" })).toHaveAttribute("aria-pressed", "true");
+    expect((screen.getByRole("checkbox") as HTMLInputElement).checked).toBe(true);
   });
 });
 
@@ -95,11 +97,11 @@ describe("where the choice is read and drawn", () => {
     expect(css).not.toMatch(/@media\s*\(prefers-color-scheme/);
   });
 
-  it("the sidebar's under „GA40”, the flags stacked apart from it; in „Setări” under „Limba” (40.19 Ask first 3, 40.28)", () => {
+  it("in the account menu under „Limba” (40.59, Figura 8.3; was the sidebar's header, 40.19/40.28); in „Setări” under „Limba”", () => {
     const sidebar = read("src", "components", "sidebar", "sidebar-nav.tsx");
-    expect(sidebar).toMatch(/GA40\s*<\/span>\s*<ThemeToggle compact \/>\s*<\/div>/);
-    expect(sidebar).toMatch(/data-sidebar-flags="">\s*<LocaleToggle \/>/); // 40.58: „RO | EN" where the flags stood
-    expect(sidebar).toContain('"absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"');
+    expect(sidebar).not.toMatch(/<ThemeToggle|<LocaleToggle|data-sidebar-flags/);
+    const menu = read("src", "components", "sidebar", "account-menu.tsx");
+    expect(menu).toMatch(/data-account-row="language">[\s\S]*?<LocaleToggle \/>[\s\S]*?data-account-row="appearance">[\s\S]*?<ThemeSwitch \/>/);
     // 40.58: no flags — „RO | EN" (locale-toggle.test.tsx); was 24 × 16 px, stacked (40.19, 40.28).
     expect(read("src", "components", "locale-toggle.tsx")).not.toContain("https://flagcdn");
     const settings = read("src", "app", "admin", "settings", "_components", "settings-view.tsx");
@@ -109,17 +111,17 @@ describe("where the choice is read and drawn", () => {
   it("the words, in both languages", () => {
     const ro = JSON.parse(read("messages", "ro-RO.json")) as { theme: Record<string, string> };
     const en = JSON.parse(read("messages", "en-GB.json")) as { theme: Record<string, string> };
-    expect(ro.theme).toEqual({ night: "Noapte", nightLong: "Noapte (Mod Întunecat)", appearance: "Aspect" });
-    expect(en.theme).toEqual({ night: "Night", nightLong: "Night (Dark Mode)", appearance: "Appearance" });
+    expect(ro.theme).toEqual({ day: "Zi", night: "Noapte", nightLong: "Noapte (Mod Întunecat)", appearance: "Aspect" });
+    expect(en.theme).toEqual({ day: "Day", night: "Night", nightLong: "Night (Dark Mode)", appearance: "Appearance" });
   });
 
-  it("the sidebar's box says the long words on hover; its name is the short one (40.28 Ask first 4)", () => {
+  it("Setări's box is named by the long words; the sidebar's box is gone (40.59)", () => {
     render(
       <ThemeProvider initial="light">
-        <ThemeToggle compact />
+        <ThemeToggle />
       </ThemeProvider>,
     );
-    const box = screen.getByRole("checkbox", { name: "night" });
-    expect(box.closest("label")?.getAttribute("title")).toBe("nightLong");
+    expect(screen.getByRole("checkbox", { name: "nightLong" }).closest("label")).toHaveAttribute("data-theme-toggle", "settings");
+    expect(read("src", "components", "theme-toggle.tsx")).not.toMatch(/\bcompact\b/);
   });
 });

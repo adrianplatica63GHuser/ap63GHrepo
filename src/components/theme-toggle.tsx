@@ -1,32 +1,52 @@
 "use client";
 
 /**
- * „Noapte" — one checkbox, drawn in the sidebar under „GA40" and in „Setări" under the language.  (Slices 40.19, 40.28)
+ * The app's look — light or dark — in its two places.                                    (Slices 40.19, 40.28, 40.59)
  *
- * Both read and write the one choice (`useTheme`, src/components/providers/theme-provider.tsx): ticked, the whole app
- * is dark at once; unticked, light. `compact` is the sidebar's: a smaller box and an `xs` label, „Noapte" / „Night"
- * (theme.night), with the long words — „Noapte (Mod Întunecat)" — as its tooltip, so the short one still explains
- * itself on hover (40.28, Ask first 4). „Setări" draws the long words as the label itself (theme.nightLong).
+ * Both read and write the one choice (`useTheme`, src/components/providers/theme-provider.tsx): dark, the whole app is
+ * dark at once; light, light.
+ *
+ *   - `ThemeSwitch` — „Zi | Noapte", the two-part control of „RO | EN" (`SegmentedSwitch`, 40.58), in the account menu
+ *     at the bottom of the sidebar (40.59, Ask first 1). It replaced the sidebar's „Noapte" checkbox under „GA40"
+ *     (40.19's „I should be able to switch to this dark mode with a checkbox", revisited by Adrian's choice of the
+ *     account menu, Figura 8.3).
+ *   - `ThemeToggle` — „Setări"'s checkbox, „Noapte (Mod Întunecat)", which stays (40.59's „Out of scope").
  */
 import { useTranslations } from "next-intl";
 import { useTheme } from "@/components/providers/theme-provider";
+import { SegmentedSwitch } from "@/components/segmented-switch";
 
-export function ThemeToggle({ compact = false }: { compact?: boolean }) {
+/** „Zi | Noapte" — the account menu's. */
+export function ThemeSwitch() {
   const t = useTranslations("theme");
   const { theme, setTheme } = useTheme();
   return (
-    <label
-      className={`flex cursor-pointer select-none items-center gap-1.5 ${compact ? "text-xs" : "text-sm"} text-ink dark:text-zinc-300`}
-      data-theme-toggle={compact ? "sidebar" : "settings"}
-      title={compact ? t("nightLong") : undefined}
-    >
+    <SegmentedSwitch
+      label={t("appearance")}
+      name="theme"
+      options={[
+        { value: "light", text: t("day") },
+        { value: "dark", text: t("night") },
+      ]}
+      value={theme}
+      onChange={setTheme}
+    />
+  );
+}
+
+/** „Noapte (Mod Întunecat)" — „Setări"'s checkbox. */
+export function ThemeToggle() {
+  const t = useTranslations("theme");
+  const { theme, setTheme } = useTheme();
+  return (
+    <label className="flex cursor-pointer select-none items-center gap-1.5 text-sm text-ink dark:text-zinc-300" data-theme-toggle="settings">
       <input
         type="checkbox"
         checked={theme === "dark"}
         onChange={(e) => setTheme(e.target.checked ? "dark" : "light")}
-        className={`${compact ? "h-3.5 w-3.5" : "h-4 w-4"} accent-cta`}
+        className="h-4 w-4 accent-cta"
       />
-      {compact ? t("night") : t("nightLong")}
+      {t("nightLong")}
     </label>
   );
 }

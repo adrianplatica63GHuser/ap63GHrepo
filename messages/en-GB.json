@@ -1555,6 +1555,7 @@
     "collapse": "Collapse sidebar",
     "expand": "Expand sidebar",
     "signedInAs": "Signed in as",
+    "account": "Account",
     "changePassword": "Change password",
     "signOut": "Sign out",
     "quickSearch": "Quick search",
@@ -5173,6 +5174,7 @@
     }
   },
   "theme": {
+    "day": "Day",
     "night": "Night",
     "nightLong": "Night (Dark Mode)",
     "appearance": "Appearance"

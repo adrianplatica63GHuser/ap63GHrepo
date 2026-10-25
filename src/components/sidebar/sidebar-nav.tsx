@@ -5,11 +5,11 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronDown, LogOut, PanelLeftClose, PanelLeftOpen, Search } from "lucide-react";
+import { ChevronDown, PanelLeftClose, PanelLeftOpen, Search } from "lucide-react";
 import { IconButton, IconTooltip } from "@/lib/ui/icon-button";
 import { createClient } from "@/lib/supabase/client";
-import { LocaleToggle } from "@/components/locale-toggle";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { AccountMenu } from "./account-menu";
+import { TILE_TITLE_TYPE } from "@/lib/ui/title-type";
 import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
 import { RecentlyViewedPanel } from "@/components/recently-viewed-panel";
 import { clearRecentlyViewed } from "@/components/providers/navigation-history-provider";
@@ -481,14 +481,10 @@ export function SidebarNav() {
         isCollapsed ? "w-14" : "w-56",
       ].join(" ")}
     >
-      {/* ── App name + „Noapte" | „RO | EN" | collapse button ──────────── */}
-      {/* Slice 40.58: the flags are „RO | EN", one two-part control, centred where the flags stood. */}
-      {/* Slice 40.28 — three parts (Adrian, 2026-10-22: „GA40 … higher and the checkbox … under this name and aligned
-          at the left with it"; the flags „on top of each other, and aligned horizontally to the middle of the left
-          navigation panel"; the collapse button „keeps its position"). At the left a column, „GA40" over the „Noapte"
-          box, both on the header's left padding; the two flags stacked and centred on the panel's own width — absolute,
-          so the columns beside them do not pull them off the middle; the collapse button where it always was. All of
-          it but the button stays hidden on the collapsed rail, as the flags always were (#23.10.dev, #38.22, 40.19). */}
+      {/* ── App name | collapse button ─────────────────────────────────── */}
+      {/* Slice 40.59 (Figura 8.3): the header holds GA40 — in Roboto Slab navy, like every tile title (TILE_TITLE_TYPE)
+          — and the collapse button, nothing else. „Noapte", „RO | EN" and „Autentificat ca" moved to the account menu at
+          the bottom (account-menu.tsx). Before: 40.28's „GA40" over the „Noapte" box, the flags centred (40.58: RO | EN). */}
       <div
         className={[
           "relative flex items-center h-14 px-3 border-b border-wire shrink-0",
@@ -497,16 +493,10 @@ export function SidebarNav() {
         data-sidebar-look=""
       >
         {!isCollapsed && (
-          <div className="flex flex-col items-start gap-0.5" data-sidebar-brand="">
-            <span className="text-sm font-bold tracking-tight text-ink select-none" data-sidebar-name="">
+          <div className="flex items-center" data-sidebar-brand="">
+            <span className={`${TILE_TITLE_TYPE} select-none`} data-sidebar-name="">
               GA40
             </span>
-            <ThemeToggle compact />
-          </div>
-        )}
-        {!isCollapsed && (
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" data-sidebar-flags="">
-            <LocaleToggle />
           </div>
         )}
         {/* #37.42 (A002): PanelLeftOpen / PanelLeftClose. */}
@@ -519,13 +509,6 @@ export function SidebarNav() {
         />
       </div>
 
-
-      {/* ── Logged-in username (expanded mode; hidden in UAT mode) ──────── */}
-      {!isCollapsed && !isUatMode && me?.username && (
-        <div className="px-4 py-1.5 text-xs text-fade truncate border-b border-wire">
-          {t("signedInAs")} <span className="font-medium text-ink">{me.username}</span>
-        </div>
-      )}
 
       {/* ── Quick-search bar (expanded mode) ───────────────────────────── */}
       {!isCollapsed && (
@@ -599,36 +582,15 @@ export function SidebarNav() {
       {/* #38.28: one folded bar above the footer; collapsed, its icon expands the sidebar. */}
       <RecentlyViewedPanel isCollapsed={isCollapsed} onExpandSidebar={expandSidebar} />
 
-      {/* ── UAT (Slice #38.22): no Supabase session to change or sign out of — said, not hidden ── */}
-      {isUatMode && !isCollapsed && (
-        <p className="border-t border-wire shrink-0 px-3 py-2 text-xs text-fade" role="note" data-uat-no-accounts="sidebar">
-          {t("uatNoAccounts")}
-        </p>
-      )}
-
-      {/* ── Bottom strip — logout ── */}
-      {!isUatMode && (
-        // #37.42 (A004): „Ieșire" is LogOut; its word is the name and the tooltip.
-        // Slice #38.41 (Ask first 1): „Schimbă parola" moved to „Setări → Contul meu";
-        // „Ieșire" stays alone and the strip keeps its height (the same padding,
-        // the same button size). Expanded, it stands at the strip's RIGHT end: at the
-        // left it sat under Next's dev indicator (bottom-left, development only), which
-        // took its clicks — full 20261008T103908Z-9761, TC-AUTH-01's sign-out.
-        <div
-          className={[
-            "border-t border-wire shrink-0 px-2 py-2 flex gap-1",
-            isCollapsed ? "flex-col items-center" : "items-center justify-end px-3",
-          ].join(" ")}
-        >
-          <IconButton
-            icon={LogOut}
-            label={t("signOut")}
-            variant="bare"
-            size="sm"
-            onClick={handleLogout}
-          />
-        </div>
-      )}
+      {/* ── Bottom strip — the account entry and its menu (Slice 40.59, Figura 8.3) ── */}
+      {/* Limba, Aspect and Ieșire — in UAT the uatNoAccounts note in Ieșire's place (#38.22). Ieșire opens upward, above
+          the strip, clear of Next's dev indicator at the bottom left (#38.41, TC-AUTH-01's sign-out). */}
+      <div
+        className={["border-t border-wire shrink-0 px-2 py-2 flex", isCollapsed ? "justify-center" : ""].join(" ")}
+        data-account-strip=""
+      >
+        <AccountMenu username={me?.username} uat={isUatMode} collapsed={isCollapsed} onSignOut={handleLogout} />
+      </div>
     </aside>
   );
 }

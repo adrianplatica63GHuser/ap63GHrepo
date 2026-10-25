@@ -135,7 +135,8 @@ describe("UAT says what it cannot offer", () => {
 
   it("a signed-in account's sidebar has no such sentence", async () => {
     renderSidebar({ username: "tc-e2e", fullAccess: true });
-    await waitFor(() => expect(screen.getByRole("button", { name: "signOut" })).toBeInTheDocument());
+    // 40.59: in the account menu, closed (hidden) until its entry is pressed.
+    await waitFor(() => expect(screen.getByRole("button", { name: "signOut", hidden: true })).toBeInTheDocument());
     expect(screen.queryByText("uatNoAccounts")).toBeNull();
   });
 

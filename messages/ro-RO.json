@@ -1555,6 +1555,7 @@
     "collapse": "Restrânge bara laterală",
     "expand": "Extinde bara laterală",
     "signedInAs": "Autentificat ca",
+    "account": "Cont",
     "changePassword": "Schimbă parola",
     "signOut": "Ieșire",
     "quickSearch": "Căutare rapidă",
@@ -5173,6 +5174,7 @@
     }
   },
   "theme": {
+    "day": "Zi",
     "night": "Noapte",
     "nightLong": "Noapte (Mod Întunecat)",
     "appearance": "Aspect"

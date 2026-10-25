@@ -76,7 +76,7 @@ describe("„RO | EN” (40.58)", () => {
   });
 
   it("the sidebar and the two sign-in pages draw the one look", () => {
-    expect(read("src", "components", "sidebar", "sidebar-nav.tsx")).toContain("<LocaleToggle />");
+    expect(read("src", "components", "sidebar", "account-menu.tsx")).toContain("<LocaleToggle />"); // 40.59: the sidebar's account menu
     for (const page of ["login", "signup"]) expect(read("src", "app", page, "page.tsx")).toContain("<LocaleToggle />");
   });
 });
