@@ -39,6 +39,7 @@ import {
   createSaleContract,
   removeGroupLeftovers,
   removeLeftovers,
+  removeRecord,
   removeStampLeftovers,
 } from "../helpers/records";
 import { expectStableScreen, expectUnitGrid, photograph } from "../helpers/field-widths";
@@ -258,6 +259,57 @@ test.describe("TC-LAYOUT-01 — Celelalte ecrane, la lățimi fixe", () => {
       await removeLeftovers(req, MARK);
       await removeGroupLeftovers(req, MARK);
       await removeStampLeftovers(req, MARK);
+    }
+  });
+});
+
+/**
+ * Slice 40.69 — a narrow window: the record screens' tiles in one column, the heading's controls under a long name, and
+ * nothing that scrolls sideways at 700 px — the dashboard, a person and a property (this spec's own, invented).
+ */
+test.describe("TC-LAYOUT-01 — o fereastră îngustă (40.69)", () => {
+  test("la 700 px nimic nu derulează în lateral; plăcile într-o coloană; un nume lung trimite versiunile și „Panouri” dedesubt", async ({ page }) => {
+    test.slow();
+    const MARK = `${E2E_MARKER}LAYOUT-01-NARROW`;
+    await removeLeftovers(page.request, MARK);
+    const LONG = "Numele-Foarte-Lung-Al-Unei-Persoane-Inventate Ca Să Nu Încapă Pe Un Rând";
+    const personId = await createNaturalPerson(page.request, { lastName: `${MARK} ${LONG}`, firstName: "Ion" });
+    const propertyId = await createProperty(page.request, { nickname: `${MARK} Teren` });
+    const sideways = () =>
+      page.evaluate(() => {
+        const ps = document.querySelector<HTMLElement>("[data-page-scroll]");
+        const de = document.documentElement;
+        return Math.max(ps ? ps.scrollWidth - ps.clientWidth : 0, de.scrollWidth - de.clientWidth);
+      });
+    try {
+      await page.setViewportSize({ width: 700, height: 900 });
+
+      // Step 7 — the dashboard, the person and the property at 700 × 900: no sideways scroll; each record's tiles in
+      // one column.
+      await page.goto("/");
+      await expect(page.locator("main h1").first()).toBeVisible({ timeout: 30_000 });
+      await page.waitForTimeout(800);
+      expect(await sideways(), "the dashboard").toBeLessThanOrEqual(1);
+      for (const [path, what] of [[`/natural-persons/${personId}`, "the person"], [`/properties/${propertyId}`, "the property"]] as const) {
+        await page.goto(path);
+        await expect(page.locator("[data-record-header] h1")).toBeVisible({ timeout: 30_000 });
+        await expect.poll(() => page.locator("[data-packed-col]").count(), { timeout: 30_000 }).toBeGreaterThan(1);
+        await page.waitForTimeout(800);
+        const cols = await page.locator("[data-packed-col]").evaluateAll((els) => [...new Set(els.map((e) => (e as HTMLElement).dataset.packedCol))]);
+        expect(cols, `${what}: one column`).toEqual(["0"]);
+        expect(await sideways(), what).toBeLessThanOrEqual(1);
+      }
+
+      // Step 8 — the person's long name: the versions and „Panouri" on the line under it, not over it.
+      await page.goto(`/natural-persons/${personId}`);
+      const h1 = page.locator("[data-record-header] h1");
+      await expect(h1).toBeVisible({ timeout: 30_000 });
+      const controls = page.locator("[data-record-header] [data-record-controls]");
+      await expect(controls).toBeVisible();
+      await expect.poll(async () => (await controls.boundingBox())!.y >= (await h1.boundingBox())!.y + (await h1.boundingBox())!.height - 1, { timeout: 15_000 }).toBe(true);
+    } finally {
+      await removeRecord(page.request, "person", personId);
+      await removeRecord(page.request, "property", propertyId);
     }
   });
 });

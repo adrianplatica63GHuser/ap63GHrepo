@@ -56,8 +56,16 @@ editor, and saves nothing.
 | 4 | Looks at a long sentence on a screen (the calculation's introduction, a note under a box) | It wraps inside the screen's column. It does not stretch the column to the window |
 | 5 | On each „Asociază …" screen, at 1366, 1920 and 2560 px (Slice #37.34) | Three tiles in reading order — „Căutare", „Rezultate", „Asociere" — side by side when the window holds them and wrapping when it does not. Every tile, and the row they sit in, is a whole number of width units (6 at 1366, 10 at 1920, 14 at 2560). The breadcrumb reads „Acasă › <the list> › <the record> › <this screen's title>" |
 | 6 | On each administration screen and Schimbă parola, at 1366, 1920 and 2560 px (Slice #37.35) | Its sections are tiles side by side where the window holds them, each a whole number of width units, and the row they sit in is whole units — 6, 10 and 14 at the three widths, or as wide as its widest tile where one is wider (the history of access requests, 9). Not „Date de referință” since #38.65: its column is as wide as its longest name, off the unit by design |
+| 7 | (Slice 40.69) At 700 × 900, opens the dashboard, then an invented person and an invented property | Nothing scrolls sideways; on the two records every tile stands in one column, one under another |
+| 8 | Opens the person, whose name is too long for one line beside the versions and „Panouri" | The versions and „Panouri" stand on the line under the name, not over it |
 
 ## Notes from the runs
+
+**2026-10-25 — steps 7–8 added (Slice 40.69).** A narrow window: tiles in one column, the heading's controls under a
+long name, nothing sideways at 700 px. Written from the slice's own change and put in the spec as a test of its own;
+not driven by hand first. Seen in the pane at 700 × 900 on a seed person, the dashboard and a seed contract whose
+title wraps: no sideways scroll, one column, the contract's controls under its title; at 1366 the person's tiles in
+their three columns as before.
 
 **2026-09-29 — `driven`, then `confirmed` (Slice #37.22, run in #37.24).** Driven twice in the
 Claude desktop app's browser pane, signed in as admin. Each run opened every screen of the case in
