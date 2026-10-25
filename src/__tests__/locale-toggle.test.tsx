@@ -71,7 +71,8 @@ describe("„RO | EN” (40.58)", () => {
 
   it("nothing names flagcdn.com any more", () => {
     for (const f of [["src", "components", "locale-toggle.tsx"], ["next.config.ts"]]) expect(read(...f)).not.toContain("https://flagcdn");
-    expect(read("src", "components", "locale-toggle.tsx")).not.toMatch(/\b(small|stacked)\b/);
+    // A behaviour guard: the code, not the comment that says what went.
+    expect(read("src", "components", "locale-toggle.tsx").replace(/\/\*[\s\S]*?\*\//g, "")).not.toMatch(/\b(small|stacked)\b/);
   });
 
   it("the sidebar and the two sign-in pages draw the one look", () => {
