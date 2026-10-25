@@ -12,6 +12,7 @@
 
 import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createDocumentOfType, removeLeftovers, removeRecord } from "../helpers/records";
+import { showEmptyFields } from "../helpers/empty-fields";
 
 const MARK = `${E2E_MARKER}DOC-11`;
 const FOURTEEN = [
@@ -22,9 +23,13 @@ const FOURTEEN = [
 
 async function visibleLabels(page: Page, id: string): Promise<string[]> {
   await page.goto(`/documents/${id}`);
-  await expect(page.locator("main label").filter({ hasText: /^Etichetă scurtă$/ }).first()).toBeVisible({ timeout: 30_000 });
+  // 40.75: a saved document reads as text — a field's name is a <label> while its tile is open, the first <span> of
+  // its stacked cell when read; and its empty fields are behind „Arată N câmpuri goale", shown here.
+  const names = page.locator("main label, main div.row-span-3.grid-rows-subgrid > span:first-child");
+  await expect(names.filter({ hasText: /^Etichetă scurtă$/ }).first()).toBeVisible({ timeout: 30_000 });
   await page.waitForTimeout(1000);
-  return page.locator("main label").evaluateAll((els) =>
+  await showEmptyFields(page);
+  return names.evaluateAll((els) =>
     els.filter((e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; }).map((e) => (e.textContent ?? "").trim()));
 }
 

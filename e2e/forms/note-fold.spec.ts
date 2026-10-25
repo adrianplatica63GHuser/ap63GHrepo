@@ -120,6 +120,8 @@ test.describe("TC-FOLD-01 — „Note” și MRZ lungi se strâng la cinci rând
 
       // Steps 1–3 — „Note extinse": five lines, all twelve, five again.
       await page.goto(`/documents/${ids[0].id}`);
+      // Slice 40.75: a saved document reads as text; the note folds in its box, so „Identificarea actului" is opened.
+      await editTile(page, "general");
       await expectFolds(page, "Note extinse", 250, "document-note-extinse");
 
       // Steps 4–5 — the Property's „Note": one paragraph, no line break, folds as well.
