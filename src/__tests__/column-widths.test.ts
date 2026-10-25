@@ -128,8 +128,10 @@ describe("one piece for every list-like table (Ask first 1, 9)", () => {
     return out;
   })();
 
-  it("29 tables, each named once in the store — but the two person-side associate-document screens, one file twice", () => {
-    expect(tables).toHaveLength(29);
+  it("28 tables, each named once in the store — but the two person-side associate-document screens, one file twice", () => {
+    // Was 29 until 40.62: the dashboard's expiring-documents table left the family — two columns that
+    // fill the card, no handles, no stored widths (field-widths.test names it as the one exception).
+    expect(tables).toHaveLength(28);
     const ids = tables.map(([, id]) => id);
     // role-stranding.test keeps those two screens byte-identical, so they share one name, and one set of widths.
     expect(ids.filter((id) => id === "persons/associate-document")).toHaveLength(2);
