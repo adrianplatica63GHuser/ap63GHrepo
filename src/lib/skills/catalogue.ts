@@ -454,7 +454,7 @@ export const SKILLS: readonly Skill[] = [
     },
     predecessors: ["persons-add-natural-person-by-hand", "links-read-version-history"],
     screens: ["natural-person-detail"],
-    cases: ["TC-PERS-03", "TC-PERS-11"],
+    cases: ["TC-PERS-03", "TC-PERS-11", "TC-PERS-15"], // 40.72: TC-PERS-15, a tile's „Editează" — the words are 40.77's
     manual: ["persons-identity-cnp", "persons-identity-death", "persons-example-death", "links-versions"],
   },
   {
