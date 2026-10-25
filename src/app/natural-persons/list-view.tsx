@@ -26,6 +26,7 @@ import { LIST_ADD, ListSearchBox } from "@/components/list/list-search";
 import { AddNewButton } from "@/components/list/add-new-button";
 import { domainIcon } from "@/components/sidebar/nav-config";
 import { LIST_COLUMN_CHOICE, LIST_COLUMN_ORDER } from "@/lib/ui/list-columns";
+import { useFittedPage } from "@/lib/ui/use-fitted-rows";
 import { useColumnDrag, useColumnOrder } from "@/components/list/column-order";
 import { ClearFiltersButton, FilterBar, FilterFunnel, type FilterBarField } from "@/components/list/filter-bar";
 import { ListSortButton } from "@/components/list/list-sort-button";
@@ -36,7 +37,6 @@ import { NATURAL_PERSON_COLUMN_FILTERS, NATURAL_PERSON_FILTER_FIELDS, parsePerso
 import { dmyFromIso, modifiedOn, personAgeText } from "@/lib/persons/person-age";
 import { DeceasedMark } from "@/components/persons/deceased-mark";
 
-const PAGE_SIZE = 15;
 // Slice #37.94: the key and the defaults are LIST_COLUMN_CHOICE.person (four since 40.66).
 const MAX_OPT   = 4;
 
@@ -70,13 +70,13 @@ type ListResponse = {
 // Slice #37.60: no importance or relevance filter any more — the route still
 // takes both parameters, and nothing here sends them.
 // Slice #39.62: the filter bar's filters, in the address's words (`appendFilterParams`).
-async function fetchNaturalPersons(q: string, page: number, filters: FilterState, order: ListOrder = DEFAULT_LIST_ORDER): Promise<ListResponse> {
+async function fetchNaturalPersons(q: string, page: number, pageSize: number, filters: FilterState, order: ListOrder = DEFAULT_LIST_ORDER): Promise<ListResponse> {
   const url = new URL("/api/people", window.location.origin);
   appendFilterParams(url.searchParams, filters, NATURAL_PERSON_FILTER_FIELDS);
   appendOrderParams(url.searchParams, order);
   if (q)          url.searchParams.set("q",          q);
-  url.searchParams.set("limit",  String(PAGE_SIZE));
-  url.searchParams.set("offset", String(page * PAGE_SIZE));
+  url.searchParams.set("limit",  String(pageSize));
+  url.searchParams.set("offset", String(page * pageSize));
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Request failed (${res.status})`);
   return res.json();
@@ -131,7 +131,9 @@ export function NaturalPersonListView() {
       : {};
   const sortName = (key: string) => optionalCols.find((c) => c.key === key)?.label ?? key;
   const [debouncedSearch, setDebouncedSearch] = useState(address.search);
-  const [currentPage,     setCurrentPage]     = useState(address.page);
+  // Slice 40.67: as many rows a page as the window holds (`useListFit().rows`); a resize keeps the first row on screen.
+  const fit = useListFit();
+  const [currentPage, setCurrentPage, pageSize] = useFittedPage(address.page, fit.rows);
 
 
   // Slice #37.60 — „Câmpuri afișate", the shared chooser (`field-chooser.tsx`).
@@ -160,16 +162,17 @@ export function NaturalPersonListView() {
       setCurrentPage(0);
     }, 250);
     return () => clearTimeout(handle);
-  }, [searchInput, debouncedSearch]);
+  }, [searchInput, debouncedSearch, setCurrentPage]);
 
   const query = useQuery<ListResponse>({
-    queryKey: ["people", "list", debouncedSearch, currentPage, filterSig, orderSig],
-    queryFn:  () => fetchNaturalPersons(debouncedSearch, currentPage, filters, listOrder),
+    queryKey: ["people", "list", debouncedSearch, currentPage, filterSig, orderSig, pageSize],
+    queryFn:  () => fetchNaturalPersons(debouncedSearch, currentPage, pageSize ?? 0, filters, listOrder),
+    enabled:  pageSize !== null,
   });
 
   const total      = query.data?.total ?? 0;
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const paginate   = total > PAGE_SIZE;
+  const totalPages = Math.max(1, Math.ceil(total / (pageSize ?? 1)));
+  const paginate   = pageSize !== null && total > pageSize;
   const items      = query.data?.items ?? [];
 
   // Slice #39.26: the view, in the list's address; the scroll, in the session. The search as typed, not debounced:
@@ -227,7 +230,6 @@ export function NaturalPersonListView() {
   // Slice #37.84: the toolbar's group ends at the table frame's right edge, not the window's.
   // Slice #40.02: the frame takes what is left of the window and scrolls its rows; the band of names sticks. Its
   // vertical scroll bar counts in the list's edge, so „Adaugă …" and the pagination row still end where the frame does.
-  const fit = useListFit();
   const edge = useListEdge(columns, fit.gutter);
   const colCount = columns.length;
 
@@ -398,7 +400,7 @@ export function NaturalPersonListView() {
         <div className="flex w-fit max-w-full items-center justify-between text-sm text-fade" {...edge.frame}>
           <span>
             {t("counts", {
-              shown: Math.min(items.length + currentPage * PAGE_SIZE, total),
+              shown: Math.min(items.length + currentPage * (pageSize ?? 0), total),
               total,
             })}
           </span>

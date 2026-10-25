@@ -27,8 +27,9 @@
  * measuring stays beside it rather than shared, the two pages being laid out differently above the frame.
  */
 import { useCallback, useLayoutEffect, useRef, useState, type CSSProperties, type RefObject } from "react";
-import { listFrameFloor, listFrameMaxHeight, rowTilesMaxHeight } from "@/lib/ui/frame-height";
+import { LIST_ROW_PX, listFrameFloor, listFrameMaxHeight, rowTilesMaxHeight } from "@/lib/ui/frame-height";
 import { COLUMN_NAMES_BAND } from "@/lib/ui/title-type";
+import { FITTED_ROWS_SETTLE_MS, fittedRows } from "@/lib/ui/use-fitted-rows";
 
 /**
  * The frame around a principal list's table: as wide as the table, scrolling both ways inside the window.
@@ -117,6 +118,12 @@ export type ListFit = {
    *  kept while the rows fit too (`LIST_FRAME`), so this is the bar's width from the first measure on — 0 in jsdom and
    *  where the bars take no room (an overlay scroll bar). */
   gutter: number;
+  /**
+   * Slice 40.67: the rows a page holds — the frame's height, less its band, in whole rows of the drawn row's height,
+   * never under 10 (`fittedRows`). Null until the frame is first measured; after that a change waits ~150 ms for the
+   * window to settle.
+   */
+  rows: number | null;
 };
 
 /**
@@ -133,6 +140,9 @@ export function useListFit(): ListFit {
     setDrawn(el);
   }, []);
   const [gutter, setGutter] = useState(0);
+  const [rows, setRows] = useState<number | null>(null);
+  const rowsRef = useRef<number | null>(null);
+  const settle = useRef<ReturnType<typeof setTimeout> | null>(null);
   const measure = () => {
     const frame = ref.current;
     if (!frame) return;
@@ -145,8 +155,24 @@ export function useListFit(): ListFit {
     const bandPx = `${Math.round(band * 100) / 100}px`;
     if (frame.style.getPropertyValue(LIST_BAND_VAR) !== bandPx) frame.style.setProperty(LIST_BAND_VAR, bandPx);
     const row = frame.querySelector("tbody tr")?.getBoundingClientRect().height ?? 0;
-    const max = `${listFrameMaxHeight({ viewport, frameTop: f.top - base, below, floor: listFrameFloor(band, row) })}px`;
+    const maxPx = listFrameMaxHeight({ viewport, frameTop: f.top - base, below, floor: listFrameFloor(band, row) });
+    const max = `${maxPx}px`;
     if (frame.style.maxHeight !== max) frame.style.maxHeight = max;
+    // Slice 40.67: the rows that fit — at once the first time, ~150 ms after the window settles afterwards.
+    // A record's row, never the „Se încarcă…" or empty-list line (taller, `py-6`): a count measured on that would be
+    // too small, and the first page asked for twice.
+    const recordRow = frame.querySelector("tbody tr:has([data-row-name-link])")?.getBoundingClientRect().height ?? 0;
+    const nextRows = fittedRows({ frame: maxPx, band, row: recordRow > 0 ? recordRow : LIST_ROW_PX });
+    if (settle.current) clearTimeout(settle.current);
+    if (rowsRef.current === null) {
+      rowsRef.current = nextRows;
+      setRows(nextRows);
+    } else if (rowsRef.current !== nextRows) {
+      settle.current = setTimeout(() => {
+        rowsRef.current = nextRows;
+        setRows(nextRows);
+      }, FITTED_ROWS_SETTLE_MS);
+    }
     const cs = getComputedStyle(frame);
     const next = Math.max(0, frame.offsetWidth - frame.clientWidth - (parseFloat(cs.borderLeftWidth) || 0) - (parseFloat(cs.borderRightWidth) || 0));
     setGutter((prev) => (prev === next ? prev : next));
@@ -162,7 +188,7 @@ export function useListFit(): ListFit {
     },
     [drawn],
   );
-  return { frame: { ref: attach, "data-list-frame": "" }, gutter };
+  return { frame: { ref: attach, "data-list-frame": "" }, gutter, rows };
 }
 
 /**

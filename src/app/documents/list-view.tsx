@@ -32,6 +32,7 @@ import { LIST_ADD, ListSearchBox } from "@/components/list/list-search";
 import { AddNewButton } from "@/components/list/add-new-button";
 import { domainIcon } from "@/components/sidebar/nav-config";
 import { LIST_COLUMN_CHOICE, LIST_COLUMN_ORDER } from "@/lib/ui/list-columns";
+import { useFittedPage } from "@/lib/ui/use-fitted-rows";
 import { useColumnDrag, useColumnOrder } from "@/components/list/column-order";
 import { HintBubble } from "@/lib/ui/hint-bubble";
 import { addedOn, dmyFromIso, modifiedOn } from "@/lib/persons/person-age";
@@ -42,7 +43,6 @@ import { DEFAULT_LIST_ORDER, LIST_SORTS, ORDER_KEYS, appendOrderParams, orderAdd
 import { appendFilterParams, filterAddressPatch, filterSignature, type FacetValue, type FilterState } from "@/lib/list/filter-bar";
 import { DOCUMENT_COLUMN_FILTERS, DOCUMENT_FILTER_FIELDS, DOCUMENT_FILTER_KEYS, parseDocumentFilters } from "@/lib/documents/list-filters";
 
-const PAGE_SIZE   = 15;
 // Slice #37.94: the key and the defaults are LIST_COLUMN_CHOICE.document (four since 40.66).
 const MAX_OPT     = 4;
 
@@ -404,6 +404,7 @@ async function fetchDocuments(
   q: string,
   documentTypeIds: string[],
   page: number,
+  pageSize: number,
   expiringSoon: boolean,
   customFieldKey: string,
   customFieldValue: string,
@@ -426,8 +427,8 @@ async function fetchDocuments(
     url.searchParams.set("customFieldKey",   customFieldKey);
     url.searchParams.set("customFieldValue", customFieldValue);
   }
-  url.searchParams.set("limit",  String(PAGE_SIZE));
-  url.searchParams.set("offset", String(page * PAGE_SIZE));
+  url.searchParams.set("limit",  String(pageSize));
+  url.searchParams.set("offset", String(page * pageSize));
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Request failed (${res.status})`);
   return res.json();
@@ -494,7 +495,9 @@ export function DocumentListView({
   const address = useListAddress(FILTER_KEYS);
   const [searchInput,     setSearchInput]     = useState(address.search);
   const [debouncedSearch, setDebouncedSearch] = useState(address.search);
-  const [currentPage,     setCurrentPage]     = useState(address.page);
+  // Slice 40.67: as many rows a page as the window holds (`useListFit().rows`); a resize keeps the first row on screen.
+  const fit = useListFit();
+  const [currentPage, setCurrentPage, pageSize] = useFittedPage(address.page, fit.rows);
   const [expiringSoon,    setExpiringSoon]    = useState(address.filters.expiring === "1");
   // ── Slice #34.10: the custom-field filter, the half of D-01 that needs code.
   //
@@ -646,7 +649,7 @@ export function DocumentListView({
       setCurrentPage(0);
     }, 250);
     return () => clearTimeout(handle);
-  }, [searchInput, debouncedSearch]);
+  }, [searchInput, debouncedSearch, setCurrentPage]);
 
   // When initialDocumentTypeIds changes (sidebar navigation), reset to page 0.
   const typeFiltersKey =
@@ -683,14 +686,14 @@ export function DocumentListView({
   const noTypesSelected = initialDocumentTypeIds !== undefined && initialDocumentTypeIds.length === 0;
 
   const query = useQuery<ListResponse>({
-    queryKey: ["documents", "list", debouncedSearch, typeFiltersKey, expiringSoon, customFieldKey, customFieldValue, filterSig, orderSig, currentPage],
-    queryFn:  () => fetchDocuments(debouncedSearch, initialDocumentTypeIds ?? [], currentPage, expiringSoon, customFieldKey, customFieldValue, filters, listOrder),
-    enabled:  !noTypesSelected,
+    queryKey: ["documents", "list", debouncedSearch, typeFiltersKey, expiringSoon, customFieldKey, customFieldValue, filterSig, orderSig, currentPage, pageSize],
+    queryFn:  () => fetchDocuments(debouncedSearch, initialDocumentTypeIds ?? [], currentPage, pageSize ?? 0, expiringSoon, customFieldKey, customFieldValue, filters, listOrder),
+    enabled:  !noTypesSelected && pageSize !== null,
   });
 
   const total      = query.data?.total ?? 0;
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const paginate   = total > PAGE_SIZE;
+  const totalPages = Math.max(1, Math.ceil(total / (pageSize ?? 1)));
+  const paginate   = pageSize !== null && total > pageSize;
   const items      = query.data?.items ?? [];
 
   // Slice #32.15 made this key carry every value the query key carries, for the ticks it cleared; since 40.10
@@ -780,7 +783,6 @@ export function DocumentListView({
   // Slice #37.84: the toolbar's group ends at the table frame's right edge, not the window's.
   // Slice #40.02: the frame takes what is left of the window and scrolls its rows; the band of names sticks. Its
   // vertical scroll bar counts in the list's edge, so „Adaugă …" and the pagination row still end where the frame does.
-  const fit = useListFit();
   const edge = useListEdge(columns, fit.gutter);
   const colCount = columns.length;
 
