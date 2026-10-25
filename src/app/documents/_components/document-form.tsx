@@ -1065,8 +1065,9 @@ export function DocumentForm({
   // notebook tab's tile has none until its type's tiles are rebuilt (#38.33–#38.34).
   // Slice 40.64: a frame whose type fields are all empty on a saved document is one line — its title, „necompletat"
   // and „Adaugă" (src/components/tiles/empty-tile.tsx). Empty as loaded and empty now (natural-person-form.tsx says why); drawn whole
-  // while a version marks a field in it or a field in it carries an error. „Actul modificat" linked to its deed is not
-  // empty, whatever its four free-text fields hold.
+  // while a version marks a field in it or a field in it carries an error. A frame holding „Actul modificat" never
+  // folds. Folded, the frame keeps its width — the body is invisible and 0 px tall, not `display: none` — because a
+  // frame is `w-fit`, as wide as its widest panel, and the tiles' units are measured on it.
   const frameFieldPaths = (tile: string): string[] =>
     customFieldGroups
       .flatMap((g) => g.fields)
@@ -1074,7 +1075,8 @@ export function DocumentForm({
       .filter((path) => tileOfPath(path) === tile);
   const frameFolded = (tile: string): boolean => {
     const paths = frameFieldPaths(tile);
-    const amendedHere = !!amendedGroup && !!parentDeed && amendedGroup.fields.some((f) => tileOfPath(`customFields.${f.key}`) === tile);
+    // „Actul modificat" never folds: its „Leagă actul modificat" is what the tile is for, linked or not.
+    const amendedHere = !!amendedGroup && amendedGroup.fields.some((f) => tileOfPath(`customFields.${f.key}`) === tile);
     return emptyTiles.collapsed(
       tile,
       !amendedHere && tileIsEmpty(formState.defaultValues, paths, emptyFormValues) && tileIsEmpty(watchedValues, paths, emptyFormValues),
@@ -1097,7 +1099,7 @@ export function DocumentForm({
             onAdd={emptyTiles.canAdd ? () => emptyTiles.open(tile, `[data-frame="${tile}"]`) : undefined}
           />
         )}
-        <div className={folded ? "hidden" : "contents"}>
+        <div className={folded ? "invisible h-0 overflow-hidden" : "contents"} aria-hidden={folded || undefined}>
           <TileTitle title={title} subtitle={subtitle} />
           <FrameContext.Provider value={true}>
             <div className="flex flex-col gap-4">{children}</div>

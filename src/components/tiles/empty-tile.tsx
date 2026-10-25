@@ -88,7 +88,9 @@ export function EmptyTileLine({
 }) {
   const t = useTranslations("shared.emptyTile");
   return (
-    <div className="flex min-h-8 min-w-0 items-center gap-3" data-empty-tile={tile}>
+    // `flex-wrap`: in a narrow panel („Reprezentanți și contact", 310 px) „Adaugă" goes under the title rather than past
+    // the panel's edge.
+    <div className="flex min-h-8 min-w-0 flex-wrap items-center gap-x-3 gap-y-1" data-empty-tile={tile}>
       <h2 className={`${TILE_TITLE_CLASS} shrink-0`}>{title}</h2>
       <span className="min-w-0 truncate text-sm text-fade dark:text-zinc-400" data-empty-tile-state={state}>
         {t(`state.${state}`)}
