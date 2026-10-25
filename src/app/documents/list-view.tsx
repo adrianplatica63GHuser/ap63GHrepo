@@ -32,7 +32,7 @@ import { LIST_ADD, ListSearchBox } from "@/components/list/list-search";
 import { AddNewButton } from "@/components/list/add-new-button";
 import { domainIcon } from "@/components/sidebar/nav-config";
 import { LIST_COLUMN_CHOICE, LIST_COLUMN_ORDER } from "@/lib/ui/list-columns";
-import { useFittedPage } from "@/lib/ui/use-fitted-rows";
+import { keepRowsWhileResized, useFittedPage } from "@/lib/ui/use-fitted-rows";
 import { useColumnDrag, useColumnOrder } from "@/components/list/column-order";
 import { HintBubble } from "@/lib/ui/hint-bubble";
 import { addedOn, dmyFromIso, modifiedOn } from "@/lib/persons/person-age";
@@ -689,6 +689,7 @@ export function DocumentListView({
     queryKey: ["documents", "list", debouncedSearch, typeFiltersKey, expiringSoon, customFieldKey, customFieldValue, filterSig, orderSig, currentPage, pageSize],
     queryFn:  () => fetchDocuments(debouncedSearch, initialDocumentTypeIds ?? [], currentPage, pageSize ?? 0, expiringSoon, customFieldKey, customFieldValue, filters, listOrder),
     enabled:  !noTypesSelected && pageSize !== null,
+    placeholderData: keepRowsWhileResized<ListResponse>(pageSize),
   });
 
   const total      = query.data?.total ?? 0;

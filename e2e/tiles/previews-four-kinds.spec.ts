@@ -22,6 +22,7 @@ import {
   type RecordKind,
 } from "../helpers/records";
 import { ROW_TILE_CEILING_PX, rowTileMinPx } from "../../src/lib/ui/field-widths";
+import { listsOnTheirEarlierColumns } from "../helpers/list-columns";
 
 const MARK = `${E2E_MARKER}TILES-11`;
 /**
@@ -194,6 +195,8 @@ async function rowsOf(tile: Locator): Promise<string[][]> {
 
 test.describe("TC-TILES-11 — cele patru previzualizări", () => {
   test("„născută:”, „(2 contacte)”, cele trei rânduri ale proprietății, actul fără „Tip document”", async ({ page }) => {
+    // 40.66: the lists open on four default columns; these steps were written against the earlier ones.
+    await listsOnTheirEarlierColumns(page);
     test.slow();
     // A run that died before its `finally` leaves its records; they would be a second match here.
     await removeLeftovers(page.request, MARK);
@@ -453,6 +456,8 @@ async function asTall(page: Page, list: string, kind: string, shot: string): Pro
 
 test.describe("TC-TILES-11 — the Incursiune as tall as the list (#38.75)", () => {
   test("step 9: on the four lists, level with the list's top and bottom, in the pinned purple", async ({ page }) => {
+    // 40.66: the lists open on four default columns; these steps were written against the earlier ones.
+    await listsOnTheirEarlierColumns(page);
     test.slow();
     for (let i = 0; i < 4; i++) await removeLeftovers(page.request, TALL); // the search answers a page at a time
     const made: [RecordKind, string][] = [];
@@ -572,6 +577,8 @@ async function links(page: Page, list: string, name: string, kind: string, rows:
 
 test.describe("TC-TILES-11 — the chain link shows „Legături” (#38.76)", () => {
   test("step 10: on the four lists, the object's „Legături” beside the list, read-only, in green, beside the eye's tile", async ({ page }) => {
+    // 40.66: the lists open on four default columns; these steps were written against the earlier ones.
+    await listsOnTheirEarlierColumns(page);
     test.slow();
     await removeLeftovers(page.request, LINKS);
     const made: [RecordKind, string][] = [];
@@ -645,6 +652,8 @@ async function linksReading(page: Page) {
 
 test.describe("TC-TILES-11 — „Legături” beside the list, as tall as its rows (#39.25)", () => {
   test("step 11: empty, the preview's height; two rows, theirs; sixteen, the ceiling, scrolling; „Închide” on the tile's line", async ({ page }) => {
+    // 40.66: the lists open on four default columns; these steps were written against the earlier ones.
+    await listsOnTheirEarlierColumns(page);
     test.slow();
     await page.setViewportSize({ width: 1920, height: 1000 });
     await removeLeftovers(page.request, ROWS);
@@ -797,6 +806,8 @@ async function roundTrip(page: Page, list: string, name: string, tiles: readonly
 
 test.describe("TC-TILES-11 — Back returns to the list as it was (#39.26)", () => {
   test("step 12: on the four lists, search, tiles and scroll come back after the record; from the menu the list opens clean", async ({ page }) => {
+    // 40.66: the lists open on four default columns; these steps were written against the earlier ones.
+    await listsOnTheirEarlierColumns(page);
     test.slow();
     // Short, so the page scrolls with the tiles open beside the list.
     await page.setViewportSize({ width: 1366, height: 420 });

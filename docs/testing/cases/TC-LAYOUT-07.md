@@ -54,6 +54,11 @@ Nothing is created or changed.
 
 ## Notes from the runs
 
+**2026-10-25 — Slice 40.67, „one step" for the frame's height.** A list's frame may now change height twice after a
+resize — the window, then its page refilled with the window's own row count — never back and forth; the scroll bars
+and the widths still change at most once. The spec counts it so; the rows on screen stay until the new page arrives, so
+there is no „Se încarcă…" between the two.
+
 **2026-10-25 — steps 8–9 added (Slice 40.67).** A page holds as many rows as the window does, never under 10, and a
 resize keeps the first row on screen. Written from the slice's own change and added to the spec as a test of its own;
 not driven by hand first.

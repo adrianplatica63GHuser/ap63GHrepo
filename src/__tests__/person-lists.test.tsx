@@ -62,7 +62,8 @@ describe("„Câmpuri afișate” on the two persons' lists (Slice #37.60)", () 
     expect(view).not.toMatch(/useState\(""\);[^\n]*\n?[^\n]*(setImportance|setRelevance)/);
     expect(view).not.toMatch(/setImportance|setRelevance|importanceLabel|relevanceLabel/);
     // #39.62 added the bar's signature (it read `…, currentPage]`); 40.46 the order's (it read `…, filterSig]`).
-    expect(view).toMatch(/queryKey: \["people", "list", debouncedSearch, currentPage, filterSig, orderSig\]/);
+    // 40.67: the page's row count is in the key too.
+    expect(view).toMatch(/queryKey: \["people", "list", debouncedSearch, currentPage, filterSig, orderSig, pageSize\]/);
     // Slice 40.10: `pageKey` went with the tick boxes it cleared; the list's address key carries the same three, the
     // search as typed (it read `const pageKey = \`${debouncedSearch}|${currentPage}|${filterSig}\``).
     expect(view).not.toContain("pageKey");

@@ -178,7 +178,8 @@ describe("the four lists keep their view in their address (#39.26)", () => {
     // Slice #39.61: Proprietăți reads its filter bar's keys from the address too.
     expect(view).toMatch(/const address = useListAddress\((DOCUMENT_ADDRESS_FILTERS|PROPERTY_FILTER_KEYS|FILTER_KEYS)?\);/);
     expect(view).toContain("useState(address.search);");
-    expect(view).toContain("useState(address.page);");
+    // 40.67: the page is the address's, followed by the window's row count (useFittedPage) — was `useState(address.page)`.
+    expect(view).toContain("useFittedPage(address.page, fit.rows);");
     // The search as typed, not the debounced one — a link that carries it must find the box's word.
     expect(view).toMatch(/useWriteListAddress\(\s*\{ search: searchInput, page: currentPage/);
     expect(view).toContain("useListScrollMemory(query.isSuccess);");

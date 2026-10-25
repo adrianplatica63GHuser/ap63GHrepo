@@ -31,7 +31,7 @@ import { LIST_ADD, ListSearchBox } from "@/components/list/list-search";
 import { AddNewButton } from "@/components/list/add-new-button";
 import { domainIcon } from "@/components/sidebar/nav-config";
 import { LIST_COLUMN_CHOICE, LIST_COLUMN_ORDER } from "@/lib/ui/list-columns";
-import { useFittedPage } from "@/lib/ui/use-fitted-rows";
+import { keepRowsWhileResized, useFittedPage } from "@/lib/ui/use-fitted-rows";
 import { useColumnDrag, useColumnOrder } from "@/components/list/column-order";
 import { ClearFiltersButton, FilterBar, FilterFunnel, type FilterBarField } from "@/components/list/filter-bar";
 import { ListSortButton } from "@/components/list/list-sort-button";
@@ -184,6 +184,7 @@ export function PropertyListView() {
     queryKey: ["properties", "list", debouncedSearch, currentPage, filterSig, orderSig, pageSize],
     queryFn:  () => fetchProperties(debouncedSearch, currentPage, pageSize ?? 0, filters, listOrder),
     enabled:  pageSize !== null,
+    placeholderData: keepRowsWhileResized<ListResponse>(pageSize),
   });
 
   const total      = query.data?.total ?? 0;

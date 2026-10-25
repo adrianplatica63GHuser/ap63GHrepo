@@ -79,8 +79,21 @@ async function resizeTo(page: Page, size: Size, keys: readonly (keyof Reading)[]
   for (let f = 0; f < n; f++) {
     for (const key of keys) {
       let changes = 0;
-      for (let i = 1; i < at.length; i++) if (at[i].frames[f]?.[key] !== at[i - 1].frames[f]?.[key]) changes++;
-      if (changes > 1) {
+      let turns = 0;
+      let way = 0;
+      for (let i = 1; i < at.length; i++) {
+        const a = at[i - 1].frames[f]?.[key];
+        const b = at[i].frames[f]?.[key];
+        if (b === a) continue;
+        changes++;
+        // Slice 40.67: a frame's height may change twice — the window, then its page refilled with the window's own
+        // row count — but only ever one way. Going back (taller, shorter, taller) is the flicker this case is about.
+        const now = typeof a === "number" && typeof b === "number" ? Math.sign(b - a) : 0;
+        if (way !== 0 && now !== way) turns++;
+        if (now !== 0) way = now;
+      }
+      const allowed = key === "ch" ? 2 : 1;
+      if (changes > allowed || turns > 0) {
         const seq = at.slice(0, 8).map((s) => { const r = s.frames[f]; return r ? `${r.cw}×${r.ch}${r.v ? "V" : ""}${r.h ? "H" : ""}` : "-"; });
         out.push(`${size.width}×${size.height}: frame ${f} ${key} changed ${changes}× (${seq.join(" ")} …)`);
       }

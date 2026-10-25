@@ -188,7 +188,7 @@ describe("the button on the four lists", () => {
     expect(src).toMatch(/ORDER_KEYS\]/);
     expect(src).toContain("...orderAddressPatch(listOrder) }");
     expect(src).toContain("appendOrderParams(url.searchParams, order);");
-    expect(src).toMatch(/filterSig, orderSig\]/);
+    expect(src).toMatch(/filterSig, orderSig(, pageSize)?\]/); // 40.67: the row count after it
     expect(src).toMatch(/function changeListOrder\(next: ListOrder\) \{\s+setListOrder\(next\);\s+setCurrentPage\(0\);/);
   });
 

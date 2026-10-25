@@ -7,7 +7,7 @@
 import { readFileSync } from "fs";
 import { join } from "path";
 import { act, renderHook } from "@testing-library/react";
-import { FITTED_ROWS_SETTLE_MS, MIN_PAGE_ROWS, firstRowPage, fittedRows, useFittedPage } from "@/lib/ui/use-fitted-rows";
+import { FITTED_ROWS_SETTLE_MS, MIN_PAGE_ROWS, firstRowPage, fittedRows, keepRowsWhileResized, useFittedPage } from "@/lib/ui/use-fitted-rows";
 
 const ROOT = join(__dirname, "..", "..");
 const read = (...p: string[]) => readFileSync(join(ROOT, ...p), "utf8");
@@ -52,13 +52,22 @@ describe("a resize keeps the first row on screen", () => {
   });
 });
 
+describe("a resize keeps the rows on screen until the new page arrives", () => {
+  it("the previous page stays while only the count changed, never for anything else", () => {
+    const keep = keepRowsWhileResized<string>(20);
+    expect(keep("rows", { queryKey: ["properties", "list", "", 2, "", "changed:desc", 15] })).toBe("rows");
+    expect(keep("rows", { queryKey: ["properties", "list", "", 3, "", "changed:desc", 20] })).toBeUndefined();
+    expect(keep("rows", undefined)).toBeUndefined();
+  });
+});
+
 describe("the four lists (Ask first 1, 3)", () => {
   const LISTS = ["properties", "natural-persons", "judicial-persons", "documents"];
   it.each(LISTS)("%s asks for the fitted count, waits for it, and keeps no 15", (dir) => {
     const src = read("src", "app", dir, "list-view.tsx");
     expect(src).toContain("const [currentPage, setCurrentPage, pageSize] = useFittedPage(address.page, fit.rows);");
     expect(src).toContain('url.searchParams.set("limit",  String(pageSize));');
-    expect(src).toMatch(/enabled:\s+(!noTypesSelected && )?pageSize !== null,/);
+    expect(src).toMatch(/enabled:\s+(!noTypesSelected && )?pageSize !== null,\n\s+placeholderData: keepRowsWhileResized<ListResponse>\(pageSize\),/);
     expect(src).not.toMatch(/PAGE_SIZE\s*=\s*15/);
   });
   it("the frame's measure gives the count (useListFit)", () => {

@@ -130,7 +130,8 @@ test.describe("TC-ICON-01 — Butoanele cu pictogramă își arată numele", () 
 
       // Step 7 (40.60) — the row: no arrow; its name a link to the person; the three buttons faint at rest, full on the
       // row under the mouse and on the row holding the focus; Tab onto the name and Enter opens the person.
-      const only = main.locator("tbody tr").first();
+      // 40.67: page two holds six rows, newest first, so „Persoana 01" is the last of them (it was the only one).
+      const only = main.locator("tbody tr").last();
       const name = only.locator("a[data-row-name-link]");
       await expect(name).toContainText("Persoana 01");
       const href = await name.getAttribute("href");

@@ -16,6 +16,7 @@
  * The association pickers and search's interleave keep their 15 (Ask first 1).
  */
 import { useState, type Dispatch, type SetStateAction } from "react";
+import type { QueryKey } from "@tanstack/react-query";
 
 /** The fewest rows a page shows, whatever the window. */
 export const MIN_PAGE_ROWS = 10;
@@ -51,4 +52,14 @@ export function useFittedPage(initialPage: number, rows: number | null): [number
     if (rows !== null && size !== null) setPage(firstRowPage(page, size, rows));
   }
   return [page, setPage, rows];
+}
+
+/**
+ * The list's query's `placeholderData`: while only the row count changed (a resize — the count is the key's last
+ * word), the rows on screen stay until the new page arrives, instead of a „Se încarcă…" line for a moment. Anything
+ * else that changed (a search, a filter, the order, the page) shows the loading line as before.
+ */
+export function keepRowsWhileResized<T>(pageSize: number | null) {
+  return (previous: T | undefined, previousQuery: { queryKey: QueryKey } | undefined): T | undefined =>
+    previousQuery !== undefined && previousQuery.queryKey[previousQuery.queryKey.length - 1] !== pageSize ? previous : undefined;
 }
