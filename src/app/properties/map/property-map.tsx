@@ -830,7 +830,7 @@ function RulerDistanceLabel({
             whiteSpace:      "nowrap",
             backgroundColor: RULER_LINE,
             color:           "white",
-            fontSize:        11,
+            fontSize:        12, // 40.63: nothing under 12 px
             fontWeight:      600,
             lineHeight:      1.2,
             padding:         "2px 6px",
