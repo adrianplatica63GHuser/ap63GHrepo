@@ -132,7 +132,7 @@ Se deschide o singură fișă odată. „Editează” pe alta, cât timp prima a
 
 Un obiect nou rămâne un singur formular, cu un singur „Salvează”. O versiune veche se citește, fără „Editează”. Fișele cu butoanele lor proprii — „Legături”, „Clasificare”, „Etichete și grupuri”, „Interacțiuni”, arborele de moștenire, harta, paginile unui act — lucrează ca înainte.
 
-![2.14 O fișă deschisă cu „Editează”: conturul albastru, „Salvează” și „Renunță” sub câmpuri](tile-edit.png){#fig-tile-edit}
+![2.14 „Identitate” deschisă cu „Editează”: conturul albastru, „Salvează” și „Renunță” sub câmpuri](tile-edit.png){#fig-tile-edit}
 
 ## 2.7 Previzualizarea {#start-preview}
 

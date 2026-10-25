@@ -378,15 +378,15 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     await still(page);
     await page.screenshot({ path: `${dir}/record.png` });
 
-    // Figura 2.14 (40.77) — „Contact" opened with „Editează" (40.72): the blue outline, „Salvează" and „Renunță" under the
-    // fields. A seed person's invented contact; the CNP is in another tile and stays blurred. Put back with „Renunță".
-    await page.locator('[data-tile-edit="contact"]').click();
-    await expect(page.locator('[data-tile-edit-bar="contact"]')).toBeVisible({ timeout: 30_000 });
+    // Figura 2.14 (40.77) — „Identitate" opened with „Editează" (40.72): the blue outline, „Salvează" and „Renunță" under
+    // the fields. A seed person's invented identity; the CNP, a box now, blurred. Put back with „Renunță".
+    await page.locator('[data-tile-edit="identity"]').click();
+    await expect(page.locator('[data-tile-edit-bar="identity"]')).toBeVisible({ timeout: 30_000 });
     await blurCnp(page);
     await still(page);
-    await page.locator('[data-panel="contact"]').screenshot({ path: `${dir}/tile-edit.png` });
-    await page.locator('[data-tile-cancel="contact"]').click();
-    await expect(page.locator('[data-tile-edit-bar="contact"]')).toHaveCount(0);
+    await page.locator('[data-panel="identity"]').screenshot({ path: `${dir}/tile-edit.png` });
+    await page.locator('[data-tile-cancel="identity"]').click();
+    await expect(page.locator('[data-tile-edit-bar="identity"]')).toHaveCount(0);
 
     // Figura 2.10 (#39.93) — a tile held over another (#39.91): „Act de identitate" held over „Identitate", which has slid
     // down to the first place in its columns that holds it whole — on a person's full columns, the bottom of the row —

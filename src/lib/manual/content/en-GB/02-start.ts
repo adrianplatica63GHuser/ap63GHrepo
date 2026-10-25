@@ -132,7 +132,7 @@ One tile is open at a time. „Edit” on another, while the first has unsaved c
 
 A new object is still one form, with one „Save”. An old version is read, with no „Edit”. The tiles with their own buttons — „Links”, „Classification”, „Tags and groups”, „Interactions”, the inheritance tree, the map, a document's pages — work as before.
 
-![2.14 A tile opened with „Edit”: the blue outline, „Save” and „Cancel” under the fields](tile-edit.png){#fig-tile-edit}
+![2.14 „Identity” opened with „Edit”: the blue outline, „Save” and „Cancel” under the fields](tile-edit.png){#fig-tile-edit}
 
 ## 2.7 The preview {#start-preview}
 
