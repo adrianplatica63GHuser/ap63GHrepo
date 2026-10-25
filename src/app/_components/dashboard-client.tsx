@@ -202,7 +202,7 @@ function entityUrl(item: RecentActivityItem): string {
 function Skeleton({ className }: { className?: string }) {
   return (
     <div
-      className={`animate-pulse rounded bg-zinc-200 dark:bg-zinc-700 ${className ?? ""}`}
+      className={`animate-pulse rounded bg-crease ${className ?? ""}`}
     />
   );
 }
@@ -297,25 +297,25 @@ export function RecentCountsSection({
           <Link
             key={c.href}
             href={c.href}
-            className="flex flex-col items-center justify-center gap-1 rounded-lg border border-wire bg-white p-4 transition-colors hover:bg-cta-pale dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+            className="flex flex-col items-center justify-center gap-1 rounded-lg border border-wire bg-raised p-4 transition-colors hover:bg-cta-pale"
             data-recent-count={c.kind}
           >
-            <Icon size={20} aria-hidden="true" className="text-fade dark:text-zinc-400" />
+            <Icon size={20} aria-hidden="true" className="text-fade" />
             {data === undefined ? (
               <Skeleton className="h-8 w-12" />
             ) : (
-              <span className="text-3xl font-bold tabular-nums text-ink dark:text-zinc-100">
+              <span className="text-3xl font-bold tabular-nums text-ink">
                 {c.count}
               </span>
             )}
-            <span className="text-xs text-zinc-500 dark:text-zinc-400 text-center">
+            <span className="text-xs text-fade text-center">
               {c.label}
             </span>
           </Link>
           );
         })}
       </div>
-      <p className="mt-3 text-xs text-zinc-400 dark:text-zinc-500 text-center">
+      <p className="mt-3 text-xs text-faint text-center">
         {t("recentCounts.subtitle")}
       </p>
     </SectionCard>
@@ -342,9 +342,9 @@ export function ExpiringDocumentsSection({
   // Slice 40.62: red when expired, amber inside the warning window, neutral beyond it (it was a pale yellow).
   function rowColor(dateValidUntil: string): string {
     const days = daysFromToday(dateValidUntil);
-    if (days < 0)           return "text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20";
-    if (days <= amberDays)  return "text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20";
-    return "text-ink dark:text-zinc-300 bg-cap dark:bg-zinc-800";
+    if (days < 0)           return "text-alert bg-alert-wash";
+    if (days <= amberDays)  return "text-warning bg-warning-wash";
+    return "text-ink bg-cap";
   }
 
   function statusLabel(dateValidUntil: string): string {
@@ -364,7 +364,7 @@ export function ExpiringDocumentsSection({
           ))}
         </div>
       ) : data.length === 0 ? (
-        <p className="text-sm text-zinc-400 dark:text-zinc-500 text-center py-4">
+        <p className="text-sm text-faint text-center py-4">
           {t("expiringDocuments.empty", { days: expiringDays })}
         </p>
       ) : (
@@ -373,14 +373,14 @@ export function ExpiringDocumentsSection({
         // it. The table is as wide as its tile and never wider — no sideways scroll at any width; a long title wraps. It
         // is a plain table (`table-fixed`, the status column `expiryStatus`'s width): a FixedTable is as wide as its
         // columns' rems, which is what pushed „Stare" off the tile's right edge in a narrow window.
-        <div className="rounded-md border border-card-rim dark:border-zinc-800" data-expiring-frame="">
+        <div className="rounded-md border border-card-rim" data-expiring-frame="">
           <table className="w-full table-fixed text-sm" data-expiring-table="">
             <colgroup>
               <col style={{ width: `${columnRem("expiryStatus")}rem` }} />
               <col />
             </colgroup>
             <thead>
-              <tr className="text-left text-xs text-zinc-500 dark:text-zinc-400 border-b border-zinc-100 dark:border-zinc-800">
+              <tr className="text-left text-xs text-fade border-b border-crease">
                 <th className="px-4 pb-2 pt-2 font-medium">{t("expiringDocuments.colStatus")}</th>
                 <th className="px-4 pb-2 pt-2 font-medium">{t("expiringDocuments.colTitle")}</th>
               </tr>
@@ -389,7 +389,7 @@ export function ExpiringDocumentsSection({
               {data.map((doc) => (
                 <tr
                   key={doc.id}
-                  className="border-b border-zinc-50 align-top dark:border-zinc-800/50 last:border-0"
+                  className="border-b border-hairline align-top last:border-0"
                 >
                   <td className="px-4 py-2">
                     <span
@@ -402,11 +402,11 @@ export function ExpiringDocumentsSection({
                   <td className="px-4 py-2 break-words">
                     <Link
                       href={`/documents/${doc.id}`}
-                      className="text-blue-600 dark:text-blue-400 hover:underline"
+                      className="text-link hover:underline"
                     >
                       {nameOr(doc.title, "document")}
                     </Link>
-                    <div className="text-xs text-fade dark:text-zinc-400" data-expiry-meta="">
+                    <div className="text-xs text-fade" data-expiry-meta="">
                       {doc.documentTypeName ?? "—"} · <span className="tabular-nums" data-expiry-date="">{formatDMY(doc.dateValidUntil)}</span>
                     </div>
                   </td>
@@ -439,19 +439,19 @@ export function StaleMetadataSection({
       {data === undefined ? (
         <Skeleton className="h-14 w-full" />
       ) : data.total === 0 ? (
-        <p className="text-sm text-emerald-600 dark:text-emerald-400 text-center py-3 font-medium">
+        <p className="text-sm text-success text-center py-3 font-medium">
           {t("staleMetadata.allGood")}
         </p>
       ) : (
         <div className="flex flex-col gap-3">
-          <p className="text-sm text-zinc-600 dark:text-zinc-300">
+          <p className="text-sm text-fade">
             {t("staleMetadata.description", { total: data.total, days: staleDays })}
           </p>
           <div className="flex gap-3 flex-wrap">
             {data.persons > 0 && (
               <Link
                 href="/persons"
-                className="flex items-center gap-1.5 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 px-3 py-1.5 text-xs text-amber-700 dark:text-amber-400 hover:opacity-80 transition-opacity"
+                className="flex items-center gap-1.5 rounded-lg border border-warning-rim bg-warning-wash px-3 py-1.5 text-xs text-warning hover:opacity-80 transition-opacity"
               >
                 <span className="font-bold">{data.persons}</span>
                 <span>{t("staleMetadata.persons")}</span>
@@ -460,7 +460,7 @@ export function StaleMetadataSection({
             {data.properties > 0 && (
               <Link
                 href="/properties"
-                className="flex items-center gap-1.5 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 px-3 py-1.5 text-xs text-amber-700 dark:text-amber-400 hover:opacity-80 transition-opacity"
+                className="flex items-center gap-1.5 rounded-lg border border-warning-rim bg-warning-wash px-3 py-1.5 text-xs text-warning hover:opacity-80 transition-opacity"
               >
                 <span className="font-bold">{data.properties}</span>
                 <span>{t("staleMetadata.properties")}</span>
@@ -469,14 +469,14 @@ export function StaleMetadataSection({
             {data.documents > 0 && (
               <Link
                 href="/documents"
-                className="flex items-center gap-1.5 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 px-3 py-1.5 text-xs text-amber-700 dark:text-amber-400 hover:opacity-80 transition-opacity"
+                className="flex items-center gap-1.5 rounded-lg border border-warning-rim bg-warning-wash px-3 py-1.5 text-xs text-warning hover:opacity-80 transition-opacity"
               >
                 <span className="font-bold">{data.documents}</span>
                 <span>{t("staleMetadata.documents")}</span>
               </Link>
             )}
           </div>
-          <p className="text-xs text-zinc-400 dark:text-zinc-500">
+          <p className="text-xs text-faint">
             {t("staleMetadata.hint")}
           </p>
         </div>
@@ -518,11 +518,11 @@ function RecentActivitySection({
           ))}
         </div>
       ) : data.length === 0 ? (
-        <p className="text-sm text-zinc-400 dark:text-zinc-500 text-center py-4">
+        <p className="text-sm text-faint text-center py-4">
           {t("recentActivity.empty")}
         </p>
       ) : (
-        <ul className="divide-y divide-zinc-50 dark:divide-zinc-800">
+        <ul className="divide-y divide-hairline">
           {data.map((item) => (
             <li key={item.id} className="flex items-center gap-3 py-2.5">
               {/* Slice 40.61 (Ask first 3): the kind's mark, its name the accessible name and the tooltip — it was the word
@@ -530,11 +530,11 @@ function RecentActivitySection({
               <EntityMark kind={kindOf(item)} label={t(KIND_LABEL_KEY[kindOf(item)])} />
               <Link
                 href={entityUrl(item)}
-                className="flex-1 truncate text-sm text-zinc-700 dark:text-zinc-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                className="flex-1 truncate text-sm text-ink hover:text-link transition-colors"
               >
                 {nameOr(item.displayName, item.entityType)}
               </Link>
-              <span className="shrink-0 text-xs text-zinc-400 dark:text-zinc-500">
+              <span className="shrink-0 text-xs text-faint">
                 {relativeTime(item.updatedAt, t)}
               </span>
             </li>
@@ -571,7 +571,7 @@ export function DashboardClient() {
   if (isError) {
     return (
       <div className="flex flex-1 items-center justify-center">
-        <p className="text-sm text-red-500">{t("loadError")}</p>
+        <p className="text-sm text-alert">{t("loadError")}</p>
       </div>
     );
   }
@@ -591,12 +591,12 @@ export function DashboardClient() {
           below ~1250px of window width (Slice #32.20).
         */}
         <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
+          <h1 className="text-2xl font-semibold tracking-tight text-strong">
             {t("title")}
           </h1>
           <ScreenHelpButton align="left" />
         </div>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="mt-1 text-sm text-fade">
           {t("subtitle")}
         </p>
       </header>

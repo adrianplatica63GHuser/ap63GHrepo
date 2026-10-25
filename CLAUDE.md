@@ -217,6 +217,11 @@ not a pattern the other lists already follow.
 This list is a summary, not the source of truth. **`package.json` is** — check it before
 assuming any API, and fix this section whenever the two disagree.
 
+**Colours are role tokens** (Slice 40.76; `src/app/globals.css`, the `@theme` block and `.dark`): a converted file
+writes only names like `text-ink`, `bg-card`, `border-wire`, `text-warning`, never a raw palette class or a `dark:`.
+**A slice converts the screens it touches and adds each to `CONVERTED` in `src/__tests__/colour-tokens.test.ts`**,
+which keeps them that way; a role with no name gets one in both places of `globals.css`, light and `.dark`.
+
 ## Key paths
 
 - `C:\dev` — the session root. Adrian connects **this** folder, not the repo, so that

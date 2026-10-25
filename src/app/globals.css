@@ -46,9 +46,6 @@
   --color-gy-light:  #F3F1ED;   /* light  grey    — page canvas (= background) */
 
   /* ── Semantic tokens (used in component classes) ───────────────────────── */
-  --color-canvas:    #F3F1ED;   /* bg-canvas   — page background               */
-  --color-card:      #EEF4FA;   /* bg-card     — panel / section background    */
-  --color-card-rim:  #C6D4E8;   /* border-card-rim — panel border              */
   /* Slice #37.78 — the right column's tiles, which never move: a light purple at
      the card's OKLCH lightness (fill 0.964, rim 0.865; dark: zinc-900's and
      zinc-800's). `src/lib/ui/tile-surface.ts` says which tiles take them.     */
@@ -85,7 +82,6 @@
 
   --color-cta:       #334155;   /* bg-cta / text-cta — primary buttons         */
   --color-cta-d:     #1e293b;   /* bg-cta-d  — primary button :hover           */
-  --color-cta-pale:  #f1f5f9;   /* bg-cta-pale — light slate wash / row hover  */
 
   /* Slice #23.05.UX — destructive actions. Deliberately desaturated to sit
      with the slate palette rather than Tailwind's brighter red-600. White
@@ -97,25 +93,84 @@
      green when a control can be used, the danger red when it cannot. Light on
      white: #15803D 5.0 : 1, #B91C1C 6.5 : 1. Dark on zinc-900: #4ADE80 10 : 1,
      #F87171 6.0 : 1 — an icon needs 3 : 1, these clear text's 4.5 too.       */
-  --color-success:      #15803D;   /* text-success                            */
   --color-success-dark: #4ADE80;   /* dark:text-success-dark                  */
   --color-danger-dark:  #F87171;   /* dark:text-danger-dark                   */
 
   --color-focus:     #1A5296;   /* border-focus — input focus border           */
   --color-navy:      #1E3A8A;   /* text-navy — back-navigation arrows + labels */
 
+
+}
+
+/* ───────────────────────────────────────────────────────────────────────────
+   Slice 40.76 — colours named by their role, each defined twice: here for light, and under `.dark` below. A
+   component writes only the name (`text-ink`, `bg-card`, `border-wire` …) and the right colour comes in both themes,
+   with no `dark:` beside it. Not `inline`, unlike the block above: a utility then reads `var(--color-…)`, which
+   `.dark` redefines — an inline token is written into the utility as its hex and cannot follow the theme.
+   The names kept from before keep their light value; each has the dark value its twins and the 40.19 safety net
+   already gave it, so nothing that was right moves. New names only where a role had none:
+     raised  — a surface lifted off the card (a white button-tile; zinc-900 in dark)
+     strong  — the strongest text, a page's heading
+     faint   — text quieter than `fade`: empty states, last-updated lines
+     hairline — the faintest line, between rows
+     link    — a link's text
+     warning, warning-wash, warning-rim — the amber of „expiring" and of a notice
+     alert, alert-wash — the red of „expired" and of a failure, as text and as a wash. `danger` stays the fill
+       of a destructive button, which must not lighten in dark (a white label on it).
+     info    — the blue of a neutral notice
+   Converted screens are listed in src/__tests__/colour-tokens.test.ts, which keeps raw palette classes and
+   `dark:` out of them. A slice converts the screens it touches and adds them there (ga40prj/CLAUDE.md).
+   ─────────────────────────────────────────────────────────────────────────── */
+@theme {
+  --color-canvas:    #F3F1ED;   /* bg-canvas   — page background               */
+  --color-card:      #EEF4FA;   /* bg-card     — panel / section background    */
+  --color-card-rim:  #C6D4E8;   /* border-card-rim — panel border              */
+  --color-cta-pale:  #f1f5f9;   /* bg-cta-pale — light slate wash / row hover  */
+  --color-success:      #15803D;   /* text-success                            */
   --color-ink:       #3C4149;   /* text-ink  — section headings, field labels  */
   --color-fade:      #595F6A;   /* text-fade — muted / secondary text          */
-
   --color-wire:      #C0C4CC;   /* border-wire  — input borders, outline btns  */
   --color-crease:    #D4DAE2;   /* divide-crease — table row dividers          */
   --color-cap:       #DEE6EF;   /* bg-cap — table header background            */
+  --color-raised:       #ffffff;
+  --color-strong:       #18181b;  /* zinc-900 */
+  --color-faint:        #a1a1aa;  /* zinc-400 */
+  --color-hairline:     #fafafa;  /* zinc-50  */
+  --color-link:         #2563eb;  /* blue-600 */
+  --color-warning:      #b45309;  /* amber-700 */
+  --color-warning-wash: #fffbeb;  /* amber-50  */
+  --color-warning-rim:  #fde68a;  /* amber-200 */
+  --color-alert:        #b91c1c;  /* red-700   */
+  --color-alert-wash:   #fef2f2;  /* red-50    */
+  --color-info:         #1d4ed8;  /* blue-700  */
 }
 
 .dark {
   --background: #0a0a0a;
   --foreground: #ededed;
   color-scheme: dark;
+  /* Slice 40.76 — each role's dark value. Unlayered, so it outranks the theme layer's :root. */
+  --color-canvas:       #0a0a0a;
+  --color-card:         #18181b;  /* zinc-900 */
+  --color-card-rim:     #27272a;  /* zinc-800 */
+  --color-success:      #4ade80;  /* = success-dark */
+  --color-ink:          #e4e4e7;  /* zinc-200 */
+  --color-fade:         #a1a1aa;  /* zinc-400 */
+  --color-wire:         #3f3f46;  /* zinc-700 */
+  --color-crease:       #27272a;  /* zinc-800 */
+  --color-cap:          #27272a;  /* zinc-800 */
+  --color-cta-pale:     #27272a;  /* zinc-800 */
+  --color-raised:       #18181b;  /* zinc-900 */
+  --color-strong:       #f4f4f5;  /* zinc-100 */
+  --color-faint:        #71717a;  /* zinc-500 */
+  --color-hairline:     rgb(39 39 42 / 0.5);  /* zinc-800 at half */
+  --color-link:         #60a5fa;  /* blue-400 */
+  --color-warning:      #fbbf24;  /* amber-400 */
+  --color-warning-wash: rgb(120 53 15 / 0.2);  /* amber-900 at a fifth */
+  --color-warning-rim:  #92400e;  /* amber-800 */
+  --color-alert:        #f87171;  /* red-400 */
+  --color-alert-wash:   rgb(127 29 29 / 0.2);  /* red-900 at a fifth */
+  --color-info:         #93c5fd;  /* blue-300 */
 }
 
 /* ───────────────────────────────────────────────────────────────────────────
@@ -127,20 +182,14 @@
    says what it wants in dark, so nothing that was right moves. Unlayered on purpose — it must outrank Tailwind's
    utilities layer, which holds the light class it corrects.
    ─────────────────────────────────────────────────────────────────────────── */
-.dark .text-ink:not([class*="dark:text-"]),
+/* Slice 40.76: text-ink, text-fade, bg-card, bg-canvas, bg-cap, bg-cta-pale, border-wire, border-card-rim and
+   border-crease carry their own dark value now (the role tokens above), so their rules here are gone; what is left
+   is the raw palette and white, which only a conversion takes off a screen. */
 .dark .text-gy-strong:not([class*="dark:text-"]) { color: #e4e4e7; }                   /* zinc-200 */
-.dark .text-fade:not([class*="dark:text-"]) { color: #a1a1aa; }                         /* zinc-400 */
 .dark .text-cta:not([class*="dark:text-"]) { color: #cbd5e1; }                          /* slate-300 */
-.dark .bg-card:not([class*="dark:bg-"]),
 .dark .bg-white:not([class*="dark:bg-"]),
 .dark .bg-bl-light:not([class*="dark:bg-"]) { background-color: #18181b; }              /* zinc-900 */
-.dark .bg-canvas:not([class*="dark:bg-"]) { background-color: #0a0a0a; }                /* the page's own */
-.dark .bg-cap:not([class*="dark:bg-"]),
-.dark .bg-cta-pale:not([class*="dark:bg-"]),
 .dark .bg-or-light:not([class*="dark:bg-"]) { background-color: #27272a; }              /* zinc-800 */
-.dark .border-wire:not([class*="dark:border-"]) { border-color: #3f3f46; }              /* zinc-700 */
-.dark .border-card-rim:not([class*="dark:border-"]),
-.dark .border-crease:not([class*="dark:border-"]) { border-color: #27272a; }            /* zinc-800 */
 
 /* Slice 40.75 — a read value alone in its row. A stacked field (STACKED_FIELD_CLASS) takes its rows from the row it
    sits in (`grid-rows-subgrid`); alone in a tile's column it has no grid to take them from, and Chrome then sizes it as
