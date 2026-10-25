@@ -6,7 +6,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import {
   type Control,
@@ -78,6 +78,18 @@ import { RecordSyncNotice, useRecordSaveSync } from "@/components/record-save-sy
 import { TileTitle } from "@/components/tiles/tile-title";
 import { EmptyTileLine, useEmptyTiles } from "@/components/tiles/empty-tile";
 import { EmptyFieldsLink, HiddenFieldsContext, hiddenFieldStyle, useEmptyFields, useFieldHidden } from "@/components/tiles/empty-fields";
+import {
+  ReadModeContext,
+  ReadValue,
+  TILE_EDITING_CLASS,
+  TileEditBar,
+  TileEditButton,
+  onTileKeyDown,
+  readText,
+  useFieldRead,
+  useTileEditing,
+  type ReadMode,
+} from "@/components/tiles/read-edit-tile";
 import { tileIsEmpty, valueAt } from "@/lib/ui/empty-tile";
 import { DeceasedMark } from "@/components/persons/deceased-mark";
 
@@ -189,6 +201,31 @@ const JP_FIELD_TILES: Record<JpFieldTile, readonly string[]> = {
 const JP_ALWAYS_SHOWN: readonly string[] = [...ALWAYS_SHOWN_FIELDS.judicialPerson, "contactPerson1Id", "contactPerson2Id"];
 /** A field's label key where it is not `fields.<name>`. */
 const JP_LABEL_KEY: Readonly<Record<string, string>> = { judicialPersonTypeId: "judicialType" };
+
+/**
+ * Slice 40.73: on a saved firm the three form tiles read as text and edit one at a time — 40.72's tile
+ * (src/components/tiles/read-edit-tile.tsx). What each tile's „Salvează" sends: its own fields; the route takes a
+ * partial update and merges the addresses by kind, and one save makes one version.
+ */
+type JpEditTile = "identity" | "contactPersons" | "addresses";
+const JP_EDIT_PAYLOAD: Record<JpEditTile, readonly (keyof ReturnType<typeof toApiPayload>)[]> = {
+  identity: ["name", "nickname", "judicialPersonTypeId", "cuiNumber", "tradeRegisterNumber", "notes"],
+  contactPersons: ["phone", "email", "contactPerson1Id", "contactPerson2Id"],
+  addresses: ["addresses", "correspondenceSameAsHq"],
+};
+/** Each tile's `data-panel`, bare (as on the natural person: the tile is this file's only `data-panel="…"`). */
+const JP_EDIT_PANEL: Record<JpEditTile, string> = {
+  identity: "identity",
+  contactPersons: "contact-persons",
+  addresses: "addresses.HEADQUARTERS",
+};
+/** The tile 40.64's one-line panels and 40.71's links belong to. */
+const JP_EDIT_OF: Readonly<Record<string, JpEditTile>> = {
+  identity: "identity",
+  contactPersons: "contactPersons",
+  headquarters: "addresses",
+  correspondence: "addresses",
+};
 
 export function JudicialPersonForm({
   mode,
@@ -461,11 +498,16 @@ export function JudicialPersonForm({
     latestVersion,
   });
 
-  const doSave = async (values: FormValues): Promise<boolean> => {
+  const doSave = async (values: FormValues, tile?: JpEditTile): Promise<boolean> => {
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const payload = toApiPayload(values);
+      const full = toApiPayload(values);
+      // Slice 40.73: a tile's „Salvează" sends that tile's fields only — and „Completează din ANAF" on „Identitate",
+      // which also writes the registered address and the firm's phone, sends those with it.
+      const anafKeys: readonly (keyof typeof full)[] = [...JP_EDIT_PAYLOAD.addresses, "phone"];
+      const keys = tile ? [...JP_EDIT_PAYLOAD[tile], ...(tile === "identity" && anafApplied ? anafKeys : [])] : null;
+      const payload = keys ? Object.fromEntries(keys.map((key) => [key, full[key]])) : full;
       const url =
         mode === "create"
           ? "/api/judicial-persons"
@@ -593,6 +635,8 @@ export function JudicialPersonForm({
           ? form.formState.isDirty
           : editDirty,
     onSave: async () => {
+      // Slice 40.73: on a saved firm the changed tile is the open one, and it saves itself.
+      if (perTile && tileEditing.open) return saveTile(tileEditing.open);
       const valid = await form.trigger();
       if (!valid) return false;
       return doSave(form.getValues());
@@ -647,10 +691,64 @@ export function JudicialPersonForm({
     emptyTiles.collapsed(
       tile,
       tileIsEmpty(formState.defaultValues, JP_EMPTY_TILE_FIELDS[tile], emptyFormValues) && tileIsEmpty(watchedValues, JP_EMPTY_TILE_FIELDS[tile], emptyFormValues),
-      JP_EMPTY_TILE_FIELDS[tile].some(marked),
+      // 40.73: a tile open for editing is drawn whole.
+      JP_EMPTY_TILE_FIELDS[tile].some(marked) || editingTile === JP_EDIT_OF[tile],
     );
+  // Slice 40.73 — the read view, as on the Natural Person (natural-person-form.tsx, 40.72).
+  const perTile = tiled && !isCreate;
+  const canEditTiles = perTile && effectiveMode === "edit";
+  const baselineRef = useRef(baseline);
+  useEffect(() => {
+    baselineRef.current = baseline;
+  }, [baseline]);
+  const discardEdits = useCallback(() => {
+    form.reset(baselineRef.current.values);
+    setSubmitError(null);
+    setAnafApplied(false);
+  }, [form]);
+  const tileEditing = useTileEditing<JpEditTile>({ dirty: editDirty, discard: discardEdits });
+  const editingTile: JpEditTile | null = canEditTiles ? tileEditing.open : null;
+  const reading = (tile: JpEditTile): boolean => perTile && editingTile !== tile;
+  const readMode: ReadMode = {
+    reading: (name) => perTile && jpTileOfField(name) !== editingTile,
+    value: (name) => valueAt(watchedValues, name),
+  };
+  const saveTile = async (tile: JpEditTile): Promise<boolean> => {
+    // The whole record is checked: the other tiles are as saved.
+    const valid = await form.trigger();
+    if (!valid) return false;
+    const values = form.getValues();
+    const ok = await doSave(values, tile);
+    if (!ok) return false;
+    baselineRef.current = { values };
+    setBaseline({ values });
+    setViewingVersion(null);
+    form.reset(values);
+    setAnafApplied(false);
+    tileEditing.close();
+    router.refresh();
+    return true;
+  };
+  const editTile = (tile: JpEditTile) => tileEditing.edit(tile, `[data-panel="${JP_EDIT_PANEL[tile]}"]`);
+  const editButton = (tile: JpEditTile, title: string) =>
+    canEditTiles && editingTile !== tile ? <TileEditButton tile={tile} title={title} onEdit={() => editTile(tile)} /> : null;
+  const editBar = (tile: JpEditTile) =>
+    editingTile === tile ? (
+      <TileEditBar tile={tile} onSave={() => void saveTile(tile)} onCancel={tileEditing.cancel} saving={submitting} canSave={editDirty} error={submitError} />
+    ) : null;
+  const editingClass = (tile: JpEditTile): string => (editingTile === tile ? ` ${TILE_EDITING_CLASS}` : "");
+  const editKeys = (tile: JpEditTile) => onTileKeyDown(editingTile === tile, tileEditing.escape);
+  /** A tile's own controls — „Completează din ANAF", a contact person's add and remove — only while it is open. */
+  const tileMode = (tile: JpEditTile): "create" | "edit" | "view" => (reading(tile) ? "view" : effectiveMode);
+
+  // Slice 40.64's „Adaugă" opens its tile in edit on a saved firm (40.73, Ask first 1).
   const addTo = (tile: JpEmptyTile, panel: string) =>
-    emptyTiles.canAdd ? () => emptyTiles.open(tile, `[data-panel="${panel}"]`) : undefined;
+    emptyTiles.canAdd
+      ? () => {
+          emptyTiles.open(tile, `[data-panel="${panel}"]`);
+          if (canEditTiles) tileEditing.edit(JP_EDIT_OF[tile], `[data-panel="${panel}"]`);
+        }
+      : undefined;
   // Slice 40.71: in a tile that holds some values, the empty fields hide behind „Arată N câmpuri goale" — as on the
   // Natural Person (natural-person-form.tsx).
   const emptyFields = useEmptyFields({
@@ -662,7 +760,11 @@ export function JudicialPersonForm({
   });
   const tAddress = useTranslations("address");
   const jpHidden = Object.fromEntries(
-    (Object.keys(JP_FIELD_TILES) as JpFieldTile[]).map((tile) => [tile, emptyFields.hide(tile, JP_FIELD_TILES[tile], JP_FIELD_TILES[tile].some(marked))]),
+    (Object.keys(JP_FIELD_TILES) as JpFieldTile[]).map((tile) => [
+      tile,
+      // 40.73: an open tile shows every field.
+      emptyFields.hide(tile, JP_FIELD_TILES[tile], JP_FIELD_TILES[tile].some(marked) || editingTile === JP_EDIT_OF[tile]),
+    ]),
   ) as Record<JpFieldTile, string[]>;
   const hiddenFields: ReadonlySet<string> = new Set(Object.values(jpHidden).flat());
   const fieldLabel = (path: string): string =>
@@ -739,8 +841,17 @@ export function JudicialPersonForm({
   return (
     <FieldPulseContext.Provider value={pulsing}>
     <HiddenFieldsContext.Provider value={hiddenFields}>
+    <ReadModeContext.Provider value={readMode}>
     <form
-      onSubmit={form.handleSubmit(onSubmit, onInvalid)}
+      onSubmit={
+        perTile
+          ? (e) => {
+              // Slice 40.73: Enter in an open tile is its „Salvează"; there is no record-level save.
+              e.preventDefault();
+              if (editingTile) void saveTile(editingTile);
+            }
+          : form.handleSubmit(onSubmit, onInvalid)
+      }
       // Slice #37.13: a whole number of panels wide, so the action bar below
       // them is as wide as they are (#37.12's rule). Slice #37.18: in tile
       // mode the page's tile row carries that width and the form itself is
@@ -786,9 +897,9 @@ export function JudicialPersonForm({
       {/* Judicial Person identity section. Slice #37.29: every label above its
           box, the rows of `SCREEN_ROWS.judicialPerson.identity`, and the panel
           the fewest whole width units that hold its widest row (3). */}
-      <section style={PANEL_UNIT_STYLE.judicialPerson.identity} data-panel="identity" {...tileProps("identity")} className={`rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${hiddenClass("identity")}`}>
+      <section style={PANEL_UNIT_STYLE.judicialPerson.identity} data-panel="identity" {...tileProps("identity")} onKeyDown={editKeys("identity")} className={`rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${hiddenClass("identity")}${editingClass("identity")}`}>
         {/* Slice #38.30: the tile's title and the line saying what it holds — in every mode. */}
-        <TileTitle title={t("tiles.identity")} subtitle={t("tileSubtitles.identity")}>
+        <TileTitle title={t("tiles.identity")} subtitle={t("tileSubtitles.identity")} action={editButton("identity", t("tiles.identity"))}>
           {/* Slice #37.57: the system ID's one place — this corner, not a field. */}
           {mode !== "create" && personCode && <SystemIdCorner code={personCode} />}
         </TileTitle>
@@ -846,7 +957,7 @@ export function JudicialPersonForm({
             />
           </div>
           {/* Slice #39.64: under the two registry numbers it reads from — on a form that can be changed. */}
-          {effectiveMode !== "view" && (
+          {tileMode("identity") !== "view" && (
             <div className="flex flex-wrap items-center gap-2" data-anaf-fill="">
               <IconButton
                 icon={Landmark}
@@ -871,14 +982,15 @@ export function JudicialPersonForm({
             fillRem={PANEL_UNIT_INNER_REM.judicialPerson.identity}
           />
           {emptyFieldsLink("identity")}
+          {editBar("identity")}
         </div>
       </section>
 
       {/* ── Contact Persons ──────────────────────────────────────────────── */}
-      <section style={PANEL_UNIT_STYLE.judicialPerson.contactPersons} data-panel="contact-persons" {...tileProps("contactPersons")} className={`rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${hiddenClass("contactPersons")}`}>
+      <section style={PANEL_UNIT_STYLE.judicialPerson.contactPersons} data-panel="contact-persons" {...tileProps("contactPersons")} onKeyDown={editKeys("contactPersons")} className={`rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${hiddenClass("contactPersons")}${editingClass("contactPersons")}`}>
         {contactPersonsFolded && <EmptyTileLine tile="contactPersons" title={t("tiles.contactPersons")} onAdd={addTo("contactPersons", "contact-persons")} />}
         <div className={contactPersonsFolded ? "hidden" : "contents"}>
-        <TileTitle title={t("tiles.contactPersons")} subtitle={t("tileSubtitles.contactPersons")} className="mb-3" />
+        <TileTitle title={t("tiles.contactPersons")} subtitle={t("tileSubtitles.contactPersons")} className="mb-3" action={editButton("contactPersons", t("tiles.contactPersons"))} />
         <div className="flex flex-col gap-3">
           {/* Slice #38.31: the firm's own phone and e-mail, above its contact persons —
               the rows of `SCREEN_ROWS.judicialPerson.contactPersons`. */}
@@ -903,7 +1015,7 @@ export function JudicialPersonForm({
             label={t("fields.contactPerson1")}
             slot={1}
             control={control}
-            mode={effectiveMode}
+            mode={tileMode("contactPersons")}
             onAdd={() => setPickerSlot(1)}
             onClear={() => handleClearContactPerson(1)}
             addLabel={t("actions.addContactPerson")}
@@ -914,7 +1026,7 @@ export function JudicialPersonForm({
             label={t("fields.contactPerson2")}
             slot={2}
             control={control}
-            mode={effectiveMode}
+            mode={tileMode("contactPersons")}
             onAdd={() => setPickerSlot(2)}
             onClear={() => handleClearContactPerson(2)}
             addLabel={t("actions.addContactPerson")}
@@ -926,6 +1038,7 @@ export function JudicialPersonForm({
             {t("hints.contactPersonNotInSystem")}
           </p>
           {emptyFieldsLink("contactPersons")}
+          {editBar("contactPersons")}
         </div>
         </div>
       </section>
@@ -946,7 +1059,11 @@ export function JudicialPersonForm({
         highlights={displayHighlights?.addresses.HEADQUARTERS}
         collapsed={headquartersFolded ? { tile: "headquarters", onAdd: addTo("headquarters", "addresses.HEADQUARTERS") } : undefined}
         emptyFields={emptyFieldsLink("headquarters")}
-        footer={
+        titleAction={editButton("addresses", t("tiles.addresses"))}
+        after={editBar("addresses")}
+        sectionClassName={editingClass("addresses").trim()}
+        onKeyDown={editKeys("addresses")}
+        footer={reading("addresses") ? undefined : (
           <Controller
             control={control}
             name="correspondenceSameAsHq"
@@ -988,7 +1105,7 @@ export function JudicialPersonForm({
               </label>
             )}
           />
-        }
+        )}
       />
 
       {/* ── Correspondence Address — only when not same as registered: its own
@@ -1004,6 +1121,8 @@ export function JudicialPersonForm({
           onAdd={
             emptyTiles.canAdd
               ? () => {
+                  // 40.73: on a saved firm „Adaugă" opens „Adrese" in edit first, then gives it its own address.
+                  if (canEditTiles) tileEditing.edit("addresses", '[data-panel="addresses.CORRESPONDENCE"]');
                   setValue("correspondenceSameAsHq", false, { shouldDirty: true });
                   emptyTiles.open("correspondence", '[data-panel="addresses.CORRESPONDENCE"]');
                 }
@@ -1020,6 +1139,8 @@ export function JudicialPersonForm({
           highlights={displayHighlights?.addresses.CORRESPONDENCE}
           collapsed={correspondenceFolded ? { tile: "correspondence", onAdd: addTo("correspondence", "addresses.CORRESPONDENCE") } : undefined}
           emptyFields={emptyFieldsLink("correspondence")}
+          sectionClassName={editingClass("addresses").trim()}
+          onKeyDown={editKeys("addresses")}
         />
       )}
       </div>{/* end „Adrese" tile */}
@@ -1032,7 +1153,8 @@ export function JudicialPersonForm({
           row's last line (`order-last`), after the list tiles. */}
       <div className={tiled ? "order-last flex basis-full flex-col gap-4" : "contents"}>
 
-      {submitError && (
+      {/* Slice 40.73: an open tile says its own refusal, under its „Salvează". */}
+      {submitError && !editingTile && (
         <p className="text-sm text-red-600 dark:text-red-400" role="alert">
           {submitError}
         </p>
@@ -1080,14 +1202,17 @@ export function JudicialPersonForm({
             onClick={() => router.back()}
           />
           <div className="flex items-center gap-3">
-            <IconButton
-              icon={Save}
-              label={t("buttons.save")}
-              variant="primary"
-              size="lg"
-              type="submit"
-              disabled={saveDisabled}
-            />
+            {/* Slice 40.73: on a saved firm each tile saves itself — Delete and the way back stay. */}
+            {!perTile && (
+              <IconButton
+                icon={Save}
+                label={t("buttons.save")}
+                variant="primary"
+                size="lg"
+                type="submit"
+                disabled={saveDisabled}
+              />
+            )}
             <IconButton
               icon={Trash2}
               label={t("buttons.delete")}
@@ -1100,14 +1225,17 @@ export function JudicialPersonForm({
         </div>
       ) : (
         <div className="flex items-center justify-center gap-3 border-t border-crease pt-6 dark:border-zinc-800">
-          <IconButton
-            icon={Save}
-            label={t("buttons.save")}
-            variant="primary"
-            size="lg"
-            type="submit"
-            disabled={saveDisabled}
-          />
+          {/* Slice 40.73: on a saved firm each tile saves itself — Delete and the way back stay. */}
+          {!perTile && (
+            <IconButton
+              icon={Save}
+              label={t("buttons.save")}
+              variant="primary"
+              size="lg"
+              type="submit"
+              disabled={saveDisabled}
+            />
+          )}
           {mode === "edit" && (
             <IconButton
               icon={Trash2}
@@ -1209,6 +1337,7 @@ export function JudicialPersonForm({
       )}
       </div>{/* end the action bar's line */}
     </form>
+    </ReadModeContext.Provider>
     </HiddenFieldsContext.Provider>
     </FieldPulseContext.Provider>
   );
@@ -1549,6 +1678,7 @@ function Field({
   fillRem,
 }: FieldProps) {
   const hiddenEmpty = useFieldHidden(name); // Slice 40.71: behind its tile's „Arată N câmpuri goale"
+  const read = useFieldRead(name);
   const ring = usePulseRing(highlight);
   const className = [
     FIELD_BOX,
@@ -1565,6 +1695,15 @@ function Field({
   // Slice #37.29: the label ABOVE its box, the pair exactly as wide as the box
   // (or the panel, for a box that fills it) — a long label wraps inside it.
   const box = stackedBoxStyle(width, fillRem ?? boxRem(width));
+  // Slice 40.73: the read view — the value as text, at the box's width.
+  if (read.reading) {
+    return (
+      <div className={STACKED_FIELD_CLASS} style={hiddenFieldStyle(hiddenEmpty, box)} data-empty-hidden={hiddenEmpty || undefined}>
+        <span className={STACKED_LABEL_CLASS}>{label}</span>
+        <ReadValue name={name} kind={width.kind} text={readText(read.value, type === "date" ? "date" : "text")} style={box} className={ring} />
+      </div>
+    );
+  }
   const control = grows ? (
     <GrowingText
       registration={register(name)}
@@ -1647,6 +1786,7 @@ function SelectField({
   snapshot?: SnapshotLookupState;
 }) {
   const hiddenEmpty = useFieldHidden(name); // Slice 40.71: behind its tile's „Arată N câmpuri goale"
+  const read = useFieldRead(name);
   // ⚠️ **`tSnapshot`, NOT a second `tShared`, AND `record-list-agreement.test.ts`
   // IS WHY.** This file's component-scope `tShared` binds
   // `shared.readonlyView`; that suite reads the FIRST `const tShared =
@@ -1689,6 +1829,16 @@ function SelectField({
             className={ring}
           />
         </div>
+      </div>
+    );
+  }
+
+  // Slice 40.73: the read view — the chosen option's words.
+  if (read.reading) {
+    return (
+      <div className={STACKED_FIELD_CLASS} style={hiddenFieldStyle(hiddenEmpty, boxStyle(width))} data-empty-hidden={hiddenEmpty || undefined}>
+        <span className={STACKED_LABEL_CLASS}>{label}</span>
+        <ReadValue name={name} kind={width.kind} text={current ? (chosenLabel ?? "") : ""} style={boxStyle(width)} className={ring} />
       </div>
     );
   }
