@@ -21,6 +21,7 @@ import { useTranslations } from "next-intl";
 import { ChevronDown, LayoutGrid } from "lucide-react";
 
 import { buttonClass } from "@/lib/ui/button-styles";
+import { LeadingIcon, TrailingIcon } from "@/lib/ui/icon-button";
 
 export type TilesMenu = {
   open: boolean;
@@ -68,7 +69,8 @@ export function hiddenMarked<K extends string>(
   return marked.filter((k) => !shown.includes(k) && disabled?.[k] === undefined).length;
 }
 
-/** The „Panouri" button: Lucide's LayoutGrid, the word, a chevron; secondary, sm; the badge on its corner. */
+/** The „Panouri" button: Lucide's LayoutGrid, the word, a chevron; secondary, sm; the badge on its corner. Its word
+ *  stands between a `LeadingIcon` and a `TrailingIcon`, which is how the text-controls guard lets a button keep words. */
 export function TilesMenuButton({ menu, badge = 0 }: { menu: TilesMenu; badge?: number }) {
   const t = useTranslations("shared.tiles");
   const badgeId = useId();
@@ -81,12 +83,13 @@ export function TilesMenuButton({ menu, badge = 0 }: { menu: TilesMenu; badge?: 
         aria-controls={menu.panelId}
         aria-describedby={badge > 0 ? badgeId : undefined}
         onClick={() => menu.setOpen(!menu.open)}
-        className={buttonClass({ variant: "secondary", size: "sm", className: "gap-1.5" })}
+        className={buttonClass({ variant: "secondary", size: "sm" })}
         data-tiles-menu-button=""
       >
-        <LayoutGrid aria-hidden="true" className="h-4 w-4" />
+        {/* The words with their icons, as the text-controls guard allows a text button (#37.46). */}
+        <LeadingIcon icon={LayoutGrid} />
         {t("panels")}
-        <ChevronDown aria-hidden="true" className={`h-4 w-4 transition-transform${menu.open ? " rotate-180" : ""}`} />
+        <TrailingIcon icon={ChevronDown} />
       </button>
       {badge > 0 && (
         <>
