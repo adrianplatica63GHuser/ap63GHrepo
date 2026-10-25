@@ -18,6 +18,8 @@
  */
 
 import { test, expect, type Locator, type Page } from "../helpers/test";
+import { editTile } from "../helpers/tiles";
+import { showEmptyFields } from "../helpers/empty-fields";
 import { E2E_MARKER, documentTypeIdFor, removeLeftovers, removeRecord } from "../helpers/records";
 
 const MARK = `${E2E_MARKER}DOC-02`;
@@ -37,7 +39,8 @@ async function createDocument(page: Page, title: string, subject: string): Promi
 }
 
 const box = (page: Page, field: string) => page.locator(`[data-width-field="${field}"]`);
-const labelOf = (page: Page, field: string) => page.locator("label").filter({ has: box(page, field) });
+// 40.75: a field's label and box sit in one stacked cell — a <label> while its tile is open, a <div> read as text.
+const labelOf = (page: Page, field: string) => page.locator(".row-span-3.grid-rows-subgrid").filter({ has: box(page, field) });
 
 async function edges(l: Locator): Promise<{ top: number; bottom: number }> {
   const b = await l.boundingBox();
@@ -91,12 +94,15 @@ test.describe("TC-DOC-02 — „Subiect” pe mai multe rânduri împinge „Not
 
       // Step 1 — read-only: three lines, nothing over anything, „Note extinse" inside the tile.
       await page.goto(`/documents/${longId}?readonly=true`);
-      await expect(box(page, "subject")).toBeDisabled({ timeout: 30_000 });
+      // 40.75: read-only reads as text — the value's box at the box's width, the same lines.
+      await expect(page.locator('[data-read-value="subject"]')).toBeVisible({ timeout: 30_000 });
+      await showEmptyFields(page, "general", { wait: true }); // „Note extinse" is empty, so behind the link
       await expectInOrder(page, 3);
       await photograph(page, "general-three-lines");
 
       // Step 2 — for editing: the same.
       await page.goto(`/documents/${longId}`);
+      await editTile(page, "general"); // 40.75
       await expect(box(page, "subject")).toBeEditable({ timeout: 30_000 });
       await expectInOrder(page, 3);
       const before = await edges(labelOf(page, "notes"));
@@ -112,6 +118,7 @@ test.describe("TC-DOC-02 — „Subiect” pe mai multe rânduri împinge „Not
       // Step 4 — the short one: one line, above „Note extinse".
       // A full navigation: the app asks about unsaved changes only on its own links.
       await page.goto(`/documents/${shortId}`);
+      await showEmptyFields(page, "general", { wait: true }); // 40.75: read as text, „Note extinse" empty
       await expectInOrder(page, 1);
       await photograph(page, "general-one-line");
     } finally {

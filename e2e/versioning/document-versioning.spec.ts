@@ -18,6 +18,7 @@
  */
 
 import { test, expect } from "../helpers/test";
+import { editTile, saveTile } from "../helpers/tiles";
 import { E2E_MARKER, removeLeftovers, removeRecord } from "../helpers/records";
 import { openFromSidebar } from "../helpers/sidebar";
 
@@ -59,34 +60,48 @@ test.describe("TC-VER-02 — Versiunile unui act: salvare, înapoi, „Fă curen
       await expect(page.getByText("v 0", { exact: true })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByRole("button", { name: "Fă curentă" })).toBeDisabled();
 
-      // Step 3 — `Doi`, „Salvează": stays, „v 1", „2 versiuni".
-      const title = page.locator('[name="title"]');
+      // Step 3 — `Doi`, „Salvează": stays, „v 1", „2 versiuni". 40.75: the document reads as text — no record-level
+      // „Salvează"; „Editează" opens „Identificarea actului", and its own „Salvează" saves it.
+      const title = page.locator('[data-read-value="title"]');
+      const titleBox = page.locator('[name="title"]');
       const save = page.getByRole("button", { name: "Salvează", exact: true });
-      await title.fill(titled("Doi"));
-      await save.click();
+      await expect(title).toHaveText(titled("Unu"));
+      await expect(save).toHaveCount(0);
+      await editTile(page, "general");
+      await titleBox.fill(titled("Doi"));
+      await saveTile(page, "general");
       await expect(page.getByRole("heading", { name: titled("Doi") })).toBeVisible({ timeout: 30_000 });
       await expect(page).toHaveURL(new RegExp(`/documents/${documentId}$`));
       await expect(page.getByText("v 1", { exact: true })).toBeAttached();
       await expect(page.getByRole("button", { name: "2 versiuni" })).toBeVisible();
 
       // Step 4 — `Trei`: „v 2", „3 versiuni".
-      await title.fill(titled("Trei"));
-      await save.click();
+      await editTile(page, "general");
+      await titleBox.fill(titled("Trei"));
+      await saveTile(page, "general");
       await expect(page.getByRole("heading", { name: titled("Trei") })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText("v 2", { exact: true })).toBeAttached();
+      await expect(page.getByRole("button", { name: "3 versiuni" })).toBeVisible();
+
+      // Step 4b (40.75) — „Editează", `Patru`, „Renunță": `Trei` again, still „3 versiuni".
+      await editTile(page, "general");
+      await titleBox.fill(titled("Patru"));
+      await page.locator('[data-tile-cancel="general"]').click();
+      await expect(page.locator('[data-tile-edit-bar="general"]')).toHaveCount(0);
+      await expect(title).toHaveText(titled("Trei"));
       await expect(page.getByRole("button", { name: "3 versiuni" })).toBeVisible();
 
       // Step 5 — „3 versiuni": „v 1", `Doi`, „Salvează" gone, the heading still current.
       await page.getByRole("button", { name: "3 versiuni" }).click();
       await expect(page.getByText("v 1", { exact: true })).toBeVisible({ timeout: 15_000 });
-      await expect(title).toHaveValue(titled("Doi"));
-      await expect(save).toHaveCount(0);
+      await expect(title).toHaveText(titled("Doi"));
+      await expect(page.locator("[data-tile-edit]")).toHaveCount(0); // 40.75: a version is read, never edited
       await expect(page.getByRole("heading", { name: titled("Trei") })).toBeVisible();
 
       // Step 6 — „Versiunea anterioară": „v 0", `Unu`.
       await page.getByRole("button", { name: "Versiunea anterioară" }).click();
       await expect(page.getByText("v 0", { exact: true })).toBeVisible({ timeout: 15_000 });
-      await expect(title).toHaveValue(titled("Unu"));
+      await expect(title).toHaveText(titled("Unu"));
 
       // Step 7 — „Fă curentă": the question and its sentence.
       await page.getByRole("button", { name: "Fă curentă" }).click();
@@ -107,7 +122,7 @@ test.describe("TC-VER-02 — Versiunile unui act: salvare, înapoi, „Fă curen
       // Step 9 — „4 versiuni": „v 2" still reads `Trei`.
       await page.getByRole("button", { name: "4 versiuni" }).click();
       await expect(page.getByText("v 2", { exact: true })).toBeVisible({ timeout: 15_000 });
-      await expect(title).toHaveValue(titled("Trei"));
+      await expect(title).toHaveText(titled("Trei"));
 
       // Step 10 — „Acte" reads `DOC…`, „Adeverință", `… Unu`.
       await openFromSidebar(page, "Acte");

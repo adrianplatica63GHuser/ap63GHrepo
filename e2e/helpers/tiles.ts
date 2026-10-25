@@ -185,3 +185,52 @@ export async function saveTile(page: Page, tile: string): Promise<void> {
   await page.locator(`[data-tile-save="${tile}"]`).click();
   await expect(page.locator(`[data-tile-edit-bar="${tile}"]`)).toHaveCount(0, { timeout: 30_000 });
 }
+
+/**
+ * Slice 40.75: `editTile` by the tile's heading — for a document's frames, whose keys follow the type's notebook
+ * (`tileOfTabIndex`), so a spec names the tile as the screen does.
+ */
+export async function editTileNamed(page: Page, name: string): Promise<Locator> {
+  const region = page.getByRole("region", { name, exact: true });
+  const button = region.locator("[data-tile-edit]").first();
+  await expect(button).toBeVisible({ timeout: 30_000 });
+  await button.click();
+  await expect(region.locator("[data-tile-edit-bar]")).toBeVisible();
+  return region;
+}
+
+/**
+ * Slice 40.75: „Identificarea actului" and each of a document's frames on the screen, opened in turn with „Editează"
+ * and put back with „Renunță" — for a spec that reads every dropdown of a type, which a saved document draws only in its open tile.
+ * A frame already open is used as it is; one with no „Editează" (nothing of its own to edit) is passed over.
+ */
+export async function forEachFrame(
+  page: Page,
+  fn: (frame: Locator, tile: string) => Promise<void>,
+  { general = true }: { general?: boolean } = {},
+): Promise<void> {
+  const keys = await page
+    .locator("[data-frame]")
+    .evaluateAll((els) => els.filter((e) => (e as HTMLElement).offsetParent !== null).map((e) => e.getAttribute("data-frame") ?? ""));
+  // „Identificarea actului" first: it holds the type's identification group, some of them dropdowns.
+  if (general) keys.unshift("general");
+  for (const tile of keys) {
+    const bar = page.locator(`[data-tile-edit-bar="${tile}"]`);
+    if ((await bar.count()) === 0) {
+      const button = page.locator(`[data-tile-edit="${tile}"]`);
+      if ((await button.count()) === 0) continue;
+      await button.click();
+      await expect(bar).toBeVisible();
+    }
+    await fn(page.locator(tile === "general" ? '[data-panel="general"]' : `[data-frame="${tile}"]`), tile);
+    await page.locator(`[data-tile-cancel="${tile}"]`).click();
+    await expect(bar).toHaveCount(0);
+  }
+}
+
+/** `saveTile` by the tile's heading. */
+export async function saveTileNamed(page: Page, name: string): Promise<void> {
+  const region = page.getByRole("region", { name, exact: true });
+  await region.locator("[data-tile-save]").click();
+  await expect(region.locator("[data-tile-edit-bar]")).toHaveCount(0, { timeout: 30_000 });
+}

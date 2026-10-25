@@ -16,7 +16,7 @@
 
 import { test, expect, type Locator, type Page } from "../helpers/test";
 import { E2E_MARKER, createDocumentOfType, removeLeftovers, removeRecord } from "../helpers/records";
-import { openEmptyTiles, showTile } from "../helpers/tiles";
+import { openEmptyTiles, showTile, editTileNamed, saveTileNamed } from "../helpers/tiles";
 import { showEmptyFields } from "../helpers/empty-fields";
 
 const MARK = `${E2E_MARKER}DOC-20`;
@@ -70,9 +70,10 @@ test.describe("TC-DOC-20 — actul adițional și actul pe care îl modifică", 
         await expect(changes.getByText(label, { exact: true }).first()).toBeVisible();
       }
 
-      // Step 2 — `TC-1` into „Nr. act părinte", „Salvează": „v 1".
+      // Step 2 — `TC-1` into „Nr. act părinte", „Salvează": „v 1". 40.75: „Editează" on „Actul modificat", its „Salvează".
+      await editTileNamed(page, "Actul modificat");
       await fallback(page).fill("TC-1");
-      await page.getByRole("button", { name: "Salvează", exact: true }).click();
+      await saveTileNamed(page, "Actul modificat");
       await expect(page.getByText("v 1", { exact: true }).first()).toBeVisible({ timeout: 30_000 });
       await photograph(page, "amended-none", amended(page));
 
@@ -108,7 +109,7 @@ test.describe("TC-DOC-20 — actul adițional și actul pe care îl modifică", 
       await amended(page).getByRole("button", { name: "Dezleagă", exact: true }).click();
       await expect(amended(page).getByRole("button", { name: "Leagă actul modificat", exact: true })).toBeVisible({ timeout: 15_000 });
       await expect(fallback(page)).toBeVisible();
-      await expect(fallback(page)).toHaveValue("TC-1");
+      await expect(fallback(page)).toHaveText("TC-1"); // 40.75: read as text
     } finally {
       await page.waitForLoadState("networkidle").catch(() => {});
       for (const id of made.reverse()) await removeRecord(page.request, "document", id);

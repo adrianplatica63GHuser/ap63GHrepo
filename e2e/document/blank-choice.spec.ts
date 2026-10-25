@@ -22,7 +22,7 @@
 
 import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createSaleContract, removeLeftovers, removeRecord } from "../helpers/records";
-import { openEmptyTiles, pressTileButton } from "../helpers/tiles";
+import { openEmptyTiles, pressTileButton, forEachFrame } from "../helpers/tiles";
 import { showEmptyFields } from "../helpers/empty-fields";
 
 const MARK = `${E2E_MARKER}DOC-06`;
@@ -104,12 +104,20 @@ test.describe("TC-DOC-06 — „fără valoare” în cursive, fără liniuțe",
       await openEmptyTiles(page);
       // 40.71: the empty fields of a partly filled tile are behind „Arată N câmpuri goale"; shown for the steps below.
       await showEmptyFields(page, undefined, { wait: true });
-      await expect(dropdowns(page)).toHaveCount(36, { timeout: 30_000 });
-      for (const box of await closedBoxes(page)) {
-        expect(box).toEqual({ shown: "fără valoare", style: "italic", blank: "fără valoare" });
-      }
+      // 40.75: a saved document reads as text and draws a tile's dropdowns while it is open — each frame in turn.
+      await expect(page.locator('[data-read-value="customFields.inCircuitCivil"]')).toBeVisible({ timeout: 30_000 });
+      let count = 0;
+      await forEachFrame(page, async () => {
+        count += await dropdowns(page).count();
+        for (const box of await closedBoxes(page)) {
+          expect(box).toEqual({ shown: "fără valoare", style: "italic", blank: "fără valoare" });
+        }
+      });
+      expect(count).toBe(36);
 
-      // Step 2 — „Circuit civil"'s list: „fără valoare" first, in italics; the others regular.
+      // Step 2 — „Circuit civil"'s list: „fără valoare" first, in italics; the others regular. Its frame opened.
+      const circuitFrame = page.locator("[data-frame]").filter({ has: page.locator('[data-read-value="customFields.inCircuitCivil"]') });
+      await circuitFrame.locator("[data-tile-edit]").click();
       await circuitCivil(page).scrollIntoViewIfNeeded();
       expect(await listOf(page)).toEqual([
         "fără valoare: italic",
@@ -131,6 +139,7 @@ test.describe("TC-DOC-06 — „fără valoare” în cursive, fără liniuțe",
       // Step 4 — „fără valoare" again: italic.
       await circuitCivil(page).selectOption({ label: "fără valoare" });
       await expect(circuitCivil(page)).toHaveCSS("font-style", "italic");
+      await page.locator("[data-tile-cancel]").click(); // 40.75: nothing kept
 
       // Step 5 — three to a row.
       await stepFive(page);
@@ -144,10 +153,15 @@ test.describe("TC-DOC-06 — „fără valoare” în cursive, fără liniuțe",
       await openEmptyTiles(page);
       // 40.71: the empty fields of a partly filled tile are behind „Arată N câmpuri goale"; shown for the steps below.
       await showEmptyFields(page, undefined, { wait: true });
-      await expect(dropdowns(page)).toHaveCount(36, { timeout: 30_000 });
-      for (const box of await closedBoxes(page)) {
-        expect(box).toEqual({ shown: "no value", style: "italic", blank: "no value" });
-      }
+      await expect(page.locator('[data-read-value="customFields.inCircuitCivil"]')).toBeVisible({ timeout: 30_000 });
+      count = 0;
+      await forEachFrame(page, async () => {
+        count += await dropdowns(page).count();
+        for (const box of await closedBoxes(page)) {
+          expect(box).toEqual({ shown: "no value", style: "italic", blank: "no value" });
+        }
+      });
+      expect(count).toBe(36);
       await stepFive(page);
       await photograph(page, "en");
     } finally {

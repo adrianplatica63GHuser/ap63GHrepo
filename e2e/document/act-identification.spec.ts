@@ -13,8 +13,8 @@
  */
 
 import { test, expect, type Page } from "../helpers/test";
+import { editTile, saveTile } from "../helpers/tiles";
 import { E2E_MARKER, createDocumentOfType, removeLeftovers, removeRecord } from "../helpers/records";
-import { showEmptyFields } from "../helpers/empty-fields";
 
 const MARK = `${E2E_MARKER}DOC-18`;
 
@@ -22,7 +22,8 @@ const tile = (page: Page) => page.locator('[data-panel="general"]');
 const box = (page: Page, field: string) => tile(page).locator(`[data-width-field="${field}"]`);
 
 async function save(page: Page, version: string): Promise<void> {
-  await page.getByRole("button", { name: "Salvează", exact: true }).click();
+  // 40.75: the open tile's own „Salvează".
+  await saveTile(page, "general");
   await expect(page.getByText(version, { exact: true }).first()).toBeVisible({ timeout: 30_000 });
 }
 
@@ -40,8 +41,8 @@ test.describe("TC-DOC-18 — „Identificarea actului”, păstrată după reîn
 
       // Step 1 — the CVC's tile: the type, the notarial set and the four identification fields.
       await page.goto(`/documents/${cvc}`);
-      // 40.71: the empty fields of a partly filled tile are behind „Arată N câmpuri goale"; shown for the steps below.
-      await showEmptyFields(page, undefined, { wait: true });
+      // 40.75: a saved document reads as text; „Editează" opens „Identificarea actului", every field drawn.
+      await editTile(page, "general");
       await expect(box(page, "customFields.dataContinut")).toBeVisible({ timeout: 30_000 });
       for (const label of ["Tip document", "Notariat", "Nr. act autentic", "Data autentificării", "Calitate exemplar", "Exemplare emise", "Temei autentificare", "Data conținutului"]) {
         await expect(tile(page).getByText(label, { exact: true }).first()).toBeVisible();
@@ -58,6 +59,10 @@ test.describe("TC-DOC-18 — „Identificarea actului”, păstrată după reîn
 
       // Step 3 — after a reload, all five.
       await page.reload();
+      // 40.75: read as text first, then open to read the boxes.
+      await expect(box(page, "nrDocument")).toHaveText("118", { timeout: 30_000 });
+      await expect(box(page, "dateDocument")).toHaveText("12.03.2020");
+      await editTile(page, "general");
       await expect(box(page, "nrDocument")).toHaveValue("118", { timeout: 30_000 });
       await expect(box(page, "dateDocument")).toHaveValue("2020-03-12");
       await expect(tile(page).getByRole("combobox", { name: "Calitate exemplar", exact: true })).toHaveValue("ORIGINAL");
@@ -66,6 +71,7 @@ test.describe("TC-DOC-18 — „Identificarea actului”, păstrată după reîn
 
       // Step 4 — the PAD: „Nr. document", „Data", kept.
       await page.goto(`/documents/${pad}`);
+      await editTile(page, "general"); // 40.75
       await expect(box(page, "nrDocument")).toBeVisible({ timeout: 30_000 });
       await expect(tile(page).getByText("Nr. document", { exact: true })).toBeVisible();
       await expect(tile(page).getByText("Data", { exact: true })).toBeVisible();
@@ -73,8 +79,8 @@ test.describe("TC-DOC-18 — „Identificarea actului”, păstrată după reîn
       await box(page, "dateDocument").fill("2021-05-04");
       await save(page, "v 1");
       await page.reload();
-      await expect(box(page, "nrDocument")).toHaveValue("PAD-7", { timeout: 30_000 });
-      await expect(box(page, "dateDocument")).toHaveValue("2021-05-04");
+      await expect(box(page, "nrDocument")).toHaveText("PAD-7", { timeout: 30_000 });
+      await expect(box(page, "dateDocument")).toHaveText("04.05.2021");
     } finally {
       for (const id of made) await removeRecord(page.request, "document", id);
     }

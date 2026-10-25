@@ -14,6 +14,7 @@
  *     route the header's „◀ v n ▶" reads.
  */
 import { test, expect } from "../helpers/test";
+import { editTile, saveTile } from "../helpers/tiles";
 import { E2E_MARKER, createSaleContract, removeLeftovers, removeRecord } from "../helpers/records";
 import { photograph } from "../helpers/field-widths";
 
@@ -35,26 +36,37 @@ test.describe("TC-TABS-01 — Același act în două ferestre", () => {
       await expect(second.getByRole("heading", { name: TITLE })).toBeVisible({ timeout: 30_000 });
       const subjectA = page.locator('[name="subject"]');
       const subjectB = second.locator('[name="subject"]');
-      await expect(subjectB).toHaveValue("");
+      // 40.75: a saved document reads as text; „Subiect" is a box only while „Identificarea actului" is open.
+      const readB = second.locator('[data-read-value="subject"]');
+      /** „Subiect" in the second window, a box or read as text. */
+      const subjectNowB = () =>
+        second
+          .locator('[name="subject"], [data-read-value="subject"]')
+          .first()
+          .evaluate((el) => (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement ? el.value : (el.textContent ?? "").trim()));
+      await expect(subjectB).toHaveCount(0);
       // The version list must be in before the first save carries its base version.
       await expect(page.getByText("v 0", { exact: true }).first()).toBeAttached({ timeout: 30_000 });
 
       // Step 2 — the first window: „Subiect" `TC-A1`, „Salvează": v 1.
+      await editTile(page, "general");
       await subjectA.fill("TC-A1");
-      await page.getByRole("button", { name: "Salvează", exact: true }).click();
+      await saveTile(page, "general");
       await expect(page.getByText("2 versiuni")).toBeVisible({ timeout: 30_000 });
 
       // Step 3 — the second window, which had nothing unsaved, shows it by itself.
-      await expect(subjectB).toHaveValue("TC-A1", { timeout: 30_000 });
+      await expect(readB).toHaveText("TC-A1", { timeout: 30_000 });
 
       // Step 4 — the second window: „Modifică", „Subiect" `TC-B` (not saved).
       await second.getByRole("button", { name: "Modifică", exact: true }).click();
+      await editTile(second, "general");
       await subjectB.fill("TC-B");
       await expect(second.getByText("Modificări nesalvate")).toBeVisible();
 
       // Step 5 — the first window: „Subiect" `TC-A2`, „Salvează": v 2.
+      await editTile(page, "general");
       await subjectA.fill("TC-A2");
-      await page.getByRole("button", { name: "Salvează", exact: true }).click();
+      await saveTile(page, "general");
       await expect(page.getByText("3 versiuni")).toBeVisible({ timeout: 30_000 });
 
       // Step 6 — the second window is NOT reloaded under the user's hands: it says so.
@@ -70,7 +82,7 @@ test.describe("TC-TABS-01 — Același act în două ferestre", () => {
       await photograph(second, "sync-saved-elsewhere", [1920]);
 
       // Step 7 — the second window saves anyway: refused, nothing written, `TC-B` still on screen.
-      await second.getByRole("button", { name: "Salvează", exact: true }).click();
+      await second.locator('[data-tile-save="general"]').click(); // 40.75: the open tile's own
       const stale = second.locator('[data-record-sync="stale"]');
       await expect(stale).toBeVisible({ timeout: 30_000 });
       await expect(stale).toContainText("Nu s-a salvat nimic");
@@ -91,7 +103,7 @@ test.describe("TC-TABS-01 — Același act în două ferestre", () => {
       const confirm = second.getByRole("dialog", { name: "Reîncărcați obiectul?" }); // #38.73: was „Reîncărcați înregistrarea?"
       await expect(confirm).toBeVisible();
       await confirm.getByRole("button", { name: "Reîncarcă" }).click();
-      await expect(subjectB).toHaveValue("TC-A2", { timeout: 30_000 });
+      await expect.poll(subjectNowB, { timeout: 30_000 }).toBe("TC-A2");
     } finally {
       await second.close();
       await removeRecord(page.request, "document", documentId);

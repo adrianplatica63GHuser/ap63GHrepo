@@ -23,7 +23,7 @@
 
 import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createSaleContract, removeLeftovers, removeRecord } from "../helpers/records";
-import { openEmptyTiles, pressTileButton } from "../helpers/tiles";
+import { openEmptyTiles, pressTileButton, forEachFrame } from "../helpers/tiles";
 import { showEmptyFields } from "../helpers/empty-fields";
 
 const MARK = `${E2E_MARKER}DOC-04`;
@@ -78,10 +78,17 @@ async function boxesPerRow(page: Page, name: string): Promise<number[]> {
   });
 }
 
+/** 40.75: a saved document draws a tile's dropdowns while it is open — each frame in turn, its widest choices. */
+async function widestWhole(page: Page): Promise<void> {
+  await forEachFrame(page, async () => {
+    for (const { name, value } of await widestChoices(page)) await page.locator(`select[name="${name}"]`).selectOption(value);
+    expect(await clipped(page)).toEqual([]);
+  });
+}
+
 async function stepsTwoAndThree(page: Page): Promise<void> {
   // Step 2 — every one, its widest choice selected, shows it whole.
-  for (const { name, value } of await widestChoices(page)) await page.locator(`select[name="${name}"]`).selectOption(value);
-  expect(await clipped(page)).toEqual([]);
+  await widestWhole(page);
   // Step 3 — since #37.55, three to a row; since #38.33 the 12 statements as 3,3,3,3 and the 5 statutory declarations as 3,2.
   expect(await boxesPerRow(page, "Declarațiile vânzătorului")).toEqual([3, 3, 3, 3]); // #38.33: the 12 statements; the warranties beside their citation
   expect(await boxesPerRow(page, "Declarații legale")).toEqual([3, 2]); // #38.33
@@ -112,13 +119,19 @@ test.describe("TC-DOC-04 — listele derulante ale unui CVC", () => {
       await openEmptyTiles(page);
       // 40.71: the empty fields of a partly filled tile are behind „Arată N câmpuri goale"; shown for the steps below.
       await showEmptyFields(page, undefined, { wait: true });
-      await expect(dropdowns(page)).toHaveCount(36, { timeout: 30_000 });
+      // 40.75: each frame's dropdowns, the frame open.
+      await expect(page.locator('[data-read-value^="customFields."]').first()).toBeVisible({ timeout: 30_000 });
+      let count = 0;
+      await forEachFrame(page, async () => {
+        count += await dropdowns(page).count();
+      });
+      expect(count).toBe(36);
 
       await stepsTwoAndThree(page);
 
       // Step 4 — 1920 × 1080: the same.
       await page.setViewportSize({ width: 1920, height: 1080 });
-      expect(await clipped(page)).toEqual([]);
+      await widestWhole(page);
       expect(await boxesPerRow(page, "Declarațiile vânzătorului")).toEqual([3, 3, 3, 3]); // #38.33: the 12 statements; the warranties beside their citation
       expect(await boxesPerRow(page, "Declarații legale")).toEqual([3, 2]); // #38.33
 

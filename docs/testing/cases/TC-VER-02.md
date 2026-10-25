@@ -36,6 +36,7 @@ because it is the title the list shows. Deleted at the end.
 | 2 | Opens it | Headed `TC-VER-02 Unu`, „Stare procesare: Neprocesat", **„v 0"**, „Fă curentă" disabled |
 | 3 | Changes „Etichetă scurtă" to `TC-VER-02 Doi` and presses „Salvează" | Stays on the document: `TC-VER-02 Doi`, **„v 1"**, „2 versiuni" |
 | 4 | Changes it to `TC-VER-02 Trei` and presses „Salvează" | `TC-VER-02 Trei`, **„v 2"**, „3 versiuni" |
+| 4b | (Slice 40.75) Presses „Editează" on „Identificarea actului", changes the label to `TC-VER-02 Patru`, presses „Renunță" | The tile reads as text again with `TC-VER-02 Trei`; still „3 versiuni" |
 | 5 | Presses „3 versiuni" | **„v 1"**, „Etichetă scurtă" `TC-VER-02 Doi`, „Salvează" gone; the heading still reads the current title |
 | 6 | Presses „Versiunea anterioară" | **„v 0"**, `TC-VER-02 Unu` |
 | 7 | Presses **„Fă curentă"** | „Faceți această versiune curentă?" — „Versiunea 0 va fi copiată într-o nouă versiune 3, care devine versiunea curentă. Continuați?" — „Anulează" / „OK" |
@@ -48,6 +49,8 @@ because it is the title the list shows. Deleted at the end.
 „Șterge" at the bottom of the form, **„Da"** to „Ștergeți actul?".
 
 ## Notes from the runs
+
+**2026-10-25 — Slice 40.75; step 4b added.** A saved document reads as text: steps 3–4 open „Identificarea actului" with „Editează" and save with its own „Salvează"; step 4b puts a change back with „Renunță"; steps 5, 6 and 9 read the label as text. The spec follows; not driven by hand first.
 
 **2026-09-26 — `automated` (Slice #37.02).** Its spec is named in the catalogue's `Spec` column; green in the test runner's e2e runs of the slice, and in its `full` run (the #37.02 handover quotes the ids).
 

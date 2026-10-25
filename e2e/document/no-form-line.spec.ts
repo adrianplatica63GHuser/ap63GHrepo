@@ -18,9 +18,10 @@ import { E2E_MARKER, createDocumentOfType, documentTypeIdFor, removeLeftovers, r
 const MARK = `${E2E_MARKER}DOC-13`;
 const LINE = "Acest tip nu are încă formular; formularul se construiește în Distilare Tipizate.";
 
+/** 40.75: a saved document reads as text — „Tip document" is its read value, the type's own name. */
 async function typeField(page: Page) {
-  const field = page.getByLabel(/^Tip document/);
-  await expect(field).not.toHaveValue("", { timeout: 30_000 });
+  const field = page.locator('[data-read-value="documentTypeId"]');
+  await expect(field).toHaveText(/\S/, { timeout: 30_000 });
   return field;
 }
 
@@ -47,8 +48,7 @@ test.describe("TC-DOC-13 — un tip fără formular, fără „Descoperire AI”
       // Step 2 — the identity card: nothing under „Tip document", no button.
       await page.goto(`/documents/${card}`);
       const cardType = await typeField(page);
-      await expect(cardType.locator("option:checked")).toHaveText("Carte de Identitate");
-      await expect(cardType).not.toHaveAttribute("aria-describedby", /.+/);
+      await expect(cardType).toHaveText("Carte de Identitate");
       await expect(page.getByText(LINE)).toHaveCount(0);
       await expect(page.getByRole("button", { name: "Descoperire AI" })).toHaveCount(0);
 

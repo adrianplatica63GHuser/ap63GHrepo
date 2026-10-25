@@ -10,7 +10,7 @@
 
 import { test, expect } from "../helpers/test";
 import { E2E_MARKER, createDocumentOfType, createProperty, removeLeftovers, removeRecord } from "../helpers/records";
-import { showTile } from "../helpers/tiles";
+import { showTile, editTileNamed, saveTileNamed } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}DOC-22`;
 
@@ -34,6 +34,8 @@ test.describe("TC-DOC-22 — „Descrierea obiectului”", () => {
       // „Obiectul vânzării" is a tile of the contract's screen (#38.33), not shown by default: ticked here.
       // 40.57: the tiles' boxes are in the „Panouri" panel.
       await showTile(page, "Obiectul vânzării");
+      // 40.75: a saved contract reads as text; „Editează" opens the tile, where the field and „Recompune" are.
+      await editTileNamed(page, "Obiectul vânzării");
       const field = page.getByLabel("Descrierea obiectului", { exact: true });
       await expect(field).toBeVisible();
       await expect(field).toHaveValue(/5\.000 mp, P 34/, { timeout: 30_000 });
@@ -45,9 +47,9 @@ test.describe("TC-DOC-22 — „Descrierea obiectului”", () => {
       await expect(field).toHaveValue(/^2 imobile, 7\.400 mp în total/, { timeout: 30_000 });
 
       // Step 3 — saved, reloaded: the text holds, and it was the one written.
-      await page.getByRole("button", { name: /^Salvează/ }).click();
+      await saveTileNamed(page, "Obiectul vânzării");
       await page.reload();
-      await expect(page.getByLabel("Descrierea obiectului", { exact: true })).toHaveValue(/^2 imobile, 7\.400 mp în total/, { timeout: 30_000 });
+      await expect(page.locator('[data-read-value="customFields.descriereObiect"]')).toHaveText(/^2 imobile, 7\.400 mp în total/, { timeout: 30_000 });
     } finally {
       await removeRecord(page.request, "document", doc).catch(() => undefined);
       for (const id of [one, two]) await removeRecord(page.request, "property", id).catch(() => undefined);
