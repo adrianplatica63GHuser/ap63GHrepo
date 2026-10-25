@@ -127,7 +127,8 @@ describe("the four forms draw it", () => {
   it("the fields stay mounted behind the line — hidden, never unmounted", () => {
     const block = read("src/components/address/address-block.tsx");
     expect(block).toContain('<div className={collapsed ? "hidden" : "contents"}>');
-    // A document's frame is `w-fit`: folded, its body is invisible and 0 px tall, so the frame keeps its width.
-    expect(read(forms[3])).toContain('<div className={folded ? "invisible h-0 overflow-hidden" : "contents"} aria-hidden={folded || undefined}>');
+    expect(read(forms[3])).toContain('<div className={folded ? "hidden" : "contents"}>');
+    // A document's frame is `w-fit`; folded, two whole units, so the tiles' edges stay on the unit.
+    expect(read(forms[3])).toContain("...(folded ? unitStyle(2) : {})");
   });
 });

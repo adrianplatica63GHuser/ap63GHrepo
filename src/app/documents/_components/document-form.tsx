@@ -1066,8 +1066,8 @@ export function DocumentForm({
   // Slice 40.64: a frame whose type fields are all empty on a saved document is one line — its title, „necompletat"
   // and „Adaugă" (src/components/tiles/empty-tile.tsx). Empty as loaded and empty now (natural-person-form.tsx says why); drawn whole
   // while a version marks a field in it or a field in it carries an error. A frame holding „Actul modificat" never
-  // folds. Folded, the frame keeps its width — the body is invisible and 0 px tall, not `display: none` — because a
-  // frame is `w-fit`, as wide as its widest panel, and the tiles' units are measured on it.
+  // folds. A frame is `w-fit`, as wide as its widest panel; folded, it has no panel to measure, so it is two whole
+  // units wide (`unitStyle(2)`) — the tiles' edges stay on the unit, and the line wraps inside it if it must.
   const frameFieldPaths = (tile: string): string[] =>
     customFieldGroups
       .flatMap((g) => g.fields)
@@ -1090,7 +1090,7 @@ export function DocumentForm({
         {...tileProps(tile)}
         data-frame={tile}
         className={`w-fit max-w-full rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${tileShown(tile) ? "" : " hidden"}`}
-        style={tiles ? { order: tiles.order(tile) } : undefined}
+        style={tiles || folded ? { ...(tiles ? { order: tiles.order(tile) } : {}), ...(folded ? unitStyle(2) : {}) } : undefined}
       >
         {folded && (
           <EmptyTileLine
@@ -1099,7 +1099,7 @@ export function DocumentForm({
             onAdd={emptyTiles.canAdd ? () => emptyTiles.open(tile, `[data-frame="${tile}"]`) : undefined}
           />
         )}
-        <div className={folded ? "invisible h-0 overflow-hidden" : "contents"} aria-hidden={folded || undefined}>
+        <div className={folded ? "hidden" : "contents"}>
           <TileTitle title={title} subtitle={subtitle} />
           <FrameContext.Provider value={true}>
             <div className="flex flex-col gap-4">{children}</div>
