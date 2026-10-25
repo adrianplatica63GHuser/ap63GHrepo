@@ -62,6 +62,7 @@ At 1366 and at 1920 px, on each of the four lists, searched for „TC-E2E-LAYOUT
 | 15 | (Slice 40.18) At 1366 px, on „Persoane fizice", looks at a column name — in the light look, then with „Mod întunecat" ticked (40.19; it was the system's setting) | Roboto Condensed, 13.5 px, semibold, upper case, in today's black (#3C4149; dark zinc-300); the band 62 px tall |
 | 16 | Opens the home page and looks at a tile's title, light and dark | Roboto Slab, 16 px, semibold, upper case, in navy #1E3A8A (dark #BFDBFE) |
 | 17 | (Slice 40.20) On each list, at 1920 px, chooses its columns four at a time until each has been shown — in Romanian, then with the English flag | Every name in the band is Adrian's short one for that language — „Nume, Poreclă, CNP, Născut pe …” / „Name, Nickname, CNP, DoB …”, and so on for the four lists — and holding the mouse over a name shows the field's whole label |
+| 18 | (Slice 40.70) At 1366 px, on „Persoane fizice", looks at the body's text and at the fonts the page loaded | The body is drawn in Roboto, Arial behind it; Roboto's italic is there for „fără valoare"; no Geist is loaded (Geist Mono is, for codes); ș and ț come from Roboto's own latin-ext file |
 
 ## At the end — leaving things as they were found
 
@@ -112,3 +113,6 @@ centre of every name-and-funnel group against its cell's, both ways.
 **2026-10-23 — Slice 40.37 (fixed in 40.39).** Step 6 reads the pinned widths: „Adaugă …" is „+ Nou" now, much
 shorter, and the box keeps the width it took from the old button. 40.37's targeted run left this spec out; 40.39's
 found it red at step 6.
+
+**2026-10-25 — step 18 added for 40.70.** Adrian, 2026-10-24, on the design document's chapter 7: „I fully accept your
+recommendations: 7a and 7b", and Roboto for the body. Not driven by hand: the spec, extended with it, is what checks it.

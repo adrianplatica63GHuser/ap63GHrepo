@@ -17,6 +17,8 @@
  * Steps 15–16 (Slice 40.18) are the fourth test: a column name is drawn in Roboto Condensed and in ink, a tile's title
  * in Roboto Slab and in navy — read off the styles and the loaded font faces, no text — in light and in dark.
  *
+ * Step 18 (Slice 40.70) is the sixth test: the body in Roboto, no Geist face or file, ș and ț from Roboto's latin-ext.
+ *
  * Steps 11–14 (Slice #40.03) are the third test (11b, Slice 40.23: the glyphs' slow pulse): Acte with four columns chosen at 1100 px, so its columns are wider
  * than the frame — the red „>" and „<" at the band's edges as the list scrolls sideways; a funnel under the right-hand
  * signs still opens its editor; at 1920 px with no column chosen, neither sign.
@@ -482,6 +484,31 @@ test.describe("TC-LAYOUT-05 — cele patru liste, câte un rând pe linie", () =
       expect(tile.color).toBe(scheme === "light" ? "rgb(30, 58, 138)" : "rgb(191, 219, 254)");
       expect(tile.loaded.some((f) => /Roboto[ _]Slab/.test(f))).toBe(true);
     }
+  });
+
+  // Step 18 (Slice 40.70): the body text in Roboto, no Geist face, and ș ț drawn by Roboto's own file. Only
+  // styles and the page's font faces are read — no record's text.
+  test("textul: Roboto, fără Geist; ș și ț din Roboto", async ({ page }) => {
+    await page.setViewportSize({ width: 1366, height: 900 });
+    await page.goto("/natural-persons");
+    await expect(page.locator("main thead [data-head-text]").first()).toBeVisible({ timeout: 30_000 });
+    const body = await page.evaluate(async () => {
+      await document.fonts.ready;
+      const family = getComputedStyle(document.body).fontFamily;
+      // A probe in the body's font, holding ș and ț: the faces the browser picks for them are the ones that draw them.
+      const used = await document.fonts.load(`400 14px ${family}`, "șțȘȚ");
+      const faces = [...document.fonts].map((f) => ({ family: f.family, style: f.style, range: f.unicodeRange, status: f.status }));
+      return { family, used: used.map((f) => ({ family: f.family, range: f.unicodeRange })), faces };
+    });
+    expect(body.family, "the body's font").toMatch(/^['"]?Roboto['"]?,/);
+    expect(body.family).toContain("Arial");
+    // next/font names its files by hash, so the faces the page declares are what says whether Geist is loaded.
+    expect(body.faces.filter((f) => /^['"]?Geist['"]?$/.test(f.family)), "no Geist face").toEqual([]);
+    expect(body.faces.some((f) => /Geist Mono/.test(f.family)), "Geist Mono stays for codes").toBe(true);
+    expect(body.faces.some((f) => /^['"]?Roboto['"]?$/.test(f.family) && f.style === "italic"), "Roboto's italic").toBe(true);
+    // ș is U+0219 and ț U+021B: the face that draws them is Roboto's latin-ext (U+100-2BA, …).
+    const roboto = body.used.filter((f) => /^['"]?Roboto['"]?$/.test(f.family));
+    expect(roboto.map((f) => f.range).some((r) => /U\+0?100-0?2[0-9A-F]{2}/i.test(r)), "Roboto's latin-ext face draws ș and ț").toBe(true);
   });
 
   // Step 17 (Slice 40.20): Adrian's short names in the band, in both languages, every column of each list — four at a
