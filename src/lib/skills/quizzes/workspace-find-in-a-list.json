@@ -92,7 +92,7 @@
           "section": "start-example-find",
           "ro": {
             "question": "Ați căutat o persoană după nume și au rămas mai multe persoane cu același nume. Ce vă sfătuiește manualul?",
-            "explanation": "Dacă rămân mai multe persoane cu același nume, adăugați din „Câmpuri afișate” o coloană care le deosebește, de pildă data nașterii, apoi apăsați „Deschide” pe rândul căutat."
+            "explanation": "Dacă rămân mai multe persoane cu același nume, adăugați din „Câmpuri afișate” o coloană care le deosebește, de pildă data nașterii, apoi apăsați numele de pe rândul căutat."
           },
           "en": {
             "question": "You searched for a person by name and several persons with the same name remain. What does the manual advise?",

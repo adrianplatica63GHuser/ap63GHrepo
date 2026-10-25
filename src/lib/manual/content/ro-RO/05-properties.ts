@@ -79,7 +79,7 @@ Câmpurile principale sunt:
 - „Suprafață calculată (m²)” — o calculează aplicația din colțuri (secțiunea [[properties-corners]]);
 - „Note”.
 
-„Salvează”, „Șterge” și „Anulează” stau jos de tot, sub hartă. Butoanele sunt pictograme — o dischetă, un coș, un X — și își arată numele când treceți cu mouse-ul peste ele.
+Pe o proprietate nouă, „Salvează”, „Șterge” și „Anulează” stau jos de tot, sub hartă; pe una salvată, fiecare fișă se salvează singură, iar jos rămân „Șterge” și „Anulează”. Butoanele sunt pictograme — o dischetă, un coș, un X — și își arată numele când treceți cu mouse-ul peste ele.
 
 Când apăsați „Salvează” pe o proprietate nouă, vă întoarceți în listă. Proprietatea nouă stă sus, cu insigna „Nou!”, iar numărul de sub listă a crescut cu unu.
 
@@ -97,7 +97,7 @@ Arhiva ține o singură proprietate pentru fiecare parcelă dintr-o localitate (
 
 ### 5.2.4 Modificarea și ștergerea {#properties-add-edit}
 
-Pe o proprietate deschisă, schimbați câmpurile și apăsați „Salvează”. Cât timp aveți schimbări nesalvate, sus în formular scrie „Modificări nesalvate”, iar „Salvează” este activ. Fiecare salvare adaugă o versiune, iar în capul ecranului apar „v …” și „… versiuni” (secțiunea [[links-versions]]).
+Pe o proprietate deschisă, apăsați „Editează” pe fișa de schimbat — „Identificare cadastrală”, „Puncte de contur” sau „Adresă” —, schimbați câmpurile și apăsați „Salvează”-ul fișei (secțiunea [[start-read-edit]]). Cât timp aveți schimbări nesalvate, sus în formular scrie „Modificări nesalvate”, iar „Salvează” este activ. Fiecare salvare adaugă o versiune, iar în capul ecranului apar „v …” și „… versiuni” (secțiunea [[links-versions]]).
 
 Coșul („Șterge”) întreabă întâi „Ștergeți proprietatea?”. „Nu” vă lasă pe ecran; „Da” șterge proprietatea și vă întoarce în listă.
 
@@ -167,12 +167,12 @@ Tabelul are coloanele „Nr.” (ordinea), „Nr. orig.” (numărul colțului �
 Fiecare rând are patru butoane:
 
 - „Mută mai sus” și „Mută mai jos” — schimbă ordinea colțurilor, deci și forma parcelei;
-- „Editează” — face din rând câmpuri de scris, cu „Salvează” și „Anulează” pe rând;
+- „Editează” — face din rând câmpuri de scris, cu „Salvează” și „Anulează” pe rând. Butoanele rândurilor și „+ Adaugă punct” stau acolo cât timp „Puncte de contur” este deschisă cu „Editează”-ul fișei; un colț tras pe hartă o deschide singur;
 - „Șterge” — scoate colțul.
 
 „+ Adaugă punct”, pe rândul titlului fișei, în dreapta, adaugă un colț nou la sfârșit.
 
-„Suprafață calculată (m²)” urmează colțurile pe loc: schimbați un colț și suprafața se schimbă imediat. „Salvează” de pe un rând nu scrie încă nimic în arhivă: colțurile se salvează abia cu „Salvează” de jos, împreună cu restul proprietății, iar versiunea de dinainte păstrează colțurile vechi.
+„Suprafață calculată (m²)” urmează colțurile pe loc: schimbați un colț și suprafața se schimbă imediat. „Salvează” de pe un rând nu scrie încă nimic în arhivă: colțurile se salvează abia cu „Salvează”-ul fișei „Puncte de contur”, sub tabel, iar versiunea de dinainte păstrează colțurile vechi.
 
 Dacă ordinea colțurilor face ca laturile să se încrucișeze, apare „Ordinea colțurilor se încrucișează”, iar suprafața calculată nu mai are sens. „Îndreaptă ordinea” vă arată forma de acum și forma îndreptată, cu suprafețele lor. Colțurile rămân unde sunt; se schimbă doar ordinea în care sunt unite. Apoi salvați ca de obicei.
 
@@ -276,5 +276,5 @@ Scanați codul QR cu telefonul, iar Google Maps pornește navigarea. Pe calculat
 
 1. Deschideți proprietatea; în „Puncte de contur”, apăsați „Editează” pe rândul colțului (secțiunea [[properties-corners-table]]).
 2. Scrieți coordonata corectă și apăsați „Salvează” pe rând. Suprafața calculată se schimbă imediat.
-3. Apăsați „Salvează” jos. Versiunea de dinainte păstrează colțul vechi (secțiunea [[links-versions]]).
+3. Apăsați „Salvează” sub tabel, al fișei. Versiunea de dinainte păstrează colțul vechi (secțiunea [[links-versions]]).
 `;

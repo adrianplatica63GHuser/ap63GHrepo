@@ -206,7 +206,7 @@
           "section": "documents-type",
           "ro": {
             "question": "Ieri, Ciprian a bifat fișa „Părți” pe contractul lui Andrei Munteanu. Azi deschide un alt contract de vânzare-cumpărare. Ce vede?",
-            "explanation": "Fișele care se văd se aleg cu bifele din capul ecranului, iar alegerea se ține minte pentru fiecare tip; un alt contract de același tip arată deci și el fișa „Părți”."
+            "explanation": "Fișele care se văd se aleg cu bifele din „Panouri”, iar alegerea se ține minte pentru fiecare tip; un alt contract de același tip arată deci și el fișa „Părți”."
           },
           "en": {
             "question": "Yesterday Ciprian ticked the „Părți” tile on Andrei Munteanu's contract. Today he opens another sale contract. What does he see?",

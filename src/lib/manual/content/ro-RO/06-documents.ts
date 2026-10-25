@@ -139,7 +139,7 @@ Fișele formularului și panourile lor:
 
 **Fișa „Părți”** ține vânzătorii și cumpărătorii, după regula din secțiunea [[documents-parties]]. Părțile stau pe grupe, sub numele rolului — „Vânzător” întâi, apoi „Cumpărător” —, fiecare rând cu „Cotă” lui (secțiunea [[documents-parties]]). Un contract fără părți spune „Nicio parte asociată încă. Asociați părțile cu rolul și cota lor.” „Asociază persoană” adaugă o parte: căutați persoana după „Nume” sau „Cod”, alegeți „Rol”, bifați rândul și apăsați „Asociază selecția”. „Dezasociază” scoate partea selectată. Celelalte persoane ale contractului, de pildă notarul, stau pe „Legături”, iar proprietățile vândute se leagă tot de acolo.
 
-**„Obiectul vânzării”** spune ce se vinde. „Descrierea obiectului” se compune din proprietățile contractului, din părți și din „Scop vânzare” — de exemplu „2 imobile, 7.400 mp în total”. Se completează singură când deschideți un contract cu câmpul gol. După ce legați o proprietate nouă, apăsați „Recompune” ca să fie scrisă din nou, apoi „Salvează”.
+**„Obiectul vânzării”** spune ce se vinde. „Descrierea obiectului” se compune din proprietățile contractului, din părți și din „Scop vânzare” — de exemplu „2 imobile, 7.400 mp în total”. Se completează singură când deschideți un contract cu câmpul gol. După ce legați o proprietate nouă, apăsați „Editează” pe „Obiectul vânzării”, „Recompune” ca să fie scrisă din nou, apoi „Salvează”-ul fișei.
 
 Un contract încheiat după un antecontract se leagă de el, iar „Temei preț” și „Stare plată” pot pomeni antecontractul (secțiunea [[documents-antecontract]]).
 
@@ -191,7 +191,7 @@ Aveți scanat un contract de vânzare-cumpărare pentru un teren din Bragadiru.
 2. Cu „+ Adaugă pagină” alegeți scanările, puneți-le în ordine și completați „Etichetă scurtă”, „Notariat”, „Nr. act autentic” și „Data autentificării” (secțiunile [[documents-add]] și [[documents-identification]]).
 3. Apăsați „Salvează”; rotiți și salvați pagina care a fost scanată întoarsă.
 4. Bifați „Părți” și asociați vânzătorul și cumpărătorul cu rolul lor, apoi scrieți-le cota (secțiunea [[documents-parties]]).
-5. Pe „Legături”, asociați terenul, apoi în „Obiectul vânzării” apăsați „Recompune” și „Salvează” (secțiunea [[documents-sale]]).
+5. Pe „Legături”, asociați terenul, apoi în „Obiectul vânzării” apăsați „Editează”, „Recompune” și „Salvează” (secțiunea [[documents-sale]]).
 
 ### 6.9.2 Înregistrați un antecontract și contractul care îl îndeplinește {#documents-example-antecontract}
 

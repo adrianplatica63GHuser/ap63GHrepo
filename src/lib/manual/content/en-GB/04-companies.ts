@@ -26,7 +26,7 @@ The search box at the top of the list („search by ID, Name, Nickname, Registra
 
 The button shows how many fields you chose, for instance „Choose fields 1/4”. The CUI column does not appear until you tick it, but searching by CUI works regardless. Under „Contact” you see the firm's first contact person; if the first slot is empty, you see the second (section [[companies-people-contact]]).
 
-Each row carries „Preview”, „Peek inside”, „Links” and „Open”. A firm's preview shows its name, then its nickname. „Peek inside” shows the firm's „Interactions” tile beside the list, and „Links” shows, also beside it, whom the firm is linked to, without opening it.
+On each row the firm's name is a link that opens it, and beside it stand, faded until the mouse passes over the row, „Preview”, „Peek inside” and „Links”. A firm's preview shows its name, then its nickname. „Peek inside” shows the firm's „Interactions” tile beside the list, and „Links” shows, also beside it, whom the firm is linked to, without opening it.
 
 A firm added recently stands at the top of the list, marked „New!”.
 
@@ -89,14 +89,14 @@ The „Addresses” tile holds „Registered Address” and „Correspondence Ad
 
 ### 4.2.4 Editing and the history {#companies-add-edit}
 
-On the firm's screen, change what you need and press „Save”, at the bottom. This time the screen stays on the firm. Every save makes a new version: the top of the screen goes from „v 0” to „v 1” and shows how many versions the firm has, for instance „2 versions”.
+On the firm's screen, press „Edit” on the tile to change, change what you need and press „Save”, under its fields (section [[start-read-edit]]). The screen stays on the firm, and the tile is read again. Every save makes a new version: the top of the screen goes from „v 0” to „v 1” and shows how many versions the firm has, for instance „2 versions”.
 
 With „Previous version” and „Next version” you see the firm as it was at each save. The firm's phone and e-mail are kept in the history too: on the version in which they were written, their fields are framed in green, the mark of a value added then. On versions and „Make Current”, see section [[links-versions]].
 
 A few things worth knowing:
 
 - A change made in a tile that you then hide is still saved.
-- If a hidden tile holds a mistake — „Name” emptied, say —, at „Save” the tile comes back, the screen scrolls to the field with the problem, and nothing is saved.
+- On a new firm, if a hidden tile holds a mistake — „Name” emptied, say —, at „Save” the tile comes back, the screen scrolls to the field with the problem, and nothing is saved.
 - While you have unsaved changes, the top says „Unsaved changes”.
 
 ### 4.2.5 Deleting a firm {#companies-add-delete}
@@ -115,7 +115,7 @@ The window has a row for each field ANAF knows: „Name”, „Trade Register No
 - a field that holds something else is not ticked; tick it only if you want ANAF's value;
 - a field ANAF does not know does not appear, so nothing is emptied.
 
-„Take the ticked” puts the ticked values on the form. Nothing is saved until you press „Save”: check the fields first. „Cancel” closes the window with no change.
+„Fill in from ANAF” stands in „Registration details” while the tile is open. „Take the ticked” puts the ticked values on the form — the registered office address and the phone too, which stand in the other tiles; the tile's „Save” keeps them all. Nothing is saved until you press it: check the fields first. „Cancel” closes the window with no change.
 
 A firm that is inactive for tax shows a warning in the window, and „Notes” gets a line with the date of the check and the date it became inactive. A firm that has been struck off has its own warning. If ANAF does not know the CUI, the window says so; if ANAF is not answering, it says „ANAF is not answering right now. Try again in a few minutes.”.
 
@@ -199,7 +199,7 @@ The situation: a document gives only a firm's CUI.
 1. Open „Juridical Persons”.
 2. Type the CUI into the search box (section [[companies-list]]).
 3. To see the CUI in the table as well, tick „CUI” in „Choose fields”.
-4. Press „Open” on the firm's row.
+4. Press the name on the firm's row.
 
 ### 4.4.3 Record a firm's director {#companies-example-representative}
 

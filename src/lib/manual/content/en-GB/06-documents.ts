@@ -139,7 +139,7 @@ The form's tiles and their panels:
 
 **The „Parties” tile** holds the sellers and the buyers, by the rule in section [[documents-parties]]. The parties are grouped under their role's name — „Vânzător” first, then „Cumpărător” —, each row with its „Share” (section [[documents-parties]]). A contract with no parties reads „No party linked yet. Link the parties with their role and share.”. „Associate person” adds a party: search for the person by „Name” or „Code”, choose „Role”, tick the row and press „Associate Selected”. „Dissociate” removes the selected party. The contract's other people, the notary for instance, sit on „Links”, and the properties sold are linked from there too.
 
-**„Obiectul vânzării”** says what is being sold. „Descrierea obiectului” (description of the object) is composed from the contract's properties, its parties and „Scop vânzare” (purpose of the sale) — for example „2 imobile, 7.400 mp în total” (2 properties, 7,400 m² in all). It fills itself in when you open a contract with the field empty. After you link a new property, press „Recompose” to have it written again, then „Save”.
+**„Obiectul vânzării”** says what is being sold. „Descrierea obiectului” (description of the object) is composed from the contract's properties, its parties and „Scop vânzare” (purpose of the sale) — for example „2 imobile, 7.400 mp în total” (2 properties, 7,400 m² in all). It fills itself in when you open a contract with the field empty. After you link a new property, press „Edit” on „Obiectul vânzării”, „Recompose” to have it written again, then the tile's „Save”.
 
 A contract signed after a preliminary contract is linked to it, and „Temei preț” and „Stare plată” can mention the preliminary contract (section [[documents-antecontract]]).
 
@@ -191,7 +191,7 @@ You have a scanned sale contract for a plot of land in Bragadiru.
 2. With „+ Add Page” choose the scans, put them in order, and fill in „Short Label”, „Notary Office”, „Authentic Deed No.” and „Authentication date” (sections [[documents-add]] and [[documents-identification]]).
 3. Press „Save”; rotate the page that was scanned the wrong way round and save the rotation.
 4. Tick „Parties” and associate the seller and the buyer with their roles, then type in their shares (section [[documents-parties]]).
-5. On „Links”, associate the plot, then in „Obiectul vânzării” press „Recompose” and „Save” (section [[documents-sale]]).
+5. On „Links”, associate the plot, then in „Obiectul vânzării” press „Edit”, „Recompose” and „Save” (section [[documents-sale]]).
 
 ### 6.9.2 Record a preliminary contract and the contract that fulfils it {#documents-example-antecontract}
 

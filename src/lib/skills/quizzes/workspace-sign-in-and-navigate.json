@@ -275,18 +275,18 @@
           "section": "start-sign-in",
           "ro": {
             "question": "Ați terminat lucrul și vreți să ieșiți din aplicație. Unde este „Ieșire”?",
-            "explanation": "Jos în bara laterală sunt „Schimbă parola” și „Ieșire”; sus scrie cu ce nume sunteți conectat („Autentificat ca …”)."
+            "explanation": "Jos în bara laterală stă contul: un clic pe el deschide în sus meniul contului, cu „Autentificat ca …”, „Limba”, „Aspect” și, ultimul, „Ieșire”."
           },
           "en": {
             "question": "You have finished work and want to leave the application. Where is „Ieșire” (sign out)?",
-            "explanation": "At the bottom of the sidebar are „Schimbă parola” and „Ieșire”; at its top it says whom you are signed in as („Autentificat ca …”)."
+            "explanation": "At the bottom of the sidebar stands the account: a click on it opens the account menu upwards, with „Autentificat ca …”, „Limba”, „Aspect” and, last, „Ieșire”."
           },
           "options": [
             {
               "id": "o1",
               "correct": false,
-              "ro": "Sus în bara laterală, lângă „Autentificat ca …”",
-              "en": "At the top of the sidebar, beside „Autentificat ca …”"
+              "ro": "Sus în bara laterală, sub „GA40”",
+              "en": "At the top of the sidebar, under „GA40”"
             },
             {
               "id": "o2",
@@ -297,14 +297,14 @@
             {
               "id": "o3",
               "correct": true,
-              "ro": "Jos în bara laterală, lângă „Schimbă parola”",
-              "en": "At the bottom of the sidebar, beside „Schimbă parola”"
+              "ro": "În meniul contului, din josul barei laterale",
+              "en": "In the account menu, at the foot of the sidebar"
             },
             {
               "id": "o4",
               "correct": false,
               "ro": "Pe „Tablou de bord”, în colțul din dreapta-sus",
-              "en": "On „Tablou de bord”, in the top right-hand corner"
+              "en": "On the „Tablou de bord”, in the top right corner"
             }
           ]
         },

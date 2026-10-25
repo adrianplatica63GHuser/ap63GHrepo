@@ -241,7 +241,7 @@
           "id": "b1",
           "section": "persons-add-tiles",
           "ro": {
-            "question": "Ați scris ceva într-o fișă a formularului, apoi ați ascuns fișa cu bifele din capul ecranului. Ce se întâmplă cu ce ați scris?",
+            "question": "Ați scris ceva într-o fișă a formularului, apoi ați ascuns fișa cu bifa ei din „Panouri”. Ce se întâmplă cu ce ați scris?",
             "explanation": "O fișă ascunsă nu își pierde datele: ce ați scris în ea se salvează la fel."
           },
           "en": {

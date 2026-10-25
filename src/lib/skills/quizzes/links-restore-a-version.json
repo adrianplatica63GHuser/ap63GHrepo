@@ -474,12 +474,12 @@
           "id": "b5",
           "section": "properties-corners-table",
           "ro": {
-            "question": "Ciprian a corectat un colț al unei parcele, a apăsat „Salvează” pe rând și apoi „Salvează” jos. A doua zi află că vechiul colț era cel bun. Ce face?",
-            "explanation": "Colțurile se salvează cu „Salvează” de jos, împreună cu restul proprietății, iar versiunea de dinainte păstrează colțurile vechi; acea versiune se poate face din nou curentă cu „Fă curentă”."
+            "question": "Ciprian a corectat un colț al unei parcele, a apăsat „Salvează” pe rând și apoi „Salvează”-ul fișei „Puncte de contur”. A doua zi află că vechiul colț era cel bun. Ce face?",
+            "explanation": "Colțurile se salvează cu „Salvează”-ul fișei „Puncte de contur”, sub tabel, iar versiunea de dinainte păstrează colțurile vechi; acea versiune se poate face din nou curentă cu „Fă curentă”."
           },
           "en": {
-            "question": "Ciprian corrected a corner of a parcel, pressed „Salvează” on the row and then „Salvează” at the bottom. The next day he learns the old corner was the right one. What does he do?",
-            "explanation": "The corners are saved with the „Salvează” at the bottom, together with the rest of the property, and the version before keeps the old corners; that version can be made current again with „Fă curentă”."
+            "question": "Ciprian corrected a corner of a parcel, pressed „Salvează” on the row and then the „Puncte de contur” tile's „Salvează”. The next day he learns the old corner was the right one. What does he do?",
+            "explanation": "The corners are saved with the „Salvează” of the „Puncte de contur” tile, under the table, and the version before keeps the old corners; that version can be made current again with „Fă curentă”."
           },
           "options": [
             {

@@ -53,13 +53,15 @@ On „Links”, choose the row with the round button at its left, then press „
 
 ## 7.2 The „Links” tile {#links-related}
 
-Every natural person, company, property and document has the „Links” tile: everything linked to the object, in one place (Figure [[fig-links-related]]). If you do not see it, tick „Links” among the tiles at the top of the screen (section [[start-tiles]]). When nothing is linked, the tile says „Nothing related yet.”.
+Every natural person, company, property and document has the „Links” tile: everything linked to the object, in one place (Figure [[fig-links-related]]). If you do not see it, tick „Links” in „Panels” (section [[start-tiles]]). When nothing is linked, the tile says „Nothing related yet.”.
 
-The rows always come in the same order — natural persons, juridical persons, properties, documents — with a thin line between two kinds and the kind's icon at the start of the row. Each row stays on one line:
+The rows always come in the same order — natural persons, juridical persons, properties, documents —, and each kind starts with a slim heading: its name, as in the sidebar, and, on the right, how many rows it has. A kind with no rows has no heading. The kind's icon stands at the start of the row. Each row stays on one line:
 
-- a person or a company: the name and, in brackets, the role;
-- a property: the name and, when the link has a role, the role in brackets;
-- a document: the short label and, in brackets, the document's type.
+- a person or a company: the name and the role;
+- a property: the name and, when the link has a role, the role;
+- a document: the short label and the document's type.
+
+The role — for a document, the type — stands in a small tag at the row's right edge, so the tags line up top to bottom, and a long name is cut with three dots before its role is.
 
 A row can carry a few buttons:
 

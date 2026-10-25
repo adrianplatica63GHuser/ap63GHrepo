@@ -13,6 +13,8 @@ The archive keeps in one place the persons the business works with, their proper
 
 The first screen after signing in is the **Dashboard** (Figure [[fig-dashboard]]): what was added in the last seven days, the objects whose metadata has not been updated for a long time, the documents that expire soon, and what was worked on recently.
 
+Each number in „Added in the last 7 days” stands under the mark of its kind — a person for persons, a building for firms, a map for properties, a page for documents —, the same marks as in the sidebar, on the objects' screens and in „Links”. In „Documents with limited validity”, each row starts with the document's status: red when it has expired, amber while it is inside the warning window, neutral after it; then comes the title and, under it, smaller, the type and the expiry date. A row opens its document.
+
 ![1.1 The dashboard, the first screen after signing in](dashboard.png){#fig-dashboard}
 
 ## 1.2 The three main objects {#intro-objects}

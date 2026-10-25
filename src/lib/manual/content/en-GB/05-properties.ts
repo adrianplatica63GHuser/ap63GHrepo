@@ -79,7 +79,7 @@ The main fields are:
 - „Calculated Area (m²)” — calculated by the application from the corners (section [[properties-corners]]);
 - „Notes”.
 
-„Save”, „Delete” and „Cancel” are at the very bottom, below the map. The buttons are icons — a floppy disk, a bin, an X — and show their names when you move the mouse over them.
+On a new property, „Save”, „Delete” and „Cancel” are at the very bottom, below the map; on a saved one, each tile saves itself, and „Delete” and „Cancel” stay at the bottom. The buttons are icons — a floppy disk, a bin, an X — and show their names when you move the mouse over them.
 
 When you press „Save” on a new property, you go back to the list. The new property is at the top, badged „New!”, and the count below the list has gone up by one.
 
@@ -97,7 +97,7 @@ The archive keeps one property per parcel in a locality (section [[properties-ta
 
 ### 5.2.4 Changing and deleting {#properties-add-edit}
 
-On an open property, change the fields and press „Save”. While you have unsaved changes, the top of the form reads „Unsaved changes” and „Save” is active. Every save adds a version, and the header of the screen shows „v …” and „… versions” (section [[links-versions]]).
+On an open property, press „Edit” on the tile to change — „Cadastral identification”, „Boundary points” or „Address” —, change the fields and press that tile's „Save” (section [[start-read-edit]]). While you have unsaved changes, the top of the form reads „Unsaved changes” and „Save” is active. Every save adds a version, and the header of the screen shows „v …” and „… versions” (section [[links-versions]]).
 
 The bin („Delete”) asks first: „Delete property?”. „No” leaves you on the screen; „Yes” deletes the property and takes you back to the list.
 
@@ -167,12 +167,12 @@ The table has the columns „#” (the order), „Orig. #” (the corner's numbe
 Each row has four buttons:
 
 - „Move up” and „Move down” — change the order of the corners, and so the parcel's shape;
-- „Edit” — turns the row into fields to type in, with „Save” and „Cancel” on the row;
+- „Edit” — turns the row into fields to type in, with „Save” and „Cancel” on the row. The rows' buttons and „+ Add point” are there while „Boundary points” is open with the tile's own „Edit”; a corner dragged on the map opens it by itself;
 - „Delete” — removes the corner.
 
 „+ Add Corner”, on the tile's title row, on the right, adds a new corner at the end.
 
-„Calculated Area (m²)” follows the corners at once: change a corner and the area changes immediately. A row's „Save” does not yet write anything to the archive: the corners are saved only with the „Save” at the bottom, together with the rest of the property, and the version before keeps the old corners.
+„Calculated Area (m²)” follows the corners at once: change a corner and the area changes immediately. A row's „Save” does not yet write anything to the archive: the corners are saved only with the „Save” of the „Boundary points” tile, under the table, and the version before keeps the old corners.
 
 If the order of the corners makes the sides cross, „The corner order crosses itself” appears, and the calculated area no longer means anything. „Straighten the order” shows you the shape as it is and the straightened shape, with their areas. The corners stay where they are; only the order in which they are joined changes. Then save as usual.
 
@@ -276,5 +276,5 @@ Scan the QR code with the phone, and Google Maps starts the navigation. On the c
 
 1. Open the property; in „Corners”, press „Edit” on the corner's row (section [[properties-corners-table]]).
 2. Type the correct coordinate and press the row's „Save”. The calculated area changes at once.
-3. Press „Save” at the bottom. The version before keeps the old corner (section [[links-versions]]).
+3. Press the tile's „Save”, under the table. The version before keeps the old corner (section [[links-versions]]).
 `;

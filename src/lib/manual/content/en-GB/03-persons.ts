@@ -40,7 +40,7 @@ Each row has four buttons:
 | „Preview” | Shows, beside the list, a short summary: the name, then the nickname and the CNP, then „born:” with the date and place of birth. |
 | „Peek inside” | Shows, beside the list, the person's „Interactions” tile (section [[persons-interactions]]). |
 | „Links” | Shows, beside the list, the person's links, read-only (section [[links-related]]). |
-| „Open” | Opens the person's screen. |
+| the name, a link | Opens the person's screen; Ctrl + click, in a new tab. |
 
 A second click on the same button closes what it opened.
 
@@ -86,7 +86,7 @@ The only thing required is the name: fill in at least „Last Name” or „Firs
 
 If a required field was left empty in a hidden tile, on saving the tile reappears, the application takes you to that field and writes underneath what is missing. Nothing is saved until you fill it in.
 
-Later, a person is changed on their own screen: change the fields and press „Save”. Every save makes a new version (section [[links-versions]]). To delete a person, press „Delete” and answer „Yes” to the question „Delete person?”; the deletion cannot be undone.
+Later, a person is changed on their own screen, tile by tile: „Edit” on the tile to change, the fields, then that tile's „Save” (section [[start-read-edit]]). Every save makes a new version (section [[links-versions]]). To delete a person, press „Delete” and answer „Yes” to the question „Delete person?”; the deletion cannot be undone.
 ### 3.2.3 The professional type and the relationship to the business {#persons-add-profession}
 
 In the „Identity” tile, two fields say who the person is to the business:
@@ -94,7 +94,7 @@ In the „Identity” tile, two fields say who the person is to the business:
 - **„Professional type”** — their profession, a single one: „Notar”, „Avocat”, „Executor judecătoresc”, „Topograf / expert cadastral”, „Evaluator”, „Expert tehnic / judiciar”, „Agent imobiliar”, „Arhitect / proiectant”, „Constructor / meșter”, „Funcționar public”, „Contabil / consultant fiscal”, „Fermier / arendaș” or „Persoană privată”. A firm, an institution or an NGO is not a natural person: it is added as a juridical person (section [[companies-add]]);
 - **„Relationship to the business”** — why the person is in the archive, with a tick for each: „Client”, „Vânzător de teren”, „Cumpărător”, „Moștenitor / familie”, „Colaborator”, „Vecin”, „Contact instituțional”. A person can have several ticks.
 
-Both are saved with „Save”. „Professional type” goes into the person's versions; „Relationship to the business” does not: on an older version it shows today's ticks, and under it reads „The relationship to the business has no versions: it shows today's values.”. The value lists are changed in „Reference Data” (section [[admin-reference-data]]).
+Both stand in „Identity” and are saved with its „Save”. „Professional type” goes into the person's versions; „Relationship to the business” does not: on an older version it shows today's ticks, and under it reads „The relationship to the business has no versions: it shows today's values.”. The value lists are changed in „Reference Data” (section [[admin-reference-data]]).
 
 ## 3.3 A person from an identity card {#persons-id-card}
 
@@ -133,7 +133,7 @@ How the application reads an identity card when a whole folder is imported, see 
 
 The CNP is what the application uses to recognise a person, for instance when it reads an identity card (section [[persons-id-card-document]]). That is why, once saved, it can no longer be changed.
 
-The „CNP” field looks like any other and you can type in it. When you move the mouse over it or enter it with the keyboard, the note „CNP cannot be changed once set — delete and recreate to change” appears; Escape hides it. If you change the CNP anyway and press „Save”, the same sentence appears in red under the form, „Unsaved changes” stays on screen, and the CNP kept is the old one.
+On a saved person, „CNP” is read like any field; after „Edit” on „Identity” it looks like any other and you can type in it. When you move the mouse over it or enter it with the keyboard, the note „CNP cannot be changed once set — delete and recreate to change” appears; Escape hides it. If you change the CNP anyway and press „Save”, the same sentence appears in red under the form, „Unsaved changes” stays on screen, and the CNP kept is the old one.
 
 A wrong CNP is put right this way: delete the person and add them again, with the correct CNP.
 
@@ -141,7 +141,7 @@ A wrong CNP is put right this way: delete the person and add them again, with th
 
 In the „Identity” tile, under „Date of Birth”, is the „Deceased” tick, unticked at first. Beside it, „Date of death” can be filled in only while „Deceased” is ticked; the date is not required.
 
-1. Open the person and tick „Deceased”.
+1. Open the person, press „Edit” on „Identity” and tick „Deceased”.
 2. Type „Date of death”, if you know it.
 3. Press „Save”.
 
@@ -220,8 +220,8 @@ You have in front of you the identity card of a person who is not yet in the arc
 
 You learn from a certificate of inheritance that a person in the archive has died.
 
-1. Find the person in the „Natural Persons” list and press „Open” (section [[persons-list]]).
-2. In „Identity”, tick „Deceased” and type „Date of death” (section [[persons-identity-death]]).
+1. Find the person in the „Natural Persons” list and press their name (section [[persons-list]]).
+2. Press „Edit” on „Identity”, tick „Deceased” and type „Date of death” (section [[persons-identity-death]]).
 3. „Save”. „Age” now shows the age at death, with „†”.
 4. Back in the list, „†” stands after their name.
 

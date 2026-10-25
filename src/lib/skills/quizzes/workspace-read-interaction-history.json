@@ -281,18 +281,18 @@
           "section": "persons-interactions",
           "ro": {
             "question": "Pe ecranul Elenei Dumitru nu vedeți deloc fișa „Interacțiuni”, deși știți că are convorbiri înregistrate. Ce faceți?",
-            "explanation": "Fișa „Interacțiuni” este bifată de la început, iar bifa ei este ultima din capul ecranului; dacă a fost debifată, o bifați din nou și fișa revine."
+            "explanation": "Fișa „Interacțiuni” este bifată de la început, iar bifa ei este ultima din „Panouri”; dacă a fost debifată, o bifați din nou și fișa revine."
           },
           "en": {
             "question": "On Elena Dumitru's screen you do not see the „Interacțiuni” tile at all, though you know she has calls recorded. What do you do?",
-            "explanation": "The „Interacțiuni” tile is ticked from the start, and its tick is the last at the top of the screen; if it was unticked, you tick it again and the tile comes back."
+            "explanation": "The „Interacțiuni” tile is ticked from the start, and its tick is the last in „Panouri”; if it was unticked, you tick it again and the tile comes back."
           },
           "options": [
             {
               "id": "o1",
               "correct": true,
-              "ro": "Bifați din nou ultima bifă din capul ecranului, „Interacțiuni”",
-              "en": "Tick again the last tick at the top of the screen, „Interacțiuni”"
+              "ro": "Bifați din nou ultima bifă din „Panouri”, „Interacțiuni”",
+              "en": "Tick again the last tick in „Panouri”, „Interacțiuni”"
             },
             {
               "id": "o2",

@@ -399,7 +399,7 @@
           "id": "b5",
           "section": "documents-type",
           "ro": {
-            "question": "Pe un contract de vânzare-cumpărare ați ales cu bifele din capul ecranului ce fișe se văd. Apoi deschideți un plan. Ce fișe vedeți?",
+            "question": "Pe un contract de vânzare-cumpărare ați ales din „Panouri” ce fișe se văd. Apoi deschideți un plan. Ce fișe vedeți?",
             "explanation": "Alegerea fișelor se ține minte pentru fiecare tip: un contract de vânzare-cumpărare și un plan își păstrează fiecare aranjamentul lui."
           },
           "en": {

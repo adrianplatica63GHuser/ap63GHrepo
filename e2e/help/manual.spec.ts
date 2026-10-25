@@ -86,7 +86,7 @@ test.describe("TC-HELP-02 — „Manual de utilizare”", () => {
     await expect(sections.first()).toHaveText("2.1 Conectarea");
     await expect(sections.last()).toHaveText("2.9 Exemple și cazuri de utilizare");
 
-    // Step 3 — „2.2 Bara laterală": the heading in view, the table, Figura 2.1 with its picture.
+    // Step 3 — „2.2 Bara laterală": the heading in view, the table, Figura 2.2 with its picture (2.1 since 40.77 is the account menu).
     await nav.getByRole("link", { name: "2.2 Bara laterală", exact: true }).click();
     await expect(page).toHaveURL(/\/manual\?s=start-sidebar$/);
     const h = byId(page, "start-sidebar");
@@ -96,7 +96,7 @@ test.describe("TC-HELP-02 — „Manual de utilizare”", () => {
     await expect(table.locator("th")).toHaveText(["Secțiunea", "Ce cuprinde"]);
     await expect(table.locator("tbody tr").last().locator("td").first()).toHaveText("Ajutor și învățare");
     const fig = byId(page, "fig-sidebar");
-    await expect(fig.locator("figcaption")).toHaveText("Figura 2.1 — Bara laterală, cu secțiunea „Domeniu” deschisă");
+    await expect(fig.locator("figcaption")).toHaveText("Figura 2.2 — Bara laterală, cu secțiunea „Domeniu” deschisă");
     await expect.poll(() => fig.locator("img").evaluate((i: HTMLImageElement) => i.naturalWidth)).toBeGreaterThan(0);
 
     // Step 4 — the cross-reference „2.8" in section 2.3.
@@ -110,7 +110,7 @@ test.describe("TC-HELP-02 — „Manual de utilizare”", () => {
     // Step 5 — a figure by its address.
     await page.goto("/manual?s=fig-list");
     await expect(byId(page, "fig-list").locator("figcaption")).toHaveText(
-      "Figura 2.4 — Lista persoanelor fizice, cu „Câmpuri afișate” deschis",
+      "Figura 2.5 — Lista persoanelor fizice, cu „Câmpuri afișate” deschis",
       { timeout: 30_000 },
     );
     await expect(byId(page, "fig-list")).toBeInViewport();
@@ -309,6 +309,19 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     await still(page);
     await sidebar(page).locator("xpath=ancestor::aside").screenshot({ path: `${dir}/sidebar.png` });
 
+    // Figura 2.1 (40.77) — the account menu open at the foot of the sidebar (40.59): the signed-in name blurred.
+    await openAccountMenu(page);
+    await page.evaluate((f) => {
+      document.querySelectorAll<HTMLElement>("[data-account-signed-in]").forEach((el) => (el.style.filter = f));
+    }, BLUR);
+    await blurRecent(page, S.recent);
+    await still(page);
+    {
+      const vp = page.viewportSize()!;
+      await page.screenshot({ path: `${dir}/account-menu.png`, clip: { x: 0, y: vp.height - 360, width: 300, height: 360 } });
+    }
+    await closeAccountMenu(page);
+
     // Figura 2.2 — 40.27: the dashboard with „Noapte" ticked (40.19, named so in 40.28); its lists blurred as in Figura 1.1. The
     // look is put back to light at once, so every other figure is light.
     await page.goto("/");
@@ -364,6 +377,16 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     await blurRecent(page, S.recent);
     await still(page);
     await page.screenshot({ path: `${dir}/record.png` });
+
+    // Figura 2.14 (40.77) — „Contact" opened with „Editează" (40.72): the blue outline, „Salvează" and „Renunță" under the
+    // fields. A seed person's invented contact; the CNP is in another tile and stays blurred. Put back with „Renunță".
+    await page.locator('[data-tile-edit="contact"]').click();
+    await expect(page.locator('[data-tile-edit-bar="contact"]')).toBeVisible({ timeout: 30_000 });
+    await blurCnp(page);
+    await still(page);
+    await page.locator('[data-panel="contact"]').screenshot({ path: `${dir}/tile-edit.png` });
+    await page.locator('[data-tile-cancel="contact"]').click();
+    await expect(page.locator('[data-tile-edit-bar="contact"]')).toHaveCount(0);
 
     // Figura 2.10 (#39.93) — a tile held over another (#39.91): „Act de identitate" held over „Identitate", which has slid
     // down to the first place in its columns that holds it whole — on a person's full columns, the bottom of the row —

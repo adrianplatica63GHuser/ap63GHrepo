@@ -26,7 +26,7 @@ Caseta de căutare din capul listei („caută după ID, Denumire, Poreclă, Nr.
 
 Butonul arată câte câmpuri ați ales, de exemplu „Câmpuri afișate 1/4”. Coloana CUI nu apare până nu o bifați, dar căutarea după CUI merge oricum. La „Contact” se vede prima persoană de contact a firmei; dacă primul loc e gol, se vede a doua (secțiunea [[companies-people-contact]]).
 
-Pe fiecare rând stau „Previzualizare”, „Incursiune”, „Legături” și „Deschide”. Previzualizarea unei firme arată denumirea ei, apoi porecla. „Incursiune” arată, alături de listă, fișa „Interacțiuni” a firmei, iar „Legături” arată, tot alături, cu cine este legată firma, fără să o deschideți.
+Pe fiecare rând, denumirea firmei este un link care o deschide, iar lângă ea stau, estompate până treceți cu mouse-ul peste rând, „Previzualizare”, „Incursiune” și „Legături”. Previzualizarea unei firme arată denumirea ei, apoi porecla. „Incursiune” arată, alături de listă, fișa „Interacțiuni” a firmei, iar „Legături” arată, tot alături, cu cine este legată firma, fără să o deschideți.
 
 O firmă adăugată de curând apare în capul listei, marcată „Nou!”.
 
@@ -89,14 +89,14 @@ Fișa „Adrese” ține „Adresă sediu social” și „Adresă corespondenț
 
 ### 4.2.4 Modificarea și istoricul {#companies-add-edit}
 
-Pe ecranul firmei schimbați ce trebuie și apăsați „Salvează”, jos. De data aceasta ecranul rămâne pe firmă. Fiecare salvare face o versiune nouă: capul ecranului trece de la „v 0” la „v 1” și arată câte versiuni are firma, de exemplu „2 versiuni”.
+Pe ecranul firmei, apăsați „Editează” pe fișa de schimbat, schimbați ce trebuie și apăsați „Salvează”, sub câmpurile ei (secțiunea [[start-read-edit]]). Ecranul rămâne pe firmă, iar fișa se citește din nou. Fiecare salvare face o versiune nouă: capul ecranului trece de la „v 0” la „v 1” și arată câte versiuni are firma, de exemplu „2 versiuni”.
 
 Cu „Versiunea anterioară” și „Versiunea următoare” vedeți firma așa cum era la fiecare salvare. Și telefonul, și e-mailul firmei sunt păstrate în istoric: pe versiunea în care au fost scrise, câmpurile lor sunt încadrate cu verde, semnul unei valori adăugate atunci. Despre versiuni și „Fă curentă”, vedeți secțiunea [[links-versions]].
 
 Câteva lucruri bune de știut:
 
 - O modificare făcută într-o fișă pe care apoi o ascundeți se salvează totuși.
-- Dacă o fișă ascunsă are o greșeală — de pildă „Denumire” golită —, la „Salvează” fișa reapare, ecranul coboară la câmpul cu problema, iar nimic nu se salvează.
+- Pe o firmă nouă, dacă o fișă ascunsă are o greșeală — de pildă „Denumire” golită —, la „Salvează” fișa reapare, ecranul coboară la câmpul cu problema, iar nimic nu se salvează.
 - Cât timp aveți modificări nesalvate, sus scrie „Modificări nesalvate”.
 
 ### 4.2.5 Ștergerea unei firme {#companies-add-delete}
@@ -115,7 +115,7 @@ Fereastra are câte un rând pentru fiecare câmp pe care ANAF îl știe: „Den
 - un câmp care are altceva nu este bifat; îl bifați doar dacă vreți valoarea ANAF;
 - un câmp pe care ANAF nu îl știe nu apare, deci nu se golește nimic.
 
-„Preia bifele” pune valorile bifate în formular. Nu se salvează nimic până nu apăsați „Salvează”: verificați întâi câmpurile. „Renunță” închide fereastra fără nicio schimbare.
+„Completează din ANAF” stă în „Date de înregistrare” cât timp fișa este deschisă. „Preia bifele” pune valorile bifate în formular — și adresa sediului social și telefonul, care stau în celelalte fișe; „Salvează”-ul fișei le păstrează pe toate. Nu se salvează nimic până nu îl apăsați: verificați întâi câmpurile. „Renunță” închide fereastra fără nicio schimbare.
 
 O firmă inactivă fiscal apare cu un avertisment în fereastră, iar la „Note” se adaugă un rând cu data verificării și data de la care e inactivă. O firmă radiată are și ea avertismentul ei. Dacă ANAF nu cunoaște CUI-ul, fereastra o spune; dacă ANAF nu răspunde, spune „ANAF nu răspunde acum. Încercați din nou peste câteva minute.”.
 
@@ -199,7 +199,7 @@ Situația: pe un act scrie doar CUI-ul unei firme.
 1. Deschideți „Persoane Juridice”.
 2. Scrieți CUI-ul în caseta de căutare (secțiunea [[companies-list]]).
 3. Ca să vedeți CUI-ul și în tabel, bifați „CUI” în „Câmpuri afișate”.
-4. Apăsați „Deschide” pe rândul firmei.
+4. Apăsați denumirea de pe rândul firmei.
 
 ### 4.4.3 Notați administratorul unei firme {#companies-example-representative}
 

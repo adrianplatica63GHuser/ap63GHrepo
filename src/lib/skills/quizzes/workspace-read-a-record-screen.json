@@ -2,6 +2,7 @@
   "skill": "workspace-read-a-record-screen",
   "manual": [
     "start-tiles",
+    "start-read-edit",
     "intro-objects",
     "start-preview",
     "admin-settings-account"
@@ -14,37 +15,37 @@
           "id": "a1",
           "section": "start-tiles",
           "ro": {
-            "question": "Pe ecranul unui obiect, la ce folosesc bifele din capul ecranului?",
-            "explanation": "Bifele din capul ecranului aleg ce fișe se văd; „Toate” le arată pe toate, iar „Implicit” revine la setul obișnuit."
+            "question": "Pe ecranul unui obiect, unde alegeți ce fișe se văd?",
+            "explanation": "„Panouri”, în capul ecranului, după versiuni, deschide panoul cu bifele fișelor, „Toate sus”, „Toate” și „Implicit”; o bifă îl lasă deschis, iar Esc sau un clic în afara lui îl închide."
           },
           "en": {
-            "question": "On an object's screen, what are the tick boxes at the top of the screen for?",
-            "explanation": "The tick boxes at the top of the screen choose which tiles show; „Toate” shows them all, and „Implicit” returns to the usual set."
+            "question": "On an object's screen, where do you choose which tiles show?",
+            "explanation": "„Panouri”, at the top of the screen after the versions, opens the panel with the tiles' tick boxes, „Toate sus”, „Toate” and „Implicit”; a tick leaves it open, and Esc or a click outside it closes it."
           },
           "options": [
             {
               "id": "o1",
               "correct": false,
-              "ro": "Marchează fișele pe care le-ați verificat",
-              "en": "They mark the tiles you have checked"
+              "ro": "În „Setări”, de fiecare dată când deschideți obiectul",
+              "en": "In „Setări”, every time you open the object"
             },
             {
               "id": "o2",
               "correct": true,
-              "ro": "Aleg ce fișe se văd pe ecran",
-              "en": "They choose which tiles show on the screen"
+              "ro": "În panoul care se deschide din „Panouri”",
+              "en": "In the panel that opens from „Panouri”"
             },
             {
               "id": "o3",
               "correct": false,
-              "ro": "Aleg fișele care se șterg odată cu coșul",
-              "en": "They choose the tiles the bin deletes"
+              "ro": "Cu dublu-clic pe titlul fiecărei fișe",
+              "en": "With a double-click on each tile's title"
             },
             {
               "id": "o4",
               "correct": false,
-              "ro": "Aleg ce fișe se pot modifica cu creionul",
-              "en": "They choose which tiles the pencil can edit"
+              "ro": "În bara de butoane de la capătul ecranului",
+              "en": "In the button bar at the end of the screen"
             }
           ]
         },
@@ -239,71 +240,77 @@
       "questions": [
         {
           "id": "b1",
-          "section": "start-tiles",
+          "section": "start-read-edit",
           "ro": {
-            "question": "Unde stă bara de butoane cu creionul, salvarea și coșul?",
-            "explanation": "Bara de butoane, ultimul lucru de pe ecran, ține creionul (modificați), salvarea și coșul (ștergeți)."
+            "question": "Pe o persoană salvată vreți să-i schimbați telefonul. Ce faceți?",
+            "explanation": "Un obiect salvat se citește; „Editează” deschide doar fișa „Contact”, iar „Salvează”-ul de sub câmpurile ei păstrează schimbarea și face o versiune nouă."
           },
           "en": {
-            "question": "Where is the button bar with the pencil, the save and the bin?",
-            "explanation": "The button bar, the last thing on the screen, holds the pencil (edit), the save and the bin (delete)."
+            "question": "On a saved person you want to change the phone number. What do you do?",
+            "explanation": "A saved object is read; „Editează” opens only the „Contact” tile, and the „Salvează” under its fields keeps the change and makes one new version."
           },
           "options": [
             {
               "id": "o1",
-              "correct": true,
-              "ro": "La capătul ecranului, după toate fișele",
-              "en": "At the end of the screen, after all the tiles"
+              "correct": false,
+              "ro": "Scrieți direct în valoare, apoi „Salvează” jos",
+              "en": "Type straight into the value, then „Salvează” at the bottom"
             },
             {
               "id": "o2",
-              "correct": false,
-              "ro": "Sus, deasupra fișelor, lângă bife",
-              "en": "At the top, above the tiles, beside the tick boxes"
+              "correct": true,
+              "ro": "„Editează” pe „Contact”, schimbați, apoi „Salvează”-ul fișei",
+              "en": "„Editează” on „Contact”, change it, then the tile's „Salvează”"
             },
             {
               "id": "o3",
               "correct": false,
-              "ro": "În bara de navigare, lângă „?”",
-              "en": "In the navigation bar, beside „?”"
+              "ro": "Apăsați creionul „Modifică”, apoi „Salvează”",
+              "en": "Press the pencil „Modifică”, then „Salvează”"
             },
             {
               "id": "o4",
               "correct": false,
-              "ro": "În colțul din dreapta-sus al primei fișe",
-              "en": "In the top right-hand corner of the first tile"
+              "ro": "Ștergeți persoana și o creați din nou",
+              "en": "Delete the person and create them again"
             }
           ]
         },
         {
           "id": "b2",
-          "section": "start-tiles",
+          "section": "start-read-edit",
           "ro": {
-            "question": "Vreți să schimbați datele unui obiect deschis. Ce buton din bara de butoane apăsați întâi?",
-            "explanation": "Creionul înseamnă „modificați”; salvarea păstrează ce ați schimbat, iar coșul șterge obiectul."
+            "question": "Ați deschis „Contact” cu „Editează” și ați schimbat un număr. Apăsați acum „Editează” pe „Identitate”. Ce se întâmplă?",
+            "explanation": "Se deschide o singură fișă odată: cât timp prima are modificări nesalvate, aplicația vă întreabă întâi dacă salvați, renunțați sau rămâneți."
           },
           "en": {
-            "question": "You want to change an open object's data. Which button in the button bar do you press first?",
-            "explanation": "The pencil means „edit”; the save keeps what you changed, and the bin deletes the object."
+            "question": "You opened „Contact” with „Editează” and changed a number. Now you press „Editează” on „Identitate”. What happens?",
+            "explanation": "One tile is open at a time: while the first has unsaved changes, the application asks first whether you save, discard or stay."
           },
           "options": [
             {
               "id": "o1",
               "correct": false,
-              "ro": "Coșul",
-              "en": "The bin"
+              "ro": "Se deschid amândouă, iar „Salvează” le păstrează pe toate",
+              "en": "Both open, and „Salvează” keeps them all"
             },
             {
               "id": "o2",
               "correct": false,
-              "ro": "Salvarea",
-              "en": "The save"
+              "ro": "Schimbarea din „Contact” se pierde fără întrebare",
+              "en": "The change in „Contact” is lost without a question"
             },
             {
               "id": "o3",
               "correct": true,
-              "ro": "Creionul",
-              "en": "The pencil"
+              "ro": "Aplicația întreabă întâi: salvați, renunțați sau rămâneți",
+              "en": "The application asks first: save, discard or stay"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nimic: „Editează” nu se poate apăsa cât timp e o fișă deschisă",
+              "en": "Nothing: „Editează” cannot be pressed while a tile is open"
             }
           ]
         },

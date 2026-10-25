@@ -38,8 +38,8 @@
             {
               "id": "o3",
               "correct": false,
-              "ro": "Bifați „Arbore de moștenire” în capul ecranului și adăugați acolo părinții, ca rude.",
-              "en": "Tick „Arbore de moștenire” (inheritance tree) at the top of the screen and add the parents there, as relatives."
+              "ro": "Bifați „Arbore de moștenire” în „Panouri” și adăugați acolo părinții, ca rude.",
+              "en": "Tick „Arbore de moștenire” (inheritance tree) in „Panouri” and add the parents there, as relatives."
             },
             {
               "id": "o4",

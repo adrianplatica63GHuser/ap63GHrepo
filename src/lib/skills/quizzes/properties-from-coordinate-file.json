@@ -559,11 +559,11 @@
           "section": "properties-corners-table",
           "ro": {
             "question": "După import, topograful vă anunță că un colț din fișier avea o cifră greșită și vă dă valoarea bună. Cum corectați proprietatea?",
-            "explanation": "Pe proprietatea importată, apăsați „Editează” pe rândul colțului în „Puncte de contur”, scrieți coordonata, „Salvează” pe rând, apoi „Salvează” jos. Un import nou ar face o altă proprietate."
+            "explanation": "Pe proprietatea importată, apăsați „Editează” pe rândul colțului în „Puncte de contur”, scrieți coordonata, „Salvează” pe rând, apoi „Salvează”-ul fișei. Un import nou ar face o altă proprietate."
           },
           "en": {
             "question": "After the import, the surveyor tells you that one corner in the file had a wrong digit and gives you the right value. How do you correct the property?",
-            "explanation": "On the imported property, press „Editează” on the corner's row in „Puncte de contur”, type the coordinate, the row's „Salvează”, then „Salvează” at the bottom. A new import would make another property."
+            "explanation": "On the imported property, press „Editează” on the corner's row in „Puncte de contur”, type the coordinate, the row's „Salvează”, then the tile's „Salvează”. A new import would make another property."
           },
           "options": [
             {
@@ -587,7 +587,7 @@
             {
               "id": "o4",
               "correct": true,
-              "ro": "„Editează” pe rând, coordonata, „Salvează” pe rând, apoi „Salvează” jos.",
+              "ro": "„Editează” pe rând, coordonata, „Salvează” pe rând, apoi „Salvează”-ul fișei.",
               "en": "„Editează” on the row, the coordinate, the row's „Salvează”, then „Salvează” at the bottom."
             }
           ]

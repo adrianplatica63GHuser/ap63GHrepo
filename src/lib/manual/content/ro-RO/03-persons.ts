@@ -40,7 +40,7 @@ Fiecare rând are patru butoane:
 | „Previzualizare” | Arată, lângă listă, un rezumat scurt: numele, apoi porecla și CNP-ul, apoi „născut:” (sau „născută:”) cu data și locul nașterii. |
 | „Incursiune” | Arată, lângă listă, fișa „Interacțiuni” a persoanei (secțiunea [[persons-interactions]]). |
 | „Legături” | Arată, lângă listă, legăturile persoanei, numai pentru citit (secțiunea [[links-related]]). |
-| „Deschide” | Deschide ecranul persoanei. |
+| numele, link | Deschide ecranul persoanei; Ctrl + clic, într-o filă nouă. |
 
 Un al doilea clic pe același buton închide ce a deschis.
 
@@ -86,7 +86,7 @@ Singurul lucru cerut este numele: completați cel puțin „Nume” sau „Prenu
 
 Dacă un câmp cerut a rămas gol într-o fișă ascunsă, la salvare fișa reapare, aplicația vă duce la câmpul acela și scrie dedesubt ce lipsește. Nu se salvează nimic până nu îl completați.
 
-Mai târziu, o persoană se modifică pe ecranul ei: schimbați câmpurile și apăsați „Salvează”. Fiecare salvare face o versiune nouă (secțiunea [[links-versions]]). Ca să ștergeți o persoană, apăsați „Șterge” și răspundeți „Da” la întrebarea „Ștergeți persoana?”; ștergerea nu se poate anula.
+Mai târziu, o persoană se modifică pe ecranul ei, fișă cu fișă: „Editează” pe fișa de schimbat, câmpurile, apoi „Salvează”-ul fișei (secțiunea [[start-read-edit]]). Fiecare salvare face o versiune nouă (secțiunea [[links-versions]]). Ca să ștergeți o persoană, apăsați „Șterge” și răspundeți „Da” la întrebarea „Ștergeți persoana?”; ștergerea nu se poate anula.
 ### 3.2.3 Tipul profesional și relația cu firma {#persons-add-profession}
 
 În fișa „Identitate”, două câmpuri spun cine este persoana pentru firmă:
@@ -94,7 +94,7 @@ Mai târziu, o persoană se modifică pe ecranul ei: schimbați câmpurile și a
 - **„Tip profesional”** — profesia ei, una singură: Notar, Avocat, Executor judecătoresc, Topograf / expert cadastral, Evaluator, Expert tehnic / judiciar, Agent imobiliar, Arhitect / proiectant, Constructor / meșter, Funcționar public, Contabil / consultant fiscal, Fermier / arendaș sau Persoană privată. O firmă, o instituție sau un ONG nu este persoană fizică: se adaugă ca persoană juridică (secțiunea [[companies-add]]);
 - **„Relația cu firma”** — de ce este persoana în arhivă, cu câte o bifă pentru fiecare: Client, Vânzător de teren, Cumpărător, Moștenitor / familie, Colaborator, Vecin, Contact instituțional. O persoană poate avea mai multe bife.
 
-Amândouă se salvează cu „Salvează”. „Tip profesional” intră în versiunile persoanei; „Relația cu firma” nu: pe o versiune mai veche arată bifele de acum, iar sub ea scrie „Relația cu firma nu are versiuni: arată valorile de acum.”. Listele de valori se schimbă în „Date de referință” (secțiunea [[admin-reference-data]]).
+Amândouă stau în „Identitate” și se salvează cu „Salvează”-ul ei. „Tip profesional” intră în versiunile persoanei; „Relația cu firma” nu: pe o versiune mai veche arată bifele de acum, iar sub ea scrie „Relația cu firma nu are versiuni: arată valorile de acum.”. Listele de valori se schimbă în „Date de referință” (secțiunea [[admin-reference-data]]).
 
 ## 3.3 O persoană dintr-o carte de identitate {#persons-id-card}
 
@@ -133,7 +133,7 @@ Cum citește aplicația o carte de identitate la importul unui dosar întreg, ve
 
 CNP-ul este ceea ce folosește aplicația ca să recunoască o persoană, de exemplu când citește o carte de identitate (secțiunea [[persons-id-card-document]]). De aceea, odată salvat, nu se mai poate schimba.
 
-Câmpul „CNP” arată ca oricare altul și puteți scrie în el. Când treceți cu mouse-ul peste el sau intrați în el cu tastatura, apare nota „CNP-ul nu poate fi modificat odată setat — ștergeți și creați din nou pentru a-l schimba”; Escape o ascunde. Dacă schimbați totuși CNP-ul și apăsați „Salvează”, sub formular apare, cu roșu, aceeași frază, „Modificări nesalvate” rămâne afișat, iar CNP-ul păstrat este cel vechi.
+Pe o persoană salvată, „CNP” se citește ca orice câmp; după „Editează” pe „Identitate” arată ca oricare altul și puteți scrie în el. Când treceți cu mouse-ul peste el sau intrați în el cu tastatura, apare nota „CNP-ul nu poate fi modificat odată setat — ștergeți și creați din nou pentru a-l schimba”; Escape o ascunde. Dacă schimbați totuși CNP-ul și apăsați „Salvează”, sub formular apare, cu roșu, aceeași frază, „Modificări nesalvate” rămâne afișat, iar CNP-ul păstrat este cel vechi.
 
 Un CNP greșit se îndreaptă așa: ștergeți persoana și adăugați-o din nou, cu CNP-ul corect.
 
@@ -141,9 +141,9 @@ Un CNP greșit se îndreaptă așa: ștergeți persoana și adăugați-o din nou
 
 În fișa „Identitate”, sub „Data nașterii”, stă bifa „Decedat”, nebifată la început. Lângă ea, „Data decesului” se poate completa doar cât timp „Decedat” este bifat; data nu este obligatorie.
 
-1. Deschideți persoana și bifați „Decedat”.
+1. Deschideți persoana, apăsați „Editează” pe „Identitate” și bifați „Decedat”.
 2. Scrieți „Data decesului”, dacă o știți.
-3. Apăsați „Salvează”.
+3. Apăsați „Salvează”, sub câmpurile fișei.
 
 După deces, „Vârstă” nu mai crește: arată vârsta la moarte, urmată de „†” — de exemplu „76 †”. O persoană bifată „Decedat”, dar fără dată, are „Vârstă” „—”. În liste, „†” apare după numele ei.
 
@@ -220,8 +220,8 @@ Aveți în față cartea de identitate a unei persoane care nu este încă în a
 
 Aflați dintr-un certificat de moștenitor că o persoană din arhivă a murit.
 
-1. Găsiți persoana în lista „Persoane Fizice” și apăsați „Deschide” (secțiunea [[persons-list]]).
-2. În „Identitate”, bifați „Decedat” și scrieți „Data decesului” (secțiunea [[persons-identity-death]]).
+1. Găsiți persoana în lista „Persoane Fizice” și apăsați numele ei (secțiunea [[persons-list]]).
+2. Apăsați „Editează” pe „Identitate”, bifați „Decedat” și scrieți „Data decesului” (secțiunea [[persons-identity-death]]).
 3. „Salvează”. „Vârstă” arată acum vârsta la deces, cu „†”.
 4. Înapoi în listă, „†” stă după numele ei.
 

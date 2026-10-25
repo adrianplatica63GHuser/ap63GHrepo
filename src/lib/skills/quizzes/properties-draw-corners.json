@@ -16,7 +16,7 @@
           "section": "properties-corners-draw",
           "ro": {
             "question": "Ați desenat colțurile unui teren pe fișa „Hartă” și ați închis forma. Unde le regăsiți și ce mai faceți ca să rămână?",
-            "explanation": "Colțurile desenate apar în „Puncte de contur”, dar rămân doar după ce salvați proprietatea cu „Salvează” de jos."
+            "explanation": "Colțurile desenate apar în „Puncte de contur”, dar rămân doar după ce apăsați „Salvează”-ul fișei, sub tabel."
           },
           "en": {
             "question": "You drew a plot's corners on the „Hartă” tile and closed the shape. Where do you find them, and what else do you do so that they stay?",
@@ -32,7 +32,7 @@
             {
               "id": "o2",
               "correct": true,
-              "ro": "Apar în „Puncte de contur”; apăsați „Salvează” de jos, ca să rămână.",
+              "ro": "Apar în „Puncte de contur”; apăsați „Salvează”-ul fișei, ca să rămână.",
               "en": "They appear in „Puncte de contur” (boundary points); press the „Salvează” at the bottom so that they stay."
             },
             {
@@ -86,17 +86,17 @@
           "section": "properties-corners-table",
           "ro": {
             "question": "În „Puncte de contur” ați corectat un colț cu „Editează” și ați apăsat „Salvează” pe rândul lui. Este colțul nou scris în arhivă?",
-            "explanation": "Nu încă. „Salvează” de pe rând nu scrie nimic în arhivă: colțurile se salvează abia cu „Salvează” de jos, împreună cu restul proprietății."
+            "explanation": "Nu încă. „Salvează” de pe rând nu scrie nimic în arhivă: colțurile se salvează abia cu „Salvează”-ul fișei „Puncte de contur”, sub tabel."
           },
           "en": {
             "question": "In „Puncte de contur” you corrected a corner with „Editează” and pressed „Salvează” on its row. Is the new corner written to the archive?",
-            "explanation": "Not yet. A row's „Salvează” writes nothing to the archive: the corners are saved only with the „Salvează” at the bottom, together with the rest of the property."
+            "explanation": "Not yet. A row's „Salvează” writes nothing to the archive: the corners are saved only with the „Salvează” of the „Puncte de contur” tile, under the table."
           },
           "options": [
             {
               "id": "o1",
               "correct": true,
-              "ro": "Nu încă: se scrie abia cu „Salvează” de jos, cu restul proprietății.",
+              "ro": "Nu încă: se scrie abia cu „Salvează”-ul fișei, sub tabel.",
               "en": "Not yet: it is written only with the „Salvează” at the bottom, with the rest of the property."
             },
             {
@@ -108,7 +108,7 @@
             {
               "id": "o3",
               "correct": false,
-              "ro": "Da, dar suprafața calculată se schimbă abia la „Salvează” de jos.",
+              "ro": "Da, dar suprafața calculată se schimbă abia la „Salvează”-ul fișei.",
               "en": "Yes, but the calculated area changes only at the „Salvează” at the bottom."
             }
           ]
@@ -184,7 +184,7 @@
             {
               "id": "o4",
               "correct": false,
-              "ro": "Nimic până la „Salvează” de jos; abia atunci se redesenează.",
+              "ro": "Nimic până la „Salvează”-ul fișei; abia atunci se redesenează.",
               "en": "Nothing until the „Salvează” at the bottom; only then is it redrawn."
             }
           ]
@@ -345,11 +345,11 @@
           "section": "properties-example-corner",
           "ro": {
             "question": "Topograful vă trimite coordonata corectă a unui colț greșit. Care este calea întreagă ca terenul să rămână corectat?",
-            "explanation": "Apăsați „Editează” pe rândul colțului în „Puncte de contur”, scrieți coordonata, „Salvează” pe rând, apoi „Salvează” jos; versiunea de dinainte păstrează colțul vechi."
+            "explanation": "Apăsați „Editează” pe rândul colțului în „Puncte de contur”, scrieți coordonata, „Salvează” pe rând, apoi „Salvează”-ul fișei; versiunea de dinainte păstrează colțul vechi."
           },
           "en": {
             "question": "The surveyor sends you the correct coordinate of a wrong corner. What is the whole path for the plot to stay corrected?",
-            "explanation": "Press „Editează” on the corner's row in „Puncte de contur”, type the coordinate, the row's „Salvează”, then „Salvează” at the bottom; the version before keeps the old corner."
+            "explanation": "Press „Editează” on the corner's row in „Puncte de contur”, type the coordinate, the row's „Salvează”, then the tile's „Salvează”; the version before keeps the old corner."
           },
           "options": [
             {
@@ -367,7 +367,7 @@
             {
               "id": "o3",
               "correct": true,
-              "ro": "„Editează” pe rând, coordonata, „Salvează” pe rând, apoi „Salvează” jos.",
+              "ro": "„Editează” pe rând, coordonata, „Salvează” pe rând, apoi „Salvează”-ul fișei.",
               "en": "„Editează” on the row, the coordinate, the row's „Salvează”, then „Salvează” at the bottom."
             },
             {

@@ -53,13 +53,15 @@ Pe „Legături”, alegeți rândul cu butonul rotund din stânga lui, apoi ap�
 
 ## 7.2 Fișa „Legături” {#links-related}
 
-Fiecare persoană fizică, firmă, proprietate și act are fișa „Legături”: tot ce este legat de obiect, într-un singur loc (Figura [[fig-links-related]]). Dacă nu o vedeți, bifați „Legături” printre fișele din capul ecranului (secțiunea [[start-tiles]]). Când nu e legat nimic, fișa spune „Nimic corelat încă.”.
+Fiecare persoană fizică, firmă, proprietate și act are fișa „Legături”: tot ce este legat de obiect, într-un singur loc (Figura [[fig-links-related]]). Dacă nu o vedeți, bifați „Legături” în „Panouri” (secțiunea [[start-tiles]]). Când nu e legat nimic, fișa spune „Nimic corelat încă.”.
 
-Rândurile vin mereu în aceeași ordine — persoanele fizice, persoanele juridice, proprietățile, actele — cu o linie subțire între două feluri și pictograma felului la începutul rândului. Fiecare rând stă pe o singură linie:
+Rândurile vin mereu în aceeași ordine — persoanele fizice, persoanele juridice, proprietățile, actele —, iar fiecare fel începe cu un titlu subțire: numele lui, ca în bara laterală, și, la dreapta, câte rânduri are. Un fel fără rânduri nu are titlu. Pictograma felului stă la începutul rândului. Fiecare rând stă pe o singură linie:
 
-- o persoană sau o firmă: numele și, în paranteză, rolul;
-- o proprietate: denumirea și, când legătura are un rol, rolul în paranteză;
-- un act: eticheta scurtă și, în paranteză, tipul actului.
+- o persoană sau o firmă: numele și rolul;
+- o proprietate: denumirea și, când legătura are un rol, rolul;
+- un act: eticheta scurtă și tipul actului.
+
+Rolul — la un act, tipul — stă într-o etichetă mică, la marginea dreaptă a rândului, așa că etichetele se aliniază de sus în jos, iar un nume lung se taie cu trei puncte înaintea rolului.
 
 Pe rânduri pot sta câteva butoane:
 

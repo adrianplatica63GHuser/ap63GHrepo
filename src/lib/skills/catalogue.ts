@@ -147,8 +147,8 @@ export const SKILLS: readonly Skill[] = [
       en: "Sign in and find your way through the sidebar",
     },
     description: {
-      ro: "Te conectezi, citești tabloul de bord, deschizi orice ecran din bara laterală, te întorci cu „Înapoi” și revii cu „Înainte”, regăsești ce ai văzut în „Recente”; îți schimbi parola și ieși.",
-      en: "Sign in, read the dashboard, open any screen from the sidebar, go back with „Înapoi” and return with „Înainte”, find what you saw in „Recente”; change your password and sign out.",
+      ro: "Te conectezi, citești tabloul de bord, deschizi orice ecran din bara laterală, te întorci cu „Înapoi” și revii cu „Înainte”, regăsești ce ai văzut în „Recente”; din meniul contului alegi limba și „Noapte”, și ieși.",
+      en: "Sign in, read the dashboard, open any screen from the sidebar, go back with „Înapoi” and return with „Înainte”, find what you saw in „Recente”; in the account menu choose the language and „Noapte”, and sign out.",
     },
     predecessors: [],
     screens: ["dashboard"],
@@ -176,12 +176,12 @@ export const SKILLS: readonly Skill[] = [
     level: 1,
     path: "workspace",
     name: {
-      ro: "Citește ecranul unui obiect: fișele și bara de butoane",
-      en: "Read an object's screen: its tiles and its button bar",
+      ro: "Citește ecranul unui obiect și modifică-l fișă cu fișă",
+      en: "Read an object's screen and change it one tile at a time",
     },
     description: {
-      ro: "Recunoști fișele unei persoane, ale unei proprietăți sau ale unui act, le alegi cu bifele, găsești ID-ul de sistem, citești numele butoanelor cu pictogramă și folosești creionul, salvarea și coșul.",
-      en: "Recognise the tiles of a person, a property or a document, pick them with the tick boxes, find the system ID, read the names of the icon buttons, and use the pencil, save and bin.",
+      ro: "Recunoști fișele unei persoane, ale unei proprietăți sau ale unui act, le alegi din „Panouri”, citești o fișă salvată, o deschizi cu „Editează”, o păstrezi cu „Salvează” sau o pui la loc cu „Renunță”, deschizi o fișă goală și câmpurile goale, găsești ID-ul de sistem și folosești coșul.",
+      en: "Recognise the tiles of a person, a property or a document, pick them in „Panouri”, read a saved tile, open it with „Editează”, keep it with „Salvează” or put it back with „Renunță”, open an empty tile and the empty fields, find the system ID and use the bin.",
     },
     predecessors: [],
     screens: DETAIL_SCREENS,
@@ -198,8 +198,9 @@ export const SKILLS: readonly Skill[] = [
       "TC-ICON-02",
       "TC-ICON-07",
       "TC-FOLD-01",
+      "TC-PERS-15", // 40.77: a tile read, „Editează", „Salvează", „Renunță"
     ],
-    manual: ["start-tiles", "intro-objects", "start-preview", "admin-settings-account"],
+    manual: ["start-tiles", "start-read-edit", "intro-objects", "start-preview", "admin-settings-account"],
   },
   {
     key: "workspace-read-help",

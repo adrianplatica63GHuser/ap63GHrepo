@@ -281,11 +281,11 @@
           "section": "links-related",
           "ro": {
             "question": "Pe ecranul unei persoane fizice nu vedeți fișa „Legături”, dar vreți să previzualizați terenul de care este legată. Ce faceți?",
-            "explanation": "Dacă nu vedeți „Legături”, bifați-o printre fișele din capul ecranului; pe rândul unui obiect legat, „Previzualizare” îl deschide alături."
+            "explanation": "Dacă nu vedeți „Legături”, bifați-o în „Panouri”; pe rândul unui obiect legat, „Previzualizare” îl deschide alături."
           },
           "en": {
             "question": "On a natural person's screen you cannot see the „Legături” tile, but you want to preview the plot linked to them. What do you do?",
-            "explanation": "If you cannot see „Legături”, tick it among the tiles at the top of the screen; on a linked object's row, „Previzualizare” opens it beside the screen."
+            "explanation": "If you cannot see „Legături”, tick it in „Panouri”; on a linked object's row, „Previzualizare” opens it beside the screen."
           },
           "options": [
             {
@@ -682,8 +682,8 @@
             {
               "id": "o2",
               "correct": true,
-              "ro": "În fișa „Părți”, care trebuie întâi bifată în capul ecranului.",
-              "en": "In the „Părți” tile, which must first be ticked at the top of the screen."
+              "ro": "În fișa „Părți”, care trebuie întâi bifată în „Panouri”.",
+              "en": "In the „Părți” tile, which must first be ticked in „Panouri”."
             },
             {
               "id": "o3",
