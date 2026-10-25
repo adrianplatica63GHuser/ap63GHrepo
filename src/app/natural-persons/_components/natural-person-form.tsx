@@ -211,12 +211,16 @@ const NP_EDIT_PAYLOAD: Record<NpEditTile, readonly (keyof ReturnType<typeof toAp
   contact: ["personalPhone1", "personalPhone2", "workPhone", "personalEmail1", "personalEmail2", "workEmail"],
   addresses: ["addresses", "correspondenceSameAsHome"],
 };
-/** Where each tile's first field is, for the focus „Editează" puts there. */
+/**
+ * Where each tile's first field is, for the focus „Editează" puts there: the tile's `data-panel`. Kept as the bare
+ * name, not as a selector, so the only `data-panel="…"` in this file is the tile itself — tiles.test and
+ * cnp-lock-hint.test cut the form into its tiles at those attributes.
+ */
 const NP_EDIT_PANEL: Record<NpEditTile, string> = {
-  identity: '[data-panel="identity"]',
-  idCard: '[data-panel="id-card"]',
-  contact: '[data-panel="contact"]',
-  addresses: '[data-panel="addresses.HOME"]',
+  identity: "identity",
+  idCard: "id-card",
+  contact: "contact",
+  addresses: "addresses.HOME",
 };
 /** The tile 40.64's one-line panels and 40.71's links belong to. */
 const NP_EDIT_OF: Readonly<Record<string, NpEditTile>> = {
@@ -824,7 +828,7 @@ export function NaturalPersonForm({
     router.refresh();
     return true;
   };
-  const editTile = (tile: NpEditTile) => tileEditing.edit(tile, NP_EDIT_PANEL[tile]);
+  const editTile = (tile: NpEditTile) => tileEditing.edit(tile, `[data-panel="${NP_EDIT_PANEL[tile]}"]`);
   const editButton = (tile: NpEditTile, title: string) =>
     canEditTiles && editingTile !== tile ? <TileEditButton tile={tile} title={title} onEdit={() => editTile(tile)} /> : null;
   const editBar = (tile: NpEditTile) =>

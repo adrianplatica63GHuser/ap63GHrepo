@@ -121,7 +121,8 @@ describe("each screen draws the line", () => {
   it("the list tiles, „Interacțiuni”, the addresses, „Părți” and „Pagini” take a subtitle", () => {
     expect(read("src", "components", "tiles", "list-tile.tsx")).toContain("<TileTitle title={title} subtitle={subtitle} />");
     expect(read("src", "components", "tiles", "interactions-tile.tsx")).toContain("<TileTitle title={title} subtitle={subtitle} />");
-    expect(read("src", "components", "address", "address-block.tsx")).toContain("<TileTitle title={title} subtitle={subtitle} />");
+    // Slice 40.72: the address tile's title also carries its „Editează" (`titleAction`).
+    expect(read("src", "components", "address", "address-block.tsx")).toContain("<TileTitle title={title} subtitle={subtitle} action={titleAction} />");
     expect(read("src", "app", "documents", "_components", "pages-panel.tsx")).toContain("<TileSubtitle text={subtitle} />");
   });
 });

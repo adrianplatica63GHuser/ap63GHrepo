@@ -254,7 +254,8 @@ describe("THE WINDOW DECIDES HOW MANY PANELS FIT, NEVER HOW WIDE ANYTHING IS", (
     expect(panels).not.toMatch(/PANEL_STYLE\}/);
     // Slice #37.27: the same-as-home checkbox is the home address panel's last line, not a panel of its own.
     expect(panels).not.toMatch(/data-panel="correspondence"/);
-    expect(panels).toMatch(/prefix="addresses\.HOME"[\s\S]*?footer=\{\s*<Controller[\s\S]*?name="correspondenceSameAsHome"/);
+    // Slice 40.72: the footer is drawn while the tile is open (in the read view the address reads as text).
+    expect(panels).toMatch(/prefix="addresses\.HOME"[\s\S]*?footer=\{reading\("addresses"\) \? undefined : \(\s*<Controller[\s\S]*?name="correspondenceSameAsHome"/);
     expect(ADDRESS_BLOCK).toMatch(/\{footer && <div/);
     expect(panels.match(/<AddressBlock<FormValues>/g) ?? []).toHaveLength(2);
     // Slice #37.17: as tiles, the page's tile row carries the width and the form is `contents`.
