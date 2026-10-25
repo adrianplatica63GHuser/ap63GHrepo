@@ -12,7 +12,7 @@
 
 import { test, expect, type Locator } from "../helpers/test";
 import { E2E_MARKER, createCompany, removeLeftovers, removeRecord } from "../helpers/records";
-import { showTile } from "../helpers/tiles";
+import { openEmptyTile, showTile } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}PERS-09`;
 const NAME = `${MARK} SRL`;
@@ -32,6 +32,8 @@ test.describe("TC-PERS-09 — O firmă cu telefonul și e-mailul ei, păstrate d
       await expect(page.getByRole("heading", { name: NAME })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText("v 0", { exact: true }).first()).toBeAttached({ timeout: 30_000 });
       const tile = await showTile(page, "Reprezentanți și contact");
+      // 40.64: a new firm's empty tile is one line; „Adaugă" opens it.
+      await openEmptyTile(page, "contactPersons");
       // By the box, not the label: an error inside the <label> joins the box's
       // accessible name („E-mail firmă Adresa de e-mail nu pare…").
       await expect(tile.getByText("Telefon firmă", { exact: true })).toBeVisible();

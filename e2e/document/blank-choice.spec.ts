@@ -22,7 +22,7 @@
 
 import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createSaleContract, removeLeftovers, removeRecord } from "../helpers/records";
-import { pressTileButton } from "../helpers/tiles";
+import { openEmptyTiles, pressTileButton } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}DOC-06`;
 const SHOTS = "playwright-report/blank-choice";
@@ -99,6 +99,8 @@ test.describe("TC-DOC-06 — „fără valoare” în cursive, fără liniuțe",
       await language(page, "ro-RO");
       await page.goto(`/documents/${id}`);
       await pressTileButton(page, "Toate", { timeout: 30_000 });
+      // 40.64: a new contract\'s empty tiles are one line each; „Adaugă" opens them.
+      await openEmptyTiles(page);
       await expect(dropdowns(page)).toHaveCount(36, { timeout: 30_000 });
       for (const box of await closedBoxes(page)) {
         expect(box).toEqual({ shown: "fără valoare", style: "italic", blank: "fără valoare" });
@@ -135,6 +137,8 @@ test.describe("TC-DOC-06 — „fără valoare” în cursive, fără liniuțe",
       await language(page, "en-GB");
       await page.goto(`/documents/${id}`);
       await pressTileButton(page, "All", { timeout: 30_000 });
+      // 40.64: a new contract\'s empty tiles are one line each; „Adaugă" opens them.
+      await openEmptyTiles(page);
       await expect(dropdowns(page)).toHaveCount(36, { timeout: 30_000 });
       for (const box of await closedBoxes(page)) {
         expect(box).toEqual({ shown: "no value", style: "italic", blank: "no value" });

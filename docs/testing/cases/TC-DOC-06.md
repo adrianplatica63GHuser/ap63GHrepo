@@ -50,6 +50,10 @@ globală for `TC-DOC-06` finds nothing.
 
 ## Notes from the runs
 
+**2026-10-25 — Slice 40.64.** On a saved record a form tile with nothing in it is one line — its title, „necompletat" and
+„Adaugă". Where a step reads or fills a field in such a tile, the person presses „Adaugă" on it first; the spec does it
+through `openEmptyTile` / `openEmptyTiles` (e2e/helpers/tiles.ts). Not driven by hand first.
+
 **2026-10-02 — run 1, `driven` (Slice #37.55).** Driven in Chrome on Windows (Claude in Chrome,
 the window maximised, 2016 px wide) against `npm run dev` on 3000; the open lists photographed
 with a screenshot of the screen, since a page screenshot does not include a dropdown's list. This

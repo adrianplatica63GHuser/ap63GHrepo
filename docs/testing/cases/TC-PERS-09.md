@@ -44,6 +44,10 @@ The window is 1366 × 900.
 
 ## Notes from the runs
 
+**2026-10-25 — Slice 40.64.** On a saved record a form tile with nothing in it is one line — its title, „necompletat" and
+„Adaugă". Where a step reads or fills a field in such a tile, the person presses „Adaugă" on it first; the spec does it
+through `openEmptyTile` / `openEmptyTiles` (e2e/helpers/tiles.ts). Not driven by hand first.
+
 **2026-10-07 — Slice #38.31, `automated` the same day.** Written with the change and translated into
 `e2e/person/firm-phone-email.spec.ts`. The spec creates the company through its route, with a
 `TC-E2E-PERS-09` name. The runner's run is in #38.31's handover.

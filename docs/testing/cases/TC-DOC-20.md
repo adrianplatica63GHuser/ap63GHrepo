@@ -46,6 +46,10 @@ Delete the three documents (`DELETE /api/documents/<id>`).
 
 ## Notes from the runs
 
+**2026-10-25 — Slice 40.64.** On a saved record a form tile with nothing in it is one line — its title, „necompletat" and
+„Adaugă". Where a step reads or fills a field in such a tile, the person presses „Adaugă" on it first; the spec does it
+through `openEmptyTile` / `openEmptyTiles` (e2e/helpers/tiles.ts). Not driven by hand first.
+
 **2026-10-08 — Slice #38.34, `automated` the same day.** Written with the change and translated into
 `e2e/document/addendum-tiles.spec.ts`, with `TC-E2E-DOC-20` names. The runner's run is in #38.34's
 handover.

@@ -16,7 +16,7 @@
 
 import { test, expect, type Locator, type Page } from "../helpers/test";
 import { E2E_MARKER, createDocumentOfType, removeLeftovers, removeRecord } from "../helpers/records";
-import { showTile } from "../helpers/tiles";
+import { openEmptyTiles, showTile } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}DOC-20`;
 const ACT = `${MARK} Act`;
@@ -53,6 +53,8 @@ test.describe("TC-DOC-20 — actul adițional și actul pe care îl modifică", 
       await page.goto(`/documents/${act}`);
       await expect(page.getByRole("heading", { name: ACT })).toBeVisible({ timeout: 30_000 });
       for (const name of ["Actul modificat", "Ce modifică", "Părți"]) await showTile(page, name);
+      // 40.64: a new act's empty tiles are one line each; „Adaugă" opens them.
+      await openEmptyTiles(page);
       const general = page.locator('[data-panel="general"]');
       for (const label of ["Notariat", "Nr. act autentic", "Data autentificării", "Calitate exemplar", "Exemplare emise", "Onorariu notarial"]) {
         await expect(general.getByText(label, { exact: true }).first()).toBeVisible();
