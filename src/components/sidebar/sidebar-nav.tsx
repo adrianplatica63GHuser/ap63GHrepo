@@ -481,7 +481,8 @@ export function SidebarNav() {
         isCollapsed ? "w-14" : "w-56",
       ].join(" ")}
     >
-      {/* ── App name + „Noapte" | the flags | collapse button ──────────── */}
+      {/* ── App name + „Noapte" | „RO | EN" | collapse button ──────────── */}
+      {/* Slice 40.58: the flags are „RO | EN", one two-part control, centred where the flags stood. */}
       {/* Slice 40.28 — three parts (Adrian, 2026-10-22: „GA40 … higher and the checkbox … under this name and aligned
           at the left with it"; the flags „on top of each other, and aligned horizontally to the middle of the left
           navigation panel"; the collapse button „keeps its position"). At the left a column, „GA40" over the „Noapte"
@@ -505,7 +506,7 @@ export function SidebarNav() {
         )}
         {!isCollapsed && (
           <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" data-sidebar-flags="">
-            <LocaleToggle small stacked />
+            <LocaleToggle />
           </div>
         )}
         {/* #37.42 (A002): PanelLeftOpen / PanelLeftClose. */}

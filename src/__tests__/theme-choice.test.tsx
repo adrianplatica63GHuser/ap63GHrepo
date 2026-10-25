@@ -98,12 +98,10 @@ describe("where the choice is read and drawn", () => {
   it("the sidebar's under „GA40”, the flags stacked apart from it; in „Setări” under „Limba” (40.19 Ask first 3, 40.28)", () => {
     const sidebar = read("src", "components", "sidebar", "sidebar-nav.tsx");
     expect(sidebar).toMatch(/GA40\s*<\/span>\s*<ThemeToggle compact \/>\s*<\/div>/);
-    expect(sidebar).toMatch(/data-sidebar-flags="">\s*<LocaleToggle small stacked \/>/);
+    expect(sidebar).toMatch(/data-sidebar-flags="">\s*<LocaleToggle \/>/); // 40.58: „RO | EN" where the flags stood
     expect(sidebar).toContain('"absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"');
-    const flags = read("src", "components", "locale-toggle.tsx");
-    expect(flags).toContain("small: { width: 24, height: 16 }");
-    expect(flags).toContain("regular: { width: 30, height: 20 }");
-    expect(flags).toContain('stacked ? "flex flex-col items-center gap-0.5" : "inline-flex items-center gap-1"');
+    // 40.58: no flags — „RO | EN" (locale-toggle.test.tsx); was 24 × 16 px, stacked (40.19, 40.28).
+    expect(read("src", "components", "locale-toggle.tsx")).not.toContain("https://flagcdn");
     const settings = read("src", "app", "admin", "settings", "_components", "settings-view.tsx");
     expect(settings).toMatch(/<LanguageChoice \/>\s*<AppearanceChoice \/>/);
   });

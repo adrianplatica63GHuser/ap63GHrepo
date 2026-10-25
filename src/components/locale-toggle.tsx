@@ -1,79 +1,44 @@
 "use client";
 
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { SUPPORTED_LOCALES, setLocaleCookie } from "@/lib/i18n/locale";
-
-/** Flag image URL and accessible label per locale. */
-const LOCALE_META: Record<string, { flagSrc: string; label: string }> = {
-  "en-GB": {
-    flagSrc: "https://flagcdn.com/w40/gb.png",
-    label: "English",
-  },
-  "ro-RO": {
-    flagSrc: "https://flagcdn.com/w40/ro.png",
-    label: "Română",
-  },
-};
+import { SegmentedSwitch } from "@/components/segmented-switch";
+import { setLocaleCookie, type SupportedLocale } from "@/lib/i18n/locale";
 
 /**
- * Flag-based locale switcher.
+ * „RO | EN" — the language switch.                                                                     (Slice 40.58)
  *
- * - Active (current) locale: flag shown in greyscale + faded, button disabled.
- * - Inactive locale: flag in full colour, clickable with a subtle scale-up.
+ * Adrian, 2026-10-24 (GA40-Design-Improvements.docx, chapter 8a and „Choices only you can make"): „RO | EN", not the
+ * flags. Two words in one two-part control (`SegmentedSwitch`): the language in use filled in slate, the other
+ * outlined. No image and no request to any outside website — the flags came from flagcdn.com, and the language in use
+ * was drawn grey, faded and disabled, so it read as „off".
  *
- * Clicking writes the locale cookie and calls router.refresh() so server
- * components re-render with the new locale.
+ * RO first, then EN (Ask first 2) — this overturns 40.28's English on top, which followed SUPPORTED_LOCALES' order;
+ * the order here is the switch's own. One look for the sidebar and the login and sign-up pages: 40.19's `small` and
+ * 40.28's `stacked` went with the flags (Ask first 3).
  *
- * Slice 40.19: `small` is the sidebar's — 24 × 16 px (Adrian: „we have to make the flags a little bit smaller"); the
- * login and signup pages keep 30 × 20.
- * Slice 40.28: `stacked` is the sidebar's too — the two flags one above the other, in SUPPORTED_LOCALES' order (English
- * on top), 2 px apart; the login and signup pages keep them side by side.
+ * Pressing the other language writes the locale cookie and calls router.refresh(), so server components re-render in
+ * it.
  */
-export const FLAG_PX = { regular: { width: 30, height: 20 }, small: { width: 24, height: 16 } } as const;
+const ORDER: readonly { locale: SupportedLocale; text: string; label: string }[] = [
+  { locale: "ro-RO", text: "RO", label: "Română" },
+  { locale: "en-GB", text: "EN", label: "English" },
+];
 
-export function LocaleToggle({ small = false, stacked = false }: { small?: boolean; stacked?: boolean }) {
-  const flag = small ? FLAG_PX.small : FLAG_PX.regular;
+export function LocaleToggle() {
+  const t = useTranslations("settings.account");
   const currentLocale = useLocale();
   const router = useRouter();
-
-  const switchTo = (locale: string) => {
-    if (locale === currentLocale) return;
-    setLocaleCookie(locale);
-    router.refresh();
-  };
-
   return (
-    <div className={stacked ? "flex flex-col items-center gap-0.5" : "inline-flex items-center gap-1"}>
-      {SUPPORTED_LOCALES.map((locale) => {
-        const meta = LOCALE_META[locale] ?? { flagSrc: "", label: locale };
-        const isActive = currentLocale === locale;
-        return (
-          <button
-            key={locale}
-            type="button"
-            onClick={() => switchTo(locale)}
-            disabled={isActive}
-            aria-pressed={isActive}
-            title={meta.label}
-            aria-label={meta.label}
-            className={[
-              "rounded p-0.5 transition-all",
-              isActive
-                ? "grayscale opacity-50 cursor-default"
-                : "cursor-pointer hover:scale-110",
-            ].join(" ")}
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={meta.flagSrc}
-              alt={meta.label}
-              style={{ width: flag.width, height: flag.height, objectFit: "fill" }}
-              className="block rounded-sm"
-            />
-          </button>
-        );
-      })}
-    </div>
+    <SegmentedSwitch
+      label={t("language")}
+      name="locale"
+      options={ORDER.map((o) => ({ value: o.locale, text: o.text, label: o.label }))}
+      value={currentLocale as SupportedLocale}
+      onChange={(locale) => {
+        setLocaleCookie(locale);
+        router.refresh();
+      }}
+    />
   );
 }

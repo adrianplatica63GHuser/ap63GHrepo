@@ -337,6 +337,10 @@ const ALLOW: Record<string, Allowed[]> = {
     ["A001", "<span className={`flex items-center ${isCollapsed ? \"\" :"],
     ["A001", "<span className={`flex items-center ${isCollapsed ? \"\" :"],
   ],
+  // Slice 40.58: a two-part switch's words — „RO | EN", from 40.59 „Zi | Noapte" — the choices themselves.
+  "src/components/segmented-switch.tsx": [
+    ["A043", "{o.text}"],
+  ],
   "src/components/tiles/tile-selector.tsx": [
     ["A020", "{t(\"allUp\")}"], // Slice 40.40: „Toate sus", left of „Toate", words like it
     ["A020", "{t(\"all\")}"],
