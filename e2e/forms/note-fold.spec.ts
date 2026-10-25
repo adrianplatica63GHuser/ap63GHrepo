@@ -124,6 +124,8 @@ test.describe("TC-FOLD-01 — „Note” și MRZ lungi se strâng la cinci rând
 
       // Steps 4–5 — the Property's „Note": one paragraph, no line break, folds as well.
       await page.goto(`/properties/${ids[1].id}`);
+      // Slice 40.74: a saved property reads as text; the note folds in its box, so „Identificare cadastrală" is opened.
+      await editTile(page, "cadastral");
       await expectFolds(page, "Note", 310);
 
       // Steps 6–7 — the MRZ: five of seven lines; the empty „Note" has no link.

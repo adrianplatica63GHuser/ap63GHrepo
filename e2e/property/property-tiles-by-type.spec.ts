@@ -20,7 +20,7 @@
 
 import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createProperty, removeLeftovers, removeRecord } from "../helpers/records";
-import { closeTiles, openTiles, pressTileButton, TILE_GROUP, tileBox } from "../helpers/tiles";
+import { closeTiles, openTiles, pressTileButton, TILE_GROUP, tileBox, editTile } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}PROP-12`;
 const NAME = `${MARK} Teren agricol`;
@@ -93,6 +93,8 @@ test.describe("TC-PROP-12 — căsuțele fișelor pe care tipul nu le arată", (
       await expectOff(page);
 
       // Step 4 — „Teren construit" on the form, not saved: both enabled; „Adresă" ticked, its tile on screen.
+      // 40.74: the saved property reads as text; „Editează" opens „Identificare cadastrală", where the type is.
+      await editTile(page, "cadastral");
       const select = page.getByRole("combobox").filter({ has: page.locator("option", { hasText: "Teren extravilan" }) });
       await select.selectOption({ label: "Teren construit" });
       for (const name of OFF) {

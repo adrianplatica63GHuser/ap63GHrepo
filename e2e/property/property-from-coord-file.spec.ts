@@ -116,8 +116,9 @@ test.describe("TC-PROP-03 — Proprietate creată dintr-un fișier cu coordonate
       await expect(page).toHaveURL(new RegExp(`/properties/${propertyId}$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: NICKNAME })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText("v 0", { exact: true }).first()).toBeAttached({ timeout: 30_000 });
-      await expect(page.locator('[name="tarlaId"] option:checked')).toHaveText("40");
-      await expect(page.locator('[name="parcela"]')).toHaveValue("TC03");
+      // 40.74: the saved property reads as text.
+      await expect(page.locator('[data-read-value="tarlaId"]')).toHaveText("40");
+      await expect(page.locator('[data-read-value="parcela"]')).toHaveText("TC03");
       await expect(page.getByRole("group", { name: "Suprafață calculată (m²)" })).toContainText("600.00", { timeout: 30_000 });
       // 40.57: by its region — the first „Puncte de contur" text is now the box in the closed „Panouri" panel.
       await expect(page.getByRole("region", { name: "Puncte de contur", exact: true })).toBeVisible();

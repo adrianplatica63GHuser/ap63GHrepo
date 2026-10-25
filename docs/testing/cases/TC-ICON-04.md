@@ -49,6 +49,8 @@ Delete the property (`DELETE /api/properties/<id>`, or „Șterge" and „Da").
 
 ## Notes from the runs
 
+**2026-10-25 — Slice 40.74.** „Puncte de contur" is opened with „Editează" before step 1's arrows (they are drawn only while it is open), and step 6's floppy disk is the tile's own „Salvează". The spec follows; not driven by hand first.
+
 **2026-10-01 — run 1, `driven` (Slice #37.45).** Driven in the Claude desktop app's browser pane
 against `npm run dev` on 3000; this file was written from it. The presses were `click()`, the
 hover a dispatched `pointerover`, the coordinates `form_input`.

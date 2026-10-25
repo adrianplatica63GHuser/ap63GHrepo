@@ -48,6 +48,8 @@ Delete the property (`DELETE`).
 
 ## Notes from the runs
 
+**2026-10-25 — Slice 40.74.** The row buttons of steps 2–4 are there once „Editează" has opened „Puncte de contur"; the spec opens it before step 2, at each width. The spec follows; not driven by hand first.
+
 **2026-10-04 — run 1, `driven` (Slice #37.77).** Driven in the desktop app's browser pane, its
 viewport emulated at 1920 × 1200 and then 1366 × 1200, against `npm run dev` on 3000. The pane's
 emulated viewport drops real clicks (FU-290), so a script pressed the buttons and read the boxes.

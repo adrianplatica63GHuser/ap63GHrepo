@@ -20,6 +20,7 @@
  */
 
 import { test, expect, type Page } from "../helpers/test";
+import { editTile } from "../helpers/tiles";
 import { E2E_MARKER, createProperty, removeLeftovers, removeRecord } from "../helpers/records";
 
 const MARK = `${E2E_MARKER}PROP-11`;
@@ -103,6 +104,8 @@ test.describe("TC-PROP-11 — titlul proprietății numește tipul ei", () => {
       await photograph(page, "agricultural");
 
       // Step 4 — „Teren construit" chosen on the form, not saved: the heading and the bubble follow.
+      // 40.74: the saved property reads as text; „Editează" opens „Identificare cadastrală", where the type is.
+      await editTile(page, "cadastral");
       const select = page.getByRole("combobox").filter({ has: page.locator("option", { hasText: "Teren extravilan" }) });
       await select.selectOption({ label: "Teren construit" });
       await expect(h.name).toHaveText("(Teren construit)");

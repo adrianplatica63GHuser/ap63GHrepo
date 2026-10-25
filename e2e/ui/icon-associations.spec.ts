@@ -22,7 +22,7 @@
 
 import { test, expect, type Locator, type Page } from "../helpers/test";
 import { E2E_MARKER, createNaturalPerson, createProperty, removeLeftovers, removeRecord, type RecordKind } from "../helpers/records";
-import { showTile } from "../helpers/tiles";
+import { showTile, editTile, saveTile } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}ICON-03`;
 const PROPERTY = `${MARK} Teren`;
@@ -113,8 +113,10 @@ test.describe("TC-ICON-03 — „Asociază” și „Dezasociază” cu pictogra
       await expect(page.getByRole("dialog")).toHaveCount(0);
 
       // Step 6 — „Poreclă" changed, the floppy disk: the „2 versiuni" chip, step-back icon first.
+      // 40.74: the saved property reads as text — „Editează" on „Identificare cadastrală", its own „Salvează".
+      await editTile(page, "cadastral");
       await page.getByRole("textbox", { name: "Poreclă", exact: true }).fill(`${PROPERTY} v1`);
-      await page.getByRole("button", { name: "Salvează" }).click();
+      await saveTile(page, "cadastral");
       const chip = page.getByRole("button", { name: "2 versiuni" });
       await expect(chip).toBeVisible({ timeout: 30_000 });
       expect(await iconOf(chip)).toBe("lucide-step-back");

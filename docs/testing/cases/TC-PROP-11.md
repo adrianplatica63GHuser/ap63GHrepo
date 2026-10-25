@@ -48,6 +48,8 @@ Delete both properties (`DELETE` on each). Nothing was saved on the form.
 
 ## Notes from the runs
 
+**2026-10-25 — Slice 40.74.** Step 4's type is chosen after „Editează" on „Identificare cadastrală"; a saved property reads as text. The spec follows; not driven by hand first.
+
 **2026-10-05 — run 1, `driven` (Slice #38.03).** Driven in the desktop app's browser pane, its
 viewport emulated at 1920 × 1200, against `npm run dev` on 3000; a script read the heading and pressed
 the ⓘ, and the type was chosen through the select (the emulated viewport drops real clicks, FU-290).

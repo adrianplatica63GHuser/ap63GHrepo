@@ -41,7 +41,7 @@ import fs from "fs";
 import path from "path";
 import * as nav from "../helpers/version-nav";
 import { E2E_MARKER, createProperty, removeLeftovers, removeRecord } from "../helpers/records";
-import { tileBox } from "../helpers/tiles";
+import { editTile, saveTile, tileBox } from "../helpers/tiles";
 
 const IDS_FILE = path.join(__dirname, "../.auth/e2e-ids.json");
 
@@ -82,10 +82,12 @@ test.describe("Versionare Proprietate", () => {
 
   test("salvarea adauga o versiune noua", async ({ page }) => {
     // Edit the nickname field
+    // Slice 40.74: the property reads as text; „Editează" opens „Identificare cadastrală".
+    await editTile(page, "cadastral");
     await page.locator("[name=\"nickname\"]").fill("E2E Edit 1");
 
-    // Click Save
-    await page.getByRole("button", { name: "Salvează", exact: true }).click();
+    // Click the tile's Save
+    await saveTile(page, "cadastral");
 
     // Version label must increment by exactly 1
     await expect(
@@ -97,8 +99,10 @@ test.describe("Versionare Proprietate", () => {
 
   test("navigare inapoi — formularul devine read-only", async ({ page }) => {
     // Save once first to ensure a fresh "latest + 1" version exists to navigate back from
+    // Slice 40.74: the property reads as text; „Editează" opens „Identificare cadastrală".
+    await editTile(page, "cadastral");
     await page.locator("[name=\"nickname\"]").fill("E2E Navigare");
-    await page.getByRole("button", { name: "Salvează", exact: true }).click();
+    await saveTile(page, "cadastral");
     await expect(
       page.getByText(`v ${startVersion + 1}`, { exact: true }),
     ).toBeVisible({ timeout: 15_000 });
@@ -112,7 +116,9 @@ test.describe("Versionare Proprietate", () => {
 
     // Form must be read-only — fieldset[disabled] wraps editable inputs
     expect(await nav.isFormReadOnly(page)).toBe(true);
-    await expect(page.locator("[name=\"nickname\"]")).toBeDisabled();
+    // 40.74: a version reads as text and has no „Editează".
+    await expect(page.locator('[data-read-value="nickname"]')).toHaveText("E2E Baseline");
+    await expect(page.locator("[data-tile-edit]")).toHaveCount(0);
 
     // "Setează ca actuală" must be enabled when viewing a past version
     await expect(
@@ -124,8 +130,10 @@ test.describe("Versionare Proprietate", () => {
 
   test("Seteaza ca actuala — creaza versiune noua din snapshot vechi", async ({ page }) => {
     // Save a modification to push the latest version forward
+    // Slice 40.74: the property reads as text; „Editează" opens „Identificare cadastrală".
+    await editTile(page, "cadastral");
     await page.locator("[name=\"nickname\"]").fill("E2E Modificare");
-    await page.getByRole("button", { name: "Salvează", exact: true }).click();
+    await saveTile(page, "cadastral");
 
     const afterSave = startVersion + 1;
     await expect(
@@ -141,13 +149,17 @@ test.describe("Versionare Proprietate", () => {
 
     // After Make Current the form must be editable (we follow the new latest)
     expect(await nav.isFormReadOnly(page)).toBe(false);
-    await expect(page.locator("[name=\"nickname\"]")).toBeEnabled();
+    // 40.74: the latest again — its tiles can be opened.
+    await expect(page.locator('[data-tile-edit="cadastral"]')).toBeVisible();
   });
 
   // ── Test 4: Save button tracks dirty state ────────────────────────────────
 
   test("butonul Salveaza: dezactivat → activ → dezactivat dupa salvare", async ({ page }) => {
-    const saveBtn = page.getByRole("button", { name: "Salvează", exact: true });
+    // Slice 40.74: no record-level Save on a saved property — the open tile's own.
+    await expect(page.getByRole("button", { name: "Salvează", exact: true })).toHaveCount(0);
+    await editTile(page, "cadastral");
+    const saveBtn = page.locator('[data-tile-save="cadastral"]');
 
     // Initially: form matches saved baseline — Save must be disabled
     await expect(saveBtn).toBeDisabled();
@@ -157,11 +169,12 @@ test.describe("Versionare Proprietate", () => {
     await expect(saveBtn).toBeEnabled();
 
     // Save — wait for the new version to appear, then Save must disable again
-    await saveBtn.click();
+    await saveTile(page, "cadastral");
     await expect(
       page.getByText(`v ${startVersion + 1}`, { exact: true }),
     ).toBeVisible({ timeout: 15_000 });
-    await expect(saveBtn).toBeDisabled();
+    // The tile reads as text again, so its „Salvează" is gone.
+    await expect(saveBtn).toHaveCount(0);
   });
 });
 
@@ -203,8 +216,11 @@ test.describe("TC-PROP-02 — Editare și salvare: contorul de versiuni avanseaz
       await expect(page.getByRole("button", { name: "Versiunea următoare" })).toBeVisible();
       await expect(page.getByRole("button", { name: "Setează ca actuală" })).toBeVisible();
 
-      // Step 3 — „Salvează" is pale: nothing has changed yet.
-      const save = page.getByRole("button", { name: "Salvează", exact: true });
+      // Step 3 — (40.74) the property reads as text, „1000.00"; „Editează" opens „Identificare cadastrală",
+      // whose „Salvează" is pale: nothing has changed yet.
+      await expect(page.locator('[data-read-value="surfaceAreaMp"]')).toHaveText("1000.00");
+      await editTile(page, "cadastral");
+      const save = page.locator('[data-tile-save="cadastral"]');
       await expect(save).toBeDisabled();
 
       // Step 4 — 1000.00 → 1100, leave the field: the banner, and „Salvează" dark.
@@ -217,7 +233,7 @@ test.describe("TC-PROP-02 — Editare și salvare: contorul de versiuni avanseaz
       await expect(save).toBeEnabled();
 
       // Step 5 — „Salvează"; the form stays on this screen.
-      await save.click();
+      await saveTile(page, "cadastral");
       await expect(page).toHaveURL(new RegExp(`/properties/${propertyId}$`));
 
       // Step 6 — the strip is REPLACED by the chip „↺ 2 versiuni"; the banner
@@ -230,19 +246,28 @@ test.describe("TC-PROP-02 — Editare și salvare: contorul de versiuni avanseaz
       await expect(page.getByRole("button", { name: "Versiunea următoare" })).toHaveCount(0);
       await expect(page.getByText("v 1", { exact: true })).toBeAttached();
       await expect(banner).toHaveCount(0);
-      await expect(area).toHaveValue("1100");
+      const areaRead = page.locator('[data-read-value="surfaceAreaMp"]');
+      await expect(areaRead).toHaveText("1100");
 
       // Step 7 — the chip leads to the previous version: „◀ v 0 ▶",
       // „Setează ca actuală" dark, the fields read-only, 1000.00 again.
       await chip.click();
       await expect(page.getByText("v 0", { exact: true })).toBeVisible({ timeout: 8_000 });
       await expect(page.getByRole("button", { name: "Setează ca actuală" })).toBeEnabled();
-      await expect(area).toBeDisabled();
-      await expect(area).toHaveValue("1000.00");
+      await expect(page.locator("[data-tile-edit]")).toHaveCount(0); // 40.74: a version is read, never edited
+      await expect(areaRead).toHaveText("1000.00");
 
       // Step 8 — „Versiunea următoare": back to the latest, „v 1".
       await page.getByRole("button", { name: "Versiunea următoare" }).click();
       await expect(page.getByText("v 1", { exact: true })).toBeAttached({ timeout: 8_000 });
+      await expect(page.getByRole("button", { name: "2 versiuni" })).toBeVisible();
+
+      // Step 9 (40.74) — „Editează" again, 1100 → 1200, „Renunță": the tile reads 1100 again, still „2 versiuni".
+      await editTile(page, "cadastral");
+      await area.fill("1200");
+      await page.locator('[data-tile-cancel="cadastral"]').click();
+      await expect(page.locator('[data-tile-edit-bar="cadastral"]')).toHaveCount(0);
+      await expect(areaRead).toHaveText("1100");
       await expect(page.getByRole("button", { name: "2 versiuni" })).toBeVisible();
     } finally {
       // The case leaves the property to TC-PROP-01's cleanup; a spec may not.

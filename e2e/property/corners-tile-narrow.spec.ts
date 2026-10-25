@@ -16,7 +16,7 @@
 
 import { test, expect, type Locator, type Page } from "../helpers/test";
 import { E2E_MARKER, createProperty, removeLeftovers, removeRecord } from "../helpers/records";
-import { showTile } from "../helpers/tiles";
+import { showTile, editTile } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}PROP-08`;
 const CORNERS = [
@@ -51,7 +51,9 @@ async function steps(page: Page, id: string, width: number): Promise<void> {
     return { corners: c.w === m.w, streetView: s.w === m.w, rightEdges: new Set([m.r, c.r, s.r]).size };
   }, { timeout: 20_000 }).toEqual({ corners: true, streetView: true, rightEdges: 1 });
 
-  // Step 2 — the four buttons on one line, „Șterge" against the table's edge.
+  // Step 2 — the four buttons on one line, „Șterge" against the table's edge. 40.74: they are there once „Editează"
+  // has opened „Puncte de contur" — the saved property reads as text.
+  await editTile(page, "corners");
   const row = tile.locator("tbody tr").first();
   const names = ["Mută mai sus", "Mută mai jos", "Editează", "Șterge"];
   const boxes = await Promise.all(names.map((n) => boxOf(row.getByRole("button", { name: n, exact: true }))));

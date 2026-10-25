@@ -49,6 +49,8 @@ or „Șterge" and „Da" on each).
 
 ## Notes from the runs
 
+**2026-10-25 — Slice 40.74.** Step 6: „Editează" on „Identificare cadastrală" first, then „Poreclă" and the tile's own „Salvează". The spec follows; not driven by hand first.
+
 **2026-10-01 — run 1, `driven` (Slice #37.44).** Driven in the Claude desktop app's browser pane
 against `npm run dev` on 3000; this file was written from it. The pane was hidden, so the hover was
 a dispatched `pointerover`, the presses `click()`, and the filter `form_input`.

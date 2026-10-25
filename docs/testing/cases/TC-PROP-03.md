@@ -56,6 +56,8 @@ with **„Da"**. The list comes back to N.
 
 ## Notes from the runs
 
+**2026-10-25 — Slice 40.74.** The saved property reads as text: the checks after the import read „Nr. tarla / sola" and „Nr. parcelă" as text, not in their boxes. The spec follows; not driven by hand first.
+
 **2026-09-25 — `automated` (Slice #36.18).** Green in the test runner's whole `npm run e2e`,
 result `20260925T201927Z-23319` on `1493c18` (21 tests); the spec is named in the catalogue's `Spec` column.
 

@@ -37,7 +37,7 @@ import path from "path";
 import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, removeLeftovers, removeRecord } from "../helpers/records";
 import { expectFixedFieldsHold, expectStableWidths, photograph } from "../helpers/field-widths";
-import { hideTile, showTile } from "../helpers/tiles";
+import { hideTile, showTile, editTile, saveTile } from "../helpers/tiles";
 import { ADDRESS, MAP_BOX_STYLE, PROPERTY } from "../../src/lib/ui/field-widths";
 
 /** Each FIXED box's widest value, by the name its box carries (Slice #37.14). */
@@ -100,6 +100,9 @@ test.describe("TC-PROP-04 — Un colț editat în „Puncte de contur”, văzut
       for (const col of ["Nr.", "Nr. orig.", "Nord (m)", "Est (m)"]) {
         await expect(page.getByRole("columnheader", { name: col, exact: true })).toBeVisible();
       }
+      // Slice 40.74: the property reads as text — a corner row has no buttons until „Editează" opens „Puncte de contur".
+      await expect(cornerRow(page, "18").getByRole("button", { name: "Editează", exact: true })).toHaveCount(0);
+      await editTile(page, "corners");
       for (const orig of ["16", "17", "18", "19"]) {
         const r = cornerRow(page, orig);
         await expect(r).toHaveCount(1);
@@ -150,10 +153,8 @@ test.describe("TC-PROP-04 — Un colț editat în „Puncte de contur”, văzut
       await expect(computedArea(page)).toContainText("614.42");
       await expect(page.getByRole("status").filter({ hasText: "Modificări nesalvate" })).toBeVisible();
 
-      // Step 4 — the form's „Salvează": stays, „v 1", „2 versiuni".
-      // #37.56: the corners stand in the right-hand column, after the form in the page, so the
-      // form's buttons are looked for in the left area.
-      await page.locator('[data-tile-area="left"] div.order-last').getByRole("button", { name: "Salvează", exact: true }).last().click();
+      // Step 4 — (40.74) the tile's „Salvează", under the corners: stays, „v 1", „2 versiuni".
+      await saveTile(page, "corners");
       await expect(page).toHaveURL(new RegExp(`/properties/${propertyId}$`));
       await expect(page.getByRole("button", { name: "2 versiuni" })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText("v 1", { exact: true }).first()).toBeAttached();

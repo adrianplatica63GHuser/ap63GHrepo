@@ -22,7 +22,7 @@
 
 import { test, expect, type Locator, type Page } from "../helpers/test";
 import { E2E_MARKER, createProperty, createSaleContract, removeLeftovers, removeRecord, type RecordKind } from "../helpers/records";
-import { showTile } from "../helpers/tiles";
+import { showTile, editTile, saveTile } from "../helpers/tiles";
 
 test.use({ realMaps: true }); // it reads the map's own toolbar once its camera has settled
 
@@ -84,6 +84,8 @@ test.describe("TC-ICON-04 — Unghiurile, un punct adăugat și mutat mai sus, c
       const map = await showTile(page, "Hartă");
       const rows = corners.locator("tbody tr");
       await expect(rows).toHaveCount(3, { timeout: 30_000 });
+      // 40.74: the saved property reads as text; „Editează" opens „Puncte de contur" and its row buttons.
+      await editTile(page, "corners");
       const ups = corners.getByRole("button", { name: "Mută mai sus", exact: true });
       const downs = corners.getByRole("button", { name: "Mută mai jos", exact: true });
       await expect(ups).toHaveCount(3);
@@ -139,7 +141,7 @@ test.describe("TC-ICON-04 — Unghiurile, un punct adăugat și mutat mai sus, c
       await expect(rows.nth(3)).toContainText("319355.12");
 
       // Step 6 — the floppy disk: „v 1", „2 versiuni", the order kept.
-      await page.locator('[data-tile-area="left"] div.order-last').getByRole("button", { name: "Salvează", exact: true }).last().click(); // #37.56: the form's, not a corner row's
+      await saveTile(page, "corners"); // 40.74: the tile's own „Salvează", under the corners
       await expect(page.getByRole("button", { name: "2 versiuni" })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText("v 1", { exact: true }).first()).toBeAttached();
       await expect(rows.nth(2)).toContainText("319340.00");
