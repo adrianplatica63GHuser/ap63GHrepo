@@ -83,7 +83,8 @@ export function ReadValue({
   className?: string;
 }) {
   return (
-    <div className={`${READ_VALUE_CLASS} ${className}`.trim()} style={style} data-width-field={name} data-width-kind={kind} data-read-value={name}>
+    // `data-no-tile-drag`: a press on a value is a press on a field, which never grabs its tile (#37.76).
+    <div className={`${READ_VALUE_CLASS} ${className}`.trim()} style={style} data-width-field={name} data-width-kind={kind} data-read-value={name} data-no-tile-drag="">
       {text === "" ? <span className="text-fade dark:text-zinc-500">—</span> : text}
     </div>
   );

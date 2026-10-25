@@ -1435,7 +1435,8 @@ export function NaturalPersonForm({
           row's last line (`order-last`), after the list tiles. */}
       <div className={tiled ? "order-last flex basis-full flex-col gap-4" : "contents"}>
 
-      {submitError && (
+      {/* Slice 40.72: an open tile says its own refusal, under its „Salvează". */}
+      {submitError && !editingTile && (
         <p className="text-sm text-red-600 dark:text-red-400" role="alert">
           {submitError}
         </p>
