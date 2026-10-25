@@ -27,6 +27,7 @@ import path from "node:path";
 import { test, expect, type Page } from "../helpers/test";
 import { accountMenu, closeAccountMenu, openAccountMenu, openSection, sidebar } from "../helpers/sidebar";
 import { setLook } from "../helpers/theme";
+import { closeTiles, openTiles, pressTileButton } from "../helpers/tiles";
 import { readZipStore } from "../../src/lib/docx/zip-store";
 import {
   E2E_MARKER,
@@ -487,8 +488,11 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     const sale = objects!.find((o) => o.kind === "DOCUMENT" && o.label.startsWith("Contract de vânzare"))!;
     const tile = (key: string) => page.locator(`[data-tile="${key}"]`).filter({ visible: true }).first();
     const tick = async (label: string, on: boolean) => {
+      // 40.57: the tile boxes are in the „Panouri" panel, opened for the tick and closed after.
+      const opened = await openTiles(page);
       const box = page.getByRole("checkbox", { name: label, exact: true });
       if ((await box.count()) && (await box.isChecked()) !== on) await box.setChecked(on);
+      if (opened) await closeTiles(page);
     };
     /** Rows of a list or of „Rezultate” whose record is not the seed's are blurred. */
     const blurNotSeed = async (prefix: string) =>
@@ -623,7 +627,8 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     await page.setViewportSize({ width: 1366, height: TALL });
     await page.reload();
     try {
-      await page.getByRole("button", { name: S.all, exact: true }).click({ timeout: 60_000 });
+      // 40.57: „Toate" is in the „Panouri" panel; pressed there, the panel closed again.
+      await pressTileButton(page, S.all, { timeout: 60_000 });
       await expect(tile("classification")).toBeVisible({ timeout: 60_000 });
       await page.waitForTimeout(2500); // past the first layout's settling
       const lowest = await page.evaluate(() =>
@@ -644,10 +649,13 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
       await page.evaluate(() => window.scrollTo(0, 0));
       const dropped = (await tile("classification").boundingBox())!.y;
       await shoot("all-up-before");
-      await page.getByRole("button", { name: S.allUp, exact: true }).click();
+      await pressTileButton(page, S.allUp);
       await expect.poll(async () => (await tile("classification").boundingBox())!.y, { timeout: 10_000 }).toBeLessThan(dropped - 100);
       await page.waitForTimeout(800); // past the slide, the sketch redrawn
+      // The sketch is in the „Panouri" panel (40.57), opened for the picture and closed after.
+      await openTiles(page);
       await shoot("all-up-after");
+      await closeTiles(page);
     } finally {
       await forgetPlaces();
       await page.setViewportSize({ width: 1366, height: 768 });
@@ -877,7 +885,7 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
       await page.goto(`/documents/${anteId}`);
       await expect(tile("general")).toBeVisible({ timeout: 60_000 });
       // The tile bar renders after the first tile: `tick` skips a box that is not there yet.
-      await expect(page.getByRole("checkbox", { name: S.links, exact: true })).toBeVisible({ timeout: 30_000 });
+      await expect(page.getByRole("checkbox", { name: S.links, exact: true })).toBeAttached({ timeout: 30_000 });
       await tick(S.links, true);
       await expect(tile("related")).toBeVisible({ timeout: 30_000 });
       await expect(tile("related")).toContainText(/Contract de v[âa]nzare/i, { timeout: 30_000 });
