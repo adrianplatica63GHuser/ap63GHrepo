@@ -15,6 +15,8 @@
  *   - „Shown" / „gone" are read as the case defines them: the bubble is the
  *     field's description, so it is always in the document; shown is the
  *     element without `sr-only`, gone is with it.
+ *   - Steps 7–10 (Slice 40.56) read the computed style — the colours, the label's family and size — where the
+ *     case says what a person sees.
  *   - Slice #37.50's pictures, not steps of the case: the identity tile at
  *     rest and with the bubble open, at 1366 and 1920 px, into
  *     `playwright-report/cnp-lock-bubble/`. The sidebar's „Recente" list is
@@ -105,6 +107,52 @@ test.describe("TC-PERS-03 — nota CNP-ului într-un balon, refuzul în română
       const stored = await page.request.get(`/api/people/${personId}`);
       expect(stored.ok()).toBeTruthy();
       expect(JSON.stringify(await stored.json())).toContain(`"cnp":"${SAVED_CNP}"`);
+
+      // Slice 40.56 — calm fields, and a field's label told apart from its value.
+      const identity = page.locator('[data-panel="identity"]');
+      const lastName = identity.getByRole("textbox", { name: "Nume", exact: true });
+      const firstName = identity.getByRole("textbox", { name: "Prenume", exact: true });
+      const nickname = identity.getByRole("textbox", { name: "Poreclă", exact: true });
+      const CLEAR = "rgba(0, 0, 0, 0)";
+      await page.mouse.move(5, 5);
+
+      // Step 7 — „Nume" at rest: no border, no fill, no shadow; its label in Roboto Condensed at 12 px, the value at 14.
+      await expect(lastName).toHaveCSS("border-top-color", CLEAR);
+      await expect(lastName).toHaveCSS("background-color", CLEAR);
+      expect(await lastName.evaluate((el) => getComputedStyle(el).boxShadow)).toMatch(/^(none|(rgba\(0, 0, 0, 0\) 0px 0px 0px 0px(, )?)+)$/);
+      const lastNameLabel = page.locator("label").filter({ has: lastName }).locator(":scope > span").first();
+      await expect(lastNameLabel).toHaveText("Nume");
+      await expect(lastNameLabel).toHaveCSS("font-size", "12px");
+      expect(await lastNameLabel.evaluate((el) => getComputedStyle(el).fontFamily)).toMatch(/Roboto Condensed/);
+      await expect(lastName).toHaveCSS("font-size", "14px");
+      expect(await lastName.evaluate((el) => getComputedStyle(el).fontFamily)).not.toMatch(/Roboto Condensed/);
+      expect(await lastNameLabel.evaluate((el) => getComputedStyle(el).color)).not.toBe(await lastName.evaluate((el) => getComputedStyle(el).color));
+
+      // Step 8 — the mouse over „Prenume": the white box with the grey border.
+      await firstName.hover();
+      await expect(firstName).toHaveCSS("border-top-color", "rgb(192, 196, 204)");
+      await expect(firstName).toHaveCSS("background-color", "rgb(255, 255, 255)");
+      await page.mouse.move(5, 5);
+      await expect(firstName).toHaveCSS("border-top-color", CLEAR);
+
+      // Step 9 — „Poreclă", empty: a dashed underline at rest; in focus the blue border and its ring.
+      await expect(nickname).toHaveValue("");
+      await expect(nickname).toHaveCSS("border-bottom-style", "dashed");
+      await expect(nickname).toHaveCSS("border-top-color", CLEAR);
+      await nickname.focus();
+      await expect(nickname).toHaveCSS("border-bottom-style", "solid");
+      await expect(nickname).toHaveCSS("border-top-color", "rgb(26, 82, 150)");
+      expect(await nickname.evaluate((el) => getComputedStyle(el).boxShadow)).not.toMatch(/^(none|(rgba\(0, 0, 0, 0\) 0px 0px 0px 0px(, )?)+)$/);
+
+      // Step 10 — „Până la" a past date: its red border at rest, and „EXPIRAT".
+      const validUntil = page.locator('input[name="idValidUntil"]');
+      await validUntil.fill("2020-01-01");
+      await page.mouse.move(5, 5);
+      await lastName.focus();
+      const red = await validUntil.evaluate((el) => getComputedStyle(el).borderTopColor);
+      expect(red).not.toBe(CLEAR);
+      expect(red).toMatch(/oklch\(0\.637 0\.237 25\.3|rgb\(239, 68, 68\)/);
+      await expect(page.locator('[data-panel="id-card"]').getByText("Expirat", { exact: false })).toBeVisible();
     } finally {
       // At the end — leaving without saving, then deleting the person.
       if (personId) await removeRecord(page.request, "person", personId);

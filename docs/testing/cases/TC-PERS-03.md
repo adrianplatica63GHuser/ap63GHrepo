@@ -43,6 +43,10 @@ field's description either way.
 | 4 | Puts the keyboard focus in the CNP (Tab from the field before, or Shift+Tab from the one after) | The bubble, reading the sentence |
 | 5 | Presses Escape | The bubble is gone; the focus stays in the CNP |
 | 6 | Changes the CNP to `1800101420029` and presses the floppy disk („Salvează") | Under the form, in red, the sentence — in Romanian; „Modificări nesalvate" stays; the person's stored CNP is still `1800101420010` |
+| 7 | Moves the mouse away and looks at „Nume" (Slice 40.56) | „Nume" sits on the tile with no border, no white fill and no shadow. Its label „Nume" is small (12 px) in Roboto Condensed, grey; the value under it is larger (14 px), darker, in the body font |
+| 8 | Moves the mouse over „Prenume", then away | Over it, the white box with the grey border; away, the box is gone again |
+| 9 | Looks at the empty „Poreclă", then clicks into it | At rest a dashed grey line under it; in focus the whole box in blue with a soft blue ring |
+| 10 | Writes `01.01.2020` in „Până la", then clicks into „Nume" | „Până la" keeps a red border with the mouse away; „EXPIRAT" beside it |
 
 ## At the end — leaving things as they were found
 
@@ -50,6 +54,9 @@ Leave the person without saving (navigate away, discarding the change), then del
 (`DELETE /api/people/<id>`). Căutare globală for `TC-PERS-03` finds nothing.
 
 ## Notes from the runs
+
+**2026-10-25 — steps 7–10 added (Slice 40.56).** Calm fields, and a label told apart from its value. Written from the
+slice's own change and added to the spec, which reads the computed style; not driven by hand first.
 
 **2026-10-02 — before the change (Slice #37.50).** Step 6 on the code before #37.50 showed the
 database's sentence, „CNP cannot be changed once set; delete and recreate the person instead", in
