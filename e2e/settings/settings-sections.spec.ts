@@ -14,6 +14,7 @@
  */
 
 import { test, expect, type Page } from "../helpers/test";
+import { accountEntry } from "../helpers/sidebar";
 
 const SHOTS = "playwright-report/settings-sections";
 
@@ -93,13 +94,14 @@ test.describe("TC-SET-02 — „Setări” în patru secțiuni", () => {
     await expect(about).not.toContainText("password");
 
     // Step 7 (#38.41) — „Contul meu": the password's two fields and the language; the
-    // sidebar's footer keeps „Ieșire" alone.
+    // sidebar's footer is the account entry (40.59; it read „Ieșire" alone).
     const account = main.getByRole("region", { name: "Contul meu", exact: true });
     await expect(account.getByLabel("Parola nouă", { exact: false })).toBeVisible();
     await expect(account.getByRole("radio", { name: "Română", exact: true })).toBeChecked();
     await expect(account.getByRole("radio", { name: "English", exact: true })).not.toBeChecked();
     await expect(page.locator("aside").getByRole("link", { name: "Schimbă parola" })).toHaveCount(0);
-    await expect(page.locator("aside").getByRole("button", { name: "Ieșire", exact: true })).toBeVisible();
+    // 40.59: „Ieșire" is in the account menu; the sidebar's footer is the account entry.
+    await expect(accountEntry(page)).toBeVisible();
     await photograph(page, "settings");
 
     // Step 8 (39.92) — „Timp de ținere peste altă fișă", in seconds with decimals: 0,1 refused; 1,25 saved and kept.

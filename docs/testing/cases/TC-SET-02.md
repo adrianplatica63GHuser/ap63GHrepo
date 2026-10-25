@@ -47,7 +47,7 @@ The window is 1366 × 900.
 | 4 | Types `45` (nothing saved), then „Anulează” | The example reads „… cu 45 de zile înainte.” at once; after „Anulează” the value and the example are back |
 | 5 | Reads „Copii de siguranță” | „Ultima copie” and „Ultima probă de restaurare”, with the result — or „Copiile de siguranță nu pot fi citite de aici…” on an installation without them; no button |
 | 6 | „Detalii” on „AI”, then reads „AI” and „Despre” | Four uses, each with a `claude-…` model; „Versiune”, „Commit”, „Mediu”, „Bază de date” (a host and a name) |
-| 7 | Reads „Contul meu” and the sidebar's footer | „Parola nouă” and „Confirmă parola”; „Limba” with „Română” chosen and „English”; the footer holds „Ieșire” alone |
+| 7 | Reads „Contul meu” and the sidebar's footer | „Parola nouă” and „Confirmă parola”; „Limba” with „Română” chosen and „English”; the footer holds the account entry, „Ieșire” inside its menu (40.59; it held „Ieșire” alone) |
 | 8 | In „Fișe”, types `0,1` in „Timp de ținere peste altă fișă” and „Salvează”; then `1,25` and „Salvează”; reloads | `0,1` is refused: „Timpul de ținere peste altă fișă se scrie în secunde, cu cel mult două zecimale, între 0,2 și 10 — de exemplu 1,5.”. With `1,25` the example reads „Exemplu: O fișă trasă peste alta și ținută acolo 1,25 secunde o face pe aceea să alunece în jos, ca să-i facă loc.” before the save; „Salvat cu succes.”; after the reload the box reads `1,25` |
 
 ## At the end — leaving things as they were found
@@ -55,6 +55,9 @@ The window is 1366 × 900.
 Step 8's value is put back as it was before the case (through `PATCH /api/time-frames`); step 4 saves nothing.
 
 ## Notes from the runs
+
+**2026-10-25 — step 7, the account menu (40.59).** „Ieșire” moved into the account menu at the sidebar's bottom; step 7
+reads the account entry there. Found red in 40.68's run.
 
 **2026-10-19 — Slice 39.92.** Step 2 reads five groups, and step 8 is new: the make-room delay saved with
 decimals, and refused outside 0,2–10 s.
