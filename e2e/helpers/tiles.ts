@@ -167,3 +167,21 @@ export async function openEmptyTiles(page: Page): Promise<void> {
     await adds.first().click();
   }
 }
+
+/**
+ * Slice 40.72: a saved record's form tile reads as text; „Editează" in its corner opens it. The one place a spec
+ * presses it (Ask first 7): `tile` is the tile's key — identity, idCard, contact, addresses. Waits for the tile's
+ * „Salvează" and „Renunță", which say it is open.
+ */
+export async function editTile(page: Page, tile: string): Promise<void> {
+  const button = page.locator(`[data-tile-edit="${tile}"]`);
+  await expect(button).toBeVisible({ timeout: 30_000 });
+  await button.click();
+  await expect(page.locator(`[data-tile-edit-bar="${tile}"]`)).toBeVisible();
+}
+
+/** The open tile's „Salvează"; waits for the tile to read as text again — the save landed. */
+export async function saveTile(page: Page, tile: string): Promise<void> {
+  await page.locator(`[data-tile-save="${tile}"]`).click();
+  await expect(page.locator(`[data-tile-edit-bar="${tile}"]`)).toHaveCount(0, { timeout: 30_000 });
+}
