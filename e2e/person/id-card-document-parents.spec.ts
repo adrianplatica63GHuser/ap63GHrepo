@@ -69,7 +69,8 @@ async function relatedRows(page: Page): Promise<string[]> {
   const tile = await showTile(page, "Legături");
   const rows = tile.locator("[data-related-group] li[data-one-line-row] [data-row-content]");
   await expect(rows.first()).toBeVisible({ timeout: 30_000 });
-  return (await rows.allInnerTexts()).map((s) => s.trim());
+  // Slice 40.65: the role is a tag whose brackets are visually hidden — the row's text, not its rendered lines.
+  return (await rows.allTextContents()).map((s) => s.trim());
 }
 
 test.describe("TC-PERS-10 — „Creează persoane din CI” pe ecranul actului", () => {

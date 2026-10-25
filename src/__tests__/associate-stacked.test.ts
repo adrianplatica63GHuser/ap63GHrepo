@@ -103,6 +103,8 @@ describe("a property's name on one line (Slice #37.58)", () => {
     const person = read("src", "app", "properties", "_components", "person-properties-tab.tsx");
     expect(person).toMatch(/const name = nameOr\(item\.label, "property"\);/);
     expect(person).toMatch(/title: text,\s+content: \(\s+<>\s+<span[^>]*>\{name\}<\/span>/);
-    expect(read("src", "components", "tiles", "one-line-rows.tsx")).toMatch(/className="min-w-0 flex-1 truncate" title=\{title\}/);
+    // Slice 40.65: with a role tag the content is a flex line whose name part is cut; without one, the span itself.
+    expect(read("src", "components", "tiles", "one-line-rows.tsx")).toMatch(/className=\{tag \? "flex min-w-0 flex-1 items-center gap-2" : "min-w-0 flex-1 truncate"\} title=\{title\}/);
+    expect(read("src", "components", "tiles", "one-line-rows.tsx")).toContain('<span className="min-w-0 truncate">{content}</span>');
   });
 });
