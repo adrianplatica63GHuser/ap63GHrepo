@@ -38,6 +38,7 @@ async function visibleLabels(page: Page, id: string): Promise<string[]> {
 test.describe("TC-DOC-11 — Antecontractul fără câmpurile făcute de „discover”", () => {
   test("antecontractul: doar câmpurile generale; contractul de vânzare: formularul lui", async ({ page }) => {
     test.slow();
+    test.setTimeout(240_000); // 40.75: each tile opened and its empty fields shown, on two documents
     await removeLeftovers(page.request, MARK);
     await page.setViewportSize({ width: 1366, height: 900 });
     const antecontract = await createDocumentOfType(page.request, "ANTECONTRACT", `${MARK} Antecontract de test`);
