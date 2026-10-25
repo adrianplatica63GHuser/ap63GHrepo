@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState, type MouseEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, type MouseEvent } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
@@ -10,6 +10,7 @@ import { IconButton, IconTooltip } from "@/lib/ui/icon-button";
 import { createClient } from "@/lib/supabase/client";
 import { AccountMenu } from "./account-menu";
 import { TILE_TITLE_TYPE } from "@/lib/ui/title-type";
+import { useNarrowWindow } from "@/lib/ui/use-narrow-window";
 import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
 import { RecentlyViewedPanel } from "@/components/recently-viewed-panel";
 import { clearRecentlyViewed } from "@/components/providers/navigation-history-provider";
@@ -363,18 +364,50 @@ export function SidebarNav() {
     return stored !== null ? stored === "true" : false;
   });
 
+  // ── Slice 40.68: a narrow window — the rail, and the full sidebar as an overlay ──
+  // Under 1024 px the sidebar is its icon rail whatever was stored; the stored choice is left alone and applies again
+  // above it. There the expand button opens the full sidebar OVER the page (a dimmed backdrop under it), and Esc, a
+  // click outside or choosing an entry closes it. Nothing about the overlay is stored.
+  const narrow = useNarrowWindow();
+  const [overlayOpen, setOverlayOpen] = useState(false);
+  const overlay = narrow && overlayOpen;
+  const railShown = overlay ? false : isCollapsed || narrow;
+  // The overlay closes when the window widens past 1024 px, or the page changes (an entry was chosen).
+  const [overlayPath, setOverlayPath] = useState(pathname);
+  if (overlayPath !== pathname) {
+    setOverlayPath(pathname);
+    if (overlayOpen) setOverlayOpen(false);
+  }
+  if (overlayOpen && !narrow) setOverlayOpen(false);
+  useEffect(() => {
+    if (!overlay) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOverlayOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [overlay]);
+
   const toggleCollapsed = useCallback(() => {
+    if (narrow) {
+      setOverlayOpen((open) => !open);
+      return;
+    }
     setIsCollapsed((prev) => {
       const next = !prev;
       localStorage.setItem("sidebar-collapsed", String(next));
       return next;
     });
-  }, []);
+  }, [narrow]);
 
   const expandSidebar = useCallback(() => {
+    if (narrow) {
+      setOverlayOpen(true);
+      return;
+    }
     setIsCollapsed(false);
     localStorage.setItem("sidebar-collapsed", "false");
-  }, []);
+  }, [narrow]);
 
   // ── Accordion state ───────────────────────────────────────────────────────
   // Flat-link sections (no children, see NavFlatSectionRow — "document" since
@@ -473,13 +506,26 @@ export function SidebarNav() {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
+    <>
+    {/* Slice 40.68: open over a narrow window, the sidebar leaves a rail's room in the row and a dimmed page under it. */}
+    {overlay && <div className="w-14 shrink-0" aria-hidden="true" data-sidebar-rail-room="" />}
+    {overlay && (
+      <div
+        className="fixed inset-0 z-40 bg-black/30 dark:bg-black/50"
+        onClick={() => setOverlayOpen(false)}
+        aria-hidden="true"
+        data-sidebar-backdrop=""
+      />
+    )}
     <aside
       suppressHydrationWarning
       className={[
         "flex flex-col bg-card border-r border-wire shrink-0",
         "transition-[width] duration-200 ease-in-out overflow-hidden",
-        isCollapsed ? "w-14" : "w-56",
+        // Slice 40.68: under `lg` the rail's width is CSS's, so the first paint is already narrow.
+        overlay ? "fixed inset-y-0 left-0 z-50 w-56 shadow-xl" : railShown ? "w-14" : "w-56 max-lg:w-14",
       ].join(" ")}
+      data-sidebar-overlay={overlay ? "" : undefined}
     >
       {/* ── App name | collapse button ─────────────────────────────────── */}
       {/* Slice 40.59 (Figura 8.3): the header holds GA40 — in Roboto Slab navy, like every tile title (TILE_TITLE_TYPE)
@@ -488,11 +534,11 @@ export function SidebarNav() {
       <div
         className={[
           "relative flex items-center h-14 px-3 border-b border-wire shrink-0",
-          isCollapsed ? "justify-center" : "justify-between",
+          railShown ? "justify-center" : "justify-between",
         ].join(" ")}
         data-sidebar-look=""
       >
-        {!isCollapsed && (
+        {!railShown && (
           <div className="flex items-center" data-sidebar-brand="">
             <span className={`${TILE_TITLE_TYPE} select-none`} data-sidebar-name="">
               GA40
@@ -501,8 +547,8 @@ export function SidebarNav() {
         )}
         {/* #37.42 (A002): PanelLeftOpen / PanelLeftClose. */}
         <IconButton
-          icon={isCollapsed ? PanelLeftOpen : PanelLeftClose}
-          label={isCollapsed ? t("expand") : t("collapse")}
+          icon={railShown ? PanelLeftOpen : PanelLeftClose}
+          label={railShown ? t("expand") : t("collapse")}
           variant="bare"
           size="sm"
           onClick={toggleCollapsed}
@@ -511,7 +557,7 @@ export function SidebarNav() {
 
 
       {/* ── Quick-search bar (expanded mode) ───────────────────────────── */}
-      {!isCollapsed && (
+      {!railShown && (
         <form
           onSubmit={handleQuickSearch}
           className="px-2 py-2 border-b border-wire shrink-0"
@@ -557,7 +603,7 @@ export function SidebarNav() {
                 key={section.key}
                 section={section}
                 isActive={isFlatSectionActive(section)}
-                isCollapsed={isCollapsed}
+                isCollapsed={railShown}
                 sectionLabel={sectionLabels[section.key] ?? section.key}
                 onNavigate={guardedNavigate}
               />
@@ -566,7 +612,7 @@ export function SidebarNav() {
                 key={section.key}
                 section={section}
                 isOpen={openSection === section.key}
-                isCollapsed={isCollapsed}
+                isCollapsed={railShown}
                 activeHref={activeHref}
                 sectionLabel={sectionLabels[section.key] ?? section.key}
                 itemLabels={itemLabels}
@@ -580,17 +626,18 @@ export function SidebarNav() {
 
       {/* ── Recently viewed — Slice #20.17 ────────────────────────────────── */}
       {/* #38.28: one folded bar above the footer; collapsed, its icon expands the sidebar. */}
-      <RecentlyViewedPanel isCollapsed={isCollapsed} onExpandSidebar={expandSidebar} />
+      <RecentlyViewedPanel isCollapsed={railShown} onExpandSidebar={expandSidebar} />
 
       {/* ── Bottom strip — the account entry and its menu (Slice 40.59, Figura 8.3) ── */}
       {/* Limba, Aspect and Ieșire — in UAT the uatNoAccounts note in Ieșire's place (#38.22). Ieșire opens upward, above
           the strip, clear of Next's dev indicator at the bottom left (#38.41, TC-AUTH-01's sign-out). */}
       <div
-        className={["border-t border-wire shrink-0 px-2 py-2 flex", isCollapsed ? "justify-center" : ""].join(" ")}
+        className={["border-t border-wire shrink-0 px-2 py-2 flex", railShown ? "justify-center" : ""].join(" ")}
         data-account-strip=""
       >
-        <AccountMenu username={me?.username} uat={isUatMode} collapsed={isCollapsed} onSignOut={handleLogout} />
+        <AccountMenu username={me?.username} uat={isUatMode} collapsed={railShown} onSignOut={handleLogout} />
       </div>
     </aside>
+    </>
   );
 }
