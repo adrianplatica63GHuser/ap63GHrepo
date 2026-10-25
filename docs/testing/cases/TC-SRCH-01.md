@@ -31,7 +31,7 @@ Nothing.
 | 2 | Types `TC-` into „Căutare nume / cod" (placeholder „Popescu", its tooltip „ex. Popescu sau PPERS00012" — Slice 40.09) | The value appears |
 | 3 | Leaves „Tip entitate" at „Orice" | No entity type is excluded |
 | 4 | Presses „Caută" | „3 rezultate", and the address bar carries `?search=TC-` |
-| 5 | Reads the results — columns Tip · Nume · Grupuri · Ștampile · Importanță · Relevanță · Proveniență · Actualizat de · Metadate actualizate | Three rows, none with a system ID. The document — „Tip" **„Document"**, „Nume" `TC-DOC-01 Contract de test`. The person — „Tip" **„Persoană"** with the badge „Fizic", „Nume" `Ion TC-PERS-01` (prenume first, see TC-PERS-01). The property — „Tip" **„Proprietate"**, „Nume" **`40 / TC01(TC-PROP-01 Teren de test)`**: a property's name here is tarla / parcelă with the nickname in brackets |
+| 5 | Reads the results — columns Tip · Nume · Grupuri · Ștampile · Importanță · Relevanță · Proveniență · Actualizat de · Metadate actualizate | Three rows, none with a system ID. (40.61: „Tip" is the kind's mark, the words below its name and tooltip.) The document — „Tip" **„Document"**, „Nume" `TC-DOC-01 Contract de test`. The person — „Tip" **„Persoană fizică"**, „Nume" `Ion TC-PERS-01` (prenume first, see TC-PERS-01). The property — „Tip" **„Proprietate"**, „Nume" **`40 / TC01(TC-PROP-01 Teren de test)`**: a property's name here is tarla / parcelă with the nickname in brackets |
 | 6 | Looks at the „Proveniență" column | All three read „Manual (Adaugă nou)" — they were typed in, not imported |
 | 7 | Sets „Tip entitate" to „Proprietate" and presses „Caută" again | One row, the property |
 | 8 | Presses „Resetează" | Every filter clears, the results table goes, and the address bar is back to `/admin/global-search` |
@@ -53,6 +53,9 @@ here lists everything the run left behind, across all three kinds, in one table.
 **before** a chain of cases too: the chain expects to find exactly what it creates.
 
 ## Notes from the runs
+
+**2026-10-25 — the kinds' marks (Slice 40.61).** „Tip" shows the kind's mark, named by the filter's words; a person's
+one mark says natural or juridical (it was „Persoană" and a chip „Fizic"). Step 5 follows; not driven by hand first.
 
 **2026-09-23 — `automated` (Slice #36.06).** Green in `npm run e2e` with the whole suite,
 12 passed; the spec is named in the catalogue's `Spec` column.

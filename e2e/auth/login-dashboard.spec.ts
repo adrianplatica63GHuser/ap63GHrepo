@@ -174,6 +174,18 @@ test.describe("TC-AUTH-01 — ieșire și conectare din nou, în aceeași filă"
       await expect(mainNav(page).getByText(section, { exact: true })).toBeVisible();
     }
 
+    // Slice 40.61 — the dashboard: the three counts in one ink colour, each under its kind's mark; a recent row shows
+    // its kind as a mark named by the kind's words (it was the word in grey monospace).
+    const counts = page.locator("[data-recent-count]");
+    await expect(counts).toHaveCount(3, { timeout: 30_000 });
+    expect(await counts.evaluateAll((cs) => cs.map((c) => c.getAttribute("data-recent-count")))).toEqual(["natural", "property", "document"]);
+    await expect(counts.locator("svg")).toHaveCount(3);
+    const colours = await counts.evaluateAll((cs) => cs.map((c) => getComputedStyle(c.querySelector(".tabular-nums") ?? c).color));
+    expect(new Set(colours).size).toBe(1);
+    const recent = page.locator('[data-panel="recent-activity"] li').first();
+    await expect(recent).toBeVisible({ timeout: 30_000 });
+    await expect(recent.getByRole("img")).toHaveAccessibleName(/^(Persoană fizică|Persoană juridică|Proprietate|Act)$/);
+
     await signOutHere(page);
     // The same document from here on: no goto, no reload.
     await signInHere(page, email, password);

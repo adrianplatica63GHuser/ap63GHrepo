@@ -102,7 +102,7 @@ test.describe("TC-SRCH-01 — Cele trei obiecte găsite prin Căutare globală",
       await expect(page.getByText("3 rezultate")).toBeVisible({ timeout: 15_000 });
       await expect(page).toHaveURL(new RegExp(`\\?search=${MARK}$`));
 
-      // Step 5 — three rows: „Document", „Persoană" with „Fizic", „Proprietate"
+      // Step 5 — three rows: „Document", „Persoană fizică", „Proprietate" — since 40.61 as the kind's mark —
       // as „tarla / parcelă(poreclă)". „Tip" says the filter's Romanian words
       // since Slice #37.07 (FU-061); the raw enum must not come back.
       for (const col of ["Tip", "Nume", "Grupuri", "Ștampile", "Importanță", "Relevanță", "Proveniență", "Actualizat de", "Metadate actualizate"]) {
@@ -112,16 +112,18 @@ test.describe("TC-SRCH-01 — Cele trei obiecte găsite prin Căutare globală",
       await expect(body).toHaveCount(3);
       const doc = body.filter({ hasText: `${MARK} Contract de test` });
       await expect(doc).not.toContainText(/DOC\d+/); // #37.57: no system ID here
-      await expect(doc).toContainText("Document");
+      // 40.61: „Tip" is the kind's mark, named by the filter's words (it was the word in a coloured chip).
+      await expect(doc.getByRole("img", { name: "Document", exact: true })).toHaveAttribute("data-entity-mark", "document");
       await expect(doc).not.toContainText("DOCUMENT");
       const person = body.filter({ hasText: `Ion ${MARK}` });
       await expect(person).not.toContainText(/PPERS\d+/); // #37.57: no system ID here
-      await expect(person).toContainText("Persoană");
+      // 40.61: one mark, the natural person's (it was „Persoană" and a second chip „Fizic").
+      await expect(person.getByRole("img", { name: "Persoană fizică", exact: true })).toHaveAttribute("data-entity-mark", "natural");
       await expect(person).not.toContainText("PERSON");
-      await expect(person).toContainText("Fizic");
+      await expect(person).not.toContainText("Fizic");
       const property = body.filter({ hasText: `40 / TC01(${MARK} Teren de test)` });
       await expect(property).not.toContainText(/PROP\d+/); // #37.57: no system ID here
-      await expect(property).toContainText("Proprietate");
+      await expect(property.getByRole("img", { name: "Proprietate", exact: true })).toHaveAttribute("data-entity-mark", "property");
       await expect(property).not.toContainText("PROPERTY");
       await expectStableColumns(page);
 
