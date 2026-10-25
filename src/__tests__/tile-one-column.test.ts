@@ -70,7 +70,9 @@ describe("the four headings wrap", () => {
     "src/app/documents/_components/document-detail-tiles.tsx",
   ])("%s: the controls in the flow, under a long name rather than over it", (file) => {
     const src = read(file);
-    expect(src).toContain('flex-wrap items-center gap-x-4 gap-y-2" data-record-header=""');
+    // 40.73: a document's name truncates, so from lg up its row does not wrap (TC-ICON-07 step 5); the others wrap.
+    const nowrap = file.includes("documents") ? " lg:flex-nowrap" : "";
+    expect(src).toContain(`flex-wrap items-center gap-x-4 gap-y-2${nowrap}" data-record-header=""`);
     expect(src).toContain('className="ml-auto flex shrink-0 items-center gap-3" data-record-controls=""');
     expect(src).not.toMatch(/absolute inset-y-0 right-0 flex items-center gap-3" data-record-controls/);
   });
