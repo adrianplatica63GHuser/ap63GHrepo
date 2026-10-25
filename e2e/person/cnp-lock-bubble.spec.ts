@@ -15,8 +15,10 @@
  *   - „Shown" / „gone" are read as the case defines them: the bubble is the
  *     field's description, so it is always in the document; shown is the
  *     element without `sr-only`, gone is with it.
- *   - Steps 7–10 (Slice 40.56) read the computed style — the colours, the label's family and size — where the
+ *   - Steps 7–9 and 13 (Slice 40.56) read the computed style — the colours, the label's family and size — where the
  *     case says what a person sees.
+ *   - Steps 10–12 (Slice 40.64) read „one line" as the tile's height: at most 64 px, a filled tile being several
+ *     times that.
  *   - Slice #37.50's pictures, not steps of the case: the identity tile at
  *     rest and with the bubble open, at 1366 and 1920 px, into
  *     `playwright-report/cnp-lock-bubble/`. The sidebar's „Recente" list is
@@ -25,6 +27,7 @@
 
 import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createNaturalPerson, removeLeftovers, removeRecord } from "../helpers/records";
+import { emptyTileLine, openEmptyTile } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}PERS-03`;
 const SAVED_CNP = "1800101420045";
@@ -144,7 +147,36 @@ test.describe("TC-PERS-03 — nota CNP-ului într-un balon, refuzul în română
       await expect(nickname).toHaveCSS("border-top-color", "rgb(26, 82, 150)");
       expect(await nickname.evaluate((el) => getComputedStyle(el).boxShadow)).not.toMatch(/^(none|(rgba\(0, 0, 0, 0\) 0px 0px 0px 0px(, )?)+)$/);
 
-      // Step 10 — „Până la" a past date: its red border at rest, and „EXPIRAT".
+      // Step 10 — Slice 40.64: the four empty tiles, each one line — its title, its state, „Adaugă".
+      const lines = {
+        contact: ["Contact", "necompletat"],
+        idCard: ["Act de identitate", "niciun act înregistrat"],
+        home: ["Adresă domiciliu", "necompletat"],
+        correspondence: ["Adresă corespondență", "necompletat"],
+      } as const;
+      for (const [tile, [title, state]] of Object.entries(lines)) {
+        const line = emptyTileLine(page, tile);
+        await expect(line).toBeVisible();
+        await expect(line.getByRole("heading", { name: title, exact: true })).toBeVisible();
+        await expect(line.locator("[data-empty-tile-state]")).toHaveText(state);
+        await expect(line.getByRole("button", { name: `Adaugă — ${title}` })).toBeVisible();
+      }
+      const contactPanel = page.locator('[data-panel="contact"]');
+      expect((await contactPanel.boundingBox())!.height).toBeLessThanOrEqual(64);
+
+      // Step 11 — „Adaugă" on „Contact": the whole form, the focus in „Telefon Personal 1".
+      await emptyTileLine(page, "contact").getByRole("button").click();
+      await expect(emptyTileLine(page, "contact")).toHaveCount(0);
+      await expect(contactPanel.getByRole("textbox", { name: "Telefon Personal 1", exact: true })).toBeFocused();
+      expect((await contactPanel.boundingBox())!.height).toBeGreaterThan(128);
+
+      // Step 12 — the home address opened, its box ticked: the correspondence reads „aceeași cu domiciliul".
+      await openEmptyTile(page, "home");
+      await page.getByRole("checkbox", { name: "Adresa de corespondență aceeași cu domiciliul" }).check();
+      await expect(emptyTileLine(page, "correspondence").locator("[data-empty-tile-state]")).toHaveText("aceeași cu domiciliul");
+
+      // Step 13 — „Până la" a past date: its red border at rest, and „EXPIRAT".
+      await openEmptyTile(page, "idCard");
       const validUntil = page.locator('input[name="idValidUntil"]');
       await validUntil.fill("2020-01-01");
       await page.mouse.move(5, 5);

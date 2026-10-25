@@ -46,7 +46,10 @@ field's description either way.
 | 7 | Moves the mouse away and looks at „Nume" (Slice 40.56) | „Nume" sits on the tile with no border, no white fill and no shadow. Its label „Nume" is small (12 px) in Roboto Condensed, grey; the value under it is larger (14 px), darker, in the body font |
 | 8 | Moves the mouse over „Prenume", then away | Over it, the white box with the grey border; away, the box is gone again |
 | 9 | Looks at the empty „Poreclă", then clicks into it | At rest a dashed grey line under it; in focus the whole box in blue with a soft blue ring |
-| 10 | Writes `01.01.2020` in „Până la", then clicks into „Nume" | „Până la" keeps a red border with the mouse away; „EXPIRAT" beside it |
+| 10 | Looks at „Contact", „Act de identitate", „Adresă domiciliu" and „Adresă corespondență" (Slice 40.64) | Each is one line: its title, then in grey „necompletat" — „niciun act înregistrat" on „Act de identitate" — and a button „Adaugă" at the right |
+| 11 | Presses „Adaugă" on „Contact" | The tile opens to its six boxes; the cursor is in „Telefon Personal 1" |
+| 12 | Presses „Adaugă" on „Adresă domiciliu", then ticks „Adresa de corespondență aceeași cu domiciliul" | „Adresă corespondență" is one line reading „aceeași cu domiciliul" |
+| 13 | Presses „Adaugă" on „Act de identitate", writes `01.01.2020` in „Până la", then clicks into „Nume" | „Până la" keeps a red border with the mouse away; „EXPIRAT" beside it |
 
 ## At the end — leaving things as they were found
 
@@ -54,6 +57,10 @@ Leave the person without saving (navigate away, discarding the change), then del
 (`DELETE /api/people/<id>`). Căutare globală for `TC-PERS-03` finds nothing.
 
 ## Notes from the runs
+
+**2026-10-25 — steps 10–12 added, step 10 became 13 (Slice 40.64).** Empty tiles as one line, „Adaugă" opening
+one with the cursor in its first box, the ticked correspondence box. Written from the slice's own change and added to
+the spec; not driven by hand first.
 
 **2026-10-25 — steps 7–10 added (Slice 40.56).** Calm fields, and a label told apart from its value. Written from the
 slice's own change and added to the spec, which reads the computed style; not driven by hand first.

@@ -140,3 +140,30 @@ export async function openShare(row: Locator): Promise<Locator> {
   await expect(panel).toBeVisible({ timeout: 15_000 });
   return panel;
 }
+
+/**
+ * Slice 40.64: on a saved record a form tile with nothing in it is ONE LINE — its title, „necompletat" (or its own
+ * state) and „Adaugă" (`src/components/tiles/empty-tile.tsx`). Its fields are in the page but hidden, so a spec that
+ * types into an empty tile of an existing record presses „Adaugă" first, through this. `tile` is the line's key
+ * (`data-empty-tile`): on the Natural Person `idCard`, `contact`, `home`, `correspondence`; on the Judicial Person
+ * `contactPersons`, `headquarters`, `correspondence`; on the Property `address`; on a document the frame's tile key
+ * (`tab:<name>`). A tile already open is left as it is, so the call is safe either way.
+ */
+export function emptyTileLine(page: Page, tile: string): Locator {
+  return page.locator(`[data-empty-tile="${tile}"]`);
+}
+
+export async function openEmptyTile(page: Page, tile: string): Promise<void> {
+  const line = emptyTileLine(page, tile);
+  if ((await line.count()) === 0) return;
+  await line.locator("[data-empty-tile-add]").click();
+  await expect(line).toHaveCount(0);
+}
+
+/** Every empty tile on the screen opened — for a spec that fills several of them. The same-as-home line's „Adaugă" unticks its box. */
+export async function openEmptyTiles(page: Page): Promise<void> {
+  const adds = page.locator("[data-empty-tile] [data-empty-tile-add]");
+  while ((await adds.count()) > 0) {
+    await adds.first().click();
+  }
+}
