@@ -14,7 +14,7 @@
 
 import { test, expect, type Locator, type Page } from "../helpers/test";
 import { E2E_MARKER, createNaturalPerson, removeLeftovers, removeRecord } from "../helpers/records";
-import { tileBox } from "../helpers/tiles";
+import { closeTiles, openTiles, pressTileButton, tileBox } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}TILES-21`;
 const KEY = "ga40-tile-positions-natural-person-v1";
@@ -49,6 +49,7 @@ function rightUnder(all: Record<string, Box>, id: string): number {
 async function setTile(page: Page, name: string, on: boolean): Promise<void> {
   const box = tileBox(page, name);
   const region = page.getByRole("region", { name, exact: true });
+  const opened = await openTiles(page); // 40.57: the box is in the „Panouri" panel
   await expect(async () => {
     if ((await box.isChecked()) !== on) await box.click();
     if (on) await expect(region).toBeVisible({ timeout: 2_000 });
@@ -57,6 +58,7 @@ async function setTile(page: Page, name: string, on: boolean): Promise<void> {
     expect(await box.isChecked()).toBe(on);
     expect(await region.isVisible()).toBe(on);
   }).toPass({ timeout: 30_000 });
+  if (opened) await closeTiles(page);
 }
 
 /** A point in a box's left padding, half way down its visible part. */
@@ -84,7 +86,7 @@ test.describe("TC-TILES-21 — un dublu-clic urcă o fișă; o fișă trasă las
       const corr = page.locator(`[data-tile-row] [data-packed-col][data-panel="${CORR}"]`);
 
       // Step 1 — „Toate", „Interacțiuni" unticked: „Adresă corespondență" right under „Act de identitate".
-      await page.getByRole("button", { name: "Toate", exact: true }).click({ timeout: 30_000 });
+      await pressTileButton(page, "Toate", { timeout: 30_000 });
       await expect(region("Etichete și grupuri")).toBeVisible({ timeout: 30_000 });
       await setTile(page, "Interacțiuni", false);
       await setTile(page, "Arbore de moștenire", false); // #39.12: the family tile packs under „Legături", where step 2 drops
@@ -167,7 +169,7 @@ test.describe("TC-TILES-21 — un dublu-clic urcă o fișă; o fișă trasă las
 
       // Step 6 — „Toate", „Interacțiuni" and „Arbore de moștenire" unticked; „Act de identitate" dragged 60 px under
       // „Corelate", leaving a gap above „Adresă corespondență".
-      await page.getByRole("button", { name: "Toate", exact: true }).click({ timeout: 30_000 });
+      await pressTileButton(page, "Toate", { timeout: 30_000 });
       await expect(region("Etichete și grupuri")).toBeVisible({ timeout: 30_000 });
       await setTile(page, "Interacțiuni", false);
       await setTile(page, "Arbore de moștenire", false);
@@ -188,6 +190,7 @@ test.describe("TC-TILES-21 — un dublu-clic urcă o fișă; o fișă trasă las
       expect(Object.keys(apart).some((id) => apart[id].y > rightUnder(apart, id))).toBe(true);
 
       // Step 6a (40.42) — „Clasificare" unticked takes its rectangle away from the diagram; ticked, it comes back.
+      await openTiles(page); // 40.57: the diagram and the bar's buttons are in the „Panouri" panel, open to step 8
       const rects = page.locator("[data-tiles-diagram] [data-diagram-rect]");
       await expect.poll(async () => rects.count()).toBe(Object.keys(apart).length);
       await setTile(page, "Clasificare", false);

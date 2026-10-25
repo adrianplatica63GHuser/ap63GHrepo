@@ -20,7 +20,7 @@
 
 import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createProperty, removeLeftovers, removeRecord } from "../helpers/records";
-import { tileBox, TILE_GROUP } from "../helpers/tiles";
+import { closeTiles, openTiles, pressTileButton, TILE_GROUP, tileBox } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}PROP-12`;
 const NAME = `${MARK} Teren agricol`;
@@ -49,11 +49,14 @@ async function expectOff(page: Page): Promise<void> {
 }
 
 async function photograph(page: Page, name: string): Promise<void> {
+  // 40.57: the bar is in the „Panouri" panel — opened for its picture.
+  const opened = await openTiles(page);
   for (const width of [1366, 1920]) {
     await page.setViewportSize({ width, height: 900 });
     await page.waitForTimeout(300);
     await page.getByRole("group", { name: TILE_GROUP }).screenshot({ path: `${SHOTS}/${name}-${width}.png` });
   }
+  if (opened) await closeTiles(page);
   await page.setViewportSize({ width: 1920, height: 1200 });
 }
 
@@ -77,14 +80,14 @@ test.describe("TC-PROP-12 — căsuțele fișelor pe care tipul nu le arată", (
       await photograph(page, "agricultural");
 
       // Step 2 — „Toate": every other box ticked; the two still off.
-      await page.getByRole("button", { name: "Toate", exact: true }).click();
+      await pressTileButton(page, "Toate");
       for (const name of ["Identificare cadastrală", "Legături", "Clasificare", "Etichete și grupuri", "Hartă", "Puncte de contur"]) {
         await expect(tileBox(page, name)).toBeChecked();
       }
       await expectOff(page);
 
       // Step 3 — „Implicit": the defaults; the two still off.
-      await page.getByRole("button", { name: "Implicit", exact: true }).click();
+      await pressTileButton(page, "Implicit");
       for (const name of ["Identificare cadastrală", "Hartă", "Puncte de contur"]) await expect(tileBox(page, name)).toBeChecked();
       for (const name of ["Legături", "Clasificare", "Etichete și grupuri"]) await expect(tileBox(page, name)).not.toBeChecked();
       await expectOff(page);

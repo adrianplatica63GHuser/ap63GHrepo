@@ -17,7 +17,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { test, expect, type Locator, type Page } from "../helpers/test";
 import { E2E_MARKER, createProperty, createSaleContract, removeLeftovers, removeRecord } from "../helpers/records";
-import { hideTile, showTile } from "../helpers/tiles";
+import { hideTile, pressTileButton, showTile } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}TILES-15`;
 const PAGE_FILE = path.join(process.cwd(), "e2e", "fixtures", "tc-e2e-pagina.png");
@@ -119,7 +119,7 @@ test.describe("TC-TILES-15 — sub coloana din dreapta", () => {
       // Step 7 — the property: „Implicit", then „Conexiuni": under „Date cadastrale", nothing stored.
       await page.goto(`/properties/${propId}`);
       await expect(page.locator('[data-panel="corners"] tbody tr')).toHaveCount(4, { timeout: 30_000 });
-      await page.getByRole("button", { name: "Implicit", exact: true }).click();
+      await pressTileButton(page, "Implicit");
       await showTile(page, "Etichete și grupuri");
       await expect.poll(async () => (await place(page, conn)).y - (await place(page, cad)).b, { timeout: 20_000 }).toBe(GAP);
       expect((await place(page, conn)).x).toBe(k1.x);
@@ -188,7 +188,7 @@ test.describe("TC-TILES-15 — sub coloana din dreapta", () => {
       await page.reload();
       await expect(page.locator('[data-panel="corners"] tbody tr')).toHaveCount(4, { timeout: 30_000 });
       await expect.poll(async () => place(page, map), { timeout: 30_000 }).toEqual(m9);
-      await page.getByRole("button", { name: "Implicit", exact: true }).click();
+      await pressTileButton(page, "Implicit");
       await expect.poll(async () => (await place(page, map)).y, { timeout: 20_000 }).toBe(0);
       expect((await place(page, map)).x).toBe(m8.x);
 

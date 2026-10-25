@@ -22,6 +22,7 @@
 
 import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createSaleContract, removeLeftovers, removeRecord } from "../helpers/records";
+import { pressTileButton } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}DOC-06`;
 const SHOTS = "playwright-report/blank-choice";
@@ -97,7 +98,7 @@ test.describe("TC-DOC-06 — „fără valoare” în cursive, fără liniuțe",
       // Step 1 — in Romanian, „Toate": 36 dropdowns, each „fără valoare" in italics, no „—" around it.
       await language(page, "ro-RO");
       await page.goto(`/documents/${id}`);
-      await page.getByRole("button", { name: "Toate", exact: true }).click({ timeout: 30_000 });
+      await pressTileButton(page, "Toate", { timeout: 30_000 });
       await expect(dropdowns(page)).toHaveCount(36, { timeout: 30_000 });
       for (const box of await closedBoxes(page)) {
         expect(box).toEqual({ shown: "fără valoare", style: "italic", blank: "fără valoare" });

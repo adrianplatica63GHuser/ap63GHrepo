@@ -23,6 +23,7 @@
 
 import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createSaleContract, removeLeftovers, removeRecord } from "../helpers/records";
+import { pressTileButton } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}DOC-04`;
 const SHOTS = "playwright-report/template-dropdowns";
@@ -105,7 +106,7 @@ test.describe("TC-DOC-04 — listele derulante ale unui CVC", () => {
 
       // Step 1 — opened at 1366, „Toate": 36 dropdowns of the type's own fields.
       await page.goto(`/documents/${id}`);
-      await page.getByRole("button", { name: "Toate", exact: true }).click({ timeout: 30_000 });
+      await pressTileButton(page, "Toate", { timeout: 30_000 });
       await expect(dropdowns(page)).toHaveCount(36, { timeout: 30_000 });
 
       await stepsTwoAndThree(page);

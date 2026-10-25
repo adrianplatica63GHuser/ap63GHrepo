@@ -14,7 +14,7 @@
 
 import { test, expect, type Locator, type Page } from "../helpers/test";
 import { E2E_MARKER, createCompany, createDocumentOfType, createNaturalPerson, removeLeftovers, removeRecord } from "../helpers/records";
-import { hideTile, showTile } from "../helpers/tiles";
+import { hideTile, pressTileButton, showTile } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}TILES-12`;
 const GAP = 16;
@@ -79,7 +79,7 @@ test.describe("TC-TILES-12 — fiecare fișă chiar sub fișa de deasupra ei", (
 
       // Step 1 — the person; „Toate": every tile, „Corelate" with the twelve contracts.
       await page.goto(`/natural-persons/${person}`);
-      await page.getByRole("button", { name: "Toate", exact: true }).click({ timeout: 30_000 });
+      await pressTileButton(page, "Toate", { timeout: 30_000 });
       // #37.89: „Interacțiuni"'s right-hand column is TC-PERS-07's subject; here it is unticked, so the row keeps the whole width this case measures.
       await hideTile(page, "Interacțiuni");
       const region = (name: string) => page.getByRole("region", { name, exact: true });

@@ -50,13 +50,18 @@ Nothing.
 | 6 | „Persoane Fizice", „Previzualizare" on „TC-TILES-18 Ion"'s row | The preview is green |
 | 7 | On „TC-TILES-18 Ion", unticks „Interacțiuni" (#37.89), drags „Etichete și grupuri" by its empty space to under „Legături" | It stands there, still yellow |
 | 8 | (40.41) In steps 1–5, looks at the bar itself | Two rows: no group's boxes on both (unless the group alone is wider than a row — then split at a box, both halves in its colour); „Toate sus", „Toate" and „Implicit" the last thing on the second row; the first row the wider of the two. The strips stand in whatever order makes the rows come out even — steps 1–4's groups are read in any order |
-| 9 | (40.42) In steps 1–5, looks right of the bar | A small diagram: one plain rectangle per tile on screen (not the action bar), each in its tile's group colour, as tall as its tile in proportion — one scale for all, none under 3 px (40.52; it read „all the same height"); from the record header's top to the bar's bottom; clear of the version controls. Where the bar leaves no room before the version controls — „TC-TILES-18 Act" at 1366, whose seven record boxes fill the first row — it is not drawn at all |
+| 9 | (40.42) In steps 1–5, looks right of the bar | A small diagram: one plain rectangle per tile on screen (not the action bar), each in its tile's group colour, as tall as its tile in proportion — one scale for all, none under 3 px (40.52; it read „all the same height"); since 40.57 inside the „Panouri" panel, right of the bar's longer row. Where the bar leaves no room — a first row as wide as the panel — it is not drawn at all |
+| 10 | (40.57) Opens „TC-TILES-18 Ion" | The bar is not on the screen: under the name, straight away, the tiles. Right after the version controls, „Panouri" with no badge (nothing is marked). Pressed: the panel opens under the header, with the bar and the diagram (steps 1–9 read them there); ticking a box leaves it open; Esc closes it and the focus is back on „Panouri" |
 
 ## At the end — leaving things as they were found
 
 Delete the four records (`DELETE`) and the natural person's stored tile arrangement.
 
 ## Notes from the runs
+
+**2026-10-25 — steps 9–10 for the „Panouri" panel (Slice 40.57).** Steps 1–9 open the panel first and read the bar
+there; step 9's diagram is read inside the panel; step 10 is new. Written from the slice's own change and added to
+the spec; not driven by hand first.
 
 **2026-10-06 — „Corelate" a stronger green (Slice #38.15).** The green group's fill is now
 `rgb(221, 240, 225)` (#DDF0E1) and its rim `rgb(175, 213, 183)` (#AFD5B7), one step stronger than

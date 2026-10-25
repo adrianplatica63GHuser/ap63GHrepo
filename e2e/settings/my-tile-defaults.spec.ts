@@ -13,7 +13,7 @@
 
 import { test, expect, type Page } from "../helpers/test";
 import { createNaturalPerson, removeLeftovers, removeRecord } from "../helpers/records";
-import { TILE_GROUP, tileBox } from "../helpers/tiles";
+import { pressTileButton, tileBox } from "../helpers/tiles";
 
 const LAST_NAME = "TC-E2E-TILEDEF";
 const ROW = "Persoană fizică";
@@ -43,7 +43,7 @@ function kindRow(page: Page) {
  */
 async function pressDefault(page: Page, on: string, off: string): Promise<void> {
   await expect(async () => {
-    await page.getByRole("group", { name: TILE_GROUP }).getByRole("button", { name: "Implicit", exact: true }).click();
+    await pressTileButton(page, "Implicit");
     await expect(tileBox(page, on)).toBeChecked({ timeout: 1_000 });
     await expect(tileBox(page, off)).not.toBeChecked({ timeout: 1_000 });
   }).toPass({ timeout: 30_000 });
@@ -76,15 +76,15 @@ test.describe("TC-SET-03 — „Implicitele mele”", () => {
 
       // Step 3 — the person's screen: „Implicit” shows the saved set.
       await page.goto(`/natural-persons/${personId}`);
-      await expect(page.getByRole("group", { name: TILE_GROUP })).toBeVisible({ timeout: 30_000 });
+      await expect(tileBox(page, "Identitate")).toBeAttached({ timeout: 30_000 });
       await pressDefault(page, "Legături", "Act de identitate");
       await expect(tileBox(page, "Identitate")).toBeChecked();
 
       // Step 4 — „Toate”, a reload, then „Implicit” again: the same set.
-      await page.getByRole("group", { name: TILE_GROUP }).getByRole("button", { name: "Toate", exact: true }).click();
+      await pressTileButton(page, "Toate");
       await expect(tileBox(page, "Act de identitate")).toBeChecked();
       await page.reload();
-      await expect(page.getByRole("group", { name: TILE_GROUP })).toBeVisible({ timeout: 30_000 });
+      await expect(tileBox(page, "Identitate")).toBeAttached({ timeout: 30_000 });
       await pressDefault(page, "Legături", "Act de identitate");
 
       // Step 5 — „Revino la implicit” in „Contul meu”; on the screen „Implicit” is the built-in set again.
@@ -95,7 +95,7 @@ test.describe("TC-SET-03 — „Implicitele mele”", () => {
       await expect(kindRow(page).getByRole("status")).toHaveText("Revenit la implicit.");
       await expect(kindRow(page).getByRole("checkbox", { name: "Act de identitate", exact: true })).toBeChecked();
       await page.goto(`/natural-persons/${personId}`);
-      await expect(page.getByRole("group", { name: TILE_GROUP })).toBeVisible({ timeout: 30_000 });
+      await expect(tileBox(page, "Identitate")).toBeAttached({ timeout: 30_000 });
       await pressDefault(page, "Act de identitate", "Legături");
     } finally {
       await forgetNaturalPersonSet(page);

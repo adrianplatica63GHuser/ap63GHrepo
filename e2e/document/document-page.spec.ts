@@ -63,7 +63,7 @@ import { test, expect, type Locator, type Page } from "../helpers/test";
 import { E2E_MARKER, createDocumentOfType, removeLeftovers, removeRecord } from "../helpers/records";
 import { openFromSidebar } from "../helpers/sidebar";
 import { expectFixedFieldsHold, expectStableColumns, expectStableWidths, expectUnitGrid, photograph } from "../helpers/field-widths";
-import { TILE_GROUP, showTile, tileBox } from "../helpers/tiles";
+import { pressTileButton, showTile, TILE_GROUP, tileBox } from "../helpers/tiles";
 import { DOCUMENT, PAGES_PANEL_REM, TEMPLATE_FIELD, UNIT_GAP_REM, UNIT_REM } from "../../src/lib/ui/field-widths";
 
 /** The widest value each FIXED box on the Document must hold (`field-widths.ts`). */
@@ -92,8 +92,7 @@ const TYPES_WITH_FIELDS = [
  */
 async function expectDocumentWidths(page: Page): Promise<void> {
   await expectStableWidths(page);
-  const group = page.getByRole("group", { name: TILE_GROUP });
-  await group.getByRole("button", { name: "Toate", exact: true }).click();
+  await pressTileButton(page, "Toate");
   await expect(page.getByRole("region", { name: "Etichete și grupuri", exact: true })).toBeVisible({ timeout: 30_000 });
   await expectStableWidths(page);
   // Slice #37.31 — every tile on the width unit: the row is 6 units at 1366 px, 10 at 1920,
@@ -105,7 +104,7 @@ async function expectDocumentWidths(page: Page): Promise<void> {
   const samples: Record<string, string> = { ...SAMPLES };
   for (const n of numbers) samples[n] = TEMPLATE_FIELD.number.sample;
   await expectFixedFieldsHold(page, samples);
-  await group.getByRole("button", { name: "Implicit", exact: true }).click();
+  await pressTileButton(page, "Implicit");
   await expect(page.getByRole("region", { name: "Etichete și grupuri", exact: true })).toHaveCount(0);
 }
 
@@ -236,7 +235,7 @@ test.describe("TC-DOC-01 — Act creat, pagină atașată, pagina se deschide", 
       // (document-detail-tiles.tsx), so its text is „Stare procesare: Neprocesat"
       // and an exact match on „Neprocesat" alone finds nothing (first run).
       await expect(page.getByText("Stare procesare: Neprocesat")).toBeVisible();
-      await expect(page.getByRole("group", { name: TILE_GROUP }).getByRole("checkbox")).toHaveCount(11, { timeout: 30_000 }); // #37.63: META INFO is two; #37.65: Persoane, Proprietăți and „Acte corelate" are „Corelate"; #38.33: five type tiles and „Părți"
+      await expect(page.getByRole("group", { name: TILE_GROUP, includeHidden: true }).getByRole("checkbox", { includeHidden: true })).toHaveCount(11, { timeout: 30_000 }); // #37.63: META INFO is two; #37.65: Persoane, Proprietăți and „Acte corelate" are „Corelate"; #38.33: five type tiles and „Părți"
       for (const tile of ["Identificarea actului", "Pagini", "Preț și plată", "Părți"]) await expect(tileBox(page, tile)).toBeChecked();
       for (const tile of ["Obiectul vânzării", "Carte funciară", "Declarații și garanții", "Taxe și cheltuieli", "Legături", "Clasificare", "Etichete și grupuri"]) {
         await expect(tileBox(page, tile)).not.toBeChecked();
@@ -285,7 +284,7 @@ test.describe("TC-DOC-01 — Act creat, pagină atașată, pagina se deschide", 
       for (const tile of ["Obiectul vânzării", "Carte funciară", "Declarații și garanții", "Taxe și cheltuieli"]) await showTile(page, tile);
       // 1440 px high: the four notebook tiles run to a second and third row.
       await photograph(page, "document-cvc-notebook-tiles", [1920, 2560], 1440);
-      await page.getByRole("group", { name: TILE_GROUP }).getByRole("button", { name: "Implicit", exact: true }).click();
+      await pressTileButton(page, "Implicit");
       await expect(tileBox(page, "Carte funciară")).not.toBeChecked();
 
       // Step 10 — „Pagini extinse": the full-window view headed „Pagini".

@@ -49,7 +49,7 @@ import {
   removeRecord,
 } from "../helpers/records";
 import { photograph } from "../helpers/field-widths";
-import { TILE_GROUP, expectOneLine, hideTile, lineRow, showTile, tileBox } from "../helpers/tiles";
+import { expectOneLine, hideTile, lineRow, pressTileButton, showTile, TILE_GROUP, tileBox } from "../helpers/tiles";
 
 test.use({ realMaps: true }); // #37.19's control counts the requests a ticked map makes
 
@@ -74,7 +74,7 @@ test.describe("TC-ASSOC-04 — Persoană asociată proprietății, cu rol, văzu
       // Step 1 — the property's screen: its tile row (no tabs — #37.19).
       await page.goto(`/properties/${propertyId}`);
       await expect(page.getByRole("heading", { name: PROPERTY })).toBeVisible({ timeout: 30_000 });
-      await expect(page.getByRole("group", { name: TILE_GROUP }).getByRole("checkbox")).toHaveCount(8, { timeout: 30_000 }); // #37.63: META INFO is two; #37.66: the three lists are „Corelate"
+      await expect(page.getByRole("group", { name: TILE_GROUP, includeHidden: true }).getByRole("checkbox", { includeHidden: true })).toHaveCount(8, { timeout: 30_000 }); // #37.63: META INFO is two; #37.66: the three lists are „Corelate"
       for (const tile of ["Identificare cadastrală", "Puncte de contur", "Adresă", "Hartă"]) await expect(tileBox(page, tile)).toBeChecked();
       for (const tile of ["Street View", "Legături", "Clasificare", "Etichete și grupuri"]) await expect(tileBox(page, tile)).not.toBeChecked();
       await expect(page.getByRole("tab")).toHaveCount(0);
@@ -217,7 +217,7 @@ test.describe("TC-ASSOC-04 — Persoană asociată proprietății, cu rol, văzu
       await page.getByRole("radio", { name: PERSON }).check();
       await page.getByRole("button", { name: "Dezasociază", exact: true }).click();
       await expect(page.getByText("Nimic corelat încă.")).toBeVisible({ timeout: 15_000 });
-      await page.getByRole("group", { name: TILE_GROUP }).getByRole("button", { name: "Implicit", exact: true }).click();
+      await pressTileButton(page, "Implicit");
       await expect(tileBox(page, "Hartă")).toBeChecked();
     } finally {
       await removeRecord(page.request, "person", personId);

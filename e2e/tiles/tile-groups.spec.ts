@@ -10,11 +10,13 @@
  *   - Step 7 checks the outline calls the place free before releasing, as
  *     TC-TILES-13's spec does, so the drag really moves the tile; the hand run's
  *     pane could not (FU-290).
+ *   - Since 40.57 the bar is in the „Panouri" panel: each form's steps open it
+ *     and close it at the end; step 9 reads the diagram inside the panel.
  */
 
 import { test, expect, type Locator, type Page } from "../helpers/test";
 import { E2E_MARKER, createCompany, createDocumentOfType, createNaturalPerson, createProperty, removeLeftovers, removeRecord } from "../helpers/records";
-import { hideTile } from "../helpers/tiles";
+import { closeTiles, hideTile, openTiles, pressTileButton, TILE_GROUP, tileBox, tilesMenuButton } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}TILES-18`;
 const KEY = "ga40-tile-positions-natural-person-v1";
@@ -92,8 +94,9 @@ async function expectDiagram(page: Page, url: string, width: number): Promise<vo
       const dg = document.querySelector<HTMLElement>("[data-tiles-diagram]");
       const header = document.querySelector("[data-record-header]");
       const bar = document.querySelector("[data-tile-selector]");
-      const slot = document.querySelector("[data-version-slot]")?.firstElementChild ?? null;
+      const panel = document.querySelector("[data-tiles-panel] > div");
       if (!dg || !header || !bar) return null;
+      const rowRight = Math.max(...[...bar.querySelectorAll<HTMLElement>("[data-bar-row]")].map((e) => R(e).right));
       const rects = [...dg.querySelectorAll<HTMLElement>("[data-diagram-rect]")];
       const boxes = [...document.querySelectorAll<HTMLElement>("[data-tile-row] [data-packed-col]")].filter(
         (e) => e.offsetParent !== null && !e.classList.contains("order-last"),
@@ -112,8 +115,10 @@ async function expectDiagram(page: Page, url: string, width: number): Promise<vo
           })
           .filter((x): x is { h: number; ratio: number } => x !== null),
         fills: rects.map((r) => [r.dataset.group ?? "", getComputedStyle(r).backgroundColor]),
-        inside: R(dg).top >= R(header).top - 1 && R(dg).bottom <= R(bar).bottom + 1,
-        clear: slot ? R(dg).right <= R(slot).left : true,
+        // 40.57: inside the „Panouri" panel, right of the bar's longer row (it was: between the header's top and the
+        // bar's bottom, clear of the version controls).
+        inside: !!panel && R(dg).top >= R(panel).top - 1 && R(dg).bottom <= R(panel).bottom + 1 && R(dg).right <= R(panel).right + 1,
+        clear: R(dg).left >= rowRight - 1,
       };
     });
     if (!d) return null;
@@ -133,6 +138,8 @@ async function expectDiagram(page: Page, url: string, width: number): Promise<vo
 
 async function expectForm(page: Page, url: string, expected: [Group, string[]][], width = 1920): Promise<void> {
   await page.goto(url);
+  // 40.57: the bar is in the „Panouri" panel — open for this form's steps, closed at their end.
+  await openTiles(page);
   // 40.53: „Toate" pressed until every box it can tick is ticked — on a busy dev server the first press can land before
   // the bar has hydrated and do nothing (run 20261024T192206Z-10638: „Legături" never shown). It is idempotent.
   const all = page.getByRole("button", { name: "Toate", exact: true });
@@ -152,6 +159,7 @@ async function expectForm(page: Page, url: string, expected: [Group, string[]][]
       expect({ name, fill: await fill(tile) }).toEqual({ name, fill: FILL[group] });
     }
   }
+  await closeTiles(page);
 }
 
 test.describe("TC-TILES-18 — bifele în patru grupuri colorate", () => {
@@ -207,7 +215,7 @@ test.describe("TC-TILES-18 — bifele în patru grupuri colorate", () => {
       await page.goto(`/natural-persons/${np}`);
       await page.evaluate((k) => localStorage.removeItem(k), KEY);
       await page.reload();
-      await page.getByRole("button", { name: "Toate", exact: true }).click({ timeout: 30_000 });
+      await pressTileButton(page, "Toate", { timeout: 30_000 });
       await hideTile(page, "Interacțiuni"); // #37.89: TC-TILES-13's layout, without the right-hand column
       await hideTile(page, "Arbore de moștenire"); // #39.12: and without the family tile, which packs under „Legături"
       const conn = page.getByRole("region", { name: "Etichete și grupuri", exact: true });
@@ -231,6 +239,41 @@ test.describe("TC-TILES-18 — bifele în patru grupuri colorate", () => {
         return { x: Math.round(now?.x ?? 0), under: (now?.y ?? 0) >= (rr?.y ?? 0) + (rr?.height ?? 0) };
       }, { timeout: 15_000 }).toEqual({ x: Math.round(r?.x ?? 0), under: true });
       expect(await fill(conn)).toBe(FILL.meta);
+
+      // Step 10 (40.57) — „Panouri": closed when the record opens, the data right under the name, no badge (nothing is
+      // marked); right after the version controls; opened, a tick keeps it open; Esc closes it.
+      await page.goto(`/natural-persons/${np}`);
+      const menu = tilesMenuButton(page);
+      await expect(menu).toBeVisible({ timeout: 30_000 });
+      await expect(menu).toHaveText("Panouri");
+      await expect(menu).toHaveAttribute("aria-expanded", "false");
+      const bar = page.getByRole("group", { name: TILE_GROUP });
+      await expect(bar).toBeHidden();
+      await expect(page.locator("[data-tiles-menu-badge]")).toHaveCount(0);
+      const identity = page.getByRole("region", { name: "Identitate", exact: true });
+      await expect(identity).toBeVisible({ timeout: 30_000 });
+      const [head, firstTile, nav, at] = await Promise.all([
+        page.locator("[data-record-header]").boundingBox(),
+        identity.boundingBox(),
+        page.locator("[data-version-slot] > *").first().boundingBox(),
+        menu.boundingBox(),
+      ]);
+      expect((firstTile?.y ?? 0) - ((head?.y ?? 0) + (head?.height ?? 0))).toBeLessThan(48);
+      if (nav) expect(at?.x ?? 0).toBeGreaterThan(nav.x);
+      await menu.click();
+      await expect(bar).toBeVisible();
+      await expect(menu).toHaveAttribute("aria-expanded", "true");
+      const family = tileBox(page, "Arbore de moștenire");
+      const was = await family.isChecked();
+      await family.click();
+      await expect(family).toBeChecked({ checked: !was });
+      await family.click();
+      await expect(family).toBeChecked({ checked: was });
+      await expect(bar).toBeVisible();
+      await page.keyboard.press("Escape");
+      await expect(bar).toBeHidden();
+      await expect(menu).toHaveAttribute("aria-expanded", "false");
+      await expect(menu).toBeFocused();
     } finally {
       await page.evaluate((k) => localStorage.removeItem(k), KEY).catch(() => undefined);
       await removeRecord(page.request, "property", prop);

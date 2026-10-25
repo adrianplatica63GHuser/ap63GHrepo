@@ -41,7 +41,7 @@ import { test, expect } from "../helpers/test";
 import { E2E_MARKER, removeLeftovers, removeRecord } from "../helpers/records";
 import { openFromSidebar } from "../helpers/sidebar";
 import { expectFixedFieldsHold, expectStableColumns, expectStableWidths, expectUnitGrid, photograph } from "../helpers/field-widths";
-import { TILE_GROUP, tileBox } from "../helpers/tiles";
+import { closeTiles, openTiles, pressTileButton, TILE_GROUP, tileBox } from "../helpers/tiles";
 import { ADDRESS, JUDICIAL_PERSON, UNIT_GAP_REM, UNIT_REM } from "../../src/lib/ui/field-widths";
 
 /** Each FIXED box's widest value, by the name its box carries (Slice #37.13). */
@@ -135,16 +135,19 @@ test.describe("TC-PERS-02 — Persoană juridică creată și modificată", () =
       await expect(page).toHaveURL(new RegExp(`/judicial-persons/${companyId}$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: NAME })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText("v 0", { exact: true }).first()).toBeAttached({ timeout: 30_000 });
-      const tiles = page.getByRole("group", { name: TILE_GROUP });
-      await expect(tiles.getByRole("checkbox")).toHaveCount(7, { timeout: 30_000 }); // #37.63: META INFO is two; #37.67: three lists are „Corelate"; #37.89: „Interacțiuni"
+      const tiles = page.getByRole("group", { name: TILE_GROUP, includeHidden: true });
+      await expect(tiles.getByRole("checkbox", { includeHidden: true })).toHaveCount(7, { timeout: 30_000 }); // #37.63: META INFO is two; #37.67: three lists are „Corelate"; #37.89: „Interacțiuni"
       for (const tile of ["Date de înregistrare", "Reprezentanți și contact", "Adrese", "Interacțiuni"]) {
         await expect(tileBox(page, tile)).toBeChecked();
       }
       for (const tile of ["Legături", "Clasificare", "Etichete și grupuri"]) {
         await expect(tileBox(page, tile)).not.toBeChecked();
       }
+      // 40.57: behind „Panouri" — the panel opened for them, and closed again.
+      await openTiles(page);
       await expect(tiles.getByRole("button", { name: "Toate", exact: true })).toBeVisible();
       await expect(tiles.getByRole("button", { name: "Implicit", exact: true })).toBeVisible();
+      await closeTiles(page);
       await expect(page.getByRole("tab")).toHaveCount(0);
       // #37.57: the system ID is the identity panel heading's corner, not a field.
       await expect(page.locator('[data-panel="identity"] [data-system-id]')).toContainText(/JPERS\d+$/);
@@ -180,7 +183,7 @@ test.describe("TC-PERS-02 — Persoană juridică creată și modificată", () =
       await expect(nickname).toHaveValue(`${MARK} editat`);
 
       // Slice #37.18 — every tile at once („Toate"), its widths held, and its pictures; then „Implicit".
-      await tiles.getByRole("button", { name: "Toate", exact: true }).click();
+      await pressTileButton(page, "Toate");
       await expect(page.getByRole("region", { name: "Etichete și grupuri", exact: true })).toBeVisible({ timeout: 30_000 });
       await expectStableWidths(page);
       // Slice #37.29 — the tiles are on a width unit: the row is 6 units at 1366 px, 10 at 1920,
@@ -188,7 +191,7 @@ test.describe("TC-PERS-02 — Persoană juridică creată și modificată", () =
       // two / three / four 32rem tiles to a row).
       await expectUnitGrid(page, UNIT_REM, UNIT_GAP_REM, { 1366: 6, 1920: 10, 2560: 14 });
       await photograph(page, "judicial-person-all-tiles", [1366, 1920, 2560], 1200);
-      await tiles.getByRole("button", { name: "Implicit", exact: true }).click();
+      await pressTileButton(page, "Implicit");
       await expect(page.getByRole("region", { name: "Etichete și grupuri", exact: true })).toHaveCount(0);
 
       // ── At the end — the case's cleanup, through the UI ──────────────────

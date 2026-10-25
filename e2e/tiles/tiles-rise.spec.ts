@@ -17,7 +17,7 @@
 
 import { test, expect, type Locator, type Page } from "../helpers/test";
 import { E2E_MARKER, createNaturalPerson, removeLeftovers, removeRecord } from "../helpers/records";
-import { tileBox } from "../helpers/tiles";
+import { closeTiles, openTiles, pressTileButton, tileBox } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}TILES-20`;
 const KEY = "ga40-tile-positions-natural-person-v1";
@@ -51,6 +51,7 @@ function rightUnder(all: Record<string, Box>, id: string): number {
 async function setTile(page: Page, name: string, on: boolean): Promise<void> {
   const box = tileBox(page, name);
   const region = page.getByRole("region", { name, exact: true });
+  const opened = await openTiles(page); // 40.57: the box is in the „Panouri" panel
   await expect(async () => {
     if ((await box.isChecked()) !== on) await box.click();
     if (on) await expect(region).toBeVisible({ timeout: 2_000 });
@@ -59,6 +60,7 @@ async function setTile(page: Page, name: string, on: boolean): Promise<void> {
     expect(await box.isChecked()).toBe(on);
     expect(await region.isVisible()).toBe(on);
   }).toPass({ timeout: 30_000 });
+  if (opened) await closeTiles(page);
 }
 
 /** Presses at (`x`, `y`), moves in steps to (`tx`, `ty`), and returns the outline's verdict and place in the row before releasing. */
@@ -100,7 +102,7 @@ test.describe("TC-TILES-20 — o fișă trasă sub două fișe urcă sub cea ră
       const region = (name: string) => page.getByRole("region", { name, exact: true });
 
       // Step 1 — „Toate", „Interacțiuni" unticked: every tile where #37.75 puts it, „Clasificări" at the left edge.
-      await page.getByRole("button", { name: "Toate", exact: true }).click({ timeout: 30_000 });
+      await pressTileButton(page, "Toate", { timeout: 30_000 });
       await expect(region("Etichete și grupuri")).toBeVisible({ timeout: 30_000 });
       await setTile(page, "Interacțiuni", false);
       await page.waitForTimeout(2500); // past the first layout's settling

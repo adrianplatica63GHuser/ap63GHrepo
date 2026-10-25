@@ -16,7 +16,7 @@
 
 import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createSaleContract, removeLeftovers, removeRecord } from "../helpers/records";
-import { tileBox } from "../helpers/tiles";
+import { pressTileButton, tileBox } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}DOC-05`;
 const SHOTS = "playwright-report/cvc-tile-names";
@@ -70,7 +70,7 @@ test.describe("TC-DOC-05 — filele și panourile unui CVC", () => {
       for (const name of ["Preț și plată", "Părți"]) await expect(tileBox(page, name)).not.toBeChecked();
 
       // Step 2 — „Toate": the five tiles and their panels, each in brackets (#37.90), none of the old names.
-      await page.getByRole("button", { name: "Toate", exact: true }).click();
+      await pressTileButton(page, "Toate");
       for (const [tile, panels] of TILES) {
         const region = page.getByRole("region", { name: tile, exact: true });
         await expect(region).toBeVisible({ timeout: 30_000 });

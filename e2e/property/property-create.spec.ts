@@ -38,7 +38,7 @@ import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, removeLeftovers, removeRecord } from "../helpers/records";
 import { openFromSidebar } from "../helpers/sidebar";
 import { expectStableColumns, expectUnitGrid, photograph } from "../helpers/field-widths";
-import { TILE_GROUP } from "../helpers/tiles";
+import { pressTileButton } from "../helpers/tiles";
 import { UNIT_GAP_REM, UNIT_REM } from "../../src/lib/ui/field-widths";
 
 const NICKNAME = `${E2E_MARKER}PROP-01 Teren de test`;
@@ -161,12 +161,11 @@ test.describe("TC-PROP-01 — Proprietate creată manual, vizibilă în listă",
       // Slice #37.30 — the saved property with the default tiles, then „Toate" on the width unit.
       await expect(page.locator('[data-panel="cadastral"]')).toBeVisible({ timeout: 30_000 });
       await photograph(page, "property-saved", [1366, 1920, 2560], 1200);
-      const tiles = page.getByRole("group", { name: TILE_GROUP });
-      await tiles.getByRole("button", { name: "Toate", exact: true }).click();
+      await pressTileButton(page, "Toate");
       await expect(page.getByRole("region", { name: "Etichete și grupuri", exact: true })).toBeVisible({ timeout: 30_000 });
       await expectUnitGrid(page, UNIT_REM, UNIT_GAP_REM, { 1366: 6, 1920: 10, 2560: 14 });
       await photograph(page, "property-all-tiles", [1366, 1920, 2560], 1200);
-      await tiles.getByRole("button", { name: "Implicit", exact: true }).click();
+      await pressTileButton(page, "Implicit");
       await expect(page.getByRole("region", { name: "Etichete și grupuri", exact: true })).toHaveCount(0);
       await page.getByRole("button", { name: "Șterge", exact: true }).click();
       const confirm = page.getByRole("dialog", { name: "Ștergeți proprietatea?" });

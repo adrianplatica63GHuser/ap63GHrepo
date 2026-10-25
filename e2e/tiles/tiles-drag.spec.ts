@@ -16,7 +16,7 @@
 
 import { test, expect, type Locator, type Page } from "../helpers/test";
 import { E2E_MARKER, createNaturalPerson, removeLeftovers, removeRecord } from "../helpers/records";
-import { hideTile } from "../helpers/tiles";
+import { hideTile, pressTileButton } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}TILES-13`;
 const KEY = "ga40-tile-positions-natural-person-v1";
@@ -70,7 +70,7 @@ test.describe("TC-TILES-13 — o fișă trasă de spațiul ei gol", () => {
       const region = (name: string) => page.getByRole("region", { name, exact: true });
 
       // Step 1 — „Toate": every tile, each where #37.75 puts it.
-      await page.getByRole("button", { name: "Toate", exact: true }).click({ timeout: 30_000 });
+      await pressTileButton(page, "Toate", { timeout: 30_000 });
       // #37.89: „Interacțiuni"'s right-hand column is TC-PERS-07's subject; here it is unticked, so the row keeps the whole width this case measures.
       await hideTile(page, "Interacțiuni");
       await hideTile(page, "Arbore de moștenire"); // #39.12: the family tile packs under „Legături", where this case drops
@@ -123,9 +123,9 @@ test.describe("TC-TILES-13 — o fișă trasă de spațiul ei gol", () => {
       await expect.poll(async () => (await boxes(page)).connections, { timeout: 20_000 }).toEqual(dropped.connections);
 
       // Step 6 — „Implicit", then „Toate": #37.75's places again.
-      await page.getByRole("button", { name: "Implicit", exact: true }).click();
+      await pressTileButton(page, "Implicit");
       await expect(region("Etichete și grupuri")).toBeHidden();
-      await page.getByRole("button", { name: "Toate", exact: true }).click();
+      await pressTileButton(page, "Toate");
       await hideTile(page, "Interacțiuni"); // #37.89, as in step 1
       await hideTile(page, "Arbore de moștenire"); // #39.12, as in step 1
       await expect(region("Etichete și grupuri")).toBeVisible({ timeout: 30_000 });

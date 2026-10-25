@@ -12,6 +12,7 @@
 
 import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createCompany, createNaturalPerson, removeLeftovers, removeRecord } from "../helpers/records";
+import { pressTileButton } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}TILES-22`;
 const GAP = 16;
@@ -77,7 +78,7 @@ for (const kind of ["Persoană fizică", "Persoană juridică"] as const) {
         await page.goto(`/${np ? "natural-persons" : "judicial-persons"}/${id}`);
         await forget();
         await page.reload();
-        await page.getByRole("button", { name: "Toate", exact: true }).click({ timeout: 30_000 });
+        await pressTileButton(page, "Toate", { timeout: 30_000 });
         await ready();
         // 40.32: one area — „Interacțiuni" starts against the row's right edge, every other tile left of it.
         const row1 = await rect(page, "[data-tile-row]");
@@ -100,7 +101,7 @@ for (const kind of ["Persoană fizică", "Persoană juridică"] as const) {
         await forget();
         await page.setViewportSize({ width: 1366, height: 2400 });
         await page.reload();
-        await page.getByRole("button", { name: "Toate", exact: true }).click({ timeout: 30_000 });
+        await pressTileButton(page, "Toate", { timeout: 30_000 });
         await ready();
         const row = await rect(page, "[data-tile-row]");
         await expect.poll(async () => (await rect(page, INTER)).x).toBe(row.x);

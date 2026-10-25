@@ -14,6 +14,13 @@
  * The Judicial Person has tiles too since #37.18, the Property since #37.19,
  * the Document since #37.20 — where every notebook tab of the type is a tile,
  * named as the tab is („Instrument", „Cadastru" …).
+ *
+ * Slice 40.57: on the four record screens the bar sits in the „Panouri" panel,
+ * closed when the record opens. `showTile`, `hideTile` and `pressTileButton`
+ * open it for what they do and close it again when they opened it; `tileBox`
+ * finds a box with the panel closed too, so its state can be read (`toBeChecked`)
+ * — to click one, `openTiles` first. Setări and the home page keep the open bar,
+ * and there these do exactly what they did.
  */
 
 import { expect, type Locator, type Page } from "@playwright/test";
@@ -21,9 +28,48 @@ import { expect, type Locator, type Page } from "@playwright/test";
 /** The checkbox row's accessible name (shared.tiles.groupLabel). */
 export const TILE_GROUP = "Părți afișate";
 
-/** The checkbox for tile `name`. */
+/** The checkbox for tile `name` — found with the „Panouri" panel closed as well (40.57). */
 export function tileBox(page: Page, name: string): Locator {
-  return page.getByRole("group", { name: TILE_GROUP }).getByRole("checkbox", { name, exact: true });
+  return page
+    .getByRole("group", { name: TILE_GROUP, includeHidden: true })
+    .getByRole("checkbox", { name, exact: true, includeHidden: true });
+}
+
+/** Slice 40.57: a record screen's „Panouri" button — none on Setări or the home page. */
+export function tilesMenuButton(page: Page): Locator {
+  return page.locator("[data-tiles-menu-button]");
+}
+
+/**
+ * Open the „Panouri" panel, if the screen has one and it is closed. True when this call opened it. Repeated until it
+ * holds, as `showTile`'s tick is: a press before the page is interactive does nothing.
+ */
+export async function openTiles(page: Page): Promise<boolean> {
+  await expect(page.locator("[data-tile-selector]").first()).toBeAttached({ timeout: 30_000 });
+  const button = tilesMenuButton(page);
+  if ((await button.count()) === 0) return false;
+  if ((await button.getAttribute("aria-expanded")) === "true") return false;
+  await expect(async () => {
+    if ((await button.getAttribute("aria-expanded")) !== "true") await button.click();
+    await expect(page.getByRole("group", { name: TILE_GROUP })).toBeVisible({ timeout: 2_000 });
+  }).toPass({ timeout: 30_000 });
+  return true;
+}
+
+/** Close the „Panouri" panel, if the screen has one and it is open — by its button. */
+export async function closeTiles(page: Page): Promise<void> {
+  const button = tilesMenuButton(page);
+  if ((await button.count()) === 0) return;
+  if ((await button.getAttribute("aria-expanded")) !== "true") return;
+  await button.click();
+  await expect(button).toHaveAttribute("aria-expanded", "false");
+}
+
+/** Press the bar's „Toate", „Toate sus" or „Implicit" — the panel opened for it, and closed after if this opened it. */
+export async function pressTileButton(page: Page, name: "Toate" | "Toate sus" | "Implicit", options?: { timeout?: number }): Promise<void> {
+  const opened = await openTiles(page);
+  await page.getByRole("group", { name: TILE_GROUP }).getByRole("button", { name, exact: true }).click(options);
+  if (opened) await closeTiles(page);
 }
 
 /**
@@ -38,11 +84,13 @@ export function tileBox(page: Page, name: string): Locator {
  */
 export async function showTile(page: Page, name: string): Promise<Locator> {
   const box = tileBox(page, name);
-  await expect(box).toBeVisible({ timeout: 30_000 });
+  await expect(box).toBeAttached({ timeout: 30_000 });
+  const opened = !(await box.isChecked()) && (await openTiles(page));
   await expect(async () => {
     if (!(await box.isChecked())) await box.click();
     await expect(box).toBeChecked({ timeout: 2_000 });
   }).toPass({ timeout: 30_000 });
+  if (opened) await closeTiles(page);
   const tile = page.getByRole("region", { name, exact: true });
   await expect(tile).toBeVisible({ timeout: 30_000 });
   return tile;
@@ -51,11 +99,14 @@ export async function showTile(page: Page, name: string): Promise<Locator> {
 /** Untick tile `name` if it is showing; the tile leaves the page (a form tile is hidden, a list tile unmounted). */
 export async function hideTile(page: Page, name: string): Promise<void> {
   const box = tileBox(page, name);
+  await expect(box).toBeAttached({ timeout: 30_000 });
+  const opened = (await box.isChecked()) && (await openTiles(page));
   // Repeated until it holds, for the reason `showTile` gives.
   await expect(async () => {
     if (await box.isChecked()) await box.click();
     await expect(box).not.toBeChecked({ timeout: 2_000 });
   }).toPass({ timeout: 30_000 });
+  if (opened) await closeTiles(page);
   await expect(page.getByRole("region", { name, exact: true })).toBeHidden();
 }
 

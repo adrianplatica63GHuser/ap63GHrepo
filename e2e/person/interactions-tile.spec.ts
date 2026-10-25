@@ -14,7 +14,7 @@
 
 import { test, expect, type Locator, type Page } from "../helpers/test";
 import { E2E_MARKER, createCompany, createDocumentOfType, createNaturalPerson, removeLeftovers, removeRecord } from "../helpers/records";
-import { showTile, tileBox } from "../helpers/tiles";
+import { closeTiles, openTiles, showTile, tileBox } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}PERS-07`;
 const PURPLE = "rgb(246, 240, 254)";
@@ -130,11 +130,13 @@ test.describe("TC-PERS-07 — „Interacțiuni” pe cele două fișe de persoan
       expect(lb.w).toBeLessThan(tb.w / 2);
 
       // Step 3 — unticked, the tile and the column go; ticked, it is back.
+      await openTiles(page); // 40.57: the box is in the „Panouri" panel
       await tileBox(page, "Interacțiuni").click();
       await expect(tile).toHaveCount(0);
       await expect(page.locator('[data-tile-area="right"]')).toBeHidden();
       await tileBox(page, "Interacțiuni").click();
       await expect(tile).toBeVisible();
+      await closeTiles(page);
 
       // Step 4 — 1366: under the left tiles, the action bar under it (#38.46 — it read „under the left area", which
       // was the column wrapped as a line of its own, outside the packing), still „Pagini"'s size, purple.

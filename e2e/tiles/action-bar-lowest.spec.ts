@@ -11,6 +11,7 @@
 
 import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createNaturalPerson, createProperty, createSaleContract, removeLeftovers, removeRecord, type RecordKind } from "../helpers/records";
+import { pressTileButton } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}TILES-23`;
 const GAP = 16;
@@ -56,7 +57,7 @@ test.describe("TC-TILES-23 — bara de butoane e ultimul lucru de pe ecran", () 
         await page.goto(`/${s.base}/${id}`);
         await forget();
         await page.reload();
-        await page.getByRole("button", { name: "Toate", exact: true }).click({ timeout: 30_000 });
+        await pressTileButton(page, "Toate", { timeout: 30_000 });
         await expect(page.locator("[data-tile-row] [data-packed-col].order-last")).toBeVisible({ timeout: 30_000 });
         for (const width of [1920, 1366, 960]) {
           await page.setViewportSize({ width, height: 1080 });

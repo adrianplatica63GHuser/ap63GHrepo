@@ -39,7 +39,7 @@ import { test, expect } from "../helpers/test";
 import { E2E_MARKER, removeLeftovers, removeRecord } from "../helpers/records";
 import { openFromSidebar } from "../helpers/sidebar";
 import { expectFixedFieldsHold, expectStableColumns, expectStableWidths, expectUnitGrid, photograph } from "../helpers/field-widths";
-import { TILE_GROUP } from "../helpers/tiles";
+import { pressTileButton } from "../helpers/tiles";
 import { ADDRESS, NATURAL_PERSON, UNIT_GAP_REM, UNIT_REM } from "../../src/lib/ui/field-widths";
 
 /** Each FIXED box's widest value, by the name its box carries (Slice #37.12). */
@@ -130,7 +130,7 @@ test.describe("TC-PERS-01 — Persoană fizică creată manual", () => {
       }
       if (viewport) await page.setViewportSize(viewport);
       // Slice #37.17 — every tile at once („Toate"), its widths held, and its pictures; then „Implicit".
-      await page.getByRole("group", { name: TILE_GROUP }).getByRole("button", { name: "Toate", exact: true }).click();
+      await pressTileButton(page, "Toate");
       await expect(page.getByRole("region", { name: "Etichete și grupuri", exact: true })).toBeVisible({ timeout: 30_000 });
       await expectStableWidths(page);
       // Slice #37.27 — the tiles are on a width unit: the row is 6 units at 1366 px, 10 at 1920,
@@ -138,7 +138,7 @@ test.describe("TC-PERS-01 — Persoană fizică creată manual", () => {
       // two / three / four 32rem tiles to a row).
       await expectUnitGrid(page, UNIT_REM, UNIT_GAP_REM, { 1366: 6, 1920: 10, 2560: 14 });
       await photograph(page, "natural-person-all-tiles", [1920, 2560], 1400);
-      await page.getByRole("group", { name: TILE_GROUP }).getByRole("button", { name: "Implicit", exact: true }).click();
+      await pressTileButton(page, "Implicit");
       await expect(page.getByRole("region", { name: "Etichete și grupuri", exact: true })).toHaveCount(0);
       await page.getByRole("button", { name: "Șterge", exact: true }).click();
       const confirm = page.getByRole("dialog", { name: "Ștergeți persoana?" });

@@ -16,7 +16,7 @@
 
 import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createNaturalPerson, removeLeftovers, removeRecord } from "../helpers/records";
-import { hideTile } from "../helpers/tiles";
+import { hideTile, openTiles, pressTileButton } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}TILES-25`;
 const KEY = "ga40-tile-positions-natural-person-v1";
@@ -107,11 +107,12 @@ test.describe("TC-TILES-25 — un dreptunghi din harta fișelor se trage ca fiș
       const region = (name: string) => page.getByRole("region", { name, exact: true });
 
       // Step 1 — „Toate", „Interacțiuni" and „Arbore de moștenire" unticked: every tile where #37.75 places it; the diagram.
-      await page.getByRole("button", { name: "Toate", exact: true }).click({ timeout: 30_000 });
+      await pressTileButton(page, "Toate", { timeout: 30_000 });
       await expect(region("Etichete și grupuri")).toBeVisible({ timeout: 30_000 });
       await hideTile(page, "Interacțiuni");
       await hideTile(page, "Arbore de moștenire");
       await page.waitForTimeout(2500); // past the first layout's settling
+      await openTiles(page); // 40.57: the diagram is in the „Panouri" panel
       await expect(page.locator("[data-tiles-diagram]")).toHaveAttribute("data-room", "yes", { timeout: 15_000 });
       const rule = await boxes(page);
       expect(rule.related).toBeDefined();
@@ -167,6 +168,7 @@ test.describe("TC-TILES-25 — un dreptunghi din harta fișelor se trage ca fiș
       await expect.poll(async () => placeOf(await boxes(page)), { timeout: 20_000 }).toEqual(placeOf(dropped));
       await page.waitForTimeout(2500); // past the settling
       const reloaded = await boxes(page);
+      await openTiles(page); // 40.57: the diagram is in the „Panouri" panel
       await expect(page.locator("[data-tiles-diagram]")).toHaveAttribute("data-room", "yes", { timeout: 15_000 });
 
       // Step 4 — dragged over „Identitate"'s rectangle; a tile makes room; Esc: every tile back where step 3 had it.

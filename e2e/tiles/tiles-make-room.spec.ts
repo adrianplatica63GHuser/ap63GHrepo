@@ -18,7 +18,7 @@
 
 import { test, expect, type Locator, type Page } from "../helpers/test";
 import { E2E_MARKER, createNaturalPerson, createProperty, removeGroupLeftovers, removeLeftovers, removeRecord } from "../helpers/records";
-import { hideTile } from "../helpers/tiles";
+import { hideTile, pressTileButton } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}TILES-24`;
 const KEY = "ga40-tile-positions-natural-person-v1";
@@ -106,7 +106,7 @@ test.describe("TC-TILES-24 — o fișă ținută peste alta îi face loc", () =>
       const region = (name: string) => page.getByRole("region", { name, exact: true });
 
       // Step 1 — „Toate", „Interacțiuni" and „Arbore de moștenire" unticked: every tile where #37.75 places it.
-      await page.getByRole("button", { name: "Toate", exact: true }).click({ timeout: 30_000 });
+      await pressTileButton(page, "Toate", { timeout: 30_000 });
       await expect(region("Etichete și grupuri")).toBeVisible({ timeout: 30_000 });
       await hideTile(page, "Interacțiuni");
       await hideTile(page, "Arbore de moștenire");
