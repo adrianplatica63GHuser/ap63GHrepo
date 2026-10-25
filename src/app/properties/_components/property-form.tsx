@@ -1257,6 +1257,9 @@ export function PropertyForm({
     setBaseline({ values, corners: savedCorners });
     setViewingVersion(null);
     form.reset(values);
+    // An associated record („?readonly=true", „Modifică") goes back to its read-only presentation once saved, as the
+    // whole save did (#21.04.Import).
+    if (mode === "view") setAssociatedEditing(false);
     tileEditing.close();
     router.refresh();
     return true;
@@ -1623,7 +1626,8 @@ export function PropertyForm({
                   <div className={STACKED_FIELD_CLASS} style={{ width: rem(PANEL_UNIT_INNER_REM.property.address) }}>
                     <span className={STACKED_LABEL_CLASS}>{t("streetViewAddress.label")}</span>
                     <ReadValue
-                      name="address.streetViewStreetLine"
+                      // An expression, so field-widths.test's row reader counts this line once: the box below is the row.
+                      name={"address.streetViewStreetLine"}
                       kind={PROP.streetViewStreetLineBox.kind}
                       text={readText(watchedValues.address?.streetViewStreetLine)}
                       style={boxStyle(PROP.streetViewStreetLineBox)}

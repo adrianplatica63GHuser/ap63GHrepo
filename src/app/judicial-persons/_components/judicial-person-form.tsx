@@ -725,6 +725,9 @@ export function JudicialPersonForm({
     setViewingVersion(null);
     form.reset(values);
     setAnafApplied(false);
+    // An associated record („?readonly=true", „Modifică") goes back to its read-only presentation once saved, as the
+    // whole save did (#21.04.Import).
+    if (mode === "view") setAssociatedEditing(false);
     tileEditing.close();
     router.refresh();
     return true;

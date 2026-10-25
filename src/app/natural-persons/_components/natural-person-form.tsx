@@ -824,6 +824,9 @@ export function NaturalPersonForm({
     setViewingVersion(null);
     // As loaded, now: 40.64's and 40.71's „empty as loaded" read the saved values.
     form.reset(values);
+    // An associated record („?readonly=true", „Modifică") goes back to its read-only presentation once saved, as the
+    // whole save did (#21.04.Import).
+    if (mode === "view") setAssociatedEditing(false);
     tileEditing.close();
     router.refresh();
     return true;
