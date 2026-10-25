@@ -74,6 +74,8 @@ test.describe("TC-PROP-06 — lista proprietăților", () => {
       await expect(picker.locator("label")).toHaveText([
         // Slice 40.20: Adrian's short names.
         "Tarla", "Parcelă", "Supr. Ofic.", "Supr. Calc.", "# CF", "# Cadastru", "Categ.Folos.", "Tip Prop.", "Localitate",
+        // 40.55: „Modificat la", last.
+        "Modificat la",
       ]);
       for (const gone of ["Poreclă", "Note", "Importanță", "Relevanță", "Proveniență"]) {
         await expect(picker.getByText(gone, { exact: true })).toHaveCount(0);

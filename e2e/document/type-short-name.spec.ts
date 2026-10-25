@@ -41,7 +41,8 @@ async function tipOf(page: Page, title: string): Promise<[string, string | null]
   await expect(search).toBeVisible({ timeout: 30_000 });
   await search.fill(MARK);
   await expect(main.locator("tbody tr").filter({ hasText: MARK })).toHaveCount(2, { timeout: 30_000 });
-  const cell = main.locator("tbody tr").filter({ hasText: title }).locator("td").nth(1);
+  // 40.60: the badges' column is gone, so „Tip" is the first cell.
+  const cell = main.locator("tbody tr").filter({ hasText: title }).locator("td").nth(0);
   return [(await cell.textContent())?.trim() ?? "", await cell.getAttribute("title")];
 }
 

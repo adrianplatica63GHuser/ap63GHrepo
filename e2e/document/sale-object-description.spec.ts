@@ -10,6 +10,7 @@
 
 import { test, expect } from "../helpers/test";
 import { E2E_MARKER, createDocumentOfType, createProperty, removeLeftovers, removeRecord } from "../helpers/records";
+import { showTile } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}DOC-22`;
 
@@ -31,7 +32,8 @@ test.describe("TC-DOC-22 — „Descrierea obiectului”", () => {
       // Step 1 — opened: the empty field shows the one property's description; nothing unsaved.
       await page.goto(`/documents/${doc}`);
       // „Obiectul vânzării" is a tile of the contract's screen (#38.33), not shown by default: ticked here.
-      await page.getByRole("checkbox", { name: "Obiectul vânzării", exact: true }).check({ timeout: 30_000 });
+      // 40.57: the tiles' boxes are in the „Panouri" panel.
+      await showTile(page, "Obiectul vânzării");
       const field = page.getByLabel("Descrierea obiectului", { exact: true });
       await expect(field).toBeVisible();
       await expect(field).toHaveValue(/5\.000 mp, P 34/, { timeout: 30_000 });

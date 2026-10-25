@@ -94,6 +94,8 @@ test.describe("TC-PERS-04 — listele de persoane", () => {
       await expect(npPicker.locator("label")).toHaveText([
         // Slice 40.20: Adrian's short names.
         "CNP", "Născut pe", "Vârstă", "Gen", "Decedat pe", "Născut la", "Tip prof.", "Rel.cu VM",
+        // 40.55: „Modificat la", last.
+        "Modificat la",
       ]);
 
       // Step 3 — CNP and Data nașterii; the search; the row.
@@ -150,7 +152,7 @@ test.describe("TC-PERS-04 — listele de persoane", () => {
       await main.getByRole("button", { name: "Câmpuri afișate 0/4", exact: true }).click();
       const jpPicker = main.locator("[data-field-chooser]");
       // #39.82: „Localitate" after them — the head office's, so its filter has a column.
-      await expect(jpPicker.locator("label")).toHaveText(["Tip", "CUI", "#Reg. Com.", "Contact", "Localitate"]); // 40.20: short names
+      await expect(jpPicker.locator("label")).toHaveText(["Tip", "CUI", "#Reg. Com.", "Contact", "Localitate", "Modificat la"]); // 40.20: short names; 40.55: „Modificat la", last
 
       // Step 6 — Nr. înregistrare (CUI); the search; the row.
       await jpPicker.getByRole("checkbox", { name: "CUI", exact: true }).check();

@@ -13,7 +13,8 @@ const MARK = `${E2E_MARKER}DOC-23`;
 /** „Tip" on the row holding `title`: its text and its tooltip. */
 async function tipOf(page: Page, title: string): Promise<[string, string | null]> {
   const main = page.locator("main");
-  const cell = main.locator("tbody tr").filter({ hasText: title }).locator("td").nth(1);
+  // 40.60: the badges' column is gone, so „Tip" is the first cell.
+  const cell = main.locator("tbody tr").filter({ hasText: title }).locator("td").nth(0);
   return [(await cell.textContent())?.trim() ?? "", await cell.getAttribute("title")];
 }
 
