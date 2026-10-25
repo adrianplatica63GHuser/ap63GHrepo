@@ -3,7 +3,7 @@
  *
  * `oneColumn` draws an arrangement as one column — top to bottom, the left column first — and stores nothing; under
  * `ONE_COLUMN_BELOW_UNITS` (5) a row uses it; a tile wider than the row scrolls inside itself; the rows are never wider
- * than the window; the four headings keep their controls in the flow.
+ * than a narrow window (`--row-cap`); the four headings keep their controls in the flow.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -51,9 +51,14 @@ describe("drawn in one column, never stored, never wider than the row (Ask first
     expect(SRC).toContain('styles.set(box.el, "overflow-x", tooWide ? "auto" : "");');
     expect(SRC).toContain('if (fitWidest) styles.set(container, "min-width", single ? "" : `${widest}px`);');
   });
-  it("the rows are never wider than the window — the record screens' and the dashboard's", () => {
-    expect(String(unitRowStyle("naturalPerson").width)).toMatch(/^min\(100%, max\(/);
-    expect(String(screenRowStyle(4).width)).toMatch(/^min\(100%, max\(/);
+  it("the rows are never wider than a narrow window — the record screens' and the dashboard's", () => {
+    expect(String(unitRowStyle("naturalPerson").width)).toMatch(/^min\(var\(--row-cap\), max\(/);
+    expect(String(screenRowStyle(4).width)).toMatch(/^min\(var\(--row-cap\), max\(/);
+    // The cap is the row's width below 1024 px (NARROW_WINDOW_QUERY) and none above it, where #37.35's rule stands: a row
+    // keeps its widest tile and the page scrolls sideways.
+    const css = read("src/app/globals.css");
+    expect(css).toMatch(/--row-cap: 100000px;/);
+    expect(css).toMatch(/@media \(max-width: 1023\.98px\) \{\s*:root \{ --row-cap: 100%; \}/);
   });
 });
 
