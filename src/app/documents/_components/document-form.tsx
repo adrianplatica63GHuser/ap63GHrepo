@@ -1388,6 +1388,7 @@ export function DocumentForm({
             scop={typeof scop === "string" ? scop : null}
             value={typeof value === "string" ? value : null}
             editable={effectiveMode === "edit" && !readMode.reading(name)}
+            fill={effectiveMode === "edit"}
             onText={onSaleObjectText}
           />
         </div>

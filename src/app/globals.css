@@ -142,6 +142,14 @@
 .dark .border-card-rim:not([class*="dark:border-"]),
 .dark .border-crease:not([class*="dark:border-"]) { border-color: #27272a; }            /* zinc-800 */
 
+/* Slice 40.75 — a read value alone in its row. A stacked field (STACKED_FIELD_CLASS) takes its rows from the row it
+   sits in (`grid-rows-subgrid`); alone in a tile's column it has no grid to take them from, and Chrome then sizes it as
+   a box's one line, so a value of three lines ran over the field below (measured: „Subiect" 68 px in a 48-px cell, on
+   a document read as text). Its own rows there, as tall as what it holds. */
+:not(.grid) > .grid-rows-subgrid:has(> [data-read-value]) {
+  grid-template-rows: none;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);

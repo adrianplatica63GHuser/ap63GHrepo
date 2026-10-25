@@ -35,6 +35,7 @@ export function SaleObjectRecompose({
   scop,
   value,
   editable,
+  fill = editable,
   onText,
 }: {
   documentId: string;
@@ -44,6 +45,11 @@ export function SaleObjectRecompose({
   value: string | null | undefined;
   /** In edit mode: the button shows, and an empty field fills itself once. */
   editable: boolean;
+  /**
+   * Slice 40.75: an empty field fills itself once — `editable` unless said otherwise. A saved contract reads as text,
+   * its tile closed, and the description is still composed for it to read („Recompune" waits for the open tile).
+   */
+  fill?: boolean;
   /** `recompose`: the button, a change to save. `auto`: the empty field filled on opening, not a change. */
   onText: (text: string, how: "recompose" | "auto") => void;
 }) {
@@ -72,20 +78,20 @@ export function SaleObjectRecompose({
   // on the runner: one call, the text returned, the field left empty). The answer is applied when it arrives, if the
   // field is still editable and still empty THEN — read from `latest`, not from the render that asked.
   const filled = useRef(false);
-  const latest = useRef({ editable, value });
+  const latest = useRef({ fill, value });
   useEffect(() => {
-    latest.current = { editable, value };
+    latest.current = { fill, value };
   });
   useEffect(() => {
-    if (!editable || filled.current || (value ?? "").trim() !== "") return;
+    if (!fill || filled.current || (value ?? "").trim() !== "") return;
     filled.current = true;
     fetchSaleObjectText(documentId, scop)
       .then((text) => {
         const now = latest.current;
-        if (text && now.editable && (now.value ?? "").trim() === "") onText(text, "auto");
+        if (text && now.fill && (now.value ?? "").trim() === "") onText(text, "auto");
       })
       .catch(() => undefined);
-  }, [editable, value, documentId, scop, onText]);
+  }, [fill, value, documentId, scop, onText]);
 
   if (!editable) return null;
   return (
