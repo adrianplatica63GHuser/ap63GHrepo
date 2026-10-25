@@ -111,6 +111,18 @@ import { RecordSyncNotice, useRecordSaveSync } from "@/components/record-save-sy
 import { TileTitle } from "@/components/tiles/tile-title";
 import { EmptyTileLine, useEmptyTiles } from "@/components/tiles/empty-tile";
 import { EmptyFieldsLink, HiddenFieldsContext, hiddenFieldStyle, useEmptyFields, useFieldHidden } from "@/components/tiles/empty-fields";
+import {
+  ReadModeContext,
+  ReadValue,
+  TILE_EDITING_CLASS,
+  TileEditBar,
+  TileEditButton,
+  onTileKeyDown,
+  readText,
+  useFieldRead,
+  useTileEditing,
+  type ReadMode,
+} from "@/components/tiles/read-edit-tile";
 import { tileIsEmpty, valueAt } from "@/lib/ui/empty-tile";
 
 // ---------------------------------------------------------------------------
@@ -280,6 +292,26 @@ const PROP_FIELD_TILES: Record<PropFieldTile, readonly string[]> = {
 };
 /** A field's label key where it is not `fields.<name>`. */
 const PROP_LABEL_KEY: Readonly<Record<string, string>> = { tarlaId: "tarlaSola", useCategoryId: "useCategory", propertyTypeId: "propertyType" };
+
+/**
+ * Slice 40.74: on a saved property the three form tiles read as text and edit one at a time — 40.72's tile
+ * (src/components/tiles/read-edit-tile.tsx). What each tile's „Salvează" sends: its own part; the route takes a
+ * partial update and replaces the address and the corners whole, so their tiles send them whole. The map and Street
+ * View keep their own controls (Ask first 2): a corner drawn on the map opens „Puncte de contur", whose „Salvează"
+ * keeps it.
+ */
+type PropEditTile = "cadastral" | "corners" | "address";
+const PROP_EDIT_PAYLOAD: Record<PropEditTile, readonly (keyof ReturnType<typeof toApiPayload>)[]> = {
+  cadastral: ["propertyTypeId", "nickname", "tarlaId", "parcela", "cadastralNumber", "carteFunciara", "useCategoryId", "surfaceAreaMp", "notes"],
+  corners: ["corners"],
+  address: ["address"],
+};
+/** Each tile's `data-panel`, bare — as on the natural person, the tile is this file's only `data-panel="…"`. */
+const PROP_EDIT_PANEL: Record<PropEditTile, string> = {
+  cadastral: "cadastral",
+  corners: "corners",
+  address: "address",
+};
 
 export function PropertyForm({
   mode,
@@ -1033,7 +1065,7 @@ export function PropertyForm({
   // both by the form's own Save button (onSubmit, which navigates after a
   // successful save) and by the unsaved-changes guard's onSave (which must
   // NOT navigate — the guard's pending action handles that separately).
-  const doSave = async (values: FormValues): Promise<boolean> => {
+  const doSave = async (values: FormValues, tile?: PropEditTile): Promise<boolean> => {
     setSubmitting(true);
     setSubmitError(null);
     setParcelExists(null);
@@ -1046,7 +1078,11 @@ export function PropertyForm({
       const selectedTypeForSave =
         (propertyTypes ?? []).find((o) => o.id === (values.propertyTypeId ?? "")) ?? null;
       const hideAddressForSave = selectedTypeForSave ? !selectedTypeForSave.showAddress : false;
-      const payload = hideAddressForSave ? { ...rawPayload, address: null } : rawPayload;
+      const fullPayload = hideAddressForSave ? { ...rawPayload, address: null } : rawPayload;
+      // Slice 40.74: a tile's „Salvează" sends that tile's part only — and „Tip proprietate" saved onto a type with no
+      // address sends the address away with it, as the whole save did.
+      const keys = tile ? [...PROP_EDIT_PAYLOAD[tile], ...(tile === "cadastral" && hideAddressForSave ? (["address"] as const) : [])] : null;
+      const payload = keys ? Object.fromEntries(keys.map((key) => [key, fullPayload[key]])) : fullPayload;
       const url =
         mode === "create"
           ? "/api/properties"
@@ -1153,6 +1189,8 @@ export function PropertyForm({
           ? createHasData
           : editDirty,
     onSave: async () => {
+      // Slice 40.74: on a saved property the changed tile is the open one, and it saves itself.
+      if (perTile && tileEditing.open) return saveTile(tileEditing.open);
       const valid = await form.trigger();
       if (!valid) return false;
       return doSave(form.getValues());
@@ -1186,6 +1224,60 @@ export function PropertyForm({
   const { register, control, formState } = form;
   const errors = formState.errors;
 
+  // Slice 40.74 — the read view, as on the Natural Person (natural-person-form.tsx, 40.72).
+  const perTile = tiled && !isCreate;
+  const canEditTiles = perTile && effectiveMode === "edit";
+  const baselineRef = useRef(baseline);
+  useEffect(() => {
+    baselineRef.current = baseline;
+  }, [baseline]);
+  const discardEdits = useCallback(() => {
+    form.reset(baselineRef.current.values);
+    setCorners(baselineRef.current.corners);
+    setSubmitError(null);
+  }, [form]);
+  const tileEditing = useTileEditing<PropEditTile>({ dirty: editDirty, discard: discardEdits });
+  const editingTile: PropEditTile | null = canEditTiles ? tileEditing.open : null;
+  const reading = (tile: PropEditTile): boolean => perTile && editingTile !== tile;
+  const readMode: ReadMode = {
+    reading: (name) => perTile && propTileOfField(name) !== editingTile,
+    value: (name) => valueAt(watchedValues, name),
+  };
+  const saveTile = async (tile: PropEditTile): Promise<boolean> => {
+    // The whole record is checked: the other tiles are as saved.
+    const valid = await form.trigger();
+    if (!valid) return false;
+    const values = form.getValues();
+    const ok = await doSave(values, tile);
+    if (!ok) return false;
+    // Only „Puncte de contur" sends the corners: a corner moved on the map while another tile was open stays a change,
+    // and the effect below opens its tile for it once this one closes.
+    const savedCorners = tile === "corners" ? corners : baselineRef.current.corners;
+    baselineRef.current = { values, corners: savedCorners };
+    setBaseline({ values, corners: savedCorners });
+    setViewingVersion(null);
+    form.reset(values);
+    tileEditing.close();
+    router.refresh();
+    return true;
+  };
+  const editTile = (tile: PropEditTile) => tileEditing.edit(tile, `[data-panel="${PROP_EDIT_PANEL[tile]}"]`);
+  const editButton = (tile: PropEditTile, title: string) =>
+    canEditTiles && editingTile !== tile ? <TileEditButton tile={tile} title={title} onEdit={() => editTile(tile)} /> : null;
+  const editBar = (tile: PropEditTile) =>
+    editingTile === tile ? (
+      <TileEditBar tile={tile} onSave={() => void saveTile(tile)} onCancel={tileEditing.cancel} saving={submitting} canSave={editDirty} error={submitError} />
+    ) : null;
+  const editingClass = (tile: PropEditTile): string => (editingTile === tile ? ` ${TILE_EDITING_CLASS}` : "");
+  const editKeys = (tile: PropEditTile) => onTileKeyDown(editingTile === tile, tileEditing.escape);
+  // A corner drawn or moved on the map (Ask first 2) opens „Puncte de contur", so its „Salvează" is there to keep it;
+  // the focus stays on the map.
+  const cornersMoved = canEditTiles && cornersChanged(corners, baseline.corners);
+  const { open: openTile, edit: editAnyTile } = tileEditing;
+  useEffect(() => {
+    if (cornersMoved && openTile === null) editAnyTile("corners", "[data-no-focus-here]");
+  }, [cornersMoved, openTile, editAnyTile]);
+
   // Slice 40.64: an empty address tile is one line — as on the Natural Person (natural-person-form.tsx).
   const emptyTiles = useEmptyTiles({ active: !isCreate, canAdd: effectiveMode === "edit" });
   const addressFolded = emptyTiles.collapsed(
@@ -1193,7 +1285,7 @@ export function PropertyForm({
     tileIsEmpty(formState.defaultValues, PROPERTY_ADDRESS_FIELDS, emptyFormValues) && tileIsEmpty(watchedValues, PROPERTY_ADDRESS_FIELDS, emptyFormValues),
     PROPERTY_ADDRESS_FIELDS.some(
       (path) => !!valueAt(errors, path) || !!valueAt(displayHighlights, path),
-    ),
+    ) || editingTile === "address", // 40.74: a tile open for editing is drawn whole
   );
 
   // Slice 40.71: in a tile that holds some values, the empty fields hide behind „Arată N câmpuri goale" — as on the
@@ -1209,7 +1301,11 @@ export function PropertyForm({
     !!valueAt(errors, path) ||
     !!(path.startsWith("address.") ? valueAt(displayHighlights, path) : valueAt(displayHighlights?.property, path));
   const propHidden = Object.fromEntries(
-    (Object.keys(PROP_FIELD_TILES) as PropFieldTile[]).map((tile) => [tile, emptyFields.hide(tile, PROP_FIELD_TILES[tile], PROP_FIELD_TILES[tile].some(propMarked))]),
+    (Object.keys(PROP_FIELD_TILES) as PropFieldTile[]).map((tile) => [
+      tile,
+      // 40.74: an open tile shows every field.
+      emptyFields.hide(tile, PROP_FIELD_TILES[tile], PROP_FIELD_TILES[tile].some(propMarked) || editingTile === tile),
+    ]),
   ) as Record<PropFieldTile, string[]>;
   const hiddenFields: ReadonlySet<string> = new Set(Object.values(propHidden).flat());
   const fieldLabel = (path: string): string => (path.startsWith("address.") ? t(path) : t(`fields.${PROP_LABEL_KEY[path] ?? path}`));
@@ -1220,8 +1316,17 @@ export function PropertyForm({
   return (
     <FieldPulseContext.Provider value={pulsing}>
     <HiddenFieldsContext.Provider value={hiddenFields}>
+    <ReadModeContext.Provider value={readMode}>
     <form
-      onSubmit={form.handleSubmit(onSubmit, onInvalid)}
+      onSubmit={
+        perTile
+          ? (e) => {
+              // Slice 40.74: Enter in an open tile is its „Salvează"; there is no record-level save.
+              e.preventDefault();
+              if (editingTile) void saveTile(editingTile);
+            }
+          : form.handleSubmit(onSubmit, onInvalid)
+      }
       // Slice #37.14: a whole number of panels wide, so the action bar below
       // them is as wide as they are (#37.12's rule). Slice #37.19: in tile
       // mode the page's tile row carries that width and the form itself is
@@ -1274,9 +1379,9 @@ export function PropertyForm({
             identifiers share one row (rule 14). They are hidden for urban
             types (Slice #19.02), and, since #37.57 (the code moved to the corner), the row with them. */}
         <fieldset disabled={effectiveMode === "view"} className={`m-0 border-0 p-0${hiddenClass("cadastral")}`} style={PANEL_UNIT_STYLE.property.cadastral} {...tileProps("cadastral")}>
-          <section data-panel="cadastral" className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          <section data-panel="cadastral" onKeyDown={editKeys("cadastral")} className={`rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${editingClass("cadastral")}`}>
             {/* Slice #38.30: the tile's title and the line saying what it holds — in every mode. */}
-            <TileTitle title={t("tiles.cadastral")} subtitle={t("tileSubtitles.cadastral")}>
+            <TileTitle title={t("tiles.cadastral")} subtitle={t("tileSubtitles.cadastral")} action={editButton("cadastral", t("tiles.cadastral"))}>
               {/* Slice #37.57: the system ID's one place — this corner, not a field. */}
               {propertyCode && <SystemIdCorner code={propertyCode} />}
             </TileTitle>
@@ -1421,6 +1526,7 @@ export function PropertyForm({
                 fillRem={PANEL_UNIT_INNER_REM.property.cadastral}
               />
               {emptyFieldsLink("cadastral")}
+              {editBar("cadastral")}
             </div>
           </section>
         </fieldset>
@@ -1439,23 +1545,25 @@ export function PropertyForm({
           style={PANEL_UNIT_STYLE.property.corners}
           data-panel="corners"
           {...tileProps("corners")}
+          onKeyDown={editKeys("corners")}
           className={[
             surface("corners"),
             cornersPulse ? "ga-vpulse-red" : "",
             tileShown("corners") ? "" : "hidden",
+            editingClass("corners").trim(),
           ].join(" ")}
         >
           {/* Slice 40.35: „+ Adaugă punct" (and, on „Adaugă proprietate", the Street View toggle) in the title row, at the
               right — CornersManager portals its toolbar into this slot; the line under the table is gone. */}
           <div className="flex items-start justify-between gap-2">
-            <TileTitle title={t("tiles.corners")} subtitle={t("tileSubtitles.corners")} />
+            <TileTitle title={t("tiles.corners")} subtitle={t("tileSubtitles.corners")} action={editButton("corners", t("tiles.corners"))} />
             <div ref={setCornersToolbar} className="flex shrink-0 items-center" data-corners-toolbar="" />
           </div>
           <CornersManager
             toolbarSlot={cornersToolbar}
             corners={corners}
             onChange={setCorners}
-            readOnly={effectiveMode === "view"}
+            readOnly={effectiveMode === "view" || reading("corners")}
             hoveredCornerIdx={hoveredCornerIdx}
             onCornerHover={setHoveredCornerIdx}
             // Slice #38.09: as tiles, Street View opens from its checkbox alone and
@@ -1465,6 +1573,7 @@ export function PropertyForm({
             onToggleStreetView={tiled || typeConfig.hideStreetView ? undefined : handleToggleStreetView}
             cornerDiff={cornerDiff ?? undefined}
           />
+          {editBar("corners")}
         </section>,
         )}
 
@@ -1474,10 +1583,24 @@ export function PropertyForm({
             Stradă — 3 units. */}
         {!typeConfig.hideAddress && (
           <fieldset disabled={effectiveMode === "view"} className={`m-0 border-0 p-0${hiddenClass("address")}`} style={PANEL_UNIT_STYLE.property.address} {...tileProps("address")}>
-            <section data-panel="address" className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-              {addressFolded && <EmptyTileLine tile="address" title={t("tiles.address")} onAdd={emptyTiles.canAdd ? () => emptyTiles.open("address", '[data-panel="address"]') : undefined} />}
+            <section data-panel="address" onKeyDown={editKeys("address")} className={`rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${editingClass("address")}`}>
+              {addressFolded && (
+                <EmptyTileLine
+                  tile="address"
+                  title={t("tiles.address")}
+                  onAdd={
+                    emptyTiles.canAdd
+                      ? () => {
+                          emptyTiles.open("address", '[data-panel="address"]');
+                          // Slice 40.74: on a saved property „Adaugă" opens the tile in edit.
+                          if (canEditTiles) tileEditing.edit("address", '[data-panel="address"]');
+                        }
+                      : undefined
+                  }
+                />
+              )}
               <div className={addressFolded ? "hidden" : "contents"}>
-              <TileTitle title={t("tiles.address")} subtitle={t("tileSubtitles.address")} />
+              <TileTitle title={t("tiles.address")} subtitle={t("tileSubtitles.address")} action={editButton("address", t("tiles.address"))} />
               <div className="flex flex-col gap-2">
                 <Field
                   label={t("address.streetLine")}
@@ -1495,6 +1618,19 @@ export function PropertyForm({
                     disabled, which also disables this button. Slice #37.30
                     (rule 15): the label above, „Preia din Street View" and its
                     help beside the box, the hint or the error under them. */}
+                {reading("address") ? (
+                  // Slice 40.74: read as text; „Preia din Street View" is there while the tile is open.
+                  <div className={STACKED_FIELD_CLASS} style={{ width: rem(PANEL_UNIT_INNER_REM.property.address) }}>
+                    <span className={STACKED_LABEL_CLASS}>{t("streetViewAddress.label")}</span>
+                    <ReadValue
+                      name="address.streetViewStreetLine"
+                      kind={PROP.streetViewStreetLineBox.kind}
+                      text={readText(watchedValues.address?.streetViewStreetLine)}
+                      style={boxStyle(PROP.streetViewStreetLineBox)}
+                      className={highlightRingClass(displayHighlights?.address.streetViewStreetLine, pulsing)}
+                    />
+                  </div>
+                ) : (
                 <label className={STACKED_FIELD_CLASS} style={{ width: rem(PANEL_UNIT_INNER_REM.property.address) }}>
                   <span className={STACKED_LABEL_CLASS}>
                     {t("streetViewAddress.label")}
@@ -1541,6 +1677,7 @@ export function PropertyForm({
                     </span>
                   )}
                 </label>
+                )}
                 <div className={STACKED_ROW_CLASS}>
                   <Field
                     label={t("address.postalCode")}
@@ -1590,6 +1727,7 @@ export function PropertyForm({
                   fillRem={PANEL_UNIT_INNER_REM.property.address}
                 />
                 {emptyFieldsLink("address")}
+                {editBar("address")}
               </div>
               </div>
             </section>
@@ -1727,7 +1865,8 @@ export function PropertyForm({
         document.body
       )}
 
-      {submitError && (
+      {/* Slice 40.74: an open tile says its own refusal, under its „Salvează". */}
+      {submitError && !editingTile && (
         <p className="text-sm text-red-600 dark:text-red-400" role="alert">
           {submitError}
         </p>
@@ -1809,14 +1948,17 @@ export function PropertyForm({
             onClick={() => router.back()}
           />
           <div className="flex items-center gap-3">
-            <IconButton
-              icon={Save}
-              label={t("buttons.save")}
-              variant="primary"
-              size="lg"
-              type="submit"
-              disabled={saveDisabled}
-            />
+            {/* Slice 40.74: on a saved property each tile saves itself — Delete and the way back stay. */}
+            {!perTile && (
+              <IconButton
+                icon={Save}
+                label={t("buttons.save")}
+                variant="primary"
+                size="lg"
+                type="submit"
+                disabled={saveDisabled}
+              />
+            )}
             <IconButton
               icon={Trash2}
               label={t("buttons.delete")}
@@ -1829,14 +1971,17 @@ export function PropertyForm({
         </div>
       ) : (
         <div className="flex items-center justify-center gap-3 border-t border-crease pt-6 dark:border-zinc-800">
-          <IconButton
-            icon={Save}
-            label={t("buttons.save")}
-            variant="primary"
-            size="lg"
-            type="submit"
-            disabled={saveDisabled}
-          />
+          {/* Slice 40.74: on a saved property each tile saves itself — Delete and the way back stay. */}
+          {!perTile && (
+            <IconButton
+              icon={Save}
+              label={t("buttons.save")}
+              variant="primary"
+              size="lg"
+              type="submit"
+              disabled={saveDisabled}
+            />
+          )}
           {effectiveMode === "edit" && (
             <IconButton
               icon={Trash2}
@@ -1958,6 +2103,7 @@ export function PropertyForm({
       )}
       </div>{/* end the action bar's line */}
     </form>
+    </ReadModeContext.Provider>
     </HiddenFieldsContext.Provider>
     </FieldPulseContext.Provider>
   );
@@ -1990,6 +2136,7 @@ type FieldProps = {
 
 function Field({ label, name, type = "text", register, error, hint, highlight, width, maxLength, fillRem }: FieldProps) {
   const hiddenEmpty = useFieldHidden(name); // Slice 40.71: behind its tile's „Arată N câmpuri goale"
+  const read = useFieldRead(name);
   const ring = usePulseRing(highlight);
   const className = [
     FIELD_BOX,
@@ -2000,6 +2147,15 @@ function Field({ label, name, type = "text", register, error, hint, highlight, w
   // Slice #37.30: the label ABOVE its box, the pair exactly as wide as the box
   // (or the panel, for a box that fills it) — a long label wraps inside it.
   const box = stackedBoxStyle(width, fillRem ?? boxRem(width));
+  // Slice 40.74: the read view — the value as text, at the box's width.
+  if (read.reading) {
+    return (
+      <div className={STACKED_FIELD_CLASS} style={hiddenFieldStyle(hiddenEmpty, box)} data-empty-hidden={hiddenEmpty || undefined}>
+        <span className={STACKED_LABEL_CLASS}>{label}</span>
+        <ReadValue name={name} kind={width.kind} text={readText(read.value, type === "date" ? "date" : "text")} style={box} className={ring} />
+      </div>
+    );
+  }
   return (
     <label className={STACKED_FIELD_CLASS} style={hiddenFieldStyle(hiddenEmpty, box)} data-empty-hidden={hiddenEmpty || undefined}>
       <span className={STACKED_LABEL_CLASS}>{label}</span>
@@ -2070,6 +2226,7 @@ function SelectField({
   snapshot?: SnapshotLookupState;
 }) {
   const hiddenEmpty = useFieldHidden(name); // Slice 40.71: behind its tile's „Arată N câmpuri goale"
+  const read = useFieldRead(name);
   const tShared = useTranslations("shared");
   const ring = usePulseRing(highlight);
   // Slice #37.14: the chosen option in full on hover when the box is narrower (#37.12).
@@ -2101,6 +2258,16 @@ function SelectField({
             className={ring}
           />
         </div>
+      </div>
+    );
+  }
+
+  // Slice 40.74: the read view — the chosen option's words.
+  if (read.reading) {
+    return (
+      <div className={STACKED_FIELD_CLASS} style={hiddenFieldStyle(hiddenEmpty, boxStyle(width))} data-empty-hidden={hiddenEmpty || undefined}>
+        <span className={STACKED_LABEL_CLASS}>{label}</span>
+        <ReadValue name={name} kind={width.kind} text={current ? (chosenLabel ?? "") : ""} style={boxStyle(width)} className={ring} />
       </div>
     );
   }
