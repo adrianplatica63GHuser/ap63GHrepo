@@ -85,11 +85,14 @@ async function peek(page: Page, list: string, name: string, kind: string, inner:
   await expect(actions.nth(2)).toHaveAccessibleName("Legături");
   await expect(actions).toHaveCount(3);
   // …and all three inside the table's frame, none cut at its edge.
-  const cut = await row.evaluate((r) => {
-    const frame = r.closest("table")!.parentElement!.getBoundingClientRect();
+  // Re-read until it holds: the row can be drawn anew between finding it and reading it while the search settles
+  // (20261025T053326Z-25030: `closest("table")` was null) — -1 then, and the poll reads again.
+  await expect.poll(async () => row.evaluate((r) => {
+    const table = r.closest("table");
+    if (!table?.parentElement) return -1;
+    const frame = table.parentElement.getBoundingClientRect();
     return [...r.querySelectorAll<HTMLElement>("[data-row-actions] a, [data-row-actions] button")].filter((b) => b.getBoundingClientRect().right > frame.right + 0.5).length;
-  });
-  expect(cut, `${list}: buttons cut at the table's edge`).toBe(0);
+  }), { message: `${list}: buttons cut at the table's edge`, timeout: 15_000 }).toBe(0);
   const magnifier = row.getByRole("button", { name: "Previzualizare", exact: true });
   const eye = row.getByRole("button", { name: "Incursiune", exact: true });
   await magnifier.click();
@@ -503,11 +506,14 @@ async function links(page: Page, list: string, name: string, kind: string, rows:
   const actions = row.locator("[data-row-actions]").locator("a, button");
   await expect(actions).toHaveCount(3); // 40.60: „Deschide" left the rows
   for (const [i, n] of ["Previzualizare", "Incursiune", "Legături"].entries()) await expect(actions.nth(i)).toHaveAccessibleName(n);
-  const cut = await row.evaluate((r) => {
-    const frame = r.closest("table")!.parentElement!.getBoundingClientRect();
+  // Re-read until it holds: the row can be drawn anew between finding it and reading it while the search settles
+  // (20261025T053326Z-25030: `closest("table")` was null) — -1 then, and the poll reads again.
+  await expect.poll(async () => row.evaluate((r) => {
+    const table = r.closest("table");
+    if (!table?.parentElement) return -1;
+    const frame = table.parentElement.getBoundingClientRect();
     return [...r.querySelectorAll<HTMLElement>("[data-row-actions] a, [data-row-actions] button")].filter((b) => b.getBoundingClientRect().right > frame.right + 0.5).length;
-  });
-  expect(cut, `${list}: buttons cut at the table's edge`).toBe(0);
+  }), { message: `${list}: buttons cut at the table's edge`, timeout: 15_000 }).toBe(0);
 
   const magnifier = row.getByRole("button", { name: "Previzualizare", exact: true });
   const eye = row.getByRole("button", { name: "Incursiune", exact: true });
