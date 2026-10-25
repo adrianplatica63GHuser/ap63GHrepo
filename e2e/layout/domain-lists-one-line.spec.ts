@@ -402,8 +402,12 @@ test.describe("TC-LAYOUT-05 — cele patru liste, câte un rând pe linie", () =
     // Step 13 — at the end: the „<" only. Then back to where a funnel stands under the right-hand signs. Slice 40.11: was
     // „pressed through them, it opens its editor" — the sign catches the press now and scrolls the list right, which
     // brings the funnel out from under it; then the funnel is pressed.
-    await frame.evaluate((f) => { f.scrollLeft = f.scrollWidth; f.scrollTop = 0; });
-    await expect(right).toHaveCount(0);
+    // Re-scrolled until it holds: the list can still widen after the first scroll (a late font, a row arriving),
+    // which leaves the frame short of its end — seen once in the runner's 20261025T121634Z-28294.
+    await expect(async () => {
+      await frame.evaluate((f) => { f.scrollLeft = f.scrollWidth; f.scrollTop = 0; });
+      await expect(right).toHaveCount(0, { timeout: 1_000 });
+    }).toPass({ timeout: 10_000 });
     await expect(left).toBeVisible();
     const at = await frame.evaluate((f) => {
       f.scrollLeft = 0;
