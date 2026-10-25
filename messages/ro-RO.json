@@ -4086,9 +4086,7 @@
     "expiringDocuments": {
       "title": "Acte cu valabilitate limitată",
       "empty": "{days, plural, one {Niciun act nu expiră în următoarea zi} few {Niciun act nu expiră în următoarele # zile} other {Niciun act nu expiră în următoarele # de zile}}",
-      "colType": "Tip",
       "colTitle": "Titlu",
-      "colDate": "Dată expirare",
       "colStatus": "Stare",
       "expired": "Expirat",
       "expiresTODAY": "Expiră AZI",

@@ -4086,9 +4086,7 @@
     "expiringDocuments": {
       "title": "Documents with limited validity",
       "empty": "No documents expiring in the next {days, plural, one {day} other {# days}}",
-      "colType": "Type",
       "colTitle": "Title",
-      "colDate": "Expiry date",
       "colStatus": "Status",
       "expired": "Expired",
       "expiresTODAY": "Expires TODAY",

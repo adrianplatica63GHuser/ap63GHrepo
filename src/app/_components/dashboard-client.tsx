@@ -7,9 +7,7 @@ import Link from "next/link";
 import { ENTITY_ICON, type EntityKind } from "@/lib/ui/entity-icon";
 import { EntityMark } from "@/components/record/entity-mark";
 import { useTimeFrames, tfDays } from "@/hooks/use-time-frames";
-import { TABLE_FRAME, WRAPS, columnHead } from "@/components/table/fixed-columns";
-import { FixedTable } from "@/components/table/column-resize";
-import { stepGridStyle, tableUnits, type ColumnName } from "@/lib/ui/field-widths";
+import { columnRem, stepGridStyle, tableUnits, type ColumnName } from "@/lib/ui/field-widths";
 import { ListTile } from "@/components/tiles/list-tile";
 import { TileSelector } from "@/components/tiles/tile-selector";
 import { useTileChoice } from "@/components/tiles/use-tile-choice";
@@ -19,7 +17,9 @@ import { ScreenHelpButton } from "@/components/help/screen-help-button";
 
 /** The expiring documents, at #37.16's column widths (Slice #37.22). */
 // Slice #37.57: no „Cod" — the title is the link; a record's system ID is shown on its own screen only.
-const EXPIRING_COLUMNS: readonly ColumnName[] = ["documentType", "documentTitle", "date", "expiryStatus"];
+// Slice 40.62: two columns — the status first, the title with the type and the date under it (were Tip, Titlu, Data
+// expirării, Stare).
+const EXPIRING_COLUMNS: readonly ColumnName[] = ["expiryStatus", "documentTitle"];
 
 /**
  * Slice #37.36: each section the fewest width units that hold it.
@@ -35,7 +35,6 @@ const HOME_UNITS: Readonly<Record<HomeTile, number>> = {
   expiringDocuments: tableUnits(EXPIRING_COLUMNS),
   recentActivity: 4,
 };
-const EXPIRING_FILL = { units: HOME_UNITS.expiringDocuments, column: "documentTitle" } as const;
 
 // ---------------------------------------------------------------------------
 // API response types — mirror src/lib/dashboard/queries.ts
@@ -340,11 +339,12 @@ export function ExpiringDocumentsSection({
   expiringDays: number;
 }) {
   const nameOr = useNameOr(); // #37.57: a name, or words — never the system ID
+  // Slice 40.62: red when expired, amber inside the warning window, neutral beyond it (it was a pale yellow).
   function rowColor(dateValidUntil: string): string {
     const days = daysFromToday(dateValidUntil);
     if (days < 0)           return "text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/20";
     if (days <= amberDays)  return "text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20";
-    return "text-yellow-700 dark:text-yellow-400 bg-yellow-50/60 dark:bg-yellow-900/10";
+    return "text-ink dark:text-zinc-300 bg-cap dark:bg-zinc-800";
   }
 
   function statusLabel(dateValidUntil: string): string {
@@ -368,47 +368,52 @@ export function ExpiringDocumentsSection({
           {t("expiringDocuments.empty", { days: expiringDays })}
         </p>
       ) : (
-        <div className={`${TABLE_FRAME} rounded-md border border-card-rim dark:border-zinc-800`}>
-          <FixedTable id="dashboard/expiring" columns={EXPIRING_COLUMNS} fill={EXPIRING_FILL}>
+        // Slice 40.62 (Adrian, chapter 10: „I fully accept your recommendations"): the status first, a chip in a column of
+        // its own fixed width; then the title as the main line, the type and the date (dd.mm.yyyy) a small grey line under
+        // it. The table is as wide as its tile and never wider — no sideways scroll at any width; a long title wraps. It
+        // is a plain table (`table-fixed`, the status column `expiryStatus`'s width): a FixedTable is as wide as its
+        // columns' rems, which is what pushed „Stare" off the tile's right edge in a narrow window.
+        <div className="rounded-md border border-card-rim dark:border-zinc-800" data-expiring-frame="">
+          <table className="w-full table-fixed text-sm" data-expiring-table="">
+            <colgroup>
+              <col style={{ width: `${columnRem("expiryStatus")}rem` }} />
+              <col />
+            </colgroup>
             <thead>
               <tr className="text-left text-xs text-zinc-500 dark:text-zinc-400 border-b border-zinc-100 dark:border-zinc-800">
-                <th className="px-4 pb-2 font-medium" {...columnHead("documentType")}>{t("expiringDocuments.colType")}</th>
-                <th className="px-4 pb-2 font-medium" {...columnHead("documentTitle")}>{t("expiringDocuments.colTitle")}</th>
-                <th className="px-4 pb-2 font-medium" {...columnHead("date")}>{t("expiringDocuments.colDate")}</th>
-                <th className="px-4 pb-2 font-medium" {...columnHead("expiryStatus")}>{t("expiringDocuments.colStatus")}</th>
+                <th className="px-4 pb-2 pt-2 font-medium">{t("expiringDocuments.colStatus")}</th>
+                <th className="px-4 pb-2 pt-2 font-medium">{t("expiringDocuments.colTitle")}</th>
               </tr>
             </thead>
             <tbody>
               {data.map((doc) => (
                 <tr
                   key={doc.id}
-                  className="border-b border-zinc-50 dark:border-zinc-800/50 last:border-0"
+                  className="border-b border-zinc-50 align-top dark:border-zinc-800/50 last:border-0"
                 >
-                  <td className={`px-4 py-2 text-zinc-600 dark:text-zinc-300 ${WRAPS}`}>
-                    {doc.documentTypeName ?? "—"}
+                  <td className="px-4 py-2">
+                    <span
+                      className={`inline-block whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${rowColor(doc.dateValidUntil)}`}
+                      data-expiry-status=""
+                    >
+                      {statusLabel(doc.dateValidUntil)}
+                    </span>
                   </td>
-                  <td className={`px-4 py-2 ${WRAPS}`}>
+                  <td className="px-4 py-2 break-words">
                     <Link
                       href={`/documents/${doc.id}`}
                       className="text-blue-600 dark:text-blue-400 hover:underline"
                     >
                       {nameOr(doc.title, "document")}
                     </Link>
-                  </td>
-                  <td className="px-4 py-2 font-mono text-xs tabular-nums text-zinc-700 dark:text-zinc-300">
-                    {formatDMY(doc.dateValidUntil)}
-                  </td>
-                  <td className="px-4 py-2">
-                    <span
-                      className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${rowColor(doc.dateValidUntil)}`}
-                    >
-                      {statusLabel(doc.dateValidUntil)}
-                    </span>
+                    <div className="text-xs text-fade dark:text-zinc-400" data-expiry-meta="">
+                      {doc.documentTypeName ?? "—"} · <span className="tabular-nums" data-expiry-date="">{formatDMY(doc.dateValidUntil)}</span>
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
-          </FixedTable>
+          </table>
         </div>
       )}
     </SectionCard>

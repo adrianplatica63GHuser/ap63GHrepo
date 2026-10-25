@@ -1251,12 +1251,15 @@ describe("the home page as unit tiles, in the detail screens' frame (Slice #37.3
     expect(src).toMatch(/<UnitRow units=\{choice\.shown\.map\(\(k\) => HOME_UNITS\[k\]\)\}>/);
     expect(src).toMatch(/useTileChoice<HomeTile>\(HOME_TILE_REGISTRY\)/);
     expect(src).toMatch(/<TileSelector all=\{HOME_TILES\}/);
-    expect(src).toMatch(/<FixedTable id="dashboard\/expiring" columns=\{EXPIRING_COLUMNS\} fill=\{EXPIRING_FILL\}>/);
+    // 40.62: a plain table as wide as its tile (it was `<FixedTable id="dashboard/expiring" … fill={EXPIRING_FILL}>`).
+    expect(src).toMatch(/<table className="w-full table-fixed text-sm" data-expiring-table="">/);
     // The old card (rounded-xl, a grey header band) and #37.22's widths are gone.
     expect(src).not.toMatch(/rounded-xl|PANEL_REM|screenPanel\(|data-panel-row/);
     expect(3 * SCALE.M + 2).toBeLessThanOrEqual(unitsInnerRem(3));
-    // #37.57: no „Cod" — the title is the link; the tile stays 8 units, the title filling it.
-    expect(tableUnits(["documentType", "documentTitle", "date", "expiryStatus"])).toBe(8);
+    // #37.57: no „Cod" — the title is the link; the tile was 8 units, the title filling it. 40.62: two columns, the
+    // status and the title, so fewer units (`tableUnits(["documentType", "documentTitle", "date", "expiryStatus"])` was 8).
+    expect(src).toContain('const EXPIRING_COLUMNS: readonly ColumnName[] = ["expiryStatus", "documentTitle"];');
+    expect(tableUnits(["expiryStatus", "documentTitle"])).toBeLessThan(8);
   });
 
   it("with nothing stored all four show — the page as it was", () => {
