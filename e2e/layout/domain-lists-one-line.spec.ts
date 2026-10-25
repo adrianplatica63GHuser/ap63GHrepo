@@ -53,10 +53,10 @@ const LISTS: { path: string; search: string; gap: number | null; searchPx: numbe
 // #39.83: four columns on each list — a long name that always takes two rows, a filterable one, a multi-word name
 // without a filter, and one more — so the band of names is read with every kind of cell in it.
 const CHOICE: Record<string, string[]> = {
-  "ga40-col-property-v4": ["useCategory", "propertyType", "cadastralNumber", "surfaceAreaMp"],
-  "ga40-col-person-v3": ["dateOfBirth", "relationships", "cnp", "placeOfBirth"],
-  "ga40-col-company-v2": ["cuiNumber", "tradeRegisterNumber", "contactPerson", "locality"],
-  "ga40-col-document-v3": ["institution", "pageCount", "nrDocument", "propertyCount"],
+  "ga40-col-property-v5": ["useCategory", "propertyType", "cadastralNumber", "surfaceAreaMp"],
+  "ga40-col-person-v4": ["dateOfBirth", "relationships", "cnp", "placeOfBirth"],
+  "ga40-col-company-v3": ["cuiNumber", "tradeRegisterNumber", "contactPerson", "locality"],
+  "ga40-col-document-v4": ["institution", "pageCount", "nrDocument", "propertyCount"],
 };
 
 /**
@@ -308,7 +308,7 @@ test.describe("TC-LAYOUT-05 — cele patru liste, câte un rând pe linie", () =
   test("semnele roșii „>” și „<” la marginile benzii cât timp sunt coloane ascunse", async ({ page }) => {
     test.slow();
     await page.addInitScript(() => {
-      localStorage.setItem("ga40-col-document-v3", JSON.stringify(["dateDocument", "institution", "pageCount", "createdAt"]));
+      localStorage.setItem("ga40-col-document-v4", JSON.stringify(["dateDocument", "institution", "pageCount", "createdAt"]));
     });
     const main = page.locator("main");
     const frame = main.locator("[data-list-frame]");
@@ -432,9 +432,9 @@ test.describe("TC-LAYOUT-05 — cele patru liste, câte un rând pe linie", () =
 
     // Step 14 — at 1920 px with no column chosen, every column fits: neither sign; the horizontal scroll bar stays the
     // frame's own.
-    await page.evaluate(() => localStorage.setItem("ga40-col-document-v3", JSON.stringify([])));
+    await page.evaluate(() => localStorage.setItem("ga40-col-document-v4", JSON.stringify([])));
     await page.setViewportSize({ width: 1920, height: 1080 });
-    await page.addInitScript(() => localStorage.setItem("ga40-col-document-v3", JSON.stringify([])));
+    await page.addInitScript(() => localStorage.setItem("ga40-col-document-v4", JSON.stringify([])));
     await page.goto("/documents");
     await expect(frame.locator("tbody tr").first()).toBeVisible({ timeout: 30_000 });
     await page.waitForTimeout(500);
@@ -493,13 +493,13 @@ test.describe("TC-LAYOUT-05 — cele patru liste, câte un rând pe linie", () =
       "en-GB": JSON.parse(fs.readFileSync("messages/en-GB.json", "utf8")),
     } as const;
     const LISTS2 = [
-      { path: "/natural-persons", ns: "naturalPerson", store: "ga40-col-person-v3", fixed: ["name", "nickname"],
+      { path: "/natural-persons", ns: "naturalPerson", store: "ga40-col-person-v4", fixed: ["name", "nickname"],
         groups: [["cnp", "dateOfBirth", "age", "gender"], ["dateOfDeath", "placeOfBirth", "professionalType", "relationships"], ["changed"]] }, // 40.55
-      { path: "/judicial-persons", ns: "judicialPerson", store: "ga40-col-company-v2", fixed: ["name", "nickname"],
+      { path: "/judicial-persons", ns: "judicialPerson", store: "ga40-col-company-v3", fixed: ["name", "nickname"],
         groups: [["judicialPersonType", "cuiNumber", "tradeRegisterNumber", "contactPerson"], ["locality", "changed"]] }, // 40.55
-      { path: "/properties", ns: "property", store: "ga40-col-property-v4", fixed: ["nickname"],
+      { path: "/properties", ns: "property", store: "ga40-col-property-v5", fixed: ["nickname"],
         groups: [["tarlaSola", "parcela", "surfaceAreaMp", "calculatedAreaMp"], ["carteFunciara", "cadastralNumber", "useCategory", "propertyType"], ["locality", "changed"]] }, // 40.55
-      { path: "/documents", ns: "document", store: "ga40-col-document-v3", fixed: ["type", "title"],
+      { path: "/documents", ns: "document", store: "ga40-col-document-v4", fixed: ["type", "title"],
         groups: [["nrDocument", "dateDocument", "institution", "subject"], ["pageCount", "personCount", "propertyCount", "createdAt"], ["changed"]] }, // 40.55
     ];
     const base = test.info().project.use.baseURL ?? "http://localhost:3000";

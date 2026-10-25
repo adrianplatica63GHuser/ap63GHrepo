@@ -52,7 +52,7 @@ test.describe("TC-LAYOUT-06 — Linia dintre coloane: trasă în banda numelor, 
   test("Acte: o linie între coloane, trasă cu mausul, păstrată, dată înapoi, mutată din tastatură", async ({ page }) => {
     test.slow();
     await page.addInitScript(() => {
-      localStorage.setItem("ga40-col-document-v3", JSON.stringify(["institution", "pageCount", "nrDocument", "propertyCount"]));
+      localStorage.setItem("ga40-col-document-v4", JSON.stringify(["institution", "pageCount", "nrDocument", "propertyCount"]));
     });
     await page.setViewportSize({ width: 1366, height: 900 });
     const main = page.locator("main");

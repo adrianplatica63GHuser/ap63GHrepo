@@ -400,7 +400,7 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     // Figura 2.4 — the list, searched by the seed person's surname, „Câmpuri afișate" open; rows not the seed's blurred.
     // #39.86: three columns with a funnel chosen first, so the band of names (#39.83) shows them beside „Nume" and
     // „Poreclă", which have none. Not „CNP": a figure shows no CNP, invented or not.
-    await page.evaluate(() => localStorage.setItem("ga40-col-person-v3", JSON.stringify(["dateOfBirth", "age", "gender"])));
+    await page.evaluate(() => localStorage.setItem("ga40-col-person-v4", JSON.stringify(["dateOfBirth", "age", "gender"])));
     await page.goto("/natural-persons");
     const search = page.locator("main").getByPlaceholder(S.personSearch);
     await expect(search).toBeVisible({ timeout: 60_000 });
@@ -677,7 +677,7 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     // Figura 5.1 — the list of properties, searched for the seed's building plots; rows not the seed's blurred. #39.86:
     // four columns, three with a funnel (#39.82) and „Nr. cadastru" without, and the funnel under „Tip proprietate"
     // pressed, so the figure shows a column filter open under its funnel (Ask first 1: invented records only).
-    await page.evaluate(() => localStorage.setItem("ga40-col-property-v4", JSON.stringify(["tarlaSola", "parcela", "propertyType", "cadastralNumber"])));
+    await page.evaluate(() => localStorage.setItem("ga40-col-property-v5", JSON.stringify(["tarlaSola", "parcela", "propertyType", "cadastralNumber"])));
     await page.goto("/properties");
     const psearch = page.locator("main").getByRole("searchbox").or(page.locator("main input[type=search], main input[placeholder]")).first();
     await expect(psearch).toBeVisible({ timeout: 60_000 });
@@ -695,7 +695,7 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     // „Pagina x din y" under the frame, and the red „<" and „>" of the hidden columns (#40.02, #40.03) — scrolled
     // half-way sideways and down; the same seed search as 5.1, rows not the seed's blurred.
     await page.setViewportSize({ width: 980, height: 560 });
-    await page.evaluate(() => localStorage.setItem("ga40-col-property-v4", JSON.stringify(["useCategory", "propertyType", "cadastralNumber", "surfaceAreaMp"])));
+    await page.evaluate(() => localStorage.setItem("ga40-col-property-v5", JSON.stringify(["useCategory", "propertyType", "cadastralNumber", "surfaceAreaMp"])));
     await page.goto("/properties");
     const fsearch = page.locator("main").getByRole("searchbox").first();
     await expect(fsearch).toBeVisible({ timeout: 60_000 });
@@ -717,7 +717,7 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     // Figura 2.7 — 40.13: the line between two columns (40.12) dragged in the band of names, the picture taken while the
     // mouse still holds it — the column on its left wider, the line darker. The same seed search; rows not the seed's
     // blurred. The width is given back with a double-click, so nothing stays stored.
-    await page.evaluate(() => localStorage.setItem("ga40-col-property-v4", JSON.stringify(["tarlaSola", "parcela", "propertyType", "cadastralNumber"])));
+    await page.evaluate(() => localStorage.setItem("ga40-col-property-v5", JSON.stringify(["tarlaSola", "parcela", "propertyType", "cadastralNumber"])));
     await page.goto("/properties");
     const rsearch = page.locator("main").getByRole("searchbox").first();
     await expect(rsearch).toBeVisible({ timeout: 60_000 });

@@ -1,6 +1,6 @@
 /**
- * Case:   TC-LAYOUT-03 — „Câmpuri afișate" fără o alegere memorată: Proprietăți cu Tip proprietate, celelalte liste doar coloanele fixe
- * Source: docs/testing/cases/TC-LAYOUT-03.md, „Last green" 2026-10-05 (steps 1 and 5 follow Slice #38.02; 6–8 are 40.45's)
+ * Case:   TC-LAYOUT-03 — „Câmpuri afișate" fără o alegere memorată: fiecare listă pe cele patru coloane alese (40.66)
+ * Source: docs/testing/cases/TC-LAYOUT-03.md, rewritten by Slice 40.66 (it read #38.02's Tip proprietate and three lists of fixed columns only)
  *
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim.
@@ -11,12 +11,13 @@
  *   - The lists show whatever the database holds; the case reads the headers
  *     and the chooser, and from a row only the shape of „Modificat la" (40.55; 40.45's „Adăugat la" before it).
  *   - Playwright's mouse; the hand run pressed by script (FU-290).
+ *   - „Does not scroll sideways" is read as the table's scrolling frame: its content no wider than the frame.
  */
 
 import { test, expect, type Page } from "../helpers/test";
 import { openFromSidebar } from "../helpers/sidebar";
 
-const KEYS = ["ga40-col-property-v4", "ga40-col-document-v3", "ga40-col-person-v3", "ga40-col-company-v2"];
+const KEYS = ["ga40-col-property-v5", "ga40-col-document-v4", "ga40-col-person-v4", "ga40-col-company-v3"];
 
 async function expectList(page: Page, chooser: string, headers: string[]): Promise<void> {
   const main = page.locator("main");
@@ -24,54 +25,55 @@ async function expectList(page: Page, chooser: string, headers: string[]): Promi
   await expect(main.locator("table").first().locator("thead th")).toHaveText(headers, { timeout: 30_000 });
 }
 
-/**
- * 40.55 — „Modificat la" is the chooser's last field; ticked, its column follows and the first row's day is dd.mm.yyyy.
- * (40.45's „Adăugat la", asked for by mistake, stood there on the three lists before.)
- */
-async function tickModifiedOn(page: Page, chooser: string, after: string, headers: string[]): Promise<void> {
-  const main = page.locator("main");
-  await main.getByRole("button", { name: chooser, exact: true }).click();
-  const boxes = page.locator("[data-field-chooser]").getByRole("checkbox");
-  await expect(boxes.last()).toHaveAccessibleName("Modificat la");
-  await boxes.last().check();
-  await expectList(page, after, headers);
-  const cell = main.locator("table").first().locator("tbody tr").first().locator("td").nth(headers.indexOf("Modificat la"));
+/** The first table's scrolling frame: how far its content is wider than the frame (0 when it does not scroll sideways). */
+async function sideways(page: Page): Promise<number> {
+  return page.locator("main table").first().evaluate((table) => {
+    let frame: HTMLElement | null = table.parentElement;
+    while (frame && getComputedStyle(frame).overflowX === "visible") frame = frame.parentElement;
+    return frame ? frame.scrollWidth - frame.clientWidth : 0;
+  });
+}
+
+/** „Modificat la"'s cell on the first row is a day, dd.mm.yyyy. */
+async function expectModifiedOn(page: Page, headers: string[]): Promise<void> {
+  const cell = page.locator("main table").first().locator("tbody tr").first().locator("td").nth(headers.indexOf("Modificat la"));
   await expect(cell).toHaveText(/^\d{2}\.\d{2}\.\d{4}$/, { timeout: 30_000 });
 }
 
+const PROPERTIES = ["Poreclă", "Tarla", "Parcelă", "Tip Prop.", "Localitate", ""]; // 40.20: short names; 40.24: no empty first column
+const DOCUMENTS = ["Tip", "Titlu", "#Document", "Data", "Inst./Notar", "Modificat la", ""];
+const PERSONS = ["Nume", "Poreclă", "CNP", "Născut pe", "Tip prof.", "Modificat la", ""];
+const COMPANIES = ["Denumire", "Poreclă", "Tip", "CUI", "Localitate", "Modificat la", ""];
+
 test.describe("TC-LAYOUT-03 — „Câmpuri afișate” fără o alegere memorată", () => {
-  test("Proprietăți cu Tip proprietate, celelalte trei doar coloanele fixe; o alegere nouă rămâne", async ({ page }) => {
+  test("fiecare listă pe cele patru coloane alese, fără derulare în lateral la 1366; o alegere nouă rămâne", async ({ page }) => {
     await page.setViewportSize({ width: 1366, height: 900 });
     await page.goto("/");
     await page.evaluate((keys) => keys.forEach((k) => localStorage.removeItem(k)), KEYS);
 
-    // Step 1 — „Proprietăți": 1/4, Tip proprietate after „Poreclă" (#38.02).
+    // Step 1 — „Proprietăți": 4/4 — Tarla, Parcelă, Tip proprietate, Localitate; nothing to scroll sideways.
     await openFromSidebar(page, "Proprietăți");
-    await expectList(page, "Câmpuri afișate 1/4", ["Poreclă", "Tip Prop.", ""] /* 40.20: short names; 40.24: no empty first column */);
+    await expectList(page, "Câmpuri afișate 4/4", PROPERTIES);
+    expect(await sideways(page)).toBeLessThanOrEqual(1);
 
-    // Steps 2–4 — the other three lists: 0/4, their fixed columns only.
-    await openFromSidebar(page, "Acte");
-    await expectList(page, "Câmpuri afișate 0/4", ["Tip", "Titlu", ""]);
-    await openFromSidebar(page, "Persoane Fizice");
-    await expectList(page, "Câmpuri afișate 0/4", ["Nume", "Poreclă", ""]);
-    await openFromSidebar(page, "Persoane Juridice");
-    await expectList(page, "Câmpuri afișate 0/4", ["Denumire", "Poreclă", ""]);
+    // Steps 2–4 — the other three: 4/4 each, „Modificat la" last, a day in it; nothing to scroll sideways.
+    for (const [list, headers] of [["Acte", DOCUMENTS], ["Persoane Fizice", PERSONS], ["Persoane Juridice", COMPANIES]] as const) {
+      await openFromSidebar(page, list);
+      await expectList(page, "Câmpuri afișate 4/4", [...headers]);
+      await expectModifiedOn(page, [...headers]);
+      expect(await sideways(page), list).toBeLessThanOrEqual(1);
+    }
 
-    // Step 5 — „Localitate" ticked on „Proprietăți", kept across a reload.
+    // Step 5 — on „Proprietăți", „Localitate" off and „Modificat la" on, kept across a reload.
     await openFromSidebar(page, "Proprietăți");
-    await page.locator("main").getByRole("button", { name: "Câmpuri afișate 1/4", exact: true }).click();
-    await page.locator("[data-field-chooser]").getByRole("checkbox", { name: "Localitate" }).check();
+    await page.locator("main").getByRole("button", { name: "Câmpuri afișate 4/4", exact: true }).click();
+    const chooser = page.locator("[data-field-chooser]");
+    await chooser.getByRole("checkbox", { name: "Localitate" }).uncheck();
+    await chooser.getByRole("checkbox", { name: "Modificat la" }).check();
     await page.reload();
-    await expectList(page, "Câmpuri afișate 2/4", ["Poreclă", "Tip Prop.", "Localitate", ""]);
-
-    // Steps 6–9 — „Modificat la" on the four lists (40.55; steps 6–8 read „Adăugat la" on the first three, 40.45).
-    await tickModifiedOn(page, "Câmpuri afișate 2/4", "Câmpuri afișate 3/4", ["Poreclă", "Tip Prop.", "Localitate", "Modificat la", ""]);
-    await openFromSidebar(page, "Persoane Fizice");
-    await tickModifiedOn(page, "Câmpuri afișate 0/4", "Câmpuri afișate 1/4", ["Nume", "Poreclă", "Modificat la", ""]);
-    await openFromSidebar(page, "Persoane Juridice");
-    await tickModifiedOn(page, "Câmpuri afișate 0/4", "Câmpuri afișate 1/4", ["Denumire", "Poreclă", "Modificat la", ""]);
-    await openFromSidebar(page, "Acte");
-    await tickModifiedOn(page, "Câmpuri afișate 0/4", "Câmpuri afișate 1/4", ["Tip", "Titlu", "Modificat la", ""]);
+    const chosen = ["Poreclă", "Tarla", "Parcelă", "Tip Prop.", "Modificat la", ""];
+    await expectList(page, "Câmpuri afișate 4/4", chosen);
+    await expectModifiedOn(page, chosen);
 
     // At the end — the keys removed (the context goes with the test too).
     await page.evaluate((keys) => keys.forEach((k) => localStorage.removeItem(k)), KEYS);

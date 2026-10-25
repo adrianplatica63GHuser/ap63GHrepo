@@ -31,7 +31,7 @@ test.describe("TC-LAYOUT-08 — o coloană mutată de nume", () => {
     await page.addInitScript(() => {
       if (sessionStorage.getItem("tc-layout-08")) return;
       sessionStorage.setItem("tc-layout-08", "1");
-      localStorage.setItem("ga40-col-property-v4", JSON.stringify(["tarlaSola", "parcela", "propertyType"]));
+      localStorage.setItem("ga40-col-property-v5", JSON.stringify(["tarlaSola", "parcela", "propertyType"]));
       localStorage.removeItem("ga40-colorder-property-v1");
     });
     await page.goto("/properties");
@@ -92,7 +92,7 @@ test.describe("TC-LAYOUT-08 — o coloană mutată de nume", () => {
     await page.addInitScript(() => {
       if (sessionStorage.getItem("tc-layout-08")) return;
       sessionStorage.setItem("tc-layout-08", "1");
-      localStorage.setItem("ga40-col-document-v3", JSON.stringify(["nrDocument", "dateDocument", "pageCount"]));
+      localStorage.setItem("ga40-col-document-v4", JSON.stringify(["nrDocument", "dateDocument", "pageCount"]));
       localStorage.removeItem("ga40-colorder-document-v1");
     });
     await page.goto("/documents");

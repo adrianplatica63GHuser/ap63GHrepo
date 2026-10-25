@@ -17,10 +17,10 @@ import { openFromSidebar } from "../helpers/sidebar";
 type Row = Record<string, unknown> & { id: string };
 
 const CHOICES: Record<string, string[]> = {
-  "ga40-col-person-v3": ["dateOfBirth", "age", "dateOfDeath", "changed"], // 40.55: „Modificat la" (was "createdAt")
-  "ga40-col-property-v4": ["tarlaSola", "parcela", "surfaceAreaMp", "calculatedAreaMp"],
-  "ga40-col-company-v2": ["judicialPersonType", "changed"], // 40.55: „Modificat la" (was "createdAt")
-  "ga40-col-document-v3": ["dateDocument", "pageCount", "personCount", "createdAt"],
+  "ga40-col-person-v4": ["dateOfBirth", "age", "dateOfDeath", "changed"], // 40.55: „Modificat la" (was "createdAt")
+  "ga40-col-property-v5": ["tarlaSola", "parcela", "surfaceAreaMp", "calculatedAreaMp"],
+  "ga40-col-company-v3": ["judicialPersonType", "changed"], // 40.55: „Modificat la" (was "createdAt")
+  "ga40-col-document-v4": ["dateDocument", "pageCount", "personCount", "createdAt"],
 };
 
 /** Ordered `dir` by `value`, empty values last. */
@@ -139,7 +139,7 @@ test.describe("TC-LAYOUT-10 — pictograma de ordonare din banda de nume", () =>
     await expect(sortButton(page)).toHaveText("Ordonat după „Pagini”");
 
     // Step 9 (40.48) — the two looks: „Gen"'s funnel in use, navy in a circle and filled; the rest the glyph alone.
-    await page.evaluate(() => localStorage.setItem("ga40-col-person-v3", JSON.stringify(["gender", "dateOfBirth", "changed"])));
+    await page.evaluate(() => localStorage.setItem("ga40-col-person-v4", JSON.stringify(["gender", "dateOfBirth", "changed"])));
     await page.goto("/natural-persons?gender=MALE");
     const gender = page.locator('main [data-filter-funnel="gender"] button');
     await expect(gender).toHaveAttribute("data-in-use", "true", { timeout: 30_000 });

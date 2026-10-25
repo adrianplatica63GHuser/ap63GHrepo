@@ -21,8 +21,8 @@ other fields ticked, or a choice not kept across a reload, is the defect.
 ## Before you start
 
 - TC-AUTH-01 is green.
-- In this browser, nothing is stored under the four lists' keys — `ga40-col-property-v4`,
-  `ga40-col-document-v3`, `ga40-col-person-v3`, `ga40-col-company-v2` (`localStorage`). Whatever
+- In this browser, nothing is stored under the four lists' keys — `ga40-col-property-v5`,
+  `ga40-col-document-v4`, `ga40-col-person-v4`, `ga40-col-company-v3` (`localStorage`, since 40.66). Whatever
   was there is kept to put back at the end.
 
 ## What Adrian is asked for
@@ -36,21 +36,22 @@ The window is 1366 × 900. „The headers" are the list table's column headers, 
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „Proprietăți" | „Câmpuri afișate 1/4"; the headers „", „Poreclă", „Tip proprietate", „" |
-| 2 | Opens „Acte" | „Câmpuri afișate 0/4"; the headers „", „Tip", „Titlu", „" |
-| 3 | Opens „Persoane Fizice" | „Câmpuri afișate 0/4"; the headers „", „Nume", „Poreclă", „" |
-| 4 | Opens „Persoane Juridice" | „Câmpuri afișate 0/4"; the headers „", „Denumire", „Poreclă", „" |
-| 5 | Opens „Proprietăți", „Câmpuri afișate", ticks „Localitate", reloads | „Câmpuri afișate 2/4"; the headers „", „Poreclă", „Tip proprietate", „Localitate", „" |
-| 6 | Still on „Proprietăți", opens „Câmpuri afișate" | „Modificat la" is the last field offered; ticked, „Câmpuri afișate 3/4" and the headers „Poreclă", „Tip Prop.", „Localitate", „Modificat la", „"; the first row's „Modificat la" a day, dd.mm.yyyy (40.55) |
-| 7 | Opens „Persoane Fizice", „Câmpuri afișate", ticks „Modificat la" — the last field offered | „Câmpuri afișate 1/4"; the headers „Nume", „Poreclă", „Modificat la", „"; the first row's „Modificat la" a day, dd.mm.yyyy (40.55) |
-| 8 | Opens „Persoane Juridice", „Câmpuri afișate", ticks „Modificat la" — the last field offered | „Câmpuri afișate 1/4"; the headers „Denumire", „Poreclă", „Modificat la", „"; the first row's „Modificat la" a day, dd.mm.yyyy (40.55) |
-| 9 | Opens „Acte", „Câmpuri afișate", ticks „Modificat la" — the last field offered, after „Adăugat la" | „Câmpuri afișate 1/4"; the headers „Tip", „Titlu", „Modificat la", „"; the first row's „Modificat la" a day, dd.mm.yyyy (40.55) |
+| 1 | Opens „Proprietăți" (Slice 40.66) | „Câmpuri afișate 4/4"; the headers „Poreclă", „Tarla", „Parcelă", „Tip Prop.", „Localitate", „"; the table does not scroll sideways |
+| 2 | Opens „Acte" | „Câmpuri afișate 4/4"; the headers „Tip", „Titlu", „#Document", „Data", „Inst./Notar", „Modificat la", „"; the first row's „Modificat la" a day, dd.mm.yyyy; no sideways scroll |
+| 3 | Opens „Persoane Fizice" | „Câmpuri afișate 4/4"; the headers „Nume", „Poreclă", „CNP", „Născut pe", „Tip prof.", „Modificat la", „"; „Modificat la" a day; no sideways scroll |
+| 4 | Opens „Persoane Juridice" | „Câmpuri afișate 4/4"; the headers „Denumire", „Poreclă", „Tip", „CUI", „Localitate", „Modificat la", „"; „Modificat la" a day; no sideways scroll |
+| 5 | Opens „Proprietăți", „Câmpuri afișate", unticks „Localitate", ticks „Modificat la", reloads | „Câmpuri afișate 4/4"; the headers „Poreclă", „Tarla", „Parcelă", „Tip Prop.", „Modificat la", „"; the first row's „Modificat la" a day |
 
 ## At the end — leaving things as they were found
 
 Put the four keys back as they were (remove those that were not there).
 
 ## Notes from the runs
+
+**2026-10-25 — rewritten (Slice 40.66).** Every list opens on four columns — Adrian: „please pick the best default
+yourself" — and all four keys moved once more, so steps 1–5 read the new defaults where they read #38.02's Tip
+proprietate and three lists of fixed columns; steps 6–9 (40.45/40.55's „Modificat la" ticked by hand) folded into 2–5,
+where it is a default. Written from the slice's own change; not driven by hand first.
 
 **2026-10-05 — run 1, `driven` (Slice #37.94).** Driven in the desktop app's browser pane against
 `npm run dev` on 3000, emulated at 1366 × 900; links and ticks pressed by script (FU-290). Nothing
