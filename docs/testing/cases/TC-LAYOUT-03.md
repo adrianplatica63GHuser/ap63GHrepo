@@ -1,4 +1,4 @@
-# TC-LAYOUT-03 — „Câmpuri afișate" fără o alegere memorată: Proprietăți cu Tip proprietate, celelalte liste doar coloanele fixe
+# TC-LAYOUT-03 — „Câmpuri afișate" fără o alegere memorată: fiecare listă pe coloanele ei implicite (40.66)
 
 | | |
 |---|---|

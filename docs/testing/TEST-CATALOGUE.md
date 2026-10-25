@@ -194,7 +194,7 @@ fixed fixture where the existing one will do.
 | [TC-TABS-01](cases/TC-TABS-01.md) | Același act în două ferestre: cealaltă urmează, salvarea învechită e refuzată | sync | happy | — | `automated` | 2026-09-28 | `e2e/sync/two-windows.spec.ts` |
 | [TC-LAYOUT-01](cases/TC-LAYOUT-01.md) | Celelalte ecrane, la lățimi fixe | layout | happy | — | `automated` | 2026-10-01 | `e2e/layout/other-screens.spec.ts` |
 | [TC-LAYOUT-02](cases/TC-LAYOUT-02.md) | Listele: „Adaugă …" se termină la marginea tabelului, nu a ferestrei | layout | happy | — | `automated` | 2026-10-04 | `e2e/layout/list-edge.spec.ts` |
-| [TC-LAYOUT-03](cases/TC-LAYOUT-03.md) | „Câmpuri afișate" fără o alegere memorată: Proprietăți cu Tip proprietate, celelalte liste doar coloanele fixe | layout | happy | — | `automated` | 2026-10-05 | `e2e/layout/list-default-fields.spec.ts` |
+| [TC-LAYOUT-03](cases/TC-LAYOUT-03.md) | „Câmpuri afișate" fără o alegere memorată: fiecare listă pe coloanele ei implicite (40.66) | layout | happy | — | `automated` | 2026-10-05 | `e2e/layout/list-default-fields.spec.ts` |
 | [TC-LAYOUT-04](cases/TC-LAYOUT-04.md) | „Recente": o singură bară, pliată, deasupra „Schimbă parola" / „Ieșire" | layout | happy | — | `automated` | 2026-10-09 | `e2e/layout/recent-one-bar.spec.ts` |
 | [TC-LAYOUT-05](cases/TC-LAYOUT-05.md) | Cele patru liste: înguste, câte un rând pe linie, butoanele unul lângă altul | layout | happy | — | `automated` | 2026-10-18 | `e2e/layout/domain-lists-one-line.spec.ts` |
 | [TC-LAYOUT-06](cases/TC-LAYOUT-06.md) | Linia dintre coloane: trasă în banda numelor, schimbă lățimea coloanei | layout | happy | — | `confirmed` | 2026-10-20 | `e2e/layout/column-resize.spec.ts` |

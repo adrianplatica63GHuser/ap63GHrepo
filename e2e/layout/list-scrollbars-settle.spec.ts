@@ -187,3 +187,50 @@ test.describe("TC-LAYOUT-07 — barele de derulare se așază o singură dată d
     expect({ noTable, wrong }).toEqual({ noTable: [], wrong: [] });
   });
 });
+
+/**
+ * Slice 40.67 — as many rows a page as the window holds, never fewer than 10; a resize keeps the first row on screen.
+ * Steps 8–9 of the case, on „Proprietăți" (617 records in the archive, so every height has pages to spare).
+ */
+test.describe("TC-LAYOUT-07 — câte rânduri încap în fereastră (40.67)", () => {
+  test("două înălțimi, două numere de rânduri, amândouă cel puțin 10; după o redimensionare, primul rând rămâne pe ecran", async ({ page }) => {
+    test.slow();
+    const rows = page.locator("main [data-list-frame] tbody tr");
+    const pageOf = page.locator("main").getByText(/^Pagina \d+ din \d+$/);
+    const frameFits = () =>
+      page.evaluate(() => {
+        const f = document.querySelector<HTMLElement>("main [data-list-frame]")!;
+        return f.scrollHeight <= f.clientHeight + 1;
+      });
+
+    // Step 8 — 1366 × 900, then 1366 × 640: a row count for each, both at least 10, the taller one more; each page
+    // fits its frame without scrolling.
+    await page.setViewportSize({ width: 1366, height: 900 });
+    // Oldest change first: a record another spec adds meanwhile goes to the end, so page 3 holds the same rows.
+    await page.goto("/properties?sort=changed&order=asc");
+    await expect.poll(() => rows.count(), { timeout: 30_000 }).toBeGreaterThanOrEqual(10);
+    await page.waitForTimeout(600);
+    const tall = await rows.count();
+    expect(await frameFits()).toBe(true);
+
+    // Step 9 — on page 3, the first row noted; the window shortened: the page shown is the one holding that row.
+    const next = page.locator("main").getByRole("button", { name: "Următor", exact: true });
+    await next.click();
+    await expect(pageOf).toHaveText(/^Pagina 2 din/, { timeout: 30_000 });
+    await next.click();
+    await expect(pageOf).toHaveText(/^Pagina 3 din/, { timeout: 30_000 });
+    await expect.poll(() => rows.count(), { timeout: 30_000 }).toBe(tall);
+    const first = await rows.first().locator("a[data-row-name-link]").getAttribute("href");
+    expect(first).toBeTruthy();
+
+    await page.setViewportSize({ width: 1366, height: 640 });
+    await expect.poll(() => rows.count(), { timeout: 30_000 }).not.toBe(tall);
+    const short = await rows.count();
+    expect(short).toBeGreaterThanOrEqual(10);
+    expect(short).toBeLessThan(tall);
+    // Row 2 × tall (0-based) is on page ⌊2 × tall ÷ short⌋ + 1.
+    await expect(pageOf).toHaveText(new RegExp(`^Pagina ${Math.floor((2 * tall) / short) + 1} din`), { timeout: 30_000 });
+    await expect(page.locator(`main [data-list-frame] tbody tr a[data-row-name-link][href="${first}"]`)).toHaveCount(1, { timeout: 30_000 });
+    if (short > 10) expect(await frameFits()).toBe(true);
+  });
+});

@@ -33,16 +33,16 @@ const recent = (page: Page) =>
 
 async function photograph(page: Page, name: string, before?: () => Promise<void>): Promise<void> {
   for (const width of [1366, 1920]) {
-    await page.setViewportSize({ width, height: 1080 });
+    await page.setViewportSize({ width, height: 600 });
     if (before) await before();
     await page.screenshot({ path: `${SHOTS}/${name}-${width}.png`, mask: [recent(page)] });
   }
-  await page.setViewportSize({ width: 1920, height: 1080 });
+  await page.setViewportSize({ width: 1920, height: 600 });
 }
 
 /** Somewhere that is no control: the window's bottom-right corner, empty on these screens. */
 async function moveAway(page: Page): Promise<void> {
-  const v = page.viewportSize() ?? { width: 1920, height: 1080 };
+  const v = page.viewportSize() ?? { width: 1920, height: 600 };
   await page.mouse.move(v.width - 10, v.height - 10);
 }
 
@@ -56,7 +56,7 @@ test.describe("TC-ICON-01 — Butoanele cu pictogramă își arată numele", () 
     await listsOnTheirEarlierColumns(page);
     test.slow();
     await removeLeftovers(page.request, MARK);
-    await page.setViewportSize({ width: 1920, height: 1080 });
+    await page.setViewportSize({ width: 1920, height: 600 });
     const ids: string[] = [];
     try {
       for (let i = 1; i <= 16; i++) {
@@ -67,12 +67,13 @@ test.describe("TC-ICON-01 — Butoanele cu pictogramă își arată numele", () 
       await page.goto("/natural-persons");
       await page.getByPlaceholder("caută după ID, Nume, Poreclă, CNP, Email Personal 1, Email Personal 2, Email serviciu, Telefon Personal 1, Telefon Personal 2 sau Telefon serviciu").fill(MARK);
       const main = page.locator("main");
-      await expect(main.getByText("Se afișează 15 din 16")).toBeVisible({ timeout: 15_000 });
+      // 40.67: a page holds what the window does, never under 10 — at 600 px tall, 10.
+      await expect(main.getByText("Se afișează 10 din 16")).toBeVisible({ timeout: 15_000 });
       await expect(main.getByText("Pagina 1 din 2")).toBeVisible();
-      await expect(main.locator("tbody tr")).toHaveCount(15);
-      await expect(main.locator("tbody tr a[data-row-name-link]")).toHaveCount(15); // 40.60: the name is the link
+      await expect(main.locator("tbody tr")).toHaveCount(10);
+      await expect(main.locator("tbody tr a[data-row-name-link]")).toHaveCount(10); // 40.60: the name is the link
       await expect(main.locator("tbody tr").getByRole("link", { name: "Deschide", exact: true })).toHaveCount(0);
-      await expect(main.getByRole("button", { name: "Previzualizare", exact: true })).toHaveCount(15);
+      await expect(main.getByRole("button", { name: "Previzualizare", exact: true })).toHaveCount(10);
       const chooseFields = main.getByRole("button", { name: "Câmpuri afișate 0/4" });
       await expect(chooseFields).toBeVisible();
       const add = main.getByRole("link", { name: "Adaugă persoană" });
@@ -119,11 +120,11 @@ test.describe("TC-ICON-01 — Butoanele cu pictogramă își arată numele", () 
       await page.keyboard.press("Escape");
       await expect(tooltip(page)).toHaveCount(0);
 
-      // Step 6 — „Următor": page two, one row, no tooltip left.
+      // Step 6 — „Următor": page two, six rows (one before 40.67's 10 a page), no tooltip left.
       await page.keyboard.press("Enter");
       await expect(main.getByText("Pagina 2 din 2")).toBeVisible();
       await expect(main.getByText("Se afișează 16 din 16")).toBeVisible();
-      await expect(main.locator("tbody tr")).toHaveCount(1);
+      await expect(main.locator("tbody tr")).toHaveCount(6);
       await expect(main.getByText(`Persoana 01 ${MARK}`)).toBeVisible();
       await expect(tooltip(page)).toHaveCount(0);
 

@@ -29,7 +29,10 @@ const MARK = `${E2E_MARKER}TILES-11`;
  * `MARK` nor is held by it, so steps 1–8's searches and leftovers never meet these.
  */
 const TALL = `${E2E_MARKER}INCURSION-H`;
-/** A list's page (`PAGE_SIZE` in each list-view). */
+/**
+ * The rows of a long list: 15 records. It was a page (`PAGE_SIZE`); since 40.67 a page holds what the window does,
+ * never under 10 — at this spec's 1000 px more than 15 — so all 15 show, and the list is a full one all the same.
+ */
 const PAGE = 15;
 
 /** Searches the list for the case's marker and opens the preview of the row holding `name`. */

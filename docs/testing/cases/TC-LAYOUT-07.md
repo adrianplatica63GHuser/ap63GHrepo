@@ -45,12 +45,18 @@ the page draws one — is taken after every paint for about a second after the r
 | 5 | Sets both edges at once, 1 px either side | One step |
 | 6 | At 125 % display scaling, maximises and restores each list | One step |
 | 7 | Opens each of the other tables at 1280 × 600; maximises; restores; sets 1366 × 768 | Each scrolling box's two bars change at most once. (A frame there may be as tall as its content; its height is not read.) |
+| 8 | Opens „Proprietăți" at 1366 × 900, oldest change first (Slice 40.67) | As many rows as the frame holds, at least 10; the frame does not scroll its rows |
+| 9 | Goes to page 3, notes its first row, then sets the window 1366 × 640 | Fewer rows a page, still at least 10; the page shown is the one holding the noted row, and the row is on screen |
 
 ## At the end — leaving things as they were found
 
 Nothing is created or changed.
 
 ## Notes from the runs
+
+**2026-10-25 — steps 8–9 added (Slice 40.67).** A page holds as many rows as the window does, never under 10, and a
+resize keeps the first row on screen. Written from the slice's own change and added to the spec as a test of its own;
+not driven by hand first.
 
 **Why the case is not driven by hand.** A blink is one or two paints (16–33 ms): an eye sees it, a reading by hand
 afterwards does not. The case is written to be run by its spec, which reads every paint; it is one of the two cases

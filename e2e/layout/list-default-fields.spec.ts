@@ -1,5 +1,5 @@
 /**
- * Case:   TC-LAYOUT-03 — „Câmpuri afișate" fără o alegere memorată: fiecare listă pe cele patru coloane alese (40.66)
+ * Case:   TC-LAYOUT-03 — „Câmpuri afișate" fără o alegere memorată: fiecare listă pe coloanele ei implicite (40.66)
  * Source: docs/testing/cases/TC-LAYOUT-03.md, „Last green" 2026-10-05 — rewritten by Slice 40.66 (it read #38.02's Tip proprietate and three lists of fixed columns only)
  *
  * A translation of the case file, step for step. Every Romanian string below
