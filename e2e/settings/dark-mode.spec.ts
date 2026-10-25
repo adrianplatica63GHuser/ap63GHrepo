@@ -135,7 +135,7 @@ test.describe("TC-SET-05 — „Noapte”", () => {
       for (const look of ["light", "dark"] as const) {
         await lookOnLoad(page, look);
         await page.goto("/");
-        await expect(page.locator("main h1").first()).toBeVisible({ timeout: 30_000 });
+        await expect(page.getByRole("heading", { level: 1, name: "Tablou de bord" })).toBeVisible({ timeout: 30_000 });
         expect(await isDark(page)).toBe(look === "dark");
         drawn[look] = await page.evaluate(() => {
           const token = (name: string) => {
@@ -146,7 +146,7 @@ test.describe("TC-SET-05 — „Noapte”", () => {
             probe.remove();
             return c;
           };
-          const h1 = document.querySelector("main h1")!;
+          const h1 = [...document.querySelectorAll("h1")].find((h) => h.textContent?.includes("Tablou de bord"))!;
           const under = h1.closest("header")?.querySelector(":scope > p");
           const frame = document.querySelector("[data-expiring-frame]");
           return {
