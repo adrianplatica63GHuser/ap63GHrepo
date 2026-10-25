@@ -84,6 +84,10 @@ wants it.
 
 ## Notes from the runs
 
+**2026-10-25 — „Acte cu valabilitate limitată" (Slice 40.62).** The spec also reads that tile at 1024 px: „Stare" first,
+then „Titlu" with the type and the date (dd.mm.yyyy) under it, and the table no wider than its tile. A check of the
+spec's, not a step of the case.
+
 **2026-10-25 — the dashboard's marks (Slice 40.61).** After the administrator's first sign-in the spec also reads the
 dashboard: the three counts in one colour, each under its kind's mark, and a recent row's kind as a mark named by its
 words. A check of the spec's, not a step of the case.

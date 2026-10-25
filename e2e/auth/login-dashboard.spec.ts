@@ -186,6 +186,28 @@ test.describe("TC-AUTH-01 — ieșire și conectare din nou, în aceeași filă"
     await expect(recent).toBeVisible({ timeout: 30_000 });
     await expect(recent.getByRole("img")).toHaveAccessibleName(/^(Persoană fizică|Persoană juridică|Proprietate|Act)$/);
 
+    // Slice 40.62 — „Acte cu valabilitate limitată" at 1024 px: „Stare" first, then „Titlu" with the type and the date
+    // (dd.mm.yyyy) under it; the table never wider than its tile. Read on the archive's own rows, when it has any.
+    const size = page.viewportSize();
+    await page.setViewportSize({ width: 1024, height: 900 });
+    const expiring = page.locator('[data-panel="expiring-documents"]');
+    await expect(expiring).toBeVisible({ timeout: 30_000 });
+    const table = expiring.locator("[data-expiring-table]");
+    if ((await table.count()) > 0) {
+      await expect(table.locator("thead th")).toHaveText(["Stare", "Titlu"]);
+      const firstRow = table.locator("tbody tr").first();
+      await expect(firstRow.locator("td").first().locator("[data-expiry-status]")).toHaveText(/^(Expirat|Expiră AZI|Expiră mâine|Expiră în .+)$/);
+      await expect(firstRow.locator("[data-expiry-date]")).toHaveText(/^\d{2}\.\d{2}\.\d{4}$/);
+      const over = await expiring.evaluate((tile) => {
+        const frame = tile.querySelector<HTMLElement>("[data-expiring-frame]")!;
+        const t = tile.querySelector<HTMLElement>("[data-expiring-table]")!;
+        return { frame: frame.scrollWidth - frame.clientWidth, table: t.getBoundingClientRect().right - tile.getBoundingClientRect().right };
+      });
+      expect(over.frame).toBeLessThanOrEqual(0);
+      expect(over.table).toBeLessThanOrEqual(0.5);
+    }
+    if (size) await page.setViewportSize(size);
+
     await signOutHere(page);
     // The same document from here on: no goto, no reload.
     await signInHere(page, email, password);
