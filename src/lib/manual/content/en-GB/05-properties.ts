@@ -97,7 +97,7 @@ The archive keeps one property per parcel in a locality (section [[properties-ta
 
 ### 5.2.4 Changing and deleting {#properties-add-edit}
 
-On an open property, press „Edit” on the tile to change — „Cadastral identification”, „Boundary points” or „Address” —, change the fields and press that tile's „Save” (section [[start-read-edit]]). While you have unsaved changes, the top of the form reads „Unsaved changes” and „Save” is active. Every save adds a version, and the header of the screen shows „v …” and „… versions” (section [[links-versions]]).
+On an open property, press „Edit” on the tile to change — „Cadastral identification”, „Corners” or „Address” —, change the fields and press that tile's „Save” (section [[start-read-edit]]). While you have unsaved changes, the top of the form reads „Unsaved changes” and „Save” is active. Every save adds a version, and the header of the screen shows „v …” and „… versions” (section [[links-versions]]).
 
 The bin („Delete”) asks first: „Delete property?”. „No” leaves you on the screen; „Yes” deletes the property and takes you back to the list.
 
@@ -167,12 +167,12 @@ The table has the columns „#” (the order), „Orig. #” (the corner's numbe
 Each row has four buttons:
 
 - „Move up” and „Move down” — change the order of the corners, and so the parcel's shape;
-- „Edit” — turns the row into fields to type in, with „Save” and „Cancel” on the row. The rows' buttons and „+ Add point” are there while „Boundary points” is open with the tile's own „Edit”; a corner dragged on the map opens it by itself;
+- „Edit” — turns the row into fields to type in, with „Save” and „Cancel” on the row. The rows' buttons and „+ Add Corner” are there while „Corners” is open with the tile's own „Edit”; a corner dragged on the map opens it by itself;
 - „Delete” — removes the corner.
 
 „+ Add Corner”, on the tile's title row, on the right, adds a new corner at the end.
 
-„Calculated Area (m²)” follows the corners at once: change a corner and the area changes immediately. A row's „Save” does not yet write anything to the archive: the corners are saved only with the „Save” of the „Boundary points” tile, under the table, and the version before keeps the old corners.
+„Calculated Area (m²)” follows the corners at once: change a corner and the area changes immediately. A row's „Save” does not yet write anything to the archive: the corners are saved only with the „Save” of the „Corners” tile, under the table, and the version before keeps the old corners.
 
 If the order of the corners makes the sides cross, „The corner order crosses itself” appears, and the calculated area no longer means anything. „Straighten the order” shows you the shape as it is and the straightened shape, with their areas. The corners stay where they are; only the order in which they are joined changes. Then save as usual.
 

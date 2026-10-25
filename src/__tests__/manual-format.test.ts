@@ -180,7 +180,7 @@ describe("the real manual", () => {
     expect(manualHref("start-sidebar")).toBe("/manual?s=start-sidebar");
     expect(manualHref()).toBe("/manual");
     expect(manualTarget("ro-RO", "start-sidebar")).toMatchObject({ kind: "section", number: "2.2", chapterId: "start" });
-    expect(manualTarget("en-GB", "fig-sidebar")).toMatchObject({ kind: "figure", number: "2.1" });
+    expect(manualTarget("en-GB", "fig-sidebar")).toMatchObject({ kind: "figure", number: "2.2" }); // 40.77: 2.1 is the account menu
     expect(manualLocale("en-GB")).toBe("en-GB");
     expect(manualLocale("ro-RO")).toBe("ro-RO");
     expect(manualLocale("fr-FR")).toBe("ro-RO");
