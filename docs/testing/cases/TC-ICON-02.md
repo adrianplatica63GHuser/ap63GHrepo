@@ -49,6 +49,8 @@ Step 8 deletes the property. If a run stops before it, delete `TC-ICON-02 …` b
 
 ## Notes from the runs
 
+**2026-10-25 — Slice 40.74.** A saved property reads as text: after „Modifică" (step 3) and on the ordinary screen (step 6) the floppy disk is „Identificare cadastrală"'s own „Salvează", once its „Editează" has opened it — there is no record-level one, and the tile's button carries its word, so step 4 reads the word rather than a tooltip. The spec follows; not driven by hand first.
+
 **2026-10-01 — run 1, `driven` (Slice #37.43).** Driven in the Claude desktop app's browser pane
 against `npm run dev` on 3000; this file was written from it. The pane was hidden, so the hovers
 were dispatched `pointerover` events and the presses `click()`.

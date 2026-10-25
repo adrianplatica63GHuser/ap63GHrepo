@@ -12,6 +12,7 @@
 
 import { test, expect, type APIRequestContext, type Page } from "../helpers/test";
 import { E2E_MARKER, createProperty, removeLeftovers, removeRecord } from "../helpers/records";
+import { editTile } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}VL-11`;
 const NAME = `${MARK} Casă`;
@@ -98,6 +99,10 @@ test.describe("TC-VL-11 — tipurile de proprietate și folosințele", () => {
       const useSelect = page.locator('select[name="useCategoryId"]');
       const note = page.locator("[data-use-not-allowed]");
       await page.goto(`/properties/${id}`);
+      // 40.74: the saved property reads as text — its use, and the sentence, before „Editează" opens the lists.
+      await expect(page.locator('[data-read-value="useCategoryId"]')).toHaveText("Arabil", { timeout: 30_000 });
+      await expect(note).toHaveText(NOT_ALLOWED("Casă"));
+      await editTile(page, "cadastral");
       await expect(useSelect.locator("option")).toHaveText(["niciunul", "Arabil", "Curți-construcții"], { timeout: 30_000 });
       await expect(useSelect.locator("option:checked")).toHaveText("Arabil");
       await expect(note).toHaveText(NOT_ALLOWED("Casă"));
@@ -116,6 +121,7 @@ test.describe("TC-VL-11 — tipurile de proprietate și folosințele", () => {
       await expect(tick(page, "Drumuri", "Teren intravilan")).toBeChecked({ timeout: 30_000 });
       await expect(row(page, "Teren intravilan").locator("[data-allows-all]")).toHaveCount(0);
       await page.goto(`/properties/${id}`);
+      await editTile(page, "cadastral"); // 40.74
       await expect(useSelect.locator("option:checked")).toHaveText("Arabil", { timeout: 30_000 });
       await typeSelect.selectOption({ label: "Teren intravilan" });
       await expect(useSelect.locator("option")).toHaveText(["niciunul", "Arabil", "Drumuri"]);

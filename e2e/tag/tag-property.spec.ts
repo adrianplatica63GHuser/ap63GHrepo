@@ -76,7 +76,8 @@ test.describe("TC-TAG-01 — Etichetă aplicată unei proprietăți și găsită
       // Step 2 — the property's „Clasificări" and „Conexiuni" (META INFO's
       // two halves since #37.63) → „Etichete / Cuvinte cheie", empty.
       await openMetaInfo(page, propertyId);
-      await expect(page.getByText("Clasificare").first()).toBeVisible();
+      // The tile itself: its name's first text on the page is now its box in the closed „Panouri" panel (40.57).
+      await expect(page.getByRole("region", { name: "Clasificare", exact: true })).toBeVisible();
       for (const field of ["Importanță", "Relevanță", "Proveniență"]) {
         await expect(page.getByText(field, { exact: true }).first()).toBeVisible();
       }

@@ -22,6 +22,7 @@
  */
 
 import { test, expect, type Locator, type Page } from "../helpers/test";
+import { editTile } from "../helpers/tiles";
 import {
   E2E_MARKER,
   createCompany,
@@ -97,9 +98,12 @@ test.describe("TC-ICON-02 — Creionul, Salvarea și Coșul pe o proprietate", (
       await modify.hover();
       await expect(tooltip(page)).toHaveText("Modifică");
 
-      // Step 3 — editing: ←, the floppy disk (inactive), the bin.
+      // Step 3 — editing: ←, the floppy disk (inactive), the bin. 40.74: „Modifică" gives each tile its „Editează";
+      // the floppy disk is the open tile's own „Salvează", and there is no record-level one.
       await modify.click();
-      const save = page.getByRole("button", { name: "Salvează" });
+      await expect(page.getByRole("button", { name: "Salvează", exact: true })).toHaveCount(0);
+      await editTile(page, "cadastral");
+      const save = page.locator('[data-tile-save="cadastral"]');
       const del = page.getByRole("button", { name: "Șterge" });
       await expect(save).toBeDisabled();
       expect(await iconOf(save)).toBe("lucide-save");
@@ -110,8 +114,7 @@ test.describe("TC-ICON-02 — Creionul, Salvarea și Coșul pe o proprietate", (
       const nickname = page.getByRole("textbox", { name: "Poreclă", exact: true });
       await nickname.fill(`${MARK} Teren modificat`);
       await expect(save).toBeEnabled();
-      await save.hover();
-      await expect(tooltip(page)).toHaveText("Salvează");
+      await expect(save).toHaveText("Salvează"); // 40.74: the tile's button carries its word, so it needs no tooltip
 
       // Step 5 — saved: read-only again, the value kept.
       await save.click();
@@ -119,11 +122,12 @@ test.describe("TC-ICON-02 — Creionul, Salvarea și Coșul pe o proprietate", (
       const stored = await (await page.request.get(`/api/properties/${propertyId}`)).json();
       expect((stored.property ?? stored).nickname).toBe(`${MARK} Teren modificat`);
 
-      // Step 6 — opened the ordinary way: floppy disk, bin, X.
+      // Step 6 — opened the ordinary way: floppy disk, bin, X. 40.74: the floppy disk is a tile's, once it is open.
       await page.goto(`/properties/${propertyId}`);
       const bin = page.getByRole("button", { name: "Șterge" });
       await expect(bin).toBeVisible({ timeout: 15_000 });
-      expect(await iconOf(page.getByRole("button", { name: "Salvează" }))).toBe("lucide-save");
+      await editTile(page, "cadastral");
+      expect(await iconOf(page.locator('[data-tile-save="cadastral"]'))).toBe("lucide-save");
       expect(await iconOf(page.getByRole("button", { name: "Anulează" }))).toBe("lucide-x");
       await photograph(page, "property-edit", () => toolbarInView(page, bin));
 

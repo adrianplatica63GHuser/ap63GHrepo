@@ -49,6 +49,8 @@ Delete the property (`DELETE`). Step 8 puts the grid back as it was.
 
 ## Notes from the runs
 
+**2026-10-25 — Slice 40.74.** A saved property reads as text: steps 5 and 7 read its use as text, then open „Identificare cadastrală" with „Editează" for the two lists. The spec follows; not driven by hand first.
+
 **2026-10-17 — written (Slice #39.66),** before migration_111 was confirmed.
 
 **2026-10-17 — run 1, `driven` (Slice #39.66).** Driven in the desktop app's browser pane, its viewport
