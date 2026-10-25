@@ -9,13 +9,14 @@
  *   - The two records are this spec's own, created through the POST route the
  *     „Adaugă" form calls and removed in `finally`, both marked
  *     TC-E2E-LAYOUT-04.
- *   - The footer's height is measured (the bounding box of „Ieșire" — „Schimbă
- *     parola" until Slice #38.41 moved it to „Setări → Contul meu") where the
- *     hand run looked.
+ *   - The footer's height is measured (the bounding box of the account entry
+ *     since 40.59 moved „Ieșire" into its menu; „Ieșire" before it, „Schimbă
+ *     parola" until Slice #38.41) where the hand run looked.
  */
 
 import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createProperty, removeLeftovers } from "../helpers/records";
+import { accountEntry } from "../helpers/sidebar";
 
 const MARK = `${E2E_MARKER}LAYOUT-04`;
 const ONE = `${MARK} Proprietate unu`;
@@ -23,7 +24,8 @@ const TWO = `${MARK} Proprietate doi`;
 
 const aside = (page: Page) => page.locator("aside");
 const bar = (page: Page) => aside(page).getByRole("button", { name: "Recente", exact: true });
-const footerTop = async (page: Page) => (await aside(page).getByRole("button", { name: "Ieșire", exact: true }).boundingBox())!.y;
+// 40.59: „Ieșire" is in the account menu now; the footer is the account entry at the sidebar's bottom.
+const footerTop = async (page: Page) => (await accountEntry(page).boundingBox())!.y;
 /** Removes the browser's list of visits, so the two this spec makes are the ones it reads. */
 const forgetVisits = (page: Page) => page.evaluate(() => localStorage.removeItem("ga40_recently_viewed"));
 

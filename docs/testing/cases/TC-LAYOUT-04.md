@@ -50,6 +50,9 @@ The window is 1366 × 900.
 
 ## Notes from the runs
 
+**2026-10-25 — Slice 40.59's account menu.** „Ieșire" is inside the account menu since 40.59, so where this case says
+„Ieșire" the sidebar's bottom is the account entry (the name, or „UAT"); the spec measures it. Found red in 40.66's run.
+
 **2026-10-07 — Slice #38.28, `automated` the same day.** Written with the change and translated into
 `e2e/layout/recent-one-bar.spec.ts`. The spec creates its own two properties (`TC-E2E-LAYOUT-04 …`)
 through the route the „Adaugă" form calls, and removes them in `finally`. It measures „Schimbă

@@ -24,6 +24,7 @@
 
 import { test, expect, type Locator, type Page } from "../helpers/test";
 import { E2E_MARKER, createDocumentOfType, removeLeftovers, removeRecord } from "../helpers/records";
+import { listsOnTheirEarlierColumns } from "../helpers/list-columns";
 
 const MARK = `${E2E_MARKER}DOC-08`;
 const TITLE = `${MARK} Act de test`;
@@ -45,6 +46,8 @@ async function photograph(page: Page, name: string, target?: Locator): Promise<v
 
 test.describe("TC-DOC-08 — lista actelor", () => {
   test("căutarea întâi, fără importanță și relevanță, „Câmpuri afișate” cu câmpurile oricărui act, „Câmp specific” explicat", async ({ page }) => {
+    // 40.66: the lists open on four default columns; these steps were written against the earlier ones.
+    await listsOnTheirEarlierColumns(page);
     test.slow();
     await removeLeftovers(page.request, MARK);
     await removeLeftovers(page.request, CVC_MARK);
@@ -217,6 +220,8 @@ test.describe("TC-DOC-08 — lista actelor", () => {
   // whole on a line of their own when it does not, and the filters row only while a filter is active. No record is
   // made: the steps read the toolbar, and the filter set is the address's.
   test("pe rândul barei: „Tip document” și „Câmp specific” după „Expiră curând”, rândul filtrelor doar cu un filtru activ", async ({ page }) => {
+    // 40.66: the lists open on four default columns; these steps were written against the earlier ones.
+    await listsOnTheirEarlierColumns(page);
     const main = page.locator("main");
     const box = async (l: Locator) => (await l.boundingBox())!;
     const search = main.getByRole("searchbox", { name: "caută după Cod, Titlu sau Nr. document" });

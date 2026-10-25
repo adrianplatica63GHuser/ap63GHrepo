@@ -66,10 +66,17 @@ test.describe("TC-LAYOUT-03 — „Câmpuri afișate” fără o alegere memorat
 
     // Step 5 — on „Proprietăți", „Localitate" off and „Modificat la" on, kept across a reload.
     await openFromSidebar(page, "Proprietăți");
-    await page.locator("main").getByRole("button", { name: "Câmpuri afișate 4/4", exact: true }).click();
+    // The panel is opened again until the box takes the change: a click while the list still hydrates can be lost
+    // (measured on the runner: the panel closed before „Localitate" could be unticked).
     const chooser = page.locator("[data-field-chooser]");
-    await chooser.getByRole("checkbox", { name: "Localitate" }).uncheck();
-    await chooser.getByRole("checkbox", { name: "Modificat la" }).check();
+    const setBox = async (name: string, checked: boolean) => {
+      await expect(async () => {
+        if ((await chooser.getByRole("checkbox").count()) === 0) await chooser.getByRole("button", { name: /^Câmpuri afișate/ }).click();
+        await chooser.getByRole("checkbox", { name, exact: true }).setChecked(checked, { timeout: 2_000 });
+      }).toPass({ timeout: 30_000 });
+    };
+    await setBox("Localitate", false);
+    await setBox("Modificat la", true);
     await page.reload();
     const chosen = ["Poreclă", "Tarla", "Parcelă", "Tip Prop.", "Modificat la", ""];
     await expectList(page, "Câmpuri afișate 4/4", chosen);

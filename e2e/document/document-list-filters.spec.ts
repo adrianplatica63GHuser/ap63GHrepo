@@ -13,11 +13,14 @@
 import { test, expect } from "../helpers/test";
 import { E2E_MARKER, createDocumentOfType, removeLeftovers, removeRecord } from "../helpers/records";
 import { expectUnder } from "../helpers/filter-editor";
+import { listsOnTheirEarlierColumns } from "../helpers/list-columns";
 
 const MARK = `${E2E_MARKER}DOC-27`;
 
 test.describe("TC-DOC-27 — filtrele listei actelor", () => {
   test("bara de filtre peste „Tip document” și „Câmp specific”: „Data”, adresa, „Șterge filtrele”", async ({ page }) => {
+    // 40.66: the lists open on four default columns; these steps were written against the earlier ones.
+    await listsOnTheirEarlierColumns(page);
     test.slow();
     await removeLeftovers(page.request, MARK);
     await page.setViewportSize({ width: 1366, height: 900 });
@@ -113,6 +116,8 @@ test.describe("TC-DOC-27 — filtrele listei actelor", () => {
   // Slice 40.31 — steps 7–10: a funnel on „Tip", the first column. It opens, under itself, the checklist of „Tip
   // document:" — the same control, writing the same documentTypeIds — so the two always show one choice.
   test("pâlnia de pe „Tip”: aceeași listă de tipuri ca „Tip document:”, păstrată la reîncărcare", async ({ page }) => {
+    // 40.66: the lists open on four default columns; these steps were written against the earlier ones.
+    await listsOnTheirEarlierColumns(page);
     test.slow();
     const TMARK = `${MARK}-T`;
     await removeLeftovers(page.request, TMARK);

@@ -33,8 +33,17 @@ function expectOrdered(items: Row[], value: (r: Row) => number | string | null, 
   for (let i = 1; i < filled.length; i++) expect([i, dir === "asc" ? filled[i - 1] <= filled[i] : filled[i - 1] >= filled[i]]).toEqual([i, true]);
 }
 
-async function answer(page: Page, api: string, action: () => Promise<unknown>): Promise<Row[]> {
-  const isList = (r: Response) => new URL(r.url()).pathname === api && r.request().method() === "GET" && r.ok();
+/**
+ * The list's answer to `action`. `want` names the order it must carry: a list whose default order is the one pressed
+ * („Modificat la" on Persoane juridice) may refetch its first page in that order while the click is on its way, and
+ * that answer — still newest first — was read for the pressed one (40.66's runs, step 7).
+ */
+async function answer(page: Page, api: string, action: () => Promise<unknown>, want?: { sort: string; order: string }): Promise<Row[]> {
+  const isList = (r: Response) => {
+    const url = new URL(r.url());
+    if (url.pathname !== api || r.request().method() !== "GET" || !r.ok()) return false;
+    return !want || (url.searchParams.get("sort") === want.sort && url.searchParams.get("order") === want.order);
+  };
   const [res] = await Promise.all([page.waitForResponse(isList, { timeout: 30_000 }), action()]);
   return ((await res.json()) as { items: Row[] }).items;
 }
@@ -123,7 +132,7 @@ test.describe("TC-LAYOUT-10 — pictograma de ordonare din banda de nume", () =>
     await openFromSidebar(page, "Persoane Juridice");
     await expect.poll(() => heads(page), { timeout: 30_000 }).toEqual(["Denumire:-", "Poreclă:-", "Tip:-", "Modificat la:none"]);
     await expect(page.locator('main thead th:has([data-column-sort="changed"])')).toHaveAttribute("aria-sort", "descending");
-    const changed = await answer(page, "/api/judicial-persons", () => icon(page, "changed").locator("button").click());
+    const changed = await answer(page, "/api/judicial-persons", () => icon(page, "changed").locator("button").click(), { sort: "changed", order: "asc" });
     expectOrdered(changed, (r) => Math.max(Date.parse(String(r.createdAt)), r.updatedAt ? Date.parse(String(r.updatedAt)) : 0), "asc");
     await expect(icon(page, "changed")).toHaveAttribute("data-sort-state", "asc");
     await expect(icon(page, "changed").locator("svg")).toHaveClass(/lucide-arrow-up(?!-)/);
