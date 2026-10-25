@@ -1162,6 +1162,14 @@
     "emptyFields": {
       "show": "{count, plural, one {Arată un câmp gol} few {Arată # câmpuri goale} other {Arată # de câmpuri goale}}",
       "all": "Câmpuri goale: {names}"
+    },
+    "readEdit": {
+      "edit": "Editează",
+      "editTile": "Editează — {tile}",
+      "save": "Salvează",
+      "cancel": "Renunță",
+      "yes": "Da",
+      "age": "{count, plural, one {# an} few {# ani} other {# de ani}}"
     }
   },
   "naturalPerson": {

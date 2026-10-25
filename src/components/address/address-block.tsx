@@ -19,7 +19,7 @@
 // (e.g. "addresses.HOME") — the call site is responsible for matching it
 // against the form schema.
 
-import { Fragment, type ReactNode } from "react";
+import { Fragment, type ReactNode, type KeyboardEventHandler } from "react";
 import { useTranslations } from "next-intl";
 import {
   type FieldPath,
@@ -43,6 +43,7 @@ import { EMPTY_MARK, FIELD_BOX, fieldBorder } from "@/lib/ui/field-box";
 import { TileTitle } from "@/components/tiles/tile-title";
 import { EmptyTileLine, type EmptyTileState } from "@/components/tiles/empty-tile";
 import { hiddenFieldStyle, useFieldHidden } from "@/components/tiles/empty-fields";
+import { ReadValue, readText, useFieldRead } from "@/components/tiles/read-edit-tile";
 
 /** Per-subfield version-diff highlight frames (Slice #18.05). Keys match the
  *  address subfield names; omitted = no frame. */
@@ -110,6 +111,14 @@ type Props<TFormValues extends FieldValues> = {
    * (src/components/tiles/empty-fields.tsx). The fields read their own hiding from `HiddenFieldsContext`.
    */
   emptyFields?: ReactNode;
+  /** Slice 40.72: „Editează", beside the panel's title. */
+  titleAction?: ReactNode;
+  /** Slice 40.72: under the panel's fields — the open tile's „Salvează" and „Renunță". */
+  after?: ReactNode;
+  /** Slice 40.72: the open tile's outline, on the panel. */
+  sectionClassName?: string;
+  /** Slice 40.72: Esc in the open tile is „Renunță". */
+  onKeyDown?: KeyboardEventHandler<HTMLElement>;
 };
 
 export function AddressBlock<TFormValues extends FieldValues>({
@@ -123,6 +132,10 @@ export function AddressBlock<TFormValues extends FieldValues>({
   footer,
   collapsed,
   emptyFields,
+  titleAction,
+  after,
+  sectionClassName,
+  onKeyDown,
 }: Props<TFormValues>) {
   const t = useTranslations("address");
   const f = (sub: string) => `${prefix}.${sub}` as FieldPath<TFormValues>;
@@ -160,10 +173,15 @@ export function AddressBlock<TFormValues extends FieldValues>({
     />
   );
   return (
-    <section style={NP_PANEL_STYLE.address} data-panel={prefix} className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+    <section
+      style={NP_PANEL_STYLE.address}
+      data-panel={prefix}
+      onKeyDown={onKeyDown}
+      className={`rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${sectionClassName ? ` ${sectionClassName}` : ""}`}
+    >
       {collapsed && <EmptyTileLine tile={collapsed.tile} title={title} onAdd={collapsed.onAdd} />}
       <div className={collapsed ? "hidden" : "contents"}>
-      <TileTitle title={title} subtitle={subtitle} />
+      <TileTitle title={title} subtitle={subtitle} action={titleAction} />
       <div className="flex flex-col gap-2">
         {ADDRESS_ROWS.map((row) => (
           <div key={row.join("|")} className={STACKED_ROW_CLASS}>
@@ -174,6 +192,7 @@ export function AddressBlock<TFormValues extends FieldValues>({
         ))}
         {emptyFields}
         {footer && <div className="pt-1" data-address-footer>{footer}</div>}
+        {after}
       </div>
       </div>
     </section>
@@ -230,6 +249,7 @@ function Field<TFormValues extends FieldValues>({
   fillRem: number;
 }) {
   const hiddenEmpty = useFieldHidden(name); // Slice 40.71: behind its tile's „Arată N câmpuri goale"
+  const read = useFieldRead(name);
   // Static ring on a historical version; animated pulse on the freshly-
   // navigated-to latest (Bug 1). The pulsing flag comes from FieldPulseContext,
   // which the versioned person form provides; defaults to a static ring
@@ -242,6 +262,15 @@ function Field<TFormValues extends FieldValues>({
   ].join(" ");
   const grows = width.kind === "grows" || width.kind === "lines";
   const box = stackedBoxStyle(width, width.fill ? fillRem : boxRem(width));
+  // Slice 40.72: the read view — the value as text, at the box's width.
+  if (read.reading) {
+    return (
+      <div className={STACKED_FIELD_CLASS} style={hiddenFieldStyle(hiddenEmpty, box)} data-empty-hidden={hiddenEmpty || undefined}>
+        <span className={STACKED_LABEL_CLASS}>{label}</span>
+        <ReadValue name={name} kind={width.kind} text={readText(read.value)} style={box} className={ring} />
+      </div>
+    );
+  }
   return (
     <label className={STACKED_FIELD_CLASS} style={hiddenFieldStyle(hiddenEmpty, box)} data-empty-hidden={hiddenEmpty || undefined}>
       <span className={STACKED_LABEL_CLASS}>

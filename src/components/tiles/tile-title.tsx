@@ -54,6 +54,7 @@ export function TileTitle({
   className = "mb-2",
   id,
   children,
+  action,
 }: {
   title: ReactNode;
   /** One line saying what the tile holds; absent, the title stands alone. */
@@ -63,13 +64,29 @@ export function TileTitle({
   /** The heading's id, for a tile labelled by it (`aria-labelledby`). */
   id?: string;
   children?: ReactNode;
+  /**
+   * Slice 40.72: a control beside the heading, outside it — „Editează" (src/components/tiles/read-edit-tile.tsx) — so
+   * the heading's name stays the tile's own.
+   */
+  action?: ReactNode;
 }) {
+  const heading = (
+    <h2 id={id} className={action ? `${TILE_TITLE_CLASS} flex-1` : TILE_TITLE_CLASS}>
+      {title}
+      {children}
+    </h2>
+  );
   return (
     <div className={`min-w-0 ${className}`} data-tile-title="">
-      <h2 id={id} className={TILE_TITLE_CLASS}>
-        {title}
-        {children}
-      </h2>
+      {action ? (
+        // Wraps: where the title and its corner leave no room, „Editează" goes under them rather than over them.
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          {heading}
+          <div className="shrink-0">{action}</div>
+        </div>
+      ) : (
+        heading
+      )}
       <TileSubtitle text={subtitle} />
     </div>
   );

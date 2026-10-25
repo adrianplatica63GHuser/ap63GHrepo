@@ -8,7 +8,7 @@ import { useTranslations } from "next-intl";
 import { useTimeFrames, tfDays } from "@/hooks/use-time-frames";
 import { useCitizenshipOptions, usePersonRelationshipOptions, usePersonTypeOptions } from "@/hooks/use-lookup-options";
 import { useRouter } from "next/navigation";
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import {
   Controller,
@@ -82,6 +82,18 @@ import { ParentsFold } from "@/components/persons/parents-fold";
 import { TileTitle } from "@/components/tiles/tile-title";
 import { EmptyTileLine, useEmptyTiles } from "@/components/tiles/empty-tile";
 import { EmptyFieldsLink, HiddenFieldsContext, hiddenFieldStyle, useEmptyFields, useFieldHidden } from "@/components/tiles/empty-fields";
+import {
+  ReadModeContext,
+  ReadValue,
+  TILE_EDITING_CLASS,
+  TileEditBar,
+  TileEditButton,
+  onTileKeyDown,
+  readText,
+  useFieldRead,
+  useTileEditing,
+  type ReadMode,
+} from "@/components/tiles/read-edit-tile";
 import { tileIsEmpty, valueAt } from "@/lib/ui/empty-tile";
 import { ParentsResolution } from "@/components/persons/parents-resolution";
 import {
@@ -186,6 +198,34 @@ const NP_FIELD_TILES: Record<NpFieldTile, readonly string[]> = {
 };
 /** A field's label key where it is not `fields.<name>`. */
 const NP_LABEL_KEY: Readonly<Record<string, string>> = { citizenshipId: "citizenship" };
+
+/**
+ * Slice 40.72: on a saved person the four form tiles read as text and edit one at a time
+ * (src/components/tiles/read-edit-tile.tsx). What each tile's „Salvează" sends — its own fields and nothing else; the
+ * route takes a partial update, and one save makes one version.
+ */
+type NpEditTile = "identity" | "idCard" | "contact" | "addresses";
+const NP_EDIT_PAYLOAD: Record<NpEditTile, readonly (keyof ReturnType<typeof toApiPayload>)[]> = {
+  identity: ["lastName", "firstName", "nickname", "cnp", "gender", "dateOfBirth", "isDeceased", "dateOfDeath", "placeOfBirth", "physicalPersonTypeId", "notes"],
+  idCard: ["idDocumentType", "idDocumentNumber", "idCardNumber", "idValidFrom", "idValidUntil", "citizenshipId", "idIssuingAuthority", "idMrzRaw"],
+  contact: ["personalPhone1", "personalPhone2", "workPhone", "personalEmail1", "personalEmail2", "workEmail"],
+  addresses: ["addresses", "correspondenceSameAsHome"],
+};
+/** Where each tile's first field is, for the focus „Editează" puts there. */
+const NP_EDIT_PANEL: Record<NpEditTile, string> = {
+  identity: '[data-panel="identity"]',
+  idCard: '[data-panel="id-card"]',
+  contact: '[data-panel="contact"]',
+  addresses: '[data-panel="addresses.HOME"]',
+};
+/** The tile 40.64's one-line panels and 40.71's links belong to. */
+const NP_EDIT_OF: Readonly<Record<string, NpEditTile>> = {
+  identity: "identity",
+  idCard: "idCard",
+  contact: "contact",
+  home: "addresses",
+  correspondence: "addresses",
+};
 
 export function NaturalPersonForm({
   mode,
@@ -513,12 +553,19 @@ export function NaturalPersonForm({
 
   // doSave performs the API call only (no navigation) so it can be reused by
   // the Save button (onSubmit), the unsaved-changes guard, and "Make Current".
-  const doSave = async (values: FormValues): Promise<boolean> => {
+  const doSave = async (values: FormValues, tile?: NpEditTile): Promise<boolean> => {
     setSubmitting(true);
     setSubmitError(null);
     try {
       // Slice #39.70: „Relația cu firma" travels with the person; the server keeps it outside the version.
-      const payload = { ...toApiPayload(values), relationshipIds };
+      const full = { ...toApiPayload(values), relationshipIds };
+      // Slice 40.72: a tile's „Salvează" sends that tile's fields only; „Relația cu firma" is on „Identitate".
+      const payload = tile
+        ? {
+            ...Object.fromEntries(NP_EDIT_PAYLOAD[tile].map((key) => [key, full[key]])),
+            ...(tile === "identity" ? { relationshipIds } : {}),
+          }
+        : full;
       const url =
         mode === "create"
           ? "/api/people"
@@ -673,6 +720,8 @@ export function NaturalPersonForm({
           ? form.formState.isDirty || relationshipIds.length > 0
           : editDirty,
     onSave: async () => {
+      // Slice 40.72: on a saved person the changed tile is the open one, and it saves itself.
+      if (perTile && tileEditing.open) return saveTile(tileEditing.open);
       const valid = await form.trigger();
       if (!valid) return false;
       return doSave(form.getValues());
@@ -731,10 +780,78 @@ export function NaturalPersonForm({
     emptyTiles.collapsed(
       tile,
       !alsoFull && tileIsEmpty(formState.defaultValues, NP_EMPTY_TILE_FIELDS[tile], emptyFormValues) && tileIsEmpty(watchedValues, NP_EMPTY_TILE_FIELDS[tile], emptyFormValues),
-      NP_EMPTY_TILE_FIELDS[tile].some(marked),
+      // 40.72: a tile open for editing is drawn whole.
+      NP_EMPTY_TILE_FIELDS[tile].some(marked) || editingTile === NP_EDIT_OF[tile],
     );
+  // Slice 40.72 — the read view. On a saved person each form tile reads as text; „Editează" opens one at a time, its
+  // „Salvează" saves that tile alone (one version), „Renunță" and Esc put it back. A new person is one form, as before;
+  // a version being viewed reads as text with no „Editează".
+  const perTile = tiled && !isCreate;
+  const canEditTiles = perTile && effectiveMode === "edit";
+  const baselineRef = useRef(baseline);
+  const relationshipBaselineRef = useRef(relationshipBaseline);
+  useEffect(() => {
+    baselineRef.current = baseline;
+    relationshipBaselineRef.current = relationshipBaseline;
+  }, [baseline, relationshipBaseline]);
+  const discardEdits = useCallback(() => {
+    form.reset(baselineRef.current.values);
+    setRelationshipIds(relationshipBaselineRef.current);
+    setSubmitError(null);
+  }, [form]);
+  const tileEditing = useTileEditing<NpEditTile>({ dirty: editDirty, discard: discardEdits });
+  const editingTile: NpEditTile | null = canEditTiles ? tileEditing.open : null;
+  const reading = (tile: NpEditTile): boolean => perTile && editingTile !== tile;
+  const readMode: ReadMode = {
+    reading: (name) => perTile && npTileOfField(name) !== editingTile,
+    value: (name) => valueAt(watchedValues, name),
+  };
+  const saveTile = async (tile: NpEditTile): Promise<boolean> => {
+    // The whole record is checked: the other tiles are as saved, and every rule ties fields of one tile.
+    const valid = await form.trigger();
+    if (!valid) return false;
+    const values = form.getValues();
+    const ok = await doSave(values, tile);
+    if (!ok) return false;
+    baselineRef.current = { values };
+    relationshipBaselineRef.current = relationshipIds;
+    setBaseline({ values });
+    setRelationshipBaseline(relationshipIds);
+    setViewingVersion(null);
+    // As loaded, now: 40.64's and 40.71's „empty as loaded" read the saved values.
+    form.reset(values);
+    tileEditing.close();
+    router.refresh();
+    return true;
+  };
+  const editTile = (tile: NpEditTile) => tileEditing.edit(tile, NP_EDIT_PANEL[tile]);
+  const editButton = (tile: NpEditTile, title: string) =>
+    canEditTiles && editingTile !== tile ? <TileEditButton tile={tile} title={title} onEdit={() => editTile(tile)} /> : null;
+  const editBar = (tile: NpEditTile) =>
+    editingTile === tile ? (
+      <TileEditBar
+        tile={tile}
+        onSave={() => void saveTile(tile)}
+        onCancel={tileEditing.cancel}
+        saving={submitting}
+        canSave={editDirty}
+        error={submitError}
+      />
+    ) : null;
+  const editingClass = (tile: NpEditTile): string => (editingTile === tile ? ` ${TILE_EDITING_CLASS}` : "");
+  const editKeys = (tile: NpEditTile) => onTileKeyDown(editingTile === tile, tileEditing.escape);
+  const tRead = useTranslations("shared.readEdit");
+  const ageYears = Number.parseInt(calculatedAge ?? "", 10);
+  const birthDateSuffix = Number.isNaN(ageYears) ? "" : ` (${tRead("age", { count: ageYears })}${calculatedAge?.includes("†") ? " †" : ""})`;
+
+  // Slice 40.64's „Adaugă" opens its tile in edit on a saved person (40.72, Ask first 3).
   const addTo = (tile: NpEmptyTile, panel: string) =>
-    emptyTiles.canAdd ? () => emptyTiles.open(tile, `[data-panel="${panel}"]`) : undefined;
+    emptyTiles.canAdd
+      ? () => {
+          emptyTiles.open(tile, `[data-panel="${panel}"]`);
+          if (canEditTiles) tileEditing.edit(NP_EDIT_OF[tile], `[data-panel="${panel}"]`);
+        }
+      : undefined;
   // Slice 40.71: in a tile that holds some values, the empty fields hide behind „Arată N câmpuri goale" — not on a new
   // record, not in a tile a version marks or a field in error is in, and not once the link was pressed.
   const emptyFields = useEmptyFields({
@@ -746,7 +863,11 @@ export function NaturalPersonForm({
   });
   const tAddress = useTranslations("address");
   const npHidden = Object.fromEntries(
-    (Object.keys(NP_FIELD_TILES) as NpFieldTile[]).map((tile) => [tile, emptyFields.hide(tile, NP_FIELD_TILES[tile], NP_FIELD_TILES[tile].some(marked))]),
+    (Object.keys(NP_FIELD_TILES) as NpFieldTile[]).map((tile) => [
+      tile,
+      // 40.72: an open tile shows every field.
+      emptyFields.hide(tile, NP_FIELD_TILES[tile], NP_FIELD_TILES[tile].some(marked) || editingTile === NP_EDIT_OF[tile]),
+    ]),
   ) as Record<NpFieldTile, string[]>;
   const hiddenFields: ReadonlySet<string> = new Set(Object.values(npHidden).flat());
   const fieldLabel = (path: string): string =>
@@ -786,8 +907,17 @@ export function NaturalPersonForm({
   return (
     <FieldPulseContext.Provider value={pulsing}>
     <HiddenFieldsContext.Provider value={hiddenFields}>
+    <ReadModeContext.Provider value={readMode}>
     <form
-      onSubmit={form.handleSubmit(onSubmit, onInvalid)}
+      onSubmit={
+        perTile
+          ? (e) => {
+              // Slice 40.72: Enter in an open tile is its „Salvează"; there is no record-level save.
+              e.preventDefault();
+              if (editingTile) void saveTile(editingTile);
+            }
+          : form.handleSubmit(onSubmit, onInvalid)
+      }
       // Slice #37.12: as wide as the panels, so the action bar below them is
       // as wide as they are and not as wide as the window (#37.26: `npRowStyle`,
       // the panels being of different widths now). Slice #37.17: in tile mode
@@ -843,9 +973,9 @@ export function NaturalPersonForm({
       >
 
       {/* Identity — core biographical data */}
-      <section style={NP_PANEL_STYLE.identity} data-panel="identity" {...tileProps("identity")} className={`rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${hiddenClass("identity")}`}>
+      <section style={NP_PANEL_STYLE.identity} data-panel="identity" {...tileProps("identity")} onKeyDown={editKeys("identity")} className={`rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${hiddenClass("identity")}${editingClass("identity")}`}>
         {/* Slice #38.30: the tile's title and the line saying what it holds — in every mode, so „Adaugă nou" reads as the record does. */}
-        <TileTitle title={t("tiles.identity")} subtitle={t("tileSubtitles.identity")}>
+        <TileTitle title={t("tiles.identity")} subtitle={t("tileSubtitles.identity")} action={editButton("identity", t("tiles.identity"))}>
           {/* Slice #37.57: the system ID's one place — this corner. */}
           {mode !== "create" && personCode && <SystemIdCorner code={personCode} />}
         </TileTitle>
@@ -898,6 +1028,7 @@ export function NaturalPersonForm({
               error={errors.dateOfBirth?.message}
               highlight={displayHighlights?.fields.dateOfBirth}
               width={NP.dateOfBirth}
+              readSuffix={birthDateSuffix}
             />
             <ReadOnlyField
               label={t("fields.age")}
@@ -905,6 +1036,7 @@ export function NaturalPersonForm({
               width={NP.age}
               field="age"
               hiddenWith="dateOfBirth"
+              readHides={reading("identity")}
             />
             <SelectField
               label={t("fields.gender")}
@@ -970,6 +1102,7 @@ export function NaturalPersonForm({
             options={relationshipOptions}
             value={relationshipIds}
             onChange={setRelationshipIds}
+            reading={reading("identity")}
             hint={
               relationshipListState === "failed"
                 ? t("hints.relationshipListFailed")
@@ -988,14 +1121,15 @@ export function NaturalPersonForm({
             fillRem={NP_PANEL_INNER_REM.identity}
           />
           {emptyFieldsLink("identity")}
+          {editBar("identity")}
         </div>
       </section>
 
       {/* ID Card — official document data; populated manually or via scanner */}
-      <section style={NP_PANEL_STYLE.idCard} data-panel="id-card" {...tileProps("idCard")} className={`rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${hiddenClass("idCard")}`}>
+      <section style={NP_PANEL_STYLE.idCard} data-panel="id-card" {...tileProps("idCard")} onKeyDown={editKeys("idCard")} className={`rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${hiddenClass("idCard")}${editingClass("idCard")}`}>
         {idCardFolded && <EmptyTileLine tile="idCard" title={t("tiles.idCard")} state="noIdDocument" onAdd={addTo("idCard", "id-card")} />}
         <div className={idCardFolded ? "hidden" : "contents"}>
-        <TileTitle title={t("tiles.idCard")} subtitle={t("tileSubtitles.idCard")} />
+        <TileTitle title={t("tiles.idCard")} subtitle={t("tileSubtitles.idCard")} action={editButton("idCard", t("tiles.idCard"))} />
         {/* Slice #37.26 — the rows of `NP_ROWS.idCard`. */}
         <div className="flex flex-col gap-2">
           <div className={STACKED_ROW_CLASS}>
@@ -1133,15 +1267,16 @@ export function NaturalPersonForm({
             </div>
           )}
           {emptyFieldsLink("idCard")}
+          {editBar("idCard")}
         </div>
         </div>
       </section>
 
       {/* Contact — phones and emails */}
-      <section style={NP_PANEL_STYLE.contact} data-panel="contact" {...tileProps("contact")} className={`rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${hiddenClass("contact")}`}>
+      <section style={NP_PANEL_STYLE.contact} data-panel="contact" {...tileProps("contact")} onKeyDown={editKeys("contact")} className={`rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${hiddenClass("contact")}${editingClass("contact")}`}>
         {contactFolded && <EmptyTileLine tile="contact" title={t("tiles.contact")} onAdd={addTo("contact", "contact")} />}
         <div className={contactFolded ? "hidden" : "contents"}>
-        <TileTitle title={t("tiles.contact")} subtitle={t("tileSubtitles.contact")} />
+        <TileTitle title={t("tiles.contact")} subtitle={t("tileSubtitles.contact")} action={editButton("contact", t("tiles.contact"))} />
         {/* Slice #37.26 — the rows of `NP_ROWS.contact`; the panel is as wide as the two phones. */}
         <div className="flex flex-col gap-2">
           <div className={STACKED_ROW_CLASS}>
@@ -1195,6 +1330,7 @@ export function NaturalPersonForm({
             width={NP.workEmail}
           />
           {emptyFieldsLink("contact")}
+          {editBar("contact")}
         </div>
         </div>
       </section>
@@ -1213,7 +1349,11 @@ export function NaturalPersonForm({
         highlights={displayHighlights?.addresses.HOME}
         collapsed={homeFolded ? { tile: "home", onAdd: addTo("home", "addresses.HOME") } : undefined}
         emptyFields={emptyFieldsLink("home")}
-        footer={
+        titleAction={editButton("addresses", t("tiles.addresses"))}
+        after={editBar("addresses")}
+        sectionClassName={editingClass("addresses").trim()}
+        onKeyDown={editKeys("addresses")}
+        footer={reading("addresses") ? undefined : (
             <Controller
               control={form.control}
               name="correspondenceSameAsHome"
@@ -1249,7 +1389,7 @@ export function NaturalPersonForm({
                 </label>
               )}
             />
-        }
+        )}
       />
 
       {/* CORRESPONDENCE address — only when not same as home. Slice 40.64: on a saved record, the same as home reads
@@ -1263,6 +1403,8 @@ export function NaturalPersonForm({
           onAdd={
             emptyTiles.canAdd
               ? () => {
+                  // 40.72: on a saved person „Adaugă" opens „Adrese" in edit first, then gives it its own address.
+                  if (canEditTiles) tileEditing.edit("addresses", '[data-panel="addresses.CORRESPONDENCE"]');
                   form.setValue("correspondenceSameAsHome", false, { shouldDirty: true });
                   emptyTiles.open("correspondence", '[data-panel="addresses.CORRESPONDENCE"]');
                 }
@@ -1279,6 +1421,8 @@ export function NaturalPersonForm({
           highlights={displayHighlights?.addresses.CORRESPONDENCE}
           collapsed={correspondenceFolded ? { tile: "correspondence", onAdd: addTo("correspondence", "addresses.CORRESPONDENCE") } : undefined}
           emptyFields={emptyFieldsLink("correspondence")}
+          sectionClassName={editingClass("addresses").trim()}
+          onKeyDown={editKeys("addresses")}
         />
       )}
       </div>{/* end „Adrese" tile */}
@@ -1339,14 +1483,17 @@ export function NaturalPersonForm({
             onClick={() => router.back()}
           />
           <div className="flex items-center gap-3">
-            <IconButton
-              icon={Save}
-              label={t("buttons.save")}
-              variant="primary"
-              size="lg"
-              type="submit"
-              disabled={saveDisabled}
-            />
+            {/* Slice 40.72: on a saved person each tile saves itself. */}
+            {!perTile && (
+              <IconButton
+                icon={Save}
+                label={t("buttons.save")}
+                variant="primary"
+                size="lg"
+                type="submit"
+                disabled={saveDisabled}
+              />
+            )}
             <IconButton
               icon={Trash2}
               label={t("buttons.delete")}
@@ -1359,14 +1506,17 @@ export function NaturalPersonForm({
         </div>
       ) : (
         <div className="flex items-center justify-center gap-3 border-t border-crease pt-6 dark:border-zinc-800">
-          <IconButton
-            icon={Save}
-            label={t("buttons.save")}
-            variant="primary"
-            size="lg"
-            type="submit"
-            disabled={saveDisabled}
-          />
+          {/* Slice 40.72: on a saved person each tile saves itself — Delete and the way back stay. */}
+          {!perTile && (
+            <IconButton
+              icon={Save}
+              label={t("buttons.save")}
+              variant="primary"
+              size="lg"
+              type="submit"
+              disabled={saveDisabled}
+            />
+          )}
           {mode === "edit" && (
             <IconButton
               icon={Trash2}
@@ -1476,6 +1626,7 @@ export function NaturalPersonForm({
         busy={false}
       />
     )}
+    </ReadModeContext.Provider>
     </HiddenFieldsContext.Provider>
     </FieldPulseContext.Provider>
   );
@@ -1530,8 +1681,12 @@ type FieldProps = {
 // boxes start on one line whatever its labels wrap to — the Judicial Person draws the same.
 
 
-function Field({ label, name, type = "text", register, error, bubble, highlight, expired, expiringSoon, width, mono, fillRem, disabled }: FieldProps) {
+function Field({ label, name, type = "text", register, error, bubble, highlight, expired, expiringSoon, width, mono, fillRem, disabled, readSuffix }: FieldProps & {
+  /** Slice 40.72: after the value in the read view — the age beside the birth date. */
+  readSuffix?: string;
+}) {
   const hiddenEmpty = useFieldHidden(name); // Slice 40.71: behind its tile's „Arată N câmpuri goale"
+  const read = useFieldRead(name);
   const ring = usePulseRing(highlight);
   const className = [
     FIELD_BOX,
@@ -1547,6 +1702,22 @@ function Field({ label, name, type = "text", register, error, bubble, highlight,
   const labelId = useId();
   const labelledBy = bubble ? labelId : undefined;
   const box = stackedBoxStyle(width, fillRem ?? boxRem(width));
+  // Slice 40.72: the read view — the value as text, at the box's width.
+  if (read.reading) {
+    const text = readText(read.value, type === "date" ? "date" : "text");
+    return (
+      <div className={STACKED_FIELD_CLASS} style={hiddenFieldStyle(hiddenEmpty, box)} data-empty-hidden={hiddenEmpty || undefined}>
+        <span className={STACKED_LABEL_CLASS}>{label}</span>
+        <ReadValue
+          name={name}
+          kind={width.kind}
+          text={text === "" ? "" : `${text}${readSuffix ?? ""}`}
+          style={box}
+          className={[ring, mono ? "font-mono" : "", expired ? "text-red-700 dark:text-red-400" : expiringSoon ? "text-amber-700 dark:text-amber-400" : ""].join(" ")}
+        />
+      </div>
+    );
+  }
   const control = grows ? (
     <GrowingText
       registration={register(name)}
@@ -1606,14 +1777,29 @@ function RelationshipsField({
   value,
   onChange,
   hint,
+  reading = false,
 }: {
   label: string;
   options: { value: string; label: string }[];
   value: readonly string[];
   onChange: (next: string[]) => void;
   hint?: string;
+  /** Slice 40.72: the read view — the ticked ones as a short list („Client, Cumpărător"). */
+  reading?: boolean;
 }) {
   const labelId = useId();
+  if (reading) {
+    return (
+      <div className="flex flex-col gap-y-0.5 text-sm" data-np-relationships="">
+        <span className={FIELD_LABEL}>{label}</span>
+        <ReadValue
+          name="relationships"
+          kind="grows"
+          text={options.filter((o) => value.includes(o.value)).map((o) => o.label).join(", ")}
+        />
+      </div>
+    );
+  }
   const toggle = (id: string, on: boolean) =>
     onChange((on ? [...value, id] : value.filter((v) => v !== id)).sort());
   return (
@@ -1677,6 +1863,7 @@ function SelectField({
   snapshot?: SnapshotLookupState;
 }) {
   const hiddenEmpty = useFieldHidden(name); // Slice 40.71: behind its tile's „Arată N câmpuri goale"
+  const read = useFieldRead(name);
   // ⚠️ **`tSnapshot`, NOT a second `tShared`, AND `record-list-agreement.test.ts`
   // IS WHY.** This file's component-scope `tShared` binds
   // `shared.readonlyView`; that suite reads the FIRST `const tShared =
@@ -1721,6 +1908,16 @@ function SelectField({
             className={ring}
           />
         </div>
+      </div>
+    );
+  }
+
+  // Slice 40.72: the read view — the chosen option's words.
+  if (read.reading) {
+    return (
+      <div className={STACKED_FIELD_CLASS} style={hiddenFieldStyle(hiddenEmpty, box)} data-empty-hidden={hiddenEmpty || undefined}>
+        <span className={STACKED_LABEL_CLASS}>{label}</span>
+        <ReadValue name={name} kind={width.kind} text={current ? (chosenLabel ?? "") : ""} style={box} className={ring} />
       </div>
     );
   }
@@ -1787,8 +1984,19 @@ function CheckField({
   onTurnOff: () => void;
 }) {
   const hiddenEmpty = useFieldHidden(name); // Slice 40.71: behind its tile's „Arată N câmpuri goale"
+  const read = useFieldRead(name);
+  const tRead = useTranslations("shared.readEdit");
   const ring = usePulseRing(highlight);
   const box = boxStyle(width);
+  // Slice 40.72: the read view — „Da" when ticked.
+  if (read.reading) {
+    return (
+      <div className={STACKED_FIELD_CLASS} style={hiddenFieldStyle(hiddenEmpty, box)} data-empty-hidden={hiddenEmpty || undefined}>
+        <span className={STACKED_LABEL_CLASS}>{label}</span>
+        <ReadValue name={name} kind={width.kind} text={read.value === true ? tRead("yes") : ""} style={box} className={ring} />
+      </div>
+    );
+  }
   return (
     <Controller
       control={control}
@@ -1815,9 +2023,10 @@ function CheckField({
   );
 }
 
-function ReadOnlyField({ label, value, width, field, hiddenWith }: { label: string; value: string; width: FieldWidth; field: string; hiddenWith?: string }) {
-  // Slice 40.71: „Vârstă" hides with „Data nașterii", the date it is worked out from.
-  const hiddenEmpty = useFieldHidden(hiddenWith ?? "");
+function ReadOnlyField({ label, value, width, field, hiddenWith, readHides = false }: { label: string; value: string; width: FieldWidth; field: string; hiddenWith?: string; readHides?: boolean }) {
+  // Slice 40.71: „Vârstă" hides with „Data nașterii", the date it is worked out from; 40.72's read view writes it
+  // beside the date, so there it hides too.
+  const hiddenEmpty = useFieldHidden(hiddenWith ?? "") || readHides;
   return (
     <div className={STACKED_FIELD_CLASS} style={hiddenFieldStyle(hiddenEmpty, boxStyle(width))} data-empty-hidden={hiddenEmpty || undefined}>
       <span className={STACKED_LABEL_CLASS}>{label}</span>

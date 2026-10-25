@@ -1162,6 +1162,14 @@
     "emptyFields": {
       "show": "{count, plural, one {Show # empty field} other {Show # empty fields}}",
       "all": "Empty fields: {names}"
+    },
+    "readEdit": {
+      "edit": "Edit",
+      "editTile": "Edit — {tile}",
+      "save": "Save",
+      "cancel": "Cancel",
+      "yes": "Yes",
+      "age": "{count, plural, one {# year} other {# years}}"
     }
   },
   "naturalPerson": {
