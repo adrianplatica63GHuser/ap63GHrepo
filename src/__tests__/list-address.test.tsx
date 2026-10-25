@@ -187,7 +187,7 @@ describe("the four lists keep their view in their address (#39.26)", () => {
     // The search's debounce sends the list to its first page only when the search changed — on mount the address's
     // page stands. It read `setDebouncedSearch(searchInput.trim()); setCurrentPage(0);` on every run.
     expect(view).toMatch(/const next = searchInput\.trim\(\);\s*if \(next === debouncedSearch\) return;/);
-    expect(view).toContain("}, [searchInput, debouncedSearch]);");
+    expect(view).toContain("}, [searchInput, debouncedSearch, setCurrentPage]);" /* 40.67: the page's setter is useFittedPage's */);
   });
 
   it.each(LISTS)("%s: its page renders it in a Suspense boundary, inside ListAddressScope", (dir, _kind, comp) => {
