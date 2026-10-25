@@ -428,7 +428,8 @@ describe("the Natural Person: every label above its box, every panel as wide as 
       contact: widest(NP_ROWS.contact, NP),
       address: widest(ADDRESS_ROWS, ADDRESS),
     };
-    expect(rowsOf).toEqual({ identity: 26.5, idCard: 26, contact: 17.5, address: 24 });
+    // identity 27: „Tip profesional" is 13.5 rem since 40.70 (Roboto), beside „Locul nașterii" — still three units.
+    expect(rowsOf).toEqual({ identity: 27, idCard: 26, contact: 17.5, address: 24 });
     expect(NP_PANEL_UNITS).toEqual({ identity: 3, idCard: 3, contact: 2, address: 3 });
     for (const k of Object.keys(NP_PANEL_UNITS) as (keyof typeof NP_PANEL_UNITS)[]) {
       expect([k, NP_PANEL_INNER_REM[k] >= rowsOf[k]]).toEqual([k, true]);
