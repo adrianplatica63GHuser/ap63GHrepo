@@ -3,7 +3,8 @@
  * Source: docs/testing/cases/TC-SET-05.md, „Last green" 2026-10-21
  *
  * A translation of the case file, step for step (Slice 40.19). Slice 40.28: the box is „Noapte" under „GA40", the
- * flags stacked in the panel's middle, „Setări"'s box „Noapte (Mod Întunecat)"; step 1 measures the header. It changes only this browser context's cookie, and
+ * flags stacked in the panel's middle, „Setări"'s box „Noapte (Mod Întunecat)"; step 1 measures the header. Slice 40.58:
+ * the flags are „RO | EN", one two-part control in the panel's middle; step 7 switches the language with it. It changes only this browser context's cookie, and
  * puts the look back to light in `finally`, so a red run leaves nothing dark behind.
  */
 import { test, expect, type Page } from "../helpers/test";
@@ -37,26 +38,27 @@ test.describe("TC-SET-05 — „Noapte”", () => {
           head: r(head),
           name: r(document.querySelector("[data-sidebar-name]")),
           box: r(document.querySelector('[data-theme-toggle="sidebar"]')),
-          flags: [...head.querySelectorAll("img")].map(r),
+          sw: r(head.querySelector('[data-segmented="locale"]')),
+          parts: [...head.querySelectorAll('[data-segmented="locale"] button')].map((b) => ({ ...r(b), text: b.textContent })),
           collapse: r(head.querySelector('button[aria-label="Restrânge bara laterală"]')),
         };
       });
       expect(Math.round(g.head.h)).toBe(56);
       expect(Math.abs(g.box.l - g.name.l)).toBeLessThanOrEqual(1);
       expect(g.box.t).toBeGreaterThanOrEqual(g.name.b - 0.5);
-      expect(g.flags.map((f) => [Math.round(f.w), Math.round(f.h)])).toEqual([[24, 16], [24, 16]]);
-      expect(g.flags[1].t).toBeGreaterThanOrEqual(g.flags[0].b);
-      expect(Math.abs(g.flags[0].l - g.flags[1].l)).toBeLessThanOrEqual(0.5);
+      // 40.58: „RO | EN" side by side, RO first, its centre on the panel's (it was two flags, one above the other).
+      expect(g.parts.map((p) => p.text)).toEqual(["RO", "EN"]);
+      expect(g.parts[1].l).toBeGreaterThanOrEqual(g.parts[0].r - 1);
+      expect(Math.abs(g.parts[0].t - g.parts[1].t)).toBeLessThanOrEqual(0.5);
       const mid = (g.aside.l + g.aside.r) / 2;
-      expect(Math.abs((g.flags[0].l + g.flags[0].r) / 2 - mid)).toBeLessThanOrEqual(1);
-      expect(Math.abs(g.name.t - g.flags[0].t)).toBeLessThanOrEqual(1); // „higher": level with the top flag
+      expect(Math.abs((g.sw.l + g.sw.r) / 2 - mid)).toBeLessThanOrEqual(1);
       // The collapse button as it always stood: 30 × 30, on the header's right padding, in its middle.
       expect([Math.round(g.collapse.w), Math.round(g.collapse.h)]).toEqual([30, 30]);
       expect(Math.abs(g.head.r - 12 - g.collapse.r)).toBeLessThanOrEqual(1);
       expect(Math.abs((g.head.t + g.head.b) / 2 - (g.collapse.t + g.collapse.b) / 2)).toBeLessThanOrEqual(1);
       // Nothing overlaps: the left column ends before the flags start, the flags before the button.
-      expect(Math.max(g.name.r, g.box.r)).toBeLessThan(g.flags[0].l);
-      expect(g.flags[0].r).toBeLessThan(g.collapse.l);
+      expect(Math.max(g.name.r, g.box.r)).toBeLessThan(g.sw.l);
+      expect(g.sw.r).toBeLessThan(g.collapse.l);
       expect(await isDark(page)).toBe(false);
       const light = await bodyBg(page);
 
@@ -95,8 +97,34 @@ test.describe("TC-SET-05 — „Noapte”", () => {
       await expect(settingsBox(page)).not.toBeChecked({ timeout: 30_000 });
       await expect(sidebarBox(page)).not.toBeChecked();
       expect(await isDark(page)).toBe(false);
+
+      // Step 7 (40.58) — „RO | EN": RO pressed and filled, EN outlined; EN turns the screen English; RO back; nothing is
+      // asked of flagcdn.com.
+      const asked: string[] = [];
+      page.on("request", (r) => {
+        if (r.url().includes("flagcdn.com")) asked.push(r.url());
+      });
+      await page.goto("/natural-persons");
+      const sw = page.locator('[data-sidebar-look] [data-segmented="locale"]');
+      const ro = sw.getByRole("button", { name: "Română", exact: true });
+      const en = sw.getByRole("button", { name: "English", exact: true });
+      await expect(ro).toHaveAttribute("aria-pressed", "true", { timeout: 30_000 });
+      await expect(en).toHaveAttribute("aria-pressed", "false");
+      await expect(ro).toBeEnabled();
+      expect(await ro.evaluate((e) => getComputedStyle(e).backgroundColor)).toBe("rgb(51, 65, 85)"); // slate, --color-cta
+      expect(await en.evaluate((e) => getComputedStyle(e).backgroundColor)).toBe("rgba(0, 0, 0, 0)");
+      await en.click();
+      await expect(en).toHaveAttribute("aria-pressed", "true", { timeout: 30_000 });
+      await expect(page.locator('[data-theme-toggle="sidebar"]').getByRole("checkbox", { name: "Night", exact: true })).toBeVisible({ timeout: 30_000 });
+      await ro.click();
+      await expect(ro).toHaveAttribute("aria-pressed", "true", { timeout: 30_000 });
+      await expect(sidebarBox(page)).toBeVisible({ timeout: 30_000 });
+      expect(asked).toEqual([]);
+      expect(await page.locator("aside img").count()).toBe(0);
     } finally {
       await lookOnLoad(page, "light");
+      const base = test.info().project.use.baseURL ?? process.env.E2E_BASE_URL ?? "http://localhost:3000";
+      await page.context().addCookies([{ name: "NEXT_LOCALE", value: "ro-RO", url: base }]);
     }
   });
 });

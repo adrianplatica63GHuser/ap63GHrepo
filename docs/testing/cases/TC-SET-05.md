@@ -38,14 +38,18 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „Persoane fizice" at 1366 × 900 and looks at the sidebar's header | The header 56 px tall. At its left „GA40", level with the top flag, and under it, its left edge on „GA40"'s within 1 px, an unticked box „Noapte" whose tooltip reads „Noapte (Mod Întunecat)"; the two flags 24 × 16 px, one above the other, their centre within 1 px of the panel's; the collapse button 30 × 30 on the header's right padding, in its middle; nothing overlapping; the page light |
+| 1 | Opens „Persoane fizice" at 1366 × 900 and looks at the sidebar's header | The header 56 px tall. At its left „GA40", and under it, its left edge on „GA40"'s within 1 px, an unticked box „Noapte" whose tooltip reads „Noapte (Mod Întunecat)"; „RO | EN" (40.58: it was the two flags) side by side, RO first, its centre within 1 px of the panel's; the collapse button 30 × 30 on the header's right padding, in its middle; nothing overlapping; the page light |
 | 2 | Ticks „Noapte" | At once, without a reload: `<html>` carries `dark`, the page's background is dark, the sidebar too |
 | 3 | Reloads the page | The page arrives dark — the server's first answer already carries `dark` on `<html>` — and the box is ticked |
 | 4 | Opens „Setări" | Under „Limba", a group „Aspect" with the box „Noapte (Mod Întunecat)", ticked |
 | 5 | Unticks it there | At once the page is light, and the sidebar's box is unticked too |
 | 6 | Reloads | Light, both boxes unticked |
+| 7 | (40.58) Opens „Persoane fizice" and looks at „RO \| EN", presses „EN", then „RO" | RO filled in slate and pressed, EN outlined. „EN": the screen in English (the box reads „Night"), EN the one pressed. „RO": Romanian again. Nothing is asked of flagcdn.com and the sidebar shows no image |
 
 ## Notes from the runs
+
+**2026-10-25 — „RO | EN" (Slice 40.58).** Step 1 reads the switch where it read the flags; step 7 is new. Written from
+the slice's own change and added to the spec; not driven by hand first.
 
 **2026-10-21 — `driven` twice, `confirmed` (Slice 40.19).** In the Claude desktop app's browser pane on
 localhost:3000, signed in as admin. Run 1 ticked the sidebar's box: `<html>` dark at once, the cookie
