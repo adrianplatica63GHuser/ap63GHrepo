@@ -28,7 +28,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 // `Map` shadows the global Map constructor, hence the alias.
-import { Map as MapIcon } from "lucide-react";
+
+import { ENTITY_ICON } from "@/lib/ui/entity-icon";
 import { RecordHeading } from "@/lib/ui/record-heading";
 import { sameProfile, typeShows, type PropertyTypeProfile } from "@/lib/properties/type-profile";
 import { PropertyTypeHeading } from "./property-type-heading";
@@ -131,7 +132,7 @@ export function PropertyDetailTiles({
       {/* Slice #19.07: name on the left, version controls right-aligned on the
           same line (portalled in by the details form via navSlot). */}
       <header className="relative flex min-h-[2.5rem] items-center" data-record-header="">
-        <RecordHeading icon={MapIcon} name={propertyName} />
+        <RecordHeading icon={ENTITY_ICON.property} name={propertyName} />
         <PropertyTypeHeading type={type} />
         {/* Slice 40.57: „Panouri" right after the version controls; its panel is where the tile bar stood. */}
         <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center gap-3" data-record-controls="">

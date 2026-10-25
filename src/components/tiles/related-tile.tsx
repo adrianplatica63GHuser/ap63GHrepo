@@ -45,7 +45,8 @@
  * Read-only rows have the two slots they can fill (`RELATED_READONLY_SLOTS`): „Relația" and „Vizualizare".
  */
 
-import { Building2, FileText, Link as LinkIcon, Map as MapIcon, Unlink, User, type LucideProps } from "lucide-react";
+import { Link as LinkIcon, Unlink, type LucideProps } from "lucide-react";
+import { ENTITY_ICON } from "@/lib/ui/entity-icon";
 import { useState, type ComponentType, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 
@@ -62,13 +63,8 @@ export type RelatedKind = "natural" | "judicial" | "property" | "document";
 /** The groups, in Adrian's order. */
 export const RELATED_KINDS: readonly RelatedKind[] = ["natural", "judicial", "property", "document"];
 
-/** The record headings' icons (#37.49, `src/lib/ui/record-heading.tsx`). */
-export const RELATED_ICON: Record<RelatedKind, ComponentType<LucideProps>> = {
-  natural: User,
-  judicial: Building2,
-  property: MapIcon,
-  document: FileText,
-};
+/** The record headings' icons (#37.49) — since 40.61 the one mark of each kind, `ENTITY_ICON` (src/lib/ui/entity-icon.ts). */
+export const RELATED_ICON: Readonly<Record<RelatedKind, ComponentType<LucideProps>>> = ENTITY_ICON;
 
 export interface RelatedRow {
   /** Unique across the tile: the kind and the LINK (a person may hold two roles). */

@@ -987,7 +987,8 @@
         "codeHint": "Type the other object's code: PPERS (natural person), JPERS (juridical person), PROP (property) or DOC (document), followed by the number — e.g. PPERS00001.",
         "empty": "No cross-references added yet",
         "referencedBy": "referenced by",
-        "typePerson": "Person",
+        "typeNatural": "Natural person",
+        "typeJudicial": "Juridical person",
         "typeProp": "Property",
         "typeDoc": "Document"
       },

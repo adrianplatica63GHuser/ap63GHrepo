@@ -3,6 +3,8 @@
 import { useNameOr } from "@/components/record/use-name-or";
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { RotateCcw, Search } from "lucide-react";
+import { EntityMark } from "@/components/record/entity-mark";
+import { type EntityKind } from "@/lib/ui/entity-icon";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -126,24 +128,12 @@ function entityHref(row: QueryResultItem): string {
   return "#";
 }
 
-function badgeClass(type: string): string {
-  if (type === "PERSON")   return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300";
-  if (type === "PROPERTY") return "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300";
-  if (type === "DOCUMENT") return "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300";
-  return "bg-zinc-100 text-zinc-800";
-}
-
-function personTypeBadge(personType: string | null) {
-  if (!personType) return null;
-  const cls = personType === "JUDICIAL"
-    ? "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
-    : "bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-300";
-  const label = personType === "JUDICIAL" ? "Juridic" : "Fizic";
-  return (
-    <span className={`inline-block rounded px-1.5 py-0.5 text-xs font-medium ${cls}`}>
-      {label}
-    </span>
-  );
+/** Slice 40.61: a result's kind, for its mark — `null` for a type the search does not know. */
+function searchKind(row: QueryResultItem): EntityKind | null {
+  if (row.entityType === "PERSON") return row.personType === "JUDICIAL" ? "judicial" : "natural";
+  if (row.entityType === "PROPERTY") return "property";
+  if (row.entityType === "DOCUMENT") return "document";
+  return null;
 }
 
 // ⚠️ **Slice #32.19 — the LABEL is passed in; the badge no longer prints the
@@ -658,18 +648,17 @@ function ResultsTable({ results, truncatedTypes, searched, page, onPageChange }:
                 className="border-b border-zinc-50 align-top transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800/30"
               >
                 <td className="px-4 py-2">
-                  <span className={`inline-block rounded px-1.5 py-0.5 text-xs font-medium ${badgeClass(row.entityType)}`}>
-                    {/* FU-061 (Slice #37.07): the same Romanian words the „Tip
-                        entitate" filter above says, not the raw enum. */}
-                    {(ENTITY_TYPES as readonly string[]).includes(row.entityType)
-                      ? t(`entityTypes.${row.entityType as (typeof ENTITY_TYPES)[number]}`)
-                      : row.entityType}
-                  </span>
-                  {row.entityType === "PERSON" && (
-                    <span className="ml-1">
-                      {personTypeBadge(row.personType)}
-                    </span>
-                  )}
+                  {/* Slice 40.61 (Ask first 3): the kind's mark — a person's natural or juridical — its name the accessible
+                      name and the tooltip, in the „Tip entitate" filter's words (FU-061, #37.07). It was a coloured chip
+                      with the word, and a second one, „Fizic" / „Juridic", for a person. */}
+                  {(() => {
+                    const kind = searchKind(row);
+                    if (!kind) return <span className="text-xs">{row.entityType}</span>;
+                    const label = kind === "natural" || kind === "judicial"
+                      ? t(`personSubtypeValues.${kind === "judicial" ? "JUDICIAL" : "NATURAL"}`)
+                      : t(`entityTypes.${row.entityType as (typeof ENTITY_TYPES)[number]}`);
+                    return <EntityMark kind={kind} label={label} />;
+                  })()}
                 </td>
                 <td className={`px-4 py-2 text-zinc-700 dark:text-zinc-300 ${wrapsIf("searchName")}`}>
                   {/* Slice #37.57: the name is the row's link (it was the code). */}

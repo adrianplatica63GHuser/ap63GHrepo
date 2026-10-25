@@ -987,7 +987,8 @@
         "codeHint": "Scrieți codul celuilalt obiect: PPERS (persoană fizică), JPERS (persoană juridică), PROP (proprietate) sau DOC (act), urmat de număr — ex. PPERS00001.",
         "empty": "Nicio trimitere adăugată încă",
         "referencedBy": "referit de",
-        "typePerson": "Persoană",
+        "typeNatural": "Persoană fizică",
+        "typeJudicial": "Persoană juridică",
         "typeProp": "Proprietate",
         "typeDoc": "Document"
       },

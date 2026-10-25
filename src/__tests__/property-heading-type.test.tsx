@@ -126,7 +126,7 @@ describe("PropertyTypeHeading (#38.03)", () => {
 
   it("the Property screen draws it after its heading, from the type the form reports", () => {
     const tiles = read("src", "app", "properties", "_components", "property-detail-tiles.tsx");
-    expect(tiles).toMatch(/<RecordHeading icon=\{MapIcon\} name=\{propertyName\} \/>\s*<PropertyTypeHeading type=\{type\} \/>/);
+    expect(tiles).toMatch(/<RecordHeading icon=\{ENTITY_ICON\.property\} name=\{propertyName\} \/>\s*<PropertyTypeHeading type=\{type\} \/>/); // 40.61: ENTITY_ICON
     expect(tiles).toContain("onTypeChange={onTypeChange}");
     const form = read("src", "app", "properties", "_components", "property-form.tsx");
     expect(form).toMatch(/onTypeChange\?\.\(typeProfile\)/);

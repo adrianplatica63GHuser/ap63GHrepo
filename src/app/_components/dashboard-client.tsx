@@ -4,6 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useNameOr } from "@/components/record/use-name-or";
 import Link from "next/link";
+import { ENTITY_ICON, type EntityKind } from "@/lib/ui/entity-icon";
+import { EntityMark } from "@/components/record/entity-mark";
 import { useTimeFrames, tfDays } from "@/hooks/use-time-frames";
 import { TABLE_FRAME, WRAPS, columnHead } from "@/components/table/fixed-columns";
 import { FixedTable } from "@/components/table/column-resize";
@@ -269,38 +271,41 @@ export function RecentCountsSection({
       label: t("recentCounts.persons"),
       count: data?.persons,
       href:  "/persons",
-      color: "text-blue-600 dark:text-blue-400",
-      bg:    "bg-blue-50 dark:bg-blue-900/30",
+      kind:  "natural",
     },
     {
       label: t("recentCounts.properties"),
       count: data?.properties,
       href:  "/properties",
-      color: "text-emerald-600 dark:text-emerald-400",
-      bg:    "bg-emerald-50 dark:bg-emerald-900/30",
+      kind:  "property",
     },
     {
       label: t("recentCounts.documents"),
       count: data?.documents,
       href:  "/documents",
-      color: "text-violet-600 dark:text-violet-400",
-      bg:    "bg-violet-50 dark:bg-violet-900/30",
+      kind:  "document",
     },
   ] as const;
 
   return (
     <SectionCard tile="recentCounts" title={t("recentCounts.title", { days: recentDays })}>
       <div style={stepGridStyle("M", 3, 1)}>
-        {cards.map((c) => (
+        {/* Slice 40.61 (Ask first 4): one ink colour on plain cards, each under its kind's mark — they were blue, green
+            and purple on tinted cards, and green and purple already meant Legături and the pinned tiles. */}
+        {cards.map((c) => {
+          const Icon = ENTITY_ICON[c.kind];
+          return (
           <Link
             key={c.href}
             href={c.href}
-            className={`flex flex-col items-center justify-center rounded-lg p-4 gap-1 ${c.bg} hover:opacity-80 transition-opacity`}
+            className="flex flex-col items-center justify-center gap-1 rounded-lg border border-wire bg-white p-4 transition-colors hover:bg-cta-pale dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+            data-recent-count={c.kind}
           >
+            <Icon size={20} aria-hidden="true" className="text-fade dark:text-zinc-400" />
             {data === undefined ? (
               <Skeleton className="h-8 w-12" />
             ) : (
-              <span className={`text-3xl font-bold tabular-nums ${c.color}`}>
+              <span className="text-3xl font-bold tabular-nums text-ink dark:text-zinc-100">
                 {c.count}
               </span>
             )}
@@ -308,7 +313,8 @@ export function RecentCountsSection({
               {c.label}
             </span>
           </Link>
-        ))}
+          );
+        })}
       </div>
       <p className="mt-3 text-xs text-zinc-400 dark:text-zinc-500 text-center">
         {t("recentCounts.subtitle")}
@@ -478,8 +484,14 @@ export function StaleMetadataSection({
 // Section 4 — Recent activity
 // ---------------------------------------------------------------------------
 
-const ENTITY_TYPE_LABEL_KEY = {
-  person:   "recentActivity.typePerson",
+/** Slice 40.61: a recent row's kind — the mark and the name it is read by. A person is natural or juridical. */
+function kindOf(item: RecentActivityItem): EntityKind {
+  if (item.entityType === "person") return item.personType === "JUDICIAL" ? "judicial" : "natural";
+  return item.entityType;
+}
+const KIND_LABEL_KEY = {
+  natural:  "recentActivity.typeNatural",
+  judicial: "recentActivity.typeJudicial",
   property: "recentActivity.typeProperty",
   document: "recentActivity.typeDocument",
 } as const;
@@ -508,9 +520,9 @@ function RecentActivitySection({
         <ul className="divide-y divide-zinc-50 dark:divide-zinc-800">
           {data.map((item) => (
             <li key={item.id} className="flex items-center gap-3 py-2.5">
-              <span className="shrink-0 rounded-md bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 text-xs font-mono text-zinc-500 dark:text-zinc-400">
-                {t(ENTITY_TYPE_LABEL_KEY[item.entityType])}
-              </span>
+              {/* Slice 40.61 (Ask first 3): the kind's mark, its name the accessible name and the tooltip — it was the word
+                  in grey monospace, which stays for codes. */}
+              <EntityMark kind={kindOf(item)} label={t(KIND_LABEL_KEY[kindOf(item)])} />
               <Link
                 href={entityUrl(item)}
                 className="flex-1 truncate text-sm text-zinc-700 dark:text-zinc-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"

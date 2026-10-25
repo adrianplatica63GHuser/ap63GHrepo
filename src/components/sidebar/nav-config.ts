@@ -1,14 +1,13 @@
 import type { LucideIcon } from "lucide-react";
+import { ENTITY_ICON } from "@/lib/ui/entity-icon";
 import {
   BarChart3,
   BookOpen,
   BookOpenText,
   Waypoints,
   MessageCircleQuestion,
-  Building2,
   Calculator,
   Database,
-  FileText,
   FileUp,
   FolderInput,
   Folders,
@@ -18,7 +17,6 @@ import {
   LayoutDashboard,
   LifeBuoy,
   Lightbulb,
-  Map,
   MessagesSquare,
   Navigation,
   Network,
@@ -29,7 +27,6 @@ import {
   Stamp,
   Tags,
   Upload,
-  User,
   UserCog,
   Users,
   Workflow,
@@ -120,12 +117,12 @@ export const NAV_SECTIONS: NavSection[] = [
     key: "domain",
     icon: Database,
     items: [
-      { key: "naturalPeople", href: "/natural-persons", icon: User },
-      { key: "judicialPeople", href: "/judicial-persons", icon: Building2 },
+      { key: "naturalPeople", href: "/natural-persons", icon: ENTITY_ICON.natural }, // 40.61: the kinds' one mark
+      { key: "judicialPeople", href: "/judicial-persons", icon: ENTITY_ICON.judicial },
       // Slice #37.92: ONE property item, with the map's icon; the whole map
       // (/properties/map) opens from the list, and this item is active there.
-      { key: "propertyList", href: "/properties", icon: Map },
-      { key: "document", href: "/documents", icon: FileText },
+      { key: "propertyList", href: "/properties", icon: ENTITY_ICON.property },
+      { key: "document", href: "/documents", icon: ENTITY_ICON.document },
       // Slice #39.02: „Interacțiuni" (#38.84) moved to „Rapoarte"; its URL did not.
     ],
   },

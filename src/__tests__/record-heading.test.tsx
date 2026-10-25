@@ -58,10 +58,11 @@ describe("RecordHeading (#37.49)", () => {
   });
 
   it.each([
-    ["natural-persons/_components/person-detail-tiles.tsx", /<RecordHeading icon=\{User\} name=\{personName\} \/>/],
-    ["judicial-persons/_components/person-detail-tiles.tsx", /<RecordHeading icon=\{Building2\} name=\{personName\} \/>/],
-    ["properties/_components/property-detail-tiles.tsx", /<RecordHeading icon=\{MapIcon\} name=\{propertyName\} \/>/],
-    ["documents/_components/document-detail-tiles.tsx", /<RecordHeading\s+icon=\{FileText\}\s+name=\{documentName\}\s+truncate\b/],
+    // 40.61: the kind's one mark, ENTITY_ICON (it was User, Building2, MapIcon and FileText imported here).
+    ["natural-persons/_components/person-detail-tiles.tsx", /<RecordHeading icon=\{ENTITY_ICON\.natural\} name=\{personName\} \/>/],
+    ["judicial-persons/_components/person-detail-tiles.tsx", /<RecordHeading icon=\{ENTITY_ICON\.judicial\} name=\{personName\} \/>/],
+    ["properties/_components/property-detail-tiles.tsx", /<RecordHeading icon=\{ENTITY_ICON\.property\} name=\{propertyName\} \/>/],
+    ["documents/_components/document-detail-tiles.tsx", /<RecordHeading\s+icon=\{ENTITY_ICON\.document\}\s+name=\{documentName\}\s+truncate\b/],
   ])("%s draws its heading through RecordHeading, with its icon", (file, pattern) => {
     const src = read("src", "app", ...file.split("/"));
     expect(src).toMatch(pattern);
@@ -69,8 +70,9 @@ describe("RecordHeading (#37.49)", () => {
   });
 
   it("the Property's icon is the folded map, not the list", () => {
-    expect(read("src", "app", "properties", "_components", "property-detail-tiles.tsx")).toMatch(
-      /import \{ Map as MapIcon \} from "lucide-react";/,
-    );
+    // 40.61: the kinds' marks live in entity-icon.ts (the Property's import was here).
+    const marks = read("src", "lib", "ui", "entity-icon.ts");
+    expect(marks).toMatch(/import \{[^}]*\bMap as MapIcon\b[^}]*\} from "lucide-react";/);
+    expect(marks).toContain("property: MapIcon,");
   });
 });

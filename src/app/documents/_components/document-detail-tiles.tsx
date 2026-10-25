@@ -37,7 +37,8 @@
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
-import { FileText } from "lucide-react";
+
+import { ENTITY_ICON } from "@/lib/ui/entity-icon";
 import { RecordHeading } from "@/lib/ui/record-heading";
 import { useRegisterPage } from "@/hooks/use-register-page";
 import { DocumentForm } from "./document-form";
@@ -170,7 +171,7 @@ export function DocumentDetailTiles({
           rather than running underneath. */}
       <header className="relative flex min-h-[2.5rem] items-center gap-3" data-record-header="">
         <RecordHeading
-          icon={FileText}
+          icon={ENTITY_ICON.document}
           name={documentName}
           truncate
           className="min-w-[8rem]"
