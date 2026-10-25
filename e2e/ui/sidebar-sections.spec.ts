@@ -8,6 +8,8 @@
  * what exists — and renamed this file from `sidebar-nine-sections.spec.ts`.
  *
  * Divergences from the hand run, each for a reason the case cannot have:
+ *   - Steps 11–13 (Slice 40.68) are a test of their own; „the rail" is read as the aside's width, at most 60 px,
+ *     and „over the page" as the aside marked `data-sidebar-overlay` with the backdrop beside it.
  *   - Slice #38.42's pictures, not steps of the case: the sidebar expanded with
  *     each section open, and collapsed — at 1366 and 1920 px, into
  *     `playwright-report/sidebar-sections/`. The sidebar's „Recente" list is
@@ -366,5 +368,49 @@ test.describe("TC-NAV-01 — the sidebar draws only what exists", () => {
     } finally {
       await removeRecord(page.request, "person", personId);
     }
+  });
+});
+
+test.describe("TC-NAV-01 — o fereastră îngustă: bara laterală e șirul de pictograme (40.68)", () => {
+  test("la 800 px șirul, alegerea memorată neschimbată, bara întreagă peste pagină; la 1280 px alegerea memorată", async ({ page }) => {
+    const aside = page.locator("aside").first();
+    const width = async () => Math.round((await aside.boundingBox())!.width);
+    const stored = () => page.evaluate(() => localStorage.getItem("sidebar-collapsed"));
+    const expand = aside.getByRole("button", { name: "Extinde bara laterală", exact: true });
+    const backdrop = page.locator("[data-sidebar-backdrop]");
+
+    // Step 11 — 800 × 900, the sidebar stored expanded: drawn as its rail, the stored value unchanged.
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto("/");
+    await page.evaluate(() => localStorage.setItem("sidebar-collapsed", "false"));
+    await page.setViewportSize({ width: 800, height: 900 });
+    await page.reload();
+    await expect.poll(width, { timeout: 30_000 }).toBeLessThanOrEqual(60);
+    expect(await stored()).toBe("false");
+
+    // Step 12 — the expand button: the whole sidebar over a dimmed page; Esc closes it; again, a click outside closes
+    // it; again, an entry: its screen opens and the sidebar closes. The stored value is still `false`.
+    await expand.click();
+    await expect(page.locator("aside[data-sidebar-overlay]")).toBeVisible();
+    await expect(backdrop).toBeVisible();
+    await expect.poll(width).toBeGreaterThan(200);
+    await page.keyboard.press("Escape");
+    await expect(backdrop).toHaveCount(0);
+    await expect.poll(width).toBeLessThanOrEqual(60);
+    await expand.click();
+    await expect(backdrop).toBeVisible();
+    await page.mouse.click(700, 450);
+    await expect(backdrop).toHaveCount(0);
+    await expand.click();
+    await expect(backdrop).toBeVisible();
+    await openFromSidebar(page, "Proprietăți");
+    await expect(page).toHaveURL(/\/properties$/, { timeout: 30_000 });
+    await expect(backdrop).toHaveCount(0);
+    await expect.poll(width).toBeLessThanOrEqual(60);
+    expect(await stored()).toBe("false");
+
+    // Step 13 — 1280 × 900: the stored choice again, the sidebar expanded.
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await expect.poll(width, { timeout: 15_000 }).toBeGreaterThan(200);
   });
 });

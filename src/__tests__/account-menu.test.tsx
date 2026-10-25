@@ -129,13 +129,14 @@ describe("the sidebar (40.59)", () => {
     const head = sidebar.slice(sidebar.indexOf("data-sidebar-look"), sidebar.indexOf("</div>", sidebar.indexOf("PanelLeftOpen : PanelLeftClose")));
     expect(head).toContain("${TILE_TITLE_TYPE} select-none");
     expect(head).toContain("GA40");
-    expect(head).toContain("icon={isCollapsed ? PanelLeftOpen : PanelLeftClose}");
+    // 40.68: the rail is drawn for a narrow window too — `railShown`, where it read `isCollapsed`.
+    expect(head).toContain("icon={railShown ? PanelLeftOpen : PanelLeftClose}");
     expect(head).not.toMatch(/ThemeToggle|LocaleToggle|signedInAs/);
   });
 
   it("„Autentificat ca” left the top; the bottom strip is the account entry, for UAT too", () => {
     expect(sidebar).not.toContain('t("signedInAs")');
-    expect(sidebar).toContain("<AccountMenu username={me?.username} uat={isUatMode} collapsed={isCollapsed} onSignOut={handleLogout} />");
+    expect(sidebar).toContain("<AccountMenu username={me?.username} uat={isUatMode} collapsed={railShown} onSignOut={handleLogout} />" /* 40.68 */);
     expect(sidebar).not.toContain("data-uat-no-accounts");
   });
 

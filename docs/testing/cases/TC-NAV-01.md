@@ -56,12 +56,21 @@ Nothing.
 | 8a | (Slice #39.97) Looks at „Înainte", right of „Înapoi", then presses it; „Înapoi" again; then „Domeniu" → „Acte" | Disabled on the person before the step back; on „Persoane Fizice" after it, enabled — a right arrow and „Înainte", on the same line as „Înapoi". Pressed: the person again, and „Înainte" disabled. „Înapoi": the list, „Înainte" enabled; „Acte": disabled — a new screen ends the way forward |
 | 9 | Opens the person again, changes „Prenume", presses „Înapoi"; „Anulează"; „Înapoi" again, „Renunță" | „Modificări nesalvate"; „Anulează" keeps the person's screen with what was typed; „Renunță" goes back to the list, nothing saved |
 | 10 | Types the person's address into the bar, then presses „Înapoi" | Nothing in the tab to go back to: the parent crumb, „Persoane Fizice" |
+| 11 | (Slice 40.68, the sidebar stored expanded, `sidebar-collapsed` = `false`) Sets the window 800 × 900 and reloads | The sidebar is its icon rail, about 56 px; `sidebar-collapsed` still `false` |
+| 12 | Presses „Extinde bara laterală"; then Esc; again, a click on the page beside it; again, „Proprietăți" | Each time the whole sidebar over a dimmed page, the page not moved; Esc closes it, the click outside closes it, „Proprietăți" opens its list and closes it; `sidebar-collapsed` still `false` |
+| 13 | Sets the window 1280 × 900 | The sidebar expanded, as stored |
 
 ## At the end — leaving things as they were found
 
 Steps 1–7 create nothing. Steps 8–10's test person is removed at the end. The sidebar is left expanded.
 
 ## Notes from the runs
+
+**2026-10-25 — steps 11–13 added (Slice 40.68).** Under 1024 px the sidebar is its rail whatever is stored, and its
+expand button opens it over the page. Written from the slice's own change and put in the spec as a test of its own;
+not driven by hand first. Seen in the pane at 800 × 800: the rail 56 px, the overlay 224 px over a dimmed page that
+stayed at 56 px, Esc and a click on the backdrop closing it, „Proprietăți" opening its list and closing it, the stored
+value `false` throughout.
 
 **2026-10-19 — Slice #39.97, step 8a written and driven.** Adrian: a „forward" button right of „Înapoi", disabled until
 a step back. Driven in the browser pane on localhost:3000 (Etichete → Proprietăți → a property, by the app's router):
