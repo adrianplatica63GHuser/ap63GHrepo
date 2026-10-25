@@ -17,6 +17,7 @@ import { HiddenColumnSigns } from "@/components/list/hidden-column-signs";
 import { LIST_TOOLBAR, columnsEdge, useListEdge } from "@/components/table/list-edge";
 import { ListHeadCell } from "@/components/table/list-head";
 import { FirstCellText } from "@/components/list/first-cell";
+import { RowNameLink } from "@/components/list/row-name-link";
 import type { ColumnName } from "@/lib/ui/field-widths";
 import { modifiedOn } from "@/lib/persons/person-age";
 import { AddPropertyDialog } from "./_components/add-property-dialog";
@@ -439,7 +440,7 @@ export function PropertyListView() {
                     router.push(`/properties/${item.id}`);
                   }}
                   onAuxClick={(e) => newTabIfAsked(e, `/properties/${item.id}`)}
-                  className="align-top hover:bg-cta-pale dark:hover:bg-zinc-800/50 cursor-pointer"
+                  className="group/row align-top hover:bg-cta-pale dark:hover:bg-zinc-800/50 cursor-pointer"
                 >
                   {order.keys.map((key) =>
                     key === "nickname" ? (
@@ -452,7 +453,9 @@ export function PropertyListView() {
                             </>
                           }
                         >
-                          {item.nickname ?? <span className="text-fade italic">—</span>}
+                          <RowNameLink href={`/properties/${item.id}`} emptyLabel={item.nickname ? undefined : t("open")}>
+                            {item.nickname ?? <span className="text-fade italic">—</span>}
+                          </RowNameLink>
                         </FirstCellText>
                       </td>
                     ) : (
@@ -463,19 +466,11 @@ export function PropertyListView() {
                   )}
                   <td className="px-4 py-1" onClick={(e) => e.stopPropagation()}>
                     {/* Slice #38.57: side by side, always. */}
-                    <span className="flex flex-nowrap gap-1.5" data-row-actions="">
-                      {/* Slice #38.71/#38.72/#38.76: the magnifier („Previzualizare"), the eye („Incursiune"), the chain link („Legături"), the arrow („Deschide"). */}
+                    <span className="flex flex-nowrap gap-1.5 opacity-35 transition-opacity group-hover/row:opacity-100 group-focus-within/row:opacity-100 [@media(hover:none)]:opacity-100" data-row-actions="">
+                      {/* Slice #38.71/#38.72/#38.76: the magnifier („Previzualizare"), the eye („Incursiune"), the chain link („Legături"). 40.60: the arrow („Deschide") went — the name is the link (`RowNameLink`); the three are faint at rest, full on the row under the mouse or holding the focus. */}
                       <PreviewButton target={{ kind: "property", id: item.id }} square="row" />
                       <IncursionButton target={{ kind: "property", id: item.id }} square="row" />
                       <LinksButton target={{ kind: "property", id: item.id }} square="row" />
-                      <IconButton
-                        href={`/properties/${item.id}`}
-                        icon={ArrowRight}
-                        label={t("open")}
-                        variant="secondary"
-                        size="xs"
-                        square="row"
-                      />
                     </span>
                   </td>
                 </tr>

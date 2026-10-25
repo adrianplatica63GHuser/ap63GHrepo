@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { RecencyBadge } from "@/components/recency-badge";
-import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { ONE_LINE, cellTitle, columnHead } from "@/components/table/fixed-columns";
 import { FixedTable } from "@/components/table/column-resize";
@@ -14,6 +14,7 @@ import { HiddenColumnSigns } from "@/components/list/hidden-column-signs";
 import { LIST_TOOLBAR, columnsEdge, useListEdge } from "@/components/table/list-edge";
 import { ListHeadCell } from "@/components/table/list-head";
 import { FirstCellText } from "@/components/list/first-cell";
+import { RowNameLink } from "@/components/list/row-name-link";
 import { newTabIfAsked } from "@/lib/ui/row-link";
 import { ListPreviewRow, ListPreviews, PreviewButton } from "@/components/tiles/preview-tiles";
 import { IncursionButton, LinksButton } from "@/components/tiles/incursion-button";
@@ -328,15 +329,17 @@ export function JudicialPersonListView() {
                     router.push(`/judicial-persons/${item.id}`);
                   }}
                   onAuxClick={(e) => newTabIfAsked(e, `/judicial-persons/${item.id}`)}
-                  className="align-top hover:bg-cta-pale dark:hover:bg-zinc-800/50 cursor-pointer"
+                  className="group/row align-top hover:bg-cta-pale dark:hover:bg-zinc-800/50 cursor-pointer"
                 >
                   {order.keys.map((key) =>
                     key === "name" ? (
                       <td key={key} className={`px-4 py-1 font-medium ${ONE_LINE}`} title={cellTitle(item.displayName)}>
                         <FirstCellText badges={<RecencyBadge createdAt={item.createdAt} updatedAt={item.updatedAt} />}>
-                          {item.displayName || (
-                            <span className="text-fade italic">—</span>
-                          )}
+                          <RowNameLink href={`/judicial-persons/${item.id}`} emptyLabel={item.displayName ? undefined : t("open")}>
+                            {item.displayName || (
+                              <span className="text-fade italic">—</span>
+                            )}
+                          </RowNameLink>
                         </FirstCellText>
                       </td>
                     ) : key === "nickname" ? (
@@ -351,19 +354,11 @@ export function JudicialPersonListView() {
                   )}
                   <td className="px-4 py-1" onClick={(e) => e.stopPropagation()}>
                     {/* Slice #38.57: side by side, always. */}
-                    <span className="flex flex-nowrap gap-1.5" data-row-actions="">
-                      {/* Slice #38.71/#38.72/#38.76: the magnifier („Previzualizare"), the eye („Incursiune"), the chain link („Legături"), the arrow („Deschide"). */}
+                    <span className="flex flex-nowrap gap-1.5 opacity-35 transition-opacity group-hover/row:opacity-100 group-focus-within/row:opacity-100 [@media(hover:none)]:opacity-100" data-row-actions="">
+                      {/* Slice #38.71/#38.72/#38.76: the magnifier („Previzualizare"), the eye („Incursiune"), the chain link („Legături"). 40.60: the arrow („Deschide") went — the name is the link (`RowNameLink`); the three are faint at rest, full on the row under the mouse or holding the focus. */}
                       <PreviewButton target={{ kind: "company", id: item.id }} square="row" />
                       <IncursionButton target={{ kind: "company", id: item.id }} square="row" />
                       <LinksButton target={{ kind: "company", id: item.id }} square="row" />
-                      <IconButton
-                        href={`/judicial-persons/${item.id}`}
-                        icon={ArrowRight}
-                        label={t("open")}
-                        variant="secondary"
-                        size="xs"
-                        square="row"
-                      />
                     </span>
                   </td>
                 </tr>

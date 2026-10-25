@@ -192,14 +192,15 @@ describe("a look, not an edit (#38.72)", () => {
     expect(tiles).toContain('<div ref={columnRef} data-list-row-tiles className="flex max-w-full shrink-0 flex-col gap-4 self-stretch" style={columnFit ? { ...ROW_TILES_STYLE, ...columnFit } : ROW_TILES_STYLE}>');
   });
 
-  it("the four lists draw magnifier, eye, chain link, arrow, and offer the tile", () => {
+  it("the four lists draw magnifier, eye, chain link — no arrow since 40.60 — and offer the tile", () => {
     for (const dir of ["properties", "documents", "natural-persons", "judicial-persons"]) {
       const view = read("src", "app", dir, "list-view.tsx");
       const actions = view.slice(view.indexOf('data-row-actions=""'), view.indexOf("</span>", view.indexOf('data-row-actions=""')));
       const at = (s: string) => actions.indexOf(s);
       // #38.72 held magnifier, eye, arrow (`at("<IncursionButton") < at("icon={ArrowRight}")`); #38.76 puts the
       // chain link between the eye and the arrow.
-      expect([dir, at("<PreviewButton") > -1 && at("<PreviewButton") < at("<IncursionButton") && at("<IncursionButton") < at("<LinksButton") && at("<LinksButton") < at("icon={ArrowRight}")]).toEqual([dir, true]);
+      // 40.60: the arrow („Deschide") went after the chain link (`at("<LinksButton") < at("icon={ArrowRight}")`).
+      expect([dir, at("<PreviewButton") > -1 && at("<PreviewButton") < at("<IncursionButton") && at("<IncursionButton") < at("<LinksButton") && at("icon={ArrowRight}") === -1]).toEqual([dir, true]);
       // #39.04: and the ids of the rows it shows (was `<ListPreviews incursion={IncursionTile}>`).
       // #39.26: and the list's address, over several lines — it was the one line
       // `<ListPreviews incursion={IncursionTile} rowIds={query.data?.items.map((i) => i.id)}>`.
@@ -214,12 +215,12 @@ describe("a look, not an edit (#38.72)", () => {
     }
   });
 
-  it("the four lists' button column holds the four buttons side by side (114 px, 40.39)", () => {
+  it("the four lists' button column holds the three buttons side by side (84 px since 40.60; 114 px, four, 40.39)", () => {
     const widths = read("src", "lib", "ui", "field-widths.ts");
     // #38.72: „three buttons side by side (94 px)", `content: 6`. #38.76 adds the chain link: 4 × 26 + 3 × 8 = 128 px,
     // `content: 8`. 40.39: as wide as the four 24-px buttons and their 6-px gaps measure, computed.
     expect(widths).toContain('listRowActions: { content: ROW_ACTIONS_REM, kind: "fixed" },');
-    expect(widths).toContain("export const ROW_ACTIONS = { count: 4, squarePx: 24, gapPx: 6 } as const;");
+    expect(widths).toContain("export const ROW_ACTIONS = { count: 3, squarePx: 24, gapPx: 6 } as const;"); // 40.60: no „Deschide"
   });
 
   it("is named „Incursiune” in Romanian and „Peek inside” in English (Ask first #3)", () => {

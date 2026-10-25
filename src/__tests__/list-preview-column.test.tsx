@@ -149,11 +149,13 @@ describe("„Previzualizare” is a magnifier, a toggle (Slice #38.71)", () => {
     expect(button("A")).toHaveAttribute("aria-pressed", "false");
   });
 
-  it("on the four lists the magnifier is the row's first button and „Deschide” its last", () => {
+  it("on the four lists the magnifier is the row's first button, and „Deschide” is gone (40.60)", () => {
     for (const dir of ["properties", "documents", "natural-persons", "judicial-persons"]) {
       const view = readFileSync(join(process.cwd(), "src", "app", dir, "list-view.tsx"), "utf8");
       const actions = view.slice(view.indexOf('data-row-actions=""'), view.indexOf("</span>", view.indexOf('data-row-actions=""')));
-      expect([dir, actions.indexOf("<PreviewButton") > -1 && actions.indexOf("<PreviewButton") < actions.indexOf("icon={ArrowRight}")]).toEqual([dir, true]);
+      // 40.60: it was `… < actions.indexOf("icon={ArrowRight}")` — „Deschide" the last; the name is the link now.
+      const first = actions.indexOf("<PreviewButton");
+      expect([dir, first > -1 && first < actions.indexOf("<IncursionButton") && !actions.includes("icon={ArrowRight}")]).toEqual([dir, true]);
     }
   });
 

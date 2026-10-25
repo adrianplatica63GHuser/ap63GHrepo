@@ -1261,11 +1261,12 @@ export function columnPadRem(name: ColumnName): number {
 }
 
 /**
- * Slice 40.39: a principal list row's buttons — the magnifier, the eye, the chain link, „Deschide": how many, their
- * square (button-styles' `row`, `h-6 w-6`, 24 px) and the gap between them (`gap-1.5`, 6 px). `listRowActions` is
- * exactly as wide as they are: 4 × 24 + 3 × 6 = 114 px.
+ * Slice 40.39: a principal list row's buttons — the magnifier, the eye, the chain link: how many, their square
+ * (button-styles' `row`, `h-6 w-6`, 24 px) and the gap between them (`gap-1.5`, 6 px). `listRowActions` is exactly as
+ * wide as they are: 3 × 24 + 2 × 6 = 84 px. (Four, 114 px, until 40.60 took „Deschide" off the rows — the name is the
+ * link.)
  */
-export const ROW_ACTIONS = { count: 4, squarePx: 24, gapPx: 6 } as const;
+export const ROW_ACTIONS = { count: 3, squarePx: 24, gapPx: 6 } as const;
 export const ROW_ACTIONS_REM = (ROW_ACTIONS.count * ROW_ACTIONS.squarePx + (ROW_ACTIONS.count - 1) * ROW_ACTIONS.gapPx) / 16;
 
 export const COLUMN = {
