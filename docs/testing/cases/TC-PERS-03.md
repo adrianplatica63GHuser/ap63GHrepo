@@ -51,12 +51,27 @@ field's description either way.
 | 12 | Presses „Adaugă" on „Adresă domiciliu", then ticks „Adresa de corespondență aceeași cu domiciliul" | „Adresă corespondență" is one line reading „aceeași cu domiciliul" |
 | 13 | Presses „Adaugă" on „Act de identitate", writes `01.01.2020` in „Până la", then clicks into „Nume" | „Până la" keeps a red border with the mouse away; „EXPIRAT" beside it |
 
+Steps 14–16 (Slice 40.71) are on a second person, **created through the API** the same way: „Nume" `TC-PERS-03-GOALE`,
+„Prenume" `Goale`, „Telefon Personal 2" `0700 000 002`, „Email serviciu" `goale@example.invalid`, no CNP (all invented).
+Since 40.71 the first person's empty identity fields are behind „Arată 8 câmpuri goale" too; steps 4 and 9 press it
+first.
+
+| # | A person does | And sees |
+|---|---|---|
+| 14 | Opens the second person and looks at „Contact" | Its two values, then „Arată 4 câmpuri goale" followed in grey by „Telefon Personal 1, Telefon serviciu, Email Personal 1, Email Personal 2"; holding the mouse on the link shows the same names; the four boxes are not drawn |
+| 15 | Looks at „Identitate" | „CNP", empty, is drawn; „Arată 8 câmpuri goale" under the tile's fields |
+| 16 | Presses „Arată 4 câmpuri goale", writes in „Telefon serviciu" and clears it again | All six boxes and no link; „Telefon serviciu" stays; „Identitate" still ends in its own link |
+
 ## At the end — leaving things as they were found
 
 Leave the person without saving (navigate away, discarding the change), then delete it
 (`DELETE /api/people/<id>`). Căutare globală for `TC-PERS-03` finds nothing.
 
 ## Notes from the runs
+
+**2026-10-25 — steps 14–16 added (Slice 40.71).** A partly filled tile's empty fields behind „Arată N câmpuri goale",
+the CNP always shown. Written from the slice's own change and added to the spec; not driven by hand first. Delete the
+second person at the end as the first.
 
 **2026-10-25 — steps 10–12 added, step 10 became 13 (Slice 40.64).** Empty tiles as one line, „Adaugă" opening
 one with the cursor in its first box, the ticked correspondence box. Written from the slice's own change and added to

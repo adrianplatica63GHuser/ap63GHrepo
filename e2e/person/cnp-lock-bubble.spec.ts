@@ -19,6 +19,9 @@
  *     case says what a person sees.
  *   - Steps 10–12 (Slice 40.64) read „one line" as the tile's height: at most 64 px, a filled tile being several
  *     times that.
+ *   - Since Slice 40.71 the identity tile's empty fields hide behind „Arată N câmpuri goale"; steps 4 and 9 use two
+ *     of them, so the first test shows them after step 1 (e2e/helpers/empty-fields.ts). Steps 14–16 are the second
+ *     test, on a person of its own whose „Contact" holds two of its six.
  *   - Slice #37.50's pictures, not steps of the case: the identity tile at
  *     rest and with the bubble open, at 1366 and 1920 px, into
  *     `playwright-report/cnp-lock-bubble/`. The sidebar's „Recente" list is
@@ -28,6 +31,7 @@
 import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createNaturalPerson, removeLeftovers, removeRecord } from "../helpers/records";
 import { emptyTileLine, openEmptyTile } from "../helpers/tiles";
+import { emptyFieldsLink, showEmptyFields } from "../helpers/empty-fields";
 
 const MARK = `${E2E_MARKER}PERS-03`;
 const SAVED_CNP = "1800101420045";
@@ -72,6 +76,8 @@ test.describe("TC-PERS-03 — nota CNP-ului într-un balon, refuzul în română
       await expect(bubble).toHaveText(SENTENCE);
       await expect(bubble).toHaveAttribute("role", "tooltip");
       await expect(bubble).toHaveClass(/(^|\s)sr-only(\s|$)/);
+      // Slice 40.71: steps 4 and 9 use „Data nașterii" and „Poreclă", empty on this person — shown first.
+      await showEmptyFields(page, "identity");
       await photograph(page, "identity-at-rest", async () => {
         await page.mouse.move(5, 5);
         await expect(bubble).toHaveClass(/(^|\s)sr-only(\s|$)/);
@@ -188,6 +194,54 @@ test.describe("TC-PERS-03 — nota CNP-ului într-un balon, refuzul în română
       await expect(page.locator('[data-panel="id-card"]').getByText("Expirat", { exact: false })).toBeVisible();
     } finally {
       // At the end — leaving without saving, then deleting the person.
+      if (personId) await removeRecord(page.request, "person", personId);
+    }
+  });
+
+  test("câmpurile goale ale unei dale completate în parte, sub „Arată N câmpuri goale” (40.71)", async ({ page }) => {
+    const MARK71 = `${E2E_MARKER}PERS-03-GOALE`;
+    await removeLeftovers(page.request, MARK71);
+    await page.setViewportSize({ width: 1366, height: 900 });
+    let personId: string | undefined;
+    try {
+      // Invented: „Contact" holds two of its six — „Telefon Personal 2" and „Email serviciu"; no CNP.
+      personId = await createNaturalPerson(page.request, { lastName: MARK71, firstName: "Goale", personalPhone2: "0700 000 002", workEmail: "goale@example.invalid" });
+      await page.goto(`/natural-persons/${personId}`);
+      await expect(page.getByRole("heading", { level: 1, name: `Goale ${MARK71}`, exact: true })).toBeVisible({ timeout: 30_000 });
+
+      // Step 14 — „Contact": its two values, then „Arată 4 câmpuri goale" and the four names in grey, all in its tooltip.
+      const contact = page.locator('[data-panel="contact"]');
+      const link = emptyFieldsLink(contact, "contact");
+      const HIDDEN = ["Telefon Personal 1", "Telefon serviciu", "Email Personal 1", "Email Personal 2"];
+      await expect(link).toHaveText("Arată 4 câmpuri goale");
+      await expect(contact.locator("[data-empty-fields-names]")).toHaveText(HIDDEN.join(", "));
+      await expect(link).toHaveAttribute("title", `Câmpuri goale: ${HIDDEN.join(", ")}`);
+      await expect(contact.getByRole("textbox", { name: "Telefon Personal 2", exact: true })).toHaveValue("0700 000 002");
+      await expect(contact.getByRole("textbox", { name: "Email serviciu", exact: true })).toHaveValue("goale@example.invalid");
+      for (const name of ["personalPhone1", "workPhone", "personalEmail1", "personalEmail2"]) {
+        await expect(contact.locator(`input[name="${name}"]`)).toBeHidden();
+      }
+
+      // Step 15 — „Identitate": the CNP shows, empty; the other empty fields are behind its own link.
+      const identity = page.locator('[data-panel="identity"]');
+      await expect(identity.getByRole("textbox", { name: "CNP", exact: true })).toBeVisible();
+      await expect(identity.getByRole("textbox", { name: "CNP", exact: true })).toHaveValue("");
+      await expect(emptyFieldsLink(identity, "identity")).toHaveText("Arată 8 câmpuri goale");
+      await expect(identity.locator('input[name="nickname"]')).toBeHidden();
+
+      // Step 16 — the link pressed: all six boxes, no link; a box typed into and emptied again stays; „Identitate" is
+      // still behind its own.
+      await link.click();
+      await expect(link).toHaveCount(0);
+      for (const name of [...HIDDEN, "Telefon Personal 2", "Email serviciu"]) {
+        await expect(contact.getByRole("textbox", { name, exact: true })).toBeVisible();
+      }
+      const workPhone = contact.getByRole("textbox", { name: "Telefon serviciu", exact: true });
+      await workPhone.fill("021 000 0000");
+      await workPhone.fill("");
+      await expect(workPhone).toBeVisible();
+      await expect(emptyFieldsLink(identity, "identity")).toBeVisible();
+    } finally {
       if (personId) await removeRecord(page.request, "person", personId);
     }
   });
