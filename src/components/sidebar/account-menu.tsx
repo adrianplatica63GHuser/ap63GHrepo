@@ -77,11 +77,20 @@ export function AccountMenu({
       document.getElementById(entryId)?.focus();
     };
     const onResize = () => setPlace(measure());
+    // Slice 40.70: the entry can move after the menu opened — the body's Roboto arriving after a first paint in its
+    // fallback shifted the sidebar's foot by 6 px in the runner (TC-SET-05), leaving the menu over the entry. So while
+    // the menu is open it follows the entry, frame by frame; a place that did not move is not set again.
+    let follow = requestAnimationFrame(function track() {
+      const next = measure();
+      if (next) setPlace((prev) => (prev && Math.abs(prev.left - next.left) < 0.5 && Math.abs(prev.bottom - next.bottom) < 0.5 ? prev : next));
+      follow = requestAnimationFrame(track);
+    });
     document.addEventListener("pointerdown", onDown, true);
     document.addEventListener("keydown", onKey);
     window.addEventListener("resize", onResize);
     return () => {
       cancelAnimationFrame(frame);
+      cancelAnimationFrame(follow);
       document.removeEventListener("pointerdown", onDown, true);
       document.removeEventListener("keydown", onKey);
       window.removeEventListener("resize", onResize);
