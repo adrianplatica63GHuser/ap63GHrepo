@@ -259,6 +259,10 @@ async function blurCnp(page: Page): Promise<void> {
     for (const el of document.querySelectorAll<HTMLInputElement>("input")) {
       if (/^\s*\d{13}\s*$/.test(el.value)) el.style.filter = f;
     }
+    // 40.72: on a saved record a tile reads as text, so the CNP is a read value, not an input.
+    for (const el of document.querySelectorAll<HTMLElement>("[data-read-value]")) {
+      if (/^\s*\d{13}\s*$/.test(el.textContent ?? "")) el.style.filter = f;
+    }
   }, BLUR);
 }
 
@@ -344,7 +348,7 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
         const label1 = new RegExp(any, "i");
         const label2 = new RegExp(start);
         for (const el of document.querySelectorAll<HTMLElement>("input, [data-width-field]")) {
-          const label = el.getAttribute("aria-label") ?? el.closest("label")?.textContent ?? "";
+          const label = el.getAttribute("aria-label") ?? (el.closest("label") ?? el.parentElement)?.textContent ?? ""; // 40.72: or a read value's box
           if (label1.test(label)) el.style.filter = f;
         }
         for (const lbl of document.querySelectorAll<HTMLLabelElement>("label")) {
@@ -527,7 +531,7 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
           const label1 = new RegExp(any, "i");
           const label2 = new RegExp(start);
           for (const el of document.querySelectorAll<HTMLElement>("input, [data-width-field]")) {
-            const label = el.getAttribute("aria-label") ?? el.closest("label")?.textContent ?? "";
+            const label = el.getAttribute("aria-label") ?? (el.closest("label") ?? el.parentElement)?.textContent ?? ""; // 40.72: or a read value's box
             if (label1.test(label)) el.style.filter = f;
           }
           for (const lbl of document.querySelectorAll<HTMLLabelElement>("label")) {
@@ -564,7 +568,7 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
           const label1 = new RegExp(any, "i");
           const label2 = new RegExp(start);
           for (const el of document.querySelectorAll<HTMLElement>("input, [data-width-field]")) {
-            const label = el.getAttribute("aria-label") ?? el.closest("label")?.textContent ?? "";
+            const label = el.getAttribute("aria-label") ?? (el.closest("label") ?? el.parentElement)?.textContent ?? ""; // 40.72: or a read value's box
             if (label1.test(label)) el.style.filter = f;
           }
           for (const lbl of document.querySelectorAll<HTMLLabelElement>("label")) {

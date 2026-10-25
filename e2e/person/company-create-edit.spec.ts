@@ -41,10 +41,9 @@ import { test, expect } from "../helpers/test";
 import { E2E_MARKER, removeLeftovers, removeRecord } from "../helpers/records";
 import { openFromSidebar } from "../helpers/sidebar";
 import { expectFixedFieldsHold, expectStableColumns, expectStableWidths, expectUnitGrid, photograph } from "../helpers/field-widths";
-import { closeTiles, openTiles, pressTileButton, TILE_GROUP, tileBox } from "../helpers/tiles";
+import { closeTiles, openTiles, pressTileButton, TILE_GROUP, tileBox, editTile, saveTile } from "../helpers/tiles";
 import { ADDRESS, JUDICIAL_PERSON, UNIT_GAP_REM, UNIT_REM } from "../../src/lib/ui/field-widths";
 import { listsOnTheirEarlierColumns } from "../helpers/list-columns";
-import { showEmptyFields } from "../helpers/empty-fields";
 
 /** Each FIXED box's widest value, by the name its box carries (Slice #37.13). */
 const SAMPLES: Record<string, string> = {};
@@ -153,6 +152,9 @@ test.describe("TC-PERS-02 — Persoană juridică creată și modificată", () =
       await expect(tiles.getByRole("button", { name: "Implicit", exact: true })).toBeVisible();
       await closeTiles(page);
       await expect(page.getByRole("tab")).toHaveCount(0);
+      // Slice 40.73: the firm reads as text; „Editează" opens „Date de înregistrare" for the CUI's note and the boxes below.
+      await expect(page.locator('[data-panel="identity"] [data-read-value="name"]')).toHaveText(NAME);
+      await editTile(page, "identity");
       // #37.57: the system ID is the identity panel heading's corner, not a field.
       await expect(page.locator('[data-panel="identity"] [data-system-id]')).toContainText(/JPERS\d+$/);
       await expect(
@@ -178,15 +180,21 @@ test.describe("TC-PERS-02 — Persoană juridică creată și modificată", () =
       if (viewport) await page.setViewportSize(viewport);
 
       // Step 10 — „Poreclă", „Salvează": STAYS on the company, „v 1", „2 versiuni".
-      // 40.71: the empty fields of a partly filled tile are behind „Arată N câmpuri goale"; shown for the steps below.
-      await showEmptyFields(page, "identity", { wait: true });
+      // 40.73: „Date de înregistrare" is open (every field drawn); its own „Salvează".
       const nickname = page.getByLabel(/^Poreclă/);
       await nickname.fill(`${MARK} editat`);
-      await page.getByRole("button", { name: "Salvează", exact: true }).click();
+      await saveTile(page, "identity");
       await expect(page.getByText("2 versiuni")).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText("v 1", { exact: true }).first()).toBeAttached();
       await expect(page).toHaveURL(new RegExp(`/judicial-persons/${companyId}$`));
-      await expect(nickname).toHaveValue(`${MARK} editat`);
+      await expect(page.locator('[data-panel="identity"] [data-read-value="nickname"]')).toHaveText(`${MARK} editat`);
+      // Step 10b (40.73) — „Editează" again, „Poreclă" changed, „Renunță": as saved, still „2 versiuni".
+      await editTile(page, "identity");
+      await page.getByLabel(/^Poreclă/).fill(`${MARK} renunțat`);
+      await page.locator('[data-tile-cancel="identity"]').click();
+      await expect(page.locator('[data-tile-edit-bar="identity"]')).toHaveCount(0);
+      await expect(page.locator('[data-panel="identity"] [data-read-value="nickname"]')).toHaveText(`${MARK} editat`);
+      await expect(page.getByText("2 versiuni")).toBeVisible();
 
       // Slice #37.18 — every tile at once („Toate"), its widths held, and its pictures; then „Implicit".
       await pressTileButton(page, "Toate");

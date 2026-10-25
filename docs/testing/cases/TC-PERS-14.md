@@ -43,6 +43,8 @@ Delete the juridical person.
 
 ## Notes from the runs
 
+**2026-10-25 — Slice 40.73.** The saved firm reads as text (step 5 reads „Tip" by its name); step 6 opens „Date de înregistrare" with „Editează" before „Completează din ANAF".
+
 **2026-10-17 — run 1, `driven` (Slice #39.64).** Claude, in the browser pane on localhost:3000, read with a script,
 against the live ANAF service (v9). Every step as written above; step 5's save went back to the list, and the record
 opened from it held the values. This file was written from it. One measurement on the way, kept in

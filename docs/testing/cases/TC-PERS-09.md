@@ -44,6 +44,8 @@ The window is 1366 × 900.
 
 ## Notes from the runs
 
+**2026-10-25 — Slice 40.73.** A saved firm reads as text: after the reload steps 4–6 read the phone and the e-mail as text (the green frame on v 1 included), and v 0, with both empty, is 40.64's one line.
+
 **2026-10-25 — Slice 40.64.** On a saved record a form tile with nothing in it is one line — its title, „necompletat" and
 „Adaugă". Where a step reads or fills a field in such a tile, the person presses „Adaugă" on it first; the spec does it
 through `openEmptyTile` / `openEmptyTiles` (e2e/helpers/tiles.ts). Not driven by hand first.

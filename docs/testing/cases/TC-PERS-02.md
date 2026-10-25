@@ -45,7 +45,8 @@ to be decided. No CUI, name or address is copied out of the archive.
 | 7 | Looks at the top of the list | A row badged **„Nou!"**, with a code beginning `JPERS`, „DENUMIRE" `TC-PERS-02 Firmă de test SRL`, „PORECLĂ" „—" |
 | 8 | Types `0000000002` into the list's search box | The row is still there — the search matches the CUI, which is what the placeholder's „ID" means. `0000000003` empties the list („Nu există persoane juridice") |
 | 9 | Replaces the search with `TC-PERS` and presses „Deschide" on the row | The company's own screen, headed `TC-PERS-02 Firmă de test SRL`, with **„v 0"** and the row of tiles (#37.18) — „Identitate" (#37.89; „Persoană juridică" before), „Reprezentanți și contact", „Adrese" and „Interacțiuni" (#37.89) ticked, „Legături" (#37.67: „Persoane corelate", „Proprietăți" and „Acte" in one), „Clasificare" and „Etichete și grupuri" not, „Toate", „Implicit" — **no „Persoane" tile**, unlike a property. the `JPERS…` code stands in the corner of „Persoană juridică" („ID sistem"), not in a field, and under the CUI the hint „CUI-ul nu poate fi modificat odată setat — ștergeți și creați din nou pentru a-l schimba" |
-| 10 | Types `TC-PERS-02 editat` into „Poreclă" and presses „Salvează" at the bottom | **The screen stays on the company**, unlike step 6. The header now reads **„v 1"** with the chip **„2 versiuni"**, and „Poreclă" holds `TC-PERS-02 editat` |
+| 10 | Types `TC-PERS-02 editat` into „Poreclă" and presses „Salvează" at the bottom (40.73: the open tile's „Salvează", under its fields) | **The screen stays on the company**, unlike step 6. The header now reads **„v 1"** with the chip **„2 versiuni"**, and „Poreclă" holds `TC-PERS-02 editat` |
+| 10b | (Slice 40.73) Presses „Editează" on „Date de înregistrare" again, changes „Poreclă", presses „Renunță" | The tile reads as text again with the saved „Poreclă"; still „2 versiuni" |
 
 ## At the end — leaving things as they were found
 
@@ -55,6 +56,10 @@ the dialog „Ștergeți persoana juridică?" with **„Da"**. The list comes ba
 persoane juridice". A company still linked to a property must be dissociated first.
 
 ## Notes from the runs
+
+**2026-10-25 — Slice 40.73; step 10b added.** A saved firm reads as text. Step 9 opens „Date de înregistrare" with
+„Editează" for the CUI's note and the boxes it measures; step 10 saves with the tile's „Salvează"; step 10b puts a
+change back with „Renunță". The spec follows; not driven by hand first.
 
 **2026-10-25 — Slice 40.66.** The lists open on four default columns (TC-LAYOUT-03). This case's steps read the lists
 as they opened before — Proprietăți on Tip proprietate, the other three on their fixed columns — so its spec stores

@@ -12,7 +12,7 @@
 
 import { test, expect, type Locator } from "../helpers/test";
 import { E2E_MARKER, createCompany, removeLeftovers, removeRecord } from "../helpers/records";
-import { openEmptyTile, showTile } from "../helpers/tiles";
+import { openEmptyTile, showTile, emptyTileLine } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}PERS-09`;
 const NAME = `${MARK} SRL`;
@@ -58,23 +58,24 @@ test.describe("TC-PERS-09 — O firmă cu telefonul și e-mailul ei, păstrate d
       await expect(page.getByText("2 versiuni")).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText("v 1", { exact: true }).first()).toBeAttached();
 
-      // Step 4 — after a reload, both are there.
+      // Step 4 — after a reload, both are there (40.73: read as text).
       await page.reload();
       const after = await showTile(page, "Reprezentanți și contact");
-      await expect(after.locator('[data-width-field="phone"]')).toHaveValue(PHONE, { timeout: 30_000 });
-      await expect(after.locator('[data-width-field="email"]')).toHaveValue(EMAIL);
+      await expect(after.locator('[data-width-field="phone"]')).toHaveText(PHONE, { timeout: 30_000 });
+      await expect(after.locator('[data-width-field="email"]')).toHaveText(EMAIL);
 
       // Step 5 — „Versiunea anterioară": „v 0", both empty.
       await page.getByRole("button", { name: "Versiunea anterioară", exact: true })
         .or(page.getByRole("button", { name: /^\d+ versiuni$/ })).first().click();
       await expect(page.getByText("v 0", { exact: true }).first()).toBeVisible({ timeout: 30_000 });
-      await expect(after.locator('[data-width-field="phone"]')).toHaveValue("");
-      await expect(after.locator('[data-width-field="email"]')).toHaveValue("");
+      // 40.73: read as text, and empty — so the tile is 40.64's one line.
+      await expect(emptyTileLine(page, "contactPersons")).toBeVisible();
+      await expect(after.locator('[data-width-field="phone"]')).toBeHidden();
 
       // Step 6 — „Versiunea următoare": „v 1", both filled and framed in green.
       await page.getByRole("button", { name: "Versiunea următoare" }).click();
       await expect(page.getByText("v 1", { exact: true }).first()).toBeVisible({ timeout: 30_000 });
-      await expect(after.locator('[data-width-field="phone"]')).toHaveValue(PHONE);
+      await expect(after.locator('[data-width-field="phone"]')).toHaveText(PHONE);
       await expect(after.locator('[data-width-field="phone"]')).toHaveClass(GREEN);
       await expect(after.locator('[data-width-field="email"]')).toHaveClass(GREEN);
     } finally {

@@ -15,6 +15,7 @@
 
 import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, removeLeftovers, removeRecord } from "../helpers/records";
+import { editTile } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}PERS-14`;
 const NAME = `${MARK} Dedeman`;
@@ -115,13 +116,17 @@ test.describe("TC-PERS-14 — „Completează din ANAF”", () => {
       expect(found.items).toHaveLength(1);
       id = found.items[0].id;
       await page.goto(`/judicial-persons/${id}`);
-      await expect(box("name")).toHaveValue(NAME, { timeout: 30_000 });
-      await expect(box("cuiNumber")).toHaveValue("RO 2816464");
-      await expect(box("phone")).toHaveValue("0234513330");
-      await expect(box("judicialPersonTypeId")).toHaveValue(srl!.id);
-      for (const [k, v] of Object.entries(DEDEMAN.address)) await expect(box(`addresses.HEADQUARTERS.${k}`)).toHaveValue(v);
+      // Slice 40.73: the saved firm reads as text — the type by its name.
+      const read = (name: string) => main.locator(`[data-read-value="${name}"]`);
+      await expect(read("name")).toHaveText(NAME, { timeout: 30_000 });
+      await expect(read("cuiNumber")).toHaveText("RO 2816464");
+      await expect(read("phone")).toHaveText("0234513330");
+      await expect(read("judicialPersonTypeId")).toHaveText(srl!.name);
+      for (const [k, v] of Object.entries(DEDEMAN.address)) await expect(read(`addresses.HEADQUARTERS.${k}`)).toHaveText(v);
 
-      // Step 6 — again: only Denumire, not ticked; „Preia bifele" disabled; ✕ closes it.
+      // Step 6 — again: only Denumire, not ticked; „Preia bifele" disabled; ✕ closes it. (40.73: „Completează din ANAF"
+      // is in „Date de înregistrare" while it is open.)
+      await editTile(page, "identity");
       await button.click();
       await expect(rows).toHaveCount(1);
       await expect(rows.first().locator("td").first()).toHaveText("Denumire");
