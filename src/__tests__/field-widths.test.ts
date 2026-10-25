@@ -537,7 +537,7 @@ describe("the Judicial Person: labels above, rows by meaning, every tile on the 
   it("no label is left beside a box, the checkbox is the registered address's last line, and the loose panel is gone", () => {
     expect(JP_FORM).not.toMatch(/LABEL_STYLE/);
     expect(panels).not.toMatch(/data-panel="correspondence"/);
-    expect(panels).toMatch(/prefix="addresses\.HEADQUARTERS"[\s\S]*?footer=\{\s*<Controller[\s\S]*?name="correspondenceSameAsHq"/);
+    expect(panels).toMatch(/prefix="addresses\.HEADQUARTERS"[\s\S]*?footer=\{reading\("addresses"\) \? undefined : \(\s*<Controller[\s\S]*?name="correspondenceSameAsHq"/ /* 40.73: drawn while the tile is open */);
   });
 
   it("the company's list tiles are the Natural Person's, at the same units (rule 17), META INFO's two halves among them", () => {

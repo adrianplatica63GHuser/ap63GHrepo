@@ -169,7 +169,10 @@ export function DocumentDetailTiles({
       {/* The header #26.12 settled (see its note in git history): the version
           strip is IN FLOW at the end of the row, so the title yields to it
           rather than running underneath. */}
-      <header className="relative flex min-h-[2.5rem] flex-wrap items-center gap-x-4 gap-y-2" data-record-header="">
+      {/* 40.69 wraps the row on a narrow window; from lg up it does not, so a long name truncates with „…" and
+          „Neprocesat" and the versions stay on its line (TC-ICON-07 step 5) — the wrap measured the name whole and
+          sent the pill under it at 1366 px too. */}
+      <header className="relative flex min-h-[2.5rem] flex-wrap items-center gap-x-4 gap-y-2 lg:flex-nowrap" data-record-header="">
         <RecordHeading
           icon={ENTITY_ICON.document}
           name={documentName}
