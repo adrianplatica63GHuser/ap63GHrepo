@@ -1158,6 +1158,10 @@
         "sameAsHq": "aceeași cu sediul social",
         "noIdDocument": "niciun act înregistrat"
       }
+    },
+    "emptyFields": {
+      "show": "{count, plural, one {Arată un câmp gol} few {Arată # câmpuri goale} other {Arată # de câmpuri goale}}",
+      "all": "Câmpuri goale: {names}"
     }
   },
   "naturalPerson": {

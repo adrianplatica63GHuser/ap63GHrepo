@@ -42,6 +42,7 @@ import { STACKED_FIELD_CLASS, STACKED_LABEL_CLASS, STACKED_ROW_CLASS } from "@/l
 import { EMPTY_MARK, FIELD_BOX, fieldBorder } from "@/lib/ui/field-box";
 import { TileTitle } from "@/components/tiles/tile-title";
 import { EmptyTileLine, type EmptyTileState } from "@/components/tiles/empty-tile";
+import { hiddenFieldStyle, useFieldHidden } from "@/components/tiles/empty-fields";
 
 /** Per-subfield version-diff highlight frames (Slice #18.05). Keys match the
  *  address subfield names; omitted = no frame. */
@@ -104,6 +105,11 @@ type Props<TFormValues extends FieldValues> = {
    * (`onAdd`, absent on a read-only view). The fields stay mounted behind it, hidden.
    */
   collapsed?: { tile: string; onAdd?: () => void };
+  /**
+   * Slice 40.71: „Arată N câmpuri goale" — the link at the panel's foot when some of its fields are empty and hidden
+   * (src/components/tiles/empty-fields.tsx). The fields read their own hiding from `HiddenFieldsContext`.
+   */
+  emptyFields?: ReactNode;
 };
 
 export function AddressBlock<TFormValues extends FieldValues>({
@@ -116,6 +122,7 @@ export function AddressBlock<TFormValues extends FieldValues>({
   highlights,
   footer,
   collapsed,
+  emptyFields,
 }: Props<TFormValues>) {
   const t = useTranslations("address");
   const f = (sub: string) => `${prefix}.${sub}` as FieldPath<TFormValues>;
@@ -165,6 +172,7 @@ export function AddressBlock<TFormValues extends FieldValues>({
             ))}
           </div>
         ))}
+        {emptyFields}
         {footer && <div className="pt-1" data-address-footer>{footer}</div>}
       </div>
       </div>
@@ -221,6 +229,7 @@ function Field<TFormValues extends FieldValues>({
   /** The panel's inner width, for the box that `fill`s it (Note). */
   fillRem: number;
 }) {
+  const hiddenEmpty = useFieldHidden(name); // Slice 40.71: behind its tile's „Arată N câmpuri goale"
   // Static ring on a historical version; animated pulse on the freshly-
   // navigated-to latest (Bug 1). The pulsing flag comes from FieldPulseContext,
   // which the versioned person form provides; defaults to a static ring
@@ -234,7 +243,7 @@ function Field<TFormValues extends FieldValues>({
   const grows = width.kind === "grows" || width.kind === "lines";
   const box = stackedBoxStyle(width, width.fill ? fillRem : boxRem(width));
   return (
-    <label className={STACKED_FIELD_CLASS} style={box}>
+    <label className={STACKED_FIELD_CLASS} style={hiddenFieldStyle(hiddenEmpty, box)} data-empty-hidden={hiddenEmpty || undefined}>
       <span className={STACKED_LABEL_CLASS}>
         {label}
         {warn && <span className="ml-1 text-amber-600 dark:text-amber-400" data-low-confidence>⚠</span>}

@@ -1012,6 +1012,19 @@ export function unitRowStyle(screen: Screen): CSSProperties {
   };
 }
 
+/**
+ * Slice 40.71: the fields drawn even when empty, beside the widths that size them — on a saved record the other empty
+ * fields of a tile that holds some values hide behind „Arată N câmpuri goale" (src/lib/ui/empty-fields.ts). These are
+ * the ones whose absence is itself information: a person's names and CNP, a firm's name and CUI, where a property is,
+ * and what a document is, when it was made and its number.
+ */
+export const ALWAYS_SHOWN_FIELDS = {
+  naturalPerson: ["lastName", "firstName", "cnp"],
+  judicialPerson: ["name", "cuiNumber"],
+  property: ["propertyTypeId", "address.locality", "tarlaId", "parcela"],
+  document: ["documentTypeId", "title", "dateDocument", "nrDocument"],
+} as const satisfies Record<string, readonly string[]>;
+
 // The Natural Person's entry of each, by the names #37.26–27 gave them.
 export const NP_ROWS = SCREEN_ROWS.naturalPerson;
 export const NP_PANEL_UNITS = PANEL_UNITS.naturalPerson;

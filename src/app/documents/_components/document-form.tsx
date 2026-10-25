@@ -75,7 +75,7 @@ import { ErrorBoundary, PanelError } from "@/components/error-boundary";
 import { inferProvenance } from "@/lib/metadata/provenance-rules";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { GrowingText } from "@/components/forms/growing-text";
-import {
+import { ALWAYS_SHOWN_FIELDS,
   DOCUMENT as DOC,
   PAGES_PANEL_STYLE,
   PANEL_GAP,
@@ -100,6 +100,7 @@ import { panelSubtitle } from "@/lib/ui/panel-subtitle";
 import { hasPartiesTile } from "@/lib/documents/sale-parties";
 import { TileTitle } from "@/components/tiles/tile-title";
 import { EmptyTileLine, useEmptyTiles } from "@/components/tiles/empty-tile";
+import { EmptyFieldsLink, HiddenFieldsContext, hiddenFieldStyle, useEmptyFields, useFieldHidden } from "@/components/tiles/empty-fields";
 import { tileIsEmpty, valueAt } from "@/lib/ui/empty-tile";
 import { tileOfTabIndex, type DocumentLayout } from "./document-tiles";
 import { RecordSyncNotice, useRecordSaveSync } from "@/components/record-save-sync";
@@ -975,6 +976,15 @@ export function DocumentForm({
   const parentDeed = useParentDeed(amendedGroup ? documentId : undefined);
   // Slice 40.64: which empty frames „Adaugă" has opened this visit (`frameBlock` below).
   const emptyTiles = useEmptyTiles({ active: !isCreate, canAdd: effectiveMode === "edit" });
+  // Slice 40.71: in a tile that holds some values, the empty fields hide behind „Arată N câmpuri goale" — as on the
+  // Natural Person (natural-person-form.tsx). Here the tiles are „Identificarea actului" and the type's own frames.
+  const emptyFields = useEmptyFields({
+    active: !isCreate,
+    loaded: formState.defaultValues,
+    now: watchedValues,
+    defaults: emptyFormValues,
+    always: ALWAYS_SHOWN_FIELDS.document,
+  });
   const otherGroups = customFieldGroups.filter(
     (g) => g !== feesGroup && g !== financialGroup && g !== certificatesGroup && g !== identificationGroup && g !== amendedGroup,
   );
@@ -1083,6 +1093,44 @@ export function DocumentForm({
       paths.some((path) => !!valueAt(errors, path) || !!(displayHighlights as Record<string, unknown> | null)?.[path]),
     );
   };
+  // Slice 40.71: each tile's field paths in the order they are drawn — „Identificarea actului" its own fields and the
+  // type's identification group, a frame its custom fields — and what hides in each.
+  const generalFieldPaths: readonly string[] = [
+    "documentTypeId",
+    "issuerPersonId",
+    "nrDocument",
+    "dateDocument",
+    ...(identificationGroup?.fields ?? []).map((f) => `customFields.${f.key}`),
+    "title",
+    "subject",
+    "notes",
+  ];
+  const customLabel = new Map(customFieldGroups.flatMap((g) => g.fields).map((f) => [`customFields.${f.key}`, f.labelRo || f.labelEn || f.key]));
+  const fixedLabel: Readonly<Record<string, string>> = {
+    documentTypeId: t("fields.type"),
+    issuerPersonId: t(cfg.labels.institution),
+    nrDocument: t(cfg.labels.nrDocument),
+    dateDocument: t(cfg.labels.dateDocument),
+    title: t("fields.title"),
+    subject: t("fields.subject"),
+    notes: t("fields.notes"),
+  };
+  const docMarked = (path: string): boolean =>
+    !!valueAt(errors, path) || !!(displayHighlights as Record<string, unknown> | null)?.[path];
+  const docTilePaths = new Map<string, readonly string[]>([["general", generalFieldPaths]]);
+  for (const path of customLabel.keys()) {
+    const tile = tileOfPath(path);
+    if (tile !== "general" && !docTilePaths.has(tile)) docTilePaths.set(tile, frameFieldPaths(tile));
+  }
+  const docHidden = new Map([...docTilePaths].map(([tile, paths]) => [tile, emptyFields.hide(tile, paths, paths.some(docMarked))]));
+  const hiddenFields: ReadonlySet<string> = new Set([...docHidden.values()].flat());
+  const emptyFieldsLink = (tile: string) => (
+    <EmptyFieldsLink
+      tile={tile}
+      labels={(docHidden.get(tile) ?? []).map((p) => fixedLabel[p] ?? customLabel.get(p) ?? p)}
+      onShow={() => emptyFields.show(tile)}
+    />
+  );
   const frameBlock = (tile: string, title: string, children: React.ReactNode, subtitle?: string) => {
     const folded = frameFolded(tile);
     return (
@@ -1102,7 +1150,10 @@ export function DocumentForm({
         <div className={folded ? "hidden" : "contents"}>
           <TileTitle title={title} subtitle={subtitle} />
           <FrameContext.Provider value={true}>
-            <div className="flex flex-col gap-4">{children}</div>
+            <div className="flex flex-col gap-4">
+              {children}
+              {emptyFieldsLink(tile)}
+            </div>
           </FrameContext.Provider>
         </div>
       </section>
@@ -1487,6 +1538,7 @@ export function DocumentForm({
           width={DOC.notes}
           fillRem={unitsInnerRem(generalUnits)}
         />
+        {emptyFieldsLink("general")}
       </Section>
   );
 
@@ -1680,6 +1732,7 @@ export function DocumentForm({
 
   return (
     <FieldPulseContext.Provider value={pulsing}>
+    <HiddenFieldsContext.Provider value={hiddenFields}>
     {/* Slice #37.15: THE WINDOW DECIDES HOW MANY PANELS FIT, NEVER HOW WIDE
         ANYTHING IS. This column is snapped to whole panels — and, once there
         are pages, to whole panels plus the page panel — so the action bar at
@@ -1987,6 +2040,7 @@ export function DocumentForm({
       />
     )}
     </div>
+    </HiddenFieldsContext.Provider>
     </FieldPulseContext.Provider>
   );
 }
@@ -2104,6 +2158,7 @@ function Field({
   fillRem,
   maxLength,
 }: FieldProps & { maxLength?: number }) {
+  const hiddenEmpty = useFieldHidden(name); // Slice 40.71: behind its tile's „Arată N câmpuri goale"
   const ring = usePulseRing(highlight);
   const className = [
     FIELD_BOX,
@@ -2115,7 +2170,7 @@ function Field({
   // the panel, for a box that fills it — and a long label wraps inside it.
   const box = stackedBoxStyle(fillRem !== undefined ? { ...width, fill: true } : width, fillRem ?? boxRem(width));
   return (
-    <label className={STACKED_FIELD_CLASS} style={box}>
+    <label className={STACKED_FIELD_CLASS} style={hiddenFieldStyle(hiddenEmpty, box)} data-empty-hidden={hiddenEmpty || undefined}>
       <span className={STACKED_LABEL_CLASS}>{label}</span>
       {grows ? (
         <GrowingText
@@ -2192,6 +2247,7 @@ function SelectField({
    */
   hint?: React.ReactNode;
 }) {
+  const hiddenEmpty = useFieldHidden(name); // Slice 40.71: behind its tile's „Arată N câmpuri goale"
   const ring = usePulseRing(highlight);
   // Slice #27.02: an explicit id, and a <label htmlFor> instead of a <label>
   // wrapping the whole field. Two things a review round caught, both fixed by
@@ -2216,7 +2272,7 @@ function SelectField({
     // Slice #37.15 made it unconditional, with the label's pt-1 — the line
     // every Field on this form now keeps, since any of them may grow.
     // Slice #37.31: the label above the box, the pair as wide as the box.
-    <div className={STACKED_FIELD_CLASS} style={boxStyle(width)}>
+    <div className={STACKED_FIELD_CLASS} style={hiddenFieldStyle(hiddenEmpty, boxStyle(width))} data-empty-hidden={hiddenEmpty || undefined}>
       <label
         htmlFor={fieldId}
         className={STACKED_LABEL_CLASS}

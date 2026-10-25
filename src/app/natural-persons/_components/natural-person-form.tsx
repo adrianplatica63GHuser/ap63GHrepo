@@ -21,7 +21,7 @@ import {
 } from "react-hook-form";
 import { AsyncSelect } from "@/components/forms/async-select";
 import { GrowingText } from "@/components/forms/growing-text";
-import {
+import { ALWAYS_SHOWN_FIELDS,
   NATURAL_PERSON as NP,
   NP_PANEL_INNER_REM,
   NP_PANEL_STYLE,
@@ -81,6 +81,7 @@ import { personAgeText } from "@/lib/persons/person-age";
 import { ParentsFold } from "@/components/persons/parents-fold";
 import { TileTitle } from "@/components/tiles/tile-title";
 import { EmptyTileLine, useEmptyTiles } from "@/components/tiles/empty-tile";
+import { EmptyFieldsLink, HiddenFieldsContext, hiddenFieldStyle, useEmptyFields, useFieldHidden } from "@/components/tiles/empty-fields";
 import { tileIsEmpty, valueAt } from "@/lib/ui/empty-tile";
 import { ParentsResolution } from "@/components/persons/parents-resolution";
 import {
@@ -169,6 +170,22 @@ const NP_EMPTY_TILE_FIELDS: Record<NpEmptyTile, readonly string[]> = {
   home: ADDRESS_PARTS.map((part) => `addresses.HOME.${part}`),
   correspondence: ADDRESS_PARTS.map((part) => `addresses.CORRESPONDENCE.${part}`),
 };
+
+/**
+ * Slice 40.71: the fields of each form tile, in the order they are drawn, for „Arată N câmpuri goale"
+ * (src/components/tiles/empty-fields.tsx). „Vârstă" follows „Data nașterii"; „Relația cu firma" and the ID card's link
+ * are not fields and always show.
+ */
+type NpFieldTile = "identity" | "idCard" | "contact" | "home" | "correspondence";
+const NP_FIELD_TILES: Record<NpFieldTile, readonly string[]> = {
+  identity: ["lastName", "firstName", "nickname", "cnp", "dateOfBirth", "gender", "isDeceased", "dateOfDeath", "placeOfBirth", "physicalPersonTypeId", "notes"],
+  idCard: NP_EMPTY_TILE_FIELDS.idCard,
+  contact: NP_EMPTY_TILE_FIELDS.contact,
+  home: NP_EMPTY_TILE_FIELDS.home,
+  correspondence: NP_EMPTY_TILE_FIELDS.correspondence,
+};
+/** A field's label key where it is not `fields.<name>`. */
+const NP_LABEL_KEY: Readonly<Record<string, string>> = { citizenshipId: "citizenship" };
 
 export function NaturalPersonForm({
   mode,
@@ -718,6 +735,25 @@ export function NaturalPersonForm({
     );
   const addTo = (tile: NpEmptyTile, panel: string) =>
     emptyTiles.canAdd ? () => emptyTiles.open(tile, `[data-panel="${panel}"]`) : undefined;
+  // Slice 40.71: in a tile that holds some values, the empty fields hide behind „Arată N câmpuri goale" — not on a new
+  // record, not in a tile a version marks or a field in error is in, and not once the link was pressed.
+  const emptyFields = useEmptyFields({
+    active: !isCreate,
+    loaded: formState.defaultValues,
+    now: watchedValues,
+    defaults: emptyFormValues,
+    always: ALWAYS_SHOWN_FIELDS.naturalPerson,
+  });
+  const tAddress = useTranslations("address");
+  const npHidden = Object.fromEntries(
+    (Object.keys(NP_FIELD_TILES) as NpFieldTile[]).map((tile) => [tile, emptyFields.hide(tile, NP_FIELD_TILES[tile], NP_FIELD_TILES[tile].some(marked))]),
+  ) as Record<NpFieldTile, string[]>;
+  const hiddenFields: ReadonlySet<string> = new Set(Object.values(npHidden).flat());
+  const fieldLabel = (path: string): string =>
+    path.startsWith("addresses.") ? tAddress(path.split(".")[2]) : t(`fields.${NP_LABEL_KEY[path] ?? path}`);
+  const emptyFieldsLink = (tile: NpFieldTile) => (
+    <EmptyFieldsLink tile={tile} labels={npHidden[tile].map(fieldLabel)} onShow={() => emptyFields.show(tile)} />
+  );
   const idCardFolded = folded("idCard", !!linkedIdCard);
   const contactFolded = folded("contact");
   const homeFolded = folded("home");
@@ -749,6 +785,7 @@ export function NaturalPersonForm({
 
   return (
     <FieldPulseContext.Provider value={pulsing}>
+    <HiddenFieldsContext.Provider value={hiddenFields}>
     <form
       onSubmit={form.handleSubmit(onSubmit, onInvalid)}
       // Slice #37.12: as wide as the panels, so the action bar below them is
@@ -867,6 +904,7 @@ export function NaturalPersonForm({
               value={calculatedAge ?? "—"}
               width={NP.age}
               field="age"
+              hiddenWith="dateOfBirth"
             />
             <SelectField
               label={t("fields.gender")}
@@ -949,6 +987,7 @@ export function NaturalPersonForm({
             width={NP.notes}
             fillRem={NP_PANEL_INNER_REM.identity}
           />
+          {emptyFieldsLink("identity")}
         </div>
       </section>
 
@@ -1093,6 +1132,7 @@ export function NaturalPersonForm({
               )}
             </div>
           )}
+          {emptyFieldsLink("idCard")}
         </div>
         </div>
       </section>
@@ -1154,6 +1194,7 @@ export function NaturalPersonForm({
             highlight={displayHighlights?.fields.workEmail}
             width={NP.workEmail}
           />
+          {emptyFieldsLink("contact")}
         </div>
         </div>
       </section>
@@ -1171,6 +1212,7 @@ export function NaturalPersonForm({
         errors={errors.addresses?.HOME}
         highlights={displayHighlights?.addresses.HOME}
         collapsed={homeFolded ? { tile: "home", onAdd: addTo("home", "addresses.HOME") } : undefined}
+        emptyFields={emptyFieldsLink("home")}
         footer={
             <Controller
               control={form.control}
@@ -1236,6 +1278,7 @@ export function NaturalPersonForm({
           errors={errors.addresses?.CORRESPONDENCE}
           highlights={displayHighlights?.addresses.CORRESPONDENCE}
           collapsed={correspondenceFolded ? { tile: "correspondence", onAdd: addTo("correspondence", "addresses.CORRESPONDENCE") } : undefined}
+          emptyFields={emptyFieldsLink("correspondence")}
         />
       )}
       </div>{/* end „Adrese" tile */}
@@ -1433,6 +1476,7 @@ export function NaturalPersonForm({
         busy={false}
       />
     )}
+    </HiddenFieldsContext.Provider>
     </FieldPulseContext.Provider>
   );
 }
@@ -1487,6 +1531,7 @@ type FieldProps = {
 
 
 function Field({ label, name, type = "text", register, error, bubble, highlight, expired, expiringSoon, width, mono, fillRem, disabled }: FieldProps) {
+  const hiddenEmpty = useFieldHidden(name); // Slice 40.71: behind its tile's „Arată N câmpuri goale"
   const ring = usePulseRing(highlight);
   const className = [
     FIELD_BOX,
@@ -1533,7 +1578,7 @@ function Field({ label, name, type = "text", register, error, bubble, highlight,
     />
   );
   return (
-    <label className={STACKED_FIELD_CLASS} style={box}>
+    <label className={STACKED_FIELD_CLASS} style={hiddenFieldStyle(hiddenEmpty, box)} data-empty-hidden={hiddenEmpty || undefined}>
       <span id={labelId} className={STACKED_LABEL_CLASS}>{label}</span>
       {bubble ? (
         <HintBubble id={bubbleId} text={bubble}>
@@ -1631,6 +1676,7 @@ function SelectField({
    */
   snapshot?: SnapshotLookupState;
 }) {
+  const hiddenEmpty = useFieldHidden(name); // Slice 40.71: behind its tile's „Arată N câmpuri goale"
   // ⚠️ **`tSnapshot`, NOT a second `tShared`, AND `record-list-agreement.test.ts`
   // IS WHY.** This file's component-scope `tShared` binds
   // `shared.readonlyView`; that suite reads the FIRST `const tShared =
@@ -1666,7 +1712,7 @@ function SelectField({
     // read leaves this field in `pending`, which takes the picker branch below.
     const labelId = `${name}-version-label`;
     return (
-      <div className={STACKED_FIELD_CLASS} style={box} role="group" aria-labelledby={labelId}>
+      <div className={STACKED_FIELD_CLASS} style={hiddenFieldStyle(hiddenEmpty, box)} data-empty-hidden={hiddenEmpty || undefined} role="group" aria-labelledby={labelId}>
         <span id={labelId} className={STACKED_LABEL_CLASS}>{label}</span>
         <div className="flex flex-col gap-0.5" style={box} data-width-field={name} data-width-kind={width.kind}>
           <SnapshotValue
@@ -1680,7 +1726,7 @@ function SelectField({
   }
 
   return (
-    <label className={STACKED_FIELD_CLASS} style={box}>
+    <label className={STACKED_FIELD_CLASS} style={hiddenFieldStyle(hiddenEmpty, box)} data-empty-hidden={hiddenEmpty || undefined}>
       <span className={STACKED_LABEL_CLASS}>{label}</span>
       <div className="flex flex-col gap-0.5" style={box}>
         {/* Slice #32.13: this select had no remount key at all, so a stored
@@ -1740,6 +1786,7 @@ function CheckField({
   width: FieldWidth;
   onTurnOff: () => void;
 }) {
+  const hiddenEmpty = useFieldHidden(name); // Slice 40.71: behind its tile's „Arată N câmpuri goale"
   const ring = usePulseRing(highlight);
   const box = boxStyle(width);
   return (
@@ -1747,7 +1794,7 @@ function CheckField({
       control={control}
       name={name}
       render={({ field }) => (
-        <label className={STACKED_FIELD_CLASS} style={box}>
+        <label className={STACKED_FIELD_CLASS} style={hiddenFieldStyle(hiddenEmpty, box)} data-empty-hidden={hiddenEmpty || undefined}>
           <span className={STACKED_LABEL_CLASS}>{label}</span>
           <span className={`flex h-[1.875rem] items-center rounded-md ${ring}`} style={box} data-width-field={name} data-width-kind={width.kind}>
             <input
@@ -1768,9 +1815,11 @@ function CheckField({
   );
 }
 
-function ReadOnlyField({ label, value, width, field }: { label: string; value: string; width: FieldWidth; field: string }) {
+function ReadOnlyField({ label, value, width, field, hiddenWith }: { label: string; value: string; width: FieldWidth; field: string; hiddenWith?: string }) {
+  // Slice 40.71: „Vârstă" hides with „Data nașterii", the date it is worked out from.
+  const hiddenEmpty = useFieldHidden(hiddenWith ?? "");
   return (
-    <div className={STACKED_FIELD_CLASS} style={boxStyle(width)}>
+    <div className={STACKED_FIELD_CLASS} style={hiddenFieldStyle(hiddenEmpty, boxStyle(width))} data-empty-hidden={hiddenEmpty || undefined}>
       <span className={STACKED_LABEL_CLASS}>{label}</span>
       <div
         className={FIELD_READONLY}

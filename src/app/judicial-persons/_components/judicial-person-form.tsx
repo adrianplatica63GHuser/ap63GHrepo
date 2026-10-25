@@ -20,7 +20,7 @@ import {
 import { AsyncSelect } from "@/components/forms/async-select";
 import { AddressBlock, AddressLine } from "@/components/address/address-block";
 import { GrowingText } from "@/components/forms/growing-text";
-import {
+import { ALWAYS_SHOWN_FIELDS,
   JUDICIAL_PERSON as JP,
   PANEL_GAP,
   PANEL_UNIT_INNER_REM,
@@ -77,6 +77,7 @@ import { firstErrorPath } from "@/lib/ui/tiles";
 import { RecordSyncNotice, useRecordSaveSync } from "@/components/record-save-sync";
 import { TileTitle } from "@/components/tiles/tile-title";
 import { EmptyTileLine, useEmptyTiles } from "@/components/tiles/empty-tile";
+import { EmptyFieldsLink, HiddenFieldsContext, hiddenFieldStyle, useEmptyFields, useFieldHidden } from "@/components/tiles/empty-fields";
 import { tileIsEmpty, valueAt } from "@/lib/ui/empty-tile";
 import { DeceasedMark } from "@/components/persons/deceased-mark";
 
@@ -172,6 +173,22 @@ const JP_EMPTY_TILE_FIELDS: Record<JpEmptyTile, readonly string[]> = {
   headquarters: ADDRESS_PARTS.map((part) => `addresses.HEADQUARTERS.${part}`),
   correspondence: ADDRESS_PARTS.map((part) => `addresses.CORRESPONDENCE.${part}`),
 };
+
+/**
+ * Slice 40.71: the fields of each form tile, in the order they are drawn, for „Arată N câmpuri goale"
+ * (src/components/tiles/empty-fields.tsx). The two contact-person rows have their own „Adaugă" and always show; they
+ * count towards the tile holding a value.
+ */
+type JpFieldTile = "identity" | "contactPersons" | "headquarters" | "correspondence";
+const JP_FIELD_TILES: Record<JpFieldTile, readonly string[]> = {
+  identity: ["name", "nickname", "judicialPersonTypeId", "cuiNumber", "tradeRegisterNumber", "notes"],
+  contactPersons: JP_EMPTY_TILE_FIELDS.contactPersons,
+  headquarters: JP_EMPTY_TILE_FIELDS.headquarters,
+  correspondence: JP_EMPTY_TILE_FIELDS.correspondence,
+};
+const JP_ALWAYS_SHOWN: readonly string[] = [...ALWAYS_SHOWN_FIELDS.judicialPerson, "contactPerson1Id", "contactPerson2Id"];
+/** A field's label key where it is not `fields.<name>`. */
+const JP_LABEL_KEY: Readonly<Record<string, string>> = { judicialPersonTypeId: "judicialType" };
 
 export function JudicialPersonForm({
   mode,
@@ -634,6 +651,25 @@ export function JudicialPersonForm({
     );
   const addTo = (tile: JpEmptyTile, panel: string) =>
     emptyTiles.canAdd ? () => emptyTiles.open(tile, `[data-panel="${panel}"]`) : undefined;
+  // Slice 40.71: in a tile that holds some values, the empty fields hide behind „Arată N câmpuri goale" — as on the
+  // Natural Person (natural-person-form.tsx).
+  const emptyFields = useEmptyFields({
+    active: !isCreate,
+    loaded: formState.defaultValues,
+    now: watchedValues,
+    defaults: emptyFormValues,
+    always: JP_ALWAYS_SHOWN,
+  });
+  const tAddress = useTranslations("address");
+  const jpHidden = Object.fromEntries(
+    (Object.keys(JP_FIELD_TILES) as JpFieldTile[]).map((tile) => [tile, emptyFields.hide(tile, JP_FIELD_TILES[tile], JP_FIELD_TILES[tile].some(marked))]),
+  ) as Record<JpFieldTile, string[]>;
+  const hiddenFields: ReadonlySet<string> = new Set(Object.values(jpHidden).flat());
+  const fieldLabel = (path: string): string =>
+    path.startsWith("addresses.") ? tAddress(path.split(".")[2]) : t(`fields.${JP_LABEL_KEY[path] ?? path}`);
+  const emptyFieldsLink = (tile: JpFieldTile) => (
+    <EmptyFieldsLink tile={tile} labels={jpHidden[tile].map(fieldLabel)} onShow={() => emptyFields.show(tile)} />
+  );
   const contactPersonsFolded = folded("contactPersons");
   const headquartersFolded = folded("headquarters");
   const correspondenceFolded = folded("correspondence");
@@ -702,6 +738,7 @@ export function JudicialPersonForm({
 
   return (
     <FieldPulseContext.Provider value={pulsing}>
+    <HiddenFieldsContext.Provider value={hiddenFields}>
     <form
       onSubmit={form.handleSubmit(onSubmit, onInvalid)}
       // Slice #37.13: a whole number of panels wide, so the action bar below
@@ -833,6 +870,7 @@ export function JudicialPersonForm({
             width={JP.notes}
             fillRem={PANEL_UNIT_INNER_REM.judicialPerson.identity}
           />
+          {emptyFieldsLink("identity")}
         </div>
       </section>
 
@@ -887,6 +925,7 @@ export function JudicialPersonForm({
           <p className="text-xs text-fade dark:text-zinc-500 italic">
             {t("hints.contactPersonNotInSystem")}
           </p>
+          {emptyFieldsLink("contactPersons")}
         </div>
         </div>
       </section>
@@ -906,6 +945,7 @@ export function JudicialPersonForm({
         errors={errors.addresses?.HEADQUARTERS}
         highlights={displayHighlights?.addresses.HEADQUARTERS}
         collapsed={headquartersFolded ? { tile: "headquarters", onAdd: addTo("headquarters", "addresses.HEADQUARTERS") } : undefined}
+        emptyFields={emptyFieldsLink("headquarters")}
         footer={
           <Controller
             control={control}
@@ -979,6 +1019,7 @@ export function JudicialPersonForm({
           errors={errors.addresses?.CORRESPONDENCE}
           highlights={displayHighlights?.addresses.CORRESPONDENCE}
           collapsed={correspondenceFolded ? { tile: "correspondence", onAdd: addTo("correspondence", "addresses.CORRESPONDENCE") } : undefined}
+          emptyFields={emptyFieldsLink("correspondence")}
         />
       )}
       </div>{/* end „Adrese" tile */}
@@ -1168,6 +1209,7 @@ export function JudicialPersonForm({
       )}
       </div>{/* end the action bar's line */}
     </form>
+    </HiddenFieldsContext.Provider>
     </FieldPulseContext.Provider>
   );
 }
@@ -1506,6 +1548,7 @@ function Field({
   width,
   fillRem,
 }: FieldProps) {
+  const hiddenEmpty = useFieldHidden(name); // Slice 40.71: behind its tile's „Arată N câmpuri goale"
   const ring = usePulseRing(highlight);
   const className = [
     FIELD_BOX,
@@ -1552,7 +1595,7 @@ function Field({
     />
   );
   return (
-    <label className={STACKED_FIELD_CLASS} style={box}>
+    <label className={STACKED_FIELD_CLASS} style={hiddenFieldStyle(hiddenEmpty, box)} data-empty-hidden={hiddenEmpty || undefined}>
       <span id={labelId} className={STACKED_LABEL_CLASS}>{label}</span>
       {bubble ? (
         <HintBubble id={bubbleId} text={bubble}>
@@ -1603,6 +1646,7 @@ function SelectField({
    */
   snapshot?: SnapshotLookupState;
 }) {
+  const hiddenEmpty = useFieldHidden(name); // Slice 40.71: behind its tile's „Arată N câmpuri goale"
   // ⚠️ **`tSnapshot`, NOT a second `tShared`, AND `record-list-agreement.test.ts`
   // IS WHY.** This file's component-scope `tShared` binds
   // `shared.readonlyView`; that suite reads the FIRST `const tShared =
@@ -1634,7 +1678,7 @@ function SelectField({
     // nothing to a screen reader.
     const labelId = `${name}-version-label`;
     return (
-      <div className={STACKED_FIELD_CLASS} style={boxStyle(width)} role="group" aria-labelledby={labelId}>
+      <div className={STACKED_FIELD_CLASS} style={hiddenFieldStyle(hiddenEmpty, boxStyle(width))} data-empty-hidden={hiddenEmpty || undefined} role="group" aria-labelledby={labelId}>
         <span id={labelId} className={STACKED_LABEL_CLASS}>
           {label}
         </span>
@@ -1650,7 +1694,7 @@ function SelectField({
   }
 
   return (
-    <label className={STACKED_FIELD_CLASS} style={boxStyle(width)}>
+    <label className={STACKED_FIELD_CLASS} style={hiddenFieldStyle(hiddenEmpty, boxStyle(width))} data-empty-hidden={hiddenEmpty || undefined}>
       <span className={STACKED_LABEL_CLASS}>
         {label}
       </span>

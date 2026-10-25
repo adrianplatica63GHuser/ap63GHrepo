@@ -76,7 +76,7 @@ import { ErrorBoundary, PanelError } from "@/components/error-boundary";
 import { VersionNavControls } from "@/components/version-nav-controls";
 import { AsyncSelect } from "@/components/forms/async-select";
 import { GrowingText } from "@/components/forms/growing-text";
-import {
+import { ALWAYS_SHOWN_FIELDS,
   ADDRESS,
   MAP_BOX_HEIGHT_REM,
   MAP_BOX_STYLE,
@@ -110,6 +110,7 @@ import { firstErrorPath } from "@/lib/ui/tiles";
 import { RecordSyncNotice, useRecordSaveSync } from "@/components/record-save-sync";
 import { TileTitle } from "@/components/tiles/tile-title";
 import { EmptyTileLine, useEmptyTiles } from "@/components/tiles/empty-tile";
+import { EmptyFieldsLink, HiddenFieldsContext, hiddenFieldStyle, useEmptyFields, useFieldHidden } from "@/components/tiles/empty-fields";
 import { tileIsEmpty, valueAt } from "@/lib/ui/empty-tile";
 
 // ---------------------------------------------------------------------------
@@ -266,6 +267,19 @@ function parcelMatchesOf(err: unknown): ParcelMatch[] | null {
 const PROPERTY_ADDRESS_FIELDS = ["streetLine", "streetViewStreetLine", "postalCode", "locality", "county", "country", "notes"].map(
   (part) => `address.${part}`,
 );
+
+/**
+ * Slice 40.71: the fields of the two form tiles, in the order they are drawn, for „Arată N câmpuri goale"
+ * (src/components/tiles/empty-fields.tsx). The computed area and the Street View address are not form boxes of their
+ * own kind and always show.
+ */
+type PropFieldTile = "cadastral" | "address";
+const PROP_FIELD_TILES: Record<PropFieldTile, readonly string[]> = {
+  cadastral: ["tarlaId", "parcela", "nickname", "surfaceAreaMp", "carteFunciara", "cadastralNumber", "useCategoryId", "propertyTypeId", "notes"],
+  address: ["streetLine", "postalCode", "locality", "county", "country", "notes"].map((part) => `address.${part}`),
+};
+/** A field's label key where it is not `fields.<name>`. */
+const PROP_LABEL_KEY: Readonly<Record<string, string>> = { tarlaId: "tarlaSola", useCategoryId: "useCategory", propertyTypeId: "propertyType" };
 
 export function PropertyForm({
   mode,
@@ -1182,8 +1196,30 @@ export function PropertyForm({
     ),
   );
 
+  // Slice 40.71: in a tile that holds some values, the empty fields hide behind „Arată N câmpuri goale" — as on the
+  // Natural Person (natural-person-form.tsx).
+  const emptyFields = useEmptyFields({
+    active: !isCreate,
+    loaded: formState.defaultValues,
+    now: watchedValues,
+    defaults: emptyFormValues,
+    always: ALWAYS_SHOWN_FIELDS.property,
+  });
+  const propMarked = (path: string): boolean =>
+    !!valueAt(errors, path) ||
+    !!(path.startsWith("address.") ? valueAt(displayHighlights, path) : valueAt(displayHighlights?.property, path));
+  const propHidden = Object.fromEntries(
+    (Object.keys(PROP_FIELD_TILES) as PropFieldTile[]).map((tile) => [tile, emptyFields.hide(tile, PROP_FIELD_TILES[tile], PROP_FIELD_TILES[tile].some(propMarked))]),
+  ) as Record<PropFieldTile, string[]>;
+  const hiddenFields: ReadonlySet<string> = new Set(Object.values(propHidden).flat());
+  const fieldLabel = (path: string): string => (path.startsWith("address.") ? t(path) : t(`fields.${PROP_LABEL_KEY[path] ?? path}`));
+  const emptyFieldsLink = (tile: PropFieldTile) => (
+    <EmptyFieldsLink tile={tile} labels={propHidden[tile].map(fieldLabel)} onShow={() => emptyFields.show(tile)} />
+  );
+
   return (
     <FieldPulseContext.Provider value={pulsing}>
+    <HiddenFieldsContext.Provider value={hiddenFields}>
     <form
       onSubmit={form.handleSubmit(onSubmit, onInvalid)}
       // Slice #37.14: a whole number of panels wide, so the action bar below
@@ -1384,6 +1420,7 @@ export function PropertyForm({
                 width={PROP.notes}
                 fillRem={PANEL_UNIT_INNER_REM.property.cadastral}
               />
+              {emptyFieldsLink("cadastral")}
             </div>
           </section>
         </fieldset>
@@ -1552,6 +1589,7 @@ export function PropertyForm({
                   width={ADDRESS.notes}
                   fillRem={PANEL_UNIT_INNER_REM.property.address}
                 />
+                {emptyFieldsLink("address")}
               </div>
               </div>
             </section>
@@ -1920,6 +1958,7 @@ export function PropertyForm({
       )}
       </div>{/* end the action bar's line */}
     </form>
+    </HiddenFieldsContext.Provider>
     </FieldPulseContext.Provider>
   );
 }
@@ -1950,6 +1989,7 @@ type FieldProps = {
 
 
 function Field({ label, name, type = "text", register, error, hint, highlight, width, maxLength, fillRem }: FieldProps) {
+  const hiddenEmpty = useFieldHidden(name); // Slice 40.71: behind its tile's „Arată N câmpuri goale"
   const ring = usePulseRing(highlight);
   const className = [
     FIELD_BOX,
@@ -1961,7 +2001,7 @@ function Field({ label, name, type = "text", register, error, hint, highlight, w
   // (or the panel, for a box that fills it) — a long label wraps inside it.
   const box = stackedBoxStyle(width, fillRem ?? boxRem(width));
   return (
-    <label className={STACKED_FIELD_CLASS} style={box}>
+    <label className={STACKED_FIELD_CLASS} style={hiddenFieldStyle(hiddenEmpty, box)} data-empty-hidden={hiddenEmpty || undefined}>
       <span className={STACKED_LABEL_CLASS}>{label}</span>
       {grows ? (
         <GrowingText
@@ -2029,6 +2069,7 @@ function SelectField({
    */
   snapshot?: SnapshotLookupState;
 }) {
+  const hiddenEmpty = useFieldHidden(name); // Slice 40.71: behind its tile's „Arată N câmpuri goale"
   const tShared = useTranslations("shared");
   const ring = usePulseRing(highlight);
   // Slice #37.14: the chosen option in full on hover when the box is narrower (#37.12).
@@ -2051,7 +2092,7 @@ function SelectField({
     // There is no `hint` here, which is why this one can name the span itself.
     const labelId = `${name}-version-label`;
     return (
-      <div className={STACKED_FIELD_CLASS} style={boxStyle(width)} role="group" aria-labelledby={labelId}>
+      <div className={STACKED_FIELD_CLASS} style={hiddenFieldStyle(hiddenEmpty, boxStyle(width))} data-empty-hidden={hiddenEmpty || undefined} role="group" aria-labelledby={labelId}>
         <span id={labelId} className={STACKED_LABEL_CLASS}>{label}</span>
         <div className="flex flex-col gap-0.5" style={boxStyle(width)} data-width-field={name} data-width-kind={width.kind}>
           <SnapshotValue
@@ -2065,7 +2106,7 @@ function SelectField({
   }
 
   return (
-    <label className={STACKED_FIELD_CLASS} style={boxStyle(width)}>
+    <label className={STACKED_FIELD_CLASS} style={hiddenFieldStyle(hiddenEmpty, boxStyle(width))} data-empty-hidden={hiddenEmpty || undefined}>
       <span className={STACKED_LABEL_CLASS}>{label}</span>
       <div className="flex flex-col gap-0.5" style={boxStyle(width)}>
         {/* Slice #32.13: the async-options idiom lives in <AsyncSelect> now.

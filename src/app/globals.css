@@ -450,6 +450,12 @@ select.ga-field:enabled:not(:hover):not(:focus):not([aria-invalid="true"]):has(o
 .dark select.ga-field:enabled:not(:hover):not(:focus):not([aria-invalid="true"]):has(option[value=""]:checked) {
   border-bottom-color: #52525b; /* zinc-600 */
 }
+/* Slice 40.71 — a row of fields whose every field is hidden behind „Arată N câmpuri goale" takes no room: the hidden
+   fields carry `data-empty-hidden` (src/components/tiles/empty-fields.tsx), and a row of nothing else goes too. */
+div:has(> [data-empty-hidden]):not(:has(> :not([data-empty-hidden]))) {
+  display: none;
+}
+
 /* The one-space placeholder is never seen; this keeps a caret-coloured space from ever being drawn. */
 .ga-field::placeholder { color: transparent; }
 

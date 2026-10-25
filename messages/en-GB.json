@@ -1158,6 +1158,10 @@
         "sameAsHq": "same as registered office",
         "noIdDocument": "no ID document recorded"
       }
+    },
+    "emptyFields": {
+      "show": "{count, plural, one {Show # empty field} other {Show # empty fields}}",
+      "all": "Empty fields: {names}"
     }
   },
   "naturalPerson": {
