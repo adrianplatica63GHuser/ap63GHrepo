@@ -81,7 +81,10 @@ export function EmptyFieldsLink({ tile, labels, onShow }: { tile: string; labels
     }
   };
   return (
-    <div className="flex min-w-0 items-baseline gap-2 pt-1 text-sm" data-empty-fields={tile} data-empty-fields-count={labels.length}>
+    // `w-0 min-w-full`, as the tiles' subtitles (tile-title.tsx): the line takes its tile's width and gives it none — a
+    // tile sized by its content (a property's „Identificare cadastrală", a document's frame) never widens for the names,
+    // which TC-TILES-07 found pushing „Hartă" under it at 1366 px.
+    <div className="flex w-0 min-w-full items-baseline gap-2 pt-1 text-sm" data-empty-fields={tile} data-empty-fields-count={labels.length}>
       <span
         role="button"
         tabIndex={0}
