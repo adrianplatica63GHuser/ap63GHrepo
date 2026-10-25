@@ -39,6 +39,7 @@ import { E2E_MARKER, removeLeftovers, removeRecord } from "../helpers/records";
 import { openFromSidebar } from "../helpers/sidebar";
 import { expectStableColumns, expectUnitGrid, photograph } from "../helpers/field-widths";
 import { pressTileButton } from "../helpers/tiles";
+import { listsOnTheirEarlierColumns } from "../helpers/list-columns";
 import { UNIT_GAP_REM, UNIT_REM } from "../../src/lib/ui/field-widths";
 
 const NICKNAME = `${E2E_MARKER}PROP-01 Teren de test`;
@@ -54,6 +55,9 @@ async function readCount(page: Page): Promise<{ shown: number; total: number }> 
 test.describe("TC-PROP-01 — Proprietate creată manual, vizibilă în listă", () => {
   test("creare manuală, rândul nou apare în listă, apoi ștergere", async ({ page }) => {
     test.slow(); // the property screens compile slowly under `next dev`; leaves the finally room to run
+    // Slice 40.66 opened Proprietăți on four default columns; steps 1–2 are written against its earlier one,
+    // „Tip proprietate" (1/4).
+    await listsOnTheirEarlierColumns(page);
     // A run interrupted before its `finally` leaves its row; remove it first,
     // or step 11 would find two.
     await removeLeftovers(page.request, `${E2E_MARKER}PROP-01`);

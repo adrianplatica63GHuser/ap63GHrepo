@@ -119,7 +119,9 @@ test.describe("TC-VL-02 — „Date de referință” pe o pagină, două valori
 
       // Step 4 — „Unește": the merged value is gone, the kept one is used by three.
       await dialog.getByRole("button", { name: "Unește", exact: true }).click();
-      await expect(dialog).toHaveCount(0, { timeout: 15_000 });
+      // 60 s: the reassign route compiles cold on its first request under `next dev` — 14.7 s in the runner's
+      // 20261025T113800Z-18016, which left the dialog open past a 15-s wait.
+      await expect(dialog).toHaveCount(0, { timeout: 60_000 });
       await expect(row(MERGED)).toHaveCount(0, { timeout: 15_000 });
       await expect(row(KEPT).locator("[data-usage]")).toHaveText("3 obiecte", { timeout: 15_000 });
 

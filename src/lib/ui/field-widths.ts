@@ -195,7 +195,9 @@ export const NATURAL_PERSON = {
   dateOfDeath: { step: "M", kind: "fixed" }, //             dd.mm.yyyy and the calendar button
   // Slice #39.70: m: 13 professions, longest „Contabil / consultant fiscal" (28; 186.6 px measured) — L; was M, for
   // „Expert" (6).
-  physicalPersonTypeId: { step: "L", kind: "select" },
+  // Slice 40.70: in Roboto it needs 192.1 px with its arrow (TC-PERS-01), 2 px past L's 190 inside: 13.5 rem, so the
+  // row with „Locul nașterii" is 27 rem and the panel keeps its three units.
+  physicalPersonTypeId: { step: "L", kind: "select", rem: 13.5 },
   // Slice #39.70: L, so „Tip profesional" (L, the professions) stays beside it in the panel's three units — the row
   // is 13 + 0.5 + 13 = 26.5 rem, the panel's widest as before. Was XL.
   placeOfBirth: { step: "L", kind: "grows" }, //            m: 0

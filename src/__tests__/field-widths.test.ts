@@ -756,9 +756,9 @@ describe("a document type's own fields are sized by rule (#37.15)", () => {
     // „Nu e menționat" needs 142 px: 9rem, where the step rule drew L (13rem).
     expect(selectNeedPx(["Nu e menționat"])).toBeCloseTo(141.7, 0);
     expect(boxRem(templateFieldWidth({ type: "select" }, ["Nu e menționat"]))).toBe(9);
-    // The blank „fără valoare" (#37.55: italic, no dashes — it was „— fără valoare —", 157 px)
-    // needs 120 px, so beside „Nu e menționat" the dropdown is 9rem, where it was 10.
-    expect(selectNeedPx(["— fără valoare —"])).toBeCloseTo(157.2, 0);
+    // The blank „fără valoare" (#37.55: italic, no dashes — it was „— fără valoare —", 157 px in Arial, 150 in
+    // Roboto since 40.70) needs 120 px, so beside „Nu e menționat" the dropdown is 9rem, where it was 10.
+    expect(selectNeedPx(["— fără valoare —"])).toBeCloseTo(149.8, 0);
     expect(selectNeedPx(["fără valoare"])).toBeCloseTo(119.6, 0);
     expect(boxRem(templateFieldWidth({ type: "select" }, ["fără valoare", "Da", "Nu", "Nu e menționat"]))).toBe(9);
     expect(selectStepFor(["fără valoare", "Da", "Nu"]).step).toBe("M");
