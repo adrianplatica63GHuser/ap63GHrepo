@@ -120,7 +120,7 @@ test.describe("TC-PERS-03 — nota CNP-ului într-un balon, refuzul în română
       await expect(lastName).toHaveCSS("border-top-color", CLEAR);
       await expect(lastName).toHaveCSS("background-color", CLEAR);
       expect(await lastName.evaluate((el) => getComputedStyle(el).boxShadow)).toMatch(/^(none|(rgba\(0, 0, 0, 0\) 0px 0px 0px 0px(, )?)+)$/);
-      const lastNameLabel = page.locator("label").filter({ has: lastName }).locator(":scope > span").first();
+      const lastNameLabel = identity.locator("label").filter({ has: page.getByRole("textbox", { name: "Nume", exact: true }) }).locator(":scope > span").first();
       await expect(lastNameLabel).toHaveText("Nume");
       await expect(lastNameLabel).toHaveCSS("font-size", "12px");
       expect(await lastNameLabel.evaluate((el) => getComputedStyle(el).fontFamily)).toMatch(/Roboto Condensed/);
