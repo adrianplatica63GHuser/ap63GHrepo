@@ -44,11 +44,11 @@ test.describe("TC-VER-01 — Versiunile unei persoane fizice: salvare, înapoi, 
       await expect(row).toHaveCount(1, { timeout: 15_000 });
       await expect(row).toContainText("Nou!");
       await expect(row).not.toContainText(/PPERS\d+/); // #37.57: no system ID here
-      const href = await row.getByRole("link", { name: "Deschide" }).getAttribute("href");
+      const href = await row.locator("a[data-row-name-link]").getAttribute("href");
       personId = href?.split("/").pop();
 
       // Step 2 — „v 0"; both arrows and „Fă curentă" disabled; „Salvează" disabled, „Șterge", „Anulează".
-      await row.getByRole("link", { name: "Deschide" }).click();
+      await row.locator("a[data-row-name-link]").click();
       await expect(page.getByRole("heading", { name: named("Unu") })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText("v 0", { exact: true })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByRole("button", { name: "Versiunea anterioară" })).toBeDisabled();
@@ -123,7 +123,7 @@ test.describe("TC-VER-01 — Versiunile unei persoane fizice: salvare, înapoi, 
       await expect(listed).not.toContainText(/PPERS\d+/); // #37.57: no system ID here
 
       // ── At the end — „Șterge", „Da" ───────────────────────────────────────
-      await listed.getByRole("link", { name: "Deschide" }).click();
+      await listed.locator("a[data-row-name-link]").click();
       await expect(page.getByRole("heading", { name: named("Unu") })).toBeVisible({ timeout: 30_000 });
       await page.getByRole("button", { name: "Șterge", exact: true }).click();
       const confirm = page.getByRole("dialog", { name: "Ștergeți persoana?" });

@@ -98,11 +98,11 @@ test.describe("TC-ASSOC-07 — Act legat manual de înscrisul pe care îl citeaz
       await expect(top).toContainText(CERTIFICATE, { timeout: 15_000 });
       await expect(top).toContainText("Nou!");
       await expect(top).toContainText("Moștenitor"); // #37.95: the type by its short name
-      const href = await top.getByRole("link", { name: "Deschide" }).getAttribute("href");
+      const href = await top.locator("a[data-row-name-link]").getAttribute("href");
       certificateId = href?.split("/").pop();
 
       // Step 3 — open it, „Asocieri": empty, the two buttons, „Înscrisuri citate…".
-      await top.getByRole("link", { name: "Deschide" }).click();
+      await top.locator("a[data-row-name-link]").click();
       await expect(page.getByRole("heading", { name: CERTIFICATE })).toBeVisible({ timeout: 30_000 });
       await showTile(page, "Legături");
       await expect(page.getByText("Nimic corelat încă.")).toBeVisible({ timeout: 30_000 });

@@ -229,9 +229,9 @@ test.describe("TC-DOC-01 — Act creat, pagină atașată, pagina se deschide", 
 
       // Step 6 — „Deschide": headed with the title, „Neprocesat", the tile row
       // (no tabs — #37.20), and „Pagini" reading „Nicio pagină adăugată".
-      const href = await top.getByRole("link", { name: "Deschide" }).getAttribute("href");
+      const href = await top.locator("a[data-row-name-link]").getAttribute("href");
       documentId = href?.split("/").pop();
-      await top.getByRole("link", { name: "Deschide" }).click();
+      await top.locator("a[data-row-name-link]").click();
       await expect(page.getByRole("heading", { name: TITLE })).toBeVisible({ timeout: 30_000 });
       // The chip carries its subject in an sr-only span
       // (document-detail-tiles.tsx), so its text is „Stare procesare: Neprocesat"

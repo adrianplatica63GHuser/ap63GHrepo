@@ -191,7 +191,7 @@ test.describe("TC-PROP-02 — Editare și salvare: contorul de versiuni avanseaz
       // did this — the same click on the persons and documents lists went
       // straight through. `force` skips only that wait; the URL assertion below
       // still proves the click landed.
-      await row.getByRole("link", { name: "Deschide" }).click({ force: true });
+      await row.locator("a[data-row-name-link]").click({ force: true });
       await expect(page).toHaveURL(new RegExp(`/properties/${propertyId}$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: nickname })).toBeVisible({ timeout: 30_000 });
       // Slice #37.19: no tab row — the property opens on its tile row.

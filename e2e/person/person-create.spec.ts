@@ -105,7 +105,7 @@ test.describe("TC-PERS-01 — Persoană fizică creată manual", () => {
       await expect(top).toContainText("Nou!");
       await expect(top).not.toContainText(/PPERS\d+/); // #37.57: no system ID here
       await expect(top).toContainText("—");
-      const href = await top.getByRole("link", { name: "Deschide" }).getAttribute("href");
+      const href = await top.locator("a[data-row-name-link]").getAttribute("href");
       personId = href?.split("/").pop();
       await expectStableColumns(page);
 
@@ -114,7 +114,7 @@ test.describe("TC-PERS-01 — Persoană fizică creată manual", () => {
       await expect(page.getByRole("row").filter({ hasText: LISTED_AS })).toHaveCount(1, { timeout: 15_000 });
 
       // ── At the end — the case's cleanup, through the UI ──────────────────
-      await page.getByRole("row").filter({ hasText: LISTED_AS }).getByRole("link", { name: "Deschide" }).click();
+      await page.getByRole("row").filter({ hasText: LISTED_AS }).locator("a[data-row-name-link]").click();
 
       // Slice #37.12 — the saved person at fixed widths, and its pictures for the handover.
       await expect(page.locator('[data-panel="identity"]')).toBeVisible({ timeout: 30_000 });

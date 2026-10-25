@@ -110,9 +110,9 @@ test.describe("TC-PROP-03 — Proprietate creată dintr-un fișier cu coordonate
       await expect(top).toContainText(NICKNAME, { timeout: 15_000 });
       await expect(top).toContainText("Nou!");
       await expect(page.getByText(new RegExp(`^Se afișează \\d+ din ${before + 1}$`))).toBeVisible();
-      const href = await top.getByRole("link", { name: "Deschide" }).getAttribute("href");
+      const href = await top.locator("a[data-row-name-link]").getAttribute("href");
       propertyId = href?.split("/").pop();
-      await top.getByRole("link", { name: "Deschide" }).click({ force: true });
+      await top.locator("a[data-row-name-link]").click({ force: true });
       await expect(page).toHaveURL(new RegExp(`/properties/${propertyId}$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: NICKNAME })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText("v 0", { exact: true }).first()).toBeAttached({ timeout: 30_000 });

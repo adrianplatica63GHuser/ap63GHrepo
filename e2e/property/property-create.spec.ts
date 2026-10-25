@@ -140,7 +140,7 @@ test.describe("TC-PROP-01 — Proprietate creată manual, vizibilă în listă",
       await expect(top).toContainText("Nou!");
       await expect(top).toContainText("40");
       await expect(top).toContainText("TC01");
-      const href = await top.getByRole("link", { name: "Deschide" }).getAttribute("href");
+      const href = await top.locator("a[data-row-name-link]").getAttribute("href");
       propertyId = href?.split("/").pop();
       await expectStableColumns(page);
 
@@ -155,7 +155,7 @@ test.describe("TC-PROP-01 — Proprietate creată manual, vizibilă în listă",
       }
 
       // ── At the end — the case's cleanup, through the UI ──────────────────
-      await top.getByRole("link", { name: "Deschide" }).click({ force: true });
+      await top.locator("a[data-row-name-link]").click({ force: true });
       await expect(page).toHaveURL(new RegExp(`/properties/${propertyId}$`), { timeout: 30_000 });
 
       // Slice #37.30 — the saved property with the default tiles, then „Toate" on the width unit.

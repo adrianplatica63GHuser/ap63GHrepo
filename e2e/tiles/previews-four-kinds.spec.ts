@@ -41,10 +41,11 @@ async function preview(page: Page, list: string, name: string): Promise<Locator>
   await search.fill(MARK);
   const row = main.locator("tbody tr").filter({ hasText: name });
   await expect(row).toHaveCount(1, { timeout: 30_000 });
-  // Slice #38.71: the row's first button is the magnifier, „Previzualizare"; its last, „Deschide"; not pressed yet.
+  // Slice #38.71: the row's first button is the magnifier, „Previzualizare"; not pressed yet. Its last was „Deschide"
+  // until 40.60 — the chain link since, the name being the link.
   const actions = row.locator("[data-row-actions]").locator("a, button");
   await expect(actions.first()).toHaveAccessibleName("Previzualizare");
-  await expect(actions.last()).toHaveAccessibleName("Deschide");
+  await expect(actions.last()).toHaveAccessibleName("Legături");
   const magnifier = row.getByRole("button", { name: "Previzualizare", exact: true });
   await expect(magnifier).toHaveAttribute("aria-pressed", "false");
   await magnifier.click();
@@ -80,9 +81,9 @@ async function peek(page: Page, list: string, name: string, kind: string, inner:
   const actions = row.locator("[data-row-actions]").locator("a, button");
   await expect(actions.nth(0)).toHaveAccessibleName("Previzualizare");
   await expect(actions.nth(1)).toHaveAccessibleName("Incursiune");
-  // Slice #38.76: the chain link between the eye and the arrow (#38.72 read „Deschide" third).
+  // Slice #38.76: the chain link after the eye (#38.72 read „Deschide" third; 40.60 took „Deschide" off the rows).
   await expect(actions.nth(2)).toHaveAccessibleName("Legături");
-  await expect(actions.nth(3)).toHaveAccessibleName("Deschide");
+  await expect(actions).toHaveCount(3);
   // …and all three inside the table's frame, none cut at its edge.
   const cut = await row.evaluate((r) => {
     const frame = r.closest("table")!.parentElement!.getBoundingClientRect();
@@ -499,8 +500,8 @@ async function links(page: Page, list: string, name: string, kind: string, rows:
   const row = main.locator("[data-list-edge] tbody tr").filter({ hasText: name });
   await expect(row).toHaveCount(1, { timeout: 30_000 });
   const actions = row.locator("[data-row-actions]").locator("a, button");
-  await expect(actions).toHaveCount(4);
-  for (const [i, n] of ["Previzualizare", "Incursiune", "Legături", "Deschide"].entries()) await expect(actions.nth(i)).toHaveAccessibleName(n);
+  await expect(actions).toHaveCount(3); // 40.60: „Deschide" left the rows
+  for (const [i, n] of ["Previzualizare", "Incursiune", "Legături"].entries()) await expect(actions.nth(i)).toHaveAccessibleName(n);
   const cut = await row.evaluate((r) => {
     const frame = r.closest("table")!.parentElement!.getBoundingClientRect();
     return [...r.querySelectorAll<HTMLElement>("[data-row-actions] a, [data-row-actions] button")].filter((b) => b.getBoundingClientRect().right > frame.right + 0.5).length;
@@ -749,7 +750,7 @@ async function roundTrip(page: Page, list: string, name: string, tiles: readonly
   // The row's „Deschide" brought into view first, as Adrian would see it before pressing it: Playwright's click
   // scrolls an off-screen target into view itself, and the list rightly keeps THAT position (measured with a trace in
   // 20261014T021521Z-11033: kept 349, then 36 by the click, and 36 restored).
-  const open = row.getByRole("link", { name: "Deschide", exact: true });
+  const open = row.locator("a[data-row-name-link]"); // 40.60: the name, where „Deschide" was
   await open.scrollIntoViewIfNeeded();
   await page.waitForTimeout(400);
   const before = await listState(page, name);

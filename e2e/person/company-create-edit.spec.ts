@@ -116,7 +116,7 @@ test.describe("TC-PERS-02 — Persoană juridică creată și modificată", () =
       await expect(top).toContainText("Nou!");
       await expect(top).not.toContainText(/JPERS\d+/); // #37.57: no system ID here
       await expect(top).toContainText("—");
-      const href = await top.getByRole("link", { name: "Deschide" }).getAttribute("href");
+      const href = await top.locator("a[data-row-name-link]").getAttribute("href");
       companyId = href?.split("/").pop();
       await expectStableColumns(page);
 
@@ -131,7 +131,7 @@ test.describe("TC-PERS-02 — Persoană juridică creată și modificată", () =
       await search.fill(`${E2E_MARKER}PERS`);
       const row = page.getByRole("row").filter({ hasText: NAME });
       await expect(row).toHaveCount(1, { timeout: 15_000 });
-      await row.getByRole("link", { name: "Deschide" }).click();
+      await row.locator("a[data-row-name-link]").click();
       await expect(page).toHaveURL(new RegExp(`/judicial-persons/${companyId}$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: NAME })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText("v 0", { exact: true }).first()).toBeAttached({ timeout: 30_000 });

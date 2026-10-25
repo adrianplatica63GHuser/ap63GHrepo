@@ -55,7 +55,7 @@ test.describe("TC-ASSOC-15 — „Legături” se încarcă pe cele patru fișe"
 
     // Step 1 — a natural person with links of every kind, from the list's first page.
     await page.goto("/natural-persons");
-    const links = page.locator("main [data-list-frame] tbody tr").getByRole("link", { name: "Deschide", exact: true });
+    const links = page.locator("main [data-list-frame] tbody tr").locator("a[data-row-name-link]");
     await expect(links.first()).toBeVisible({ timeout: 30_000 });
     const ids = (await links.evaluateAll((as) => as.map((a) => a.getAttribute("href") ?? ""))).map((h) => h.split("/").pop()!).filter(Boolean);
     let person: { id: string; kinds: Set<Kind>; refs: Item[]; props: Item[]; docs: Item[] } | null = null;

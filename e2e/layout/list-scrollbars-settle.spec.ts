@@ -158,7 +158,7 @@ test.describe("TC-LAYOUT-07 — barele de derulare se așază o singură dată d
     test.slow();
     await page.setViewportSize({ width: 1280, height: 600 });
     await page.goto("/natural-persons");
-    const open = page.locator("main [data-list-frame] tbody tr").first().getByRole("link", { name: "Deschide", exact: true });
+    const open = page.locator("main [data-list-frame] tbody tr").first().locator("a[data-row-name-link]");
     await expect(open).toBeVisible({ timeout: 30_000 });
     const person = new URL((await open.getAttribute("href"))!, "http://x").pathname;
     const screens = [

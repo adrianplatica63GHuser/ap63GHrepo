@@ -285,7 +285,7 @@ test.describe("TC-LAYOUT-05 — cele patru liste, câte un rând pe linie", () =
         expect(middle.top, `${list.path}: scrolled half-way`).toBeGreaterThan(0);
         await page.waitForTimeout(400); // the scroll is kept 100 ms after it stops
         const row = frame.locator("tbody tr").nth(middle.row);
-        await row.getByRole("link", { name: "Deschide", exact: true }).click();
+        await row.locator("a[data-row-name-link]").click();
         await expect(page).toHaveURL((u) => u.pathname.startsWith(`${list.path}/`), { timeout: 30_000 });
         await page.waitForTimeout(1_000);
         await page.goBack();

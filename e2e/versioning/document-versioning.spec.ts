@@ -49,11 +49,11 @@ test.describe("TC-VER-02 — Versiunile unui act: salvare, înapoi, „Fă curen
       await expect(row).toContainText("Nou!");
       await expect(row).not.toContainText(/DOC\d+/); // #37.57: no system ID here
       await expect(row).toContainText("Adeverință");
-      const href = await row.getByRole("link", { name: "Deschide" }).getAttribute("href");
+      const href = await row.locator("a[data-row-name-link]").getAttribute("href");
       documentId = href?.split("/").pop();
 
       // Step 2 — headed with the title, „Stare procesare: Neprocesat", „v 0", „Fă curentă" disabled.
-      await row.getByRole("link", { name: "Deschide" }).click();
+      await row.locator("a[data-row-name-link]").click();
       await expect(page.getByRole("heading", { name: titled("Unu") })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText("Stare procesare: Neprocesat")).toBeVisible();
       await expect(page.getByText("v 0", { exact: true })).toBeVisible({ timeout: 30_000 });
@@ -118,7 +118,7 @@ test.describe("TC-VER-02 — Versiunile unui act: salvare, înapoi, „Fă curen
       await expect(listed).not.toContainText(/DOC\d+/); // #37.57: no system ID here
 
       // ── At the end — „Șterge", „Da" to „Ștergeți actul?" ─────────────────
-      await listed.getByRole("link", { name: "Deschide" }).click();
+      await listed.locator("a[data-row-name-link]").click();
       await expect(page.getByRole("heading", { name: titled("Unu") })).toBeVisible({ timeout: 30_000 });
       await page.locator('[data-tile-area="left"] div.order-last').getByRole("button", { name: "Șterge", exact: true }).last().click(); // #37.56: not a page's, in the right-hand column
       const confirm = page.getByRole("dialog", { name: "Ștergeți actul?" });

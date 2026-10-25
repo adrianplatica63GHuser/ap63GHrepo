@@ -67,7 +67,8 @@ test.describe("TC-ICON-01 — Butoanele cu pictogramă își arată numele", () 
       await expect(main.getByText("Se afișează 15 din 16")).toBeVisible({ timeout: 15_000 });
       await expect(main.getByText("Pagina 1 din 2")).toBeVisible();
       await expect(main.locator("tbody tr")).toHaveCount(15);
-      await expect(main.getByRole("link", { name: "Deschide", exact: true })).toHaveCount(15);
+      await expect(main.locator("tbody tr a[data-row-name-link]")).toHaveCount(15); // 40.60: the name is the link
+      await expect(main.locator("tbody tr").getByRole("link", { name: "Deschide", exact: true })).toHaveCount(0);
       await expect(main.getByRole("button", { name: "Previzualizare", exact: true })).toHaveCount(15);
       const chooseFields = main.getByRole("button", { name: "Câmpuri afișate 0/4" });
       await expect(chooseFields).toBeVisible();
@@ -106,8 +107,8 @@ test.describe("TC-ICON-01 — Butoanele cu pictogramă își arată numele", () 
       await expect(tooltip(page)).toHaveText("Anterior");
       await moveAway(page);
 
-      // Step 5 — Tab from the last row's last button to „Următor": its tooltip; Escape closes it. Since #38.71 that button
-      // is „Deschide" — the magnifier („Previzualizare") comes first.
+      // Step 5 — Tab from the last row's last button to „Următor": its tooltip; Escape closes it. Since #38.71 the
+      // magnifier („Previzualizare") comes first; since 40.60 the last is the chain link („Legături" — „Deschide" went).
       await main.locator("tbody tr").last().locator("[data-row-actions]").locator("a, button").last().focus();
       await page.keyboard.press("Tab");
       await expect(next).toBeFocused();
@@ -122,6 +123,30 @@ test.describe("TC-ICON-01 — Butoanele cu pictogramă își arată numele", () 
       await expect(main.locator("tbody tr")).toHaveCount(1);
       await expect(main.getByText(`Persoana 01 ${MARK}`)).toBeVisible();
       await expect(tooltip(page)).toHaveCount(0);
+
+      // Step 7 (40.60) — the row: no arrow; its name a link to the person; the three buttons faint at rest, full on the
+      // row under the mouse and on the row holding the focus; Tab onto the name and Enter opens the person.
+      const only = main.locator("tbody tr").first();
+      const name = only.locator("a[data-row-name-link]");
+      await expect(name).toContainText("Persoana 01");
+      const href = await name.getAttribute("href");
+      expect(ids.map((id) => `/natural-persons/${id}`)).toContain(href);
+      await expect(only.getByRole("link", { name: "Deschide", exact: true })).toHaveCount(0);
+      const quiet = only.locator("[data-row-actions]");
+      await moveAway(page);
+      await expect(quiet).toHaveCSS("opacity", "0.35");
+      await only.hover({ position: { x: 8, y: 8 } });
+      await expect(quiet).toHaveCSS("opacity", "1");
+      await moveAway(page);
+      await expect(quiet).toHaveCSS("opacity", "0.35");
+      // A link with an href is in the Tab order by itself; the focus is put there directly.
+      await expect(name).not.toHaveAttribute("tabindex", /-/);
+      await name.focus();
+      await expect(name).toBeFocused();
+      await expect(quiet).toHaveCSS("opacity", "1");
+      await page.keyboard.press("Enter");
+      await expect(page).toHaveURL(new RegExp(`${href}$`), { timeout: 30_000 });
+      await page.goBack();
 
       // Pictures (#37.42), not steps: the sidebar open, collapsed with a row's tooltip, and a form's „Înapoi".
       await photograph(page, "sidebar-open", () => moveAway(page));

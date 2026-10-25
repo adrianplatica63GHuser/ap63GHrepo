@@ -84,7 +84,7 @@ test.describe("TC-PROP-04 — Un colț editat în „Puncte de contur”, văzut
       await dialog.getByRole("button", { name: "Închide" }).click();
       const top = page.getByRole("row").filter({ hasText: NICKNAME });
       await expect(top).toHaveCount(1, { timeout: 15_000 });
-      propertyId = (await top.getByRole("link", { name: "Deschide" }).getAttribute("href"))?.split("/").pop();
+      propertyId = (await top.locator("a[data-row-name-link]").getAttribute("href"))?.split("/").pop();
 
       // Step 1 — „v 0", 611.87, „Afișare: DD DMS Stereo 70", Nr. · Nr. orig. · Nord (m) · Est (m),
       // rows 16–19 each with „Mută mai sus", „Mută mai jos", „Editează", „Șterge", then „+ Adaugă punct".

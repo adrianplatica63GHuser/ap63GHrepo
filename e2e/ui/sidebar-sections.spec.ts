@@ -280,7 +280,7 @@ test.describe("TC-NAV-01 — the sidebar draws only what exists", () => {
       await search.fill(MARK);
       const row = page.locator("main tbody tr").filter({ hasText: MARK });
       await expect(row).toHaveCount(1, { timeout: 30_000 });
-      await row.getByRole("link", { name: "Deschide", exact: true }).click();
+      await row.locator("a[data-row-name-link]").click();
       await expect(page).toHaveURL((u) => u.pathname === `/natural-persons/${personId}`, { timeout: 30_000 });
     };
     try {

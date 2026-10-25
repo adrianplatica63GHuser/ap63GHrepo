@@ -46,12 +46,16 @@ can clip it) and exists only while it is shown.
 | 4 | Moves the mouse over „Anterior", which is inactive | A tooltip `Anterior` |
 | 5 | Brings the keyboard focus to „Următor" (Tab from the last row's last button — „Deschide" since #38.71, which put the magnifier, „Previzualizare", first) | A tooltip `Următor`; Escape closes it |
 | 6 | Presses „Următor" | „Pagina 2 din 2", one row, `Persoana 01 TC-ICON-01`, „Se afișează 16 din 16"; no tooltip is left on the screen |
+| 7 | (40.60) Looks at page two's one row, moves the mouse over it and away, then puts the focus on its name and presses Enter | No „Deschide" arrow; the name is a link to the person. The three buttons are faint at rest, fully visible while the mouse is on the row and while the focus is in it. Enter opens the person |
 
 ## At the end — leaving things as they were found
 
 Delete the sixteen persons (on each, „Șterge" and „Da", or `DELETE /api/people/<id>`).
 
 ## Notes from the runs
+
+**2026-10-25 — step 7 (Slice 40.60).** The name is the row's link and the buttons are quiet at rest. Written from the
+slice's change and added to the spec; not driven by hand first.
 
 **2026-10-01 — `automated`.** `e2e/ui/icon-button.spec.ts` translates the case with Playwright's
 real mouse and keyboard, and takes #37.42's pictures. Green on its first runner run,
