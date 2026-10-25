@@ -81,7 +81,7 @@ test.describe("TC-TAG-01 — Etichetă aplicată unei proprietăți și găsită
       for (const field of ["Importanță", "Relevanță", "Proveniență"]) {
         await expect(page.getByText(field, { exact: true }).first()).toBeVisible();
       }
-      await expect(page.getByText("Etichete și grupuri").first()).toBeVisible();
+      await expect(page.getByRole("region", { name: "Etichete și grupuri", exact: true })).toBeVisible();
       await expect(page.getByText("Etichete / Cuvinte cheie").first()).toBeVisible();
       await expect(page.getByText("Nicio etichetă adăugată încă")).toBeVisible();
 
