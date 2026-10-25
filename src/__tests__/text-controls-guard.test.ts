@@ -301,6 +301,10 @@ const ALLOW: Record<string, Allowed[]> = {
     ["A110", "{labelCancel}"],
     ["A110", "{labelOk}"],
   ],
+  // Slice 40.71: „Arată N câmpuri goale", a fold like „Arată mai mult…" — the count is what it says.
+  "src/components/tiles/empty-fields.tsx": [
+    ["FOLD", '{t("show", { count: labels.length })}'],
+  ],
   "src/components/forms/growing-text.tsx": [
     ["FOLD", "{expanded ? t(\"showLess\") : t(\"showMore\")}"],
   ],

@@ -23,6 +23,7 @@
 import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createSaleContract, removeLeftovers, removeRecord } from "../helpers/records";
 import { openEmptyTiles, pressTileButton } from "../helpers/tiles";
+import { showEmptyFields } from "../helpers/empty-fields";
 
 const MARK = `${E2E_MARKER}DOC-06`;
 const SHOTS = "playwright-report/blank-choice";
@@ -101,6 +102,8 @@ test.describe("TC-DOC-06 — „fără valoare” în cursive, fără liniuțe",
       await pressTileButton(page, "Toate", { timeout: 30_000 });
       // 40.64: a new contract\'s empty tiles are one line each; „Adaugă" opens them.
       await openEmptyTiles(page);
+      // 40.71: the empty fields of a partly filled tile are behind „Arată N câmpuri goale"; shown for the steps below.
+      await showEmptyFields(page, undefined, { wait: true });
       await expect(dropdowns(page)).toHaveCount(36, { timeout: 30_000 });
       for (const box of await closedBoxes(page)) {
         expect(box).toEqual({ shown: "fără valoare", style: "italic", blank: "fără valoare" });
@@ -139,6 +142,8 @@ test.describe("TC-DOC-06 — „fără valoare” în cursive, fără liniuțe",
       await pressTileButton(page, "All", { timeout: 30_000 });
       // 40.64: a new contract\'s empty tiles are one line each; „Adaugă" opens them.
       await openEmptyTiles(page);
+      // 40.71: the empty fields of a partly filled tile are behind „Arată N câmpuri goale"; shown for the steps below.
+      await showEmptyFields(page, undefined, { wait: true });
       await expect(dropdowns(page)).toHaveCount(36, { timeout: 30_000 });
       for (const box of await closedBoxes(page)) {
         expect(box).toEqual({ shown: "no value", style: "italic", blank: "no value" });

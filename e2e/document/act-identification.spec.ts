@@ -14,6 +14,7 @@
 
 import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createDocumentOfType, removeLeftovers, removeRecord } from "../helpers/records";
+import { showEmptyFields } from "../helpers/empty-fields";
 
 const MARK = `${E2E_MARKER}DOC-18`;
 
@@ -39,6 +40,8 @@ test.describe("TC-DOC-18 — „Identificarea actului”, păstrată după reîn
 
       // Step 1 — the CVC's tile: the type, the notarial set and the four identification fields.
       await page.goto(`/documents/${cvc}`);
+      // 40.71: the empty fields of a partly filled tile are behind „Arată N câmpuri goale"; shown for the steps below.
+      await showEmptyFields(page, undefined, { wait: true });
       await expect(box(page, "customFields.dataContinut")).toBeVisible({ timeout: 30_000 });
       for (const label of ["Tip document", "Notariat", "Nr. act autentic", "Data autentificării", "Calitate exemplar", "Exemplare emise", "Temei autentificare", "Data conținutului"]) {
         await expect(tile(page).getByText(label, { exact: true }).first()).toBeVisible();

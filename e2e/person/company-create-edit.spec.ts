@@ -44,6 +44,7 @@ import { expectFixedFieldsHold, expectStableColumns, expectStableWidths, expectU
 import { closeTiles, openTiles, pressTileButton, TILE_GROUP, tileBox } from "../helpers/tiles";
 import { ADDRESS, JUDICIAL_PERSON, UNIT_GAP_REM, UNIT_REM } from "../../src/lib/ui/field-widths";
 import { listsOnTheirEarlierColumns } from "../helpers/list-columns";
+import { showEmptyFields } from "../helpers/empty-fields";
 
 /** Each FIXED box's widest value, by the name its box carries (Slice #37.13). */
 const SAMPLES: Record<string, string> = {};
@@ -177,6 +178,8 @@ test.describe("TC-PERS-02 — Persoană juridică creată și modificată", () =
       if (viewport) await page.setViewportSize(viewport);
 
       // Step 10 — „Poreclă", „Salvează": STAYS on the company, „v 1", „2 versiuni".
+      // 40.71: the empty fields of a partly filled tile are behind „Arată N câmpuri goale"; shown for the steps below.
+      await showEmptyFields(page, "identity", { wait: true });
       const nickname = page.getByLabel(/^Poreclă/);
       await nickname.fill(`${MARK} editat`);
       await page.getByRole("button", { name: "Salvează", exact: true }).click();

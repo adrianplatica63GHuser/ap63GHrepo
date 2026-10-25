@@ -12,9 +12,22 @@ export function emptyFieldsLink(scope: Page | Locator, tile: string): Locator {
   return scope.locator(`[data-empty-fields="${tile}"] [data-empty-fields-show]`);
 }
 
-/** Shows every hidden empty field of `tile`, or of every tile on the screen when `tile` is left out. */
-export async function showEmptyFields(scope: Page | Locator, tile?: string): Promise<void> {
+/**
+ * Shows every hidden empty field of `tile`, or of every tile on the screen when `tile` is left out. With `wait`, first
+ * waits for a link to be there (30 s) — for a screen known to have one, whose values arrive after its first paint —
+ * and then keeps pressing until none has come back for a moment, as a document's own fields arrive with its type.
+ */
+export async function showEmptyFields(scope: Page | Locator, tile?: string, { wait = false }: { wait?: boolean } = {}): Promise<void> {
   const links = tile ? emptyFieldsLink(scope, tile) : scope.locator("[data-empty-fields-show]");
-  // Pressing one link removes it, so take the first until none is left.
-  for (let left = await links.count(); left > 0; left = await links.count()) await links.first().click();
+  if (wait) await links.first().waitFor({ state: "visible", timeout: 30_000 });
+  for (let quiet = 0; quiet < 2; ) {
+    // Pressing one link removes it, so take the first until none is left.
+    if ((await links.count()) > 0) {
+      await links.first().click();
+      quiet = 0;
+    } else {
+      quiet++;
+      if (wait && quiet < 2) await new Promise((r) => setTimeout(r, 400));
+    }
+  }
 }

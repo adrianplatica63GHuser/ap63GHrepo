@@ -12,6 +12,7 @@
 
 import { test, expect } from "../helpers/test";
 import { E2E_MARKER, createNaturalPerson, removeLeftovers, removeRecord } from "../helpers/records";
+import { showEmptyFields } from "../helpers/empty-fields";
 
 const MARK = `${E2E_MARKER}PERS-11`;
 const BEFORE_BIRTH = "nu poate fi înainte de";
@@ -30,6 +31,8 @@ test.describe("TC-PERS-11 — „Decedat” și „Data decesului”", () => {
       // Step 1 — „Decedat" unticked, „Data decesului" not to be filled, „Vârstă" counted to today.
       await page.goto(`/natural-persons/${personId}`);
       await expect(page.getByRole("heading", { level: 1, name: `Ion ${MARK}`, exact: true })).toBeVisible({ timeout: 30_000 });
+      // 40.71: the empty fields of a partly filled tile are behind „Arată N câmpuri goale"; shown for the steps below.
+      await showEmptyFields(page, "identity", { wait: true });
       const deceased = page.getByRole("checkbox", { name: "Decedat", exact: true });
       const date = page.locator('input[name="dateOfDeath"]');
       const age = page.locator('[data-width-field="age"]');

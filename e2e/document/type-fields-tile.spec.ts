@@ -20,6 +20,7 @@
 import { test, expect, type Locator, type Page } from "../helpers/test";
 import { E2E_MARKER, createDocumentOfType, removeLeftovers, removeRecord } from "../helpers/records";
 import { openEmptyTiles, pressTileButton, tileBox } from "../helpers/tiles";
+import { showEmptyFields } from "../helpers/empty-fields";
 
 const MARK = `${E2E_MARKER}DOC-03`;
 const SHOTS = "playwright-report/type-fields-tile";
@@ -70,6 +71,8 @@ test.describe("TC-DOC-03 — un PAD: „Detalii act” fără panou de emitere; 
       await page.goto(`/documents/${padId}`);
       let tile = page.getByRole("region", { name: "Detalii act", exact: true });
       await expect(tile).toBeVisible({ timeout: 30_000 });
+      // 40.71: the empty fields of a partly filled tile are behind „Arată N câmpuri goale"; shown for the steps below.
+      await showEmptyFields(page, "general", { wait: true });
       // 40.57: the tile's box is in the „Panouri" panel, closed.
       await expect(tileBox(page, "Detalii act")).toBeAttached();
       await expect(tile.getByRole("heading", { name: "[Date de emitere]", exact: true })).toHaveCount(0);
@@ -89,6 +92,7 @@ test.describe("TC-DOC-03 — un PAD: „Detalii act” fără panou de emitere; 
       await page.goto(`/documents/${padId}`);
       tile = page.getByRole("region", { name: "Document details", exact: true });
       await expect(tile).toBeVisible({ timeout: 30_000 });
+      await showEmptyFields(page, "general", { wait: true });
       await expect(tile.getByRole("heading", { name: "[Issue details]", exact: true })).toHaveCount(0);
       for (const old of ["Type fields", "Document-type-specific fields"]) await expect(page.getByText(old)).toHaveCount(0);
       await expect(tile.getByText(/\bFees\b/)).toHaveCount(0);
@@ -103,6 +107,7 @@ test.describe("TC-DOC-03 — un PAD: „Detalii act” fără panou de emitere; 
       // Step 3 — the CVC, in English, „All": the notarial set on „Document identification"; „[Taxe și onorarii]" without a date box.
       await page.goto(`/documents/${cvcId}`);
       await allTiles(page, "All");
+      await showEmptyFields(page, "general", { wait: true });
       const fees = () => page.locator('[data-section="fees"], [data-panel="fees"]').first();
       await expect(dateLabel(page)).toHaveText("Authentication date", { timeout: 30_000 });
       await expect(page.getByRole("combobox", { name: "Notary Office", exact: true })).toBeVisible(); // a <select> named by <label htmlFor>
@@ -114,6 +119,7 @@ test.describe("TC-DOC-03 — un PAD: „Detalii act” fără panou de emitere; 
       await language(page, "ro-RO");
       await page.goto(`/documents/${cvcId}`);
       await allTiles(page, "Toate");
+      await showEmptyFields(page, undefined, { wait: true });
       await expect(dateLabel(page)).toHaveText("Data autentificării", { timeout: 30_000 });
       await expect(page.getByRole("combobox", { name: "Notariat", exact: true })).toBeVisible(); // a <select> named by <label htmlFor>
       await expect(label("nrDocument")).toHaveText("Nr. act autentic");
