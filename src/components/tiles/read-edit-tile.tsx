@@ -146,10 +146,14 @@ export function useTileEditing<T extends string>({
 /** The open tile's outline: the focus blue, outside the tile's own border. */
 export const TILE_EDITING_CLASS = "outline outline-2 outline-offset-2 outline-bl-strong dark:outline-blue-400";
 
-/** Esc inside the open tile is „Renunță". */
+/**
+ * Esc inside the open tile is „Renunță" — unless a hint bubble is open in it (a saved CNP's note, #37.50): that Esc
+ * closes the bubble, as it always did, and the next one the tile.
+ */
 export function onTileKeyDown(editing: boolean, escape: () => void) {
   return (e: KeyboardEvent<HTMLElement>) => {
     if (!editing || e.key !== "Escape" || e.defaultPrevented) return;
+    if (e.currentTarget.querySelector('[role="tooltip"]:not(.sr-only)')) return;
     e.preventDefault();
     escape();
   };
