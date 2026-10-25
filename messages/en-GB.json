@@ -848,6 +848,8 @@
     },
     "tiles": {
       "groupLabel": "Parts shown",
+      "panels": "Panels",
+      "panelsMarked": "{count, plural, one {one hidden part has highlighted fields} other {# hidden parts have highlighted fields}}",
       "allUp": "All up",
       "all": "All",
       "defaults": "Default",

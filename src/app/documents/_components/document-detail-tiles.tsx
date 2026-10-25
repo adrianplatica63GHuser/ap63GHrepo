@@ -48,6 +48,7 @@ import { ListTile } from "@/components/tiles/list-tile";
 import { groupSurface } from "@/lib/ui/tile-surface";
 import { TileSelector } from "@/components/tiles/tile-selector";
 import { useTileChoice } from "@/components/tiles/use-tile-choice";
+import { TilesMenuButton, hiddenMarked, useTilesMenu } from "@/components/tiles/tiles-menu";
 import { TileAreas, useRightColumn } from "@/components/tiles/tile-areas";
 import { groupedTiles, tileGroupOf, tilesOfTab } from "@/lib/ui/tiles";
 import { LIST_UNITS, unitRowStyle } from "@/lib/ui/field-widths";
@@ -118,6 +119,8 @@ export function DocumentDetailTiles({
   const urlTiles = tilesOfTab(DOC_TILE_OF_TAB, initialTab);
   const urlTile = urlTiles[0];
   const choice = useTileChoice<string>(reg, urlTiles);
+  // Slice 40.57: the „Panouri" panel's open state — the header's button, the bar's panel.
+  const tilesMenu = useTilesMenu();
   // Slice #37.24 — related records open beside this one, read-only.
   const previews = usePreviews();
   const previewEntries = usePreviewSelectorEntries(previews);
@@ -184,11 +187,11 @@ export function DocumentDetailTiles({
             {t(`status.${status}` as Parameters<typeof t>[0])}
           </span>
         )}
-        <div
-          ref={setNavSlot}
-          data-version-slot=""
-          className="pointer-events-none ml-auto flex shrink-0 items-center"
-        />
+        {/* Slice 40.57: „Panouri" right after the version controls; its panel is where the tile bar stood. */}
+        <div className="pointer-events-none ml-auto flex shrink-0 items-center gap-3" data-record-controls="">
+          <div ref={setNavSlot} data-version-slot="" className="flex items-center" />
+          <TilesMenuButton menu={tilesMenu} badge={hiddenMarked(marked, choice.shown)} />
+        </div>
       </header>
 
       <div
@@ -198,7 +201,7 @@ export function DocumentDetailTiles({
         {/* Drawn once the type is known (`ready`, see document-tiles.ts): a tick
             made before would be stored under a key the type then replaces. */}
         {layout.ready !== false && (
-          <TileSelector all={reg.all} groups={groupedTiles(reg)} labels={labels} choice={choice} marked={marked} extra={previewEntries} allUp twoRows diagram={reg.entity} />
+          <TileSelector all={reg.all} groups={groupedTiles(reg)} labels={labels} choice={choice} marked={marked} extra={previewEntries} menu={tilesMenu} allUp twoRows diagram={reg.entity} />
         )}
 
         <PreviewOpenerProvider previews={previews}>

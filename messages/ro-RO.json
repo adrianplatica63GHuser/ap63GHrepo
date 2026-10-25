@@ -848,6 +848,8 @@
     },
     "tiles": {
       "groupLabel": "Părți afișate",
+      "panels": "Panouri",
+      "panelsMarked": "{count, plural, one {o parte ascunsă are câmpuri evidențiate} few {# părți ascunse au câmpuri evidențiate} other {# de părți ascunse au câmpuri evidențiate}}",
       "allUp": "Toate sus",
       "all": "Toate",
       "defaults": "Implicit",

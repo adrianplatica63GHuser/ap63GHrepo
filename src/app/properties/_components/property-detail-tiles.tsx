@@ -40,6 +40,7 @@ import { ListTile } from "@/components/tiles/list-tile";
 import { groupSurface } from "@/lib/ui/tile-surface";
 import { TileSelector } from "@/components/tiles/tile-selector";
 import { useTileChoice } from "@/components/tiles/use-tile-choice";
+import { TilesMenuButton, useTilesMenu } from "@/components/tiles/tiles-menu";
 import { TileAreas, useRightColumn } from "@/components/tiles/tile-areas";
 import { groupedTiles, tileGroupOf, tilesOfTab } from "@/lib/ui/tiles";
 import { LIST_UNITS, unitRowStyle } from "@/lib/ui/field-widths";
@@ -84,6 +85,8 @@ export function PropertyDetailTiles({
   // Slice #38.04: the tiles that type does not show — their boxes disabled, their stored choice kept.
   const offTiles = useMemo<readonly PropTile[]>(() => typeShows(type).hidden, [type]);
   const choice = useTileChoice<PropTile>(PROP_TILE_REGISTRY, urlTiles, offTiles);
+  // Slice 40.57: the „Panouri" panel's open state — the header's button, the bar's panel.
+  const tilesMenu = useTilesMenu();
   const offReasons = useMemo<Partial<Record<PropTile, string>>>(
     () => Object.fromEntries(offTiles.map((k) => [k, t("heading.typeDisablesTile", { type: type?.name ?? "" })])),
     [offTiles, type, t],
@@ -130,15 +133,15 @@ export function PropertyDetailTiles({
       <header className="relative flex min-h-[2.5rem] items-center" data-record-header="">
         <RecordHeading icon={MapIcon} name={propertyName} />
         <PropertyTypeHeading type={type} />
-        <div
-          ref={setNavSlot}
-          data-version-slot=""
-          className="pointer-events-none absolute inset-y-0 right-0 flex items-center"
-        />
+        {/* Slice 40.57: „Panouri" right after the version controls; its panel is where the tile bar stood. */}
+        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center gap-3" data-record-controls="">
+          <div ref={setNavSlot} data-version-slot="" className="flex items-center" />
+          <TilesMenuButton menu={tilesMenu} />
+        </div>
       </header>
 
       <div className="flex flex-col gap-4" style={unitRowStyle("property")}>
-        <TileSelector all={PROP_TILES} groups={groupedTiles(PROP_TILE_REGISTRY)} labels={labels} choice={choice} extra={previewEntries} disabled={offReasons} allUp twoRows diagram={PROP_TILE_REGISTRY.entity} />
+        <TileSelector all={PROP_TILES} groups={groupedTiles(PROP_TILE_REGISTRY)} labels={labels} choice={choice} extra={previewEntries} disabled={offReasons} menu={tilesMenu} allUp twoRows diagram={PROP_TILE_REGISTRY.entity} />
 
         <PreviewOpenerProvider previews={previews}>
         <TileAreas right={rightAll} slotRefs={slotRefs} entity={PROP_TILE_REGISTRY.entity}>

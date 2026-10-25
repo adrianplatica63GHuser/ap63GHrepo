@@ -10,7 +10,7 @@
  *
  * WHERE (Ask first 1): its left edge one average checkbox-label width right of the bar's longer row (and of the record's
  * name, should that reach further); its top level with the record header's top, its bottom with the bar's bottom —
- * Adrian's height: the name's row, the gap, the two rows. It never covers the version controls at the header's right:
+ * Adrian's height: the name's row, the gap, the two rows. (Until 40.57, below.) It never covered the version controls:
  * when the room before them is short it is drawn narrower, never taller.
  *
  * WHEN (Ask first 4): it redraws from the packing hook's snapshot (`TILES_PLACED`) — after a layout, a drop, a
@@ -24,6 +24,11 @@
  * cannot drop (Ask first 2). A click does nothing; Esc, or a release outside the diagram, puts everything back. Only
  * the rectangles take the pointer, „grab" over them; the diagram stays `aria-hidden` — no keyboard path, as the tiles
  * have none (Ask first 3). Every rectangle's tile can be dragged, previews too (Ask first 4).
+ *
+ * Slice 40.57 (Ask first 2): the diagram moved into the „Panouri" panel with the bar, right of the checkboxes as before,
+ * at its old size — as tall as the record's name row, the 16 px under it and the bar's two rows. Its left edge as
+ * before, one average checkbox-label width right of the bar's longer row; its right the panel's. The panel holds it
+ * (`onHeight`). With the panel closed there is nothing to measure, and it waits (`data-room="pending"`).
  */
 import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 
@@ -36,13 +41,12 @@ import { DRAG_THRESHOLD_PX } from "./use-tile-packing";
 /** Slice 40.53: a rectangle being dragged — where it stood at the press, and how far the pointer has moved it. */
 type Held = { id: string; rect: DiagramRect; x0: number; y0: number; dx: number; dy: number; active: boolean; toScreen: (dx: number, dy: number) => { dx: number; dy: number } };
 
-/** The gap kept between the diagram and the version controls, in px. */
-const CLEAR_PX = 12;
+/** The gap between the record's header and the bar that the diagram's height counts, as before 40.57 (`gap-4`). */
+const HEADER_GAP_PX = 16;
 
 /**
- * The narrowest room it is drawn in, in px. Less — a sale contract at 1366, whose seven record boxes fill the bar's
- * first row up to the version controls — and it is not drawn at all (`data-room="none"`): narrower, never over them,
- * never taller.
+ * The narrowest room it is drawn in, in px. Less — a bar whose first row fills the panel — and it is not drawn at all
+ * (`data-room="none"`): narrower, never taller.
  */
 export const DIAGRAM_MIN_ROOM_PX = 48;
 
@@ -64,20 +68,27 @@ function frameOf(wrap: HTMLElement): Frame | null {
   if (!header || !bar) return null;
   const R = (e: Element) => e.getBoundingClientRect();
   const w = R(wrap);
-  const h = R(header);
+  const b = R(bar);
+  // The panel closed: nothing is laid out.
+  if (b.width === 0 || w.width === 0) return null;
   // The bar's longer row ends where its furthest piece (or the buttons) ends.
-  const rowRight = [...bar.querySelectorAll<HTMLElement>("[data-bar-row]")].reduce((m, e) => Math.max(m, R(e).right), R(bar).left);
+  const rowRight = [...bar.querySelectorAll<HTMLElement>("[data-bar-row]")].reduce((m, e) => Math.max(m, R(e).right), b.left);
   const labels = [...bar.querySelectorAll("label")].map((l) => R(l).width).filter((x) => x > 0);
   const average = labels.length ? labels.reduce((s, x) => s + x, 0) / labels.length : 80;
-  const slot = header.querySelector<HTMLElement>("[data-version-slot]");
-  const named = [...header.children].filter((c) => c !== slot).reduce((m, c) => Math.max(m, R(c).right), h.left);
-  const controls = slot?.firstElementChild ? R(slot.firstElementChild).left : h.right;
-  const left = Math.max(rowRight, named) + average;
-  const right = Math.min(w.right, controls - CLEAR_PX);
-  return { left: left - w.left, top: h.top - w.top, width: Math.max(0, right - left), height: R(bar).bottom - h.top };
+  const left = rowRight + average;
+  return { left: left - w.left, top: 0, width: Math.max(0, w.right - left), height: R(header).height + HEADER_GAP_PX + b.height };
 }
 
-export function TilesDiagram({ entity, groupOf }: { entity: string; groupOf: (id: string) => TileGroup | null }) {
+export function TilesDiagram({
+  entity,
+  groupOf,
+  onHeight,
+}: {
+  entity: string;
+  groupOf: (id: string) => TileGroup | null;
+  /** Slice 40.57: told the height it is drawn at (0 when it is not), so the panel can hold it. */
+  onHeight?: (px: number) => void;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const [heard, setHeard] = useState<PlacedSnapshot | undefined>(undefined);
   // The last one heard for this kind of record, or — none heard yet, or the kind changed — the last one published.
@@ -118,6 +129,10 @@ export function TilesDiagram({ entity, groupOf }: { entity: string; groupOf: (id
 
   let diagram: Diagram = { rects: [], width: 0, height: 0, unit: 0, across: 0, scale: 0 };
   const room = !!frame && frame.width >= DIAGRAM_MIN_ROOM_PX && frame.height > 0;
+  const drawnHeight = frame && room ? Math.ceil(frame.height) : 0;
+  useLayoutEffect(() => {
+    onHeight?.(drawnHeight);
+  }, [drawnHeight, onHeight]);
   if (snapshot && frame && room) {
     const tiles: DiagramTile[] = [];
     for (const b of snapshot.boxes) {
@@ -159,7 +174,10 @@ export function TilesDiagram({ entity, groupOf }: { entity: string; groupOf: (id
       if (e.key !== "Escape") return;
       const h = heldRef.current;
       update(null);
-      if (h?.active) dragFromDiagram({ entity, id: h.id, phase: "cancel", dx: 0, dy: 0 });
+      if (!h?.active) return;
+      // 40.57: this Esc is the drag's — the „Panouri" panel around the diagram stays open.
+      e.stopPropagation();
+      dragFromDiagram({ entity, id: h.id, phase: "cancel", dx: 0, dy: 0 });
     };
     window.addEventListener("pointermove", onMove, true);
     window.addEventListener("pointerup", onUp, true);

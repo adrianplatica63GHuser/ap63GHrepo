@@ -45,11 +45,8 @@ const ALLOWLIST: Record<string, string> = {
   // select has no `buttonClass` equivalent.
   "components/entity-metadata-tab.tsx": "native <select> dropdowns",
 
-  // Slice #34.02: the identity-card review dialog's institution dropdown. A
-  // native <select> for the same reason as the row above — and deliberately not
-  // `AsyncSelect`, which is react-hook-form bound while this is a DOCUMENT
-  // column on a person form. It is disabled while the submit is in flight, so
-  // what is on screen and what is being written cannot diverge.
+  // (The identity-card review dialog's institution dropdown, #34.02, was here until 40.56: it takes the calm field
+  // box now, which fades a disabled box by its text, not its opacity.)
 
   // The helper itself documents the pattern it replaced; its tests assert the
   // helper never emits one.

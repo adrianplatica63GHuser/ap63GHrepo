@@ -37,6 +37,7 @@ import { ListTile } from "@/components/tiles/list-tile";
 import { groupSurface } from "@/lib/ui/tile-surface";
 import { TileSelector } from "@/components/tiles/tile-selector";
 import { useTileChoice } from "@/components/tiles/use-tile-choice";
+import { TilesMenuButton, useTilesMenu } from "@/components/tiles/tiles-menu";
 import { groupedTiles, tileGroupOf, tilesOfTab } from "@/lib/ui/tiles";
 import { NP_LIST_UNITS, npRowStyle } from "@/lib/ui/field-widths";
 import { type FormValues } from "./form-schema";
@@ -80,6 +81,8 @@ export function PersonDetailTiles({
   const urlTiles = tilesOfTab(NP_TILE_OF_TAB, initialTab);
   const urlTile = urlTiles[0];
   const choice = useTileChoice<NpTile>(NP_TILE_REGISTRY, urlTiles);
+  // Slice 40.57: the „Panouri" panel's open state — the header's button, the bar's panel.
+  const tilesMenu = useTilesMenu();
   // Slice #37.24 — related records open beside this one, read-only.
   const previews = usePreviews();
   // Slice #37.89: „Interacțiuni" is a right-hand tile (`placement.right`), as „Hartă" and „Pagini" are — since 40.32 it starts at the right edge and moves like any tile.
@@ -122,15 +125,15 @@ export function PersonDetailTiles({
           same line (portalled in by the details form via navSlot). */}
       <header className="relative flex min-h-[2.5rem] items-center" data-record-header="">
         <RecordHeading icon={User} name={personName} />
-        <div
-          ref={setNavSlot}
-          data-version-slot=""
-          className="pointer-events-none absolute inset-y-0 right-0 flex items-center"
-        />
+        {/* Slice 40.57: „Panouri" right after the version controls; its panel is where the tile bar stood. */}
+        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center gap-3" data-record-controls="">
+          <div ref={setNavSlot} data-version-slot="" className="flex items-center" />
+          <TilesMenuButton menu={tilesMenu} />
+        </div>
       </header>
 
       <div className="flex flex-col gap-4" style={npRowStyle()}>
-        <TileSelector all={NP_TILES} groups={groupedTiles(NP_TILE_REGISTRY)} labels={labels} choice={choice} extra={previewEntries} allUp twoRows diagram={NP_TILE_REGISTRY.entity} />
+        <TileSelector all={NP_TILES} groups={groupedTiles(NP_TILE_REGISTRY)} labels={labels} choice={choice} extra={previewEntries} menu={tilesMenu} allUp twoRows diagram={NP_TILE_REGISTRY.entity} />
 
         <PreviewOpenerProvider previews={previews}>
         {/* Slice #37.75: each box right under the box above it; #37.89: the right-hand column (`TileAreas`). */}

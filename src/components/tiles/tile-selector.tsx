@@ -27,6 +27,10 @@
  *
  * Slice 40.40: `allUp` draws „Toate sus" left of „Toate" — on the four record screens only, not on Setări's bar nor
  * the home page's. Pressed, every tile slides up and the tile columns are evened (`allUp` in tile-positions.ts).
+ *
+ * Slice 40.57: `menu` (the four record screens) puts the whole bar — the two rows, the buttons and the tiles diagram
+ * right of them — in a panel under the record's header, opened by the header's „Panouri" button (`tiles-menu.tsx`).
+ * Closed, the panel is hidden but stays in the page, so the bar keeps its measurements and every box its state.
  */
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
@@ -37,6 +41,7 @@ import type { TileGroup } from "@/lib/ui/tiles";
 import { groupStrip } from "@/lib/ui/tile-surface";
 import { barPieces, fitPieces, pickTwoRows, type BarMeasures, type BarPiece } from "@/lib/ui/tile-bar-rows";
 import { TilesDiagram } from "./tiles-diagram";
+import type { TilesMenu } from "./tiles-menu";
 
 /** Slice 40.41: what the bar measured and chose — two rows, or (too narrow) its pieces in one wrapping row. */
 type BarLayout = { rows: [BarPiece[], BarPiece[]] | null; pieces: BarPiece[] };
@@ -80,6 +85,7 @@ export function TileSelector<K extends string>({
   allUp = false,
   twoRows = false,
   diagram,
+  menu,
 }: {
   all: readonly K[];
   /**
@@ -106,6 +112,8 @@ export function TileSelector<K extends string>({
   twoRows?: boolean;
   /** Slice 40.42: the record kind's entity — draw the tiles diagram right of the two rows (`TilesDiagram`). */
   diagram?: string;
+  /** Slice 40.57: draw the bar in the „Panouri" panel, open while `menu.open` (`useTilesMenu`). */
+  menu?: TilesMenu;
 }) {
   const t = useTranslations("shared.tiles");
   const isOff = (key: K): boolean => disabled?.[key] !== undefined;
@@ -162,6 +170,19 @@ export function TileSelector<K extends string>({
   const keys = (groups ?? []).map((g) => g.group as string);
   const barRef = useRef<HTMLDivElement>(null);
   const [layout, setLayout] = useState<BarLayout | null>(null);
+  // Slice 40.57: the diagram's height in the panel, which the panel must hold (the diagram is drawn over its corner).
+  const [diagramHeight, setDiagramHeight] = useState(0);
+  // Slice 40.57: the panel — under the header, over the tiles, as wide as the bar was; hidden while closed.
+  const panelled = (node: ReactNode): ReactNode =>
+    menu ? (
+      <div id={menu.panelId} hidden={!menu.open} className="relative z-30 h-0" data-tiles-panel="">
+        <div className="absolute inset-x-0 top-0 rounded-md border border-card-rim bg-white p-3 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
+          {node}
+        </div>
+      </div>
+    ) : (
+      node
+    );
   const keysSig = keys.join("|");
   useLayoutEffect(() => {
     const bar = barRef.current;
@@ -240,16 +261,16 @@ export function TileSelector<K extends string>({
         {buttonsGroup}
       </div>
     );
-    if (!diagram) return barEl;
-    return (
-      <div className="relative" data-tile-bar-wrap="">
+    if (!diagram) return panelled(barEl);
+    return panelled(
+      <div className="relative" style={diagramHeight > 0 ? { minHeight: diagramHeight } : undefined} data-tile-bar-wrap="">
         {barEl}
-        <TilesDiagram entity={diagram} groupOf={groupOf} />
-      </div>
+        <TilesDiagram entity={diagram} groupOf={groupOf} onHeight={setDiagramHeight} />
+      </div>,
     );
   }
 
-  return (
+  return panelled(
     <div role="group" aria-label={t("groupLabel")} className="flex flex-wrap items-center gap-x-4 gap-y-2" data-tile-selector>
       {groups ? (
         groups.map(({ group, tiles }) => (
@@ -266,6 +287,6 @@ export function TileSelector<K extends string>({
       )}
       {groups && !groups.some((g) => g.group === "related") && extras}
       {buttonsGroup}
-    </div>
+    </div>,
   );
 }
