@@ -101,6 +101,18 @@ import { hasPartiesTile } from "@/lib/documents/sale-parties";
 import { TileTitle } from "@/components/tiles/tile-title";
 import { EmptyTileLine, useEmptyTiles } from "@/components/tiles/empty-tile";
 import { EmptyFieldsLink, HiddenFieldsContext, hiddenFieldStyle, useEmptyFields, useFieldHidden } from "@/components/tiles/empty-fields";
+import {
+  ReadModeContext,
+  ReadValue,
+  TILE_EDITING_CLASS,
+  TileEditBar,
+  TileEditButton,
+  onTileKeyDown,
+  readText,
+  useFieldRead,
+  useTileEditing,
+  type ReadMode,
+} from "@/components/tiles/read-edit-tile";
 import { tileIsEmpty, valueAt } from "@/lib/ui/empty-tile";
 import { tileOfTabIndex, type DocumentLayout } from "./document-tiles";
 import { RecordSyncNotice, useRecordSaveSync } from "@/components/record-save-sync";
@@ -863,6 +875,8 @@ export function DocumentForm({
           ? form.formState.isDirty || stagedPages.length > 0
           : editDirty,
     onSave: async () => {
+      // Slice 40.75: on a saved document the changed tile is the open one, and it saves itself.
+      if (perTile && tileEditing.open) return saveTile(tileEditing.open);
       const valid = await form.trigger();
       if (!valid) return false;
       if (isCreate) return (await saveCreate(form.getValues())) !== null;
@@ -1042,6 +1056,51 @@ export function DocumentForm({
     if (ISSUE_FIELDS.has(root)) return "general";
     return "general";
   };
+  // Slice 40.75 — the read view, as on the Natural Person (natural-person-form.tsx, 40.72): each form tile —
+  // „Identificarea actului" and each of the type's frames — reads as text, and „Editează" opens one at a time.
+  // ⚠️ A tile's „Salvează" sends the whole record: the route replaces `customFields` whole, and „Identificarea
+  // actului" holds some of them (the identification group), so a part would drop the rest. With one tile open at a
+  // time every other tile is as saved, so the version still records that tile's change alone.
+  const perTile = tiled && !isCreate;
+  const canEditTiles = perTile && effectiveMode === "edit";
+  const baselineRef = useRef(baseline);
+  useEffect(() => {
+    baselineRef.current = baseline;
+  }, [baseline]);
+  const discardEdits = useCallback(() => {
+    form.reset(baselineRef.current.values);
+    setSubmitError(null);
+  }, [form]);
+  const tileEditing = useTileEditing<string>({ dirty: editDirty, discard: discardEdits });
+  const editingTile: string | null = canEditTiles ? tileEditing.open : null;
+  const readMode: ReadMode = {
+    reading: (name) => perTile && tileOfPath(name) !== editingTile,
+    value: (name) => valueAt(watchedValues, name),
+  };
+  /** Where a tile's first field is: „Identificarea actului" is a panel, every other tile a frame. */
+  const tileSelector = (tile: string): string => (tile === "general" ? `[data-panel="${tile}"]` : `[data-frame="${tile}"]`);
+  const saveTile = async (tile: string): Promise<boolean> => {
+    // The whole record is checked: the other tiles are as saved.
+    const valid = await form.trigger();
+    if (!valid) return false;
+    const saved = await doSave(form.getValues());
+    if (!saved) return false;
+    baselineRef.current = { values: saved };
+    setBaseline({ values: saved });
+    setViewingVersion(null);
+    if (mode === "view") setAssociatedEditing(false);
+    if (tileEditing.open === tile) tileEditing.close();
+    router.refresh();
+    return true;
+  };
+  const editButton = (tile: string, title: string) =>
+    canEditTiles && editingTile !== tile ? <TileEditButton tile={tile} title={title} onEdit={() => tileEditing.edit(tile, tileSelector(tile))} /> : null;
+  const editBar = (tile: string) =>
+    editingTile === tile ? (
+      <TileEditBar tile={tile} onSave={() => void saveTile(tile)} onCancel={tileEditing.cancel} saving={submitting} canSave={editDirty} error={submitError} />
+    ) : null;
+  const editingClass = (tile: string): string => (editingTile === tile ? ` ${TILE_EDITING_CLASS}` : "");
+  const editKeys = (tile: string) => onTileKeyDown(editingTile === tile, tileEditing.escape);
   // What the page needs to build the row: the type on screen, and the tiles
   // holding a framed field (HIGHLIGHTS ARE NOT LOST IN A HIDDEN TILE — the page
   // marks a hidden one). Sent as one signature so an unchanged render sends
@@ -1090,7 +1149,8 @@ export function DocumentForm({
     return emptyTiles.collapsed(
       tile,
       !amendedHere && tileIsEmpty(formState.defaultValues, paths, emptyFormValues) && tileIsEmpty(watchedValues, paths, emptyFormValues),
-      paths.some((path) => !!valueAt(errors, path) || !!(displayHighlights as Record<string, unknown> | null)?.[path]),
+      // 40.75: a tile open for editing is drawn whole.
+      paths.some((path) => !!valueAt(errors, path) || !!(displayHighlights as Record<string, unknown> | null)?.[path]) || editingTile === tile,
     );
   };
   // Slice 40.71: each tile's field paths in the order they are drawn — „Identificarea actului" its own fields and the
@@ -1122,7 +1182,8 @@ export function DocumentForm({
     const tile = tileOfPath(path);
     if (tile !== "general" && !docTilePaths.has(tile)) docTilePaths.set(tile, frameFieldPaths(tile));
   }
-  const docHidden = new Map([...docTilePaths].map(([tile, paths]) => [tile, emptyFields.hide(tile, paths, paths.some(docMarked))]));
+  // 40.75: an open tile shows every field.
+  const docHidden = new Map([...docTilePaths].map(([tile, paths]) => [tile, emptyFields.hide(tile, paths, paths.some(docMarked) || editingTile === tile)]));
   const hiddenFields: ReadonlySet<string> = new Set([...docHidden.values()].flat());
   const emptyFieldsLink = (tile: string) => (
     <EmptyFieldsLink
@@ -1137,22 +1198,32 @@ export function DocumentForm({
       <section
         {...tileProps(tile)}
         data-frame={tile}
-        className={`w-fit max-w-full rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${tileShown(tile) ? "" : " hidden"}`}
+        onKeyDown={editKeys(tile)}
+        className={`w-fit max-w-full rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${tileShown(tile) ? "" : " hidden"}${editingClass(tile)}`}
         style={tiles || folded ? { ...(tiles ? { order: tiles.order(tile) } : {}), ...(folded ? unitStyle(2) : {}) } : undefined}
       >
         {folded && (
           <EmptyTileLine
             tile={tile}
             title={title}
-            onAdd={emptyTiles.canAdd ? () => emptyTiles.open(tile, `[data-frame="${tile}"]`) : undefined}
+            onAdd={
+              emptyTiles.canAdd
+                ? () => {
+                    emptyTiles.open(tile, `[data-frame="${tile}"]`);
+                    // Slice 40.75: on a saved document „Adaugă" opens the frame in edit.
+                    if (canEditTiles) tileEditing.edit(tile, `[data-frame="${tile}"]`);
+                  }
+                : undefined
+            }
           />
         )}
         <div className={folded ? "hidden" : "contents"}>
-          <TileTitle title={title} subtitle={subtitle} />
+          <TileTitle title={title} subtitle={subtitle} action={editButton(tile, title)} />
           <FrameContext.Provider value={true}>
             <div className="flex flex-col gap-4">
               {children}
               {emptyFieldsLink(tile)}
+              {editBar(tile)}
             </div>
           </FrameContext.Provider>
         </div>
@@ -1316,7 +1387,7 @@ export function DocumentForm({
             documentId={documentId}
             scop={typeof scop === "string" ? scop : null}
             value={typeof value === "string" ? value : null}
-            editable={effectiveMode === "edit"}
+            editable={effectiveMode === "edit" && !readMode.reading(name)}
             onText={onSaleObjectText}
           />
         </div>
@@ -1443,6 +1514,10 @@ export function DocumentForm({
         title={t("tiles.general")}
         subtitle={t("tileSubtitles.general")}
         code={mode !== "create" ? documentCode : undefined}
+        action={editButton("general", t("tiles.general"))}
+        after={editBar("general")}
+        editing={editingTile === "general"}
+        onKeyDown={editKeys("general")}
       >
         <SelectField
           label={t("fields.type")}
@@ -1488,6 +1563,9 @@ export function DocumentForm({
           highlight={displayHighlights?.documentTypeId}
           width={DOC.documentTypeId}
           watchValue={watchedValues.documentTypeId}
+          // 40.75: the read view says the type's own name, without „(are formular)", and keeps the „no form" line.
+          readLabel={selectedType?.name}
+          hintInRead
           // Slice #37.85: see `showNoFormHint` — a reader who can configure types only, linking to
           // the engine with this type already chosen.
           hint={
@@ -1614,7 +1692,15 @@ export function DocumentForm({
   const formElement = (
     <form
       id="document-form"
-      onSubmit={form.handleSubmit(onSubmit, onInvalid)}
+      onSubmit={
+        perTile
+          ? (e) => {
+              // Slice 40.75: Enter in an open tile is its „Salvează"; there is no record-level save.
+              e.preventDefault();
+              if (editingTile) void saveTile(editingTile);
+            }
+          : form.handleSubmit(onSubmit, onInvalid)
+      }
       // Slice #37.20: as tiles the form is `contents`, its panels items of the
       // page's tile row.
       className={tiled ? "contents" : "flex flex-col gap-4"}
@@ -1627,6 +1713,7 @@ export function DocumentForm({
           sections; the version nav lives in the header (portalled), outside
           this fieldset, so its ◀/▶ buttons stay clickable on read-only
           historical versions. */}
+      <ReadModeContext.Provider value={readMode}>
       <fieldset disabled={effectiveMode === "view"} className="contents">
       {/* ── The page stack, and the notebook that may hold it ─────────────
           Slice #36.01. `panelsOf(tab)` returns the panels that belong on one
@@ -1713,8 +1800,10 @@ export function DocumentForm({
       )}
 
       </fieldset>
+      </ReadModeContext.Provider>
 
-      {submitError && (
+      {/* Slice 40.75: an open tile says its own refusal, under its „Salvează". */}
+      {submitError && !editingTile && (
         <p className={`text-sm text-red-600 dark:text-red-400${tiled ? " order-last basis-full" : ""}`} role="alert">
           {submitError}
         </p>
@@ -1929,15 +2018,18 @@ export function DocumentForm({
           onClick={() => router.back()}
         />
         <div className="flex items-center gap-3">
-          <IconButton
-            icon={Save}
-            label={t("buttons.save")}
-            variant="primary"
-            size="lg"
-            type="submit"
-            form="document-form"
-            disabled={saveDisabled}
-          />
+          {/* Slice 40.75: on a saved document each tile saves itself — Delete and the way back stay. */}
+          {!perTile && (
+            <IconButton
+              icon={Save}
+              label={t("buttons.save")}
+              variant="primary"
+              size="lg"
+              type="submit"
+              form="document-form"
+              disabled={saveDisabled}
+            />
+          )}
           <IconButton
             icon={Trash2}
             label={t("buttons.delete")}
@@ -1951,15 +2043,18 @@ export function DocumentForm({
     ) : (
       <div className="flex flex-col items-center gap-2 border-t border-crease pt-6 dark:border-zinc-800">
         <div className="flex items-center justify-center gap-3">
-          <IconButton
-            icon={Save}
-            label={t("buttons.save")}
-            variant="primary"
-            size="lg"
-            type="submit"
-            form="document-form"
-            disabled={saveDisabled}
-          />
+          {/* Slice 40.75: on a saved document each tile saves itself — Delete and the way back stay. */}
+          {!perTile && (
+            <IconButton
+              icon={Save}
+              label={t("buttons.save")}
+              variant="primary"
+              size="lg"
+              type="submit"
+              form="document-form"
+              disabled={saveDisabled}
+            />
+          )}
           {mode === "edit" && (
             <IconButton
               icon={Trash2}
@@ -2071,7 +2166,16 @@ function Section({
   panel,
   units,
   children,
+  action,
+  after,
+  editing = false,
+  onKeyDown,
 }: {
+  /** Slice 40.75: a tile's „Editează", its „Salvează"/„Renunță" bar, its outline and its keys — never inside a frame. */
+  action?: React.ReactNode;
+  after?: React.ReactNode;
+  editing?: boolean;
+  onKeyDown?: React.KeyboardEventHandler<HTMLElement>;
   /**
    * Slice #37.52: optional — a type's fields with no group sit under no
    * heading, the tile's own name („Detalii act") already saying whose they are.
@@ -2099,7 +2203,7 @@ function Section({
   // Slice 40.06: through TileTitle, as every tile's heading — the same markup it wrote out by hand.
   const heading = title === undefined ? null : (
     // Slice #37.90: inside a tile, a panel's subtitle reads in square brackets.
-    <TileTitle title={framed ? panelSubtitle(title) : title} subtitle={framed ? undefined : subtitle}>
+    <TileTitle title={framed ? panelSubtitle(title) : title} subtitle={framed ? undefined : subtitle} action={framed ? undefined : action}>
       {/* Slice #37.57: the system ID's one place — this corner. */}
       {code && <SystemIdCorner code={code} />}
     </TileTitle>
@@ -2116,10 +2220,14 @@ function Section({
     <section
       style={order === undefined ? unitStyle(units) : { ...unitStyle(units), order }}
       data-panel={panel}
-      className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+      onKeyDown={onKeyDown}
+      className={`rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${editing ? ` ${TILE_EDITING_CLASS}` : ""}`}
     >
       {heading}
-      <div className="flex flex-col gap-2">{children}</div>
+      <div className="flex flex-col gap-2">
+        {children}
+        {after}
+      </div>
     </section>
   );
 }
@@ -2159,6 +2267,7 @@ function Field({
   maxLength,
 }: FieldProps & { maxLength?: number }) {
   const hiddenEmpty = useFieldHidden(name); // Slice 40.71: behind its tile's „Arată N câmpuri goale"
+  const read = useFieldRead(name);
   const ring = usePulseRing(highlight);
   const className = [
     FIELD_BOX,
@@ -2169,6 +2278,15 @@ function Field({
   // Slice #37.31: the label ABOVE its box, the pair as wide as the box — or
   // the panel, for a box that fills it — and a long label wraps inside it.
   const box = stackedBoxStyle(fillRem !== undefined ? { ...width, fill: true } : width, fillRem ?? boxRem(width));
+  // Slice 40.75: the read view — the value as text, at the box's width.
+  if (read.reading) {
+    return (
+      <div className={STACKED_FIELD_CLASS} style={hiddenFieldStyle(hiddenEmpty, box)} data-empty-hidden={hiddenEmpty || undefined}>
+        <span className={STACKED_LABEL_CLASS}>{label}</span>
+        <ReadValue name={name} kind={width.kind} text={readText(read.value, type === "date" ? "date" : "text")} style={box} className={ring} />
+      </div>
+    );
+  }
   return (
     <label className={STACKED_FIELD_CLASS} style={hiddenFieldStyle(hiddenEmpty, box)} data-empty-hidden={hiddenEmpty || undefined}>
       <span className={STACKED_LABEL_CLASS}>{label}</span>
@@ -2224,7 +2342,13 @@ function SelectField({
   emptyOptionLabel,
   width,
   watchValue,
+  readLabel,
+  hintInRead = false,
 }: Omit<FieldProps, "width"> & {
+  /** Slice 40.75: the hint is a statement about the value, not a control, so the read view keeps it (the type's „no form"). */
+  hintInRead?: boolean;
+  /** Slice 40.75: the read view's words for the chosen value, where an option's own label says more (the type's „(are formular)"). */
+  readLabel?: string;
   /** Slice #37.15: `capped` — the rule stopped at XXL and the option shows in full on hover only. */
   width: FieldWidth & { capped?: boolean };
   /** The chosen value, so the box can show that option in full on hover (#37.12). */
@@ -2248,6 +2372,7 @@ function SelectField({
   hint?: React.ReactNode;
 }) {
   const hiddenEmpty = useFieldHidden(name); // Slice 40.71: behind its tile's „Arată N câmpuri goale"
+  const read = useFieldRead(name);
   const ring = usePulseRing(highlight);
   // Slice #27.02: an explicit id, and a <label htmlFor> instead of a <label>
   // wrapping the whole field. Two things a review round caught, both fixed by
@@ -2266,6 +2391,16 @@ function SelectField({
     .filter(Boolean)
     .join(" ");
   const chosenLabel = options.find((o) => o.value === (watchValue ?? ""))?.label;
+  // Slice 40.75: the read view — the chosen option's words; a blank choice reads as nothing.
+  if (read.reading) {
+    return (
+      <div className={STACKED_FIELD_CLASS} style={hiddenFieldStyle(hiddenEmpty, boxStyle(width))} data-empty-hidden={hiddenEmpty || undefined}>
+        <span className={STACKED_LABEL_CLASS}>{label}</span>
+        <ReadValue name={name} kind={width.kind} text={watchValue ? (readLabel ?? chosenLabel ?? "") : ""} style={boxStyle(width)} className={ring} />
+        {hintInRead && hint && <span className="text-xs text-fade dark:text-zinc-400">{hint}</span>}
+      </div>
+    );
+  }
   return (
     // `items-start`, so the label sits on the select's line instead of
     // drifting to the middle of a two-line block when a hint is present.
