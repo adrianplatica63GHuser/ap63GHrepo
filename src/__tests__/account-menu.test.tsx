@@ -96,7 +96,7 @@ describe("the account entry and its menu (40.59)", () => {
       </div>,
     );
     fireEvent.click(entry());
-    fireEvent.pointerDown(screen.getByRole("button", { name: "EN" }));
+    fireEvent.pointerDown(screen.getByRole("button", { name: "English" }));
     expect(menu().hidden).toBe(false);
     fireEvent.pointerDown(screen.getByTestId("outside"));
     expect(menu().hidden).toBe(true);
