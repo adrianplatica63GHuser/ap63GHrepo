@@ -55,10 +55,10 @@ describe("„Acte cu valabilitate limitată” (40.62)", () => {
   it("the chip: red when expired, amber inside the window, neutral beyond it; the words as before", () => {
     const chips = [...draw().querySelectorAll<HTMLElement>("[data-expiry-status]")];
     expect(chips.map((c) => c.textContent)).toEqual(["expiringDocuments.expired", "expiringDocuments.expiresInDays:5", "expiringDocuments.expiresInDays:40"]);
-    expect(chips[0].className).toMatch(/text-red-700/);
-    expect(chips[1].className).toMatch(/text-amber-700/);
+    expect(chips[0].className).toMatch(/\btext-alert\b/); // 40.76: the role token, red in both themes
+    expect(chips[1].className).toMatch(/\btext-warning\b/);
     expect(chips[2].className).toMatch(/text-ink/);
-    expect(chips[2].className).not.toMatch(/yellow|red|amber/);
+    expect(chips[2].className).not.toMatch(/yellow|red|amber|alert|warning/);
   });
 
   it("the title, a link to its document, with the type and the date dd.mm.yyyy under it, not monospace", () => {

@@ -127,6 +127,42 @@ test.describe("TC-SET-05 — „Noapte”", () => {
       await closeAccountMenu(page);
       expect(asked).toEqual([]);
       expect(await page.locator("aside img").count()).toBe(0);
+
+      // Step 8 (40.76) — the dashboard, converted to the role tokens, in both looks: its heading, its line under it and
+      // the expiring documents' frame each draw their token's colour, and the colour changes with the look.
+      const drawn: Record<string, Record<string, string>> = {};
+      for (const look of ["light", "dark"] as const) {
+        await lookOnLoad(page, look);
+        await page.goto("/");
+        await expect(page.locator("main h1").first()).toBeVisible({ timeout: 30_000 });
+        expect(await isDark(page)).toBe(look === "dark");
+        drawn[look] = await page.evaluate(() => {
+          const token = (name: string) => {
+            const probe = document.createElement("span");
+            probe.style.color = `var(--color-${name})`;
+            document.body.appendChild(probe);
+            const c = getComputedStyle(probe).color;
+            probe.remove();
+            return c;
+          };
+          const h1 = document.querySelector("main h1")!;
+          const under = h1.closest("header")?.querySelector(":scope > p");
+          const frame = document.querySelector("[data-expiring-frame]");
+          return {
+            heading: getComputedStyle(h1).color,
+            strong: token("strong"),
+            under: under ? getComputedStyle(under).color : "",
+            fade: token("fade"),
+            frame: frame ? getComputedStyle(frame).borderTopColor : token("card-rim"),
+            rim: token("card-rim"),
+          };
+        });
+        expect(drawn[look].heading, `${look}: the heading is --color-strong`).toBe(drawn[look].strong);
+        expect(drawn[look].under, `${look}: the line under it is --color-fade`).toBe(drawn[look].fade);
+        expect(drawn[look].frame, `${look}: the expiring frame's line is --color-card-rim`).toBe(drawn[look].rim);
+      }
+      expect(drawn.dark.heading).not.toBe(drawn.light.heading);
+      expect(drawn.dark.rim).not.toBe(drawn.light.rim);
     } finally {
       await lookOnLoad(page, "light");
       const base = test.info().project.use.baseURL ?? process.env.E2E_BASE_URL ?? "http://localhost:3000";

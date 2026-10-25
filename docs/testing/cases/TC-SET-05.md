@@ -45,8 +45,11 @@ Nothing.
 | 5 | Unticks it there | At once the page is light, and the menu's „Zi" is the one pressed |
 | 6 | Reloads | Light: the box unticked, „Zi" pressed |
 | 7 | (40.58; in the menu since 40.59) Opens „Persoane fizice", opens the menu, looks at „RO \| EN", presses „EN", then „RO" | RO filled in slate and pressed, EN outlined. „EN": the screen in English („Aspect"'s switch reads „Day \| Night"), EN the one pressed. „RO": Romanian again. Nothing is asked of flagcdn.com and the sidebar shows no image |
+| 8 | (Slice 40.76) Opens the dashboard in the light look, then in the dark one | Its heading, the line under it and the expiring documents' frame each in their role's colour — the heading the strongest text, the line the muted one, the frame the tile's rim — and each colour different in dark: the dashboard writes only the role names, which carry both |
 
 ## Notes from the runs
+
+**2026-10-25 — Slice 40.76; step 8 added.** The dashboard is the role tokens' pattern screen (chapter 11). The spec reads each colour against its token in both looks; not driven by hand first.
 
 **2026-10-25 — the account menu (Slice 40.59, Figura 8.3).** „Noapte" and „RO | EN" left the header for the account
 menu at the bottom of the sidebar; steps 1–3 and 5–7 rewritten for it. Written from the slice's own change and added to
