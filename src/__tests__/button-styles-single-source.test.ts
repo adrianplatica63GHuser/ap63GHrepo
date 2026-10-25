@@ -50,7 +50,6 @@ const ALLOWLIST: Record<string, string> = {
   // `AsyncSelect`, which is react-hook-form bound while this is a DOCUMENT
   // column on a person form. It is disabled while the submit is in flight, so
   // what is on screen and what is being written cannot diverge.
-  "app/admin/import/_components/id-card-person-dialog.tsx": "native <select> dropdown",
 
   // The helper itself documents the pattern it replaced; its tests assert the
   // helper never emits one.
