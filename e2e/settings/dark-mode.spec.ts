@@ -22,6 +22,7 @@ const bodyBg = (page: Page) => page.evaluate(() => getComputedStyle(document.bod
 
 test.describe("TC-SET-05 — „Noapte”", () => {
   test("în meniul contului, păstrat la reîncărcare, același în „Setări”", async ({ page }) => {
+    test.setTimeout(120_000); // 40.76: step 8 loads the dashboard twice
     await lookOnLoad(page, "light");
     await page.setViewportSize({ width: 1366, height: 900 });
     try {
