@@ -18,7 +18,7 @@ import {
   Controller,
 } from "react-hook-form";
 import { AsyncSelect } from "@/components/forms/async-select";
-import { AddressBlock } from "@/components/address/address-block";
+import { AddressBlock, AddressLine } from "@/components/address/address-block";
 import { GrowingText } from "@/components/forms/growing-text";
 import {
   JUDICIAL_PERSON as JP,
@@ -76,6 +76,8 @@ import { jpTileOfField, type JpTile } from "./person-tiles";
 import { firstErrorPath } from "@/lib/ui/tiles";
 import { RecordSyncNotice, useRecordSaveSync } from "@/components/record-save-sync";
 import { TileTitle } from "@/components/tiles/tile-title";
+import { EmptyTileLine, useEmptyTiles } from "@/components/tiles/empty-tile";
+import { tileIsEmpty, valueAt } from "@/lib/ui/empty-tile";
 import { DeceasedMark } from "@/components/persons/deceased-mark";
 
 type Props = {
@@ -158,6 +160,18 @@ async function fetchJudicialPersonTypes(): Promise<JudicialPersonTypeOption[]> {
   const body = await res.json();
   return (body.items ?? []) as JudicialPersonTypeOption[];
 }
+
+/**
+ * Slice 40.64: the fields of each form tile that can fold to one line, for `tileIsEmpty`. „Identitate" never folds —
+ * it holds the firm's name and its system ID; „Adrese" is its two panels, each folding on its own.
+ */
+type JpEmptyTile = "contactPersons" | "headquarters" | "correspondence";
+const ADDRESS_PARTS = ["streetLine", "postalCode", "locality", "county", "country", "notes"] as const;
+const JP_EMPTY_TILE_FIELDS: Record<JpEmptyTile, readonly string[]> = {
+  contactPersons: ["phone", "email", "contactPerson1Id", "contactPerson2Id"],
+  headquarters: ADDRESS_PARTS.map((part) => `addresses.HEADQUARTERS.${part}`),
+  correspondence: ADDRESS_PARTS.map((part) => `addresses.CORRESPONDENCE.${part}`),
+};
 
 export function JudicialPersonForm({
   mode,
@@ -605,6 +619,25 @@ export function JudicialPersonForm({
   const { register, formState, control, setValue, getValues } = form;
   const errors = formState.errors;
 
+  // Slice 40.64: a form tile with nothing in it is one line — as on the Natural Person (natural-person-form.tsx).
+  const emptyTiles = useEmptyTiles({ active: !isCreate, canAdd: effectiveMode === "edit" });
+  const marked = (path: string): boolean =>
+    !!valueAt(errors, path) ||
+    !!(path.startsWith("addresses.")
+      ? valueAt(displayHighlights?.addresses, path.slice("addresses.".length))
+      : (displayHighlights?.fields as Record<string, unknown> | undefined)?.[path]);
+  const folded = (tile: JpEmptyTile): boolean =>
+    emptyTiles.collapsed(
+      tile,
+      tileIsEmpty(formState.defaultValues, JP_EMPTY_TILE_FIELDS[tile], emptyFormValues) && tileIsEmpty(watchedValues, JP_EMPTY_TILE_FIELDS[tile], emptyFormValues),
+      JP_EMPTY_TILE_FIELDS[tile].some(marked),
+    );
+  const addTo = (tile: JpEmptyTile, panel: string) =>
+    emptyTiles.canAdd ? () => emptyTiles.open(tile, `[data-panel="${panel}"]`) : undefined;
+  const contactPersonsFolded = folded("contactPersons");
+  const headquartersFolded = folded("headquarters");
+  const correspondenceFolded = folded("correspondence");
+
   // Is CUI already set? Show lock hint in edit mode.
   const cuiIsLocked =
     mode === "edit" && Boolean(initialValues?.cuiNumber?.trim());
@@ -805,6 +838,8 @@ export function JudicialPersonForm({
 
       {/* ── Contact Persons ──────────────────────────────────────────────── */}
       <section style={PANEL_UNIT_STYLE.judicialPerson.contactPersons} data-panel="contact-persons" {...tileProps("contactPersons")} className={`rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${hiddenClass("contactPersons")}`}>
+        {contactPersonsFolded && <EmptyTileLine tile="contactPersons" title={t("tiles.contactPersons")} onAdd={addTo("contactPersons", "contact-persons")} />}
+        <div className={contactPersonsFolded ? "hidden" : "contents"}>
         <TileTitle title={t("tiles.contactPersons")} subtitle={t("tileSubtitles.contactPersons")} className="mb-3" />
         <div className="flex flex-col gap-3">
           {/* Slice #38.31: the firm's own phone and e-mail, above its contact persons —
@@ -853,6 +888,7 @@ export function JudicialPersonForm({
             {t("hints.contactPersonNotInSystem")}
           </p>
         </div>
+        </div>
       </section>
 
       {/* Slice #37.18: „Adrese" is one tile of two panels — the registered
@@ -869,6 +905,7 @@ export function JudicialPersonForm({
         register={register}
         errors={errors.addresses?.HEADQUARTERS}
         highlights={displayHighlights?.addresses.HEADQUARTERS}
+        collapsed={headquartersFolded ? { tile: "headquarters", onAdd: addTo("headquarters", "addresses.HEADQUARTERS") } : undefined}
         footer={
           <Controller
             control={control}
@@ -899,6 +936,9 @@ export function JudicialPersonForm({
                     if (e.target.checked) {
                       const hq = getValues("addresses.HEADQUARTERS");
                       setValue("addresses.CORRESPONDENCE", { ...hq }, { shouldDirty: true });
+                    } else {
+                      // Slice 40.64: unticked to give it its own address — the panel opens, the focus in it.
+                      emptyTiles.open("correspondence", '[data-panel="addresses.CORRESPONDENCE"]');
                     }
                   }}
                   className="accent-cta"
@@ -913,6 +953,24 @@ export function JudicialPersonForm({
 
       {/* ── Correspondence Address — only when not same as registered: its own
           3-unit panel, as on the Natural Person. ── */}
+      {/* Slice 40.64: on a saved record, the same as the registered address reads as one line, „aceeași cu sediul
+          social", whose „Adaugă" unticks the box and opens the panel. */}
+      {correspondenceSameAsHq && !isCreate && (
+        <AddressLine
+          prefix="addresses.CORRESPONDENCE"
+          tile="correspondence"
+          title={t("sections.correspondenceAddress")}
+          state="sameAsHq"
+          onAdd={
+            emptyTiles.canAdd
+              ? () => {
+                  setValue("correspondenceSameAsHq", false, { shouldDirty: true });
+                  emptyTiles.open("correspondence", '[data-panel="addresses.CORRESPONDENCE"]');
+                }
+              : undefined
+          }
+        />
+      )}
       {!correspondenceSameAsHq && (
         <AddressBlock<FormValues>
           title={t("sections.correspondenceAddress")}
@@ -920,6 +978,7 @@ export function JudicialPersonForm({
           register={register}
           errors={errors.addresses?.CORRESPONDENCE}
           highlights={displayHighlights?.addresses.CORRESPONDENCE}
+          collapsed={correspondenceFolded ? { tile: "correspondence", onAdd: addTo("correspondence", "addresses.CORRESPONDENCE") } : undefined}
         />
       )}
       </div>{/* end „Adrese" tile */}

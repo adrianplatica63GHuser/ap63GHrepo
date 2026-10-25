@@ -1148,6 +1148,16 @@
       "announceFirst": "Coloana {name}, prima din {total}",
       "announce": "Coloana {name}, a {n}-a din {total}",
       "hint": "Trageți numele coloanei ca s-o mutați; Alt + ← / → o mută cu un loc."
+    },
+    "emptyTile": {
+      "add": "Adaugă",
+      "addTo": "Adaugă — {tile}",
+      "state": {
+        "empty": "necompletat",
+        "sameAsHome": "aceeași cu domiciliul",
+        "sameAsHq": "aceeași cu sediul social",
+        "noIdDocument": "niciun act înregistrat"
+      }
     }
   },
   "naturalPerson": {

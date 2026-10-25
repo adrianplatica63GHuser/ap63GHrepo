@@ -1148,6 +1148,16 @@
       "announceFirst": "Column {name}, 1 of {total}",
       "announce": "Column {name}, {n} of {total}",
       "hint": "Drag a column's name to move it; Alt + ← / → moves it one place."
+    },
+    "emptyTile": {
+      "add": "Add",
+      "addTo": "Add — {tile}",
+      "state": {
+        "empty": "not filled in",
+        "sameAsHome": "same as home address",
+        "sameAsHq": "same as registered office",
+        "noIdDocument": "no ID document recorded"
+      }
     }
   },
   "naturalPerson": {

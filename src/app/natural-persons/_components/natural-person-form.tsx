@@ -34,7 +34,7 @@ import {
   stackedBoxStyle,
   type FieldWidth,
 } from "@/lib/ui/field-widths";
-import { AddressBlock } from "@/components/address/address-block";
+import { AddressBlock, AddressLine } from "@/components/address/address-block";
 import { refusalCode, safeMutate } from "@/lib/api/safe-mutate";
 import { HintBubble } from "@/lib/ui/hint-bubble";
 import { ArrowLeft, Pencil, Save, Trash2, X } from "lucide-react";
@@ -80,6 +80,8 @@ import { RecordSyncNotice, useRecordSaveSync } from "@/components/record-save-sy
 import { personAgeText } from "@/lib/persons/person-age";
 import { ParentsFold } from "@/components/persons/parents-fold";
 import { TileTitle } from "@/components/tiles/tile-title";
+import { EmptyTileLine, useEmptyTiles } from "@/components/tiles/empty-tile";
+import { tileIsEmpty, valueAt } from "@/lib/ui/empty-tile";
 import { ParentsResolution } from "@/components/persons/parents-resolution";
 import {
   blankDrafts,
@@ -154,6 +156,19 @@ async function fetchVersions(personId: string): Promise<VersionItem[]> {
   const body = await res.json();
   return (body.items ?? []) as VersionItem[];
 }
+
+/**
+ * Slice 40.64: the fields of each form tile that can fold to one line, for `tileIsEmpty`. „Identitate" never folds —
+ * it holds the record's name and its system ID; „Adrese" is its two panels, each folding on its own.
+ */
+type NpEmptyTile = "idCard" | "contact" | "home" | "correspondence";
+const ADDRESS_PARTS = ["streetLine", "postalCode", "locality", "county", "country", "notes"] as const;
+const NP_EMPTY_TILE_FIELDS: Record<NpEmptyTile, readonly string[]> = {
+  idCard: ["idDocumentType", "idDocumentNumber", "idCardNumber", "idValidFrom", "idValidUntil", "citizenshipId", "idIssuingAuthority", "idMrzRaw"],
+  contact: ["personalPhone1", "personalPhone2", "workPhone", "personalEmail1", "personalEmail2", "workEmail"],
+  home: ADDRESS_PARTS.map((part) => `addresses.HOME.${part}`),
+  correspondence: ADDRESS_PARTS.map((part) => `addresses.CORRESPONDENCE.${part}`),
+};
 
 export function NaturalPersonForm({
   mode,
@@ -684,6 +699,30 @@ export function NaturalPersonForm({
   const { register, control, formState } = form;
   const errors = formState.errors;
 
+  // Slice 40.64: a form tile with nothing in it is one line — its title, a short state and „Adaugă"
+  // (src/components/tiles/empty-tile.tsx). Empty means empty as loaded — a version's `form.reset` included — AND empty
+  // now: emptying a box while typing never folds the tile away under the cursor, and a value the screen fills in on
+  // opening (Acte's „Descrierea obiectului") keeps its tile open. Drawn whole
+  // while a version marks a field in it, or a field in it carries an error; never folded on a new record.
+  const emptyTiles = useEmptyTiles({ active: !isCreate, canAdd: effectiveMode === "edit" });
+  const marked = (path: string): boolean =>
+    !!valueAt(errors, path) ||
+    !!(path.startsWith("addresses.")
+      ? valueAt(displayHighlights?.addresses, path.slice("addresses.".length))
+      : (displayHighlights?.fields as Record<string, unknown> | undefined)?.[path]);
+  const folded = (tile: NpEmptyTile, alsoFull = false): boolean =>
+    emptyTiles.collapsed(
+      tile,
+      !alsoFull && tileIsEmpty(formState.defaultValues, NP_EMPTY_TILE_FIELDS[tile], emptyFormValues) && tileIsEmpty(watchedValues, NP_EMPTY_TILE_FIELDS[tile], emptyFormValues),
+      NP_EMPTY_TILE_FIELDS[tile].some(marked),
+    );
+  const addTo = (tile: NpEmptyTile, panel: string) =>
+    emptyTiles.canAdd ? () => emptyTiles.open(tile, `[data-panel="${panel}"]`) : undefined;
+  const idCardFolded = folded("idCard", !!linkedIdCard);
+  const contactFolded = folded("contact");
+  const homeFolded = folded("home");
+  const correspondenceFolded = folded("correspondence");
+
   // Is the CNP already set? Show lock hint wherever the field is editable.
   //                                                          (Slice #32.18)
   // `natural_person_lock_cnp` (drizzle/0000_initial_schema.sql) rejects the
@@ -915,6 +954,8 @@ export function NaturalPersonForm({
 
       {/* ID Card — official document data; populated manually or via scanner */}
       <section style={NP_PANEL_STYLE.idCard} data-panel="id-card" {...tileProps("idCard")} className={`rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${hiddenClass("idCard")}`}>
+        {idCardFolded && <EmptyTileLine tile="idCard" title={t("tiles.idCard")} state="noIdDocument" onAdd={addTo("idCard", "id-card")} />}
+        <div className={idCardFolded ? "hidden" : "contents"}>
         <TileTitle title={t("tiles.idCard")} subtitle={t("tileSubtitles.idCard")} />
         {/* Slice #37.26 — the rows of `NP_ROWS.idCard`. */}
         <div className="flex flex-col gap-2">
@@ -1053,10 +1094,13 @@ export function NaturalPersonForm({
             </div>
           )}
         </div>
+        </div>
       </section>
 
       {/* Contact — phones and emails */}
       <section style={NP_PANEL_STYLE.contact} data-panel="contact" {...tileProps("contact")} className={`rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${hiddenClass("contact")}`}>
+        {contactFolded && <EmptyTileLine tile="contact" title={t("tiles.contact")} onAdd={addTo("contact", "contact")} />}
+        <div className={contactFolded ? "hidden" : "contents"}>
         <TileTitle title={t("tiles.contact")} subtitle={t("tileSubtitles.contact")} />
         {/* Slice #37.26 — the rows of `NP_ROWS.contact`; the panel is as wide as the two phones. */}
         <div className="flex flex-col gap-2">
@@ -1111,6 +1155,7 @@ export function NaturalPersonForm({
             width={NP.workEmail}
           />
         </div>
+        </div>
       </section>
 
       {/* Slice #37.17: „Adrese" is one tile — the home address and, when it
@@ -1125,6 +1170,7 @@ export function NaturalPersonForm({
         register={register}
         errors={errors.addresses?.HOME}
         highlights={displayHighlights?.addresses.HOME}
+        collapsed={homeFolded ? { tile: "home", onAdd: addTo("home", "addresses.HOME") } : undefined}
         footer={
             <Controller
               control={form.control}
@@ -1149,6 +1195,9 @@ export function NaturalPersonForm({
                       if (e.target.checked) {
                         const home = form.getValues("addresses.HOME");
                         form.setValue("addresses.CORRESPONDENCE", { ...home }, { shouldDirty: true });
+                      } else {
+                        // Slice 40.64: unticked to give it its own address — the panel opens, the focus in it.
+                        emptyTiles.open("correspondence", '[data-panel="addresses.CORRESPONDENCE"]');
                       }
                     }}
                     className="accent-cta"
@@ -1161,7 +1210,24 @@ export function NaturalPersonForm({
         }
       />
 
-      {/* CORRESPONDENCE address — only when not same as home */}
+      {/* CORRESPONDENCE address — only when not same as home. Slice 40.64: on a saved record, the same as home reads
+          as one line, „aceeași cu domiciliul", whose „Adaugă" unticks the box and opens the panel. */}
+      {watchedValues.correspondenceSameAsHome && !isCreate && (
+        <AddressLine
+          prefix="addresses.CORRESPONDENCE"
+          tile="correspondence"
+          title={t("sections.correspondenceAddress")}
+          state="sameAsHome"
+          onAdd={
+            emptyTiles.canAdd
+              ? () => {
+                  form.setValue("correspondenceSameAsHome", false, { shouldDirty: true });
+                  emptyTiles.open("correspondence", '[data-panel="addresses.CORRESPONDENCE"]');
+                }
+              : undefined
+          }
+        />
+      )}
       {!watchedValues.correspondenceSameAsHome && (
         <AddressBlock<FormValues>
           title={t("sections.correspondenceAddress")}
@@ -1169,6 +1235,7 @@ export function NaturalPersonForm({
           register={register}
           errors={errors.addresses?.CORRESPONDENCE}
           highlights={displayHighlights?.addresses.CORRESPONDENCE}
+          collapsed={correspondenceFolded ? { tile: "correspondence", onAdd: addTo("correspondence", "addresses.CORRESPONDENCE") } : undefined}
         />
       )}
       </div>{/* end „Adrese" tile */}

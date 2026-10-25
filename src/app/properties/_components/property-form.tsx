@@ -109,6 +109,8 @@ import { propTileOfField, type PropTile } from "./property-tiles";
 import { firstErrorPath } from "@/lib/ui/tiles";
 import { RecordSyncNotice, useRecordSaveSync } from "@/components/record-save-sync";
 import { TileTitle } from "@/components/tiles/tile-title";
+import { EmptyTileLine, useEmptyTiles } from "@/components/tiles/empty-tile";
+import { tileIsEmpty, valueAt } from "@/lib/ui/empty-tile";
 
 // ---------------------------------------------------------------------------
 // Version history fetch (Slice #18.02)
@@ -255,6 +257,15 @@ function parcelMatchesOf(err: unknown): ParcelMatch[] | null {
   if (body?.code !== "PARCEL_EXISTS" || !Array.isArray(body.matches)) return null;
   return body.matches as ParcelMatch[];
 }
+
+/**
+ * Slice 40.64: the address tile's fields, for `tileIsEmpty` — the one form tile of a property that folds to one line.
+ * „Date cadastrale" holds the property's type and system ID and never folds; „Puncte de contur", the map and Street
+ * View have their own empty states.
+ */
+const PROPERTY_ADDRESS_FIELDS = ["streetLine", "streetViewStreetLine", "postalCode", "locality", "county", "country", "notes"].map(
+  (part) => `address.${part}`,
+);
 
 export function PropertyForm({
   mode,
@@ -1161,6 +1172,16 @@ export function PropertyForm({
   const { register, control, formState } = form;
   const errors = formState.errors;
 
+  // Slice 40.64: an empty address tile is one line — as on the Natural Person (natural-person-form.tsx).
+  const emptyTiles = useEmptyTiles({ active: !isCreate, canAdd: effectiveMode === "edit" });
+  const addressFolded = emptyTiles.collapsed(
+    "address",
+    tileIsEmpty(formState.defaultValues, PROPERTY_ADDRESS_FIELDS, emptyFormValues) && tileIsEmpty(watchedValues, PROPERTY_ADDRESS_FIELDS, emptyFormValues),
+    PROPERTY_ADDRESS_FIELDS.some(
+      (path) => !!valueAt(errors, path) || !!valueAt(displayHighlights, path),
+    ),
+  );
+
   return (
     <FieldPulseContext.Provider value={pulsing}>
     <form
@@ -1417,6 +1438,8 @@ export function PropertyForm({
         {!typeConfig.hideAddress && (
           <fieldset disabled={effectiveMode === "view"} className={`m-0 border-0 p-0${hiddenClass("address")}`} style={PANEL_UNIT_STYLE.property.address} {...tileProps("address")}>
             <section data-panel="address" className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+              {addressFolded && <EmptyTileLine tile="address" title={t("tiles.address")} onAdd={emptyTiles.canAdd ? () => emptyTiles.open("address", '[data-panel="address"]') : undefined} />}
+              <div className={addressFolded ? "hidden" : "contents"}>
               <TileTitle title={t("tiles.address")} subtitle={t("tileSubtitles.address")} />
               <div className="flex flex-col gap-2">
                 <Field
@@ -1529,6 +1552,7 @@ export function PropertyForm({
                   width={ADDRESS.notes}
                   fillRem={PANEL_UNIT_INNER_REM.property.address}
                 />
+              </div>
               </div>
             </section>
           </fieldset>

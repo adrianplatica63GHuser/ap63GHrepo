@@ -99,6 +99,8 @@ import { firstErrorPath } from "@/lib/ui/tiles";
 import { panelSubtitle } from "@/lib/ui/panel-subtitle";
 import { hasPartiesTile } from "@/lib/documents/sale-parties";
 import { TileTitle } from "@/components/tiles/tile-title";
+import { EmptyTileLine, useEmptyTiles } from "@/components/tiles/empty-tile";
+import { tileIsEmpty, valueAt } from "@/lib/ui/empty-tile";
 import { tileOfTabIndex, type DocumentLayout } from "./document-tiles";
 import { RecordSyncNotice, useRecordSaveSync } from "@/components/record-save-sync";
 import { DeceasedMark } from "@/components/persons/deceased-mark";
@@ -971,6 +973,8 @@ export function DocumentForm({
   // under that deed's link („Actul modificat"), and only while there is none.
   const amendedGroup = customFieldGroups.find((g) => isAmendedDeedGroup(g.label));
   const parentDeed = useParentDeed(amendedGroup ? documentId : undefined);
+  // Slice 40.64: which empty frames „Adaugă" has opened this visit (`frameBlock` below).
+  const emptyTiles = useEmptyTiles({ active: !isCreate, canAdd: effectiveMode === "edit" });
   const otherGroups = customFieldGroups.filter(
     (g) => g !== feesGroup && g !== financialGroup && g !== certificatesGroup && g !== identificationGroup && g !== amendedGroup,
   );
@@ -1059,19 +1063,49 @@ export function DocumentForm({
   // Hidden, never unmounted, like every form tile (#37.20).
   // Slice #38.30: `subtitle`, the line under the title — the fields tile's; a
   // notebook tab's tile has none until its type's tiles are rebuilt (#38.33–#38.34).
-  const frameBlock = (tile: string, title: string, children: React.ReactNode, subtitle?: string) => (
-    <section
-      {...tileProps(tile)}
-      data-frame={tile}
-      className={`w-fit max-w-full rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${tileShown(tile) ? "" : " hidden"}`}
-      style={tiles ? { order: tiles.order(tile) } : undefined}
-    >
-      <TileTitle title={title} subtitle={subtitle} />
-      <FrameContext.Provider value={true}>
-        <div className="flex flex-col gap-4">{children}</div>
-      </FrameContext.Provider>
-    </section>
-  );
+  // Slice 40.64: a frame whose type fields are all empty on a saved document is one line — its title, „necompletat"
+  // and „Adaugă" (src/components/tiles/empty-tile.tsx). Empty as loaded and empty now (natural-person-form.tsx says why); drawn whole
+  // while a version marks a field in it or a field in it carries an error. „Actul modificat" linked to its deed is not
+  // empty, whatever its four free-text fields hold.
+  const frameFieldPaths = (tile: string): string[] =>
+    customFieldGroups
+      .flatMap((g) => g.fields)
+      .map((f) => `customFields.${f.key}`)
+      .filter((path) => tileOfPath(path) === tile);
+  const frameFolded = (tile: string): boolean => {
+    const paths = frameFieldPaths(tile);
+    const amendedHere = !!amendedGroup && !!parentDeed && amendedGroup.fields.some((f) => tileOfPath(`customFields.${f.key}`) === tile);
+    return emptyTiles.collapsed(
+      tile,
+      !amendedHere && tileIsEmpty(formState.defaultValues, paths, emptyFormValues) && tileIsEmpty(watchedValues, paths, emptyFormValues),
+      paths.some((path) => !!valueAt(errors, path) || !!(displayHighlights as Record<string, unknown> | null)?.[path]),
+    );
+  };
+  const frameBlock = (tile: string, title: string, children: React.ReactNode, subtitle?: string) => {
+    const folded = frameFolded(tile);
+    return (
+      <section
+        {...tileProps(tile)}
+        data-frame={tile}
+        className={`w-fit max-w-full rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${tileShown(tile) ? "" : " hidden"}`}
+        style={tiles ? { order: tiles.order(tile) } : undefined}
+      >
+        {folded && (
+          <EmptyTileLine
+            tile={tile}
+            title={title}
+            onAdd={emptyTiles.canAdd ? () => emptyTiles.open(tile, `[data-frame="${tile}"]`) : undefined}
+          />
+        )}
+        <div className={folded ? "hidden" : "contents"}>
+          <TileTitle title={title} subtitle={subtitle} />
+          <FrameContext.Provider value={true}>
+            <div className="flex flex-col gap-4">{children}</div>
+          </FrameContext.Provider>
+        </div>
+      </section>
+    );
+  };
 
   // An error in a hidden tile: show the tile (for this visit), scroll to the
   // field, focus it and pulse it — the Natural Person's `onInvalid` (#37.17).

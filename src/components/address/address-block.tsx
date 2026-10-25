@@ -41,6 +41,7 @@ import {
 import { STACKED_FIELD_CLASS, STACKED_LABEL_CLASS, STACKED_ROW_CLASS } from "@/lib/ui/stacked";
 import { EMPTY_MARK, FIELD_BOX, fieldBorder } from "@/lib/ui/field-box";
 import { TileTitle } from "@/components/tiles/tile-title";
+import { EmptyTileLine, type EmptyTileState } from "@/components/tiles/empty-tile";
 
 /** Per-subfield version-diff highlight frames (Slice #18.05). Keys match the
  *  address subfield names; omitted = no frame. */
@@ -98,6 +99,11 @@ type Props<TFormValues extends FieldValues> = {
    * room of its own beside this one.
    */
   footer?: ReactNode;
+  /**
+   * Slice 40.64: the panel is empty on a saved record — drawn as one line, its title, „necompletat" and „Adaugă"
+   * (`onAdd`, absent on a read-only view). The fields stay mounted behind it, hidden.
+   */
+  collapsed?: { tile: string; onAdd?: () => void };
 };
 
 export function AddressBlock<TFormValues extends FieldValues>({
@@ -109,6 +115,7 @@ export function AddressBlock<TFormValues extends FieldValues>({
   warnFields,
   highlights,
   footer,
+  collapsed,
 }: Props<TFormValues>) {
   const t = useTranslations("address");
   const f = (sub: string) => `${prefix}.${sub}` as FieldPath<TFormValues>;
@@ -147,6 +154,8 @@ export function AddressBlock<TFormValues extends FieldValues>({
   );
   return (
     <section style={NP_PANEL_STYLE.address} data-panel={prefix} className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      {collapsed && <EmptyTileLine tile={collapsed.tile} title={title} onAdd={collapsed.onAdd} />}
+      <div className={collapsed ? "hidden" : "contents"}>
       <TileTitle title={title} subtitle={subtitle} />
       <div className="flex flex-col gap-2">
         {ADDRESS_ROWS.map((row) => (
@@ -158,6 +167,31 @@ export function AddressBlock<TFormValues extends FieldValues>({
         ))}
         {footer && <div className="pt-1" data-address-footer>{footer}</div>}
       </div>
+      </div>
+    </section>
+  );
+}
+
+/**
+ * Slice 40.64: an address panel that is only one line — the correspondence address that is the same as the home (or
+ * the registered) one: „aceeași cu domiciliul". Its own panel, as wide as the block, so the tile keeps its shape.
+ */
+export function AddressLine({
+  prefix,
+  tile,
+  title,
+  state,
+  onAdd,
+}: {
+  prefix: string;
+  tile: string;
+  title: string;
+  state: EmptyTileState;
+  onAdd?: () => void;
+}) {
+  return (
+    <section style={NP_PANEL_STYLE.address} data-panel={prefix} className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <EmptyTileLine tile={tile} title={title} state={state} onAdd={onAdd} />
     </section>
   );
 }
