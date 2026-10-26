@@ -65,6 +65,11 @@ $RunnerLog  = Join-Path $Channel 'runner.log'
 $ConsoleLog = Join-Path $Channel 'runner.console.log'
 $Pwsh       = (Get-Process -Id $PID).Path                # the pwsh.exe running this - PowerShell 7 by construction
 $Conhost    = Join-Path $env:SystemRoot 'System32\conhost.exe'
+# Slice 40.81: a Store-installed pwsh lives in a versioned folder under WindowsApps that every update replaces -
+# 7.6.7 -> 7.6.8 left the task launching a path that was gone, exiting 0x0 with no runner, for a day. Its app execution
+# alias in %LOCALAPPDATA% does not move, so the task names that; the versioned path stays the last launcher tried.
+$StoreAlias = Join-Path $env:LOCALAPPDATA 'Microsoft\WindowsApps\pwsh.exe'
+$TaskPwsh   = if ($Pwsh -match '\\WindowsApps\\Microsoft\.PowerShell_' -and (Test-Path -LiteralPath $StoreAlias)) { $StoreAlias } else { $Pwsh }
 $StaleAfter = 30                                         # seconds; the runner beats every 5
 
 function Get-RunnerProcesses {
@@ -101,12 +106,12 @@ function Remove-RunnerTask {
     }
 }
 
-function Register-RunnerTask([ValidateSet('headless', 'hidden')] [string] $Launcher) {
+function Register-RunnerTask([ValidateSet('headless', 'hidden')] [string] $Launcher, [string] $Exe) {
     $psArgs = "-NoProfile -NonInteractive -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$Wrapper`""
     $action = if ($Launcher -eq 'headless') {
-        New-ScheduledTaskAction -Execute $Conhost -Argument "--headless `"$Pwsh`" $psArgs" -WorkingDirectory $Repo
+        New-ScheduledTaskAction -Execute $Conhost -Argument "--headless `"$Exe`" $psArgs" -WorkingDirectory $Repo
     } else {
-        New-ScheduledTaskAction -Execute $Pwsh -Argument $psArgs -WorkingDirectory $Repo
+        New-ScheduledTaskAction -Execute $Exe -Argument $psArgs -WorkingDirectory $Repo
     }
     $user      = [Security.Principal.WindowsIdentity]::GetCurrent().Name
     $trigger   = New-ScheduledTaskTrigger -AtLogOn -User $user
@@ -209,6 +214,13 @@ if ($Check) {
     }
     $info = Get-ScheduledTaskInfo -TaskPath $TaskPath -TaskName $TaskName
     Write-Host "  task      : $TaskPath$TaskName - $($task.State) (last result 0x$('{0:X}' -f $info.LastTaskResult), last run $($info.LastRunTime))"
+    # Slice 40.81: the pwsh the task launches must still exist - a Store update moves a versioned path, and the task then
+    # "succeeds" (0x0) without starting anything.
+    $act = $task.Actions | Select-Object -First 1
+    $taskExe = if ($act.Execute -match 'pwsh\.exe$') { $act.Execute } elseif ($act.Arguments -match '"([^"]*pwsh\.exe)"') { $Matches[1] } else { $null }
+    if ($taskExe -and -not (Test-Path -LiteralPath $taskExe)) {
+        Write-Host "  pwsh      : GONE - the task launches $taskExe, which no longer exists (PowerShell was updated). Re-run the installer: pwsh -NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`""
+    }
     $procs = Get-RunnerProcesses
     Write-Host "  processes : $(if ($procs) { ($procs | ForEach-Object { "$($_.Name) $($_.ProcessId)" }) -join ', ' } else { 'none' })"
     $age = Get-HeartbeatAge
@@ -260,11 +272,14 @@ Stop-Runner
 
 Write-Host "`n[4/5] registering $TaskPath$TaskName"
 $alive = $null
-foreach ($launcher in 'headless', 'hidden') {
-    Register-RunnerTask $launcher
+$tries = @(@{ Launcher = 'headless'; Exe = $TaskPwsh }, @{ Launcher = 'hidden'; Exe = $TaskPwsh })
+if ($TaskPwsh -ne $Pwsh) { $tries += @{ Launcher = 'headless'; Exe = $Pwsh } }
+foreach ($try in $tries) {
+    $launcher = $try.Launcher
+    Register-RunnerTask $launcher $try.Exe
     $since = [datetime]::UtcNow
     Start-ScheduledTask -TaskPath $TaskPath -TaskName $TaskName
-    Write-Host "  started with the '$launcher' launcher - waiting for the runner's heartbeat"
+    Write-Host "  started with the '$launcher' launcher ($($try.Exe)) - waiting for the runner's heartbeat"
     $alive = Wait-Heartbeat $since
     if ($alive) { break }
     $info = Get-ScheduledTaskInfo -TaskPath $TaskPath -TaskName $TaskName
@@ -274,7 +289,7 @@ foreach ($launcher in 'headless', 'hidden') {
     Stop-Runner
 }
 if (-not $alive) {
-    throw "The runner did not start with either launcher. Run it by hand to see why: pwsh -NoProfile -File `"$Wrapper`""
+    throw "The runner did not start with any launcher. Run it by hand to see why: pwsh -NoProfile -File `"$Wrapper`""
 }
 
 Write-Host "`n[5/5] ping"
