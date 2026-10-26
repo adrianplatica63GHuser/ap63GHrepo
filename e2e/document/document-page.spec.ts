@@ -62,12 +62,9 @@ import path from "path";
 import { test, expect, type Locator, type Page } from "../helpers/test";
 import { E2E_MARKER, createDocumentOfType, removeLeftovers, removeRecord } from "../helpers/records";
 import { openFromSidebar } from "../helpers/sidebar";
-import { expectFixedFieldsHold, expectStableColumns, expectStableWidths, expectUnitGrid, photograph } from "../helpers/field-widths";
-import { openEmptyTiles, pressTileButton, showTile, TILE_GROUP, tileBox } from "../helpers/tiles";
-import { DOCUMENT, PAGES_PANEL_REM, TEMPLATE_FIELD, UNIT_GAP_REM, UNIT_REM } from "../../src/lib/ui/field-widths";
-
-/** The widest value each FIXED box on the Document must hold (`field-widths.ts`). */
-const SAMPLES: Record<string, string> = { nrDocument: DOCUMENT.nrDocument.sample };
+import { expectDropdownsWrap, expectDropdownWraps, expectStableColumns, expectStableWidths, expectUnitGrid, photograph } from "../helpers/field-widths";
+import { editTile, openEmptyTiles, pressTileButton, showTile, TILE_GROUP, tileBox } from "../helpers/tiles";
+import { PAGES_PANEL_REM, UNIT_GAP_REM, UNIT_REM } from "../../src/lib/ui/field-widths";
 
 /**
  * The seeded types with fields of their own (the six `measure-fields` read),
@@ -86,8 +83,9 @@ const TYPES_WITH_FIELDS = [
 /**
  * The fixed-width checks on the open document: same widths at 1400 and 2400
  * px, then — with every tile shown at once („Toate", Slice #37.20: the notebook's
- * pages are tiles now) — the same again, every number box holds its sample,
- * every dropdown its longest option, and no panel is wider inside than out.
+ * pages are tiles now) — the same again, every dropdown is its width with a long
+ * value wrapped (40.78; the number boxes' samples went with the FIXED kind), and
+ * no panel is wider inside than out.
  * „Implicit" puts the default back.
  */
 async function expectDocumentWidths(page: Page): Promise<void> {
@@ -100,12 +98,7 @@ async function expectDocumentWidths(page: Page): Promise<void> {
   // Slice #37.31 — every tile on the width unit: the row is 6 units at 1366 px, 10 at 1920,
   // 14 at 2560, and each tile — a notebook tile is one frame — a whole number of units.
   await expectUnitGrid(page, UNIT_REM, UNIT_GAP_REM, { 1366: 6, 1920: 10, 2560: 14 });
-  const numbers = await page.locator('input[type="number"][data-width-field]').evaluateAll((els) =>
-    els.map((e) => (e as HTMLElement).dataset.widthField ?? ""),
-  );
-  const samples: Record<string, string> = { ...SAMPLES };
-  for (const n of numbers) samples[n] = TEMPLATE_FIELD.number.sample;
-  await expectFixedFieldsHold(page, samples);
+  await expectDropdownsWrap(page);
   await pressTileButton(page, "Implicit");
   await expect(page.getByRole("region", { name: "Etichete și grupuri", exact: true })).toHaveCount(0);
 }
@@ -337,6 +330,24 @@ test.describe("TC-DOC-01 — Act creat, pagină atașată, pagina se deschide", 
       }
     } finally {
       for (const id of made) await removeRecord(page.request, "document", id);
+    }
+  });
+  // Slice 40.78 — not a step of the case: a dropdown whose chosen value is longer than its box keeps its width and
+  // wraps the value onto a second line, and is still chosen by keyboard. The issuer lists every public body, whose
+  // longest names pass XXL; `expectDropdownWraps` takes the first dropdown in the open tile that has such an option.
+  test("40.78: o valoare mai lungă decât caseta trece pe rândul următor, caseta își păstrează lățimea", async ({ page }) => {
+    const title = `${E2E_MARKER}DOC-01-WRAP`;
+    await removeLeftovers(page.request, title);
+    const id = await createDocumentOfType(page.request, "CONTRACT_VANZARE", title);
+    try {
+      await page.goto(`/documents/${id}`);
+      await expect(page.getByRole("heading", { name: title })).toBeVisible({ timeout: 30_000 });
+      await editTile(page, "general");
+      await expectDropdownWraps(page, page.locator('[data-panel="general"]'));
+      await expectDropdownsWrap(page);
+      await page.locator('[data-tile-cancel="general"]').click();
+    } finally {
+      await removeRecord(page.request, "document", id);
     }
   });
 });

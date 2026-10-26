@@ -77,6 +77,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch, type Control, type FieldPath, type UseFormRegister } from "react-hook-form";
 import { AsyncSelect } from "@/components/forms/async-select";
+import { WrappingSelect } from "@/components/forms/wrapping-select";
 import { foldLookupName, matchInstitution } from "@/lib/import/lookup-name-match";
 import { publicBodyTypeIdFor, type PublicBodyType } from "@/lib/documents/issuer";
 import {
@@ -1884,8 +1885,10 @@ export function IdCardPersonDialog({
                     rebuilt from `institutionOptions` on every render and the
                     `value` is controlled, so a row added mid-dialog appears
                     without a key trick. */}
-                <select
+                {/* Slice 40.78: through `WrappingSelect`, so a long institution's name wraps inside the box. */}
+                <WrappingSelect
                   id="id-card-institution"
+                  shown={institutionOptions.find((o) => o.value === institutionId)?.label ?? (institutionId === "" ? "—" : "")}
                   // Slice #34.25 — the sentence below is a DESCRIPTION of this
                   // control, announced after its name rather than as part of
                   // it. Same reasoning as `SelectField`'s, which this region
@@ -1919,7 +1922,7 @@ export function IdCardPersonDialog({
                   {institutionOptions.map((o) => (
                     <option key={o.value} value={o.value}>{o.label}</option>
                   ))}
-                </select>
+                </WrappingSelect>
               <div className="flex flex-col items-start gap-1">
               {/* The reading itself, said once, under the control that acts on
                   it — so a person deciding whether to press the button is
@@ -2210,10 +2213,8 @@ function SelectField({
   const controlId = `id-card-${name}`;
   const showHint = Boolean(hint) && !error;
   const box = stackedBoxStyle(width, boxRem(width));
-  // Slice #37.12: NOTHING IS CUT OFF WITHOUT A WAY TO READ IT. The box is as
-  // wide as its step; an option longer than that shows in full on hover.
-  const current = useWatch({ control, name });
-  const chosenLabel = options.find((o) => o.value === (current ?? ""))?.label;
+  // Slice 40.78: the box is as wide as its step; a chosen option longer than that wraps onto a second line
+  // (`WrappingSelect`, inside `AsyncSelect`) instead of showing in full on hover.
   return (
     <div className={STACKED_FIELD_CLASS} style={box}>
       <FieldLabel label={label} warn={warn} htmlFor={controlId} />
@@ -2247,7 +2248,6 @@ function SelectField({
         aria-describedby={showHint ? hintId : undefined}
         className={[FIELD_BOX, boxBorder(error)].join(" ")}
         style={box}
-        title={chosenLabel}
         widthField={name}
       />
       {(error || showHint) && (

@@ -40,17 +40,10 @@
 import { test, expect } from "../helpers/test";
 import { E2E_MARKER, removeLeftovers, removeRecord } from "../helpers/records";
 import { openFromSidebar } from "../helpers/sidebar";
-import { expectFixedFieldsHold, expectStableColumns, expectStableWidths, expectUnitGrid, photograph } from "../helpers/field-widths";
+import { expectDropdownsWrap, expectStableColumns, expectStableWidths, expectUnitGrid, photograph } from "../helpers/field-widths";
 import { closeTiles, openTiles, pressTileButton, TILE_GROUP, tileBox, editTile, saveTile } from "../helpers/tiles";
-import { ADDRESS, JUDICIAL_PERSON, UNIT_GAP_REM, UNIT_REM } from "../../src/lib/ui/field-widths";
+import { UNIT_GAP_REM, UNIT_REM } from "../../src/lib/ui/field-widths";
 import { listsOnTheirEarlierColumns } from "../helpers/list-columns";
-
-/** Each FIXED box's widest value, by the name its box carries (Slice #37.13). */
-const SAMPLES: Record<string, string> = {};
-for (const [k, w] of Object.entries(JUDICIAL_PERSON)) if ("sample" in w) SAMPLES[k] = w.sample;
-for (const [k, w] of Object.entries(ADDRESS)) {
-  if ("sample" in w) for (const kind of ["HEADQUARTERS", "CORRESPONDENCE"]) SAMPLES[`addresses.${kind}.${k}`] = w.sample;
-}
 
 const MARK = `${E2E_MARKER}PERS-02`;
 const NAME = `${MARK} Firmă de test SRL`;
@@ -164,7 +157,7 @@ test.describe("TC-PERS-02 — Persoană juridică creată și modificată", () =
       // Slice #37.13 — the same widths at 1400 and 2400 px; FIXED boxes hold their values;
       // „Denumire" grows downward with a long value (typed, never saved); the pictures.
       await expectStableWidths(page);
-      await expectFixedFieldsHold(page, SAMPLES);
+      await expectDropdownsWrap(page); // 40.78: every dropdown its width, a long value wrapped
       const denumire = page.locator('[data-width-field="name"]');
       const before = await denumire.boundingBox();
       await denumire.fill(`${NAME} ${"SOCIETATEA AGRICOLĂ ".repeat(4)}`);

@@ -273,4 +273,21 @@ describe("AsyncSelect", () => {
     const marked = [...select().options].filter((o) => o.hasAttribute("data-blank")).map((o) => o.text);
     expect(marked).toEqual(["niciunul"]);
   });
+
+  // Slice 40.78 — the box is the width it is given and a long chosen value wraps onto a second line: a native
+  // <select> cannot, so the chosen option's words are drawn on a face laid over it (`WrappingSelect`).
+  it("shows the chosen option's words on its face, follows a change, and puts nothing on hover (40.78)", () => {
+    const { container } = render(<Harness stored={UUID_A} options={TYPES} onSubmit={jest.fn()} />);
+    const face = container.querySelector<HTMLElement>("[data-select-face]");
+    expect(face).not.toBeNull();
+    // Hidden from a screen reader, which reads the select's own value; every press lands on the select.
+    expect(face).toHaveAttribute("aria-hidden", "true");
+    expect(face?.textContent).toBe("Garaj");
+    fireEvent.change(select(), { target: { value: UUID_B } });
+    expect(face?.textContent).toBe("Teren Arabil");
+    expect(select()).not.toHaveAttribute("title");
+    // The select and its face share one cell; the select keeps the box's classes and its width.
+    expect(select()).toHaveClass("cls", "ga-select");
+    expect(face?.parentElement).toBe(select().parentElement);
+  });
 });

@@ -45,7 +45,7 @@ async function newProperty(page: Page, nickname: string, tarlaLabel: string, par
   await expect(tarla.locator("option", { hasText: tarlaLabel })).toHaveCount(1, { timeout: 30_000 });
   await page.locator('[name="nickname"]').fill(nickname);
   await tarla.selectOption({ label: tarlaLabel });
-  await page.locator('input[name="parcela"]').fill(parcela);
+  await page.locator('[name="parcela"]').fill(parcela); // 40.78: a box that grows, a <textarea>
   await page.getByRole("button", { name: "Salvează", exact: true }).click();
 }
 

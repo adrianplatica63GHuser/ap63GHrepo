@@ -35,10 +35,10 @@ describe("the value as text", () => {
     expect(readText("  Ion  ")).toBe("Ion");
   });
   it("keeps the field's width mark, and an empty value reads „—”", () => {
-    const { container } = render(<ReadValue name="cnp" kind="fixed" text="" style={{ width: "8.5rem" }} />);
+    const { container } = render(<ReadValue name="cnp" kind="grows" text="" style={{ width: "8.5rem" }} />);
     const box = container.querySelector("[data-read-value]") as HTMLElement;
     expect(box.dataset.widthField).toBe("cnp");
-    expect(box.dataset.widthKind).toBe("fixed");
+    expect(box.dataset.widthKind).toBe("grows");
     expect(box.style.width).toBe("8.5rem");
     expect(box).toHaveTextContent("—");
   });

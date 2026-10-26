@@ -45,7 +45,7 @@ export type PersonLinkScope = "all" | "parties" | "notParties";
  * person's type.
  */
 /** The three cotă boxes at L, so „fără suprafață" shows whole. */
-const COTA_BOX_STYLE = boxStyle({ step: "L", kind: "fixed" });
+const COTA_BOX_STYLE = boxStyle({ step: "L", kind: "input" });
 
 /**
  * ⚠️ **`linkId` IS THE ROW AND `id` IS THE PERSON.**            (Slice #36.02)

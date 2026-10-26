@@ -72,7 +72,7 @@ function panelsOf(fields: StoredField[]) {
 }
 
 describe("the packing rule itself", () => {
-  const M: FieldWidth = { step: "M", kind: "fixed" };
+  const M: FieldWidth = { step: "M", kind: "input" };
   const XL: FieldWidth = { step: "XL", kind: "grows" };
   const TA: FieldWidth = { step: "TILE", kind: "lines", rows: 1 };
 
@@ -233,7 +233,7 @@ describe("dropdowns three to a row (#37.53, #37.55)", () => {
   });
 
   it("takes the third unit only for a panel of two or more dropdowns, and only when it saves rows", () => {
-    const M = { step: "M", kind: "fixed" } as const;
+    const M = { step: "M", kind: "input" } as const;
     const D = { step: "L", kind: "select", rem: 10 } as const;
     // Two dropdowns: 20.5rem — no fit in 2 units (17.875 inside), a pair in 3.
     expect(packFieldRows([{ key: "a", width: D }, { key: "b", width: D }])).toEqual({ units: 3, rows: [["a", "b"]] });

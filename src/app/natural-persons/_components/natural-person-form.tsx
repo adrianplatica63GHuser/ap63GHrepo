@@ -1884,8 +1884,8 @@ function SelectField({
   // for something else, so the label gets its own.
   const tSnapshot = useTranslations("shared");
   const ring = usePulseRing(highlight);
-  // Slice #37.12: NOTHING IS CUT OFF WITHOUT A WAY TO READ IT. The box is as
-  // wide as its step; an option longer than that shows in full on hover.
+  // Slice 40.78: the box is as wide as its step, and a chosen option longer than that wraps onto a second line
+  // (`WrappingSelect`, inside `AsyncSelect`); the read view writes the same words.
   const current = useWatch({ control, name });
   const chosenLabel = options.find((o) => o.value === (current ?? ""))?.label;
   const box = boxStyle(width);
@@ -1951,7 +1951,6 @@ function SelectField({
             ring,
           ].join(" ")}
           style={box}
-          title={chosenLabel}
           widthField={name}
         />
         {/* Slice #34.04: `hint` was already on `FieldProps` and rendered by

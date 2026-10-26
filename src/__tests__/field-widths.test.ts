@@ -289,11 +289,11 @@ describe("the scale", () => {
     for (const s of steps) expect(HOLDS[s] * 7 + 18).toBeLessThanOrEqual(SCALE[s] * 16 + 8);
   });
 
-  it("Adrian's cadastral widths: Nr. parcelă M (his later note, #37.30); Nr. tarla / sola M, because its empty option is the longest value (rule 10)", () => {
+  it("Adrian's cadastral widths: Nr. parcelă M (his later note, #37.30); Nr. tarla / sola stays M (40.78 changed no size)", () => {
     // 01.Slice.Inputs\Slices.01--39\Slices.37.nn\Stacked.txt, 2026-09-29: „Nr. tarla / sola back to S, Nr. parcelă back to M".
     expect(PROPERTY.parcela.step).toBe("M");
-    expect(PROPERTY.parcela.sample).toBe("000/00/00");
-    // „47/2" would fit S; „niciunul", the dropdown's own empty option, does not — so M.
+    // „47/2" would fit S; „niciunul", the dropdown's own empty option, does not — which is why it was made M (rule 10,
+    // retired by 40.78: a longer value wraps now). The width stays as it was.
     // (#37.55 took its dashes off: about 90 px where it was 107 — still past S's 80.)
     expect(textPx("47/2") + SELECT_CHROME_PX).toBeLessThanOrEqual(SCALE.S * 16);
     expect(textPx("niciunul") + SELECT_CHROME_PX).toBeGreaterThan(SCALE.S * 16);
@@ -333,22 +333,61 @@ describe("the scale", () => {
     }
   });
 
-  it("a FIXED field that names a sample holds it at about 7.8 px a digit and 9.3 px a capital", () => {
-    const px = (s: string): number => [...s].reduce((n, c) => n + (/[0-9]/.test(c) ? 7.8 : /[A-ZĂÂÎȘȚH]/.test(c) ? 9.3 : /[a-zăâîșț]/.test(c) ? 6.5 : 4), 0);
-    for (const w of [
-      ...Object.values(NATURAL_PERSON),
-      ...Object.values(ADDRESS),
-      ...Object.values(JUDICIAL_PERSON),
-      ...Object.values(PROPERTY),
-      ...Object.values(DOCUMENT),
-      ...Object.values(TEMPLATE_FIELD),
-    ] as FieldWidth[]) {
-      if (w.sample) expect(px(w.sample) + 18).toBeLessThanOrEqual(boxRem(w) * 16);
+  // Slice 40.78 — Adrian, 2026-10-26: „please get rid of the notion of fixed field". One rule: a box is its step (or
+  // its `rem`), and a value longer than it wraps downward.
+  it("no field is FIXED any more: no `sample`, no `capped`, and the text that was fixed grows like a name", () => {
+    const records = { NATURAL_PERSON, ADDRESS, JUDICIAL_PERSON, PROPERTY, DOCUMENT, TEMPLATE_FIELD, SCREEN } as Record<string, Record<string, FieldWidth>>;
+    for (const [record, fields] of Object.entries(records)) {
+      for (const [name, w] of Object.entries(fields)) {
+        expect([record, name, w.kind]).not.toEqual([record, name, "fixed"]);
+        expect([record, name, Object.keys(w).filter((k) => k === "sample" || k === "capped")]).toEqual([record, name, []]);
+        expect(["input", "select", "grows", "lines"]).toContain(w.kind);
+      }
     }
+    // CNP, phones, document and card numbers, CUI, Nr. registru comerțului, Nr. CF, Nr. cadastru, Nr. parcelă,
+    // Nr. document, and the address's postal code, county and country: the box a name is.
+    for (const w of [
+      NATURAL_PERSON.cnp, NATURAL_PERSON.idDocumentNumber, NATURAL_PERSON.idCardNumber,
+      NATURAL_PERSON.personalPhone1, NATURAL_PERSON.personalPhone2, NATURAL_PERSON.workPhone,
+      JUDICIAL_PERSON.cuiNumber, JUDICIAL_PERSON.tradeRegisterNumber, JUDICIAL_PERSON.phone,
+      PROPERTY.parcela, PROPERTY.carteFunciara, PROPERTY.cadastralNumber, DOCUMENT.nrDocument,
+      ADDRESS.postalCode, ADDRESS.county, ADDRESS.country,
+    ] as FieldWidth[]) expect(w.kind).toBe("grows");
+    // A date, a number and a tick stay the browser's own box, which cannot wrap.
+    for (const w of [
+      NATURAL_PERSON.dateOfBirth, NATURAL_PERSON.dateOfDeath, NATURAL_PERSON.idValidFrom, NATURAL_PERSON.idValidUntil,
+      NATURAL_PERSON.isDeceased, PROPERTY.surfaceAreaMp, DOCUMENT.dateDocument, TEMPLATE_FIELD.date, TEMPLATE_FIELD.number,
+    ] as FieldWidth[]) expect(w.kind).toBe("input");
+    // No size changed with the rule (40.79 and 40.80 are the first new sizes).
+    expect(boxRem(NATURAL_PERSON.cnp)).toBe(SCALE.M);
+    expect(boxRem(NATURAL_PERSON.physicalPersonTypeId)).toBe(13.5);
+    expect(PROPERTY.useCategoryId.step).toBe("L");
+    expect(PROPERTY.tarlaId.step).toBe("M");
+    expect(DOCUMENT.issuerPersonId.step).toBe("XXL");
+  });
+
+  it("every record screen's dropdown goes through the wrapping one, and none shows its value on hover instead", () => {
+    const forms = [
+      "src/app/natural-persons/_components/natural-person-form.tsx",
+      "src/app/judicial-persons/_components/judicial-person-form.tsx",
+      "src/app/properties/_components/property-form.tsx",
+      "src/app/documents/_components/document-form.tsx",
+      "src/app/admin/import/_components/id-card-person-dialog.tsx",
+    ];
+    for (const f of forms) {
+      const src = read(f).replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
+      // A bare <select> on a record screen would be a box that cuts its value again.
+      expect([f, /<select\b/.test(src)]).toEqual([f, false]);
+      expect([f, /title=\{chosenLabel\}|capped/.test(src)]).toEqual([f, false]);
+      expect([f, /<(AsyncSelect|WrappingSelect)\b/.test(src)]).toEqual([f, true]);
+    }
+    const async = read("src/components/forms/async-select.tsx");
+    expect(async).toMatch(/<WrappingSelect\b/);
+    expect(async).not.toMatch(/\btitle=\{/);
   });
 
   it("a box's width is an inline style in rem, and the form snaps to whole panels", () => {
-    expect(boxStyle({ step: "M", kind: "fixed" })).toEqual({ width: "8.5rem" });
+    expect(boxStyle({ step: "M", kind: "input" })).toEqual({ width: "8.5rem" });
     expect(String(panelRowStyle().width)).toBe("max(32rem, calc(round(down, 100% + 1rem, 33rem) - 1rem))");
   });
 });
@@ -738,11 +777,11 @@ describe("the Document's page image and row (#37.15)", () => {
 });
 
 describe("a document type's own fields are sized by rule (#37.15)", () => {
-  it("by type: text grows at XL, a textarea at the panel's width with its breaks, a date or number is a fixed M", () => {
+  it("by type: text grows at XL, a textarea at the panel's width with its breaks, a date or number is the browser's own M box", () => {
     expect(templateFieldWidth({ type: "text" })).toEqual({ step: "XL", kind: "grows" });
     expect(templateFieldWidth({ type: "textarea" })).toEqual({ step: "TILE", kind: "lines", rows: 1 });
-    expect(templateFieldWidth({ type: "date" })).toEqual({ step: "M", kind: "fixed" });
-    expect(templateFieldWidth({ type: "number" })).toMatchObject({ step: "M", kind: "fixed" });
+    expect(templateFieldWidth({ type: "date" })).toEqual({ step: "M", kind: "input" });
+    expect(templateFieldWidth({ type: "number" })).toMatchObject({ step: "M", kind: "input" });
   });
 
   it("under Certificate și referințe everything grows at the panel's width — except a dropdown", () => {
@@ -752,7 +791,7 @@ describe("a document type's own fields are sized by rule (#37.15)", () => {
     expect(templateFieldWidth({ type: "select" }, ["Da", "Nu"], true).kind).toBe("select");
   });
 
-  it("a dropdown is as wide as its widest choice needs, in half rems, from S up, and stops at XXL (#37.53)", () => {
+  it("a dropdown starts as wide as its widest choice needs, in half rems, from S up, and stops at XXL, past which it wraps (#37.53, 40.78)", () => {
     // Never narrower than S.
     expect(templateFieldWidth({ type: "select" }, ["Da", "Nu"])).toEqual({ step: "S", kind: "select", rem: 5 });
     // „Nu e menționat" needs 142 px: 9rem, where the step rule drew L (13rem).
@@ -765,7 +804,8 @@ describe("a document type's own fields are sized by rule (#37.15)", () => {
     expect(boxRem(templateFieldWidth({ type: "select" }, ["fără valoare", "Da", "Nu", "Nu e menționat"]))).toBe(9);
     expect(selectStepFor(["fără valoare", "Da", "Nu"]).step).toBe("M");
     const long = "O opțiune foarte lungă, mult peste ce încape într-o casetă";
-    expect(templateFieldWidth({ type: "select" }, [long])).toEqual({ step: "XXL", kind: "select", capped: true });
+    expect(templateFieldWidth({ type: "select" }, [long])).toEqual({ step: "XXL", kind: "select" });
+    expect(selectStepFor([long]).wraps).toBe(true);
     expect(boxRem(templateFieldWidth({ type: "select" }, [long]))).toBe(SCALE.XXL);
     // The width shows every label whole, and is never more than half a rem past what it needs.
     for (const labels of [["Da"], ["Neverificat"], ["Primăria Municipiului"], ["3 — Fără cadastru, completat ulterior"], ["fără valoare"]]) {
@@ -775,8 +815,8 @@ describe("a document type's own fields are sized by rule (#37.15)", () => {
     }
     // The chosen step shows every label whole, with the arrow and the padding.
     for (const labels of [["Da"], ["Neverificat"], ["Primăria Municipiului"], ["3 — Fără cadastru, completat ulterior"]]) {
-      const { step, capped } = selectStepFor(labels);
-      expect(capped).toBe(false);
+      const { step, wraps } = selectStepFor(labels);
+      expect(wraps).toBe(false);
       expect(textPx(labels[0]) + SELECT_CHROME_PX).toBeLessThanOrEqual(SCALE[step] * 16);
     }
   });
@@ -784,7 +824,7 @@ describe("a document type's own fields are sized by rule (#37.15)", () => {
   it("a field's own `width` names the step; its kind still follows from its type", () => {
     expect(templateFieldWidth({ type: "text", width: "L" })).toEqual({ step: "L", kind: "grows" });
     expect(templateFieldWidth({ type: "select", width: "XS" }, ["Opțiune lungă"])).toEqual({ step: "XS", kind: "select" });
-    expect(templateFieldWidth({ type: "date", width: "L" }).kind).toBe("fixed");
+    expect(templateFieldWidth({ type: "date", width: "L" }).kind).toBe("input");
   });
 
   it("measures text in Roboto (40.70): diacritics as their letter, an em dash wide, a capital wider than a small letter", () => {
@@ -794,15 +834,15 @@ describe("a document type's own fields are sized by rule (#37.15)", () => {
     expect(textPx("0000")).toBeCloseTo(4 * 7.868, 2); // Roboto's digit, 562 thousandths of 14 px (Arial's was 556)
   });
 
-  it("every dropdown on every seeded form fits without the cap, its blank choice included", () => {
+  it("every dropdown on every seeded form fits on one line below XXL, its blank choice included", () => {
     const file = parseFormsFile(read(FORMS_FILE_REL));
     let selects = 0;
     for (const form of file.forms) {
       for (const f of parseTemplateFields(form.fields)) {
         if (f.type !== "select" || !f.options?.length) continue;
         selects++;
-        const w = templateFieldWidth(f, ["fără valoare", ...f.options.map((o) => o.labelRo)]);
-        expect([form.key, f.key, w.capped ?? false]).toEqual([form.key, f.key, false]);
+        const { wraps } = selectStepFor(["fără valoare", ...f.options.map((o) => o.labelRo)]);
+        expect([form.key, f.key, wraps]).toEqual([form.key, f.key, false]);
       }
     }
     expect(selects).toBeGreaterThan(40);

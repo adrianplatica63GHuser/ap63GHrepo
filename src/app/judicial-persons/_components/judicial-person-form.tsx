@@ -1802,7 +1802,7 @@ function SelectField({
   // for something else, so the label gets its own.
   const tSnapshot = useTranslations("shared");
   const ring = usePulseRing(highlight);
-  // Slice #37.13: the chosen option in full on hover when the box is narrower (#37.12).
+  // Slice 40.78: the chosen option's words for the read view; in edit a long one wraps (`WrappingSelect`).
   const current = useWatch({ control, name });
   const chosenLabel = options.find((o) => o.value === (current ?? ""))?.label;
 
@@ -1869,7 +1869,6 @@ function SelectField({
             ring,
           ].join(" ")}
           style={boxStyle(width)}
-          title={chosenLabel}
           widthField={name}
         />
         {error && (

@@ -36,14 +36,9 @@ import os from "os";
 import path from "path";
 import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, removeLeftovers, removeRecord } from "../helpers/records";
-import { expectFixedFieldsHold, expectStableWidths, photograph } from "../helpers/field-widths";
+import { expectDropdownsWrap, expectStableWidths, photograph } from "../helpers/field-widths";
 import { hideTile, showTile, editTile, saveTile } from "../helpers/tiles";
-import { ADDRESS, MAP_BOX_STYLE, PROPERTY } from "../../src/lib/ui/field-widths";
-
-/** Each FIXED box's widest value, by the name its box carries (Slice #37.14). */
-const SAMPLES: Record<string, string> = {};
-for (const [k, w] of Object.entries(PROPERTY)) if ("sample" in w) SAMPLES[k] = w.sample;
-for (const [k, w] of Object.entries(ADDRESS)) if ("sample" in w) SAMPLES[`address.${k}`] = w.sample;
+import { MAP_BOX_STYLE } from "../../src/lib/ui/field-widths";
 
 const MARK = `${E2E_MARKER}PROP-04`;
 const NICKNAME = `${MARK} Teren din fisier`;
@@ -115,7 +110,7 @@ test.describe("TC-PROP-04 — Un colț editat în „Puncte de contur”, văzut
       // Slice #37.14 — the same widths at 1400 and 2400 px, the map at its fixed size, the pictures.
       const widths = await expectStableWidths(page);
       expect(widths.fields.map).toBe(parseFloat(String(MAP_BOX_STYLE.width)) * 16);
-      await expectFixedFieldsHold(page, SAMPLES);
+      await expectDropdownsWrap(page); // 40.78: every dropdown its width, a long value wrapped
       // The widest real X and Y, and the point labels, fit their fixed columns.
       const cut = await page.locator('[data-width-field="corners"] td').evaluateAll((cells) =>
         cells.filter((c) => c.scrollWidth > c.clientWidth + 1 && !c.querySelector("button")).map((c) => c.textContent ?? ""),

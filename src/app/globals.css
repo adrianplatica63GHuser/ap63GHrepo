@@ -542,6 +542,31 @@ select:has(option[data-blank]) option:not([data-blank]) {
   font-style: normal;
 }
 
+/* Slice 40.78 — a dropdown that wraps (src/components/forms/wrapping-select.tsx). The <select> is stretched under a face
+   that shows the chosen option's words, wrapping inside the box's width; the select's own text is transparent so the
+   two never draw over each other. Unlayered, so it wins over the box's `text-ink`. Its options get their colour back —
+   an <option> inherits the select's, and Chrome draws the open list with it. The face follows the select's state:
+   italic on the blank choice (as the select itself was, #37.55), faded when the select is disabled ON ITS OWN — not
+   when only its <fieldset> is, which is a page being read (FIELD_BOX's `[&[disabled]]`). */
+select.ga-select {
+  color: transparent;
+}
+select.ga-select option {
+  color: var(--color-ink);
+}
+.dark select.ga-select option {
+  color: #f4f4f5; /* zinc-100, the box's dark value */
+}
+select.ga-select:has(option[data-blank]:checked) + .ga-select-face {
+  font-style: italic;
+}
+select.ga-select[disabled] + .ga-select-face {
+  color: var(--color-fade);
+}
+.dark select.ga-select[disabled] + .ga-select-face {
+  color: #71717a; /* zinc-500 */
+}
+
 /* Slice #38.85 — „Interacțiuni": a row just saved flashes once where it landed (spec §4: „The row flashes
    once so the user can see where it landed"). Indigo-200 fading to nothing; with reduced motion it holds
    indigo-100 for as long as the screen keeps the mark (1.5 s), without moving. */

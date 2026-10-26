@@ -75,6 +75,7 @@ import { ErrorBoundary, PanelError } from "@/components/error-boundary";
 import { inferProvenance } from "@/lib/metadata/provenance-rules";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { GrowingText } from "@/components/forms/growing-text";
+import { WrappingSelect } from "@/components/forms/wrapping-select";
 import { ALWAYS_SHOWN_FIELDS,
   DOCUMENT as DOC,
   PAGES_PANEL_STYLE,
@@ -1264,7 +1265,7 @@ export function DocumentForm({
   const customFieldWidth = (
     f: (typeof templateFields)[number],
     forceFullWidthTextarea = false,
-  ): FieldWidth & { capped?: boolean } => {
+  ): FieldWidth => {
     if (f.type === "select" && f.options && f.options.length > 0) {
       const options = selectOptionsForValue(f.options, watchedValues.customFields?.[f.key]);
       return templateFieldWidth(f, [t("fields.customSelectEmpty"), ...options.map((o) => o.label)]);
@@ -2350,9 +2351,8 @@ function SelectField({
   hintInRead?: boolean;
   /** Slice 40.75: the read view's words for the chosen value, where an option's own label says more (the type's „(are formular)"). */
   readLabel?: string;
-  /** Slice #37.15: `capped` — the rule stopped at XXL and the option shows in full on hover only. */
-  width: FieldWidth & { capped?: boolean };
-  /** The chosen value, so the box can show that option in full on hover (#37.12). */
+  width: FieldWidth;
+  /** The chosen value, so the box can show that option's words — wrapping when longer than the box (40.78). */
   watchValue?: string | null;
   options: { value: string; label: string }[];
   /**
@@ -2416,7 +2416,10 @@ function SelectField({
         {label}
       </label>
       <div className="flex flex-col gap-0.5" style={boxStyle(width)}>
-        <select
+        <WrappingSelect
+          // Slice 40.78: the box shows the chosen option's words, wrapping onto a second line when they are longer
+          // than the box — a native <select> cannot, so `WrappingSelect` lays it under a face that does.
+          shown={chosenLabel ?? (watchValue ? "" : (emptyOptionLabel ?? ""))}
           // Bug fix: `options` loads asynchronously (useQuery). This <select>
           // is uncontrolled — react-hook-form's `register` assigns the DOM
           // element's initial value once, at mount/ref-attach time. If that
@@ -2447,11 +2450,9 @@ function SelectField({
           // dropped it, which is how an accessibility fix becomes a regression.
           aria-describedby={describedBy || undefined}
           aria-invalid={error ? true : undefined}
-          title={chosenLabel}
           style={boxStyle(width)}
           data-width-field={name}
           data-width-kind="select"
-          data-width-capped={width.capped ? "true" : undefined}
           className={[
             FIELD_BOX,
             fieldBorder(Boolean(error)),
@@ -2466,7 +2467,7 @@ function SelectField({
           {options.map((o) => (
             <option key={o.value} value={o.value}>{o.label}</option>
           ))}
-        </select>
+        </WrappingSelect>
         {hint && (
           <span id={hintId} className="text-xs text-fade dark:text-zinc-400">{hint}</span>
         )}

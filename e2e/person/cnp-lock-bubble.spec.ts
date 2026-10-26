@@ -193,7 +193,7 @@ test.describe("TC-PERS-03 — nota CNP-ului într-un balon, refuzul în română
       await validUntil.fill("2020-01-01");
       await page.mouse.move(5, 5);
       // 40.72: „Identitate" reads as text again, so the focus goes to another box of the open tile.
-      await page.locator('input[name="idCardNumber"]').focus();
+      await page.locator('[name="idCardNumber"]').focus(); // 40.78: a box that grows, a <textarea>
       const red = await validUntil.evaluate((el) => getComputedStyle(el).borderTopColor);
       expect(red).not.toBe(CLEAR);
       // Tailwind 4's red-500, as Chromium reports it (lab), or as oklch / sRGB elsewhere.

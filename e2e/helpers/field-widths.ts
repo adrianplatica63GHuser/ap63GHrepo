@@ -11,10 +11,12 @@
  * #37.12 uses it on the Natural Person (TC-PERS-01's spec); #37.13–#37.15 call
  * the same three functions on their screens.
  *
- * Slice #37.15: a box that is not drawn — on a notebook page that is not open —
- * is skipped by the "holds its value" check (it is 0 px wide, and says nothing),
- * and so is a dropdown marked `data-width-capped`: the rule stopped it at XXL on
- * purpose, and its chosen option shows in full on hover.
+ * Slice 40.78: no box is FIXED any more — a value longer than its box wraps
+ * downward, a dropdown's included — so the check that every fixed box held its
+ * `sample` is gone with the samples. `expectDropdownsWrap` checks the rule that
+ * replaced it, and `expectDropdownWraps` proves it on one dropdown chosen by
+ * keyboard. A box that is not drawn — on a notebook page that is not open — is
+ * skipped (it is 0 px wide, and says nothing).
  */
 
 import { expect, type Locator, type Page } from "@playwright/test";
@@ -97,49 +99,113 @@ export async function expectStableWidths(page: Page, widths: readonly number[] =
 }
 
 /**
- * Every FIXED box holds its widest legitimate value without scrolling, drawn in
- * the font the page actually renders: `samples` maps a field's name to that
- * value (the `sample` in `field-widths.ts`), and a select is checked against
- * its own longest option, less the arrow. No panel's content is wider than the
- * panel. Returns what did not fit, so the failure names it.
+ * EVERY DROPDOWN IS THE WIDTH IT IS GIVEN, AND A LONG VALUE WRAPS.      (Slice 40.78)
+ *
+ * Adrian, 2026-10-26: „Any dropdown should have the size that I set myself when doing the layout of the panels; in
+ * case the content is too long use wrapping to a second line". For every drawn dropdown (`WrappingSelect`): the box
+ * is exactly the width its inline style names, whatever it holds; when the chosen option's words are wider than the
+ * face has room for, the box is taller than one line; and when they fit, it is one line. No panel's content is wider
+ * than the panel. Returns what broke, so the failure names it.
  */
-export async function expectFixedFieldsHold(page: Page, samples: Readonly<Record<string, string>>): Promise<void> {
-  const misfits = await page.evaluate((s) => {
+export async function expectDropdownsWrap(page: Page): Promise<void> {
+  const misfits = await page.evaluate(() => {
     const out: string[] = [];
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
     if (!ctx) return ["no 2d canvas"];
-    const inner = (el: HTMLElement): number => {
-      const cs = getComputedStyle(el);
-      return el.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-    };
-    const drawn = (el: HTMLElement): boolean => el.getClientRects().length > 0;
-    const textWidth = (el: HTMLElement, text: string): number => {
-      const cs = getComputedStyle(el);
-      ctx.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
-      return ctx.measureText(text).width;
-    };
-    document.querySelectorAll<HTMLElement>('[data-width-kind="fixed"]').forEach((el) => {
-      const name = el.dataset.widthField ?? "?";
-      const sample = s[name];
-      if (!sample || !(el instanceof HTMLInputElement) || el.type === "date" || !drawn(el)) return;
-      const need = textWidth(el, sample);
-      if (need > inner(el)) out.push(`${name}: „${sample}" needs ${need.toFixed(1)} px, the box has ${inner(el).toFixed(1)}`);
-    });
+    const rootPx = parseFloat(getComputedStyle(document.documentElement).fontSize);
     document.querySelectorAll<HTMLSelectElement>('select[data-width-kind="select"]').forEach((el) => {
-      if (!drawn(el) || el.dataset.widthCapped === "true") return;
+      if (el.getClientRects().length === 0) return;
       const name = el.dataset.widthField ?? "?";
-      const longest = [...el.options].map((o) => o.text).sort((a, b) => b.length - a.length)[0] ?? "";
-      const need = textWidth(el, longest) + 24; // the arrow
-      if (need > inner(el)) out.push(`${name}: its longest option „${longest}" needs ${need.toFixed(1)} px, the box has ${inner(el).toFixed(1)}`);
+      const face = el.nextElementSibling as HTMLElement | null;
+      const words = face?.firstElementChild as HTMLElement | null;
+      if (!face || face.dataset.selectFace === undefined || !words) {
+        out.push(`${name}: no face — a dropdown that cannot wrap`);
+        return;
+      }
+      const box = el.getBoundingClientRect();
+      const declared = el.style.width.endsWith("rem") ? parseFloat(el.style.width) * rootPx : parseFloat(el.style.width);
+      if (Math.abs(box.width - declared) > 0.5) out.push(`${name}: ${box.width.toFixed(1)} px wide, its width is ${declared.toFixed(1)}`);
+      const cs = getComputedStyle(words);
+      ctx.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+      const text = words.textContent ?? "";
+      const need = ctx.measureText(text).width;
+      const line = parseFloat(cs.lineHeight);
+      const lines = Math.round(words.getBoundingClientRect().height / line);
+      if (need > words.clientWidth + 1 && lines < 2) out.push(`${name}: „${text}" needs ${need.toFixed(1)} px in ${words.clientWidth} px, on one line`);
+      if (need <= words.clientWidth && lines > 1) out.push(`${name}: „${text}" fits ${words.clientWidth} px, on ${lines} lines`);
+      if (Math.abs(face.getBoundingClientRect().height - box.height) > 1) out.push(`${name}: the select is not as tall as its face`);
     });
     document.querySelectorAll<HTMLElement>("[data-panel]").forEach((el) => {
-      if (!drawn(el)) return;
+      if (el.getClientRects().length === 0) return;
       if (el.scrollWidth > el.clientWidth + 1) out.push(`panel ${el.dataset.panel}: content ${el.scrollWidth} px in ${el.clientWidth} px`);
     });
     return out;
-  }, samples);
-  expect(misfits, "fixed boxes that do not hold their value").toEqual([]);
+  });
+  expect(misfits, "dropdowns that do not keep their width and wrap a long value").toEqual([]);
+}
+
+/**
+ * One dropdown with an option longer than its box, that option chosen BY KEYBOARD (focus, then its first words
+ * typed — the select's own type-ahead): the value is chosen, the box keeps its width, it is taller than one line, and
+ * its face shows the words. The first drawn dropdown in `scope` that has such an option is the one checked, and the
+ * choice is put back afterwards. Fails when no dropdown in `scope` has one, so the step can never pass without
+ * proving anything. (Slice 40.78)
+ */
+export async function expectDropdownWraps(page: Page, scope: Locator = page.locator("main")): Promise<void> {
+  const selects = scope.locator('select[data-width-kind="select"]');
+  let select: Locator | null = null;
+  let longest: { value: string; text: string; px: number; room: number } | null = null;
+  for (const candidate of await selects.all()) {
+    if (!(await candidate.isVisible())) continue;
+    const found = await candidate.evaluate((el: HTMLSelectElement) => {
+      const face = el.nextElementSibling?.firstElementChild as HTMLElement | null;
+      const ctx = document.createElement("canvas").getContext("2d");
+      if (!face || !ctx) return null;
+      const cs = getComputedStyle(face);
+      ctx.font = `normal ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+      let best: { value: string; text: string; px: number; room: number } | null = null;
+      for (const o of [...el.options]) {
+        if (o.value === "" || o.disabled) continue;
+        const px = ctx.measureText(o.text).width;
+        if (!best || px > best.px) best = { value: o.value, text: o.text, px, room: face.clientWidth };
+      }
+      return best && best.px > best.room + 1 ? best : null;
+    });
+    if (found) {
+      select = candidate;
+      longest = found;
+      break;
+    }
+  }
+  expect(longest, "a drawn dropdown with an option longer than its box").not.toBeNull();
+  if (!select || !longest) return;
+  const before = await select.inputValue();
+  const box0 = await select.boundingBox();
+  await select.focus();
+  // The select's type-ahead: its first word, typed at once, chooses the first option that starts with it (a space
+  // could open the list instead, so the word stops before one).
+  const typed = longest.text.split(" ")[0].slice(0, 12);
+  const firstMatch = await select.evaluate(
+    (el: HTMLSelectElement, start: string) =>
+      [...el.options].find((o) => !o.disabled && o.text.toLowerCase().startsWith(start.toLowerCase()))?.value ?? "",
+    typed,
+  );
+  await page.keyboard.type(typed);
+  await expect(select, `„${typed}" typed into the focused dropdown chooses its option`).toHaveValue(firstMatch);
+  if (firstMatch !== longest.value) await select.selectOption(longest.value);
+  await expect(select).toHaveValue(longest.value);
+  await expect.poll(async () => (await select!.boundingBox())?.height ?? 0, { message: "a long value makes the box taller" }).toBeGreaterThan((box0?.height ?? 0) + 8);
+  const box1 = await select.boundingBox();
+  expect(Math.abs((box1?.width ?? 0) - (box0?.width ?? 0)), "the box keeps its width").toBeLessThanOrEqual(0.5);
+  await expect(select.locator("xpath=following-sibling::*[@data-select-face]")).toContainText(longest.text);
+  // Put the choice back — through the change event, as a choice is made, so the form is as it was (the blank may be a
+  // hidden, disabled option that `selectOption` refuses).
+  await select.evaluate((el: HTMLSelectElement, value: string) => {
+    el.value = value;
+    el.dispatchEvent(new Event("change", { bubbles: true }));
+  }, before);
+  await expect(select).toHaveValue(before);
 }
 
 /**

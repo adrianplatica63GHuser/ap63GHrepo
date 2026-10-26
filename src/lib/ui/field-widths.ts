@@ -14,13 +14,29 @@
  * scale rather than a number, so the screens stay a handful of widths that line
  * up; to move a whole step, change the scale.
  *
- * Two kinds of field, from Field.Widths.v02 (Adrian, 2026-09-28):
- *   FIXED  (`fixed`, `select`) — dropdowns, dates, numbers, CNP, codes, phones.
- *          The box holds the longest legitimate value and is no wider.
- *   GROWS  (`grows`, `lines`) — names, places, authorities, streets, emails,
- *          notes. The box has this width and its HEIGHT grows to show the whole
- *          value (`src/components/forms/growing-text.tsx`). `grows` is one value
- *          and never takes a line break; `lines` keeps them (notes, MRZ).
+ * ONE RULE FOR EVERY FIELD (Slice 40.78): ITS WIDTH IS ITS STEP (OR ITS `rem`),
+ * AND A VALUE LONGER THAN THE BOX WRAPS DOWNWARD. The box grows TALLER, never
+ * wider. Adrian, 2026-10-26: „a dropdown — if it's a fixed field — will not
+ * accommodate a future (longer string) value that is added to a value list, so
+ * there is no point in it being fixed width; it will just wrap its content on a
+ * second line if the content is too long … Any dropdown should have the size
+ * that I set myself when doing the layout of the panels; in case the content is
+ * too long use wrapping to a second line or I will just go and shorten the
+ * content in the value list". So no box is sized by its longest legitimate value
+ * any more — Field.Widths.v02's FIXED kind, its `sample`s and the `capped`
+ * dropdowns are gone, and a value added to a list later can never force a box
+ * wider. The kind says only which control draws the box:
+ *   `grows`  one value that wraps — names, places, numbers typed as text (CNP,
+ *            phones, document numbers, CUI, Nr. CF …):
+ *            `src/components/forms/growing-text.tsx`; never takes a line break.
+ *   `lines`  the same, keeping its line breaks — notes, the MRZ.
+ *   `select` a dropdown: `src/components/forms/wrapping-select.tsx` shows the
+ *            chosen option's words wrapping inside the box.
+ *   `input`  the browser's own box — a date, a number, a tick, a search box —
+ *            which cannot wrap; its step was chosen for its format.
+ * A width that was widened to hold a longest value (Tip profesional's 13.5rem,
+ * Nr. tarla / sola at M, Categorie de folosință at L) stays as it is: no size
+ * changed with the rule.
  *
  * MEASURED, NOT GUESSED. The comment beside each width quotes the local
  * archive as the runner's `measure-fields` sequence read it on 2026-09-28
@@ -82,7 +98,7 @@ export const PANEL_PADDING_REM = 0.75;
 export const PANEL_BORDER_REM = 1 / 16;
 export const PANEL_INNER_REM = PANEL_REM - 2 * PANEL_PADDING_REM - 2 * PANEL_BORDER_REM;
 
-export type FieldKind = "fixed" | "select" | "grows" | "lines";
+export type FieldKind = "input" | "select" | "grows" | "lines";
 
 /**
  * Slice #37.40 — every „Note…" box and the MRZ show at most this many RENDERED
@@ -100,16 +116,10 @@ export interface FieldWidth {
   /** For `lines`: fold to this many rendered lines, with „Arată mai mult…" (#37.40). */
   fold?: number;
   /**
-   * For a FIXED field: the widest value it must hold without scrolling — the
-   * format's longest, or the measured longest, masked (`H` a capital, `n` a
-   * lower-case letter, `0` a digit). The e2e check draws it in the box.
-   */
-  sample?: string;
-  /**
    * A width off the scale, in rem — where Adrian asked for one by size
    * (#37.26: the ID card's first row „about 75%" of what it was), and a
-   * document type's own dropdown, which is as wide as its widest choice
-   * (#37.53, `templateFieldWidth`). The step still says what the box is, and
+   * document type's own dropdown, which starts as wide as its widest choice
+   * (#37.53, `templateFieldWidth`) and wraps past XXL (40.78). The step still says what the box is, and
    * the scale stays a handful of steps.
    */
   rem?: number;
@@ -119,12 +129,6 @@ export interface FieldWidth {
    * the step decides, as before.
    */
   fill?: true;
-  /**
-   * For a `select` whose options are open-ended — a name the archive holds, not a list somebody wrote: capped at its
-   * step, the box showing the start of a longer option and its `title` the whole of it. The e2e check
-   * (`expectFixedFieldsHold`) skips a capped box (#37.53's `templateSelectWidth`, the issuer since #39.85).
-   */
-  capped?: boolean;
 }
 
 // ---- styles -----------------------------------------------------------------------
@@ -186,13 +190,13 @@ export const NATURAL_PERSON = {
   lastName: { step: "L", kind: "grows" }, //                m: 0 · — · —
   firstName: { step: "L", kind: "grows" }, //               m: 1 · 4 · 4
   nickname: { step: "L", kind: "grows" }, //                m: 1 · 4 · 4
-  cnp: { step: "M", kind: "fixed", sample: "0000000000000" }, // 13 digits; m: 0
+  cnp: { step: "M", kind: "grows" }, // 13 digits; m: 0
   gender: { step: "M", kind: "select" }, //                 „Masculin"
-  dateOfBirth: { step: "M", kind: "fixed" }, //             dd.mm.yyyy and the calendar button
-  age: { step: "XS", kind: "fixed", sample: "000" }, //     beside the date it is worked out from; „78 †" for the dead (#39.30) fits too
+  dateOfBirth: { step: "M", kind: "input" }, //             dd.mm.yyyy and the calendar button
+  age: { step: "XS", kind: "input" }, //     beside the date it is worked out from; „78 †" for the dead (#39.30) fits too
   // Slice #39.30 — „Decedat", a tick, and „Data decesului", a date like the birth's.
-  isDeceased: { step: "XS", kind: "fixed" }, //            a tick under its label
-  dateOfDeath: { step: "M", kind: "fixed" }, //             dd.mm.yyyy and the calendar button
+  isDeceased: { step: "XS", kind: "input" }, //            a tick under its label
+  dateOfDeath: { step: "M", kind: "input" }, //             dd.mm.yyyy and the calendar button
   // Slice #39.70: m: 13 professions, longest „Contabil / consultant fiscal" (28; 186.6 px measured) — L; was M, for
   // „Expert" (6).
   // Slice 40.70: in Roboto it needs 192.1 px with its arrow (TC-PERS-01), 2 px past L's 190 inside: 13.5 rem, so the
@@ -205,17 +209,17 @@ export const NATURAL_PERSON = {
   // Carte de identitate — the first row „about 75%" of L, M and M (Adrian, #37.26). Tip document
   // is 10rem, not 9.75: „Carte de identitate" needs 156.4 px with the arrow, and 9.75rem is 156.
   idDocumentType: { step: "L", kind: "select", rem: 10 }, // „Carte de identitate" (19)
-  idDocumentNumber: { step: "M", kind: "fixed", sample: "HH000000", rem: 6.375 }, // series and number; m: 0
-  idCardNumber: { step: "M", kind: "fixed", sample: "000000000", rem: 6.375 }, //    m: 0
-  idValidFrom: { step: "M", kind: "fixed" },
-  idValidUntil: { step: "M", kind: "fixed" },
+  idDocumentNumber: { step: "M", kind: "grows", rem: 6.375 }, // series and number; m: 0
+  idCardNumber: { step: "M", kind: "grows", rem: 6.375 }, //    m: 0
+  idValidFrom: { step: "M", kind: "input" },
+  idValidUntil: { step: "M", kind: "input" },
   citizenshipId: { step: "M", kind: "select" }, //          m: 8 options, longest „Moldoveană" (10)
   idIssuingAuthority: { step: "XL", kind: "grows" }, //     „SPCLEP Sector 3 București"; m: 0
   idMrzRaw: { step: "XL", kind: "lines", fold: NOTE_FOLD_LINES, rows: 3, fill: true }, // 3 × 30 monospace; m: 1 · 1507 — free text pasted into it, which grows; the panel's whole width (#37.26)
   // Contact
-  personalPhone1: { step: "M", kind: "fixed", sample: "+00 000 000 000" }, // m: 0
-  personalPhone2: { step: "M", kind: "fixed", sample: "+00 000 000 000" }, // m: 0
-  workPhone: { step: "M", kind: "fixed", sample: "+00 000 000 000" }, //      m: 0
+  personalPhone1: { step: "M", kind: "grows" }, // m: 0
+  personalPhone2: { step: "M", kind: "grows" }, // m: 0
+  workPhone: { step: "M", kind: "grows" }, //      m: 0
   personalEmail1: { step: "XL", kind: "grows" }, //         prenume.nume@domeniu.ro is 25–30; m: 0
   personalEmail2: { step: "XL", kind: "grows" }, //         m: 0
   workEmail: { step: "XL", kind: "grows" }, //              m: 0
@@ -228,10 +232,10 @@ export const NATURAL_PERSON = {
  */
 export const ADDRESS = {
   streetLine: { step: "XXL", kind: "grows" }, //            m: 0
-  postalCode: { step: "S", kind: "fixed", sample: "000000" }, // six digits; m: 0
+  postalCode: { step: "S", kind: "grows" }, // six digits; m: 0
   locality: { step: "L", kind: "grows" }, //                m: 0
-  county: { step: "M", kind: "fixed", sample: "Hnnnn-Hnnnnnn" }, // „Caraș-Severin", the longest county; m: 0
-  country: { step: "M", kind: "fixed", sample: "Hnnnnnn" }, //      „România"; m: 0
+  county: { step: "M", kind: "grows" }, // „Caraș-Severin", the longest county; m: 0
+  country: { step: "M", kind: "grows" }, //      „România"; m: 0
   notes: { step: "TILE", kind: "lines", fold: NOTE_FOLD_LINES, rows: 1, fill: true }, // m: 0; on a stacked panel, its whole width (#37.26)
 } as const satisfies Record<string, FieldWidth>;
 
@@ -374,10 +378,10 @@ export const JUDICIAL_PERSON = {
   name: { step: "XXL", kind: "grows", fill: true }, //      „SOCIETATEA AGRICOLĂ … S.R.L." can pass 60 — it wraps; the panel's whole width since #37.29; m: 0
   nickname: { step: "M", kind: "grows" }, //                m: 0 — M since #39.71, so Tip's XL keeps Poreclă | Tip in three units
   judicialPersonTypeId: { step: "XL", kind: "select" }, //  #39.71: 17 options, longest „Cabinet sau societate de avocatură" (34, 243.5 px) — past L
-  cuiNumber: { step: "M", kind: "fixed", sample: "HH0000000000" }, //    „RO12345678", up to 10 digits; m: 0
-  tradeRegisterNumber: { step: "M", kind: "fixed", sample: "H00/00000/0000" }, // „J40/12345/2020"; m: 0
+  cuiNumber: { step: "M", kind: "grows" }, //    „RO12345678", up to 10 digits; m: 0
+  tradeRegisterNumber: { step: "M", kind: "grows" }, // „J40/12345/2020"; m: 0
   // Slice #38.31: the firm's own phone and e-mail — the Natural Person's boxes (NP.personalPhone1, NP.personalEmail1).
-  phone: { step: "M", kind: "fixed", sample: "+00 000 000 000" }, // m: 0 (a new column)
+  phone: { step: "M", kind: "grows" }, // m: 0 (a new column)
   email: { step: "XL", kind: "grows" }, //                  office@firma-exemplu.ro is 20–30; m: 0 (a new column)
   notes: { step: "TILE", kind: "lines", fold: NOTE_FOLD_LINES, rows: 1, fill: true }, // m: 0; the panel's whole width (#37.29)
   contactPerson: { step: "XL", kind: "grows" }, //          a natural person's display name, wrapping; m: 1 · 4
@@ -405,15 +409,15 @@ export const LABEL_INDENT = rem(LABEL_REM + LABEL_GAP_REM);
  * #37.57 the system ID is the heading's corner and the row is the two numbers.
  */
 export const PROPERTY = {
-  // Capped since 40.32's run: a tarla's option carries its description since #39.67 („T201 — Sola din nord-vestul
-  // orașului Bragadiru", 319 px) — archive data, open-ended, so its whole text is on hover, as the issuer's.
-  tarlaId: { step: "M", kind: "select", capped: true }, //      M: „niciunul" needs about 90 px (see above); m: 3 options, longest „47/2"
-  parcela: { step: "M", kind: "fixed", sample: "000/00/00" }, // Adrian's M (Stacked.txt); m: 3 · 6 · 6
+  // A tarla's option carries its description since #39.67 („T201 — Sola din nord-vestul orașului Bragadiru", 319 px):
+  // it wraps inside M (40.78; it was cut, its whole text on hover, since 40.32).
+  tarlaId: { step: "M", kind: "select" }, //      M: „niciunul" needs about 90 px (see above); m: 3 options, longest „47/2"
+  parcela: { step: "M", kind: "grows" }, // Adrian's M (Stacked.txt); m: 3 · 6 · 6
   nickname: { step: "XL", kind: "grows" }, //                   m: 8 · 38 · 38 — p95 is past L (27), so XL; longer wraps
-  surfaceAreaMp: { step: "M", kind: "fixed", sample: "0000000.00" }, //  the box shows 1234567.89, no separators; m: 3 · 6
-  calculatedAreaMp: { step: "M", kind: "fixed", sample: "0000000.00" }, // toFixed(2), in the mono font; m: 3 · 6
-  carteFunciara: { step: "M", kind: "fixed", sample: "000000" }, //       m: 0
-  cadastralNumber: { step: "M", kind: "fixed", sample: "HHHHH-00.00-H" }, // m: 1 · 13
+  surfaceAreaMp: { step: "M", kind: "input" }, //  the box shows 1234567.89, no separators; m: 3 · 6
+  calculatedAreaMp: { step: "M", kind: "input" }, // toFixed(2), in the mono font; m: 3 · 6
+  carteFunciara: { step: "M", kind: "grows" }, //       m: 0
+  cadastralNumber: { step: "M", kind: "grows" }, // m: 1 · 13
   useCategoryId: { step: "L", kind: "select" }, //              „Curți-construcții" needs 121 px, M holds 118 (40.32's run); was M, longest „Neproductiv" (11)
   propertyTypeId: { step: "L", kind: "select" }, //             m: 9 agreed options since #39.66, longest „Spațiu comercial" (16); was 14, „Vegetație Forestieră" (20)
   notes: { step: "TILE", kind: "lines", fold: NOTE_FOLD_LINES, rows: 1, fill: true }, // m: 1 · 72, at most 300; the panel's whole width (#37.30)
@@ -427,7 +431,7 @@ export const PROPERTY = {
  * address's (`ADDRESS`); the description like a nickname; the notes the page's width, folded as every note.
  */
 export const TARLA = {
-  indicativ: { step: "M", kind: "fixed", sample: "000/00" },
+  indicativ: { step: "M", kind: "input" },
   locality: { step: "L", kind: "grows" },
   county: { step: "M", kind: "grows" },
   descriere: { step: "XL", kind: "grows" },
@@ -489,12 +493,12 @@ export const DOCUMENT = {
   title: { step: "TILE", kind: "grows", fill: true }, //  Etichetă scurtă; m: 105 · 151 · 73; the panel's whole width (#37.31)
   subject: { step: "TILE", kind: "grows", fill: true }, // m: 48 · 428 · 301; the panel's whole width (#37.31)
   notes: { step: "TILE", kind: "lines", fold: NOTE_FOLD_LINES, rows: 1, fill: true }, // Note extinse; m: 50 · 2504 · 2283, at most 4000; whole width
-  // #39.72: the issuer, a juridical person by name — „Biroul Individual Notarial …" passes 40. Fixed in passing (#39.85):
-  // capped — every juridical person is an option, and the big seed's „Comisia Județeană Ilfov pentru stabilirea
-  // dreptului de proprietate asupra terenurilor" needs 538 px; the box shows its start, its title the whole name.
-  issuerPersonId: { step: "XXL", kind: "select", capped: true },
-  nrDocument: { step: "M", kind: "fixed", sample: "00/00.00.0000" }, // m: 24 · 13 · 6
-  dateDocument: { step: "M", kind: "fixed" }, //         dd.mm.yyyy and the calendar button
+  // #39.72: the issuer, a juridical person by name — „Biroul Individual Notarial …" passes 40, and the big seed's
+  // „Comisia Județeană Ilfov pentru stabilirea dreptului de proprietate asupra terenurilor" needs 538 px: it wraps
+  // inside XXL (40.78; it was cut, its whole name on hover, since #39.85).
+  issuerPersonId: { step: "XXL", kind: "select" },
+  nrDocument: { step: "M", kind: "grows" }, // m: 24 · 13 · 6
+  dateDocument: { step: "M", kind: "input" }, //         dd.mm.yyyy and the calendar button
 } as const satisfies Record<string, FieldWidth>;
 
 /**
@@ -534,10 +538,11 @@ export const INTERACTIONS_TILE_STYLE: CSSProperties = { ...PAGES_PANEL_STYLE, mi
  * field's `type`:
  *   text      the default text width, growing downward (one value, no breaks);
  *   textarea  the panel's whole width, growing, line breaks kept;
- *   number    a fixed M;   date   a fixed M;
- *   select    as wide as its widest choice needs (the blank one included),
- *             rounded up to the next 0.5rem, never narrower than S — past XXL
- *             it stays XXL and shows the chosen option in full on hover.
+ *   number    M;   date   M — the browser's own box (`input`);
+ *   select    starts as wide as its widest choice needs (the blank one
+ *             included), rounded up to the next 0.5rem, never narrower than S —
+ *             past XXL it stays XXL and a longer choice wraps (40.78: nobody
+ *             laid a type's dropdown out, so this is its starting width).
  *             (#37.53: it used to be rounded up to the next STEP, so a CVC
  *             dropdown needing 157 px — „— fără valoare —" — was drawn at L,
  *             208 px. Measured on the six seeded forms: 49 of 49 dropdowns
@@ -554,8 +559,8 @@ export const INTERACTIONS_TILE_STYLE: CSSProperties = { ...PAGES_PANEL_STYLE, mi
 export const TEMPLATE_FIELD = {
   text: { step: "XL", kind: "grows" },
   textarea: { step: "TILE", kind: "lines", rows: 1 },
-  number: { step: "M", kind: "fixed", sample: "0000000.00" }, // m: at most 5 digits
-  date: { step: "M", kind: "fixed" },
+  number: { step: "M", kind: "input" }, // m: at most 5 digits
+  date: { step: "M", kind: "input" },
 } as const satisfies Record<string, FieldWidth>;
 
 /** The steps a select may take, narrowest first; the last is its cap. */
@@ -600,25 +605,28 @@ export function selectNeedPx(labels: readonly string[]): number {
   return Math.max(0, ...labels.map((l) => textPx(l))) * 1.05 + SELECT_CHROME_PX;
 }
 
-/** The narrowest step whose dropdown shows every one of `labels` whole, capped at XXL. */
-export function selectStepFor(labels: readonly string[]): { step: Step; capped: boolean } {
+/**
+ * The narrowest step whose dropdown shows every one of `labels` on one line, up to XXL; `wraps` when even XXL is
+ * narrower than the widest, whose words then go onto a second line (40.78).
+ */
+export function selectStepFor(labels: readonly string[]): { step: Step; wraps: boolean } {
   const need = selectNeedPx(labels);
-  for (const step of SELECT_STEPS) if (SCALE[step] * 16 >= need) return { step, capped: false };
-  return { step: SELECT_STEPS[SELECT_STEPS.length - 1], capped: true };
+  for (const step of SELECT_STEPS) if (SCALE[step] * 16 >= need) return { step, wraps: false };
+  return { step: SELECT_STEPS[SELECT_STEPS.length - 1], wraps: true };
 }
 
 /**
  * A document type's own dropdown: as wide as `labels` need, rounded up to the
- * next 0.5rem, never narrower than S; past XXL, XXL and `capped`. (#37.53)
+ * next 0.5rem, never narrower than S; past XXL, XXL, and a longer choice wraps (40.78). (#37.53)
  * „Nu e menționat" needs 142 px → 9rem; the blank „fără valoare" (#37.55, in
  * italics, which Roboto draws about 3% narrower than its upright) 120 px →
  * 7.5rem — the same two numbers in Roboto (40.70) as they were in Arial.
  * The step is the one that would have held it — what the box is, not its width.
  */
-export function templateSelectWidth(labels: readonly string[]): FieldWidth & { capped?: boolean } {
+export function templateSelectWidth(labels: readonly string[]): FieldWidth {
   const need = selectNeedPx(labels);
-  const { step, capped } = selectStepFor(labels);
-  if (capped) return { step, kind: "select", capped };
+  const { step, wraps } = selectStepFor(labels);
+  if (wraps) return { step, kind: "select" };
   return { step, kind: "select", rem: Math.max(SCALE.S, Math.ceil(need / 8) / 2) };
 }
 
@@ -638,7 +646,7 @@ export function templateFieldWidth(
   field: TemplateFieldShape,
   labels: readonly string[] = [],
   forceLines = false,
-): FieldWidth & { capped?: boolean } {
+): FieldWidth {
   if (field.type === "select") {
     if (field.width) return { step: field.width, kind: "select" };
     return templateSelectWidth(labels);
@@ -1639,67 +1647,67 @@ export const HELP_NAV_STYLE: CSSProperties = { width: rem(SCALE.XL) };
 
 export const SCREEN = {
   // The „Asociază …" screens: the search boxes and the role
-  searchName: { step: "L", kind: "fixed" }, //         a person's name, typed to find them (w-48 before)
-  searchCode: { step: "M", kind: "fixed", sample: "HHHHH00000" }, // a code (w-32 and w-36 before)
-  searchText: { step: "XL", kind: "fixed" }, //        one box over code, title and more (w-64 before)
+  searchName: { step: "L", kind: "input" }, //         a person's name, typed to find them (w-48 before)
+  searchCode: { step: "M", kind: "input" }, // a code (w-32 and w-36 before)
+  searchText: { step: "XL", kind: "input" }, //        one box over code, title and more (w-64 before)
   role: { step: "XL", kind: "select" }, //             a role — „Moștenitor testamentar"; longer ones show on hover
   // Grupuri and Ștampile: the add form and the editor
   groupTarget: { step: "L", kind: "select" }, //       „Persoane fizice" — also the read-only box (200 px before)
-  groupCode: { step: "M", kind: "fixed", sample: "HH 00" }, // „AA 01" (140 px before)
+  groupCode: { step: "M", kind: "input" }, // „AA 01" (140 px before)
   groupDescription: { step: "XXL", kind: "lines", rows: 2 }, // at most 500 characters
-  stampShortDescription: { step: "XXL", kind: "fixed" }, // a stamp's short description (max-w-sm before)
+  stampShortDescription: { step: "XXL", kind: "input" }, // a stamp's short description (max-w-sm before)
   stampNotes: { step: "XXL", kind: "lines", fold: NOTE_FOLD_LINES, rows: 3 },
-  groupCodePending: { step: "XL", kind: "fixed" }, //  „Codul se atribuie la salvare", before there is a code
-  memberSearch: { step: "XXL", kind: "fixed" }, //     the search above the candidates
+  groupCodePending: { step: "XL", kind: "input" }, //  „Codul se atribuie la salvare", before there is a code
+  memberSearch: { step: "XXL", kind: "input" }, //     the search above the candidates
   // Setări
-  timeFrameDays: { step: "S", kind: "fixed", sample: "0000" }, // 1–3650, with the spinner (w-20 before)
+  timeFrameDays: { step: "S", kind: "input" }, // 1–3650, with the spinner (w-20 before)
   // Setări → Costuri: an amount entered from a bill (Slice #39.17)
-  costDate: { step: "M", kind: "fixed", sample: "00.00.0000" }, // a period's first or last day
-  costAmount: { step: "M", kind: "fixed", sample: "000000.00" }, // up to a million, two decimals
+  costDate: { step: "M", kind: "input" }, // a period's first or last day
+  costAmount: { step: "M", kind: "input" }, // up to a million, two decimals
   costCurrency: { step: "S", kind: "select" }, //      CAD, USD, EUR
-  costRate: { step: "S", kind: "fixed", sample: "0.0000" }, // CA$ per one of the currency
-  costNote: { step: "XL", kind: "fixed" }, //          at most 200 characters
+  costRate: { step: "S", kind: "input" }, // CA$ per one of the currency
+  costNote: { step: "XL", kind: "input" }, //          at most 200 characters
   // Schimbă parola
-  password: { step: "XL", kind: "fixed" },
+  password: { step: "XL", kind: "input" },
   // Texte de ajutor
   helpText: { step: "XXL", kind: "lines", rows: 4 },
   // Calcul
-  calcGroupDescription: { step: "XXL", kind: "fixed" }, // at most 500, one line
-  calcRoadNickname: { step: "XL", kind: "fixed" }, //  a property's nickname, as PROPERTY.nickname
+  calcGroupDescription: { step: "XXL", kind: "input" }, // at most 500, one line
+  calcRoadNickname: { step: "XL", kind: "input" }, //  a property's nickname, as PROPERTY.nickname
   calcRoadCorner: { step: "S", kind: "select" }, //    the road's corner, by its number in the file — „121" (#38.24)
   calcRoadSide: { step: "M", kind: "select" }, //      the road's side, by its two corners — „121–122" (#38.24)
   // #39.79: the first step — the property, the owners and their shares, the road's width
-  calcPropertySearch: { step: "XXL", kind: "fixed" }, // code, nickname, cadastral number or CF, typed to find it
-  calcOwnerSearch: { step: "XL", kind: "fixed" }, //   a person's name, typed to add them as an owner
-  calcShare: { step: "S", kind: "fixed", sample: "000,00" }, // a share, two decimals at most — „33,33"
-  calcRoadWidth: { step: "S", kind: "fixed", sample: "00,00" }, // the road's width in metres, under 15 — „4"
+  calcPropertySearch: { step: "XXL", kind: "input" }, // code, nickname, cadastral number or CF, typed to find it
+  calcOwnerSearch: { step: "XL", kind: "input" }, //   a person's name, typed to add them as an owner
+  calcShare: { step: "S", kind: "input" }, // a share, two decimals at most — „33,33"
+  calcRoadWidth: { step: "S", kind: "input" }, // the road's width in metres, under 15 — „4"
   // Motorul de tipuri
   documentType: { step: "XXL", kind: "select" }, //    the type to distil, as DOCUMENT.documentTypeId (max-w-lg before)
   matchPercent: { step: "M", kind: "select" }, //      „Matching %" (10rem and 8rem before)
-  proposedLabel: { step: "XL", kind: "fixed" }, //     a proposed field's label, as TEMPLATE_FIELD.text
+  proposedLabel: { step: "XL", kind: "input" }, //     a proposed field's label, as TEMPLATE_FIELD.text
   proposedType: { step: "M", kind: "select" }, //      „Text lung"
-  proposedHint: { step: "XXL", kind: "fixed" }, //     the wordings the samples used
+  proposedHint: { step: "XXL", kind: "input" }, //     the wordings the samples used
   // META INFO, on the four detail screens (Slice #37.23 — the guard found them)
-  metaTag: { step: "XL", kind: "fixed" }, //           a tag, typed to add it (flex-1 up to max-w-xs before)
-  metaCrossRefNote: { step: "XXL", kind: "fixed" }, // a cross-reference's note, at most 500 (flex-1 before)
-  listSearch: { step: "XL", kind: "fixed" }, //        a list's search box (flex-1 up to max-w-md before; the natural persons' is w-64)
+  metaTag: { step: "XL", kind: "input" }, //           a tag, typed to add it (flex-1 up to max-w-xs before)
+  metaCrossRefNote: { step: "XXL", kind: "input" }, // a cross-reference's note, at most 500 (flex-1 before)
+  listSearch: { step: "XL", kind: "input" }, //        a list's search box (flex-1 up to max-w-md before; the natural persons' is w-64)
   // The value-list editor's add/edit form and „Roluri pe Document"'s pickers (Slice #37.37)
-  valueName: { step: "XL", kind: "fixed" }, //         a list's „Denumire"
-  valueText: { step: "L", kind: "fixed" }, //          any other one-line field — an indicativ, a key, a converse name
+  valueName: { step: "XL", kind: "input" }, //         a list's „Denumire"
+  valueText: { step: "L", kind: "input" }, //          any other one-line field — an indicativ, a key, a converse name
   valueDescription: { step: "XXL", kind: "lines", rows: 3 }, // a description, which grows downward
   docPersonsType: { step: "XL", kind: "select" }, //   Tip Document; a longer name shows on hover
   docPersonsRole: { step: "XL", kind: "select" }, //   Rol Persoană
   // „Interacțiuni" (Slice #38.84)
-  interactionSearch: { step: "XL", kind: "fixed" }, // the module bar's search, on a person's name and the subject
-  interactionPerson: { step: "XL", kind: "fixed" }, // the person typeahead, as `searchText`
-  interactionSubject: { step: "L", kind: "fixed" }, // „Subiectul conține", a few words of a 120-character subject
-  interactionDay: { step: "M", kind: "fixed", sample: "00.00.0000" }, // „Personalizat"'s two days; the follow-up's date
+  interactionSearch: { step: "XL", kind: "input" }, // the module bar's search, on a person's name and the subject
+  interactionPerson: { step: "XL", kind: "input" }, // the person typeahead, as `searchText`
+  interactionSubject: { step: "L", kind: "input" }, // „Subiectul conține", a few words of a 120-character subject
+  interactionDay: { step: "M", kind: "input" }, // „Personalizat"'s two days; the follow-up's date
   // The log form (Slice #38.85)
-  interactionWhen: { step: "L", kind: "fixed", sample: "00.00.0000, 00:00" }, // date and time, with the picker's icon
+  interactionWhen: { step: "L", kind: "input" }, // date and time, with the picker's icon
   interactionStatus: { step: "L", kind: "select" }, // „Așteaptă răspuns", the longest status
-  interactionSubjectLine: { step: "XXL", kind: "fixed" }, // the subject, 120 characters at most, one line
+  interactionSubjectLine: { step: "XXL", kind: "input" }, // the subject, 120 characters at most, one line
   interactionDescription: { step: "XXL", kind: "lines", rows: 3 }, // the description, and the internal note
-  interactionTag: { step: "L", kind: "fixed" }, // a tag, at most 60 characters (#38.86)
+  interactionTag: { step: "L", kind: "input" }, // a tag, at most 60 characters (#38.86)
 } as const satisfies Record<string, FieldWidth>;
 export type ScreenField = keyof typeof SCREEN;
 

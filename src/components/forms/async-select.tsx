@@ -1,12 +1,14 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import type {
-  Control,
-  FieldPath,
-  FieldValues,
-  UseFormRegister,
+import {
+  useWatch,
+  type Control,
+  type FieldPath,
+  type FieldValues,
+  type UseFormRegister,
 } from "react-hook-form";
+import { WrappingSelect } from "./wrapping-select";
 
 /**
  * `blank` (Slice #37.55): this option is the picker's „no value" — drawn in
@@ -75,12 +77,8 @@ type AsyncSelectProps<T extends FieldValues> = {
   "aria-invalid"?: true;
   /** Slice #37.12: the box's width, from `src/lib/ui/field-widths.ts`. */
   style?: CSSProperties;
-  /** Slice #37.12: the chosen option's full text, shown on hover when the box is narrower than it. */
-  title?: string;
   /** Slice #37.12: the field's name for the width checks (`data-width-field`). */
   widthField?: string;
-  /** Its options are open-ended — archive data — so its width is capped (`FieldWidth.capped`, `data-width-capped`). */
-  capped?: boolean;
   /** Slice #37.32: for a `<label htmlFor>` that cannot wrap the select (the ID-card dialog's citizenship). */
   id?: string;
 };
@@ -133,44 +131,37 @@ type AsyncSelectProps<T extends FieldValues> = {
  */
 export function AsyncSelect<T extends FieldValues>({
   name,
-  // ⚠️ **`control` is accepted and not destructured, since Slice #34.03.** It
-  // fed the `useWatch` that `allowUnlistedValue` needed to know the current
-  // value; with the synthesis gone there is nothing in here that reads the
-  // form. It stays in the prop type on purpose rather than being removed:
-  // `async-select-single-source.test.ts` asserts that every call site hands
-  // its select a `control`, which is the idiom that keeps all seven selects
-  // going through react-hook-form's context instead of each form inventing its
-  // own wiring — the thing this component exists to make singular. Removing it
-  // is a four-form change for no behaviour, and it is in the handover under
-  // "Noticed, not fixed".
+  // Slice 40.78: `control` is read again — the box shows the chosen option's words itself (`WrappingSelect`), so it
+  // watches the value, as `allowUnlistedValue` once did (#34.03 stopped destructuring it).
+  // `async-select-single-source.test.ts` asserts that every call site hands its select a `control`.
+  control,
   register,
   options,
   className,
   "aria-describedby": describedBy,
   "aria-invalid": invalid,
   style,
-  title,
   widthField,
-  capped = false,
   id,
 }: AsyncSelectProps<T>) {
-  // Slice #34.03: `useWatch` and the once-captured `openedWith` went with
-  // `allowUnlistedValue` - nothing reads the current value any more, because
-  // every option this component renders now comes from the list.
+  // Every option this component renders comes from the list (#34.03).
   const rendered = [...options];
+  // Slice 40.78: the chosen option's words, which the box shows wrapping inside its width — a value longer than the
+  // box goes onto a second line instead of being cut (the `title` on hover that stood for it is gone).
+  const current = useWatch({ control, name });
+  const shown = rendered.find((o) => o.value === String(current ?? ""))?.label ?? "";
 
   return (
-    <select
+    <WrappingSelect
       key={options.length}
+      shown={shown}
       id={id}
       aria-describedby={describedBy}
       aria-invalid={invalid}
       className={className}
       style={style}
-      title={title}
       data-width-field={widthField}
       data-width-kind={widthField ? "select" : undefined}
-      data-width-capped={widthField && capped ? "true" : undefined}
       // Last on purpose: `register` can itself return `disabled` (from
       // `useForm({ disabled })` or `register(name, { disabled })`), and nothing
       // this component accepts may quietly override what the form said.
@@ -181,6 +172,6 @@ export function AsyncSelect<T extends FieldValues>({
           {o.label}
         </option>
       ))}
-    </select>
+    </WrappingSelect>
   );
 }

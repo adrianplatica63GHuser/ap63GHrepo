@@ -38,16 +38,9 @@
 import { test, expect } from "../helpers/test";
 import { E2E_MARKER, removeLeftovers, removeRecord } from "../helpers/records";
 import { openFromSidebar } from "../helpers/sidebar";
-import { expectFixedFieldsHold, expectStableColumns, expectStableWidths, expectUnitGrid, photograph } from "../helpers/field-widths";
+import { expectDropdownsWrap, expectStableColumns, expectStableWidths, expectUnitGrid, photograph } from "../helpers/field-widths";
 import { pressTileButton } from "../helpers/tiles";
-import { ADDRESS, NATURAL_PERSON, UNIT_GAP_REM, UNIT_REM } from "../../src/lib/ui/field-widths";
-
-/** Each FIXED box's widest value, by the name its box carries (Slice #37.12). */
-const SAMPLES: Record<string, string> = {};
-for (const [k, w] of Object.entries(NATURAL_PERSON)) if ("sample" in w) SAMPLES[k] = w.sample;
-for (const [k, w] of Object.entries(ADDRESS)) {
-  if ("sample" in w) for (const kind of ["HOME", "CORRESPONDENCE"]) SAMPLES[`addresses.${kind}.${k}`] = w.sample;
-}
+import { UNIT_GAP_REM, UNIT_REM } from "../../src/lib/ui/field-widths";
 
 const LAST_NAME = `${E2E_MARKER}PERS-01`;
 const LISTED_AS = `Ion ${LAST_NAME}`; // prenume first, as the list renders it
@@ -80,7 +73,7 @@ test.describe("TC-PERS-01 — Persoană fizică creată manual", () => {
 
       // Slice #37.12 — the same widths at 1400 and 2400 px; every FIXED box holds its value.
       await expectStableWidths(page);
-      await expectFixedFieldsHold(page, SAMPLES);
+      await expectDropdownsWrap(page); // 40.78: every dropdown its width, a long value wrapped
       // „Locul nașterii" grows downward: taller with a long value, never wider;
       // a pasted line break becomes a space, because it is one value.
       const place = page.locator('[data-width-field="placeOfBirth"]');
@@ -119,7 +112,7 @@ test.describe("TC-PERS-01 — Persoană fizică creată manual", () => {
       // Slice #37.12 — the saved person at fixed widths, and its pictures for the handover.
       await expect(page.locator('[data-panel="identity"]')).toBeVisible({ timeout: 30_000 });
       await expectStableWidths(page);
-      await expectFixedFieldsHold(page, SAMPLES);
+      await expectDropdownsWrap(page); // 40.78: every dropdown its width, a long value wrapped
       const viewport = page.viewportSize();
       for (const width of [1366, 1920, 2560]) {
         // 1400 px high since #37.26: with every label above its box the form is taller than 1000.
