@@ -471,7 +471,8 @@ describe("the Natural Person: every label above its box, every panel as wide as 
     };
     // identity 27: „Tip profesional" is 13.5 rem since 40.70 (Roboto), beside „Locul nașterii" — still three units.
     // idCard 23.75 since 40.79 (Emisă de L, the MRZ L and not filling): the first row, Tip document | Nr. | Nr. card.
-    expect(rowsOf).toEqual({ identity: 27, idCard: 23.75, contact: 17.5, address: 24 });
+    // address 18.5 since 40.80 (Stradă XL): Cod poștal | Localitate — still three units.
+    expect(rowsOf).toEqual({ identity: 27, idCard: 23.75, contact: 17.5, address: 18.5 });
     expect(NP_PANEL_UNITS).toEqual({ identity: 3, idCard: 3, contact: 2, address: 3 });
     for (const k of Object.keys(NP_PANEL_UNITS) as (keyof typeof NP_PANEL_UNITS)[]) {
       expect([k, NP_PANEL_INNER_REM[k] >= rowsOf[k]]).toEqual([k, true]);
@@ -517,6 +518,21 @@ describe("the Natural Person: every label above its box, every panel as wide as 
       const messages = JSON.parse(read("messages", `${locale}.json`)) as { naturalPerson: { options: { genderShort: Record<string, string> } } };
       expect(messages.naturalPerson.options.genderShort).toEqual({ MALE: "M", FEMALE: "F" });
     }
+  });
+
+  // Slice 40.80 — Adrian, 2026-10-26: „Stradă, Nr., etaj, ap -XL / Cod poștal - S / Localitate - L / Județ / Sector - no
+  // change / Țară - no change / Note - TILE".
+  it("the address block at Adrian's sizes, one width on every screen (40.80)", () => {
+    expect(ADDRESS.streetLine).toEqual({ step: "XL", kind: "grows" });
+    expect([ADDRESS.postalCode.step, ADDRESS.locality.step, ADDRESS.county.step, ADDRESS.country.step, ADDRESS.notes.step]).toEqual(["S", "L", "M", "M", "TILE"]);
+    expect(ADDRESS.notes.fill).toBe(true);
+    // Every caller draws the shared widths: the block itself, and the Property's own address rows.
+    expect(ADDRESS_BLOCK).toMatch(/ADDRESS_ROWS\.map\(/);
+    expect(code(read("src", "app", "properties", "_components", "property-form.tsx"))).toMatch(/width=\{ADDRESS\.streetLine\}/);
+    // No panel moved: each address panel is still the fewest units its widest row needs.
+    expect(PANEL_UNITS.naturalPerson.address).toBe(3);
+    expect(PANEL_UNITS.judicialPerson.address).toBe(3);
+    expect(PANEL_UNITS.property.address).toBe(3);
   });
 
   it("no label beside a box is left on the form, and the row is as wide as its panels", () => {

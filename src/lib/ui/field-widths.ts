@@ -241,7 +241,9 @@ export const NATURAL_PERSON = {
  * address and no property address with a value in the local archive.
  */
 export const ADDRESS = {
-  streetLine: { step: "XXL", kind: "grows" }, //            m: 0
+  // Slice 40.80 — Adrian, 2026-10-26: „Stradă, Nr., etaj, ap - XL" (was XXL); a longer street wraps (40.78). One width
+  // on every screen that draws an address — the two persons', the property's, the ID-card dialog's (rule 17). m: 0
+  streetLine: { step: "XL", kind: "grows" },
   postalCode: { step: "S", kind: "grows" }, // six digits; m: 0
   locality: { step: "L", kind: "grows" }, //                m: 0
   county: { step: "M", kind: "grows" }, // „Caraș-Severin", the longest county; m: 0
@@ -774,7 +776,10 @@ function mapUnits<T extends Record<string, number>, V>(units: T, f: (n: number) 
   return Object.fromEntries(Object.entries(units).map(([k, n]) => [k, f(n)])) as { [K in keyof T]: V };
 }
 
-/** The shared address block, stacked: Stradă is its widest row (24rem) — 3 units on every screen. */
+/**
+ * The shared address block, stacked: 3 units on every screen. Its widest row was Stradă (24rem) until 40.80 made it
+ * XL; it is now Cod poștal | Localitate, 5 + 0.5 + 13 = 18.5rem — still past the 17.875rem inside 2 units.
+ */
 const ADDRESS_PANEL_UNITS = unitsFor(panelRem(widestRow(ADDRESS_ROWS, ADDRESS)));
 
 /** Each form panel in units, by screen. */
@@ -782,7 +787,7 @@ export const PANEL_UNITS = {
   naturalPerson: { ...panelUnitsOf(SCREEN_ROWS.naturalPerson, NATURAL_PERSON), address: ADDRESS_PANEL_UNITS },
   //  identity 3 — Poreclă | Tip and ID | CUI | Nr. Reg. Com., both 26.5rem; contactPersons 2 — the XL box, 17rem.
   judicialPerson: { ...panelUnitsOf(SCREEN_ROWS.judicialPerson, JUDICIAL_PERSON), address: ADDRESS_PANEL_UNITS },
-  //  cadastral 3 — Cod | Nr. tarla / sola | Nr. parcelă, 26.5rem; address 3 — Stradă, 24rem.
+  //  cadastral 3 — Cod | Nr. tarla / sola | Nr. parcelă, 26.5rem; address 3 — Cod poștal | Localitate, 18.5rem (40.80).
   //  corners 3 (#37.77): the four fixed columns are 19rem; 3 units leave the actions column
   //  about 9rem (144 px, 120 inside its padding), and a row's four buttons — „Mută mai sus",
   //  „Mută mai jos", „Editează", „Șterge", 26-px icon squares at xs since #37.45 — need

@@ -98,6 +98,16 @@ test.describe("TC-PERS-01 — Persoană fizică creată manual", () => {
       expect(mrzBox?.width).toBe(SCALE.L * rem);
       expect(mrzBox?.height ?? 0).toBeGreaterThanOrEqual(2 * 20); // two 20-px lines
 
+      // Slice 40.80 — „Stradă, Nr., etaj, ap" is XL in the address block, and a long street wraps: taller, never wider.
+      const street = page.locator('[data-width-field="addresses.HOME.streetLine"]');
+      const streetOne = await street.boundingBox();
+      expect(streetOne?.width).toBe(SCALE.XL * rem);
+      await street.fill("Strada Exemplului Foarte Lungă nr. 123, bl. A4, sc. 2, et. 7, ap. 45");
+      const streetGrown = await street.boundingBox();
+      expect(streetGrown?.width).toBe(SCALE.XL * rem);
+      expect(streetGrown?.height ?? 0).toBeGreaterThan((streetOne?.height ?? 0) + 10);
+      await street.fill("");
+
       // Steps 3–4 — „Nume" and „Prenume".
       await page.getByLabel(/^Nume(\s|$)/).fill(LAST_NAME);
       await page.getByLabel(/^Prenume(\s|$)/).fill("Ion");
