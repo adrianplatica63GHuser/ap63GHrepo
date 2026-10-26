@@ -52,7 +52,7 @@ Coloanele care se pot filtra, alese în „Câmpuri afișate”:
 
 - **„Tip profesional”** — profesiile din listă, așa cum sunt acum în arhivă (secțiunea [[persons-add-profession]]);
 - **„Relația cu firma”** — o persoană trece de filtru dacă are cel puțin una dintre relațiile bifate; „(necompletat)” arată persoanele fără nicio relație;
-- **„Gen”** — „Masculin” și „Feminin”;
+- **„Gen”** — „F” și „M”, ca în coloană;
 - **„Locul nașterii”** — locurile scrise în arhivă, cu bife, ca o localitate;
 - **„Data nașterii” și „Data decesului”** — „De la” și „Până la” sau, din „Perioadă…”, „Anul acesta” ori „Ultimele 12 luni”;
 - **„Vârstă”** — „De la” și „Până la”. Este vârsta din listă: la o persoană decedată, vârsta la deces.
@@ -73,6 +73,8 @@ Pe lista persoanelor fizice, apăsați „Adaugă persoană” — butonul din d
 | „Act de identitate” | „Tip document” („Carte de identitate” sau „Pașaport”) și datele actului. |
 | „Contact” | Telefoanele și adresele de e-mail. |
 | „Adrese” | „Adresă domiciliu” și „Adresă corespondență”. |
+
+„Gen” se scrie cu o literă: „M” sau „F” — în formular, pe ecranul persoanei, în coloana „Gen” a listei și în fereastra cărții de identitate. Ținut sub mouse, arată cuvântul întreg, „Masculin” sau „Feminin”. „Relația cu firma” ține tot rândul ei din „Identitate”, cu bifele una după alta, iar „MRZ (text brut)”, în „Act de identitate”, arată cel puțin două rânduri; un rând mai lung al MRZ-ului trece pe rândul următor.
 
 Bifele din capul ecranului arată sau ascund fișe, ca pe orice obiect (secțiunea [[start-tiles]]). O fișă ascunsă nu își pierde datele: ce ați scris în ea se salvează la fel.
 

@@ -126,6 +126,8 @@ An open object shows its data in tiles — panels with a name each, written at t
 
 A form's fields have no frame at rest: the field's name is small and grey above, and the value, bolder, under it; an empty field has a broken line beneath it. The white frame shows when the mouse passes over a field you can type in, and the blue one while you type in it.
 
+Each field has its own width and does not widen as you type. A value longer than the field goes onto the next line, and the field grows taller — a drop-down list too: a long choice reads on two lines, and the open list shows every value whole. A list value that is too long can be shortened in „Reference Data” (section [[admin-reference-data]]).
+
 A saved object is read: each form tile shows its values as text — the date of birth with the age beside it, such as 15.06.1985 (41 years), a chosen list item by its words, tick boxes as a short list. „Edit”, in the tile, at the right of the line under its title, opens it as a form: the tile gets a blue outline, and „Save” and „Cancel” appear under the fields (Figure [[fig-tile-edit]]). „Save” keeps only that tile's fields and makes one new version; „Cancel” puts the tile back as it was. An open tile shows all its fields, the empty ones too, and „Add”, on an empty tile, opens it straight as a form.
 
 One tile is open at a time. „Edit” on another, while the first has unsaved changes, asks first: save, discard or stay — as when you leave the screen (section [[start-breadcrumb]]). From the keyboard, Tab reaches „Edit”, Enter opens the tile with the cursor in its first field, Enter in an open tile saves it, and Esc is „Cancel”.

@@ -52,7 +52,7 @@ The columns that can be filtered, chosen in „Choose fields”:
 
 - **„Professional type”** — the professions on the list, as they stand in the archive now (section [[persons-add-profession]]);
 - **„Relationship to the business”** — a person passes the filter when they hold at least one of the ticked relationships; „(empty)” shows the persons with none;
-- **„Gender”** — „Male” and „Female”;
+- **„Gender”** — „F” and „M”, as in the column;
 - **„Place of Birth”** — the places written in the archive, with ticks, like a locality;
 - **„Date of Birth” and „Date of death”** — „From” and „To”, or, from „Period…”, „This year” or „The last 12 months”;
 - **„Age”** — „From” and „To”. It is the age the list shows: for a deceased person, the age at death.
@@ -73,6 +73,8 @@ On the list of natural persons, press „Add new Person” — the button on the
 | „Identity document” | „ID Type” („ID Card” or „Passport”) and the document's details. |
 | „Contact” | The telephone numbers and e-mail addresses. |
 | „Addresses” | „Home Address” and „Correspondence Address”. |
+
+„Gender” is written as one letter: „M” or „F” — on the form, on the person's screen, in the list's „Gender” column and in the ID card's window. Under the mouse it shows the whole word, „Male” or „Female”. „Relationship to the business” takes the whole of its row in „Identity”, its ticks one after another, and „MRZ (raw)”, in „Identity document”, shows at least two lines; a longer MRZ line goes onto the next one.
 
 The ticks at the top of the screen show or hide tiles, as on any object (section [[start-tiles]]). A hidden tile does not lose its data: what you typed in it is saved all the same.
 

@@ -459,6 +459,44 @@
               "en": "It opens the buyer beside it, and the change is left untouched"
             }
           ]
+        },
+        {
+          "id": "b7",
+          "section": "start-read-edit",
+          "ro": {
+            "question": "Într-o fișă deschisă cu „Editează” alegeți dintr-o listă o valoare mai lungă decât câmpul ei. Cum arată câmpul?",
+            "explanation": "Fiecare câmp are lățimea lui și nu se lățește după valoare. O valoare mai lungă trece pe rândul următor, iar câmpul se face mai înalt — și la o listă de alegere; lista deschisă arată fiecare valoare întreagă."
+          },
+          "en": {
+            "question": "In a tile opened with „Editează” (edit), you choose from a list a value longer than its field. How does the field look?",
+            "explanation": "Each field has its own width and does not widen for its value. A longer value goes onto the next line and the field grows taller — a drop-down list too; the open list shows every value whole."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Se lățește până încape toată valoarea pe un rând",
+              "en": "It widens until the whole value fits on one line"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "Rămâne la fel de lat, iar valoarea trece pe rândul următor",
+              "en": "It keeps its width, and the value goes onto the next line"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Taie valoarea, care se citește întreagă doar ținând mouse-ul pe câmp",
+              "en": "It cuts the value, which reads whole only with the mouse held on the field"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "Nu primește valoarea până nu o scurtați în „Date de referință”",
+              "en": "It refuses the value until you shorten it in „Date de referință” (reference data)"
+            }
+          ]
         }
       ]
     }

@@ -126,6 +126,8 @@ Un obiect deschis își arată datele în fișe — panouri cu câte un nume, sc
 
 Câmpurile unui formular nu au chenar cât stau: numele câmpului e mic, gri, deasupra, iar valoarea, mai groasă, sub el; un câmp gol are dedesubt o linie întreruptă. Chenarul alb apare când treceți cu mouse-ul peste un câmp în care se poate scrie, iar cel albastru când scrieți în el.
 
+Fiecare câmp are lățimea lui și nu se lățește după ce scrieți în el. O valoare mai lungă decât câmpul trece pe rândul următor, iar câmpul se face mai înalt — și la o listă de alegere: o alegere lungă se citește pe două rânduri, iar lista deschisă arată fiecare valoare întreagă. O valoare de listă prea lungă se poate scurta în „Date de referință” (secțiunea [[admin-reference-data]]).
+
 Un obiect salvat se citește: fiecare fișă de formular își arată valorile ca text — data nașterii cu vârsta alături, de pildă 15.06.1985 (41 de ani), o listă aleasă prin cuvintele ei, bifele ca o listă scurtă. „Editează”, în fișă, la dreapta rândului de sub titlu, o deschide în formular: fișa capătă un contur albastru, iar sub câmpuri apar „Salvează” și „Renunță” (Figura [[fig-tile-edit]]). „Salvează” păstrează doar câmpurile fișei aceleia și face o singură versiune nouă; „Renunță” pune fișa înapoi cum era. O fișă deschisă își arată toate câmpurile, și pe cele goale, iar „Adaugă”, pe o fișă goală, o deschide direct în formular.
 
 Se deschide o singură fișă odată. „Editează” pe alta, cât timp prima are modificări nesalvate, vă întreabă întâi: salvați, renunțați sau rămâneți — la fel ca la plecarea de pe ecran (secțiunea [[start-breadcrumb]]). Din tastatură, Tab ajunge la „Editează”, Enter deschide fișa cu cursorul în primul ei câmp, Enter într-o fișă deschisă o salvează, iar Esc este „Renunță”.
