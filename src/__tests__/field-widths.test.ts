@@ -414,7 +414,9 @@ describe("the Natural Person: every label above its box, every panel as wide as 
 
   it("every field is in exactly one row", () => {
     const listed = Object.values(NP_ROWS).flat(2);
-    expect([...listed].sort()).toEqual(Object.keys(NP).sort());
+    // Slice 40.79: „Relația cu firma" has a width (TILE) but no row — a group of ticks the form draws between the last
+    // row and Note, at the panel's inner width.
+    expect([...listed].sort()).toEqual(Object.keys(NP).filter((k) => k !== "relationships").sort());
     expect(new Set(listed).size).toBe(listed.length);
     expect([...ADDRESS_ROWS.flat()].sort()).toEqual(Object.keys(ADDRESS).sort());
   });
