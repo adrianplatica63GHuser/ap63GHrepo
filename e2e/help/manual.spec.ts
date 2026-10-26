@@ -257,7 +257,8 @@ async function blurRecent(page: Page, title: string): Promise<void> {
 /** Any box holding a 13-digit number — a CNP, in an editable form or a read-only version alike — blurred. */
 async function blurCnp(page: Page): Promise<void> {
   await page.evaluate((f) => {
-    for (const el of document.querySelectorAll<HTMLInputElement>("input")) {
+    // 40.78: the CNP is a box that grows — a <textarea> — since no field is FIXED; an <input> before.
+    for (const el of document.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>("input, textarea")) {
       if (/^\s*\d{13}\s*$/.test(el.value)) el.style.filter = f;
     }
     // 40.72: on a saved record a tile reads as text, so the CNP is a read value, not an input.
