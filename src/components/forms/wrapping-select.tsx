@@ -26,7 +26,7 @@
 import type { ComponentPropsWithRef, CSSProperties, ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
 
-type Props = Omit<ComponentPropsWithRef<"select">, "style" | "className" | "children" | "title"> & {
+type Props = Omit<ComponentPropsWithRef<"select">, "style" | "className" | "children"> & {
   /** The chosen option's words, as the box shows them; "" for none. */
   shown: string;
   /** The box's look — `FIELD_BOX`, `fieldBorder`, the version ring — on the select, which takes every state. */

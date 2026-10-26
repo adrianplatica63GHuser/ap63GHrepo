@@ -40,7 +40,7 @@ import { E2E_MARKER, removeLeftovers, removeRecord } from "../helpers/records";
 import { openFromSidebar } from "../helpers/sidebar";
 import { expectDropdownsWrap, expectStableColumns, expectStableWidths, expectUnitGrid, photograph } from "../helpers/field-widths";
 import { pressTileButton } from "../helpers/tiles";
-import { UNIT_GAP_REM, UNIT_REM } from "../../src/lib/ui/field-widths";
+import { SCALE, UNIT_GAP_REM, UNIT_REM } from "../../src/lib/ui/field-widths";
 
 const LAST_NAME = `${E2E_MARKER}PERS-01`;
 const LISTED_AS = `Ion ${LAST_NAME}`; // prenume first, as the list renders it
@@ -83,6 +83,20 @@ test.describe("TC-PERS-01 — Persoană fizică creată manual", () => {
       const grown = await place.boundingBox();
       expect(grown?.width).toBe(oneLine?.width);
       expect(grown?.height ?? 0).toBeGreaterThan((oneLine?.height ?? 0) + 10);
+
+      // Slice 40.79 — Adrian's sizes: Nume M; Gen XS, reading „M" with „Masculin" on hover; the MRZ L, two lines tall.
+      const rem = 16;
+      expect((await page.locator('[data-width-field="lastName"]').boundingBox())?.width).toBe(SCALE.M * rem);
+      const gen = page.getByRole("combobox", { name: "Gen", exact: true });
+      await gen.selectOption("MALE");
+      await expect(gen.locator("xpath=following-sibling::*[@data-select-face]")).toHaveText("M");
+      await expect(gen).toHaveAttribute("title", "Masculin");
+      expect((await gen.boundingBox())?.width).toBe(SCALE.XS * rem);
+      await gen.selectOption("");
+      const mrz = page.locator('[data-width-field="idMrzRaw"]');
+      const mrzBox = await mrz.boundingBox();
+      expect(mrzBox?.width).toBe(SCALE.L * rem);
+      expect(mrzBox?.height ?? 0).toBeGreaterThanOrEqual(2 * 20); // two 20-px lines
 
       // Steps 3–4 — „Nume" and „Prenume".
       await page.getByLabel(/^Nume(\s|$)/).fill(LAST_NAME);

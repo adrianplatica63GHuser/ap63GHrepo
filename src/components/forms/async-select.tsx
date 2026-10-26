@@ -16,7 +16,16 @@ import { WrappingSelect } from "./wrapping-select";
  * Set by the caller, not inferred from `value === ""`: the persons' pickers
  * use a bare „—" there, which is a gap, not a label.
  */
-export type AsyncSelectOption = { value: string; label: string; blank?: boolean };
+export type AsyncSelectOption = {
+  value: string;
+  label: string;
+  blank?: boolean;
+  /**
+   * Slice 40.79: the whole word when `label` is a short form („M" for „Masculin") — the option's `title` and its name
+   * to a screen reader, and the box's `title` on hover while it is the one chosen.
+   */
+  title?: string;
+};
 
 /**
  * ⚠️ **`optionsWithUnlistedValues` was here, and Slice #34.03 deleted it
@@ -149,7 +158,8 @@ export function AsyncSelect<T extends FieldValues>({
   // Slice 40.78: the chosen option's words, which the box shows wrapping inside its width — a value longer than the
   // box goes onto a second line instead of being cut (the `title` on hover that stood for it is gone).
   const current = useWatch({ control, name });
-  const shown = rendered.find((o) => o.value === String(current ?? ""))?.label ?? "";
+  const chosen = rendered.find((o) => o.value === String(current ?? ""));
+  const shown = chosen?.label ?? "";
 
   return (
     <WrappingSelect
@@ -160,6 +170,8 @@ export function AsyncSelect<T extends FieldValues>({
       aria-invalid={invalid}
       className={className}
       style={style}
+      // Slice 40.79: only a short form's whole word („Masculin" behind „M"); a long value wraps instead (40.78).
+      title={chosen?.title}
       data-width-field={widthField}
       data-width-kind={widthField ? "select" : undefined}
       // Last on purpose: `register` can itself return `disabled` (from
@@ -168,7 +180,7 @@ export function AsyncSelect<T extends FieldValues>({
       {...register(name)}
     >
       {rendered.map((o) => (
-        <option key={o.value} value={o.value} data-blank={o.blank ? "" : undefined}>
+        <option key={o.value} value={o.value} data-blank={o.blank ? "" : undefined} title={o.title} aria-label={o.title}>
           {o.label}
         </option>
       ))}

@@ -1264,6 +1264,10 @@
       "gender": {
         "MALE": "Masculin",
         "FEMALE": "Feminin"
+      },
+      "genderShort": {
+        "MALE": "M",
+        "FEMALE": "F"
       }
     },
     "buttons": {

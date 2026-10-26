@@ -55,7 +55,7 @@ test.describe("TC-PERS-08 — părinții din cartea de identitate, la „Adaugă
       await expect(page).toHaveURL(/\/natural-persons\/new$/, { timeout: 30_000 });
       await page.getByLabel(/^Nume(\s|$)/).fill(MARK);
       await page.getByLabel(/^Prenume(\s|$)/).fill("Andrei");
-      await page.getByRole("combobox", { name: "Gen", exact: true }).selectOption({ label: "Masculin" });
+      await page.getByRole("combobox", { name: "Gen", exact: true }).selectOption("MALE"); // 40.79: it reads „M"
       const fold = page.locator("[data-parents-fold]");
       await expect(fold).toHaveCount(0);
 

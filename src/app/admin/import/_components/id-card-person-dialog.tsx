@@ -1614,8 +1614,9 @@ export function IdCardPersonDialog({
           width={width}
           options={[
             { value: "", label: "—" },
-            { value: "MALE", label: t("genderMale") },
-            { value: "FEMALE", label: t("genderFemale") },
+            // Slice 40.79: „M" / „F" as on the person, the whole word on hover and to a screen reader.
+            { value: "MALE", label: tNp("options.genderShort.MALE"), title: t("genderMale") },
+            { value: "FEMALE", label: tNp("options.genderShort.FEMALE"), title: t("genderFemale") },
           ]}
         />
       );
@@ -2195,7 +2196,8 @@ function SelectField({
   label, name, register, control, error, warn, width, hint, hintAction, options,
 }: FieldProps & {
   control: Control<FormValues>;
-  options: { value: string; label: string }[];
+  /** `title`: the whole word behind a short label („Masculin" behind „M", 40.79). */
+  options: { value: string; label: string; title?: string }[];
 }) {
   // ⚠️ **THE SENTENCE AND ITS CONTROL LIVE OUTSIDE THE <label>, AND TWO
   // REVIEW ROUNDS ON #34.13 PUT THEM THERE.** Inside it they cost two things:

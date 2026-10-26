@@ -192,7 +192,8 @@ export function NaturalPersonListView() {
       // Slice #39.30: stopped at the death and marked „78 †"; „Decedat" for a dead person with no date.
       case "age":              return personAgeText(item, t("fields.isDeceased"));
       case "dateOfDeath":      return dmyFromIso(item.dateOfDeath);
-      case "gender":           return item.gender === "MALE" ? t("options.gender.MALE") : item.gender === "FEMALE" ? t("options.gender.FEMALE") : null;
+      // Slice 40.79: „M" / „F", the whole word on hover and to a screen reader.
+      case "gender":           return item.gender === "MALE" || item.gender === "FEMALE" ? <GenderShort gender={item.gender} /> : null;
       case "placeOfBirth":     return item.placeOfBirth;
       case "professionalType": return item.professionalType;
       case "relationships":    return item.relationships;
@@ -224,7 +225,7 @@ export function NaturalPersonListView() {
     kind: f.kind,
     // Slice 40.20: a filter keeps the field's whole label, not the band's short one.
     label: optionalCols.find((c) => NATURAL_PERSON_COLUMN_FILTERS[c.key] === f.key)?.full ?? f.key,
-    ...(f.key === "gender" ? { valueLabel: (id: string) => (id === "MALE" ? t("options.gender.MALE") : id === "FEMALE" ? t("options.gender.FEMALE") : id) } : {}),
+    ...(f.key === "gender" ? { valueLabel: (id: string) => (id === "MALE" ? t("options.genderShort.MALE") : id === "FEMALE" ? t("options.genderShort.FEMALE") : id) } : {}),
   }));
   const filterLabel = (key: string) => filterFields.find((f) => f.key === key)?.label ?? key;
 
@@ -432,5 +433,17 @@ export function NaturalPersonListView() {
       )}
 
     </ListPreviews>
+  );
+}
+
+/** Slice 40.79 — a person's gender in the list: „M" / „F", the whole word („Masculin", „Feminin") on hover and to a screen reader. */
+function GenderShort({ gender }: { gender: "MALE" | "FEMALE" }) {
+  const t = useTranslations("naturalPerson");
+  const full = t(`options.gender.${gender}`);
+  return (
+    <span title={full}>
+      <span aria-hidden="true">{t(`options.genderShort.${gender}`)}</span>
+      <span className="sr-only">{full}</span>
+    </span>
   );
 }

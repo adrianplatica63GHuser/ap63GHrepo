@@ -187,11 +187,14 @@ export function panelRowStyle(): CSSProperties {
  */
 export const NATURAL_PERSON = {
   // Identitate
-  lastName: { step: "L", kind: "grows" }, //                m: 0 · — · —
-  firstName: { step: "L", kind: "grows" }, //               m: 1 · 4 · 4
-  nickname: { step: "L", kind: "grows" }, //                m: 1 · 4 · 4
+  // Slice 40.79 — Adrian's sizes of 2026-10-26, judged in Romanian: Nume, Prenume, Poreclă M (were L); a longer
+  // name wraps (40.78).
+  lastName: { step: "M", kind: "grows" }, //                m: 0 · — · —
+  firstName: { step: "M", kind: "grows" }, //               m: 1 · 4 · 4
+  nickname: { step: "M", kind: "grows" }, //                m: 1 · 4 · 4
   cnp: { step: "M", kind: "grows" }, // 13 digits; m: 0
-  gender: { step: "M", kind: "select" }, //                 „Masculin"
+  // Slice 40.79: XS, reading „F" / „M" (naturalPerson.options.genderShort), the whole word on hover; was M („Masculin").
+  gender: { step: "XS", kind: "select" },
   dateOfBirth: { step: "M", kind: "input" }, //             dd.mm.yyyy and the calendar button
   age: { step: "XS", kind: "input" }, //     beside the date it is worked out from; „78 †" for the dead (#39.30) fits too
   // Slice #39.30 — „Decedat", a tick, and „Data decesului", a date like the birth's.
@@ -206,6 +209,9 @@ export const NATURAL_PERSON = {
   // is 13 + 0.5 + 13 = 26.5 rem, the panel's widest as before. Was XL.
   placeOfBirth: { step: "L", kind: "grows" }, //            m: 0
   notes: { step: "TILE", kind: "lines", fold: NOTE_FOLD_LINES, rows: 1, fill: true }, // m: 0; the panel's whole width (#37.26)
+  // Slice 40.79 — „Relația cu firma" (#39.70, a group of ticks): TILE, its ticks flowing across the panel's whole inner
+  // width on their own row, as Note does. Not in `NP_ROWS`: the form draws it between the last row and Note.
+  relationships: { step: "TILE", kind: "input", fill: true },
   // Carte de identitate — the first row „about 75%" of L, M and M (Adrian, #37.26). Tip document
   // is 10rem, not 9.75: „Carte de identitate" needs 156.4 px with the arrow, and 9.75rem is 156.
   idDocumentType: { step: "L", kind: "select", rem: 10 }, // „Carte de identitate" (19)
@@ -214,8 +220,12 @@ export const NATURAL_PERSON = {
   idValidFrom: { step: "M", kind: "input" },
   idValidUntil: { step: "M", kind: "input" },
   citizenshipId: { step: "M", kind: "select" }, //          m: 8 options, longest „Moldoveană" (10)
-  idIssuingAuthority: { step: "XL", kind: "grows" }, //     „SPCLEP Sector 3 București"; m: 0
-  idMrzRaw: { step: "XL", kind: "lines", fold: NOTE_FOLD_LINES, rows: 3, fill: true }, // 3 × 30 monospace; m: 1 · 1507 — free text pasted into it, which grows; the panel's whole width (#37.26)
+  // Slice 40.79: Emisă de L (was XL) — „SPCLEP Sector 3 București" wraps; m: 0.
+  idIssuingAuthority: { step: "L", kind: "grows" },
+  // Slice 40.79: L and at least two lines (Adrian: „MRZ (text brut) - L, 2 rows"); no longer the panel's whole width
+  // (#37.26). A 30-character MRZ line is wider than L in the mono font, so each line wraps; it keeps its line breaks,
+  // grows downward and folds at five lines like every note (#37.40). m: 1 · 1507 — free text pasted into it.
+  idMrzRaw: { step: "L", kind: "lines", fold: NOTE_FOLD_LINES, rows: 2 },
   // Contact
   personalPhone1: { step: "M", kind: "grows" }, // m: 0
   personalPhone2: { step: "M", kind: "grows" }, // m: 0

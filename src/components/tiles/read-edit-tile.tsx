@@ -74,6 +74,7 @@ export function ReadValue({
   text,
   style,
   className = "",
+  full,
 }: {
   name: string;
   kind: string;
@@ -81,11 +82,25 @@ export function ReadValue({
   style?: CSSProperties;
   /** The version ring, when the field carries one. */
   className?: string;
+  /**
+   * Slice 40.79: the whole word when `text` is a short form („Masculin" behind „M"): on hover, and what a screen
+   * reader says instead of the letter.
+   */
+  full?: string;
 }) {
   return (
     // `data-no-tile-drag`: a press on a value is a press on a field, which never grabs its tile (#37.76).
-    <div className={`${READ_VALUE_CLASS} ${className}`.trim()} style={style} data-width-field={name} data-width-kind={kind} data-read-value={name} data-no-tile-drag="">
-      {text === "" ? <span className="text-fade dark:text-zinc-500">—</span> : text}
+    <div className={`${READ_VALUE_CLASS} ${className}`.trim()} style={style} title={text !== "" ? full : undefined} data-width-field={name} data-width-kind={kind} data-read-value={name} data-no-tile-drag="">
+      {text === "" ? (
+        <span className="text-fade dark:text-zinc-500">—</span>
+      ) : full ? (
+        <>
+          <span aria-hidden="true">{text}</span>
+          <span className="sr-only">{full}</span>
+        </>
+      ) : (
+        text
+      )}
     </div>
   );
 }

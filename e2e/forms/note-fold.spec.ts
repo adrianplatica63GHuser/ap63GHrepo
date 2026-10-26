@@ -134,7 +134,9 @@ test.describe("TC-FOLD-01 — „Note” și MRZ lungi se strâng la cinci rând
       await page.goto(`/natural-persons/${ids[2].id}`);
       // Slice 40.72: a saved person reads as text; the MRZ folds in its box, so „Act de identitate" is opened.
       await editTile(page, "idCard");
-      await expectFolds(page, "MRZ (text brut)", 150, "natural-person-mrz");
+      // Slice 40.79: the MRZ is L, 190 px inside — 22 characters of Geist Mono a line — so each of its seven
+      // 35–36-character lines takes two: fourteen lines open, 14 × 20 + 10 = 290 px (it was the panel's width, 150).
+      await expectFolds(page, "MRZ (text brut)", 290, "natural-person-mrz");
       // Its own „Note" and the address block's are both empty: no link under either.
       await expect(fold(page, "Note").links).toHaveCount(0);
     } finally {

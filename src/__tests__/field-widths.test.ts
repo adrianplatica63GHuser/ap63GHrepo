@@ -383,7 +383,8 @@ describe("the scale", () => {
     }
     const async = read("src/components/forms/async-select.tsx");
     expect(async).toMatch(/<WrappingSelect\b/);
-    expect(async).not.toMatch(/\btitle=\{/);
+    // Only a short label's whole word („Masculin" behind „M", 40.79) — never the chosen label to read a cut value.
+    expect(async).toMatch(/title=\{chosen\?\.title\}/);
   });
 
   it("a box's width is an inline style in rem, and the form snaps to whole panels", () => {
@@ -469,7 +470,8 @@ describe("the Natural Person: every label above its box, every panel as wide as 
       address: widest(ADDRESS_ROWS, ADDRESS),
     };
     // identity 27: „Tip profesional" is 13.5 rem since 40.70 (Roboto), beside „Locul nașterii" — still three units.
-    expect(rowsOf).toEqual({ identity: 27, idCard: 26, contact: 17.5, address: 24 });
+    // idCard 23.75 since 40.79 (Emisă de L, the MRZ L and not filling): the first row, Tip document | Nr. | Nr. card.
+    expect(rowsOf).toEqual({ identity: 27, idCard: 23.75, contact: 17.5, address: 24 });
     expect(NP_PANEL_UNITS).toEqual({ identity: 3, idCard: 3, contact: 2, address: 3 });
     for (const k of Object.keys(NP_PANEL_UNITS) as (keyof typeof NP_PANEL_UNITS)[]) {
       expect([k, NP_PANEL_INNER_REM[k] >= rowsOf[k]]).toEqual([k, true]);
@@ -478,9 +480,43 @@ describe("the Natural Person: every label above its box, every panel as wide as 
     expect(NP_PANEL_INNER_REM).toEqual({ identity: 28.125, idCard: 28.125, contact: 17.875, address: 28.125 });
     for (const inner of Object.values(NP_PANEL_INNER_REM)) expect(panelRem(inner)).toBeLessThan(PANEL_REM);
     expect(rowRem([NP.idValidFrom, NP.idValidUntil]) + STACK_GAP_REM + NP_VALIDITY_REM).toBe(NP_PANEL_INNER_REM.idCard);
-    expect([NP.notes.fill, NP.idMrzRaw.fill, ADDRESS.notes.fill]).toEqual([true, true, true]);
+    expect([NP.notes.fill, ADDRESS.notes.fill]).toEqual([true, true]);
     expect(panels).toMatch(/width=\{NP\.notes\}\s+fillRem=\{NP_PANEL_INNER_REM\.identity\}/);
-    expect(panels).toMatch(/width=\{NP\.idMrzRaw\}\s+fillRem=\{NP_PANEL_INNER_REM\.idCard\}/);
+    // Slice 40.79: the MRZ is L, no longer the panel's whole width.
+    expect("fill" in NP.idMrzRaw).toBe(false);
+    expect(panels).toMatch(/width=\{NP\.idMrzRaw\}\s+mono/);
+  });
+
+  // Slice 40.79 — Adrian, 2026-10-26, judged in Romanian: „Nume - M / Prenume - M / Poreclă - M / … / Gen (please use
+  // "F" for Feminin, "M" for Masculin) - XS / … / Relația cu firma - TILE / Note - TILE" and „Emisă de - L / MRZ (text
+  // brut) - L, 2 rows"; every other field on the two panels unchanged.
+  it("Identitate and Act de identitate at Adrian's sizes (40.79)", () => {
+    expect([NP.lastName.step, NP.firstName.step, NP.nickname.step]).toEqual(["M", "M", "M"]);
+    expect(NP.gender).toEqual({ step: "XS", kind: "select" });
+    expect(NP.relationships).toEqual({ step: "TILE", kind: "input", fill: true });
+    expect(NP.notes.step).toBe("TILE");
+    expect(NP.idIssuingAuthority).toEqual({ step: "L", kind: "grows" });
+    expect(NP.idMrzRaw).toMatchObject({ step: "L", kind: "lines", rows: 2 });
+    // Unchanged.
+    expect([NP.cnp.step, NP.dateOfBirth.step, NP.age.step, NP.dateOfDeath.step, NP.placeOfBirth.step]).toEqual(["M", "M", "XS", "M", "L"]);
+    expect([boxRem(NP.physicalPersonTypeId), boxRem(NP.idDocumentType), boxRem(NP.idDocumentNumber), boxRem(NP.idCardNumber)]).toEqual([13.5, 10, 6.375, 6.375]);
+    expect([NP.idValidFrom.step, NP.idValidUntil.step, NP.citizenshipId.step]).toEqual(["M", "M", "M"]);
+    // „M" — the wider letter — beside the arrow fits XS: the face's text room is the box less its padding, border, gap and arrow.
+    expect(textPx("M") + 9 + 5 + 4 + 16).toBeLessThanOrEqual(SCALE.XS * 16);
+    // The relationships' ticks span the panel's inner width on the form.
+    expect(panels).toMatch(/style=\{stackedBoxStyle\(NP\.relationships, NP_PANEL_INNER_REM\.identity\)\}/);
+    // Gen reads „M" / „F", the whole word its title, on the form, the ID-card dialog and the list.
+    const form = code(read("src", "app", "natural-persons", "_components", "natural-person-form.tsx"));
+    expect(form).toMatch(/label: t\("options\.genderShort\.MALE"\), title: t\("options\.gender\.MALE"\)/);
+    expect(form).toMatch(/label: t\("options\.genderShort\.FEMALE"\), title: t\("options\.gender\.FEMALE"\)/);
+    const dialog = code(read("src", "app", "admin", "import", "_components", "id-card-person-dialog.tsx"));
+    expect(dialog).toMatch(/label: tNp\("options\.genderShort\.MALE"\), title: t\("genderMale"\)/);
+    const list = code(read("src", "app", "natural-persons", "list-view.tsx"));
+    expect(list).toMatch(/<GenderShort gender=\{item\.gender\} \/>/);
+    for (const locale of ["ro-RO", "en-GB"]) {
+      const messages = JSON.parse(read("messages", `${locale}.json`)) as { naturalPerson: { options: { genderShort: Record<string, string> } } };
+      expect(messages.naturalPerson.options.genderShort).toEqual({ MALE: "M", FEMALE: "F" });
+    }
   });
 
   it("no label beside a box is left on the form, and the row is as wide as its panels", () => {

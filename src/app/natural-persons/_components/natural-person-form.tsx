@@ -8,7 +8,7 @@ import { useTranslations } from "next-intl";
 import { useTimeFrames, tfDays } from "@/hooks/use-time-frames";
 import { useCitizenshipOptions, usePersonRelationshipOptions, usePersonTypeOptions } from "@/hooks/use-lookup-options";
 import { useRouter } from "next/navigation";
-import { useEffect, useId, useMemo, useRef, useState, useCallback } from "react";
+import { useEffect, useId, useMemo, useRef, useState, useCallback, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import {
   Controller,
@@ -1053,8 +1053,9 @@ export function NaturalPersonForm({
               error={errors.gender?.message}
               options={[
                 { value: "", label: "—" },
-                { value: "MALE", label: t("options.gender.MALE") },
-                { value: "FEMALE", label: t("options.gender.FEMALE") },
+                // Slice 40.79: „M" / „F" in a box of XS, the whole word on hover and to a screen reader.
+                { value: "MALE", label: t("options.genderShort.MALE"), title: t("options.gender.MALE") },
+                { value: "FEMALE", label: t("options.genderShort.FEMALE"), title: t("options.gender.FEMALE") },
               ]}
               highlight={displayHighlights?.fields.gender}
               width={NP.gender}
@@ -1106,6 +1107,7 @@ export function NaturalPersonForm({
           {/* Slice #39.70 — „Relația cu firma": several at once, saved with the person, never versioned. */}
           <RelationshipsField
             label={t("fields.relationships")}
+            style={stackedBoxStyle(NP.relationships, NP_PANEL_INNER_REM.identity)}
             options={relationshipOptions}
             value={relationshipIds}
             onChange={setRelationshipIds}
@@ -1244,7 +1246,6 @@ export function NaturalPersonForm({
             error={errors.idMrzRaw?.message}
             highlight={displayHighlights?.fields.idMrzRaw}
             width={NP.idMrzRaw}
-            fillRem={NP_PANEL_INNER_REM.idCard}
             mono
           />
           {offerParents && (
@@ -1786,19 +1787,22 @@ function RelationshipsField({
   onChange,
   hint,
   reading = false,
+  style,
 }: {
   label: string;
   options: { value: string; label: string }[];
   value: readonly string[];
   onChange: (next: string[]) => void;
   hint?: string;
+  /** Slice 40.79: TILE — the panel's whole inner width (`NP.relationships`). */
+  style: CSSProperties;
   /** Slice 40.72: the read view — the ticked ones as a short list („Client, Cumpărător"). */
   reading?: boolean;
 }) {
   const labelId = useId();
   if (reading) {
     return (
-      <div className="flex flex-col gap-y-0.5 text-sm" data-np-relationships="">
+      <div className="flex flex-col gap-y-0.5 text-sm" style={style} data-np-relationships="">
         <span className={FIELD_LABEL}>{label}</span>
         <ReadValue
           name="relationships"
@@ -1811,7 +1815,7 @@ function RelationshipsField({
   const toggle = (id: string, on: boolean) =>
     onChange((on ? [...value, id] : value.filter((v) => v !== id)).sort());
   return (
-    <div className="flex flex-col gap-y-0.5 text-sm" role="group" aria-labelledby={labelId} data-np-relationships="">
+    <div className="flex flex-col gap-y-0.5 text-sm" style={style} role="group" aria-labelledby={labelId} data-np-relationships="" data-width-field="relationships" data-width-kind={NP.relationships.kind}>
       {/* The stacked label's look without its `self-end`, which in a column would push it to the right. */}
       <span id={labelId} className={FIELD_LABEL}>
         {label}
@@ -1846,7 +1850,8 @@ function SelectField({
   width,
 }: FieldProps & {
   control: Control<FormValues>;
-  options: { value: string; label: string }[];
+  /** `title`: the whole word behind a short label („Masculin" behind „M", 40.79). */
+  options: { value: string; label: string; title?: string }[];
   /** A list that failed to load, said under the picker (#37.50 moved Field's own hint to `bubble`). */
   hint?: string;
   /**
@@ -1887,7 +1892,8 @@ function SelectField({
   // Slice 40.78: the box is as wide as its step, and a chosen option longer than that wraps onto a second line
   // (`WrappingSelect`, inside `AsyncSelect`); the read view writes the same words.
   const current = useWatch({ control, name });
-  const chosenLabel = options.find((o) => o.value === (current ?? ""))?.label;
+  const chosenOption = options.find((o) => o.value === (current ?? ""));
+  const chosenLabel = chosenOption?.label;
   const box = boxStyle(width);
 
   // A version whose lookup row an admin deleted PRINTS what the snapshot holds
@@ -1925,7 +1931,7 @@ function SelectField({
     return (
       <div className={STACKED_FIELD_CLASS} style={hiddenFieldStyle(hiddenEmpty, box)} data-empty-hidden={hiddenEmpty || undefined}>
         <span className={STACKED_LABEL_CLASS}>{label}</span>
-        <ReadValue name={name} kind={width.kind} text={current ? (chosenLabel ?? "") : ""} style={box} className={ring} />
+        <ReadValue name={name} kind={width.kind} text={current ? (chosenLabel ?? "") : ""} full={chosenOption?.title} style={box} className={ring} />
       </div>
     );
   }
