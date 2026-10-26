@@ -12,17 +12,17 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-10-26 — 362 entries (FU-360 filed by 40.18, FU-361 by 40.27, FU-362 by 40.78). Rows are status, columns are impact.
+As of 2026-10-26 — 363 entries (FU-360 filed by 40.18, FU-361 by 40.27, FU-362 by 40.78, FU-363 by 40.79). Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
-| open | 18 | 85 | 79 | 25 | 207 |
+| open | 18 | 85 | 79 | 26 | 208 |
 | planned | 0 | 0 | 1 | 0 | 1 |
 | resolved | 38 | 61 | 32 | 3 | 134 |
 | ignored | 4 | 3 | 4 | 2 | 13 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 6 | 1 | 0 | 7 |
-| **total** | 60 | 155 | 117 | 30 | 362 |
+| **total** | 60 | 155 | 117 | 31 | 363 |
 <!-- summary:end -->
 
 `src/__tests__/follow-up-register.test.ts` recounts the table and fails when this block disagrees
@@ -446,3 +446,4 @@ Nothing is filed from memory: every row carries evidence someone actually looked
 | FU-360 | 2026-10-21 40.18 Handover.40.18.md | recommendation | UI shell | Six tables outside the seven kinds 40.05 pictured still draw their column names in 12-px Arial, medium, in fade (zinc-400 dark) on today's band or none: „Calcul → Istoric" (the history list and three tables of a run) and „Tarla" (its list and three tables of a tarla). Giving them `COLUMN_NAMES_BAND` (or `COLUMN_NAMES_TYPE` where there is no band) would make every column name in the app alternative 13's. | src/app/admin/calculation/history/_components/calculation-history-list.tsx:107; src/app/admin/calculation/history/[id]/_components/calculation-run-detail.tsx:298, 374, 460; src/app/tarlale/_components/tarla-list.tsx:44; src/app/tarlale/_components/tarla-detail.tsx:307, 371, 416 | cosmetic | XS | open | Read `COLUMN_NAMES_BAND` from src/lib/ui/title-type.ts in the eight theads; ask Adrian first whether the fade was deliberate. | 2026-10-21 |
 | FU-361 | 2026-10-21 40.27 Handover.40.27.md | copy/i18n | UI shell | The sidebar still names the two persons' lists in title case, „Persoane Fizice” / „Persoane Juridice” (EN „Natural Persons” / „Juridical Persons”), while 40.22 made their screens' titles „Persoane fizice” / „Persoane juridice”; the breadcrumb already says „Persoane fizice”. Each name is right on its own; side by side in the manual's figures (2.1, 2.4) they read as two spellings of one list. | messages/ro-RO.json `nav.*` (the sidebar's Domeniu entries); messages/en-GB.json the same | cosmetic | XS | open | Ask Adrian whether the sidebar follows 40.22 („Persoane fizice”) or keeps title case; then the two message values, the manual's quotes of them and the specs that read the sidebar by name. | 2026-10-21 |
 | FU-362 | 2026-10-26 40.78 Handover.40.78.md | recommendation | UI shell | 40.78 made every record screen's dropdown wrap a long value (`WrappingSelect`); the dropdowns on the other screens are still a bare native `<select>` at a fixed width, which cuts a chosen value longer than its box — the „Asociază …" screens' role pickers, the lists' filters, the administration (value lists, roles, stamps, groups, the Form editor, costs, the calculation), the Document's cotă mode, META INFO, the AI linkers, „Adaugă proprietate" and the interaction log. Adrian's rule of 2026-10-26 („any dropdown … use wrapping to a second line") reads as all of them. | src/components/forms/wrapping-select.tsx; `grep -rn "<select" src --include=*.tsx` (27 files outside the record screens at 2ca20cf) | user | M | open | Draw each through `WrappingSelect` (a `shown` and the same props), screen by screen; a header per family. | 2026-10-26 |
+| FU-363 | 2026-10-26 40.79 Handover.40.79.md | next-slice idea | People | At 40.79's sizes every Identitate row but one fits two units: Locul nașterii | Tip profesional (13 + 0.5 + 13.5 = 27rem) is what keeps the panel at three. Putting the two on rows of their own would make Identitate a 2-unit tile (its widest row then Nume | Prenume, 17.5rem of the 17.875 inside). | src/lib/ui/field-widths.ts `NATURAL_PERSON_ROWS.identity`; field-widths.test.ts „each panel is the fewest whole units" | cosmetic | XS | open | Adrian's choice; if yes, split the row in `NATURAL_PERSON_ROWS.identity` and the form, and move the panel-units numbers in field-widths.test. | 2026-10-26 |
