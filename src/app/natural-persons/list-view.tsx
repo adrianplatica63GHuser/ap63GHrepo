@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
+import { GenderShort } from "./_components/gender-short";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { RecencyBadge } from "@/components/recency-badge";
@@ -433,17 +434,5 @@ export function NaturalPersonListView() {
       )}
 
     </ListPreviews>
-  );
-}
-
-/** Slice 40.79 — a person's gender in the list: „M" / „F", the whole word („Masculin", „Feminin") on hover and to a screen reader. */
-function GenderShort({ gender }: { gender: "MALE" | "FEMALE" }) {
-  const t = useTranslations("naturalPerson");
-  const full = t(`options.gender.${gender}`);
-  return (
-    <span title={full}>
-      <span aria-hidden="true">{t(`options.genderShort.${gender}`)}</span>
-      <span className="sr-only">{full}</span>
-    </span>
   );
 }

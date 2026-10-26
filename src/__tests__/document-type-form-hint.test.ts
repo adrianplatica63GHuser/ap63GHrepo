@@ -433,8 +433,9 @@ const SELECT_FIELD = functionBody(FORM_CODE, "function SelectField(");
 
 describe("the SelectField slice this suite reads is the real one", () => {
   it("contains the whole control and nothing after it", () => {
-    expect(SELECT_FIELD).toContain("<select");
-    expect(SELECT_FIELD).toContain("</select>");
+    // 40.78: the control is `<WrappingSelect>`, the native <select> under a face that wraps a long value.
+    expect(SELECT_FIELD).toContain("<WrappingSelect");
+    expect(SELECT_FIELD).toContain("</WrappingSelect>");
     expect(SELECT_FIELD).not.toContain("SurveyorPickerDialog");
     expect(SELECT_FIELD).not.toContain("<textarea");
   });
@@ -486,7 +487,7 @@ describe("the hint is not drawn as an error", () => {
     // substring and the guard would have passed through it. A label that CLOSES
     // before the control opens cannot contain it, however it is formatted.
     const closed = SELECT_FIELD.indexOf("</label>");
-    const control = SELECT_FIELD.indexOf("<select");
+    const control = SELECT_FIELD.indexOf("<WrappingSelect");
     expect(closed).toBeGreaterThan(-1);
     expect(control).toBeGreaterThan(-1);
     expect(closed).toBeLessThan(control);
