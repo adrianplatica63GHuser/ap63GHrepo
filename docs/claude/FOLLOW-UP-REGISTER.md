@@ -12,17 +12,17 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-10-21 — 361 entries (FU-360 filed by 40.18, FU-361 by 40.27). Rows are status, columns are impact.
+As of 2026-10-26 — 362 entries (FU-360 filed by 40.18, FU-361 by 40.27, FU-362 by 40.78). Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
-| open | 18 | 84 | 79 | 25 | 206 |
+| open | 18 | 85 | 79 | 25 | 207 |
 | planned | 0 | 0 | 1 | 0 | 1 |
 | resolved | 38 | 61 | 32 | 3 | 134 |
 | ignored | 4 | 3 | 4 | 2 | 13 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 6 | 1 | 0 | 7 |
-| **total** | 60 | 154 | 117 | 30 | 361 |
+| **total** | 60 | 155 | 117 | 30 | 362 |
 <!-- summary:end -->
 
 `src/__tests__/follow-up-register.test.ts` recounts the table and fails when this block disagrees
@@ -445,3 +445,4 @@ Nothing is filed from memory: every row carries evidence someone actually looked
 | FU-359 | 2026-10-20 #40.01 Handover.40.01.md | defect | Documents | On „Acte" at a narrow window the filter group („Tip document:", the sign, „Câmp specific:" and its ⓘ — 603 px, one item that never wraps apart) is wider than the space the toolbar's controls leave beside „Adaugă act": at 1000 px it wraps onto its own line as asked, but ends 30 px past the controls' box (nothing overlaps); about 100 px narrower it would reach past the toolbar and scroll the page sideways. | src/app/documents/list-view.tsx — `data-toolbar-controls`, `data-filter-fixed` (flex-nowrap, shrink-0); measured in the browser pane at 1000 × 900 | user | XS | open | Let the group's „Câmp specific" part wrap under „Tip document:" (still together) below the width where the group fits a line, or narrow the type button's 14 rem there. | 2026-10-20 |
 | FU-360 | 2026-10-21 40.18 Handover.40.18.md | recommendation | UI shell | Six tables outside the seven kinds 40.05 pictured still draw their column names in 12-px Arial, medium, in fade (zinc-400 dark) on today's band or none: „Calcul → Istoric" (the history list and three tables of a run) and „Tarla" (its list and three tables of a tarla). Giving them `COLUMN_NAMES_BAND` (or `COLUMN_NAMES_TYPE` where there is no band) would make every column name in the app alternative 13's. | src/app/admin/calculation/history/_components/calculation-history-list.tsx:107; src/app/admin/calculation/history/[id]/_components/calculation-run-detail.tsx:298, 374, 460; src/app/tarlale/_components/tarla-list.tsx:44; src/app/tarlale/_components/tarla-detail.tsx:307, 371, 416 | cosmetic | XS | open | Read `COLUMN_NAMES_BAND` from src/lib/ui/title-type.ts in the eight theads; ask Adrian first whether the fade was deliberate. | 2026-10-21 |
 | FU-361 | 2026-10-21 40.27 Handover.40.27.md | copy/i18n | UI shell | The sidebar still names the two persons' lists in title case, „Persoane Fizice” / „Persoane Juridice” (EN „Natural Persons” / „Juridical Persons”), while 40.22 made their screens' titles „Persoane fizice” / „Persoane juridice”; the breadcrumb already says „Persoane fizice”. Each name is right on its own; side by side in the manual's figures (2.1, 2.4) they read as two spellings of one list. | messages/ro-RO.json `nav.*` (the sidebar's Domeniu entries); messages/en-GB.json the same | cosmetic | XS | open | Ask Adrian whether the sidebar follows 40.22 („Persoane fizice”) or keeps title case; then the two message values, the manual's quotes of them and the specs that read the sidebar by name. | 2026-10-21 |
+| FU-362 | 2026-10-26 40.78 Handover.40.78.md | recommendation | UI shell | 40.78 made every record screen's dropdown wrap a long value (`WrappingSelect`); the dropdowns on the other screens are still a bare native `<select>` at a fixed width, which cuts a chosen value longer than its box — the „Asociază …" screens' role pickers, the lists' filters, the administration (value lists, roles, stamps, groups, the Form editor, costs, the calculation), the Document's cotă mode, META INFO, the AI linkers, „Adaugă proprietate" and the interaction log. Adrian's rule of 2026-10-26 („any dropdown … use wrapping to a second line") reads as all of them. | src/components/forms/wrapping-select.tsx; `grep -rn "<select" src --include=*.tsx` (27 files outside the record screens at 2ca20cf) | user | M | open | Draw each through `WrappingSelect` (a `shown` and the same props), screen by screen; a header per family. | 2026-10-26 |
