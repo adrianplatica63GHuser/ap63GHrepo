@@ -265,15 +265,24 @@ describe("checkTypeForms — the identity card", () => {
     ]);
   });
 
-  it("⚠️ excuses a stored card by its NAME as well as by its key", () => {
-    // A row somebody added by hand, or one an earlier import invented from a
-    // classified label, carries neither `CARTE_IDENTITATE` nor a form.
+  // ⚠️ Slice 40.82 INVERTED this one. It read „excuses a stored card by its NAME as well as by its key" and
+  // expected `clean`: a hand-added „Buletin de identitate" type was an identity type by its name. A name no
+  // longer makes one — the `identity_kind` marker does (migration_118) — so such a row is an ordinary type
+  // that needs a form like any other; the archive's old booklet is CARTE_IDENTITATE_VECHE, marked.
+  it("does NOT excuse a stored type by its NAME any more — only by its marker or kind key (Slice 40.82)", () => {
     const handAdded = type("id-hand", "BULETIN_IDENTITATE", "Buletin de identitate");
     const verdict = checkTypeForms({
       entries: [entry("b.jpg", { typeKey: "BULETIN_IDENTITATE", label: "buletin" })],
       catalogue: [CATCH_ALL, handAdded],
     });
-    expect(verdict.clean).toBe(true);
+    expect(verdict.clean).toBe(false);
+    const marked = type("id-vechi", "CARTE_IDENTITATE_VECHE", "Carte de Identitate (model vechi)");
+    expect(
+      checkTypeForms({
+        entries: [entry("v.jpg", { typeKey: "CARTE_IDENTITATE_VECHE", label: "buletin" })],
+        catalogue: [CATCH_ALL, marked],
+      }).clean,
+    ).toBe(true);
   });
 
   it("⚠️ excuses a card the run would CREATE off the SCAN SIGNAL ALONE", () => {

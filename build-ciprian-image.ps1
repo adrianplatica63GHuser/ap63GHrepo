@@ -1149,7 +1149,7 @@ $knownOperationalTables = @(
     "app_users", "user_requests", "user_tile_default", "skill_attempt", "ai_paid_read", "cost_record",
     "principal_object", "person", "natural_person", "judicial_person", "address", "person_version",
     "property", "property_address", "property_corner", "property_corner_source", "property_version",
-    "document", "document_page", "document_version",
+    "document", "document_page", "document_version", "identity_document",
     "person_person", "person_document", "property_person", "property_document", "property_property",
     "document_document",
     "groups", "group_member", "stamps", "stamp_member",

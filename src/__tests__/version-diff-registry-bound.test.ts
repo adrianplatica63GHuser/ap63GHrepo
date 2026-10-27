@@ -93,7 +93,8 @@ const sorted = (xs: readonly string[]): string[] => [...xs].sort();
 // Document
 // ---------------------------------------------------------------------------
 
-const DOC_EXPECTED = [...DOCUMENT_SNAPSHOT_KEYS].filter((k) => k !== "customFields");
+// Slice 40.82: `identity` is a nested block too — compared by identitySnapshotsEqual, framed by 40.83's screen.
+const DOC_EXPECTED = [...DOCUMENT_SNAPSHOT_KEYS].filter((k) => k !== "customFields" && k !== "identity");
 
 function docSnap(value: string | null): DocumentSnapshot {
   return {

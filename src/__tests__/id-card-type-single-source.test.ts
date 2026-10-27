@@ -260,7 +260,9 @@ describe("idCardFormRefusal — what a write would leave behind", () => {
         { key: "CARTE_IDENTITATE", name: "Carte de identitate (două exemplare)", hasForm: true },
         false,
       ),
-    ).toBe("form");
+    // Slice 40.82: still refused, now as `rename` — the stored row was a card only by its NAME, which no longer
+    // counts, so moving it onto the kind's key is what makes it one.
+    ).toBe("rename");
   });
 
   // ⚠️ Slice 40.82 INVERTED this one. It read „still refuses a name-only write that makes an ORDINARY type a card",

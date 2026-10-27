@@ -59,7 +59,10 @@ describe("the short names' seed (#37.95)", () => {
   });
 
   it("names every catalogue type, and nothing else", () => {
-    expect(SEED.map((s) => s.key).sort()).toEqual(CATALOGUE.map((c) => c.key).sort());
+    // Slice 40.82: the three identity kinds migration_118 added take their short names there (and in the reference
+    // data's IDENTITY KINDS update), not in 092's list, which is history.
+    const ADDED_BY_118 = ["CARTE_IDENTITATE_VECHE", "PASAPORT", "PASAPORT_CRDS"];
+    expect([...SEED.map((s) => s.key), ...ADDED_BY_118].sort()).toEqual(CATALOGUE.map((c) => c.key).sort());
   });
 
   it("gives the archive's abbreviations", () => {

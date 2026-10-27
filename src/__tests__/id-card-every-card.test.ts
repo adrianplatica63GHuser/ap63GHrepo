@@ -79,7 +79,8 @@ describe("the parents offered (Ask first 2)", () => {
 describe("the action on a card's screen (Ask first 1)", () => {
   const form = code(read("src", "app", "documents", "_components", "document-form.tsx"));
   it("is drawn on an identity card's screen only", () => {
-    expect(form).toMatch(/documentTypeIsIdCard\(/);
+    // Slice 40.82: the identity test reads the type's marker now (documentTypeIsIdentity).
+    expect(form).toMatch(/documentTypeIsIdentity\(/);
     expect(form).toContain("<IdCardPeopleAction");
   });
   it("opens the import's own dialog, with no property", () => {

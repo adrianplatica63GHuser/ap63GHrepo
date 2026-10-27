@@ -278,7 +278,8 @@ describe("has-a-form is decided once, and the dropdown asks that one function", 
     // account with a row since), and only where a form may come.
     expect(stmt).toMatch(/^const showNoFormHint = canConfigure\s*&&/);
     expect(stmt).toMatch(/&&\s*typeMayHoldAForm\(\{/);
-    expect(stmt).toContain("typeIsIdCard: documentTypeIsIdCard(selectedType)");
+    // Slice 40.82: documentTypeIsIdCard became documentTypeIsIdentity (the marker, not the name).
+    expect(stmt).toContain("typeIsIdCard: documentTypeIsIdentity(selectedType)");
     // `effectiveMode`, not `mode`: an associated record after Modifică is an
     // editable picker, and a read-only screen is not one.
     expect(stmt).toContain('effectiveMode !== "view"');

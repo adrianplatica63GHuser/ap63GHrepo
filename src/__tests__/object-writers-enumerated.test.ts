@@ -484,7 +484,8 @@ describe("every snapshot comparison reads the registry, not its own copy", () =>
    * is a comparison RULE, not a second key list, and it is the only one.
    */
   const ALLOWED_QUOTED: Record<string, readonly string[]> = {
-    "src/lib/documents/queries.ts": ["customFields"],
+    // Slice 40.82: `identity` is the second nested block (`if (k === "identity")`), compared by identitySnapshotsEqual.
+    "src/lib/documents/queries.ts": ["customFields", "identity"],
   };
 
   it("so nothing re-lists the keys as literals beside the assignment", () => {

@@ -245,9 +245,21 @@ describe("documentTypeKeyRefusal", () => {
   it.each([
     ["UNCLASSIFIED",     "NECLASIFICAT"],
     ["NECLASIFICAT",     "Neclasificat"],
-    ["CARTE_IDENTITATE", "Carte de Identitate"],
   ])("⚠️ allows the reserved key %s when the name says the same thing (%s)", (key, name) => {
     expect(documentTypeKeyRefusal(key, name)).toBeNull();
+  });
+
+  // ⚠️ Slice 40.82 INVERTED the third row of the table above, which read
+  // `["CARTE_IDENTITATE", "Carte de Identitate"]` → allowed. A NAME no longer makes a type an identity
+  // document — migration_118's `identity_kind` marker does, and only a migration writes it — so no door
+  // may mint a row under one of the four identity kinds' keys whatever it is called: the rows exist,
+  // marked, and a create under their key would be an unmarked twin.
+  it.each([
+    ["CARTE_IDENTITATE",       "Carte de Identitate"],
+    ["CARTE_IDENTITATE_VECHE", "Carte de Identitate (model vechi)"],
+    ["PASAPORT",               "Pașaport"],
+  ])("refuses an identity kind's key %s even under its own name (%s) — Slice 40.82", (key, name) => {
+    expect(documentTypeKeyRefusal(key, name)).toBe("reserved");
   });
 
   it("carries its refusal, and is recognised by its own helper", () => {
