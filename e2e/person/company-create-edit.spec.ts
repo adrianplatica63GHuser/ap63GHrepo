@@ -158,6 +158,11 @@ test.describe("TC-PERS-02 — Persoană juridică creată și modificată", () =
       // „Denumire" grows downward with a long value (typed, never saved); the pictures.
       await expectStableWidths(page);
       await expectDropdownsWrap(page); // 40.78: every dropdown its width, a long value wrapped
+      // 40.90 — Adrian's mark: „Tip" is L (208 px), Poreclă | Tip still on one row.
+      const tipBox = await page.locator('[data-panel="identity"] [data-width-field="judicialPersonTypeId"]').boundingBox();
+      const nickBox = await page.locator('[data-panel="identity"] [data-width-field="nickname"]').boundingBox();
+      expect(Math.abs((tipBox?.width ?? 0) - 208), "Tip is L, 208 px").toBeLessThanOrEqual(1);
+      expect(Math.abs((tipBox?.y ?? 0) - (nickBox?.y ?? -100)), "Poreclă | Tip on one row").toBeLessThanOrEqual(1);
       const denumire = page.locator('[data-width-field="name"]');
       const before = await denumire.boundingBox();
       await denumire.fill(`${NAME} ${"SOCIETATEA AGRICOLĂ ".repeat(4)}`);

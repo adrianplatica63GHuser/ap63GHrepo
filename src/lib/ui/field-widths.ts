@@ -393,7 +393,8 @@ export function tileTableRem(units: number): number {
 export const JUDICIAL_PERSON = {
   name: { step: "XXL", kind: "grows", fill: true }, //      „SOCIETATEA AGRICOLĂ … S.R.L." can pass 60 — it wraps; the panel's whole width since #37.29; m: 0
   nickname: { step: "M", kind: "grows" }, //                m: 0 — M since #39.71, so Tip's XL keeps Poreclă | Tip in three units
-  judicialPersonTypeId: { step: "XL", kind: "select" }, //  #39.71: 17 options, longest „Cabinet sau societate de avocatură" (34, 243.5 px) — past L
+  // 40.90 — Adrian's mark: XL → L. Poreclă | Tip (8.5 + 0.5 + 13) still fit three units; a longer type wraps (40.78).
+  judicialPersonTypeId: { step: "L", kind: "select" }, //  #39.71: 17 options, longest „Cabinet sau societate de avocatură" (34, 243.5 px) — wraps at L
   cuiNumber: { step: "M", kind: "grows" }, //    „RO12345678", up to 10 digits; m: 0
   tradeRegisterNumber: { step: "M", kind: "grows" }, // „J40/12345/2020"; m: 0
   // Slice #38.31: the firm's own phone and e-mail — the Natural Person's boxes (NP.personalPhone1, NP.personalEmail1).
@@ -425,8 +426,8 @@ export const LABEL_INDENT = rem(LABEL_REM + LABEL_GAP_REM);
  * #37.57 the system ID is the heading's corner and the row is the two numbers.
  */
 export const PROPERTY = {
-  // A tarla's option carries its description since #39.67 („T201 — Sola din nord-vestul orașului Bragadiru", 319 px):
-  // it wraps inside M (40.78; it was cut, its whole text on hover, since 40.32).
+  // A tarla's option carried its description from #39.67 to 40.90 („T201 — Sola din nord-vestul orașului Bragadiru",
+  // 319 px); since 40.90 it is the code alone, the description on hover (`tarlaPickerOption`).
   tarlaId: { step: "M", kind: "select" }, //      M: „niciunul" needs about 90 px (see above); m: 3 options, longest „47/2"
   parcela: { step: "M", kind: "grows" }, // Adrian's M (Stacked.txt); m: 3 · 6 · 6
   nickname: { step: "XL", kind: "grows" }, //                   m: 8 · 38 · 38 — p95 is past L (27), so XL; longer wraps
@@ -434,8 +435,9 @@ export const PROPERTY = {
   calculatedAreaMp: { step: "M", kind: "input" }, // toFixed(2), in the mono font; m: 3 · 6
   carteFunciara: { step: "M", kind: "grows" }, //       m: 0
   cadastralNumber: { step: "M", kind: "grows" }, // m: 1 · 13
-  useCategoryId: { step: "L", kind: "select" }, //              „Curți-construcții" needs 121 px, M holds 118 (40.32's run); was M, longest „Neproductiv" (11)
-  propertyTypeId: { step: "L", kind: "select" }, //             m: 9 agreed options since #39.66, longest „Spațiu comercial" (16); was 14, „Vegetație Forestieră" (20)
+  // 40.90 — Adrian's marks: both L → M. „Curți-construcții" (121 px) and the longer types wrap (40.78).
+  useCategoryId: { step: "M", kind: "select" }, //              „Curți-construcții" needs 121 px, M holds 118 (40.32's run); was M, longest „Neproductiv" (11)
+  propertyTypeId: { step: "M", kind: "select" }, //             m: 9 agreed options since #39.66, longest „Spațiu comercial" (16); was 14, „Vegetație Forestieră" (20)
   notes: { step: "TILE", kind: "lines", fold: NOTE_FOLD_LINES, rows: 1, fill: true }, // m: 1 · 72, at most 300; the panel's whole width (#37.30)
   /** The Street View address row: the box, then „Preia" and its hint, in the panel's width. */
   streetViewStreetLine: { step: "TILE", kind: "grows" },
@@ -855,8 +857,11 @@ export const PANEL_UNITS = {
   //  inside its cell. map and streetView 3 (rule 20; Adrian's Ask first): 28.1rem inside,
   //  about the 30.4 they were, and beside Date cadastrale at 1366 px — so the right column is
   //  3 units, all three tiles flush right.
+  //  40.90: cadastral held at 3 — Categorie de folosință and Tip proprietate went L → M, so its widest row is now
+  //  17.5rem and would fit 2 units, but Adrian left Note at the tile's 450 px and every other field as it was.
   property: {
     ...panelUnitsOf(SCREEN_ROWS.property, { ...PROPERTY, ...PROPERTY_ADDRESS }),
+    cadastral: 3,
     corners: 3,
     map: 3,
     streetView: 3,

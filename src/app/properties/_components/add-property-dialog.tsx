@@ -35,6 +35,7 @@ import { inferProvenance } from "@/lib/metadata/provenance-rules";
 import { useNameOr } from "@/components/record/use-name-or";
 // Slice #34.20/#34.23 — the coordinate offer, from the one module the calculation screen reads it from too.
 import { COORDINATE_FILE_ACCEPT, COORDINATE_FILE_OFFER } from "@/lib/files/picker-accept";
+import { tarlaPickerOption } from "@/lib/tarla/label";
 
 interface Corner {
   lat: number;
@@ -334,9 +335,11 @@ export function AddPropertyDialog({ onClose }: Props) {
                       className={`${FIELD_BOX} w-56`}
                     >
                       <option value="" data-blank="">{tProp("fields.noneOption")}</option>
-                      {(tarlaItems ?? []).map((o) => (
-                        <option key={o.id} value={o.id}>{o.descriere ? `${o.indicativ} — ${o.descriere}` : o.indicativ}</option>
-                      ))}
+                      {(tarlaItems ?? []).map((o) => {
+                        // Slice 40.90: the code alone; „code — description" on hover.
+                        const opt = tarlaPickerOption(o.indicativ, o.descriere);
+                        return <option key={o.id} value={o.id} title={opt.title} aria-label={opt.title}>{opt.label}</option>;
+                      })}
                     </select>
                   </label>
                   <label className="flex flex-col gap-1 text-sm">

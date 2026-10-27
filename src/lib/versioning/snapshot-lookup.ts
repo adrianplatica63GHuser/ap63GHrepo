@@ -70,7 +70,8 @@
  * helper, check its fetcher for that guard before trusting `[]`.
  *
  * ⚠️ **`recorded` AND `resolved` PRINT DIFFERENT STRINGS FOR THE SAME TARLA,
- * DELIBERATELY.** The tarla picker labels a row `indicativ — descriere`, while
+ * DELIBERATELY.** The tarla picker labelled a row `indicativ — descriere` until
+ * Slice 40.90, which shows the code alone (the description on hover), while
  * a pre-#34.03 snapshot recorded the `indicativ` ALONE, because that is all the
  * old TEXT column ever held. So the boundary pair migration_078 leaves on every
  * property — the last legacy version and the first one saved after it — shows

@@ -45,6 +45,7 @@ The window is 1366 × 900.
 | 9 | Types `TC-PROP-16` in „Descriere”, then presses „Anulează” (#39.87) | While typed, „Salvează” and „Anulează” can be pressed; after „Anulează”, „Descriere” is empty again, both are idle, and the page is still Cornetu's TC16 |
 | 10 | Presses „Șterge” | The dialog „Ștergeți „TC16”?”: „1 obiect depinde de această valoare, așa că ștergerea nu este posibilă acum:” over „1 proprietate”, and no „Șterge” in it; „Anulează” closes it and the tarla is still there |
 | 11 | Opens a third tarla `TC16`, in Domnești, with three corners (made through the API); at 1366 and at 1920 px wide looks at „Contur”; then presses „Șterge” and, in the dialog, „Șterge” | Each corner on one line, its four buttons („Mută mai sus”, „Mută mai jos”, „Editează”, „Șterge”) side by side; „Contur” still 476 px and its table not scrolling sideways. The dialog says „Nimic nu depinde de această valoare. …”; after „Șterge”, the tarla list, with the two TC16 rows of Bragadiru and Cornetu only |
+| 12 | (40.90) Opens `TC-E2E-PROP-16 Bragadiru` — its tarla, TC16 in Bragadiru, made with the description „Lunca de lângă drum" | „Nr. tarla / sola" reads „TC16 (Bragadiru)"; on hover „TC16 (Bragadiru) — Lunca de lângă drum". „Categorie de folosință" and „Tip proprietate" are 136 px wide |
 
 ## At the end — leaving things as they were found
 
@@ -52,6 +53,10 @@ Delete the two properties (`DELETE` on each), then the two tarlale (`DELETE /api
 the Domnești one, if step 11 did not.
 
 ## Notes from the runs
+
+**2026-10-27 — Slice 40.90.** Step 12 added: a property's tarla shows its code alone, its description only on hover
+(Adrian), and the property's two dropdowns are M. Bragadiru's TC16 is made with a description for it. Not driven by
+hand first; the spec checks it.
 
 **2026-10-17 — written (Slice #39.67)** from the code and the message files, after `migrate-local` applied
 migration_112.

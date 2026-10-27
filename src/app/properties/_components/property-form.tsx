@@ -33,6 +33,7 @@ import {
   type Stereo70Point,
 } from "@/lib/geo/convert-client";
 import { streetLineFromGeocodeResult } from "@/lib/geo/reverse-geocode";
+import { tarlaPickerOption } from "@/lib/tarla/label";
 import { ArrowLeft, ArrowRight, Camera, FolderOpen, Minimize, Pencil, Save, Trash2, X } from "lucide-react";
 import type { PropertyTypeProfile } from "@/lib/properties/type-profile";
 import { IconButton } from "@/lib/ui/icon-button";
@@ -417,7 +418,8 @@ export function PropertyForm({
         (tarlaCodeCount.get(o.indicativ.trim().toLowerCase()) ?? 0) > 1
           ? `${o.indicativ} (${o.locality?.trim() || t("fields.tarlaNoLocality")})`
           : o.indicativ;
-      return { value: o.id, label: o.descriere ? `${code} — ${o.descriere}` : code };
+      // Slice 40.90: the code alone; „code — description" on hover (`tarlaPickerOption`).
+      return { value: o.id, ...tarlaPickerOption(code, o.descriere) };
     }),
   ];
 
@@ -2214,7 +2216,8 @@ function SelectField({
   pageLabel,
 }: FieldProps & {
   control: Control<FormValues>;
-  options: { value: string; label: string; blank?: boolean }[];
+  /** `title` (40.90): the whole text behind a short label — a tarla's „code — description" — on hover. */
+  options: { value: string; label: string; blank?: boolean; title?: string }[];
   /** Slice #39.67: the chosen value's own page, opened from under the box (a tarla's), or null for none. */
   pageHref?: (value: string) => string | null;
   pageLabel?: string;
@@ -2235,7 +2238,8 @@ function SelectField({
   const ring = usePulseRing(highlight);
   // Slice 40.78: the chosen option's words for the read view; in edit a long one wraps (`WrappingSelect`).
   const current = useWatch({ control, name });
-  const chosenLabel = options.find((o) => o.value === (current ?? ""))?.label;
+  const chosenOption = options.find((o) => o.value === (current ?? ""));
+  const chosenLabel = chosenOption?.label;
 
   // A version whose lookup row an admin deleted, or whose tarla was recorded as
   // text before the column had an id, PRINTS what the snapshot holds instead of
@@ -2271,7 +2275,7 @@ function SelectField({
     return (
       <div className={STACKED_FIELD_CLASS} style={hiddenFieldStyle(hiddenEmpty, boxStyle(width))} data-empty-hidden={hiddenEmpty || undefined}>
         <span className={STACKED_LABEL_CLASS}>{label}</span>
-        <ReadValue name={name} kind={width.kind} text={current ? (chosenLabel ?? "") : ""} style={boxStyle(width)} className={ring} />
+        <ReadValue name={name} kind={width.kind} text={current ? (chosenLabel ?? "") : ""} full={chosenOption?.title} style={boxStyle(width)} className={ring} />
       </div>
     );
   }

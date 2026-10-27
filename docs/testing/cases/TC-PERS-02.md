@@ -57,6 +57,9 @@ persoane juridice". A company still linked to a property must be dissociated fir
 
 ## Notes from the runs
 
+**2026-10-27 — Slice 40.90.** Adrian set „Tip" to L (208 px); the spec checks its width, with Poreclă | Tip still on
+one row, where #37.13's width checks run. No step changed.
+
 **2026-10-25 — Slice 40.73; step 10b added.** A saved firm reads as text. Step 9 opens „Date de înregistrare" with
 „Editează" for the CUI's note and the boxes it measures; step 10 saves with the tile's „Salvează"; step 10b puts a
 change back with „Renunță". The spec follows; not driven by hand first.

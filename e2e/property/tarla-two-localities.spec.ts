@@ -15,6 +15,7 @@
 
 import { test, expect, type APIRequestContext, type Page } from "../helpers/test";
 import { E2E_MARKER, removeLeftovers, removeRecord } from "../helpers/records";
+import { showEmptyFields } from "../helpers/empty-fields";
 
 const MARK = `${E2E_MARKER}PROP-16`;
 const CODE = "TC16";
@@ -32,8 +33,11 @@ async function removeTarlale(request: APIRequestContext): Promise<void> {
   for (const t of await tarlale(request)) await request.delete(`${TARLA}/${t.id}`);
 }
 
-async function addTarla(request: APIRequestContext, locality: string): Promise<string> {
-  const res = await request.post(TARLA, { data: { indicativ: CODE, locality, county: "Ilfov" } });
+/** 40.90: Bragadiru's TC16 carries a description, so the property's tarla can show its code and hover the two. */
+const DESCRIPTION = "Lunca de lângă drum";
+
+async function addTarla(request: APIRequestContext, locality: string, descriere?: string): Promise<string> {
+  const res = await request.post(TARLA, { data: { indicativ: CODE, locality, county: "Ilfov", ...(descriere ? { descriere } : {}) } });
   expect(res.ok(), `POST ${TARLA} ${locality}: ${res.status()}`).toBeTruthy();
   return ((await res.json()) as { id: string }).id;
 }
@@ -61,7 +65,7 @@ test.describe("TC-PROP-16 — aceeași tarla în două localități", () => {
     await removeLeftovers(page.request, MARK);
     await removeTarlale(page.request);
     await page.setViewportSize({ width: 1366, height: 900 });
-    const bragadiru = await addTarla(page.request, "Bragadiru");
+    const bragadiru = await addTarla(page.request, "Bragadiru", DESCRIPTION);
     const cornetu = await addTarla(page.request, "Cornetu");
     try {
       // Step 1 — two rows TC16, „Bragadiru, Ilfov" and „Cornetu, Ilfov", each with „Deschide pagina tarlalei".
@@ -209,6 +213,21 @@ test.describe("TC-PROP-16 — aceeași tarla în două localități", () => {
       await expect(page).toHaveURL(/\/tarlale$/, { timeout: 30_000 });
       await expect(page.locator(`[data-tarla-row="${CODE}"]`)).toHaveCount(2, { timeout: 30_000 });
       expect((await tarlale(page.request)).map((t) => t.id)).not.toContain(domnesti);
+
+      // Step 12 — 40.90: `TC-E2E-PROP-16 Bragadiru`: „Nr. tarla / sola" reads „TC16 (Bragadiru)", the description only
+      // on hover; „Categorie de folosință" and „Tip proprietate" are M (136 px).
+      const [onBragadiru] = await propertyIdsOn(page.request, bragadiru);
+      expect(onBragadiru, "the Bragadiru property").toBeTruthy();
+      await page.goto(`/properties/${onBragadiru}`);
+      const tarlaValue = page.locator('[data-read-value="tarlaId"]');
+      // What is drawn is the code; the whole text is the hover and, hidden, what a screen reader says (ReadValue `full`).
+      await expect(tarlaValue.locator('span[aria-hidden="true"]')).toHaveText(`${CODE} (Bragadiru)`, { timeout: 30_000 });
+      await expect(tarlaValue).toHaveAttribute("title", `${CODE} (Bragadiru) — ${DESCRIPTION}`);
+      await showEmptyFields(page);
+      for (const field of ["useCategoryId", "propertyTypeId"]) {
+        const b = await page.locator(`[data-read-value="${field}"]`).boundingBox();
+        expect(Math.abs((b?.width ?? 0) - 136), `${field} is M, 136 px`).toBeLessThanOrEqual(1);
+      }
     } finally {
       // At the end — the two properties, then the two tarlale.
       await page.waitForLoadState("networkidle").catch(() => {});

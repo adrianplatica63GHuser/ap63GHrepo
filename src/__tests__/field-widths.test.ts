@@ -364,7 +364,9 @@ describe("the scale", () => {
     // No size changed with the rule (40.79 and 40.80 are the first new sizes).
     expect(boxRem(NATURAL_PERSON.cnp)).toBe(SCALE.M);
     expect(boxRem(NATURAL_PERSON.physicalPersonTypeId)).toBe(13.5);
-    expect(PROPERTY.useCategoryId.step).toBe("L");
+    expect(PROPERTY.useCategoryId.step).toBe("M"); // 40.90: Adrian's mark, L → M
+    expect(PROPERTY.propertyTypeId.step).toBe("M"); // 40.90
+    expect(JUDICIAL_PERSON.judicialPersonTypeId.step).toBe("L"); // 40.90: Adrian's mark, XL → L
     expect(PROPERTY.tarlaId.step).toBe("M");
     // 40.88: Adrian's marks — Tip document and the issuer XXL → XL, on every type.
     expect(DOCUMENT.issuerPersonId.step).toBe("XL");
@@ -623,14 +625,14 @@ describe("the Judicial Person: labels above, rows by meaning, every tile on the 
   });
 
   it("each panel is the fewest whole units that hold its widest row: Persoană juridică 3, Persoane de contact 2, Adresă 3", () => {
-    // #39.71: Poreclă M | Tip XL (the public-body types are long) — 26 rem, still three units.
-    expect(rowRem([JP.nickname, JP.judicialPersonTypeId])).toBe(26);
+    // #39.71: Poreclă M | Tip XL (the public-body types are long) — 26 rem; 40.90: Tip L, 22 rem — still three units.
+    expect(rowRem([JP.nickname, JP.judicialPersonTypeId])).toBe(22);
     // #37.57: the system ID left this row for the heading's corner; Poreclă | Tip still makes it 3.
     expect(rowRem([JP.cuiNumber, JP.tradeRegisterNumber])).toBe(17.5);
     expect("code" in JP).toBe(false);
     expect(PANEL_UNITS.judicialPerson).toEqual({ identity: 3, contactPersons: 2, address: 3 });
-    expect(PANEL_UNIT_INNER_REM.judicialPerson.identity).toBeGreaterThanOrEqual(26.5);
-    expect(unitsInnerRem(2)).toBeLessThan(26.5);
+    expect(PANEL_UNIT_INNER_REM.judicialPerson.identity).toBeGreaterThanOrEqual(22);
+    expect(unitsInnerRem(2)).toBeLessThan(22);
     expect(PANEL_UNIT_INNER_REM.judicialPerson.contactPersons).toBeGreaterThanOrEqual(boxRem(JP.contactPerson));
     // The contact rows are the XL box under its label; the hint wraps inside the panel.
     expect(region(JP_FORM, "function ContactPersonRow(", "\nfunction ")).toMatch(/STACKED_FIELD_CLASS/);

@@ -9,7 +9,7 @@ import fs from "fs";
 import path from "path";
 import { sameTarlaCode, sameTarlaLocality, tarlaCodeTakenBy } from "@/lib/properties/tarla-code-guard";
 import { localityFromFolderName } from "@/lib/import/folder-locality";
-import { tarlaLabel } from "@/lib/tarla/label";
+import { tarlaLabel, tarlaPickerOption } from "@/lib/tarla/label";
 
 const read = (...p: string[]) => fs.readFileSync(path.join(process.cwd(), ...p), "utf8");
 
@@ -62,6 +62,28 @@ describe("a tarla's name", () => {
     expect(tarlaLabel({ indicativ: "50", locality: "Bragadiru" })).toBe("50 — Bragadiru");
     expect(tarlaLabel({ indicativ: "50", locality: "  " })).toBe("50");
     expect(tarlaLabel({ indicativ: "47/2" })).toBe("47/2");
+  });
+});
+
+// Slice 40.90 — Adrian: „show only the <Tarla code> and show <Tarla code - description> only on hover".
+describe("a property's tarla: the code, its description on hover", () => {
+  it("shows the code alone and hovers „code — description”; no description, no hover", () => {
+    expect(tarlaPickerOption("T201", "Sola din nord-vestul orașului Bragadiru")).toEqual({
+      label: "T201",
+      title: "T201 — Sola din nord-vestul orașului Bragadiru",
+    });
+    expect(tarlaPickerOption("50 (Cornetu)", "Lunca Mare")).toEqual({ label: "50 (Cornetu)", title: "50 (Cornetu) — Lunca Mare" });
+    expect(tarlaPickerOption("47/2", null)).toEqual({ label: "47/2" });
+    expect(tarlaPickerOption("47/2", "   ")).toEqual({ label: "47/2" });
+  });
+
+  it("is what both property pickers build their options from, and neither writes the description beside the code", () => {
+    const read = (p: string) => fs.readFileSync(path.join(process.cwd(), p), "utf8");
+    for (const file of ["src/app/properties/_components/property-form.tsx", "src/app/properties/_components/add-property-dialog.tsx"]) {
+      const src = read(file);
+      expect([file, src.includes("tarlaPickerOption(")]).toEqual([file, true]);
+      expect([file, /—\s*\$\{o\.descriere\}/.test(src)]).toEqual([file, false]);
+    }
   });
 });
 
