@@ -290,7 +290,7 @@ describe("checkTypeForms — the identity card", () => {
     // reason is again agreement rather than tidiness.** For a type the run
     // CREATES, `docTypeIdCardRef` has no entry — it is built once from the
     // start-of-run list — so the run's expression collapses to
-    // `isIdCardEntry(sr)` and nothing else. An extra `isIdCardTypeName(label)`
+    // `isIdentityEntry(sr)` and nothing else. An extra `isIdCardTypeName(label)`
     // term here excused types the run would then flag as awaiting a form
     // (and, until #37.85, buy a discovery read for) — a type the gate had
     // promised needed no form.
@@ -303,7 +303,7 @@ describe("checkTypeForms — the identity card", () => {
 
   it("⚠️ does NOT excuse a created type off its label when the scan did not say card", () => {
     // The half the third round added. "Acte de identitate" passes
-    // `isIdCardTypeName` and fails `isIdCardLabel`, and `isIdCardEntry`
+    // `isIdCardTypeName` and fails `isIdentityLabel`, and `isIdentityEntry`
     // short-circuits to false on any non-card key without reading the label at
     // all — so this is a type the RUN would report as awaiting a form, and the
     // gate has to agree.
@@ -320,12 +320,12 @@ describe("checkTypeForms — the identity card", () => {
     // SHOWED WHY THAT WAS THE WRONG READING.** `discover-run.ts` argued that
     // the TYPE should answer for a stored row, and it is right about what ought
     // to be asked — but the run asks
-    // `docTypeIdCardRef.get(id) === true || isIdCardEntry(sr)`, where the left
+    // `docTypeIdCardRef.get(id) === true || isIdentityEntry(sr)`, where the left
     // half is exactly the key-and-name test and the right half is the scan.
     // Dropping the scan term here made the gate refuse imports the run would
     // never have flagged: `isIdCardTypeName` deliberately rejects "Buletin de
     // analiză", "Buletin de încercare" and "Copie CI" — ordinary formless types
-    // in a land-registry archive — while `isIdCardLabel`, which the scan
+    // in a land-registry archive — while `isIdentityLabel`, which the scan
     // signal comes from, accepts all three.
     //
     // So this test pins AGREEMENT WITH THE EXECUTOR rather than the tidier

@@ -497,7 +497,7 @@ describe("the dialog decides through these rules and not beside them", () => {
     // write keeps the value from the render that first created the callback,
     // so a retry that repaired the list would still submit „unreadable".
     expect(code).toMatch(
-      /\[documentId, institutionForWrite, institutionListUnreadable, t\]/,
+      /\[documentId, institutionForWrite, institutionListUnreadable, t(, kind, readFields, readParents)?\]/,
     );
   });
 
@@ -591,7 +591,8 @@ describe("the dialog decides through these rules and not beside them", () => {
     expect(code).toMatch(/id=\{INSTITUTION_HINT_ID\}/);
     // The colour carries the urgency that the live region deliberately does
     // not — see the assertion below for why there is no `role` here.
-    expect(code).toMatch(/authorityNotFiled\s*\?\s*"text-xs text-red-600/);
+    // Slice 40.86: the dialog speaks in role tokens — „text-alert" is the red it was.
+    expect(code).toMatch(/authorityNotFiled\s*\?\s*"text-xs text-alert/);
   });
 
   it("did not teach institutionForCardWrite the new question", () => {

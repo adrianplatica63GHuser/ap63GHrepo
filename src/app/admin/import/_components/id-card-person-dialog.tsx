@@ -133,6 +133,15 @@ import {
   institutionSelectSeed,
 } from "@/lib/import/id-card-review";
 import { MULTI_IDENTITY_CODE } from "@/lib/import/multi-card-gate";
+import {
+  cardFieldsOfKind,
+  fillEmptyPersonPatch,
+  identityKindOfRead,
+  identityValuesFromRead,
+  type IdentityReadFields,
+  type IdentityReadParents,
+} from "@/lib/import/identity-read";
+import { IDENTITY_KINDS, type IdentityKind, type IdentityValueKey } from "@/lib/identity-documents/kinds";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { GrowingText } from "@/components/forms/growing-text";
 import {
@@ -154,7 +163,21 @@ import { TILE_TITLE_TYPE } from "@/lib/ui/title-type";
 // Wire shapes
 // ---------------------------------------------------------------------------
 
+/** Slice 40.86: the document type of an identity kind, read off the types' marker; null when the list cannot be read. */
+async function typeIdOfKind(kind: IdentityKind): Promise<string | null> {
+  try {
+    const res = await fetch("/api/admin/value-lists/document-types");
+    if (res.redirected || !res.ok) return null;
+    const items = ((await res.json()) as { items?: { id: string; identityKind?: string | null }[] }).items ?? [];
+    return items.find((i) => i.identityKind === kind)?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
 type ExtractResponse = {
+  /** Slice 40.86: the kind the read found, or null — `identityKindOfRead` falls back to the document's type. */
+  kind?: string | null;
   fields?: Partial<Record<string, string | null>>;
   lowConfidenceFields?: string[];
   unmappedRaw?: Record<string, string>;
@@ -435,7 +458,7 @@ type Props = {
   documentId: string;
   /**
    * Slice #23.03.Import — how sure the folder scan was that this entry is an
-   * identity card at all. `isIdCardEntry` is a yes/no gate and discards that
+   * identity card at all. `isIdentityEntry` is a yes/no gate and discards that
    * nuance, so a "low" row offers the action just as confidently as a "high"
    * one. Undefined when the entry was never scanned.
    */
@@ -479,7 +502,7 @@ type Phase = "extracting" | "resolving" | "ready";
 
 /** Slice #37.32 — a review panel, as the Natural Person's: its frame and its title. */
 const PANEL_CLASS =
-  "rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900";
+  "rounded-md border border-card-rim bg-card p-3 shadow-sm";
 const PANEL_TITLE_CLASS = `mb-2 ${TILE_TITLE_TYPE}`;
 
 /** Instituție takes the Carte de identitate panel's whole width (`ID_CARD_INSTITUTION`). */
@@ -661,6 +684,20 @@ export function IdCardPersonDialog({
   >(null);
   const tParents = useTranslations("parentsFromIdCard");
 
+  /**
+   * Slice 40.86 — the read's kind and its whole answer. The kind decides which fields the review shows and which go
+   * to the document (`identityValuesFromRead`); the four the person has no field for (Starea civilă, the officer,
+   * a passport's Tip and Codul țării) are only here. `docKind` is the kind the document was filed under.
+   */
+  const [readKindRaw, setReadKindRaw] = useState<string | null>(null);
+  const [readFields, setReadFields] = useState<IdentityReadFields>({});
+  const [readParents, setReadParents] = useState<IdentityReadParents>({});
+  const [docKind, setDocKind] = useState<IdentityKind | null>(null);
+  const tKind = useTranslations("identityDocument.kinds");
+  const tIdField = useTranslations("identityDocument");
+  /** The kind this card is filed under once saved: the read's, else the document's, else model nou. */
+  const kind: IdentityKind = identityKindOfRead(readKindRaw, docKind ? IDENTITY_KINDS[docKind].typeKey : null);
+
   const [matchCandidate, setMatchCandidate] = useState<ResolutionCandidate | null>(null);
   const [possibleMatches, setPossibleMatches] = useState<ResolutionMatch[]>([]);
   const [searchedName, setSearchedName] = useState<string | null>(null);
@@ -760,6 +797,10 @@ export function IdCardPersonDialog({
         // Slice #38.44 (Ask first 2): both rows, always — one the card does not
         // name is offered empty, to type.
         const cardParents = cardParentsFrom(data.parents);
+        // Slice 40.86: the read's kind and its whole answer, for the document's identity values.
+        setReadKindRaw(typeof data.kind === "string" ? data.kind : null);
+        setReadFields(fields as IdentityReadFields);
+        setReadParents(cardParents);
         setCardNamesParents(cardParents.father !== null || cardParents.mother !== null);
         setParentDrafts(offeredDrafts(cardParents, fields.lastName ?? ""));
         setPhase("resolving");
@@ -837,11 +878,13 @@ export function IdCardPersonDialog({
     fetch(`/api/documents/${encodeURIComponent(documentId)}`)
       .then(async (res) => {
         if (res.redirected || !res.ok) return null;
-        return (await res.json()) as IdCardDocumentCurrent;
+        return (await res.json()) as IdCardDocumentCurrent & { identity?: { kind?: IdentityKind } | null };
       })
       .then((doc) => {
         if (cancelled || doc === null) return;
         setDocumentInstitutionId(doc.issuerPersonId ?? "");
+        // Slice 40.86: the kind the document was filed under — the read's kind wins over it.
+        setDocKind(doc.identity?.kind ?? null);
       })
       .catch(() => {});
     return () => {
@@ -1113,7 +1156,8 @@ export function IdCardPersonDialog({
           idCardNumber:       values.idCardNumber,
           idIssuingAuthority: values.idIssuingAuthority,
           idValidFrom:        values.idValidFrom,
-          idValidUntil:       values.idValidUntil,
+          // Slice 40.86: a booklet has no validity end — none is written for one.
+          idValidUntil:       cardFieldsOfKind(kind).includes("idValidUntil") ? values.idValidUntil : null,
           firstName:          values.firstName,
           lastName:           values.lastName,
           // Slice #34.02 — whatever the dropdown holds now, and ONLY when that
@@ -1145,20 +1189,50 @@ export function IdCardPersonDialog({
           institutionListUnreadable,
         });
 
+        // Slice 40.86: the card's own values → the document's identity values, write-if-empty like every field
+        // above, and the document re-filed under the kind the read found (Ask first 1) — between identity types
+        // only: a document the classifier filed elsewhere keeps its type, and gets no identity values.
+        const docIdentity = (current as { identity?: { kind?: IdentityKind; values?: Record<string, string | null> } | null }).identity ?? null;
+        const currentKind = docIdentity?.kind ?? null;
+        const retypeTo = currentKind !== null && currentKind !== kind ? await typeIdOfKind(kind) : null;
+        const writeKind = currentKind === null ? null : retypeTo ? kind : currentKind;
+        const read: IdentityReadFields = {
+          ...readFields,
+          lastName: values.lastName,
+          firstName: values.firstName,
+          cnp: values.cnp,
+          gender: values.gender,
+          dateOfBirth: values.dateOfBirth,
+          placeOfBirth: values.placeOfBirth,
+          idCardNumber: values.idCardNumber,
+          idMrzRaw: values.idMrzRaw,
+        };
+        const stored = docIdentity?.values ?? {};
+        const identity = writeKind === null
+          ? {}
+          : Object.fromEntries(
+              Object.entries(identityValuesFromRead(writeKind, read, readParents)).filter(([k]) => !(stored[k] ?? "").trim()),
+            );
+
         const res = await fetch(`/api/documents/${encodeURIComponent(documentId)}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...patch, aiInterpretedAt: new Date().toISOString() }),
+          body: JSON.stringify({
+            ...patch,
+            ...(retypeTo ? { documentTypeId: retypeTo } : {}),
+            ...(Object.keys(identity).length > 0 ? { identity } : {}),
+            aiInterpretedAt: new Date().toISOString(),
+          }),
         });
         if (res.redirected) throw new Error(t("sessionExpired"));
         if (!res.ok) return { written: 0, failed: true };
 
-        return { written: idCardDocumentFieldCount(patch), failed: false };
+        return { written: idCardDocumentFieldCount(patch) + Object.keys(identity).length, failed: false };
       } catch {
         return { written: 0, failed: true };
       }
     },
-    [documentId, institutionForWrite, institutionListUnreadable, t],
+    [documentId, institutionForWrite, institutionListUnreadable, t, kind, readFields, readParents],
   );
 
   const finish = useCallback(
@@ -1206,6 +1280,37 @@ export function IdCardPersonDialog({
     return true;
   }, [getValues, parentDrafts, tParents]);
 
+  /**
+   * Slice 40.86 (Ask first 3): an existing holder gets the card's facts only where their field is empty — CNP, sex,
+   * date and place of birth, citizenship; nothing filled is overwritten (the resolution dialog showed both), and
+   * the home address is not touched (Ask first 4). Never throws: the link and the card's document write go on.
+   */
+  const fillEmptyPersonFields = useCallback(
+    async (personId: string, values: FormValues): Promise<void> => {
+      try {
+        const cur = await fetch(`/api/people/${encodeURIComponent(personId)}`);
+        if (cur.redirected || !cur.ok) return;
+        const natural = ((await cur.json()) as { natural?: Record<string, string | null> | null }).natural ?? {};
+        const patch = fillEmptyPersonPatch(natural, {
+          cnp: values.cnp,
+          gender: values.gender,
+          dateOfBirth: values.dateOfBirth,
+          placeOfBirth: values.placeOfBirth,
+          citizenshipId: citizenshipForWrite(values.citizenshipId, citizenshipOptions),
+        });
+        if (Object.keys(patch).length === 0) return;
+        await fetch(`/api/people/${encodeURIComponent(personId)}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(patch),
+        });
+      } catch {
+        // The link stands; an empty field left empty is the safe direction.
+      }
+    },
+    [citizenshipOptions],
+  );
+
   const handleLinkExisting = useCallback(
     async (personId: string) => {
       if (parentsIncomplete()) return;
@@ -1213,6 +1318,8 @@ export function IdCardPersonDialog({
       setError(null);
       try {
         await linkPerson(personId);
+        // Slice 40.86 (Ask first 3): the person's facts into the existing person's EMPTY fields only.
+        await fillEmptyPersonFields(personId, getValues());
         // The card's own fields are independent of whether its holder turned
         // out to be new: this branch writes them too. The values are the raw
         // extraction, since the review form only renders on the create branch.
@@ -1229,7 +1336,7 @@ export function IdCardPersonDialog({
         setError(err instanceof Error ? err.message : t("linkError"));
       }
     },
-    [linkPerson, writeDocumentFields, getValues, holderDone, parentsIncomplete, t],
+    [linkPerson, fillEmptyPersonFields, writeDocumentFields, getValues, holderDone, parentsIncomplete, t],
   );
 
   const doCreate = useCallback(
@@ -1426,6 +1533,20 @@ export function IdCardPersonDialog({
       ],
     ] as const
   ).filter((row): row is readonly [string, string] => Boolean(row[1]));
+
+  // Slice 40.86: what the read gives the document's identity values, by the kind's own labels — shown before it is
+  // written, as every field above. Write-if-empty decides at submit, against a fresh read, as above.
+  // The values the review form below already shows (the person's facts, „Nr. card") and the parents' fold above go to
+  // the document as well — one sentence says so; the rows are only what the person has no field for.
+  const SHOWN_BELOW = new Set<string>(["lastName", "firstName", "cnp", "sex", "dateOfBirth", "placeOfBirth", "nationality", "cardNumber", "fatherFirstName", "motherFirstName"]);
+  const identityPreviewRows: (readonly [string, string])[] = Object.entries(
+    identityValuesFromRead(kind, { ...readFields, lastName: wLastName, firstName: wFirstName, idCardNumber: wIdCardNumber }, readParents),
+  ).filter(([k]) => !SHOWN_BELOW.has(k)).map(([k, v]) => {
+    const def = IDENTITY_KINDS[kind].fields.find((f) => f.key === (k as IdentityValueKey));
+    return [def ? tIdField(def.messageKey.slice("identityDocument.".length)) : k, v] as const;
+  });
+  const refiled = docKind !== null && docKind !== kind;
+  const cardFields = new Set<string>(cardFieldsOfKind(kind));
 
   // ── Slice #34.02: the three questions the institution row has to answer ───
   //
@@ -1672,10 +1793,10 @@ export function IdCardPersonDialog({
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="id-card-error-title"
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-scrim/40 p-4"
       >
-        <div className="w-full max-w-sm rounded-xl border border-card-rim bg-white p-5 shadow-xl dark:border-zinc-800 dark:bg-zinc-900">
-          <h2 id="id-card-error-title" className="text-sm font-semibold text-ink dark:text-zinc-200">
+        <div className="w-full max-w-sm rounded-xl border border-card-rim bg-raised p-5 shadow-xl">
+          <h2 id="id-card-error-title" className="text-sm font-semibold text-ink">
             {/* ⚠️ **A REFUSAL IS NOT A FAILURE, AND THE HEADING HAS TO SAY SO.**
                 (Slice #32.08.) `extractErrorTitle` reads "Citirea a eșuat", over
                 a body that says the read worked and was declined because the
@@ -1686,7 +1807,7 @@ export function IdCardPersonDialog({
                 refusal that guards a `natural_person`. */}
             {refusedFatal ? t("extractRefusedTitle") : t("extractErrorTitle")}
           </h2>
-          <p className="mt-2 text-sm text-fade dark:text-zinc-400">{fatalError}</p>
+          <p className="mt-2 text-sm text-fade">{fatalError}</p>
           <div className="mt-4 flex justify-end">
             {/*
               Slice #23.08.Import — converted to buttonClass. It was left
@@ -1725,9 +1846,9 @@ export function IdCardPersonDialog({
         role="dialog"
         aria-modal="true"
         aria-label={t("title")}
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-scrim/40 p-4"
       >
-        <div className="w-full max-w-sm rounded-lg bg-card p-6 text-center shadow-xl dark:bg-zinc-900">
+        <div className="w-full max-w-sm rounded-lg bg-card p-6 text-center shadow-xl">
           {/* Slice #23.09.UX — one extract-id-card call, then one resolve
               call; neither reports intermediate progress. */}
           <ActivityCue progress className="text-center">
@@ -1778,7 +1899,7 @@ export function IdCardPersonDialog({
       <ScanConfidenceWarning confidence={scanConfidence} className="mt-3" />
 
       {searchedName && possibleMatches.length > 0 && (
-        <p className="mt-2 text-xs text-fade dark:text-zinc-400">
+        <p className="mt-2 text-xs text-fade">
           {t("searchedFor", { name: searchedName })}
         </p>
       )}
@@ -1794,22 +1915,36 @@ export function IdCardPersonDialog({
         tarla/parcela inputs — a value the system is about to store is shown
         first, never inferred silently.
       */}
-      {docPreviewRows.length > 0 && (
-        <div className="mt-3 rounded-md border border-wire bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-950">
-          <p className="text-xs font-semibold text-ink dark:text-zinc-300">
-            {t("docFieldsTitle")}
+      {/* Slice 40.86: the kind the read found, and — when the classifier filed the card under another — that the
+          save files it under this one (Ask first 1). */}
+      {phase === "ready" && (
+        <p className="mt-3 text-sm text-ink" data-identity-read-kind={kind}>
+          {t("readKind", { kind: tKind(kind) })}
+          {refiled && docKind !== null && (
+            <span className="ml-1 text-warning" data-identity-refiled="">
+              {t("refiled", { from: tKind(docKind), to: tKind(kind) })}
+            </span>
+          )}
+        </p>
+      )}
+
+      {(docPreviewRows.length > 0 || identityPreviewRows.length > 0) && (
+        <div className="mt-3 rounded-md border border-wire bg-raised px-3 py-2" data-identity-document-preview="">
+          <p className="text-xs font-semibold text-ink">
+            {t("docFieldsTitle", { kind: tKind(kind) })}
           </p>
           <ul className="mt-1 flex flex-col gap-0.5">
-            {docPreviewRows.map(([label, value]) => (
+            {[...docPreviewRows, ...identityPreviewRows].map(([label, value]) => (
               <li key={label} className="flex gap-2 text-xs">
-                <span className="w-32 shrink-0 text-fade dark:text-zinc-400">{label}</span>
-                <span className="min-w-0 flex-1 break-words text-ink dark:text-zinc-200">
+                <span className="w-32 shrink-0 text-fade">{label}</span>
+                <span className="min-w-0 flex-1 break-words text-ink">
                   {value}
                 </span>
               </li>
             ))}
           </ul>
-          <p className="mt-1.5 text-xs text-fade dark:text-zinc-400">{t("docFieldsHint")}</p>
+          <p className="mt-1.5 text-xs text-fade" data-identity-also-person="">{t("identityAlsoOnDocument")}</p>
+          <p className="mt-1.5 text-xs text-fade">{t("docFieldsHint")}</p>
         </div>
       )}
 
@@ -1823,10 +1958,10 @@ export function IdCardPersonDialog({
       />
 
       {showForm && (
-        <div className="mt-5 border-t border-wire pt-4 dark:border-zinc-700">
-          <h4 className="text-sm font-semibold text-ink dark:text-zinc-300">{t("reviewTitle")}</h4>
+        <div className="mt-5 border-t border-wire pt-4">
+          <h4 className="text-sm font-semibold text-ink">{t("reviewTitle")}</h4>
           {lowConfidence.size > 0 && (
-            <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">{t("lowConfidenceNote")}</p>
+            <p className="mt-1 text-xs text-warning">{t("lowConfidenceNote")}</p>
           )}
 
           <div className="mt-3">
@@ -1838,7 +1973,8 @@ export function IdCardPersonDialog({
               (rule 16), which is what the `items-start` on the old two-column rows was for. */}
           <div className="mt-3 flex flex-wrap items-start gap-4" data-panel-row>
             <section style={NP_PANEL_STYLE.identity} data-panel="identity" className={PANEL_CLASS}>
-              <h2 className={PANEL_TITLE_CLASS}>{tNp("sections.identity")}</h2>
+              {/* Slice 40.86: these go to the person. */}
+              <h2 className={PANEL_TITLE_CLASS}>{t("personPanelTitle")}</h2>
               <div className="flex flex-col gap-2">
                 {ID_CARD_DIALOG_ROWS.identity.map((row) => (
                   <div key={row.join("|")} className={STACKED_ROW_CLASS}>
@@ -1848,11 +1984,13 @@ export function IdCardPersonDialog({
               </div>
             </section>
             <section style={NP_PANEL_STYLE.idCard} data-panel="id-card" className={PANEL_CLASS}>
-              <h2 className={PANEL_TITLE_CLASS}>{tNp("sections.idCard")}</h2>
+              {/* Slice 40.86: these go to the document — the kind's own fields only. */}
+              <h2 className={PANEL_TITLE_CLASS}>{t("cardPanelTitle", { kind: tKind(kind) })}</h2>
               <div className="flex flex-col gap-2">
+                {/* Slice 40.86: the kind's own fields — a booklet has no „Până la", only model nou a „Nr. card". */}
                 {ID_CARD_DIALOG_ROWS.idCard.map((row) => (
                   <div key={row.join("|")} className={STACKED_ROW_CLASS}>
-                    {row.map((name) => <Fragment key={name}>{reviewField(name)}</Fragment>)}
+                    {row.filter((name) => cardFields.has(name)).map((name) => <Fragment key={name}>{reviewField(name)}</Fragment>)}
                   </div>
                 ))}
             {/* ── Slice #34.02: the authority, as a row rather than as prose ──
@@ -1979,8 +2117,8 @@ export function IdCardPersonDialog({
                   // reached; the colour carries the urgency on screen.
                   className={
                     authorityNotFiled
-                      ? "text-xs text-red-600 dark:text-red-400"
-                      : "text-xs text-fade dark:text-zinc-400"
+                      ? "text-xs text-alert"
+                      : "text-xs text-fade"
                   }
                 >
                   {institutionListState === "loading"
@@ -2051,7 +2189,7 @@ export function IdCardPersonDialog({
                   />
                 )}
               {addInstitutionError && (
-                <p role="alert" className="text-xs text-rose-700 dark:text-rose-400">
+                <p role="alert" className="text-xs text-alert">
                   {addInstitutionError}
                 </p>
               )}
@@ -2073,14 +2211,14 @@ export function IdCardPersonDialog({
           </div>
 
           {unmappedEntries.length > 0 && (
-            <div className="mt-3 rounded-md border border-amber-300 bg-amber-50 p-3 dark:border-amber-700 dark:bg-amber-950/30">
-              <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">{t("unmappedTitle")}</p>
-              <p className="mt-0.5 text-xs text-amber-700 dark:text-amber-400">{t("unmappedHint")}</p>
+            <div className="mt-3 rounded-md border border-warning-rim bg-warning-wash p-3">
+              <p className="text-sm font-semibold text-warning">{t("unmappedTitle")}</p>
+              <p className="mt-0.5 text-xs text-warning">{t("unmappedHint")}</p>
               <ul className="mt-2 flex flex-col gap-0.5 text-sm">
                 {unmappedEntries.map(([label, value]) => (
                   <li key={label} className="flex gap-2">
-                    <span className="font-medium text-ink dark:text-zinc-300">{label}:</span>
-                    <span className="text-fade dark:text-zinc-400">{value}</span>
+                    <span className="font-medium text-ink">{label}:</span>
+                    <span className="text-fade">{value}</span>
                   </li>
                 ))}
               </ul>
@@ -2092,7 +2230,7 @@ export function IdCardPersonDialog({
       {error && (
         <div
           role="alert"
-          className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-800 dark:bg-red-950/30 dark:text-red-300"
+          className="mt-3 rounded-md border border-alert bg-alert-wash px-3 py-2 text-sm text-alert"
         >
           {error}
         </div>
@@ -2145,7 +2283,7 @@ function FieldLabel({ label, warn, htmlFor }: { label: string; warn?: boolean; h
   const content = (
     <>
       {label}
-      {warn && <span className="ml-1 text-amber-600 dark:text-amber-400" data-low-confidence>⚠</span>}
+      {warn && <span className="ml-1 text-warning" data-low-confidence>⚠</span>}
     </>
   );
   return htmlFor ? (
@@ -2189,7 +2327,7 @@ function Field({ label, name, type = "text", register, error, warn, width }: Fie
           data-width-kind={width.kind}
         />
       )}
-      {error && <span className="text-xs text-red-600 dark:text-red-400">{error}</span>}
+      {error && <span className="text-xs text-alert">{error}</span>}
     </label>
   );
 }
@@ -2256,7 +2394,7 @@ function SelectField({
       />
       {(error || showHint) && (
         <div className="flex flex-col items-start gap-1">
-          {error && <span className="text-xs text-red-600 dark:text-red-400">{error}</span>}
+          {error && <span className="text-xs text-alert">{error}</span>}
           {/* Slice #34.04's sentence, Slice #34.13's control. `role="alert"`
               because the sentence appears after the field is on screen and
               describes something the user has to act on — and here "—" is not
@@ -2264,7 +2402,7 @@ function SelectField({
               region should announce the sentence, not re-read a button label
               every time it changes. */}
           {showHint && (
-            <span id={hintId} role="alert" className="text-xs text-red-600 dark:text-red-400">
+            <span id={hintId} role="alert" className="text-xs text-alert">
               {hint}
             </span>
           )}

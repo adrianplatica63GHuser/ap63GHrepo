@@ -188,7 +188,7 @@ export type ClassifiedEntry = {
    * ONE.** `discover-run.ts` states the rule this follows: the TYPE answers
    * whether a document is a card - its key, or a name that reads as one - and
    * the scan is fallen back on only for a type that does not exist yet, where
-   * there is no row to ask. `isIdCardEntry` in `src/lib/import/id-card.ts` is
+   * there is no row to ask. `isIdentityEntry` in `src/lib/import/id-card.ts` is
    * what produces it; the wizard calls that and passes the answer, so this
    * module stays free of `ScanResult`.
    */
@@ -663,14 +663,14 @@ function existingTypeOf(
       typeHasForm: hasForm,
       // ⚠️ **THE SAME `||` THE RUN WRITES, TERM FOR TERM, AND AN ADVERSARIAL
       // ROUND IS WHY THE SECOND TERM IS HERE.** `bulk-import-dialog.tsx` asks
-      // `docTypeIdCardRef.current.get(id) === true || isIdCardEntry(sr)`, and
+      // `docTypeIdCardRef.current.get(id) === true || isIdentityEntry(sr)`, and
       // that ref is built from exactly the key-and-name test on the left. The
       // first draft stopped at the left half on the grounds that `discover-run`
       // says the TYPE answers for a stored row — true of what SHOULD be asked,
       // and not of what the run asks. Dropping the scan term made the gate stop
       // imports the run would never have flagged: `Buletin de analiză`,
       // `Buletin de încercare` and `Copie CI` are ordinary formless types that
-      // `isIdCardTypeName` deliberately refuses and `isIdCardLabel` accepts.
+      // `isIdCardTypeName` deliberately refuses and `isIdentityLabel` accepts.
       // A gate that disagrees with the executor is worse than no gate.
       typeIsIdCard: documentTypeIsIdentity(row) || entry.isIdCard === true,
     }),
@@ -731,10 +731,10 @@ function newTypeOf(
       // ⚠️ **THE SCAN'S SIGNAL ALONE, AND A THIRD ROUND TOOK THE LABEL TEST
       // BACK OUT.** For a type the run CREATES, `docTypeIdCardRef` has no entry
       // — it is built once from the start-of-run list — so the run's expression
-      // collapses to `isIdCardEntry(sr)` and nothing else. Keeping
+      // collapses to `isIdentityEntry(sr)` and nothing else. Keeping
       // `isIdCardTypeName(name)` here excused types the run would then flag: a
       // label like "Acte de identitate" passes that test and fails
-      // `isIdCardLabel`, and `isIdCardEntry` short-circuits to false on any
+      // `isIdentityLabel`, and `isIdentityEntry` short-circuits to false on any
       // non-card key without ever reading the label. The gate would have
       // promised no form was needed and the run's rows would then have said
       // one was missing. Agreement with the executor, again, over the tidier

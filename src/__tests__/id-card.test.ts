@@ -11,9 +11,9 @@
 
 import {
   foldRomanian,
-  isIdCardLabel,
-  isIdCardEntry,
-  ID_CARD_READ_TYPE_KEYS,
+  isIdentityLabel,
+  isIdentityEntry,
+  IDENTITY_READ_TYPE_KEYS,
   looksLikeIdCardName,
 } from "@/lib/import/id-card";
 
@@ -36,7 +36,7 @@ describe("foldRomanian", () => {
   });
 });
 
-describe("isIdCardLabel", () => {
+describe("isIdentityLabel", () => {
   it.each([
     "Carte de Identitate",
     "carte de identitate",
@@ -50,11 +50,11 @@ describe("isIdCardLabel", () => {
     "C.I.",
     "CI",
   ])("accepts %j", (label) => {
-    expect(isIdCardLabel(label)).toBe(true);
+    expect(isIdentityLabel(label)).toBe(true);
   });
 
   it("accepts a diacritic-bearing label (regression: raw toLowerCase missed these)", () => {
-    expect(isIdCardLabel("Carte de identitate românească")).toBe(true);
+    expect(isIdentityLabel("Carte de identitate românească")).toBe(true);
   });
 
   it.each([
@@ -64,34 +64,34 @@ describe("isIdCardLabel", () => {
     "Certificat de Moștenitor",
     "Document necunoscut",
   ])("rejects %j", (label) => {
-    expect(isIdCardLabel(label)).toBe(false);
+    expect(isIdentityLabel(label)).toBe(false);
   });
 
   it("rejects a vehicle registration card (regression: substring match sent CIV to the ID extractor)", () => {
-    expect(isIdCardLabel("Carte de identitate a vehiculului")).toBe(false);
-    expect(isIdCardLabel("Carte de identitate auto")).toBe(false);
+    expect(isIdentityLabel("Carte de identitate a vehiculului")).toBe(false);
+    expect(isIdentityLabel("Carte de identitate auto")).toBe(false);
   });
 
   it("does not fire on CI embedded in another token", () => {
-    expect(isIdCardLabel("CIF 12345678")).toBe(false);
-    expect(isIdCardLabel("Cinci parcele")).toBe(false);
+    expect(isIdentityLabel("CIF 12345678")).toBe(false);
+    expect(isIdentityLabel("Cinci parcele")).toBe(false);
   });
 
   it("handles null / undefined / empty", () => {
-    expect(isIdCardLabel(null)).toBe(false);
-    expect(isIdCardLabel(undefined)).toBe(false);
-    expect(isIdCardLabel("")).toBe(false);
+    expect(isIdentityLabel(null)).toBe(false);
+    expect(isIdentityLabel(undefined)).toBe(false);
+    expect(isIdentityLabel("")).toBe(false);
   });
 });
 
-describe("isIdCardEntry", () => {
-  it.each(ID_CARD_READ_TYPE_KEYS)("accepts typeKey %s regardless of label", (key) => {
-    expect(isIdCardEntry({ typeKey: key, description: "Ceva nerelevant" })).toBe(true);
+describe("isIdentityEntry", () => {
+  it.each(IDENTITY_READ_TYPE_KEYS)("accepts typeKey %s regardless of label", (key) => {
+    expect(isIdentityEntry({ typeKey: key, description: "Ceva nerelevant" })).toBe(true);
   });
 
   it("lets a confident non-ID typeKey veto a matching label", () => {
     expect(
-      isIdCardEntry({
+      isIdentityEntry({
         typeKey: "CONTRACT_VANZARE",
         description: "Contract de vânzare cu buletin anexat",
       }),
@@ -99,20 +99,20 @@ describe("isIdCardEntry", () => {
   });
 
   it("falls through to the label when the key is UNCLASSIFIED", () => {
-    expect(isIdCardEntry({ typeKey: "UNCLASSIFIED", description: "Buletin" })).toBe(true);
-    expect(isIdCardEntry({ typeKey: "UNCLASSIFIED", description: "Titlu de Proprietate" })).toBe(false);
+    expect(isIdentityEntry({ typeKey: "UNCLASSIFIED", description: "Buletin" })).toBe(true);
+    expect(isIdentityEntry({ typeKey: "UNCLASSIFIED", description: "Titlu de Proprietate" })).toBe(false);
   });
 
   it("falls through to the label when there is no key at all", () => {
-    expect(isIdCardEntry({ description: "Carte de Identitate" })).toBe(true);
-    expect(isIdCardEntry({ typeKey: null, description: "Carte de Identitate" })).toBe(true);
-    expect(isIdCardEntry({ typeKey: "  ", description: "Carte de Identitate" })).toBe(true);
+    expect(isIdentityEntry({ description: "Carte de Identitate" })).toBe(true);
+    expect(isIdentityEntry({ typeKey: null, description: "Carte de Identitate" })).toBe(true);
+    expect(isIdentityEntry({ typeKey: "  ", description: "Carte de Identitate" })).toBe(true);
   });
 
   it("rejects an entry with neither signal", () => {
-    expect(isIdCardEntry({})).toBe(false);
-    expect(isIdCardEntry(null)).toBe(false);
-    expect(isIdCardEntry(undefined)).toBe(false);
+    expect(isIdentityEntry({})).toBe(false);
+    expect(isIdentityEntry(null)).toBe(false);
+    expect(isIdentityEntry(undefined)).toBe(false);
   });
 });
 
@@ -187,4 +187,4 @@ describe("looksLikeIdCardName", () => {
 //
 // `isIdCardTypeName` judged a document TYPE by its name. Since migration_118 an identity type is recognised by its
 // marker (`documentTypeIsIdentity`, src/__tests__/identity-document-kinds.test.ts), so a type NAMED like a card is an
-// ordinary type unless it carries one. The scan-side tests above (`isIdCardLabel`, `isIdCardEntry`) are unchanged.
+// ordinary type unless it carries one. The scan-side tests above (`isIdentityLabel`, `isIdentityEntry`) are unchanged.

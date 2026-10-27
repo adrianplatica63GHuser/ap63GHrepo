@@ -2,9 +2,17 @@
  * POST /api/admin/import/extract-id-card
  *
  * Accepts a multipart/form-data upload with a single `image` field (a
- * scanned/photographed Romanian ID card — "Carte de Identitate"). Sends the
- * image to a vision-capable LLM (Anthropic Claude) and asks it to read off
- * the fields we can map to `natural_person` columns.
+ * scanned/photographed Romanian identity document). Sends the image to a
+ * vision-capable LLM (Anthropic Claude) and asks it to read off its fields.
+ *
+ * Slice 40.86: the four identity kinds, in ONE paid read (Ask first 1). The model
+ * first decides the KIND from what the image shows — „CI_VECHE" (the booklet
+ * „buletin"), „CI_NOU" (a laminated or electronic card), „PASAPORT", „PASAPORT_CRDS"
+ * (a passport with a domicile abroad) — and returns it as `kind`, then that kind's
+ * fields. The classifier's type key is only a hint: the caller files the document
+ * under the kind the read found (`identityKindOfRead`, src/lib/import/identity-read.ts).
+ * Four fields the person has no column for — `civilStatus`, `issuerOfficer`,
+ * `passportType`, `countryCode` — go to the document's identity values only.
  *
  * This route requires internet access and incurs a per-call API cost
  * (accepted by Adrian — Slice #14.15.01). Requires ANTHROPIC_API_KEY to be
@@ -83,6 +91,7 @@ import {
 } from "@/lib/import/multi-card-gate";
 import { matchCitizenship } from "@/lib/import/lookup-name-match";
 import { cardParentsFrom, type CardParents } from "@/lib/import/id-card-parents";
+import { isIdentityKind, type IdentityKind } from "@/lib/identity-documents/kinds";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -110,7 +119,12 @@ type ExtractionField =
   | "addressPostalCode"
   | "addressLocality"
   | "addressCounty"
-  | "addressCountry";
+  | "addressCountry"
+  // Slice 40.86: an identity document's own, which no person field holds.
+  | "civilStatus"
+  | "issuerOfficer"
+  | "passportType"
+  | "countryCode";
 
 // Default country for any address read off a Romanian ID card — these are
 // always domestic addresses, so defaulting it server-side (rather than
@@ -121,6 +135,8 @@ const DEFAULT_ADDRESS_COUNTRY = "România";
 type ExtractedFields = Partial<Record<ExtractionField, string>>;
 
 type ExtractionResult = {
+  /** Slice 40.86: the kind the read found — CI_VECHE | CI_NOU | PASAPORT | PASAPORT_CRDS — or null when it could not tell. */
+  kind: IdentityKind | null;
   fields: ExtractedFields;
   lowConfidenceFields: string[];
   unmappedRaw: Record<string, string>;
@@ -203,29 +219,41 @@ function classifyAnthropicError(
   };
 }
 
-const SYSTEM_PROMPT = `You read scanned Romanian national ID cards (Carte de Identitate) and extract structured data. Respond with ONLY a single JSON object, no prose, no markdown fences.
+const SYSTEM_PROMPT = `You read scanned Romanian identity documents and extract structured data. Respond with ONLY a single JSON object, no prose, no markdown fences.
+
+First decide WHICH of the four kinds the image is, from what it shows — never from a file name:
+- "CI_VECHE": the old booklet "buletin de identitate" — a small book with typed or handwritten pages, the parents' first names, a civil status ("starea civilă"), the officer who issued it; no CNP on most, no validity end, no machine-readable zone (MRZ).
+- "CI_NOU": a Romanian identity card ("Carte de identitate") — a laminated or plastic card, or the electronic card: a CNP, "Valabilitate" dates, and an MRZ starting "IDROU" at the bottom.
+- "PASAPORT": a Romanian passport ("Pașaport" / "Passport", type "P", country code "ROU", an MRZ starting "P<ROU") whose domicile is a Romanian county (județ).
+- "PASAPORT_CRDS": a Romanian passport whose domicile is abroad — a country other than Romania, or the word "CRDS".
+Then read that kind's fields into the shape below; a field the kind does not print is null.
 
 Shape:
 {
+  "kind": "CI_VECHE" | "CI_NOU" | "PASAPORT" | "PASAPORT_CRDS" | null,   // null only when it is none of the four
   "fields": {
     "lastName": string | null,        // "Nume"
     "firstName": string | null,       // "Prenume"
     "gender": "MALE" | "FEMALE" | null,  // "Sex" — M -> MALE, F -> FEMALE
     "dateOfBirth": string | null,     // ISO yyyy-mm-dd, from CNP or printed DOB
     "cnp": string | null,             // "CNP" — 13 digits, digits only
-    "idDocumentNumber": string | null,// series + number combined, e.g. "RT123456" (no space)
+    "idDocumentNumber": string | null,// series + number combined, e.g. "RT123456" (no space); a passport's "Nr. pașaportului"
     "idCardNumber": string | null,    // secondary card / document number if a DIFFERENT number is printed (e.g. on the back, or a permanent-number field), else null
     "placeOfBirth": string | null,    // "Loc nastere"
-    "idIssuingAuthority": string | null, // "Emisa de" / issuing authority
-    "idValidFrom": string | null,     // ISO yyyy-mm-dd, "Valabilitate" start
-    "idValidUntil": string | null,    // ISO yyyy-mm-dd, "Valabilitate" end
+    "idIssuingAuthority": string | null, // "Emisa de" / issuing authority — the institution only (a booklet's officer goes in issuerOfficer)
+    "idValidFrom": string | null,     // ISO yyyy-mm-dd — the ISSUE date: "Valabilitate" start on a card, "Data eliberării" in a booklet, "Data emiterii" on a passport
+    "idValidUntil": string | null,    // ISO yyyy-mm-dd, "Valabilitate" end / a passport's "Data expirării"; null on a booklet
     "idMrzRaw": string | null,        // the raw machine-readable zone text (back of card), verbatim, lines joined with \\n
     "citizenshipRaw": string | null,  // citizenship/nationality as printed, e.g. "ROU" or "Romana"
     "addressStreetLine": string | null,  // "Domiciliu" — the street/number/block/floor/apartment part only, e.g. "Str. Valea Calugareasca nr.9 bl.Z4 et.7 ap.44" (do not include the city/sector/county part here)
     "addressPostalCode": string | null,  // postal code, if printed (rare on Romanian ID cards) — else null, do not guess
     "addressLocality": string | null,    // city/town/commune/sector, e.g. "Sector 6" or "Mun. Bucuresti Sector 6" or "Ploiesti"
     "addressCounty": string | null,      // judet (county), e.g. "Ilfov" — for Bucharest sectors, this is usually not printed separately, leave null
-    "addressCountry": string | null      // almost always "Romania" for a domestic ID card; null only if you genuinely cannot tell it's Romanian
+    "addressCountry": string | null,     // almost always "Romania" for a domestic ID card; null only if you genuinely cannot tell it's Romanian. On a PASAPORT_CRDS: the country of the domicile, e.g. "Spania"
+    "civilStatus": string | null,        // CI_VECHE only: "Starea civilă" as printed, e.g. "necăsătorit"
+    "issuerOfficer": string | null,      // CI_VECHE only: the officer who signed it, as printed (the institution goes in idIssuingAuthority)
+    "passportType": string | null,       // a passport's "Tip" / "Type", e.g. "P"
+    "countryCode": string | null         // a passport's "Codul țării" / "Country code", e.g. "ROU"
   },
   "personCount": number,              // how many DISTINCT PEOPLE's identity documents this image shows — see the rule below
   "lowConfidenceFields": string[],    // keys above where you are not confident in the OCR read (blurry, ambiguous, or guessed) — this includes any addressX field where you had to guess how to split the printed address into parts
@@ -237,12 +265,14 @@ Shape:
 }
 
 Rules:
-- "personCount" is about what THIS IMAGE IS: a personal identity document (carte de identitate / buletin), or a sheet of nothing but such documents. Answer 0 when it is neither — the classifier's guess can be wrong, and a marriage certificate, a contract or a compensation file printing two CNPs is not two identity cards. A single sheet holding two people's cards, one above the other, IS a sheet of identity documents and is the case this field exists for: answer 2, not 0.
-- Otherwise "personCount" counts PEOPLE, not card-shaped rectangles. Answer 1 for a single person's card however many times that one card appears on the image — the FRONT AND BACK of one card, one booklet buletin photographed spread by spread, or two photographs of the same holder in one booklet are all ONE person. Answer 2 or more ONLY on positive evidence of a second person: a second, DIFFERENT CNP, or a different printed name together with a different document series. If you cannot read two distinct CNPs or two distinct names, answer 1.
+- "personCount" is about what THIS IMAGE IS: a personal identity document (carte de identitate / buletin / pașaport), or a sheet of nothing but such documents. Answer 0 when it is neither — the classifier's guess can be wrong, and a marriage certificate, a contract or a compensation file printing two CNPs is not two identity cards. A single sheet holding two people's cards, one above the other, IS a sheet of identity documents and is the case this field exists for: answer 2, not 0.
+- Otherwise "personCount" counts PEOPLE, not card-shaped rectangles. Answer 1 for a single person's card however many times that one card appears on the image — the FRONT AND BACK of one card, one booklet buletin photographed spread by spread, two photographs of the same holder in one booklet, or ONE person's card and passport on one sheet are all ONE person (count people, not kinds). Answer 2 or more ONLY on positive evidence of a second person: a second, DIFFERENT CNP, or a different printed name together with a different document series. If you cannot read two distinct CNPs or two distinct names, answer 1.
 - If "personCount" is 2 or more, still fill in "fields" for the FIRST person as best you can — the caller refuses the read on the count alone and never uses those values, but a blank object would make a wrong count indistinguishable from an unreadable image.
 - Only include a field in "unmappedRaw" if it genuinely does not fit one of the named fields above. Do not duplicate a named field into unmappedRaw. In particular, the printed domiciliu/address line should always be split across addressStreetLine/addressLocality/addressCounty/addressPostalCode/addressCountry, never placed in unmappedRaw, even if you are unsure exactly how to split it (in that case, do your best and list the relevant addressX keys in lowConfidenceFields instead).
 - If you cannot read a field at all, set it to null and do NOT list it in lowConfidenceFields (null means "not found", not "uncertain"). Only list a field in lowConfidenceFields if you extracted a value but are unsure it is correct.
 - The parents: a card that prints them gives their first names, on a line such as "Prenume părinți: ION / MARIA" or "Fiul lui ION și al MARIEI" (the father first). Put the father's first name in parents.father and the mother's in parents.mother, in the nominative as a person would write the name ("MARIEI" -> "Maria"), in normal capitalisation. Never put a parent's name in unmappedRaw, and never guess a parent the card does not print — null.
+- A passport's domicile is ONE value, not an address: on a PASAPORT put the county (județ) in addressCounty and leave addressStreetLine, addressLocality and addressPostalCode null; on a PASAPORT_CRDS put the country in addressCountry and leave the other address fields null.
+- A booklet (CI_VECHE) prints the parents' first names: put them in "parents" as the rule below says.
 - Dates must be ISO yyyy-mm-dd or null. Never invent a date.
 - Output strictly valid JSON — no comments, no trailing commas, no markdown code fences.`;
 
@@ -357,7 +387,7 @@ export async function POST(request: NextRequest): Promise<Response> {
               },
               {
                 type: "text",
-                text: "Extract the fields from this Romanian ID card image as instructed.",
+                text: "Decide the kind of this Romanian identity document, then extract its fields as instructed.",
               },
             ],
           },
@@ -395,6 +425,8 @@ export async function POST(request: NextRequest): Promise<Response> {
   try {
     const raw = extractJson(textBlock) as Partial<ExtractionResult>;
     parsed = {
+      // Slice 40.86: anything but the four kinds is „could not tell" — the caller falls back to the classifier's key.
+      kind: isIdentityKind(raw.kind) ? raw.kind : null,
       fields: raw.fields ?? {},
       lowConfidenceFields: Array.isArray(raw.lowConfidenceFields) ? raw.lowConfidenceFields : [],
       unmappedRaw:
@@ -559,6 +591,7 @@ export async function POST(request: NextRequest): Promise<Response> {
   }
 
   return Response.json({
+    kind: parsed.kind,
     fields: { ...parsed.fields, citizenshipId, issuerPersonId },
     lookupUnavailable,
     lowConfidenceFields: parsed.lowConfidenceFields,

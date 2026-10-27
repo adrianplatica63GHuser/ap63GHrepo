@@ -13,10 +13,10 @@ import {
   ID_CARD_NOTE_MARKER,
   ID_CARD_SUBJECT_PREFIX,
   ID_CARD_TITLE_PREFIX,
-  ID_CARD_READ_TYPE_KEYS,
+  IDENTITY_READ_TYPE_KEYS,
   documentFieldsFromIdCard,
   idCardDocumentFieldCount,
-  isIdCardEntry,
+  isIdentityEntry,
   type IdCardDocumentSource,
 } from "@/lib/import/id-card";
 
@@ -519,7 +519,7 @@ describe("idCardDocumentFieldCount", () => {
   });
 });
 
-describe("ID_CARD_READ_TYPE_KEYS — Slice #23.08.Import removed the phantom _ALT key", () => {
+describe("IDENTITY_READ_TYPE_KEYS — Slice #23.08.Import removed the phantom _ALT key", () => {
   it("no longer carries CARTE_IDENTITATE_ALT", () => {
     // Confirmed against the live lookup_document_type at the time (26 rows),
     // and this key is not one of them — nor is it in the forty-four the seed
@@ -528,12 +528,12 @@ describe("ID_CARD_READ_TYPE_KEYS — Slice #23.08.Import removed the phantom _AL
     // Slice #29.07.** Until then the resolver slugged a key from the label, so
     // it could never produce this one; now it offers the canonical key, but
     // only one `canonicalTypeKey` accepts, and this is not in the catalogue.
-    expect(ID_CARD_READ_TYPE_KEYS as readonly string[]).not.toContain("CARTE_IDENTITATE_ALT");
+    expect(IDENTITY_READ_TYPE_KEYS as readonly string[]).not.toContain("CARTE_IDENTITATE_ALT");
   });
 
   it("still recognises the real key", () => {
-    expect(ID_CARD_READ_TYPE_KEYS as readonly string[]).toContain("CARTE_IDENTITATE");
-    expect(isIdCardEntry({ typeKey: "CARTE_IDENTITATE" })).toBe(true);
+    expect(IDENTITY_READ_TYPE_KEYS as readonly string[]).toContain("CARTE_IDENTITATE");
+    expect(isIdentityEntry({ typeKey: "CARTE_IDENTITATE" })).toBe(true);
   });
 
   it("treats the retired key as any other non-ID key — no longer a match", () => {
@@ -541,8 +541,8 @@ describe("ID_CARD_READ_TYPE_KEYS — Slice #23.08.Import removed the phantom _AL
     // not UNCLASSIFIED either, so it is vetoed like any other non-ID key.
     // Pinned deliberately: this is the behaviour change, and it is safe only
     // because nothing can produce that key any more.
-    expect(isIdCardEntry({ typeKey: "CARTE_IDENTITATE_ALT" })).toBe(false);
+    expect(isIdentityEntry({ typeKey: "CARTE_IDENTITATE_ALT" })).toBe(false);
     // ...but a row with no key and an ID-card label is still caught.
-    expect(isIdCardEntry({ description: "Carte de identitate" })).toBe(true);
+    expect(isIdentityEntry({ description: "Carte de identitate" })).toBe(true);
   });
 });

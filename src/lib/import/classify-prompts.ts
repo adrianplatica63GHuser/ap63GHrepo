@@ -355,7 +355,7 @@ export const KNOWN_TYPE_KEYS: readonly KnownTypeKey[] =
  * guard written twice.
  *
  * ⚠️ **Stripping UNCLASSIFIED at the scan boundary is behaviour-preserving for
- * `isIdCardEntry`, measured rather than assumed.** That function reads the
+ * `isIdentityEntry`, measured rather than assumed.** That function reads the
  * scan's `typeKey` and treats "a missing key" and "the explicitly-uncertain
  * UNCLASSIFIED" identically — both fall through to its label heuristic — so a
  * `null` where UNCLASSIFIED used to be takes the same branch. Those are the
@@ -453,8 +453,8 @@ Rules:
 - This image may be a page out of the middle of such an act, and only its first page carries a heading. If the page has no heading and its text would otherwise have led you to one of those four, that is the case to decline: answer suggestedTypeKey=null AND set "classifiedLabel" to "Document necunoscut", because a label naming one of them is filed the same way a key would be. This applies to those four only - a headingless page of any other kind of document is classified from the page as usual.
 - If a heading IS there and reads as a dezlipire or a dezmembrare but the word itself is smudged or cut off, answer ACT_DEZMEMBRARE. If what is readable OF THE HEADING points to an alipire or a lotizare, answer that one instead - those two are not interchangeable with anything. Text elsewhere on the page is not a heading and does not count here.
 - "identityPersonCount" is about what THIS IMAGE IS, and it counts PEOPLE rather than card-shaped rectangles. Decide in this order.
-- FIRST: is the image itself a personal identity document (carte de identitate / buletin), or a sheet of nothing but such documents? If it is anything else — a contract, a plan, a certificate, a bank statement — answer 0. Answer 0 as well when the image is one of those and merely quotes, annexes or reproduces somebody's identity card alongside it: that is one legitimate document and the card belongs in it.
-- THEN, and only for an image that IS an identity document: answer 1 for a single person's card however many times that card appears — the FRONT AND BACK of one card, one booklet buletin photographed spread by spread, and two photographs of the same holder in one booklet are all ONE person.
+- FIRST: is the image itself a personal identity document (carte de identitate / buletin / pașaport), or a sheet of nothing but such documents? If it is anything else — a contract, a plan, a certificate, a bank statement — answer 0. Answer 0 as well when the image is one of those and merely quotes, annexes or reproduces somebody's identity card alongside it: that is one legitimate document and the card belongs in it.
+- THEN, and only for an image that IS an identity document: answer 1 for a single person's card however many times that card appears — the FRONT AND BACK of one card, one booklet buletin photographed spread by spread, two photographs of the same holder in one booklet, and ONE person's card and passport on one sheet are all ONE person (count people, not kinds of document).
 - Count a second person ONLY on positive evidence of a second person: a second, DIFFERENT CNP (the 13-digit Romanian personal code), or a different printed name together with a different document series. If you can read neither two distinct CNPs nor two distinct names, answer 1. Never infer a second person from a second rectangle, a second photograph, or a second page.
 - If the image is blank, rotated beyond reading, or is a photograph of furniture/people (not a document), set extractable=false, suggestedTypeKey=null and "classifiedLabel" to "Document necunoscut" - a descriptive label here is read as the name of a document type and files the page under a new one.
 - If the document title is in the top-right corner (ANCPI template code), that is a strong signal — use it.
@@ -639,7 +639,7 @@ ${genericLines}${customLines ? "\n" + customLines : ""}
 }
 
 Rules:
-- "identityPersonCount" is about what THIS DOCUMENT IS, not about what appears anywhere in it. Set it to 0 unless the document itself IS a personal identity document (carte de identitate / buletin) or a set of them. A contract, a power of attorney or a compensation file that ANNEXES or reproduces the parties' identity cards is 0 — those are one legitimate document and the cards belong in it. Set it to 0 for anything that merely quotes a CNP.
+- "identityPersonCount" is about what THIS DOCUMENT IS, not about what appears anywhere in it. Set it to 0 unless the document itself IS a personal identity document (carte de identitate / buletin / pașaport) or a set of them. A contract, a power of attorney or a compensation file that ANNEXES or reproduces the parties' identity cards is 0 — those are one legitimate document and the cards belong in it. Set it to 0 for anything that merely quotes a CNP.
 - When the document IS an identity document, count PEOPLE and not card-shaped rectangles. Count 1 for a single person's card however many times that card appears: the FRONT AND BACK of one card, one booklet photographed spread by spread, or two photographs of the same holder are all ONE person. Count a second person ONLY on a second, DIFFERENT CNP, or a different printed name together with a different document series.
 - Dates must be ISO yyyy-mm-dd or null. Convert Romanian format (zi.luna.an) to ISO.
 - Numbers must be numeric strings only (digits + decimal separator), no units.

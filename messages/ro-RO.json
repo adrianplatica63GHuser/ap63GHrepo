@@ -2917,7 +2917,7 @@
           "createError": "Crearea persoanei a eșuat",
           "createInsteadOfMatch": "Nu, este altcineva",
           "creating": "Se creează…",
-          "docFieldsTitle": "Se completează și pe document",
+          "docFieldsTitle": "Se completează și pe act — {kind}",
           "docFieldsHint": "Doar câmpurile rămase necompletate pe document. Nimic scris de o persoană nu este înlocuit.",
           "docFieldTitle": "Titlu",
           "docFieldNrDocument": "Serie și număr",
@@ -2989,7 +2989,12 @@
           "typeJudicial": "Persoană juridică",
           "typeNatural": "Persoană fizică",
           "unmappedHint": "Aceste valori nu au un câmp corespunzător. Copiați-le manual dacă sunt necesare.",
-          "unmappedTitle": "Găsit pe card, necompletat automat"
+          "unmappedTitle": "Găsit pe card, necompletat automat",
+          "readKind": "Act citit: {kind}.",
+          "refiled": "Importul l-a clasificat ca {from}; la salvare se trece la {to}.",
+          "cardPanelTitle": "Pe act — {kind}",
+          "personPanelTitle": "Pe persoană — Identitate",
+          "identityAlsoOnDocument": "Numele, prenumele, CNP-ul, sexul, nașterea, cetățenia, „Nr. card” și părinții de mai jos se trec și pe act, cum sunt tipărite."
         },
         "personDocFields": "{count, plural, =0 {niciun câmp pe document} one {un câmp pe document} few {# câmpuri pe document} other {# de câmpuri pe document}}",
         "personDocFieldsFailed": "Câmpurile documentului nu au putut fi scrise",

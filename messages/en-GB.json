@@ -2917,7 +2917,7 @@
           "createError": "Creating the person failed",
           "createInsteadOfMatch": "No, this is someone else",
           "creating": "Creating…",
-          "docFieldsTitle": "Also written to the document",
+          "docFieldsTitle": "Also filled on the document — {kind}",
           "docFieldsHint": "Only into the document's still-empty fields. Nothing a person wrote is replaced.",
           "docFieldTitle": "Title",
           "docFieldNrDocument": "Series and number",
@@ -2989,7 +2989,12 @@
           "typeJudicial": "Juridical person",
           "typeNatural": "Natural person",
           "unmappedHint": "These values have no matching field. Copy them across manually if needed.",
-          "unmappedTitle": "Found on the card, not auto-filled"
+          "unmappedTitle": "Found on the card, not auto-filled",
+          "readKind": "Document read: {kind}.",
+          "refiled": "The import classified it as {from}; saving files it as {to}.",
+          "cardPanelTitle": "On the document — {kind}",
+          "personPanelTitle": "On the person — Identity",
+          "identityAlsoOnDocument": "The names, CNP, sex, birth, citizenship, „Nr. card” and parents below go onto the document too, as printed."
         },
         "personDocFields": "{count, plural, =0 {no document fields} one {# document field} other {# document fields}}",
         "personDocFieldsFailed": "The document fields could not be written",

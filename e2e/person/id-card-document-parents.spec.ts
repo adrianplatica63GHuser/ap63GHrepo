@@ -16,6 +16,8 @@
  *     answer it with no parents at all (Ask first 2). The real read is
  *     TC-IMP-05's.
  *   - Everything named TC-E2E-IMP-05 is removed in `finally`.
+ *   - Slice 40.86, step 6: a passport read off a document filed as a card (the read decides the kind) — the
+ *     answer is drawn here too, invented: no real passport is read.
  */
 
 import fs from "node:fs";
@@ -148,6 +150,52 @@ test.describe("TC-PERS-10 — „Creează persoane din CI” pe ecranul actului"
       await expect(fold).toContainText("Cartea nu tipărește prenumele părinților");
       // Nothing is written: „Închide".
       await page.getByRole("button", { name: "Închide", exact: true }).first().click();
+    } finally {
+      await removeLeftovers(page.request, MARK);
+      if (documentId) await removeRecord(page.request, "document", documentId);
+    }
+  });
+
+  // Slice 40.86, step 6 — the read decides the kind: a passport read off a document the import filed as a card is
+  // re-filed as „Pașaport", and the passport's own values land on the document's identity values.
+  test("a passport read off a card's document: re-filed as Pașaport, its values on the document", async ({ page }) => {
+    test.slow();
+    await page.setViewportSize({ width: 1366, height: 900 });
+    await removeLeftovers(page.request, MARK);
+    let documentId: string | undefined;
+    try {
+      documentId = await cardDocument(page);
+      await page.route("**/api/admin/import/extract-id-card", (route) =>
+        route.fulfill({
+          json: {
+            kind: "PASAPORT",
+            fields: {
+              lastName: MARK, firstName: "Andrei", cnp: "1800101420096", gender: "MALE", dateOfBirth: "1980-01-01",
+              idDocumentNumber: "051234876", idValidFrom: "2022-09-01", idValidUntil: "2099-09-01",
+              addressCounty: "Ilfov", addressCountry: "România", passportType: "P", countryCode: "ROU",
+            },
+            lowConfidenceFields: [], unmappedRaw: {}, lookupUnavailable: false, parents: { father: null, mother: null },
+          },
+        }),
+      );
+      await page.goto(`/documents/${documentId}`);
+      await page.getByRole("button", { name: "Creează persoane din CI", exact: true }).click({ timeout: 30_000 });
+      const kindLine = page.locator('[data-identity-read-kind="PASAPORT"]');
+      await expect(kindLine).toContainText("Act citit: Pașaport.", { timeout: 60_000 });
+      await expect(kindLine.locator("[data-identity-refiled]")).toContainText("la salvare se trece la Pașaport");
+      const preview = page.locator("[data-identity-document-preview]");
+      await expect(preview).toContainText("Codul țării");
+      await expect(preview).toContainText("ROU");
+
+      await page.getByRole("button", { name: "Creează și leagă", exact: true }).click();
+      await expect(page.locator("[data-id-card-people-done]")).toContainText("Titularul a fost creat și legat de act.", { timeout: 30_000 });
+
+      const doc = (await (await page.request.get(`/api/documents/${documentId}`)).json()) as {
+        nrDocument: string | null; identity: { kind: string; values: Record<string, string | null> } | null;
+      };
+      expect(doc.identity?.kind).toBe("PASAPORT");
+      expect(doc.nrDocument).toBe("051234876");
+      expect(doc.identity?.values).toMatchObject({ lastName: MARK, passportType: "P", countryCode: "ROU", domicileCounty: "Ilfov" });
     } finally {
       await removeLeftovers(page.request, MARK);
       if (documentId) await removeRecord(page.request, "document", documentId);

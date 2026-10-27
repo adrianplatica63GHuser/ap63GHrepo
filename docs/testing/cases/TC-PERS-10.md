@@ -42,6 +42,7 @@ The window is 1366 × 900.
 | 3 | „Creează și leagă” for the holder, then for each parent | „Tatăl titularului”, then „Mama titularului”; under the button: „Titularul a fost creat și legat de act.”, „Tatăl: creat(ă) și legat(ă)”, „Mama: creat(ă) și legat(ă)” |
 | 4 | Reads the act's persons | One: `Andrei TC-E2E-IMP-05`, „Titular act de identitate” |
 | 5 | Opens `Andrei TC-E2E-IMP-05` | „Legături”: `Ion TC-E2E-IMP-05 (Tată)`, `Maria TC-E2E-IMP-05 (Mamă)` |
+| 6 | (Slice 40.86) A second card document; the read answers a PASSPORT (invented values: Tip P, Codul țării ROU, Nr. 051234876, domiciliul Ilfov); „Creează persoane din CI”, „Creează și leagă” | The dialog says „Act citit: Pașaport.” and that the save files it as Pașaport; the preview lists „Codul țării” ROU. Afterwards the document is a Pașaport, „Nr. pașaportului” 051234876, its Tip, Codul țării and Domiciliu — județul filled |
 | 6 | On a second such act whose card names no parents, presses the button | Both parent rows, unticked and empty; „Cartea nu tipărește prenumele părinților, sau citirea nu le-a găsit…” |
 
 ## At the end — leaving things as they were found
@@ -49,6 +50,9 @@ The window is 1366 × 900.
 The three persons and the acts are deleted.
 
 ## Notes from the runs
+
+**2026-10-26 — Slice 40.86.** Step 6 added: the read decides the kind, and a document the import filed as a card
+is re-filed as the passport it is. The read is answered by the spec, invented, as for steps 1–5. Not driven by hand first.
 
 **2026-10-08 — Slice #38.44, automated.** `e2e/person/id-card-document-parents.spec.ts`. In the spec the
 read is answered with what TC-IMP-05's hand run read off the same card, so a full run buys no vision

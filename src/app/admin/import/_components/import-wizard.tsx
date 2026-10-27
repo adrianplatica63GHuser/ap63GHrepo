@@ -150,7 +150,7 @@ import { ImportConstraintsStage } from "./import-constraints-stage";
 import { ImportDuplicationStage } from "./import-duplication-stage";
 import { ImportPreexistingStage } from "./import-preexisting-stage";
 import { shouldInterpretEntry } from "@/lib/import/ai-interpret-run";
-import { isIdCardEntry } from "@/lib/import/id-card";
+import { isIdentityEntry } from "@/lib/import/id-card";
 import { ImportScanningStage } from "./import-scanning-stage";
 import { ImportStepGate, STAGES_WITH_NEXT_ACTION } from "./import-step-gate";
 import { auditSavedSession, type SavedSessionAudit } from "@/lib/import/session-client";
@@ -268,7 +268,7 @@ function classifiedEntriesOf(
       // The weaker of the two identity-card signals, and the gate uses it only
       // for a type the archive does not hold — see `ClassifiedEntry`. The same
       // call `interpretUpperBound` already makes one screen later.
-      isIdCard: isIdCardEntry(result),
+      isIdCard: isIdentityEntry(result),
       // ⚠️ **CARRIED, NOT FETCHED.**                            (Slice #32.02)
       // `confidence` is already on the `ScanResult` this line is reading — the
       // scan route returns it and the row above stores it — so the stop
@@ -2726,7 +2726,7 @@ export function ImportWizard() {
   const interpretUpperBound = useMemo(
     () =>
       entriesToImport.filter((entry) =>
-        shouldInterpretEntry(entry, { isIdCard: isIdCardEntry(scanResults.get(entry.path)) }),
+        shouldInterpretEntry(entry, { isIdCard: isIdentityEntry(scanResults.get(entry.path)) }),
       ).length,
     [entriesToImport, scanResults],
   );
@@ -2742,7 +2742,7 @@ export function ImportWizard() {
       entriesToImport.filter(
         (entry) =>
           scanResults.get(entry.path)?.typeKey === PLAN_PARCELAR_KEY &&
-          shouldInterpretEntry(entry, { isIdCard: isIdCardEntry(scanResults.get(entry.path)) }),
+          shouldInterpretEntry(entry, { isIdCard: isIdentityEntry(scanResults.get(entry.path)) }),
       ).length,
     [entriesToImport, scanResults],
   );

@@ -59,7 +59,7 @@ const read = (rel: string): string => readFileSync(join(ROOT, rel), "utf8");
  * self-clean even if someone later narrows that exclusion.
  */
 const NAME_TEST = "isIdCard" + "TypeName";
-const KEY_LIST = "ID_CARD" + "_READ_TYPE_KEYS";
+const KEY_LIST = "IDENTITY" + "_READ_TYPE_KEYS";
 
 /** Strips block and line comments so a mention in prose is not a match. */
 function stripComments(source: string): string {
@@ -143,7 +143,7 @@ const NOT_CARD_NAMES = [
   "Aviz de Instituție",
 ];
 
-/** The vehicle veto, which is shared with `isIdCardLabel` and is not to go. */
+/** The vehicle veto, which is shared with `isIdentityLabel` and is not to go. */
 const VEHICLE_NAMES = [
   "Carte de identitate a vehiculului",
   "Carte de identitate auto",
@@ -708,7 +708,7 @@ describe("the scan-aware variants still add the scan's own signal", () => {
 
   it("the gate's stored-type arm asks the TYPE and the scan", () => {
     // A gate that disagrees with the executor is worse than no gate: the run
-    // asks `docTypeIdCardRef.get(id) === true || isIdCardEntry(sr)`, so the
+    // asks `docTypeIdCardRef.get(id) === true || isIdentityEntry(sr)`, so the
     // gate has to ask the scan too or it stops imports the run never flags.
     const body = bodyOf(GATE(), "existingTypeOf") || fnBodyOf(GATE(), "existingTypeOf");
     expect(body).toContain("documentTypeIsIdentity(");
@@ -727,7 +727,7 @@ describe("the scan-aware variants still add the scan's own signal", () => {
     const code = stripComments(
       read("src/app/admin/import/_components/bulk-import-dialog.tsx"),
     );
-    expect(code).toContain("isIdCardEntry(sr)");
+    expect(code).toContain("isIdentityEntry(sr)");
     expect(code).toMatch(/docTypeIdCardRef\.current\.get\([A-Za-z]+\) === true \|\|/);
   });
 });

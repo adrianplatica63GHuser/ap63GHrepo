@@ -178,7 +178,7 @@ import type { ScanResult } from "./scan-table";
 import { inferProvenanceForFiles } from "@/lib/metadata/provenance-rules";
 import type { ProvenanceCode } from "@/lib/metadata/provenance";
 import { ProvenanceField } from "./provenance-field";
-import { isIdCardEntry } from "@/lib/import/id-card";
+import { isIdentityEntry } from "@/lib/import/id-card";
 import { documentTypeIsIdentity } from "@/lib/identity-documents/kinds";
 import { isDeclaredCoordinateFile } from "@/lib/import/structure-rules";
 import type { EntryAssignment } from "@/lib/import/property-folders";
@@ -1291,7 +1291,7 @@ type EnsuredDocType = {
    *
    * ⚠️ **Absent reads as `false`, and the caller writes it into
    * `docTypeIdCardRef` ONLY when it is `true`.** That map's reader asks
-   * `get(id) === true || isIdCardEntry(sr)`, so a stored `false` is not the
+   * `get(id) === true || isIdentityEntry(sr)`, so a stored `false` is not the
    * same as no entry — it would erase a `true` the start-of-run list or
    * `readTypeCatalogue` had already put there. A `true` is the answer the map
    * could not previously have for a type minted mid-run.
@@ -1763,7 +1763,7 @@ export function BulkImportDialog({
    * see `typeIsIdCard` in `discover-run.ts` for the two ways the scan's own
    * signal comes apart from it. Since #32.07 the question has ONE answer,
    * `documentTypeIsIdCard`: the seeded key, or the NAME test, which is
-   * deliberately NARROWER than the scan's own `isIdCardLabel` — see that
+   * deliberately NARROWER than the scan's own `isIdentityLabel` — see that
    * function's header for the type names ("Buletin de analiză", "Copie CI") the
    * wider heuristic would have silently cost a form.
    *
@@ -2538,7 +2538,7 @@ export function BulkImportDialog({
             // it and send the reader back to the scan's own signal, which is
             // the signal that is false on a mislabelled card. Either witness is
             // enough and neither may cancel the other, which is why the reader
-            // is `|| isIdCardEntry(sr)` rather than `??`.
+            // is `|| isIdentityEntry(sr)` rather than `??`.
             if (resolvedType.isIdCard === true) {
               docTypeIdCardRef.current.set(resolvedType.row.id, true);
             }
@@ -2826,7 +2826,7 @@ export function BulkImportDialog({
           // click before it happens — see `interpretSkipReason`, of which
           // `shouldInterpretEntry` is the thinner view that screen reads.
           const rowProperty = soleProperty(entry.path);
-          const skipReason = interpretSkipReason(entry, { isIdCard: isIdCardEntry(sr) });
+          const skipReason = interpretSkipReason(entry, { isIdCard: isIdentityEntry(sr) });
 
           // 7a. The identity card's person — QUEUED, not written.  (#26.10)
           //
@@ -2851,7 +2851,7 @@ export function BulkImportDialog({
           // there is one is `idCardImage`'s answer, not the AI route's.
           // Slice #38.44: every card the scan recognises, its property or none —
           // with none, the dialog links the holder to this Document only.
-          if (isIdCardEntry(sr)) {
+          if (isIdentityEntry(sr)) {
             try {
               const image = await idCardImage(entry);
               // ⚠️ The `mounted` test guards the REF write too, not just the
@@ -2970,7 +2970,7 @@ export function BulkImportDialog({
             // says "no form" over a type that must never have one, and a real
             // type wrongly skipped only loses a row's "no form yet" sentence.
             const typeIsIdCard =
-              docTypeIdCardRef.current.get(finalTypeId) === true || isIdCardEntry(sr);
+              docTypeIdCardRef.current.get(finalTypeId) === true || isIdentityEntry(sr);
             /**
              * The row behind `finalTypeId`, where this loop has one.
              *                                                  (Slice #34.10)
@@ -4177,7 +4177,7 @@ export function BulkImportDialog({
         const typeIsIdCard =
           finalTypeId !== null &&
           (docTypeIdCardRef.current.get(finalTypeId) === true ||
-            isIdCardEntry(scanResults.get(path)));
+            isIdentityEntry(scanResults.get(path)));
         /**
          * The row behind `finalTypeId`, off the preflight that just ran.
          *                                                    (Slice #34.10)
@@ -4562,7 +4562,7 @@ export function BulkImportDialog({
         }
         const typeIsIdCard =
           docTypeIdCardRef.current.get(typeId) === true ||
-          isIdCardEntry(scanResults.get(path));
+          isIdentityEntry(scanResults.get(path));
         const awaitsForm = typeAwaitsForm({
           typeId,
           // ⚠️ **Both columns, and #34.10 made them required-and-nullable so a
@@ -4905,7 +4905,7 @@ export function BulkImportDialog({
         // #37.57: the NAME, not the code or the id — a nickname, or words.
         cornerPropertyName: cornerProperty === undefined ? null : (cornerProperty.nickname ?? tUnnamed("property")),
         cornerCount: cornerProperty?.cornerCount ?? 0,
-        isIdCard: isIdCardEntry(scanResults.get(r.entry.path)),
+        isIdCard: isIdentityEntry(scanResults.get(r.entry.path)),
         personId: r.personId,
         personCreated: r.personCreated,
         personDeclined: r.personDeclined,

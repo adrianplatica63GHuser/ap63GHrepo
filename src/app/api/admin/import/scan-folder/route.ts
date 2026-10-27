@@ -192,7 +192,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     // #29.07.) Three pieces of code held three positions on an UNCLASSIFIED
     // key — this route let it through, `ai-interpret` stripped it, the matching
     // rule skipped it — and the rule is one function now. Nothing downstream
-    // can tell the difference: `isIdCardEntry` treats a missing key and
+    // can tell the difference: `isIdentityEntry` treats a missing key and
     // UNCLASSIFIED identically (both fall through to its label heuristic), and
     // `ensureDocType` hands the key to a resolver that refuses it anyway.
     const suggestedTypeKey = canonicalTypeKey(raw.suggestedTypeKey);

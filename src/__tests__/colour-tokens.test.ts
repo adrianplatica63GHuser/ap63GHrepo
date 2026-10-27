@@ -30,6 +30,8 @@ export const CONVERTED: readonly string[] = [
   "src/app/natural-persons/[id]/page.tsx", // 40.85
   "src/app/documents/new/page.tsx", // 40.85, the holder
   "src/app/documents/_components/ai-party-linker-dialog.tsx", // 40.85, no card on the person
+  "src/app/admin/import/_components/id-card-person-dialog.tsx", // 40.86, the four kinds
+  "src/lib/import/identity-read.ts", // 40.86
 ];
 
 const PALETTE =

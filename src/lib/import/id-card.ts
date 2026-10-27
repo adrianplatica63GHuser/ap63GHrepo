@@ -84,8 +84,9 @@ import { UNCLASSIFIED_DOCUMENT_TYPE_KEY } from "@/lib/documents/document-type-ma
 // card" and served both the TYPE test and the SCAN test. The type test now reads the marker column; what is left is
 // the scan's: the classifier keys whose image today's card read (extract-id-card) handles — both identity cards,
 // the booklet „buletin" (model vechi) as well as model nou, as the read did before 40.82 when the classifier called
-// either one CARTE_IDENTITATE. A passport is not read until Slice 40.86 teaches the read all four kinds.
-export const ID_CARD_READ_TYPE_KEYS = ["CARTE_IDENTITATE", "CARTE_IDENTITATE_VECHE"] as const;
+// either one CARTE_IDENTITATE. Slice 40.86: the read decides the kind itself, so it takes all four — both cards and
+// both passports — and the classifier's key is only its hint (`identityKindOfRead`, ./identity-read.ts).
+export const IDENTITY_READ_TYPE_KEYS = ["CARTE_IDENTITATE", "CARTE_IDENTITATE_VECHE", "PASAPORT", "PASAPORT_CRDS"] as const;
 
 /**
  * Lowercase and strip Romanian diacritics.
@@ -127,21 +128,33 @@ const POSITIVE_PATTERNS: RegExp[] = [
 ];
 
 /**
+ * Slice 40.86: a Romanian passport — „Pașaport", „Pașaport CRDS", „passport" — is read as an identity document, unless
+ * it is a building's energy passport, a machine's or an animal's. Two lists of their own, beside the card's two:
+ * migration_073's SQL predicate mirrors VETO_PATTERNS and POSITIVE_PATTERNS term for term, and it is about cards.
+ */
+const PASSPORT_VETO_PATTERNS: RegExp[] = [
+  /pasaport\s+(energetic|tehnic|canin|felin|pentru\s+animal)/,
+  /\b(pet|animal)\s+passport\b/,
+];
+const PASSPORT_PATTERNS: RegExp[] = [/\bpasaport\b/, /\bpassport\b/];
+
+/**
  * Does this free-text classification label describe an identity card?
  * Exported separately so the label heuristic can be tested on its own.
  */
-export function isIdCardLabel(label: string | null | undefined): boolean {
+export function isIdentityLabel(label: string | null | undefined): boolean {
   if (!label) return false;
   const folded = foldRomanian(label);
   if (!folded) return false;
   if (VETO_PATTERNS.some((re) => re.test(folded))) return false;
-  return POSITIVE_PATTERNS.some((re) => re.test(folded));
+  if (POSITIVE_PATTERNS.some((re) => re.test(folded))) return true;
+  return !PASSPORT_VETO_PATTERNS.some((re) => re.test(folded)) && PASSPORT_PATTERNS.some((re) => re.test(folded));
 }
 
 // Slice 40.82: `isIdCardTypeName` and `documentTypeIsIdCard` are gone. An identity document's TYPE is recognised by
 // its marker, `lookup_document_type.identity_kind`, through `documentTypeIsIdentity`
 // (src/lib/identity-documents/kinds.ts) — never by its name. What stays here judges a label the classifier read off
-// an IMAGE (`isIdCardLabel`, `isIdCardEntry`), which is a different question. migration_073's SQL predicate is a
+// an IMAGE (`isIdentityLabel`, `isIdentityEntry`), which is a different question. migration_073's SQL predicate is a
 // frozen copy of the retired name test; src/__tests__/id-card-type-single-source.test.ts pins it as such.
 
 /** The shape this module needs off a ScanResult. Structural, not imported. */
@@ -172,16 +185,16 @@ export type IdCardScanSignal = {
  * `UNCLASSIFIED_DOCUMENT_TYPE_KEY` rather than spelling the literal, so it is
  * one of the places that follow the rule rather than a fourth opinion about it.
  */
-export function isIdCardEntry(scan: IdCardScanSignal | null | undefined): boolean {
+export function isIdentityEntry(scan: IdCardScanSignal | null | undefined): boolean {
   if (!scan) return false;
 
   const key = scan.typeKey?.trim();
   if (key) {
-    if ((ID_CARD_READ_TYPE_KEYS as readonly string[]).includes(key)) return true;
+    if ((IDENTITY_READ_TYPE_KEYS as readonly string[]).includes(key)) return true;
     if (key !== UNCLASSIFIED_DOCUMENT_TYPE_KEY) return false;
   }
 
-  return isIdCardLabel(scan.description);
+  return isIdentityLabel(scan.description);
 }
 
 // ---------------------------------------------------------------------------
@@ -608,7 +621,7 @@ export function idCardDocumentFieldCount(patch: IdCardDocumentPatch): number {
 /**
  * Does this file or folder NAME say it is an identity card?
  *
- * ⚠️ **A weaker signal than `isIdCardEntry`, used at a point where the strong
+ * ⚠️ **A weaker signal than `isIdentityEntry`, used at a point where the strong
  * one does not exist yet.** Everything above this line reads Haiku's verdict,
  * which arrives at the Scanning stage. The Pre-existing stage runs BEFORE
  * classification — its whole purpose is to decide what to send there — so the
@@ -640,7 +653,7 @@ export function idCardDocumentFieldCount(patch: IdCardDocumentPatch): number {
  * rather than claiming the exception is complete.
  *
  * The extension comes off first, so the question asked is about the name the
- * user typed rather than about the format it was saved in. `isIdCardLabel`
+ * user typed rather than about the format it was saved in. `isIdentityLabel`
  * folds diacritics before matching, which is also what makes the ASCII `\b`
  * anchors in `POSITIVE_PATTERNS` legitimate here — by the time they run there
  * is no non-ASCII letter left for them to mis-anchor against. (See CLAUDE.md's
@@ -663,5 +676,5 @@ export function looksLikeIdCardName(name: string): boolean {
   //
   // Hyphens need no such treatment: `-` is not a word character, so `\b`
   // already fires beside it.
-  return isIdCardLabel(stem.replace(/_+/g, " "));
+  return isIdentityLabel(stem.replace(/_+/g, " "));
 }

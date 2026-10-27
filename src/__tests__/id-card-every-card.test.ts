@@ -32,8 +32,8 @@ describe("the queue and the link step", () => {
   const bulk = code(read("src", "app", "admin", "import", "_components", "bulk-import-dialog.tsx"));
   const dialog = code(read("src", "app", "admin", "import", "_components", "id-card-person-dialog.tsx"));
   it("queues every recognised card, its property or none", () => {
-    expect(bulk).not.toMatch(/isIdCardEntry\(sr\)\s*&&\s*rowProperty\s*!==\s*null/);
-    expect(bulk).toMatch(/if \(isIdCardEntry\(sr\)\) \{/);
+    expect(bulk).not.toMatch(/isIdentityEntry\(sr\)\s*&&\s*rowProperty\s*!==\s*null/);
+    expect(bulk).toMatch(/if \(isIdentityEntry\(sr\)\) \{/);
     expect(bulk).toMatch(/propertyId:\s*rowProperty,/);
   });
   it("links the holder to a property only when there is one, and always to the Document in the holder role", () => {

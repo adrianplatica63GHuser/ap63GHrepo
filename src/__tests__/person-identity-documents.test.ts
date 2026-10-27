@@ -122,6 +122,7 @@ describe("natural_person's id_* columns: read and written by nothing", () => {
     "src/app/admin/import/_components/id-card-person-dialog.tsx": "the import's card dialog — 40.86",
     "src/app/api/admin/import/extract-id-card/route.ts": "the import's card read — 40.86",
     "src/lib/import/id-card.ts": "the import's card read — 40.86",
+    "src/lib/import/identity-read.ts": "the import's read of the four kinds: the card's values, to the document (40.86)",
     "src/lib/ui/field-widths.ts": "the import's card dialog's rows (ID_CARD_DIALOG_ROWS) — 40.86",
     "src/lib/documents/ai-extract.ts": "a deed's quoted number, shown and matched, never stored (Ask first 4)",
     "src/app/api/documents/[id]/ai-interpret/route.ts": "the same quote, matched against identity documents",
