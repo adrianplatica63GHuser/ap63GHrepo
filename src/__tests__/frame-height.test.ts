@@ -38,7 +38,7 @@ describe("frameMaxHeight (#38.56)", () => {
 
 describe("the frame and its header (#38.56)", () => {
   it("scrolls in both directions, at the measured height", () => {
-    expect(MODAL).toContain('className="max-w-full overflow-auto rounded-md border border-card-rim dark:border-zinc-800"');
+    expect(MODAL).toContain('className="max-w-full overflow-auto rounded-md border border-card-rim"');
     expect(MODAL).toContain("style={frameHeight === null ? undefined : { maxHeight: frameHeight }}");
   });
 

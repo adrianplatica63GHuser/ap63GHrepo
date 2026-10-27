@@ -19,6 +19,11 @@ export const CONVERTED: readonly string[] = [
   "src/app/_components/dashboard-client.tsx", // 40.76, the pattern
   "src/app/documents/_components/document-form.tsx", // 40.83, with the identity tile
   "src/app/documents/_components/identity-tile-parts.tsx", // 40.83
+  "src/app/admin/value-lists/_components/value-list-modal.tsx", // 40.84, the identity rows
+  "src/app/admin/value-lists/_components/document-type-page.tsx", // 40.84, the system form
+  "src/app/admin/value-lists/_components/document-type-form-editor.tsx", // 40.84, the one identity message
+  "src/app/admin/value-lists/_components/identity-system-form.tsx", // 40.84
+  "src/app/admin/doc-type-engine/_components/doc-type-engine.tsx", // 40.84, its identity refusal
 ];
 
 const PALETTE =

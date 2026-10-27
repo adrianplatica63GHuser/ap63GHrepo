@@ -38,7 +38,7 @@ import {
   lookupOriginStatus,
 } from "@/lib/admin/value-lists/origin-status";
 import { parseTemplateFields } from "@/lib/documents/template-fields";
-import { documentTypeIsIdentity } from "@/lib/identity-documents/kinds";
+import { documentTypeIsIdentity, identityKindOfRow } from "@/lib/identity-documents/kinds";
 import { documentTypeIsCatchAll } from "@/lib/documents/document-type-match";
 import { DocumentTypeFormEditor, type FormLock } from "./document-type-form-editor";
 import { usedFirst } from "@/lib/admin/value-lists/categories";
@@ -771,8 +771,8 @@ function EditForm({
   }
 
   return (
-    <div className="mb-4 rounded-md border border-card-rim bg-card p-4 dark:border-zinc-700 dark:bg-zinc-800">
-      <h3 className="mb-3 text-sm font-semibold text-ink dark:text-zinc-100">
+    <div className="mb-4 rounded-md border border-card-rim bg-card p-4">
+      <h3 className="mb-3 text-sm font-semibold text-ink">
         {state.id ? t("form.editTitle") : t("form.addTitle")}
       </h3>
 
@@ -787,7 +787,7 @@ function EditForm({
             return (
               <label
                 key={f.key}
-                className="flex items-center gap-2 text-sm text-ink dark:text-zinc-300 cursor-pointer select-none"
+                className="flex items-center gap-2 text-sm text-ink cursor-pointer select-none"
               >
                 <input
                   type="checkbox"
@@ -810,9 +810,9 @@ function EditForm({
               className="flex flex-col gap-1"
               style={screenBox(formBox(f)).style}
             >
-              <label className="text-xs font-medium text-ink dark:text-zinc-400">
+              <label className="text-xs font-medium text-ink">
                 {f.labelText ?? t(`fields.${f.labelKey}`)}
-                {f.required && <span className="ml-0.5 text-red-500">*</span>}
+                {f.required && <span className="ml-0.5 text-alert">*</span>}
               </label>
               {f.multiline ? (
                 <textarea
@@ -826,7 +826,7 @@ function EditForm({
                     // Allow Enter inside textarea; only Escape closes
                     if (e.key === "Escape") onClose();
                   }}
-                  className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 resize-y"
+                  className="rounded-md border border-wire bg-raised px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none resize-y"
                 />
               ) : (
                 <input
@@ -838,7 +838,7 @@ function EditForm({
                     setValues((prev) => ({ ...prev, [f.key]: e.target.value }))
                   }
                   onKeyDown={handleKey}
-                  className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
+                  className="rounded-md border border-wire bg-raised px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none"
                 />
               )}
             </div>
@@ -877,7 +877,7 @@ function EditForm({
           screen-reader user renaming a type otherwise gets a refused save and
           nothing at all. */}
       {error && (
-        <p role="alert" className="mt-2 text-xs text-red-600 dark:text-red-400">
+        <p role="alert" className="mt-2 text-xs text-alert">
           {/* ⚠️ **The values object is passed UNCONDITIONALLY, AND AN
               ADVERSARIAL ROUND MEASURED WHY IT MATTERS MORE THAN THE FIRST
               VERSION OF THIS COMMENT CLAIMED.** (Slice #34.32.) Exactly one
@@ -1411,7 +1411,8 @@ export function ValueListModal({
    */
   const formLockOf = (row: Row): FormLock => {
     const cols = { key: String(row.key ?? ""), name: String(row.name ?? "") };
-    if (documentTypeIsIdentity(cols)) return "idCard";
+    // Slice 40.84: the row's marker, as `awaitsFormRow` reads it — not the key alone.
+    if (identityKindOfRow(row) !== null) return "idCard";
     if (documentTypeIsCatchAll(cols)) return "catchAll";
     return null;
   };
@@ -1474,8 +1475,12 @@ export function ValueListModal({
           doneKey: "allHaveForm",
           statusPrefix: "documentTypeStatus",
           awaits: (row) => awaitsFormRow(row),
+          // Slice 40.84: the four identity types say so — their form is the application's, so „Adăugat manual” or
+          // „Creat la import” would read as a type still waiting for one.
           statusOf: (row) =>
-            documentTypeStatus({ origin: row.origin, templateFields: row.templateFields }),
+            identityKindOfRow(row) !== null
+              ? "identity"
+              : documentTypeStatus({ origin: row.origin, templateFields: row.templateFields }),
           nameClass: (row) =>
             documentTypeNameClass({ origin: row.origin, templateFields: row.templateFields }),
           colouredField: "name",
@@ -1592,7 +1597,7 @@ export function ValueListModal({
         // confirmation — the exact stack `document-type-form-editor.tsx`
         // documents as unreachable by Escape.)
         inert={!!formEditorRow || !!confirmDeleteRow}
-        className="rounded-xl border border-card-rim bg-card shadow-sm focus-visible:outline-none dark:border-zinc-800 dark:bg-zinc-900"
+        className="rounded-xl border border-card-rim bg-card shadow-sm focus-visible:outline-none"
         style={fill ? { width: "100%" } : dialogCardStyle(VALUE_LIST_CARD_UNITS)}
         data-value-list-card=""
       >
@@ -1600,7 +1605,7 @@ export function ValueListModal({
         {/* Slice #38.78: the title's line carries „+ Adaugă" at the right — its right edge the table's (the line is
             never narrower than the frame under it) — and the count a little to its left. The table starts right
             under the divider. */}
-        <div className="border-b border-card-rim px-5 py-3 dark:border-zinc-800" data-value-list-head="">
+        <div className="border-b border-card-rim px-5 py-3" data-value-list-head="">
           <div
             // Slice #39.75: a tile's card centres its title line over its table, as it centres the table (below).
             className={`flex max-w-full flex-wrap items-center justify-between gap-3${fill ? " mx-auto" : ""}`} data-tile-centred={fill ? "" : undefined}
@@ -1608,7 +1613,7 @@ export function ValueListModal({
           >
             <h2
               id={listTitleId}
-              className="text-base font-semibold text-ink dark:text-zinc-100"
+              className="text-base font-semibold text-ink"
             >
               {/* Slice #38.68: marked, the title looks like the marked name in the column — a filled rounded box. */}
               <span
@@ -1625,7 +1630,7 @@ export function ValueListModal({
                   the nine shown; one that rewrites the total loses the one number that says how much of the list
                   this is. */}
               {query.data && (
-                <span className="text-xs text-fade dark:text-zinc-400" data-value-list-count="">
+                <span className="text-xs text-fade" data-value-list-count="">
                   {visibleRows !== undefined && visibleRows.length !== query.data.length
                     ? t("toolbar.countFiltered", {
                         count: visibleRows.length,
@@ -1667,7 +1672,7 @@ export function ValueListModal({
             {form && formSlot && createPortal(
               // A div, not a named section: a region named for the list would share its name with the list's card.
               <div
-                className="rounded-xl border border-card-rim bg-card px-5 pb-5 pt-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+                className="rounded-xl border border-card-rim bg-card px-5 pb-5 pt-3 shadow-sm"
                 data-value-list-form-tile={listKey}
               >
                 <EditForm
@@ -1704,7 +1709,7 @@ export function ValueListModal({
               {isDocumentTypes && (
                 <div className="flex items-center gap-3" data-form-filter="">
                   {(["withForm", "withoutForm"] as const).map((k) => (
-                    <label key={k} className="flex cursor-pointer select-none items-center gap-2 text-xs text-ink dark:text-zinc-300">
+                    <label key={k} className="flex cursor-pointer select-none items-center gap-2 text-xs text-ink">
                       <input
                         type="checkbox"
                         checked={formFilter[k]}
@@ -1717,7 +1722,7 @@ export function ValueListModal({
                 </div>
               )}
               {!isDocumentTypes && review && offerReview && (
-                <label className="flex cursor-pointer select-none items-center gap-2 text-xs text-ink dark:text-zinc-300">
+                <label className="flex cursor-pointer select-none items-center gap-2 text-xs text-ink">
                   <input
                     type="checkbox"
                     checked={onlyAwaiting}
@@ -1758,7 +1763,7 @@ export function ValueListModal({
             {awaitingOn && review && (
               <p
                 role="status"
-                className="mb-3 text-xs font-medium text-emerald-700 dark:text-emerald-400"
+                className="mb-3 text-xs font-medium text-success"
               >
                 {backlogEmpty && (visibleRows?.length ?? 0) > 0
                   ? t(`table.${review.doneKey}` as Parameters<typeof t>[0])
@@ -1772,7 +1777,7 @@ export function ValueListModal({
                 measured height, and the header row sticks to its top. */}
             <div
               ref={frameRef}
-              className="max-w-full overflow-auto rounded-md border border-card-rim dark:border-zinc-800"
+              className="max-w-full overflow-auto rounded-md border border-card-rim"
               style={frameHeight === null ? undefined : { maxHeight: frameHeight }}
               data-value-list-table-frame=""
             >
@@ -1811,7 +1816,7 @@ export function ValueListModal({
                     <th className={`${pad} py-2`} {...columnHead(actionsColumn(listKey))} />
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-crease bg-white dark:divide-zinc-800 dark:bg-zinc-900">
+                <tbody className="divide-y divide-crease bg-raised">
                   {query.isLoading && (
                     <tr>
                       <td
@@ -1826,7 +1831,7 @@ export function ValueListModal({
                     <tr>
                       <td
                         colSpan={emptyStateColSpan}
-                        className="px-4 py-6 text-center text-red-600"
+                        className="px-4 py-6 text-center text-alert"
                       >
                         {t("table.error")}
                       </td>
@@ -1848,7 +1853,7 @@ export function ValueListModal({
                         className={
                           query.data?.length === 0
                             ? "px-4 py-6 text-center text-fade"
-                            : "px-4 py-6 text-center text-emerald-700 dark:text-emerald-400"
+                            : "px-4 py-6 text-center text-success"
                         }
                       >
                         {query.data?.length === 0
@@ -1865,7 +1870,7 @@ export function ValueListModal({
                     <tr
                       key={row.id}
                       data-unused={usage.data?.[row.id] === 0 ? "" : undefined}
-                      className={`hover:bg-cta-pale dark:hover:bg-zinc-800/50${usage.data?.[row.id] === 0 ? " opacity-60" : ""}`}
+                      className={`hover:bg-cta-pale${usage.data?.[row.id] === 0 ? " opacity-60" : ""}`}
                     >
                       {cells.map((cell) => (
                         <td
@@ -1882,7 +1887,7 @@ export function ValueListModal({
                             // untouched row looks as it always did.
                             review && cell[0].key === review.colouredField
                               ? review.nameClass(row)
-                              : "text-ink dark:text-zinc-300",
+                              : "text-ink",
                             // Slice #37.37 had „a long value wraps downward in its column, never truncated".
                             // Slice #38.50, at Adrian's request: one line per row, cut with „…", whole on hover.
                             ONE_LINE,
@@ -1918,8 +1923,9 @@ export function ValueListModal({
                       ))}
                       {review && (
                         <td
-                          className={`${pad} py-2 text-ink dark:text-zinc-300 ${ONE_LINE}`}
+                          className={`${pad} py-2 text-ink ${ONE_LINE}`}
                           title={t(`${review.statusPrefix}.${review.statusOf(row)}` as Parameters<typeof t>[0])}
+                          data-row-status={review.statusOf(row)}
                         >
                           {t(
                             `${review.statusPrefix}.${review.statusOf(row)}` as Parameters<
@@ -1928,7 +1934,7 @@ export function ValueListModal({
                           )}
                         </td>
                       )}
-                      <td className={`${pad} py-2 text-xs text-fade dark:text-zinc-400 ${ONE_LINE} ${CENTRED}`} data-usage={usage.data?.[row.id] ?? ""}>
+                      <td className={`${pad} py-2 text-xs text-fade ${ONE_LINE} ${CENTRED}`} data-usage={usage.data?.[row.id] ?? ""}>
                         {usage.data === undefined
                           ? "…"
                           : (usage.data[row.id] ?? 0) === 0
@@ -2014,11 +2020,14 @@ export function ValueListModal({
                               The two columns are read off the row exactly the
                               way `awaitsFormRow` reads them for
                               `documentTypeIsIdCard`. */}
+                          {/* Slice 40.84: an identity row neither — its form is the system's, shown on its page;
+                              only an old free form left on one keeps the button, so it can be cleared. */}
                           {isDocumentTypes &&
-                            (!documentTypeIsCatchAll({
+                            ((!documentTypeIsCatchAll({
                               key:  String(row.key ?? ""),
                               name: String(row.name ?? ""),
-                            }) ||
+                            }) &&
+                              identityKindOfRow(row) === null) ||
                               parseTemplateFields(row.templateFields).length > 0) && (
                             // #37.46 (A086): ClipboardList + „Formular (n)" — the
                             // count stays in the words, no badge.
@@ -2405,18 +2414,18 @@ export function DeleteDialog({
 
   return (
     <>
-      <div className="fixed inset-0 z-60 bg-black/50" aria-hidden />
+      <div className="fixed inset-0 z-60 bg-scrim/50" aria-hidden />
       <div
         ref={panelRef}
         tabIndex={-1}
         role="alertdialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="fixed inset-x-4 top-1/4 z-60 mx-auto max-w-md rounded-xl border border-card-rim bg-card p-6 shadow-2xl focus:outline-none dark:border-zinc-800 dark:bg-zinc-900"
+        className="fixed inset-x-4 top-1/4 z-60 mx-auto max-w-md rounded-xl border border-card-rim bg-card p-6 shadow-2xl focus:outline-none"
       >
         <h3
           id={titleId}
-          className="mb-3 text-sm font-semibold text-ink dark:text-zinc-100"
+          className="mb-3 text-sm font-semibold text-ink"
         >
           {merging
             ? t("merge.title", { name: String(row[labelField] ?? "") })
@@ -2428,23 +2437,23 @@ export function DeleteDialog({
             the same rule the backlog banner above follows. */}
         <div aria-live="polite">
           {dependents.isPending && (
-            <p className="text-sm text-fade dark:text-zinc-400">
+            <p className="text-sm text-fade">
               {t("confirm.checking")}
             </p>
           )}
 
           {dependents.isError && (
-            <p className="text-sm text-red-600 dark:text-red-400">
+            <p className="text-sm text-alert">
               {t("confirm.checkFailed")}
             </p>
           )}
 
           {blocked && report && (
             <>
-              <p className="mb-2 text-sm text-ink dark:text-zinc-300">
+              <p className="mb-2 text-sm text-ink">
                 {merging ? t("merge.willMove", { count: report.total }) : t("confirm.inUse", { count: report.total })}
               </p>
-              <ul className="mb-3 list-disc pl-5 text-sm text-ink dark:text-zinc-300">
+              <ul className="mb-3 list-disc pl-5 text-sm text-ink">
                 {report.dependents.map((d) => (
                   <li key={d.labelKey}>
                     {t(
@@ -2458,7 +2467,7 @@ export function DeleteDialog({
           )}
 
           {free && (
-            <p className="mb-3 text-sm text-ink dark:text-zinc-300">
+            <p className="mb-3 text-sm text-ink">
               {merging ? t("merge.nothingMoves") : t("confirm.deleteBody")}
             </p>
           )}
@@ -2468,7 +2477,7 @@ export function DeleteDialog({
               use, and it is the honest half of "the count never claims more
               than it knows". */}
           {report?.notes.map((n) => (
-            <p key={n} className="mb-2 text-xs text-fade dark:text-zinc-400">
+            <p key={n} className="mb-2 text-xs text-fade">
               {t(`dependents.notes.${n}` as Parameters<typeof t>[0])}
             </p>
           ))}
@@ -2477,13 +2486,13 @@ export function DeleteDialog({
         {(blocked || (merging && report !== undefined)) && (
           <div className="mb-3">
             {targets.length === 0 ? (
-              <p className="text-sm text-ink dark:text-zinc-300">
+              <p className="text-sm text-ink">
                 {t("confirm.noTarget")}
               </p>
             ) : (
               <>
               <label className="flex flex-col gap-1">
-                <span className="text-xs font-medium text-ink dark:text-zinc-400">
+                <span className="text-xs font-medium text-ink">
                   {merging ? t("merge.keep") : t("confirm.moveTo")}
                 </span>
                 <select
@@ -2508,7 +2517,7 @@ export function DeleteDialog({
                     setWarnings([]);
                   }}
                   disabled={busy}
-                  className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
+                  className="rounded-md border border-wire bg-raised px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none"
                 >
                   <option value="">{t("confirm.selectTarget")}</option>
                   {targets.map((r) => (
@@ -2549,10 +2558,10 @@ export function DeleteDialog({
               said out loud: it disappears without anyone requesting it. */}
           {report && report.removedWithRow.length > 0 && (
             <>
-              <p className="mb-1 text-xs font-medium text-ink dark:text-zinc-400">
+              <p className="mb-1 text-xs font-medium text-ink">
                 {t("confirm.removedWithRow")}
               </p>
-              <ul className="mb-3 list-disc pl-5 text-xs text-fade dark:text-zinc-400">
+              <ul className="mb-3 list-disc pl-5 text-xs text-fade">
                 {report.removedWithRow.map((d) => (
                   <li key={d.labelKey}>
                     {t(
@@ -2571,7 +2580,7 @@ export function DeleteDialog({
             reliably announced. */}
         <p
           role="status"
-          className="mb-2 text-xs font-medium text-emerald-700 empty:mb-0 dark:text-emerald-400"
+          className="mb-2 text-xs font-medium text-success empty:mb-0"
         >
           {movedTotal !== null ? t("confirm.moved", { count: movedTotal }) : ""}
         </p>
@@ -2599,10 +2608,10 @@ export function DeleteDialog({
         <div aria-live="polite">
           {granted.length > 0 && (
             <>
-              <p className="mb-1 text-xs font-medium text-ink dark:text-zinc-400">
+              <p className="mb-1 text-xs font-medium text-ink">
                 {t("confirm.roleWhitelistGranted")}
               </p>
-              <ul className="mb-2 list-disc pl-5 text-xs text-fade dark:text-zinc-400">
+              <ul className="mb-2 list-disc pl-5 text-xs text-fade">
                 {granted.map((g) => (
                   <li key={g.labelKey}>
                     {t(
@@ -2650,7 +2659,7 @@ export function DeleteDialog({
           {warnings.map((w) => (
             <p
               key={w}
-              className="mb-2 text-xs text-amber-700 dark:text-amber-400"
+              className="mb-2 text-xs text-warning"
             >
               {t(`confirm.${w}` as Parameters<typeof t>[0])}
             </p>
@@ -2660,7 +2669,7 @@ export function DeleteDialog({
         {/* Chosen on this side from a code, never echoed from the server: the
             server's own `error` strings are English. */}
         {failure && (
-          <p role="alert" className="mb-2 text-xs text-red-600 dark:text-red-400">
+          <p role="alert" className="mb-2 text-xs text-alert">
             {/* Values passed for the reason the save form's copy of this
                 states. ⚠️ **"neither of which takes an argument today" stood
                 here and was made false by #36.02** — this dialog's `failure`

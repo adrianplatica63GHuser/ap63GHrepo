@@ -1008,12 +1008,14 @@ describe("migration_073's SQL predicate is the TypeScript one", () => {
 /**
  * The two `valueList.confirm.errors.*` members are bound by
  * `value-list-dependents.test.ts`, which iterates the exported `FAILURE_CODES`
- * array — a stronger guard than a list here, and the reason they are absent
- * from this one.
+ * array — a stronger guard than a list here. Since Slice 40.84 they are also
+ * the ONLY copy of the two refusals, so they are listed here too.
  */
 const COPY_KEYS = [
-  "docTypeEngine.save.idCardType",
-  "valueList.templateFields.errorIdCardType",
+  // Slice 40.84: one message per code, read by the list, the form editor and the engine alike — the engine's
+  // `docTypeEngine.save.idCardType` and the editor's `valueList.templateFields.errorIdCardType` are gone.
+  "valueList.confirm.errors.idCardForm",
+  "valueList.confirm.errors.idCardRename",
 ];
 
 const ro = JSON.parse(read("messages/ro-RO.json")) as Record<string, unknown>;

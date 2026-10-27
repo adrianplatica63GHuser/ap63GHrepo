@@ -46,6 +46,6 @@ describe("the centred columns (#38.60)", () => {
   });
   it("centre „Folosit de”, header and cells, on every list", () => {
     expect(MODAL).toContain('<th className={`${pad} py-2 align-bottom ${CENTRED}`} {...columnHead(usageColumn(listKey))}>');
-    expect(MODAL).toMatch(/<td className=\{`\$\{pad\} py-2 text-xs text-fade dark:text-zinc-400 \$\{ONE_LINE\} \$\{CENTRED\}`\} data-usage=/);
+    expect(MODAL).toMatch(/<td className=\{`\$\{pad\} py-2 text-xs text-fade \$\{ONE_LINE\} \$\{CENTRED\}`\} data-usage=/);
   });
 });

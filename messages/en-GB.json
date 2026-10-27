@@ -2463,7 +2463,8 @@
     "documentTypeStatus": {
       "new": "Added by hand",
       "aiScanned": "Created by an import",
-      "aiCompleted": "Has a form"
+      "aiCompleted": "Has a form",
+      "identity": "Identity document"
     },
     "lookupOriginStatus": {
       "manual": "Added by hand",
@@ -2551,7 +2552,6 @@
       "confirmDiscardTitle": "Discard your changes?",
       "confirmDiscardBody": "Nothing on this form has been saved yet. Closing now leaves the document type exactly as it was.",
       "confirmDiscard": "Discard",
-      "errorIdCardType": "This document type is an identity card, so it cannot have a form. The data on an identity card is captured during import as Person records — a form here would be a second, freely editable copy of somebody’s national identity number on every document of this type. If the type already has fields, remove all of them and save — this window is the only place a form can be deleted. Otherwise close it without saving.",
       "errorCatchAllType": "This is the catch-all document type, so it cannot have a form. It holds the documents whose type could not be established, and a form here would be written onto the one row every unrecognised document in the archive shares. If the type already has fields, remove them and save — this window is the only place a form can be deleted, and removing is allowed where adding is not. Otherwise close it without saving.",
       "errorTypeNameTaken": "A document type with this name already exists, so the form could not be saved. Names are compared without diacritics, case or punctuation. Close this window, refresh the list, and decide which of the two rows to keep.",
       "tabPlaceholder": "Tab name",
@@ -2581,8 +2581,8 @@
         "tarlaCodeTaken": "A tarla code that reads the same as this one already exists in the same locality: “{code}”. Codes are compared without case, diacritics or extra spaces, so “t3” and “T3” are one code. Two codes for one tarla split its properties between them, so no total is correct. Change the code in the field above, or close the window — the tarla is already in the list, as “{code}”.",
         "tarlaCodeTakenRace": "A tarla code that reads the same as this one has just appeared in the list. Close the window, refresh the list and use the code that already exists.",
         "generic": "The operation failed. Close the dialog, refresh the page and try again.",
-        "idCardForm": "This document type is an identity card, so it cannot have a form. The data on an identity card is captured during import as persons, not as values in the fields of a form. If the type already carries a form, open “Form” on its row, delete every field and save.",
-        "idCardRename": "This document type already has a form, so it cannot be given an identity-card name: the data on an identity card is captured during import as Person records, and a form would be a second, freely editable copy of somebody’s national identity number. Remove the form first — close this window, press “Form” on the type’s row, delete every field and save — then come back and rename the type.",
+        "idCardForm": "This is an identity-document type: its fields are defined by the application (the system form, on the type’s page, “Form” tab), the same on every document of this type, so it cannot have a form of its own. If an old form is still on the type, open “Form”, delete every field and save.",
+        "idCardRename": "This type has a form of its own, so it cannot become an identity-document type: an identity document’s fields are defined by the application. Remove the form first — “Form” on the type’s row, delete every field, save — then come back.",
         "catchAllForm": "This is the catch-all document type, so it cannot be given a form. It holds the documents whose type could not be established — documents whose type is wrong, not documents whose type is unfinished — so a form here would be written onto the one row every unrecognised document in the archive shares. If the type already carries a form, open “Form” on its row, delete every field and save; removing fields is allowed, adding them is not.",
         "catchAllRename": "This document type already has a form, so it cannot be renamed into the catch-all: the catch-all holds the documents whose type could not be established, and a form there would be written onto the one row every unrecognised document in the archive shares. Remove the form first — close this window, press “Form” on the type’s row, delete every field and save — then come back and rename the type.",
         "documentTypeNameTaken": "A document type with this name already exists. Names are compared without diacritics, case or punctuation, so “Contract de Vânzare” and “contract de vanzare” are the same name. Choose another, or use the type that already exists.",
@@ -4577,7 +4577,6 @@
       "failed": "The form could not be saved. Try again.",
       "sessionLost": "Your session has expired, so the form was NOT saved. Sign in again in a new tab, then press “Approve the form” again — the samples that were read are not lost.",
       "typeGone": "The document type no longer exists. It was deleted elsewhere, so there is nowhere to save the form.",
-      "idCardType": "This document type is an identity card, so it cannot have a form. The data on an identity card is captured during import as persons, not as values in the fields of a form — a form here would be a second, freely editable copy of somebody’s national identity number on every document of this type. The samples that were read are not lost, but this type cannot be given the form.",
       "catchAllType": "This document type is the catch-all for documents whose type could not be established, so it cannot have a form: a form here would be written onto the one row every unrecognised document in the archive shares. The samples that were read are not lost, but this type cannot be given the form."
     },
     "saved": {
@@ -5262,6 +5261,27 @@
     "change": {
       "removes": "Saving removes: {fields} — the new type has no such fields.",
       "held": "The document holds identity values: empty them before changing it to an ordinary document type."
+    },
+    "systemForm": {
+      "line": "System form: an identity document’s fields are defined by the application and are not changed here.",
+      "caption": "The system form of {type}",
+      "colField": "Field",
+      "colValue": "Value",
+      "colWidth": "Width",
+      "colStored": "Kept in",
+      "lines": "{n, plural, one {# line} other {# lines}}",
+      "values": {
+        "text": "Text",
+        "date": "Date",
+        "sex": "F / M",
+        "cnp": "CNP (13 digits)",
+        "lines": "Text on lines",
+        "issuer": "Institution (from the list)"
+      },
+      "stored": {
+        "document": "The document (common to every document)",
+        "identity": "The identity document’s data"
+      }
     }
   }
 }

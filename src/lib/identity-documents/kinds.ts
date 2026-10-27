@@ -196,6 +196,20 @@ export function identityKindOfType(type: { key?: string | null; identityKind?: s
   return identityKindForTypeKey(type.key);
 }
 
+/**
+ * A Reference Data row's kind.                                          (Slice 40.84)
+ *
+ * The list and the type's page hold rows as `Record<string, unknown>` (every column of `lookup_document_type`), so
+ * the two columns are read off it explicitly: the marker where the row carries it, else the key. Never the name.
+ */
+export function identityKindOfRow(row: Record<string, unknown> | null | undefined): IdentityKind | null {
+  if (!row) return null;
+  return identityKindOfType({
+    key: typeof row.key === "string" ? row.key : null,
+    ...(row.identityKind !== undefined ? { identityKind: typeof row.identityKind === "string" ? row.identityKind : null } : {}),
+  });
+}
+
 /** Is this document TYPE an identity document? One answer, read off the marker (see `identityKindOfType`). */
 export function documentTypeIsIdentity(type: { key?: string | null; identityKind?: string | null } | null | undefined): boolean {
   return identityKindOfType(type) !== null;

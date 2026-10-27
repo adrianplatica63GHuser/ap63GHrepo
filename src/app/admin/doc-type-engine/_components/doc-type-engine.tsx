@@ -173,6 +173,8 @@ export function DocTypeEngine({
   // value under, and that renaming a label does not touch it. A third round
   // found this file CLAIMING to reuse the sentence and never rendering it.
   const tKey = useTranslations("valueList.templateFields");
+  // Slice 40.84: one message per identity refusal code, shared with Reference Data's list and form editor.
+  const tErr = useTranslations("valueList.confirm.errors");
 
   const [step, setStep] = useState<Step>("pick");
   const [types, setTypes] = useState<DocumentTypeCatalogueRow[] | null>(null);
@@ -754,9 +756,11 @@ export function DocTypeEngine({
         // and a row RENAMED into the catch-all in another tab mid-run still
         // arrives at Save selectable.
         setSaveError(
-          body.code === ID_CARD_FORM_CODE || body.code === ID_CARD_RENAME_CODE
-            ? t("save.idCardType")
-            : body.code === CATCH_ALL_FORM_CODE || body.code === CATCH_ALL_RENAME_CODE
+          body.code === ID_CARD_FORM_CODE
+            ? tErr("idCardForm", { code: "", collisions: 0 })
+            : body.code === ID_CARD_RENAME_CODE
+              ? tErr("idCardRename", { code: "", collisions: 0 })
+              : body.code === CATCH_ALL_FORM_CODE || body.code === CATCH_ALL_RENAME_CODE
               ? t("save.catchAllType")
               : body.code === "too_many_fields"
                 ? t("save.tooMany", { max: body.max ?? MAX_TEMPLATE_FIELDS })
@@ -774,7 +778,7 @@ export function DocTypeEngine({
     } finally {
       setSaving(false);
     }
-  }, [accepted, acceptedKeys, baselineKeys, selectedType, t]);
+  }, [accepted, acceptedKeys, baselineKeys, selectedType, t, tErr]);
 
   /** What the permanently-mounted live region is saying right now. */
   const liveMessage =
@@ -794,10 +798,9 @@ export function DocTypeEngine({
           : "";
 
   const inputClass =
-    "rounded-md border border-wire bg-white px-2 py-1.5 text-sm text-ink " +
+    "rounded-md border border-wire bg-raised px-2 py-1.5 text-sm text-ink " +
     "shadow-sm focus:border-focus focus:outline-none " +
-    "disabled:bg-cap disabled:text-fade " +
-    "dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:disabled:bg-zinc-800";
+    "disabled:bg-cap disabled:text-fade";
 
   const patch = (clusterId: string, change: Partial<ProposalRow>) =>
     setRows((rs) =>
@@ -816,7 +819,7 @@ export function DocTypeEngine({
 
   return (
     <UnitRow units={[ENGINE_UNITS]}>
-    <section {...screenPanel("doc-type-engine", ENGINE_UNITS)} className="rounded-xl border border-card-rim bg-white p-5 dark:border-zinc-700 dark:bg-zinc-900">
+    <section {...screenPanel("doc-type-engine", ENGINE_UNITS)} className="rounded-xl border border-card-rim bg-raised p-5">
       {/* ⚠️ **MOUNTED ONCE, FOR THE WHOLE SCREEN, AND `import-types-blocked-stage.tsx`
           RECORDS WHY.** "A live region inserted into the DOM together with its
           text is not reliably announced — the region has to exist before its
@@ -832,7 +835,7 @@ export function DocTypeEngine({
       <h2
         ref={headingRef}
         tabIndex={-1}
-        className="text-lg font-semibold text-ink dark:text-zinc-100"
+        className="text-lg font-semibold text-ink"
       >
         {step === "saved" ? t("saved.title") : step === "review" ? t("review.title") : t("pick.title")}
       </h2>
@@ -840,12 +843,12 @@ export function DocTypeEngine({
       {/* ══ Step 1 — the type, the folder, the line ═══════════════════════════ */}
       {step === "pick" && (
         <>
-          <p className="mt-1.5 text-sm text-ink dark:text-zinc-300">{t("pick.intro")}</p>
+          <p className="mt-1.5 text-sm text-ink">{t("pick.intro")}</p>
 
           {typesError && (
             <div
               role="alert"
-              className="mt-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-950/30 dark:text-red-300"
+              className="mt-4 rounded-lg border border-alert bg-alert-wash px-4 py-3 text-sm text-alert"
             >
               {typesError}
             </div>
@@ -854,7 +857,7 @@ export function DocTypeEngine({
           <div className="mt-5">
             <label
               htmlFor="dte-type"
-              className="block text-sm font-medium text-ink dark:text-zinc-200"
+              className="block text-sm font-medium text-ink"
             >
               {t("types.label")}
             </label>
@@ -884,7 +887,7 @@ export function DocTypeEngine({
               })}
             </select>
             {selectedType && documentTypeHasForm(selectedType.templateFields) && (
-              <p className="mt-1.5 text-xs text-fade dark:text-zinc-400">
+              <p className="mt-1.5 text-xs text-fade">
                 {t("types.additiveNote", { count: existingFields.length })}
               </p>
             )}
@@ -901,22 +904,22 @@ export function DocTypeEngine({
               onClick={handlePickFolder}
             />
             {folderName && (
-              <p className="mt-2 text-sm text-ink dark:text-zinc-300">
+              <p className="mt-2 text-sm text-ink">
                 {t("folder.picked", { folder: folderName, count: samples.length })}
               </p>
             )}
             {overflow > 0 && (
-              <p className="mt-1 text-sm text-ink dark:text-zinc-300">
+              <p className="mt-1 text-sm text-ink">
                 {t("folder.overflow", { count: overflow, max: MAX_SAMPLES_PER_RUN })}
               </p>
             )}
             {folderName && samples.length === 0 && !walkError && (
-              <p className="mt-1 text-sm text-ink dark:text-zinc-300">{t("folder.noSamples")}</p>
+              <p className="mt-1 text-sm text-ink">{t("folder.noSamples")}</p>
             )}
             {walkError && (
               <div
                 role="alert"
-                className="mt-3 rounded-md bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-950 dark:text-red-300"
+                className="mt-3 rounded-md bg-alert-wash px-4 py-3 text-sm text-alert"
               >
                 {walkError}
               </div>
@@ -926,7 +929,7 @@ export function DocTypeEngine({
           <div className="mt-5">
             <label
               htmlFor="dte-percent"
-              className="block text-sm font-medium text-ink dark:text-zinc-200"
+              className="block text-sm font-medium text-ink"
             >
               {t("matching.label")}
             </label>
@@ -946,7 +949,7 @@ export function DocTypeEngine({
                 </option>
               ))}
             </select>
-            <p className="mt-1.5 text-xs text-fade dark:text-zinc-400">
+            <p className="mt-1.5 text-xs text-fade">
               {t("matching.hint")}
             </p>
           </div>
@@ -990,13 +993,13 @@ export function DocTypeEngine({
       {/* ══ Step 2 — reading ═════════════════════════════════════════════════ */}
       {step === "reading" && (
         <div className="mt-4">
-          <p className="text-sm text-ink dark:text-zinc-300">
+          <p className="text-sm text-ink">
             {progress
               ? t("run.progress", { done: progress.settled, total: progress.total })
               : t("run.starting")}
           </p>
           {progress?.current && (
-            <p className="mt-1 text-sm text-fade dark:text-zinc-400">
+            <p className="mt-1 text-sm text-fade">
               {t("run.current", { file: progress.current })}
             </p>
           )}
@@ -1009,7 +1012,7 @@ export function DocTypeEngine({
             </p>
           )}
           {clustering ? (
-            <p className="mt-4 text-sm text-ink dark:text-zinc-300">
+            <p className="mt-4 text-sm text-ink">
               {wasCancelled ? t("run.comparingAfterCancel") : t("run.comparing")}
             </p>
           ) : (
@@ -1026,7 +1029,7 @@ export function DocTypeEngine({
                 disabled={cancelling}
                 onClick={cancelRun}
               />
-              <p className="mt-1 text-xs text-fade dark:text-zinc-400">{t("run.cancelNote")}</p>
+              <p className="mt-1 text-xs text-fade">{t("run.cancelNote")}</p>
             </div>
           )}
         </div>
@@ -1037,17 +1040,17 @@ export function DocTypeEngine({
         <>
           {/* ⚠️ The denominator, in words, first — before any percentage on the
               screen means anything. Never "70%" over an unknown N. */}
-          <p className="mt-1.5 text-sm text-ink dark:text-zinc-300">
+          <p className="mt-1.5 text-sm text-ink">
             {t("review.forType", { type: selectedType?.name ?? "" })}
           </p>
-          <p className="mt-1 text-sm font-medium text-ink dark:text-zinc-200">
+          <p className="mt-1 text-sm font-medium text-ink">
             {t("review.denominator", {
               read: distillation.samplesRead,
               picked: distillation.samplesPicked,
             })}
           </p>
           {distillation.samplesRead < distillation.samplesPicked && (
-            <p className="mt-1 text-sm text-fade dark:text-zinc-400">
+            <p className="mt-1 text-sm text-fade">
               {t("review.unread", { count: unreadSampleCount(reads) })}
             </p>
           )}
@@ -1056,20 +1059,20 @@ export function DocTypeEngine({
               named rather than implied by a tidy list. Two route headers promise
               the screen says these; an adversarial round found it did not. */}
           {wasCancelled && distillation.samplesRead > 0 && (
-            <p className="mt-1 text-sm text-fade dark:text-zinc-400">{t("run.cancelled")}</p>
+            <p className="mt-1 text-sm text-fade">{t("run.cancelled")}</p>
           )}
           {partial.skippedPages > 0 && (
-            <p className="mt-1 text-sm text-fade dark:text-zinc-400">
+            <p className="mt-1 text-sm text-fade">
               {t("review.skippedPages", { count: partial.skippedPages })}
             </p>
           )}
           {partial.truncatedReads > 0 && (
-            <p className="mt-1 text-sm text-fade dark:text-zinc-400">
+            <p className="mt-1 text-sm text-fade">
               {t("review.truncatedReads", { count: partial.truncatedReads })}
             </p>
           )}
           {(partial.uncompared > 0 || partial.clusterTruncated) && (
-            <p className="mt-1 text-sm text-fade dark:text-zinc-400">
+            <p className="mt-1 text-sm text-fade">
               {t("review.partialComparison", { count: partial.uncompared })}
             </p>
           )}
@@ -1077,7 +1080,7 @@ export function DocTypeEngine({
           {runError && (
             <div
               role="alert"
-              className="mt-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-950/30 dark:text-red-300"
+              className="mt-4 rounded-lg border border-alert bg-alert-wash px-4 py-3 text-sm text-alert"
             >
               {runError}
             </div>
@@ -1085,7 +1088,7 @@ export function DocTypeEngine({
 
           {/* The line is still movable here, and moving it re-reads nothing. */}
           <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1">
-            <label htmlFor="dte-percent-review" className="basis-full text-sm font-medium text-ink dark:text-zinc-200">
+            <label htmlFor="dte-percent-review" className="basis-full text-sm font-medium text-ink">
               {t("matching.label")}
             </label>
             <select
@@ -1104,24 +1107,24 @@ export function DocTypeEngine({
                 </option>
               ))}
             </select>
-            <span className="text-xs text-fade dark:text-zinc-400">{t("matching.freeToChange")}</span>
+            <span className="text-xs text-fade">{t("matching.freeToChange")}</span>
           </div>
 
           {overCapacity && (
             <div
               role="alert"
-              className="mt-4 rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300"
+              className="mt-4 rounded-md border border-warning-rim bg-warning-wash px-4 py-3 text-sm text-warning"
             >
               {t("review.overCapacity", { would: wouldBeFieldCount, max: MAX_TEMPLATE_FIELDS })}
             </div>
           )}
 
-          <h3 className="mt-6 text-sm font-semibold text-ink dark:text-zinc-100">
+          <h3 className="mt-6 text-sm font-semibold text-ink">
             {t("review.aboveTitle", { count: distillation.fields.length })}
           </h3>
 
           {distillation.fields.length > 0 && (
-            <p className="mt-2 rounded-md border border-wire bg-cta-pale px-4 py-3 text-xs leading-relaxed text-ink dark:border-zinc-700 dark:bg-zinc-800/40 dark:text-zinc-300">
+            <p className="mt-2 rounded-md border border-wire bg-cta-pale px-4 py-3 text-xs leading-relaxed text-ink">
               {tKey("keyNote")}{" "}
               {/* The screen-specific half, which the reused sentence cannot
                   carry: on THIS screen the field is being added, so the key is
@@ -1131,7 +1134,7 @@ export function DocTypeEngine({
           )}
 
           {distillation.fields.length === 0 && !runError && (
-            <p className="mt-2 text-sm text-ink dark:text-zinc-300">
+            <p className="mt-2 text-sm text-ink">
               {/* Lowering the line only helps if there IS something under it. */}
               {distillation.below.length > 0 ? t("review.aboveEmpty") : t("review.nothingFound")}
             </p>
@@ -1144,7 +1147,7 @@ export function DocTypeEngine({
               return (
                 <li
                   key={field.clusterId}
-                  className="rounded-lg border border-wire p-4 dark:border-zinc-700"
+                  className="rounded-lg border border-wire p-4"
                 >
                   <div className="flex items-start gap-3">
                     <input
@@ -1160,7 +1163,7 @@ export function DocTypeEngine({
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-end gap-3">
                         <div>
-                          <label className="block text-xs font-medium text-fade dark:text-zinc-400">
+                          <label className="block text-xs font-medium text-fade">
                             {t("review.label")}
                           </label>
                           <input
@@ -1180,7 +1183,7 @@ export function DocTypeEngine({
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-medium text-fade dark:text-zinc-400">
+                          <label className="block text-xs font-medium text-fade">
                             {t("review.type")}
                           </label>
                           <select
@@ -1202,7 +1205,7 @@ export function DocTypeEngine({
                             <option value="number">{t("review.typeNumber")}</option>
                           </select>
                         </div>
-                        <p className="text-xs text-fade dark:text-zinc-400">
+                        <p className="text-xs text-fade">
                           {t("review.foundIn", {
                             count: field.foundIn,
                             read: distillation.samplesRead,
@@ -1218,12 +1221,12 @@ export function DocTypeEngine({
                           never editable: `valueList.templateFields.keyNote` says
                           why, and this screen does not repeat it in its own
                           words. */}
-                      <p className="mt-1 font-mono text-xs text-fade dark:text-zinc-400">
+                      <p className="mt-1 font-mono text-xs text-fade">
                         {row.include ? keyForRow(field.clusterId) : t("review.keyPending")}
                       </p>
 
                       {field.variants.length > 0 && (
-                        <p className="mt-1 text-xs text-fade dark:text-zinc-400">
+                        <p className="mt-1 text-xs text-fade">
                           {t("review.variants", { wordings: field.variants.join(" / ") })}
                         </p>
                       )}
@@ -1234,7 +1237,7 @@ export function DocTypeEngine({
                           the prose, the human gets a clean official label, both
                           on the same prompt line. */}
                       <div className="mt-3">
-                        <label className="block text-xs font-medium text-fade dark:text-zinc-400">
+                        <label className="block text-xs font-medium text-fade">
                           {t("review.hint")}
                         </label>
                         <input
@@ -1247,7 +1250,7 @@ export function DocTypeEngine({
                           onChange={(e) => patch(field.clusterId, { aiHint: e.target.value })}
                           className={inputClass}
                         />
-                        <p className="mt-1 text-xs text-fade dark:text-zinc-400">
+                        <p className="mt-1 text-xs text-fade">
                           {t("review.hintNote")}
                         </p>
                       </div>
@@ -1255,7 +1258,7 @@ export function DocTypeEngine({
                       {/* The mapping: what this field picked up out of each
                           sample, so it is approved having been seen to work. */}
                       <details className="mt-3">
-                        <summary className="cursor-pointer text-xs text-fade dark:text-zinc-400">
+                        <summary className="cursor-pointer text-xs text-fade">
                           {t("review.evidence", { count: field.evidence.length })}
                         </summary>
                         <ul className="mt-2 space-y-1">
@@ -1264,10 +1267,10 @@ export function DocTypeEngine({
                               key={`${field.clusterId}-${member.sampleId}`}
                               className="flex gap-2 text-xs"
                             >
-                              <span className="shrink-0 text-fade dark:text-zinc-400">
+                              <span className="shrink-0 text-fade">
                                 {sampleName(reads, member.sampleId)}
                               </span>
-                              <span className="min-w-0 break-words text-ink dark:text-zinc-200">
+                              <span className="min-w-0 break-words text-ink">
                                 {member.value}
                               </span>
                             </li>
@@ -1289,15 +1292,15 @@ export function DocTypeEngine({
               the percentage is still changeable. A second overflow path written
               by hand would be a second writer of one rule. */}
           {distillation.below.length > 0 && (
-            <div className="mt-6 border-t border-crease pt-4 dark:border-zinc-800">
-              <h3 className="text-sm font-semibold text-ink dark:text-zinc-100">
+            <div className="mt-6 border-t border-crease pt-4">
+              <h3 className="text-sm font-semibold text-ink">
                 {t("review.belowTitle", { count: distillation.below.length })}
               </h3>
-              <p className="mt-1 text-sm text-ink dark:text-zinc-300">{t("review.belowNote")}</p>
+              <p className="mt-1 text-sm text-ink">{t("review.belowNote")}</p>
               <ul className="mt-2 space-y-1">
                 {distillation.below.map((candidate) => (
-                  <li key={candidate.clusterId} className="text-xs text-fade dark:text-zinc-400">
-                    <span className="text-ink dark:text-zinc-200">{candidate.labelRo}</span>
+                  <li key={candidate.clusterId} className="text-xs text-fade">
+                    <span className="text-ink">{candidate.labelRo}</span>
                     {" — "}
                     {t("review.foundIn", {
                       count: candidate.foundIn,
@@ -1314,15 +1317,15 @@ export function DocTypeEngine({
               Listed rather than dropped: a candidate that simply vanished would
               read as a field the run failed to find. */}
           {distillation.alreadyCaptured.length > 0 && (
-            <div className="mt-6 border-t border-crease pt-4 dark:border-zinc-800">
-              <h3 className="text-sm font-semibold text-ink dark:text-zinc-100">
+            <div className="mt-6 border-t border-crease pt-4">
+              <h3 className="text-sm font-semibold text-ink">
                 {t("review.alreadyTitle", { count: distillation.alreadyCaptured.length })}
               </h3>
-              <p className="mt-1 text-sm text-ink dark:text-zinc-300">{t("review.alreadyNote")}</p>
+              <p className="mt-1 text-sm text-ink">{t("review.alreadyNote")}</p>
               <ul className="mt-2 space-y-1">
                 {distillation.alreadyCaptured.map((candidate) => (
-                  <li key={candidate.clusterId} className="text-xs text-fade dark:text-zinc-400">
-                    <span className="text-ink dark:text-zinc-200">{candidate.labelRo}</span>
+                  <li key={candidate.clusterId} className="text-xs text-fade">
+                    <span className="text-ink">{candidate.labelRo}</span>
                     {" — "}
                     {t("review.foundIn", {
                       count: candidate.foundIn,
@@ -1339,12 +1342,12 @@ export function DocTypeEngine({
           )}
 
           {unnamedRow && (
-            <p role="alert" className="mt-4 text-sm text-red-700 dark:text-red-300">
+            <p role="alert" className="mt-4 text-sm text-alert">
               {t("review.labelRequired")}
             </p>
           )}
           {duplicateRow && (
-            <p role="alert" className="mt-4 text-sm text-red-700 dark:text-red-300">
+            <p role="alert" className="mt-4 text-sm text-alert">
               {t("review.labelDuplicate")}
             </p>
           )}
@@ -1352,7 +1355,7 @@ export function DocTypeEngine({
           {saveError && (
             <div
               role="alert"
-              className="mt-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-950/30 dark:text-red-300"
+              className="mt-4 rounded-md border border-alert bg-alert-wash px-4 py-3 text-sm text-alert"
             >
               {saveError}
             </div>
@@ -1381,7 +1384,7 @@ export function DocTypeEngine({
               disabled={saving}
               onClick={startOver}
             />
-            <span className="text-xs text-fade dark:text-zinc-400">{t("save.note")}</span>
+            <span className="text-xs text-fade">{t("save.note")}</span>
           </div>
         </>
       )}
@@ -1389,10 +1392,10 @@ export function DocTypeEngine({
       {/* ══ Done ═════════════════════════════════════════════════════════════ */}
       {step === "saved" && (
         <>
-          <p className="mt-1.5 text-sm text-ink dark:text-zinc-300">
+          <p className="mt-1.5 text-sm text-ink">
             {t("saved.body", { type: selectedType?.name ?? "", count: accepted.length })}
           </p>
-          <p className="mt-3 text-sm text-ink dark:text-zinc-300">{t("saved.whatNext")}</p>
+          <p className="mt-3 text-sm text-ink">{t("saved.whatNext")}</p>
           {/* ⚠️ **`next/link`, not a raw `<a>` — Slice #34.10 corrected the one
               link that already joined these screens.** It was the only
               navigation between the import, Reference Data and this screen, it

@@ -10,7 +10,8 @@
  *     screens call, with `TC-E2E-VL-04` names, and removed in `finally` (the
  *     type first; its pairs go with it).
  *   - Slice #38.39's pictures, not steps of the case: the page's three tabs at
- *     1366 and 1920 px, into `playwright-report/document-type-page/`.
+ *     1366 and 1920 px, into `playwright-report/document-type-page/`. *   - Steps 6–7 (Slice 40.84) read the identity types migration_118 made; they
+ *     create nothing and open no document, so no personal data is shown.
  */
 
 import { test, expect, type APIRequestContext, type Page } from "../helpers/test";
@@ -108,5 +109,42 @@ test.describe("TC-VL-04 — un tip de act pe pagina lui", () => {
       await removeOurs(page.request, TYPES);
       await removeOurs(page.request, ROLES);
     }
+  });
+
+  test("un tip de act de identitate: „Act de identitate” în listă, fără „Formular”; pe pagina lui, formularul de sistem", async ({ page }) => {
+    await page.setViewportSize({ width: 1366, height: 900 });
+
+    // Step 6 — the list: „Pașaport” marked „Act de identitate”, and no „Formular” button on its row.
+    await page.goto("/admin/value-lists?list=document-types");
+    const row = page.locator("tbody tr").filter({ has: page.locator("[data-name-tip]", { hasText: /^Pașaport$/ }) });
+    await expect(row.locator('[data-row-status="identity"]')).toHaveText("Act de identitate", { timeout: 30_000 });
+    await expect(row.getByRole("button", { name: /^Formular/ })).toHaveCount(0);
+
+    // Step 7 — each of the four → „Formular”: the line, the kind's fields in the document's order, their widths;
+    // nothing to edit or save.
+    const LINE = "Formular de sistem: câmpurile unui act de identitate sunt definite de aplicație și nu se modifică aici.";
+    const FOUR = [
+      { code: "CARTE_IDENTITATE_VECHE", kind: "CI_VECHE", first: "lastName", fields: 12, absent: "cnp" },
+      { code: "CARTE_IDENTITATE", kind: "CI_NOU", first: "nrDocument", fields: 13, absent: "dateOfBirth" },
+      { code: "PASAPORT", kind: "PASAPORT", first: "passportType", fields: 15, absent: "domicileCountry" },
+      { code: "PASAPORT_CRDS", kind: "PASAPORT_CRDS", first: "passportType", fields: 15, absent: "domicileCounty" },
+    ] as const;
+    for (const t of FOUR) {
+      await page.goto(`/admin/value-lists/document-types/${t.code}?tab=form`);
+      const form = page.locator(`[data-identity-system-form="${t.kind}"]`);
+      await expect(form, t.code).toBeVisible({ timeout: 30_000 });
+      await expect(form.getByText(LINE, { exact: true })).toBeVisible();
+      await expect(form.locator("[data-system-field]")).toHaveCount(t.fields);
+      await expect(form.locator("[data-system-field]").first()).toHaveAttribute("data-system-field", t.first);
+      await expect(form.locator(`[data-system-field="${t.absent}"]`)).toHaveCount(0);
+      await expect(page.getByRole("tabpanel").getByRole("button")).toHaveCount(0);
+      await expect(page.getByText("Acest tip nu are încă formular.", { exact: true })).toHaveCount(0);
+    }
+    // The model nou's CNP: its label and its width step.
+    await page.goto("/admin/value-lists/document-types/CARTE_IDENTITATE?tab=form");
+    const nou = page.locator('[data-identity-system-form="CI_NOU"]');
+    await expect(nou.locator('[data-system-field="cnp"] td').first()).toHaveText("CNP", { timeout: 30_000 });
+    await expect(nou.locator('[data-system-field="cnp"] [data-system-width]')).toHaveText("M");
+    await photograph(page, "identity-system-form");
   });
 });

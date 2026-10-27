@@ -206,7 +206,11 @@ export function DocumentTypeFormEditor({
    * half that is allowed. The user should not learn the rule from a rejected
    * save.
    *
-   * ⚠️ **The sentence shown is `errorIdCardType` / `errorCatchAllType` — the
+   * Slice 40.84: the identity sentence is `valueList.confirm.errors.idCardForm`, the
+   * one message for that code on every screen that shows it (the list, this editor,
+   * the engine); `errorIdCardType` is gone.
+   *
+   * ⚠️ **The sentence shown is `idCardForm` / `errorCatchAllType` — the
    * SAME string the refused save would have produced, not a second one written
    * for the banner.** Both already end with the remedy in as many words ("this
    * window is the only place a form can be deleted"), so a warning written
@@ -225,6 +229,8 @@ export function DocumentTypeFormEditor({
   onClose: () => void;
 }) {
   const t = useTranslations("valueList.templateFields");
+  // Slice 40.84: one message per refusal code, shared with the list and the engine.
+  const tErr = useTranslations("valueList.confirm.errors");
   const qc = useQueryClient();
 
   /**
@@ -305,9 +311,8 @@ export function DocumentTypeFormEditor({
         // live stored `typeName` and cannot rename — but both codes map to the
         // one sentence, because a screen that answers a refusal it did not
         // expect with a stack-shaped English string is the thing being fixed.
-        if (code === ID_CARD_FORM_CODE || code === ID_CARD_RENAME_CODE) {
-          throw new Error(t("errorIdCardType"));
-        }
+        if (code === ID_CARD_FORM_CODE) throw new Error(tErr("idCardForm", { code: "", collisions: 0 }));
+        if (code === ID_CARD_RENAME_CODE) throw new Error(tErr("idCardRename", { code: "", collisions: 0 }));
         // ⚠️ **Slice #32.19, finding S-02 — and this is the one that actually
         // fires from this screen.** The list modal no longer draws the Form
         // button on a catch-all row with no form, so the ordinary way in is
@@ -631,17 +636,16 @@ export function DocumentTypeFormEditor({
   }
 
   const inputClass =
-    "rounded-md border border-wire bg-white px-2 py-1.5 text-sm text-ink " +
+    "rounded-md border border-wire bg-raised px-2 py-1.5 text-sm text-ink " +
     "shadow-sm focus:border-focus focus:outline-none " +
-    "disabled:bg-cap disabled:text-fade " +
-    "dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:disabled:bg-zinc-800";
+    "disabled:bg-cap disabled:text-fade";
 
   return (
     <>
       {/* z-70: this opens on top of the value-list modal (z-50) and its own
           delete dialog (z-60). No backdrop click handler, deliberately — a
           stray click must not discard an editing session. */}
-      <div className="fixed inset-0 z-70 bg-black/50 backdrop-blur-sm" aria-hidden />
+      <div className="fixed inset-0 z-70 bg-scrim/50 backdrop-blur-sm" aria-hidden />
 
       <div className="fixed inset-0 z-70 flex items-start justify-center overflow-y-auto p-4">
         {/* `inert` while a confirmation is open: the Tab trap keeps the
@@ -654,18 +658,18 @@ export function DocumentTypeFormEditor({
           role="dialog"
           aria-modal="true"
           aria-labelledby={titleId}
-          className="my-8 flex max-h-[90vh] flex-col rounded-xl border border-card-rim bg-card p-6 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900"
+          className="my-8 flex max-h-[90vh] flex-col rounded-xl border border-card-rim bg-card p-6 shadow-2xl"
           style={{ ...dialogCardStyle(FE_CARD_UNITS), width: "100%" }}
         >
           <div className="flex items-start justify-between gap-4">
             <div>
               <h2
                 id={titleId}
-                className="text-base font-semibold text-ink dark:text-zinc-100"
+                className="text-base font-semibold text-ink"
               >
                 {t("title", { type: typeName })}
               </h2>
-              <p className="mt-1 text-sm text-fade dark:text-zinc-400">{t("intro")}</p>
+              <p className="mt-1 text-sm text-fade">{t("intro")}</p>
             </div>
             {/* #37.43 (A025): X in place of the „✕" glyph; „Închide" its name and
                 tooltip. The ref stays: focus returns here (IconButton takes it). */}
@@ -697,16 +701,16 @@ export function DocumentTypeFormEditor({
             <p
               id={lockNoteId}
               role="note"
-              className="mt-4 rounded-md border border-amber-500 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-900 dark:border-amber-400 dark:bg-amber-900/30 dark:text-amber-100"
+              className="mt-4 rounded-md border border-warning-rim bg-warning-wash px-4 py-3 text-sm leading-relaxed text-warning"
             >
-              {formLock === "idCard" ? t("errorIdCardType") : t("errorCatchAllType")}
+              {formLock === "idCard" ? tErr("idCardForm", { code: "", collisions: 0 }) : t("errorCatchAllType")}
             </p>
           )}
 
           {/* ── The fields ──────────────────────────────────────────────── */}
           <div className="mt-4 min-h-0 flex-1 overflow-y-auto">
             {rows.length === 0 ? (
-              <p className="rounded-md border border-dashed border-wire px-4 py-8 text-center text-sm text-fade dark:border-zinc-700 dark:text-zinc-400">
+              <p className="rounded-md border border-dashed border-wire px-4 py-8 text-center text-sm text-fade">
                 {/* ⚠️ **`empty` IS A LYING CTA ON A LOCKED ROW, and that is
                     exactly the class of defect this project's reviews keep
                     catching.** It reads "Add a field, or let AI Discovery
@@ -748,7 +752,7 @@ export function DocumentTypeFormEditor({
                         <th
                           key={id}
                           scope="col"
-                          className={`sticky top-0 z-10 border-b border-crease bg-card py-2 dark:border-zinc-700 dark:bg-zinc-900 ${pad}`}
+                          className={`sticky top-0 z-10 border-b border-crease bg-card py-2 ${pad}`}
                           {...columnHead(column as ColumnName)}
                         >
                           {t(id as "colOrder")}
@@ -756,7 +760,7 @@ export function DocumentTypeFormEditor({
                       ))}
                       <th
                         scope="col"
-                        className="sticky top-0 z-10 border-b border-crease bg-card py-2 dark:border-zinc-700 dark:bg-zinc-900"
+                        className="sticky top-0 z-10 border-b border-crease bg-card py-2"
                         {...columnHead("feActions")}
                       >
                         <span className="sr-only">{t("colActions")}</span>
@@ -770,7 +774,7 @@ export function DocumentTypeFormEditor({
                       return (
                         <tr
                           key={row.rowId}
-                          className="border-b border-crease/60 align-top dark:border-zinc-800"
+                          className="border-b border-crease/60 align-top"
                         >
                           <td className="py-2 pr-2">
                             <div className="flex gap-1">
@@ -810,7 +814,7 @@ export function DocumentTypeFormEditor({
                               className={inputClass}
                             />
                             {/* Rule 1, on every row: the key, shown and inert. */}
-                            <span className="mt-1 block font-mono text-xs text-fade dark:text-zinc-500">
+                            <span className="mt-1 block font-mono text-xs text-fade">
                               {key || t("keyPending")}
                               {/* Not on a RECLAIMED key: that is the old key
                                   coming back to the values behind it, and
@@ -852,7 +856,7 @@ export function DocumentTypeFormEditor({
                               ))}
                             </select>
                             {initialTypes.has(row.rowId) && initialTypes.get(row.rowId) !== row.type && (
-                              <p className="mt-1 text-xs leading-snug text-amber-700 dark:text-amber-400">
+                              <p className="mt-1 text-xs leading-snug text-warning">
                                 {t("typeChangedWarning")}
                               </p>
                             )}
@@ -985,7 +989,7 @@ export function DocumentTypeFormEditor({
                 onClick={addRow}
                 disabled={saving || atCapacity || formLock !== null}
               />
-              <span className="text-xs text-fade dark:text-zinc-400">
+              <span className="text-xs text-fade">
                 {atCapacity
                   ? t("atCapacity", { max: MAX_TEMPLATE_FIELDS })
                   : t("count", { count: rows.length, max: MAX_TEMPLATE_FIELDS })}
@@ -1003,7 +1007,7 @@ export function DocumentTypeFormEditor({
               ))}
             </datalist>
 
-            <p className="mt-4 rounded-md border border-wire bg-cta-pale px-4 py-3 text-xs leading-relaxed text-ink dark:border-zinc-700 dark:bg-zinc-800/40 dark:text-zinc-300">
+            <p className="mt-4 rounded-md border border-wire bg-cta-pale px-4 py-3 text-xs leading-relaxed text-ink">
               {t("keyNote")}
             </p>
 
@@ -1012,7 +1016,7 @@ export function DocumentTypeFormEditor({
                 and no panel is a panel of one on that tab, and a field with a
                 panel and no tab goes on the first tab. Said here because the
                 alternative is an administrator discovering them by saving. */}
-            <p className="mt-2 rounded-md border border-wire bg-cta-pale px-4 py-3 text-xs leading-relaxed text-ink dark:border-zinc-700 dark:bg-zinc-800/40 dark:text-zinc-300">
+            <p className="mt-2 rounded-md border border-wire bg-cta-pale px-4 py-3 text-xs leading-relaxed text-ink">
               {t("tabNote")}
             </p>
           </div>
@@ -1026,7 +1030,7 @@ export function DocumentTypeFormEditor({
           {error && (
             <div
               role="alert"
-              className="mt-4 flex items-start gap-2 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-950/30 dark:text-red-300"
+              className="mt-4 flex items-start gap-2 rounded-md border border-alert bg-alert-wash px-4 py-3 text-sm text-alert"
             >
               <span className="mt-0.5 shrink-0 font-bold">!</span>
               <span>{error}</span>
@@ -1059,18 +1063,18 @@ export function DocumentTypeFormEditor({
       {/* ── Confirmations: remove a field, or discard the session ───────── */}
       {pending && (
         <>
-          <div className="fixed inset-0 z-80 bg-black/50" aria-hidden />
+          <div className="fixed inset-0 z-80 bg-scrim/50" aria-hidden />
           <div
             ref={confirmPanelRef}
             role="alertdialog"
             aria-modal="true"
             aria-labelledby="editor-confirm-title"
             aria-describedby="editor-confirm-body"
-            className="fixed inset-x-4 top-1/4 z-80 mx-auto max-w-md rounded-xl border border-card-rim bg-card p-6 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900"
+            className="fixed inset-x-4 top-1/4 z-80 mx-auto max-w-md rounded-xl border border-card-rim bg-card p-6 shadow-2xl"
           >
             <h3
               id="editor-confirm-title"
-              className="text-sm font-semibold text-ink dark:text-zinc-100"
+              className="text-sm font-semibold text-ink"
             >
               {pending.kind === "discard"
                 ? t("confirmDiscardTitle")
@@ -1087,7 +1091,7 @@ export function DocumentTypeFormEditor({
                 possible, and `reclaimedKeys` is what makes the undo real. */}
             <p
               id="editor-confirm-body"
-              className="mt-3 text-sm leading-relaxed text-ink dark:text-zinc-300"
+              className="mt-3 text-sm leading-relaxed text-ink"
             >
               {pending.kind === "discard"
                 ? t("confirmDiscardBody")
