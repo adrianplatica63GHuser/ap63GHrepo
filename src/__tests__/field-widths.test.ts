@@ -927,11 +927,29 @@ describe("a document type's own fields are sized by rule (#37.15)", () => {
     expect(selects).toBeGreaterThan(40);
   });
 
-  it("no seeded form sets `width` — the rule sizes all of them", () => {
+  // Was „no seeded form sets `width` — the rule sizes all of them" (#37.15). Since 40.88 Adrian sets sizes field by
+  // field (migration_120), so the file carries `width` exactly where a migration put it, and nowhere else.
+  it("a seeded form sets `width` only on the fields Adrian sized, each a step of the scale (40.88)", () => {
     const file = parseFormsFile(read(FORMS_FILE_REL));
-    for (const form of file.forms) for (const f of form.fields as Record<string, unknown>[]) expect("width" in f).toBe(false);
+    const sized: string[] = [];
+    for (const form of file.forms) {
+      for (const f of form.fields as Record<string, unknown>[]) {
+        if (!("width" in f)) continue;
+        expect([form.key, f.key, isStep(f.width)]).toEqual([form.key, f.key, true]);
+        sized.push(`${form.key}.${String(f.key)}=${String(f.width)}`);
+      }
+    }
+    expect(sized.sort()).toEqual(SIZED_FIELDS.slice().sort());
   });
 });
+
+/** Every `width` the forms file carries: migration_120 (40.88). */
+const SIZED_FIELDS = [
+  ...["calitateExemplar=M", "exemplareEmise=TILE", "temeiLegalCompletare=TILE", "efectUrmarit=M", "pretNeschimbat=M",
+    "liberDeSarcini=M", "faraServituti=M", "nearendat=M", "notificareAml=M", "consimtamantRadiere=M", "taxeLocaleLaZi=M",
+    "nedezmembratContrar=M", "consimtamantDatePersonale=M", "celelalteClauzeNemodificate=M"].map((s) => `ACT_ADITIONAL.${s}`),
+  ...["calitateExemplar=M", "exemplareEmise=TILE"].map((s) => `CONTRACT_VANZARE.${s}`),
+];
 
 describe("a template field's optional `width` (#37.15)", () => {
   const stored = { key: "k", labelRo: "Etichetă", labelEn: "Label", type: "text", order: 0 };

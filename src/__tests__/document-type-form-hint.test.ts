@@ -492,8 +492,11 @@ describe("the hint is not drawn as an error", () => {
     // The joined list, in the order they are read out.
     expect(SELECT_FIELD).toContain("[hint ? hintId : null, error ? errorId : null]");
     expect(SELECT_FIELD).toContain("<span id={errorId}");
-    // An aria-label would name the field a second time and win over the <label>.
-    expect(SELECT_FIELD).not.toContain("aria-label=");
+    // An aria-label would name the field a second time and win over the <label>. 40.88: an <option> may carry one —
+    // the type's „(F)" spelled out (`aria-label={o.title}`) names that choice, not the field — so the check reads the
+    // field with its <option> elements taken out.
+    expect(SELECT_FIELD.replace(/<option\b[^>]*>/g, "")).not.toContain("aria-label=");
+    expect(SELECT_FIELD).toContain("aria-label={o.title}");
   });
 
   it("no longer wraps the control in the label that carries the sentence", () => {

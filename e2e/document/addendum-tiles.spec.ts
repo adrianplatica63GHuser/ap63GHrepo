@@ -18,7 +18,7 @@
 
 import { test, expect, type Locator, type Page } from "../helpers/test";
 import { E2E_MARKER, createDocumentOfType, removeLeftovers, removeRecord } from "../helpers/records";
-import { openEmptyTiles, showTile, editTile, editTileNamed, saveTileNamed } from "../helpers/tiles";
+import { openEmptyTile, openEmptyTiles, showTile, editTile, editTileNamed, saveTileNamed } from "../helpers/tiles";
 import { showEmptyFields } from "../helpers/empty-fields";
 
 const MARK = `${E2E_MARKER}DOC-20`;
@@ -148,7 +148,11 @@ test.describe("TC-DOC-20 — actul adițional și actul pe care îl modifică", 
       await page.locator('[data-tile-cancel="general"]').click();
       await expect(page.locator('[data-tile-edit-bar="general"]')).toHaveCount(0);
       // „Editează" on „Ce modifică": Temei legal completare the panel's whole width (2 units, 286 px), the dropdowns M.
-      const changes6 = await editTileNamed(page, "Ce modifică");
+      // Still empty, so one line with „Adaugă" again after the navigation of step 4 (40.64): opened, then „Editează".
+      await openEmptyTile(page, "tab:Ce modifică");
+      const changes6 = page.getByRole("region", { name: "Ce modifică", exact: true });
+      if ((await changes6.locator("[data-tile-edit-bar]").count()) === 0) await editTileNamed(page, "Ce modifică");
+      await showEmptyFields(changes6);
       const inChanges = (name: string) => changes6.locator(`[data-width-field="customFields.${name}"]`);
       await expectWidth(inChanges("temeiLegalCompletare"), 286);
       for (const name of ["efectUrmarit", "pretNeschimbat", "liberDeSarcini", "consimtamantRadiere", "celelalteClauzeNemodificate"]) {

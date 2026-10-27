@@ -115,7 +115,7 @@ describe("documentTypeOptionLabel — the picker marks the MINORITY", () => {
   });
 
   it.each(HAS_FORM)("marks a type with %s", (_label, raw) => {
-    expect(documentTypeOptionLabel("Contract", raw, mark)).toBe("Contract (are formular)");
+    expect(documentTypeOptionLabel("Contract", raw, mark)).toBe("Contract (F)");
   });
 
   // ⚠️ Not the same assertion as the one above. A marker that happened to
