@@ -41,6 +41,7 @@ saved.
 | 2 | Selects in each its widest choice | Every one shows it whole — on one line when it fits the box, wrapped onto a second line in a box that keeps its width when it does not (40.78, 40.88) |
 | 3 | Looks at „Declarațiile vânzătorului" and „Declarații legale" (#38.33) | Boxes per row 3, 3, 3, 3 and 3, 2 („Temei legal evicțiune" is a text box, with one dropdown beside it) |
 | 4 | Widens the window to 1920 × 1080 | Steps 2 and 3 the same |
+| 5 | (40.89) Back at 1366 × 900, looks at „Preț", „Situația în cartea funciară" and „Excepția de la cadastru" | „Preț total", „Monedă", „Preț declarat real" on the first row of „Preț", „Temei preț" and „Alocare preț" one to a row below; „Marcaj carte funciară" alone, then „Consimțământ radiere" and „Intabulare posibilă" on the next row; „Temei excepție cadastru", then „Renunțare cercetare OCPI" and „Obligație număr cadastral" alone on their row, then „Termen formalități" and „Completare ulterioară", one to a row |
 
 ## At the end — leaving things as they were found
 
@@ -48,6 +49,9 @@ Leave without saving, and delete the document (`DELETE /api/documents/<id>`). C�
 `TC-DOC-04` finds nothing.
 
 ## Notes from the runs
+
+**2026-10-27 — Slice 40.89.** Step 5 added: Adrian's three moves on the contract's „Preț și plată" and „Carte funciară".
+Not driven by hand first; the spec reads the rows.
 
 **2026-10-27 — Slice 40.88.** Adrian set some dropdowns narrower than their widest choice (Calitate exemplar at M, and
 40.89's Contract de vânzare dropdowns), so „whole" in step 2 is 40.78's rule: a choice wider than its box wraps onto a

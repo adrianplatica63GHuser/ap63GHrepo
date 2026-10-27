@@ -69,6 +69,23 @@ async function boxesPerRow(page: Page, name: string): Promise<number[]> {
   });
 }
 
+/** The fields in the panel headed `name`, row by row, by their `data-width-field` (40.89). */
+async function rowsOf(page: Page, name: string): Promise<string[][]> {
+  const panel = page.locator("section").filter({ has: page.getByRole("heading", { name: `[${name}]`, exact: true }) }).last();
+  return panel.locator("[data-width-field]").evaluateAll((els) => {
+    const rows = new Map<number, { left: number; key: string }[]>();
+    for (const el of els) {
+      const r = el.getBoundingClientRect();
+      if (r.width === 0) continue;
+      const top = Math.round(r.top);
+      const key = (el.getAttribute("data-width-field") ?? "").replace(/^customFields\./, "");
+      const row = [...rows.keys()].find((t) => Math.abs(t - top) <= 2) ?? top;
+      rows.set(row, [...(rows.get(row) ?? []), { left: r.left, key }]);
+    }
+    return [...rows.entries()].sort((a, b) => a[0] - b[0]).map(([, r]) => r.sort((x, y) => x.left - y.left).map((i) => i.key));
+  });
+}
+
 /** 40.75: a saved document draws a tile's dropdowns while it is open — each frame in turn, its widest choices. */
 async function widestWhole(page: Page): Promise<void> {
   await forEachFrame(page, async () => {
@@ -126,6 +143,17 @@ test.describe("TC-DOC-04 — listele derulante ale unui CVC", () => {
       await widestWhole(page);
       expect(await boxesPerRow(page, "Declarațiile vânzătorului")).toEqual([3, 3, 3, 3]); // #38.33: the 12 statements; the warranties beside their citation
       expect(await boxesPerRow(page, "Declarații legale")).toEqual([3, 2]); // #38.33
+
+      // Step 5 — 40.89, Adrian's three moves, back at 1366.
+      await page.setViewportSize({ width: 1366, height: 900 });
+      expect(await rowsOf(page, "Preț")).toEqual([["pretTotal", "monedaPret", "pretRealDeclarat"], ["temeiPret"], ["alocarePret"]]);
+      expect(await rowsOf(page, "Situația în cartea funciară")).toEqual([["marcajCarteFunciara"], ["consimtamantRadiere", "poateFiIntabulat"]]);
+      expect(await rowsOf(page, "Excepția de la cadastru")).toEqual([
+        ["temeiExceptieCadastru"],
+        ["renuntareCercetareOcpi", "obligatieNrCadastral"],
+        ["termenFormalitati"],
+        ["completareUlterioara"],
+      ]);
 
       await photograph(page);
     } finally {

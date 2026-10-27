@@ -110,6 +110,16 @@ export type DocumentTemplateField = {
    * and carries a stored one through a save untouched.
    */
   width?: Step;
+  /**
+   * Optional ROW START (Slice 40.89): the field begins a new row in its panel,
+   * whatever room is left on the row before it. Rule 18 (`packFieldRows`) flows a
+   * panel's fields in form order and, without this, starts a row only at a `full`
+   * field. Absent on every field but the one a migration names (migration_121:
+   * Consimțământ radiere on the CVC, so Marcaj carte funciară stands alone above
+   * it). Anything but `true` is dropped on read; the Form editor has no control
+   * for it and carries a stored one through a save untouched, as it does `width`.
+   */
+  newRow?: true;
 };
 
 const VALID_TYPES: readonly DocumentTemplateFieldType[] = ["text", "textarea", "date", "number", "select"];
@@ -168,6 +178,8 @@ export function parseTemplateFields(raw: unknown): DocumentTemplateField[] {
       // Slice #37.15: present only when it names a step, so a field without one
       // reads back exactly as it did before the key existed.
       ...(isStep(f.width) ? { width: f.width } : {}),
+      // Slice 40.89: present only when true, so a field without one reads back as before.
+      ...(f.newRow === true ? { newRow: true as const } : {}),
     }))
     .filter((f) => f.key.length > 0)
     .sort((a, b) => a.order - b.order);

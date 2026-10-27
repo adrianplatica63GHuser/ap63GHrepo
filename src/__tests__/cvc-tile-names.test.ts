@@ -90,6 +90,15 @@ describe("the CVC's tiles and panels (#37.54, rebuilt by #38.33)", () => {
     for (const [tile, keys] of Object.entries(PLACE)) for (const k of keys) expect([k, where.get(k)]).toEqual([k, tile]);
   });
 
+  // 40.89 (migration_121) — Adrian: „Preț declarat real" to the right of „Monedă"; „Intabulare posibilă" down one line, to
+  // the right of „Consimțământ radiere", which starts that line (`newRow`).
+  it("puts „Preț declarat real” right after „Monedă”, and „Consimțământ radiere” right before „Intabulare posibilă”, starting a row", () => {
+    const keys = [...CVC].sort((a, b) => a.order - b.order).map((f) => f.key);
+    expect(keys.slice(keys.indexOf("pretTotal"), keys.indexOf("pretTotal") + 5)).toEqual(["pretTotal", "monedaPret", "pretRealDeclarat", "temeiPret", "alocarePret"]);
+    expect(keys.slice(keys.indexOf("marcajCarteFunciara"), keys.indexOf("marcajCarteFunciara") + 3)).toEqual(["marcajCarteFunciara", "consimtamantRadiere", "poateFiIntabulat"]);
+    expect(CVC.filter((f) => (f as { newRow?: unknown }).newRow === true).map((f) => f.key)).toEqual(["consimtamantRadiere"]);
+  });
+
   it("puts „Temei legal evicțiune” right after „Garanție evicțiune”", () => {
     const keys = [...CVC].sort((a, b) => a.order - b.order).map((f) => f.key);
     expect(keys.indexOf("temeiLegalEvictiune")).toBe(keys.indexOf("garantieEvictiune") + 1);

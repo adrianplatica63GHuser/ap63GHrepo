@@ -99,6 +99,8 @@ export type TemplateEditorRow = {
    * a width somebody set on the field.
    */
   storedWidth?: Step;
+  /** A stored `newRow` (Slice 40.89), carried through a save untouched, as `storedWidth` is. */
+  storedNewRow?: true;
 };
 
 /** Build an editor row from a stored field. */
@@ -126,6 +128,7 @@ export function rowFromStoredField(
     storedTab: tab ? { ro: field.tabRo ?? null, en: field.tabEn ?? null } : null,
     optionsText: formatOptionsText(field.options ?? null),
     ...(field.width ? { storedWidth: field.width } : {}),
+    ...(field.newRow ? { storedNewRow: true as const } : {}),
   };
 }
 
@@ -337,6 +340,7 @@ export function fieldFromEditorRow(
     // typed text is still on the row, so switching back restores it.
     options: row.type === "select" ? parseOptionsText(row.optionsText) : null,
     ...(row.storedWidth ? { width: row.storedWidth } : {}),
+    ...(row.storedNewRow ? { newRow: true as const } : {}),
   };
 }
 

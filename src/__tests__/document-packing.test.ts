@@ -32,6 +32,7 @@ type StoredField = {
   groupRo?: string | null;
   groupEn?: string | null;
   width?: FieldWidth["step"] | null;
+  newRow?: boolean;
   options?: { value: string; labelRo?: string; labelEn?: string }[] | null;
 };
 
@@ -66,12 +67,21 @@ function panelsOf(fields: StoredField[]) {
     const items = group.map((f) => {
       const width = widthOf(f, force);
       const isSelect = f.type === "select" && !!f.options && f.options.length > 0;
-      return { key: f.key, width, full: templateFieldTakesRow(width, { isSelect, forceLines: force }) };
+      return { key: f.key, width, full: templateFieldTakesRow(width, { isSelect, forceLines: force }), newRow: f.newRow === true };
     });
     const packed = packFieldRows(items, { baseRowsRem: isFeesGroup(label) ? FEES_BASE : isIdentificationGroup(label) ? IDENTIFICATION_BASE : 0 });
     return { label, items, ...packed };
   });
 }
+
+describe("a row started on purpose (40.89, `newRow`)", () => {
+  const M: FieldWidth = { step: "M", kind: "input" };
+  it("ends the row before the field, whatever room it had, and keeps form order", () => {
+    expect(packFieldRows([{ key: "a", width: M }, { key: "b", width: M, newRow: true }, { key: "c", width: M }]).rows).toEqual([["a"], ["b", "c"]]);
+    // A field that starts a row as the first of its panel, or after a full one, changes nothing.
+    expect(packFieldRows([{ key: "a", width: M, newRow: true }, { key: "b", width: M }]).rows).toEqual([["a", "b"]]);
+  });
+});
 
 describe("the packing rule itself", () => {
   const M: FieldWidth = { step: "M", kind: "input" };
@@ -174,14 +184,16 @@ const CVC_ROWS: { label: string; units: number; rows: string[][] }[] = [
     ["exemplareEmise"],
     ["temeiAutentificare", "dataContinut"],
   ] },
+  // 40.89 (migration_121): Preț total S | Monedă S | Preț declarat real M — 19.5rem, so the panel takes 3 units (Ask
+  // first 5), and the two text boxes at XL below, one a row.
   { label: "Preț", units: 3, rows: [
-    ["pretTotal", "monedaPret"],
+    ["pretTotal", "monedaPret", "pretRealDeclarat"],
     ["temeiPret"],
-    ["alocarePret", "pretRealDeclarat"],
+    ["alocarePret"],
   ] },
+  // 40.89: the three at M — one row at 3 units.
   { label: "Plată", units: 3, rows: [
-    ["starePlata", "modalitatePlata"],
-    ["dataPlatii"],
+    ["starePlata", "modalitatePlata", "dataPlatii"],
   ] },
   // Slice #38.49 (migration_102): „Descrierea obiectului" first in „Obiectul vânzării", a panel of its own.
   { label: "Descriere", units: 2, rows: [
@@ -194,17 +206,20 @@ const CVC_ROWS: { label: string; units: number; rows: string[][] }[] = [
     ["vecinatati"],
     ["origineLot"],
   ] },
+  // 40.89: Categorie internă XL | Documentație finalizată M share a row at 3 units.
   { label: "Dosar cadastral", units: 3, rows: [
-    ["categorieInterna"],
-    ["documentatieFinalizata"],
+    ["categorieInterna", "documentatieFinalizata"],
   ] },
-  { label: "Situația în cartea funciară", units: 3, rows: [
-    ["marcajCarteFunciara", "poateFiIntabulat"],
-    ["consimtamantRadiere"],
+  // 40.89: Marcaj carte funciară (L) alone; Consimțământ radiere starts the next row (`newRow`), Intabulare posibilă beside it.
+  { label: "Situația în cartea funciară", units: 2, rows: [
+    ["marcajCarteFunciara"],
+    ["consimtamantRadiere", "poateFiIntabulat"],
   ] },
-  { label: "Excepția de la cadastru", units: 3, rows: [
-    ["temeiExceptieCadastru", "renuntareCercetareOcpi"],
-    ["obligatieNrCadastral", "termenFormalitati"],
+  // 40.89: the three text boxes at TILE, each on a row of its own; the two dropdowns alone on the row between them (Ask first 4).
+  { label: "Excepția de la cadastru", units: 2, rows: [
+    ["temeiExceptieCadastru"],
+    ["renuntareCercetareOcpi", "obligatieNrCadastral"],
+    ["termenFormalitati"],
     ["completareUlterioara"],
   ] },
   { label: "Declarațiile vânzătorului", units: 3, rows: [
@@ -222,9 +237,9 @@ const CVC_ROWS: { label: string; units: number; rows: string[][] }[] = [
     ["declaratieArt292", "notificareAml", "consimtamantDatePersonale"],
     ["preemptiuneTerenAgricol", "preemptiunePadure"],
   ] },
+  // 40.89: the four sums at S — one row.
   { label: "Taxe și onorarii", units: 3, rows: [
-    ["timbruJudiciar", "onorariuNotarial", "impozitTransfer"],
-    ["taxaTimbruPublicitate"],
+    ["timbruJudiciar", "onorariuNotarial", "impozitTransfer", "taxaTimbruPublicitate"],
   ] },
   { label: "Cheltuieli", units: 3, rows: [
     ["cheltuieliPerfectare", "taxeLocalePlatiteDe", "taxeLocaleLaZi"],

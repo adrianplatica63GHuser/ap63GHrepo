@@ -943,12 +943,25 @@ describe("a document type's own fields are sized by rule (#37.15)", () => {
   });
 });
 
-/** Every `width` the forms file carries: migration_120 (40.88). */
+/** Every `width` the forms file carries: migration_120 (40.88) and migration_121 (40.89). */
 const SIZED_FIELDS = [
   ...["calitateExemplar=M", "exemplareEmise=TILE", "temeiLegalCompletare=TILE", "efectUrmarit=M", "pretNeschimbat=M",
     "liberDeSarcini=M", "faraServituti=M", "nearendat=M", "notificareAml=M", "consimtamantRadiere=M", "taxeLocaleLaZi=M",
     "nedezmembratContrar=M", "consimtamantDatePersonale=M", "celelalteClauzeNemodificate=M"].map((s) => `ACT_ADITIONAL.${s}`),
-  ...["calitateExemplar=M", "exemplareEmise=TILE"].map((s) => `CONTRACT_VANZARE.${s}`),
+  ...["calitateExemplar=M", "exemplareEmise=TILE",
+    // 40.89 — Preț și plată
+    "pretTotal=S", "monedaPret=S", "pretRealDeclarat=M", "starePlata=M", "modalitatePlata=M",
+    // Carte funciară
+    "categorieInterna=XL", "documentatieFinalizata=M", "marcajCarteFunciara=L", "poateFiIntabulat=M", "consimtamantRadiere=M",
+    "temeiExceptieCadastru=TILE", "renuntareCercetareOcpi=M", "obligatieNrCadastral=M", "termenFormalitati=TILE", "completareUlterioara=TILE",
+    // Declarații și garanții
+    "inCircuitCivil=M", "liberDeSarcini=M", "faraServituti=M", "neipotecat=M", "nepromisAltcuiva=M", "nearendat=M",
+    "neaportatSocietate=M", "faraLitigii=M", "faraExpropriere=M", "faraMonumentIstoric=M", "nedezmembratContrar=M",
+    "cumparatorCunoasteSituatia=M", "garantieEvictiune=M", "temeiLegalEvictiune=L", "garantieVicii=M", "declaratieArt292=M",
+    "notificareAml=M", "consimtamantDatePersonale=M", "preemptiuneTerenAgricol=M", "preemptiunePadure=M",
+    // Taxe și cheltuieli
+    "timbruJudiciar=S", "onorariuNotarial=S", "impozitTransfer=S", "taxaTimbruPublicitate=S",
+    "cheltuieliPerfectare=M", "taxeLocalePlatiteDe=M", "taxeLocaleLaZi=M"].map((s) => `CONTRACT_VANZARE.${s}`),
 ];
 
 describe("a template field's optional `width` (#37.15)", () => {
@@ -973,6 +986,24 @@ describe("a template field's optional `width` (#37.15)", () => {
     const [withWidth, without] = parseTemplateFields([{ ...stored, width: "M" }, { ...stored, key: "j", order: 1 }]);
     expect(fieldFromEditorRow(rowFromStoredField(withWidth, 0), "k", 0).width).toBe("M");
     expect(fieldFromEditorRow(rowFromStoredField(without, 1), "j", 1)).not.toHaveProperty("width");
+  });
+});
+
+describe("a template field's optional `newRow` (40.89)", () => {
+  const stored = { key: "k", labelRo: "Etichetă", labelEn: "Label", type: "text", order: 0 };
+
+  it("is read when true, dropped otherwise, and absent when absent", () => {
+    expect(parseTemplateFields([{ ...stored, newRow: true }])[0].newRow).toBe(true);
+    expect(parseTemplateFields([{ ...stored, newRow: "true" }])[0]).not.toHaveProperty("newRow");
+    expect(parseTemplateFields([{ ...stored, newRow: false }])[0]).not.toHaveProperty("newRow");
+    expect(parseTemplateFields([stored])[0]).not.toHaveProperty("newRow");
+  });
+
+  it("survives the write door, and a Form-editor save, untouched", () => {
+    expect(documentTemplateFieldSchema.parse({ ...stored, newRow: true }).newRow).toBe(true);
+    const [starts, plain] = parseTemplateFields([{ ...stored, newRow: true }, { ...stored, key: "j", order: 1 }]);
+    expect(fieldFromEditorRow(rowFromStoredField(starts, 0), "k", 0).newRow).toBe(true);
+    expect(fieldFromEditorRow(rowFromStoredField(plain, 1), "j", 1)).not.toHaveProperty("newRow");
   });
 });
 

@@ -1042,6 +1042,11 @@ export interface PackItem {
   width: FieldWidth;
   /** Takes a row of its own at the panel's whole width. */
   full?: boolean;
+  /**
+   * Starts a new row, whatever room the row before it has left (40.89: a template field's `newRow`). Form order is
+   * still kept; it only ends the row early — Marcaj carte funciară alone, then Consimțământ radiere | Intabulare.
+   */
+  newRow?: boolean;
 }
 
 export function packFieldRows(
@@ -1072,7 +1077,7 @@ function packAt(items: readonly PackItem[], units: number): { units: number; row
       rows.push([item.key]);
       continue;
     }
-    if (row.length && rowRem([...row, item].map((i) => i.width)) > inner) flush();
+    if (row.length && (item.newRow || rowRem([...row, item].map((i) => i.width)) > inner)) flush();
     row.push(item);
   }
   flush();

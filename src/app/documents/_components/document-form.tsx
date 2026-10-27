@@ -1487,7 +1487,8 @@ export function DocumentForm({
       const width = customFieldWidth(f, forceFullWidthTextarea);
       const isSelect = f.type === "select" && !!f.options && f.options.length > 0;
       // 40.88: a field at TILE takes a row of its own too (`templateFieldTakesRow`).
-      return { key: f.key, width, full: templateFieldTakesRow(width, { isSelect, forceLines: forceFullWidthTextarea }) };
+      // 40.89: a field may start a row of its own accord (`newRow`, migration_121).
+      return { key: f.key, width, full: templateFieldTakesRow(width, { isSelect, forceLines: forceFullWidthTextarea }), newRow: f.newRow === true };
     });
     const { units, rows } = packFieldRows(items, { baseRowsRem });
     const inner = unitsInnerRem(units);

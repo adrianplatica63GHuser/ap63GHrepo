@@ -309,6 +309,8 @@ export const documentTemplateFieldSchema = z.object({
   // would strip the key, and a width written through either door would be
   // gone on the next read with nothing said.
   width:   z.enum(["XS", "S", "M", "L", "XL", "XXL", "TILE"]).nullish(),
+  // Slice 40.89 — a field that starts a row (`newRow`). Kept here for the same reason as `width`: zod would strip it.
+  newRow:  z.boolean().nullish(),
 });
 
 export const documentTypeSchema = z.object({

@@ -43,7 +43,7 @@ The window is 1366 × 900. „One line" is the label 20 px high (its line height
 |---|---|---|
 | 1 | Opens `TC-DOC-05 CVC` | In „Părți afișate": „Identificarea actului", „Pagini", „Obiectul vânzării", „Carte funciară", „Declarații și garanții" and „Taxe și cheltuieli" ticked — the old choice read as today's tiles (#38.33); „Preț și plată" and „Părți" not |
 | 2 | Presses „Toate" | The tiles „Preț și plată" („[Preț]", „[Plată]"), „Obiectul vânzării" („[Descriere]", „[Scop și predare]", „[Obiect declarat]" — „[Descriere]" since #38.49), „Carte funciară" („[Dosar cadastral]", „[Situația în cartea funciară]", „[Excepția de la cadastru]"), „Declarații și garanții" („[Declarațiile vânzătorului]", „[Garanții]", „[Declarații legale]") and „Taxe și cheltuieli" („[Taxe și onorarii]", „[Cheltuieli]"); none of the old names anywhere |
-| 3 | Looks at „Taxe și onorarii" | „Timbru judiciar", „Onorariu notarial", „Impozit transfer" on one row, then „Taxă timbru și publicitate" alone on the next, its label on one line |
+| 3 | Looks at „Taxe și onorarii" | „Timbru judiciar", „Onorariu notarial", „Impozit transfer" and „Taxă timbru și publicitate" on one row (since 40.89, all four at S), „Taxă timbru și publicitate" last, its label on one line |
 
 ## At the end — leaving things as they were found
 
@@ -51,6 +51,9 @@ Put the remembered tiles back as they were (or remove the key if there was none)
 document (`DELETE /api/documents/<id>`). Căutare globală for `TC-DOC-05` finds nothing.
 
 ## Notes from the runs
+
+**2026-10-27 — Slice 40.89.** Adrian set the four fees to S (80 px), so they share one row; step 3 says so. Not driven by
+hand first; the spec checks it.
 
 **2026-10-25 — Slice 40.64.** On a saved record a form tile with nothing in it is one line — its title, „necompletat" and
 „Adaugă". Where a step reads or fills a field in such a tile, the person presses „Adaugă" on it first; the spec does it
