@@ -4,7 +4,7 @@
 -- GENERATED FILE -- DO NOT EDIT BY HAND.
 -- Regenerate with:  .\scripts\Export-SupabaseSchema.ps1
 --
--- Generated : 2026-10-19 08:07
+-- Generated : 2026-10-26 20:21
 -- Source    : local Docker database (ga40db @ ga40prj-postgres)
 --
 -- Applies the complete schema from scratch after running
@@ -594,6 +594,36 @@ CREATE TABLE public.help_hint (
 
 
 --
+-- Name: identity_document; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.identity_document (
+    document_id uuid NOT NULL,
+    last_name text,
+    first_name text,
+    cnp text,
+    sex public.gender,
+    date_of_birth date,
+    place_of_birth text,
+    nationality text,
+    father_first_name text,
+    mother_first_name text,
+    civil_status text,
+    domicile_address text,
+    domicile_county text,
+    domicile_country text,
+    issuer_officer text,
+    passport_type text,
+    country_code text,
+    mrz text,
+    card_number text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT identity_document_cnp_digits CHECK (((cnp IS NULL) OR (cnp ~ '^[0-9]{13}$'::text)))
+);
+
+
+--
 -- Name: interaction; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -718,7 +748,9 @@ CREATE TABLE public.lookup_document_type (
     template_fields jsonb,
     origin text DEFAULT 'MANUAL'::text NOT NULL,
     short_name text,
-    CONSTRAINT chk_ldt_origin CHECK ((origin = ANY (ARRAY['MANUAL'::text, 'IMPORT'::text])))
+    identity_kind text,
+    CONSTRAINT chk_ldt_origin CHECK ((origin = ANY (ARRAY['MANUAL'::text, 'IMPORT'::text]))),
+    CONSTRAINT lookup_document_type_identity_kind_check CHECK (((identity_kind IS NULL) OR (identity_kind = ANY (ARRAY['CI_VECHE'::text, 'CI_NOU'::text, 'PASAPORT'::text, 'PASAPORT_CRDS'::text]))))
 );
 
 
@@ -1685,6 +1717,14 @@ ALTER TABLE ONLY public.help_hint
 
 
 --
+-- Name: identity_document identity_document_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.identity_document
+    ADD CONSTRAINT identity_document_pkey PRIMARY KEY (document_id);
+
+
+--
 -- Name: interaction_document interaction_document_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2281,6 +2321,13 @@ CREATE UNIQUE INDEX group_member_group_principal_object_unique ON public.group_m
 
 
 --
+-- Name: identity_document_cnp_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX identity_document_cnp_idx ON public.identity_document USING btree (cnp);
+
+
+--
 -- Name: idx_document_nr_document_trgm; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2376,6 +2423,13 @@ CREATE INDEX interaction_tag_tag_idx ON public.interaction_tag USING btree (tag)
 --
 
 CREATE UNIQUE INDEX judicial_person_cui_unique ON public.judicial_person USING btree (cui_number) WHERE (cui_number IS NOT NULL);
+
+
+--
+-- Name: lookup_document_type_identity_kind_unique; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX lookup_document_type_identity_kind_unique ON public.lookup_document_type USING btree (identity_kind) WHERE (identity_kind IS NOT NULL);
 
 
 --
@@ -2892,6 +2946,14 @@ ALTER TABLE ONLY public.group_member
 
 ALTER TABLE ONLY public.group_member
     ADD CONSTRAINT group_member_principal_object_id_fkey FOREIGN KEY (principal_object_id) REFERENCES public.principal_object(id) ON DELETE CASCADE;
+
+
+--
+-- Name: identity_document identity_document_document_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.identity_document
+    ADD CONSTRAINT identity_document_document_id_fkey FOREIGN KEY (document_id) REFERENCES public.document(id) ON DELETE CASCADE;
 
 
 --
