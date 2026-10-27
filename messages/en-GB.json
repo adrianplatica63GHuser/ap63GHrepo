@@ -1971,7 +1971,8 @@
       "related": "Links",
       "classification": "Classification",
       "connections": "Tags and groups",
-      "parties": "Parties"
+      "parties": "Parties",
+      "identity": "Identity document"
     },
     "tileSubtitles": {
       "general": "Type, issuer, number, date",
@@ -1980,7 +1981,8 @@
       "related": "People, properties and documents linked to this document",
       "classification": "Importance, relevance, provenance",
       "connections": "Tags, groups, stamps, see also",
-      "parties": "The document's parties, with their role and share"
+      "parties": "The document's parties, with their role and share",
+      "identity": "What the document says, in its own order"
     },
     "tabs": {
       "details": "Details",
@@ -5250,6 +5252,16 @@
     "warnings": {
       "cnp_sex_mismatch": "The CNP does not match the sex on the document.",
       "cnp_birth_date_mismatch": "The CNP does not match the date of birth on the document."
+    },
+    "holder": "Holder:",
+    "validity": {
+      "valid": "VALID",
+      "expired": "EXPIRED",
+      "expiringSoon": "EXPIRES IN {n} DAYS"
+    },
+    "change": {
+      "removes": "Saving removes: {fields} — the new type has no such fields.",
+      "held": "The document holds identity values: empty them before changing it to an ordinary document type."
     }
   }
 }

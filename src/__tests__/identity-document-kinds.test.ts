@@ -95,13 +95,13 @@ describe("each kind's fields — the design's matrix, Adrian's lists exactly", (
     expect(IDENTITY_VALUE_KEYS.filter((k) => !used.has(k))).toEqual([]);
   });
 
-  it("the widths the design names: Nume M, Prenume M, Sex XS, Emisă de L, MRZ L on lines, Domiciliu XL", () => {
+  it("the widths the design names: Nume M, Prenume M, Sex XS, Emisă de L, MRZ L on two lines, Domiciliu XL (40.83: from IDENTITY_DOCUMENT)", () => {
     const w = (kind: IdentityKind, key: IdentityFieldKey) => IDENTITY_KINDS[kind].fields.find((f) => f.key === key)!.width;
     expect(w("CI_NOU", "lastName").step).toBe("M");
     expect(w("CI_NOU", "firstName").step).toBe("M");
     expect(w("CI_NOU", "sex")).toEqual({ step: "XS", kind: "select" });
     expect(w("CI_NOU", "issuer").step).toBe("L");
-    expect(w("CI_NOU", "mrz")).toEqual({ step: "L", kind: "lines" });
+    expect(w("CI_NOU", "mrz")).toMatchObject({ step: "L", kind: "lines", rows: 2 });
     expect(w("CI_NOU", "domicileAddress").step).toBe("XL");
   });
 });

@@ -18,7 +18,7 @@
  *
  * PURE — no React, no DB, no next/*. Safe to import from a client component.
  */
-import type { FieldWidth } from "@/lib/ui/field-widths";
+import { IDENTITY_DOCUMENT, type FieldWidth } from "@/lib/ui/field-widths";
 
 /** The marker values `lookup_document_type.identity_kind` may hold (its CHECK constraint is this list). */
 export const IDENTITY_KIND_VALUES = ["CI_VECHE", "CI_NOU", "PASAPORT", "PASAPORT_CRDS"] as const;
@@ -81,52 +81,43 @@ export type IdentityFieldDef = {
   width: FieldWidth;
 };
 
-const W = {
-  xsSelect: { step: "XS", kind: "select" },
-  xs: { step: "XS", kind: "grows" },
-  m: { step: "M", kind: "grows" },
-  mDate: { step: "M", kind: "input" },
-  l: { step: "L", kind: "grows" },
-  lLines: { step: "L", kind: "lines" },
-  xl: { step: "XL", kind: "grows" },
-} as const satisfies Record<string, FieldWidth>;
-
-function idf(key: IdentityValueKey, type: IdentityValueType, width: FieldWidth, label: string = key): IdentityFieldDef {
-  return { key, target: "identity", column: IDENTITY_VALUE_COLUMNS[key], messageKey: `identityDocument.fields.${label}`, type, width };
+// Slice 40.83: every width is the screen's own table, `IDENTITY_DOCUMENT` (src/lib/ui/field-widths.ts).
+function idf(key: IdentityValueKey, type: IdentityValueType, label: string = key): IdentityFieldDef {
+  return { key, target: "identity", column: IDENTITY_VALUE_COLUMNS[key], messageKey: `identityDocument.fields.${label}`, type, width: IDENTITY_DOCUMENT[key] };
 }
-function docf(key: IdentityDocumentFieldKey, type: IdentityValueType, width: FieldWidth, label: string): IdentityFieldDef {
-  return { key, target: "document", column: IDENTITY_DOCUMENT_COLUMNS[key], messageKey: `identityDocument.fields.${label}`, type, width };
+function docf(key: IdentityDocumentFieldKey, type: IdentityValueType, label: string): IdentityFieldDef {
+  return { key, target: "document", column: IDENTITY_DOCUMENT_COLUMNS[key], messageKey: `identityDocument.fields.${label}`, type, width: IDENTITY_DOCUMENT[key] };
 }
 
 // The fields, as each kind prints them. A label differs by kind only where the card prints a different word: a
 // card's „Seria și numărul" is a passport's „Nr. pașaportului", its „Data eliberării" a passport's „Data emiterii".
 const F = {
-  seriesAndNumber: docf("nrDocument", "text", W.m, "seriesAndNumber"),
-  passportNumber: docf("nrDocument", "text", W.m, "passportNumber"),
-  issueDate: docf("dateDocument", "date", W.mDate, "issueDate"),
-  passportIssueDate: docf("dateDocument", "date", W.mDate, "passportIssueDate"),
-  validUntil: docf("dateValidUntil", "date", W.mDate, "validUntil"),
-  passportValidUntil: docf("dateValidUntil", "date", W.mDate, "passportValidUntil"),
-  issuer: docf("issuer", "issuer", W.l, "issuer"),
-  passportIssuer: docf("issuer", "issuer", W.l, "passportIssuer"),
-  lastName: idf("lastName", "text", W.m),
-  firstName: idf("firstName", "text", W.m),
-  fatherFirstName: idf("fatherFirstName", "text", W.m),
-  motherFirstName: idf("motherFirstName", "text", W.m),
-  cnp: idf("cnp", "cnp", W.m),
-  sex: idf("sex", "sex", W.xsSelect),
-  dateOfBirth: idf("dateOfBirth", "date", W.mDate),
-  placeOfBirth: idf("placeOfBirth", "text", W.l),
-  civilStatus: idf("civilStatus", "text", W.m),
-  nationality: idf("nationality", "text", W.m),
-  domicileAddress: idf("domicileAddress", "text", W.xl),
-  domicileCounty: idf("domicileCounty", "text", W.m),
-  domicileCountry: idf("domicileCountry", "text", W.m),
-  issuerOfficer: idf("issuerOfficer", "text", W.l),
-  passportType: idf("passportType", "text", W.xs),
-  countryCode: idf("countryCode", "text", W.xs),
-  mrz: idf("mrz", "lines", W.lLines),
-  cardNumber: idf("cardNumber", "text", W.m),
+  seriesAndNumber: docf("nrDocument", "text", "seriesAndNumber"),
+  passportNumber: docf("nrDocument", "text", "passportNumber"),
+  issueDate: docf("dateDocument", "date", "issueDate"),
+  passportIssueDate: docf("dateDocument", "date", "passportIssueDate"),
+  validUntil: docf("dateValidUntil", "date", "validUntil"),
+  passportValidUntil: docf("dateValidUntil", "date", "passportValidUntil"),
+  issuer: docf("issuer", "issuer", "issuer"),
+  passportIssuer: docf("issuer", "issuer", "passportIssuer"),
+  lastName: idf("lastName", "text"),
+  firstName: idf("firstName", "text"),
+  fatherFirstName: idf("fatherFirstName", "text"),
+  motherFirstName: idf("motherFirstName", "text"),
+  cnp: idf("cnp", "cnp"),
+  sex: idf("sex", "sex"),
+  dateOfBirth: idf("dateOfBirth", "date"),
+  placeOfBirth: idf("placeOfBirth", "text"),
+  civilStatus: idf("civilStatus", "text"),
+  nationality: idf("nationality", "text"),
+  domicileAddress: idf("domicileAddress", "text"),
+  domicileCounty: idf("domicileCounty", "text"),
+  domicileCountry: idf("domicileCountry", "text"),
+  issuerOfficer: idf("issuerOfficer", "text"),
+  passportType: idf("passportType", "text"),
+  countryCode: idf("countryCode", "text"),
+  mrz: idf("mrz", "lines"),
+  cardNumber: idf("cardNumber", "text"),
 } as const;
 
 export type IdentityKindDef = {

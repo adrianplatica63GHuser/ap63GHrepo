@@ -8,6 +8,8 @@ import { documentStatus } from "@/lib/documents/status";
 import { canConfigureRoles } from "@/lib/auth/can-configure-roles";
 import { DocumentDetailTiles } from "../_components/document-detail-tiles";
 import { fromApiRecord } from "../_components/form-schema";
+import { db } from "@/db";
+import { identityBlockFor } from "@/lib/identity-documents/queries";
 
 type PageParams = {
   params:       Promise<{ id: string }>;
@@ -20,7 +22,8 @@ export default async function EditDocumentPage({ params, searchParams }: PagePar
   const record  = await getDocumentWithSurveyor(id);
   if (!record) notFound();
 
-  const initialValues = fromApiRecord(record);
+  // Slice 40.83: an identity document's own values, for its „Act de identitate" tile (null on an ordinary type).
+  const initialValues = fromApiRecord({ ...record, identity: await identityBlockFor(db, record.id, record.documentTypeId) });
   const tUnnamed = await getTranslations("shared.unnamed");
   const label = record.title ?? tUnnamed("document") /* #37.57: never the system ID */;
 

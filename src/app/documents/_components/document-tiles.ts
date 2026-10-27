@@ -66,6 +66,12 @@ export interface DocumentLayout {
    * is true. Absent means true (a layout built by hand, as the tests do).
    */
   ready?: boolean;
+  /**
+   * Slice 40.83: the type is an identity document (it carries `identity_kind`): its one record tile is
+   * „Act de identitate" (`IDENTITY_TILE`), holding the kind's fields — the number, the dates and the issuer among
+   * them — in place of a form's tile. An identity type holds no form and no parties. Absent means false.
+   */
+  identity?: boolean;
 }
 
 /** The tile of notebook tab `label`. The label is the key: exact text, as `templateTabsOf` keeps it. */
@@ -116,6 +122,9 @@ export const FIELDS_TILE = "fields";
 /** Slice #38.33: a contract de vânzare's sellers and buyers (`layout.parties`). */
 export const PARTIES_TILE = "parties";
 
+/** Slice 40.83: an identity document's tile, „Act de identitate". */
+export const IDENTITY_TILE = "identity";
+
 /** The tile of notebook page `index` — or the fields tile when there is no notebook. */
 export function tileOfTabIndex(tabs: readonly string[], index: number): string {
   return tabs.length > 0 ? tabTileKey(tabs[Math.min(Math.max(index, 0), tabs.length - 1)]) : FIELDS_TILE;
@@ -138,11 +147,13 @@ export const RELATED_WAS: Readonly<Record<string, "related">> = {
 
 /** Built from the type on screen. The entity — and so the storage key — carries the type's key. */
 export function documentTileRegistry(layout: DocumentLayout): TileRegistry<string> {
-  const typeTiles = layout.tabs.length > 0 ? layout.tabs.map(tabTileKey) : layout.ownFields === false ? [] : [FIELDS_TILE];
+  const typeTiles = layout.identity
+    ? [IDENTITY_TILE]
+    : layout.tabs.length > 0 ? layout.tabs.map(tabTileKey) : layout.ownFields === false ? [] : [FIELDS_TILE];
   // Slice #37.88: in the groups' order — the record's own data (with „Părți"),
   // „Corelate", „Clasificări" and „Conexiuni", then „Pagini" at the right.
   // Slice #38.33: a contract de vânzare's „Părți" stands after its type tiles, as a certificate's does.
-  const parties = layout.parties ? [PARTIES_TILE] : [];
+  const parties = layout.parties && !layout.identity ? [PARTIES_TILE] : [];
   const record = ["general", ...typeTiles, ...parties];
   const fixed = layout.pages ? ["pages"] : [];
   const all = [...record, ...DOCUMENT_LIST_TILES, ...fixed];

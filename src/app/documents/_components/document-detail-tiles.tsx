@@ -61,6 +61,7 @@ import { type FormValues } from "./form-schema";
 import {
   DOC_TILE_OF_TAB,
   FIELDS_TILE,
+  IDENTITY_TILE,
   documentTileRegistry,
   markedTiles,
   type DocumentLayout,
@@ -151,6 +152,7 @@ export function DocumentDetailTiles({
       general:      t("tiles.general"),
       pages:        t("tiles.pages"),
       [FIELDS_TILE]: t("tiles.fields"),
+      [IDENTITY_TILE]: t("tiles.identity"),
       parties:      t("tiles.parties"),
       related:      t("tiles.related"),
       classification: t("tiles.classification"),

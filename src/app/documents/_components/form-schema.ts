@@ -17,7 +17,8 @@
 import { z } from "zod/v4";
 import type { DocumentSnapshot } from "@/lib/documents/validation";
 import { customFieldsEqual } from "@/lib/documents/template-fields";
-import { identitySnapshotsEqual } from "@/lib/identity-documents/validation";
+import { identitySnapshotsEqual, type IdentityValues } from "@/lib/identity-documents/validation";
+import { IDENTITY_VALUE_KEYS, identityValueKeysOf, type IdentityKind, type IdentityValueKey } from "@/lib/identity-documents/kinds";
 import { DOCUMENT_SNAPSHOT_KEYS } from "@/lib/versioning/snapshot-registry";
 import {
   diffFieldMap,
@@ -74,6 +75,10 @@ export const formSchema = z.object({
   // (nested record, not a flat string), same treatment as Person's address
   // blocks or Property's corners.
   customFields: z.record(z.string(), z.string()),
+
+  // Slice 40.83: an identity document's own values (src/lib/identity-documents), each a string — "" is empty.
+  // Every key of the table; which ones the kind shows is the registry's. Ignored on an ordinary type.
+  identity: z.record(z.string(), z.string()),
 });
 
 export type FormValues = z.infer<typeof formSchema>;
@@ -106,7 +111,13 @@ export const emptyFormValues: FormValues = {
   surveyorName: "",
   surveyorPersonType: "",
   customFields: {},
+  identity: emptyIdentityForm(),
 };
+
+/** Slice 40.83: every identity field, empty. */
+export function emptyIdentityForm(): Record<IdentityValueKey, string> {
+  return Object.fromEntries(IDENTITY_VALUE_KEYS.map((k) => [k, ""])) as Record<IdentityValueKey, string>;
+}
 
 // ---------------------------------------------------------------------------
 // Hydrate form from API response
@@ -140,6 +151,8 @@ type ApiRecord = {
   surveyorPersonType:  "NATURAL" | "JUDICIAL" | null;
   // Slice #21.03.Import
   customFields: Record<string, string | null> | null;
+  // Slice 40.83: the identity block GET returns (null on an ordinary type; absent on a snapshot from before 40.82)
+  identity?: { values: IdentityValues } | null;
 };
 
 export function fromApiRecord(r: ApiRecord): FormValues {
@@ -169,6 +182,9 @@ export function fromApiRecord(r: ApiRecord): FormValues {
     customFields: Object.fromEntries(
       Object.entries(r.customFields ?? {}).map(([k, v]) => [k, v ?? ""]),
     ),
+    identity: Object.fromEntries(
+      IDENTITY_VALUE_KEYS.map((k) => [k, (r.identity?.values?.[k] as string | null | undefined) ?? ""]),
+    ),
   };
 }
 
@@ -176,7 +192,12 @@ export function fromApiRecord(r: ApiRecord): FormValues {
 // Convert form values to API payload
 // ---------------------------------------------------------------------------
 
-export function toApiPayload(values: FormValues): Record<string, unknown> {
+/**
+ * Slice 40.83: `identityKind` is the selected type's kind, null on an ordinary type. On an identity kind the
+ * payload carries `identity` — the kind's own fields, every other one null, so a change of kind clears what the new
+ * kind has no field for (the API refuses a value outside the kind). On an ordinary type it carries none.
+ */
+export function toApiPayload(values: FormValues, identityKind: IdentityKind | null = null): Record<string, unknown> {
   const str = (v: string) => v.trim() || null;
   const dateStr = (v: string) => v || null;
   const uuid = (v: string) => v.trim() || null;
@@ -215,7 +236,20 @@ export function toApiPayload(values: FormValues): Record<string, unknown> {
     customFields: Object.fromEntries(
       Object.entries(values.customFields).map(([k, v]) => [k, str(v)]),
     ),
+    ...(identityKind ? { identity: identityPayload(values.identity, identityKind) } : {}),
   };
+}
+
+/** The identity block for a kind: its own fields, trimmed ("" → null), every other field null. */
+export function identityPayload(identity: Record<string, string>, kind: IdentityKind): Record<IdentityValueKey, string | null> {
+  const own = new Set<IdentityValueKey>(identityValueKeysOf(kind));
+  return Object.fromEntries(
+    IDENTITY_VALUE_KEYS.map((k) => {
+      if (!own.has(k)) return [k, null];
+      const v = (identity[k] ?? "").trim();
+      return [k, v === "" ? null : k === "mrz" ? v : v.replace(/\s+/g, " ")];
+    }),
+  ) as Record<IdentityValueKey, string | null>;
 }
 
 // ===========================================================================
@@ -265,10 +299,17 @@ const DOC_FIELD_KEYS: readonly DocFieldKey[] = DOCUMENT_SNAPSHOT_KEYS.filter(
   (key): key is DocFieldKey => key !== "customFields" && key !== "identity",
 ) satisfies readonly (keyof FormValues)[];
 
-/** Per-field highlight frames, keyed by document field name. */
+/** Per-field highlight frames, keyed by document field name — and, since 40.83, `identity.<field>`. */
 export type DocumentFieldHighlights = Partial<
-  Record<(typeof DOC_FIELD_KEYS)[number], HighlightColor>
+  Record<(typeof DOC_FIELD_KEYS)[number] | `identity.${IdentityValueKey}`, HighlightColor>
 >;
+
+/** A snapshot's identity block as `identity.<field>` → value; none (a snapshot from before 40.82, an ordinary type) is all null. */
+function flatIdentity(snap: DocumentSnapshot | null): Record<string, string | null> {
+  const block = snap && typeof snap.identity === "object" ? snap.identity : null;
+  return Object.fromEntries(IDENTITY_VALUE_KEYS.map((k) => [`identity.${k}`, (block?.[k] as string | null | undefined) ?? null]));
+}
+const IDENTITY_PATHS = IDENTITY_VALUE_KEYS.map((k) => `identity.${k}` as const);
 
 /** Snapshot → RHF form values (edit/view hydration). The snapshot is already a
  *  flat string|null map; documentTypeId is coerced to "" when absent.
@@ -281,6 +322,8 @@ export function snapshotToFormValues(snap: DocumentSnapshot): FormValues {
     documentTypeId:      snap.documentTypeId ?? "",
     surveyorDisplayName: null,
     surveyorPersonType:  null,
+    // Slice 40.83: the version's identity values (none before 40.82)
+    identity: snap.identity && typeof snap.identity === "object" ? { values: snap.identity } : null,
   });
 }
 
@@ -290,7 +333,11 @@ export function computeFieldHighlights(
   prev: DocumentSnapshot | null,
   curr: DocumentSnapshot,
 ): DocumentFieldHighlights {
-  return diffFieldMap(prev, curr, DOC_FIELD_KEYS);
+  // Slice 40.83: an identity document's values frame like any field, under `identity.<field>`.
+  return {
+    ...diffFieldMap(prev, curr, DOC_FIELD_KEYS),
+    ...diffFieldMap(prev ? flatIdentity(prev) : null, flatIdentity(curr), IDENTITY_PATHS),
+  };
 }
 
 /** Version label colour. v0 green; red if any field modified/deleted; else green. */
@@ -315,5 +362,9 @@ export function formValuesEqual(a: FormValues, b: FormValues): boolean {
   // DOC_FIELD_KEYS (see the flat-map note on that const) — compared
   // separately so a template-field edit still marks the form dirty.
   if (!customFieldsEqual(a.customFields, b.customFields)) return false;
+  // Slice 40.83: the identity values ("" == empty).
+  for (const k of IDENTITY_VALUE_KEYS) {
+    if (normVal(a.identity?.[k]) !== normVal(b.identity?.[k])) return false;
+  }
   return true;
 }

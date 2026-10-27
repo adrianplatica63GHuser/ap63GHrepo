@@ -1971,7 +1971,8 @@
       "related": "Legături",
       "classification": "Clasificare",
       "connections": "Etichete și grupuri",
-      "parties": "Părți"
+      "parties": "Părți",
+      "identity": "Act de identitate"
     },
     "tileSubtitles": {
       "general": "Tip, emitent, număr, dată",
@@ -1980,7 +1981,8 @@
       "related": "Persoane, proprietăți și acte legate de acest act",
       "classification": "Importanță, relevanță, proveniență",
       "connections": "Etichete, grupuri, ștampile, vezi și",
-      "parties": "Părțile actului, cu rolul și cota lor"
+      "parties": "Părțile actului, cu rolul și cota lor",
+      "identity": "Ce scrie pe act, în ordinea de pe act"
     },
     "tabs": {
       "details": "Detalii",
@@ -5250,6 +5252,16 @@
     "warnings": {
       "cnp_sex_mismatch": "CNP-ul nu corespunde sexului de pe act.",
       "cnp_birth_date_mismatch": "CNP-ul nu corespunde datei nașterii de pe act."
+    },
+    "holder": "Titular:",
+    "validity": {
+      "valid": "VALABIL",
+      "expired": "EXPIRAT",
+      "expiringSoon": "EXPIRĂ ÎN {n} ZILE"
+    },
+    "change": {
+      "removes": "La salvare se șterg: {fields} — noul tip nu are aceste câmpuri.",
+      "held": "Actul are date de identitate completate: goliți-le înainte de a-l trece la un tip de document obișnuit."
     }
   }
 }

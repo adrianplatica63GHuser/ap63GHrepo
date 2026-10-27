@@ -143,6 +143,7 @@
   --color-alert:        #b91c1c;  /* red-700   */
   --color-alert-wash:   #fef2f2;  /* red-50    */
   --color-info:         #1d4ed8;  /* blue-700  */
+  --color-scrim:        #000000;  /* bg-scrim/40 — the shade behind a dialog (40.83) */
 }
 
 .dark {
@@ -171,6 +172,7 @@
   --color-alert:        #f87171;  /* red-400 */
   --color-alert-wash:   rgb(127 29 29 / 0.2);  /* red-900 at a fifth */
   --color-info:         #93c5fd;  /* blue-300 */
+  --color-scrim:        #000000;  /* the shade stays black in the dark */
 }
 
 /* ───────────────────────────────────────────────────────────────────────────

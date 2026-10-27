@@ -22,7 +22,7 @@ import { ArrowLeft, Building2, Minimize2, MousePointerClick, Pencil, Save, Trash
 import { IconButton } from "@/lib/ui/icon-button";
 import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
 import { UnsavedChangesBanner } from "@/components/unsaved-changes-banner";
-import { safeMutate } from "@/lib/api/safe-mutate";
+import { refusalCode, safeMutate } from "@/lib/api/safe-mutate";
 import {
   VersionNavControls,
   type VersionNavView,
@@ -63,7 +63,16 @@ import {
   documentTypeOptionLabel,
 } from "@/lib/documents/status";
 import { typeMayHoldAForm } from "@/lib/import/discover-run";
-import { documentTypeIsIdentity } from "@/lib/identity-documents/kinds";
+import { documentTypeIsIdentity, identityKindOfType, type IdentityFieldDef } from "@/lib/identity-documents/kinds";
+import {
+  identityChangeNotice,
+  identityCnpError,
+  identityCnpWarnings,
+  identityFieldPath,
+  identityFieldRows,
+  identityTilePaths,
+} from "@/lib/identity-documents/form";
+import { IdentityHolderLine, IdentityValidity } from "./identity-tile-parts";
 import { IdCardPeopleAction } from "./id-card-people-action";
 import { SaleObjectRecompose } from "@/components/documents/sale-object-recompose";
 import { SALE_OBJECT_FIELD_KEY } from "@/lib/documents/sale-object-description";
@@ -115,7 +124,7 @@ import {
   type ReadMode,
 } from "@/components/tiles/read-edit-tile";
 import { tileIsEmpty, valueAt } from "@/lib/ui/empty-tile";
-import { tileOfTabIndex, type DocumentLayout } from "./document-tiles";
+import { IDENTITY_TILE, tileOfTabIndex, type DocumentLayout } from "./document-tiles";
 import { RecordSyncNotice, useRecordSaveSync } from "@/components/record-save-sync";
 import { DeceasedMark } from "@/components/persons/deceased-mark";
 
@@ -153,6 +162,8 @@ type DocumentTypeOption = {
   name: string;
   // Slice #21.03.Import: raw jsonb — parsed via parseTemplateFields before use.
   templateFields?: unknown;
+  // Slice 40.83: the identity-kind marker (migration_118) — the list carries every column; null on an ordinary type.
+  identityKind?: string | null;
 };
 
 // ⚠️ **`res.redirected` as well as `!res.ok`.**                 (Slice #34.04)
@@ -317,6 +328,9 @@ export function DocumentForm({
       ? { "data-tile": tile, role: "region", "aria-label": tiles.labels[tile] ?? tile, hidden: !tileShown(tile) }
       : {};
   const tShared = useTranslations("shared");
+  // Slice 40.83: the identity tile's labels, sentences, and Sex as „F" / „M" (as Gen, 40.79).
+  const tId = useTranslations("identityDocument");
+  const tGenderShort = useTranslations("naturalPerson.options.genderShort");
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -429,6 +443,9 @@ export function DocumentForm({
   );
   const selectedTypeKey = selectedType?.key;
   const cfg = getTypeConfig(selectedTypeKey);
+  // Slice 40.83: the identity kind of the type picked — read off its marker; null on an ordinary type. Its fields are
+  // the registry's (src/lib/identity-documents/kinds.ts), drawn in the „Act de identitate" tile.
+  const identityKind = selectedType ? identityKindOfType(selectedType) : null;
 
   // Slice #21.03.Import: the selected type's template fields, if any (Phase 3
   // — reintroduces type-specific fields as data, not hardcoded sections).
@@ -480,6 +497,12 @@ export function DocumentForm({
   const [baseline, setBaseline] = useState<{ values: FormValues }>(
     () => ({ values: initialValues ?? emptyFormValues }),
   );
+  // Slice 40.83: the kind the document HAS (its saved type), against which a change of type is judged.
+  const savedKind = useMemo(() => {
+    if (isCreate) return null;
+    const saved = typeOptions.find((opt) => opt.id === baseline.values.documentTypeId);
+    return saved ? identityKindOfType(saved) : null;
+  }, [isCreate, typeOptions, baseline.values.documentTypeId]);
 
   // Bug 1 (Slice #18.15.bugs): transient pulse of the latest version's
   // N-1 -> N change. Set when the user navigates onto the latest from a
@@ -717,7 +740,18 @@ export function DocumentForm({
     setSubmitError(null);
     try {
       const valuesToSave = valuesForSave(values);
-      const payload = toApiPayload(valuesToSave);
+      // Slice 40.83: an identity document's checks before anything is sent — a CNP without a valid control digit, and
+      // a change to an ordinary type while identity values are held (the API refuses both; said here first).
+      if (identityKind !== null && identityCnpError(valuesToSave.identity?.cnp)) {
+        form.setError("identity.cnp", { message: tId("errors.identity_cnp_invalid") });
+        setSubmitError(tId("errors.identity_cnp_invalid"));
+        return null;
+      }
+      if (identityChangeNotice(savedKind, identityKind, valuesToSave.identity ?? {})?.kind === "held") {
+        setSubmitError(tId("change.held"));
+        return null;
+      }
+      const payload = toApiPayload(valuesToSave, identityKind);
       const url =
         mode === "create"
           ? "/api/documents"
@@ -781,6 +815,12 @@ export function DocumentForm({
     } catch (err) {
       // Slice #37.21: a save refused as stale writes nothing; the notice says so.
       if (recordSync.refused(err)) return null;
+      // Slice 40.83: an identity refusal is said in its own words, matched on the code.
+      const code = refusalCode(err);
+      if (code?.startsWith("identity_") && tId.has(`errors.${code}`)) {
+        setSubmitError(tId(`errors.${code}`, { fields: "" }));
+        return null;
+      }
       setSubmitError(err instanceof Error ? err.message : String(err));
       return null;
     } finally {
@@ -1054,6 +1094,8 @@ export function DocumentForm({
       return tileOfTabIndex(tabs, tabOfCustomField(key ?? ""));
     }
     // Slice #38.32: the issuer, the number and the date are there too.
+    // Slice 40.83: on an identity type they are on „Act de identitate", with the validity end and the kind's own.
+    if (identityKind !== null && (root === "identity" || root === "dateValidUntil" || ISSUE_FIELDS.has(root))) return IDENTITY_TILE;
     if (ISSUE_FIELDS.has(root)) return "general";
     return "general";
   };
@@ -1079,7 +1121,7 @@ export function DocumentForm({
     value: (name) => valueAt(watchedValues, name),
   };
   /** Where a tile's first field is: „Identificarea actului" is a panel, every other tile a frame. */
-  const tileSelector = (tile: string): string => (tile === "general" ? `[data-panel="${tile}"]` : `[data-frame="${tile}"]`);
+  const tileSelector = (tile: string): string => (tile === "general" || tile === IDENTITY_TILE ? `[data-panel="${tile}"]` : `[data-frame="${tile}"]`);
   const saveTile = async (tile: string): Promise<boolean> => {
     // The whole record is checked: the other tiles are as saved.
     const valid = await form.trigger();
@@ -1108,7 +1150,7 @@ export function DocumentForm({
   // nothing.
   const onTileLayout = tiles?.onLayout;
   const tileLayoutSig = JSON.stringify({
-    layout: { typeKey: selectedTypeKey ?? null, tabs, pages: showPagesPanel, ready: documentTypesFetched, ownFields: typeHasForm, parties: mode !== "create" && !!documentId && hasPartiesTile(selectedTypeKey) },
+    layout: { typeKey: selectedTypeKey ?? null, tabs, pages: showPagesPanel, ready: documentTypesFetched, ownFields: typeHasForm, parties: mode !== "create" && !!documentId && hasPartiesTile(selectedTypeKey), identity: identityKind !== null },
     highlighted: Object.entries(displayHighlights ?? {})
       .filter(([, colour]) => !!colour)
       .map(([field]) => tileOfPath(field)),
@@ -1158,9 +1200,8 @@ export function DocumentForm({
   // type's identification group, a frame its custom fields — and what hides in each.
   const generalFieldPaths: readonly string[] = [
     "documentTypeId",
-    "issuerPersonId",
-    "nrDocument",
-    "dateDocument",
+    // Slice 40.83: on an identity type these three are on „Act de identitate".
+    ...(identityKind === null ? ["issuerPersonId", "nrDocument", "dateDocument"] : []),
     ...(identificationGroup?.fields ?? []).map((f) => `customFields.${f.key}`),
     "title",
     "subject",
@@ -1179,6 +1220,11 @@ export function DocumentForm({
   const docMarked = (path: string): boolean =>
     !!valueAt(errors, path) || !!(displayHighlights as Record<string, unknown> | null)?.[path];
   const docTilePaths = new Map<string, readonly string[]>([["general", generalFieldPaths]]);
+  // Slice 40.83: „Act de identitate"'s fields, in the order the card prints them.
+  if (identityKind !== null) docTilePaths.set(IDENTITY_TILE, identityTilePaths(identityKind));
+  const identityLabel = new Map<string, string>(
+    identityKind === null ? [] : identityFieldRows(identityKind).rows.flat().map((f) => [identityFieldPath(f), tId(f.messageKey.slice("identityDocument.".length))]),
+  );
   for (const path of customLabel.keys()) {
     const tile = tileOfPath(path);
     if (tile !== "general" && !docTilePaths.has(tile)) docTilePaths.set(tile, frameFieldPaths(tile));
@@ -1189,7 +1235,7 @@ export function DocumentForm({
   const emptyFieldsLink = (tile: string) => (
     <EmptyFieldsLink
       tile={tile}
-      labels={(docHidden.get(tile) ?? []).map((p) => fixedLabel[p] ?? customLabel.get(p) ?? p)}
+      labels={(docHidden.get(tile) ?? []).map((p) => identityLabel.get(p) ?? fixedLabel[p] ?? customLabel.get(p) ?? p)}
       onShow={() => emptyFields.show(tile)}
     />
   );
@@ -1200,7 +1246,7 @@ export function DocumentForm({
         {...tileProps(tile)}
         data-frame={tile}
         onKeyDown={editKeys(tile)}
-        className={`w-fit max-w-full rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${tileShown(tile) ? "" : " hidden"}${editingClass(tile)}`}
+        className={`w-fit max-w-full rounded-md border border-card-rim bg-card p-3 shadow-sm${tileShown(tile) ? "" : " hidden"}${editingClass(tile)}`}
         style={tiles || folded ? { ...(tiles ? { order: tiles.order(tile) } : {}), ...(folded ? unitStyle(2) : {}) } : undefined}
       >
         {folded && (
@@ -1252,6 +1298,121 @@ export function DocumentForm({
       window.setTimeout(() => row.classList.remove("ga-vpulse-red"), 3300);
     }, 60);
   };
+
+  // ── Slice 40.83: „Act de identitate" ─────────────────────────────────────
+  // An identity document's one tile: exactly its kind's fields (the 40.82 registry), in the order the card prints
+  // them, the document's own four — the number, the issue date, the validity end, the issuer — among them, so none
+  // shows twice. Each is the form's own field, so it reads, edits, frames a version's change and pulses like any.
+  const identityRowsNow = identityKind !== null ? identityFieldRows(identityKind) : null;
+  const identityCnpWarn = identityKind !== null ? identityCnpWarnings(watchedValues.identity ?? {}) : [];
+  const identityChange = isCreate || effectiveMode === "view" ? null : identityChangeNotice(savedKind, identityKind, watchedValues.identity ?? {});
+  const identityTypeNotice = identityChange ? (
+    <span className={identityChange.kind === "held" ? "text-alert" : "text-warning"} data-identity-change={identityChange.kind}>
+      {identityChange.kind === "held"
+        ? tId("change.held")
+        : tId("change.removes", { fields: identityChange.fields.map((k) => tId(`fields.${k}`)).join(", ") })}
+    </span>
+  ) : undefined;
+  const identityHighlight = (path: string): HighlightColor | undefined =>
+    (displayHighlights as Record<string, HighlightColor | undefined> | null)?.[path];
+  const renderIdentityField = (f: IdentityFieldDef) => {
+    const path = identityFieldPath(f) as FieldPath<FormValues>;
+    const label = tId(f.messageKey.slice("identityDocument.".length));
+    const idErrors = errors.identity as Record<string, { message?: string } | undefined> | undefined;
+    if (f.type === "issuer") {
+      return (
+        <SelectField
+          key={path}
+          label={label}
+          name="issuerPersonId"
+          register={register}
+          error={errors.issuerPersonId?.message}
+          options={issuer.options}
+          highlight={displayHighlights?.issuerPersonId}
+          width={f.width}
+          watchValue={watchedValues.issuerPersonId}
+          hint={
+            <>
+              <IssuerSearchButton onClick={() => setIssuerSearchOpen(true)} />
+              {issuerRead && !watchedValues.issuerPersonId ? (
+                <IssuerProposal read={issuerRead} listed={issuer.listed} publicBodyTypes={issuer.publicBodyTypes} onPick={pickIssuer} />
+              ) : null}
+            </>
+          }
+        />
+      );
+    }
+    if (f.type === "sex") {
+      return (
+        <SelectField
+          key={path}
+          label={label}
+          name={path}
+          register={register}
+          error={idErrors?.sex?.message}
+          options={[
+            { value: "FEMALE", label: tGenderShort("FEMALE") },
+            { value: "MALE", label: tGenderShort("MALE") },
+          ]}
+          emptyOptionLabel="—"
+          highlight={identityHighlight(path)}
+          width={f.width}
+          watchValue={watchedValues.identity?.sex ?? ""}
+        />
+      );
+    }
+    const cnpError = f.key === "cnp" && identityCnpError(watchedValues.identity?.cnp) ? tId("errors.identity_cnp_invalid") : undefined;
+    const field = (
+      <Field
+        key={path}
+        label={label}
+        name={path}
+        type={f.type === "date" ? "date" : "text"}
+        register={register}
+        error={(f.target === "identity" ? idErrors?.[f.key]?.message : undefined) ?? cnpError}
+        highlight={f.target === "identity" ? identityHighlight(path) : identityHighlight(f.key)}
+        width={f.width}
+      />
+    );
+    if (f.key !== "dateValidUntil") return field;
+    // VALABIL / EXPIRAT beside „Valabil până la", as on the person's tile (40.79).
+    return (
+      <div key={path} className="contents">
+        {field}
+        <div className={STACKED_FIELD_CLASS} data-validity-status="">
+          <span aria-hidden="true" className={`invisible ${STACKED_LABEL_CLASS}`}>{" "}</span>
+          <div className="flex min-h-[1.875rem] items-center leading-tight">
+            <IdentityValidity validUntil={watchedValues.dateValidUntil} />
+          </div>
+        </div>
+      </div>
+    );
+  };
+  const identitySection = identityKind !== null && identityRowsNow ? (
+    <Section
+      panel="identity"
+      units={identityRowsNow.units}
+      title={t("tiles.identity")}
+      subtitle={tId(`kinds.${identityKind}`)}
+      action={editButton(IDENTITY_TILE, t("tiles.identity"))}
+      after={editBar(IDENTITY_TILE)}
+      editing={editingTile === IDENTITY_TILE}
+      onKeyDown={editKeys(IDENTITY_TILE)}
+    >
+      <IdentityHolderLine documentId={isCreate ? null : documentId} />
+      {identityRowsNow.rows.map((row) => (
+        <div key={row.map((f) => f.key).join("|")} className={STACKED_ROW_CLASS} data-identity-row="">
+          {row.map(renderIdentityField)}
+        </div>
+      ))}
+      {identityCnpWarn.map((w) => (
+        <p key={w} className="text-xs text-warning" data-identity-warning={w}>
+          {tId(`warnings.${w}`)}
+        </p>
+      ))}
+      {emptyFieldsLink(IDENTITY_TILE)}
+    </Section>
+  ) : null;
 
   // Renders one custom field's input — shared by every group below.
   // `forceFullWidthTextarea` is set for Certificate și referințe so every
@@ -1422,6 +1583,8 @@ export function DocumentForm({
   // Packed to the tile's own width, so two short fields share a row.
   const identificationPacked = packCustomFields(identificationGroup?.fields ?? [], false, unitsInnerRem(PANEL_UNITS.document.general));
   const issueFields = (
+    // Slice 40.83: an identity type shows these on „Act de identitate", where its card prints them — never twice.
+    identityKind !== null ? null : (
     <>
       {/* Slice #39.72: the issuer, a juridical person — public-body persons listed, every one on search, and the
           AI's reading offered while the field is empty (issuer-field.tsx). */}
@@ -1469,6 +1632,7 @@ export function DocumentForm({
       </div>
       {identificationPacked.nodes}
     </>
+    )
   );
 
   // When the type also defines a "Financiar" group, the two panels sit next
@@ -1576,13 +1740,13 @@ export function DocumentForm({
                   link: (chunks) => (
                     <Link
                       href={`/admin/doc-type-engine?type=${encodeURIComponent(selectedType.id)}`}
-                      className="underline underline-offset-2 hover:text-ink dark:hover:text-zinc-200"
+                      className="underline underline-offset-2 hover:text-ink"
                     >
                       {chunks}
                     </Link>
                   ),
                 })
-              : undefined
+              : identityTypeNotice
           }
         />
         {/* Slice #38.32: who issued it, its number, its date, and the type's own identification fields. */}
@@ -1634,6 +1798,8 @@ export function DocumentForm({
     <>
       {/* Slice #37.20: as tiles, the general data is a tile of its own. */}
       {tab === 0 && !tiled && generalSection}
+      {/* Slice 40.83: an identity type's „Act de identitate", beside it. */}
+      {tab === 0 && !tiled && identitySection}
 
       {/* ── Taxe și onorarii (alone or paired with Financiar) ──────────── */}
       {feesUnitTab === tab && feesOrPairedSection}
@@ -1728,6 +1894,8 @@ export function DocumentForm({
           {/* Slice #37.20: every notebook page is a tile, drawn beside the
               others; a type with none has one tile for its own fields. */}
           {tileBlock("general", generalSection)}
+          {/* Slice 40.83: an identity document's one record tile, in place of a form's. */}
+          {identitySection && tileBlock(IDENTITY_TILE, identitySection)}
           {notebook
             ? tabs.map((label, i) => (
                 <div key={label} className="contents">
@@ -1743,7 +1911,7 @@ export function DocumentForm({
           <div
             role="tablist"
             aria-label={t("notebook.tablistLabel")}
-            className="flex flex-wrap gap-1 border-b border-crease dark:border-zinc-700"
+            className="flex flex-wrap gap-1 border-b border-crease"
             onKeyDown={(e) => {
               const delta = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
               if (delta === 0) return;
@@ -1766,8 +1934,8 @@ export function DocumentForm({
                 className={[
                   "-mb-px rounded-t-md border-b-2 px-3 py-2 text-sm font-medium",
                   i === activeTab
-                    ? "border-focus text-ink dark:text-zinc-100"
-                    : "border-transparent text-fade hover:text-ink dark:text-zinc-400 dark:hover:text-zinc-100",
+                    ? "border-focus text-ink"
+                    : "border-transparent text-fade hover:text-ink",
                 ].join(" ")}
               >
                 {label}
@@ -1806,7 +1974,7 @@ export function DocumentForm({
 
       {/* Slice 40.75: an open tile says its own refusal, under its „Salvează". */}
       {submitError && !editingTile && (
-        <p className={`text-sm text-red-600 dark:text-red-400${tiled ? " order-last basis-full" : ""}`} role="alert">
+        <p className={`text-sm text-alert${tiled ? " order-last basis-full" : ""}`} role="alert">
           {submitError}
         </p>
       )}
@@ -1942,18 +2110,18 @@ export function DocumentForm({
       <div role="dialog" aria-modal="true" aria-label={t("pages.theaterTitle")}>
         {/* Backdrop — click to close */}
         <div
-          className="fixed inset-0 z-50 bg-black/50"
+          className="fixed inset-0 z-50 bg-scrim/50"
           aria-hidden="true"
           onClick={handleCloseTheaterPage}
         />
         {/* Panel */}
         <div
-          className="fixed inset-4 z-50 flex flex-col rounded-xl border border-card-rim bg-white shadow-2xl overflow-hidden dark:border-zinc-700 dark:bg-zinc-900"
+          className="fixed inset-4 z-50 flex flex-col rounded-xl border border-card-rim bg-raised shadow-2xl overflow-hidden"
           style={{ animation: "ga-theater-in 180ms ease" }}
         >
           {/* Header */}
-          <div className="flex items-center justify-between gap-4 px-4 py-2 border-b border-crease dark:border-zinc-700 bg-white dark:bg-zinc-900">
-            <span className="text-sm font-semibold text-ink dark:text-zinc-200">
+          <div className="flex items-center justify-between gap-4 px-4 py-2 border-b border-crease bg-raised">
+            <span className="text-sm font-semibold text-ink">
               {t("pages.theaterTitle")}
             </span>
             {/* #37.44 (A028): Minimize2 in place of „✕ Restrânge"; „Restrânge" its name and tooltip. */}
@@ -1986,7 +2154,7 @@ export function DocumentForm({
     <div className={tiled ? "order-last flex basis-full flex-col gap-4" : "contents"}>
     {effectiveMode === "view" ? (
       mode === "view" && (
-        <div className="flex items-center justify-between border-t border-crease pt-6 dark:border-zinc-800">
+        <div className="flex items-center justify-between border-t border-crease pt-6">
           <IconButton
             icon={ArrowLeft}
             label={tShared("readonlyView.backToList")}
@@ -2011,7 +2179,7 @@ export function DocumentForm({
         </div>
       )
     ) : mode === "view" ? (
-      <div className="flex items-center justify-between border-t border-crease pt-6 dark:border-zinc-800">
+      <div className="flex items-center justify-between border-t border-crease pt-6">
         <IconButton
           icon={ArrowLeft}
           label={tShared("readonlyView.backToList")}
@@ -2043,7 +2211,7 @@ export function DocumentForm({
         </div>
       </div>
     ) : (
-      <div className="flex flex-col items-center gap-2 border-t border-crease pt-6 dark:border-zinc-800">
+      <div className="flex flex-col items-center gap-2 border-t border-crease pt-6">
         <div className="flex items-center justify-center gap-3">
           {/* Slice 40.75: on a saved document each tile saves itself — Delete and the way back stay. */}
           {!perTile && (
@@ -2223,7 +2391,7 @@ function Section({
       style={order === undefined ? unitStyle(units) : { ...unitStyle(units), order }}
       data-panel={panel}
       onKeyDown={onKeyDown}
-      className={`rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${editing ? ` ${TILE_EDITING_CLASS}` : ""}`}
+      className={`rounded-md border border-card-rim bg-card p-3 shadow-sm${editing ? ` ${TILE_EDITING_CLASS}` : ""}`}
     >
       {heading}
       <div className="flex flex-col gap-2">
@@ -2326,7 +2494,7 @@ function Field({
         />
       )}
       {error && (
-        <span className="text-xs text-red-600 dark:text-red-400">{error}</span>
+        <span className="text-xs text-alert">{error}</span>
       )}
     </label>
   );
@@ -2398,7 +2566,7 @@ function SelectField({
       <div className={STACKED_FIELD_CLASS} style={hiddenFieldStyle(hiddenEmpty, boxStyle(width))} data-empty-hidden={hiddenEmpty || undefined}>
         <span className={STACKED_LABEL_CLASS}>{label}</span>
         <ReadValue name={name} kind={width.kind} text={watchValue ? (readLabel ?? chosenLabel ?? "") : ""} style={boxStyle(width)} className={ring} />
-        {hintInRead && hint && <span className="text-xs text-fade dark:text-zinc-400">{hint}</span>}
+        {hintInRead && hint && <span className="text-xs text-fade">{hint}</span>}
       </div>
     );
   }
@@ -2469,10 +2637,10 @@ function SelectField({
           ))}
         </WrappingSelect>
         {hint && (
-          <span id={hintId} className="text-xs text-fade dark:text-zinc-400">{hint}</span>
+          <span id={hintId} className="text-xs text-fade">{hint}</span>
         )}
         {error && (
-          <span id={errorId} className="text-xs text-red-600 dark:text-red-400">{error}</span>
+          <span id={errorId} className="text-xs text-alert">{error}</span>
         )}
       </div>
     </div>
@@ -2545,11 +2713,11 @@ function SurveyorPickerDialog({
       role="dialog"
       aria-modal="true"
       aria-labelledby="surveyor-picker-title"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-scrim/40 p-4"
     >
-      <div className="flex w-full max-w-lg flex-col gap-3 rounded-lg bg-card p-5 shadow-xl dark:bg-zinc-900">
+      <div className="flex w-full max-w-lg flex-col gap-3 rounded-lg bg-card p-5 shadow-xl">
         <div className="flex items-center justify-between">
-          <h3 id="surveyor-picker-title" className="text-base font-semibold text-ink dark:text-zinc-100">
+          <h3 id="surveyor-picker-title" className="text-base font-semibold text-ink">
             {t("surveyorPicker.title")}
           </h3>
           <IconButton
@@ -2563,7 +2731,7 @@ function SurveyorPickerDialog({
 
         {step === "choose-type" ? (
           <div className="flex flex-col gap-3">
-            <p className="text-sm text-fade dark:text-zinc-400">
+            <p className="text-sm text-fade">
               {t("surveyorPicker.stepChooseType")}
             </p>
             <div className="flex gap-3">
@@ -2599,38 +2767,38 @@ function SurveyorPickerDialog({
         ) : (
           <div className="flex flex-col gap-3">
             <div className="grid grid-cols-2 gap-2">
-              <label className="flex flex-col gap-1 text-xs font-medium text-ink dark:text-zinc-300">
+              <label className="flex flex-col gap-1 text-xs font-medium text-ink">
                 {t("surveyorPicker.labelName")}
                 <input
                   type="text"
                   value={nameFilter}
                   onChange={(e) => { setNameFilter(e.target.value); setPage(0); }}
                   placeholder={t("surveyorPicker.namePlaceholder")}
-                  className="rounded-md border border-wire bg-white px-2 py-1 text-sm shadow-sm focus:outline-none dark:border-zinc-700 dark:bg-zinc-950"
+                  className="rounded-md border border-wire bg-raised px-2 py-1 text-sm shadow-sm focus:outline-none"
                 />
               </label>
-              <label className="flex flex-col gap-1 text-xs font-medium text-ink dark:text-zinc-300">
+              <label className="flex flex-col gap-1 text-xs font-medium text-ink">
                 {t("surveyorPicker.labelCode")}
                 <input
                   type="text"
                   value={codeFilter}
                   onChange={(e) => { setCodeFilter(e.target.value); setPage(0); }}
                   placeholder={t("surveyorPicker.codePlaceholder")}
-                  className="rounded-md border border-wire bg-white px-2 py-1 text-sm shadow-sm focus:outline-none dark:border-zinc-700 dark:bg-zinc-950"
+                  className="rounded-md border border-wire bg-raised px-2 py-1 text-sm shadow-sm focus:outline-none"
                 />
               </label>
             </div>
 
-            <div className="max-h-64 overflow-y-auto rounded-md border border-wire dark:border-zinc-700">
+            <div className="max-h-64 overflow-y-auto rounded-md border border-wire">
               {searchQuery.isLoading ? (
                 <p className="p-3 text-sm text-fade">{t("surveyorPicker.loading")}</p>
               ) : searchQuery.isError ? (
-                <p className="p-3 text-sm text-red-600">{t("surveyorPicker.error")}</p>
+                <p className="p-3 text-sm text-alert">{t("surveyorPicker.error")}</p>
               ) : items.length === 0 ? (
                 <p className="p-3 text-sm text-fade">{t("surveyorPicker.resultsEmpty")}</p>
               ) : (
                 <table className="w-full text-sm">
-                  <thead className="bg-canvas dark:bg-zinc-800">
+                  <thead className="bg-canvas">
                     <tr>
                       <th className="px-3 py-1.5 text-left text-xs font-medium text-fade">{t("surveyorPicker.colName")}</th>
                       <th className="px-3 py-1.5" />
@@ -2640,9 +2808,9 @@ function SurveyorPickerDialog({
                     {items.map((item) => (
                       <tr
                         key={item.id}
-                        className="border-t border-wire hover:bg-canvas dark:border-zinc-700 dark:hover:bg-zinc-800"
+                        className="border-t border-wire hover:bg-canvas"
                       >
-                        <td className="px-3 py-1.5 text-ink dark:text-zinc-200">{item.displayName}{item.isDeceased && <DeceasedMark />}</td>
+                        <td className="px-3 py-1.5 text-ink">{item.displayName}{item.isDeceased && <DeceasedMark />}</td>
                         <td className="px-3 py-1.5 text-right">
                           <IconButton
                             icon={MousePointerClick}
@@ -2712,13 +2880,13 @@ function ConfirmDialog({
       role="dialog"
       aria-modal="true"
       aria-labelledby="confirm-title"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-scrim/40 p-4"
     >
-      <div className="w-full max-w-sm rounded-lg bg-card p-6 shadow-xl dark:bg-zinc-900">
-        <h3 id="confirm-title" className="text-base font-semibold text-ink dark:text-zinc-100">
+      <div className="w-full max-w-sm rounded-lg bg-card p-6 shadow-xl">
+        <h3 id="confirm-title" className="text-base font-semibold text-ink">
           {title}
         </h3>
-        <p className="mt-2 text-sm text-fade dark:text-zinc-400">{body}</p>
+        <p className="mt-2 text-sm text-fade">{body}</p>
         <div className="mt-5 flex justify-end gap-2">
           {isConfirm && (
             <button

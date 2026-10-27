@@ -514,6 +514,40 @@ export const DOCUMENT = {
 } as const satisfies Record<string, FieldWidth>;
 
 /**
+ * An identity document's tile, „Act de identitate".               (Slice 40.83)
+ *
+ * The person's size wherever the field is the same one (40.79, 40.80): Nume, Prenume, CNP M; Sex XS reading „F" /
+ * „M"; the dates M; Locul nașterii L; Emisă de L; the MRZ L on two lines; Domiciliu as Stradă, XL. A field with no
+ * counterpart on the person has its own step here — each one line to change. The registry
+ * (src/lib/identity-documents/kinds.ts) takes every width from this table.
+ */
+export const IDENTITY_DOCUMENT = {
+  lastName: NATURAL_PERSON.lastName,
+  firstName: NATURAL_PERSON.firstName,
+  cnp: NATURAL_PERSON.cnp,
+  sex: NATURAL_PERSON.gender,
+  dateOfBirth: NATURAL_PERSON.dateOfBirth,
+  placeOfBirth: NATURAL_PERSON.placeOfBirth,
+  nrDocument: { step: "M", kind: "grows" }, //      the series and number, or the passport's nine digits
+  dateDocument: NATURAL_PERSON.idValidFrom,
+  dateValidUntil: NATURAL_PERSON.idValidUntil,
+  issuer: { step: "L", kind: "select" }, //         Emisă de: a juridical person, as the document's issuer is — at the person's L
+  mrz: NATURAL_PERSON.idMrzRaw,
+  cardNumber: { step: "M", kind: "grows" },
+  domicileAddress: ADDRESS.streetLine,
+  domicileCounty: ADDRESS.county,
+  domicileCountry: ADDRESS.country,
+  // No counterpart on the person:
+  nationality: { step: "M", kind: "grows" }, //     as printed: „Română / ROU", „ROMÂNĂ"
+  fatherFirstName: { step: "M", kind: "grows" }, // a first name, as Prenume
+  motherFirstName: { step: "M", kind: "grows" },
+  civilStatus: { step: "M", kind: "grows" }, //     „căsătorit(ă)", „necăsătorit(ă)"
+  issuerOfficer: { step: "L", kind: "grows" }, //   the officer's rank and name
+  passportType: { step: "XS", kind: "grows" }, //   „P"
+  countryCode: { step: "XS", kind: "grows" }, //    „ROU"
+} as const satisfies Record<string, FieldWidth>;
+
+/**
  * The page image beside the Document's fields.               (Slice #37.15)
  *
  * ⚠️ **NOT NARROWER THAN IT WAS.** Before this slice the „Pagini" panel was

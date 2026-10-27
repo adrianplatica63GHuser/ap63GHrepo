@@ -58,8 +58,8 @@ export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCa
   // Slice #38.84: „Interacțiuni".
   "/interactions":                         ["TC-INT-01", "TC-NAV-01", "TC-INT-02", "TC-INT-03", "TC-INT-04", "TC-INT-05", "TC-INT-06"],
   "/inheritance-tree":                     ["TC-INHER-01", "TC-NAV-01", "TC-INHER-02", "TC-INHER-03"], // Slices #39.11, #39.12, #39.13
-  "/documents/new":                        ["TC-DOC-01", "TC-ASSOC-07", "TC-ASSOC-10", "TC-ASSOC-12", "TC-VER-02", "TC-DOC-13", "TC-DOC-14", "TC-DOC-26"],
-  "/documents/[id]":                       ["TC-DOC-01", "TC-ASSOC-01", "TC-AI-01", "TC-ASSOC-03", "TC-ASSOC-05", "TC-ASSOC-07", "TC-ASSOC-10", "TC-ASSOC-12", "TC-VER-02", "TC-TILES-04", "TC-TABS-01", "TC-TILES-05", "TC-FOLD-01", "TC-ICON-07", "TC-DOC-02", "TC-DOC-03", "TC-DOC-04", "TC-DOC-05", "TC-DOC-06", "TC-TILES-07", "TC-SYSID-01", "TC-ASSOC-13", "TC-DOC-07", "TC-TILES-08", "TC-TILES-09", "TC-DOC-09", "TC-DOC-10", "TC-DOC-11", "TC-TILES-14", "TC-TILES-15", "TC-DOC-12", "TC-TILES-16", "TC-TILES-17", "TC-DOC-13", "TC-TILES-18", "TC-DOC-17", "TC-DOC-18", "TC-DOC-19", "TC-DOC-20", "TC-PERS-10", "TC-TILES-23", "TC-DOC-22", "TC-DOC-24", "TC-DOC-25", "TC-DOC-26", "TC-ASSOC-14", "TC-ASSOC-15"],
+  "/documents/new":                        ["TC-DOC-01", "TC-ASSOC-07", "TC-ASSOC-10", "TC-ASSOC-12", "TC-VER-02", "TC-DOC-13", "TC-DOC-14", "TC-DOC-26", "TC-DOC-28"],
+  "/documents/[id]":                       ["TC-DOC-01", "TC-ASSOC-01", "TC-AI-01", "TC-ASSOC-03", "TC-ASSOC-05", "TC-ASSOC-07", "TC-ASSOC-10", "TC-ASSOC-12", "TC-VER-02", "TC-TILES-04", "TC-TABS-01", "TC-TILES-05", "TC-FOLD-01", "TC-ICON-07", "TC-DOC-02", "TC-DOC-03", "TC-DOC-04", "TC-DOC-05", "TC-DOC-06", "TC-TILES-07", "TC-SYSID-01", "TC-ASSOC-13", "TC-DOC-07", "TC-TILES-08", "TC-TILES-09", "TC-DOC-09", "TC-DOC-10", "TC-DOC-11", "TC-TILES-14", "TC-TILES-15", "TC-DOC-12", "TC-TILES-16", "TC-TILES-17", "TC-DOC-13", "TC-TILES-18", "TC-DOC-17", "TC-DOC-18", "TC-DOC-19", "TC-DOC-20", "TC-PERS-10", "TC-TILES-23", "TC-DOC-22", "TC-DOC-24", "TC-DOC-25", "TC-DOC-26", "TC-ASSOC-14", "TC-ASSOC-15", "TC-DOC-28"],
   "/documents/[id]/associate-person":      ["TC-ASSOC-01", "TC-LAYOUT-01", "TC-ASSOC-13", "TC-DOC-19", "TC-VL-03", "TC-LAYOUT-06"],
   "/documents/[id]/associate-property":    ["TC-ASSOC-02", "TC-LAYOUT-01", "TC-ASSOC-13"],
   "/admin/import":                         ["TC-IMP-01", "TC-IMP-02", "TC-IMP-03", "TC-IMP-04", "TC-ICON-06", "TC-IMP-05", "TC-IMP-06"],
@@ -149,6 +149,10 @@ export const CATALOGUE_OPTED_OUT: Readonly<Record<string, string>> = {
  * it. The same paragraph is in docs/testing/TEST-CATALOGUE.md.
  */
 export const PROMOTED_WITHOUT_DRIVING: Readonly<Record<CatalogueCaseId, string>> = {
+  "TC-DOC-28":
+    "Slice 40.83: the slice's header asks for this spec in the slice itself, over the four identity kinds on invented " +
+    "records made through the API — a real identity card may not be photographed or read for it (the capture rule). " +
+    "Its green run on the test runner is the case's proof; a hand run adds nothing the spec does not check.",
   "TC-AUTH-01":
     "Claude may not type a password into a field, so the case's login steps can never be driven by hand. " +
     "e2e/auth.setup.ts performs them on every run from E2E_EMAIL / E2E_PASSWORD in .env, and the spec asserts " +

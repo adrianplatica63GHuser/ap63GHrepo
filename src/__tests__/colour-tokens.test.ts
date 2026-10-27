@@ -17,6 +17,8 @@ const read = (rel: string) => fs.readFileSync(path.join(ROOT, rel), "utf8");
 /** The converted files. Add a screen here when a slice converts it. */
 export const CONVERTED: readonly string[] = [
   "src/app/_components/dashboard-client.tsx", // 40.76, the pattern
+  "src/app/documents/_components/document-form.tsx", // 40.83, with the identity tile
+  "src/app/documents/_components/identity-tile-parts.tsx", // 40.83
 ];
 
 const PALETTE =
