@@ -409,6 +409,7 @@ export function PropertyForm({
   // today. The label is unchanged.
   // Slice #39.67: tarla numbers restart in every locality, so a code held by two tarlale names its locality
   // („50 (Cornetu)"); a code that is the only one of its kind reads as before, and keeps the box's width.
+  // Slice 40.90: the code alone; „code — description" on hover (`tarlaPickerOption`).
   const tarlaCodeCount = new Map<string, number>();
   for (const o of tarlaItems ?? []) tarlaCodeCount.set(o.indicativ.trim().toLowerCase(), (tarlaCodeCount.get(o.indicativ.trim().toLowerCase()) ?? 0) + 1);
   const tarlaOptions = [
@@ -418,7 +419,6 @@ export function PropertyForm({
         (tarlaCodeCount.get(o.indicativ.trim().toLowerCase()) ?? 0) > 1
           ? `${o.indicativ} (${o.locality?.trim() || t("fields.tarlaNoLocality")})`
           : o.indicativ;
-      // Slice 40.90: the code alone; „code — description" on hover (`tarlaPickerOption`).
       return { value: o.id, ...tarlaPickerOption(code, o.descriere) };
     }),
   ];
