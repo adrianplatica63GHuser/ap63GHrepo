@@ -122,19 +122,24 @@ Fișierele care nu au primit niciun tip ajung la tipul „neclasificat” și nu
 
 După „Importă”, fiecare document creat este citit de AI, iar câmpurile formularului se completează singure — la un contract de vânzare-cumpărare, de exemplu, prețul cu moneda și data autentificării. Ce nu are loc într-un câmp rămâne o notă scurtă în „Note extinse”, iar „Stare procesare” arată „Procesat cu AI” (secțiunea [[documents-identification]]). Uneori citirea îi dă documentului titlul tipărit pe el. Emitentul pe care îl citește nu se scrie ca emitent: așteaptă lângă câmpul emitentului până alegeți (secțiunea [[documents-identification]]). Înscrisurile pe care le citează documentul vă așteaptă răspunsul (secțiunea [[links-references-documents]]).
 
-AI-ul nu citește fișierele Word, Excel, .rtf și .txt; o carte de identitate are citirea ei, mai jos, iar un plan parcelar se mai citește o dată, pentru tarla lui; o imagine cu actele mai multor persoane nu se citește deloc. Și nu creează, nici nu leagă vreo persoană fără confirmarea dumneavoastră.
+AI-ul nu citește fișierele Word, Excel, .rtf și .txt; un act de identitate — carte de identitate sau pașaport — are citirea lui, mai jos, iar un plan parcelar se mai citește o dată, pentru tarla lui; o imagine cu actele mai multor persoane nu se citește deloc. Și nu creează, nici nu leagă vreo persoană fără confirmarea dumneavoastră.
 
 ### 10.4.4 Cărțile de identitate și persoanele propuse {#import-scanning-people}
 
 Spre sfârșitul importului se deschid, pe rând, două feluri de ferestre.
 
-„Creează persoană din cartea de identitate” („Card 1 din 2”, de exemplu) arată numele, CNP-ul, „Serie și număr” și „Eliberat de”, citite de pe carte, și caută titularul în arhivă după CNP. Dacă îl găsește, „Persoana există deja”: comparați datele și apăsați „Confirmă și leagă”. Dacă nu, „Persoană nouă”: apăsați „Creează și leagă”. Persoanele cu nume asemănător apar la „Potriviri posibile”, ca sugestii, nu ca potriviri sigure. Titularul este legat de carte ca „Titular act de identitate”. Sub el, „Părinții titularului” propune tatăl și mama de pe carte, legați apoi de titular ca „Tată” și „Mamă” (secțiunea [[persons-id-card]]). „Instituție emitentă” oferă emitenții, persoane juridice de un tip de autoritate publică; când autoritatea de pe carte nu e printre ei, „Adaugă „…” ca persoană juridică” o face, cu tipul pe care i-l sugerează numele (secțiunea [[companies-add-public-bodies]]).
+„Creează persoană din cartea de identitate” („Card 1 din 2”, de exemplu) se deschide pentru fiecare act de identitate: carte de identitate, veche sau nouă, ori pașaport. O singură citire hotărăște întâi ce fel de act este și o spune — „Act citit: Pașaport.”, de exemplu; dacă importul îl clasificase altfel, fereastra adaugă că la salvare actul trece la felul citit. Apoi arată separat ce se scrie pe act și ce se scrie pe persoană (secțiunea [[persons-identity-documents]]):
+
+- „Pe act — …”: numărul, datele și emitentul, doar cele pe care le are felul actului; în caseta „Se completează și pe act — …”, ce are numai actul, de pildă „Domiciliu”, „Starea civilă” sau „Codul țării”;
+- „Pe persoană — Identitate”: numele, CNP-ul, genul, nașterea, cetățenia și domiciliul, ca adresă de domiciliu — la un pașaport doar județul, la un pașaport CRDS doar țara.
+
+Fereastra caută titularul în arhivă după CNP. Dacă îl găsește, „Persoana există deja”: comparați datele și apăsați „Confirmă și leagă”; persoana primește doar câmpurile pe care nu le avea completate, iar ce avea nu se înlocuiește. Dacă nu, „Persoană nouă”: apăsați „Creează și leagă”. Persoanele cu nume asemănător apar la „Potriviri posibile”, ca sugestii, nu ca potriviri sigure. Titularul este legat de carte ca „Titular act de identitate”. Sub el, „Părinții titularului” propune tatăl și mama de pe carte, legați apoi de titular ca „Tată” și „Mamă” (secțiunea [[persons-id-card]]). „Instituție emitentă” oferă emitenții, persoane juridice de un tip de autoritate publică; când autoritatea de pe carte nu e printre ei, „Adaugă „…” ca persoană juridică” o face, cu tipul pe care i-l sugerează numele (secțiunea [[companies-add-public-bodies]]).
 
 „Confirmați persoanele din acest document” arată, una câte una, persoanele găsite de AI într-un document — vânzătorii, cumpărătorul, notarul —, cu rolul fiecăreia. Alegeți „Da, asociază această persoană” pentru cineva din arhivă, „Creează și asociază” sau „Nu, creează o persoană nouă” pentru cineva nou, ori „Omite”.
 
 Pentru o firmă nouă al cărei CUI l-a citit AI-ul, fereastra are și „Completează din ANAF” (secțiunea [[companies-add-anaf]]). Apăsat, arată ce ar completa ANAF față de ce a citit AI-ul — numărul de la registrul comerțului, telefonul, tipul, adresa sediului —, cu aceleași bife: câmpurile goale bifate, cele citite altfel doar dacă le bifați. La „Creează și asociază”, firma se creează cu valorile bifate, deci ajunge în arhivă completă.
 
-**Răspundeți atunci.** După ce închideți fereastra importului, persoanele găsite în documente nu mai sunt oferite: „După ce închideți, nu mai există unde.” Unei cărți de identitate rămase fără răspuns îi rămâne „Creează persoane din CI”, pe ecranul actului (secțiunea [[persons-id-card-document]]).
+**Răspundeți atunci.** După ce închideți fereastra importului, persoanele găsite în documente nu mai sunt oferite: „După ce închideți, nu mai există unde.” Unui act de identitate rămas fără răspuns îi rămâne „Creează persoane din CI”, pe ecranul actului (secțiunea [[persons-id-card-document]]).
 
 ### 10.4.5 Planurile parcelare și tarla lor {#import-scanning-tarla}
 
@@ -181,7 +186,7 @@ Pe ecranul importului, „Reia ultimul import (…)”, cu numele folderului, re
 Se plătesc două lucruri, anunțate pe ecran înainte de butonul lor:
 
 - la „Scanare”, o clasificare pentru fiecare document imagine sau PDF (dintr-un folder de pagini, doar prima pagină), anunțată la „Deja în sistem”;
-- după „Importă”, o citire pentru fiecare astfel de document, cărțile de identitate incluse, anunțată la „Import”. Citirea unei cărți se plătește și dacă apăsați „Omite”.
+- după „Importă”, o citire pentru fiecare astfel de document, actele de identitate incluse, anunțată la „Import”. Citirea unei cărți se plătește și dacă apăsați „Omite”.
 
 Fișierele Word, .rtf și .txt și documentele aflate deja în sistem nu costă nimic. Un dosar cu o carte de identitate, un contract de trei pagini și un fișier de coordonate costă patru operații AI: două clasificări și două citiri. Importat a doua oară, neschimbat, nu costă nimic.
 

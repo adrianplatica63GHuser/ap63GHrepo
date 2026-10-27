@@ -16,11 +16,11 @@
           "section": "persons-id-card-manual",
           "ro": {
             "question": "Pe ecranul „Persoană fizică nouă” ați completat titularul de pe cartea lui de identitate. Ce faceți ca să apară „Părinții titularului”?",
-            "explanation": "În fișa „Act de identitate”, la „Tip document”, alegeți „Carte de identitate”; sub fișă apare „Părinții titularului”, cu „Creează și tatăl” și „Creează și mama”."
+            "explanation": "„Părinții titularului” stă sub câmpurile fișei „Identitate”, pe orice persoană nouă, cu cele două rânduri nebifate: bifați „Creează și tatăl” și „Creează și mama” și scrieți prenumele lor."
           },
           "en": {
             "question": "On the „Persoană fizică nouă” (new natural person) screen you have filled in the holder from their identity card. What do you do so that „Părinții titularului” (the holder's parents) appears?",
-            "explanation": "In the „Act de identitate” tile, under „Tip document”, choose „Carte de identitate”; under the tile „Părinții titularului” appears, with „Creează și tatăl” and „Creează și mama”."
+            "explanation": "„Părinții titularului” stands under the fields of the „Identitate” tile, on every new person, its two rows unticked: tick „Creează și tatăl” (create the father too) and „Creează și mama” (create the mother too) and type their first names."
           },
           "options": [
             {
@@ -32,8 +32,8 @@
             {
               "id": "o2",
               "correct": true,
-              "ro": "În fișa „Act de identitate”, la „Tip document”, alegeți „Carte de identitate”.",
-              "en": "In the „Act de identitate” tile, under „Tip document”, choose „Carte de identitate”."
+              "ro": "Nimic: stă deja sub „Identitate”, cu rândurile nebifate.",
+              "en": "Nothing: it already stands under „Identitate”, its rows unticked."
             },
             {
               "id": "o3",

@@ -28,7 +28,7 @@ You also get here from other places, with the type already chosen: from the line
 **„The document type that gets the form”** — choose the type from the list. Two marks in the list tell you something:
 
 - „already has a form” — the type can still be chosen. The new fields are added to the ones it has; none of the existing ones is changed or removed.
-- „cannot have a form” — the identity card, whose details are taken at import as persons rather than as values in a form, and the catch-all type, which gathers the documents whose type could not be established.
+- „cannot have a form” — the four identity document types, whose fields the application defines (section [[documents-identity]]), and the catch-all type, which gathers the documents whose type could not be established.
 
 **„Choose the sample folder…”** — point at a folder on the computer holding documents of the same kind, usually between ten and twenty. The browser asks your permission to read the folder; give it. It works in Chrome, Edge or another Chromium-based browser. JPEG, PNG, GIF or WebP images and PDF files are read; TIFF, BMP, Word or text cannot be. One run reads a limited number of samples: if the folder holds more, the screen tells you how many will not be read, and if you want them all, split the folder.
 

@@ -5,7 +5,7 @@
 export const CHAPTER = `
 # 3 Natural persons {#persons}
 
-A natural person is a human being: their name, CNP, date of birth, identity document, telephone numbers, e-mail addresses and addresses. This chapter shows how you find a person, how you add one — by hand or from an identity card —, how you record a death, how you link relatives, and what the „Inheritance tree” and „Interactions” tiles mean.
+A natural person is a human being: their name, CNP, date of birth, citizenship, identity documents, telephone numbers, e-mail addresses and addresses. This chapter shows how you find a person, how you add one — by hand or from an identity card —, how you record a death, how you link relatives, and what the „Inheritance tree” and „Interactions” tiles mean.
 
 ## 3.1 The list of natural persons {#persons-list}
 
@@ -69,12 +69,12 @@ On the list of natural persons, press „Add new Person” — the button on the
 
 | The tile | What it holds |
 |---|---|
-| „Identity” | „Last Name”, „First Name”, „Nickname”, „CNP”, „Gender”, „Date of Birth”, „Deceased” and „Date of death”, „Place of Birth”. |
-| „Identity document” | „ID Type” („ID Card” or „Passport”) and the document's details. |
+| „Identity” | „Last Name”, „First Name”, „Nickname”, „CNP”, „Gender”, „Date of Birth”, „Deceased” and „Date of death”, „Place of Birth”, „Citizenship”, „Professional type”. |
+| „Identity documents” | On a saved person: their identity cards and passports, each a document of its own (section [[persons-identity-documents]]). It does not appear on „New Natural Person”: there is no person yet to hold them. |
 | „Contact” | The telephone numbers and e-mail addresses. |
 | „Addresses” | „Home Address” and „Correspondence Address”. |
 
-„Gender” is written as one letter: „M” or „F” — on the form, on the person's screen, in the list's „Gender” column and in the ID card's window. Under the mouse it shows the whole word, „Male” or „Female”. „Relationship to the business” takes the whole of its row in „Identity”, its ticks one after another, and „MRZ (raw)”, in „Identity document”, shows at least two lines; a longer MRZ line goes onto the next one.
+„Gender” is written as one letter: „M” or „F” — on the form, on the person's screen, in the list's „Gender” column and in the ID card's window. Under the mouse it shows the whole word, „Male” or „Female”. „Relationship to the business” takes the whole of its row in „Identity”, its ticks one after another. „Citizenship” sits beside „Place of Birth”.
 
 The ticks at the top of the screen show or hide tiles, as on any object (section [[start-tiles]]). A hidden tile does not lose its data: what you typed in it is saved all the same.
 
@@ -100,12 +100,12 @@ Both stand in „Identity” and are saved with its „Save”. „Professional 
 
 ## 3.3 A person from an identity card {#persons-id-card}
 
-A Romanian identity card also prints the parents' first names. The application makes use of that: together with the card's holder, it can create the father and the mother and link them to the holder as „Tată” (father) and „Mamă” (mother). This is done in two ways.
+A Romanian identity card — the old booklet above all — also prints the parents' first names. The application makes use of that: together with the card's holder, it can create the father and the mother and link them to the holder as „Tată” (father) and „Mamă” (mother). This is done in two ways. What the person holds and what their identity document holds, see section [[persons-identity-documents]].
 
 ### 3.3.1 When adding by hand {#persons-id-card-manual}
 
 1. On the „New Natural Person” screen, fill in the holder: „Last Name”, „First Name”, „Gender” and whatever else you have from the card.
-2. In the „Identity document” tile, under „ID Type”, choose „ID Card”. Under the tile, „The holder's parents” appears.
+2. Under the fields of the „Identity” tile stands „The holder's parents”, its two rows unticked.
 3. Tick „Also create the father” and type his first name. Tick „Also create the mother” and type her first name.
 4. Each parent's surname is filled in with the holder's and marked „The holder's surname, assumed — check it: a mother's may be her maiden name.” Correct it if you know another.
 5. Press „Save”. The holder is created first.
@@ -119,15 +119,44 @@ At the end you return to the list of persons. On the holder's screen, in „Link
 
 When the identity card is already a document in the archive, with its scan as a page, the persons are created from the document's screen.
 
-1. Open the document of type „Carte de Identitate”.
+1. Open the identity document: a „Carte de Identitate (model nou)”, a „Carte de Identitate (model vechi)”, a „Pașaport” or a „Pașaport CRDS”.
 2. Press „Create people from the ID card”, beside „Modify”. The application reads the card from the first page and opens the window „Create person from ID card”.
 3. Check the holder and press „Create and link”. If the holder is already in the archive, the application finds them by CNP and does not make a second person.
 4. In „The holder's parents”, the father and mother read from the card are already ticked, with the holder's surname, marked as assumed. Check them, then press „Create and link” for each.
 5. Under the button, the application writes what it did: „The holder was created and linked to the document.”, „Father: created and linked”, „Mother: created and linked”.
 
-The holder is linked to the document as „Titular act de identitate” (identity-document holder), and the parents are linked to the holder as „Tată” and „Mamă”. If the reading does not find the parents' first names, the two rows appear empty and unticked, with the note „The card does not print the parents' first names, or the read did not find them…”: you can type them yourself.
+The holder is linked to the document as „Titular act de identitate” (identity-document holder), and the parents are linked to the holder as „Tată” and „Mamă”. What the document printed is written on the document, in its „Identity document” tile; the names, the CNP, the gender, the birth and the citizenship go onto the person, and a person who already existed receives only the fields they had empty. If the reading does not find the parents' first names, the two rows appear empty and unticked, with the note „The card does not print the parents' first names, or the read did not find them…”: you can type them yourself.
 
 How the application reads an identity card when a whole folder is imported, see section [[import-scanning]].
+
+### 3.3.3 Identity documents: what the person holds and what the document holds {#persons-identity-documents}
+
+The archive knows four kinds of identity document. Each is a document type, with its own fields, as the document prints them (section [[documents-identity]]):
+
+| The type | What it has of its own |
+|---|---|
+| „Carte de Identitate (model vechi)” | The old booklet: „Father's first name”, „Mother's first name”, „Civil status”, „Issuing officer”. No CNP, no „Valid until”, no MRZ. |
+| „Carte de Identitate (model nou)” | The laminated or electronic card: „CNP”, „Sex”, „Valid until”, „MRZ” and, when printed, „Card no.”. |
+| „Pașaport” | „Type”, „Country code”, „Passport no.”, „CNP”, „MRZ” and „Domicile — county”. |
+| „Pașaport CRDS” | As the passport, but with „Domicile — country”: that of someone who lives abroad. |
+
+The rule: **the person holds what is true of them, whichever document carries it; each document holds what it printed.** The names, the CNP, the date and place of birth, the gender and the citizenship sit in „Identity”, one value each. The series and number, the dates, the issuer and everything else on the document sit on the identity document.
+
+On a person's screen, the „Identity documents” tile shows their documents (Figure [[fig-persons-identity-documents]]):
+
+- for each document: its kind („CI”, „CI vechi”, „Pașaport” or „Pașaport CRDS”), the series and number, „Valid until” and the state — „VALID”, „EXPIRED” or, close to expiry, „EXPIRES IN 30 DAYS”; the document's code opens it;
+- the first is the „current” one: the one valid today with the latest issue date; if none is valid any more, the one issued last;
+- with no document at all, the tile is a single line: „no ID document recorded”.
+
+![3.2 A person's „Identity documents” tile](persons-identity-documents.png){#fig-persons-identity-documents}
+
+A new document is added from right here:
+
+1. Press „Add identity document”. The application asks „Which identity document are you adding?”.
+2. Choose the kind and press „Continue”. „Add new Document” opens, with the chosen type, the person as holder, and their names, CNP, gender and birth already filled in.
+3. Fill in the rest from the document and press „Save”. Only now is the document saved, and the person is linked to it as „Titular act de identitate” (identity-document holder).
+
+A version of the person saved before identity documents were documents of their own also shows, in this tile, the document details it had then — read-only, under their names of that time.
 
 ## 3.4 The CNP and a death {#persons-identity}
 
@@ -175,7 +204,7 @@ A link is removed from „Links”: choose the row and press „Dissociate”.
 
 The „Inheritance tree” tile, light blue, draws the person's family: parents and grandparents up to great-grandparents, children down to great-grandchildren, siblings and the husband or wife (Figure [[fig-persons-tree]]). If you do not see it, tick „Inheritance tree” at the top of the screen.
 
-![3.2 A person's „Inheritance tree” tile](persons-tree.png){#fig-persons-tree}
+![3.3 A person's „Inheritance tree” tile](persons-tree.png){#fig-persons-tree}
 
 Only links with a kinship role go into the tree — the roles marked „Kinship” in „Person Roles”. A person with no such links shows „No family ties yet.”
 
@@ -203,7 +232,7 @@ From the list of persons, „Peek inside” shows the history only; a click on a
 
 The „Interactions” tile can also go on the left, under the other tiles: grab it by its empty space and drag it there (Figure [[fig-persons-interactions-moved]]). Its place is kept for every person.
 
-![3.3 The „Interactions” tile dragged from the right to the left of the screen, under the other tiles](persons-interactions-moved.png){#fig-persons-interactions-moved}
+![3.4 The „Interactions” tile dragged from the right to the left of the screen, under the other tiles](persons-interactions-moved.png){#fig-persons-interactions-moved}
 
 ## 3.7 Examples and use cases {#persons-examples}
 
@@ -213,10 +242,11 @@ You have in front of you the identity card of a person who is not yet in the arc
 
 1. „Natural Persons” → „Add new Person” (section [[persons-add]]).
 2. Fill in the surname, first name, gender, CNP and date of birth from the card.
-3. Under „ID Type”, choose „ID Card”; tick „Also create the father” and „Also create the mother” and type their first names (section [[persons-id-card-manual]]).
+3. Under „Identity”, in „The holder's parents”, tick „Also create the father” and „Also create the mother” and type their first names (section [[persons-id-card-manual]]).
 4. Check the mother's surname: it may be her maiden name.
 5. „Save”, then „Create and link” for each parent.
 6. Open the person: in „Links” they have a „(Tată)” and a „(Mamă)”.
+7. On the same screen, in „Identity documents”, press „Add identity document” and add the identity card you have in front of you (section [[persons-identity-documents]]).
 
 ### 3.7.2 Record a person's death {#persons-example-death}
 

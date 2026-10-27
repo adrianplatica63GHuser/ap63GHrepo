@@ -4,7 +4,8 @@
     "persons-identity-cnp",
     "persons-identity-death",
     "persons-example-death",
-    "links-versions"
+    "links-versions",
+    "persons-identity-documents"
   ],
   "variants": [
     {
@@ -305,6 +306,44 @@
               "correct": false,
               "ro": "Cu data decesului și CNP-ul, sub nume.",
               "en": "With the date of death and the CNP, under the name."
+            }
+          ]
+        },
+        {
+          "id": "a9",
+          "section": "persons-identity-documents",
+          "ro": {
+            "question": "Ion Popescu are în arhivă o carte de identitate și un pașaport. Unde stă CNP-ul lui, ca dată a persoanei?",
+            "explanation": "Persoana ține ce este adevărat despre ea, oricare act l-ar purta: numele, CNP-ul, data și locul nașterii, genul și cetățenia stau în „Identitate”, câte o valoare. Fiecare act ține ce a tipărit el."
+          },
+          "en": {
+            "question": "Ion Popescu has an identity card and a passport in the archive. Where does his CNP live, as a fact of the person?",
+            "explanation": "The person holds what is true of them, whichever document carries it: the names, the CNP, the date and place of birth, the gender and the citizenship sit in „Identitate”, one value each. Each document holds what it printed."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "Doar pe cartea de identitate curentă, de unde îl citește persoana",
+              "en": "Only on the current identity card, from which the person reads it"
+            },
+            {
+              "id": "o2",
+              "correct": true,
+              "ro": "În fișa „Identitate” a persoanei, o singură valoare",
+              "en": "In the person's „Identitate” tile, a single value"
+            },
+            {
+              "id": "o3",
+              "correct": false,
+              "ro": "Pe fiecare act, iar persoana îl arată pe cel mai nou",
+              "en": "On each document, and the person shows the newest one"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "În „Acte de identitate”, în coloana „Seria și numărul”",
+              "en": "In „Acte de identitate”, in the „Seria și numărul” column"
             }
           ]
         }
@@ -614,6 +653,44 @@
               "correct": false,
               "ro": "Nu se mai poate; scrie în „Note” că a fost o greșeală.",
               "en": "It cannot be done any more; he writes in „Note” that it was a mistake."
+            }
+          ]
+        },
+        {
+          "id": "b9",
+          "section": "persons-identity-documents",
+          "ro": {
+            "question": "Care act de identitate are câmpul „Domiciliu — țara”?",
+            "explanation": "„Pașaport CRDS” este pașaportul celui care locuiește în străinătate: în locul câmpului „Domiciliu — județul” al pașaportului, are „Domiciliu — țara”."
+          },
+          "en": {
+            "question": "Which identity document has the field „Domiciliu — țara” (domicile — country)?",
+            "explanation": "„Pașaport CRDS” is the passport of someone who lives abroad: instead of the passport's „Domiciliu — județul” (domicile — county), it has „Domiciliu — țara”."
+          },
+          "options": [
+            {
+              "id": "o1",
+              "correct": false,
+              "ro": "„Pașaport”",
+              "en": "„Pașaport” (passport)"
+            },
+            {
+              "id": "o2",
+              "correct": false,
+              "ro": "„Carte de Identitate (model nou)”",
+              "en": "„Carte de Identitate (model nou)” (new-style card)"
+            },
+            {
+              "id": "o3",
+              "correct": true,
+              "ro": "„Pașaport CRDS”",
+              "en": "„Pașaport CRDS” (CRDS passport)"
+            },
+            {
+              "id": "o4",
+              "correct": false,
+              "ro": "„Carte de Identitate (model vechi)”",
+              "en": "„Carte de Identitate (model vechi)” (old booklet)"
             }
           ]
         }

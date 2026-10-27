@@ -99,6 +99,19 @@ A document brought into the archive by the import has its form filled in by AI f
 
 The document's classification, tags, groups and stamps sit on the tiles „Classification” and „Tags and groups”; they work as on any object (section [[links-classify]]).
 
+### 6.4.1 The identity document {#documents-identity}
+
+A document of one of the four identity document types (section [[persons-identity-documents]]) has no „Document details”: it has the „Identity document” tile, with exactly the fields of its kind, in the order the document prints them (Figure [[fig-identity-document]]). The number, the issue date, „Valid until” and the issuer sit here, not in „Document identification”.
+
+![6.2 The „Identity document” tile of an identity card](identity-document.png){#fig-identity-document}
+
+- At the top, „Holder:” names the person linked to the document as „Titular act de identitate”, with the link to them.
+- Beside „Valid until” — on a passport, „Expiry date” — stands the state: „VALID”, „EXPIRED” or „EXPIRES IN 30 DAYS”, as on the person. The old booklet has no such date, so no state either.
+- A CNP without a correct control digit is not saved: „A CNP has 13 digits and a correct control digit.”. A CNP that does not match „Sex” or the date of birth is saved, with a warning under the tile.
+- When the type changes between two identity documents, under „Document Type” it says which fields are removed on saving. An identity document does not change to an ordinary type while it has identity values filled in.
+
+A new identity document is made from „Documents” → „Add new Document”, choosing the type, or from the person, with „Add identity document” (section [[persons-identity-documents]]). The fields of each kind can be seen, read-only, in „Reference Data” (section [[admin-reference-data-document-types]]).
+
 ## 6.5 Parties, roles and shares {#documents-parties}
 
 The people, properties and documents linked to a document sit on the tile „Links” (section [[links-related]]): natural persons first, then juridical persons, properties and documents, each row on a single line, with the icon of its kind. A person reads „Name (Role)”, a document „Short label (Type)”. On a document's row, „Relationship” shows how the two documents are linked. Under the rows are „Associate person”, „Associate property”, „Associate document” and „Dissociate”, which removes the selected row's link (section [[links-associate]]). „Cited instruments” opens the panel of the deeds the document cites (section [[links-references]]). On a document with a „Parties” tile, the parties stand there (below).
@@ -123,7 +136,7 @@ Which role holds a share is decided in „Reference Data”, under „Person Rol
 
 The sale contract („Contract de Vânzare”, „CVC” in the list) has the richest form in the archive (Figure [[fig-documents-sale]]). Its tile ticks are, in order: „Document identification”, „Preț și plată”, „Obiectul vânzării”, „Carte funciară”, „Declarații și garanții”, „Taxe și cheltuieli”, „Parties”, „Links”, „Classification”, „Tags and groups” and „Pages”. In „Document identification”, besides „Notary Office”, „Authentic Deed No.” and „Authentication date”, there are „Calitate exemplar” (copy status), „Exemplare emise” (copies issued), „Temei autentificare” (authentication basis) and „Data conținutului” (date of the content).
 
-![6.2 A sale contract](documents-sale.png){#fig-documents-sale}
+![6.3 A sale contract](documents-sale.png){#fig-documents-sale}
 
 The form's tiles and their panels:
 
@@ -155,7 +168,7 @@ The preliminary contract has the „Parties” tile, as the sale contract does (
 
 **The link to the contract.** When the sale contract that fulfils the preliminary contract is in the archive too, link them: on the preliminary contract press „Associate document”, tick the contract, choose „Antecontract al” under „Link type” and press „Associate Selected” (section [[links-references-documents]]). „Relationship” then shows on the preliminary contract „this document “Antecontract al”” followed by the contract, and on the contract the preliminary contract, „Antecontract al”, „this document” (Figure [[fig-documents-antecontract]]). A contract brought in by the import that mentions the preliminary contract has it among its „Cited instruments”; if the preliminary contract is in the archive, „Link” makes the same link.
 
-![6.3 The „Links” tile of a preliminary contract, linked to the sale contract that fulfils it](documents-antecontract.png){#fig-documents-antecontract}
+![6.4 The „Links” tile of a preliminary contract, linked to the sale contract that fulfils it](documents-antecontract.png){#fig-documents-antecontract}
 
 On the contract, the preliminary contract shows in the form too: in „[Preț]”, „Temei preț” holds the deed the price rests on — the preliminary contract, for instance, with its number and date —, and in „[Plată]”, „Stare plată” can be „Achitat la antecontract”.
 

@@ -25,8 +25,8 @@
             {
               "id": "o1",
               "correct": false,
-              "ro": "Din „Persoane Fizice” → „Adaugă persoană”, alegând „Carte de identitate” la „Tip document”.",
-              "en": "From „Persoane Fizice” → „Adaugă persoană” (add person), choosing „Carte de identitate” under „Tip document”."
+              "ro": "Din „Persoane Fizice” → „Adaugă persoană”, alegând cartea în „Acte de identitate”.",
+              "en": "From „Persoane Fizice” → „Adaugă persoană” (add person), choosing the card in „Acte de identitate”."
             },
             {
               "id": "o2",
@@ -666,18 +666,18 @@
           "section": "persons-id-card-manual",
           "ro": {
             "question": "Ciprian are pe birou, pe hârtie, cartea de identitate a lui Radu Stan, care nu este nici persoană, nici act în arhivă. Vrea să-l adauge pe Radu împreună cu părinții. Ce cale folosește?",
-            "explanation": "Când cartea nu este în arhivă, adăugați persoana de mână: pe „Persoană fizică nouă”, alegeți „Carte de identitate” la „Tip document” și bifați „Creează și tatăl” și „Creează și mama”. „Creează persoane din CI” citește o carte aflată deja ca act în arhivă."
+            "explanation": "Când cartea nu este în arhivă, adăugați persoana de mână: pe „Persoană fizică nouă”, sub „Identitate”, bifați în „Părinții titularului” „Creează și tatăl” și „Creează și mama”. „Creează persoane din CI” citește o carte aflată deja ca act în arhivă."
           },
           "en": {
             "question": "Ciprian has on his desk, on paper, the identity card of Radu Stan, who is neither a person nor a document in the archive. He wants to add Radu together with his parents. Which way does he use?",
-            "explanation": "When the card is not in the archive, you add the person by hand: on „Persoană fizică nouă”, choose „Carte de identitate” under „Tip document” and tick „Creează și tatăl” (create the father too) and „Creează și mama” (create the mother too). „Creează persoane din CI” reads a card that is already a document in the archive."
+            "explanation": "When the card is not in the archive, you add the person by hand: on „Persoană fizică nouă”, under „Identitate”, tick in „Părinții titularului” „Creează și tatăl” (create the father too) and „Creează și mama” (create the mother too). „Creează persoane din CI” reads a card that is already a document in the archive."
           },
           "options": [
             {
               "id": "o1",
               "correct": true,
-              "ro": "„Adaugă persoană”, „Carte de identitate” la „Tip document” și bifele pentru tată și mamă.",
-              "en": "„Adaugă persoană”, „Carte de identitate” under „Tip document” and the ticks for father and mother."
+              "ro": "„Adaugă persoană” și, sub „Identitate”, bifele pentru tată și mamă.",
+              "en": "„Adaugă persoană” and, under „Identitate”, the ticks for father and mother."
             },
             {
               "id": "o2",
@@ -694,8 +694,8 @@
             {
               "id": "o4",
               "correct": false,
-              "ro": "„Adaugă persoană”, cu „Pașaport” la „Tip document”, ca să apară „Părinții titularului”.",
-              "en": "„Adaugă persoană”, with „Pașaport” (passport) under „Tip document”, so that „Părinții titularului” appears."
+              "ro": "„Adaugă persoană”, apoi „Adaugă act de identitate”, ca să apară „Părinții titularului”.",
+              "en": "„Adaugă persoană”, then „Adaugă act de identitate” (add identity document), so that „Părinții titularului” appears."
             }
           ]
         },

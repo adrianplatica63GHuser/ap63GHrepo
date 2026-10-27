@@ -5,7 +5,7 @@
 export const CHAPTER = `
 # 3 Persoane fizice {#persons}
 
-O persoană fizică este un om: numele, CNP-ul, data nașterii, actul de identitate, telefoanele, adresele de e-mail și adresele lui. Capitolul acesta vă arată cum găsiți o persoană, cum o adăugați — de mână sau dintr-o carte de identitate —, cum îi notați decesul, cum îi legați rudele și ce înseamnă fișele „Arbore de moștenire” și „Interacțiuni”.
+O persoană fizică este un om: numele, CNP-ul, data nașterii, cetățenia, actele de identitate, telefoanele, adresele de e-mail și adresele lui. Capitolul acesta vă arată cum găsiți o persoană, cum o adăugați — de mână sau dintr-o carte de identitate —, cum îi notați decesul, cum îi legați rudele și ce înseamnă fișele „Arbore de moștenire” și „Interacțiuni”.
 
 ## 3.1 Lista persoanelor fizice {#persons-list}
 
@@ -69,12 +69,12 @@ Pe lista persoanelor fizice, apăsați „Adaugă persoană” — butonul din d
 
 | Fișa | Ce cuprinde |
 |---|---|
-| „Identitate” | „Nume”, „Prenume”, „Poreclă”, „CNP”, „Gen”, „Data nașterii”, „Decedat” și „Data decesului”, „Locul nașterii”. |
-| „Act de identitate” | „Tip document” („Carte de identitate” sau „Pașaport”) și datele actului. |
+| „Identitate” | „Nume”, „Prenume”, „Poreclă”, „CNP”, „Gen”, „Data nașterii”, „Decedat” și „Data decesului”, „Locul nașterii”, „Cetățenie”, „Tip profesional”. |
+| „Acte de identitate” | Pe o persoană salvată: cărțile ei de identitate și pașapoartele, fiecare un act al ei (secțiunea [[persons-identity-documents]]). Pe „Persoană fizică nouă” nu apare: nu există încă persoana care să le dețină. |
 | „Contact” | Telefoanele și adresele de e-mail. |
 | „Adrese” | „Adresă domiciliu” și „Adresă corespondență”. |
 
-„Gen” se scrie cu o literă: „M” sau „F” — în formular, pe ecranul persoanei, în coloana „Gen” a listei și în fereastra cărții de identitate. Ținut sub mouse, arată cuvântul întreg, „Masculin” sau „Feminin”. „Relația cu firma” ține tot rândul ei din „Identitate”, cu bifele una după alta, iar „MRZ (text brut)”, în „Act de identitate”, arată cel puțin două rânduri; un rând mai lung al MRZ-ului trece pe rândul următor.
+„Gen” se scrie cu o literă: „M” sau „F” — în formular, pe ecranul persoanei, în coloana „Gen” a listei și în fereastra cărții de identitate. Ținut sub mouse, arată cuvântul întreg, „Masculin” sau „Feminin”. „Relația cu firma” ține tot rândul ei din „Identitate”, cu bifele una după alta. „Cetățenie” stă lângă „Locul nașterii”.
 
 Bifele din capul ecranului arată sau ascund fișe, ca pe orice obiect (secțiunea [[start-tiles]]). O fișă ascunsă nu își pierde datele: ce ați scris în ea se salvează la fel.
 
@@ -100,12 +100,12 @@ Amândouă stau în „Identitate” și se salvează cu „Salvează”-ul ei. 
 
 ## 3.3 O persoană dintr-o carte de identitate {#persons-id-card}
 
-O carte de identitate românească tipărește și prenumele părinților. Aplicația se folosește de asta: odată cu titularul cărții, poate crea tatăl și mama și îi leagă de el ca „Tată” și „Mamă”. Se face în două feluri.
+O carte de identitate românească — buletinul vechi, mai ales — tipărește și prenumele părinților. Aplicația se folosește de asta: odată cu titularul cărții, poate crea tatăl și mama și îi leagă de el ca „Tată” și „Mamă”. Se face în două feluri. Ce ține persoana și ce ține actul ei de identitate, vedeți în secțiunea [[persons-identity-documents]].
 
 ### 3.3.1 La adăugarea de mână {#persons-id-card-manual}
 
 1. Pe ecranul „Persoană fizică nouă”, completați titularul: „Nume”, „Prenume”, „Gen” și ce mai aveți de pe carte.
-2. În fișa „Act de identitate”, la „Tip document”, alegeți „Carte de identitate”. Sub fișă apare „Părinții titularului”.
+2. Sub câmpurile fișei „Identitate” stă „Părinții titularului”, cu cele două rânduri nebifate.
 3. Bifați „Creează și tatăl” și scrieți-i prenumele. Bifați „Creează și mama” și scrieți-i prenumele.
 4. Numele de familie al fiecărui părinte este completat cu al titularului și marcat „Numele titularului, presupus — verificați-l: al mamei poate fi cel de dinainte de căsătorie.” Corectați-l dacă știți altul.
 5. Apăsați „Salvează”. Titularul se creează întâi.
@@ -119,15 +119,44 @@ La sfârșit vă întoarceți la lista persoanelor. Pe ecranul titularului, în 
 
 Când cartea de identitate este deja un act în arhivă, cu scanarea ei ca pagină, persoanele se creează de pe ecranul actului.
 
-1. Deschideți actul de tip „Carte de identitate”.
+1. Deschideți actul de identitate: o „Carte de Identitate (model nou)”, o „Carte de Identitate (model vechi)”, un „Pașaport” sau un „Pașaport CRDS”.
 2. Apăsați „Creează persoane din CI”, lângă „Modifică”. Aplicația citește cartea de pe prima pagină și deschide fereastra „Creează persoană din cartea de identitate”.
 3. Verificați titularul și apăsați „Creează și leagă”. Dacă titularul există deja în arhivă, aplicația îl găsește după CNP și nu face o a doua persoană.
 4. În „Părinții titularului”, tatăl și mama citiți de pe carte sunt deja bifați, cu numele de familie al titularului, marcat ca presupus. Verificați-i, apoi apăsați „Creează și leagă” pentru fiecare.
 5. Sub buton, aplicația scrie ce a făcut: „Titularul a fost creat și legat de act.”, „Tatăl: creat(ă) și legat(ă)”, „Mama: creat(ă) și legat(ă)”.
 
-Titularul este legat de act ca „Titular act de identitate”, iar părinții sunt legați de titular ca „Tată” și „Mamă”. Dacă citirea nu găsește prenumele părinților, cele două rânduri apar goale și nebifate, cu nota „Cartea nu tipărește prenumele părinților, sau citirea nu le-a găsit…”: le puteți scrie voi.
+Titularul este legat de act ca „Titular act de identitate”, iar părinții sunt legați de titular ca „Tată” și „Mamă”. Ce a tipărit actul se scrie pe act, în fișa lui „Act de identitate”; pe persoană ajung numele, CNP-ul, genul, nașterea și cetățenia, iar o persoană care exista deja primește doar câmpurile pe care nu le avea completate. Dacă citirea nu găsește prenumele părinților, cele două rânduri apar goale și nebifate, cu nota „Cartea nu tipărește prenumele părinților, sau citirea nu le-a găsit…”: le puteți scrie voi.
 
 Cum citește aplicația o carte de identitate la importul unui dosar întreg, vedeți în secțiunea [[import-scanning]].
+
+### 3.3.3 Actele de identitate: ce ține persoana și ce ține actul {#persons-identity-documents}
+
+Arhiva cunoaște patru feluri de acte de identitate. Fiecare este un tip de act, cu câmpurile lui, așa cum le tipărește actul (secțiunea [[documents-identity]]):
+
+| Tipul | Ce are al lui |
+|---|---|
+| „Carte de Identitate (model vechi)” | Buletinul-carnet: „Prenumele tatălui”, „Prenumele mamei”, „Starea civilă”, „Lucrătorul care a eliberat-o”. Fără CNP, fără „Valabil până la”, fără MRZ. |
+| „Carte de Identitate (model nou)” | Cartea plastifiată sau electronică: „CNP”, „Sex”, „Valabil până la”, „MRZ” și, dacă e tipărit, „Nr. card”. |
+| „Pașaport” | „Tip”, „Codul țării”, „Nr. pașaportului”, „CNP”, „MRZ” și „Domiciliu — județul”. |
+| „Pașaport CRDS” | La fel ca pașaportul, dar cu „Domiciliu — țara”: al celui care locuiește în străinătate. |
+
+Regula: **persoana ține ce este adevărat despre ea, oricare act l-ar purta; fiecare act ține ce a tipărit el.** Numele, CNP-ul, data și locul nașterii, genul și cetățenia stau în „Identitate”, câte o valoare. Seria și numărul, datele, emitentul și tot restul de pe act stau pe actul de identitate.
+
+Pe ecranul unei persoane, fișa „Acte de identitate” îi arată actele (Figura [[fig-persons-identity-documents]]):
+
+- pentru fiecare act: felul lui („CI”, „CI vechi”, „Pașaport” sau „Pașaport CRDS”), seria și numărul, „Valabil până la” și starea — „VALABIL”, „EXPIRAT” sau, aproape de expirare, „EXPIRĂ ÎN 30 ZILE”; codul actului îl deschide;
+- primul este cel „curent”: cel valabil azi, cu data eliberării cea mai nouă; dacă niciunul nu mai e valabil, cel eliberat ultimul;
+- fără niciun act, fișa stă pe un singur rând: „niciun act înregistrat”.
+
+![3.2 Fișa „Acte de identitate” a unei persoane](persons-identity-documents.png){#fig-persons-identity-documents}
+
+Un act nou se adaugă chiar de aici:
+
+1. Apăsați „Adaugă act de identitate”. Aplicația întreabă „Ce act de identitate adăugați?”.
+2. Alegeți felul actului și apăsați „Continuă”. Se deschide „Adaugă act”, cu tipul ales, cu persoana ca titular și cu numele, CNP-ul, genul și nașterea ei deja completate.
+3. Completați restul de pe act și apăsați „Salvează”. Abia acum se salvează actul, iar persoana este legată de el ca „Titular act de identitate”.
+
+O versiune a persoanei salvată înainte ca actele de identitate să fie acte separate arată, în fișa aceasta, și datele actului pe care le avea atunci — doar de citit, sub numele lor de atunci.
 
 ## 3.4 CNP-ul și decesul {#persons-identity}
 
@@ -175,7 +204,7 @@ O legătură se scoate din „Legături”: alegeți rândul și apăsați „De
 
 Fișa „Arbore de moștenire”, albastru deschis, desenează familia persoanei: părinții și bunicii până la străbunici, copiii până la strănepoți, frații și soțul sau soția (Figura [[fig-persons-tree]]). Dacă nu o vedeți, bifați „Arbore de moștenire” în capul ecranului.
 
-![3.2 Fișa „Arbore de moștenire” a unei persoane](persons-tree.png){#fig-persons-tree}
+![3.3 Fișa „Arbore de moștenire” a unei persoane](persons-tree.png){#fig-persons-tree}
 
 În arbore intră doar legăturile cu un rol de rudenie — rolurile marcate „Rudenie” în „Roluri Persoane”. O persoană fără astfel de legături arată „Nicio legătură de familie încă.”.
 
@@ -203,7 +232,7 @@ Din lista persoanelor, „Incursiune” arată doar istoricul; un clic pe o inte
 
 Fișa „Interacțiuni” se poate pune și în stânga, sub celelalte fișe: apucați-o de spațiul ei gol și trageți-o acolo (Figura [[fig-persons-interactions-moved]]). Locul ei se păstrează pentru toate persoanele.
 
-![3.3 Fișa „Interacțiuni” trasă din dreapta în stânga ecranului, sub celelalte fișe](persons-interactions-moved.png){#fig-persons-interactions-moved}
+![3.4 Fișa „Interacțiuni” trasă din dreapta în stânga ecranului, sub celelalte fișe](persons-interactions-moved.png){#fig-persons-interactions-moved}
 
 ## 3.7 Exemple și cazuri de utilizare {#persons-examples}
 
@@ -213,10 +242,11 @@ Aveți în față cartea de identitate a unei persoane care nu este încă în a
 
 1. „Persoane Fizice” → „Adaugă persoană” (secțiunea [[persons-add]]).
 2. Completați numele, prenumele, genul, CNP-ul și data nașterii de pe carte.
-3. La „Tip document”, alegeți „Carte de identitate”; bifați „Creează și tatăl” și „Creează și mama” și scrieți prenumele lor (secțiunea [[persons-id-card-manual]]).
+3. Sub „Identitate”, în „Părinții titularului”, bifați „Creează și tatăl” și „Creează și mama” și scrieți prenumele lor (secțiunea [[persons-id-card-manual]]).
 4. Verificați numele de familie al mamei: poate fi cel de dinainte de căsătorie.
 5. „Salvează”, apoi „Creează și leagă” pentru fiecare părinte.
 6. Deschideți persoana: în „Legături” are un „(Tată)” și o „(Mamă)”.
+7. Tot pe ecranul ei, în „Acte de identitate”, apăsați „Adaugă act de identitate” și adăugați cartea de identitate pe care o aveți în față (secțiunea [[persons-identity-documents]]).
 
 ### 3.7.2 Notați decesul unei persoane {#persons-example-death}
 

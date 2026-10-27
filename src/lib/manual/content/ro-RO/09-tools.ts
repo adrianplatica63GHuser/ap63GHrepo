@@ -28,7 +28,7 @@ Se ajunge aici și din alte locuri, cu tipul deja ales: din linia „Acest tip n
 **„Tipul de document care primește formularul”** — alegeți tipul din listă. Două semne din listă spun ceva:
 
 - „are deja formular” — tipul se poate alege și așa. Câmpurile noi se adaugă la cele pe care le are; niciunul dintre cele existente nu este modificat sau șters.
-- „nu poate primi formular” — cartea de identitate, ale cărei date se preiau la import ca persoane, nu ca valori într-un formular, și tipul de rezervă, care adună actele al căror tip nu s-a putut stabili.
+- „nu poate primi formular” — cele patru tipuri de act de identitate, ale căror câmpuri le definește aplicația (secțiunea [[documents-identity]]), și tipul de rezervă, care adună actele al căror tip nu s-a putut stabili.
 
 **„Alege folderul cu mostre…”** — arătați un folder de pe calculator cu acte de același fel, de obicei între zece și douăzeci. Browserul vă cere voie să citească folderul; dați-i-o. Merge în Chrome, Edge sau alt browser bazat pe Chromium. Se citesc imagini JPEG, PNG, GIF sau WebP și fișiere PDF; TIFF, BMP, Word sau text nu se pot citi. O rulare citește un număr limitat de mostre: dacă folderul are mai multe, ecranul vă spune câte rămân necitite, iar dacă le vreți pe toate, împărțiți folderul.
 

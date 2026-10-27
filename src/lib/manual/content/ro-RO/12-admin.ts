@@ -67,15 +67,17 @@ Deasupra celor trei liste din „Roluri și legături” stă fișa „Cum se le
 
 ### 12.1.3 Tipurile de document {#admin-reference-data-document-types}
 
-„Tipuri de Document” are coloanele „Denumire”, „Denumire scurtă”, „Stare” și „Folosit de (n obiecte)”. „Stare” spune de unde vine tipul și dacă are formular: „Adăugat manual”, „Creat la import” sau „Are formular”. Țineți mouse-ul pe denumirea unui tip și bula arată denumirea întreagă, iar sub ea cheia tipului, de exemplu „CONTRACT_VANZARE”.
+„Tipuri de Document” are coloanele „Denumire”, „Denumire scurtă”, „Stare” și „Folosit de (n obiecte)”. „Stare” spune de unde vine tipul și dacă are formular: „Adăugat manual”, „Creat la import” sau „Are formular”; cele patru tipuri de act de identitate spun „Act de identitate”. Țineți mouse-ul pe denumirea unui tip și bula arată denumirea întreagă, iar sub ea cheia tipului, de exemplu „CONTRACT_VANZARE”.
 
 Deasupra tabelului stau două bife: „Cu formular” arată doar tipurile care au formular, „Fără formular” doar pe cele care nu au. Amândouă bifate, sau niciuna, arată toate tipurile. Când un import se oprește la un tip fără formular, legătura lui deschide lista cu „Fără formular” bifat (capitolul [[import]]).
 
 „Deschide”, pe rândul unui tip, deschide pagina tipului, cu trei file:
 
 - „General” — „Denumire”, „Denumire scurtă”, „Cod” și „Stare”, cu „Salvează”. Codul se poate doar citi: „Codul nu se schimbă: formularele exportate, cererea către AI și testele îl folosesc.”. Denumirea scurtă este cea din coloana „Tip” a listei actelor (secțiunea [[documents-list]]).
-- „Formular” — câmpurile proprii ale actelor de acest tip (secțiunea [[documents-identification]]). Fără formular, fila spune „Acest tip nu are încă formular.” și oferă „Creează formularul”; cu formular, „Editează formularul”, cu numărul câmpurilor. Fiecare câmp are o etichetă în română și una în engleză. Cheia de sub etichetă se stabilește la adăugarea câmpului și nu se mai schimbă, așa că o etichetă se poate redenumi fără grijă. Cartea de identitate și tipul de rezervă pentru actele neclasificate nu pot avea formular.
+- „Formular” — câmpurile proprii ale actelor de acest tip (secțiunea [[documents-identification]]). Fără formular, fila spune „Acest tip nu are încă formular.” și oferă „Creează formularul”; cu formular, „Editează formularul”, cu numărul câmpurilor. Fiecare câmp are o etichetă în română și una în engleză. Cheia de sub etichetă se stabilește la adăugarea câmpului și nu se mai schimbă, așa că o etichetă se poate redenumi fără grijă. Cele patru tipuri de act de identitate arată aici formularul lor de sistem: „Formular de sistem: câmpurile unui act de identitate sunt definite de aplicație și nu se modifică aici.”, apoi câmpurile felului lor, în ordinea de pe act, fiecare cu lățimea lui (Figura [[fig-admin-system-form]], secțiunea [[documents-identity]]). Nu primesc un formular propriu, iar în listă rândul lor nu are butonul „Formular”. Nici tipul de rezervă pentru actele neclasificate nu poate avea formular.
 - „Roluri” — rolurile pe care le poate avea o persoană într-un act de acest tip. Alegeți un rol în „Adaugă un rol” și apăsați „Adaugă rolul”; bifați „Deține cotă” acolo unde rolul aduce o cotă-parte.
+
+![12.2 Formularul de sistem al tipului „Pașaport”](system-form.png){#fig-admin-system-form}
 
 Fila „Roluri” a unui tip și „Act” din panoul unui rol arată aceleași perechi, din două capete: un rol adăugat pe un tip apare și în panoul rolului, cu bifa lui. „← Tipuri de Document” vă întoarce la listă.
 
@@ -170,7 +172,7 @@ Textele din spatele butonului „?” și sfaturile cu bec de pe ecrane (secțiu
 
 „Setări” se deschide din bara laterală, ultimul în secțiunea „Administrare” (Figura [[fig-admin-settings]]). Ca pe ecranul unui obiect, căsuțele de sus aleg ce părți se văd, iar „Implicit” le aduce înapoi (secțiunea [[start-tiles]]). Părțile sunt „Contul meu”, „Praguri de timp”, „Copii de siguranță”, „Despre” și, în grupa „Costuri”, câte una pentru fiecare furnizor care poate costa bani.
 
-![12.2 „Setări”](admin-settings.png){#fig-admin-settings}
+![12.3 „Setări”](admin-settings.png){#fig-admin-settings}
 
 ### 12.5.1 „Contul meu” {#admin-settings-account}
 
@@ -191,7 +193,7 @@ Pragurile hotărăsc, printre altele:
 
 - câte zile în urmă numără „Recente” pe „Tablou de bord” și câte zile înainte arată acolo actele care expiră;
 - cu cât timp înainte un act apare „expiră curând”;
-- cu cât timp înainte de expirare este semnalată o carte de identitate („Prag CI expiră curând”);
+- cu cât timp înainte de expirare este semnalat un act de identitate — carte de identitate sau pașaport („Prag CI expiră curând”);
 - cât timp poartă un obiect schimbat insigna „Nou!”, roșie și apoi chihlimbar, și după cât timp insigna dispare;
 - cât timp țineți o fișă peste alta până când aceea alunecă în jos, ca să-i facă loc.
 

@@ -516,7 +516,7 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     await still(page);
     await page.screenshot({ path: `${dir}/persons-new.png` });
 
-    // Figura 3.2 — the „Arbore de moștenire" tile of the seed's YOUNGEST person (the first, born 1907, has a family too
+    // Figura 3.3 — the „Arbore de moștenire" tile of the seed's YOUNGEST person (the first, born 1907, has a family too
     // large to read in one tile): seed persons only.
     await page.goto(`/natural-persons/${naturals[naturals.length - 1].id}`);
     await expect(tile("inheritanceTree")).toBeVisible({ timeout: 60_000 });
@@ -524,7 +524,47 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     await still(page);
     await tile("inheritanceTree").screenshot({ path: `${dir}/persons-tree.png` });
 
-    // Figura 3.3 — 40.36: the same seed person's „Interacțiuni" (40.32: it starts on the right and moves like any tile)
+    // 40.87 — an identity document and its holder, from the big dev seed's invented cards (it files no passport).
+    // Figura 6.2: the card's „Act de identitate" tile; Figura 3.2: its holder's „Acte de identitate". Seed records
+    // only; the CNP and the MRZ are blurred all the same, and so is every series and number in the holder's list.
+    const card = objects!.find((o) => o.kind === "DOCUMENT" && o.label.startsWith("Carte de identitate"))!;
+    const blurIdentity = () =>
+      page.evaluate((f) => {
+        for (const el of document.querySelectorAll<HTMLElement>("[data-read-value], input, textarea")) {
+          const v = el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement ? el.value : (el.textContent ?? "");
+          if (/^\s*\d{13}\s*$/.test(v) || /<</.test(v) || /^\s*[A-Z]{2}\s?\d{6}\s*$/.test(v)) el.style.filter = f;
+        }
+        for (const el of document.querySelectorAll<HTMLElement>("[data-identity-document] td:nth-child(2)")) el.style.filter = f;
+      }, BLUR);
+    await page.goto(`/documents/${card.id}`);
+    const identityPanel = page.locator('[data-panel="identity"]').filter({ visible: true }).first();
+    await expect(identityPanel).toBeVisible({ timeout: 60_000 });
+    await page.waitForTimeout(1500);
+    await blurIdentity();
+    await still(page);
+    await identityPanel.screenshot({ path: `${dir}/identity-document.png` });
+
+    const holders = (await (await page.request.get(`/api/documents/${card.id}/persons`)).json()) as { items: { id: string }[] };
+    const holder = holders.items.find((h) => naturals.some((n) => n.id === h.id))!;
+    await page.goto(`/natural-persons/${holder.id}`);
+    await expect(tile("idCard")).toBeVisible({ timeout: 60_000 });
+    await expect(tile("idCard").locator("[data-identity-document]").first()).toBeVisible({ timeout: 30_000 });
+    await page.waitForTimeout(1500);
+    await blurIdentity();
+    await still(page);
+    await tile("idCard").screenshot({ path: `${dir}/persons-identity-documents.png` });
+
+    // Figura 12.2 — 40.84: the passport's system form, under „Tipuri de Document" (no record in it at all).
+    await page.goto("/admin/value-lists/document-types/PASAPORT?tab=form");
+    const systemForm = page.locator('[data-identity-system-form="PASAPORT"]');
+    await expect(systemForm).toBeVisible({ timeout: 60_000 });
+    await page.waitForTimeout(800);
+    await still(page);
+    await page.getByRole("tabpanel").first().screenshot({ path: `${dir}/system-form.png` });
+    // Back to Figura 3.3's person, whom Figura 3.4 reloads.
+    await page.goto(`/natural-persons/${naturals[naturals.length - 1].id}`);
+
+    // Figura 3.4 — 40.36: the same seed person's „Interacțiuni" (40.32: it starts on the right and moves like any tile)
     // dragged by its free space to the left, under every other tile. A window tall enough for the whole row, the
     // picture cut at the row's bottom; the CNP, the identity fields and „Recente" blurred. The arrangement is forgotten
     // straight after, so no other figure, and no later run, sees it.
@@ -589,7 +629,7 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     // Figurile 2.11 and 2.12 (2.10 and 2.11 until 40.54) — 40.44, for 40.40–40.42: the same seed person at 1366 × 3600, „Toate" pressed, „Clasificare"
     // dragged by its free space far down under every tile — shot; then „Toate sus" — shot: the tiles risen and the
     // columns evened, the small sketch of the tiles (40.42) right of the bar's two rows (40.41). The CNP, the identity
-    // fields and „Recente" blurred; the arrangement forgotten straight after, as Figura 3.3's is.
+    // fields and „Recente" blurred; the arrangement forgotten straight after, as Figura 3.4's is.
     const blurPerson = async () => {
       await page.evaluate(
         ([f, any, start]) => {
@@ -820,7 +860,7 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     await still(page);
     await page.screenshot({ path: `${dir}/links-associate.png` });
 
-    // Figura 6.2 — the seed's sale contract, „Părți" shown, the whole page.
+    // Figura 6.3 — the seed's sale contract, „Părți" shown, the whole page.
     await page.goto(`/documents/${sale.id}`);
     await expect(tile("general")).toBeVisible({ timeout: 60_000 });
     await tick(S.parties, true);
@@ -853,7 +893,7 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
       await removeRecord(page.request, "document", docId);
     }
 
-    // Figura 6.3 (Slice #39.47) — an antecontract's „Legături”, linked to the seed's sale contract with „Antecontract
+    // Figura 6.4 (Slice #39.47) — an antecontract's „Legături”, linked to the seed's sale contract with „Antecontract
     // al”, two seed persons on it. The seed has no antecontract, so one is made here — its title in the seed's own
     // style, the marker in its „Subiect” (which „Căutare globală” searches, so removeLeftovers finds it) — and
     // removed in `finally`, its links with it.
@@ -955,7 +995,7 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
 
     for (const f of [
       "dashboard", "sidebar", "breadcrumb", "list", "list-fit", "list-resize", "record", "make-room", "all-up-before", "all-up-after", "help",
-      "persons-new", "persons-tree", "persons-interactions-moved", "companies-record", "properties-list", "properties-record",
+      "persons-new", "persons-identity-documents", "identity-document", "system-form", "persons-tree", "persons-interactions-moved", "companies-record", "properties-list", "properties-record",
       "documents-pages", "documents-sale", "documents-antecontract", "links-associate", "links-related", "links-versions",
       "tools-doc-type-engine", "tools-calculation", "import-steps", "reports-search", "admin-value-lists", "admin-settings",
     ]) {

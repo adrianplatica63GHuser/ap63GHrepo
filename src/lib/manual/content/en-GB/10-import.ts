@@ -122,19 +122,24 @@ Files that received no type go to the „Unclassified” type and do not stop th
 
 After „Import”, every document created is read by the AI, and the fields of its form fill themselves in — on a sale contract, for example, the price with its currency and the date of authentication. Whatever has no field stays as a short note in „Enhanced Notes”, and „Processing status” shows „AI processed” (section [[documents-identification]]). Sometimes the reading gives the document the title printed on it. The issuer it reads is not written as the issuer: it waits beside the issuer field until you choose (section [[documents-identification]]). The instruments the document cites wait for your answer (section [[links-references-documents]]).
 
-The AI does not read Word, Excel, .rtf or .txt files; an identity card has a reading of its own, below, and a plan parcelar is read once more, for its tarla; an image holding several people's documents is not read at all. And it neither creates nor links a person without your confirmation.
+The AI does not read Word, Excel, .rtf or .txt files; an identity document — identity card or passport — has a reading of its own, below, and a plan parcelar is read once more, for its tarla; an image holding several people's documents is not read at all. And it neither creates nor links a person without your confirmation.
 
 ### 10.4.4 Identity cards, and the persons proposed {#import-scanning-people}
 
 Towards the end of the import two kinds of window open, one after another.
 
-„Create person from ID card” („Card 1 of 2”, for example) shows the name, the CNP, „Series and number” and „Issued by”, read from the card, and looks for the holder in the archive by CNP. If it finds them, „This person already exists”: compare the details and press „Confirm and link”. If not, „New person”: press „Create and link”. Persons with a similar name appear under „Possible matches”, as suggestions, not as sure matches. The holder is linked to the card as „Titular act de identitate” (identity-document holder). Below, „The holder's parents” proposes the father and mother from the card, then linked to the holder as „Tată” and „Mamă” (section [[persons-id-card]]). „Issuing institution” offers the issuers, juridical persons of a public-body type; when the card's authority is not among them, „Add “…” as a juridical person” makes it, with the type its name suggests (section [[companies-add-public-bodies]]).
+„Create person from ID card” („Card 1 of 2”, for example) opens for each identity document: an identity card, old or new, or a passport. A single reading first decides what kind of document it is and says so — „Document read: Passport.”, for example; if the import had classified it otherwise, the window adds that on saving the document changes to the kind read. Then it shows apart what is written on the document and what is written on the person (section [[persons-identity-documents]]):
+
+- „On the document — …”: the number, the dates and the issuer, only those the kind of document has; in the box „Also filled on the document — …”, what only the document has, such as „Domicile”, „Civil status” or „Country code”;
+- „On the person — Identity”: the names, the CNP, the gender, the birth, the citizenship and the domicile, as the home address — for a passport only the county, for a CRDS passport only the country.
+
+The window looks for the holder in the archive by CNP. If it finds them, „This person already exists”: compare the details and press „Confirm and link”; the person receives only the fields they had empty, and nothing they had is replaced. If not, „New person”: press „Create and link”. Persons with a similar name appear under „Possible matches”, as suggestions, not as sure matches. The holder is linked to the card as „Titular act de identitate” (identity-document holder). Below, „The holder's parents” proposes the father and mother from the card, then linked to the holder as „Tată” and „Mamă” (section [[persons-id-card]]). „Issuing institution” offers the issuers, juridical persons of a public-body type; when the card's authority is not among them, „Add “…” as a juridical person” makes it, with the type its name suggests (section [[companies-add-public-bodies]]).
 
 „Confirm people from this document” shows, one by one, the persons the AI found in a document — the sellers, the buyer, the notary — with each one's role. Choose „Yes, link this person” for someone in the archive, „Create & link” or „No, create a new person instead” for someone new, or „Skip”.
 
 For a new firm whose CUI the AI read, the window also has „Fill in from ANAF” (section [[companies-add-anaf]]). Pressed, it shows what ANAF would fill in beside what the AI read — the trade register number, the phone, the type, the head office address — with the same ticks: the empty fields ticked, those read differently only if you tick them. With „Create & link”, the firm is created with the ticked values, so it arrives in the archive complete.
 
-**Answer then.** Once you close the import's window, the persons found in documents are not offered again: „Once you close, there is nowhere left.” An identity card left unanswered still has „Create people from the ID card”, on the document's screen (section [[persons-id-card-document]]).
+**Answer then.** Once you close the import's window, the persons found in documents are not offered again: „Once you close, there is nowhere left.” An identity document left unanswered still has „Create people from the ID card”, on the document's screen (section [[persons-id-card-document]]).
 
 ### 10.4.5 Plans parcelare and their tarla {#import-scanning-tarla}
 
@@ -181,7 +186,7 @@ On the import screen, „Resume last import (…)”, with the folder's name, re
 Two things are paid for, each announced on the screen before its button:
 
 - at „Scanning”, one classification for each document that is an image or a PDF (from a page folder, only the first page), announced at „Already in the system”;
-- after „Import”, one reading for each such document, identity cards included, announced at „Import”. The reading of a card is paid for even if you press „Skip”.
+- after „Import”, one reading for each such document, identity documents included, announced at „Import”. The reading of a card is paid for even if you press „Skip”.
 
 Word, .rtf and .txt files, and documents already in the system, cost nothing. A file with one identity card, one three-page contract and one coordinate file costs four AI operations: two classifications and two readings. Imported a second time, unchanged, it costs nothing.
 

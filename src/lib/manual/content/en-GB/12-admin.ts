@@ -67,15 +67,17 @@ Above the three lists of „Roles and links” stands the tile „How objects ar
 
 ### 12.1.3 Document types {#admin-reference-data-document-types}
 
-„Document Types” has the columns „Name”, „Short name”, „Status” and „Used by (n objects)”. „Status” says where the type comes from and whether it has a form: „Added by hand”, „Created by an import” or „Has a form”. Hold the mouse over a type's name and the bubble shows the full name, with the type's key under it, for instance „CONTRACT_VANZARE”.
+„Document Types” has the columns „Name”, „Short name”, „Status” and „Used by (n objects)”. „Status” says where the type comes from and whether it has a form: „Added by hand”, „Created by an import” or „Has a form”; the four identity document types say „Identity document”. Hold the mouse over a type's name and the bubble shows the full name, with the type's key under it, for instance „CONTRACT_VANZARE”.
 
 Above the table are two ticks: „With a form” shows only the types that have a form, „Without a form” only those that do not. Both ticked, or neither, shows every type. When an import stops at a type without a form, its link opens the list with „Without a form” ticked (chapter [[import]]).
 
 „Open”, on a type's row, opens the type's page, with three tabs:
 
 - „General” — „Name”, „Short name”, „Code” and „Status”, with „Save”. The code can only be read: „The code does not change: exported forms, the AI request and the tests use it.”. The short name is the one in the „Type” column of the documents list (section [[documents-list]]).
-- „Form” — the fields of the documents of this type (section [[documents-identification]]). Without a form, the tab reads „This type has no form yet.” and offers „Create the form”; with one, „Edit the form”, with the number of fields. Each field has a label in Romanian and one in English. The key under the label is set when the field is added and never changes, so a label can be renamed without worry. The identity card and the catch-all type for unclassified documents cannot have a form.
+- „Form” — the fields of the documents of this type (section [[documents-identification]]). Without a form, the tab reads „This type has no form yet.” and offers „Create the form”; with one, „Edit the form”, with the number of fields. Each field has a label in Romanian and one in English. The key under the label is set when the field is added and never changes, so a label can be renamed without worry. The four identity document types show their system form here: „System form: an identity document’s fields are defined by the application and are not changed here.”, then the fields of their kind, in the document's order, each with its width (Figure [[fig-admin-system-form]], section [[documents-identity]]). They get no form of their own, and in the list their row has no „Form” button. The catch-all type for unclassified documents cannot have a form either.
 - „Roles” — the roles a person can have in a document of this type. Choose a role in „Add a role” and press „Add the role”; tick „Holds a share” where the role brings a share.
+
+![12.2 The system form of the „Pașaport” type](system-form.png){#fig-admin-system-form}
 
 A type's „Roles” tab and „Document” on a role's panel show the same pairs, from two ends: a role added on a type also appears on the role's panel, with its tick. „← Document Types” takes you back to the list.
 
@@ -170,7 +172,7 @@ The texts behind the „?” button and the light-bulb hints on the screens (sec
 
 „Settings” opens from the sidebar, the last item of the „Administration” section (Figure [[fig-admin-settings]]). As on an object's screen, the boxes at the top choose which parts are shown, and „Default” brings them back (section [[start-tiles]]). The parts are „My account”, „Time thresholds”, „Backups”, „About” and, in the „Costs” group, one for each provider that can cost money.
 
-![12.2 „Settings”](admin-settings.png){#fig-admin-settings}
+![12.3 „Settings”](admin-settings.png){#fig-admin-settings}
 
 ### 12.5.1 „My account” {#admin-settings-account}
 
@@ -191,7 +193,7 @@ Among other things, the thresholds decide:
 
 - how many days back „Recent” counts on „Dashboard”, and how many days ahead it shows the documents that expire;
 - how long before a document shows „expiring soon”;
-- how long before its expiry an identity card is flagged („ID card expiring soon threshold”);
+- how long before its expiry an identity document — identity card or passport — is flagged („ID card expiring soon threshold”);
 - how long a changed object carries the „New!” badge, red and then amber, and after how long the badge disappears;
 - how long you hold a tile over another before that one slides down to make room.
 

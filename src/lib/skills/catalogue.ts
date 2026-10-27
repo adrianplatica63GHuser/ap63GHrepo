@@ -432,8 +432,8 @@ export const SKILLS: readonly Skill[] = [
     path: "persons",
     name: { ro: "Adaugă o persoană fizică dintr-o carte de identitate", en: "Add a natural person from an identity card" },
     description: {
-      ro: "Din „Adaugă persoană”, pe lista persoanelor, citești o carte de identitate și primești persoana completată, cu tatăl și mama create și legate ca „Tată” și „Mamă”.",
-      en: "From „Adaugă persoană” (add person), on the list of persons, read an identity card and get the person filled in, with the father and mother created and linked as „Tată” and „Mamă”.",
+      ro: "Din „Adaugă persoană”, pe lista persoanelor, completezi persoana de pe cartea ei de identitate și, din „Părinții titularului”, creezi tatăl și mama, legați ca „Tată” și „Mamă”.",
+      en: "From „Adaugă persoană” (add person), on the list of persons, fill in the person from their identity card and, from „Părinții titularului” (the holder's parents), create the father and mother, linked as „Tată” and „Mamă”.",
     },
     predecessors: ["persons-add-natural-person-by-hand", "documents-read-pages"],
     screens: ["natural-persons-list", "natural-person-detail"],
@@ -446,17 +446,17 @@ export const SKILLS: readonly Skill[] = [
     level: 2,
     path: "persons",
     name: {
-      ro: "Ține identitatea unei persoane la zi: CNP-ul și decesul",
-      en: "Keep a person's identity current: the CNP and a death",
+      ro: "Ține identitatea unei persoane la zi: CNP-ul, actele de identitate și decesul",
+      en: "Keep a person's identity current: the CNP, the identity documents and a death",
     },
     description: {
-      ro: "Știi de ce un CNP salvat nu se mai schimbă, bifezi „Decedat” cu data decesului și vezi vârsta oprindu-se la deces.",
-      en: "Know why a saved CNP cannot change, tick „Decedat” with the date of death, and see the age stop at death.",
+      ro: "Știi de ce un CNP salvat nu se mai schimbă, ce ține persoana și ce ține fiecare act de identitate al ei, adaugi un act din „Acte de identitate”, bifezi „Decedat” cu data decesului și vezi vârsta oprindu-se la deces.",
+      en: "Know why a saved CNP cannot change, what the person holds and what each of their identity documents holds, add a document from „Acte de identitate”, tick „Decedat” with the date of death, and see the age stop at death.",
     },
     predecessors: ["persons-add-natural-person-by-hand", "links-read-version-history"],
     screens: ["natural-person-detail"],
-    cases: ["TC-PERS-03", "TC-PERS-11", "TC-PERS-15"], // 40.72: TC-PERS-15, a tile's „Editează" — the words are 40.77's
-    manual: ["persons-identity-cnp", "persons-identity-death", "persons-example-death", "links-versions"],
+    cases: ["TC-PERS-03", "TC-PERS-11", "TC-PERS-15", "TC-PERS-16", "TC-DOC-28"], // 40.72: TC-PERS-15, a tile's „Editează" — the words are 40.77's; 40.87: TC-PERS-16 „Acte de identitate", TC-DOC-28 the document's „Act de identitate"
+    manual: ["persons-identity-cnp", "persons-identity-death", "persons-example-death", "links-versions", "persons-identity-documents"],
   },
   {
     key: "persons-link-relatives",
@@ -710,8 +710,8 @@ export const SKILLS: readonly Skill[] = [
       en: "Create the persons from an identity card already in the archive",
     },
     description: {
-      ro: "Pe actul unei cărți de identitate apeși „Creează persoane din CI”: titularul e legat de act, apoi tatăl și mama, fiecare verificat înainte de a fi creat.",
-      en: "On an identity card's document, press „Creează persoane din CI”: the holder is linked to the document, then the father and mother, each checked before it is created.",
+      ro: "Pe un act de identitate — carte de identitate sau pașaport — apeși „Creează persoane din CI”: titularul e legat de act, apoi tatăl și mama, fiecare verificat înainte de a fi creat.",
+      en: "On an identity document — identity card or passport — press „Creează persoane din CI”: the holder is linked to the document, then the father and mother, each checked before it is created.",
     },
     predecessors: ["persons-person-from-id-card", "persons-link-relatives"],
     screens: ["document-detail", "natural-person-detail"],

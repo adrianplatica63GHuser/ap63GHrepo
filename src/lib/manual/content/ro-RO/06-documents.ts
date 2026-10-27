@@ -99,6 +99,19 @@ Un act adus în arhivă cu importul are formularul completat de AI, din ce a cit
 
 Clasificarea, etichetele, grupurile și ștampilele actului stau în fișele „Clasificare” și „Etichete și grupuri”; sunt la fel ca pe orice obiect (secțiunea [[links-classify]]).
 
+### 6.4.1 Actul de identitate {#documents-identity}
+
+Un act de unul dintre cele patru tipuri de act de identitate (secțiunea [[persons-identity-documents]]) nu are „Detalii act”: are fișa „Act de identitate”, cu exact câmpurile felului său, în ordinea în care le tipărește actul (Figura [[fig-identity-document]]). Numărul, data eliberării, „Valabil până la” și emitentul stau aici, nu în „Identificarea actului”.
+
+![6.2 Fișa „Act de identitate” a unei cărți de identitate](identity-document.png){#fig-identity-document}
+
+- Sus, „Titular:” numește persoana legată de act ca „Titular act de identitate”, cu legătura spre ea.
+- Lângă „Valabil până la” — la pașaport, „Data expirării” — stă starea: „VALABIL”, „EXPIRAT” sau „EXPIRĂ ÎN 30 ZILE”, ca pe persoană. Buletinul vechi nu are această dată, deci nici stare.
+- Un CNP fără cifra de control corectă nu se salvează: „CNP-ul trebuie să aibă 13 cifre și o cifră de control corectă.”. Un CNP care nu se potrivește cu „Sex” sau cu data nașterii se salvează, cu un avertisment sub fișă.
+- La schimbarea tipului între două acte de identitate, sub „Tip document” scrie ce câmpuri se șterg la salvare. Un act de identitate nu trece la un tip obișnuit cât timp are date de identitate completate.
+
+Un act de identitate nou se face din „Acte” → „Adaugă act”, alegând tipul, sau de pe persoană, cu „Adaugă act de identitate” (secțiunea [[persons-identity-documents]]). Câmpurile fiecărui fel de act se văd, doar de citit, în „Date de referință” (secțiunea [[admin-reference-data-document-types]]).
+
 ## 6.5 Părțile, rolurile și cota-parte {#documents-parties}
 
 Persoanele, proprietățile și actele legate de un act stau în fișa „Legături” (secțiunea [[links-related]]): întâi persoanele fizice, apoi persoanele juridice, proprietățile și actele, fiecare rând pe o singură linie, cu pictograma felului lui. O persoană se citește „Nume (Rol)”, un act „Etichetă scurtă (Tip)”. Pe rândul unui act, „Relația” arată în ce fel sunt legate cele două acte. Sub rânduri sunt „Asociază persoană”, „Asociază proprietate”, „Asociază act” și „Dezasociază”, care scoate legătura rândului selectat (secțiunea [[links-associate]]). „Înscrisuri citate” deschide panoul înscrisurilor pe care actul le citează (secțiunea [[links-references]]). Pe un act cu fișa „Părți”, părțile stau acolo (mai jos).
@@ -123,7 +136,7 @@ Ce rol deține o cotă se hotărăște în „Date de referință”, la „Rolu
 
 Contractul de vânzare-cumpărare („Contract de Vânzare”, în listă „CVC”) are cel mai bogat formular din arhivă (Figura [[fig-documents-sale]]). Bifele lui de fișe sunt, în ordine: „Identificarea actului”, „Preț și plată”, „Obiectul vânzării”, „Carte funciară”, „Declarații și garanții”, „Taxe și cheltuieli”, „Părți”, „Legături”, „Clasificare”, „Etichete și grupuri” și „Pagini”. În „Identificarea actului”, pe lângă „Notariat”, „Nr. act autentic” și „Data autentificării”, stau „Calitate exemplar”, „Exemplare emise”, „Temei autentificare” și „Data conținutului”.
 
-![6.2 Un contract de vânzare-cumpărare](documents-sale.png){#fig-documents-sale}
+![6.3 Un contract de vânzare-cumpărare](documents-sale.png){#fig-documents-sale}
 
 Fișele formularului și panourile lor:
 
@@ -155,7 +168,7 @@ Antecontractul are fișa „Părți”, ca și contractul de vânzare-cumpărare
 
 **Legătura cu contractul.** Când contractul de vânzare-cumpărare care îndeplinește antecontractul este și el în arhivă, legați-le: pe antecontract apăsați „Asociază act”, bifați contractul, alegeți la „Tip legătură” „Antecontract al” și apăsați „Asociază selecția” (secțiunea [[links-references-documents]]). „Relația” arată apoi pe antecontract „acest document „Antecontract al”” urmat de contract, iar pe contract antecontractul, „Antecontract al”, „acest document” (Figura [[fig-documents-antecontract]]). Un contract adus cu importul care pomenește antecontractul îl are printre „Înscrisuri citate”; dacă antecontractul este în arhivă, „Leagă” face aceeași legătură.
 
-![6.3 Fișa „Legături” a unui antecontract, legat de contractul de vânzare-cumpărare care îl îndeplinește](documents-antecontract.png){#fig-documents-antecontract}
+![6.4 Fișa „Legături” a unui antecontract, legat de contractul de vânzare-cumpărare care îl îndeplinește](documents-antecontract.png){#fig-documents-antecontract}
 
 Pe contract, antecontractul apare și în formular: în „[Preț]”, „Temei preț” ține actul pe care se sprijină prețul — de exemplu antecontractul, cu numărul și data lui —, iar în „[Plată]”, „Stare plată” poate fi „Achitat la antecontract”.
 
