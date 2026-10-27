@@ -12,17 +12,17 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-10-26 — 369 entries (FU-360 filed by 40.18, FU-361 by 40.27, FU-362 by 40.78, FU-363 by 40.79, FU-364–365 by 40.84, FU-366–369 by 40.85). Rows are status, columns are impact.
+As of 2026-10-26 — 371 entries (FU-360 filed by 40.18, FU-361 by 40.27, FU-362 by 40.78, FU-363 by 40.79, FU-364–365 by 40.84, FU-366–369 by 40.85, FU-370–371 by 40.86). Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
-| open | 20 | 88 | 80 | 26 | 214 |
+| open | 20 | 90 | 80 | 26 | 216 |
 | planned | 0 | 0 | 1 | 0 | 1 |
 | resolved | 38 | 61 | 32 | 3 | 134 |
 | ignored | 4 | 3 | 4 | 2 | 13 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 6 | 1 | 0 | 7 |
-| **total** | 62 | 158 | 118 | 31 | 369 |
+| **total** | 62 | 160 | 118 | 31 | 371 |
 <!-- summary:end -->
 
 `src/__tests__/follow-up-register.test.ts` recounts the table and fails when this block disagrees
@@ -453,3 +453,5 @@ Nothing is filed from memory: every row carries evidence someone actually looked
 | FU-367 | 2026-10-26 40.85 Handover.40.85.md | next-slice idea | People | A marker on the person when a value on „Identitate" (names, CNP, sex, date or place of birth) differs from what the current identity document prints, so the two copies do not drift apart unseen (40.85, Ask first 6). | src/lib/identity-documents/person-list.ts `orderPersonIdentityDocuments` (the current one); src/app/natural-persons/_components/person-identity-documents.tsx | user | M | open | Adrian's choice. | 2026-10-26 |
 | FU-368 | 2026-10-26 40.85 Handover.40.85.md | debt | Tooling & CI | The big dev seed no longer files a child's passport anywhere: until 40.85 it lived only on natural_person (`x.passport`), and the plan files identity documents only for some persons with a card. Every planned card and passport could be an identity document of its own. | scripts/seed-dev-data-big/enrich.ts (`passport`); scripts/seed-dev-data-big/documents.ts (CARTE_IDENTITATE, PASAPORT) | dev | S | open | File one identity document per planned card and passport, holder linked. | 2026-10-26 |
 | FU-369 | 2026-10-26 40.85 Handover.40.85.md | next-slice idea | People | „Cetățenie" is on „Identitate" since 40.85, but the Natural Persons list's „Câmpuri afișate" — which offers the tile's fields — has no column for it. | src/app/natural-persons/list-view.tsx; src/__tests__/person-lists.test.tsx (the exclusion) | user | S | open | Add the column, with its filter if wanted. | 2026-10-26 |
+| FU-370 | 2026-10-26 40.86 Handover.40.86.md | next-slice idea | Import | Cards imported before 40.86 hold only what migration_118 backfilled (model nou's fields from the holder, no MRZ on most); a „Citește din nou” on an identity document would read its page once more and fill its empty identity values — the header left it out of scope. | src/app/api/admin/import/extract-id-card/route.ts; src/lib/import/identity-read.ts `identityValuesFromRead` | user | S | open | Adrian's choice: one paid read per document re-read. | 2026-10-26 |
+| FU-371 | 2026-10-26 40.86 Handover.40.86.md | copy/i18n | Import | The action that reads an identity document and creates its holder is still named for the card — „Creează persoane din CI” on the document screen, „cartea de identitate” in the import's dialog — although since 40.86 it reads passports too. | messages/ro-RO.json document.idCardPeople.action, adminImport.wizard.importDialog.idCard | user | XS | open | Name it for an identity document („din actul de identitate”) with 40.87's manual. | 2026-10-26 |
