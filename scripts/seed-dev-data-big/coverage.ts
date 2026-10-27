@@ -183,6 +183,9 @@ export type DocumentFacts = {
   target: number;
   /** read back from the database */
   total: number;
+  /** of them, identity documents (any of the four kinds) — and how many the plan wanted (75 % of the persons) */
+  identity: number;
+  identityPlanned: number;
   contracts: number;
   /** contracts with an „Act adițional la" link from an act */
   contractsWithAct: number;
@@ -203,7 +206,8 @@ export type DocumentFacts = {
 export function documentLines(f: DocumentFacts): CoverageLine[] {
   return [
     exactly("Documente", f.total, f.target),
-    share("Contracte de vânzare", f.contracts, f.total, 40),
+    exactly("Acte de identitate (75 % din persoanele fizice)", f.identity, f.identityPlanned),
+    share("Contracte de vânzare (din documentele care nu sunt acte de identitate)", f.contracts, f.total - f.identity, 40),
     share("Contracte cu act adițional legat", f.contractsWithAct, f.contracts, 50),
     ...f.fourFields.map((x) => share(`Contracte cu „${x.label}"`, x.filled, f.contracts, 70)),
     share("Contracte cu preț, monedă și data plății", f.priced, f.contracts, 70),
@@ -269,7 +273,10 @@ export type EnrichFacts = {
   relationships: { used: number; available: number; adults: number; withAny: number };
   natural: {
     withPhone: number; phone2: number; working: number; workPhone: number; workEmail: number; withEmail: number; email2: number;
-    idCards: number; withMrz: number; cardNumber: number; passports: number; correspondence: number; postal: number; sameAsHome: number; addressNotes: number;
+    idCards: number; withMrz: number; cardNumber: number; passports: number;
+    /** natural persons; those holding an identity document of any kind; the kinds used (of four) */
+    persons: number; withIdentity: number; identityKinds: number;
+    correspondence: number; postal: number; sameAsHome: number; addressNotes: number;
   };
   judicial: { total: number; correspondence: number };
   /** properties with an address, and those whose address carries the Street View line */
@@ -303,6 +310,8 @@ export function enrichLines(f: EnrichFacts): CoverageLine[] {
     share("Telefon de serviciu (din cei care lucrează)", n.workPhone, n.working, 25),
     atLeast("E-mail de serviciu", n.workEmail, 20),
     share("Al doilea e-mail (din cei cu e-mail)", n.email2, n.withEmail, 8),
+    share("Persoane fizice cu act de identitate", n.withIdentity, n.persons, 75),
+    exactly("Tipuri de act de identitate folosite", n.identityKinds, 4),
     share("Cărți de identitate cu MRZ", n.withMrz, n.idCards, 100),
     atLeast("Cărți de identitate cu numărul cardului", n.cardNumber, 10),
     atLeast("Pașapoarte (copii)", n.passports, 3),

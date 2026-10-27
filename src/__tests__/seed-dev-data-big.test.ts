@@ -31,7 +31,7 @@ import { meaningfulWords, naturalDetails } from "../../scripts/seed-dev-data-big
 import { COMPANY_TYPES, generateCompanies, MAX_REPRESENTED } from "../../scripts/seed-dev-data-big/companies";
 import { coverageLines, formatCoverage, propertyLines, type JudicialRow, type NaturalRow, type PropertyRow } from "../../scripts/seed-dev-data-big/coverage";
 import { ADRIAN_LINE, area, bearing, dist, inRange, lineCluster, lotsOnLine, overlaps, rowOfLots, sharesEdge, type Poly } from "../../scripts/seed-dev-data-big/geometry";
-import { DOCUMENT_TOTAL, documentViolations, docsPerParty, FOUR_FIELDS, generateDocuments, MAX_DOCS_PER_PARTY, MAX_LINKS, type DocPlan } from "../../scripts/seed-dev-data-big/documents";
+import { DOCUMENT_TOTAL, documentViolations, docsPerParty, FOUR_FIELDS, generateDocuments, IDENTITY_TYPES, identityTarget, isIdentityType, MAX_DOCS_PER_PARTY, MAX_LINKS, type DocPlan } from "../../scripts/seed-dev-data-big/documents";
 import { tileRows, topUpLinks } from "../../scripts/seed-dev-data-big/links";
 import { GROUPS, groupTargetOf, planMetadata, STAMPS, TAGS } from "../../scripts/seed-dev-data-big/metadata";
 import { CURTI, generateProperties, LINE_DEPTH, MAX_FAMILY_PLUS_OWNED, MAX_OWNED, MIX, PLOT_AREA, PROPERTY_TOTAL, sharesAddUp, TPC, type TypeFlags } from "../../scripts/seed-dev-data-big/properties";
@@ -561,9 +561,14 @@ describe("the documents", () => {
   const acts = docs.filter((d) => d.type === "ACT_ADITIONAL");
   const byKey = new Map(docs.map((d) => [d.key, d]));
 
-  it("1,050 in all: at least 40 % sales contracts, at least half of them with an act adițional", () => {
-    expect(docs).toHaveLength(DOCUMENT_TOTAL);
-    expect(contracts.length / docs.length).toBeGreaterThanOrEqual(0.4);
+  // the identity documents come on top of the 1,050 (2026-10-27), one per holder by construction
+  const identities = docs.filter((d) => isIdentityType(d.type));
+  const others = docs.filter((d) => !isIdentityType(d.type));
+
+  it("1,050 besides the identity documents: at least 40 % sales contracts, at least half of them with an act adițional", () => {
+    expect(others).toHaveLength(DOCUMENT_TOTAL);
+    expect(docs).toHaveLength(DOCUMENT_TOTAL + identities.length);
+    expect(contracts.length / others.length).toBeGreaterThanOrEqual(0.4);
     const withAct = new Set(acts.map((a) => a.links.find((l) => l.role === "Act adițional la")!.to));
     expect(withAct.size).toBe(acts.length);
     expect(withAct.size / contracts.length).toBeGreaterThanOrEqual(0.5);
@@ -601,9 +606,9 @@ describe("the documents", () => {
     }
   });
 
-  it("none on more than 25 documents, most on one to six", () => {
-    const per = docsPerParty(docs);
-    expect(Math.max(...per.values())).toBeLessThanOrEqual(MAX_DOCS_PER_PARTY);
+  it("none on more than 25 documents, most on one to six (an identity document aside)", () => {
+    expect(Math.max(...docsPerParty(docs).values())).toBeLessThanOrEqual(MAX_DOCS_PER_PARTY);
+    const per = docsPerParty(others);
     const few = [...per.values()].filter((n) => n >= 1 && n <= 6).length;
     expect(few / per.size).toBeGreaterThan(0.6);
   });
@@ -623,6 +628,23 @@ describe("the documents", () => {
       }
     }
     expect(chains).toBeGreaterThanOrEqual(20);
+  });
+
+  it("an identity document for 75 % of the natural persons, one each, across all four kinds", () => {
+    const holders = identities.map((d) => d.idCardOf!);
+    expect(new Set(holders).size).toBe(holders.length);
+    expect(holders).toHaveLength(identityTarget(plan.persons.length));
+    for (const t of IDENTITY_TYPES) expect([t, identities.filter((d) => d.type === t).length >= 10]).toEqual([t, true]);
+    for (const d of identities) {
+      const p = plan.persons.find((x) => x.key === d.idCardOf)!;
+      expect(d.parties).toEqual([{ key: p.key, role: "Titular act de identitate", pct: null, mod: null }]);
+      expect(d.date >= p.dob && (!p.dod || d.date < p.dod)).toBe(true);
+      // a booklet prints no validity end; every other kind is still valid, or was until its holder died
+      if (d.type === "CARTE_IDENTITATE_VECHE") expect(d.fields.dateValidUntil).toBeUndefined();
+      else expect(d.fields.dateValidUntil! > TODAY).toBe(true);
+      if (d.type === "CARTE_IDENTITATE" || d.type === "PASAPORT_CRDS") expect(ageAt(p.dob, TODAY)).toBeGreaterThanOrEqual(d.type === "PASAPORT_CRDS" ? 18 : 14);
+    }
+    expect(new Set(identities.map((d) => d.nr)).size).toBe(identities.length);
   });
 
   it("an identity card is its holder's, dated the day it was issued", () => {

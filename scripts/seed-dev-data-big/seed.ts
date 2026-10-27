@@ -176,6 +176,8 @@ import {
   DOC_TYPE_ROLES,
   DOCUMENT_TOTAL,
   documentViolations,
+  identityTarget,
+  isIdentityType,
   docsPerParty,
   FOUR_FIELDS,
   generateDocuments,
@@ -1005,8 +1007,11 @@ async function documentCoverage(docs: DocPlan[], plan: FamilyPlan, companies: Co
     return cert?.type === "CERTIFICAT_MOSTENITOR" && cert.links.some((m) => byKey.get(m.to)?.type === "CONTRACT_VANZARE");
   })).length;
   return documentLines({
-    target: DOCUMENT_TOTAL,
+    // the 1,050 and, on top of them, the identity documents the plan made (75 % of the persons)
+    target: DOCUMENT_TOTAL + docs.filter((d) => isIdentityType(d.type)).length,
     total: rows.length,
+    identity: rows.filter((r) => isIdentityType(r.key ?? "")).length,
+    identityPlanned: identityTarget(plan.persons.length),
     contracts: contracts.length,
     contractsWithAct: withAct.size,
     fourFields: FOUR_FIELDS.map((k) => ({ label: labels[k], filled: contracts.filter((r) => filled(r, k)).length })),
@@ -1327,7 +1332,9 @@ async function enrichCoverage(p: Plans): Promise<CoverageLine[]> {
   const [idn] = await rows<Count>(`SELECT count(DISTINCT pd.person_id) FILTER (WHERE t.identity_kind = 'CI_NOU') AS cards,
       count(DISTINCT pd.person_id) FILTER (WHERE t.identity_kind = 'CI_NOU' AND i.mrz IS NOT NULL) AS mrz,
       count(DISTINCT pd.person_id) FILTER (WHERE i.card_number IS NOT NULL) AS card_number,
-      count(DISTINCT pd.person_id) FILTER (WHERE t.identity_kind IN ('PASAPORT', 'PASAPORT_CRDS')) AS passports
+      count(DISTINCT pd.person_id) FILTER (WHERE t.identity_kind IN ('PASAPORT', 'PASAPORT_CRDS')) AS passports,
+      count(DISTINCT pd.person_id) FILTER (WHERE t.identity_kind IS NOT NULL) AS any_identity,
+      count(DISTINCT t.identity_kind) AS kinds
     FROM person_document pd JOIN document d ON d.id = pd.document_id JOIN lookup_document_type t ON t.id = d.document_type_id
     LEFT JOIN identity_document i ON i.document_id = d.id WHERE pd.person_id = ANY($1::uuid[])`, [nat]);
   const addr = async (ids: string[]) => {
@@ -1358,7 +1365,8 @@ async function enrichCoverage(p: Plans): Promise<CoverageLine[]> {
     natural: {
       withPhone: num(n, "phone"), phone2: num(n, "phone2"), working, workPhone: num(n, "work_phone"), workEmail: num(n, "work_email"),
       withEmail: num(n, "email"), email2: num(n, "email2"), idCards: num(idn, "cards"), withMrz: num(idn, "mrz"), cardNumber: num(idn, "card_number"),
-      passports: num(idn, "passports"), correspondence: num(na, "corr"), postal: num(na, "postal"), sameAsHome: num(n, "same_home"),
+      passports: num(idn, "passports"), persons: nat.length, withIdentity: num(idn, "any_identity"), identityKinds: num(idn, "kinds"),
+      correspondence: num(na, "corr"), postal: num(na, "postal"), sameAsHome: num(n, "same_home"),
       addressNotes: num(na, "notes") + num(ja, "notes"),
     },
     judicial: { total: jur.length, correspondence: num(ja, "corr") },

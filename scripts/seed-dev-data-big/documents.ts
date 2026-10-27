@@ -1,6 +1,8 @@
 /**
  * The big seed's 1,050 documents — 430 sales contracts, 220 acte adiționale, 400 of the catalogue's other types.
  *                                                                                              (Slice #39.22)
+ * And on top of them, since 2026-10-27, an identity document for 75 % of the natural persons, across the four kinds
+ * (`identityDocuments`).
  *
  * PURE: a plan of documents (type, number, date, the type's own fields, the form's values, parties with their
  * roles and shares, properties, links to other documents, notes) that seed.ts writes through createDocument,
@@ -28,6 +30,7 @@ import type { NaturalDetails } from "./persons";
 import { NOTE_MARKER } from "./persons";
 import type { PropertyPlan } from "./properties";
 
+/** The documents that are not identity documents; the identity documents come on top (`identityTarget`). */
 export const DOCUMENT_TOTAL = 1050;
 export const CONTRACTS = 430;
 export const ACTS = 220;
@@ -42,21 +45,28 @@ export const MAX_LINKS = 15;
 /** The share of contracts whose form carries the four fields, price, currency and date of payment. */
 export const FORM_SHARE = 0.75;
 
+/**
+ * The identity documents (Adrian, 2026-10-27): one for 75 % of the natural persons, across the four kinds — no longer
+ * a quota of OTHER_MIX. Their keys are the four kinds' type keys (src/lib/identity-documents/kinds.ts).
+ */
+export const IDENTITY_SHARE = 0.75;
+export const IDENTITY_TYPES = ["CARTE_IDENTITATE", "CARTE_IDENTITATE_VECHE", "PASAPORT", "PASAPORT_CRDS"] as const;
+export const isIdentityType = (type: string): boolean => (IDENTITY_TYPES as readonly string[]).includes(type);
+/** How many natural persons get an identity document. */
+export const identityTarget = (persons: number): number => Math.ceil(persons * IDENTITY_SHARE);
+
 /** The 400 that are neither contract nor act — the SQL seed's mix, titles and certificates raised for the chains. */
 export const OTHER_MIX: readonly (readonly [string, number])[] = [
   ["TITLU_PROPRIETATE", 65],
   ["CERTIFICAT_MOSTENITOR", 57],
-  // Slice 40.82: the four identity kinds, five of the cards' 28 now old booklets and passports
-  ["CARTE_IDENTITATE", 23],
-  ["CARTE_IDENTITATE_VECHE", 2],
-  ["PASAPORT", 2],
-  ["PASAPORT_CRDS", 1],
+  // 2026-10-27: the 28 identity documents that were here are planned by `identityDocuments` instead, one for 75 % of
+  // the persons; their places went to the extracts and fiscal certificates (+14 each), so the mix is still 400
   ["PROCURA", 20],
   ["ACT_CADASTRU", 20],
   ["CERTIFICAT_URBANISM", 20],
-  ["EXTRAS_CARTE_FUNCIARA", 18],
+  ["EXTRAS_CARTE_FUNCIARA", 32],
   ["AUTORIZATIE", 18],
-  ["CERTIFICAT_FISCAL", 16],
+  ["CERTIFICAT_FISCAL", 30],
   ["CONTRACT_PRESTARI_SERVICII", 16],
   ["CERTIFICAT_SARCINI", 16],
   ["AVIZ_INSTITUTIE", 14],
@@ -253,7 +263,7 @@ class Docs {
       CARTE_IDENTITATE: `Copie a actului de identitate depusă la dosarul de vânzare.`,
       PROCURA: `Procură specială pentru reprezentare la semnarea actelor.`,
     };
-    const base = lines[d.type] ?? `Document primit în copie și păstrat la dosarul imobilului.`;
+    const base = lines[isIdentityType(d.type) ? "CARTE_IDENTITATE" : d.type] ?? `Document primit în copie și păstrat la dosarul imobilului.`;
     return `${base}${first ? ` Partea principală: ${first}.` : ""} ${NOTE_MARKER}`;
   }
 
@@ -320,6 +330,9 @@ export const FOUR_FIELDS = ["starePlata", "temeiPret", "scopVanzare", "predareSt
 
 export function generateDocuments(r: Rng, ctx: DocumentContext): DocPlan[] {
   const b = new Docs(r, ctx);
+  // the identity documents first: each holder's link is counted before the contracts and the others take the room —
+  // placed last, the persons already at 15 links leave room for barely two in three
+  const identities = identityDocuments(r, b, ctx);
   const props = r.shuffle(ctx.properties);
   const contracts: { doc: DocPlan; property: PropertyPlan }[] = [];
   const childrenOf = (k: string) => ctx.plan.persons.filter((c) => c.parents.includes(k) || c.adoptiveParents.includes(k));
@@ -528,10 +541,105 @@ export function generateDocuments(r: Rng, ctx: DocumentContext): DocPlan[] {
   }
 
   // ── the other types, until each quota is spent; what a quota could not place becomes an extract or a
-  //    fiscal certificate, so the total is always 1,050
+  //    fiscal certificate, so the total is always 1,050 besides the identity documents
   fillOthers(r, b, ctx);
-  topUp(r, b, ctx);
+  topUp(r, b, DOCUMENT_TOTAL + identities);
   return b.out;
+}
+
+/**
+ * The identity documents (Adrian, 2026-10-27): one for `identityTarget` of the natural persons — 75 % — across the
+ * four kinds, each its holder's, as „Titular act de identitate". seed.ts writes each kind's own values from the holder
+ * (`identityOf`) and, for today's card, its two faces. Who can hold which:
+ *   - Carte de identitate (model nou): the living from 14 on — the card persons.ts gave them, number and dates;
+ *   - Carte de identitate (model vechi): the „buletin" of whoever died since 1991, and of some living born by 1994 —
+ *     issued 1990–2008, from 14 on and before a death; it prints no validity end;
+ *   - Pașaport: a child's under 14 (valid three years, issued in the last two and a half), or a holder's from 14
+ *     (ten years; five under 18), issued in the last nine years;
+ *   - Pașaport CRDS: an adult's who lives abroad (seed.ts writes „Spania"), ten years.
+ * A person who died before 1991, or before 14, holds none; neither does one with no room left on „Legături".
+ * Returns how many it planned.
+ */
+function identityDocuments(r: Rng, b: Docs, ctx: DocumentContext): number {
+  const want = identityTarget(ctx.plan.persons.length);
+  const usedNr = new Set<string>();
+  const unique = (make: () => string): string => {
+    let n: string;
+    do n = make(); while (usedNr.has(n));
+    usedNr.add(n);
+    return n;
+  };
+  const BOOKLET_FROM = "1990-01-02";
+  const BOOKLET_LAST = "2008-12-31";
+  const PASSPORTS = "Serviciul Public Comunitar pentru Eliberarea Pașapoartelor Ilfov";
+  const holderParty = (key: string): Party => ({ key, role: "Titular act de identitate", pct: null, mod: null });
+  /** the booklet's issue date: from 14, 1990–2008, before a death — or null */
+  const bookletDate = (p: PlanPerson): string | null =>
+    between(r, maxIso(BOOKLET_FROM, addYears(p.dob, 14))!, minIso(BOOKLET_LAST, p.dod ? addDays(p.dod, -1) : null)!);
+  /** the kinds this person can hold, by weight */
+  const kindsOf = (p: PlanPerson, d: NaturalDetails): [string, number][] => {
+    if (p.dod) return p.dod >= "1991-01-01" && addYears(p.dob, 14) < minIso(BOOKLET_LAST, p.dod)! ? [["CARTE_IDENTITATE_VECHE", 1]] : [];
+    const age = ageAt(p.dob, TODAY);
+    if (age < 14) return d.cnp && daysBetween(p.dob, TODAY) > 60 ? [["PASAPORT", 1]] : [];
+    const out: [string, number][] = [];
+    if (d.idCard) out.push(["CARTE_IDENTITATE", 58]);
+    if (d.cnp) out.push(["PASAPORT", 14]);
+    if (d.cnp && age >= 18) out.push(["PASAPORT_CRDS", 14]);
+    if (addYears(p.dob, 14) <= BOOKLET_LAST) out.push(["CARTE_IDENTITATE_VECHE", 14]);
+    return out;
+  };
+  let made = 0;
+  for (const p of r.shuffle(ctx.plan.persons)) {
+    if (made >= want) break;
+    const d = b.det.get(p.key);
+    if (!d || !b.room(p.key)) continue;
+    const kinds = kindsOf(p, d);
+    if (kinds.length === 0) continue;
+    const type = r.weighted(kinds);
+    const holder = b.name(p.key);
+    switch (type) {
+      case "CARTE_IDENTITATE": {
+        const nr = `${d.idCard!.number.slice(0, 2)} ${d.idCard!.number.slice(2)}`;
+        usedNr.add(nr);
+        b.add({
+          type, nr, date: d.idCard!.from, title: `Carte de identitate ${nr} — ${holder}`,
+          fields: { emitent: d.idCard!.authority, dateValidUntil: d.idCard!.until },
+          customFields: null, parties: [holderParty(p.key)], properties: [], links: [], idCardOf: p.key,
+        });
+        break;
+      }
+      case "CARTE_IDENTITATE_VECHE": {
+        const date = bookletDate(p);
+        if (!date) continue;
+        const nr = unique(() => `${r.pick(["BX", "DP", "RX", "IF"])} ${r.int(100000, 999999)}`);
+        b.add({
+          type, nr, date, title: `Buletin de identitate ${nr} — ${holder}`,
+          fields: { emitent: d.address.locality === "București" ? "SPCEP Sector 5" : "SPCLEP Bragadiru" },
+          customFields: null, parties: [holderParty(p.key)], properties: [], links: [], idCardOf: p.key,
+        });
+        break;
+      }
+      case "PASAPORT":
+      case "PASAPORT_CRDS": {
+        const age = ageAt(p.dob, TODAY);
+        const child = age < 14;
+        const date = child
+          ? maxIso(addDays(TODAY, -r.int(30, 900)), addDays(p.dob, 30))!
+          : maxIso(addDays(TODAY, -r.int(30, 9 * 365)), addYears(p.dob, 14), type === "PASAPORT_CRDS" ? addYears(p.dob, 18) : null)!;
+        const until = addYears(date, child ? 3 : ageAt(p.dob, date) < 18 ? 5 : 10);
+        if (until <= TODAY) continue;
+        const nr = unique(() => String(r.int(50_000_000, 59_999_999)).padStart(9, "0"));
+        b.add({
+          type, nr, date, title: `Pașaport${type === "PASAPORT_CRDS" ? " CRDS" : ""} ${nr} — ${holder}`,
+          fields: { emitent: PASSPORTS, dateValidUntil: until },
+          customFields: null, parties: [holderParty(p.key)], properties: [], links: [], idCardOf: p.key,
+        });
+        break;
+      }
+    }
+    made++;
+  }
+  return made;
 }
 
 function fillOthers(r: Rng, b: Docs, ctx: DocumentContext): void {
@@ -584,39 +692,6 @@ function fillOthers(r: Rng, b: Docs, ctx: DocumentContext): void {
           parties: [{ key: dead.key, role: "Defunct", pct: null, mod: null }, ...heirs.map((k) => ({ key: k, role: "Moștenitor", pct: heirs.length === 1 ? 100 : pct(1, heirs.length), mod: (heirs.length === 1 ? "NUME_PROPRIU" : "INDIVIZIUNE") as CotaMod })), ...(notary ? [P(notary, "Notar")] : [])],
           properties: p ? [p.key] : [],
           links: [],
-        });
-        done = true;
-        break;
-      }
-      case "CARTE_IDENTITATE": {
-        const d = r.pick(ctx.details.filter((x) => x.idCard && !b.out.some((y) => y.idCardOf === x.key)));
-        if (!d || !b.room(d.key)) break;
-        const nr = d.idCard!.number;
-        b.add({
-          type, nr: `${nr.slice(0, 2)} ${nr.slice(2)}`, date: d.idCard!.from,
-          title: `Carte de identitate ${nr.slice(0, 2)} ${nr.slice(2)} — ${b.name(d.key)}`,
-          fields: { emitent: d.idCard!.authority, dateValidUntil: d.idCard!.until },
-          customFields: null, parties: [P(d.key, "Titular act de identitate")], properties: [], links: [], idCardOf: d.key,
-        });
-        done = true;
-        break;
-      }
-      // Slice 40.82: an old booklet („buletin") issued ten years before the person's card, and passports issued
-      // with it — the holder's, with the values seed.ts writes from the holder (`identityOf`).
-      case "CARTE_IDENTITATE_VECHE":
-      case "PASAPORT":
-      case "PASAPORT_CRDS": {
-        const d = r.pick(ctx.details.filter((x) => x.idCard && x.cnp && !b.out.some((y) => y.idCardOf === x.key)));
-        if (!d || !b.room(d.key)) break;
-        const old = type === "CARTE_IDENTITATE_VECHE";
-        const holder = b.persons.get(d.key);
-        const date = old ? maxIso(addYears(d.idCard!.from, -10), holder ? addYears(holder.dob, 14) : null)! : d.idCard!.from;
-        const nr = old ? `${r.pick(["BX", "DP", "RX"])} ${r.int(100000, 999999)}` : String(r.int(50_000_000, 59_999_999)).padStart(9, "0");
-        b.add({
-          type, nr, date,
-          title: `${old ? "Buletin de identitate" : "Pașaport"} ${nr} — ${b.name(d.key)}`,
-          fields: old ? { emitent: d.idCard!.authority } : { emitent: "Serviciul Public Comunitar pentru Eliberarea Pașapoartelor Ilfov", dateValidUntil: addYears(date, 10) },
-          customFields: null, parties: [P(d.key, "Titular act de identitate")], properties: [], links: [], idCardOf: d.key,
         });
         done = true;
         break;
@@ -764,8 +839,9 @@ function fillOthers(r: Rng, b: Docs, ctx: DocumentContext): void {
   }
 }
 
-function topUp(r: Rng, b: Docs, ctx: DocumentContext): void {
-  for (let guard = 0; b.out.length < DOCUMENT_TOTAL && guard < 50_000; guard++) {
+function topUp(r: Rng, b: Docs, total: number): void {
+  const ctx = b.ctx;
+  for (let guard = 0; b.out.length < total && guard < 50_000; guard++) {
     const p = r.pick(ctx.properties);
     const date = between(r, maxIso(p.acquiredOn, "2004-01-01")!, addDays(TODAY, -10));
     if (!date) continue;
@@ -784,7 +860,7 @@ function topUp(r: Rng, b: Docs, ctx: DocumentContext): void {
       links: [],
     });
   }
-  if (b.out.length < DOCUMENT_TOTAL) throw new Error(`documents: only ${b.out.length} of ${DOCUMENT_TOTAL} could be placed`);
+  if (b.out.length < total) throw new Error(`documents: only ${b.out.length} of ${total} could be placed`);
 }
 
 // ---------------------------------------------------------------------------
