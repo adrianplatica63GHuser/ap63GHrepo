@@ -12,17 +12,17 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-10-26 — 365 entries (FU-360 filed by 40.18, FU-361 by 40.27, FU-362 by 40.78, FU-363 by 40.79, FU-364–365 by 40.84). Rows are status, columns are impact.
+As of 2026-10-26 — 369 entries (FU-360 filed by 40.18, FU-361 by 40.27, FU-362 by 40.78, FU-363 by 40.79, FU-364–365 by 40.84, FU-366–369 by 40.85). Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
-| open | 19 | 86 | 79 | 26 | 210 |
+| open | 20 | 88 | 80 | 26 | 214 |
 | planned | 0 | 0 | 1 | 0 | 1 |
 | resolved | 38 | 61 | 32 | 3 | 134 |
 | ignored | 4 | 3 | 4 | 2 | 13 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 6 | 1 | 0 | 7 |
-| **total** | 61 | 156 | 117 | 31 | 365 |
+| **total** | 62 | 158 | 118 | 31 | 369 |
 <!-- summary:end -->
 
 `src/__tests__/follow-up-register.test.ts` recounts the table and fails when this block disagrees
@@ -449,3 +449,7 @@ Nothing is filed from memory: every row carries evidence someone actually looked
 | FU-363 | 2026-10-26 40.79 Handover.40.79.md | next-slice idea | People | At 40.79's sizes every Identitate row but one fits two units: Locul nașterii beside Tip profesional (13 + 0.5 + 13.5 = 27rem) is what keeps the panel at three. Putting the two on rows of their own would make Identitate a 2-unit tile (its widest row then Nume beside Prenume, 17.5rem of the 17.875 inside). | src/lib/ui/field-widths.ts `NATURAL_PERSON_ROWS.identity`; field-widths.test.ts „each panel is the fewest whole units" | cosmetic | XS | open | Adrian's choice; if yes, split the row in `NATURAL_PERSON_ROWS.identity` and the form, and move the panel-units numbers in field-widths.test. | 2026-10-26 |
 | FU-364 | 2026-10-26 40.82 Handover.40.82.md; 2026-10-26 40.84 Handover.40.84.md | data risk | Reference data | Reference Data's „move the documents to another type” (#29.14) re-points documents without the identity rules: identity documents moved onto an ordinary type keep their `identity_document` rows, which the document's own PATCH refuses to leave behind (`identity_values_held`). | src/lib/admin/value-lists/queries.ts:1615 `reassignDependents`; src/lib/documents/queries.ts — `planIdentityUpdate` | data | S | open | Refuse the re-point away from an identity type while a document holds values, or drop the empty rows, in that path. | 2026-10-26 |
 | FU-365 | 2026-10-26 40.84 Handover.40.84.md | next-slice idea | Reference data | An identity kind's form (its fields, their order and widths) changes only by a slice; the type's „Formular” tab shows it read-only (40.84, Ask first 2). Making it editable there would be a slice of its own, for Adrian to take up if he wants it. | src/lib/identity-documents/kinds.ts `IDENTITY_KINDS`; src/lib/ui/field-widths.ts `IDENTITY_DOCUMENT`; src/app/admin/value-lists/_components/identity-system-form.tsx | user | M | open | Adrian's choice. | 2026-10-26 |
+| FU-366 | 2026-10-26 40.85 Handover.40.85.md | data risk | DB & migrations | natural_person's seven identity-card columns (id_document_type, id_document_number, id_card_number, id_valid_from, id_valid_until, id_issuing_authority, id_mrz_raw) are read and written by nothing since 40.85; dropping them destroys stored values and waits for Adrian. Go-ahead question: „May the seven columns be dropped? Their values are in migration_118's identity documents (backfills A and B) and in the person versions written before 40.85." | src/db/schema/index.ts (naturalPerson); src/lib/persons/legacy-id-card.ts; src/db/seed_dev_data.sql:381 (the hand-run SQL seed still writes them); scripts/seed-dev-data-big/columns.ts LEGACY_ID | data | S | open | After the go-ahead: a migration that drops them, the schema, seed_dev_data.sql, columns.ts and the snapshot type's legacy keys (versions keep theirs). | 2026-10-26 |
+| FU-367 | 2026-10-26 40.85 Handover.40.85.md | next-slice idea | People | A marker on the person when a value on „Identitate" (names, CNP, sex, date or place of birth) differs from what the current identity document prints, so the two copies do not drift apart unseen (40.85, Ask first 6). | src/lib/identity-documents/person-list.ts `orderPersonIdentityDocuments` (the current one); src/app/natural-persons/_components/person-identity-documents.tsx | user | M | open | Adrian's choice. | 2026-10-26 |
+| FU-368 | 2026-10-26 40.85 Handover.40.85.md | debt | Tooling & CI | The big dev seed no longer files a child's passport anywhere: until 40.85 it lived only on natural_person (`x.passport`), and the plan files identity documents only for some persons with a card. Every planned card and passport could be an identity document of its own. | scripts/seed-dev-data-big/enrich.ts (`passport`); scripts/seed-dev-data-big/documents.ts (CARTE_IDENTITATE, PASAPORT) | dev | S | open | File one identity document per planned card and passport, holder linked. | 2026-10-26 |
+| FU-369 | 2026-10-26 40.85 Handover.40.85.md | next-slice idea | People | „Cetățenie" is on „Identitate" since 40.85, but the Natural Persons list's „Câmpuri afișate" — which offers the tile's fields — has no column for it. | src/app/natural-persons/list-view.tsx; src/__tests__/person-lists.test.tsx (the exclusion) | user | S | open | Add the column, with its filter if wanted. | 2026-10-26 |
