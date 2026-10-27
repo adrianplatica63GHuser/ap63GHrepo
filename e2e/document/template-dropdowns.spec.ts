@@ -19,12 +19,17 @@
  *     „Declarații și obligații legale". The case file says so.
  *   - #37.55 took the dashes off the blank choice, so the clauses are 9rem and
  *     sit three to a row; step 3 counts the new rows. The case file says so.
+ *   - 40.88: „whole" is 40.78's rule — on one line when the choice fits the
+ *     box, wrapped in a box that keeps its width when it does not
+ *     (`expectDropdownsWrap`). Adrian set some dropdowns narrower than their
+ *     widest choice (Calitate exemplar at M). The case file says so.
  */
 
 import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createSaleContract, removeLeftovers, removeRecord } from "../helpers/records";
 import { openEmptyTiles, pressTileButton, forEachFrame } from "../helpers/tiles";
 import { showEmptyFields } from "../helpers/empty-fields";
+import { expectDropdownsWrap } from "../helpers/field-widths";
 
 const MARK = `${E2E_MARKER}DOC-04`;
 const SHOTS = "playwright-report/template-dropdowns";
@@ -49,20 +54,6 @@ async function widestChoices(page: Page): Promise<{ name: string; value: string 
   });
 }
 
-/** „Whole": the inner width at least the selected text's width plus 24 px for the arrow. Returns those that are not. */
-async function clipped(page: Page): Promise<string[]> {
-  return dropdowns(page).evaluateAll((els) => {
-    const ctx = document.createElement("canvas").getContext("2d")!;
-    return (els as HTMLSelectElement[]).flatMap((s) => {
-      const cs = getComputedStyle(s);
-      ctx.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
-      const inner = s.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-      const text = s.selectedOptions[0]?.text ?? "";
-      const need = ctx.measureText(text).width + 24;
-      return need > inner ? [`${s.name}: „${text}" needs ${need.toFixed(1)} px, has ${inner.toFixed(1)}`] : [];
-    });
-  });
-}
 
 /** Boxes per row in the panel headed `name`, top to bottom. */
 async function boxesPerRow(page: Page, name: string): Promise<number[]> {
@@ -82,7 +73,8 @@ async function boxesPerRow(page: Page, name: string): Promise<number[]> {
 async function widestWhole(page: Page): Promise<void> {
   await forEachFrame(page, async () => {
     for (const { name, value } of await widestChoices(page)) await page.locator(`select[name="${name}"]`).selectOption(value);
-    expect(await clipped(page)).toEqual([]);
+    // 40.88: whole means 40.78's rule — one line when it fits, wrapped in a box that keeps its width when it does not.
+    await expectDropdownsWrap(page);
   });
 }
 

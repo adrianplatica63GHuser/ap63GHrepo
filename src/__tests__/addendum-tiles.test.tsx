@@ -40,11 +40,13 @@ type Field = { key: string; tabRo: string | null; groupRo: string | null; groupE
 const ACT = (JSON.parse(read("src", "db", "document-type-forms.json")) as { forms: Record<string, Field[]> }).forms.ACT_ADITIONAL;
 /** The group's name, read from the module — a second copy of it is what template-groups-single-source forbids. */
 const AMENDED = templateFieldGroupById("amendedDeed")?.ro ?? "";
-const keysOf = (group: string) => ACT.filter((f) => f.groupRo === group).map((f) => f.key);
+/** A group's keys in form order — `order`, which is what the form draws by, not the file's array order. */
+const keysOf = (group: string) => ACT.filter((f) => f.groupRo === group).sort((a, b) => a.order - b.order).map((f) => f.key);
 
 describe("the act adițional's 20 fields, each placed once", () => {
-  it("„Identificarea actului”: the copy's quality, the copies issued and the notary's fee, on no tab (Ask first 2)", () => {
-    expect(keysOf("Identificarea actului")).toEqual(["calitateExemplar", "exemplareEmise", "onorariuNotarial"]);
+  it("„Identificarea actului”: the copy's quality, the notary's fee and the copies issued, on no tab (Ask first 2; 40.88's swap)", () => {
+    // 40.88 (migration_120): Adrian swapped Exemplare emise and Onorariu notarial.
+    expect(keysOf("Identificarea actului")).toEqual(["calitateExemplar", "onorariuNotarial", "exemplareEmise"]);
     expect(ACT.filter((f) => f.groupRo === "Identificarea actului").every((f) => f.tabRo === null)).toBe(true);
   });
 

@@ -38,7 +38,7 @@ saved.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Opens `TC-DOC-04 CVC` in a 1366 × 900 window and presses „Toate" | 36 dropdowns of the type's own fields |
-| 2 | Selects in each its widest choice | Every one shows it whole |
+| 2 | Selects in each its widest choice | Every one shows it whole — on one line when it fits the box, wrapped onto a second line in a box that keeps its width when it does not (40.78, 40.88) |
 | 3 | Looks at „Declarațiile vânzătorului" and „Declarații legale" (#38.33) | Boxes per row 3, 3, 3, 3 and 3, 2 („Temei legal evicțiune" is a text box, with one dropdown beside it) |
 | 4 | Widens the window to 1920 × 1080 | Steps 2 and 3 the same |
 
@@ -48,6 +48,11 @@ Leave without saving, and delete the document (`DELETE /api/documents/<id>`). C�
 `TC-DOC-04` finds nothing.
 
 ## Notes from the runs
+
+**2026-10-27 — Slice 40.88.** Adrian set some dropdowns narrower than their widest choice (Calitate exemplar at M, and
+40.89's Contract de vânzare dropdowns), so „whole" in step 2 is 40.78's rule: a choice wider than its box wraps onto a
+second line, the box keeping its width. The spec checks it with `expectDropdownsWrap` (e2e/helpers/field-widths.ts).
+Not driven by hand first.
 
 **2026-10-25 — Slice 40.64.** On a saved record a form tile with nothing in it is one line — its title, „necompletat" and
 „Adaugă". Where a step reads or fills a field in such a tile, the person presses „Adaugă" on it first; the spec does it

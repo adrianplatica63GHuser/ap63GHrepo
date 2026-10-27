@@ -505,14 +505,16 @@ export function tightCornerColumn(width: string): string {
  * moves up. TILE is the widest a box beside its label can be; past it they wrap.
  */
 export const DOCUMENT = {
-  documentTypeId: { step: "XXL", kind: "select" }, //   m: 47 options, longest „Tabel/Lista - Nu este un document oficial" (41)
+  // Slice 40.88 — Adrian's marks on „Field sizes — gray tiles": Tip document and the issuer XXL → XL, on every type
+  // (one field each, shared by all of them). A longer type name or issuer wraps (40.78).
+  documentTypeId: { step: "XL", kind: "select" }, //   m: 47 options, longest „Tabel/Lista - Nu este un document oficial" (41)
   title: { step: "TILE", kind: "grows", fill: true }, //  Etichetă scurtă; m: 105 · 151 · 73; the panel's whole width (#37.31)
   subject: { step: "TILE", kind: "grows", fill: true }, // m: 48 · 428 · 301; the panel's whole width (#37.31)
   notes: { step: "TILE", kind: "lines", fold: NOTE_FOLD_LINES, rows: 1, fill: true }, // Note extinse; m: 50 · 2504 · 2283, at most 4000; whole width
   // #39.72: the issuer, a juridical person by name — „Biroul Individual Notarial …" passes 40, and the big seed's
   // „Comisia Județeană Ilfov pentru stabilirea dreptului de proprietate asupra terenurilor" needs 538 px: it wraps
-  // inside XXL (40.78; it was cut, its whole name on hover, since #39.85).
-  issuerPersonId: { step: "XXL", kind: "select" },
+  // (40.78; it was cut, its whole name on hover, since #39.85). XL since 40.88, as Tip document.
+  issuerPersonId: { step: "XL", kind: "select" },
   nrDocument: { step: "M", kind: "grows" }, // m: 24 · 13 · 6
   dateDocument: { step: "M", kind: "input" }, //         dd.mm.yyyy and the calendar button
 } as const satisfies Record<string, FieldWidth>;
@@ -600,7 +602,13 @@ export const INTERACTIONS_TILE_STYLE: CSSProperties = { ...PAGES_PANEL_STYLE, mi
  *             valoare", in italics, 120 px — no longer the widest choice of a
  *             CVC dropdown, so „Da / Nu / Nu e menționat" is 9rem.)
  * A field whose JSON carries `width` (one of the scale's steps) takes that step
- * instead; its KIND still follows from its type. No form sets `width` today.
+ * instead; its KIND still follows from its type. Since 40.88 Act Adițional and
+ * Contract de vânzare set it (migration_120) — Adrian's sizes, one field at a time.
+ *
+ * TILE (40.88, as in 40.79): the box takes the panel's whole inner width on a row
+ * of its own, as Note does — `fill` here, and `full` in rule 18
+ * (`templateFieldTakesRow`). Beside a label TILE is 24.375rem; on a stacked panel
+ * it is whatever the panel is inside, so the step alone would not be the panel.
  *
  * `m:` is `measure-fields` on the 116 template fields of the six seeded types:
  * text runs from 3 characters to 267, most under 45 — XL holds 37, and longer
@@ -697,13 +705,26 @@ export function templateFieldWidth(
   labels: readonly string[] = [],
   forceLines = false,
 ): FieldWidth {
+  const tile = field.width === "TILE" ? ({ fill: true } as const) : {};
   if (field.type === "select") {
-    if (field.width) return { step: field.width, kind: "select" };
+    if (field.width) return { step: field.width, kind: "select", ...tile };
     return templateSelectWidth(labels);
   }
-  if (forceLines) return { ...TEMPLATE_FIELD.textarea, ...(field.width ? { step: field.width } : {}) };
+  if (forceLines) return { ...TEMPLATE_FIELD.textarea, ...(field.width ? { step: field.width } : {}), ...tile };
   const base: FieldWidth = TEMPLATE_FIELD[field.type];
-  return field.width ? { ...base, step: field.width } : base;
+  return field.width ? { ...base, step: field.width, ...tile } : base;
+}
+
+/**
+ * Whether a template field takes a row of its own at the panel's whole width in rule 18 (`packFieldRows`'s `full`).
+ * A textarea does, and every field under Certificate și referințe (`forceLines`) — but never a dropdown that is not
+ * TILE, which stays as wide as its choices (#36.01). Since 40.88 a field at TILE does too, whatever its type: TILE
+ * is the panel's whole inner width, so nothing can sit beside it. One function, so the form and the packing test
+ * cannot come to disagree about which boxes break a row.
+ */
+export function templateFieldTakesRow(width: FieldWidth, { isSelect, forceLines = false }: { isSelect: boolean; forceLines?: boolean }): boolean {
+  if (width.step === "TILE" && width.fill) return true;
+  return !isSelect && (forceLines || width.kind === "lines");
 }
 
 /** Whether `value` names one of the scale's steps — what a template field's `width` may hold. */
@@ -786,7 +807,7 @@ export const SCREEN_ROWS = {
     ],
   },
   document: {
-    // „Identificarea actului" (#38.32): Tip document (XXL, the no-form hint under it) —
+    // „Identificarea actului" (#38.32): Tip document (XL since 40.88, the no-form hint under it) —
     // Emitent / Notariat — Nr. document | Data (rule 14) — then the type's identification
     // fields, packed — then Etichetă scurtă — Subiect — Note extinse, each the whole width.
     // The issuer, number and date sat at the top of the fees panel until #38.32.
@@ -840,12 +861,16 @@ export const PANEL_UNITS = {
     map: 3,
     streetView: 3,
   },
-  //  general 3 — Tip document and Emitent at XXL, 24rem; fees 3 — the fees group's fields,
+  //  general 3 — held at 3 since 40.88: Tip document and Emitent went XXL → XL, and the rows alone
+  //  would now fit 2 units (Nr. document | Data, 17.5rem), but Adrian marked Etichetă scurtă,
+  //  Subiect and Note extinse green at the 3-unit tile's whole width (450 px), and Exemplare emise
+  //  TILE beside them; fees 3 — the fees group's fields,
   //  3 units at least as before #38.32 (a wider group widens it: `packFieldRows`).
   //  pages 4 — PAGES_PANEL_REM is exactly unitsRem(4) (rule 20). (succession 3 went with the
   //  certificate's own „Părți" panel in #39.48.)
   document: {
     ...panelUnitsOf(SCREEN_ROWS.document, DOCUMENT),
+    general: 3,
     fees: 3,
     pages: 4,
   },
@@ -1735,7 +1760,7 @@ export const SCREEN = {
   calcShare: { step: "S", kind: "input" }, // a share, two decimals at most — „33,33"
   calcRoadWidth: { step: "S", kind: "input" }, // the road's width in metres, under 15 — „4"
   // Motorul de tipuri
-  documentType: { step: "XXL", kind: "select" }, //    the type to distil, as DOCUMENT.documentTypeId (max-w-lg before)
+  documentType: { step: "XXL", kind: "select" }, //    the type to distil, as DOCUMENT.documentTypeId was until 40.88 (max-w-lg before)
   matchPercent: { step: "M", kind: "select" }, //      „Matching %" (10rem and 8rem before)
   proposedLabel: { step: "XL", kind: "input" }, //     a proposed field's label, as TEMPLATE_FIELD.text
   proposedType: { step: "M", kind: "select" }, //      „Text lung"

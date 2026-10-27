@@ -1934,7 +1934,8 @@
       "surveyorNotInSystem": "Dacă topograful nu se află în sistem, acesta trebuie introdus mai întâi ca persoană fizică sau juridică."
     },
     "typeForm": {
-      "optionHasForm": "{name} (are formular)",
+      "optionHasForm": "{name} (F)",
+      "optionHasFormTitle": "{name} (are formular)",
       "noFormHint": "Acest tip nu are încă formular; formularul se construiește în <link>Distilare Tipizate</link>."
     },
     "surveyorPicker": {

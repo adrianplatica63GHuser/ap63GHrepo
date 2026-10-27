@@ -96,6 +96,7 @@ import { ALWAYS_SHOWN_FIELDS,
   packFieldRows,
   rem,
   stackedBoxStyle,
+  templateFieldTakesRow,
   templateFieldWidth,
   unitRowStyle,
   unitStyle,
@@ -1485,7 +1486,8 @@ export function DocumentForm({
     const items = fields.map((f) => {
       const width = customFieldWidth(f, forceFullWidthTextarea);
       const isSelect = f.type === "select" && !!f.options && f.options.length > 0;
-      return { key: f.key, width, full: !isSelect && (forceFullWidthTextarea || width.kind === "lines") };
+      // 40.88: a field at TILE takes a row of its own too (`templateFieldTakesRow`).
+      return { key: f.key, width, full: templateFieldTakesRow(width, { isSelect, forceLines: forceFullWidthTextarea }) };
     });
     const { units, rows } = packFieldRows(items, { baseRowsRem });
     const inner = unitsInnerRem(units);
@@ -1541,6 +1543,8 @@ export function DocumentForm({
           // Slice #37.15: as wide as its longest option — the blank one too —
           // from S to XXL, by rule (`templateFieldWidth`).
           width={customFieldWidth(f, forceFullWidthTextarea)}
+          // 40.88: a dropdown at TILE fills the panel, on its row of its own.
+          fillRem={fillRem}
           watchValue={watchedValues.customFields?.[f.key]}
           // The blank choice is SELECTABLE here, unlike the type picker's
           // hidden placeholder: a clause ticked by mistake has to be
@@ -1757,6 +1761,9 @@ export function DocumentForm({
               opt.templateFields,
               (name) => t("typeForm.optionHasForm", { name }),
             ),
+            // Slice 40.88: the mark is „(F)" (Adrian: „(are formular)" was too long); the option's hover text and its
+            // accessible name keep the whole words, so the letter is never unexplained.
+            title: documentTypeHasForm(opt.templateFields) ? t("typeForm.optionHasFormTitle", { name: opt.name }) : undefined,
           }))}
           highlight={displayHighlights?.documentTypeId}
           width={DOC.documentTypeId}
@@ -2545,18 +2552,20 @@ function SelectField({
   disabled,
   emptyOptionLabel,
   width,
+  fillRem,
   watchValue,
   readLabel,
   hintInRead = false,
 }: Omit<FieldProps, "width"> & {
   /** Slice 40.75: the hint is a statement about the value, not a control, so the read view keeps it (the type's „no form"). */
   hintInRead?: boolean;
-  /** Slice 40.75: the read view's words for the chosen value, where an option's own label says more (the type's „(are formular)"). */
+  /** Slice 40.75: the read view's words for the chosen value, where an option's own label says more (the type's „(F)"). */
   readLabel?: string;
   width: FieldWidth;
   /** The chosen value, so the box can show that option's words — wrapping when longer than the box (40.78). */
   watchValue?: string | null;
-  options: { value: string; label: string }[];
+  /** `title` (40.88): the option's hover text and accessible name, where its label is shortened — the type's „(F)". */
+  options: { value: string; label: string; title?: string }[];
   /**
    * Slice #36.01: when set, the blank choice is a REAL, selectable option
    * carrying this caption, instead of the hidden disabled placeholder below.
@@ -2594,12 +2603,14 @@ function SelectField({
     .filter(Boolean)
     .join(" ");
   const chosenLabel = options.find((o) => o.value === (watchValue ?? ""))?.label;
+  // 40.88: a box at TILE fills its panel (`fillRem`, the panel's inner width), as a text Field does.
+  const boxCss = fillRem !== undefined ? stackedBoxStyle({ ...width, fill: true }, fillRem) : boxStyle(width);
   // Slice 40.75: the read view — the chosen option's words; a blank choice reads as nothing.
   if (read.reading) {
     return (
-      <div className={STACKED_FIELD_CLASS} style={hiddenFieldStyle(hiddenEmpty, boxStyle(width))} data-empty-hidden={hiddenEmpty || undefined}>
+      <div className={STACKED_FIELD_CLASS} style={hiddenFieldStyle(hiddenEmpty, boxCss)} data-empty-hidden={hiddenEmpty || undefined}>
         <span className={STACKED_LABEL_CLASS}>{label}</span>
-        <ReadValue name={name} kind={width.kind} text={watchValue ? (readLabel ?? chosenLabel ?? "") : ""} style={boxStyle(width)} className={ring} />
+        <ReadValue name={name} kind={width.kind} text={watchValue ? (readLabel ?? chosenLabel ?? "") : ""} style={boxCss} className={ring} />
         {hintInRead && hint && <span className="text-xs text-fade">{hint}</span>}
       </div>
     );
@@ -2610,14 +2621,14 @@ function SelectField({
     // Slice #37.15 made it unconditional, with the label's pt-1 — the line
     // every Field on this form now keeps, since any of them may grow.
     // Slice #37.31: the label above the box, the pair as wide as the box.
-    <div className={STACKED_FIELD_CLASS} style={hiddenFieldStyle(hiddenEmpty, boxStyle(width))} data-empty-hidden={hiddenEmpty || undefined}>
+    <div className={STACKED_FIELD_CLASS} style={hiddenFieldStyle(hiddenEmpty, boxCss)} data-empty-hidden={hiddenEmpty || undefined}>
       <label
         htmlFor={fieldId}
         className={STACKED_LABEL_CLASS}
       >
         {label}
       </label>
-      <div className="flex flex-col gap-0.5" style={boxStyle(width)}>
+      <div className="flex flex-col gap-0.5" style={boxCss}>
         <WrappingSelect
           // Slice 40.78: the box shows the chosen option's words, wrapping onto a second line when they are longer
           // than the box — a native <select> cannot, so `WrappingSelect` lays it under a face that does.
@@ -2652,7 +2663,7 @@ function SelectField({
           // dropped it, which is how an accessibility fix becomes a regression.
           aria-describedby={describedBy || undefined}
           aria-invalid={error ? true : undefined}
-          style={boxStyle(width)}
+          style={boxCss}
           data-width-field={name}
           data-width-kind="select"
           className={[
@@ -2667,7 +2678,7 @@ function SelectField({
             <option value="" disabled hidden />
           )}
           {options.map((o) => (
-            <option key={o.value} value={o.value}>{o.label}</option>
+            <option key={o.value} value={o.value} title={o.title} aria-label={o.title}>{o.label}</option>
           ))}
         </WrappingSelect>
         {hint && (

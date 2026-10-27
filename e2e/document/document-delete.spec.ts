@@ -35,7 +35,7 @@ test.describe("TC-DOC-26 — „Șterge” pe un act abia creat", () => {
     try {
       // Step 1 — „Adaugă act": a Contract de Vânzare, a notary office, the number.
       await page.goto("/documents/new");
-      await page.getByLabel(/^Tip document/).selectOption({ label: "Contract de Vânzare (are formular)" });
+      await page.getByLabel(/^Tip document/).selectOption({ label: "Contract de Vânzare (F)" }); // 40.88: „(are formular)" became „(F)"
       await tile(page).getByRole("combobox", { name: "Notariat", exact: true }).selectOption({ label: "Notariat" }) // #39.72: the issuer, a juridical person by its name;
       await tile(page).locator('[data-width-field="nrDocument"]').fill(MARK);
 

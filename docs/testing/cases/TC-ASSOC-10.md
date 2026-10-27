@@ -30,7 +30,7 @@ for TC-ASSOC-01 on 2026-09-21. The deed does not rename a buyer because it is a 
 - A company, made on „Persoane Juridice" → „Adaugă": „Denumire" **`TC-ASSOC-10 Firmă de test SRL`**,
   nothing else.
 - A document, made on „Acte" → „Adaugă act": „Tip document" **„Contract de Vânzare"** (the select
-  reads „Contract de Vânzare (are formular)"), „Etichetă scurtă" **`TC-ASSOC-10 Contract de test`**.
+  reads „Contract de Vânzare (F)"), „Etichetă scurtă" **`TC-ASSOC-10 Contract de test`**.
 
 Both are deleted at the end.
 

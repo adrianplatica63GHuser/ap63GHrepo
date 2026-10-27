@@ -38,7 +38,7 @@ The window is 1920 × 1080.
 | 2 | „+ Adaugă pagină", chooses `tc-e2e-pagina-1.jpg`, `tc-e2e-pagina-2.jpg` and `tc-e2e-pagina-3.pdf` | Three rows, 1 to 3, in that order: the two JPGs with their picture, the PDF with a file icon. Nothing is saved yet |
 | 3 | „+ Adaugă pagină", chooses a file `poza.heic` | Refused there: „poza.heic: Acest tip de fișier nu poate fi adăugat ca pagină. …"; still three rows |
 | 4 | „Mută mai sus" on row 3, then „Mută mai jos" on row 2 | The PDF goes to 2, then back to 3: 1 `…-1.jpg`, 2 `…-2.jpg`, 3 `…-3.pdf`. Row 1's „Mută mai sus" is inactive |
-| 5 | „Tip document" Contract de Vânzare (are formular), „Etichetă scurtă" `TC-DOC-14 Act`, „Salvează" | The document's own screen (`/documents/<id>`), headed `TC-DOC-14 Act`; „Pagini" lists 1 `tc-e2e-pagina-1.jpg`, 2 `tc-e2e-pagina-2.jpg`, 3 `tc-e2e-pagina-3.pdf`; no „Unele pagini nu au fost salvate" |
+| 5 | „Tip document" Contract de Vânzare (F), „Etichetă scurtă" `TC-DOC-14 Act`, „Salvează" | The document's own screen (`/documents/<id>`), headed `TC-DOC-14 Act`; „Pagini" lists 1 `tc-e2e-pagina-1.jpg`, 2 `tc-e2e-pagina-2.jpg`, 3 `tc-e2e-pagina-3.pdf`; no „Unele pagini nu au fost salvate" |
 | 6 | „Acte", „Adaugă act", chooses `tc-e2e-pagina-3.pdf`, then „Acte" in the sidebar | „Modificări nesalvate", with „Anulează", „Renunță" and „Salvează"; „Anulează" keeps the form and its one row |
 
 ## At the end — leaving things as they were found

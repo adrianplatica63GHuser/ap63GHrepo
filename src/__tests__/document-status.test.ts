@@ -83,7 +83,7 @@ describe("documentTypeHasForm — the AI-completed test", () => {
 
 describe("documentTypeOptionLabel — the picker marks the MINORITY", () => {
   // Stands in for the `t("typeForm.optionHasForm")` call the form passes.
-  const mark = (name: string) => `${name} (are formular)`;
+  const mark = (name: string) => `${name} (F)`; // 40.88: „(are formular)" became „(F)"
 
   it.each(NO_FORM)("returns a type with %s byte-for-byte unchanged", (_label, raw) => {
     expect(documentTypeOptionLabel("Contract", raw, mark)).toBe("Contract");

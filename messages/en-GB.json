@@ -1934,7 +1934,8 @@
       "surveyorNotInSystem": "If the surveyor is not yet in the system, add them first as a natural person or juridical person."
     },
     "typeForm": {
-      "optionHasForm": "{name} (has a form)",
+      "optionHasForm": "{name} (F)",
+      "optionHasFormTitle": "{name} (has a form)",
       "noFormHint": "This type has no form yet; its form is built in <link>DocTypeEngine</link>."
     },
     "surveyorPicker": {

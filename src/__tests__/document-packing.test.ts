@@ -14,10 +14,12 @@
 import fs from "node:fs";
 import path from "node:path";
 import {
+  SCALE,
   boxRem,
   packFieldRows,
   rowRem,
   selectNeedPx,
+  templateFieldTakesRow,
   templateFieldWidth,
   unitsInnerRem,
   type FieldWidth,
@@ -64,7 +66,7 @@ function panelsOf(fields: StoredField[]) {
     const items = group.map((f) => {
       const width = widthOf(f, force);
       const isSelect = f.type === "select" && !!f.options && f.options.length > 0;
-      return { key: f.key, width, full: !isSelect && (force || width.kind === "lines") };
+      return { key: f.key, width, full: templateFieldTakesRow(width, { isSelect, forceLines: force }) };
     });
     const packed = packFieldRows(items, { baseRowsRem: isFeesGroup(label) ? FEES_BASE : isIdentificationGroup(label) ? IDENTIFICATION_BASE : 0 });
     return { label, items, ...packed };
@@ -118,6 +120,34 @@ describe.each(Object.keys(FORMS.forms))("the seeded type %s", (key) => {
   });
 });
 
+describe("an Act Adițional's panels at Adrian's sizes (40.88)", () => {
+  it("packs „Identificarea actului” and „Ce modifică” into these rows", () => {
+    const act = panelsOf(FORMS.forms.ACT_ADITIONAL)
+      .filter((p) => ["Identificarea actului", "Motiv și efect", "Clauze completate"].includes(p.label))
+      .map((p) => ({ label: p.label, units: p.units, rows: p.rows }));
+    expect(act).toEqual([
+      // Calitate exemplar | Onorariu notarial, then Exemplare emise across the tile (the swap, and TILE).
+      { label: "Identificarea actului", units: 3, rows: [["calitateExemplar", "onorariuNotarial"], ["exemplareEmise"]] },
+      // Motiv completare (a textarea) and Temei legal completare (TILE) each the panel's width; the two dropdowns at M share a row.
+      { label: "Motiv și efect", units: 2, rows: [["motivCompletare"], ["temeiLegalCompletare"], ["efectUrmarit", "pretNeschimbat"]] },
+      // The nine clauses at M, three to a row.
+      { label: "Clauze completate", units: 3, rows: [
+        ["liberDeSarcini", "faraServituti", "nearendat"],
+        ["notificareAml", "consimtamantRadiere", "taxeLocaleLaZi"],
+        ["nedezmembratContrar", "consimtamantDatePersonale", "celelalteClauzeNemodificate"],
+      ] },
+    ]);
+  });
+
+  it("draws each marked field at its step", () => {
+    const byKey = new Map(panelsOf(FORMS.forms.ACT_ADITIONAL).flatMap((p) => p.items).map((i) => [i.key, i.width] as const));
+    for (const k of ["calitateExemplar", "efectUrmarit", "pretNeschimbat", "liberDeSarcini", "celelalteClauzeNemodificate"]) {
+      expect([k, boxRem(byKey.get(k)!)]).toEqual([k, SCALE.M]);
+    }
+    for (const k of ["exemplareEmise", "temeiLegalCompletare"]) expect([k, byKey.get(k)!.step, byKey.get(k)!.fill]).toEqual([k, "TILE", true]);
+  });
+});
+
 describe("a CVC's panels, written out", () => {
   it("packs each group of the sale contract into these rows", () => {
     const cvc = panelsOf(FORMS.forms.CONTRACT_VANZARE).map((p) => ({ label: p.label, units: p.units, rows: p.rows }));
@@ -138,8 +168,10 @@ describe("a CVC's panels, written out", () => {
  */
 const CVC_ROWS: { label: string; units: number; rows: string[][] }[] = [
   // #38.33: the CVC's groups after its six tiles (Adrian.Request.txt), in form order.
+  // 40.88 (migration_120): Calitate exemplar M; Exemplare emise TILE — the panel's width, on a row of its own.
   { label: "Identificarea actului", units: 3, rows: [
-    ["calitateExemplar", "exemplareEmise"],
+    ["calitateExemplar"],
+    ["exemplareEmise"],
     ["temeiAutentificare", "dataContinut"],
   ] },
   { label: "Preț", units: 3, rows: [

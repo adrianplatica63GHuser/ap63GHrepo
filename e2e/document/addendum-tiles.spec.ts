@@ -12,11 +12,13 @@
  *     (`data-width-field`).
  *   - Slice #38.34's pictures, not steps of the case: „Actul modificat" linked
  *     and not, and the page, at 1366 and 1920 px, into `playwright-report/addendum-tiles/`.
+ *   - Step 6 (40.88) measures the boxes in px, from field-widths.ts's scale:
+ *     XL 272, M 136, a 3-unit tile 450 inside, a 2-unit panel 286.
  */
 
 import { test, expect, type Locator, type Page } from "../helpers/test";
 import { E2E_MARKER, createDocumentOfType, removeLeftovers, removeRecord } from "../helpers/records";
-import { openEmptyTiles, showTile, editTileNamed, saveTileNamed } from "../helpers/tiles";
+import { openEmptyTiles, showTile, editTile, editTileNamed, saveTileNamed } from "../helpers/tiles";
 import { showEmptyFields } from "../helpers/empty-fields";
 
 const MARK = `${E2E_MARKER}DOC-20`;
@@ -27,6 +29,19 @@ const SHOTS = "playwright-report/addendum-tiles";
 
 const amended = (page: Page) => page.getByRole("region", { name: "Actul modificat", exact: true });
 const fallback = (page: Page) => amended(page).locator('[data-width-field="customFields.actParinteNumar"]');
+
+/** A drawn box's place and size. */
+async function rect(box: Locator): Promise<{ x: number; y: number; width: number; height: number }> {
+  await expect(box).toBeVisible({ timeout: 30_000 });
+  const r = await box.boundingBox();
+  expect(r).not.toBeNull();
+  return r!;
+}
+
+/** Within a pixel of `px` wide. */
+async function expectWidth(box: Locator, px: number): Promise<void> {
+  expect(Math.abs((await rect(box)).width - px), `${await box.getAttribute("data-width-field")} is ${px} px`).toBeLessThanOrEqual(1);
+}
 
 async function photograph(page: Page, name: string, target: Locator | null): Promise<void> {
   for (const width of [1366, 1920]) {
@@ -110,6 +125,37 @@ test.describe("TC-DOC-20 — actul adițional și actul pe care îl modifică", 
       await expect(amended(page).getByRole("button", { name: "Leagă actul modificat", exact: true })).toBeVisible({ timeout: 15_000 });
       await expect(fallback(page)).toBeVisible();
       await expect(fallback(page)).toHaveText("TC-1"); // 40.75: read as text
+
+      // Step 6 — 40.88, Adrian's sizes. „Editează" on „Identificarea actului": the type „… (F)", the words on hover;
+      // Tip document and Notariat XL; Calitate exemplar | Onorariu notarial on one row, Exemplare emise across the
+      // tile under them.
+      await editTile(page, "general");
+      const identification = page.locator('[data-panel="general"]');
+      const field = (name: string) => identification.locator(`[data-width-field="${name}"]`);
+      const chosen = field("documentTypeId").locator("option:checked");
+      await expect(chosen).toHaveText("Act Adițional (F)");
+      await expect(chosen).toHaveAttribute("title", "Act Adițional (are formular)");
+      await expectWidth(field("documentTypeId"), 272);
+      await expectWidth(field("issuerPersonId"), 272);
+      const quality = await rect(field("customFields.calitateExemplar"));
+      const fee = await rect(field("customFields.onorariuNotarial"));
+      const copies = await rect(field("customFields.exemplareEmise"));
+      expect(Math.abs(quality.y - fee.y), "Calitate exemplar | Onorariu notarial on one row").toBeLessThanOrEqual(1);
+      expect(fee.x).toBeGreaterThan(quality.x);
+      expect(copies.y, "Exemplare emise under them").toBeGreaterThan(Math.max(quality.y + quality.height, fee.y + fee.height) - 1);
+      await expectWidth(field("customFields.calitateExemplar"), 136);
+      await expectWidth(field("customFields.exemplareEmise"), 450);
+      await page.locator('[data-tile-cancel="general"]').click();
+      await expect(page.locator('[data-tile-edit-bar="general"]')).toHaveCount(0);
+      // „Editează" on „Ce modifică": Temei legal completare the panel's whole width (2 units, 286 px), the dropdowns M.
+      const changes6 = await editTileNamed(page, "Ce modifică");
+      const inChanges = (name: string) => changes6.locator(`[data-width-field="customFields.${name}"]`);
+      await expectWidth(inChanges("temeiLegalCompletare"), 286);
+      for (const name of ["efectUrmarit", "pretNeschimbat", "liberDeSarcini", "consimtamantRadiere", "celelalteClauzeNemodificate"]) {
+        await expectWidth(inChanges(name), 136);
+      }
+      await changes6.locator("[data-tile-cancel]").click();
+      await expect(changes6.locator("[data-tile-edit-bar]")).toHaveCount(0);
     } finally {
       await page.waitForLoadState("networkidle").catch(() => {});
       for (const id of made.reverse()) await removeRecord(page.request, "document", id);

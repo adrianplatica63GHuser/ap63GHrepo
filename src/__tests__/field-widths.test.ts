@@ -79,6 +79,8 @@ import {
   rowRem,
   selectNeedPx,
   selectStepFor,
+  stackedBoxStyle,
+  templateFieldTakesRow,
   templateFieldWidth,
   textPx,
   type FieldWidth,
@@ -364,7 +366,9 @@ describe("the scale", () => {
     expect(boxRem(NATURAL_PERSON.physicalPersonTypeId)).toBe(13.5);
     expect(PROPERTY.useCategoryId.step).toBe("L");
     expect(PROPERTY.tarlaId.step).toBe("M");
-    expect(DOCUMENT.issuerPersonId.step).toBe("XXL");
+    // 40.88: Adrian's marks — Tip document and the issuer XXL → XL, on every type.
+    expect(DOCUMENT.issuerPersonId.step).toBe("XL");
+    expect(DOCUMENT.documentTypeId.step).toBe("XL");
   });
 
   it("every record screen's dropdown goes through the wrapping one, and none shows its value on hover instead", () => {
@@ -884,6 +888,22 @@ describe("a document type's own fields are sized by rule (#37.15)", () => {
     expect(templateFieldWidth({ type: "text", width: "L" })).toEqual({ step: "L", kind: "grows" });
     expect(templateFieldWidth({ type: "select", width: "XS" }, ["Opțiune lungă"])).toEqual({ step: "XS", kind: "select" });
     expect(templateFieldWidth({ type: "date", width: "L" }).kind).toBe("input");
+  });
+
+  it("TILE fills the panel on a row of its own, whatever the field's type (40.88)", () => {
+    expect(templateFieldWidth({ type: "text", width: "TILE" })).toEqual({ step: "TILE", kind: "grows", fill: true });
+    expect(templateFieldWidth({ type: "number", width: "TILE" })).toEqual({ step: "TILE", kind: "input", fill: true });
+    expect(templateFieldWidth({ type: "select", width: "TILE" }, ["Da"])).toEqual({ step: "TILE", kind: "select", fill: true });
+    // A row of its own: TILE, a textarea, anything under Certificate și referințe — never another dropdown.
+    expect(templateFieldTakesRow(templateFieldWidth({ type: "text", width: "TILE" }), { isSelect: false })).toBe(true);
+    expect(templateFieldTakesRow(templateFieldWidth({ type: "select", width: "TILE" }, ["Da"]), { isSelect: true })).toBe(true);
+    expect(templateFieldTakesRow(templateFieldWidth({ type: "textarea" }), { isSelect: false })).toBe(true);
+    expect(templateFieldTakesRow(templateFieldWidth({ type: "text" }, [], true), { isSelect: false, forceLines: true })).toBe(true);
+    expect(templateFieldTakesRow(templateFieldWidth({ type: "text" }), { isSelect: false })).toBe(false);
+    expect(templateFieldTakesRow(templateFieldWidth({ type: "select", width: "M" }, ["Da"]), { isSelect: true })).toBe(false);
+    expect(templateFieldTakesRow(templateFieldWidth({ type: "select" }, ["Da"], true), { isSelect: true, forceLines: true })).toBe(false);
+    // A TILE box beside its label is the step; on a stacked panel it is the panel's inner width (`fill`).
+    expect(stackedBoxStyle(templateFieldWidth({ type: "text", width: "TILE" }), unitsInnerRem(3))).toEqual({ width: `${unitsInnerRem(3)}rem` });
   });
 
   it("measures text in Roboto (40.70): diacritics as their letter, an em dash wide, a capital wider than a small letter", () => {

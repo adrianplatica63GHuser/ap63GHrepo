@@ -136,7 +136,21 @@ function statement(src: string, head: string): string {
 describe("both locales carry the same two messages", () => {
   it.each(LOCALES)("%s has the group, with exactly these keys", (file) => {
     expect(Object.keys(at(MESSAGES[file], "document.typeForm") as object).sort())
-      .toEqual(["noFormHint", "optionHasForm"]);
+      .toEqual(["noFormHint", "optionHasForm", "optionHasFormTitle"]);
+  });
+
+  // Slice 40.88 — Adrian: „(are formular)" is too long; „(F)" instead. The hover text and the accessible name keep
+  // the whole words, so the letter is never unexplained.
+  it.each(LOCALES)("%s marks a type with a form „(F)”", (file) => {
+    expect(text(file, "document.typeForm.optionHasForm")).toBe("{name} (F)");
+  });
+
+  it.each([
+    ["ro-RO.json", "{name} (are formular)"],
+    ["en-GB.json", "{name} (has a form)"],
+  ])("%s says it in words on hover", (file, words) => {
+    expect(text(file, "document.typeForm.optionHasFormTitle")).toBe(words);
+    expect([...scanIcu(text(file, "document.typeForm.optionHasFormTitle")).args]).toEqual(["name"]);
   });
 
   it.each(LOCALES)("%s interpolates the type name, and nothing else", (file) => {
@@ -190,6 +204,7 @@ describe("the hint is one sentence, without alarm", () => {
   it.each(LOCALES)("%s carries no line break", (file) => {
     expect(text(file, "document.typeForm.noFormHint")).not.toMatch(/[\r\n]/);
     expect(text(file, "document.typeForm.optionHasForm")).not.toMatch(/[\r\n]/);
+    expect(text(file, "document.typeForm.optionHasFormTitle")).not.toMatch(/[\r\n]/);
   });
 
   // Risk 2, in the copy. „încă" / „yet" left this list in #37.85 — see the
@@ -329,6 +344,9 @@ describe("has-a-form is decided once, and the dropdown asks that one function", 
     // `opt.name` in a ternary arm one line above. Round four.
     expect(field).toMatch(/documentTypeOptionLabel\(\s*opt\.name,\s*opt\.templateFields,/);
     expect(field).toContain('t("typeForm.optionHasForm"');
+    // 40.88: the whole words on hover and as the option's name, only where the type has a form.
+    expect(field).toMatch(/title:\s*documentTypeHasForm\(opt\.templateFields\)\s*\?\s*t\("typeForm\.optionHasFormTitle", \{ name: opt\.name \}\)\s*:\s*undefined/);
+    expect(FORM_CODE).toContain("<option key={o.value} value={o.value} title={o.title} aria-label={o.title}>");
     expect(field).toContain('t.rich("typeForm.noFormHint"');
     // No carve-out on which options are marked. Both that were tried made the
     // picker inconsistent — see the component's comment, which records them.

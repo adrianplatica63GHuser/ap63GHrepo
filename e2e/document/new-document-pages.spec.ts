@@ -71,7 +71,7 @@ test.describe("TC-DOC-14 — un act nou primește paginile înainte de prima sal
       await expect(rows(page).nth(0).getByRole("button", { name: "Mută mai sus", exact: true })).toBeDisabled();
 
       // Step 5 — the type, the label, „Salvează": the document's own screen, its pages 1–3.
-      await page.getByLabel(/^Tip document/).selectOption({ label: "Contract de Vânzare (are formular)" });
+      await page.getByLabel(/^Tip document/).selectOption({ label: "Contract de Vânzare (F)" }); // 40.88: „(are formular)" became „(F)"
       await page.getByLabel(/^Etichetă scurtă/).fill(TITLE);
       await page.locator("#document-form").evaluate((f: HTMLFormElement) => f.requestSubmit());
       await expect(page).toHaveURL(/\/documents\/[0-9a-f-]{36}$/, { timeout: 60_000 });

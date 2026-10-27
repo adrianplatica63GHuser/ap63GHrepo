@@ -180,8 +180,8 @@ test.describe("TC-DOC-01 — Act creat, pagină atașată, pagina se deschide", 
       const type = page.getByLabel(/^Tip document/);
       await expect(type).toHaveValue("");
 
-      // Step 3 — „Contract de Vânzare (are formular)": the notebook tabs and „FINANCIAR".
-      await type.selectOption({ label: "Contract de Vânzare (are formular)" });
+      // Step 3 — „Contract de Vânzare (F)" (40.88; „(are formular)" until then): the notebook tabs and „FINANCIAR".
+      await type.selectOption({ label: "Contract de Vânzare (F)" });
       // #38.33: the CVC's five tabs; the first page's first panel is „Preț".
       for (const tab of ["Preț și plată", "Obiectul vânzării", "Carte funciară", "Declarații și garanții", "Taxe și cheltuieli"]) {
         await expect(page.getByRole("tab", { name: tab, exact: true })).toBeVisible();
