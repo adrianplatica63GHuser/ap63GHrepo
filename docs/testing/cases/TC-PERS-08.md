@@ -36,7 +36,7 @@ The window is 1366 × 900.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | „Persoane Fizice" → „Adaugă persoană"; „Nume" `TC-PERS-08`, „Prenume" `Andrei`, „Gen" „Masculin" | The form; no „Părinții titularului" |
-| 2 | „Tip document" → „Carte de identitate" | Under the tile, „Părinții titularului" with „Creează și tatăl" and „Creează și mama", both unticked, each surname `TC-PERS-08` |
+| 2 | Looks under „Identitate" (Slice 40.85: no „Tip document" on the person any more) | „Părinții titularului" with „Creează și tatăl" and „Creează și mama", both unticked, each surname `TC-PERS-08` |
 | 3 | Ticks „Creează și tatăl" and types `Ion`; ticks „Creează și mama", types `Maria`, and replaces her surname with `TC-PERS-08-MAMA` | The father's surname is marked as the holder's, assumed („Numele titularului, presupus — verificați-l…"); the mother's is no longer marked |
 | 4 | „Salvează" | „Tatăl titularului", „Părintele 1 din 2", „Fără CNP, potrivirea se face doar după nume…", „Persoană nouă" |
 | 5 | „Creează și leagă" | „Mama titularului", „Părintele 2 din 2" |
@@ -49,6 +49,10 @@ The window is 1366 × 900.
 „Șterge" and **„Da"** on the three persons.
 
 ## Notes from the runs
+
+**2026-10-26 — Slice 40.85.** The person's card fields went (an identity document is a document of its own), so
+„Părinții titularului" is offered on every new person, under „Identitate"; step 2 no longer picks „Tip document".
+The spec follows; not driven by hand first.
 
 **2026-10-07 — Slice #38.29, `automated` the same day.** Written with the change and translated into
 `e2e/person/parents-from-id-card.spec.ts`. The spec's names carry `TC-E2E-PERS-08`. It reads step 8's

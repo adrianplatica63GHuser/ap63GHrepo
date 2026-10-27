@@ -6,9 +6,11 @@
  * `checkIdentityWrite` (./validation). They take the caller's connection, because a document and its identity
  * values are written in one transaction (`createDocument` / `updateDocument` in src/lib/documents/queries.ts).
  */
-import { and, eq, inArray, notExists } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, notExists, sql, type SQL } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import { db, type DbTransaction } from "@/db";
-import { document, documentPage, identityDocument, lookupDocumentType, personDocument } from "@/db/schema";
+import { document, documentPage, identityDocument, lookupDocumentType, person, personDocument } from "@/db/schema";
+import { personIdentityDocumentOf, type PersonIdentityDocument } from "./person-list";
 import { IDENTITY_VALUE_KEYS, isIdentityKind, type IdentityKind } from "./kinds";
 import {
   emptyIdentityValues,
@@ -115,4 +117,73 @@ export async function identityDocumentsMadeByMigration(personIds: readonly strin
       ),
     );
   return rows.map((r) => r.id);
+}
+
+/**
+ * The identity documents each of these persons holds — every document of an identity type the person is linked to,
+ * in any role (the holder's is „Titular act de identitate"), once each.                    (Slice 40.85)
+ * Unordered: `orderPersonIdentityDocuments` (./person-list) puts the current one first.
+ */
+export async function listIdentityDocumentsOf(personIds: readonly string[]): Promise<Map<string, PersonIdentityDocument[]>> {
+  const out = new Map<string, PersonIdentityDocument[]>();
+  if (personIds.length === 0) return out;
+  const issuer = alias(person, "issuer");
+  const rows = await db
+    .select({
+      personId: personDocument.personId,
+      id: document.id,
+      code: document.code,
+      identityKind: lookupDocumentType.identityKind,
+      typeName: lookupDocumentType.name,
+      typeShortName: lookupDocumentType.shortName,
+      nrDocument: document.nrDocument,
+      dateDocument: document.dateDocument,
+      dateValidUntil: document.dateValidUntil,
+      issuerName: issuer.displayName,
+    })
+    .from(personDocument)
+    .innerJoin(document, eq(personDocument.documentId, document.id))
+    .innerJoin(lookupDocumentType, eq(document.documentTypeId, lookupDocumentType.id))
+    .leftJoin(issuer, eq(document.issuerPersonId, issuer.id))
+    .where(and(inArray(personDocument.personId, [...personIds]), isNotNull(lookupDocumentType.identityKind)));
+  for (const r of rows) {
+    const doc = personIdentityDocumentOf(r);
+    if (!doc) continue;
+    const list = out.get(r.personId) ?? [];
+    if (!list.some((d) => d.id === doc.id)) list.push(doc);
+    out.set(r.personId, list);
+  }
+  return out;
+}
+
+/** One person's identity documents (see `listIdentityDocumentsOf`). */
+export async function listPersonIdentityDocuments(personId: string): Promise<PersonIdentityDocument[]> {
+  return (await listIdentityDocumentsOf([personId])).get(personId) ?? [];
+}
+
+/** `identityNumberKey` (./person-list) in SQL: upper-cased, the „seria" / „nr." words out, letters and digits only. */
+function sqlFold(col: SQL | typeof document.nrDocument): SQL {
+  return sql`regexp_replace(regexp_replace(upper(coalesce(${col}, '')), '\\m(SERIA|SERIE|NR|NUMĂRUL|NUMARUL)\\M\\.?', '', 'g'), '[^0-9A-Z]', '', 'g')`;
+}
+
+/**
+ * The natural persons holding an identity document with this number — what a deed's quoted CI number is matched
+ * against since 40.85 (Ask first 4), in place of the person's own card columns. Compared as
+ * `identityNumberKey` folds it („IF 123456" is „IF123456").
+ */
+export async function holdersOfIdentityNumber(numberKey: string): Promise<string[]> {
+  if (!numberKey) return [];
+  const rows = await db
+    .selectDistinct({ personId: personDocument.personId })
+    .from(personDocument)
+    .innerJoin(document, eq(personDocument.documentId, document.id))
+    .innerJoin(lookupDocumentType, eq(document.documentTypeId, lookupDocumentType.id))
+    .where(
+      and(
+        isNotNull(lookupDocumentType.identityKind),
+        // The fold in SQL is the same as `identityNumberKey`: upper-case, then letters and digits only.
+        eq(sqlFold(document.nrDocument), numberKey),
+      ),
+    );
+  return rows.map((r) => r.personId);
 }

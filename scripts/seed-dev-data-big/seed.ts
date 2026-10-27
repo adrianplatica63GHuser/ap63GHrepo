@@ -564,14 +564,8 @@ async function createNaturalPersons(plan: FamilyPlan, details: NaturalDetails[],
       isDeceased: p.dod !== null,
       dateOfDeath: p.dod,
       placeOfBirth: p.birthPlace.label,
-      // #39.81: a child's passport where there is no identity card
-      idDocumentType: d.idCard ? "ID_CARD" : x.passport ? "PASSPORT" : null,
-      idDocumentNumber: d.idCard?.number ?? x.passport?.number ?? null,
-      idIssuingAuthority: d.idCard?.authority ?? x.passport?.authority ?? null,
-      idValidFrom: d.idCard?.from ?? x.passport?.from ?? null,
-      idValidUntil: d.idCard?.until ?? x.passport?.until ?? null,
-      idCardNumber: x.idCardNumber,
-      idMrzRaw: x.idMrzRaw,
+      // Slice 40.85: the card and the passport are not written on the person any more — natural_person's id_*
+      // columns are read by nothing. The identity documents the plan files (documents.ts) are the person's cards.
       personalPhone1: d.phone,
       personalPhone2: x.personalPhone2,
       workPhone: x.workPhone,
@@ -1327,10 +1321,15 @@ async function enrichCoverage(p: Plans): Promise<CoverageLine[]> {
   const [rel] = await rows<Count>("SELECT count(DISTINCT relationship_id) AS used, count(DISTINCT natural_person_id) FILTER (WHERE natural_person_id = ANY($2::uuid[])) AS adults FROM natural_person_relationship WHERE natural_person_id = ANY($1::uuid[])", [nat, adults]);
   const [n] = await rows<Count>(`SELECT count(personal_phone_1) AS phone, count(personal_phone_2) AS phone2, count(work_phone) AS work_phone,
       count(work_email) AS work_email, count(personal_email_1) AS email, count(personal_email_2) AS email2,
-      count(*) FILTER (WHERE id_document_type = 'ID_CARD') AS cards, count(*) FILTER (WHERE id_document_type = 'ID_CARD' AND id_mrz_raw IS NOT NULL) AS mrz,
-      count(id_card_number) AS card_number, count(*) FILTER (WHERE id_document_type = 'PASSPORT') AS passports,
       count(*) FILTER (WHERE correspondence_same_as_home) AS same_home
     FROM natural_person WHERE person_id = ANY($1::uuid[])`, [nat]);
+  // Slice 40.85: the persons' cards and passports are their identity documents, not natural_person's id_* columns.
+  const [idn] = await rows<Count>(`SELECT count(DISTINCT pd.person_id) FILTER (WHERE t.identity_kind = 'CI_NOU') AS cards,
+      count(DISTINCT pd.person_id) FILTER (WHERE t.identity_kind = 'CI_NOU' AND i.mrz IS NOT NULL) AS mrz,
+      count(DISTINCT pd.person_id) FILTER (WHERE i.card_number IS NOT NULL) AS card_number,
+      count(DISTINCT pd.person_id) FILTER (WHERE t.identity_kind IN ('PASAPORT', 'PASAPORT_CRDS')) AS passports
+    FROM person_document pd JOIN document d ON d.id = pd.document_id JOIN lookup_document_type t ON t.id = d.document_type_id
+    LEFT JOIN identity_document i ON i.document_id = d.id WHERE pd.person_id = ANY($1::uuid[])`, [nat]);
   const addr = async (ids: string[]) => {
     const [a] = await rows<Count>("SELECT count(*) FILTER (WHERE kind = 'CORRESPONDENCE') AS corr, count(*) FILTER (WHERE kind = 'POSTAL') AS postal, count(notes) AS notes FROM address WHERE person_id = ANY($1::uuid[])", [ids]);
     return a;
@@ -1358,8 +1357,8 @@ async function enrichCoverage(p: Plans): Promise<CoverageLine[]> {
     relationships: { used: num(rel, "used"), available: RELATIONSHIPS.length, adults: adults.length, withAny: num(rel, "adults") },
     natural: {
       withPhone: num(n, "phone"), phone2: num(n, "phone2"), working, workPhone: num(n, "work_phone"), workEmail: num(n, "work_email"),
-      withEmail: num(n, "email"), email2: num(n, "email2"), idCards: num(n, "cards"), withMrz: num(n, "mrz"), cardNumber: num(n, "card_number"),
-      passports: num(n, "passports"), correspondence: num(na, "corr"), postal: num(na, "postal"), sameAsHome: num(n, "same_home"),
+      withEmail: num(n, "email"), email2: num(n, "email2"), idCards: num(idn, "cards"), withMrz: num(idn, "mrz"), cardNumber: num(idn, "card_number"),
+      passports: num(idn, "passports"), correspondence: num(na, "corr"), postal: num(na, "postal"), sameAsHome: num(n, "same_home"),
       addressNotes: num(na, "notes") + num(ja, "notes"),
     },
     judicial: { total: jur.length, correspondence: num(ja, "corr") },

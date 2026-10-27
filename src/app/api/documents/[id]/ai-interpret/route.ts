@@ -157,6 +157,7 @@ import { getCurrentUserIdAndAccess } from "@/lib/auth/current-role";
 import { checkOcrRateLimit } from "@/lib/rate-limit/ocr";
 import {
   findNaturalPersonByCnp,
+  findNaturalPersonByIdentityNumber,
   searchPersonsAll,
   type NaturalPersonMatchCandidate,
   type PersonSearchItem,
@@ -510,9 +511,14 @@ export async function POST(req: NextRequest, ctx: Ctx): Promise<Response> {
       let possibleMatches: PersonSearchItem[] = [];
       try {
         if (p.personType === "NATURAL" && p.cnp?.trim()) {
-          matchCandidate = await findNaturalPersonByCnp(p.cnp);
+          matchCandidate = await findNaturalPersonByCnp(p.cnp, p.idDocumentNumber);
         } else if (p.personType === "JUDICIAL" && p.cuiNumber?.trim()) {
           matchCandidate = await findJudicialPersonByCui(p.cuiNumber);
+        }
+        // Slice 40.85 (Ask first 4): a CI number the deed quotes is matched against the numbers of the persons'
+        // identity documents — never stored on a person. Asked when the CNP gave nobody.
+        if (!matchCandidate && p.personType === "NATURAL" && p.idDocumentNumber?.trim()) {
+          matchCandidate = await findNaturalPersonByIdentityNumber(p.idDocumentNumber);
         }
 
         // No CNP/CUI extracted (or it matched nobody) — fall back to a

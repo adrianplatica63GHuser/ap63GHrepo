@@ -390,7 +390,7 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     await page.locator('[data-tile-cancel="identity"]').click();
     await expect(page.locator('[data-tile-edit-bar="identity"]')).toHaveCount(0);
 
-    // Figura 2.10 (#39.93) — a tile held over another (#39.91): „Act de identitate" held over „Identitate", which has slid
+    // Figura 2.10 (#39.93) — a tile held over another (#39.91): „Acte de identitate" held over „Identitate", which has slid
     // down to the first place in its columns that holds it whole — on a person's full columns, the bottom of the row —
     // and the outline shows the place free. A window tall enough for the whole row, the picture cut at the row's bottom.
     // Nothing is dropped: Esc puts it all back, so no arrangement is stored. The CNP and „Recente" blurred again.
@@ -405,7 +405,7 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
         return r ? { x: r.left, y: r.top, h: r.height } : null;
       }, tile);
     const [held, under] = await Promise.all([rectOf("idCard"), rectOf("identity")]);
-    if (!held || !under) throw new Error("„Act de identitate” or „Identitate” is not on the seed person's screen.");
+    if (!held || !under) throw new Error("„Acte de identitate” or „Identitate” is not on the seed person's screen.");
     const from = { x: held.x + 5, y: held.y + Math.min(held.h / 2, 120) };
     await page.mouse.move(from.x, from.y);
     await page.mouse.down();

@@ -24,6 +24,12 @@ export const CONVERTED: readonly string[] = [
   "src/app/admin/value-lists/_components/document-type-form-editor.tsx", // 40.84, the one identity message
   "src/app/admin/value-lists/_components/identity-system-form.tsx", // 40.84
   "src/app/admin/doc-type-engine/_components/doc-type-engine.tsx", // 40.84, its identity refusal
+  "src/app/natural-persons/_components/natural-person-form.tsx", // 40.85, Cetățenie and „Acte de identitate"
+  "src/app/natural-persons/_components/person-identity-documents.tsx", // 40.85
+  "src/app/natural-persons/_components/person-detail-tiles.tsx", // 40.85
+  "src/app/natural-persons/[id]/page.tsx", // 40.85
+  "src/app/documents/new/page.tsx", // 40.85, the holder
+  "src/app/documents/_components/ai-party-linker-dialog.tsx", // 40.85, no card on the person
 ];
 
 const PALETTE =

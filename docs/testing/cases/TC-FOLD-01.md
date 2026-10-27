@@ -26,8 +26,9 @@ too. A box with five lines or fewer has no link.
   - a Property nicknamed `TC-FOLD-01 Teren cu notă lungă`, whose „Note" is ONE paragraph with no
     line break: `Un singur paragraf lung, fără niciun rând nou, scris ca să se rupă pe ecran pe
     mai multe rânduri decât cinci.` nine times over;
-  - a Natural Person `TC-FOLD-01 Persoana`, whose „MRZ (text brut)" is seven lines of 36
-    characters, and whose „Note" is empty.
+  - a „Carte de Identitate (model nou)" document `TC-FOLD-01 Carte de identitate cu MRZ`, whose
+    „MRZ" is seven lines of 36 characters (Slice 40.85: the MRZ is an identity document's, no longer a
+    person's).
 
 ## What Adrian is asked for
 
@@ -46,14 +47,17 @@ A run also reads `data-folded` on the box and its height, because „five lines"
 | 3 | Presses „Arată mai puțin…" | Five lines again, and „Arată mai mult…" |
 | 4 | Opens `TC-FOLD-01 Teren cu notă lungă` | „Note" — one paragraph, no line break — shows five lines, with „Arată mai mult…" |
 | 5 | Presses it, then „Arată mai puțin…" | The whole paragraph (fifteen lines at 1920 px, 310 px), then five lines again |
-| 6 | Opens `TC-FOLD-01 Persoana` | „MRZ (text brut)" shows five of its seven lines, with „Arată mai mult…"; „Note", empty, has no link |
-| 7 | Presses it, then „Arată mai puțin…" | All seven lines (150 px), then five again |
+| 6 | Opens `TC-FOLD-01 Carte de identitate cu MRZ`, „Editează" on „Act de identitate" | „MRZ" shows five of its seven lines, with „Arată mai mult…" |
+| 7 | Presses it, then „Arată mai puțin…" | All seven lines (290 px at L, two lines each), then five again |
 
 ## At the end — leaving things as they were found
 
 Delete the three records: on each, „Șterge" and „Da".
 
 ## Notes from the runs
+
+**2026-10-26 — Slice 40.85.** The person holds no MRZ any more: steps 6–7 read the MRZ of an identity document
+(40.83's „Act de identitate" tile), the same width as the person's was. The spec follows; not driven by hand first.
 
 **2026-10-25 — Slice 40.74.** Steps 4–5: the property's „Note" folds in its box, so the spec opens „Identificare cadastrală" with „Editează" first. The spec follows; not driven by hand first.
 

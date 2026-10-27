@@ -5,6 +5,7 @@ import { SystemIdCorner } from "@/components/record/system-id-corner";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
+import { holderRoleIdFor } from "@/lib/import/id-card-holder-role";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useId, useMemo, useRef, useState } from "react";
@@ -254,6 +255,11 @@ type Props = {
    * (`canConfigureRoles()`), as the role-configuration note decides its own.
    */
   canConfigure?:     boolean;
+  /**
+   * Slice 40.85: „Adaugă act de identitate" on a person — the new identity document's holder. Linked to the document
+   * in the role „Titular act de identitate" once the document is saved; nothing is saved before.
+   */
+  holder?:          { id: string; code: string; displayName: string } | null;
   /** Notified whenever the "Show Big Page" toggle changes, so the parent
    *  (DocumentDetailTiles) can widen the page's outer container — mirrors
    *  PropertyForm's onBigMapChange. */
@@ -294,6 +300,20 @@ type Props = {
   };
 };
 
+/** Slice 40.85: link a new identity document's holder, in the holder role where the type offers it. Never throws. */
+async function linkHolder(documentId: string, personId: string): Promise<void> {
+  try {
+    const personRoleId = await holderRoleIdFor(documentId);
+    await fetch(`/api/documents/${encodeURIComponent(documentId)}/persons`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ personIds: [personId], personRoleId }),
+    });
+  } catch {
+    // The document is saved; its holder can still be added under „Corelate".
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
@@ -306,6 +326,7 @@ export function DocumentForm({
   issuerName = null,
   issuerRead = null,
   canConfigure = false,
+  holder = null,
   onBigPageChange,
   versionNavSlot,
   tiles,
@@ -838,7 +859,13 @@ export function DocumentForm({
     createdIdRef.current = null;
     const result = await saveNewDocument(
       stagedPages,
-      async () => ((await doSave(values)) ? createdIdRef.current : null),
+      async () => {
+        const id = (await doSave(values)) ? createdIdRef.current : null;
+        // Slice 40.85: the holder, once the document exists — linked in „Titular act de identitate" where its type
+        // offers the role, without one otherwise (as „Creează persoană din CI" links a card's holder).
+        if (id && holder) await linkHolder(id, holder.id);
+        return id;
+      },
       async (id, file, pageNumber) => {
         setSubmitting(true);
         const fd = new FormData();
@@ -1400,6 +1427,11 @@ export function DocumentForm({
       onKeyDown={editKeys(IDENTITY_TILE)}
     >
       <IdentityHolderLine documentId={isCreate ? null : documentId} />
+      {isCreate && holder && (
+        <p className="text-sm text-fade" data-identity-holder-new={holder.id}>
+          {tId("holder")} <span className="text-ink">{holder.displayName}</span> <span className="text-xs">({holder.code})</span>
+        </p>
+      )}
       {identityRowsNow.rows.map((row) => (
         <div key={row.map((f) => f.key).join("|")} className={STACKED_ROW_CLASS} data-identity-row="">
           {row.map(renderIdentityField)}

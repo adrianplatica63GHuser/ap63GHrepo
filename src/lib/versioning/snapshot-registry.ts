@@ -150,8 +150,6 @@ export const NATURAL_PERSON_SNAPSHOT_FIELDS_KEYS = [
   "lastName",
   "nickname",
   "cnp",
-  "idDocumentType",
-  "idDocumentNumber",
   "gender",
   "dateOfBirth",
   "isDeceased",
@@ -163,11 +161,8 @@ export const NATURAL_PERSON_SNAPSHOT_FIELDS_KEYS = [
   "personalEmail2",
   "workEmail",
   "placeOfBirth",
-  "idIssuingAuthority",
-  "idValidFrom",
-  "idValidUntil",
-  "idCardNumber",
-  "idMrzRaw",
+  // Slice 40.85: the seven identity-card keys left — a version before it still holds them
+  // (`LegacyPersonIdCardSnapshot`), read-only; none is compared or written since.
   "citizenshipId",
   "physicalPersonTypeId",
   "correspondenceSameAsHome",

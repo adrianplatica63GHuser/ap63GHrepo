@@ -17,14 +17,17 @@
 
 import {
   emptyFormValues,
+  emptyIdCardFormValues,
   formSchema,
   fromApiPayload,
+  idCardFormSchema,
   toApiPayload,
   type FormValues,
 } from "@/app/natural-persons/_components/form-schema";
 import {
   listQuerySchema,
   naturalPersonCreateSchema,
+  naturalPersonUpdateSchema,
 } from "@/lib/persons/validation";
 
 // ---------------------------------------------------------------------------
@@ -75,29 +78,24 @@ describe("formSchema — name requirement", () => {
   });
 });
 
-describe("formSchema — ID document fields (no pairing required)", () => {
-  it("accepts both fields empty", () => {
-    expect(formSchema.safeParse(minValid()).success).toBe(true);
+// Slice 40.85: the person's form holds no ID document field any more — the person's identity documents are
+// documents of their own („Acte de identitate"). The import's card dialog keeps them, in `idCardFormSchema`.
+describe("formSchema — no ID document field on the person (Slice 40.85)", () => {
+  it("the person's form has none of the seven; the card dialog's has all, with the person's rules", () => {
+    for (const k of ["idDocumentType", "idDocumentNumber", "idCardNumber", "idValidFrom", "idValidUntil", "idIssuingAuthority", "idMrzRaw"]) {
+      expect(emptyFormValues).not.toHaveProperty(k);
+      expect(emptyIdCardFormValues).toHaveProperty(k, "");
+    }
+    expect(emptyFormValues).toHaveProperty("citizenshipId", "");
+    expect(idCardFormSchema.safeParse({ ...emptyIdCardFormValues, firstName: "Adrian", idDocumentNumber: "RX123" }).success).toBe(true);
+    expect(idCardFormSchema.safeParse({ ...emptyIdCardFormValues, idDocumentNumber: "RX123" }).success).toBe(false);
   });
 
-  it("accepts both fields filled", () => {
-    const v = minValid({
-      idDocumentType: "ID_CARD",
-      idDocumentNumber: "RX123456",
-    });
-    expect(formSchema.safeParse(v).success).toBe(true);
-  });
-
-  it("accepts type without number", () => {
-    expect(
-      formSchema.safeParse(minValid({ idDocumentType: "ID_CARD" })).success,
-    ).toBe(true);
-  });
-
-  it("accepts number without type", () => {
-    expect(
-      formSchema.safeParse(minValid({ idDocumentNumber: "RX123" })).success,
-    ).toBe(true);
+  it("toApiPayload sends none of them, even from the card dialog's values", () => {
+    const card = { ...emptyIdCardFormValues, firstName: "Adrian", idDocumentNumber: "RX123", idMrzRaw: "X" };
+    const payload = toApiPayload(card);
+    expect(payload).not.toHaveProperty("idDocumentNumber");
+    expect(payload).not.toHaveProperty("idMrzRaw");
   });
 });
 
@@ -197,8 +195,7 @@ describe("toApiPayload", () => {
     expect(payload.lastName).toBeNull();
     expect(payload.nickname).toBeNull();
     expect(payload.cnp).toBeNull();
-    expect(payload.idDocumentType).toBeNull();
-    expect(payload.idDocumentNumber).toBeNull();
+    expect(payload.citizenshipId).toBeNull();
     expect(payload.gender).toBeNull();
     expect(payload.dateOfBirth).toBeNull();
     expect(payload.notes).toBeNull();
@@ -280,8 +277,6 @@ describe("fromApiPayload", () => {
         lastName: null,
         nickname: null,
         cnp: null,
-        idDocumentType: null,
-        idDocumentNumber: null,
         gender: null,
         dateOfBirth: null,
         personalPhone1: null,
@@ -291,11 +286,6 @@ describe("fromApiPayload", () => {
         personalEmail2: null,
         workEmail: null,
         placeOfBirth: null,
-        idIssuingAuthority: null,
-        idValidFrom: null,
-        idValidUntil: null,
-        idCardNumber: null,
-        idMrzRaw: null,
         citizenshipId: null,
         // Slice #18.16.VL:
         physicalPersonTypeId: null,
@@ -392,13 +382,19 @@ describe("naturalPersonCreateSchema (API)", () => {
     expect(result.success).toBe(true);
   });
 
-  it("accepts unpaired ID document fields", () => {
+  it("Slice 40.85: answers a payload naming an ID document field as if it did not — nothing of it is written", () => {
     const result = naturalPersonCreateSchema.safeParse({
       firstName: "Adrian",
       personalEmail1: "x@y.z",
       idDocumentType: "ID_CARD",
+      idDocumentNumber: "RX123456",
+      idMrzRaw: "IDROU",
     });
     expect(result.success).toBe(true);
+    expect(result.data).not.toHaveProperty("idDocumentType");
+    expect(result.data).not.toHaveProperty("idDocumentNumber");
+    expect(result.data).not.toHaveProperty("idMrzRaw");
+    expect(naturalPersonUpdateSchema.parse({ idValidUntil: "2030-01-01" })).not.toHaveProperty("idValidUntil");
   });
 });
 

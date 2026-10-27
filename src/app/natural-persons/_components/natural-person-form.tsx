@@ -1,6 +1,5 @@
 "use client";
 
-import { useNameOr } from "@/components/record/use-name-or";
 import { SystemIdCorner } from "@/components/record/system-id-corner";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -25,12 +24,10 @@ import { ALWAYS_SHOWN_FIELDS,
   NATURAL_PERSON as NP,
   NP_PANEL_INNER_REM,
   NP_PANEL_STYLE,
-  NP_VALIDITY_REM,
   PANEL_GAP,
   boxRem,
   boxStyle,
   npRowStyle,
-  rem,
   stackedBoxStyle,
   type FieldWidth,
 } from "@/lib/ui/field-widths";
@@ -81,6 +78,8 @@ import { personAgeText } from "@/lib/persons/person-age";
 import { ParentsFold } from "@/components/persons/parents-fold";
 import { TileTitle } from "@/components/tiles/tile-title";
 import { EmptyTileLine, useEmptyTiles } from "@/components/tiles/empty-tile";
+import type { PersonIdentityDocument } from "@/lib/identity-documents/person-list";
+import { PersonIdentityDocuments } from "./person-identity-documents";
 import { EmptyFieldsLink, HiddenFieldsContext, hiddenFieldStyle, useEmptyFields, useFieldHidden } from "@/components/tiles/empty-fields";
 import {
   ReadModeContext,
@@ -106,7 +105,6 @@ import {
   type ParentOutcome,
 } from "@/lib/import/id-card-parents";
 
-type IdCardLink = { id: string; code: string; title: string | null } | null;
 
 
 type Props = {
@@ -124,8 +122,8 @@ type Props = {
    * saved with the person, and it makes the form dirty like any field.
    */
   initialRelationshipIds?: string[];
-  /** The person's CARTE_IDENTITATE Document, if one is linked (edit/view only). */
-  linkedIdCard?: IdCardLink;
+  /** Slice 40.85: the identity documents the person holds, unordered (edit/view only) — „Acte de identitate". */
+  identityDocuments?: readonly PersonIdentityDocument[];
   /** Slice #18.05 — header DOM node to portal the version-nav controls into,
    *  so they render on the person-name line. */
   versionNavSlot?: HTMLElement | null;
@@ -174,10 +172,9 @@ async function fetchVersions(personId: string): Promise<VersionItem[]> {
  * Slice 40.64: the fields of each form tile that can fold to one line, for `tileIsEmpty`. „Identitate" never folds —
  * it holds the record's name and its system ID; „Adrese" is its two panels, each folding on its own.
  */
-type NpEmptyTile = "idCard" | "contact" | "home" | "correspondence";
+type NpEmptyTile = "contact" | "home" | "correspondence";
 const ADDRESS_PARTS = ["streetLine", "postalCode", "locality", "county", "country", "notes"] as const;
 const NP_EMPTY_TILE_FIELDS: Record<NpEmptyTile, readonly string[]> = {
-  idCard: ["idDocumentType", "idDocumentNumber", "idCardNumber", "idValidFrom", "idValidUntil", "citizenshipId", "idIssuingAuthority", "idMrzRaw"],
   contact: ["personalPhone1", "personalPhone2", "workPhone", "personalEmail1", "personalEmail2", "workEmail"],
   home: ADDRESS_PARTS.map((part) => `addresses.HOME.${part}`),
   correspondence: ADDRESS_PARTS.map((part) => `addresses.CORRESPONDENCE.${part}`),
@@ -188,10 +185,9 @@ const NP_EMPTY_TILE_FIELDS: Record<NpEmptyTile, readonly string[]> = {
  * (src/components/tiles/empty-fields.tsx). „Vârstă" follows „Data nașterii"; „Relația cu firma" and the ID card's link
  * are not fields and always show.
  */
-type NpFieldTile = "identity" | "idCard" | "contact" | "home" | "correspondence";
+type NpFieldTile = "identity" | "contact" | "home" | "correspondence";
 const NP_FIELD_TILES: Record<NpFieldTile, readonly string[]> = {
-  identity: ["lastName", "firstName", "nickname", "cnp", "dateOfBirth", "gender", "isDeceased", "dateOfDeath", "placeOfBirth", "physicalPersonTypeId", "notes"],
-  idCard: NP_EMPTY_TILE_FIELDS.idCard,
+  identity: ["lastName", "firstName", "nickname", "cnp", "dateOfBirth", "gender", "isDeceased", "dateOfDeath", "placeOfBirth", "citizenshipId", "physicalPersonTypeId", "notes"],
   contact: NP_EMPTY_TILE_FIELDS.contact,
   home: NP_EMPTY_TILE_FIELDS.home,
   correspondence: NP_EMPTY_TILE_FIELDS.correspondence,
@@ -204,10 +200,9 @@ const NP_LABEL_KEY: Readonly<Record<string, string>> = { citizenshipId: "citizen
  * (src/components/tiles/read-edit-tile.tsx). What each tile's „Salvează" sends — its own fields and nothing else; the
  * route takes a partial update, and one save makes one version.
  */
-type NpEditTile = "identity" | "idCard" | "contact" | "addresses";
+type NpEditTile = "identity" | "contact" | "addresses";
 const NP_EDIT_PAYLOAD: Record<NpEditTile, readonly (keyof ReturnType<typeof toApiPayload>)[]> = {
-  identity: ["lastName", "firstName", "nickname", "cnp", "gender", "dateOfBirth", "isDeceased", "dateOfDeath", "placeOfBirth", "physicalPersonTypeId", "notes"],
-  idCard: ["idDocumentType", "idDocumentNumber", "idCardNumber", "idValidFrom", "idValidUntil", "citizenshipId", "idIssuingAuthority", "idMrzRaw"],
+  identity: ["lastName", "firstName", "nickname", "cnp", "gender", "dateOfBirth", "isDeceased", "dateOfDeath", "placeOfBirth", "citizenshipId", "physicalPersonTypeId", "notes"],
   contact: ["personalPhone1", "personalPhone2", "workPhone", "personalEmail1", "personalEmail2", "workEmail"],
   addresses: ["addresses", "correspondenceSameAsHome"],
 };
@@ -218,14 +213,12 @@ const NP_EDIT_PAYLOAD: Record<NpEditTile, readonly (keyof ReturnType<typeof toAp
  */
 const NP_EDIT_PANEL: Record<NpEditTile, string> = {
   identity: "identity",
-  idCard: "id-card",
   contact: "contact",
   addresses: "addresses.HOME",
 };
 /** The tile 40.64's one-line panels and 40.71's links belong to. */
 const NP_EDIT_OF: Readonly<Record<string, NpEditTile>> = {
   identity: "identity",
-  idCard: "idCard",
   contact: "contact",
   home: "addresses",
   correspondence: "addresses",
@@ -237,12 +230,11 @@ export function NaturalPersonForm({
   personCode,
   initialValues,
   initialRelationshipIds,
-  linkedIdCard,
+  identityDocuments,
   versionNavSlot,
   tiles,
 }: Props) {
   const t = useTranslations("naturalPerson");
-  const nameOr = useNameOr(); // #37.57: a name, or words — never the system ID
   // Slice #37.17 — tile mode. `tileProps` marks a form tile for the specs and
   // hides it when unticked; `hidden` alone would lose to any display class, so
   // the class goes with it (the notebook's note in document-form.tsx).
@@ -312,7 +304,7 @@ export function NaturalPersonForm({
   // eslint-disable-next-line react-hooks/incompatible-library
   const watchedValues = form.watch();
   // Slice #38.29 — the parents' fold: a new person whose ID document is a „Carte de identitate".
-  const offerParents = mode === "create" && watchedValues.idDocumentType === "ID_CARD";
+  const offerParents = mode === "create";
   const shownParents = followHolderSurname(parentDrafts, watchedValues.lastName ?? "");
 
   // Derived display values (recalculate on every render since watchedValues is live).
@@ -322,18 +314,6 @@ export function NaturalPersonForm({
     { dateOfBirth: watchedValues.dateOfBirth, isDeceased: watchedValues.isDeceased, dateOfDeath: watchedValues.dateOfDeath },
     "—",
   );
-  const idValidUntilDate = watchedValues.idValidUntil
-    ? new Date(watchedValues.idValidUntil)
-    : null;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const idValidUntilExpired = idValidUntilDate !== null && idValidUntilDate < today;
-  const idValidUntilDaysLeft =
-    idValidUntilDate !== null && !idValidUntilExpired
-      ? Math.ceil((idValidUntilDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
-      : null;
-  const idValidUntilExpiringSoon =
-    idValidUntilDaysLeft !== null && idValidUntilDaysLeft <= tfDays(tf, "id_card_expiring_soon");
 
   // --- Version history (Slice #18.05) ------------------------------------
   const versionsQuery = useQuery({
@@ -882,7 +862,6 @@ export function NaturalPersonForm({
   const emptyFieldsLink = (tile: NpFieldTile) => (
     <EmptyFieldsLink tile={tile} labels={npHidden[tile].map(fieldLabel)} onShow={() => emptyFields.show(tile)} />
   );
-  const idCardFolded = folded("idCard", !!linkedIdCard);
   const contactFolded = folded("contact");
   const homeFolded = folded("home");
   const correspondenceFolded = folded("correspondence");
@@ -980,7 +959,7 @@ export function NaturalPersonForm({
       >
 
       {/* Identity — core biographical data */}
-      <section style={NP_PANEL_STYLE.identity} data-panel="identity" {...tileProps("identity")} onKeyDown={editKeys("identity")} className={`rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${hiddenClass("identity")}${editingClass("identity")}`}>
+      <section style={NP_PANEL_STYLE.identity} data-panel="identity" {...tileProps("identity")} onKeyDown={editKeys("identity")} className={`rounded-md border border-card-rim bg-card p-3 shadow-sm${hiddenClass("identity")}${editingClass("identity")}`}>
         {/* Slice #38.30: the tile's title and the line saying what it holds — in every mode, so „Adaugă nou" reads as the record does. */}
         <TileTitle title={t("tiles.identity")} subtitle={t("tileSubtitles.identity")} action={editButton("identity", t("tiles.identity"))}>
           {/* Slice #37.57: the system ID's one place — this corner. */}
@@ -1091,6 +1070,21 @@ export function NaturalPersonForm({
               highlight={displayHighlights?.fields.placeOfBirth}
               width={NP.placeOfBirth}
             />
+            {/* Slice 40.85 (Ask first 1): Cetățenie is the person's, after Locul nașterii, at its size. */}
+            <SelectField
+              label={t("fields.citizenship")}
+              name="citizenshipId"
+              register={register}
+              control={control}
+              error={errors.citizenshipId?.message}
+              hint={citizenshipListState === "failed" ? t("hints.citizenshipListFailed") : undefined}
+              options={[{ value: "", label: "—" }, ...citizenshipOptions]}
+              highlight={displayHighlights?.fields.citizenshipId}
+              snapshot={snapshotLookups.citizenshipId}
+              width={NP.citizenshipId}
+            />
+          </div>
+          <div className={STACKED_ROW_CLASS}>
             <SelectField
               label={t("fields.physicalPersonTypeId")}
               name="physicalPersonTypeId"
@@ -1129,125 +1123,9 @@ export function NaturalPersonForm({
             width={NP.notes}
             fillRem={NP_PANEL_INNER_REM.identity}
           />
-          {emptyFieldsLink("identity")}
-          {editBar("identity")}
-        </div>
-      </section>
-
-      {/* ID Card — official document data; populated manually or via scanner */}
-      <section style={NP_PANEL_STYLE.idCard} data-panel="id-card" {...tileProps("idCard")} onKeyDown={editKeys("idCard")} className={`rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${hiddenClass("idCard")}${editingClass("idCard")}`}>
-        {idCardFolded && <EmptyTileLine tile="idCard" title={t("tiles.idCard")} state="noIdDocument" onAdd={addTo("idCard", "id-card")} />}
-        <div className={idCardFolded ? "hidden" : "contents"}>
-        <TileTitle title={t("tiles.idCard")} subtitle={t("tileSubtitles.idCard")} action={editButton("idCard", t("tiles.idCard"))} />
-        {/* Slice #37.26 — the rows of `NP_ROWS.idCard`. */}
-        <div className="flex flex-col gap-2">
-          <div className={STACKED_ROW_CLASS}>
-            <SelectField
-              label={t("fields.idDocumentType")}
-              name="idDocumentType"
-              register={register}
-              control={control}
-              error={errors.idDocumentType?.message}
-              options={[
-                { value: "", label: "—" },
-                { value: "ID_CARD", label: t("options.idDoc.ID_CARD") },
-                { value: "PASSPORT", label: t("options.idDoc.PASSPORT") },
-              ]}
-              highlight={displayHighlights?.fields.idDocumentType}
-              width={NP.idDocumentType}
-            />
-            <Field
-              label={t("fields.idDocumentNumber")}
-              name="idDocumentNumber"
-              register={register}
-              error={errors.idDocumentNumber?.message}
-              highlight={displayHighlights?.fields.idDocumentNumber}
-              width={NP.idDocumentNumber}
-            />
-            <Field
-              label={t("fields.idCardNumber")}
-              name="idCardNumber"
-              register={register}
-              error={errors.idCardNumber?.message}
-              highlight={displayHighlights?.fields.idCardNumber}
-              width={NP.idCardNumber}
-            />
-          </div>
-          {/* The two dates, then their validity status in the rest of the row,
-              level with the boxes (an empty line where their labels are). */}
-          <div className={STACKED_ROW_CLASS}>
-            <Field
-              label={t("fields.idValidFrom")}
-              name="idValidFrom"
-              type="date"
-              register={register}
-              error={errors.idValidFrom?.message}
-              highlight={displayHighlights?.fields.idValidFrom}
-              width={NP.idValidFrom}
-            />
-            <Field
-              label={t("fields.idValidUntil")}
-              name="idValidUntil"
-              type="date"
-              register={register}
-              error={errors.idValidUntil?.message}
-              highlight={displayHighlights?.fields.idValidUntil}
-              expired={idValidUntilExpired}
-              expiringSoon={idValidUntilExpiringSoon}
-              width={NP.idValidUntil}
-            />
-            <div className={STACKED_FIELD_CLASS} style={{ width: rem(NP_VALIDITY_REM) }} data-validity-status>
-              <span aria-hidden="true" className={`invisible ${STACKED_LABEL_CLASS}`}>{" "}</span>
-              <div className="flex min-h-[1.875rem] items-center leading-tight">
-                {idValidUntilExpired && (
-                  <span className="text-xs font-bold uppercase text-red-600 dark:text-red-400">
-                    {t("hints.idExpired")}
-                  </span>
-                )}
-                {!idValidUntilExpired && idValidUntilExpiringSoon && idValidUntilDaysLeft !== null && (
-                  <span className="text-xs font-bold uppercase text-orange-600 dark:text-orange-400">
-                    {t("hints.idExpiringSoon", { n: idValidUntilDaysLeft })}
-                  </span>
-                )}
-                {!idValidUntilExpired && !idValidUntilExpiringSoon && idValidUntilDate !== null && (
-                  <span className="text-xs font-bold uppercase text-green-600 dark:text-green-400">
-                    {t("hints.idValid")}
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-          <div className={STACKED_ROW_CLASS}>
-            <SelectField
-              label={t("fields.citizenship")}
-              name="citizenshipId"
-              register={register}
-              control={control}
-              error={errors.citizenshipId?.message}
-              hint={citizenshipListState === "failed" ? t("hints.citizenshipListFailed") : undefined}
-              options={[{ value: "", label: "—" }, ...citizenshipOptions]}
-              highlight={displayHighlights?.fields.citizenshipId}
-              snapshot={snapshotLookups.citizenshipId}
-              width={NP.citizenshipId}
-            />
-            <Field
-              label={t("fields.idIssuingAuthority")}
-              name="idIssuingAuthority"
-              register={register}
-              error={errors.idIssuingAuthority?.message}
-              highlight={displayHighlights?.fields.idIssuingAuthority}
-              width={NP.idIssuingAuthority}
-            />
-          </div>
-          <Field
-            label={t("fields.idMrzRaw")}
-            name="idMrzRaw"
-            register={register}
-            error={errors.idMrzRaw?.message}
-            highlight={displayHighlights?.fields.idMrzRaw}
-            width={NP.idMrzRaw}
-            mono
-          />
+          {/* Slice #38.29 / 40.85: on „Adaugă persoană", the holder's father and mother, unticked. Offered beside
+              „Tip document: Carte de identitate" until 40.85 took the card's fields off the person; now always, as
+              a fold nothing is created from until a row is ticked. */}
           {offerParents && (
             <ParentsFold
               drafts={shownParents}
@@ -1256,32 +1134,30 @@ export function NaturalPersonForm({
               disabled={submitting}
             />
           )}
-          {mode !== "create" && (
-            <div className="flex flex-col gap-0.5 text-sm">
-              <span className={FIELD_LABEL}>
-                {t("fields.idLink")}
-              </span>
-              {linkedIdCard ? (
-                <a
-                  href={`/documents/${linkedIdCard.id}`}
-                  className="text-cta hover:underline"
-                >
-                  {/* #37.57: the card by its title, not its system ID. */}
-                  {nameOr(linkedIdCard.title, "document")} →
-                </a>
-              ) : (
-                <span className="text-fade dark:text-zinc-500">{t("hints.idLinkNone")}</span>
-              )}
-            </div>
-          )}
-          {emptyFieldsLink("idCard")}
-          {editBar("idCard")}
-        </div>
+          {emptyFieldsLink("identity")}
+          {editBar("identity")}
         </div>
       </section>
 
+      {/* Slice 40.85: „Acte de identitate" — the identity documents the person holds, read-only, each opening its
+          document; „Adaugă act de identitate" starts a new one with the person as holder. Not on „Adaugă persoană":
+          there is no person yet to hold one. The tile keeps its key, `idCard`, so a saved choice of tiles holds. */}
+      {!isCreate && (
+        <section style={NP_PANEL_STYLE.idCard} data-panel="id-card" {...tileProps("idCard")} className={`rounded-md border border-card-rim bg-card p-3 shadow-sm${hiddenClass("idCard")}`}>
+          <PersonIdentityDocuments
+            personId={personId ?? ""}
+            documents={identityDocuments ?? []}
+            soonDays={tfDays(tf, "id_card_expiring_soon")}
+            legacy={isOnLatest ? null : (currSnap?.natural ?? null)}
+            title={t("tiles.idCard")}
+            subtitle={t("tileSubtitles.idCard")}
+            canAdd={effectiveMode === "edit" && isOnLatest}
+          />
+        </section>
+      )}
+
       {/* Contact — phones and emails */}
-      <section style={NP_PANEL_STYLE.contact} data-panel="contact" {...tileProps("contact")} onKeyDown={editKeys("contact")} className={`rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${hiddenClass("contact")}${editingClass("contact")}`}>
+      <section style={NP_PANEL_STYLE.contact} data-panel="contact" {...tileProps("contact")} onKeyDown={editKeys("contact")} className={`rounded-md border border-card-rim bg-card p-3 shadow-sm${hiddenClass("contact")}${editingClass("contact")}`}>
         {contactFolded && <EmptyTileLine tile="contact" title={t("tiles.contact")} onAdd={addTo("contact", "contact")} />}
         <div className={contactFolded ? "hidden" : "contents"}>
         <TileTitle title={t("tiles.contact")} subtitle={t("tileSubtitles.contact")} action={editButton("contact", t("tiles.contact"))} />
@@ -1370,8 +1246,8 @@ export function NaturalPersonForm({
                   className={[
                     "flex cursor-pointer items-center gap-2 rounded-md text-sm select-none",
                     watchedValues.correspondenceSameAsHome
-                      ? "font-bold text-ink dark:text-zinc-200"
-                      : "font-normal text-fade dark:text-zinc-400",
+                      ? "font-bold text-ink"
+                      : "font-normal text-fade",
                     displayHighlights?.fields.correspondenceSameAsHome
                       ? "px-1 " + highlightRingClass(displayHighlights.fields.correspondenceSameAsHome, pulsing)
                       : "",
@@ -1445,7 +1321,7 @@ export function NaturalPersonForm({
 
       {/* Slice 40.72: an open tile says its own refusal, under its „Salvează". */}
       {submitError && !editingTile && (
-        <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+        <p className="text-sm text-alert" role="alert">
           {submitError}
         </p>
       )}
@@ -1459,7 +1335,7 @@ export function NaturalPersonForm({
           version nav arrows are the way back. */}
       {effectiveMode === "view" ? (
         mode === "view" && (
-          <div className="flex items-center justify-between border-t border-crease pt-6 dark:border-zinc-800">
+          <div className="flex items-center justify-between border-t border-crease pt-6">
             <IconButton
               icon={ArrowLeft}
               label={tShared("backToList")}
@@ -1483,7 +1359,7 @@ export function NaturalPersonForm({
           </div>
         )
       ) : mode === "view" ? (
-        <div className="flex items-center justify-between border-t border-crease pt-6 dark:border-zinc-800">
+        <div className="flex items-center justify-between border-t border-crease pt-6">
           <IconButton
             icon={ArrowLeft}
             label={tShared("backToList")}
@@ -1514,7 +1390,7 @@ export function NaturalPersonForm({
           </div>
         </div>
       ) : (
-        <div className="flex items-center justify-center gap-3 border-t border-crease pt-6 dark:border-zinc-800">
+        <div className="flex items-center justify-center gap-3 border-t border-crease pt-6">
           {/* Slice 40.72: on a saved person each tile saves itself — Delete and the way back stay. */}
           {!perTile && (
             <IconButton
@@ -1722,7 +1598,7 @@ function Field({ label, name, type = "text", register, error, bubble, highlight,
           kind={width.kind}
           text={text === "" ? "" : `${text}${readSuffix ?? ""}`}
           style={box}
-          className={[ring, mono ? "font-mono" : "", expired ? "text-red-700 dark:text-red-400" : expiringSoon ? "text-amber-700 dark:text-amber-400" : ""].join(" ")}
+          className={[ring, mono ? "font-mono" : "", expired ? "text-alert" : expiringSoon ? "text-warning" : ""].join(" ")}
         />
       </div>
     );
@@ -1768,7 +1644,7 @@ function Field({ label, name, type = "text", register, error, bubble, highlight,
         control
       )}
       {error && (
-        <span className="text-xs text-red-600 dark:text-red-400">{error}</span>
+        <span className="text-xs text-alert">{error}</span>
       )}
     </label>
   );
@@ -1822,7 +1698,7 @@ function RelationshipsField({
       </span>
       <div className="flex flex-wrap gap-x-4 gap-y-1">
         {options.map((o) => (
-          <label key={o.value} className="inline-flex items-center gap-1.5 text-sm text-ink dark:text-zinc-200">
+          <label key={o.value} className="inline-flex items-center gap-1.5 text-sm text-ink">
             <input
               type="checkbox"
               checked={value.includes(o.value)}
@@ -1832,7 +1708,7 @@ function RelationshipsField({
           </label>
         ))}
       </div>
-      {hint && <span className="text-xs text-fade dark:text-zinc-400">{hint}</span>}
+      {hint && <span className="text-xs text-fade">{hint}</span>}
     </div>
   );
 }
@@ -1967,10 +1843,10 @@ function SelectField({
             appears after the field is on screen and describes something the
             user has to act on. */}
         {hint && !error && (
-          <span role="alert" className="text-xs text-red-600 dark:text-red-400">{hint}</span>
+          <span role="alert" className="text-xs text-alert">{hint}</span>
         )}
         {error && (
-          <span className="text-xs text-red-600 dark:text-red-400">{error}</span>
+          <span className="text-xs text-alert">{error}</span>
         )}
       </div>
     </label>
@@ -2081,16 +1957,16 @@ function ConfirmDialog({
       role="dialog"
       aria-modal="true"
       aria-labelledby="confirm-title"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-scrim/40 p-4"
     >
-      <div className="w-full max-w-sm rounded-lg bg-card p-6 shadow-xl dark:bg-zinc-900">
+      <div className="w-full max-w-sm rounded-lg bg-card p-6 shadow-xl">
         <h3
           id="confirm-title"
-          className="text-base font-semibold text-ink dark:text-zinc-100"
+          className="text-base font-semibold text-ink"
         >
           {title}
         </h3>
-        <p className="mt-2 text-sm text-fade dark:text-zinc-400">{body}</p>
+        <p className="mt-2 text-sm text-fade">{body}</p>
         <div className="mt-5 flex justify-end gap-2">
           {isConfirm && (
             <button

@@ -66,7 +66,7 @@ Two things were seen along the way:
 | 5 | Presses „Salvează" | The page stays; „v 1" and „2 versiuni" in the header; the banner goes. Ticks „Persoană juridică": „Poreclă" reads `TC` |
 | 6 | Clears „Denumire", unticks „Persoană juridică". „Salvează" stays enabled: as tiles, an invalid form does not disable it. Presses „Salvează" | „Persoană juridică" is ticked and shown again, for this visit only (the stored choice is unchanged). The page has scrolled to „Denumire", the box has the focus, its row pulses red, and beneath it is „Name is required" (English in either language, as TC-TILES-01's FU-261). Nothing is saved (still „v 1") |
 | 7 | „Anulează" | Back on „Persoane Juridice"; the cleared name is dropped, nothing saved |
-| 8 | Opens any natural person | Its own row: „Identitate", „Act de identitate", „Contact", „Adrese" ticked, „Acte" not. The company's choice did not reach it |
+| 8 | Opens any natural person | Its own row: „Identitate", „Acte de identitate", „Contact", „Adrese" ticked, „Acte" not. The company's choice did not reach it |
 | 9 | Opens the company again: „Toate", then „Implicit" | „Toate": all eight boxes ticked, and „Asocieri", „Proprietăți", „Acte", „Clasificare" and „Etichete și grupuri" shown after the panels. „Implicit": back to the three form tiles, and „Acte" is gone |
 | — | At the end: on the company „Șterge" → „Da", then on the natural person „Șterge" → „Da" | Back on each list; both are gone |
 

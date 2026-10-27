@@ -70,7 +70,7 @@ async function padding(box: Locator): Promise<{ x: number; y: number }> {
 }
 
 test.describe("TC-TILES-21 — un dublu-clic urcă o fișă; o fișă trasă lasă locul gol", () => {
-  test("„Act de identitate” trasă sub „Corelate”; „Adresă corespondență” rămâne, apoi urcă la dublu-clic; după reîncărcare", async ({ page }) => {
+  test("„Acte de identitate” trasă sub „Corelate”; „Adresă corespondență” rămâne, apoi urcă la dublu-clic; după reîncărcare", async ({ page }) => {
     test.slow();
     await removeLeftovers(page.request, MARK);
     await page.setViewportSize({ width: 1920, height: 1300 });
@@ -85,7 +85,7 @@ test.describe("TC-TILES-21 — un dublu-clic urcă o fișă; o fișă trasă las
       const region = (name: string) => page.getByRole("region", { name, exact: true });
       const corr = page.locator(`[data-tile-row] [data-packed-col][data-panel="${CORR}"]`);
 
-      // Step 1 — „Toate", „Interacțiuni" unticked: „Adresă corespondență" right under „Act de identitate".
+      // Step 1 — „Toate", „Interacțiuni" unticked: „Adresă corespondență" right under „Acte de identitate".
       await pressTileButton(page, "Toate", { timeout: 30_000 });
       await expect(region("Etichete și grupuri")).toBeVisible({ timeout: 30_000 });
       await setTile(page, "Interacțiuni", false);
@@ -95,8 +95,8 @@ test.describe("TC-TILES-21 — un dublu-clic urcă o fișă; o fișă trasă las
       expect(rule[CORR].x).toBe(rule.idCard.x);
       expect(rule[CORR].y).toBe(rule.idCard.y + rule.idCard.h + GAP);
 
-      // Step 2 — „Act de identitate" dragged to „Corelate"'s left edge, 60 px under it: it stays there; nothing else moves.
-      const card = region("Act de identitate");
+      // Step 2 — „Acte de identitate" dragged to „Corelate"'s left edge, 60 px under it: it stays there; nothing else moves.
+      const card = region("Acte de identitate");
       const p = await padding(card);
       const [r0, row] = await Promise.all([card.boundingBox(), page.locator("[data-tile-row]").boundingBox()]);
       const tx = (row?.x ?? 0) + rule.related.x + (p.x - (r0?.x ?? 0));
@@ -118,7 +118,7 @@ test.describe("TC-TILES-21 — un dublu-clic urcă o fișă; o fișă trasă las
       }).toEqual({ x: rule.related.x, y: true });
       const dropped = await boxes(page);
       for (const id of Object.keys(rule).filter((k) => k !== "idCard")) expect({ id, box: dropped[id] }).toEqual({ id, box: rule[id] });
-      expect(dropped[CORR].y).toBeGreaterThan(rightUnder(dropped, CORR)); // the space „Act de identitate" left stays empty
+      expect(dropped[CORR].y).toBeGreaterThan(rightUnder(dropped, CORR)); // the space „Acte de identitate" left stays empty
 
       // Step 3 — a double-click on „Adresă corespondență"'s left padding: it rises right under the lowest tile above it.
       const q = await padding(corr);
@@ -167,7 +167,7 @@ test.describe("TC-TILES-21 — un dublu-clic urcă o fișă; o fișă trasă las
       await page.reload();
       const region = (name: string) => page.getByRole("region", { name, exact: true });
 
-      // Step 6 — „Toate", „Interacțiuni" and „Arbore de moștenire" unticked; „Act de identitate" dragged 60 px under
+      // Step 6 — „Toate", „Interacțiuni" and „Arbore de moștenire" unticked; „Acte de identitate" dragged 60 px under
       // „Corelate", leaving a gap above „Adresă corespondență".
       await pressTileButton(page, "Toate", { timeout: 30_000 });
       await expect(region("Etichete și grupuri")).toBeVisible({ timeout: 30_000 });
@@ -175,7 +175,7 @@ test.describe("TC-TILES-21 — un dublu-clic urcă o fișă; o fișă trasă las
       await setTile(page, "Arbore de moștenire", false);
       await page.waitForTimeout(2500);
       const rule = await boxes(page);
-      const card = region("Act de identitate");
+      const card = region("Acte de identitate");
       const p = await padding(card);
       const [r0, row] = await Promise.all([card.boundingBox(), page.locator("[data-tile-row]").boundingBox()]);
       const tx = (row?.x ?? 0) + rule.related.x + (p.x - (r0?.x ?? 0));

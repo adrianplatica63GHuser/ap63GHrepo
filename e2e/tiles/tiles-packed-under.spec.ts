@@ -91,7 +91,7 @@ test.describe("TC-TILES-12 — fiecare fișă chiar sub fișa de deasupra ei", (
       const corr = page.locator('[data-panel="addresses.CORRESPONDENCE"]');
       await expect.poll(async () => {
         const [identity, idCard, contact, h, c, related, cls, conn] = await Promise.all([
-          boxOf(region("Identitate")), boxOf(region("Act de identitate")), boxOf(region("Contact")),
+          boxOf(region("Identitate")), boxOf(region("Acte de identitate")), boxOf(region("Contact")),
           boxOf(home), boxOf(corr), boxOf(region("Legături")), boxOf(region("Clasificare")), boxOf(region("Etichete și grupuri")),
         ]);
         return {

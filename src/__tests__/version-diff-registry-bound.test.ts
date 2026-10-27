@@ -330,7 +330,7 @@ describe("every frame a form renders is a frame the diff computes", () => {
       "src/app/natural-persons/_components/natural-person-form.tsx",
       "displayHighlights\\?\\.fields\\.([A-Za-z0-9_]+)",
       [...NATURAL_PERSON_SNAPSHOT_FIELDS_KEYS, "notes"],
-      26, // #39.30: + isDeceased, dateOfDeath
+      19, // #39.30: + isDeceased, dateOfDeath; 40.85: − the card's seven (an identity document's now)
     ],
     [
       "src/app/judicial-persons/_components/judicial-person-form.tsx",

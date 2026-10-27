@@ -161,7 +161,7 @@ test.describe("TC-PERS-03 — nota CNP-ului într-un balon, refuzul în română
       // Step 10 — Slice 40.64: the four empty tiles, each one line — its title, its state, „Adaugă".
       const lines = {
         contact: ["Contact", "necompletat"],
-        idCard: ["Act de identitate", "niciun act înregistrat"],
+        idCard: ["Acte de identitate", "niciun act înregistrat"], // 40.85: the person's identity documents
         home: ["Adresă domiciliu", "necompletat"],
         correspondence: ["Adresă corespondență", "necompletat"],
       } as const;
@@ -186,19 +186,15 @@ test.describe("TC-PERS-03 — nota CNP-ului într-un balon, refuzul în română
       await page.getByRole("checkbox", { name: "Adresa de corespondență aceeași cu domiciliul" }).check();
       await expect(emptyTileLine(page, "correspondence").locator("[data-empty-tile-state]")).toHaveText("aceeași cu domiciliul");
 
-      // Step 13 — „Până la" a past date: its red border at rest, and „EXPIRAT". (40.72: „Adrese" put back first.)
+      // Step 13 — Slice 40.85: „Adaugă" on „Acte de identitate" asks which identity document; „Renunță" closes it.
+      // (The card's „Până la" and its EXPIRAT are an identity document's since 40.85 — TC-PERS-16, TC-DOC-28.)
       await page.locator('[data-tile-cancel="addresses"]').click();
-      await openEmptyTile(page, "idCard");
-      const validUntil = page.locator('input[name="idValidUntil"]');
-      await validUntil.fill("2020-01-01");
-      await page.mouse.move(5, 5);
-      // 40.72: „Identitate" reads as text again, so the focus goes to another box of the open tile.
-      await page.locator('[name="idCardNumber"]').focus(); // 40.78: a box that grows, a <textarea>
-      const red = await validUntil.evaluate((el) => getComputedStyle(el).borderTopColor);
-      expect(red).not.toBe(CLEAR);
-      // Tailwind 4's red-500, as Chromium reports it (lab), or as oklch / sRGB elsewhere.
-      expect(red).toMatch(/lab\(55\.48|oklch\(0\.637 0\.237 25\.3|rgb\(239, 68, 68\)/);
-      await expect(page.locator('[data-panel="id-card"]').getByText("Expirat", { exact: false })).toBeVisible();
+      await emptyTileLine(page, "idCard").getByRole("button").click();
+      const chooser = page.locator("[data-identity-kind-chooser]");
+      await expect(chooser.getByText("Ce act de identitate adăugați?", { exact: true })).toBeVisible();
+      await expect(chooser.getByRole("radio")).toHaveCount(4);
+      await chooser.getByRole("button", { name: "Renunță" }).click();
+      await expect(chooser).toHaveCount(0);
     } finally {
       // At the end — leaving without saving, then deleting the person.
       if (personId) await removeRecord(page.request, "person", personId);
@@ -234,7 +230,8 @@ test.describe("TC-PERS-03 — nota CNP-ului într-un balon, refuzul în română
       const identity = page.locator('[data-panel="identity"]');
       await expect(identity.locator('[data-read-value="cnp"]')).toBeVisible();
       await expect(identity.locator('[data-read-value="cnp"]')).toHaveText("—");
-      await expect(emptyFieldsLink(identity, "identity")).toHaveText("Arată 8 câmpuri goale");
+      // 40.85: „Cetățenie" is on „Identitate" now — nine empty fields, not eight.
+      await expect(emptyFieldsLink(identity, "identity")).toHaveText("Arată 9 câmpuri goale");
       await expect(identity.locator('[data-read-value="nickname"]')).toBeHidden();
 
       // Step 16 — the link pressed: all six boxes, no link; a box typed into and emptied again stays; „Identitate" is

@@ -47,6 +47,11 @@ import { scanTextControls, type TextControl } from "@/lib/testing/text-controls"
 type Allowed = [id: string, childrenStart: string];
 
 const ALLOW: Record<string, Allowed[]> = {
+  // Slice 40.85: „Acte de identitate" — a document's code opens it; „Renunță" closes the kind's question.
+  "src/app/natural-persons/_components/person-identity-documents.tsx": [
+    ["A110", "{t(\"cancel\")}"],
+    ["A113", "{r.code}"],
+  ],
   // Slice #39.72: the issuer search — a juridical person's name picks it, with its code, type and CUI beside it.
   "src/app/documents/_components/issuer-field.tsx": [
     ["A113", "{o.displayName}"],
@@ -261,7 +266,7 @@ const ALLOW: Record<string, Allowed[]> = {
     ["A108", "{loading ? buttonSigningIn : buttonSignIn}"],
   ],
   "src/app/natural-persons/_components/natural-person-form.tsx": [
-    ["A113", "{nameOr(linkedIdCard.title, \"document\")} →"], // #37.57: the card by its title
+    // Slice 40.85: „Carte de identitate asociată" went with the card's fields — „Acte de identitate" lists them.
     ["A110", "{noLabel}"],
     ["A110", "{yesLabel}"],
   ],

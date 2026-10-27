@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
-import { getPersonById, getPersonIdCardLink } from "@/lib/persons/queries";
+import { getPersonById } from "@/lib/persons/queries";
+import { listPersonIdentityDocuments } from "@/lib/identity-documents/queries";
 import { PersonDetailTiles } from "../_components/person-detail-tiles";
 import { fromApiPayload } from "../_components/form-schema";
 
@@ -20,10 +21,11 @@ export default async function EditNaturalPersonPage({ params, searchParams }: Pa
     notes:     data.person.notes,
   });
 
-  const linkedIdCard = await getPersonIdCardLink(data.person.id);
+  // Slice 40.85: „Acte de identitate" — every identity document the person holds, of any kind.
+  const identityDocuments = await listPersonIdentityDocuments(data.person.id);
 
   return (
-    <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-zinc-950">
+    <div className="flex flex-1 flex-col bg-canvas">
       {/* Slice #21.08.misc: the max-w-3xl (768px) cap was removed so the
           Details tab's two side-by-side panel stacks have room. Matches the
           Property detail page, which is already uncapped. This widens every
@@ -39,7 +41,7 @@ export default async function EditNaturalPersonPage({ params, searchParams }: Pa
           // Slice #37.17: a `?tab=` adds its tile for this visit
           // (NP_TILE_OF_TAB); `details`, or anything unknown, adds nothing.
           initialTab={tab}
-          linkedIdCard={linkedIdCard}
+          identityDocuments={identityDocuments}
         />
       </main>
     </div>

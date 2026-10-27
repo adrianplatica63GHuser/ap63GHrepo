@@ -46,20 +46,20 @@ field's description either way.
 | 7 | Moves the mouse away and looks at „Nume" (Slice 40.56) | „Nume" sits on the tile with no border, no white fill and no shadow. Its label „Nume" is small (12 px) in Roboto Condensed, grey; the value under it is larger (14 px), darker, in the body font |
 | 8 | Moves the mouse over „Prenume", then away | Over it, the white box with the grey border; away, the box is gone again |
 | 9 | Looks at the empty „Poreclă", then clicks into it | At rest a dashed grey line under it; in focus the whole box in blue with a soft blue ring |
-| 10 | Looks at „Contact", „Act de identitate", „Adresă domiciliu" and „Adresă corespondență" (Slice 40.64) | Each is one line: its title, then in grey „necompletat" — „niciun act înregistrat" on „Act de identitate" — and a button „Adaugă" at the right |
+| 10 | Looks at „Contact", „Acte de identitate", „Adresă domiciliu" and „Adresă corespondență" (Slice 40.64) | Each is one line: its title, then in grey „necompletat" — „niciun act înregistrat" on „Acte de identitate" — and a button „Adaugă" at the right |
 | 11 | Presses „Adaugă" on „Contact" | The tile opens to its six boxes; the cursor is in „Telefon Personal 1" |
 | 12 | Presses „Adaugă" on „Adresă domiciliu", then ticks „Adresa de corespondență aceeași cu domiciliul" | „Adresă corespondență" is one line reading „aceeași cu domiciliul" |
-| 13 | Presses „Adaugă" on „Act de identitate", writes `01.01.2020` in „Până la", then clicks into „Nume" | „Până la" keeps a red border with the mouse away; „EXPIRAT" beside it |
+| 13 | Presses „Adaugă" on „Acte de identitate" (Slice 40.85), then „Renunță" | „Ce act de identitate adăugați?" and the four kinds; then gone |
 
 Steps 14–16 (Slice 40.71) are on a second person, **created through the API** the same way: „Nume" `TC-PERS-03-GOALE`,
 „Prenume" `Goale`, „Telefon Personal 2" `0700 000 002`, „Email serviciu" `goale@example.invalid`, no CNP (all invented).
-Since 40.71 the first person's empty identity fields are behind „Arată 8 câmpuri goale" too; steps 4 and 9 press it
+Since 40.71 the first person's empty identity fields are behind „Arată 9 câmpuri goale" (8 before 40.85) too; steps 4 and 9 press it
 first.
 
 | # | A person does | And sees |
 |---|---|---|
 | 14 | Opens the second person and looks at „Contact" | Its two values, then „Arată 4 câmpuri goale" followed in grey by „Telefon Personal 1, Telefon serviciu, Email Personal 1, Email Personal 2"; holding the mouse on the link shows the same names; the four boxes are not drawn |
-| 15 | Looks at „Identitate" | „CNP", empty, is drawn; „Arată 8 câmpuri goale" under the tile's fields |
+| 15 | Looks at „Identitate" | „CNP", empty, is drawn; „Arată 9 câmpuri goale" under the tile's fields (Cetățenie among them since 40.85) |
 | 16 | Presses „Arată 4 câmpuri goale", writes in „Telefon serviciu" and clears it again | All six boxes and no link; „Telefon serviciu" stays; „Identitate" still ends in its own link |
 
 ## At the end — leaving things as they were found
@@ -68,6 +68,10 @@ Leave the person without saving (navigate away, discarding the change), then del
 (`DELETE /api/people/<id>`). Căutare globală for `TC-PERS-03` finds nothing.
 
 ## Notes from the runs
+
+**2026-10-26 — Slice 40.85.** The person's „Act de identitate" is „Acte de identitate", the identity documents the
+person holds: step 10 reads the new title, step 13 the kind it asks for (the card's „Până la" is an identity
+document's — TC-PERS-16), step 15 counts Cetățenie on „Identitate". The spec follows; not driven by hand first.
 
 **2026-10-25 — Slice 40.72.** A saved person reads as text. Steps 1–9 happen with „Identitate" opened by „Editează"
 (an open tile shows every field); after step 9 „Renunță" puts it back, so step 11's „Adaugă" opens „Contact"

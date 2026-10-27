@@ -25,6 +25,7 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import { emptyIdentityValues, type IdentitySnapshot } from "@/lib/identity-documents/validation";
 import { IDENTITY_VALUE_KEYS } from "@/lib/identity-documents/kinds";
+import { LEGACY_PERSON_ID_CARD_KEYS } from "@/lib/persons/legacy-id-card";
 import {
   DOCUMENT_SNAPSHOT_KEYS,
   IDENTITY_SNAPSHOT_KEYS,
@@ -129,8 +130,6 @@ describe("NATURAL_PERSON_SNAPSHOT_FIELDS_KEYS", () => {
       lastName:                 null,
       nickname:                 null,
       cnp:                      null,
-      idDocumentType:           null,
-      idDocumentNumber:         null,
       gender:                   null,
       dateOfBirth:              null,
       isDeceased:               false,
@@ -142,16 +141,17 @@ describe("NATURAL_PERSON_SNAPSHOT_FIELDS_KEYS", () => {
       personalEmail2:           null,
       workEmail:                null,
       placeOfBirth:             null,
-      idIssuingAuthority:       null,
-      idValidFrom:              null,
-      idValidUntil:             null,
-      idCardNumber:             null,
-      idMrzRaw:                 null,
       citizenshipId:            null,
       physicalPersonTypeId:     null,
       correspondenceSameAsHome: false,
     };
     expect(sortedKeys(dummy)).toEqual(sortedArray(NATURAL_PERSON_SNAPSHOT_FIELDS_KEYS));
+  });
+
+  it("Slice 40.85: holds none of the seven identity-card keys — a version before it keeps them, read-only", () => {
+    for (const k of LEGACY_PERSON_ID_CARD_KEYS) {
+      expect((NATURAL_PERSON_SNAPSHOT_FIELDS_KEYS as readonly string[]).includes(k)).toBe(false);
+    }
   });
 });
 

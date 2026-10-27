@@ -116,7 +116,8 @@ describe("the Natural Person's tiles", () => {
     const idCard = panel('data-panel="id-card"', 'data-panel="contact"');
     const contact = panel('data-panel="contact"', "<AddressBlock");
     expect(identity.length).toBeGreaterThan(5);
-    expect(idCard.length).toBeGreaterThan(5);
+    // Slice 40.85: „Acte de identitate" lists the person's identity documents — no field of the form is on it.
+    expect(idCard).toEqual([]);
     for (const f of identity) expect([f, npTileOfField(f)]).toEqual([f, "identity"]);
     for (const f of idCard) expect([f, npTileOfField(f)]).toEqual([f, "idCard"]);
     for (const f of contact) expect([f, npTileOfField(f)]).toEqual([f, "contact"]);
@@ -152,7 +153,8 @@ describe("the Natural Person's tiles", () => {
       // Slice #37.27: „Asocieri" is „Persoane" on the Natural Person — its people, by name and relationship.
       // Slice #37.67: Persoane, Proprietăți and Acte are one tile, „Corelate".
       // #38.30: „Act de identitate", „Legături", „Clasificare", „Etichete și grupuri".
-      "Identitate", "Act de identitate", "Contact", "Adrese", "Legături", "Clasificare", "Etichete și grupuri", "Arbore de moștenire", "Interacțiuni", // #37.89; #39.12
+      // 40.85: „Acte de identitate" — the person's identity documents.
+      "Identitate", "Acte de identitate", "Contact", "Adrese", "Legături", "Clasificare", "Etichete și grupuri", "Arbore de moștenire", "Interacțiuni", // #37.89; #39.12
     ]);
     expect(ro.shared.tiles.all).toBe("Toate");
     expect(ro.shared.tiles.defaults).toBe("Implicit");

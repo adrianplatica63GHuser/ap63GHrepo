@@ -34,11 +34,11 @@ The window is 1366 × 900.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „Setări”, „Contul meu”, the „Persoană fizică” row | The built-in set ticked: „Act de identitate” on, „Legături” off; no „Revino la implicit” |
-| 2 | Unticks „Act de identitate”, ticks „Legături”, „Salvează” | „Salvat.”, and „Revino la implicit” appears |
-| 3 | Opens TC-E2E-TILEDEF's screen, „Implicit” | „Legături” and „Identitate” ticked, „Act de identitate” not |
+| 1 | Opens „Setări”, „Contul meu”, the „Persoană fizică” row | The built-in set ticked: „Acte de identitate” on, „Legături” off; no „Revino la implicit” |
+| 2 | Unticks „Acte de identitate”, ticks „Legături”, „Salvează” | „Salvat.”, and „Revino la implicit” appears |
+| 3 | Opens TC-E2E-TILEDEF's screen, „Implicit” | „Legături” and „Identitate” ticked, „Acte de identitate” not |
 | 4 | „Toate”, reloads the page, „Implicit” | The same set as step 3 |
-| 5 | Back in „Contul meu”, „Revino la implicit”; then the person's screen, „Implicit” | „Revenit la implicit.”; on the screen „Act de identitate” ticked, „Legături” not |
+| 5 | Back in „Contul meu”, „Revino la implicit”; then the person's screen, „Implicit” | „Revenit la implicit.”; on the screen „Acte de identitate” ticked, „Legături” not |
 
 ## At the end — leaving things as they were found
 

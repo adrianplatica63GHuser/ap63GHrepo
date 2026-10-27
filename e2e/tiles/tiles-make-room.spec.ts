@@ -90,7 +90,7 @@ async function holdOver(page: Page, tile: Locator, p: { x: number; y: number }, 
 }
 
 test.describe("TC-TILES-24 — o fișă ținută peste alta îi face loc", () => {
-  test("persoană fizică: „Act de identitate” ținută peste „Corelate”; lăsată; după reîncărcare; Esc pune totul înapoi", async ({ page }) => {
+  test("persoană fizică: „Acte de identitate” ținută peste „Corelate”; lăsată; după reîncărcare; Esc pune totul înapoi", async ({ page }) => {
     test.slow();
     await removeLeftovers(page.request, MARK);
     await page.setViewportSize({ width: 1920, height: 1300 });
@@ -115,8 +115,8 @@ test.describe("TC-TILES-24 — o fișă ținută peste alta îi face loc", () =>
       expect(rule.related).toBeDefined();
       expect(rule.idCard).toBeDefined();
 
-      // Step 2 — „Act de identitate" dragged until its top-left corner is at „Corelate"'s, and held: „Corelate" slides down out of its way.
-      const card = region("Act de identitate");
+      // Step 2 — „Acte de identitate" dragged until its top-left corner is at „Corelate"'s, and held: „Corelate" slides down out of its way.
+      const card = region("Acte de identitate");
       await holdOver(page, card, await padding(card), { x: rule.related.x, y: rule.related.y });
       await expect.poll(async () => (await outline(page)).free, { timeout: 5_000 }).toBe("true");
       const o = await outline(page);
@@ -131,7 +131,7 @@ test.describe("TC-TILES-24 — o fișă ținută peste alta îi face loc", () =>
       const held = await boxes(page);
       for (const id of Object.keys(rule).filter((k) => k !== "idCard" && !under.includes(k))) expect({ id, box: held[id] }).toEqual({ id, box: rule[id] });
 
-      // Released: „Act de identitate" where the outline was; the tiles that made room stay where they slid.
+      // Released: „Acte de identitate" where the outline was; the tiles that made room stay where they slid.
       await page.mouse.up();
       await expect.poll(async () => {
         const now = await boxes(page);
@@ -148,7 +148,7 @@ test.describe("TC-TILES-24 — o fișă ținută peste alta îi face loc", () =>
       await page.waitForTimeout(2500); // past the settling
       const reloaded = await boxes(page);
 
-      // Step 4 — „Act de identitate" held over „Identitate"; a tile makes room; Esc: every tile back where step 3 had it.
+      // Step 4 — „Acte de identitate" held over „Identitate"; a tile makes room; Esc: every tile back where step 3 had it.
       const target = reloaded.identity;
       await holdOver(page, card, await padding(card), { x: target.x, y: target.y });
       await expect.poll(async () => (await outline(page)).free, { timeout: 5_000 }).toBe("true");

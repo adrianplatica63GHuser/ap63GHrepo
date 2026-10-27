@@ -34,7 +34,7 @@ record; the form does not require one for a save.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Presses „Persoane Fizice" in the left sidebar | The heading „Persoană fizică", a table headed NUME · PORECLĂ, and a button „Adaugă persoană" |
-| 2 | Presses „Adaugă persoană" | **Straight to** „Persoană fizică nouă" at `/natural-persons/new` — no chooser dialog, unlike the property list. Its sections are „IDENTITATE", „CARTE DE IDENTITATE", „CONTACT", „ADRESĂ DOMICILIU" |
+| 2 | Presses „Adaugă persoană" | **Straight to** „Persoană fizică nouă" at `/natural-persons/new` — no chooser dialog, unlike the property list. Its sections are „IDENTITATE", „CONTACT", „ADRESĂ DOMICILIU" (Slice 40.85: no identity-document tile on a new person) |
 | 3 | Types `TC-PERS-01` into „Nume" | The value appears |
 | 4 | Types `Ion` into „Prenume" | The value appears |
 | 5 | Scrolls to the bottom and presses „Salvează" | **The screen returns to the list**, not to the new person |
@@ -49,6 +49,10 @@ the form, and answer the dialog „Ștergeți persoana?" with **„Da"** — its
 „Nu" and „Da". A person already associated to a document must be dissociated first.
 
 ## Notes from the runs
+
+**2026-10-26 — Slice 40.85.** A new person has no identity-document section: the person's identity documents are
+documents of their own, listed on the saved person's „Acte de identitate". Step 2 lists three sections. The spec
+follows; not driven by hand first.
 
 **2026-09-25 (Slice #36.18) — held line for line, to create the person the second runs
 needed.** `PPERS01897`, „Nu există persoane" → „Se afișează 1 din 1", found again by `TC-PERS`;

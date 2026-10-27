@@ -511,11 +511,7 @@ async function createNaturalPersons(): Promise<void> {
       gender: p.gender,
       dateOfBirth: p.dob,
       placeOfBirth: p.birthPlace,
-      idDocumentType: p.idCard ? "ID_CARD" : null,
-      idDocumentNumber: p.idCard ? `${p.idCard.series}${p.idCard.number}` : null,
-      idIssuingAuthority: p.idCard ? "SPCLEP Bragadiru" : null,
-      idValidFrom: p.idCard?.from ?? null,
-      idValidUntil: p.idCard?.until ?? null,
+      // Slice 40.85: the card is not written on the person any more; it is the person's identity document (D1–D4).
       personalPhone1: `+40 7${intBetween(20, 89)} ${intBetween(100, 999)} ${intBetween(100, 999)}`,
       personalEmail1: `${p.first}.${p.last}`.toLowerCase().replace(/[^a-z.]/g, "") + "@exemplu.ro",
       citizenshipId: opt(refIds.citizenship, p.citizenship ?? "Română"),

@@ -182,7 +182,8 @@ describe("THE WINDOW DECIDES HOW MANY PANELS FIT, NEVER HOW WIDE ANYTHING IS", (
     // #39.30: + „Decedat", a tick (`CheckField`), which names its width too.
     const uses = panels.match(/<(Field|SelectField|ReadOnlyField|CheckField)\b/g) ?? [];
     const widths = panels.match(/width=\{NP\.[A-Za-z0-9]+\}/g) ?? [];
-    expect(uses.length).toBeGreaterThan(20);
+    // Slice 40.85: the card's eight fields left the person (19 now; „Cetățenie" moved to „Identitate").
+    expect(uses.length).toBeGreaterThan(15);
     expect(widths).toHaveLength(uses.length);
   });
 
@@ -426,7 +427,9 @@ describe("the Natural Person: every label above its box, every panel as wide as 
     const idCard = region(panels, 'data-panel="id-card"', 'data-panel="contact"');
     const contact = region(panels, 'data-panel="contact"', "<AddressBlock");
     expect(rowsOf(identity)).toEqual(NP_ROWS.identity.map((r) => [...r]));
-    expect(rowsOf(idCard)).toEqual(NP_ROWS.idCard.map((r) => [...r]));
+    // Slice 40.85: „Acte de identitate" lists identity documents and draws none of NP_ROWS.idCard — the import's
+    // card dialog still does (ID_CARD_DIALOG_ROWS, below), until 40.86.
+    expect(rowsOf(idCard)).toEqual([]);
     expect(rowsOf(contact)).toEqual(NP_ROWS.contact.map((r) => [...r]));
     // The address block draws ADDRESS_ROWS itself when stacked.
     expect(ADDRESS_BLOCK).toMatch(/ADDRESS_ROWS\.map\(/);
@@ -438,17 +441,17 @@ describe("the Natural Person: every label above its box, every panel as wide as 
       ["nickname", "cnp"],
       ["dateOfBirth", "age", "gender"],
       ["isDeceased", "dateOfDeath"],
-      ["placeOfBirth", "physicalPersonTypeId"],
+      // Slice 40.85 (Ask first 1): Cetățenie after Locul nașterii, at its size; Tip profesional on its own row.
+      ["placeOfBirth", "citizenshipId"],
+      ["physicalPersonTypeId"],
       ["notes"],
     ]);
     expect(NP_ROWS.idCard).toEqual([
       ["idDocumentType", "idDocumentNumber", "idCardNumber"],
       ["idValidFrom", "idValidUntil"],
-      ["citizenshipId", "idIssuingAuthority"],
+      ["idIssuingAuthority"],
       ["idMrzRaw"],
     ]);
-    // The validity status sits in the dates' row, after them.
-    expect(region(panels, 'name="idValidUntil"', 'name="citizenshipId"')).toMatch(/data-validity-status/);
     expect(NP_VALIDITY_REM).toBe(10.125);
   });
 
@@ -471,10 +474,11 @@ describe("the Natural Person: every label above its box, every panel as wide as 
       contact: widest(NP_ROWS.contact, NP),
       address: widest(ADDRESS_ROWS, ADDRESS),
     };
-    // identity 27: „Tip profesional" is 13.5 rem since 40.70 (Roboto), beside „Locul nașterii" — still three units.
+    // identity 22 since 40.85: „Locul nașterii" | „Cetățenie" (13 + 0.5 + 8.5) — still three units (Nume | Prenume,
+    // Data nașterii | Vârstă | Gen, … hold it there; FU-363 asks whether it should be two).
     // idCard 23.75 since 40.79 (Emisă de L, the MRZ L and not filling): the first row, Tip document | Nr. | Nr. card.
     // address 18.5 since 40.80 (Stradă XL): Cod poștal | Localitate — still three units.
-    expect(rowsOf).toEqual({ identity: 27, idCard: 23.75, contact: 17.5, address: 18.5 });
+    expect(rowsOf).toEqual({ identity: 22, idCard: 23.75, contact: 17.5, address: 18.5 });
     expect(NP_PANEL_UNITS).toEqual({ identity: 3, idCard: 3, contact: 2, address: 3 });
     for (const k of Object.keys(NP_PANEL_UNITS) as (keyof typeof NP_PANEL_UNITS)[]) {
       expect([k, NP_PANEL_INNER_REM[k] >= rowsOf[k]]).toEqual([k, true]);
@@ -487,7 +491,8 @@ describe("the Natural Person: every label above its box, every panel as wide as 
     expect(panels).toMatch(/width=\{NP\.notes\}\s+fillRem=\{NP_PANEL_INNER_REM\.identity\}/);
     // Slice 40.79: the MRZ is L, no longer the panel's whole width.
     expect("fill" in NP.idMrzRaw).toBe(false);
-    expect(panels).toMatch(/width=\{NP\.idMrzRaw\}\s+mono/);
+    // Slice 40.85: not on the person's form at all — an identity document's (IDENTITY_DOCUMENT.mrz).
+    expect(panels).not.toMatch(/NP\.idMrzRaw/);
   });
 
   // Slice 40.79 — Adrian, 2026-10-26, judged in Romanian: „Nume - M / Prenume - M / Poreclă - M / … / Gen (please use
@@ -1129,11 +1134,12 @@ describe("the ID-card dialog: the Natural Person's rows, widths and panels (Slic
   const panels = region(ID_CARD_DIALOG, "data-panel-row", "{unmappedEntries");
 
   it("keeps the Natural Person's rows, less what a card does not carry — derived, never a copy", () => {
-    expect(ID_CARD_DIALOG_ROWS.identity).toEqual([["lastName", "firstName"], ["cnp"], ["dateOfBirth", "gender"], ["placeOfBirth"]]);
+    // Slice 40.85: Cetățenie moved to „Identitate" on the person, so here too.
+    expect(ID_CARD_DIALOG_ROWS.identity).toEqual([["lastName", "firstName"], ["cnp"], ["dateOfBirth", "gender"], ["placeOfBirth", "citizenshipId"]]);
     expect(ID_CARD_DIALOG_ROWS.idCard).toEqual([
       ["idDocumentNumber", "idCardNumber"],
       ["idValidFrom", "idValidUntil"],
-      ["citizenshipId", "idIssuingAuthority"],
+      ["idIssuingAuthority"],
     ]);
     expect(ID_CARD_DIALOG_ROWS.identity).toEqual(keepFields(NP_ROWS.identity, ID_CARD_DIALOG_FIELDS));
     expect(ID_CARD_DIALOG_ROWS.idCard).toEqual(keepFields(NP_ROWS.idCard, ID_CARD_DIALOG_FIELDS));

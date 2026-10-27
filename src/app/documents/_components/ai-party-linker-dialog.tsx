@@ -596,9 +596,8 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
           // rather than guessing where the split is — better than a wrong split.
           lastName: hasSplitName ? orUndef(party.lastName) : orUndef(party.name),
           cnp: orUndef(party.cnp),
-          idDocumentType: orUndef(party.idDocumentNumber) ? "ID_CARD" : undefined,
-          idDocumentNumber: orUndef(party.idDocumentNumber),
-          idIssuingAuthority: orUndef(party.idIssuingAuthority),
+          // Slice 40.85 (Ask first 4): the CI number the deed quotes is shown and matched, never stored on the
+          // person, and no identity document is made from a quote — the deed's pages are its record.
           addresses,
           provenance,
         };
@@ -754,8 +753,8 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
       onClose={() => onClose({ ...counts, skipped: counts.skipped + (total - index) })}
     >
       {offersAnaf && partyAnafCui && (
-        <fieldset className="mt-3 flex flex-col gap-2 rounded-md border border-wire px-3 py-2 dark:border-zinc-700" data-party-anaf="">
-          <legend className="px-1 text-xs font-medium text-fade dark:text-zinc-400">{tAnaf("colAnaf")}</legend>
+        <fieldset className="mt-3 flex flex-col gap-2 rounded-md border border-wire px-3 py-2" data-party-anaf="">
+          <legend className="px-1 text-xs font-medium text-fade">{tAnaf("colAnaf")}</legend>
           <p className="text-sm text-fade">{tAnaf("partyIntro", { cui: partyAnafCui })}</p>
           <div>
             <IconButton
@@ -787,13 +786,13 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
       )}
 
       {offersShare && (
-      <fieldset className="mt-3 flex flex-wrap items-start gap-3 rounded-md border border-wire px-3 py-2 dark:border-zinc-700">
-        <legend className="px-1 text-xs font-medium text-fade dark:text-zinc-400">
+      <fieldset className="mt-3 flex flex-wrap items-start gap-3 rounded-md border border-wire px-3 py-2">
+        <legend className="px-1 text-xs font-medium text-fade">
           {tCota("colCota")}
         </legend>
 
         <label className="flex flex-col gap-0.5 text-sm">
-          <span className="text-xs text-fade dark:text-zinc-400">{tCota("colCota")}</span>
+          <span className="text-xs text-fade">{tCota("colCota")}</span>
           <input
             type="text"
             inputMode="decimal"
@@ -804,21 +803,21 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
             aria-invalid={cotaErrors.parte ? true : undefined}
             onChange={(e) => setCotaDraft((d) => ({ ...d, parte: e.target.value }))}
             className={[
-              "w-28 rounded-md border bg-white px-2 py-1 text-sm shadow-sm focus:outline-none dark:bg-zinc-950 dark:text-zinc-100",
+              "w-28 rounded-md border bg-raised px-2 py-1 text-sm shadow-sm focus:outline-none",
               cotaErrors.parte
-                ? "border-red-500 focus:border-red-600"
-                : "border-wire focus:border-focus dark:border-zinc-700",
+                ? "border-alert focus:border-alert"
+                : "border-wire focus:border-focus",
             ].join(" ")}
           />
           {cotaErrors.parte && (
-            <span className="text-xs text-red-600 dark:text-red-400" role="alert">
+            <span className="text-xs text-alert" role="alert">
               {cotaErrorLabel(cotaErrors.parte)}
             </span>
           )}
         </label>
 
         <label className="flex flex-col gap-0.5 text-sm">
-          <span className="text-xs text-fade dark:text-zinc-400">{tCota("colCotaMp")}</span>
+          <span className="text-xs text-fade">{tCota("colCotaMp")}</span>
           <input
             type="text"
             inputMode="decimal"
@@ -829,21 +828,21 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
             aria-invalid={cotaErrors.mp ? true : undefined}
             onChange={(e) => setCotaDraft((d) => ({ ...d, mp: e.target.value }))}
             className={[
-              "w-28 rounded-md border bg-white px-2 py-1 text-sm shadow-sm focus:outline-none dark:bg-zinc-950 dark:text-zinc-100",
+              "w-28 rounded-md border bg-raised px-2 py-1 text-sm shadow-sm focus:outline-none",
               cotaErrors.mp
-                ? "border-red-500 focus:border-red-600"
-                : "border-wire focus:border-focus dark:border-zinc-700",
+                ? "border-alert focus:border-alert"
+                : "border-wire focus:border-focus",
             ].join(" ")}
           />
           {cotaErrors.mp && (
-            <span className="text-xs text-red-600 dark:text-red-400" role="alert">
+            <span className="text-xs text-alert" role="alert">
               {cotaErrorLabel(cotaErrors.mp)}
             </span>
           )}
         </label>
 
         <label className="flex flex-col gap-0.5 text-sm">
-          <span className="text-xs text-fade dark:text-zinc-400">{tCota("colCotaMod")}</span>
+          <span className="text-xs text-fade">{tCota("colCotaMod")}</span>
           <select
             value={cotaMod ?? ""}
             disabled={busy}
@@ -851,7 +850,7 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
               const v = e.target.value;
               setCotaModDraft((COTA_MOD_VALUES as readonly string[]).includes(v) ? (v as CotaMod) : null);
             }}
-            className="rounded-md border border-wire bg-white px-2 py-1 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
+            className="rounded-md border border-wire bg-raised px-2 py-1 text-sm shadow-sm focus:border-focus focus:outline-none"
           >
             <option value="" data-blank="">{tCota("cotaModPlaceholder")}</option>
             {COTA_MOD_VALUES.map((v) => (
@@ -865,7 +864,7 @@ export function AiPartyLinkerDialog({ documentId, parties, onClose }: Props) {
       {error && (
         <div
           role="alert"
-          className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-800 dark:bg-red-950/30 dark:text-red-300"
+          className="mt-3 rounded-md border border-alert bg-alert-wash px-3 py-2 text-sm text-alert"
         >
           {error}
         </div>

@@ -67,7 +67,8 @@ test.describe("TC-PERS-01 — Persoană fizică creată manual", () => {
       await page.getByRole("link", { name: "Adaugă persoană" }).click();
       await expect(page).toHaveURL(/\/natural-persons\/new$/, { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: "Persoană fizică nouă" })).toBeVisible({ timeout: 30_000 });
-      for (const section of ["IDENTITATE", "ACT DE IDENTITATE", "CONTACT", "ADRESĂ DOMICILIU"]) {
+      // Slice 40.85: no identity-document tile on a new person — there is no person yet to hold one.
+      for (const section of ["IDENTITATE", "CONTACT", "ADRESĂ DOMICILIU"]) {
         await expect(page.getByText(section).first()).toBeVisible();
       }
 
@@ -84,7 +85,8 @@ test.describe("TC-PERS-01 — Persoană fizică creată manual", () => {
       expect(grown?.width).toBe(oneLine?.width);
       expect(grown?.height ?? 0).toBeGreaterThan((oneLine?.height ?? 0) + 10);
 
-      // Slice 40.79 — Adrian's sizes: Nume M; Gen XS, reading „M" with „Masculin" on hover; the MRZ L, two lines tall.
+      // Slice 40.79 — Adrian's sizes: Nume M; Gen XS, reading „M" with „Masculin" on hover. (40.85: the MRZ is an
+      // identity document's now — TC-FOLD-01; „Cetățenie" is on „Identitate", M, after „Locul nașterii".)
       const rem = 16;
       expect((await page.locator('[data-width-field="lastName"]').boundingBox())?.width).toBe(SCALE.M * rem);
       const gen = page.getByRole("combobox", { name: "Gen", exact: true });
@@ -93,10 +95,9 @@ test.describe("TC-PERS-01 — Persoană fizică creată manual", () => {
       await expect(gen).toHaveAttribute("title", "Masculin");
       expect((await gen.boundingBox())?.width).toBe(SCALE.XS * rem);
       await gen.selectOption("");
-      const mrz = page.locator('[data-width-field="idMrzRaw"]');
-      const mrzBox = await mrz.boundingBox();
-      expect(mrzBox?.width).toBe(SCALE.L * rem);
-      expect(mrzBox?.height ?? 0).toBeGreaterThanOrEqual(2 * 20); // two 20-px lines
+      const identityPanel = page.locator('[data-panel="identity"]');
+      await expect(identityPanel.getByRole("combobox", { name: "Cetățenie", exact: true })).toBeVisible();
+      await expect(page.locator('[data-panel="id-card"]')).toHaveCount(0); // no card on „Adaugă persoană"
 
       // Slice 40.80 — „Stradă, Nr., etaj, ap" is XL in the address block, and a long street wraps: taller, never wider.
       const street = page.locator('[data-width-field="addresses.HOME.streetLine"]');

@@ -1251,7 +1251,6 @@
       "idValidFrom": "ID Valid From",
       "idValidUntil": "Until",
       "idMrzRaw": "MRZ (raw)",
-      "idLink": "Linked ID Card",
       "notes": "Notes",
       "correspondenceSameAsHome": "Correspondence address same as home address",
       "relationships": "Relationship to the business"
@@ -1292,10 +1291,6 @@
       "citizenshipListFailed": "The citizenship list could not be read, so “—” does not mean “no citizenship”.",
       "personTypeListFailed": "The professional-type list could not be read, so “—” does not mean “no type”.",
       "countryRequiredIfAddressFilled": "Required if any other address field is filled",
-      "idLinkNone": "No ID card document linked",
-      "idExpired": "EXPIRED",
-      "idExpiringSoon": "EXPIRES IN {n} DAYS",
-      "idValid": "VALID",
       "death": {
         "DEATH_WITHOUT_DECEASED": "A date of death can only be set for a person marked „Deceased\".",
         "DEATH_BEFORE_BIRTH": "The date of death cannot be before the date of birth.",
@@ -1314,7 +1309,7 @@
     },
     "tiles": {
       "identity": "Identity",
-      "idCard": "Identity document",
+      "idCard": "Identity documents",
       "contact": "Contact",
       "addresses": "Addresses",
       "related": "Links",
@@ -1325,7 +1320,7 @@
     },
     "tileSubtitles": {
       "identity": "Name, CNP, gender, date and place of birth, death",
-      "idCard": "Identity card or passport",
+      "idCard": "The person's identity documents, the current one first",
       "contact": "Phone numbers and e-mail addresses",
       "addresses": "Home and correspondence",
       "related": "People, properties and documents linked to this person",
@@ -1346,6 +1341,21 @@
       "professionalType": "Prof.type",
       "relationships": "Rel.to VM",
       "changed": "Modified on"
+    },
+    "identityDocs": {
+      "none": "The person holds no recorded identity document.",
+      "caption": "The person's identity documents",
+      "colKind": "Document",
+      "colNumber": "Series and number",
+      "colValidUntil": "Valid until",
+      "colStatus": "Status",
+      "colCode": "Code",
+      "current": "current",
+      "add": "Add identity document",
+      "kindQuestion": "Which identity document are you adding?",
+      "continue": "Continue",
+      "cancel": "Cancel",
+      "legacyTitle": "In this version of the person, saved before identity documents were documents of their own, the person carried:"
     }
   },
   "judicialPerson": {

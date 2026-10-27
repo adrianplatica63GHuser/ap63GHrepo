@@ -12,6 +12,7 @@
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { naturalPerson } from "@/db/schema";
+import { LEGACY_PERSON_ID_CARD_KEYS, type LegacyPersonIdCardKey, type LegacyPersonIdCardSnapshot } from "./legacy-id-card";
 
 // ---------------------------------------------------------------------------
 // Address input — used in both create and update payloads
@@ -46,9 +47,20 @@ const addressArraySchema = z
  */
 const relationshipIdsSchema = z.array(z.string().uuid()).max(50).optional();
 
+// Slice 40.85: natural_person's identity-card columns, which no API reads or writes any more (./legacy-id-card).
+export { LEGACY_PERSON_ID_CARD_KEYS, type LegacyPersonIdCardKey, type LegacyPersonIdCardSnapshot };
+
 const naturalPersonBase = createInsertSchema(naturalPerson).omit({
   // Populated by the handler after inserting the parent person row.
   personId: true,
+  // Slice 40.85: never written through the API (LEGACY_PERSON_ID_CARD_KEYS).
+  idDocumentType: true,
+  idDocumentNumber: true,
+  idCardNumber: true,
+  idValidFrom: true,
+  idValidUntil: true,
+  idIssuingAuthority: true,
+  idMrzRaw: true,
 });
 
 // ---------------------------------------------------------------------------
@@ -172,8 +184,6 @@ export type NaturalPersonSnapshotFields = {
   lastName:           string | null;
   nickname:           string | null;
   cnp:                string | null;
-  idDocumentType:     string | null;
-  idDocumentNumber:   string | null;
   gender:             string | null;
   dateOfBirth:        string | null;
   // Slice #39.30 (migration_108 backfilled both into every older snapshot):
@@ -186,11 +196,6 @@ export type NaturalPersonSnapshotFields = {
   personalEmail2:     string | null;
   workEmail:          string | null;
   placeOfBirth:       string | null;
-  idIssuingAuthority: string | null;
-  idValidFrom:        string | null;
-  idValidUntil:       string | null;
-  idCardNumber:           string | null;
-  idMrzRaw:               string | null;
   citizenshipId:          string | null;
   // Slice #18.16.VL: Professional Type FK (lookup_person_type).
   physicalPersonTypeId:   string | null;
@@ -201,7 +206,7 @@ export type NaturalPersonSnapshotFields = {
 export type NaturalPersonSnapshot = {
   // person.notes (lives on the base `person` row, not natural_person).
   notes:   string | null;
-  natural: NaturalPersonSnapshotFields;
+  natural: NaturalPersonSnapshotFields & LegacyPersonIdCardSnapshot;
   addresses: {
     HOME:           PersonAddressSnapshot | null;
     CORRESPONDENCE: PersonAddressSnapshot | null;

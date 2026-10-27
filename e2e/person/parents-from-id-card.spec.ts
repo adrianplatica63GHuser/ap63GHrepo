@@ -57,10 +57,9 @@ test.describe("TC-PERS-08 — părinții din cartea de identitate, la „Adaugă
       await page.getByLabel(/^Prenume(\s|$)/).fill("Andrei");
       await page.getByRole("combobox", { name: "Gen", exact: true }).selectOption("MALE"); // 40.79: it reads „M"
       const fold = page.locator("[data-parents-fold]");
-      await expect(fold).toHaveCount(0);
 
-      // Step 2 — „Carte de identitate": the fold, both unticked, the holder's surname.
-      await page.getByRole("combobox", { name: "Tip document", exact: true }).selectOption({ label: "Carte de identitate" });
+      // Step 2 — Slice 40.85: the person holds no „Tip document" any more (an identity document is a document of its
+      // own), so the fold is offered on every new person, under „Identitate" — both unticked, the holder's surname.
       await expect(fold.getByRole("heading", { name: "Părinții titularului" })).toBeVisible();
       const father = fold.getByRole("checkbox", { name: "Creează și tatăl" });
       const mother = fold.getByRole("checkbox", { name: "Creează și mama" });

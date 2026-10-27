@@ -1251,7 +1251,6 @@
       "idValidFrom": "Valabil de la",
       "idValidUntil": "Până la",
       "idMrzRaw": "MRZ (text brut)",
-      "idLink": "Carte de identitate asociată",
       "notes": "Note",
       "correspondenceSameAsHome": "Adresa de corespondență aceeași cu domiciliul",
       "relationships": "Relația cu firma"
@@ -1292,10 +1291,6 @@
       "citizenshipListFailed": "Lista de cetățenii nu a putut fi citită, așa că „—” nu înseamnă „fără cetățenie”.",
       "personTypeListFailed": "Lista de tipuri profesionale nu a putut fi citită, așa că „—” nu înseamnă „fără tip”.",
       "countryRequiredIfAddressFilled": "Necesar dacă orice alt câmp al adresei este completat",
-      "idLinkNone": "Niciun document de carte de identitate asociat",
-      "idExpired": "EXPIRAT",
-      "idExpiringSoon": "EXPIRĂ ÎN {n} ZILE",
-      "idValid": "VALABIL",
       "death": {
         "DEATH_WITHOUT_DECEASED": "„Data decesului\" se poate completa doar pentru o persoană marcată „Decedat\".",
         "DEATH_BEFORE_BIRTH": "„Data decesului\" nu poate fi înainte de „Data nașterii\".",
@@ -1314,7 +1309,7 @@
     },
     "tiles": {
       "identity": "Identitate",
-      "idCard": "Act de identitate",
+      "idCard": "Acte de identitate",
       "contact": "Contact",
       "addresses": "Adrese",
       "related": "Legături",
@@ -1325,7 +1320,7 @@
     },
     "tileSubtitles": {
       "identity": "Nume, CNP, gen, data și locul nașterii, decesul",
-      "idCard": "Carte de identitate sau pașaport",
+      "idCard": "Actele de identitate ale persoanei, cel curent primul",
       "contact": "Telefoane și adrese de e-mail",
       "addresses": "Domiciliu și corespondență",
       "related": "Persoane, proprietăți și acte legate de această persoană",
@@ -1346,6 +1341,21 @@
       "professionalType": "Tip prof.",
       "relationships": "Rel.cu VM",
       "changed": "Modificat la"
+    },
+    "identityDocs": {
+      "none": "Persoana nu deține niciun act de identitate înregistrat.",
+      "caption": "Actele de identitate ale persoanei",
+      "colKind": "Act",
+      "colNumber": "Seria și numărul",
+      "colValidUntil": "Valabil până la",
+      "colStatus": "Stare",
+      "colCode": "Cod",
+      "current": "curent",
+      "add": "Adaugă act de identitate",
+      "kindQuestion": "Ce act de identitate adăugați?",
+      "continue": "Continuă",
+      "cancel": "Renunță",
+      "legacyTitle": "În această versiune a persoanei, salvată înainte ca actele de identitate să fie acte separate, erau trecute pe persoană:"
     }
   },
   "judicialPerson": {

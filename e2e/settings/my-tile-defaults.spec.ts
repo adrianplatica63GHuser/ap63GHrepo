@@ -61,12 +61,12 @@ test.describe("TC-SET-03 — „Implicitele mele”", () => {
       // Step 1 — „Contul meu”, the „Persoană fizică” row: the built-in set is ticked.
       await page.goto("/admin/settings");
       const row = kindRow(page);
-      await expect(row.getByRole("checkbox", { name: "Act de identitate", exact: true })).toBeChecked({ timeout: 30_000 });
+      await expect(row.getByRole("checkbox", { name: "Acte de identitate", exact: true })).toBeChecked({ timeout: 30_000 });
       await expect(row.getByRole("checkbox", { name: "Legături", exact: true })).not.toBeChecked();
       await expect(row.getByRole("button", { name: "Revino la implicit", exact: true })).toHaveCount(0);
 
-      // Step 2 — „Act de identitate” off, „Legături” on, „Salvează”.
-      await row.getByRole("checkbox", { name: "Act de identitate", exact: true }).uncheck();
+      // Step 2 — „Acte de identitate” off, „Legături” on, „Salvează”.
+      await row.getByRole("checkbox", { name: "Acte de identitate", exact: true }).uncheck();
       await row.getByRole("checkbox", { name: "Legături", exact: true }).check();
       const put = page.waitForResponse((r) => r.url().includes("/api/account/tile-defaults") && r.request().method() === "PUT");
       await row.getByRole("button", { name: "Salvează", exact: true }).click();
@@ -77,15 +77,15 @@ test.describe("TC-SET-03 — „Implicitele mele”", () => {
       // Step 3 — the person's screen: „Implicit” shows the saved set.
       await page.goto(`/natural-persons/${personId}`);
       await expect(tileBox(page, "Identitate")).toBeAttached({ timeout: 30_000 });
-      await pressDefault(page, "Legături", "Act de identitate");
+      await pressDefault(page, "Legături", "Acte de identitate");
       await expect(tileBox(page, "Identitate")).toBeChecked();
 
       // Step 4 — „Toate”, a reload, then „Implicit” again: the same set.
       await pressTileButton(page, "Toate");
-      await expect(tileBox(page, "Act de identitate")).toBeChecked();
+      await expect(tileBox(page, "Acte de identitate")).toBeChecked();
       await page.reload();
       await expect(tileBox(page, "Identitate")).toBeAttached({ timeout: 30_000 });
-      await pressDefault(page, "Legături", "Act de identitate");
+      await pressDefault(page, "Legături", "Acte de identitate");
 
       // Step 5 — „Revino la implicit” in „Contul meu”; on the screen „Implicit” is the built-in set again.
       await page.goto("/admin/settings");
@@ -93,10 +93,10 @@ test.describe("TC-SET-03 — „Implicitele mele”", () => {
       await kindRow(page).getByRole("button", { name: "Revino la implicit", exact: true }).click({ timeout: 30_000 });
       expect((await del).status()).toBe(204);
       await expect(kindRow(page).getByRole("status")).toHaveText("Revenit la implicit.");
-      await expect(kindRow(page).getByRole("checkbox", { name: "Act de identitate", exact: true })).toBeChecked();
+      await expect(kindRow(page).getByRole("checkbox", { name: "Acte de identitate", exact: true })).toBeChecked();
       await page.goto(`/natural-persons/${personId}`);
       await expect(tileBox(page, "Identitate")).toBeAttached({ timeout: 30_000 });
-      await pressDefault(page, "Act de identitate", "Legături");
+      await pressDefault(page, "Acte de identitate", "Legături");
     } finally {
       await forgetNaturalPersonSet(page);
       if (personId) await removeRecord(page.request, "person", personId);

@@ -15,7 +15,7 @@
  * untouched.
  */
 
-import { and, count, desc, eq, ilike, inArray, or, sql, type SQL } from "drizzle-orm";
+import { and, count, desc, eq, getTableColumns, ilike, inArray, or, sql, type SQL } from "drizzle-orm";
 import type { FilterState } from "@/lib/list/filter-bar";
 import type { ListOrder } from "@/lib/list/list-order";
 import { changedAt, listOrderBy } from "@/lib/list/order-sql";
@@ -49,15 +49,23 @@ import {
   personVersion,
   principalObject,
 } from "@/db/schema";
-import type {
-  AllPersonsListQuery,
-  ListQuery,
-  NaturalPersonCreate,
-  NaturalPersonSnapshot,
-  NaturalPersonUpdate,
-  PersonAddressSnapshot,
+import {
+  LEGACY_PERSON_ID_CARD_KEYS,
+  type AllPersonsListQuery,
+  type LegacyPersonIdCardKey,
+  type ListQuery,
+  type NaturalPersonCreate,
+  type NaturalPersonSnapshot,
+  type NaturalPersonUpdate,
+  type PersonAddressSnapshot,
 } from "./validation";
 import type { JudicialPersonSnapshot } from "@/lib/judicial-persons/validation";
+import { holdersOfIdentityNumber, listPersonIdentityDocuments } from "@/lib/identity-documents/queries";
+import {
+  identityDocumentForQuote,
+  identityNumberKey,
+  orderPersonIdentityDocuments,
+} from "@/lib/identity-documents/person-list";
 // Slice #34.15 — the door on the three person-side association writes. The
 // rule is pure (`role-attachment.ts`); the offered sets are the same lists the
 // three pickers filter on (`role-offers.ts`).
@@ -379,9 +387,19 @@ export async function listAllPersons(opts: AllPersonsListQuery): Promise<{
 // Get by id (full record: person + subtype + addresses)
 // ---------------------------------------------------------------------------
 
+/**
+ * natural_person's columns as every read here selects them: all but the seven identity-card ones, which no screen,
+ * API or matching rule reads since Slice 40.85 (`LEGACY_PERSON_ID_CARD_KEYS`).
+ */
+type NaturalColumns = Omit<ReturnType<typeof getTableColumns<typeof naturalPerson>>, LegacyPersonIdCardKey>;
+const NATURAL_COLUMNS = Object.fromEntries(
+  Object.entries(getTableColumns(naturalPerson)).filter(([k]) => !(LEGACY_PERSON_ID_CARD_KEYS as readonly string[]).includes(k)),
+) as NaturalColumns;
+export type NaturalPersonRow = Omit<typeof naturalPerson.$inferSelect, LegacyPersonIdCardKey>;
+
 export type PersonFull = {
   person: typeof person.$inferSelect;
-  natural: typeof naturalPerson.$inferSelect | null;
+  natural: NaturalPersonRow | null;
   addresses: (typeof address.$inferSelect)[];
   /** Slice #39.70: „Relația cu firma" — read by `getPersonById`; outside every snapshot. */
   relationshipIds?: string[];
@@ -418,7 +436,7 @@ export async function getPersonById(id: string): Promise<PersonFull | null> {
   const [naturalRows, addressRows] = await Promise.all([
     personRow.type === "NATURAL"
       ? db
-          .select()
+          .select(NATURAL_COLUMNS)
           .from(naturalPerson)
           .where(eq(naturalPerson.personId, id))
           .limit(1)
@@ -483,8 +501,6 @@ export function naturalSnapshotFromFull(full: PersonFull): NaturalPersonSnapshot
       lastName:           n?.lastName           ?? null,
       nickname:           n?.nickname           ?? null,
       cnp:                n?.cnp                ?? null,
-      idDocumentType:     n?.idDocumentType     ?? null,
-      idDocumentNumber:   n?.idDocumentNumber   ?? null,
       gender:             n?.gender             ?? null,
       dateOfBirth:        n?.dateOfBirth        ?? null,
       // Slice #39.30:
@@ -497,11 +513,7 @@ export function naturalSnapshotFromFull(full: PersonFull): NaturalPersonSnapshot
       personalEmail2:     n?.personalEmail2     ?? null,
       workEmail:          n?.workEmail          ?? null,
       placeOfBirth:       n?.placeOfBirth       ?? null,
-      idIssuingAuthority: n?.idIssuingAuthority ?? null,
-      idValidFrom:        n?.idValidFrom        ?? null,
-      idValidUntil:       n?.idValidUntil       ?? null,
-      idCardNumber:       n?.idCardNumber       ?? null,
-      idMrzRaw:           n?.idMrzRaw           ?? null,
+      // Slice 40.85: a version holds no identity-card value any more (`LegacyPersonIdCardSnapshot`).
       citizenshipId:          n?.citizenshipId          ?? null,
       // Slice #18.16.VL: Professional Type FK.
       physicalPersonTypeId:   n?.physicalPersonTypeId   ?? null,
@@ -805,8 +817,6 @@ export async function createNaturalPerson(
         lastName: natFields.lastName ?? null,
         nickname: natFields.nickname ?? null,
         cnp: natFields.cnp ?? null,
-        idDocumentType: natFields.idDocumentType ?? null,
-        idDocumentNumber: natFields.idDocumentNumber ?? null,
         gender: natFields.gender ?? null,
         dateOfBirth: natFields.dateOfBirth ?? null,
         // Slice #39.30:
@@ -819,18 +829,14 @@ export async function createNaturalPerson(
         personalEmail2: natFields.personalEmail2 ?? null,
         workEmail: natFields.workEmail ?? null,
         placeOfBirth: natFields.placeOfBirth ?? null,
-        idIssuingAuthority: natFields.idIssuingAuthority ?? null,
-        idValidFrom: natFields.idValidFrom ?? null,
-        idValidUntil: natFields.idValidUntil ?? null,
-        idCardNumber: natFields.idCardNumber ?? null,
-        idMrzRaw: natFields.idMrzRaw ?? null,
+        // Slice 40.85: the identity-card columns are not written (LEGACY_PERSON_ID_CARD_KEYS).
         citizenshipId: natFields.citizenshipId ?? null,
         // Slice #18.16.VL:
         physicalPersonTypeId: natFields.physicalPersonTypeId ?? null,
         // Slice #19.01:
         correspondenceSameAsHome: natFields.correspondenceSameAsHome ?? false,
       })
-      .returning();
+      .returning(NATURAL_COLUMNS);
 
     let addressRows: (typeof address.$inferSelect)[] = [];
     if (addressList.length > 0) {
@@ -976,7 +982,7 @@ export async function updateNaturalPerson(
       .where(eq(person.id, id))
       .limit(1);
     const [refreshedNatural] = await tx
-      .select()
+      .select(NATURAL_COLUMNS)
       .from(naturalPerson)
       .where(eq(naturalPerson.personId, id))
       .limit(1);
@@ -1117,29 +1123,68 @@ export type NaturalPersonMatchCandidate = {
   type:               "NATURAL";
   displayName:        string;
   cnp:                string | null;
+  /**
+   * Slice 40.85: the number and issuer of one of the person's IDENTITY DOCUMENTS — the one the deed's quoted number
+   * names, else the current one — never natural_person's id_* columns, which nothing reads any more.
+   */
   idDocumentNumber:   string | null;
   idIssuingAuthority: string | null;
 };
 
-export async function findNaturalPersonByCnp(cnp: string): Promise<NaturalPersonMatchCandidate | null> {
+async function withIdentityDocument(
+  row: { id: string; code: string; displayName: string; cnp: string | null },
+  quotedNumber: string | null | undefined,
+): Promise<NaturalPersonMatchCandidate> {
+  const docs = orderPersonIdentityDocuments(await listPersonIdentityDocuments(row.id), new Date(), 0);
+  const doc = identityDocumentForQuote(docs, quotedNumber);
+  return {
+    ...row,
+    type: "NATURAL" as const,
+    idDocumentNumber: doc?.nrDocument ?? null,
+    idIssuingAuthority: doc?.issuerName ?? null,
+  };
+}
+
+const MATCH_COLUMNS = {
+  id:          person.id,
+  code:        person.code,
+  displayName: person.displayName,
+  cnp:         naturalPerson.cnp,
+};
+
+export async function findNaturalPersonByCnp(
+  cnp: string,
+  /** Slice 40.85: the CI number the source quotes, to show the person's document that carries it. */
+  quotedNumber?: string | null,
+): Promise<NaturalPersonMatchCandidate | null> {
   const trimmed = cnp.trim();
   if (!trimmed) return null;
 
   const [row] = await db
-    .select({
-      id:                 person.id,
-      code:               person.code,
-      displayName:        person.displayName,
-      cnp:                naturalPerson.cnp,
-      idDocumentNumber:   naturalPerson.idDocumentNumber,
-      idIssuingAuthority: naturalPerson.idIssuingAuthority,
-    })
+    .select(MATCH_COLUMNS)
     .from(naturalPerson)
     .innerJoin(person, eq(person.id, naturalPerson.personId))
     .where(eq(naturalPerson.cnp, trimmed))
     .limit(1);
 
-  return row ? { ...row, type: "NATURAL" as const } : null;
+  return row ? withIdentityDocument(row, quotedNumber) : null;
+}
+
+/**
+ * The one natural person holding an identity document with the number a deed quotes, or null — none, or more than
+ * one (a number two persons' documents share is no identification).          (Slice 40.85, Ask first 4)
+ * Asked only when the deed gives no CNP, or its CNP matched nobody.
+ */
+export async function findNaturalPersonByIdentityNumber(quotedNumber: string): Promise<NaturalPersonMatchCandidate | null> {
+  const holders = await holdersOfIdentityNumber(identityNumberKey(quotedNumber));
+  if (holders.length !== 1) return null;
+  const [row] = await db
+    .select(MATCH_COLUMNS)
+    .from(naturalPerson)
+    .innerJoin(person, eq(person.id, naturalPerson.personId))
+    .where(eq(naturalPerson.personId, holders[0]))
+    .limit(1);
+  return row ? withIdentityDocument(row, quotedNumber) : null;
 }
 
 // ---------------------------------------------------------------------------
@@ -1278,39 +1323,11 @@ export async function listPersonDocuments(personId: string): Promise<PersonDocum
   }));
 }
 
-/**
- * The person's linked ID card Document (a type marked CI_NOU or CI_VECHE —
- * Slice 40.82, migration_118's `identity_kind`), if one exists. Used to render the read-only "ID link"
- * row on the Details tab. A person can in principle have more than one such
- * Document linked; this returns the most recently associated one.
+/*
+ * Slice 40.85: `getPersonIdCardLink` — „Carte de identitate asociată", the one card a person was linked to — is gone.
+ * „Acte de identitate" lists every identity document the person holds: `listPersonIdentityDocuments`
+ * (src/lib/identity-documents/queries.ts), ordered by `orderPersonIdentityDocuments`.
  */
-export async function getPersonIdCardLink(
-  personId: string,
-): Promise<{ id: string; code: string; title: string | null } | null> {
-  const rows = await db
-    .select({ id: document.id, code: document.code, title: document.title })
-    .from(personDocument)
-    .innerJoin(document, eq(personDocument.documentId, document.id))
-    .innerJoin(lookupDocumentType, eq(document.documentTypeId, lookupDocumentType.id))
-    .where(
-      and(
-        eq(personDocument.personId, personId),
-        // Slice 40.82: the marker, not a key list — the two card kinds, old and new. A passport is an identity
-        // document too, but this row is „Carte de identitate asociată"; Slice 40.85 replaces it with the list of
-        // every identity document the person holds.
-        inArray(lookupDocumentType.identityKind, ["CI_NOU", "CI_VECHE"]),
-      ),
-    )
-    // ⚠️ `createdAt` alone stopped being a total order in #36.02: two roles for
-    // one person on one document are written in a single batch and share it to
-    // the microsecond, so `limit(1)` picked between them at the planner's whim.
-    // The id breaks the tie. Both rows name the same document, so the VALUE was
-    // never wrong — only unstable, which is how it would have stayed invisible.
-    .orderBy(desc(personDocument.createdAt), desc(personDocument.id))
-    .limit(1);
-
-  return rows[0] ?? null;
-}
 
 /**
  * ⚠️ **Checked against the DISTINCT list, not the selected documents' types.**

@@ -41,9 +41,9 @@ Nothing.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | The window at 1920 px. Opens „TC-TILES-24 Unu"; „Toate" in „Părți afișate"; unticks „Interacțiuni" and „Arbore de moștenire" | Every tile where #37.75 places it |
-| 2 | Presses on „Act de identitate"'s left padding and drags it until its top-left corner is at „Corelate"'s; holds; releases | While it is held the outline turns from red to free, and „Corelate" — with any tile the outline covers — slides straight down, its left edge unchanged, clear of the outline; every other tile stays. Released, „Act de identitate" stands where the outline was, and „Corelate" stays where it slid |
-| 3 | Reloads the page | „Act de identitate" and „Corelate" where step 2 left them |
-| 4 | Drags „Act de identitate" over „Identitate"; holds until a tile has slid; presses Esc; releases | Every tile, „Act de identitate" too, back where step 3 had it |
+| 2 | Presses on „Acte de identitate"'s left padding and drags it until its top-left corner is at „Corelate"'s; holds; releases | While it is held the outline turns from red to free, and „Corelate" — with any tile the outline covers — slides straight down, its left edge unchanged, clear of the outline; every other tile stays. Released, „Acte de identitate" stands where the outline was, and „Corelate" stays where it slid |
+| 3 | Reloads the page | „Acte de identitate" and „Corelate" where step 2 left them |
+| 4 | Drags „Acte de identitate" over „Identitate"; holds until a tile has slid; presses Esc; releases | Every tile, „Acte de identitate" too, back where step 3 had it |
 | 5 | The window at 1920 px. Opens the group's screen; presses on „Deja în grup"'s bottom bar and drags it until its top-left corner is at „Membri disponibili pentru includere"'s; holds; releases | While it is held the outline turns free and „Membri disponibili…" slides straight down under it. Released, „Deja în grup" stands where the outline was; „Identitatea grupului" never moves |
 | 6 | Reloads the page | Both places hold |
 

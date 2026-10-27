@@ -410,6 +410,8 @@ export const INSTITUTIONS: readonly InstitutionPlan[] = [
   { key: "I06", name: "Distribuție Energie Electrică Muntenia", type: "SA", publicBody: false, phone: "+40 21 929 00 00", email: "avize@energie-exemplu.ro", hq: { streetLine: "Str. Sebastian nr. 1", locality: BUC.locality, county: BUC.county, postalCode: BUC.postalCode }, notes: "Emite avizele de racordare cerute pentru autorizații. (date de test)" },
   { key: "I07", name: "SPCLEP Bragadiru", type: "Autoritate locală", publicBody: true, phone: "+40 21 448 01 20", email: "evidenta@primaria-exemplu.ro", hq: { streetLine: "Șos. Alexandriei nr. 249", locality: BRAG.locality, county: BRAG.county, postalCode: BRAG.postalCode }, notes: "Serviciul de evidență a persoanelor care emite cărțile de identitate. (date de test)" },
   { key: "I08", name: "SPCEP Sector 5", type: "Autoritate locală", publicBody: true, phone: "+40 21 410 12 00", email: "evidenta.s5@exemplu.ro", hq: { streetLine: "Str. Antiaeriană nr. 10", locality: BUC.locality, county: BUC.county, postalCode: BUC.postalCode }, notes: "Evidența persoanelor din Sectorul 5. (date de test)" },
+  // Slice 40.85 (found by its run): the passports 40.82 files name this issuer, and every „Emitent" has its institution.
+  { key: "I09", name: "Serviciul Public Comunitar pentru Eliberarea Pașapoartelor Ilfov", type: "Instituție publică teritorială", publicBody: true, phone: "+40 21 310 20 30", email: "pasapoarte.ilfov@exemplu.ro", hq: { streetLine: "Bd. Ghencea nr. 43", locality: BUC.locality, county: BUC.county, postalCode: BUC.postalCode }, notes: "Eliberează pașapoartele simple electronice. (date de test)" },
 ];
 
 /** The public-body types migration_115 added, which the issuer picker offers first. */

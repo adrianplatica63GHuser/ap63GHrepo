@@ -39,6 +39,8 @@ const I = "interactions" as const;
 const NR: Fill = { not: "No side-road run (Adrian, 2026-10-18): the commit names each slice after its owner, and a property named like a person confused." };
 
 const ACCOUNT = "Adrian's own operational state, not archive data — the seed never writes it.";
+/** Slice 40.85: natural_person's id_* columns, which nothing reads since; the person's cards are identity documents. */
+const LEGACY_ID: Fill = { not: "Slice 40.85: a person's ID card and passport are identity documents of their own (identity_document); natural_person's id_* columns are read by nothing and wait to be dropped." };
 
 export const SEED_COLUMNS: Record<string, TableFill> = {
   principal_object: { scope: { column: "id", set: "pos" }, columns: { code: APP, object_type: APP } },
@@ -46,10 +48,10 @@ export const SEED_COLUMNS: Record<string, TableFill> = {
   natural_person: {
     scope: { column: "person_id", set: "natural" },
     columns: {
-      person_id: APP, first_name: S, last_name: S, nickname: S, cnp: S, id_document_type: S, id_document_number: S, gender: S,
+      person_id: APP, first_name: S, last_name: S, nickname: S, cnp: S, id_document_type: LEGACY_ID, id_document_number: LEGACY_ID, gender: S,
       date_of_birth: S, is_deceased: "seed-true", date_of_death: S, personal_phone_1: S, personal_phone_2: S, work_phone: S,
-      personal_email_1: S, personal_email_2: S, work_email: S, place_of_birth: S, id_issuing_authority: S, id_valid_from: S,
-      id_valid_until: S, id_card_number: S, id_mrz_raw: S, citizenship_id: S, physical_person_type_id: S,
+      personal_email_1: S, personal_email_2: S, work_email: S, place_of_birth: S, id_issuing_authority: LEGACY_ID, id_valid_from: LEGACY_ID,
+      id_valid_until: LEGACY_ID, id_card_number: LEGACY_ID, id_mrz_raw: LEGACY_ID, citizenship_id: S, physical_person_type_id: S,
       correspondence_same_as_home: "seed-true",
     },
   },

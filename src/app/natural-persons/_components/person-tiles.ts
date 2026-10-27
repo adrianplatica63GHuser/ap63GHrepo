@@ -70,11 +70,9 @@ const IDENTITY = new Set([
   "lastName", "firstName", "nickname", "cnp", "gender", "dateOfBirth",
   "isDeceased", "dateOfDeath", // Slice #39.30
   "physicalPersonTypeId", "placeOfBirth", "notes",
+  "citizenshipId", // Slice 40.85: on „Identitate"
 ]);
-const ID_CARD = new Set([
-  "idDocumentType", "idDocumentNumber", "idCardNumber", "idValidFrom", "idValidUntil",
-  "citizenshipId", "idIssuingAuthority", "idMrzRaw",
-]);
+// Slice 40.85: „Acte de identitate" (`idCard`) lists the person's identity documents and holds no field.
 
 /**
  * The form tile a field lives on — where a validation error has to be shown.
@@ -84,7 +82,6 @@ const ID_CARD = new Set([
 export function npTileOfField(path: string): NpTile {
   const root = path.split(".")[0];
   if (IDENTITY.has(root)) return "identity";
-  if (ID_CARD.has(root)) return "idCard";
   if (root === "addresses" || root === "correspondenceSameAsHome") return "addresses";
   return "contact";
 }

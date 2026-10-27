@@ -42,9 +42,9 @@ Nothing.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | The window at 1920 px. Opens „TC-TILES-25 Unu"; „Toate" in „Părți afișate"; unticks „Interacțiuni" and „Arbore de moștenire" | Every tile where #37.75 places it; the diagram right of the bar, one rectangle per tile |
-| 2 | In the diagram, presses on „Act de identitate"'s rectangle and drags it until its top-left corner is at „Corelate"'s rectangle's; holds; releases | As soon as it moves, „Act de identitate" moves on the screen with it, and the screen's outline stands on „Corelate"'s place, red, the rectangle rimmed red. Held, „Corelate" slides straight down on the screen and its rectangle slides down in the diagram; the outline turns free and the rim goes. Released, „Act de identitate" stands where the outline was, „Corelate" stays where it slid, and the diagram shows both where they now stand |
-| 3 | Reloads the page | „Act de identitate" and „Corelate" where step 2 left them |
-| 4 | In the diagram, drags „Act de identitate"'s rectangle over „Identitate"'s; holds until a tile has slid; presses Esc; releases | Every tile, „Act de identitate" too, back where step 3 had it |
+| 2 | In the diagram, presses on „Acte de identitate"'s rectangle and drags it until its top-left corner is at „Corelate"'s rectangle's; holds; releases | As soon as it moves, „Acte de identitate" moves on the screen with it, and the screen's outline stands on „Corelate"'s place, red, the rectangle rimmed red. Held, „Corelate" slides straight down on the screen and its rectangle slides down in the diagram; the outline turns free and the rim goes. Released, „Acte de identitate" stands where the outline was, „Corelate" stays where it slid, and the diagram shows both where they now stand |
+| 3 | Reloads the page | „Acte de identitate" and „Corelate" where step 2 left them |
+| 4 | In the diagram, drags „Acte de identitate"'s rectangle over „Identitate"'s; holds until a tile has slid; presses Esc; releases | Every tile, „Acte de identitate" too, back where step 3 had it |
 | 5 | Drags it over „Identitate"'s again, moves the pointer well below the diagram, and releases there | Every tile back where step 3 had it |
 | 6 | Clicks „Identitate"'s rectangle | Nothing moves |
 

@@ -80,11 +80,13 @@ import { AsyncSelect } from "@/components/forms/async-select";
 import { WrappingSelect } from "@/components/forms/wrapping-select";
 import { foldLookupName, matchInstitution } from "@/lib/import/lookup-name-match";
 import { publicBodyTypeIdFor, type PublicBodyType } from "@/lib/documents/issuer";
+// Slice 40.85: the card's values are no longer the person's form's; this dialog reads them in the person's form
+// plus the card's (`idCardFormSchema`) until 40.86 gives it the identity document's fields.
 import {
-  emptyFormValues,
-  formSchema,
+  emptyIdCardFormValues as emptyFormValues,
+  idCardFormSchema as formSchema,
   toApiPayload,
-  type FormValues,
+  type IdCardFormValues as FormValues,
 } from "@/app/natural-persons/_components/form-schema";
 import { AddressBlock } from "@/components/address/address-block";
 import { inferProvenance } from "@/lib/metadata/provenance-rules";

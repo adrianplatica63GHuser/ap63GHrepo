@@ -121,7 +121,9 @@ describe("the four forms draw it", () => {
   });
   it("the Natural Person: the ID document says „niciun act înregistrat”, the correspondence the same as home", () => {
     const src = read(forms[0]);
-    expect(src).toContain('state="noIdDocument"');
+    // Slice 40.85: „Acte de identitate" is its own component — the person's identity documents, none of them a field.
+    expect(read("src/app/natural-persons/_components/person-identity-documents.tsx")).toContain('state="noIdDocument"');
+    expect(src).toContain("<PersonIdentityDocuments");
     expect(src).toContain('state="sameAsHome"');
   });
   it("the fields stay mounted behind the line — hidden, never unmounted", () => {

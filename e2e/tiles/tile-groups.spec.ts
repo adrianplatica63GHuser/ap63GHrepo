@@ -181,7 +181,7 @@ test.describe("TC-TILES-18 — bifele în patru grupuri colorate", () => {
           ["fixed", ["Hartă", "Puncte de contur", "Street View"]],
         ], width);
         await expectForm(page, `/natural-persons/${np}`, [
-          ["record", ["Identitate", "Act de identitate", "Contact", "Adrese"]],
+          ["record", ["Identitate", "Acte de identitate", "Contact", "Adrese"]],
           ["related", ["Legături"]],
           ["meta", ["Clasificare", "Etichete și grupuri"]],
           ["family", ["Arbore de moștenire"]], // #39.12

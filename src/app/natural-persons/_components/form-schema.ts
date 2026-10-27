@@ -51,14 +51,11 @@ const addressBlockSchema = z.object({
 
 export type AddressBlock = z.infer<typeof addressBlockSchema>;
 
-export const formSchema = z
-  .object({
+const personShape = {
     firstName: z.string(),
     lastName: z.string(),
     nickname: z.string(),
     cnp: z.string(),
-    idDocumentType: z.string(), // "" | "ID_CARD" | "PASSPORT"
-    idDocumentNumber: z.string(),
     gender: z.string(), // "" | "MALE" | "FEMALE"
     dateOfBirth: z.string(), // "" | "YYYY-MM-DD"
     // Slice #39.30: „Decedat", and „Data decesului" — enabled only while it is ticked.
@@ -71,11 +68,7 @@ export const formSchema = z
     personalEmail2: z.string(),
     workEmail: z.string(),
     placeOfBirth: z.string(),
-    idIssuingAuthority: z.string(),
-    idValidFrom: z.string(), // "" | "YYYY-MM-DD"
-    idValidUntil: z.string(), // "" | "YYYY-MM-DD"
-    idCardNumber: z.string(),
-    idMrzRaw: z.string(),
+    // Slice 40.85: on „Identitate" now, after Locul nașterii.
     citizenshipId: z.string(), // "" | uuid
     // Slice #18.16.VL: Professional Type FK (lookup_person_type); "" = unset.
     physicalPersonTypeId: z.string(),
@@ -86,40 +79,56 @@ export const formSchema = z
       HOME: addressBlockSchema,
       CORRESPONDENCE: addressBlockSchema,
     }),
-  })
+};
+
+type PersonCore = z.infer<z.ZodObject<typeof personShape>>;
+
+/**
+ * The person's rules, one function for both schemas below (a refined object cannot be extended in zod 4). Each issue
+ * is the one the four refinements it replaced raised, with the same path, in the same order.
+ */
+function personRules(d: PersonCore, ctx: { addIssue: (issue: { code: "custom"; message: string; path: (string | number)[] }) => void }): void {
   // At least one of firstName / lastName
-  .refine(
-    (d) => d.firstName.trim().length > 0 || d.lastName.trim().length > 0,
-    {
-      message: "At least one of First Name or Last Name is required",
-      path: ["lastName"],
-    },
-  )
+  if (!(d.firstName.trim().length > 0 || d.lastName.trim().length > 0)) {
+    ctx.addIssue({ code: "custom", message: "At least one of First Name or Last Name is required", path: ["lastName"] });
+  }
   // Slice #39.30: the death rules, in the words the API answers with (src/lib/persons/death.ts).
-  .superRefine((d, ctx) => {
-    const problem = deathProblem({ isDeceased: d.isDeceased, dateOfDeath: d.isDeceased ? d.dateOfDeath : "", dateOfBirth: d.dateOfBirth });
-    if (problem) ctx.addIssue({ code: "custom", message: DEATH_PROBLEM_TEXT[problem], path: ["dateOfDeath"] });
-  })
+  const problem = deathProblem({ isDeceased: d.isDeceased, dateOfDeath: d.isDeceased ? d.dateOfDeath : "", dateOfBirth: d.dateOfBirth });
+  if (problem) ctx.addIssue({ code: "custom", message: DEATH_PROBLEM_TEXT[problem], path: ["dateOfDeath"] });
   // Each address block: if any non-Country field is filled, Country must be too
-  .refine(
-    (d) => addressBlockHasCountryWhenNeeded(d.addresses.HOME),
-    {
-      message: "Country is required for the Home address",
-      path: ["addresses", "HOME", "country"],
-    },
-  )
+  if (!addressBlockHasCountryWhenNeeded(d.addresses.HOME)) {
+    ctx.addIssue({ code: "custom", message: "Country is required for the Home address", path: ["addresses", "HOME", "country"] });
+  }
   // Correspondence address only needs validation when not hidden by the checkbox
-  .refine(
-    (d) =>
-      d.correspondenceSameAsHome ||
-      addressBlockHasCountryWhenNeeded(d.addresses.CORRESPONDENCE),
-    {
-      message: "Country is required for the Correspondence address",
-      path: ["addresses", "CORRESPONDENCE", "country"],
-    },
-  );
+  if (!(d.correspondenceSameAsHome || addressBlockHasCountryWhenNeeded(d.addresses.CORRESPONDENCE))) {
+    ctx.addIssue({ code: "custom", message: "Country is required for the Correspondence address", path: ["addresses", "CORRESPONDENCE", "country"] });
+  }
+}
+
+export const formSchema = z.object(personShape).superRefine(personRules);
 
 export type FormValues = z.infer<typeof formSchema>;
+
+/**
+ * The card's own values, which the import's „Creează persoană din CI" dialog reads and reviews.   (Slice 40.85)
+ *
+ * They are no longer the PERSON's: since 40.85 the person's form neither shows nor sends them, and `toApiPayload`
+ * leaves them out, so nothing writes natural_person's id_* columns. The dialog keeps them to write the card's
+ * Document (its number, dates, issuer) until 40.86 gives it the identity document's fields.
+ */
+const idCardShape = {
+  idDocumentType: z.string(), // "" | "ID_CARD" | "PASSPORT"
+  idDocumentNumber: z.string(),
+  idIssuingAuthority: z.string(),
+  idValidFrom: z.string(), // "" | "YYYY-MM-DD"
+  idValidUntil: z.string(), // "" | "YYYY-MM-DD"
+  idCardNumber: z.string(),
+  idMrzRaw: z.string(),
+};
+
+export const idCardFormSchema = z.object({ ...personShape, ...idCardShape }).superRefine(personRules);
+
+export type IdCardFormValues = z.infer<typeof idCardFormSchema>;
 
 function addressBlockHasCountryWhenNeeded(b: AddressBlock): boolean {
   const otherFieldsFilled =
@@ -150,8 +159,6 @@ export const emptyFormValues: FormValues = {
   lastName: "",
   nickname: "",
   cnp: "",
-  idDocumentType: "",
-  idDocumentNumber: "",
   gender: "",
   dateOfBirth: "",
   isDeceased: false,
@@ -163,11 +170,6 @@ export const emptyFormValues: FormValues = {
   personalEmail2: "",
   workEmail: "",
   placeOfBirth: "",
-  idIssuingAuthority: "",
-  idValidFrom: "",
-  idValidUntil: "",
-  idCardNumber: "",
-  idMrzRaw: "",
   citizenshipId: "",
   physicalPersonTypeId: "",
   notes: "",
@@ -176,6 +178,18 @@ export const emptyFormValues: FormValues = {
     HOME: { ...emptyAddressBlock },
     CORRESPONDENCE: { ...emptyAddressBlock },
   },
+};
+
+/** The import dialog's empty form: the person's, and the card's values empty. */
+export const emptyIdCardFormValues: IdCardFormValues = {
+  ...emptyFormValues,
+  idDocumentType: "",
+  idDocumentNumber: "",
+  idIssuingAuthority: "",
+  idValidFrom: "",
+  idValidUntil: "",
+  idCardNumber: "",
+  idMrzRaw: "",
 };
 
 // ---------------------------------------------------------------------------
@@ -187,8 +201,6 @@ type NaturalRow = {
   lastName: string | null;
   nickname: string | null;
   cnp: string | null;
-  idDocumentType: "ID_CARD" | "PASSPORT" | null;
-  idDocumentNumber: string | null;
   gender: "MALE" | "FEMALE" | null;
   dateOfBirth: string | null;
   // Slice #39.30 — optional, because a version written before migration_108 has neither:
@@ -201,11 +213,6 @@ type NaturalRow = {
   personalEmail2: string | null;
   workEmail: string | null;
   placeOfBirth: string | null;
-  idIssuingAuthority: string | null;
-  idValidFrom: string | null;
-  idValidUntil: string | null;
-  idCardNumber: string | null;
-  idMrzRaw: string | null;
   citizenshipId: string | null;
   // Slice #18.16.VL:
   physicalPersonTypeId: string | null;
@@ -239,8 +246,6 @@ export function fromApiPayload(input: {
     lastName: n?.lastName ?? "",
     nickname: n?.nickname ?? "",
     cnp: n?.cnp ?? "",
-    idDocumentType: n?.idDocumentType ?? "",
-    idDocumentNumber: n?.idDocumentNumber ?? "",
     gender: n?.gender ?? "",
     dateOfBirth: n?.dateOfBirth ?? "",
     isDeceased: n?.isDeceased ?? false,
@@ -252,11 +257,6 @@ export function fromApiPayload(input: {
     personalEmail2: n?.personalEmail2 ?? "",
     workEmail: n?.workEmail ?? "",
     placeOfBirth: n?.placeOfBirth ?? "",
-    idIssuingAuthority: n?.idIssuingAuthority ?? "",
-    idValidFrom: n?.idValidFrom ?? "",
-    idValidUntil: n?.idValidUntil ?? "",
-    idCardNumber: n?.idCardNumber ?? "",
-    idMrzRaw: n?.idMrzRaw ?? "",
     citizenshipId: n?.citizenshipId ?? "",
     physicalPersonTypeId: n?.physicalPersonTypeId ?? "",
     notes: input.notes ?? "",
@@ -332,9 +332,6 @@ export function toApiPayload(
     lastName: blank(values.lastName),
     nickname: blank(values.nickname),
     cnp: blank(values.cnp),
-    idDocumentType:
-      blank(values.idDocumentType) as "ID_CARD" | "PASSPORT" | null,
-    idDocumentNumber: blank(values.idDocumentNumber),
     gender: blank(values.gender) as "MALE" | "FEMALE" | null,
     dateOfBirth: blank(values.dateOfBirth),
     // Slice #39.30: unticking „Decedat" clears the date.
@@ -347,11 +344,6 @@ export function toApiPayload(
     personalEmail2: blank(values.personalEmail2),
     workEmail: blank(values.workEmail),
     placeOfBirth: blank(values.placeOfBirth),
-    idIssuingAuthority: blank(values.idIssuingAuthority),
-    idValidFrom: blank(values.idValidFrom),
-    idValidUntil: blank(values.idValidUntil),
-    idCardNumber: blank(values.idCardNumber),
-    idMrzRaw: blank(values.idMrzRaw),
     citizenshipId: blank(values.citizenshipId),
     // Slice #18.16.VL:
     physicalPersonTypeId: blank(values.physicalPersonTypeId),
@@ -429,8 +421,6 @@ function snapshotFieldMap(
     lastName:           snap.natural.lastName,
     nickname:           snap.natural.nickname,
     cnp:                snap.natural.cnp,
-    idDocumentType:     snap.natural.idDocumentType,
-    idDocumentNumber:   snap.natural.idDocumentNumber,
     gender:             snap.natural.gender,
     dateOfBirth:        snap.natural.dateOfBirth,
     // Slice #39.30 — a version from before migration_108 reads as alive with no date.
@@ -443,11 +433,6 @@ function snapshotFieldMap(
     personalEmail2:     snap.natural.personalEmail2,
     workEmail:          snap.natural.workEmail,
     placeOfBirth:       snap.natural.placeOfBirth,
-    idIssuingAuthority: snap.natural.idIssuingAuthority,
-    idValidFrom:        snap.natural.idValidFrom,
-    idValidUntil:       snap.natural.idValidUntil,
-    idCardNumber:       snap.natural.idCardNumber,
-    idMrzRaw:           snap.natural.idMrzRaw,
     citizenshipId:      snap.natural.citizenshipId,
     physicalPersonTypeId: snap.natural.physicalPersonTypeId,
     notes:              snap.notes,

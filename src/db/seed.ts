@@ -79,7 +79,9 @@ import { eq, sql } from "drizzle-orm";
 import { db, pool } from "./index";
 import { createDocument } from "@/lib/documents/queries";
 import { createJudicialPerson } from "@/lib/judicial-persons/queries";
-import { createNaturalPerson } from "@/lib/persons/queries";
+import { associateDocumentsToPerson, createNaturalPerson } from "@/lib/persons/queries";
+import { isValidCnp } from "@/lib/identity-documents/validation";
+import { ID_CARD_HOLDER_ROLE } from "@/lib/import/id-card-holder-role";
 import { createPropertyIn } from "@/lib/properties/queries";
 // Slice #34.32 — migration_083's fold, so the tarla lookup below adopts a
 // differently-spelled row instead of inserting one the index refuses.
@@ -89,6 +91,7 @@ import type { IdentityInput } from "@/lib/identity-documents/validation";
 import {
   lookupDocumentType,
   lookupJudicialPersonType,
+  lookupPersonRole,
   lookupTarla,
   person,
 } from "./schema";
@@ -1351,6 +1354,47 @@ const JUDICIAL_PERSONS: SeedJudicialRow[] = [
 // Seed runner
 // ---------------------------------------------------------------------------
 
+/**
+ * A seed person's ID card or passport, as an identity document of its own.             (Slice 40.85)
+ *
+ * Until 40.85 the seed wrote the number on the person (natural_person.id_document_*), which no screen reads any more.
+ * The same number now becomes a pageless identity document — „Carte de Identitate (model nou)" or „Pașaport" — with
+ * the person as its holder („Titular act de identitate"), so „Acte de identitate" lists it. The CNP goes onto the
+ * document only where its control digit is right (the identity rules refuse it otherwise); every value is the seed's
+ * own, invented.
+ */
+async function seedIdentityDocument(row: SeedPersonRow, personId: string): Promise<void> {
+  if (!row.idDocumentNumber) return;
+  const typeKey = row.idDocumentType === "PASSPORT" ? "PASAPORT" : "CARTE_IDENTITATE";
+  const [type] = await db
+    .select({ id: lookupDocumentType.id, name: lookupDocumentType.name })
+    .from(lookupDocumentType)
+    .where(eq(lookupDocumentType.key, typeKey))
+    .limit(1);
+  if (!type) return;
+  const name = [row.lastName, row.firstName].filter(Boolean).join(" ");
+  const doc = await createDocument(
+    {
+      documentTypeId: type.id,
+      title: `${type.name} ${row.idDocumentNumber}${name ? ` — ${name}` : ""}`,
+      nrDocument: row.idDocumentNumber,
+      identity: {
+        lastName: row.lastName ?? null,
+        firstName: row.firstName ?? null,
+        cnp: row.cnp && isValidCnp(row.cnp) ? row.cnp : null,
+        sex: row.gender ?? null,
+      },
+    },
+    SEED_UPDATED_BY,
+  );
+  const [holder] = await db
+    .select({ id: lookupPersonRole.id })
+    .from(lookupPersonRole)
+    .where(eq(lookupPersonRole.name, ID_CARD_HOLDER_ROLE))
+    .limit(1);
+  await associateDocumentsToPerson(personId, [doc.id], holder?.id ?? null);
+}
+
 async function seed() {
   /**
    * Did the natural-persons section RUN this time, or was it skipped?
@@ -1394,8 +1438,7 @@ async function seed() {
           lastName:         row.lastName         ?? null,
           nickname:         row.nickname         ?? null,
           cnp:              row.cnp              ?? null,
-          idDocumentType:   row.idDocumentType   ?? null,
-          idDocumentNumber: row.idDocumentNumber ?? null,
+          // Slice 40.85: the person's card is not written on the person any more — see below.
           gender:           row.gender           ?? null,
           dateOfBirth:      row.dateOfBirth      ?? null,
           personalPhone1:   row.personalPhone1   ?? null,
@@ -1408,7 +1451,7 @@ async function seed() {
           addresses:        row.addresses ?? [],
         },
         SEED_UPDATED_BY,
-      );
+      ).then((full) => seedIdentityDocument(row, full.person.id));
     }
     naturalsSeededThisRun = true;
     console.log(`Seeded ${PERSONS.length} natural persons.`);

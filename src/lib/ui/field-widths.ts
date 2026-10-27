@@ -282,14 +282,18 @@ const NATURAL_PERSON_ROWS = {
     ["nickname", "cnp"],
     ["dateOfBirth", "age", "gender"],
     ["isDeceased", "dateOfDeath"],
-    ["placeOfBirth", "physicalPersonTypeId"],
+    // Slice 40.85 (Ask first 1): Cetățenie is the person's, after Locul nașterii, at its size; Tip profesional below.
+    ["placeOfBirth", "citizenshipId"],
+    ["physicalPersonTypeId"],
     ["notes"],
   ],
+  // Slice 40.85: the person's „Acte de identitate" lists identity documents and draws none of these; the import's
+  // card dialog still does (ID_CARD_DIALOG_ROWS) until 40.86 gives it the identity document's fields.
   idCard: [
     ["idDocumentType", "idDocumentNumber", "idCardNumber"],
     // …and the validity status („VALABIL", „EXPIRAT") in the rest of this row: `NP_VALIDITY_REM`.
     ["idValidFrom", "idValidUntil"],
-    ["citizenshipId", "idIssuingAuthority"],
+    ["idIssuingAuthority"],
     ["idMrzRaw"],
   ],
   contact: [

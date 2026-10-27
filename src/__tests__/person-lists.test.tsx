@@ -24,7 +24,8 @@ describe("„Câmpuri afișate” on the two persons' lists (Slice #37.60)", () 
   it("the Natural Persons list offers its „Identitate” fields less the name, the nickname and „Note”, in the panel's order", () => {
     const panel = SCREEN_ROWS.naturalPerson.identity.flat()
       // #39.30: „Decedat" is not a column — it is the „†" after the name; „Data decesului" is offered.
-      .filter((f) => !["lastName", "firstName", "nickname", "notes", "isDeceased"].includes(f))
+      // Slice 40.85: „Cetățenie" came onto „Identitate" from the card's tile; the list has no column for it yet (FU-369).
+      .filter((f) => !["lastName", "firstName", "nickname", "notes", "isDeceased", "citizenshipId"].includes(f))
       .map((f) => (f === "physicalPersonTypeId" ? "professionalType" : f));
     expect(panel).toEqual(["cnp", "dateOfBirth", "age", "gender", "dateOfDeath", "placeOfBirth", "professionalType"]);
     // Slice #39.70: and „Relația cu firma" after them — a column the list offers that is not in the panel's rows

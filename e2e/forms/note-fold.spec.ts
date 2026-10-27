@@ -11,9 +11,11 @@
  *     are created by POSTing the bodies the case names, as its „Before you
  *     start" says; they are removed through the DELETE routes at the end.
  *   - Slice #37.40's pictures, not a step of the case: the Document's „Note
- *     extinse" and the Natural Person's MRZ, folded and open, at 1366 and 1920
+ *     extinse" and the MRZ, folded and open, at 1366 and 1920
  *     px, into `playwright-report/note-fold/`. The sidebar's „Recente" list is
  *     painted over.
+ *   - Slice 40.85: the MRZ is no longer the person's — it is an identity document's („Carte de Identitate (model
+ *     nou)", 40.82–40.83), so steps 6–7 open one, invented, made through the API like the other two records.
  */
 
 import { test, expect, type Locator, type Page } from "../helpers/test";
@@ -99,12 +101,14 @@ test.describe("TC-FOLD-01 — „Note” și MRZ lungi se strâng la cinci rând
     };
     const cvc = types.items.find((t) => t.key === "CONTRACT_VANZARE");
     expect(cvc, "the Contract de Vânzare type").toBeTruthy();
+    const card = types.items.find((t) => t.key === "CARTE_IDENTITATE");
+    expect(card, "the Carte de Identitate (model nou) type").toBeTruthy();
     const post = async (url: string, data: unknown) => {
       const res = await page.request.post(url, { data });
       expect(res.ok(), `POST ${url}: ${res.status()}`).toBeTruthy();
       return res.json();
     };
-    const ids: { kind: "document" | "property" | "person"; id: string }[] = [];
+    const ids: { kind: "document" | "property"; id: string }[] = [];
     try {
       const doc = await post("/api/documents", {
         documentTypeId: cvc!.id,
@@ -115,8 +119,13 @@ test.describe("TC-FOLD-01 — „Note” și MRZ lungi se strâng la cinci rând
       ids.push({ kind: "document", id: doc.id ?? doc.document.id });
       const prop = await post("/api/properties", { nickname: `${MARK} Teren cu notă lungă`, notes: PARA, provenance: "MANUAL" });
       ids.push({ kind: "property", id: prop.property.id });
-      const person = await post("/api/people", { lastName: MARK, firstName: "Persoana", idMrzRaw: MRZ, provenance: "MANUAL" });
-      ids.push({ kind: "person", id: person.person.id });
+      const cardDoc = await post("/api/documents", {
+        documentTypeId: card!.id,
+        title: `${MARK} Carte de identitate cu MRZ`,
+        identity: { lastName: MARK, firstName: "Persoana", mrz: MRZ },
+        provenance: "MANUAL",
+      });
+      ids.push({ kind: "document", id: cardDoc.id ?? cardDoc.document.id });
 
       // Steps 1–3 — „Note extinse": five lines, all twelve, five again.
       await page.goto(`/documents/${ids[0].id}`);
@@ -130,15 +139,14 @@ test.describe("TC-FOLD-01 — „Note” și MRZ lungi se strâng la cinci rând
       await editTile(page, "cadastral");
       await expectFolds(page, "Note", 310);
 
-      // Steps 6–7 — the MRZ: five of seven lines; the empty „Note" has no link.
-      await page.goto(`/natural-persons/${ids[2].id}`);
-      // Slice 40.72: a saved person reads as text; the MRZ folds in its box, so „Act de identitate" is opened.
-      await editTile(page, "idCard");
+      // Steps 6–7 — the MRZ: five of seven lines. Slice 40.85: on the identity document's „Act de identitate",
+      // opened with „Editează" (40.83's tile reads as text, as every tile).
+      await page.goto(`/documents/${ids[2].id}`);
+      await editTile(page, "identity");
       // Slice 40.79: the MRZ is L, 190 px inside — 22 characters of Geist Mono a line — so each of its seven
       // 35–36-character lines takes two: fourteen lines open, 14 × 20 + 10 = 290 px (it was the panel's width, 150).
-      await expectFolds(page, "MRZ (text brut)", 290, "natural-person-mrz");
-      // Its own „Note" and the address block's are both empty: no link under either.
-      await expect(fold(page, "Note").links).toHaveCount(0);
+      // The identity document's MRZ is the same width (`IDENTITY_DOCUMENT.mrz`, 40.83).
+      await expectFolds(page, "MRZ", 290, "identity-document-mrz");
     } finally {
       // The case's own cleanup, through the routes „Șterge" → „Da" calls.
       for (const { kind, id } of ids) await removeRecord(page.request, kind, id);

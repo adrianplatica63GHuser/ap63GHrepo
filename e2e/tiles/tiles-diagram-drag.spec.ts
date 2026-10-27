@@ -90,7 +90,7 @@ async function dragRect(page: Page, id: string, target: Box): Promise<void> {
 }
 
 test.describe("TC-TILES-25 — un dreptunghi din harta fișelor se trage ca fișa lui", () => {
-  test("persoană fizică: „Act de identitate” trasă în hartă peste „Corelate”; lăsată; după reîncărcare; Esc, o eliberare afară și un clic nu mută nimic", async ({ page }) => {
+  test("persoană fizică: „Acte de identitate” trasă în hartă peste „Corelate”; lăsată; după reîncărcare; Esc, o eliberare afară și un clic nu mută nimic", async ({ page }) => {
     test.slow();
     await removeLeftovers(page.request, MARK);
     await page.setViewportSize({ width: 1920, height: 1300 });
@@ -122,7 +122,7 @@ test.describe("TC-TILES-25 — un dreptunghi din harta fișelor se trage ca fiș
       expect(r0.at.idCard).toBeDefined();
       expect(r0.dragged).toBeNull();
 
-      // Step 2 — „Act de identitate"'s rectangle laid on „Corelate"'s: the tile moves with it, the outline on „Corelate".
+      // Step 2 — „Acte de identitate"'s rectangle laid on „Corelate"'s: the tile moves with it, the outline on „Corelate".
       await dragRect(page, "idCard", r0.at.related);
       const first = await outline(page);
       expect(first.x).toBe(rule.related.x);
@@ -148,7 +148,7 @@ test.describe("TC-TILES-25 — un dreptunghi din harta fișelor se trage ca fiș
       }, { timeout: 5_000 }).toEqual({ slid: true, dragged: { id: "idCard", how: "free" } });
       const held = await boxes(page);
 
-      // Released, inside the diagram: „Act de identitate" where the outline was; „Corelate" where it slid; redrawn.
+      // Released, inside the diagram: „Acte de identitate" where the outline was; „Corelate" where it slid; redrawn.
       await page.mouse.up();
       await expect.poll(async () => {
         const now = await boxes(page);

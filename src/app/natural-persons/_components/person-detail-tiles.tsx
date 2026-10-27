@@ -50,7 +50,7 @@ import { PersonTreeTile } from "@/app/_components/person-tree-tile";
 import { PANEL_UNITS } from "@/lib/ui/field-widths";
 import { PreviewOpenerProvider, PreviewTiles, usePreviewSelectorEntries, usePreviews } from "@/components/tiles/preview-tiles";
 
-type IdCardLink = { id: string; code: string; title: string | null } | null;
+import type { PersonIdentityDocument } from "@/lib/identity-documents/person-list";
 
 type Props = {
   personId:      string;
@@ -62,7 +62,8 @@ type Props = {
   readonly?:     boolean;
   /** The `?tab=` the page was opened with, if any. */
   initialTab?:   string;
-  linkedIdCard?: IdCardLink;
+  /** Slice 40.85: the identity documents the person holds — „Acte de identitate". */
+  identityDocuments?: readonly PersonIdentityDocument[];
 };
 
 export function PersonDetailTiles({
@@ -73,7 +74,7 @@ export function PersonDetailTiles({
   initialRelationshipIds,
   readonly,
   initialTab,
-  linkedIdCard,
+  identityDocuments,
 }: Props) {
   const t = useTranslations("naturalPerson");
   useRegisterPage(personName, personCode, "NATURAL_PERSON");
@@ -146,7 +147,7 @@ export function PersonDetailTiles({
             personCode={personCode}
             initialValues={initialValues}
             initialRelationshipIds={initialRelationshipIds}
-            linkedIdCard={linkedIdCard}
+            identityDocuments={identityDocuments}
             versionNavSlot={navSlot}
             tiles={{ shown: choice.shown, labels, onRevealTile: choice.reveal }}
           />

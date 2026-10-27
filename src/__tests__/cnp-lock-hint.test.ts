@@ -181,7 +181,9 @@ describe("the natural-person form mirrors the judicial-person form", () => {
     expect(natural![0]).not.toMatch(/\breadOnly\b/);
     const identity = NATURAL.slice(NATURAL.indexOf('data-panel="identity"'), NATURAL.indexOf('data-panel="id-card"'));
     expect(identity.length).toBeGreaterThan(1000);
-    expect(identity.match(/\bdisabled=\{/g) ?? []).toHaveLength(1);
+    // Slice 40.85: „Părinții titularului" moved under „Identitate" with the card's fields gone; its `disabled` is the
+    // fold's own (while saving), not a Field's.
+    expect(identity.replace(/<ParentsFold[\s\S]*?\/>/, "").match(/\bdisabled=\{/g) ?? []).toHaveLength(1);
     expect(NATURAL).toMatch(/name="dateOfDeath"[\s\S]{0,300}?disabled=\{!watchedValues\.isDeceased\}/);
   });
 });
