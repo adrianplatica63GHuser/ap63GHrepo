@@ -19,8 +19,8 @@ and on a type with no labels of its own.
 ## Before you start
 
 - TC-AUTH-01 is green.
-- **Created through the API**: a Contract de Vânzare `TC-DOC-18 CVC` and a Plan de Amplasament și
-  Delimitare `TC-DOC-18 PAD`, both with nothing filled.
+- **Created through the API**: a Contract de Vânzare `TC-DOC-18 CVC` and an Autorizație `TC-DOC-18 PAD` (a Plan de
+  Amplasament și Delimitare until 2026-10-27, when Adrian removed that type), both with nothing filled.
 
 ## What Adrian is asked for
 
@@ -42,6 +42,9 @@ The window is 1366 × 900.
 Delete both documents (`DELETE /api/documents/<id>`).
 
 ## Notes from the runs
+
+**2026-10-27 — Slice 40.90.** The second document is an Autorizație: Adrian removed the Plan de Amplasament și
+Delimitare type on purpose. Step 4 reads the same generic „Nr. document" and „Data". Not driven by hand first.
 
 **2026-10-07 — Slice #38.32, `automated` the same day.** Written with the change and translated into
 `e2e/document/act-identification.spec.ts`, with `TC-E2E-DOC-18` names. The runner's run is in #38.32's

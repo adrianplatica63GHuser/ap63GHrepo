@@ -36,7 +36,9 @@ test.describe("TC-DOC-18 — „Identificarea actului”, păstrată după reîn
     try {
       const cvc = await createDocumentOfType(page.request, "CONTRACT_VANZARE", `${MARK} CVC`);
       made.push(cvc);
-      const pad = await createDocumentOfType(page.request, "PLAN_AMPLASAMENT_DELIMITARE", `${MARK} PAD`);
+      // 40.90: an Autorizație, where the case had a PAD — Adrian removed the PAD type; any type with the generic
+      // „Emitent / Nr. document / Data" proves the same.
+      const pad = await createDocumentOfType(page.request, "AUTORIZATIE", `${MARK} PAD`);
       made.push(pad);
 
       // Step 1 — the CVC's tile: the type, the notarial set and the four identification fields.
@@ -69,7 +71,7 @@ test.describe("TC-DOC-18 — „Identificarea actului”, păstrată după reîn
       await expect(box(page, "customFields.exemplareEmise")).toHaveValue("3");
       await expect(box(page, "customFields.dataContinut")).toHaveValue("2019-11-30");
 
-      // Step 4 — the PAD: „Nr. document", „Data", kept.
+      // Step 4 — an Autorizație (the PAD until 40.90): „Nr. document", „Data", kept.
       await page.goto(`/documents/${pad}`);
       await editTile(page, "general"); // 40.75
       await expect(box(page, "nrDocument")).toBeVisible({ timeout: 30_000 });

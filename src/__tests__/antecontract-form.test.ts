@@ -30,8 +30,10 @@ describe("the Antecontract has no form (Slice #37.74)", () => {
   });
 
   // Slice #38.49 (migration_102): 54 — #37.74 had „the CVC's 53 fields".
-  it("the other five forms are still there, the CVC's 54 fields among them", () => {
-    expect(FILE.forms.map((f) => f.key)).toEqual(["ACT_ADITIONAL", "CONTRACT_VANZARE", "FISA_CORPULUI_PROPRIETATE", "PLAN_AMPLASAMENT_DELIMITARE", "PLAN_PARCELAR"]);
+  // 2026-10-27 (40.90): Adrian removed the Fișă, PAD and Plan parcelar forms on purpose — „they were faulty, the result
+  // of a failed attempt at creating Forms for Documents; I will re-do them". Two forms are left.
+  it("the other two forms are still there, the CVC's 54 fields among them", () => {
+    expect(FILE.forms.map((f) => f.key)).toEqual(["ACT_ADITIONAL", "CONTRACT_VANZARE"]);
     expect(FILE.forms.find((f) => f.key === "CONTRACT_VANZARE")!.fields).toHaveLength(54);
   });
 });

@@ -39,8 +39,8 @@ back at the end.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens `TC-DOC-03 PAD` | A tile „Detalii act" (and its tick in „Părți afișate"), with no „[Date de emitere]" and no date box in it; nowhere „Câmpuri specifice" nor „Taxe și onorarii". On „Identificarea actului": „Emitent", „Nr. document", „Data", the last on one line |
-| 2 | Switches the interface to English and opens it again | „Document details", with no „[Issue details]"; nowhere „Type fields", „Document-type-specific fields" nor „Fees"; on „Document identification" „Issuer", „Document No.", „Date" on one line |
+| 1 | *(retired 2026-10-27 — see the notes)* Opens `TC-DOC-03 PAD` | A tile „Detalii act" (and its tick in „Părți afișate"), with no „[Date de emitere]" and no date box in it; nowhere „Câmpuri specifice" nor „Taxe și onorarii". On „Identificarea actului": „Emitent", „Nr. document", „Data", the last on one line |
+| 2 | *(retired 2026-10-27)* Switches the interface to English and opens it again | „Document details", with no „[Issue details]"; nowhere „Type fields", „Document-type-specific fields" nor „Fees"; on „Document identification" „Issuer", „Document No.", „Date" on one line |
 | 3 | Opens `TC-DOC-03 CVC`, in English, „All" tiles | On „Document identification": „Notary Office", „Authentic Deed No.", „Authentication date". The „[Taxe și onorarii]" panel — the CVC's own fees group, labelled as the type writes it — holds no date box |
 | 4 | Switches back to Romanian and opens it again | „Notariat", „Nr. act autentic", „Data autentificării" on one line, on „Identificarea actului"; „[Taxe și onorarii]" holds the four fees and no date box |
 
@@ -50,6 +50,12 @@ The interface back in Romanian (the cookie removed, as it was). Delete both docu
 (`DELETE /api/documents/<id>`). Căutare globală for `TC-DOC-03` finds nothing.
 
 ## Notes from the runs
+
+**2026-10-27 — Slice 40.90. Steps 1 and 2 retired.** They read the PAD's „Detalii act" — a form with no panels — and
+Adrian removed the PAD's form, with the Fișă's and the Plan parcelar's, on purpose: „they were faulty, the result of a
+failed attempt at creating Forms for Documents; I will re-do them". No other type has a form of that kind, so the steps
+have nothing to open; they return with one. The generic „Emitent", „Nr. document", „Data" stay covered by TC-DOC-18
+step 4. The spec runs steps 3 and 4.
 
 **2026-10-25 — Slice 40.64.** On a saved record a form tile with nothing in it is one line — its title, „necompletat" and
 „Adaugă". Where a step reads or fills a field in such a tile, the person presses „Adaugă" on it first; the spec does it

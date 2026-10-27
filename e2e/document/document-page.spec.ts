@@ -71,12 +71,11 @@ import { PAGES_PANEL_REM, UNIT_GAP_REM, UNIT_REM } from "../../src/lib/ui/field-
  * and the Certificat de Moștenitor for its parties panel. (Slice #37.15)
  */
 // Slice #37.74: no ANTECONTRACT — its form („discover"'s 14 fields) was taken off; it has no fields of its own.
+// 2026-10-27 (40.90): no FISA_CORPULUI_PROPRIETATE, PLAN_AMPLASAMENT_DELIMITARE or PLAN_PARCELAR — Adrian removed their
+// forms on purpose, to be made again.
 const TYPES_WITH_FIELDS = [
   "ACT_ADITIONAL",
   "CONTRACT_VANZARE",
-  "FISA_CORPULUI_PROPRIETATE",
-  "PLAN_AMPLASAMENT_DELIMITARE",
-  "PLAN_PARCELAR",
   "CERTIFICAT_MOSTENITOR",
 ] as const;
 
@@ -323,8 +322,8 @@ test.describe("TC-DOC-01 — Act creat, pagină atașată, pagina se deschide", 
           page.locator(key === "CERTIFICAT_MOSTENITOR" ? '[data-tile="parties"]' : '[data-width-field^="customFields."]').first(),
         ).toBeAttached({ timeout: 30_000 });
         await expectDocumentWidths(page);
-        // Slice #37.31 — the Plan parcelar's „Câmpuri specifice" and the certificate's „Părți", pictured.
-        if (key === "PLAN_PARCELAR" || key === "CERTIFICAT_MOSTENITOR") {
+        // Slice #37.31 — the certificate's „Părți", pictured (the Plan parcelar's form went in 40.90).
+        if (key === "CERTIFICAT_MOSTENITOR") {
           await photograph(page, `document-${key.toLowerCase()}`, [1366, 1920, 2560], 1200);
         }
       }

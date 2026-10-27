@@ -19,7 +19,7 @@
 
 import { test, expect, type Locator, type Page } from "../helpers/test";
 import { E2E_MARKER, createDocumentOfType, removeLeftovers, removeRecord } from "../helpers/records";
-import { openEmptyTiles, pressTileButton, tileBox, editTile } from "../helpers/tiles";
+import { openEmptyTiles, pressTileButton, editTile } from "../helpers/tiles";
 import { showEmptyFields } from "../helpers/empty-fields";
 
 const MARK = `${E2E_MARKER}DOC-03`;
@@ -62,47 +62,14 @@ test.describe("TC-DOC-03 — un PAD: „Detalii act” fără panou de emitere; 
     const made: string[] = [];
     const label = (field: string) => page.locator("label").filter({ has: page.locator(`[data-width-field="${field}"]`) }).locator("span").first();
     try {
-      const padId = await createDocumentOfType(page.request, "PLAN_AMPLASAMENT_DELIMITARE", `${MARK} PAD`);
-      made.push(padId);
       const cvcId = await createDocumentOfType(page.request, "CONTRACT_VANZARE", `${MARK} CVC`);
       made.push(cvcId);
 
-      // Step 1 — the PAD: „Detalii act" with no issue panel; „Emitent", „Nr. document", „Data" on „Identificarea actului".
-      await page.goto(`/documents/${padId}`);
-      let tile = page.getByRole("region", { name: "Detalii act", exact: true });
-      await expect(tile).toBeVisible({ timeout: 30_000 });
-      // 40.71: the empty fields of a partly filled tile are behind „Arată N câmpuri goale"; shown for the steps below.
-      await editTile(page, "general"); // 40.75: the document reads as text; open, every field drawn
-      // 40.57: the tile's box is in the „Panouri" panel, closed.
-      await expect(tileBox(page, "Detalii act")).toBeAttached();
-      await expect(tile.getByRole("heading", { name: "[Date de emitere]", exact: true })).toHaveCount(0);
-      await expect(tile.locator('[data-width-field="dateDocument"]')).toHaveCount(0);
-      await expect(page.getByText("Câmpuri specifice")).toHaveCount(0);
-      await expect(tile.getByText("Taxe și onorarii")).toHaveCount(0);
-      let general = page.getByRole("region", { name: "Identificarea actului", exact: true });
-      await expect(general.locator('[data-width-field="dateDocument"]')).toBeVisible();
-      await expect(page.getByRole("combobox", { name: "Emitent", exact: true })).toBeVisible(); // a <select> named by <label htmlFor>
-      await expect(label("nrDocument")).toHaveText("Nr. document");
-      await expect(dateLabel(page)).toHaveText("Data");
-      await oneLine(dateLabel(page));
-      await photograph(page, "pad-ro", () => page.getByRole("region", { name: "Detalii act", exact: true }));
-
-      // Step 2 — in English: „Document details" with no „[Issue details]"; „Issuer", „Document No.", „Date".
+      // Steps 1–2 retired 2026-10-27 (40.90): they read a PAD's „Detalii act", a form with no panels, and Adrian removed
+      // the PAD's form on purpose („faulty … I will re-do them"). No other type has such a form today; the generic
+      // „Emitent / Nr. document / Data" stay covered by TC-DOC-18 step 4. They come back with a form of that kind.
+      // Step 3 opens the interface in English first, as step 2 left it.
       await language(page, "en-GB");
-      await page.goto(`/documents/${padId}`);
-      tile = page.getByRole("region", { name: "Document details", exact: true });
-      await expect(tile).toBeVisible({ timeout: 30_000 });
-      await editTile(page, "general"); // 40.75: the document reads as text; open, every field drawn
-      await expect(tile.getByRole("heading", { name: "[Issue details]", exact: true })).toHaveCount(0);
-      for (const old of ["Type fields", "Document-type-specific fields"]) await expect(page.getByText(old)).toHaveCount(0);
-      await expect(tile.getByText(/\bFees\b/)).toHaveCount(0);
-      general = page.getByRole("region", { name: "Document identification", exact: true });
-      await expect(general.locator('[data-width-field="dateDocument"]')).toBeVisible();
-      await expect(page.getByRole("combobox", { name: "Issuer", exact: true })).toBeVisible(); // a <select> named by <label htmlFor>
-      await expect(label("nrDocument")).toHaveText("Document No.");
-      await expect(dateLabel(page)).toHaveText("Date");
-      await oneLine(dateLabel(page));
-      await photograph(page, "pad-en", () => page.getByRole("region", { name: "Document details", exact: true }));
 
       // Step 3 — the CVC, in English, „All": the notarial set on „Document identification"; „[Taxe și onorarii]" without a date box.
       await page.goto(`/documents/${cvcId}`);

@@ -53,7 +53,9 @@ describe("„Câmp specific” offers only closed lists (Slice #37.73)", () => {
     for (const gone of ["cnp_1", "cnp_2", "nr_cad", "nr_cadastral", "ci_seria_if_nr", "incheiere_de_autentificare_nr", "suma_de", "diferenta_de", "anul", "luna", "s_a_perceput_onorariul_de"]) {
       expect([gone, keys.has(gone)]).toEqual([gone, false]);
     }
-    for (const f of FORMS.forms.FISA_CORPULUI_PROPRIETATE as { key: string }[]) expect([f.key, keys.has(f.key)]).toEqual([f.key, false]);
+    // 40.90: the Fișă's form is gone from the file (Adrian removed it); none of the keys it had is offered.
+    expect(FORMS.forms.FISA_CORPULUI_PROPRIETATE).toBeUndefined();
+    for (const k of ["judetul", "cod_siruta", "nr_cadastral_al_corpului_de_proprietate"]) expect([k, keys.has(k)]).toEqual([k, false]);
     for (const kept of ["monedaPret", "starePlata", "modalitatePlata"]) expect([kept, keys.has(kept)]).toEqual([kept, true]);
     expect(keys.has("temeiPret")).toBe(false);
     expect(offered.find((o) => o.key === "starePlata")!.labels.ACHITAT_INTEGRAL).toBe("Achitat integral");

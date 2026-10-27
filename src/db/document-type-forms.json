@@ -83,41 +83,6 @@
       {"key":"cheltuieliPerfectare","type":"select","order":51,"tabEn":"Fees and costs","tabRo":"Taxe și cheltuieli","width":"M","aiHint":null,"groupEn":"Costs","groupRo":"Cheltuieli","labelEn":"Closing costs borne by","labelRo":"Cheltuieli perfectare","options":[{"value":"VANZATOR","labelEn":"Seller","labelRo":"Vânzător"},{"value":"CUMPARATOR","labelEn":"Buyer","labelRo":"Cumpărător"},{"value":"AMBELE","labelEn":"Both parties","labelRo":"Ambele părți"},{"value":"NEMENTIONAT","labelEn":"Not stated","labelRo":"Nu e menționat"}]},
       {"key":"taxeLocalePlatiteDe","type":"select","order":52,"tabEn":"Fees and costs","tabRo":"Taxe și cheltuieli","width":"M","aiHint":null,"groupEn":"Costs","groupRo":"Cheltuieli","labelEn":"Local taxes paid by","labelRo":"Plătitor taxe locale","options":[{"value":"VANZATOR","labelEn":"Seller","labelRo":"Vânzător"},{"value":"CUMPARATOR","labelEn":"Buyer","labelRo":"Cumpărător"},{"value":"AMBELE","labelEn":"Both parties","labelRo":"Ambele părți"},{"value":"NEMENTIONAT","labelEn":"Not stated","labelRo":"Nu e menționat"}]},
       {"key":"taxeLocaleLaZi","type":"select","order":53,"tabEn":"Fees and costs","tabRo":"Taxe și cheltuieli","width":"M","aiHint":null,"groupEn":"Costs","groupRo":"Cheltuieli","labelEn":"Local taxes current","labelRo":"Taxe locale la zi","options":[{"value":"AFIRMAT","labelEn":"Asserted","labelRo":"Afirmat"},{"value":"NEMENTIONAT","labelEn":"Not stated","labelRo":"Nu e menționat"},{"value":"EXCEPTIE","labelEn":"Exception","labelRo":"Excepție"}]}
-    ],
-    "FISA_CORPULUI_PROPRIETATE": [
-      {"key":"judetul","type":"text","order":0,"aiHint":null,"groupEn":null,"groupRo":null,"labelEn":"Județul","labelRo":"Județul"},
-      {"key":"unitate_administrativ_teritoriala","type":"text","order":1,"aiHint":null,"groupEn":null,"groupRo":null,"labelEn":"Unitate administrativ-teritoriala","labelRo":"Unitate administrativ-teritoriala"},
-      {"key":"cod_grupa_destinatie","type":"text","order":2,"aiHint":null,"groupEn":null,"groupRo":null,"labelEn":"Cod grupa destinatie","labelRo":"Cod grupa destinatie"},
-      {"key":"suprafata_de_masuratori_mp","type":"number","order":3,"aiHint":null,"groupEn":null,"groupRo":null,"labelEn":"Suprafata de masuratori (mp)","labelRo":"Suprafata de masuratori (mp)"},
-      {"key":"clasa_de_calitate","type":"text","order":4,"aiHint":null,"groupEn":null,"groupRo":null,"labelEn":"Clasa de calitate","labelRo":"Clasa de calitate"},
-      {"key":"zona_in_cadrul_localitatii","type":"text","order":5,"aiHint":null,"groupEn":null,"groupRo":null,"labelEn":"Zona in cadrul localitatii","labelRo":"Zona in cadrul localitatii"},
-      {"key":"mentiuni","type":"text","order":6,"aiHint":null,"groupEn":null,"groupRo":null,"labelEn":"Mentiuni","labelRo":"Mentiuni"},
-      {"key":"total_suprafata_de_masuratori_mp","type":"number","order":7,"aiHint":null,"groupEn":null,"groupRo":null,"labelEn":"TOTAL Suprafata de masuratori (mp)","labelRo":"TOTAL Suprafata de masuratori (mp)"},
-      {"key":"mentiuni_constructii","type":"text","order":8,"aiHint":null,"groupEn":null,"groupRo":null,"labelEn":"Mentiuni (constructii)","labelRo":"Mentiuni (constructii)"},
-      {"key":"tipul_actului_doveditor_nr_si_data_inreg","type":"text","order":9,"aiHint":null,"groupEn":null,"groupRo":null,"labelEn":"Tipul actului doveditor nr.si data inregistrarii eliberarii","labelRo":"Tipul actului doveditor nr.si data inregistrarii eliberarii"},
-      {"key":"cod_numeric_personal_cod_unic","type":"text","order":10,"aiHint":null,"groupEn":null,"groupRo":null,"labelEn":"Cod numeric Personal/Cod UNIC","labelRo":"Cod numeric Personal/Cod UNIC"},
-      {"key":"cod_grupa_proprietate","type":"text","order":11,"aiHint":null,"groupEn":null,"groupRo":null,"labelEn":"Cod grupa proprietate","labelRo":"Cod grupa proprietate"},
-      {"key":"cod_siruta","type":"text","order":12,"aiHint":null,"groupEn":null,"groupRo":null,"labelEn":"Cod SIRUTA","labelRo":"Cod SIRUTA"},
-      {"key":"suprafata_din_act_ha_sau_mp_teren","type":"number","order":13,"aiHint":null,"groupEn":null,"groupRo":null,"labelEn":"Suprafata din act (ha sau mp) Teren","labelRo":"Suprafata din act (ha sau mp) Teren"},
-      {"key":"suprafata_din_act_ha_sau_mp_constr","type":"text","order":14,"aiHint":null,"groupEn":null,"groupRo":null,"labelEn":"Suprafata din act (ha sau mp) Constr.","labelRo":"Suprafata din act (ha sau mp) Constr."},
-      {"key":"modul_de_detinere_teren_constr_exclusiv","type":"text","order":15,"aiHint":null,"groupEn":null,"groupRo":null,"labelEn":"Modul de detinere Teren/constr. Exclusiv","labelRo":"Modul de detinere Teren/constr. Exclusiv"},
-      {"key":"domiciliu_sediu_proprietar","type":"text","order":16,"aiHint":null,"groupEn":null,"groupRo":null,"labelEn":"Domiciliu/Sediu proprietar","labelRo":"Domiciliu/Sediu proprietar"},
-      {"key":"cod_intravilan_extravilan","type":"text","order":17,"aiHint":null,"groupEn":null,"groupRo":null,"labelEn":"Cod intravilan/extravilan","labelRo":"Cod intravilan/extravilan"},
-      {"key":"nomenclatura","type":"text","order":18,"aiHint":null,"groupEn":null,"groupRo":null,"labelEn":"Nomenclatura","labelRo":"Nomenclatura"},
-      {"key":"nr_cadastral_al_corpului_de_proprietate","type":"text","order":19,"aiHint":null,"groupEn":null,"groupRo":null,"labelEn":"Nr.cadastral al corpului de proprietate","labelRo":"Nr.cadastral al corpului de proprietate"},
-      {"key":"nr_sector_cadastral","type":"text","order":20,"aiHint":null,"groupEn":null,"groupRo":null,"labelEn":"Nr.sector cadastral","labelRo":"Nr.sector cadastral"},
-      {"key":"nr_carte_funciara","type":"text","order":21,"aiHint":null,"groupEn":null,"groupRo":null,"labelEn":"Nr.carte funciara","labelRo":"Nr.carte funciara"},
-      {"key":"nr_parcela","type":"text","order":22,"aiHint":null,"groupEn":null,"groupRo":null,"labelEn":"Nr. parcela","labelRo":"Nr. parcela"},
-      {"key":"categoria_de_folosinta","type":"text","order":23,"aiHint":null,"groupEn":null,"groupRo":null,"labelEn":"Categoria de folosinta","labelRo":"Categoria de folosinta"}
-    ],
-    "PLAN_AMPLASAMENT_DELIMITARE": [
-      {"key":"nr_cadastral_al_corpului_de_proprietate","type":"text","order":0,"aiHint":"printed on the document as 'Nr. cadastral al corpului de proprietate'","groupEn":null,"groupRo":null,"labelEn":"Nr. cadastral al corpului de proprietate","labelRo":"Nr. cadastral al corpului de proprietate"},
-      {"key":"teritoriul_adm","type":"text","order":1,"aiHint":"printed on the document as 'Teritoriul adm.'","groupEn":null,"groupRo":null,"labelEn":"Teritoriul adm.","labelRo":"Teritoriul adm."},
-      {"key":"adresa_corpului_de_proprietate","type":"text","order":2,"aiHint":"printed on the document as 'Adresa corpului de proprietate'","groupEn":null,"groupRo":null,"labelEn":"Adresa corpului de proprietate","labelRo":"Adresa corpului de proprietate"},
-      {"key":"sistem_de_proiectie","type":"text","order":3,"aiHint":"printed on the document as 'SISTEM DE PROIECTIE'","groupEn":null,"groupRo":null,"labelEn":"SISTEM DE PROIECTIE","labelRo":"SISTEM DE PROIECTIE"}
-    ],
-    "PLAN_PARCELAR": [
-      {"key":"parcela","type":"text","order":0,"aiHint":null,"groupEn":null,"groupRo":null,"labelEn":"Parcelă","labelRo":"Parcelă"}
     ]
   }
 }
