@@ -12,17 +12,17 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-10-26 — 371 entries (FU-360 filed by 40.18, FU-361 by 40.27, FU-362 by 40.78, FU-363 by 40.79, FU-364–365 by 40.84, FU-366–369 by 40.85, FU-370–371 by 40.86). Rows are status, columns are impact.
+As of 2026-10-26 — 372 entries (FU-360 filed by 40.18, FU-361 by 40.27, FU-362 by 40.78, FU-363 by 40.79, FU-364–365 by 40.84, FU-366–369 by 40.85, FU-370–371 by 40.86, FU-372 by 40.87). Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
-| open | 20 | 90 | 80 | 26 | 216 |
+| open | 20 | 90 | 80 | 27 | 217 |
 | planned | 0 | 0 | 1 | 0 | 1 |
 | resolved | 38 | 61 | 32 | 3 | 134 |
 | ignored | 4 | 3 | 4 | 2 | 13 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 6 | 1 | 0 | 7 |
-| **total** | 62 | 160 | 118 | 31 | 371 |
+| **total** | 62 | 160 | 118 | 32 | 372 |
 <!-- summary:end -->
 
 `src/__tests__/follow-up-register.test.ts` recounts the table and fails when this block disagrees
@@ -455,3 +455,4 @@ Nothing is filed from memory: every row carries evidence someone actually looked
 | FU-369 | 2026-10-26 40.85 Handover.40.85.md | next-slice idea | People | „Cetățenie" is on „Identitate" since 40.85, but the Natural Persons list's „Câmpuri afișate" — which offers the tile's fields — has no column for it. | src/app/natural-persons/list-view.tsx; src/__tests__/person-lists.test.tsx (the exclusion) | user | S | open | Add the column, with its filter if wanted. | 2026-10-26 |
 | FU-370 | 2026-10-26 40.86 Handover.40.86.md | next-slice idea | Import | Cards imported before 40.86 hold only what migration_118 backfilled (model nou's fields from the holder, no MRZ on most); a „Citește din nou” on an identity document would read its page once more and fill its empty identity values — the header left it out of scope. | src/app/api/admin/import/extract-id-card/route.ts; src/lib/import/identity-read.ts `identityValuesFromRead` | user | S | open | Adrian's choice: one paid read per document re-read. | 2026-10-26 |
 | FU-371 | 2026-10-26 40.86 Handover.40.86.md | copy/i18n | Import | The action that reads an identity document and creates its holder is still named for the card — „Creează persoane din CI” on the document screen, „cartea de identitate” in the import's dialog — although since 40.86 it reads passports too. | messages/ro-RO.json document.idCardPeople.action, adminImport.wizard.importDialog.idCard | user | XS | open | Name it for an identity document („din actul de identitate”) with 40.87's manual. | 2026-10-26 |
+| FU-372 | 2026-10-26 40.87 Handover.40.87.md | next-slice idea | Help | The manual's Figure 6.2 („Act de identitate” on a document) shows a seed identity card, not the passport Ask first 3 asked for: the big dev seed files no passport as a document (FU-368). Once it does, e2e/help/manual.spec.ts can shoot a passport's tile instead. | e2e/help/manual.spec.ts (the `card` it finds); scripts/seed-dev-data-big | cosmetic | XS | open | With FU-368: one line in the spec, the figure re-shot. | 2026-10-26 |
