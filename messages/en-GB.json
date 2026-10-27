@@ -1982,7 +1982,7 @@
       "classification": "Importance, relevance, provenance",
       "connections": "Tags, groups, stamps, see also",
       "parties": "The document's parties, with their role and share",
-      "identity": "What the document says, in its own order"
+      "identity": "{kind}: what the document says, in its own order"
     },
     "tabs": {
       "details": "Details",

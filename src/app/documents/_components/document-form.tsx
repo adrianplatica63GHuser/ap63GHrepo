@@ -1393,7 +1393,7 @@ export function DocumentForm({
       panel="identity"
       units={identityRowsNow.units}
       title={t("tiles.identity")}
-      subtitle={tId(`kinds.${identityKind}`)}
+      subtitle={t("tileSubtitles.identity", { kind: tId(`kinds.${identityKind}`) })}
       action={editButton(IDENTITY_TILE, t("tiles.identity"))}
       after={editBar(IDENTITY_TILE)}
       editing={editingTile === IDENTITY_TILE}
@@ -1746,9 +1746,11 @@ export function DocumentForm({
                     </Link>
                   ),
                 })
-              : identityTypeNotice
+              : undefined
           }
         />
+        {/* Slice 40.83: what a change of type does to the identity values, under „Tip document". */}
+        {identityTypeNotice && <p className="text-xs">{identityTypeNotice}</p>}
         {/* Slice #38.32: who issued it, its number, its date, and the type's own identification fields. */}
         {issueFields}
         {/* Slice #37.31: Etichetă scurtă moves up next to Tip document — what

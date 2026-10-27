@@ -1982,7 +1982,7 @@
       "classification": "Importanță, relevanță, proveniență",
       "connections": "Etichete, grupuri, ștampile, vezi și",
       "parties": "Părțile actului, cu rolul și cota lor",
-      "identity": "Ce scrie pe act, în ordinea de pe act"
+      "identity": "{kind}: ce scrie pe act, în ordinea de pe act"
     },
     "tabs": {
       "details": "Detalii",

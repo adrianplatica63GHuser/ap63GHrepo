@@ -60,21 +60,22 @@ test.describe("TC-DOC-28 — actul de identitate pe ecranul lui", () => {
       });
       made.push(crds);
 
-      // Step 1 — model nou: the tile, its fields once, EXPIRAT, the CNP warning.
+      // Step 1 — model nou: read as text — its values, EXPIRAT, the CNP warning; then open, every field drawn once
+      // (a read view hides an empty field behind „Arată N câmpuri goale", 40.71).
       await page.goto(`/documents/${nou}`);
       await expect(tile(page)).toBeVisible({ timeout: 30_000 });
-      for (const label of ["Seria și numărul", "CNP", "Sex", "Nume", "Prenume", "Cetățenia", "Domiciliu", "Emisă de", "Data eliberării", "Valabil până la", "MRZ", "Nr. card"]) {
-        await expect(tile(page).getByText(label, { exact: true }).first()).toBeVisible();
-      }
-      await expect(tile(page).getByText("Data nașterii", { exact: true })).toHaveCount(0);
-      await expect(general(page).locator('[data-width-field="nrDocument"]')).toHaveCount(0);
       await expect(box(page, "nrDocument")).toHaveText("IF 123456");
       await expect(box(page, "identity.lastName")).toHaveText("Testescu");
       await expect(tile(page).locator('[data-identity-validity="expired"]')).toHaveText("EXPIRAT");
       await expect(tile(page).locator('[data-identity-warning="cnp_sex_mismatch"]')).toBeVisible();
+      await expect(general(page).locator('[data-width-field="nrDocument"]')).toHaveCount(0);
+      await editTile(page, "identity");
+      for (const label of ["Seria și numărul", "CNP", "Sex", "Nume", "Prenume", "Cetățenia", "Domiciliu", "Emisă de", "Data eliberării", "Valabil până la", "MRZ", "Nr. card"]) {
+        await expect(tile(page).getByText(label, { exact: true }).first()).toBeVisible();
+      }
+      await expect(tile(page).getByText("Data nașterii", { exact: true })).toHaveCount(0);
 
       // Step 2 — a CNP without its control digit is refused; Sex corrected, the warning goes; kept after a reload.
-      await editTile(page, "identity");
       await box(page, "identity.cnp").fill("1850421400124");
       await expect(tile(page).getByText("CNP-ul trebuie să aibă 13 cifre și o cifră de control corectă.").first()).toBeVisible();
       await box(page, "identity.cnp").fill(CNP);
@@ -89,11 +90,14 @@ test.describe("TC-DOC-28 — actul de identitate pe ecranul lui", () => {
       // Step 3 — model vechi: the booklet's fields; no CNP, no validity end, so no status.
       await page.goto(`/documents/${vechi}`);
       await expect(tile(page)).toBeVisible({ timeout: 30_000 });
+      await expect(tile(page).locator("[data-identity-validity]")).toHaveCount(0);
+      await editTile(page, "identity");
       for (const label of ["Prenumele tatălui", "Prenumele mamei", "Starea civilă", "Lucrătorul care a eliberat-o"]) {
         await expect(tile(page).getByText(label, { exact: true }).first()).toBeVisible();
       }
       await expect(tile(page).getByText("CNP", { exact: true })).toHaveCount(0);
-      await expect(tile(page).locator("[data-identity-validity]")).toHaveCount(0);
+      await expect(tile(page).getByText("Valabil până la", { exact: true })).toHaveCount(0);
+      await page.locator('[data-tile-cancel="identity"]').click();
 
       // Step 4 — the passports: VALABIL and the county; CRDS the country.
       await page.goto(`/documents/${pas}`);
@@ -111,7 +115,7 @@ test.describe("TC-DOC-28 — actul de identitate pe ecranul lui", () => {
       await expect(notice).toContainText("Nr. card");
       await saveTile(page, "general");
       await page.reload();
-      await expect(tile(page).getByText("Codul țării", { exact: true }).first()).toBeVisible({ timeout: 30_000 });
+      await expect(tile(page).getByText("Nr. pașaportului", { exact: true }).first()).toBeVisible({ timeout: 30_000 });
       await expect(box(page, "identity.lastName")).toHaveText("Testescu");
       await expect(box(page, "identity.domicileAddress")).toHaveCount(0);
 

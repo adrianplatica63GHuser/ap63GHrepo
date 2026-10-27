@@ -73,6 +73,10 @@ const ALLOW: Record<string, Allowed[]> = {
   "src/app/documents/_components/document-related-tile.tsx": [
     ["A096", "{chunks}"],
   ],
+  // Slice 40.83: the identity document's holder — the person's name is the link to the person (A113).
+  "src/app/documents/_components/identity-tile-parts.tsx": [
+    ["A113", "{holder.displayName}"],
+  ],
   "src/app/_components/dashboard-client.tsx": [
     ["A113", "<Icon size={20} aria-hidden=\"true\" className=\"text-fade\" /> {"], // 40.61: the count under its kind's mark (40.76: its colour a role token)
     ["A113", "{nameOr(doc.title, \"document\")}"], // #37.57: the title is the link

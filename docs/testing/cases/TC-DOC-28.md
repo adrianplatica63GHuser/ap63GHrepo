@@ -39,7 +39,7 @@ Nothing.
 | 4 | Opens the model vechi document | Prenumele tatălui, Prenumele mamei, Starea civilă, Lucrătorul care a eliberat-o; no CNP; no VALABIL / EXPIRAT |
 | 5 | Opens the Pașaport, then the Pașaport CRDS | VALABIL and Domiciliu — județul Ilfov; Domiciliu — țara Spania |
 | 6 | On the model nou: „Editează" on „Identificarea actului", Tip document „Pașaport" | under it: „La salvare se șterg: Domiciliu, Nr. card — noul tip nu are aceste câmpuri." |
-| 7 | „Salvează"; reloads | the passport's fields (Codul țării …); Nume kept; no Domiciliu |
+| 7 | „Salvează"; reloads | the passport's fields (Nr. pașaportului …); Nume kept; no Domiciliu |
 | 8 | „Editează" again, Tip document „Adeverință"; „Salvează" | „Actul are date de identitate completate: goliți-le înainte de a-l trece la un tip de document obișnuit." — nothing saved |
 | 9 | Tip document back to „Pașaport"; „Renunță" | the tile closes |
 | 10 | „Acte" → „Adaugă act", Tip document „Carte de Identitate (model vechi)", Nume „Testescu", „Salvează" | „Act de identitate" empty before; the new document opens with Nume Testescu |

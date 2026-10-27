@@ -74,7 +74,8 @@ export function identityValidity(validUntil: string | null | undefined, today: D
   if (Number.isNaN(until.getTime())) return null;
   const day = new Date(today.getFullYear(), today.getMonth(), today.getDate());
   if (until.getTime() < day.getTime()) return { kind: "expired" };
-  const days = Math.ceil((until.getTime() - day.getTime()) / 86_400_000);
+  // Rounded, not ceiled: a day across a clock change is 23 or 25 hours long.
+  const days = Math.round((until.getTime() - day.getTime()) / 86_400_000);
   return days <= soonDays ? { kind: "expiringSoon", days } : { kind: "valid" };
 }
 
