@@ -1127,6 +1127,11 @@ export const lookupDocumentType = pgTable("lookup_document_type", {
   // stray value a compile error at every drizzle write site rather than a
   // CHECK violation at runtime.
   origin: text("origin").$type<"MANUAL" | "IMPORT">().notNull().default("MANUAL"),
+  // Slice 40.82 (migration_118): which identity-document kind this type is — CI_VECHE, CI_NOU, PASAPORT or
+  // PASAPORT_CRDS — or NULL for every ordinary type. The application recognises an identity document by this
+  // marker, never by the type's name (src/lib/identity-documents/kinds.ts, `documentTypeIsIdentity`). One type per
+  // kind (a partial unique index). Written by migrations only: the value-lists doors strip it from every payload.
+  identityKind: text("identity_kind").$type<"CI_VECHE" | "CI_NOU" | "PASAPORT" | "PASAPORT_CRDS">(),
 },
   // ── Two types may not share one display name ──────────────  (Slice #34.09)
   //
@@ -1162,6 +1167,11 @@ export const lookupDocumentType = pgTable("lookup_document_type", {
   // Shape copied from `user_requests_email_pending_unique` below, the
   // project's other partial unique index.
   (t) => [
+    check(
+      "lookup_document_type_identity_kind_check",
+      sql`${t.identityKind} IS NULL OR ${t.identityKind} IN ('CI_VECHE', 'CI_NOU', 'PASAPORT', 'PASAPORT_CRDS')`,
+    ),
+    uniqueIndex("lookup_document_type_identity_kind_unique").on(t.identityKind).where(sql`${t.identityKind} IS NOT NULL`),
     uniqueIndex("lookup_document_type_name_normalised_unique")
       .on(
         sql`regexp_replace(btrim(regexp_replace(regexp_replace(lower(normalize(coalesce(${t.name}, ''), NFD)), '[' || chr(768) || '-' || chr(879) || ']', '', 'g'), '\\s+', ' ', 'g')), '[^a-z0-9]', '', 'g')`,
@@ -1436,6 +1446,54 @@ export const document = pgTable("document", {
     .notNull()
     .defaultNow(),
 }, (t) => [index("document_issuer_person_idx").on(t.issuerPersonId)]);
+
+// ---------------------------------------------------------------------------
+// identity_document — what an identity document printed  (Slice 40.82, migration_118)
+// ---------------------------------------------------------------------------
+//
+// 1:1 with `document`, for a document whose type carries `identity_kind`. Holds what the document's common columns
+// do not: the number, the issue date, the validity end and the issuer stay `document`'s own, so lists, filters and
+// the expiry status keep working on them. Which of these fields a kind has is code (src/lib/identity-documents/
+// kinds.ts); every write goes through src/lib/identity-documents/validation.ts. Values are AS PRINTED: the person
+// keeps the person's facts (natural_person), each document keeps its own copy. `cnp` is not unique — one person
+// holds several documents. In the document's version snapshot under `identity`.
+
+export const identityDocument = pgTable(
+  "identity_document",
+  {
+    documentId: uuid("document_id")
+      .primaryKey()
+      .references(() => document.id, { onDelete: "cascade" }),
+    lastName: text("last_name"),
+    firstName: text("first_name"),
+    cnp: text("cnp"),
+    sex: genderEnum("sex"),
+    dateOfBirth: date("date_of_birth", { mode: "string" }),
+    placeOfBirth: text("place_of_birth"),
+    // As printed („ROU", „Română") — the person's citizenship is natural_person.citizenship_id.
+    nationality: text("nationality"),
+    fatherFirstName: text("father_first_name"),
+    motherFirstName: text("mother_first_name"),
+    // „Starea civilă" — the old booklet's „Status" (Adrian, 2026-10-26).
+    civilStatus: text("civil_status"),
+    // The domicile line as printed; the person's structured home address is `address`.
+    domicileAddress: text("domicile_address"),
+    domicileCounty: text("domicile_county"),
+    domicileCountry: text("domicile_country"),
+    // The officer who signed an old booklet, beside the institution (`document.issuer_*`).
+    issuerOfficer: text("issuer_officer"),
+    passportType: text("passport_type"),
+    countryCode: text("country_code"),
+    mrz: text("mrz"),
+    cardNumber: text("card_number"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    check("identity_document_cnp_digits", sql`${t.cnp} IS NULL OR ${t.cnp} ~ '^[0-9]{13}$'`),
+    index("identity_document_cnp_idx").on(t.cnp),
+  ],
+);
 
 // ---------------------------------------------------------------------------
 // document_version — full-snapshot version history  (Slice #18.06)
