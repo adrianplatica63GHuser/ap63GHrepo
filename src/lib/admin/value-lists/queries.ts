@@ -1028,6 +1028,8 @@ export async function updateValue(
           key:            lookupDocumentType.key,
           name:           lookupDocumentType.name,
           templateFields: lookupDocumentType.templateFields,
+          // Slice 40.82: the marker, which is what recognises an identity type now.
+          identityKind:   lookupDocumentType.identityKind,
         })
         .from(lookupDocumentType)
         .where(eq(lookupDocumentType.id, id))
@@ -1040,11 +1042,15 @@ export async function updateValue(
           {
             key:     stored.key,
             name:    stored.name,
+            identityKind: stored.identityKind,
             hasForm: documentTypeHasForm(stored.templateFields),
           },
           {
             key:  typeof values.key === "string" ? values.key : stored.key,
             name: typeof values.name === "string" ? values.name : stored.name,
+            // A write that moves the key judges the key it moves to (the marker is the stored row's, which no write
+            // through these doors can change); a write that keeps it keeps the marker.
+            ...(typeof values.key === "string" && values.key !== stored.key ? {} : { identityKind: stored.identityKind }),
             hasForm:
               nextFields === undefined
                 ? documentTypeHasForm(stored.templateFields)

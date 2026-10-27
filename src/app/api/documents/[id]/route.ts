@@ -1,8 +1,10 @@
 /**
  * /api/documents/[id]
  *
- * GET    — fetch full document record
- * PATCH  — partial update
+ * GET    — fetch full document record, with its `identity` block (Slice 40.82: the kind, the values and the
+ *          CNP warnings on a document of an identity type; null on an ordinary one)
+ * PATCH  — partial update; an `identity` block is written in the same transaction (Slice 40.82), and a refusal
+ *          is a 400 with its `code` and the `fields` it names
  * DELETE — deletes the row AND its stored page files (Slice #29.04). Pages,
  *          versions, junctions and the document's principal_object row all go
  *          with it; the code it held is retired, never reused. Unguarded
@@ -22,6 +24,8 @@ import {
 } from "@/lib/documents/queries";
 import { documentUpdateSchema } from "@/lib/documents/validation";
 import { getCurrentUserEmail } from "@/lib/auth/current-user";
+import { db } from "@/db";
+import { identityBlockFor, identityRefusalToResponse } from "@/lib/identity-documents/queries";
 import { StaleVersionError, splitBaseVersion, staleVersionResponse } from "@/lib/versioning/base-version";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -33,7 +37,7 @@ export async function GET(_req: NextRequest, ctx: Ctx): Promise<Response> {
     if (!result) {
       return Response.json({ error: "Not found" }, { status: 404 });
     }
-    return Response.json(result);
+    return Response.json({ ...result, identity: await identityBlockFor(db, result.id, result.documentTypeId) });
   } catch (err) {
     return unexpectedError(err, "GET /api/documents/[id]");
   }
@@ -68,9 +72,11 @@ export async function PATCH(
     if (!result) {
       return Response.json({ error: "Not found" }, { status: 404 });
     }
-    return Response.json(result);
+    return Response.json({ ...result, identity: await identityBlockFor(db, result.id, result.documentTypeId) });
   } catch (err) {
     if (err instanceof StaleVersionError) return staleVersionResponse(err);
+    const identityRefusal = identityRefusalToResponse(err);
+    if (identityRefusal) return identityRefusal;
     const dbResponse = dbErrorToResponse(err);
     if (dbResponse) return dbResponse;
     return unexpectedError(err, "PATCH /api/documents/[id]");

@@ -80,7 +80,12 @@
 // file follows that rule rather than restating it. (Slice #29.07.)
 import { UNCLASSIFIED_DOCUMENT_TYPE_KEY } from "@/lib/documents/document-type-match";
 
-export const ID_CARD_TYPE_KEYS = ["CARTE_IDENTITATE"] as const;
+// ⚠️ **Slice 40.82: what the list MEANS changed, and so did its name.** It was „the keys that mean an identity
+// card" and served both the TYPE test and the SCAN test. The type test now reads the marker column; what is left is
+// the scan's: the classifier keys whose image today's card read (extract-id-card) handles — both identity cards,
+// the booklet „buletin" (model vechi) as well as model nou, as the read did before 40.82 when the classifier called
+// either one CARTE_IDENTITATE. A passport is not read until Slice 40.86 teaches the read all four kinds.
+export const ID_CARD_READ_TYPE_KEYS = ["CARTE_IDENTITATE", "CARTE_IDENTITATE_VECHE"] as const;
 
 /**
  * Lowercase and strip Romanian diacritics.
@@ -133,100 +138,11 @@ export function isIdCardLabel(label: string | null | undefined): boolean {
   return POSITIVE_PATTERNS.some((re) => re.test(folded));
 }
 
-/**
- * Does this document TYPE's NAME describe the identity-card type?
- *                                                              (Slice #27.05)
- *
- * ⚠️ **A NARROWER TEST THAN `isIdCardLabel`, deliberately, and an adversarial
- * round is why it is a second function rather than a second caller of that
- * one.** The two read different distributions. `isIdCardLabel` judges a model's
- * free-text classification of a scanned IMAGE, where a bare "buletin" or a
- * standalone "CI" is reasonably a card; this judges a row in a land-registry
- * archive's type list, where "Buletin de analiză", "Buletin de încercare" and
- * "Copie CI" are ordinary names and `VETO_PATTERNS` — which only knows about
- * vehicles — does not save them. A false positive here is silent and costs a
- * whole type its form: `typeMayHoldAForm` refuses it a form, DocTypeEngine will
- * not offer it, and its rows never say a form is missing.
- *
- * So only the unambiguous wordings — but ALL of them, and a fifth adversarial
- * round is why that second half matters as much as the first. A first draft
- * matched `(carte|act) de identitate` and nothing else, which misses every one
- * of these: **"Buletin de identitate"** (the pre-1997 official name, and the
- * label a model reaches for), **"Cartea de identitate"** (the definite article —
- * the form this very file uses in `ID_CARD_NOTE_LINE`), "Acte de identitate",
- * "Cărți de identitate". Those are not corner cases: `ensureDocType` POSTs the
- * scan's own free-text label as a type NAME, so the run that correctly declines
- * to read a card can persist exactly such a row — and the NEXT run finds it in
- * the type list, answers `false` here, and reads it.
- *
- * The KEY is the real answer wherever there is one (`ID_CARD_TYPE_KEYS`); this
- * arm exists for a row somebody added by hand, or one an import invented from a
- * classified label.
- *
- * The vehicle veto is kept: "carte de identitate a vehiculului" is a car's
- * registration document and is exactly the phrase this would otherwise match.
- *
- * No `\b` anywhere near the Romanian — it is ASCII-only and this text has been
- * folded, not transliterated; the space-and-anchor forms below say the same
- * thing without it.
- */
-export function isIdCardTypeName(name: string | null | undefined): boolean {
-  const folded = foldRomanian(name ?? "");
-  if (!folded) return false;
-  if (VETO_PATTERNS.some((re) => re.test(folded))) return false;
-  // `carte` / `cartea` / `carti` (folded from cărți), `act` / `acte`, and
-  // `buletin` — each optionally followed by "de", then "identitate". A bare
-  // "buletin" or a standalone "CI" is deliberately NOT here: those are what
-  // `isIdCardLabel` reads off a scanned image, and what make "Buletin de
-  // analiză" and "Copie CI" false positives in a type list.
-  return /(^|[^a-z0-9])(cart(e|ea|i)|act(e)?|buletin)\s+(de\s+)?identitate([^a-z0-9]|$)/.test(
-    folded,
-  );
-}
-
-/**
- * Is this document TYPE an identity card?     ONE ANSWER, ONE DEFINITION.
- *                                                              (Slice #32.07)
- *
- * The canonical TYPE spelling — `key` on `ID_CARD_TYPE_KEYS`, or a `name`
- * `isIdCardTypeName` accepts — expressed once. Until this slice it was written
- * out by hand in five places (`doc-type-engine.tsx`, `bulk-import-dialog.tsx`
- * twice, `value-list-modal.tsx`, `type-form-gate.ts`) and a sixth site compared
- * a bare `"CARTE_IDENTITATE"` literal (`persons/queries.ts`). All six agreed,
- * term for term, and nothing kept them in step; a seventh copy is how they
- * would stop agreeing, and none of them sat on a WRITE path — which is the
- * state that let a 24-field form, two CNPs among them, be stored on a type
- * named „Carte de identitate (două exemplare)".
- *
- * ⚠️ **THE TWO TERMS ARE OR'd, NOT AND'd, AND THE KEY IS NOT THE STRONGER
- * SIGNAL HERE.** `ID_CARD_TYPE_KEYS` only ever holds keys this codebase
- * defines, so a row somebody added by hand, or one an import invented from a
- * classified label, carries an ordinary slugged key and is recognisable by its
- * NAME alone. That is precisely the row this slice exists for.
- *
- * ⚠️ **IT TAKES THE ROW'S OWN TWO COLUMNS AND NOTHING ELSE.** No scan signal,
- * no `entry.isIdCard`. The three call sites that add or remove the SCAN's
- * signal (`type-form-gate.ts` twice, `bulk-import-dialog.tsx`'s discover step)
- * disagree with this on purpose and keep their own expressions — each
- * disagreement is argued in a comment beside it and two are pinned by
- * `import-type-form-gate.test.ts`. Widening this function to take a scan would
- * make those three unable to differ, which is the opposite of what they are.
- *
- * ⚠️ **AND IT IS NOT TO BE WIDENED IN THE OTHER DIRECTION EITHER.** It composes
- * `isIdCardTypeName`, whose header explains at length why a bare „buletin" and
- * a standalone „CI" are absent from it: they are what `isIdCardLabel` reads off
- * a scanned IMAGE, and what would make „Buletin de analiză" and „Copie CI"
- * false positives in a type list. A false positive here now costs a real type
- * its form AND refuses the save that would give it one.
- */
-export function documentTypeIsIdCard(type: {
-  key?: string | null;
-  name?: string | null;
-}): boolean {
-  const key = type.key?.trim() ?? "";
-  if (key && (ID_CARD_TYPE_KEYS as readonly string[]).includes(key)) return true;
-  return isIdCardTypeName(type.name);
-}
+// Slice 40.82: `isIdCardTypeName` and `documentTypeIsIdCard` are gone. An identity document's TYPE is recognised by
+// its marker, `lookup_document_type.identity_kind`, through `documentTypeIsIdentity`
+// (src/lib/identity-documents/kinds.ts) — never by its name. What stays here judges a label the classifier read off
+// an IMAGE (`isIdCardLabel`, `isIdCardEntry`), which is a different question. migration_073's SQL predicate is a
+// frozen copy of the retired name test; src/__tests__/id-card-type-single-source.test.ts pins it as such.
 
 /** The shape this module needs off a ScanResult. Structural, not imported. */
 export type IdCardScanSignal = {
@@ -261,7 +177,7 @@ export function isIdCardEntry(scan: IdCardScanSignal | null | undefined): boolea
 
   const key = scan.typeKey?.trim();
   if (key) {
-    if ((ID_CARD_TYPE_KEYS as readonly string[]).includes(key)) return true;
+    if ((ID_CARD_READ_TYPE_KEYS as readonly string[]).includes(key)) return true;
     if (key !== UNCLASSIFIED_DOCUMENT_TYPE_KEY) return false;
   }
 

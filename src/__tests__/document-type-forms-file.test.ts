@@ -41,7 +41,7 @@ import {
 } from "@/lib/documents/document-type-forms-file";
 import { UNCLASSIFIED_DOCUMENT_TYPE_KEY } from "@/lib/documents/document-type-match";
 import { parseTemplateFields } from "@/lib/documents/template-fields";
-import { ID_CARD_TYPE_KEYS } from "@/lib/import/id-card";
+import { IDENTITY_TYPE_KEYS } from "@/lib/identity-documents/kinds";
 
 const ROOT = process.cwd();
 const TEXT = readFileSync(join(ROOT, FORMS_FILE_REL), "utf8");
@@ -103,7 +103,7 @@ describe.each(FILE.forms.map((f) => [f.key, f.fields] as const))("the form of %s
   });
 
   it("is not a form on a type that may never hold one", () => {
-    expect([...ID_CARD_TYPE_KEYS, UNCLASSIFIED_DOCUMENT_TYPE_KEY]).not.toContain(key);
+    expect([...IDENTITY_TYPE_KEYS, UNCLASSIFIED_DOCUMENT_TYPE_KEY]).not.toContain(key);
   });
 });
 

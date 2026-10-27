@@ -66,7 +66,7 @@ import {
   documentTypeIsCatchAll,
   sameDocumentTypeName,
 } from "@/lib/documents/document-type-match";
-import { documentTypeIsIdCard } from "@/lib/import/id-card";
+import { documentTypeIsIdentity } from "@/lib/identity-documents/kinds";
 import { requestedDocumentTypeKey } from "@/lib/admin/value-lists/keys";
 
 /**
@@ -210,7 +210,7 @@ export function documentTypeKeyRefusal(
   const byKey  = { key: slug, name: "" };
   const byName = { key: "",   name: statedName };
   if (documentTypeIsCatchAll(byKey) && !documentTypeIsCatchAll(byName)) return "reserved";
-  if (documentTypeIsIdCard(byKey)  && !documentTypeIsIdCard(byName))  return "reserved";
+  if (documentTypeIsIdentity(byKey)  && !documentTypeIsIdentity(byName))  return "reserved";
   return null;
 }
 

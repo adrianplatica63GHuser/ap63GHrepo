@@ -5203,5 +5203,53 @@
     "night": "Night",
     "nightLong": "Night (Dark Mode)",
     "appearance": "Appearance"
+  },
+  "identityDocument": {
+    "kinds": {
+      "CI_VECHE": "Identity card (old booklet)",
+      "CI_NOU": "Identity card (new style)",
+      "PASAPORT": "Passport",
+      "PASAPORT_CRDS": "Passport (CRDS)"
+    },
+    "fields": {
+      "seriesAndNumber": "Series and number",
+      "passportNumber": "Passport no.",
+      "issueDate": "Issue date",
+      "passportIssueDate": "Issue date",
+      "validUntil": "Valid until",
+      "passportValidUntil": "Expiry date",
+      "issuer": "Issued by",
+      "passportIssuer": "Issuing authority",
+      "lastName": "Last name",
+      "firstName": "First name",
+      "fatherFirstName": "Father's first name",
+      "motherFirstName": "Mother's first name",
+      "cnp": "CNP",
+      "sex": "Sex",
+      "dateOfBirth": "Date of birth",
+      "placeOfBirth": "Place of birth",
+      "civilStatus": "Civil status",
+      "nationality": "Nationality",
+      "domicileAddress": "Domicile",
+      "domicileCounty": "Domicile — county",
+      "domicileCountry": "Domicile — country",
+      "issuerOfficer": "Issuing officer",
+      "passportType": "Type",
+      "countryCode": "Country code",
+      "mrz": "MRZ",
+      "cardNumber": "Card no."
+    },
+    "errors": {
+      "identity_field_not_in_kind": "This kind of identity document has no field: {fields}.",
+      "identity_cnp_invalid": "A CNP has 13 digits and a correct control digit.",
+      "identity_date_invalid": "The date of birth is not a valid date.",
+      "identity_sex_invalid": "Sex is „F” or „M”.",
+      "identity_on_ordinary_type": "Only an identity document has these fields.",
+      "identity_values_held": "The identity document holds values; clear them before changing it to an ordinary type."
+    },
+    "warnings": {
+      "cnp_sex_mismatch": "The CNP does not match the sex on the document.",
+      "cnp_birth_date_mismatch": "The CNP does not match the date of birth on the document."
+    }
   }
 }

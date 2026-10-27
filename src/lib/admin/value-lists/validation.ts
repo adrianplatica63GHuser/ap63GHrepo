@@ -481,7 +481,7 @@ export const LIST_SCHEMAS: Record<ListKey, z.ZodType<any>> = {
  */
 export function stripDocumentTypeOrigin<T extends Record<string, unknown>>(
   data: T,
-): Omit<T, "origin"> {
+): Omit<T, "origin" | "identityKind"> {
   // ⚠️ **A DELEGATION, NOT A COPY, SINCE SLICE #34.14.** The strip is now
   // generic — `updateValue` applies `stripLookupOrigin` to EVERY list before it
   // dispatches — and this name is kept for the one branch that composes it with
@@ -540,9 +540,12 @@ export function stripDocumentTypeOrigin<T extends Record<string, unknown>>(
  */
 export function stripLookupOrigin<T extends Record<string, unknown>>(
   data: T,
-): Omit<T, "origin"> {
-  const { origin: _ignored, ...safe } = data;
+): Omit<T, "origin" | "identityKind"> {
+  // Slice 40.82: `identity_kind` (lookup_document_type) is written by migrations only — the marker that makes a
+  // type an identity document. Stripped here with `origin`, for the same reason, on every list.
+  const { origin: _ignored, identityKind: _kind, ...safe } = data;
   void _ignored;
+  void _kind;
   return safe;
 }
 

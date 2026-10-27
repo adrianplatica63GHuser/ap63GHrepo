@@ -12,9 +12,8 @@
 import {
   foldRomanian,
   isIdCardLabel,
-  isIdCardTypeName,
   isIdCardEntry,
-  ID_CARD_TYPE_KEYS,
+  ID_CARD_READ_TYPE_KEYS,
   looksLikeIdCardName,
 } from "@/lib/import/id-card";
 
@@ -86,7 +85,7 @@ describe("isIdCardLabel", () => {
 });
 
 describe("isIdCardEntry", () => {
-  it.each(ID_CARD_TYPE_KEYS)("accepts typeKey %s regardless of label", (key) => {
+  it.each(ID_CARD_READ_TYPE_KEYS)("accepts typeKey %s regardless of label", (key) => {
     expect(isIdCardEntry({ typeKey: key, description: "Ceva nerelevant" })).toBe(true);
   });
 
@@ -183,78 +182,9 @@ describe("looksLikeIdCardName", () => {
 });
 
 // ---------------------------------------------------------------------------
-// The TYPE-name test   (Slice #27.05)
+// The TYPE-name test   (Slice #27.05) — retired in Slice 40.82
 // ---------------------------------------------------------------------------
-
-describe("isIdCardTypeName — which document TYPE is the identity-card type", () => {
-  /**
-   * ⚠️ **A second, NARROWER test than `isIdCardLabel`, and both directions cost
-   * something real.** #27.05 reads one document of every type with no custom
-   * form and offers the fields for review — so a false NEGATIVE here opens that
-   * review on an identity card with `cnp`, `nume` and `domiciliu` pre-ticked,
-   * and one press puts a freely-editable copy of somebody's national identity
-   * number on every card in the archive. A false POSITIVE silently costs a real
-   * type its form: excluded from discovery for the whole run, with no error, no
-   * count and nothing on screen.
-   *
-   * The two lists below are the ones two adversarial rounds produced.
-   */
-  it("matches every wording a card's TYPE is actually stored under", () => {
-    for (const name of [
-      "Carte de Identitate",
-      "carte identitate",
-      // ⚠️ The definite article, which `ID_CARD_NOTE_LINE` itself uses.
-      "Cartea de identitate",
-      "Act de identitate",
-      "Acte de identitate",
-      "Cărți de identitate",
-      // …and the same word with the diacritic dropped by a scan.
-      "Carti de identitate",
-      // ⚠️ The pre-1997 official name, and the label a model reaches for.
-      // `ensureDocType` POSTs the scan's label as a type NAME, so the run that
-      // correctly declines to read a card can persist exactly this row — and
-      // the NEXT run finds it in the type list.
-      "Buletin de identitate",
-      "BULETIN DE IDENTITATE",
-    ]) {
-      expect(isIdCardTypeName(name)).toBe(true);
-    }
-  });
-
-  it("refuses the type names a land-registry archive really holds", () => {
-    for (const name of [
-      // The false positives `isIdCardLabel` produces on this distribution: its
-      // bare-"buletin" and standalone-"CI" arms are right for a model reading a
-      // scanned image and wrong for a row in a type list.
-      "Buletin de analiză",
-      "Buletin de încercare",
-      "Copie CI",
-      "Fișa CI",
-      "Buletin",
-      "CI",
-      "C.I.",
-      // A car's registration document — the veto, which is shared.
-      "Carte de identitate a vehiculului",
-      // And the seeded types, none of which may lose its form to this.
-      "Contract de Vânzare",
-      "Certificat de Moștenitor",
-      "Act de Adjudecare",
-      "Act de Donație",
-      "Act Cadastru",
-      "Certificat de Urbanism",
-      "Extras din Carte Funciară",
-      "Titlu de Proprietate",
-      "Hotărâre Judecătorească",
-      "Aviz de Instituție",
-    ]) {
-      expect(isIdCardTypeName(name)).toBe(false);
-    }
-  });
-
-  it("is silent about nothing at all", () => {
-    expect(isIdCardTypeName("")).toBe(false);
-    expect(isIdCardTypeName("   ")).toBe(false);
-    expect(isIdCardTypeName(null)).toBe(false);
-    expect(isIdCardTypeName(undefined)).toBe(false);
-  });
-});
+//
+// `isIdCardTypeName` judged a document TYPE by its name. Since migration_118 an identity type is recognised by its
+// marker (`documentTypeIsIdentity`, src/__tests__/identity-document-kinds.test.ts), so a type NAMED like a card is an
+// ordinary type unless it carries one. The scan-side tests above (`isIdCardLabel`, `isIdCardEntry`) are unchanged.

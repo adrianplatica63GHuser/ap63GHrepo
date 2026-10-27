@@ -129,7 +129,7 @@ export async function PUT(request: NextRequest, ctx: Ctx): Promise<Response> {
     // because this door cannot rename — so `idCardFormRefusal` can only ever
     // answer `form` here, and the `rename` half it also knows about belongs to
     // the two value-lists doors.
-    const identity = { key: current.key, name: current.name };
+    const identity = { key: current.key, name: current.name, identityKind: current.identityKind };
     const refusal = idCardFormRefusal(
       { ...identity, hasForm: current.fields.length > 0 },
       { ...identity, hasForm: parsed.data.fields.length > 0 || current.fields.length > 0 },

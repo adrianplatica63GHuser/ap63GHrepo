@@ -63,7 +63,7 @@ import {
   documentTypeOptionLabel,
 } from "@/lib/documents/status";
 import { typeMayHoldAForm } from "@/lib/import/discover-run";
-import { documentTypeIsIdCard } from "@/lib/import/id-card";
+import { documentTypeIsIdentity } from "@/lib/identity-documents/kinds";
 import { IdCardPeopleAction } from "./id-card-people-action";
 import { SaleObjectRecompose } from "@/components/documents/sale-object-recompose";
 import { SALE_OBJECT_FIELD_KEY } from "@/lib/documents/sale-object-description";
@@ -556,7 +556,7 @@ export function DocumentForm({
       // The catch-all is caught by its key and name inside; this form holds no
       // separate id for it.
       fallbackTypeId: null,
-      typeIsIdCard: documentTypeIsIdCard(selectedType),
+      typeIsIdCard: documentTypeIsIdentity(selectedType),
     });
 
   // Has the editable latest copy diverged from the loaded baseline?
@@ -1817,7 +1817,7 @@ export function DocumentForm({
   // import's own „Creează persoană din CI" — the holder found by CNP, the
   // parents after it. In the action bar, on the latest version only.
   const idCardPeople =
-    isOnLatest && documentId && selectedType && documentTypeIsIdCard(selectedType) ? (
+    isOnLatest && documentId && selectedType && documentTypeIsIdentity(selectedType) ? (
       <IdCardPeopleAction documentId={documentId} title={initialValues?.title ?? ""} />
     ) : null;
 

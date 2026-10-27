@@ -95,6 +95,8 @@ import {
   updateDocument,
 } from "../../src/lib/documents/queries";
 import { documentCreateSchema, documentUpdateSchema } from "../../src/lib/documents/validation";
+import { identityDocumentsMadeByMigration } from "../../src/lib/identity-documents/queries";
+import type { IdentityInput } from "../../src/lib/identity-documents/validation";
 import { createDocumentPage } from "../../src/lib/documents/pages-queries";
 import { addEntityTag, patchEntityMetadata } from "../../src/lib/metadata/queries";
 import { addEntityToGroup, addStampToEntity } from "../../src/lib/metadata/membership";
@@ -251,6 +253,9 @@ const NEW_OR_FLAGGED_ROLES: RoleSpec[] = [
 /** document type key → [role name, holds share] */
 const DOC_TYPE_ROLES: Record<string, [string, boolean][]> = {
   CARTE_IDENTITATE: [["Titular act de identitate", false]],
+  CARTE_IDENTITATE_VECHE: [["Titular act de identitate", false]],
+  PASAPORT: [["Titular act de identitate", false]],
+  PASAPORT_CRDS: [["Titular act de identitate", false]],
   TITLU_PROPRIETATE: [["Autoritate locală", false]],
   ACT_DEZMEMBRARE: [["Proprietar", true], ["Notar", false], ["Topograf / Expert cadastral", false]],
   ACT_ALIPIRE: [["Proprietar", true], ["Notar", false], ["Topograf / Expert cadastral", false]],
@@ -708,6 +713,8 @@ type DP = {
   extra?: Record<string, string | null>;
   customFields?: Record<string, string | null>;
   notes?: string;
+  /** Slice 40.82: an identity document's own values, worked out when the document is created (the CNPs exist by then) */
+  identity?: () => IdentityInput;
   pages: () => Page[];
 };
 
@@ -762,9 +769,47 @@ function documentPlan(): DP[] {
         date: p.idCard!.from,
         validUntil: p.idCard!.until,
         emitent: "SPCLEP Bragadiru",
+        // Slice 40.82: what the card prints (model nou)
+        identity: () => ({
+          lastName: p.last, firstName: p.first, cnp: cnpOf.get(k) ?? null, sex: p.gender, nationality: "Română / ROU",
+          placeOfBirth: p.birthPlace, domicileAddress: `${p.street}, Bragadiru, jud. Ilfov`,
+          mrz: `IDROU${p.last.toUpperCase()}<<${p.first.toUpperCase()}`.normalize("NFD").replace(/[\u0300-\u036f]/g, "").padEnd(36, "<") + "\n" + `${p.idCard!.series}${p.idCard!.number}<ROU${cnpOf.get(k) ?? ""}`.padEnd(36, "<"),
+          cardNumber: `${p.idCard!.number}`,
+        }),
         pages: () => idCardPages(k),
       };
     }),
+    // Slice 40.82: one of each other identity kind — an old booklet, a passport, a CRDS passport (invented)
+    {
+      key: "D21", type: "CARTE_IDENTITATE_VECHE", title: "Buletin de identitate BX 482113 — Ionescu Mihai", nr: "BX 482113", date: "1996-10-01",
+      emitent: "SPCLEP Bragadiru",
+      identity: () => ({
+        lastName: "Ionescu", firstName: "Mihai", fatherFirstName: "Gheorghe", motherFirstName: "Ana", dateOfBirth: "1978-09-30",
+        placeOfBirth: "Bragadiru, jud. Ilfov", civilStatus: "necăsătorit", domicileAddress: "Str. Independenței nr. 41, Bragadiru, jud. Ilfov",
+        issuerOfficer: "Plt. maj. Ionescu V.",
+      }),
+      pages: () => pdfPages("Buletin_BX_482113.pdf", "Buletin de identitate BX 482113", [["IONESCU MIHAI, fiul lui Gheorghe și Ana, născut la 30.09.1978 în Bragadiru.", "Document fictiv generat pentru testare."]]),
+    },
+    {
+      key: "D22", type: "PASAPORT", title: "Pașaport 054812937 — Stanciu Elena", nr: "054812937", date: "2023-02-14", validUntil: "2033-02-14",
+      emitent: "Serviciul Public Comunitar pentru Eliberarea Pașapoartelor Ilfov",
+      identity: () => ({
+        passportType: "P", countryCode: "ROU", lastName: "Stanciu", firstName: "Elena", nationality: "ROMÂNĂ / ROU", dateOfBirth: "1986-06-21",
+        sex: "FEMALE", placeOfBirth: "Cluj-Napoca", cnp: cnpOf.get("N5") ?? null, domicileCounty: "Ilfov",
+        mrz: "P<ROUSTANCIU<<ELENA<<<<<<<<<<<<<<<<<<<<<<<<<<\n054812937<ROU8606214F3302146<<<<<<<<<<<<<<00",
+      }),
+      pages: () => pdfPages("Pasaport_054812937.pdf", "Pașaport 054812937", [["STANCIU ELENA — pașaport simplu electronic.", "Document fictiv generat pentru testare."]]),
+    },
+    {
+      key: "D23", type: "PASAPORT_CRDS", title: "Pașaport CRDS 058123004 — Dobre Maria", nr: "058123004", date: "2024-05-06", validUntil: "2034-05-06",
+      emitent: "Consulatul General al României la Madrid",
+      identity: () => ({
+        passportType: "P", countryCode: "ROU", lastName: "Dobre", firstName: "Maria", nationality: "ROMÂNĂ / ROU", dateOfBirth: "1975-03-12",
+        sex: "FEMALE", placeOfBirth: "Bragadiru, jud. Ilfov", cnp: cnpOf.get("N2") ?? null, domicileCountry: "Spania",
+        mrz: "P<ROUDOBRE<<MARIA<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n058123004<ROU7503122F3405060<<<<<<<<<<<<<<00",
+      }),
+      pages: () => pdfPages("Pasaport_CRDS_058123004.pdf", "Pașaport CRDS 058123004", [["DOBRE MARIA — pașaport CRDS, domiciliul în Spania.", "Document fictiv generat pentru testare."]]),
+    },
     {
       key: "D5", type: "TITLU_PROPRIETATE", title: "Titlu de proprietate nr. 1532/1995 — Ionescu Gheorghe", nr: "1532", date: "1995-06-20",
       emitent: "Comisia județeană Ilfov pentru stabilirea dreptului de proprietate privată asupra terenurilor", suprafata: 13500,
@@ -900,6 +945,7 @@ async function createDocuments(): Promise<void> {
       customFields: d.customFields ?? null,
       notes: d.notes ?? "Document fictiv generat pentru testare.",
       ...(d.extra ?? {}),
+      identity: d.identity ? d.identity() : null,
     });
     const row = await createDocument(input, BY);
     remember({ key: d.key, kind: "DOCUMENT", id: row.id, po: row.principalObjectId, code: row.code, label: d.title });
@@ -1014,6 +1060,10 @@ async function createRelations(): Promise<void> {
   await pd("D2", "N3", "Titular act de identitate");
   await pd("D3", "N5", "Titular act de identitate");
   await pd("D4", "N9", "Titular act de identitate");
+  // Slice 40.82
+  await pd("D21", "N3", "Titular act de identitate");
+  await pd("D22", "N5", "Titular act de identitate");
+  await pd("D23", "N2", "Titular act de identitate");
   await pd("D5", "N1", "Proprietar", { pct: 100, mp: 13500, mod: "NUME_PROPRIU" });
   await pd("D5", "J5", "Autoritate locală");
   // Slice #38.38: „Defunct" and „Moștenitor" are the certificate's roles (they were a quality).
@@ -1489,7 +1539,8 @@ async function remove(): Promise<void> {
   }
   const m = JSON.parse(fs.readFileSync(MANIFEST, "utf8")) as Manifest;
   const ids = (k: Kind[]) => m.objects.filter((o) => k.includes(o.kind)).map((o) => o.id);
-  const docs = await deleteDocuments(ids(["DOCUMENT"]));
+  // Slice 40.82: and the pageless identity documents migration_118 made from the seed's persons, untouched since
+  const docs = await deleteDocuments([...ids(["DOCUMENT"]), ...(await identityDocumentsMadeByMigration(ids(["NATURAL"])))]);
   const props = await deleteProperties(ids(["PROPERTY"]));
   const persons = await deletePersons(ids(["NATURAL", "JUDICIAL"]));
   let g = 0;

@@ -121,6 +121,8 @@ import { claimCornerSource } from "../../src/lib/properties/corner-source";
 import { deleteCalculationRun } from "../../src/lib/calculation/runs";
 import { parseTemplateFields } from "../../src/lib/documents/template-fields";
 import { buildPdf, idCardBack, idCardFront, type IdCardData } from "../seed-dev-data/dummy-files";
+import { identityDocumentsMadeByMigration } from "../../src/lib/identity-documents/queries";
+import type { IdentityInput } from "../../src/lib/identity-documents/validation";
 import { makeRng } from "./rng";
 import { addDays, ageAt, dmy, yearOf } from "./dates";
 import { cuiDigits, makeCui } from "./identifiers";
@@ -864,6 +866,47 @@ function pagesOf(d: DocPlan, details: Map<string, NaturalDetails>, plan: FamilyP
   return [{ name: `${d.type}_${d.nr}_${d.date}.pdf`.replace(/[^A-Za-z0-9_.-]+/g, "_"), pageName: "Document", mime: "application/pdf", buf: buildPdf([{ title: d.title, lines }]) }];
 }
 
+/**
+ * An identity document's values, from its holder (Slice 40.82): each kind's own fields, the way its document
+ * prints them — a passport its type and country code, an old booklet the parents' first names, the civil status and
+ * the officer who signed it. Invented, like everything the seed writes; the CNP is the holder's own (valid).
+ */
+function identityOf(d: DocPlan, details: Map<string, NaturalDetails>, plan: FamilyPlan): IdentityInput | null {
+  if (!d.idCardOf) return null;
+  const n = details.get(d.idCardOf)!;
+  const p = plan.persons.find((x) => x.key === d.idCardOf)!;
+  const parent = (sex: "MALE" | "FEMALE", fallback: string) =>
+    plan.persons.find((x) => p.parents.includes(x.key) && x.sex === sex)?.first ?? fallback;
+  const surname = n.laterSurnames.filter((s) => s.on <= d.date).at(-1)?.surname ?? n.lastName;
+  const home = `${n.address.streetLine}, ${n.address.locality}, jud. ${n.address.county}`;
+  const mrzName = `${surname}<<${n.firstName}`.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().replace(/[^A-Z<]/g, "<");
+  switch (d.type) {
+    case "CARTE_IDENTITATE":
+      return {
+        lastName: surname, firstName: n.firstName, cnp: n.cnp, sex: p.sex, nationality: "Română / ROU",
+        placeOfBirth: p.birthPlace.label, domicileAddress: home,
+        mrz: `IDROU${mrzName}`.padEnd(36, "<").slice(0, 36) + "\n" + `${d.nr.replace(/\s+/g, "")}<ROU${n.cnp ?? ""}`.padEnd(36, "<").slice(0, 36),
+        cardNumber: n.cnp ? n.cnp.slice(-6) : null,
+      };
+    case "CARTE_IDENTITATE_VECHE":
+      return {
+        lastName: surname, firstName: n.firstName, fatherFirstName: parent("MALE", "Ion"), motherFirstName: parent("FEMALE", "Maria"),
+        dateOfBirth: p.dob, placeOfBirth: p.birthPlace.label, civilStatus: n.laterSurnames.length ? "căsătorit(ă)" : "necăsătorit(ă)",
+        domicileAddress: home, issuerOfficer: "Plt. maj. Ionescu V.",
+      };
+    case "PASAPORT":
+    case "PASAPORT_CRDS":
+      return {
+        passportType: "P", countryCode: "ROU", lastName: surname, firstName: n.firstName, nationality: "ROMÂNĂ / ROU",
+        dateOfBirth: p.dob, sex: p.sex, placeOfBirth: p.birthPlace.label, cnp: n.cnp,
+        ...(d.type === "PASAPORT" ? { domicileCounty: n.address.county } : { domicileCountry: "Spania" }),
+        mrz: `P<ROU${mrzName}`.padEnd(44, "<").slice(0, 44) + "\n" + `${d.nr}<ROU`.padEnd(44, "<").slice(0, 44),
+      };
+    default:
+      return null;
+  }
+}
+
 /** The pages, the first with the notes written about it and its turn, where the plan gives them (#39.81). */
 async function writePages(docId: string, pages: Page[], first: { notes: string | null; rotation: number } = { notes: null, rotation: 0 }): Promise<void> {
   let n = 1;
@@ -901,6 +944,8 @@ async function createDocuments(docs: DocPlan[], details: NaturalDetails[], plan:
       importTitle: x.importTitle,
       customFields: d.customFields,
       notes: d.notes || null,
+      // Slice 40.82: an identity document's own values
+      identity: identityOf(d, det, plan),
     });
     const row = await createDocument(input, BY);
     remember({ key: d.key, kind: "DOCUMENT", id: row.id, po: row.principalObjectId, code: row.code, label: d.title });
@@ -1433,7 +1478,9 @@ async function remove(): Promise<void> {
   // documents first (their links, pages, corner claims and plan links go with them), then the runs (the run, the
   // properties it made, its group), properties (their owners go with the persons), the tarlas once nothing stands
   // on them, then companies and institutions (they point at their representatives), then persons
-  const docIds = [...ids("DOCUMENT"), ...x.documents.map((o) => o.id)];
+  // Slice 40.82: and the pageless identity documents migration_118 made from the seed's persons' „Act de identitate"
+  // (untouched since — one somebody edited is no longer the migration's, and stays)
+  const docIds = [...ids("DOCUMENT"), ...x.documents.map((o) => o.id), ...(await identityDocumentsMadeByMigration(ids("NATURAL")))];
   const docs = await deleteDocuments(docIds);
   for (const id of docIds) fs.rmSync(path.join(UPLOADS, "document-pages", id), { recursive: true, force: true });
   let runs = 0;

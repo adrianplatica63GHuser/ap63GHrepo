@@ -13,7 +13,7 @@ import {
   ID_CARD_NOTE_MARKER,
   ID_CARD_SUBJECT_PREFIX,
   ID_CARD_TITLE_PREFIX,
-  ID_CARD_TYPE_KEYS,
+  ID_CARD_READ_TYPE_KEYS,
   documentFieldsFromIdCard,
   idCardDocumentFieldCount,
   isIdCardEntry,
@@ -519,7 +519,7 @@ describe("idCardDocumentFieldCount", () => {
   });
 });
 
-describe("ID_CARD_TYPE_KEYS — Slice #23.08.Import removed the phantom _ALT key", () => {
+describe("ID_CARD_READ_TYPE_KEYS — Slice #23.08.Import removed the phantom _ALT key", () => {
   it("no longer carries CARTE_IDENTITATE_ALT", () => {
     // Confirmed against the live lookup_document_type at the time (26 rows),
     // and this key is not one of them — nor is it in the forty-four the seed
@@ -528,11 +528,11 @@ describe("ID_CARD_TYPE_KEYS — Slice #23.08.Import removed the phantom _ALT key
     // Slice #29.07.** Until then the resolver slugged a key from the label, so
     // it could never produce this one; now it offers the canonical key, but
     // only one `canonicalTypeKey` accepts, and this is not in the catalogue.
-    expect(ID_CARD_TYPE_KEYS as readonly string[]).not.toContain("CARTE_IDENTITATE_ALT");
+    expect(ID_CARD_READ_TYPE_KEYS as readonly string[]).not.toContain("CARTE_IDENTITATE_ALT");
   });
 
   it("still recognises the real key", () => {
-    expect(ID_CARD_TYPE_KEYS as readonly string[]).toContain("CARTE_IDENTITATE");
+    expect(ID_CARD_READ_TYPE_KEYS as readonly string[]).toContain("CARTE_IDENTITATE");
     expect(isIdCardEntry({ typeKey: "CARTE_IDENTITATE" })).toBe(true);
   });
 

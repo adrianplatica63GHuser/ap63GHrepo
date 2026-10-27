@@ -38,7 +38,7 @@ import {
   lookupOriginStatus,
 } from "@/lib/admin/value-lists/origin-status";
 import { parseTemplateFields } from "@/lib/documents/template-fields";
-import { documentTypeIsIdCard } from "@/lib/import/id-card";
+import { documentTypeIsIdentity } from "@/lib/identity-documents/kinds";
 import { documentTypeIsCatchAll } from "@/lib/documents/document-type-match";
 import { DocumentTypeFormEditor, type FormLock } from "./document-type-form-editor";
 import { usedFirst } from "@/lib/admin/value-lists/categories";
@@ -1379,7 +1379,11 @@ export function ValueListModal({
   const awaitsFormRow = (row: Row): boolean =>
     documentTypeAwaitsForm({ origin: row.origin, templateFields: row.templateFields }) &&
     !documentTypeIsCatchAll({ key: String(row.key ?? ""), name: String(row.name ?? "") }) &&
-    !documentTypeIsIdCard({ key: String(row.key ?? ""), name: String(row.name ?? "") });
+    // Slice 40.82: the row's marker (the list carries every column), else its key — never its name.
+    !documentTypeIsIdentity({
+      key: String(row.key ?? ""),
+      ...(row.identityKind !== undefined ? { identityKind: typeof row.identityKind === "string" ? row.identityKind : null } : {}),
+    });
 
   /**
    * May this row be GIVEN a form — and if not, which rule says so? D-06.
@@ -1407,7 +1411,7 @@ export function ValueListModal({
    */
   const formLockOf = (row: Row): FormLock => {
     const cols = { key: String(row.key ?? ""), name: String(row.name ?? "") };
-    if (documentTypeIsIdCard(cols)) return "idCard";
+    if (documentTypeIsIdentity(cols)) return "idCard";
     if (documentTypeIsCatchAll(cols)) return "catchAll";
     return null;
   };

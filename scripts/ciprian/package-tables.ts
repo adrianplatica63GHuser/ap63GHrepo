@@ -35,6 +35,7 @@ export const SHIPPED_WITH_DATA: Readonly<Record<string, string>> = {
   document: "the documents",
   document_page: "the documents' pages (their files travel in ciprian-uploads.zip)",
   document_version: "the documents' versions",
+  identity_document: "what the identity documents printed (Slice 40.82)",
   person_person: "the links",
   person_document: "the links",
   property_person: "the links",

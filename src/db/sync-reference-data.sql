@@ -222,7 +222,12 @@ INSERT INTO lookup_document_type (key, name, sort_order) VALUES
   ('ACT_CADASTRU',               'Act Cadastru',                   2),
   ('ACT_DONATIE',                'Act de Donație',                 3),
   ('AVIZ_INSTITUTIE',            'Aviz de Instituție',             5),
-  ('CARTE_IDENTITATE',           'Carte de Identitate',            6),
+  -- Slice 40.82 (migration_118): today's card is model nou, under the key it always had; the three other identity
+  -- kinds are new rows. All four carry `identity_kind` (the UPDATE after the short names).
+  ('CARTE_IDENTITATE',           'Carte de Identitate (model nou)', 6),
+  ('CARTE_IDENTITATE_VECHE',     'Carte de Identitate (model vechi)', 6),
+  ('PASAPORT',                   'Pașaport',                       6),
+  ('PASAPORT_CRDS',              'Pașaport CRDS',                  6),
   ('CERTIFICAT_FISCAL',          'Certificat Fiscal',              7),
   ('CERTIFICAT_MOSTENITOR',      'Certificat de Moștenitor',       8),
   -- Was CERTIFICAT_SARCINI, which carried 'Certificat de Bunuri' while the
@@ -368,6 +373,20 @@ UPDATE lookup_document_type AS t
     ('ACT_DEZLIPIRE',                'Dezlipire'),
     ('ACT_DEZMEMBRARE',              'Dezmembrare')
   ) AS s(key, short_name)
+ WHERE t.key = s.key;
+
+-- IDENTITY KINDS (Slice 40.82, migration_118): the marker the application recognises an identity document by, and
+-- the old booklet's short name. Its own statement rather than a row in the VALUES list above, which
+-- src/__tests__/document-type-short-name.test.ts holds equal to migration_092's and migration_103's.
+UPDATE lookup_document_type AS t
+   SET identity_kind = s.kind,
+       short_name = coalesce(s.short_name, t.short_name)
+  FROM (VALUES
+    ('CARTE_IDENTITATE',       'CI_NOU',        NULL),
+    ('CARTE_IDENTITATE_VECHE', 'CI_VECHE',      'CI vechi'),
+    ('PASAPORT',               'PASAPORT',      NULL),
+    ('PASAPORT_CRDS',          'PASAPORT_CRDS', NULL)
+  ) AS s(key, kind, short_name)
  WHERE t.key = s.key;
 
 -- ── lookup_document_type.template_fields ──────────────────────────────────────

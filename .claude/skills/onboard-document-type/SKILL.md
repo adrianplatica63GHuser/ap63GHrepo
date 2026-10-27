@@ -31,6 +31,31 @@ Per field:
 - `parseTemplateFields` never throws on malformed data — a bad row degrades gracefully (drops the bad entries) rather than breaking the form or the AI prompt. Still worth eyeballing the PUT response to confirm field count and a sample group came through as expected before moving on.
 - **There is a second writer, and it is the user's: Descoperire AI** (Slice #26.11). Running it on a document of the type offers the fields it read for review, and accepting them `PUT`s to `/api/document-types/{id}/template-fields`, which **merges** — every existing field is kept, in order, with its key untouched, and the accepted ones are appended. That route is additive by construction, so it can never clobber a template written the way this section describes; the admin PUT above stays the full-replace door. Two consequences for the checklist: a discovered key is a snake_case slug of the Romanian label rather than camelCase (both are legal and the merge matches them case- and separator-insensitively, so `pretTotal` and a discovered `pret_total` are recognised as one field), and a type may hold at most `MAX_TEMPLATE_FIELDS` (60) fields in total.
 
+### An identity kind (Slice 40.82) — NOT a form
+
+An identity document (a card, a passport, a residence permit) is never onboarded through `template_fields`: an
+identity type may not hold a form (#32.07's rule, `id-card-form-guard.ts`), and its fields are code, the same for
+every document of the kind. Today's four kinds are CI_VECHE, CI_NOU, PASAPORT, PASAPORT_CRDS. A fifth is a slice, not
+a redesign:
+
+1. **The registry** — one entry in `IDENTITY_KINDS` (`src/lib/identity-documents/kinds.ts`): its kind value, type
+   key, Romanian type name, and its fields in the order the document prints them, each a `F.*` entry (target
+   `document` for the four common columns — number, issue date, valid until, issuer — and `identity` for the rest).
+   A field the table lacks is a column on `identity_document` plus a key in `IDENTITY_VALUE_COLUMNS`,
+   `IDENTITY_SNAPSHOT_KEYS` (`snapshot-registry.ts`) and the migration's snapshot SQL.
+2. **The type row, in a migration** — the row with its `identity_kind`, added to the CHECK on
+   `lookup_document_type.identity_kind`, and the same row in `sync-reference-data.sql`. The marker is written by
+   migrations only; the value-lists doors strip it.
+3. **The labels** — `identityDocument.kinds.<KIND>` and any new `identityDocument.fields.*` in both
+   `messages/*.json`.
+4. **The classifier** — the key and name in `KNOWN_DOCUMENT_TYPES` (`classify-prompts.ts`) with a rule saying how
+   to tell it from its neighbours, and — if the import must read it — the kind in the identity read (Slice 40.86).
+5. **The holder role** — „Titular act de identitate" on the type (Reference Data → Document Persons), as the four have.
+
+Every write of the values goes through `checkIdentityWrite` (`validation.ts`): a field the kind lacks, a CNP without
+a valid checksum, a malformed date or sex is refused with a named code. Identity screens are photographed with
+seed or invented records only (`C:\dev\.claude\rules\capture-and-personal-data.md`).
+
 ### Party / person extraction (only relevant if the type names people or organizations)
 
 - Party roles (Vânzător, Cumpărător, Notar, Mandatar, etc.) are configured per document type in **Reference Data → Document Persons**, fully data-driven — the extraction code has no hardcoded notion of "seller" or "buyer". **Configure roles before testing AI Interpret** — if none are configured for the type, the prompt omits the parties section entirely and the response comes back with `partyRolesConfigured: false`, not an error, so a missing-roles config gap is easy to miss if you don't know to check for it.

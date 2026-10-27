@@ -85,6 +85,7 @@ import { createPropertyIn } from "@/lib/properties/queries";
 // differently-spelled row instead of inserting one the index refuses.
 import { sameTarlaCode } from "@/lib/properties/tarla-code-guard";
 import type { JudicialPersonCreate } from "@/lib/judicial-persons/validation";
+import type { IdentityInput } from "@/lib/identity-documents/validation";
 import {
   lookupDocumentType,
   lookupJudicialPersonType,
@@ -845,7 +846,9 @@ type DocumentTypeKey =
   | "CERTIFICAT_SARCINI" | "CERTIFICAT_URBANISM" | "CONTRACT_ARENDA"
   | "CONTRACT_INCHIRIERE" | "CONTRACT_PARTAJ" | "CONTRACT_PRESTARI_SERVICII"
   | "CONTRACT_VANZARE" | "EXTRAS_CARTE_FUNCIARA" | "EXTRAS_PUG"
-  | "HOTARARE_JUDECATOREASCA" | "TESTAMENT" | "TITLU_PROPRIETATE";
+  | "HOTARARE_JUDECATOREASCA" | "TESTAMENT" | "TITLU_PROPRIETATE"
+  // Slice 40.82: the four identity kinds (migration_118)
+  | "CARTE_IDENTITATE" | "CARTE_IDENTITATE_VECHE" | "PASAPORT" | "PASAPORT_CRDS";
 
 type SeedDocumentRow = {
   typeKey: DocumentTypeKey;
@@ -864,9 +867,22 @@ type SeedDocumentRow = {
   dateStart?: string;
   dateEnd?: string;
   notes?: string;
+  // Slice 40.82: an identity document's validity end and its own values (invented; the CNPs pass the checksum)
+  dateValidUntil?: string;
+  identity?: IdentityInput;
 };
 
 const DOCUMENTS: SeedDocumentRow[] = [
+  // ── The four identity kinds (Slice 40.82) — invented people, linked to nobody ──
+  { typeKey: "CARTE_IDENTITATE", title: "CI Marin Vasile", nrDocument: "IF 731204", dateDocument: "2021-04-21", dateValidUntil: "2031-04-21", emitent: "SPCLEP Bragadiru",
+    identity: { lastName: "Marin", firstName: "Vasile", cnp: "1850421400123", sex: "MALE", nationality: "Română / ROU", placeOfBirth: "Mun. București", domicileAddress: "Str. Teilor nr. 5, Bragadiru, jud. Ilfov", mrz: "IDROUMARIN<<VASILE<<<<<<<<<<<<<<<<<<<<\nIF731204<ROU8504211M310421<<<<<<<<4", cardNumber: "015732" } },
+  { typeKey: "CARTE_IDENTITATE_VECHE", title: "CI Popa Dumitru (buletin)", nrDocument: "BX 120934", dateDocument: "1995-06-02", emitent: "Poliția Bragadiru",
+    identity: { lastName: "Popa", firstName: "Dumitru", fatherFirstName: "Ilie", motherFirstName: "Floarea", dateOfBirth: "1978-12-29", placeOfBirth: "Bragadiru, jud. Ilfov", civilStatus: "necăsătorit", domicileAddress: "Str. Libertății nr. 9, Bragadiru, jud. Ilfov", issuerOfficer: "Plt. Georgescu M." } },
+  { typeKey: "PASAPORT", title: "Pașaport Marin Vasile", nrDocument: "051234876", dateDocument: "2022-09-01", dateValidUntil: "2032-09-01", emitent: "SPCEEPS Ilfov",
+    identity: { passportType: "P", countryCode: "ROU", lastName: "Marin", firstName: "Vasile", nationality: "ROMÂNĂ / ROU", dateOfBirth: "1985-04-21", sex: "MALE", placeOfBirth: "Mun. București", cnp: "1850421400123", domicileCounty: "Ilfov" } },
+  { typeKey: "PASAPORT_CRDS", title: "Pașaport CRDS Stan Alina", nrDocument: "058776120", dateDocument: "2024-02-12", dateValidUntil: "2034-02-12", emitent: "Consulatul General al României la Torino",
+    identity: { passportType: "P", countryCode: "ROU", lastName: "Stan", firstName: "Alina", nationality: "ROMÂNĂ / ROU", dateOfBirth: "1990-11-14", sex: "FEMALE", placeOfBirth: "Ploiești, jud. Prahova", cnp: "2901114400270", domicileCountry: "Italia" } },
+
   // ── ACT_ADJUDECARE ──────────────────────────────────────────────────────
   { typeKey: "ACT_ADJUDECARE", title: "Adjudecare Teren Snagov",    nrDocument: "1234/2019", dateDocument: "2019-04-12",  notes: "Executare silită dosar 445/2018" },
   { typeKey: "ACT_ADJUDECARE", title: "Adjudecare Lot 3 Balotești", nrDocument: "887/2020",  dateDocument: "2020-09-03",     notes: "Vânzare la licitație publică" },
@@ -1590,6 +1606,8 @@ async function seed() {
           dateStart:         row.dateStart         ?? null,
           dateEnd:           row.dateEnd           ?? null,
           notes:             row.notes             ?? null,
+          dateValidUntil:    row.dateValidUntil    ?? null,
+          identity:          row.identity          ?? null,
         },
         SEED_UPDATED_BY,
       );

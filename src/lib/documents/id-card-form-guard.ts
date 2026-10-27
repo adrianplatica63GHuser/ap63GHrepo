@@ -34,7 +34,7 @@
  * src/__tests__/id-card-type-single-source.test.ts.
  */
 
-import { documentTypeIsIdCard } from "@/lib/import/id-card";
+import { documentTypeIsIdentity } from "@/lib/identity-documents/kinds";
 
 /**
  * Which half of the write is refused, and therefore which half the user is
@@ -72,6 +72,11 @@ export function idCardRefusalCode(refusal: IdCardFormRefusal): string {
 export type IdCardFormState = {
   key?: string | null;
   name?: string | null;
+  /**
+   * Slice 40.82: the row's `identity_kind` marker, when the caller read it — what decides, through
+   * `documentTypeIsIdentity`. Absent, the key does (the four kinds' keys are the code's own); the name never does.
+   */
+  identityKind?: string | null;
   /** `documentTypeHasForm(templateFields)` — parsed, not `Array.length > 0`. */
   hasForm: boolean;
 };
@@ -106,7 +111,7 @@ export function idCardFormRefusal(
   writesTheForm: boolean,
 ): IdCardFormRefusal | null {
   if (!after.hasForm) return null;
-  if (!documentTypeIsIdCard(after)) return null;
+  if (!documentTypeIsIdentity(after)) return null;
 
   // The write would leave an identity-card type carrying a form.
   //
@@ -148,7 +153,7 @@ export function idCardFormRefusal(
   // every carve-out in the codebase match. The carve-out is untouched by it:
   // Reference Data's edit form sends `name` and cannot express a key, and
   // `updateValue` defaults `after.key` to the stored one.
-  const alreadyWrong = before !== null && before.hasForm && documentTypeIsIdCard(before);
+  const alreadyWrong = before !== null && before.hasForm && documentTypeIsIdentity(before);
   // ⚠️ **AN ABSENT `after.key` IS NOT A CHANGED ONE.** All three doors default
   // it to the stored key today, so this is a landmine rather than a live bug —
   // but a fourth door describing a name-only write by simply omitting `key`
@@ -161,7 +166,7 @@ export function idCardFormRefusal(
   // Name the half that is the CHANGE, because that is the half the user can
   // undo. A row that already carried a form and was not a card is being
   // renamed INTO one; everything else is the form being added to a card.
-  if (before !== null && before.hasForm && !documentTypeIsIdCard(before)) return "rename";
+  if (before !== null && before.hasForm && !documentTypeIsIdentity(before)) return "rename";
   return "form";
 }
 

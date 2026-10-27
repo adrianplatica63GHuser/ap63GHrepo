@@ -69,6 +69,13 @@ jest.mock("@/lib/documents/queries", () => ({
   updateDocument: mockFakeUpdate(),
 }));
 
+// Slice 40.82: the document PATCH answers with the identity block, read after the save; not this file's subject.
+jest.mock("@/lib/identity-documents/queries", () => ({
+  __esModule: true,
+  identityBlockFor: jest.fn().mockResolvedValue(null),
+  identityRefusalToResponse: jest.fn().mockReturnValue(null),
+}));
+
 import type { NextRequest } from "next/server";
 import { PATCH as patchPerson } from "@/app/api/people/[id]/route";
 import { PATCH as patchCompany } from "@/app/api/judicial-persons/[id]/route";

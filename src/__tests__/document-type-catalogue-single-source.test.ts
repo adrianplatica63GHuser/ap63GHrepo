@@ -65,7 +65,7 @@ import {
   canonicalTypeKey,
 } from "@/lib/import/classify-prompts";
 import { UNCLASSIFIED_DOCUMENT_TYPE_KEY } from "@/lib/documents/document-type-match";
-import { ID_CARD_TYPE_KEYS } from "@/lib/import/id-card";
+import { IDENTITY_TYPE_KEYS } from "@/lib/identity-documents/kinds";
 
 const ROOT = process.cwd();
 const read = (rel: string): string => fs.readFileSync(path.join(ROOT, rel), "utf8");
@@ -384,8 +384,10 @@ describe("every carve-out that matches a canonical key can still fire", () => {
     expect(unknown).toEqual([]);
   });
 
-  it("holds the identity-card key", () => {
-    for (const key of ID_CARD_TYPE_KEYS) {
+  // Slice 40.82: the four identity kinds' keys (the TYPE is recognised by its marker; these are the keys the
+  // classifier answers and migration_118 gives the four rows).
+  it("holds the identity kinds' keys", () => {
+    for (const key of IDENTITY_TYPE_KEYS) {
       expect(KNOWN_TYPE_KEYS as readonly string[]).toContain(key);
     }
   });

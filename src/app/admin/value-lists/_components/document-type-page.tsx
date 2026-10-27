@@ -33,7 +33,7 @@ import { IconButton } from "@/lib/ui/icon-button";
 import { screenBox } from "@/lib/ui/field-widths";
 import { RequestFailedError, type FailureCode } from "@/lib/admin/value-lists/failures";
 import { parseTemplateFields } from "@/lib/documents/template-fields";
-import { documentTypeIsIdCard } from "@/lib/import/id-card";
+import { documentTypeIsIdentity } from "@/lib/identity-documents/kinds";
 import { documentTypeIsCatchAll } from "@/lib/documents/document-type-match";
 import { documentTypeStatus } from "@/lib/documents/status";
 import {
@@ -52,7 +52,7 @@ const INPUT_CLASS =
 
 function formLockOf(row: ValueListRow): FormLock {
   const cols = { key: String(row.key ?? ""), name: String(row.name ?? "") };
-  if (documentTypeIsIdCard(cols)) return "idCard";
+  if (documentTypeIsIdentity(cols)) return "idCard";
   if (documentTypeIsCatchAll(cols)) return "catchAll";
   return null;
 }

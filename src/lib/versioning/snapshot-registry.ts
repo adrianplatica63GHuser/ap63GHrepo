@@ -48,6 +48,7 @@ import type {
 } from "@/lib/persons/validation";
 import type { JudicialPersonSnapshotFields } from "@/lib/judicial-persons/validation";
 import type { DocumentSnapshot } from "@/lib/documents/validation";
+import type { IdentitySnapshot } from "@/lib/identity-documents/validation";
 import type { MetadataSnapshot } from "@/lib/metadata/queries";
 
 // ---------------------------------------------------------------------------
@@ -253,11 +254,47 @@ export const DOCUMENT_SNAPSHOT_KEYS = [
   // DocumentSnapshot but never mirrored here; the compile-time guard below was
   // inert at the time, so nothing caught it).
   "customFields",
+  // Slice 40.82: an identity document's own values (migration_118's identity_document), a nested block like
+  // `customFields`; null on an ordinary type, and absent from every snapshot written before 40.82, which reads as
+  // holding none (`identitySnapshotsEqual`). Its keys are IDENTITY_SNAPSHOT_KEYS below.
+  "identity",
 ] as const satisfies ReadonlyArray<keyof DocumentSnapshot>;
 
 const _documentCheck: AssertExactKeys<
   DocumentSnapshot,
   typeof DOCUMENT_SNAPSHOT_KEYS
+> = true;
+
+// ---------------------------------------------------------------------------
+// Identity snapshot (Slice 40.82)
+// ---------------------------------------------------------------------------
+// Matches: IdentitySnapshot in src/lib/identity-documents/validation.ts — the `identity` block of a DocumentSnapshot.
+// Backfill: migration_118_identity_documents.sql (`pg_temp.m118_values`, `pg_temp.m118_empty`).
+
+export const IDENTITY_SNAPSHOT_KEYS = [
+  "lastName",
+  "firstName",
+  "cnp",
+  "sex",
+  "dateOfBirth",
+  "placeOfBirth",
+  "nationality",
+  "fatherFirstName",
+  "motherFirstName",
+  "civilStatus",
+  "domicileAddress",
+  "domicileCounty",
+  "domicileCountry",
+  "issuerOfficer",
+  "passportType",
+  "countryCode",
+  "mrz",
+  "cardNumber",
+] as const satisfies ReadonlyArray<keyof IdentitySnapshot>;
+
+const _identityCheck: AssertExactKeys<
+  IdentitySnapshot,
+  typeof IDENTITY_SNAPSHOT_KEYS
 > = true;
 
 // ---------------------------------------------------------------------------

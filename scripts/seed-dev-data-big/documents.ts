@@ -46,7 +46,11 @@ export const FORM_SHARE = 0.75;
 export const OTHER_MIX: readonly (readonly [string, number])[] = [
   ["TITLU_PROPRIETATE", 65],
   ["CERTIFICAT_MOSTENITOR", 57],
-  ["CARTE_IDENTITATE", 28],
+  // Slice 40.82: the four identity kinds, five of the cards' 28 now old booklets and passports
+  ["CARTE_IDENTITATE", 23],
+  ["CARTE_IDENTITATE_VECHE", 2],
+  ["PASAPORT", 2],
+  ["PASAPORT_CRDS", 1],
   ["PROCURA", 20],
   ["ACT_CADASTRU", 20],
   ["CERTIFICAT_URBANISM", 20],
@@ -77,6 +81,9 @@ export const DOC_TYPE_ROLES: Readonly<Record<string, readonly (readonly [string,
   TITLU_PROPRIETATE: [["Proprietar", true], ["Autoritate locală", false]],
   CERTIFICAT_MOSTENITOR: [["Defunct", false], ["Moștenitor", true], ["Notar", false]],
   CARTE_IDENTITATE: [["Titular act de identitate", false]],
+  CARTE_IDENTITATE_VECHE: [["Titular act de identitate", false]],
+  PASAPORT: [["Titular act de identitate", false]],
+  PASAPORT_CRDS: [["Titular act de identitate", false]],
   PROCURA: [["Mandant", false], ["Reprezentant legal / Mandatar", false], ["Notar", false]],
   ACT_CADASTRU: [["Proprietar", true], ["Topograf / Expert cadastral", false]],
   CERTIFICAT_URBANISM: [["Solicitant", false], ["Proprietar", true]],
@@ -125,7 +132,7 @@ export type DocPlan = {
   parties: Party[];
   properties: string[];
   links: DocLink[];
-  /** the identity card's holder, for its picture */
+  /** the identity document's holder — for a card's picture, and (Slice 40.82) for its identity values */
   idCardOf?: string;
 };
 
@@ -589,6 +596,26 @@ function fillOthers(r: Rng, b: Docs, ctx: DocumentContext): void {
           type, nr: `${nr.slice(0, 2)} ${nr.slice(2)}`, date: d.idCard!.from,
           title: `Carte de identitate ${nr.slice(0, 2)} ${nr.slice(2)} — ${b.name(d.key)}`,
           fields: { emitent: d.idCard!.authority, dateValidUntil: d.idCard!.until },
+          customFields: null, parties: [P(d.key, "Titular act de identitate")], properties: [], links: [], idCardOf: d.key,
+        });
+        done = true;
+        break;
+      }
+      // Slice 40.82: an old booklet („buletin") issued ten years before the person's card, and passports issued
+      // with it — the holder's, with the values seed.ts writes from the holder (`identityOf`).
+      case "CARTE_IDENTITATE_VECHE":
+      case "PASAPORT":
+      case "PASAPORT_CRDS": {
+        const d = r.pick(ctx.details.filter((x) => x.idCard && x.cnp && !b.out.some((y) => y.idCardOf === x.key)));
+        if (!d || !b.room(d.key)) break;
+        const old = type === "CARTE_IDENTITATE_VECHE";
+        const holder = b.persons.get(d.key);
+        const date = old ? maxIso(addYears(d.idCard!.from, -10), holder ? addYears(holder.dob, 14) : null)! : d.idCard!.from;
+        const nr = old ? `${r.pick(["BX", "DP", "RX"])} ${r.int(100000, 999999)}` : String(r.int(50_000_000, 59_999_999)).padStart(9, "0");
+        b.add({
+          type, nr, date,
+          title: `${old ? "Buletin de identitate" : "Pașaport"} ${nr} — ${b.name(d.key)}`,
+          fields: old ? { emitent: d.idCard!.authority } : { emitent: "Serviciul Public Comunitar pentru Eliberarea Pașapoartelor Ilfov", dateValidUntil: addYears(date, 10) },
           customFields: null, parties: [P(d.key, "Titular act de identitate")], properties: [], links: [], idCardOf: d.key,
         });
         done = true;

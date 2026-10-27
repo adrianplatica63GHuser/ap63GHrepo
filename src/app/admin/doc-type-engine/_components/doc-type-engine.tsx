@@ -60,7 +60,7 @@ import {
 import { documentTypeHasForm } from "@/lib/documents/status";
 import { parseTemplateFields, type DocumentTemplateFieldType } from "@/lib/documents/template-fields";
 import { typeMayHoldAForm } from "@/lib/import/discover-run";
-import { documentTypeIsIdCard } from "@/lib/import/id-card";
+import { documentTypeIsIdentity } from "@/lib/identity-documents/kinds";
 import {
   ID_CARD_FORM_CODE,
   ID_CARD_RENAME_CODE,
@@ -286,7 +286,7 @@ export function DocTypeEngine({
 
   const refusalFor = useCallback(
     (row: DocumentTypeCatalogueRow): "idCard" | "fallback" | null => {
-      const typeIsIdCard = documentTypeIsIdCard(row);
+      const typeIsIdCard = documentTypeIsIdentity(row);
       // ⚠️ **Slice #34.10 — ONE CALL WHERE #32.19 NEEDED TWO, and the second
       // one is gone rather than kept for safety.** #32.19 asked
       // `documentTypeIsCatchAll(row)` here, immediately before

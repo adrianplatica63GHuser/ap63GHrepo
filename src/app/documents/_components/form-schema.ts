@@ -17,6 +17,7 @@
 import { z } from "zod/v4";
 import type { DocumentSnapshot } from "@/lib/documents/validation";
 import { customFieldsEqual } from "@/lib/documents/template-fields";
+import { identitySnapshotsEqual } from "@/lib/identity-documents/validation";
 import { DOCUMENT_SNAPSHOT_KEYS } from "@/lib/versioning/snapshot-registry";
 import {
   diffFieldMap,
@@ -253,13 +254,15 @@ export function toApiPayload(values: FormValues): Record<string, unknown> {
 // the schema field above). `notes` IS in the registry for this entity — it is
 // a column on `document` — so unlike the person forms there is nothing to add
 // back.
-type DocFieldKey = Exclude<(typeof DOCUMENT_SNAPSHOT_KEYS)[number], "customFields">;
+// Slice 40.82: `identity` is a nested block too (an identity document's own values), diffed by
+// `identitySnapshotsEqual`; its per-field frames are Slice 40.83's screen.
+type DocFieldKey = Exclude<(typeof DOCUMENT_SNAPSHOT_KEYS)[number], "customFields" | "identity">;
 
 // The `satisfies` is what the old list's `satisfies readonly (keyof FormValues)[]`
 // gave and a bare annotation would drop: it still fails to compile if the
 // snapshot ever grows a key the FORM does not carry under the same name.
 const DOC_FIELD_KEYS: readonly DocFieldKey[] = DOCUMENT_SNAPSHOT_KEYS.filter(
-  (key): key is DocFieldKey => key !== "customFields",
+  (key): key is DocFieldKey => key !== "customFields" && key !== "identity",
 ) satisfies readonly (keyof FormValues)[];
 
 /** Per-field highlight frames, keyed by document field name. */
@@ -296,6 +299,8 @@ export function versionLabelColor(
   curr: DocumentSnapshot,
 ): HighlightColor {
   if (!prev) return "green";
+  // Slice 40.82: a change to an identity document's values is a modification like any field's.
+  if (!identitySnapshotsEqual(prev.identity, curr.identity)) return "red";
   return labelColorFromHighlights(true, computeFieldHighlights(prev, curr));
 }
 

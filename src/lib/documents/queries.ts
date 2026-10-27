@@ -47,6 +47,26 @@ import { assertRoleMayBeAttached } from "@/lib/admin/value-lists/role-attachment
 import { DocumentNotFoundError } from "@/lib/documents/document-not-found";
 import { cotaFromDb, cotaToDb, isCotaMod, type CotaMod } from "./cota-parte";
 import { assertLinkMayStoreShare, assertShareMayBeStored } from "./share-not-held";
+import {
+  IdentityWriteRefusedError,
+  deleteIdentityValues,
+  getIdentityValues,
+  getIdentityValuesFor,
+  identityKindOfTypeId,
+  putIdentityValues,
+} from "@/lib/identity-documents/queries";
+import {
+  IDENTITY_ON_ORDINARY_TYPE_CODE,
+  IDENTITY_VALUES_HELD_CODE,
+  checkIdentityWrite,
+  emptyIdentityValues,
+  identityHoldsValues,
+  identitySnapshotsEqual,
+  valuesOutsideKind,
+  type IdentityInput,
+  type IdentityValues,
+} from "@/lib/identity-documents/validation";
+import type { IdentityValueKey } from "@/lib/identity-documents/kinds";
 
 // ---------------------------------------------------------------------------
 // Return types
@@ -383,8 +403,13 @@ export type DocumentVersionItem = {
 // string), which is the branch that reads it.
 const SNAPSHOT_KEYS: ReadonlyArray<keyof DocumentSnapshot> = DOCUMENT_SNAPSHOT_KEYS;
 
-/** Build the canonical document snapshot from a freshly-fetched record. */
-export function snapshotFromFull(full: DocumentFull): DocumentSnapshot {
+/**
+ * Build the canonical document snapshot from a freshly-fetched record.
+ *
+ * Slice 40.82: `identity` is the document's identity_document row, read by the caller in the same transaction —
+ * null on an ordinary type, or on an identity document that has no row yet.
+ */
+export function snapshotFromFull(full: DocumentFull, identity: IdentityValues | null = null): DocumentSnapshot {
   return {
     documentTypeId:    full.documentTypeId    ?? null,
     title:             full.title             ?? null,
@@ -411,6 +436,8 @@ export function snapshotFromFull(full: DocumentFull): DocumentSnapshot {
     surveyorId:        full.surveyorId         ?? null,
     // Slice #21.03.Import
     customFields:      full.customFields ?? null,
+    // Slice 40.82
+    identity,
   };
 }
 
@@ -479,6 +506,11 @@ function snapshotsEqual(a: DocumentSnapshot, b: DocumentSnapshot): boolean {
       if (!customFieldsEqual(a.customFields, b.customFields)) return false;
       continue;
     }
+    // Slice 40.82: a nested block too; a snapshot from before 40.82 has none and equals an empty one.
+    if (k === "identity") {
+      if (!identitySnapshotsEqual(a.identity, b.identity)) return false;
+      continue;
+    }
     if (a[k] !== b[k]) return false;
   }
   return true;
@@ -535,7 +567,9 @@ export async function recordDocumentVersionsIfChanged(
           .select()
           .from(document)
           .where(inArray(document.id, idList));
-        return new Map(rows.map((r) => [r.id, snapshotFromFull(r)]));
+        // Slice 40.82: each document's identity values, through `tx`, so the snapshot is the whole of it.
+        const identities = await getIdentityValuesFor(tx, idList);
+        return new Map(rows.map((r) => [r.id, snapshotFromFull(r, identities.get(r.id) ?? null)]));
       },
       latestVersions: async (batch) => {
         const idList = [...batch];
@@ -629,11 +663,15 @@ export async function createDocument(
       })
       .returning();
 
+    // Slice 40.82: a document of an identity type gets its identity row with it — empty, or the values the body
+    // carries — so the document's values are in version 0. An ordinary type refuses a block that holds anything.
+    const identity = await writeIdentityOnCreate(tx, row.id, row.documentTypeId, input.identity);
+
     // Slice #18.06: record version 0 — the state at creation.
     await tx.insert(documentVersion).values({
       documentId:    row.id,
       versionNumber: 0,
-      snapshot:      snapshotFromFull(row),
+      snapshot:      snapshotFromFull(row, identity),
       updatedBy,
     });
 
@@ -651,11 +689,11 @@ export async function updateDocument(
   updatedBy: string | null = null,
   /** Slice #37.21: the version the form was loaded at; a later one refuses the save. */
   baseVersion?: number,
-): Promise<(DocumentFull & { version: number | null }) | null> {
+): Promise<(DocumentFull & { version: number | null; identityRemoved: IdentityValueKey[] }) | null> {
   return await db.transaction(async (tx) => {
     // Verify exists and not deleted.
     const existing = await tx
-      .select({ id: document.id })
+      .select({ id: document.id, documentTypeId: document.documentTypeId })
       .from(document)
       .where(eq(document.id, id))
       .limit(1)
@@ -710,8 +748,19 @@ export async function updateDocument(
         : null;
     }
 
+    // Slice 40.82: the identity values, judged against the type the document will HAVE — before anything is
+    // written, so a refusal leaves the document as it was.
+    const identityOutcome = await planIdentityUpdate(
+      tx,
+      id,
+      existing[0].documentTypeId,
+      input.documentTypeId ?? existing[0].documentTypeId,
+      input.identity,
+    );
+
     // patch always has at least updatedBy
     await tx.update(document).set(patch).where(eq(document.id, id));
+    await identityOutcome.apply();
 
     const [updated] = await tx
       .select()
@@ -731,10 +780,14 @@ export async function updateDocument(
       tx,
       [id],
       updatedBy,
-      new Map([[id, snapshotFromFull(updated)]]),
+      new Map([[id, snapshotFromFull(updated, identityOutcome.values)]]),
     );
 
-    return { ...updated, version: await latestVersionIn(tx, "document", id) };
+    return {
+      ...updated,
+      version: await latestVersionIn(tx, "document", id),
+      identityRemoved: identityOutcome.removed,
+    };
   });
 }
 
@@ -843,6 +896,83 @@ export async function deleteDocument(id: string): Promise<boolean> {
 }
 
 // ---------------------------------------------------------------------------
+// Identity values on create and update  (Slice 40.82)
+// ---------------------------------------------------------------------------
+
+/** A block that sets something — `null`, `{}` and all-null blocks set nothing. */
+function identityInputSetsSomething(input: IdentityInput | null | undefined): boolean {
+  return !!input && Object.values(input).some((v) => typeof v === "string" && v.trim() !== "");
+}
+
+async function writeIdentityOnCreate(
+  tx: DbTransaction,
+  documentId: string,
+  documentTypeId: string,
+  input: IdentityInput | null | undefined,
+): Promise<IdentityValues | null> {
+  const kind = await identityKindOfTypeId(tx, documentTypeId);
+  if (kind === null) {
+    if (identityInputSetsSomething(input)) {
+      throw new IdentityWriteRefusedError(IDENTITY_ON_ORDINARY_TYPE_CODE, Object.keys(input ?? {}));
+    }
+    return null;
+  }
+  const check = checkIdentityWrite(kind, input ?? {});
+  if (!check.ok) throw new IdentityWriteRefusedError(check.code, check.fields);
+  const values: IdentityValues = { ...emptyIdentityValues(), ...check.values };
+  await putIdentityValues(tx, documentId, values);
+  return values;
+}
+
+/**
+ * What an update does to the identity row, decided before the document is written.
+ *
+ *   - To an ORDINARY type: a block that sets something is refused; a document whose stored values hold anything is
+ *     refused too (`identity_values_held` — design 2.4: not to an ordinary type while identity values are held);
+ *     an empty row is removed.
+ *   - To an IDENTITY kind: the block is judged against that kind; values the kind has no field for — what a change
+ *     between kinds leaves behind — are removed, and named in `removed` so the caller can say so.
+ */
+async function planIdentityUpdate(
+  tx: DbTransaction,
+  documentId: string,
+  fromTypeId: string,
+  toTypeId: string,
+  input: IdentityInput | null | undefined,
+): Promise<{ values: IdentityValues | null; removed: IdentityValueKey[]; apply: () => Promise<void> }> {
+  const kind = await identityKindOfTypeId(tx, toTypeId);
+  const stored = await getIdentityValues(tx, documentId);
+  if (kind === null) {
+    if (identityInputSetsSomething(input)) {
+      throw new IdentityWriteRefusedError(IDENTITY_ON_ORDINARY_TYPE_CODE, Object.keys(input ?? {}));
+    }
+    if (fromTypeId !== toTypeId && identityHoldsValues(stored)) {
+      throw new IdentityWriteRefusedError(IDENTITY_VALUES_HELD_CODE, []);
+    }
+    return {
+      values: null,
+      removed: [],
+      apply: async () => {
+        if (stored !== null && !identityHoldsValues(stored)) await deleteIdentityValues(tx, documentId);
+      },
+    };
+  }
+  const check = checkIdentityWrite(kind, input ?? {});
+  if (!check.ok) throw new IdentityWriteRefusedError(check.code, check.fields);
+  const base = stored ?? emptyIdentityValues();
+  const removed = valuesOutsideKind(kind, base);
+  const values: IdentityValues = { ...base, ...Object.fromEntries(removed.map((k) => [k, null])), ...check.values };
+  const unchanged = stored !== null && identitySnapshotsEqual(stored, values);
+  return {
+    values,
+    removed,
+    apply: async () => {
+      if (!unchanged) await putIdentityValues(tx, documentId, values);
+    },
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Internal helper — maps validated input to DB insert values
 // ---------------------------------------------------------------------------
 
@@ -895,6 +1025,8 @@ function inputToValues(
 export type DocumentTypeTemplate = {
   key:    string;
   name:   string;
+  /** Slice 40.82: the identity-kind marker (null on an ordinary type). */
+  identityKind: string | null;
   fields: DocumentTemplateField[];
 };
 
@@ -912,13 +1044,14 @@ export async function getDocumentTypeTemplate(
       key:            lookupDocumentType.key,
       name:           lookupDocumentType.name,
       templateFields: lookupDocumentType.templateFields,
+      identityKind:   lookupDocumentType.identityKind,
     })
     .from(lookupDocumentType)
     .where(eq(lookupDocumentType.id, documentTypeId))
     .limit(1);
 
   if (!row) return null;
-  return { key: row.key, name: row.name, fields: parseTemplateFields(row.templateFields) };
+  return { key: row.key, name: row.name, identityKind: row.identityKind ?? null, fields: parseTemplateFields(row.templateFields) };
 }
 
 /**
@@ -933,13 +1066,15 @@ export async function getDocumentTypeTemplate(
  */
 export async function getDocumentTypeForTemplateEdit(
   documentTypeId: string,
-): Promise<{ id: string; key: string; name: string; fields: DocumentTemplateField[] } | null> {
+): Promise<{ id: string; key: string; name: string; identityKind: string | null; fields: DocumentTemplateField[] } | null> {
   const [row] = await db
     .select({
       id:             lookupDocumentType.id,
       key:            lookupDocumentType.key,
       name:           lookupDocumentType.name,
       templateFields: lookupDocumentType.templateFields,
+      // Slice 40.82: the identity-kind marker, which the identity-card form guard reads.
+      identityKind:   lookupDocumentType.identityKind,
     })
     .from(lookupDocumentType)
     .where(eq(lookupDocumentType.id, documentTypeId))
@@ -950,6 +1085,7 @@ export async function getDocumentTypeForTemplateEdit(
     id:     row.id,
     key:    row.key,
     name:   row.name,
+    identityKind: row.identityKind ?? null,
     fields: parseTemplateFields(row.templateFields),
   };
 }

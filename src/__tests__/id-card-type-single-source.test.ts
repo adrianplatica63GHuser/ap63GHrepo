@@ -35,7 +35,7 @@
 import { readFileSync, readdirSync, statSync } from "fs";
 import { join, relative, sep } from "path";
 
-import { documentTypeIsIdCard, ID_CARD_TYPE_KEYS } from "@/lib/import/id-card";
+import { documentTypeIsIdentity, IDENTITY_TYPE_KEYS } from "@/lib/identity-documents/kinds";
 import {
   ID_CARD_FORM_CODE,
   ID_CARD_RENAME_CODE,
@@ -59,7 +59,7 @@ const read = (rel: string): string => readFileSync(join(ROOT, rel), "utf8");
  * self-clean even if someone later narrows that exclusion.
  */
 const NAME_TEST = "isIdCard" + "TypeName";
-const KEY_LIST = "ID_CARD" + "_TYPE_KEYS";
+const KEY_LIST = "ID_CARD" + "_READ_TYPE_KEYS";
 
 /** Strips block and line comments so a mention in prose is not a match. */
 function stripComments(source: string): string {
@@ -152,47 +152,45 @@ const VEHICLE_NAMES = [
   "Carte de identitate remorcă",
 ];
 
-describe("documentTypeIsIdCard — one answer, over the row's own two columns", () => {
-  it.each(CARD_NAMES)("accepts the NAME %s on an ordinary key", (name) => {
-    expect(documentTypeIsIdCard({ key: "CONTRACT_VANZARE", name })).toBe(true);
+// Slice 40.82: `documentTypeIsIdCard` (key OR name) became `documentTypeIsIdentity`, which reads the row's
+// `identity_kind` marker — migration_118 — and falls back to the four kinds' KEYS where the caller's row does not
+// carry the column. The NAME is never asked any more: the name lists above, which used to be accepted or refused by
+// name, are all ordinary types now unless they carry the marker.
+describe("documentTypeIsIdentity — one answer, read off the marker", () => {
+  it.each(CARD_NAMES)("does NOT accept the NAME %s on an ordinary key (was: accepted, by name)", (name) => {
+    expect(documentTypeIsIdentity({ key: "CONTRACT_VANZARE", identityKind: null, ...({ name } as object) })).toBe(false);
+    expect(documentTypeIsIdentity({ key: "CONTRACT_VANZARE" })).toBe(false);
   });
 
-  it.each(NOT_CARD_NAMES)("refuses the NAME %s", (name) => {
-    expect(documentTypeIsIdCard({ key: "CONTRACT_VANZARE", name })).toBe(false);
+  it.each(NOT_CARD_NAMES.concat(VEHICLE_NAMES))("refuses %s, as before", () => {
+    expect(documentTypeIsIdentity({ key: "CONTRACT_VANZARE" })).toBe(false);
+    expect(documentTypeIsIdentity({ key: "CARTE_IDENTITATE_VEHICUL" })).toBe(false);
   });
 
-  it.each(VEHICLE_NAMES)("refuses %s — a vehicle's registration document", (name) => {
-    expect(documentTypeIsIdCard({ key: "CARTE_IDENTITATE_VEHICUL", name })).toBe(false);
+  it("the marker decides wherever the row carries it — even against the key", () => {
+    expect(documentTypeIsIdentity({ key: "ORICE", identityKind: "PASAPORT" })).toBe(true);
+    expect(documentTypeIsIdentity({ key: "CARTE_IDENTITATE", identityKind: null })).toBe(false);
+    expect(documentTypeIsIdentity({ key: "X", identityKind: "NOT_A_KIND" })).toBe(false);
   });
 
-  it("accepts the seeded KEY whatever the name says", () => {
-    // The key arm answers on its own: a row renamed by hand is still the
-    // archive's identity-card type, and `getPersonIdCardLink` matches the key.
-    expect(documentTypeIsIdCard({ key: "CARTE_IDENTITATE", name: "Contract de Vânzare" })).toBe(
-      true,
-    );
-    expect(documentTypeIsIdCard({ key: "  CARTE_IDENTITATE  ", name: "" })).toBe(true);
+  it("without the column, the four kinds' keys decide, trimmed", () => {
+    for (const key of IDENTITY_TYPE_KEYS) expect(documentTypeIsIdentity({ key })).toBe(true);
+    expect(documentTypeIsIdentity({ key: "  CARTE_IDENTITATE  " })).toBe(true);
   });
 
   it("is silent about nothing at all", () => {
-    expect(documentTypeIsIdCard({})).toBe(false);
-    expect(documentTypeIsIdCard({ key: "", name: "" })).toBe(false);
-    expect(documentTypeIsIdCard({ key: "   ", name: "   " })).toBe(false);
-    expect(documentTypeIsIdCard({ key: null, name: null })).toBe(false);
+    expect(documentTypeIsIdentity({})).toBe(false);
+    expect(documentTypeIsIdentity({ key: "" })).toBe(false);
+    expect(documentTypeIsIdentity({ key: "   " })).toBe(false);
+    expect(documentTypeIsIdentity({ key: null })).toBe(false);
+    expect(documentTypeIsIdentity(null)).toBe(false);
   });
 
   it("takes no scan signal — the three scan-aware variants stay separate", () => {
-    // ⚠️ **A COMPILE-TIME assertion, and an adversarial round is why.** The
-    // first version of this test asserted
-    // `documentTypeIsIdCard({ key: "ALTUL", name: "Buletin" }) === false`,
-    // which `NOT_CARD_NAMES` already covers and which says nothing at all about
-    // the parameter: someone could widen it to take the scan's verdict and OR
-    // that in — the exact change this function's header forbids — and the
-    // assertion would stay green. Excess-property checking fails today and
-    // stops failing the moment the parameter widens, which is the fact the
-    // test is actually about.
-    // @ts-expect-error — the parameter is the ROW's two columns and nothing else
-    documentTypeIsIdCard({ key: "ALTUL", name: "Buletin", isIdCard: true });
+    // ⚠️ A COMPILE-TIME assertion (#32.07): excess-property checking fails today and stops failing the moment the
+    // parameter widens to take the scan's verdict.
+    // @ts-expect-error — the parameter is the ROW's key and marker and nothing else
+    documentTypeIsIdentity({ key: "ALTUL", isIdCard: true });
   });
 });
 
@@ -265,13 +263,25 @@ describe("idCardFormRefusal — what a write would leave behind", () => {
     ).toBe("form");
   });
 
-  it("still refuses a name-only write that makes an ORDINARY type a card", () => {
-    // The carve-out above is about a row that was ALREADY wrong. This one is
-    // the write that makes it wrong, and it carries no `templateFields` either.
+  // ⚠️ Slice 40.82 INVERTED this one. It read „still refuses a name-only write that makes an ORDINARY type a card",
+  // expecting "rename": a NAME made a type a card. A name no longer does — the marker does, and no write through
+  // these doors can set it — so the write is an ordinary rename of an ordinary type. The KEY arm below is what is
+  // left of "making an ordinary type a card", and it is still refused.
+  it("a name-only write no longer makes an ORDINARY type a card (Slice 40.82)", () => {
     expect(
       idCardFormRefusal(
         { ...PLAIN, hasForm: true },
         { key: PLAIN.key, name: "Carte de identitate", hasForm: true },
+        false,
+      ),
+    ).toBeNull();
+  });
+
+  it("a write that moves an ordinary type's KEY onto an identity kind's is still `rename`", () => {
+    expect(
+      idCardFormRefusal(
+        { ...PLAIN, hasForm: true },
+        { key: "PASAPORT", name: PLAIN.name, hasForm: true },
         false,
       ),
     ).toBe("rename");
@@ -280,8 +290,12 @@ describe("idCardFormRefusal — what a write would leave behind", () => {
   it("refuses a CREATE that is an identity card with a form, as `form`", () => {
     // No stored row, so there is no rename to undo — the fields are the change.
     expect(idCardFormRefusal(null, { ...CARD, hasForm: true }, true)).toBe("form");
+    // Slice 40.82: by its marker or its key — a NAME alone („Buletin de identitate" under key X) no longer makes one.
     expect(
       idCardFormRefusal(null, { key: "X", name: "Buletin de identitate", hasForm: true }, true),
+    ).toBeNull();
+    expect(
+      idCardFormRefusal(null, { key: "X", identityKind: "CI_VECHE", hasForm: true }, true),
     ).toBe("form");
   });
 
@@ -291,11 +305,12 @@ describe("idCardFormRefusal — what a write would leave behind", () => {
     expect(idCardFormRefusal(null, { ...CARD, hasForm: false }, false)).toBeNull();
   });
 
-  it("calls a rename that ADDS the form `form`, because the fields are the change", () => {
+  it("calls a re-key that ADDS the form `form`, because the fields are the change", () => {
+    // Slice 40.82: was a RENAME into „Carte de identitate"; a name no longer makes a card, the key does.
     expect(
       idCardFormRefusal(
         { ...PLAIN, hasForm: false },
-        { key: PLAIN.key, name: "Carte de identitate", hasForm: true },
+        { key: "CARTE_IDENTITATE_VECHE", name: PLAIN.name, hasForm: true },
         true,
       ),
     ).toBe("form");
@@ -360,7 +375,6 @@ describe("idCardFormRefusal — what a write would leave behind", () => {
  */
 const KEY_LIST_ALLOWED = [
   "lib/import/id-card.ts",
-  "lib/persons/queries.ts",
 ];
 
 describe("the identity-card TYPE test has one definition", () => {
@@ -372,12 +386,12 @@ describe("the identity-card TYPE test has one definition", () => {
 
   it("exports the predicate exactly once", () => {
     const definitions = files.filter((file) =>
-      /export\s+function\s+documentTypeIsIdCard\s*\(/.test(
+      /export\s+function\s+documentTypeIsIdentity\s*\(/.test(
         stripComments(readFileSync(file, "utf8")),
       ),
     );
     expect(definitions.map((f) => relative(SRC, f))).toEqual([
-      join("lib", "import", "id-card.ts"),
+      join("lib", "identity-documents", "kinds.ts"),
     ]);
   });
 
@@ -632,7 +646,7 @@ describe("every server door that writes template_fields consults the predicate",
     // false on a card the scan mislabelled. The resolution carries the server's
     // verdict instead.
     const code = stripComments(read("src/lib/documents/resolve-document-type.ts"));
-    expect(code).toContain("documentTypeIsIdCard");
+    expect(code).toContain("documentTypeIsIdentity");
     expect(code).toMatch(/isIdCard:/);
   });
 
@@ -695,7 +709,7 @@ describe("the scan-aware variants still add the scan's own signal", () => {
     // asks `docTypeIdCardRef.get(id) === true || isIdCardEntry(sr)`, so the
     // gate has to ask the scan too or it stops imports the run never flags.
     const body = bodyOf(GATE(), "existingTypeOf") || fnBodyOf(GATE(), "existingTypeOf");
-    expect(body).toContain("documentTypeIsIdCard(");
+    expect(body).toContain("documentTypeIsIdentity(");
     expect(body).toContain("entry.isIdCard");
   });
 
@@ -704,7 +718,7 @@ describe("the scan-aware variants still add the scan's own signal", () => {
     // proposed label would excuse types the run would then flag.
     const body = fnBodyOf(GATE(), "newTypeOf");
     expect(body).toContain("entry.isIdCard");
-    expect(body).not.toContain("documentTypeIsIdCard(");
+    expect(body).not.toContain("documentTypeIsIdentity(");
   });
 
   it("the wizard's type-form step still ORs the scan's signal", () => {
@@ -739,24 +753,28 @@ describe("the scan-aware variants still add the scan's own signal", () => {
 const MIGRATION = "src/db/migration_073_id_card_types_hold_no_form.sql";
 const ID_CARD_SRC = read("src/lib/import/id-card.ts");
 
-/** The regex literal `isIdCardTypeName` returns, as source text. */
+/**
+ * The regex literal `isIdCardTypeName` returned, as source text — FROZEN in Slice 40.82, which retired that function
+ * (an identity type is recognised by its marker now). migration_073 is applied history and never changes, so its
+ * predicate is pinned to the rule as it stood when it ran rather than to a function that no longer exists.
+ */
 function positivePatternSource(): string {
-  const body = ID_CARD_SRC.slice(ID_CARD_SRC.indexOf("export function isIdCardTypeName"));
-  const m = /return\s+\/([\s\S]*?)\/\.test\(/.exec(body);
-  return m === null ? "" : m[1];
+  return String.raw`(^|[^a-z0-9])(cart(e|ea|i)|act(e)?|buletin)\s+(de\s+)?identitate([^a-z0-9]|$)`;
 }
+/** `ID_CARD_TYPE_KEYS` as migration_073 knew it — frozen in Slice 40.82 for the same reason. */
+const ID_CARD_TYPE_KEYS_073 = ["CARTE_IDENTITATE"] as const;
 
 describe("migration_073's SQL predicate is the TypeScript one", () => {
   const sql = read(MIGRATION);
 
-  it("carries every ID_CARD_TYPE_KEYS member, and no other key", () => {
+  it("carries every key migration_073 knew (ID_CARD_TYPE_KEYS, frozen), and no other", () => {
     const m = /ARRAY\[([^\]]*)\]/.exec(sql);
     expect(m).not.toBeNull();
     const keys = (m as RegExpExecArray)[1]
       .split(",")
       .map((k) => k.trim().replace(/^'|'$/g, ""))
       .filter((k) => k !== "");
-    expect(keys.sort()).toEqual([...ID_CARD_TYPE_KEYS].sort());
+    expect(keys.sort()).toEqual([...ID_CARD_TYPE_KEYS_073].sort());
   });
 
   /**
@@ -823,7 +841,7 @@ describe("migration_073's SQL predicate is the TypeScript one", () => {
       p.replace(/^\\b/, "(^|[^a-z0-9])").replace(/\\b$/, "([^a-z0-9]|$)");
     const expected = [
       "SELECT",
-      `btrim(coalesce($1, '')) = ANY (ARRAY[${[...ID_CARD_TYPE_KEYS]
+      `btrim(coalesce($1, '')) = ANY (ARRAY[${[...ID_CARD_TYPE_KEYS_073]
         .map((k) => `'${k}'`)
         .join(", ")}])`,
       "OR (",

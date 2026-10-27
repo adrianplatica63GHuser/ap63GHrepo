@@ -46,6 +46,8 @@ const EMPTY_SNAP: DocumentSnapshot = {
   // updated with it, so the file no longer type-checked (found by the tsc pass
   // in Slice #21.07.Import).
   customFields:      null,
+  // Slice 40.82: an ordinary document's identity block
+  identity:          null,
 };
 
 function snap(over: Partial<DocumentSnapshot> = {}): DocumentSnapshot {

@@ -9,6 +9,7 @@
  */
 
 import { z } from "zod/v4";
+import { identityInputSchema, type IdentitySnapshot } from "@/lib/identity-documents/validation";
 
 // ---------------------------------------------------------------------------
 // Base schema — all nullable except `documentTypeId`
@@ -56,6 +57,11 @@ const documentBase = z.object({
   // Loosely typed on purpose — the actual shape is admin/AI-defined per type,
   // not known at compile time.
   customFields: z.record(z.string(), z.string().nullable()).nullish(),
+
+  // Slice 40.82: an identity document's own values (src/lib/identity-documents). Only on a type that carries
+  // `identity_kind`; the fields a kind has are code (kinds.ts), and `checkIdentityWrite` judges every write. A
+  // PATCH changes only the keys it names. Written in the same transaction as the document, and versioned.
+  identity: identityInputSchema.nullish(),
 });
 
 // ---------------------------------------------------------------------------
@@ -186,4 +192,7 @@ export type DocumentSnapshot = {
   // document type. Compared as a normalised record (see customFieldsEqual in
   // template-fields.ts), not via the flat `!==` used for the other keys.
   customFields:      Record<string, string | null> | null;
+  // Slice 40.82: an identity document's values (null on an ordinary type). Compared by `identitySnapshotsEqual`,
+  // like `customFields` a nested block; a snapshot written before 40.82 has no such key and reads as holding none.
+  identity:          IdentitySnapshot | null;
 };

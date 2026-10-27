@@ -178,7 +178,8 @@ import type { ScanResult } from "./scan-table";
 import { inferProvenanceForFiles } from "@/lib/metadata/provenance-rules";
 import type { ProvenanceCode } from "@/lib/metadata/provenance";
 import { ProvenanceField } from "./provenance-field";
-import { documentTypeIsIdCard, isIdCardEntry } from "@/lib/import/id-card";
+import { isIdCardEntry } from "@/lib/import/id-card";
+import { documentTypeIsIdentity } from "@/lib/identity-documents/kinds";
 import { isDeclaredCoordinateFile } from "@/lib/import/structure-rules";
 import type { EntryAssignment } from "@/lib/import/property-folders";
 import { titleForEntry, type PreexistingRow } from "@/lib/import/preexisting-check";
@@ -884,7 +885,7 @@ async function readTypeCatalogue(): Promise<TypeCatalogueRead> {
     // since. (Slice #34.11)
     readFailed: false,
     idCardTypeIds: fresh
-      .filter((item, i) => !typeRows[i].hasForm && documentTypeIsIdCard(item))
+      .filter((item, i) => !typeRows[i].hasForm && documentTypeIsIdentity(item))
       .map((item) => item.id),
     typeRows,
   };
@@ -1284,7 +1285,7 @@ type EnsuredDocType = {
    *
    * ⚠️ **Carried rather than recomputed, and the difference is real.** `row`
    * above holds this client's own label where the server gave no name and `""`
-   * where it gave no key, so asking `documentTypeIsIdCard(row)` here would be a
+   * where it gave no key, so asking `documentTypeIsIdentity(row)` here would be a
    * second opinion built from a worse copy of the two columns the question is
    * about. The resolver answers from the stored row.
    *
@@ -2375,7 +2376,7 @@ export function BulkImportDialog({
         items.map((item) => [item.id, documentTypeHasForm(item.templateFields)]),
       );
       docTypeIdCardRef.current = new Map(
-        items.map((item) => [item.id, documentTypeIsIdCard(item)]),
+        items.map((item) => [item.id, documentTypeIsIdentity(item)]),
       );
       // Slice #27.07 — the BEFORE half of "gained a form during this run",
       // taken once, here, from the same list and the same function the two maps

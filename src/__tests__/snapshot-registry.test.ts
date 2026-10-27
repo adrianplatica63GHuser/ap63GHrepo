@@ -21,8 +21,13 @@
  * No DB, no React, no network — pure structural checks.
  */
 
+import { readFileSync } from "fs";
+import { join } from "path";
+import { emptyIdentityValues, type IdentitySnapshot } from "@/lib/identity-documents/validation";
+import { IDENTITY_VALUE_KEYS } from "@/lib/identity-documents/kinds";
 import {
   DOCUMENT_SNAPSHOT_KEYS,
+  IDENTITY_SNAPSHOT_KEYS,
   JUDICIAL_PERSON_SNAPSHOT_FIELDS_KEYS,
   METADATA_SNAPSHOT_KEYS,
   NATURAL_PERSON_SNAPSHOT_FIELDS_KEYS,
@@ -220,8 +225,30 @@ describe("DOCUMENT_SNAPSHOT_KEYS", () => {
       // Slice #21.03 added customFields to DocumentSnapshot; see the note in
       // document-versions.test.ts.
       customFields:      null,
+      // Slice 40.82
+      identity:          null,
     };
     expect(sortedKeys(dummy)).toEqual(sortedArray(DOCUMENT_SNAPSHOT_KEYS));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Identity snapshot (Slice 40.82) — the `identity` block of a document snapshot
+// ---------------------------------------------------------------------------
+
+describe("IDENTITY_SNAPSHOT_KEYS", () => {
+  it("matches IdentitySnapshot exactly, and the table's fields", () => {
+    const dummy: IdentitySnapshot = emptyIdentityValues();
+    expect(sortedKeys(dummy)).toEqual(sortedArray(IDENTITY_SNAPSHOT_KEYS));
+    expect(sortedArray(IDENTITY_SNAPSHOT_KEYS)).toEqual(sortedArray(IDENTITY_VALUE_KEYS));
+  });
+
+  it("is what migration_118 writes into a snapshot's `identity`", () => {
+    const sql = readFileSync(join(process.cwd(), "src/db/migration_118_identity_documents.sql"), "utf8");
+    const empty = /m118_empty\(\) RETURNS jsonb AS \$f\$([\s\S]*?)\$f\$/.exec(sql);
+    expect(empty).not.toBeNull();
+    const keys = [...(empty as RegExpExecArray)[1].matchAll(/'([a-zA-Z]+)', NULL/g)].map((m) => m[1]);
+    expect(keys.sort()).toEqual(sortedArray(IDENTITY_SNAPSHOT_KEYS));
   });
 });
 

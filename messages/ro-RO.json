@@ -5203,5 +5203,53 @@
     "night": "Noapte",
     "nightLong": "Noapte (Mod Întunecat)",
     "appearance": "Aspect"
+  },
+  "identityDocument": {
+    "kinds": {
+      "CI_VECHE": "Carte de identitate (model vechi)",
+      "CI_NOU": "Carte de identitate (model nou)",
+      "PASAPORT": "Pașaport",
+      "PASAPORT_CRDS": "Pașaport CRDS"
+    },
+    "fields": {
+      "seriesAndNumber": "Seria și numărul",
+      "passportNumber": "Nr. pașaportului",
+      "issueDate": "Data eliberării",
+      "passportIssueDate": "Data emiterii",
+      "validUntil": "Valabil până la",
+      "passportValidUntil": "Data expirării",
+      "issuer": "Emisă de",
+      "passportIssuer": "Autoritatea emitentă",
+      "lastName": "Nume",
+      "firstName": "Prenume",
+      "fatherFirstName": "Prenumele tatălui",
+      "motherFirstName": "Prenumele mamei",
+      "cnp": "CNP",
+      "sex": "Sex",
+      "dateOfBirth": "Data nașterii",
+      "placeOfBirth": "Locul nașterii",
+      "civilStatus": "Starea civilă",
+      "nationality": "Cetățenia",
+      "domicileAddress": "Domiciliu",
+      "domicileCounty": "Domiciliu — județul",
+      "domicileCountry": "Domiciliu — țara",
+      "issuerOfficer": "Lucrătorul care a eliberat-o",
+      "passportType": "Tip",
+      "countryCode": "Codul țării",
+      "mrz": "MRZ",
+      "cardNumber": "Nr. card"
+    },
+    "errors": {
+      "identity_field_not_in_kind": "Acest tip de act de identitate nu are câmpul: {fields}.",
+      "identity_cnp_invalid": "CNP-ul trebuie să aibă 13 cifre și o cifră de control corectă.",
+      "identity_date_invalid": "Data nașterii nu este o dată validă.",
+      "identity_sex_invalid": "Sexul este „F” sau „M”.",
+      "identity_on_ordinary_type": "Doar un act de identitate are aceste câmpuri.",
+      "identity_values_held": "Actul de identitate are valori completate; golește-le înainte să-i schimbi tipul într-unul obișnuit."
+    },
+    "warnings": {
+      "cnp_sex_mismatch": "CNP-ul nu corespunde sexului de pe act.",
+      "cnp_birth_date_mismatch": "CNP-ul nu corespunde datei nașterii de pe act."
+    }
   }
 }

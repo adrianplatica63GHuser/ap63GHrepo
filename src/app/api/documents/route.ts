@@ -16,6 +16,8 @@ import { documentCreateSchema } from "@/lib/documents/validation";
 import { provenanceFromRequestBody } from "@/lib/metadata/provenance";
 import { setInitialProvenance } from "@/lib/metadata/queries";
 import { getCurrentUserEmail } from "@/lib/auth/current-user";
+import { db } from "@/db";
+import { identityBlockFor, identityRefusalToResponse } from "@/lib/identity-documents/queries";
 import { getTimeFrameSettings } from "@/lib/time-frames/queries";
 import { parseDocumentListRequest } from "@/lib/documents/list-request";
 import { getDays } from "@/lib/time-frames/config";
@@ -98,8 +100,14 @@ export async function POST(request: NextRequest): Promise<Response> {
           // Best-effort, as documented — never at the cost of the 201.
         });
     }
-    return Response.json(result, { status: 201 });
+    // Slice 40.82: the identity block, as GET /api/documents/[id] returns it (null on an ordinary type).
+    return Response.json(
+      { ...result, identity: await identityBlockFor(db, result.id, result.documentTypeId) },
+      { status: 201 },
+    );
   } catch (err) {
+    const identityRefusal = identityRefusalToResponse(err);
+    if (identityRefusal) return identityRefusal;
     const dbResponse = dbErrorToResponse(err);
     if (dbResponse) return dbResponse;
     return unexpectedError(err, "POST /api/documents");

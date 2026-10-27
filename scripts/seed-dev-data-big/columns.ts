@@ -94,7 +94,7 @@ export const SEED_COLUMNS: Record<string, TableFill> = {
   },
   lookup_judicial_person_type: { scope: null, columns: { name: REF, sort_order: REF, public_body: REF } },
   lookup_citizenship: { scope: null, columns: { name: REF, sort_order: REF } },
-  lookup_document_type: { scope: null, columns: { key: REF, name: REF, short_name: REF, sort_order: REF, template_fields: REF, origin: REF } },
+  lookup_document_type: { scope: null, columns: { key: REF, name: REF, short_name: REF, sort_order: REF, template_fields: REF, origin: REF, identity_kind: REF } },
   lookup_doc_type_person_role: { scope: null, columns: { document_type_id: REF, person_role_id: REF, holds_share: REF } },
   lookup_property_property_role: { scope: null, columns: { name: REF, description: REF, sort_order: REF } },
   lookup_document_document_role: { scope: null, columns: { name: REF, description: REF, sort_order: REF } },
@@ -109,6 +109,15 @@ export const SEED_COLUMNS: Record<string, TableFill> = {
     },
   },
   document_version: { scope: null, columns: { document_id: APP, version_number: APP, snapshot: APP, updated_by: APP } },
+  // Slice 40.82: what an identity document printed — every field held by one of the seed's four kinds
+  identity_document: {
+    scope: { column: "document_id", set: "documents" },
+    columns: {
+      document_id: APP, last_name: S, first_name: S, cnp: S, sex: S, date_of_birth: S, place_of_birth: S, nationality: S,
+      father_first_name: S, mother_first_name: S, civil_status: S, domicile_address: S, domicile_county: S,
+      domicile_country: S, issuer_officer: S, passport_type: S, country_code: S, mrz: S, card_number: S,
+    },
+  },
   property_person: { scope: { column: "property_id", set: "properties" }, columns: { property_id: S, person_id: S, person_role_id: S } },
   property_document: { scope: { column: "property_id", set: "properties" }, columns: { property_id: S, document_id: S } },
   property_property: { scope: { column: "property_id_a", set: "properties" }, columns: { property_id_a: S, property_id_b: S, relationship_role_id: S, role_reads_a_to_b: APP } },

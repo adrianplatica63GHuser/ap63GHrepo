@@ -288,7 +288,9 @@ export const KNOWN_DOCUMENT_TYPES = [
   { key: "AUTORIZATIE",                 name: "Autorizație" },
   { key: "AUTORIZATIE_CONSTRUIRE",      name: "Autorizație De Construire" },
   { key: "AVIZ_INSTITUTIE",             name: "Aviz de Instituție" },
-  { key: "CARTE_IDENTITATE",            name: "Carte de Identitate" },
+  // Slice 40.82: the four identity kinds (migration_118). Today's card keeps its key under its new name.
+  { key: "CARTE_IDENTITATE",            name: "Carte de Identitate (model nou)" },
+  { key: "CARTE_IDENTITATE_VECHE",      name: "Carte de Identitate (model vechi)" },
   { key: "CERERE_DESPAGUBIRE",          name: "Cerere de Despăgubire" },
   { key: "CERTIFICAT_BUNURI",           name: "Certificat de Bunuri" },
   { key: "CERTIFICAT_FISCAL",           name: "Certificat Fiscal" },
@@ -312,6 +314,8 @@ export const KNOWN_DOCUMENT_TYPES = [
   { key: "HOTARARE_JUDECATOREASCA",     name: "Hotărâre Judecătorească" },
   { key: "INCHEIERE_INTABULARE",        name: "Încheiere de Intabulare" },
   { key: "PLAN_AMPLASAMENT_DELIMITARE", name: "Plan de Amplasament și Delimitare" },
+  { key: "PASAPORT",                    name: "Pașaport" },
+  { key: "PASAPORT_CRDS",               name: "Pașaport CRDS" },
   { key: "PLAN_PARCELAR",               name: "Plan Parcelar" },
   { key: "PROCURA",                     name: "Procură" },
   { key: "TESTAMENT",                   name: "Testament" },
@@ -432,7 +436,9 @@ Shape:
 }
 
 Rules:
-- CARTE_IDENTITATE only when the document is clearly a Romanian national ID card (CI) or a similar personal identity card.
+- CARTE_IDENTITATE only when the document is clearly a Romanian national ID card (CI) or a similar personal identity card: a laminated or plastic card with a CNP and a machine-readable zone (MRZ) at the bottom.
+- CARTE_IDENTITATE_VECHE is the older booklet, the "buletin de identitate": a small book with handwritten or typed pages, the parents' first names, a civil status and an officer's signature, no MRZ.
+- PASAPORT and PASAPORT_CRDS are Romanian passports ("Pașaport", "Passport", a "P" type and "ROU" country code). Choose PASAPORT_CRDS when the passport states a domicile abroad (a country other than Romania, or "CRDS"), PASAPORT otherwise.
 - Choose between two keys by the NAME beside them, never by the key alone. CERTIFICAT_BUNURI is stored as "Certificat de Bunuri" and CERTIFICAT_SARCINI as "Certificat de Sarcini"; AUTORIZATIE is the general "Autorizație" and AUTORIZATIE_CONSTRUIRE is a building permit.
 - ACT_PARTAJ and CONTRACT_PARTAJ both divide co-owned property and are NOT interchangeable. ACT_PARTAJ is the notarial deed that performs the division ("act de partaj", "act de partaj voluntar"); CONTRACT_PARTAJ is the contract the parties agree it under ("contract de partaj"). Read the document's own heading and use that; if the heading says only "partaj" with no other word, choose CONTRACT_PARTAJ.
 - ANTECONTRACT is a promise to sell later ("antecontract", "promisiune de vânzare"), never CONTRACT_VANZARE, which transfers ownership now.

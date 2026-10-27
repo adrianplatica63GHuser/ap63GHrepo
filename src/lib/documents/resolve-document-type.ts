@@ -115,7 +115,7 @@ import { pgErrorCode } from "@/lib/api/errors";
 import { advisoryLockKeys } from "@/lib/properties/import-property-plan";
 import { asDocumentTypeNameTaken } from "@/lib/documents/document-type-name-guard";
 import { canonicalTypeKey } from "@/lib/import/classify-prompts";
-import { documentTypeIsIdCard } from "@/lib/import/id-card";
+import { documentTypeIsIdentity } from "@/lib/identity-documents/kinds";
 import {
   normaliseDocumentTypeName,
   resolveAgainstTypes,
@@ -296,7 +296,7 @@ export async function resolveClassifiedDocumentType(
         id:       resolution.row.id,
         key:      resolution.row.key,
         name:     resolution.row.name,
-        isIdCard: documentTypeIsIdCard(resolution.row),
+        isIdCard: documentTypeIsIdentity(resolution.row),
       };
     }
     if (resolution.kind === "declined") return { outcome: "unclassified", id: null };
@@ -403,7 +403,7 @@ export async function resolveClassifiedDocumentType(
           id:       created.row.id,
           key:      created.row.key,
           name:     created.row.name,
-          isIdCard: documentTypeIsIdCard(created.row),
+          isIdCard: documentTypeIsIdentity(created.row),
         };
       }
       const createdKey  = textOf(created.row.key, "");
@@ -417,7 +417,8 @@ export async function resolveClassifiedDocumentType(
         // whose preferred key was refused carries a slug, and the NAME is the
         // model's label rather than the catalogue's stored name (see the
         // create block above for why that trade is the right way round).
-        isIdCard: documentTypeIsIdCard({ key: createdKey, name: createdName }),
+        // Slice 40.82: a row created here carries no marker (only migrations write it), so its key decides.
+        isIdCard: documentTypeIsIdentity({ key: createdKey }),
       };
     } catch (err) {
       // ⚠️ **THREE WAYS TO LOSE THIS RACE, AND THEY GET THE SAME ANSWER.**
