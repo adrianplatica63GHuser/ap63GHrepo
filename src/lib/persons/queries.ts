@@ -50,9 +50,7 @@ import {
   principalObject,
 } from "@/db/schema";
 import {
-  LEGACY_PERSON_ID_CARD_KEYS,
   type AllPersonsListQuery,
-  type LegacyPersonIdCardKey,
   type ListQuery,
   type NaturalPersonCreate,
   type NaturalPersonSnapshot,
@@ -388,14 +386,11 @@ export async function listAllPersons(opts: AllPersonsListQuery): Promise<{
 // ---------------------------------------------------------------------------
 
 /**
- * natural_person's columns as every read here selects them: all but the seven identity-card ones, which no screen,
- * API or matching rule reads since Slice 40.85 (`LEGACY_PERSON_ID_CARD_KEYS`).
+ * natural_person's columns as every read here selects them. Until migration_119 dropped the seven identity-card
+ * columns (FU-366), this left them out.
  */
-type NaturalColumns = Omit<ReturnType<typeof getTableColumns<typeof naturalPerson>>, LegacyPersonIdCardKey>;
-const NATURAL_COLUMNS = Object.fromEntries(
-  Object.entries(getTableColumns(naturalPerson)).filter(([k]) => !(LEGACY_PERSON_ID_CARD_KEYS as readonly string[]).includes(k)),
-) as NaturalColumns;
-export type NaturalPersonRow = Omit<typeof naturalPerson.$inferSelect, LegacyPersonIdCardKey>;
+const NATURAL_COLUMNS = getTableColumns(naturalPerson);
+export type NaturalPersonRow = typeof naturalPerson.$inferSelect;
 
 export type PersonFull = {
   person: typeof person.$inferSelect;
@@ -829,7 +824,7 @@ export async function createNaturalPerson(
         personalEmail2: natFields.personalEmail2 ?? null,
         workEmail: natFields.workEmail ?? null,
         placeOfBirth: natFields.placeOfBirth ?? null,
-        // Slice 40.85: the identity-card columns are not written (LEGACY_PERSON_ID_CARD_KEYS).
+        // The identity-card columns are gone (migration_119, FU-366).
         citizenshipId: natFields.citizenshipId ?? null,
         // Slice #18.16.VL:
         physicalPersonTypeId: natFields.physicalPersonTypeId ?? null,

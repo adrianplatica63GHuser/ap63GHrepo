@@ -378,9 +378,7 @@ JOIN principal_object po ON po.code = v.code;
 
 INSERT INTO natural_person (
   person_id, first_name, last_name, nickname, cnp,
-  id_document_type, id_document_number, id_card_number,
   gender, date_of_birth, place_of_birth,
-  id_issuing_authority, id_valid_from, id_valid_until,
   personal_phone_1, personal_phone_2, personal_email_1, work_email,
   citizenship_id, physical_person_type_id,
   correspondence_same_as_home
@@ -388,9 +386,9 @@ INSERT INTO natural_person (
 SELECT
   p.id,
   v.first_name, v.last_name, v.nickname, v.cnp,
-  v.id_doc_type::id_document_type, v.id_doc_nr, v.id_card_nr,
+  -- migration_119 dropped natural_person's id_* columns (FU-366): the card values below (id_doc_type … id_until)
+  -- are kept in the VALUES for the record and written nowhere; the application's cards are identity documents.
   v.gender::gender, v.dob::date, v.pob,
-  v.issuing_auth, v.id_from::date, v.id_until::date,
   v.phone1, v.phone2, v.email1, v.email_w,
   (SELECT id FROM lookup_citizenship WHERE name = v.citizenship LIMIT 1),
   (SELECT id FROM lookup_person_type WHERE name = v.person_type_name LIMIT 1),

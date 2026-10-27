@@ -2,10 +2,9 @@
  * natural_person's identity-card columns.                              (Slice 40.85)
  *
  * Since 40.82 a person's identity documents are documents of their own (`identity_document`), and since 40.85 no
- * screen, API, matching rule or deed reader reads or writes these seven columns: the API's schemas omit them
- * (src/lib/persons/validation.ts), so a payload that still names one is answered as if it did not. They stay in the
- * table — dropping them destroys stored data and waits for Adrian's go-ahead (docs/claude/FOLLOW-UP-REGISTER.md) —
- * and in the versions written before 40.85, which show them read-only in the history.
+ * screen, API, matching rule or deed reader read or wrote these seven columns; migration_119 dropped them (FU-366,
+ * Adrian's go-ahead of 2026-10-27). They live on in the versions written before 40.85, which show them read-only in
+ * the history — these keys are those versions' keys.
  *
  * PURE — safe to import from a client component.
  */

@@ -47,20 +47,15 @@ const addressArraySchema = z
  */
 const relationshipIdsSchema = z.array(z.string().uuid()).max(50).optional();
 
-// Slice 40.85: natural_person's identity-card columns, which no API reads or writes any more (./legacy-id-card).
+// Slice 40.85: the identity-card keys a version written before 40.85 still holds (./legacy-id-card); the columns
+// themselves were dropped by migration_119.
 export { LEGACY_PERSON_ID_CARD_KEYS, type LegacyPersonIdCardKey, type LegacyPersonIdCardSnapshot };
 
 const naturalPersonBase = createInsertSchema(naturalPerson).omit({
   // Populated by the handler after inserting the parent person row.
   personId: true,
-  // Slice 40.85: never written through the API (LEGACY_PERSON_ID_CARD_KEYS).
-  idDocumentType: true,
-  idDocumentNumber: true,
-  idCardNumber: true,
-  idValidFrom: true,
-  idValidUntil: true,
-  idIssuingAuthority: true,
-  idMrzRaw: true,
+  // The identity-card columns are gone (migration_119): a payload naming one is answered as if it did not, since an
+  // object schema strips the keys it does not know.
 });
 
 // ---------------------------------------------------------------------------

@@ -75,11 +75,6 @@ export const addressKindEnum = pgEnum("address_kind", [
   "CORRESPONDENCE",
 ]);
 
-export const idDocumentTypeEnum = pgEnum("id_document_type", [
-  "ID_CARD",
-  "PASSPORT",
-]);
-
 export const genderEnum = pgEnum("gender", ["MALE", "FEMALE"]);
 
 // ---------------------------------------------------------------------------
@@ -152,8 +147,8 @@ export const naturalPerson = pgTable(
     // (NULL -> value is allowed; value -> anything-different is not).
     cnp: text("cnp"),
 
-    idDocumentType: idDocumentTypeEnum("id_document_type"),
-    idDocumentNumber: text("id_document_number"),
+    // The identity-card columns (id_document_type … id_mrz_raw) were dropped by migration_119 (FU-366): a person's
+    // card or passport is an identity document of its own (identity_document, migration_118; Slice 40.82).
 
     gender: genderEnum("gender"),
     // `mode: "string"` keeps DOB as ISO date strings ("1985-02-03") on both
@@ -174,15 +169,8 @@ export const naturalPerson = pgTable(
     personalEmail2: text("personal_email_2"),
     workEmail: text("work_email"),
 
-    // Added in Slice 14.15.01 — fields read off a Romanian ID card that have
-    // no existing home, plus a citizenship FK. All nullable; populated either
-    // manually or via the Import/Classify "Person" flow's vision extraction.
+    // Added in Slice 14.15.01 — the place of birth and a citizenship FK. All nullable.
     placeOfBirth: text("place_of_birth"),
-    idIssuingAuthority: text("id_issuing_authority"),
-    idValidFrom: date("id_valid_from", { mode: "string" }),
-    idValidUntil: date("id_valid_until", { mode: "string" }),
-    idCardNumber: text("id_card_number"),
-    idMrzRaw: text("id_mrz_raw"),
     citizenshipId: uuid("citizenship_id").references(() => lookupCitizenship.id, { onDelete: "set null" }),
 
     // "Tip Profesional" — Physical Person Type, admin-managed via
