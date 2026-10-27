@@ -4,7 +4,7 @@
 -- GENERATED FILE -- DO NOT EDIT BY HAND.
 -- Regenerate with:  .\scripts\Export-SupabaseSchema.ps1
 --
--- Generated : 2026-10-26 20:21
+-- Generated : 2026-10-27 08:23
 -- Source    : local Docker database (ga40db @ ga40prj-postgres)
 --
 -- Applies the complete schema from scratch after running
@@ -99,16 +99,6 @@ CREATE TYPE public.group_target_type AS ENUM (
     'JUDICIAL_PERSON',
     'PROPERTY',
     'DOCUMENT'
-);
-
-
---
--- Name: id_document_type; Type: TYPE; Schema: public; Owner: -
---
-
-CREATE TYPE public.id_document_type AS ENUM (
-    'ID_CARD',
-    'PASSPORT'
 );
 
 
@@ -1000,8 +990,6 @@ CREATE TABLE public.natural_person (
     last_name text,
     nickname text,
     cnp text,
-    id_document_type public.id_document_type,
-    id_document_number text,
     gender public.gender,
     date_of_birth date,
     personal_phone_1 text,
@@ -1011,11 +999,6 @@ CREATE TABLE public.natural_person (
     personal_email_2 text,
     work_email text,
     place_of_birth text,
-    id_issuing_authority text,
-    id_valid_from date,
-    id_valid_until date,
-    id_card_number text,
-    id_mrz_raw text,
     citizenship_id uuid,
     physical_person_type_id uuid,
     correspondence_same_as_home boolean DEFAULT false NOT NULL,
