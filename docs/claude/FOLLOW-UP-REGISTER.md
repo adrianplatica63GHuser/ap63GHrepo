@@ -12,17 +12,17 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-10-26 — 363 entries (FU-360 filed by 40.18, FU-361 by 40.27, FU-362 by 40.78, FU-363 by 40.79). Rows are status, columns are impact.
+As of 2026-10-26 — 365 entries (FU-360 filed by 40.18, FU-361 by 40.27, FU-362 by 40.78, FU-363 by 40.79, FU-364–365 by 40.84). Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
-| open | 18 | 85 | 79 | 26 | 208 |
+| open | 19 | 86 | 79 | 26 | 210 |
 | planned | 0 | 0 | 1 | 0 | 1 |
 | resolved | 38 | 61 | 32 | 3 | 134 |
 | ignored | 4 | 3 | 4 | 2 | 13 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 6 | 1 | 0 | 7 |
-| **total** | 60 | 155 | 117 | 31 | 363 |
+| **total** | 61 | 156 | 117 | 31 | 365 |
 <!-- summary:end -->
 
 `src/__tests__/follow-up-register.test.ts` recounts the table and fails when this block disagrees
@@ -447,3 +447,5 @@ Nothing is filed from memory: every row carries evidence someone actually looked
 | FU-361 | 2026-10-21 40.27 Handover.40.27.md | copy/i18n | UI shell | The sidebar still names the two persons' lists in title case, „Persoane Fizice” / „Persoane Juridice” (EN „Natural Persons” / „Juridical Persons”), while 40.22 made their screens' titles „Persoane fizice” / „Persoane juridice”; the breadcrumb already says „Persoane fizice”. Each name is right on its own; side by side in the manual's figures (2.1, 2.4) they read as two spellings of one list. | messages/ro-RO.json `nav.*` (the sidebar's Domeniu entries); messages/en-GB.json the same | cosmetic | XS | open | Ask Adrian whether the sidebar follows 40.22 („Persoane fizice”) or keeps title case; then the two message values, the manual's quotes of them and the specs that read the sidebar by name. | 2026-10-21 |
 | FU-362 | 2026-10-26 40.78 Handover.40.78.md | recommendation | UI shell | 40.78 made every record screen's dropdown wrap a long value (`WrappingSelect`); the dropdowns on the other screens are still a bare native `<select>` at a fixed width, which cuts a chosen value longer than its box — the „Asociază …" screens' role pickers, the lists' filters, the administration (value lists, roles, stamps, groups, the Form editor, costs, the calculation), the Document's cotă mode, META INFO, the AI linkers, „Adaugă proprietate" and the interaction log. Adrian's rule of 2026-10-26 („any dropdown … use wrapping to a second line") reads as all of them. | src/components/forms/wrapping-select.tsx; `grep -rn "<select" src --include=*.tsx` (27 files outside the record screens at 2ca20cf) | user | M | open | Draw each through `WrappingSelect` (a `shown` and the same props), screen by screen; a header per family. | 2026-10-26 |
 | FU-363 | 2026-10-26 40.79 Handover.40.79.md | next-slice idea | People | At 40.79's sizes every Identitate row but one fits two units: Locul nașterii beside Tip profesional (13 + 0.5 + 13.5 = 27rem) is what keeps the panel at three. Putting the two on rows of their own would make Identitate a 2-unit tile (its widest row then Nume beside Prenume, 17.5rem of the 17.875 inside). | src/lib/ui/field-widths.ts `NATURAL_PERSON_ROWS.identity`; field-widths.test.ts „each panel is the fewest whole units" | cosmetic | XS | open | Adrian's choice; if yes, split the row in `NATURAL_PERSON_ROWS.identity` and the form, and move the panel-units numbers in field-widths.test. | 2026-10-26 |
+| FU-364 | 2026-10-26 40.82 Handover.40.82.md; 2026-10-26 40.84 Handover.40.84.md | data risk | Reference data | Reference Data's „move the documents to another type” (#29.14) re-points documents without the identity rules: identity documents moved onto an ordinary type keep their `identity_document` rows, which the document's own PATCH refuses to leave behind (`identity_values_held`). | src/lib/admin/value-lists/queries.ts:1615 `reassignDependents`; src/lib/documents/queries.ts — `planIdentityUpdate` | data | S | open | Refuse the re-point away from an identity type while a document holds values, or drop the empty rows, in that path. | 2026-10-26 |
+| FU-365 | 2026-10-26 40.84 Handover.40.84.md | next-slice idea | Reference data | An identity kind's form (its fields, their order and widths) changes only by a slice; the type's „Formular” tab shows it read-only (40.84, Ask first 2). Making it editable there would be a slice of its own, for Adrian to take up if he wants it. | src/lib/identity-documents/kinds.ts `IDENTITY_KINDS`; src/lib/ui/field-widths.ts `IDENTITY_DOCUMENT`; src/app/admin/value-lists/_components/identity-system-form.tsx | user | M | open | Adrian's choice. | 2026-10-26 |
