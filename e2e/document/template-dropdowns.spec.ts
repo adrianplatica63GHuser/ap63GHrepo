@@ -1,5 +1,5 @@
 /**
- * Case:   TC-DOC-04 — Listele derulante ale unui CVC: cât cea mai lungă alegere, trei pe rând
+ * Case:   TC-DOC-04 — Listele derulante ale unui CVC: cât cea mai lungă alegere, două pe rând
  * Source: docs/testing/cases/TC-DOC-04.md, „Last green" 2026-10-02
  *
  * A translation of the case file, step for step. Every Romanian string below
@@ -19,6 +19,8 @@
  *     „Declarații și obligații legale". The case file says so.
  *   - #37.55 took the dashes off the blank choice, so the clauses are 9rem and
  *     sit three to a row; step 3 counts the new rows. The case file says so.
+ *   - 40.93: Adrian's rows of two (migration_122) — step 3 counts 2s, and
+ *     step 6 reads the five tiles' rows he changed, with two widths in px.
  *   - 40.88: „whole" is 40.78's rule — on one line when the choice fits the
  *     box, wrapped in a box that keeps its width when it does not
  *     (`expectDropdownsWrap`). Adrian set some dropdowns narrower than their
@@ -98,9 +100,10 @@ async function widestWhole(page: Page): Promise<void> {
 async function stepsTwoAndThree(page: Page): Promise<void> {
   // Step 2 — every one, its widest choice selected, shows it whole.
   await widestWhole(page);
-  // Step 3 — since #37.55, three to a row; since #38.33 the 12 statements as 3,3,3,3 and the 5 statutory declarations as 3,2.
-  expect(await boxesPerRow(page, "Declarațiile vânzătorului")).toEqual([3, 3, 3, 3]); // #38.33: the 12 statements; the warranties beside their citation
-  expect(await boxesPerRow(page, "Declarații legale")).toEqual([3, 2]); // #38.33
+  // Step 3 — since 40.93 (migration_122) two to a row: the 12 statements as 2,2,2,2,2,2 and the 5 statutory
+  // declarations as 2,2,1 (#37.55–40.92 three to a row: 3,3,3,3 and 3,2).
+  expect(await boxesPerRow(page, "Declarațiile vânzătorului")).toEqual([2, 2, 2, 2, 2, 2]);
+  expect(await boxesPerRow(page, "Declarații legale")).toEqual([2, 2, 1]);
 }
 
 async function photograph(page: Page): Promise<void> {
@@ -113,7 +116,7 @@ async function photograph(page: Page): Promise<void> {
 }
 
 test.describe("TC-DOC-04 — listele derulante ale unui CVC", () => {
-  test("cât cea mai lungă alegere, întregi, trei pe rând, la 1366 și la 1920", async ({ page }) => {
+  test("cât cea mai lungă alegere, întregi, două pe rând, la 1366 și la 1920", async ({ page }) => {
     test.slow();
     await removeLeftovers(page.request, MARK);
     await page.setViewportSize({ width: 1366, height: 900 });
@@ -141,8 +144,8 @@ test.describe("TC-DOC-04 — listele derulante ale unui CVC", () => {
       // Step 4 — 1920 × 1080: the same.
       await page.setViewportSize({ width: 1920, height: 1080 });
       await widestWhole(page);
-      expect(await boxesPerRow(page, "Declarațiile vânzătorului")).toEqual([3, 3, 3, 3]); // #38.33: the 12 statements; the warranties beside their citation
-      expect(await boxesPerRow(page, "Declarații legale")).toEqual([3, 2]); // #38.33
+      expect(await boxesPerRow(page, "Declarațiile vânzătorului")).toEqual([2, 2, 2, 2, 2, 2]); // 40.93
+      expect(await boxesPerRow(page, "Declarații legale")).toEqual([2, 2, 1]); // 40.93
 
       // Step 5 — 40.89, Adrian's three moves, back at 1366.
       await page.setViewportSize({ width: 1366, height: 900 });
@@ -154,6 +157,25 @@ test.describe("TC-DOC-04 — listele derulante ale unui CVC", () => {
         ["termenFormalitati"],
         ["completareUlterioara"],
       ]);
+
+      // Step 6 — 40.93, Adrian's six changes (migration_122). Temei autentificare across „Identificarea actului",
+      // Data conținutului under it; Stare plată | Data plății, Modalitate plată under them, both L; Documentație
+      // finalizată under Categorie internă at 184 px; the warranties swapped; the fees two to a row, Onorariu notarial
+      // | Impozit transfer first.
+      const general = page.locator('[data-panel="general"]');
+      const authBox = await general.locator('[data-width-field="customFields.temeiAutentificare"]').boundingBox();
+      const contentBox = await general.locator('[data-width-field="customFields.dataContinut"]').boundingBox();
+      expect(contentBox!.y, "Data conținutului under Temei autentificare").toBeGreaterThan(authBox!.y + authBox!.height - 1);
+      expect(Math.abs(contentBox!.x - authBox!.x), "both at the left").toBeLessThanOrEqual(1);
+      expect(await rowsOf(page, "Plată")).toEqual([["starePlata", "dataPlatii"], ["modalitatePlata"]]);
+      expect(await rowsOf(page, "Dosar cadastral")).toEqual([["categorieInterna"], ["documentatieFinalizata"]]);
+      expect(await rowsOf(page, "Garanții")).toEqual([["garantieEvictiune", "garantieVicii"], ["temeiLegalEvictiune"]]);
+      expect(await rowsOf(page, "Taxe și onorarii")).toEqual([["onorariuNotarial", "impozitTransfer"], ["timbruJudiciar", "taxaTimbruPublicitate"]]);
+      expect(await rowsOf(page, "Cheltuieli")).toEqual([["cheltuieliPerfectare", "taxeLocalePlatiteDe"], ["taxeLocaleLaZi"]]);
+      for (const [key, px] of [["starePlata", 208], ["modalitatePlata", 208], ["documentatieFinalizata", 184], ["onorariuNotarial", 136]] as const) {
+        const b = await page.locator(`[data-width-field="customFields.${key}"]`).first().boundingBox();
+        expect(Math.abs(b!.width - px), `${key} is ${px} px`).toBeLessThanOrEqual(1);
+      }
 
       await photograph(page);
     } finally {

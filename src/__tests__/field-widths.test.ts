@@ -945,24 +945,26 @@ describe("a document type's own fields are sized by rule (#37.15)", () => {
   });
 });
 
-/** Every `width` the forms file carries: migration_120 (40.88) and migration_121 (40.89). */
+/** Every `width` the forms file carries: migration_120 (40.88), migration_121 (40.89) and migration_122 (40.93). */
 const SIZED_FIELDS = [
   ...["calitateExemplar=M", "exemplareEmise=TILE", "temeiLegalCompletare=TILE", "efectUrmarit=M", "pretNeschimbat=M",
     "liberDeSarcini=M", "faraServituti=M", "nearendat=M", "notificareAml=M", "consimtamantRadiere=M", "taxeLocaleLaZi=M",
     "nedezmembratContrar=M", "consimtamantDatePersonale=M", "celelalteClauzeNemodificate=M"].map((s) => `ACT_ADITIONAL.${s}`),
   ...["calitateExemplar=M", "exemplareEmise=TILE",
-    // 40.89 — Preț și plată
-    "pretTotal=S", "monedaPret=S", "pretRealDeclarat=M", "starePlata=M", "modalitatePlata=M",
-    // Carte funciară
-    "categorieInterna=XL", "documentatieFinalizata=M", "marcajCarteFunciara=L", "poateFiIntabulat=M", "consimtamantRadiere=M",
+    // 40.93 — Temei autentificare TILE
+    "temeiAutentificare=TILE",
+    // 40.89 — Preț și plată; 40.93: Stare plată and Modalitate plată L
+    "pretTotal=S", "monedaPret=S", "pretRealDeclarat=M", "starePlata=L", "modalitatePlata=L",
+    // Carte funciară; 40.93: Documentație finalizată has no width again (its widest choice, 184 px)
+    "categorieInterna=XL", "marcajCarteFunciara=L", "poateFiIntabulat=M", "consimtamantRadiere=M",
     "temeiExceptieCadastru=TILE", "renuntareCercetareOcpi=M", "obligatieNrCadastral=M", "termenFormalitati=TILE", "completareUlterioara=TILE",
     // Declarații și garanții
     "inCircuitCivil=M", "liberDeSarcini=M", "faraServituti=M", "neipotecat=M", "nepromisAltcuiva=M", "nearendat=M",
     "neaportatSocietate=M", "faraLitigii=M", "faraExpropriere=M", "faraMonumentIstoric=M", "nedezmembratContrar=M",
-    "cumparatorCunoasteSituatia=M", "garantieEvictiune=M", "temeiLegalEvictiune=L", "garantieVicii=M", "declaratieArt292=M",
+    "cumparatorCunoasteSituatia=M", "garantieEvictiune=M", "temeiLegalEvictiune=TILE", "garantieVicii=M", "declaratieArt292=M",
     "notificareAml=M", "consimtamantDatePersonale=M", "preemptiuneTerenAgricol=M", "preemptiunePadure=M",
-    // Taxe și cheltuieli
-    "timbruJudiciar=S", "onorariuNotarial=S", "impozitTransfer=S", "taxaTimbruPublicitate=S",
+    // Taxe și cheltuieli; 40.93: the four sums M
+    "timbruJudiciar=M", "onorariuNotarial=M", "impozitTransfer=M", "taxaTimbruPublicitate=M",
     "cheltuieliPerfectare=M", "taxeLocalePlatiteDe=M", "taxeLocaleLaZi=M"].map((s) => `CONTRACT_VANZARE.${s}`),
 ];
 

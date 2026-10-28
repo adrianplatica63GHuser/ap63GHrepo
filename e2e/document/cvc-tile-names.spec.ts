@@ -87,13 +87,16 @@ test.describe("TC-DOC-05 — filele și panourile unui CVC", () => {
         await expect(page.getByRole("checkbox", { name: old, exact: true })).toHaveCount(0);
       }
 
-      // Step 3 — the fees: since 40.89 all four at S on one row, „Taxă timbru și publicitate" last, its label one line.
+      // Step 3 — the fees: since 40.93 (migration_122) all four at M, two to a row — Onorariu notarial | Impozit transfer,
+      // then Timbru judiciar | Taxă timbru și publicitate, last — its label one line. (40.89: all four at S on one row.)
       const tops: number[] = [];
-      for (const key of ["timbruJudiciar", "onorariuNotarial", "impozitTransfer", "taxaTimbruPublicitate"]) {
+      for (const key of ["onorariuNotarial", "impozitTransfer", "timbruJudiciar", "taxaTimbruPublicitate"]) {
         const b = await fee(page, key).box.boundingBox();
         tops.push(Math.round(b!.y));
       }
-      expect(new Set(tops).size, `the four fees on one row: ${tops.join(", ")}`).toBe(1);
+      expect(tops[0], "Onorariu notarial | Impozit transfer on one row").toBe(tops[1]);
+      expect(tops[2], "Timbru judiciar | Taxă timbru și publicitate on one row").toBe(tops[3]);
+      expect(tops[2], "the second row under the first").toBeGreaterThan(tops[0]);
       const ttp = fee(page, "taxaTimbruPublicitate").label;
       await expect(ttp).toHaveText("Taxă timbru și publicitate");
       const [height, line] = await ttp.evaluate((el) => [el.getBoundingClientRect().height, parseFloat(getComputedStyle(el).lineHeight)]);

@@ -96,12 +96,27 @@ describe("the CVC's tiles and panels (#37.54, rebuilt by #38.33)", () => {
     const keys = [...CVC].sort((a, b) => a.order - b.order).map((f) => f.key);
     expect(keys.slice(keys.indexOf("pretTotal"), keys.indexOf("pretTotal") + 5)).toEqual(["pretTotal", "monedaPret", "pretRealDeclarat", "temeiPret", "alocarePret"]);
     expect(keys.slice(keys.indexOf("marcajCarteFunciara"), keys.indexOf("marcajCarteFunciara") + 3)).toEqual(["marcajCarteFunciara", "consimtamantRadiere", "poateFiIntabulat"]);
-    expect(CVC.filter((f) => (f as { newRow?: unknown }).newRow === true).map((f) => f.key)).toEqual(["consimtamantRadiere"]);
+    // 40.93 (migration_122) adds eleven row marks: Modalitate plată under Stare plată, Documentație finalizată under
+    // Categorie internă, rows of two on the two declarations panels, Timbru judiciar and Taxe locale la zi.
+    expect([...CVC].sort((a, b) => a.order - b.order).filter((f) => (f as { newRow?: unknown }).newRow === true).map((f) => f.key)).toEqual([
+      "modalitatePlata", "documentatieFinalizata", "consimtamantRadiere",
+      "faraServituti", "nepromisAltcuiva", "neaportatSocietate", "faraExpropriere", "nedezmembratContrar",
+      "consimtamantDatePersonale", "preemptiunePadure", "timbruJudiciar", "taxeLocaleLaZi",
+    ]);
   });
 
-  it("puts „Temei legal evicțiune” right after „Garanție evicțiune”", () => {
+  // 40.93 (migration_122) — Adrian: „switch the places of the fields „Temei legal evicțiune" and „Garanție vicii
+  // ascunse"". Was: „puts „Temei legal evicțiune” right after „Garanție evicțiune”" (#38.33), now inverted in place.
+  it("puts „Garanție vicii ascunse” right after „Garanție evicțiune”, and „Temei legal evicțiune” after them", () => {
     const keys = [...CVC].sort((a, b) => a.order - b.order).map((f) => f.key);
-    expect(keys.indexOf("temeiLegalEvictiune")).toBe(keys.indexOf("garantieEvictiune") + 1);
+    expect(keys.indexOf("garantieVicii")).toBe(keys.indexOf("garantieEvictiune") + 1);
+    expect(keys.indexOf("temeiLegalEvictiune")).toBe(keys.indexOf("garantieVicii") + 1);
+  });
+
+  // 40.93 (migration_122) — Adrian: „Data plății" beside „Stare plată", „Modalitate plată" under „Stare plată".
+  it("orders the payment Stare plată, Data plății, Modalitate plată", () => {
+    const pay = [...CVC].filter((f) => f.groupRo === "Plată").sort((a, b) => a.order - b.order).map((f) => f.key);
+    expect(pay).toEqual(["starePlata", "dataPlatii", "modalitatePlata"]);
   });
 
   it("keeps none of the old names", () => {
@@ -115,9 +130,11 @@ describe("the CVC's tiles and panels (#37.54, rebuilt by #38.33)", () => {
     }
   });
 
-  it("orders the fees Timbru judiciar, Onorariu notarial, Impozit transfer, Taxă timbru și publicitate", () => {
+  // 40.93 (migration_122) — Adrian: „the first row under „Taxe și onorarii" has the fields „Onorariu notarial" and
+  // „Impozit transfer"". Was „Timbru judiciar, Onorariu notarial, Impozit transfer, Taxă timbru și publicitate" (#38.33).
+  it("orders the fees Onorariu notarial, Impozit transfer, Timbru judiciar, Taxă timbru și publicitate", () => {
     const fees = [...CVC].filter((f) => f.groupRo === "Taxe și onorarii").sort((a, b) => a.order - b.order).map((f) => f.key);
-    expect(fees).toEqual(["timbruJudiciar", "onorariuNotarial", "impozitTransfer", "taxaTimbruPublicitate"]);
+    expect(fees).toEqual(["onorariuNotarial", "impozitTransfer", "timbruJudiciar", "taxaTimbruPublicitate"]);
   });
 
   it("keeps every field's `order` 0..n-1, each once, as the Form editor writes it", () => {

@@ -179,10 +179,12 @@ describe("a CVC's panels, written out", () => {
 const CVC_ROWS: { label: string; units: number; rows: string[][] }[] = [
   // #38.33: the CVC's groups after its six tiles (Adrian.Request.txt), in form order.
   // 40.88 (migration_120): Calitate exemplar M; Exemplare emise TILE — the panel's width, on a row of its own.
+  // 40.93 (migration_122): Temei autentificare TILE, so Data conținutului starts the next row by itself.
   { label: "Identificarea actului", units: 3, rows: [
     ["calitateExemplar"],
     ["exemplareEmise"],
-    ["temeiAutentificare", "dataContinut"],
+    ["temeiAutentificare"],
+    ["dataContinut"],
   ] },
   // 40.89 (migration_121): Preț total S | Monedă S | Preț declarat real M — 19.5rem, so the panel takes 3 units (Ask
   // first 5), and the two text boxes at XL below, one a row.
@@ -191,9 +193,11 @@ const CVC_ROWS: { label: string; units: number; rows: string[][] }[] = [
     ["temeiPret"],
     ["alocarePret"],
   ] },
-  // 40.89: the three at M — one row at 3 units.
+  // 40.93 (migration_122): Stare plată L | Data plății M, then Modalitate plată L under Stare plată (`newRow`).
+  // 22.25rem with the gap — still 3 units.
   { label: "Plată", units: 3, rows: [
-    ["starePlata", "modalitatePlata", "dataPlatii"],
+    ["starePlata", "dataPlatii"],
+    ["modalitatePlata"],
   ] },
   // Slice #38.49 (migration_102): „Descrierea obiectului" first in „Obiectul vânzării", a panel of its own.
   { label: "Descriere", units: 2, rows: [
@@ -206,9 +210,11 @@ const CVC_ROWS: { label: string; units: number; rows: string[][] }[] = [
     ["vecinatati"],
     ["origineLot"],
   ] },
-  // 40.89: Categorie internă XL | Documentație finalizată M share a row at 3 units.
-  { label: "Dosar cadastral", units: 3, rows: [
-    ["categorieInterna", "documentatieFinalizata"],
+  // 40.93 (migration_122): Documentație finalizată back to its widest choice (184 px), under Categorie internă
+  // (`newRow`) — 2 units hold XL now (was 3, the pair, 40.89).
+  { label: "Dosar cadastral", units: 2, rows: [
+    ["categorieInterna"],
+    ["documentatieFinalizata"],
   ] },
   // 40.89: Marcaj carte funciară (L) alone; Consimțământ radiere starts the next row (`newRow`), Intabulare posibilă beside it.
   { label: "Situația în cartea funciară", units: 2, rows: [
@@ -222,27 +228,34 @@ const CVC_ROWS: { label: string; units: number; rows: string[][] }[] = [
     ["termenFormalitati"],
     ["completareUlterioara"],
   ] },
-  { label: "Declarațiile vânzătorului", units: 3, rows: [
-    ["inCircuitCivil", "liberDeSarcini", "faraServituti"],
-    ["neipotecat", "nepromisAltcuiva", "nearendat"],
-    ["neaportatSocietate", "faraLitigii", "faraExpropriere"],
-    ["faraMonumentIstoric", "nedezmembratContrar", "cumparatorCunoasteSituatia"],
+  // 40.93 (migration_122): rows of two, by `newRow` on the 3rd, 5th, … — 2 units (was 3, three to a row).
+  { label: "Declarațiile vânzătorului", units: 2, rows: [
+    ["inCircuitCivil", "liberDeSarcini"],
+    ["faraServituti", "neipotecat"],
+    ["nepromisAltcuiva", "nearendat"],
+    ["neaportatSocietate", "faraLitigii"],
+    ["faraExpropriere", "faraMonumentIstoric"],
+    ["nedezmembratContrar", "cumparatorCunoasteSituatia"],
   ] },
-  { label: "Garanții", units: 3, rows: [
-    // „Temei legal evicțiune" is a text box (XL, 17rem): beside „Garanție evicțiune", as the request asks.
-    ["garantieEvictiune", "temeiLegalEvictiune"],
-    ["garantieVicii"],
+  // 40.93: Garanție vicii ascunse takes Temei legal evicțiune's place; the Temei under them at TILE — 2 units (was 3).
+  { label: "Garanții", units: 2, rows: [
+    ["garantieEvictiune", "garantieVicii"],
+    ["temeiLegalEvictiune"],
   ] },
-  { label: "Declarații legale", units: 3, rows: [
-    ["declaratieArt292", "notificareAml", "consimtamantDatePersonale"],
-    ["preemptiuneTerenAgricol", "preemptiunePadure"],
+  { label: "Declarații legale", units: 2, rows: [
+    ["declaratieArt292", "notificareAml"],
+    ["consimtamantDatePersonale", "preemptiuneTerenAgricol"],
+    ["preemptiunePadure"],
   ] },
-  // 40.89: the four sums at S — one row.
+  // 40.93: the four sums at M, two to a row, Onorariu notarial | Impozit transfer first; 3 units, the fees panel's base.
   { label: "Taxe și onorarii", units: 3, rows: [
-    ["timbruJudiciar", "onorariuNotarial", "impozitTransfer", "taxaTimbruPublicitate"],
+    ["onorariuNotarial", "impozitTransfer"],
+    ["timbruJudiciar", "taxaTimbruPublicitate"],
   ] },
-  { label: "Cheltuieli", units: 3, rows: [
-    ["cheltuieliPerfectare", "taxeLocalePlatiteDe", "taxeLocaleLaZi"],
+  // 40.93: Cheltuieli perfectare | Plătitor taxe locale, then Taxe locale la zi (`newRow`) — 2 units (was 3).
+  { label: "Cheltuieli", units: 2, rows: [
+    ["cheltuieliPerfectare", "taxeLocalePlatiteDe"],
+    ["taxeLocaleLaZi"],
   ] },
 ];
 
@@ -270,12 +283,10 @@ describe("dropdowns three to a row (#37.53, #37.55)", () => {
         }
       }
     }
-    // #38.33: the CVC's three are „Declarațiile vânzătorului", „Declarații legale" and „Cheltuieli".
+    // #38.33: the CVC's three were „Declarațiile vânzătorului", „Declarații legale" and „Cheltuieli"; since 40.93
+    // (migration_122) all three are rows of two, by Adrian's request, and the CVC has none.
     expect(threes.sort()).toEqual([
       "ACT_ADITIONAL · Clauze completate",
-      "CONTRACT_VANZARE · Cheltuieli",
-      "CONTRACT_VANZARE · Declarații legale",
-      "CONTRACT_VANZARE · Declarațiile vânzătorului",
     ]);
   });
 
