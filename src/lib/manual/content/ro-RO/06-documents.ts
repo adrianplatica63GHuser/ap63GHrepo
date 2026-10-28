@@ -73,7 +73,7 @@ Pe rândul fiecărei pagini sunt „Notițe pagină” (un creion), „Tipărire
 
 „Tip document” spune ce fel de act este, iar tipul hotărăște ce câmpuri are formularul, cum se numesc emitentul, numărul și data și ce roluri pot avea persoanele legate de act. Pe „Act nou”, câmpul pornește gol.
 
-Tipurile care au formular propriu se citesc în listă cu „(are formular)” după nume — de exemplu „Contract de Vânzare (are formular)”. Cum alegeți un astfel de tip, formularul crește cu fișele lui. Un tip fără formular păstrează doar câmpurile generale ale actului. Pentru un utilizator cu rol de superutilizator, sub „Tip document” al unui tip fără formular scrie „Acest tip nu are încă formular; formularul se construiește în Distilare Tipizate.”, iar „Distilare Tipizate” deschide instrumentul cu tipul deja ales (secțiunea [[tools-doc-type-engine]]).
+Tipurile care au formular propriu se citesc în listă cu „(F)” după nume — de exemplu „Contract de Vânzare (F)”. „F” înseamnă că tipul are formular: ținând mouse-ul pe el, lista scrie întreg „(are formular)”. Cum alegeți un astfel de tip, formularul crește cu fișele lui. Un tip fără formular păstrează doar câmpurile generale ale actului. Pentru un utilizator cu rol de superutilizator, sub „Tip document” al unui tip fără formular scrie „Acest tip nu are încă formular; formularul se construiește în Distilare Tipizate.”, iar „Distilare Tipizate” deschide instrumentul cu tipul deja ales (secțiunea [[tools-doc-type-engine]]).
 
 Fișele care se văd se aleg cu bifele din capul ecranului, ca pe orice obiect (secțiunea [[start-tiles]]), iar alegerea se ține minte pentru fiecare tip: un contract de vânzare-cumpărare și un plan își păstrează fiecare aranjamentul lui. Dacă schimbați tipul unui act, se schimbă și fișele.
 
@@ -134,7 +134,7 @@ Ce rol deține o cotă se hotărăște în „Date de referință”, la „Rolu
 
 ## 6.6 Contractul de vânzare-cumpărare {#documents-sale}
 
-Contractul de vânzare-cumpărare („Contract de Vânzare”, în listă „CVC”) are cel mai bogat formular din arhivă (Figura [[fig-documents-sale]]). Bifele lui de fișe sunt, în ordine: „Identificarea actului”, „Preț și plată”, „Obiectul vânzării”, „Carte funciară”, „Declarații și garanții”, „Taxe și cheltuieli”, „Părți”, „Legături”, „Clasificare”, „Etichete și grupuri” și „Pagini”. În „Identificarea actului”, pe lângă „Notariat”, „Nr. act autentic” și „Data autentificării”, stau „Calitate exemplar”, „Exemplare emise”, „Temei autentificare” și „Data conținutului”.
+Contractul de vânzare-cumpărare („Contract de Vânzare”, în listă „CVC”) are cel mai bogat formular din arhivă (Figura [[fig-documents-sale]]). Bifele lui de fișe sunt, în ordine: „Identificarea actului”, „Preț și plată”, „Obiectul vânzării”, „Carte funciară”, „Declarații și garanții”, „Taxe și cheltuieli”, „Părți”, „Legături”, „Clasificare”, „Etichete și grupuri” și „Pagini”. În „Identificarea actului”, pe lângă „Notariat”, „Nr. act autentic” și „Data autentificării”, stau „Calitate exemplar”, „Exemplare emise” — pe un rând al lui, cât toată fișa —, „Temei autentificare” și „Data conținutului”.
 
 ![6.3 Un contract de vânzare-cumpărare](documents-sale.png){#fig-documents-sale}
 
@@ -148,7 +148,9 @@ Fișele formularului și panourile lor:
 | Declarații și garanții | [Declarațiile vânzătorului], [Garanții], [Declarații legale] |
 | Taxe și cheltuieli | [Taxe și onorarii], [Cheltuieli] |
 
-În „[Taxe și onorarii]” stau „Timbru judiciar”, „Onorariu notarial”, „Impozit transfer” și „Taxă timbru și publicitate”.
+În „[Taxe și onorarii]” stau, pe un singur rând, „Timbru judiciar”, „Onorariu notarial”, „Impozit transfer” și „Taxă timbru și publicitate”.
+
+Câteva câmpuri stau într-o ordine anume. În „[Preț]”, primul rând este „Preț total”, „Monedă” și „Preț declarat real”. În „[Situația în cartea funciară]”, „Marcaj carte funciară” stă singur, iar „Consimțământ radiere” și „Intabulare posibilă” sunt pe rândul de sub el. În „[Excepția de la cadastru]”, „Temei excepție cadastru”, „Termen formalități” și „Completare ulterioară” țin fiecare un rând întreg, iar „Renunțare cercetare OCPI” și „Obligație număr cadastral” stau singure pe rândul lor.
 
 **Fișa „Părți”** ține vânzătorii și cumpărătorii, după regula din secțiunea [[documents-parties]]. Părțile stau pe grupe, sub numele rolului — „Vânzător” întâi, apoi „Cumpărător” —, fiecare rând cu „Cotă” lui (secțiunea [[documents-parties]]). Un contract fără părți spune „Nicio parte asociată încă. Asociați părțile cu rolul și cota lor.” „Asociază persoană” adaugă o parte: căutați persoana după „Nume” sau „Cod”, alegeți „Rol”, bifați rândul și apăsați „Asociază selecția”. „Dezasociază” scoate partea selectată. Celelalte persoane ale contractului, de pildă notarul, stau pe „Legături”, iar proprietățile vândute se leagă tot de acolo.
 
@@ -162,7 +164,7 @@ Antecontractul — promisiunea de vânzare — este actul prin care vânzătorul
 
 În arhivă, antecontractul este un act de tipul „Antecontract”. Îl adăugați ca pe orice act, cu paginile lui (secțiunea [[documents-add]]). Fișa „Identificarea actului” are denumirile generale — „Emitent”, „Nr. document” și „Data” — și câmpurile generale „Etichetă scurtă”, „Subiect” și „Note extinse” (secțiunea [[documents-identification]]).
 
-**Antecontractul nu are formular propriu.** În lista „Tip document” scrie doar „Antecontract”, fără „(are formular)”, așa că actul păstrează numai câmpurile generale: ce promite el se citește din paginile lui, iar ce vreți să găsiți ușor — prețul, termenul — scrieți în „Subiect” sau în „Note extinse”. Contractul de vânzare-cumpărare are, dimpotrivă, cel mai bogat formular din arhivă, cu fișele lui de la „Preț și plată” la „Taxe și cheltuieli”, pentru că el este actul care transferă proprietatea. Formularul unui tip se construiește în „Distilare Tipizate” din actele de acel tip; antecontractul nu are încă unul, iar un superutilizator i-l poate construi acolo (secțiunea [[tools-doc-type-engine]]).
+**Antecontractul nu are formular propriu.** În lista „Tip document” scrie doar „Antecontract”, fără „(F)”, așa că actul păstrează numai câmpurile generale: ce promite el se citește din paginile lui, iar ce vreți să găsiți ușor — prețul, termenul — scrieți în „Subiect” sau în „Note extinse”. Contractul de vânzare-cumpărare are, dimpotrivă, cel mai bogat formular din arhivă, cu fișele lui de la „Preț și plată” la „Taxe și cheltuieli”, pentru că el este actul care transferă proprietatea. Formularul unui tip se construiește în „Distilare Tipizate” din actele de acel tip; antecontractul nu are încă unul, iar un superutilizator i-l poate construi acolo (secțiunea [[tools-doc-type-engine]]).
 
 Antecontractul are fișa „Părți”, ca și contractul de vânzare-cumpărare (secțiunea [[documents-parties]]): promitentul vânzător și promitentul cumpărător dețin o cotă, așa că stau acolo, sub „Promitent vânzător” și „Promitent cumpărător”, fiecare cu „Cotă” lui; notarul stă pe „Legături”. Îi legați cu „Asociază persoană”, din „Părți” sau din „Legături”, cu rolul lor (secțiunea [[links-associate]]). Cele trei roluri ale antecontractului — „Promitent vânzător”, „Promitent cumpărător” și „Notar” — vin cu datele de referință ale aplicației; se pot schimba în „Date de referință”, la „Roluri Persoane” (secțiunea [[admin-reference-data]]). O persoană legată fără rol nu este parte și stă pe „Legături”.
 
@@ -176,7 +178,7 @@ Pe contract, antecontractul apare și în formular: în „[Preț]”, „Temei 
 
 ### 6.8.1 Actul adițional {#documents-dependent-addendum}
 
-Un act adițional modifică un alt act. Are fișele „Identificarea actului” (cu numele notariale și „Onorariu notarial”), „Actul modificat”, „Ce modifică” și „Părți”, care ține, ca la contract, vânzătorii și cumpărătorii (secțiunea [[documents-parties]]).
+Un act adițional modifică un alt act. Are fișele „Identificarea actului” (cu numele notariale, apoi „Calitate exemplar” și „Onorariu notarial” pe un rând și „Exemplare emise” sub ele, cât toată fișa), „Actul modificat”, „Ce modifică” și „Părți”, care ține, ca la contract, vânzătorii și cumpărătorii (secțiunea [[documents-parties]]).
 
 „Actul modificat” leagă actul adițional de contractul pe care îl modifică. Salvați întâi actul adițional, apoi apăsați „Leagă actul modificat”, căutați la „Caută actul modificat” după etichetă sau număr și apăsați „Leagă” pe actul potrivit. Fișa arată atunci actul legat, tipul lui și „Deschide”; „Dezleagă” desface legătura.
 
@@ -200,7 +202,7 @@ Certificatul urmează regula contractului (secțiunea [[documents-parties]]): mo
 
 Aveți scanat un contract de vânzare-cumpărare pentru un teren din Bragadiru.
 
-1. „Acte” → „Adaugă act”; la „Tip document” alegeți „Contract de Vânzare (are formular)” (secțiunea [[documents-type]]).
+1. „Acte” → „Adaugă act”; la „Tip document” alegeți „Contract de Vânzare (F)” (secțiunea [[documents-type]]).
 2. Cu „+ Adaugă pagină” alegeți scanările, puneți-le în ordine și completați „Etichetă scurtă”, „Notariat”, „Nr. act autentic” și „Data autentificării” (secțiunile [[documents-add]] și [[documents-identification]]).
 3. Apăsați „Salvează”; rotiți și salvați pagina care a fost scanată întoarsă.
 4. Bifați „Părți” și asociați vânzătorul și cumpărătorul cu rolul lor, apoi scrieți-le cota (secțiunea [[documents-parties]]).

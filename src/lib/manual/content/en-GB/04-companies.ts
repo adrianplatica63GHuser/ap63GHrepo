@@ -69,7 +69,7 @@ The first tile holds the firm's details:
 
 - „Name” — the firm's name, the only required field.
 - „Nickname” — a short name of your own, by which you find it more easily.
-- „Type” — the firm's form: „Consiliu Local”, „Instituție”, „SRL”, „SA”, „SRL-D”, „PFA”, „II”, „IF”, „ONG”, one of the seven public-body types (section [[companies-add-public-bodies]]) or „Altele”; „—” means none is chosen.
+- „Type” — the firm's form: „Consiliu Local”, „Instituție”, „SRL”, „SA”, „SRL-D”, „PFA”, „II”, „IF”, „ONG”, one of the seven public-body types (section [[companies-add-public-bodies]]) or „Altele”; „—” means none is chosen. A long type goes onto a second line in the box.
 - „Registration No. (CUI)” — the unique registration code.
 - „Trade Register No.” — the Trade Register number.
 

@@ -96,7 +96,7 @@ export const OUTLINE: Readonly<Record<string, string>> = {
   "documents-add-read": "Cum vezi și citești paginile unui act, cum le mărești pe tot ecranul și ce înseamnă un fișier care nu se poate previzualiza sau care lipsește.",
   "documents-add-rotate": "Cum rotești (întorci) o pagină scanată strâmb și păstrezi rotirea, și cum scrii, schimbi sau ștergi notițele unei pagini ori o tipărești.",
   "documents-add-delete": "Cum ștergi (elimini) definitiv un act din arhivă, ce întrebare apare și ce se întâmplă când ștergerea nu reușește.",
-  "documents-type": "Ce hotărăște tipul actului (câmpuri, roluri, denumiri), ce înseamnă „(are formular)”, ce faci la un tip fără formular și cum se țin minte fișele pe tip.",
+  "documents-type": "Ce hotărăște tipul actului (câmpuri, roluri, denumiri), ce înseamnă „(F)”, ce faci la un tip fără formular și cum se țin minte fișele pe tip.",
   "documents-identification": "Ce câmpuri are identificarea actului (emitent, notariat, număr, dată, etichetă, subiect, note), cum golești o valoare și cum completează AI-ul actele importate.",
   "documents-identity": "Fișa „Act de identitate” a unui buletin sau pașaport: câmpurile felului lui, titularul, VALABIL sau EXPIRAT, verificarea CNP-ului și schimbarea tipului.",
   "documents-parties": "Cum legi persoane de un act cu rolul lor (vânzător, cumpărător, notar, moștenitor), cum scrii cota-parte și de ce suma cotelor poate să nu dea 100%.",

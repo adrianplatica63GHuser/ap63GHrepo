@@ -73,7 +73,7 @@ On each page's row are „Page notes” (a pen), „Print” and „Delete”. T
 
 „Document Type” says what kind of document it is, and the type decides which fields the form has, what the issuer, the number and the date are called, and which roles the people linked to the document can have. On „New Document” the field starts empty.
 
-Types that have a form of their own read „(has a form)” after their name in the list — for example „Contract de Vânzare (has a form)”. As soon as you choose such a type, the form grows with its tiles. A type with no form keeps only the document's general fields. For a user with the superuser role, under „Document Type” on a type with no form it reads „This type has no form yet; its form is built in DocTypeEngine.”, and „DocTypeEngine” opens the tool with the type already chosen (section [[tools-doc-type-engine]]).
+Types that have a form of their own read „(F)” after their name in the list — for example „Contract de Vânzare (F)”. „F” means the type has a form: resting the mouse on it, the list shows the words, „(has a form)”. As soon as you choose such a type, the form grows with its tiles. A type with no form keeps only the document's general fields. For a user with the superuser role, under „Document Type” on a type with no form it reads „This type has no form yet; its form is built in DocTypeEngine.”, and „DocTypeEngine” opens the tool with the type already chosen (section [[tools-doc-type-engine]]).
 
 The tiles shown are chosen with the ticks at the head of the screen, as on any object (section [[start-tiles]]), and the choice is remembered per type: a sale contract and a plan each keep their own arrangement. If you change a document's type, the tiles change with it.
 
@@ -134,7 +134,7 @@ Which role holds a share is decided in „Reference Data”, under „Person Rol
 
 ## 6.6 The sale contract {#documents-sale}
 
-The sale contract („Contract de Vânzare”, „CVC” in the list) has the richest form in the archive (Figure [[fig-documents-sale]]). Its tile ticks are, in order: „Document identification”, „Preț și plată”, „Obiectul vânzării”, „Carte funciară”, „Declarații și garanții”, „Taxe și cheltuieli”, „Parties”, „Links”, „Classification”, „Tags and groups” and „Pages”. In „Document identification”, besides „Notary Office”, „Authentic Deed No.” and „Authentication date”, there are „Calitate exemplar” (copy status), „Exemplare emise” (copies issued), „Temei autentificare” (authentication basis) and „Data conținutului” (date of the content).
+The sale contract („Contract de Vânzare”, „CVC” in the list) has the richest form in the archive (Figure [[fig-documents-sale]]). Its tile ticks are, in order: „Document identification”, „Preț și plată”, „Obiectul vânzării”, „Carte funciară”, „Declarații și garanții”, „Taxe și cheltuieli”, „Parties”, „Links”, „Classification”, „Tags and groups” and „Pages”. In „Document identification”, besides „Notary Office”, „Authentic Deed No.” and „Authentication date”, there are „Calitate exemplar” (copy status), „Exemplare emise” (copies issued) — on a row of its own, the tile's whole width —, „Temei autentificare” (authentication basis) and „Data conținutului” (date of the content).
 
 ![6.3 A sale contract](documents-sale.png){#fig-documents-sale}
 
@@ -148,7 +148,9 @@ The form's tiles and their panels:
 | „Declarații și garanții” (statements and warranties) | „[Declarațiile vânzătorului]”, „[Garanții]”, „[Declarații legale]” |
 | „Taxe și cheltuieli” (taxes and costs) | „[Taxe și onorarii]”, „[Cheltuieli]” |
 
-„[Taxe și onorarii]” holds „Timbru judiciar”, „Onorariu notarial”, „Impozit transfer” and „Taxă timbru și publicitate”.
+„[Taxe și onorarii]” holds, on one row, „Timbru judiciar”, „Onorariu notarial”, „Impozit transfer” and „Taxă timbru și publicitate”.
+
+A few fields stand in a set order. In „[Preț]”, the first row is „Preț total” (total price), „Monedă” (currency) and „Preț declarat real” (declared price is real). In „[Situația în cartea funciară]”, „Marcaj carte funciară” (land-book marker) stands alone, and „Consimțământ radiere” (consent to removal) and „Intabulare posibilă” (registration possible) are on the row under it. In „[Excepția de la cadastru]”, „Temei excepție cadastru”, „Termen formalități” and „Completare ulterioară” each take a whole row, and „Renunțare cercetare OCPI” and „Obligație număr cadastral” stand alone on theirs.
 
 **The „Parties” tile** holds the sellers and the buyers, by the rule in section [[documents-parties]]. The parties are grouped under their role's name — „Vânzător” first, then „Cumpărător” —, each row with its „Share” (section [[documents-parties]]). A contract with no parties reads „No party linked yet. Link the parties with their role and share.”. „Associate person” adds a party: search for the person by „Name” or „Code”, choose „Role”, tick the row and press „Associate Selected”. „Dissociate” removes the selected party. The contract's other people, the notary for instance, sit on „Links”, and the properties sold are linked from there too.
 
@@ -162,7 +164,7 @@ The preliminary contract — the antecontract, a promise to sell — is the deed
 
 In the archive, a preliminary contract is a document of the type „Antecontract”. You add it like any document, with its pages (section [[documents-add]]). Its „Document identification” tile has the general names — „Issuer”, „Document No.” and „Date” — and the general fields „Short Label”, „Subject” and „Enhanced Notes” (section [[documents-identification]]).
 
-**The preliminary contract has no form of its own.** The „Document Type” list shows just „Antecontract”, without „(has a form)”, so the document keeps only the general fields: what it promises is read from its pages, and what you want to find easily — the price, the date — you write in „Subject” or „Enhanced Notes”. The sale contract, by contrast, has the richest form in the archive, with its tiles from „Preț și plată” to „Taxe și cheltuieli”, because it is the deed that transfers ownership. A type's form is built in „DocTypeEngine” from documents of that type; the preliminary contract has none yet, and a superuser can build one there (section [[tools-doc-type-engine]]).
+**The preliminary contract has no form of its own.** The „Document Type” list shows just „Antecontract”, without „(F)”, so the document keeps only the general fields: what it promises is read from its pages, and what you want to find easily — the price, the date — you write in „Subject” or „Enhanced Notes”. The sale contract, by contrast, has the richest form in the archive, with its tiles from „Preț și plată” to „Taxe și cheltuieli”, because it is the deed that transfers ownership. A type's form is built in „DocTypeEngine” from documents of that type; the preliminary contract has none yet, and a superuser can build one there (section [[tools-doc-type-engine]]).
 
 The preliminary contract has the „Parties” tile, as the sale contract does (section [[documents-parties]]): the promising seller and the promising buyer hold a share, so they stand there, under „Promitent vânzător” and „Promitent cumpărător”, each with their „Share”; the notary stands on „Links”. You link them with „Associate person”, from „Parties” or from „Links”, with their role (section [[links-associate]]). The preliminary contract's three roles — „Promitent vânzător”, „Promitent cumpărător” and „Notar” — come with the application's reference data; they can be changed in „Reference Data”, under „Person Roles” (section [[admin-reference-data]]). A person linked without a role is not a party and stands on „Links”.
 
@@ -176,7 +178,7 @@ On the contract, the preliminary contract shows in the form too: in „[Preț]�
 
 ### 6.8.1 The addendum {#documents-dependent-addendum}
 
-An addendum amends another document. It has the tiles „Document identification” (with the notarial names and „Onorariu notarial”), „Actul modificat” (the amended document), „Ce modifică” (what it changes) and „Parties”, which holds, as on the contract, the sellers and the buyers (section [[documents-parties]]).
+An addendum amends another document. It has the tiles „Document identification” (with the notarial names, then „Calitate exemplar” and „Onorariu notarial” on one row and „Exemplare emise” under them, the tile's whole width), „Actul modificat” (the amended document), „Ce modifică” (what it changes) and „Parties”, which holds, as on the contract, the sellers and the buyers (section [[documents-parties]]).
 
 „Actul modificat” links the addendum to the contract it amends. Save the addendum first, then press „Link the amended deed”, search under „Search for the amended deed” by label or number, and press „Link “…”” on the right document. The tile then shows the linked document, its type and „Open”; „Unlink” undoes the link.
 
@@ -200,7 +202,7 @@ The certificate follows the contract's rule (section [[documents-parties]]): the
 
 You have a scanned sale contract for a plot of land in Bragadiru.
 
-1. „Documents” → „Add new Document”; under „Document Type” choose „Contract de Vânzare (has a form)” (section [[documents-type]]).
+1. „Documents” → „Add new Document”; under „Document Type” choose „Contract de Vânzare (F)” (section [[documents-type]]).
 2. With „+ Add Page” choose the scans, put them in order, and fill in „Short Label”, „Notary Office”, „Authentic Deed No.” and „Authentication date” (sections [[documents-add]] and [[documents-identification]]).
 3. Press „Save”; rotate the page that was scanned the wrong way round and save the rotation.
 4. Tick „Parties” and associate the seller and the buyer with their roles, then type in their shares (section [[documents-parties]]).

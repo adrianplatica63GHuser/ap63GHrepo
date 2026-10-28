@@ -91,11 +91,11 @@
           "section": "documents-type",
           "ro": {
             "question": "Pe „Act nou” deschideți lista „Tip document”. După ce recunoașteți un tip care are formular propriu?",
-            "explanation": "Tipurile care au formular propriu se citesc în listă cu „(are formular)” după nume — de exemplu „Contract de Vânzare (are formular)”."
+            "explanation": "Tipurile care au formular propriu se citesc în listă cu „(F)” după nume — de exemplu „Contract de Vânzare (F)”; ținând mouse-ul pe tip, scrie întreg „(are formular)”."
           },
           "en": {
             "question": "On „Act nou” you open the „Tip document” list. How do you recognise a type that has a form of its own?",
-            "explanation": "Types that have a form of their own read „(are formular)” (has a form) after their name in the list — for example „Contract de Vânzare (are formular)”."
+            "explanation": "Types that have a form of their own read „(F)” after their name in the list — for example „Contract de Vânzare (F)”; resting the mouse on the type shows the words, „(are formular)” (has a form)."
           },
           "options": [
             {
@@ -119,8 +119,8 @@
             {
               "id": "o4",
               "correct": true,
-              "ro": "Are „(are formular)” scris după nume",
-              "en": "It has „(are formular)” written after its name"
+              "ro": "Are „(F)” scris după nume",
+              "en": "It has „(F)” written after its name"
             }
           ]
         },
@@ -361,11 +361,11 @@
           "id": "b4",
           "section": "documents-type",
           "ro": {
-            "question": "Alegeți la „Tip document” un tip fără „(are formular)” după nume. Ce rămâne în formularul actului?",
+            "question": "Alegeți la „Tip document” un tip fără „(F)” după nume. Ce rămâne în formularul actului?",
             "explanation": "Un tip fără formular păstrează doar câmpurile generale ale actului."
           },
           "en": {
-            "question": "Under „Tip document” you choose a type without „(are formular)” after its name. What remains in the document's form?",
+            "question": "Under „Tip document” you choose a type without „(F)” after its name. What remains in the document's form?",
             "explanation": "A type with no form keeps only the document's general fields."
           },
           "options": [

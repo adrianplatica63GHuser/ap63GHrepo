@@ -368,8 +368,8 @@
             {
               "id": "o1",
               "correct": false,
-              "ro": "În lista „Acte”, căutând „(are formular)” în coloana „Tip”.",
-              "en": "In the „Acte” list, looking for „(are formular)” in the „Tip” column."
+              "ro": "În lista „Acte”, căutând „(F)” în coloana „Tip”.",
+              "en": "In the „Acte” list, looking for „(F)” in the „Tip” column."
             },
             {
               "id": "o2",
@@ -873,8 +873,8 @@
             {
               "id": "o2",
               "correct": false,
-              "ro": "Schimbă tipul actului într-unul cu „(are formular)”.",
-              "en": "He changes the document's type to one with „(are formular)”."
+              "ro": "Schimbă tipul actului într-unul cu „(F)”.",
+              "en": "He changes the document's type to one with „(F)”."
             },
             {
               "id": "o3",

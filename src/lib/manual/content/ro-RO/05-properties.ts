@@ -71,7 +71,7 @@ Câmpurile principale sunt:
 
 - „Poreclă” — numele după care recunoașteți proprietatea în listă;
 - „Tip proprietate” — de exemplu teren extravilan sau teren construit (secțiunea [[properties-type]]);
-- „Nr. tarla / sola” — se alege dintr-o listă, nu se scrie: lista cuprinde „niciunul” și tarlalele care există deja în arhivă;
+- „Nr. tarla / sola” — se alege dintr-o listă, nu se scrie: lista cuprinde „niciunul” și tarlalele care există deja în arhivă, fiecare cu codul ei; descrierea tarlalei apare când țineți mouse-ul pe cod;
 - „Nr. parcelă” — se scrie liber;
 - „Nr. cadastru” și „Nr. CF”;
 - „Categorie de folosință” — lista oferă doar folosințele pe care tipul ales le permite; o folosință salvată înainte, pe care tipul n-o mai permite, rămâne, iar sub câmp scrie „Tipul „…” nu are această categorie de folosință printre cele permise.” (secțiunea [[admin-reference-data-property-types]]);

@@ -71,7 +71,7 @@ The main fields are:
 
 - „Nickname” — the name by which you recognise the property in the list;
 - „Property Type” — for instance land outside the built-up area, or built-up land (section [[properties-type]]);
-- „Tarla / Sola” — chosen from a list, not typed: the list holds „none” and the tarlas already in the archive;
+- „Tarla / Sola” — chosen from a list, not typed: the list holds „none” and the tarlas already in the archive, each by its code; the tarla's description shows when you rest the mouse on the code;
 - „Parcela” — typed freely;
 - „Cadastral No.” and „Carte Funciara”;
 - „Use Category” — the list offers only the uses the chosen type allows; a use saved earlier that the type no longer allows stays, and under the field it reads „The type „…” does not list this use category among the ones it allows.” (section [[admin-reference-data-property-types]]);

@@ -69,7 +69,7 @@ Prima fișă ține datele firmei:
 
 - „Denumire” — numele firmei, singurul câmp obligatoriu.
 - „Poreclă” — un nume scurt, al vostru, după care o găsiți mai ușor.
-- „Tip” — forma firmei: „Consiliu Local”, „Instituție”, „SRL”, „SA”, „SRL-D”, „PFA”, „II”, „IF”, „ONG”, unul dintre cele șapte tipuri de autoritate publică (secțiunea [[companies-add-public-bodies]]) sau „Altele”; „—” înseamnă că nu e ales.
+- „Tip” — forma firmei: „Consiliu Local”, „Instituție”, „SRL”, „SA”, „SRL-D”, „PFA”, „II”, „IF”, „ONG”, unul dintre cele șapte tipuri de autoritate publică (secțiunea [[companies-add-public-bodies]]) sau „Altele”; „—” înseamnă că nu e ales. Un tip lung trece pe al doilea rând în casetă.
 - „Nr. înregistrare (CUI)” — codul unic de înregistrare.
 - „Nr. registru comerțului” — numărul de la Registrul Comerțului.
 

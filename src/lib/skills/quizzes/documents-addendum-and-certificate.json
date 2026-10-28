@@ -390,7 +390,7 @@
           "section": "documents-antecontract",
           "ro": {
             "question": "Ciprian vrea să înregistreze antecontractul prin care Andrei Munteanu promite să-și vândă terenul. După ce alege „Antecontract” la „Tip document”, de ce nu vede fișele „Preț și plată” și „Taxe și cheltuieli”, ca la contractul de vânzare?",
-            "explanation": "Antecontractul nu are formular propriu: în listă scrie doar „Antecontract”, fără „(are formular)”, așa că actul păstrează numai câmpurile generale. Formularul unui tip se construiește în „Distilare Tipizate”."
+            "explanation": "Antecontractul nu are formular propriu: în listă scrie doar „Antecontract”, fără „(F)”, așa că actul păstrează numai câmpurile generale. Formularul unui tip se construiește în „Distilare Tipizate”."
           },
           "en": {
             "question": "Ciprian wants to record the preliminary contract in which Andrei Munteanu promises to sell his land. After choosing „Antecontract” under „Document Type”, why does he not see the „Preț și plată” and „Taxe și cheltuieli” tiles, as on the sale contract?",

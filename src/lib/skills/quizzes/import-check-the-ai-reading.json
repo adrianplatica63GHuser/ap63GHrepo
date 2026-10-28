@@ -467,8 +467,8 @@
             {
               "id": "o4",
               "correct": false,
-              "ro": "Se completează după ce alegeți tipul „(are formular)”.",
-              "en": "It is filled in once you choose the „(are formular)” type."
+              "ro": "Se completează după ce alegeți tipul cu „(F)”.",
+              "en": "It is filled in once you choose the type marked „(F)”."
             }
           ]
         },

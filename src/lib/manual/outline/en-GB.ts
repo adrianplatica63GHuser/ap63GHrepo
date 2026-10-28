@@ -96,7 +96,7 @@ export const OUTLINE: Readonly<Record<string, string>> = {
   "documents-add-read": "How to view and read a document's pages, enlarge them to the whole window, and what it means when a file cannot be previewed or is missing.",
   "documents-add-rotate": "How to rotate a page scanned the wrong way round and keep the rotation, and how to write, change or clear a page's notes, or print it.",
   "documents-add-delete": "How to delete (remove) a document from the archive for good, the confirmation it asks for, and what happens when the delete fails.",
-  "documents-type": "What a document's type decides (fields, roles, labels), what „(has a form)” means, what a type with no form keeps, and how tiles are remembered per type.",
+  "documents-type": "What a document's type decides (fields, roles, labels), what „(F)” means, what a type with no form keeps, and how tiles are remembered per type.",
   "documents-identification": "Which fields a document's identification holds (issuer, notary, number, date, label, subject, notes), how to clear a value, and how AI fills in imported deeds.",
   "documents-identity": "The „Identity document” tile of an ID card or passport: its kind's fields, the holder, VALID or EXPIRED, the CNP check and changing the type.",
   "documents-parties": "How to link people to a document with their role (seller, buyer, notary, heir), enter each party's share or portion, and why shares may not add up to 100%.",
