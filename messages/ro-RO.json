@@ -1938,6 +1938,24 @@
       "optionHasFormTitle": "{name} (are formular)",
       "noFormHint": "Acest tip nu are încă formular; formularul se construiește în <link>Distilare Tipizate</link>."
     },
+    "typeChange": {
+      "action": "Schimbă tipul…",
+      "title": "Schimbă tipul actului",
+      "intro": "Tipul unui act salvat se schimbă doar pentru a corecta o clasificare greșită. Alegeți tipul corect: mai jos se arată ce se pierde, înainte de orice schimbare.",
+      "newType": "Tipul nou",
+      "choose": "Alegeți tipul…",
+      "dropsFields": "Câmpurile formularului care se șterg la salvare:",
+      "dropsIdentity": "Câmpurile de identitate care se șterg la salvare:",
+      "held": "Tipul nu se poate schimba într-un tip de document obișnuit cât timp actul are date de identitate completate: goliți-le întâi în „Act de identitate”, apoi schimbați tipul.",
+      "partiesKept": "Părțile legate cu un rol pe care noul tip nu îl are — rămân legate, cu rolul lor:",
+      "party": "{name} ({code}) — {role}",
+      "partiesLoading": "Se verifică părțile legate…",
+      "partiesError": "Părțile legate nu s-au putut verifica; ele rămân oricum legate, cu rolul lor.",
+      "dropsNothing": "Schimbarea nu șterge nimic.",
+      "savedOnSave": "Nimic nu se scrie până la „Salvează”.",
+      "confirm": "Confirmă",
+      "cancel": "Anulează"
+    },
     "surveyorPicker": {
       "title": "Selectați Topograful",
       "stepChooseType": "Ce tip de persoană este topograful?",

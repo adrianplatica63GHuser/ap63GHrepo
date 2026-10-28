@@ -14,6 +14,8 @@
  *     and not, and the page, at 1366 and 1920 px, into `playwright-report/addendum-tiles/`.
  *   - Step 6 (40.88) measures the boxes in px, from field-widths.ts's scale:
  *     XL 272, M 136, a 3-unit tile 450 inside, a 2-unit panel 286.
+ *   - Step 7 (40.92) creates a fourth document, a Contract de Vânzare with
+ *     „Preț total" filled, through the route.
  */
 
 import { test, expect, type Locator, type Page } from "../helpers/test";
@@ -25,8 +27,11 @@ const MARK = `${E2E_MARKER}DOC-20`;
 const ACT = `${MARK} Act`;
 const CVC = `${MARK} CVC`;
 const OTHER = `${MARK} Alt CVC`;
+const RETYPED = `${MARK} CVC tip`;
 const SHOTS = "playwright-report/addendum-tiles";
 
+/** 40.92: „Schimbă tipul…"'s confirmation. */
+const typeChange = (page: Page) => page.locator("[data-type-change-dialog]");
 const amended = (page: Page) => page.getByRole("region", { name: "Actul modificat", exact: true });
 const fallback = (page: Page) => amended(page).locator('[data-width-field="customFields.actParinteNumar"]');
 
@@ -64,6 +69,8 @@ test.describe("TC-DOC-20 — actul adițional și actul pe care îl modifică", 
       made.push(await createDocumentOfType(page.request, "CONTRACT_VANZARE", OTHER));
       const act = await createDocumentOfType(page.request, "ACT_ADITIONAL", ACT);
       made.push(act);
+      const retyped = await createDocumentOfType(page.request, "CONTRACT_VANZARE", RETYPED, { customFields: { pretTotal: "100000" } });
+      made.push(retyped);
 
       // Step 1 — the four tiles; „Onorariu notarial" on „Identificarea actului"; no deed yet.
       await page.goto(`/documents/${act}`);
@@ -126,15 +133,20 @@ test.describe("TC-DOC-20 — actul adițional și actul pe care îl modifică", 
       await expect(fallback(page)).toBeVisible();
       await expect(fallback(page)).toHaveText("TC-1"); // 40.75: read as text
 
-      // Step 6 — 40.88, Adrian's sizes. „Editează" on „Identificarea actului": the type „… (F)", the words on hover;
-      // Tip document and Notariat XL; Calitate exemplar | Onorariu notarial on one row, Exemplare emise across the
-      // tile under them.
+      // Step 6 — 40.88, Adrian's sizes. „Editează" on „Identificarea actului": Tip document and Notariat XL;
+      // Calitate exemplar | Onorariu notarial on one row, Exemplare emise across the tile under them.
+      // 40.92: in edit mode the type reads as text beside „Schimbă tipul…"; a type with a form is „… (F)" in that
+      // dialog's list, the words on hover.
       await editTile(page, "general");
       const identification = page.locator('[data-panel="general"]');
       const field = (name: string) => identification.locator(`[data-width-field="${name}"]`);
-      const chosen = field("documentTypeId").locator("option:checked");
-      await expect(chosen).toHaveText("Act Adițional (F)");
-      await expect(chosen).toHaveAttribute("title", "Act Adițional (are formular)");
+      await expect(field("documentTypeId")).toHaveText("Act Adițional");
+      await expect(identification.locator('select[name="documentTypeId"]')).toHaveCount(0);
+      await identification.getByRole("button", { name: "Schimbă tipul…", exact: true }).click();
+      const cvcOption = typeChange(page).locator("option", { hasText: "Contract de Vânzare (F)" });
+      await expect(cvcOption).toHaveAttribute("title", "Contract de Vânzare (are formular)");
+      await typeChange(page).getByRole("button", { name: "Anulează", exact: true }).click();
+      await expect(typeChange(page)).toHaveCount(0);
       await expectWidth(field("documentTypeId"), 272);
       await expectWidth(field("issuerPersonId"), 272);
       const quality = await rect(field("customFields.calitateExemplar"));
@@ -160,6 +172,30 @@ test.describe("TC-DOC-20 — actul adițional și actul pe care îl modifică", 
       }
       await changes6.locator("[data-tile-cancel]").click();
       await expect(changes6.locator("[data-tile-edit-bar]")).toHaveCount(0);
+
+      // Step 7 — 40.92. A Contract de Vânzare with „Preț total" filled: „Schimbă tipul…" to Act Adițional names that
+      // field; „Anulează" leaves the type as it was; „Confirmă" changes it in the form, and „Salvează" writes it.
+      await page.goto(`/documents/${retyped}`);
+      await expect(page.getByRole("heading", { name: RETYPED })).toBeVisible({ timeout: 30_000 });
+      await editTile(page, "general");
+      const typeBox = page.locator('[data-panel="general"] [data-read-value="documentTypeId"]');
+      await expect(typeBox).toHaveText("Contract de Vânzare");
+      const changeType = page.locator('[data-panel="general"]').getByRole("button", { name: "Schimbă tipul…", exact: true });
+      await changeType.click();
+      await typeChange(page).getByLabel("Tipul nou").selectOption({ label: "Act Adițional (F)" });
+      await expect(typeChange(page).locator('[data-type-change-list="fields"]')).toContainText("Preț total");
+      await typeChange(page).getByRole("button", { name: "Anulează", exact: true }).click();
+      await expect(typeChange(page)).toHaveCount(0);
+      await expect(typeBox).toHaveText("Contract de Vânzare");
+      await changeType.click();
+      await typeChange(page).getByLabel("Tipul nou").selectOption({ label: "Act Adițional (F)" });
+      await typeChange(page).getByRole("button", { name: "Confirmă", exact: true }).click();
+      await expect(typeChange(page)).toHaveCount(0);
+      await expect(typeBox).toHaveText("Act Adițional");
+      await page.locator('[data-tile-save="general"]').click();
+      await expect(page.locator('[data-tile-edit-bar="general"]')).toHaveCount(0, { timeout: 30_000 });
+      await page.reload();
+      await expect(page.locator('[data-read-value="documentTypeId"]')).toHaveText("Act Adițional", { timeout: 30_000 });
     } finally {
       await page.waitForLoadState("networkidle").catch(() => {});
       for (const id of made.reverse()) await removeRecord(page.request, "document", id);

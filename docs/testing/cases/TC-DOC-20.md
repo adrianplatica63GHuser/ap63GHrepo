@@ -22,7 +22,8 @@ deed accepted, or the text fields shown beside a linked deed is the defect this 
 
 - TC-AUTH-01 is green.
 - **Created through the API**: two Contracte de Vânzare, `TC-DOC-20 CVC` and `TC-DOC-20 Alt CVC`, and
-  an Act Adițional `TC-DOC-20 Act`, all with nothing filled.
+  an Act Adițional `TC-DOC-20 Act`, all with nothing filled; and (40.92) a third Contract de Vânzare,
+  `TC-DOC-20 CVC tip`, with „Preț total" 100000.
 
 ## What Adrian is asked for
 
@@ -39,13 +40,17 @@ The window is 1366 × 900.
 | 3 | Presses „Leagă actul modificat", types `TC-DOC-20` into „Caută actul modificat", presses „Leagă" on `TC-DOC-20 CVC` | The two contracts are listed. The tile then shows `TC-DOC-20 CVC`, „Contract de Vânzare" and „Deschide"; the line and the four fields are gone |
 | 4 | On „Legături", „Asociază act": ticks `TC-DOC-20 Alt CVC`, picks „Act adițional la" in „Tip legătură", presses „Asociază selecția"; then „Anulează" | „Acest act adițional modifică deja „TC-DOC-20 CVC”. Dezlegați-l întâi." — nothing is linked; back on the act |
 | 5 | Presses „Dezleagă" on „Actul modificat" | „Leagă actul modificat" again, and the four fields, `TC-1` still in „Nr. act părinte" |
-| 6 | (40.88) Presses „Editează" on „Identificarea actului"; then „Renunță", and „Editează" on „Ce modifică" | „Tip document" reads „Act Adițional (F)", „Act Adițional (are formular)" on hover; it and „Notariat" are 272 px wide. „Calitate exemplar" (136 px) and „Onorariu notarial" share a row; „Exemplare emise" is under them, across the tile (450 px). On „Ce modifică", „Temei legal completare" is its panel's whole width (286 px); „Efect urmărit", „Preț neschimbat" and the clauses are 136 px |
+| 6 | (40.88) Presses „Editează" on „Identificarea actului"; presses „Schimbă tipul…", then „Anulează"; then „Renunță", and „Editează" on „Ce modifică" | „Tip document" reads „Act Adițional" as text, with „Schimbă tipul…" beside it (40.92); in its list a type with a form reads „Contract de Vânzare (F)", „Contract de Vânzare (are formular)" on hover. „Tip document" and „Notariat" are 272 px wide. „Calitate exemplar" (136 px) and „Onorariu notarial" share a row; „Exemplare emise" is under them, across the tile (450 px). On „Ce modifică", „Temei legal completare" is its panel's whole width (286 px); „Efect urmărit", „Preț neschimbat" and the clauses are 136 px |
+| 7 | (40.92) Opens `TC-DOC-20 CVC tip`, „Editează" on „Identificarea actului", „Schimbă tipul…", „Tipul nou" „Act Adițional (F)"; „Anulează"; again, „Confirmă"; „Salvează"; reloads | The confirmation lists „Preț total" under „Câmpurile formularului care se șterg la salvare:". After „Anulează" the type is still „Contract de Vânzare"; after „Confirmă" it reads „Act Adițional", and after the reload too |
 
 ## At the end — leaving things as they were found
 
-Delete the three documents (`DELETE /api/documents/<id>`).
+Delete the four documents (`DELETE /api/documents/<id>`).
 
 ## Notes from the runs
+
+**2026-10-28 — Slice 40.92.** Step 6 reads the type as text in edit mode and finds „(F)" in „Schimbă tipul…"'s list;
+step 7 added: a saved document's type changed through that confirmation. Not driven by hand first; the spec drives it.
 
 **2026-10-27 — Slice 40.88.** Step 6 added: Adrian's sizes on the act's tiles, the swap of „Exemplare emise" and
 „Onorariu notarial", and „(F)" for a type with a form. Not driven by hand first; the spec measures it.

@@ -21,6 +21,8 @@ const MARK = `${E2E_MARKER}DOC-28`;
 const tile = (page: Page) => page.locator('[data-panel="identity"]');
 const box = (page: Page, field: string) => tile(page).locator(`[data-width-field="${field}"]`);
 const general = (page: Page) => page.locator('[data-panel="general"]');
+/** 40.92: „Schimbă tipul…"'s confirmation. */
+const typeChangeDialog = (page: Page) => page.locator("[data-type-change-dialog]");
 
 // An invented CNP: a man born 1985-04-21, control digit valid.
 const CNP = "1850421400123";
@@ -107,9 +109,16 @@ test.describe("TC-DOC-28 — actul de identitate pe ecranul lui", () => {
       await expect(box(page, "identity.domicileCountry")).toHaveText("Spania", { timeout: 30_000 });
 
       // Step 5 — model nou to Pașaport: the values it has no field for are named, and removed on save.
+      // 40.92: through „Schimbă tipul…" — its confirmation names them first; „Confirmă" changes the type in the form.
       await page.goto(`/documents/${nou}`);
       await editTile(page, "general");
-      await general(page).getByLabel(/^Tip document/).selectOption({ label: "Pașaport" });
+      await general(page).getByRole("button", { name: "Schimbă tipul…", exact: true }).click();
+      await typeChangeDialog(page).getByLabel("Tipul nou").selectOption({ label: "Pașaport" });
+      const named = typeChangeDialog(page).locator('[data-type-change-list="identity"]');
+      await expect(named).toContainText("Domiciliu");
+      await expect(named).toContainText("Nr. card");
+      await typeChangeDialog(page).getByRole("button", { name: "Confirmă", exact: true }).click();
+      await expect(typeChangeDialog(page)).toHaveCount(0);
       const notice = general(page).locator('[data-identity-change="removes"]');
       await expect(notice).toContainText("Domiciliu");
       await expect(notice).toContainText("Nr. card");
@@ -119,14 +128,15 @@ test.describe("TC-DOC-28 — actul de identitate pe ecranul lui", () => {
       await expect(box(page, "identity.lastName")).toHaveText("Testescu");
       await expect(box(page, "identity.domicileAddress")).toHaveCount(0);
 
-      // Step 6 — to an ordinary type while a value is held: said, and refused.
+      // Step 6 — to an ordinary type while a value is held: said, and refused — 40.92: the confirmation says why and
+      // offers no „Confirmă"; „Anulează" leaves the type as it was.
       await editTile(page, "general");
-      await general(page).getByLabel(/^Tip document/).selectOption({ label: "Adeverință" });
-      await expect(general(page).locator('[data-identity-change="held"]')).toBeVisible();
-      await page.locator('[data-tile-save="general"]').click();
-      await expect(page.getByText("goliți-le înainte de a-l trece la un tip de document obișnuit").first()).toBeVisible();
-      // Back to Pașaport — nothing left to save — and the tile closed.
-      await general(page).getByLabel(/^Tip document/).selectOption({ label: "Pașaport" });
+      await general(page).getByRole("button", { name: "Schimbă tipul…", exact: true }).click();
+      await typeChangeDialog(page).getByLabel("Tipul nou").selectOption({ label: "Adeverință" });
+      await expect(typeChangeDialog(page).locator("[data-type-change-held]")).toContainText("goliți-le întâi");
+      await expect(typeChangeDialog(page).getByRole("button", { name: "Confirmă", exact: true })).toHaveCount(0);
+      await typeChangeDialog(page).getByRole("button", { name: "Anulează", exact: true }).click();
+      await expect(general(page).locator('[data-read-value="documentTypeId"]')).toHaveText("Pașaport");
       await page.locator('[data-tile-cancel="general"]').click();
       await expect(page.locator('[data-tile-edit-bar="general"]')).toHaveCount(0);
 

@@ -129,6 +129,8 @@ import { tileIsEmpty, valueAt } from "@/lib/ui/empty-tile";
 import { IDENTITY_TILE, tileOfTabIndex, type DocumentLayout } from "./document-tiles";
 import { RecordSyncNotice, useRecordSaveSync } from "@/components/record-save-sync";
 import { DeceasedMark } from "@/components/persons/deceased-mark";
+import { DocumentTypeChange, type TypeChangeDrops } from "./document-type-change";
+import { customFieldsDroppedByType, keepsCustomFieldOnRetype } from "@/lib/documents/type-change";
 
 /**
  * Slice #37.20 — the `order` a panel takes in the page's tile row. A notebook
@@ -730,15 +732,49 @@ export function DocumentForm({
     // brand-new document's `custom_fields` and its first version snapshot.
     const retypedByHand = values.documentTypeId !== baseline.values.documentTypeId;
     if (!retypedByHand || !selectedType) return values;
+    // Slice 40.92: the filter is `keepsCustomFieldOnRetype`, which „Schimbă tipul…" reads to name what goes.
+    const newTypeKeys = new Set(templateFields.map((f) => f.key));
     return {
       ...values,
       customFields: Object.fromEntries(
-        Object.entries(values.customFields).filter(
-          ([key]) =>
-          !someTypeDeclares.has(key) ||
-          templateFields.some((f) => f.key === key),
-        ),
+        Object.entries(values.customFields).filter(([key]) => keepsCustomFieldOnRetype(key, someTypeDeclares, newTypeKeys)),
       ),
+    };
+  };
+
+  /**
+   * Slice 40.92: what a change of this saved document's type to `toId` drops, in the words „Schimbă tipul…" shows —
+   * the form fields by the label of the type they are on now (the type on screen first, then the saved one, then
+   * any), and the identity notice by its fields' labels. Read from the form's values at the moment of asking.
+   */
+  const typeChangeDrops = (toId: string): TypeChangeDrops => {
+    const to = typeOptions.find((opt) => opt.id === toId);
+    const labelOrder = [
+      selectedType,
+      typeOptions.find((opt) => opt.id === baseline.values.documentTypeId),
+      ...typeOptions,
+    ];
+    const labels = new Map<string, string>();
+    for (const type of labelOrder) {
+      for (const f of parseTemplateFields(type?.templateFields)) {
+        if (!labels.has(f.key)) labels.set(f.key, f.labelRo || f.labelEn || f.key);
+      }
+    }
+    const fields = customFieldsDroppedByType(
+      form.getValues("customFields") ?? {},
+      someTypeDeclares,
+      new Set(parseTemplateFields(to?.templateFields).map((f) => f.key)),
+      (key) => labels.get(key),
+    );
+    const notice = identityChangeNotice(savedKind, to ? identityKindOfType(to) : null, form.getValues("identity") ?? {});
+    return {
+      fields,
+      identity:
+        notice === null
+          ? null
+          : notice.kind === "held"
+            ? { kind: "held" }
+            : { kind: "removes", fields: notice.fields.map((k) => tId(`fields.${k}`)) },
     };
   };
 
@@ -1772,6 +1808,21 @@ export function DocumentForm({
           // 40.75: the read view says the type's own name, without „(are formular)", and keeps the „no form" line.
           readLabel={selectedType?.name}
           hintInRead
+          // Slice 40.92: a saved document's type is changed only through „Schimbă tipul…" and its confirmation; a new
+          // document keeps the plain dropdown.
+          changeAction={
+            !isCreate && documentId
+              ? (options) => (
+                  <DocumentTypeChange
+                    documentId={documentId}
+                    options={options}
+                    currentTypeId={selectedDocumentTypeId ?? ""}
+                    dropsFor={typeChangeDrops}
+                    onConfirm={(toId) => form.setValue("documentTypeId", toId, { shouldDirty: true, shouldValidate: true })}
+                  />
+                )
+              : undefined
+          }
           // Slice #37.85: see `showNoFormHint` — a reader who can configure types only, linking to
           // the engine with this type already chosen.
           hint={
@@ -2557,9 +2608,15 @@ function SelectField({
   watchValue,
   readLabel,
   hintInRead = false,
+  changeAction,
 }: Omit<FieldProps, "width"> & {
   /** Slice 40.75: the hint is a statement about the value, not a control, so the read view keeps it (the type's „no form"). */
   hintInRead?: boolean;
+  /**
+   * Slice 40.92: in edit mode the value is not a live dropdown — it reads as text, with this action beside it, which
+   * is handed the dropdown's own options („Schimbă tipul…" on a saved document's type). The read view is unchanged.
+   */
+  changeAction?: (options: { value: string; label: string; title?: string }[]) => React.ReactNode;
   /** Slice 40.75: the read view's words for the chosen value, where an option's own label says more (the type's „(F)"). */
   readLabel?: string;
   width: FieldWidth;
@@ -2613,6 +2670,25 @@ function SelectField({
         <span className={STACKED_LABEL_CLASS}>{label}</span>
         <ReadValue name={name} kind={width.kind} text={watchValue ? (readLabel ?? chosenLabel ?? "") : ""} style={boxCss} className={ring} />
         {hintInRead && hint && <span className="text-xs text-fade">{hint}</span>}
+      </div>
+    );
+  }
+  // Slice 40.92: edit mode with a change action — the value as text, the action beside it, the hint and error kept.
+  // The pair is the box plus the icon, so the outer takes no width of its own; three children, as the subgrid has rows.
+  if (changeAction) {
+    return (
+      <div className={STACKED_FIELD_CLASS} style={hiddenFieldStyle(hiddenEmpty)} data-empty-hidden={hiddenEmpty || undefined}>
+        <span className={STACKED_LABEL_CLASS}>{label}</span>
+        <div className="flex items-start gap-1">
+          <ReadValue name={name} kind={width.kind} text={watchValue ? (readLabel ?? chosenLabel ?? "") : ""} style={boxCss} className={ring} />
+          {changeAction(options)}
+        </div>
+        {(hint || error) && (
+          <div className="flex flex-col gap-0.5" style={boxCss}>
+            {hint && <span className="text-xs text-fade">{hint}</span>}
+            {error && <span className="text-xs text-alert">{error}</span>}
+          </div>
+        )}
       </div>
     );
   }

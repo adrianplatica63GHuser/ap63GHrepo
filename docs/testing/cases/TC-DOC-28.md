@@ -38,10 +38,10 @@ Nothing.
 | 3 | CNP back, Sex M, Prenume „Ionel"; „Salvează"; reloads | the warning gone; Prenume Ionel, Sex M |
 | 4 | Opens the model vechi document | Prenumele tatălui, Prenumele mamei, Starea civilă, Lucrătorul care a eliberat-o; no CNP; no VALABIL / EXPIRAT |
 | 5 | Opens the Pașaport, then the Pașaport CRDS | VALABIL and Domiciliu — județul Ilfov; Domiciliu — țara Spania |
-| 6 | On the model nou: „Editează" on „Identificarea actului", Tip document „Pașaport" | under it: „La salvare se șterg: Domiciliu, Nr. card — noul tip nu are aceste câmpuri." |
+| 6 | On the model nou: „Editează" on „Identificarea actului", „Schimbă tipul…", „Tipul nou" „Pașaport"; „Confirmă" | the confirmation lists Domiciliu and Nr. card under „Câmpurile de identitate care se șterg la salvare:"; after „Confirmă", under Tip document: „La salvare se șterg: Domiciliu, Nr. card — noul tip nu are aceste câmpuri." |
 | 7 | „Salvează"; reloads | the passport's fields (Nr. pașaportului …); Nume kept; no Domiciliu |
-| 8 | „Editează" again, Tip document „Adeverință"; „Salvează" | „Actul are date de identitate completate: goliți-le înainte de a-l trece la un tip de document obișnuit." — nothing saved |
-| 9 | Tip document back to „Pașaport"; „Renunță" | the tile closes |
+| 8 | „Editează" again, „Schimbă tipul…", „Tipul nou" „Adeverință" | „Tipul nu se poate schimba într-un tip de document obișnuit cât timp actul are date de identitate completate: goliți-le întâi în „Act de identitate”, apoi schimbați tipul." — and no „Confirmă" |
+| 9 | „Anulează"; „Renunță" | Tip document still „Pașaport"; the tile closes |
 | 10 | „Acte" → „Adaugă act", Tip document „Carte de Identitate (model vechi)", Nume „Testescu", „Salvează" | „Act de identitate" empty before; the new document opens with Nume Testescu |
 
 ## At the end — leaving things as they were found
@@ -49,6 +49,9 @@ Nothing.
 Delete the five documents.
 
 ## Notes from the runs
+
+**2026-10-28 — Slice 40.92.** Steps 6, 8 and 9: a saved document's type is changed through „Schimbă tipul…" and its
+confirmation, no longer through the dropdown. Not driven by hand first; the spec drives it.
 
 **2026-10-26 — Slice 40.83.** Written with the slice's spec, `e2e/document/identity-document.spec.ts`, which drives it
 on invented records; promoted without hand runs (`PROMOTED_WITHOUT_DRIVING`).

@@ -1938,6 +1938,24 @@
       "optionHasFormTitle": "{name} (has a form)",
       "noFormHint": "This type has no form yet; its form is built in <link>DocTypeEngine</link>."
     },
+    "typeChange": {
+      "action": "Change type…",
+      "title": "Change the document's type",
+      "intro": "A saved document's type is changed only to correct a misclassification. Pick the right type: what is lost is shown below, before anything changes.",
+      "newType": "New type",
+      "choose": "Pick a type…",
+      "dropsFields": "Form fields removed on save:",
+      "dropsIdentity": "Identity fields removed on save:",
+      "held": "The type cannot become an ordinary document type while the document holds identity values: empty them in „Identity document” first, then change the type.",
+      "partiesKept": "Linked parties with a role the new type does not have — they stay linked, with their role:",
+      "party": "{name} ({code}) — {role}",
+      "partiesLoading": "Checking the linked parties…",
+      "partiesError": "The linked parties could not be checked; they stay linked with their role regardless.",
+      "dropsNothing": "The change removes nothing.",
+      "savedOnSave": "Nothing is written until „Save”.",
+      "confirm": "Confirm",
+      "cancel": "Cancel"
+    },
     "surveyorPicker": {
       "title": "Select Surveyor",
       "stepChooseType": "What type of person is the surveyor?",
