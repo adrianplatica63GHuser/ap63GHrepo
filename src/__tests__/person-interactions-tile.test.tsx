@@ -131,10 +131,10 @@ describe("B reaches C (#39.05)", () => {
 
   // Slice 40.43: B as tall as its rows up to 410 px (the tile then 436), no height and no floor of the tile's own — it
   // read „B keeps its height", `[data-interactions-history]`'s `style.height` „410px".
-  it("B as tall as its rows up to 410 px, C under it, the tile 40 rem wide with no height of its own", () => {
+  it("B as tall as its rows up to 410 px, C under it, the tile 41.1875 rem wide (40.98; 40 before) with no height of its own", () => {
     renderTile();
     const tile = document.querySelector<HTMLElement>('[data-tile="interactions"]')!;
-    expect(tile.style.width).toBe("40rem");
+    expect(tile.style.width).toBe("41.1875rem"); // 40.98: 5 units of 119 px
     expect(tile.style.height).toBe("");
     expect(tile.style.minHeight).toBe("");
     const b = tile.querySelector<HTMLElement>("[data-interactions-history]")!;

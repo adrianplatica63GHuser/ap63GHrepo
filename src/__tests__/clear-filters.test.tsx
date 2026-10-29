@@ -82,7 +82,8 @@ describe("on the four lists", () => {
 
 describe("an open tile stays beside the list when the columns leave room (40.49)", () => {
   it("the body's cap: the room beside the tiles when the columns fit in it, the whole row when not", () => {
-    expect(bodyBesideTiles("calc(30rem + 2px)").maxWidth).toBe("max(calc(100% - 41rem), min(100%, calc((calc(30rem + 2px) - (100% - 41rem)) * 1000)))");
+    // 40.98: the row tiles' column is 41.1875rem (5 units of 119 px) and its gap; it was 40 + 1.
+    expect(bodyBesideTiles("calc(30rem + 2px)").maxWidth).toBe("max(calc(100% - 42.1875rem), min(100%, calc((calc(30rem + 2px) - (100% - 42.1875rem)) * 1000)))");
   });
 
   it.each(["natural-persons", "judicial-persons", "properties", "documents"])("%s hands its columns' width to the tiles", (dir) => {
