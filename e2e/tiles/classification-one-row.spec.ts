@@ -37,9 +37,10 @@ async function box(l: Locator): Promise<{ x: number; y: number; width: number; h
 
 /** Steps 1 and 2 on one record's screen. */
 async function layout(cls: Locator): Promise<void> {
-  // Step 1 — 476 px (3 units); Relevanță level with Importanță and to its right; Proveniență under both.
+  // Step 1 — 524 px (4 units of 119, 40.98; 476, 3 of 148, before); Relevanță level with Importanță and to its right;
+  // Proveniență under both.
   const t = await box(cls);
-  expect(Math.round(t.width)).toBe(476);
+  expect(Math.round(t.width)).toBe(524);
   const [imp, rel, prov] = [await box(cls.locator("select").nth(0)), await box(cls.locator("select").nth(1)), await box(cls.locator("select").nth(2))];
   expect(Math.abs(rel.y - imp.y)).toBeLessThan(0.5);
   expect(rel.x).toBeGreaterThan(imp.x + imp.width);

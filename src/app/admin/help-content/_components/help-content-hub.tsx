@@ -31,7 +31,7 @@ import { UnitRow } from "@/components/screen/unit-row";
  * unit); an editor 6 — its two XXL columns and their gap, inside its padding.
  */
 const NAV_UNITS = 2;
-const EDITOR_UNITS = 6;
+const EDITOR_UNITS = 7; // 40.98: re-pinned (6 of 148 px); NAV_UNITS 2 stays 2, the nearest
 
 // Slice #32.16: the screen and hint names on this page come from
 // `help.admin.screens.*` / `help.admin.hints.*` rather than from the registry,

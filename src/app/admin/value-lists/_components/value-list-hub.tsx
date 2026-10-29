@@ -45,10 +45,10 @@ import { PANEL_TITLE_TYPE } from "@/lib/ui/title-type";
 
 /**
  * The list's side takes the rest of the row, and never less than this: below
- * it (a 1366 px window, six units) the list goes under the categories rather
+ * it (a 1366 px window, six units; seven of 119 px since 40.98) the list goes under the categories rather
  * than beside them in a sliver. A list wider than its side scrolls inside it.
  */
-const LIST_MIN_UNITS = 6;
+const LIST_MIN_UNITS = 7; // 40.98: re-pinned (6 of 148 px)
 
 /**
  * Slice #39.76 — the relationship triangle is a line of its own across the row (`full`), its card at the width #38.77
@@ -60,7 +60,7 @@ const TRIANGLE_UNITS = VALUE_LIST_CARD_UNITS;
 /** Slice #39.76 — the list whose add/edit form is a tile of its own: a role's fields, scope and document types. */
 const ROLE_FORM_LIST: ListKey = "person-roles";
 /** Its tile: five units — the fields wrap in it, its scope and its document types under them. */
-const ROLE_FORM_UNITS = 5;
+const ROLE_FORM_UNITS = 6; // 40.98: re-pinned (5 of 148 px)
 
 export function ValueListHub({
   /**

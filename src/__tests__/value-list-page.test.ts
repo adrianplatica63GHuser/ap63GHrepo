@@ -182,9 +182,12 @@ describe("the column, as wide as its longest name (Slice #38.65)", () => {
     expect(Math.abs(after - before)).toBeLessThanOrEqual(4);
   });
 
+  // 40.98: the two units it was were 148-px units, 19.5rem — two of 119 are 15.875, narrower than its names, so the
+  // column is measured against the 19.5 it replaced, and stays off the grid by name.
   it("is about 20 % narrower than the two units it was (#38.35)", () => {
-    const saved = 1 - REFERENCE_NAV_REM / unitsRem(2);
-    expect(unitsRem(2)).toBe(19.5);
+    const TWO_UNITS_OF_148 = 19.5;
+    const saved = 1 - REFERENCE_NAV_REM / TWO_UNITS_OF_148;
+    expect(unitsRem(2)).toBe(15.875);
     expect(saved).toBeGreaterThan(0.15);
     expect(saved).toBeLessThan(0.25);
   });

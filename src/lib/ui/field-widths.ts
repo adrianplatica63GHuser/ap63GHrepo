@@ -345,8 +345,14 @@ export function panelRem(inner: number): number {
  * and 24 inside) fit in three. A row holds 6 units on a 1366-pixel laptop
  * (68.4rem beside the sidebar), 10 on a 1920-pixel monitor and 14 on a 2560.
  * Today only the Natural Person is on it.
+ *
+ * Slice 40.98 (Adrian, 2026-10-28: „modify the size of the unit … from 148 to 119"): 7.4375rem, 119 px; the gap stays
+ * 1rem. A 3-unit tile is 389 px, 363 inside — „Each panel needs to fit 363 px inside", his red note — so L + M,
+ * M + M or one XL fit a row, and two L, M + XL or one XXL do not. A 1366-px window holds 8 units beside the sidebar,
+ * a 1920-px one 12. Every count fixed in code was re-pinned to the count nearest the width it had (3 → 4, 476 → 524 px;
+ * 4 → 5, 640 → 659; 5 → 6, 804 → 794; 6 → 7, 968 → 929; 10 → 12, 1624 → 1604; 2 stays 2, 312 → 254).
  */
-export const UNIT_REM = 9.25;
+export const UNIT_REM = 7.4375;
 export const UNIT_GAP_REM = PANEL_GAP_REM;
 
 /** `n` units wide: the units and the gaps between them. */
@@ -487,6 +493,7 @@ export const CORNER_COLUMNS = {
  * buttons need 116 px (4 × 26 and 3 gaps of 4). Before: 432 − 304 = 128, less 24 of padding = 104 — the bin wrapped to a
  * second line. After: 432 − 256 = 176, less 12 = 164. Units are rem, so 1366 px is the same arithmetic. The property form
  * and a document's pages keep `CORNER_COLUMNS` as it is (Ask first 1).
+ * 40.98: a third is 4 units of 119 px, 524 px, its table 480 — the buttons' cell 152 at the ordinary gaps, 212 here.
  */
 export const CORNER_TIGHT_SAVING_REM = 0.75;
 
@@ -560,11 +567,11 @@ export const IDENTITY_DOCUMENT = {
  *
  * ⚠️ **NOT NARROWER THAN IT WAS.** Before this slice the „Pagini" panel was
  * two-fifths of a centred 93rem block, which TC-DOC-01's spec measured in a
- * 1920 × 1080 window (see the #37.15 handover). 40rem is 640 px, wider than
+ * 1920 × 1080 window (see the #37.15 handover). 40rem is 640 px (41.1875rem, 659, since 40.98), wider than
  * that, and it no longer depends on the window. `src/__tests__/field-widths.test.ts`
  * holds it at no less than 36rem (576 px, the arithmetic's figure).
  */
-export const PAGES_PANEL_REM = 40; // = unitsRem(4): the page image joins the width unit unchanged (#37.31, rule 20)
+export const PAGES_PANEL_REM = unitsRem(5); // 40.98: 5 units, 659 px — „5 units is the closest match" to the 640 it was (unitsRem(4), #37.31)
 export const PAGES_PANEL_STYLE: CSSProperties = { width: rem(PAGES_PANEL_REM) };
 
 /**
@@ -580,7 +587,7 @@ export const INTERACTIONS_TILE_STYLE: CSSProperties = { ...PAGES_PANEL_STYLE, mi
 // height) is gone — on a person's screen the tile is as tall as what it holds (interactions-tile.tsx), as „Legături" is.
 
 // Slice #37.31: `documentRowStyle` and `fieldsBesidePagesStyle` gave way to
-// `unitRowStyle("document")` — the page image is a 4-unit tile like any other.
+// `unitRowStyle("document")` — the page image is a 5-unit tile like any other (4 of 148 px until 40.98).
 
 // ---- a document type's own fields (#37.15) ------------------------------------------------
 
@@ -824,12 +831,16 @@ export const SCREEN_ROWS = {
 export type Screen = keyof typeof SCREEN_ROWS;
 
 /** The fewest units that hold each panel's widest row. */
+/** Slice 40.98: the fewest units a gray tile's panel of fields takes — 3, 363 px inside (Adrian's red note). */
+export const GRAY_PANEL_MIN_UNITS = 3;
+
 function panelUnitsOf<R extends Record<string, readonly (readonly string[])[]>>(
   rows: R,
   widths: Readonly<Record<string, FieldWidth>>,
 ): { [K in keyof R]: number } {
   return Object.fromEntries(
-    Object.entries(rows).map(([panel, r]) => [panel, unitsFor(panelRem(widestRow(r, widths)))]),
+    // 40.98 (Ask first 6): a gray-tile panel is at least 3 units, 363 px inside.
+    Object.entries(rows).map(([panel, r]) => [panel, Math.max(GRAY_PANEL_MIN_UNITS, unitsFor(panelRem(widestRow(r, widths))))]),
   ) as { [K in keyof R]: number };
 }
 
@@ -841,7 +852,7 @@ function mapUnits<T extends Record<string, number>, V>(units: T, f: (n: number) 
  * The shared address block, stacked: 3 units on every screen. Its widest row was Stradă (24rem) until 40.80 made it
  * XL; it is now Cod poștal | Localitate, 5 + 0.5 + 13 = 18.5rem — still past the 17.875rem inside 2 units.
  */
-const ADDRESS_PANEL_UNITS = unitsFor(panelRem(widestRow(ADDRESS_ROWS, ADDRESS)));
+const ADDRESS_PANEL_UNITS = Math.max(GRAY_PANEL_MIN_UNITS, unitsFor(panelRem(widestRow(ADDRESS_ROWS, ADDRESS))));
 
 /** Each form panel in units, by screen. */
 export const PANEL_UNITS = {
@@ -861,23 +872,26 @@ export const PANEL_UNITS = {
   //  17.5rem and would fit 2 units, but Adrian left Note at the tile's 450 px and every other field as it was.
   property: {
     ...panelUnitsOf(SCREEN_ROWS.property, { ...PROPERTY, ...PROPERTY_ADDRESS }),
-    cadastral: 3,
-    corners: 3,
-    map: 3,
-    streetView: 3,
+    // 40.98 (Adrian): Colțuri „needs 4" — its four row buttons would wrap in 3 units of 119 px — and Hartă and Street
+    // View „should go to 4 to stay beside the 4-unit cadastral panel"; Date cadastrale 4, its Cod | Nr. tarla / sola |
+    // Nr. parcelă row (26.5rem, 424 px) past the 363 px inside 3.
+    cadastral: 4,
+    corners: 4,
+    map: 4,
+    streetView: 4,
   },
   //  general 3 — held at 3 since 40.88: Tip document and Emitent went XXL → XL, and the rows alone
   //  would now fit 2 units (Nr. document | Data, 17.5rem), but Adrian marked Etichetă scurtă,
   //  Subiect and Note extinse green at the 3-unit tile's whole width (450 px), and Exemplare emise
   //  TILE beside them; fees 3 — the fees group's fields,
   //  3 units at least as before #38.32 (a wider group widens it: `packFieldRows`).
-  //  pages 4 — PAGES_PANEL_REM is exactly unitsRem(4) (rule 20). (succession 3 went with the
+  //  pages 5 — PAGES_PANEL_REM is exactly unitsRem(5) (rule 20; 4 of 148 px until 40.98). (succession 3 went with the
   //  certificate's own „Părți" panel in #39.48.)
   document: {
     ...panelUnitsOf(SCREEN_ROWS.document, DOCUMENT),
     general: 3,
     fees: 3,
-    pages: 4,
+    pages: 5, // 40.98: PAGES_PANEL_REM is unitsRem(5)
   },
 } as const;
 
@@ -1030,17 +1044,11 @@ export const SHARE_PANEL_STYLE: CSSProperties = { width: rem(panelRem(SCALE.L)) 
  * One pure function, so a new type needs no layout work. Each box keeps the
  * width `templateFieldWidth` gave it (#37.15); this decides only the rows.
  *
- * AND A PANEL OF DROPDOWNS TAKES A THIRD UNIT WHEN THAT PAIRS THEM. (#37.53)
- * Since #37.53 a dropdown is as wide as its widest choice — most of a CVC's
- * 10rem — but a 2-unit panel is 17.875rem inside, and two of them with the gap
- * are 20.5. So a panel holding two or more dropdowns is packed at 3 units as
- * well (28.125rem inside), and takes the 3 when its fields come out in fewer
- * rows. Form order is kept; no field moves to make a pair. Measured on the six
- * seeded forms: six panels go from 2 units to 3 (the CVC's Financiar, Excepție
- * cadastru, Declarații și garanții and Declarații și obligații legale — named
- * „Stare juridică afirmată" and „Conformitate și formalități" until #37.54 —
- * the Act adițional's Act părinte and Clauze completate); every other panel is
- * as it was.
+ * A PANEL OF DROPDOWNS NO LONGER TAKES A THIRD UNIT OF ITS OWN. (#37.53, gone in 40.98)
+ * #37.53 packed a panel of two or more dropdowns at 3 units when that saved rows — a 2-unit panel, 17.875rem inside,
+ * could not pair two of them. On the 119-px unit every gray panel is 3 units at least (GRAY_PANEL_MIN_UNITS), 363 px
+ * inside, so two dropdowns pair by the floor alone, and three 9rem ones no longer fit a row (the Act adițional's
+ * Clauze completate are two to a row since 40.98).
  */
 export interface PackItem {
   key: string;
@@ -1056,15 +1064,11 @@ export interface PackItem {
 
 export function packFieldRows(
   items: readonly PackItem[],
-  { minUnits = 2, baseRowsRem = 0 }: { minUnits?: number; baseRowsRem?: number } = {},
+  { minUnits = GRAY_PANEL_MIN_UNITS, baseRowsRem = 0 }: { minUnits?: number; baseRowsRem?: number } = {},
 ): { units: number; rows: string[][] } {
   const widest = Math.max(baseRowsRem, 0, ...items.filter((i) => !i.full).map((i) => boxRem(i.width)));
   const units = Math.max(minUnits, unitsFor(panelRem(widest)));
-  const packed = packAt(items, units);
-  const dropdowns = items.filter((i) => !i.full && i.width.kind === "select").length;
-  if (units >= 3 || dropdowns < 2) return packed;
-  const wider = packAt(items, 3);
-  return wider.rows.length < packed.rows.length ? wider : packed;
+  return packAt(items, units);
 }
 
 /** The rows `items` flow into at `units` wide (rule 18). */
@@ -1193,7 +1197,10 @@ export const ID_CARD_INSTITUTION = { step: "XL", kind: "select", fill: true } as
  * between them, 6 units), the card's padding (1.5rem a side) and room for its
  * scrollbar, which a card capped at 90% of the window's height can show.
  */
-export const ID_CARD_DIALOG_CARD_STYLE: CSSProperties = { maxWidth: rem(unitsRem(6) + 2 * 1.5 + 1.5) };
+// 40.98: the two panels' own units (3 + 4 on the 119-px unit: Carte de identitate's first row is 23.75rem), not a fixed 6.
+export const ID_CARD_DIALOG_CARD_STYLE: CSSProperties = {
+  maxWidth: rem(unitsRem(PANEL_UNITS.naturalPerson.identity + PANEL_UNITS.naturalPerson.idCard) + 2 * 1.5 + 1.5),
+};
 
 // ---- a Previzualizare tile, on the unit, in its screen's rows (#37.33) ------------------
 
@@ -1201,13 +1208,13 @@ export const ID_CARD_DIALOG_CARD_STYLE: CSSProperties = { maxWidth: rem(unitsRem
  * A PREVIEW IS A SMALLER COPY OF THE RECORD.                   (Slice #37.33)
  *
  * A Previzualizare tile is whole width units — a person, a company or a
- * property 3, like the first panel of its screen; a document 4, the page
- * image's width (`PAGES_PANEL_REM` is exactly `unitsRem(4)`) — and shows its
+ * property 4 (3 of 148 px until 40.98, re-pinned to keep its width); a document 5,
+ * the page image's width (`PAGES_PANEL_REM` is exactly `unitsRem(5)`) — and shows its
  * fields as that screen does: labels above, in the screen's rows, at the
  * screen's widths. The fields are #37.24's short set per kind; the rows are the
  * screen's, through `keepFields`, so nothing is laid out by hand here.
  */
-export const PREVIEW_UNITS = { panel: 3, pages: 4 } as const;
+export const PREVIEW_UNITS = { panel: 4, pages: 5 } as const; // 40.98: re-pinned to the width they had (3 → 4, 4 → 5)
 export type PreviewWidth = keyof typeof PREVIEW_UNITS;
 export const PREVIEW_STYLE: Readonly<Record<PreviewWidth, CSSProperties>> = {
   panel: unitStyle(PREVIEW_UNITS.panel),
@@ -1727,7 +1734,7 @@ export function stepGridStyle(step: Step, columns: number, gapRem = 0.75): CSSPr
 }
 
 /** The calculation's preview map: 6 width units (#37.35, rule 20; two panels before), as tall as it was (420 px). */
-export const CALC_MAP_UNITS = 6;
+export const CALC_MAP_UNITS = 7; // 40.98: 929 px, the nearest to the 968 it was at 6
 export const CALC_MAP_STYLE: CSSProperties = { width: rem(unitsRem(CALC_MAP_UNITS)), height: rem(26.25) };
 
 /** The list of screens and hints beside the help editor (18rem before; XL now). */

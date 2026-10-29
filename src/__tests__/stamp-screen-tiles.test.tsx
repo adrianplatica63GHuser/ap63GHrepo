@@ -98,11 +98,12 @@ describe("the default placement (#38.13)", () => {
   const unit = UNIT_REM * remPx;
   const gap = UNIT_GAP_REM * remPx;
   // The heights measured on a synthetic stamp in the browser pane (TC-STAMP-02, run 1).
+  // 40.98: the screen's tiles are 4 units of 119 px (3 of 148 until then).
   const boxes = [
-    { id: "description", units: 3, height: 309 },
-    { id: "type", units: 3, height: 141 },
-    { id: "stamped", units: 3, height: 187 },
-    { id: "available", units: 3, height: 511 },
+    { id: "description", units: STAMP_SCREEN.units, height: 309 },
+    { id: "type", units: STAMP_SCREEN.units, height: 141 },
+    { id: "stamped", units: STAMP_SCREEN.units, height: 187 },
+    { id: "available", units: STAMP_SCREEN.units, height: 511 },
   ];
   const at = (units: number) => {
     const own = columnsIn(units * unit + (units - 1) * gap, unit, gap);
@@ -110,12 +111,14 @@ describe("the default placement (#38.13)", () => {
     return Object.fromEntries(placeWithStored(boxes, {}, own, gap, flow).placed.map((p) => [p.id, [p.col, p.top]]));
   };
 
-  it.each([6, 10, 14])("a row of %i units: the first two where they stood, „deja ștampilate” under the first, „disponibile” under the second", (units) => {
+  // 40.98: 1366, 1920 and 2560 px hold 8, 12 and 17 units of 119 px (6, 10 and 14 of 148).
+  it.each([8, 12, 17])("a row of %i units: the first two where they stood, „deja ștampilate” under the first, „disponibile” under the second", (units) => {
+    expect(STAMP_SCREEN.units).toBe(4);
     expect(at(units)).toEqual({
       description: [0, 0],
-      type: [3, 0],
+      type: [4, 0],
       stamped: [0, 309 + gap],
-      available: [3, 141 + gap],
+      available: [4, 141 + gap],
     });
   });
 });

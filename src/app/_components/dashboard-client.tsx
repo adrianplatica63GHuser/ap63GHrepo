@@ -30,10 +30,11 @@ const EXPIRING_COLUMNS: readonly ColumnName[] = ["expiryStatus", "documentTitle"
  *   - the activity: a row is the type chip, the name (XL, truncated) and the time — 4.
  */
 const HOME_UNITS: Readonly<Record<HomeTile, number>> = {
-  recentCounts: 3,
-  staleMetadata: 3,
+  // 40.98: re-pinned to the width they had on the 148-px unit — 3 → 4 (476 → 524 px), 4 → 5 (640 → 659).
+  recentCounts: 4,
+  staleMetadata: 4,
   expiringDocuments: tableUnits(EXPIRING_COLUMNS),
-  recentActivity: 4,
+  recentActivity: 5,
 };
 
 // ---------------------------------------------------------------------------

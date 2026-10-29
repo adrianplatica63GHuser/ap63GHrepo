@@ -20,8 +20,8 @@ const MODAL = code(read("src", "app", "admin", "value-lists", "_components", "va
 
 /** The card's padding (`p-5`), as value-list-modal.tsx's CARD_PADDING_REM. */
 const CARD = 1.25;
-/** The eight units the one card had on every list until #39.75 — 1296 px. */
-const BEFORE = 8;
+/** The eight units of 148 px the one card had on every list until #39.75 — 1296 px. */
+const BEFORE_PX = 1296;
 
 describe("the menu item (Ask first 1)", () => {
   it("is title case, as its neighbours, in both languages", () => {
@@ -31,14 +31,15 @@ describe("the menu item (Ask first 1)", () => {
 });
 
 describe("the widths — whole units, the fewest that hold each table (Ask first 2)", () => {
-  it("„Categorii Folosință” at the compact padding is three units: 29.75rem, its 27rem table and the card", () => {
+  // 40.98: on the 119-px unit, four units — 524 px, where three of 148 were 476. Was „three units: 29.75rem".
+  it("„Categorii Folosință” at the compact padding is four units: 32.75rem, its 27rem table and the card", () => {
     expect(MODAL).toMatch(/const COMPACT_LISTS: ReadonlySet<ListKey> = new Set\(\["person-roles", "use-categories"\]\);/);
     const table = columnsRem(["valueNameShort", "valueUsageRoles", "valueActionsRoles"]);
     expect(table).toBe(27);
-    expect(dialogUnits(table, CARD)).toBe(3);
-    expect(unitsRem(3)).toBe(29.75);
-    // Adrian's „about 35 %" of the eight units: 476 of 1296 px is 37 %.
-    expect(Math.round((unitsRem(3) / unitsRem(BEFORE)) * 100)).toBe(37);
+    expect(dialogUnits(table, CARD)).toBe(4);
+    expect(unitsRem(4)).toBe(32.75);
+    // Adrian's „about 35 %" of the 1296 px the one card had: 476 px was 37 %, 524 is 40 %.
+    expect(Math.round(((unitsRem(4) * 16) / BEFORE_PX) * 100)).toBe(40);
   });
 
   it("each list's card on a tiled page is its own (`valueListCardUnits`), filling its tile, its list centred", () => {
@@ -47,9 +48,11 @@ describe("the widths — whole units, the fewest that hold each table (Ask first
     expect(MODAL).toContain('className={fill ? "mx-auto w-fit max-w-full" : "w-fit max-w-full"} data-value-list-frame="" data-tile-centred={fill ? "" : undefined}>');
   });
 
-  it("the grid takes the units its table needs at its own width: 701 px measured is five, 62 % of eight", () => {
-    expect(typeUsesUnits(701)).toBe(5);
-    expect(Math.round((unitsRem(5) / unitsRem(BEFORE)) * 100)).toBe(62);
+  // 40.98: six units of 119 px, 794 px (five of 148 were 804, 62 % of the card).
+  it("the grid takes the units its table needs at its own width: 701 px measured is six, 61 % of the card", () => {
+    expect(typeUsesUnits(701)).toBe(6);
+    expect(unitsRem(6) * 16).toBe(794);
+    expect(Math.round(((unitsRem(6) * 16) / BEFORE_PX) * 100)).toBe(61);
     expect(typeUsesUnits(100)).toBe(2); // never under MIN_TILE_UNITS
   });
 });
@@ -110,9 +113,12 @@ describe("every page but „Indicative Tarla” as tiles (Slice #39.76)", () => 
 describe("one gap on every page: „Categorii Folosință”'s (Slice #39.88)", () => {
   // Adrian, 2026-10-18: „The gap between the list edge and the tile edge has a proper size … all the others must be
   // modified to have the same size as the use categories tile". The browser half is TC-VL-05 and TC-VL-11 step 9.
-  it("is the card's border and its p-5 — 21 px — and „Categorii Folosință”'s list already stands at it", () => {
+  // 40.98: in 4 units of 119 px its 27rem table no longer stands at the gap by itself — it grows to it (30rem, 48 px
+  // to the fill column), as every other list does. Was „… already stands at it", in 3 units of 148.
+  it("is the card's border and its p-5 — 21 px — and „Categorii Folosință”'s list grows to it", () => {
     expect(REFERENCE_GAP_REM * 16).toBe(21);
-    expect(referenceTableRem(unitsRem(3))).toBe(columnsRem(["valueNameShort", "valueUsageRoles", "valueActionsRoles"]));
+    expect(referenceTableRem(unitsRem(4))).toBe(30);
+    expect(referenceTableRem(unitsRem(4))).toBeGreaterThan(columnsRem(["valueNameShort", "valueUsageRoles", "valueActionsRoles"]));
     expect(referenceTileRem(referenceTableRem(unitsRem(7)))).toBe(unitsRem(7));
     expect(PANEL_BORDER_REM).toBe(1 / 16);
   });
@@ -135,8 +141,10 @@ describe("one gap on every page: „Categorii Folosință”'s (Slice #39.88)", 
     expect(MODAL).toContain('return columns.includes("valueText") ? "valueText" : columns[0];');
     // Slice 40.12: one piece, `FixedTable`, which also keeps a width the user dragged — taken from the fill column.
     expect(MODAL).toContain('<FixedTable id={`value-list/${listKey}`} columns={columns} className="text-sm min-w-full" fill={tileFill}>');
-    // „Indicative Tarla": 964 px in 1132 before, 1088 after — the 124 px to „Descriere".
-    expect(referenceTableRem(unitsRem(7)) * 16).toBe(1088);
+    // „Indicative Tarla": 964 px in 1132 before, 1088 after — the 124 px to „Descriere" (#39.88, 7 units of 148).
+    // 40.98: 8 units of 119 px, 1196 px — 1020 for the table, 56 px to „Descriere".
+    expect(dialogUnits(964 / 16, CARD)).toBe(8);
+    expect(referenceTableRem(unitsRem(8)) * 16).toBe(1020);
   });
 
   it("the allowed-uses grid too: its bottom at the gap, and what it gains to „Tip”", () => {

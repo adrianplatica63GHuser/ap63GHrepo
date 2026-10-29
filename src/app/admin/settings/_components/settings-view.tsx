@@ -27,9 +27,9 @@ import { PANEL_TITLE_TYPE } from "@/lib/ui/title-type";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 /** Slice #37.35: Setări's tiles, 3 units each. Slice #39.17: ticked on and off like a record's (`settings-tiles.ts`). */
-const SETTINGS_TILE_UNITS = 3;
+const SETTINGS_TILE_UNITS = 4; // 40.98: re-pinned (3 of 148 px)
 /** Slice #38.40: „Praguri de timp" is four groups (five since 39.92) with an example under each threshold — one unit wider. */
-const TIME_FRAMES_UNITS = 4;
+const TIME_FRAMES_UNITS = 5; // 40.98: re-pinned (4 of 148 px)
 
 // ---------------------------------------------------------------------------
 // Locale helper — read the current cookie locale so we can pick _en vs _ro

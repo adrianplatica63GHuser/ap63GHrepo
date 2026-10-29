@@ -37,9 +37,9 @@ gap, within 2 px.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | The window 1920 × 1080; „Proprietăți", searches `TC-TILES-19` | The three properties' rows |
-| 2 | „Previzualizare" on „TC-TILES-19 Teren A" (#39.04) | Its preview in the column at the list's right, its top level with the list's top (the toolbar's), 40 rem wide; the magnifier reads pressed |
+| 2 | „Previzualizare" on „TC-TILES-19 Teren A" (#39.04) | Its preview in the column at the list's right, its top level with the list's top (the toolbar's), 41.1875 rem wide (40.98; 40 rem before); the magnifier reads pressed |
 | 3 | Looks at the other two rows (#39.04) | Their magnifiers are disabled |
-| 4 | The window 1366 × 900 | The list and the column do not fit side by side, so the preview stands under the list, still 40 rem; the page does not scroll sideways |
+| 4 | The window 1366 × 900 | The list and the column do not fit side by side, so the preview stands under the list, still 41.1875 rem; the page does not scroll sideways |
 | 5 | „Previzualizare" on A again, then on B | A's preview closes and every row is free; B's preview opens and A's magnifier is disabled |
 
 ## At the end — leaving things as they were found

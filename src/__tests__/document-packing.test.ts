@@ -5,7 +5,7 @@
  * `packFieldRows` flows a panel's fields in form order into rows of its inner
  * width; a textarea, and every Certificate și referințe field, takes a row of
  * its own at the panel's whole width; the panel is the fewest units that hold
- * its widest box, never fewer than 2. This suite runs it over the six seeded
+ * its widest box, never fewer than 3 (40.98; 2 until then). This suite runs it over the six seeded
  * types exactly as the Document form does (grouped by `groupRo`, widths from
  * `templateFieldWidth`, the fees panel's own three fields as its base rows),
  * so a new or edited type is checked with no layout work — and writes out the
@@ -96,14 +96,17 @@ describe("the packing rule itself", () => {
       { key: "d", width: TA, full: true },
       { key: "e", width: M },
     ]);
-    expect(units).toBe(2); // the widest box is XL, 17rem — two units hold it
+    expect(units).toBe(3); // the widest box is XL, 17rem — two units would hold it; 40.98: a gray panel is 3 at least
     expect(rows).toEqual([["a", "b"], ["c"], ["d"], ["e"]]);
   });
 
-  it("is never fewer than two units, and widens to hold the widest box or base row", () => {
-    expect(packFieldRows([{ key: "a", width: M }]).units).toBe(2);
-    expect(packFieldRows([{ key: "a", width: { step: "XXL", kind: "select" } }]).units).toBe(3);
-    expect(packFieldRows([], { baseRowsRem: 24 }).units).toBe(3);
+  // 40.98 (Adrian: „Each panel needs to fit 363 px inside"): three units at least, 22.6875rem inside; it was two.
+  it("is never fewer than three units, and widens to hold the widest box or base row", () => {
+    expect(packFieldRows([{ key: "a", width: M }]).units).toBe(3);
+    expect(unitsInnerRem(3) * 16).toBe(363);
+    expect(packFieldRows([{ key: "a", width: { step: "XXL", kind: "select" } }]).units).toBe(4); // 24rem, past 363 px
+    expect(packFieldRows([], { baseRowsRem: 22 }).units).toBe(3);
+    expect(packFieldRows([], { baseRowsRem: 24 }).units).toBe(4);
   });
 });
 
@@ -116,9 +119,10 @@ describe.each(Object.keys(FORMS.forms))("the seeded type %s", (key) => {
     }
   });
 
-  it("gives every panel 2 or 3 units, and no row is wider than its panel", () => {
+  // 40.98: every seeded panel is 3 units — the floor holds each; a panel past it would be listed in the handover.
+  it("gives every panel 3 units, and no row is wider than its panel", () => {
     for (const p of panels) {
-      expect([p.label, [2, 3].includes(p.units)]).toEqual([p.label, true]);
+      expect([p.label, p.units]).toEqual([p.label, 3]);
       const byKey = new Map(p.items.map((i) => [i.key, i] as const));
       for (const row of p.rows) {
         const sized = row.map((k) => byKey.get(k)!).filter((i) => !i.full);
@@ -138,13 +142,17 @@ describe("an Act Adițional's panels at Adrian's sizes (40.88)", () => {
     expect(act).toEqual([
       // Calitate exemplar | Onorariu notarial, then Exemplare emise across the tile (the swap, and TILE).
       { label: "Identificarea actului", units: 3, rows: [["calitateExemplar", "onorariuNotarial"], ["exemplareEmise"]] },
-      // Motiv completare (a textarea) and Temei legal completare (TILE) each the panel's width; the two dropdowns at M share a row.
-      { label: "Motiv și efect", units: 2, rows: [["motivCompletare"], ["temeiLegalCompletare"], ["efectUrmarit", "pretNeschimbat"]] },
-      // The nine clauses at M, three to a row.
+      // Motiv completare (a textarea) and Temei legal completare (TILE) each the panel's width; the two dropdowns at M
+      // share a row. 40.98: 3 units, the floor (was 2).
+      { label: "Motiv și efect", units: 3, rows: [["motivCompletare"], ["temeiLegalCompletare"], ["efectUrmarit", "pretNeschimbat"]] },
+      // The nine clauses at M (136 px), two to a row since 40.98 — three and their gaps are 440 px, past 363 (Ask
+      // first 6: a row the packing made breaks where it no longer fits). Was three to a row in 3 units of 148.
       { label: "Clauze completate", units: 3, rows: [
-        ["liberDeSarcini", "faraServituti", "nearendat"],
-        ["notificareAml", "consimtamantRadiere", "taxeLocaleLaZi"],
-        ["nedezmembratContrar", "consimtamantDatePersonale", "celelalteClauzeNemodificate"],
+        ["liberDeSarcini", "faraServituti"],
+        ["nearendat", "notificareAml"],
+        ["consimtamantRadiere", "taxeLocaleLaZi"],
+        ["nedezmembratContrar", "consimtamantDatePersonale"],
+        ["celelalteClauzeNemodificate"],
       ] },
     ]);
   });
@@ -170,8 +178,9 @@ describe("a CVC's panels, written out", () => {
  * re-measured in #37.53 and #37.55). Since #37.53 a dropdown is as wide as its
  * widest choice, and a panel of dropdowns takes a third unit when that pairs
  * them. Since #37.55 the blank reads „fără valoare" (120 px, no longer the
- * widest), so a clause offering „Da / Nu / Nu e menționat" is 9rem — three to
- * a row of the 3-unit panel's 28.125rem, in Romanian as in English. The fees fit three numbers to a row beside
+ * widest), so a clause offering „Da / Nu / Nu e menționat" is 9rem. 40.98: on the
+ * 119-px unit every panel is 3 units, 363 px inside — the floor (Ask first 6);
+ * the rows are as they were, only the units of the 2-unit panels changed. The fees fit three numbers to a row beside
  * Instituție's 3 units, „Taxă timbru și publicitate" last and alone (#37.54);
  * Dosar și exemplar (#37.54, it was Antet instrument) is 3 because „Categorie
  * internă" has a 37-character option (18rem).
@@ -200,36 +209,36 @@ const CVC_ROWS: { label: string; units: number; rows: string[][] }[] = [
     ["modalitatePlata"],
   ] },
   // Slice #38.49 (migration_102): „Descrierea obiectului" first in „Obiectul vânzării", a panel of its own.
-  { label: "Descriere", units: 2, rows: [
+  { label: "Descriere", units: 3, rows: [
     ["descriereObiect"],
   ] },
   { label: "Scop și predare", units: 3, rows: [
     ["scopVanzare", "predareStapanire"],
   ] },
-  { label: "Obiect declarat", units: 2, rows: [
+  { label: "Obiect declarat", units: 3, rows: [
     ["vecinatati"],
     ["origineLot"],
   ] },
   // 40.93 (migration_122): Documentație finalizată back to its widest choice (184 px), under Categorie internă
-  // (`newRow`) — 2 units hold XL now (was 3, the pair, 40.89).
-  { label: "Dosar cadastral", units: 2, rows: [
+  // (`newRow`) — 2 units held XL (was 3, the pair, 40.89); 3, the floor, since 40.98.
+  { label: "Dosar cadastral", units: 3, rows: [
     ["categorieInterna"],
     ["documentatieFinalizata"],
   ] },
   // 40.89: Marcaj carte funciară (L) alone; Consimțământ radiere starts the next row (`newRow`), Intabulare posibilă beside it.
-  { label: "Situația în cartea funciară", units: 2, rows: [
+  { label: "Situația în cartea funciară", units: 3, rows: [
     ["marcajCarteFunciara"],
     ["consimtamantRadiere", "poateFiIntabulat"],
   ] },
   // 40.89: the three text boxes at TILE, each on a row of its own; the two dropdowns alone on the row between them (Ask first 4).
-  { label: "Excepția de la cadastru", units: 2, rows: [
+  { label: "Excepția de la cadastru", units: 3, rows: [
     ["temeiExceptieCadastru"],
     ["renuntareCercetareOcpi", "obligatieNrCadastral"],
     ["termenFormalitati"],
     ["completareUlterioara"],
   ] },
-  // 40.93 (migration_122): rows of two, by `newRow` on the 3rd, 5th, … — 2 units (was 3, three to a row).
-  { label: "Declarațiile vânzătorului", units: 2, rows: [
+  // 40.93 (migration_122): rows of two, by `newRow` on the 3rd, 5th, … — 2 units (was 3, three to a row); 3, the floor, since 40.98.
+  { label: "Declarațiile vânzătorului", units: 3, rows: [
     ["inCircuitCivil", "liberDeSarcini"],
     ["faraServituti", "neipotecat"],
     ["nepromisAltcuiva", "nearendat"],
@@ -237,12 +246,12 @@ const CVC_ROWS: { label: string; units: number; rows: string[][] }[] = [
     ["faraExpropriere", "faraMonumentIstoric"],
     ["nedezmembratContrar", "cumparatorCunoasteSituatia"],
   ] },
-  // 40.93: Garanție vicii ascunse takes Temei legal evicțiune's place; the Temei under them at TILE — 2 units (was 3).
-  { label: "Garanții", units: 2, rows: [
+  // 40.93: Garanție vicii ascunse takes Temei legal evicțiune's place; the Temei under them at TILE — 2 units (was 3); 3 since 40.98.
+  { label: "Garanții", units: 3, rows: [
     ["garantieEvictiune", "garantieVicii"],
     ["temeiLegalEvictiune"],
   ] },
-  { label: "Declarații legale", units: 2, rows: [
+  { label: "Declarații legale", units: 3, rows: [
     ["declaratieArt292", "notificareAml"],
     ["consimtamantDatePersonale", "preemptiuneTerenAgricol"],
     ["preemptiunePadure"],
@@ -252,52 +261,47 @@ const CVC_ROWS: { label: string; units: number; rows: string[][] }[] = [
     ["onorariuNotarial", "impozitTransfer"],
     ["timbruJudiciar", "taxaTimbruPublicitate"],
   ] },
-  // 40.93: Cheltuieli perfectare | Plătitor taxe locale, then Taxe locale la zi (`newRow`) — 2 units (was 3).
-  { label: "Cheltuieli", units: 2, rows: [
+  // 40.93: Cheltuieli perfectare | Plătitor taxe locale, then Taxe locale la zi (`newRow`) — 2 units (was 3); 3 since 40.98.
+  { label: "Cheltuieli", units: 3, rows: [
     ["cheltuieliPerfectare", "taxeLocalePlatiteDe"],
     ["taxeLocaleLaZi"],
   ] },
 ];
 
-describe("dropdowns three to a row (#37.53, #37.55)", () => {
+// 40.98: the 119-px unit ends three dropdowns to a row. A 3-unit panel is 363 px inside, and three 9rem dropdowns with
+// their gaps are 448 — so the rule that gave a panel of dropdowns its third unit (#37.53) is gone with the 2-unit
+// panel it widened: every gray panel is 3 units at least, and two dropdowns pair there by the floor alone. Was
+// „dropdowns three to a row (#37.53, #37.55)": three to a row in 3 units of 148 px, 28.125rem inside.
+describe("dropdowns on the 119-px unit (40.98; three to a row until then, #37.53, #37.55)", () => {
   it("on „Da / Nu / Nu e menționat” plus the blank choice, the widest is „Nu e menționat”, and the dropdown is 9rem", () => {
     const labels = [EMPTY, "Da", "Nu", "Nu e menționat"];
     const widest = labels.reduce((a, b) => (selectNeedPx([b]) > selectNeedPx([a]) ? b : a));
     expect(widest).toBe("Nu e menționat");
-    expect(boxRem(templateFieldWidth({ type: "select" }, labels))).toBe(9);
-    // Three of them and the two gaps fit a 3-unit panel; at 10rem (the dashed blank) they did not.
-    expect(rowRem([templateFieldWidth({ type: "select" }, labels), templateFieldWidth({ type: "select" }, labels), templateFieldWidth({ type: "select" }, labels)])).toBeLessThanOrEqual(unitsInnerRem(3));
-    expect(rowRem([{ step: "L", kind: "select", rem: 10 }, { step: "L", kind: "select", rem: 10 }, { step: "L", kind: "select", rem: 10 }])).toBeGreaterThan(unitsInnerRem(3));
+    const d = templateFieldWidth({ type: "select" }, labels);
+    expect(boxRem(d)).toBe(9);
+    // Two of them and the gap fit a 3-unit panel; three do not (they did in 3 units of 148 px).
+    expect(rowRem([d, d])).toBeLessThanOrEqual(unitsInnerRem(3));
+    expect(rowRem([d, d, d])).toBeGreaterThan(unitsInnerRem(3));
   });
 
-  it("names the seeded panels that hold three dropdowns to a row, each 3 units, in form order", () => {
-    // #37.54 renamed the CVC's two from „Stare juridică afirmată" and „Conformitate și formalități".
+  it("no seeded panel holds three dropdowns to a row", () => {
     const threes: string[] = [];
     for (const [type, fields] of Object.entries(FORMS.forms)) {
       for (const p of panelsOf(fields)) {
         const kind = new Map(p.items.map((i) => [i.key, i.width.kind] as const));
-        if (p.rows.some((r) => r.length === 3 && r.every((k) => kind.get(k) === "select"))) {
-          threes.push(`${type} · ${p.label}`);
-          expect([p.label, p.units]).toEqual([p.label, 3]);
-          expect(p.rows.flat()).toEqual(fields.filter((f) => (f.groupRo || f.groupEn || "") === p.label).map((f) => f.key));
-        }
+        if (p.rows.some((r) => r.length === 3 && r.every((k) => kind.get(k) === "select"))) threes.push(`${type} · ${p.label}`);
       }
     }
-    // #38.33: the CVC's three were „Declarațiile vânzătorului", „Declarații legale" and „Cheltuieli"; since 40.93
-    // (migration_122) all three are rows of two, by Adrian's request, and the CVC has none.
-    expect(threes.sort()).toEqual([
-      "ACT_ADITIONAL · Clauze completate",
-    ]);
+    // Was ["ACT_ADITIONAL · Clauze completate"] — its nine clauses are two to a row since 40.98.
+    expect(threes).toEqual([]);
   });
 
-  it("takes the third unit only for a panel of two or more dropdowns, and only when it saves rows", () => {
+  it("pairs two dropdowns in the floor's 3 units, with no rule of their own", () => {
     const M = { step: "M", kind: "input" } as const;
     const D = { step: "L", kind: "select", rem: 10 } as const;
-    // Two dropdowns: 20.5rem — no fit in 2 units (17.875 inside), a pair in 3.
+    // Two dropdowns: 21rem with the gap, in 3 units (22.6875 inside).
     expect(packFieldRows([{ key: "a", width: D }, { key: "b", width: D }])).toEqual({ units: 3, rows: [["a", "b"]] });
-    // One dropdown and boxes that already pair at 2: nothing changes.
-    expect(packFieldRows([{ key: "a", width: M }, { key: "b", width: M }, { key: "c", width: D }]).units).toBe(2);
-    // No dropdowns: rule 18 as it was.
-    expect(packFieldRows([{ key: "a", width: { step: "L", kind: "grows" } }, { key: "b", width: { step: "L", kind: "grows" } }]).units).toBe(2);
+    // One dropdown and two M boxes: three units, the M pair first, the dropdown on the next row.
+    expect(packFieldRows([{ key: "a", width: M }, { key: "b", width: M }, { key: "c", width: D }])).toEqual({ units: 3, rows: [["a", "b"], ["c"]] });
   });
 });

@@ -60,8 +60,8 @@ const OWNER_COLUMNS: readonly ColumnName[] = [
 ];
 
 /** Slice #37.35's commit form (3 units) and success panel (6), back with step 4 (#38.25). */
-const COMMIT_UNITS = 3;
-const COMMITTED_UNITS = 6;
+const COMMIT_UNITS = 4; // 40.98: re-pinned (3 of 148 px)
+const COMMITTED_UNITS = 7; // 40.98: re-pinned (6 of 148 px)
 
 /**
  * Slice #37.35: the calculation is one tile — the 6-unit map (rule 20), the

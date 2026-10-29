@@ -14,10 +14,12 @@ const read = (...p: string[]) => fs.readFileSync(path.join(process.cwd(), ...p),
 const box = (id: string, col: number, top: number, height: number, extra: Partial<Placed> = {}): Placed => ({ id, col, units: 3, top, height, ...extra });
 
 describe("one column (Ask first 1, 2)", () => {
-  it("a 700-px window holds fewer than 5 units, 1366 px keeps its columns", () => {
+  // 40.98 (Adrian: „Yes, please implement!"): below 6 units of 119 px, about 794 px; it was 5 of 148, 804.
+  it("a 700-px window holds fewer than 6 units, 1366 px keeps its columns", () => {
     const unit = UNIT_REM * 16;
     const gap = UNIT_GAP_REM * 16;
-    expect(ONE_COLUMN_BELOW_UNITS).toBe(5);
+    expect(ONE_COLUMN_BELOW_UNITS).toBe(6);
+    expect(ONE_COLUMN_BELOW_UNITS * unit + (ONE_COLUMN_BELOW_UNITS - 1) * gap).toBe(794);
     // 700 px less the sidebar's rail (56) and the page's padding (2 × 24): 596 px.
     expect(columnsIn(596, unit, gap)).toBeLessThan(ONE_COLUMN_BELOW_UNITS);
     // 1366 px less the sidebar (224) and the padding: 1094 px.

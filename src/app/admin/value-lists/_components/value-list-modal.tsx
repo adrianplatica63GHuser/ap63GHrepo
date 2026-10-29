@@ -162,7 +162,7 @@ const OWN_COLUMNS: Partial<Record<ListKey, Readonly<Record<string, ColumnName>>>
 /**
  * Slice #38.70: the lists whose cells are drawn with half the side padding (`px-2`) — „Roluri Persoane", so its table
  * fits the 924 px its frame has at 1366 px. Every column it draws carries the same `pad` (field-widths.ts).
- * Slice #39.75: „Categorii Folosință" too — at that padding its tile is three units (29.75rem, its 27rem table and the
+ * Slice #39.75: „Categorii Folosință" too — at that padding its tile is three units (four of 119 px since 40.98; 29.75rem, its 27rem table and the
  * card's padding), not four, so it stands beside the five-unit types at 1920 px (Adrian: „about 35 %" of the eight
  * units it had).
  */

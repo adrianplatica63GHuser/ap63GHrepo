@@ -28,7 +28,7 @@ first. Since #37.77 the Property's column is 3 units, so at 1366 px it still sta
 - In this browser, the stored tile choices `ga40-tiles-document-CONTRACT_VANZARE-v1` and
   `ga40-tiles-property-v1` are set aside, so both screens open on their defaults; whatever was
   there is put back at the end.
-- The window is at least 1920 px wide, so the tile row is 10 units (1624 px).
+- The window is at least 1920 px wide, so the tile row is 12 units of 119 px (1604 px; 10 of 148, 1624 px, before 40.98).
 
 ## What Adrian is asked for
 
@@ -46,7 +46,7 @@ its top on the row's top. Nothing is saved.
 | 3 | Ticks „Street View" | „Street View" under „Puncte de contur", at the right |
 | 4 | Unticks „Hartă" | „Puncte de contur" at the top of the column, level with the row; „Street View" under it |
 | 5 | Unticks „Puncte de contur" and „Street View" | No column: only „Identificare cadastrală" and „Adresă", side by side from the left |
-| 6 | Ticks „Hartă" and „Puncte de contur" again, and narrows the window to 1366 px | The row is 6 units (968 px). „Identificare cadastrală" at the left, top level with the row; beside it the column: „Hartă" at the right, top level with the row, „Puncte de contur" under it. „Adresă" under „Identificare cadastrală" |
+| 6 | Ticks „Hartă" and „Puncte de contur" again, and narrows the window to 1366 px | The row is 8 units of 119 px (1064 px; 6 of 148, 968 px, before 40.98). „Identificare cadastrală" at the left, top level with the row; beside it the column: „Hartă" at the right, top level with the row, „Puncte de contur" under it. „Adresă" under „Identificare cadastrală" |
 
 ## At the end — leaving things as they were found
 

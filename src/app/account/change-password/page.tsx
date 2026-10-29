@@ -22,8 +22,9 @@ export default async function ChangePasswordPage() {
       <h1 className="text-2xl font-bold text-ink mb-1">{t("heading")}</h1>
       <p className="text-sm text-fade mb-6">{t("intro")}</p>
       {/* Slice #37.35: the card is a 3-unit tile on the screen's unit row. */}
-      <UnitRow units={[3]}>
-        <div {...screenPanel("change-password", 3)} className="bg-surface rounded-xl border border-wire shadow-sm p-6">
+      {/* 40.98: 4 units, re-pinned to the 476 px its 3 were on the 148-px unit. */}
+      <UnitRow units={[4]}>
+        <div {...screenPanel("change-password", 4)} className="bg-surface rounded-xl border border-wire shadow-sm p-6">
           {/* Slice #38.22: UAT has no accounts — said, instead of a form that cannot work. */}
           {isUatNoAuth() ? (
             <p className="text-sm text-fade" role="note" data-uat-no-accounts="password">{t("uatNoAccounts")}</p>

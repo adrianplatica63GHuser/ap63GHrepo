@@ -2424,7 +2424,7 @@ export function DocumentForm({
  * `data-panel` — so the frame is the tile and the tile is whole units.
  */
 /** Slice #38.34: „Actul modificat" is at least three units wide — room for the deed's search. */
-const AMENDED_DEED_UNITS = 3;
+const AMENDED_DEED_UNITS = 4; // 40.98: re-pinned (3 of 148 px)
 
 function Section({
   title,

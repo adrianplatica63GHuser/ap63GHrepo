@@ -26,8 +26,8 @@ import { screenBox, screenPanel } from "@/lib/ui/field-widths";
 import { UnitRow } from "@/components/screen/unit-row";
 import { useFitToWindow } from "@/lib/ui/use-fit-to-window";
 
-/** Slice #37.35: the cloud is 6 units (#37.22's two panels). */
-const CLOUD_UNITS = 6;
+/** Slice #37.35: the cloud is 6 units (#37.22's two panels); 7 of 119 px since 40.98. */
+const CLOUD_UNITS = 7; // 40.98: re-pinned (6 of 148 px)
 
 // ---------------------------------------------------------------------------
 // Types

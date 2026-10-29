@@ -331,7 +331,7 @@ function DocumentTypeFilterDropdown({
         {/* Slice #40.01: the words one width in every state — the 14 rem a type's name had — so ticking types never
             moves the toolbar's row, now that the button stands on it, nor the frame that follows the toolbar (#37.84;
             TC-LAYOUT-02 step 8). Slice 40.46: 12 rem, so the row, with the sort button after „Câmp specific", was still
-            narrow enough at 1920 px for the 640-px Incursiune beside the list (TC-TILES-11 step 9). Slice 40.49: 11 rem,
+            narrow enough at 1920 px for the 640-px (659 since 40.98) Incursiune beside the list (TC-TILES-11 step 9). Slice 40.49: 11 rem,
             so with „Șterge filtrele" too the row stays one row at 1366 px (1089 of 1094; TC-DOC-08 step 1); a longer
             name ends in „…", whole on hover. */}
         {trigger.kind === "one" ? (

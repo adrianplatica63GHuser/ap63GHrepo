@@ -131,12 +131,13 @@ test.describe("TC-PROP-16 — aceeași tarla în două localități", () => {
       await expect(page.locator("[data-tarla-property]")).toHaveCount(1);
       await expect(page.locator("[data-tarla-property]")).toContainText(`${MARK} Cornetu`);
 
-      // Step 8 — #39.77: at 1920 × 1080 the panels are tiles — thirds (476 px) and, for the two big lists, halves
-      // (804 px); „Implicit" at the top right; each big list at most two thirds of the window, its header on top.
+      // Step 8 — #39.77: at 1920 × 1080 the panels are tiles — thirds (524 px since 40.98, 4 units of 119; 476 before)
+      // and, for the two big lists, halves (794 px, 6 units; 804 before); „Implicit" at the top right; each big list at
+      // most two thirds of the window, its header on top.
       await page.setViewportSize({ width: 1920, height: 1080 });
       await expect(page.locator('[data-tile-positions-reset="tarla"]')).toBeVisible();
       // #39.87: „Despre limitele tarlalelor" is a tile too, the first, a third.
-      for (const [tile, px] of [["facts", 476], ["identity", 476], ["outline", 476], ["plans", 476], ["parcels", 476], ["properties", 804], ["documents", 804]] as const)
+      for (const [tile, px] of [["facts", 524], ["identity", 524], ["outline", 524], ["plans", 524], ["parcels", 524], ["properties", 794], ["documents", 794]] as const)
         await expect(page.locator(`[data-tile-screen="tarla"] > [data-tile="${tile}"]`)).toHaveCSS("width", `${px}px`);
       const big = page.locator("[data-tarla-big-list]");
       await expect(big).toHaveCount(1); // Cornetu's TC16 has a property and no document, so only its properties' list

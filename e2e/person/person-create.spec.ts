@@ -151,10 +151,10 @@ test.describe("TC-PERS-01 — Persoană fizică creată manual", () => {
       await pressTileButton(page, "Toate");
       await expect(page.getByRole("region", { name: "Etichete și grupuri", exact: true })).toBeVisible({ timeout: 30_000 });
       await expectStableWidths(page);
-      // Slice #37.27 — the tiles are on a width unit: the row is 6 units at 1366 px, 10 at 1920,
-      // 14 at 2560, and every tile and panel is a whole number of units (replaces #37.23's
+      // Slice #37.27 — the tiles are on a width unit: the row is 8 units at 1366 px, 12 at 1920 (40.98; 6, 10, 14 of 148 px),
+      // 17 at 2560, and every tile and panel is a whole number of units (replaces #37.23's
       // two / three / four 32rem tiles to a row).
-      await expectUnitGrid(page, UNIT_REM, UNIT_GAP_REM, { 1366: 6, 1920: 10, 2560: 14 });
+      await expectUnitGrid(page, UNIT_REM, UNIT_GAP_REM, { 1366: 8, 1920: 12, 2560: 17 });
       await photograph(page, "natural-person-all-tiles", [1920, 2560], 1400);
       await pressTileButton(page, "Implicit");
       await expect(page.getByRole("region", { name: "Etichete și grupuri", exact: true })).toHaveCount(0);

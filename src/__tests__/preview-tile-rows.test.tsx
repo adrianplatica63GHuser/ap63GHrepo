@@ -4,7 +4,7 @@
  *
  * Labels above their values, fields sharing a row as on the screen, each at its
  * screen width (a field without one takes the tile's whole inner width), and
- * the tile itself whole width units: 3 for a person, 4 for a document.
+ * the tile itself whole width units: 4 for a person, 5 for a document (40.98; 3 and 4 of 148 px before).
  * `preview-tiles.test.tsx` (#37.24) holds what a preview may and may not do,
  * unedited; this holds how it is laid out.
  */
@@ -51,11 +51,11 @@ describe("a preview's fields, laid out as on the record's screen (#37.33)", () =
     expect(fieldOf("CNP").style.width).toBe(`${boxRem(NATURAL_PERSON.cnp)}rem`);
   });
 
-  it("is 3 units for a person, 4 for a document", () => {
+  it("is 4 units for a person, 5 for a document (40.98)", () => {
     const { container, unmount } = renderPerson("panel");
-    expect((container.querySelector("[data-preview]") as HTMLElement).style.width).toBe("29.75rem");
+    expect((container.querySelector("[data-preview]") as HTMLElement).style.width).toBe("32.75rem");
     unmount();
     const doc = renderPerson("pages");
-    expect((doc.container.querySelector("[data-preview]") as HTMLElement).style.width).toBe("40rem");
+    expect((doc.container.querySelector("[data-preview]") as HTMLElement).style.width).toBe("41.1875rem");
   });
 });

@@ -28,7 +28,7 @@
  *     The new property is photographed filled (`property-new-*`) before
  *     „Salvează"; before the cleanup the saved one is photographed with the
  *     default tiles, then with „Toate", where `expectUnitGrid` checks the row is
- *     6, 10 and 14 units at 1366, 1920 and 2560 px. Not steps of the case.
+ *     8, 12 and 17 units at 1366, 1920 and 2560 px (40.98; 6, 10 and 14 of 148). Not steps of the case.
  *   - Slice #37.16 checks the list's fixed column widths here: every column the
  *     same width at 1400 and 2400 px, the table no wider than its columns, and
  *     no fixed column's cell wider than the column. Not a step of the case.
@@ -167,7 +167,7 @@ test.describe("TC-PROP-01 — Proprietate creată manual, vizibilă în listă",
       await photograph(page, "property-saved", [1366, 1920, 2560], 1200);
       await pressTileButton(page, "Toate");
       await expect(page.getByRole("region", { name: "Etichete și grupuri", exact: true })).toBeVisible({ timeout: 30_000 });
-      await expectUnitGrid(page, UNIT_REM, UNIT_GAP_REM, { 1366: 6, 1920: 10, 2560: 14 });
+      await expectUnitGrid(page, UNIT_REM, UNIT_GAP_REM, { 1366: 8, 1920: 12, 2560: 17 });
       await photograph(page, "property-all-tiles", [1366, 1920, 2560], 1200);
       await pressTileButton(page, "Implicit");
       await expect(page.getByRole("region", { name: "Etichete și grupuri", exact: true })).toHaveCount(0);

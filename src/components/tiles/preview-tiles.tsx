@@ -279,7 +279,7 @@ export function bodyBesideTiles(columns: string): CSSProperties {
   return { maxWidth: `max(calc${room}, min(100%, calc((${columns} - ${room}) * 1000)))` };
 }
 
-/** Slice #39.04: the row tiles' column — the person screen's „Interacțiuni" width, `PAGES_PANEL_REM` (40 rem). */
+/** Slice #39.04: the row tiles' column — the person screen's „Interacțiuni" width, `PAGES_PANEL_REM` (41.1875rem, 659 px, since 40.98; 40rem, 640 px, before). */
 export const ROW_TILES_STYLE: CSSProperties = { width: rem(PAGES_PANEL_REM) };
 
 /** A preview in that column takes the column's width, whatever width it has on a detail screen. */

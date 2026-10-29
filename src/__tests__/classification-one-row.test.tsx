@@ -135,11 +135,12 @@ describe("„Clasificări”: Importanță and Relevanță on one row (Slice #37
     expect(historyLine().textContent).toBe("provenance.historyTitle");
   });
 
-  it("the tile is 3 units on all four screens — the fewest that hold the row (rule 17)", () => {
-    expect(CLASSIFICATION_UNITS).toBe(3);
+  // 40.98: 4 units of 119 px, 524 px — the row no longer fits 3 (389). Was 3 units of 148, 476 px.
+  it("the tile is 4 units on all four screens — the fewest that hold the row (rule 17)", () => {
+    expect(CLASSIFICATION_UNITS).toBe(4);
     for (const k of ["naturalPerson", "judicialPerson", "property", "document"] as const) {
-      expect(LIST_UNITS[k].classification).toBe(3);
+      expect(LIST_UNITS[k].classification).toBe(4);
     }
-    expect(unitsRem(3) * 16).toBe(476);
+    expect(unitsRem(4) * 16).toBe(524);
   });
 });

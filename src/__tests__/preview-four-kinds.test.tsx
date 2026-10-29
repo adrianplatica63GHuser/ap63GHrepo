@@ -187,9 +187,10 @@ describe("the messages and the rows (Slice #37.70)", () => {
     // „Tip document" is no longer asked for by the previews (its key stays for nobody).
   });
 
-  it("the property's three rows, in order, in the 3-unit tile", () => {
+  // 40.98: the tile is 4 units of 119 px (3 of 148 until then), 524 px — about the 476 it was.
+  it("the property's three rows, in order, in the 4-unit tile", () => {
     expect(PREVIEW_ROWS.property).toEqual([["parcela", "tarlaId", "surfaceAreaMp"], ["nickname"], ["carteFunciara", "cadastralNumber"]]);
-    expect(PREVIEW_UNITS.panel).toBe(3);
+    expect(PREVIEW_UNITS.panel).toBe(4);
     expect(rowRem(PREVIEW_ROWS.property[0].map((f) => PREVIEW_WIDTHS.property[f]))).toBe(26.5);
     expect(26.5).toBeLessThanOrEqual(PREVIEW_INNER_REM.panel);
   });

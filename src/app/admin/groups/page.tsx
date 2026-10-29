@@ -23,11 +23,11 @@ export default async function GroupsPage({ searchParams }: PageProps) {
           </h1>
         </header>
 
-        {/* Info panel — what is a Group and when to use it. Slice #37.35: the first tile of the list's unit row (6 units). */}
+        {/* Info panel — what is a Group and when to use it. Slice #37.35: the first tile of the list's unit row (6 units; 7 of 119 px since 40.98). */}
         <GroupsListView
           fromMap={fromMap}
           about={
-            <section {...screenPanel("about-groups", 6)} className="rounded-lg border border-blue-200 bg-blue-50 px-5 py-4 dark:border-blue-900 dark:bg-blue-950/40">
+            <section {...screenPanel("about-groups", 7 /* 40.98: re-pinned, 6 of 148 px */)} className="rounded-lg border border-blue-200 bg-blue-50 px-5 py-4 dark:border-blue-900 dark:bg-blue-950/40">
           <h2 className={`mb-3 ${PAGE_HEADING_TYPE}`}>
             {t("infoPanel.title")}
           </h2>

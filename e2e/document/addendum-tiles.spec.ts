@@ -13,7 +13,7 @@
  *   - Slice #38.34's pictures, not steps of the case: „Actul modificat" linked
  *     and not, and the page, at 1366 and 1920 px, into `playwright-report/addendum-tiles/`.
  *   - Step 6 (40.88) measures the boxes in px, from field-widths.ts's scale:
- *     XL 272, M 136, a 3-unit tile 450 inside, a 2-unit panel 286.
+ *     XL 272, M 136, a 3-unit tile 363 inside (40.98; 450 in 3 units of 148, and „Ce modifică" 286 in 2).
  *   - Step 7 (40.92) creates a fourth document, at its start (step 3 would find it), a Contract de Vânzare with
  *     „Preț total" filled, through the route.
  */
@@ -154,17 +154,18 @@ test.describe("TC-DOC-20 — actul adițional și actul pe care îl modifică", 
       expect(fee.x).toBeGreaterThan(quality.x);
       expect(copies.y, "Exemplare emise under them").toBeGreaterThan(Math.max(quality.y + quality.height, fee.y + fee.height) - 1);
       await expectWidth(field("customFields.calitateExemplar"), 136);
-      await expectWidth(field("customFields.exemplareEmise"), 450);
+      await expectWidth(field("customFields.exemplareEmise"), 363); // 40.98: 3 units of 119 px (450 in 3 of 148)
       await page.locator('[data-tile-cancel="general"]').click();
       await expect(page.locator('[data-tile-edit-bar="general"]')).toHaveCount(0);
-      // „Editează" on „Ce modifică": Temei legal completare the panel's whole width (2 units, 286 px), the dropdowns M.
+      // „Editează" on „Ce modifică": Temei legal completare the panel's whole width (3 units since 40.98, 363 px; 2
+      // units of 148, 286, before), the dropdowns M.
       // Still empty, so one line with „Adaugă" again after the navigation of step 4 (40.64): opened, then „Editează".
       await openEmptyTile(page, "tab:Ce modifică");
       const changes6 = page.getByRole("region", { name: "Ce modifică", exact: true });
       if ((await changes6.locator("[data-tile-edit-bar]").count()) === 0) await editTileNamed(page, "Ce modifică");
       await showEmptyFields(changes6);
       const inChanges = (name: string) => changes6.locator(`[data-width-field="customFields.${name}"]`);
-      await expectWidth(inChanges("temeiLegalCompletare"), 286);
+      await expectWidth(inChanges("temeiLegalCompletare"), 363);
       for (const name of ["efectUrmarit", "pretNeschimbat", "liberDeSarcini", "consimtamantRadiere", "celelalteClauzeNemodificate"]) {
         await expectWidth(inChanges(name), 136);
       }

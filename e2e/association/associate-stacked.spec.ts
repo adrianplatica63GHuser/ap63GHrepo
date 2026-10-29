@@ -134,7 +134,7 @@ test.describe("TC-ASSOC-13 — ecranele de asociere: tile una sub alta; numele p
       await expectOneLine(linked);
       const rem = await page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).fontSize));
       const width = await tile.evaluate((el) => el.getBoundingClientRect().width);
-      expect(Math.round(width)).toBe(Math.round((4 * 9.25 + 3) * rem));
+      expect(Math.round(width)).toBe(Math.round((4 * 7.4375 + 3) * rem)); // 40.98: 4 units of 119 px
       await photograph(page, "pad-properties", tile);
 
       // At the end — „Dezasociază" in „Proprietăți" (the PAD's „Persoane" has one too).

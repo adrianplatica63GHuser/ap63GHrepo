@@ -31,7 +31,7 @@ import type { CostSummary, EnteredAmount, ProviderSummary } from "@/lib/costs/su
 import { PANEL_TITLE_TYPE } from "@/lib/ui/title-type";
 
 /** The cost tiles are as wide as Setări's own tiles. */
-const COST_TILE_UNITS = 3;
+const COST_TILE_UNITS = 4; // 40.98: re-pinned (3 of 148 px)
 
 async function fetchCosts(): Promise<CostSummary> {
   const res = await fetch("/api/admin/costs");

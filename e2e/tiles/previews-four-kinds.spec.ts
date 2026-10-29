@@ -70,7 +70,7 @@ async function closeByMagnifier(page: Page, name: string): Promise<void> {
 /**
  * Slice #38.72: the eye, „Incursiune", on one list. The row reads magnifier, eye, arrow; with a preview open,
  * the eye shows the object's tile beside the list — `inner` finds the reused tile in it. #39.04: the preview stays
- * and its magnifier stays pressed; the tile is 40 rem wide (±2 px) at 1366 and 1920 px — it read „filling the row to
+ * and its magnifier stays pressed; the tile is 41.1875 rem wide (40.98; 40 before) (±2 px) at 1366 and 1920 px — it read „filling the row to
  * the content area's right edge (±8 px), the preview closed and every magnifier disabled". The eye again closes it;
  * the magnifier then closes the preview. A picture at each width (the spec's own records only).
  */
@@ -113,10 +113,10 @@ async function peek(page: Page, list: string, name: string, kind: string, inner:
     await page.setViewportSize({ width, height: 900 });
     await page.waitForTimeout(400);
     const off = await page.evaluate((k) => {
-      const px = 40 * parseFloat(getComputedStyle(document.documentElement).fontSize);
+      const px = 41.1875 * parseFloat(getComputedStyle(document.documentElement).fontSize);
       return document.querySelector(`[data-incursion="${k}"]`)!.getBoundingClientRect().width - px;
     }, kind);
-    expect(Math.abs(off), `${list} at ${width}: the tile is ${off} px off 40 rem`).toBeLessThanOrEqual(2);
+    expect(Math.abs(off), `${list} at ${width}: the tile is ${off} px off 41.1875 rem (40.98: 5 units of 119 px; 40 before)`).toBeLessThanOrEqual(2);
     await page.screenshot({ path: `playwright-report/incursion/${shot}-${width}.png` });
   }
   await page.setViewportSize({ width: 1366, height: 900 });
@@ -130,7 +130,7 @@ async function peek(page: Page, list: string, name: string, kind: string, inner:
 
 /**
  * Slice #39.04 — step 7: a row's three toggles on one list. The eye, then the magnifier, then the chain link: all
- * three pressed; the column reads „Previzualizare", „Legături", „Incursiune" top to bottom, each 40 rem (±2 px) at
+ * three pressed; the column reads „Previzualizare", „Legături", „Incursiune" top to bottom, each 41.1875 rem (40.98; 40 before) (±2 px) at
  * 1366 and 1920 px; `other`'s three are disabled, its „Deschide" not. Released one by one, every row is enabled
  * again. A picture at each width (the spec's own records only).
  */
@@ -166,10 +166,10 @@ async function three(page: Page, list: string, name: string, other: string, shot
     await page.setViewportSize({ width, height: 900 });
     await page.waitForTimeout(400);
     const off = await column.evaluate((c) => {
-      const px = 40 * parseFloat(getComputedStyle(document.documentElement).fontSize);
+      const px = 41.1875 * parseFloat(getComputedStyle(document.documentElement).fontSize);
       return [...c.children].map((k) => Math.round((k.getBoundingClientRect().width - px) * 10) / 10);
     });
-    for (const o of off) expect(Math.abs(o), `${list} at ${width}: a tile ${o} px off 40 rem`).toBeLessThanOrEqual(2);
+    for (const o of off) expect(Math.abs(o), `${list} at ${width}: a tile ${o} px off 41.1875 rem (40.98: 5 units of 119 px; 40 before)`).toBeLessThanOrEqual(2);
     await page.mouse.move(1, 1);
     await page.screenshot({ path: `playwright-report/row-tiles/${shot}-${width}.png` });
   }

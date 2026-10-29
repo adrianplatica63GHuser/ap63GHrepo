@@ -42,6 +42,7 @@ import {
   NP_PANEL_UNITS,
   UNIT_GAP_REM,
   UNIT_REM,
+  GRAY_PANEL_MIN_UNITS,
   tileTableRem,
   unitsFor,
   unitsInnerRem,
@@ -458,7 +459,7 @@ describe("the Natural Person: every label above its box, every panel as wide as 
       ["idIssuingAuthority"],
       ["idMrzRaw"],
     ]);
-    expect(NP_VALIDITY_REM).toBe(10.125);
+    expect(NP_VALIDITY_REM).toBe(13.125); // 40.98: Carte de identitate is 4 units of 119 px (10.125 in 3 of 148)
   });
 
   it("the ID card's first row is about 75% of what it was, and still holds its values", () => {
@@ -485,13 +486,16 @@ describe("the Natural Person: every label above its box, every panel as wide as 
     // idCard 23.75 since 40.79 (Emisă de L, the MRZ L and not filling): the first row, Tip document | Nr. | Nr. card.
     // address 18.5 since 40.80 (Stradă XL): Cod poștal | Localitate — still three units.
     expect(rowsOf).toEqual({ identity: 22, idCard: 23.75, contact: 17.5, address: 18.5 });
-    expect(NP_PANEL_UNITS).toEqual({ identity: 3, idCard: 3, contact: 2, address: 3 });
+    // 40.98 (the 119-px unit): Carte de identitate 4 — its first row, 23.75rem, is Adrian's and past the 363 px inside
+    // 3; Contact 3, the gray panels' floor (was 2 of 148 px). Was { identity: 3, idCard: 3, contact: 2, address: 3 }.
+    expect(NP_PANEL_UNITS).toEqual({ identity: 3, idCard: 4, contact: 3, address: 3 });
     for (const k of Object.keys(NP_PANEL_UNITS) as (keyof typeof NP_PANEL_UNITS)[]) {
       expect([k, NP_PANEL_INNER_REM[k] >= rowsOf[k]]).toEqual([k, true]);
-      expect([k, unitsInnerRem(NP_PANEL_UNITS[k] - 1) < rowsOf[k]]).toEqual([k, true]); // one unit fewer would not hold it
+      // one unit fewer would not hold it — or would be under the floor of 3
+      expect([k, NP_PANEL_UNITS[k] === GRAY_PANEL_MIN_UNITS || unitsInnerRem(NP_PANEL_UNITS[k] - 1) < rowsOf[k]]).toEqual([k, true]);
     }
-    expect(NP_PANEL_INNER_REM).toEqual({ identity: 28.125, idCard: 28.125, contact: 17.875, address: 28.125 });
-    for (const inner of Object.values(NP_PANEL_INNER_REM)) expect(panelRem(inner)).toBeLessThan(PANEL_REM);
+    expect(NP_PANEL_INNER_REM).toEqual({ identity: 22.6875, idCard: 31.125, contact: 22.6875, address: 22.6875 });
+    for (const inner of Object.values(NP_PANEL_INNER_REM)) expect(panelRem(inner)).toBeLessThanOrEqual(unitsRem(4));
     expect(rowRem([NP.idValidFrom, NP.idValidUntil]) + STACK_GAP_REM + NP_VALIDITY_REM).toBe(NP_PANEL_INNER_REM.idCard);
     expect([NP.notes.fill, ADDRESS.notes.fill]).toEqual([true, true]);
     expect(panels).toMatch(/width=\{NP\.notes\}\s+fillRem=\{NP_PANEL_INNER_REM\.identity\}/);
@@ -551,32 +555,35 @@ describe("the Natural Person: every label above its box, every panel as wide as 
   it("no label beside a box is left on the form, and the row is as wide as its panels", () => {
     expect(NP_FORM).not.toMatch(/LABEL_STYLE/);
     expect(ADDRESS_BLOCK).not.toMatch(/LABEL_STYLE/);
-    // #37.67: the widest tile is 4 units („Corelate"), where Proprietăți made it 5.
-    expect(String(npRowStyle().width)).toBe("min(var(--row-cap), max(40rem, calc(round(down, 100% + 1rem, 10.25rem) - 1rem)))");
+    // #37.67: the widest tile is 4 units („Corelate"), where Proprietăți made it 5. 40.98: 4 units of 119 px.
+    expect(String(npRowStyle().width)).toBe("min(var(--row-cap), max(32.75rem, calc(round(down, 100% + 1rem, 8.4375rem) - 1rem)))");
   });
 });
 
 describe("the width unit: every Natural Person tile a whole number of units (Slice #37.27)", () => {
   it("n units are n units and the gaps between them, so a 3 and a 3 line up with a 4 and a 2", () => {
-    expect(UNIT_REM).toBe(9.25);
+    // 40.98 (Adrian: „from 148 to 119"): 7.4375rem; it was 9.25 (#37.27).
+    expect(UNIT_REM).toBe(7.4375);
     expect(UNIT_GAP_REM).toBe(1);
-    expect([1, 2, 3, 4, 5, 6].map(unitsRem)).toEqual([9.25, 19.5, 29.75, 40, 50.25, 60.5]);
+    expect([1, 2, 3, 4, 5, 6].map(unitsRem)).toEqual([7.4375, 15.875, 24.3125, 32.75, 41.1875, 49.625]);
+    expect([3, 4, 5].map((n) => unitsRem(n) * 16)).toEqual([389, 524, 659]);
+    expect(unitsInnerRem(3) * 16).toBe(363); // „Each panel needs to fit 363 px inside"
     expect(unitsRem(3) + UNIT_GAP_REM + unitsRem(3)).toBe(unitsRem(6));
     expect(unitsRem(4) + UNIT_GAP_REM + unitsRem(2)).toBe(unitsRem(6));
     expect(unitsFor(unitsRem(3))).toBe(3);
     expect(unitsFor(unitsRem(3) + 0.01)).toBe(4);
   });
 
-  it("a row holds 6 units beside the sidebar at 1366 px, 10 at 1920 and 14 at 2560", () => {
+  it("a row holds 8 units beside the sidebar at 1366 px, 12 at 1920 and 17 at 2560 (40.98; 6, 10 and 14 of 148 px)", () => {
     // The sidebar is 14rem and the page's padding 1.5rem a side: what is left, in rem.
     const room = (px: number): number => px / 16 - 14 - 3;
     const fit = (px: number): number => Math.floor((room(px) + UNIT_GAP_REM) / (UNIT_REM + UNIT_GAP_REM));
-    expect([1366, 1920, 2560].map(fit)).toEqual([6, 10, 14]);
+    expect([1366, 1920, 2560].map(fit)).toEqual([8, 12, 17]);
   });
 
   it("a person's list tiles: „Corelate” at the Document's units, META INFO's two halves at theirs (#37.67)", () => {
     // #37.67: Persoane (4), Proprietăți (5) and Acte (5) are one tile, „Corelate" — no tables, so no column sets.
-    expect(NP_LIST_UNITS).toEqual({ related: RELATED_UNITS, classification: 3, connections: 3 }); // #37.68: Importanță and Relevanță on one row
+    expect(NP_LIST_UNITS).toEqual({ related: RELATED_UNITS, classification: 4, connections: 3 }); // #37.68: Importanță and Relevanță on one row; 40.98: 4 of 119 px
     expect(RELATED_UNITS).toBe(4);
   });
 
@@ -624,15 +631,16 @@ describe("the Judicial Person: labels above, rows by meaning, every tile on the 
     expect(JP.name.fill && JP.notes.fill).toBe(true);
   });
 
-  it("each panel is the fewest whole units that hold its widest row: Persoană juridică 3, Persoane de contact 2, Adresă 3", () => {
+  it("each panel is the fewest whole units that hold its widest row: Persoană juridică 3, Persoane de contact 3 (40.98: the floor), Adresă 3", () => {
     // #39.71: Poreclă M | Tip XL (the public-body types are long) — 26 rem; 40.90: Tip L, 22 rem — still three units.
     expect(rowRem([JP.nickname, JP.judicialPersonTypeId])).toBe(22);
     // #37.57: the system ID left this row for the heading's corner; Poreclă | Tip still makes it 3.
     expect(rowRem([JP.cuiNumber, JP.tradeRegisterNumber])).toBe(17.5);
     expect("code" in JP).toBe(false);
-    expect(PANEL_UNITS.judicialPerson).toEqual({ identity: 3, contactPersons: 2, address: 3 });
+    expect(PANEL_UNITS.judicialPerson).toEqual({ identity: 3, contactPersons: 3, address: 3 });
     expect(PANEL_UNIT_INNER_REM.judicialPerson.identity).toBeGreaterThanOrEqual(22);
     expect(unitsInnerRem(2)).toBeLessThan(22);
+    expect(unitsInnerRem(3)).toBeGreaterThanOrEqual(22); // 40.98: 22.6875rem inside 3 units of 119 px
     expect(PANEL_UNIT_INNER_REM.judicialPerson.contactPersons).toBeGreaterThanOrEqual(boxRem(JP.contactPerson));
     // The contact rows are the XL box under its label; the hint wraps inside the panel.
     expect(region(JP_FORM, "function ContactPersonRow(", "\nfunction ")).toMatch(/STACKED_FIELD_CLASS/);
@@ -656,10 +664,10 @@ describe("the Judicial Person: labels above, rows by meaning, every tile on the 
 
   it("rule 19: one shape keyed by screen — the Natural Person's numbers did not move", () => {
     expect(NP_ROWS).toBe(SCREEN_ROWS.naturalPerson);
-    expect(NP_PANEL_UNITS).toEqual({ identity: 3, idCard: 3, contact: 2, address: 3 });
+    expect(NP_PANEL_UNITS).toEqual({ identity: 3, idCard: 4, contact: 3, address: 3 }); // 40.98
     expect(PANEL_UNITS.naturalPerson).toBe(NP_PANEL_UNITS);
     expect(String(unitRowStyle("naturalPerson").width)).toBe(String(npRowStyle().width));
-    expect(String(unitRowStyle("judicialPerson").width)).toBe("min(var(--row-cap), max(40rem, calc(round(down, 100% + 1rem, 10.25rem) - 1rem)))"); // #37.67: 4 units; #40.69: never wider than a narrow window
+    expect(String(unitRowStyle("judicialPerson").width)).toBe("min(var(--row-cap), max(32.75rem, calc(round(down, 100% + 1rem, 8.4375rem) - 1rem)))"); // #37.67: 4 units; #40.69: never wider than a narrow window; 40.98: of 119 px
     // No JP_ twins of the unit shape.
     expect(code(read("src", "lib", "ui", "field-widths.ts"))).not.toMatch(/export const JP_(ROWS|PANEL|LIST|META)/);
   });
@@ -699,18 +707,21 @@ describe("the Property: labels above, rows by meaning, every tile on the unit (S
     expect(PROP_FORM).not.toMatch(/LABEL_INDENT|LABEL_STYLE/);
   });
 
-  it("each tile is whole units: Date cadastrale 3, Adresă 3, Puncte de contur, Hartă and Street View 3 (#37.77)", () => {
+  // 40.98 (Adrian's red notes): Colțuri „needs 4", Hartă and Street View „should go to 4 to stay beside the 4-unit
+  // cadastral panel". Was: Date cadastrale 3, Adresă 3, the three 3 (#37.77).
+  it("each tile is whole units: Date cadastrale 4, Adresă 3, Puncte de contur, Hartă and Street View 4 (40.98)", () => {
     // #37.57: the system ID left the first row for the heading's corner; the panel stays 3.
     expect(rowRem([PROPERTY.tarlaId, PROPERTY.parcela])).toBe(17.5);
     expect("code" in PROPERTY).toBe(false);
     expect(SCREEN_ROWS.property.cadastral[0]).toEqual(["tarlaId", "parcela"]);
-    expect(PANEL_UNITS.property).toEqual({ cadastral: 3, address: 3, corners: 3, map: 3, streetView: 3 });
-    expect(parseFloat(String(MAP_BOX_STYLE.width))).toBe(unitsInnerRem(3));
+    expect(PANEL_UNITS.property).toEqual({ cadastral: 4, address: 3, corners: 4, map: 4, streetView: 4 });
+    expect(unitsRem(PANEL_UNITS.property.cadastral) * 16).toBe(524);
+    expect(parseFloat(String(MAP_BOX_STYLE.width))).toBe(unitsInnerRem(4));
     expect(MAP_BOX_STYLE.height).toBe("22rem");
   });
 
   it("the list tiles: „Corelate” the Document's 4 units (#37.66, rule 17), Clasificări 3 (#37.68) and Conexiuni 3 (#37.63)", () => {
-    expect(LIST_UNITS.property).toEqual({ related: RELATED_UNITS, classification: 3, connections: 3 }); // #37.68
+    expect(LIST_UNITS.property).toEqual({ related: RELATED_UNITS, classification: 4, connections: 3 }); // #37.68; 40.98: Clasificări 4 of 119 px
     expect(LIST_UNITS.property.related).toBe(LIST_UNITS.document.related);
     const page = code(read("src", "app", "properties", "_components", "property-detail-tiles.tsx"));
     for (const k of ["related", "classification", "connections"]) {
@@ -756,7 +767,7 @@ describe("the Document: labels above, every tile on the unit, notebook tiles as 
   it("the list tiles: „Corelate” 4 units (#37.65), Clasificări 3 (#37.68) and Conexiuni 3 (#37.63)", () => {
     // #37.65: the fewest units that hold its widest row — the icon, the longest property name, all four slots (rule 17).
     expect(LIST_UNITS.document.related).toBe(oneLineRowUnits(RELATED_SLOTS, ROW_CONTENT_REM.property, true));
-    expect(LIST_UNITS.document).toEqual({ related: 4, classification: 3, connections: 3 }); // #37.68
+    expect(LIST_UNITS.document).toEqual({ related: 4, classification: 4, connections: 3 }); // #37.68; 40.98: Clasificări 4 of 119 px
     const page = code(read("src", "app", "documents", "_components", "document-detail-tiles.tsx"));
     for (const k of ["related", "classification", "connections"]) {
       expect(page).toMatch(new RegExp(`<ListTile tile="${k}"[^>]*units=\\{LIST_UNITS\\.document\\.${k}\\}`));
@@ -833,11 +844,13 @@ describe("the Document's page image and row (#37.15)", () => {
     expect(PAGES_PANEL_REM * 16).toBeGreaterThanOrEqual(576);
   });
 
-  it("is exactly four width units, so it joins the unit row unchanged (#37.31, rule 20)", () => {
-    expect(PAGES_PANEL_REM).toBe(unitsRem(4));
-    expect(PANEL_UNITS.document.pages).toBe(4);
-    // At 1920 px the default CVC is Date generale 3, Pagini 4 and Instrument 3 — a full row of 10.
-    expect(PANEL_UNITS.document.general + PANEL_UNITS.document.pages + 3).toBe(10);
+  // 40.98 (Adrian: „5 units is the closest match"): 659 px; it was four units of 148 px, 640 (#37.31, rule 20).
+  it("is exactly five width units, so it joins the unit row unchanged (40.98)", () => {
+    expect(PAGES_PANEL_REM).toBe(unitsRem(5));
+    expect(PAGES_PANEL_REM * 16).toBe(659);
+    expect(PANEL_UNITS.document.pages).toBe(5);
+    // At 1920 px (12 units) the default CVC's Identificarea actului 3, Pagini 5 and a 3-unit tile fit one row.
+    expect(PANEL_UNITS.document.general + PANEL_UNITS.document.pages + 3).toBeLessThanOrEqual(12);
   });
 });
 
@@ -1229,7 +1242,7 @@ describe("the ID-card dialog: the Natural Person's rows, widths and panels (Slic
       expect(panels).toMatch(new RegExp(`<section style=\\{NP_PANEL_STYLE\\.${p}\\}`));
       expect(panels).toMatch(new RegExp(`ID_CARD_DIALOG_ROWS\\.${p}\\.map\\(`));
     }
-    expect([NP_PANEL_UNITS.identity, NP_PANEL_UNITS.idCard, NP_PANEL_UNITS.address]).toEqual([3, 3, 3]);
+    expect([NP_PANEL_UNITS.identity, NP_PANEL_UNITS.idCard, NP_PANEL_UNITS.address]).toEqual([3, 4, 3]); // 40.98: idCard 4
     const field = region(ID_CARD_DIALOG, "const reviewField = (", "if (fatalError) {");
     expect(field).toMatch(/const width = NATURAL_PERSON\[name\];/);
     expect(field).toMatch(/const label = tNp\(`fields\./);
@@ -1242,9 +1255,10 @@ describe("the ID-card dialog: the Natural Person's rows, widths and panels (Slic
     expect(panels).toMatch(/<AddressBlock<FormValues>[\s\S]*?warnFields=\{addressWarnFields\}/);
   });
 
-  it("the card is wide only when the review shows, and holds two 3-unit panels side by side", () => {
-    expect(unitsRem(NP_PANEL_UNITS.identity) + UNIT_GAP_REM + unitsRem(NP_PANEL_UNITS.idCard)).toBe(unitsRem(6));
-    expect(ID_CARD_DIALOG_CARD_STYLE.maxWidth).toBe("65rem");
+  // 40.98: Identitate 3 and Carte de identitate 4 of 119 px, side by side (was two 3-unit panels of 148, 65rem).
+  it("the card is wide only when the review shows, and holds its two panels side by side", () => {
+    expect(unitsRem(NP_PANEL_UNITS.identity) + UNIT_GAP_REM + unitsRem(NP_PANEL_UNITS.idCard)).toBe(unitsRem(7));
+    expect(ID_CARD_DIALOG_CARD_STYLE.maxWidth).toBe("62.5625rem");
     expect(ID_CARD_DIALOG).toMatch(/wide=\{showForm\}/);
     const card = code(read("src", "components", "persons", "person-resolution-dialog.tsx"));
     expect(card).toMatch(/wide = false/);
@@ -1258,9 +1272,10 @@ describe("the ID-card dialog: the Natural Person's rows, widths and panels (Slic
 });
 
 describe("a Previzualizare tile: whole units, its screen's rows (Slice #37.33)", () => {
-  it("is 3 units for a person, a company or a property and 4 — the page image's width — for a document", () => {
-    expect(PREVIEW_UNITS).toEqual({ panel: 3, pages: 4 });
-    expect(PREVIEW_STYLE.panel.width).toBe("29.75rem");
+  // 40.98: re-pinned to the width they had on the 148-px unit — 3 → 4 (524 px), 4 → 5 (659, the page image's).
+  it("is 4 units for a person, a company or a property and 5 — the page image's width — for a document", () => {
+    expect(PREVIEW_UNITS).toEqual({ panel: 4, pages: 5 });
+    expect(PREVIEW_STYLE.panel.width).toBe("32.75rem");
     expect(PREVIEW_STYLE.pages.width).toBe(`${PAGES_PANEL_REM}rem`);
   });
 
@@ -1346,18 +1361,19 @@ describe("the thirteen „Asociază …” screens: Căutare, Rezultate and Asoc
     expect(src).toMatch(/useRecordCrumb\(/);
   });
 
-  it("the tiles are the fewest units that hold them, and the three sit side by side at 1920 px (10 units)", () => {
+  // 40.98: on the 119-px unit — Căutare 3, Rezultate 4/7/3, Asociere 3; at 1920 px a row holds 12.
+  it("the tiles are the fewest units that hold them, and the three sit side by side at 1920 px (12 units)", () => {
     expect(boxesUnits(["searchName", "searchCode"])).toBe(3);
-    expect(boxesUnits(["searchText"])).toBe(2);
-    expect(boxesUnits(["role"])).toBe(2);
+    expect(boxesUnits(["searchText"])).toBe(3);
+    expect(boxesUnits(["role"])).toBe(3);
     expect(boxesUnits([])).toBe(2);
     // #37.57: no „Cod" column — a record's system ID is on its own screen only.
     const person = ["select", "personName", "personType"] as const;
     const doc = ["select", "documentType", "documentTitle"] as const;
     const prop = ["select", "propertyLabel"] as const;
-    expect([tableUnits(person), tableUnits(doc), tableUnits(prop)]).toEqual([4, 5, 3]);
-    expect(3 + tableUnits(person) + 2).toBeLessThanOrEqual(10);
-    expect(2 + tableUnits(doc) + 2).toBeLessThanOrEqual(10);
+    expect([tableUnits(person), tableUnits(doc), tableUnits(prop)]).toEqual([4, 7, 3]);
+    expect(3 + tableUnits(person) + 3).toBeLessThanOrEqual(12);
+    expect(3 + tableUnits(doc) + 3).toBeLessThanOrEqual(13); // the documents' search: one row at 2560 px, two at 1920
     // One unit fewer would not hold the table, and the fill column keeps at least its own width.
     for (const [cols, fill] of [[person, "personName"], [doc, "documentTitle"], [prop, "propertyLabel"]] as const) {
       const sum = cols.reduce((n, c) => n + columnRem(c), 0);
@@ -1368,9 +1384,9 @@ describe("the thirteen „Asociază …” screens: Căutare, Rezultate and Asoc
   });
 
   it("screenPanel and the screen row learn the unit, by opt-in", () => {
-    expect(screenPanel("x", 3).style).toEqual({ width: "29.75rem" });
+    expect(screenPanel("x", 3).style).toEqual({ width: "24.3125rem" }); // 40.98: 3 units of 119 px
     expect(screenPanel("x").style).toEqual(PANEL_STYLE);
-    expect(String(screenRowStyle(6).width)).toBe("min(var(--row-cap), max(60.5rem, calc(round(down, 100% + 1rem, 10.25rem) - 1rem)))");
+    expect(String(screenRowStyle(6).width)).toBe("min(var(--row-cap), max(49.625rem, calc(round(down, 100% + 1rem, 8.4375rem) - 1rem)))");
   });
 });
 
@@ -1420,7 +1436,7 @@ describe("the administration screens on the unit (Slice #37.35)", () => {
   });
 
   it("Calcul's map is whole units, at its height (rule 20)", () => {
-    expect(CALC_MAP_STYLE).toEqual({ width: `${unitsRem(6)}rem`, height: "26.25rem" });
+    expect(CALC_MAP_STYLE).toEqual({ width: `${unitsRem(7)}rem`, height: "26.25rem" }); // 40.98: 7 of 119 px, 929 (6 of 148, 968)
   });
 });
 
@@ -1429,7 +1445,7 @@ describe("the home page as unit tiles, in the detail screens' frame (Slice #37.3
 
   it("each section is a ListTile of whole units, on the unit row, ticked with the detail screens' selector", () => {
     expect(src).toMatch(/<ListTile tile=\{tile\} panel=\{PANEL_NAME\[tile\]\} title=\{title\} units=\{HOME_UNITS\[tile\]\}>/);
-    expect(src).toMatch(/recentCounts: 3,\s*staleMetadata: 3,\s*expiringDocuments: tableUnits\(EXPIRING_COLUMNS\),\s*recentActivity: 4,/);
+    expect(src).toMatch(/recentCounts: 4,\s*staleMetadata: 4,\s*expiringDocuments: tableUnits\(EXPIRING_COLUMNS\),\s*recentActivity: 5,/); // 40.98: re-pinned
     expect(src).toMatch(/<UnitRow units=\{choice\.shown\.map\(\(k\) => HOME_UNITS\[k\]\)\}>/);
     expect(src).toMatch(/useTileChoice<HomeTile>\(HOME_TILE_REGISTRY\)/);
     expect(src).toMatch(/<TileSelector all=\{HOME_TILES\}/);
@@ -1437,7 +1453,7 @@ describe("the home page as unit tiles, in the detail screens' frame (Slice #37.3
     expect(src).toMatch(/<table className="w-full table-fixed text-sm" data-expiring-table="">/);
     // The old card (rounded-xl, a grey header band) and #37.22's widths are gone.
     expect(src).not.toMatch(/rounded-xl|PANEL_REM|screenPanel\(|data-panel-row/);
-    expect(3 * SCALE.M + 2).toBeLessThanOrEqual(unitsInnerRem(3));
+    expect(3 * SCALE.M + 2).toBeLessThanOrEqual(unitsInnerRem(4)); // 40.98: the counts' tile is 4 units of 119 px
     // #37.57: no „Cod" — the title is the link; the tile was 8 units, the title filling it. 40.62: two columns, the
     // status and the title, so fewer units (`tableUnits(["documentType", "documentTitle", "date", "expiryStatus"])` was 8).
     expect(src).toContain('const EXPIRING_COLUMNS: readonly ColumnName[] = ["expiryStatus", "documentTitle"];');

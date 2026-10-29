@@ -374,7 +374,7 @@ test.describe("TC-VL-05 pasul 9 — listele ca fișe (#39.76)", () => {
               tile: t.dataset.tile,
               units,
               // The triangle is a line of its own across the row (`data-tile-full`), at #38.77's width (TC-VL-10).
-              whole: full || offGrid || Math.abs(r.width - (units * 9.25 + (units - 1)) * rem) <= 1,
+              whole: full || offGrid || Math.abs(r.width - (units * 7.4375 + (units - 1)) * rem) <= 1 /* 40.98: UNIT_REM, 119 px */,
               even: frame ? Math.abs(frame.left - r.left - (r.right - frame.right)) <= 2 : true,
               gap: !standard || (list !== undefined && near21(list.left - r.left) && near21(r.right - list.right) && near21(r.bottom - list.bottom)),
             };

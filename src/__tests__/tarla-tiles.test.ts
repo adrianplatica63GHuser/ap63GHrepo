@@ -36,16 +36,19 @@ describe("„Indicative Tarla” — a small gap after the code, the list ending
 });
 
 describe("the tarla page as tiles (Ask first 1, 2, 4)", () => {
-  it("thirds of 3 units (476 px) and halves of 5 (804 px) — a maximized window's page holds ten", () => {
-    expect([TARLA_THIRD_UNITS, TARLA_HALF_UNITS]).toEqual([3, 5]);
-    expect(unitsRem(3) * REM).toBe(476);
-    expect(unitsRem(5) * REM).toBe(804);
-    expect(unitsRem(10) * REM).toBe(1624); // 1920 − the sidebar's 248 − the page's 2 × 24
+  // 40.98 (Ask first 5): on the 119-px unit a 1920-px row holds 12, so its third is 4 and its half 6. Was thirds of 3
+  // units (476 px) and halves of 5 (804 px) of the ten a row held.
+  it("thirds of 4 units (524 px) and halves of 6 (794 px) — a maximized window's page holds twelve", () => {
+    expect([TARLA_THIRD_UNITS, TARLA_HALF_UNITS]).toEqual([4, 6]);
+    expect(unitsRem(4) * REM).toBe(524);
+    expect(unitsRem(6) * REM).toBe(794);
+    expect(unitsRem(12) * REM).toBeLessThanOrEqual(1624); // 1920 − the sidebar's 248 − the page's 2 × 24
+    expect(unitsRem(13) * REM).toBeGreaterThan(1624);
     expect(TARLA_SCREEN).toEqual({
       entity: "tarla",
       tiles: ["facts", "identity", "outline", "properties", "plans", "parcels", "documents"], // #39.87: the facts first
-      units: 5,
-      flowUnits: 10,
+      units: 6,
+      flowUnits: 12,
     });
   });
 
@@ -115,15 +118,17 @@ describe("„Contur”: one line per corner, by narrower gaps (#39.87, Ask first
     }
   });
 
-  it("in a third the buttons' cell holds the four (116 px): 104 before, 164 after", () => {
+  // 40.98: a third is 4 units of 119 px, its table 480 px (432 in 3 of 148) — the four buttons fit even at the
+  // ordinary gaps now (152 px); the narrower ones stay, and leave them 212. Was „104 before, 164 after".
+  it("in a third the buttons' cell holds the four (116 px): 152 at the ordinary gaps, 212 at the narrower", () => {
     const table = (unitsInnerRem(TARLA_THIRD_UNITS) + 0.75 * 2 - 1.25 * 2) * REM - 2; // the card's px-5, the frame's border
-    expect(table).toBe(432);
+    expect(table).toBe(480);
     const sum = (ws: string[]) => ws.reduce((n, w) => n + parseFloat(w) * REM, 0);
     const loose = table - sum(Object.values(CORNER_COLUMNS)) - 24;
     const tight = table - sum(Object.values(CORNER_COLUMNS).map(tightCornerColumn)) - 12;
-    expect(loose).toBeLessThan(116);
+    expect(loose).toBeGreaterThanOrEqual(116);
     expect(tight).toBeGreaterThanOrEqual(116);
-    expect([loose, tight]).toEqual([104, 164]);
+    expect([loose, tight]).toEqual([152, 212]);
   });
 
   it("only the tarla page asks for it — the property form and a document's pages keep their table", () => {

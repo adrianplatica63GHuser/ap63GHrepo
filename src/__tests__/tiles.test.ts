@@ -40,7 +40,7 @@ import {
   PROP_TILE_REGISTRY,
   propTileOfField,
 } from "@/app/properties/_components/property-tiles";
-import { NP_PANEL_INNER_REM, TILE_REM, PANEL_REM, PANEL_GAP_REM, panelRem } from "@/lib/ui/field-widths";
+import { NP_PANEL_INNER_REM, TILE_REM, PANEL_REM, PANEL_GAP_REM, panelRem, unitsRem } from "@/lib/ui/field-widths";
 
 const ROOT = process.cwd();
 const read = (...p: string[]): string => fs.readFileSync(path.join(ROOT, ...p), "utf8");
@@ -169,8 +169,10 @@ describe("the Natural Person's tiles", () => {
     expect(TILE_REM.wide).toBe(2 * PANEL_REM + PANEL_GAP_REM);
   });
 
-  it("form tiles are each as wide as their widest row since #37.26 — never wider than a small tile", () => {
-    for (const inner of Object.values(NP_PANEL_INNER_REM)) expect(panelRem(inner)).toBeLessThan(TILE_REM.small);
+  // 40.98: never wider than 4 units of 119 px — Carte de identitate, 4 units, is 524 px, 12 past the old small tile's
+  // 512; the other three are 3 units, 389 px. Was „never wider than a small tile".
+  it("form tiles are each as wide as their widest row since #37.26 — never wider than four units", () => {
+    for (const inner of Object.values(NP_PANEL_INNER_REM)) expect(panelRem(inner)).toBeLessThanOrEqual(unitsRem(4));
     expect(FORM).toMatch(/NP_PANEL_STYLE\.identity[\s\S]*NP_PANEL_STYLE\.idCard[\s\S]*NP_PANEL_STYLE\.contact/);
   });
 });

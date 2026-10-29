@@ -81,10 +81,11 @@ describe("the default placement (#38.12)", () => {
   const unit = UNIT_REM * remPx;
   const gap = UNIT_GAP_REM * remPx;
   // The heights measured on a synthetic group of two in the browser pane.
+  // 40.98: the screen's tiles are 4 units of 119 px (3 of 148 until then).
   const boxes = [
-    { id: "identity", units: 3, height: 304 },
-    { id: "available", units: 3, height: 511 },
-    { id: "in-group", units: 3, height: 165 },
+    { id: "identity", units: GROUP_SCREEN.units, height: 304 },
+    { id: "available", units: GROUP_SCREEN.units, height: 511 },
+    { id: "in-group", units: GROUP_SCREEN.units, height: 165 },
   ];
   /** What the hook runs for a row `units` wide: the flow held to `flowUnits`, the row's whole width free. */
   const at = (units: number) => {
@@ -93,20 +94,22 @@ describe("the default placement (#38.12)", () => {
     return Object.fromEntries(placeWithStored(boxes, {}, own, gap, flow).placed.map((p) => [p.id, [p.col, p.top]]));
   };
 
-  it.each([6, 10, 14])("a row of %i units: „Deja în grup” under „Identitatea grupului”, „Membri disponibili…” at their right", (units) => {
-    expect(at(units)).toEqual({ identity: [0, 0], available: [3, 0], "in-group": [0, 304 + gap] });
+  // 40.98: 1366, 1920 and 2560 px hold 8, 12 and 17 units of 119 px (6, 10 and 14 of 148).
+  it.each([8, 12, 17])("a row of %i units: „Deja în grup” under „Identitatea grupului”, „Membri disponibili…” at their right", (units) => {
+    expect(GROUP_SCREEN.units).toBe(4);
+    expect(at(units)).toEqual({ identity: [0, 0], available: [4, 0], "in-group": [0, 304 + gap] });
   });
 
   it("without the held flow, a wide row would put the three in one line — which is why the screen holds it", () => {
-    const own = 10;
+    const own = 12;
     const placed = Object.fromEntries(placeWithStored(boxes, {}, own, gap).placed.map((p) => [p.id, p.col]));
-    expect(placed["in-group"]).toBe(6);
+    expect(placed["in-group"]).toBe(8);
   });
 
   it("a dragged „Deja în grup” keeps its stored place in the free space at the right", () => {
-    const own = 10;
-    const placed = placeWithStored(boxes, { "in-group": { col: 6, top: 0 } }, own, gap, GROUP_SCREEN.flowUnits).placed;
-    expect(placed.find((p) => p.id === "in-group")).toMatchObject({ col: 6, top: 0 });
+    const own = 12;
+    const placed = placeWithStored(boxes, { "in-group": { col: 8, top: 0 } }, own, gap, GROUP_SCREEN.flowUnits).placed;
+    expect(placed.find((p) => p.id === "in-group")).toMatchObject({ col: 8, top: 0 });
   });
 });
 

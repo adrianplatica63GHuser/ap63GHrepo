@@ -108,11 +108,11 @@ import { screenBox, screenPanel } from "@/lib/ui/field-widths";
 import { UnitRow } from "@/components/screen/unit-row";
 
 /**
- * Slice #37.35: the engine is one tile of 6 units (#37.22's two panels, on the
+ * Slice #37.35: the engine is one tile of 6 units (7 of 119 px since 40.98; #37.22's two panels, on the
  * unit) — a proposed field's row (XL, M and XXL) fits inside it; a caption under
  * a box wraps at the tile's inner width.
  */
-const ENGINE_UNITS = 6;
+const ENGINE_UNITS = 7; // 40.98: re-pinned (6 of 148 px)
 
 /*
  * ⚠️ **THERE IS DELIBERATELY NO MODULE-LEVEL `_dirHandle` HERE, AND THE FIRST

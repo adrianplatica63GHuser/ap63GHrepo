@@ -76,7 +76,7 @@ async function screen(
 
 /**
  * A screen of unit tiles (Slice #37.35): every tile and panel a whole number of
- * units, and the row as many units as the window holds — 6, 10 and 14 at 1366,
+ * units, and the row as many units as the window holds — 8, 12 and 17 at 1366 (40.98; 6, 10, 14 of 148 px),
  * 1920 and 2560 px — or, where one tile is wider than that, as wide as it (the
  * row is never narrower than its widest tile, and the page scrolls sideways).
  */
@@ -89,7 +89,7 @@ async function expectScreenUnitGrid(page: Page): Promise<void> {
     return Math.max(0, ...units);
   }, [UNIT_REM, UNIT_GAP_REM] as const);
   expect(widest, "no tile on the unit row").toBeGreaterThan(0);
-  await expectUnitGrid(page, UNIT_REM, UNIT_GAP_REM, { 1366: Math.max(6, widest), 1920: Math.max(10, widest), 2560: Math.max(14, widest) });
+  await expectUnitGrid(page, UNIT_REM, UNIT_GAP_REM, { 1366: Math.max(8, widest), 1920: Math.max(12, widest), 2560: Math.max(17, widest) });
 }
 
 /**
@@ -182,7 +182,7 @@ test.describe("TC-LAYOUT-01 — Celelalte ecrane, la lățimi fixe", () => {
           for (const tile of ["Căutare", "Rezultate", "Asociere"]) {
             await expect(page.getByRole("region", { name: tile, exact: true })).toBeVisible();
           }
-          await expectUnitGrid(page, UNIT_REM, UNIT_GAP_REM, { 1366: 6, 1920: 10, 2560: 14 });
+          await expectUnitGrid(page, UNIT_REM, UNIT_GAP_REM, { 1366: 8, 1920: 12, 2560: 17 });
           const title = (await heading(page).textContent())?.trim() ?? "";
           const record = (await page.locator("main header p").first().textContent())?.trim() ?? "";
           const crumbs = page.getByRole("navigation", { name: "Fir de navigare" }).locator("a, [aria-current=page]");

@@ -59,7 +59,8 @@ test.describe("TC-TILES-19 — previzualizarea unui rând, în coloana lui", () 
       await expect(rows).toHaveCount(3, { timeout: 30_000 });
       const list = main.locator("[data-list-body]");
       const magnifier = (name: string) => rows.filter({ hasText: name }).getByRole("button", { name: "Previzualizare", exact: true });
-      const rem40 = await page.evaluate(() => 40 * parseFloat(getComputedStyle(document.documentElement).fontSize));
+      // 40.98: the row tiles' column is PAGES_PANEL_REM, 5 units of 119 px (40rem before).
+      const rem40 = await page.evaluate(() => 41.1875 * parseFloat(getComputedStyle(document.documentElement).fontSize));
 
       // Step 2 — (#39.04) A's preview in the row tiles' column at the list's right, its top level with the list's
       // top (the toolbar's), 40 rem wide. It read: „at the table's right, its top level with the table's top".
@@ -69,7 +70,7 @@ test.describe("TC-TILES-19 — previzualizarea unui rând, în coloana lui", () 
       const a = await box(previewOf(page, A));
       expect(a.left).toBeGreaterThanOrEqual(l.right);
       expect(near(a.top, l.top), `A's top ${a.top} level with the list's ${l.top}`).toBe(true);
-      expect(Math.abs(a.right - a.left - rem40), "A's width, 40 rem").toBeLessThanOrEqual(2);
+      expect(Math.abs(a.right - a.left - rem40), "A's width, 41.1875 rem").toBeLessThanOrEqual(2);
       await expect(magnifier(A)).toHaveAttribute("aria-pressed", "true");
 
       // Step 3 — (#39.04) the other rows wait: B's and C's magnifiers disabled. It read: „B's preview under A's".
@@ -83,7 +84,7 @@ test.describe("TC-TILES-19 — previzualizarea unui rând, în coloana lui", () 
       const l4 = await box(list);
       const a4 = await box(previewOf(page, A));
       expect(a4.top).toBeGreaterThan(l4.bottom);
-      expect(Math.abs(a4.right - a4.left - rem40), "A's width at 1366, 40 rem").toBeLessThanOrEqual(2);
+      expect(Math.abs(a4.right - a4.left - rem40), "A's width at 1366, 41.1875 rem").toBeLessThanOrEqual(2);
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
       await page.screenshot({ path: `${SHOTS}/properties-row-preview-1366.png`, fullPage: true });
 

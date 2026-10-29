@@ -8,7 +8,7 @@
  * Divergences from the hand run, each for a reason the case cannot have:
  *   - The records carry `TC-E2E-PERS-07` (records.ts).
  *   - The sizes are compared with the document's „Pagini" as measured in this
- *     run, not with the case's 640 × 420 written as numbers alone; both are asserted.
+ *     run, not with the case's 640 × 420 written as numbers alone; both are asserted. 40.98: 659 wide, 5 units of 119 px.
  *   - Step 6 (40.43) makes its two persons and their interactions through the API, as the other records are made.
  */
 
@@ -81,14 +81,15 @@ test.describe("TC-PERS-07 — „Interacțiuni” pe cele două fișe de persoan
     const made: string[] = [];
     try {
       await page.setViewportSize({ width: 1920, height: 1080 });
-      // Step 1 — the document's „Pagini", no page: 640 × 436 (420 before #38.30's subtitle line).
+      // Step 1 — the document's „Pagini", no page: 659 × 436 (40.98: 5 units of 119 px; 640 before; 420 high before
+      // #38.30's subtitle line).
       await page.goto(`/documents/${doc}`);
       const pages = page.locator('[data-tile="pages"]');
       await expect(pages).toBeVisible({ timeout: 30_000 });
       await expect(page.getByText("Nicio pagină adăugată")).toBeVisible({ timeout: 30_000 });
       const pages1920 = await settledSize(pages);
       // 420 px in the pane, 422 on the runner's server before #38.30; + the 16 px subtitle line. Within 4 px is „Pagini"'s height.
-      expect(pages1920.w).toBe(640);
+      expect(pages1920.w).toBe(659);
       expect(Math.abs(pages1920.h - 436)).toBeLessThanOrEqual(4);
 
       // Step 2 — the person: the last box ticked in the purple strip; the tile at „Pagini"'s size and place.
@@ -150,7 +151,7 @@ test.describe("TC-PERS-07 — „Interacțiuni” pe cele două fișe de persoan
         return { underTiles: t.y >= Math.max(...bottoms), barUnder: bar.y >= t.y + t.h };
       }, { timeout: 15_000 }).toEqual({ underTiles: true, barUnder: true });
       const at1366 = await size(tile);
-      expect(at1366.w).toBe(640);
+      expect(at1366.w).toBe(659);
       // #39.05 read the history at „Pagini"'s height; 40.33: empty, it is short — under 200 px with C.
       await expect(tile).toHaveAttribute("data-interactions-state", "empty");
       expect(at1366.h).toBeLessThan(200);

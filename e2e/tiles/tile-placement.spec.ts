@@ -16,6 +16,7 @@
  *     sidebar's „Recente" list painted over; and the narrowest window at which
  *     each screen's column still stands beside the left area, by a sweep of
  *     window widths, into `breakpoints.json` there.
+ *   - Slice 40.98's widths at step 3, not a step of the case: the four property tiles 524 px, „Adresă" 389.
  */
 
 import fs from "node:fs";
@@ -109,7 +110,7 @@ test.describe("TC-TILES-07 — unde stau părțile la deschidere", () => {
       await page.goto(`/documents/${docId}`);
       for (const name of ["Identificarea actului", "Pagini", "Preț și plată"]) await expect(tileBox(page, name)).toBeChecked({ timeout: 30_000 }); // #38.33
       await expect(page.locator('[data-tile="pages"]')).toBeVisible({ timeout: 30_000 });
-      expect(await rowWidth(page)).toBe(1624);
+      expect(await rowWidth(page)).toBe(1604); // 40.98: 12 units of 119 px (1624, 10 of 148, before)
       await atTheRight(page, "pages");
       const fees = await at(page, "tab:Preț și plată");
       expect(fees.y).toBe(0);
@@ -143,6 +144,12 @@ test.describe("TC-TILES-07 — unde stau părțile la deschidere", () => {
       const sv = await at(page, "streetView");
       expect(Math.abs(sv.re)).toBeLessThanOrEqual(1);
       expect(sv.y).toBeGreaterThan((await at(page, "corners")).bottom);
+      // 40.98 (Adrian's red notes): on the 119-px unit, Date cadastrale, Puncte de contur, Hartă and Street View are
+      // 4 units, 524 px each, the three in the column beside the cadastral tile; Adresă 3 units, 389 px.
+      const widths = await page.evaluate(() =>
+        Object.fromEntries(["cadastral", "corners", "map", "streetView", "address"].map((n) => [n, Math.round(document.querySelector<HTMLElement>(`[data-tile="${n}"]`)!.getBoundingClientRect().width)])),
+      );
+      expect(widths).toEqual({ cadastral: 524, corners: 524, map: 524, streetView: 524, address: 389 });
 
       // Step 4 — „Hartă" unticked: „Puncte de contur" at the top of the column, „Street View" under it.
       await hideTile(page, "Hartă");
@@ -156,13 +163,13 @@ test.describe("TC-TILES-07 — unde stau părțile la deschidere", () => {
       expect((await at(page, "cadastral")).x).toBe(0);
       expect((await at(page, "address")).y).toBe(0);
 
-      // Step 6 — „Hartă" and „Puncte de contur" again, at 1366: 968 px; the 3-unit column (#37.77)
-      // beside „Date cadastrale", „Adresă" under it.
+      // Step 6 — „Hartă" and „Puncte de contur" again, at 1366: 1064 px, 8 units of 119 (40.98; 968, 6 of 148, before);
+      // the 4-unit column beside the 4-unit „Date cadastrale", „Adresă" under it.
       await showTile(page, "Hartă");
       await showTile(page, "Puncte de contur");
       await page.setViewportSize({ width: 1366, height: 900 });
       await settle(page);
-      expect(await rowWidth(page)).toBe(968);
+      expect(await rowWidth(page)).toBe(1064);
       await expect.poll(async () => {
         const [cad, addr, m6, c6] = await Promise.all([at(page, "cadastral"), at(page, "address"), at(page, "map"), at(page, "corners")]);
         return {

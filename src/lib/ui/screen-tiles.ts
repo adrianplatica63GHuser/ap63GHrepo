@@ -38,26 +38,26 @@ export interface ScreenTiles {
 export const GROUP_SCREEN: ScreenTiles = {
   entity: "admin-group",
   tiles: ["identity", "available", "in-group"],
-  units: 3,
-  flowUnits: 2 * 3,
+  units: 4, // 40.98: re-pinned, 476 → 524 px
+  flowUnits: 2 * 4,
 };
 
 /** Administrare → Ștampile → „Aplică" (#38.13). */
 export const STAMP_SCREEN: ScreenTiles = {
   entity: "admin-stamp",
   tiles: ["description", "type", "stamped", "available"],
-  units: 3,
-  flowUnits: 2 * 3,
+  units: 4, // 40.98: re-pinned, 476 → 524 px
+  flowUnits: 2 * 4,
 };
 
 /**
  * Slice #39.77 — a tarla's page (/tarlale/[id]). Adrian, 2026-10-17: every panel a third of a maximized window, the
  * properties and the documents half of it. In whole units (Ask first 1): at 1920 px with the sidebar open the page holds
- * ten units (1624 px), a third of which rounds to 3 units (476 px) and a half to 5 (804 px). At 1366 px it holds six:
- * two thirds side by side, or a half.
+ * 1624 px — ten units of 148 px until 40.98, a third of which rounded to 3 units (476 px) and a half to 5 (804 px).
  */
-export const TARLA_THIRD_UNITS = 3;
-export const TARLA_HALF_UNITS = 5;
+// 40.98: a 1920-px row holds 12 units of 119 px — a third is 4 (524 px), a half 6 (794 px).
+export const TARLA_THIRD_UNITS = 4;
+export const TARLA_HALF_UNITS = 6;
 
 /**
  * Slice #39.87 — „Despre limitele tarlalelor" is a tile of the page too, the first, a third wide (Adrian, 2026-10-18: „the
@@ -68,5 +68,5 @@ export const TARLA_SCREEN: ScreenTiles = {
   entity: "tarla",
   tiles: ["facts", "identity", "outline", "properties", "plans", "parcels", "documents"],
   units: TARLA_HALF_UNITS,
-  flowUnits: 10,
+  flowUnits: 12, // 40.98: the 1920-px row's 12 units (10 of 148 px)
 };

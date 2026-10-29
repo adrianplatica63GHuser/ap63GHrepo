@@ -280,7 +280,7 @@ export function packedHeight(placed: readonly Placed[], withFixed = false): numb
  * sidebar's rail, 40.68), 1366 px holds 7 and keeps its layout exactly. Two tiles of the common widths (3 and 2–4
  * units) need 5 to stand side by side.
  */
-export const ONE_COLUMN_BELOW_UNITS = 5;
+export const ONE_COLUMN_BELOW_UNITS = 6; // 40.98 (Adrian: „Yes, please implement!"): about 794 px, as 5 of 148 px were 804
 
 /**
  * Slice 40.69: the arrangement drawn as one column — ONLY a way of drawing it (Ask first 2): the tiles in the order the

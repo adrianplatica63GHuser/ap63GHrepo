@@ -22,12 +22,12 @@ import { UnitRow } from "@/components/screen/unit-row";
 const COLUMNS: readonly ColumnName[] = ["groupCode", "description", "rowActions"];
 
 /**
- * Slice #37.35: the screen's tiles — what this list is (6 units, #37.22's two
+ * Slice #37.35: the screen's tiles — what this list is (6 units, 7 of 119 px since 40.98; #37.22's two
  * panels), the add form (3) while it is open, and the list (the fewest units
  * that hold its columns, the description taking what the others leave).
  */
-const ABOUT_UNITS = 6;
-const FORM_UNITS = 3;
+const ABOUT_UNITS = 7; // 40.98: re-pinned (6 of 148 px)
+const FORM_UNITS = 4; // 40.98: re-pinned (3 of 148 px)
 const LIST_UNITS = tableUnits(COLUMNS);
 // Slice #39.89: the list fills its tile at Reference Data's standard gap, the description taking what the others leave.
 const LIST_FILL: ColumnName = "description";
