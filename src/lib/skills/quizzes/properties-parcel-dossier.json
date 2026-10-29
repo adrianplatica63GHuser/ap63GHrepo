@@ -515,18 +515,18 @@
           "section": "links-related",
           "ro": {
             "question": "Lucrând la dosar pe ecranul parcelei, Ciprian vrea să citească repede contractul legat, fără să plece de pe parcelă. Ce apasă pe rândul contractului din „Legături”?",
-            "explanation": "„Previzualizare” deschide obiectul legat alături, fără să plecați de pe ecran. „Vizualizare” îl deschide numai pentru citire, pe ecranul lui."
+            "explanation": "„Previzualizare” deschide obiectul legat alături, fără să plecați de pe ecran. Numele de pe rând îl deschide numai pentru citire, pe ecranul lui."
           },
           "en": {
             "question": "Working on the dossier on the parcel's screen, Ciprian wants to read the linked contract quickly, without leaving the parcel. What does he press on the contract's row in „Legături”?",
-            "explanation": "„Previzualizare” (preview) opens the linked object alongside, without leaving the screen. „Vizualizare” (view) opens it read-only, on its own screen."
+            "explanation": "„Previzualizare” (preview) opens the linked object alongside, without leaving the screen. The name in the row opens it read-only, on its own screen."
           },
           "options": [
             {
               "id": "o1",
               "correct": false,
-              "ro": "„Vizualizare”, care îl deschide în aceeași fișă.",
-              "en": "„Vizualizare”, which opens it in the same tile."
+              "ro": "Numele contractului, care îl deschide în aceeași fișă.",
+              "en": "The contract's name, which opens it in the same tile."
             },
             {
               "id": "o2",

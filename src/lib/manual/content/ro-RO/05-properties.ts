@@ -170,7 +170,7 @@ Fiecare rând are patru butoane:
 - „Editează” — face din rând câmpuri de scris, cu „Salvează” și „Anulează” pe rând. Butoanele rândurilor și „+ Adaugă punct” stau acolo cât timp „Puncte de contur” este deschisă cu „Editează”-ul fișei; un colț tras pe hartă o deschide singur;
 - „Șterge” — scoate colțul.
 
-„+ Adaugă punct”, pe rândul titlului fișei, în dreapta, adaugă un colț nou la sfârșit.
+„+ Adaugă punct” adaugă un colț nou la sfârșit. Nu se vede până apăsați „Editează” pe fișă; atunci stă pe rândul lui „Afișare:”, în dreapta.
 
 „Suprafață calculată (m²)” urmează colțurile pe loc: schimbați un colț și suprafața se schimbă imediat. „Salvează” de pe un rând nu scrie încă nimic în arhivă: colțurile se salvează abia cu „Salvează”-ul fișei „Puncte de contur”, sub tabel, iar versiunea de dinainte păstrează colțurile vechi.
 
@@ -178,7 +178,7 @@ Dacă ordinea colțurilor face ca laturile să se încrucișeze, apare „Ordine
 
 ### 5.4.2 Fișa „Hartă” {#properties-corners-map}
 
-Fișa „Hartă” desenează parcela. Sus, în dreapta, are pe un rând:
+Fișa „Hartă” desenează parcela. Are deasupra titlul ei, ca orice fișă; sub titlu, în dreapta, are pe un rând:
 
 - „Hartă extinsă” — deschide harta pe tot ecranul;
 - „Desenează” — pune colțuri cu clicuri pe hartă;
@@ -205,7 +205,7 @@ Harta extinsă are „Desenează”, „Arată Unghiuri” și „HARTĂ” / �
 
 ### 5.4.5 Fișa „Street View” {#properties-corners-street-view}
 
-Fișa „Street View” arată imaginea străzii de lângă parcelă. Este oprită până o bifați, pentru că Google taxează fiecare imagine deschisă. Are nevoie de cel puțin un colț; dacă Google nu are imagini în apropiere, fișa vă spune. Harta completă are și ea Street View (secțiunea [[map-street-view]]).
+Fișa „Street View” arată imaginea străzii de lângă parcelă, sub titlul fișei. Este oprită până o bifați, pentru că Google taxează fiecare imagine deschisă. Are nevoie de cel puțin un colț; dacă Google nu are imagini în apropiere, fișa vă spune. Harta completă are și ea Street View (secțiunea [[map-street-view]]).
 
 ## 5.5 O parcelă dintr-un fișier cu coordonate {#properties-coord-file}
 

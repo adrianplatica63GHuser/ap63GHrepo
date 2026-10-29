@@ -170,7 +170,7 @@ Each row has four buttons:
 - „Edit” — turns the row into fields to type in, with „Save” and „Cancel” on the row. The rows' buttons and „+ Add Corner” are there while „Corners” is open with the tile's own „Edit”; a corner dragged on the map opens it by itself;
 - „Delete” — removes the corner.
 
-„+ Add Corner”, on the tile's title row, on the right, adds a new corner at the end.
+„+ Add Corner” adds a new corner at the end. It is not shown until you press „Edit” on the tile; then it stands on the „Display:” line, on the right.
 
 „Calculated Area (m²)” follows the corners at once: change a corner and the area changes immediately. A row's „Save” does not yet write anything to the archive: the corners are saved only with the „Save” of the „Corners” tile, under the table, and the version before keeps the old corners.
 
@@ -178,7 +178,7 @@ If the order of the corners makes the sides cross, „The corner order crosses i
 
 ### 5.4.2 The „Map” tile {#properties-corners-map}
 
-The „Map” tile draws the parcel. At its top right, on one line, it has:
+The „Map” tile draws the parcel. It has its title above it, like any tile; under the title, at the right, on one line, it has:
 
 - „Expand map” — opens the map on the whole screen;
 - „Draw” — places corners by clicks on the map;
@@ -205,7 +205,7 @@ The expanded map has „Draw”, „Show Angles” and „STR” / „SAT”. A 
 
 ### 5.4.5 The „Street View” tile {#properties-corners-street-view}
 
-The „Street View” tile shows the street view next to the parcel. It is off until you tick it, because Google charges for every view opened. It needs at least one corner; if Google has no images nearby, the tile says so. The full map has Street View too (section [[map-street-view]]).
+The „Street View” tile shows the street view next to the parcel, under the tile's title. It is off until you tick it, because Google charges for every view opened. It needs at least one corner; if Google has no images nearby, the tile says so. The full map has Street View too (section [[map-street-view]]).
 
 ## 5.5 A parcel from a coordinate file {#properties-coord-file}
 

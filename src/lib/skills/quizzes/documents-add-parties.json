@@ -514,12 +514,12 @@
           "id": "b6",
           "section": "companies-people-records",
           "ro": {
-            "question": "Pe un act ați asociat o firmă ca „Vânzător”. Vreți să-i verificați datele, așa că apăsați „Vizualizare” pe rândul ei. Ce se deschide?",
-            "explanation": "De pe act, „Vizualizare” pe rândul firmei deschide ecranul firmei — nu al unei persoane fizice —, doar pentru citit, cu „Înapoi la listă” și „Modifică” jos."
+            "question": "Pe un act ați asociat o firmă ca „Vânzător”. Vreți să-i verificați datele, așa că faceți clic pe numele firmei, pe rândul ei. Ce se deschide?",
+            "explanation": "De pe act, numele firmei, pe rândul ei, deschide ecranul firmei — nu al unei persoane fizice —, doar pentru citit, cu „Înapoi la listă” și „Modifică” jos."
           },
           "en": {
-            "question": "On a document you have associated a firm as „Vânzător”. You want to check its details, so you press „Vizualizare” (view) on its row. What opens?",
-            "explanation": "From the document, „Vizualizare” on the firm's row opens the firm's screen — not a natural person's —, read-only, with „Înapoi la listă” and „Modifică” at the bottom."
+            "question": "On a document you have associated a firm as „Vânzător”. You want to check its details, so you click the firm's name on its row. What opens?",
+            "explanation": "From the document, the firm's name on its row opens the firm's screen — not a natural person's —, read-only, with „Înapoi la listă” and „Modifică” at the bottom."
           },
           "options": [
             {

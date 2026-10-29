@@ -438,8 +438,8 @@
             {
               "id": "o1",
               "correct": false,
-              "ro": "Apasă „Vizualizare” pe rândul certificatului; contractul rămâne alături.",
-              "en": "He presses „Vizualizare” on the certificate's row; the contract stays alongside."
+              "ro": "Face clic pe numele certificatului; contractul rămâne alături.",
+              "en": "He clicks the certificate's name on its row; the contract stays alongside."
             },
             {
               "id": "o2",

@@ -115,7 +115,7 @@ export const OUTLINE: Readonly<Record<string, string>> = {
   "links-associate-kinds": "What can be linked to what (person, company, land, document, relatives) and which role or link type you choose for each pairing.",
   "links-associate-role": "How to choose a link's role, why you tick the document before the role, how family roles show reversed (parent/daughter), and when a link has no role.",
   "links-associate-remove": "How to remove or delete a link (dissociate) without deleting the objects, and why the „Associate” buttons are blocked while a row is chosen.",
-  "links-related": "What an object's „Links” tile shows and in what order, and what the Relationship, View, Preview and Share buttons on its rows do.",
+  "links-related": "What an object's „Links” tile shows and in what order, and what the name, as a link, and the Relationship, Preview and Share buttons on its rows do.",
   "links-references": "How to make directional links between documents (earlier title, annex) or between properties (included in), and how they read from both ends.",
   "links-references-documents": "How to link a document to the deed it cites (earlier title, annex, addendum, replaces) and review the cited instruments the AI found.",
   "links-references-properties": "How to show a parcel is included in another plot, a subdivision of it, reached through it, or neighbouring it (adjacent, joined, overlapping).",

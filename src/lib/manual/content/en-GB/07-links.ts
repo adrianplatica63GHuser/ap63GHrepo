@@ -13,7 +13,7 @@ A link between two objects is called an association. It is made once, from eithe
 
 ### 7.1.1 The association screen {#links-associate-screen}
 
-On an object's „Links” tile (section [[links-related]]) there are three buttons: „Associate person”, „Associate property” and „Associate document”. Each opens an association screen, with three tiles one under another (Figure [[fig-links-associate]]):
+On an object's „Links” tile (section [[links-related]]) there are three buttons: „Associate person”, „Associate property” and „Associate document”, each with two icons — the chain and the person, the property or the document; „Dissociate” has the chain and a broken link. Each „Associate …” opens an association screen, with three tiles one under another (Figure [[fig-links-associate]]):
 
 - „Search” — the filters. For persons they are „Name” and „Code”; for properties and documents there is a single box, „Search”, which searches by code and by name or title.
 - „Results” — the objects found. Tick the row or rows you want to link. Natural and juridical persons stand in the same table, and the „Type” column says which is which: „Natural” or „Judicial”.
@@ -63,10 +63,11 @@ The rows always come in the same order — natural persons, juridical persons, p
 
 The role — for a document, the type — stands in a small tag at the row's right edge, so the tags line up top to bottom, and a long name is cut with three dots before its role is.
 
-A row can carry a few buttons:
+The name on a row is a link: a click on it opens the linked object read-only, and „Modify”, at the bottom of its screen, makes it editable.
+
+A row can carry a few buttons, faint while the mouse is elsewhere and full on the row under the mouse:
 
 - „Relationship” shows, in a bubble, what links the two objects: the person's role in the document (for instance Role: „Vânzător”) or the sentence of a link with a direction (section [[links-references]]). A click outside the bubble or the Esc key closes it.
-- „View” opens the linked object read-only; „Modify”, at the bottom of its screen, makes it editable.
 - „Preview” opens it alongside, without leaving the screen (section [[start-preview]]).
 - „Share”, in orange, holds a person's share in a document (section [[documents-parties]]).
 
@@ -172,7 +173,7 @@ A plot of land in Bragadiru has an owner who is already in the archive.
 1. Open the land and, on „Links”, press „Associate person” (section [[links-associate]]).
 2. Type part of the person's name into „Name” and tick their row in „Results”.
 3. Choose the owner's role in „Role” and press „Associate Selected”.
-4. On „Links”, press „View” on the person's row: on their „Links” tile the land appears, with the role in brackets (section [[links-related]]).
+4. On „Links”, click the person's name on their row: on their „Links” tile the land appears, with the role in brackets (section [[links-related]]).
 
 ### 7.7.2 Show that the seller inherited the land {#links-example-title}
 

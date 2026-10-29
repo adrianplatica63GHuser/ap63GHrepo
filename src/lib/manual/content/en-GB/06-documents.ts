@@ -77,6 +77,8 @@ Types that have a form of their own read „(F)” after their name in the list 
 
 The tiles shown are chosen with the ticks at the head of the screen, as on any object (section [[start-tiles]]), and the choice is remembered per type: a sale contract and a plan each keep their own arrangement. If you change a document's type, the tiles change with it.
 
+**A saved document's type is changed only as a correction.** On a saved document, „Document Type” reads as text in the form too; beside it stands „Change type…”, which opens „Change the document's type”. Pick „New type”: before anything changes, the window shows „Form fields removed on save:”, on an identity document „Identity fields removed on save:”, and the linked parties with a role the new type does not have — they stay linked, with their role. When nothing is lost, it says „The change removes nothing.”. „Confirm” changes the type in the form, „Cancel” leaves it as it was. Nothing is written to the archive until „Save”.
+
 ## 6.4 The document's identification and form {#documents-identification}
 
 Every document begins with the tile „Document identification”: „Document Type”, then the document's issuer, number and date. Their names depend on the type:
@@ -108,7 +110,7 @@ A document of one of the four identity document types (section [[persons-identit
 - At the top, „Holder:” names the person linked to the document as „Titular act de identitate”, with the link to them.
 - Beside „Valid until” — on a passport, „Expiry date” — stands the state: „VALID”, „EXPIRED” or „EXPIRES IN 30 DAYS”, as on the person. The old booklet has no such date, so no state either.
 - A CNP without a correct control digit is not saved: „A CNP has 13 digits and a correct control digit.”. A CNP that does not match „Sex” or the date of birth is saved, with a warning under the tile.
-- When the type changes between two identity documents, under „Document Type” it says which fields are removed on saving. An identity document does not change to an ordinary type while it has identity values filled in.
+- When the type changes between two identity documents, „Change type…” shows which identity fields are removed on saving (section [[documents-type]]). An identity document does not change to an ordinary type while it has identity values filled in: the window says so and has no „Confirm”.
 
 A new identity document is made from „Documents” → „Add new Document”, choosing the type, or from the person, with „Add identity document” (section [[persons-identity-documents]]). The fields of each kind can be seen, read-only, in „Reference Data” (section [[admin-reference-data-document-types]]).
 
@@ -134,7 +136,7 @@ Which role holds a share is decided in „Reference Data”, under „Person Rol
 
 ## 6.6 The sale contract {#documents-sale}
 
-The sale contract („Contract de Vânzare”, „CVC” in the list) has the richest form in the archive (Figure [[fig-documents-sale]]). Its tile ticks are, in order: „Document identification”, „Preț și plată”, „Obiectul vânzării”, „Carte funciară”, „Declarații și garanții”, „Taxe și cheltuieli”, „Parties”, „Links”, „Classification”, „Tags and groups” and „Pages”. In „Document identification”, besides „Notary Office”, „Authentic Deed No.” and „Authentication date”, there are „Calitate exemplar” (copy status), „Exemplare emise” (copies issued) — on a row of its own, the tile's whole width —, „Temei autentificare” (authentication basis) and „Data conținutului” (date of the content).
+The sale contract („Contract de Vânzare”, „CVC” in the list) has the richest form in the archive (Figure [[fig-documents-sale]]). Its tile ticks are, in order: „Document identification”, „Preț și plată”, „Obiectul vânzării”, „Carte funciară”, „Declarații și garanții”, „Taxe și cheltuieli”, „Parties”, „Links”, „Classification”, „Tags and groups” and „Pages”. In „Document identification”, besides „Notary Office”, „Authentic Deed No.” and „Authentication date”, there are „Calitate exemplar” (copy status), „Exemplare emise” (copies issued) and „Temei autentificare” (authentication basis) — each on a row of its own, the tile's whole width — and „Data conținutului” (date of the content).
 
 ![6.3 A sale contract](documents-sale.png){#fig-documents-sale}
 
@@ -148,9 +150,9 @@ The form's tiles and their panels:
 | „Declarații și garanții” (statements and warranties) | „[Declarațiile vânzătorului]”, „[Garanții]”, „[Declarații legale]” |
 | „Taxe și cheltuieli” (taxes and costs) | „[Taxe și onorarii]”, „[Cheltuieli]” |
 
-„[Taxe și onorarii]” holds, on one row, „Timbru judiciar”, „Onorariu notarial”, „Impozit transfer” and „Taxă timbru și publicitate”.
+„[Taxe și onorarii]” holds them two to a row: „Onorariu notarial” and „Impozit transfer”, then „Timbru judiciar” and „Taxă timbru și publicitate”.
 
-A few fields stand in a set order. In „[Preț]”, the first row is „Preț total” (total price), „Monedă” (currency) and „Preț declarat real” (declared price is real). In „[Situația în cartea funciară]”, „Marcaj carte funciară” (land-book marker) stands alone, and „Consimțământ radiere” (consent to removal) and „Intabulare posibilă” (registration possible) are on the row under it. In „[Excepția de la cadastru]”, „Temei excepție cadastru”, „Termen formalități” and „Completare ulterioară” each take a whole row, and „Renunțare cercetare OCPI” and „Obligație număr cadastral” stand alone on theirs.
+A few fields stand in a set order. In „[Preț]”, the first row is „Preț total” (total price), „Monedă” (currency) and „Preț declarat real” (declared price is real). In „[Situația în cartea funciară]”, „Marcaj carte funciară” (land-book marker) stands alone, and „Consimțământ radiere” (consent to removal) and „Intabulare posibilă” (registration possible) are on the row under it. In „[Excepția de la cadastru]”, „Temei excepție cadastru”, „Termen formalități” and „Completare ulterioară” each take a whole row, and „Renunțare cercetare OCPI” and „Obligație număr cadastral” stand alone on theirs. In „[Plată]”, „Stare plată” (payment status) and „Data plății” (payment date) share a row, and „Modalitate plată” (payment method) is on the row under „Stare plată”. In „[Dosar cadastral]”, „Documentație finalizată” (file complete) stands under „Categorie internă” (internal category). The seller's statements are two to a row, from „Circuit civil” and „Liber de sarcini”. In „[Garanții]”, „Garanție evicțiune” and „Garanție vicii ascunse” share a row, and „Temei legal evicțiune”, under them, takes the tile's whole width. In „[Cheltuieli]”, „Cheltuieli perfectare” and „Plătitor taxe locale” share a row, and „Taxe locale la zi” is on the row under them.
 
 **The „Parties” tile** holds the sellers and the buyers, by the rule in section [[documents-parties]]. The parties are grouped under their role's name — „Vânzător” first, then „Cumpărător” —, each row with its „Share” (section [[documents-parties]]). A contract with no parties reads „No party linked yet. Link the parties with their role and share.”. „Associate person” adds a party: search for the person by „Name” or „Code”, choose „Role”, tick the row and press „Associate Selected”. „Dissociate” removes the selected party. The contract's other people, the notary for instance, sit on „Links”, and the properties sold are linked from there too.
 

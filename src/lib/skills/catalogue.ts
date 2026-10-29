@@ -147,8 +147,8 @@ export const SKILLS: readonly Skill[] = [
       en: "Sign in and find your way through the sidebar",
     },
     description: {
-      ro: "Te conectezi, citești tabloul de bord, deschizi orice ecran din bara laterală, te întorci cu „Înapoi” și revii cu „Înainte”, regăsești ce ai văzut în „Recente”; din meniul contului alegi limba și „Noapte”, și ieși.",
-      en: "Sign in, read the dashboard, open any screen from the sidebar, go back with „Înapoi” and return with „Înainte”, find what you saw in „Recente”; in the account menu choose the language and „Noapte”, and sign out.",
+      ro: "Te conectezi, citești tabloul de bord, deschizi orice ecran din bara laterală, te întorci cu „Înapoi” și revii cu „Înainte”, regăsești ce ai văzut în „Recente”; din capul barei laterale alegi limba și „Noapte”, iar din meniul contului ieși.",
+      en: "Sign in, read the dashboard, open any screen from the sidebar, go back with „Înapoi” and return with „Înainte”, find what you saw in „Recente”; at the top of the sidebar choose the language and „Noapte”, and sign out from the account menu.",
     },
     predecessors: [],
     screens: ["dashboard"],

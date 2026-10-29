@@ -628,11 +628,11 @@
           "section": "links-related",
           "ro": {
             "question": "Pe fișa „Legături” a unui teren vedeți proprietarul, Andrei Munteanu, și vreți să-i corectați numărul de telefon. Ce faceți?",
-            "explanation": "„Vizualizare” deschide obiectul legat numai pentru citire; „Modifică”, jos pe ecranul lui, îl face modificabil."
+            "explanation": "Numele de pe rând deschide obiectul legat numai pentru citire; „Modifică”, jos pe ecranul lui, îl face modificabil."
           },
           "en": {
             "question": "On a plot's „Legături” tile you see the owner, Andrei Munteanu, and you want to correct his telephone number. What do you do?",
-            "explanation": "„Vizualizare” opens the linked object read-only; „Modifică”, at the bottom of its screen, makes it editable."
+            "explanation": "The name in the row opens the linked object read-only; „Modifică”, at the bottom of its screen, makes it editable."
           },
           "options": [
             {
@@ -656,8 +656,8 @@
             {
               "id": "o4",
               "correct": true,
-              "ro": "„Vizualizare” pe rândul lui, apoi „Modifică”, jos pe ecranul lui.",
-              "en": "„Vizualizare” on his row, then „Modifică”, at the bottom of his screen."
+              "ro": "Un clic pe numele lui, apoi „Modifică”, jos pe ecranul lui.",
+              "en": "A click on his name, then „Modifică”, at the bottom of his screen."
             }
           ]
         },

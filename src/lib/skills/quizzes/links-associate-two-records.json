@@ -70,8 +70,8 @@
             {
               "id": "o2",
               "correct": false,
-              "ro": "Apăsați „Vizualizare” pe rând și apoi „Modifică”",
-              "en": "You press „Vizualizare” on the row and then „Modifică”"
+              "ro": "Faceți clic pe numele din rând, apoi apăsați „Modifică”",
+              "en": "You click the name in the row, then press „Modifică”"
             },
             {
               "id": "o3",

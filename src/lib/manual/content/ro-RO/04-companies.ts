@@ -163,7 +163,7 @@ Un reprezentant se leagă din ecranul firmei:
 
 Înapoi pe firmă, „Legături” arată persoana pe un rând, cu rolul ei între paranteze: „Nume Prenume (Reprezentant legal / Mandatar)”.
 
-Aceeași legătură se citește și de la celălalt capăt. Pe ecranul persoanei, în fișa ei „Legături”, firma apare cu rolul întors: „Denumirea firmei (Reprezentat(ă) / Mandant(ă))” — persoana o reprezintă pe firmă, deci firma este cea reprezentată. „Vizualizare”, pe fiecare rând, deschide celălalt capăt, doar pentru citit.
+Aceeași legătură se citește și de la celălalt capăt. Pe ecranul persoanei, în fișa ei „Legături”, firma apare cu rolul întors: „Denumirea firmei (Reprezentat(ă) / Mandant(ă))” — persoana o reprezintă pe firmă, deci firma este cea reprezentată. Numele de pe fiecare rând deschide celălalt capăt, doar pentru citit.
 
 O legătură greșită se scoate selectând rândul ei în „Legături” și apăsând „Dezasociază”. Fișa „Legături” este descrisă pe larg în secțiunea [[links-related]].
 
@@ -174,7 +174,7 @@ O firmă poate fi parte într-un act sau proprietar al unui teren, la fel ca o p
 - „Asociază act” deschide „Asociere act”. Bifați actul, apoi alegeți „Rol”: după ce ați bifat actul, lista rolurilor se strânge la cele pe care tipul acela de act le are. La un „Contract de Vânzare”, de pildă: „Cumpărător”, „Moștenitor”, „Notar”, „Reprezentant legal / Mandatar”, „Vânzător”. Pe act, firma apare apoi în fișa „Părți”, cu rolul ei. Despre părți, roluri și cota-parte, vedeți secțiunile [[documents-parties]] și [[documents-sale]].
 - „Asociază proprietate” deschide „Asociere proprietate”. Bifați proprietatea și alegeți „Rol”: „Coproprietar”, „Cumpărător”, „Proprietar” sau „Titular de drept”. Pe proprietate, firma apare în „Legături”, de exemplu „Denumirea firmei (Proprietar)”.
 
-De pe act sau de pe proprietate, „Vizualizare” pe rândul firmei deschide ecranul firmei — nu al unei persoane fizice —, doar pentru citit, cu „Înapoi la listă” și „Modifică” jos. Asocierea în general este în capitolul [[links]].
+De pe act sau de pe proprietate, numele firmei, pe rândul ei, deschide ecranul firmei — nu al unei persoane fizice —, doar pentru citit, cu „Înapoi la listă” și „Modifică” jos. Asocierea în general este în capitolul [[links]].
 
 ### 4.3.4 Interacțiunile firmei {#companies-people-interactions}
 
@@ -208,7 +208,7 @@ Situația: o persoană semnează în numele unei firme și vreți ca legătura s
 1. Deschideți firma și bifați fișa „Legături”.
 2. Apăsați „Asociază persoană”, căutați persoana, bifați-o și alegeți „Reprezentant legal / Mandatar” (secțiunea [[companies-people-representatives]]).
 3. Apăsați „Asociază selecția”.
-4. Apăsați „Vizualizare” pe rândul persoanei: în fișa ei „Legături”, firma apare ca „Reprezentat(ă) / Mandant(ă)”.
+4. Faceți clic pe numele persoanei, pe rândul ei: în fișa ei „Legături”, firma apare ca „Reprezentat(ă) / Mandant(ă)”.
 
 ### 4.4.4 Treceți o firmă ca proprietar al unui teren din Bragadiru {#companies-example-owner}
 

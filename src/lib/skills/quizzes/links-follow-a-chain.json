@@ -92,11 +92,11 @@
           "section": "links-related",
           "ro": {
             "question": "Pe „Legături” al unui teren stă rândul „Mihai Stoica (Proprietar)”. Ciprian vrea să afle ce alte terenuri mai are Mihai. Ce face?",
-            "explanation": "„Vizualizare” deschide obiectul legat, iar fișa lui „Legături” arată ce este legat de el; „Relația” arată doar ce leagă cele două obiecte."
+            "explanation": "Un clic pe numele de pe rând deschide obiectul legat, iar fișa lui „Legături” arată ce este legat de el; „Relația” arată doar ce leagă cele două obiecte."
           },
           "en": {
             "question": "On a plot's „Legături” there is the row „Mihai Stoica (Proprietar)”. Ciprian wants to find out which other plots Mihai has. What does he do?",
-            "explanation": "„Vizualizare” (view) opens the linked object, and its own „Legături” tile shows what is linked to it; „Relația” (the relationship) shows only what links the two objects."
+            "explanation": "A click on the name in the row opens the linked object, and its own „Legături” tile shows what is linked to it; „Relația” (the relationship) shows only what links the two objects."
           },
           "options": [
             {
@@ -120,8 +120,8 @@
             {
               "id": "o4",
               "correct": true,
-              "ro": "Apasă „Vizualizare” pe rândul lui Mihai și îi citește „Legături”",
-              "en": "He presses „Vizualizare” on Mihai's row and reads his „Legături”"
+              "ro": "Face clic pe numele lui Mihai și îi citește „Legături”",
+              "en": "He clicks Mihai's name and reads his „Legături”"
             }
           ]
         },
@@ -292,8 +292,8 @@
             {
               "id": "o2",
               "correct": true,
-              "ro": "Deschide firma cu „Vizualizare” și caută în „Legături” rolul „Reprezentant legal / Mandatar”",
-              "en": "He opens the company with „Vizualizare” and looks in „Legături” for the role „Reprezentant legal / Mandatar”"
+              "ro": "Deschide firma cu un clic pe numele ei și caută în „Legături” rolul „Reprezentant legal / Mandatar”",
+              "en": "He opens the company with a click on its name and looks in „Legături” for the role „Reprezentant legal / Mandatar”"
             },
             {
               "id": "o3",
@@ -729,8 +729,8 @@
             {
               "id": "o1",
               "correct": false,
-              "ro": "„Vizualizare”, care ține contractul deschis alături",
-              "en": "„Vizualizare”, which keeps the contract open alongside"
+              "ro": "Numele terenului, care ține contractul deschis alături",
+              "en": "The plot's name, which keeps the contract open alongside"
             },
             {
               "id": "o2",

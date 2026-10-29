@@ -163,7 +163,7 @@ A representative is linked from the firm's screen:
 
 Back on the firm, „Links” shows the person on one row, with their role in brackets: „Surname First name (Reprezentant legal / Mandatar)”.
 
-The same link reads from the other end as well. On the person's screen, in their own „Links” tile, the firm appears with the role turned round: „Firm's name (Reprezentat(ă) / Mandant(ă))” — the person represents the firm, so the firm is the one represented. „View”, on each row, opens the other end, read-only.
+The same link reads from the other end as well. On the person's screen, in their own „Links” tile, the firm appears with the role turned round: „Firm's name (Reprezentat(ă) / Mandant(ă))” — the person represents the firm, so the firm is the one represented. The name on each row opens the other end, read-only.
 
 A wrong link is taken out by selecting its row in „Links” and pressing „Dissociate”. The „Links” tile is described in full in section [[links-related]].
 
@@ -174,7 +174,7 @@ A firm can be a party to a document or the owner of a piece of land, just as a n
 - „Associate document” opens „Associate Document”. Tick the document, then choose „Role”: once you have ticked the document, the list of roles narrows to those that type of document has. On a „Contract de Vânzare” (sale contract), for instance: „Cumpărător”, „Moștenitor”, „Notar”, „Reprezentant legal / Mandatar”, „Vânzător”. On the document, the firm then appears in the „Parties” tile, with its role. On parties, roles and the share, see sections [[documents-parties]] and [[documents-sale]].
 - „Associate property” opens „Associate Property”. Tick the property and choose „Role”: „Coproprietar”, „Cumpărător”, „Proprietar” or „Titular de drept”. On the property, the firm appears in „Links”, for instance „Firm's name (Proprietar)”.
 
-From the document or the property, „View” on the firm's row opens the firm's screen — not a natural person's —, read-only, with „Back to list” and „Modify” at the bottom. Associating objects in general is in chapter [[links]].
+From the document or the property, the firm's name, on its row, opens the firm's screen — not a natural person's —, read-only, with „Back to list” and „Modify” at the bottom. Associating objects in general is in chapter [[links]].
 
 ### 4.3.4 The firm's interactions {#companies-people-interactions}
 
@@ -208,7 +208,7 @@ The situation: a person signs on behalf of a firm and you want the link to show 
 1. Open the firm and tick the „Links” tile.
 2. Press „Associate person”, search for the person, tick them and choose „Reprezentant legal / Mandatar” (section [[companies-people-representatives]]).
 3. Press „Associate Selected”.
-4. Press „View” on the person's row: in their „Links” tile, the firm appears as „Reprezentat(ă) / Mandant(ă)”.
+4. Click the person's name on their row: in their „Links” tile, the firm appears as „Reprezentat(ă) / Mandant(ă)”.
 
 ### 4.4.4 Record a firm as the owner of a piece of land in Bragadiru {#companies-example-owner}
 

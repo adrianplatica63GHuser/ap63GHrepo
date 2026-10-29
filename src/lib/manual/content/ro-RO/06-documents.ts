@@ -77,6 +77,8 @@ Tipurile care au formular propriu se citesc în listă cu „(F)” după nume �
 
 Fișele care se văd se aleg cu bifele din capul ecranului, ca pe orice obiect (secțiunea [[start-tiles]]), iar alegerea se ține minte pentru fiecare tip: un contract de vânzare-cumpărare și un plan își păstrează fiecare aranjamentul lui. Dacă schimbați tipul unui act, se schimbă și fișele.
 
+**Tipul unui act salvat se schimbă doar ca o corectură.** Pe un act salvat, „Tip document” se citește ca text și în formular; lângă el stă „Schimbă tipul…”, care deschide „Schimbă tipul actului”. Alegeți „Tipul nou”: fereastra arată, înainte de orice schimbare, „Câmpurile formularului care se șterg la salvare:”, la un act de identitate „Câmpurile de identitate care se șterg la salvare:”, și părțile legate cu un rol pe care noul tip nu îl are — ele rămân legate, cu rolul lor. Când nu se pierde nimic, scrie „Schimbarea nu șterge nimic.”. „Confirmă” schimbă tipul în formular, „Anulează” îl lasă cum era. Nimic nu se scrie în arhivă până la „Salvează”.
+
 ## 6.4 Identificarea actului și formularul {#documents-identification}
 
 Fiecare act începe cu fișa „Identificarea actului”: „Tip document”, apoi emitentul, numărul și data actului. Numele lor depind de tip:
@@ -108,7 +110,7 @@ Un act de unul dintre cele patru tipuri de act de identitate (secțiunea [[perso
 - Sus, „Titular:” numește persoana legată de act ca „Titular act de identitate”, cu legătura spre ea.
 - Lângă „Valabil până la” — la pașaport, „Data expirării” — stă starea: „VALABIL”, „EXPIRAT” sau „EXPIRĂ ÎN 30 ZILE”, ca pe persoană. Buletinul vechi nu are această dată, deci nici stare.
 - Un CNP fără cifra de control corectă nu se salvează: „CNP-ul trebuie să aibă 13 cifre și o cifră de control corectă.”. Un CNP care nu se potrivește cu „Sex” sau cu data nașterii se salvează, cu un avertisment sub fișă.
-- La schimbarea tipului între două acte de identitate, sub „Tip document” scrie ce câmpuri se șterg la salvare. Un act de identitate nu trece la un tip obișnuit cât timp are date de identitate completate.
+- La schimbarea tipului între două acte de identitate, „Schimbă tipul…” arată ce câmpuri de identitate se șterg la salvare (secțiunea [[documents-type]]). Un act de identitate nu trece la un tip obișnuit cât timp are date de identitate completate: fereastra o spune și nu are „Confirmă”.
 
 Un act de identitate nou se face din „Acte” → „Adaugă act”, alegând tipul, sau de pe persoană, cu „Adaugă act de identitate” (secțiunea [[persons-identity-documents]]). Câmpurile fiecărui fel de act se văd, doar de citit, în „Date de referință” (secțiunea [[admin-reference-data-document-types]]).
 
@@ -134,7 +136,7 @@ Ce rol deține o cotă se hotărăște în „Date de referință”, la „Rolu
 
 ## 6.6 Contractul de vânzare-cumpărare {#documents-sale}
 
-Contractul de vânzare-cumpărare („Contract de Vânzare”, în listă „CVC”) are cel mai bogat formular din arhivă (Figura [[fig-documents-sale]]). Bifele lui de fișe sunt, în ordine: „Identificarea actului”, „Preț și plată”, „Obiectul vânzării”, „Carte funciară”, „Declarații și garanții”, „Taxe și cheltuieli”, „Părți”, „Legături”, „Clasificare”, „Etichete și grupuri” și „Pagini”. În „Identificarea actului”, pe lângă „Notariat”, „Nr. act autentic” și „Data autentificării”, stau „Calitate exemplar”, „Exemplare emise” — pe un rând al lui, cât toată fișa —, „Temei autentificare” și „Data conținutului”.
+Contractul de vânzare-cumpărare („Contract de Vânzare”, în listă „CVC”) are cel mai bogat formular din arhivă (Figura [[fig-documents-sale]]). Bifele lui de fișe sunt, în ordine: „Identificarea actului”, „Preț și plată”, „Obiectul vânzării”, „Carte funciară”, „Declarații și garanții”, „Taxe și cheltuieli”, „Părți”, „Legături”, „Clasificare”, „Etichete și grupuri” și „Pagini”. În „Identificarea actului”, pe lângă „Notariat”, „Nr. act autentic” și „Data autentificării”, stau „Calitate exemplar”, „Exemplare emise” și „Temei autentificare” — fiecare pe un rând al lui, cât toată fișa — și „Data conținutului”.
 
 ![6.3 Un contract de vânzare-cumpărare](documents-sale.png){#fig-documents-sale}
 
@@ -148,9 +150,9 @@ Fișele formularului și panourile lor:
 | Declarații și garanții | [Declarațiile vânzătorului], [Garanții], [Declarații legale] |
 | Taxe și cheltuieli | [Taxe și onorarii], [Cheltuieli] |
 
-În „[Taxe și onorarii]” stau, pe un singur rând, „Timbru judiciar”, „Onorariu notarial”, „Impozit transfer” și „Taxă timbru și publicitate”.
+În „[Taxe și onorarii]” stau, câte două pe un rând, „Onorariu notarial” și „Impozit transfer”, apoi „Timbru judiciar” și „Taxă timbru și publicitate”.
 
-Câteva câmpuri stau într-o ordine anume. În „[Preț]”, primul rând este „Preț total”, „Monedă” și „Preț declarat real”. În „[Situația în cartea funciară]”, „Marcaj carte funciară” stă singur, iar „Consimțământ radiere” și „Intabulare posibilă” sunt pe rândul de sub el. În „[Excepția de la cadastru]”, „Temei excepție cadastru”, „Termen formalități” și „Completare ulterioară” țin fiecare un rând întreg, iar „Renunțare cercetare OCPI” și „Obligație număr cadastral” stau singure pe rândul lor.
+Câteva câmpuri stau într-o ordine anume. În „[Preț]”, primul rând este „Preț total”, „Monedă” și „Preț declarat real”. În „[Situația în cartea funciară]”, „Marcaj carte funciară” stă singur, iar „Consimțământ radiere” și „Intabulare posibilă” sunt pe rândul de sub el. În „[Excepția de la cadastru]”, „Temei excepție cadastru”, „Termen formalități” și „Completare ulterioară” țin fiecare un rând întreg, iar „Renunțare cercetare OCPI” și „Obligație număr cadastral” stau singure pe rândul lor. În „[Plată]”, „Stare plată” și „Data plății” stau pe un rând, iar „Modalitate plată” pe rândul de sub „Stare plată”. În „[Dosar cadastral]”, „Documentație finalizată” stă sub „Categorie internă”. Declarațiile vânzătorului stau câte două pe un rând, de la „Circuit civil” și „Liber de sarcini”. În „[Garanții]”, „Garanție evicțiune” și „Garanție vicii ascunse” sunt pe un rând, iar „Temei legal evicțiune”, sub ele, cât toată fișa. În „[Cheltuieli]”, „Cheltuieli perfectare” și „Plătitor taxe locale” sunt pe un rând, iar „Taxe locale la zi” pe rândul de sub ele.
 
 **Fișa „Părți”** ține vânzătorii și cumpărătorii, după regula din secțiunea [[documents-parties]]. Părțile stau pe grupe, sub numele rolului — „Vânzător” întâi, apoi „Cumpărător” —, fiecare rând cu „Cotă” lui (secțiunea [[documents-parties]]). Un contract fără părți spune „Nicio parte asociată încă. Asociați părțile cu rolul și cota lor.” „Asociază persoană” adaugă o parte: căutați persoana după „Nume” sau „Cod”, alegeți „Rol”, bifați rândul și apăsați „Asociază selecția”. „Dezasociază” scoate partea selectată. Celelalte persoane ale contractului, de pildă notarul, stau pe „Legături”, iar proprietățile vândute se leagă tot de acolo.
 

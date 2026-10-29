@@ -448,8 +448,8 @@
             {
               "id": "o1",
               "correct": false,
-              "ro": "Deschiderea obiectului cu „Vizualizare”",
-              "en": "Opening the object with „Vizualizare”"
+              "ro": "Deschiderea obiectului, cu un clic pe numele lui din „Legături”",
+              "en": "Opening the object with a click on its name in „Legături”"
             },
             {
               "id": "o2",

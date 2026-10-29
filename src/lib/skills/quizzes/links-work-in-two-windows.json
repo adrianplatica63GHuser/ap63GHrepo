@@ -297,8 +297,8 @@
             {
               "id": "o2",
               "correct": false,
-              "ro": "Apasă „Vizualizare” pe rândul ei; prețul se salvează singur",
-              "en": "Presses „Vizualizare” on her row; the price saves by itself"
+              "ro": "Face clic pe numele ei; prețul se salvează singur",
+              "en": "Clicks her name; the price saves by itself"
             },
             {
               "id": "o3",
@@ -720,8 +720,8 @@
             {
               "id": "o2",
               "correct": false,
-              "ro": "„Vizualizare” pe ambele rânduri, care le pune alături",
-              "en": "„Vizualizare” on both rows, which puts them side by side"
+              "ro": "Un clic pe numele de pe ambele rânduri, care le pune alături",
+              "en": "A click on the name on both rows, which puts them side by side"
             },
             {
               "id": "o3",

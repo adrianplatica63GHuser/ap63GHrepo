@@ -11,7 +11,7 @@ Capitolul acesta vă arată ce folosiți peste tot în aplicație: conectarea, b
 
 Deschideți aplicația în browser și conectați-vă cu adresa de e-mail și parola contului dumneavoastră, apoi apăsați „Conectare”. Se deschide tabloul de bord (secțiunea [[intro-purpose]]).
 
-Jos, în bara laterală, stă contul vostru: pictograma unui om, numele cu care sunteți conectat și o săgeată. Un clic pe el deschide în sus un meniu mic: întâi „Autentificat ca …”, apoi „Limba”, „Aspect” și „Ieșire” (Figura [[fig-account-menu]]). Esc sau un clic în afara meniului îl închide. Parola se schimbă din „Setări” (secțiunea [[admin-settings-account]]).
+Jos, în bara laterală, stă contul vostru: pictograma unui om, numele cu care sunteți conectat și o săgeată. Un clic pe el deschide în sus un meniu mic: întâi „Autentificat ca …”, apoi „Ieșire” (Figura [[fig-account-menu]]); cât bara laterală e strânsă, meniul ține și „Limba” și „Aspect” (secțiunea [[start-sidebar]]). Esc sau un clic în afara meniului îl închide. Parola se schimbă din „Setări” (secțiunea [[admin-settings-account]]).
 
 ![2.1 Meniul contului, deschis din josul barei laterale](account-menu.png){#fig-account-menu}
 
@@ -19,7 +19,7 @@ Cine nu are încă un cont cere acces din pagina de conectare. Cererea ajunge la
 
 ## 2.2 Bara laterală {#start-sidebar}
 
-Bara laterală, în stânga, deschide orice ecran al aplicației (Figura [[fig-sidebar]]). Sus ține doar „GA40” și butonul care o strânge; jos, contul (secțiunea [[start-sign-in]]). Este împărțită în secțiuni:
+Bara laterală, în stânga, deschide orice ecran al aplicației (Figura [[fig-sidebar]]). Sus ține „GA40”, cele două comutatoare mici „Limba” și „Aspect” și butonul care o strânge; jos, contul (secțiunea [[start-sign-in]]). Este împărțită în secțiuni:
 
 | Secțiunea | Ce cuprinde |
 |---|---|
@@ -35,7 +35,7 @@ Un clic pe o secțiune îi arată ecranele, iar un clic pe un ecran îl deschide
 
 ![2.2 Bara laterală, cu secțiunea „Domeniu” deschisă](sidebar.png){#fig-sidebar}
 
-În meniul contului, „Limba” are două cuvinte, RO și EN: limba în care lucrați este plină, în gri-albăstrui închis, cu literele albe, iar un clic pe cealaltă schimbă limba ecranelor. „Aspect” are „Zi” și „Noapte”: „Noapte” trece toată aplicația pe fundal închis, pe loc, fără să reîncărcați pagina, iar „Zi” o readuce luminoasă (Figura [[fig-dark]]). Alegerea se păstrează în browserul acesta, și după ce îl închideți, și se schimbă la fel din „Setări”, cu căsuța „Noapte (Mod Întunecat)” (secțiunea [[admin-settings-account]]). Setarea de culori a calculatorului nu contează: fără „Noapte”, aplicația este luminoasă.
+În capul barei laterale, lângă „GA40”, „Limba” are două cuvinte, RO și EN: limba în care lucrați este plină, în gri-albăstrui închis, cu literele albe, iar un clic pe cealaltă schimbă limba ecranelor. „Aspect” are un soare și o lună — „Zi” și „Noapte”, cum scrie când țineți mouse-ul pe ele: „Noapte” trece toată aplicația pe fundal închis, pe loc, fără să reîncărcați pagina, iar „Zi” o readuce luminoasă (Figura [[fig-dark]]). Alegerea se păstrează în browserul acesta, și după ce îl închideți, și se schimbă la fel din „Setări”, cu căsuța „Noapte (Mod Întunecat)” (secțiunea [[admin-settings-account]]). Setarea de culori a calculatorului nu contează: fără „Noapte”, aplicația este luminoasă. Cât bara laterală e strânsă la pictograme, cele două comutatoare se mută în meniul contului (secțiunea [[start-sign-in]]).
 
 Într-o fereastră îngustă, sub 1024 de pixeli, bara laterală este mereu strânsă, la pictograme. „Extinde bara laterală” o deschide atunci peste pagină, care se întunecă; Esc, un clic pe pagină sau un ecran ales o strâng la loc. Când lărgiți fereastra, bara revine cum ați lăsat-o.
 
@@ -109,10 +109,10 @@ Un obiect deschis își arată datele în fișe — panouri cu câte un nume, sc
 - Ca să puneți o fișă unde stă alta, trageți-o peste aceea și țineți-o nemișcată: după o secundă — cât spune „Timp de ținere peste altă fișă”, în „Setări” (secțiunea [[admin-settings-thresholds]]) — fișa de dedesubt alunecă în jos, în coloanele ei, la primul loc liber destul de mare, iar conturul arată că locul e liber (Figura [[fig-make-room]]). Lăsați fișa acolo; Esc pune totul înapoi.
 - Fișele mov deschis — harta, colțurile, Street View, paginile unui act, interacțiunile unei persoane — pornesc lângă marginea dreaptă, una sub alta, și se trag ca orice altă fișă; locul în care le lăsați se păstrează, iar „Implicit” le pune înapoi în dreapta.
 - ID-ul de sistem al obiectului stă în colțul din dreapta-sus al primei fișe.
-- O fișă de formular fără nimic în ea stă pe un singur rând: numele ei, „necompletat” (sau starea ei, de pildă „aceeași cu domiciliul”) și „Adaugă”, care o deschide, cu cursorul în primul câmp. Prima fișă a unui obiect — identitatea unei persoane sau a unei firme, „Identificare cadastrală”, „Identificarea actului” — nu se strânge niciodată.
+- O fișă de formular fără nimic în ea stă pe un singur rând: numele ei, „necompletat” (sau starea ei, de pildă „aceeași cu domiciliul”) și „Adaugă” — plusul —, care o deschide, cu cursorul în primul câmp. Prima fișă a unui obiect — identitatea unei persoane sau a unei firme, „Identificare cadastrală”, „Identificarea actului” — nu se strânge niciodată.
 - Într-o fișă care are ceva completat, câmpurile goale stau ascunse în spatele unui link — de pildă „Arată 4 câmpuri goale” —, urmat de numele lor, în gri; țineți mouse-ul pe link și le citiți pe toate. Un clic le arată, până plecați de pe obiect. Câteva câmpuri se văd mereu, și goale, pentru că lipsa lor spune ceva: la o persoană numele, prenumele și CNP-ul; la o firmă denumirea și CUI-ul; la o proprietate tipul, localitatea, tarlaua și parcela; la un act tipul, titlul, data și numărul.
 - Într-o fereastră îngustă, cam sub 1000 de pixeli, fișele stau într-o singură coloană, în ordinea în care sunt așezate, de sus în jos; acolo nu se trage nimic și nu se păstrează nimic. O fișă mai lată decât fereastra se derulează în ea, iar versiunile și „Panouri” trec sub un nume lung.
-- Bara de butoane, ultimul lucru de pe ecran, ține coșul (ștergeți) și drumul înapoi; pe un obiect nou, salvarea; pe un obiect deschis doar pentru citire, creionul „Modifică”. Un buton cu pictogramă își arată numele când treceți cu mouse-ul peste el.
+- Bara de butoane, ultimul lucru de pe ecran, ține coșul (ștergeți) și drumul înapoi; pe un obiect nou, salvarea; pe un obiect deschis doar pentru citire, creionul „Modifică”. Un buton cu pictogramă își arată numele când treceți cu mouse-ul peste el. Pe fișele gri, butoanele au doar pictograma — „Editează”, „Asociază persoană”, „Dezasociază” și celelalte —, iar numele lor îl citiți ținând mouse-ul pe ele; manualul le spune pe nume, ca bulele lor.
 
 ![2.10 Ecranul unei persoane fizice, cu fișele ei](record.png){#fig-record}
 
@@ -124,11 +124,11 @@ Un obiect deschis își arată datele în fișe — panouri cu câte un nume, sc
 
 ### 2.6.1 Citirea unei fișe și „Editează” {#start-read-edit}
 
-Câmpurile unui formular nu au chenar cât stau: numele câmpului e mic, gri, deasupra, iar valoarea, mai groasă, sub el; un câmp gol are dedesubt o linie întreruptă. Chenarul alb apare când treceți cu mouse-ul peste un câmp în care se poate scrie, iar cel albastru când scrieți în el.
+Câmpurile unui formular nu au chenar cât stau: numele câmpului e mic, bleumarin, ca titlul fișei, deasupra, iar valoarea, mai groasă, sub el; un câmp gol are dedesubt o linie întreruptă. Chenarul alb apare când treceți cu mouse-ul peste un câmp în care se poate scrie, iar cel albastru când scrieți în el.
 
 Fiecare câmp are lățimea lui și nu se lățește după ce scrieți în el. O valoare mai lungă decât câmpul trece pe rândul următor, iar câmpul se face mai înalt — și la o listă de alegere: o alegere lungă se citește pe două rânduri, iar lista deschisă arată fiecare valoare întreagă. O valoare de listă prea lungă se poate scurta în „Date de referință” (secțiunea [[admin-reference-data]]).
 
-Un obiect salvat se citește: fiecare fișă de formular își arată valorile ca text — data nașterii cu vârsta alături, de pildă 15.06.1985 (41 de ani), o listă aleasă prin cuvintele ei, bifele ca o listă scurtă. „Editează”, în fișă, la dreapta rândului de sub titlu, o deschide în formular: fișa capătă un contur albastru, iar sub câmpuri apar „Salvează” și „Renunță” (Figura [[fig-tile-edit]]). „Salvează” păstrează doar câmpurile fișei aceleia și face o singură versiune nouă; „Renunță” pune fișa înapoi cum era. O fișă deschisă își arată toate câmpurile, și pe cele goale, iar „Adaugă”, pe o fișă goală, o deschide direct în formular.
+Un obiect salvat se citește: fiecare fișă de formular își arată valorile ca text — data nașterii cu vârsta alături, de pildă 15.06.1985 (41 de ani), o listă aleasă prin cuvintele ei, bifele ca o listă scurtă. „Editează” — creionul —, în fișă, la dreapta rândului de sub titlu, o deschide în formular: fișa capătă un contur albastru, iar sub câmpuri apar „Salvează” — discheta — și „Renunță” — un X (Figura [[fig-tile-edit]]). „Salvează” păstrează doar câmpurile fișei aceleia și face o singură versiune nouă; „Renunță” pune fișa înapoi cum era. O fișă deschisă își arată toate câmpurile, și pe cele goale, iar „Adaugă”, pe o fișă goală, o deschide direct în formular.
 
 Se deschide o singură fișă odată. „Editează” pe alta, cât timp prima are modificări nesalvate, vă întreabă întâi: salvați, renunțați sau rămâneți — la fel ca la plecarea de pe ecran (secțiunea [[start-breadcrumb]]). Din tastatură, Tab ajunge la „Editează”, Enter deschide fișa cu cursorul în primul ei câmp, Enter într-o fișă deschisă o salvează, iar Esc este „Renunță”.
 

@@ -11,7 +11,7 @@ This chapter shows what you use everywhere in the application: signing in, the s
 
 Open the application in the browser, sign in with your account's e-mail address and password, and press „Sign in”. The dashboard opens (section [[intro-purpose]]).
 
-At the bottom of the sidebar stands your account: the icon of a person, the name you are signed in as and an arrow. A click on it opens a small menu upwards: first „Signed in as …”, then „Language”, „Appearance” and „Sign out” (Figure [[fig-account-menu]]). Esc or a click outside the menu closes it. The password is changed in „Settings” (section [[admin-settings-account]]).
+At the bottom of the sidebar stands your account: the icon of a person, the name you are signed in as and an arrow. A click on it opens a small menu upwards: first „Signed in as …”, then „Sign out” (Figure [[fig-account-menu]]); while the sidebar is collapsed, the menu holds „Language” and „Appearance” too (section [[start-sidebar]]). Esc or a click outside the menu closes it. The password is changed in „Settings” (section [[admin-settings-account]]).
 
 ![2.1 The account menu, opened from the bottom of the sidebar](account-menu.png){#fig-account-menu}
 
@@ -19,7 +19,7 @@ Someone without an account yet requests access from the sign-in page. The reques
 
 ## 2.2 The sidebar {#start-sidebar}
 
-The sidebar, on the left, opens any screen of the application (Figure [[fig-sidebar]]). At the top it holds only „GA40” and the button that collapses it; at the bottom, the account (section [[start-sign-in]]). It is divided into sections:
+The sidebar, on the left, opens any screen of the application (Figure [[fig-sidebar]]). At the top it holds „GA40”, the two small switches „Language” and „Appearance”, and the button that collapses it; at the bottom, the account (section [[start-sign-in]]). It is divided into sections:
 
 | Section | What it holds |
 |---|---|
@@ -35,7 +35,7 @@ A click on a section shows its screens, and a click on a screen opens it; the op
 
 ![2.2 The sidebar, with the „Domain” section open](sidebar.png){#fig-sidebar}
 
-In the account menu, „Language” has two words, RO and EN: the language you work in is filled in dark slate, with white letters, and a click on the other changes the screens' language. „Appearance” has „Day” and „Night”: „Night” turns the whole application dark at once, without reloading the page, and „Day” makes it light again (Figure [[fig-dark]]). The choice is kept in this browser, also after you close it, and is changed the same way in „Settings”, with the box „Night (Dark Mode)” (section [[admin-settings-account]]). The computer's own colour setting does not count: without „Night”, the application is light.
+At the top of the sidebar, beside „GA40”, „Language” has two words, RO and EN: the language you work in is filled in dark slate, with white letters, and a click on the other changes the screens' language. „Appearance” has a sun and a moon — „Day” and „Night”, as their hover hints say: „Night” turns the whole application dark at once, without reloading the page, and „Day” makes it light again (Figure [[fig-dark]]). The choice is kept in this browser, also after you close it, and is changed the same way in „Settings”, with the box „Night (Dark Mode)” (section [[admin-settings-account]]). The computer's own colour setting does not count: without „Night”, the application is light. While the sidebar is collapsed to its icons, the two switches move into the account menu (section [[start-sign-in]]).
 
 In a narrow window, under 1024 pixels, the sidebar is always collapsed to its icons. „Expand sidebar” then opens it over the page, which darkens; Esc, a click on the page or a chosen screen collapses it again. When you widen the window, the sidebar is back as you left it.
 
@@ -109,10 +109,10 @@ An open object shows its data in tiles — panels with a name each, written at t
 - To put a tile where another stands, drag it over that one and hold it still: after a second — as long as „Hold time over another tile” in „Settings” says (section [[admin-settings-thresholds]]) — the tile underneath slides down, in its own columns, to the first free place large enough, and the outline shows that the place is free (Figure [[fig-make-room]]). Drop the tile there; Esc puts everything back.
 - The light purple tiles — the map, the corners, Street View, a document's pages, a person's interactions — start by the right edge, one under another, and are dragged like any other tile; the place you leave them in is kept, and „Default” puts them back on the right.
 - The object's system ID sits in the top right-hand corner of the first tile.
-- A form tile with nothing in it stands on one line: its name, „not filled in” (or its own state, such as „same as home address”) and „Add”, which opens it with the cursor in its first field. An object's first tile — a person's or a firm's identity, „Cadastral identification”, „Document identification” — never folds.
+- A form tile with nothing in it stands on one line: its name, „not filled in” (or its own state, such as „same as home address”) and „Add” — the plus —, which opens it with the cursor in its first field. An object's first tile — a person's or a firm's identity, „Cadastral identification”, „Document identification” — never folds.
 - In a tile that holds something, the empty fields are hidden behind a link — such as „Show 4 empty fields” —, followed by their names in grey; hold the mouse on the link to read them all. A click shows them until you leave the object. A few fields always show, even empty, because their absence says something: for a person the last name, the first name and the CNP; for a firm the name and the CUI; for a property the type, the locality, the parcel block and the parcel; for a document the type, the title, the date and the number.
 - In a narrow window, under about 1000 pixels, the tiles stand in one column, in the order they are arranged in, top to bottom; nothing is dragged there and nothing is kept. A tile wider than the window scrolls inside itself, and the versions and „Panels” move under a long name.
-- The button bar, the last thing on the screen, holds the bin (delete) and the way back; on a new object, the save; on an object opened only for reading, the pencil „Modify”. An icon button shows its name when the mouse passes over it.
+- The button bar, the last thing on the screen, holds the bin (delete) and the way back; on a new object, the save; on an object opened only for reading, the pencil „Modify”. An icon button shows its name when the mouse passes over it. On the grey tiles the buttons show only their icon — „Edit”, „Associate person”, „Dissociate” and the rest —, and you read their name by holding the mouse over them; this manual calls them by name, as their hints do.
 
 ![2.10 A natural person's screen, with its tiles](record.png){#fig-record}
 
@@ -124,11 +124,11 @@ An open object shows its data in tiles — panels with a name each, written at t
 
 ### 2.6.1 Reading a tile, and „Edit” {#start-read-edit}
 
-A form's fields have no frame at rest: the field's name is small and grey above, and the value, bolder, under it; an empty field has a broken line beneath it. The white frame shows when the mouse passes over a field you can type in, and the blue one while you type in it.
+A form's fields have no frame at rest: the field's name is small and navy, like the tile's title, above, and the value, bolder, under it; an empty field has a broken line beneath it. The white frame shows when the mouse passes over a field you can type in, and the blue one while you type in it.
 
 Each field has its own width and does not widen as you type. A value longer than the field goes onto the next line, and the field grows taller — a drop-down list too: a long choice reads on two lines, and the open list shows every value whole. A list value that is too long can be shortened in „Reference Data” (section [[admin-reference-data]]).
 
-A saved object is read: each form tile shows its values as text — the date of birth with the age beside it, such as 15.06.1985 (41 years), a chosen list item by its words, tick boxes as a short list. „Edit”, in the tile, at the right of the line under its title, opens it as a form: the tile gets a blue outline, and „Save” and „Cancel” appear under the fields (Figure [[fig-tile-edit]]). „Save” keeps only that tile's fields and makes one new version; „Cancel” puts the tile back as it was. An open tile shows all its fields, the empty ones too, and „Add”, on an empty tile, opens it straight as a form.
+A saved object is read: each form tile shows its values as text — the date of birth with the age beside it, such as 15.06.1985 (41 years), a chosen list item by its words, tick boxes as a short list. „Edit” — the pencil —, in the tile, at the right of the line under its title, opens it as a form: the tile gets a blue outline, and „Save” — the floppy disk — and „Cancel” — an X — appear under the fields (Figure [[fig-tile-edit]]). „Save” keeps only that tile's fields and makes one new version; „Cancel” puts the tile back as it was. An open tile shows all its fields, the empty ones too, and „Add”, on an empty tile, opens it straight as a form.
 
 One tile is open at a time. „Edit” on another, while the first has unsaved changes, asks first: save, discard or stay — as when you leave the screen (section [[start-breadcrumb]]). From the keyboard, Tab reaches „Edit”, Enter opens the tile with the cursor in its first field, Enter in an open tile saves it, and Esc is „Cancel”.
 

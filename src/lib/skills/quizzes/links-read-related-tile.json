@@ -323,12 +323,12 @@
           "id": "b3",
           "section": "links-related",
           "ro": {
-            "question": "Apăsați „Vizualizare” pe rândul unei persoane legate. Ce se întâmplă?",
-            "explanation": "„Vizualizare” deschide obiectul legat numai pentru citire; „Modifică”, jos pe ecranul lui, îl face modificabil."
+            "question": "Faceți clic pe numele unei persoane legate, pe rândul ei. Ce se întâmplă?",
+            "explanation": "Numele de pe rând deschide obiectul legat numai pentru citire; „Modifică”, jos pe ecranul lui, îl face modificabil."
           },
           "en": {
-            "question": "You press „Vizualizare” on a linked person's row. What happens?",
-            "explanation": "„Vizualizare” opens the linked object read-only; „Modifică”, at the bottom of its screen, makes it editable."
+            "question": "You click a linked person's name, on their row. What happens?",
+            "explanation": "The name in the row opens the linked object read-only; „Modifică”, at the bottom of its screen, makes it editable."
           },
           "options": [
             {
@@ -372,8 +372,8 @@
             {
               "id": "o1",
               "correct": false,
-              "ro": "„Vizualizare”",
-              "en": "„Vizualizare”"
+              "ro": "Numele lui",
+              "en": "His name"
             },
             {
               "id": "o2",

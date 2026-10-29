@@ -275,11 +275,11 @@
           "section": "start-sign-in",
           "ro": {
             "question": "Ați terminat lucrul și vreți să ieșiți din aplicație. Unde este „Ieșire”?",
-            "explanation": "Jos în bara laterală stă contul: un clic pe el deschide în sus meniul contului, cu „Autentificat ca …”, „Limba”, „Aspect” și, ultimul, „Ieșire”."
+            "explanation": "Jos în bara laterală stă contul: un clic pe el deschide în sus meniul contului, cu „Autentificat ca …” și, ultimul, „Ieșire”; „Limba” și „Aspect” apar în meniu doar cu bara laterală restrânsă."
           },
           "en": {
             "question": "You have finished work and want to leave the application. Where is „Ieșire” (sign out)?",
-            "explanation": "At the bottom of the sidebar stands the account: a click on it opens the account menu upwards, with „Autentificat ca …”, „Limba”, „Aspect” and, last, „Ieșire”."
+            "explanation": "At the bottom of the sidebar stands the account: a click on it opens the account menu upwards, with „Autentificat ca …” and, last, „Ieșire”; „Limba” and „Aspect” appear in the menu only when the sidebar is collapsed."
           },
           "options": [
             {

@@ -13,7 +13,7 @@ Legătura dintre două obiecte se numește asociere. Se face o singură dată, d
 
 ### 7.1.1 Ecranul de asociere {#links-associate-screen}
 
-Pe fișa „Legături” a unui obiect (secțiunea [[links-related]]) stau trei butoane: „Asociază persoană”, „Asociază proprietate” și „Asociază act”. Fiecare deschide un ecran de asociere, cu trei fișe una sub alta (Figura [[fig-links-associate]]):
+Pe fișa „Legături” a unui obiect (secțiunea [[links-related]]) stau trei butoane: „Asociază persoană”, „Asociază proprietate” și „Asociază act”, fiecare cu două pictograme — lanțul și persoana, proprietatea sau actul; „Dezasociază” are lanțul și o za ruptă. Fiecare „Asociază …” deschide un ecran de asociere, cu trei fișe una sub alta (Figura [[fig-links-associate]]):
 
 - „Căutare” — filtrele. Pentru persoane sunt „Nume” și „Cod”; pentru proprietăți și acte este o singură casetă, „Căutare”, care caută după cod și după denumire sau titlu.
 - „Rezultate” — obiectele găsite. Bifați rândul sau rândurile pe care vreți să le legați. Persoanele fizice și cele juridice stau în același tabel, iar coloana „Tip” spune care este care: „Fizică” sau „Juridică”.
@@ -63,10 +63,11 @@ Rândurile vin mereu în aceeași ordine — persoanele fizice, persoanele jurid
 
 Rolul — la un act, tipul — stă într-o etichetă mică, la marginea dreaptă a rândului, așa că etichetele se aliniază de sus în jos, iar un nume lung se taie cu trei puncte înaintea rolului.
 
-Pe rânduri pot sta câteva butoane:
+Numele de pe rând este un link: un clic pe el deschide obiectul legat numai pentru citire, iar „Modifică”, jos pe ecranul lui, îl face modificabil.
+
+Pe rânduri pot sta câteva butoane, palide cât stă mouse-ul în altă parte și pline pe rândul de sub mouse:
 
 - „Relația” arată, într-o bulă, ce leagă cele două obiecte: rolul persoanei în act (de pildă Rol: „Vânzător”) sau propoziția unei legături cu sens (secțiunea [[links-references]]). Un clic în afara bulei sau tasta Esc o închide.
-- „Vizualizare” deschide obiectul legat numai pentru citire; „Modifică”, jos pe ecranul lui, îl face modificabil.
 - „Previzualizare” o deschide alături, fără să plecați de pe ecran (secțiunea [[start-preview]]).
 - „Cotă”, portocaliu, ține cota-parte a unei persoane pe un act (secțiunea [[documents-parties]]).
 
@@ -172,7 +173,7 @@ Un teren din Bragadiru are un proprietar care este deja în arhivă.
 1. Deschideți terenul și, pe „Legături”, apăsați „Asociază persoană” (secțiunea [[links-associate]]).
 2. Scrieți o parte din numele persoanei în „Nume” și bifați rândul ei în „Rezultate”.
 3. Alegeți rolul de proprietar în „Rol” și apăsați „Asociază selecția”.
-4. Pe „Legături”, apăsați „Vizualizare” pe rândul persoanei: pe fișa ei „Legături” apare terenul, cu rolul în paranteză (secțiunea [[links-related]]).
+4. Pe „Legături”, faceți clic pe numele persoanei, pe rândul ei: pe fișa ei „Legături” apare terenul, cu rolul în paranteză (secțiunea [[links-related]]).
 
 ### 7.7.2 Arătați că vânzătorul a moștenit terenul {#links-example-title}
 

@@ -115,7 +115,7 @@ export const OUTLINE: Readonly<Record<string, string>> = {
   "links-associate-kinds": "Ce se poate lega de ce (persoană, firmă, teren, act, rude) și ce rol sau tip de legătură alegi pentru fiecare pereche.",
   "links-associate-role": "Cum alegi rolul unei legături, de ce bifezi întâi actul și apoi rolul, cum apare rolul invers la rude (părinte/fiică) și când asocierea rămâne fără rol.",
   "links-associate-remove": "Cum ștergi sau elimini o legătură (dezasociezi) fără să ștergi obiectele și de ce butoanele „Asociază” se blochează cât e ales un rând.",
-  "links-related": "Ce arată fișa „Legături” a unui obiect, în ce ordine, și ce fac pe rânduri butoanele Relația, Vizualizare, Previzualizare și Cotă.",
+  "links-related": "Ce arată fișa „Legături” a unui obiect, în ce ordine, și ce fac pe rânduri numele, ca link, și butoanele Relația, Previzualizare și Cotă.",
   "links-references": "Cum faci legături cu sens între acte (titlu anterior, anexă) sau între proprietăți (inclusă în) și cum se citesc corect din ambele capete.",
   "links-references-documents": "Cum legi un act de înscrisul pe care îl citează (titlu anterior, anexă, act adițional, înlocuiește) și cum verifici înscrisurile citate găsite de AI.",
   "links-references-properties": "Cum arăți că o parcelă e inclusă în alt teren, e subdiviziune a lui, are acces prin el sau îi e vecină (adiacentă, alipită, suprapusă).",

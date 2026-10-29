@@ -325,11 +325,11 @@
           "section": "links-example-owner",
           "ro": {
             "question": "Ați legat, de pe un teren din Bragadiru, proprietarul lui. Cum verificați direct de acolo că legătura se vede și de la persoană?",
-            "explanation": "Pe „Legături”, „Vizualizare” pe rândul persoanei îi deschide ecranul; în fișa ei „Legături” apare terenul, cu rolul în paranteză."
+            "explanation": "Pe „Legături”, un clic pe numele persoanei îi deschide ecranul; în fișa ei „Legături” apare terenul, cu rolul în paranteză."
           },
           "en": {
             "question": "From a plot of land in Bragadiru, you linked its owner. How do you check, straight from there, that the link also shows from the person?",
-            "explanation": "On „Legături”, „Vizualizare” on the person's row opens their screen; in their „Legături” tile the land appears, with the role in brackets."
+            "explanation": "On „Legături”, a click on the person's name opens their screen; in their „Legături” tile the land appears, with the role in brackets."
           },
           "options": [
             {
@@ -341,8 +341,8 @@
             {
               "id": "o2",
               "correct": true,
-              "ro": "„Vizualizare” pe rândul ei: terenul apare în „Legături”, cu rolul.",
-              "en": "„Vizualizare” on their row: the land appears in „Legături”, with the role."
+              "ro": "Un clic pe numele ei: terenul apare în „Legături”, cu rolul.",
+              "en": "A click on their name: the land appears in „Legături”, with the role."
             },
             {
               "id": "o3",
@@ -400,12 +400,12 @@
           "id": "b3",
           "section": "companies-people-records",
           "ro": {
-            "question": "Pe ecranul unui teren, în „Legături”, apăsați „Vizualizare” pe rândul firmei proprietare, ca să-i schimbați telefonul. Ce faceți pe ecranul care se deschide?",
-            "explanation": "„Vizualizare” deschide ecranul firmei doar pentru citit, cu „Înapoi la listă” și „Modifică” jos; „Modifică” îl face modificabil."
+            "question": "Pe ecranul unui teren, în „Legături”, faceți clic pe numele firmei proprietare, ca să-i schimbați telefonul. Ce faceți pe ecranul care se deschide?",
+            "explanation": "Numele de pe rând deschide ecranul firmei doar pentru citit, cu „Înapoi la listă” și „Modifică” jos; „Modifică” îl face modificabil."
           },
           "en": {
-            "question": "On a plot of land's screen, in „Legături”, you press „Vizualizare” on the owning firm's row, to change its phone. What do you do on the screen that opens?",
-            "explanation": "„Vizualizare” opens the firm's screen read-only, with „Înapoi la listă” and „Modifică” at the bottom; „Modifică” makes it editable."
+            "question": "On a plot of land's screen, in „Legături”, you click the owning firm's name, to change its phone. What do you do on the screen that opens?",
+            "explanation": "The name in the row opens the firm's screen read-only, with „Înapoi la listă” and „Modifică” at the bottom; „Modifică” makes it editable."
           },
           "options": [
             {
