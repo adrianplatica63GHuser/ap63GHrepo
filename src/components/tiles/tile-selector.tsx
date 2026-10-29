@@ -184,6 +184,12 @@ export function TileSelector<K extends string>({
       node
     );
   const keysSig = keys.join("|");
+  // 40.98: a layout that settles. On the 119-px unit TC-DOC-01 met „Maximum update depth exceeded" here: at some panel
+  // widths one row and two measure differently enough to pick each other in turn, and this effect runs after every
+  // render. The layout last set is kept in a ref; a measure that would not change it, or one more in a burst, sets
+  // nothing, so no render follows — the next resize measures again.
+  const shownLayout = useRef<BarLayout | null>(null);
+  const layoutBurst = useRef({ at: 0, n: 0 });
   useLayoutEffect(() => {
     const bar = barRef.current;
     if (!two || !bar) return;
@@ -193,7 +199,13 @@ export function TileSelector<K extends string>({
       if (!m || m.width <= 0) return;
       const rows = pickTwoRows(m);
       const next: BarLayout = { rows: rows ? rows.rows : null, pieces: barPieces(m) };
-      setLayout((prev) => (sameLayout(prev, next) ? prev : next));
+      if (sameLayout(shownLayout.current, next)) return;
+      const now = typeof performance === "undefined" ? Date.now() : performance.now();
+      if (now - layoutBurst.current.at > 250) layoutBurst.current = { at: now, n: 0 };
+      layoutBurst.current.n += 1;
+      if (layoutBurst.current.n > 8) return;
+      shownLayout.current = next;
+      setLayout(next);
     };
     measure();
     // jsdom (jest) has no layout and no ResizeObserver: the first measure stands there.
