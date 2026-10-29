@@ -40,7 +40,7 @@ is saved.
 | 2 | Opens the list of „Circuit civil" („Declarațiile vânzătorului") | „fără valoare" first, in italics; „Afirmat", „Nu e menționat", „Excepție" in the regular font |
 | 3 | Chooses „Afirmat" | The box reads „Afirmat", regular; the list still has „fără valoare" in italics and the others regular |
 | 4 | Chooses „fără valoare" again | The box reads „fără valoare" in italics |
-| 5 | Looks at „Declarațiile vânzătorului" and „Declarații legale" (#38.33) | Boxes per row 3, 3, 3, 3 and 3, 2 („Temei legal evicțiune" is a text box, with one dropdown beside it) |
+| 5 | Looks at „Declarațiile vânzătorului" and „Declarații legale" (#38.33) | Boxes per row 2, 2, 2, 2, 2, 2 and 2, 2, 1 — Adrian's rows of two (40.93, migration_122); they were 3, 3, 3, 3 and 3, 2 |
 | 6 | Switches the interface to English and presses „All" | Each dropdown reads „no value" in italics; the two panels' boxes per row as in step 5 |
 
 ## At the end — leaving things as they were found

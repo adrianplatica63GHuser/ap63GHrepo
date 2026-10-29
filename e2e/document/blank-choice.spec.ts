@@ -72,8 +72,10 @@ async function boxesPerRow(page: Page, name: string): Promise<number[]> {
 }
 
 async function stepFive(page: Page): Promise<void> {
-  expect(await boxesPerRow(page, "Declarațiile vânzătorului")).toEqual([3, 3, 3, 3]); // #38.33: the 12 statements; the warranties beside their citation
-  expect(await boxesPerRow(page, "Declarații legale")).toEqual([3, 2]); // #38.33
+  // 40.93 (migration_122, Adrian's rows): the 12 statements two to a row; „Declarații legale" 2, 2, 1. They were 3, 3, 3, 3
+  // and 3, 2 (#38.33). Stale since 40.93, found in 40.98, which keeps them: on the 119-px unit three no longer fit.
+  expect(await boxesPerRow(page, "Declarațiile vânzătorului")).toEqual([2, 2, 2, 2, 2, 2]);
+  expect(await boxesPerRow(page, "Declarații legale")).toEqual([2, 2, 1]);
 }
 
 async function photograph(page: Page, lang: "ro" | "en"): Promise<void> {
@@ -141,7 +143,7 @@ test.describe("TC-DOC-06 — „fără valoare” în cursive, fără liniuțe",
       await expect(circuitCivil(page)).toHaveCSS("font-style", "italic");
       await page.locator("[data-tile-cancel]").click(); // 40.75: nothing kept
 
-      // Step 5 — three to a row.
+      // Step 5 — two to a row (40.93; three until then).
       await stepFive(page);
       await photograph(page, "ro");
 

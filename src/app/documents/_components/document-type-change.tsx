@@ -32,6 +32,7 @@ import { IconButton } from "@/lib/ui/icon-button";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { tabTrapMove } from "@/lib/ui/dialog-focus";
 import { FIELD_BOX, fieldBorder } from "@/lib/ui/field-box";
+import { SCALE, rem } from "@/lib/ui/field-widths";
 import type { StrandedParty } from "@/lib/documents/type-change";
 
 /** What a change to one type drops, resolved to the words the dialog shows. */
@@ -184,10 +185,12 @@ function DocumentTypeChangeDialog({
           id={selectId}
           value={picked}
           onChange={(e) => setPicked(e.target.value)}
-          className={`mt-1 w-full ${FIELD_BOX} ${fieldBorder(false)}`}
+          // A box of the scale, never a stretching one (layout-guard, #37.23): XXL, 384 px, in the 400-px card.
+          className={`mt-1 ${FIELD_BOX} ${fieldBorder(false)}`}
+          style={{ width: rem(SCALE.XXL), maxWidth: "100%" }}
           data-type-change-select=""
         >
-          <option value="" disabled>
+          <option value="" disabled data-blank="">
             {t("choose")}
           </option>
           {options.map((o) => (

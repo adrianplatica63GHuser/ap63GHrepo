@@ -65,7 +65,7 @@ export function SegmentedSwitch<V extends string>({
               if (!on) onChange(o.value);
             }}
             className={[
-              small ? "px-1.5 text-[11px] font-semibold leading-[18px] transition-colors" : "px-2 py-0.5 text-xs font-semibold leading-5 transition-colors",
+              small ? "px-1.5 text-xs font-semibold leading-[18px] transition-colors" : "px-2 py-0.5 text-xs font-semibold leading-5 transition-colors",
               Icon ? "inline-flex items-center justify-center" : "",
               "focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus",
               i > 0 ? "border-l border-cta dark:border-slate-400" : "",

@@ -354,9 +354,19 @@ const ALLOW: Record<string, Allowed[]> = {
   "src/components/list/row-name-link.tsx": [
     ["A113", "{children}"],
   ],
-  // Slice 40.58: a two-part switch's words — „RO | EN", from 40.59 „Zi | Noapte" — the choices themselves.
+  // Slice 40.58: a two-part switch's words — „RO | EN", from 40.59 „Zi | Noapte" — the choices themselves. 40.95: a
+  // choice may draw its icon before its words (☀ / ☾ in the sidebar's header). It read `{o.text}`.
   "src/components/segmented-switch.tsx": [
-    ["A043", "{o.text}"],
+    ["A043", "{Icon ? <Icon size={small ? 12 : 14}"],
+  ],
+  // Slice 40.92: „Schimbă tipul…"'s decisions — „Anulează" and „Confirmă" (A110, a confirmation's answers).
+  "src/app/documents/_components/document-type-change.tsx": [
+    ["A110", "{t(\"cancel\")}"],
+    ["A110", "{t(\"confirm\")}"],
+  ],
+  // Slice 40.96: a „Legături" row's name is its link — the text is the data (A113), as on the lists.
+  "src/components/tiles/related-tile.tsx": [
+    ["A113", "{children}"],
   ],
   "src/components/tiles/tile-selector.tsx": [
     ["A020", "{t(\"allUp\")}"], // Slice 40.40: „Toate sus", left of „Toate", words like it

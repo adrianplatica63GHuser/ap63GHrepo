@@ -44,7 +44,8 @@ test.describe("TC-SET-05 — „Noapte”", () => {
         await expect(segment(page, "theme", value)).toHaveAttribute("title", title);
         await expect(segment(page, "theme", value).locator("svg")).toHaveCount(1);
       }
-      expect(await segment(page, "locale", "ro-RO").evaluate((e) => getComputedStyle(e).fontSize)).toBe("11px");
+      // 12 px, the app's smallest text (min-text-size, 40.63) — 40.95 drew it at 11, which that guard refuses.
+      expect(await segment(page, "locale", "ro-RO").evaluate((e) => getComputedStyle(e).fontSize)).toBe("12px");
       const name = head(page).locator("[data-sidebar-name]");
       expect(await name.evaluate((e) => getComputedStyle(e).fontFamily)).toMatch(/Roboto Slab/);
       expect(await name.evaluate((e) => getComputedStyle(e).color)).toBe("rgb(30, 58, 138)"); // navy

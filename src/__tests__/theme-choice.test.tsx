@@ -81,7 +81,7 @@ describe("the account menu's „Zi | Noapte” and Setări's box are one choice 
     expect(day).toHaveAttribute("aria-pressed", "true");
     expect(day.textContent).toBe("");
     expect(container.querySelectorAll("svg")).toHaveLength(2);
-    expect(day.className).toContain("text-[11px]");
+    expect(day.className).toContain("text-xs"); // 12 px: min-text-size (40.63); 40.95 had 11
   });
 
   it("a dark load shows „Noapte” pressed and the box ticked", () => {

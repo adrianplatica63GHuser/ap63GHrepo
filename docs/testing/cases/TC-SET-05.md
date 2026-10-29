@@ -38,7 +38,7 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „Persoane fizice" at 1366 × 900 and looks at the sidebar's header | (40.59; 40.95) The header 56 px tall, holding „GA40" — Roboto Slab, navy, like a tile title — then „RO \| EN" and a sun \| moon („Zi", „Noapte" on hover), smaller than the account menu's (11-px words), then the collapse button: no box, no „Autentificat ca". The collapse button 30 × 30 px on the header's right padding, in its middle. The page light |
+| 1 | Opens „Persoane fizice" at 1366 × 900 and looks at the sidebar's header | (40.59; 40.95) The header 56 px tall, holding „GA40" — Roboto Slab, navy, like a tile title — then „RO \| EN" and a sun \| moon („Zi", „Noapte" on hover), smaller than the account menu's (12-px words — the app's smallest text — on an 18-px line), then the collapse button: no box, no „Autentificat ca". The collapse button 30 × 30 px on the header's right padding, in its middle. The page light |
 | 2 | Presses the account entry at the bottom of the sidebar (the account's name), then Esc; then the header's moon | The menu opens upward, above the entry: „Autentificat ca <name>", „Ieșire" — no „Limba", no „Aspect" (40.95). Esc closes it and the focus is on the entry. The moon („Noapte"): at once, without a reload, `<html>` carries `dark`, the page's background is dark, the sidebar too |
 | 3 | Reloads the page | The page arrives dark — the server's first answer already carries `dark` on `<html>` — and the header's moon is the one pressed |
 | 4 | Opens „Setări" | Under „Limba", a group „Aspect" with the box „Noapte (Mod Întunecat)", ticked |
