@@ -4,8 +4,8 @@
  * The entry (the username, or on the rail its icon) opens a menu upward: „Autentificat ca <name>" first, then Limba
  * (RO | EN), Aspect (Zi | Noapte) and Ieșire — in UAT the uatNoAccounts note instead of Ieșire, and the entry reads
  * „UAT". Enter/Space open it and put the focus inside; Esc closes it and gives the focus back; a press outside closes
- * it; the arrow keys move through it. The sidebar's header holds GA40, in the tiles' title face, and the collapse
- * button only.
+ * it; the arrow keys move through it. The sidebar's header holds GA40, in the tiles' title face, the collapse
+ * button and — 40.95 — Limba and Aspect, which the menu keeps on the collapsed rail only.
  */
 import { readFileSync } from "fs";
 import { join } from "path";
@@ -53,7 +53,8 @@ describe("the account entry and its menu (40.59)", () => {
     expect(menu().hidden).toBe(true);
   });
 
-  it("opened: „Autentificat ca” first, then Limba, Aspect and Ieșire; the focus inside", () => {
+  // 40.95: expanded, Limba and Aspect are in the sidebar's header; the menu holds „Autentificat ca” and „Ieșire”.
+  it("opened, expanded: „Autentificat ca” first, then Ieșire — no Limba or Aspect; the focus inside", () => {
     const onSignOut = jest.fn();
     render(<AccountMenu username="adrian" uat={false} collapsed={false} onSignOut={onSignOut} />);
     openWithKeyboard();
@@ -61,17 +62,15 @@ describe("the account entry and its menu (40.59)", () => {
     expect(entry()).toHaveAttribute("aria-expanded", "true");
     const lines = [...menu().children].map((c) => c.textContent?.trim());
     expect(lines[0]).toBe("signedInAs adrian");
-    expect(menu().querySelector('[data-account-row="language"]')).toHaveTextContent("language");
-    expect(menu().querySelector('[data-account-row="appearance"]')).toHaveTextContent("appearance");
-    expect(screen.getByRole("group", { name: "language" })).toBeInTheDocument();
-    expect(screen.getByRole("group", { name: "appearance" })).toBeInTheDocument();
+    expect(menu().querySelector("[data-account-row]")).toBeNull();
+    expect(screen.queryByRole("group", { name: "language" })).toBeNull();
     expect(menu().contains(document.activeElement)).toBe(true);
     fireEvent.click(screen.getByRole("button", { name: "signOut" }));
     expect(onSignOut).toHaveBeenCalledTimes(1);
   });
 
-  it("the arrow keys move through it, round at the ends; Esc closes it and gives the focus back", () => {
-    render(<AccountMenu username="adrian" uat={false} collapsed={false} onSignOut={jest.fn()} />);
+  it("the arrow keys move through it, round at the ends; Esc closes it and gives the focus back (the rail's menu)", () => {
+    render(<AccountMenu username="adrian" uat={false} collapsed onSignOut={jest.fn()} />);
     openWithKeyboard();
     const items = [...menu().querySelectorAll("button")];
     expect(items.map((b) => b.textContent)).toEqual(["RO", "EN", "day", "night", "signOut"]);
@@ -92,7 +91,7 @@ describe("the account entry and its menu (40.59)", () => {
     render(
       <div>
         <span data-testid="outside">x</span>
-        <AccountMenu username="adrian" uat={false} collapsed={false} onSignOut={jest.fn()} />
+        <AccountMenu username="adrian" uat={false} collapsed onSignOut={jest.fn()} />
       </div>,
     );
     fireEvent.click(entry());
@@ -102,14 +101,14 @@ describe("the account entry and its menu (40.59)", () => {
     expect(menu().hidden).toBe(true);
   });
 
-  it("UAT: the entry reads „UAT”; Limba and Aspect, and the note in Ieșire's place", () => {
+  it("UAT: the entry reads „UAT”; the note in Ieșire's place (40.95: Limba and Aspect in the header)", () => {
     render(<AccountMenu username="UAT" uat collapsed={false} onSignOut={jest.fn()} />);
     expect(entry()).toHaveTextContent("UAT");
     fireEvent.click(entry());
     expect(screen.queryByRole("button", { name: "signOut" })).toBeNull();
     expect(menu().querySelector("[data-uat-no-accounts]")).toHaveTextContent("uatNoAccounts");
     expect(menu().querySelector("[data-account-signed-in]")).toBeNull();
-    expect(screen.getByRole("group", { name: "language" })).toBeInTheDocument();
+    expect(screen.queryByRole("group", { name: "language" })).toBeNull();
   });
 
   it("on the rail: the User icon alone, the username its name; the same menu", () => {
@@ -119,19 +118,25 @@ describe("the account entry and its menu (40.59)", () => {
     fireEvent.click(entry());
     expect(menu().hidden).toBe(false);
     expect(menu().className).toContain("fixed");
+    // 40.95: on the rail, where the header has no room, Limba and Aspect are here.
+    expect(menu().querySelector('[data-account-row="language"]')).toHaveTextContent("language");
+    expect(menu().querySelector('[data-account-row="appearance"]')).toHaveTextContent("appearance");
+    expect(screen.getByRole("group", { name: "appearance" })).toBeInTheDocument();
   });
 });
 
 describe("the sidebar (40.59)", () => {
   const sidebar = code(read("src", "components", "sidebar", "sidebar-nav.tsx"));
 
-  it("the header holds GA40, in the tiles' title face, and the collapse button only", () => {
+  it("the header holds GA40, in the tiles' title face, Limba and Aspect (40.95), and the collapse button", () => {
     const head = sidebar.slice(sidebar.indexOf("data-sidebar-look"), sidebar.indexOf("</div>", sidebar.indexOf("PanelLeftOpen : PanelLeftClose")));
     expect(head).toContain("${TILE_TITLE_TYPE} select-none");
     expect(head).toContain("GA40");
     // 40.68: the rail is drawn for a narrow window too — `railShown`, where it read `isCollapsed`.
     expect(head).toContain("icon={railShown ? PanelLeftOpen : PanelLeftClose}");
-    expect(head).not.toMatch(/ThemeToggle|LocaleToggle|signedInAs/);
+    // 40.95: Limba and Aspect beside GA40, expanded only. Was „no LocaleToggle in the header" (40.59).
+    expect(head).toMatch(/\{!railShown && \([\s\S]*?<LocaleToggle size="sm" \/>\s*<ThemeSwitch icons size="sm" \/>/);
+    expect(head).not.toMatch(/ThemeToggle|signedInAs/);
   });
 
   it("„Autentificat ca” left the top; the bottom strip is the account entry, for UAT too", () => {

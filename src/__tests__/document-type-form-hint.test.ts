@@ -465,8 +465,10 @@ describe("the hint is not drawn as an error", () => {
   // text; the red one below it is the validation message and stays that way.
   const hintSpan = /<span id=\{hintId\}[^>]*>/.exec(FORM_CODE)?.[0] ?? "";
 
-  it("renders the hint in the muted secondary colour", () => {
-    expect(hintSpan).toContain("text-fade");
+  // 40.95: an explanation inside a tile is the header's navy (`text-label`). Was „the muted secondary colour"
+  // (`text-fade`), #27.02.
+  it("renders the hint in the label navy, not as an alarm", () => {
+    expect(hintSpan).toContain("text-label");
   });
 
   it("is a span this test can actually see", () => {

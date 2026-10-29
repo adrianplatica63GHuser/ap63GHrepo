@@ -70,6 +70,20 @@ describe("the account menu's „Zi | Noapte” and Setări's box are one choice 
     expect(document.documentElement.classList.contains("dark")).toBe(false);
   });
 
+  it("the header's icons (40.95): a sun and a moon, named „Zi” and „Noapte”, the chosen one pressed", () => {
+    const { container } = render(
+      <ThemeProvider initial="light">
+        <ThemeSwitch icons size="sm" />
+      </ThemeProvider>,
+    );
+    const day = screen.getByRole("button", { name: "day" });
+    expect(day).toHaveAttribute("title", "day");
+    expect(day).toHaveAttribute("aria-pressed", "true");
+    expect(day.textContent).toBe("");
+    expect(container.querySelectorAll("svg")).toHaveLength(2);
+    expect(day.className).toContain("text-[11px]");
+  });
+
   it("a dark load shows „Noapte” pressed and the box ticked", () => {
     render(
       <ThemeProvider initial="dark">
@@ -97,11 +111,14 @@ describe("where the choice is read and drawn", () => {
     expect(css).not.toMatch(/@media\s*\(prefers-color-scheme/);
   });
 
-  it("in the account menu under „Limba” (40.59, Figura 8.3; was the sidebar's header, 40.19/40.28); in „Setări” under „Limba”", () => {
+  // 40.95: in the sidebar's header beside GA40, small, Aspect a sun and a moon; in the account menu on the rail only.
+  // Was: „not in the sidebar's header" (40.59, Figura 8.3), now inverted.
+  it("in the sidebar's header, beside GA40 (40.95); in the account menu on the rail; in „Setări” under „Limba”", () => {
     const sidebar = read("src", "components", "sidebar", "sidebar-nav.tsx");
-    expect(sidebar).not.toMatch(/<ThemeToggle|<LocaleToggle|data-sidebar-flags/);
+    expect(sidebar).toMatch(/<LocaleToggle size="sm" \/>\s*<ThemeSwitch icons size="sm" \/>/);
+    expect(sidebar).not.toMatch(/<ThemeToggle|data-sidebar-flags/);
     const menu = read("src", "components", "sidebar", "account-menu.tsx");
-    expect(menu).toMatch(/data-account-row="language">[\s\S]*?<LocaleToggle \/>[\s\S]*?data-account-row="appearance">[\s\S]*?<ThemeSwitch \/>/);
+    expect(menu).toMatch(/\{collapsed && \([\s\S]*?data-account-row="language">[\s\S]*?<LocaleToggle \/>[\s\S]*?data-account-row="appearance">[\s\S]*?<ThemeSwitch \/>/);
     // 40.58: no flags — „RO | EN" (locale-toggle.test.tsx); was 24 × 16 px, stacked (40.19, 40.28).
     expect(read("src", "components", "locale-toggle.tsx")).not.toContain("https://flagcdn");
     const settings = read("src", "app", "admin", "settings", "_components", "settings-view.tsx");

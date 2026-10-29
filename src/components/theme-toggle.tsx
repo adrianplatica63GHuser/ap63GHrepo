@@ -13,20 +13,25 @@
  *   - `ThemeToggle` — „Setări"'s checkbox, „Noapte (Mod Întunecat)", which stays (40.59's „Out of scope").
  */
 import { useTranslations } from "next-intl";
+import { Moon, Sun } from "lucide-react";
 import { useTheme } from "@/components/providers/theme-provider";
 import { SegmentedSwitch } from "@/components/segmented-switch";
 
-/** „Zi | Noapte" — the account menu's. */
-export function ThemeSwitch() {
+/**
+ * „Zi | Noapte" — the account menu's on the collapsed rail; Slice 40.95: in the sidebar's header, `icons` — a sun for
+ * day and a moon for night, named and tooltipped „Zi" and „Noapte" — at `size="sm"`.
+ */
+export function ThemeSwitch({ icons = false, size }: { icons?: boolean; size?: "md" | "sm" } = {}) {
   const t = useTranslations("theme");
   const { theme, setTheme } = useTheme();
   return (
     <SegmentedSwitch
       label={t("appearance")}
       name="theme"
+      size={size}
       options={[
-        { value: "light", text: t("day") },
-        { value: "dark", text: t("night") },
+        { value: "light", text: t("day"), ...(icons ? { icon: Sun } : {}) },
+        { value: "dark", text: t("night"), ...(icons ? { icon: Moon } : {}) },
       ]}
       value={theme}
       onChange={setTheme}

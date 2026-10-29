@@ -138,7 +138,7 @@ export function RoleTag({ role }: { role: string }) {
 
 /** Slice 40.65: a kind group's heading — the kind's name, and its count on the right in tabular figures. */
 export const RELATED_HEADING_CLASS =
-  "flex items-baseline justify-between gap-2 px-3 pb-0.5 pt-2 font-colhead text-xs font-normal tracking-[0.02em] text-fade dark:text-zinc-400";
+  "flex items-baseline justify-between gap-2 px-3 pb-0.5 pt-2 font-colhead text-xs font-normal tracking-[0.02em] text-label";
 
 export function RelatedTile({
   label,
@@ -249,9 +249,10 @@ export function RelatedTile({
                   <span className="tabular-nums" data-related-count="">{g.rows.length}</span>
                 </h3>
               )}
-              {/* Slice #38.33: a role group is headed by its role. */}
+              {/* Slice #38.33: a role group is headed by its role. 40.95: in the header's navy, as the kind headings; the
+                  rows, roles included, stay ink. */}
               {g.heading !== null && (
-                <p className="px-3 pt-2 text-xs font-semibold uppercase tracking-wide text-fade dark:text-zinc-400" data-party-group-heading="">
+                <p className="px-3 pt-2 text-xs font-semibold uppercase tracking-wide text-label" data-party-group-heading="">
                   {g.heading}
                 </p>
               )}

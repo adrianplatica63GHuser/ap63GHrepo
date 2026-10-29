@@ -1,40 +1,51 @@
 /**
- * Case:   TC-SET-05 — „Noapte”: în meniul contului, păstrat la reîncărcare, același în „Setări”
+ * Case:   TC-SET-05 — „Noapte”: în antetul barei laterale, păstrat la reîncărcare, același în „Setări”
  * Source: docs/testing/cases/TC-SET-05.md, „Last green" 2026-10-21
  *
  * A translation of the case file, step for step (Slice 40.19). Slice 40.28: the box is „Noapte" under „GA40", the
  * flags stacked in the panel's middle, „Setări"'s box „Noapte (Mod Întunecat)"; step 1 measures the header. Slice 40.58:
  * the flags are „RO | EN", one two-part control in the panel's middle; step 7 switches the language with it. Slice 40.59
  * (Figura 8.3): „Noapte" and „RO | EN" are in the account menu at the bottom of the sidebar; the header holds GA40 and
- * the collapse button only. It changes only this browser context's cookie, and
+ * the collapse button only. Slice 40.95: Limba and Aspect are in the header again, beside GA40, smaller — RO | EN and a
+ * sun | moon — and in the account menu on the collapsed rail only; step 9 reads a field's label in the header's navy.
+ * It changes only this browser context's cookie, and
  * puts the look back to light in `finally`, so a red run leaves nothing dark behind.
  */
 import { test, expect, type Page } from "../helpers/test";
-import { accountEntry, accountMenu, closeAccountMenu, openAccountMenu } from "../helpers/sidebar";
+import { accountEntry, openAccountMenu } from "../helpers/sidebar";
 import { lookOnLoad } from "../helpers/theme";
+import { E2E_MARKER, createNaturalPerson, removeLeftovers, removeRecord } from "../helpers/records";
 
-// 40.59: the sidebar's „Noapte" is the account menu's „Zi | Noapte" (it was a checkbox under „GA40", 40.19/40.28).
-const segment = (page: Page, sw: string, value: string) => accountMenu(page).locator(`[data-segmented="${sw}"] [data-segment="${value}"]`);
+// 40.95: the header's „Zi | Noapte" (a sun and a moon) and „RO | EN"; 40.59–40.94 they were the account menu's.
+const head = (page: Page) => page.locator("[data-sidebar-look]");
+const segment = (page: Page, sw: string, value: string) => head(page).locator(`[data-segmented="${sw}"] [data-segment="${value}"]`);
+const MARK = `${E2E_MARKER}SET-05`;
 const settingsBox = (page: Page) =>
   page.locator('[data-account-appearance]').getByRole("checkbox", { name: "Noapte (Mod Întunecat)", exact: true });
 const isDark = (page: Page) => page.evaluate(() => document.documentElement.classList.contains("dark"));
 const bodyBg = (page: Page) => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
 
 test.describe("TC-SET-05 — „Noapte”", () => {
-  test("în meniul contului, păstrat la reîncărcare, același în „Setări”", async ({ page }) => {
-    test.setTimeout(120_000); // 40.76: step 8 loads the dashboard twice
+  test("în antetul barei laterale, păstrat la reîncărcare, același în „Setări”", async ({ page }) => {
+    test.setTimeout(150_000); // 40.76: step 8 loads the dashboard twice; 40.95: step 9 a person
     await lookOnLoad(page, "light");
     await page.setViewportSize({ width: 1366, height: 900 });
+    let person: string | undefined;
     try {
-      // Step 1 (40.59) — the header holds GA40, in Roboto Slab navy like a tile title, and the collapse button, nothing
-      // else: no box, no „RO | EN", no „Autentificat ca"; the collapse button where it always stood. The page light.
+      // Step 1 (40.59; 40.95) — the header holds GA40, in Roboto Slab navy like a tile title, then RO | EN and the sun |
+      // moon, small, then the collapse button where it always stood; no box, no „Autentificat ca". The page light.
       await page.goto("/natural-persons");
-      const head = page.locator("[data-sidebar-look]");
-      await expect(head.locator("[data-sidebar-name]")).toHaveText("GA40", { timeout: 30_000 });
-      await expect(head.locator("input, [data-segmented]")).toHaveCount(0);
-      await expect(head.getByText(/Autentificat ca/)).toHaveCount(0);
-      await expect(head.getByRole("button")).toHaveCount(1);
-      const name = head.locator("[data-sidebar-name]");
+      await expect(head(page).locator("[data-sidebar-name]")).toHaveText("GA40", { timeout: 30_000 });
+      await expect(head(page).locator("input")).toHaveCount(0);
+      await expect(head(page).locator("[data-segmented]")).toHaveCount(2);
+      await expect(head(page).getByText(/Autentificat ca/)).toHaveCount(0);
+      await expect(head(page).getByRole("button")).toHaveCount(5);
+      for (const [value, title] of [["light", "Zi"], ["dark", "Noapte"]] as const) {
+        await expect(segment(page, "theme", value)).toHaveAttribute("title", title);
+        await expect(segment(page, "theme", value).locator("svg")).toHaveCount(1);
+      }
+      expect(await segment(page, "locale", "ro-RO").evaluate((e) => getComputedStyle(e).fontSize)).toBe("11px");
+      const name = head(page).locator("[data-sidebar-name]");
       expect(await name.evaluate((e) => getComputedStyle(e).fontFamily)).toMatch(/Roboto Slab/);
       expect(await name.evaluate((e) => getComputedStyle(e).color)).toBe("rgb(30, 58, 138)"); // navy
       const g = await page.evaluate(() => {
@@ -52,25 +63,24 @@ test.describe("TC-SET-05 — „Noapte”", () => {
       expect(await isDark(page)).toBe(false);
       const light = await bodyBg(page);
 
-      // Step 2 (40.59) — the account entry at the bottom opens the menu upward: „Autentificat ca" first, Limba, Aspect
-      // („Zi" pressed), Ieșire. „Noapte": dark at once, no reload.
+      // Step 2 (40.59; 40.95) — the account entry at the bottom opens the menu upward: „Autentificat ca" first, then
+      // Ieșire — no Limba, no Aspect, which are in the header; Esc closes it, the focus back on the entry. Then the
+      // header's moon („Noapte"): dark at once, no reload.
       const menu = await openAccountMenu(page);
       const [entryBox, menuBox] = [await accountEntry(page).boundingBox(), await menu.boundingBox()];
       expect((menuBox?.y ?? 0) + (menuBox?.height ?? 0)).toBeLessThanOrEqual((entryBox?.y ?? 0) + 1);
       await expect(menu.locator("[data-account-signed-in]")).toHaveText(/^Autentificat ca \S+/);
-      await expect(menu.getByRole("group", { name: "Limba", exact: true })).toBeVisible();
-      await expect(menu.getByRole("group", { name: "Aspect", exact: true })).toBeVisible();
+      await expect(menu.locator("[data-segmented]")).toHaveCount(0);
       await expect(menu.getByRole("button", { name: "Ieșire", exact: true })).toBeVisible();
+      await page.keyboard.press("Escape");
+      await expect(menu).toBeHidden();
+      await expect(accountEntry(page)).toBeFocused();
       await expect(segment(page, "theme", "light")).toHaveAttribute("aria-pressed", "true");
       await segment(page, "theme", "dark").click();
       await expect(segment(page, "theme", "dark")).toHaveAttribute("aria-pressed", "true");
       expect(await isDark(page)).toBe(true);
       expect(await bodyBg(page)).not.toBe(light);
       expect(await page.evaluate(() => getComputedStyle(document.querySelector("aside")!).backgroundColor)).toBe("rgb(24, 24, 27)");
-      // Esc closes it, the focus back on the entry.
-      await page.keyboard.press("Escape");
-      await expect(menu).toBeHidden();
-      await expect(accountEntry(page)).toBeFocused();
 
       // Step 3 — a reload arrives dark: the server's own answer carries the class; „Noapte" is the one pressed.
       const html = await (await page.request.get("/natural-persons")).text();
@@ -102,16 +112,15 @@ test.describe("TC-SET-05 — „Noapte”", () => {
       await expect(segment(page, "theme", "light")).toHaveAttribute("aria-pressed", "true");
       expect(await isDark(page)).toBe(false);
 
-      // Step 7 (40.58; in the menu since 40.59) — „RO | EN": RO pressed and filled, EN outlined; EN turns the screen
+      // Step 7 (40.58; in the header since 40.95) — „RO | EN": RO pressed and filled, EN outlined; EN turns the screen
       // English; RO back; nothing is asked of flagcdn.com.
       const asked: string[] = [];
       page.on("request", (r) => {
         if (r.url().includes("flagcdn.com")) asked.push(r.url());
       });
       await page.goto("/natural-persons");
-      await openAccountMenu(page);
-      const ro = accountMenu(page).getByRole("button", { name: "Română", exact: true });
-      const en = accountMenu(page).getByRole("button", { name: "English", exact: true });
+      const ro = head(page).getByRole("button", { name: "Română", exact: true });
+      const en = head(page).getByRole("button", { name: "English", exact: true });
       await expect(ro).toHaveAttribute("aria-pressed", "true", { timeout: 30_000 });
       await expect(en).toHaveAttribute("aria-pressed", "false");
       await expect(ro).toBeEnabled();
@@ -119,13 +128,11 @@ test.describe("TC-SET-05 — „Noapte”", () => {
       expect(await en.evaluate((e) => getComputedStyle(e).backgroundColor)).toBe("rgba(0, 0, 0, 0)");
       await en.click();
       await expect(en).toHaveAttribute("aria-pressed", "true", { timeout: 30_000 });
-      await expect(accountMenu(page).getByRole("group", { name: "Language", exact: true })).toBeAttached({ timeout: 30_000 });
-      await expect(segment(page, "theme", "dark")).toHaveText("Night");
-      await openAccountMenu(page);
+      await expect(head(page).getByRole("group", { name: "Language", exact: true })).toBeAttached({ timeout: 30_000 });
+      await expect(segment(page, "theme", "dark")).toHaveAttribute("title", "Night");
       await ro.click();
       await expect(ro).toHaveAttribute("aria-pressed", "true", { timeout: 30_000 });
-      await expect(segment(page, "theme", "dark")).toHaveText("Noapte", { timeout: 30_000 });
-      await closeAccountMenu(page);
+      await expect(segment(page, "theme", "dark")).toHaveAttribute("title", "Noapte", { timeout: 30_000 });
       expect(asked).toEqual([]);
       expect(await page.locator("aside img").count()).toBe(0);
 
@@ -164,7 +171,19 @@ test.describe("TC-SET-05 — „Noapte”", () => {
       }
       expect(drawn.dark.heading).not.toBe(drawn.light.heading);
       expect(drawn.dark.rim).not.toBe(drawn.light.rim);
+
+      // Step 9 (40.95) — an invented person, light: „Nume"'s label is the tile header's navy, its value is not.
+      await lookOnLoad(page, "light");
+      await removeLeftovers(page.request, MARK);
+      person = await createNaturalPerson(page.request, { lastName: `${MARK} Testescu`, firstName: "Ion" });
+      await page.goto(`/natural-persons/${person}`);
+      const value = page.locator('[data-read-value="lastName"]').first();
+      await expect(value).toContainText("Testescu", { timeout: 30_000 });
+      const label = value.locator("xpath=..").locator("span").first();
+      expect(await label.evaluate((e) => getComputedStyle(e).color)).toBe("rgb(30, 58, 138)");
+      expect(await value.evaluate((e) => getComputedStyle(e).color)).not.toBe("rgb(30, 58, 138)");
     } finally {
+      if (person) await removeRecord(page.request, "person", person);
       await lookOnLoad(page, "light");
       const base = test.info().project.use.baseURL ?? process.env.E2E_BASE_URL ?? "http://localhost:3000";
       await page.context().addCookies([{ name: "NEXT_LOCALE", value: "ro-RO", url: base }]);

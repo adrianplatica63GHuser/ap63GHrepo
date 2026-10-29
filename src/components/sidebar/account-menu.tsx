@@ -14,6 +14,10 @@
  *     uatNoAccounts note in its place. Ieșire stands above the strip, clear of Next's dev indicator at the bottom left
  *     that once took its clicks (#38.41).
  *
+ * Slice 40.95: Limba and Aspect moved to the sidebar's header, beside GA40 (Adrian, 2026-10-28). On the collapsed rail
+ * there is no room for them there, and GA40 is not shown, so on the rail only they stay here (Ask first 2); expanded,
+ * the menu holds „Autentificat ca" and „Ieșire".
+ *
  * Enter or Space on the entry opens it (it is a button) and puts the focus on its first control; Esc and a press outside
  * close it, Esc giving the focus back to the entry; the arrow keys, Home and End move through its controls. It is drawn
  * `fixed`, above the entry, so the rail's 56 px — and the sidebar's `overflow-hidden` — cannot clip it. Closed, it stays
@@ -148,14 +152,18 @@ export function AccountMenu({
             {t("signedInAs")} <span className="font-medium text-ink dark:text-zinc-200">{username}</span>
           </p>
         )}
-        <div className="flex items-center justify-between gap-3 py-1" data-account-row="language">
-          <span className="text-ink dark:text-zinc-200">{tAccount("language")}</span>
-          <LocaleToggle />
-        </div>
-        <div className="flex items-center justify-between gap-3 py-1" data-account-row="appearance">
-          <span className="text-ink dark:text-zinc-200">{tTheme("appearance")}</span>
-          <ThemeSwitch />
-        </div>
+        {collapsed && (
+          <>
+            <div className="flex items-center justify-between gap-3 py-1" data-account-row="language">
+              <span className="text-ink dark:text-zinc-200">{tAccount("language")}</span>
+              <LocaleToggle />
+            </div>
+            <div className="flex items-center justify-between gap-3 py-1" data-account-row="appearance">
+              <span className="text-ink dark:text-zinc-200">{tTheme("appearance")}</span>
+              <ThemeSwitch />
+            </div>
+          </>
+        )}
         <div className="my-2 border-t border-wire dark:border-zinc-700" />
         {uat ? (
           // UAT (Slice #38.22): no Supabase session to sign out of — said, not hidden.

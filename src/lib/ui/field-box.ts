@@ -31,8 +31,13 @@
  * `outline` and `box-shadow`, so it shows on a borderless box; `usePulseRing` is unaffected.
  */
 
-/** A field's label: Roboto Condensed, 12 px, muted. Stacked labels add their `self-end` (`STACKED_LABEL_CLASS`). */
-export const FIELD_LABEL = "font-colhead text-xs font-normal tracking-[0.02em] text-fade dark:text-zinc-400";
+/**
+ * A field's label: Roboto Condensed, 12 px. Stacked labels add their `self-end` (`STACKED_LABEL_CLASS`).
+ * Slice 40.95 (Adrian, 2026-10-28): the navy of the tile's header (`text-label`, #1E3A8A, the titles' #BFDBFE in dark)
+ * — every calm field's label in the app, dialogs included, one constant (Ask first 3); the value stays ink. Was muted
+ * grey (`text-fade`, zinc-400 in dark).
+ */
+export const FIELD_LABEL = "font-colhead text-xs font-normal tracking-[0.02em] text-label";
 
 /**
  * The box's own look; its width is never a class here — it comes from `boxStyle` / `stackedBoxStyle`, and its

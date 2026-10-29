@@ -33,9 +33,9 @@ import { TILE_TITLE_TYPE } from "@/lib/ui/title-type";
  */
 export const TILE_TITLE_CLASS = `flex items-center gap-2 ${TILE_TITLE_TYPE}`;
 
-/** The subtitle's classes: one grey line, cut with an ellipsis, adding no width. */
+/** The subtitle's classes: one line, cut with an ellipsis, adding no width. 40.95: the header's navy (`text-label`). */
 export const TILE_SUBTITLE_CLASS =
-  "w-0 min-w-full truncate text-xs font-normal normal-case tracking-normal text-fade dark:text-zinc-500";
+  "w-0 min-w-full truncate text-xs font-normal normal-case tracking-normal text-label";
 
 export function TileSubtitle({ text }: { text: string | undefined }) {
   if (!text) return null;

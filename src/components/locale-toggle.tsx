@@ -25,7 +25,8 @@ const ORDER: readonly { locale: SupportedLocale; text: string; label: string }[]
   { locale: "en-GB", text: "EN", label: "English" },
 ];
 
-export function LocaleToggle() {
+/** Slice 40.95: `size="sm"` in the sidebar's header, beside GA40. */
+export function LocaleToggle({ size }: { size?: "md" | "sm" } = {}) {
   const t = useTranslations("settings.account");
   const currentLocale = useLocale();
   const router = useRouter();
@@ -33,6 +34,7 @@ export function LocaleToggle() {
     <SegmentedSwitch
       label={t("language")}
       name="locale"
+      size={size}
       options={ORDER.map((o) => ({ value: o.locale, text: o.text, label: o.label }))}
       value={currentLocale as SupportedLocale}
       onChange={(locale) => {

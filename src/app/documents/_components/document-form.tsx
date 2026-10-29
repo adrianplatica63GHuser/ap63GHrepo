@@ -2673,7 +2673,7 @@ function SelectField({
       <div className={STACKED_FIELD_CLASS} style={hiddenFieldStyle(hiddenEmpty, boxCss)} data-empty-hidden={hiddenEmpty || undefined}>
         <span className={STACKED_LABEL_CLASS}>{label}</span>
         <ReadValue name={name} kind={width.kind} text={watchValue ? (readLabel ?? chosenLabel ?? "") : ""} style={boxCss} className={ring} />
-        {hintInRead && hint && <span className="text-xs text-fade">{hint}</span>}
+        {hintInRead && hint && <span className="text-xs text-label">{hint}</span>}
       </div>
     );
   }
@@ -2689,7 +2689,7 @@ function SelectField({
         </div>
         {(hint || error) && (
           <div className="flex flex-col gap-0.5" style={boxCss}>
-            {hint && <span className="text-xs text-fade">{hint}</span>}
+            {hint && <span className="text-xs text-label">{hint}</span>}
             {error && <span className="text-xs text-alert">{error}</span>}
           </div>
         )}
@@ -2763,7 +2763,7 @@ function SelectField({
           ))}
         </WrappingSelect>
         {hint && (
-          <span id={hintId} className="text-xs text-fade">{hint}</span>
+          <span id={hintId} className="text-xs text-label">{hint}</span>
         )}
         {error && (
           <span id={errorId} className="text-xs text-alert">{error}</span>

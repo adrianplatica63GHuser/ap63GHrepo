@@ -1,4 +1,4 @@
-# TC-SET-05 — „Noapte”: în meniul contului, păstrat la reîncărcare, același în „Setări”
+# TC-SET-05 — „Noapte”: în antetul barei laterale, păstrat la reîncărcare, același în „Setări”
 
 | | |
 |---|---|
@@ -38,16 +38,21 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „Persoane fizice" at 1366 × 900 and looks at the sidebar's header | (40.59) The header 56 px tall, holding „GA40" — Roboto Slab, navy, like a tile title — and the collapse button, nothing else: no box, no „RO \| EN", no „Autentificat ca". The collapse button 30 × 30 px on the header's right padding, in its middle. The page light |
-| 2 | Presses the account entry at the bottom of the sidebar (the account's name), then „Noapte", then Esc | The menu opens upward, above the entry: „Autentificat ca <name>", „Limba" with RO \| EN, „Aspect" with Zi \| Noapte („Zi" pressed), „Ieșire". „Noapte": at once, without a reload, `<html>` carries `dark`, the page's background is dark, the sidebar too. Esc closes the menu and the focus is on the entry |
-| 3 | Reloads the page | The page arrives dark — the server's first answer already carries `dark` on `<html>` — and the menu's „Noapte" is the one pressed |
+| 1 | Opens „Persoane fizice" at 1366 × 900 and looks at the sidebar's header | (40.59; 40.95) The header 56 px tall, holding „GA40" — Roboto Slab, navy, like a tile title — then „RO \| EN" and a sun \| moon („Zi", „Noapte" on hover), smaller than the account menu's (11-px words), then the collapse button: no box, no „Autentificat ca". The collapse button 30 × 30 px on the header's right padding, in its middle. The page light |
+| 2 | Presses the account entry at the bottom of the sidebar (the account's name), then Esc; then the header's moon | The menu opens upward, above the entry: „Autentificat ca <name>", „Ieșire" — no „Limba", no „Aspect" (40.95). Esc closes it and the focus is on the entry. The moon („Noapte"): at once, without a reload, `<html>` carries `dark`, the page's background is dark, the sidebar too |
+| 3 | Reloads the page | The page arrives dark — the server's first answer already carries `dark` on `<html>` — and the header's moon is the one pressed |
 | 4 | Opens „Setări" | Under „Limba", a group „Aspect" with the box „Noapte (Mod Întunecat)", ticked |
-| 5 | Unticks it there | At once the page is light, and the menu's „Zi" is the one pressed |
+| 5 | Unticks it there | At once the page is light, and the header's sun is the one pressed |
 | 6 | Reloads | Light: the box unticked, „Zi" pressed |
-| 7 | (40.58; in the menu since 40.59) Opens „Persoane fizice", opens the menu, looks at „RO \| EN", presses „EN", then „RO" | RO filled in slate and pressed, EN outlined. „EN": the screen in English („Aspect"'s switch reads „Day \| Night"), EN the one pressed. „RO": Romanian again. Nothing is asked of flagcdn.com and the sidebar shows no image |
+| 7 | (40.58; in the header since 40.95) Opens „Persoane fizice", looks at the header's „RO \| EN", presses „EN", then „RO" | RO filled in slate and pressed, EN outlined. „EN": the screen in English (the moon's hover reads „Night"), EN the one pressed. „RO": Romanian again. Nothing is asked of flagcdn.com and the sidebar shows no image |
 | 8 | (Slice 40.76) Opens the dashboard in the light look, then in the dark one | Its heading, the line under it and the expiring documents' frame each in their role's colour — the heading the strongest text, the line the muted one, the frame the tile's rim — and each colour different in dark: the dashboard writes only the role names, which carry both |
+| 9 | (40.95) Opens an invented person, `TC-E2E-SET-05 Testescu`, in the light look | „Nume"'s label is the navy of the tile's header (#1E3A8A); its value is not |
 
 ## Notes from the runs
+
+**2026-10-28 — Slice 40.95.** Limba and Aspect moved to the sidebar's header (the account menu keeps them on the
+collapsed rail); steps 1, 2, 3, 5 and 7 read them there; step 9 added, a label in navy, on an invented person (created
+through the route and removed at the end); the title says „în antetul barei laterale”. Not driven by hand first.
 
 **2026-10-25 — Slice 40.76; step 8 added.** The dashboard is the role tokens' pattern screen (chapter 11). The spec reads each colour against its token in both looks; not driven by hand first.
 

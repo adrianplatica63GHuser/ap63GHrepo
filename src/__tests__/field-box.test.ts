@@ -64,8 +64,10 @@ describe("the box at rest, on hover and in focus", () => {
 });
 
 describe("the label is told apart from its value (Figura 1.3)", () => {
-  it("Roboto Condensed, 12 px, muted — the stacked label draws it", () => {
-    expect(tokens(FIELD_LABEL)).toEqual(expect.arrayContaining(["font-colhead", "text-xs", "font-normal", "text-fade", "dark:text-zinc-400"]));
+  // 40.95 (Adrian): the tile header's navy, `text-label` — was muted grey (`text-fade`, `dark:text-zinc-400`).
+  it("Roboto Condensed, 12 px, the header's navy — the stacked label draws it", () => {
+    expect(tokens(FIELD_LABEL)).toEqual(expect.arrayContaining(["font-colhead", "text-xs", "font-normal", "text-label"]));
+    expect(tokens(FIELD_LABEL)).not.toContain("text-fade");
     expect(STACKED_LABEL_CLASS).toBe(`self-end ${FIELD_LABEL}`);
   });
 

@@ -10,6 +10,8 @@ import { IconButton, IconTooltip } from "@/lib/ui/icon-button";
 import { createClient } from "@/lib/supabase/client";
 import { AccountMenu } from "./account-menu";
 import { TILE_TITLE_TYPE } from "@/lib/ui/title-type";
+import { LocaleToggle } from "@/components/locale-toggle";
+import { ThemeSwitch } from "@/components/theme-toggle";
 import { useNarrowWindow } from "@/lib/ui/use-narrow-window";
 import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
 import { RecentlyViewedPanel } from "@/components/recently-viewed-panel";
@@ -529,8 +531,9 @@ export function SidebarNav() {
     >
       {/* ── App name | collapse button ─────────────────────────────────── */}
       {/* Slice 40.59 (Figura 8.3): the header holds GA40 — in Roboto Slab navy, like every tile title (TILE_TITLE_TYPE)
-          — and the collapse button, nothing else. „Noapte", „RO | EN" and „Autentificat ca" moved to the account menu at
-          the bottom (account-menu.tsx). Before: 40.28's „GA40" over the „Noapte" box, the flags centred (40.58: RO | EN). */}
+          — and the collapse button. Slice 40.95 (Adrian, 2026-10-28): Limba (RO | EN) and Aspect (a sun and a moon) to
+          the right of GA40, smaller than in the account menu, which keeps them for the collapsed rail only. Before:
+          40.28's „GA40" over the „Noapte" box, the flags centred (40.58: RO | EN). */}
       <div
         className={[
           "relative flex items-center h-14 px-3 border-b border-wire shrink-0",
@@ -545,14 +548,22 @@ export function SidebarNav() {
             </span>
           </div>
         )}
-        {/* #37.42 (A002): PanelLeftOpen / PanelLeftClose. */}
-        <IconButton
-          icon={railShown ? PanelLeftOpen : PanelLeftClose}
-          label={railShown ? t("expand") : t("collapse")}
-          variant="bare"
-          size="sm"
-          onClick={toggleCollapsed}
-        />
+        <div className="flex items-center gap-1" data-sidebar-switches="">
+          {!railShown && (
+            <>
+              <LocaleToggle size="sm" />
+              <ThemeSwitch icons size="sm" />
+            </>
+          )}
+          {/* #37.42 (A002): PanelLeftOpen / PanelLeftClose. */}
+          <IconButton
+            icon={railShown ? PanelLeftOpen : PanelLeftClose}
+            label={railShown ? t("expand") : t("collapse")}
+            variant="bare"
+            size="sm"
+            onClick={toggleCollapsed}
+          />
+        </div>
       </div>
 
 
