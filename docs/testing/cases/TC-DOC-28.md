@@ -38,6 +38,7 @@ Nothing.
 | 3 | CNP back, Sex M, Prenume „Ionel"; „Salvează"; reloads | the warning gone; Prenume Ionel, Sex M |
 | 4 | Opens the model vechi document | Prenumele tatălui, Prenumele mamei, Starea civilă, Lucrătorul care a eliberat-o; no CNP; no VALABIL / EXPIRAT |
 | 5 | Opens the Pașaport, then the Pașaport CRDS | VALABIL and Domiciliu — județul Ilfov; Domiciliu — țara Spania |
+| 5b | (40.94) „Editează" on „Act de identitate" on the Pașaport, „Renunță"; the same on the model vechi | The Pașaport: Tip, Codul țării, Nr. pașaportului; Nume, Prenume; Cetățenia, Sex; Data nașterii, Locul nașterii; Data emiterii, Data expirării and its status; Autoritatea emitentă across the tile; CNP, Domiciliu — județul; MRZ across the tile — under the „Titular" line. The model vechi: Nume, Prenume; Prenumele tatălui, Prenumele mamei; Starea civilă, Data nașterii; then Locul nașterii, Domiciliu and Emisă de, each across the tile; Data eliberării, Lucrătorul care a eliberat-o; Seria și numărul |
 | 6 | On the model nou: „Editează" on „Identificarea actului", „Schimbă tipul…", „Tipul nou" „Pașaport"; „Confirmă" | the confirmation lists Domiciliu and Nr. card under „Câmpurile de identitate care se șterg la salvare:"; after „Confirmă", under Tip document: „La salvare se șterg: Domiciliu, Nr. card — noul tip nu are aceste câmpuri." |
 | 7 | „Salvează"; reloads | the passport's fields (Nr. pașaportului …); Nume kept; no Domiciliu |
 | 8 | „Editează" again, „Schimbă tipul…", „Tipul nou" „Adeverință" | „Tipul nu se poate schimba într-un tip de document obișnuit cât timp actul are date de identitate completate: goliți-le întâi în „Act de identitate”, apoi schimbați tipul." — and no „Confirmă" |
@@ -49,6 +50,9 @@ Nothing.
 Delete the five documents.
 
 ## Notes from the runs
+
+**2026-10-28 — Slice 40.94.** Step 5b added: Adrian's rows on the Pașaport and the model vechi. Not driven by hand
+first; the spec reads the rows.
 
 **2026-10-28 — Slice 40.92.** Steps 6, 8 and 9: a saved document's type is changed through „Schimbă tipul…" and its
 confirmation, no longer through the dropdown. Not driven by hand first; the spec drives it.

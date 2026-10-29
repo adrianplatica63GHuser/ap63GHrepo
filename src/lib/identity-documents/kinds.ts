@@ -8,6 +8,12 @@
  * matrix (Identity.Documents.Design.v01, section 2.2) sets them out. An identity type never holds a free form
  * (`template_fields`): its fields are these, the same for every document of the kind (#32.07's rule, kept).
  *
+ * Slice 40.94: a kind is its ROWS — Adrian's rows of 2026-10-28, top to bottom and left to right, as the „Act de
+ * identitate" tile draws them, in edit and in the read view. `fields` is derived from them in that order, and is
+ * what every other walker (validation, the import's read, the person dialog, the system form) reads. A field at TILE
+ * on one kind (`tile`, on a row of its own) keeps its own width on another: Locul nașterii is TILE on both cards and
+ * beside Data nașterii on the passports.
+ *
  * Four of a kind's fields are the document's own columns — the number, the issue date, the validity end and the
  * issuer — so lists, filters and the expiry status keep working on them; the rest live in `identity_document`, one
  * row per document. `target` says which.
@@ -120,6 +126,20 @@ const F = {
   cardNumber: idf("cardNumber", "text"),
 } as const;
 
+/**
+ * A field at TILE on this kind: on a row of its own, its box the tile's whole inner width (`fill`, as Note's). Its
+ * value kind is kept — the MRZ stays `lines`, two of them.                                     (Slice 40.94)
+ */
+function tile(f: IdentityFieldDef): IdentityFieldDef {
+  const { rows, fold } = f.width;
+  return { ...f, width: { step: "TILE", kind: f.width.kind, fill: true, ...(rows !== undefined ? { rows } : {}), ...(fold !== undefined ? { fold } : {}) } };
+}
+
+/** The kind's fields, from its rows: left to right, top to bottom. */
+function kindDef(def: Omit<IdentityKindDef, "fields">): IdentityKindDef {
+  return { ...def, fields: def.rows.flat() };
+}
+
 export type IdentityKindDef = {
   kind: IdentityKind;
   /** The `lookup_document_type.key` migration_118 gives the kind's type. */
@@ -128,47 +148,84 @@ export type IdentityKindDef = {
   typeName: string;
   /** The kind's own name, under `identityDocument.kinds`. */
   messageKey: `identityDocument.kinds.${IdentityKind}`;
-  /** The fields, in the order the document prints them. */
+  /** Slice 40.94: the tile's rows, as Adrian set them — drawn as written, never re-flowed. A TILE field is alone on its row. */
+  rows: readonly (readonly IdentityFieldDef[])[];
+  /** The fields, in the rows' order (derived from `rows`). */
   fields: readonly IdentityFieldDef[];
 };
 
-const PASSPORT_HEAD = [F.passportType, F.countryCode, F.passportNumber, F.lastName, F.firstName, F.nationality, F.dateOfBirth, F.sex, F.placeOfBirth, F.passportIssueDate, F.passportIssuer, F.passportValidUntil, F.cnp] as const;
+/**
+ * The passports' rows (Adrian, 2026-10-28): „Titular" is the holder line the tile draws above them, and the status
+ * (VALABIL / EXPIRAT) is drawn beside Data expirării — neither is a field. The domicile, beside CNP, is a county on
+ * a Pașaport and a country on a Pașaport CRDS.
+ */
+function passportRows(domicile: IdentityFieldDef): readonly (readonly IdentityFieldDef[])[] {
+  return [
+    [F.passportType, F.countryCode, F.passportNumber],
+    [F.lastName, F.firstName],
+    [F.nationality, F.sex],
+    [F.dateOfBirth, F.placeOfBirth],
+    [F.passportIssueDate, F.passportValidUntil],
+    [tile(F.passportIssuer)],
+    [F.cnp, domicile],
+    [tile(F.mrz)],
+  ];
+}
 
 export const IDENTITY_KINDS: Readonly<Record<IdentityKind, IdentityKindDef>> = {
   // The booklet „buletin" (Adrian, 2026-10-26, Q #15/#18): exactly his list — no CNP, no Sex, no validity end, no
   // MRZ. „Status" is „Starea civilă" (Q #16). „Emisă de" is the institution AND the officer who signed it.
-  CI_VECHE: {
+  CI_VECHE: kindDef({
     kind: "CI_VECHE",
     typeKey: "CARTE_IDENTITATE_VECHE",
     typeName: "Carte de Identitate (model vechi)",
     messageKey: "identityDocument.kinds.CI_VECHE",
-    fields: [F.lastName, F.firstName, F.fatherFirstName, F.motherFirstName, F.dateOfBirth, F.placeOfBirth, F.civilStatus, F.domicileAddress, F.issueDate, F.issuer, F.issuerOfficer, F.seriesAndNumber],
-  },
+    rows: [
+      [F.lastName, F.firstName],
+      [F.fatherFirstName, F.motherFirstName],
+      [F.civilStatus, F.dateOfBirth],
+      [tile(F.placeOfBirth)],
+      [tile(F.domicileAddress)],
+      [tile(F.issuer)],
+      [F.issueDate, F.issuerOfficer],
+      [F.seriesAndNumber],
+    ],
+  }),
   // Today's „Carte de Identitate", renamed; its key is kept, so everything keyed on it keeps working. The laminated
   // card of 1997–2009 prints a CNP, a validity end and an MRZ, so it is filed here too. „Nr. card" kept, optional
   // (Q #17).
-  CI_NOU: {
+  CI_NOU: kindDef({
     kind: "CI_NOU",
     typeKey: "CARTE_IDENTITATE",
     typeName: "Carte de Identitate (model nou)",
     messageKey: "identityDocument.kinds.CI_NOU",
-    fields: [F.seriesAndNumber, F.cnp, F.sex, F.lastName, F.firstName, F.nationality, F.placeOfBirth, F.domicileAddress, F.issuer, F.issueDate, F.validUntil, F.mrz, F.cardNumber],
-  },
+    rows: [
+      [F.seriesAndNumber, F.cnp],
+      [F.lastName, F.firstName],
+      [F.nationality, F.sex],
+      [tile(F.placeOfBirth)],
+      [tile(F.domicileAddress)],
+      [tile(F.issuer)],
+      [F.issueDate, F.validUntil],
+      [tile(F.mrz)],
+      [F.cardNumber],
+    ],
+  }),
   // The two passports share every field but the domicile: a county for one living in Romania, a country for CRDS.
-  PASAPORT: {
+  PASAPORT: kindDef({
     kind: "PASAPORT",
     typeKey: "PASAPORT",
     typeName: "Pașaport",
     messageKey: "identityDocument.kinds.PASAPORT",
-    fields: [...PASSPORT_HEAD, F.domicileCounty, F.mrz],
-  },
-  PASAPORT_CRDS: {
+    rows: passportRows(F.domicileCounty),
+  }),
+  PASAPORT_CRDS: kindDef({
     kind: "PASAPORT_CRDS",
     typeKey: "PASAPORT_CRDS",
     typeName: "Pașaport CRDS",
     messageKey: "identityDocument.kinds.PASAPORT_CRDS",
-    fields: [...PASSPORT_HEAD, F.domicileCountry, F.mrz],
-  },
+    rows: passportRows(F.domicileCountry),
+  }),
 };
 
 /** The type keys of the four kinds — what a caller without the marker column falls back to. */

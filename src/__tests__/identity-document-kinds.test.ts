@@ -50,25 +50,26 @@ describe("the four kinds", () => {
 
 describe("each kind's fields — the design's matrix, Adrian's lists exactly", () => {
   it("model vechi (the booklet): no CNP, no sex, no validity end, no MRZ (Q #15)", () => {
+    // 40.94: in Adrian's rows, left to right and top to bottom (the fields are the same twelve).
     expect(fieldsOf("CI_VECHE")).toEqual([
-      "lastName", "firstName", "fatherFirstName", "motherFirstName", "dateOfBirth", "placeOfBirth", "civilStatus",
-      "domicileAddress", "dateDocument", "issuer", "issuerOfficer", "nrDocument",
+      "lastName", "firstName", "fatherFirstName", "motherFirstName", "civilStatus", "dateOfBirth", "placeOfBirth",
+      "domicileAddress", "issuer", "dateDocument", "issuerOfficer", "nrDocument",
     ]);
     for (const absent of ["cnp", "sex", "dateValidUntil", "mrz", "cardNumber"] as const) expect(kindHasField("CI_VECHE", absent)).toBe(false);
   });
 
   it("model nou: Nr. card kept, optional (Q #17); no date of birth", () => {
     expect(fieldsOf("CI_NOU")).toEqual([
-      "nrDocument", "cnp", "sex", "lastName", "firstName", "nationality", "placeOfBirth", "domicileAddress", "issuer",
+      "nrDocument", "cnp", "lastName", "firstName", "nationality", "sex", "placeOfBirth", "domicileAddress", "issuer",
       "dateDocument", "dateValidUntil", "mrz", "cardNumber",
     ]);
     expect(kindHasField("CI_NOU", "dateOfBirth")).toBe(false);
   });
 
   it("the two passports share every field but the domicile: a county, or a country for CRDS", () => {
-    const common = ["passportType", "countryCode", "nrDocument", "lastName", "firstName", "nationality", "dateOfBirth", "sex", "placeOfBirth", "dateDocument", "issuer", "dateValidUntil", "cnp"];
-    expect(fieldsOf("PASAPORT")).toEqual([...common, "domicileCounty", "mrz"]);
-    expect(fieldsOf("PASAPORT_CRDS")).toEqual([...common, "domicileCountry", "mrz"]);
+    const head = ["passportType", "countryCode", "nrDocument", "lastName", "firstName", "nationality", "sex", "dateOfBirth", "placeOfBirth", "dateDocument", "dateValidUntil", "issuer", "cnp"];
+    expect(fieldsOf("PASAPORT")).toEqual([...head, "domicileCounty", "mrz"]);
+    expect(fieldsOf("PASAPORT_CRDS")).toEqual([...head, "domicileCountry", "mrz"]);
   });
 
   it("every kind has the four common fields, as the document's own columns", () => {
@@ -100,9 +101,24 @@ describe("each kind's fields — the design's matrix, Adrian's lists exactly", (
     expect(w("CI_NOU", "lastName").step).toBe("M");
     expect(w("CI_NOU", "firstName").step).toBe("M");
     expect(w("CI_NOU", "sex")).toEqual({ step: "XS", kind: "select" });
-    expect(w("CI_NOU", "issuer").step).toBe("L");
-    expect(w("CI_NOU", "mrz")).toMatchObject({ step: "L", kind: "lines", rows: 2 });
-    expect(w("CI_NOU", "domicileAddress").step).toBe("XL");
+    // 40.94: Emisă de, MRZ and Domiciliu are TILE on the new card (Adrian's rows); on the passports Emisă de's own is
+    // „Autoritatea emitentă", TILE too, and the MRZ keeps its two lines at TILE.
+    expect(w("PASAPORT", "dateOfBirth").step).toBe("M");
+    expect(w("CI_NOU", "issuer")).toEqual({ step: "TILE", kind: "select", fill: true });
+    expect(w("CI_NOU", "mrz")).toMatchObject({ step: "TILE", kind: "lines", rows: 2, fill: true });
+    expect(w("CI_NOU", "domicileAddress")).toEqual({ step: "TILE", kind: "grows", fill: true });
+  });
+
+  // 40.94 — Adrian's rows, 2026-10-28, verbatim: each kind's tile, top to bottom and left to right; TILE alone on its row.
+  it.each([
+    ["CI_VECHE", [["lastName", "firstName"], ["fatherFirstName", "motherFirstName"], ["civilStatus", "dateOfBirth"], ["placeOfBirth*"], ["domicileAddress*"], ["issuer*"], ["dateDocument", "issuerOfficer"], ["nrDocument"]]],
+    ["CI_NOU", [["nrDocument", "cnp"], ["lastName", "firstName"], ["nationality", "sex"], ["placeOfBirth*"], ["domicileAddress*"], ["issuer*"], ["dateDocument", "dateValidUntil"], ["mrz*"], ["cardNumber"]]],
+    ["PASAPORT", [["passportType", "countryCode", "nrDocument"], ["lastName", "firstName"], ["nationality", "sex"], ["dateOfBirth", "placeOfBirth"], ["dateDocument", "dateValidUntil"], ["issuer*"], ["cnp", "domicileCounty"], ["mrz*"]]],
+    ["PASAPORT_CRDS", [["passportType", "countryCode", "nrDocument"], ["lastName", "firstName"], ["nationality", "sex"], ["dateOfBirth", "placeOfBirth"], ["dateDocument", "dateValidUntil"], ["issuer*"], ["cnp", "domicileCountry"], ["mrz*"]]],
+  ] as const)("%s: Adrian's rows, a TILE (*) alone on its row", (kind, rows) => {
+    const got = IDENTITY_KINDS[kind].rows.map((r) => r.map((f) => `${f.key}${f.width.fill ? "*" : ""}`));
+    expect(got).toEqual(rows.map((r) => [...r]));
+    for (const r of IDENTITY_KINDS[kind].rows) if (r.some((f) => f.width.fill)) expect(r).toHaveLength(1);
   });
 });
 

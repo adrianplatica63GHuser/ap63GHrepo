@@ -1,14 +1,13 @@
 /**
  * The identity tile's pure rules — what the document screen draws and refuses.            (Slice 40.83)
  *
- * The tile „Act de identitate" shows exactly the kind's fields from the registry (kinds.ts), in the order the card
- * prints them, the document's own four (number, issue date, validity end, issuer) slotted in where the card prints
- * them, so nothing shows twice. These helpers are what the form asks: the rows the fields flow into, the notice a
+ * The tile „Act de identitate" shows exactly the kind's fields from the registry (kinds.ts), in the kind's rows
+ * (40.94), the document's own four (number, issue date, validity end, issuer) among them, so nothing shows twice. These helpers are what the form asks: the rows the fields flow into, the notice a
  * change of type gives, the validity status, and the check before a save.
  *
  * PURE — no React, no DB. Unit-tested in src/__tests__/identity-document-tile.test.ts.
  */
-import { packFieldRows, unitsInnerRem } from "@/lib/ui/field-widths";
+import { panelRem, rowRem, unitsFor, unitsInnerRem } from "@/lib/ui/field-widths";
 import {
   IDENTITY_KINDS,
   IDENTITY_VALUE_KEYS,
@@ -19,15 +18,18 @@ import {
 } from "./kinds";
 import { cnpDateOfBirth, cnpSex, isValidCnp } from "./validation";
 
-/** The rows the kind's fields flow into, and the tile's width in units (rule 18, the fields' own widths). */
+/**
+ * The tile's rows and its width in units.                                                  (40.83; 40.94)
+ *
+ * Slice 40.94: the rows are the kind's own (`IDENTITY_KINDS[kind].rows`, Adrian's), drawn as written — never
+ * re-flowed, so a row he set is never broken (Ask first 6). The tile is the fewest units that hold its widest row,
+ * and at least 3; a TILE field (`fill`) takes whatever that leaves, so it never widens the tile.
+ */
 export function identityFieldRows(kind: IdentityKind): { units: number; inner: number; rows: IdentityFieldDef[][] } {
-  const fields = IDENTITY_KINDS[kind].fields;
-  const byKey = new Map(fields.map((f) => [f.key, f] as const));
-  const { units, rows } = packFieldRows(
-    fields.map((f) => ({ key: f.key, width: f.width, full: false })),
-    { minUnits: 3 },
-  );
-  return { units, inner: unitsInnerRem(units), rows: rows.map((r) => r.map((k) => byKey.get(k as IdentityFieldDef["key"])!)) };
+  const rows = IDENTITY_KINDS[kind].rows.map((r) => [...r]);
+  const widest = Math.max(0, ...rows.map((r) => rowRem(r.map((f) => f.width))));
+  const units = Math.max(3, unitsFor(panelRem(widest)));
+  return { units, inner: unitsInnerRem(units), rows };
 }
 
 /** The form's path for a field: the document's own column, or `identity.<field>`. */

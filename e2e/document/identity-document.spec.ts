@@ -24,6 +24,21 @@ const general = (page: Page) => page.locator('[data-panel="general"]');
 /** 40.92: „Schimbă tipul…"'s confirmation. */
 const typeChangeDialog = (page: Page) => page.locator("[data-type-change-dialog]");
 
+/** 40.94: the tile's fields row by row, by their `data-width-field`, left to right (a TILE alone on its row). */
+async function tileRows(page: Page): Promise<string[][]> {
+  return tile(page).locator("[data-width-field]").evaluateAll((els) => {
+    const rows = new Map<number, { left: number; key: string }[]>();
+    for (const el of els) {
+      const r = el.getBoundingClientRect();
+      if (r.width === 0) continue;
+      const top = Math.round(r.top);
+      const row = [...rows.keys()].find((t) => Math.abs(t - top) <= 2) ?? top;
+      rows.set(row, [...(rows.get(row) ?? []), { left: r.left, key: (el.getAttribute("data-width-field") ?? "").replace(/^identity\./, "") }]);
+    }
+    return [...rows.entries()].sort((a, b) => a[0] - b[0]).map(([, r]) => r.sort((x, y) => x.left - y.left).map((i) => i.key));
+  });
+}
+
 // An invented CNP: a man born 1985-04-21, control digit valid.
 const CNP = "1850421400123";
 
@@ -107,6 +122,28 @@ test.describe("TC-DOC-28 — actul de identitate pe ecranul lui", () => {
       await expect(box(page, "identity.domicileCounty")).toHaveText("Ilfov");
       await page.goto(`/documents/${crds}`);
       await expect(box(page, "identity.domicileCountry")).toHaveText("Spania", { timeout: 30_000 });
+
+      // Step 4b — 40.94, Adrian's rows, opened so every field is drawn: the Pașaport, then the model vechi. „Titular" is
+      // the holder line above the rows, and the status sits beside Data expirării — neither is a field.
+      await page.goto(`/documents/${pas}`);
+      await expect(tile(page)).toBeVisible({ timeout: 30_000 });
+      await editTile(page, "identity");
+      expect(await tileRows(page)).toEqual([
+        ["passportType", "countryCode", "nrDocument"], ["lastName", "firstName"], ["nationality", "sex"],
+        ["dateOfBirth", "placeOfBirth"], ["dateDocument", "dateValidUntil"], ["issuerPersonId"], ["cnp", "domicileCounty"], ["mrz"],
+      ]);
+      await page.locator('[data-tile-cancel="identity"]').click();
+      await page.goto(`/documents/${vechi}`);
+      await expect(tile(page)).toBeVisible({ timeout: 30_000 });
+      await editTile(page, "identity");
+      expect(await tileRows(page)).toEqual([
+        ["lastName", "firstName"], ["fatherFirstName", "motherFirstName"], ["civilStatus", "dateOfBirth"], ["placeOfBirth"],
+        ["domicileAddress"], ["issuerPersonId"], ["dateDocument", "issuerOfficer"], ["nrDocument"],
+      ]);
+      // Locul nașterii, Domiciliu and Emisă de across the tile, as wide as each other.
+      const across = await Promise.all(["identity.placeOfBirth", "identity.domicileAddress", "issuerPersonId"].map(async (f) => (await box(page, f).boundingBox())!.width));
+      expect(Math.max(...across) - Math.min(...across), `TILE widths ${across.join(", ")}`).toBeLessThanOrEqual(1);
+      await page.locator('[data-tile-cancel="identity"]').click();
 
       // Step 5 — model nou to Pașaport: the values it has no field for are named, and removed on save.
       // 40.92: through „Schimbă tipul…" — its confirmation names them first; „Confirmă" changes the type in the form.

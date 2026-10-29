@@ -1381,6 +1381,8 @@ export function DocumentForm({
     (displayHighlights as Record<string, HighlightColor | undefined> | null)?.[path];
   const renderIdentityField = (f: IdentityFieldDef) => {
     const path = identityFieldPath(f) as FieldPath<FormValues>;
+    // Slice 40.94: a field at TILE on this kind takes the tile's whole inner width, on its row of its own.
+    const fillRem = f.width.fill && identityRowsNow ? identityRowsNow.inner : undefined;
     const label = tId(f.messageKey.slice("identityDocument.".length));
     const idErrors = errors.identity as Record<string, { message?: string } | undefined> | undefined;
     if (f.type === "issuer") {
@@ -1394,6 +1396,7 @@ export function DocumentForm({
           options={issuer.options}
           highlight={displayHighlights?.issuerPersonId}
           width={f.width}
+          fillRem={fillRem}
           watchValue={watchedValues.issuerPersonId}
           hint={
             <>
@@ -1436,6 +1439,7 @@ export function DocumentForm({
         error={(f.target === "identity" ? idErrors?.[f.key]?.message : undefined) ?? cnpError}
         highlight={f.target === "identity" ? identityHighlight(path) : identityHighlight(f.key)}
         width={f.width}
+        fillRem={fillRem}
       />
     );
     if (f.key !== "dateValidUntil") return field;

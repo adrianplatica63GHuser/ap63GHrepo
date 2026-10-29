@@ -39,8 +39,17 @@ describe("the tile's fields", () => {
     expect(rows.flat().map((f) => f.key)).toEqual(IDENTITY_KINDS[kind].fields.map((f) => f.key));
   });
 
+  // 40.94 (Ask first 1, 6): the kind's own rows, as written — never re-flowed — in a tile of 3 units, the least it
+  // takes; the widest row (the passports' Data nașterii | Locul nașterii) fits in it.
+  it.each([...IDENTITY_KIND_VALUES])("%s: the kind's rows as written, 3 units", (kind) => {
+    const { units, rows } = identityFieldRows(kind);
+    expect(rows.map((r) => r.map((f) => f.key))).toEqual(IDENTITY_KINDS[kind].rows.map((r) => r.map((f) => f.key)));
+    expect(units).toBe(3);
+  });
+
   it("the paths: the document's own columns where the card prints them, the rest under identity.", () => {
-    expect(identityTilePaths("CI_NOU").slice(0, 3)).toEqual(["nrDocument", "identity.cnp", "identity.sex"]);
+    // 40.94: the new card's first row is Seria și numărul | CNP, then Nume | Prenume.
+    expect(identityTilePaths("CI_NOU").slice(0, 3)).toEqual(["nrDocument", "identity.cnp", "identity.lastName"]);
     expect(identityTilePaths("CI_NOU")).toContain("issuerPersonId");
     expect(identityTilePaths("CI_NOU")).toContain("dateValidUntil");
     expect(identityTilePaths("CI_VECHE")).not.toContain("dateValidUntil");
