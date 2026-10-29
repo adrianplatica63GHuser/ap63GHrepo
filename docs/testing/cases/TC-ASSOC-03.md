@@ -36,7 +36,8 @@ role a notary writes for the buyer on a Contract de Vânzare.
 | 5 | **Ticks the row first** | The row is selected, the hint „Selectați cel puțin un act" goes away, and **„Rol" narrows to the roles of that document's type**: „— fără rol —", „Cumpărător", „Moștenitor", „Notar", „Reprezentant legal / Mandatar", „Vânzător" |
 | 6 | Chooses „Cumpărător" in „Rol" | The role is selected |
 | 7 | Presses „Asociază selecția" | Back on the person, on its „Legături" (`?tab=document`): one line, no column headings — `TC-DOC-01 Contract de test (Contract de Vânzare)` — „Relația", „Vizualizare"; „Relația" says `Rol: „Cumpărător”` |
-| 8 | Presses „Vizualizare" on that row | The document's own screen, opened **read-only** (`?readonly=true`) |
+| 7b | (40.96) Looks at the tile's buttons; rests the mouse away from the row, then on it | „Asociază persoană", „Asociază proprietate", „Asociază act" and „Dezasociază" are icons only — the chain and the kind's icon, the chain and the broken chain — their words on hover. The row's buttons are faint at rest and full with the mouse on the row |
+| 8 | Presses the document's name on that row (40.96; „Vizualizare" until then) | The document's own screen, opened **read-only** (`?readonly=true`) |
 | 9 | Looks at the tile „Părți" on the document | One row, on one line: `Ion TC-PERS-01 (Cumpărător)`, with an orange „Cotă" |
 
 Step 9 is the other end of the link, and is the reason this case is not just step 7.
@@ -54,6 +55,9 @@ asks for no confirmation). „Nimic corelat încă." follows. The person and the
 for the cases that follow.
 
 ## Notes from the runs
+
+**2026-10-28 — Slice 40.96.** Step 7b added: the tile's icon-only buttons and the quiet row; step 8 presses the row's
+name, the link that replaced „Vizualizare". Not driven by hand first; the spec drives it.
 
 **2026-10-07 — Slice #38.33.** A Contract de Vânzare's sellers and buyers are on „Părți", so step 9
 reads the buyer there.

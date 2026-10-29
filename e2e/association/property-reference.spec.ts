@@ -101,7 +101,7 @@ async function linkAndRead(page: Page, part: { id: string; name: string }, whole
   await fromPart.getByRole("button", { name: "Relația", exact: true }).click();
   await expect(page.getByRole("status").filter({ hasText: ROLE })).toHaveText(`această proprietate „${ROLE}” ${whole.name}`);
   await page.keyboard.press("Escape");
-  await expect(fromPart.getByRole("link", { name: "Vizualizare" })).toBeVisible();
+  await expect(fromPart.locator("[data-row-name-link]")).toBeVisible();
 
   // Step 6 — the whole's „Proprietăți corelate": the converse, with the part's name.
   await page.goto(`/properties/${whole.id}`);

@@ -41,9 +41,9 @@ export function PersonRelatedTile({ personId, backBase, label, readOnly = false 
       // Slice 40.16: the loading line only while every kind still loads — one kind failing or slow never blanks the rest.
       loading={persons.isLoading && properties.isLoading && documents.isLoading}
       associate={[
-        { label: t("associatePerson"), onClick: persons.associate },
-        { label: t("associateProperty"), onClick: properties.associate },
-        { label: t("associateDocument"), onClick: documents.associate },
+        { label: t("associatePerson"), kind: "natural", onClick: persons.associate },
+        { label: t("associateProperty"), kind: "property", onClick: properties.associate },
+        { label: t("associateDocument"), kind: "document", onClick: documents.associate },
       ]}
       belowRows={
         <>

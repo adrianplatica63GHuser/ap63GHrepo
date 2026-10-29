@@ -78,7 +78,6 @@ export function IdCardPeopleAction({ documentId, title }: { documentId: string; 
       <IconButton
         icon={UserPlus}
         label={state === "loading" ? t("loading") : t("action")}
-        showLabel
         variant="secondary"
         size="lg"
         busy={state === "loading"}

@@ -495,7 +495,6 @@ export function ProcessPanel({ documentId }: Props) {
             icon={Play}
             label={processing ? t("processing") : t("buttonLabel")}
             busy={processing}
-            showLabel
             variant="primary"
             size="lg"
             onClick={handleProcess}

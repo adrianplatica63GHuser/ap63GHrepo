@@ -86,7 +86,7 @@ test.describe("TC-ASSOC-09 — Două persoane corelate, citite corect din ambele
       const onAna = lineRow(page.getByRole("region", { name: "Legături", exact: true }), MIHAI);
       await expect(onAna).toHaveCount(1, { timeout: 15_000 });
       await expect(onAna.locator("[data-row-content]")).toHaveText(`${MIHAI} (Părinte)`);
-      await expect(onAna.getByRole("link", { name: "Vizualizare" })).toBeVisible();
+      await expect(onAna.locator("[data-row-name-link]")).toBeVisible();
       await expectOneLine(onAna);
       await expect(page.getByRole("columnheader")).toHaveCount(0);
 

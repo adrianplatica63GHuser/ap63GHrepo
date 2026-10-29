@@ -93,7 +93,7 @@ test.describe("TC-ASSOC-05 — Act asociat proprietății, din ecranul propriet�
       await expect(related.getByText("Cod", { exact: true })).toHaveCount(0);
 
       // Step 7 — „Vizualizare": the document, READ-ONLY.
-      await linked.getByRole("link", { name: "Vizualizare" }).click();
+      await linked.locator("[data-row-name-link]").click();
       await expect(page).toHaveURL(new RegExp(`/documents/${documentId}\\?readonly=true$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: DOC_TITLE })).toBeVisible({ timeout: 30_000 });
 
@@ -102,7 +102,7 @@ test.describe("TC-ASSOC-05 — Act asociat proprietății, din ecranul propriet�
       const back = lineRow(props, PROPERTY);
       await expect(back).toHaveCount(1, { timeout: 30_000 });
       await expect(back.getByRole("radio", { name: PROPERTY })).toHaveCount(1);
-      await expect(back.getByRole("link", { name: "Vizualizare" })).toBeVisible();
+      await expect(back.locator("[data-row-name-link]")).toBeVisible();
       await expect(back.locator("[data-row-content]")).toHaveText(PROPERTY);
 
       // ── At the end — on the document's „Proprietăți": radio, „Dezasociază" ─

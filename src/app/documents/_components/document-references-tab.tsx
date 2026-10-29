@@ -1,7 +1,7 @@
 "use client";
 
 import { useNameOr } from "@/components/record/use-name-or";
-import { ArrowLeftRight, ArrowRight, ListChecks, ScanText, ScrollText } from "lucide-react";
+import { ArrowLeftRight, ListChecks, ScanText, ScrollText, Search } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { PressBubble } from "@/lib/ui/press-bubble";
 import { useId, useState, type ReactNode } from "react";
@@ -14,8 +14,6 @@ import {
   type LinkerDocumentType,
   type LinkerItem,
 } from "./ai-reference-linker-dialog";
-import { openThroughGuard } from "@/lib/ui/row-link";
-import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
 import { PreviewButton } from "@/components/tiles/preview-tiles";
 import { RelatedLoadError } from "@/components/tiles/related-load-error";
 
@@ -88,7 +86,6 @@ export function useDocumentReferenceRows(documentId: string): DocumentReferenceR
   const nameOr      = useNameOr(); // #37.57: a name, or words — never the system ID
   const router      = useRouter();
   // FU-271 (Slice #37.33): „Vizualizare" and a double-click leave this screen, so they ask about unsaved work first.
-  const { guardedNavigate } = useUnsavedChanges();
   const queryClient = useQueryClient();
 
 
@@ -245,16 +242,7 @@ export function useDocumentReferenceRows(documentId: string): DocumentReferenceR
               }
             />
           ) : undefined,
-          view: (
-            <IconButton
-              href={`/documents/${encodeURIComponent(item.id)}?readonly=true`}
-              onClick={(e) => openThroughGuard(e, `/documents/${encodeURIComponent(item.id)}?readonly=true`, guardedNavigate)}
-              icon={ArrowRight}
-              label={t("view")}
-              variant="secondary"
-              size="xs"
-            />
-          ),
+          // 40.96: no „Vizualizare\" — the name in the row is the link (RelatedTile).
           preview: <PreviewButton target={{ kind: "document", id: item.id }} />,
       },
     };
@@ -264,9 +252,10 @@ export function useDocumentReferenceRows(documentId: string): DocumentReferenceR
   // how many instruments wait for an answer.
   const instrumentsButton = (
           <IconButton
+            // 40.96 (Adrian): the scroll, then a magnifier — icons only, the words its name and tooltip.
             icon={ScrollText}
+            secondIcon={Search}
             label={t("instrumentsButton")}
-            showLabel
             count={pendingCount}
             note={pendingCount > 0 ? t("instrumentsPending", { count: pendingCount }) : undefined}
             variant="secondary"
@@ -312,7 +301,6 @@ export function useDocumentReferenceRows(documentId: string): DocumentReferenceR
           <IconButton
             icon={ListChecks}
             label={t("openLinker")}
-            showLabel
             variant="primary"
             size="lg"
             onClick={() => setLinkerOpen(true)}
@@ -322,7 +310,6 @@ export function useDocumentReferenceRows(documentId: string): DocumentReferenceR
             icon={ScanText}
             label={rereading ? t("rereading") : t("reread")}
             busy={rereading}
-            showLabel
             variant="secondary"
             size="lg"
             onClick={handleReread}

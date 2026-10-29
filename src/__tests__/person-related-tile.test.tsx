@@ -86,7 +86,7 @@ describe("a person's „Corelate”", () => {
       ["CVC 1 (Contract de Vânzare)", "CVC 1 (Contract de Vânzare)", "CM 1 (Certificat de moștenitor)", "Plan"],
     ]);
     for (const li of screen.getAllByRole("listitem")) {
-      expect([...li.querySelectorAll<HTMLElement>("[data-slot]")].map((s) => s.dataset.slot)).toEqual(["share", "relation", "view", "preview"]);
+      expect([...li.querySelectorAll<HTMLElement>("[data-slot]")].map((s) => s.dataset.slot)).toEqual(["share", "relation", "preview"]); // 40.96: no „Vizualizare"
       expect(li.className).toContain("whitespace-nowrap");
       expect(li.querySelector('[data-slot="share"]')?.childElementCount).toBe(0); // the share stays on the Document
     }

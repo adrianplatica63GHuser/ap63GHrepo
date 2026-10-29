@@ -180,9 +180,7 @@ export function TileEditButton({ tile, title, onEdit }: { tile: string; title: s
   return (
     <IconButton
       icon={Pencil}
-      label={t("edit")}
-      fullName={t("editTile", { tile: title })}
-      showLabel
+      label={t("editTile", { tile: title })}
       variant="secondary"
       size="sm"
       onClick={onEdit}
@@ -217,8 +215,8 @@ export function TileEditBar({
         </p>
       )}
       <div className="flex flex-wrap items-center gap-3">
-        <IconButton icon={Save} label={t("save")} showLabel variant="primary" size="sm" onClick={onSave} disabled={saving || !canSave} data-tile-save={tile} />
-        <IconButton icon={X} label={t("cancel")} showLabel variant="secondary" size="sm" onClick={onCancel} disabled={saving} data-tile-cancel={tile} />
+        <IconButton icon={Save} label={t("save")} variant="primary" size="sm" onClick={onSave} disabled={saving || !canSave} data-tile-save={tile} />
+        <IconButton icon={X} label={t("cancel")} variant="secondary" size="sm" onClick={onCancel} disabled={saving} data-tile-cancel={tile} />
       </div>
     </div>
   );

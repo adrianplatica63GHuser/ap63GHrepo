@@ -95,7 +95,35 @@ export interface RelatedRow {
 
 export interface RelatedAssociate {
   label: string;
+  /** Slice 40.96: the kind it associates — its icon (`ENTITY_ICON`) stands after the chain. */
+  kind: RelatedKind;
   onClick: () => void;
+}
+
+/**
+ * Slice 40.96: the record's name in a row, a link that opens it (Adrian: „the open button disappears and is replaced
+ * by having the name of the object as a link"). A plain click opens it as „Vizualizare" did — read-only, through the
+ * unsaved-changes guard — and does not select the row; Ctrl/⌘+click, Shift+click and a middle-click are the
+ * browser's, a new tab (`RowNameLink`'s, 40.60). A click elsewhere on the row still selects it for „Dezasociază".
+ */
+function RelatedNameLink({ href, onOpen, children }: { href: string; onOpen: () => void; children: ReactNode }) {
+  return (
+    <a
+      href={href}
+      onClick={(e) => {
+        e.stopPropagation();
+        if (e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return;
+        e.preventDefault();
+        onOpen();
+      }}
+      onAuxClick={(e) => e.stopPropagation()}
+      onDoubleClick={(e) => e.stopPropagation()}
+      className="rounded-sm text-inherit no-underline underline-offset-2 hover:underline focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus"
+      data-row-name-link=""
+    >
+      {children}
+    </a>
+  );
 }
 
 /** Every key a literal — the copy suites find a component's keys by reading its source. */
@@ -269,7 +297,9 @@ export function RelatedTile({
                       radioLabel={row.radioLabel}
                       icon={RELATED_ICON[row.kind]}
                       kindLabel={kindLabel(t, row.kind)}
-                      content={row.content}
+                      content={<RelatedNameLink href={row.href} onOpen={() => guardedNavigate(row.href)}>{row.content}</RelatedNameLink>}
+                      // 40.96: the row's buttons quiet at rest, full on the row under the mouse, as on the lists (40.60).
+                      quiet
                       title={row.title}
                       tag={row.role ? <RoleTag role={row.role} /> : undefined}
                       buttons={readOnly ? readOnlyButtons(row.buttons) : row.buttons}
@@ -298,24 +328,27 @@ export function RelatedTile({
             {/* At `sm`: the three „Asociază …" and „Dezasociază" stand in one row in the
                 tile's 4 units (563 px of the 610 inside, measured); at `lg` they took two rows. */}
             <div className="flex flex-wrap gap-2">
+              {/* 40.96: icons only, the words their name and tooltip — the chain and the kind's own icon; „Dezasociază"
+                  the chain and the broken chain. */}
               {associate.map((a) => (
                 <IconButton
                   key={a.label}
                   icon={LinkIcon}
+                  secondIcon={ENTITY_ICON[a.kind]}
                   label={a.label}
-                  showLabel
                   variant="primary"
                   size="sm"
                   onClick={a.onClick}
                   disabled={selected !== null}
+                  data-associate={a.kind}
                 />
               ))}
               <IconButton
-                icon={Unlink}
+                icon={LinkIcon}
+                secondIcon={Unlink}
                 label={t("dissociate")}
                 busy={dissociating}
                 busyLabel={t("dissociating")}
-                showLabel
                 variant="secondary"
                 size="sm"
                 onClick={handleDissociate}
@@ -339,9 +372,11 @@ export function RelatedTile({
  * Slice #38.76: a read-only row's buttons — every slot but `share`, whose „Cotă" opens its values to edit.
  * Slice #39.25: and but `preview`, which was only ever drawn disabled there (was `withoutShare`).
  */
+// 40.96: no row has a „Vizualizare" any more — the name is the link — so a read-only row keeps „Relația" alone.
 export function readOnlyButtons(buttons: RelatedRow["buttons"]): RelatedRow["buttons"] {
-  const { share: _share, preview: _preview, ...rest } = buttons;
+  const { share: _share, preview: _preview, view: _view, ...rest } = buttons;
   void _share;
   void _preview;
+  void _view;
   return rest;
 }

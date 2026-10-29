@@ -87,7 +87,7 @@ test.describe("TC-ASSOC-06 — Firmă proprietară a unui teren", () => {
       const onCompany = lineRow(page.getByRole("region", { name: "Legături", exact: true }), PROPERTY);
       await expect(onCompany).toHaveCount(1, { timeout: 15_000 });
       await expect(onCompany.locator("[data-row-content]")).toHaveText(`${PROPERTY} (${ROLE})`);
-      await expect(onCompany.getByRole("link", { name: "Vizualizare" })).toBeVisible();
+      await expect(onCompany.locator("[data-row-name-link]")).toBeVisible();
       await expectOneLine(onCompany);
 
       // Step 7 — the other end: the property's „Persoane", Nume · Rol, the company.
@@ -98,7 +98,7 @@ test.describe("TC-ASSOC-06 — Firmă proprietară a unui teren", () => {
       await expect(onProperty).toContainText(ROLE);
 
       // Step 8 — „Vizualizare" opens the COMPANY, read-only, „Înapoi la listă" and „Modifică".
-      await onProperty.getByRole("link", { name: "Vizualizare" }).click();
+      await onProperty.locator("[data-row-name-link]").click();
       await expect(page).toHaveURL(new RegExp(`/judicial-persons/${companyId}\\?readonly=true$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: COMPANY })).toBeVisible({ timeout: 30_000 });
       await expect(page.getByRole("button", { name: "Înapoi la listă" }).or(page.getByRole("link", { name: "Înapoi la listă" }))).toBeVisible();

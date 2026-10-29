@@ -172,9 +172,9 @@ export function AmendedDeedLink({ documentId, readOnly }: { documentId: string |
                 .join(" · ")}
             </p>
           </div>
-          <IconButton icon={ExternalLink} label={t("open")} showLabel variant="secondary" size="sm" href={`/documents/${encodeURIComponent(parent.id)}`} />
+          <IconButton icon={ExternalLink} label={t("open")} variant="secondary" size="sm" href={`/documents/${encodeURIComponent(parent.id)}`} />
           {!readOnly && (
-            <IconButton type="button" icon={Unlink} label={t("unlink")} showLabel variant="secondary" size="sm" busy={busy} onClick={unlink} />
+            <IconButton type="button" icon={Unlink} label={t("unlink")} variant="secondary" size="sm" busy={busy} onClick={unlink} />
           )}
         </div>
       ) : !documentId ? (
@@ -183,7 +183,7 @@ export function AmendedDeedLink({ documentId, readOnly }: { documentId: string |
         <div className="flex flex-col gap-2">
           {!searching ? (
             <div>
-              <IconButton type="button" icon={LinkIcon} label={t("link")} showLabel variant="primary" size="sm" onClick={() => setSearching(true)} />
+              <IconButton type="button" icon={LinkIcon} label={t("link")} variant="primary" size="sm" onClick={() => setSearching(true)} />
             </div>
           ) : (
             <div className="flex flex-col gap-2" data-parent-search>

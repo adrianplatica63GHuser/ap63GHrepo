@@ -1,14 +1,11 @@
 "use client";
 
-import { ArrowRight } from "lucide-react";
-import { IconButton } from "@/lib/ui/icon-button";
 import type { ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import type { RelatedRow } from "@/components/tiles/related-tile";
-import { openThroughGuard, personPath } from "@/lib/ui/row-link";
-import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
+import { personPath } from "@/lib/ui/row-link";
 import { PreviewButton } from "@/components/tiles/preview-tiles";
 import { personPreview } from "@/lib/ui/previews";
 import { RelatedLoadError } from "@/components/tiles/related-load-error";
@@ -54,7 +51,6 @@ export function usePropertyPersonRows(propertyId: string): PropertyPersonRows {
   const t           = useTranslations("property.persons");
   const router      = useRouter();
   // FU-271 (Slice #37.33): „Vizualizare" and a double-click leave this screen, so they ask about unsaved work first.
-  const { guardedNavigate } = useUnsavedChanges();
   const queryClient = useQueryClient();
 
   const { data: persons, isLoading, isError, error, refetch, isFetching } = useQuery({
@@ -93,16 +89,7 @@ export function usePropertyPersonRows(propertyId: string): PropertyPersonRows {
       href: `${personPath(p.type, p.id)}?readonly=true`,
       dissociate: () => dissociate(p.id),
       buttons: {
-        view: (
-          <IconButton
-            href={`${personPath(p.type, p.id)}?readonly=true`}
-            onClick={(e) => openThroughGuard(e, `${personPath(p.type, p.id)}?readonly=true`, guardedNavigate)}
-            icon={ArrowRight}
-            label={t("view")}
-            variant="secondary"
-            size="xs"
-          />
-        ),
+        // 40.96: no „Vizualizare\" — the name in the row is the link (RelatedTile).
         preview: <PreviewButton target={personPreview(p.type, p.id)} />,
       },
     };

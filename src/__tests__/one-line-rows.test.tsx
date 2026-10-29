@@ -106,7 +106,7 @@ describe("one line a row", () => {
     for (const li of screen.getAllByRole("listitem")) {
       const slots = [...li.querySelectorAll<HTMLElement>("[data-slot]")];
       // #37.65: one slot set for the whole tile, whatever the row's kind.
-      expect(slots.map((s) => s.dataset.slot)).toEqual(["share", "relation", "view", "preview"]);
+      expect(slots.map((s) => s.dataset.slot)).toEqual(["share", "relation", "preview"]); // 40.96: the name is the link
       expect(slots[0].style.width).toBe(`${ROW_SLOT_REM.share}rem`);
     }
     expect(rowOf("Maria Proiectant").querySelector('[data-slot="share"]')?.childElementCount).toBe(0);
@@ -210,14 +210,15 @@ describe("„Acte corelate”", () => {
 });
 
 describe("„Proprietăți”", () => {
-  it("a property's name on one line, the view and preview slots after it", async () => {
+  it("a property's name on one line, a link, the preview slot after it (40.96: no view slot)", async () => {
     renderTile(<DocumentRelatedTile documentId="doc" label="Corelate" />);
     await screen.findByRole("group", { name: "Corelate" });
     const row = within(screen.getByRole("list", { name: "group.property" })).getByRole("listitem");
     expect(row.querySelector("[data-row-content]")).toHaveAttribute("title", "Livada de la deal");
     // The two buttons it has, in their slots; the share and relationship slots empty.
     const slots = [...row.querySelectorAll<HTMLElement>("[data-slot]")];
-    expect(slots.map((s) => [s.dataset.slot, s.childElementCount > 0])).toEqual([["share", false], ["relation", false], ["view", true], ["preview", false]]);
+    expect(slots.map((s) => [s.dataset.slot, s.childElementCount > 0])).toEqual([["share", false], ["relation", false], ["preview", false]]);
+    expect(row.querySelector("[data-row-name-link]")).toHaveAttribute("href", expect.stringContaining("?readonly=true"));
   });
 });
 

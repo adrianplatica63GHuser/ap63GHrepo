@@ -90,8 +90,8 @@ test.describe("TC-ASSOC-11 — Persoană fizică legată de o firmă, citită di
       await expectOneLine(onCompany);
       await expect(page.getByRole("columnheader")).toHaveCount(0);
 
-      // Step 6 — „Vizualizare": the person, read-only.
-      await onCompany.getByRole("link", { name: "Vizualizare" }).click();
+      // Step 6 — the name (40.96; „Vizualizare" until then): the person, read-only.
+      await onCompany.locator("[data-row-name-link]").click();
       await expect(page).toHaveURL(new RegExp(`/natural-persons/${personId}\\?readonly=true$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: PERSON })).toBeVisible({ timeout: 30_000 });
 
@@ -103,7 +103,7 @@ test.describe("TC-ASSOC-11 — Persoană fizică legată de o firmă, citită di
       await expect(onPerson).not.toContainText("Reprezentant legal / Mandatar");
 
       // Step 8 — „Vizualizare" on that row: the COMPANY's screen, read-only.
-      await onPerson.getByRole("link", { name: "Vizualizare" }).click();
+      await onPerson.locator("[data-row-name-link]").click();
       await expect(page).toHaveURL(new RegExp(`/judicial-persons/${companyId}\\?readonly=true$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: COMPANY })).toBeVisible({ timeout: 30_000 });
 

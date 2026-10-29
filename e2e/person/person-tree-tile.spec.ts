@@ -74,7 +74,8 @@ test.describe("TC-INHER-02 — arborele persoanei", () => {
       // Step 1a (Slice 40.34) — the button reads „Adaugă sau scoate", named and tooltipped „Adaugă sau scoate o rudă";
       // „Asociază persoană"'s kind: its height and its colour, as wide as its words, at the tile's left.
       const open = tile(page).locator("[data-tree-expand]");
-      await expect(open).toHaveText("Adaugă sau scoate");
+      // 40.96: icon-only — its words are its name and tooltip, „Adaugă sau scoate o rudă" (40.34 showed „Adaugă sau scoate").
+      await expect(open).toHaveText("");
       await expect(open).toHaveAccessibleName("Adaugă sau scoate o rudă");
       await showTile(page, "Legături");
       const associate = page.locator('[data-tile="related"]').getByRole("button", { name: "Asociază persoană", exact: true });

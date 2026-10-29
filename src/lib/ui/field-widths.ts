@@ -966,13 +966,13 @@ export function oneLineRowUnits(slots: readonly RowSlot[], contentRem: number, i
  * slots — „Cotă" first, the relationship before „Vizualizare", then
  * „Previzualizare" — every row's in the same place whatever its kind.
  */
-export const RELATED_SLOTS: readonly RowSlot[] = ["share", "relation", "view", "preview"];
+export const RELATED_SLOTS: readonly RowSlot[] = ["share", "relation", "preview"]; // 40.96: no „Vizualizare" — the name is the link
 
 /**
  * Slice #39.25: „Legături" read-only, beside a list — „Relația" and „Vizualizare" only. The `share` slot is always
  * empty there (#38.76), and „Previzualizare" was drawn disabled; Adrian: „please remove the disabled Preview button".
  */
-export const RELATED_READONLY_SLOTS: readonly RowSlot[] = ["relation", "view"];
+export const RELATED_READONLY_SLOTS: readonly RowSlot[] = ["relation"]; // 40.96: „Vizualizare" went; the name opens the record
 
 /**
  * „Corelate"'s units: the fewest that hold its widest row — the icon, the

@@ -1,8 +1,7 @@
 "use client";
 
 import { useNameOr } from "@/components/record/use-name-or";
-import { ArrowLeftRight, ArrowRight } from "lucide-react";
-import { IconButton } from "@/lib/ui/icon-button";
+import { ArrowLeftRight } from "lucide-react";
 import { PressBubble } from "@/lib/ui/press-bubble";
 import type { ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -10,8 +9,6 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import type { RelatedRow } from "@/components/tiles/related-tile";
 import { propertyRoleChip } from "@/lib/properties/relation-roles";
-import { openThroughGuard } from "@/lib/ui/row-link";
-import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
 import { PreviewButton } from "@/components/tiles/preview-tiles";
 import { RelatedLoadError } from "@/components/tiles/related-load-error";
 
@@ -55,7 +52,6 @@ export function usePropertyReferenceRows(propertyId: string): PropertyReferenceR
   const nameOr      = useNameOr(); // #37.57: a name, or words — never the system ID
   const router      = useRouter();
   // FU-271 (Slice #37.33): „Vizualizare" and a double-click leave this screen, so they ask about unsaved work first.
-  const { guardedNavigate } = useUnsavedChanges();
   const queryClient = useQueryClient();
 
   const { data: items, isLoading, isError, error, refetch, isFetching } = useQuery({
@@ -104,16 +100,7 @@ export function usePropertyReferenceRows(propertyId: string): PropertyReferenceR
       dissociate: () => dissociate(item.id),
       buttons: {
         relation: sentence ? <PressBubble icon={ArrowLeftRight} label={t("relationship")} text={sentence} /> : undefined,
-        view: (
-          <IconButton
-            href={`/properties/${encodeURIComponent(item.id)}?readonly=true`}
-            onClick={(e) => openThroughGuard(e, `/properties/${encodeURIComponent(item.id)}?readonly=true`, guardedNavigate)}
-            icon={ArrowRight}
-            label={t("view")}
-            variant="secondary"
-            size="xs"
-          />
-        ),
+        // 40.96: no „Vizualizare\" — the name in the row is the link (RelatedTile).
         preview: <PreviewButton target={{ kind: "property", id: item.id }} />,
       },
     };

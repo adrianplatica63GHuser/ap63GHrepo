@@ -100,7 +100,7 @@ export function PersonTreeTile({
         // scoate o rudă" as its name and tooltip (Ask first 1); „Asociază …"'s kind — primary, sm, as wide as its
         // words, at the tile's left (Ask first 2). It was one large indigo button stretched across the tile (#39.05).
         <div className="mt-3 flex flex-col items-start" data-tree-panel="collapsed">
-          <IconButton icon={Users} label={t("openShort")} fullName={t("open")} showLabel variant="primary" size="sm" data-tree-expand="" onClick={() => setExpanded(true)} />
+          <IconButton icon={Users} label={t("open")} variant="primary" size="sm" data-tree-expand="" onClick={() => setExpanded(true)} />
         </div>
       )}
     </section>
@@ -199,7 +199,7 @@ function FamilyPanel({ personId, personName, onCollapse }: { personId: string; p
   return (
     <div className="mt-3 flex flex-col gap-3" data-tree-panel="expanded">
       <div className="flex justify-end">
-        <IconButton icon={ChevronUp} label={t("collapse")} showLabel variant="secondary" size="xs" data-tree-collapse="" onClick={onCollapse} />
+        <IconButton icon={ChevronUp} label={t("collapse")} variant="secondary" size="xs" data-tree-collapse="" onClick={onCollapse} />
       </div>
 
       <div className="flex flex-col gap-1">
@@ -217,7 +217,7 @@ function FamilyPanel({ personId, personName, onCollapse }: { personId: string; p
                 {confirm === m.otherId ? (
                   <span className="flex items-center gap-1" role="group" aria-label={t("removeConfirm", { name: m.name })}>
                     <span className="text-xs text-ink">{t("removeConfirm", { name: m.name })}</span>
-                    <IconButton icon={Trash2} label={t("removeYes")} showLabel variant="danger" size="xs" busy={busy} onClick={() => void remove(m.otherId)} />
+                    <IconButton icon={Trash2} label={t("removeYes")} variant="danger" size="xs" busy={busy} onClick={() => void remove(m.otherId)} />
                     <IconButton icon={ChevronUp} label={t("removeNo")} variant="secondary" size="xs" onClick={() => setConfirm(null)} />
                   </span>
                 ) : (
@@ -272,7 +272,7 @@ function FamilyPanel({ personId, personName, onCollapse }: { personId: string; p
           </select>
         </label>
         <div>
-          <IconButton icon={Plus} label={t("add")} showLabel variant="primary" size="sm" busy={busy} disabled={!other || !roleId} onClick={() => void add()} />
+          <IconButton icon={Plus} label={t("add")} variant="primary" size="sm" busy={busy} disabled={!other || !roleId} onClick={() => void add()} />
         </div>
         {error && <p role="alert" className="text-xs text-red-600 dark:text-red-400">{t("error")}</p>}
       </fieldset>

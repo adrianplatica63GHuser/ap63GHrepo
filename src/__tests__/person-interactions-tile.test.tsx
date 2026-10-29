@@ -71,13 +71,15 @@ describe("the address and C (#39.05)", () => {
     renderTile();
     expect(panel()).toHaveAttribute("data-person-log", "collapsed");
     expect(stub()).toBeNull();
-    expect(document.querySelector("[data-log-expand]")).toHaveTextContent("screen.logTitle");
+    // 40.96: icon-only, its words its name and tooltip.
+    expect(document.querySelector("[data-log-expand]")).toHaveAccessibleName("screen.logTitle");
     // Slice 40.33: „Asociază …"'s kind — primary, sm, as wide as its words (it was #38.85's large indigo, stretched).
     const src = readFileSync(join(process.cwd(), "src", "app", "_components", "person-interactions-tile.tsx"), "utf8");
-    expect(src).toMatch(/label=\{t\("screen\.logTitle"\)\}\s+showLabel\s+variant="primary"\s+size="sm"/);
+    expect(src).toMatch(/label=\{t\("screen\.logTitle"\)\}\s+variant="primary"\s+size="sm"/);
     expect(document.querySelector("[data-person-log]")!.className).toContain("items-start");
     const related = readFileSync(join(process.cwd(), "src", "components", "tiles", "related-tile.tsx"), "utf8");
-    expect(related).toMatch(/icon=\{LinkIcon\}\s+label=\{a\.label\}\s+showLabel\s+variant="primary"\s+size="sm"/);
+    // 40.96: the chain and the kind's own icon, no words on screen.
+    expect(related).toMatch(/icon=\{LinkIcon\}\s+secondIcon=\{ENTITY_ICON\[a\.kind\]\}\s+label=\{a\.label\}\s+variant="primary"\s+size="sm"/);
   });
 
   it("?log=new opens C expanded on a new record; ?log=<id> on that row, which reads selected in B", async () => {

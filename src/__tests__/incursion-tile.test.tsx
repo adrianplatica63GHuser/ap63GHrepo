@@ -414,7 +414,7 @@ describe("„Legături” read-only draws no association control (#38.76)", () =
         label="Legături"
         rows={rows}
         loading={false}
-        associate={[{ label: "associatePerson", onClick: jest.fn() }]}
+        associate={[{ label: "associatePerson", kind: "natural", onClick: jest.fn() }]}
         belowRows={<p data-below="">Total</p>}
         extraButtons={<button type="button" data-extra="">Înscrisuri citate</button>}
         underButtons={<div data-under="" />}
@@ -430,17 +430,19 @@ describe("„Legături” read-only draws no association control (#38.76)", () =
     for (const sel of ["[data-share-button]", "[data-below]", "[data-extra]", "[data-under]"]) expect(container.querySelector(sel)).not.toBeNull();
   });
 
-  it("read-only: the rows, their kinds' icons, „Vizualizare” and „Relația” — and no radio, no associate, no dissociate, no share, nothing below", () => {
+  // 40.96: „Vizualizare” went — the name in the row is the link. Was „„Vizualizare” and „Relația”” (#38.76, #39.25).
+  it("read-only: the rows, their kinds' icons, „Relația” and the name as a link — and no radio, no associate, no dissociate, no share, nothing below", () => {
     const { container } = draw(true);
-    // #39.25: and no „Previzualizare” — not even disabled — in a row of two slots, „Relația” and „Vizualizare”.
+    // #39.25: and no „Previzualizare” — not even disabled — in a row of one slot, „Relația”.
     expect(container.querySelector("[data-preview-button]")).toBeNull();
-    expect([...container.querySelector("[data-one-line-row]")!.querySelectorAll("[data-slot]")].map((s) => s.getAttribute("data-slot"))).toEqual(["relation", "view"]);
+    expect([...container.querySelector("[data-one-line-row]")!.querySelectorAll("[data-slot]")].map((s) => s.getAttribute("data-slot"))).toEqual(["relation"]);
+    expect(container.querySelector("[data-one-line-row] [data-row-name-link]")).not.toBeNull();
     expect(container.querySelectorAll("[data-one-line-row]")).toHaveLength(2);
     expect(container.querySelectorAll('input[type="radio"]')).toHaveLength(0);
     expect(container.textContent).not.toContain("associatePerson");
     expect(container.textContent).not.toContain("dissociate");
     for (const sel of ["[data-share-button]", "[data-below]", "[data-extra]", "[data-under]"]) expect(container.querySelector(sel)).toBeNull();
-    expect(container.textContent).toContain("Vizualizare");
+    expect(container.textContent).not.toContain("Vizualizare");
     expect(container.querySelector("[data-relation-bubble]")).not.toBeNull();
     // A click selects nothing: no row is marked chosen.
     fireEvent.click(container.querySelector("[data-one-line-row]")!);
@@ -558,11 +560,12 @@ describe("„Legături” and „Interacțiuni” beside the lists: no head bar,
     expect(onScreen.querySelector<HTMLElement>("[data-related-empty]")!.className).toMatch(/\bpx-4 py-6\b/);
   });
 
-  it("a read-only row keeps „Relația” and „Vizualizare” only", () => {
-    expect(RELATED_READONLY_SLOTS).toEqual(["relation", "view"]);
-    expect(RELATED_SLOTS).toEqual(["share", "relation", "view", "preview"]);
+  // 40.96: no „Vizualizare” on any row (the name is the link). Was „„Relația” and „Vizualizare” only”.
+  it("a read-only row keeps „Relația” only; an editable one Cotă, Relația, Previzualizare", () => {
+    expect(RELATED_READONLY_SLOTS).toEqual(["relation"]);
+    expect(RELATED_SLOTS).toEqual(["share", "relation", "preview"]);
     const rest = readOnlyButtons({ share: "s", relation: "r", view: "v", preview: "p" });
-    expect(Object.keys(rest).sort()).toEqual(["relation", "view"]);
+    expect(Object.keys(rest).sort()).toEqual(["relation"]);
   });
 
   it("heights: empty, the row's preview's (measured); a long one stops at #39.04's 436 px", () => {

@@ -84,6 +84,7 @@ export function OneLineRow({
   onClick,
   onAuxClick,
   onDoubleClick,
+  quiet = false,
   ...data
 }: {
   selected: boolean;
@@ -112,6 +113,11 @@ export function OneLineRow({
   onClick: (e: MouseEvent<HTMLLIElement>) => void;
   onAuxClick: (e: MouseEvent<HTMLLIElement>) => void;
   onDoubleClick: () => void;
+  /**
+   * Slice 40.96: the buttons quiet — 35 % at rest, full on the row under the mouse, on the row holding the focus, on a
+   * screen with no hover, and while one of them is pressed (an open Previzualizare): the four lists' rows (40.60).
+   */
+  quiet?: boolean;
   /** `data-*` marks for the specs (`data-share`, `data-kind`). */
   [dataAttribute: `data-${string}`]: string | undefined;
 }) {
@@ -124,7 +130,7 @@ export function OneLineRow({
       onAuxClick={onAuxClick}
       onDoubleClick={onDoubleClick}
       className={[
-        "flex cursor-pointer items-center gap-2 whitespace-nowrap border-b border-card-rim px-2 py-1 text-sm last:border-0 dark:border-zinc-800",
+        "group/row flex cursor-pointer items-center gap-2 whitespace-nowrap border-b border-card-rim px-2 py-1 text-sm last:border-0 dark:border-zinc-800",
         selected ? "bg-cta-pale dark:bg-cta/10" : "hover:bg-canvas dark:hover:bg-zinc-800/50",
       ].join(" ")}
     >
@@ -154,7 +160,12 @@ export function OneLineRow({
       </span>
       {/* `div`s, not `span`s: a slot may hold a block (the share panel, a bubble). */}
       <div
-        className="flex shrink-0 items-center gap-1"
+        className={
+          quiet
+            ? "flex shrink-0 items-center gap-1 opacity-35 transition-opacity group-hover/row:opacity-100 group-focus-within/row:opacity-100 has-[[aria-pressed=true]]:opacity-100 has-[[aria-expanded=true]]:opacity-100 [@media(hover:none)]:opacity-100"
+            : "flex shrink-0 items-center gap-1"
+        }
+        data-row-buttons={quiet ? "quiet" : undefined}
         onClick={keep}
         onAuxClick={keep}
         onDoubleClick={keep}

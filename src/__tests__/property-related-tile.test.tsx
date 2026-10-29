@@ -77,7 +77,7 @@ describe("the Property's „Corelate”", () => {
       ["CVC 1 (Contract de Vânzare)"],
     ]);
     for (const li of screen.getAllByRole("listitem")) {
-      expect([...li.querySelectorAll<HTMLElement>("[data-slot]")].map((s) => s.dataset.slot)).toEqual(["share", "relation", "view", "preview"]);
+      expect([...li.querySelectorAll<HTMLElement>("[data-slot]")].map((s) => s.dataset.slot)).toEqual(["share", "relation", "preview"]); // 40.96: no „Vizualizare"
       expect(li.className).toContain("whitespace-nowrap");
     }
     expect(screen.queryByRole("table")).toBeNull();

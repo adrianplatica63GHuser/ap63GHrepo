@@ -98,9 +98,7 @@ export function EmptyTileLine({
       {onAdd && (
         <IconButton
           icon={Plus}
-          label={t("add")}
-          fullName={t("addTo", { tile: title })}
-          showLabel
+          label={t("addTo", { tile: title })}
           variant="secondary"
           size="sm"
           className="ml-auto shrink-0"

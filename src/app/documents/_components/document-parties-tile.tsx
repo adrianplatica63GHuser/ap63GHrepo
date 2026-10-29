@@ -33,7 +33,7 @@ export function DocumentPartiesTile({ documentId, label, typeKey }: { documentId
       label={label}
       rows={persons.rows}
       loading={persons.isLoading}
-      associate={[{ label: t("associatePerson"), onClick: () => router.push(partiesAssociatePath(typeKey, documentId)) }]}
+      associate={[{ label: t("associatePerson"), kind: "natural", onClick: () => router.push(partiesAssociatePath(typeKey, documentId)) }]}
       belowRows={persons.below}
       groupByRole
       emptyLabel={tDoc("empty")}

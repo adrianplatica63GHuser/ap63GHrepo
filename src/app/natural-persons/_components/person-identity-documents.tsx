@@ -106,7 +106,7 @@ export function PersonIdentityDocuments({
         ))}
       </div>
       <div className="flex gap-2">
-        <IconButton icon={Plus} label={t("continue")} showLabel variant="primary" size="sm" onClick={() => router.push(newIdentityDocumentHref(kind, personId))} />
+        <IconButton icon={Plus} label={t("continue")} variant="primary" size="sm" onClick={() => router.push(newIdentityDocumentHref(kind, personId))} />
         <button type="button" className="rounded-md px-2 py-1 text-sm text-fade hover:text-ink" onClick={() => setChoosing(false)}>
           {t("cancel")}
         </button>
@@ -115,7 +115,7 @@ export function PersonIdentityDocuments({
   );
 
   const addButton = canAdd ? (
-    <IconButton icon={Plus} label={t("add")} showLabel variant="secondary" size="sm" onClick={() => setChoosing(true)} />
+    <IconButton icon={Plus} label={t("add")} variant="secondary" size="sm" onClick={() => setChoosing(true)} />
   ) : undefined;
 
   if (rows.length === 0 && legacyRows.length === 0) {

@@ -117,7 +117,7 @@ test.describe("TC-ASSOC-04 — Persoană asociată proprietății, cu rol, văzu
       await expect(onProperty).toHaveCount(1, { timeout: 15_000 });
       await expect(onProperty.locator("[data-row-content]")).toHaveText(`${PERSON} (${ROLE})`);
       await expectOneLine(onProperty);
-      await expect(onProperty.getByRole("link", { name: "Vizualizare" })).toBeVisible();
+      await expect(onProperty.locator("[data-row-name-link]")).toBeVisible();
       await expect(related.getByRole("columnheader")).toHaveCount(0);
       await expect(onProperty.getByRole("button", { name: "Cotă", exact: true })).toHaveCount(0);
 
@@ -161,7 +161,7 @@ test.describe("TC-ASSOC-04 — Persoană asociată proprietății, cu rol, văzu
       await expect(again.locator("[data-row-content]")).toHaveText(`${PROPERTY} (${ROLE})`);
 
       // Step 12 — „Vizualizare": the property READ-ONLY, its „Persoane" reads the person.
-      await again.getByRole("link", { name: "Vizualizare" }).click();
+      await again.locator("[data-row-name-link]").click();
       await expect(page).toHaveURL(new RegExp(`/properties/${propertyId}\\?readonly=true$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: PROPERTY })).toBeVisible({ timeout: 30_000 });
       const readBackTile = await showTile(page, "Legături");

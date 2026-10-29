@@ -117,8 +117,21 @@ test.describe("TC-ASSOC-03 — Act asociat persoanei, din ecranul persoanei", ()
       await expect(page.getByRole("status").filter({ hasText: "Rol: „" })).toHaveText("Rol: „Cumpărător”");
       await page.keyboard.press("Escape");
 
-      // Step 8 — „Vizualizare": the document, READ-ONLY.
-      await linked.getByRole("link", { name: "Vizualizare" }).click();
+      // Step 7b — 40.96: the tile's buttons are icons only, their words their names; „Asociază act" the chain and the
+      // document; the row's buttons quiet at rest and full on the row under the mouse.
+      for (const name of ["Asociază persoană", "Asociază proprietate", "Asociază act", "Dezasociază"]) {
+        const b = page.getByRole("button", { name, exact: true });
+        await expect(b).toHaveText("");
+        await expect(b.locator("svg")).toHaveCount(2);
+      }
+      const quiet = linked.locator('[data-row-buttons="quiet"]');
+      await page.mouse.move(1, 1);
+      await expect.poll(() => quiet.evaluate((e) => getComputedStyle(e).opacity)).toBe("0.35");
+      await linked.locator("[data-row-content]").hover();
+      await expect.poll(() => quiet.evaluate((e) => getComputedStyle(e).opacity)).toBe("1");
+
+      // Step 8 — the document's name (40.96; „Vizualizare" until then): the document, READ-ONLY.
+      await linked.locator("[data-row-name-link]").click();
       await expect(page).toHaveURL(new RegExp(`/documents/${documentId}\\?readonly=true$`), { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: DOC_TITLE })).toBeVisible({ timeout: 30_000 });
 

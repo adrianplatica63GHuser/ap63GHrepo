@@ -114,7 +114,9 @@ test.describe("TC-ICON-02 — Creionul, Salvarea și Coșul pe o proprietate", (
       const nickname = page.getByRole("textbox", { name: "Poreclă", exact: true });
       await nickname.fill(`${MARK} Teren modificat`);
       await expect(save).toBeEnabled();
-      await expect(save).toHaveText("Salvează"); // 40.74: the tile's button carries its word, so it needs no tooltip
+      // 40.96: icon-only, as every button on a gray tile — „Salvează" its name and its tooltip (40.74 gave it its word).
+      await expect(save).toHaveText("");
+      await expect(save).toHaveAccessibleName("Salvează");
 
       // Step 5 — saved: read-only again, the value kept.
       await save.click();

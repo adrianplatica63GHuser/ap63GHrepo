@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, PieChart } from "lucide-react";
+import { PieChart } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useCallback, useEffect, useId, useMemo, useState, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -21,8 +21,7 @@ import {
 } from "@/lib/documents/cota-parte";
 import { cotaTotalsByRole } from "@/lib/documents/cota-parte-total";
 import { shareCells, storesShare } from "@/lib/documents/share-cells";
-import { openThroughGuard, personPath } from "@/lib/ui/row-link";
-import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
+import { personPath } from "@/lib/ui/row-link";
 import { PreviewButton } from "@/components/tiles/preview-tiles";
 import { personPreview } from "@/lib/ui/previews";
 import { isPartyLink } from "@/lib/documents/sale-parties";
@@ -128,7 +127,6 @@ export function useDocumentPersonRows(documentId: string, scope: PersonLinkScope
   const t           = useTranslations("document.persons");
   const router      = useRouter();
   // FU-271 (Slice #37.33): „Vizualizare" and a double-click leave this screen, so they ask about unsaved work first.
-  const { guardedNavigate } = useUnsavedChanges();
   const queryClient = useQueryClient();
 
   const [drafts,     setDrafts]     = useState<Record<string, Draft>>({});
@@ -449,7 +447,6 @@ export function useDocumentPersonRows(documentId: string, scope: PersonLinkScope
           <IconButton
             icon={PieChart}
             label={t("share")}
-            showLabel
             variant={storesShare(item) ? "attention-outline" : "attention"}
             size="xs"
             data-share-button=""
@@ -496,16 +493,7 @@ export function useDocumentPersonRows(documentId: string, scope: PersonLinkScope
       dissociate: () => dissociate(item),
       buttons: {
         share: shareButton || undefined,
-        view: (
-          <IconButton
-            href={`${personPath(item.type, item.id)}?readonly=true`}
-            onClick={(e) => openThroughGuard(e, `${personPath(item.type, item.id)}?readonly=true`, guardedNavigate)}
-            icon={ArrowRight}
-            label={t("view")}
-            variant="secondary"
-            size="xs"
-          />
-        ),
+        // 40.96: no „Vizualizare\" — the name in the row is the link (RelatedTile).
         preview: <PreviewButton target={personPreview(item.type, item.id)} />,
       },
     };

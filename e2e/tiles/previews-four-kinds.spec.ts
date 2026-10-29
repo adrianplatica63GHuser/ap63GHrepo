@@ -693,7 +693,8 @@ test.describe("TC-TILES-11 — „Legături” beside the list, as tall as its r
       const t = await linksReading(page);
       expect({ rows: t.rows, scrolls: t.scrolls }).toEqual({ rows: 2, scrolls: false });
       expect(t.buttons.filter((b) => b === "Previzualizare" || b === "Deschide")).toEqual([]);
-      expect(t.buttons.filter((b) => b === "Vizualizare")).toHaveLength(2);
+      // 40.96: no „Vizualizare" — each row's name is the link to its record.
+      expect(t.buttons.filter((b) => b === "Vizualizare")).toEqual([]);
       expect(t.height, `two rows: ${t.height} px`).toBeLessThan(ROW_TILE_CEILING_PX - 100);
       await page.mouse.move(1, 1);
       await page.screenshot({ path: "playwright-report/legaturi-height/two-1920.png" });

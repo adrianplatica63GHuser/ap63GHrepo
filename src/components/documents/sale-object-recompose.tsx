@@ -99,7 +99,6 @@ export function SaleObjectRecompose({
       <IconButton
         icon={RefreshCw}
         label={t("recompose")}
-        showLabel
         variant="secondary"
         size="sm"
         busy={busy}

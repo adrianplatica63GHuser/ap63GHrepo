@@ -226,6 +226,12 @@ type Common = {
    */
   trailingIcon?: ComponentType<LucideProps>;
   /**
+   * Slice 40.96: on an icon-only button, a second icon after the first, in the same button — „Asociază persoană"'s
+   * chain and person (Adrian, 2026-10-28). The square widens to hold both; the name and the tooltip are `label`, as
+   * for one icon. Busy, the spinner stands alone. Ignored with `showLabel`.
+   */
+  secondIcon?: ComponentType<LucideProps>;
+  /**
    * Working: a spinning LoaderCircle in place of the icon, and `busyLabel`
    * („Se salvează…") as the name and the tooltip. An icon + label button
    * keeps its label on screen, so it keeps its width.
@@ -270,6 +276,15 @@ type AsLink = Common &
 
 export type IconButtonProps = AsButton | AsLink;
 
+/**
+ * Slice 40.96: an icon-only pair is as tall as the square and as wide as its two icons — the square's fixed width
+ * (`w-*`) and its `p-0` give way to a small padding and a gap.
+ */
+function pairClass(classes: string, pair: boolean): string {
+  if (!pair) return classes;
+  return `${classes.split(" ").filter((c) => !/^w-[\d.]+$/.test(c) && c !== "p-0").join(" ")} w-auto gap-0.5 px-1`;
+}
+
 export function IconButton(props: IconButtonProps) {
   const {
     icon: Icon,
@@ -281,6 +296,7 @@ export function IconButton(props: IconButtonProps) {
     fullName,
     iconEnd = false,
     trailingIcon: After,
+    secondIcon: Second,
     busy = false,
     busyLabel,
     count,
@@ -321,7 +337,11 @@ export function IconButton(props: IconButtonProps) {
     // `motion-reduce:` — under prefers-reduced-motion the spinner holds still.
     <LoaderCircle size={px} aria-hidden="true" className="shrink-0 animate-spin motion-reduce:animate-none" />
   ) : (
-    <Icon size={px} aria-hidden="true" className="shrink-0" />
+    <>
+      <Icon size={px} aria-hidden="true" className="shrink-0" />
+      {/* 40.96: the second icon of an icon-only pair. */}
+      {Second && !showLabel && <Second size={px} aria-hidden="true" data-icon-second="" className="shrink-0" />}
+    </>
   );
 
   const inner = (
@@ -352,7 +372,7 @@ export function IconButton(props: IconButtonProps) {
   if (rest.href !== undefined) {
     const { href, ...linkRest } = rest as Omit<AsLink, keyof Common>;
     control = (
-      <Link href={href} {...linkRest} aria-label={ariaLabel} aria-describedby={describedBy} className={linkClass(options)}>
+      <Link href={href} {...linkRest} aria-label={ariaLabel} aria-describedby={describedBy} className={pairClass(linkClass(options), Boolean(Second) && !showLabel)}>
         {inner}
       </Link>
     );
@@ -366,7 +386,7 @@ export function IconButton(props: IconButtonProps) {
         {...buttonRest}
         aria-label={ariaLabel}
         aria-describedby={describedBy}
-        className={buttonClass(options)}
+        className={pairClass(buttonClass(options), Boolean(Second) && !showLabel)}
       >
         {inner}
       </button>

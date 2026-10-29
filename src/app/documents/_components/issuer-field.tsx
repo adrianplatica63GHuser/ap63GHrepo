@@ -222,7 +222,6 @@ export function IssuerProposal({
           label={t("openToFill")}
           variant="ghost"
           size="xs"
-          showLabel
           href={`/judicial-persons/${made.id}`}
           target="_blank"
         />
@@ -239,7 +238,6 @@ export function IssuerProposal({
             label={t("use", { name: matched.displayName })}
             variant="secondary"
             size="xs"
-            showLabel
             disabled={disabled}
             onClick={() => onPick({ id: matched.id, displayName: matched.displayName })}
           />
@@ -249,7 +247,6 @@ export function IssuerProposal({
             label={t("add", { name: read.trim() })}
             variant="secondary"
             size="xs"
-            showLabel
             disabled={disabled || adding}
             busy={adding}
             busyLabel={t("adding")}

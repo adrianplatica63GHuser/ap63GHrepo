@@ -100,7 +100,7 @@ test.describe("TC-DOC-09 — un rând pe rând, restul după butoane", () => {
       await expect(persons.getByRole("columnheader")).toHaveCount(0);
       await expect(row.getByRole("button", { name: "Cotă", exact: true })).toHaveCount(0);
       await expect(row.locator('input[type="text"], select')).toHaveCount(0);
-      await expect(row.getByRole("link", { name: "Vizualizare", exact: true })).toBeVisible();
+      await expect(row.locator("[data-row-name-link]")).toBeVisible();
       await expect(row.getByRole("button", { name: "Previzualizare", exact: true })).toBeVisible();
       await photograph(page, "pad-tiles", persons);
 

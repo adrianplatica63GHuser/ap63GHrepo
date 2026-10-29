@@ -1662,7 +1662,6 @@ export function PropertyForm({
                       label={fetchingStreetView ? t("streetViewAddress.fetching") : t("streetViewAddress.fetch")}
                       busy={fetchingStreetView}
                       note={!streetViewCentroid ? t("streetViewAddress.needsCorners") : undefined}
-                      showLabel
                       variant="secondary"
                       size="xs"
                       className="mt-1 shrink-0"
@@ -1901,7 +1900,6 @@ export function PropertyForm({
                   href={`/properties/${m.id}`}
                   icon={ArrowRight}
                   label={t("parcelExists.open", { name: nameOr(m.nickname, "property") })}
-                  showLabel
                   variant="secondary"
                   size="xs"
                 />

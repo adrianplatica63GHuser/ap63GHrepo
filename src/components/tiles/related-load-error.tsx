@@ -34,7 +34,6 @@ export function RelatedLoadError({
       <IconButton
         icon={RotateCw}
         label={t("retry")}
-        showLabel
         size="sm"
         variant="secondary"
         busy={retrying}

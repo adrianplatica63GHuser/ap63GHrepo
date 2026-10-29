@@ -1,8 +1,8 @@
 /**
  * Every row that opens a record is a real link.                (Slice #37.21)
  *
- * The open button of every association tile („Vizualizare") is an `<a href>`
- * to the record read-only, and every row — tile or list — opens the same
+ * The record's name in every association tile's row is an `<a href>` to the record read-only (40.96; it was the
+ * „Vizualizare" button, #37.21–40.95), and every row — tile or list — opens the same
  * address in a new tab on Ctrl/⌘+click or a middle-click, while a plain click
  * and a double-click do what they did.
  */
@@ -33,14 +33,11 @@ const LISTS = [
 ];
 
 describe("an association row", () => {
-  it.each(TILES.map((f) => [f.join("/"), f]))("%s: „Vizualizare\" is a link to the record read-only, and the row opens a new tab on request", (_n, f) => {
+  // 40.96 (Adrian): „the open button disappears and is replaced by having the name of the object as a link". Was:
+  // „Vizualizare" an ArrowRight IconButton linking to the record read-only (#37.42).
+  it.each(TILES.map((f) => [f.join("/"), f]))("%s: no „Vizualizare\" — the row gives its record's read-only address, the name links to it", (_n, f) => {
     const src = read("src", "app", ...(f as string[]));
-    // Slice #37.42: „Vizualizare" is an ArrowRight IconButton in its link form —
-    // its words the name and the tooltip. It was asserted as
-    // `<Link href={`…?readonly=true`}>…{t("view")}</Link>`; the link it renders
-    // is the same, so the assertion moved to the component that draws it.
-    expect(src).toMatch(/<IconButton\s+href=\{`[^`]*\?readonly=true`\}[\s\S]{0,300}?icon=\{ArrowRight\}\s+label=\{t\("view"\)\}/);
-    expect(src).not.toMatch(/<button[^>]*>\s*\{t\("view"\)\}/);
+    expect(src).not.toMatch(/label=\{t\("view"\)\}/);
     if (src.includes(": RelatedRow[]")) {
       // Slice #37.65: „Corelate"'s rows — the row gives its record's read-only address, and
       // RelatedTile does the clicks with it (the next test).
@@ -55,6 +52,8 @@ describe("an association row", () => {
 
   it("„Corelate” (#37.65): a row's click selects it, Ctrl/⌘ or the middle button opens a new tab, a double-click opens it through the guard", () => {
     const src = read("src", "components", "tiles", "related-tile.tsx");
+    // 40.96: the name is the link — a plain click opens the record through the guard and does not select the row.
+    expect(src).toMatch(/<RelatedNameLink href=\{row\.href\} onOpen=\{\(\) => guardedNavigate\(row\.href\)\}>/);
     expect(src).toMatch(/onClick=\{\(e\) => \{\s*if \(newTabIfAsked\(e, row\.href\)\) return;/);
     expect(src).toMatch(/onAuxClick=\{\(e\) => newTabIfAsked\(e, row\.href\)\}/);
     expect(src).toMatch(/onDoubleClick=\{\(\) => guardedNavigate\(row\.href\)\}/);
@@ -82,14 +81,11 @@ describe("an association row leaves the screen through the unsaved-changes guard
   // a row's double-click left WITHOUT the „Modificări nesalvate" question, and
   // the edit was lost. Only the sidebar, the recently-viewed panel and a
   // preview's „Deschide" went through `guardedNavigate`.
-  it.each(TILES.map((f) => [f.join("/"), f]))("%s: „Vizualizare\" and the double-click ask first", (_n, f) => {
+  // 40.96: the name's click and the double-click are RelatedTile's, through the guard (above); a tile never pushes
+  // the router to its record itself. Was: „„Vizualizare" and the double-click ask first", the button's own guard.
+  it.each(TILES.map((f) => [f.join("/"), f]))("%s: the row leaves through RelatedTile's guard, never straight to the router", (_n, f) => {
     const src = read("src", "app", ...(f as string[]));
-    expect(src).toMatch(/const \{ guardedNavigate \} = useUnsavedChanges\(\);/);
-    // The link: a plain click through the guard; Ctrl/⌘ and middle click left to the browser.
-    // (#37.42: `<IconButton href=… onClick=…>`, which renders that same `<Link>`.)
-    expect(src).toMatch(/<IconButton\s+href=\{`[^`]*\?readonly=true`\}\s+onClick=\{\(e\) => openThroughGuard\(e, `[^`]*\?readonly=true`, guardedNavigate\)\}/);
-    // The double-click: through the guard, never straight to the router (#37.65: in RelatedTile, above).
-    if (!src.includes(": RelatedRow[]")) expect(src).toMatch(/onDoubleClick=\{\(\) => guardedNavigate\(`[^`]*\?readonly=true`\)\}/);
+    expect(src).toContain(": RelatedRow[]");
     expect(src).not.toMatch(/router\.push\(`[^`]*\?readonly=true`\)/);
   });
 

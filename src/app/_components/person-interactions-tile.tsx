@@ -114,7 +114,7 @@ export function PersonInteractionsTile({
   const panel = expanded ? (
     <div className="mt-3 flex flex-col gap-2" data-person-log="expanded">
       <div className="flex justify-end">
-        <IconButton icon={ChevronUp} label={t("log.collapse")} showLabel variant="secondary" size="xs" data-log-collapse="" onClick={collapse} />
+        <IconButton icon={ChevronUp} label={t("log.collapse")} variant="secondary" size="xs" data-log-collapse="" onClick={collapse} />
       </div>
       <LogTile
         scope={personId}
@@ -139,7 +139,6 @@ export function PersonInteractionsTile({
       <IconButton
         icon={SquarePen}
         label={t("screen.logTitle")}
-        showLabel
         variant="primary"
         size="sm"
         data-log-expand=""

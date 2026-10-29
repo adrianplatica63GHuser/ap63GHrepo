@@ -965,7 +965,6 @@ export function JudicialPersonForm({
               <IconButton
                 icon={Landmark}
                 label={t("anaf.button")}
-                showLabel
                 variant="secondary"
                 size="sm"
                 disabled={!cuiValue?.trim()}
