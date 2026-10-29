@@ -1366,6 +1366,14 @@ export const CELL_PADDING_REM = 2;
  */
 export const PROPERTY_NAME_PX = 273;
 
+/**
+ * Slice 40.98: an association screen's property results („Rezultate", `select` + `propertyLabel`) are 4 units at
+ * least. Three of 148 px held the 273-px name with room to spare; three of 119 (389 px) cut it on screen
+ * (TC-ASSOC-13 step 4), though the arithmetic below `tableUnits` reads at p-3 says it just fits — the card's own
+ * padding takes the rest. Re-pinned as every fixed count was: 3 → 4, 476 → 524 px.
+ */
+export const PROPERTY_RESULTS_MIN_UNITS = 4;
+
 export interface ColumnWidth {
   /** The content's width, a step of the scale — or, for the two tiny controls, rem. */
   content: Step | number;
@@ -1876,10 +1884,15 @@ export const MIN_TILE_UNITS = 2;
  * 15.95rem, rounded up to the next quarter: **16rem, 82 % of two units** (Adrian
  * asked for „about 20 %" less). It is the one panel off the unit grid, and says
  * so (`data-measured-width`, which `expectUnitGrid` leaves out).
+ *
+ * 40.98: the buttons' side padding 6 px (`px-1.5`, was `px-2`) — 15.7rem, so **15.75rem, 252 px**. On the 119-px
+ * unit a 1920-px page then leaves the list's side 1336 px, ten units (1334): „Tipuri de Proprietate" (6) and
+ * „Categorii Folosință" (4) side by side, as Adrian asked in #39.75. At 16rem the side was 1332 px — nine units, and
+ * the two stacked. The gaps either side of the name: 19 px before, 19.8 after.
  */
 export const REFERENCE_NAV_NAME_PX = 213.2;
-/** Inside each of the column's buttons, a side: Tailwind `px-2`. */
-export const REFERENCE_NAV_BUTTON_PAD_REM = 0.5;
+/** Inside each of the column's buttons, a side: Tailwind `px-1.5` (40.98; `px-2` until then). */
+export const REFERENCE_NAV_BUTTON_PAD_REM = 0.375;
 export const REFERENCE_NAV_REM =
   Math.ceil((REFERENCE_NAV_NAME_PX / 16 + 2 * (PANEL_PADDING_REM + REFERENCE_NAV_BUTTON_PAD_REM + PANEL_BORDER_REM)) * 4) / 4;
 

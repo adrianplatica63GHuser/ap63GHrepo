@@ -195,7 +195,7 @@ export function ValueListHub({
         >
           {listsByCategory().map((category) => (
             <div key={category.id} className="flex flex-col gap-1" data-category={category.id}>
-              <h2 className={`px-2 ${PANEL_TITLE_TYPE}`}>
+              <h2 className={`px-1.5 ${PANEL_TITLE_TYPE}`}>
                 {t(`categories.${category.id}`)}
               </h2>
               <ul className="flex flex-col">
@@ -215,7 +215,7 @@ export function ValueListHub({
                         data-marked={marked ? "" : undefined}
                         onClick={() => chooseList(key)}
                         className={[
-                          "w-fit rounded-md px-2 py-1 text-left text-sm transition-colors focus-visible:outline-2 focus-visible:outline-focus",
+                          "w-fit rounded-md px-1.5 py-1 text-left text-sm transition-colors focus-visible:outline-2 focus-visible:outline-focus",
                           marked
                             ? LINK_MARK_BOX
                             : current && !linkGroup

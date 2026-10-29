@@ -41,7 +41,7 @@ The window is 1366 × 900.
 | 6 | Chooses „Teren intravilan” in „Tip proprietate”, without saving | Every use offered; the sentence under the field gone |
 | 7 | Back on the page, ticks „Drumuri” on „Teren intravilan”; reopens the property, chooses „Teren intravilan” again | The tick stays after a reload; „(toate)” gone from that row; the form offers „Drumuri” and „Arabil” (the value it holds) and the sentence under the field again |
 | 8 | Unticks „Drumuri” on „Teren intravilan” | The row reads „(toate)” again |
-| 9 | Widens the window to 1920 × 1080 (#39.75) | The three are tiles, with „Implicit” above them at the right: „Tipuri de Proprietate” (five units) and „Categorii Folosință” (three) side by side at the top, „Folosințe permise pentru fiecare tip” (five) under the types. In each, the list stands with the same gap to the tile's left and right edges — since #39.88 the standard one, 21 px, left, right and bottom, the grid included. Back at 1366 × 900, the three stand one under another again |
+| 9 | Widens the window to 1920 × 1080 (#39.75) | The three are tiles, with „Implicit” above them at the right: „Tipuri de Proprietate” (six units of 119 px since 40.98; five of 148 before) and „Categorii Folosință” (four; three) side by side at the top, „Folosințe permise pentru fiecare tip” (six; five) under the types. In each, the list stands with the same gap to the tile's left and right edges — since #39.88 the standard one, 21 px, left, right and bottom, the grid included. Back at 1366 × 900, the three stand one under another again |
 
 ## At the end — leaving things as they were found
 

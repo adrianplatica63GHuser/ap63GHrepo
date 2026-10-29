@@ -167,18 +167,23 @@ describe("the column, as wide as its longest name (Slice #38.65)", () => {
   const page = read("src", "app", "admin", "value-lists", "page.tsx");
   const px = (r: number) => r * 16;
 
-  it("is 16rem: the measured name, the padding and the border a side, up to the next quarter rem", () => {
+  // 40.98: 15.75rem — the buttons' padding 6 px a side, so the 1920-px page's list side holds ten units of 119 px.
+  // It was 16rem (15.95 with `px-2`).
+  it("is 15.75rem: the measured name, the padding and the border a side, up to the next quarter rem", () => {
     expect(REFERENCE_NAV_NAME_PX).toBe(213.2);
     const parts = REFERENCE_NAV_NAME_PX / 16 + 2 * (PANEL_PADDING_REM + REFERENCE_NAV_BUTTON_PAD_REM + PANEL_BORDER_REM);
-    expect(parts).toBeCloseTo(15.95, 5);
-    expect(REFERENCE_NAV_REM).toBe(16);
+    expect(parts).toBeCloseTo(15.7, 5);
+    expect(REFERENCE_NAV_REM).toBe(15.75);
+    // At 1920 px the page's row is 12 units, 1604 px; less the column and its gap, the side (1336) holds ten units.
+    const side = unitsRem(12) * 16 - REFERENCE_NAV_REM * 16 - 16;
+    expect(Math.floor((side + 16) / (16 * (unitsRem(1) + 1)))).toBe(10);
     expect(REFERENCE_NAV_REM).toBeGreaterThanOrEqual(parts);
   });
 
   it("leaves the gap after that name equal to the gap before it, within the 4 px TC-VL-02 step 7 allows", () => {
     const before = px(PANEL_BORDER_REM + PANEL_PADDING_REM + REFERENCE_NAV_BUTTON_PAD_REM);
     const after = px(REFERENCE_NAV_REM) - before - REFERENCE_NAV_NAME_PX;
-    expect(before).toBe(21);
+    expect(before).toBe(19); // 40.98: px-1.5 (21 with px-2)
     expect(Math.abs(after - before)).toBeLessThanOrEqual(4);
   });
 

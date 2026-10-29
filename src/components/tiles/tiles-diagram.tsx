@@ -79,6 +79,12 @@ function frameOf(wrap: HTMLElement): Frame | null {
   return { left: left - w.left, top: 0, width: Math.max(0, w.right - left), height: R(header).height + HEADER_GAP_PX + b.height };
 }
 
+/** Two frames within a pixel of each other on every side are the same frame (40.98). */
+function sameFrame(a: Frame | null, b: Frame | null): boolean {
+  if (a === null || b === null) return a === b;
+  return Math.abs(a.left - b.left) < 1 && Math.abs(a.top - b.top) < 1 && Math.abs(a.width - b.width) < 1 && Math.abs(a.height - b.height) < 1;
+}
+
 export function TilesDiagram({
   entity,
   groupOf,
@@ -104,12 +110,23 @@ export function TilesDiagram({
     return () => window.removeEventListener(TILES_PLACED, on);
   }, [entity]);
 
+  // 40.98: a frame that settles. TC-DOC-01 met „Maximum update depth exceeded" here — this effect runs after every
+  // render, and a frame that differed by a fraction of a pixel each time (the labels' average width, as the panel's
+  // rows reflowed on the narrower unit) set state on every pass. So a change under a pixel is no change, and more
+  // than a few changes in a burst wait for the next resize rather than loop.
+  const burst = useRef({ at: 0, n: 0 });
   useLayoutEffect(() => {
     const wrap = ref.current?.parentElement;
     if (!wrap) return;
     const measure = () => {
       const next = frameOf(wrap);
-      setFrame((prev) => (JSON.stringify(prev) === JSON.stringify(next) ? prev : next));
+      setFrame((prev) => {
+        if (sameFrame(prev, next)) return prev;
+        const now = typeof performance === "undefined" ? Date.now() : performance.now();
+        if (now - burst.current.at > 250) burst.current = { at: now, n: 0 };
+        burst.current.n += 1;
+        return burst.current.n > 8 ? prev : next;
+      });
     };
     measure();
     // jsdom (jest) has no layout and no ResizeObserver: the first measure stands there.

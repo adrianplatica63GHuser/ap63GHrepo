@@ -222,7 +222,17 @@ test.describe("TC-VL-05 pasul 5 — „Tipuri de obiecte” fără spațiu irosi
       await page.goto(`/admin/value-lists?list=${list.key}`);
       await expect(page.locator("[data-usage]").first()).not.toHaveText("…", { timeout: 30_000 });
       const g = await nameGap(page);
-      expect({ list: list.name, rows: g.rows > 0, cut: g.cut, under24: g.gap < 24 }, `the longest name ends ${g.gap} px before the next column`).toEqual({
+      // 2026-10-29 (40.98, FU-378): the judicial types' column is sized for „Cabinet sau societate de avocatură"
+      // (sync-reference-data.sql, #39.72). A database whose list no longer holds that name — Adrian's reads
+      // „Cabinet de avocatură" — leaves its column wider than its names by the difference; that is the data's, not the
+      // column's, so there only „nothing cut" is asked, and the run says why.
+      const sizedFor = list.key === "judicial-person-types" ? "Cabinet sau societate de avocatură" : null;
+      const names = sizedFor
+        ? ((await (await page.request.get(`/api/admin/value-lists/${list.key}`)).json()) as { items: { name: string }[] }).items.map((i) => i.name)
+        : [];
+      const drifted = sizedFor !== null && !names.includes(sizedFor);
+      if (drifted) test.info().annotations.push({ type: "reference data", description: `${list.name}: no „${sizedFor}" — the gap (${g.gap} px) not asked (FU-378)` });
+      expect({ list: list.name, rows: g.rows > 0, cut: g.cut, under24: drifted || g.gap < 24 }, `the longest name ends ${g.gap} px before the next column`).toEqual({
         list: list.name, rows: true, cut: [], under24: true,
       });
       if (list.key === "property-types") expect(g.streetLines, "„Street View” on two lines").toBe(2);

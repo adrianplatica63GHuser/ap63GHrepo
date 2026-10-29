@@ -68,7 +68,7 @@ describe("a list's preview stands in the row tiles' column, beside the whole lis
     expect(document.querySelector("[data-list-preview-column]")).toBeNull();
   });
 
-  it("the preview opens in a column after the list's body, 40 rem wide", async () => {
+  it("the preview opens in a column after the list's body, 41.1875 rem wide (40.98; 40 before)", async () => {
     renderList();
     await act(async () => press("A"));
     await waitFor(() => expect(column()?.querySelectorAll("[data-preview]")).toHaveLength(1));
@@ -79,7 +79,7 @@ describe("a list's preview stands in the row tiles' column, beside the whole lis
     expect(kids[1]).toBe(column());
     expect(column()!.className).toMatch(/\bflex-col\b/);
     expect(column()!.className).toMatch(/\bself-stretch\b/);
-    expect(column()!.style.width).toBe("40rem");
+    expect(column()!.style.width).toBe("41.1875rem"); // 40.98: PAGES_PANEL_REM, 5 units of 119 px (40rem before)
     expect(row().className).toMatch(/\bflex-wrap\b/);
     await waitFor(() => expect([...column()!.querySelectorAll("[data-preview] h2")].map((h) => h.textContent)).toEqual(["Teren A"]));
     // The preview takes the column's width, not its own detail-screen width.

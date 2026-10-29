@@ -12,7 +12,7 @@ import { TABLE_FRAME, columnHead } from "@/components/table/fixed-columns";
 import { FixedTable } from "@/components/table/column-resize";
 import { AssociateRow, AssociateTile, useRecordCrumb } from "@/components/associate/associate-tiles";
 import { STACKED_FIELD_CLASS, STACKED_LABEL_CLASS, STACKED_ROW_CLASS } from "@/lib/ui/stacked";
-import { boxesUnits, screenBox, screenFieldStyle, tableUnits, type ColumnName } from "@/lib/ui/field-widths";
+import { boxesUnits, screenBox, screenFieldStyle, tableUnits, type ColumnName, PROPERTY_RESULTS_MIN_UNITS } from "@/lib/ui/field-widths";
 import { associationFailureMessage } from "@/lib/ui/association-failure";
 import { usePersonRoleOptions, useRoleOptionsWithCarried } from "@/hooks/use-lookup-options";
 
@@ -21,7 +21,7 @@ const COLUMNS: readonly ColumnName[] = ["select", "propertyLabel"];
 
 /** Slice #37.34: Căutare, Rezultate and Asociere, each the fewest whole units that hold it. */
 const SEARCH_UNITS = boxesUnits(["searchText"]);
-const RESULTS_UNITS = tableUnits(COLUMNS);
+const RESULTS_UNITS = Math.max(tableUnits(COLUMNS), PROPERTY_RESULTS_MIN_UNITS); // 40.98
 const ASSOCIATION_UNITS = boxesUnits(["role"]);
 /** The results table fills its tile; propertyLabel takes what the other columns leave. */
 const RESULTS_FILL = { units: RESULTS_UNITS, column: "propertyLabel" } as const;

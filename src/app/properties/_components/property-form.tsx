@@ -1900,6 +1900,7 @@ export function PropertyForm({
                   href={`/properties/${m.id}`}
                   icon={ArrowRight}
                   label={t("parcelExists.open", { name: nameOr(m.nickname, "property") })}
+                  showLabel
                   variant="secondary"
                   size="xs"
                 />

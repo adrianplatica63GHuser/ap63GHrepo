@@ -13,6 +13,7 @@ import {
   PROPERTY_NAME_PX,
   fillColumnRem,
   tableUnits,
+  PROPERTY_RESULTS_MIN_UNITS,
   unitsInnerRem,
   oneLineRowRem,
   RELATED_SLOTS,
@@ -76,8 +77,21 @@ describe("a property's name on one line (Slice #37.58)", () => {
 
   it("the association screens' results hold it too: the label column takes what the box leaves, past 273 px", () => {
     const cols: ColumnName[] = ["select", "propertyLabel"];
-    const units = tableUnits(cols);
+    const units = Math.max(tableUnits(cols), PROPERTY_RESULTS_MIN_UNITS);
     expect(fillColumnRem(cols, units, "propertyLabel") - CELL_PADDING_REM).toBeGreaterThanOrEqual(NAME_REM);
+  });
+
+  // 40.98: 4 units at least — 3 of 119 px cut the name on screen (TC-ASSOC-13 step 4); the four screens say so.
+  it("each association screen's property results are at least 4 units (40.98)", () => {
+    expect(PROPERTY_RESULTS_MIN_UNITS).toBe(4);
+    for (const f of [
+      ["src", "app", "documents", "[id]", "associate-property", "associate-property-view.tsx"],
+      ["src", "app", "judicial-persons", "[id]", "associate-property", "associate-property-view.tsx"],
+      ["src", "app", "natural-persons", "[id]", "associate-property", "associate-property-view.tsx"],
+      ["src", "app", "properties", "[id]", "associate-reference", "associate-reference-view.tsx"],
+    ]) {
+      expect([f.join("/"), read(...f).includes("const RESULTS_UNITS = Math.max(tableUnits(COLUMNS), PROPERTY_RESULTS_MIN_UNITS);")]).toEqual([f.join("/"), true]);
+    }
   });
 
   it("every cell that shows a property's name is one line, cut with „…”, whole in its title", () => {

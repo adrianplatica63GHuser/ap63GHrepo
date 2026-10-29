@@ -36,8 +36,15 @@ const TILE_FILES = [
 ];
 
 describe("no button on the four objects' tiles draws its words (40.96)", () => {
-  it.each(TILE_FILES)("%s: no showLabel", (file) => {
-    expect(read(...file.split("/")).match(/\bshowLabel\b/g) ?? []).toEqual([]);
+  // 40.98: one place in these files is not on a tile — the property form's „Această parcelă are deja o proprietate"
+  // alert, whose „Deschide <name>" links keep their words (#37.42, A016: a column of bare arrows would not say which
+  // property each opens). 40.96 took them away with the tile buttons; TC-PROP-16 step 5 caught it.
+  const OFF_TILE: Record<string, number> = { "src/app/properties/_components/property-form.tsx": 1 };
+  it.each(TILE_FILES)("%s: no showLabel on a tile", (file) => {
+    expect((read(...file.split("/")).match(/\bshowLabel\b/g) ?? []).length).toBe(OFF_TILE[file] ?? 0);
+  });
+  it("the property form's one is the parcel alert's „Deschide <name>”", () => {
+    expect(read("src", "app", "properties", "_components", "property-form.tsx")).toMatch(/label=\{t\("parcelExists\.open", \{ name: nameOr\(m\.nickname, "property"\) \}\)\}\s+showLabel/);
   });
 
   it("the judicial person's „Completează din ANAF” is icon-only too", () => {
