@@ -20,8 +20,9 @@ another, is the defect this case exists to catch.
 
 - TC-AUTH-01 is green.
 - **Created through the API** as `e2e/helpers/records.ts` creates prerequisites: a PAD (Plan de
-  amplasament și delimitare) „TC-ASSOC-13 PAD" and a property „TC-ASSOC-13 Parcelă de test cu un
-  nume lung" (43 characters, longer than any name the old 3-unit „Proprietăți" held on one line).
+  amplasament și delimitare) „TC-ASSOC-13 PAD" and a property „TC-ASSOC-13 Parcelă test nume lung"
+  (34 characters; the spec's, with its `TC-E2E-` mark, is 38 — the archive's longest name, which „Legături" is sized
+  for. Until 40.98 it was „… Parcelă de test cu un nume lung", 43, which 4 units of 148 px held and 4 of 119 cut).
 
 ## What Adrian is asked for
 
@@ -39,8 +40,8 @@ cut („…").
 | 1 | Opens `TC-ASSOC-13 PAD`, ticks „Legături" and presses its „Asociază persoană" | „Asociere persoană" at `/documents/[id]/associate-person`: the tiles „Căutare", „Rezultate" and „Asociere", one under another, „Căutare" first |
 | 2 | Looks at „Asociere" | „Asociază selecția" and „Anulează" inside the window, without scrolling |
 | 3 | Presses „Anulează"; on the PAD presses „Legături"'s „Asociază proprietate" | „Asociere proprietate" at `/documents/[id]/associate-property`: the same three tiles, one under another; „Asociere"'s buttons inside the window |
-| 4 | Types `TC-ASSOC-13` into „Căutare" (placeholder „Cod sau denumire…") | One row: `TC-ASSOC-13 Parcelă de test cu un nume lung`, on one line |
-| 5 | Ticks it and presses „Asociază selecția" | Back on the PAD (`?tab=properties`): „Legături" is 4 units wide (#37.65; „Proprietăți" was 3 in #37.64, 4 before) and its one row reads `TC-ASSOC-13 Parcelă de test cu un nume lung` on one line |
+| 4 | Types `TC-ASSOC-13` into „Căutare" (placeholder „Cod sau denumire…") | One row: `TC-ASSOC-13 Parcelă test nume lung`, on one line |
+| 5 | Ticks it and presses „Asociază selecția" | Back on the PAD (`?tab=properties`): „Legături" is 4 units wide (#37.65; „Proprietăți" was 3 in #37.64, 4 before) and its one row reads `TC-ASSOC-13 Parcelă test nume lung` on one line |
 
 ## At the end — leaving things as they were found
 

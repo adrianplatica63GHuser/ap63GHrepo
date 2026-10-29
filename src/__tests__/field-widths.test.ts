@@ -1351,7 +1351,8 @@ describe("the thirteen „Asociază …” screens: Căutare, Rezultate and Asoc
     const association = at("association", "ASSOCIATION_UNITS");
     expect(search < results && results < association).toBe(true);
     expect(src).toMatch(/const SEARCH_UNITS = boxesUnits\(\["search(Name", "searchCode|Text)"\]\);/);
-    expect(src).toMatch(/const RESULTS_UNITS = tableUnits\(COLUMNS\);/);
+    // 40.98: a property's results take 4 units at least (PROPERTY_RESULTS_MIN_UNITS); every other table its own.
+    expect(src).toMatch(/const RESULTS_UNITS = (tableUnits\(COLUMNS\)|Math\.max\(tableUnits\(COLUMNS\), PROPERTY_RESULTS_MIN_UNITS\));/);
     expect(src).toMatch(/const ASSOCIATION_UNITS = boxesUnits\(\[("role")?\]\);/);
     expect(src).toMatch(/<FixedTable id="[a-z-]+\/associate-[a-z]+" columns=\{COLUMNS\} fill=\{RESULTS_FILL\}>/);
     // Labels above: no 5.5rem label beside a box, no #37.22 column.

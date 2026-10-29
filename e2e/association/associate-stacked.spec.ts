@@ -34,7 +34,9 @@ import { showTile } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}ASSOC-13`;
 const PAD = `${MARK} PAD`;
-const PROPERTY = `${MARK} Parcelă de test cu un nume lung`;
+// 40.98: 38 characters — the archive's longest name, which „Legături" is sized for (PROPERTY_NAME_PX, 273 px). It was
+// 47 (`… Parcelă de test cu un nume lung`), which 4 units of 148 held with room over and 4 of 119 cut.
+const PROPERTY = `${MARK} Parcelă test nume lung`;
 const SHOTS = "playwright-report/associate-stacked";
 
 /** The three tiles: one under another, the same left edge; „Asociere" below „Rezultate" or held at the window's bottom. */

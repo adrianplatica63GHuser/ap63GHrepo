@@ -114,19 +114,22 @@ export function TilesDiagram({
   // render, and a frame that differed by a fraction of a pixel each time (the labels' average width, as the panel's
   // rows reflowed on the narrower unit) set state on every pass. So a change under a pixel is no change, and more
   // than a few changes in a burst wait for the next resize rather than loop.
+  // The frame last set, read without a render: a measure that would not change it — or one more in a burst — sets
+  // nothing at all, so no render follows it.
   const burst = useRef({ at: 0, n: 0 });
+  const shown = useRef<Frame | null>(null);
   useLayoutEffect(() => {
     const wrap = ref.current?.parentElement;
     if (!wrap) return;
     const measure = () => {
       const next = frameOf(wrap);
-      setFrame((prev) => {
-        if (sameFrame(prev, next)) return prev;
-        const now = typeof performance === "undefined" ? Date.now() : performance.now();
-        if (now - burst.current.at > 250) burst.current = { at: now, n: 0 };
-        burst.current.n += 1;
-        return burst.current.n > 8 ? prev : next;
-      });
+      if (sameFrame(shown.current, next)) return;
+      const now = typeof performance === "undefined" ? Date.now() : performance.now();
+      if (now - burst.current.at > 250) burst.current = { at: now, n: 0 };
+      burst.current.n += 1;
+      if (burst.current.n > 8) return;
+      shown.current = next;
+      setFrame(next);
     };
     measure();
     // jsdom (jest) has no layout and no ResizeObserver: the first measure stands there.

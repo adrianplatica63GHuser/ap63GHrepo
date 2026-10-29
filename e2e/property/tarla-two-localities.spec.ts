@@ -206,7 +206,7 @@ test.describe("TC-PROP-16 — aceeași tarla în două localități", () => {
           return frame.scrollWidth - frame.clientWidth;
         });
         expect(sideways, `${width} px: the corners' table does not scroll sideways`).toBeLessThanOrEqual(0);
-        await expect(page.locator('[data-tile-screen="tarla"] > [data-tile="outline"]')).toHaveCSS("width", "476px");
+        await expect(page.locator('[data-tile-screen="tarla"] > [data-tile="outline"]')).toHaveCSS("width", "524px"); // 40.98: a third, 4 units of 119
       }
       await page.locator("[data-tarla-save]").getByRole("button", { name: "Șterge", exact: true }).click();
       await expect(dialog).toContainText("Nimic nu depinde de această valoare.", { timeout: 15_000 });
