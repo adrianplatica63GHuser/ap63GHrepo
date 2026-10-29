@@ -12,17 +12,17 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-10-28 — 375 entries (FU-360 filed by 40.18, FU-361 by 40.27, FU-362 by 40.78, FU-363 by 40.79, FU-364–365 by 40.84, FU-366–369 by 40.85, FU-370–371 by 40.86, FU-372 by 40.87, FU-373 by 40.88, FU-374 by 40.90, FU-375 by 40.92). Rows are status, columns are impact.
+As of 2026-10-28 — 376 entries (FU-360 filed by 40.18, FU-361 by 40.27, FU-362 by 40.78, FU-363 by 40.79, FU-364–365 by 40.84, FU-366–369 by 40.85, FU-370–371 by 40.86, FU-372 by 40.87, FU-373 by 40.88, FU-374 by 40.90, FU-375 by 40.92, FU-376 by 40.96). Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
-| open | 19 | 92 | 80 | 27 | 218 |
+| open | 19 | 92 | 81 | 27 | 219 |
 | planned | 0 | 0 | 1 | 0 | 1 |
 | resolved | 40 | 61 | 32 | 3 | 136 |
 | ignored | 4 | 3 | 4 | 2 | 13 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 6 | 1 | 0 | 7 |
-| **total** | 63 | 162 | 118 | 32 | 375 |
+| **total** | 63 | 162 | 119 | 32 | 376 |
 <!-- summary:end -->
 
 `src/__tests__/follow-up-register.test.ts` recounts the table and fails when this block disagrees
@@ -459,3 +459,4 @@ Nothing is filed from memory: every row carries evidence someone actually looked
 | FU-373 | 2026-10-27 40.88 Handover.40.88.md; 2026-10-27 40.89 Handover.40.89.md (TC-DOC-03 too) | data risk | DB & migrations | The local database no longer holds the document types FISA_CORPULUI_PROPRIETATE, PLAN_AMPLASAMENT_DELIMITARE and PLAN_PARCELAR (the value-list API has no row for them), so the runner's forms-export writes only two forms and would drop those three from src/db/document-type-forms.json — the rebuild's and Ciprian's source — if committed as written; TC-DOC-18, TC-DOC-01's „lățimile fixe" test and TC-DOC-03 fail at their set-up („No document type with key … on this database"). | runner forms-export 20261027T225518Z-19009 (2 forms); targeted 20261027T225716Z-24002 (e2e); forms-drift on every run since | data | XS | resolved | 40.90 e7fe4a5a — Adrian removed them on purpose („they were faulty … I will re-do them"); the three forms are out of the file, TC-DOC-18 and TC-DOC-01 off them, TC-DOC-03 steps 1–2 retired. Was: whether Adrian removed the three types on purpose. They were there at 12:49Z on 2026-10-27 (forms-drift in step) and gone by 22:55Z, while the database grew from 66,373 to 72,340 rows. 40.88 kept the three forms in the file by hand. If on purpose: remove them from the file and the two specs; if not: restore the types. | 2026-10-27 |
 | FU-374 | 2026-10-27 40.90 Handover.40.90.md | recommendation | Reference data | Adrian deleted the document TYPES Fișa Corpului de Proprietate, Plan de Amplasament și Delimitare and Plan Parcelar, not only their faulty forms: the import's plan parcelar → tarla path keys on `PLAN_PARCELAR` (src/lib/tarla/plan-read.ts PLAN_PARCELAR_KEY; TC-IMP-06), five e2e specs create a PAD as their second document (role-panel, associate-stacked, one-line-rows, related-tile, role-share), and the dev seed writes PAD documents — all fail on the local database until the types return. | src/lib/tarla/plan-read.ts:29; e2e/admin/role-panel.spec.ts:91; e2e/association/associate-stacked.spec.ts:87; e2e/document/one-line-rows.spec.ts:86; e2e/document/related-tile.spec.ts:78; e2e/document/role-share.spec.ts:122; scripts/seed-dev-data/seed.ts:262 | user | XS | open | Recommended: restore the three types in Date de referință with no form. If they stay deleted, move the five specs and the seed to other types, and decide what the import does with a plan parcelar. Asked 2026-10-27. | 2026-10-27 |
 | FU-375 | 2026-10-28 40.92 Handover.40.92.md | next-slice idea | Documents | After „Schimbă tipul…”, a party linked under a role the new type does not allow stays linked with that role (a save never re-checks the links), so the Părți tile shows a role the type will not offer again; nothing offers to change it there. | src/lib/documents/queries.ts `updateDocument` (never touches person_document); src/app/api/documents/[id]/type-change/route.ts; src/__tests__/document-type-change.test.ts „a save does not re-check the linked parties” | user | S | open | Offer, in the confirmation, a role of the new type for each such party (or a „Schimbă rolul” on the Părți row), written with the type's save. | 2026-10-28 |
+| FU-376 | 2026-10-28 40.96 Handover.40.96.md | copy/i18n | Testing | Eighteen test-case files still tell the reader to press a row's „Vizualizare” on Legături / Părți (or name it among the row's buttons), which 40.96 removed — the record's name is the link now; their specs were moved to the name, the cases' words were not. | grep -c Vizualizare docs/testing/cases/*.md: TC-ASSOC-01–11, TC-DOC-01, -09, -12, -24, TC-TABS-01, TC-TILES-05, -11 (TC-ASSOC-03 done in 40.96) | dev | S | open | Reword each step to „presses the record's name on that row” as the spec does; one docs commit. | 2026-10-28 |
