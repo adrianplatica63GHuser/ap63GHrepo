@@ -179,7 +179,13 @@ test.describe("TC-DOC-28 — actul de identitate pe ecranul lui", () => {
 
       // Step 7 — Documente → Adaugă act with an identity type: the tile, empty; saved.
       await page.goto("/documents/new");
-      await page.getByLabel(/^Tip document/).selectOption({ label: "Carte de Identitate (model vechi)" });
+      // By its name's start: the archive's own list may call it „(model vechi)" or „(tip vechi)" — Adrian's database
+      // reads „tip" (seen 2026-10-29), sync-reference-data.sql „model". A label the list lacks made selectOption wait
+      // out the whole test.
+      const typeSelect = page.getByLabel(/^Tip document/);
+      const booklet = typeSelect.locator("option", { hasText: /^Carte de Identitate \((model|tip) vechi\)$/ });
+      await expect(booklet).toHaveCount(1, { timeout: 30_000 });
+      await typeSelect.selectOption((await booklet.getAttribute("value"))!);
       await expect(tile(page)).toBeVisible({ timeout: 30_000 });
       await expect(box(page, "identity.lastName")).toHaveValue("");
       await page.getByLabel(/^Etichetă scurtă/).fill(`${MARK} nou din Acte`);

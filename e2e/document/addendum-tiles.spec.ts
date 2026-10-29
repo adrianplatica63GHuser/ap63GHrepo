@@ -14,7 +14,7 @@
  *     and not, and the page, at 1366 and 1920 px, into `playwright-report/addendum-tiles/`.
  *   - Step 6 (40.88) measures the boxes in px, from field-widths.ts's scale:
  *     XL 272, M 136, a 3-unit tile 450 inside, a 2-unit panel 286.
- *   - Step 7 (40.92) creates a fourth document, a Contract de Vânzare with
+ *   - Step 7 (40.92) creates a fourth document, at its start (step 3 would find it), a Contract de Vânzare with
  *     „Preț total" filled, through the route.
  */
 
@@ -69,8 +69,6 @@ test.describe("TC-DOC-20 — actul adițional și actul pe care îl modifică", 
       made.push(await createDocumentOfType(page.request, "CONTRACT_VANZARE", OTHER));
       const act = await createDocumentOfType(page.request, "ACT_ADITIONAL", ACT);
       made.push(act);
-      const retyped = await createDocumentOfType(page.request, "CONTRACT_VANZARE", RETYPED, { customFields: { pretTotal: "100000" } });
-      made.push(retyped);
 
       // Step 1 — the four tiles; „Onorariu notarial" on „Identificarea actului"; no deed yet.
       await page.goto(`/documents/${act}`);
@@ -175,6 +173,9 @@ test.describe("TC-DOC-20 — actul adițional și actul pe care îl modifică", 
 
       // Step 7 — 40.92. A Contract de Vânzare with „Preț total" filled: „Schimbă tipul…" to Act Adițional names that
       // field; „Anulează" leaves the type as it was; „Confirmă" changes it in the form, and „Salvează" writes it.
+      // Created here, not with the other three: step 3's search for the mark must find the two contracts alone.
+      const retyped = await createDocumentOfType(page.request, "CONTRACT_VANZARE", RETYPED, { customFields: { pretTotal: "100000" } });
+      made.push(retyped);
       await page.goto(`/documents/${retyped}`);
       await expect(page.getByRole("heading", { name: RETYPED })).toBeVisible({ timeout: 30_000 });
       await editTile(page, "general");

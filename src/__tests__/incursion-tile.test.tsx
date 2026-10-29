@@ -425,8 +425,9 @@ describe("„Legături” read-only draws no association control (#38.76)", () =
     const { container } = draw(false);
     expect(container.querySelector("[data-preview-button]")).not.toBeNull();
     expect(container.querySelectorAll('input[type="radio"]')).toHaveLength(2);
-    expect(container.textContent).toContain("associatePerson");
-    expect(container.textContent).toContain("dissociate");
+    // 40.96: the tile's buttons are icons only — their words are their names, not their text.
+    expect(container.querySelector('button[aria-label="associatePerson"]')).not.toBeNull();
+    expect(container.querySelector('button[aria-label="dissociate"]')).not.toBeNull();
     for (const sel of ["[data-share-button]", "[data-below]", "[data-extra]", "[data-under]"]) expect(container.querySelector(sel)).not.toBeNull();
   });
 

@@ -125,6 +125,8 @@ test.describe("TC-ASSOC-03 — Act asociat persoanei, din ecranul persoanei", ()
         await expect(b.locator("svg")).toHaveCount(2);
       }
       const quiet = linked.locator('[data-row-buttons="quiet"]');
+      // Esc above put the focus back on „Relația", and the row holding the focus shows its buttons full — by design.
+      await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
       await page.mouse.move(1, 1);
       await expect.poll(() => quiet.evaluate((e) => getComputedStyle(e).opacity)).toBe("0.35");
       await linked.locator("[data-row-content]").hover();
