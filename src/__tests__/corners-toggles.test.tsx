@@ -31,7 +31,7 @@ beforeEach(() => {
   global.fetch = jest.fn(async () => ({ ok: false, status: 404, json: async () => ({}) })) as unknown as typeof fetch;
 });
 
-function renderManager(props: { streetView?: boolean } = {}) {
+function renderManager(props: { streetView?: boolean; addOnDisplayLine?: boolean; readOnly?: boolean } = {}) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
@@ -99,6 +99,32 @@ describe("the rows' arrows and the add button", () => {
   it("„+ Adaugă punct” is MapPinPlus, keeping its name", () => {
     renderManager();
     expect(iconClass(screen.getByRole("button", { name: "+ add" }))).toContain("lucide-map-pin-plus");
+  });
+});
+
+// Slice 40.97 — on a property's form: „+ Adaugă punct" only in edit, at the right of the „Afișare:" line.
+describe("„+ Adaugă punct” on a property's corners tile (40.97)", () => {
+  it("read: not drawn at all — hidden, not disabled", () => {
+    renderManager({ addOnDisplayLine: true, readOnly: true });
+    expect(screen.queryByRole("button", { name: "+ add" })).toBeNull();
+  });
+
+  it("in edit: on the display line, pushed to its right; no toolbar under the table", () => {
+    const { container } = renderManager({ addOnDisplayLine: true });
+    const add = screen.getByRole("button", { name: "+ add" });
+    const line = container.querySelector("[data-corners-add-line]")!;
+    expect(line.contains(add)).toBe(true);
+    expect(line.className).toContain("ml-auto");
+    expect(line.parentElement!.textContent).toContain("displayLabel");
+    expect(screen.getAllByRole("button", { name: "+ add" })).toHaveLength(1);
+    // A form without tiles keeps its Street View toggle under the table.
+    expect(screen.getByRole("button", { name: "showStreetView" })).toBeInTheDocument();
+  });
+
+  it("elsewhere (the tarla page, „Adaugă proprietate”): the toolbar under the table, as before", () => {
+    const { container } = renderManager();
+    expect(container.querySelector("[data-corners-add-line]")).toBeNull();
+    expect(screen.getByRole("button", { name: "+ add" })).toBeInTheDocument();
   });
 });
 

@@ -425,8 +425,6 @@ export function PropertyForm({
 
   const [corners,          setCorners]          = useState<Corner[]>(initialCorners);
   const [hoveredCornerIdx, setHoveredCornerIdx] = useState<number | null>(null);
-  // Slice 40.35: the corners tile's title row slot, where CornersManager puts „+ Adaugă punct".
-  const [cornersToolbar,   setCornersToolbar]   = useState<HTMLDivElement | null>(null);
   const [submitting,       setSubmitting]       = useState(false);
   const [submitError,      setSubmitError]      = useState<string | null>(null);
   // Slice #37.04 (FU-016): „Adaugă nou" named a parcel that already has a
@@ -1558,14 +1556,12 @@ export function PropertyForm({
             editingClass("corners").trim(),
           ].join(" ")}
         >
-          {/* Slice 40.35: „+ Adaugă punct" (and, on „Adaugă proprietate", the Street View toggle) in the title row, at the
-              right — CornersManager portals its toolbar into this slot; the line under the table is gone. */}
-          <div className="flex items-start justify-between gap-2">
-            <TileTitle title={t("tiles.corners")} subtitle={t("tileSubtitles.corners")} action={editButton("corners", t("tiles.corners"))} />
-            <div ref={setCornersToolbar} className="flex shrink-0 items-center" data-corners-toolbar="" />
-          </div>
+          {/* Slice 40.97 (Adrian, 2026-10-28): Editează at the tile's top right, as on every other tile; „+ Adaugă punct"
+              only once it is pressed, on the „Afișare:" line at the right (`addOnDisplayLine`). 40.35–40.96 it stood in
+              the title row, through a portal, disabled while read-only. */}
+          <TileTitle title={t("tiles.corners")} subtitle={t("tileSubtitles.corners")} action={editButton("corners", t("tiles.corners"))} />
           <CornersManager
-            toolbarSlot={cornersToolbar}
+            addOnDisplayLine
             corners={corners}
             onChange={setCorners}
             readOnly={effectiveMode === "view" || reading("corners")}
@@ -1754,6 +1750,8 @@ export function PropertyForm({
           {...tileProps("map")}
           className={surface("map")}
         >
+          {/* Slice 40.97: a header with the tile's name, as the other tiles and „Panouri" name it; the map keeps its height. */}
+          <TileTitle title={t("tiles.map")} />
           <div
             className="relative overflow-hidden rounded-md border border-card-rim dark:border-zinc-800"
             style={MAP_BOX_STYLE}
@@ -1800,6 +1798,8 @@ export function PropertyForm({
             {...tileProps("streetView")}
             className={surface("streetView")}
           >
+            {/* Slice 40.97: its name, as Hartă's. */}
+            <TileTitle title={t("tiles.streetView")} />
             <div
               className="overflow-hidden rounded-md border border-card-rim dark:border-zinc-800"
               style={MAP_BOX_STYLE}

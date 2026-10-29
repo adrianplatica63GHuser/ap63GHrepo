@@ -4,7 +4,6 @@ import { useTranslations } from "next-intl";
 import { ArrowDown, ArrowUp, MapPinPlus, Pencil, PersonStanding, Save, Trash2, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useState, useEffect } from "react";
-import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import { decimalToDMS, dmsToDecimal, formatDMS } from "@/lib/geo/dms";
 import {
@@ -55,7 +54,12 @@ type Props = {
   // Slice 40.35 — the corners tile's title row on a property's form: the toolbar („+ Adaugă punct", and on
   // „Adaugă proprietate" the Street View toggle beside it) is drawn there, at the right, not on a line under the table.
   // Absent (the tarla page's „Contur"), or before the slot mounts, it stays under the table.
-  toolbarSlot?:      HTMLElement | null;
+  /**
+   * Slice 40.97: on a property's form, „+ Adaugă punct" stands at the right of the „Afișare:" line, and only while the
+   * tile is being edited (Adrian, 2026-10-28). Absent — the tarla page's „Contur", „Adaugă proprietate" — the toolbar
+   * stays under the table, as it always was. (40.35–40.96 the form portalled it into the title row.)
+   */
+  addOnDisplayLine?: boolean;
 };
 
 // ---------------------------------------------------------------------------
@@ -373,7 +377,7 @@ function displayFmtToInputMode(fmt: DisplayFormat): InputMode {
 // Main manager
 // ---------------------------------------------------------------------------
 
-export function CornersManager({ corners, onChange, readOnly = false, hoveredCornerIdx, onCornerHover, streetView = false, onToggleStreetView, cornerDiff, tight = false, toolbarSlot }: Props) {
+export function CornersManager({ corners, onChange, readOnly = false, hoveredCornerIdx, onCornerHover, streetView = false, onToggleStreetView, cornerDiff, tight = false, addOnDisplayLine = false }: Props) {
   const t = useTranslations("property.corners");
 
   const [displayFmt,  setDisplayFmt]  = useState<DisplayFormat>("S70");
@@ -504,27 +508,28 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
       })()
     : null;
 
-  // Slice 40.35: on a property's form the toolbar stands in the corners tile's title row, at the right (`toolbarSlot`,
-  // property-form.tsx), and the line under the table is gone; the tarla page's „Contur" keeps it here. While a
-  // corner is being added or edited „+ Adaugă punct" hides, as before.
-  const toolbar = ((!adding && editingIdx === null) || onToggleStreetView) ? (
+  // While a corner is being added or edited „+ Adaugă punct" hides, as before. Slice 40.97: on a property's form it is
+  // drawn on the „Afișare:" line instead (below), and only in edit.
+  const addButton = (
+    // #37.45 (A067): MapPinPlus. The name keeps its „+": e2e finds the button by „+ Adaugă punct", as #37.44 kept „+ Adaugă".
+    <IconButton
+      icon={MapPinPlus}
+      label={`+ ${t("add")}`}
+      variant="secondary"
+      size="sm"
+      onClick={() => setAdding(true)}
+      disabled={readOnly}
+      data-corner-add=""
+    />
+  );
+  const addInToolbar = !addOnDisplayLine && !adding && editingIdx === null;
+  const toolbar = (addInToolbar || onToggleStreetView) ? (
         // Toolbar: Add, and — on „Adaugă proprietate" only — Show/Hide Street View.
         // Slice #38.09: on a saved property Street View opens from its tile
         // checkbox alone, and the angles toggle stands on the map's top row.
         // Version-nav controls moved to the page header in Slice #18.UX.04.
         <div className="flex flex-wrap items-center gap-y-2">
-          {!adding && editingIdx === null && (
-            // #37.45 (A067): MapPinPlus. The name keeps its „+": e2e finds
-            // the button by „+ Adaugă punct", as #37.44 kept „+ Adaugă".
-            <IconButton
-              icon={MapPinPlus}
-              label={`+ ${t("add")}`}
-              variant="secondary"
-              size="sm"
-              onClick={() => setAdding(true)}
-              disabled={readOnly}
-            />
-          )}
+          {addInToolbar && addButton}
           {onToggleStreetView && (
             // #37.45 (A059): PersonStanding, a toggle — the cta fill and
             // `aria-pressed` while Street View shows; the name and tooltip
@@ -576,6 +581,10 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
         )}
         {showS70Error   && <span className="text-xs text-red-500">{t("convertError")}</span>}
         {!readOnly && <HelpHint hintKey="corner-reorder" />}
+        {/* Slice 40.97: in edit only, at the line's right; hidden, not disabled, while the tile is read. */}
+        {addOnDisplayLine && !readOnly && !adding && editingIdx === null && (
+          <span className="ml-auto" data-corners-add-line="">{addButton}</span>
+        )}
       </div>
 
       <div className="overflow-x-auto rounded-md border border-card-rim bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
@@ -707,7 +716,7 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
         </table>
       </div>
 
-      {toolbarSlot !== undefined ? (toolbar && toolbarSlot ? createPortal(toolbar, toolbarSlot) : null) : toolbar}
+      {toolbar}
     </div>
   );
 }

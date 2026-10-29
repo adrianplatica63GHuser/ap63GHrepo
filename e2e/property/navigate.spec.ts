@@ -15,7 +15,7 @@
 
 import { test, expect, type Locator, type Page } from "../helpers/test";
 import { E2E_MARKER, createProperty, removeLeftovers, removeRecord } from "../helpers/records";
-import { showTile } from "../helpers/tiles";
+import { editTile, showTile } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}PROP-13`;
 const BASE = "https://www.google.com/maps/dir/?api=1";
@@ -79,12 +79,22 @@ test.describe("TC-PROP-13 — „Navighează”", () => {
       await expect(top.getByRole("button", { name: "Navighează", exact: true })).not.toHaveText(/Navighează/);
       const [tileBox, mapBox] = [(await mapTile.boundingBox())!, (await mapTile.locator('[data-width-field="map"]').boundingBox())!];
       expect(tileBox.y + tileBox.height - (mapBox.y + mapBox.height)).toBeLessThanOrEqual(14);
+      // 40.97: Hartă has its header, the tile's name. „+ Adaugă punct" is not drawn until „Editează" (at the tile's top
+      // right, as on every tile); then it stands on the „Afișare:" line, at the right (40.35–40.96: the title row).
+      await expect(mapTile.locator("[data-tile-title] h2").first()).toHaveText("Hartă");
       const corners = page.locator('[data-tile="corners"]');
       const add = corners.getByRole("button", { name: "+ Adaugă punct" });
+      await expect(add).toHaveCount(0);
+      const edit = corners.locator("[data-tile-edit]");
+      const [e, c0] = [(await edit.boundingBox())!, (await corners.boundingBox())!];
+      expect(c0.x + c0.width - (e.x + e.width), "Editează at the right").toBeLessThanOrEqual(16);
+      await editTile(page, "corners");
       await expect(add).toBeVisible();
-      const [a, title, c] = [(await add.boundingBox())!, (await corners.locator("[data-tile-title]").first().boundingBox())!, (await corners.boundingBox())!];
-      expect(a.y).toBeLessThan(title.y + title.height);
-      expect(c.x + c.width - (a.x + a.width)).toBeLessThanOrEqual(16);
+      const display = corners.getByText("Afișare:", { exact: true });
+      const [a, d, c] = [(await add.boundingBox())!, (await display.boundingBox())!, (await corners.boundingBox())!];
+      expect(Math.abs(a.y + a.height / 2 - (d.y + d.height / 2)), "on the „Afișare:\" line").toBeLessThanOrEqual(8);
+      expect(c.x + c.width - (a.x + a.width), "at its right").toBeLessThanOrEqual(16);
+      await corners.locator('[data-tile-cancel="corners"]').click();
 
       // Step 1 — „Livada": the parcel's centre, from „Locația mea"; the link in a new tab, the phone's as a QR code.
       let dialog = await openDialog(page, parcel);
