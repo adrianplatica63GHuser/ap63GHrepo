@@ -83,11 +83,8 @@ const ALLOW: Record<string, Allowed[]> = {
     ["A113", "{holder.displayName}"],
   ],
   "src/app/_components/dashboard-client.tsx": [
-    ["A113", "<Icon size={20} aria-hidden=\"true\" className=\"text-fade\" /> {"], // 40.61: the count under its kind's mark (40.76: its colour a role token)
+    ["A113", "{body}"], // 41.01: a kind's count card on both count tiles — its mark, its count, its name (40.61's count card and the stale tile's three pills before)
     ["A113", "{nameOr(doc.title, \"document\")}"], // #37.57: the title is the link
-    ["A113", "<span className=\"font-bold\">{data.persons}</span> <span>"],
-    ["A113", "<span className=\"font-bold\">{data.properties}</span> <sp"],
-    ["A113", "<span className=\"font-bold\">{data.documents}</span> <spa"],
     ["A113", "{nameOr(item.displayName, item.entityType)}"],
   ],
   // Slice #39.37: the user manual. A cross-reference in a sentence is a same-tab link whose words are the number
