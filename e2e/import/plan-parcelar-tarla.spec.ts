@@ -102,8 +102,7 @@ const INNER = { useInnerText: true } as const;
 
 test.describe("TC-IMP-06 — un plan parcelar importat", () => {
   test("tarla TCP9 creată cu patru parcele, planul legat de ea", async ({ page }) => {
-    // Slice 41.03: four minutes — the import's steps, „Continuă fără formulare" among them, outran test.slow()'s 90 s.
-    test.setTimeout(240_000);
+    test.slow();
     await page.setViewportSize({ width: 1366, height: 900 });
     const step = page.getByText(/^Pasul curent: /).first();
     await page.goto("/admin/import");
@@ -139,12 +138,13 @@ test.describe("TC-IMP-06 — un plan parcelar importat", () => {
       }
       await page.getByRole("button", { name: "Continuă la pasul „Scanare”", exact: true }).click();
       // Slice 41.03 (FU-374): Plan Parcelar has no form — Adrian recreated the type without one — so the scan stops at
-      // „unele tipuri de documente nu au încă formular", and the import goes on with „Continuă fără formulare".
+      // „unele tipuri de documente nu au încă formular", and the import goes on with „Continuă fără formulare" — which
+      // itself moves on to „Evaluare" (there is no „Continuă la pasul „Evaluare”" to press after it).
       const waive = page.getByRole("button", { name: "Continuă fără formulare", exact: true });
       await expect(waive).toBeVisible({ timeout: 60_000 });
       await waive.click();
       await expect(page.getByText("Scanat", { exact: true }).first()).toBeVisible({ timeout: 60_000 });
-      await page.getByRole("button", { name: "Continuă la pasul „Evaluare”", exact: true }).click();
+      await expect(step).toHaveText("Pasul curent: Evaluare", { timeout: 30_000 });
       await page.getByRole("button", { name: "Continuă la pasul „Import”", exact: true }).click();
       await expect(page.getByText("Se creează un document, cu fișierele lui.")).toBeVisible({ timeout: 30_000 });
       await expect(
