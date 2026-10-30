@@ -7,7 +7,7 @@ import Link from "next/link";
 import { ENTITY_ICON, type EntityKind } from "@/lib/ui/entity-icon";
 import { EntityMark } from "@/components/record/entity-mark";
 import { useTimeFrames, tfDays } from "@/hooks/use-time-frames";
-import { columnRem, stepGridStyle, tableUnits, type ColumnName } from "@/lib/ui/field-widths";
+import { columnRem, tableUnits, type ColumnName } from "@/lib/ui/field-widths";
 import { ListTile } from "@/components/tiles/list-tile";
 import { TileSelector } from "@/components/tiles/tile-selector";
 import { useTileChoice } from "@/components/tiles/use-tile-choice";
@@ -23,16 +23,17 @@ const EXPIRING_COLUMNS: readonly ColumnName[] = ["expiryStatus", "documentTitle"
 
 /**
  * Slice #37.36: each section the fewest width units that hold it.
- *   - the counts: three M cards and their gaps (27.5rem) — 3;
- *   - the stale metadata: its sentence and three links on one row — 3, like the counts;
+ *   - the counts (41.01): four cards, two by two, filling the tile — 2 units (228 px inside, each card 110);
+ *   - the stale metadata (41.01): the same four cards, in amber — 2, like the counts;
  *   - the expiring documents: the fewest units that hold the table's columns (8),
  *     the title taking what the others leave;
  *   - the activity: a row is the type chip, the name (XL, truncated) and the time — 4.
  */
 const HOME_UNITS: Readonly<Record<HomeTile, number>> = {
   // 40.98: re-pinned to the width they had on the 148-px unit — 3 → 4 (476 → 524 px), 4 → 5 (640 → 659).
-  recentCounts: 4,
-  staleMetadata: 4,
+  // 41.01: the two count tiles 2 units (254 px) — four cards two by two, where three M cards stood in a row of 4.
+  recentCounts: 2,
+  staleMetadata: 2,
   expiringDocuments: tableUnits(EXPIRING_COLUMNS),
   recentActivity: 5,
 };
@@ -42,9 +43,10 @@ const HOME_UNITS: Readonly<Record<HomeTile, number>> = {
 // ---------------------------------------------------------------------------
 
 type RecentCounts = {
-  persons:    number;
-  properties: number;
-  documents:  number;
+  naturalPersons:  number;
+  judicialPersons: number;
+  properties:      number;
+  documents:       number;
 };
 
 type ExpiringDocument = {
@@ -56,10 +58,11 @@ type ExpiringDocument = {
 };
 
 type StaleMetadataCount = {
-  total:      number;
-  persons:    number;
-  properties: number;
-  documents:  number;
+  total:           number;
+  naturalPersons:  number;
+  judicialPersons: number;
+  properties:      number;
+  documents:       number;
 };
 
 type RecentActivityItem = {
@@ -256,6 +259,109 @@ const PANEL_NAME: Readonly<Record<HomeTile, string>> = {
 // `useTimeFrames()` itself, matching how `amberDays` has always been threaded:
 // one call to the hook, in the root, passed down.
 
+/**
+ * Slice 41.01: the four principal kinds, in the order and the look both count tiles share — Persoane fizice |
+ * Persoane juridice on the first row, Proprietăți | Acte on the second. Each opens its kind's list (they took
+ * the address /persons, which is no route: Adrian's 404).
+ */
+const COUNT_KINDS: readonly { kind: EntityKind; field: "naturalPersons" | "judicialPersons" | "properties" | "documents"; href: string }[] = [
+  { kind: "natural",  field: "naturalPersons",  href: "/natural-persons" },
+  { kind: "judicial", field: "judicialPersons", href: "/judicial-persons" },
+  { kind: "property", field: "properties",      href: "/properties" },
+  { kind: "document", field: "documents",       href: "/documents" },
+];
+
+/** The kinds' names on a count card, plural. */
+const COUNT_LABEL_KEY: Readonly<Record<EntityKind, string>> = {
+  natural:  "kindCounts.natural",
+  judicial: "kindCounts.judicial",
+  property: "kindCounts.property",
+  document: "kindCounts.document",
+};
+
+/**
+ * Slice 41.01 (Ask first 1): ONE card for a kind's count, on both tiles — the kind's mark at 16 px, the count at
+ * text-xl, the name at text-xs under it. Only the colour differs: `warning` is the amber of the stale tile (its wash
+ * and rim), `plain` the recent tile's card. A count of 0 is faded and not a link (Ask first 5); still loading, the
+ * count is a skeleton and the card is not a link yet.
+ */
+function KindCountCard({
+  kind,
+  label,
+  count,
+  href,
+  tone,
+  mark,
+}: {
+  kind: EntityKind;
+  label: string;
+  count: number | undefined;
+  href: string;
+  tone: "plain" | "warning";
+  /** The e2e's handle: `data-recent-count` or `data-stale-count`, valued with the kind. */
+  mark: "data-recent-count" | "data-stale-count";
+}) {
+  const Icon = ENTITY_ICON[kind];
+  const colours =
+    tone === "warning"
+      ? "border-warning-rim bg-warning-wash text-warning"
+      : "border-wire bg-raised text-ink";
+  const body = (
+    <>
+      <Icon size={16} aria-hidden="true" className={tone === "warning" ? "text-warning" : "text-fade"} />
+      {count === undefined ? (
+        <Skeleton className="h-7 w-8" />
+      ) : (
+        <span className="text-xl font-bold leading-7 tabular-nums">{count}</span>
+      )}
+      <span className={`text-xs leading-tight text-center ${tone === "warning" ? "" : "text-fade"}`}>{label}</span>
+    </>
+  );
+  const box = `flex min-w-0 flex-col items-center justify-center gap-0.5 rounded-lg border px-1 py-2 ${colours}`;
+  const attrs = { [mark]: kind, "data-count-card": "" };
+  if (count === undefined || count === 0) {
+    return (
+      <div className={`${box}${count === 0 ? " opacity-50" : ""}`} {...attrs}>
+        {body}
+      </div>
+    );
+  }
+  return (
+    <Link href={href} className={`${box} transition-colors hover:opacity-80`} {...attrs}>
+      {body}
+    </Link>
+  );
+}
+
+/** Slice 41.01 (Ask first 2): two by two, filling the tile edge to edge — the tile's own padding is the gap to its edges. */
+function KindCountGrid({
+  data,
+  t,
+  tone,
+  mark,
+}: {
+  data: RecentCounts | StaleMetadataCount | undefined;
+  t: ReturnType<typeof useTranslations>;
+  tone: "plain" | "warning";
+  mark: "data-recent-count" | "data-stale-count";
+}) {
+  return (
+    <div className="grid grid-cols-2 gap-2" data-count-grid="">
+      {COUNT_KINDS.map((c) => (
+        <KindCountCard
+          key={c.kind}
+          kind={c.kind}
+          label={t(COUNT_LABEL_KEY[c.kind])}
+          count={data?.[c.field]}
+          href={c.href}
+          tone={tone}
+          mark={mark}
+        />
+      ))}
+    </div>
+  );
+}
+
 export function RecentCountsSection({
   data,
   t,
@@ -266,59 +372,11 @@ export function RecentCountsSection({
   /** `dashboard_recent_days` — the window the counts were computed over. */
   recentDays: number;
 }) {
-  const cards = [
-    {
-      label: t("recentCounts.persons"),
-      count: data?.persons,
-      href:  "/persons",
-      kind:  "natural",
-    },
-    {
-      label: t("recentCounts.properties"),
-      count: data?.properties,
-      href:  "/properties",
-      kind:  "property",
-    },
-    {
-      label: t("recentCounts.documents"),
-      count: data?.documents,
-      href:  "/documents",
-      kind:  "document",
-    },
-  ] as const;
-
+  // Slice 40.61 (Ask first 4): one ink colour on plain cards, each under its kind's mark. Slice 41.01: four kinds, the
+  // stale tile's card, and no „Obiecte nou adăugate" under them (Ask first 6).
   return (
     <SectionCard tile="recentCounts" title={t("recentCounts.title", { days: recentDays })}>
-      <div style={stepGridStyle("M", 3, 1)}>
-        {/* Slice 40.61 (Ask first 4): one ink colour on plain cards, each under its kind's mark — they were blue, green
-            and purple on tinted cards, and green and purple already meant Legături and the pinned tiles. */}
-        {cards.map((c) => {
-          const Icon = ENTITY_ICON[c.kind];
-          return (
-          <Link
-            key={c.href}
-            href={c.href}
-            className="flex flex-col items-center justify-center gap-1 rounded-lg border border-wire bg-raised p-4 transition-colors hover:bg-cta-pale"
-            data-recent-count={c.kind}
-          >
-            <Icon size={20} aria-hidden="true" className="text-fade" />
-            {data === undefined ? (
-              <Skeleton className="h-8 w-12" />
-            ) : (
-              <span className="text-3xl font-bold tabular-nums text-ink">
-                {c.count}
-              </span>
-            )}
-            <span className="text-xs text-fade text-center">
-              {c.label}
-            </span>
-          </Link>
-          );
-        })}
-      </div>
-      <p className="mt-3 text-xs text-faint text-center">
-        {t("recentCounts.subtitle")}
-      </p>
+      <KindCountGrid data={data} t={t} tone="plain" mark="data-recent-count" />
     </SectionCard>
   );
 }
@@ -432,55 +490,19 @@ export function StaleMetadataSection({
 }: {
   data: StaleMetadataCount | undefined;
   t: ReturnType<typeof useTranslations>;
-  /** `dashboard_stale_metadata` — the age the count was computed against. */
+  /** `dashboard_stale_metadata` — the age the count was computed against, quoted by the title (41.01). */
   staleDays: number;
 }) {
+  // Slice 41.01: the recent tile's four cards, in amber (Ask first 1, 5); the sentence and the hint under the links are
+  // gone, the age they quoted is in the title (Ask first 6).
   return (
-    <SectionCard tile="staleMetadata" title={t("staleMetadata.title")}>
-      {data === undefined ? (
-        <Skeleton className="h-14 w-full" />
-      ) : data.total === 0 ? (
+    <SectionCard tile="staleMetadata" title={t("staleMetadata.title", { days: staleDays })}>
+      {data !== undefined && data.total === 0 ? (
         <p className="text-sm text-success text-center py-3 font-medium">
           {t("staleMetadata.allGood")}
         </p>
       ) : (
-        <div className="flex flex-col gap-3">
-          <p className="text-sm text-fade">
-            {t("staleMetadata.description", { total: data.total, days: staleDays })}
-          </p>
-          <div className="flex gap-3 flex-wrap">
-            {data.persons > 0 && (
-              <Link
-                href="/persons"
-                className="flex items-center gap-1.5 rounded-lg border border-warning-rim bg-warning-wash px-3 py-1.5 text-xs text-warning hover:opacity-80 transition-opacity"
-              >
-                <span className="font-bold">{data.persons}</span>
-                <span>{t("staleMetadata.persons")}</span>
-              </Link>
-            )}
-            {data.properties > 0 && (
-              <Link
-                href="/properties"
-                className="flex items-center gap-1.5 rounded-lg border border-warning-rim bg-warning-wash px-3 py-1.5 text-xs text-warning hover:opacity-80 transition-opacity"
-              >
-                <span className="font-bold">{data.properties}</span>
-                <span>{t("staleMetadata.properties")}</span>
-              </Link>
-            )}
-            {data.documents > 0 && (
-              <Link
-                href="/documents"
-                className="flex items-center gap-1.5 rounded-lg border border-warning-rim bg-warning-wash px-3 py-1.5 text-xs text-warning hover:opacity-80 transition-opacity"
-              >
-                <span className="font-bold">{data.documents}</span>
-                <span>{t("staleMetadata.documents")}</span>
-              </Link>
-            )}
-          </div>
-          <p className="text-xs text-faint">
-            {t("staleMetadata.hint")}
-          </p>
-        </div>
+        <KindCountGrid data={data} t={t} tone="warning" mark="data-stale-count" />
       )}
     </SectionCard>
   );
@@ -557,7 +579,7 @@ export function DashboardClient() {
   const choice = useTileChoice<HomeTile>(HOME_TILE_REGISTRY);
   const labels: Record<HomeTile, string> = {
     recentCounts: t("recentCounts.title", { days: tfDays(tf, "dashboard_recent_days") }),
-    staleMetadata: t("staleMetadata.title"),
+    staleMetadata: t("staleMetadata.title", { days: tfDays(tf, "dashboard_stale_metadata") }),
     expiringDocuments: t("expiringDocuments.title"),
     recentActivity: t("recentActivity.title"),
   };

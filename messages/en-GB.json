@@ -4139,11 +4139,7 @@
     "subtitle": "What needs your attention today",
     "loadError": "Failed to load dashboard",
     "recentCounts": {
-      "title": "Added in the last {days, plural, one {day} other {# days}}",
-      "subtitle": "Newly added objects",
-      "persons": "Persons",
-      "properties": "Properties",
-      "documents": "Documents"
+      "title": "Added in the last {days, plural, one {day} other {# days}}"
     },
     "expiringDocuments": {
       "title": "Documents with limited validity",
@@ -4156,13 +4152,14 @@
       "expiresInDays": "Expires in {days} days"
     },
     "staleMetadata": {
-      "title": "Metadata needing attention",
-      "allGood": "All metadata is up to date",
-      "description": "{total, plural, one {# object} other {# objects}} with metadata not updated in over {days, plural, one {a day} other {# days}}",
-      "persons": "persons",
-      "properties": "properties",
-      "documents": "documents",
-      "hint": "Click a type to open the corresponding list"
+      "title": "Metadata not updated in over {days, plural, one {a day} other {# days}}",
+      "allGood": "All metadata is up to date"
+    },
+    "kindCounts": {
+      "natural": "Natural persons",
+      "judicial": "Juridical persons",
+      "property": "Properties",
+      "document": "Documents"
     },
     "recentActivity": {
       "title": "Recent activity",

@@ -4139,11 +4139,7 @@
     "subtitle": "Ce necesită atenția dumneavoastră azi",
     "loadError": "Eroare la încărcarea tabloului de bord",
     "recentCounts": {
-      "title": "{days, plural, one {Adăugate în ultima zi} few {Adăugate în ultimele # zile} other {Adăugate în ultimele # de zile}}",
-      "subtitle": "Obiecte nou adăugate",
-      "persons": "Persoane",
-      "properties": "Proprietăți",
-      "documents": "Acte"
+      "title": "{days, plural, one {Adăugate în ultima zi} few {Adăugate în ultimele # zile} other {Adăugate în ultimele # de zile}}"
     },
     "expiringDocuments": {
       "title": "Acte cu valabilitate limitată",
@@ -4156,13 +4152,14 @@
       "expiresInDays": "Expiră în {days, plural, one {o zi} few {# zile} other {# de zile}}"
     },
     "staleMetadata": {
-      "title": "Metadate care necesită atenție",
-      "allGood": "Toate metadatele sunt actualizate",
-      "description": "{total, plural, one {Un obiect} few {# obiecte} other {# de obiecte}} cu metadate neactualizate de peste {days, plural, one {o zi} few {# zile} other {# de zile}}",
-      "persons": "persoane",
-      "properties": "proprietăți",
-      "documents": "acte",
-      "hint": "Faceți clic pe un tip pentru a deschide lista corespunzătoare"
+      "title": "{days, plural, one {Metadate neactualizate de peste o zi} few {Metadate neactualizate de peste # zile} other {Metadate neactualizate de peste # de zile}}",
+      "allGood": "Toate metadatele sunt actualizate"
+    },
+    "kindCounts": {
+      "natural": "Persoane fizice",
+      "judicial": "Persoane juridice",
+      "property": "Proprietăți",
+      "document": "Acte"
     },
     "recentActivity": {
       "title": "Activitate recentă",

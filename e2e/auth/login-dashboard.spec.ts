@@ -54,9 +54,13 @@ test.describe("TC-AUTH-01 — Conectare și tabloul de bord", () => {
     await expect(page.getByRole("heading", { name: "Tablou de bord" })).toBeVisible({ timeout: 30_000 });
     await expect(page.getByText("Ce necesită atenția dumneavoastră azi")).toBeVisible();
 
-    // Step 6a (Slice #37.36) — the four sections are tiles: „Metadate care necesită
-    // atenție" unticked leaves the page, stays unticked after a reload, and comes back.
-    const STALE = "Metadate care necesită atenție";
+    // Step 6a (Slice #37.36) — the four sections are tiles: the stale-metadata tile
+    // unticked leaves the page, stays unticked after a reload, and comes back.
+    // Slice 41.01: its title carries the age its count is against, as the recent tile carries its days —
+    // „Metadate neactualizate de peste N zile" (it was „Metadate care necesită atenție"); N is the archive's setting.
+    await expect(page.locator('[data-panel="stale-metadata"]')).toBeVisible({ timeout: 30_000 });
+    const STALE = (await page.locator('[data-panel="stale-metadata"]').getAttribute("aria-label"))!;
+    expect(STALE).toMatch(/^Metadate neactualizate de peste (o zi|\d+ zile|\d+ de zile)$/);
     const staleTile = page.getByRole("region", { name: STALE, exact: true });
     await expect(staleTile).toBeVisible({ timeout: 30_000 });
     await expect(async () => {
@@ -70,6 +74,62 @@ test.describe("TC-AUTH-01 — Conectare și tabloul de bord", () => {
     await expect(staleTile).toHaveCount(0);
     await tileBox(page, STALE).check();
     await expect(staleTile).toBeVisible({ timeout: 15_000 });
+
+    // Step 6b (Slice 41.01) — both count tiles draw the four kinds the same way, two by two: Persoane fizice |
+    // Persoane juridice, then Proprietăți | Acte; the grid sits evenly in its tile; every card with a count opens its
+    // kind's list, never a 404 (Adrian: „I clicked on the yellow button with persons … and I got 404 error").
+    const KINDS = ["natural", "judicial", "property", "document"];
+    const NAMES = ["Persoane fizice", "Persoane juridice", "Proprietăți", "Acte"];
+    const LISTS = ["/natural-persons", "/judicial-persons", "/properties", "/documents"];
+    await expect(page.getByText("Obiecte nou adăugate")).toHaveCount(0);
+    await expect(page.getByText("Faceți clic pe un tip", { exact: false })).toHaveCount(0);
+    const targets: string[] = [];
+    for (const [panel, mark] of [["recent-counts", "data-recent-count"], ["stale-metadata", "data-stale-count"]] as const) {
+      const tile = page.locator(`[data-panel="${panel}"]`);
+      const cards = tile.locator(`[${mark}]`);
+      if (panel === "stale-metadata" && (await cards.count()) === 0) {
+        await expect(tile.getByText("Toate metadatele sunt actualizate")).toBeVisible();
+        continue;
+      }
+      await expect(cards).toHaveCount(4, { timeout: 30_000 });
+      expect(await cards.evaluateAll((cs, m) => cs.map((c) => c.getAttribute(m)), mark)).toEqual(KINDS);
+      for (let i = 0; i < 4; i++) {
+        await expect(cards.nth(i)).toContainText(NAMES[i]);
+        await expect(cards.nth(i).locator("svg")).toHaveCount(1);
+      }
+      // Two rows of two, and the same gap from the grid to the tile's left, right and bottom edge.
+      const geo = await tile.evaluate((t) => {
+        const grid = t.querySelector<HTMLElement>("[data-count-grid]")!.getBoundingClientRect();
+        const box = t.getBoundingClientRect();
+        const cs = [...t.querySelectorAll<HTMLElement>("[data-count-card]")].map((c) => c.getBoundingClientRect());
+        return {
+          left: grid.left - box.left, right: box.right - grid.right, bottom: box.bottom - grid.bottom,
+          rows: [cs[0].top === cs[1].top, cs[2].top === cs[3].top, cs[2].top > cs[0].top],
+          widths: cs.map((c) => Math.round(c.width)),
+        };
+      });
+      expect(geo.rows).toEqual([true, true, true]);
+      expect(Math.abs(geo.left - geo.right)).toBeLessThanOrEqual(1);
+      expect(Math.abs(geo.left - geo.bottom)).toBeLessThanOrEqual(1);
+      expect(new Set(geo.widths).size).toBe(1);
+      // A card with a count is a link to its kind's list; a 0 is not a link.
+      for (let i = 0; i < 4; i++) {
+        const href = await cards.nth(i).getAttribute("href");
+        const count = Number((await cards.nth(i).locator(".tabular-nums").innerText()).trim());
+        expect([panel, KINDS[i], count > 0 ? href : null]).toEqual([panel, KINDS[i], count > 0 ? LISTS[i] : null]);
+        if (href) targets.push(href);
+      }
+    }
+    for (const href of [...new Set(targets)]) {
+      const res = await page.request.get(href);
+      expect([href, res.status()]).toEqual([href, 200]);
+    }
+    if (targets.length > 0) {
+      await page.locator(`[data-panel="recent-counts"] a[href="${targets[0]}"], [data-panel="stale-metadata"] a[href="${targets[0]}"]`).first().click();
+      await expect(page).toHaveURL(new RegExp(`${targets[0]}$`));
+      await page.goto("/");
+      await expect(page.getByRole("heading", { name: "Tablou de bord" })).toBeVisible({ timeout: 30_000 });
+    }
 
     // Step 7 — the sidebar's sections, scoped to the sidebar (helpers/sidebar.ts).
     const nav = sidebar(page);
@@ -176,10 +236,11 @@ test.describe("TC-AUTH-01 — ieșire și conectare din nou, în aceeași filă"
 
     // Slice 40.61 — the dashboard: the three counts in one ink colour, each under its kind's mark; a recent row shows
     // its kind as a mark named by the kind's words (it was the word in grey monospace).
+    // Slice 41.01: four kinds — a person is natural or juridical.
     const counts = page.locator("[data-recent-count]");
-    await expect(counts).toHaveCount(3, { timeout: 30_000 });
-    expect(await counts.evaluateAll((cs) => cs.map((c) => c.getAttribute("data-recent-count")))).toEqual(["natural", "property", "document"]);
-    await expect(counts.locator("svg")).toHaveCount(3);
+    await expect(counts).toHaveCount(4, { timeout: 30_000 });
+    expect(await counts.evaluateAll((cs) => cs.map((c) => c.getAttribute("data-recent-count")))).toEqual(["natural", "judicial", "property", "document"]);
+    await expect(counts.locator("svg")).toHaveCount(4);
     const colours = await counts.evaluateAll((cs) => cs.map((c) => getComputedStyle(c.querySelector(".tabular-nums") ?? c).color));
     expect(new Set(colours).size).toBe(1);
     const recent = page.locator('[data-panel="recent-activity"] li').first();

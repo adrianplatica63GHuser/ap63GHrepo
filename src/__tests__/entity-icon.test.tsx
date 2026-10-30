@@ -60,11 +60,12 @@ describe("where the marks replaced words and colours", () => {
   });
 
   it("the counts: ink numbers on white cards with the wire border, each under its kind's mark (Ask first 4)", () => {
-    const counts = dash.slice(dash.indexOf("export function RecentCountsSection"), dash.indexOf("export function", dash.indexOf("export function RecentCountsSection") + 10));
+    // 41.01: one card for both count tiles (KindCountCard); the recent tile's is the plain one.
+    const counts = dash.slice(dash.indexOf("function KindCountCard"), dash.indexOf("export function RecentCountsSection"));
     // 40.76: the same look through the role tokens — ink, a raised card with the wire border — which carry their dark.
-    expect(counts).toContain('className="text-3xl font-bold tabular-nums text-ink"');
-    expect(counts).toContain("rounded-lg border border-wire bg-raised p-4");
-    expect(counts).toContain("const Icon = ENTITY_ICON[c.kind];");
+    expect(counts).toContain('className="text-xl font-bold leading-7 tabular-nums"');
+    expect(counts).toContain('"border-wire bg-raised text-ink"');
+    expect(counts).toContain("const Icon = ENTITY_ICON[kind];");
     expect(counts).not.toMatch(/text-(blue|emerald|violet)-600|bg-(blue|emerald|violet)-50/);
   });
 

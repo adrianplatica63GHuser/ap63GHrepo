@@ -1446,7 +1446,7 @@ describe("the home page as unit tiles, in the detail screens' frame (Slice #37.3
 
   it("each section is a ListTile of whole units, on the unit row, ticked with the detail screens' selector", () => {
     expect(src).toMatch(/<ListTile tile=\{tile\} panel=\{PANEL_NAME\[tile\]\} title=\{title\} units=\{HOME_UNITS\[tile\]\}>/);
-    expect(src).toMatch(/recentCounts: 4,\s*staleMetadata: 4,\s*expiringDocuments: tableUnits\(EXPIRING_COLUMNS\),\s*recentActivity: 5,/); // 40.98: re-pinned
+    expect(src).toMatch(/recentCounts: 2,\s*staleMetadata: 2,\s*expiringDocuments: tableUnits\(EXPIRING_COLUMNS\),\s*recentActivity: 5,/); // 40.98: re-pinned; 41.01: the counts 2
     expect(src).toMatch(/<UnitRow units=\{choice\.shown\.map\(\(k\) => HOME_UNITS\[k\]\)\}>/);
     expect(src).toMatch(/useTileChoice<HomeTile>\(HOME_TILE_REGISTRY\)/);
     expect(src).toMatch(/<TileSelector all=\{HOME_TILES\}/);
@@ -1454,7 +1454,9 @@ describe("the home page as unit tiles, in the detail screens' frame (Slice #37.3
     expect(src).toMatch(/<table className="w-full table-fixed text-sm" data-expiring-table="">/);
     // The old card (rounded-xl, a grey header band) and #37.22's widths are gone.
     expect(src).not.toMatch(/rounded-xl|PANEL_REM|screenPanel\(|data-panel-row/);
-    expect(3 * SCALE.M + 2).toBeLessThanOrEqual(unitsInnerRem(4)); // 40.98: the counts' tile is 4 units of 119 px
+    // 41.01: the counts' tile is 2 units of 119 px — 228 px inside, two cards and their 8-px gap, 110 px each.
+    expect(unitsInnerRem(2) * 16).toBeCloseTo(228, 0);
+    expect(((unitsInnerRem(2) - 0.5) / 2) * 16).toBeCloseTo(110, 0);
     // #37.57: no „Cod" — the title is the link; the tile was 8 units, the title filling it. 40.62: two columns, the
     // status and the title, so fewer units (`tableUnits(["documentType", "documentTitle", "date", "expiryStatus"])` was 8).
     expect(src).toContain('const EXPIRING_COLUMNS: readonly ColumnName[] = ["expiryStatus", "documentTitle"];');

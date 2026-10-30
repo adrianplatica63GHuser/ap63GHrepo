@@ -6,7 +6,7 @@
  * ──────────
  * `dashboard.recentCounts.title` read "Added in the last 7 days",
  * `dashboard.expiringDocuments.empty` read "No documents expiring in the next
- * 60 days", and `dashboard.staleMetadata.description` interpolated only the
+ * 60 days", and `dashboard.staleMetadata.description` (41.01: gone, its age in the title) interpolated only the
  * record count. Seven, sixty and ninety are exactly `TIME_FRAME_DEFAULTS` for
  * `dashboard_recent_days`, `dashboard_expiring_docs` and
  * `dashboard_stale_metadata`, which is why nobody noticed: on a fresh database
@@ -87,9 +87,10 @@ jest.mock("next-intl", () => ({
 // evaluated lazily and is explicitly allowed.
 jest.mock("next/link", () => ({
   __esModule: true,
-  default: ({ children }: { children: ReactNode }) =>
+  // Slice 41.01: the props pass through (href, the cards' data- marks), so a card's link can be read.
+  default: ({ children, ...rest }: { children: ReactNode } & Record<string, unknown>) =>
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    (require("react") as typeof import("react")).createElement("a", null, children),
+    (require("react") as typeof import("react")).createElement("a", rest, children),
 }));
 
 const LOCALES = ["en-GB", "ro-RO"] as const;
@@ -215,7 +216,8 @@ describe("the day-count sentences are not fixed strings", () => {
   const CASES = [
     ["recentCounts.title", "dashboard_recent_days"],
     ["expiringDocuments.empty", "dashboard_expiring_docs"],
-    ["staleMetadata.description", "dashboard_stale_metadata"],
+    // Slice 41.01: the stale tile's sentence is gone; its age is in its title.
+    ["staleMetadata.title", "dashboard_stale_metadata"],
   ] as const;
 
   it.each(LOCALES)("%s: every sentence interpolates `days`", (locale) => {
@@ -253,15 +255,13 @@ describe("the day-count sentences are not fixed strings", () => {
   );
 
   it.each(LOCALES)(
-    "%s: `recentCounts.subtitle` no longer restates the window in words",
+    "%s: the counts' line under the cards and the stale tile's sentence and hint are gone (Slice 41.01)",
     (locale) => {
-      // It used to say "New records since last week" / „...față de săptămâna
-      // trecută", which is a second statement of `dashboard_recent_days` that
-      // cannot take a placeholder. It is now window-free, so it cannot
-      // contradict the title above it whatever the setting says.
-      const subtitle = raw(locale, "recentCounts.subtitle");
-      expect(subtitle).not.toMatch(/week|săptăm[âa]n/i);
-      expect(scanIcu(subtitle).args.size).toBe(0);
+      // „Obiecte nou adăugate" (#32.18 had made it window-free) said what the title says; Adrian: „it's useless".
+      // The stale tile's sentence quoted the age its title now carries, and its hint explained the cards.
+      const ns = (MESSAGES[locale].dashboard as Record<string, Record<string, unknown>>);
+      expect(Object.keys(ns.recentCounts)).toEqual(["title"]);
+      expect(Object.keys(ns.staleMetadata).sort()).toEqual(["allGood", "title"]);
     },
   );
 });
@@ -276,7 +276,7 @@ describe("the rendered sentence follows the setting", () => {
   it.each(LOCALES)("%s: the recent-counts heading quotes the recent-days window", (locale) => {
     render(
       <RecentCountsSection
-        data={{ persons: 1, properties: 2, documents: 3 }}
+        data={{ naturalPersons: 1, judicialPersons: 4, properties: 2, documents: 3 }}
         t={tFor(locale)}
         recentDays={RECENT}
       />,
@@ -302,20 +302,16 @@ describe("the rendered sentence follows the setting", () => {
     expect(document.body.textContent).toContain(String(EXPIRING));
   });
 
-  it.each(LOCALES)("%s: the stale-metadata sentence quotes its age as well as its count", (locale) => {
+  it.each(LOCALES)("%s: the stale-metadata title quotes its age (Slice 41.01: the sentence under it is gone)", (locale) => {
     render(
       <StaleMetadataSection
-        data={{ total: 5, persons: 0, properties: 0, documents: 0 }}
+        data={{ total: 5, naturalPersons: 2, judicialPersons: 0, properties: 3, documents: 0 }}
         t={tFor(locale)}
         staleDays={STALE}
       />,
     );
-    const expected = formatIcu(
-      raw(locale, "staleMetadata.description"),
-      { total: 5, days: STALE },
-      locale,
-    );
-    expect(screen.getByText(expected)).toBeInTheDocument();
+    const expected = formatIcu(raw(locale, "staleMetadata.title"), { days: STALE }, locale);
+    expect(screen.getByRole("heading").textContent).toBe(expected);
     expect(document.body.textContent).toContain(String(STALE));
   });
 
@@ -353,5 +349,73 @@ describe("the root threads each setting into the section that quotes it", () => 
   it("the sections are not reading useTimeFrames() for themselves", () => {
     // One call to the hook, in the root — the shape `amberDays` established.
     expect(SOURCE.match(/useTimeFrames\(\)/g)).toHaveLength(1);
+  });
+});
+
+describe("the two count tiles: four kinds, one card, no 404 (Slice 41.01)", () => {
+  const KIND_ORDER = ["natural", "judicial", "property", "document"];
+  const LISTS = ["/natural-persons", "/judicial-persons", "/properties", "/documents"];
+
+  it.each(LOCALES)("%s: the recent tile draws four cards, two persons first, each its count, name and mark", (locale) => {
+    const { container } = render(
+      <RecentCountsSection
+        data={{ naturalPersons: 3, judicialPersons: 0, properties: 7, documents: 12 }}
+        t={tFor(locale)}
+        recentDays={7}
+      />,
+    );
+    const cards = [...container.querySelectorAll("[data-recent-count]")];
+    expect(cards.map((c) => c.getAttribute("data-recent-count"))).toEqual(KIND_ORDER);
+    expect(cards.map((c) => c.querySelector(".tabular-nums")?.textContent)).toEqual(["3", "0", "7", "12"]);
+    const names = ["natural", "judicial", "property", "document"].map((k) => raw(locale, `kindCounts.${k}`));
+    expect(cards.map((c) => c.textContent?.replace(/^\d+/, ""))).toEqual(names);
+    expect(cards.every((c) => c.querySelector("svg") !== null)).toBe(true);
+    // A count is a link (next/link is an <a> here); a 0 is faded and not a link.
+    expect(cards.map((c) => c.tagName)).toEqual(["A", "DIV", "A", "A"]);
+    expect(cards[1].className).toContain("opacity-50");
+    expect(document.body.textContent).not.toMatch(/Obiecte nou adăugate|Newly added objects/);
+  });
+
+  it.each(LOCALES)("%s: the stale tile draws the same four cards, in amber, a 0 shown", (locale) => {
+    const { container } = render(
+      <StaleMetadataSection
+        data={{ total: 9, naturalPersons: 0, judicialPersons: 4, properties: 5, documents: 0 }}
+        t={tFor(locale)}
+        staleDays={90}
+      />,
+    );
+    const cards = [...container.querySelectorAll("[data-stale-count]")];
+    expect(cards.map((c) => c.getAttribute("data-stale-count"))).toEqual(KIND_ORDER);
+    expect(cards.map((c) => c.querySelector(".tabular-nums")?.textContent)).toEqual(["0", "4", "5", "0"]);
+    expect(cards.map((c) => c.tagName)).toEqual(["DIV", "A", "A", "DIV"]);
+    expect(cards.every((c) => /border-warning-rim bg-warning-wash/.test(c.className))).toBe(true);
+  });
+
+  it("all four 0: the stale tile keeps its one line in place of the grid", () => {
+    const { container } = render(
+      <StaleMetadataSection
+        data={{ total: 0, naturalPersons: 0, judicialPersons: 0, properties: 0, documents: 0 }}
+        t={tFor("ro-RO")}
+        staleDays={90}
+      />,
+    );
+    expect(container.querySelectorAll("[data-stale-count]")).toHaveLength(0);
+    expect(screen.getByText("Toate metadatele sunt actualizate")).toBeInTheDocument();
+  });
+
+  it("each card opens its kind's list — never /persons, which is no route", () => {
+    const src = fs.readFileSync(path.join(process.cwd(), "src", "app", "_components", "dashboard-client.tsx"), "utf8");
+    for (const l of LISTS) expect(src).toContain(`href: "${l}"`);
+    expect(src).not.toMatch(/["'`]\/persons["'`]/);
+    for (const l of LISTS) expect(fs.existsSync(path.join(process.cwd(), "src", "app", l.slice(1), "page.tsx"))).toBe(true);
+  });
+
+  it("one card component on both tiles; the counts at text-xl, the mark at 16 px", () => {
+    const src = fs.readFileSync(path.join(process.cwd(), "src", "app", "_components", "dashboard-client.tsx"), "utf8");
+    expect(src.match(/<KindCountGrid /g)).toHaveLength(2);
+    expect(src).toContain('<Icon size={16} aria-hidden="true"');
+    expect(src).toContain('className="text-xl font-bold leading-7 tabular-nums"');
+    expect(src).not.toContain("text-3xl");
+    expect(src).toContain('<div className="grid grid-cols-2 gap-2" data-count-grid="">');
   });
 });

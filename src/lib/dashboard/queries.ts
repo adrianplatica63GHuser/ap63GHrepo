@@ -21,10 +21,12 @@ import {
 // Return types
 // ---------------------------------------------------------------------------
 
+/** Slice 41.01: the four principal kinds apart — a person is natural or juridical (it was one „persons" count). */
 export type RecentCounts = {
-  persons:    number;
-  properties: number;
-  documents:  number;
+  naturalPersons:  number;
+  judicialPersons: number;
+  properties:      number;
+  documents:       number;
 };
 
 export type ExpiringDocument = {
@@ -36,10 +38,11 @@ export type ExpiringDocument = {
 };
 
 export type StaleMetadataCount = {
-  total:       number;
-  persons:     number;
-  properties:  number;
-  documents:   number;
+  total:           number;
+  naturalPersons:  number;
+  judicialPersons: number;
+  properties:      number;
+  documents:       number;
 };
 
 export type RecentActivityItem = {
@@ -61,10 +64,12 @@ export async function getDashboardRecentCounts(recentDays = 7): Promise<RecentCo
   cutoff.setDate(cutoff.getDate() - recentDays);
 
   const [personsResult, propertiesResult, documentsResult] = await Promise.all([
+    // Slice 41.01: one row per person type, so the natural and the juridical are counted apart.
     db
-      .select({ count: sql<number>`cast(count(*) as int)` })
+      .select({ type: person.type, count: sql<number>`cast(count(*) as int)` })
       .from(person)
-      .where(gte(person.createdAt, cutoff)),
+      .where(gte(person.createdAt, cutoff))
+      .groupBy(person.type),
 
     db
       .select({ count: sql<number>`cast(count(*) as int)` })
@@ -77,8 +82,10 @@ export async function getDashboardRecentCounts(recentDays = 7): Promise<RecentCo
       .where(gte(document.createdAt, cutoff)),
   ]);
 
+  const ofType = (t: "NATURAL" | "JUDICIAL") => personsResult.find((r) => r.type === t)?.count ?? 0;
   return {
-    persons:    personsResult[0]?.count ?? 0,
+    naturalPersons:  ofType("NATURAL"),
+    judicialPersons: ofType("JUDICIAL"),
     properties: propertiesResult[0]?.count ?? 0,
     documents:  documentsResult[0]?.count ?? 0,
   };
@@ -142,9 +149,11 @@ export async function getDashboardStaleMetadata(staleDays = 90): Promise<StaleMe
     OR ${entityMetadata.provenanceUpdatedAt} < ${cutoff.toISOString()}
   )`;
 
+  // Slice 41.01: a person's type is on its person row, joined through the principal object it owns.
   const rows = await db
     .select({
       objectType: principalObject.objectType,
+      personType: person.type,
       count:      sql<number>`cast(count(*) as int)`,
     })
     .from(entityMetadata)
@@ -152,17 +161,25 @@ export async function getDashboardStaleMetadata(staleDays = 90): Promise<StaleMe
       principalObject,
       eq(entityMetadata.principalObjectId, principalObject.id),
     )
+    .leftJoin(person, eq(person.principalObjectId, principalObject.id))
     .where(stale)
-    .groupBy(principalObject.objectType);
+    .groupBy(principalObject.objectType, person.type);
 
-  let persons = 0, properties = 0, documents = 0;
+  let naturalPersons = 0, judicialPersons = 0, properties = 0, documents = 0;
   for (const r of rows) {
-    if (r.objectType === "PERSON")   persons    = r.count;
-    if (r.objectType === "PROPERTY") properties = r.count;
-    if (r.objectType === "DOCUMENT") documents  = r.count;
+    if (r.objectType === "PERSON" && r.personType === "JUDICIAL") judicialPersons += r.count;
+    else if (r.objectType === "PERSON") naturalPersons += r.count;
+    if (r.objectType === "PROPERTY") properties += r.count;
+    if (r.objectType === "DOCUMENT") documents  += r.count;
   }
 
-  return { total: persons + properties + documents, persons, properties, documents };
+  return {
+    total: naturalPersons + judicialPersons + properties + documents,
+    naturalPersons,
+    judicialPersons,
+    properties,
+    documents,
+  };
 }
 
 // ---------------------------------------------------------------------------
