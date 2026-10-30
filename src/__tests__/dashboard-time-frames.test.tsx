@@ -416,6 +416,7 @@ describe("the two count tiles: four kinds, one card, no 404 (Slice 41.01)", () =
     expect(src).toContain('<Icon size={16} aria-hidden="true"');
     expect(src).toContain('className="text-xl font-bold leading-7 tabular-nums"');
     expect(src).not.toContain("text-3xl");
-    expect(src).toContain('<div className="grid grid-cols-2 gap-2" data-count-grid="">');
+    expect(src).toContain('<div style={COUNT_GRID_STYLE} data-count-grid="">');
+    expect(src).toContain('gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "0.5rem"');
   });
 });

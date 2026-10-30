@@ -333,6 +333,8 @@ function KindCountCard({
   );
 }
 
+const COUNT_GRID_STYLE: React.CSSProperties = { display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "0.5rem" };
+
 /** Slice 41.01 (Ask first 2): two by two, filling the tile edge to edge — the tile's own padding is the gap to its edges. */
 function KindCountGrid({
   data,
@@ -346,7 +348,8 @@ function KindCountGrid({
   mark: "data-recent-count" | "data-stale-count";
 }) {
   return (
-    <div className="grid grid-cols-2 gap-2" data-count-grid="">
+    // Two equal columns of the tile's own width (a fixed 2 units) — never the window's, so no `grid-cols-*` (#37.22).
+    <div style={COUNT_GRID_STYLE} data-count-grid="">
       {COUNT_KINDS.map((c) => (
         <KindCountCard
           key={c.kind}
