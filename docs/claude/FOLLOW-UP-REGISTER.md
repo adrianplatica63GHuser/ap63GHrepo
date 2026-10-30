@@ -12,17 +12,17 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-10-29 — 380 entries (FU-360 filed by 40.18, FU-361 by 40.27, FU-362 by 40.78, FU-363 by 40.79, FU-364–365 by 40.84, FU-366–369 by 40.85, FU-370–371 by 40.86, FU-372 by 40.87, FU-373 by 40.88, FU-374 by 40.90, FU-375 by 40.92, FU-376 by 40.96, 40.98). Rows are status, columns are impact.
+As of 2026-10-30 — 381 entries (FU-360 filed by 40.18, FU-361 by 40.27, FU-362 by 40.78, FU-363 by 40.79, FU-364–365 by 40.84, FU-366–369 by 40.85, FU-370–371 by 40.86, FU-372 by 40.87, FU-373 by 40.88, FU-374 by 40.90, FU-375 by 40.92, FU-376 by 40.96, 40.98, FU-381 by 41.01). Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
-| open | 19 | 93 | 82 | 29 | 223 |
+| open | 19 | 94 | 82 | 29 | 224 |
 | planned | 0 | 0 | 1 | 0 | 1 |
 | resolved | 40 | 61 | 32 | 3 | 136 |
 | ignored | 4 | 3 | 4 | 2 | 13 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 6 | 1 | 0 | 7 |
-| **total** | 63 | 163 | 120 | 34 | 380 |
+| **total** | 63 | 164 | 120 | 34 | 381 |
 <!-- summary:end -->
 
 `src/__tests__/follow-up-register.test.ts` recounts the table and fails when this block disagrees
@@ -464,3 +464,4 @@ Nothing is filed from memory: every row carries evidence someone actually looked
 | FU-378 | 2026-10-29 40.98 Handover.40.98.md | data risk | Reference data | Adrian's local database names two identity types „Carte de Identitate (tip nou)” and „(tip vechi)”, where sync-reference-data.sql, migration_118, kinds.ts and the manual say „(model nou)” / „(model vechi)”; its judicial types read „Cabinet de avocatură” where the sync file says „Cabinet sau societate de avocatură”; and „Plan de Amplasament și Delimitare” is back without its form, so its name is not bold. A reference-data sync or a full reset would rename them back; TC-DOC-28 accepts either type name, and TC-VL-05 step 5 does not ask the gap of a list whose sized-for name is gone. | /documents/new on localhost:3000, 2026-10-29; src/db/sync-reference-data.sql:228; src/lib/identity-documents/kinds.ts:181 | user | S | open | Adrian picks the wording; one slice then writes it into the sync file, kinds.ts, the manual and the quizzes. | 2026-10-29 |
 | FU-379 | 2026-10-29 40.98 Handover.40.98.md | debt | Tarla page | The tarla page's „Contur” still uses the narrower corner columns (`tight`, #39.87) that a 3-unit third of 148 px needed; at 4 units of 119 the buttons' cell is 152 px at the ordinary gaps, past the 116 the four buttons need, so `tight` no longer buys anything. | src/__tests__/tarla-tiles.test.ts „152 at the ordinary gaps, 212 at the narrower” | cosmetic | S | open | Drop `tight` from the tarla page and its test, or keep it for the extra room — Adrian's call when he next looks at „Contur”. | 2026-10-29 |
 | FU-380 | 2026-10-29 40.98 Handover.40.98.md | tooling | Test runner | The runner's first e2e run after several days served a stylesheet with no `.text-label` rule (the class was in the DOM, the token in the CSS), so TC-SET-05 step 9 read the label in the body colour; the same spec passed on the next run with nothing changed. | run 20261029T010508Z-20563 trace: 0 `.text-label` in the one CSS resource; run 20261029T012302Z-1611 green | dev | S | open | If it recurs: start the runner's `next dev` with Turbopack's dev filesystem cache off (`experimental.turbopackFileSystemCacheForDev: false` when GA40_NEXT_DIST_DIR is set), or clear `.next/runner/dev` before each e2e run. | 2026-10-29 |
+| FU-381 | 2026-10-30 41.01 Handover.41.01.md | next-slice idea | Dashboard | The home page's count cards open their kind's list unfiltered: no list takes a filter for the records added in the last N days, or for those whose metadata is older than N days, so „Adăugate…” 305 opens all the natural persons, not the 305. | src/app/_components/dashboard-client.tsx COUNT_KINDS; src/lib/persons/list-filters.ts NATURAL_PERSON_FILTER_FIELDS (no createdAt, no metadata age) | user | M | open | A „Adăugat” date filter and a „Metadate neactualizate” filter on the four lists, and the cards' href carrying them. | 2026-10-30 |
