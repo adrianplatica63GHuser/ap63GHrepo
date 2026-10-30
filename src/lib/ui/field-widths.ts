@@ -196,7 +196,8 @@ export const NATURAL_PERSON = {
   // Slice 40.79: XS, reading „F" / „M" (naturalPerson.options.genderShort), the whole word on hover; was M („Masculin").
   gender: { step: "XS", kind: "select" },
   dateOfBirth: { step: "M", kind: "input" }, //             dd.mm.yyyy and the calendar button
-  age: { step: "XS", kind: "input" }, //     beside the date it is worked out from; „78 †" for the dead (#39.30) fits too
+  // Slice 41.04 — Adrian: „Please make the age field to be S size" (was XS).
+  age: { step: "S", kind: "input" }, //      beside the date it is worked out from; „78 †" for the dead (#39.30) fits too
   // Slice #39.30 — „Decedat", a tick, and „Data decesului", a date like the birth's.
   isDeceased: { step: "XS", kind: "input" }, //            a tick under its label
   dateOfDeath: { step: "M", kind: "input" }, //             dd.mm.yyyy and the calendar button
@@ -205,9 +206,9 @@ export const NATURAL_PERSON = {
   // Slice 40.70: in Roboto it needs 192.1 px with its arrow (TC-PERS-01), 2 px past L's 190 inside: 13.5 rem, so the
   // row with „Locul nașterii" is 27 rem and the panel keeps its three units.
   physicalPersonTypeId: { step: "L", kind: "select", rem: 13.5 },
-  // Slice #39.70: L, so „Tip profesional" (L, the professions) stays beside it in the panel's three units — the row
-  // is 13 + 0.5 + 13 = 26.5 rem, the panel's widest as before. Was XL.
-  placeOfBirth: { step: "L", kind: "grows" }, //            m: 0
+  // Slice 41.04 — Adrian: „Make place of birth to be tile size": the panel's whole inner width, on a row of its own.
+  // Was L (#39.70, beside „Tip profesional", then 40.85 beside Cetățenie), XL before that.
+  placeOfBirth: { step: "TILE", kind: "grows", fill: true }, // m: 0
   notes: { step: "TILE", kind: "lines", fold: NOTE_FOLD_LINES, rows: 1, fill: true }, // m: 0; the panel's whole width (#37.26)
   // Slice 40.79 — „Relația cu firma" (#39.70, a group of ticks): TILE, its ticks flowing across the panel's whole inner
   // width on their own row, as Note does. Not in `NP_ROWS`: the form draws it between the last row and Note.
@@ -277,13 +278,17 @@ type NpField = keyof typeof NATURAL_PERSON;
 type AddressField = keyof typeof ADDRESS;
 
 const NATURAL_PERSON_ROWS = {
+  // Slice 41.04 — Adrian's rows: Poreclă alone on the second; CNP | Cetățenie on a new third; Data nașterii | Vârstă |
+  // Sex and the rest one row lower; Locul nașterii alone, at TILE. Was [nickname, cnp], …, [placeOfBirth,
+  // citizenshipId] (40.85). The widest row, Data nașterii | Vârstă | Sex, is 136 + 80 + 56 + 2 × 8 = 288 px, inside
+  // the panel's 363: it stays 3 units.
   identity: [
     ["lastName", "firstName"],
-    ["nickname", "cnp"],
+    ["nickname"],
+    ["cnp", "citizenshipId"],
     ["dateOfBirth", "age", "gender"],
     ["isDeceased", "dateOfDeath"],
-    // Slice 40.85 (Ask first 1): Cetățenie is the person's, after Locul nașterii, at its size; Tip profesional below.
-    ["placeOfBirth", "citizenshipId"],
+    ["placeOfBirth"],
     ["physicalPersonTypeId"],
     ["notes"],
   ],
@@ -523,7 +528,9 @@ export const DOCUMENT = {
   // #39.72: the issuer, a juridical person by name — „Biroul Individual Notarial …" passes 40, and the big seed's
   // „Comisia Județeană Ilfov pentru stabilirea dreptului de proprietate asupra terenurilor" needs 538 px: it wraps
   // (40.78; it was cut, its whole name on hover, since #39.85). XL since 40.88, as Tip document.
-  issuerPersonId: { step: "XL", kind: "select" },
+  // Slice 41.04 — Adrian: „make Notary Office field to be TILE size": the panel's whole inner width, on every type (it
+  // is one field, labelled by the type — „Birou notarial", „Instituție"), where it already stood alone on its row.
+  issuerPersonId: { step: "TILE", kind: "select", fill: true },
   nrDocument: { step: "M", kind: "grows" }, // m: 24 · 13 · 6
   dateDocument: { step: "M", kind: "input" }, //         dd.mm.yyyy and the calendar button
 } as const satisfies Record<string, FieldWidth>;
@@ -542,7 +549,7 @@ export const IDENTITY_DOCUMENT = {
   cnp: NATURAL_PERSON.cnp,
   sex: NATURAL_PERSON.gender,
   dateOfBirth: NATURAL_PERSON.dateOfBirth,
-  placeOfBirth: NATURAL_PERSON.placeOfBirth,
+  placeOfBirth: { step: "L", kind: "grows" }, //    41.04: its own L — the person's is TILE now, the card's rows did not move
   nrDocument: { step: "M", kind: "grows" }, //      the series and number, or the passport's nine digits
   dateDocument: NATURAL_PERSON.idValidFrom,
   dateValidUntil: NATURAL_PERSON.idValidUntil,
@@ -1169,6 +1176,12 @@ export const ID_CARD_DIALOG_FIELDS = [
 ] as const satisfies readonly NpField[];
 export type IdCardDialogField = (typeof ID_CARD_DIALOG_FIELDS)[number];
 
+/** Slice 41.04: the card dialog's widths — the person's, but Locul nașterii at its L (the person's is TILE now). */
+export const ID_CARD_DIALOG_WIDTHS: Readonly<Record<IdCardDialogField, FieldWidth>> = {
+  ...NATURAL_PERSON,
+  placeOfBirth: { step: "L", kind: "grows" },
+};
+
 /** `rows` with only the fields in `keep`, in their order; a row left empty goes. */
 export function keepFields<F extends string, K extends string>(
   rows: readonly (readonly F[])[],
@@ -1179,7 +1192,9 @@ export function keepFields<F extends string, K extends string>(
 }
 
 export const ID_CARD_DIALOG_ROWS = {
-  identity: keepFields(NP_ROWS.identity, ID_CARD_DIALOG_FIELDS),
+  // Slice 41.04: the person's „Identitate" moved CNP beside Cetățenie and Locul nașterii to a row of its own; the
+  // import's card dialog keeps its rows (out of 41.04's scope), so they are written here rather than kept from NP_ROWS.
+  identity: [["lastName", "firstName"], ["cnp"], ["dateOfBirth", "gender"], ["placeOfBirth", "citizenshipId"]] as IdCardDialogField[][],
   idCard: keepFields(NP_ROWS.idCard, ID_CARD_DIALOG_FIELDS),
 } as const;
 
@@ -1277,7 +1292,8 @@ export type PreviewLinesKind = keyof typeof PREVIEW_LINES;
  *     the other two leave (`PREVIEW_SUBJECT_REM`) and wraps inside it.
  */
 export const PREVIEW_ROWS: Readonly<Record<PreviewKind, readonly (readonly string[])[]>> = {
-  person: keepFields(SCREEN_ROWS.naturalPerson.identity, PREVIEW_FIELDS.person),
+  // Slice 41.04: a person's preview keeps its lines — Poreclă | CNP first — though „Identitate" now parts the two.
+  person: [["nickname", "cnp"], ["dateOfBirth"], ["dateOfDeath"], ["placeOfBirth"], ["notes"]],
   company: keepFields(SCREEN_ROWS.judicialPerson.identity, PREVIEW_FIELDS.company),
   property: [["parcela", "tarlaId", "surfaceAreaMp"], ["nickname"], ["carteFunciara", "cadastralNumber"]],
   document: [["subject", "nrDocument", "dateDocument"]],
@@ -1289,7 +1305,8 @@ export const PREVIEW_SUBJECT_REM =
 
 /** Each kind's widths: its screen's — but a document's Subiect, which shares its row (#37.70). */
 export const PREVIEW_WIDTHS: Readonly<Record<PreviewKind, Readonly<Record<string, FieldWidth>>>> = {
-  person: NATURAL_PERSON,
+  // Slice 41.04: Locul nașterii at its L in a preview, as before — TILE is the record's own tile.
+  person: { ...NATURAL_PERSON, placeOfBirth: { step: "L", kind: "grows" } },
   company: JUDICIAL_PERSON,
   property: PROPERTY,
   document: { ...DOCUMENT, subject: { step: "TILE", kind: "grows", rem: PREVIEW_SUBJECT_REM } },

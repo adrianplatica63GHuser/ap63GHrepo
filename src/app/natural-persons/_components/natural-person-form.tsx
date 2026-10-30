@@ -187,7 +187,8 @@ const NP_EMPTY_TILE_FIELDS: Record<NpEmptyTile, readonly string[]> = {
  */
 type NpFieldTile = "identity" | "contact" | "home" | "correspondence";
 const NP_FIELD_TILES: Record<NpFieldTile, readonly string[]> = {
-  identity: ["lastName", "firstName", "nickname", "cnp", "dateOfBirth", "gender", "isDeceased", "dateOfDeath", "placeOfBirth", "citizenshipId", "physicalPersonTypeId", "notes"],
+  // 41.04: in the rows' new order — CNP, Cetățenie, then the birth row.
+  identity: ["lastName", "firstName", "nickname", "cnp", "citizenshipId", "dateOfBirth", "gender", "isDeceased", "dateOfDeath", "placeOfBirth", "physicalPersonTypeId", "notes"],
   contact: NP_EMPTY_TILE_FIELDS.contact,
   home: NP_EMPTY_TILE_FIELDS.home,
   correspondence: NP_EMPTY_TILE_FIELDS.correspondence,
@@ -202,7 +203,7 @@ const NP_LABEL_KEY: Readonly<Record<string, string>> = { citizenshipId: "citizen
  */
 type NpEditTile = "identity" | "contact" | "addresses";
 const NP_EDIT_PAYLOAD: Record<NpEditTile, readonly (keyof ReturnType<typeof toApiPayload>)[]> = {
-  identity: ["lastName", "firstName", "nickname", "cnp", "gender", "dateOfBirth", "isDeceased", "dateOfDeath", "placeOfBirth", "citizenshipId", "physicalPersonTypeId", "notes"],
+  identity: ["lastName", "firstName", "nickname", "cnp", "citizenshipId", "gender", "dateOfBirth", "isDeceased", "dateOfDeath", "placeOfBirth", "physicalPersonTypeId", "notes"],
   contact: ["personalPhone1", "personalPhone2", "workPhone", "personalEmail1", "personalEmail2", "workEmail"],
   addresses: ["addresses", "correspondenceSameAsHome"],
 };
@@ -985,6 +986,8 @@ export function NaturalPersonForm({
               width={NP.firstName}
             />
           </div>
+          {/* Slice 41.04 — Adrian: Poreclă „the only field on the second line"; CNP down to a new third line, Cetățenie
+              beside it. */}
           <div className={STACKED_ROW_CLASS}>
             <Field
               label={t("fields.nickname")}
@@ -994,6 +997,8 @@ export function NaturalPersonForm({
               highlight={displayHighlights?.fields.nickname}
               width={NP.nickname}
             />
+          </div>
+          <div className={STACKED_ROW_CLASS}>
             <Field
               label={t("fields.cnp")}
               name="cnp"
@@ -1002,6 +1007,19 @@ export function NaturalPersonForm({
               bubble={cnpIsLocked ? t("hints.cnpLocked") : undefined}
               highlight={displayHighlights?.fields.cnp}
               width={NP.cnp}
+            />
+            {/* Slice 41.04: Cetățenie at CNP's right (Adrian's „the right side of CNP"); 40.85 had it after Locul nașterii. */}
+            <SelectField
+              label={t("fields.citizenship")}
+              name="citizenshipId"
+              register={register}
+              control={control}
+              error={errors.citizenshipId?.message}
+              hint={citizenshipListState === "failed" ? t("hints.citizenshipListFailed") : undefined}
+              options={[{ value: "", label: "—" }, ...citizenshipOptions]}
+              highlight={displayHighlights?.fields.citizenshipId}
+              snapshot={snapshotLookups.citizenshipId}
+              width={NP.citizenshipId}
             />
           </div>
           {/* The age beside the date it is worked out from, then the gender. */}
@@ -1061,6 +1079,7 @@ export function NaturalPersonForm({
               disabled={!watchedValues.isDeceased}
             />
           </div>
+          {/* Slice 41.04 — Locul nașterii alone, at TILE (Adrian: „Make place of birth to be tile size"). */}
           <div className={STACKED_ROW_CLASS}>
             <Field
               label={t("fields.placeOfBirth")}
@@ -1069,19 +1088,7 @@ export function NaturalPersonForm({
               error={errors.placeOfBirth?.message}
               highlight={displayHighlights?.fields.placeOfBirth}
               width={NP.placeOfBirth}
-            />
-            {/* Slice 40.85 (Ask first 1): Cetățenie is the person's, after Locul nașterii, at its size. */}
-            <SelectField
-              label={t("fields.citizenship")}
-              name="citizenshipId"
-              register={register}
-              control={control}
-              error={errors.citizenshipId?.message}
-              hint={citizenshipListState === "failed" ? t("hints.citizenshipListFailed") : undefined}
-              options={[{ value: "", label: "—" }, ...citizenshipOptions]}
-              highlight={displayHighlights?.fields.citizenshipId}
-              snapshot={snapshotLookups.citizenshipId}
-              width={NP.citizenshipId}
+              fillRem={NP_PANEL_INNER_REM.identity}
             />
           </div>
           <div className={STACKED_ROW_CLASS}>

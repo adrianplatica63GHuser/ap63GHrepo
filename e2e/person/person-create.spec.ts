@@ -75,7 +75,7 @@ test.describe("TC-PERS-01 — Persoană fizică creată manual", () => {
       // Slice #37.12 — the same widths at 1400 and 2400 px; every FIXED box holds its value.
       await expectStableWidths(page);
       await expectDropdownsWrap(page); // 40.78: every dropdown its width, a long value wrapped
-      // „Locul nașterii" grows downward: taller with a long value, never wider;
+      // „Locul nașterii" grows downward: taller with a long value, never wider (41.04: at TILE, the panel's width);
       // a pasted line break becomes a space, because it is one value.
       const place = page.locator('[data-width-field="placeOfBirth"]');
       const oneLine = await place.boundingBox();
@@ -97,6 +97,24 @@ test.describe("TC-PERS-01 — Persoană fizică creată manual", () => {
       await gen.selectOption("");
       const identityPanel = page.locator('[data-panel="identity"]');
       await expect(identityPanel.getByRole("combobox", { name: "Cetățenie", exact: true })).toBeVisible();
+      // Slice 41.04 — Adrian's rows: Poreclă alone on the second line, CNP | Cetățenie on the third, Data nașterii |
+      // Vârstă | Gen under them; Vârstă S; Locul nașterii alone, the panel's whole inner width.
+      const at = async (name: string) => (await identityPanel.locator(`[data-width-field="${name}"]`).boundingBox())!;
+      const [nick, cnp, cit, dob, age, sex, pob, last] = await Promise.all(
+        ["nickname", "cnp", "citizenshipId", "dateOfBirth", "age", "gender", "placeOfBirth", "lastName"].map(at),
+      );
+      expect(Math.abs(cnp.y - cit.y), "CNP | Cetățenie on one row").toBeLessThanOrEqual(1);
+      expect(cit.x).toBeGreaterThan(cnp.x);
+      expect(nick.y, "Poreclă above CNP").toBeLessThan(cnp.y - 1);
+      expect(Math.abs(nick.y - last.y), "Poreclă not beside Nume").toBeGreaterThan(1);
+      expect(dob.y, "the birth row under CNP").toBeGreaterThan(cnp.y + 1);
+      expect([Math.abs(dob.y - age.y) <= 1, Math.abs(dob.y - sex.y) <= 1]).toEqual([true, true]);
+      expect(age.width).toBe(SCALE.S * rem);
+      const inner = await identityPanel.evaluate((p) => {
+        const cs = getComputedStyle(p);
+        return p.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      });
+      expect(Math.abs(pob.width - inner), "Locul nașterii across the panel").toBeLessThanOrEqual(1);
       await expect(page.locator('[data-panel="id-card"]')).toHaveCount(0); // no card on „Adaugă persoană"
 
       // Slice 40.80 — „Stradă, Nr., etaj, ap" is XL in the address block, and a long street wraps: taller, never wider.

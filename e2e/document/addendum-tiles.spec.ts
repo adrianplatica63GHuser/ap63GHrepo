@@ -146,7 +146,8 @@ test.describe("TC-DOC-20 — actul adițional și actul pe care îl modifică", 
       await typeChange(page).getByRole("button", { name: "Anulează", exact: true }).click();
       await expect(typeChange(page)).toHaveCount(0);
       await expectWidth(field("documentTypeId"), 272);
-      await expectWidth(field("issuerPersonId"), 272);
+      // 41.04: the issuer is TILE on every type — the tile's whole inner width, as „Etichetă scurtă" (was XL, 272).
+      await expectWidth(field("issuerPersonId"), (await rect(identification.locator('[data-width-field="title"]'))).width);
       const quality = await rect(field("customFields.calitateExemplar"));
       const fee = await rect(field("customFields.onorariuNotarial"));
       const copies = await rect(field("customFields.exemplareEmise"));

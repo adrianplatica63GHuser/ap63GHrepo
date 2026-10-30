@@ -370,7 +370,8 @@ describe("the scale", () => {
     expect(JUDICIAL_PERSON.judicialPersonTypeId.step).toBe("L"); // 40.90: Adrian's mark, XL → L
     expect(PROPERTY.tarlaId.step).toBe("M");
     // 40.88: Adrian's marks — Tip document and the issuer XXL → XL, on every type.
-    expect(DOCUMENT.issuerPersonId.step).toBe("XL");
+    // 41.04 — Adrian: „make Notary Office field to be TILE size" — one field, every type (was XL).
+    expect(DOCUMENT.issuerPersonId).toEqual({ step: "TILE", kind: "select", fill: true });
     expect(DOCUMENT.documentTypeId.step).toBe("XL");
   });
 
@@ -442,14 +443,16 @@ describe("the Natural Person: every label above its box, every panel as wide as 
     expect(ADDRESS_BLOCK).toMatch(/ADDRESS_ROWS\.map\(/);
   });
 
-  it("Adrian's rows: Nume | Prenume, Poreclă | CNP, Data nașterii | Vârstă | Gen, Decedat | Data decesului (#39.30), Locul nașterii | Tip profesional, then Note", () => {
+  // 41.04: Adrian's rows of 2026-10-29 — was „Nume | Prenume, Poreclă | CNP, Data nașterii | Vârstă | Gen, Decedat |
+  // Data decesului (#39.30), Locul nașterii | Cetățenie (40.85), Tip profesional, then Note".
+  it("Adrian's rows: Nume | Prenume, Poreclă alone, CNP | Cetățenie, Data nașterii | Vârstă | Sex, Decedat | Data decesului, Locul nașterii alone, Tip profesional, then Note", () => {
     expect(NP_ROWS.identity).toEqual([
       ["lastName", "firstName"],
-      ["nickname", "cnp"],
+      ["nickname"],
+      ["cnp", "citizenshipId"],
       ["dateOfBirth", "age", "gender"],
       ["isDeceased", "dateOfDeath"],
-      // Slice 40.85 (Ask first 1): Cetățenie after Locul nașterii, at its size; Tip profesional on its own row.
-      ["placeOfBirth", "citizenshipId"],
+      ["placeOfBirth"],
       ["physicalPersonTypeId"],
       ["notes"],
     ]);
@@ -516,7 +519,13 @@ describe("the Natural Person: every label above its box, every panel as wide as 
     expect(NP.idIssuingAuthority).toEqual({ step: "L", kind: "grows" });
     expect(NP.idMrzRaw).toMatchObject({ step: "L", kind: "lines", rows: 2 });
     // Unchanged.
-    expect([NP.cnp.step, NP.dateOfBirth.step, NP.age.step, NP.dateOfDeath.step, NP.placeOfBirth.step]).toEqual(["M", "M", "XS", "M", "L"]);
+    expect([NP.cnp.step, NP.dateOfBirth.step, NP.dateOfDeath.step]).toEqual(["M", "M", "M"]);
+    // 41.04 — Adrian: Vârstă S (was XS), Locul nașterii TILE on a row of its own (was L).
+    expect(NP.age).toEqual({ step: "S", kind: "input" });
+    expect(NP.placeOfBirth).toEqual({ step: "TILE", kind: "grows", fill: true });
+    // The widest row, Data nașterii | Vârstă | Sex: 136 + 80 + 56 + 2 × 8 = 288 px, inside the 3-unit panel's 363.
+    expect((boxRem(NP.dateOfBirth) + boxRem(NP.age) + boxRem(NP.gender) + 2 * 0.5) * 16).toBe(288);
+    expect(PANEL_UNITS.naturalPerson.identity).toBe(3);
     expect([boxRem(NP.physicalPersonTypeId), boxRem(NP.idDocumentType), boxRem(NP.idDocumentNumber), boxRem(NP.idCardNumber)]).toEqual([13.5, 10, 6.375, 6.375]);
     expect([NP.idValidFrom.step, NP.idValidUntil.step, NP.citizenshipId.step]).toEqual(["M", "M", "M"]);
     // „M" — the wider letter — beside the arrow fits XS: the face's text room is the box less its padding, border, gap and arrow.

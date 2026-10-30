@@ -1659,6 +1659,8 @@ export function DocumentForm({
   // so the tile reads type, issuer, number, date, as its subtitle says.
   // Packed to the tile's own width, so two short fields share a row.
   const identificationPacked = packCustomFields(identificationGroup?.fields ?? [], false, unitsInnerRem(PANEL_UNITS.document.general));
+  // The tile's units: its own, or its custom rows' (moved up from the tile's drawing for the issuer's TILE, 41.04).
+  const generalUnits = Math.max(PANEL_UNITS.document.general, identificationPacked.units);
   const issueFields = (
     // Slice 40.83: an identity type shows these on „Act de identitate", where its card prints them — never twice.
     identityKind !== null ? null : (
@@ -1673,6 +1675,7 @@ export function DocumentForm({
         options={issuer.options}
         highlight={displayHighlights?.issuerPersonId}
         width={DOC.issuerPersonId}
+        fillRem={unitsInnerRem(generalUnits)}
         watchValue={watchedValues.issuerPersonId}
         hint={
           <>
@@ -1737,7 +1740,6 @@ export function DocumentForm({
   ) : (
     feesSection
   );
-  const generalUnits = Math.max(PANEL_UNITS.document.general, identificationPacked.units);
 
   // ── General ───────────────────────────────────────────────────────────
   // Code shown inline on the heading line (Slice #21.06.misc: mirrors Person's

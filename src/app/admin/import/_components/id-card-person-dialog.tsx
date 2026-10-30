@@ -146,8 +146,8 @@ import { buttonClass } from "@/lib/ui/button-styles";
 import { GrowingText } from "@/components/forms/growing-text";
 import {
   ID_CARD_DIALOG_ROWS,
+  ID_CARD_DIALOG_WIDTHS,
   ID_CARD_INSTITUTION,
-  NATURAL_PERSON,
   NP_PANEL_INNER_REM,
   NP_PANEL_STYLE,
   boxRem,
@@ -1724,7 +1724,7 @@ export function IdCardPersonDialog({
    */
   const reviewField = (name: IdCardDialogField) => {
     const label = tNp(`fields.${name === "citizenshipId" ? "citizenship" : name}`);
-    const width = NATURAL_PERSON[name];
+    const width = ID_CARD_DIALOG_WIDTHS[name]; // 41.04: the person's widths, Locul nașterii at L
     if (name === "gender") {
       return (
         <SelectField

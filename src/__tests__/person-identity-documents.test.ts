@@ -107,7 +107,7 @@ describe("natural_person's id_* columns: read and written by nothing", () => {
     }
     expect(NP_ROWS.identity.flat()).toContain("citizenshipId");
     const row = NP_ROWS.identity.find((r) => (r as readonly string[]).includes("citizenshipId")) as readonly string[];
-    expect(row).toEqual(["placeOfBirth", "citizenshipId"]);
+    expect(row).toEqual(["cnp", "citizenshipId"]); // 41.04: at CNP's right (40.85: after Locul nașterii)
   });
 
   /**
