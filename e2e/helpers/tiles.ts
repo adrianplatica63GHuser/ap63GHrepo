@@ -19,7 +19,7 @@
  * closed when the record opens. `showTile`, `hideTile` and `pressTileButton`
  * open it for what they do and close it again when they opened it; `tileBox`
  * finds a box with the panel closed too, so its state can be read (`toBeChecked`)
- * — to click one, `openTiles` first. Setări and the home page keep the open bar,
+ * — to click one, `openTiles` first. Setări keeps the open bar (41.02: the home page has „Panouri" too),
  * and there these do exactly what they did.
  */
 
@@ -35,7 +35,7 @@ export function tileBox(page: Page, name: string): Locator {
     .getByRole("checkbox", { name, exact: true, includeHidden: true });
 }
 
-/** Slice 40.57: a record screen's „Panouri" button — none on Setări or the home page. */
+/** Slice 40.57: a record screen's „Panouri" button — none on Setări (41.02: the home page has one). */
 export function tilesMenuButton(page: Page): Locator {
   return page.locator("[data-tiles-menu-button]");
 }

@@ -2,8 +2,8 @@
  * Slice 40.40 — „Toate sus" in the tile bar, left of „Toate", on the four record screens only.
  *
  * The bar draws the button when told to (`allUp`), and pressing it asks the tile choice to send TILES_ALL_UP for its
- * kind of record — the packing hook does the moving (tile-positions.test.ts covers `allUp` itself). Setări's bar and
- * the home page's do not get it.
+ * kind of record — the packing hook does the moving (tile-positions.test.ts covers `allUp` itself). Setări's bar does
+ * not get it. Slice 41.02: the home page does — its tiles are laid out by the same packing (`TileAreas`, entity `home`).
  */
 import { readFileSync } from "fs";
 import { join } from "path";
@@ -56,7 +56,9 @@ describe("„Toate sus” (40.40)", () => {
     expect(heard).toEqual(["test-40-40"]);
   });
 
-  it("the four record screens draw it; the home page and Setări do not", () => {
+  // Slice 41.02 (Ask first 5): inverted for the home page. Was: „the four record screens draw it; the home page and
+  // Setări do not", with `expect(dashboard).not.toMatch(/<TileSelector [^>]*\ballUp\b/)`.
+  it("the four record screens and the home page draw it; Setări does not", () => {
     for (const f of [
       ["src", "app", "natural-persons", "_components", "person-detail-tiles.tsx"],
       ["src", "app", "judicial-persons", "_components", "person-detail-tiles.tsx"],
@@ -65,7 +67,11 @@ describe("„Toate sus” (40.40)", () => {
     ]) {
       expect([f.join("/"), /<TileSelector [^>]*\ballUp\b/.test(read(...f))]).toEqual([f.join("/"), true]);
     }
-    expect(read("src", "app", "_components", "dashboard-client.tsx")).not.toMatch(/<TileSelector [^>]*\ballUp\b/);
+    const home = read("src", "app", "_components", "dashboard-client.tsx");
+    expect(home).toMatch(/<TileSelector [^>]*\ballUp\b/);
+    // „Toate sus" needs tiles that have places: the home page's are TileAreas' boxes, under its own entity.
+    expect(home).toContain("<TileAreas right={NO_RIGHT} slotRefs={NO_SLOTS} entity={HOME_TILE_REGISTRY.entity}>");
+    expect(home).not.toMatch(/<UnitRow\b/);
     expect(read("src", "app", "admin", "settings", "_components", "settings-view.tsx")).not.toMatch(/<TileSelector [^>]*\ballUp\b/);
   });
 });

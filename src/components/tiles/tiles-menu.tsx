@@ -14,7 +14,7 @@
  *
  * The badge (Ask first 3): a small navy count on the button's corner — the hidden tiles that hold a marked field
  * (#37.20), which only a Document has; none when there are none. Inside the panel the dot stays beside its tile's name.
- * Setări's and the home page's bars stay open, as they were.
+ * Setări's bar stays open, as it was. Slice 41.02: the home page's is behind „Panouri" too, beside its title and „?".
  */
 import { useEffect, useId, useState } from "react";
 import { useTranslations } from "next-intl";

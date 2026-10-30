@@ -25,8 +25,8 @@
  * and a new arrangement settles in one more render, before the paint. Too narrow for two rows, the pieces wrap in one
  * row as before, the buttons still last.
  *
- * Slice 40.40: `allUp` draws „Toate sus" left of „Toate" — on the four record screens only, not on Setări's bar nor
- * the home page's. Pressed, every tile slides up and the tile columns are evened (`allUp` in tile-positions.ts).
+ * Slice 40.40: `allUp` draws „Toate sus" left of „Toate" — on the four record screens and (41.02) the home page, not
+ * on Setări's bar. Pressed, every tile slides up and the tile columns are evened (`allUp` in tile-positions.ts).
  *
  * Slice 40.57: `menu` (the four record screens) puts the whole bar — the two rows, the buttons and the tiles diagram
  * right of them — in a panel under the record's header, opened by the header's „Panouri" button (`tiles-menu.tsx`).

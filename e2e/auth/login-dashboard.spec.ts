@@ -41,7 +41,7 @@ import { test, expect, type Page } from "../helpers/test";
 import { accountEntry, accountMenu, closeAccountMenu, openAccountMenu, openSection, sidebar, signOutFromMenu } from "../helpers/sidebar";
 import { USER_STATE } from "../helpers/auth-state";
 import { fillLoginForm } from "../helpers/login-form";
-import { tileBox } from "../helpers/tiles";
+import { hideTile, openTiles, closeTiles, showTile, tileBox, tilesMenuButton } from "../helpers/tiles";
 
 test.describe("TC-AUTH-01 — Conectare și tabloul de bord", () => {
   test("după conectare: tabloul de bord, bara laterală și numele contului", async ({ page }) => {
@@ -63,17 +63,42 @@ test.describe("TC-AUTH-01 — Conectare și tabloul de bord", () => {
     expect(STALE).toMatch(/^Metadate neactualizate de peste (o zi|\d+ zile|\d+ de zile)$/);
     const staleTile = page.getByRole("region", { name: STALE, exact: true });
     await expect(staleTile).toBeVisible({ timeout: 30_000 });
-    await expect(async () => {
-      await tileBox(page, STALE).uncheck();
-      await expect(tileBox(page, STALE)).not.toBeChecked({ timeout: 2_000 });
-    }).toPass({ timeout: 30_000 });
+    // Slice 41.02: the bar is behind „Panouri" — hideTile / showTile open it for the tick and close it again.
+    await hideTile(page, STALE);
     await expect(staleTile).toHaveCount(0);
     await page.reload();
     await expect(page.getByRole("heading", { name: "Tablou de bord" })).toBeVisible({ timeout: 30_000 });
     await expect(tileBox(page, STALE)).not.toBeChecked({ timeout: 15_000 });
     await expect(staleTile).toHaveCount(0);
-    await tileBox(page, STALE).check();
+    await showTile(page, STALE);
     await expect(staleTile).toBeVisible({ timeout: 15_000 });
+
+    // Step 6c (Slice 41.02) — „Panouri" beside the title and its „?", closed when the page opens; inside it the four
+    // boxes, „Toate sus", „Toate" and „Implicit". Unticking „Activitate recentă" hides it; „Toate sus" leaves every
+    // tile right under the one above it (or at the top of the row).
+    const panelsButton = tilesMenuButton(page);
+    await expect(panelsButton).toBeVisible();
+    await expect(panelsButton).toHaveAttribute("aria-expanded", "false");
+    const titleBox = (await page.getByRole("heading", { name: "Tablou de bord" }).boundingBox())!;
+    const buttonBox = (await panelsButton.boundingBox())!;
+    expect(Math.abs(buttonBox.y + buttonBox.height / 2 - (titleBox.y + titleBox.height / 2))).toBeLessThanOrEqual(8);
+    await openTiles(page);
+    const panel = page.locator("[data-tiles-panel]");
+    await expect(panel.getByRole("checkbox")).toHaveCount(4);
+    await expect(panel.locator("[data-tile-bar-buttons] button")).toHaveText(["Toate sus", "Toate", "Implicit"]);
+    await closeTiles(page);
+    await hideTile(page, "Activitate recentă");
+    await expect(page.locator('[data-panel="recent-activity"]')).toHaveCount(0);
+    await showTile(page, "Activitate recentă");
+    await openTiles(page);
+    await page.locator("[data-tiles-all-up]").click();
+    await closeTiles(page);
+    await expect.poll(async () => page.locator("[data-panel]").evaluateAll((tiles) => {
+      const rs = tiles.map((t) => t.getBoundingClientRect());
+      const top = Math.min(...rs.map((r) => r.top));
+      // A tile is „up" when it stands at the row's top, or right under (16 px) a tile it shares columns with.
+      return rs.filter((r) => Math.abs(r.top - top) > 1 && !rs.some((o) => o !== r && o.left < r.right - 1 && r.left < o.right - 1 && Math.abs(r.top - o.bottom - 16) <= 1)).length;
+    }), { timeout: 15_000 }).toBe(0);
 
     // Step 6b (Slice 41.01) — both count tiles draw the four kinds the same way, two by two: Persoane fizice |
     // Persoane juridice, then Proprietăți | Acte; the grid sits evenly in its tile; every card with a count opens its

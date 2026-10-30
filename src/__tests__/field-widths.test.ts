@@ -1446,8 +1446,10 @@ describe("the home page as unit tiles, in the detail screens' frame (Slice #37.3
 
   it("each section is a ListTile of whole units, on the unit row, ticked with the detail screens' selector", () => {
     expect(src).toMatch(/<ListTile tile=\{tile\} panel=\{PANEL_NAME\[tile\]\} title=\{title\} units=\{HOME_UNITS\[tile\]\}>/);
-    expect(src).toMatch(/recentCounts: 2,\s*staleMetadata: 2,\s*expiringDocuments: tableUnits\(EXPIRING_COLUMNS\),\s*recentActivity: 5,/); // 40.98: re-pinned; 41.01: the counts 2
-    expect(src).toMatch(/<UnitRow units=\{choice\.shown\.map\(\(k\) => HOME_UNITS\[k\]\)\}>/);
+    expect(src).toMatch(/recentCounts: 2,\s*staleMetadata: 2,\s*expiringDocuments: tableUnits\(EXPIRING_COLUMNS\),\s*recentActivity: 3,/); // 40.98: re-pinned; 41.01: the counts 2; 41.02: the activity 3
+    // 41.02: the record screens' packing (TileAreas) on a row as wide as the widest tile — was `<UnitRow units=…>`.
+    expect(src).toMatch(/<div className="flex flex-col gap-4" style=\{screenRowStyle\(HOME_WIDEST_UNITS\)\}>/);
+    expect(src).toContain("<TileAreas right={NO_RIGHT} slotRefs={NO_SLOTS} entity={HOME_TILE_REGISTRY.entity}>");
     expect(src).toMatch(/useTileChoice<HomeTile>\(HOME_TILE_REGISTRY\)/);
     expect(src).toMatch(/<TileSelector all=\{HOME_TILES\}/);
     // 40.62: a plain table as wide as its tile (it was `<FixedTable id="dashboard/expiring" … fill={EXPIRING_FILL}>`).
@@ -1461,6 +1463,10 @@ describe("the home page as unit tiles, in the detail screens' frame (Slice #37.3
     // status and the title, so fewer units (`tableUnits(["documentType", "documentTitle", "date", "expiryStatus"])` was 8).
     expect(src).toContain('const EXPIRING_COLUMNS: readonly ColumnName[] = ["expiryStatus", "documentTitle"];');
     expect(tableUnits(["expiryStatus", "documentTitle"])).toBeLessThan(8);
+    // 41.02: Stare as wide as its longest chip — M, 136 px, holds „Expiră în 365 de zile" (124 px at text-xs) — so the
+    // tile is 5 units (it was 6 with an L column: 794 → 659 px).
+    expect(columnRem("expiryStatus")).toBe(SCALE.M + 2);
+    expect(tableUnits(["expiryStatus", "documentTitle"])).toBe(5);
   });
 
   it("with nothing stored all four show — the page as it was", () => {

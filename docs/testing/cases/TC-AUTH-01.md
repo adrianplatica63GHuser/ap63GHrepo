@@ -62,8 +62,9 @@ PowerShell window.**
 | 4 | Presses „Conectare" | The button reads „Se conectează…" while it works |
 | 5 | Waits | The address becomes `http://localhost:3000/` and the login form is gone |
 | 6 | Looks at the page | „Tablou de bord", and under it „Ce necesită atenția dumneavoastră azi" |
-| 6a | In „Părți afișate" above the sections, unticks „Metadate neactualizate de peste N zile" (41.01; „Metadate care necesită atenție" before), reloads the page, then ticks it again (Slice #37.36) | The section leaves the page when unticked; after the reload its box is still unticked and the section still gone; ticked again, it is back |
+| 6a | (41.02: in „Panouri" beside the title) In „Părți afișate" above the sections, unticks „Metadate neactualizate de peste N zile" (41.01; „Metadate care necesită atenție" before), reloads the page, then ticks it again (Slice #37.36) | The section leaves the page when unticked; after the reload its box is still unticked and the section still gone; ticked again, it is back |
 | 6b | (Slice 41.01) Looks at „Adăugate în ultimele N zile" and „Metadate neactualizate de peste N zile", then presses a card with a count | Both draw four cards, two by two — „Persoane fizice" \| „Persoane juridice", then „Proprietăți" \| „Acte" — each the kind's mark, its count and its name, plain on the first tile and amber on the second; the grid is as far from the tile's left, right and bottom edge; no „Obiecte nou adăugate" and no „Faceți clic pe un tip…"; a 0 is faded and opens nothing; a card with a count opens its kind's list, never a 404 (all four 0 on the second tile: „Toate metadatele sunt actualizate" instead) |
+| 6c | (Slice 41.02) Presses „Panouri" beside the title and its „?"; unticks „Activitate recentă", ticks it again; presses „Toate sus" | The button sits on the title's line, closed when the page opens; its panel holds the four boxes, „Toate sus", „Toate" and „Implicit"; unticked, „Activitate recentă" leaves the page; after „Toate sus" every tile stands at the top of the row or right under the tile above it |
 | 7 | Looks at the left sidebar | The seven sections „Tablou de bord", „Domeniu", „Instrumente", „Import", „Rapoarte", „Administrare" and „Ajutor și învățare" (40.08: „Setări" is an item of „Administrare"; no „Studiu" or „Ajutor") — and below them, directly above „Ieșire" (#38.41), one folded bar „Recente" (#38.28; its records unfold above it on a click — TC-LAYOUT-04) |
 | 8 | (40.59) Presses the account entry at the **bottom** of the sidebar — it shows the account's name — and closes the menu again | The menu's first line: „Autentificat ca", and the account's name. The top of the sidebar no longer says it |
 | 9 | Opens the account menu at the bottom of the sidebar and presses „Ieșire" (40.59) | The address becomes `http://localhost:3000/login` and the form from step 1 is back |
@@ -145,6 +146,10 @@ else — and it is in the handover. **Fixed in Slice #37.07 (FU-072):** the tab 
 **2026-10-01 — step 6a added (Slice #37.36).** The home page's four sections became tiles ticked in
 „Părți afișate"; the spec unticks „Metadate care necesită atenție", reloads, finds it still
 unticked and gone, and ticks it back (e2e 20261001T035419Z-27044).
+
+**2026-10-30 — step 6c added (Slice 41.02).** The home page's tile bar went behind „Panouri", with „Toate sus"; its
+tiles are laid out by the record screens' packing. „Acte cu valabilitate limitată" is 5 units (Stare as wide as its
+longest chip), „Activitate recentă" 3 (a long name cut short, the whole of it its tooltip).
 
 **2026-10-29 — step 6b added (Slice 41.01).** The two count tiles draw the four principal kinds with one card, and
 their persons' cards opened `/persons`, which is no route (Adrian's 404). The spec reads the eight cards and asks each

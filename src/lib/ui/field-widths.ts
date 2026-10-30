@@ -1482,7 +1482,7 @@ export const COLUMN = {
   email: { content: "XL", kind: "wraps" }, //               their email; NP.personalEmail1 is XL too
   requestStatus: { content: "M", kind: "fixed" }, //        „În așteptare", with its icon
   decision: { content: "L", kind: "fixed" }, //             „Aprobă" and „Respinge", two sm buttons with icons
-  expiryStatus: { content: "L", kind: "fixed" }, //         „Expiră în 30 de zile"
+  expiryStatus: { content: "M", kind: "fixed" }, //         „Expiră în 365 de zile" is 124 px at text-xs (41.02; was L)
   algorithm: { content: "M", kind: "fixed" }, //            „Divizare parcelă"
   runStatus: { content: "S", kind: "fixed" }, //            „Activ" / „Depășit"
   outputRole: { content: "L", kind: "fixed" }, //           „Parcelă proprietar"

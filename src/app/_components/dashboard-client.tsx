@@ -7,11 +7,12 @@ import Link from "next/link";
 import { ENTITY_ICON, type EntityKind } from "@/lib/ui/entity-icon";
 import { EntityMark } from "@/components/record/entity-mark";
 import { useTimeFrames, tfDays } from "@/hooks/use-time-frames";
-import { columnRem, tableUnits, type ColumnName } from "@/lib/ui/field-widths";
+import { columnRem, screenRowStyle, tableUnits, type ColumnName } from "@/lib/ui/field-widths";
 import { ListTile } from "@/components/tiles/list-tile";
 import { TileSelector } from "@/components/tiles/tile-selector";
 import { useTileChoice } from "@/components/tiles/use-tile-choice";
-import { UnitRow } from "@/components/screen/unit-row";
+import { TilesMenuButton, useTilesMenu } from "@/components/tiles/tiles-menu";
+import { TileAreas } from "@/components/tiles/tile-areas";
 import { HOME_TILES, HOME_TILE_REGISTRY, type HomeTile } from "./home-tiles";
 import { ScreenHelpButton } from "@/components/help/screen-help-button";
 
@@ -28,6 +29,9 @@ const EXPIRING_COLUMNS: readonly ColumnName[] = ["expiryStatus", "documentTitle"
  *   - the expiring documents: the fewest units that hold the table's columns (8),
  *     the title taking what the others leave;
  *   - the activity: a row is the type chip, the name (XL, truncated) and the time — 4.
+ *     41.02: 3 units (363 px inside; it was 5) — a long name is cut short, the whole of it its hover title.
+ *   - 41.02: the expiring documents' Stare is as wide as its longest chip (M, „Expiră în 365 de zile" is 124 px), so
+ *     the tile is 5 units (659 px; it was 6, 794).
  */
 const HOME_UNITS: Readonly<Record<HomeTile, number>> = {
   // 40.98: re-pinned to the width they had on the 148-px unit — 3 → 4 (476 → 524 px), 4 → 5 (640 → 659).
@@ -35,8 +39,14 @@ const HOME_UNITS: Readonly<Record<HomeTile, number>> = {
   recentCounts: 2,
   staleMetadata: 2,
   expiringDocuments: tableUnits(EXPIRING_COLUMNS),
-  recentActivity: 5,
+  recentActivity: 3,
 };
+
+/** Slice 41.02: the widest home tile — the row is never narrower (`screenRowStyle`). */
+const HOME_WIDEST_UNITS = Math.max(...Object.values(HOME_UNITS));
+/** Slice 41.02: the home page has no right-hand column; stable, so the packing's hook does not re-run on every render. */
+const NO_RIGHT: readonly string[] = [];
+const NO_SLOTS: Readonly<Record<string, (el: HTMLElement | null) => void>> = {};
 
 // ---------------------------------------------------------------------------
 // API response types — mirror src/lib/dashboard/queries.ts
@@ -554,13 +564,15 @@ function RecentActivitySection({
               {/* Slice 40.61 (Ask first 3): the kind's mark, its name the accessible name and the tooltip — it was the word
                   in grey monospace, which stays for codes. */}
               <EntityMark kind={kindOf(item)} label={t(KIND_LABEL_KEY[kindOf(item)])} />
+              {/* 41.02: on a 3-unit tile a long name is cut short — the whole name is its hover title. */}
               <Link
                 href={entityUrl(item)}
-                className="flex-1 truncate text-sm text-ink hover:text-link transition-colors"
+                className="min-w-0 flex-1 truncate text-sm text-ink hover:text-link transition-colors"
+                title={nameOr(item.displayName, item.entityType)}
               >
                 {nameOr(item.displayName, item.entityType)}
               </Link>
-              <span className="shrink-0 text-xs text-faint">
+              <span className="shrink-0 whitespace-nowrap text-xs text-faint">
                 {relativeTime(item.updatedAt, t)}
               </span>
             </li>
@@ -580,6 +592,8 @@ export function DashboardClient() {
   const { data: tf } = useTimeFrames();
   // Slice #37.36: the sections are tiles, ticked on and off like a record's.
   const choice = useTileChoice<HomeTile>(HOME_TILE_REGISTRY);
+  // Slice 41.02: „Panouri", as on a record (40.57) — the bar behind one button, closed until pressed.
+  const tilesMenu = useTilesMenu();
   const labels: Record<HomeTile, string> = {
     recentCounts: t("recentCounts.title", { days: tfDays(tf, "dashboard_recent_days") }),
     staleMetadata: t("staleMetadata.title", { days: tfDays(tf, "dashboard_stale_metadata") }),
@@ -621,44 +635,47 @@ export function DashboardClient() {
             {t("title")}
           </h1>
           <ScreenHelpButton align="left" />
+          {/* Slice 41.02 (Ask first 1): „Panouri" beside the title and its „?"; its panel a popover under the header. */}
+          <TilesMenuButton menu={tilesMenu} />
         </div>
         <p className="mt-1 text-sm text-fade">
           {t("subtitle")}
         </p>
       </header>
 
-      {/* Slice #37.22 — one row of fixed sections that wraps: the window decides
-          how many sit side by side, never how wide one is. Slice #37.36: tiles
-          of whole units on the unit row, ticked on and off in „Părți afișate".
-          At 1920 px the counts and the stale metadata share a row and the
-          expiring documents (8 units) wrap under them; at 2560 the three fit
-          (3 + 3 + 8 = 14) and the activity sits under them. */}
-      <TileSelector all={HOME_TILES} labels={labels} choice={choice} />
-      <UnitRow units={choice.shown.map((k) => HOME_UNITS[k])}>
-        {choice.isShown("recentCounts") && (
-          <RecentCountsSection
-            data={data?.recentCounts}
-            t={t}
-            recentDays={tfDays(tf, "dashboard_recent_days")}
-          />
-        )}
-        {choice.isShown("staleMetadata") && (
-          <StaleMetadataSection
-            data={data?.staleMetadata}
-            t={t}
-            staleDays={tfDays(tf, "dashboard_stale_metadata")}
-          />
-        )}
-        {choice.isShown("expiringDocuments") && (
-          <ExpiringDocumentsSection
-            data={data?.expiringDocuments}
-            t={t}
-            amberDays={tfDays(tf, "dashboard_expiring_amber")}
-            expiringDays={tfDays(tf, "dashboard_expiring_docs")}
-          />
-        )}
-        {choice.isShown("recentActivity") && <RecentActivitySection data={data?.recentActivity} t={t} />}
-      </UnitRow>
+      {/* Slice #37.22 — one row of fixed sections. Slice #37.36: tiles of whole units, ticked on and off in „Părți
+          afișate". Slice 41.02: the bar is behind „Panouri", with „Toate sus" (Ask first 1, 2), and the tiles are
+          laid out by the record screens' packing (`TileAreas`, tile-positions.ts) instead of the wrapping UnitRow —
+          each right under the one above it, draggable, remembered per browser under `home`, „Toate sus" sliding
+          them up and evening the columns. */}
+      <div className="flex flex-col gap-4" style={screenRowStyle(HOME_WIDEST_UNITS)}>
+        <TileSelector all={HOME_TILES} labels={labels} choice={choice} menu={tilesMenu} allUp />
+        <TileAreas right={NO_RIGHT} slotRefs={NO_SLOTS} entity={HOME_TILE_REGISTRY.entity}>
+          {choice.isShown("recentCounts") && (
+            <RecentCountsSection
+              data={data?.recentCounts}
+              t={t}
+              recentDays={tfDays(tf, "dashboard_recent_days")}
+            />
+          )}
+          {choice.isShown("staleMetadata") && (
+            <StaleMetadataSection
+              data={data?.staleMetadata}
+              t={t}
+              staleDays={tfDays(tf, "dashboard_stale_metadata")}
+            />
+          )}
+          {choice.isShown("expiringDocuments") && (
+            <ExpiringDocumentsSection
+              data={data?.expiringDocuments}
+              t={t}
+              amberDays={tfDays(tf, "dashboard_expiring_amber")}
+              expiringDays={tfDays(tf, "dashboard_expiring_docs")}
+            />
+          )}
+          {choice.isShown("recentActivity") && <RecentActivitySection data={data?.recentActivity} t={t} />}
+        </TileAreas>
+      </div>
     </div>
   );
 }

@@ -4,7 +4,7 @@
  * The button opens and closes the panel; Esc and a press outside close it, a press inside does not; the badge counts
  * the hidden tiles holding a marked field. The panel stays in the page while closed (hidden), so a box keeps its
  * state. The four record screens draw the button right after the version controls and hand the bar the menu; Setări
- * and the home page do not.
+ * does not. Slice 41.02: the home page does, beside its title and „?".
  */
 import { readFileSync } from "fs";
 import { join } from "path";
@@ -122,8 +122,13 @@ describe("where it is drawn", () => {
     expect(read(...RECORD[3])).toContain("<TilesMenuButton menu={tilesMenu} badge={hiddenMarked(marked, choice.shown)} />");
   });
 
-  it("Setări and the home page keep the open bar", () => {
-    expect(read("src", "app", "_components", "dashboard-client.tsx")).not.toMatch(/<TileSelector [^>]*\bmenu=/);
+  // Slice 41.02: the home page's bar is behind „Panouri" too, beside its title and „?". Was: „Setări and the home
+  // page keep the open bar".
+  it("the home page's bar is behind „Panouri”, beside its title; Setări keeps the open bar", () => {
+    const home = read("src", "app", "_components", "dashboard-client.tsx");
+    expect(home).toMatch(/<TileSelector [^>]*\bmenu=\{tilesMenu\}/);
+    expect(home).toContain("const tilesMenu = useTilesMenu();");
+    expect(home).toMatch(/<ScreenHelpButton align="left" \/>\s*\{\/\*[^]*?\*\/\}\s*<TilesMenuButton menu=\{tilesMenu\} \/>/);
     expect(read("src", "app", "admin", "settings", "_components", "settings-view.tsx")).not.toMatch(/<TileSelector [^>]*\bmenu=/);
   });
 
