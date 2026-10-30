@@ -704,11 +704,11 @@
           "id": "b9",
           "section": "admin-reference-data-document-types",
           "ro": {
-            "question": "Ciprian vrea să adauge câmpuri proprii tipului „Carte de Identitate (model nou)”, ca pe un contract. Ce găsește pe fila „Formular”?",
+            "question": "Ciprian vrea să adauge câmpuri proprii tipului „Carte de Identitate (tip nou)”, ca pe un contract. Ce găsește pe fila „Formular”?",
             "explanation": "Cele patru tipuri de act de identitate arată formularul lor de sistem: „Formular de sistem: câmpurile unui act de identitate sunt definite de aplicație și nu se modifică aici.”. Nu primesc un formular propriu."
           },
           "en": {
-            "question": "Ciprian wants to add fields of its own to the „Carte de Identitate (model nou)” (identity card) type, as on a contract. What does he find on the „Formular” tab?",
+            "question": "Ciprian wants to add fields of its own to the „Carte de Identitate (tip nou)” (identity card) type, as on a contract. What does he find on the „Formular” tab?",
             "explanation": "The four identity document types show their system form: „Formular de sistem: câmpurile unui act de identitate sunt definite de aplicație și nu se modifică aici.” (the fields are defined by the application and are not changed here). They get no form of their own."
           },
           "options": [

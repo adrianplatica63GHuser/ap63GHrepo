@@ -24,7 +24,7 @@ export type PersonIdentityDocument = {
   nrDocument: string | null;
   /** The issue date („Data eliberării" / „Data emiterii"), yyyy-mm-dd. */
   dateDocument: string | null;
-  /** „Valabil până la", yyyy-mm-dd; a model vechi has none. */
+  /** „Valabil până la", yyyy-mm-dd; a tip vechi has none. */
   dateValidUntil: string | null;
   /** The issuer's name — the juridical person on the document. */
   issuerName: string | null;

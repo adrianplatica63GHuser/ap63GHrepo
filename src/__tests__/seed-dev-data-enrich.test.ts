@@ -221,7 +221,7 @@ describe("companies, institutions and issuers", () => {
     expect(companyTypeName(notary)).toBe("Birou notarial");
     const other = companies.find((c) => !c.name.startsWith("Biroul") && !c.name.startsWith("Cabinet"))!;
     expect(companyTypeName(other)).toBe(other.type);
-    for (const t of ["Birou notarial", "Cabinet sau societate de avocatură"]) expect(PUBLIC_BODY_TYPES).toContain(t as never);
+    for (const t of ["Birou notarial", "Cabinet de avocatură"]) expect(PUBLIC_BODY_TYPES).toContain(t as never);
   });
 
   it("an institution for every „Emitent” the documents carry, and every public body's type a public-body type", () => {

@@ -5238,8 +5238,8 @@
   },
   "identityDocument": {
     "kinds": {
-      "CI_VECHE": "Carte de identitate (model vechi)",
-      "CI_NOU": "Carte de identitate (model nou)",
+      "CI_VECHE": "Carte de identitate (tip vechi)",
+      "CI_NOU": "Carte de identitate (tip nou)",
       "PASAPORT": "Pașaport",
       "PASAPORT_CRDS": "Pașaport CRDS"
     },

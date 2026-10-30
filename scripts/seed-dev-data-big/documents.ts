@@ -611,8 +611,8 @@ function releaseIdentityHolder(b: Docs, reserved: Set<string>, key: string): voi
 /**
  * The identity documents: one for each reserved holder, as „Titular act de identitate", across the four kinds —
  * seed.ts writes each kind's own values from the holder (`identityOf`) and, for today's card, its two faces:
- *   - Carte de identitate (model nou): the living from 14 on — the card persons.ts gave them, number and dates;
- *   - Carte de identitate (model vechi): the „buletin" of whoever died since 1991, and of some living born by 1994 —
+ *   - Carte de identitate (tip nou): the living from 14 on — the card persons.ts gave them, number and dates;
+ *   - Carte de identitate (tip vechi): the „buletin" of whoever died since 1991, and of some living born by 1994 —
  *     issued 1990–2008, from 14 on and before a death; it prints no validity end;
  *   - Pașaport: a child's under 14 (valid three years, issued in the last two and a half), or a holder's from 14
  *     (ten years; five under 18), issued in the last nine years;

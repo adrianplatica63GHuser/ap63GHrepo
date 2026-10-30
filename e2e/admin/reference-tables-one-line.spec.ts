@@ -222,24 +222,19 @@ test.describe("TC-VL-05 pasul 5 — „Tipuri de obiecte” fără spațiu irosi
       await page.goto(`/admin/value-lists?list=${list.key}`);
       await expect(page.locator("[data-usage]").first()).not.toHaveText("…", { timeout: 30_000 });
       const g = await nameGap(page);
-      // 2026-10-29 (40.98, FU-378): the judicial types' column is sized for „Cabinet sau societate de avocatură"
-      // (sync-reference-data.sql, #39.72). A database whose list no longer holds that name — Adrian's reads
-      // „Cabinet de avocatură" — leaves its column wider than its names by the difference; that is the data's, not the
-      // column's, so there only „nothing cut" is asked, and the run says why.
-      const sizedFor = list.key === "judicial-person-types" ? "Cabinet sau societate de avocatură" : null;
+      // Slice 41.03: the judicial types' column is sized for the sync file's longest name, „Birou de executor
+      // judecătoresc" (sync-reference-data.sql) — Adrian's „Cabinet de avocatură" is in both now (FU-378). His own list
+      // calls that type „Executor judecătoresc", so on his database the column is wider than its names by the
+      // difference: that is the data's, not the column's, and there only „nothing cut" is asked, and the run says why.
+      // (Was sized for „Cabinet sau societate de avocatură", with his „Cabinet de avocatură" accepted as drift.)
+      // The document types' column is sized for „Plan de Amplasament și Delimitare" in regular weight: Adrian recreated
+      // the type without a form (FU-374), and every list holds it again (was: in bold, a type with a form).
+      const sizedFor = list.key === "judicial-person-types" ? "Birou de executor judecătoresc" : null;
       const names = sizedFor
         ? ((await (await page.request.get(`/api/admin/value-lists/${list.key}`)).json()) as { items: { name: string }[] }).items.map((i) => i.name)
         : [];
-      // The document types' column is sized for „Plan de Amplasament și Delimitare" in bold — a type with a form
-      // (field-widths.ts valueDocTypeName). Where that type has no form (Adrian deleted it, FU-374), its name is
-      // regular and narrower, and the gap is the data's again.
-      const padBold = list.key !== "document-types" || (await page.evaluate(() => {
-        const cell = [...document.querySelectorAll<HTMLElement>("table[data-width-table] tbody td")].find((td) => td.innerText.trim().startsWith("Plan de Amplasament și Delimitare"));
-        const text = cell?.querySelector<HTMLElement>("[data-name-tip]") ?? cell?.querySelector<HTMLElement>("span");
-        return !!text && Number(getComputedStyle(text).fontWeight) >= 600;
-      }));
-      const drifted = (sizedFor !== null && !names.includes(sizedFor)) || !padBold;
-      if (drifted) test.info().annotations.push({ type: "reference data", description: `${list.name}: the name its column is sized for is not in the list as it was — the gap (${g.gap} px) not asked (FU-374, FU-378)` });
+      const drifted = sizedFor !== null && !names.includes(sizedFor);
+      if (drifted) test.info().annotations.push({ type: "reference data", description: `${list.name}: the name its column is sized for is not in the list as it was — the gap (${g.gap} px) not asked` });
       expect({ list: list.name, rows: g.rows > 0, cut: g.cut, under24: drifted || g.gap < 24 }, `the longest name ends ${g.gap} px before the next column`).toEqual({
         list: list.name, rows: true, cut: [], under24: true,
       });

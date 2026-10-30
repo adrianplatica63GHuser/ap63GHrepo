@@ -276,7 +276,7 @@ describe("checkTypeForms — the identity card", () => {
       catalogue: [CATCH_ALL, handAdded],
     });
     expect(verdict.clean).toBe(false);
-    const marked = type("id-vechi", "CARTE_IDENTITATE_VECHE", "Carte de Identitate (model vechi)");
+    const marked = type("id-vechi", "CARTE_IDENTITATE_VECHE", "Carte de Identitate (tip vechi)");
     expect(
       checkTypeForms({
         entries: [entry("v.jpg", { typeKey: "CARTE_IDENTITATE_VECHE", label: "buletin" })],

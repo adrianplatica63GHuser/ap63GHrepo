@@ -112,15 +112,16 @@ describe("„Tipuri de obiecte” without the wasted space (#38.66)", () => {
   // Each column: [its COLUMN name, the field it is drawn for, the widest thing it holds — its longest value or its
   // header's longest word — measured in px at 1366 on the archive (field-widths.ts says where)].
   const OWN: [string, keyof typeof COLUMN, string, number][] = [
-    // #39.72: „Cabinet sau societate de avocatură", #39.71's public-body type — was 87.2, „Consiliu Local".
-    ["judicial-person-types", "valueJudicialTypeName", "name", 219.5],
+    // 41.03: „Birou de executor judecătoresc", now Adrian's „Cabinet de avocatură" is shorter — was 219.5, „Cabinet sau
+    // societate de avocatură" (#39.72), and 87.2, „Consiliu Local", before that.
+    ["judicial-person-types", "valueJudicialTypeName", "name", 192.3],
     // #39.70: the header „DENUMIRE" (104 px; „Spațiu comercial" 103.4) since #39.66's types — was 148.6, „Teren pentru
     // Construcții" (#39.23).
     ["property-types", "valuePropertyTypeName", "name", 104],
     ["property-types", "valueFlagTarlaParcela", "showTarlaParcela", 59.2], // „PARCELĂ"
     ["property-types", "valueFlagAddress", "showAddress", 52.5], //         „ADRESĂ"
     ["property-types", "valueFlagStreetView", "showStreetView", 49.1], //   „STREET"
-    ["document-types", "valueDocTypeName", "name", 232.6], //               „Plan de Amplasament și Delimitare", bold
+    ["document-types", "valueDocTypeName", "name", 217.9], //               „Plan de Amplasament și Delimitare", regular (41.03: no form; 232.6 bold)
     ["document-types", "valueDocTypeShortName", "shortName", 97.3], //      „Doc. cadastrală"
   ];
 

@@ -34,6 +34,8 @@ import {
   E2E_MARKER,
   createDocumentOfType,
   createNaturalPerson,
+  ensureDocTypeRole,
+  removeDocTypeRole,
   removeLeftovers,
   removeRecord,
 } from "../helpers/records";
@@ -108,8 +110,11 @@ test.describe("TC-DOC-07 — cota-parte doar pentru rolurile care dețin o cotă
     await removeLeftovers(page.request, MARK);
     await page.setViewportSize({ width: 1366, height: 900 });
 
+    // Slice 41.03 (FU-374): Adrian recreated the PAD without role rows — „Proiectant" on it is made here when it is
+    // missing, and removed at the end.
+    const made = await ensureDocTypeRole(page.request, "PLAN_AMPLASAMENT_DELIMITARE", PROIECTANT_NAMES);
     const all = await pairs(page);
-    const proiectant = all.find((p) => p.documentTypeName === "Plan de Amplasament și Delimitare" && PROIECTANT_NAMES.includes(p.personRoleName));
+    const proiectant = all.find((p) => p.id === made.pair.id);
     const vanzator = all.find((p) => p.documentTypeName === "Contract de Vânzare" && p.personRoleName === "Vânzător");
     expect(proiectant, "the PAD offers „Proiectant\" (Before you start)").toBeTruthy();
     expect(vanzator, "Contract de Vânzare offers „Vânzător\" (Before you start)").toBeTruthy();
@@ -191,6 +196,7 @@ test.describe("TC-DOC-07 — cota-parte doar pentru rolurile care dețin o cotă
       await removeRecord(page.request, "document", padId);
       await removeRecord(page.request, "document", cvcId);
       await removeRecord(page.request, "person", personId);
+      if (made.created) await removeDocTypeRole(page.request, made.pair.id);
     }
   });
 });

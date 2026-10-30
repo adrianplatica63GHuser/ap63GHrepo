@@ -39,7 +39,7 @@ const NAME_RULES: ReadonlyArray<readonly [RegExp, string]> = [
   [/^(judecatori|tribunal|curtea )/, "Instanță"],
   [/notar/, "Birou notarial"],
   [/executor/, "Birou de executor judecătoresc"],
-  [/avocat/, "Cabinet sau societate de avocatură"],
+  [/avocat/, "Cabinet de avocatură"],
   [/^(ocpi|ajfp|dgrfp|institutia prefectului|prefectura)/, "Instituție publică teritorială"],
   [/^(anaf|ancpi|ministerul|guvernul)/, "Autoritate publică centrală"],
   [/^(primaria|consiliu|consiliul|spclep|serviciul public comunitar)/, "Autoritate locală"],

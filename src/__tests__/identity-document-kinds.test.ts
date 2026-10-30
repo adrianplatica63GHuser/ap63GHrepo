@@ -28,8 +28,8 @@ describe("the four kinds", () => {
   it("are the four the marker's CHECK allows, each with its type key and Romanian name", () => {
     expect([...IDENTITY_KIND_VALUES]).toEqual(["CI_VECHE", "CI_NOU", "PASAPORT", "PASAPORT_CRDS"]);
     expect(IDENTITY_KIND_VALUES.map((k) => [IDENTITY_KINDS[k].typeKey, IDENTITY_KINDS[k].typeName])).toEqual([
-      ["CARTE_IDENTITATE_VECHE", "Carte de Identitate (model vechi)"],
-      ["CARTE_IDENTITATE", "Carte de Identitate (model nou)"],
+      ["CARTE_IDENTITATE_VECHE", "Carte de Identitate (tip vechi)"],
+      ["CARTE_IDENTITATE", "Carte de Identitate (tip nou)"],
       ["PASAPORT", "Pașaport"],
       ["PASAPORT_CRDS", "Pașaport CRDS"],
     ]);
@@ -49,7 +49,7 @@ describe("the four kinds", () => {
 });
 
 describe("each kind's fields — the design's matrix, Adrian's lists exactly", () => {
-  it("model vechi (the booklet): no CNP, no sex, no validity end, no MRZ (Q #15)", () => {
+  it("tip vechi (the booklet): no CNP, no sex, no validity end, no MRZ (Q #15)", () => {
     // 40.94: in Adrian's rows, left to right and top to bottom (the fields are the same twelve).
     expect(fieldsOf("CI_VECHE")).toEqual([
       "lastName", "firstName", "fatherFirstName", "motherFirstName", "civilStatus", "dateOfBirth", "placeOfBirth",
@@ -58,7 +58,7 @@ describe("each kind's fields — the design's matrix, Adrian's lists exactly", (
     for (const absent of ["cnp", "sex", "dateValidUntil", "mrz", "cardNumber"] as const) expect(kindHasField("CI_VECHE", absent)).toBe(false);
   });
 
-  it("model nou: Nr. card kept, optional (Q #17); no date of birth", () => {
+  it("tip nou: Nr. card kept, optional (Q #17); no date of birth", () => {
     expect(fieldsOf("CI_NOU")).toEqual([
       "nrDocument", "cnp", "lastName", "firstName", "nationality", "sex", "placeOfBirth", "domicileAddress", "issuer",
       "dateDocument", "dateValidUntil", "mrz", "cardNumber",

@@ -83,7 +83,7 @@ import { UNCLASSIFIED_DOCUMENT_TYPE_KEY } from "@/lib/documents/document-type-ma
 // ⚠️ **Slice 40.82: what the list MEANS changed, and so did its name.** It was „the keys that mean an identity
 // card" and served both the TYPE test and the SCAN test. The type test now reads the marker column; what is left is
 // the scan's: the classifier keys whose image today's card read (extract-id-card) handles — both identity cards,
-// the booklet „buletin" (model vechi) as well as model nou, as the read did before 40.82 when the classifier called
+// the booklet „buletin" (tip vechi) as well as tip nou, as the read did before 40.82 when the classifier called
 // either one CARTE_IDENTITATE. Slice 40.86: the read decides the kind itself, so it takes all four — both cards and
 // both passports — and the classifier's key is only its hint (`identityKindOfRead`, ./identity-read.ts).
 export const IDENTITY_READ_TYPE_KEYS = ["CARTE_IDENTITATE", "CARTE_IDENTITATE_VECHE", "PASAPORT", "PASAPORT_CRDS"] as const;

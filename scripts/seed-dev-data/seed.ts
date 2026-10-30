@@ -765,7 +765,7 @@ function documentPlan(): DP[] {
         date: p.idCard!.from,
         validUntil: p.idCard!.until,
         emitent: "SPCLEP Bragadiru",
-        // Slice 40.82: what the card prints (model nou)
+        // Slice 40.82: what the card prints (tip nou)
         identity: () => ({
           lastName: p.last, firstName: p.first, cnp: cnpOf.get(k) ?? null, sex: p.gender, nationality: "Română / ROU",
           placeOfBirth: p.birthPlace, domicileAddress: `${p.street}, Bragadiru, jud. Ilfov`,

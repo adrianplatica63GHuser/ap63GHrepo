@@ -137,6 +137,11 @@ test.describe("TC-IMP-06 — un plan parcelar importat", () => {
         await expect(page.getByText(done).first()).toBeVisible({ timeout: 30_000 });
       }
       await page.getByRole("button", { name: "Continuă la pasul „Scanare”", exact: true }).click();
+      // Slice 41.03 (FU-374): Plan Parcelar has no form — Adrian recreated the type without one — so the scan stops at
+      // „unele tipuri de documente nu au încă formular", and the import goes on with „Continuă fără formulare".
+      const waive = page.getByRole("button", { name: "Continuă fără formulare", exact: true });
+      await expect(waive).toBeVisible({ timeout: 60_000 });
+      await waive.click();
       await expect(page.getByText("Scanat", { exact: true }).first()).toBeVisible({ timeout: 60_000 });
       await page.getByRole("button", { name: "Continuă la pasul „Evaluare”", exact: true }).click();
       await page.getByRole("button", { name: "Continuă la pasul „Import”", exact: true }).click();

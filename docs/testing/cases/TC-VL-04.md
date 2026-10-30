@@ -46,7 +46,7 @@ The window is 1366 × 900.
 | 4 | Opens „Roluri”; picks `TC-VL-04 Rol` in „Adaugă un rol”, „Adaugă rolul”; ticks „Deține cotă”; reloads | „Acest tip nu oferă încă niciun rol. Adăugați unul mai jos.”, then the role listed, unticked; after the tick and the reload it is still ticked |
 | 5 | Opens „Roluri Persoane” in „Date de referință”, „Editează” on `TC-VL-04 Rol` | Under „Tipuri de act”, `TC-VL-04 Tip` with „Deține cotă” ticked |
 | 6 | Back on „Tipuri de Document”, finds „Pașaport” | Its status „Act de identitate”; no „Formular” button on its row |
-| 7 | Opens each of the four identity types (`CARTE_IDENTITATE_VECHE`, `CARTE_IDENTITATE`, `PASAPORT`, `PASAPORT_CRDS`), „Formular” | „Formular de sistem: câmpurile unui act de identitate sunt definite de aplicație și nu se modifică aici.” over the kind's fields, in the document's order (12, 13, 15 and 15 of them); on model nou „Seria și numărul” first, „CNP” at width M, no „Data nașterii”; no button to edit or save |
+| 7 | Opens each of the four identity types (`CARTE_IDENTITATE_VECHE`, `CARTE_IDENTITATE`, `PASAPORT`, `PASAPORT_CRDS`), „Formular” | „Formular de sistem: câmpurile unui act de identitate sunt definite de aplicație și nu se modifică aici.” over the kind's fields, in the document's order (12, 13, 15 and 15 of them); on tip nou „Seria și numărul” first, „CNP” at width M, no „Data nașterii”; no button to edit or save |
 
 ## At the end — leaving things as they were found
 

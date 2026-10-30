@@ -78,12 +78,12 @@ test.describe("TC-PERS-16 — actele de identitate ale unei persoane", () => {
       await rows.nth(1).locator("[data-identity-open]").click();
       await expect(page).toHaveURL(new RegExp(`/documents/${card}$`), { timeout: 30_000 });
 
-      // Step 4 — „Adaugă act de identitate": the kind asked; „Carte de identitate (model vechi)", „Continuă".
+      // Step 4 — „Adaugă act de identitate": the kind asked; „Carte de identitate (tip vechi)", „Continuă".
       await page.goto(`/natural-persons/${personId}`);
       await tile.getByRole("button", { name: "Adaugă act de identitate" }).click();
       const chooser = page.locator("[data-identity-kind-chooser]");
       await expect(chooser.getByText("Ce act de identitate adăugați?", { exact: true })).toBeVisible();
-      await chooser.getByRole("radio", { name: "Carte de identitate (model vechi)" }).check();
+      await chooser.getByRole("radio", { name: "Carte de identitate (tip vechi)" }).check();
       await chooser.getByRole("button", { name: "Continuă" }).click();
 
       // Step 5 — „Adaugă act": the type chosen, the holder named, the person's names filled in; nothing saved yet.

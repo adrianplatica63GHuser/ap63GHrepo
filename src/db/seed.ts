@@ -1358,7 +1358,7 @@ const JUDICIAL_PERSONS: SeedJudicialRow[] = [
  * A seed person's ID card or passport, as an identity document of its own.             (Slice 40.85)
  *
  * Until 40.85 the seed wrote the number on the person (natural_person.id_document_*), which no screen reads any more.
- * The same number now becomes a pageless identity document — „Carte de Identitate (model nou)" or „Pașaport" — with
+ * The same number now becomes a pageless identity document — „Carte de Identitate (tip nou)" or „Pașaport" — with
  * the person as its holder („Titular act de identitate"), so „Acte de identitate" lists it. The CNP goes onto the
  * document only where its control digit is right (the identity rules refuse it otherwise); every value is the seed's
  * own, invented.

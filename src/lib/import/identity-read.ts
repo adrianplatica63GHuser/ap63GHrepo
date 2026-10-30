@@ -56,7 +56,7 @@ export type IdentityReadFields = Partial<
 export type IdentityReadParents = { father?: string | null; mother?: string | null };
 
 /**
- * The kind the read found; else the classifier's hint (the document's type key); else model nou — the card the read
+ * The kind the read found; else the classifier's hint (the document's type key); else tip nou — the card the read
  * handled before 40.86. The read's kind wins over the hint (Ask first 1).
  */
 export function identityKindOfRead(readKind: unknown, hintTypeKey: string | null | undefined): IdentityKind {
@@ -119,7 +119,7 @@ export function identityValuesFromRead(
 
 /**
  * The review's card fields for a kind (`ID_CARD_DIALOG_ROWS.idCard`'s names): a booklet has no validity end, and only
- * model nou a „Nr. card".
+ * tip nou a „Nr. card".
  */
 export function cardFieldsOfKind(kind: IdentityKind): readonly ("idDocumentNumber" | "idCardNumber" | "idValidFrom" | "idValidUntil" | "idIssuingAuthority")[] {
   const keys = new Set(IDENTITY_KINDS[kind].fields.map((d) => d.key));

@@ -4,9 +4,9 @@
  *
  * Slice 40.83. The four identity kinds on the document's own screen, each made through POST /api/documents with
  * invented values (no real card, the capture rule) and the TC-E2E- marker, and removed in `finally`:
- *   - model nou: its fields in the card's order, the common ones once (not in „Identificarea actului"), EXPIRAT on a
+ *   - tip nou: its fields in the card's order, the common ones once (not in „Identificarea actului"), EXPIRAT on a
  *     validity end in the past, the warning when the CNP's sex disagrees with Sex, a CNP refused, an edit kept;
- *   - model vechi: the booklet's own fields, no CNP, no validity, so no status;
+ *   - tip vechi: the booklet's own fields, no CNP, no validity, so no status;
  *   - Pașaport: VALABIL, its domicile county; Pașaport CRDS: its domicile country;
  *   - a change of type: to Pașaport names the values removed and removes them; to an ordinary type is refused while
  *     a value is held;
@@ -77,7 +77,7 @@ test.describe("TC-DOC-28 — actul de identitate pe ecranul lui", () => {
       });
       made.push(crds);
 
-      // Step 1 — model nou: read as text — its values, EXPIRAT, the CNP warning; then open, every field drawn once
+      // Step 1 — tip nou: read as text — its values, EXPIRAT, the CNP warning; then open, every field drawn once
       // (a read view hides an empty field behind „Arată N câmpuri goale", 40.71).
       await page.goto(`/documents/${nou}`);
       await expect(tile(page)).toBeVisible({ timeout: 30_000 });
@@ -104,7 +104,7 @@ test.describe("TC-DOC-28 — actul de identitate pe ecranul lui", () => {
       await expect(box(page, "identity.firstName")).toHaveText("Ionel", { timeout: 30_000 });
       await expect(box(page, "identity.sex")).toHaveText("M");
 
-      // Step 3 — model vechi: the booklet's fields; no CNP, no validity end, so no status.
+      // Step 3 — tip vechi: the booklet's fields; no CNP, no validity end, so no status.
       await page.goto(`/documents/${vechi}`);
       await expect(tile(page)).toBeVisible({ timeout: 30_000 });
       await expect(tile(page).locator("[data-identity-validity]")).toHaveCount(0);
@@ -123,7 +123,7 @@ test.describe("TC-DOC-28 — actul de identitate pe ecranul lui", () => {
       await page.goto(`/documents/${crds}`);
       await expect(box(page, "identity.domicileCountry")).toHaveText("Spania", { timeout: 30_000 });
 
-      // Step 4b — 40.94, Adrian's rows, opened so every field is drawn: the Pașaport, then the model vechi. „Titular" is
+      // Step 4b — 40.94, Adrian's rows, opened so every field is drawn: the Pașaport, then the tip vechi. „Titular" is
       // the holder line above the rows, and the status sits beside Data expirării — neither is a field.
       await page.goto(`/documents/${pas}`);
       await expect(tile(page)).toBeVisible({ timeout: 30_000 });
@@ -145,7 +145,7 @@ test.describe("TC-DOC-28 — actul de identitate pe ecranul lui", () => {
       expect(Math.max(...across) - Math.min(...across), `TILE widths ${across.join(", ")}`).toBeLessThanOrEqual(1);
       await page.locator('[data-tile-cancel="identity"]').click();
 
-      // Step 5 — model nou to Pașaport: the values it has no field for are named, and removed on save.
+      // Step 5 — tip nou to Pașaport: the values it has no field for are named, and removed on save.
       // 40.92: through „Schimbă tipul…" — its confirmation names them first; „Confirmă" changes the type in the form.
       await page.goto(`/documents/${nou}`);
       await editTile(page, "general");
@@ -179,11 +179,11 @@ test.describe("TC-DOC-28 — actul de identitate pe ecranul lui", () => {
 
       // Step 7 — Documente → Adaugă act with an identity type: the tile, empty; saved.
       await page.goto("/documents/new");
-      // By its name's start: the archive's own list may call it „(model vechi)" or „(tip vechi)" — Adrian's database
-      // reads „tip" (seen 2026-10-29), sync-reference-data.sql „model". A label the list lacks made selectOption wait
-      // out the whole test.
+      // Slice 41.03 (FU-378): one name — „Carte de Identitate (tip vechi)", Adrian's, now in sync-reference-data.sql
+      // too. Was „(model vechi)" or „(tip vechi)", either accepted. Found by its option first: a label the list lacks
+      // made selectOption wait out the whole test.
       const typeSelect = page.getByLabel(/^Tip document/);
-      const booklet = typeSelect.locator("option", { hasText: /^Carte de Identitate \((model|tip) vechi\)$/ });
+      const booklet = typeSelect.locator("option", { hasText: /^Carte de Identitate \(tip vechi\)$/ });
       await expect(booklet).toHaveCount(1, { timeout: 30_000 });
       await typeSelect.selectOption((await booklet.getAttribute("value"))!);
       await expect(tile(page)).toBeVisible({ timeout: 30_000 });

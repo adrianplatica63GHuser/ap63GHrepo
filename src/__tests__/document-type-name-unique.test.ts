@@ -256,7 +256,7 @@ describe("documentTypeKeyRefusal", () => {
   // marked, and a create under their key would be an unmarked twin.
   it.each([
     ["CARTE_IDENTITATE",       "Carte de Identitate"],
-    ["CARTE_IDENTITATE_VECHE", "Carte de Identitate (model vechi)"],
+    ["CARTE_IDENTITATE_VECHE", "Carte de Identitate (tip vechi)"],
     ["PASAPORT",               "Pașaport"],
   ])("refuses an identity kind's key %s even under its own name (%s) — Slice 40.82", (key, name) => {
     expect(documentTypeKeyRefusal(key, name)).toBe("reserved");

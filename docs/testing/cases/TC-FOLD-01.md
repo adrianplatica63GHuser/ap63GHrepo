@@ -26,7 +26,7 @@ too. A box with five lines or fewer has no link.
   - a Property nicknamed `TC-FOLD-01 Teren cu notă lungă`, whose „Note" is ONE paragraph with no
     line break: `Un singur paragraf lung, fără niciun rând nou, scris ca să se rupă pe ecran pe
     mai multe rânduri decât cinci.` nine times over;
-  - a „Carte de Identitate (model nou)" document `TC-FOLD-01 Carte de identitate cu MRZ`, whose
+  - a „Carte de Identitate (tip nou)" document `TC-FOLD-01 Carte de identitate cu MRZ`, whose
     „MRZ" is seven lines of 36 characters (Slice 40.85: the MRZ is an identity document's, no longer a
     person's).
 

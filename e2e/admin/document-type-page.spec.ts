@@ -140,7 +140,7 @@ test.describe("TC-VL-04 — un tip de act pe pagina lui", () => {
       await expect(page.getByRole("tabpanel").getByRole("button")).toHaveCount(0);
       await expect(page.getByText("Acest tip nu are încă formular.", { exact: true })).toHaveCount(0);
     }
-    // The model nou's CNP: its label and its width step.
+    // The tip nou's CNP: its label and its width step.
     await page.goto("/admin/value-lists/document-types/CARTE_IDENTITATE?tab=form");
     const nou = page.locator('[data-identity-system-form="CI_NOU"]');
     await expect(nou.locator('[data-system-field="cnp"] td').first()).toHaveText("CNP", { timeout: 30_000 });

@@ -400,7 +400,7 @@ export const JUDICIAL_PERSON = {
   name: { step: "XXL", kind: "grows", fill: true }, //      „SOCIETATEA AGRICOLĂ … S.R.L." can pass 60 — it wraps; the panel's whole width since #37.29; m: 0
   nickname: { step: "M", kind: "grows" }, //                m: 0 — M since #39.71, so Tip's XL keeps Poreclă | Tip in three units
   // 40.90 — Adrian's mark: XL → L. Poreclă | Tip (8.5 + 0.5 + 13) still fit three units; a longer type wraps (40.78).
-  judicialPersonTypeId: { step: "L", kind: "select" }, //  #39.71: 17 options, longest „Cabinet sau societate de avocatură" (34, 243.5 px) — wraps at L
+  judicialPersonTypeId: { step: "L", kind: "select" }, //  #39.71: 17 options; 41.03: the longest „Birou de executor judecătoresc" (30) — fits L (was „Cabinet sau societate de avocatură", 34, 243.5 px, which wrapped)
   cuiNumber: { step: "M", kind: "grows" }, //    „RO12345678", up to 10 digits; m: 0
   tradeRegisterNumber: { step: "M", kind: "grows" }, // „J40/12345/2020"; m: 0
   // Slice #38.31: the firm's own phone and e-mail — the Natural Person's boxes (NP.personalPhone1, NP.personalEmail1).
@@ -1526,9 +1526,11 @@ export const COLUMN = {
   // measured in the runner's Chromium at 1366 px on the archive, 2026-10-10 (Arial: 14 px cells, 12 px uppercase
   // headers), and rounded up to the next quarter rem with at least 1 px to spare. A longer value added later is cut
   // with „…" and whole on hover, as every reference cell is (#38.50). The seeds' values all fit.
-  // Slice #39.72 (fixing #39.71's types): „Cabinet sau societate de avocatură" (219.5 px, from TC-VL-05's gap of
-  // -111.5 at 5.75 rem) — was 5.75 for „Consiliu Local" (87.2 px), and valueName's XL (272) before #38.66.
-  valueJudicialTypeName: { content: 14, kind: "fixed" },
+  // Slice 41.03 (FU-378): Adrian's „Cabinet de avocatură" (131.7 px) leaves „Birou de executor judecătoresc" (192.3 px,
+  // the sync file's) the longest — measured in the browser pane at 1366 px, 14 px cells. Was 14 for „Cabinet sau
+  // societate de avocatură" (219.5 px, #39.72, from TC-VL-05's gap of -111.5 at 5.75 rem), 5.75 for „Consiliu Local"
+  // (87.2 px) before that, and valueName's XL (272) before #38.66.
+  valueJudicialTypeName: { content: 12.5, kind: "fixed" },
   // Slice #39.23: „Teren pentru Construcții" (148.6 px), the property type the big dev seed added, was cut at 8 rem.
   // #39.66 folded it into „Teren intravilan"; the width stays, for a type Adrian names longer.
   // Slice #39.70 (fixing #39.66's names): the nine agreed types are shorter — at 9.5 rem TC-VL-05 measured the longest
@@ -1538,7 +1540,9 @@ export const COLUMN = {
   valueFlagTarlaParcela: { content: 4, kind: "fixed" }, //   ✓ / – under „TARLA /" over „PARCELĂ" (59.2 px); was valueFlag (88)
   valueFlagAddress: { content: 3.5, kind: "fixed" }, //      ✓ / – under „ADRESĂ" (52.5 px)
   valueFlagStreetView: { content: 3.25, kind: "fixed" }, //  ✓ / – under „STREET" over „VIEW" (49.1 px): the header takes two lines
-  valueDocTypeName: { content: 14.75, kind: "fixed" }, //    „Plan de Amplasament și Delimitare" in bold — a type with a form (232.6 px); was XL (272)
+  // Slice 41.03 (FU-374): „Plan de Amplasament și Delimitare" has no form — Adrian recreated the type without one — so its
+  // name is regular, 217.9 px (the pane, 1366). Was 14.75 for the same name in bold (232.6 px), XL (272) before that.
+  valueDocTypeName: { content: 14, kind: "fixed" },
   valueDocTypeShortName: { content: 6.25, kind: "fixed" }, // „Doc. cadastrală" (97.3 px); was valueText's 10 rem (160)
   // Slice #38.57 — the four main lists (Proprietăți, Persoane fizice, Persoane juridice, Acte) on #38.50's rule: one line
   // per row, a long cell cut with „…" and whole on hover, the row's buttons side by side. Each column as wide as its

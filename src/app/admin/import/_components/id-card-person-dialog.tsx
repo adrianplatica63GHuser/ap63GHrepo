@@ -695,7 +695,7 @@ export function IdCardPersonDialog({
   const [docKind, setDocKind] = useState<IdentityKind | null>(null);
   const tKind = useTranslations("identityDocument.kinds");
   const tIdField = useTranslations("identityDocument");
-  /** The kind this card is filed under once saved: the read's, else the document's, else model nou. */
+  /** The kind this card is filed under once saved: the read's, else the document's, else tip nou. */
   const kind: IdentityKind = identityKindOfRead(readKindRaw, docKind ? IDENTITY_KINDS[docKind].typeKey : null);
 
   const [matchCandidate, setMatchCandidate] = useState<ResolutionCandidate | null>(null);
@@ -1987,7 +1987,7 @@ export function IdCardPersonDialog({
               {/* Slice 40.86: these go to the document — the kind's own fields only. */}
               <h2 className={PANEL_TITLE_CLASS}>{t("cardPanelTitle", { kind: tKind(kind) })}</h2>
               <div className="flex flex-col gap-2">
-                {/* Slice 40.86: the kind's own fields — a booklet has no „Până la", only model nou a „Nr. card". */}
+                {/* Slice 40.86: the kind's own fields — a booklet has no „Până la", only tip nou a „Nr. card". */}
                 {ID_CARD_DIALOG_ROWS.idCard.map((row) => (
                   <div key={row.join("|")} className={STACKED_ROW_CLASS}>
                     {row.filter((name) => cardFields.has(name)).map((name) => <Fragment key={name}>{reviewField(name)}</Fragment>)}

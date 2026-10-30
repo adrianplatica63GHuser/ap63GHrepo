@@ -1,8 +1,8 @@
 /**
  * The identity-document kinds, and the fields each one has.            (Slice 40.82)
  *
- * ONE registry, in code. The archive knows four identity-document types — Carte de Identitate (model vechi),
- * Carte de Identitate (model nou), Pașaport, Pașaport CRDS — each marked in the database by
+ * ONE registry, in code. The archive knows four identity-document types — Carte de Identitate (tip vechi),
+ * Carte de Identitate (tip nou), Pașaport, Pașaport CRDS — each marked in the database by
  * `lookup_document_type.identity_kind` (migration_118), never recognised by its name. Which fields a kind has, in
  * what order, under which label and at what width is THIS file: Adrian's four lists of 2026-10-26, as the design's
  * matrix (Identity.Documents.Design.v01, section 2.2) sets them out. An identity type never holds a free form
@@ -178,7 +178,7 @@ export const IDENTITY_KINDS: Readonly<Record<IdentityKind, IdentityKindDef>> = {
   CI_VECHE: kindDef({
     kind: "CI_VECHE",
     typeKey: "CARTE_IDENTITATE_VECHE",
-    typeName: "Carte de Identitate (model vechi)",
+    typeName: "Carte de Identitate (tip vechi)",
     messageKey: "identityDocument.kinds.CI_VECHE",
     rows: [
       [F.lastName, F.firstName],
@@ -197,7 +197,7 @@ export const IDENTITY_KINDS: Readonly<Record<IdentityKind, IdentityKindDef>> = {
   CI_NOU: kindDef({
     kind: "CI_NOU",
     typeKey: "CARTE_IDENTITATE",
-    typeName: "Carte de Identitate (model nou)",
+    typeName: "Carte de Identitate (tip nou)",
     messageKey: "identityDocument.kinds.CI_NOU",
     rows: [
       [F.seriesAndNumber, F.cnp],

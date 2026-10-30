@@ -139,7 +139,7 @@ INSERT INTO lookup_judicial_person_type (name, sort_order, public_body) VALUES
   ('Instanță',                           24, true),
   ('Birou notarial',                     25, true),
   ('Birou de executor judecătoresc',     26, true),
-  ('Cabinet sau societate de avocatură', 27, true),
+  ('Cabinet de avocatură', 27, true),
   ('Altele', 100, false);
 
 -- ── lookup_document_type ──────────────────────────────────────────────────────
@@ -222,10 +222,10 @@ INSERT INTO lookup_document_type (key, name, sort_order) VALUES
   ('ACT_CADASTRU',               'Act Cadastru',                   2),
   ('ACT_DONATIE',                'Act de Donație',                 3),
   ('AVIZ_INSTITUTIE',            'Aviz de Instituție',             5),
-  -- Slice 40.82 (migration_118): today's card is model nou, under the key it always had; the three other identity
+  -- Slice 40.82 (migration_118): today's card is tip nou, under the key it always had; the three other identity
   -- kinds are new rows. All four carry `identity_kind` (the UPDATE after the short names).
-  ('CARTE_IDENTITATE',           'Carte de Identitate (model nou)', 6),
-  ('CARTE_IDENTITATE_VECHE',     'Carte de Identitate (model vechi)', 6),
+  ('CARTE_IDENTITATE',           'Carte de Identitate (tip nou)', 6),
+  ('CARTE_IDENTITATE_VECHE',     'Carte de Identitate (tip vechi)', 6),
   ('PASAPORT',                   'Pașaport',                       6),
   ('PASAPORT_CRDS',              'Pașaport CRDS',                  6),
   ('CERTIFICAT_FISCAL',          'Certificat Fiscal',              7),
@@ -276,10 +276,12 @@ INSERT INTO lookup_document_type (key, name, sort_order) VALUES
   ('COMUNICARE_OFICIALA',           'Comunicare Oficială',               32),
   ('DOVADA_EXPROPRIERE',            'Dovadă de Expropriere',             33),
   ('EXTRAS_CONT',                   'Extras de Cont',                    34),
-  ('FISA_CORPULUI_PROPRIETATE',     'Fișa Corpului de Proprietate',      35),
+  -- Slice 41.03 (FU-374): the three plan types as Adrian recreated them in Date de referință on 2026-10-28 — no form,
+  -- sort 140 / 150 / 160 (35 / 37 / 38 before he deleted them), „Plan Parcelar" its short name.
+  ('FISA_CORPULUI_PROPRIETATE',     'Fișa Corpului de Proprietate',     140),
   ('INCHEIERE_INTABULARE',          'Încheiere de Intabulare',           36),
-  ('PLAN_AMPLASAMENT_DELIMITARE',   'Plan de Amplasament și Delimitare',  37),
-  ('PLAN_PARCELAR',                 'Plan Parcelar',                     38),
+  ('PLAN_AMPLASAMENT_DELIMITARE',   'Plan de Amplasament și Delimitare', 150),
+  ('PLAN_PARCELAR',                 'Plan Parcelar',                    160),
   ('PROCURA',                       'Procură',                           39),
   -- Slice #34.19: the four act types the archive holds and this file did not.
   -- `scripts/add-document-types.sql` (Slice #34.09, part 4) created them by
@@ -366,7 +368,7 @@ UPDATE lookup_document_type AS t
     ('FISA_CORPULUI_PROPRIETATE',    'Fișa corpului'),
     ('INCHEIERE_INTABULARE',         'Intabulare'),
     ('PLAN_AMPLASAMENT_DELIMITARE',  'PAD'),
-    ('PLAN_PARCELAR',                'Plan parcelar'),
+    ('PLAN_PARCELAR',                'Plan Parcelar'),
     ('PROCURA',                      'Procură'),
     ('ACT_ADITIONAL',                'Act adițional'),
     ('ACT_ALIPIRE',                  'Alipire'),

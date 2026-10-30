@@ -31,7 +31,7 @@ const CNP = (() => {
 })();
 
 describe("the kind (Ask first 1)", () => {
-  it("the read's kind wins; else the document's type; else model nou", () => {
+  it("the read's kind wins; else the document's type; else tip nou", () => {
     expect(identityKindOfRead("PASAPORT", "CARTE_IDENTITATE")).toBe("PASAPORT");
     expect(identityKindOfRead(null, "CARTE_IDENTITATE_VECHE")).toBe("CI_VECHE");
     expect(identityKindOfRead("NOT_A_KIND", "PASAPORT_CRDS")).toBe("PASAPORT_CRDS");
@@ -86,13 +86,13 @@ describe("where the values go (Ask first 3, 4)", () => {
     expect(v.lastName).toBe("Testescu");
   });
 
-  it("model nou: CNP, sex, the domicile as one line, the MRZ, Nr. card — no date of birth (the card has none)", () => {
+  it("tip nou: CNP, sex, the domicile as one line, the MRZ, Nr. card — no date of birth (the card has none)", () => {
     const v = identityValuesFromRead("CI_NOU", read, parents);
     expect(v).toMatchObject({ cnp: CNP, sex: "MALE", domicileAddress: "Str. Probei nr. 1, Bragadiru, jud. Ilfov", mrz: "IDROU<<\nX", cardNumber: "000111" });
     expect(v).not.toHaveProperty("dateOfBirth");
   });
 
-  it("model vechi: the parents, the civil status, the officer; no CNP, no MRZ", () => {
+  it("tip vechi: the parents, the civil status, the officer; no CNP, no MRZ", () => {
     const v = identityValuesFromRead("CI_VECHE", read, parents);
     expect(v).toMatchObject({ fatherFirstName: "Ilie", motherFirstName: "Ana", civilStatus: "necăsătorit", issuerOfficer: "Plt. Test", dateOfBirth: "1985-04-21" });
     expect(v).not.toHaveProperty("cnp");

@@ -289,8 +289,8 @@ export const KNOWN_DOCUMENT_TYPES = [
   { key: "AUTORIZATIE_CONSTRUIRE",      name: "Autorizație De Construire" },
   { key: "AVIZ_INSTITUTIE",             name: "Aviz de Instituție" },
   // Slice 40.82: the four identity kinds (migration_118). Today's card keeps its key under its new name.
-  { key: "CARTE_IDENTITATE",            name: "Carte de Identitate (model nou)" },
-  { key: "CARTE_IDENTITATE_VECHE",      name: "Carte de Identitate (model vechi)" },
+  { key: "CARTE_IDENTITATE",            name: "Carte de Identitate (tip nou)" },
+  { key: "CARTE_IDENTITATE_VECHE",      name: "Carte de Identitate (tip vechi)" },
   { key: "CERERE_DESPAGUBIRE",          name: "Cerere de Despăgubire" },
   { key: "CERTIFICAT_BUNURI",           name: "Certificat de Bunuri" },
   { key: "CERTIFICAT_FISCAL",           name: "Certificat Fiscal" },

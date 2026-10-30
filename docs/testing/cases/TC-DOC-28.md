@@ -22,8 +22,8 @@ is held. A new identity document can be made from „Acte".
 - TC-AUTH-01 is green.
 - **Created through the API** as `e2e/helpers/records.ts` creates prerequisites, with invented values only (never a
   real card — `C:\dev\.claude\rules\capture-and-personal-data.md`): four documents titled `TC-E2E-DOC-28 …` — a
-  „Carte de Identitate (model nou)" valid until 21.04.2022 with CNP 1850421400123 and Sex F, a „Carte de Identitate
-  (model vechi)", a „Pașaport" valid until 2099, a „Pașaport CRDS" with domicile Spania.
+  „Carte de Identitate (tip nou)" valid until 21.04.2022 with CNP 1850421400123 and Sex F, a „Carte de Identitate
+  (tip vechi)", a „Pașaport" valid until 2099, a „Pașaport CRDS" with domicile Spania.
 
 ## What Adrian is asked for
 
@@ -33,17 +33,17 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens the model nou document | „Act de identitate": Seria și numărul, CNP, Sex, Nume, Prenume, Cetățenia, Locul nașterii, Domiciliu, Emisă de, Data eliberării, Valabil până la, MRZ, Nr. card — no Data nașterii; „Identificarea actului" without the number; EXPIRAT; „CNP-ul nu corespunde sexului de pe act." |
+| 1 | Opens the tip nou document | „Act de identitate": Seria și numărul, CNP, Sex, Nume, Prenume, Cetățenia, Locul nașterii, Domiciliu, Emisă de, Data eliberării, Valabil până la, MRZ, Nr. card — no Data nașterii; „Identificarea actului" without the number; EXPIRAT; „CNP-ul nu corespunde sexului de pe act." |
 | 2 | „Editează" on „Act de identitate"; CNP 1850421400124 | „CNP-ul trebuie să aibă 13 cifre și o cifră de control corectă." |
 | 3 | CNP back, Sex M, Prenume „Ionel"; „Salvează"; reloads | the warning gone; Prenume Ionel, Sex M |
-| 4 | Opens the model vechi document | Prenumele tatălui, Prenumele mamei, Starea civilă, Lucrătorul care a eliberat-o; no CNP; no VALABIL / EXPIRAT |
+| 4 | Opens the tip vechi document | Prenumele tatălui, Prenumele mamei, Starea civilă, Lucrătorul care a eliberat-o; no CNP; no VALABIL / EXPIRAT |
 | 5 | Opens the Pașaport, then the Pașaport CRDS | VALABIL and Domiciliu — județul Ilfov; Domiciliu — țara Spania |
-| 5b | (40.94) „Editează" on „Act de identitate" on the Pașaport, „Renunță"; the same on the model vechi | The Pașaport: Tip, Codul țării, Nr. pașaportului; Nume, Prenume; Cetățenia, Sex; Data nașterii, Locul nașterii; Data emiterii, Data expirării and its status; Autoritatea emitentă across the tile; CNP, Domiciliu — județul; MRZ across the tile — under the „Titular" line. The model vechi: Nume, Prenume; Prenumele tatălui, Prenumele mamei; Starea civilă, Data nașterii; then Locul nașterii, Domiciliu and Emisă de, each across the tile; Data eliberării, Lucrătorul care a eliberat-o; Seria și numărul |
-| 6 | On the model nou: „Editează" on „Identificarea actului", „Schimbă tipul…", „Tipul nou" „Pașaport"; „Confirmă" | the confirmation lists Domiciliu and Nr. card under „Câmpurile de identitate care se șterg la salvare:"; after „Confirmă", under Tip document: „La salvare se șterg: Domiciliu, Nr. card — noul tip nu are aceste câmpuri." |
+| 5b | (40.94) „Editează" on „Act de identitate" on the Pașaport, „Renunță"; the same on the tip vechi | The Pașaport: Tip, Codul țării, Nr. pașaportului; Nume, Prenume; Cetățenia, Sex; Data nașterii, Locul nașterii; Data emiterii, Data expirării and its status; Autoritatea emitentă across the tile; CNP, Domiciliu — județul; MRZ across the tile — under the „Titular" line. The tip vechi: Nume, Prenume; Prenumele tatălui, Prenumele mamei; Starea civilă, Data nașterii; then Locul nașterii, Domiciliu and Emisă de, each across the tile; Data eliberării, Lucrătorul care a eliberat-o; Seria și numărul |
+| 6 | On the tip nou: „Editează" on „Identificarea actului", „Schimbă tipul…", „Tipul nou" „Pașaport"; „Confirmă" | the confirmation lists Domiciliu and Nr. card under „Câmpurile de identitate care se șterg la salvare:"; after „Confirmă", under Tip document: „La salvare se șterg: Domiciliu, Nr. card — noul tip nu are aceste câmpuri." |
 | 7 | „Salvează"; reloads | the passport's fields (Nr. pașaportului …); Nume kept; no Domiciliu |
 | 8 | „Editează" again, „Schimbă tipul…", „Tipul nou" „Adeverință" | „Tipul nu se poate schimba într-un tip de document obișnuit cât timp actul are date de identitate completate: goliți-le întâi în „Act de identitate”, apoi schimbați tipul." — and no „Confirmă" |
 | 9 | „Anulează"; „Renunță" | Tip document still „Pașaport"; the tile closes |
-| 10 | „Acte" → „Adaugă act", Tip document „Carte de Identitate (model vechi)", Nume „Testescu", „Salvează" | „Act de identitate" empty before; the new document opens with Nume Testescu |
+| 10 | „Acte" → „Adaugă act", Tip document „Carte de Identitate (tip vechi)", Nume „Testescu", „Salvează" | „Act de identitate" empty before; the new document opens with Nume Testescu |
 
 ## At the end — leaving things as they were found
 
@@ -51,7 +51,7 @@ Delete the five documents.
 
 ## Notes from the runs
 
-**2026-10-28 — Slice 40.94.** Step 5b added: Adrian's rows on the Pașaport and the model vechi. Not driven by hand
+**2026-10-28 — Slice 40.94.** Step 5b added: Adrian's rows on the Pașaport and the tip vechi. Not driven by hand
 first; the spec reads the rows.
 
 **2026-10-28 — Slice 40.92.** Steps 6, 8 and 9: a saved document's type is changed through „Schimbă tipul…" and its

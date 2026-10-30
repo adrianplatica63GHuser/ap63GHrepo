@@ -378,7 +378,7 @@ export function judicialExtras(r: Rng, companies: CompanyPlan[]): Map<string, Ju
 /** The type a company is written with: the offices under migration_115's types, the rest as planned. */
 export function companyTypeName(c: CompanyPlan): string {
   if (c.name.startsWith("Biroul Individual Notarial")) return "Birou notarial";
-  if (c.name.startsWith("Cabinet de Avocat")) return "Cabinet sau societate de avocatură";
+  if (c.name.startsWith("Cabinet de Avocat")) return "Cabinet de avocatură";
   return c.type;
 }
 
@@ -417,7 +417,7 @@ export const INSTITUTIONS: readonly InstitutionPlan[] = [
 /** The public-body types migration_115 added, which the issuer picker offers first. */
 export const PUBLIC_BODY_TYPES = [
   "Autoritate publică centrală", "Instituție publică teritorială", "Autoritate locală", "Instanță", "Birou notarial",
-  "Birou de executor judecătoresc", "Cabinet sau societate de avocatură",
+  "Birou de executor judecătoresc", "Cabinet de avocatură",
 ] as const;
 
 // ---------------------------------------------------------------------------

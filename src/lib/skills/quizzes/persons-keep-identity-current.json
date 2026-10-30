@@ -677,8 +677,8 @@
             {
               "id": "o2",
               "correct": false,
-              "ro": "„Carte de Identitate (model nou)”",
-              "en": "„Carte de Identitate (model nou)” (new-style card)"
+              "ro": "„Carte de Identitate (tip nou)”",
+              "en": "„Carte de Identitate (tip nou)” (new-style card)"
             },
             {
               "id": "o3",
@@ -689,8 +689,8 @@
             {
               "id": "o4",
               "correct": false,
-              "ro": "„Carte de Identitate (model vechi)”",
-              "en": "„Carte de Identitate (model vechi)” (old booklet)"
+              "ro": "„Carte de Identitate (tip vechi)”",
+              "en": "„Carte de Identitate (tip vechi)” (old booklet)"
             }
           ]
         }

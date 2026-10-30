@@ -93,7 +93,7 @@ Formularul proprietății oferă la „Categorie de folosință” doar folosin�
 
 ### 12.1.5 Autoritățile publice {#admin-reference-data-public-bodies}
 
-La „Tipuri de Persoană Juridică”, fiecare tip are bifa „Autoritate publică”. O au cele șapte tipuri de autoritate publică — „Autoritate publică centrală”, „Instituție publică teritorială”, „Autoritate locală”, „Instanță”, „Birou notarial”, „Birou de executor judecătoresc”, „Cabinet sau societate de avocatură” (secțiunea [[companies-add-public-bodies]]) —, iar formele de firmă nu. Lista emitentului unui act ține persoanele juridice al căror tip e bifat (secțiunea [[documents-identification]]): bifați un tip al vostru și firmele lui intră în listă; debifați-l și ies din ea, deși un act care numește una o păstrează.
+La „Tipuri de Persoană Juridică”, fiecare tip are bifa „Autoritate publică”. O au cele șapte tipuri de autoritate publică — „Autoritate publică centrală”, „Instituție publică teritorială”, „Autoritate locală”, „Instanță”, „Birou notarial”, „Birou de executor judecătoresc”, „Cabinet de avocatură” (secțiunea [[companies-add-public-bodies]]) —, iar formele de firmă nu. Lista emitentului unui act ține persoanele juridice al căror tip e bifat (secțiunea [[documents-identification]]): bifați un tip al vostru și firmele lui intră în listă; debifați-l și ies din ea, deși un act care numește una o păstrează.
 
 Arhiva nu mai are o listă de instituții: instituțiile ei au devenit persoane juridice de aceste tipuri.
 

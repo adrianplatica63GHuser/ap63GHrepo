@@ -31,7 +31,7 @@ describe("the public-body type a name suggests", () => {
     ["Biroul Individual Notarial Popescu Ion", "Birou notarial"],
     ["Societatea Profesională Notarială Lex", "Birou notarial"],
     ["Biroul Executorului Judecătoresc Ionescu", "Birou de executor judecătoresc"],
-    ["Cabinet de avocat Marin", "Cabinet sau societate de avocatură"],
+    ["Cabinet de avocat Marin", "Cabinet de avocatură"],
     ["OCPI Ilfov", "Instituție publică teritorială"],
     ["O.C.P.I. Ilfov", "Instituție publică teritorială"],
     ["Instituția Prefectului Ilfov", "Instituție publică teritorială"],

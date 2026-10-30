@@ -83,6 +83,49 @@ export async function documentTypeIdFor(request: APIRequestContext, key: string)
   return hit.id;
 }
 
+/** A document type ↔ person role pair, as `GET /api/admin/doc-type-person-roles` lists it. */
+export type DocTypeRolePair = {
+  id: string;
+  documentTypeId: string;
+  personRoleId: string;
+  personRoleName: string;
+  documentTypeName: string;
+  holdsShare: boolean;
+};
+
+/**
+ * Slice 41.03 (FU-374): the pair a spec needs, made by the spec when the archive lacks it. Adrian recreated Fișa
+ * Corpului de Proprietate, Plan de Amplasament și Delimitare and Plan Parcelar without a form and without role rows,
+ * and his reference data is not ours to add to: a spec that needs, say, „Proiectant" on the PAD creates the pair
+ * here, and removes it in its `finally` with `removeDocTypeRole` — only when `created` says this call made it.
+ * `roleNames` in order of preference (a role renamed by #38.37's clean-up is listed under both names).
+ */
+export async function ensureDocTypeRole(
+  request: APIRequestContext,
+  typeKey: string,
+  roleNames: readonly string[],
+): Promise<{ pair: DocTypeRolePair; created: boolean }> {
+  const documentTypeId = await documentTypeIdFor(request, typeKey);
+  const pairsNow = () => getItems<DocTypeRolePair>(request, "/api/admin/doc-type-person-roles");
+  const find = (all: DocTypeRolePair[]) =>
+    roleNames.map((n) => all.find((p) => p.documentTypeId === documentTypeId && p.personRoleName === n)).find(Boolean);
+  const existing = find(await pairsNow());
+  if (existing) return { pair: existing, created: false };
+  const roles = await getItems<{ id: string; name: string }>(request, "/api/admin/value-lists/person-roles");
+  const role = roleNames.map((n) => roles.find((r) => r.name === n)).find(Boolean);
+  if (!role) throw new Error(`No person role named ${roleNames.join(" / ")} on this database.`);
+  await postJson(request, "/api/admin/doc-type-person-roles", { documentTypeId, personRoleId: role.id });
+  const made = find(await pairsNow());
+  if (!made) throw new Error(`The pair ${typeKey} — ${role.name} was not listed after it was created.`);
+  return { pair: made, created: true };
+}
+
+/** Remove a pair `ensureDocTypeRole` created. A 404 is success, as for a record. */
+export async function removeDocTypeRole(request: APIRequestContext, id: string): Promise<void> {
+  const res = await request.delete(`/api/admin/doc-type-person-roles/${id}`);
+  expect([200, 204, 404], `DELETE the pair ${id}: ${res.status()}`).toContain(res.status());
+}
+
 /**
  * What a „Rol" dropdown on Proprietate ↔ Persoană offers: „fără rol", then
  * every role Reference Data ticks „valid for property", in the list's own

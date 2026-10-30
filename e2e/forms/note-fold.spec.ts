@@ -102,7 +102,7 @@ test.describe("TC-FOLD-01 — „Note” și MRZ lungi se strâng la cinci rând
     const cvc = types.items.find((t) => t.key === "CONTRACT_VANZARE");
     expect(cvc, "the Contract de Vânzare type").toBeTruthy();
     const card = types.items.find((t) => t.key === "CARTE_IDENTITATE");
-    expect(card, "the Carte de Identitate (model nou) type").toBeTruthy();
+    expect(card, "the Carte de Identitate (tip nou) type").toBeTruthy();
     const post = async (url: string, data: unknown) => {
       const res = await page.request.post(url, { data });
       expect(res.ok(), `POST ${url}: ${res.status()}`).toBeTruthy();
@@ -137,7 +137,9 @@ test.describe("TC-FOLD-01 — „Note” și MRZ lungi se strâng la cinci rând
       await page.goto(`/properties/${ids[1].id}`);
       // Slice 40.74: a saved property reads as text; the note folds in its box, so „Identificare cadastrală" is opened.
       await editTile(page, "cadastral");
-      await expectFolds(page, "Note", 310);
+      // 270 since 40.98's 4-unit „Identificare cadastrală" (524 px; 476 at the 148-px unit): the paragraph takes fewer
+      // lines (was 310). Fixed in passing by 41.03, whose run met it.
+      await expectFolds(page, "Note", 270);
 
       // Steps 6–7 — the MRZ: five of seven lines. Slice 40.85: on the identity document's „Act de identitate",
       // opened with „Editează" (40.83's tile reads as text, as every tile).

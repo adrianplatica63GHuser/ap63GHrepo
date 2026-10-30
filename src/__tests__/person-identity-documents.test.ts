@@ -29,7 +29,7 @@ const doc = (over: Partial<PersonIdentityDocument>): PersonIdentityDocument => (
   id: "d",
   code: "DOC00001",
   kind: "CI_NOU",
-  typeName: "Carte de Identitate (model nou)",
+  typeName: "Carte de Identitate (tip nou)",
   typeShortName: "CI",
   nrDocument: null,
   dateDocument: null,
@@ -71,7 +71,7 @@ describe("the order of „Acte de identitate”", () => {
   });
 
   it("the kind's short name, else its name; a row of an ordinary type is not one of the list", () => {
-    expect(personIdentityLabel({ typeName: "Carte de Identitate (model nou)", typeShortName: "CI" })).toBe("CI");
+    expect(personIdentityLabel({ typeName: "Carte de Identitate (tip nou)", typeShortName: "CI" })).toBe("CI");
     expect(personIdentityLabel({ typeName: "Pașaport", typeShortName: null })).toBe("Pașaport");
     const raw = { id: "x", code: "D", typeName: "Adeverință", typeShortName: null, nrDocument: null, dateDocument: null, dateValidUntil: null, issuerName: null };
     expect(personIdentityDocumentOf({ ...raw, identityKind: null })).toBeNull();

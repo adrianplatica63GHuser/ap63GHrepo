@@ -119,7 +119,7 @@ At the end you return to the list of persons. On the holder's screen, in „Link
 
 When the identity card is already a document in the archive, with its scan as a page, the persons are created from the document's screen.
 
-1. Open the identity document: a „Carte de Identitate (model nou)”, a „Carte de Identitate (model vechi)”, a „Pașaport” or a „Pașaport CRDS”.
+1. Open the identity document: a „Carte de Identitate (tip nou)”, a „Carte de Identitate (tip vechi)”, a „Pașaport” or a „Pașaport CRDS”.
 2. Press „Create people from the ID card”, beside „Modify”. The application reads the card from the first page and opens the window „Create person from ID card”.
 3. Check the holder and press „Create and link”. If the holder is already in the archive, the application finds them by CNP and does not make a second person.
 4. In „The holder's parents”, the father and mother read from the card are already ticked, with the holder's surname, marked as assumed. Check them, then press „Create and link” for each.
@@ -135,8 +135,8 @@ The archive knows four kinds of identity document. Each is a document type, with
 
 | The type | What it has of its own |
 |---|---|
-| „Carte de Identitate (model vechi)” | The old booklet: „Father's first name”, „Mother's first name”, „Civil status”, „Issuing officer”. No CNP, no „Valid until”, no MRZ. |
-| „Carte de Identitate (model nou)” | The laminated or electronic card: „CNP”, „Sex”, „Valid until”, „MRZ” and, when printed, „Card no.”. |
+| „Carte de Identitate (tip vechi)” | The old booklet: „Father's first name”, „Mother's first name”, „Civil status”, „Issuing officer”. No CNP, no „Valid until”, no MRZ. |
+| „Carte de Identitate (tip nou)” | The laminated or electronic card: „CNP”, „Sex”, „Valid until”, „MRZ” and, when printed, „Card no.”. |
 | „Pașaport” | „Type”, „Country code”, „Passport no.”, „CNP”, „MRZ” and „Domicile — county”. |
 | „Pașaport CRDS” | As the passport, but with „Domicile — country”: that of someone who lives abroad. |
 

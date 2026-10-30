@@ -34,7 +34,7 @@ const passport: PersonIdentityDocument = {
   dateDocument: "2022-09-01", dateValidUntil: "2099-09-01", issuerName: null,
 };
 const card: PersonIdentityDocument = {
-  id: "c1", code: "DOC00003", kind: "CI_NOU", typeName: "Carte de Identitate (model nou)", typeShortName: "CI", nrDocument: "IF 123456",
+  id: "c1", code: "DOC00003", kind: "CI_NOU", typeName: "Carte de Identitate (tip nou)", typeShortName: "CI", nrDocument: "IF 123456",
   dateDocument: "2010-04-21", dateValidUntil: "2020-04-21", issuerName: null,
 };
 const base = { personId: "person-1", soonDays: 90, title: "Acte de identitate", subtitle: "Actele de identitate ale persoanei, cel curent primul" };

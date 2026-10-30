@@ -33,8 +33,13 @@ const pairsOf = (block: string) => [...block.matchAll(/\('([A-Z_]+)',\s+'([^']+)
 /** migration_103's six (#38.54): from its header comment to its `WHERE`. */
 const SIX = pairsOf(MIGRATION_103.slice(MIGRATION_103.indexOf("-- SHORT NAMES (Slice #38.54)."), MIGRATION_103.indexOf(" WHERE t.key = s.key;")));
 const SIX_BY_KEY = Object.fromEntries(SIX.map((s) => [s.key, s.shortName]));
-/** The seed as the database holds it after every migration: 092's list with 103's six in their places. */
-const SEED = pairsOf(seedBlock(MIGRATION)).map((s) => ({ key: s.key, shortName: SIX_BY_KEY[s.key] ?? s.shortName }));
+/**
+ * Slice 41.03 (FU-374): the short name Adrian gave Plan Parcelar when he recreated the type in Date de referință — the
+ * reference data follows his database, the migrations stay history.
+ */
+const ADRIAN_41_03: Readonly<Record<string, string>> = { PLAN_PARCELAR: "Plan Parcelar" };
+/** The seed as the database holds it after every migration: 092's list with 103's six in their places (and 41.03's). */
+const SEED = pairsOf(seedBlock(MIGRATION)).map((s) => ({ key: s.key, shortName: ADRIAN_41_03[s.key] ?? SIX_BY_KEY[s.key] ?? s.shortName }));
 const INSERT = SYNC.slice(SYNC.indexOf("INSERT INTO lookup_document_type (key, name, sort_order) VALUES"), SYNC.indexOf("-- SHORT NAMES (Slice #37.95)."));
 const CATALOGUE = [...INSERT.matchAll(/\('([A-Z_]+)',\s+'([^']+)',\s+\d+\)/g)].map((m) => ({ key: m[1], name: m[2] }));
 

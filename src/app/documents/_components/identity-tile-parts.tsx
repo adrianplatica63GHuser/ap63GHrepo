@@ -6,7 +6,7 @@
  * - `IdentityHolderLine` — the holder (role „Titular act de identitate") in the tile's heading row, linked to the
  *   person; nothing while none is linked.
  * - `IdentityValidity` — VALABIL / EXPIRAT / EXPIRĂ ÎN n ZILE beside „Valabil până la", in the person tile's words
- *   and colours (40.79); nothing on a kind with no validity end (model vechi), or with the date empty.
+ *   and colours (40.79); nothing on a kind with no validity end (tip vechi), or with the date empty.
  *
  * The fields themselves are the document form's own (document-form.tsx), so they read, edit, frame and pulse like
  * every other field of the record. Colours are role tokens (colour-tokens.test.ts).

@@ -119,7 +119,7 @@ La sfârșit vă întoarceți la lista persoanelor. Pe ecranul titularului, în 
 
 Când cartea de identitate este deja un act în arhivă, cu scanarea ei ca pagină, persoanele se creează de pe ecranul actului.
 
-1. Deschideți actul de identitate: o „Carte de Identitate (model nou)”, o „Carte de Identitate (model vechi)”, un „Pașaport” sau un „Pașaport CRDS”.
+1. Deschideți actul de identitate: o „Carte de Identitate (tip nou)”, o „Carte de Identitate (tip vechi)”, un „Pașaport” sau un „Pașaport CRDS”.
 2. Apăsați „Creează persoane din CI”, lângă „Modifică”. Aplicația citește cartea de pe prima pagină și deschide fereastra „Creează persoană din cartea de identitate”.
 3. Verificați titularul și apăsați „Creează și leagă”. Dacă titularul există deja în arhivă, aplicația îl găsește după CNP și nu face o a doua persoană.
 4. În „Părinții titularului”, tatăl și mama citiți de pe carte sunt deja bifați, cu numele de familie al titularului, marcat ca presupus. Verificați-i, apoi apăsați „Creează și leagă” pentru fiecare.
@@ -135,8 +135,8 @@ Arhiva cunoaște patru feluri de acte de identitate. Fiecare este un tip de act,
 
 | Tipul | Ce are al lui |
 |---|---|
-| „Carte de Identitate (model vechi)” | Buletinul-carnet: „Prenumele tatălui”, „Prenumele mamei”, „Starea civilă”, „Lucrătorul care a eliberat-o”. Fără CNP, fără „Valabil până la”, fără MRZ. |
-| „Carte de Identitate (model nou)” | Cartea plastifiată sau electronică: „CNP”, „Sex”, „Valabil până la”, „MRZ” și, dacă e tipărit, „Nr. card”. |
+| „Carte de Identitate (tip vechi)” | Buletinul-carnet: „Prenumele tatălui”, „Prenumele mamei”, „Starea civilă”, „Lucrătorul care a eliberat-o”. Fără CNP, fără „Valabil până la”, fără MRZ. |
+| „Carte de Identitate (tip nou)” | Cartea plastifiată sau electronică: „CNP”, „Sex”, „Valabil până la”, „MRZ” și, dacă e tipărit, „Nr. card”. |
 | „Pașaport” | „Tip”, „Codul țării”, „Nr. pașaportului”, „CNP”, „MRZ” și „Domiciliu — județul”. |
 | „Pașaport CRDS” | La fel ca pașaportul, dar cu „Domiciliu — țara”: al celui care locuiește în străinătate. |
 

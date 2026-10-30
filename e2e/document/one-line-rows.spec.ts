@@ -28,6 +28,8 @@ import {
   E2E_MARKER,
   createDocumentOfType,
   createNaturalPerson,
+  ensureDocTypeRole,
+  removeDocTypeRole,
   removeLeftovers,
   removeRecord,
 } from "../helpers/records";
@@ -74,7 +76,10 @@ test.describe("TC-DOC-09 — un rând pe rând, restul după butoane", () => {
 
     const pairsRes = await page.request.get("/api/admin/doc-type-person-roles");
     const pairs = ((await pairsRes.json()) as { items: Pair[] }).items;
-    const proiectant = pairs.find((p) => p.documentTypeName === "Plan de Amplasament și Delimitare" && PROIECTANT_NAMES.includes(p.personRoleName));
+    // Slice 41.03 (FU-374): Adrian recreated the PAD without role rows — the spec makes „Proiectant" on it when it is
+    // missing, and removes it at the end.
+    const made = await ensureDocTypeRole(page.request, "PLAN_AMPLASAMENT_DELIMITARE", PROIECTANT_NAMES);
+    const proiectant: Pair | undefined = made.pair;
     const vanzator = pairs.find((p) => p.documentTypeName === "Contract de Vânzare" && p.personRoleName === "Vânzător");
     expect(proiectant?.holdsShare, "PAD — „Proiectant\" holds no share (Before you start)").toBe(false);
     expect(vanzator?.holdsShare, "Contract de Vânzare — „Vânzător\" holds a share (Before you start)").toBe(true);
@@ -199,6 +204,7 @@ test.describe("TC-DOC-09 — un rând pe rând, restul după butoane", () => {
       await removeRecord(page.request, "document", padId);
       await removeRecord(page.request, "document", cvcId);
       await removeRecord(page.request, "person", personId);
+      if (made.created) await removeDocTypeRole(page.request, made.pair.id);
     }
   });
 });
