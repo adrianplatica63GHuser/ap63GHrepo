@@ -591,6 +591,13 @@ export const PAGES_PANEL_REM = unitsRem(5); // 40.98: 5 units, 659 px — „5 u
 export const PAGES_PANEL_STYLE: CSSProperties = { width: rem(PAGES_PANEL_REM) };
 
 /**
+ * Slice 41.11: the log form's „Descriere" — the log card's whole width inside, growing with its text. The card stands
+ * in a person's „Interacțiuni" tile (5 units, `PAGES_PANEL_STYLE`): the tile's inner width less the card's 12-px padding
+ * and 1-px border a side — 607 px.
+ */
+export const LOG_DESCRIPTION_REM = unitsInnerRem(5) - 2 * 0.75 - 2 / 16;
+
+/**
  * Slice #37.89: „Interacțiuni" on the two person forms is as large as a
  * Document's „Pagini": its width, and the height „Pagini" has before a page is
  * added (420 px at 1366 and 1920, measured 2026-10-05; TC-PERS-07 compares the two).
@@ -1841,9 +1848,11 @@ export const SCREEN = {
   interactionSubject: { step: "L", kind: "input" }, // „Subiectul conține", a few words of a 120-character subject
   interactionDay: { step: "M", kind: "input" }, // „Personalizat"'s two days; the follow-up's date
   // The log form (Slice #38.85)
+  // 41.11's Ask first 2 asked M; at 136 px Chrome cuts the time off „2026-10-30 02:35" (measured), so it stays L.
   interactionWhen: { step: "L", kind: "input" }, // date and time, with the picker's icon
   interactionStatus: { step: "L", kind: "select" }, // „Așteaptă răspuns", the longest status
-  interactionSubjectLine: { step: "XXL", kind: "input" }, // the subject, 120 characters at most, one line
+  interactionSubjectLine: { step: "XXL", kind: "input" }, // the subject's line in a dialog and a picker; 120 characters
+  interactionSubjectBox: { step: "L", kind: "input" }, // 41.11: the log form's „Subiect" — compact, its whole value on hover
   interactionDescription: { step: "XXL", kind: "lines", rows: 3 }, // the description, and the internal note
   interactionTag: { step: "L", kind: "input" }, // a tag, at most 60 characters (#38.86)
 } as const satisfies Record<string, FieldWidth>;

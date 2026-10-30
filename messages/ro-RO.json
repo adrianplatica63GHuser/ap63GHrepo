@@ -4990,6 +4990,7 @@
       "saveAndNew": "Salvează și adaugă",
       "cancel": "Renunță",
       "ctrlS": "Salvează cu",
+      "ctrlSHint": "Salvează cu Ctrl+S",
       "saved": "Interacțiune înregistrată",
       "saveFailed": "Interacțiunea nu s-a putut salva. Încearcă din nou.",
       "discardQuestion": "Renunți la interacțiunea nesalvată?",

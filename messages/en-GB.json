@@ -4990,6 +4990,7 @@
       "saveAndNew": "Save and new",
       "cancel": "Cancel",
       "ctrlS": "Save with",
+      "ctrlSHint": "Save with Ctrl+S",
       "saved": "Interaction logged",
       "saveFailed": "The interaction could not be saved. Try again.",
       "discardQuestion": "Discard the interaction you have not saved?",

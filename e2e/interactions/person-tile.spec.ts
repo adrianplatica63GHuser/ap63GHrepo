@@ -75,6 +75,19 @@ test.describe("TC-INT-06 — istoricul și panoul de acțiune pe fișa persoanei
       await expect(logTile.getByRole("heading", { name: "Înregistrează o interacțiune" })).toBeVisible({ timeout: 15_000 });
       await expect(logTile.getByRole("combobox", { name: "Persoană" })).toHaveCount(0);
       await logTile.locator('[data-channel-option="PHONE"]').click();
+      // Slice 41.11 — step 2b: the buttons are small icons, their words their names; „Trimisă" pressed, „Primită" not;
+      // Ctrl+S is in „Salvează"'s hint, not a line of its own.
+      const outbound = logTile.getByRole("button", { name: "Trimisă", exact: true });
+      await outbound.click();
+      await expect(outbound).toHaveAttribute("aria-pressed", "true");
+      await expect(logTile.getByRole("button", { name: "Primită", exact: true })).toHaveAttribute("aria-pressed", "false");
+      await expect(logTile.locator('[data-channel-option="PHONE"]')).toHaveAttribute("aria-pressed", "true");
+      for (const name of ["Telefon", "Trimisă", "Salvează", "Salvează și adaugă", "Renunță", "Interacțiune nouă", "Editează selecția"]) {
+        const b = logTile.getByRole("button", { name, exact: true });
+        await expect(b).toHaveText("");
+        expect(((await b.boundingBox())?.height ?? 99), name).toBeLessThanOrEqual(32);
+      }
+      await expect(logTile.locator("[data-ctrl-s]")).toHaveCount(0);
       const subject = logTile.getByLabel("Subiect", { exact: true });
       await subject.fill("Telefon de clarificare");
       await logTile.getByRole("button", { name: "Salvează", exact: true }).click();
@@ -89,8 +102,8 @@ test.describe("TC-INT-06 — istoricul și panoul de acțiune pe fișa persoanei
       const id = (await mine.getAttribute("data-person-interaction"))!;
       await mine.click();
       await expect(mine).toHaveAttribute("aria-selected", "true");
-      const mode = logTile.getByRole("radiogroup", { name: "Mod" });
-      await expect(mode.getByRole("radio", { name: "Editează selecția" })).toBeChecked({ timeout: 15_000 });
+      const mode = logTile.getByRole("group", { name: "Mod" }); // 41.11: two icon toggles
+      await expect(mode.getByRole("button", { name: "Editează selecția" })).toHaveAttribute("aria-pressed", "true", { timeout: 15_000 });
       await expect(subject).toHaveValue("Telefon de clarificare", { timeout: 15_000 });
       await subject.fill("Telefon de clarificare, cu răspuns");
       await logTile.getByRole("button", { name: "Salvează modificările", exact: true }).click();
@@ -101,7 +114,7 @@ test.describe("TC-INT-06 — istoricul și panoul de acțiune pe fișa persoanei
       await page.locator("[data-log-delete]").getByRole("button", { name: "Șterge", exact: true }).click();
       await expect(page.locator("[data-toast]")).toHaveText("Interacțiune ștearsă");
       await expect(subjects).toHaveText(["Ofertă de preț"], { timeout: 30_000 });
-      await expect(mode.getByRole("radio", { name: "Interacțiune nouă" })).toBeChecked();
+      await expect(mode.getByRole("button", { name: "Interacțiune nouă" })).toHaveAttribute("aria-pressed", "true");
       expect((await page.request.get(`/api/interactions/${id}`)).status()).toBe(404);
 
       // Step 5 — „Restrânge": the large button again.
@@ -111,7 +124,7 @@ test.describe("TC-INT-06 — istoricul și panoul de acțiune pe fișa persoanei
       // Step 6 — the address: `?log=new` opens C expanded on a new record; `?log=<id>` on that row.
       await page.goto(`/natural-persons/${ana}?log=new`);
       await expect(logTile).toBeVisible({ timeout: 30_000 });
-      await expect(mode.getByRole("radio", { name: "Interacțiune nouă" })).toBeChecked();
+      await expect(mode.getByRole("button", { name: "Interacțiune nouă" })).toHaveAttribute("aria-pressed", "true");
       await page.goto(`/natural-persons/${ana}?log=${offer}`);
       await expect(subject).toHaveValue("Ofertă de preț", { timeout: 30_000 });
       await expect(tile.locator(`[data-person-interaction="${offer}"]`)).toHaveAttribute("aria-selected", "true");

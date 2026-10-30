@@ -86,7 +86,7 @@ test.describe("TC-INT-02 — o interacțiune înregistrată de mână", () => {
       // Step 4 — „Telefon": the description asks „Ce s-a convenit?"; „Primită"; a subject. (#39.06: no person to find.)
       await log.locator('[data-channel-option="PHONE"]').click();
       await expect(log.getByLabel("Descriere", { exact: true })).toHaveAttribute("placeholder", "Ce s-a convenit?");
-      await log.locator("[data-log-direction]").getByText("Primită", { exact: true }).click();
+      await log.locator('[data-direction-option="INBOUND"]').click(); // 41.11: an icon toggle, „Primită" its name
       await subject.fill("Programare vizionare");
 
       // Step 5 — tomorrow, still „Înregistrată": the date's hint; Save inert. Yesterday: Save is live.
@@ -108,13 +108,13 @@ test.describe("TC-INT-02 — o interacțiune înregistrată de mână", () => {
 
       // Step 7 — „Salvează și adaugă": channel, direction and person stay; the subject is empty.
       await log.locator('[data-channel-option="PHONE"]').click();
-      await log.locator("[data-log-direction]").getByText("Primită", { exact: true }).click();
+      await log.locator('[data-direction-option="INBOUND"]').click(); // 41.11: an icon toggle, „Primită" its name
       await subject.fill("Al doilea apel");
       await saveAndNew.click();
       await expect(subjects).toHaveText(["Al doilea apel", "Programare vizionare"], { timeout: 30_000 });
       await expect(subject).toHaveValue("");
-      await expect(log.locator('[data-channel-option="PHONE"] input')).toBeChecked();
-      await expect(log.locator("[data-log-direction]").getByRole("radio", { name: "Primită" })).toBeChecked();
+      await expect(log.locator('[data-channel-option="PHONE"]')).toHaveAttribute("aria-pressed", "true");
+      await expect(log.locator("[data-log-direction]").getByRole("button", { name: "Primită" })).toHaveAttribute("aria-pressed", "true");
 
       // Step 8 — „Renunță" on a form with something typed asks first; „Renunță la ea" clears it.
       await subject.fill("Ciornă");
@@ -122,7 +122,7 @@ test.describe("TC-INT-02 — o interacțiune înregistrată de mână", () => {
       await expect(log.getByRole("alertdialog")).toContainText("Renunți la interacțiunea nesalvată?");
       await log.getByRole("button", { name: "Renunță la ea", exact: true }).click();
       await expect(subject).toHaveValue("");
-      await expect(log.locator('[data-channel-option="EMAIL"] input')).toBeChecked();
+      await expect(log.locator('[data-channel-option="EMAIL"]')).toHaveAttribute("aria-pressed", "true");
 
       // Step 9 — Ctrl+S saves.
       await subject.fill("Salvat cu tastatura");

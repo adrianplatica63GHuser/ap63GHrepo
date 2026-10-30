@@ -2,16 +2,18 @@
 
 import { useEffect, useEffectEvent, useId, useState, useSyncExternalStore, type ReactNode, type RefObject } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Check, CirclePlus, FileText, Link2, Mail, Map as MapIcon, MessageCircle, Plus, SquarePen, Trash2, X } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Check, FileText, Link2, Mail, Map as MapIcon, MessageCircle, Pencil, Plus, SquarePen, Trash2, X } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
 import { useNameOr } from "@/components/record/use-name-or";
 import { IconButton } from "@/lib/ui/icon-button";
 import { DisclosureSection } from "@/lib/ui/disclosure-section";
 import { buttonClass } from "@/lib/ui/button-styles";
-import { screenBox } from "@/lib/ui/field-widths";
+import { LOG_DESCRIPTION_REM, rem, screenBox } from "@/lib/ui/field-widths";
+import { FIELD_LABEL } from "@/lib/ui/field-box";
+import { GrowingText } from "@/components/forms/growing-text";
 import { INTERACTION_CHANNELS, INTERACTION_STATUSES, SUBJECT_MAX, type InteractionRecord } from "@/lib/interactions/model";
-import { CHANNEL_INK, CHANNEL_PILL, MODULE_CARD } from "@/lib/interactions/palette";
+import { CHANNEL_INK, MODULE_CARD } from "@/lib/interactions/palette";
 import {
   DESCRIPTION_PROMPT,
   FORM_FIELDS,
@@ -29,7 +31,7 @@ import {
   type FormField,
   type LogForm,
 } from "@/lib/interactions/form";
-import { CHANNEL_ICON, DIRECTION_ICON } from "@/components/interactions/interaction-pills";
+import { CHANNEL_ICON } from "@/components/interactions/interaction-pills";
 import { SECTION_OF_FIELD, errorIn, initialOpen, relatedCounts, type LogSection } from "@/lib/interactions/log-sections";
 import { PersonPicker } from "./filter-controls";
 import { RecordSearch } from "./pickers";
@@ -56,6 +58,15 @@ const BOX =
   "rounded-md border bg-white px-3 py-1.5 text-sm text-ink placeholder:text-fade dark:bg-zinc-900 dark:text-zinc-100";
 const boxBorder = (invalid: boolean) =>
   invalid ? "border-red-700 outline outline-1 outline-red-700 dark:border-red-400 dark:outline-red-400" : "border-slate-300 dark:border-zinc-600";
+
+/**
+ * Slice 41.11 (Ask first 1): the direction's two toggles — down-left for what came in, up-right for what went out.
+ * The history keeps its own arrows (`DIRECTION_ICON`).
+ */
+const LOG_DIRECTION_ICON = { INBOUND: ArrowDownLeft, OUTBOUND: ArrowUpRight } as const;
+
+/** Slice 41.11: „Descriere" across the card, growing with its text (`LOG_DESCRIPTION_REM`). */
+const LOG_DESCRIPTION_WIDTH = rem(LOG_DESCRIPTION_REM);
 
 /** What the screen asks the tile to confirm before it throws a dirty form away (38.87): another row, or a new record. */
 export type SwitchRequest = { kind: "select"; id: string } | { kind: "new" };
@@ -354,33 +365,40 @@ export function LogTile({
       tabIndex={-1}
       aria-labelledby="interactions-log-title"
       data-interactions-log=""
-      className={`${MODULE_CARD} flex min-w-0 flex-col gap-4 p-4 focus-visible:outline-2 focus-visible:outline-focus`}
+      // Slice 41.11 (Adrian: „everything can be a lot smaller and more organized and compact"): 8-px gaps, 12-px padding.
+      className={`${MODULE_CARD} flex min-w-0 flex-col gap-2 p-3 focus-visible:outline-2 focus-visible:outline-focus`}
     >
-      <h2 id="interactions-log-title" className="flex items-center gap-2 text-lg font-semibold text-ink dark:text-zinc-100">
-        <SquarePen aria-hidden="true" size={20} className="text-[#3b5bdb] dark:text-[#768ce6]" />
+      <div className="flex flex-wrap items-center gap-2">
+      <h2 id="interactions-log-title" className="flex items-center gap-2 text-base font-semibold text-ink dark:text-zinc-100">
+        <SquarePen aria-hidden="true" size={18} className="text-[#3b5bdb] dark:text-[#768ce6]" />
         {t("screen.logTitle")}
       </h2>
 
-      {/* 38.87: the mode switch (§4, Figure 2) — „Editează selecția" once a row of the history is chosen. */}
-      <div role="radiogroup" aria-label={tl("mode")} data-log-mode={mode} className="grid grid-cols-2 overflow-hidden rounded-md border border-slate-300 text-sm dark:border-zinc-600">
-        {(["new", "edit"] as const).map((m, i) => (
-          <label
-            key={m}
-            className={`flex cursor-pointer select-none items-center justify-center px-3 py-1.5 has-[:disabled]:cursor-not-allowed has-[:disabled]:text-fade has-[:focus-visible]:outline-2 has-[:focus-visible]:-outline-offset-2 has-[:focus-visible]:outline-focus ${
-              i > 0 ? "border-l border-slate-300 dark:border-zinc-600" : ""
-            } ${mode === m ? "bg-[#eef2ff] font-medium text-[#3b5bdb] dark:bg-[#202745] dark:text-[#768ce6]" : "bg-white text-slate-700 dark:bg-zinc-900 dark:text-zinc-300"}`}
-          >
-            <input
-              type="radio"
-              name="interaction-mode"
-              className="sr-only"
-              checked={mode === m}
-              disabled={m === "edit" && !selectedId}
-              onChange={() => (m === "new" ? onModeNew() : undefined)}
-            />
-            {m === "new" ? tl("modeNew") : tl("modeEdit")}
-          </label>
-        ))}
+      {/* 38.87: the mode switch (§4, Figure 2) — „Editează selecția" once a row of the history is chosen. Slice 41.11
+          (Ask first 1): two small icon toggles beside the title — Plus and Pencil, their words the hover hint and the
+          name, the mode in force pressed. Was a two-part bar of words across the card. */}
+      <div role="group" aria-label={tl("mode")} data-log-mode={mode} className="ml-auto flex items-center gap-1">
+        <IconButton
+          icon={Plus}
+          label={tl("modeNew")}
+          variant={mode === "new" ? "accent" : "secondary"}
+          size="sm"
+          aria-pressed={mode === "new"}
+          onClick={() => {
+            if (mode !== "new") onModeNew();
+          }}
+          data-log-mode-button="new"
+        />
+        <IconButton
+          icon={Pencil}
+          label={tl("modeEdit")}
+          variant={mode === "edit" ? "accent" : "secondary"}
+          size="sm"
+          aria-pressed={mode === "edit"}
+          disabled={!selectedId}
+          data-log-mode-button="edit"
+        />
+      </div>
       </div>
 
       <DisclosureSection {...sectionProps("connections", tl("connections"))}>
@@ -395,63 +413,57 @@ export function LogTile({
           e.preventDefault();
           void save(false);
         }}
-        className="flex flex-col gap-4"
+        className="flex flex-col gap-2"
       >
         {mode === "edit" && !loaded && (
           <p role="status" className="text-sm text-fade dark:text-zinc-400" data-log-loading="">
             {record.isError ? tl("loadFailed") : tl("loadingRecord")}
           </p>
         )}
-        <fieldset disabled={mode === "edit" && !loaded} className="m-0 flex min-w-0 flex-col gap-4 border-0 p-0">
+        <fieldset disabled={mode === "edit" && !loaded} className="m-0 flex min-w-0 flex-col gap-2 border-0 p-0">
 
         <DisclosureSection {...sectionProps("manual", tl("manual"))}>
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
         <Field label={tl("channel")} labelId={ids.channel}>
-          <div role="radiogroup" aria-labelledby={ids.channel} className="flex flex-wrap gap-1.5" data-log-channel="">
+          {/* Slice 41.11 (Ask first 1): each channel a small toggle of its icon — the one the history draws for it — its
+              word the hover hint and the name; the chosen one pressed. Was a pill of icon and word. */}
+          <div role="group" aria-labelledby={ids.channel} className="flex flex-wrap gap-1" data-log-channel="">
             {INTERACTION_CHANNELS.map((c, i) => {
-              const Icon = CHANNEL_ICON[c];
               const on = form.channel === c;
               return (
-                <label
+                <IconButton
                   key={c}
+                  id={i === 0 ? "interaction-channel-first" : undefined}
+                  icon={CHANNEL_ICON[c]}
+                  label={t(`channel.${c}`)}
+                  variant={on ? "accent" : "secondary"}
+                  size="sm"
+                  aria-pressed={on}
+                  onClick={() => set({ channel: c })}
                   data-channel-option={c}
-                  className={`inline-flex cursor-pointer select-none items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-sm font-medium has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-focus ${
-                    on ? CHANNEL_PILL[c] : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="interaction-channel"
-                    id={i === 0 ? "interaction-channel-first" : undefined}
-                    className="sr-only"
-                    checked={on}
-                    onChange={() => set({ channel: c })}
-                  />
-                  <Icon aria-hidden="true" size={16} className={on ? undefined : CHANNEL_INK[c]} />
-                  {t(`channel.${c}`)}
-                </label>
+                />
               );
             })}
           </div>
         </Field>
 
-        <div className="flex flex-wrap gap-x-6 gap-y-4">
+        <div className="flex flex-wrap items-start gap-x-4 gap-y-2">
           <Field label={tl("direction")} labelId={ids.direction}>
-            <div role="radiogroup" aria-labelledby={ids.direction} className="inline-flex overflow-hidden rounded-md border border-slate-300 dark:border-zinc-600" data-log-direction="">
-              {(["INBOUND", "OUTBOUND"] as const).map((d, i) => {
-                const Icon = DIRECTION_ICON[d];
+            {/* Slice 41.11 (Ask first 1): two small toggles, ArrowDownLeft and ArrowUpRight, the chosen one pressed. */}
+            <div role="group" aria-labelledby={ids.direction} className="flex items-center gap-1" data-log-direction="">
+              {(["INBOUND", "OUTBOUND"] as const).map((d) => {
                 const on = form.direction === d;
                 return (
-                  <label
+                  <IconButton
                     key={d}
-                    className={`inline-flex cursor-pointer select-none items-center gap-1.5 px-3 py-1.5 text-sm has-[:focus-visible]:outline-2 has-[:focus-visible]:-outline-offset-2 has-[:focus-visible]:outline-focus ${
-                      i > 0 ? "border-l border-slate-300 dark:border-zinc-600" : ""
-                    } ${on ? "bg-[#3b5bdb] font-medium text-white dark:bg-[#768ce6] dark:text-zinc-900" : "bg-white text-slate-700 hover:bg-slate-50 dark:bg-zinc-900 dark:text-zinc-300"}`}
-                  >
-                    <input type="radio" name="interaction-direction" className="sr-only" checked={on} onChange={() => set({ direction: d })} />
-                    <Icon aria-hidden="true" size={16} />
-                    {t(`direction.${d}`)}
-                  </label>
+                    icon={LOG_DIRECTION_ICON[d]}
+                    label={t(`direction.${d}`)}
+                    variant={on ? "accent" : "secondary"}
+                    size="sm"
+                    aria-pressed={on}
+                    onClick={() => set({ direction: d })}
+                    data-direction-option={d}
+                  />
                 );
               })}
             </div>
@@ -526,20 +538,23 @@ export function LogTile({
             aria-invalid={!!shown("subject")}
             aria-describedby={ids.hintSubject}
             className={`${BOX} ${boxBorder(!!shown("subject"))}`}
-            {...screenBox("interactionSubjectLine")}
+            title={form.subject || undefined}
+            {...screenBox("interactionSubjectBox")}
           />
         </Field>
 
         <Field label={tl("description")} htmlFor="interaction-description" hint={tl("descriptionHint")} hintId={ids.hintDescription}>
-          <textarea
+          {/* Slice 41.11 (Ask first 2): the card's whole width, growing with its text. */}
+          <GrowingText
             id="interaction-description"
-            rows={3}
+            lines
+            minRows={2}
+            width={LOG_DESCRIPTION_WIDTH}
             value={form.description}
             placeholder={tl(`prompt.${DESCRIPTION_PROMPT[form.channel]}`)}
-            onChange={(e) => set({ description: e.target.value })}
+            onValueChange={(description) => set({ description })}
             aria-describedby={ids.hintDescription}
             className={`${BOX} ${boxBorder(false)}`}
-            {...screenBox("interactionDescription")}
           />
         </Field>
 
@@ -548,7 +563,7 @@ export function LogTile({
 
         {/* 38.86: what the record links to — documents already in the archive, tags, one property. #39.33: „Asocieri". */}
         <DisclosureSection {...sectionProps("related", tl("related"))}>
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
         <LinkedDocuments documents={form.documents} onChange={(documents) => set({ documents })} />
         <TagChips tags={form.tags} onChange={(tags) => set({ tags })} />
         <RelatedProperty property={form.property} onChange={(property) => set({ property })} />
@@ -672,39 +687,38 @@ export function LogTile({
           </div>
         )}
 
-        {/* The action bar (§4). */}
-        <div className="flex flex-wrap items-center gap-2 border-t border-slate-200 pt-3 dark:border-zinc-700" data-log-actions="">
-          {mode === "edit" && (
-            <IconButton icon={Trash2} label={tl("delete")} showLabel variant="bare-danger" size="lg" disabled={!loaded || saving} onClick={() => setAskDelete(true)} />
-          )}
+        {/* The action bar (§4). Slice 41.11 (Ask first 1, 3): small icon buttons, their words the hover hint and the name —
+            „Salvează" a check, „Salvează și adaugă" a check and a plus, „Renunță" an X; Ctrl+S is in „Salvează"'s hint
+            now, not a line of its own. */}
+        <div className="flex flex-wrap items-center gap-1 border-t border-slate-200 pt-2 dark:border-zinc-700" data-log-actions="">
           <IconButton
             type="submit"
             icon={Check}
             label={mode === "edit" ? tl("saveChanges") : tl("save")}
-            showLabel
+            note={tl("ctrlSHint")}
             variant="accent"
-            size="lg"
+            size="sm"
             busy={saving}
             busyLabel={tl("saving")}
             disabled={!check.ok || saving || (mode === "edit" && (!loaded || !dirty))}
+            data-log-save=""
           />
           {mode === "new" && (
             <IconButton
-              icon={CirclePlus}
+              icon={Check}
+              secondIcon={Plus}
               label={tl("saveAndNew")}
-              showLabel
               variant="secondary"
-              size="lg"
+              size="sm"
               disabled={!check.ok || saving}
               onClick={() => void save(true)}
+              data-log-save-new=""
             />
           )}
-          <IconButton icon={X} label={tl("cancel")} showLabel variant="ghost" size="lg" onClick={cancel} />
-          <span className="ml-auto flex items-center gap-1 text-xs text-fade dark:text-zinc-400" data-ctrl-s="">
-            {tl("ctrlS")}
-            <kbd className="rounded border border-slate-300 px-1.5 py-0.5 font-sans dark:border-zinc-600">Ctrl</kbd>
-            <kbd className="rounded border border-slate-300 px-1.5 py-0.5 font-sans dark:border-zinc-600">S</kbd>
-          </span>
+          <IconButton icon={X} label={tl("cancel")} variant="secondary" size="sm" onClick={cancel} data-log-cancel="" />
+          {mode === "edit" && (
+            <IconButton icon={Trash2} label={tl("delete")} variant="bare-danger" size="sm" className="ml-auto" disabled={!loaded || saving} onClick={() => setAskDelete(true)} />
+          )}
         </div>
       </form>
 
@@ -764,13 +778,14 @@ function Field({
   children: ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-1.5">
+    // Slice 41.11 (Ask first 2): the label at 12 px in the header's navy above its box, as on the gray tiles (40.95).
+    <div className="flex flex-col gap-0.5">
       {htmlFor ? (
-        <label htmlFor={htmlFor} className="text-sm font-medium text-ink dark:text-zinc-100">
+        <label htmlFor={htmlFor} className={FIELD_LABEL}>
           {label}
         </label>
       ) : (
-        <span id={labelId} className="text-sm font-medium text-ink dark:text-zinc-100">
+        <span id={labelId} className={FIELD_LABEL}>
           {label}
         </span>
       )}

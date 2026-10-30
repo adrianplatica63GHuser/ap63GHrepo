@@ -78,16 +78,16 @@ test.describe("TC-INT-04 — schimbat, apărat, șters", () => {
       const subject = tile.getByLabel("Subiect", { exact: true });
       // #39.06: the rows of Ana's history on her screen (it read the module's grid, `[data-interaction-row]`).
       const rowOf = (id: string) => page.locator(`[data-person-interaction="${id}"]`);
-      const mode = tile.getByRole("radiogroup", { name: "Mod" });
+      const mode = tile.getByRole("group", { name: "Mod" }); // 41.11: two icon toggles, the mode in force pressed
       const saveChanges = tile.getByRole("button", { name: "Salvează modificările", exact: true });
 
       // Step 1 — a row chosen: „Editează selecția", the record in the form, the audit line.
       await page.goto(`/natural-persons/${ana}?log=new`); // #39.06: was `/interactions?person=${ana}`
       await expect(rowOf(offer.id)).toBeVisible({ timeout: 30_000 });
-      await expect(mode.getByRole("radio", { name: "Editează selecția" })).toBeDisabled();
+      await expect(mode.getByRole("button", { name: "Editează selecția" })).toBeDisabled();
       await rowOf(offer.id).click();
       await expect(rowOf(offer.id)).toHaveAttribute("aria-selected", "true");
-      await expect(mode.getByRole("radio", { name: "Editează selecția" })).toBeChecked();
+      await expect(mode.getByRole("button", { name: "Editează selecția" })).toHaveAttribute("aria-pressed", "true");
       await expect(subject).toHaveValue("Ofertă trimisă", { timeout: 15_000 });
       await expect(tile.locator("[data-audit-line]")).toContainText("Creată de");
       await expect(tile.locator("[data-audit-line]")).toContainText("modificată ultima dată de");
@@ -145,7 +145,7 @@ test.describe("TC-INT-04 — schimbat, apărat, șters", () => {
       await confirm.getByRole("button", { name: "Șterge", exact: true }).click();
       await expect(page.locator("[data-toast]")).toHaveText("Interacțiune ștearsă");
       await expect(rowOf(call.id)).toHaveCount(0, { timeout: 15_000 });
-      await expect(mode.getByRole("radio", { name: "Interacțiune nouă" })).toBeChecked();
+      await expect(mode.getByRole("button", { name: "Interacțiune nouă" })).toHaveAttribute("aria-pressed", "true");
       expect((await page.request.get(`/api/interactions/${call.id}`)).status()).toBe(404);
     } finally {
       await removeRecord(page.request, "person", ana);

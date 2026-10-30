@@ -129,8 +129,9 @@ describe("the tile (#39.33)", () => {
     const order = ["connections", "manual", "related", "followUp", "internal"].map((s) => at(`sectionProps("${s}", tl("${s}"))`));
     expect(order.every((i) => i > 0)).toBe(true);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
-    expect(at('role="radiogroup" aria-label={tl("mode")}')).toBeLessThan(order[0]);
-    expect(at("{/* The action bar (§4). */}")).toBeGreaterThan(order[4]);
+    // Slice 41.11: the mode switch is two icon toggles in a group beside the title; the action bar's comment grew.
+    expect(at('role="group" aria-label={tl("mode")}')).toBeLessThan(order[0]);
+    expect(at("{/* The action bar (§4).")).toBeGreaterThan(order[4]);
   });
 
   it.each(["ro-RO", "en-GB"] as const)("%s names the five and the summaries", (locale) => {
