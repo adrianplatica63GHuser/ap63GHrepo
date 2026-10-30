@@ -232,6 +232,36 @@ which keeps them that way; a role with no name gets one in both places of `globa
   (`01.Slice.Inputs`, `02.01.Import.topics`, `05.02.User.Manual` …) sit at its root.
 - `C:\dev.docs\01.Slice.Inputs\` — slice input docs, one folder per slice. Read only the
   folder for the current slice; don't re-read mockups from earlier slices.
+- **A finished range of slice folders moves into the archive — checked at every handover**
+  (Adrian, 2026-10-30). Slice numbers run `<R>.01` … `<R>.99` within a range `R`, and a range's
+  folders sit at the root of `01.Slice.Inputs\` as `Slices.<R>.<a>-<R>.<b>`. **A range is finished
+  when one of its root folders ends in `-<R>.99` and a root folder of a later range exists** (the
+  next range has started). Then every root folder `Slices.<R>.*` moves, as it is, into the archive —
+  the one root folder named `Slices.01--<nn>` — beside the earlier ranges' folders. Nothing is
+  hard-coded: the range, its folders and the archive's name are all read from the folder. Claude
+  runs this before each handover, without asking — a move within one mount, nothing deleted — and
+  lists what moved under „Fixed in passing". Moved only: `Slices.<R>.*` folders of a finished range.
+  Never `Queue\`, `Register.Reviews\`, a loose file, the current range, or a folder whose name is
+  already taken in the archive (reported, left in place). **The archive keeps its name** —
+  `docs/claude/WHERE-SLICES-COME-FROM.md` and older handovers point at paths inside it. First run:
+  range 40's twelve folders, 2026-10-30.
+
+    ```bash
+    cd "$HOME/mnt/dev.docs/01.Slice.Inputs" || exit 1
+    arch=$(ls -d Slices.01--* 2>/dev/null)
+    [ -n "$arch" ] && [ "$(printf '%s\n' "$arch" | wc -l)" -eq 1 ] || { echo "archive folder not exactly one: '$arch'"; exit 1; }
+    for last in Slices.*-*.99; do
+      [ -d "$last" ] || continue
+      r=${last#Slices.}; r=${r%%.*}
+      case "$r" in ''|*[!0-9]*) continue ;; esac
+      later=$(ls -d Slices.[0-9]*.* 2>/dev/null | sed -E 's/^Slices\.([0-9]+)\..*/\1/' | awk -v r="$r" '$1+0 > r+0' | head -1)
+      [ -n "$later" ] || { echo "range $r: still current, left in place"; continue; }
+      for d in Slices."$r".*; do
+        [ -d "$d" ] || continue
+        if [ -e "$arch/$d" ]; then echo "SKIPPED, already in $arch: $d"; else mv -- "$d" "$arch/" && echo "archived: $d -> $arch/"; fi
+      done
+    done
+    ```
 
 ## Where the rest of the knowledge lives
 
