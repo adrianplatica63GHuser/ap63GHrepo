@@ -88,6 +88,7 @@ import {
   ID_CARD_DIALOG_CARD_STYLE,
   ID_CARD_DIALOG_FIELDS,
   ID_CARD_DIALOG_ROWS,
+  ID_CARD_DIALOG_WIDTHS,
   ID_CARD_INSTITUTION,
   keepFields,
   PREVIEW_FIELDS,
@@ -488,7 +489,9 @@ describe("the Natural Person: every label above its box, every panel as wide as 
     // Data nașterii | Vârstă | Gen, … hold it there; FU-363 asks whether it should be two).
     // idCard 23.75 since 40.79 (Emisă de L, the MRZ L and not filling): the first row, Tip document | Nr. | Nr. card.
     // address 18.5 since 40.80 (Stradă XL): Cod poștal | Localitate — still three units.
-    expect(rowsOf).toEqual({ identity: 22, idCard: 23.75, contact: 17.5, address: 18.5 });
+    // 41.04: identity's widest row is Data nașterii | Vârstă | Sex, 8.5 + 5 + 3.5 + 2 × 0.5 = 18 (was 22, Locul nașterii
+    // | Cetățenie).
+    expect(rowsOf).toEqual({ identity: 18, idCard: 23.75, contact: 17.5, address: 18.5 });
     // 40.98 (the 119-px unit): Carte de identitate 4 — its first row, 23.75rem, is Adrian's and past the 363 px inside
     // 3; Contact 3, the gray panels' floor (was 2 of 148 px). Was { identity: 3, idCard: 3, contact: 2, address: 3 }.
     expect(NP_PANEL_UNITS).toEqual({ identity: 3, idCard: 4, contact: 3, address: 3 });
@@ -1236,11 +1239,13 @@ describe("the ID-card dialog: the Natural Person's rows, widths and panels (Slic
       ["idValidFrom", "idValidUntil"],
       ["idIssuingAuthority"],
     ]);
-    expect(ID_CARD_DIALOG_ROWS.identity).toEqual(keepFields(NP_ROWS.identity, ID_CARD_DIALOG_FIELDS));
+    // 41.04: the person's „Identitate" moved to Adrian's rows; the dialog's are out of that slice's scope and are
+    // written out — they are no longer the person's kept (was `toEqual(keepFields(NP_ROWS.identity, …))`).
+    expect(ID_CARD_DIALOG_ROWS.identity).not.toEqual(keepFields(NP_ROWS.identity, ID_CARD_DIALOG_FIELDS));
     expect(ID_CARD_DIALOG_ROWS.idCard).toEqual(keepFields(NP_ROWS.idCard, ID_CARD_DIALOG_FIELDS));
     expect(keepFields([["a", "b"], ["c"]], ["b"])).toEqual([["b"]]);
     const file = code(read("src", "lib", "ui", "field-widths.ts"));
-    expect(file).toMatch(/identity: keepFields\(NP_ROWS\.identity, ID_CARD_DIALOG_FIELDS\)/);
+    expect(file).toMatch(/identity: \[\["lastName", "firstName"\], \["cnp"\], \["dateOfBirth", "gender"\], \["placeOfBirth", "citizenshipId"\]\] as IdCardDialogField\[\]\[\]/);
     expect(file).toMatch(/idCard: keepFields\(NP_ROWS\.idCard, ID_CARD_DIALOG_FIELDS\)/);
     // Every field the dialog keeps is a row's; none of them is dropped on the way.
     expect([...Object.values(ID_CARD_DIALOG_ROWS).flat(2)].sort()).toEqual([...ID_CARD_DIALOG_FIELDS].sort());
@@ -1253,7 +1258,9 @@ describe("the ID-card dialog: the Natural Person's rows, widths and panels (Slic
     }
     expect([NP_PANEL_UNITS.identity, NP_PANEL_UNITS.idCard, NP_PANEL_UNITS.address]).toEqual([3, 4, 3]); // 40.98: idCard 4
     const field = region(ID_CARD_DIALOG, "const reviewField = (", "if (fatalError) {");
-    expect(field).toMatch(/const width = NATURAL_PERSON\[name\];/);
+    // 41.04: the person's widths but Locul nașterii at L (the person's is TILE now) — ID_CARD_DIALOG_WIDTHS.
+    expect(field).toMatch(/const width = ID_CARD_DIALOG_WIDTHS\[name\];/);
+    expect(ID_CARD_DIALOG_WIDTHS).toEqual({ ...NATURAL_PERSON, placeOfBirth: { step: "L", kind: "grows" } });
     expect(field).toMatch(/const label = tNp\(`fields\./);
     expect(field.match(/width=\{width\}/g) ?? []).toHaveLength(3);
     expect(panels).not.toMatch(/grid-cols-2/);
@@ -1301,7 +1308,8 @@ describe("a Previzualizare tile: whole units, its screen's rows (Slice #37.33)",
       document: [["subject", "nrDocument", "dateDocument"]],
     });
     const file = code(read("src", "lib", "ui", "field-widths.ts"));
-    expect(file).toMatch(/person: keepFields\(SCREEN_ROWS\.naturalPerson\.identity, PREVIEW_FIELDS\.person\)/);
+    // 41.04: a person's preview keeps its lines; „Identitate" parted Poreclă and CNP (was kept from its rows).
+    expect(file).toMatch(/person: \[\["nickname", "cnp"\], \["dateOfBirth"\], \["dateOfDeath"\], \["placeOfBirth"\], \["notes"\]\],/);
     expect(file).toMatch(/company: keepFields\(SCREEN_ROWS\.judicialPerson\.identity, PREVIEW_FIELDS\.company\)/);
     // Slice #37.70: the property's and the document's rows are Adrian's, no longer their screen's.
     expect(file).not.toMatch(/property: keepFields\(/);

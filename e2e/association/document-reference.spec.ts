@@ -97,7 +97,11 @@ test.describe("TC-ASSOC-07 — Act legat manual de înscrisul pe care îl citeaz
       const top = page.getByRole("row").nth(1);
       await expect(top).toContainText(CERTIFICATE, { timeout: 15_000 });
       await expect(top).toContainText("Nou!");
-      await expect(top).toContainText("Moștenitor"); // #37.95: the type by its short name
+      // #37.95: the type by its short name — read from the archive's list (41.04): Adrian's reads „Moștenire" where the
+      // sync file says „Moștenitor" (FU-382).
+      const types = (await (await page.request.get("/api/admin/value-lists/document-types")).json()) as { items: { key: string; shortName: string | null }[] };
+      const shortName = types.items.find((t) => t.key === "CERTIFICAT_MOSTENITOR")?.shortName ?? "Moștenitor";
+      await expect(top).toContainText(shortName);
       const href = await top.locator("a[data-row-name-link]").getAttribute("href");
       certificateId = href?.split("/").pop();
 
