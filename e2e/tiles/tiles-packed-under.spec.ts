@@ -124,14 +124,22 @@ test.describe("TC-TILES-12 — fiecare fișă chiar sub fișa de deasupra ei", (
         return c.b - c.t > r.b - r.t;
       }, { timeout: 20_000 }).toBe(true);
 
-      // Step 4 — „Previzualizare" on Contract 1: right under „Corelate".
+      // Step 4 — „Previzualizare" on Contract 1: under „Corelate".
       await related.locator("li").getByRole("button", { name: "Previzualizare", exact: true }).click();
       const preview = page.locator("[data-preview]");
       await expect(preview.locator("h2")).toHaveText(`${MARK} Contract 1`, { timeout: 30_000 });
+      // Slice 41.05: with the 2-unit address and contact tiles a box of the company's may reach lower than „Legături" in
+      // the preview's columns, so the preview stands 16 px under the lowest of them — under „Legături", at its left,
+      // never overlapping (was: exactly 16 px under „Legături" and above „Clasificare"'s bottom).
       await expect.poll(async () => {
-        const [p, r, c, bar] = await Promise.all([boxOf(preview), boxOf(related), boxOf(cls), boxOf(actionBar(page))]);
-        return { underRelated: p.t - r.b, sameLeft: p.l === r.l, aboveClsBottom: p.t < c.b, barUnder: bar.t - p.b };
-      }, { timeout: 20_000 }).toEqual({ underRelated: GAP, sameLeft: true, aboveClsBottom: true, barUnder: GAP });
+        const [p, r, bar] = await Promise.all([boxOf(preview), boxOf(related), boxOf(actionBar(page))]);
+        const restsOn = await page.evaluate(({ l, t, r: right, gap }) =>
+          [...document.querySelectorAll<HTMLElement>("[data-packed-col]")]
+            .filter((e) => !e.hasAttribute("data-preview") && !e.classList.contains("order-last"))
+            .map((e) => e.getBoundingClientRect())
+            .some((o) => o.left < right - 1 && l < o.right - 1 && Math.abs(t - Math.round(o.bottom) - gap) <= 1), { l: p.l, t: p.t, r: p.r, gap: GAP });
+        return { underRelated: p.t - r.b >= GAP, sameLeft: p.l === r.l, restsOn, barUnder: bar.t - p.b };
+      }, { timeout: 20_000 }).toEqual({ underRelated: true, sameLeft: true, restsOn: true, barUnder: GAP });
       expect(await overlapsIn(page)).toEqual([]);
       const before = await places(page);
 
