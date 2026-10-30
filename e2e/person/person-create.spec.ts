@@ -117,13 +117,20 @@ test.describe("TC-PERS-01 — Persoană fizică creată manual", () => {
       expect(Math.abs(pob.width - inner), "Locul nașterii across the panel").toBeLessThanOrEqual(1);
       await expect(page.locator('[data-panel="id-card"]')).toHaveCount(0); // no card on „Adaugă persoană"
 
-      // Slice 40.80 — „Stradă, Nr., etaj, ap" is XL in the address block, and a long street wraps: taller, never wider.
+      // Slice 40.80 — „Stradă, Nr., etaj, ap" in the address block, and a long street wraps: taller, never wider.
+      // Slice 41.05 — the address and „Contact" tiles 2 units (254 px); Stradă TILE, the panel's whole inner width
+      // (228; was XL, 272); Localitate M, Țară S.
+      for (const panel of ["contact", "addresses.HOME"]) {
+        expect([panel, Math.round((await page.locator(`[data-panel="${panel}"]`).boundingBox())!.width)]).toEqual([panel, 254]);
+      }
       const street = page.locator('[data-width-field="addresses.HOME.streetLine"]');
       const streetOne = await street.boundingBox();
-      expect(streetOne?.width).toBe(SCALE.XL * rem);
+      expect(streetOne?.width).toBe(228);
+      expect((await page.locator('[data-width-field="addresses.HOME.locality"]').boundingBox())?.width).toBe(SCALE.M * rem);
+      expect((await page.locator('[data-width-field="addresses.HOME.country"]').boundingBox())?.width).toBe(SCALE.S * rem);
       await street.fill("Strada Exemplului Foarte Lungă nr. 123, bl. A4, sc. 2, et. 7, ap. 45");
       const streetGrown = await street.boundingBox();
-      expect(streetGrown?.width).toBe(SCALE.XL * rem);
+      expect(streetGrown?.width).toBe(228);
       expect(streetGrown?.height ?? 0).toBeGreaterThan((streetOne?.height ?? 0) + 10);
       await street.fill("");
 

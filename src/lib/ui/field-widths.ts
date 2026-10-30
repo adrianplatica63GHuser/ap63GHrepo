@@ -231,9 +231,11 @@ export const NATURAL_PERSON = {
   personalPhone1: { step: "M", kind: "grows" }, // m: 0
   personalPhone2: { step: "M", kind: "grows" }, // m: 0
   workPhone: { step: "M", kind: "grows" }, //      m: 0
-  personalEmail1: { step: "XL", kind: "grows" }, //         prenume.nume@domeniu.ro is 25–30; m: 0
-  personalEmail2: { step: "XL", kind: "grows" }, //         m: 0
-  workEmail: { step: "XL", kind: "grows" }, //              m: 0
+  // Slice 41.05: on the 2-unit „Contact" (228 px inside) an XL box (272) would pass the panel — each e-mail takes the
+  // panel's whole width instead (Ask first 3).
+  personalEmail1: { step: "XL", kind: "grows", fill: true }, // prenume.nume@domeniu.ro is 25–30; m: 0
+  personalEmail2: { step: "XL", kind: "grows", fill: true }, // m: 0
+  workEmail: { step: "XL", kind: "grows", fill: true }, //      m: 0
 } as const satisfies Record<string, FieldWidth>;
 
 /**
@@ -242,13 +244,15 @@ export const NATURAL_PERSON = {
  * address and no property address with a value in the local archive.
  */
 export const ADDRESS = {
-  // Slice 40.80 — Adrian, 2026-10-26: „Stradă, Nr., etaj, ap - XL" (was XXL); a longer street wraps (40.78). One width
-  // on every screen that draws an address — the two persons', the property's, the ID-card dialog's (rule 17). m: 0
-  streetLine: { step: "XL", kind: "grows" },
+  // Slice 41.05 — Adrian, 2026-10-29: „make the street address field to be tile size; Make the locality field to be one
+  // size shorter; Make the country field to be one size shorter" — on every address tile (the two persons', the
+  // property's; the ID-card dialog's reads this too, rule 17). Stradă TILE (was XL since 40.80, XXL before), Localitate M
+  // (was L), Țară S (was M). A longer value wraps (40.78). m: 0
+  streetLine: { step: "TILE", kind: "grows", fill: true },
   postalCode: { step: "S", kind: "grows" }, // six digits; m: 0
-  locality: { step: "L", kind: "grows" }, //                m: 0
+  locality: { step: "M", kind: "grows" }, //                m: 0
   county: { step: "M", kind: "grows" }, // „Caraș-Severin", the longest county; m: 0
-  country: { step: "M", kind: "grows" }, //      „România"; m: 0
+  country: { step: "S", kind: "grows" }, //      „România" (55 px at text-sm); m: 0
   notes: { step: "TILE", kind: "lines", fold: NOTE_FOLD_LINES, rows: 1, fill: true }, // m: 0; on a stacked panel, its whole width (#37.26)
 } as const satisfies Record<string, FieldWidth>;
 
@@ -301,8 +305,10 @@ const NATURAL_PERSON_ROWS = {
     ["idIssuingAuthority"],
     ["idMrzRaw"],
   ],
+  // Slice 41.05: the two personal phones one to a row — M + M (280 px) is past the 2-unit panel's 228.
   contact: [
-    ["personalPhone1", "personalPhone2"],
+    ["personalPhone1"],
+    ["personalPhone2"],
     ["workPhone"],
     ["personalEmail1"],
     ["personalEmail2"],
@@ -410,9 +416,11 @@ export const JUDICIAL_PERSON = {
   tradeRegisterNumber: { step: "M", kind: "grows" }, // „J40/12345/2020"; m: 0
   // Slice #38.31: the firm's own phone and e-mail — the Natural Person's boxes (NP.personalPhone1, NP.personalEmail1).
   phone: { step: "M", kind: "grows" }, // m: 0 (a new column)
-  email: { step: "XL", kind: "grows" }, //                  office@firma-exemplu.ro is 20–30; m: 0 (a new column)
+  // Slice 41.05: on the 2-unit „Reprezentanți și contact" (228 px inside) the e-mail and the contact person take the
+  // panel's whole width (they were XL, 272 — past it).
+  email: { step: "XL", kind: "grows", fill: true }, //      office@firma-exemplu.ro is 20–30; m: 0 (a new column)
   notes: { step: "TILE", kind: "lines", fold: NOTE_FOLD_LINES, rows: 1, fill: true }, // m: 0; the panel's whole width (#37.29)
-  contactPerson: { step: "XL", kind: "grows" }, //          a natural person's display name, wrapping; m: 1 · 4
+  contactPerson: { step: "XL", kind: "grows", fill: true }, // a natural person's display name, wrapping; m: 1 · 4
 } as const satisfies Record<string, FieldWidth>;
 
 // ---- the Property (#37.14) --------------------------------------------------------------
@@ -556,9 +564,10 @@ export const IDENTITY_DOCUMENT = {
   issuer: { step: "L", kind: "select" }, //         Emisă de: a juridical person, as the document's issuer is — at the person's L
   mrz: NATURAL_PERSON.idMrzRaw,
   cardNumber: { step: "M", kind: "grows" },
-  domicileAddress: ADDRESS.streetLine,
+  // 41.05: the domicile keeps its own widths — the address tiles' Stradă is TILE and Țară S now, the card did not move.
+  domicileAddress: { step: "XL", kind: "grows" },
   domicileCounty: ADDRESS.county,
-  domicileCountry: ADDRESS.country,
+  domicileCountry: { step: "M", kind: "grows" },
   // No counterpart on the person:
   nationality: { step: "M", kind: "grows" }, //     as printed: „Română / ROU", „ROMÂNĂ"
   fatherFirstName: { step: "M", kind: "grows" }, // a first name, as Prenume
@@ -840,6 +849,13 @@ export type Screen = keyof typeof SCREEN_ROWS;
 /** The fewest units that hold each panel's widest row. */
 /** Slice 40.98: the fewest units a gray tile's panel of fields takes — 3, 363 px inside (Adrian's red note). */
 export const GRAY_PANEL_MIN_UNITS = 3;
+/**
+ * Slice 41.05 — the exception, by name (Ask first 2): every address tile, a natural person's „Contact" and a juridical
+ * person's „Reprezentanți și contact" are 2 units, 254 px (228 inside), below the floor above. Adrian, 2026-10-29: „Make
+ * all the address tiles to be two units wide instead of three", and the two contact tiles the same. Their rows fit:
+ * Cod poștal | Localitate and Județ | Țară are 80 + 8 + 136 = 224 px; a wider box takes the panel's whole width.
+ */
+export const TWO_UNIT_PANEL_UNITS = 2;
 
 function panelUnitsOf<R extends Record<string, readonly (readonly string[])[]>>(
   rows: R,
@@ -856,16 +872,19 @@ function mapUnits<T extends Record<string, number>, V>(units: T, f: (n: number) 
 }
 
 /**
- * The shared address block, stacked: 3 units on every screen. Its widest row was Stradă (24rem) until 40.80 made it
- * XL; it is now Cod poștal | Localitate, 5 + 0.5 + 13 = 18.5rem — still past the 17.875rem inside 2 units.
+ * The shared address block, stacked: 2 units on every screen since 41.05 (TWO_UNIT_PANEL_UNITS) — its widest rows,
+ * Cod poștal | Localitate and Județ | Țară, are 5 + 0.5 + 8.5 = 14rem, inside the 14.25rem 2 units hold. Was 3 (the gray
+ * floor; Cod poștal | Localitate 18.5rem with Localitate L).
  */
-const ADDRESS_PANEL_UNITS = Math.max(GRAY_PANEL_MIN_UNITS, unitsFor(panelRem(widestRow(ADDRESS_ROWS, ADDRESS))));
+const ADDRESS_PANEL_UNITS = Math.max(TWO_UNIT_PANEL_UNITS, unitsFor(panelRem(widestRow(ADDRESS_ROWS, ADDRESS))));
 
 /** Each form panel in units, by screen. */
 export const PANEL_UNITS = {
-  naturalPerson: { ...panelUnitsOf(SCREEN_ROWS.naturalPerson, NATURAL_PERSON), address: ADDRESS_PANEL_UNITS },
+  // 41.05: „Contact" 2 units (TWO_UNIT_PANEL_UNITS), its phones one to a row and its e-mails the panel's width.
+  naturalPerson: { ...panelUnitsOf(SCREEN_ROWS.naturalPerson, NATURAL_PERSON), contact: TWO_UNIT_PANEL_UNITS, address: ADDRESS_PANEL_UNITS },
   //  identity 3 — Poreclă | Tip and ID | CUI | Nr. Reg. Com., both 26.5rem; contactPersons 2 — the XL box, 17rem.
-  judicialPerson: { ...panelUnitsOf(SCREEN_ROWS.judicialPerson, JUDICIAL_PERSON), address: ADDRESS_PANEL_UNITS },
+  // 41.05: „Reprezentanți și contact" 2 units, the e-mail and the contact persons the panel's width.
+  judicialPerson: { ...panelUnitsOf(SCREEN_ROWS.judicialPerson, JUDICIAL_PERSON), contactPersons: TWO_UNIT_PANEL_UNITS, address: ADDRESS_PANEL_UNITS },
   //  cadastral 3 — Cod | Nr. tarla / sola | Nr. parcelă, 26.5rem; address 3 — Cod poștal | Localitate, 18.5rem (40.80).
   //  corners 3 (#37.77): the four fixed columns are 19rem; 3 units leave the actions column
   //  about 9rem (144 px, 120 inside its padding), and a row's four buttons — „Mută mai sus",
@@ -886,6 +905,9 @@ export const PANEL_UNITS = {
     corners: 4,
     map: 4,
     streetView: 4,
+    // 41.05: the address 2 units, as every address tile — „Preia din Street View" goes under its box when it does not
+    // fit beside it.
+    address: TWO_UNIT_PANEL_UNITS,
   },
   //  general 3 — held at 3 since 40.88: Tip document and Emitent went XXL → XL, and the rows alone
   //  would now fit 2 units (Nr. document | Data, 17.5rem), but Adrian marked Etichetă scurtă,

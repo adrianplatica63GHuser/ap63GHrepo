@@ -1610,6 +1610,7 @@ export function PropertyForm({
                   error={errors.address?.streetLine?.message}
                   highlight={displayHighlights?.address.streetLine}
                   width={ADDRESS.streetLine}
+                  fillRem={PANEL_UNIT_INNER_REM.property.address}
                 />
                 {/* Slice #18.12: Street View address — only the street line may
                     differ from the document-derived one above; the shared
@@ -1637,7 +1638,9 @@ export function PropertyForm({
                   <span className={STACKED_LABEL_CLASS}>
                     {t("streetViewAddress.label")}
                   </span>
-                  <div className="flex items-start gap-2">
+                  {/* Slice 41.05: on the 2-unit tile „Preia din Street View" and its „?" go under the box when they do
+                      not fit beside it. */}
+                  <div className="flex flex-wrap items-start gap-2" data-street-view-row="">
                     <GrowingText
                       registration={register("address.streetViewStreetLine")}
                       width={String(boxStyle(PROP.streetViewStreetLineBox).width)}

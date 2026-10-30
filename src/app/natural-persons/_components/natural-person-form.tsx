@@ -1168,26 +1168,25 @@ export function NaturalPersonForm({
         {contactFolded && <EmptyTileLine tile="contact" title={t("tiles.contact")} onAdd={addTo("contact", "contact")} />}
         <div className={contactFolded ? "hidden" : "contents"}>
         <TileTitle title={t("tiles.contact")} subtitle={t("tileSubtitles.contact")} action={editButton("contact", t("tiles.contact"))} />
-        {/* Slice #37.26 — the rows of `NP_ROWS.contact`; the panel is as wide as the two phones. */}
+        {/* Slice #37.26 — the rows of `NP_ROWS.contact`. Slice 41.05: the tile is 2 units, so the two phones are one to
+            a row and the e-mails take the panel's whole width. */}
         <div className="flex flex-col gap-2">
-          <div className={STACKED_ROW_CLASS}>
-            <Field
-              label={t("fields.personalPhone1")}
-              name="personalPhone1"
-              register={register}
-              error={errors.personalPhone1?.message}
-              highlight={displayHighlights?.fields.personalPhone1}
-              width={NP.personalPhone1}
-            />
-            <Field
-              label={t("fields.personalPhone2")}
-              name="personalPhone2"
-              register={register}
-              error={errors.personalPhone2?.message}
-              highlight={displayHighlights?.fields.personalPhone2}
-              width={NP.personalPhone2}
-            />
-          </div>
+          <Field
+            label={t("fields.personalPhone1")}
+            name="personalPhone1"
+            register={register}
+            error={errors.personalPhone1?.message}
+            highlight={displayHighlights?.fields.personalPhone1}
+            width={NP.personalPhone1}
+          />
+          <Field
+            label={t("fields.personalPhone2")}
+            name="personalPhone2"
+            register={register}
+            error={errors.personalPhone2?.message}
+            highlight={displayHighlights?.fields.personalPhone2}
+            width={NP.personalPhone2}
+          />
           <Field
             label={t("fields.workPhone")}
             name="workPhone"
@@ -1203,6 +1202,7 @@ export function NaturalPersonForm({
             error={errors.personalEmail1?.message}
             highlight={displayHighlights?.fields.personalEmail1}
             width={NP.personalEmail1}
+            fillRem={NP_PANEL_INNER_REM.contact}
           />
           <Field
             label={t("fields.personalEmail2")}
@@ -1211,6 +1211,7 @@ export function NaturalPersonForm({
             error={errors.personalEmail2?.message}
             highlight={displayHighlights?.fields.personalEmail2}
             width={NP.personalEmail2}
+            fillRem={NP_PANEL_INNER_REM.contact}
           />
           <Field
             label={t("fields.workEmail")}
@@ -1219,6 +1220,7 @@ export function NaturalPersonForm({
             error={errors.workEmail?.message}
             highlight={displayHighlights?.fields.workEmail}
             width={NP.workEmail}
+            fillRem={NP_PANEL_INNER_REM.contact}
           />
           {emptyFieldsLink("contact")}
           {editBar("contact")}

@@ -1012,6 +1012,7 @@ export function JudicialPersonForm({
             error={errors.email ? t("hints.emailShape") : undefined}
             highlight={displayHighlights?.fields.email}
             width={JP.email}
+            fillRem={PANEL_UNIT_INNER_REM.judicialPerson.contactPersons}
           />
           <ContactPersonRow
             label={t("fields.contactPerson1")}
@@ -1383,8 +1384,10 @@ function ContactPersonRow({
   // Slice #37.13: the chosen person's name is a GROWING value — the box is
   // `JP.contactPerson` wide and a long name wraps onto more lines, never cut.
   // Slice #37.29: the label above it, the pair as wide as the box.
+  // Slice 41.05: the panel's whole width on the 2-unit tile (XL, 272, would pass its 228).
+  const personBox = stackedBoxStyle(JP.contactPerson, PANEL_UNIT_INNER_REM.judicialPerson.contactPersons);
   return (
-    <div className={STACKED_FIELD_CLASS} style={boxStyle(JP.contactPerson)} role="group" aria-label={label}>
+    <div className={STACKED_FIELD_CLASS} style={personBox} role="group" aria-label={label}>
       <span className={STACKED_LABEL_CLASS}>
         {label}
       </span>
@@ -1393,7 +1396,7 @@ function ContactPersonRow({
           "flex items-start gap-2 rounded-md py-1",
           highlight ? "px-1 " + ring : "",
         ].join(" ")}
-        style={boxStyle(JP.contactPerson)}
+        style={personBox}
         data-width-field={`contactPerson${slot}`}
         data-width-kind={JP.contactPerson.kind}
       >
