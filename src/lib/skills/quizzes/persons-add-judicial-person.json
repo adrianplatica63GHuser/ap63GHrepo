@@ -162,11 +162,11 @@
           "section": "companies-add-edit",
           "ro": {
             "question": "Schimbați ceva pe o firmă care există deja și apăsați „Salvează”. Ce se întâmplă?",
-            "explanation": "De data aceasta ecranul rămâne pe firmă. Fiecare salvare face o versiune nouă: capul ecranului trece, de exemplu, de la „v 0” la „v 1”."
+            "explanation": "De data aceasta ecranul rămâne pe firmă. Fiecare salvare face o versiune nouă: bara de sus trece, de exemplu, de la „v 0” la „v 1”."
           },
           "en": {
             "question": "You change something on a firm that already exists and press „Salvează”. What happens?",
-            "explanation": "This time the screen stays on the firm. Every save makes a new version: the top of the screen goes, for instance, from „v 0” to „v 1”."
+            "explanation": "This time the screen stays on the firm. Every save makes a new version: the top bar goes, for instance, from „v 0” to „v 1”."
           },
           "options": [
             {
@@ -368,7 +368,7 @@
               "id": "o3",
               "correct": false,
               "ro": "Capul ecranului trece deja la „v 1”.",
-              "en": "The top of the screen already moves to „v 1”."
+              "en": "The top bar already moves to „v 1”."
             },
             {
               "id": "o4",

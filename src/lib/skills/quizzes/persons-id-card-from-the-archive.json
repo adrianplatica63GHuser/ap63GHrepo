@@ -357,18 +357,18 @@
           "section": "persons-relatives-tree",
           "ro": {
             "question": "După ce a creat părinții lui Andrei de pe carte, Ciprian vrea să-i vadă desenați împreună cu el, fără să mai lege nimic. Unde se uită?",
-            "explanation": "Fișa „Arbore de moștenire” desenează familia persoanei din legăturile cu rol de rudenie, care sunt aceleași cu cele din „Legături”; dacă nu o vedeți, bifați-o în capul ecranului."
+            "explanation": "Fișa „Arbore de moștenire” desenează familia persoanei din legăturile cu rol de rudenie, care sunt aceleași cu cele din „Legături”; dacă nu o vedeți, bifați-o în „Panouri”."
           },
           "en": {
             "question": "Having created Andrei's parents from the card, Ciprian wants to see them drawn together with him, without linking anything else. Where does he look?",
-            "explanation": "The „Arbore de moștenire” (inheritance tree) tile draws the person's family from the links with a kinship role, which are the same as those in „Legături”; if you do not see it, tick it at the top of the screen."
+            "explanation": "The „Arbore de moștenire” (inheritance tree) tile draws the person's family from the links with a kinship role, which are the same as those in „Legături”; if you do not see it, tick it in „Panouri”."
           },
           "options": [
             {
               "id": "o1",
               "correct": true,
-              "ro": "Pe ecranul lui Andrei, în fișa „Arbore de moștenire”, bifată în capul ecranului dacă lipsește.",
-              "en": "On Andrei's screen, in the „Arbore de moștenire” tile, ticked at the top of the screen if missing."
+              "ro": "Pe ecranul lui Andrei, în fișa „Arbore de moștenire”, bifată în „Panouri” dacă lipsește.",
+              "en": "On Andrei's screen, in the „Arbore de moștenire” tile, ticked in „Panouri” if missing."
             },
             {
               "id": "o2",

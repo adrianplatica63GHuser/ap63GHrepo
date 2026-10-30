@@ -97,7 +97,7 @@ The archive keeps one property per parcel in a locality (section [[properties-ta
 
 ### 5.2.4 Changing and deleting {#properties-add-edit}
 
-On an open property, press „Edit” on the tile to change — „Cadastral identification”, „Corners” or „Address” —, change the fields and press that tile's „Save” (section [[start-read-edit]]). While you have unsaved changes, the top of the form reads „Unsaved changes” and „Save” is active. Every save adds a version, and the header of the screen shows „v …” and „… versions” (section [[links-versions]]).
+On an open property, press „Edit” on the tile to change — „Cadastral identification”, „Corners” or „Address” —, change the fields and press that tile's „Save” (section [[start-read-edit]]). While you have unsaved changes, the top of the form reads „Unsaved changes” and „Save” is active. Every save adds a version, and the top bar shows „v …” and „… versions” (section [[links-versions]]).
 
 The bin („Delete”) asks first: „Delete property?”. „No” leaves you on the screen; „Yes” deletes the property and takes you back to the list.
 
@@ -133,7 +133,7 @@ You choose the type in „Property Type”. When you choose another type, the he
 
 ### 5.3.1 A property's tiles {#properties-type-tiles}
 
-The ticks at the top of the screen („Parts shown”) choose the tiles, as on any object (section [[start-tiles]]):
+The ticks in „Panels” („Parts shown”) choose the tiles, as on any object (section [[start-tiles]]):
 
 | The tile | What it shows |
 |---|---|

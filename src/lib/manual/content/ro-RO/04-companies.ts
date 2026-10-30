@@ -47,7 +47,7 @@ Pe lista firmelor, apăsați „Adaugă persoană juridică” — un + și clă
 
 Singurul câmp obligatoriu este „Denumire”. O firmă care are doar denumirea este un obiect adevărat și se completează mai târziu. Când apăsați „Salvează”, jos, aplicația vă întoarce la listă, unde firma nouă stă sus, marcată „Nou!”. O deschideți cu „Deschide”.
 
-Ecranul unei firme deschise are în cap denumirea și versiunea („v 0” pentru o firmă abia creată), iar dedesubt fișele ei (Figura [[fig-companies-record]]):
+Ecranul unei firme deschise are în cap denumirea, iar dedesubt fișele ei; versiunea („v 0” pentru o firmă abia creată) stă în bara de sus, lângă „Panouri” (Figura [[fig-companies-record]]):
 
 | Fișa | Ce cuprinde | Se vede de la început |
 |---|---|---|
@@ -89,7 +89,7 @@ Fișa „Adrese” ține „Adresă sediu social” și „Adresă corespondenț
 
 ### 4.2.4 Modificarea și istoricul {#companies-add-edit}
 
-Pe ecranul firmei, apăsați „Editează” pe fișa de schimbat, schimbați ce trebuie și apăsați „Salvează”, sub câmpurile ei (secțiunea [[start-read-edit]]). Ecranul rămâne pe firmă, iar fișa se citește din nou. Fiecare salvare face o versiune nouă: capul ecranului trece de la „v 0” la „v 1” și arată câte versiuni are firma, de exemplu „2 versiuni”.
+Pe ecranul firmei, apăsați „Editează” pe fișa de schimbat, schimbați ce trebuie și apăsați „Salvează”, sub câmpurile ei (secțiunea [[start-read-edit]]). Ecranul rămâne pe firmă, iar fișa se citește din nou. Fiecare salvare face o versiune nouă: bara de sus trece de la „v 0” la „v 1” și arată câte versiuni are firma, de exemplu „2 versiuni”.
 
 Cu „Versiunea anterioară” și „Versiunea următoare” vedeți firma așa cum era la fiecare salvare. Și telefonul, și e-mailul firmei sunt păstrate în istoric: pe versiunea în care au fost scrise, câmpurile lor sunt încadrate cu verde, semnul unei valori adăugate atunci. Despre versiuni și „Fă curentă”, vedeți secțiunea [[links-versions]].
 

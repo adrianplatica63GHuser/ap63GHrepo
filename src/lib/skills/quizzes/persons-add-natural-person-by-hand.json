@@ -245,7 +245,7 @@
             "explanation": "O fișă ascunsă nu își pierde datele: ce ați scris în ea se salvează la fel."
           },
           "en": {
-            "question": "You typed something in a tile of the form, then hid the tile with the ticks at the top of the screen. What happens to what you typed?",
+            "question": "You typed something in a tile of the form, then hid the tile with the ticks in „Panouri”. What happens to what you typed?",
             "explanation": "A hidden tile does not lose its data: what you typed in it is saved all the same."
           },
           "options": [

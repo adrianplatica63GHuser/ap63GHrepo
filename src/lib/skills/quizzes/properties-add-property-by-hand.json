@@ -356,11 +356,11 @@
           "id": "b3",
           "section": "properties-type-hidden",
           "ro": {
-            "question": "Ați ales un tip care nu arată „Adresă”. Cum arată bifa „Adresă” din capul ecranului?",
+            "question": "Ați ales un tip care nu arată „Adresă”. Cum arată bifa „Adresă” din „Panouri”?",
             "explanation": "Pentru un asemenea tip, bifa este nebifată și inactivă, cu numele în cursiv, iar mesajul ei spune că tipul ales nu afișează fișa. „Toate” și „Implicit” nu o ating."
           },
           "en": {
-            "question": "You chose a type that does not show „Adresă”. What does the „Adresă” tick at the top of the screen look like?",
+            "question": "You chose a type that does not show „Adresă”. What does the „Adresă” tick in „Panouri” look like?",
             "explanation": "For such a type the tick is unticked and inactive, its name in italics, and its message says that the chosen type does not show the tile. „Toate” and „Implicit” do not touch it."
           },
           "options": [
@@ -373,8 +373,8 @@
             {
               "id": "o2",
               "correct": false,
-              "ro": "Dispare cu totul din capul ecranului.",
-              "en": "It disappears from the top of the screen altogether."
+              "ro": "Dispare cu totul din „Panouri”.",
+              "en": "It disappears from „Panouri” altogether."
             },
             {
               "id": "o3",

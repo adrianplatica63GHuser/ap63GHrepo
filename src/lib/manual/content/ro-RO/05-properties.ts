@@ -97,7 +97,7 @@ Arhiva ține o singură proprietate pentru fiecare parcelă dintr-o localitate (
 
 ### 5.2.4 Modificarea și ștergerea {#properties-add-edit}
 
-Pe o proprietate deschisă, apăsați „Editează” pe fișa de schimbat — „Identificare cadastrală”, „Puncte de contur” sau „Adresă” —, schimbați câmpurile și apăsați „Salvează”-ul fișei (secțiunea [[start-read-edit]]). Cât timp aveți schimbări nesalvate, sus în formular scrie „Modificări nesalvate”, iar „Salvează” este activ. Fiecare salvare adaugă o versiune, iar în capul ecranului apar „v …” și „… versiuni” (secțiunea [[links-versions]]).
+Pe o proprietate deschisă, apăsați „Editează” pe fișa de schimbat — „Identificare cadastrală”, „Puncte de contur” sau „Adresă” —, schimbați câmpurile și apăsați „Salvează”-ul fișei (secțiunea [[start-read-edit]]). Cât timp aveți schimbări nesalvate, sus în formular scrie „Modificări nesalvate”, iar „Salvează” este activ. Fiecare salvare adaugă o versiune, iar în bara de sus apar „v …” și „… versiuni” (secțiunea [[links-versions]]).
 
 Coșul („Șterge”) întreabă întâi „Ștergeți proprietatea?”. „Nu” vă lasă pe ecran; „Da” șterge proprietatea și vă întoarce în listă.
 
@@ -133,7 +133,7 @@ Tipul îl alegeți în „Tip proprietate”. Când alegeți alt tip, titlul și
 
 ### 5.3.1 Fișele unei proprietăți {#properties-type-tiles}
 
-Bifele din capul ecranului („Părți afișate”) aleg fișele, ca pe orice obiect (secțiunea [[start-tiles]]):
+Bifele din „Panouri” („Părți afișate”) aleg fișele, ca pe orice obiect (secțiunea [[start-tiles]]):
 
 | Fișa | Ce arată |
 |---|---|

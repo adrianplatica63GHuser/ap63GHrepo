@@ -16,11 +16,11 @@
           "section": "start-tiles",
           "ro": {
             "question": "Pe ecranul unui obiect, unde alegeți ce fișe se văd?",
-            "explanation": "„Panouri”, în capul ecranului, după versiuni, deschide panoul cu bifele fișelor, „Toate sus”, „Toate” și „Implicit”; o bifă îl lasă deschis, iar Esc sau un clic în afara lui îl închide."
+            "explanation": "„Panouri”, în bara de sus, după versiuni și înainte de „?”, deschide panoul cu bifele fișelor, „Toate sus”, „Toate” și „Implicit”; o bifă îl lasă deschis, iar Esc sau un clic în afara lui îl închide."
           },
           "en": {
             "question": "On an object's screen, where do you choose which tiles show?",
-            "explanation": "„Panouri”, at the top of the screen after the versions, opens the panel with the tiles' tick boxes, „Toate sus”, „Toate” and „Implicit”; a tick leaves it open, and Esc or a click outside it closes it."
+            "explanation": "„Panouri”, in the top bar, after the versions and before „?”, opens the panel with the tiles' tick boxes, „Toate sus”, „Toate” and „Implicit”; a tick leaves it open, and Esc or a click outside it closes it."
           },
           "options": [
             {

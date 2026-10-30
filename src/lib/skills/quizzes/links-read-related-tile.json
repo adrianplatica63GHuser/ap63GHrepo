@@ -53,18 +53,18 @@
           "section": "links-related",
           "ro": {
             "question": "Pe ecranul unui obiect nu vedeți fișa „Legături”. Ce faceți?",
-            "explanation": "Dacă nu o vedeți, bifați „Legături” printre fișele din capul ecranului."
+            "explanation": "Dacă nu o vedeți, bifați „Legături” printre fișele din „Panouri”."
           },
           "en": {
             "question": "On an object's screen you do not see the „Legături” tile. What do you do?",
-            "explanation": "If you do not see it, tick „Legături” among the tiles at the top of the screen."
+            "explanation": "If you do not see it, tick „Legături” among the tiles in „Panouri”."
           },
           "options": [
             {
               "id": "o1",
               "correct": true,
-              "ro": "Bifați „Legături” printre fișele din capul ecranului",
-              "en": "You tick „Legături” among the tiles at the top of the screen"
+              "ro": "Bifați „Legături” printre fișele din „Panouri”",
+              "en": "You tick „Legături” among the tiles in „Panouri”"
             },
             {
               "id": "o2",

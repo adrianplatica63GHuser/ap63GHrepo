@@ -13,7 +13,7 @@ Arhiva păstrează într-un singur loc persoanele cu care lucrează afacerea, pr
 
 Primul ecran după conectare este **Tabloul de bord** (Figura [[fig-dashboard]]): ce s-a adăugat în ultimele șapte zile, obiectele ale căror metadate nu au mai fost actualizate de mult, actele care expiră în curând și ce s-a lucrat recent.
 
-Fiecare număr din „Adăugate în ultimele 7 zile” stă sub semnul felului său — un om pentru persoane, o clădire pentru firme, o hartă pentru proprietăți, o pagină pentru acte —, aceleași semne ca în bara laterală, pe ecranele obiectelor și în „Legături”. În „Acte cu valabilitate limitată”, fiecare rând începe cu starea actului: roșie când a expirat, portocalie cât timp e în fereastra de avertizare, neutră după ea; urmează titlul și, dedesubt, mai mic, tipul și data expirării. Un rând deschide actul.
+„Adăugate în ultimele 7 zile” și „Metadate neactualizate de peste 90 de zile” arată la fel: câte un număr pentru fiecare fel de obiect — „Persoane fizice”, „Persoane juridice”, „Proprietăți”, „Acte” —, fiecare sub semnul felului său — un om, o clădire, o hartă, o pagină —, aceleași semne ca în bara laterală, pe ecranele obiectelor și în „Legături”. Un clic pe un rând deschide lista felului aceluia. „Panouri”, lângă titlu, alege ce fișe arată tabloul de bord, ca pe ecranul unui obiect (secțiunea [[start-tiles]]). În „Acte cu valabilitate limitată”, fiecare rând începe cu starea actului: roșie când a expirat, portocalie cât timp e în fereastra de avertizare, neutră după ea; urmează titlul și, dedesubt, mai mic, tipul și data expirării. Un rând deschide actul.
 
 ![1.1 Tabloul de bord, primul ecran după conectare](dashboard.png){#fig-dashboard}
 

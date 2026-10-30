@@ -61,7 +61,7 @@ Rândurile vin mereu în aceeași ordine — persoanele fizice, persoanele jurid
 - o proprietate: denumirea și, când legătura are un rol, rolul;
 - un act: eticheta scurtă și tipul actului.
 
-Rolul — la un act, tipul — stă într-o etichetă mică, la marginea dreaptă a rândului, așa că etichetele se aliniază de sus în jos, iar un nume lung se taie cu trei puncte înaintea rolului.
+Rolul — la un act, tipul — stă într-o etichetă mică, la marginea dreaptă a rândului, așa că etichetele se aliniază de sus în jos. Numele ocupă tot locul până la etichetă sau, fără ea, până la butoane: un nume lung se taie cu trei puncte abia acolo, iar ținând mouse-ul pe el îl citiți întreg.
 
 Numele de pe rând este un link: un clic pe el deschide obiectul legat numai pentru citire, iar „Modifică”, jos pe ecranul lui, îl face modificabil.
 
@@ -70,6 +70,8 @@ Pe rânduri pot sta câteva butoane, palide cât stă mouse-ul în altă parte �
 - „Relația” arată, într-o bulă, ce leagă cele două obiecte: rolul persoanei în act (de pildă Rol: „Vânzător”) sau propoziția unei legături cu sens (secțiunea [[links-references]]). Un clic în afara bulei sau tasta Esc o închide.
 - „Previzualizare” o deschide alături, fără să plecați de pe ecran (secțiunea [[start-preview]]).
 - „Cotă”, portocaliu, ține cota-parte a unei persoane pe un act (secțiunea [[documents-parties]]).
+
+Fiecare buton stă în același loc pe toate rândurile fișei, așa că butoanele se aliniază de sus în jos; un buton pe care nu-l are niciun rând al fișei — „Cotă” pe ecranul unei persoane sau al unei proprietăți, de pildă — nu-și mai ține locul, iar locul acela rămâne numelor.
 
 Sub rânduri stau „Asociază persoană”, „Asociază proprietate”, „Asociază act” și „Dezasociază”; pe un act, după ele, și „Înscrisuri citate” (secțiunea [[links-references]]). Pe un contract de vânzare-cumpărare, un act adițional sau un certificat de moștenitor, părțile stau în fișa „Părți”, grupate pe rol, iar „Legături” ține celelalte legături ale actului și, deasupra lor, un rând care spune câte părți sunt în „Părți” (secțiunea [[documents-parties]]).
 
@@ -109,7 +111,11 @@ Pe orice obiect stau două fișe care țin de felul în care lucrați cu el: „
 | Relevanță | Inactiv, Istoric, Actual, De perspectivă | unde stă obiectul în timp; un act vechi poate fi istoric și totuși foarte important |
 | Proveniență | de exemplu „Manual (Adaugă nou)”, „Interpretare AI”, „Fișier de coordonate (.txt)” | cum a intrat obiectul în arhivă |
 
-Sub „Proveniență”, „Istoric” ține fiecare schimbare, cu data ei. „Salvează”, pe linia lui „Istoric”, nu se poate apăsa până nu schimbați o valoare; după salvare scrie „✓ Salvat”. Salvarea adaugă o versiune a obiectului (secțiunea [[links-versions]]).
+„Clasificare” se citește ca o fișă de formular (secțiunea [[start-read-edit]]): cele trei valori stau una sub alta, fiecare cu numele deasupra, mic, bleumarin, și cu „Marchează ca verificat” — insigna cu bifa — alături; dedesubt scrie când s-a schimbat ultima oară. „Marchează ca verificat” notează că valoarea e încă bună, fără s-o schimbe.
+
+„Editează” — creionul —, în colțul fișei, deschide cele trei liste, una sub alta, cât fișa de late, iar fișa capătă conturul albastru. „Salvează”, sub ele, le scrie pe toate trei deodată și adaugă o versiune a obiectului (secțiunea [[links-versions]]); nu se poate apăsa până nu schimbați o valoare. „Renunță” sau Esc le pune la loc, fără să scrie nimic. O alegere dintr-o listă nu se salvează singură. Fără nicio valoare, fișa stă pe un singur rând — „Clasificare”, „necompletat” și „Adaugă”, care deschide listele. Pe o versiune veche fișa doar se citește.
+
+Sub „Proveniență”, „Istoric” ține fiecare schimbare, cu data ei.
 
 ### 7.4.2 Etichetele {#links-classify-tags}
 
@@ -140,9 +146,9 @@ Pe obiect, ștampila apare în „Etichete și grupuri”, la „Ștampile”, u
 
 ## 7.5 Versiunile și „Fă curentă” {#links-versions}
 
-Fiecare salvare a unui obiect păstrează o versiune nouă și o lasă neatinsă pe cea dinainte (secțiunea [[intro-versions]]). Versiunile se numără de la 0: un obiect abia creat arată „v 0” în dreapta-sus. „Salvează” nu se poate apăsa până nu schimbați ceva, așa că o versiune nouă apare doar când s-a schimbat ceva. După salvare rămâneți pe obiect.
+Fiecare salvare a unui obiect păstrează o versiune nouă și o lasă neatinsă pe cea dinainte (secțiunea [[intro-versions]]). Versiunile se numără de la 0: un obiect abia creat arată „v 0” în bara de sus, la stânga lui „Panouri” (secțiunea [[start-breadcrumb]]). „Salvează” nu se poate apăsa până nu schimbați ceva, așa că o versiune nouă apare doar când s-a schimbat ceva. După salvare rămâneți pe obiect.
 
-Când are mai multe versiuni, în dreapta-sus stă „N versiuni”, de exemplu „2 versiuni”. Apăsat, vă duce cu o versiune înapoi și arată „Versiunea anterioară”, „Versiunea următoare” și „Fă curentă” (Figura [[fig-links-versions]]). Pe o versiune veche:
+Când are mai multe versiuni, în același loc stă „N versiuni”, de exemplu „2 versiuni”. Apăsat, vă duce cu o versiune înapoi și arată „Versiunea anterioară”, „Versiunea următoare” și „Fă curentă” (Figura [[fig-links-versions]]). Pe o versiune veche:
 
 - câmpurile se pot doar citi, iar „Salvează” lipsește;
 - titlul ecranului arată tot numele curent, nu pe cel din versiunea pe care o citiți;
@@ -195,7 +201,7 @@ Un contract de vânzare-cumpărare citează certificatul de moștenitor din care
 
 Ați corectat prenumele unei persoane și ați salvat, apoi ați aflat că forma veche era cea bună.
 
-1. Pe ecranul persoanei, apăsați „N versiuni”, în dreapta-sus (secțiunea [[links-versions]]).
+1. Pe ecranul persoanei, apăsați „N versiuni”, în bara de sus (secțiunea [[links-versions]]).
 2. Cu „Versiunea anterioară” și „Versiunea următoare”, căutați versiunea cu prenumele vechi.
 3. Apăsați „Fă curentă” și apoi „OK”: versiunea aceea se copiază într-una nouă, curentă, iar cea cu prenumele corectat rămâne în istoric.
 `;

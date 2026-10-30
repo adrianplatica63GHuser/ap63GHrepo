@@ -13,7 +13,7 @@ The archive keeps in one place the persons the business works with, their proper
 
 The first screen after signing in is the **Dashboard** (Figure [[fig-dashboard]]): what was added in the last seven days, the objects whose metadata has not been updated for a long time, the documents that expire soon, and what was worked on recently.
 
-Each number in „Added in the last 7 days” stands under the mark of its kind — a person for persons, a building for firms, a map for properties, a page for documents —, the same marks as in the sidebar, on the objects' screens and in „Links”. In „Documents with limited validity”, each row starts with the document's status: red when it has expired, amber while it is inside the warning window, neutral after it; then comes the title and, under it, smaller, the type and the expiry date. A row opens its document.
+„Added in the last 7 days” and „Metadata not updated in over 90 days” look alike: one number for each kind of object — „Natural persons”, „Juridical persons”, „Properties”, „Documents” —, each under the mark of its kind — a person, a building, a map, a page —, the same marks as in the sidebar, on the objects' screens and in „Links”. A click on a row opens that kind's list. „Panels”, beside the title, chooses which tiles the dashboard shows, as on an object's screen (section [[start-tiles]]). In „Documents with limited validity”, each row starts with the document's status: red when it has expired, amber while it is inside the warning window, neutral after it; then comes the title and, under it, smaller, the type and the expiry date. A row opens its document.
 
 ![1.1 The dashboard, the first screen after signing in](dashboard.png){#fig-dashboard}
 

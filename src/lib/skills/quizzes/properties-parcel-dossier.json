@@ -16,11 +16,11 @@
           "section": "links-related",
           "ro": {
             "question": "Ciprian începe dosarul parcelei „Teren Bragadiru” și vrea să vadă într-un singur loc persoanele, proprietățile și actele legate de ea. Pe ecranul proprietății, cu fișele „Implicit”, nu le găsește. Ce face?",
-            "explanation": "Tot ce este legat de un obiect stă în fișa „Legături”. „Implicit” arată doar „Identificare cadastrală”, „Adresă”, „Hartă” și „Puncte de contur”, așa că „Legături” se bifează printre fișele din capul ecranului."
+            "explanation": "Tot ce este legat de un obiect stă în fișa „Legături”. „Implicit” arată doar „Identificare cadastrală”, „Adresă”, „Hartă” și „Puncte de contur”, așa că „Legături” se bifează printre fișele din „Panouri”."
           },
           "en": {
             "question": "Ciprian starts the dossier of the parcel „Teren Bragadiru” and wants to see in one place the persons, properties and documents linked to it. On the property's screen, with the „Implicit” (default) tiles, he does not find them. What does he do?",
-            "explanation": "Everything linked to an object stands in the „Legături” (links) tile. „Implicit” shows only „Identificare cadastrală”, „Adresă”, „Hartă” and „Puncte de contur”, so „Legături” is ticked among the tiles at the top of the screen."
+            "explanation": "Everything linked to an object stands in the „Legături” (links) tile. „Implicit” shows only „Identificare cadastrală”, „Adresă”, „Hartă” and „Puncte de contur”, so „Legături” is ticked among the tiles in „Panouri”."
           },
           "options": [
             {
@@ -32,8 +32,8 @@
             {
               "id": "o2",
               "correct": true,
-              "ro": "Bifează „Legături” printre fișele din capul ecranului.",
-              "en": "He ticks „Legături” among the tiles at the top of the screen."
+              "ro": "Bifează „Legături” printre fișele din „Panouri”.",
+              "en": "He ticks „Legături” among the tiles in „Panouri”."
             },
             {
               "id": "o3",

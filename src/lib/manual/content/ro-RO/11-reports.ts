@@ -36,6 +36,8 @@ Un clic pe un rând îl selectează și arată descrierea interacțiunii sub sub
 
 Pe ecranul persoanei, sub istoricul din fișa „Interacțiuni”, apăsați butonul „Înregistrează o interacțiune”. Formularul nu are căsuță pentru persoană: interacțiunea este a persoanei de pe ecran. Formularul are cinci secțiuni, fiecare cu un titlu urmat de o săgeată; un clic pe titlu deschide secțiunea, al doilea o închide. Când formularul se deschide, doar „Introducere manuală” este deschisă.
 
+Butoanele formularului sunt mici și au doar pictograme; numele fiecăruia îl citiți ținând mouse-ul pe el. Lângă titlul formularului, „Interacțiune nouă” — plusul — și „Editează selecția” — creionul — arată modul în care lucrați: cel de acum este apăsat, plin. La „Canal”, fiecare canal are pictograma lui din istoric — „Telefon”, receptorul, de pildă —, iar la „Sens”, „Primită” este o săgeată în jos, spre stânga, și „Trimisă” o săgeată în sus, spre dreapta. Alegerea făcută rămâne apăsată. Numele câmpurilor sunt mici, bleumarin, deasupra casetelor, iar „Descriere” este cât formularul de lată și crește odată cu textul.
+
 - „Conturi conectate” — Gmail și WhatsApp Business, fiecare „Neconectat”. Butoanele „Conectează” nu fac încă nimic: o interacțiune se înregistrează de mână, fără niciun cont conectat, iar „Nimic nu se trimite fără confirmare.”.
 - „Introducere manuală” — „Canal”, „Sens”, „Stare”, „Data și ora” (implicit acum), „Subiect” și „Descriere”. Subiectul este ce apare în istoric și ce se folosește la filtrare, deci păstrați-l scurt. Descrierea ține restul; întrebarea scrisă în ea se schimbă după canal — la „Telefon”, de exemplu, „Ce s-a convenit?”.
 - „Asocieri” — actele, etichetele și proprietatea legate de interacțiune (secțiunea [[reports-interactions-links]]).
@@ -48,10 +50,10 @@ Starea poate fi „Înregistrată”, „Așteaptă răspuns”, „Trimisă”,
 
 „Salvează” nu răspunde până când formularul nu este complet. Fără subiect, apare „Adaugă un subiect scurt. Acesta apare în istoric.”. Dacă greșeala este într-o secțiune închisă, salvarea o deschide și duce cursorul la câmpul de corectat.
 
-- „Salvează” — apare „Interacțiune înregistrată”, iar interacțiunea apare prima în istoricul persoanei.
-- „Salvează și adaugă” — salvează și lasă formularul gata pentru următoarea, cu același canal și același sens, subiectul gol.
-- „Renunță” — dacă ați scris ceva, întâi întreabă „Renunți la interacțiunea nesalvată?”: „Renunță la ea” golește formularul, „Continuă” vă lasă să scrieți mai departe.
-- Ctrl+S face același lucru ca „Salvează”.
+- „Salvează” — bifa — apare „Interacțiune înregistrată”, iar interacțiunea apare prima în istoricul persoanei.
+- „Salvează și adaugă” — bifa cu un plus — salvează și lasă formularul gata pentru următoarea, cu același canal și același sens, subiectul gol.
+- „Renunță” — un X — dacă ați scris ceva, întâi întreabă „Renunți la interacțiunea nesalvată?”: „Renunță la ea” golește formularul, „Continuă” vă lasă să scrieți mai departe.
+- Ctrl+S face același lucru ca „Salvează”; o spune și bula lui: „Salvează cu Ctrl+S”.
 
 „Restrânge” strânge formularul la loc, în butonul lui.
 
@@ -73,7 +75,7 @@ Nimic din ce ați scris nu se pierde fără întrebare. Dacă alegeți alt rând
 
 Dacă altcineva a salvat aceeași interacțiune înaintea dumneavoastră, salvarea nu trece peste el: apare „Această interacțiune a fost modificată de altcineva. O reîncarci sau o suprascrii?”. „Reîncarcă” aduce varianta lui; „Suprascrie” păstrează ce ați scris dumneavoastră.
 
-Ca să ștergeți o interacțiune, apăsați „Șterge interacțiunea”. Întrebarea „Ștergi interacțiunea?” numește persoana și data și spune „Actele legate rămân în arhivă; persoana și proprietatea nu se schimbă.”. „Șterge” o șterge definitiv: apare „Interacțiune ștearsă”, rândul dispare, iar formularul revine la „Interacțiune nouă”.
+Ca să ștergeți o interacțiune, apăsați „Șterge interacțiunea” — coșul, la capătul din dreapta al rândului de butoane. Întrebarea „Ștergi interacțiunea?” numește persoana și data și spune „Actele legate rămân în arhivă; persoana și proprietatea nu se schimbă.”. „Șterge” o șterge definitiv: apare „Interacțiune ștearsă”, rândul dispare, iar formularul revine la „Interacțiune nouă”.
 
 ### 11.1.5 „Exportă” {#reports-interactions-export}
 

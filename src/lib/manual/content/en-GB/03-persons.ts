@@ -69,14 +69,14 @@ On the list of natural persons, press „Add new Person” — the button on the
 
 | The tile | What it holds |
 |---|---|
-| „Identity” | „Last Name”, „First Name”, „Nickname”, „CNP”, „Gender”, „Date of Birth”, „Deceased” and „Date of death”, „Place of Birth”, „Citizenship”, „Professional type”. |
+| „Identity” | In rows: „Last Name” and „First Name”; „Nickname”, alone; „CNP” and „Citizenship”; „Date of Birth”, „Age” and „Gender”; „Deceased” and „Date of death”; „Place of Birth”, as wide as the tile; „Professional type”; „Notes”. |
 | „Identity documents” | On a saved person: their identity cards and passports, each a document of its own (section [[persons-identity-documents]]). It does not appear on „New Natural Person”: there is no person yet to hold them. |
 | „Contact” | The telephone numbers and e-mail addresses. |
 | „Addresses” | „Home Address” and „Correspondence Address”. |
 
 „Gender” is written as one letter: „M” or „F” — on the form, on the person's screen, in the list's „Gender” column and in the ID card's window. Under the mouse it shows the whole word, „Male” or „Female”. „Relationship to the business” takes the whole of its row in „Identity”, its ticks one after another. „Citizenship” sits beside „Place of Birth”.
 
-The ticks at the top of the screen show or hide tiles, as on any object (section [[start-tiles]]). A hidden tile does not lose its data: what you typed in it is saved all the same.
+The ticks in „Panels” show or hide tiles, as on any object (section [[start-tiles]]). A hidden tile does not lose its data: what you typed in it is saved all the same.
 
 ### 3.2.2 Saving {#persons-add-save}
 
@@ -202,7 +202,7 @@ A link is removed from „Links”: choose the row and press „Dissociate”.
 
 ### 3.5.2 The „Inheritance tree” tile {#persons-relatives-tree}
 
-The „Inheritance tree” tile, light blue, draws the person's family: parents and grandparents up to great-grandparents, children down to great-grandchildren, siblings and the husband or wife (Figure [[fig-persons-tree]]). If you do not see it, tick „Inheritance tree” at the top of the screen.
+The „Inheritance tree” tile, light blue, draws the person's family: parents and grandparents up to great-grandparents, children down to great-grandchildren, siblings and the husband or wife (Figure [[fig-persons-tree]]). If you do not see it, tick „Inheritance tree” in „Panels”.
 
 ![3.3 A person's „Inheritance tree” tile](persons-tree.png){#fig-persons-tree}
 
@@ -218,13 +218,13 @@ The ties added here are the same as those in „Links”: a relative linked in o
 
 ## 3.6 A person's interactions {#persons-interactions}
 
-The „Interactions” tile is the history of what has happened with the person: calls, e-mails, meetings. It starts at the right of the screen, light purple, is dragged elsewhere like any tile, and is ticked from the start; its tick is the last at the top of the screen. The tile is as tall as what it holds, as „Links” is: a person with no interactions shows only „No interaction logged with this person.” and the button under it; with a few, the history is as tall as their rows, and past a point it grows no more and scrolls. „Open in Interactions” takes you to the screen with all the interactions.
+The „Interactions” tile is the history of what has happened with the person: calls, e-mails, meetings. It starts at the right of the screen, light purple, is dragged elsewhere like any tile, and is ticked from the start; its tick is the last in „Panels”. The tile is as tall as what it holds, as „Links” is: a person with no interactions shows only „No interaction logged with this person.” and the button under it; with a few, the history is as tall as their rows, and past a point it grows no more and scrolls. „Open in Interactions” takes you to the screen with all the interactions.
 
 Under the history, the button „Log interaction” opens the form, already tied to this person:
 
 1. Press „Log interaction”.
-2. Choose the channel, for instance „Phone”, and type the subject.
-3. Press „Save”. „Interaction logged” appears, and the interaction appears in the history.
+2. Choose the channel, for instance „Phone” — the handset —, and type the subject. The form's buttons show only icons; you read their names by holding the mouse on them (section [[reports-interactions-log]]).
+3. Press „Save” — the tick. „Interaction logged” appears, and the interaction appears in the history.
 
 A click on an interaction in the history opens it in the form: change what is needed and press „Save changes”, or press „Delete interaction”, then „Delete”. „Collapse” folds the form away again.
 

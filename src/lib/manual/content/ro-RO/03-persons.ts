@@ -69,14 +69,14 @@ Pe lista persoanelor fizice, apăsați „Adaugă persoană” — butonul din d
 
 | Fișa | Ce cuprinde |
 |---|---|
-| „Identitate” | „Nume”, „Prenume”, „Poreclă”, „CNP”, „Gen”, „Data nașterii”, „Decedat” și „Data decesului”, „Locul nașterii”, „Cetățenie”, „Tip profesional”. |
+| „Identitate” | Pe rânduri: „Nume” și „Prenume”; „Poreclă”, singură; „CNP” și „Cetățenie”; „Data nașterii”, „Vârstă” și „Gen”; „Decedat” și „Data decesului”; „Locul nașterii”, cât fișa de lată; „Tip profesional”; „Note”. |
 | „Acte de identitate” | Pe o persoană salvată: cărțile ei de identitate și pașapoartele, fiecare un act al ei (secțiunea [[persons-identity-documents]]). Pe „Persoană fizică nouă” nu apare: nu există încă persoana care să le dețină. |
 | „Contact” | Telefoanele și adresele de e-mail. |
 | „Adrese” | „Adresă domiciliu” și „Adresă corespondență”. |
 
 „Gen” se scrie cu o literă: „M” sau „F” — în formular, pe ecranul persoanei, în coloana „Gen” a listei și în fereastra cărții de identitate. Ținut sub mouse, arată cuvântul întreg, „Masculin” sau „Feminin”. „Relația cu firma” ține tot rândul ei din „Identitate”, cu bifele una după alta. „Cetățenie” stă lângă „Locul nașterii”.
 
-Bifele din capul ecranului arată sau ascund fișe, ca pe orice obiect (secțiunea [[start-tiles]]). O fișă ascunsă nu își pierde datele: ce ați scris în ea se salvează la fel.
+Bifele din „Panouri” arată sau ascund fișe, ca pe orice obiect (secțiunea [[start-tiles]]). O fișă ascunsă nu își pierde datele: ce ați scris în ea se salvează la fel.
 
 ### 3.2.2 Salvarea {#persons-add-save}
 
@@ -202,7 +202,7 @@ O legătură se scoate din „Legături”: alegeți rândul și apăsați „De
 
 ### 3.5.2 Fișa „Arbore de moștenire” {#persons-relatives-tree}
 
-Fișa „Arbore de moștenire”, albastru deschis, desenează familia persoanei: părinții și bunicii până la străbunici, copiii până la strănepoți, frații și soțul sau soția (Figura [[fig-persons-tree]]). Dacă nu o vedeți, bifați „Arbore de moștenire” în capul ecranului.
+Fișa „Arbore de moștenire”, albastru deschis, desenează familia persoanei: părinții și bunicii până la străbunici, copiii până la strănepoți, frații și soțul sau soția (Figura [[fig-persons-tree]]). Dacă nu o vedeți, bifați „Arbore de moștenire” în „Panouri”.
 
 ![3.3 Fișa „Arbore de moștenire” a unei persoane](persons-tree.png){#fig-persons-tree}
 
@@ -218,13 +218,13 @@ Legăturile adăugate aici sunt aceleași cu cele din „Legături”: o rudă l
 
 ## 3.6 Interacțiunile unei persoane {#persons-interactions}
 
-Fișa „Interacțiuni” este istoricul a ce s-a petrecut cu persoana: telefoane, e-mailuri, întâlniri. Pornește din dreapta ecranului, mov deschis, se trage în alt loc ca orice fișă și este bifată de la început; bifa ei este ultima din capul ecranului. Fișa este cât ce ține, ca „Legături”: o persoană fără interacțiuni arată doar „Nicio interacțiune înregistrată cu această persoană.” și butonul de sub ea; cu câteva, istoricul are înălțimea rândurilor lor, iar de la o vreme nu mai crește și se derulează în el. „Deschide în „Interacțiuni”” duce la ecranul cu toate interacțiunile.
+Fișa „Interacțiuni” este istoricul a ce s-a petrecut cu persoana: telefoane, e-mailuri, întâlniri. Pornește din dreapta ecranului, mov deschis, se trage în alt loc ca orice fișă și este bifată de la început; bifa ei este ultima din „Panouri”. Fișa este cât ce ține, ca „Legături”: o persoană fără interacțiuni arată doar „Nicio interacțiune înregistrată cu această persoană.” și butonul de sub ea; cu câteva, istoricul are înălțimea rândurilor lor, iar de la o vreme nu mai crește și se derulează în el. „Deschide în „Interacțiuni”” duce la ecranul cu toate interacțiunile.
 
 Sub istoric, butonul „Înregistrează o interacțiune” deschide formularul, deja legat de persoana aceasta:
 
 1. Apăsați „Înregistrează o interacțiune”.
-2. Alegeți canalul, de exemplu „Telefon”, și scrieți subiectul.
-3. Apăsați „Salvează”. Apare „Interacțiune înregistrată”, iar interacțiunea apare în istoric.
+2. Alegeți canalul, de exemplu „Telefon” — receptorul —, și scrieți subiectul. Butoanele formularului au doar pictograme; numele lor îl citiți ținând mouse-ul pe ele (secțiunea [[reports-interactions-log]]).
+3. Apăsați „Salvează” — bifa. Apare „Interacțiune înregistrată”, iar interacțiunea apare în istoric.
 
 Un clic pe o interacțiune din istoric o deschide în formular: schimbați ce trebuie și apăsați „Salvează modificările”, sau apăsați „Șterge interacțiunea”, apoi „Șterge”. „Restrânge” strânge formularul la loc.
 

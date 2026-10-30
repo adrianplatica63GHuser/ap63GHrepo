@@ -437,8 +437,8 @@
             {
               "id": "o2",
               "correct": false,
-              "ro": "„Salvează”, pe linia lui „Istoric”, în „Clasificare”",
-              "en": "„Salvează”, on the line of „Istoric”, in „Clasificare”"
+              "ro": "„Editează”, pe fișa „Clasificare”",
+              "en": "„Editează”, on the „Clasificare” tile"
             },
             {
               "id": "o3",

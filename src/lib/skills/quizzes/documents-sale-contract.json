@@ -16,11 +16,11 @@
           "section": "documents-sale",
           "ro": {
             "question": "Ciprian deschide un contract de vânzare-cumpărare pe care l-a arhivat un coleg și nu vede nicăieri vânzătorii și cumpărătorii. Ce face întâi?",
-            "explanation": "Vânzătorii și cumpărătorii stau în fișa „Părți”, care nu se vede de la început, așa că trebuie bifată printre fișele din capul ecranului."
+            "explanation": "Vânzătorii și cumpărătorii stau în fișa „Părți”, care nu se vede de la început, așa că trebuie bifată printre fișele din „Panouri”."
           },
           "en": {
             "question": "Ciprian opens a sale contract that a colleague filed and cannot see the sellers and buyers anywhere. What does he do first?",
-            "explanation": "The sellers and buyers sit on the „Părți” (parties) tile, which is not shown at first, so it has to be ticked among the tiles at the head of the screen."
+            "explanation": "The sellers and buyers sit on the „Părți” (parties) tile, which is not shown at first, so it has to be ticked among the tiles in „Panouri”."
           },
           "options": [
             {
@@ -32,8 +32,8 @@
             {
               "id": "o2",
               "correct": true,
-              "ro": "Bifează fișa „Părți” printre fișele din capul ecranului.",
-              "en": "He ticks the „Părți” tile among the tiles at the head of the screen."
+              "ro": "Bifează fișa „Părți” printre fișele din „Panouri”.",
+              "en": "He ticks the „Părți” tile among the tiles in „Panouri”."
             },
             {
               "id": "o3",
@@ -210,7 +210,7 @@
           },
           "en": {
             "question": "Yesterday Ciprian ticked the „Părți” tile on Andrei Munteanu's contract. Today he opens another sale contract. What does he see?",
-            "explanation": "The tiles shown are chosen with the ticks at the head of the screen, and the choice is remembered per type; another contract of the same type therefore shows the „Părți” tile too."
+            "explanation": "The tiles shown are chosen with the ticks in „Panouri”, and the choice is remembered per type; another contract of the same type therefore shows the „Părți” tile too."
           },
           "options": [
             {

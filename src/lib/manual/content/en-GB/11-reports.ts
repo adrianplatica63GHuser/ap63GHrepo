@@ -36,6 +36,8 @@ A click on a row selects it and shows the interaction's description under its su
 
 On the person's screen, under the history in the „Interactions” tile, press the button „Log interaction”. The form has no box for the person: the interaction belongs to the person on the screen. The form has five sections, each a title followed by an arrow; a click on the title opens the section, a second click closes it. When the form opens, only „Manual entry” is open.
 
+The form's buttons are small and show only icons; you read each one's name by holding the mouse on it. Beside the form's title, „New interaction” — the plus — and „Edit selected” — the pencil — show the mode you are working in: the current one is pressed, filled. Under „Channel”, each channel has its icon from the history — „Phone”, the handset, for instance —, and under „Direction”, „Inbound” is an arrow down and to the left, „Outbound” an arrow up and to the right. The choice made stays pressed. The field names are small, in navy, above their boxes, and „Description” is as wide as the form and grows with its text.
+
 - „Connected accounts” — Gmail and WhatsApp Business, each „Not connected”. The „Connect” buttons do nothing yet: an interaction is recorded by hand, with no account connected, and „Nothing is sent without confirmation.”.
 - „Manual entry” — „Channel”, „Direction”, „Status”, „Date and time” (now, by default), „Subject” and „Description”. The subject is what appears in the history and what filtering uses, so keep it short. The description holds the rest; the question written in it changes with the channel — for „Phone”, for instance, „What was agreed?”.
 - „Related” — the documents, tags and property linked to the interaction (section [[reports-interactions-links]]).
@@ -48,10 +50,10 @@ The status can be „Logged”, „Needs reply”, „Sent”, „Completed” o
 
 „Save” does not respond until the form is complete. With no subject, „Add a short subject. This is what the grid will show.” appears. When the mistake is in a closed section, saving opens it and puts the cursor on the field to correct.
 
-- „Save” — „Interaction logged” appears, and the interaction appears first in the person's history.
-- „Save and new” — saves and leaves the form ready for the next one, with the same channel and the same direction, the subject empty.
-- „Cancel” — if you typed something, it first asks „Discard the interaction you have not saved?”: „Discard it” empties the form, „Keep editing” lets you carry on typing.
-- Ctrl+S does the same as „Save”.
+- „Save” — the tick — „Interaction logged” appears, and the interaction appears first in the person's history.
+- „Save and new” — the tick with a plus — saves and leaves the form ready for the next one, with the same channel and the same direction, the subject empty.
+- „Cancel” — an X — if you typed something, it first asks „Discard the interaction you have not saved?”: „Discard it” empties the form, „Keep editing” lets you carry on typing.
+- Ctrl+S does the same as „Save”; its hint says so too: „Save with Ctrl+S”.
 
 „Collapse” folds the form back into its button.
 
@@ -73,7 +75,7 @@ Nothing you typed is lost without a question. If you choose another row with uns
 
 If someone else saved the same interaction before you, your save does not go over theirs: „This interaction was updated by someone else. Reload, or overwrite?” appears. „Reload” brings their version; „Overwrite” keeps what you typed.
 
-To delete an interaction, press „Delete interaction”. The question „Delete the interaction?” names the person and the date and says „Linked documents stay in the archive; the person and the property do not change.”. „Delete” deletes it for good: „Interaction deleted” appears, the row goes, and the form returns to „New interaction”.
+To delete an interaction, press „Delete interaction” — the bin, at the right-hand end of the row of buttons. The question „Delete the interaction?” names the person and the date and says „Linked documents stay in the archive; the person and the property do not change.”. „Delete” deletes it for good: „Interaction deleted” appears, the row goes, and the form returns to „New interaction”.
 
 ### 11.1.5 „Export” {#reports-interactions-export}
 

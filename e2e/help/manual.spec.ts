@@ -291,7 +291,7 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
 
     // Figura 1.1 — the dashboard. Its lists name records of the whole archive: blurred.
     await page.goto("/");
-    await expect(page.getByText(S.recentActivity, { exact: false }).first()).toBeVisible({ timeout: 60_000 });
+    await expect(page.locator('[data-panel="recent-activity"]')).toBeVisible({ timeout: 60_000 }); // 41.12: the tile, not its tick box behind „Panouri" (41.02)
     await page.waitForTimeout(1500);
     // The dashboard has no <main>: its four tiles are [data-panel] sections, and two of them list records.
     await page.evaluate((f) => {
@@ -327,7 +327,7 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     // Figura 2.2 — 40.27: the dashboard with „Noapte" ticked (40.19, named so in 40.28); its lists blurred as in Figura 1.1. The
     // look is put back to light at once, so every other figure is light.
     await page.goto("/");
-    await expect(page.getByText(S.recentActivity, { exact: false }).first()).toBeVisible({ timeout: 60_000 });
+    await expect(page.locator('[data-panel="recent-activity"]')).toBeVisible({ timeout: 60_000 }); // 41.12: the tile, not its tick box behind „Panouri" (41.02)
     // „Noapte" itself, as the reader does it — the moon in the sidebar's header since 40.95 (the account menu's 40.59–
     // 40.94; the box under „GA40" before): pressed, it writes the look's cookie and the class on <html>.
     await page.locator('[data-sidebar-look] [data-segmented="theme"] [data-segment="dark"]').click();
@@ -349,6 +349,8 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     await page.goto(`/natural-persons/${person.id}`);
     const bar = page.getByRole("navigation", { name: S.breadcrumb }).filter({ visible: true });
     await expect(bar).toContainText(person.label.split(" ")[0], { timeout: 60_000 });
+    // 41.08: the versions and „Panouri” join the bar once the page is interactive (a portal): wait for them.
+    await expect(bar.locator("[data-tiles-menu-button]")).toBeVisible({ timeout: 30_000 });
     await still(page);
     await bar.screenshot({ path: `${dir}/breadcrumb.png` });
 

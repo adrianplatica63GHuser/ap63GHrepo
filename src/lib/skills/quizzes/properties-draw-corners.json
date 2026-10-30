@@ -605,11 +605,11 @@
           "section": "properties-example-corner",
           "ro": {
             "question": "Ați corectat un colț și ați salvat proprietatea. Un coleg întreabă unde era colțul înainte. Unde îl găsiți?",
-            "explanation": "Fiecare salvare adaugă o versiune, iar versiunea de dinainte păstrează colțul vechi; o citiți din „… versiuni”, în capul ecranului."
+            "explanation": "Fiecare salvare adaugă o versiune, iar versiunea de dinainte păstrează colțul vechi; o citiți din „… versiuni”, în bara de sus."
           },
           "en": {
             "question": "You corrected a corner and saved the property. A colleague asks where the corner was before. Where do you find it?",
-            "explanation": "Every save adds a version, and the version before keeps the old corner; you read it from „… versiuni” (versions), at the top of the screen."
+            "explanation": "Every save adds a version, and the version before keeps the old corner; you read it from „… versiuni” (versions), in the top bar."
           },
           "options": [
             {

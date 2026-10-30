@@ -380,8 +380,8 @@
             {
               "id": "o3",
               "correct": false,
-              "ro": "Bifează „Toate” în capul ecranului, care pune toate versiunile alăturat",
-              "en": "Ticks „Toate” at the top of the screen, which puts all versions side by side"
+              "ro": "Bifează „Toate” în „Panouri”, care pune toate versiunile alăturat",
+              "en": "Ticks „Toate” in „Panouri”, which puts all versions side by side"
             },
             {
               "id": "o4",
@@ -780,12 +780,12 @@
           "id": "b9",
           "section": "links-classify-classification",
           "ro": {
-            "question": "Ciprian schimbă „Importanță” a unui teren din „Medie” în „Ridicată” și apasă „Salvează” pe linia lui „Istoric”. Ce urmă lasă schimbarea?",
-            "explanation": "După salvare scrie „✓ Salvat”; „Istoric” ține fiecare schimbare, cu data ei, iar salvarea adaugă o versiune a obiectului."
+            "question": "Ciprian deschide „Clasificare” unui teren cu „Editează”, schimbă „Importanță” din „Medie” în „Ridicată” și apasă „Salvează”. Ce urmă lasă schimbarea?",
+            "explanation": "După salvare fișa se citește din nou, cu „Ridicată”; „Istoric” ține fiecare schimbare, cu data ei, iar salvarea adaugă o versiune a obiectului."
           },
           "en": {
-            "question": "Ciprian changes a plot's „Importanță” (importance) from „Medie” to „Ridicată” and presses „Salvează” on the line of „Istoric”. What trace does the change leave?",
-            "explanation": "After the save it reads „✓ Salvat”; „Istoric” keeps every change, with its date, and the save adds a version of the object."
+            "question": "Ciprian opens a plot's „Clasificare” with „Editează” (edit), changes „Importanță” (importance) from „Medie” to „Ridicată” and presses „Salvează” (save). What trace does the change leave?",
+            "explanation": "After the save the tile reads again, with „Ridicată”; „Istoric” keeps every change, with its date, and the save adds a version of the object."
           },
           "options": [
             {

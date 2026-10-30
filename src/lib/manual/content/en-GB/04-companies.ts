@@ -47,7 +47,7 @@ On the list of firms, press „Add new Juridical Person” — a + and a buildin
 
 The only required field is „Name”. A firm that has only its name is a real object and is completed later. When you press „Save”, at the bottom, the application takes you back to the list, where the new firm stands at the top, marked „New!”. You open it with „Open”.
 
-The screen of an open firm carries its name and its version at the top („v 0” for a firm just created), and its tiles below (Figure [[fig-companies-record]]):
+The screen of an open firm carries its name at the top and its tiles below; its version („v 0” for a firm just created) stands in the top bar, beside „Panels” (Figure [[fig-companies-record]]):
 
 | Tile | What it holds | Shown from the start |
 |---|---|---|
@@ -89,7 +89,7 @@ The „Addresses” tile holds „Registered Address” and „Correspondence Ad
 
 ### 4.2.4 Editing and the history {#companies-add-edit}
 
-On the firm's screen, press „Edit” on the tile to change, change what you need and press „Save”, under its fields (section [[start-read-edit]]). The screen stays on the firm, and the tile is read again. Every save makes a new version: the top of the screen goes from „v 0” to „v 1” and shows how many versions the firm has, for instance „2 versions”.
+On the firm's screen, press „Edit” on the tile to change, change what you need and press „Save”, under its fields (section [[start-read-edit]]). The screen stays on the firm, and the tile is read again. Every save makes a new version: the top bar goes from „v 0” to „v 1” and shows how many versions the firm has, for instance „2 versions”.
 
 With „Previous version” and „Next version” you see the firm as it was at each save. The firm's phone and e-mail are kept in the history too: on the version in which they were written, their fields are framed in green, the mark of a value added then. On versions and „Make Current”, see section [[links-versions]].
 

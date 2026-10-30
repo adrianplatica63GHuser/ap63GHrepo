@@ -61,7 +61,7 @@ The rows always come in the same order — natural persons, juridical persons, p
 - a property: the name and, when the link has a role, the role;
 - a document: the short label and the document's type.
 
-The role — for a document, the type — stands in a small tag at the row's right edge, so the tags line up top to bottom, and a long name is cut with three dots before its role is.
+The role — for a document, the type — stands in a small tag at the row's right edge, so the tags line up top to bottom. The name takes all the room up to the tag or, with none, up to the buttons: a long name is cut with three dots only there, and holding the mouse on it you read it whole.
 
 The name on a row is a link: a click on it opens the linked object read-only, and „Modify”, at the bottom of its screen, makes it editable.
 
@@ -70,6 +70,8 @@ A row can carry a few buttons, faint while the mouse is elsewhere and full on th
 - „Relationship” shows, in a bubble, what links the two objects: the person's role in the document (for instance Role: „Vânzător”) or the sentence of a link with a direction (section [[links-references]]). A click outside the bubble or the Esc key closes it.
 - „Preview” opens it alongside, without leaving the screen (section [[start-preview]]).
 - „Share”, in orange, holds a person's share in a document (section [[documents-parties]]).
+
+Each button stands in the same place on every row of the tile, so the buttons line up top to bottom; a button that no row of the tile has — „Share” on a person's or a property's screen, for instance — no longer keeps its place, and that room goes to the names.
 
 Under the rows are „Associate person”, „Associate property”, „Associate document” and „Dissociate”; on a document, after them, also „Cited instruments” (section [[links-references]]). On a sale contract, an addendum or a certificate of inheritance, the parties stand in the „Parties” tile, grouped by role, and „Links” holds the document's other links and, above them, a line saying how many parties are in „Parties” (section [[documents-parties]]).
 
@@ -109,7 +111,11 @@ Every object has two tiles that concern how you work with it: „Classification�
 | Relevance | Inactive, Historical, Current, Future | where the object stands in time; an old deed can be historical and still very important |
 | Provenance | for instance „Manual (Add new)”, „AI interpretation”, „Coordinate file (.txt)” | how the object came into the archive |
 
-Under „Provenance”, „History” keeps every change, with its date. „Save”, on the line of „History”, cannot be pressed until you change a value; after the save it reads „✓ Saved”. The save adds a version of the object (section [[links-versions]]).
+„Classification” is read like a form tile (section [[start-read-edit]]): the three values stand one under another, each with its name above it, small, in navy, and with „Mark as reviewed” — the badge with the tick — beside it; under it, when it last changed. „Mark as reviewed” notes that the value is still right, without changing it.
+
+„Edit” — the pencil —, in the tile's corner, opens the three lists, one under another, as wide as the tile, and the tile gets the blue outline. „Save”, under them, writes all three at once and adds a version of the object (section [[links-versions]]); it cannot be pressed until you change a value. „Cancel” or Esc puts them back, writing nothing. A choice from a list is not saved by itself. With no value at all, the tile stands on one line — „Classification”, „not filled in” and „Add”, which opens the lists. On an old version the tile is only read.
+
+Under „Provenance”, „History” keeps every change, with its date.
 
 ### 7.4.2 Tags {#links-classify-tags}
 
@@ -140,9 +146,9 @@ On the object, the stamp appears in „Tags and groups”, under „Stamps”, w
 
 ## 7.5 Versions and „Make Current” {#links-versions}
 
-Every save of an object keeps a new version and leaves the one before untouched (section [[intro-versions]]). Versions are counted from 0: an object just created shows „v 0” at the top right. „Save” cannot be pressed until you change something, so a new version appears only when something has changed. After the save you stay on the object.
+Every save of an object keeps a new version and leaves the one before untouched (section [[intro-versions]]). Versions are counted from 0: an object just created shows „v 0” in the top bar, left of „Panels” (section [[start-breadcrumb]]). „Save” cannot be pressed until you change something, so a new version appears only when something has changed. After the save you stay on the object.
 
-When it has several versions, the top right shows „N versions”, for instance „2 versions”. Pressed, it takes you one version back and shows „Previous version”, „Next version” and „Make Current” (Figure [[fig-links-versions]]). On an old version:
+When it has several versions, the same place shows „N versions”, for instance „2 versions”. Pressed, it takes you one version back and shows „Previous version”, „Next version” and „Make Current” (Figure [[fig-links-versions]]). On an old version:
 
 - the fields can only be read, and „Save” is missing;
 - the screen's title still shows the current name, not the one in the version you are reading;
@@ -195,7 +201,7 @@ A sale contract cites the certificate of inheritance the seller's right comes fr
 
 You corrected a person's first name and saved, then learned that the old form was the right one.
 
-1. On the person's screen, press „N versions”, at the top right (section [[links-versions]]).
+1. On the person's screen, press „N versions”, in the top bar (section [[links-versions]]).
 2. With „Previous version” and „Next version”, find the version with the old first name.
 3. Press „Make Current” and then „OK”: that version is copied into a new, current one, and the one with the corrected first name stays in the history.
 `;

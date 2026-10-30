@@ -167,11 +167,11 @@
           "id": "a5",
           "section": "links-classify-classification",
           "ro": {
-            "question": "Pe un act, schimbați „Relevanță” din „Actual” în „Istoric” și apăsați „Salvează”, pe linia lui „Istoric”. Ce s-a mai întâmplat cu actul, în afară de noua valoare?",
+            "question": "Pe un act, deschideți „Clasificare” cu „Editează”, schimbați „Relevanță” din „Actual” în „Istoric” și apăsați „Salvează”. Ce s-a mai întâmplat cu actul, în afară de noua valoare?",
             "explanation": "Salvarea din „Clasificare” adaugă o versiune a obiectului, iar „Istoric” păstrează schimbarea, cu data ei."
           },
           "en": {
-            "question": "On a document, you change „Relevanță” from „Actual” (current) to „Istoric” (historical) and press „Salvează” (save), on the line of „Istoric”. What else happened to the document, besides the new value?",
+            "question": "On a document, you open „Clasificare” with „Editează” (edit), change „Relevanță” from „Actual” (current) to „Istoric” (historical) and press „Salvează” (save). What else happened to the document, besides the new value?",
             "explanation": "The save in „Clasificare” adds a version of the object, and „Istoric” keeps the change, with its date."
           },
           "options": [
@@ -206,11 +206,11 @@
           "section": "links-classify-tags",
           "ro": {
             "question": "Pe același teren adăugați eticheta „litigiu” și schimbați „Importanță” în „Ridicată”. Care dintre cele două schimbări are nevoie de „Salvează”?",
-            "explanation": "Eticheta se salvează pe loc, fără „Salvează”; în „Clasificare”, „Salvează” de pe linia lui „Istoric” scrie valoarea schimbată."
+            "explanation": "Eticheta se salvează pe loc, fără „Salvează”; în „Clasificare”, deschisă cu „Editează”, „Salvează” de sub liste scrie valoarea schimbată."
           },
           "en": {
             "question": "On the same plot you add the tag „litigiu” (dispute) and change „Importanță” to „Ridicată”. Which of the two changes needs „Salvează”?",
-            "explanation": "The tag is saved at once, without „Salvează”; in „Clasificare”, „Salvează” on the line of „Istoric” writes the changed value."
+            "explanation": "The tag is saved at once, without „Salvează”; in „Clasificare”, opened with „Editează” (edit), „Salvează” under the lists writes the changed value."
           },
           "options": [
             {
@@ -546,12 +546,12 @@
           "id": "b7",
           "section": "links-classify-classification",
           "ro": {
-            "question": "Deschideți fișa „Clasificare” a unei persoane, dar „Salvează”, pe linia lui „Istoric”, nu se poate apăsa. De ce?",
-            "explanation": "„Salvează” din „Clasificare” nu se poate apăsa până nu schimbați o valoare; după salvare scrie „✓ Salvat”."
+            "question": "Deschideți fișa „Clasificare” a unei persoane cu „Editează”, dar „Salvează”, sub cele trei liste, nu se poate apăsa. De ce?",
+            "explanation": "„Salvează” din „Clasificare” nu se poate apăsa până nu schimbați o valoare; după salvare fișa se citește din nou."
           },
           "en": {
-            "question": "You open a person's „Clasificare” tile, but „Salvează”, on the line of „Istoric”, cannot be pressed. Why?",
-            "explanation": "„Salvează” in „Clasificare” cannot be pressed until you change a value; after the save it reads „✓ Salvat”."
+            "question": "You open a person's „Clasificare” tile with „Editează” (edit), but „Salvează”, under the three lists, cannot be pressed. Why?",
+            "explanation": "„Salvează” in „Clasificare” cannot be pressed until you change a value; after the save the tile reads again."
           },
           "options": [
             {

@@ -537,8 +537,8 @@
             {
               "id": "o3",
               "correct": true,
-              "ro": "Bifează fișa „Părți” din capul ecranului.",
-              "en": "He ticks the „Părți” tile at the top of the screen."
+              "ro": "Bifează fișa „Părți” din „Panouri”.",
+              "en": "He ticks the „Părți” tile in „Panouri”."
             },
             {
               "id": "o4",

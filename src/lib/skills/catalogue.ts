@@ -147,8 +147,8 @@ export const SKILLS: readonly Skill[] = [
       en: "Sign in and find your way through the sidebar",
     },
     description: {
-      ro: "Te conectezi, citești tabloul de bord, deschizi orice ecran din bara laterală, te întorci cu „Înapoi” și revii cu „Înainte”, regăsești ce ai văzut în „Recente”; din capul barei laterale alegi limba și „Noapte”, iar din meniul contului ieși.",
-      en: "Sign in, read the dashboard, open any screen from the sidebar, go back with „Înapoi” and return with „Înainte”, find what you saw in „Recente”; at the top of the sidebar choose the language and „Noapte”, and sign out from the account menu.",
+      ro: "Te conectezi, citești tabloul de bord — cele patru feluri de obiecte în fișele lui —, deschizi orice ecran din bara laterală, te întorci cu „Înapoi” și revii cu „Înainte”, regăsești ce ai văzut în „Recente”; din capul barei laterale alegi limba și „Noapte”, iar din meniul contului ieși.",
+      en: "Sign in, read the dashboard — the four kinds of object on its tiles —, open any screen from the sidebar, go back with „Înapoi” and return with „Înainte”, find what you saw in „Recente”; at the top of the sidebar choose the language and „Noapte”, and sign out from the account menu.",
     },
     predecessors: [],
     screens: ["dashboard"],
@@ -415,8 +415,8 @@ export const SKILLS: readonly Skill[] = [
     path: "workspace",
     name: { ro: "Înregistrează de mână o interacțiune", en: "Log an interaction by hand" },
     description: {
-      ro: "Notezi un apel telefonic, o întâlnire sau un mesaj cu o persoană, fără niciun cont conectat, în cele cinci secțiuni ale formularului.",
-      en: "Record a phone call, a meeting or a message with a person, with no account connected, in the form's five sections.",
+      ro: "Notezi un apel telefonic, o întâlnire sau un mesaj cu o persoană, fără niciun cont conectat, în cele cinci secțiuni ale formularului, cu butoanele lui mici, cu pictograme.",
+      en: "Record a phone call, a meeting or a message with a person, with no account connected, in the form's five sections, with its small icon buttons.",
     },
     predecessors: [],
     screens: ["interactions"],
@@ -591,8 +591,8 @@ export const SKILLS: readonly Skill[] = [
     path: "links",
     name: { ro: "Clasifică un obiect și pune-i etichete", en: "Classify an object and tag it" },
     description: {
-      ro: "Alegi importanța, relevanța și proveniența în „Clasificare”, pui și scoți etichete în „Etichete și grupuri”, găsești obiectele după o etichetă și, în norul etichetelor, redenumești și unești etichete.",
-      en: "Choose importance, relevance and provenance in „Clasificare”, add and remove tags in „Etichete și grupuri”, find objects by a tag and, in the tag cloud, rename and merge tags.",
+      ro: "Alegi importanța, relevanța și proveniența în „Clasificare”, cu „Editează” și „Salvează”, pui și scoți etichete în „Etichete și grupuri”, găsești obiectele după o etichetă și, în norul etichetelor, redenumești și unești etichete.",
+      en: "Choose importance, relevance and provenance in „Clasificare”, with „Editează” and „Salvează”, add and remove tags in „Etichete și grupuri”, find objects by a tag and, in the tag cloud, rename and merge tags.",
     },
     predecessors: ["workspace-read-a-record-screen", "links-read-related-tile"],
     screens: ["admin-tags"],

@@ -438,11 +438,11 @@
           "section": "links-classify-classification",
           "ro": {
             "question": "Care dintre acestea adaugă o versiune nouă a obiectului?",
-            "explanation": "„Salvează”, pe linia lui „Istoric” din „Clasificare”, se apasă după ce schimbați o valoare, iar salvarea adaugă o versiune a obiectului."
+            "explanation": "„Salvează”, sub listele din „Clasificare” deschise cu „Editează”, se apasă după ce schimbați o valoare, iar salvarea adaugă o versiune a obiectului."
           },
           "en": {
             "question": "Which of these adds a new version of the object?",
-            "explanation": "„Salvează”, on the line of „Istoric” in „Clasificare”, is pressed after you change a value, and the save adds a version of the object."
+            "explanation": "„Salvează”, under the lists of „Clasificare” opened with „Editează”, is pressed after you change a value, and the save adds a version of the object."
           },
           "options": [
             {

@@ -403,7 +403,7 @@
             "explanation": "Alegerea fișelor se ține minte pentru fiecare tip: un contract de vânzare-cumpărare și un plan își păstrează fiecare aranjamentul lui."
           },
           "en": {
-            "question": "On a sale contract you chose which tiles are shown, with the ticks at the head of the screen. Then you open a plan. Which tiles do you see?",
+            "question": "On a sale contract you chose which tiles are shown, with the ticks in „Panouri”. Then you open a plan. Which tiles do you see?",
             "explanation": "The choice of tiles is remembered per type: a sale contract and a plan each keep their own arrangement."
           },
           "options": [

@@ -203,11 +203,11 @@
           "id": "a6",
           "section": "links-classify-classification",
           "ro": {
-            "question": "Ciprian schimbă „Importanță” unui act din „Medie” în „Ridicată” și apasă „Salvează” pe linia lui „Istoric”. Apoi se răzgândește. Unde găsește valoarea de dinainte, ca s-o facă din nou curentă?",
+            "question": "Ciprian deschide „Clasificare” unui act cu „Editează”, schimbă „Importanță” din „Medie” în „Ridicată” și apasă „Salvează”. Apoi se răzgândește. Unde găsește valoarea de dinainte, ca s-o facă din nou curentă?",
             "explanation": "Salvarea din „Clasificare” adaugă o versiune a obiectului; versiunea de dinainte, cu „Medie”, se poate face din nou curentă cu „Fă curentă”."
           },
           "en": {
-            "question": "Ciprian changes a document's „Importanță” from „Medie” to „Ridicată” and presses „Salvează” on the line of „Istoric”. Then he changes his mind. Where does he find the earlier value, to make it current again?",
+            "question": "Ciprian opens a document's „Clasificare” with „Editează” (edit), changes „Importanță” from „Medie” to „Ridicată” and presses „Salvează”. Then he changes his mind. Where does he find the earlier value, to make it current again?",
             "explanation": "The save in „Clasificare” adds a version of the object; the version before, with „Medie”, can be made current again with „Fă curentă”."
           },
           "options": [

@@ -158,8 +158,8 @@
             {
               "id": "o4",
               "correct": false,
-              "ro": "Fișa „Arbore de moștenire” nu era bifată în capul ecranului.",
-              "en": "The „Arbore de moștenire” tile was not ticked at the top of the screen."
+              "ro": "Fișa „Arbore de moștenire” nu era bifată în „Panouri”.",
+              "en": "The „Arbore de moștenire” tile was not ticked in „Panouri”."
             }
           ]
         },
@@ -325,11 +325,11 @@
           "section": "persons-relatives-tree",
           "ro": {
             "question": "Pe ecranul lui Mihai Popescu, Ciprian vrea să-i lege tatăl din fișa „Arbore de moștenire”. Ce apasă ca să se deschidă panoul legăturilor de familie?",
-            "explanation": "Sub desen, butonul „Adaugă sau scoate” deschide panoul legăturilor de familie; numele lui întreg, „Adaugă sau scoate o rudă”, apare când țineți mouse-ul pe el. Dacă fișa nu se vede, bifați „Arbore de moștenire” în capul ecranului."
+            "explanation": "Sub desen, butonul „Adaugă sau scoate” deschide panoul legăturilor de familie; numele lui întreg, „Adaugă sau scoate o rudă”, apare când țineți mouse-ul pe el. Dacă fișa nu se vede, bifați „Arbore de moștenire” în „Panouri”."
           },
           "en": {
             "question": "On Mihai Popescu's screen, Ciprian wants to link his father from the „Arbore de moștenire” tile. What does he press so that the panel of family ties opens?",
-            "explanation": "Under the drawing, the button „Adaugă sau scoate” (add or remove) opens the panel of family ties; its whole name, „Adaugă sau scoate o rudă” (add or remove a relative), shows when you rest the mouse on it. If the tile is not showing, tick „Arbore de moștenire” at the top of the screen."
+            "explanation": "Under the drawing, the button „Adaugă sau scoate” (add or remove) opens the panel of family ties; its whole name, „Adaugă sau scoate o rudă” (add or remove a relative), shows when you rest the mouse on it. If the tile is not showing, tick „Arbore de moștenire” in „Panouri”."
           },
           "options": [
             {
@@ -500,7 +500,7 @@
               "id": "o3",
               "correct": false,
               "ro": "Apasă „Toate” în „Panouri”.",
-              "en": "He presses „Toate” among the ticks at the top of the screen."
+              "en": "He presses „Toate” among the ticks in „Panouri”."
             },
             {
               "id": "o4",
