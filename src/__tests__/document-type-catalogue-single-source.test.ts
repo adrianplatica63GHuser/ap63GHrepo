@@ -233,12 +233,22 @@ describe("the four act types are one list in four files", () => {
     );
   });
 
-  it("gives the migration chain the same name AND sort_order as the seed", () => {
+  /**
+   * Slice 41.13 (FU-382): the sort_order the four carry in Adrian's database, which the seed now writes — 0, the
+   * column's default, since `add-document-types.sql` created them. migration_081 keeps 40-43 (it is applied, and
+   * history), so verify-rebuild baselines these four rows on both sides: eight lines, decided, not drifted into.
+   */
+  const ADRIAN_SORT_ORDER: Readonly<Record<string, number>> = {
+    ACT_ADITIONAL: 0, ACT_ALIPIRE: 0, ACT_DEZLIPIRE: 0, ACT_DEZMEMBRARE: 0,
+  };
+
+  it("gives the migration chain the same name AND sort_order as the seed (Adrian's sort_orders named)", () => {
     const seeded = new Map(seededDocumentTypes().map((r) => [r.key, r]));
+    expect(Object.keys(ADRIAN_SORT_ORDER).sort()).toEqual(migratedActTypes().map((r) => r.key).sort());
     const wrong = migratedActTypes()
       .filter((row) => {
         const seed = seeded.get(row.key);
-        return !seed || seed.name !== row.name || seed.sortOrder !== row.sortOrder;
+        return !seed || seed.name !== row.name || seed.sortOrder !== (ADRIAN_SORT_ORDER[row.key] ?? row.sortOrder);
       })
       .map((row) => {
         const seed = seeded.get(row.key);

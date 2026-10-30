@@ -15,7 +15,6 @@ import type { ManualLocale } from "@/lib/manual/format";
 export const MANUAL_QUOTES_NOT_LABELS: Readonly<Record<ManualLocale, Readonly<Record<string, string>>>> = {
   "ro-RO": {
     "generic — de înlocuit cu instituția exactă": "the note migration_115 writes on an institution's generic juridical person (Slice #39.71) — data, written by the migration, not in the reference SQL",
-    "Consiliu Local": "a juridical person type the archive holds (added in Reference Data), not in the rebuild's seed — until #39.70 it passed as a natural-person type that migration_114 removed",
     "secțiunea 2.5": "an example of the manual's own cross-reference, not a label",
     "Figura 2.3": "an example of the manual's own cross-reference, not a label",
     "Ion Popescu": "an invented person's name in an example",
@@ -72,7 +71,6 @@ export const MANUAL_QUOTES_NOT_LABELS: Readonly<Record<ManualLocale, Readonly<Re
   },
   "en-GB": {
     "generic — de înlocuit cu instituția exactă": "the note migration_115 writes on an institution's generic juridical person (Slice #39.71) — data, written by the migration, not in the reference SQL",
-    "Consiliu Local": "a juridical person type the archive holds (added in Reference Data), not in the rebuild's seed — until #39.70 it passed as a natural-person type that migration_114 removed",
     "section 2.5": "an example of the manual's own cross-reference, not a label",
     "Figure 2.3": "an example of the manual's own cross-reference, not a label",
     "Ion Popescu": "an invented person's name in an example",

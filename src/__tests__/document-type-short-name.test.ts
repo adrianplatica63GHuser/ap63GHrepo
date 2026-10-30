@@ -12,7 +12,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { LIST_META } from "@/lib/admin/value-lists/config";
-import { derivedShortName, shortNameKey } from "@/lib/documents/type-short-name";
+import { documentTypeShortName, shortNameKey } from "@/lib/documents/type-short-name";
 
 const read = (rel: string) => fs.readFileSync(path.join(process.cwd(), rel), "utf8");
 const MIGRATION = read("src/db/migration_092_document_type_short_name.sql");
@@ -34,12 +34,21 @@ const pairsOf = (block: string) => [...block.matchAll(/\('([A-Z_]+)',\s+'([^']+)
 const SIX = pairsOf(MIGRATION_103.slice(MIGRATION_103.indexOf("-- SHORT NAMES (Slice #38.54)."), MIGRATION_103.indexOf(" WHERE t.key = s.key;")));
 const SIX_BY_KEY = Object.fromEntries(SIX.map((s) => [s.key, s.shortName]));
 /**
- * Slice 41.03 (FU-374): the short name Adrian gave Plan Parcelar when he recreated the type in Date de referință — the
- * reference data follows his database, the migrations stay history.
+ * The short names Adrian set in Date de referință — the reference data follows his database, the migrations stay
+ * history. Slice 41.03 (FU-374): Plan Parcelar, when he recreated the type. Slice 41.13 (FU-382): the six he had
+ * renamed, read from his database on 2026-10-30.
  */
-const ADRIAN_41_03: Readonly<Record<string, string>> = { PLAN_PARCELAR: "Plan Parcelar" };
-/** The seed as the database holds it after every migration: 092's list with 103's six in their places (and 41.03's). */
-const SEED = pairsOf(seedBlock(MIGRATION)).map((s) => ({ key: s.key, shortName: ADRIAN_41_03[s.key] ?? SIX_BY_KEY[s.key] ?? s.shortName }));
+const ADRIAN: Readonly<Record<string, string>> = {
+  PLAN_PARCELAR: "Plan Parcelar",
+  ACT_CADASTRU: "Cadastru",
+  ACT_PARTAJ: "Partaj",
+  AUTORIZATIE: "Autorizație",
+  CARTE_IDENTITATE: "CI (nou)",
+  CERTIFICAT_MOSTENITOR: "Moștenire",
+  DOCUMENTATIE_CADASTRALA: "Doc. cadastru",
+};
+/** The seed as the reference data writes it: 092's list with 103's six in their places, and Adrian's over both. */
+const SEED = pairsOf(seedBlock(MIGRATION)).map((s) => ({ key: s.key, shortName: ADRIAN[s.key] ?? SIX_BY_KEY[s.key] ?? s.shortName }));
 const INSERT = SYNC.slice(SYNC.indexOf("INSERT INTO lookup_document_type (key, name, sort_order) VALUES"), SYNC.indexOf("-- SHORT NAMES (Slice #37.95)."));
 const CATALOGUE = [...INSERT.matchAll(/\('([A-Z_]+)',\s+'([^']+)',\s+\d+\)/g)].map((m) => ({ key: m[1], name: m[2] }));
 
@@ -80,14 +89,20 @@ describe("the short names' seed (#37.95)", () => {
     expect(by.AUTORIZATIE_CONSTRUIRE).toBe("Aut. Constr.");
   });
 
-  it("has no two types reading alike — stored, or a stored one against another's derived", () => {
+  // Slice 41.13: against the other type's EFFECTIVE short name — its stored one, the rule's only when it has none —
+  // which is what Date de referință refuses by (`shortNameClash`). Until then every other type was read by the rule
+  // alone, and Adrian's „Partaj" for Act de Partaj counted as a clash with Contract de Partaj's derived „Partaj",
+  // though Contract de Partaj shows „Contract partaj" and the screen accepted his name.
+  it("has no two types reading alike — stored, or a stored one against another's effective", () => {
     const keys = SEED.map((s) => shortNameKey(s.shortName));
     expect(keys.filter((k, i) => keys.indexOf(k) !== i)).toEqual([]);
     const byKey = Object.fromEntries(CATALOGUE.map((c) => [c.key, c.name]));
+    const storedBy = Object.fromEntries(SEED.map((s) => [s.key, s.shortName]));
     for (const s of SEED) {
       for (const c of CATALOGUE) {
         if (c.key === s.key) continue;
-        expect([s.key, c.key, shortNameKey(s.shortName) === shortNameKey(derivedShortName(c.name))]).toEqual([s.key, c.key, false]);
+        const theirs = documentTypeShortName({ name: c.name, shortName: storedBy[c.key] ?? null });
+        expect([s.key, c.key, shortNameKey(s.shortName) === shortNameKey(theirs)]).toEqual([s.key, c.key, false]);
       }
       expect(byKey[s.key]).toBeDefined();
     }

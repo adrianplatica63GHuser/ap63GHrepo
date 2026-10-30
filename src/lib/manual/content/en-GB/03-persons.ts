@@ -144,7 +144,7 @@ The rule: **the person holds what is true of them, whichever document carries it
 
 On a person's screen, the „Identity documents” tile shows their documents (Figure [[fig-persons-identity-documents]]):
 
-- for each document: its kind („CI”, „CI vechi”, „Pașaport” or „Pașaport CRDS”), the series and number, „Valid until” and the state — „VALID”, „EXPIRED” or, close to expiry, „EXPIRES IN 30 DAYS”; the document's code opens it;
+- for each document: its kind („CI (nou)”, „CI (vechi)”, „Pașaport” or „Pașaport CRDS”), the series and number, „Valid until” and the state — „VALID”, „EXPIRED” or, close to expiry, „EXPIRES IN 30 DAYS”; the document's code opens it;
 - the first is the „current” one: the one valid today with the latest issue date; if none is valid any more, the one issued last;
 - with no document at all, the tile is a single line: „no ID document recorded”.
 

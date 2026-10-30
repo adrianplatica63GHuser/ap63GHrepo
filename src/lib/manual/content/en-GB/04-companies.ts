@@ -132,7 +132,7 @@ The bodies that issue documents — a notary's office, a court, a town hall, the
 | „Autoritate locală” | a town hall, a local council, the county council |
 | „Instanță” | a court of first instance, a tribunal, a court of appeal |
 | „Birou notarial” | a notary's office, or a professional company of notaries |
-| „Birou de executor judecătoresc” | a bailiff's office |
+| „Executor judecătoresc” | a bailiff's office |
 | „Cabinet de avocatură” | a lawyer's practice, or a law firm |
 
 In „Type” they stand after the company forms, with „Altele” last. Each has a tax code in ANAF's register, so „Fill in from ANAF” fills them in like any firm (section [[companies-add-anaf]]).

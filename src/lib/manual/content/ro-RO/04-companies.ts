@@ -132,7 +132,7 @@ Instituțiile care emit acte — un birou notarial, o instanță, o primărie, o
 | „Autoritate locală” | o primărie, un consiliu local, consiliul județean |
 | „Instanță” | o judecătorie, un tribunal, o curte de apel |
 | „Birou notarial” | un birou individual notarial sau o societate profesională notarială |
-| „Birou de executor judecătoresc” | un birou de executor |
+| „Executor judecătoresc” | un birou de executor |
 | „Cabinet de avocatură” | un cabinet de avocat sau o societate de avocați |
 
 La „Tip” stau după formele de firmă, cu „Altele” la urmă. Fiecare are cod fiscal în registrul ANAF, așa că „Completează din ANAF” le completează ca pe orice firmă (secțiunea [[companies-add-anaf]]).

@@ -130,7 +130,10 @@ INSERT INTO lookup_citizenship (name, sort_order) VALUES
 -- Slice #39.71 (migration_115): the seven public-body types, at 21–27 so they list after the company forms, and
 -- „Altele" moved to 100 so it stays last. Slice #39.72 (migration_116): `public_body` marks them — the document's
 -- issuer picker lists their persons first.
+-- Slice 41.13 (FU-382): Adrian's list as his database holds it on 2026-10-30 — „Executor judecătoresc" (was „Birou de
+-- executor judecătoresc"), and „Consiliu Local" / „Instituție", which he added at sort 0 and not as public bodies.
 INSERT INTO lookup_judicial_person_type (name, sort_order, public_body) VALUES
+  ('Consiliu Local', 0, false), ('Instituție', 0, false),
   ('SRL', 1, false), ('SA', 2, false), ('SRL-D', 3, false), ('PFA', 4, false),
   ('II',  5, false), ('IF', 6, false), ('ONG',   7, false),
   ('Autoritate publică centrală',        21, true),
@@ -138,7 +141,7 @@ INSERT INTO lookup_judicial_person_type (name, sort_order, public_body) VALUES
   ('Autoritate locală',                  23, true),
   ('Instanță',                           24, true),
   ('Birou notarial',                     25, true),
-  ('Birou de executor judecătoresc',     26, true),
+  ('Executor judecătoresc',              26, true),
   ('Cabinet de avocatură', 27, true),
   ('Altele', 100, false);
 
@@ -247,7 +250,7 @@ INSERT INTO lookup_document_type (key, name, sort_order) VALUES
   ('HOTARARE_JUDECATOREASCA',    'Hotărâre Judecătorească',       18),
   ('TESTAMENT',                  'Testament',                     19),
   ('TITLU_PROPRIETATE',          'Titlu de Proprietate',          20),
-  ('UNCLASSIFIED',               'NECLASIFICAT',                  21),
+  ('UNCLASSIFIED',               'NECLASIFICAT',                  18),  -- Adrian's sort (21 until 41.13, FU-382)
   ('AUTORIZATIE',                'Autorizație',                   22),
   ('CERTIFICAT_SARCINI',         'Certificat de Sarcini',         23),
   -- migration_035_seed_doc_types.sql, values byte-for-byte from that file.
@@ -319,24 +322,30 @@ INSERT INTO lookup_document_type (key, name, sort_order) VALUES
   -- numbers here without changing it there costs two baselined differences per
   -- row — which is the one way the „stable identity for the row and nothing
   -- more" paragraph above is now too relaxed about this column.
-  ('ACT_ADITIONAL',                 'Act Adițional',                     40),
-  ('ACT_ALIPIRE',                   'Act de Alipire',                    41),
-  ('ACT_DEZLIPIRE',                 'Act de Dezlipire',                  42),
-  ('ACT_DEZMEMBRARE',               'Act de Dezmembrare',                43);
+  --
+  -- Slice 41.13 (FU-382): and now they carry 0 here too — the sort the live rows have always had in Adrian's
+  -- database. migration_081 keeps 40-43, as history; the two baselined differences per row are the price the
+  -- paragraph above names, paid so that a sync stops writing numbers his database does not hold.
+  ('ACT_ADITIONAL',                 'Act Adițional',                      0),
+  ('ACT_ALIPIRE',                   'Act de Alipire',                     0),
+  ('ACT_DEZLIPIRE',                 'Act de Dezlipire',                   0),
+  ('ACT_DEZMEMBRARE',               'Act de Dezmembrare',                 0);
 
 -- SHORT NAMES (Slice #37.95). This VALUES list is migration_092's, with the six
 -- short names migration_103 sets (Slice #38.54) written in their places;
 -- src/__tests__/document-type-short-name.test.ts holds the two equal.
+-- Slices 41.03 and 41.13 (FU-374, FU-382): over both, the short names Adrian set in Date de referință — Plan Parcelar,
+-- then CI (nou), Cadastru, Partaj, Autorizație, Moștenire and Doc. cadastru. The test lists them as his.
 UPDATE lookup_document_type AS t
    SET short_name = s.short_name
   FROM (VALUES
     ('ACT_ADJUDECARE',               'Adjudecare'),
-    ('ACT_CADASTRU',                 'Act cadastru'),
+    ('ACT_CADASTRU',                 'Cadastru'),
     ('ACT_DONATIE',                  'Donație'),
     ('AVIZ_INSTITUTIE',              'Aviz'),
-    ('CARTE_IDENTITATE',             'CI'),
+    ('CARTE_IDENTITATE',             'CI (nou)'),
     ('CERTIFICAT_FISCAL',            'Cert. fiscal'),
-    ('CERTIFICAT_MOSTENITOR',        'Moștenitor'),
+    ('CERTIFICAT_MOSTENITOR',        'Moștenire'),
     ('CERTIFICAT_BUNURI',            'Bunuri'),
     ('CERTIFICAT_URBANISM',          'Urbanism'),
     ('CONTRACT_ARENDA',              'Arendă'),
@@ -350,13 +359,13 @@ UPDATE lookup_document_type AS t
     ('TESTAMENT',                    'Testament'),
     ('TITLU_PROPRIETATE',            'TP'),
     ('UNCLASSIFIED',                 'NECLASIF.'),
-    ('AUTORIZATIE',                  'Aut.'),
+    ('AUTORIZATIE',                  'Autorizație'),
     ('CERTIFICAT_SARCINI',           'Sarcini'),
     ('HOTARARE_ADMINISTRATIVA',      'Hot. admin.'),
-    ('DOCUMENTATIE_CADASTRALA',      'Doc. cadastrală'),
+    ('DOCUMENTATIE_CADASTRALA',      'Doc. cadastru'),
     ('AUTORIZATIE_CONSTRUIRE',       'Aut. Constr.'),
     ('ACT_LOTIZARE',                 'Lotizare'),
-    ('ACT_PARTAJ',                   'Act partaj'),
+    ('ACT_PARTAJ',                   'Partaj'),
     ('ADEVERINTA',                   'Adeverință'),
     ('ADRESA_OFICIALA',              'Adresă'),
     ('ANTECONTRACT',                 'Antecontract'),
@@ -385,9 +394,10 @@ UPDATE lookup_document_type AS t
        short_name = coalesce(s.short_name, t.short_name)
   FROM (VALUES
     ('CARTE_IDENTITATE',       'CI_NOU',        NULL),
-    ('CARTE_IDENTITATE_VECHE', 'CI_VECHE',      'CI vechi'),
-    ('PASAPORT',               'PASAPORT',      NULL),
-    ('PASAPORT_CRDS',          'PASAPORT_CRDS', NULL)
+    -- Slice 41.13 (FU-382): Adrian's short names for the three (CI vechi, and none for the passports, until then).
+    ('CARTE_IDENTITATE_VECHE', 'CI_VECHE',      'CI (vechi)'),
+    ('PASAPORT',               'PASAPORT',      'Pașaport'),
+    ('PASAPORT_CRDS',          'PASAPORT_CRDS', 'Pașaport CRDS')
   ) AS s(key, kind, short_name)
  WHERE t.key = s.key;
 
@@ -570,7 +580,18 @@ FROM (VALUES
   ('Titlu de Proprietate',          'Proprietar'),
   ('Titlu de Proprietate',          'Moștenitor'),
   ('Titlu de Proprietate',          'Coproprietar'),
-  ('Titlu de Proprietate',          'Reprezentant legal')
+  ('Titlu de Proprietate',          'Reprezentant legal'),
+  -- Slice 41.13 (41.03's Ask first 4): the three plan types' roles, as Adrian's database holds them since 2026-10-30.
+  -- Proprietar holds a share by the rule below.
+  ('Plan de Amplasament și Delimitare', 'Proiectant'),
+  ('Plan de Amplasament și Delimitare', 'Topograf / Expert cadastral'),
+  ('Plan de Amplasament și Delimitare', 'Proprietar'),
+  ('Plan de Amplasament și Delimitare', 'Autoritate locală'),
+  ('Fișa Corpului de Proprietate',  'Topograf / Expert cadastral'),
+  ('Fișa Corpului de Proprietate',  'Proprietar'),
+  ('Plan Parcelar',                 'Topograf / Expert cadastral'),
+  ('Plan Parcelar',                 'Autoritate locală'),
+  ('Plan Parcelar',                 'Proprietar')
 ) AS pairs(doc_name, role_name)
 JOIN doc d ON d.name = pairs.doc_name
 JOIN rol r ON r.name = pairs.role_name

@@ -93,7 +93,7 @@ The property form offers in „Use Category” only the uses the chosen type all
 
 ### 12.1.5 Public bodies {#admin-reference-data-public-bodies}
 
-On „Juridical Person Types”, every type has the tick „Public body”. The seven public-body types have it — „Autoritate publică centrală”, „Instituție publică teritorială”, „Autoritate locală”, „Instanță”, „Birou notarial”, „Birou de executor judecătoresc”, „Cabinet de avocatură” (section [[companies-add-public-bodies]]) — and the company forms do not. The list of a document's issuer holds the juridical persons whose type is ticked (section [[documents-identification]]): tick a type of your own and its firms join that list; untick one and they leave it, though a document that names one keeps it.
+On „Juridical Person Types”, every type has the tick „Public body”. The seven public-body types have it — „Autoritate publică centrală”, „Instituție publică teritorială”, „Autoritate locală”, „Instanță”, „Birou notarial”, „Executor judecătoresc”, „Cabinet de avocatură” (section [[companies-add-public-bodies]]) — and the company forms do not. The list of a document's issuer holds the juridical persons whose type is ticked (section [[documents-identification]]): tick a type of your own and its firms join that list; untick one and they leave it, though a document that names one keeps it.
 
 The archive no longer has a list of institutions: its institutions became juridical persons of these types.
 

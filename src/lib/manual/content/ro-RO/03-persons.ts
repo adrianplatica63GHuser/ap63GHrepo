@@ -144,7 +144,7 @@ Regula: **persoana ține ce este adevărat despre ea, oricare act l-ar purta; fi
 
 Pe ecranul unei persoane, fișa „Acte de identitate” îi arată actele (Figura [[fig-persons-identity-documents]]):
 
-- pentru fiecare act: felul lui („CI”, „CI vechi”, „Pașaport” sau „Pașaport CRDS”), seria și numărul, „Valabil până la” și starea — „VALABIL”, „EXPIRAT” sau, aproape de expirare, „EXPIRĂ ÎN 30 ZILE”; codul actului îl deschide;
+- pentru fiecare act: felul lui („CI (nou)”, „CI (vechi)”, „Pașaport” sau „Pașaport CRDS”), seria și numărul, „Valabil până la” și starea — „VALABIL”, „EXPIRAT” sau, aproape de expirare, „EXPIRĂ ÎN 30 ZILE”; codul actului îl deschide;
 - primul este cel „curent”: cel valabil azi, cu data eliberării cea mai nouă; dacă niciunul nu mai e valabil, cel eliberat ultimul;
 - fără niciun act, fișa stă pe un singur rând: „niciun act înregistrat”.
 
