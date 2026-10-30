@@ -77,7 +77,7 @@ describe("the Property's „Corelate”", () => {
       ["CVC 1 (Contract de Vânzare)"],
     ]);
     for (const li of screen.getAllByRole("listitem")) {
-      expect([...li.querySelectorAll<HTMLElement>("[data-slot]")].map((s) => s.dataset.slot)).toEqual(["share", "relation", "preview"]); // 40.96: no „Vizualizare"
+      expect([...li.querySelectorAll<HTMLElement>("[data-slot]")].map((s) => s.dataset.slot)).toEqual(["relation", "preview"]); // 40.96: no „Vizualizare"; 41.09: no „Cotă" slot where no row holds a share
       expect(li.className).toContain("whitespace-nowrap");
     }
     expect(screen.queryByRole("table")).toBeNull();
@@ -87,7 +87,8 @@ describe("the Property's „Corelate”", () => {
     renderTile();
     await screen.findByRole("group", { name: "Corelate" });
     expect(screen.queryByRole("button", { name: "share" })).toBeNull();
-    for (const li of screen.getAllByRole("listitem")) expect(li.querySelector('[data-slot="share"]')?.childElementCount).toBe(0);
+    // 41.09: and no slot for one — a slot no row fills gives its room to the names.
+    for (const li of screen.getAllByRole("listitem")) expect(li.querySelector('[data-slot="share"]')).toBeNull();
   });
 
   it("a related property's relationship is behind „Relația”, a sentence that reads one way; a click outside hides it", async () => {

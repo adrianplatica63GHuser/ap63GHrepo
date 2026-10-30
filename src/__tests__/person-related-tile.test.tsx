@@ -86,9 +86,9 @@ describe("a person's „Corelate”", () => {
       ["CVC 1 (Contract de Vânzare)", "CVC 1 (Contract de Vânzare)", "CM 1 (Certificat de moștenitor)", "Plan"],
     ]);
     for (const li of screen.getAllByRole("listitem")) {
-      expect([...li.querySelectorAll<HTMLElement>("[data-slot]")].map((s) => s.dataset.slot)).toEqual(["share", "relation", "preview"]); // 40.96: no „Vizualizare"
+      expect([...li.querySelectorAll<HTMLElement>("[data-slot]")].map((s) => s.dataset.slot)).toEqual(["relation", "preview"]); // 40.96: no „Vizualizare"; 41.09: no „Cotă" slot where no row holds a share
       expect(li.className).toContain("whitespace-nowrap");
-      expect(li.querySelector('[data-slot="share"]')?.childElementCount).toBe(0); // the share stays on the Document
+      expect(li.querySelector('[data-slot="share"]')).toBeNull(); // the share stays on the Document — 41.09: its slot too
     }
     expect(screen.queryByRole("table")).toBeNull();
   });
