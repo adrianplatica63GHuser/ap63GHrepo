@@ -1,6 +1,6 @@
 /**
  * Case:   TC-TILES-09 — „Clasificare” îngustă (41.10; was: Relevanță lângă Importanță, salvarea pe linia „Istoric")
- * Source: docs/testing/cases/TC-TILES-09.md, „Last green" 2026-10-03
+ * Source: docs/testing/cases/TC-TILES-09.md, „Last green" 2026-10-30 (Slice 41.10 rewrote the case)
  *
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim.

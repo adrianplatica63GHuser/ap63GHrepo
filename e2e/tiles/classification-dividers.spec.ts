@@ -1,6 +1,6 @@
 /**
  * Case:   TC-TILES-16 — „Clasificare": o fișă gri — citită, „Editează”, 2 unități
- * Source: docs/testing/cases/TC-TILES-16.md (rewritten by Slice 41.10; was #37.81's lines and #38.01's cells)
+ * Source: docs/testing/cases/TC-TILES-16.md, „Last green" 2026-10-30 (Slice 41.10 rewrote the case)
  *
  * A translation of the case file, step for step. Every Romanian string below
  * is quoted from it verbatim.

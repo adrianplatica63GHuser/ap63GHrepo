@@ -17,7 +17,7 @@ import type { HighlightColor } from "@/lib/versioning/field-diff";
 import type { MetadataSnapshot, MetadataVersionItem } from "@/lib/metadata/queries";
 import { PROVENANCE_VALUES, provenanceI18nKey } from "@/lib/metadata/provenance";
 import { buttonClass } from "@/lib/ui/button-styles";
-import { screenBox } from "@/lib/ui/field-widths";
+import { CLASSIFICATION_UNITS, rem, screenBox, unitsInnerRem } from "@/lib/ui/field-widths";
 import { HintBubble } from "@/lib/ui/hint-bubble";
 import { Divider } from "@/lib/ui/divider";
 import { MAX_GROUPS_PER_ITEM, MAX_GROUPS_PER_PROPERTY } from "@/lib/groups/validation";
@@ -132,6 +132,9 @@ function versionLabelColor(
 // MetaSelect — thin styled select
 // ---------------------------------------------------------------------------
 
+/** Slice 41.10: a dropdown in „Editează" fills the 2-unit tile inside — 228 px. */
+const CLASSIFICATION_SELECT_STYLE: React.CSSProperties = { width: rem(unitsInnerRem(CLASSIFICATION_UNITS)) };
+
 function MetaSelect({
   value,
   onChange,
@@ -160,9 +163,10 @@ function MetaSelect({
       aria-describedby={describedBy}
       onChange={(e) => onChange(e.target.value)}
       disabled={disabled}
+      // Slice 41.10: the 2-unit tile's whole width inside (228 px), as a gray tile's fill field — a fixed width (#37.23).
+      style={CLASSIFICATION_SELECT_STYLE}
       className={[
-        // Slice 41.10: the 2-unit tile's whole width inside (228 px), as a gray tile's fill field.
-        "w-full rounded border border-slate-300 dark:border-slate-600",
+        "rounded border border-slate-300 dark:border-slate-600",
         "bg-white dark:bg-slate-800 text-ink dark:text-zinc-100",
         "text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-500",
         "disabled:opacity-50",
