@@ -1195,6 +1195,11 @@ export function DocumentForm({
     baselineRef.current = { values: saved };
     setBaseline({ values: saved });
     setViewingVersion(null);
+    // Slice 41.06: as loaded, now — 40.64's and 40.71's „empty as loaded" read `formState.defaultValues`, which nothing
+    // here moved after a save: a tile saved with its first value still read as empty-as-loaded, so none of its empty
+    // fields hid („Declarații și garanții" drew all twenty). The Natural Person and the Property reset here; the
+    // Document did not.
+    form.reset(saved);
     if (mode === "view") setAssociatedEditing(false);
     if (tileEditing.open === tile) tileEditing.close();
     router.refresh();
@@ -1646,7 +1651,7 @@ export function DocumentForm({
   // width: three fees to a row, „Taxă timbru și publicitate" alone after them.
   const feesPacked = packCustomFields(feesGroup?.fields ?? [], false, unitsInnerRem(PANEL_UNITS.document.fees));
   const feesSection = feesGroup && feesGroup.fields.length > 0 ? (
-    <Section key="fees" panel="fees" units={Math.max(PANEL_UNITS.document.fees, feesPacked.units)} title={feesGroup.label}>
+    <Section key="fees" panel="fees" units={Math.max(PANEL_UNITS.document.fees, feesPacked.units)} title={feesGroup.label} paths={feesGroup.fields.map((f) => `customFields.${f.key}`)}>
       {feesPacked.nodes}
     </Section>
   ) : null;
@@ -1732,7 +1737,7 @@ export function DocumentForm({
   const financialPacked = packCustomFields(financialGroup?.fields ?? []);
   const feesOrPairedSection = feesPaired && financialGroup ? (
     <>
-      <Section panel="financial" units={financialPacked.units} title={financialGroup.label}>
+      <Section panel="financial" units={financialPacked.units} title={financialGroup.label} paths={financialGroup.fields.map((f) => `customFields.${f.key}`)}>
         {financialPacked.nodes}
       </Section>
       {feesSection}
@@ -1907,7 +1912,7 @@ export function DocumentForm({
           from the fees panel's cannot pair with it — half a pair drawn on each
           page would be the same panel twice. It renders alone there instead. */}
       {!feesPaired && financialGroup && financialSoloTab === tab && (
-        <Section panel="financial" units={financialPacked.units} title={financialGroup.label}>
+        <Section panel="financial" units={financialPacked.units} title={financialGroup.label} paths={financialGroup.fields.map((f) => `customFields.${f.key}`)}>
           {financialPacked.nodes}
         </Section>
       )}
@@ -1918,7 +1923,7 @@ export function DocumentForm({
       {certificatesGroup && certificatesTab === tab && (() => {
         const packed = packCustomFields(certificatesGroup.fields, true);
         return (
-          <Section panel="certificates" units={packed.units} title={certificatesGroup.label}>
+          <Section panel="certificates" units={packed.units} title={certificatesGroup.label} paths={certificatesGroup.fields.map((f) => `customFields.${f.key}`)}>
             {packed.nodes}
           </Section>
         );
@@ -1948,7 +1953,7 @@ export function DocumentForm({
         .map(({ label, fields }) => {
           const packed = packCustomFields(fields);
           return (
-            <Section key={label || "_ungrouped"} panel={`group:${label || "_ungrouped"}`} units={packed.units} title={label || undefined}>
+            <Section key={label || "_ungrouped"} panel={`group:${label || "_ungrouped"}`} units={packed.units} title={label || undefined} paths={fields.map((f) => `customFields.${f.key}`)}>
               {packed.nodes}
             </Section>
           );
@@ -2439,6 +2444,7 @@ function Section({
   after,
   editing = false,
   onKeyDown,
+  paths,
 }: {
   /** Slice 40.75: a tile's „Editează", its „Salvează"/„Renunță" bar, its outline and its keys — never inside a frame. */
   action?: React.ReactNode;
@@ -2462,6 +2468,11 @@ function Section({
   code?:    string | null;
   /** Slice #37.15: the panel's name for the e2e width check (`data-panel`). */
   panel:    string;
+  /**
+   * Slice 41.06: the group's field paths. Inside a tile, a group whose every field hides behind „Arată N câmpuri goale"
+   * hides with them — its heading too.
+   */
+  paths?:   readonly string[];
   /** Slice #37.31: the panel's width in units. */
   units:    number;
   children: React.ReactNode;
@@ -2469,6 +2480,7 @@ function Section({
   // Slice #37.20: as tiles, a panel takes its tile's place in the row.
   const order = useContext(PanelOrderContext);
   const framed = useContext(FrameContext);
+  const hidden = useContext(HiddenFieldsContext); // Slice 41.06: a group whose fields all hide hides whole
   // Slice 40.06: through TileTitle, as every tile's heading — the same markup it wrote out by hand.
   const heading = title === undefined ? null : (
     // Slice #37.90: inside a tile, a panel's subtitle reads in square brackets.
@@ -2478,8 +2490,9 @@ function Section({
     </TileTitle>
   );
   if (framed) {
+    const allHidden = paths !== undefined && paths.length > 0 && paths.every((p) => hidden.has(p));
     return (
-      <section data-section={panel} style={{ width: rem(unitsInnerRem(units)) }}>
+      <section data-section={panel} style={hiddenFieldStyle(allHidden, { width: rem(unitsInnerRem(units)) })} data-empty-hidden={allHidden || undefined}>
         {heading}
         <div className="flex flex-col gap-2">{children}</div>
       </section>

@@ -173,3 +173,49 @@ test.describe("TC-DOC-06 — „fără valoare” în cursive, fără liniuțe",
     }
   });
 });
+
+// Slice 41.06 — Adrian's repro on TC-DOC-06's contract: a tile saved with its first value shows that value alone and
+// „Arată N câmpuri goale" — not every field as „—". The form took the saved values as loaded only after a reload: the
+// Document never reset after a tile's save, as the Natural Person and the Property do.
+test.describe("TC-DOC-06 pasul 7 (41.06) — un câmp salvat, restul în „Arată N câmpuri goale”", () => {
+  test("„Declarații și garanții”: Neipotecat salvat, celelalte ascunse, titlurile grupurilor goale la fel", async ({ page }) => {
+    test.slow();
+    await removeLeftovers(page.request, `${MARK} 41.06`);
+    await page.setViewportSize({ width: 1366, height: 900 });
+    let id: string | undefined;
+    try {
+      id = await createSaleContract(page.request, `${MARK} 41.06 CVC`);
+      await language(page, "ro-RO");
+      await page.goto(`/documents/${id}`);
+      await pressTileButton(page, "Toate", { timeout: 30_000 });
+      const frame = page.locator('[data-frame="tab:Declarații și garanții"]');
+      // A new contract's tile is one line; „Adaugă" opens it in edit.
+      await frame.locator("[data-empty-tile-add]").click({ timeout: 30_000 });
+      await expect(frame.locator("[data-tile-edit-bar]")).toBeVisible();
+      const save = frame.locator("[data-tile-save]");
+      await expect(save).toBeDisabled();
+      await frame.locator('select[name="customFields.neipotecat"]').selectOption("AFIRMAT");
+      await expect(save).toBeEnabled();
+      await save.click();
+      await expect(frame.locator("[data-tile-edit-bar]")).toHaveCount(0, { timeout: 30_000 });
+      // Read as text: Neipotecat alone, the rest behind the link; no dropdown; the empty groups' headings hidden.
+      await expect(frame.locator("[data-read-value]:visible")).toHaveCount(1, { timeout: 15_000 });
+      await expect(frame.locator('[data-read-value="customFields.neipotecat"]')).toHaveText("Afirmat");
+      await expect(frame.locator("select:visible")).toHaveCount(0);
+      const link = frame.locator("[data-empty-fields]");
+      await expect(link).toBeVisible();
+      expect(Number(await link.getAttribute("data-empty-fields-count"))).toBeGreaterThan(10);
+      await expect(link.locator("[data-empty-fields-show]")).toHaveText(/^Arată \d+ (de )?câmpuri goale$/);
+      for (const group of ["Garanții", "Declarații legale"]) {
+        await expect(frame.getByRole("heading", { name: `[${group}]`, exact: true })).toBeHidden();
+      }
+      await expect(frame.getByRole("heading", { name: "[Declarațiile vânzătorului]", exact: true })).toBeVisible();
+      // The link shows them all again, headings too.
+      await link.locator("[data-empty-fields-show]").click();
+      await expect(frame.getByRole("heading", { name: "[Garanții]", exact: true })).toBeVisible();
+      expect(await frame.locator("[data-read-value]:visible").count()).toBeGreaterThan(10);
+    } finally {
+      if (id) await removeRecord(page.request, "document", id);
+    }
+  });
+});
