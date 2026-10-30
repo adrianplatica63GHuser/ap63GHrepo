@@ -351,6 +351,7 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     await expect(bar).toContainText(person.label.split(" ")[0], { timeout: 60_000 });
     // 41.08: the versions and „Panouri” join the bar once the page is interactive (a portal): wait for them.
     await expect(bar.locator("[data-tiles-menu-button]")).toBeVisible({ timeout: 30_000 });
+    await expect(bar.locator("[data-version-slot] > *").first()).toBeVisible({ timeout: 30_000 });
     await still(page);
     await bar.screenshot({ path: `${dir}/breadcrumb.png` });
 
