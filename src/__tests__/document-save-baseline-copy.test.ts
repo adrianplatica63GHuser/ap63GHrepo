@@ -19,7 +19,7 @@ describe("the shape of the defect, in plain objects", () => {
   it("a baseline that IS the live object never differs from it — a copy does", () => {
     const live = { customFields: { taxeLocalePlatiteDe: "" } as Record<string, string> };
     const aliased = live;
-    const copied = structuredClone(live);
+    const copied = JSON.parse(JSON.stringify(live)) as typeof live; // jest's jsdom has no structuredClone; the browser has
     live.customFields.taxeLocalePlatiteDe = "VANZATOR";
     expect(JSON.stringify(aliased) === JSON.stringify(live)).toBe(true); // „not dirty": Salvează disabled
     expect(JSON.stringify(copied) === JSON.stringify(live)).toBe(false); // dirty: Salvează lit
