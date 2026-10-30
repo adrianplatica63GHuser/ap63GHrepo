@@ -5,18 +5,18 @@
  * answer a question by what it means. `manual-outline.test.ts` holds it to the manual: one line per section.
  */
 export const OUTLINE: Readonly<Record<string, string>> = {
-  "intro-purpose": "What the archive is for: one place for persons, properties and documents with their scans; what the dashboard shows (new items and stale metadata for the four kinds of object, expiring documents, recent activity, „Panels”).",
+  "intro-purpose": "What the archive is for: one place for persons, properties and documents with their scans; what the dashboard shows (new items and stale metadata on four kinds, expiring documents, „Panels”).",
   "intro-objects": "What persons, properties and documents are, how they link (role on a document, owner with a share) and what the codes PPERS, JPERS, PROP and DOC mean.",
   "intro-versions": "What happens on every save: a new version is kept, the old one stays and can be read or made current again; the change history is never lost.",
   "intro-how-to-read": "How the manual is organised: chapter order, numbered sections and figures, worked examples at the end of each chapter, and how button names are written.",
   "intro-examples": "Quick examples: everything about a parcel (owners, documents), what changed on a person through its versions, and what was worked on today on the dashboard.",
   "start-sign-in": "How to sign in (log in) with e-mail and password, the account menu at the foot of the sidebar (who you are, RO | EN, Day | Night, sign out), where to change the password.",
   "start-sidebar": "The left-hand menu: which screens each section holds (Domain, Tools, Import, Reporting, Administration — with Settings last —, Help) and how to collapse or expand it.",
-  "start-breadcrumb": "Where you are (Home › section › screen), going back with „Back” and returning with „Forward”, and what happens to unsaved changes: „Cancel” stays, „Discard” leaves without saving; the bar that stays at the top, with the versions and „Panels” beside „?”.",
+  "start-breadcrumb": "Where you are (Home › section › screen), „Back” and „Forward”, unsaved changes; the bar stays at the top, with the versions and „Panels” beside „?”.",
   "start-recent": "How to quickly reopen the objects you viewed last (your history) from the „Recently viewed” list at the bottom of the sidebar.",
   "start-lists": "Working with a list: as many rows as fit, the four default columns, the name as a link, search, „Choose fields”, funnel filters, hidden columns and a column's width.",
   "start-tiles": "An object's screen: „Panels” and the tiles, making room by holding one over another, empty tiles on one line, empty fields hidden, the narrow window, the system ID, the buttons.",
-  "start-read-edit": "A saved object read as text: „Edit” opens one tile at a time, „Save” makes one version, „Cancel” puts it back writing nothing; the keys, the calm fields, a long value on the next line, and the new object.",
+  "start-read-edit": "A saved object read as text: „Edit” opens one tile, „Save” makes one version, „Cancel” writes nothing; the keys, the calm fields, a long value, and the new object.",
   "start-preview": "How to open a linked object side by side without leaving your screen (e.g. the buyer beside the contract); at most two previews at once, also from lists.",
   "start-help": "Where to find a screen's help (the „?” button), what the small light bulb explains for hidden gestures (drag, double-click) and who writes the help texts.",
   "start-examples": "Step-by-step everyday examples: searching by part of a name, leaving a screen without losing edits, and making more room on the screen.",

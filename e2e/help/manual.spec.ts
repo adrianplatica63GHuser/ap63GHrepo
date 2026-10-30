@@ -678,7 +678,9 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
         ),
       );
       const cls = (await tile("classification").boundingBox())!;
-      const to = { x: cls.x + 5, y: lowest + 80 };
+      // 41.12: 240 px under the lowest tile (was 80) — at 2 units (41.10) „Clasificare” has the lowest tile above it in
+      // its own columns, so „Toate sus” raises it by the space under that tile only, which must be past the 100 below.
+      const to = { x: cls.x + 5, y: lowest + 240 };
       await page.mouse.move(cls.x + 5, cls.y + 5);
       await page.mouse.down();
       for (let i = 1; i <= 12; i++) await page.mouse.move(cls.x + 5 + ((to.x - cls.x - 5) * i) / 12, cls.y + 5 + ((to.y - cls.y - 5) * i) / 12);

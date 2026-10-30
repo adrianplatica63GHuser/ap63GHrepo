@@ -5,18 +5,18 @@
  * answer a question by what it means. `manual-outline.test.ts` holds it to the manual: one line per section.
  */
 export const OUTLINE: Readonly<Record<string, string>> = {
-  "intro-purpose": "La ce folosește arhiva: ține la un loc persoane, proprietăți și acte cu paginile scanate; ce arată tabloul de bord (noutăți și metadate vechi pe cele patru feluri de obiecte, acte care expiră, activitatea recentă, „Panouri”).",
+  "intro-purpose": "La ce folosește arhiva: ține la un loc persoane, proprietăți și acte cu paginile scanate; ce arată tabloul de bord (noutăți și metadate vechi pe patru feluri, acte care expiră, „Panouri”).",
   "intro-objects": "Ce sunt persoanele, proprietățile și actele, cum se leagă (rol într-un act, proprietar cu cotă-parte) și ce înseamnă codurile PPERS, JPERS, PROP și DOC.",
   "intro-versions": "Ce se întâmplă la fiecare salvare: se păstrează o versiune nouă, cea veche rămâne, poate fi citită și refăcută curentă; istoricul nu se pierde.",
   "intro-how-to-read": "Cum e organizat manualul: ordinea capitolelor, numerotarea secțiunilor și figurilor, exemplele de la final și cum sunt scrise numele butoanelor.",
   "intro-examples": "Exemple rapide: tot ce ține de o parcelă (proprietari, acte), ce s-a schimbat la o persoană prin versiuni, ce s-a lucrat azi pe tabloul de bord.",
   "start-sign-in": "Cum te conectezi (login) cu e-mail și parolă, meniul contului din josul barei (cine ești, limba RO | EN, Zi | Noapte, ieșirea), unde schimbi parola și cum ceri acces.",
   "start-sidebar": "Meniul din stânga: ce ecrane are fiecare secțiune (Domeniu, Instrumente, Import, Rapoarte, Administrare — cu Setări ultimul —, Ajutor) și cum restrângi sau extinzi bara.",
-  "start-breadcrumb": "Unde te afli (Acasă › secțiune › ecran), cum te întorci cu „Înapoi” și revii cu „Înainte”, și ce faci cu modificările nesalvate: „Anulează” rămâi, „Renunță” pleci fără salvare; bara care rămâne sus, cu versiunile și „Panouri” lângă „?”.",
+  "start-breadcrumb": "Unde te afli (Acasă › secțiune › ecran), „Înapoi” și „Înainte”, modificările nesalvate; bara rămâne sus, cu versiunile și „Panouri” lângă „?”.",
   "start-recent": "Cum redeschizi repede ultimele obiecte deschise (istoricul tău) din lista „Recente”, jos în bara laterală.",
   "start-lists": "Lucrul cu o listă: rânduri câte încap, cele patru coloane implicite, numele ca link, căutarea, „Câmpuri afișate”, filtrele din pâlnie, coloanele ascunse, lățimea unei coloane.",
   "start-tiles": "Ecranul unui obiect: „Panouri” și fișele, faci loc ținând o fișă peste alta, fișele goale pe un rând, câmpurile goale ascunse, fereastra îngustă, ID-ul de sistem, butoanele.",
-  "start-read-edit": "Un obiect salvat citit ca text: „Editează” deschide o singură fișă, „Salvează” face o versiune, „Renunță” o pune la loc fără să scrie nimic; tastele, câmpurile calme, o valoare lungă pe rândul următor, obiectul nou.",
+  "start-read-edit": "Un obiect salvat citit ca text: „Editează” deschide o fișă, „Salvează” face o versiune, „Renunță” nu scrie nimic; tastele, câmpurile calme, o valoare lungă, obiectul nou.",
   "start-preview": "Cum deschizi alături un obiect legat fără să pleci de pe ecran (de ex. cumpărătorul lângă contract); cel mult două previzualizări, și din liste.",
   "start-help": "Unde găsești ajutorul unui ecran (butonul „?”), ce explică becul mic la gesturile ascunse (tragere, dublu-clic) și cine scrie textele de ajutor.",
   "start-examples": "Exemple pas cu pas pentru lucrul de zi cu zi: căutare după o parte din nume, plecare fără pierderea modificărilor, mai mult loc pe ecran.",
