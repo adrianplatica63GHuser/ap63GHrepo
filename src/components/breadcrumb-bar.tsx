@@ -33,6 +33,7 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useNavigationHistory } from "@/components/providers/navigation-history-provider";
 import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provider";
 import { ScreenHelpButton } from "@/components/help/screen-help-button";
+import { usePageBarSlotRef } from "@/components/page-bar-slot";
 import { NAV_SECTIONS } from "@/components/sidebar/nav-config";
 import { IconButton } from "@/lib/ui/icon-button";
 import {
@@ -369,11 +370,31 @@ function ForwardButton() {
 // Inner component (needs Suspense for useSearchParams)
 // ---------------------------------------------------------------------------
 
+/**
+ * Slice 41.08: the bar's height, as `--page-bar-h` on the scrolling column it sticks in — what sticks under it reads it.
+ * A callback ref with its cleanup (React 19): the observer goes, and the variable with it, when the bar does.
+ */
+function trackBarHeight(nav: HTMLElement | null): (() => void) | undefined {
+  const column = nav?.closest<HTMLElement>("[data-page-scroll]");
+  if (!nav || !column) return undefined;
+  const set = () => column.style.setProperty("--page-bar-h", `${nav.offsetHeight}px`);
+  set();
+  if (typeof ResizeObserver === "undefined") return () => column.style.removeProperty("--page-bar-h");
+  const observer = new ResizeObserver(set);
+  observer.observe(nav);
+  return () => {
+    observer.disconnect();
+    column.style.removeProperty("--page-bar-h");
+  };
+}
+
 function BreadcrumbBarInner() {
   const pathname    = usePathname();
   const searchParams = useSearchParams();
   const t           = useTranslations("navigation.breadcrumb");
   const { pageLabels } = useNavigationHistory();
+  // Slice 41.08: the slot left of „?", where a record screen portals its versions pill and „Panouri".
+  const slotRef = usePageBarSlotRef();
 
   // Slice #39.03: every screen this tab passes through, the home page's too — before the bar hides itself.
   useEffect(() => {
@@ -429,15 +450,32 @@ function BreadcrumbBarInner() {
       replacement for the scrollbar, and it is what a truncated label costs one
       attribute to get. Do not put the class back.
     */
+    /*
+      Slice 41.08 — the bar stays on screen: sticky at the top of the page's scrolling column (`data-page-scroll`, the
+      bar's parent), on its own background, so the tiles slide under it (Ask first 1). Adrian, 2026-10-29: „if I scroll
+      … I lose sight of the bar … can we make that it stays there even if I scroll". Sticky needs no overflow on the bar
+      itself, so #32.20's trap below does not come back. Its height is `--page-bar-h` on that column (`trackBarHeight`),
+      for what else sticks there (the „Modificări nesalvate" banner, the manual's contents) and for `scroll-padding-top`.
+    */
     <nav
+      ref={trackBarHeight}
       aria-label={t("ariaLabel")}
-      className="flex items-center gap-1 pl-3 pr-6 py-2 text-sm text-zinc-500 dark:text-zinc-400 border-b border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 shrink-0"
+      className="sticky top-0 z-30 flex items-center gap-1 pl-3 pr-6 py-2 text-sm text-zinc-500 dark:text-zinc-400 border-b border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 shrink-0"
+      data-page-bar=""
     >
       <BackButton segments={segments} pathname={pathname} />
       {segments.map((seg, idx) => {
         const isLast = idx === segments.length - 1;
         return (
-          <span key={`${seg.href ?? seg.label}-${idx}`} className="flex items-center gap-1 min-w-0">
+          // Slice 41.08 (Ask first 4): the crumbs give way before anything else, and the earlier ones before the last —
+          // each down to its „…" (min-w-6, its full name on hover; min-w-10 holds the chevron, the gap and that) — a
+          // truncated label's own minimum is its whole text, so the wrapper needs a floor of its own. The last then
+          // truncates. The slot and „?" never shrink, and the bar never wraps.
+          <span
+            key={`${seg.href ?? seg.label}-${idx}`}
+            className={isLast ? "flex items-center gap-1 min-w-0" : "flex items-center gap-1 min-w-10 shrink-[100]"}
+            data-crumb={isLast ? "last" : ""}
+          >
             {idx > 0 && (
               <svg
                 width="12"
@@ -455,7 +493,7 @@ function BreadcrumbBarInner() {
               </svg>
             )}
             {!isLast && seg.href === null ? (
-              <span className="truncate max-w-[200px]" title={seg.label} data-crumb-section="">
+              <span className="truncate min-w-6 max-w-[200px]" title={seg.label} data-crumb-section="">
                 {seg.label}
               </span>
             ) : isLast ? (
@@ -469,7 +507,7 @@ function BreadcrumbBarInner() {
             ) : (
               <Link
                 href={seg.href ?? "/"}
-                className="truncate max-w-[200px] hover:text-zinc-800 hover:underline dark:hover:text-zinc-200 transition-colors"
+                className="truncate min-w-6 max-w-[200px] hover:text-zinc-800 hover:underline dark:hover:text-zinc-200 transition-colors"
                 title={seg.label}
               >
                 {seg.label}
@@ -489,7 +527,10 @@ function BreadcrumbBarInner() {
         ml-auto pushes it to the far right. It renders nothing when the route
         has no registered help screen, or when that screen has no content.
       */}
-      <span className="ml-auto pl-4 shrink-0">
+      {/* Slice 41.08: the slot, left of „?" — empty on a screen with no record (Ask first 5). It takes the ml-auto that
+          pushed „?" right, so an empty slot changes nothing. */}
+      <span ref={slotRef} className="ml-auto pl-4 flex shrink-0 items-center" data-page-bar-slot="" />
+      <span className="pl-4 shrink-0" data-page-bar-help="">
         <ScreenHelpButton />
       </span>
     </nav>

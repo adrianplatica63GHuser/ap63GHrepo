@@ -268,6 +268,65 @@ test.describe("TC-LAYOUT-01 — Celelalte ecrane, la lățimi fixe", () => {
  * nothing that scrolls sideways at 700 px — the dashboard, a person and a property (this spec's own, invented).
  */
 test.describe("TC-LAYOUT-01 — o fereastră îngustă (40.69)", () => {
+  // Slice 41.08 — step 9: the page bar stays on screen, and holds the versions pill and „Panouri", left of „?".
+  test("pasul 9 (41.08): la 1024 px, derulat până jos, bara și „?” rămân sus; versiunile și „Panouri” în bară, la stânga lui „?”", async ({ page }) => {
+    test.slow();
+    const MARK9 = `${E2E_MARKER}LAYOUT-01-BAR`;
+    await removeLeftovers(page.request, MARK9);
+    const propertyId = await createProperty(page.request, { nickname: `${MARK9} Teren` });
+    try {
+      await page.setViewportSize({ width: 1024, height: 600 });
+      await page.goto(`/properties/${propertyId}`);
+      await expect(page.locator("[data-record-header] h1")).toBeVisible({ timeout: 30_000 });
+      const bar = page.locator("[data-page-bar]");
+      const help = bar.locator("[data-page-bar-help] button").first();
+      const slot = bar.locator("[data-version-slot]");
+      const menu = bar.locator("[data-tiles-menu-button]");
+      await expect(menu).toBeVisible({ timeout: 30_000 });
+      await expect(help).toBeVisible();
+      // In the bar, in that order: the versions pill's slot, „Panouri", „?".
+      const [s, m, h] = await Promise.all([slot.boundingBox(), menu.boundingBox(), help.boundingBox()]);
+      expect(s!.x + s!.width).toBeLessThanOrEqual(m!.x + 1);
+      expect(m!.x + m!.width).toBeLessThanOrEqual(h!.x + 1);
+      // Scrolled to the bottom, the bar and its „?" are still at the top of the content.
+      await expect.poll(() => page.evaluate(() => {
+        const ps = document.querySelector<HTMLElement>("[data-page-scroll]")!;
+        return ps.scrollHeight - ps.clientHeight;
+      }), { timeout: 15_000 }).toBeGreaterThan(100);
+      await page.evaluate(() => {
+        const ps = document.querySelector<HTMLElement>("[data-page-scroll]")!;
+        ps.scrollTop = ps.scrollHeight;
+      });
+      await page.waitForTimeout(300);
+      const top = await page.evaluate(() => {
+        const ps = document.querySelector<HTMLElement>("[data-page-scroll]")!;
+        const b = document.querySelector<HTMLElement>("[data-page-bar]")!;
+        return { scrolled: ps.scrollTop, bar: Math.round(b.getBoundingClientRect().top - ps.getBoundingClientRect().top) };
+      });
+      expect(top.scrolled).toBeGreaterThan(100);
+      expect(top.bar).toBe(0);
+      await expect(help).toBeInViewport();
+      await expect(menu).toBeInViewport();
+      // „Panouri" opened down there: under the bar, right-aligned to its button, and it stays where it opened.
+      await menu.click();
+      const panel = page.locator("[data-tiles-panel] > div");
+      await expect(panel).toBeVisible();
+      await expect(page.locator("[data-tiles-panel]")).toHaveAttribute("data-tiles-panel-place", "bar");
+      const [pb, bb, mb] = await Promise.all([panel.boundingBox(), bar.boundingBox(), menu.boundingBox()]);
+      expect(pb!.y).toBeGreaterThanOrEqual(bb!.y + bb!.height - 1);
+      expect(Math.abs(pb!.x + pb!.width - (mb!.x + mb!.width))).toBeLessThanOrEqual(2);
+      await page.evaluate(() => {
+        document.querySelector<HTMLElement>("[data-page-scroll]")!.scrollTop = 0;
+      });
+      await page.waitForTimeout(300);
+      expect(Math.round((await panel.boundingBox())!.y)).toBe(Math.round(pb!.y));
+      await page.keyboard.press("Escape");
+      await expect(panel).toBeHidden();
+    } finally {
+      await removeRecord(page.request, "property", propertyId);
+    }
+  });
+
   test("la 700 px nimic nu derulează în lateral; plăcile într-o coloană; un nume lung trimite versiunile și „Panouri” dedesubt", async ({ page }) => {
     test.slow();
     const MARK = `${E2E_MARKER}LAYOUT-01-NARROW`;
@@ -301,13 +360,15 @@ test.describe("TC-LAYOUT-01 — o fereastră îngustă (40.69)", () => {
         expect(await sideways(), what).toBeLessThanOrEqual(1);
       }
 
-      // Step 8 — the person's long name: the versions and „Panouri" on the line under it, not over it.
+      // Step 8 — the person's long name: never under the versions and „Panouri". Since 41.08 they are in the page bar,
+      // left of „?", and the bar stays on one line however long the name and however narrow the window.
       await page.goto(`/natural-persons/${personId}`);
       const h1 = page.locator("[data-record-header] h1");
       await expect(h1).toBeVisible({ timeout: 30_000 });
-      const controls = page.locator("[data-record-header] [data-record-controls]");
+      const controls = page.locator("[data-page-bar] [data-record-controls]");
       await expect(controls).toBeVisible();
-      await expect.poll(async () => (await controls.boundingBox())!.y >= (await h1.boundingBox())!.y + (await h1.boundingBox())!.height - 1, { timeout: 15_000 }).toBe(true);
+      await expect(page.locator("[data-record-header] [data-record-controls]")).toHaveCount(0);
+      await expect.poll(async () => (await page.locator("[data-page-bar]").boundingBox())!.height, { timeout: 15_000 }).toBeLessThan(60);
     } finally {
       await removeRecord(page.request, "person", personId);
       await removeRecord(page.request, "property", propertyId);

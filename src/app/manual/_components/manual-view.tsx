@@ -233,7 +233,8 @@ export function ManualView() {
         </p>
       )}
       <div className="flex items-start gap-8">
-        <nav aria-label={t("chapterNav")} style={CONTENTS_STYLE} className="sticky top-4 shrink-0 text-sm">
+        {/* Slice 41.08: 1 rem under the page bar, which sticks above it now. */}
+        <nav aria-label={t("chapterNav")} style={CONTENTS_STYLE} className="sticky top-[calc(var(--page-bar-h,0px)+1rem)] shrink-0 text-sm">
           <h2 className="mb-2 font-semibold text-ink dark:text-zinc-100">{t("contents")}</h2>
           <ol className="flex flex-col gap-1">
             {manual.chapters.map((c) => {

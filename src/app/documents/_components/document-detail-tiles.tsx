@@ -50,6 +50,7 @@ import { groupSurface } from "@/lib/ui/tile-surface";
 import { TileSelector } from "@/components/tiles/tile-selector";
 import { useTileChoice } from "@/components/tiles/use-tile-choice";
 import { TilesMenuButton, hiddenMarked, useTilesMenu } from "@/components/tiles/tiles-menu";
+import { PageBarControls } from "@/components/page-bar-slot";
 import { TileAreas, useRightColumn } from "@/components/tiles/tile-areas";
 import { groupedTiles, tileGroupOf, tilesOfTab } from "@/lib/ui/tiles";
 import { LIST_UNITS, unitRowStyle } from "@/lib/ui/field-widths";
@@ -194,10 +195,11 @@ export function DocumentDetailTiles({
           </span>
         )}
         {/* Slice 40.57: „Panouri" right after the version controls; its panel is where the tile bar stood. */}
-        <div className="ml-auto flex shrink-0 items-center gap-3" data-record-controls="">
+        {/* Slice 41.08: both in the page bar, left of „?" — portalled there (`PageBarControls`); the name stays here. */}
+        <PageBarControls>
           <div ref={setNavSlot} data-version-slot="" className="flex items-center" />
           <TilesMenuButton menu={tilesMenu} badge={hiddenMarked(marked, choice.shown)} />
-        </div>
+        </PageBarControls>
       </header>
 
       <div

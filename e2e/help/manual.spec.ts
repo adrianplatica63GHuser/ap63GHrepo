@@ -470,7 +470,7 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     // Figura 2.13 (2.10 until 40.44 added two before it, 2.12 until 40.54 added 2.5) — the „?" of the list, open.
     await page.goto("/natural-persons");
     await expect(search).toBeVisible({ timeout: 60_000 });
-    const help = page.getByRole("navigation", { name: S.breadcrumb }).filter({ visible: true }).locator(":scope > span.ml-auto button").first();
+    const help = page.getByRole("navigation", { name: S.breadcrumb }).filter({ visible: true }).locator("[data-page-bar-help] button").first(); // 41.08: the slot took ml-auto
     await expect(help).toBeVisible({ timeout: 30_000 });
     await help.click();
     await page.waitForTimeout(800);

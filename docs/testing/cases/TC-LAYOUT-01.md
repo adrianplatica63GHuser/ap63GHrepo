@@ -57,7 +57,8 @@ editor, and saves nothing.
 | 5 | On each „Asociază …" screen, at 1366, 1920 and 2560 px (Slice #37.34) | Three tiles in reading order — „Căutare", „Rezultate", „Asociere" — side by side when the window holds them and wrapping when it does not. Every tile, and the row they sit in, is a whole number of width units (6 at 1366, 10 at 1920, 14 at 2560). The breadcrumb reads „Acasă › <the list> › <the record> › <this screen's title>" |
 | 6 | On each administration screen and Schimbă parola, at 1366, 1920 and 2560 px (Slice #37.35) | Its sections are tiles side by side where the window holds them, each a whole number of width units, and the row they sit in is whole units — 6, 10 and 14 at the three widths, or as wide as its widest tile where one is wider (the history of access requests, 9). Not „Date de referință” since #38.65: its column is as wide as its longest name, off the unit by design |
 | 7 | (Slice 40.69) At 700 × 900, opens the dashboard, then an invented person and an invented property | Nothing scrolls sideways; on the two records every tile stands in one column, one under another |
-| 8 | Opens the person, whose name is too long for one line beside the versions and „Panouri" | The versions and „Panouri" stand on the line under the name, not over it |
+| 8 | Opens the person, whose name is too long for one line | (Slice 41.08; was: the versions and „Panouri" on the line under the name) The versions and „Panouri" are in the page bar, left of „?", none in the record's header; the bar stays one line |
+| 9 | (Slice 41.08) At 1024 × 600, opens an invented property, scrolls to the bottom, opens „Panouri", scrolls back to the top | In the bar, left to right: the versions, „Panouri", „?"; scrolled to the bottom the bar is still at the top of the content, „?" and „Panouri" in view; the panel opens under the bar, its right edge at the button's, and stays where it opened while the page scrolls; Esc closes it |
 
 ## Notes from the runs
 

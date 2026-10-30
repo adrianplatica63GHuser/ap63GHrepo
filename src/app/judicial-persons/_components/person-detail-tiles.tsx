@@ -43,6 +43,7 @@ import { groupSurface } from "@/lib/ui/tile-surface";
 import { TileSelector } from "@/components/tiles/tile-selector";
 import { useTileChoice } from "@/components/tiles/use-tile-choice";
 import { TilesMenuButton, useTilesMenu } from "@/components/tiles/tiles-menu";
+import { PageBarControls } from "@/components/page-bar-slot";
 import { groupedTiles, tileGroupOf, tilesOfTab } from "@/lib/ui/tiles";
 import { LIST_UNITS, unitRowStyle } from "@/lib/ui/field-widths";
 import { type FormValues } from "./form-schema";
@@ -120,10 +121,11 @@ export function JudicialPersonDetailTiles({
         <RecordHeading icon={ENTITY_ICON.judicial} name={personName} />
         {/* Slice 40.57: „Panouri" right after the version controls; its panel is where the tile bar stood.
             Slice 40.69: in the flow, at the right — under a long name on a narrow window, never over it. */}
-        <div className="ml-auto flex shrink-0 items-center gap-3" data-record-controls="">
+        {/* Slice 41.08: both in the page bar, left of „?" — portalled there (`PageBarControls`); the name stays here. */}
+        <PageBarControls>
           <div ref={setNavSlot} data-version-slot="" className="flex items-center" />
           <TilesMenuButton menu={tilesMenu} />
-        </div>
+        </PageBarControls>
       </header>
 
       <div className="flex flex-col gap-4" style={unitRowStyle("judicialPerson")}>

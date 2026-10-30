@@ -172,11 +172,42 @@ export function TileSelector<K extends string>({
   const [layout, setLayout] = useState<BarLayout | null>(null);
   // Slice 40.57: the diagram's height in the panel, which the panel must hold (the diagram is drawn over its corner).
   const [diagramHeight, setDiagramHeight] = useState(0);
+  // Slice 41.08 (Ask first 3): with „Panouri" in the page bar, the panel opens under the bar, right-aligned to its
+  // button, and stays where it opened while open — `fixed`, placed when it opens and on a resize, never on a scroll:
+  // the bar does not move either. As wide as the bar was (the in-flow wrapper's width), at most up to the button. It
+  // scrolls inside itself if the window is shorter than it. A button not in the bar (the home page's, 41.02) keeps the
+  // panel where it was, and so does jsdom, which measures nothing.
+  const panelWrapRef = useRef<HTMLDivElement>(null);
+  const [placed, setBarPlace] = useState<{ top: number; left: number; width: number } | null>(null);
+  const menuOpen = !!menu?.open;
+  const menuButtonId = menu?.buttonId;
+  // Closed, no place; opened again, the layout effect places it anew before the first paint.
+  const barPlace = menuOpen ? placed : null;
+  useLayoutEffect(() => {
+    if (!menuOpen || !menuButtonId) return;
+    const place = () => {
+      const wrap = panelWrapRef.current;
+      const button = document.getElementById(menuButtonId);
+      const bar = button?.closest<HTMLElement>("[data-page-bar]");
+      if (!wrap || !button || !bar) return setBarPlace(null);
+      const w = wrap.getBoundingClientRect();
+      const b = button.getBoundingClientRect();
+      if (w.width <= 0) return;
+      const width = Math.min(w.width, b.right - 8);
+      setBarPlace({ top: Math.round(bar.getBoundingClientRect().bottom + 4), left: Math.round(b.right - width), width: Math.round(width) });
+    };
+    place();
+    window.addEventListener("resize", place);
+    return () => window.removeEventListener("resize", place);
+  }, [menuOpen, menuButtonId]);
   // Slice 40.57: the panel — under the header, over the tiles, as wide as the bar was; hidden while closed.
   const panelled = (node: ReactNode): ReactNode =>
     menu ? (
-      <div id={menu.panelId} hidden={!menu.open} className="relative z-30 h-0" data-tiles-panel="">
-        <div className="absolute inset-x-0 top-0 rounded-md border border-card-rim bg-white p-3 shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
+      <div ref={panelWrapRef} id={menu.panelId} hidden={!menu.open} className="relative z-30 h-0" data-tiles-panel="" data-tiles-panel-place={barPlace ? "bar" : undefined}>
+        <div
+          className={`${barPlace ? "fixed overflow-y-auto" : "absolute inset-x-0 top-0"} rounded-md border border-card-rim bg-white p-3 shadow-lg dark:border-zinc-700 dark:bg-zinc-900`}
+          style={barPlace ? { top: barPlace.top, left: barPlace.left, width: barPlace.width, maxHeight: `calc(100vh - ${barPlace.top + 8}px)` } : undefined}
+        >
           {node}
         </div>
       </div>
