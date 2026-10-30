@@ -163,7 +163,8 @@ test.describe("TC-DOC-09 — un rând pe rând, restul după butoane", () => {
       await expect(related.getByRole("columnheader")).toHaveCount(0);
       await expect(doc).not.toContainText("acest document");
       for (const name of ["Relația", "Previzualizare"]) await expect(doc.getByRole("button", { name, exact: true })).toBeVisible();
-      await expect(doc.getByRole("link", { name: "Vizualizează", exact: true })).toBeVisible();
+      // 40.96: the record's name is the link (it was a „Vizualizează" link on the row; FU-376). Fixed in passing by 41.03.
+      await expect(doc.getByRole("link", { name: PAD })).toBeVisible();
 
       // Step 8 — „Relația": the sentence in a bubble beside it.
       const sentence = `${PAD} „Titlu anterior al” acest document`;

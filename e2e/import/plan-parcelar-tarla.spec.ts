@@ -102,7 +102,8 @@ const INNER = { useInnerText: true } as const;
 
 test.describe("TC-IMP-06 — un plan parcelar importat", () => {
   test("tarla TCP9 creată cu patru parcele, planul legat de ea", async ({ page }) => {
-    test.slow();
+    // Slice 41.03: four minutes — the import's steps, „Continuă fără formulare" among them, outran test.slow()'s 90 s.
+    test.setTimeout(240_000);
     await page.setViewportSize({ width: 1366, height: 900 });
     const step = page.getByText(/^Pasul curent: /).first();
     await page.goto("/admin/import");

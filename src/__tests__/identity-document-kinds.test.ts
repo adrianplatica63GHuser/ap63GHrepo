@@ -41,7 +41,9 @@ describe("the four kinds", () => {
     for (const kind of IDENTITY_KIND_VALUES) {
       const { typeKey, typeName } = IDENTITY_KINDS[kind];
       expect(sql).toContain(`('${typeKey}',`);
-      expect(sql).toContain(`'${typeName}'`);
+      // Slice 41.03 (FU-378): the migration is history and keeps the names it wrote — „(model nou)" / „(model vechi)";
+      // the code and the reference data carry Adrian's „(tip nou)" / „(tip vechi)".
+      expect(sql).toContain(`'${typeName.replace("(tip nou)", "(model nou)").replace("(tip vechi)", "(model vechi)")}'`);
       expect(sql).toContain(`'${kind}'`);
     }
     expect(sql).toContain("identity_kind IN ('CI_VECHE', 'CI_NOU', 'PASAPORT', 'PASAPORT_CRDS')");

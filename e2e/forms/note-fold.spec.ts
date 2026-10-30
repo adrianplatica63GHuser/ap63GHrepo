@@ -147,8 +147,9 @@ test.describe("TC-FOLD-01 — „Note” și MRZ lungi se strâng la cinci rând
       await editTile(page, "identity");
       // Slice 40.79: the MRZ is L, 190 px inside — 22 characters of Geist Mono a line — so each of its seven
       // 35–36-character lines takes two: fourteen lines open, 14 × 20 + 10 = 290 px (it was the panel's width, 150).
-      // The identity document's MRZ is the same width (`IDENTITY_DOCUMENT.mrz`, 40.83).
-      await expectFolds(page, "MRZ", 290, "identity-document-mrz");
+      // Since 40.94 the identity document's MRZ runs across its tile (Adrian's rows), so each line fits on one
+      // again: seven lines, 7 × 20 + 10 = 150 px. Fixed in passing by 41.03, whose run met it.
+      await expectFolds(page, "MRZ", 150, "identity-document-mrz");
     } finally {
       // The case's own cleanup, through the routes „Șterge" → „Da" calls.
       for (const { kind, id } of ids) await removeRecord(page.request, kind, id);
