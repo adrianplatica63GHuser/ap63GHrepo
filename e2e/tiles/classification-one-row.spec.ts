@@ -1,5 +1,5 @@
 /**
- * Case:   TC-TILES-09 — „Clasificări": Relevanță lângă Importanță, butonul de salvare pe linia „Istoric"
+ * Case:   TC-TILES-09 — „Clasificare” îngustă (41.10; was: Relevanță lângă Importanță, salvarea pe linia „Istoric")
  * Source: docs/testing/cases/TC-TILES-09.md, „Last green" 2026-10-03
  *
  * A translation of the case file, step for step. Every Romanian string below
@@ -25,7 +25,8 @@ const CLASSIFICATION = "Clasificare";
 async function tile(page: Page, url: string): Promise<Locator> {
   await page.goto(url);
   const cls = page.getByRole("region", { name: CLASSIFICATION, exact: true });
-  await expect(cls.locator("select")).toHaveCount(3, { timeout: 30_000 });
+  // 41.10: a new record has no value — the tile folds to one line; otherwise it reads, with „Editează".
+  await expect(cls.locator('[data-empty-tile="classification"], [data-tile-edit="classification"]').first()).toBeVisible({ timeout: 30_000 });
   return cls;
 }
 
@@ -35,30 +36,35 @@ async function box(l: Locator): Promise<{ x: number; y: number; width: number; h
   return b;
 }
 
+/** „Adaugă" on the folded line, or „Editează": the three selects. */
+async function openEdit(cls: Locator): Promise<void> {
+  const add = cls.locator("[data-empty-tile-add]");
+  if (await add.count()) await add.click();
+  else await cls.locator('[data-tile-edit="classification"]').click();
+  await expect(cls.locator("select")).toHaveCount(3, { timeout: 15_000 });
+}
+
 /** Steps 1 and 2 on one record's screen. */
 async function layout(cls: Locator): Promise<void> {
-  // Step 1 — 524 px (4 units of 119, 40.98; 476, 3 of 148, before); Relevanță level with Importanță and to its right;
-  // Proveniență under both.
+  // Step 1 — 254 px (2 units of 119, 41.10; 524, 4, before); opened, the three selects one under another, each inside.
   const t = await box(cls);
-  expect(Math.round(t.width)).toBe(524);
+  expect(Math.round(t.width)).toBe(254);
+  await openEdit(cls);
   const [imp, rel, prov] = [await box(cls.locator("select").nth(0)), await box(cls.locator("select").nth(1)), await box(cls.locator("select").nth(2))];
-  expect(Math.abs(rel.y - imp.y)).toBeLessThan(0.5);
-  expect(rel.x).toBeGreaterThan(imp.x + imp.width);
-  expect(prov.y).toBeGreaterThan(Math.max(imp.y + imp.height, rel.y + rel.height));
+  expect(rel.y).toBeGreaterThan(imp.y + imp.height);
+  expect(prov.y).toBeGreaterThan(rel.y + rel.height);
+  for (const b of [imp, rel, prov]) expect(b.x + b.width).toBeLessThanOrEqual(t.x + t.width - 12 + 1);
 
-  // Step 2 — one „Salvează", disabled, on „ISTORIC"'s line, its right edge the tile's less border and 12 px padding.
+  // Step 2 — one „Salvează", disabled, under the fields; „Renunță" closes it.
   const saves = cls.getByRole("button", { name: "Salvează", exact: true });
   await expect(saves).toHaveCount(1);
   await expect(saves).toBeDisabled();
-  const s = await box(saves);
-  const h = await box(cls.getByRole("heading", { name: "Istoric", exact: true }));
-  const mid = s.y + s.height / 2;
-  expect(mid).toBeGreaterThanOrEqual(h.y);
-  expect(mid).toBeLessThanOrEqual(h.y + h.height);
-  expect(Math.abs(s.x + s.width - (t.x + t.width - 1 - 12))).toBeLessThan(0.5);
+  expect((await box(saves)).y).toBeGreaterThan(prov.y + prov.height);
+  await cls.getByRole("button", { name: "Renunță", exact: true }).click();
+  await expect(cls.locator("select")).toHaveCount(0);
 }
 
-test.describe("TC-TILES-09 — Relevanță lângă Importanță, salvarea pe linia „Istoric”", () => {
+test.describe("TC-TILES-09 — „Clasificare” îngustă: cele trei una sub alta, „Salvează” sub ele", () => {
   test("pe cele patru ecrane, și o salvare care scrie", async ({ page }) => {
     test.slow();
     // A run that died before its `finally` leaves its records; they would be a second match here.
@@ -76,18 +82,14 @@ test.describe("TC-TILES-09 — Relevanță lângă Importanță, salvarea pe lin
       const cls = await tile(page, personUrl);
       await layout(cls);
 
-      // Step 3 — Importanță to „Ridicată", „Salvează" → „✓ Salvat" on the same line; reopened, „Ridicată".
-      await cls.locator("select").nth(0).selectOption({ label: "Ridicată" });
+      // Step 3 — Importanță to „Ridicată", „Salvează": the tile reads „Ridicată"; reopened, „Ridicată".
+      await openEdit(cls);
+      await cls.getByRole("combobox", { name: "Importanță", exact: true }).selectOption({ label: "Ridicată" });
       await expect(cls.getByRole("button", { name: "Salvează", exact: true })).toBeEnabled();
       await cls.getByRole("button", { name: "Salvează", exact: true }).click();
-      const saved = cls.getByRole("button", { name: "✓ Salvat", exact: true });
-      await expect(saved).toBeVisible();
-      const s = await box(saved);
-      const h = await box(cls.getByRole("heading", { name: "Istoric", exact: true }));
-      expect(s.y + s.height / 2).toBeGreaterThanOrEqual(h.y);
-      expect(s.y + s.height / 2).toBeLessThanOrEqual(h.y + h.height);
+      await expect(cls.locator('[data-read-value="classification.importance"]')).toHaveText("Ridicată", { timeout: 15_000 });
       const again = await tile(page, personUrl);
-      await expect(again.locator("select").nth(0).locator("option:checked")).toHaveText("Ridicată");
+      await expect(again.locator('[data-read-value="classification.importance"]')).toHaveText("Ridicată");
 
       // Step 4 — the company, the property and the document.
       for (const url of [`/judicial-persons/${ids.company}?tab=metadata`, `/properties/${ids.property}?tab=metadata`, `/documents/${ids.document}?tab=metadata`]) {

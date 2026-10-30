@@ -19,13 +19,15 @@ const GROUPS = ["Etichete / Cuvinte cheie", "Grupuri", "Ștampile", "Vezi și"];
 async function check(page: Page, url: string) {
   await page.goto(url);
   const conn = await showTile(page, "Etichete și grupuri");
-  const cls = await showTile(page, "Clasificare");
   await expect(conn.locator("[data-connections-groups] > [data-divider]")).toHaveCount(3, { timeout: 30_000 });
-  await expect(cls.locator('[data-divider="horizontal"]').first()).toBeVisible();
-  const ref = await cls.locator('[data-divider="horizontal"]').first().evaluate((d) => {
+  // 41.10: „Clasificare" draws a line only under its version controls, which a new record does not have — so the
+  // look to match is the shared divider's own (src/lib/ui/divider.tsx): 1 px solid, the rim colour. Was read off
+  // „Clasificări"'s first line.
+  const ref = await conn.locator("[data-connections-groups] > [data-divider]").first().evaluate((d) => {
     const cs = getComputedStyle(d);
     return `${cs.borderTopWidth} ${cs.borderTopStyle} ${cs.borderTopColor}`;
   });
+  expect(ref).toMatch(/^1px solid rgb\(/);
   const read = await conn.evaluate((tile, refLook) => {
     const tb = tile.getBoundingClientRect();
     const kids = [...tile.querySelector("[data-connections-groups]")!.children] as HTMLElement[];

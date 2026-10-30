@@ -2,8 +2,8 @@
 
 import { useNameOr } from "@/components/record/use-name-or";
 import { unnamedKindOf } from "@/lib/ui/unnamed";
-import { Fragment, useId, useState, useRef } from "react";
-import { Calculator, Check, Link as LinkIcon, Plus, Save, X } from "lucide-react";
+import { Fragment, useEffect, useId, useState, useRef } from "react";
+import { Calculator, Link as LinkIcon, Plus, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { AddToggleButton, MarkReviewedButton } from "@/components/metadata-buttons";
 import Link from "next/link";
@@ -21,7 +21,10 @@ import { screenBox } from "@/lib/ui/field-widths";
 import { HintBubble } from "@/lib/ui/hint-bubble";
 import { Divider } from "@/lib/ui/divider";
 import { MAX_GROUPS_PER_ITEM, MAX_GROUPS_PER_PROPERTY } from "@/lib/groups/validation";
-import { SHARED_LEFT_INSET, SHIFTED_SELECT_ROW, useSharedLeftLine } from "@/lib/ui/classification-left-line";
+import { FIELD_LABEL } from "@/lib/ui/field-box";
+import { ReadValue, TileEditBar, TileEditButton, onTileKeyDown } from "@/components/tiles/read-edit-tile";
+import { EmptyTileLine, focusFirstField } from "@/components/tiles/empty-tile";
+import { TileAction, useTileChrome } from "@/components/tiles/list-tile";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -137,10 +140,13 @@ function MetaSelect({
   options,
   highlight,
   describedBy,
+  label,
 }: {
   value:       string;
   onChange:    (v: string) => void;
   disabled?:   boolean;
+  /** Slice 41.10: its name — the item's title, which is a heading, not a <label>. */
+  label?:      string;
   placeholder: string;
   options:     { value: string; label: string }[];
   highlight?:  HighlightColor | undefined;
@@ -150,11 +156,13 @@ function MetaSelect({
   return (
     <select
       value={value}
+      aria-label={label}
       aria-describedby={describedBy}
       onChange={(e) => onChange(e.target.value)}
       disabled={disabled}
       className={[
-        "rounded border border-slate-300 dark:border-slate-600",
+        // Slice 41.10: the 2-unit tile's whole width inside (228 px), as a gray tile's fill field.
+        "w-full rounded border border-slate-300 dark:border-slate-600",
         "bg-white dark:bg-slate-800 text-ink dark:text-zinc-100",
         "text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-500",
         "disabled:opacity-50",
@@ -183,16 +191,14 @@ function MetaSelect({
  * keyboard (#37.50). The text stays in the document (`sr-only` while closed),
  * so the control it explains can point `aria-describedby` at it.
  */
-const ITEM_TITLE = "text-sm font-semibold text-ink dark:text-zinc-100";
-
-/** Slice #37.81: Importanță | the vertical divider | Relevanță — two equal cells. */
-const CLASSIFICATION_PAIR_GRID: React.CSSProperties = { gridTemplateColumns: "minmax(0, 1fr) auto minmax(0, 1fr)" };
+/** Slice 41.10: an item's title is a field's label, as on the gray tiles — navy, 12 px (40.95's `FIELD_LABEL`). */
+const ITEM_TITLE = FIELD_LABEL;
 
 function ItemTitle({ id, title, note, about }: { id: string; title: string; note?: string; about: string }) {
   if (!note) return <h3 className={ITEM_TITLE}>{title}</h3>;
   return (
     <HintBubble id={id} text={note} triggerLabel={about}>
-      <h3 className={`${ITEM_TITLE} mt-0.5`}>{title}</h3>
+      <h3 className={ITEM_TITLE}>{title}</h3>
     </HintBubble>
   );
 }
@@ -226,57 +232,61 @@ const TAG_CHIP =
   "group relative inline-flex items-center rounded-full border border-slate-300 bg-slate-50 px-2 py-1 text-sm leading-tight text-ink dark:border-slate-600 dark:bg-zinc-800 dark:text-zinc-100";
 
 // ---------------------------------------------------------------------------
-// MetadataSection — one editable section (controlled select + review button)
+// ClassificationItem — one value, read as text or edited     (Slice 41.10)
 // ---------------------------------------------------------------------------
 
-function MetadataSection({
+/**
+ * Slice 41.10 — „Clasificare" as a gray tile (Ask first 2). Read: the label, the value as text under it (its meaning a
+ * bubble on it, #37.63), „Marchează ca verificat" beside it as an icon, and when it last changed under it. „Editează"
+ * turns the three values into their selects, saved together by „Salvează" — they no longer save as they change.
+ * One to a row, so the tile is 2 units (Ask first 3). Was #37.68's MetadataSection: Importanță and Relevanță side by
+ * side, centred, with a divider between them (#37.81, #38.01), the selects always open.
+ */
+function ClassificationItem({
+  item,
   title,
   note,
+  about,
   value,
+  valueText,
+  editing,
   onChange,
   options,
   statementMap,
   placeholder,
-  labelMarkReviewed,
-  labelMarkingReviewed,
-  labelMarkedReviewed,
+  markLabels,
   daysText,
   reviewWarning,
   onMarkReviewed,
-  readOnly,
+  latest,
   highlight,
-  about,
-  centred = false,
-  alignedLeft = false,
   children,
 }: {
-  title:                 string;
-  note:                  string;
-  /** Controlled value — empty string means "no selection". */
-  value:                 string;
-  onChange:              (v: string) => void;
-  options:               { value: string; label: string }[];
-  statementMap:          Record<string, string>;
-  placeholder:           string;
-  labelMarkReviewed:     string;
-  labelMarkingReviewed:  string;
-  labelMarkedReviewed:   string;
-  /** Pre-formatted "Updated X days ago" text, or null if never saved. */
-  daysText:              string | null;
-  /** Non-null when >90 days — shown in red. */
-  reviewWarning:         string | null;
-  onMarkReviewed:        () => Promise<void>;
-  /** When true: dropdown is disabled. */
-  readOnly?:             boolean;
+  item:          "importance" | "relevance" | "provenance";
+  title:         string;
+  note:          string;
+  about:         string;
+  /** The value's code — empty string means none. */
+  value:         string;
+  /** The value's words, read. */
+  valueText:     string;
+  /** The select, not the text. */
+  editing:       boolean;
+  onChange:      (v: string) => void;
+  options:       { value: string; label: string }[];
+  statementMap:  Record<string, string>;
+  placeholder:   string;
+  markLabels:    { mark: string; marking: string; marked: string };
+  /** „Actualizat acum N zile", or null if never saved. */
+  daysText:      string | null;
+  /** Non-null past the review threshold — shown in red. */
+  reviewWarning: string | null;
+  onMarkReviewed: () => Promise<void>;
+  /** The latest version — not an older one being looked at, which reads only. */
+  latest:        boolean;
   /** Version-diff highlight colour for this field. */
-  highlight?:            HighlightColor | undefined;
-  /** The ⓘ's name: „Despre „{title}"" (#37.63). */
-  about:                 string;
-  /** Slice #37.81: everything centred across, in its own cell — the select row shifted left (#38.01). */
-  centred?:              boolean;
-  /** Slice #38.01: inset to the shared left line — Importanță's select's left edge. */
-  alignedLeft?:          boolean;
-  children?:             React.ReactNode;
+  highlight?:    HighlightColor | undefined;
+  children?:     React.ReactNode;
 }) {
   const [reviewing, setReviewing] = useState(false);
   const [reviewed,  setReviewed]  = useState(false);
@@ -297,82 +307,54 @@ function MetadataSection({
   const noteId = `${uid}-note`;
   const statementId = `${uid}-statement`;
 
-  const select = (
+  const control = editing ? (
     <MetaSelect
       value={value}
       onChange={onChange}
-      disabled={readOnly}
+      label={title}
       placeholder={placeholder}
       options={options}
       highlight={highlight}
       describedBy={statement ? `${noteId} ${statementId}` : noteId}
     />
+  ) : (
+    <ReadValue
+      name={`classification.${item}`}
+      kind="select"
+      text={valueText}
+      className={highlightRingClass(highlight, false)}
+    />
   );
 
   return (
-    <section
-      className={centred ? "flex flex-col items-center gap-1 text-center" : "flex flex-col gap-1"}
-      data-centred={centred ? "" : undefined}
-      data-aligned-left={alignedLeft ? "" : undefined}
-      style={alignedLeft ? SHARED_LEFT_INSET : undefined}
-    >
+    <section className="flex flex-col gap-0.5" data-classification-item={item}>
       <ItemTitle id={noteId} title={title} note={note} about={about} />
-
-      {/* Slice #38.01: centred, the row is the cell's width — an empty track, the
-          SELECT, and the review button's track, the free width shared 0.75 : 1.25,
-          so the select stands 0.75 × its centred gap from the cell's left edge
-          (classification-left-line.ts). The title and the notes stay centred. */}
-      <div
-        className={centred ? "grid w-full items-center" : "flex flex-wrap items-center gap-2"}
-        style={centred ? SHIFTED_SELECT_ROW : undefined}
-        data-select-row={centred ? "shifted" : undefined}
-      >
-        {centred && <span aria-hidden="true" />}
-        {/* Slice #37.63 — what the chosen value means is a bubble ON the value:
-            the mouse resting on it, or the keyboard reaching it, opens it. It
-            was a paragraph (and, for Proveniență, „Ce înseamnă asta?") under it. */}
-        {statement ? (
-          <HintBubble id={statementId} text={statement}>
-            {select}
-          </HintBubble>
-        ) : (
-          select
-        )}
-        {!readOnly && centred && (
-          <span className="ml-1" style={{ justifySelf: "start" }}>
-            <MarkReviewedButton
-              reviewed={reviewed}
-              reviewing={reviewing}
-              labels={{ mark: labelMarkReviewed, marking: labelMarkingReviewed, marked: labelMarkedReviewed }}
-              onClick={handleMarkReviewed}
-            />
-          </span>
-        )}
-        {!readOnly && !centred && (
-          // #37.44 (A031): BadgeCheck, filled once reviewed.
-          <MarkReviewedButton
-            reviewed={reviewed}
-            reviewing={reviewing}
-            labels={{ mark: labelMarkReviewed, marking: labelMarkingReviewed, marked: labelMarkedReviewed }}
-            onClick={handleMarkReviewed}
-          />
+      <div className="flex items-center gap-2">
+        {/* Slice #37.63 — what the chosen value means is a bubble ON the value. */}
+        <div className="min-w-0 flex-1">
+          {statement ? (
+            <HintBubble id={statementId} text={statement}>
+              {control}
+            </HintBubble>
+          ) : (
+            control
+          )}
+        </div>
+        {latest && !editing && (
+          // #37.44 (A031): BadgeCheck, filled once reviewed — an icon, its words the hint and the name (40.96).
+          <MarkReviewedButton reviewed={reviewed} reviewing={reviewing} labels={markLabels} onClick={handleMarkReviewed} />
         )}
       </div>
 
-      {/* What says something about THIS record stays visible: when it last
-          changed, and the review warning (hidden on historical read-only views). */}
-      {!readOnly && (daysText || reviewWarning) && (
-        <div className="flex flex-col gap-0.5">
-          {daysText && (
-            <p className="text-xs text-fade dark:text-zinc-500">{daysText}</p>
-          )}
-          {reviewWarning && (
-            <p className="text-xs font-medium text-red-600 dark:text-red-400">{reviewWarning}</p>
-          )}
+      {/* What says something about THIS record: when it last changed, and the review warning. */}
+      {latest && (daysText || reviewWarning) && (
+        <div className="flex flex-col gap-0.5 px-2">
+          {daysText && <p className="text-xs text-fade dark:text-zinc-500">{daysText}</p>}
+          {reviewWarning && <p className="text-xs font-medium text-red-600 dark:text-red-400">{reviewWarning}</p>}
         </div>
       )}
 
-      {children && <div className="mt-1">{children}</div>}
+      {children && <div className="mt-1 flex flex-col gap-1 px-2">{children}</div>}
     </section>
   );
 }
@@ -1256,8 +1238,11 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
   const queryClient = useQueryClient();
   // Slice #38.10: the server's own limit — a property's, or a person's and a document's.
   const groupCap = apiPath.startsWith("/api/properties/") ? MAX_GROUPS_PER_PROPERTY : MAX_GROUPS_PER_ITEM;
-  // Slice #38.01: Proveniență's left line is Importanță's select's, measured.
-  const sharedLeftLine = useSharedLeftLine();
+  // Slice 41.10: „Clasificare" reads and edits as a gray tile, inside a `readEdit` ListTile (its chrome).
+  const chrome = useTileChrome();
+  const [editing, setEditing] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const itemsId = useId();
   const { data: tf } = useTimeFrames();
 
   const backLabel = t("backTo", { name: backEntityName });
@@ -1274,7 +1259,6 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
   const [localRelevance,  setLocalRelevance]  = useState<string>("");
   const [localProvenance, setLocalProvenance] = useState<string>("");
   const [saving,          setSaving]          = useState(false);
-  const [saved,           setSaved]           = useState(false);
   // Tracks the last server-data key so we can sync state during rendering
   // instead of in a useEffect (React "adjusting state during rendering" pattern).
   const [lastFetchedKey, setLastFetchedKey] = useState<string>("");
@@ -1424,6 +1408,7 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
   async function saveAll() {
     if (!data?.principalObjectId) return;
     setSaving(true);
+    setSaveError(null);
     try {
       const res = await fetch(`/api/metadata/${data.principalObjectId}`, {
         method:  "PATCH",
@@ -1440,12 +1425,45 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
       if (versionsQueryKey) {
         await queryClient.invalidateQueries({ queryKey: [versionsQueryKey] });
       }
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
+      // Slice 41.10: saved, the tile reads again.
+      setEditing(false);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : String(err));
     } finally {
       setSaving(false);
     }
   }
+
+  // Slice 41.10: „Editează" opens the three selects on the values as saved; „Renunță" (or Esc) puts them back.
+  function startEdit() {
+    setLocalImportance(data?.importance ?? "");
+    setLocalRelevance(data?.relevance ?? "");
+    setLocalProvenance(data?.provenance ?? "");
+    setSaveError(null);
+    setEditing(true);
+    focusFirstField(`[data-classification-items="${itemsId}"]`);
+  }
+  function cancelEdit() {
+    setLocalImportance(data?.importance ?? "");
+    setLocalRelevance(data?.relevance ?? "");
+    setLocalProvenance(data?.provenance ?? "");
+    setSaveError(null);
+    setEditing(false);
+  }
+
+  // Slice 41.10 (Ask first 5): with no value at all, on the latest version, the tile folds to one line — as an empty
+  // gray tile does (40.64) — „necompletat" and „Adaugă", which opens it. Only inside its frame, which draws the fold.
+  const folded =
+    showClassification && !!chrome && !!data && isOnLatest && !editing &&
+    !data.importance && !data.relevance && !data.provenance;
+  const setChromeFolded = chrome?.setFolded;
+  const setChromeEditing = chrome?.setEditing;
+  useEffect(() => {
+    setChromeFolded?.(folded);
+  }, [setChromeFolded, folded]);
+  useEffect(() => {
+    setChromeEditing?.(editing);
+  }, [setChromeEditing, editing]);
 
   // ── Display values (local on latest; snapshot on historical) ─────────────
 
@@ -1578,6 +1596,7 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
   // ── Render ────────────────────────────────────────────────────────────────
 
   const about = (title: string) => t("about", { title });
+  const markLabels = { mark: t("markReviewed.button"), marking: t("markReviewed.marking"), marked: t("markReviewed.marked") };
 
   // Slice #37.82: „Conexiuni"'s groups that are drawn, in order — the lines go between them.
   const connectionGroups: { key: string; node: React.ReactNode }[] = [];
@@ -1677,12 +1696,12 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
           bubble), its control and what is true of this record; no paragraphs
           of help, no empty lines. With `part` the tile's own title names the
           section; without it both sections are drawn under their subheaders. */}
-      <div className="flex flex-col gap-4" data-metadata-part={part ?? "both"} ref={sharedLeftLine}>
+      <div className="flex flex-col gap-4" data-metadata-part={part ?? "both"}>
 
         {showClassification && (<>
         {/* ── Version nav (only when there are multiple versions) ──────────── */}
         {/* Slice #37.81: the line under it is the shared divider, as the tile's other two are. */}
-        {totalVer > 1 && (<>
+        {totalVer > 1 && !folded && (<>
           <div className="flex items-center gap-2">
             <VersionNavControls nav={navView} labels={navLabels} />
           </div>
@@ -1695,83 +1714,87 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
           </h3>
         )}
 
-        {/* Slice #37.68 — Importanță and Relevanță are two columns of one row,
-            each with its title and bubble, its select and review button, and
-            its „Actualizat …" and warning under its own select. Proveniență,
-            the wider select, keeps a row of its own under them.
-            Slice #37.81 — two equal cells with the vertical divider between
-            them; each one's content centred across, the shorter centred down
-            against the taller. */}
-        <div className="grid items-center gap-4" style={CLASSIFICATION_PAIR_GRID} data-classification-pair="">
+        {/* Slice 41.10: „Editează" in the tile's corner, as on a gray tile — on the latest version, while reading. */}
+        {isOnLatest && !editing && !folded && (
+          <TileAction>
+            <TileEditButton tile="classification" title={chrome?.title ?? t("sectionClassification")} onEdit={startEdit} />
+          </TileAction>
+        )}
+
+        {folded ? (
+          <EmptyTileLine title={chrome!.title} tile="classification" onAdd={startEdit} />
+        ) : (
+        // Slice 41.10 (Ask first 2): the three values one to a row, label above value; „Editează" turns them into
+        // their selects, saved together by „Salvează" under them; Esc is „Renunță".
+        <div
+          role="group"
+          aria-label={chrome?.title ?? t("sectionClassification")}
+          className="flex flex-col gap-2"
+          data-classification-items={itemsId}
+          data-classification-editing={editing ? "" : undefined}
+          onKeyDown={onTileKeyDown(editing, cancelEdit)}
+        >
         {/* ── 1. Importanță / Importance ──────────────────────────────────── */}
-        <MetadataSection
+        <ClassificationItem
+          item="importance"
           title={t("importance.title")}
           note={t("importance.note")}
           about={about(t("importance.title"))}
           value={displayImportance}
+          valueText={importanceOptions.find((o) => o.value === displayImportance)?.label ?? ""}
+          editing={editing}
           onChange={setLocalImportance}
           options={importanceOptions}
           statementMap={importanceStatements}
           placeholder={t("importance.placeholder")}
-          labelMarkReviewed={t("markReviewed.button")}
-          labelMarkingReviewed={t("markReviewed.marking")}
-          labelMarkedReviewed={t("markReviewed.marked")}
+          markLabels={markLabels}
           daysText={buildDaysText(data.importanceUpdatedAt)}
           reviewWarning={buildReviewWarning(data.importanceUpdatedAt)}
           onMarkReviewed={() => touchField("importance")}
-          readOnly={!isOnLatest}
+          latest={isOnLatest}
           highlight={highlights.importance}
-          centred
         />
 
-        <Divider vertical />
-
         {/* ── 2. Relevanță / Relevance ─────────────────────────────────────── */}
-        <MetadataSection
+        <ClassificationItem
+          item="relevance"
           title={t("relevance.title")}
           note={t("relevance.note")}
           about={about(t("relevance.title"))}
           value={displayRelevance}
+          valueText={relevanceOptions.find((o) => o.value === displayRelevance)?.label ?? ""}
+          editing={editing}
           onChange={setLocalRelevance}
           options={relevanceOptions}
           statementMap={relevanceStatements}
           placeholder={t("relevance.placeholder")}
-          labelMarkReviewed={t("markReviewed.button")}
-          labelMarkingReviewed={t("markReviewed.marking")}
-          labelMarkedReviewed={t("markReviewed.marked")}
+          markLabels={markLabels}
           daysText={buildDaysText(data.relevanceUpdatedAt)}
           reviewWarning={buildReviewWarning(data.relevanceUpdatedAt)}
           onMarkReviewed={() => touchField("relevance")}
-          readOnly={!isOnLatest}
+          latest={isOnLatest}
           highlight={highlights.relevance}
-          centred
         />
-        </div>
-
-        {/* Slice #37.81: the line between the pair and Proveniență. */}
-        <Divider />
 
         {/* ── 3. Proveniență / Provenience, with its history ───────────────── */}
-        {/* Slice #38.01: its title, select and „Istoric" start on Importanță's
-            select's left edge — measured by `sharedLeftLine`, on the column above. */}
-        <MetadataSection
+        <ClassificationItem
+          item="provenance"
           title={t("provenance.title")}
           note={t("provenance.note")}
           about={about(t("provenance.title"))}
           value={displayProvenance}
+          valueText={provenanceLabelMap[displayProvenance] ?? ""}
+          editing={editing}
           onChange={setLocalProvenance}
           options={provenanceOptions}
           statementMap={provenanceStatements}
           placeholder={t("provenance.placeholder")}
-          labelMarkReviewed={t("markReviewed.button")}
-          labelMarkingReviewed={t("markReviewed.marking")}
-          labelMarkedReviewed={t("markReviewed.marked")}
+          markLabels={markLabels}
           daysText={buildDaysText(data.provenanceUpdatedAt)}
           reviewWarning={buildReviewWarning(data.provenanceUpdatedAt)}
           onMarkReviewed={() => touchField("provenance")}
-          readOnly={!isOnLatest}
+          latest={isOnLatest}
           highlight={highlights.provenance}
-          alignedLeft
         >
           {/* Slice #20.09: calculation source link (shown when provenance = ALGORITHM) */}
           {calculationSourcePath && displayProvenance === "ALGORITHM" && (
@@ -1784,43 +1807,37 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
             />
           )}
 
-          {/* History — sourced from entity_provenance_log via the main query.
-              It says something about THIS record, so it stays visible (#37.63). */}
-          {/* Slice #37.68 — the save button stands on „Istoric"'s line, against
-              the tile's right edge; on a version that is not the latest there
-              is no save button and „Istoric" is alone on its line. */}
-          <div className="flex items-center justify-between gap-3" data-history-line="">
-            <h4 className="text-xs font-semibold uppercase tracking-wide text-fade dark:text-zinc-500">
-              {t("provenance.historyTitle")}
-            </h4>
-            {isOnLatest && (
-              // #37.42/#37.43 (A022): Save; while „✓ Salvat" shows, a Check in its
-              // place, then Save again — the after-save confirmation stays.
-              <IconButton
-                icon={saved ? Check : Save}
-                label={saved ? t("saved") : t("save")}
-                busy={saving}
-                busyLabel={t("saving")}
-                variant="primary"
-                size="lg"
-                onClick={saveAll}
-                disabled={saving || saved || !isDirty}
-              />
-            )}
-          </div>
+          {/* History — sourced from entity_provenance_log via the main query. It says something about THIS record,
+              so it stays visible (#37.63). Slice 41.10: a label as the others; the save moved to „Salvează". */}
+          <h4 className={FIELD_LABEL} data-history-line="">
+            {t("provenance.historyTitle")}
+          </h4>
           {data.provenanceHistory.length === 0 ? (
             <p className="text-xs text-fade dark:text-zinc-500">{t("provenance.historyEmpty")}</p>
           ) : (
             <ul className="flex flex-col gap-0.5">
               {data.provenanceHistory.map((entry, i) => (
-                <li key={i} className="flex items-center gap-3 text-xs text-fade dark:text-zinc-400">
+                <li key={i} className="flex items-center gap-3 text-xs text-ink dark:text-zinc-300">
                   <span className="font-mono tabular-nums">{entry.date}</span>
                   <span>{provenanceLabelMap[entry.method] ?? entry.method}</span>
                 </li>
               ))}
             </ul>
           )}
-        </MetadataSection>
+        </ClassificationItem>
+
+        {editing && (
+          <TileEditBar
+            tile="classification"
+            onSave={() => void saveAll()}
+            onCancel={cancelEdit}
+            saving={saving}
+            canSave={isDirty}
+            error={saveError}
+          />
+        )}
+        </div>
+        )}
 
         </>)}
 

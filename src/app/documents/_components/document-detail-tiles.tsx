@@ -254,7 +254,7 @@ export function DocumentDetailTiles({
               through the same query key — fetched once. */}
           {choice.isShown("classification") && (
             <div className="max-w-full" style={{ order: order("classification") }}>
-              <ListTile tile="classification" title={labels.classification} subtitle={t("tileSubtitles.classification")} units={LIST_UNITS.document.classification} surface={groupSurface(tileGroupOf(reg, "classification"))}>
+              <ListTile tile="classification" readEdit title={labels.classification} subtitle={t("tileSubtitles.classification")} units={LIST_UNITS.document.classification} surface={groupSurface(tileGroupOf(reg, "classification"))}>
                 <EntityMetadataTab
                   apiPath={`/api/documents/${encodeURIComponent(documentId)}/entity-references`}
                   queryKey={`entity-references-document-${documentId}`}

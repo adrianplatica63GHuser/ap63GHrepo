@@ -1,15 +1,14 @@
 /**
- * Slice #37.68 — „Clasificări" on the four record screens:
- * Importanță and Relevanță are two columns of one row, and the save button
- * stands on „Istoric"'s line, against the tile's right edge. One component
- * draws the tile on all four screens, so it is tested once here; the units are
- * in field-widths.test.ts.
+ * „Clasificare" on the four record screens. One component draws the tile on all four, so it is tested once here.
+ * Slice 41.10 replaced #37.68's one row (Importanță and Relevanță side by side, the save on „Istoric"'s line) with a
+ * gray tile's read view and „Editează" (see the describe below). The file keeps its name.
  */
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 
 import { EntityMetadataTab } from "@/components/entity-metadata-tab";
+import { ListTile } from "@/components/tiles/list-tile";
 import { CLASSIFICATION_UNITS, LIST_UNITS, unitsRem } from "@/lib/ui/field-widths";
 
 jest.mock("next-intl", () => ({
@@ -37,14 +36,16 @@ const META = {
 };
 const snapshot = { importance: "LOW", relevance: "CURRENT", provenance: "MANUAL" };
 
+let meta: Record<string, unknown> = META;
 let versions: { id: string; versionNumber: number; snapshot: typeof snapshot; createdAt: string }[] = [];
 let calls: { url: string; method: string; body?: string }[] = [];
 beforeEach(() => {
   calls = [];
   versions = [];
+  meta = META;
   global.fetch = jest.fn(async (url: string, init?: RequestInit) => {
     calls.push({ url, method: init?.method ?? "GET", body: init?.body as string | undefined });
-    const json = url === "/api/meta" ? META
+    const json = url === "/api/meta" ? meta
       : url.endsWith("/versions") ? { items: versions }
       : {};
     return { ok: true, status: 200, redirected: false, json: async () => json };
@@ -60,57 +61,55 @@ function renderTile() {
   );
 }
 
-const pair = (): HTMLElement => {
-  const el = document.querySelector<HTMLElement>("[data-classification-pair]");
-  if (!el) throw new Error("no pair row");
-  return el;
-};
-const historyLine = (): HTMLElement => {
-  const el = document.querySelector<HTMLElement>("[data-history-line]");
-  if (!el) throw new Error("no „Istoric” line");
-  return el;
-};
+const items = () => [...document.querySelectorAll<HTMLElement>("[data-classification-item]")];
 
-describe("„Clasificări”: Importanță and Relevanță on one row (Slice #37.68)", () => {
-  it("the row holds exactly Importanță and Relevanță, each with its select and review button; Proveniență is under it", async () => {
+function renderInFrame() {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(
+    <QueryClientProvider client={client}>
+      <ListTile tile="classification" title="Clasificare" readEdit units={2}>
+        <EntityMetadataTab apiPath="/api/meta" queryKey="meta-test" backHref="/x" backEntityName="X" part="classification" />
+      </ListTile>
+    </QueryClientProvider>,
+  );
+}
+
+/**
+ * Slice 41.10 — „Clasificare" as a gray tile (was #37.68: Importanță and Relevanță on one row, the save on „Istoric"'s
+ * line). Read: the three values as text, one to a row, label above value, each with its „Marchează ca verificat";
+ * „Editează" opens the three selects with „Salvează" and „Renunță"; 2 units; with no value, one line.
+ */
+describe("„Clasificare”: read, and edited with „Editează” (Slice 41.10)", () => {
+  it("reads the three values as text, one to a row, label above value, each with its review button; no select", async () => {
     renderTile();
     await screen.findByRole("heading", { name: "importance.title" });
-    const sections = [...pair().children].filter((c) => c.tagName === "SECTION");
-    expect(sections).toHaveLength(2);
-    expect(sections.map((s) => s.querySelector("h3")?.textContent)).toEqual(["importance.title", "relevance.title"]);
-    for (const s of sections) {
-      expect(s.querySelectorAll("select")).toHaveLength(1);
-      expect(within(s as HTMLElement).getByRole("button", { name: "markReviewed.button" })).toBeTruthy();
+    expect(items().map((i) => i.dataset.classificationItem)).toEqual(["importance", "relevance", "provenance"]);
+    expect(document.querySelectorAll("select")).toHaveLength(0);
+    expect(items().map((i) => i.querySelector("[data-read-value]")?.textContent)).toEqual(["importance.low", "relevance.current", "provenance.manual"]);
+    for (const i of items()) {
+      expect(i.querySelector("h3")!.compareDocumentPosition(i.querySelector("[data-read-value]")!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(within(i).getByRole("button", { name: "markReviewed.button" })).toBeTruthy();
+      expect(i.querySelector("h3")!.className).toBe("font-colhead text-xs font-normal tracking-[0.02em] text-label");
     }
-    // „Actualizat …" stays under its own select.
-    expect(within(sections[0] as HTMLElement).getByText("lastChangedToday")).toBeTruthy();
-    expect(within(sections[1] as HTMLElement).queryByText("lastChangedToday")).toBeNull();
-    // Proveniență is not in the row: a section of its own after it.
-    const provenance = screen.getByRole("heading", { name: "provenance.title" }).closest("section");
-    expect(provenance).not.toBeNull();
-    expect(pair().contains(provenance)).toBe(false);
-    expect(pair().compareDocumentPosition(provenance!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    // Slice #38.01: Proveniență starts on the shared left line, the pair row's two cells do not.
-    expect(provenance).toHaveAttribute("data-aligned-left");
-    for (const s of sections) expect(s).not.toHaveAttribute("data-aligned-left");
+    // „Actualizat …" stays under its own value.
+    expect(within(items()[0]).getByText("lastChangedToday")).toBeTruthy();
+    expect(within(items()[1]).queryByText("lastChangedToday")).toBeNull();
+    // No save while reading: „Editează" is the way in.
+    expect(screen.queryByRole("button", { name: "save" })).toBeNull();
+    expect(screen.getByRole("button", { name: /^editTile/ })).toBeTruthy();
   });
 
-  it("the save button is on „Istoric”'s line, after the title (the line's right end), and nowhere else", async () => {
+  it("„Editează”: three selects, „Salvează” disabled until something changes, then one save writes the three values and it reads again", async () => {
     renderTile();
-    const save = await screen.findByRole("button", { name: "save" });
-    const line = historyLine();
-    expect(line.contains(save)).toBe(true);
-    expect(line.className).toMatch(/justify-between/);
-    expect(line.firstElementChild?.textContent).toBe("provenance.historyTitle");
-    // The button is the line's last element — inside its tooltip's wrapper.
-    expect(line.lastElementChild?.contains(save)).toBe(true);
-    expect(screen.getAllByRole("button", { name: "save" })).toHaveLength(1);
-  });
-
-  it("it keeps its behaviour: disabled until something changes, then a save writes the three values", async () => {
-    renderTile();
-    expect(await screen.findByRole("button", { name: "save" })).toBeDisabled();
-    fireEvent.change(pair().querySelectorAll("select")[0], { target: { value: "HIGH" } });
+    fireEvent.click(await screen.findByRole("button", { name: /^editTile/ }));
+    const selects = await screen.findAllByRole("combobox");
+    expect(selects.map((x) => x.getAttribute("aria-label"))).toEqual(["importance.title", "relevance.title", "provenance.title"]);
+    // While editing, no review button: it marks the saved value, not the one being chosen.
+    expect(screen.queryByRole("button", { name: "markReviewed.button" })).toBeNull();
+    expect(screen.getByRole("button", { name: "save" })).toBeDisabled();
+    // A change writes nothing until „Salvează".
+    fireEvent.change(selects[0], { target: { value: "HIGH" } });
+    expect(calls.some((c) => c.method === "PATCH")).toBe(false);
     // Queried afresh: IconButton replaces its button when `disabled` flips (FU-291).
     await waitFor(() => expect(screen.getByRole("button", { name: "save" })).toBeEnabled());
     fireEvent.click(screen.getByRole("button", { name: "save" }));
@@ -118,29 +117,56 @@ describe("„Clasificări”: Importanță and Relevanță on one row (Slice #37
     const patch = calls.find((c) => c.method === "PATCH")!;
     expect(patch.url).toBe("/api/metadata/po-1");
     expect(JSON.parse(patch.body!)).toEqual({ importance: "HIGH", relevance: "CURRENT", provenance: "MANUAL" });
-    // „✓ Salvat" after the save, still on „Istoric"'s line.
-    const saved = await screen.findByRole("button", { name: "saved" });
-    expect(historyLine().contains(saved)).toBe(true);
+    await waitFor(() => expect(document.querySelectorAll("select")).toHaveLength(0));
   });
 
-  it("on a version that is not the latest there is no save button, and „Istoric” is alone on its line", async () => {
+  it("„Renunță” puts the values back and sends nothing", async () => {
+    renderTile();
+    fireEvent.click(await screen.findByRole("button", { name: /^editTile/ }));
+    fireEvent.change((await screen.findAllByRole("combobox"))[1], { target: { value: "FUTURE" } });
+    fireEvent.click(screen.getByRole("button", { name: "cancel" }));
+    await waitFor(() => expect(document.querySelectorAll("select")).toHaveLength(0));
+    expect(items()[1].querySelector("[data-read-value]")?.textContent).toBe("relevance.current");
+    expect(calls.some((c) => c.method === "PATCH")).toBe(false);
+  });
+
+  it("on a version that is not the latest: no „Editează”, no review buttons", async () => {
     versions = [
       { id: "v0", versionNumber: 0, snapshot, createdAt: "" },
       { id: "v1", versionNumber: 1, snapshot: { ...snapshot, importance: "HIGH" }, createdAt: "" },
     ];
     renderTile();
     fireEvent.click(await screen.findByRole("button", { name: "version.prev" }));
-    await waitFor(() => expect(screen.queryByRole("button", { name: "save" })).toBeNull());
-    expect(historyLine().children).toHaveLength(1);
-    expect(historyLine().textContent).toBe("provenance.historyTitle");
+    await waitFor(() => expect(screen.queryByRole("button", { name: /^editTile/ })).toBeNull());
+    expect(screen.queryByRole("button", { name: "markReviewed.button" })).toBeNull();
   });
 
-  // 40.98: 4 units of 119 px, 524 px — the row no longer fits 3 (389). Was 3 units of 148, 476 px.
-  it("the tile is 4 units on all four screens — the fewest that hold the row (rule 17)", () => {
-    expect(CLASSIFICATION_UNITS).toBe(4);
+  it("in its frame: „Editează” in the title's corner, the blue outline while editing", async () => {
+    const { container } = renderInFrame();
+    const edit = await screen.findByRole("button", { name: /^editTile/ });
+    expect(container.querySelector("[data-tile-action-slot]")!.contains(edit)).toBe(true);
+    fireEvent.click(edit);
+    await waitFor(() => expect(container.querySelector("[data-tile]")).toHaveAttribute("data-tile-editing"));
+    expect(container.querySelector("[data-tile]")!.className).toContain("outline-bl-strong");
+  });
+
+  it("with no value at all it folds to one line — the title, „necompletat”, „Adaugă” — which opens the selects", async () => {
+    meta = { ...META, importance: null, relevance: null, provenance: null };
+    const { container } = renderInFrame();
+    await waitFor(() => expect(container.querySelector("[data-empty-tile=classification]")).not.toBeNull());
+    expect(container.querySelector("[data-tile]")).toHaveAttribute("data-tile-folded");
+    expect(container.querySelector("[data-tile-title]")).toBeNull();
+    fireEvent.click(container.querySelector("[data-empty-tile-add]")!);
+    await waitFor(() => expect(container.querySelectorAll("select")).toHaveLength(3));
+    expect(container.querySelector("[data-tile]")).not.toHaveAttribute("data-tile-folded");
+  });
+
+  // 41.10: 2 units of 119 px, 254 px — half of 40.98's 4 (524 px).
+  it("the tile is 2 units on all four screens", () => {
+    expect(CLASSIFICATION_UNITS).toBe(2);
     for (const k of ["naturalPerson", "judicialPerson", "property", "document"] as const) {
-      expect(LIST_UNITS[k].classification).toBe(4);
+      expect(LIST_UNITS[k].classification).toBe(2);
     }
-    expect(unitsRem(4) * 16).toBe(524);
+    expect(unitsRem(2) * 16).toBe(254);
   });
 });

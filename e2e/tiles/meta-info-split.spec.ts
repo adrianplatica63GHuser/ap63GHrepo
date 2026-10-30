@@ -91,9 +91,9 @@ test.describe("TC-TILES-08 — META INFO în două", () => {
       // Step 2 — „Importanță"'s bubble.
       await importanceBubble(page, cls);
 
-      // Step 3 — Proveniență's value, „Manual (Adaugă nou)", and what it means.
-      const provenance = cls.locator("select").nth(2);
-      await expect(provenance.locator("option:checked")).toHaveText("Manual (Adaugă nou)");
+      // Step 3 — Proveniență's value, „Manual (Adaugă nou)", and what it means. 41.10: read as text, not a select.
+      const provenance = cls.locator('[data-read-value="classification.provenance"]');
+      await expect(provenance).toHaveText("Manual (Adaugă nou)");
       const meaning = cls.getByRole("tooltip").filter({ hasText: "Acest element a fost introdus manual" });
       await expect(meaning).toHaveClass(/sr-only/);
       await provenance.hover();

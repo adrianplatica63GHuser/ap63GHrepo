@@ -174,7 +174,7 @@ export function PropertyDetailTiles({
           {/* Slice #37.63: META INFO is two tiles, each reading the record's metadata
               through the same query key — fetched once. */}
           {choice.isShown("classification") && (
-            <ListTile tile="classification" title={labels.classification} subtitle={t("tileSubtitles.classification")} units={LIST_UNITS.property.classification} surface={groupSurface(tileGroupOf(PROP_TILE_REGISTRY, "classification"))}>
+            <ListTile tile="classification" readEdit title={labels.classification} subtitle={t("tileSubtitles.classification")} units={LIST_UNITS.property.classification} surface={groupSurface(tileGroupOf(PROP_TILE_REGISTRY, "classification"))}>
               <EntityMetadataTab
                 apiPath={`/api/properties/${encodeURIComponent(propertyId)}/entity-references`}
                 queryKey={`entity-references-property-${propertyId}`}

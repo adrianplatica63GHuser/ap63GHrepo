@@ -1,4 +1,8 @@
 /**
+ * ⚠️ Slice 41.10: NO LONGER DRAWN. „Clasificare" reads as a gray tile — no pair row, no cells — so nothing imports
+ * this module but its own test. It stays only because a slice deletes nothing it did not create; deleting it, and its
+ * describe in classification-dividers.test.tsx, is a one-line follow-up.
+ *
  * „Clasificări": where Importanță's and Relevanță's selects stand in their
  * cells, and the one left line Proveniență shares with Importanță's select.
  *                                                                (Slice #38.01)

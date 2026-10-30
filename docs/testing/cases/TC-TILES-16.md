@@ -1,4 +1,4 @@
-# TC-TILES-16 — „Clasificări": linii între cele trei, Importanță și Relevanță fiecare în celula ei, Proveniență pe linia Importanței
+# TC-TILES-16 — „Clasificare": o fișă gri — citită, „Editează", 2 unități (41.10; was: liniile și cele două celule)
 
 | | |
 |---|---|
@@ -10,25 +10,21 @@
 
 ## What this proves
 
-In „Clasificări" (Slice #37.81) a vertical line separates Importanță from Relevanță, and a
-horizontal one separates the two from Proveniență; with two versions the version controls' line is
-the same line. Every line is 1 px in the rim colour and stops inside the tile's padding. Importanță
-and Relevanță each stand centred in a cell of their own, their selects level. A cell's content
-pushed to one side, the lines looking different from each other, or a line touching the tile's
-border is the defect this case exists to catch; a change and a save still write.
+Since Slice 41.10 „Clasificare" is a gray tile, at 2 units (254 px). It reads its three values as text, one to a row,
+the label above the value, each with „Marchează ca verificat" as an icon. „Editează" turns them into their selects,
+written only by „Salvează". „Renunță" writes nothing. With no value at all it folds to one line. A select drawn while
+reading, a value saved as it is chosen, the tile wider than 254 px, or anything past its edge is the defect this case
+exists to catch.
 
-Since Slice #38.01 each cell's select row stands a little left of the centre: the select's gap to its
-cell's left edge is three quarters of what centring gave it (d), its review button still beside it,
-the title and the notes under it still centred. Proveniență's title, select and „Istoric" start on
-Importanță's select's left edge. A select back at its cell's centre, or Proveniență starting at the
-tile's padding, is the defect that change adds.
+Until 41.10 it proved #37.81's lines between Importanță's and Relevanță's cells and #38.01's shifted selects. Those
+cells are gone, and the version controls' line is the only one left.
 
 ## Before you start
 
 - TC-AUTH-01 is green.
-- **Created through the API** as `e2e/helpers/records.ts` creates prerequisites: a natural person
-  „Ion TC-TILES-16" and a Contract de Vânzare „TC-TILES-16 Act".
-- The window is 1920 px wide (1366 px for step 5). „Clasificări" is ticked on both screens.
+- **Created through the API** as `e2e/helpers/records.ts` creates prerequisites: a property
+  „TC-TILES-16 Teren" (41.10; was a natural person) and a Contract de Vânzare „TC-TILES-16 Act".
+- The window is 1366 px wide (41.10; was 1920, and 1366 for a step 5). „Clasificare" is ticked on both screens.
 
 ## What Adrian is asked for
 
@@ -36,13 +32,15 @@ Nothing.
 
 ## Steps
 
-| # | A person does | And sees |
+| # | Does | Sees |
 |---|---|---|
-| 1 | Opens the person | One version: two lines in the tile — a vertical one between Importanță and Relevanță, a horizontal one under them, before Proveniență. Relevanță's select level with Importanță's (the same top); each select's left edge 3/8 × (the cell's width − the select's width) from its cell's left edge, ±1 px — three quarters of the centred gap (#38.01); Proveniență's title, select and „Istoric" each starting on Importanță's select's left edge, ±1 px; the vertical line between the two cells, from the cells' top to their bottom, and every line inside the tile's padding (12 px from the tile's edges, or more) |
-| 2 | Chooses an Importanță value and presses the tile's „Salvează" | The version controls appear („Versiunea anterioară"): two versions; and a third line, under them, the same 1 px and colour as the other two. The two cells as in step 1 |
-| 3 | Goes to the older version („Versiunea anterioară") | The three lines are there, Importanță and Relevanță still side by side, their selects placed as in step 1 and level, Proveniență on Importanță's select's line — with no review buttons |
-| 4 | Opens the document and does steps 1–2 there | The same |
-| 5 | Narrows the window to 1366 px and opens the person again | The selects placed as in step 1 and level, Proveniență on Importanță's select's line, every line inside the padding |
+| 1 | (41.10) At 1366 px, opens an invented property, tile „Clasificare" | 254 px wide; it reads — Importanță, Relevanță and Proveniență one to a row, Proveniență „Manual (Adaugă nou)" as text, no select |
+| 2 | Presses „Editează" | Importanță, Relevanță and Proveniență as selects, one to a row, nothing past the tile's edge; „Salvează" disabled |
+| 3 | Chooses an Importanță value, presses „Salvează" | The tile reads: the value as text, no select, „Editează" in the corner; still 254 px |
+| 4 | Reloads the page | The value is still there; the version controls, with one line under them, inside the padding |
+| 5 | „Editează", Importanță back to blank, „Renunță" | The value as it was — nothing written |
+| 6 | „Versiunea anterioară" | No „Editează", no „Marchează ca verificat" |
+| 7 | Opens an invented sale contract and does steps 1–5 there | The same |
 
 ## At the end — leaving things as they were found
 

@@ -1025,24 +1025,16 @@ export const RELATED_READONLY_SLOTS: readonly RowSlot[] = ["relation"]; // 40.96
 export const RELATED_UNITS = oneLineRowUnits(RELATED_SLOTS, ROW_CONTENT_REM.property, true);
 
 /**
- * „Clasificări" with Importanță and Relevanță on one row  (Slice #37.68).
+ * „Clasificare": 2 units  (Slice 41.10; Adrian, 2026-10-29: „much more compact and half the width it is now").
  *
- * Each of the two is its select and „Marchează ca verificat" side by side, and
- * the two stand 1rem apart (`gap-4`). Measured on 2026-10-04 in the desktop
- * app's browser pane against `npm run dev`: Importanță's select 104 px,
- * Relevanță's 131 px (its widest option, „De perspectivă"), the review button
- * 34 px, 8 px between a select and its button — 146 + 16 + 173 = 335 px. Inside
- * 2 units there are 286 px, so the tile takes 3 (450 px inside). Proveniență's
- * select (197 px) and its button keep a row of their own and fit either way.
- * Native selects size to their widest option, so these numbers are the
- * browser's, not ours — re-measure if an option's wording changes.
- *
- * Slice #37.81: the two are two EQUAL cells with a 1-px divider between them,
- * 1rem either side — so each cell is as wide as the wider of the two (173 px):
- * 2 × 173 + 2 × 16 + 1 = 379 px, still inside 3 units (450 px). Unchanged size.
+ * Since 41.10 the tile reads as a gray tile — the three values one to a row, as text, „Marchează ca verificat" an
+ * icon beside each — and only „Editează" turns them into their selects, one to a row, each the panel's width. So
+ * nothing stands side by side any more, and the widest thing is a read value and its 34-px button: 2 units, 254 px,
+ * 228 inside. Proveniență's select and its button needed 239 px side by side (Ask first 2): in the edit the button is
+ * not drawn, so the select takes the 228. Was 4 units (#37.68's pair row — Importanță and Relevanță with their buttons
+ * side by side, 379 px, `CLASSIFICATION_PAIR_REM`).
  */
-export const CLASSIFICATION_PAIR_REM = (2 * (131 + 8 + 34) + 2 * 16 + 1) / 16;
-export const CLASSIFICATION_UNITS = unitsFor(panelRem(CLASSIFICATION_PAIR_REM));
+export const CLASSIFICATION_UNITS = 2;
 
 // Slice #37.67: a person's Persoane (4), Proprietăți (5) and Acte (5) are one tile, „Corelate" —
 // the Document's `RELATED_UNITS`, 4 (rule 17), on both person screens.

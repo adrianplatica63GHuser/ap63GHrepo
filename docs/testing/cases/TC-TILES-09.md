@@ -1,4 +1,4 @@
-# TC-TILES-09 — „Clasificări": Relevanță lângă Importanță, butonul de salvare pe linia „Istoric"
+# TC-TILES-09 — „Clasificare" îngustă: cele trei una sub alta, „Salvează" sub ele (41.10; was: Relevanță lângă Importanță, salvarea pe linia „Istoric")
 
 | | |
 |---|---|
@@ -32,9 +32,9 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens the natural person with `?tab=metadata` on its address | „CLASIFICĂRI" is 524 px wide (4 units of 119 px since 40.98; 476, 3 of 148, before). Importanță and Relevanță stand side by side: Relevanță's select is level with Importanță's (the same top, to the pixel) and to its right. Proveniență's select is under both |
-| 2 | Looks at the line of „ISTORIC" | The save button „Salvează" is on it, disabled: its middle is within the height of „ISTORIC", and its right edge is the tile's right edge less its padding (12 px), to the pixel. There is no other „Salvează" in the tile |
-| 3 | Changes Importanță to „Ridicată" and presses „Salvează" | The button turns into „✓ Salvat", still on „Istoric"'s line. Opened again, the person's Importanță reads „Ridicată" |
+| 1 | Opens the natural person with `?tab=metadata` on its address | (41.10) „Clasificare" is 254 px wide (2 units of 119 px; 524, 4, before). It reads, its Proveniență „Manual (Adaugă nou)"; „Editează" opens Importanță, Relevanță and Proveniență as selects, one under another, each inside the tile |
+| 2 | Looks under the three selects | (41.10) One „Salvează", disabled, under Proveniență; „Renunță" closes the tile with nothing written |
+| 3 | „Editează", Importanță to „Ridicată", „Salvează" | (41.10) The tile reads „Ridicată" as text. Opened again, the person's Importanță reads „Ridicată" |
 | 4 | Opens the company, the property and the document the same way (`?tab=metadata`) | On each, steps 1 and 2 read the same |
 
 ## At the end — leaving things as they were found

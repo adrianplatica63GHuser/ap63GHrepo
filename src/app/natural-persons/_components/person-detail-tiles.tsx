@@ -162,7 +162,7 @@ export function PersonDetailTiles({
           {/* Slice #37.63: META INFO is two tiles, each reading the record's metadata
               through the same query key — fetched once. */}
           {choice.isShown("classification") && (
-            <ListTile tile="classification" title={labels.classification} subtitle={t("tileSubtitles.classification")} units={NP_LIST_UNITS.classification} surface={groupSurface(tileGroupOf(NP_TILE_REGISTRY, "classification"))}>
+            <ListTile tile="classification" readEdit title={labels.classification} subtitle={t("tileSubtitles.classification")} units={NP_LIST_UNITS.classification} surface={groupSurface(tileGroupOf(NP_TILE_REGISTRY, "classification"))}>
               <EntityMetadataTab
                 apiPath={`/api/people/${encodeURIComponent(personId)}/entity-references`}
                 queryKey={`entity-references-person-${personId}`}
