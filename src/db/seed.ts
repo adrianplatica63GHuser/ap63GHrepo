@@ -1589,13 +1589,21 @@ async function seed() {
   }
 
   // ---- Documents ----
+  // ⚠️ **Identity documents do not count** (Slice 41.15). Since 40.85 the persons section
+  // above writes each person's identity card, so on a fresh database a plain
+  // `count(*) from document` is already 30 here and this section skipped itself on every
+  // first run — `npm run supabase:sync` included — leaving no ordinary documents at all.
   const documentCount = (
-    await db.execute(sql`select count(*)::int as count from document`)
+    await db.execute(sql`
+      select count(*)::int as count
+        from document d
+        left join lookup_document_type t on t.id = d.document_type_id
+       where t.identity_kind is null`)
   ).rows[0] as { count: number };
 
   if (documentCount.count > 0) {
     console.log(
-      `document already has ${documentCount.count} row(s); skipping document seed.`,
+      `document already has ${documentCount.count} non-identity row(s); skipping document seed.`,
     );
   } else {
     // Resolve every lookup_document_type.key -> id once, up front. These
