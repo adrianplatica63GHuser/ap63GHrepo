@@ -12,17 +12,17 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-10-30 — 382 entries (FU-360 filed by 40.18, FU-361 by 40.27, FU-362 by 40.78, FU-363 by 40.79, FU-364–365 by 40.84, FU-366–369 by 40.85, FU-370–371 by 40.86, FU-372 by 40.87, FU-373 by 40.88, FU-374 by 40.90, FU-375 by 40.92, FU-376 by 40.96, 40.98, FU-381 by 41.01, FU-382 by 41.03). Rows are status, columns are impact.
+As of 2026-10-30 — 384 entries (FU-360 filed by 40.18, FU-361 by 40.27, FU-362 by 40.78, FU-363 by 40.79, FU-364–365 by 40.84, FU-366–369 by 40.85, FU-370–371 by 40.86, FU-372 by 40.87, FU-373 by 40.88, FU-374 by 40.90, FU-375 by 40.92, FU-376 by 40.96, 40.98, FU-381 by 41.01, FU-382 by 41.03, FU-383–384 by 41.10). Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
-| open | 20 | 92 | 82 | 29 | 223 |
+| open | 20 | 92 | 84 | 29 | 225 |
 | planned | 0 | 0 | 1 | 0 | 1 |
 | resolved | 40 | 63 | 32 | 3 | 138 |
 | ignored | 4 | 3 | 4 | 2 | 13 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 6 | 1 | 0 | 7 |
-| **total** | 64 | 164 | 120 | 34 | 382 |
+| **total** | 64 | 164 | 122 | 34 | 384 |
 <!-- summary:end -->
 
 `src/__tests__/follow-up-register.test.ts` recounts the table and fails when this block disagrees
@@ -466,3 +466,5 @@ Nothing is filed from memory: every row carries evidence someone actually looked
 | FU-380 | 2026-10-29 40.98 Handover.40.98.md | tooling | Test runner | The runner's first e2e run after several days served a stylesheet with no `.text-label` rule (the class was in the DOM, the token in the CSS), so TC-SET-05 step 9 read the label in the body colour; the same spec passed on the next run with nothing changed. | run 20261029T010508Z-20563 trace: 0 `.text-label` in the one CSS resource; run 20261029T012302Z-1611 green | dev | S | open | If it recurs: start the runner's `next dev` with Turbopack's dev filesystem cache off (`experimental.turbopackFileSystemCacheForDev: false` when GA40_NEXT_DIST_DIR is set), or clear `.next/runner/dev` before each e2e run. | 2026-10-29 |
 | FU-381 | 2026-10-30 41.01 Handover.41.01.md | next-slice idea | Dashboard | The home page's count cards open their kind's list unfiltered: no list takes a filter for the records added in the last N days, or for those whose metadata is older than N days, so „Adăugate…” 305 opens all the natural persons, not the 305. | src/app/_components/dashboard-client.tsx COUNT_KINDS; src/lib/persons/list-filters.ts NATURAL_PERSON_FILTER_FIELDS (no createdAt, no metadata age) | user | M | open | A „Adăugat” date filter and a „Metadate neactualizate” filter on the four lists, and the cards' href carrying them. | 2026-10-30 |
 | FU-382 | 2026-10-30 41.03 Handover.41.03.md | data risk | Reference data | Adrian's database differs from sync-reference-data.sql in more than FU-378's names: judicial types „Executor judecătoresc” (sync: „Birou de executor judecătoresc”) and „Consiliu Local” / „Instituție” at sort 0 (not in the sync file); document types' short names CI (nou), CI (vechi), Pașaport, Pașaport CRDS, Cadastru, Partaj, Autorizație, Moștenire, Doc. cadastru (sync: CI, —, —, —, Act cadastru, Act partaj, Aut., Moștenitor, Doc. cadastrală) and sort orders 0 for the four „Act de …” types (sync 40–43), 18 for NECLASIFICAT (21). A `npm run supabase:sync` or a reset writes the sync file's values. | /api/admin/value-lists/document-types and /judicial-person-types on localhost:3000, 2026-10-30, against src/db/sync-reference-data.sql | data | S | open | Adrian says which of his values the sync file should take (likely all); one slice writes them in, as 41.03 did. | 2026-10-30 |
+| FU-383 | 2026-10-30 41.10 Handover.41.10.md | test gap | Tiles | Three tile-arrangement specs are red on `main` before 41.10 as after it (runner `20261030T061311Z-4422` on `f2e37f9`): TC-TILES-14 (pinned-tint: at 1366 px the property's map column now stands beside the form, not under it), TC-TILES-21 (tiles-double-click: „Adresă corespondență” no longer under „Acte de identitate”; „Toate sus” leaves columns 503 px apart, over the tallest tile + 16) and TC-TILES-20 (tiles-rise: „Clasificare” not at the left edge after „Toate”). Each reads a default arrangement the tile widths of 40.98–41.05 changed; none was on a slice's targeted list since. | .test-runner/logs/20261030T061311Z-4422/e2e.log; e2e/tiles/pinned-tint.spec.ts:77, tiles-double-click.spec.ts:95 and :188/:217, tiles-rise.spec.ts:110 | dev | M | open | One slice re-reads each case against today's default arrangement (the rule, as TC-TILES-12 does since 41.05, not the old positions) and makes the three green. | 2026-10-30 |
+| FU-384 | 2026-10-30 41.10 Handover.41.10.md | debt | Clasificare | `src/lib/ui/classification-left-line.ts` (#38.01's shifted selects and shared left line) is no longer drawn: 41.10's gray-tile „Clasificare” has no pair row. Only its own describe in classification-dividers.test.tsx still imports it; 41.10 left it, as a slice deletes nothing it did not create. | src/lib/ui/classification-left-line.ts header; src/__tests__/classification-dividers.test.tsx („the select rows shifted…” describe) | dev | S | open | Delete the module and that describe. | 2026-10-30 |
