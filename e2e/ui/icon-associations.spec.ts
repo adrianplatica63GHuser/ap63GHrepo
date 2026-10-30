@@ -70,10 +70,12 @@ test.describe("TC-ICON-03 — „Asociază” și „Dezasociază” cu pictogra
       await expect(page.getByText("Nimic corelat încă.")).toBeVisible({ timeout: 30_000 });
       const associate = page.getByRole("button", { name: "Asociază persoană", exact: true });
       const dissociate = page.getByRole("button", { name: "Dezasociază", exact: true });
-      await expect(associate).toHaveText("Asociază persoană");
+      // 40.96: icons only, the words their name (above) and tooltip — the chain and the kind's icon; „Dezasociază" the
+      // chain and the broken chain. (Was: the link and the words; this spec read the words until 41.08's run.)
+      await expect(associate).toHaveText("");
       expect(await iconOf(associate)).toBe("lucide-link");
-      await expect(dissociate).toHaveText("Dezasociază");
-      expect(await iconOf(dissociate)).toBe("lucide-unlink");
+      await expect(dissociate).toHaveText("");
+      expect(await dissociate.locator("svg.lucide-unlink").count()).toBe(1);
       await expect(dissociate).toBeDisabled();
 
       // Step 2 — „Asociere persoană", its „Anulează" an X.

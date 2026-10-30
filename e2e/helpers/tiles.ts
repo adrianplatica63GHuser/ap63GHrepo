@@ -47,7 +47,10 @@ export function tilesMenuButton(page: Page): Locator {
 export async function openTiles(page: Page): Promise<boolean> {
   await expect(page.locator("[data-tile-selector]").first()).toBeAttached({ timeout: 30_000 });
   const button = tilesMenuButton(page);
-  if ((await button.count()) === 0) return false;
+  // 41.08: the button is portalled into the page bar once the page has hydrated, so it is not there at first paint.
+  // A screen with „Panouri" draws its panel in the page from the first paint: wait for the button there; none, none.
+  if ((await page.locator("[data-tiles-panel]").count()) === 0) return false;
+  await expect(button).toBeVisible({ timeout: 30_000 });
   if ((await button.getAttribute("aria-expanded")) === "true") return false;
   await expect(async () => {
     if ((await button.getAttribute("aria-expanded")) !== "true") await button.click();

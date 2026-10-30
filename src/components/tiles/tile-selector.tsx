@@ -174,9 +174,9 @@ export function TileSelector<K extends string>({
   const [diagramHeight, setDiagramHeight] = useState(0);
   // Slice 41.08 (Ask first 3): with „Panouri" in the page bar, the panel opens under the bar, right-aligned to its
   // button, and stays where it opened while open — `fixed`, placed when it opens and on a resize, never on a scroll:
-  // the bar does not move either. As wide as the bar was (the in-flow wrapper's width), at most up to the button. It
-  // scrolls inside itself if the window is shorter than it. A button not in the bar (the home page's, 41.02) keeps the
-  // panel where it was, and so does jsdom, which measures nothing.
+  // the bar does not move either. As wide as the bar was (the in-flow wrapper's width), less what lies right of the
+  // button — never left of the content. It scrolls inside itself if the window is shorter than it. A button not in
+  // the bar (the home page's, 41.02) keeps the panel where it was, and so does jsdom, which measures nothing.
   const panelWrapRef = useRef<HTMLDivElement>(null);
   const [placed, setBarPlace] = useState<{ top: number; left: number; width: number } | null>(null);
   const menuOpen = !!menu?.open;
@@ -193,7 +193,7 @@ export function TileSelector<K extends string>({
       const w = wrap.getBoundingClientRect();
       const b = button.getBoundingClientRect();
       if (w.width <= 0) return;
-      const width = Math.min(w.width, b.right - 8);
+      const width = Math.min(w.width, b.right - w.left); // never left of the content, over the sidebar
       setBarPlace({ top: Math.round(bar.getBoundingClientRect().bottom + 4), left: Math.round(b.right - width), width: Math.round(width) });
     };
     place();
