@@ -310,6 +310,11 @@ screens the next batch changed again, at 10–20 % of a session).
 - **What stays per slice:** the help-coverage gate (`.claude/rules/help-and-registry.md`) — a new
   route still needs its help decision and a new hint its placement in the slice that adds them, or
   CI fails. Only the prose, the figures, the quizzes and the skills map wait for the update.
+- **The reminder line (Adrian, 2026-10-30).** When a batch of slices ends without a help update,
+  the **last line** of the session reply — and of the batch's last handover — is this reminder,
+  with the marker's commit and the next due date filled in:
+  `⚠️ Reminder: if this batch goes to Ciprian, update Help and learning first — it was last updated at <LAST-SYNC commit>; the next scheduled update is <date>.`
+  A batch whose last slice was the help update ends without it.
 
 ## Ending a slice: file what it noticed
 
