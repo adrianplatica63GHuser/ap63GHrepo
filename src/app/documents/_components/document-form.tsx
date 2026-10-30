@@ -869,7 +869,15 @@ export function DocumentForm({
         );
       }
       // What the SERVER now has, which is what the callers baseline against.
-      return valuesToSave;
+      //
+      // ⚠️ Slice 41.07: A COPY, NEVER THE FORM'S OWN OBJECT. `form.getValues()` hands back React Hook Form's live values
+      // — the object it goes on writing into — and `valuesForSave` returns that same object when nothing is stripped.
+      // Baselined as it was, the baseline WAS the form: every later change changed the baseline too, so `editDirty` was
+      // false for the rest of the visit („Salvează" disabled), switching tiles never asked, and „Renunță" reset the form
+      // to itself — the change stayed on screen and the next save of any tile wrote it (Adrian's „Plătitor taxe
+      // locale", saved with „Obligație număr cadastral" in one version). Only after a first save: the baseline from the
+      // server props was a copy.
+      return structuredClone(valuesToSave);
     } catch (err) {
       // Slice #37.21: a save refused as stale writes nothing; the notice says so.
       if (recordSync.refused(err)) return null;
@@ -942,6 +950,7 @@ export function DocumentForm({
     // bits (e.g. the page title if the document's label changed).
     setBaseline({ values: saved });
     setViewingVersion(null);
+    form.reset(saved); // 41.07: as loaded, now — as saveTile does (41.06)
     // Slice #21.04.Import: an associated record reverts to its read-only
     // presentation (Back to list + Modify) once the edit is saved — Modify
     // must be clicked again for a further change.
@@ -963,6 +972,7 @@ export function DocumentForm({
     // Bug 1: pulse the restored change once the new version refetches in.
     pendingPulseRef.current = makeCurrentNextNumber;
     setBaseline({ values: saved });
+    form.reset(saved); // 41.07: as loaded, now — as saveTile does (41.06)
     setViewingVersion(null);
     setConfirmMakeCurrent(false);
     router.refresh();

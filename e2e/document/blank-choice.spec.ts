@@ -219,3 +219,54 @@ test.describe("TC-DOC-06 pasul 7 (41.06) — un câmp salvat, restul în „Arat
     }
   });
 });
+
+// Slice 41.07 — Adrian: „I went in to edit mode and selected a value for … Plătitor taxe locale; the Save button was
+// disabled … when I try to cancel the change it went back to the read only mode but the save was actually performed".
+// After a first save the baseline WAS the form's live values (doSave returned React Hook Form's own object), so every
+// later change moved it too: „Salvează" stayed disabled, „Renunță" kept the change, and the next save wrote it.
+test.describe("TC-DOC-06 pasul 8 (41.07) — după o salvare, „Salvează” se aprinde și „Renunță” nu păstrează nimic", () => {
+  test("„Taxe și cheltuieli”: Plătitor taxe locale după o primă salvare — Renunță, reîncărcare, gol; Salvează, reîncărcare, păstrat", async ({ page }) => {
+    test.slow();
+    await removeLeftovers(page.request, `${MARK} 41.07`);
+    await page.setViewportSize({ width: 1366, height: 900 });
+    let id: string | undefined;
+    try {
+      id = await createSaleContract(page.request, `${MARK} 41.07 CVC`);
+      await language(page, "ro-RO");
+      await page.goto(`/documents/${id}`);
+      await pressTileButton(page, "Toate", { timeout: 30_000 });
+      // A first save in the visit — what armed the bug.
+      const decl = page.locator('[data-frame="tab:Declarații și garanții"]');
+      await decl.locator("[data-empty-tile-add]").click({ timeout: 30_000 });
+      await decl.locator('select[name="customFields.neipotecat"]').selectOption("AFIRMAT");
+      await decl.locator("[data-tile-save]").click();
+      await expect(decl.locator("[data-tile-edit-bar]")).toHaveCount(0, { timeout: 30_000 });
+
+      const fees = page.locator('[data-frame="tab:Taxe și cheltuieli"]');
+      const payer = () => fees.locator('select[name="customFields.taxeLocalePlatiteDe"]');
+      const open = async () => {
+        await fees.locator("[data-empty-tile-add], [data-tile-edit]").first().click({ timeout: 30_000 });
+        await expect(fees.locator("[data-tile-edit-bar]")).toBeVisible();
+      };
+      // Choosing a value lights „Salvează"; „Renunță" leaves the record as it was — on screen and after a reload.
+      await open();
+      await expect(fees.locator("[data-tile-save]")).toBeDisabled();
+      await payer().selectOption("CUMPARATOR");
+      await expect(fees.locator("[data-tile-save]")).toBeEnabled();
+      await fees.locator("[data-tile-cancel]").click();
+      await expect(fees.locator("[data-tile-edit-bar]")).toHaveCount(0);
+      await expect(fees.getByText("Cumpărător", { exact: true })).toHaveCount(0);
+      await page.reload();
+      await expect(fees.locator("[data-empty-tile]")).toBeVisible({ timeout: 30_000 }); // nothing saved: still one line
+      // Only „Salvează" writes, and what it writes is there after a reload.
+      await open();
+      await payer().selectOption("CUMPARATOR");
+      await fees.locator("[data-tile-save]").click();
+      await expect(fees.locator("[data-tile-edit-bar]")).toHaveCount(0, { timeout: 30_000 });
+      await page.reload();
+      await expect(fees.locator('[data-read-value="customFields.taxeLocalePlatiteDe"]')).toHaveText("Cumpărător", { timeout: 30_000 });
+    } finally {
+      if (id) await removeRecord(page.request, "document", id);
+    }
+  });
+});

@@ -43,6 +43,7 @@ is saved.
 | 5 | Looks at „Declarațiile vânzătorului" and „Declarații legale" (#38.33) | Boxes per row 2, 2, 2, 2, 2, 2 and 2, 2, 1 — Adrian's rows of two (40.93, migration_122); they were 3, 3, 3, 3 and 3, 2 |
 | 6 | Switches the interface to English and presses „All" | Each dropdown reads „no value" in italics; the two panels' boxes per row as in step 5 |
 | 7 | (Slice 41.06, a contract of its own) On a new contract's „Declarații și garanții": „Adaugă", Neipotecat „Afirmat", „Salvează" | Before the choice „Salvează" is disabled, after it enabled; saved, the tile reads Neipotecat „Afirmat" alone and „Arată N câmpuri goale" — no other field, no dropdown; „[Garanții]" and „[Declarații legale]" hidden with their fields, „[Declarațiile vânzătorului]" shown; the link shows them all again |
+| 8 | (Slice 41.07, a contract of its own) A first „Salvează" on „Declarații și garanții"; then „Taxe și cheltuieli": „Adaugă", Plătitor taxe locale „Cumpărător"; „Renunță"; reload; „Adaugă" again, the same choice, „Salvează"; reload | After the choice „Salvează" is enabled, even after the first save; after „Renunță" and the reload the tile is one line, „necompletat" — nothing was written; after „Salvează" and the reload Plătitor taxe locale reads „Cumpărător" |
 
 ## At the end — leaving things as they were found
 
