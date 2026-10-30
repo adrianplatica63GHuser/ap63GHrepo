@@ -77,6 +77,14 @@ you.
 `Bug:` verbatim matters more than it looks — a paraphrased Romanian error string sends
 Claude looking in the wrong `messages/*.json` key.
 
+## A batch's last slice
+
+A batch of slices no longer ends with the Help and learning update (manual, „?" texts, quizzes,
+skills map) every time. It ends with one only when an update is due — every two weeks, the day after
+the automatic regression, from November 5, 2026 — or when you ask for it. The rule, and the
+`docs/help/LAST-SYNC.md` marker it starts from, are in `ga40prj/CLAUDE.md` → „Help and learning is
+updated every two weeks".
+
 ## What you should *stop* putting in the header
 
 Each of these is now permanent, and repeating it in the header only risks the two copies

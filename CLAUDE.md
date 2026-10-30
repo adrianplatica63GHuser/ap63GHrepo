@@ -260,6 +260,27 @@ permission always, computer use or a Chrome site only for screen work (`C:\dev\C
 Then read whatever else the slice needs — freely, without asking. See the autonomy section
 in `C:\dev\CLAUDE.md`.
 
+## Help and learning is updated every two weeks
+
+The Help and learning update — the manual and its figures in both languages, the „?" help texts and
+proposals, the quizzes and the skills map — is **not** the last slice of every batch any more (Adrian,
+2026-10-30: the screens change almost daily, so updating and re-shooting after each batch documented
+screens the next batch changed again, at 10–20 % of a session).
+
+- **When:** on the day after each automatic regression — **November 5, 2026, then every 14 days**
+  (November 19, December 3, …), i.e. `REGRESSION_FIRST` + 1 day in
+  `scripts/test-runner/protocol.ts` — and whenever Adrian asks for one (before showing Ciprian
+  something, say). A batch written or started on or after a due date, while `docs/help/LAST-SYNC.md`
+  names a commit older than that date, ends with the update as its last slice; otherwise no batch
+  gets one.
+- **From where:** `docs/help/LAST-SYNC.md` names the last commit the previous update covered. The
+  update reads `git log <that commit>..HEAD` (subjects and diffs of the user-facing slices) to know
+  what changed, never memory or slice numbers. Its **last** commit rewrites `Synced through:` with
+  the newest commit it covered and adds a line to the file's history.
+- **What stays per slice:** the help-coverage gate (`.claude/rules/help-and-registry.md`) — a new
+  route still needs its help decision and a new hint its placement in the slice that adds them, or
+  CI fails. Only the prose, the figures, the quizzes and the skills map wait for the update.
+
 ## Ending a slice: file what it noticed
 
 Everything a slice notices and does not fix goes into `docs/claude/FOLLOW-UP-REGISTER.md`, in the

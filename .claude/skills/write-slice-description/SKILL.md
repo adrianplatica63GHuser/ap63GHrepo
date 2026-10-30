@@ -35,6 +35,13 @@ a rule file. Honour that list: repeating those lines is how the two copies drift
   `### Questions to answer` (for `investigate`) or `### What this covers` heading below it.
   The header does not grow.
 
+- **A batch's last slice.** When Adrian asks for a list or batch of slices, add the Help and
+  learning update (manual and figures, „?" texts, quizzes, skills map) as the last slice **only
+  when it is due**: today is on or after a due date (November 5, 2026, then every 14 days) and
+  `docs/help/LAST-SYNC.md` names a commit older than that date — or when he asks for it. Its
+  `Goal:` says it covers `git log <LAST-SYNC commit>..HEAD` and ends by moving the marker.
+  Rule: `CLAUDE.md` → „Help and learning is updated every two weeks".
+
 ## Before you write
 
 Ground the slice in what is already built. A slice that asks for something shipped two
