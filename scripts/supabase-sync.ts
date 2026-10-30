@@ -252,12 +252,16 @@ async function syncSimple(table: string, orderBy: string): Promise<void> {
   ok(`${table}  (${rowCount ?? 0} rows, ${dataColumns.length} column(s): ${cols})`);
 }
 
-/** Every table syncSimple is called on, with its order column, in copy order. */
+/**
+ * Every table syncSimple is called on, with its order column, in copy order.
+ * src/__tests__/supabase-sync-plans.test.ts fails when a call has no entry here.
+ */
 const SIMPLE_TABLES: Array<[string, string]> = [
   ["lookup_property_type", "sort_order"],
   ["lookup_tarla", "sort_order"],
   ["lookup_use_category", "sort_order"],
   ["lookup_person_type", "sort_order"],
+  ["lookup_person_relationship", "sort_order"], // Slice #39.70; missing here until 41.14, so every sync since failed at it
   ["lookup_citizenship", "sort_order"],
   ["lookup_document_type", "sort_order"],
   ["lookup_person_role", "sort_order"],
