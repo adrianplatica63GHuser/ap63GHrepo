@@ -26,7 +26,8 @@
  *    text, visually hidden, so a screen reader and a copy read „Nume (Rol)".
  *  - **One slot set.** `RELATED_SLOTS` for every group, so „Cotă", the
  *    relationship, „Vizualizare" and „Previzualizare" stand in the same place
- *    down the whole tile, across the four groups.
+ *    down the whole tile, across the four groups. Slice 41.09: of those, the
+ *    ones a row fills (`usedSlots`) — an empty one's room is the names'.
  *  - **One selection.** One row selected at a time, whatever its kind; one
  *    „Dezasociază", which removes the selected row's link through what its
  *    kind's row gave (`dissociate`: the route that kind uses today). The
@@ -164,6 +165,19 @@ export function RoleTag({ role }: { role: string }) {
   );
 }
 
+/**
+ * Slice 41.09 — the slots a tile's rows fill, in the list's order. Adrian, 2026-10-29: „I see some wasted space … between
+ * the name of the object and the buttons … give more space to the name of the object so it fills the empty room". The
+ * name was already the row's flexible part (`flex-1`); the room was a SLOT no row filled — „Cotă" (72 px) on every
+ * person's and property's „Legături", where nothing holds a share, and „Relația" where no row has one — kept empty on
+ * every row so the buttons line up (#37.64). A slot no row fills lines nothing up: it goes, and its room is the names'.
+ * A slot one row fills stays on every row, so the buttons still stand in one column down the tile (#37.65). The tile's
+ * units do not change (`RELATED_UNITS`, worked out for the fullest row).
+ */
+export function usedSlots(all: readonly RowSlot[], buttons: readonly RelatedRow["buttons"][]): RowSlot[] {
+  return all.filter((slot) => buttons.some((b) => b[slot] !== undefined && b[slot] !== null && b[slot] !== false));
+}
+
 /** Slice 40.65: a kind group's heading — the kind's name, and its count on the right in tabular figures. */
 export const RELATED_HEADING_CLASS =
   "flex items-baseline justify-between gap-2 px-3 pb-0.5 pt-2 font-colhead text-xs font-normal tracking-[0.02em] text-label";
@@ -228,6 +242,11 @@ export function RelatedTile({
     : RELATED_KINDS
         .map((kind) => ({ kind: kind as string, heading: null, rows: rows.filter((r) => r.kind === kind) }))
         .filter((g) => g.rows.length > 0);
+  // Slice 41.09: the slots the rows fill — one set for every group still, so the buttons line up down the tile.
+  const slots = usedSlots(
+    readOnly ? RELATED_READONLY_SLOTS : RELATED_SLOTS,
+    rows.map((r) => (readOnly ? readOnlyButtons(r.buttons) : r.buttons)),
+  );
 
   const handleDissociate = async () => {
     if (!selected) return;
@@ -284,7 +303,7 @@ export function RelatedTile({
                   {g.heading}
                 </p>
               )}
-              <OneLineRows slots={readOnly ? RELATED_READONLY_SLOTS : RELATED_SLOTS} label={g.heading ?? groupLabel(t, g.kind as RelatedKind)} bare>
+              <OneLineRows slots={slots} label={g.heading ?? groupLabel(t, g.kind as RelatedKind)} bare>
                 {g.rows.map((row) => {
                   const isSelected = row.key === selected?.key;
                   return (

@@ -108,6 +108,30 @@ test.describe("TC-DOC-10 — „Corelate” pe un act", () => {
         await expect(group).not.toHaveClass(/border-t/);
       }
       await expect(tile.getByRole("heading")).toHaveCount(5); // 40.65: the tile's own title and the four groups' headings
+      // Step 1b (41.09) — the names take the room: no slot stands empty on every row, each row's content ends at its
+      // buttons (the 8-px gap), and a name ends whole or where its tag or the buttons begin.
+      const rowsRead = await tile.locator("li[data-one-line-row]").evaluateAll((lis) =>
+        lis.map((li) => {
+          const R = (e: Element) => e.getBoundingClientRect();
+          const content = li.querySelector("[data-row-content]")!;
+          const name = content.querySelector("[data-row-name]") ?? content;
+          const end = content.querySelector("[data-row-role]") ?? li.querySelector("[data-row-buttons]")!;
+          return {
+            slots: [...li.querySelectorAll("[data-slot]")].map((x) => [x.getAttribute("data-slot"), x.children.length > 0] as const),
+            toButtons: Math.round(R(li.querySelector("[data-row-buttons]")!).left - R(content).right),
+            whole: name.scrollWidth <= name.clientWidth + 1 && [...name.querySelectorAll("*")].every((e) => (e as HTMLElement).scrollWidth <= (e as HTMLElement).clientWidth + 1),
+            toEnd: Math.round(R(end).left - R(name).right),
+          };
+        }),
+      );
+      expect(rowsRead.length).toBe(4);
+      for (const slot of rowsRead[0].slots.map(([k]) => k)) {
+        expect({ slot, filled: rowsRead.some((r) => r.slots.some(([k, f]) => k === slot && f)) }).toEqual({ slot, filled: true });
+      }
+      for (const r of rowsRead) {
+        expect(r.toButtons).toBeLessThanOrEqual(9);
+        if (!r.whole) expect(r.toEnd).toBeLessThanOrEqual(9);
+      }
       const names = ["Asociază persoană", "Asociază proprietate", "Asociază act", "Dezasociază"];
       const tops = await Promise.all(names.map(async (name) => Math.round((await tile.getByRole("button", { name, exact: true }).boundingBox())?.y ?? -1)));
       expect(new Set(tops).size, `one row: ${tops.join(", ")}`).toBe(1);

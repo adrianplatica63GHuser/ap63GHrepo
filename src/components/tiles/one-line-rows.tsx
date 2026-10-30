@@ -151,7 +151,8 @@ export function OneLineRow({
       <span data-row-content="" className={tag ? "flex min-w-0 flex-1 items-center gap-2" : "min-w-0 flex-1 truncate"} title={title}>
         {tag ? (
           <>
-            <span className="min-w-0 truncate">{content}</span>
+            {/* 41.09: the name takes the room up to its tag, which stays at the content's right edge (40.65). */}
+            <span className="min-w-0 flex-1 truncate" data-row-name="">{content}</span>
             {tag}
           </>
         ) : (
