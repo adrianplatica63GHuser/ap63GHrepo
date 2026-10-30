@@ -40,13 +40,13 @@ describe("the type-fields tile's names (#37.52)", () => {
   // three are on „Identificarea actului" now, so with no fees group there is no fees panel.
   it("titles the fees panel with the type's fees group, and draws none without one (#38.32)", () => {
     expect(FORM).toContain("const feesSection = feesGroup && feesGroup.fields.length > 0 ? (");
-    expect(FORM).toContain("title={feesGroup.label}>");
+    expect(FORM).toContain("title={feesGroup.label} paths=");
     expect(at(MSG.ro, "document", "sections", "issue")).toBeUndefined();
     expect(at(MSG.en, "document", "sections", "issue")).toBeUndefined();
   });
 
   it("puts no heading over the fields with no group", () => {
-    expect(FORM).toMatch(/units=\{packed\.units\} title=\{label \|\| undefined\}>/);
+    expect(FORM).toMatch(/units=\{packed\.units\} title=\{label \|\| undefined\} paths=/);
     expect(FORM).toContain("const heading = title === undefined ? null : (");
     expect(FORM).toMatch(/title\?:\s+string;/);
   });
