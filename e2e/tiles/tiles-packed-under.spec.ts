@@ -86,26 +86,27 @@ test.describe("TC-TILES-12 — fiecare fișă chiar sub fișa de deasupra ei", (
       await expect(region("Etichete și grupuri")).toBeVisible({ timeout: 30_000 });
       await expect(region("Legături").locator("li")).toHaveCount(12, { timeout: 30_000 });
 
-      // Step 2 — each box right under the box above it.
-      const home = page.locator('[data-panel="addresses.HOME"]');
-      const corr = page.locator('[data-panel="addresses.CORRESPONDENCE"]');
+      // Step 2 — each box right under the box above it. Slice 41.05: the address and „Contact" tiles are 2 units, so
+      // „Adresă domiciliu" now fits on the first line beside „Contact" and the arrangement under it changed; the case's
+      // rule is asked of every box rather than of five named pairs: at the row's top, or 16 px under a box it shares
+      // columns with. (Was: „Adresă domiciliu" right under „Identitate", „Adresă corespondență" right under „Acte de
+      // identitate", „Legături" under „Contact", „Clasificare" and „Etichete și grupuri" under the two addresses.)
       await expect.poll(async () => {
-        const [identity, idCard, contact, h, c, related, cls, conn] = await Promise.all([
-          boxOf(region("Identitate")), boxOf(region("Acte de identitate")), boxOf(region("Contact")),
-          boxOf(home), boxOf(corr), boxOf(region("Legături")), boxOf(region("Clasificare")), boxOf(region("Etichete și grupuri")),
-        ]);
-        return {
-          firstLine: new Set([identity.t, idCard.t, contact.t]).size,
-          homeUnderIdentity: h.t - identity.b,
-          corrUnderIdCard: c.t - idCard.b,
-          relatedUnderContact: related.t - contact.b,
-          clsUnderHome: cls.t - h.b,
-          connUnderCorr: conn.t - c.b,
-          aboveRelatedBottom: cls.t < related.b && conn.t < related.b,
-        };
-      }, { timeout: 20_000 }).toEqual({
-        firstLine: 1, homeUnderIdentity: GAP, corrUnderIdCard: GAP, relatedUnderContact: GAP, clsUnderHome: GAP, connUnderCorr: GAP, aboveRelatedBottom: true,
-      });
+        const [identity, idCard, contact] = await Promise.all([boxOf(region("Identitate")), boxOf(region("Acte de identitate")), boxOf(region("Contact"))]);
+        const floating = await page.evaluate((gap) => {
+          const rs = [...document.querySelectorAll<HTMLElement>("[data-packed-col]")]
+            .filter((e) => !e.classList.contains("order-last") && !e.hasAttribute("data-preview"))
+            .map((e) => {
+              const r = e.getBoundingClientRect();
+              return { id: e.dataset.tile ?? e.dataset.panel ?? "?", l: Math.round(r.left), t: Math.round(r.top), r: Math.round(r.right), b: Math.round(r.bottom) };
+            });
+          const top = Math.min(...rs.map((x) => x.t));
+          return rs
+            .filter((x) => Math.abs(x.t - top) > 1 && !rs.some((o) => o !== x && o.l < x.r - 1 && x.l < o.r - 1 && Math.abs(x.t - o.b - gap) <= 1))
+            .map((x) => x.id);
+        }, GAP);
+        return { firstLine: new Set([identity.t, idCard.t, contact.t]).size, floating };
+      }, { timeout: 20_000 }).toEqual({ firstLine: 1, floating: [] });
       expect(await overlapsIn(page)).toEqual([]);
       const lowest = await page.evaluate(() => Math.max(...[...document.querySelectorAll<HTMLElement>("[data-packed-col]")]
         .filter((e) => !e.classList.contains("order-last")).map((e) => Math.round(e.getBoundingClientRect().bottom))));

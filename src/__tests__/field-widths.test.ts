@@ -491,16 +491,21 @@ describe("the Natural Person: every label above its box, every panel as wide as 
     // address 18.5 since 40.80 (Stradă XL): Cod poștal | Localitate — still three units.
     // 41.04: identity's widest row is Data nașterii | Vârstă | Sex, 8.5 + 5 + 3.5 + 2 × 0.5 = 18 (was 22, Locul nașterii
     // | Cetățenie).
-    expect(rowsOf).toEqual({ identity: 18, idCard: 23.75, contact: 17.5, address: 18.5 });
+    // 41.05: Contact's phones one to a row (8.5; the e-mails fill), the address's widest rows 5 + 0.5 + 8.5 = 14 (was
+    // 17.5, the two phones, and 18.5, Cod poștal | Localitate L).
+    expect(rowsOf).toEqual({ identity: 18, idCard: 23.75, contact: 8.5, address: 14 });
     // 40.98 (the 119-px unit): Carte de identitate 4 — its first row, 23.75rem, is Adrian's and past the 363 px inside
     // 3; Contact 3, the gray panels' floor (was 2 of 148 px). Was { identity: 3, idCard: 3, contact: 2, address: 3 }.
-    expect(NP_PANEL_UNITS).toEqual({ identity: 3, idCard: 4, contact: 3, address: 3 });
+    // 41.05: Contact and the address 2 units, the exception by name (TWO_UNIT_PANEL_UNITS).
+    expect(NP_PANEL_UNITS).toEqual({ identity: 3, idCard: 4, contact: 2, address: 2 });
     for (const k of Object.keys(NP_PANEL_UNITS) as (keyof typeof NP_PANEL_UNITS)[]) {
       expect([k, NP_PANEL_INNER_REM[k] >= rowsOf[k]]).toEqual([k, true]);
       // one unit fewer would not hold it — or would be under the floor of 3
       expect([k, NP_PANEL_UNITS[k] === GRAY_PANEL_MIN_UNITS || unitsInnerRem(NP_PANEL_UNITS[k] - 1) < rowsOf[k]]).toEqual([k, true]);
     }
-    expect(NP_PANEL_INNER_REM).toEqual({ identity: 22.6875, idCard: 31.125, contact: 22.6875, address: 22.6875 });
+    expect(NP_PANEL_INNER_REM).toEqual({ identity: 22.6875, idCard: 31.125, contact: 14.25, address: 14.25 });
+    // 41.05: the e-mails take the 2-unit panel's whole width.
+    for (const e of ["personalEmail1", "personalEmail2", "workEmail"]) expect(panels).toMatch(new RegExp(`width=\\{NP\\.${e}\\}\\s+fillRem=\\{NP_PANEL_INNER_REM\\.contact\\}`));
     for (const inner of Object.values(NP_PANEL_INNER_REM)) expect(panelRem(inner)).toBeLessThanOrEqual(unitsRem(4));
     expect(rowRem([NP.idValidFrom, NP.idValidUntil]) + STACK_GAP_REM + NP_VALIDITY_REM).toBe(NP_PANEL_INNER_REM.idCard);
     expect([NP.notes.fill, ADDRESS.notes.fill]).toEqual([true, true]);
@@ -551,17 +556,22 @@ describe("the Natural Person: every label above its box, every panel as wide as 
 
   // Slice 40.80 — Adrian, 2026-10-26: „Stradă, Nr., etaj, ap -XL / Cod poștal - S / Localitate - L / Județ / Sector - no
   // change / Țară - no change / Note - TILE".
-  it("the address block at Adrian's sizes, one width on every screen (40.80)", () => {
-    expect(ADDRESS.streetLine).toEqual({ step: "XL", kind: "grows" });
-    expect([ADDRESS.postalCode.step, ADDRESS.locality.step, ADDRESS.county.step, ADDRESS.country.step, ADDRESS.notes.step]).toEqual(["S", "L", "M", "M", "TILE"]);
+  // Slice 41.05 — Adrian, 2026-10-29: Stradă TILE, Localitate one size shorter (M), Țară one size shorter (S), every
+  // address tile 2 units. Was XL, L, M and 3 units (40.80).
+  it("the address block at Adrian's sizes, one width on every screen (40.80, 41.05)", () => {
+    expect(ADDRESS.streetLine).toEqual({ step: "TILE", kind: "grows", fill: true });
+    expect([ADDRESS.postalCode.step, ADDRESS.locality.step, ADDRESS.county.step, ADDRESS.country.step, ADDRESS.notes.step]).toEqual(["S", "M", "M", "S", "TILE"]);
+    expect(rowRem([ADDRESS.postalCode, ADDRESS.locality]) * 16).toBe(224);
+    expect(rowRem([ADDRESS.county, ADDRESS.country]) * 16).toBe(224);
+    expect(unitsInnerRem(2) * 16).toBe(228);
     expect(ADDRESS.notes.fill).toBe(true);
     // Every caller draws the shared widths: the block itself, and the Property's own address rows.
     expect(ADDRESS_BLOCK).toMatch(/ADDRESS_ROWS\.map\(/);
-    expect(code(read("src", "app", "properties", "_components", "property-form.tsx"))).toMatch(/width=\{ADDRESS\.streetLine\}/);
-    // No panel moved: each address panel is still the fewest units its widest row needs.
-    expect(PANEL_UNITS.naturalPerson.address).toBe(3);
-    expect(PANEL_UNITS.judicialPerson.address).toBe(3);
-    expect(PANEL_UNITS.property.address).toBe(3);
+    expect(code(read("src", "app", "properties", "_components", "property-form.tsx"))).toMatch(/width=\{ADDRESS\.streetLine\}\s+fillRem=\{PANEL_UNIT_INNER_REM\.property\.address\}/);
+    // 41.05: every address panel 2 units (was 3).
+    expect(PANEL_UNITS.naturalPerson.address).toBe(2);
+    expect(PANEL_UNITS.judicialPerson.address).toBe(2);
+    expect(PANEL_UNITS.property.address).toBe(2);
   });
 
   it("no label beside a box is left on the form, and the row is as wide as its panels", () => {
@@ -643,17 +653,19 @@ describe("the Judicial Person: labels above, rows by meaning, every tile on the 
     expect(JP.name.fill && JP.notes.fill).toBe(true);
   });
 
-  it("each panel is the fewest whole units that hold its widest row: Persoană juridică 3, Persoane de contact 3 (40.98: the floor), Adresă 3", () => {
+  it("each panel is the fewest whole units that hold its widest row: Persoană juridică 3, Persoane de contact 2 and Adresă 2 (41.05)", () => {
     // #39.71: Poreclă M | Tip XL (the public-body types are long) — 26 rem; 40.90: Tip L, 22 rem — still three units.
     expect(rowRem([JP.nickname, JP.judicialPersonTypeId])).toBe(22);
     // #37.57: the system ID left this row for the heading's corner; Poreclă | Tip still makes it 3.
     expect(rowRem([JP.cuiNumber, JP.tradeRegisterNumber])).toBe(17.5);
     expect("code" in JP).toBe(false);
-    expect(PANEL_UNITS.judicialPerson).toEqual({ identity: 3, contactPersons: 3, address: 3 });
+    expect(PANEL_UNITS.judicialPerson).toEqual({ identity: 3, contactPersons: 2, address: 2 });
     expect(PANEL_UNIT_INNER_REM.judicialPerson.identity).toBeGreaterThanOrEqual(22);
     expect(unitsInnerRem(2)).toBeLessThan(22);
     expect(unitsInnerRem(3)).toBeGreaterThanOrEqual(22); // 40.98: 22.6875rem inside 3 units of 119 px
-    expect(PANEL_UNIT_INNER_REM.judicialPerson.contactPersons).toBeGreaterThanOrEqual(boxRem(JP.contactPerson));
+    // 41.05: the contact persons and the e-mail take the 2-unit panel's whole width (their XL is past it).
+    expect([JP.contactPerson.fill, JP.email.fill]).toEqual([true, true]);
+    expect(PANEL_UNIT_INNER_REM.judicialPerson.contactPersons).toBeGreaterThanOrEqual(boxRem(JP.phone));
     // The contact rows are the XL box under its label; the hint wraps inside the panel.
     expect(region(JP_FORM, "function ContactPersonRow(", "\nfunction ")).toMatch(/STACKED_FIELD_CLASS/);
   });
@@ -676,7 +688,7 @@ describe("the Judicial Person: labels above, rows by meaning, every tile on the 
 
   it("rule 19: one shape keyed by screen — the Natural Person's numbers did not move", () => {
     expect(NP_ROWS).toBe(SCREEN_ROWS.naturalPerson);
-    expect(NP_PANEL_UNITS).toEqual({ identity: 3, idCard: 4, contact: 3, address: 3 }); // 40.98
+    expect(NP_PANEL_UNITS).toEqual({ identity: 3, idCard: 4, contact: 2, address: 2 }); // 40.98; 41.05: contact and address 2
     expect(PANEL_UNITS.naturalPerson).toBe(NP_PANEL_UNITS);
     expect(String(unitRowStyle("naturalPerson").width)).toBe(String(npRowStyle().width));
     expect(String(unitRowStyle("judicialPerson").width)).toBe("min(var(--row-cap), max(32.75rem, calc(round(down, 100% + 1rem, 8.4375rem) - 1rem)))"); // #37.67: 4 units; #40.69: never wider than a narrow window; 40.98: of 119 px
@@ -726,7 +738,7 @@ describe("the Property: labels above, rows by meaning, every tile on the unit (S
     expect(rowRem([PROPERTY.tarlaId, PROPERTY.parcela])).toBe(17.5);
     expect("code" in PROPERTY).toBe(false);
     expect(SCREEN_ROWS.property.cadastral[0]).toEqual(["tarlaId", "parcela"]);
-    expect(PANEL_UNITS.property).toEqual({ cadastral: 4, address: 3, corners: 4, map: 4, streetView: 4 });
+    expect(PANEL_UNITS.property).toEqual({ cadastral: 4, address: 2, corners: 4, map: 4, streetView: 4 }); // 41.05: address 2
     expect(unitsRem(PANEL_UNITS.property.cadastral) * 16).toBe(524);
     expect(parseFloat(String(MAP_BOX_STYLE.width))).toBe(unitsInnerRem(4));
     expect(MAP_BOX_STYLE.height).toBe("22rem");
@@ -1256,7 +1268,7 @@ describe("the ID-card dialog: the Natural Person's rows, widths and panels (Slic
       expect(panels).toMatch(new RegExp(`<section style=\\{NP_PANEL_STYLE\\.${p}\\}`));
       expect(panels).toMatch(new RegExp(`ID_CARD_DIALOG_ROWS\\.${p}\\.map\\(`));
     }
-    expect([NP_PANEL_UNITS.identity, NP_PANEL_UNITS.idCard, NP_PANEL_UNITS.address]).toEqual([3, 4, 3]); // 40.98: idCard 4
+    expect([NP_PANEL_UNITS.identity, NP_PANEL_UNITS.idCard, NP_PANEL_UNITS.address]).toEqual([3, 4, 2]); // 40.98: idCard 4; 41.05: address 2
     const field = region(ID_CARD_DIALOG, "const reviewField = (", "if (fatalError) {");
     // 41.04: the person's widths but Locul nașterii at L (the person's is TILE now) — ID_CARD_DIALOG_WIDTHS.
     expect(field).toMatch(/const width = ID_CARD_DIALOG_WIDTHS\[name\];/);

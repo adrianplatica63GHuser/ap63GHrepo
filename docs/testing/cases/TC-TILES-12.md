@@ -37,7 +37,7 @@ Nothing.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Opens the person; „Toate" in „Părți afișate" | Every tile; „Legături" lists the twelve contracts |
-| 2 | Reads the boxes | „Identitate", „Acte de identitate", „Contact" on the first line. „Adresă domiciliu" right under „Identitate", „Adresă corespondență" right under „Acte de identitate", „Legături" right under „Contact". „Clasificare" right under „Adresă domiciliu" and „Etichete și grupuri" right under „Adresă corespondență" — both above „Legături"'s bottom. No two boxes overlap; the buttons under the form are under every box |
+| 2 | Reads the boxes | „Identitate", „Acte de identitate", „Contact" on the first line. Every other box right under a box it shares columns with — 16 px below it — or on the first line too (41.05: the address and „Contact" tiles are 2 units, so „Adresă domiciliu" fits on the first line beside „Contact"; until then the case named five pairs: „Adresă domiciliu" under „Identitate", „Adresă corespondență" under „Acte de identitate", „Legături" under „Contact", „Clasificare" and „Etichete și grupuri" under the two addresses). No two boxes overlap |
 | 3 | Opens the company; ticks „Legături" and „Clasificare", leaves „Etichete și grupuri" unticked | „Legături" with Contract 1, „Clasificare" beside it, taller |
 | 4 | Presses „Previzualizare" on Contract 1's row in „Legături" | The preview „TC-TILES-12 Contract 1" right under „Legături", its left edge on „Legături"'s, its top above „Clasificare"'s bottom; the buttons under the form below the preview |
 | 5 | „Închide" on the preview | The preview is gone; „Legături", „Clasificare" and the form's boxes where they were in step 4 |

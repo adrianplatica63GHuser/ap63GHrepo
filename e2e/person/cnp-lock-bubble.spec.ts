@@ -97,8 +97,9 @@ test.describe("TC-PERS-03 — nota CNP-ului într-un balon, refuzul în română
       await page.mouse.move(5, 5);
       await expect(bubble).toHaveClass(/(^|\s)sr-only(\s|$)/);
 
-      // Step 4 — the keyboard focus into the CNP, Shift+Tab from the field after it.
-      await page.locator('input[name="dateOfBirth"]').focus();
+      // Step 4 — the keyboard focus into the CNP, Shift+Tab from the field after it (41.04: Cetățenie, at CNP's right;
+      // it was Data nașterii).
+      await page.locator('select[name="citizenshipId"]').focus();
       await page.keyboard.press("Shift+Tab");
       await expect(cnp).toBeFocused();
       await expect(bubble).not.toHaveClass(/(^|\s)sr-only(\s|$)/);

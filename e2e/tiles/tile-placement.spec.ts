@@ -16,7 +16,7 @@
  *     sidebar's „Recente" list painted over; and the narrowest window at which
  *     each screen's column still stands beside the left area, by a sweep of
  *     window widths, into `breakpoints.json` there.
- *   - Slice 40.98's widths at step 3, not a step of the case: the four property tiles 524 px, „Adresă" 389.
+ *   - Slice 40.98's widths at step 3, not a step of the case: the four property tiles 524 px, „Adresă" 254 (41.05; was 389).
  */
 
 import fs from "node:fs";
@@ -145,11 +145,11 @@ test.describe("TC-TILES-07 — unde stau părțile la deschidere", () => {
       expect(Math.abs(sv.re)).toBeLessThanOrEqual(1);
       expect(sv.y).toBeGreaterThan((await at(page, "corners")).bottom);
       // 40.98 (Adrian's red notes): on the 119-px unit, Date cadastrale, Puncte de contur, Hartă and Street View are
-      // 4 units, 524 px each, the three in the column beside the cadastral tile; Adresă 3 units, 389 px.
+      // 4 units, 524 px each, the three in the column beside the cadastral tile; Adresă 2 units, 254 px (41.05; 3, 389).
       const widths = await page.evaluate(() =>
         Object.fromEntries(["cadastral", "corners", "map", "streetView", "address"].map((n) => [n, Math.round(document.querySelector<HTMLElement>(`[data-tile="${n}"]`)!.getBoundingClientRect().width)])),
       );
-      expect(widths).toEqual({ cadastral: 524, corners: 524, map: 524, streetView: 524, address: 389 });
+      expect(widths).toEqual({ cadastral: 524, corners: 524, map: 524, streetView: 524, address: 254 });
 
       // Step 4 — „Hartă" unticked: „Puncte de contur" at the top of the column, „Street View" under it.
       await hideTile(page, "Hartă");

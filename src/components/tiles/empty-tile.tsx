@@ -89,9 +89,10 @@ export function EmptyTileLine({
   const t = useTranslations("shared.emptyTile");
   return (
     // `flex-wrap`: in a narrow panel („Reprezentanți și contact", 310 px) „Adaugă" goes under the title rather than past
-    // the panel's edge.
+    // the panel's edge. Slice 41.05: on a 2-unit tile (228 px inside) the title itself is wider than the panel — it
+    // wraps inside it (`max-w-full`, was `shrink-0`), as a tile's own title does.
     <div className="flex min-h-8 min-w-0 flex-wrap items-center gap-x-3 gap-y-1" data-empty-tile={tile}>
-      <h2 className={`${TILE_TITLE_CLASS} shrink-0`}>{title}</h2>
+      <h2 className={`${TILE_TITLE_CLASS} min-w-0 max-w-full`}>{title}</h2>
       <span className="min-w-0 truncate text-sm text-fade dark:text-zinc-400" data-empty-tile-state={state}>
         {t(`state.${state}`)}
       </span>
