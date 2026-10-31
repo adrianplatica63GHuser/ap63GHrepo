@@ -110,7 +110,7 @@
  */
 import { useLayoutEffect, useRef, type RefObject } from "react";
 import { TILE_FRAME_REM, TILE_INNER_VAR, UNIT_GAP_REM, declaredWidthPx, exactUnitsCss, rem } from "@/lib/ui/field-widths";
-import { headingMeasure, judgeWidth, laptopUnits, type HeadingMeasure, type WidthVerdict } from "@/lib/ui/tile-width-rules";
+import { headingMeasure, judgeWidth, laptopUnits, type TileLine, type WidthVerdict } from "@/lib/ui/tile-width-rules";
 import { formOfEntity, sharedWidthOf } from "@/lib/ui/tiles";
 import { liveUnitPx } from "@/lib/ui/width-unit";
 import { columnsIn, fitsBeside, grow, packedHeight, unitsOf, type PackBox, type Placed, ONE_COLUMN_BELOW_UNITS, oneColumn } from "@/lib/ui/tile-packing";
@@ -375,13 +375,16 @@ export const VERDICT_COLOUR: Readonly<Record<WidthVerdict["kind"], string>> = {
 export const TILE_WIDTH_NOTE_CLASS =
   "pointer-events-none absolute z-[70] max-w-[20rem] whitespace-pre-line rounded-md border border-card-rim bg-white px-2 py-1 text-xs leading-snug font-medium text-ink shadow-lg dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200";
 
+/** 41.21 (Ask first 3): how wide the bubble may grow for a list of lines — 448 px. */
+export const TILE_WIDTH_LIST_MAX = "28rem";
+
 /** 41.18: the narrowest a tile can be, and what sets it. */
 interface Floor {
   units: number;
   /** It holds fixed boxes at all. */
   fields: boolean;
-  /** The row that stops it going one unit narrower: its fields, and the px the tile needs to hold it — or, 41.20, its heading. */
-  widest?: { fields: string; px: number; heading?: HeadingMeasure };
+  /** 41.21: at each width under its narrowest it was measured at, its lines there and the px it has (k units, k − 1 gaps). */
+  lines: Map<number, { have: number; lines: TileLine[] }>;
 }
 
 /** 41.17–41.18: what a tile's edge was measured to allow when it was pressed or stepped. */
@@ -394,7 +397,7 @@ interface Measured {
   /** 41.19: the width this tile shares across forms, and its name for the bubble's line. */
   shared?: string;
   title: string;
-  widest?: { fields: string; px: number; heading?: HeadingMeasure };
+  lines: Map<number, { have: number; lines: TileLine[] }>;
   fields: boolean;
   table?: number;
   beside: { col: number; title: string }[];
@@ -1077,8 +1080,10 @@ export function useTilePacking(
      * Ask first 3 and 4: the narrowest the tile can be with every fixed box in it — a box with a width of its own, not
      * one in a table and not one that fills the tile — keeping its size, inside the tile, and on the row it shares with
      * its neighbours. Tried a unit at a time from `from` down; the tile is put back as it was before anything paints.
+     * 41.21: `all` measures on past the first width that breaks, down to one unit — every line at every width, for the
+     * list a refusal shows; without it (a shared tile's floor), it stops there.
      */
-    const narrowest = (b: FoundBox, from: number, unit: number, gap: number): Floor => {
+    const narrowest = (b: FoundBox, from: number, unit: number, gap: number, all = false): Floor => {
       const el = b.el;
       const fixed = Array.from(el.querySelectorAll<HTMLElement>("*")).filter(
         (d) =>
@@ -1093,7 +1098,7 @@ export function useTilePacking(
         const inner = r.right - parseFloat(cs.paddingRight || "0") - parseFloat(cs.borderRightWidth || "0");
         return fixed.map((d) => {
           const x = d.getBoundingClientRect();
-          return { w: x.width, top: x.top, right: x.right, inner };
+          return { w: x.width, top: x.top, left: x.left, right: x.right, inner };
         });
       };
       const base = shape();
@@ -1110,10 +1115,9 @@ export function useTilePacking(
         for (const [i, j] of rows) if (Math.abs(s[i].top - s[j].top) >= 0.5) bad.add(i).add(j);
         return [...bad];
       };
-      let widest: Floor["widest"];
       const box0 = el.getBoundingClientRect();
       const cs0 = getComputedStyle(el);
-      const innerRight0 = box0.right - parseFloat(cs0.paddingRight || "0") - parseFloat(cs0.borderRightWidth || "0");
+      const rightFrame = parseFloat(cs0.paddingRight || "0") + parseFloat(cs0.borderRightWidth || "0");
       const width0 = el.style.getPropertyValue("width");
       const inner0 = el.style.getPropertyValue(TILE_INNER_VAR);
       // 41.20 (Ask first 2, 3): the heading as it is drawn now, on one line — its visible parts, the gap between them
@@ -1121,41 +1125,82 @@ export function useTilePacking(
       const h = el.querySelector<HTMLElement>("h2, h3");
       const drawnHeading = h ? headingParts(h, el) : undefined;
       const heading = drawnHeading ? headingMeasure(drawnHeading.parts, drawnHeading.spaces, drawnHeading.frame) : undefined;
+      // 41.21: the rows of field boxes — boxes that share a parent and a top line — in screen order, as they stand now.
+      const groups: number[][] = [];
+      const groupOf = new Map<number, number[]>();
+      fixed.forEach((_, i) => {
+        const g = [i];
+        groups.push(g);
+        groupOf.set(i, g);
+      });
+      for (const [i, j] of rows) {
+        const gi = groupOf.get(i)!;
+        const gj = groupOf.get(j)!;
+        if (gi === gj) continue;
+        for (const x of gj) {
+          gi.push(x);
+          groupOf.set(x, gi);
+        }
+        groups.splice(groups.indexOf(gj), 1);
+      }
+      const rowLine = (g: number[], fits: boolean): TileLine => {
+        const right = Math.max(...g.map((i) => base[i].right));
+        const fields = [...new Set([...g].sort((x, y) => base[x].left - base[y].left).map((i) => labelOf(fixed[i])).filter(Boolean))];
+        return {
+          kind: "fields",
+          name: fields.join(" | "),
+          px: right - box0.left + rightFrame,
+          fits,
+          top: Math.min(...g.map((i) => base[i].top)) - box0.top,
+          left: Math.min(...g.map((i) => base[i].left)) - box0.left,
+        };
+      };
+      /**
+       * 41.21 (Ask first 4): every line at `px`, in one pass — the heading and each row of fields, fitting or not. A row
+       * does not fit when one of its boxes breaks (41.18); the heading, when it needs more than `px`. When
+       * neither the heading nor a row breaks but the tile itself does not hold, what spills is the line (41.20).
+       */
+      const linesAt = (px: number): TileLine[] => {
+        const bad = new Set(broken(shape()));
+        const out: TileLine[] = groups.map((g) => rowLine(g, !g.some((i) => bad.has(i))));
+        if (h && heading) {
+          // Its measure decides, so the line never reads „209 px (încap 254)"; anything else in it that spills is the
+          // tile's own spill, below.
+          const fits = heading.px <= px + 0.5;
+          out.unshift({ kind: "heading", name: heading.title, px: heading.px, fits, top: -1, left: 0, heading });
+        }
+        if (out.every((l) => l.fits)) {
+          // The tile itself holds too: drawn at the width it is given (no min-width keeps it wider) and nothing in it
+          // spilling past its edge — a button row, a line that does not wrap.
+          const drawn = el.getBoundingClientRect().width;
+          if (Math.abs(drawn - px) >= 0.5 || el.scrollWidth > el.clientWidth + 1) {
+            const r = el.getBoundingClientRect();
+            const spill = spillOf(el, r.right - rightFrame);
+            out.push(
+              spill
+                ? { kind: "fields", name: spill.name, px: spill.right - r.left + rightFrame, fits: false, top: Number.MAX_SAFE_INTEGER, left: 0 }
+                : { kind: "fields", name: titleOf(b), px: Math.max(drawn, el.scrollWidth + (el.offsetWidth - el.clientWidth)), fits: false, top: Number.MAX_SAFE_INTEGER, left: 0 },
+            );
+          }
+        }
+        return out;
+      };
+      const lines: Floor["lines"] = new Map();
       let n = from;
+      let stopped = false;
       try {
         for (let k = from - 1; k >= 1; k--) {
           const px = k * (unit + gap) - gap;
           el.style.setProperty("width", `${px}px`);
           el.style.setProperty(TILE_INNER_VAR, `calc(${px}px - ${rem(TILE_FRAME_REM)})`);
-          // 41.20 (Ask first 4): the rows of fields first — a heading is named only when no row stops the tile before it.
-          const bad = broken(shape());
-          if (bad.length > 0) {
-            // The row of the first box that broke: it and every box beside it, as they stood at `from`.
-            const row = new Set([bad[0]]);
-            for (const [i, j] of rows) if (row.has(i) || row.has(j)) row.add(i).add(j);
-            const right = Math.max(...[...row].map((i) => base[i].right));
-            const fields = [...new Set([...row].map((i) => labelOf(fixed[i])).filter(Boolean))];
-            widest = { fields: fields.join(" | "), px: right - box0.left + (box0.right - innerRight0) };
-            break;
-          }
-          // The tile itself holds too: drawn at the width it is given (no min-width keeps it wider) and nothing in it
-          // spilling past its edge — a heading that does not wrap, a button row.
-          const drawn = el.getBoundingClientRect().width;
-          if (Math.abs(drawn - px) >= 0.5 || el.scrollWidth > el.clientWidth + 1) {
-            // 41.20: its heading when the heading is what does not fit — named by what is visible, its px taken apart;
-            // else what spills, by its own words; else, the tile by its name and the width it was drawn at.
-            if (h && heading && (heading.px > px + 0.5 || h.scrollWidth > h.clientWidth + 1)) {
-              widest = { fields: heading.title, px: heading.px, heading };
-              break;
-            }
-            const r = el.getBoundingClientRect();
-            const spill = spillOf(el, r.right - (box0.right - innerRight0));
-            widest = spill
-              ? { fields: spill.name, px: spill.right - r.left + (box0.right - innerRight0) }
-              : { fields: titleOf(b), px: Math.max(drawn, el.scrollWidth + (el.offsetWidth - el.clientWidth)) };
-            break;
-          }
-          n = k;
+          const at = linesAt(px);
+          if (at.some((l) => !l.fits)) {
+            stopped = true;
+            lines.set(k, { have: px, lines: at });
+            // 41.21 (Ask first 4): the narrowest is where the first line breaks; the widths under it are measured on, for
+            // the list the pointer may ask for — unless only the narrowest is wanted.
+            if (!all) break;
+          } else if (!stopped) n = k;
         }
       } finally {
         if (width0) el.style.setProperty("width", width0);
@@ -1163,7 +1208,7 @@ export function useTilePacking(
         if (inner0) el.style.setProperty(TILE_INNER_VAR, inner0);
         else el.style.removeProperty(TILE_INNER_VAR);
       }
-      return { units: n, fields: fixed.length > 0, widest };
+      return { units: n, fields: fixed.length > 0, lines };
     };
 
     /** 41.18: a list tile's table — the units its columns need at their own widths, its frame and the tile's. */
@@ -1180,7 +1225,7 @@ export function useTilePacking(
     const limitsOf = (b: FoundBox, p: Placed): Measured => {
       const { unit, gap } = metrics();
       const still = new Set(boxes.filter((x) => x.full).map((x) => x.id));
-      const floor = narrowest(b, p.units, unit, gap);
+      const floor = narrowest(b, p.units, unit, gap, true);
       // 41.19 (Ask first 4): a shared tile's narrowest is its widest content on any form — this form's measure is kept
       // for the others, and theirs read here; the refusal names the form that sets it.
       const k = sharedOf(b);
@@ -1203,11 +1248,15 @@ export function useTilePacking(
           const qb = boxOf(q.id);
           return { col: q.col, title: qb ? titleOf(qb) : tileOf(q.id) };
         });
-      return { ...limits, content, elsewhere, shared: k, title: titleOf(b), widest: floor.widest, fields: floor.fields, table: tableUnitsOf(b, unit, gap), beside, col: p.col, laptop: laptopUnits(unit, gap) };
+      return { ...limits, content, elsewhere, shared: k, title: titleOf(b), lines: floor.lines, fields: floor.fields, table: tableUnitsOf(b, unit, gap), beside, col: p.col, laptop: laptopUnits(unit, gap) };
     };
 
     /** 41.18: what the bubble says; 41.19 (Ask first 5): a shared tile adds that its width applies on every form. */
     const linesOf = (m: Measured, v: WidthVerdict): string[] => [...words.current.verdict(v), ...(m.shared ? [words.current.shared(m.title)] : [])];
+    /** 41.21 (Ask first 3): what the live region reads — a refused list's first sentence and its count, not every number. */
+    const heardOf = (m: Measured, v: WidthVerdict): string[] => [...words.current.heard(v), ...(m.shared ? [words.current.shared(m.title)] : [])];
+    /** 41.21: the refusal that lists lines — the bubble may grow for it. */
+    const isList = (v: WidthVerdict) => v.kind === "refused" && v.refusal.reason === "content";
 
     /** 41.18: the verdict on `asked` units for what was measured. */
     const verdictOf = (m: Measured, asked: number): WidthVerdict =>
@@ -1215,7 +1264,7 @@ export function useTilePacking(
         asked,
         min: m.min,
         max: m.max,
-        widest: m.widest,
+        lines: m.lines.get(asked),
         elsewhere: m.elsewhere,
         contentUnits: m.content,
         hasFields: m.fields,
@@ -1243,9 +1292,9 @@ export function useTilePacking(
       }
       if (text !== spoken) live.textContent = spoken = text;
     };
-    const showNote = (lines: readonly string[], verdict: WidthVerdict["kind"], x: number, y: number) => {
+    const showNote = (lines: readonly string[], verdict: WidthVerdict["kind"], x: number, y: number, heard: readonly string[] = lines, list = false) => {
       window.clearTimeout(noteTimer);
-      say(lines);
+      say(heard);
       if (lines.length === 0) return hideNote(false);
       if (!note) {
         note = document.createElement("div");
@@ -1256,6 +1305,9 @@ export function useTilePacking(
       if (note.parentElement !== container) container.appendChild(note);
       note.dataset.verdict = verdict;
       note.textContent = lines.join("\n");
+      // 41.21 (Ask first 3): a list of lines may take up to 28rem, one line a row; any other note keeps the tooltip's 20rem.
+      if (list) note.style.setProperty("max-width", TILE_WIDTH_LIST_MAX);
+      else note.style.removeProperty("max-width");
       note.style.setProperty("left", `${Math.max(0, x)}px`);
       note.style.setProperty("top", `${Math.max(0, y)}px`);
     };
@@ -1405,7 +1457,10 @@ export function useTilePacking(
       r.handle.dataset.verdict = verdict.kind;
       paint(r.handle, verdict.kind);
       const p = placed.find((x) => x.id === r.box.id);
-      if (p) showNote(linesOf(r.measured, verdict), verdict.kind, ...besideEdge(p, r.px, e.clientY - container.getBoundingClientRect().top - 12));
+      if (p) {
+        const [x, y] = besideEdge(p, r.px, e.clientY - container.getBoundingClientRect().top - 12);
+        showNote(linesOf(r.measured, verdict), verdict.kind, x, y, heardOf(r.measured, verdict), isList(verdict));
+      }
     };
     const onEdgeUp = (e: PointerEvent) => {
       const r = endResize();
@@ -1465,7 +1520,8 @@ export function useTilePacking(
       const verdict = verdictOf(limits, asked);
       if (verdict.kind !== "refused") commit(id, asked);
       const at = placed.find((x) => x.id === id) ?? p;
-      showNote(linesOf(limits, verdict), verdict.kind, ...besideEdge(at, b.el.offsetWidth, at.top + 8));
+      const [x, y] = besideEdge(at, b.el.offsetWidth, at.top + 8);
+      showNote(linesOf(limits, verdict), verdict.kind, x, y, heardOf(limits, verdict), isList(verdict));
       noteTimer = window.setTimeout(() => hideNote(false), 4000);
     };
 

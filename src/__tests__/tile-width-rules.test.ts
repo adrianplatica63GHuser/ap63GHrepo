@@ -3,26 +3,31 @@
  */
 import { readFileSync } from "fs";
 import { join } from "path";
-import { LAPTOP_ROW_PX, VISIBLE_JOIN, headingMeasure, judgeWidth, laptopUnits, type WidthCase } from "@/lib/ui/tile-width-rules";
+import { LAPTOP_ROW_PX, VISIBLE_JOIN, headingMeasure, judgeWidth, laptopUnits, type TileLine, type WidthCase } from "@/lib/ui/tile-width-rules";
 
 const read = (...p: string[]) => readFileSync(join(process.cwd(), ...p), "utf8");
 const base: WidthCase = { asked: 3, min: 2, max: 8, contentUnits: 2, hasFields: true, beside: [], col: 0, laptopUnits: 8 };
 const at = (asked: number, more: Partial<WidthCase> = {}) => judgeWidth({ ...base, ...more, asked });
 
 describe("refused (Ask first 1)", () => {
-  it("(a) narrower than its content — the widest row named, with what it needs", () => {
-    expect(at(1, { widest: { fields: "Nume | Prenume", px: 314.4 } })).toEqual({
+  // 41.21: every line that would not fit at the asked width, each with its px and the px the tile has there.
+  const row = (name: string, px: number, top: number, fits = false): TileLine => ({ kind: "fields", name, px, fits, top, left: 13 });
+
+  it("(a) narrower than its content — every line that would not fit, with what each needs and what the tile has", () => {
+    const heading = headingMeasure([{ text: "Identitate", px: 103.1 }, { text: "PPERS81773", px: 72 }], [8], 26);
+    const lines: TileLine[] = [
+      row("Prenume | Nume", 306.4, 60),
+      row("CNP", 200, 120, true),
+      { kind: "heading", name: heading.title, px: heading.px, fits: true, top: -1, left: 0, heading },
+    ];
+    expect(at(1, { lines: { have: 119, lines } })).toEqual({
       kind: "refused",
-      refusal: { reason: "content", units: 2, fields: "Nume | Prenume", px: 314 },
+      refusal: { reason: "content", units: 2, misfit: { lines: [{ ...lines[0], px: 306 }], count: 1, more: 0, have: 119 } },
     });
   });
 
-  it("(a′) 41.20: narrower than its heading — its own refusal, named by what is visible, its px taken apart", () => {
-    const heading = headingMeasure([{ text: "Identitate", px: 97.6 }, { text: "PPERS 77369", px: 78.6 }], [8], 26);
-    expect(at(1, { widest: { fields: heading.title, px: heading.px, heading } })).toEqual({
-      kind: "refused",
-      refusal: { reason: "heading", units: 2, heading },
-    });
+  it("(a) with nothing measured not to fit, it is the one-unit floor", () => {
+    expect(at(1, { lines: { have: 119, lines: [row("CNP", 100, 0, true)] } })).toEqual({ kind: "refused", refusal: { reason: "one" } });
   });
 
   it("(b) wider than this window's row", () => {
@@ -107,11 +112,15 @@ describe("the words (Ask first 3, 5)", () => {
 
   it("every reason in both languages, with its arguments", () => {
     const args: Record<string, string[]> = {
-      "refused.content": ["units", "fields", "px"],
+      "refused.narrower": ["units"], // 41.21: the list's first line, then a line a row
+      "refused.row": ["fields", "px", "have"],
+      "refused.headingRow": ["title", "px", "have", "detail"],
+      "refused.more": ["count"],
+      "refused.count": ["count"],
       "refused.window": ["units"],
       "refused.one": [],
       "refused.form": ["units", "form"], // 41.19
-      "refused.heading": ["units", "title", "px", "detail"], // 41.20
+      // 41.20: the heading's parts.
       "refused.headingFirst": ["text", "px"],
       "refused.headingPart": ["text", "px"],
       "refused.headingSpace": ["px"],
@@ -129,30 +138,41 @@ describe("the words (Ask first 3, 5)", () => {
         for (const n of names) expect([lang, key, n, text.includes(`{${n}`)]).toEqual([lang, key, n, true]);
       }
     }
-    // 41.19: „form”; 41.20: the heading and its parts.
-    expect(Object.keys(ro.refused).sort()).toEqual(["content", "form", "heading", "headingFirst", "headingFrame", "headingPart", "headingSpace", "one", "window"]);
+    // 41.19: „form”; 41.20: the heading's parts; 41.21: the list — „content” and „heading” became its lines.
+    expect(Object.keys(ro.refused).sort()).toEqual(
+      ["count", "form", "headingFirst", "headingFrame", "headingPart", "headingRow", "headingSpace", "more", "narrower", "one", "row", "window"],
+    );
     expect(Object.keys(en.refused).sort()).toEqual(Object.keys(ro.refused).sort());
     expect(Object.keys(ro.advised).sort()).toEqual(["alone", "laptop", "room", "table"]);
   });
 
   it("41.20: a heading is called a heading, not a row — and its words add up part by part", () => {
-    expect(ro.refused.heading).toContain("titlul «{title}» are nevoie de {px} px — {detail}.");
-    expect(ro.refused.heading).not.toContain("rândul");
+    expect(ro.refused.headingRow).toBe("titlul «{title}» — {px} px (încap {have}): {detail}");
     expect([ro.refused.headingFirst, ro.refused.headingSpace, ro.refused.headingPart, ro.refused.headingFrame]).toEqual([
       "«{text}» {px} px",
       "spațiu {px}",
       "«{text}» {px}",
       "margini {px}",
     ]);
-    expect(en.refused.heading).toContain("the heading «{title}» needs {px} px — {detail}.");
+    expect(en.refused.headingRow).toBe("the heading «{title}» — {px} px ({have} available): {detail}");
   });
 
-  it("41.20: the rows of fields are checked before the tile itself, and names are what is visible", () => {
+  it("41.21: the list's words — „«Nume | Prenume» — 314 px (încap 254)”, the cut, the count read out", () => {
+    expect(ro.refused.narrower).toBe("Panoul nu poate fi mai îngust de {units, plural, one {# unitate} few {# unități} other {# de unități}}:");
+    expect(ro.refused.row).toBe("«{fields}» — {px} px (încap {have})");
+    expect(ro.refused.more).toBe("… și încă {count, plural, one {un rând} few {# rânduri} other {# de rânduri}}");
+    expect(ro.refused.count).toBe("{count, plural, one {Un rând nu încape} few {# rânduri nu încap} other {# de rânduri nu încap}}.");
+  });
+
+  it("41.20–41.21: every line is measured in one pass, the tile itself only when they all fit; names are what is visible", () => {
     const src = read("src", "components", "tiles", "use-tile-packing.ts");
-    const rowsAt = src.indexOf("const bad = broken(shape());");
-    const tileAt = src.indexOf("if (Math.abs(drawn - px) >= 0.5 || el.scrollWidth > el.clientWidth + 1) {");
+    const rowsAt = src.indexOf("const bad = new Set(broken(shape()));");
+    const tileAt = src.indexOf("if (out.every((l) => l.fits)) {");
     expect(rowsAt).toBeGreaterThan(0);
     expect(tileAt).toBeGreaterThan(rowsAt);
+    expect(src).toContain("const floor = narrowest(b, p.units, unit, gap, true);");
+    expect(src).toContain("lines: m.lines.get(asked),");
+    expect(src).toContain('export const TILE_WIDTH_LIST_MAX = "28rem";');
     expect(src).toContain("return (h ? visibleName(h) : \"\") || b.el.getAttribute(\"aria-label\") || tileOf(b.id);");
     expect(src).not.toMatch(/querySelector\("h2, h3"\)\?\.textContent/);
   });

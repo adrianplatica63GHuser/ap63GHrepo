@@ -13,11 +13,13 @@ export interface TileWidthWords {
   handle: (title: string) => string;
   /** Its value: „3 unități”. */
   units: (count: number) => string;
-  /** 41.18: what a verdict says, a line per reason — nothing when the width is fine. */
+  /** 41.18: what a verdict says, a line per reason — nothing when the width is fine. 41.21: a refusal, a line per row. */
   verdict: (v: WidthVerdict) => string[];
+  /** 41.21: what the live region reads of it — a refused list's first sentence and how many lines do not fit. */
+  heard: (v: WidthVerdict) => string[];
   /** 41.19: the line a shared tile's bubble adds — „Lățimea se aplică panoului {title} pe toate formularele”. */
   shared: (title: string) => string;
 }
 
 /** Until a screen hands its words over: the tile's own name, the bare count. */
-export const PLAIN_TILE_WIDTH_WORDS: TileWidthWords = { handle: (title) => title, units: (count) => String(count), verdict: () => [], shared: () => "" };
+export const PLAIN_TILE_WIDTH_WORDS: TileWidthWords = { handle: (title) => title, units: (count) => String(count), verdict: () => [], heard: () => [], shared: () => "" };

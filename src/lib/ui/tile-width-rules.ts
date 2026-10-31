@@ -9,8 +9,8 @@
  * „ok", „refused" with its reason, or „advised" with what the width will cost, out. The handle (use-tile-packing.ts)
  * measures and shows; this decides, and `tile-width-rules.test.ts` pins each reason.
  *
- * 41.20: a heading that stops the tile is its own refusal — named by what is on the screen, never by the screen
- * reader's „ID sistem", and with its px taken apart (`headingMeasure`).
+ * 41.20: a heading is named by what is on the screen, never by the screen reader's „ID sistem", and its px are taken
+ * apart (`headingMeasure`). 41.21: a refusal lists every line that would not fit at the asked width (`misfitList`).
  *
  * PURE — no DOM, no React.
  */
@@ -52,12 +52,64 @@ export function headingMeasure(parts: readonly HeadingPart[], spaces: readonly n
   return { title: p.map((x) => x.text).join(VISIBLE_JOIN), parts: p, spaces: s, frame: f, px };
 }
 
+/**
+ * 41.21: one line of a tile at the width the pointer asks for — its heading, a row of field boxes, or a row of text.
+ * Adrian, 2026-10-31: „please list all the rows including the heading that will not fit; and provide the
+ * measurements associated with your thinking, how many pixels each line would need".
+ */
+export interface TileLine {
+  /** A heading (41.20's measure and words), a row of fixed field boxes, or a row of text that wraps. */
+  kind: "heading" | "fields" | "text";
+  /** Its name: the heading's visible title, or the row's fields' labels joined with „ | ". */
+  name: string;
+  /** The px the tile needs for it: from its left outer edge to the line's right end, plus its right padding and border. */
+  px: number;
+  /** It was measured to fit at the asked width. */
+  fits: boolean;
+  /** Where it stands at the tile's own width, for the screen order: its top, then its left (px from the tile's corner). */
+  top: number;
+  left: number;
+  /** A heading's parts (41.20). */
+  heading?: HeadingMeasure;
+}
+
+/** 41.21 (Ask first 2): the most lines the bubble lists — past it, the widest of them and „… și încă N rânduri". */
+export const MISFIT_CAP = 6;
+
+/** 41.21: what the bubble lists — the lines that do not fit, the px the narrower tile has, and how many are left out. */
+export interface Misfit {
+  /** In screen order — the heading first, then the rows top to bottom. Whole px. */
+  lines: TileLine[];
+  /** Every line that does not fit, the listed ones included. */
+  count: number;
+  /** Not listed: past the cap. */
+  more: number;
+  /** The px the tile has at the asked width: k units and k − 1 gaps. */
+  have: number;
+}
+
+/**
+ * 41.21 (Ask first 1, 2, 4, 5): lines in, the list out. A line that fits is not listed, nor is a row of text — it grows
+ * downward, as the fields' rule allows. The heading comes first, then the rows top to bottom, left to right. Past
+ * `cap`, the `cap` widest are kept, still in screen order, and the rest counted in `more`.
+ */
+export function misfitList(lines: readonly TileLine[], have: number, cap: number = MISFIT_CAP): Misfit {
+  const out = lines
+    .filter((l) => !l.fits && l.kind !== "text")
+    .map((l) => ({ ...l, px: Math.round(l.px) }))
+    .sort((a, b) => Number(b.kind === "heading") - Number(a.kind === "heading") || a.top - b.top || a.left - b.left);
+  const keep = out.length <= cap ? out : [...out].sort((a, b) => b.px - a.px).slice(0, Math.max(0, cap));
+  const kept = new Set(keep);
+  return { lines: out.filter((l) => kept.has(l)), count: out.length, more: out.length - kept.size, have: Math.round(have) };
+}
+
 /** Not possible (Ask first 1): the edge stops at the last width the tile can have and turns red. */
 export type WidthRefusal =
-  /** (a) Narrower than its content: the widest row of fixed boxes, its fields and the px the tile needs for it. */
-  | { reason: "content"; units: number; fields: string; px: number }
-  /** 41.20: narrower than its heading — named by what is visible, and how its px add up. */
-  | { reason: "heading"; units: number; heading: HeadingMeasure }
+  /**
+   * (a) Narrower than its content — 41.21: every line that would not fit at the asked width, each with its px and the
+   * px the narrower tile has; `units` the narrowest every one of them fits.
+   */
+  | { reason: "content"; units: number; misfit: Misfit }
   /** (b) Wider than this window's row holds — or than reaches a tile that holds still beside it. */
   | { reason: "window"; units: number }
   /** (c) Under one unit. */
@@ -87,11 +139,8 @@ export interface WidthCase {
   /** The narrowest and widest the tile can be (`widthLimits`, tile-positions.ts). */
   min: number;
   max: number;
-  /**
-   * What sets `min` when it is the content: the widest row's fields and the px the tile needs to hold it — or, 41.20,
-   * the tile's heading, with its measure, when no row of fields stops it first.
-   */
-  widest?: { fields: string; px: number; heading?: HeadingMeasure };
+  /** 41.21: the tile's lines measured at the asked width, and the px it has there — when it was measured. */
+  lines?: { have: number; lines: readonly TileLine[] };
   /** 41.19: when `min` is set by a shared tile's content on another form, that form (`formOfEntity`). */
   elsewhere?: string;
   /** The units its content needs — `min` before its own width is counted. */
@@ -120,9 +169,9 @@ export function judgeWidth(c: WidthCase): WidthVerdict {
   if (c.asked < 1) return { kind: "refused", refusal: { reason: "one" } };
   if (c.asked < c.min) {
     if (c.elsewhere) return { kind: "refused", refusal: { reason: "form", units: c.min, form: c.elsewhere } };
-    if (c.widest?.heading) return { kind: "refused", refusal: { reason: "heading", units: c.min, heading: c.widest.heading } };
-    return c.widest
-      ? { kind: "refused", refusal: { reason: "content", units: c.min, fields: c.widest.fields, px: Math.round(c.widest.px) } }
+    const misfit = c.lines ? misfitList(c.lines.lines, c.lines.have) : undefined;
+    return misfit && misfit.count > 0
+      ? { kind: "refused", refusal: { reason: "content", units: c.min, misfit } }
       : { kind: "refused", refusal: { reason: "one" } };
   }
   if (c.asked > c.max) return { kind: "refused", refusal: { reason: "window", units: c.max } };
