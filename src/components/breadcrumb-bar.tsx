@@ -471,9 +471,14 @@ function BreadcrumbBarInner() {
           // each down to its „…" (min-w-6, its full name on hover; min-w-10 holds the chevron, the gap and that) — a
           // truncated label's own minimum is its whole text, so the wrapper needs a floor of its own. The last then
           // truncates. The slot and „?" never shrink, and the bar never wraps.
+          // Slice 41.22: the slot may now shrink, by the system ID only, at the ordinary factor 1 — so the crumbs' factors
+          // are a million (the last) and a hundred million (the others) times that: while a crumb can still give way, the
+          // slot's share of the shortfall is under a thousandth of a px, too little to cut the ID. (A factor under 1 on
+          // the slot does not work: once it is the only item left that can shrink, a flex line whose shrink factors sum
+          // to less than 1 takes only that fraction of its shortfall — the 700-px step measured +70 px with 0.00001.)
           <span
             key={`${seg.href ?? seg.label}-${idx}`}
-            className={isLast ? "flex items-center gap-1 min-w-0" : "flex items-center gap-1 min-w-10 shrink-[100]"}
+            className={isLast ? "flex items-center gap-1 min-w-0 shrink-[1000000]" : "flex items-center gap-1 min-w-10 shrink-[100000000]"}
             data-crumb={isLast ? "last" : ""}
           >
             {idx > 0 && (
@@ -529,11 +534,11 @@ function BreadcrumbBarInner() {
       */}
       {/* Slice 41.08: the slot, left of „?" — empty on a screen with no record (Ask first 5). It takes the ml-auto that
           pushed „?" right, so an empty slot changes nothing.
-          Slice 41.22: it shrinks too, but only after the crumbs (a factor a million times smaller than theirs, so they
-          take the whole of the shortfall while they can) and only as far as its own min-content — which leaves out the
-          system ID (its grid column is minmax(0,auto), `*-detail-tiles.tsx`). So at 700 px the ID is cut to its „…”
-          and nothing scrolls sideways; the pill, „Panouri" and „?" keep their size. */}
-      <span ref={slotRef} className="ml-auto pl-4 flex shrink-[0.00001] items-center" data-page-bar-slot="" />
+          Slice 41.22: it shrinks too (factor 1), but only after the crumbs (theirs are a million times larger, above)
+          and only as far as its own min-content — which leaves out the system ID (its grid column is minmax(0,auto),
+          `*-detail-tiles.tsx`). So at 700 px the ID is cut to its „…” and nothing scrolls sideways; the pill,
+          „Panouri" and „?" keep their size. */}
+      <span ref={slotRef} className="ml-auto pl-4 flex shrink items-center" data-page-bar-slot="" />
       <span className="pl-4 shrink-0" data-page-bar-help="">
         <ScreenHelpButton />
       </span>

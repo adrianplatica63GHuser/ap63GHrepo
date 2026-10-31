@@ -82,12 +82,14 @@ describe("the bar", () => {
   });
 
   it("has one slot, left of „?”, which takes the ml-auto — empty on a screen with no record", () => {
-    // 41.22: `shrink-0` became a factor far below the crumbs' — the slot gives way only after them, and only by the ID.
-    expect(BAR).toMatch(/<span ref=\{slotRef\} className="ml-auto pl-4 flex shrink-\[0\.00001\] items-center" data-page-bar-slot="" \/>\s*<span className="pl-4 shrink-0" data-page-bar-help="">\s*<ScreenHelpButton \/>/);
+    // 41.22: `shrink-0` became `shrink` (1), the crumbs' factors far above it — the slot gives way only after them,
+    // and only by the ID.
+    expect(BAR).toMatch(/<span ref=\{slotRef\} className="ml-auto pl-4 flex shrink items-center" data-page-bar-slot="" \/>\s*<span className="pl-4 shrink-0" data-page-bar-help="">\s*<ScreenHelpButton \/>/);
   });
 
   it("gives way at the crumbs first, the earlier ones before the last; never wraps", () => {
-    expect(BAR).toContain('className={isLast ? "flex items-center gap-1 min-w-0" : "flex items-center gap-1 min-w-10 shrink-[100]"}');
+    // 41.22: the factors were 1 and 100; now a million and a hundred million, above the slot's 1.
+    expect(BAR).toContain('className={isLast ? "flex items-center gap-1 min-w-0 shrink-[1000000]" : "flex items-center gap-1 min-w-10 shrink-[100000000]"}');
     expect(BAR).not.toMatch(/<nav[^>]*flex-wrap/);
   });
 
