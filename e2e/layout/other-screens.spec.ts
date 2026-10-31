@@ -340,6 +340,20 @@ test.describe("TC-LAYOUT-01 — o fereastră îngustă (40.69)", () => {
         const de = document.documentElement;
         return Math.max(ps ? ps.scrollWidth - ps.clientWidth : 0, de.scrollWidth - de.clientWidth);
       });
+    const sticksOut = () =>
+      page.evaluate(() => {
+        const ps = document.querySelector<HTMLElement>("[data-page-scroll]") ?? document.documentElement;
+        const edge = ps.getBoundingClientRect().right;
+        const out = [...ps.querySelectorAll<HTMLElement>("*")].filter((e) => e.getBoundingClientRect().right > edge + 1);
+        const outer = out.filter((e) => !out.includes(e.parentElement as HTMLElement));
+        return outer
+          .slice(0, 6)
+          .map((e) => {
+            const tag = [...e.attributes].filter((a) => a.name.startsWith("data-")).map((a) => `[${a.name}${a.value ? `=${a.value}` : ""}]`).join("");
+            return `${e.tagName.toLowerCase()}${tag} +${Math.round(e.getBoundingClientRect().right - edge)}px w${Math.round(e.getBoundingClientRect().width)}`;
+          })
+          .join("; ");
+      });
     try {
       await page.setViewportSize({ width: 700, height: 900 });
 
@@ -357,7 +371,8 @@ test.describe("TC-LAYOUT-01 — o fereastră îngustă (40.69)", () => {
         await page.waitForTimeout(800);
         const cols = await page.locator("[data-packed-col]").evaluateAll((els) => [...new Set(els.map((e) => (e as HTMLElement).dataset.packedCol))]);
         expect(cols, `${what}: one column`).toEqual(["0"]);
-        expect(await sideways(), what).toBeLessThanOrEqual(1);
+        // 41.22: when it scrolls, the message names what sticks out — the outermost elements past the column's right edge.
+        expect(await sideways(), `${what}: ${await sticksOut()}`).toBeLessThanOrEqual(1);
       }
 
       // Step 8 — the person's long name: never under the versions and „Panouri". Since 41.08 they are in the page bar,
