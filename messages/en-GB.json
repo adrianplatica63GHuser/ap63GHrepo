@@ -1169,7 +1169,7 @@
       "save": "Save",
       "cancel": "Cancel",
       "yes": "Yes",
-      "age": "{count, plural, one {# year} other {# years}}"
+      "age": "{count, plural, other {# y}}"
     },
     "tileWidth": {
       "handle": "Width of the tile {title}",

@@ -1169,7 +1169,7 @@
       "save": "Salvează",
       "cancel": "Renunță",
       "yes": "Da",
-      "age": "{count, plural, one {# an} few {# ani} other {# de ani}}"
+      "age": "{count, plural, one {# an} other {# ani}}"
     },
     "tileWidth": {
       "handle": "Lățimea panoului {title}",
