@@ -1170,6 +1170,10 @@
       "cancel": "Cancel",
       "yes": "Yes",
       "age": "{count, plural, one {# year} other {# years}}"
+    },
+    "tileWidth": {
+      "handle": "Width of the tile {title}",
+      "units": "{count, plural, one {# unit} other {# units}}"
     }
   },
   "naturalPerson": {

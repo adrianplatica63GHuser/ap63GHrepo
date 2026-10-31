@@ -1061,6 +1061,9 @@ export const SKILLS_UNCOVERED_CASES: Readonly<Record<string, string>> = {
   "TC-SET-06":
     "Slice 41.16: the width unit set on „Setări”. Its skill is written by the next Help and learning update (due 2026-11-05, from " +
     "docs/help/LAST-SYNC.md), which covers 41.16–41.19 together; until then the case has no skill.",
+  "TC-TILES-26":
+    "Slice 41.17: a tile's width dragged by its right edge. Its skill comes with the same Help and learning update as " +
+    "TC-SET-06's (due 2026-11-05), which covers 41.16–41.19 together.",
 };
 
 export function skillByKey(key: string): Skill | undefined {

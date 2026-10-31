@@ -304,11 +304,15 @@ export function FixedTable({
   // 41.16: a table that fills a tile of whole units follows the tile as drawn on the live unit — the table and its
   // fill column both gain what the tile is wider than on 119 px (`tileExtraCss`, nothing at the default unit).
   const extra = fill && fill.tableRem === undefined ? tileExtraCss(fill.units) : null;
-  const plus = (r: number): string => (extra ? `calc(${rem(r)} + ${extra})` : rem(r));
+  const fillAt = fill ? columns.indexOf(fill.column) : -1;
+  // 41.17: a tile made narrower by its edge takes from the fill column down to a column's least width, no further —
+  // past that the table is wider than its tile and scrolls inside its frame.
+  const fillCss =
+    extra && fillAt >= 0 ? `max(${rem(Math.min(MIN_COLUMN_REM, rems[fillAt]))}, calc(${rem(rems[fillAt])} + ${extra}))` : null;
   return (
     <table
       className={`table-fixed ${className} ${COLUMN_LINES}`}
-      style={{ width: plus(tableRem) }}
+      style={{ width: fillCss ? `calc(${rem(tableRem - rems[fillAt])} + ${fillCss})` : rem(tableRem) }}
       data-width-table={columns.join(" ")}
       data-resize-table={id}
     >
@@ -323,7 +327,7 @@ export function FixedTable({
         {columns.map((name, i) => (
           <col
             key={`${name}-${i}`}
-            style={{ width: fill && name === fill.column ? plus(rems[i]) : rem(rems[i]) }}
+            style={{ width: fillCss && i === fillAt ? fillCss : rem(rems[i]) }}
             data-fill-gain={fill && name === fill.column ? rems[i] - columnRem(name) : undefined}
             data-width-stored={stored[name] !== undefined && name !== fill?.column ? "" : undefined}
           />

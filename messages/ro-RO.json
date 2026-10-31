@@ -1170,6 +1170,10 @@
       "cancel": "Renunță",
       "yes": "Da",
       "age": "{count, plural, one {# an} few {# ani} other {# de ani}}"
+    },
+    "tileWidth": {
+      "handle": "Lățimea panoului {title}",
+      "units": "{count, plural, one {# unitate} few {# unități} other {# de unități}}"
     }
   },
   "naturalPerson": {

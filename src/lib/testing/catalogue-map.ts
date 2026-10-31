@@ -49,7 +49,7 @@ export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCa
   // Slice #37.38: the map opened on a Property from its form. Needs a Google
   // Maps key in .env — the laptop and the runner have one.
   "/properties/map":                       ["TC-MAP-01", "TC-PROP-10", "TC-MAP-02", "TC-MAP-03", "TC-MAP-04", "TC-MAP-05", "TC-MAP-06", "TC-MAP-07", "TC-MAP-08", "TC-MAP-10"],
-  "/properties/[id]":                      ["TC-PROP-02", "TC-ASSOC-02", "TC-ASSOC-04", "TC-ASSOC-05", "TC-ASSOC-06", "TC-PROP-03", "TC-TAG-01", "TC-ASSOC-08", "TC-PROP-04", "TC-CALC-01", "TC-TILES-03", "TC-MAP-01", "TC-FOLD-01", "TC-ICON-02", "TC-ICON-03", "TC-ICON-04", "TC-ICON-07", "TC-TILES-07", "TC-SYSID-01", "TC-TILES-08", "TC-TILES-09", "TC-PROP-07", "TC-PROP-08", "TC-TILES-14", "TC-TILES-15", "TC-TILES-18", "TC-PROP-09", "TC-PROP-11", "TC-PROP-12", "TC-GRP-02", "TC-GRP-03", "TC-TILES-23", "TC-PROP-13", "TC-MAP-09", "TC-ASSOC-15"],
+  "/properties/[id]":                      ["TC-PROP-02", "TC-ASSOC-02", "TC-ASSOC-04", "TC-ASSOC-05", "TC-ASSOC-06", "TC-PROP-03", "TC-TAG-01", "TC-ASSOC-08", "TC-PROP-04", "TC-CALC-01", "TC-TILES-03", "TC-MAP-01", "TC-FOLD-01", "TC-ICON-02", "TC-ICON-03", "TC-ICON-04", "TC-ICON-07", "TC-TILES-07", "TC-SYSID-01", "TC-TILES-08", "TC-TILES-09", "TC-PROP-07", "TC-PROP-08", "TC-TILES-14", "TC-TILES-15", "TC-TILES-18", "TC-PROP-09", "TC-PROP-11", "TC-PROP-12", "TC-GRP-02", "TC-GRP-03", "TC-TILES-23", "TC-PROP-13", "TC-MAP-09", "TC-ASSOC-15", "TC-TILES-26"],
   // Slice #37.42: the list's icon buttons — tooltips by mouse and keyboard, an inactive one too.
   "/natural-persons":                      ["TC-PERS-01", "TC-VER-01", "TC-TILES-06", "TC-ICON-01", "TC-SYSID-01", "TC-PERS-04", "TC-TILES-11", "TC-LAYOUT-02", "TC-LAYOUT-03", "TC-LAYOUT-05", "TC-PERS-11", "TC-PERS-12", "TC-LAYOUT-07", "TC-SET-05", "TC-LAYOUT-09", "TC-LAYOUT-10"],
   "/natural-persons/new":                  ["TC-PERS-01", "TC-ASSOC-11", "TC-ASSOC-12", "TC-STAMP-01", "TC-VER-01", "TC-PERS-08", "TC-SET-06"],
@@ -169,6 +169,10 @@ export const PROMOTED_WITHOUT_DRIVING: Readonly<Record<CatalogueCaseId, string>>
     "Slice 41.16: the slice's header asks for this step in the slice itself — the width unit set on „Setări” and read " +
     "back on a person's form, measured in px. A hand run reads the same numbers the spec reads; its green run on the " +
     "test runner is the case's proof.",
+  "TC-TILES-26":
+    "Slice 41.17: the slice's header asks for this spec in the slice itself — a tile's right edge dragged a third of a " +
+    "unit at a time and measured in px, which a hand run reads no better than the spec. Its green run on the test " +
+    "runner is the case's proof.",
   "TC-ASSOC-15":
     "Slice 40.16: the case reads „Legături” on a person's, a company's, a property's and a document's form; three of them " +
     "draw a Google map, and October 2026's maps ceiling is spent. The spec blocks the maps and reads the same tile, so " +

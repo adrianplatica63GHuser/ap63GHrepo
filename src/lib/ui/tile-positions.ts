@@ -121,6 +121,12 @@ export interface StoredPlace {
    * stored before #38.45 — and the layout closes the gap above it.
    */
   space?: number;
+  /**
+   * Slice 41.17: its width in units, set by dragging its right edge. Absent, the width its screen gives it — every
+   * entry stored before 41.17 — so no arrangement stored earlier needs rewriting (no -v2). Units, not px, so a unit
+   * changed on „Setări" (41.16) keeps every count.
+   */
+  units?: number;
 }
 
 export type StoredPlaces = Readonly<Record<string, StoredPlace>>;
@@ -192,6 +198,9 @@ export function parseStoredPlaces(raw: string | null | undefined): Record<string
     // #38.45: a corrupt space is no space — the place itself still holds.
     const { space } = v as { space?: unknown };
     if (typeof space === "number" && Number.isFinite(space) && space >= 1 && space <= MAX_TOP) out[id].space = Math.round(space);
+    // 41.17: a corrupt width is the screen's own width — the place itself still holds.
+    const { units } = v as { units?: unknown };
+    if (Number.isInteger(units) && (units as number) >= 1 && (units as number) <= MAX_UNITS) out[id].units = units as number;
   }
   return out;
 }
@@ -455,8 +464,106 @@ export function placesToStore(
   for (const p of placed) {
     if (p.rowEnd || p.fixed || !isStorable(p.id)) continue;
     if (fallback.includes(p.id) && !moved.includes(p.id)) continue;
-    out[p.id] = storedPlaceOf(placed, p, gap, lead);
+    // 41.17: a place written anew keeps the width stored with it — a width is changed only by its own edge.
+    const units = previous[p.id]?.units;
+    out[p.id] = units === undefined ? storedPlaceOf(placed, p, gap, lead) : { ...storedPlaceOf(placed, p, gap, lead), units };
   }
+  return out;
+}
+
+// ---- a tile's width, dragged by its right edge (Slice 41.17) --------------------------------------------------------
+
+/**
+ * Adrian, 2026-10-31: „I would like to be able to adjust the width of any tile by grabbing its right edge and moving
+ * it left or right; however, for the case of the tiles the width of the tile will snap into place at the next size
+ * possible for that tile - which is an integer number of units … If I grab the right edge of a 3 unit tile and I move
+ * it left it will snap into place as a 2 unit tile; but if I move it right it will snap into place as a 4 unit tile".
+ */
+
+/** The widest a stored width may be, in units — as wide as a stored column may start. */
+export const MAX_UNITS = 64;
+
+/** How far past its edge a drag must go to move a tile one unit that way: a quarter of a unit (Ask first 2). */
+export const WIDTH_SNAP_AT = 0.25;
+
+/**
+ * The width a tile of `from` units takes when its edge is let go `dxPx` from where it was pressed: the nearest whole
+ * number of units — except that a quarter of a unit in one direction always moves it at least one unit that way —
+ * and never past `min` or `max`.
+ */
+export function snapUnits(from: number, dxPx: number, unitPx: number, gapPx: number, min: number, max: number): number {
+  const steps = dxPx / (unitPx + gapPx);
+  let n = from + Math.round(steps);
+  if (steps >= WIDTH_SNAP_AT) n = Math.max(n, from + 1);
+  if (steps <= -WIDTH_SNAP_AT) n = Math.min(n, from - 1);
+  return Math.min(max, Math.max(min, n));
+}
+
+/** The fewest units `px` wide or wider — never under one. */
+export function unitsAtLeast(px: number, unitPx: number, gapPx: number): number {
+  return Math.max(1, Math.ceil((px + gapPx) / (unitPx + gapPx) - 1e-6));
+}
+
+export interface WidthLimits {
+  /** Never narrower: the tile's widest row of fixed boxes, as its screen measured it — and never under one unit. */
+  min: number;
+  /** Never wider: the row's right end on this window, and never across a box that stands still (37.79). */
+  max: number;
+}
+
+/**
+ * The widths tile `id` may take (Ask first 4): from `contentUnits` — the fewest units in which every fixed box keeps its
+ * size and its row — to the row's end on this window, stopping short of a fixed box or one that holds still beside it.
+ * Its own width is always inside them.
+ */
+export function widthLimits(
+  placed: readonly Placed[],
+  id: string,
+  contentUnits: number,
+  columns: number,
+  gap: number,
+  still: ReadonlySet<string> = new Set(),
+): WidthLimits {
+  const me = placed.find((p) => p.id === id);
+  if (!me) return { min: 1, max: 1 };
+  let max = Math.max(1, Math.floor(columns) - me.col);
+  for (let n = me.units + 1; n <= max; n++) {
+    const rect = { col: me.col, units: n, top: me.top, height: me.height };
+    if (placed.some((p) => p.id !== id && !p.rowEnd && (p.fixed || still.has(p.id)) && overlaps(p, rect, gap))) {
+      max = n - 1;
+      break;
+    }
+  }
+  const min = Math.max(1, Math.min(contentUnits, me.units));
+  return { min, max: Math.max(max, me.units) };
+}
+
+/**
+ * Tile `id` at `units` wide, where it stands (Ask first 5): the tiles it now overlaps slide down out of its way, as a
+ * held tile makes room (`makeRoom`), never sideways; a narrower tile leaves its space, which the next layout's
+ * `riseIntoGaps` fills.
+ */
+export function resizeTile(
+  placed: readonly Placed[],
+  id: string,
+  units: number,
+  columns: number,
+  gap: number,
+  still: ReadonlySet<string> = new Set(),
+): { placed: Placed[]; slid: string[] } {
+  const next = placed.map((p) => (p.id === id ? { ...p, units } : { ...p }));
+  const me = next.find((p) => p.id === id);
+  if (!me) return { placed: next, slid: [] };
+  return makeRoom(next, id, { col: me.col, top: me.top }, columns, gap, still) ?? { placed: withRowEnds(next, gap), slid: [] };
+}
+
+/** `stored` with tile `id`'s width set to `units` — or forgotten, `undefined`, when it is the screen's own again. */
+export function withStoredWidth(stored: StoredPlaces, id: string, units: number | undefined): Record<string, StoredPlace> {
+  const out: Record<string, StoredPlace> = { ...stored };
+  const place = out[id];
+  if (!place) return out;
+  const { units: _was, ...rest } = place;
+  out[id] = units === undefined ? rest : { ...rest, units };
   return out;
 }
 

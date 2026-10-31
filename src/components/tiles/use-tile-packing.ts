@@ -108,8 +108,9 @@
  * keeps to at most `flowUnits` of the row's units, and the rest of the row is
  * free space a tile may be dragged to. Without it, the flow takes the row.
  */
-import { useLayoutEffect, type RefObject } from "react";
-import { UNIT_GAP_REM, declaredWidthPx } from "@/lib/ui/field-widths";
+import { useLayoutEffect, useRef, type RefObject } from "react";
+import { useTranslations } from "next-intl";
+import { TILE_FRAME_REM, TILE_INNER_VAR, UNIT_GAP_REM, declaredWidthPx, exactUnitsCss, rem } from "@/lib/ui/field-widths";
 import { liveUnitPx } from "@/lib/ui/width-unit";
 import { columnsIn, fitsBeside, grow, packedHeight, unitsOf, type PackBox, type Placed, ONE_COLUMN_BELOW_UNITS, oneColumn } from "@/lib/ui/tile-packing";
 import {
@@ -125,10 +126,14 @@ import {
   parseStoredPlaces,
   placeWithStored,
   placesToStore,
+  resizeTile,
   riseOne,
   snapPlace,
+  snapUnits,
   storedPlaceOf,
   tilePositionsKey,
+  widthLimits,
+  withStoredWidth,
   type StoredPlace,
   type StoredPlaces,
 } from "@/lib/ui/tile-positions";
@@ -183,7 +188,7 @@ export function findBoxes(container: HTMLElement): FoundBox[] {
   const counts = new Map<string, number>();
   const walk = (parent: Element, tile: string | null) => {
     for (const child of Array.from(parent.children)) {
-      if (!(child instanceof HTMLElement) || child.hidden || child.dataset.tileOutline !== undefined) continue;
+      if (!(child instanceof HTMLElement) || child.hidden || child.dataset.tileOutline !== undefined || child.dataset.tileHandle !== undefined) continue;
       const display = getComputedStyle(child).display;
       if (display === "none" || isOverlay(child)) continue;
       const own = child.dataset.tile ?? null;
@@ -239,6 +244,13 @@ function styleKeeper() {
       if (!props) kept.set(el, (props = new Map()));
       if (!props.has(prop)) props.set(prop, el.style.getPropertyValue(prop));
       el.style.setProperty(prop, value);
+    },
+    /** 41.17: back to what it was before any `set`, the record kept — a width a drag forced, before it is measured. */
+    reset(el: HTMLElement, prop: string): void {
+      const was = kept.get(el)?.get(prop);
+      if (was === undefined) return;
+      if (was) el.style.setProperty(prop, was);
+      else el.style.removeProperty(prop);
     },
     restore(): void {
       for (const [el, props] of kept) {
@@ -300,6 +312,17 @@ function ownWidth(el: HTMLElement): number {
   return Math.max(declared || 0, el.offsetWidth);
 }
 
+/** 41.17: the width handle — the lists' column handle (40.12) on its side. */
+export const TILE_HANDLE_PX = 8;
+export const TILE_HANDLE_CLASS = "group absolute z-[25] flex cursor-col-resize justify-center outline-none";
+export const TILE_HANDLE_LINE_CLASS =
+  "pointer-events-none h-full w-0.5 rounded-full bg-transparent transition-colors group-hover:bg-ink/40 group-focus-visible:bg-cta group-data-[resizing]:bg-cta";
+
+interface TileWidthWords {
+  handle: (title: string) => string;
+  units: (count: number) => string;
+}
+
 /**
  * Packs the boxes of the row `ref` points at, and lets the user drag them.
  * `fitWidest`: give the row a min-width of its widest box — for #37.56's left
@@ -321,6 +344,12 @@ export function useTilePacking(
 ): void {
   // A stable dependency: the screens pass a fresh array on every render.
   const rightKey = (right ?? []).join("|");
+  // 41.17: the width handle's words, in the screen's language, for the effect below — which outlives any one render.
+  const t = useTranslations("shared.tileWidth");
+  const words = useRef<TileWidthWords>({ handle: (title) => title, units: (count) => String(count) });
+  useLayoutEffect(() => {
+    words.current = { handle: (title) => t("handle", { title }), units: (count) => t("units", { count }) };
+  });
   useLayoutEffect(() => {
     const container = ref.current;
     // jsdom (jest) has no layout and no ResizeObserver: the row stays a flex-wrap there.
@@ -386,9 +415,23 @@ export function useTilePacking(
 
     const styles = styleKeeper();
 
+    // 41.17: a tile's width set by dragging its right edge, stored in units beside its place.
+    /** The boxes whose width a stored one forces (this layout): `apply` sets it, `layout` takes it off to measure. */
+    const forced = new Set<string>();
+    /** Each box's own width in units — what its screen draws — measured in `layout` before any width is forced. */
+    const ownUnits = new Map<string, number>();
+    /** A box whose width can be dragged: a tile the arrangement stores — not a banner, a fixed box or a preview. */
+    const canResize = (b: FoundBox) => !b.full && !b.rowEnd && isStorable(b.id);
+    /** Too narrow for two columns (40.69): drawn as one, and every tile at its own width. */
+    const narrow = () => ownColumns < ONE_COLUMN_BELOW_UNITS;
+    /** A box's width in units: its stored one, else its own — measured afresh unless a stored width is forcing it. */
+    const widthOf = (b: FoundBox, unit: number, gap: number) => {
+      const own = forced.has(b.id) ? (ownUnits.get(b.id) ?? 1) : unitsOf(ownWidth(b.el), unit, gap);
+      const set = canResize(b) && !narrow() ? stored[b.id]?.units : undefined;
+      return set ?? own;
+    };
     /** A box's width in units, as the flow takes it: a right-hand tile may reach past the flow's units (40.32). */
-    const unitsFor = (b: FoundBox, unit: number, gap: number) =>
-      Math.min(unitsOf(ownWidth(b.el), unit, gap), isRight(b) ? columns : flowColumns);
+    const unitsFor = (b: FoundBox, unit: number, gap: number) => Math.min(widthOf(b, unit, gap), isRight(b) ? columns : flowColumns);
 
     const apply = () => {
       const { unit, gap } = metrics();
@@ -411,11 +454,23 @@ export function useTilePacking(
         // #38.47: the action bar spans the row's units; a banner the row.
         if (p.rowEnd) styles.set(box.el, "width", `${p.units * (unit + gap) - gap}px`);
         else if (box.full) styles.set(box.el, "width", "100%");
-        else widest = Math.max(widest, ownWidth(box.el));
+        else {
+          // 41.17: a stored width — at most what the row holds on this window, for this visit — is forced, with the inner
+          // width a TILE box, Note and a list tile's table follow; every other tile keeps its own.
+          const own = ownUnits.get(p.id);
+          if (!single && canResize(box) && stored[p.id]?.units !== undefined && own !== undefined && p.units !== own) {
+            const w = exactUnitsCss(p.units);
+            styles.set(box.el, "width", w);
+            styles.set(box.el, TILE_INNER_VAR, `calc(${w} - ${rem(TILE_FRAME_REM)})`);
+            forced.add(p.id);
+          }
+          widest = Math.max(widest, ownWidth(box.el));
+        }
         box.el.dataset.packedCol = String(p.col);
       }
       // Slice 40.69: in one column the row holds no tile wider than itself, so it is not stretched to the widest.
       if (fitWidest) styles.set(container, "min-width", single ? "" : `${widest}px`);
+      syncHandles();
       publish();
     };
 
@@ -441,9 +496,17 @@ export function useTilePacking(
     const heights = () => new Map(boxes.map((b) => [b.id, b.el.offsetHeight]));
 
     const layout = () => {
-      if (drag?.active) return;
+      if (drag?.active || resize) return;
       const { unit, gap } = metrics();
       boxes = findBoxes(container);
+      // 41.17: every width a stored one forced goes back to the screen's own before anything is measured; `apply` sets
+      // it again.
+      for (const b of boxes) {
+        styles.reset(b.el, "width");
+        styles.reset(b.el, TILE_INNER_VAR);
+      }
+      forced.clear();
+      ownUnits.clear();
       ownColumns = columnsIn(container.clientWidth, unit, gap);
       columns = ownColumns;
       flowColumns = flowUnits ? Math.min(ownColumns, Math.max(1, flowUnits)) : ownColumns;
@@ -453,7 +516,7 @@ export function useTilePacking(
       // row's right edge, one under another — or, when they and the widest left tile do not fit side by side
       // (#38.46), under the left tiles.
       const rightBoxes = rightNames.flatMap((n) => boxes.filter((b) => tileOf(b.id) === n));
-      const own = (b: FoundBox) => unitsOf(ownWidth(b.el), unit, gap);
+      const own = (b: FoundBox) => widthOf(b, unit, gap);
       const leftUnits = boxes.filter((b) => !b.full && !b.rowEnd && !rightBoxes.includes(b)).map(own);
       const starting = rightBoxes.filter((b) => !stored[b.id] && !visit[b.id]);
       const beside = fitsBeside(leftUnits, starting.map(own), ownColumns);
@@ -481,6 +544,7 @@ export function useTilePacking(
           return { ...b, id };
         });
       }
+      for (const b of boxes) ownUnits.set(b.id, unitsOf(ownWidth(b.el), unit, gap));
       const items: PackBox[] = boxes.map((b) => ({
         id: b.id,
         units: b.rowEnd || b.full ? flowColumns : unitsFor(b, unit, gap),
@@ -511,7 +575,7 @@ export function useTilePacking(
     const onSizes = () => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
-        if (drag?.active) return;
+        if (drag?.active || resize) return;
         const { unit, gap } = metrics();
         if (columnsIn(container.clientWidth, unit, gap) !== ownColumns) return fresh();
         // A ResizeObserver also reports every box once when it starts observing it:
@@ -842,9 +906,285 @@ export function useTilePacking(
     };
     window.addEventListener(TILES_ALL_UP, onAllUp);
 
+    // ---- 41.17: a tile's width, dragged by its right edge ------------------------------------------------------------
+    // Ask first 1: the lists' column handle (40.12) on its side — an 8-px strip on the tile's right edge, its whole height,
+    // the col-resize cursor, a line darker while hovered or dragged; a focusable separator named „Lățimea panoului
+    // {title}”: Left and Right step one unit, Home or a double-click gives the tile its own width back. It holds the
+    // pointer while dragged, so a drag that ends over a button presses nothing. One per tile, in the row itself
+    // (`data-tile-handle`, which `findBoxes` skips), so nothing is added inside a tile React draws.
+    const handles = new Map<string, HTMLDivElement>();
+    interface Resize {
+      box: FoundBox;
+      handle: HTMLDivElement;
+      /** Its width in units when pressed. */
+      from: number;
+      min: number;
+      max: number;
+      x0: number;
+      /** Its width in px when pressed, and as drawn now. */
+      px0: number;
+      px: number;
+      pointer: number;
+    }
+    let resize: Resize | null = null;
+
+    const boxOf = (id: string) => boxes.find((b) => b.id === id);
+    const titleOf = (b: FoundBox) =>
+      b.el.querySelector("h2, h3")?.textContent?.replace(/\s+/g, " ").trim() || b.el.getAttribute("aria-label") || tileOf(b.id);
+    const drawWidth = (el: HTMLElement, w: string) => {
+      styles.set(el, "width", w);
+      styles.set(el, TILE_INNER_VAR, `calc(${w} - ${rem(TILE_FRAME_REM)})`);
+    };
+
+    /**
+     * Ask first 3 and 4: the narrowest the tile can be with every fixed box in it — a box with a width of its own, not
+     * one in a table and not one that fills the tile — keeping its size, inside the tile, and on the row it shares with
+     * its neighbours. Tried a unit at a time from `from` down; the tile is put back as it was before anything paints.
+     */
+    const narrowest = (b: FoundBox, from: number, unit: number, gap: number): number => {
+      const el = b.el;
+      const fixed = Array.from(el.querySelectorAll<HTMLElement>("*")).filter(
+        (d) =>
+          /^[0-9.]+(rem|px)$/.test(d.style.width) &&
+          !d.closest("table") &&
+          d.getClientRects().length > 0 &&
+          !/^(absolute|fixed)$/.test(getComputedStyle(d).position),
+      );
+      if (fixed.length === 0) return 1;
+      const shape = () => {
+        const r = el.getBoundingClientRect();
+        const cs = getComputedStyle(el);
+        const inner = r.right - parseFloat(cs.paddingRight || "0") - parseFloat(cs.borderRightWidth || "0");
+        return fixed.map((d) => {
+          const x = d.getBoundingClientRect();
+          return { w: x.width, top: x.top, right: x.right, inner };
+        });
+      };
+      const base = shape();
+      const rows: [number, number][] = [];
+      for (let i = 0; i < fixed.length; i++)
+        for (let j = i + 1; j < fixed.length; j++)
+          if (fixed[i].parentElement === fixed[j].parentElement && Math.abs(base[i].top - base[j].top) < 0.5) rows.push([i, j]);
+      const holds = (s: ReturnType<typeof shape>) =>
+        s.every((x, i) => Math.abs(x.w - base[i].w) < 0.5 && x.right <= x.inner + 0.5) && rows.every(([i, j]) => Math.abs(s[i].top - s[j].top) < 0.5);
+      const width0 = el.style.getPropertyValue("width");
+      const inner0 = el.style.getPropertyValue(TILE_INNER_VAR);
+      let n = from;
+      try {
+        for (let k = from - 1; k >= 1; k--) {
+          const px = k * (unit + gap) - gap;
+          el.style.setProperty("width", `${px}px`);
+          el.style.setProperty(TILE_INNER_VAR, `calc(${px}px - ${rem(TILE_FRAME_REM)})`);
+          if (!holds(shape())) break;
+          n = k;
+        }
+      } finally {
+        if (width0) el.style.setProperty("width", width0);
+        else el.style.removeProperty("width");
+        if (inner0) el.style.setProperty(TILE_INNER_VAR, inner0);
+        else el.style.removeProperty(TILE_INNER_VAR);
+      }
+      return n;
+    };
+
+    const limitsOf = (b: FoundBox, p: Placed) => {
+      const { unit, gap } = metrics();
+      const still = new Set(boxes.filter((x) => x.full).map((x) => x.id));
+      return widthLimits(placed, b.id, narrowest(b, p.units, unit, gap), columns, gap, still);
+    };
+
+    const describe = (h: HTMLElement, units: number, limits?: { min: number; max: number }) => {
+      h.setAttribute("aria-valuenow", String(units));
+      h.setAttribute("aria-valuetext", words.current.units(units));
+      if (limits) {
+        h.setAttribute("aria-valuemin", String(limits.min));
+        h.setAttribute("aria-valuemax", String(limits.max));
+      }
+    };
+
+    /** Every tile's handle where its right edge is drawn; none on a one-column screen, nor while a tile is carried. */
+    const syncHandles = () => {
+      if (drag?.active) return;
+      if (!key || single) {
+        for (const h of handles.values()) h.remove();
+        handles.clear();
+        return;
+      }
+      const { unit, gap } = metrics();
+      const byId = new Map(boxes.map((b) => [b.id, b]));
+      const live = new Set<string>();
+      for (const p of placed) {
+        const b = byId.get(p.id);
+        if (!b || p.rowEnd || p.fixed || !canResize(b)) continue;
+        live.add(p.id);
+        let h = handles.get(p.id);
+        if (!h) {
+          h = makeHandle(p.id);
+          handles.set(p.id, h);
+        }
+        if (h.parentElement !== container) container.appendChild(h);
+        const w = resize?.box.id === p.id ? resize.px : b.el.offsetWidth;
+        h.style.left = `${p.col * (unit + gap) + w - TILE_HANDLE_PX / 2}px`;
+        h.style.top = `${p.top}px`;
+        h.style.height = `${Math.max(p.height, b.el.offsetHeight)}px`;
+        h.setAttribute("aria-label", words.current.handle(titleOf(b)));
+        if (resize?.box.id !== p.id) describe(h, p.units);
+      }
+      for (const [id, h] of handles) {
+        if (live.has(id)) continue;
+        h.remove();
+        handles.delete(id);
+      }
+    };
+
+    /** Tile `id` at `units` wide: the tiles it now overlaps slide down, and its width and their places are stored. */
+    const commit = (id: string, units: number) => {
+      const b = boxOf(id);
+      const p = placed.find((x) => x.id === id);
+      if (!b || !p || single) return;
+      if (units === p.units) {
+        apply();
+        return;
+      }
+      const own = ownUnits.get(id);
+      const still = new Set(boxes.filter((x) => x.full).map((x) => x.id));
+      const r = resizeTile(placed, id, units, columns, metrics().gap, still);
+      placed = r.placed;
+      slide(r.slid);
+      store(id, r.slid);
+      stored = withStoredWidth(stored, id, units === own ? undefined : units);
+      writePlaces(key, stored);
+      layout();
+    };
+
+    /** Home, or a double-click: the tile's own width again — its stored width forgotten. */
+    const toOwn = (id: string) => {
+      if (stored[id]?.units === undefined) return;
+      stored = withStoredWidth(stored, id, undefined);
+      writePlaces(key, stored);
+      layout();
+    };
+
+    const endResize = (): Resize | null => {
+      const r = resize;
+      if (!r) return null;
+      resize = null;
+      window.removeEventListener("pointermove", onEdgeMove, true);
+      window.removeEventListener("pointerup", onEdgeUp, true);
+      window.removeEventListener("pointercancel", onEdgeCancel, true);
+      window.removeEventListener("keydown", onEdgeEscape, true);
+      r.handle.removeEventListener("lostpointercapture", onEdgeCancel);
+      delete r.handle.dataset.resizing;
+      document.body.style.removeProperty("cursor");
+      document.body.style.removeProperty("user-select");
+      if (r.handle.hasPointerCapture?.(r.pointer)) r.handle.releasePointerCapture(r.pointer);
+      styles.reset(r.box.el, "width");
+      styles.reset(r.box.el, TILE_INNER_VAR);
+      forced.delete(r.box.id);
+      return r;
+    };
+
+    const onEdgeMove = (e: PointerEvent) => {
+      const r = resize;
+      if (!r) return;
+      e.preventDefault();
+      const { unit, gap } = metrics();
+      // The edge follows the pointer, and stops where the tile can go no further (41.18 says why).
+      const lo = r.min * (unit + gap) - gap;
+      const hi = r.max * (unit + gap) - gap;
+      r.px = Math.min(hi, Math.max(lo, r.px0 + (e.clientX - r.x0)));
+      drawWidth(r.box.el, `${r.px}px`);
+      syncHandles();
+      describe(r.handle, snapUnits(r.from, e.clientX - r.x0, unit, gap, r.min, r.max));
+    };
+    const onEdgeUp = (e: PointerEvent) => {
+      const r = endResize();
+      if (!r) return;
+      const { unit, gap } = metrics();
+      commit(r.box.id, snapUnits(r.from, e.clientX - r.x0, unit, gap, r.min, r.max));
+    };
+    const onEdgeCancel = () => {
+      if (!endResize()) return;
+      apply();
+    };
+    const onEdgeEscape = (e: KeyboardEvent) => {
+      if (e.key !== "Escape" || !resize) return;
+      e.preventDefault();
+      e.stopPropagation();
+      onEdgeCancel();
+    };
+
+    const onEdgePress = (e: PointerEvent, id: string) => {
+      if (e.button !== 0 || !e.isPrimary || drag || resize || single) return;
+      const b = boxOf(id);
+      const p = placed.find((x) => x.id === id);
+      const h = handles.get(id);
+      if (!b || !p || !h) return;
+      e.preventDefault();
+      e.stopPropagation();
+      interacted = true;
+      const limits = limitsOf(b, p);
+      const px = b.el.offsetWidth;
+      resize = { box: b, handle: h, from: p.units, min: limits.min, max: limits.max, x0: e.clientX, px0: px, px, pointer: e.pointerId };
+      describe(h, p.units, limits);
+      h.setPointerCapture?.(e.pointerId);
+      h.dataset.resizing = "";
+      document.body.style.cursor = "col-resize";
+      document.body.style.userSelect = "none";
+      window.addEventListener("pointermove", onEdgeMove, true);
+      window.addEventListener("pointerup", onEdgeUp, true);
+      window.addEventListener("pointercancel", onEdgeCancel, true);
+      window.addEventListener("keydown", onEdgeEscape, true);
+      h.addEventListener("lostpointercapture", onEdgeCancel);
+    };
+
+    const onEdgeKey = (e: KeyboardEvent, id: string) => {
+      if (resize || drag?.active || single) return;
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "Home") return;
+      const b = boxOf(id);
+      const p = placed.find((x) => x.id === id);
+      if (!b || !p) return;
+      e.preventDefault();
+      e.stopPropagation();
+      interacted = true;
+      if (e.key === "Home") return toOwn(id);
+      const limits = limitsOf(b, p);
+      commit(id, Math.min(limits.max, Math.max(limits.min, p.units + (e.key === "ArrowRight" ? 1 : -1))));
+    };
+
+    const makeHandle = (id: string): HTMLDivElement => {
+      const h = document.createElement("div");
+      h.dataset.tileHandle = id.replace(/^wrapped:/, "");
+      h.setAttribute("role", "separator");
+      h.setAttribute("aria-orientation", "vertical");
+      h.tabIndex = 0;
+      h.className = TILE_HANDLE_CLASS;
+      h.style.width = `${TILE_HANDLE_PX}px`;
+      const line = document.createElement("div");
+      line.className = TILE_HANDLE_LINE_CLASS;
+      line.setAttribute("aria-hidden", "true");
+      h.appendChild(line);
+      h.addEventListener("pointerdown", (e) => onEdgePress(e, id));
+      h.addEventListener("keydown", (e) => onEdgeKey(e, id));
+      h.addEventListener("dblclick", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toOwn(id);
+      });
+      h.addEventListener("focus", () => {
+        const b = boxOf(id);
+        const p = placed.find((x) => x.id === id);
+        if (b && p && !resize) describe(h, p.units, limitsOf(b, p));
+      });
+      return h;
+    };
+
     fresh();
     return () => {
       end(false);
+      endResize();
+      for (const h of handles.values()) h.remove();
+      handles.clear();
       window.clearTimeout(slideEnd);
       cancelAnimationFrame(frame);
       sizes.disconnect();

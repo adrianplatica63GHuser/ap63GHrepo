@@ -426,6 +426,11 @@ export function unitsCss(n: number): string {
   return atLeastUnitsCss(unitsRem(n));
 }
 
+/** Slice 41.17: exactly `n` live units and the gaps between them — the width a tile's dragged edge gave it. */
+export function exactUnitsCss(n: number): string {
+  return `calc(${n} * ${UNIT_CSS} + ${rem((n - 1) * UNIT_GAP_REM)})`;
+}
+
 /** Inside a gray tile drawn `outer` wide: less its padding and border. */
 export function tileInnerCss(outer: string): string {
   return `calc(${outer} - ${rem(TILE_FRAME_REM)})`;
@@ -480,6 +485,8 @@ export function declaredWidthPx(width: string, unitPx: number, remPx = 16): numb
   const w = width.trim();
   if (/^[0-9.]+rem$/.test(w)) return parseFloat(w) * remPx;
   if (/^[0-9.]+px$/.test(w)) return parseFloat(w);
+  const exact = /^calc\(([0-9]+) \* var\(--unit[^)]*\) \+ ([0-9.]+)rem\)$/.exec(w);
+  if (exact) return Number(exact[1]) * unitPx + parseFloat(exact[2]) * remPx;
   const m = /^calc\(round\(up, ([0-9.]+)rem, var\(--unit[^)]*\) \+ ([0-9.]+)rem\) - ([0-9.]+)rem\)$/.exec(w);
   if (!m) return null;
   const step = unitPx + parseFloat(m[2]) * remPx;
