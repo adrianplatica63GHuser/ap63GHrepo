@@ -1,4 +1,4 @@
-# TC-TILES-27 — „Legături” lățită pe o persoană are aceeași lățime pe o proprietate, în locul ei; „Implicit” o uită pe amândouă
+# TC-TILES-27 — „Adresă” lățită pe o persoană are aceeași lățime pe o proprietate, în locul ei; „Implicit” o uită pe amândouă
 
 | | |
 |---|---|
@@ -28,9 +28,9 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens an invented property, `TC-E2E-TILES-27 Teren`, at 1920 × 1080 | „Legături” at its own width, a whole number of units |
-| 2 | Opens an invented person, drags „Legături”'s right edge a third of a unit right and holds it, then lets go | While held, the bubble beside the edge says „Lățimea se aplică panoului Legături pe toate formularele.”; let go, one unit wider |
-| 3 | Opens the property again | „Legături” one unit wider too, in the column it stood in |
+| 1 | Opens an invented property, `TC-E2E-TILES-27 Teren`, at 1920 × 1080 | Its address tile at its own width, a whole number of units („Legături” is not shown until ticked, and „Implicit” would untick it, so the address tiles stand for the shared ones) |
+| 2 | Opens an invented person, drags the right edge of its home address tile a third of a unit right and holds it, then lets go | While held, the bubble beside the edge says „Lățimea se aplică panoului … pe toate formularele.”; let go, one unit wider |
+| 3 | Opens the property again | Its address tile one unit wider too, in the column it stood in |
 | 4 | Presses „Implicit” on the property, then opens the person | Its own width on the property, and on the person |
 
 ## At the end — leaving things as they were found
