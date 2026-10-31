@@ -1058,6 +1058,9 @@ export const SKILLS: readonly Skill[] = [
 export const SKILLS_UNCOVERED_CASES: Readonly<Record<string, string>> = {
   "TC-LAYOUT-01":
     "The other screens measured at fixed widths (1400 and 2400 px): a statement about layout, not something a user does or understands.",
+  "TC-SET-06":
+    "Slice 41.16: the width unit set on „Setări”. Its skill is written by the next Help and learning update (due 2026-11-05, from " +
+    "docs/help/LAST-SYNC.md), which covers 41.16–41.19 together; until then the case has no skill.",
 };
 
 export function skillByKey(key: string): Skill | undefined {

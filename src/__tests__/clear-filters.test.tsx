@@ -12,6 +12,7 @@ import { join } from "node:path";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { ClearFiltersButton } from "@/components/list/filter-bar";
 import { bodyBesideTiles } from "@/components/tiles/preview-tiles";
+import { unitsCss } from "@/lib/ui/field-widths";
 import ro from "../../messages/ro-RO.json";
 import en from "../../messages/en-GB.json";
 
@@ -83,7 +84,9 @@ describe("on the four lists", () => {
 describe("an open tile stays beside the list when the columns leave room (40.49)", () => {
   it("the body's cap: the room beside the tiles when the columns fit in it, the whole row when not", () => {
     // 40.98: the row tiles' column is 41.1875rem (5 units of 119 px) and its gap; it was 40 + 1.
-    expect(bodyBesideTiles("calc(30rem + 2px)").maxWidth).toBe("max(calc(100% - 42.1875rem), min(100%, calc((calc(30rem + 2px) - (100% - 42.1875rem)) * 1000)))");
+    // 41.16: the column as drawn on the live unit (`unitsCss(5)`, 659 px on 119) and its 1-rem gap.
+    const room = `(100% - ${unitsCss(5)} - 1rem)`;
+    expect(bodyBesideTiles("calc(30rem + 2px)").maxWidth).toBe(`max(calc${room}, min(100%, calc((calc(30rem + 2px) - ${room}) * 1000)))`);
   });
 
   it.each(["natural-persons", "judicial-persons", "properties", "documents"])("%s hands its columns' width to the tiles", (dir) => {
