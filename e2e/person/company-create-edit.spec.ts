@@ -148,8 +148,9 @@ test.describe("TC-PERS-02 — Persoană juridică creată și modificată", () =
       // Slice 40.73: the firm reads as text; „Editează" opens „Date de înregistrare" for the CUI's note and the boxes below.
       await expect(page.locator('[data-panel="identity"] [data-read-value="name"]')).toHaveText(NAME);
       await editTile(page, "identity");
-      // #37.57: the system ID is the identity panel heading's corner, not a field.
-      await expect(page.locator('[data-panel="identity"] [data-system-id]')).toContainText(/JPERS\d+$/);
+      // #37.57: the system ID is not a field; 41.22: it is in the page bar, left of the versions pill — not in the panel.
+      await expect(page.locator("[data-page-bar] [data-version-slot] [data-system-id]")).toContainText(/JPERS\d+$/);
+      await expect(page.locator('[data-panel="identity"] [data-system-id]')).toHaveCount(0);
       await expect(
         page.getByText("CUI-ul nu poate fi modificat odată setat — ștergeți și creați din nou pentru a-l schimba"),
       ).toBeVisible();

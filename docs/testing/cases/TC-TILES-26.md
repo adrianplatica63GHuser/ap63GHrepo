@@ -38,13 +38,17 @@ Nothing.
 | 6 | Focuses the edge, presses → then Home | One unit more, the focus still on the edge; then its own width |
 | 7 | (41.18) Focuses the edge (it says the narrowest the tile can be), drags it one unit past that, and holds it | The edge stops at the narrowest, and beside it a bubble (41.21): „Panoul nu poate fi mai îngust de N unități:”, then a line for every row that would not fit at that width — „«Nume | Prenume» — 306 px (încap 254)”, each needing more than the tile has — the heading's first when it does not fit, „titlul «…» — … px (încap …): «…» … px, spațiu …, «…» …, margini …”, its parts adding up; past six, „… și încă N rânduri”. The live region reads the first line and how many („2 rânduri nu încap.”). Or, where its content fits one unit, „Un panou are cel puțin o unitate.” Let go: the bubble goes, the tile at its narrowest |
 | 8 | (41.18) Drags it two units right — two past what it needs — and holds it | A bubble: „Cu 2 unități mai lat decât îi trebuie: rămâne loc gol în dreapta câmpurilor.” Let go: the width is taken, the field box the same |
-| 9 | (41.20, 41.21) Opens an invented natural person, `TC-E2E-TILES-26 Popescu`, its identity filled with invented data; drags the „Identitate” tile's edge from 3 units to 2, and holds it | The edge is named „Lățimea panoului Identitate · <cod>”. The bubble lists every line of Identitate that needs more than 254 px — the row with „Prenume” and „Nume” among them — each with its px, and the heading only if it needs more too; never „ID sistem”, which only a screen reader hears. The live region says how many. Let go: the tile at 3 units. The person is removed |
+| 9 | (41.20, 41.21, 41.22) Opens an invented natural person, `TC-E2E-TILES-26 Popescu`, its identity filled with invented data; drags the „Identitate” tile's edge from 3 units to 2, and holds it | The edge is named „Lățimea panoului Identitate” — since 41.22 the heading is only its title, the system ID being in the page bar, and no code is in the tile. The bubble lists every line of Identitate that needs more than 254 px — the row with „Prenume” and „Nume” among them — each with its px, and the heading only if it needs more too; never „ID sistem”, which only a screen reader hears. The live region says how many. Let go: the tile at 3 units. The person is removed |
 
 ## At the end — leaving things as they were found
 
 The property is removed. The arrangement is this browser context's own.
 
 ## Notes from the runs
+
+**2026-10-31 — Slice 41.22.** The system ID left the Identity tile's heading for the page bar, so step 9's edge is
+named „Lățimea panoului Identitate” and the heading's one part is „Identitate”; the heading is in the refusal's list
+only if it measures more than 254 px, which the spec logs. Written from the slice's own change; not driven by hand first.
 
 **2026-10-31 — Slice 41.21.** Steps 7 and 9 read the list: a line a row that would not fit, each with its px and the
 px the tile has. Written from the slice's own change; not driven by hand first.

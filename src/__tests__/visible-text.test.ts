@@ -3,9 +3,12 @@
  *
  * Slice 41.20 — a name as the screen shows it: never what only a screen reader hears.
  *
- * Adrian: „why are you showing me the string "System ID "? I cannot see it anywhere!" The Identity tile's heading holds
+ * Adrian: „why are you showing me the string "System ID "? I cannot see it anywhere!" The Identity tile's heading held
  * the system ID corner (system-id-corner.tsx), whose „ID sistem" is `sr-only`. jsdom has no layout, so the widths
  * (`headingParts`) are TC-TILES-26 step 9's; the rule for which text counts is pinned here.
+ *
+ * Slice 41.22 moved the ID out of every tile heading, into the page bar. The rule stands for any heading with a part
+ * only a screen reader hears, so the example below keeps the corner's markup as that case — not as where it is drawn.
  */
 import { isUnseen, visibleName, visibleParts, visibleText } from "@/components/tiles/visible-text";
 
@@ -14,12 +17,12 @@ function heading(html: string): HTMLElement {
   return document.querySelector("h2")!;
 }
 
-/** The corner as SystemIdCorner draws it. */
+/** A part with an `sr-only` label, marked up as SystemIdCorner draws the ID (41.22: in the page bar, no longer in a heading). */
 const corner = (code: string) =>
-  `<span class="ml-auto shrink-0 whitespace-nowrap" data-system-id><span class="sr-only">ID sistem </span><span class="select-all">${code}</span></span>`;
+  `<span class="shrink-0 whitespace-nowrap" data-system-id><span class="sr-only">ID sistem </span><span class="select-all">${code}</span></span>`;
 
 describe("the visible-text rule (Ask first 1)", () => {
-  it("the Identity heading reads „Identitate · PPERS 77369” — never „ID sistem”", () => {
+  it("a heading with an sr-only part reads „Identitate · PPERS 77369” — never „ID sistem” (the pre-41.22 Identity heading)", () => {
     const h = heading(`Identitate${corner("PPERS 77369")}`);
     expect(h.textContent).toBe("IdentitateID sistem PPERS 77369"); // what the bubble used to say
     expect(visibleName(h)).toBe("Identitate · PPERS 77369");

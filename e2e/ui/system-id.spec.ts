@@ -1,5 +1,5 @@
 /**
- * Case:   TC-SYSID-01 — ID-ul de sistem într-un singur loc: colțul din dreapta-sus al primului panou
+ * Case:   TC-SYSID-01 — ID-ul de sistem într-un singur loc: în bara paginii, la stânga versiunilor
  * Source: docs/testing/cases/TC-SYSID-01.md, „Last green" 2026-10-02
  *
  * A translation of the case file, step for step. Every Romanian string below
@@ -8,10 +8,10 @@
  * Divergences from the hand run, each for a reason the case cannot have:
  *   - The records carry `TC-E2E-SYSID-01` (records.ts).
  *   - Step 5 also checks the four tables' headers by name (no „Cod").
- *   - Slice #37.57's pictures, not steps of the case: the four first panels
- *     and the four lists — each list filtered by its search box to this case's
- *     record, so no real record is pictured — at 1366 and 1920 px, into
- *     `playwright-report/system-id/`.
+ *   - Pictures, not steps of the case: the page bar of each of the four
+ *     screens (41.22; the first panels before it) and the four lists — each
+ *     list filtered by its search box to this case's record, so no real record
+ *     is pictured — at 1366 and 1920 px, into `playwright-report/system-id/`.
  */
 
 import { test, expect, type Page } from "../helpers/test";
@@ -35,44 +35,61 @@ async function codesOnScreen(page: Page): Promise<string[]> {
   return page.evaluate((src) => document.body.innerText.replace(/PPERS00001/g, "").match(new RegExp(src, "g")) ?? [], CODE.source);
 }
 
-/** The corner: one, on its panel heading's line, at its right end; the heading one line. */
-async function corner(page: Page): Promise<{ heading: string; text: string; gap: number; sameLine: boolean; oneLine: boolean; count: number }> {
+/**
+ * 41.22 — the ID: one, in the page bar's versions slot, its first child; the versions pill right after it with the
+ * bar's gap, on one line with it; „Panouri" after both; none inside a tile.
+ */
+async function inBar(page: Page) {
   return page.evaluate(() => {
     const all = [...document.querySelectorAll<HTMLElement>("[data-system-id]")].filter((e) => e.getBoundingClientRect().width > 0);
     const c = all[0];
-    const h = c.closest("h2")!;
-    const p = (c.closest("[data-panel]") ?? c.closest("section"))!;
-    const r = c.getBoundingClientRect(), hr = h.getBoundingClientRect(), pr = p.getBoundingClientRect();
+    const slot = c?.closest<HTMLElement>("[data-page-bar] [data-version-slot]") ?? null;
+    const pill = c?.nextElementSibling as HTMLElement | null;
+    const menu = document.querySelector<HTMLElement>("[data-page-bar] [data-tiles-menu-button]");
+    const r = c.getBoundingClientRect();
+    const pr = pill?.getBoundingClientRect();
+    const mr = menu?.getBoundingClientRect();
     return {
-      heading: (h.firstChild?.textContent ?? "").trim(),
-      text: c.textContent ?? "",
-      gap: Math.round(pr.right - r.right),
-      sameLine: Math.abs((r.top + r.bottom) / 2 - (hr.top + hr.bottom) / 2) < 4,
-      oneLine: hr.height < 30,
       count: all.length,
+      text: c.textContent ?? "",
+      inSlot: slot !== null,
+      first: slot?.firstElementChild === c,
+      gap: pr ? Math.round(pr.left - r.right) : null,
+      sameLine: pr ? Math.abs((r.top + r.bottom) / 2 - (pr.top + pr.bottom) / 2) < 4 : null,
+      oneLine: r.height < 24,
+      beforeMenu: mr ? r.right <= mr.left : null,
+      inTile: document.querySelectorAll("[data-tile] [data-system-id], [data-panel] [data-system-id], section [data-system-id]").length,
     };
   });
 }
 
-async function stepScreen(page: Page, url: string, heading: string, prefix: string): Promise<void> {
+async function stepScreen(page: Page, url: string, prefix: string): Promise<void> {
   await page.goto(url);
-  await expect(page.locator("[data-system-id]").first()).toBeVisible({ timeout: 30_000 });
-  const c = await corner(page);
+  const id = page.locator("[data-page-bar] [data-version-slot] [data-system-id]");
+  await expect(id).toBeVisible({ timeout: 30_000 });
+  // The versions pill lands once the versions have loaded — then it stands right of the ID.
+  await expect(page.locator("[data-page-bar] [data-version-slot] > *")).toHaveCount(2, { timeout: 30_000 });
+  const c = await inBar(page);
   expect(c.count).toBe(1);
-  expect(c.heading).toBe(heading);
+  expect(c.inSlot && c.first).toBe(true);
   expect(c.text).toMatch(new RegExp(`^ID sistem ${prefix}\\d+$`));
+  expect(c.gap).toBeGreaterThanOrEqual(8);
   expect(c.gap).toBeLessThanOrEqual(16);
-  expect(c.sameLine && c.oneLine).toBe(true);
+  expect(c.sameLine && c.oneLine && c.beforeMenu).toBe(true);
+  expect(c.inTile).toBe(0);
   const code = c.text.replace("ID sistem ", "");
   expect(await codesOnScreen(page)).toEqual([code]);
   await expect(page.locator('[data-width-field="code"]')).toHaveCount(0);
+  // One click selects it for copying.
+  await id.locator(".select-all").click();
+  expect(await page.evaluate(() => window.getSelection()?.toString().trim())).toBe(code);
 }
 
-async function photographPanel(page: Page, name: string): Promise<void> {
+async function photographBar(page: Page, name: string): Promise<void> {
   for (const width of [1366, 1920]) {
     await page.setViewportSize({ width, height: 900 });
     await page.waitForTimeout(300);
-    await page.locator("section", { has: page.locator("[data-system-id]") }).first().screenshot({ path: `${SHOTS}/${name}-${width}.png` });
+    await page.locator("[data-page-bar]").screenshot({ path: `${SHOTS}/${name}-${width}.png` });
   }
   await page.setViewportSize({ width: 1366, height: 900 });
 }
@@ -96,7 +113,7 @@ async function listStep(page: Page, url: string, name: string): Promise<void> {
 }
 
 test.describe("TC-SYSID-01 — ID-ul de sistem într-un singur loc", () => {
-  test("colțul din dreapta-sus al primului panou, și nicăieri altundeva; listele fără cod", async ({ page }) => {
+  test("în bara paginii, la stânga versiunilor, și nicăieri altundeva; listele fără cod", async ({ page }) => {
     test.slow();
     await removeLeftovers(page.request, MARK);
     await page.setViewportSize({ width: 1366, height: 900 });
@@ -111,15 +128,15 @@ test.describe("TC-SYSID-01 — ID-ul de sistem într-un singur loc", () => {
       const dc = await createSaleContract(page.request, `${MARK} Act de test`);
       made.push({ kind: "document", id: dc });
 
-      // Steps 1–4 — one code on each screen, in the corner of its first panel.
-      await stepScreen(page, `/natural-persons/${np}`, "Identitate", "PPERS");
-      await photographPanel(page, "natural-person");
-      await stepScreen(page, `/judicial-persons/${jp}`, "Date de înregistrare", "JPERS"); // #37.89: the first panel is „Identitate"; #38.30: „Date de înregistrare"
-      await photographPanel(page, "judicial-person");
-      await stepScreen(page, `/properties/${pr}`, "Identificare cadastrală", "PROP");
-      await photographPanel(page, "property");
-      await stepScreen(page, `/documents/${dc}`, "Identificarea actului", "DOC");
-      await photographPanel(page, "document");
+      // Steps 1–4 — one code on each screen, in the page bar, left of the versions pill (41.22).
+      await stepScreen(page, `/natural-persons/${np}`, "PPERS");
+      await photographBar(page, "natural-person");
+      await stepScreen(page, `/judicial-persons/${jp}`, "JPERS");
+      await photographBar(page, "judicial-person");
+      await stepScreen(page, `/properties/${pr}`, "PROP");
+      await photographBar(page, "property");
+      await stepScreen(page, `/documents/${dc}`, "DOC");
+      await photographBar(page, "document");
 
       // Step 5 — the four lists: no „Cod", no code, this case's record among the rows.
       await listStep(page, "/natural-persons", "natural-persons");

@@ -1,14 +1,15 @@
 /**
- * A record's system ID in one place only.                       (Slice #37.57)
+ * A record's system ID in one place only.                       (Slice #37.57, 41.22)
  *
- * DOC01590, PPERS07056, JPERS…, PROP… are shown in exactly one place: the
- * top-right corner of the first panel of the record's own screen —
- * „Identitate" on a Natural and a Judicial Person, „Date cadastrale" on a
- * Property, „Date generale" on a Document (`<SystemIdCorner>`). Adrian: „The
- * System ID should be removed from every other spots including the lists of
- * main objects". The search boxes still MATCH a code typed into them; nothing
- * else shows one. The browser half — the corner on screen, no code on the four
- * lists — is TC-SYSID-01.
+ * DOC01590, PPERS07056, JPERS…, PROP… are shown in exactly one place: the page
+ * bar of the record's own screen, immediately left of the versions pill
+ * (`<SystemIdCorner>`, portalled by the form into the slot it portals the pill
+ * into). Adrian, #37.57: „The System ID should be removed from every other spots
+ * including the lists of main objects"; 41.22: „remove the system ID that shows
+ * on the top right corner of the first grey tile and place it on the top bar at
+ * the left of the versions navigation button". The search boxes still MATCH a
+ * code typed into them; nothing else shows one. The browser half — the code in
+ * the bar, none in a tile, no code on the four lists — is TC-SYSID-01.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -26,21 +27,40 @@ function files(dir: string): string[] {
   });
 }
 
-describe("the corner", () => {
-  it.each([
-    // #38.30: the heading is `<TileTitle title={t("tiles.…")} …>`, the corner its child, after the title.
-    ["src/app/natural-persons/_components/natural-person-form.tsx", /<TileTitle title=\{t\("tiles\.identity"\)\}[^>]*>[\s\S]{0,200}<SystemIdCorner code=\{personCode\} \/>/],
-    ["src/app/judicial-persons/_components/judicial-person-form.tsx", /<TileTitle title=\{t\("tiles\.identity"\)\}[^>]*>[\s\S]{0,200}<SystemIdCorner code=\{personCode\} \/>/],
-    ["src/app/properties/_components/property-form.tsx", /<TileTitle title=\{t\("tiles\.cadastral"\)\}[^>]*>[\s\S]{0,200}<SystemIdCorner code=\{propertyCode\} \/>/],
-    // #37.90: the heading is `{framed ? panelSubtitle(title) : title}`, the corner still after it.
-    ["src/app/documents/_components/document-form.tsx", /\btitle\}[\s\S]{0,200}<SystemIdCorner code=\{code\} \/>/],
-  ])("%s draws it at the end of its first panel's heading", (file, pattern) => {
-    expect(code(read(file))).toMatch(pattern);
+describe("the one place: the page bar, left of the versions pill (41.22)", () => {
+  // 41.22 inverted this in place. Until then the corner was a tile heading's child — `<TileTitle title={t("tiles.identity")} …>`
+  // then `<SystemIdCorner code={personCode} />` — and the test read: „%s draws it at the end of its first panel's heading".
+  const FORMS: [string, string, string][] = [
+    ["src/app/natural-persons/_components/natural-person-form.tsx", "personCode", "src/app/natural-persons/_components/person-detail-tiles.tsx"],
+    ["src/app/judicial-persons/_components/judicial-person-form.tsx", "personCode", "src/app/judicial-persons/_components/person-detail-tiles.tsx"],
+    ["src/app/properties/_components/property-form.tsx", "propertyCode", "src/app/properties/_components/property-detail-tiles.tsx"],
+    ["src/app/documents/_components/document-form.tsx", "documentCode", "src/app/documents/_components/document-detail-tiles.tsx"],
+  ];
+
+  it.each(FORMS)("%s portals it into the versions slot, before the pill", (file, prop) => {
+    const src = code(read(file));
+    // The portal into `versionNavSlot` holds the ID first, then the pill.
+    const portal = new RegExp(`createPortal\\(\\s*<>\\s*\\{[^}]*${prop} && <SystemIdCorner code=\\{${prop}\\} />\\}\\s*\\{versionNav && <VersionNavControls[\\s\\S]{0,800}?</>,\\s*versionNavSlot,`);
+    expect(src).toMatch(portal);
+    // Exactly one SystemIdCorner in the form — the one in the portal.
+    expect(src.match(/<SystemIdCorner\b/g)).toHaveLength(1);
   });
 
-  it("is selectable, says what it is, and never wraps the heading", () => {
+  it.each(FORMS)("%s: no tile heading holds it any more", (file) => {
+    const src = code(read(file));
+    expect(src).not.toMatch(/<TileTitle\b[^>]*>[\s\S]{0,200}<SystemIdCorner\b/);
+    expect(src).not.toMatch(/\bcode=\{[^}]*documentCode/); // the document's „Date generale" Section no longer takes one
+  });
+
+  it.each(FORMS)("%s: its screen's versions slot keeps the bar's gap between the ID and the pill", (_file, _prop, tiles) => {
+    expect(code(read(tiles))).toMatch(/<PageBarControls>\s*<div ref=\{setNavSlot\} data-version-slot="" className="flex items-center gap-3" \/>\s*<TilesMenuButton/);
+  });
+
+  it("is selectable, says what it is, and never wraps", () => {
     const corner = code(read("src/components/record/system-id-corner.tsx"));
-    expect(corner).toMatch(/ml-auto shrink-0 whitespace-nowrap font-mono/);
+    // 41.22: no `ml-auto` — that pushed it to a heading's right end; in the bar it stands in the slot's flow.
+    expect(corner).toMatch(/className="shrink-0 whitespace-nowrap font-mono text-xs/);
+    expect(corner).not.toMatch(/ml-auto/);
     expect(corner).toMatch(/<span className="sr-only">\{t\("label"\)\} <\/span>/);
     expect(corner).toMatch(/<span className="select-all">\{code\}<\/span>/);
     expect(JSON.parse(read("messages/ro-RO.json")).shared.systemId.label).toBe("ID sistem");

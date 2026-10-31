@@ -33,6 +33,10 @@ export const CONVERTED: readonly string[] = [
   "src/app/admin/import/_components/id-card-person-dialog.tsx", // 40.86, the four kinds
   "src/lib/import/identity-read.ts", // 40.86
   "src/app/documents/_components/document-type-change.tsx", // 40.92, „Schimbă tipul…"
+  "src/components/record/system-id-corner.tsx", // 41.22, the system ID in the page bar
+  "src/app/judicial-persons/_components/person-detail-tiles.tsx", // 41.22, the versions slot
+  "src/app/properties/_components/property-detail-tiles.tsx", // 41.22
+  "src/app/documents/_components/document-detail-tiles.tsx", // 41.22
 ];
 
 const PALETTE =

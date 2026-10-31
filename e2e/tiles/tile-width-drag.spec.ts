@@ -11,7 +11,8 @@
  *
  * 41.20 (step 9): on an invented natural person, the Identity tile — the refusal names what is on the screen, never
  * the screen reader's „ID sistem". 41.21: a refusal lists every line that would not fit at the asked width, each with
- * its px and the px the tile has (`readList`); step 9 drags Identitate from 3 units to 2.
+ * its px and the px the tile has (`readList`); step 9 drags Identitate from 3 units to 2. 41.22: the system ID left the
+ * heading for the page bar, so the heading is „Identitate" alone, and the refusal names it only if that measures more.
  */
 import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createNaturalPerson, createProperty, removeLeftovers, removeRecord } from "../helpers/records";
@@ -213,7 +214,9 @@ test.describe("TC-TILES-26 — lățimea unei plăci", () => {
       await expect(edge).toBeAttached({ timeout: 30_000 });
 
       // Step 9 — the handle is named by what is on the screen too; the heading's parts, measured as the bubble takes them.
-      await expect(edge).toHaveAttribute("aria-label", /^Lățimea panoului Identitate · \S/);
+      // 41.22: the heading is only its title — the ID is in the page bar (it was „Identitate · <cod>”).
+      await expect(edge).toHaveAttribute("aria-label", "Lățimea panoului Identitate");
+      await expect(page.locator('[data-tile="identity"] [data-system-id]')).toHaveCount(0);
       await expect(edge).not.toHaveAttribute("aria-label", /ID sistem/);
       await edge.focus();
       const now = Number(await edge.getAttribute("aria-valuenow"));
@@ -257,7 +260,11 @@ test.describe("TC-TILES-26 — lățimea unei plăci", () => {
       const said = (await bubble(page).textContent()) ?? "";
       console.log(`TC-TILES-26 step 9 — the bubble:\n${said}`);
       expect(listed.some((l) => /Prenume|Nume/.test(l.name)), said).toBe(true);
-      expect(listed.some((l) => l.name.startsWith("Identitate · ")), said).toBe(heading.parts.reduce((a, p) => a + Math.round(p.px), 0) + heading.gap + Math.round(heading.frame) > unitsPx(2));
+      // The heading is named only if it measures more than 2 units — with one part, no gap between parts counts.
+      const headingPx = heading.parts.reduce((a, p) => a + Math.round(p.px), 0) + (heading.parts.length > 1 ? heading.gap : 0) + Math.round(heading.frame);
+      console.log(`TC-TILES-26 step 9 — the heading needs ${headingPx} px of ${unitsPx(2)}`);
+      expect(heading.parts.map((p) => p.text)).toEqual(["Identitate"]);
+      expect(listed.some((l) => l.name.startsWith("Identitate")), said).toBe(headingPx > unitsPx(2));
       expect(said).not.toContain("ID sistem");
       await expect(live(page)).not.toContainText("ID sistem");
       await page.mouse.up();

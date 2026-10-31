@@ -104,7 +104,7 @@ describe("the four record screens", () => {
     ["src", "app", "properties", "_components", "property-detail-tiles.tsx"],
     ["src", "app", "documents", "_components", "document-detail-tiles.tsx"],
   ])("%s/%s/%s/%s/%s: the versions pill and „Panouri” through PageBarControls", (...f) => {
-    expect(read(...f)).toMatch(/<PageBarControls>\s*<div ref=\{setNavSlot\} data-version-slot="" className="flex items-center" \/>\s*<TilesMenuButton menu=\{tilesMenu\}[^\n]*\n\s*<\/PageBarControls>/);
+    expect(read(...f)).toMatch(/<PageBarControls>\s*<div ref=\{setNavSlot\} data-version-slot="" className="flex items-center gap-3" \/>\s*<TilesMenuButton menu=\{tilesMenu\}[^\n]*\n\s*<\/PageBarControls>/);
   });
 
   it("„Panouri”'s panel opens under the bar, right-aligned to its button, fixed while open — only when the button is in the bar", () => {

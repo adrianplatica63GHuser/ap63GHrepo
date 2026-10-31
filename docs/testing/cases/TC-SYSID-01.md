@@ -1,4 +1,4 @@
-# TC-SYSID-01 — ID-ul de sistem într-un singur loc: colțul din dreapta-sus al primului panou
+# TC-SYSID-01 — ID-ul de sistem într-un singur loc: în bara paginii, la stânga versiunilor
 
 | | |
 |---|---|
@@ -11,10 +11,11 @@
 ## What this proves
 
 Since Slice #37.57 a record's system ID (PPERS…, JPERS…, PROP…, DOC…) is shown in exactly one
-place: the top-right corner of its screen's first panel — „Identitate" on a Natural Person,
-„Identitate" on a Judicial Person (#37.89; „Persoană juridică" before), „Date cadastrale" on a Property, „Date generale" on a
-Document — small, monospaced, on the heading's line, read aloud as „ID sistem …". It is nowhere
-else on the screen, and the four lists show no code at all.
+place, and since Slice 41.22 that place is the page bar: immediately left of the versions pill,
+with the bar's gap, „Panouri" after both — small, monospaced, muted, read aloud as „ID sistem …",
+and one click selects it for copying. (From #37.57 to 41.22 it stood at the top-right corner of
+the screen's first panel.) It is in no tile, nowhere else on the screen, and the four lists show
+no code at all.
 
 ## Before you start
 
@@ -31,15 +32,16 @@ Nothing.
 
 „A code" is a word of the shape PPERS/JPERS/PROP/DOC followed by digits. „On the screen" is the
 page's text, the sidebar included, less the „Vezi și" hint, whose example (`PPERS00001`) shows how
-to type a code into its box. „In the corner": the code's box is on its panel heading's line, at
-its right end (13 px from the panel's edge, its padding), and the heading stays on one line.
+to type a code into its box. „In the bar": the code's box is the first thing in the page bar's
+versions slot, the versions pill right after it (8–16 px between them) on the same line, „Panouri"
+after both; no tile holds a code.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens the natural person | One code on the screen, in the corner of „Identitate"; its accessible text „ID sistem PPERS…" |
-| 2 | Opens the company | One code, in the corner of „Date de înregistrare"; no „ID" field among the panel's boxes |
-| 3 | Opens the property | One code, in the corner of „Identificare cadastrală"; no „Cod" field among the panel's boxes |
-| 4 | Opens the document | One code, in the corner of „Identificarea actului" |
+| 1 | Opens the natural person; clicks the code | One code on the screen, in the bar, left of the versions pill; its accessible text „ID sistem PPERS…"; the click selects the whole code |
+| 2 | Opens the company; clicks the code | One code, in the bar; no „ID" field among „Date de înregistrare"'s boxes; the click selects it |
+| 3 | Opens the property; clicks the code | One code, in the bar; no „Cod" field among „Identificare cadastrală"'s boxes; the click selects it |
+| 4 | Opens the document; clicks the code | One code, in the bar; the click selects it |
 | 5 | Opens Persoane Fizice, Persoane Juridice, Proprietăți and Acte | Each list's table: no „Cod" column, no code in any row, the record of this case among its rows; no code in the sidebar's „Recente" |
 
 ## At the end — leaving things as they were found
@@ -76,3 +78,8 @@ the file above unchanged; each screen loaded in turn and read with the same scri
 **2026-10-05 — Slice #37.92.** The sidebar's „Proprietăți — Listă" and „Proprietăți — Hartă" are one item,
 „Proprietăți"; the whole map opens from the list's „Hartă completă" (TC-PROP-10). The steps above name
 the sidebar item by its new name; nothing else in them changed.
+
+**2026-10-31 — Slice 41.22.** Adrian: „remove the system ID that shows on the top right corner of the first grey
+tile and place it on the top bar at the left of the versions navigation button". Steps 1–4 now find the code in the
+page bar, left of the versions pill, none in a tile, and click it to select it; the spec photographs the bar instead
+of the first panel. The lists (step 5) are unchanged. Written from the slice's own change; not driven by hand first.
