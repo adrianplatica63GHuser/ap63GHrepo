@@ -208,6 +208,27 @@ test.describe("TC-TILES-26 — lățimea unei plăci", () => {
         };
       });
       console.log(`TC-TILES-26 step 9 — Identity: ${now} units, narrowest ${min}; heading ${JSON.stringify(heading)}`);
+      // What the refusal said before 41.20, replayed: the tile set to 2 units off screen, its scrollWidth and border (the
+      // old „needs N px"), and what reached furthest right — then put back, before anything paints.
+      const before = await page.evaluate((px) => {
+        const box = document.querySelector<HTMLElement>('[data-tile="identity"]')!;
+        const w = box.style.getPropertyValue("width");
+        box.style.setProperty("width", `${px}px`);
+        try {
+          const left = box.getBoundingClientRect().left;
+          let far = { right: 0, what: "" };
+          for (const d of box.querySelectorAll<HTMLElement>("*")) {
+            const r = d.getBoundingClientRect();
+            if (d.children.length === 0 && r.width > 0 && r.right - left > far.right)
+              far = { right: r.right - left, what: `${d.tagName.toLowerCase()} ${(d.closest("label")?.querySelector("span")?.textContent ?? d.textContent ?? "").trim().slice(0, 30)}` };
+          }
+          return { said: box.scrollWidth + (box.offsetWidth - box.clientWidth), scrollWidth: box.scrollWidth, far };
+        } finally {
+          if (w) box.style.setProperty("width", w);
+          else box.style.removeProperty("width");
+        }
+      }, unitsPx(2));
+      console.log(`TC-TILES-26 step 9 — before 41.20, at 2 units: ${JSON.stringify(before)}`);
       expect(min).toBeGreaterThanOrEqual(2);
 
       await holdEdge(page, "identity", (min - 1 - now) * (UNIT + GAP));
