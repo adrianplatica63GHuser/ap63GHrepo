@@ -1064,6 +1064,9 @@ export const SKILLS_UNCOVERED_CASES: Readonly<Record<string, string>> = {
   "TC-TILES-26":
     "Slice 41.17: a tile's width dragged by its right edge. Its skill comes with the same Help and learning update as " +
     "TC-SET-06's (due 2026-11-05), which covers 41.16–41.19 together.",
+  "TC-TILES-27":
+    "Slice 41.19: one width on every form for Legături, the address tiles, Clasificare and Etichete și grupuri. Its skill " +
+    "comes with the same Help and learning update (due 2026-11-05).",
 };
 
 export function skillByKey(key: string): Skill | undefined {

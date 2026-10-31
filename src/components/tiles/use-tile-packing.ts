@@ -111,6 +111,7 @@
 import { useLayoutEffect, useRef, type RefObject } from "react";
 import { TILE_FRAME_REM, TILE_INNER_VAR, UNIT_GAP_REM, declaredWidthPx, exactUnitsCss, rem } from "@/lib/ui/field-widths";
 import { judgeWidth, laptopUnits, type WidthVerdict } from "@/lib/ui/tile-width-rules";
+import { formOfEntity, sharedWidthOf } from "@/lib/ui/tiles";
 import { liveUnitPx } from "@/lib/ui/width-unit";
 import { columnsIn, fitsBeside, grow, packedHeight, unitsOf, type PackBox, type Placed, ONE_COLUMN_BELOW_UNITS, oneColumn } from "@/lib/ui/tile-packing";
 import {
@@ -133,6 +134,13 @@ import {
   storedPlaceOf,
   tilePositionsKey,
   MAX_UNITS,
+  SHARED_FLOORS_KEY,
+  SHARED_WIDTHS_KEY,
+  parseSharedFloors,
+  parseSharedWidths,
+  sharedFloor,
+  withSharedFloor,
+  withSharedWidth,
   unitsAtLeast,
   widthLimits,
   withStoredWidth,
@@ -276,6 +284,40 @@ function readPlaces(key: string | null): StoredPlaces {
   }
 }
 
+/** 41.19: the widths the shared tiles have on every form, and the narrowest each form measured — this browser's. */
+function readShared(): Record<string, number> {
+  try {
+    return parseSharedWidths(localStorage.getItem(SHARED_WIDTHS_KEY));
+  } catch {
+    return {};
+  }
+}
+
+function writeShared(widths: Readonly<Record<string, number>>): void {
+  try {
+    if (Object.keys(widths).length === 0) localStorage.removeItem(SHARED_WIDTHS_KEY);
+    else localStorage.setItem(SHARED_WIDTHS_KEY, JSON.stringify(widths));
+  } catch {
+    // A private window or a full quota: the width holds for this visit only.
+  }
+}
+
+function readFloors(): Record<string, Record<string, number>> {
+  try {
+    return parseSharedFloors(localStorage.getItem(SHARED_FLOORS_KEY));
+  } catch {
+    return {};
+  }
+}
+
+function writeFloors(floors: Readonly<Record<string, Readonly<Record<string, number>>>>): void {
+  try {
+    localStorage.setItem(SHARED_FLOORS_KEY, JSON.stringify(floors));
+  } catch {
+    // As above.
+  }
+}
+
 function writePlaces(key: string | null, places: StoredPlaces): void {
   if (!key) return;
   try {
@@ -346,6 +388,11 @@ interface Measured {
   min: number;
   max: number;
   content: number;
+  /** 41.19: the form whose content sets a shared tile's narrowest, when it is not this one. */
+  elsewhere?: string;
+  /** 41.19: the width this tile shares across forms, and its name for the bubble's line. */
+  shared?: string;
+  title: string;
   widest?: { fields: string; px: number };
   fields: boolean;
   table?: number;
@@ -461,12 +508,25 @@ export function useTilePacking(
     const ownUnits = new Map<string, number>();
     /** A box whose width can be dragged: a tile the arrangement stores — not a banner, a fixed box or a preview. */
     const canResize = (b: FoundBox) => !b.full && !b.rowEnd && isStorable(b.id);
+    /** 41.19: the width a tile shares with every form that draws it (tiles.ts) — only where places are stored. */
+    const sharedOf = (b: FoundBox) => (key ? sharedWidthOf(tileOf(b.id)) : undefined);
+    /** 41.19: the shared widths, read at each layout — another form's change is taken when this one is shown again. */
+    let shared: Record<string, number> = {};
+    /** 41.19 (Ask first 4): on this form, the narrowest a shared tile drawn narrower than its own width can be. */
+    const floorHere = new Map<string, number>();
+    /** The width set for a box: a shared tile's on every form, any other tile's in its kind's own entry. */
+    const setWidthOf = (b: FoundBox) => {
+      const k = sharedOf(b);
+      return k ? shared[k] : stored[b.id]?.units;
+    };
     /** Too narrow for two columns (40.69): drawn as one, and every tile at its own width. */
     const narrow = () => ownColumns < ONE_COLUMN_BELOW_UNITS;
     /** A box's width in units: its stored one, else its own — measured afresh unless a stored width is forcing it. */
     const widthOf = (b: FoundBox, unit: number, gap: number) => {
       const own = forced.has(b.id) ? (ownUnits.get(b.id) ?? 1) : unitsOf(ownWidth(b.el), unit, gap);
-      const set = canResize(b) && !narrow() ? stored[b.id]?.units : undefined;
+      let set = canResize(b) && !narrow() ? setWidthOf(b) : undefined;
+      // 41.19 (Ask first 4): a width set on another form never squeezes this form's content.
+      if (set !== undefined && set < own && floorHere.has(b.id)) set = Math.max(set, floorHere.get(b.id)!);
       return set ?? own;
     };
     /** A box's width in units, as the flow takes it: a right-hand tile may reach past the flow's units (40.32). */
@@ -497,7 +557,7 @@ export function useTilePacking(
           // 41.17: a stored width — at most what the row holds on this window, for this visit — is forced, with the inner
           // width a TILE box, Note and a list tile's table follow; every other tile keeps its own.
           const own = ownUnits.get(p.id);
-          if (!single && canResize(box) && stored[p.id]?.units !== undefined && own !== undefined && p.units !== own) {
+          if (!single && canResize(box) && setWidthOf(box) !== undefined && own !== undefined && p.units !== own) {
             const w = exactUnitsCss(p.units);
             styles.set(box.el, "width", w);
             styles.set(box.el, TILE_INNER_VAR, `calc(${w} - ${rem(TILE_FRAME_REM)})`);
@@ -550,6 +610,7 @@ export function useTilePacking(
       columns = ownColumns;
       flowColumns = flowUnits ? Math.min(ownColumns, Math.max(1, flowUnits)) : ownColumns;
       stored = readPlaces(key);
+      shared = readShared();
       const h = heights();
       // 40.32: the right-hand tiles, in `right`'s order; those with nothing stored (this visit or before) start at the
       // row's right edge, one under another — or, when they and the widest left tile do not fit side by side
@@ -584,6 +645,12 @@ export function useTilePacking(
         });
       }
       for (const b of boxes) ownUnits.set(b.id, unitsOf(ownWidth(b.el), unit, gap));
+      floorHere.clear();
+      for (const b of boxes) {
+        const k = sharedOf(b);
+        const own = ownUnits.get(b.id) ?? 1;
+        if (k && canResize(b) && shared[k] !== undefined && shared[k] < own) floorHere.set(b.id, narrowest(b, own, unit, gap).units);
+      }
       const items: PackBox[] = boxes.map((b) => ({
         id: b.id,
         units: b.rowEnd || b.full ? flowColumns : unitsFor(b, unit, gap),
@@ -930,6 +997,9 @@ export function useTilePacking(
     const onReset = (e: Event) => {
       if ((e as CustomEvent<string>).detail !== entity) return;
       visit = {};
+      // 41.19 (Ask first 7): „Implicit” on any form forgets the shared widths too — the one step back.
+      shared = {};
+      writeShared(shared);
       fresh();
     };
     window.addEventListener(TILE_POSITIONS_RESET, onReset);
@@ -1070,15 +1140,33 @@ export function useTilePacking(
       const { unit, gap } = metrics();
       const still = new Set(boxes.filter((x) => x.full).map((x) => x.id));
       const floor = narrowest(b, p.units, unit, gap);
-      const limits = widthLimits(placed, b.id, floor.units, columns, gap, still);
+      // 41.19 (Ask first 4): a shared tile's narrowest is its widest content on any form — this form's measure is kept
+      // for the others, and theirs read here; the refusal names the form that sets it.
+      const k = sharedOf(b);
+      let content = floor.units;
+      let elsewhere: string | undefined;
+      if (k && entity) {
+        const form = formOfEntity(entity);
+        const floors = withSharedFloor(readFloors(), k, form, floor.units);
+        writeFloors(floors);
+        const across = sharedFloor(floors, k, form, floor.units);
+        if (across.units > content) {
+          content = across.units;
+          elsewhere = across.form;
+        }
+      }
+      const limits = widthLimits(placed, b.id, content, columns, gap, still);
       const beside = placed
         .filter((q) => q.id !== p.id && !q.rowEnd && q.col >= p.col + p.units && q.top < p.top + p.height && p.top < q.top + q.height)
         .map((q) => {
           const qb = boxOf(q.id);
           return { col: q.col, title: qb ? titleOf(qb) : tileOf(q.id) };
         });
-      return { ...limits, content: floor.units, widest: floor.widest, fields: floor.fields, table: tableUnitsOf(b, unit, gap), beside, col: p.col, laptop: laptopUnits(unit, gap) };
+      return { ...limits, content, elsewhere, shared: k, title: titleOf(b), widest: floor.widest, fields: floor.fields, table: tableUnitsOf(b, unit, gap), beside, col: p.col, laptop: laptopUnits(unit, gap) };
     };
+
+    /** 41.18: what the bubble says; 41.19 (Ask first 5): a shared tile adds that its width applies on every form. */
+    const linesOf = (m: Measured, v: WidthVerdict): string[] => [...words.current.verdict(v), ...(m.shared ? [words.current.shared(m.title)] : [])];
 
     /** 41.18: the verdict on `asked` units for what was measured. */
     const verdictOf = (m: Measured, asked: number): WidthVerdict =>
@@ -1087,6 +1175,7 @@ export function useTilePacking(
         min: m.min,
         max: m.max,
         widest: m.widest,
+        elsewhere: m.elsewhere,
         contentUnits: m.content,
         hasFields: m.fields,
         tableUnits: m.table,
@@ -1206,13 +1295,29 @@ export function useTilePacking(
       placed = r.placed;
       slide(r.slid);
       store(id, r.slid);
-      stored = withStoredWidth(stored, id, units === own ? undefined : units);
+      const k = sharedOf(b);
+      if (k) {
+        // 41.19 (Ask first 2): one width on every form; its kind's entry keeps the place only.
+        shared = withSharedWidth(shared, k, units === own ? undefined : units);
+        writeShared(shared);
+        stored = withStoredWidth(stored, id, undefined);
+      } else stored = withStoredWidth(stored, id, units === own ? undefined : units);
       persist();
       layout();
     };
 
     /** Home, or a double-click: the tile's own width again — its stored width forgotten. */
     const toOwn = (id: string) => {
+      const sb = boxOf(id);
+      const k = sb ? sharedOf(sb) : undefined;
+      if (k) {
+        // 41.19 (Ask first 7): a double-click — or Home — on a shared tile's edge gives that tile its own width everywhere.
+        if (shared[k] === undefined) return;
+        shared = withSharedWidth(shared, k, undefined);
+        writeShared(shared);
+        layout();
+        return;
+      }
       if (stored[id]?.units === undefined) return;
       stored = withStoredWidth(stored, id, undefined);
       persist();
@@ -1259,7 +1364,7 @@ export function useTilePacking(
       r.handle.dataset.verdict = verdict.kind;
       paint(r.handle, verdict.kind);
       const p = placed.find((x) => x.id === r.box.id);
-      if (p) showNote(words.current.verdict(verdict), verdict.kind, ...besideEdge(p, r.px, e.clientY - container.getBoundingClientRect().top - 12));
+      if (p) showNote(linesOf(r.measured, verdict), verdict.kind, ...besideEdge(p, r.px, e.clientY - container.getBoundingClientRect().top - 12));
     };
     const onEdgeUp = (e: PointerEvent) => {
       const r = endResize();
@@ -1319,7 +1424,7 @@ export function useTilePacking(
       const verdict = verdictOf(limits, asked);
       if (verdict.kind !== "refused") commit(id, asked);
       const at = placed.find((x) => x.id === id) ?? p;
-      showNote(words.current.verdict(verdict), verdict.kind, ...besideEdge(at, b.el.offsetWidth, at.top + 8));
+      showNote(linesOf(limits, verdict), verdict.kind, ...besideEdge(at, b.el.offsetWidth, at.top + 8));
       noteTimer = window.setTimeout(() => hideNote(false), 4000);
     };
 

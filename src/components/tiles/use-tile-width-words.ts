@@ -11,6 +11,9 @@ import { useTranslations } from "next-intl";
 import type { TileWidthWords } from "./tile-width-words";
 import type { WidthAdvice, WidthRefusal, WidthVerdict } from "@/lib/ui/tile-width-rules";
 
+/** 41.19: the forms a shared tile's floor can be measured on (`formOfEntity`). */
+const FORMS = ["natural-person", "judicial-person", "property", "document"] as const;
+
 export function useTileWidthWords(): TileWidthWords {
   const t = useTranslations("shared.tileWidth");
   return useMemo(() => {
@@ -22,6 +25,8 @@ export function useTileWidthWords(): TileWidthWords {
           return t("refused.window", { units: r.units });
         case "one":
           return t("refused.one");
+        case "form":
+          return t("refused.form", { units: r.units, form: (FORMS as readonly string[]).includes(r.form) ? t(`forms.${r.form as (typeof FORMS)[number]}`) : r.form });
       }
     };
     const advice = (a: WidthAdvice): string => {
@@ -40,6 +45,7 @@ export function useTileWidthWords(): TileWidthWords {
       handle: (title: string) => t("handle", { title }),
       units: (count: number) => t("units", { count }),
       verdict: (v: WidthVerdict) => (v.kind === "ok" ? [] : v.kind === "refused" ? [refusal(v.refusal)] : v.advice.map(advice)),
+      shared: (title: string) => t("shared", { title }),
     };
   }, [t]);
 }

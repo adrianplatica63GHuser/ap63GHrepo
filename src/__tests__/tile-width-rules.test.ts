@@ -71,6 +71,7 @@ describe("the words (Ask first 3, 5)", () => {
       "refused.content": ["units", "fields", "px"],
       "refused.window": ["units"],
       "refused.one": [],
+      "refused.form": ["units", "form"], // 41.19
       "advised.room": ["spare"],
       "advised.alone": ["title"],
       "advised.laptop": ["units"],
@@ -84,7 +85,7 @@ describe("the words (Ask first 3, 5)", () => {
         for (const n of names) expect([lang, key, n, text.includes(`{${n}`)]).toEqual([lang, key, n, true]);
       }
     }
-    expect(Object.keys(ro.refused).sort()).toEqual(["content", "one", "window"]);
+    expect(Object.keys(ro.refused).sort()).toEqual(["content", "form", "one", "window"]); // 41.19: „form”
     expect(Object.keys(ro.advised).sort()).toEqual(["alone", "laptop", "room", "table"]);
   });
 

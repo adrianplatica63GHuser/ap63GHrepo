@@ -1177,13 +1177,21 @@
       "refused": {
         "content": "Panoul nu poate fi mai îngust de {units, plural, one {# unitate} few {# unități} other {# de unități}}: rândul «{fields}» are nevoie de {px} px.",
         "window": "Pe această fereastră încap cel mult {units, plural, one {# unitate} few {# unități} other {# de unități}}.",
-        "one": "Un panou are cel puțin o unitate."
+        "one": "Un panou are cel puțin o unitate.",
+        "form": "Panoul nu poate fi mai îngust de {units, plural, one {# unitate} few {# unități} other {# de unități}}: pe formularul «{form}» conținutul lui are nevoie de atât."
       },
       "advised": {
         "room": "Cu {spare, plural, one {# unitate} few {# unități} other {# de unități}} mai lat decât îi trebuie: rămâne loc gol în dreapta câmpurilor.",
         "alone": "Atât de lat, „{title}” nu mai încape lângă el și trece dedesubt.",
         "laptop": "Mai lat decât {units, plural, one {unitatea} few {cele # unități} other {cele # de unități}} care încap pe o fereastră de 1366 px: acolo va fi desenat cât încape pe rând.",
         "table": "Mai îngust decât coloanele tabelului: tabelul se derulează în lateral."
+      },
+      "shared": "Lățimea se aplică panoului {title} pe toate formularele.",
+      "forms": {
+        "natural-person": "Persoană fizică",
+        "judicial-person": "Persoană juridică",
+        "property": "Proprietate",
+        "document": "Act"
       }
     }
   },

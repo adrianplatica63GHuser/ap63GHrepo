@@ -557,6 +557,77 @@ export function resizeTile(
   return makeRoom(next, id, { col: me.col, top: me.top }, columns, gap, still) ?? { placed: withRowEnds(next, gap), slid: [] };
 }
 
+// ---- one width on every form (Slice 41.19) -------------------------------------------------------------------------
+
+/**
+ * Ask first 2: the widths the tiles in `SHARED_WIDTH_TILES` (tiles.ts) share, once per browser — `{ [shared]: units }`,
+ * written by whichever form changes one and read by every form. Each kind's own entry keeps these tiles' places, and
+ * no longer their widths.
+ */
+export const SHARED_WIDTHS_KEY = "ga40-tile-widths-shared-v1";
+
+/**
+ * Ask first 4: the narrowest each form measured a shared tile at — `{ [shared]: { [form]: units } }` — so that a width
+ * set on one form fits every form, and the refusal names the form whose content sets it.
+ */
+export const SHARED_FLOORS_KEY = "ga40-tile-width-floors-v1";
+
+const wholeUnits = (v: unknown): v is number => Number.isInteger(v) && (v as number) >= 1 && (v as number) <= MAX_UNITS;
+
+export function parseSharedWidths(raw: string | null | undefined): Record<string, number> {
+  try {
+    const data: unknown = raw ? JSON.parse(raw) : null;
+    if (!data || typeof data !== "object" || Array.isArray(data)) return {};
+    return Object.fromEntries(Object.entries(data as Record<string, unknown>).filter(([, v]) => wholeUnits(v))) as Record<string, number>;
+  } catch {
+    return {};
+  }
+}
+
+export function withSharedWidth(widths: Readonly<Record<string, number>>, shared: string, units: number | undefined): Record<string, number> {
+  const out = { ...widths };
+  if (units === undefined) delete out[shared];
+  else out[shared] = units;
+  return out;
+}
+
+export function parseSharedFloors(raw: string | null | undefined): Record<string, Record<string, number>> {
+  try {
+    const data: unknown = raw ? JSON.parse(raw) : null;
+    if (!data || typeof data !== "object" || Array.isArray(data)) return {};
+    const out: Record<string, Record<string, number>> = {};
+    for (const [shared, forms] of Object.entries(data as Record<string, unknown>)) {
+      if (!forms || typeof forms !== "object" || Array.isArray(forms)) continue;
+      const kept = Object.entries(forms as Record<string, unknown>).filter(([, v]) => wholeUnits(v));
+      if (kept.length > 0) out[shared] = Object.fromEntries(kept) as Record<string, number>;
+    }
+    return out;
+  } catch {
+    return {};
+  }
+}
+
+export function withSharedFloor(
+  floors: Readonly<Record<string, Readonly<Record<string, number>>>>,
+  shared: string,
+  form: string,
+  units: number,
+): Record<string, Record<string, number>> {
+  return { ...floors, [shared]: { ...(floors[shared] ?? {}), [form]: units } };
+}
+
+/** The narrowest a shared tile can be on every form: the widest floor measured, `here` standing for `form`'s own. */
+export function sharedFloor(
+  floors: Readonly<Record<string, Readonly<Record<string, number>>>>,
+  shared: string,
+  form: string,
+  here: number,
+): { units: number; form: string } {
+  let best = { units: here, form };
+  for (const [f, units] of Object.entries(floors[shared] ?? {})) if (f !== form && units > best.units) best = { units, form: f };
+  return best;
+}
+
 /** `stored` with tile `id`'s width set to `units` — or forgotten, `undefined`, when it is the screen's own again. */
 export function withStoredWidth(stored: StoredPlaces, id: string, units: number | undefined): Record<string, StoredPlace> {
   const out: Record<string, StoredPlace> = { ...stored };

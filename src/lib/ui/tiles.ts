@@ -116,6 +116,36 @@ export function rightColumnIndex<K extends string>(
 }
 
 /** Where a screen's choice is remembered — per browser, per entity kind. */
+/**
+ * Slice 41.19 — THE TILES THAT SHARE ONE WIDTH ON EVERY FORM. Adrian, 2026-10-31: „For the tiles used in multiple places
+ * (like Links, Addresses and Classification) one change to the size of any of these tiles done on any form will
+ * propagate to every other form where these tiles are being used". His three, and — since he wrote „like" — every tile
+ * one component draws on more than one kind of record (Ask first 1): a tile's name → the width it shares.
+ *
+ * - `related` — „Legături” (related-tile.tsx), on the four record screens;
+ * - `addresses` / `address` — every address tile (address-block.tsx): a natural person's two, a firm's, a property's —
+ *   one width for all of them, a person's two included (Ask first 3);
+ * - `classification` — „Clasificare” (entity-metadata-tab.tsx), on the four;
+ * - `connections` — „Etichete și grupuri” (entity-metadata-tab.tsx), the fourth, on the four.
+ */
+export const SHARED_WIDTH_TILES: Readonly<Record<string, string>> = {
+  related: "related",
+  addresses: "address",
+  address: "address",
+  classification: "classification",
+  connections: "connections",
+};
+
+/** The width tile `tile` shares across forms, or none — a tile whose width is its own kind of record's. */
+export function sharedWidthOf(tile: string): string | undefined {
+  return Object.prototype.hasOwnProperty.call(SHARED_WIDTH_TILES, tile) ? SHARED_WIDTH_TILES[tile] : undefined;
+}
+
+/** The form a tile arrangement belongs to — every document type one form: „Act”. */
+export function formOfEntity(entity: string): string {
+  return entity.startsWith("document-") ? "document" : entity;
+}
+
 export function tileStorageKey(entity: string): string {
   return `ga40-tiles-${entity}-v1`;
 }

@@ -19,7 +19,9 @@ export type WidthRefusal =
   /** (b) Wider than this window's row holds — or than reaches a tile that holds still beside it. */
   | { reason: "window"; units: number }
   /** (c) Under one unit. */
-  | { reason: "one" };
+  | { reason: "one" }
+  /** 41.19: a shared tile narrower than its content on another form — that form named. */
+  | { reason: "form"; units: number; form: string };
 
 /** Possible but a bad idea (Ask first 2): the edge turns amber, the width is taken, and the cost is said. */
 export type WidthAdvice =
@@ -45,6 +47,8 @@ export interface WidthCase {
   max: number;
   /** What sets `min` when it is the content: the widest row's fields and the px the tile needs to hold it. */
   widest?: { fields: string; px: number };
+  /** 41.19: when `min` is set by a shared tile's content on another form, that form (`formOfEntity`). */
+  elsewhere?: string;
   /** The units its content needs — `min` before its own width is counted. */
   contentUnits: number;
   /** It holds fixed boxes (fields); a tile of only text and lists has no „room on the right of its fields". */
@@ -70,6 +74,7 @@ export function laptopUnits(unitPx: number, gapPx: number): number {
 export function judgeWidth(c: WidthCase): WidthVerdict {
   if (c.asked < 1) return { kind: "refused", refusal: { reason: "one" } };
   if (c.asked < c.min) {
+    if (c.elsewhere) return { kind: "refused", refusal: { reason: "form", units: c.min, form: c.elsewhere } };
     return c.widest
       ? { kind: "refused", refusal: { reason: "content", units: c.min, fields: c.widest.fields, px: Math.round(c.widest.px) } }
       : { kind: "refused", refusal: { reason: "one" } };

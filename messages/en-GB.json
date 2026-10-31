@@ -1177,13 +1177,21 @@
       "refused": {
         "content": "The tile cannot be narrower than {units, plural, one {# unit} other {# units}}: the row «{fields}» needs {px} px.",
         "window": "This window holds at most {units, plural, one {# unit} other {# units}}.",
-        "one": "A tile is at least one unit wide."
+        "one": "A tile is at least one unit wide.",
+        "form": "The tile cannot be narrower than {units, plural, one {# unit} other {# units}}: on the «{form}» form its content needs that much."
       },
       "advised": {
         "room": "{spare, plural, one {# unit} other {# units}} wider than it needs: empty room on the right of its fields.",
         "alone": "This wide, „{title}” no longer fits beside it and goes under it.",
         "laptop": "Wider than the {units, plural, one {# unit} other {# units}} a 1366-px window holds: there it is drawn as wide as the row holds.",
         "table": "Narrower than the table's columns: the table scrolls sideways."
+      },
+      "shared": "The width applies to the tile {title} on every form.",
+      "forms": {
+        "natural-person": "Natural person",
+        "judicial-person": "Legal entity",
+        "property": "Property",
+        "document": "Document"
       }
     }
   },

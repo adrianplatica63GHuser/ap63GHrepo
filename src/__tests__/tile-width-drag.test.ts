@@ -151,6 +151,7 @@ describe("the handle (Ask first 1, 7)", () => {
     expect(ro.handle).toBe("Lățimea panoului {title}");
     expect(ro.units).toBe("{count, plural, one {# unitate} few {# unități} other {# de unități}}");
     // 41.18 added what the drag says: `refused` and `advised`.
-    expect(Object.keys(en).sort()).toEqual(["advised", "handle", "refused", "units"]);
+    // 41.19: and the shared tiles' line and the forms' names.
+    expect(Object.keys(en).sort()).toEqual(["advised", "forms", "handle", "refused", "shared", "units"]);
   });
 });
