@@ -1783,7 +1783,7 @@ export function PropertyForm({
                   navigate={
                     <NavigateButton
                       target={{ corners, address: typeConfig.hideAddress ? null : watchedValues.address ?? null }}
-                      name={watchedValues.nickname?.trim() || propertyCode || ""}
+                      name={watchedValues.nickname?.trim() ?? "" /* 41.22: never the code (#37.57) — the dialog has its words for no name */}
                     />
                   }
                 />
