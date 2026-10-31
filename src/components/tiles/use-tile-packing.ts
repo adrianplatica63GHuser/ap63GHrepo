@@ -110,7 +110,7 @@
  */
 import { useLayoutEffect, useRef, type RefObject } from "react";
 import { TILE_FRAME_REM, TILE_INNER_VAR, UNIT_GAP_REM, declaredWidthPx, exactUnitsCss, rem } from "@/lib/ui/field-widths";
-import { judgeWidth, laptopUnits, type WidthVerdict } from "@/lib/ui/tile-width-rules";
+import { headingMeasure, judgeWidth, laptopUnits, type HeadingMeasure, type WidthVerdict } from "@/lib/ui/tile-width-rules";
 import { formOfEntity, sharedWidthOf } from "@/lib/ui/tiles";
 import { liveUnitPx } from "@/lib/ui/width-unit";
 import { columnsIn, fitsBeside, grow, packedHeight, unitsOf, type PackBox, type Placed, ONE_COLUMN_BELOW_UNITS, oneColumn } from "@/lib/ui/tile-packing";
@@ -150,6 +150,7 @@ import {
 import { loadMakeRoomDelay, makeRoomDelayMs } from "./make-room-delay";
 import { isDragSurface } from "./tile-drag-surface";
 import { PLAIN_TILE_WIDTH_WORDS, type TileWidthWords } from "./tile-width-words";
+import { headingParts, visibleName, visibleText } from "./visible-text";
 import { TILE_DIAGRAM_DRAG, publishPlaced, type DiagramDrag } from "./tiles-placed";
 
 /** How long after a layout the row still settles afresh on a height change, unless the user acts first. */
@@ -379,8 +380,8 @@ interface Floor {
   units: number;
   /** It holds fixed boxes at all. */
   fields: boolean;
-  /** The row that stops it going one unit narrower: its fields, and the px the tile needs to hold it. */
-  widest?: { fields: string; px: number };
+  /** The row that stops it going one unit narrower: its fields, and the px the tile needs to hold it — or, 41.20, its heading. */
+  widest?: { fields: string; px: number; heading?: HeadingMeasure };
 }
 
 /** 41.17–41.18: what a tile's edge was measured to allow when it was pressed or stepped. */
@@ -393,7 +394,7 @@ interface Measured {
   /** 41.19: the width this tile shares across forms, and its name for the bubble's line. */
   shared?: string;
   title: string;
-  widest?: { fields: string; px: number };
+  widest?: { fields: string; px: number; heading?: HeadingMeasure };
   fields: boolean;
   table?: number;
   beside: { col: number; title: string }[];
@@ -401,11 +402,29 @@ interface Measured {
   laptop: number;
 }
 
-/** A fixed box's name: its field's label, else its own. */
+/** A fixed box's name: its field's label as the screen shows it (41.20 — no `sr-only` or `aria-hidden` text), else its own. */
 function labelOf(d: HTMLElement): string {
   const own = d.closest<HTMLElement>("label") ?? d;
-  const text = own.querySelector("span")?.textContent?.replace(/\s+/g, " ").trim();
+  const span = own.querySelector("span");
+  const text = span ? visibleText(span) : "";
   return text || d.getAttribute("aria-label") || d.dataset.widthField || "";
+}
+
+/**
+ * 41.20: what spills past the tile's inner edge at a width where every row of fields still fits — a button row, a line
+ * that does not wrap: the leaf drawn furthest right, named by its visible words (or the control it is in).
+ */
+function spillOf(el: HTMLElement, inner: number): { name: string; right: number } | undefined {
+  let best: { d: Element; right: number } | undefined;
+  for (const d of Array.from(el.querySelectorAll("*"))) {
+    if (d.children.length > 0 || d.closest("[aria-hidden='true'], .sr-only")) continue;
+    const x = d.getBoundingClientRect();
+    if (x.width > 0 && x.right > inner + 0.5 && (!best || x.right > best.right)) best = { d, right: x.right };
+  }
+  if (!best) return undefined;
+  const named = best.d.closest<HTMLElement>("label, button, a, [role='button']") ?? best.d.parentElement ?? el;
+  const name = visibleText(named) || named.getAttribute("aria-label") || visibleText(best.d);
+  return name ? { name, right: best.right } : undefined;
 }
 
 /**
@@ -1043,8 +1062,12 @@ export function useTilePacking(
     let resize: Resize | null = null;
 
     const boxOf = (id: string) => boxes.find((b) => b.id === id);
-    const titleOf = (b: FoundBox) =>
-      b.el.querySelector("h2, h3")?.textContent?.replace(/\s+/g, " ").trim() || b.el.getAttribute("aria-label") || tileOf(b.id);
+    // 41.20 (Ask first 1): named by what is on the screen — the heading's visible parts, „Identitate · PPERS 77369",
+    // never its `textContent`, which glued in the screen reader's „ID sistem".
+    const titleOf = (b: FoundBox) => {
+      const h = b.el.querySelector("h2, h3");
+      return (h ? visibleName(h) : "") || b.el.getAttribute("aria-label") || tileOf(b.id);
+    };
     const drawWidth = (el: HTMLElement, w: string) => {
       styles.set(el, "width", w);
       styles.set(el, TILE_INNER_VAR, `calc(${w} - ${rem(TILE_FRAME_REM)})`);
@@ -1089,21 +1112,22 @@ export function useTilePacking(
       };
       let widest: Floor["widest"];
       const box0 = el.getBoundingClientRect();
+      const cs0 = getComputedStyle(el);
+      const innerRight0 = box0.right - parseFloat(cs0.paddingRight || "0") - parseFloat(cs0.borderRightWidth || "0");
       const width0 = el.style.getPropertyValue("width");
       const inner0 = el.style.getPropertyValue(TILE_INNER_VAR);
+      // 41.20 (Ask first 2, 3): the heading as it is drawn now, on one line — its visible parts, the gap between them
+      // and the frame around it — so what it needs is a sum the message can show, part by part.
+      const h = el.querySelector<HTMLElement>("h2, h3");
+      const drawnHeading = h ? headingParts(h, el) : undefined;
+      const heading = drawnHeading ? headingMeasure(drawnHeading.parts, drawnHeading.spaces, drawnHeading.frame) : undefined;
       let n = from;
       try {
         for (let k = from - 1; k >= 1; k--) {
           const px = k * (unit + gap) - gap;
           el.style.setProperty("width", `${px}px`);
           el.style.setProperty(TILE_INNER_VAR, `calc(${px}px - ${rem(TILE_FRAME_REM)})`);
-          // The tile itself holds too: drawn at the width it is given (no min-width keeps it wider) and nothing in it
-          // spilling past its edge — a heading that does not wrap, a button row.
-          const drawn = el.getBoundingClientRect().width;
-          if (Math.abs(drawn - px) >= 0.5 || el.scrollWidth > el.clientWidth + 1) {
-            widest = { fields: titleOf(b), px: Math.max(drawn, el.scrollWidth + (el.offsetWidth - el.clientWidth)) };
-            break;
-          }
+          // 41.20 (Ask first 4): the rows of fields first — a heading is named only when no row stops the tile before it.
           const bad = broken(shape());
           if (bad.length > 0) {
             // The row of the first box that broke: it and every box beside it, as they stood at `from`.
@@ -1111,7 +1135,24 @@ export function useTilePacking(
             for (const [i, j] of rows) if (row.has(i) || row.has(j)) row.add(i).add(j);
             const right = Math.max(...[...row].map((i) => base[i].right));
             const fields = [...new Set([...row].map((i) => labelOf(fixed[i])).filter(Boolean))];
-            widest = { fields: fields.join(" | "), px: right - box0.left + (box0.right - base[0].inner) };
+            widest = { fields: fields.join(" | "), px: right - box0.left + (box0.right - innerRight0) };
+            break;
+          }
+          // The tile itself holds too: drawn at the width it is given (no min-width keeps it wider) and nothing in it
+          // spilling past its edge — a heading that does not wrap, a button row.
+          const drawn = el.getBoundingClientRect().width;
+          if (Math.abs(drawn - px) >= 0.5 || el.scrollWidth > el.clientWidth + 1) {
+            // 41.20: its heading when the heading is what does not fit — named by what is visible, its px taken apart;
+            // else what spills, by its own words; else, the tile by its name and the width it was drawn at.
+            if (h && heading && (heading.px > px + 0.5 || h.scrollWidth > h.clientWidth + 1)) {
+              widest = { fields: heading.title, px: heading.px, heading };
+              break;
+            }
+            const r = el.getBoundingClientRect();
+            const spill = spillOf(el, r.right - (box0.right - innerRight0));
+            widest = spill
+              ? { fields: spill.name, px: spill.right - r.left + (box0.right - innerRight0) }
+              : { fields: titleOf(b), px: Math.max(drawn, el.scrollWidth + (el.offsetWidth - el.clientWidth)) };
             break;
           }
           n = k;

@@ -1178,7 +1178,12 @@
         "content": "The tile cannot be narrower than {units, plural, one {# unit} other {# units}}: the row «{fields}» needs {px} px.",
         "window": "This window holds at most {units, plural, one {# unit} other {# units}}.",
         "one": "A tile is at least one unit wide.",
-        "form": "The tile cannot be narrower than {units, plural, one {# unit} other {# units}}: on the «{form}» form its content needs that much."
+        "form": "The tile cannot be narrower than {units, plural, one {# unit} other {# units}}: on the «{form}» form its content needs that much.",
+        "heading": "The tile cannot be narrower than {units, plural, one {# unit} other {# units}}: the heading «{title}» needs {px} px — {detail}.",
+        "headingFirst": "«{text}» {px} px",
+        "headingPart": "«{text}» {px}",
+        "headingSpace": "space {px}",
+        "headingFrame": "padding and border {px}"
       },
       "advised": {
         "room": "{spare, plural, one {# unit} other {# units}} wider than it needs: empty room on the right of its fields.",

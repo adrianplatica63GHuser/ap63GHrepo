@@ -21,6 +21,19 @@ export function useTileWidthWords(): TileWidthWords {
       switch (r.reason) {
         case "content":
           return t("refused.content", { units: r.units, fields: r.fields, px: r.px });
+        case "heading": {
+          // 41.20 (Ask first 2): „«Identitate» 98 px, spațiu 8, «PPERS 77369» 79, margini 26" — the parts in order, the
+          // space between each two, and the frame, adding up to the px the sentence gives.
+          const h = r.heading;
+          const detail = [
+            ...h.parts.flatMap((p, i) => [
+              ...(i > 0 ? [t("refused.headingSpace", { px: h.spaces[i - 1] ?? 0 })] : []),
+              i === 0 ? t("refused.headingFirst", { text: p.text, px: p.px }) : t("refused.headingPart", { text: p.text, px: p.px }),
+            ]),
+            t("refused.headingFrame", { px: h.frame }),
+          ].join(", ");
+          return t("refused.heading", { units: r.units, title: h.title, px: h.px, detail });
+        }
         case "window":
           return t("refused.window", { units: r.units });
         case "one":

@@ -1178,7 +1178,12 @@
         "content": "Panoul nu poate fi mai îngust de {units, plural, one {# unitate} few {# unități} other {# de unități}}: rândul «{fields}» are nevoie de {px} px.",
         "window": "Pe această fereastră încap cel mult {units, plural, one {# unitate} few {# unități} other {# de unități}}.",
         "one": "Un panou are cel puțin o unitate.",
-        "form": "Panoul nu poate fi mai îngust de {units, plural, one {# unitate} few {# unități} other {# de unități}}: pe formularul «{form}» conținutul lui are nevoie de atât."
+        "form": "Panoul nu poate fi mai îngust de {units, plural, one {# unitate} few {# unități} other {# de unități}}: pe formularul «{form}» conținutul lui are nevoie de atât.",
+        "heading": "Panoul nu poate fi mai îngust de {units, plural, one {# unitate} few {# unități} other {# de unități}}: titlul «{title}» are nevoie de {px} px — {detail}.",
+        "headingFirst": "«{text}» {px} px",
+        "headingPart": "«{text}» {px}",
+        "headingSpace": "spațiu {px}",
+        "headingFrame": "margini {px}"
       },
       "advised": {
         "room": "Cu {spare, plural, one {# unitate} few {# unități} other {# de unități}} mai lat decât îi trebuie: rămâne loc gol în dreapta câmpurilor.",

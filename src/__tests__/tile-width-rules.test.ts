@@ -3,7 +3,7 @@
  */
 import { readFileSync } from "fs";
 import { join } from "path";
-import { LAPTOP_ROW_PX, judgeWidth, laptopUnits, type WidthCase } from "@/lib/ui/tile-width-rules";
+import { LAPTOP_ROW_PX, VISIBLE_JOIN, headingMeasure, judgeWidth, laptopUnits, type WidthCase } from "@/lib/ui/tile-width-rules";
 
 const read = (...p: string[]) => readFileSync(join(process.cwd(), ...p), "utf8");
 const base: WidthCase = { asked: 3, min: 2, max: 8, contentUnits: 2, hasFields: true, beside: [], col: 0, laptopUnits: 8 };
@@ -17,6 +17,14 @@ describe("refused (Ask first 1)", () => {
     });
   });
 
+  it("(a′) 41.20: narrower than its heading — its own refusal, named by what is visible, its px taken apart", () => {
+    const heading = headingMeasure([{ text: "Identitate", px: 97.6 }, { text: "PPERS 77369", px: 78.6 }], [8], 26);
+    expect(at(1, { widest: { fields: heading.title, px: heading.px, heading } })).toEqual({
+      kind: "refused",
+      refusal: { reason: "heading", units: 2, heading },
+    });
+  });
+
   it("(b) wider than this window's row", () => {
     expect(at(9)).toEqual({ kind: "refused", refusal: { reason: "window", units: 8 } });
   });
@@ -24,6 +32,37 @@ describe("refused (Ask first 1)", () => {
   it("(c) under one unit", () => {
     expect(at(0)).toEqual({ kind: "refused", refusal: { reason: "one" } });
     expect(at(-2, { min: 1 })).toEqual({ kind: "refused", refusal: { reason: "one" } });
+  });
+});
+
+describe("41.20 — the heading's px (Ask first 2, 3)", () => {
+  it("each part, the space between, the frame — whole px, and the total exactly their sum", () => {
+    const m = headingMeasure([{ text: "Identitate", px: 97.6 }, { text: "PPERS 77369", px: 78.6 }], [8], 26);
+    expect(m).toEqual({
+      title: "Identitate · PPERS 77369",
+      parts: [{ text: "Identitate", px: 98 }, { text: "PPERS 77369", px: 79 }],
+      spaces: [8],
+      frame: 26,
+      px: 98 + 8 + 79 + 26,
+    });
+  });
+
+  it("the visible parts are joined with „ · ”; one part has no space", () => {
+    expect(VISIBLE_JOIN).toBe(" · ");
+    expect(headingMeasure([{ text: "Date cadastrale", px: 150.2 }], [], 26.4)).toEqual({
+      title: "Date cadastrale",
+      parts: [{ text: "Date cadastrale", px: 150 }],
+      spaces: [],
+      frame: 26,
+      px: 176,
+    });
+  });
+
+  it("a space per gap, a missing one counted as none; nothing negative", () => {
+    const m = headingMeasure([{ text: "A", px: 10 }, { text: "B", px: 20 }, { text: "C", px: 30 }], [8], -1);
+    expect(m.spaces).toEqual([8, 0]);
+    expect(m.frame).toBe(0);
+    expect(m.px).toBe(68);
   });
 });
 
@@ -72,6 +111,11 @@ describe("the words (Ask first 3, 5)", () => {
       "refused.window": ["units"],
       "refused.one": [],
       "refused.form": ["units", "form"], // 41.19
+      "refused.heading": ["units", "title", "px", "detail"], // 41.20
+      "refused.headingFirst": ["text", "px"],
+      "refused.headingPart": ["text", "px"],
+      "refused.headingSpace": ["px"],
+      "refused.headingFrame": ["px"],
       "advised.room": ["spare"],
       "advised.alone": ["title"],
       "advised.laptop": ["units"],
@@ -85,8 +129,32 @@ describe("the words (Ask first 3, 5)", () => {
         for (const n of names) expect([lang, key, n, text.includes(`{${n}`)]).toEqual([lang, key, n, true]);
       }
     }
-    expect(Object.keys(ro.refused).sort()).toEqual(["content", "form", "one", "window"]); // 41.19: „form”
+    // 41.19: „form”; 41.20: the heading and its parts.
+    expect(Object.keys(ro.refused).sort()).toEqual(["content", "form", "heading", "headingFirst", "headingFrame", "headingPart", "headingSpace", "one", "window"]);
+    expect(Object.keys(en.refused).sort()).toEqual(Object.keys(ro.refused).sort());
     expect(Object.keys(ro.advised).sort()).toEqual(["alone", "laptop", "room", "table"]);
+  });
+
+  it("41.20: a heading is called a heading, not a row — and its words add up part by part", () => {
+    expect(ro.refused.heading).toContain("titlul «{title}» are nevoie de {px} px — {detail}.");
+    expect(ro.refused.heading).not.toContain("rândul");
+    expect([ro.refused.headingFirst, ro.refused.headingSpace, ro.refused.headingPart, ro.refused.headingFrame]).toEqual([
+      "«{text}» {px} px",
+      "spațiu {px}",
+      "«{text}» {px}",
+      "margini {px}",
+    ]);
+    expect(en.refused.heading).toContain("the heading «{title}» needs {px} px — {detail}.");
+  });
+
+  it("41.20: the rows of fields are checked before the tile itself, and names are what is visible", () => {
+    const src = read("src", "components", "tiles", "use-tile-packing.ts");
+    const rowsAt = src.indexOf("const bad = broken(shape());");
+    const tileAt = src.indexOf("if (Math.abs(drawn - px) >= 0.5 || el.scrollWidth > el.clientWidth + 1) {");
+    expect(rowsAt).toBeGreaterThan(0);
+    expect(tileAt).toBeGreaterThan(rowsAt);
+    expect(src).toContain("return (h ? visibleName(h) : \"\") || b.el.getAttribute(\"aria-label\") || tileOf(b.id);");
+    expect(src).not.toMatch(/querySelector\("h2, h3"\)\?\.textContent/);
   });
 
   it("are shown beside the edge and read out politely, never a toast or a dialog", () => {
