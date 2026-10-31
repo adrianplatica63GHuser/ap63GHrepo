@@ -119,21 +119,31 @@ test.describe("TC-TILES-26 — lățimea unei plăci", () => {
       await expect.poll(async () => (await measure(page, tile)).tile).toBe(unitsPx(n));
       expect((await measure(page, tile)).field).toBe(before.field);
 
-      // Step 7 (41.18) — two units left, past its narrowest: refused, and why — the edge stops, the width stays there.
-      await holdEdge(page, tile, -2 * (UNIT + GAP));
-      await expect(bubble(page)).toHaveText(/^Panoul nu poate fi mai îngust de (o unitate|\d+ unități|\d+ de unități): rândul «[^»]+» are nevoie de \d+ px\.$/);
+      // Step 7 (41.18) — one unit past its narrowest (what the edge says it is): refused, and why — the row that sets it,
+      // or, where its content fits one unit, that a tile is at least one. The edge stops; let go, the narrowest.
+      const edge = page.locator(`[data-tile-handle="${tile}"]`);
+      await edge.focus();
+      const min = Number(await edge.getAttribute("aria-valuemin"));
+      const max = Number(await edge.getAttribute("aria-valuemax"));
+      const why =
+        min >= 2
+          ? /^Panoul nu poate fi mai îngust de (\d+ unități|\d+ de unități): rândul «[^»]+» are nevoie de \d+ px\.$/
+          : /^Un panou are cel puțin o unitate\.$/;
+      await holdEdge(page, tile, (min - 1 - n) * (UNIT + GAP));
+      await expect(bubble(page)).toHaveText(why);
       await expect(bubble(page)).toHaveAttribute("data-verdict", "refused");
-      await expect(page.locator('[data-tile-width-note="live"]')).toHaveText(/^Panoul nu poate fi mai îngust/);
+      await expect(page.locator('[data-tile-width-note="live"]')).toHaveText(why);
       await page.mouse.up();
       await expect(bubble(page)).toHaveCount(0);
-      await expect.poll(async () => (await measure(page, tile)).tile).toBe(unitsPx(n - 1));
+      await expect.poll(async () => (await measure(page, tile)).tile).toBe(unitsPx(min));
 
       // Step 8 (41.18) — two units past what it needs: advised against, and taken.
+      expect(min + 2).toBeLessThanOrEqual(max);
       await holdEdge(page, tile, 2 * (UNIT + GAP));
       await expect(bubble(page)).toHaveText(/Cu 2 unități mai lat decât îi trebuie: rămâne loc gol în dreapta câmpurilor\./);
       await expect(bubble(page)).toHaveAttribute("data-verdict", "advised");
       await page.mouse.up();
-      await expect.poll(async () => (await measure(page, tile)).tile).toBe(unitsPx(n + 1));
+      await expect.poll(async () => (await measure(page, tile)).tile).toBe(unitsPx(min + 2));
       expect((await measure(page, tile)).field).toBe(before.field);
     } finally {
       if (id) await removeRecord(page.request, "property", id);

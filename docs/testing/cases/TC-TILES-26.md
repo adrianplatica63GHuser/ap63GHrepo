@@ -36,7 +36,7 @@ Nothing.
 | 4 | Reloads | The same width |
 | 5 | Presses „Implicit” | Its own width again |
 | 6 | Focuses the edge, presses → then Home | One unit more, the focus still on the edge; then its own width |
-| 7 | (41.18) Drags its edge two units left, past its narrowest, and holds it | The edge stops at the narrowest, and beside it a bubble: „Panoul nu poate fi mai îngust de N unități: rândul «…» are nevoie de … px.”, read out too. Let go: the bubble goes, the tile one unit narrower than its own |
+| 7 | (41.18) Focuses the edge (it says the narrowest the tile can be), drags it one unit past that, and holds it | The edge stops at the narrowest, and beside it a bubble: „Panoul nu poate fi mai îngust de N unități: rândul «…» are nevoie de … px.” — or, where its content fits one unit, „Un panou are cel puțin o unitate.” — read out too. Let go: the bubble goes, the tile at its narrowest |
 | 8 | (41.18) Drags it two units right — two past what it needs — and holds it | A bubble: „Cu 2 unități mai lat decât îi trebuie: rămâne loc gol în dreapta câmpurilor.” Let go: the width is taken, the field box the same |
 
 ## At the end — leaving things as they were found

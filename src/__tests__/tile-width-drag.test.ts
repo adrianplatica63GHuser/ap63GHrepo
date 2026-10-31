@@ -150,6 +150,7 @@ describe("the handle (Ask first 1, 7)", () => {
     const en = JSON.parse(read("messages", "en-GB.json")).shared.tileWidth;
     expect(ro.handle).toBe("Lățimea panoului {title}");
     expect(ro.units).toBe("{count, plural, one {# unitate} few {# unități} other {# de unități}}");
-    expect(Object.keys(en).sort()).toEqual(["handle", "units"]);
+    // 41.18 added what the drag says: `refused` and `advised`.
+    expect(Object.keys(en).sort()).toEqual(["advised", "handle", "refused", "units"]);
   });
 });

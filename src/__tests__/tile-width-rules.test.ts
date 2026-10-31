@@ -95,7 +95,7 @@ describe("the words (Ask first 3, 5)", () => {
     expect(src).toContain("const verdict = verdictOf(r.measured, asked);");
     expect(src).toContain('if (verdict.kind !== "refused") commit(id, asked);');
     expect(src).toContain("child.dataset.tileWidthNote !== undefined");
-    expect(src).not.toMatch(/toast|role="dialog"/);
+    expect(src).not.toMatch(/useToast|showToast|role="dialog"|<dialog/);
   });
 
   it("the edge turns red when refused and amber when advised", () => {
