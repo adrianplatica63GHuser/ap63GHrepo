@@ -1133,19 +1133,32 @@ export function useTilePacking(
         groups.push(g);
         groupOf.set(i, g);
       });
-      for (const [i, j] of rows) {
+      const join = (i: number, j: number) => {
         const gi = groupOf.get(i)!;
         const gj = groupOf.get(j)!;
-        if (gi === gj) continue;
+        if (gi === gj) return;
         for (const x of gj) {
           gi.push(x);
           groupOf.set(x, gi);
         }
         groups.splice(groups.indexOf(gj), 1);
-      }
+      };
+      for (const [i, j] of rows) join(i, j);
+      // A fixed box inside another (a field's box and its own input) is that box's row, not a row of its own — and is
+      // not named: „firstName", its width key, is no name on the screen.
+      const inner = new Set<number>();
+      fixed.forEach((d, i) => {
+        const j = fixed.findIndex((o, k) => k !== i && o.contains(d));
+        if (j >= 0) {
+          inner.add(i);
+          join(j, i);
+        }
+      });
       const rowLine = (g: number[], fits: boolean): TileLine => {
         const right = Math.max(...g.map((i) => base[i].right));
-        const fields = [...new Set([...g].sort((x, y) => base[x].left - base[y].left).map((i) => labelOf(fixed[i])).filter(Boolean))];
+        const outer = g.filter((i) => !inner.has(i));
+        const named = (outer.length > 0 ? outer : g).sort((x, y) => base[x].left - base[y].left);
+        const fields = [...new Set(named.map((i) => labelOf(fixed[i])).filter(Boolean))];
         return {
           kind: "fields",
           name: fields.join(" | "),

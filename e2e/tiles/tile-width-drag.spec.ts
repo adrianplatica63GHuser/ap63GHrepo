@@ -73,6 +73,9 @@ async function readList(page: Page, units: number, have: number): Promise<{ name
     }
     return { name, px: Number(px) };
   });
+  // Each line once, and named by what is on the screen — never a box's width key („firstName").
+  expect(new Set(listed.map((l) => l.name)).size).toBe(listed.length);
+  for (const l of listed) expect(l.name).not.toMatch(/^[a-z]+(?:[A-Z][a-z0-9]*)+$/);
   const count = listed.length + (more ? Number(/\d+/.exec(more)?.[0] ?? 1) : 0);
   await expect(live(page)).toHaveText(`${first} ${count === 1 ? "Un rând nu încape" : `${count} rânduri nu încap`}.`);
   return listed;
