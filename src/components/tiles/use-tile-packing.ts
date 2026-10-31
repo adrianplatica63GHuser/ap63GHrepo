@@ -994,7 +994,6 @@ export function useTilePacking(
           d.getClientRects().length > 0 &&
           !/^(absolute|fixed)$/.test(getComputedStyle(d).position),
       );
-      if (fixed.length === 0) return { units: 1, fields: false };
       const shape = () => {
         const r = el.getBoundingClientRect();
         const cs = getComputedStyle(el);
@@ -1028,6 +1027,13 @@ export function useTilePacking(
           const px = k * (unit + gap) - gap;
           el.style.setProperty("width", `${px}px`);
           el.style.setProperty(TILE_INNER_VAR, `calc(${px}px - ${rem(TILE_FRAME_REM)})`);
+          // The tile itself holds too: drawn at the width it is given (no min-width keeps it wider) and nothing in it
+          // spilling past its edge — a heading that does not wrap, a button row.
+          const drawn = el.getBoundingClientRect().width;
+          if (Math.abs(drawn - px) >= 0.5 || el.scrollWidth > el.clientWidth + 1) {
+            widest = { fields: titleOf(b), px: Math.max(drawn, el.scrollWidth + (el.offsetWidth - el.clientWidth)) };
+            break;
+          }
           const bad = broken(shape());
           if (bad.length > 0) {
             // The row of the first box that broke: it and every box beside it, as they stood at `from`.
@@ -1046,7 +1052,7 @@ export function useTilePacking(
         if (inner0) el.style.setProperty(TILE_INNER_VAR, inner0);
         else el.style.removeProperty(TILE_INNER_VAR);
       }
-      return { units: n, fields: true, widest };
+      return { units: n, fields: fixed.length > 0, widest };
     };
 
     /** 41.18: a list tile's table — the units its columns need at their own widths, its frame and the tile's. */
