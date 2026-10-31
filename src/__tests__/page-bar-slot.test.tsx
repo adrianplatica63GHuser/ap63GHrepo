@@ -82,7 +82,8 @@ describe("the bar", () => {
   });
 
   it("has one slot, left of „?”, which takes the ml-auto — empty on a screen with no record", () => {
-    expect(BAR).toMatch(/<span ref=\{slotRef\} className="ml-auto pl-4 flex shrink-0 items-center" data-page-bar-slot="" \/>\s*<span className="pl-4 shrink-0" data-page-bar-help="">\s*<ScreenHelpButton \/>/);
+    // 41.22: `shrink-0` became a factor far below the crumbs' — the slot gives way only after them, and only by the ID.
+    expect(BAR).toMatch(/<span ref=\{slotRef\} className="ml-auto pl-4 flex shrink-\[0\.00001\] items-center" data-page-bar-slot="" \/>\s*<span className="pl-4 shrink-0" data-page-bar-help="">\s*<ScreenHelpButton \/>/);
   });
 
   it("gives way at the crumbs first, the earlier ones before the last; never wraps", () => {
@@ -104,7 +105,7 @@ describe("the four record screens", () => {
     ["src", "app", "properties", "_components", "property-detail-tiles.tsx"],
     ["src", "app", "documents", "_components", "document-detail-tiles.tsx"],
   ])("%s/%s/%s/%s/%s: the versions pill and „Panouri” through PageBarControls", (...f) => {
-    expect(read(...f)).toMatch(/<PageBarControls>\s*<div ref=\{setNavSlot\} data-version-slot="" className="flex items-center gap-3" \/>\s*<TilesMenuButton menu=\{tilesMenu\}[^\n]*\n\s*<\/PageBarControls>/);
+    expect(read(...f)).toMatch(/<PageBarControls>\s*<div ref=\{setNavSlot\} data-version-slot="" className="grid grid-cols-\[minmax\(0,auto\)_auto\] items-center gap-3 empty:hidden" \/>\s*<TilesMenuButton menu=\{tilesMenu\}[^\n]*\n\s*<\/PageBarControls>/);
   });
 
   it("„Panouri”'s panel opens under the bar, right-aligned to its button, fixed while open — only when the button is in the bar", () => {

@@ -113,7 +113,7 @@ describe("where it is drawn", () => {
 
   it.each(RECORD)("%s/%s/%s/%s/%s: the button right after the version controls, the bar given the menu", (...f) => {
     const src = read(...f);
-    expect(src).toMatch(/<div ref=\{setNavSlot\} data-version-slot="" className="flex items-center gap-3" \/>\s*<TilesMenuButton menu=\{tilesMenu\}/);
+    expect(src).toMatch(/<div ref=\{setNavSlot\} data-version-slot="" className="grid grid-cols-\[minmax\(0,auto\)_auto\] items-center gap-3 empty:hidden" \/>\s*<TilesMenuButton menu=\{tilesMenu\}/);
     expect(src).toMatch(/<TileSelector [^>]*\bmenu=\{tilesMenu\}/);
     expect(src).toContain("const tilesMenu = useTilesMenu();");
   });

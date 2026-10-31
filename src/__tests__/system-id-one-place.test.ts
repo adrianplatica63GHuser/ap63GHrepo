@@ -49,17 +49,19 @@ describe("the one place: the page bar, left of the versions pill (41.22)", () =>
   it.each(FORMS)("%s: no tile heading holds it any more", (file) => {
     const src = code(read(file));
     expect(src).not.toMatch(/<TileTitle\b[^>]*>[\s\S]{0,200}<SystemIdCorner\b/);
-    expect(src).not.toMatch(/\bcode=\{[^}]*documentCode/); // the document's „Date generale" Section no longer takes one
+    expect(src).not.toMatch(/code=\{mode !== "create" \? documentCode/); // the document's „Date generale" Section no longer takes one
   });
 
-  it.each(FORMS)("%s: its screen's versions slot keeps the bar's gap between the ID and the pill", (_file, _prop, tiles) => {
-    expect(code(read(tiles))).toMatch(/<PageBarControls>\s*<div ref=\{setNavSlot\} data-version-slot="" className="flex items-center gap-3" \/>\s*<TilesMenuButton/);
+  it.each(FORMS)("%s: its screen's versions slot — the ID's column gives way, the pill's does not, the bar's gap between", (_file, _prop, tiles) => {
+    expect(code(read(tiles))).toMatch(/<PageBarControls>\s*<div ref=\{setNavSlot\} data-version-slot="" className="grid grid-cols-\[minmax\(0,auto\)_auto\] items-center gap-3 empty:hidden" \/>\s*<TilesMenuButton/);
   });
 
-  it("is selectable, says what it is, and never wraps", () => {
+  it("is selectable, says what it is, never wraps, and is cut to its „…” only when the bar has no room", () => {
     const corner = code(read("src/components/record/system-id-corner.tsx"));
-    // 41.22: no `ml-auto` — that pushed it to a heading's right end; in the bar it stands in the slot's flow.
-    expect(corner).toMatch(/className="shrink-0 whitespace-nowrap font-mono text-xs/);
+    // 41.22: no `ml-auto` — that pushed it to a heading's right end; in the bar it stands in the slot's flow, and
+    // `truncate` (one line, „…") with its whole code as the tooltip.
+    expect(corner).toMatch(/className="min-w-0 truncate font-mono text-xs/);
+    expect(corner).toMatch(/title=\{code\}/);
     expect(corner).not.toMatch(/ml-auto/);
     expect(corner).toMatch(/<span className="sr-only">\{t\("label"\)\} <\/span>/);
     expect(corner).toMatch(/<span className="select-all">\{code\}<\/span>/);

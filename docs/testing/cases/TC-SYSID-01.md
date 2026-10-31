@@ -82,4 +82,5 @@ the sidebar item by its new name; nothing else in them changed.
 **2026-10-31 — Slice 41.22.** Adrian: „remove the system ID that shows on the top right corner of the first grey
 tile and place it on the top bar at the left of the versions navigation button". Steps 1–4 now find the code in the
 page bar, left of the versions pill, none in a tile, and click it to select it; the spec photographs the bar instead
-of the first panel. The lists (step 5) are unchanged. Written from the slice's own change; not driven by hand first.
+of the first panel. The lists (step 5) are unchanged. On a narrow window the crumbs give way first, then the code is
+cut to its „…" (its whole code on hover; TC-LAYOUT-01's 700-px step had found it pushing the screen 70 px sideways). Written from the slice's own change; not driven by hand first.

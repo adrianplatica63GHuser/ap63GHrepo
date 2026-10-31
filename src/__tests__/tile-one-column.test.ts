@@ -79,6 +79,6 @@ describe("the four headings wrap", () => {
     // with no shell around, they stay in the header's flow, at the right, as 40.69 put them.
     expect(src).toMatch(/<PageBarControls>\s*<div ref=\{setNavSlot\} data-version-slot=""/);
     expect(src).not.toContain('data-record-controls=""');
-    expect(read("src/components/page-bar-slot.tsx")).toContain('`${ctx ? "" : "ml-auto "}flex shrink-0 items-center gap-3`} data-record-controls=""');
+    expect(read("src/components/page-bar-slot.tsx")).toContain('`${ctx ? "" : "ml-auto shrink-0 "}flex items-center gap-3`} data-record-controls=""');
   });
 });
