@@ -101,7 +101,7 @@ describe("nowhere else", () => {
   });
 
   it("„Navighează”'s dialog is titled by the property's nickname, or by its words for none — never by the code (41.22)", () => {
-    expect(code(read("src/app/properties/_components/property-form.tsx"))).toMatch(/<NavigateButton[\s\S]{0,200}name=\{watchedValues\.nickname\?\.trim\(\) \?\? ""\}/);
+    expect(code(read("src/app/properties/_components/property-form.tsx"))).toMatch(/<NavigateButton[\s\S]{0,200}name=\{watchedValues\.nickname\?\.trim\(\) \?\? ""\s*\}/);
     expect(code(read("src/app/properties/_components/property-form.tsx"))).not.toMatch(/\|\|\s*propertyCode\b/);
   });
 
