@@ -9,7 +9,7 @@ import { useNameOr } from "@/components/record/use-name-or";
 import { IconButton } from "@/lib/ui/icon-button";
 import { DisclosureSection } from "@/lib/ui/disclosure-section";
 import { buttonClass } from "@/lib/ui/button-styles";
-import { LOG_DESCRIPTION_REM, rem, screenBox } from "@/lib/ui/field-widths";
+import { LOG_DESCRIPTION_WIDTH, screenBox } from "@/lib/ui/field-widths";
 import { FIELD_LABEL } from "@/lib/ui/field-box";
 import { GrowingText } from "@/components/forms/growing-text";
 import { INTERACTION_CHANNELS, INTERACTION_STATUSES, SUBJECT_MAX, type InteractionRecord } from "@/lib/interactions/model";
@@ -66,7 +66,7 @@ const boxBorder = (invalid: boolean) =>
 const LOG_DIRECTION_ICON = { INBOUND: ArrowDownLeft, OUTBOUND: ArrowUpRight } as const;
 
 /** Slice 41.11: „Descriere" across the card, growing with its text (`LOG_DESCRIPTION_REM`). */
-const LOG_DESCRIPTION_WIDTH = rem(LOG_DESCRIPTION_REM);
+// 41.16: `LOG_DESCRIPTION_WIDTH` follows the tile as drawn on the live unit (field-widths.ts).
 
 /** What the screen asks the tile to confirm before it throws a dirty form away (38.87): another row, or a new record. */
 export type SwitchRequest = { kind: "select"; id: string } | { kind: "new" };

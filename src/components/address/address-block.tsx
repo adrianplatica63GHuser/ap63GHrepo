@@ -37,6 +37,7 @@ import {
   boxRem,
   stackedBoxStyle,
   type FieldWidth,
+  tileInner,
 } from "@/lib/ui/field-widths";
 import { STACKED_FIELD_CLASS, STACKED_LABEL_CLASS, STACKED_ROW_CLASS } from "@/lib/ui/stacked";
 import { EMPTY_MARK, FIELD_BOX, fieldBorder } from "@/lib/ui/field-box";
@@ -261,7 +262,8 @@ function Field<TFormValues extends FieldValues>({
     ring,
   ].join(" ");
   const grows = width.kind === "grows" || width.kind === "lines";
-  const box = stackedBoxStyle(width, width.fill ? fillRem : boxRem(width));
+  // 41.16: a box that fills its tile follows the tile's width as drawn on the live unit (`tileInner`).
+  const box = stackedBoxStyle(width, width.fill ? tileInner(fillRem) : boxRem(width));
   // Slice 40.72: the read view — the value as text, at the box's width.
   if (read.reading) {
     return (

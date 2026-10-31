@@ -31,6 +31,7 @@ jest.mock("@/app/interactions/_components/log-tile", () => ({
 import { PersonInteractionsTile } from "@/app/_components/person-interactions-tile";
 import { InteractionsTile } from "@/components/tiles/interactions-tile";
 import { LOG_PARAM, personBase, personLogHref, readLog } from "@/lib/interactions/links";
+import { declaredWidthPx } from "@/lib/ui/field-widths";
 
 const ROWS = [
   { id: "i2", channel: "MEETING", direction: "OUTBOUND", occurredAt: "2026-10-10T09:00:00Z", personId: "p1", personName: "X", personType: "NATURAL", subject: "Întâlnire", status: "LOGGED", followUpOn: null, documentCount: 0, updatedAt: "2026-10-10T09:00:00Z" },
@@ -134,7 +135,7 @@ describe("B reaches C (#39.05)", () => {
   it("B as tall as its rows up to 410 px, C under it, the tile 41.1875 rem wide (40.98; 40 before) with no height of its own", () => {
     renderTile();
     const tile = document.querySelector<HTMLElement>('[data-tile="interactions"]')!;
-    expect(tile.style.width).toBe("41.1875rem"); // 40.98: 5 units of 119 px
+    expect(declaredWidthPx(tile.style.width, 119)).toBe(659); // 40.98: 5 units of 119 px; 41.16: on the live unit
     expect(tile.style.height).toBe("");
     expect(tile.style.minHeight).toBe("");
     const b = tile.querySelector<HTMLElement>("[data-interactions-history]")!;

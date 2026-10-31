@@ -32,7 +32,7 @@ import { LINK_MARK_BOX } from "@/lib/ui/link-mark";
 import { VALUE_LIST_CARD_UNITS, ValueListModal, referenceTileWidth } from "./value-list-modal";
 import { ReferenceTiles, type ReferenceTile } from "./reference-tiles";
 import { RelationshipTriangle } from "./relationship-triangle";
-import { REFERENCE_NAV_REM, rem, unitsRem } from "@/lib/ui/field-widths";
+import { REFERENCE_NAV_REM, rem, unitsCss } from "@/lib/ui/field-widths";
 import { UnitRow } from "@/components/screen/unit-row";
 import { PANEL_TITLE_TYPE } from "@/lib/ui/title-type";
 
@@ -241,7 +241,7 @@ export function ValueListHub({
       <div
         data-value-list-side=""
         className="flex flex-1 flex-col gap-3 overflow-x-auto overflow-y-hidden"
-        style={{ flexBasis: 0, minWidth: rem(unitsRem(LIST_MIN_UNITS)) }}
+        style={{ flexBasis: 0, minWidth: unitsCss(LIST_MIN_UNITS) }}
       >
         {selected === null ? (
           <p className="rounded-lg border border-dashed border-card-rim px-4 py-6 text-sm text-fade dark:border-zinc-800 dark:text-zinc-400">

@@ -19,6 +19,9 @@
      tile and the page scrolls sideways, as #37.35 set. The breakpoint is NARROW_WINDOW_QUERY's
      (src/lib/ui/use-narrow-window.ts). A custom property is substituted where it is used, so 100% is the row's own. */
   --row-cap: 100000px;
+  /* Slice 41.16 — the width unit, 119 px until „Setări" sets another (src/lib/ui/width-unit.ts). The root layout writes
+     this browser's on <html>; every width drawn in units is an expression of it (field-widths.ts, UNIT_CSS). */
+  --unit: 7.4375rem;
   --background: #F3F1ED;   /* light grey / soft off-white — page canvas       */
   --foreground: #2C2F33;   /* deep charcoal — body text (≈ 12 : 1 on canvas)  */
 }

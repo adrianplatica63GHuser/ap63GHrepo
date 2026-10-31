@@ -40,7 +40,7 @@ import { IconButton } from "@/lib/ui/icon-button";
 import type { SmallSquare } from "@/lib/ui/button-styles";
 import { PreviewTileBody, type PreviewField } from "./preview-tile-body";
 import { loadPreview } from "./preview-data";
-import { PAGES_PANEL_REM, PREVIEW_LINES, PREVIEW_ROWS, PREVIEW_WIDTHS, rem, type PreviewKind, type PreviewLinesKind } from "@/lib/ui/field-widths";
+import { PREVIEW_LINES, PREVIEW_ROWS, PREVIEW_WIDTHS, UNIT_GAP_REM, rem, unitsCss, type PreviewKind, type PreviewLinesKind } from "@/lib/ui/field-widths";
 import { nextPreviews, previewHref, previewKey, type PreviewTarget } from "@/lib/ui/previews";
 import { NO_ROW_TILES, closeRowTile, isLocked, isRowTileOpen, toggleRowTile, type RowTile, type RowTiles } from "@/lib/ui/row-tiles";
 import { IncursionContext, type Incursion, type IncursionTileComponent } from "./incursion-context";
@@ -275,12 +275,13 @@ export function ListPreviews({
  * „if": `min(100%, (C − X) × 1000)` is negative when the room X is at least the columns C, and 100% when it is not.
  */
 export function bodyBesideTiles(columns: string): CSSProperties {
-  const room = `(100% - ${PAGES_PANEL_REM + 1}rem)`;
+  // 41.16: the row tiles' column as drawn on the live unit (`unitsCss(5)`).
+  const room = `(100% - ${unitsCss(5)} - ${rem(UNIT_GAP_REM)})`;
   return { maxWidth: `max(calc${room}, min(100%, calc((${columns} - ${room}) * 1000)))` };
 }
 
 /** Slice #39.04: the row tiles' column — the person screen's „Interacțiuni" width, `PAGES_PANEL_REM` (41.1875rem, 659 px, since 40.98; 40rem, 640 px, before). */
-export const ROW_TILES_STYLE: CSSProperties = { width: rem(PAGES_PANEL_REM) };
+export const ROW_TILES_STYLE: CSSProperties = { width: unitsCss(5) };
 
 /** A preview in that column takes the column's width, whatever width it has on a detail screen. */
 const FILL_COLUMN: CSSProperties = { width: "100%" };

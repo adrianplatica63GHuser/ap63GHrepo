@@ -15,7 +15,7 @@ import { useEffect, useId, useState, type CSSProperties, type KeyboardEvent, typ
 import { useTranslations } from "next-intl";
 import { LIST_META, type ListKey } from "@/lib/admin/value-lists/config";
 import { RELATIONSHIPS, type ObjectKind, type Relationship, type RelationshipId } from "@/lib/admin/value-lists/relationships";
-import { rem, unitsRem } from "@/lib/ui/field-widths";
+import { rem, unitsCss } from "@/lib/ui/field-widths";
 import { LINK_MARK_BOX, LINK_MARK_FILL, LINK_MARK_INK } from "@/lib/ui/link-mark";
 import { InfoPress } from "@/lib/ui/info-press";
 
@@ -68,8 +68,9 @@ const DRAWING_COLUMN_REM = DRAWING.w / 16 + 2 * 1.25;
 
 /** The tile's width: the card's, plus a fifth of what the six had in it. */
 export function triangleCardStyle(cardUnits: number): CSSProperties {
-  const card = unitsRem(cardUnits);
-  return { maxWidth: rem(card + (SIX_WIDER - 1) * (card - DRAWING_COLUMN_REM)) };
+  // 41.16: the card as drawn on the live unit — card + (SIX_WIDER − 1) × (card − the drawing's column).
+  const card = unitsCss(cardUnits);
+  return { maxWidth: `calc(${SIX_WIDER} * ${card} - ${rem((SIX_WIDER - 1) * DRAWING_COLUMN_REM)})` };
 }
 
 /** Where each object sits — the triangle's corners. */

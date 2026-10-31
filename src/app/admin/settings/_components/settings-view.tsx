@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Save, X } from "lucide-react";
+import { RotateCcw, Save, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -14,7 +14,8 @@ import { useLocale } from "next-intl";
 import { useRouter } from "next/navigation";
 import { SUPPORTED_LOCALES, setLocaleCookie } from "@/lib/i18n/locale";
 import { ChangePasswordForm } from "@/app/account/change-password/change-password-form";
-import { screenBox, screenPanel } from "@/lib/ui/field-widths";
+import { DEFAULT_UNIT_PX, UNIT_PX_MAX, UNIT_PX_MIN, screenBox, screenPanel } from "@/lib/ui/field-widths";
+import { applyWidthUnit, parseWidthUnitDraft } from "@/lib/ui/width-unit";
 import { UnitRow } from "@/components/screen/unit-row";
 import { MyTileDefaults } from "./my-tile-defaults";
 import { TileSelector } from "@/components/tiles/tile-selector";
@@ -512,7 +513,78 @@ function AppearanceChoice() {
   );
 }
 
-function AccountTile({ uat }: { uat: boolean }) {
+/**
+ * Slice 41.16 — „Unitatea de lățime" (Ask first 1, 2): the width unit every tile is drawn in, in whole px from 80 to
+ * 200, kept by this browser. „Salvează" redraws this screen at once and every other screen the next time it is shown
+ * (src/lib/ui/width-unit.ts); „Revino la 119 px" puts the default back. The field sizes do not change, so a smaller
+ * unit gives a tile more units and a larger one fewer — never narrower than what it holds.
+ */
+function WidthUnitChoice({ initial }: { initial: number }) {
+  const t = useTranslations("settings.account.widthUnit");
+  const [saved, setSaved] = useState(initial);
+  const [draft, setDraft] = useState(String(initial));
+  const [state, setState] = useState<"idle" | "saved" | "invalid">("idle");
+  const parsed = parseWidthUnitDraft(draft);
+  const changed = parsed === null || parsed !== saved;
+  const keep = (px: number) => {
+    applyWidthUnit(px);
+    setSaved(px);
+    setDraft(String(px));
+    setState("saved");
+  };
+  return (
+    <fieldset className="flex flex-col gap-1.5" data-account-width-unit="">
+      <legend className={`mb-1 ${PANEL_TITLE_TYPE}`}>{t("title")}</legend>
+      <p className="text-xs text-fade">{t("intro")}</p>
+      <div className="flex flex-wrap items-center gap-2">
+        <label htmlFor="width-unit-px" className="text-sm text-ink">{t("label")}</label>
+        <input
+          id="width-unit-px"
+          {...screenBox("widthUnitPx")}
+          type="number"
+          min={UNIT_PX_MIN}
+          max={UNIT_PX_MAX}
+          step={1}
+          value={draft}
+          aria-describedby="width-unit-range"
+          aria-invalid={state === "invalid" || undefined}
+          onChange={(e) => {
+            setDraft(e.target.value);
+            setState("idle");
+          }}
+          onKeyDown={(e) => {
+            if (e.key !== "Enter") return;
+            e.preventDefault();
+            if (parsed === null) setState("invalid");
+            else if (changed) keep(parsed);
+          }}
+          className={[
+            "rounded-md border px-2 py-1 text-sm text-right tabular-nums bg-white dark:bg-zinc-800 text-ink",
+            state === "invalid" ? "border-red-500" : changed ? "border-amber-400 ring-1 ring-amber-400" : "border-wire",
+          ].join(" ")}
+        />
+        <span className="text-xs text-fade">px</span>
+      </div>
+      <p id="width-unit-range" className="text-xs text-fade">{t("range", { min: UNIT_PX_MIN, max: UNIT_PX_MAX })}</p>
+      <div className="mt-1 flex flex-wrap items-center gap-2">
+        <IconButton
+          icon={Save}
+          label={t("save")}
+          variant="primary"
+          onClick={() => (parsed === null ? setState("invalid") : keep(parsed))}
+          disabled={!changed}
+        />
+        {saved !== DEFAULT_UNIT_PX && (
+          <IconButton icon={RotateCcw} label={t("reset", { px: DEFAULT_UNIT_PX })} variant="secondary" onClick={() => keep(DEFAULT_UNIT_PX)} />
+        )}
+        {state === "saved" && <span role="status" className="text-xs text-emerald-700 dark:text-emerald-400">{t("saved", { px: saved })}</span>}
+        {state === "invalid" && <span role="alert" className="text-xs text-red-600 dark:text-red-400">{t("invalid", { min: UNIT_PX_MIN, max: UNIT_PX_MAX })}</span>}
+      </div>
+    </fieldset>
+  );
+}
+
+function AccountTile({ uat, unitPx }: { uat: boolean; unitPx: number }) {
   const t = useTranslations("settings");
   const tPwd = useTranslations("auth.changePassword");
   return (
@@ -527,12 +599,13 @@ function AccountTile({ uat }: { uat: boolean }) {
       </div>
       <LanguageChoice />
       <AppearanceChoice />
+      <WidthUnitChoice initial={unitPx} />
       <MyTileDefaults />
     </Tile>
   );
 }
 
-export function SettingsView({ uat = false }: { uat?: boolean } = {}) {
+export function SettingsView({ uat = false, unitPx = DEFAULT_UNIT_PX }: { uat?: boolean; unitPx?: number } = {}) {
   const t = useTranslations("settings");
   // Slice #39.17: the tiles are ticked on and off, as on a record's screen; every one shows by default.
   const choice = useTileChoice<SettingsTile>(SETTINGS_TILE_REGISTRY);
@@ -553,7 +626,7 @@ export function SettingsView({ uat = false }: { uat?: boolean } = {}) {
     <UnitRow units={[SETTINGS_TILE_UNITS, TIME_FRAMES_UNITS]}>
       {/* Slice #38.20: no „Altele" — Grupuri, Ștampile and Etichete are in the sidebar's
           „Administrare", which is where a screen is found. */}
-      {choice.isShown("account") && <AccountTile uat={uat} />}
+      {choice.isShown("account") && <AccountTile uat={uat} unitPx={unitPx} />}
       {choice.isShown("timeFrames") && <TimeFramesPanel />}
       <SystemTiles choice={choice} />
       <CostTiles choice={choice} />

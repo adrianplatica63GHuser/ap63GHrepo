@@ -17,7 +17,7 @@ import type { HighlightColor } from "@/lib/versioning/field-diff";
 import type { MetadataSnapshot, MetadataVersionItem } from "@/lib/metadata/queries";
 import { PROVENANCE_VALUES, provenanceI18nKey } from "@/lib/metadata/provenance";
 import { buttonClass } from "@/lib/ui/button-styles";
-import { CLASSIFICATION_UNITS, rem, screenBox, unitsInnerRem } from "@/lib/ui/field-widths";
+import { CLASSIFICATION_UNITS, screenBox, tileInner, unitsInnerRem } from "@/lib/ui/field-widths";
 import { HintBubble } from "@/lib/ui/hint-bubble";
 import { Divider } from "@/lib/ui/divider";
 import { MAX_GROUPS_PER_ITEM, MAX_GROUPS_PER_PROPERTY } from "@/lib/groups/validation";
@@ -133,7 +133,8 @@ function versionLabelColor(
 // ---------------------------------------------------------------------------
 
 /** Slice 41.10: a dropdown in „Editează" fills the 2-unit tile inside — 228 px. */
-const CLASSIFICATION_SELECT_STYLE: React.CSSProperties = { width: rem(unitsInnerRem(CLASSIFICATION_UNITS)) };
+// 41.16: the tile's inner width as drawn on the live unit (`tileInner`), 228 px on 119.
+const CLASSIFICATION_SELECT_STYLE: React.CSSProperties = { width: tileInner(unitsInnerRem(CLASSIFICATION_UNITS)) };
 
 function MetaSelect({
   value,

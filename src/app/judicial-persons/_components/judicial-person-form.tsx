@@ -30,6 +30,7 @@ import { ALWAYS_SHOWN_FIELDS,
   stackedBoxStyle,
   unitRowStyle,
   type FieldWidth,
+  tileInner,
 } from "@/lib/ui/field-widths";
 import { STACKED_FIELD_CLASS, STACKED_LABEL_CLASS, STACKED_ROW_CLASS } from "@/lib/ui/stacked";
 import { EMPTY_MARK, FIELD_BOX, fieldBorder } from "@/lib/ui/field-box";
@@ -1385,7 +1386,7 @@ function ContactPersonRow({
   // `JP.contactPerson` wide and a long name wraps onto more lines, never cut.
   // Slice #37.29: the label above it, the pair as wide as the box.
   // Slice 41.05: the panel's whole width on the 2-unit tile (XL, 272, would pass its 228).
-  const personBox = stackedBoxStyle(JP.contactPerson, PANEL_UNIT_INNER_REM.judicialPerson.contactPersons);
+  const personBox = stackedBoxStyle(JP.contactPerson, tileInner(PANEL_UNIT_INNER_REM.judicialPerson.contactPersons));
   return (
     <div className={STACKED_FIELD_CLASS} style={personBox} role="group" aria-label={label}>
       <span className={STACKED_LABEL_CLASS}>
@@ -1699,7 +1700,8 @@ function Field({
   const labelledBy = bubble ? labelId : undefined;
   // Slice #37.29: the label ABOVE its box, the pair exactly as wide as the box
   // (or the panel, for a box that fills it) — a long label wraps inside it.
-  const box = stackedBoxStyle(width, fillRem ?? boxRem(width));
+  // 41.16: a box that fills its tile follows the tile's width as drawn on the live unit (`tileInner`).
+  const box = stackedBoxStyle(width, fillRem !== undefined ? tileInner(fillRem) : boxRem(width));
   // Slice 40.73: the read view — the value as text, at the box's width.
   if (read.reading) {
     return (

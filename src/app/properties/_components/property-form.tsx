@@ -87,10 +87,10 @@ import { ALWAYS_SHOWN_FIELDS,
   PROPERTY as PROP,
   boxRem,
   boxStyle,
-  rem,
   stackedBoxStyle,
   unitRowStyle,
   type FieldWidth,
+  tileInner,
 } from "@/lib/ui/field-widths";
 import { STACKED_FIELD_CLASS, STACKED_LABEL_CLASS, STACKED_ROW_CLASS } from "@/lib/ui/stacked";
 import { EMPTY_MARK, FIELD_BOX, FIELD_READONLY, fieldBorder } from "@/lib/ui/field-box";
@@ -1622,7 +1622,7 @@ export function PropertyForm({
                     help beside the box, the hint or the error under them. */}
                 {reading("address") ? (
                   // Slice 40.74: read as text; „Preia din Street View" is there while the tile is open.
-                  <div className={STACKED_FIELD_CLASS} style={{ width: rem(PANEL_UNIT_INNER_REM.property.address) }}>
+                  <div className={STACKED_FIELD_CLASS} style={{ width: tileInner(PANEL_UNIT_INNER_REM.property.address) }}>
                     <span className={STACKED_LABEL_CLASS}>{t("streetViewAddress.label")}</span>
                     <ReadValue
                       // An expression, so field-widths.test's row reader counts this line once: the box below is the row.
@@ -1634,7 +1634,7 @@ export function PropertyForm({
                     />
                   </div>
                 ) : (
-                <label className={STACKED_FIELD_CLASS} style={{ width: rem(PANEL_UNIT_INNER_REM.property.address) }}>
+                <label className={STACKED_FIELD_CLASS} style={{ width: tileInner(PANEL_UNIT_INNER_REM.property.address) }}>
                   <span className={STACKED_LABEL_CLASS}>
                     {t("streetViewAddress.label")}
                   </span>
@@ -2154,7 +2154,8 @@ function Field({ label, name, type = "text", register, error, hint, highlight, w
   const grows = width.kind === "grows" || width.kind === "lines";
   // Slice #37.30: the label ABOVE its box, the pair exactly as wide as the box
   // (or the panel, for a box that fills it) — a long label wraps inside it.
-  const box = stackedBoxStyle(width, fillRem ?? boxRem(width));
+  // 41.16: a box that fills its tile follows the tile's width as drawn on the live unit (`tileInner`).
+  const box = stackedBoxStyle(width, fillRem !== undefined ? tileInner(fillRem) : boxRem(width));
   // Slice 40.74: the read view — the value as text, at the box's width.
   if (read.reading) {
     return (

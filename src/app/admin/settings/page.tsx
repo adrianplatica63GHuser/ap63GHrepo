@@ -1,4 +1,6 @@
 import { getTranslations } from "next-intl/server";
+import { cookies } from "next/headers";
+import { WIDTH_UNIT_COOKIE_NAME, widthUnitOf } from "@/lib/ui/width-unit";
 import { SettingsView } from "./_components/settings-view";
 import { isUatNoAuth } from "@/lib/auth/current-user";
 
@@ -13,6 +15,8 @@ export default async function SettingsPage() {
   // every /admin/* route including this one.
 
   const t = await getTranslations("settings");
+  // Slice 41.16: this browser's width unit, so „Unitatea de lățime" opens on it.
+  const unitPx = widthUnitOf((await cookies()).get(WIDTH_UNIT_COOKIE_NAME)?.value);
 
   return (
     <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-zinc-950">
@@ -24,7 +28,7 @@ export default async function SettingsPage() {
         </header>
 
         {/* Slice #38.41: UAT has no accounts, so „Contul meu" says so instead of a password form. */}
-        <SettingsView uat={isUatNoAuth()} />
+        <SettingsView uat={isUatNoAuth()} unitPx={unitPx} />
       </main>
     </div>
   );

@@ -17,6 +17,7 @@ import { act, fireEvent, render, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { ListPreviewRow, ListPreviews, PreviewButton } from "@/components/tiles/preview-tiles";
+import { declaredWidthPx } from "@/lib/ui/field-widths";
 
 jest.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
@@ -79,7 +80,8 @@ describe("a list's preview stands in the row tiles' column, beside the whole lis
     expect(kids[1]).toBe(column());
     expect(column()!.className).toMatch(/\bflex-col\b/);
     expect(column()!.className).toMatch(/\bself-stretch\b/);
-    expect(column()!.style.width).toBe("41.1875rem"); // 40.98: PAGES_PANEL_REM, 5 units of 119 px (40rem before)
+    // 40.98: PAGES_PANEL_REM, 5 units of 119 px (40rem before); 41.16: as drawn on the live unit, 659 px on 119.
+    expect(declaredWidthPx(column()!.style.width, 119)).toBe(659);
     expect(row().className).toMatch(/\bflex-wrap\b/);
     await waitFor(() => expect([...column()!.querySelectorAll("[data-preview] h2")].map((h) => h.textContent)).toEqual(["Teren A"]));
     // The preview takes the column's width, not its own detail-screen width.

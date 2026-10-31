@@ -109,7 +109,8 @@
  * free space a tile may be dragged to. Without it, the flow takes the row.
  */
 import { useLayoutEffect, type RefObject } from "react";
-import { UNIT_GAP_REM, UNIT_REM } from "@/lib/ui/field-widths";
+import { UNIT_GAP_REM, declaredWidthPx } from "@/lib/ui/field-widths";
+import { liveUnitPx } from "@/lib/ui/width-unit";
 import { columnsIn, fitsBeside, grow, packedHeight, unitsOf, type PackBox, type Placed, ONE_COLUMN_BELOW_UNITS, oneColumn } from "@/lib/ui/tile-packing";
 import {
   MAKE_ROOM_SLIDE_MS,
@@ -293,8 +294,9 @@ function remPx(): number {
  * differently after a load than after narrowing the window.
  */
 function ownWidth(el: HTMLElement): number {
-  const w = el.style.width;
-  const declared = w.endsWith("rem") ? parseFloat(w) * remPx() : w.endsWith("px") ? parseFloat(w) : 0;
+  // 41.16: a unit tile's width is an expression of the live unit (`atLeastUnitsCss`), worked out here on that unit.
+  const r = remPx();
+  const declared = declaredWidthPx(el.style.width, liveUnitPx(r), r);
   return Math.max(declared || 0, el.offsetWidth);
 }
 
@@ -378,7 +380,8 @@ export function useTilePacking(
 
     const metrics = () => {
       const r = remPx();
-      return { unit: UNIT_REM * r, gap: UNIT_GAP_REM * r };
+      // 41.16: the unit set on „Setări" — `--unit` as the browser resolves it — not the 119-px default.
+      return { unit: liveUnitPx(r), gap: UNIT_GAP_REM * r };
     };
 
     const styles = styleKeeper();

@@ -12,6 +12,8 @@ import "./globals.css";
 import { RecordSyncProvider } from "@/components/providers/record-sync-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { THEME_COOKIE_NAME, themeClass, themeOf } from "@/lib/ui/theme";
+import { WIDTH_UNIT_COOKIE_NAME, widthUnitOf, widthUnitStyle } from "@/lib/ui/width-unit";
+import { WidthUnitSync } from "@/components/providers/width-unit-sync";
 
 // Slice 40.70: the body text — the plain member of the titles' family. The variable file, one per style and subset,
 // carries every weight the app asks for (font-medium 500, font-semibold 600, font-bold 700) where static files would
@@ -56,17 +58,21 @@ export default async function RootLayout({
   const locale = await getLocale();
   const messages = await getMessages();
   // Slice 40.19: the look from the ga40-theme cookie, on <html> from the first byte — a dark load is never white first.
-  const theme = themeOf((await cookies()).get(THEME_COOKIE_NAME)?.value);
+  const jar = await cookies();
+  const theme = themeOf(jar.get(THEME_COOKIE_NAME)?.value);
+  // Slice 41.16: the width unit set on „Setări", from this browser's cookie — every tile is drawn in it from the first byte.
+  const unitPx = widthUnitOf(jar.get(WIDTH_UNIT_COOKIE_NAME)?.value);
 
   return (
     <html
       lang={locale}
       className={`${roboto.variable} ${geistMono.variable} ${robotoSlab.variable} ${robotoCondensed.variable} h-full antialiased ${themeClass(theme)}`.trim()}
-      style={{ colorScheme: theme }}
+      style={{ colorScheme: theme, ...widthUnitStyle(unitPx) }}
     >
       <body className="h-full flex flex-col">
         <NextIntlClientProvider locale={locale} messages={messages}>
           <ThemeProvider initial={theme}>
+          <WidthUnitSync />
           <MapsProvider>
             <QueryProvider>
               <RecordSyncProvider>

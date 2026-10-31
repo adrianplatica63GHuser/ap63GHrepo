@@ -105,6 +105,9 @@ import {
   screenPanel,
   screenRowStyle,
   tableUnits,
+  declaredWidthPx,
+  unitStyle,
+  unitsCss,
   PANEL_STYLE,
   oneLineRowUnits,
   ROW_CONTENT_REM,
@@ -539,7 +542,7 @@ describe("the Natural Person: every label above its box, every panel as wide as 
     // „M" — the wider letter — beside the arrow fits XS: the face's text room is the box less its padding, border, gap and arrow.
     expect(textPx("M") + 9 + 5 + 4 + 16).toBeLessThanOrEqual(SCALE.XS * 16);
     // The relationships' ticks span the panel's inner width on the form.
-    expect(panels).toMatch(/style=\{stackedBoxStyle\(NP\.relationships, NP_PANEL_INNER_REM\.identity\)\}/);
+    expect(panels).toMatch(/style=\{stackedBoxStyle\(NP\.relationships, tileInner\(NP_PANEL_INNER_REM\.identity\)\)\}/); // 41.16: as drawn
     // Gen reads „M" / „F", the whole word its title, on the form, the ID-card dialog and the list.
     const form = code(read("src", "app", "natural-persons", "_components", "natural-person-form.tsx"));
     expect(form).toMatch(/label: t\("options\.genderShort\.MALE"\), title: t\("options\.gender\.MALE"\)/);
@@ -691,7 +694,9 @@ describe("the Judicial Person: labels above, rows by meaning, every tile on the 
     expect(NP_PANEL_UNITS).toEqual({ identity: 3, idCard: 4, contact: 2, address: 2 }); // 40.98; 41.05: contact and address 2
     expect(PANEL_UNITS.naturalPerson).toBe(NP_PANEL_UNITS);
     expect(String(unitRowStyle("naturalPerson").width)).toBe(String(npRowStyle().width));
-    expect(String(unitRowStyle("judicialPerson").width)).toBe("min(var(--row-cap), max(32.75rem, calc(round(down, 100% + 1rem, 8.4375rem) - 1rem)))"); // #37.67: 4 units; #40.69: never wider than a narrow window; 40.98: of 119 px
+    // #37.67: 4 units; #40.69: never wider than a narrow window; 40.98: of 119 px; 41.16: of the live unit.
+    expect(String(unitRowStyle("judicialPerson").width)).toBe(`min(var(--row-cap), max(${unitsCss(4)}, calc(round(down, 100% + 1rem, var(--unit, 7.4375rem) + 1rem) - 1rem)))`);
+    expect(declaredWidthPx(unitsCss(4), 119)).toBe(524);
     // No JP_ twins of the unit shape.
     expect(code(read("src", "lib", "ui", "field-widths.ts"))).not.toMatch(/export const JP_(ROWS|PANEL|LIST|META)/);
   });
@@ -740,7 +745,7 @@ describe("the Property: labels above, rows by meaning, every tile on the unit (S
     expect(SCREEN_ROWS.property.cadastral[0]).toEqual(["tarlaId", "parcela"]);
     expect(PANEL_UNITS.property).toEqual({ cadastral: 4, address: 2, corners: 4, map: 4, streetView: 4 }); // 41.05: address 2
     expect(unitsRem(PANEL_UNITS.property.cadastral) * 16).toBe(524);
-    expect(parseFloat(String(MAP_BOX_STYLE.width))).toBe(unitsInnerRem(4));
+    expect(MAP_BOX_STYLE.width).toBe(`var(--tile-inner, ${unitsInnerRem(4)}rem)`); // 41.16: its tile's inner width as drawn
     expect(MAP_BOX_STYLE.height).toBe("22rem");
   });
 
@@ -1286,7 +1291,9 @@ describe("the ID-card dialog: the Natural Person's rows, widths and panels (Slic
   // 40.98: Identitate 3 and Carte de identitate 4 of 119 px, side by side (was two 3-unit panels of 148, 65rem).
   it("the card is wide only when the review shows, and holds its two panels side by side", () => {
     expect(unitsRem(NP_PANEL_UNITS.identity) + UNIT_GAP_REM + unitsRem(NP_PANEL_UNITS.idCard)).toBe(unitsRem(7));
-    expect(ID_CARD_DIALOG_CARD_STYLE.maxWidth).toBe("62.5625rem");
+    // 41.16: the two panels as drawn on the live unit — 62.5625rem, 1001 px, on 119.
+    expect(ID_CARD_DIALOG_CARD_STYLE.maxWidth).toBe(`calc(${unitsCss(3)} + ${unitsCss(4)} + 5.5rem)`);
+    expect(declaredWidthPx(unitsCss(3), 119)! + declaredWidthPx(unitsCss(4), 119)! + 5.5 * 16).toBe(62.5625 * 16);
     expect(ID_CARD_DIALOG).toMatch(/wide=\{showForm\}/);
     const card = code(read("src", "components", "persons", "person-resolution-dialog.tsx"));
     expect(card).toMatch(/wide = false/);
@@ -1303,8 +1310,9 @@ describe("a Previzualizare tile: whole units, its screen's rows (Slice #37.33)",
   // 40.98: re-pinned to the width they had on the 148-px unit — 3 → 4 (524 px), 4 → 5 (659, the page image's).
   it("is 4 units for a person, a company or a property and 5 — the page image's width — for a document", () => {
     expect(PREVIEW_UNITS).toEqual({ panel: 4, pages: 5 });
-    expect(PREVIEW_STYLE.panel.width).toBe("32.75rem");
-    expect(PREVIEW_STYLE.pages.width).toBe(`${PAGES_PANEL_REM}rem`);
+    // 41.16: as drawn on the live unit — 524 and 659 px on 119.
+    expect(declaredWidthPx(String(PREVIEW_STYLE.panel.width), 119)).toBe(524);
+    expect(declaredWidthPx(String(PREVIEW_STYLE.pages.width), 119)).toBe(PAGES_PANEL_REM * 16);
   });
 
   it("lays #37.24's short set in its screen's rows (a person, a company) or Adrian's (a property, a document — #37.70)", () => {
@@ -1414,9 +1422,10 @@ describe("the thirteen „Asociază …” screens: Căutare, Rezultate and Asoc
   });
 
   it("screenPanel and the screen row learn the unit, by opt-in", () => {
-    expect(screenPanel("x", 3).style).toEqual({ width: "24.3125rem" }); // 40.98: 3 units of 119 px
+    expect(screenPanel("x", 3).style).toEqual(unitStyle(3)); // 40.98: 3 units of 119 px; 41.16: of the live unit
+    expect(declaredWidthPx(String(screenPanel("x", 3).style.width), 119)).toBe(389);
     expect(screenPanel("x").style).toEqual(PANEL_STYLE);
-    expect(String(screenRowStyle(6).width)).toBe("min(var(--row-cap), max(49.625rem, calc(round(down, 100% + 1rem, 8.4375rem) - 1rem)))");
+    expect(String(screenRowStyle(6).width)).toBe(`min(var(--row-cap), max(${unitsCss(6)}, calc(round(down, 100% + 1rem, var(--unit, 7.4375rem) + 1rem) - 1rem)))`);
   });
 });
 
@@ -1466,7 +1475,8 @@ describe("the administration screens on the unit (Slice #37.35)", () => {
   });
 
   it("Calcul's map is whole units, at its height (rule 20)", () => {
-    expect(CALC_MAP_STYLE).toEqual({ width: `${unitsRem(7)}rem`, height: "26.25rem" }); // 40.98: 7 of 119 px, 929 (6 of 148, 968)
+    expect(CALC_MAP_STYLE).toEqual({ width: unitsCss(7), height: "26.25rem" }); // 40.98: 7 of 119 px, 929 (6 of 148, 968); 41.16: live
+    expect(declaredWidthPx(unitsCss(7), 119)).toBe(929);
   });
 });
 

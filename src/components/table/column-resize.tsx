@@ -32,7 +32,7 @@
  */
 import { useCallback, useLayoutEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
-import { columnRem, rem, tileTableRem, type ColumnName } from "@/lib/ui/field-widths";
+import { columnRem, rem, tileExtraCss, tileTableRem, type ColumnName } from "@/lib/ui/field-widths";
 import { IconTooltip } from "@/lib/ui/icon-button";
 import {
   COLUMN_STEP_REM,
@@ -301,10 +301,14 @@ export function FixedTable({
   const [stored, setWidth] = useColumnWidths(id);
   const tile = fill ? { column: fill.column, tableRem: fill.tableRem ?? tileTableRem(fill.units) } : undefined;
   const { rems, tableRem, roomRem } = resolveColumnRems(columns, stored, tile);
+  // 41.16: a table that fills a tile of whole units follows the tile as drawn on the live unit — the table and its
+  // fill column both gain what the tile is wider than on 119 px (`tileExtraCss`, nothing at the default unit).
+  const extra = fill && fill.tableRem === undefined ? tileExtraCss(fill.units) : null;
+  const plus = (r: number): string => (extra ? `calc(${rem(r)} + ${extra})` : rem(r));
   return (
     <table
       className={`table-fixed ${className} ${COLUMN_LINES}`}
-      style={{ width: rem(tableRem) }}
+      style={{ width: plus(tableRem) }}
       data-width-table={columns.join(" ")}
       data-resize-table={id}
     >
@@ -319,7 +323,7 @@ export function FixedTable({
         {columns.map((name, i) => (
           <col
             key={`${name}-${i}`}
-            style={{ width: rem(rems[i]) }}
+            style={{ width: fill && name === fill.column ? plus(rems[i]) : rem(rems[i]) }}
             data-fill-gain={fill && name === fill.column ? rems[i] - columnRem(name) : undefined}
             data-width-stored={stored[name] !== undefined && name !== fill?.column ? "" : undefined}
           />

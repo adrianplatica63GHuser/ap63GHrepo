@@ -363,8 +363,36 @@ export function panelRem(inner: number): number {
  * a 1920-px one 12. Every count fixed in code was re-pinned to the count nearest the width it had (3 → 4, 476 → 524 px;
  * 4 → 5, 640 → 659; 5 → 6, 804 → 794; 6 → 7, 968 → 929; 10 → 12, 1624 → 1604; 2 stays 2, 312 → 254).
  */
-export const UNIT_REM = 7.4375;
+/**
+ * Slice 41.16 — THE UNIT IS SET ON „SETĂRI" (Adrian, 2026-10-31: „I would like to have the ability to set the size of
+ * this unit on the Settings page. Dynamically, all the tiles will adjust to the new unit size"). 119 px until changed,
+ * whole px from 80 to 200, kept per browser (`ga40-width-unit`, src/lib/ui/width-unit.ts).
+ *
+ * The live unit is the CSS variable `--unit` on <html>, and every width DRAWN in units is a CSS expression of it
+ * (`atLeastUnitsCss`), so a new unit reaches every tile with no reload — the server draws the first byte with this
+ * browser's unit, from the cookie, as it draws the theme (40.19), and nothing has to re-render.
+ *
+ * The NUMBERS stay at the default: `UNIT_REM`, `unitsRem`, `unitsFor`, `unitsInnerRem` and every count built from them
+ * are the 119-px layout, and a drawn width is THE FEWEST LIVE UNITS AT LEAST THAT WIDE (Ask first 3). So at 119 every
+ * tile is exactly what it was, and on any other unit nothing is narrower than it is today — a row packed against the
+ * 119-px inner width still fits. A count worked out from a panel's fixed rows draws its rows' width instead
+ * (`PANEL_MIN_REM`), so it is recomputed on the new unit rather than held at its 119-px width.
+ */
+export const DEFAULT_UNIT_PX = 119;
+export const UNIT_PX_MIN = 80;
+export const UNIT_PX_MAX = 200;
+export const UNIT_REM = DEFAULT_UNIT_PX / 16; // 7.4375 — the default; the live unit is `UNIT_CSS`
 export const UNIT_GAP_REM = PANEL_GAP_REM;
+/** The live unit: the CSS variable on <html>, the default where nothing set it. */
+export const UNIT_VAR = "--unit";
+export const UNIT_CSS = `var(${UNIT_VAR}, ${UNIT_REM}rem)`;
+/**
+ * A unit tile's inner width, set on the tile beside its width (`atLeastStyle`) so that what fills the tile — a TILE
+ * box, Note, a list tile's table — follows the width it is drawn at (`tileInner`), not the 119-px number.
+ */
+export const TILE_INNER_VAR = "--tile-inner";
+/** A gray tile's frame: its p-3 and its 1-px border, both sides — `unitsRem(n) − unitsInnerRem(n)`. */
+export const TILE_FRAME_REM = 2 * PANEL_PADDING_REM + 2 * PANEL_BORDER_REM;
 
 /** `n` units wide: the units and the gaps between them. */
 export function unitsRem(n: number): number {
@@ -383,13 +411,80 @@ export function unitsInnerRem(n: number): number {
   return unitsRem(n) - 2 * PANEL_PADDING_REM - 2 * PANEL_BORDER_REM;
 }
 
+/**
+ * Slice 41.16: the fewest live units at least `minRem` wide, and the gaps between them — `unitsFor` in CSS. At the
+ * default unit `atLeastUnitsCss(unitsRem(n))` is exactly `n` units (every number here is a sixteenth of a rem, exact in
+ * binary, so `round()` lands on the multiple and not past it). `round()` is Chrome 125+, as `unitRowStyle` already needs.
+ */
+export function atLeastUnitsCss(minRem: number): string {
+  const gap = rem(UNIT_GAP_REM);
+  return `calc(round(up, ${rem(minRem + UNIT_GAP_REM)}, ${UNIT_CSS} + ${gap}) - ${gap})`;
+}
+
+/** `n` units as drawn: the fewest live units at least as wide as `n` units are on 119 px. */
+export function unitsCss(n: number): string {
+  return atLeastUnitsCss(unitsRem(n));
+}
+
+/** Inside a gray tile drawn `outer` wide: less its padding and border. */
+export function tileInnerCss(outer: string): string {
+  return `calc(${outer} - ${rem(TILE_FRAME_REM)})`;
+}
+
+/** A tile at least `minRem` wide, in whole live units, carrying its inner width for what fills it. */
+export function atLeastStyle(minRem: number): CSSProperties {
+  const width = atLeastUnitsCss(minRem);
+  return { width, [TILE_INNER_VAR]: tileInnerCss(width) } as CSSProperties;
+}
+
 export function unitStyle(n: number): CSSProperties {
-  return { width: rem(unitsRem(n)) };
+  return atLeastStyle(unitsRem(n));
+}
+
+/** What fills the tile it stands in: that tile's inner width as drawn, `fallbackRem` outside a unit tile. */
+export function tileInner(fallbackRem: number): string {
+  return `var(${TILE_INNER_VAR}, ${rem(fallbackRem)})`;
+}
+
+/**
+ * How much wider than `units` units on 119 px the tile around is drawn — 0 at the default unit. A list tile's table and
+ * its fill column add it (column-resize.tsx), so the table keeps filling its tile.
+ */
+export function tileExtraCss(units: number): string {
+  const inner = unitsInnerRem(units);
+  return `(${tileInner(inner)} - ${rem(inner)})`;
 }
 
 /** A box on a stacked panel: its own width, or the panel's whole inner width when it `fill`s it. */
-export function stackedBoxStyle(w: FieldWidth, panelInner: number): CSSProperties {
-  return { width: rem(w.fill ? panelInner : boxRem(w)) };
+export function stackedBoxStyle(w: FieldWidth, panelInner: number | string): CSSProperties {
+  return { width: w.fill ? (typeof panelInner === "string" ? panelInner : rem(panelInner)) : rem(boxRem(w)) };
+}
+
+/**
+ * Slice 41.16: the live unit in px from `--unit`'s value as `getComputedStyle` gives it — „7.4375rem", „100px" — or
+ * null when it is not a length this app writes.
+ */
+export function unitPxOf(value: string | null | undefined, remPx = 16): number | null {
+  const m = /^\s*([0-9]*\.?[0-9]+)(rem|px)\s*$/.exec(value ?? "");
+  if (!m) return null;
+  const px = Number(m[1]) * (m[2] === "rem" ? remPx : 1);
+  return Number.isFinite(px) && px > 0 ? px : null;
+}
+
+/**
+ * Slice 41.16: the width an element is drawn at from its own `style.width` — a length, or `atLeastUnitsCss`'s
+ * expression worked out on `unitPx` — so the tile packing reads a tile's declared width even where `max-width` has
+ * shrunk the box (use-tile-packing.ts, `ownWidth`). Null for anything else.
+ */
+export function declaredWidthPx(width: string, unitPx: number, remPx = 16): number | null {
+  const w = width.trim();
+  if (/^[0-9.]+rem$/.test(w)) return parseFloat(w) * remPx;
+  if (/^[0-9.]+px$/.test(w)) return parseFloat(w);
+  const m = /^calc\(round\(up, ([0-9.]+)rem, var\(--unit[^)]*\) \+ ([0-9.]+)rem\) - ([0-9.]+)rem\)$/.exec(w);
+  if (!m) return null;
+  const step = unitPx + parseFloat(m[2]) * remPx;
+  const k = Math.ceil((parseFloat(m[1]) * remPx) / step - 1e-6);
+  return k * step - parseFloat(m[3]) * remPx;
 }
 
 /** A table on a list tile fills the tile inside its frame (the frame's 1-px border on each side). */
@@ -588,7 +683,7 @@ export const IDENTITY_DOCUMENT = {
  * holds it at no less than 36rem (576 px, the arithmetic's figure).
  */
 export const PAGES_PANEL_REM = unitsRem(5); // 40.98: 5 units, 659 px — „5 units is the closest match" to the 640 it was (unitsRem(4), #37.31)
-export const PAGES_PANEL_STYLE: CSSProperties = { width: rem(PAGES_PANEL_REM) };
+export const PAGES_PANEL_STYLE: CSSProperties = unitStyle(5); // 41.16: in live units, at least 659 px
 
 /**
  * Slice 41.11: the log form's „Descriere" — the log card's whole width inside, growing with its text. The card stands
@@ -596,6 +691,8 @@ export const PAGES_PANEL_STYLE: CSSProperties = { width: rem(PAGES_PANEL_REM) };
  * and 1-px border a side — 607 px.
  */
 export const LOG_DESCRIPTION_REM = unitsInnerRem(5) - 2 * 0.75 - 2 / 16;
+/** 41.16: the same, as drawn — the tile's inner width on the live unit, less the card's padding and border. */
+export const LOG_DESCRIPTION_WIDTH = `calc(${tileInner(unitsInnerRem(5))} - ${rem(2 * 0.75 + 2 / 16)})`;
 
 /**
  * Slice #37.89: „Interacțiuni" on the two person forms is as large as a
@@ -864,13 +961,17 @@ export const GRAY_PANEL_MIN_UNITS = 3;
  */
 export const TWO_UNIT_PANEL_UNITS = 2;
 
-function panelUnitsOf<R extends Record<string, readonly (readonly string[])[]>>(
+/**
+ * Each panel's width from its rows: its widest row, and never under 3 units on 119 px (40.98, Ask first 6: 363 px
+ * inside). 41.16: kept as a width, not a count, so a new unit recomputes the count from it (`PANEL_MIN_REM`);
+ * `unitsFor` of it is the count it always was.
+ */
+function panelMinRemOf<R extends Record<string, readonly (readonly string[])[]>>(
   rows: R,
   widths: Readonly<Record<string, FieldWidth>>,
 ): { [K in keyof R]: number } {
   return Object.fromEntries(
-    // 40.98 (Ask first 6): a gray-tile panel is at least 3 units, 363 px inside.
-    Object.entries(rows).map(([panel, r]) => [panel, Math.max(GRAY_PANEL_MIN_UNITS, unitsFor(panelRem(widestRow(r, widths))))]),
+    Object.entries(rows).map(([panel, r]) => [panel, Math.max(unitsRem(GRAY_PANEL_MIN_UNITS), panelRem(widestRow(r, widths)))]),
   ) as { [K in keyof R]: number };
 }
 
@@ -883,15 +984,20 @@ function mapUnits<T extends Record<string, number>, V>(units: T, f: (n: number) 
  * Cod poștal | Localitate and Județ | Țară, are 5 + 0.5 + 8.5 = 14rem, inside the 14.25rem 2 units hold. Was 3 (the gray
  * floor; Cod poștal | Localitate 18.5rem with Localitate L).
  */
-const ADDRESS_PANEL_UNITS = Math.max(TWO_UNIT_PANEL_UNITS, unitsFor(panelRem(widestRow(ADDRESS_ROWS, ADDRESS))));
+const ADDRESS_PANEL_MIN_REM = Math.max(unitsRem(TWO_UNIT_PANEL_UNITS), panelRem(widestRow(ADDRESS_ROWS, ADDRESS)));
+const TWO_UNIT_REM = unitsRem(TWO_UNIT_PANEL_UNITS);
 
-/** Each form panel in units, by screen. */
-export const PANEL_UNITS = {
+/**
+ * Each form panel's width in rem on 119 px, by screen (41.16): the width its rows need — or, for a count pinned by
+ * hand, the width that count has on 119 px. `PANEL_UNITS` is the count of each, and the panel is DRAWN at the fewest
+ * live units at least this wide (`PANEL_UNIT_STYLE`).
+ */
+export const PANEL_MIN_REM = {
   // 41.05: „Contact" 2 units (TWO_UNIT_PANEL_UNITS), its phones one to a row and its e-mails the panel's width.
-  naturalPerson: { ...panelUnitsOf(SCREEN_ROWS.naturalPerson, NATURAL_PERSON), contact: TWO_UNIT_PANEL_UNITS, address: ADDRESS_PANEL_UNITS },
+  naturalPerson: { ...panelMinRemOf(SCREEN_ROWS.naturalPerson, NATURAL_PERSON), contact: TWO_UNIT_REM, address: ADDRESS_PANEL_MIN_REM },
   //  identity 3 — Poreclă | Tip and ID | CUI | Nr. Reg. Com., both 26.5rem; contactPersons 2 — the XL box, 17rem.
   // 41.05: „Reprezentanți și contact" 2 units, the e-mail and the contact persons the panel's width.
-  judicialPerson: { ...panelUnitsOf(SCREEN_ROWS.judicialPerson, JUDICIAL_PERSON), contactPersons: TWO_UNIT_PANEL_UNITS, address: ADDRESS_PANEL_UNITS },
+  judicialPerson: { ...panelMinRemOf(SCREEN_ROWS.judicialPerson, JUDICIAL_PERSON), contactPersons: TWO_UNIT_REM, address: ADDRESS_PANEL_MIN_REM },
   //  cadastral 3 — Cod | Nr. tarla / sola | Nr. parcelă, 26.5rem; address 3 — Cod poștal | Localitate, 18.5rem (40.80).
   //  corners 3 (#37.77): the four fixed columns are 19rem; 3 units leave the actions column
   //  about 9rem (144 px, 120 inside its padding), and a row's four buttons — „Mută mai sus",
@@ -904,17 +1010,17 @@ export const PANEL_UNITS = {
   //  40.90: cadastral held at 3 — Categorie de folosință and Tip proprietate went L → M, so its widest row is now
   //  17.5rem and would fit 2 units, but Adrian left Note at the tile's 450 px and every other field as it was.
   property: {
-    ...panelUnitsOf(SCREEN_ROWS.property, { ...PROPERTY, ...PROPERTY_ADDRESS }),
+    ...panelMinRemOf(SCREEN_ROWS.property, { ...PROPERTY, ...PROPERTY_ADDRESS }),
     // 40.98 (Adrian): Colțuri „needs 4" — its four row buttons would wrap in 3 units of 119 px — and Hartă and Street
     // View „should go to 4 to stay beside the 4-unit cadastral panel"; Date cadastrale 4, its Cod | Nr. tarla / sola |
     // Nr. parcelă row (26.5rem, 424 px) past the 363 px inside 3.
-    cadastral: 4,
-    corners: 4,
-    map: 4,
-    streetView: 4,
+    cadastral: unitsRem(4),
+    corners: unitsRem(4),
+    map: unitsRem(4),
+    streetView: unitsRem(4),
     // 41.05: the address 2 units, as every address tile — „Preia din Street View" goes under its box when it does not
     // fit beside it.
-    address: TWO_UNIT_PANEL_UNITS,
+    address: TWO_UNIT_REM,
   },
   //  general 3 — held at 3 since 40.88: Tip document and Emitent went XXL → XL, and the rows alone
   //  would now fit 2 units (Nr. document | Data, 17.5rem), but Adrian marked Etichetă scurtă,
@@ -924,11 +1030,19 @@ export const PANEL_UNITS = {
   //  pages 5 — PAGES_PANEL_REM is exactly unitsRem(5) (rule 20; 4 of 148 px until 40.98). (succession 3 went with the
   //  certificate's own „Părți" panel in #39.48.)
   document: {
-    ...panelUnitsOf(SCREEN_ROWS.document, DOCUMENT),
-    general: 3,
-    fees: 3,
-    pages: 5, // 40.98: PAGES_PANEL_REM is unitsRem(5)
+    ...panelMinRemOf(SCREEN_ROWS.document, DOCUMENT),
+    general: unitsRem(3),
+    fees: unitsRem(3),
+    pages: PAGES_PANEL_REM, // 40.98: unitsRem(5)
   },
+} as const;
+
+/** Each form panel in units, by screen — on 119 px; the drawn count follows the live unit (41.16). */
+export const PANEL_UNITS = {
+  naturalPerson: mapUnits(PANEL_MIN_REM.naturalPerson, unitsFor),
+  judicialPerson: mapUnits(PANEL_MIN_REM.judicialPerson, unitsFor),
+  property: mapUnits(PANEL_MIN_REM.property, unitsFor),
+  document: mapUnits(PANEL_MIN_REM.document, unitsFor),
 } as const;
 
 /** Each panel's inner width — whole units, so at least its widest row. */
@@ -941,15 +1055,15 @@ export const PANEL_UNIT_INNER_REM = {
 
 /** Each panel's style — whole units, not `PANEL_STYLE`'s 32rem. */
 export const PANEL_UNIT_STYLE = {
-  naturalPerson: mapUnits(PANEL_UNITS.naturalPerson, unitStyle),
-  judicialPerson: mapUnits(PANEL_UNITS.judicialPerson, unitStyle),
-  property: mapUnits(PANEL_UNITS.property, unitStyle),
-  document: mapUnits(PANEL_UNITS.document, unitStyle),
+  naturalPerson: mapUnits(PANEL_MIN_REM.naturalPerson, atLeastStyle),
+  judicialPerson: mapUnits(PANEL_MIN_REM.judicialPerson, atLeastStyle),
+  property: mapUnits(PANEL_MIN_REM.property, atLeastStyle),
+  document: mapUnits(PANEL_MIN_REM.document, atLeastStyle),
 } as const;
 
 /** The mini-map and Street View boxes: their tile's whole inner width, 22rem tall (rule 20). */
 export const MAP_BOX_HEIGHT_REM = 22;
-export const MAP_BOX_STYLE: CSSProperties = { width: rem(PANEL_UNIT_INNER_REM.property.map), height: rem(MAP_BOX_HEIGHT_REM) };
+export const MAP_BOX_STYLE: CSSProperties = { width: tileInner(PANEL_UNIT_INNER_REM.property.map), height: rem(MAP_BOX_HEIGHT_REM) };
 
 /**
  * The list tiles in units (#37.27). Rule 17: the same list is the same size on
@@ -1130,14 +1244,10 @@ function packAt(items: readonly PackItem[], units: number): { units: number; row
  * bar is wider than the tiles.
  */
 export function unitRowStyle(screen: Screen): CSSProperties {
-  const step = UNIT_REM + UNIT_GAP_REM;
-  const widest = unitsRem(Math.max(...Object.values(PANEL_UNITS[screen]), ...Object.values(LIST_UNITS[screen])));
   // Slice 40.69: on a narrow window never wider than the window — `--row-cap` is 100% below 1024 px and no cap above
   // it (globals.css): narrower than the widest tile, the tiles stand in one column and shrink to it. At 1024 px and
-  // wider the row is what it was.
-  return {
-    width: `min(var(--row-cap), max(${rem(widest)}, calc(round(down, 100% + ${rem(UNIT_GAP_REM)}, ${rem(step)}) - ${rem(UNIT_GAP_REM)})))`,
-  };
+  // wider the row is what it was. 41.16: the same rule as `screenRowStyle`, on the live unit.
+  return screenRowStyle(Math.max(...Object.values(PANEL_UNITS[screen]), ...Object.values(LIST_UNITS[screen])));
 }
 
 /**
@@ -1235,7 +1345,8 @@ export const ID_CARD_INSTITUTION = { step: "XL", kind: "select", fill: true } as
  */
 // 40.98: the two panels' own units (3 + 4 on the 119-px unit: Carte de identitate's first row is 23.75rem), not a fixed 6.
 export const ID_CARD_DIALOG_CARD_STYLE: CSSProperties = {
-  maxWidth: rem(unitsRem(PANEL_UNITS.naturalPerson.identity + PANEL_UNITS.naturalPerson.idCard) + 2 * 1.5 + 1.5),
+  // 41.16: the two panels as drawn on the live unit, the gap between them, the card's padding and its gap.
+  maxWidth: `calc(${unitsCss(PANEL_UNITS.naturalPerson.identity)} + ${unitsCss(PANEL_UNITS.naturalPerson.idCard)} + ${rem(UNIT_GAP_REM + 2 * 1.5 + 1.5)})`,
 };
 
 // ---- a Previzualizare tile, on the unit, in its screen's rows (#37.33) ------------------
@@ -1785,7 +1896,7 @@ export function stepGridStyle(step: Step, columns: number, gapRem = 0.75): CSSPr
 
 /** The calculation's preview map: 6 width units (#37.35, rule 20; two panels before), as tall as it was (420 px). */
 export const CALC_MAP_UNITS = 7; // 40.98: 929 px, the nearest to the 968 it was at 6
-export const CALC_MAP_STYLE: CSSProperties = { width: rem(unitsRem(CALC_MAP_UNITS)), height: rem(26.25) };
+export const CALC_MAP_STYLE: CSSProperties = { width: unitsCss(CALC_MAP_UNITS), height: rem(26.25) };
 
 /** The list of screens and hints beside the help editor (18rem before; XL now). */
 export const HELP_NAV_STYLE: CSSProperties = { width: rem(SCALE.XL) };
@@ -1806,6 +1917,7 @@ export const SCREEN = {
   memberSearch: { step: "XXL", kind: "input" }, //     the search above the candidates
   // Setări
   timeFrameDays: { step: "S", kind: "input" }, // 1–3650, with the spinner (w-20 before)
+  widthUnitPx: { step: "S", kind: "input" }, // 41.16: the width unit, 80–200 px, with the spinner
   // Setări → Costuri: an amount entered from a bill (Slice #39.17)
   costDate: { step: "M", kind: "input" }, // a period's first or last day
   costAmount: { step: "M", kind: "input" }, // up to a million, two decimals
@@ -1889,12 +2001,13 @@ export function screenPanel(name: string, wide: boolean | number = false) {
  * screens are the first; #37.35 and #37.36 use the same form.
  */
 export function screenRowStyle(widestUnits: number): CSSProperties {
-  const step = UNIT_REM + UNIT_GAP_REM;
+  const gap = rem(UNIT_GAP_REM);
   // Slice 40.69: on a narrow window never wider than the window (`--row-cap`, globals.css) — the dashboard's sections
   // go to one column at the same point. At 1024 px and wider a row still keeps its widest tile and the page scrolls
-  // sideways (#37.35: „Utilizatori"'s „Istoric" is 9 units at 1366).
+  // sideways (#37.35: „Utilizatori"'s „Istoric" is 9 units at 1366). 41.16: on the live unit — whole units of
+  // `--unit`, never fewer than the widest tile as drawn.
   return {
-    width: `min(var(--row-cap), max(${rem(unitsRem(widestUnits))}, calc(round(down, 100% + ${rem(UNIT_GAP_REM)}, ${rem(step)}) - ${rem(UNIT_GAP_REM)})))`,
+    width: `min(var(--row-cap), max(${unitsCss(widestUnits)}, calc(round(down, 100% + ${gap}, ${UNIT_CSS} + ${gap}) - ${gap})))`,
   };
 }
 
@@ -2007,7 +2120,7 @@ export function dialogUnits(innerRem: number, paddingRem: number): number {
 
 /** A card of `units`, never wider than the window (it sits `inset-x-4` over the page). */
 export function dialogCardStyle(units: number): CSSProperties {
-  return { maxWidth: rem(unitsRem(units)) };
+  return { maxWidth: unitsCss(units) };
 }
 
 /** A table's columns, summed: what `columnsStyle` gives as a width, as a number. */

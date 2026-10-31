@@ -30,6 +30,7 @@ import { ALWAYS_SHOWN_FIELDS,
   npRowStyle,
   stackedBoxStyle,
   type FieldWidth,
+  tileInner,
 } from "@/lib/ui/field-widths";
 import { AddressBlock, AddressLine } from "@/components/address/address-block";
 import { refusalCode, safeMutate } from "@/lib/api/safe-mutate";
@@ -1108,7 +1109,7 @@ export function NaturalPersonForm({
           {/* Slice #39.70 — „Relația cu firma": several at once, saved with the person, never versioned. */}
           <RelationshipsField
             label={t("fields.relationships")}
-            style={stackedBoxStyle(NP.relationships, NP_PANEL_INNER_REM.identity)}
+            style={stackedBoxStyle(NP.relationships, tileInner(NP_PANEL_INNER_REM.identity))}
             options={relationshipOptions}
             value={relationshipIds}
             onChange={setRelationshipIds}
@@ -1595,7 +1596,8 @@ function Field({ label, name, type = "text", register, error, bubble, highlight,
   // box would be NAMED by the sentence as well as described by it (#37.50).
   const labelId = useId();
   const labelledBy = bubble ? labelId : undefined;
-  const box = stackedBoxStyle(width, fillRem ?? boxRem(width));
+  // 41.16: a box that fills its tile follows the tile's width as drawn on the live unit (`tileInner`).
+  const box = stackedBoxStyle(width, fillRem !== undefined ? tileInner(fillRem) : boxRem(width));
   // Slice 40.72: the read view — the value as text, at the box's width.
   if (read.reading) {
     const text = readText(read.value, type === "date" ? "date" : "text");

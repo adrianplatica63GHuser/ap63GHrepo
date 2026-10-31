@@ -52,7 +52,7 @@ export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCa
   "/properties/[id]":                      ["TC-PROP-02", "TC-ASSOC-02", "TC-ASSOC-04", "TC-ASSOC-05", "TC-ASSOC-06", "TC-PROP-03", "TC-TAG-01", "TC-ASSOC-08", "TC-PROP-04", "TC-CALC-01", "TC-TILES-03", "TC-MAP-01", "TC-FOLD-01", "TC-ICON-02", "TC-ICON-03", "TC-ICON-04", "TC-ICON-07", "TC-TILES-07", "TC-SYSID-01", "TC-TILES-08", "TC-TILES-09", "TC-PROP-07", "TC-PROP-08", "TC-TILES-14", "TC-TILES-15", "TC-TILES-18", "TC-PROP-09", "TC-PROP-11", "TC-PROP-12", "TC-GRP-02", "TC-GRP-03", "TC-TILES-23", "TC-PROP-13", "TC-MAP-09", "TC-ASSOC-15"],
   // Slice #37.42: the list's icon buttons — tooltips by mouse and keyboard, an inactive one too.
   "/natural-persons":                      ["TC-PERS-01", "TC-VER-01", "TC-TILES-06", "TC-ICON-01", "TC-SYSID-01", "TC-PERS-04", "TC-TILES-11", "TC-LAYOUT-02", "TC-LAYOUT-03", "TC-LAYOUT-05", "TC-PERS-11", "TC-PERS-12", "TC-LAYOUT-07", "TC-SET-05", "TC-LAYOUT-09", "TC-LAYOUT-10"],
-  "/natural-persons/new":                  ["TC-PERS-01", "TC-ASSOC-11", "TC-ASSOC-12", "TC-STAMP-01", "TC-VER-01", "TC-PERS-08"],
+  "/natural-persons/new":                  ["TC-PERS-01", "TC-ASSOC-11", "TC-ASSOC-12", "TC-STAMP-01", "TC-VER-01", "TC-PERS-08", "TC-SET-06"],
   "/natural-persons/[id]":                 ["TC-PERS-01", "TC-ASSOC-03", "TC-ASSOC-04", "TC-ASSOC-09", "TC-ASSOC-11", "TC-ASSOC-12", "TC-STAMP-01", "TC-VER-01", "TC-TILES-01", "TC-FOLD-01", "TC-ICON-07", "TC-PERS-03", "TC-SYSID-01", "TC-TILES-08", "TC-TILES-09", "TC-PERS-05", "TC-TILES-10", "TC-TILES-12", "TC-TILES-13", "TC-TILES-16", "TC-TILES-17", "TC-TILES-18", "TC-PERS-07", "TC-TILES-20", "TC-TILES-21", "TC-TILES-22", "TC-SET-03", "TC-TILES-23", "TC-INT-06", "TC-INHER-02", "TC-PERS-11", "TC-INT-07", "TC-TILES-24", "TC-TILES-25", "TC-ASSOC-15", "TC-PERS-15", "TC-PERS-16"],
   "/documents":                            ["TC-DOC-01", "TC-VER-02", "TC-TILES-06", "TC-SYSID-01", "TC-DOC-08", "TC-TILES-11", "TC-LAYOUT-02", "TC-LAYOUT-03", "TC-DOC-15", "TC-DOC-16", "TC-DOC-21", "TC-LAYOUT-05", "TC-DOC-23", "TC-DOC-27", "TC-LAYOUT-06", "TC-LAYOUT-07", "TC-LAYOUT-08", "TC-LAYOUT-09", "TC-LAYOUT-10"],
   // Slice #38.84: „Interacțiuni".
@@ -91,7 +91,7 @@ export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCa
   // Slice #37.08 — the last four that need a cleanup rule, each written into
   // its case file before the run.
   "/admin/users":                          ["TC-USERS-01", "TC-LAYOUT-01", "TC-AUTH-02"],
-  "/admin/settings":                       ["TC-SET-01", "TC-LAYOUT-01", "TC-NAV-01", "TC-SET-02", "TC-SET-03", "TC-SET-04", "TC-SET-05"],
+  "/admin/settings":                       ["TC-SET-01", "TC-LAYOUT-01", "TC-NAV-01", "TC-SET-02", "TC-SET-03", "TC-SET-04", "TC-SET-05", "TC-SET-06"],
   "/reports":                              ["TC-NAV-01"],
   "/manual":                               ["TC-HELP-02", "TC-NAV-01"], // Slice #39.37
   "/skills-map":                           ["TC-SKILL-01", "TC-NAV-01", "TC-SKILL-03"], // Slices #39.42, #39.50
@@ -165,6 +165,10 @@ export const PROMOTED_WITHOUT_DRIVING: Readonly<Record<CatalogueCaseId, string>>
     "Slice 40.14: the case asserts that a list's scroll bar never blinks after a resize — one or two paints, 16–33 ms, " +
     "which an eye sees and no reading by hand afterwards can catch. Its spec reads the frame after every paint for a " +
     "second; that run is its only possible proof.",
+  "TC-SET-06":
+    "Slice 41.16: the slice's header asks for this step in the slice itself — the width unit set on „Setări” and read " +
+    "back on a person's form, measured in px. A hand run reads the same numbers the spec reads; its green run on the " +
+    "test runner is the case's proof.",
   "TC-ASSOC-15":
     "Slice 40.16: the case reads „Legături” on a person's, a company's, a property's and a document's form; three of them " +
     "draw a Google map, and October 2026's maps ceiling is spent. The spec blocks the maps and reads the same tile, so " +

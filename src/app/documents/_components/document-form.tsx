@@ -94,7 +94,6 @@ import { ALWAYS_SHOWN_FIELDS,
   boxRem,
   boxStyle,
   packFieldRows,
-  rem,
   stackedBoxStyle,
   templateFieldTakesRow,
   templateFieldWidth,
@@ -102,6 +101,7 @@ import { ALWAYS_SHOWN_FIELDS,
   unitStyle,
   unitsInnerRem,
   type FieldWidth,
+  tileInner,
 } from "@/lib/ui/field-widths";
 import { STACKED_FIELD_CLASS, STACKED_LABEL_CLASS, STACKED_ROW_CLASS } from "@/lib/ui/stacked";
 import { EMPTY_MARK, FIELD_BOX, fieldBorder } from "@/lib/ui/field-box";
@@ -2502,7 +2502,7 @@ function Section({
   if (framed) {
     const allHidden = paths !== undefined && paths.length > 0 && paths.every((p) => hidden.has(p));
     return (
-      <section data-section={panel} style={hiddenFieldStyle(allHidden, { width: rem(unitsInnerRem(units)) })} data-empty-hidden={allHidden || undefined}>
+      <section data-section={panel} style={hiddenFieldStyle(allHidden, { width: tileInner(unitsInnerRem(units)) })} data-empty-hidden={allHidden || undefined}>
         {heading}
         <div className="flex flex-col gap-2">{children}</div>
       </section>
@@ -2569,7 +2569,8 @@ function Field({
   const grows = width.kind === "grows" || width.kind === "lines";
   // Slice #37.31: the label ABOVE its box, the pair as wide as the box — or
   // the panel, for a box that fills it — and a long label wraps inside it.
-  const box = stackedBoxStyle(fillRem !== undefined ? { ...width, fill: true } : width, fillRem ?? boxRem(width));
+  // 41.16: a box that fills its tile follows the tile's width as drawn on the live unit (`tileInner`).
+  const box = stackedBoxStyle(fillRem !== undefined ? { ...width, fill: true } : width, fillRem !== undefined ? tileInner(fillRem) : boxRem(width));
   // Slice 40.75: the read view — the value as text, at the box's width.
   if (read.reading) {
     return (
@@ -2691,7 +2692,7 @@ function SelectField({
     .join(" ");
   const chosenLabel = options.find((o) => o.value === (watchValue ?? ""))?.label;
   // 40.88: a box at TILE fills its panel (`fillRem`, the panel's inner width), as a text Field does.
-  const boxCss = fillRem !== undefined ? stackedBoxStyle({ ...width, fill: true }, fillRem) : boxStyle(width);
+  const boxCss = fillRem !== undefined ? stackedBoxStyle({ ...width, fill: true }, tileInner(fillRem)) : boxStyle(width);
   // Slice 40.75: the read view — the chosen option's words; a blank choice reads as nothing.
   if (read.reading) {
     return (

@@ -187,7 +187,8 @@ describe("a look, not an edit (#38.72)", () => {
     expect(TILE).toContain('className={fills ? "flex w-full min-w-0 flex-1 flex-col" : "flex w-full min-w-0 flex-col"}');
     expect(TILE).not.toContain("export const INCURSION_MIN_REM");
     const tiles = read("src", "components", "tiles", "preview-tiles.tsx");
-    expect(tiles).toContain("export const ROW_TILES_STYLE: CSSProperties = { width: rem(PAGES_PANEL_REM) };");
+    // 41.16: 5 units as drawn on the live unit — `PAGES_PANEL_REM`, 659 px, on 119.
+    expect(tiles).toContain("export const ROW_TILES_STYLE: CSSProperties = { width: unitsCss(5) };");
     // #40.02: and, beside the list, capped at the window's bottom (`useRowTilesFit`) — it read `style={ROW_TILES_STYLE}>`.
     expect(tiles).toContain('<div ref={columnRef} data-list-row-tiles className="flex max-w-full shrink-0 flex-col gap-4 self-stretch" style={columnFit ? { ...ROW_TILES_STYLE, ...columnFit } : ROW_TILES_STYLE}>');
   });

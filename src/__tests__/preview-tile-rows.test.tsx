@@ -10,7 +10,7 @@
  */
 import { render, screen } from "@testing-library/react";
 import { PreviewTileBody } from "@/components/tiles/preview-tile-body";
-import { NATURAL_PERSON, boxRem } from "@/lib/ui/field-widths";
+import { NATURAL_PERSON, boxRem, declaredWidthPx } from "@/lib/ui/field-widths";
 
 const LABELS = { open: "Deschide", close: "Închide", readonly: "Numai citire", firstPage: "Prima pagină", noPage: "Nicio pagină" };
 
@@ -53,9 +53,9 @@ describe("a preview's fields, laid out as on the record's screen (#37.33)", () =
 
   it("is 4 units for a person, 5 for a document (40.98)", () => {
     const { container, unmount } = renderPerson("panel");
-    expect((container.querySelector("[data-preview]") as HTMLElement).style.width).toBe("32.75rem");
+    expect(declaredWidthPx((container.querySelector("[data-preview]") as HTMLElement).style.width, 119)).toBe(524); // 41.16: on the live unit
     unmount();
     const doc = renderPerson("pages");
-    expect((doc.container.querySelector("[data-preview]") as HTMLElement).style.width).toBe("41.1875rem");
+    expect(declaredWidthPx((doc.container.querySelector("[data-preview]") as HTMLElement).style.width, 119)).toBe(659);
   });
 });

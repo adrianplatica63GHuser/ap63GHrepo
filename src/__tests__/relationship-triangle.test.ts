@@ -14,7 +14,7 @@ import { DRAWING, NOTE_PULSE_MS, SIX_WIDER, triangleCardStyle } from "@/app/admi
 
 // Slice #38.77 reads the tile's width rule from the component itself; it needs no translations to do that.
 jest.mock("next-intl", () => ({ useTranslations: () => (key: string) => key }));
-import { unitsRem } from "@/lib/ui/field-widths";
+import { unitsCss, unitsRem } from "@/lib/ui/field-widths";
 
 const read = (rel: string) => fs.readFileSync(path.join(process.cwd(), rel), "utf8");
 const SCHEMA = read("src/db/supabase_schema_full.sql");
@@ -329,7 +329,9 @@ describe("„Vezi: …” on the name line, the six's column 20 % wider (Slice #
     const units = 7;
     const card = unitsRem(units);
     const drawingColumn = DRAWING.w / 16 + 2.5; // the drawing and its px-5 either side
-    const tile = parseFloat(String(triangleCardStyle(units).maxWidth));
+    // 41.16: the card as drawn on the live unit — 1.2 × the card, less a fifth of the drawing's column.
+    expect(String(triangleCardStyle(units).maxWidth)).toBe(`calc(1.2 * ${unitsCss(units)} - ${0.2 * drawingColumn}rem)`);
+    const tile = 1.2 * card - 0.2 * drawingColumn;
     expect(tile - drawingColumn).toBeCloseTo(1.2 * (card - drawingColumn), 6);
     expect(TILE).toContain("style={triangleCardStyle(cardUnits)}");
     expect(TILE).not.toContain("style={dialogCardStyle(");

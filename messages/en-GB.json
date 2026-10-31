@@ -4286,6 +4286,16 @@
         "en-GB": "English",
         "ro-RO": "Română"
       },
+      "widthUnit": {
+        "title": "Width unit",
+        "intro": "Every tile is a whole number of units wide. The fields keep their size: with a smaller unit a tile takes more units, with a larger one fewer, but never narrower than what it holds. The unit is kept by this browser.",
+        "label": "Unit",
+        "range": "A whole number of pixels, from {min} to {max}.",
+        "save": "Save",
+        "reset": "Back to {px} px",
+        "saved": "Saved: {px} px. This screen has been redrawn; the others take the new unit the next time they are shown.",
+        "invalid": "The unit must be a whole number from {min} to {max}."
+      },
       "tileDefaults": {
         "title": "My defaults",
         "intro": "The parts “Default” shows on an object's screen, for each kind of object. The ticks set on a screen stay the browser's; “Default” returns to what you save here.",

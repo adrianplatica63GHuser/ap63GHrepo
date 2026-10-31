@@ -16,6 +16,7 @@ import {
   stackedBoxStyle,
   type FieldWidth,
   type PreviewWidth,
+  tileInner,
 } from "@/lib/ui/field-widths";
 import { STACKED_FIELD_CLASS, STACKED_ROW_CLASS } from "@/lib/ui/stacked";
 import { RotatedImage } from "@/components/documents/rotated-image";
@@ -201,7 +202,7 @@ export function PreviewTileBody({
         {rowsOf(fields).map((row) => (
           <div key={row.map((f) => f.label).join("|")} className={STACKED_ROW_CLASS}>
             {row.map((f) => (
-              <div key={f.label} className={STACKED_FIELD_CLASS} style={stackedBoxStyle(f.width ?? PREVIEW_FILL, PREVIEW_INNER_REM[width])}>
+              <div key={f.label} className={STACKED_FIELD_CLASS} style={stackedBoxStyle(f.width ?? PREVIEW_FILL, tileInner(PREVIEW_INNER_REM[width]))}>
                 <span className={PREVIEW_LABEL_CLASS}>{f.label}</span>
                 <span className="break-words text-ink dark:text-zinc-100" data-preview-value>{f.value ?? "—"}</span>
               </div>

@@ -4286,6 +4286,16 @@
         "en-GB": "English",
         "ro-RO": "Română"
       },
+      "widthUnit": {
+        "title": "Unitatea de lățime",
+        "intro": "Lățimea fiecărui panou este un număr întreg de unități. Câmpurile își păstrează mărimea: cu o unitate mai mică un panou ia mai multe unități, cu una mai mare mai puține, dar niciodată nu e mai îngust decât ce conține. Unitatea rămâne a acestui browser.",
+        "label": "Unitatea",
+        "range": "Un număr întreg de pixeli, între {min} și {max}.",
+        "save": "Salvează",
+        "reset": "Revino la {px} px",
+        "saved": "Salvat: {px} px. Ecranul acesta s-a redesenat; celelalte iau unitatea nouă când sunt afișate din nou.",
+        "invalid": "Unitatea trebuie să fie un număr întreg între {min} și {max}."
+      },
       "tileDefaults": {
         "title": "Implicitele mele",
         "intro": "Părțile pe care „Implicit” le arată pe ecranul unui obiect, pentru fiecare fel de obiect. Bifele puse pe un ecran rămân ale browserului; „Implicit” revine la ce salvați aici.",
