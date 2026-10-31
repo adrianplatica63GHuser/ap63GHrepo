@@ -35,7 +35,9 @@ export function usePageBarSlotRef(): ((el: HTMLElement | null) => void) | undefi
 export function PageBarControls({ children }: { children: ReactNode }) {
   const ctx = useContext(PageBarSlotContext);
   const controls = (
-    <div className={`${ctx ? "" : "ml-auto "}flex shrink-0 items-center gap-3`} data-record-controls="">
+    // 41.22: in the bar it may shrink — its floor is its min-content, which leaves out only the system ID (cut to its
+    // „…" once the crumbs have given way). In a header (no shell) it keeps its size, as before.
+    <div className={`${ctx ? "" : "ml-auto shrink-0 "}flex items-center gap-3`} data-record-controls="">
       {children}
     </div>
   );

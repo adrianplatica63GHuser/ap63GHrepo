@@ -122,9 +122,11 @@ export function JudicialPersonDetailTiles({
         {/* Slice 40.57: „Panouri" right after the version controls; its panel is where the tile bar stood.
             Slice 40.69: in the flow, at the right — under a long name on a narrow window, never over it. */}
         {/* Slice 41.08: both in the page bar, left of „?" — portalled there (`PageBarControls`); the name stays here. */}
-        {/* Slice 41.22: the form portals the system ID here, then the versions pill — the bar's own gap between them. */}
+        {/* Slice 41.22: the form portals the system ID here, then the versions pill — the bar's own gap between them. The
+            ID's column is minmax(0,auto): on a narrow window, once the crumbs have given way, the ID is cut to its „…”
+            and the pill keeps its size; the slot hides when empty (a new record). */}
         <PageBarControls>
-          <div ref={setNavSlot} data-version-slot="" className="flex items-center gap-3" />
+          <div ref={setNavSlot} data-version-slot="" className="grid grid-cols-[minmax(0,auto)_auto] items-center gap-3 empty:hidden" />
           <TilesMenuButton menu={tilesMenu} />
         </PageBarControls>
       </header>

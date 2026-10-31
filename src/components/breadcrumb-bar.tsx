@@ -528,8 +528,12 @@ function BreadcrumbBarInner() {
         has no registered help screen, or when that screen has no content.
       */}
       {/* Slice 41.08: the slot, left of „?" — empty on a screen with no record (Ask first 5). It takes the ml-auto that
-          pushed „?" right, so an empty slot changes nothing. */}
-      <span ref={slotRef} className="ml-auto pl-4 flex shrink-0 items-center" data-page-bar-slot="" />
+          pushed „?" right, so an empty slot changes nothing.
+          Slice 41.22: it shrinks too, but only after the crumbs (a factor a million times smaller than theirs, so they
+          take the whole of the shortfall while they can) and only as far as its own min-content — which leaves out the
+          system ID (its grid column is minmax(0,auto), `*-detail-tiles.tsx`). So at 700 px the ID is cut to its „…”
+          and nothing scrolls sideways; the pill, „Panouri" and „?" keep their size. */}
+      <span ref={slotRef} className="ml-auto pl-4 flex shrink-[0.00001] items-center" data-page-bar-slot="" />
       <span className="pl-4 shrink-0" data-page-bar-help="">
         <ScreenHelpButton />
       </span>
