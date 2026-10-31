@@ -32,6 +32,7 @@
  */
 import { useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { useTilePacking } from "./use-tile-packing";
+import { useTileWidthWords } from "./use-tile-width-words";
 import { PANEL_GAP } from "@/lib/ui/field-widths";
 
 /** What a form needs to place a right-hand tile in its slot. */
@@ -95,7 +96,8 @@ export function TileAreas({
   // longer give the area its min-content width, so the hook gives it its widest box's. 40.32: the right-hand tiles
   // are boxes of it too.
   const areaRef = useRef<HTMLDivElement>(null);
-  useTilePacking(areaRef, { fitWidest: true, entity, right });
+  const words = useTileWidthWords();
+  useTilePacking(areaRef, { fitWidest: true, entity, right, words });
   return (
     <div className="flex flex-wrap items-start" style={{ gap: PANEL_GAP }} data-tile-row>
       <div ref={areaRef} className="flex flex-wrap items-start" style={LEFT_AREA_STYLE} data-tile-area="left">

@@ -109,7 +109,6 @@
  * free space a tile may be dragged to. Without it, the flow takes the row.
  */
 import { useLayoutEffect, useRef, type RefObject } from "react";
-import { useTranslations } from "next-intl";
 import { TILE_FRAME_REM, TILE_INNER_VAR, UNIT_GAP_REM, declaredWidthPx, exactUnitsCss, rem } from "@/lib/ui/field-widths";
 import { liveUnitPx } from "@/lib/ui/width-unit";
 import { columnsIn, fitsBeside, grow, packedHeight, unitsOf, type PackBox, type Placed, ONE_COLUMN_BELOW_UNITS, oneColumn } from "@/lib/ui/tile-packing";
@@ -139,6 +138,7 @@ import {
 } from "@/lib/ui/tile-positions";
 import { loadMakeRoomDelay, makeRoomDelayMs } from "./make-room-delay";
 import { isDragSurface } from "./tile-drag-surface";
+import { PLAIN_TILE_WIDTH_WORDS, type TileWidthWords } from "./use-tile-width-words";
 import { TILE_DIAGRAM_DRAG, publishPlaced, type DiagramDrag } from "./tiles-placed";
 
 /** How long after a layout the row still settles afresh on a height change, unless the user acts first. */
@@ -318,11 +318,6 @@ export const TILE_HANDLE_CLASS = "group absolute z-[25] flex cursor-col-resize j
 export const TILE_HANDLE_LINE_CLASS =
   "pointer-events-none h-full w-0.5 rounded-full bg-transparent transition-colors group-hover:bg-ink/40 group-focus-visible:bg-cta group-data-[resizing]:bg-cta";
 
-interface TileWidthWords {
-  handle: (title: string) => string;
-  units: (count: number) => string;
-}
-
 /**
  * Packs the boxes of the row `ref` points at, and lets the user drag them.
  * `fitWidest`: give the row a min-width of its widest box — for #37.56's left
@@ -340,15 +335,16 @@ export function useTilePacking(
     entity,
     right,
     flowUnits,
-  }: { fitWidest?: boolean; entity?: string; right?: readonly string[]; flowUnits?: number } = {},
+    words: wordsGiven,
+  }: { fitWidest?: boolean; entity?: string; right?: readonly string[]; flowUnits?: number; words?: TileWidthWords } = {},
 ): void {
   // A stable dependency: the screens pass a fresh array on every render.
   const rightKey = (right ?? []).join("|");
-  // 41.17: the width handle's words, in the screen's language, for the effect below — which outlives any one render.
-  const t = useTranslations("shared.tileWidth");
-  const words = useRef<TileWidthWords>({ handle: (title) => title, units: (count) => String(count) });
+  // 41.17: the width handle's words, in the screen's language (`useTileWidthWords`, handed over by the screen), for
+  // the effect below — which outlives any one render.
+  const words = useRef<TileWidthWords>(PLAIN_TILE_WIDTH_WORDS);
   useLayoutEffect(() => {
-    words.current = { handle: (title) => t("handle", { title }), units: (count) => t("units", { count }) };
+    words.current = wordsGiven ?? PLAIN_TILE_WIDTH_WORDS;
   });
   useLayoutEffect(() => {
     const container = ref.current;
@@ -637,6 +633,9 @@ export function useTilePacking(
     const boxAt = (target: EventTarget | null): FoundBox | undefined =>
       target instanceof Node ? boxes.find((b) => !b.rowEnd && !b.full && b.el.contains(target)) : undefined;
 
+    /** The one place the arrangement is written: a drop, a double-click's rise, „Toate sus”, a width (41.17). */
+    const persist = () => writePlaces(key, stored);
+
     // Box `id` now stands where the user put it — and `slid`, the tiles that made room for it (39.91):
     // store the arrangement, as one — a preview's place for this visit only.
     const store = (id: string, slid: readonly string[] = []) => {
@@ -651,7 +650,7 @@ export function useTilePacking(
         for (const s of unmoved) delete next[s];
         stored = next;
         fallback = fallback.filter((f) => !lasting.includes(f));
-        writePlaces(key, stored);
+        persist();
       }
       for (const m of moved.filter((x) => !isStorable(x))) {
         const at = placed.find((p) => p.id === m);
@@ -1024,9 +1023,9 @@ export function useTilePacking(
         }
         if (h.parentElement !== container) container.appendChild(h);
         const w = resize?.box.id === p.id ? resize.px : b.el.offsetWidth;
-        h.style.left = `${p.col * (unit + gap) + w - TILE_HANDLE_PX / 2}px`;
-        h.style.top = `${p.top}px`;
-        h.style.height = `${Math.max(p.height, b.el.offsetHeight)}px`;
+        h.style.setProperty("left", `${p.col * (unit + gap) + w - TILE_HANDLE_PX / 2}px`);
+        h.style.setProperty("top", `${p.top}px`);
+        h.style.setProperty("height", `${Math.max(p.height, b.el.offsetHeight)}px`);
         h.setAttribute("aria-label", words.current.handle(titleOf(b)));
         if (resize?.box.id !== p.id) describe(h, p.units);
       }
@@ -1053,7 +1052,7 @@ export function useTilePacking(
       slide(r.slid);
       store(id, r.slid);
       stored = withStoredWidth(stored, id, units === own ? undefined : units);
-      writePlaces(key, stored);
+      persist();
       layout();
     };
 
@@ -1061,7 +1060,7 @@ export function useTilePacking(
     const toOwn = (id: string) => {
       if (stored[id]?.units === undefined) return;
       stored = withStoredWidth(stored, id, undefined);
-      writePlaces(key, stored);
+      persist();
       layout();
     };
 
@@ -1159,7 +1158,7 @@ export function useTilePacking(
       h.setAttribute("aria-orientation", "vertical");
       h.tabIndex = 0;
       h.className = TILE_HANDLE_CLASS;
-      h.style.width = `${TILE_HANDLE_PX}px`;
+      h.style.setProperty("width", `${TILE_HANDLE_PX}px`);
       const line = document.createElement("div");
       line.className = TILE_HANDLE_LINE_CLASS;
       line.setAttribute("aria-hidden", "true");

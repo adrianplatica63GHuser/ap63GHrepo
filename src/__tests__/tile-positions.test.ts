@@ -428,7 +428,10 @@ describe("every tile rises into the empty space above it (#38.16)", () => {
     expect(JSON.stringify(stored)).toBe(before);
     const src = code(read("src", "components", "tiles", "use-tile-packing.ts"));
     // In `store`, after a free drop or a double-click's rise (#38.45; #38.16's note read „in `end`, on a free drop").
+    // 41.17: and a width set by a tile's edge — all through `persist`, the one write.
     expect(src.match(/writePlaces\(key, /g)).toHaveLength(1);
+    expect(src).toContain("const persist = () => writePlaces(key, stored);");
+    expect(src.match(/persist\(\);/g)).toHaveLength(3);
   });
 
   it("the hook no longer rises a dropped tile; it lays the row out — so rises — at every fresh layout", () => {

@@ -208,8 +208,11 @@ describe("the screens", () => {
   it("the hook measures and places, and never moves an element: the DOM's order stays the reading order", () => {
     const src = code(read("src", "components", "tiles", "use-tile-packing.ts"));
     expect(src).not.toMatch(/\.(insertBefore|prepend|append|replaceChildren)\(/);
-    // #37.76: the one element it adds is the drag outline, after the boxes, and it never counts as a box.
-    expect(src.match(/\.appendChild\([^)]*\)/g) ?? []).toEqual([".appendChild(outline)"]);
+    // #37.76: the drag outline, after the boxes, never counted as a box. 41.17: and each tile's width handle (with
+    // its line), in the row after the boxes, skipped by `findBoxes` as the outline is.
+    expect(src.match(/\.appendChild\([^)]*\)/g) ?? []).toEqual([".appendChild(outline)", ".appendChild(h)", ".appendChild(line)"]);
+    expect(src).toContain("container.appendChild(h)");
+    expect(src).toContain("child.dataset.tileHandle !== undefined");
     expect(src).toContain("container.appendChild(outline)");
     expect(src).toContain("child.dataset.tileOutline !== undefined");
     expect(src).not.toContain("createPortal");

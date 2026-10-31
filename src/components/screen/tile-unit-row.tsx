@@ -16,12 +16,14 @@
  */
 import { useRef, type ReactNode } from "react";
 import { useTilePacking } from "@/components/tiles/use-tile-packing";
+import { useTileWidthWords } from "@/components/tiles/use-tile-width-words";
 import { PANEL_GAP, screenRowStyle } from "@/lib/ui/field-widths";
 import type { ScreenTiles } from "@/lib/ui/screen-tiles";
 
 export function TileUnitRow({ screen, children }: { screen: ScreenTiles; children: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
-  useTilePacking(ref, { entity: screen.entity, flowUnits: screen.flowUnits });
+  const words = useTileWidthWords();
+  useTilePacking(ref, { entity: screen.entity, flowUnits: screen.flowUnits, words });
   return (
     <div style={screenRowStyle(screen.units)}>
       <div ref={ref} className="flex flex-wrap items-start" style={{ gap: PANEL_GAP }} data-tile-row data-tile-screen={screen.entity}>
