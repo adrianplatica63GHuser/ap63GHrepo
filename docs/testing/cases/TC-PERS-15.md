@@ -11,7 +11,7 @@
 ## What this proves
 
 Since Slice 40.72 a saved natural person's form tiles read as text. Each label is small and muted above its value,
-the birth date is written with the age beside it („15.06.1985 (41 de ani)"), and „Editează" sits in each tile's
+the birth date is written with the age beside it („15.06.1985 (41 ani)"), and „Editează" sits in each tile's
 corner. „Editează" turns only that tile into its form, outlined in blue, with „Salvează" and „Renunță" under it.
 „Salvează" saves that tile's fields and makes one version, and „Renunță" puts the tile back. One tile is open at a
 time: opening another while the open one has changes asks first (Salvează, Renunță, Anulează). Esc is „Renunță".
@@ -33,7 +33,7 @@ The window is 1366 × 900.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens the person | No box in „Identitate" or „Contact": the values as text, „Data nașterii" reading `15.06.1985 (41 de ani)` (the age today). „Editează" in each tile's corner, and no „Salvează" for the record |
+| 1 | Opens the person | No box in „Identitate" or „Contact": the values as text, „Data nașterii" reading `15.06.1985 (41 ani)` (the age today; 41.23 dropped the „de”). „Editează" in each tile's corner, and no „Salvează" for the record |
 | 2 | Presses „Editează" on „Contact" | „Contact" outlined in blue with its six boxes, the cursor in „Telefon Personal 1"; „Salvează" and „Renunță" under them. „Identitate" still reads as text |
 | 3 | Writes `021 000 0015` in „Telefon serviciu" and presses „Salvează" | „Contact" reads as text again, with the new phone; the person has one version more; only the phone changed |
 | 4 | Presses „Editează" on „Identitate", writes `Schimbat` in „Poreclă", presses „Renunță" | „Identitate" reads as text, without „Schimbat"; no new version |
