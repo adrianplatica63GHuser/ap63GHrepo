@@ -36,15 +36,18 @@ Nothing.
 | 4 | Reloads | The same width |
 | 5 | Presses „Implicit” | Its own width again |
 | 6 | Focuses the edge, presses → then Home | One unit more, the focus still on the edge; then its own width |
-| 7 | (41.18) Focuses the edge (it says the narrowest the tile can be), drags it one unit past that, and holds it | The edge stops at the narrowest, and beside it a bubble: „Panoul nu poate fi mai îngust de N unități: rândul «…» are nevoie de … px.” — or (41.20), where no row of fields stops it first and its heading does, „…: titlul «…» are nevoie de … px — «…» … px, spațiu …, «…» …, margini ….”; or, where its content fits one unit, „Un panou are cel puțin o unitate.” — read out too. Let go: the bubble goes, the tile at its narrowest |
+| 7 | (41.18) Focuses the edge (it says the narrowest the tile can be), drags it one unit past that, and holds it | The edge stops at the narrowest, and beside it a bubble (41.21): „Panoul nu poate fi mai îngust de N unități:”, then a line for every row that would not fit at that width — „«Nume | Prenume» — 306 px (încap 254)”, each needing more than the tile has — the heading's first when it does not fit, „titlul «…» — … px (încap …): «…» … px, spațiu …, «…» …, margini …”, its parts adding up; past six, „… și încă N rânduri”. The live region reads the first line and how many („2 rânduri nu încap.”). Or, where its content fits one unit, „Un panou are cel puțin o unitate.” Let go: the bubble goes, the tile at its narrowest |
 | 8 | (41.18) Drags it two units right — two past what it needs — and holds it | A bubble: „Cu 2 unități mai lat decât îi trebuie: rămâne loc gol în dreapta câmpurilor.” Let go: the width is taken, the field box the same |
-| 9 | (41.20) Opens an invented natural person, `TC-E2E-TILES-26 Popescu`, its identity filled with invented data; drags the „Identitate” tile's edge one unit past its narrowest, and holds it | The edge is named „Lățimea panoului Identitate · <cod>”. The bubble names what is on the screen — a row of fields, or „titlul «Identitate · <cod>»” with its px taken apart — and never „ID sistem”, which only a screen reader hears; nor does the live region. Let go: the tile at its narrowest. The person is removed |
+| 9 | (41.20, 41.21) Opens an invented natural person, `TC-E2E-TILES-26 Popescu`, its identity filled with invented data; drags the „Identitate” tile's edge from 3 units to 2, and holds it | The edge is named „Lățimea panoului Identitate · <cod>”. The bubble lists every line of Identitate that needs more than 254 px — the row with „Prenume” and „Nume” among them — each with its px, and the heading only if it needs more too; never „ID sistem”, which only a screen reader hears. The live region says how many. Let go: the tile at 3 units. The person is removed |
 
 ## At the end — leaving things as they were found
 
 The property is removed. The arrangement is this browser context's own.
 
 ## Notes from the runs
+
+**2026-10-31 — Slice 41.21.** Steps 7 and 9 read the list: a line a row that would not fit, each with its px and the
+px the tile has. Written from the slice's own change; not driven by hand first.
 
 **2026-10-31 — Slice 41.20.** Step 7 also accepts the heading's own sentence; step 9 added — the Identity tile of an
 invented natural person, whose heading carries the system ID corner. Its heading's parts are measured and logged.

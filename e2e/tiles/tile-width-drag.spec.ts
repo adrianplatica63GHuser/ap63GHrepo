@@ -9,9 +9,9 @@
  * refused, and says why; two units past what it needs it is advised against, and taken. The map tile is not drawn (maps are
  * blocked by default): no map, no Street View, no address look-up.
  *
- * 41.20 (step 9): on an invented natural person, the Identity tile dragged one unit past its narrowest — the refusal
- * names what is on the screen, „titlul «Identitate · …»" with its px taken apart, or a row of fields, and never the
- * screen reader's „ID sistem". The heading's parts are measured and logged, for the handover's answer.
+ * 41.20 (step 9): on an invented natural person, the Identity tile — the refusal names what is on the screen, never
+ * the screen reader's „ID sistem". 41.21: a refusal lists every line that would not fit at the asked width, each with
+ * its px and the px the tile has (`readList`); step 9 drags Identitate from 3 units to 2.
  */
 import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createNaturalPerson, createProperty, removeLeftovers, removeRecord } from "../helpers/records";
@@ -42,6 +42,41 @@ async function holdEdge(page: Page, id: string, dx: number): Promise<void> {
 }
 
 const bubble = (page: Page) => page.locator('[data-tile-width-note="bubble"]');
+const live = (page: Page) => page.locator('[data-tile-width-note="live"]');
+
+/** 41.21: „N unități" as the messages write it (2 to 19 here; a tile is at most 8 on 1920 px). */
+const unitsRo = (n: number) => (n === 1 ? "1 unitate" : n < 20 ? `${n} unități` : `${n} de unități`);
+
+/**
+ * 41.21: the refusal's list, read and checked — its first line, then a line per row that would not fit, each needing
+ * more px than the tile has: „«Prenume | Nume» — 306 px (încap 254)", or the heading's, „titlul «…» — N px (încap 254):
+ * «…» a px, spațiu g, «…» b, margini f" (its parts adding up to N). The live region: the first line and how many.
+ */
+async function readList(page: Page, units: number, have: number): Promise<{ name: string; px: number }[]> {
+  const first = `Panoul nu poate fi mai îngust de ${unitsRo(units)}:`;
+  await expect.poll(async () => (await bubble(page).textContent()) ?? "").toMatch(new RegExp(`^${first}\n`));
+  const [top, ...rest] = ((await bubble(page).textContent()) ?? "").split("\n");
+  expect(top).toBe(first);
+  const more = rest.length > 0 && /^… și încă (un rând|\d+ (de )?rânduri)$/.test(rest[rest.length - 1]) ? rest.pop() : undefined;
+  expect(rest.length).toBeGreaterThan(0);
+  expect(rest.length).toBeLessThanOrEqual(6);
+  const listed = rest.map((line) => {
+    const r = /^«([^»]+)» — (\d+) px \(încap (\d+)\)$/.exec(line);
+    const h = /^titlul «([^»]+)» — (\d+) px \(încap (\d+)\): «[^»]+» (\d+) px((?:, spațiu \d+, «[^»]+» \d+)*), margini (\d+)$/.exec(line);
+    expect([line, Boolean(r || h)]).toEqual([line, true]);
+    const [, name, px, room] = (r ?? h)!;
+    expect([line, Number(room)]).toEqual([line, have]);
+    expect([line, Number(px) > have]).toEqual([line, true]);
+    if (h) {
+      const sum = Number(h[4]) + [...h[5].matchAll(/spațiu (\d+), «[^»]+» (\d+)/g)].reduce((a, m) => a + Number(m[1]) + Number(m[2]), 0) + Number(h[6]);
+      expect([line, sum]).toEqual([line, Number(px)]);
+    }
+    return { name, px: Number(px) };
+  });
+  const count = listed.length + (more ? Number(/\d+/.exec(more)?.[0] ?? 1) : 0);
+  await expect(live(page)).toHaveText(`${first} ${count === 1 ? "Un rând nu încape" : `${count} rânduri nu încap`}.`);
+  return listed;
+}
 
 async function dragEdge(page: Page, id: string, dx: number): Promise<void> {
   const box = (await page.locator(`[data-tile-handle="${id}"]`).boundingBox())!;
@@ -129,15 +164,15 @@ test.describe("TC-TILES-26 — lățimea unei plăci", () => {
       await edge.focus();
       const min = Number(await edge.getAttribute("aria-valuemin"));
       const max = Number(await edge.getAttribute("aria-valuemax"));
-      // 41.20: or the heading, named by what is visible, its px taken apart — „titlul «…» are nevoie de N px — «…» N px, …".
-      const why =
-        min >= 2
-          ? /^Panoul nu poate fi mai îngust de (\d+ unități|\d+ de unități): (rândul «[^»]+» are nevoie de \d+ px|titlul «[^»]+» are nevoie de \d+ px — «[^»]+» \d+ px(, spațiu \d+, «[^»]+» \d+)*, margini \d+)\.$/
-          : /^Un panou are cel puțin o unitate\.$/;
+      // 41.21: a line per row that would not fit at that width — the heading's too — each with its px (`readList`).
       await holdEdge(page, tile, (min - 1 - n) * (UNIT + GAP));
-      await expect(bubble(page)).toHaveText(why);
       await expect(bubble(page)).toHaveAttribute("data-verdict", "refused");
-      await expect(page.locator('[data-tile-width-note="live"]')).toHaveText(why);
+      if (min >= 2) {
+        console.log(`TC-TILES-26 step 7 — ${tile} at ${min - 1}: ${JSON.stringify(await readList(page, min, unitsPx(min - 1)))}`);
+      } else {
+        await expect(bubble(page)).toHaveText(/^Un panou are cel puțin o unitate\.$/);
+        await expect(live(page)).toHaveText(/^Un panou are cel puțin o unitate\.$/);
+      }
       await page.mouse.up();
       await expect(bubble(page)).toHaveCount(0);
       await expect.poll(async () => (await measure(page, tile)).tile).toBe(unitsPx(min));
@@ -208,38 +243,20 @@ test.describe("TC-TILES-26 — lățimea unei plăci", () => {
         };
       });
       console.log(`TC-TILES-26 step 9 — Identity: ${now} units, narrowest ${min}; heading ${JSON.stringify(heading)}`);
-      // What the refusal said before 41.20, replayed: the tile set to 2 units off screen, its scrollWidth and border (the
-      // old „needs N px"), and what reached furthest right — then put back, before anything paints.
-      const before = await page.evaluate((px) => {
-        const box = document.querySelector<HTMLElement>('[data-tile="identity"]')!;
-        const w = box.style.getPropertyValue("width");
-        box.style.setProperty("width", `${px}px`);
-        try {
-          const left = box.getBoundingClientRect().left;
-          let far = { right: 0, what: "" };
-          for (const d of box.querySelectorAll<HTMLElement>("*")) {
-            const r = d.getBoundingClientRect();
-            if (d.children.length === 0 && r.width > 0 && r.right - left > far.right)
-              far = { right: r.right - left, what: `${d.tagName.toLowerCase()} ${(d.closest("label")?.querySelector("span")?.textContent ?? d.textContent ?? "").trim().slice(0, 30)}` };
-          }
-          return { said: box.scrollWidth + (box.offsetWidth - box.clientWidth), scrollWidth: box.scrollWidth, far };
-        } finally {
-          if (w) box.style.setProperty("width", w);
-          else box.style.removeProperty("width");
-        }
-      }, unitsPx(2));
-      console.log(`TC-TILES-26 step 9 — before 41.20, at 2 units: ${JSON.stringify(before)}`);
-      expect(min).toBeGreaterThanOrEqual(2);
+      expect(now).toBe(3);
+      expect(min).toBe(3);
 
-      await holdEdge(page, "identity", (min - 1 - now) * (UNIT + GAP));
+      // 41.21 — from 3 units to 2: every line of Identitate that needs more than 254 px, each with its px; the heading
+      // only if it measures so. The live region says how many.
+      await holdEdge(page, "identity", (2 - now) * (UNIT + GAP));
       await expect(bubble(page)).toHaveAttribute("data-verdict", "refused");
+      const listed = await readList(page, 3, unitsPx(2));
       const said = (await bubble(page).textContent()) ?? "";
-      console.log(`TC-TILES-26 step 9 — the bubble: ${said}`);
-      await expect(bubble(page)).toHaveText(
-        /^Panoul nu poate fi mai îngust de (\d+ unități|\d+ de unități): (titlul «Identitate · [^»]+» are nevoie de \d+ px — «Identitate» \d+ px, spațiu \d+, «[^»]+» \d+, margini \d+|rândul «[^»]+» are nevoie de \d+ px)\.$/,
-      );
+      console.log(`TC-TILES-26 step 9 — the bubble:\n${said}`);
+      expect(listed.some((l) => /Prenume|Nume/.test(l.name)), said).toBe(true);
+      expect(listed.some((l) => l.name.startsWith("Identitate · ")), said).toBe(heading.parts.reduce((a, p) => a + Math.round(p.px), 0) + heading.gap + Math.round(heading.frame) > unitsPx(2));
       expect(said).not.toContain("ID sistem");
-      await expect(page.locator('[data-tile-width-note="live"]')).not.toContainText("ID sistem");
+      await expect(live(page)).not.toContainText("ID sistem");
       await page.mouse.up();
       await expect(bubble(page)).toHaveCount(0);
       await expect.poll(async () => (await measure(page, "identity")).tile).toBe(unitsPx(min));
