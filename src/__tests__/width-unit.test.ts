@@ -123,7 +123,7 @@ describe("the form panels (41.16, Ask first 3)", () => {
 describe("where the unit is read (41.16)", () => {
   it("the root layout draws `--unit` from the cookie; the page keeps it in step on every navigation", () => {
     const layout = read("src", "app", "layout.tsx");
-    expect(layout).toMatch(/widthUnitOf\(jar\.get\(WIDTH_UNIT_COOKIE_NAME\)\?\.value\)/);
+    expect(layout).toContain("widthUnitOf((await cookies()).get(WIDTH_UNIT_COOKIE_NAME)?.value)");
     expect(layout).toContain("style={{ colorScheme: theme, ...widthUnitStyle(unitPx) }}");
     expect(layout).toContain("<WidthUnitSync />");
     expect(read("src", "app", "globals.css")).toMatch(/--unit: 7\.4375rem;/);

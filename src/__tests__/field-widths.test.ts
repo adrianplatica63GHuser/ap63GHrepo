@@ -581,7 +581,8 @@ describe("the Natural Person: every label above its box, every panel as wide as 
     expect(NP_FORM).not.toMatch(/LABEL_STYLE/);
     expect(ADDRESS_BLOCK).not.toMatch(/LABEL_STYLE/);
     // #37.67: the widest tile is 4 units („Corelate"), where Proprietăți made it 5. 40.98: 4 units of 119 px.
-    expect(String(npRowStyle().width)).toBe("min(var(--row-cap), max(32.75rem, calc(round(down, 100% + 1rem, 8.4375rem) - 1rem)))");
+    // 41.16: on the live unit — 4 units as drawn, whole units of `--unit`.
+    expect(String(npRowStyle().width)).toBe(`min(var(--row-cap), max(${unitsCss(4)}, calc(round(down, 100% + 1rem, var(--unit, 7.4375rem) + 1rem) - 1rem)))`);
   });
 });
 

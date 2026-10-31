@@ -330,7 +330,7 @@ describe("„Vezi: …” on the name line, the six's column 20 % wider (Slice #
     const card = unitsRem(units);
     const drawingColumn = DRAWING.w / 16 + 2.5; // the drawing and its px-5 either side
     // 41.16: the card as drawn on the live unit — 1.2 × the card, less a fifth of the drawing's column.
-    expect(String(triangleCardStyle(units).maxWidth)).toBe(`calc(1.2 * ${unitsCss(units)} - ${0.2 * drawingColumn}rem)`);
+    expect(String(triangleCardStyle(units).maxWidth)).toBe(`calc(1.2 * ${unitsCss(units)} - ${(SIX_WIDER - 1) * drawingColumn}rem)`);
     const tile = 1.2 * card - 0.2 * drawingColumn;
     expect(tile - drawingColumn).toBeCloseTo(1.2 * (card - drawingColumn), 6);
     expect(TILE).toContain("style={triangleCardStyle(cardUnits)}");

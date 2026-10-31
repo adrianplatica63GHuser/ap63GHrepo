@@ -58,10 +58,9 @@ export default async function RootLayout({
   const locale = await getLocale();
   const messages = await getMessages();
   // Slice 40.19: the look from the ga40-theme cookie, on <html> from the first byte — a dark load is never white first.
-  const jar = await cookies();
-  const theme = themeOf(jar.get(THEME_COOKIE_NAME)?.value);
+  const theme = themeOf((await cookies()).get(THEME_COOKIE_NAME)?.value);
   // Slice 41.16: the width unit set on „Setări", from this browser's cookie — every tile is drawn in it from the first byte.
-  const unitPx = widthUnitOf(jar.get(WIDTH_UNIT_COOKIE_NAME)?.value);
+  const unitPx = widthUnitOf((await cookies()).get(WIDTH_UNIT_COOKIE_NAME)?.value);
 
   return (
     <html
