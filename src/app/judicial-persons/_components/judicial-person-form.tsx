@@ -868,10 +868,13 @@ export function JudicialPersonForm({
       <UnsavedChangesBanner show={editDirty} className={tiled ? "basis-full" : undefined} />
       <RecordSyncNotice sync={recordSync} dirty={editDirty} listHref="/judicial-persons" className={tiled ? "basis-full" : undefined} />
 
-      {/* Slice #18.05: version controls portalled onto the person-name line. */}
-      {versionNavSlot && versionNav &&
+      {/* Slice #18.05: version controls portalled onto the person-name line.
+          Slice 41.22: the system ID before them — its one place (`SystemIdCorner`). */}
+      {versionNavSlot && ((mode !== "create" && personCode) || versionNav) &&
         createPortal(
-          <VersionNavControls
+          <>
+          {mode !== "create" && personCode && <SystemIdCorner code={personCode} />}
+          {versionNav && <VersionNavControls
             nav={versionNav}
             labels={{
               versionLabel:    t("version.label", { n: versionNav.current }),
@@ -881,7 +884,8 @@ export function JudicialPersonForm({
               makeCurrent:     t("version.makeCurrent"),
               makeCurrentHint: t("version.makeCurrentHint"),
             }}
-          />,
+          />}
+          </>,
           versionNavSlot,
         )}
 
@@ -903,10 +907,8 @@ export function JudicialPersonForm({
           the fewest whole width units that hold its widest row (3). */}
       <section style={PANEL_UNIT_STYLE.judicialPerson.identity} data-panel="identity" {...tileProps("identity")} onKeyDown={editKeys("identity")} className={`rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${hiddenClass("identity")}${editingClass("identity")}`}>
         {/* Slice #38.30: the tile's title and the line saying what it holds — in every mode. */}
-        <TileTitle title={t("tiles.identity")} subtitle={t("tileSubtitles.identity")} action={editButton("identity", t("tiles.identity"))}>
-          {/* Slice #37.57: the system ID's one place — this corner, not a field. */}
-          {mode !== "create" && personCode && <SystemIdCorner code={personCode} />}
-        </TileTitle>
+        {/* Slice 41.22: the heading is only its title — the system ID is in the page bar, left of the versions pill. */}
+        <TileTitle title={t("tiles.identity")} subtitle={t("tileSubtitles.identity")} action={editButton("identity", t("tiles.identity"))} />
         <div className="flex flex-col gap-2">
           <Field
             label={t("fields.name")}

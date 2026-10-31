@@ -196,8 +196,9 @@ export function DocumentDetailTiles({
         )}
         {/* Slice 40.57: „Panouri" right after the version controls; its panel is where the tile bar stood. */}
         {/* Slice 41.08: both in the page bar, left of „?" — portalled there (`PageBarControls`); the name stays here. */}
+        {/* Slice 41.22: the form portals the system ID here, then the versions pill — the bar's own gap between them. */}
         <PageBarControls>
-          <div ref={setNavSlot} data-version-slot="" className="flex items-center" />
+          <div ref={setNavSlot} data-version-slot="" className="flex items-center gap-3" />
           <TilesMenuButton menu={tilesMenu} badge={hiddenMarked(marked, choice.shown)} />
         </PageBarControls>
       </header>

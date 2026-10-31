@@ -1773,7 +1773,6 @@ export function DocumentForm({
         units={generalUnits}
         title={t("tiles.general")}
         subtitle={t("tileSubtitles.general")}
-        code={mode !== "create" ? documentCode : undefined}
         action={editButton("general", t("tiles.general"))}
         after={editBar("general")}
         editing={editingTile === "general"}
@@ -2117,10 +2116,13 @@ export function DocumentForm({
     >
     {/* Slice #18.06: version controls portalled into the detail-tabs header so
         they sit on the document-name line. Only for an existing document once
-        its versions have loaded, and only when the header provided a slot. */}
-    {versionNavSlot && versionNav &&
+        its versions have loaded, and only when the header provided a slot.
+        Slice 41.22: the system ID before them — its one place (`SystemIdCorner`). */}
+    {versionNavSlot && ((mode !== "create" && documentCode) || versionNav) &&
       createPortal(
-        <VersionNavControls
+        <>
+        {mode !== "create" && documentCode && <SystemIdCorner code={documentCode} />}
+        {versionNav && <VersionNavControls
           nav={versionNav}
           labels={{
             versionLabel:    t("version.label", { n: versionNav.current }),
@@ -2130,7 +2132,8 @@ export function DocumentForm({
             makeCurrent:     t("version.makeCurrent"),
             makeCurrentHint: t("version.makeCurrentHint"),
           }}
-        />,
+        />}
+        </>,
         versionNavSlot,
       )}
 
@@ -2446,7 +2449,6 @@ const AMENDED_DEED_UNITS = 4; // 40.98: re-pinned (3 of 148 px)
 function Section({
   title,
   subtitle,
-  code,
   panel,
   units,
   children,
@@ -2472,10 +2474,6 @@ function Section({
    * bracketed subtitle (#37.90) and the frame carries the tile's own line.
    */
   subtitle?: string;
-  /** Slice #21.06.misc: shown inline on the heading line, mirroring how
-   *  Person's Identity section shows its personCode — used by General to
-   *  show documentCode instead of as its own field row. */
-  code?:    string | null;
   /** Slice #37.15: the panel's name for the e2e width check (`data-panel`). */
   panel:    string;
   /**
@@ -2494,10 +2492,8 @@ function Section({
   // Slice 40.06: through TileTitle, as every tile's heading — the same markup it wrote out by hand.
   const heading = title === undefined ? null : (
     // Slice #37.90: inside a tile, a panel's subtitle reads in square brackets.
-    <TileTitle title={framed ? panelSubtitle(title) : title} subtitle={framed ? undefined : subtitle} action={framed ? undefined : action}>
-      {/* Slice #37.57: the system ID's one place — this corner. */}
-      {code && <SystemIdCorner code={code} />}
-    </TileTitle>
+    // Slice 41.22: only the title — the system ID (#37.57's corner, drawn here by „Date generale") is in the page bar.
+    <TileTitle title={framed ? panelSubtitle(title) : title} subtitle={framed ? undefined : subtitle} action={framed ? undefined : action} />
   );
   if (framed) {
     const allHidden = paths !== undefined && paths.length > 0 && paths.every((p) => hidden.has(p));

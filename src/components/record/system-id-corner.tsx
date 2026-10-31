@@ -2,20 +2,24 @@
 
 /**
  * A record's system ID — DOC01590, PPERS07056 — in the one place it is shown:
- * the top-right corner of the first panel of its screen.        (Slice #37.57)
+ * the page bar, immediately left of the versions pill.          (Slice 41.22)
  *
- * „Identitate" on a Natural and a Judicial Person, „Date cadastrale" on a
- * Property, „Date generale" on a Document; only on a saved record. Small,
- * monospaced and muted, at the right end of the heading line (`ml-auto` in the
- * heading's flex row), and it never makes the heading wrap (`shrink-0`,
- * `whitespace-nowrap`). The code itself is `select-all`, so one click selects
- * it for copying — the search boxes still match on it. Read aloud as
- * „ID sistem DOC01590".
+ * Adrian, 2026-10-31: „For all the principal objects remove the system ID that shows on the top right corner of the
+ * first grey tile and place it on the top bar at the left of the versions navigation button". So each of the four
+ * forms (natural person, juridical person, property, document) portals it into the slot it already portals the
+ * versions pill into (`versionNavSlot`, drawn by its `*-detail-tiles.tsx` inside `PageBarControls`), before the pill —
+ * only on a saved record, and on an older version or a read-only view the same ID, since it is the same record. When
+ * no pill is drawn yet, the ID stands where the pill would be, left of „Panouri". With no shell (a jest render) the
+ * controls, and the ID with them, stay in the record's header.
  *
- * ⚠️ **Nowhere else.** Lists, list tiles, association screens, previews, the
- * recently-viewed panel, global search and the admin screens name a record by
- * its name, or by words when it has none (`shared.unnamed`) — never by its code.
- * `system-id-one-place.test.ts` holds that.
+ * Until 41.22 it stood at the right end of the first tile's heading (#37.57, `ml-auto`). The look is unchanged: small,
+ * monospaced and muted, never wrapping (`shrink-0`, `whitespace-nowrap`), so on a narrow window the bar's crumbs give
+ * way before it (41.08). The code itself is `select-all`, so one click selects it for copying — the search boxes still
+ * match on it. Read aloud as „ID sistem DOC01590".
+ *
+ * ⚠️ **Nowhere else.** Lists, list tiles, association screens, previews, the recently-viewed panel, global search,
+ * the admin screens and every tile's heading name a record by its name, or by words when it has none
+ * (`shared.unnamed`) — never by its code. `system-id-one-place.test.ts` holds that.
  */
 import { useTranslations } from "next-intl";
 
@@ -23,7 +27,7 @@ export function SystemIdCorner({ code }: { code: string }) {
   const t = useTranslations("shared.systemId");
   return (
     <span
-      className="ml-auto shrink-0 whitespace-nowrap font-mono text-xs font-normal normal-case tracking-normal text-fade dark:text-zinc-500"
+      className="shrink-0 whitespace-nowrap font-mono text-xs font-normal normal-case tracking-normal text-fade"
       data-system-id
     >
       <span className="sr-only">{t("label")} </span>

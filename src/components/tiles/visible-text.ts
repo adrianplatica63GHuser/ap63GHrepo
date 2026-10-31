@@ -4,7 +4,8 @@
  * Adrian, 2026-10-31: „why are you showing me the string "System ID "? I cannot see it anywhere!" The width bubble
  * named a tile by its heading's `textContent`, which glues every text node together — the record's system ID corner
  * (system-id-corner.tsx) included, whose „ID sistem" / „System ID" is `sr-only`: read aloud, never drawn. So
- * „Identitate" + „ID sistem" + „PPERS 77369" came out as „IdentitateID sistem PPERS 77369".
+ * „Identitate" + „ID sistem" + „PPERS 77369" came out as „IdentitateID sistem PPERS 77369". (Since 41.22 the ID is in
+ * the page bar and no tile heading holds it; the rule below stands for any part only a screen reader hears.)
  *
  * Here a name is its visible text only (Ask first 1): `sr-only`, `aria-hidden`, `hidden` and undrawn nodes left out,
  * and a heading's visible parts — its direct children — joined with „ · " (`VISIBLE_JOIN`): „Identitate · PPERS 77369".

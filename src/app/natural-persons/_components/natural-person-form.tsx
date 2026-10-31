@@ -922,10 +922,13 @@ export function NaturalPersonForm({
 
       {/* Slice #18.05: version controls portalled into the detail-tabs header
           so they sit on the person-name line. Only for an existing person once
-          its versions have loaded, and only when the header provided a slot. */}
-      {versionNavSlot && versionNav &&
+          its versions have loaded, and only when the header provided a slot.
+          Slice 41.22: the system ID before them — its one place (`SystemIdCorner`). */}
+      {versionNavSlot && ((mode !== "create" && personCode) || versionNav) &&
         createPortal(
-          <VersionNavControls
+          <>
+          {mode !== "create" && personCode && <SystemIdCorner code={personCode} />}
+          {versionNav && <VersionNavControls
             nav={versionNav}
             labels={{
               versionLabel:    t("version.label", { n: versionNav.current }),
@@ -935,7 +938,8 @@ export function NaturalPersonForm({
               makeCurrent:     t("version.makeCurrent"),
               makeCurrentHint: t("version.makeCurrentHint"),
             }}
-          />,
+          />}
+          </>,
           versionNavSlot,
         )}
 
@@ -963,10 +967,8 @@ export function NaturalPersonForm({
       {/* Identity — core biographical data */}
       <section style={NP_PANEL_STYLE.identity} data-panel="identity" {...tileProps("identity")} onKeyDown={editKeys("identity")} className={`rounded-md border border-card-rim bg-card p-3 shadow-sm${hiddenClass("identity")}${editingClass("identity")}`}>
         {/* Slice #38.30: the tile's title and the line saying what it holds — in every mode, so „Adaugă nou" reads as the record does. */}
-        <TileTitle title={t("tiles.identity")} subtitle={t("tileSubtitles.identity")} action={editButton("identity", t("tiles.identity"))}>
-          {/* Slice #37.57: the system ID's one place — this corner. */}
-          {mode !== "create" && personCode && <SystemIdCorner code={personCode} />}
-        </TileTitle>
+        {/* Slice 41.22: the heading is only its title — the system ID is in the page bar, left of the versions pill. */}
+        <TileTitle title={t("tiles.identity")} subtitle={t("tileSubtitles.identity")} action={editButton("identity", t("tiles.identity"))} />
         {/* Slice #37.26 — the rows of `NP_ROWS.identity`. */}
         <div className="flex flex-col gap-2">
           <div className={STACKED_ROW_CLASS}>

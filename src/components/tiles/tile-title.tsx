@@ -16,8 +16,8 @@
  * ⚠️ **IT SHOWS WHENEVER THE TITLE SHOWS** (the header's Ask first 1). A line
  * that came and went with the window's width would move the fields under it.
  *
- * `children` sit in the title's line after the text — the system ID's corner
- * (#37.57) on the first tile of each record.
+ * `children` sit in the title's line after the text. (#37.57 put the system ID's
+ * corner there on each record's first tile; 41.22 moved it to the page bar.)
  *
  * Slice 40.06: every record and dashboard tile draws its title through this piece — the inheritance tree tile and
  * Tarla's tiles included — so one class string changes them all. `tile-heading-one-piece.test.ts` keeps it so. `id`
@@ -67,7 +67,7 @@ export function TileTitle({
   /**
    * Slice 40.72: a control at the right of the line under the heading — „Editează"
    * (src/components/tiles/read-edit-tile.tsx). Outside the heading, so its name stays the tile's own, and under it,
-   * so the heading's own corner (the system ID, #37.57) keeps the tile's top-right corner.
+   * so the heading's own corner keeps the tile's top-right corner (the system ID's until 41.22 moved it to the page bar).
    */
   action?: ReactNode;
 }) {

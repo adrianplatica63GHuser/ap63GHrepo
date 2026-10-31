@@ -1345,10 +1345,13 @@ export function PropertyForm({
       {/* Version controls (Slice #18.UX.04) — portalled into the page header so
           they sit centered on the property-title line. Only rendered for an
           existing property once its versions have loaded (versionNav != null)
-          and only when the header has provided a slot element. */}
-      {versionNavSlot && versionNav &&
+          and only when the header has provided a slot element.
+          Slice 41.22: the system ID before them — its one place (`SystemIdCorner`). */}
+      {versionNavSlot && (propertyCode || versionNav) &&
         createPortal(
-          <VersionNavControls
+          <>
+          {propertyCode && <SystemIdCorner code={propertyCode} />}
+          {versionNav && <VersionNavControls
             nav={versionNav}
             labels={{
               versionLabel:    t("corners.versionLabel", { n: versionNav.current }),
@@ -1358,7 +1361,8 @@ export function PropertyForm({
               makeCurrent:     t("corners.makeCurrent"),
               makeCurrentHint: t("corners.makeCurrentHint"),
             }}
-          />,
+          />}
+          </>,
           versionNavSlot,
         )}
 
@@ -1384,10 +1388,8 @@ export function PropertyForm({
         <fieldset disabled={effectiveMode === "view"} className={`m-0 border-0 p-0${hiddenClass("cadastral")}`} style={PANEL_UNIT_STYLE.property.cadastral} {...tileProps("cadastral")}>
           <section data-panel="cadastral" onKeyDown={editKeys("cadastral")} className={`rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${editingClass("cadastral")}`}>
             {/* Slice #38.30: the tile's title and the line saying what it holds — in every mode. */}
-            <TileTitle title={t("tiles.cadastral")} subtitle={t("tileSubtitles.cadastral")} action={editButton("cadastral", t("tiles.cadastral"))}>
-              {/* Slice #37.57: the system ID's one place — this corner, not a field. */}
-              {propertyCode && <SystemIdCorner code={propertyCode} />}
-            </TileTitle>
+            {/* Slice 41.22: the heading is only its title — the system ID is in the page bar, left of the versions pill. */}
+            <TileTitle title={t("tiles.cadastral")} subtitle={t("tileSubtitles.cadastral")} action={editButton("cadastral", t("tiles.cadastral"))} />
             <div className="flex flex-col gap-2">
               {!typeConfig.hideTarlaParcela && (
                 <div className={STACKED_ROW_CLASS}>
