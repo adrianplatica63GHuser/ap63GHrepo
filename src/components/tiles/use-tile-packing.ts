@@ -138,7 +138,7 @@ import {
 } from "@/lib/ui/tile-positions";
 import { loadMakeRoomDelay, makeRoomDelayMs } from "./make-room-delay";
 import { isDragSurface } from "./tile-drag-surface";
-import { PLAIN_TILE_WIDTH_WORDS, type TileWidthWords } from "./use-tile-width-words";
+import { PLAIN_TILE_WIDTH_WORDS, type TileWidthWords } from "./tile-width-words";
 import { TILE_DIAGRAM_DRAG, publishPlaced, type DiagramDrag } from "./tiles-placed";
 
 /** How long after a layout the row still settles afresh on a height change, unless the user acts first. */

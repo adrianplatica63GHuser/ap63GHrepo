@@ -185,7 +185,7 @@ describe("the screens", () => {
 
   it("the Property and the Document pack their one area (`TileAreas`), the right-hand tiles in it since 40.32", () => {
     const src = code(read("src", "components", "tiles", "tile-areas.tsx"));
-    expect(src).toContain("useTilePacking(areaRef, { fitWidest: true, entity, right })");
+    expect(src).toContain("useTilePacking(areaRef, { fitWidest: true, entity, right, words })");
     expect(src).toMatch(/<div ref=\{areaRef\}[^>]*data-tile-area="left"/);
     // The slots are inside the area, not a column beside it.
     expect(src).toMatch(/data-tile-area="left">\s*\{children\}\s*\{right\.length > 0 && \(\s*<div className="contents" data-tile-area="right">/);

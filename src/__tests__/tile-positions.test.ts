@@ -214,7 +214,7 @@ describe("the screens", () => {
     for (const f of ["src/app/natural-persons/_components/person-detail-tiles.tsx", "src/app/judicial-persons/_components/person-detail-tiles.tsx"]) {
       expect(code(read(...f.split("/")))).toMatch(/<TileAreas[^>]*entity=\{[A-Z_]+_TILE_REGISTRY\.entity\}/);
     }
-    expect(code(read("src", "components", "tiles", "tile-areas.tsx"))).toContain("useTilePacking(areaRef, { fitWidest: true, entity, right })");
+    expect(code(read("src", "components", "tiles", "tile-areas.tsx"))).toContain("useTilePacking(areaRef, { fitWidest: true, entity, right, words })");
     expect(code(read("src", "app", "properties", "_components", "property-detail-tiles.tsx"))).toMatch(/<TileAreas[^>]*entity=\{/);
     expect(code(read("src", "app", "documents", "_components", "document-detail-tiles.tsx"))).toMatch(/<TileAreas[^>]*entity=\{reg\.entity\}/);
   });

@@ -132,7 +132,7 @@ describe("positions under the group screen's own key (#38.12)", () => {
   });
 
   it("the forms' mechanism, not a copy: the row packs through useTilePacking, the reset sends the forms' event", () => {
-    expect(read("src", "components", "screen", "tile-unit-row.tsx")).toContain("useTilePacking(ref, { entity: screen.entity, flowUnits: screen.flowUnits })");
+    expect(read("src", "components", "screen", "tile-unit-row.tsx")).toContain("useTilePacking(ref, { entity: screen.entity, flowUnits: screen.flowUnits, words })");
     expect(read("src", "app", "admin", "groups", "_components", "group-editor.tsx")).toContain("<TileUnitRow screen={GROUP_SCREEN}>");
     const page = read("src", "app", "admin", "groups", "[id]", "page.tsx");
     expect(page).toContain("<TilePositionsReset entity={GROUP_SCREEN.entity} />");

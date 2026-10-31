@@ -8,16 +8,7 @@
  */
 import { useMemo } from "react";
 import { useTranslations } from "next-intl";
-
-export interface TileWidthWords {
-  /** The handle's name: „Lățimea panoului {title}”. */
-  handle: (title: string) => string;
-  /** Its value: „3 unități”. */
-  units: (count: number) => string;
-}
-
-/** Until a screen hands its words over: the tile's own name, the bare count. */
-export const PLAIN_TILE_WIDTH_WORDS: TileWidthWords = { handle: (title) => title, units: (count) => String(count) };
+import type { TileWidthWords } from "./tile-width-words";
 
 export function useTileWidthWords(): TileWidthWords {
   const t = useTranslations("shared.tileWidth");
