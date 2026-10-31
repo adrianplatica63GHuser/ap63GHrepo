@@ -8,9 +8,13 @@
  * gives the tile its own width back. The field box keeps its width throughout. 41.18: past its narrowest the drag is
  * refused, and says why; two units past what it needs it is advised against, and taken. The map tile is not drawn (maps are
  * blocked by default): no map, no Street View, no address look-up.
+ *
+ * 41.20 (step 9): on an invented natural person, the Identity tile dragged one unit past its narrowest — the refusal
+ * names what is on the screen, „titlul «Identitate · …»" with its px taken apart, or a row of fields, and never the
+ * screen reader's „ID sistem". The heading's parts are measured and logged, for the handover's answer.
  */
 import { test, expect, type Page } from "../helpers/test";
-import { E2E_MARKER, createProperty, removeLeftovers, removeRecord } from "../helpers/records";
+import { E2E_MARKER, createNaturalPerson, createProperty, removeLeftovers, removeRecord } from "../helpers/records";
 import { pressTileButton } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}TILES-26`;
@@ -125,9 +129,10 @@ test.describe("TC-TILES-26 — lățimea unei plăci", () => {
       await edge.focus();
       const min = Number(await edge.getAttribute("aria-valuemin"));
       const max = Number(await edge.getAttribute("aria-valuemax"));
+      // 41.20: or the heading, named by what is visible, its px taken apart — „titlul «…» are nevoie de N px — «…» N px, …".
       const why =
         min >= 2
-          ? /^Panoul nu poate fi mai îngust de (\d+ unități|\d+ de unități): rândul «[^»]+» are nevoie de \d+ px\.$/
+          ? /^Panoul nu poate fi mai îngust de (\d+ unități|\d+ de unități): (rândul «[^»]+» are nevoie de \d+ px|titlul «[^»]+» are nevoie de \d+ px — «[^»]+» \d+ px(, spațiu \d+, «[^»]+» \d+)*, margini \d+)\.$/
           : /^Un panou are cel puțin o unitate\.$/;
       await holdEdge(page, tile, (min - 1 - n) * (UNIT + GAP));
       await expect(bubble(page)).toHaveText(why);
@@ -149,4 +154,77 @@ test.describe("TC-TILES-26 — lățimea unei plăci", () => {
       if (id) await removeRecord(page.request, "property", id);
     }
   });
+
+  test("the refusal names only what is on the screen — a natural person's Identity tile (41.20)", async ({ page }) => {
+    test.slow();
+    await removeLeftovers(page.request, MARK);
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    let id: string | undefined;
+    try {
+      // Invented: the marker as the name, a synthetic CNP as the other specs use.
+      id = await createNaturalPerson(page.request, {
+        lastName: `${MARK} Popescu`,
+        firstName: "Ana-Maria",
+        cnp: "1800101420096",
+        gender: "FEMALE",
+        dateOfBirth: "1980-01-01",
+        placeOfBirth: "Mun. București",
+      });
+      await page.goto(`/natural-persons/${id}`);
+      const edge = page.locator('[data-tile-handle="identity"]');
+      await expect(edge).toBeAttached({ timeout: 30_000 });
+
+      // Step 9 — the handle is named by what is on the screen too; the heading's parts, measured as the bubble takes them.
+      await expect(edge).toHaveAttribute("aria-label", /^Lățimea panoului Identitate · \S/);
+      await expect(edge).not.toHaveAttribute("aria-label", /ID sistem/);
+      await edge.focus();
+      const now = Number(await edge.getAttribute("aria-valuenow"));
+      const min = Number(await edge.getAttribute("aria-valuemin"));
+      const heading = await page.evaluate(() => {
+        const box = document.querySelector<HTMLElement>('[data-tile="identity"]')!;
+        const h = box.querySelector<HTMLElement>("h2")!;
+        const cs = getComputedStyle(h);
+        const parts = [...h.childNodes].map((n) => {
+          if (n.nodeType === Node.TEXT_NODE) {
+            const r = document.createRange();
+            r.selectNodeContents(n);
+            return { text: (n.textContent ?? "").trim(), px: r.getBoundingClientRect().width };
+          }
+          const el = n as HTMLElement;
+          const shown = [...el.querySelectorAll<HTMLElement>("span")].filter((s) => !s.classList.contains("sr-only"));
+          return { text: shown.map((s) => s.textContent).join("").trim(), px: el.getBoundingClientRect().width };
+        });
+        const b = box.getBoundingClientRect();
+        const hr = h.getBoundingClientRect();
+        const bs = getComputedStyle(box);
+        return {
+          parts,
+          gap: parseFloat(cs.columnGap) || 0,
+          frame: hr.left - b.left + (b.right - hr.right),
+          tile: b.width,
+          padding: [bs.paddingLeft, bs.borderLeftWidth],
+          scrollWidth: box.scrollWidth,
+          clientWidth: box.clientWidth,
+        };
+      });
+      console.log(`TC-TILES-26 step 9 — Identity: ${now} units, narrowest ${min}; heading ${JSON.stringify(heading)}`);
+      expect(min).toBeGreaterThanOrEqual(2);
+
+      await holdEdge(page, "identity", (min - 1 - now) * (UNIT + GAP));
+      await expect(bubble(page)).toHaveAttribute("data-verdict", "refused");
+      const said = (await bubble(page).textContent()) ?? "";
+      console.log(`TC-TILES-26 step 9 — the bubble: ${said}`);
+      await expect(bubble(page)).toHaveText(
+        /^Panoul nu poate fi mai îngust de (\d+ unități|\d+ de unități): (titlul «Identitate · [^»]+» are nevoie de \d+ px — «Identitate» \d+ px, spațiu \d+, «[^»]+» \d+, margini \d+|rândul «[^»]+» are nevoie de \d+ px)\.$/,
+      );
+      expect(said).not.toContain("ID sistem");
+      await expect(page.locator('[data-tile-width-note="live"]')).not.toContainText("ID sistem");
+      await page.mouse.up();
+      await expect(bubble(page)).toHaveCount(0);
+      await expect.poll(async () => (await measure(page, "identity")).tile).toBe(unitsPx(min));
+    } finally {
+      if (id) await removeRecord(page.request, "person", id);
+    }
+  });
+
 });
