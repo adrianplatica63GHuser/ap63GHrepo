@@ -210,7 +210,8 @@ describe("the screens", () => {
     expect(src).not.toMatch(/\.(insertBefore|prepend|append|replaceChildren)\(/);
     // #37.76: the drag outline, after the boxes, never counted as a box. 41.17: and each tile's width handle (with
     // its line), in the row after the boxes, skipped by `findBoxes` as the outline is.
-    expect(src.match(/\.appendChild\([^)]*\)/g) ?? []).toEqual([".appendChild(outline)", ".appendChild(h)", ".appendChild(line)"]);
+    expect(src.match(/\.appendChild\([^)]*\)/g) ?? []).toEqual([".appendChild(outline)", ".appendChild(live)", ".appendChild(note)", ".appendChild(h)", ".appendChild(line)"]);
+    expect(src).toContain("child.dataset.tileWidthNote !== undefined"); // 41.18: the bubble and the live region
     expect(src).toContain("container.appendChild(h)");
     expect(src).toContain("child.dataset.tileHandle !== undefined");
     expect(src).toContain("container.appendChild(outline)");

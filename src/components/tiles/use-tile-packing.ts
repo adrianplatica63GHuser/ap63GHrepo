@@ -110,6 +110,7 @@
  */
 import { useLayoutEffect, useRef, type RefObject } from "react";
 import { TILE_FRAME_REM, TILE_INNER_VAR, UNIT_GAP_REM, declaredWidthPx, exactUnitsCss, rem } from "@/lib/ui/field-widths";
+import { judgeWidth, laptopUnits, type WidthVerdict } from "@/lib/ui/tile-width-rules";
 import { liveUnitPx } from "@/lib/ui/width-unit";
 import { columnsIn, fitsBeside, grow, packedHeight, unitsOf, type PackBox, type Placed, ONE_COLUMN_BELOW_UNITS, oneColumn } from "@/lib/ui/tile-packing";
 import {
@@ -131,6 +132,8 @@ import {
   snapUnits,
   storedPlaceOf,
   tilePositionsKey,
+  MAX_UNITS,
+  unitsAtLeast,
   widthLimits,
   withStoredWidth,
   type StoredPlace,
@@ -188,7 +191,7 @@ export function findBoxes(container: HTMLElement): FoundBox[] {
   const counts = new Map<string, number>();
   const walk = (parent: Element, tile: string | null) => {
     for (const child of Array.from(parent.children)) {
-      if (!(child instanceof HTMLElement) || child.hidden || child.dataset.tileOutline !== undefined || child.dataset.tileHandle !== undefined) continue;
+      if (!(child instanceof HTMLElement) || child.hidden || child.dataset.tileOutline !== undefined || child.dataset.tileHandle !== undefined || child.dataset.tileWidthNote !== undefined) continue;
       const display = getComputedStyle(child).display;
       if (display === "none" || isOverlay(child)) continue;
       const own = child.dataset.tile ?? null;
@@ -317,6 +320,46 @@ export const TILE_HANDLE_PX = 8;
 export const TILE_HANDLE_CLASS = "group absolute z-[25] flex cursor-col-resize justify-center outline-none";
 export const TILE_HANDLE_LINE_CLASS =
   "pointer-events-none h-full w-0.5 rounded-full bg-transparent transition-colors group-hover:bg-ink/40 group-focus-visible:bg-cta group-data-[resizing]:bg-cta";
+
+/** 41.18 (Ask first 1, 2): the dragged edge red when the width is refused, amber when it is advised against. */
+export const VERDICT_COLOUR: Readonly<Record<WidthVerdict["kind"], string>> = {
+  ok: "var(--color-cta)",
+  refused: "var(--color-danger)",
+  advised: "var(--color-warning)",
+};
+
+/** 41.18: the bubble beside a dragged edge — the app's tooltip, as an icon button's (icon-button.tsx); a line a reason. */
+export const TILE_WIDTH_NOTE_CLASS =
+  "pointer-events-none absolute z-[70] max-w-[20rem] whitespace-pre-line rounded-md border border-card-rim bg-white px-2 py-1 text-xs leading-snug font-medium text-ink shadow-lg dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200";
+
+/** 41.18: the narrowest a tile can be, and what sets it. */
+interface Floor {
+  units: number;
+  /** It holds fixed boxes at all. */
+  fields: boolean;
+  /** The row that stops it going one unit narrower: its fields, and the px the tile needs to hold it. */
+  widest?: { fields: string; px: number };
+}
+
+/** 41.17–41.18: what a tile's edge was measured to allow when it was pressed or stepped. */
+interface Measured {
+  min: number;
+  max: number;
+  content: number;
+  widest?: { fields: string; px: number };
+  fields: boolean;
+  table?: number;
+  beside: { col: number; title: string }[];
+  col: number;
+  laptop: number;
+}
+
+/** A fixed box's name: its field's label, else its own. */
+function labelOf(d: HTMLElement): string {
+  const own = d.closest<HTMLElement>("label") ?? d;
+  const text = own.querySelector("span")?.textContent?.replace(/\s+/g, " ").trim();
+  return text || d.getAttribute("aria-label") || d.dataset.widthField || "";
+}
 
 /**
  * Packs the boxes of the row `ref` points at, and lets the user drag them.
@@ -919,6 +962,8 @@ export function useTilePacking(
       from: number;
       min: number;
       max: number;
+      /** 41.18: what was measured when it was pressed — the verdict's case, less the width asked. */
+      measured: Measured;
       x0: number;
       /** Its width in px when pressed, and as drawn now. */
       px0: number;
@@ -940,7 +985,7 @@ export function useTilePacking(
      * one in a table and not one that fills the tile — keeping its size, inside the tile, and on the row it shares with
      * its neighbours. Tried a unit at a time from `from` down; the tile is put back as it was before anything paints.
      */
-    const narrowest = (b: FoundBox, from: number, unit: number, gap: number): number => {
+    const narrowest = (b: FoundBox, from: number, unit: number, gap: number): Floor => {
       const el = b.el;
       const fixed = Array.from(el.querySelectorAll<HTMLElement>("*")).filter(
         (d) =>
@@ -949,7 +994,7 @@ export function useTilePacking(
           d.getClientRects().length > 0 &&
           !/^(absolute|fixed)$/.test(getComputedStyle(d).position),
       );
-      if (fixed.length === 0) return 1;
+      if (fixed.length === 0) return { units: 1, fields: false };
       const shape = () => {
         const r = el.getBoundingClientRect();
         const cs = getComputedStyle(el);
@@ -964,8 +1009,17 @@ export function useTilePacking(
       for (let i = 0; i < fixed.length; i++)
         for (let j = i + 1; j < fixed.length; j++)
           if (fixed[i].parentElement === fixed[j].parentElement && Math.abs(base[i].top - base[j].top) < 0.5) rows.push([i, j]);
-      const holds = (s: ReturnType<typeof shape>) =>
-        s.every((x, i) => Math.abs(x.w - base[i].w) < 0.5 && x.right <= x.inner + 0.5) && rows.every(([i, j]) => Math.abs(s[i].top - s[j].top) < 0.5);
+      // 41.18: which boxes a width breaks — they name the row that sets the floor.
+      const broken = (s: ReturnType<typeof shape>): number[] => {
+        const bad = new Set<number>();
+        s.forEach((x, i) => {
+          if (Math.abs(x.w - base[i].w) >= 0.5 || x.right > x.inner + 0.5) bad.add(i);
+        });
+        for (const [i, j] of rows) if (Math.abs(s[i].top - s[j].top) >= 0.5) bad.add(i).add(j);
+        return [...bad];
+      };
+      let widest: Floor["widest"];
+      const box0 = el.getBoundingClientRect();
       const width0 = el.style.getPropertyValue("width");
       const inner0 = el.style.getPropertyValue(TILE_INNER_VAR);
       let n = from;
@@ -974,7 +1028,16 @@ export function useTilePacking(
           const px = k * (unit + gap) - gap;
           el.style.setProperty("width", `${px}px`);
           el.style.setProperty(TILE_INNER_VAR, `calc(${px}px - ${rem(TILE_FRAME_REM)})`);
-          if (!holds(shape())) break;
+          const bad = broken(shape());
+          if (bad.length > 0) {
+            // The row of the first box that broke: it and every box beside it, as they stood at `from`.
+            const row = new Set([bad[0]]);
+            for (const [i, j] of rows) if (row.has(i) || row.has(j)) row.add(i).add(j);
+            const right = Math.max(...[...row].map((i) => base[i].right));
+            const fields = [...new Set([...row].map((i) => labelOf(fixed[i])).filter(Boolean))];
+            widest = { fields: fields.join(" | "), px: right - box0.left + (box0.right - base[0].inner) };
+            break;
+          }
           n = k;
         }
       } finally {
@@ -983,13 +1046,99 @@ export function useTilePacking(
         if (inner0) el.style.setProperty(TILE_INNER_VAR, inner0);
         else el.style.removeProperty(TILE_INNER_VAR);
       }
-      return n;
+      return { units: n, fields: true, widest };
     };
 
-    const limitsOf = (b: FoundBox, p: Placed) => {
+    /** 41.18: a list tile's table — the units its columns need at their own widths, its frame and the tile's. */
+    const tableUnitsOf = (b: FoundBox, unit: number, gap: number): number | undefined => {
+      const table = b.el.querySelector<HTMLTableElement>("table[data-width-table]");
+      if (!table) return undefined;
+      let rems = 0;
+      for (const c of Array.from(table.querySelectorAll<HTMLElement>("col"))) {
+        rems += /^[0-9.]+rem$/.test(c.style.width) ? parseFloat(c.style.width) : Number(c.dataset.fillBase ?? 0);
+      }
+      return unitsAtLeast((rems + TILE_FRAME_REM) * remPx() + 2, unit, gap);
+    };
+
+    const limitsOf = (b: FoundBox, p: Placed): Measured => {
       const { unit, gap } = metrics();
       const still = new Set(boxes.filter((x) => x.full).map((x) => x.id));
-      return widthLimits(placed, b.id, narrowest(b, p.units, unit, gap), columns, gap, still);
+      const floor = narrowest(b, p.units, unit, gap);
+      const limits = widthLimits(placed, b.id, floor.units, columns, gap, still);
+      const beside = placed
+        .filter((q) => q.id !== p.id && !q.rowEnd && q.col >= p.col + p.units && q.top < p.top + p.height && p.top < q.top + q.height)
+        .map((q) => {
+          const qb = boxOf(q.id);
+          return { col: q.col, title: qb ? titleOf(qb) : tileOf(q.id) };
+        });
+      return { ...limits, content: floor.units, widest: floor.widest, fields: floor.fields, table: tableUnitsOf(b, unit, gap), beside, col: p.col, laptop: laptopUnits(unit, gap) };
+    };
+
+    /** 41.18: the verdict on `asked` units for what was measured. */
+    const verdictOf = (m: Measured, asked: number): WidthVerdict =>
+      judgeWidth({
+        asked,
+        min: m.min,
+        max: m.max,
+        widest: m.widest,
+        contentUnits: m.content,
+        hasFields: m.fields,
+        tableUnits: m.table,
+        beside: m.beside,
+        col: m.col,
+        laptopUnits: m.laptop,
+      });
+
+    // 41.18 (Ask first 3): a small bubble beside the edge, near the pointer, in the app's tooltip style, gone when the
+    // drag ends; the same words in a polite live region, which the keyboard's steps fill too. Not a toast, not a dialog.
+    let note: HTMLDivElement | null = null;
+    let live: HTMLDivElement | null = null;
+    let spoken = "";
+    let noteTimer = 0;
+    const say = (lines: readonly string[]) => {
+      const text = lines.join(" ");
+      if (!live) {
+        live = document.createElement("div");
+        live.dataset.tileWidthNote = "live";
+        live.className = "sr-only";
+        live.setAttribute("role", "status");
+        live.setAttribute("aria-live", "polite");
+        container.appendChild(live);
+      }
+      if (text !== spoken) live.textContent = spoken = text;
+    };
+    const showNote = (lines: readonly string[], verdict: WidthVerdict["kind"], x: number, y: number) => {
+      window.clearTimeout(noteTimer);
+      say(lines);
+      if (lines.length === 0) return hideNote(false);
+      if (!note) {
+        note = document.createElement("div");
+        note.dataset.tileWidthNote = "bubble";
+        note.className = TILE_WIDTH_NOTE_CLASS;
+        note.setAttribute("aria-hidden", "true");
+      }
+      if (note.parentElement !== container) container.appendChild(note);
+      note.dataset.verdict = verdict;
+      note.textContent = lines.join("\n");
+      note.style.setProperty("left", `${Math.max(0, x)}px`);
+      note.style.setProperty("top", `${Math.max(0, y)}px`);
+    };
+    const hideNote = (quiet = true) => {
+      window.clearTimeout(noteTimer);
+      note?.remove();
+      if (quiet) spoken = "";
+    };
+    /** The edge's line while it is dragged: the action colour, red when refused, amber when advised; none after. */
+    const paint = (h: HTMLElement, verdict: WidthVerdict["kind"] | null) => {
+      const line = h.firstElementChild as HTMLElement | null;
+      if (!line) return;
+      if (verdict === null) line.style.removeProperty("background-color");
+      else line.style.backgroundColor = VERDICT_COLOUR[verdict];
+    };
+    /** Where the bubble goes beside tile `p`'s edge: just right of it, at `y` (container px). */
+    const besideEdge = (p: Placed, widthPx: number, y: number): [number, number] => {
+      const { unit, gap } = metrics();
+      return [p.col * (unit + gap) + widthPx + 12, y];
     };
 
     const describe = (h: HTMLElement, units: number, limits?: { min: number; max: number }) => {
@@ -1074,6 +1223,9 @@ export function useTilePacking(
       window.removeEventListener("keydown", onEdgeEscape, true);
       r.handle.removeEventListener("lostpointercapture", onEdgeCancel);
       delete r.handle.dataset.resizing;
+      delete r.handle.dataset.verdict;
+      paint(r.handle, null);
+      hideNote();
       document.body.style.removeProperty("cursor");
       document.body.style.removeProperty("user-select");
       if (r.handle.hasPointerCapture?.(r.pointer)) r.handle.releasePointerCapture(r.pointer);
@@ -1095,6 +1247,13 @@ export function useTilePacking(
       drawWidth(r.box.el, `${r.px}px`);
       syncHandles();
       describe(r.handle, snapUnits(r.from, e.clientX - r.x0, unit, gap, r.min, r.max));
+      // 41.18: what the width the pointer asks for — unclamped — would be: refused (red), advised (amber), or fine.
+      const asked = snapUnits(r.from, e.clientX - r.x0, unit, gap, -MAX_UNITS, MAX_UNITS);
+      const verdict = verdictOf(r.measured, asked);
+      r.handle.dataset.verdict = verdict.kind;
+      paint(r.handle, verdict.kind);
+      const p = placed.find((x) => x.id === r.box.id);
+      if (p) showNote(words.current.verdict(verdict), verdict.kind, ...besideEdge(p, r.px, e.clientY - container.getBoundingClientRect().top - 12));
     };
     const onEdgeUp = (e: PointerEvent) => {
       const r = endResize();
@@ -1124,8 +1283,9 @@ export function useTilePacking(
       interacted = true;
       const limits = limitsOf(b, p);
       const px = b.el.offsetWidth;
-      resize = { box: b, handle: h, from: p.units, min: limits.min, max: limits.max, x0: e.clientX, px0: px, px, pointer: e.pointerId };
+      resize = { box: b, handle: h, from: p.units, min: limits.min, max: limits.max, measured: limits, x0: e.clientX, px0: px, px, pointer: e.pointerId };
       describe(h, p.units, limits);
+      paint(h, "ok");
       h.setPointerCapture?.(e.pointerId);
       h.dataset.resizing = "";
       document.body.style.cursor = "col-resize";
@@ -1148,7 +1308,13 @@ export function useTilePacking(
       interacted = true;
       if (e.key === "Home") return toOwn(id);
       const limits = limitsOf(b, p);
-      commit(id, Math.min(limits.max, Math.max(limits.min, p.units + (e.key === "ArrowRight" ? 1 : -1))));
+      // 41.18: a step the tile cannot take is refused, and said; one it can is taken, and its cost said.
+      const asked = p.units + (e.key === "ArrowRight" ? 1 : -1);
+      const verdict = verdictOf(limits, asked);
+      if (verdict.kind !== "refused") commit(id, asked);
+      const at = placed.find((x) => x.id === id) ?? p;
+      showNote(words.current.verdict(verdict), verdict.kind, ...besideEdge(at, b.el.offsetWidth, at.top + 8));
+      noteTimer = window.setTimeout(() => hideNote(false), 4000);
     };
 
     const makeHandle = (id: string): HTMLDivElement => {
@@ -1182,6 +1348,8 @@ export function useTilePacking(
     return () => {
       end(false);
       endResize();
+      hideNote();
+      live?.remove();
       for (const h of handles.values()) h.remove();
       handles.clear();
       window.clearTimeout(slideEnd);

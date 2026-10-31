@@ -329,6 +329,7 @@ export function FixedTable({
             key={`${name}-${i}`}
             style={{ width: fillCss && i === fillAt ? fillCss : rem(rems[i]) }}
             data-fill-gain={fill && name === fill.column ? rems[i] - columnRem(name) : undefined}
+            data-fill-base={fillCss && i === fillAt ? columnRem(name) : undefined}
             data-width-stored={stored[name] !== undefined && name !== fill?.column ? "" : undefined}
           />
         ))}

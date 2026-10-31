@@ -5,7 +5,8 @@
  * Slice 41.17. On an invented property (created through the route, removed at the end) at 1920 × 1080: the first tile
  * whose handle allows a unit either way and that holds a field box. A third of a unit left is one unit fewer; a third
  * right, twice, one more than it had; a reload keeps it; „Implicit” forgets it; the keyboard steps a unit and Home
- * gives the tile its own width back. The field box keeps its width throughout. The map tile is not drawn (maps are
+ * gives the tile its own width back. The field box keeps its width throughout. 41.18: past its narrowest the drag is
+ * refused, and says why; two units past what it needs it is advised against, and taken. The map tile is not drawn (maps are
  * blocked by default): no map, no Street View, no address look-up.
  */
 import { test, expect, type Page } from "../helpers/test";
@@ -24,6 +25,19 @@ const measure = (page: Page, id: string) =>
     const field = [...(tile?.querySelectorAll<HTMLElement>("[data-width-field]") ?? [])].find((f) => /rem$/.test(f.style.width));
     return { tile: tile?.getBoundingClientRect().width ?? -1, field: field?.getBoundingClientRect().width ?? -1 };
   }, id);
+
+/** 41.18: press the edge and move it `dx` without letting go — the bubble is read while it is held. */
+async function holdEdge(page: Page, id: string, dx: number): Promise<void> {
+  const box = (await page.locator(`[data-tile-handle="${id}"]`).boundingBox())!;
+  const x = box.x + box.width / 2;
+  const y = box.y + Math.min(40, box.height / 2);
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await page.mouse.move(x + dx / 2, y, { steps: 4 });
+  await page.mouse.move(x + dx, y, { steps: 4 });
+}
+
+const bubble = (page: Page) => page.locator('[data-tile-width-note="bubble"]');
 
 async function dragEdge(page: Page, id: string, dx: number): Promise<void> {
   const box = (await page.locator(`[data-tile-handle="${id}"]`).boundingBox())!;
@@ -103,6 +117,23 @@ test.describe("TC-TILES-26 — lățimea unei plăci", () => {
       await expect(handle).toBeFocused();
       await page.keyboard.press("Home");
       await expect.poll(async () => (await measure(page, tile)).tile).toBe(unitsPx(n));
+      expect((await measure(page, tile)).field).toBe(before.field);
+
+      // Step 7 (41.18) — two units left, past its narrowest: refused, and why — the edge stops, the width stays there.
+      await holdEdge(page, tile, -2 * (UNIT + GAP));
+      await expect(bubble(page)).toHaveText(/^Panoul nu poate fi mai îngust de (o unitate|\d+ unități|\d+ de unități): rândul «[^»]+» are nevoie de \d+ px\.$/);
+      await expect(bubble(page)).toHaveAttribute("data-verdict", "refused");
+      await expect(page.locator('[data-tile-width-note="live"]')).toHaveText(/^Panoul nu poate fi mai îngust/);
+      await page.mouse.up();
+      await expect(bubble(page)).toHaveCount(0);
+      await expect.poll(async () => (await measure(page, tile)).tile).toBe(unitsPx(n - 1));
+
+      // Step 8 (41.18) — two units past what it needs: advised against, and taken.
+      await holdEdge(page, tile, 2 * (UNIT + GAP));
+      await expect(bubble(page)).toHaveText(/Cu 2 unități mai lat decât îi trebuie: rămâne loc gol în dreapta câmpurilor\./);
+      await expect(bubble(page)).toHaveAttribute("data-verdict", "advised");
+      await page.mouse.up();
+      await expect.poll(async () => (await measure(page, tile)).tile).toBe(unitsPx(n + 1));
       expect((await measure(page, tile)).field).toBe(before.field);
     } finally {
       if (id) await removeRecord(page.request, "property", id);

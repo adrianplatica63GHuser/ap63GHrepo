@@ -36,12 +36,17 @@ Nothing.
 | 4 | Reloads | The same width |
 | 5 | Presses „Implicit” | Its own width again |
 | 6 | Focuses the edge, presses → then Home | One unit more, the focus still on the edge; then its own width |
+| 7 | (41.18) Drags its edge two units left, past its narrowest, and holds it | The edge stops at the narrowest, and beside it a bubble: „Panoul nu poate fi mai îngust de N unități: rândul «…» are nevoie de … px.”, read out too. Let go: the bubble goes, the tile one unit narrower than its own |
+| 8 | (41.18) Drags it two units right — two past what it needs — and holds it | A bubble: „Cu 2 unități mai lat decât îi trebuie: rămâne loc gol în dreapta câmpurilor.” Let go: the width is taken, the field box the same |
 
 ## At the end — leaving things as they were found
 
 The property is removed. The arrangement is this browser context's own.
 
 ## Notes from the runs
+
+**2026-10-31 — Slice 41.18.** Steps 7 and 8 added: the refusal and the advice, read in the bubble while the edge is
+held. Written from the slice's own change; not driven by hand first.
 
 **2026-10-31 — Slice 41.17.** Written from the slice's own change with its spec, `e2e/tiles/tile-width-drag.spec.ts`;
 not driven by hand first (`PROMOTED_WITHOUT_DRIVING`): Adrian's dev server was not running, so the runner's run is the

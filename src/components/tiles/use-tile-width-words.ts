@@ -9,8 +9,37 @@
 import { useMemo } from "react";
 import { useTranslations } from "next-intl";
 import type { TileWidthWords } from "./tile-width-words";
+import type { WidthAdvice, WidthRefusal, WidthVerdict } from "@/lib/ui/tile-width-rules";
 
 export function useTileWidthWords(): TileWidthWords {
   const t = useTranslations("shared.tileWidth");
-  return useMemo(() => ({ handle: (title: string) => t("handle", { title }), units: (count: number) => t("units", { count }) }), [t]);
+  return useMemo(() => {
+    const refusal = (r: WidthRefusal): string => {
+      switch (r.reason) {
+        case "content":
+          return t("refused.content", { units: r.units, fields: r.fields, px: r.px });
+        case "window":
+          return t("refused.window", { units: r.units });
+        case "one":
+          return t("refused.one");
+      }
+    };
+    const advice = (a: WidthAdvice): string => {
+      switch (a.reason) {
+        case "room":
+          return t("advised.room", { spare: a.spare });
+        case "alone":
+          return t("advised.alone", { title: a.title });
+        case "laptop":
+          return t("advised.laptop", { units: a.units });
+        case "table":
+          return t("advised.table");
+      }
+    };
+    return {
+      handle: (title: string) => t("handle", { title }),
+      units: (count: number) => t("units", { count }),
+      verdict: (v: WidthVerdict) => (v.kind === "ok" ? [] : v.kind === "refused" ? [refusal(v.refusal)] : v.advice.map(advice)),
+    };
+  }, [t]);
 }

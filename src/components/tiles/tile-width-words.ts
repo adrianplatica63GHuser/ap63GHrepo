@@ -6,12 +6,16 @@
  * (document-delete.test.ts) must not load next-intl's ES modules. The words in the screen's language come from
  * `useTileWidthWords` (use-tile-width-words.ts).
  */
+import type { WidthVerdict } from "@/lib/ui/tile-width-rules";
+
 export interface TileWidthWords {
   /** The handle's name: „Lățimea panoului {title}”. */
   handle: (title: string) => string;
   /** Its value: „3 unități”. */
   units: (count: number) => string;
+  /** 41.18: what a verdict says, a line per reason — nothing when the width is fine. */
+  verdict: (v: WidthVerdict) => string[];
 }
 
 /** Until a screen hands its words over: the tile's own name, the bare count. */
-export const PLAIN_TILE_WIDTH_WORDS: TileWidthWords = { handle: (title) => title, units: (count) => String(count) };
+export const PLAIN_TILE_WIDTH_WORDS: TileWidthWords = { handle: (title) => title, units: (count) => String(count), verdict: () => [] };
