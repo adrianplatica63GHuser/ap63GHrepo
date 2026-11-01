@@ -28,13 +28,22 @@ async function visibleLabels(page: Page, id: string): Promise<string[]> {
   const names = page.locator("main label, main div.row-span-3.grid-rows-subgrid > span:first-child");
   await expect(names.filter({ hasText: /^Etichetă scurtă$/ }).first()).toBeVisible({ timeout: 30_000 });
   await page.waitForTimeout(1000);
-  // A type's tiles with nothing in them are one line each (40.64): the ones on screen opened. Not `openEmptyTiles`,
-  // which presses every one, a hidden tile's too, and waits for ever on it.
-  const adds = page.locator("[data-empty-tile] [data-empty-tile-add]:visible");
-  while ((await adds.count()) > 0) await adds.first().click();
-  await showEmptyFields(page);
-  return names.evaluateAll((els) =>
+  // A type's tiles with nothing in them are one line each (40.64): the ones on screen opened. 41.30: one at a time —
+  // opening the next folds the one before — so the labels are read after each, and gathered.
+  const read = () => names.evaluateAll((els) =>
     els.filter((e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; }).map((e) => (e.textContent ?? "").trim()));
+  await showEmptyFields(page);
+  const seen = new Set(await read());
+  const folded = await page.locator("[data-empty-tile]:visible").evaluateAll((els) => els.map((e) => e.getAttribute("data-empty-tile") ?? ""));
+  for (const key of folded) {
+    const line = page.locator(`[data-empty-tile="${key}"]`);
+    if (!(await line.isVisible())) continue;
+    await line.locator("[data-empty-tile-add]").click();
+    await expect(line).toHaveCount(0);
+    await showEmptyFields(page);
+    for (const n of await read()) seen.add(n);
+  }
+  return [...seen];
 }
 
 test.describe("TC-DOC-11 — Antecontractul fără câmpurile făcute de „discover”", () => {

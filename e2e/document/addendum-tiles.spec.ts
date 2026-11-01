@@ -20,7 +20,7 @@
 
 import { test, expect, type Locator, type Page } from "../helpers/test";
 import { E2E_MARKER, createDocumentOfType, removeLeftovers, removeRecord } from "../helpers/records";
-import { openEmptyTile, openEmptyTiles, showTile, editTile, editTileNamed, saveTileNamed } from "../helpers/tiles";
+import { openEmptyTile, openFoldedTile, showTile, editTile, editTileNamed, saveTileNamed } from "../helpers/tiles";
 import { showEmptyFields } from "../helpers/empty-fields";
 
 const MARK = `${E2E_MARKER}DOC-20`;
@@ -74,8 +74,6 @@ test.describe("TC-DOC-20 — actul adițional și actul pe care îl modifică", 
       await page.goto(`/documents/${act}`);
       await expect(page.getByRole("heading", { name: ACT })).toBeVisible({ timeout: 30_000 });
       for (const name of ["Actul modificat", "Ce modifică", "Părți"]) await showTile(page, name);
-      // 40.64: a new act's empty tiles are one line each; „Adaugă" opens them.
-      await openEmptyTiles(page);
       // 40.71: the empty fields of a partly filled tile are behind „Arată N câmpuri goale"; shown for the steps below.
       await showEmptyFields(page, undefined, { wait: true });
       const general = page.locator('[data-panel="general"]');
@@ -85,6 +83,8 @@ test.describe("TC-DOC-20 — actul adițional și actul pe care îl modifică", 
       await expect(amended(page).getByRole("button", { name: "Leagă actul modificat", exact: true })).toBeVisible();
       await expect(amended(page).getByText("Actul modificat nu e în arhivă — datele lui, așa cum le dă actul adițional:")).toBeVisible();
       await expect(fallback(page)).toBeVisible();
+      // 40.64: a new act's empty tiles are one line each; „Adaugă" opens them — 41.30: one at a time, so just before reading.
+      await openFoldedTile(page, "Ce modifică");
       const changes = page.getByRole("region", { name: "Ce modifică", exact: true });
       for (const label of ["Motiv completare", "Efect urmărit", "Preț neschimbat", "Liber de sarcini"]) {
         await expect(changes.getByText(label, { exact: true }).first()).toBeVisible();

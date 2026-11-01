@@ -16,7 +16,7 @@
 
 import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createSaleContract, removeLeftovers, removeRecord } from "../helpers/records";
-import { openEmptyTiles, pressTileButton, tileBox } from "../helpers/tiles";
+import { openFoldedTile, openPanelTile, pressTileButton, tileBox } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}DOC-05`;
 const SHOTS = "playwright-report/cvc-tile-names";
@@ -71,9 +71,10 @@ test.describe("TC-DOC-05 — filele și panourile unui CVC", () => {
 
       // Step 2 — „Toate": the five tiles and their panels, each in brackets (#37.90), none of the old names.
       await pressTileButton(page, "Toate");
-      // 40.64: a new contract's empty tiles are one line each; „Adaugă" opens them.
-      await openEmptyTiles(page);
+      // 40.64: a new contract's empty tiles are one line each; „Adaugă" opens them — 41.30: one at a time (opening the next
+      // folds the one before), so each just before it is read.
       for (const [tile, panels] of TILES) {
+        await openFoldedTile(page, tile);
         const region = page.getByRole("region", { name: tile, exact: true });
         await expect(region).toBeVisible({ timeout: 30_000 });
         for (const panel of panels) {
@@ -89,6 +90,7 @@ test.describe("TC-DOC-05 — filele și panourile unui CVC", () => {
 
       // Step 3 — the fees: since 40.93 (migration_122) all four at M, two to a row — Onorariu notarial | Impozit transfer,
       // then Timbru judiciar | Taxă timbru și publicitate, last — its label one line. (40.89: all four at S on one row.)
+      await openPanelTile(page, "Taxe și onorarii");
       const tops: number[] = [];
       for (const key of ["onorariuNotarial", "impozitTransfer", "timbruJudiciar", "taxaTimbruPublicitate"]) {
         const b = await fee(page, key).box.boundingBox();

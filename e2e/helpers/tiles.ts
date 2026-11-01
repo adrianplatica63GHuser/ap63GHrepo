@@ -163,12 +163,27 @@ export async function openEmptyTile(page: Page, tile: string): Promise<void> {
   await expect(line).toHaveCount(0);
 }
 
-/** Every empty tile on the screen opened — for a spec that fills several of them. The same-as-home line's „Adaugă" unticks its box. */
-export async function openEmptyTiles(page: Page): Promise<void> {
-  const adds = page.locator("[data-empty-tile] [data-empty-tile-add]");
-  while ((await adds.count()) > 0) {
-    await adds.first().click();
+/**
+ * Slice 41.30: one empty tile is open at a time on a saved record — opening one folds the empty tile opened before it —
+ * so `openEmptyTiles` (every empty tile at once) is gone. A spec that reads a tile opens that one just before reading it:
+ * by the tile's own title (the folded line keeps its heading), or by a panel inside it.
+ */
+export async function openFoldedTile(page: Page, name: string): Promise<void> {
+  const line = page.locator("[data-empty-tile]").filter({ has: page.getByRole("heading", { name, exact: true }) });
+  if (!(await line.isVisible())) return;
+  await line.locator("[data-empty-tile-add]").click();
+  await expect(line).toHaveCount(0);
+}
+
+/** 41.30: the document frame holding the panel headed `[panel]` (#37.90's brackets), opened if it is folded. */
+export async function openPanelTile(page: Page, panel: string): Promise<Locator> {
+  const frame = page.locator("[data-frame]").filter({ has: page.getByRole("heading", { name: `[${panel}]`, exact: true, includeHidden: true }) }).last();
+  const add = frame.locator("[data-empty-tile-add]");
+  if (await add.isVisible()) {
+    await add.click();
+    await expect(frame.locator("[data-empty-tile]")).toHaveCount(0);
   }
+  return frame;
 }
 
 /**
@@ -208,7 +223,7 @@ export async function editTileNamed(page: Page, name: string): Promise<Locator> 
  * A frame already open is used as it is; one with no „Editează" (nothing of its own to edit) is passed over.
  * Slice 41.26: a frame that was empty folds back to its line at that „Renunță" — so a frame drawn as its line is opened
  * with its „Adaugă" (which opens it in edit on a saved document), and a spec that reads rows afterwards opens the
- * empty tiles again (`openEmptyTiles`).
+ * tile it reads again (`openFoldedTile`, `openPanelTile` — 41.30).
  */
 export async function forEachFrame(
   page: Page,

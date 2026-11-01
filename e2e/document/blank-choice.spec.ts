@@ -22,18 +22,20 @@
 
 import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createSaleContract, removeLeftovers, removeRecord } from "../helpers/records";
-import { openEmptyTiles, pressTileButton, forEachFrame } from "../helpers/tiles";
+import { openPanelTile, pressTileButton, forEachFrame } from "../helpers/tiles";
 import { showEmptyFields } from "../helpers/empty-fields";
 
 const MARK = `${E2E_MARKER}DOC-06`;
 const SHOTS = "playwright-report/blank-choice";
 
-/** 41.26: an empty frame folds back to its line at a „Renunță" — opened again, every field shown, before reading it. */
+/**
+ * 41.26: an empty frame folds back to its line at a „Renunță" — opened again before reading it. 41.30: one empty tile is
+ * open at a time, so `reopen` opens the one frame step 5 reads („Declarații și garanții"), its empty fields shown.
+ */
 async function reopen(page: Page): Promise<void> {
-  await openEmptyTiles(page);
-  await expect(page.locator("[data-frame] [data-empty-tile]")).toHaveCount(0);
+  const frame = await openPanelTile(page, "Declarațiile vânzătorului");
   // The fields shown once stay shown for the visit, so there may be no „Arată N câmpuri goale" left: no wait.
-  await showEmptyFields(page);
+  await showEmptyFields(frame);
 }
 
 async function language(page: Page, locale: "ro-RO" | "en-GB"): Promise<void> {
@@ -110,12 +112,11 @@ test.describe("TC-DOC-06 — „fără valoare” în cursive, fără liniuțe",
       await language(page, "ro-RO");
       await page.goto(`/documents/${id}`);
       await pressTileButton(page, "Toate", { timeout: 30_000 });
-      // 40.64: a new contract\'s empty tiles are one line each; „Adaugă" opens them.
-      await openEmptyTiles(page);
       // 40.71: the empty fields of a partly filled tile are behind „Arată N câmpuri goale"; shown for the steps below.
+      // 41.30: the empty tiles stay folded — `forEachFrame` opens each in turn with its „Adaugă".
       await showEmptyFields(page, undefined, { wait: true });
       // 40.75: a saved document reads as text and draws a tile's dropdowns while it is open — each frame in turn.
-      await expect(page.locator('[data-read-value="customFields.inCircuitCivil"]')).toBeVisible({ timeout: 30_000 });
+      await expect(page.locator('[data-read-value="customFields.inCircuitCivil"]')).toBeAttached({ timeout: 30_000 });
       let count = 0;
       await forEachFrame(page, async () => {
         count += await dropdowns(page).count();
@@ -124,12 +125,14 @@ test.describe("TC-DOC-06 — „fără valoare” în cursive, fără liniuțe",
         }
       });
       expect(count).toBe(36);
-      await reopen(page); // 41.26
 
-      // Step 2 — „Circuit civil"'s list: „fără valoare" first, in italics; the others regular. Its frame opened.
+      // Step 2 — „Circuit civil"'s list: „fără valoare" first, in italics; the others regular. Its frame opened — with
+      // its „Adaugă" when it is folded (41.26, 41.30), else its „Editează".
       const circuitFrame = page.locator("[data-frame]").filter({ has: page.locator('[data-read-value="customFields.inCircuitCivil"]') });
-      // 41.26: after `reopen` the last frame it opened is already in edit — then there is no „Editează" to press.
-      if ((await circuitFrame.locator("[data-tile-edit-bar]").count()) === 0) await circuitFrame.locator("[data-tile-edit]").click();
+      const circuitAdd = circuitFrame.locator("[data-empty-tile-add]");
+      if (await circuitAdd.isVisible()) await circuitAdd.click();
+      else await circuitFrame.locator("[data-tile-edit]").click();
+      await expect(circuitCivil(page)).toBeVisible();
       await circuitCivil(page).scrollIntoViewIfNeeded();
       expect(await listOf(page)).toEqual([
         "fără valoare: italic",
@@ -162,11 +165,9 @@ test.describe("TC-DOC-06 — „fără valoare” în cursive, fără liniuțe",
       await language(page, "en-GB");
       await page.goto(`/documents/${id}`);
       await pressTileButton(page, "All", { timeout: 30_000 });
-      // 40.64: a new contract\'s empty tiles are one line each; „Adaugă" opens them.
-      await openEmptyTiles(page);
       // 40.71: the empty fields of a partly filled tile are behind „Arată N câmpuri goale"; shown for the steps below.
       await showEmptyFields(page, undefined, { wait: true });
-      await expect(page.locator('[data-read-value="customFields.inCircuitCivil"]')).toBeVisible({ timeout: 30_000 });
+      await expect(page.locator('[data-read-value="customFields.inCircuitCivil"]')).toBeAttached({ timeout: 30_000 });
       count = 0;
       await forEachFrame(page, async () => {
         count += await dropdowns(page).count();
@@ -175,7 +176,7 @@ test.describe("TC-DOC-06 — „fără valoare” în cursive, fără liniuțe",
         }
       });
       expect(count).toBe(36);
-      await reopen(page); // 41.26
+      await reopen(page); // 41.26, 41.30
       await stepFive(page);
       await photograph(page, "en");
     } finally {

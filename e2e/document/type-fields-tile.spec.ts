@@ -19,7 +19,7 @@
 
 import { test, expect, type Locator, type Page } from "../helpers/test";
 import { E2E_MARKER, createDocumentOfType, removeLeftovers, removeRecord } from "../helpers/records";
-import { openEmptyTiles, pressTileButton, editTile } from "../helpers/tiles";
+import { openPanelTile, pressTileButton, editTile } from "../helpers/tiles";
 import { showEmptyFields } from "../helpers/empty-fields";
 
 const MARK = `${E2E_MARKER}DOC-03`;
@@ -49,9 +49,9 @@ async function photograph(page: Page, name: string, target: () => Locator): Prom
 }
 
 async function allTiles(page: Page, word: "Toate" | "All"): Promise<void> {
-  // 40.57: the button is in the „Panouri" panel; 40.64: a new contract's empty tiles are one line — „Adaugă" opens them.
+  // 40.57: the button is in the „Panouri" panel. 40.64: a new contract's empty tiles are one line — 41.30: opened one at
+  // a time (opening the next folds the one before), so the fees' frame is opened when it is read (`openPanelTile`).
   await pressTileButton(page, word);
-  await openEmptyTiles(page);
 }
 
 test.describe("TC-DOC-03 — un PAD: „Detalii act” fără panou de emitere; „Identificarea actului”", () => {
@@ -79,6 +79,9 @@ test.describe("TC-DOC-03 — un PAD: „Detalii act” fără panou de emitere; 
       await expect(dateLabel(page)).toHaveText("Authentication date", { timeout: 30_000 });
       await expect(page.getByRole("combobox", { name: "Notary Office", exact: true })).toBeVisible(); // a <select> named by <label htmlFor>
       await expect(label("nrDocument")).toHaveText("Authentic Deed No.");
+      // 41.30: „Identificarea actului" put back, then the fees' frame opened — one tile in edit at a time.
+      await page.locator('[data-tile-cancel="general"]').click();
+      await openPanelTile(page, "Taxe și onorarii");
       await expect(fees().getByRole("heading", { name: "[Taxe și onorarii]", exact: true })).toBeVisible();
       await expect(fees().locator('[data-width-field="dateDocument"]')).toHaveCount(0);
 
@@ -92,15 +95,18 @@ test.describe("TC-DOC-03 — un PAD: „Detalii act” fără panou de emitere; 
       await expect(page.getByRole("combobox", { name: "Notariat", exact: true })).toBeVisible(); // a <select> named by <label htmlFor>
       await expect(label("nrDocument")).toHaveText("Nr. act autentic");
       await expect(page.getByRole("region", { name: "Identificarea actului", exact: true }).locator('[data-width-field="dateDocument"]')).toBeVisible();
+      await oneLine(dateLabel(page));
+      // The region is the tile's `display: contents` wrapper; the panel is what is drawn.
+      await photograph(page, "cvc-identification-ro", () => page.locator('[data-panel="general"]'));
+      // 41.30: „Identificarea actului" put back, then the fees' frame opened — one tile in edit at a time.
+      await page.locator('[data-tile-cancel="general"]').click();
+      await openPanelTile(page, "Taxe și onorarii");
       await expect(fees().getByRole("heading", { name: "[Taxe și onorarii]", exact: true })).toBeVisible();
       await expect(fees().locator('[data-width-field="dateDocument"]')).toHaveCount(0);
       for (const key of ["timbruJudiciar", "onorariuNotarial", "impozitTransfer", "taxaTimbruPublicitate"]) {
         await expect(fees().locator(`[data-width-field="customFields.${key}"]`)).toBeVisible();
       }
-      await oneLine(dateLabel(page));
       await photograph(page, "cvc-fees-ro", fees);
-      // The region is the tile's `display: contents` wrapper; the panel is what is drawn.
-      await photograph(page, "cvc-identification-ro", () => page.locator('[data-panel="general"]'));
     } finally {
       // At the end — Romanian again, and both documents deleted.
       await language(page, "ro-RO");

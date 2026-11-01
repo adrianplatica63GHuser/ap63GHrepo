@@ -63,7 +63,7 @@ import { test, expect, type Locator, type Page } from "../helpers/test";
 import { E2E_MARKER, createDocumentOfType, removeLeftovers, removeRecord } from "../helpers/records";
 import { openFromSidebar } from "../helpers/sidebar";
 import { expectDropdownsWrap, expectDropdownWraps, expectStableColumns, expectStableWidths, expectUnitGrid, photograph } from "../helpers/field-widths";
-import { editTile, openEmptyTiles, pressTileButton, showTile, TILE_GROUP, tileBox } from "../helpers/tiles";
+import { editTile, pressTileButton, showTile, TILE_GROUP, tileBox } from "../helpers/tiles";
 import { PAGES_PANEL_REM, UNIT_GAP_REM, UNIT_REM } from "../../src/lib/ui/field-widths";
 
 /**
@@ -91,8 +91,8 @@ async function expectDocumentWidths(page: Page): Promise<void> {
   await expectStableWidths(page);
   await pressTileButton(page, "Toate");
   await expect(page.getByRole("region", { name: "Etichete și grupuri", exact: true })).toBeVisible({ timeout: 30_000 });
-  // 40.64: a new act's empty tiles are one line each; opened, so every box below is measured.
-  await openEmptyTiles(page);
+  // 40.64: a new act's empty tiles are one line each. 41.30: they stay folded — one empty tile is open at a time on a
+  // saved act, so their boxes (mounted, hidden) measure 0 at every width; the frames and every drawn box are measured.
   await expectStableWidths(page);
   // Slice #37.31 — every tile on the width unit: the row is 8 units at 1366 px, 12 at 1920 (40.98; 6, 10, 14 of 148 px),
   // 17 at 2560, and each tile — a notebook tile is one frame — a whole number of units.

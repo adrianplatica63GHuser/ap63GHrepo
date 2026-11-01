@@ -29,7 +29,7 @@
 
 import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createSaleContract, removeLeftovers, removeRecord } from "../helpers/records";
-import { openEmptyTiles, pressTileButton, forEachFrame } from "../helpers/tiles";
+import { openFoldedTile, openPanelTile, pressTileButton, forEachFrame } from "../helpers/tiles";
 import { showEmptyFields } from "../helpers/empty-fields";
 import { expectDropdownsWrap } from "../helpers/field-widths";
 
@@ -73,6 +73,7 @@ async function boxesPerRow(page: Page, name: string): Promise<number[]> {
 
 /** The fields in the panel headed `name`, row by row, by their `data-width-field` (40.89). */
 async function rowsOf(page: Page, name: string): Promise<string[][]> {
+  await reopen(page, name); // 41.30
   const panel = page.locator("section").filter({ has: page.getByRole("heading", { name: `[${name}]`, exact: true }) }).last();
   return panel.locator("[data-width-field]").evaluateAll((els) => {
     const rows = new Map<number, { left: number; key: string }[]>();
@@ -136,12 +137,15 @@ async function priceFrame(page: Page) {
   });
 }
 
-/** 41.26: an empty frame folds back to its line at `forEachFrame`'s „Renunță" — opened again, every field shown, to read rows. */
-async function reopen(page: Page): Promise<void> {
-  await openEmptyTiles(page);
-  await expect(page.locator("[data-frame] [data-empty-tile]")).toHaveCount(0);
+/**
+ * 41.26: an empty frame folds back to its line at `forEachFrame`'s „Renunță" — opened again, every field shown, to read
+ * rows. 41.30: one empty tile is open at a time, so the frame holding the panel read next is opened — `rowsOf` and
+ * `boxesPerRow` do it for their panel.
+ */
+async function reopen(page: Page, panel = "Declarațiile vânzătorului"): Promise<void> {
+  const frame = await openPanelTile(page, panel);
   // The fields shown once stay shown for the visit, so there may be no „Arată N câmpuri goale" left: no wait.
-  await showEmptyFields(page);
+  await showEmptyFields(frame);
 }
 
 async function stepsTwoAndThree(page: Page): Promise<void> {
@@ -175,9 +179,8 @@ test.describe("TC-DOC-04 — listele derulante ale unui CVC", () => {
       // Step 1 — opened at 1366, „Toate": 36 dropdowns of the type's own fields.
       await page.goto(`/documents/${id}`);
       await pressTileButton(page, "Toate", { timeout: 30_000 });
-      // 40.64: a new contract\'s empty tiles are one line each; „Adaugă" opens them.
-      await openEmptyTiles(page);
       // 40.71: the empty fields of a partly filled tile are behind „Arată N câmpuri goale"; shown for the steps below.
+      // 41.30: the empty tiles stay folded — `forEachFrame` opens each in turn.
       await showEmptyFields(page, undefined, { wait: true });
       // 40.75: each frame's dropdowns, the frame open.
       await expect(page.locator('[data-read-value^="customFields."]').first()).toBeVisible({ timeout: 30_000 });
@@ -248,8 +251,8 @@ test.describe("TC-DOC-04 — listele derulante ale unui CVC", () => {
       const openPrice = async () => {
         await page.goto(`/documents/${id}`);
         await pressTileButton(page, "Toate", { timeout: 30_000 });
-        await openEmptyTiles(page);
-        await showEmptyFields(page, undefined, { wait: true });
+        await openFoldedTile(page, "Preț și plată"); // 41.30: the one frame read here
+        await showEmptyFields(page);
         await frame.scrollIntoViewIfNeeded();
         await expect(frame.locator('[data-width-field="customFields.pretTotal"]')).toBeVisible({ timeout: 30_000 });
         await page.waitForTimeout(300);
