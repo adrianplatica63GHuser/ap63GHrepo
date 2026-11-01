@@ -97,6 +97,45 @@ async function widestWhole(page: Page): Promise<void> {
   });
 }
 
+const UNIT = 119;
+const GAP = 16;
+const unitsPx = (n: number) => n * UNIT + (n - 1) * GAP;
+
+/**
+ * 41.25 — „Preț și plată" as drawn: the frame's px, its inner width, each panel's px, anything inside wider than the
+ * widest panel, and its width handle's units.
+ */
+async function priceFrame(page: Page) {
+  return page.getByRole("region", { name: "Preț și plată", exact: true }).evaluate((el) => {
+    const px = (v: string) => parseFloat(v) || 0;
+    const r = el.getBoundingClientRect();
+    const cs = getComputedStyle(el);
+    const inner = r.width - px(cs.paddingLeft) - px(cs.paddingRight) - px(cs.borderLeftWidth) - px(cs.borderRightWidth);
+    const sections = [...el.querySelectorAll<HTMLElement>("section")].map((s) => ({
+      section: s.dataset.section ?? s.dataset.panel ?? "",
+      w: Math.round(s.getBoundingClientRect().width * 10) / 10,
+      style: s.style.width,
+    }));
+    const widest = Math.max(0, ...sections.map((s) => s.w));
+    const all = [...el.querySelectorAll<HTMLElement>("*")].filter((e) => e.getBoundingClientRect().width > widest + 1);
+    const wider = all
+      .filter((e) => !all.includes(e.parentElement as HTMLElement))
+      .slice(0, 6)
+      .map((e) => `${e.tagName.toLowerCase()}${[...e.attributes].filter((a) => a.name.startsWith("data-")).map((a) => `[${a.name}]`).join("")} w${Math.round(e.getBoundingClientRect().width * 10) / 10}`);
+    const handle = document.querySelector<HTMLElement>(`[data-tile-handle="${el.dataset.frame ?? el.dataset.tile}"]`);
+    return {
+      tile: el.dataset.frame ?? el.dataset.tile ?? "",
+      w: Math.round(r.width * 10) / 10,
+      inner: Math.round(inner * 10) / 10,
+      style: (el as HTMLElement).style.width,
+      sections,
+      wider,
+      now: Number(handle?.getAttribute("aria-valuenow") ?? NaN),
+      min: Number(handle?.getAttribute("aria-valuemin") ?? NaN),
+    };
+  });
+}
+
 async function stepsTwoAndThree(page: Page): Promise<void> {
   // Step 2 — every one, its widest choice selected, shows it whole.
   await widestWhole(page);
@@ -180,6 +219,60 @@ test.describe("TC-DOC-04 — listele derulante ale unui CVC", () => {
       await photograph(page);
     } finally {
       // At the end — leaving without saving, and deleting the document.
+      if (id) await removeRecord(page.request, "document", id);
+    }
+  });
+
+  // Slice 41.25 — „Preț și plată" in whole units, its fields re-laid (Adrian: „it looks like 2.5 units; When I try to
+  // grab the right edge and make it narrower it jumps to three units instead").
+  test("pasul 7 (41.25): „Preț și plată” — unități întregi, marginea pornește de la cât arată, câmpurile pe rândurile lui Adrian", async ({ page }) => {
+    test.slow();
+    const MARK7 = `${MARK}-PRET`;
+    await removeLeftovers(page.request, MARK7);
+    await page.setViewportSize({ width: 1366, height: 900 });
+    let id: string | undefined;
+    try {
+      id = await createSaleContract(page.request, `${MARK7} CVC`);
+      await page.goto(`/documents/${id}`);
+      await pressTileButton(page, "Toate", { timeout: 30_000 });
+      await openEmptyTiles(page);
+      await showEmptyFields(page, undefined, { wait: true });
+      const frame = page.getByRole("region", { name: "Preț și plată", exact: true });
+      await frame.scrollIntoViewIfNeeded();
+      await expect(frame.locator('[data-width-field="customFields.pretTotal"]')).toBeVisible({ timeout: 30_000 });
+      const open = await priceFrame(page);
+      console.log(`TC-DOC-04 step 7 (41.25) — open: ${JSON.stringify(open)}`);
+
+      // Whole units, and the handle reads the units the frame shows.
+      const units = Math.round((open.w + GAP) / (UNIT + GAP));
+      expect(open.w, "a whole number of units").toBe(unitsPx(units));
+      expect(open.now, "the edge starts at the units shown").toBe(units);
+      expect(units, "Preț total | Monedă, 280 px, past 2 units").toBe(3);
+
+      // Adrian's rows (migration_123).
+      expect(await rowsOf(page, "Preț")).toEqual([["pretTotal", "monedaPret"], ["pretRealDeclarat"], ["temeiPret"], ["alocarePret"]]);
+      expect(await rowsOf(page, "Plată")).toEqual([["starePlata"], ["dataPlatii"], ["modalitatePlata"]]);
+      for (const key of ["pretTotal", "monedaPret"]) {
+        const b = await frame.locator(`[data-width-field="customFields.${key}"]`).boundingBox();
+        expect(Math.abs(b!.width - 136), `${key} is M, 136 px`).toBeLessThanOrEqual(1);
+      }
+      const price = open.sections.find((sec) => sec.section !== "" && sec.w > 0);
+      for (const key of ["temeiPret", "alocarePret"]) {
+        const b = await frame.locator(`[data-width-field="customFields.${key}"]`).boundingBox();
+        expect(Math.abs(b!.width - (price?.w ?? -1)), `${key} is the panel's inner width`).toBeLessThanOrEqual(1);
+      }
+
+      // One unit narrower from the width shown: refused (41.21 says why) or one unit narrower — never the same or wider.
+      const edge = page.locator(`[data-tile-handle="${open.tile}"]`);
+      await edge.focus();
+      await page.keyboard.press("ArrowLeft");
+      await page.waitForTimeout(300);
+      const after = await priceFrame(page);
+      console.log(`TC-DOC-04 step 7 (41.25) — one unit narrower: ${JSON.stringify({ w: after.w, now: after.now, min: after.min })}`);
+      expect([open.w, unitsPx(units - 1)]).toContain(after.w);
+      expect(after.w).toBeLessThanOrEqual(open.w);
+      if (after.w === open.w) expect(open.min, "refused only at the narrowest").toBe(units);
+    } finally {
       if (id) await removeRecord(page.request, "document", id);
     }
   });
