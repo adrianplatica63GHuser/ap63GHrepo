@@ -707,7 +707,12 @@ export function JudicialPersonForm({
     setSubmitError(null);
     setAnafApplied(false);
   }, [form]);
-  const tileEditing = useTileEditing<JpEditTile>({ dirty: editDirty, discard: discardEdits });
+  // 41.26: as on the natural person — the empty tiles an edit tile covers fold back when it is left without a value.
+  const tileEditing = useTileEditing<JpEditTile>({
+    dirty: editDirty,
+    discard: discardEdits,
+    onLeave: (edit, how) => emptyTiles.close(Object.keys(JP_EDIT_OF).filter((k) => JP_EDIT_OF[k] === edit), how === "cancel"),
+  });
   const editingTile: JpEditTile | null = canEditTiles ? tileEditing.open : null;
   const reading = (tile: JpEditTile): boolean => perTile && editingTile !== tile;
   const readMode: ReadMode = {

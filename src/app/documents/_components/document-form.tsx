@@ -1190,7 +1190,9 @@ export function DocumentForm({
     form.reset(baselineRef.current.values);
     setSubmitError(null);
   }, [form]);
-  const tileEditing = useTileEditing<string>({ dirty: editDirty, discard: discardEdits });
+  // 41.26: a frame opened with „Adaugă" and left without a value folds back to its line; after „Renunță" or Esc the
+  // focus is on its „Adaugă" again.
+  const tileEditing = useTileEditing<string>({ dirty: editDirty, discard: discardEdits, onLeave: (tile, how) => emptyTiles.close(tile, how === "cancel") });
   const editingTile: string | null = canEditTiles ? tileEditing.open : null;
   const readMode: ReadMode = {
     reading: (name) => perTile && tileOfPath(name) !== editingTile,

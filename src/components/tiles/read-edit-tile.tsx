@@ -19,7 +19,7 @@
  *     „Renunță", through the guard when changed.
  *   - `TileEditButton` (the corner) and `TileEditBar` („Salvează", „Renunță"), and `TILE_EDITING_CLASS` (the outline).
  */
-import { createContext, useCallback, useContext, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { Pencil, Save, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
@@ -120,17 +120,30 @@ export type TileEditing<T extends string> = {
   close: () => void;
 };
 
+/**
+ * Slice 41.26: how a tile's edit ended — „Renunță" or Esc, or saved. Not when another tile is opened over it: a tile
+ * opened with „Adaugă" stays open then, so pressing every „Adaugă" in turn opens them all (TC-DOC-04's steps do).
+ */
+export type TileLeave = "cancel" | "save";
+
 export function useTileEditing<T extends string>({
   dirty,
   discard,
+  onLeave,
 }: {
   /** The open tile has changes. */
   dirty: boolean;
   /** Puts the record's values back as saved. */
   discard: () => void;
+  /** Slice 41.26: the open tile's edit ended — a screen folds its empty tiles back to their line (`useEmptyTiles.close`). */
+  onLeave?: (tile: T, how: TileLeave) => void;
 }): TileEditing<T> {
   const [open, setOpen] = useState<T | null>(null);
   const { guardedAction } = useUnsavedChanges();
+  const leave = useRef(onLeave);
+  useEffect(() => {
+    leave.current = onLeave;
+  }, [onLeave]);
   const edit = useCallback(
     (tile: T, selector: string) => {
       const go = () => {
@@ -149,12 +162,16 @@ export function useTileEditing<T extends string>({
   const cancel = useCallback(() => {
     discard();
     setOpen(null);
-  }, [discard]);
+    if (open !== null) leave.current?.(open, "cancel");
+  }, [discard, open]);
   const escape = useCallback(() => {
     if (dirty) guardedAction(cancel);
     else cancel();
   }, [dirty, guardedAction, cancel]);
-  const close = useCallback(() => setOpen(null), []);
+  const close = useCallback(() => {
+    setOpen(null);
+    if (open !== null) leave.current?.(open, "save");
+  }, [open]);
   return { open, edit, cancel, escape, close };
 }
 

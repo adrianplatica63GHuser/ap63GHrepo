@@ -5,8 +5,10 @@
  *
  * On the four record screens a form tile with nothing in it (`tileIsEmpty`, src/lib/ui/empty-tile.ts) took as much
  * room as a full one: „Adresă corespondență" drew six empty boxes as tall as the home address above it. Now it is one
- * line. „Adaugă" opens it to today's form, with the focus in its first field; once opened it stays open until the
- * record is left.
+ * line. „Adaugă" opens it to today's form, with the focus in its first field. Slice 41.26: it stays open while its edit
+ * does; left without a value — „Renunță", Esc, or saved empty — it folds back to its line (`close`).
+ * Adrian, 2026-10-31: „if I open any of these tiles, I don't do any change, and then I just cancel it will stay expanded
+ * and show me all the empty fields instead of showing me a very small version of the tile … like in the beginning".
  *
  * ⚠️ **THE FIELDS STAY MOUNTED.** The one line is drawn in front of the tile's own body, which is only hidden — so
  * react-hook-form keeps every registration, a version's `form.reset` still reaches the boxes, and nothing typed is
@@ -42,6 +44,11 @@ export type EmptyTiles = {
   collapsed: (key: string, empty: boolean, whole?: boolean) => boolean;
   /** Opens the tile for this visit and puts the focus in the first field inside `selector` (its panel). */
   open: (key: string, selector: string) => void;
+  /**
+   * Slice 41.26: the tiles' edit was left — they are no longer opened, so each that is still empty folds back to its
+   * line. `focus`: the focus goes to the line's „Adaugă" (after „Renunță" or Esc, so the keyboard is not lost).
+   */
+  close: (keys: string | readonly string[], focus?: boolean) => void;
   /** „Adaugă" is offered — false on a read-only view. */
   canAdd: boolean;
 };
@@ -60,7 +67,22 @@ export function useEmptyTiles({ active, canAdd }: { active: boolean; canAdd: boo
     setOpened((prev) => (prev.has(key) ? prev : new Set(prev).add(key)));
     focusFirstField(selector);
   }, []);
-  return { collapsed, open, canAdd };
+  const close = useCallback((keys: string | readonly string[], focus = false) => {
+    const list: readonly string[] = typeof keys === "string" ? [keys] : keys;
+    setOpened((prev) => (list.some((k) => prev.has(k)) ? new Set([...prev].filter((k) => !list.includes(k))) : prev));
+    if (!focus) return;
+    // As `focusFirstField`: a timeout, once React has drawn the line (a tile that still holds a value draws none).
+    setTimeout(() => {
+      for (const k of list) {
+        const add = document.querySelector<HTMLElement>(`[data-empty-tile="${k}"] [data-empty-tile-add]`);
+        if (add) {
+          add.focus();
+          return;
+        }
+      }
+    }, 0);
+  }, []);
+  return { collapsed, open, close, canAdd };
 }
 
 /**

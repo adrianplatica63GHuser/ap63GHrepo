@@ -1236,7 +1236,10 @@ export function PropertyForm({
     setCorners(baselineRef.current.corners);
     setSubmitError(null);
   }, [form]);
-  const tileEditing = useTileEditing<PropEditTile>({ dirty: editDirty, discard: discardEdits });
+  // Slice 40.64: an empty address tile is one line — as on the Natural Person (natural-person-form.tsx). 41.26: above the
+  // editing, which folds it back when its edit is left without a value.
+  const emptyTiles = useEmptyTiles({ active: !isCreate, canAdd: effectiveMode === "edit" });
+  const tileEditing = useTileEditing<PropEditTile>({ dirty: editDirty, discard: discardEdits, onLeave: (tile, how) => emptyTiles.close(tile, how === "cancel") });
   const editingTile: PropEditTile | null = canEditTiles ? tileEditing.open : null;
   const reading = (tile: PropEditTile): boolean => perTile && editingTile !== tile;
   const readMode: ReadMode = {
@@ -1281,8 +1284,6 @@ export function PropertyForm({
     if (cornersMoved && openTile === null) editAnyTile("corners", "[data-no-focus-here]");
   }, [cornersMoved, openTile, editAnyTile]);
 
-  // Slice 40.64: an empty address tile is one line — as on the Natural Person (natural-person-form.tsx).
-  const emptyTiles = useEmptyTiles({ active: !isCreate, canAdd: effectiveMode === "edit" });
   const addressFolded = emptyTiles.collapsed(
     "address",
     tileIsEmpty(formState.defaultValues, PROPERTY_ADDRESS_FIELDS, emptyFormValues) && tileIsEmpty(watchedValues, PROPERTY_ADDRESS_FIELDS, emptyFormValues),

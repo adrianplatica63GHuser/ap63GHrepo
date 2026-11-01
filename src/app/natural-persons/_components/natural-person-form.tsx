@@ -785,7 +785,13 @@ export function NaturalPersonForm({
     setRelationshipIds(relationshipBaselineRef.current);
     setSubmitError(null);
   }, [form]);
-  const tileEditing = useTileEditing<NpEditTile>({ dirty: editDirty, discard: discardEdits });
+  // 41.26: the empty tiles an edit tile covers (Adresă domiciliu and Adresă corespondență are both „addresses") fold back
+  // to their line when it is left without a value; after „Renunță" or Esc the focus is on their „Adaugă".
+  const tileEditing = useTileEditing<NpEditTile>({
+    dirty: editDirty,
+    discard: discardEdits,
+    onLeave: (edit, how) => emptyTiles.close(Object.keys(NP_EDIT_OF).filter((k) => NP_EDIT_OF[k] === edit), how === "cancel"),
+  });
   const editingTile: NpEditTile | null = canEditTiles ? tileEditing.open : null;
   const reading = (tile: NpEditTile): boolean => perTile && editingTile !== tile;
   const readMode: ReadMode = {
