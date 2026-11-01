@@ -18,7 +18,7 @@ import { useTimeFrames, tfDays } from "@/hooks/use-time-frames";
 import { ID_CARD_HOLDER_ROLE } from "@/lib/import/id-card-holder-role";
 import { identityValidity } from "@/lib/identity-documents/form";
 
-type PersonRow = { id: string; code: string; type: "NATURAL" | "JUDICIAL"; displayName: string; roleName: string | null };
+export type PersonRow = { id: string; code: string; type: "NATURAL" | "JUDICIAL"; displayName: string; roleName: string | null };
 
 async function fetchHolder(documentId: string): Promise<PersonRow | null> {
   const res = await fetch(`/api/documents/${encodeURIComponent(documentId)}/persons`);
@@ -28,14 +28,23 @@ async function fetchHolder(documentId: string): Promise<PersonRow | null> {
   return items.find((p) => (p.roleName ?? "").trim().toLocaleLowerCase("ro-RO") === want) ?? null;
 }
 
-export function IdentityHolderLine({ documentId }: { documentId: string | null | undefined }) {
-  const t = useTranslations("identityDocument");
-  const { data: holder } = useQuery({
+/**
+ * Slice 41.33: the act's holder — one query, one cache — read by the holder line and by „Creează persoane din CI",
+ * which is disabled while a holder is linked. `loading` until the first answer.
+ */
+export function useIdentityHolder(documentId: string | null | undefined): { holder: PersonRow | null; loading: boolean } {
+  const { data, isPending } = useQuery({
     queryKey: ["document-persons", documentId, "holder"],
     queryFn: () => fetchHolder(documentId!),
     enabled: !!documentId,
     staleTime: 0,
   });
+  return { holder: data ?? null, loading: !!documentId && isPending };
+}
+
+export function IdentityHolderLine({ documentId }: { documentId: string | null | undefined }) {
+  const t = useTranslations("identityDocument");
+  const { holder } = useIdentityHolder(documentId);
   if (!documentId || !holder) return null;
   const href = holder.type === "NATURAL" ? `/natural-persons/${holder.id}` : `/judicial-persons/${holder.id}`;
   return (

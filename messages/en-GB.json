@@ -2393,7 +2393,8 @@
       "noPage": "The document has no page to read.",
       "error": "The card could not be read. Try again.",
       "holderCreated": "The holder was created and linked to the document.",
-      "holderLinked": "The holder already existed and was linked to the document."
+      "holderLinked": "The holder already existed and was linked to the document.",
+      "hasHolder": "This document already has a holder: {name}"
     },
     "issuer": {
       "search": "Search for a juridical person",

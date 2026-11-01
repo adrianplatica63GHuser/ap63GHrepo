@@ -2393,7 +2393,8 @@
       "noPage": "Actul nu are nicio pagină de citit.",
       "error": "Cartea nu a putut fi citită. Încercați din nou.",
       "holderCreated": "Titularul a fost creat și legat de act.",
-      "holderLinked": "Titularul există deja și a fost legat de act."
+      "holderLinked": "Titularul există deja și a fost legat de act.",
+      "hasHolder": "Actul are deja un titular: {name}"
     },
     "issuer": {
       "search": "Caută o persoană juridică",

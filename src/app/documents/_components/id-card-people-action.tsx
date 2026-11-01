@@ -23,6 +23,7 @@ import { IconButton } from "@/lib/ui/icon-button";
 import { IdCardPersonDialog, type IdCardPersonOutcome } from "@/app/admin/import/_components/id-card-person-dialog";
 import { cardImageFromFile } from "@/app/admin/import/_components/id-card-image";
 import { parentOutcomeSentences } from "@/lib/import/id-card-parents";
+import { useIdentityHolder } from "./identity-tile-parts";
 
 type PageRow = { id: string; pageNumber: number | null; fileName: string | null; mimeType: string | null };
 
@@ -51,6 +52,12 @@ export function IdCardPeopleAction({ documentId, title }: { documentId: string; 
   const [file, setFile] = useState<File | null>(null);
   const [state, setState] = useState<"idle" | "loading" | "noPage" | "error">("idle");
   const [done, setDone] = useState<string[] | null>(null);
+  // Slice 41.33 — Adrian: „If a “Pașaport” already have a holder disable the button … and on hover give a hint that this
+  // document already has a holder". On every identity kind. The holder line's own query, so linking or unlinking a
+  // holder changes the button at once. Disabled with no hint while it loads; `aria-disabled`, not `disabled`, so the
+  // hint reaches the keyboard and a screen reader.
+  const { holder, loading: holderLoading } = useIdentityHolder(documentId);
+  const blocked = holderLoading || holder !== null;
 
   async function open() {
     setDone(null);
@@ -81,8 +88,13 @@ export function IdCardPeopleAction({ documentId, title }: { documentId: string; 
         variant="secondary"
         size="lg"
         busy={state === "loading"}
-        onClick={() => void open()}
+        onClick={() => {
+          if (!blocked) void open();
+        }}
         disabled={state === "loading" || file !== null}
+        aria-disabled={blocked || undefined}
+        note={holder ? t("hasHolder", { name: holder.displayName }) : undefined}
+        data-id-card-people-blocked={holder ? "holder" : holderLoading ? "loading" : undefined}
       />
       {state === "noPage" && <p role="alert" className="text-xs text-red-600 dark:text-red-400">{t("noPage")}</p>}
       {state === "error" && <p role="alert" className="text-xs text-red-600 dark:text-red-400">{t("error")}</p>}
