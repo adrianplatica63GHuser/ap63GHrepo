@@ -489,6 +489,22 @@ export function stackedBoxStyle(w: FieldWidth, panelInner: number | string): CSS
 }
 
 /**
+ * Slice 41.29: the room a 30-px icon button takes beside a box — the 8-px gap between boxes on a row, then the button.
+ * „Schimbă tipul…" beside „Tip document" is the one caller.
+ */
+export const BESIDE_ICON_REM = 0.5 + 1.875;
+
+/**
+ * Slice 41.29: a box that keeps `w`'s width while it fits in its tile beside `besideRem` (an icon and its gap), and
+ * narrows with the tile when it does not — its text wrapping — so what stands beside it ends at the tile's inner edge,
+ * never on its border. Outside a unit tile (no `--tile-inner`) it is `w`'s width.
+ */
+export function cappedBoxStyle(w: FieldWidth, besideRem = 0): CSSProperties {
+  const box = boxRem(w);
+  return { width: `min(${rem(box)}, calc(${tileInner(box + besideRem)} - ${rem(besideRem)}))` };
+}
+
+/**
  * Slice 41.16: the live unit in px from `--unit`'s value as `getComputedStyle` gives it — „7.4375rem", „100px" — or
  * null when it is not a length this app writes.
  */

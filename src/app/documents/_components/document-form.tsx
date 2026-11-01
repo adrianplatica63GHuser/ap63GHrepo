@@ -93,6 +93,8 @@ import { ALWAYS_SHOWN_FIELDS,
   PANEL_UNITS,
   boxRem,
   boxStyle,
+  BESIDE_ICON_REM,
+  cappedBoxStyle,
   packFieldRows,
   stackedBoxStyle,
   templateFieldTakesRow,
@@ -2695,7 +2697,12 @@ function SelectField({
     .join(" ");
   const chosenLabel = options.find((o) => o.value === (watchValue ?? ""))?.label;
   // 40.88: a box at TILE fills its panel (`fillRem`, the panel's inner width), as a text Field does.
-  const boxCss = fillRem !== undefined ? stackedBoxStyle({ ...width, fill: true }, tileInner(fillRem)) : boxStyle(width);
+  // 41.29: a field with a change action („Tip document" on a saved document) keeps its own width while the box, the 8-px
+  // gap and the 30-px button fit in the tile, and narrows (wrapping) when they do not — so at 2 units the button ends at
+  // the tile's inner edge, not on its border. Edit and the read view alike; every other select keeps its fixed width.
+  const boxCss = fillRem !== undefined
+    ? stackedBoxStyle({ ...width, fill: true }, tileInner(fillRem))
+    : changeAction ? cappedBoxStyle(width, BESIDE_ICON_REM) : boxStyle(width);
   // Slice 40.75: the read view — the chosen option's words; a blank choice reads as nothing.
   if (read.reading) {
     return (
@@ -2712,9 +2719,11 @@ function SelectField({
     return (
       <div className={STACKED_FIELD_CLASS} style={hiddenFieldStyle(hiddenEmpty)} data-empty-hidden={hiddenEmpty || undefined}>
         <span className={STACKED_LABEL_CLASS}>{label}</span>
-        <div className="flex items-start gap-1">
-          <ReadValue name={name} kind={width.kind} text={watchValue ? (readLabel ?? chosenLabel ?? "") : ""} style={boxCss} className={ring} />
-          {changeAction(options)}
+        {/* 41.29: 8 px between the value and the button, as between boxes on a row; neither shrinks — the box's width is
+            already capped so the pair ends at the tile's inner edge. */}
+        <div className="flex items-start gap-2" data-type-change-row>
+          <ReadValue name={name} kind={width.kind} text={watchValue ? (readLabel ?? chosenLabel ?? "") : ""} style={boxCss} className={["shrink-0", ring].filter(Boolean).join(" ")} />
+          <span className="shrink-0">{changeAction(options)}</span>
         </div>
         {(hint || error) && (
           <div className="flex flex-col gap-0.5" style={boxCss}>
