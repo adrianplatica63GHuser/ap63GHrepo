@@ -17,7 +17,7 @@ import type { HighlightColor } from "@/lib/versioning/field-diff";
 import type { MetadataSnapshot, MetadataVersionItem } from "@/lib/metadata/queries";
 import { PROVENANCE_VALUES, provenanceI18nKey } from "@/lib/metadata/provenance";
 import { buttonClass } from "@/lib/ui/button-styles";
-import { CLASSIFICATION_UNITS, screenBox, tileInner, unitsInnerRem } from "@/lib/ui/field-widths";
+import { CLASSIFICATION_UNITS, boxRem, rem, screenBox, tileInner, unitsInnerRem } from "@/lib/ui/field-widths";
 import { HintBubble } from "@/lib/ui/hint-bubble";
 import { Divider } from "@/lib/ui/divider";
 import { MAX_GROUPS_PER_ITEM, MAX_GROUPS_PER_PROPERTY } from "@/lib/groups/validation";
@@ -30,6 +30,8 @@ import { TileAction, useTileChrome } from "@/components/tiles/list-tile";
 // Constants
 // ---------------------------------------------------------------------------
 
+/** 41.27: the tag box — what is left beside „Adaugă", at least M (136 px). */
+const TAG_BOX_STYLE: React.CSSProperties = { minWidth: rem(boxRem({ step: "M", kind: "input" })) };
 const IMPORTANCE_VALUES = ["LOW", "MEDIUM", "HIGH"] as const;
 const RELEVANCE_VALUES  = ["INACTIVE", "HISTORICAL", "CURRENT", "FUTURE"] as const;
 // PROVENANCE_VALUES is imported from @/lib/metadata/provenance - the single
@@ -375,6 +377,7 @@ function TagsSection({
   labelNote,
   labelAbout,
   labelPlaceholder,
+  labelBox,
   labelAdd,
   labelAdding,
   labelRemove,
@@ -386,6 +389,8 @@ function TagsSection({
   labelNote:         string;
   labelAbout:        string;
   labelPlaceholder:  string;
+  /** 41.27: the tag box's accessible name, „Etichetă nouă". */
+  labelBox:          string;
   labelAdd:          string;
   labelAdding:       string;
   labelRemove:       string;
@@ -495,8 +500,14 @@ function TagsSection({
           onKeyDown={handleKeyDown}
           disabled={adding}
           placeholder={labelPlaceholder}
-          {...screenBox("metaTag")}
-          className="rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-ink dark:text-zinc-100 text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-500"
+          // 41.27 — Adrian: „Why I cannot make this tile to be two units; It gives me a message about <metatag>!" The box
+          // takes what is left beside „Adaugă" (at least M, 136 px), so the tile fits 2 units and the box grows on 3;
+          // it was `metaTag` (XL, 272 px), wider than 2 units' 228 inside. Named for a screen reader, and so for the
+          // width bubble (`labelOf`).
+          aria-label={labelBox}
+          style={TAG_BOX_STYLE}
+          data-tag-input=""
+          className="min-w-0 flex-1 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-ink dark:text-zinc-100 text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-500"
         />
         {/* #37.44 (A032): Plus; „Se adaugă…" its name while it works. */}
         <IconButton
@@ -1615,6 +1626,7 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
           labelNote={t("tags.note")}
           labelAbout={about(t("tags.title"))}
           labelPlaceholder={t("tags.placeholder")}
+          labelBox={t("tags.box")}
           labelAdd={t("tags.add")}
           labelAdding={t("tags.adding")}
           labelRemove={t("tags.remove")}

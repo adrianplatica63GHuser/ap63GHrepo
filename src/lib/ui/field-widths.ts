@@ -1107,7 +1107,8 @@ export const MAP_BOX_STYLE: CSSProperties = { width: tileInner(PANEL_UNIT_INNER_
  * each the fewest units that hold it once the explanations went into bubbles:
  * „Clasificări" 2 — a dropdown and „Marchează ca verificat" side by
  * side, the widest being Proveniență's „Fișier de coordonate (.txt)" — and
- * „Conexiuni" 3 — the tag box (`metaTag`, XL) and its „Adaugă" button.
+ * „Conexiuni" 3 — the tag box (`metaTag`, XL) and its „Adaugă" button. (41.27: on the record tile the tag box takes what
+ * is left beside „Adaugă", at least M, so the tile goes to 2 units; `metaTag` stays the admin tag manager's.)
  */
 /**
  * ONE LINE A ROW.                                                  (Slice #37.64)

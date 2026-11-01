@@ -405,12 +405,28 @@ interface Measured {
   laptop: number;
 }
 
-/** A fixed box's name: its field's label as the screen shows it (41.20 — no `sr-only` or `aria-hidden` text), else its own. */
-function labelOf(d: HTMLElement): string {
+/**
+ * A fixed box's name: its field's label as the screen shows it (41.20 — no `sr-only` or `aria-hidden` text), else its
+ * accessible name (`aria-label`, `aria-labelledby`), else its placeholder, else its title — and never its width key.
+ *
+ * Slice 41.27 — Adrian: „It gives me a message about <metatag>!" A box without a label was named by `data-width-field`,
+ * a key nobody sees. A box with none of those is not named here; its row then takes the tile's name (`rowLine`).
+ */
+export function labelOf(d: HTMLElement): string {
   const own = d.closest<HTMLElement>("label") ?? d;
   const span = own.querySelector("span");
   const text = span ? visibleText(span) : "";
-  return text || d.getAttribute("aria-label") || d.dataset.widthField || "";
+  if (text) return text;
+  const aria = d.getAttribute("aria-label")?.trim();
+  if (aria) return aria;
+  const by = (d.getAttribute("aria-labelledby") ?? "")
+    .split(/\s+/)
+    .map((id) => (id ? d.ownerDocument.getElementById(id) : null))
+    .map((e) => (e ? visibleText(e) : ""))
+    .filter(Boolean)
+    .join(" ");
+  if (by) return by;
+  return d.getAttribute("placeholder")?.trim() || d.getAttribute("title")?.trim() || "";
 }
 
 /**
@@ -1123,6 +1139,8 @@ export function useTilePacking(
       // 41.20 (Ask first 2, 3): the heading as it is drawn now, on one line — its visible parts, the gap between them
       // and the frame around it — so what it needs is a sum the message can show, part by part.
       const h = el.querySelector<HTMLElement>("h2, h3");
+      // 41.27: a row whose boxes have no name on the screen is named by its tile — never by a key.
+      const tileName = (h ? visibleName(h) : "") || el.getAttribute("aria-label") || "";
       const drawnHeading = h ? headingParts(h, el) : undefined;
       const heading = drawnHeading ? headingMeasure(drawnHeading.parts, drawnHeading.spaces, drawnHeading.frame) : undefined;
       // 41.21: the rows of field boxes — boxes that share a parent and a top line — in screen order, as they stand now.
@@ -1161,7 +1179,7 @@ export function useTilePacking(
         const fields = [...new Set(named.map((i) => labelOf(fixed[i])).filter(Boolean))];
         return {
           kind: "fields",
-          name: fields.join(" | "),
+          name: fields.join(" | ") || tileName,
           px: right - box0.left + rightFrame,
           fits,
           top: Math.min(...g.map((i) => base[i].top)) - box0.top,

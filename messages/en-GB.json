@@ -952,6 +952,7 @@
         "title": "Tags / Keywords",
         "note": "Free-form tags that help you find and filter this item. Enter one tag at a time and press Add or Enter.",
         "placeholder": "Enter a tag…",
+        "box": "New tag",
         "add": "Add",
         "adding": "Adding…",
         "remove": "Remove tag",
