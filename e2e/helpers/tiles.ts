@@ -225,8 +225,9 @@ export async function forEachFrame(
     if ((await bar.count()) === 0) {
       const button = page.locator(`[data-tile-edit="${tile}"]`);
       const add = page.locator(`[data-frame="${tile}"] [data-empty-tile-add]`);
-      if ((await button.count()) > 0) await button.click();
-      else if (tile !== "general" && (await add.count()) > 0) await add.click();
+      // A folded frame keeps its „Editează" in the page, hidden behind the line — so visible, not merely there.
+      if (await button.isVisible()) await button.click();
+      else if (tile !== "general" && (await add.isVisible())) await add.click();
       else continue;
       await expect(bar).toBeVisible();
     }
