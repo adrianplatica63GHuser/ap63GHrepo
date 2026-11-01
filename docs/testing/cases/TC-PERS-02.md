@@ -125,3 +125,8 @@ explanation on hover. Only the quoted words changed in this file.
 
 **2026-10-18 — `automated` (Slice #39.85).** The test runner's targeted run 20261018T165019Z-11827 on 4e824a7 ran `e2e/person/company-create-edit.spec.ts` green
 with the search box's new words (lint, tsc and the slice's jest suites green too).
+
+**2026-10-31 — Slice 41.24.** Adrian: „bring the Type field under the Nickname; make the nickname to be tile size".
+In „Date de înregistrare", „Tip" (still L, 208 px) has a row of its own under „Poreclă", and „Poreclă" is the panel's whole
+inner width, in edit and at rest; the spec measures both, with the panel still 3 units. Written from the slice's own
+change; not driven by hand first.

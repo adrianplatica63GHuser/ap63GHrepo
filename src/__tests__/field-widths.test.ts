@@ -642,31 +642,36 @@ describe("the Judicial Person: labels above, rows by meaning, every tile on the 
     return rows;
   }
 
-  it("draws exactly the rows the file names: Denumire — Poreclă | Tip — CUI | Nr. Reg. Com. — Note (#37.57: no ID)", () => {
+  it("draws exactly the rows the file names: Denumire — Poreclă — Tip — CUI | Nr. Reg. Com. — Note (#37.57: no ID; 41.24)", () => {
+    // 41.24 — Tip under Poreclă; the second row was ["nickname", "judicialPersonTypeId"].
     expect(SCREEN_ROWS.judicialPerson.identity).toEqual([
       ["name"],
-      ["nickname", "judicialPersonTypeId"],
+      ["nickname"],
+      ["judicialPersonTypeId"],
       ["cuiNumber", "tradeRegisterNumber"],
       ["notes"],
     ]);
     expect(rowsOf(identity)).toEqual(SCREEN_ROWS.judicialPerson.identity.map((r) => [...r]));
-    // Denumire and Note fill the panel; the CUI hint stays with CUI (rule 15) — a bubble since #37.50.
+    // Denumire, Poreclă (41.24) and Note fill the panel; the CUI hint stays with CUI (rule 15) — a bubble since #37.50.
     expect(identity).toMatch(/width=\{JP\.name\}\s+fillRem=\{PANEL_UNIT_INNER_REM\.judicialPerson\.identity\}/);
+    expect(identity).toMatch(/width=\{JP\.nickname\}\s+fillRem=\{PANEL_UNIT_INNER_REM\.judicialPerson\.identity\}/);
+    expect(JP.nickname).toEqual({ step: "TILE", kind: "grows", fill: true });
     expect(identity).toMatch(/width=\{JP\.notes\}\s+fillRem=\{PANEL_UNIT_INNER_REM\.judicialPerson\.identity\}/);
     expect(identity).toMatch(/name="cuiNumber"[\s\S]{0,200}bubble=\{cuiIsLocked/);
     expect(JP.name.fill && JP.notes.fill).toBe(true);
   });
 
   it("each panel is the fewest whole units that hold its widest row: Persoană juridică 3, Persoane de contact 2 and Adresă 2 (41.05)", () => {
-    // #39.71: Poreclă M | Tip XL (the public-body types are long) — 26 rem; 40.90: Tip L, 22 rem — still three units.
-    expect(rowRem([JP.nickname, JP.judicialPersonTypeId])).toBe(22);
-    // #37.57: the system ID left this row for the heading's corner; Poreclă | Tip still makes it 3.
+    // #39.71: Poreclă M | Tip XL — 26 rem; 40.90: Tip L, 22 rem. 41.24: no such row any more — Tip alone (L) and
+    // CUI | Nr. Reg. Com. (17.5 rem, 280 px) are the widest rows with a fixed width, past 2 units' 228 px inside:
+    // still three units.
+    expect(rowRem([JP.judicialPersonTypeId])).toBe(13);
     expect(rowRem([JP.cuiNumber, JP.tradeRegisterNumber])).toBe(17.5);
     expect("code" in JP).toBe(false);
     expect(PANEL_UNITS.judicialPerson).toEqual({ identity: 3, contactPersons: 2, address: 2 });
-    expect(PANEL_UNIT_INNER_REM.judicialPerson.identity).toBeGreaterThanOrEqual(22);
-    expect(unitsInnerRem(2)).toBeLessThan(22);
-    expect(unitsInnerRem(3)).toBeGreaterThanOrEqual(22); // 40.98: 22.6875rem inside 3 units of 119 px
+    expect(PANEL_UNIT_INNER_REM.judicialPerson.identity).toBeGreaterThanOrEqual(17.5);
+    expect(unitsInnerRem(2)).toBeLessThan(17.5); // 41.24: 14.25rem (228 px) inside 2 units — CUI | Nr. Reg. Com. needs 17.5
+    expect(unitsInnerRem(3)).toBeGreaterThanOrEqual(17.5); // 40.98: 22.6875rem inside 3 units of 119 px
     // 41.05: the contact persons and the e-mail take the 2-unit panel's whole width (their XL is past it).
     expect([JP.contactPerson.fill, JP.email.fill]).toEqual([true, true]);
     expect(PANEL_UNIT_INNER_REM.judicialPerson.contactPersons).toBeGreaterThanOrEqual(boxRem(JP.phone));

@@ -37,7 +37,7 @@
  *     tile boxes, not eight.
  */
 
-import { test, expect } from "../helpers/test";
+import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, removeLeftovers, removeRecord } from "../helpers/records";
 import { openFromSidebar } from "../helpers/sidebar";
 import { expectDropdownsWrap, expectStableColumns, expectStableWidths, expectUnitGrid, photograph } from "../helpers/field-widths";
@@ -48,6 +48,22 @@ import { listsOnTheirEarlierColumns } from "../helpers/list-columns";
 const MARK = `${E2E_MARKER}PERS-02`;
 const NAME = `${MARK} Firmă de test SRL`;
 const CUI = "0000000002";
+
+/** 41.24 — Poreclă's and Tip's boxes in „Date de înregistrare", and the panel's inner width (its p-3 and 1-px border off). */
+async function nicknameAndType(page: Page) {
+  return page.evaluate(() => {
+    const panel = document.querySelector<HTMLElement>('[data-panel="identity"]')!;
+    const box = (k: string) => {
+      const el = [...panel.querySelectorAll<HTMLElement>(`[data-width-field="${k}"]`)].find((e) => e.getBoundingClientRect().width > 0);
+      if (!el) return null;
+      const r = el.getBoundingClientRect();
+      return { top: Math.round(r.top), bottom: Math.round(r.bottom), width: Math.round(r.width) };
+    };
+    const cs = getComputedStyle(panel);
+    const inner = panel.getBoundingClientRect().width - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - parseFloat(cs.borderLeftWidth) - parseFloat(cs.borderRightWidth);
+    return { nick: box("nickname")!, tip: box("judicialPersonTypeId"), inner: Math.round(inner) };
+  });
+}
 
 test.describe("TC-PERS-02 — Persoană juridică creată și modificată", () => {
   test("creare, găsire după nume și CUI, modificare → v 1, apoi ștergere", async ({ page }) => {
@@ -159,11 +175,13 @@ test.describe("TC-PERS-02 — Persoană juridică creată și modificată", () =
       // „Denumire" grows downward with a long value (typed, never saved); the pictures.
       await expectStableWidths(page);
       await expectDropdownsWrap(page); // 40.78: every dropdown its width, a long value wrapped
-      // 40.90 — Adrian's mark: „Tip" is L (208 px), Poreclă | Tip still on one row.
-      const tipBox = await page.locator('[data-panel="identity"] [data-width-field="judicialPersonTypeId"]').boundingBox();
-      const nickBox = await page.locator('[data-panel="identity"] [data-width-field="nickname"]').boundingBox();
-      expect(Math.abs((tipBox?.width ?? 0) - 208), "Tip is L, 208 px").toBeLessThanOrEqual(1);
-      expect(Math.abs((tipBox?.y ?? 0) - (nickBox?.y ?? -100)), "Poreclă | Tip on one row").toBeLessThanOrEqual(1);
+      // 40.90 — Adrian's mark: „Tip" is L (208 px). 41.24 — Tip under Poreclă, Poreclă the panel's whole inner width
+      // (it was Poreclă | Tip on one row).
+      const edit = await nicknameAndType(page);
+      console.log(`TC-PERS-02 (41.24) in edit: ${JSON.stringify(edit)}`);
+      expect(Math.abs(edit.tip!.width - 208), "Tip is L, 208 px").toBeLessThanOrEqual(1);
+      expect(edit.tip!.top, "Tip starts below Poreclă").toBeGreaterThanOrEqual(edit.nick.bottom - 1);
+      expect(Math.abs(edit.nick.width - edit.inner), "Poreclă is the panel's inner width").toBeLessThanOrEqual(1);
       const denumire = page.locator('[data-width-field="name"]');
       const before = await denumire.boundingBox();
       await denumire.fill(`${NAME} ${"SOCIETATEA AGRICOLĂ ".repeat(4)}`);
@@ -194,6 +212,11 @@ test.describe("TC-PERS-02 — Persoană juridică creată și modificată", () =
       await expect(page.locator('[data-tile-edit-bar="identity"]')).toHaveCount(0);
       await expect(page.locator('[data-panel="identity"] [data-read-value="nickname"]')).toHaveText(`${MARK} editat`);
       await expect(page.getByText("2 versiuni")).toBeVisible();
+      // 41.24 — at rest too: Poreclă the panel's inner width; Tip, when it has a value to show, below it.
+      const rest = await nicknameAndType(page);
+      console.log(`TC-PERS-02 (41.24) at rest: ${JSON.stringify(rest)}`);
+      expect(Math.abs(rest.nick.width - rest.inner), "Poreclă is the panel's inner width at rest").toBeLessThanOrEqual(1);
+      if (rest.tip) expect(rest.tip.top, "Tip starts below Poreclă at rest").toBeGreaterThanOrEqual(rest.nick.bottom - 1);
 
       // Slice #37.18 — every tile at once („Toate"), its widths held, and its pictures; then „Implicit".
       await pressTileButton(page, "Toate");
