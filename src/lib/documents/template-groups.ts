@@ -122,3 +122,19 @@ export function isIdentificationGroup(label: string): boolean {
 export function isAmendedDeedGroup(label: string): boolean {
   return templateFieldGroupOf(label) === "amendedDeed";
 }
+
+/**
+ * Slice 41.31: the field paths a tile may offer behind „Arată N câmpuri goale". While a parent deed is linked, the
+ * amended-deed fallback (number, date, notariat, type) is drawn under a parent that is hidden — never unmounted, so
+ * linking clears nothing (#38.34) — so a link naming one of them would „show" a field nobody can see, and vanish. Those
+ * paths are left out then; unlinked, they are offered again like any other.
+ */
+export function offeredEmptyFieldPaths(
+  paths: readonly string[],
+  amendedFields: readonly { key: string }[] | undefined,
+  deedLinked: boolean,
+): readonly string[] {
+  if (!deedLinked || !amendedFields?.length) return paths;
+  const hidden = new Set(amendedFields.map((f) => `customFields.${f.key}`));
+  return paths.filter((p) => !hidden.has(p));
+}

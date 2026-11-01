@@ -51,6 +51,7 @@ import {
   isFinancialGroup,
   isIdentificationGroup,
   isAmendedDeedGroup,
+  offeredEmptyFieldPaths,
 } from "@/lib/documents/template-groups";
 import {
   feesPairStaysTogether,
@@ -1312,7 +1313,8 @@ export function DocumentForm({
   );
   for (const path of customLabel.keys()) {
     const tile = tileOfPath(path);
-    if (tile !== "general" && !docTilePaths.has(tile)) docTilePaths.set(tile, frameFieldPaths(tile));
+    // 41.31: never a field under a hidden parent — the amended-deed fallback while a deed is linked.
+    if (tile !== "general" && !docTilePaths.has(tile)) docTilePaths.set(tile, offeredEmptyFieldPaths(frameFieldPaths(tile), amendedGroup?.fields, !!parentDeed));
   }
   // 40.75: an open tile shows every field.
   const docHidden = new Map([...docTilePaths].map(([tile, paths]) => [tile, emptyFields.hide(tile, paths, paths.some(docMarked) || editingTile === tile)]));
