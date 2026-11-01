@@ -28,6 +28,12 @@ import { showEmptyFields } from "../helpers/empty-fields";
 const MARK = `${E2E_MARKER}DOC-06`;
 const SHOTS = "playwright-report/blank-choice";
 
+/** 41.26: an empty frame folds back to its line at a „Renunță" — opened again, every field shown, before reading it. */
+async function reopen(page: Page): Promise<void> {
+  await openEmptyTiles(page);
+  await showEmptyFields(page, undefined, { wait: true });
+}
+
 async function language(page: Page, locale: "ro-RO" | "en-GB"): Promise<void> {
   await page.context().addCookies([{ name: "NEXT_LOCALE", value: locale, domain: "localhost", path: "/" }]);
 }
@@ -116,10 +122,12 @@ test.describe("TC-DOC-06 — „fără valoare” în cursive, fără liniuțe",
         }
       });
       expect(count).toBe(36);
+      await reopen(page); // 41.26
 
       // Step 2 — „Circuit civil"'s list: „fără valoare" first, in italics; the others regular. Its frame opened.
       const circuitFrame = page.locator("[data-frame]").filter({ has: page.locator('[data-read-value="customFields.inCircuitCivil"]') });
-      await circuitFrame.locator("[data-tile-edit]").click();
+      // 41.26: after `reopen` the last frame it opened is already in edit — then there is no „Editează" to press.
+      if ((await circuitFrame.locator("[data-tile-edit-bar]").count()) === 0) await circuitFrame.locator("[data-tile-edit]").click();
       await circuitCivil(page).scrollIntoViewIfNeeded();
       expect(await listOf(page)).toEqual([
         "fără valoare: italic",
@@ -142,6 +150,7 @@ test.describe("TC-DOC-06 — „fără valoare” în cursive, fără liniuțe",
       await circuitCivil(page).selectOption({ label: "fără valoare" });
       await expect(circuitCivil(page)).toHaveCSS("font-style", "italic");
       await page.locator("[data-tile-cancel]").click(); // 40.75: nothing kept
+      await reopen(page); // 41.26: that „Renunță" folded the frame back to its line
 
       // Step 5 — two to a row (40.93; three until then).
       await stepFive(page);
@@ -164,6 +173,7 @@ test.describe("TC-DOC-06 — „fără valoare” în cursive, fără liniuțe",
         }
       });
       expect(count).toBe(36);
+      await reopen(page); // 41.26
       await stepFive(page);
       await photograph(page, "en");
     } finally {
@@ -289,6 +299,7 @@ test.describe("TC-DOC-06 pasul 9 (41.26) — o dală goală deschisă cu „Adau
         const line = frame.locator("[data-empty-tile]");
         await expect(line, `${name}: one line at first`).toBeVisible({ timeout: 30_000 });
         await expect(line.locator("[data-empty-tile-state]")).toHaveText("necompletat");
+        const folded = (await frame.boundingBox())!.height;
         await line.locator("[data-empty-tile-add]").click();
         await expect(frame.locator("[data-tile-edit-bar]"), `${name}: open, in edit`).toBeVisible();
         await expect(line).toHaveCount(0);
@@ -297,7 +308,7 @@ test.describe("TC-DOC-06 pasul 9 (41.26) — o dală goală deschisă cu „Adau
         await expect(frame.locator("[data-tile-edit-bar]")).toHaveCount(0);
         await expect(line, `${name}: back to its one line after ${how}`).toBeVisible();
         await expect(line.locator("[data-empty-tile-add]"), `${name}: the focus on „Adaugă”`).toBeFocused();
-        expect((await frame.boundingBox())!.height, `${name}: one line high`).toBeLessThanOrEqual(64);
+        expect(Math.abs((await frame.boundingBox())!.height - folded), `${name}: as high as at first (${folded} px)`).toBeLessThanOrEqual(1);
       }
     } finally {
       if (id) await removeRecord(page.request, "document", id);

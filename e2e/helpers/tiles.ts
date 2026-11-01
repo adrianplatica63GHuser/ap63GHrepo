@@ -206,6 +206,9 @@ export async function editTileNamed(page: Page, name: string): Promise<Locator> 
  * Slice 40.75: „Identificarea actului" and each of a document's frames on the screen, opened in turn with „Editează"
  * and put back with „Renunță" — for a spec that reads every dropdown of a type, which a saved document draws only in its open tile.
  * A frame already open is used as it is; one with no „Editează" (nothing of its own to edit) is passed over.
+ * Slice 41.26: a frame that was empty folds back to its line at that „Renunță" — so a frame drawn as its line is opened
+ * with its „Adaugă" (which opens it in edit on a saved document), and a spec that reads rows afterwards opens the
+ * empty tiles again (`openEmptyTiles`).
  */
 export async function forEachFrame(
   page: Page,
@@ -221,8 +224,10 @@ export async function forEachFrame(
     const bar = page.locator(`[data-tile-edit-bar="${tile}"]`);
     if ((await bar.count()) === 0) {
       const button = page.locator(`[data-tile-edit="${tile}"]`);
-      if ((await button.count()) === 0) continue;
-      await button.click();
+      const add = page.locator(`[data-frame="${tile}"] [data-empty-tile-add]`);
+      if ((await button.count()) > 0) await button.click();
+      else if (tile !== "general" && (await add.count()) > 0) await add.click();
+      else continue;
       await expect(bar).toBeVisible();
     }
     await fn(page.locator(tile === "general" ? '[data-panel="general"]' : `[data-frame="${tile}"]`), tile);

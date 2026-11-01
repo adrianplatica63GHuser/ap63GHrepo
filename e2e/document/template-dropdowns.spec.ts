@@ -136,9 +136,16 @@ async function priceFrame(page: Page) {
   });
 }
 
+/** 41.26: an empty frame folds back to its line at `forEachFrame`'s „Renunță" — opened again, every field shown, to read rows. */
+async function reopen(page: Page): Promise<void> {
+  await openEmptyTiles(page);
+  await showEmptyFields(page, undefined, { wait: true });
+}
+
 async function stepsTwoAndThree(page: Page): Promise<void> {
   // Step 2 — every one, its widest choice selected, shows it whole.
   await widestWhole(page);
+  await reopen(page);
   // Step 3 — since 40.93 (migration_122) two to a row: the 12 statements as 2,2,2,2,2,2 and the 5 statutory
   // declarations as 2,2,1 (#37.55–40.92 three to a row: 3,3,3,3 and 3,2).
   expect(await boxesPerRow(page, "Declarațiile vânzătorului")).toEqual([2, 2, 2, 2, 2, 2]);
@@ -183,6 +190,7 @@ test.describe("TC-DOC-04 — listele derulante ale unui CVC", () => {
       // Step 4 — 1920 × 1080: the same.
       await page.setViewportSize({ width: 1920, height: 1080 });
       await widestWhole(page);
+      await reopen(page);
       expect(await boxesPerRow(page, "Declarațiile vânzătorului")).toEqual([2, 2, 2, 2, 2, 2]); // 40.93
       expect(await boxesPerRow(page, "Declarații legale")).toEqual([2, 2, 1]); // 40.93
 
