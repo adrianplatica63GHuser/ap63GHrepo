@@ -100,6 +100,8 @@ import { ALWAYS_SHOWN_FIELDS,
   unitRowStyle,
   unitStyle,
   unitsInnerRem,
+  framePanelStyle,
+  FRAME_INNER_STYLE,
   type FieldWidth,
   tileInner,
 } from "@/lib/ui/field-widths";
@@ -1326,7 +1328,8 @@ export function DocumentForm({
         data-frame={tile}
         onKeyDown={editKeys(tile)}
         className={`w-fit max-w-full rounded-md border border-card-rim bg-card p-3 shadow-sm${tileShown(tile) ? "" : " hidden"}${editingClass(tile)}`}
-        style={tiles || folded ? { ...(tiles ? { order: tiles.order(tile) } : {}), ...(folded ? unitStyle(2) : {}) } : undefined}
+        // 41.25: the frame's inner width passed on to its panels (`framePanelStyle`) — set when its edge gave it one.
+        style={{ ...FRAME_INNER_STYLE, ...(tiles ? { order: tiles.order(tile) } : {}), ...(folded ? unitStyle(2) : {}) }}
       >
         {folded && (
           <EmptyTileLine
@@ -2498,7 +2501,9 @@ function Section({
   if (framed) {
     const allHidden = paths !== undefined && paths.length > 0 && paths.every((p) => hidden.has(p));
     return (
-      <section data-section={panel} style={hiddenFieldStyle(allHidden, { width: tileInner(unitsInnerRem(units)) })} data-empty-hidden={allHidden || undefined}>
+      // 41.25: its units on the live unit (it was `tileInner(unitsInnerRem(units))`, worked out on 119 px), so the frame
+      // around — as wide as its widest panel — is whole units on any unit; what fills the panel follows it.
+      <section data-section={panel} style={hiddenFieldStyle(allHidden, framePanelStyle(units))} data-empty-hidden={allHidden || undefined}>
         {heading}
         <div className="flex flex-col gap-2">{children}</div>
       </section>

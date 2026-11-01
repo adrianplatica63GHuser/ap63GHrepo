@@ -452,6 +452,29 @@ export function tileInner(fallbackRem: number): string {
 }
 
 /**
+ * Slice 41.25: a document frame's own inner width, under a name of its own. The tile packing sets `--tile-inner` on the
+ * frame when its edge gave it a width (41.17); the frame passes it on as `--frame-inner` (`FRAME_INNER_STYLE`), so that
+ * each panel inside can set `--tile-inner` for what fills it without a variable that names itself.
+ */
+export const FRAME_INNER_VAR = "--frame-inner";
+export const FRAME_INNER_STYLE = { [FRAME_INNER_VAR]: `var(${TILE_INNER_VAR})` } as CSSProperties;
+
+/**
+ * Slice 41.25: a panel of `n` units inside a document frame (`Section`, FrameContext) — the frame's inner width when its
+ * edge set one, else `n` units as drawn on the LIVE unit, less a tile's frame — and the same width for what fills it.
+ *
+ * Adrian, 2026-10-31, on a Contract de vânzare's „Preț și plată": „it looks like 2.5 units; When I try to grab the right
+ * edge and make it narrower it jumps to three units instead". The panels fell back to `unitsInnerRem(n)`, a width worked
+ * out on 119 px, while the grid and the edge use the unit set on „Setări" (41.16, per browser). Measured by TC-DOC-04
+ * step 7 on a unit of 150 px: the frame 389 px — 2.4 units of 150 + 16 — and its edge reading 3. A frame is as wide as
+ * its widest panel (`w-fit`), so a panel in live units makes every frame, on every type, whole units.
+ */
+export function framePanelStyle(n: number): CSSProperties {
+  const w = `var(${FRAME_INNER_VAR}, ${tileInnerCss(unitsCss(n))})`;
+  return { width: w, [TILE_INNER_VAR]: w } as CSSProperties;
+}
+
+/**
  * How much wider than `units` units on 119 px the tile around is drawn — 0 at the default unit. A list tile's table and
  * its fill column add it (column-resize.tsx), so the table keeps filling its tile.
  */
