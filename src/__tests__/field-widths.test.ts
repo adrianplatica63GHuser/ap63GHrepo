@@ -796,7 +796,8 @@ describe("the Document: labels above, every tile on the unit, notebook tiles as 
     expect(panels.match(/packCustomFields\(|financialPacked/g)?.length ?? 0).toBeGreaterThanOrEqual(3);
     expect(DOC_FORM).toMatch(/frameBlock\(tileOfTabIndex\(tabs, i\), label, panelsOf\(i\)\)/);
     // Inside a frame a panel is a section of it: no border, `data-section`, its units' inner width.
-    expect(region(DOC_FORM, "function Section(", "\ntype FieldProps")).toMatch(/if \(framed\)[\s\S]*data-section=\{panel\}[\s\S]*unitsInnerRem\(units\)/);
+    // 41.25: a framed panel's width is in live units (it was unitsInnerRem(units), on 119 px).
+    expect(region(DOC_FORM, "function Section(", "\ntype FieldProps")).toMatch(/if \(framed\)[\s\S]*data-section=\{panel\}[\s\S]*framePanelStyle\(units\)/);
   });
 
   it("the list tiles: „Corelate” 4 units (#37.65), Clasificări 3 (#37.68) and Conexiuni 3 (#37.63)", () => {

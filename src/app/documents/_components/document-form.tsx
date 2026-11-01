@@ -2501,7 +2501,7 @@ function Section({
   if (framed) {
     const allHidden = paths !== undefined && paths.length > 0 && paths.every((p) => hidden.has(p));
     return (
-      // 41.25: its units on the live unit (it was `tileInner(unitsInnerRem(units))`, worked out on 119 px), so the frame
+      // 41.25: its units on the live unit (it fell back to `unitsInnerRem` — a width worked out on 119 px), so the frame
       // around — as wide as its widest panel — is whole units on any unit; what fills the panel follows it.
       <section data-section={panel} style={hiddenFieldStyle(allHidden, framePanelStyle(units))} data-empty-hidden={allHidden || undefined}>
         {heading}
