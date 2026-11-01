@@ -43,9 +43,14 @@ async function tileRows(page: Page): Promise<string[][]> {
 
 /** 41.29: the frame or tile around „Identificarea actului" — the one whose edge the packing drags. */
 async function generalHandle(page: Page): Promise<string> {
-  return general(page).evaluate((el) => {
-    const t = el.closest<HTMLElement>("[data-frame], [data-tile]");
-    return t?.dataset.frame ?? t?.dataset.tile ?? "";
+  // The nearest ancestor that has an edge drawn for it — the frame on a notebook type, else the tile itself.
+  return general(page).evaluate((el: HTMLElement) => {
+    for (let at: HTMLElement | null = el; at; at = at.parentElement) {
+      for (const id of [at.dataset.frame, at.dataset.tile]) {
+        if (id && document.querySelector(`[data-tile-handle="${CSS.escape(id)}"]`)) return id;
+      }
+    }
+    return "";
   });
 }
 
@@ -62,6 +67,7 @@ async function typeRowEdges(page: Page): Promise<{ inner: number; button: number
 
 /** 41.29: at 2 units, in edit and at rest; then the tile's own width again. */
 async function expectTypeButtonInside(page: Page): Promise<void> {
+  await expect(page.locator("[data-tile-handle]").first()).toBeAttached({ timeout: 30_000 });
   const id = await generalHandle(page);
   expect(id, "the general panel sits in a tile with an edge").not.toBe("");
   const edge = page.locator(`[data-tile-handle="${id}"]`);
