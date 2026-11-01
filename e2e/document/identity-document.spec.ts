@@ -46,8 +46,9 @@ async function generalHandle(page: Page): Promise<string> {
   // The nearest ancestor that has an edge drawn for it — the frame on a notebook type, else the tile itself.
   return general(page).evaluate((el: HTMLElement) => {
     for (let at: HTMLElement | null = el; at; at = at.parentElement) {
-      for (const id of [at.dataset.frame, at.dataset.tile]) {
-        if (id && document.querySelector(`[data-tile-handle="${CSS.escape(id)}"]`)) return id;
+      // A tile drawn inside its `display: contents` wrapper is packed as `<key>#0` (findBoxes).
+      for (const id of [at.dataset.frame, at.dataset.tile].flatMap((k) => (k ? [k, `${k}#0`] : []))) {
+        if (document.querySelector(`[data-tile-handle="${CSS.escape(id)}"]`)) return id;
       }
     }
     return "";
