@@ -119,6 +119,16 @@ test.describe("TC-PERS-10 — „Creează persoane din CI” pe ecranul actului"
       const linked = (persons.items ?? []).map((p) => [p.displayName ?? p.name, p.roleName ?? null]);
       expect(linked).toEqual([[HOLDER, "Titular act de identitate"]]);
 
+      // Step 4b (41.33) — the act has a holder now: „Creează persoane din CI" is aria-disabled, still focusable, and its
+      // hint names the holder.
+      await page.goto(`/documents/${documentId}`);
+      const blocked = page.getByRole("button", { name: "Creează persoane din CI", exact: true });
+      await expect(blocked).toHaveAttribute("aria-disabled", "true", { timeout: 30_000 });
+      await expect(page.locator('[data-id-card-people-blocked="holder"]')).toHaveCount(1);
+      await blocked.focus();
+      await expect(blocked).toBeFocused();
+      await expect(blocked).toHaveAccessibleDescription(`Actul are deja un titular: ${HOLDER}`);
+
       // Step 5 — the holder's „Legături": the father, the mother, the card.
       const holderId = await personIdNamed(page, HOLDER);
       await page.goto(`/natural-persons/${holderId}`);
