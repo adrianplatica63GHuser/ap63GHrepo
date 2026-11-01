@@ -124,3 +124,6 @@ unchanged.
 Playwright's real mouse and keyboard and takes #37.50's pictures. Green on its first runner run,
 `20261002T130624Z-14261` on `2a28142` (the spec alone, with lint and tsc; jest
 `20261002T130839Z-21933`, 204 suites).
+
+**2026-10-31 — Slice 41.26.** Step 11 also presses „Renunță" on the opened „Contact" with nothing typed: it is one line
+again, the focus on its „Adaugă". Written from the slice's own change; not driven by hand first.

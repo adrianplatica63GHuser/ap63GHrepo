@@ -94,6 +94,27 @@ describe("which tiles are folded", () => {
     expect(saved.result.current.collapsed("idCard", true)).toBe(true);
     jest.useRealTimers();
   });
+  // Slice 41.26 — Adrian: „if I open any of these tiles, I don't do any change, and then I just cancel it will stay
+  // expanded". Until then an opened tile stayed open until the record was left.
+  it("close: a tile left without a value folds back; the others stay as they are; `focus` lands on its „Adaugă”", () => {
+    jest.useFakeTimers();
+    const saved = renderHook(() => useEmptyTiles({ active: true, canAdd: true }));
+    act(() => saved.result.current.open("home", '[data-panel="home"]'));
+    act(() => saved.result.current.open("correspondence", '[data-panel="correspondence"]'));
+    act(() => saved.result.current.open("contact", '[data-panel="contact"]'));
+    act(() => saved.result.current.close(["home", "correspondence"]));
+    expect(saved.result.current.collapsed("home", true)).toBe(true);
+    expect(saved.result.current.collapsed("correspondence", true)).toBe(true);
+    expect(saved.result.current.collapsed("contact", true)).toBe(false);
+    // A tile that holds a value is drawn whole either way (41.06 shows its values).
+    expect(saved.result.current.collapsed("home", false)).toBe(false);
+    document.body.innerHTML = '<div data-empty-tile="contact"><h2>Contact</h2><button data-empty-tile-add="">Adaugă</button></div>';
+    act(() => saved.result.current.close("contact", true));
+    act(() => jest.runAllTimers());
+    expect(document.activeElement?.hasAttribute("data-empty-tile-add")).toBe(true);
+    expect(saved.result.current.collapsed("contact", true)).toBe(true);
+    jest.useRealTimers();
+  });
   it("„Adaugă” puts the focus in the tile's first field", () => {
     jest.useFakeTimers();
     document.body.innerHTML = '<section data-panel="contact"><input type="checkbox"><input name="first"><input name="second"></section>';

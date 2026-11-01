@@ -84,6 +84,33 @@ describe("one tile at a time (Ask first 1, 5)", () => {
     expect(guardedAction).toHaveBeenCalledTimes(1);
     expect(result.current.open).toBeNull();
   });
+  // Slice 41.26: a screen hears how a tile's edit ended, to fold its empty tiles back to their line.
+  it("onLeave: „Renunță” and Esc say „cancel”, a save „save”; opening another tile says nothing", () => {
+    const discard = jest.fn();
+    const onLeave = jest.fn();
+    const { result } = renderHook(() => useTileEditing<"a" | "b">({ dirty: false, discard, onLeave }));
+    act(() => result.current.edit("a", "[data-x]"));
+    act(() => result.current.edit("b", "[data-x]"));
+    expect(onLeave).not.toHaveBeenCalled();
+    act(() => result.current.cancel());
+    expect(onLeave).toHaveBeenLastCalledWith("b", "cancel");
+    act(() => result.current.edit("a", "[data-x]"));
+    act(() => result.current.escape());
+    expect(onLeave).toHaveBeenLastCalledWith("a", "cancel");
+    act(() => result.current.edit("a", "[data-x]"));
+    act(() => result.current.close());
+    expect(onLeave).toHaveBeenLastCalledWith("a", "save");
+    expect(onLeave).toHaveBeenCalledTimes(3);
+    // Nothing open: nothing to leave.
+    act(() => result.current.cancel());
+    expect(onLeave).toHaveBeenCalledTimes(3);
+  });
+  it("each screen folds its empty tiles when an edit is left (41.26)", () => {
+    expect(read("src", "app", "documents", "_components", "document-form.tsx")).toContain('onLeave: (tile, how) => emptyTiles.close(tile, how === "cancel")');
+    expect(read("src", "app", "properties", "_components", "property-form.tsx")).toContain('onLeave: (tile, how) => emptyTiles.close(tile, how === "cancel")');
+    expect(read("src", "app", "natural-persons", "_components", "natural-person-form.tsx")).toContain('onLeave: (edit, how) => emptyTiles.close(Object.keys(NP_EDIT_OF).filter((k) => NP_EDIT_OF[k] === edit), how === "cancel")');
+    expect(read("src", "app", "judicial-persons", "_components", "judicial-person-form.tsx")).toContain('onLeave: (edit, how) => emptyTiles.close(Object.keys(JP_EDIT_OF).filter((k) => JP_EDIT_OF[k] === edit), how === "cancel")');
+  });
   it("Esc in the open tile is „Renunță”; elsewhere it does nothing", () => {
     const escape = jest.fn();
     render(
@@ -117,7 +144,7 @@ describe("the buttons", () => {
 });
 
 describe("the Natural Person uses it (Ask first 2, 3, 6)", () => {
-  const src = read("src/app/natural-persons/_components/natural-person-form.tsx");
+  const src = read("src", "app", "natural-persons", "_components", "natural-person-form.tsx");
   it("each tile's „Salvează” sends that tile's fields only", () => {
     expect(src).toMatch(/NP_EDIT_PAYLOAD\[tile\]\.map\(\(key\) => \[key, full\[key\]\]\)/);
     expect(src).toMatch(/addresses: \["addresses", "correspondenceSameAsHome"\]/);

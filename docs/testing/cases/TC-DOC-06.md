@@ -97,3 +97,8 @@ as run 2 left it, unchanged.
 **2026-10-05 — Slice #37.90.** Inside a tile a panel's subtitle reads in square brackets („[Declarații și
 garanții]"). The steps name the panels, not their headings, so nothing in them changed; the spec finds
 the two panels by their bracketed headings.
+
+**2026-10-31 — Slice 41.26.** Step 9 added (its own test in the spec): on a new invented contract, each of „Declarații
+și garanții", „Taxe și cheltuieli" and „Carte funciară" — „Adaugă", then „Renunță" (Esc for the third) with nothing
+chosen — is its one line again, „necompletat" and „Adaugă", with the focus on „Adaugă". Until 41.26 an opened tile stayed
+open, every field „—", until the record was left. Written from the slice's own change; not driven by hand first.

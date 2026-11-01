@@ -181,6 +181,11 @@ test.describe("TC-PERS-03 — nota CNP-ului într-un balon, refuzul în română
       await expect(emptyTileLine(page, "contact")).toHaveCount(0);
       await expect(contactPanel.getByRole("textbox", { name: "Telefon Personal 1", exact: true })).toBeFocused();
       expect((await contactPanel.boundingBox())!.height).toBeGreaterThan(128);
+      // 41.26 — „Renunță" with nothing typed: „Contact" is one line again, the focus on its „Adaugă".
+      await page.locator('[data-tile-cancel="contact"]').click();
+      await expect(emptyTileLine(page, "contact")).toBeVisible();
+      await expect(emptyTileLine(page, "contact").locator("[data-empty-tile-add]")).toBeFocused();
+      expect((await contactPanel.boundingBox())!.height).toBeLessThanOrEqual(64);
 
       // Step 12 — the home address opened, its box ticked: the correspondence reads „aceeași cu domiciliul".
       await openEmptyTile(page, "home");

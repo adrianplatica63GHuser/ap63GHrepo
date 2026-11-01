@@ -270,3 +270,37 @@ test.describe("TC-DOC-06 pasul 8 (41.07) — după o salvare, „Salvează” se
     }
   });
 });
+
+// Slice 41.26 — Adrian: „if I open any of these tiles, I don't do any change, and then I just cancel it will stay
+// expanded and show me all the empty fields instead of showing me a very small version of the tile".
+test.describe("TC-DOC-06 pasul 9 (41.26) — o dală goală deschisă cu „Adaugă” și lăsată cu „Renunță” revine la un rând", () => {
+  test("„Declarații și garanții”, „Taxe și cheltuieli”, „Carte funciară”: Adaugă → Renunță (și o dată Esc) → un rând, „Adaugă” cu focus", async ({ page }) => {
+    test.slow();
+    await removeLeftovers(page.request, `${MARK} 41.26`);
+    await page.setViewportSize({ width: 1366, height: 900 });
+    let id: string | undefined;
+    try {
+      id = await createSaleContract(page.request, `${MARK} 41.26 CVC`);
+      await language(page, "ro-RO");
+      await page.goto(`/documents/${id}`);
+      await pressTileButton(page, "Toate", { timeout: 30_000 });
+      for (const [name, how] of [["Declarații și garanții", "Renunță"], ["Taxe și cheltuieli", "Renunță"], ["Carte funciară", "Esc"]] as const) {
+        const frame = page.locator(`[data-frame="tab:${name}"]`);
+        const line = frame.locator("[data-empty-tile]");
+        await expect(line, `${name}: one line at first`).toBeVisible({ timeout: 30_000 });
+        await expect(line.locator("[data-empty-tile-state]")).toHaveText("necompletat");
+        await line.locator("[data-empty-tile-add]").click();
+        await expect(frame.locator("[data-tile-edit-bar]"), `${name}: open, in edit`).toBeVisible();
+        await expect(line).toHaveCount(0);
+        if (how === "Renunță") await frame.locator("[data-tile-cancel]").click();
+        else await page.keyboard.press("Escape");
+        await expect(frame.locator("[data-tile-edit-bar]")).toHaveCount(0);
+        await expect(line, `${name}: back to its one line after ${how}`).toBeVisible();
+        await expect(line.locator("[data-empty-tile-add]"), `${name}: the focus on „Adaugă”`).toBeFocused();
+        expect((await frame.boundingBox())!.height, `${name}: one line high`).toBeLessThanOrEqual(64);
+      }
+    } finally {
+      if (id) await removeRecord(page.request, "document", id);
+    }
+  });
+});
