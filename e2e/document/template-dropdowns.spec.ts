@@ -29,7 +29,7 @@
 
 import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createSaleContract, removeLeftovers, removeRecord } from "../helpers/records";
-import { openFoldedTile, openPanelTile, pressTileButton, forEachFrame } from "../helpers/tiles";
+import { openFoldedTile, openFrameWith, openPanelTile, pressTileButton, forEachFrame } from "../helpers/tiles";
 import { showEmptyFields } from "../helpers/empty-fields";
 import { expectDropdownsWrap } from "../helpers/field-widths";
 
@@ -226,6 +226,7 @@ test.describe("TC-DOC-04 — listele derulante ale unui CVC", () => {
       expect(await rowsOf(page, "Taxe și onorarii")).toEqual([["onorariuNotarial", "impozitTransfer"], ["timbruJudiciar", "taxaTimbruPublicitate"]]);
       expect(await rowsOf(page, "Cheltuieli")).toEqual([["cheltuieliPerfectare", "taxeLocalePlatiteDe"], ["taxeLocaleLaZi"]]);
       for (const [key, px] of [["starePlata", 208], ["modalitatePlata", 208], ["documentatieFinalizata", 184], ["onorariuNotarial", 136]] as const) {
+        await openFrameWith(page, `[data-width-field="customFields.${key}"]`); // 41.30: one empty frame open at a time
         const b = await page.locator(`[data-width-field="customFields.${key}"]`).first().boundingBox();
         expect(Math.abs(b!.width - px), `${key} is ${px} px`).toBeLessThanOrEqual(1);
       }

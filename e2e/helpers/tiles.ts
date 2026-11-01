@@ -175,6 +175,17 @@ export async function openFoldedTile(page: Page, name: string): Promise<void> {
   await expect(line).toHaveCount(0);
 }
 
+/** 41.30: the document frame holding `selector` (its fields stay mounted behind the line), opened if it is folded. */
+export async function openFrameWith(page: Page, selector: string): Promise<Locator> {
+  const frame = page.locator("[data-frame]").filter({ has: page.locator(selector) }).last();
+  const add = frame.locator("[data-empty-tile-add]");
+  if (await add.isVisible()) {
+    await add.click();
+    await expect(frame.locator("[data-empty-tile]")).toHaveCount(0);
+  }
+  return frame;
+}
+
 /** 41.30: the document frame holding the panel headed `[panel]` (#37.90's brackets), opened if it is folded. */
 export async function openPanelTile(page: Page, panel: string): Promise<Locator> {
   const frame = page.locator("[data-frame]").filter({ has: page.getByRole("heading", { name: `[${panel}]`, exact: true, includeHidden: true }) }).last();
