@@ -39,6 +39,11 @@ export const LAYOUT_EXCEPTIONS: readonly LayoutException[] = [
       "A Reference Data tile (#39.75) is whole units and its list a little narrower; the list centred in the tile is what gives it the same gap to the tile's left and right edges (Adrian, 2026-10-17) — since #39.88 the list fills it at the standard gap, and the centring is what keeps the roles' and the links' lists, which keep their own width, even. The column is the tile, which is not capped — `max-w-full` only keeps the list inside it.",
   },
   {
+    line: "data-tag-input",
+    reason:
+      "Etichete și grupuri's tag box (41.27) takes what is left of its row beside „Adaugă”, never narrower than M (TAG_BOX_STYLE's minWidth), so the tile fits 2 units and the box grows on 3 — Adrian asked for the tile at 2 units, and a fixed XL box (272 px) is wider than 2 units' 228 inside.",
+  },
+  {
     line: "fixed inset-",
     reason:
       "A dialog's card is fixed by design: its max-w-sm, -md or -lg — or, since #37.37, the value lists' editors' whole width units (`dialogCardStyle`) — holds it at one width over the page, and centring it over the page is what makes it a dialog.",
