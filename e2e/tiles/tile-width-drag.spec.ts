@@ -15,7 +15,7 @@
  * heading for the page bar, so the heading is „Identitate" alone, and the refusal names it only if that measures more.
  */
 import { test, expect, type Page } from "../helpers/test";
-import { E2E_MARKER, createNaturalPerson, createProperty, removeLeftovers, removeRecord } from "../helpers/records";
+import { E2E_MARKER, createCompany, createNaturalPerson, createProperty, createSaleContract, removeLeftovers, removeRecord, type RecordKind } from "../helpers/records";
 import { pressTileButton } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}TILES-26`;
@@ -275,4 +275,57 @@ test.describe("TC-TILES-26 — lățimea unei plăci", () => {
     }
   });
 
+  // Slice 41.27 — Adrian: „Tags and groups: Why I cannot make this tile to be two units; It gives me a message about
+  // <metatag>!" Step 10: on an invented record of each kind, „Etichete și grupuri" one unit narrower from 3 — taken, at
+  // 2 units (254 px); on the person a tag is added there; Home gives the shared width back, so other specs see 3.
+  test("step 10 (41.27): „Etichete și grupuri” at 2 units on the four record screens, a tag added there; never a key in a refusal", async ({ page }) => {
+    test.slow();
+    const MARK10 = `${MARK}-ETICHETE`;
+    await removeLeftovers(page.request, MARK10);
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    const made: { kind: RecordKind; id: string; path: string }[] = [];
+    try {
+      const np = await createNaturalPerson(page.request, { lastName: `${MARK10} Popescu`, firstName: "Ana" });
+      made.push({ kind: "person", id: np, path: `/natural-persons/${np}` });
+      const jp = await createCompany(page.request, { name: `${MARK10} Firmă SRL` });
+      made.push({ kind: "company", id: jp, path: `/judicial-persons/${jp}` });
+      const pr = await createProperty(page.request, { nickname: `${MARK10} Teren` });
+      made.push({ kind: "property", id: pr, path: `/properties/${pr}` });
+      const dc = await createSaleContract(page.request, `${MARK10} CVC`);
+      made.push({ kind: "document", id: dc, path: `/documents/${dc}` });
+      for (const m of made) {
+        await page.goto(m.path);
+        await pressTileButton(page, "Toate", { timeout: 30_000 });
+        const edge = page.locator('[data-tile-handle="connections"]');
+        await expect(edge).toBeAttached({ timeout: 30_000 });
+        await expect(edge).toHaveAttribute("aria-valuenow", "3");
+        await edge.focus();
+        await page.keyboard.press("ArrowLeft");
+        await page.waitForTimeout(300);
+        const said = (await bubble(page).count()) > 0 ? ((await bubble(page).textContent()) ?? "") : "";
+        const now = await edge.getAttribute("aria-valuenow");
+        const w = (await measure(page, "connections")).tile;
+        console.log(`TC-TILES-26 step 10 (41.27) — ${m.kind}: ${now} units, ${w} px${said ? `; the bubble: ${said}` : ""}`);
+        expect(said, `${m.kind}: no key in what the bubble says`).not.toMatch(/«[a-z]+(?:[A-Z][a-z0-9]*)+»/);
+        expect(now, `${m.kind}: one unit narrower is taken`).toBe("2");
+        await expect.poll(async () => (await measure(page, "connections")).tile).toBe(unitsPx(2));
+        if (m.kind === "person") {
+          // A tag typed and added at 2 units: the box beside „Adaugă" holds it.
+          const box = page.locator("[data-tag-input]");
+          await expect(box).toHaveAttribute("aria-label", "Etichetă nouă");
+          const bw = (await box.boundingBox())!.width;
+          expect(bw, "the tag box is at least M").toBeGreaterThanOrEqual(135);
+          await box.fill(`${MARK10.toLowerCase()}-eticheta`);
+          await box.press("Enter");
+          await expect(page.locator("[data-tag-chip]").filter({ hasText: `${MARK10.toLowerCase()}-eticheta` })).toBeVisible({ timeout: 30_000 });
+        }
+        // Home: the tile's own width again (3), for every form sharing it.
+        await edge.focus();
+        await page.keyboard.press("Home");
+        await expect(edge).toHaveAttribute("aria-valuenow", "3");
+      }
+    } finally {
+      for (const m of made) await removeRecord(page.request, m.kind, m.id);
+    }
+  });
 });
