@@ -316,4 +316,38 @@ test.describe("TC-DOC-06 pasul 9 (41.26) — o dală goală deschisă cu „Adau
       if (id) await removeRecord(page.request, "document", id);
     }
   });
+
+  // Slice 41.30 — Adrian: „Slice 41.26 does not work … The tile stays open with all the empty fields". A tile left by
+  // opening the next one used to stay whole; now it folds, so one is open at a time and „Renunță" leaves three lines.
+  test("41.30: the three opened one after another, then „Renunță” (and once Esc) → three one-line tiles", async ({ page }) => {
+    test.slow();
+    await removeLeftovers(page.request, `${MARK} 41.30`);
+    await page.setViewportSize({ width: 1366, height: 900 });
+    let id: string | undefined;
+    try {
+      id = await createSaleContract(page.request, `${MARK} 41.30 CVC`);
+      await language(page, "ro-RO");
+      await page.goto(`/documents/${id}`);
+      await pressTileButton(page, "Toate", { timeout: 30_000 });
+      const names = ["Declarații și garanții", "Taxe și cheltuieli", "Carte funciară"] as const;
+      const frame = (name: string) => page.locator(`[data-frame="tab:${name}"]`);
+      const line = (name: string) => frame(name).locator("[data-empty-tile]");
+      for (const how of ["Renunță", "Esc"] as const) {
+        for (const name of names) await expect(line(name), `${name}: one line at first`).toBeVisible({ timeout: 30_000 });
+        for (const [i, name] of names.entries()) {
+          await line(name).locator("[data-empty-tile-add]").click();
+          await expect(frame(name).locator("[data-tile-edit-bar]"), `${name}: open, in edit`).toBeVisible();
+          // The one opened before folded as this one opened.
+          if (i > 0) await expect(line(names[i - 1]), `${names[i - 1]}: folded when ${name} opened`).toBeVisible();
+        }
+        const last = names[names.length - 1];
+        if (how === "Renunță") await frame(last).locator("[data-tile-cancel]").click();
+        else await page.keyboard.press("Escape");
+        for (const name of names) await expect(line(name), `${name}: one line after ${how}`).toBeVisible();
+        await expect(line(last).locator("[data-empty-tile-add]"), `the focus on ${last}'s „Adaugă”`).toBeFocused();
+      }
+    } finally {
+      if (id) await removeRecord(page.request, "document", id);
+    }
+  });
 });

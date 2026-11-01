@@ -187,6 +187,17 @@ test.describe("TC-PERS-03 — nota CNP-ului într-un balon, refuzul în română
       await expect(emptyTileLine(page, "contact").locator("[data-empty-tile-add]")).toBeFocused();
       expect((await contactPanel.boundingBox())!.height).toBeLessThanOrEqual(64);
 
+      // 41.30 — „Contact" opened, then the home address opened over it: „Contact" folds as the address opens; „Renunță"
+      // folds the address — both one line again.
+      await emptyTileLine(page, "contact").getByRole("button").click();
+      await expect(emptyTileLine(page, "contact")).toHaveCount(0);
+      await emptyTileLine(page, "home").getByRole("button").click();
+      await expect(emptyTileLine(page, "home")).toHaveCount(0);
+      await expect(emptyTileLine(page, "contact"), "Contact folded when the address opened").toBeVisible();
+      await page.locator('[data-tile-cancel="addresses"]').click();
+      await expect(emptyTileLine(page, "home")).toBeVisible();
+      await expect(emptyTileLine(page, "contact")).toBeVisible();
+
       // Step 12 — the home address opened, its box ticked: the correspondence reads „aceeași cu domiciliul".
       await openEmptyTile(page, "home");
       await page.getByRole("checkbox", { name: "Adresa de corespondență aceeași cu domiciliul" }).check();

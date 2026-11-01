@@ -115,6 +115,18 @@ describe("which tiles are folded", () => {
     expect(saved.result.current.collapsed("contact", true)).toBe(true);
     jest.useRealTimers();
   });
+  // Slice 41.30: leaving edit at page level (view mode, an older version) folds every opened tile that is still empty.
+  it("when „Adaugă” is no longer offered (the page left edit), every opened tile folds back", () => {
+    const saved = renderHook(({ canAdd }) => useEmptyTiles({ active: true, canAdd }), { initialProps: { canAdd: true } });
+    act(() => saved.result.current.open("home", '[data-panel="home"]'));
+    act(() => saved.result.current.open("contact", '[data-panel="contact"]'));
+    expect(saved.result.current.collapsed("home", true)).toBe(false);
+    saved.rerender({ canAdd: false });
+    expect(saved.result.current.collapsed("home", true)).toBe(true);
+    expect(saved.result.current.collapsed("contact", true)).toBe(true);
+    saved.rerender({ canAdd: true });
+    expect(saved.result.current.collapsed("contact", true)).toBe(true);
+  });
   it("„Adaugă” puts the focus in the tile's first field", () => {
     jest.useFakeTimers();
     document.body.innerHTML = '<section data-panel="contact"><input type="checkbox"><input name="first"><input name="second"></section>';

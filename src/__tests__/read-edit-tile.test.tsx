@@ -85,13 +85,18 @@ describe("one tile at a time (Ask first 1, 5)", () => {
     expect(result.current.open).toBeNull();
   });
   // Slice 41.26: a screen hears how a tile's edit ended, to fold its empty tiles back to their line.
-  it("onLeave: „Renunță” and Esc say „cancel”, a save „save”; opening another tile says nothing", () => {
+  // 41.30 inverted this in place. Was: „onLeave: „Renunță” and Esc say „cancel”, a save „save”; opening another tile
+  // says nothing" — 41.26's decision 2, which Adrian's report overturned (a tile left by opening the next stayed whole).
+  it("onLeave: „Renunță” and Esc say „cancel”, a save „save”, opening another tile „switch” (41.30)", () => {
     const discard = jest.fn();
     const onLeave = jest.fn();
     const { result } = renderHook(() => useTileEditing<"a" | "b">({ dirty: false, discard, onLeave }));
     act(() => result.current.edit("a", "[data-x]"));
     act(() => result.current.edit("b", "[data-x]"));
-    expect(onLeave).not.toHaveBeenCalled();
+    expect(onLeave).toHaveBeenLastCalledWith("a", "switch");
+    // The same tile again is no switch.
+    act(() => result.current.edit("b", "[data-x]"));
+    expect(onLeave).toHaveBeenCalledTimes(1);
     act(() => result.current.cancel());
     expect(onLeave).toHaveBeenLastCalledWith("b", "cancel");
     act(() => result.current.edit("a", "[data-x]"));
@@ -100,10 +105,22 @@ describe("one tile at a time (Ask first 1, 5)", () => {
     act(() => result.current.edit("a", "[data-x]"));
     act(() => result.current.close());
     expect(onLeave).toHaveBeenLastCalledWith("a", "save");
-    expect(onLeave).toHaveBeenCalledTimes(3);
+    expect(onLeave).toHaveBeenCalledTimes(4);
     // Nothing open: nothing to leave.
     act(() => result.current.cancel());
-    expect(onLeave).toHaveBeenCalledTimes(3);
+    expect(onLeave).toHaveBeenCalledTimes(4);
+  });
+  it("a changed tile left by opening another: the guard first, then „switch” once it is discarded (41.30)", () => {
+    const discard = jest.fn();
+    const onLeave = jest.fn();
+    const { result, rerender } = renderHook(({ dirty }) => useTileEditing<"a" | "b">({ dirty, discard, onLeave }), { initialProps: { dirty: false } });
+    act(() => result.current.edit("a", "[data-x]"));
+    rerender({ dirty: true });
+    act(() => result.current.edit("b", "[data-x]"));
+    expect(guardedAction).toHaveBeenCalledTimes(1);
+    expect(discard).toHaveBeenCalledTimes(1);
+    expect(onLeave).toHaveBeenLastCalledWith("a", "switch");
+    expect(result.current.open).toBe("b");
   });
   it("each screen folds its empty tiles when an edit is left (41.26)", () => {
     expect(read("src", "app", "documents", "_components", "document-form.tsx")).toContain('onLeave: (tile, how) => emptyTiles.close(tile, how === "cancel")');
