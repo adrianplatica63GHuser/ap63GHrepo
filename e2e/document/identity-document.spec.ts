@@ -11,8 +11,8 @@
  *   - a change of type: to Pașaport names the values removed and removes them; to an ordinary type is refused while
  *     a value is held;
  *   - Documente → Adaugă act with an identity type: the tile, empty, and the value saved.
- * 41.29 (steps 5b, 6b): „Identificarea actului" at 2 units — on the Pașaport and on an invented Contract de vânzare —
- *   keeps „Schimbă tipul…" inside the tile's inner edge; the width is put back after.
+ * 41.29 (a test of its own, step 9): „Identificarea actului" at 2 units — on an invented Pașaport and an invented
+ *   Contract de vânzare — keeps „Schimbă tipul…" inside the tile's inner edge; the width is put back after.
  * No map, no Street View, no address look-up.
  */
 import { test, expect, type Page } from "../helpers/test";
@@ -211,11 +211,6 @@ test.describe("TC-DOC-28 — actul de identitate pe ecranul lui", () => {
       await expect(box(page, "identity.lastName")).toHaveText("Testescu");
       await expect(box(page, "identity.domicileAddress")).toHaveCount(0);
 
-      // Step 5b (41.29) — „Identificarea actului" one unit narrower (3 → 2 units): „Schimbă tipul…" ends at the tile's
-      // inner edge, so its gap to the border is the tile's padding plus border; at rest the value box stays inside too.
-      // The width is put back with Home (the tile's own width).
-      await expectTypeButtonInside(page);
-
       // Step 6 — to an ordinary type while a value is held: said, and refused — 40.92: the confirmation says why and
       // offers no „Confirmă"; „Anulează" leaves the type as it was.
       await editTile(page, "general");
@@ -227,13 +222,6 @@ test.describe("TC-DOC-28 — actul de identitate pe ecranul lui", () => {
       await expect(general(page).locator('[data-read-value="documentTypeId"]')).toHaveText("Pașaport");
       await page.locator('[data-tile-cancel="general"]').click();
       await expect(page.locator('[data-tile-edit-bar="general"]')).toHaveCount(0);
-
-      // Step 6b (41.29) — the same on an invented Contract de vânzare.
-      const contract = await createSaleContract(page.request, `${MARK} Contract`);
-      made.push(contract);
-      await page.goto(`/documents/${contract}`);
-      await expect(general(page)).toBeVisible({ timeout: 30_000 });
-      await expectTypeButtonInside(page);
 
       // Step 7 — Documente → Adaugă act with an identity type: the tile, empty; saved.
       await page.goto("/documents/new");
@@ -252,6 +240,29 @@ test.describe("TC-DOC-28 — actul de identitate pe ecranul lui", () => {
       await expect(page).toHaveURL(/\/documents\/[0-9a-f-]{36}$/, { timeout: 60_000 });
       made.push(page.url().split("/").pop()!);
       await expect(box(page, "identity.lastName")).toHaveText("Testescu", { timeout: 30_000 });
+    } finally {
+      for (const id of made) await removeRecord(page.request, "document", id);
+    }
+  });
+
+  // Step 9 (41.29) — „Identificarea actului" stepped to 2 units with its edge's keyboard: „Schimbă tipul…" ends at the
+  // tile's inner edge (its gap to the border is the tile's padding plus border), in edit; at rest the value box stays
+  // inside. Home puts the tile's own width back. On a Pașaport and on a Contract de vânzare.
+  test("41.29: „Schimbă tipul…” stays inside the tile at 2 units", async ({ page }) => {
+    test.slow();
+    await removeLeftovers(page.request, `${MARK} 41.29`);
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    const made: string[] = [];
+    try {
+      made.push(await createDocumentOfType(page.request, "PASAPORT", `${MARK} 41.29 Pașaport`, {
+        identity: { lastName: "Testescu", firstName: "Ion", passportType: "P", countryCode: "ROU" },
+      }));
+      made.push(await createSaleContract(page.request, `${MARK} 41.29 Contract`));
+      for (const id of made) {
+        await page.goto(`/documents/${id}`);
+        await expect(general(page)).toBeVisible({ timeout: 30_000 });
+        await expectTypeButtonInside(page);
+      }
     } finally {
       for (const id of made) await removeRecord(page.request, "document", id);
     }
