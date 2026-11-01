@@ -31,7 +31,9 @@ const SHOTS = "playwright-report/blank-choice";
 /** 41.26: an empty frame folds back to its line at a „Renunță" — opened again, every field shown, before reading it. */
 async function reopen(page: Page): Promise<void> {
   await openEmptyTiles(page);
-  await showEmptyFields(page, undefined, { wait: true });
+  await expect(page.locator("[data-frame] [data-empty-tile]")).toHaveCount(0);
+  // The fields shown once stay shown for the visit, so there may be no „Arată N câmpuri goale" left: no wait.
+  await showEmptyFields(page);
 }
 
 async function language(page: Page, locale: "ro-RO" | "en-GB"): Promise<void> {

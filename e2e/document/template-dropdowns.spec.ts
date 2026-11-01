@@ -139,7 +139,9 @@ async function priceFrame(page: Page) {
 /** 41.26: an empty frame folds back to its line at `forEachFrame`'s „Renunță" — opened again, every field shown, to read rows. */
 async function reopen(page: Page): Promise<void> {
   await openEmptyTiles(page);
-  await showEmptyFields(page, undefined, { wait: true });
+  await expect(page.locator("[data-frame] [data-empty-tile]")).toHaveCount(0);
+  // The fields shown once stay shown for the visit, so there may be no „Arată N câmpuri goale" left: no wait.
+  await showEmptyFields(page);
 }
 
 async function stepsTwoAndThree(page: Page): Promise<void> {
