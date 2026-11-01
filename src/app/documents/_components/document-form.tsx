@@ -95,7 +95,7 @@ import { ALWAYS_SHOWN_FIELDS,
   boxRem,
   boxStyle,
   BESIDE_ICON_REM,
-  cappedBoxStyle,
+  roomLeftBoxStyle,
   packFieldRows,
   stackedBoxStyle,
   templateFieldTakesRow,
@@ -2720,7 +2720,7 @@ function SelectField({
   // the tile's inner edge, not on its border. Edit and the read view alike; every other select keeps its fixed width.
   const boxCss = fillRem !== undefined
     ? stackedBoxStyle({ ...width, fill: true }, tileInner(fillRem))
-    : changeAction ? cappedBoxStyle(width, BESIDE_ICON_REM) : boxStyle(width);
+    : changeAction ? roomLeftBoxStyle(width, BESIDE_ICON_REM) : boxStyle(width);
   // Slice 40.75: the read view — the chosen option's words; a blank choice reads as nothing.
   if (read.reading) {
     return (

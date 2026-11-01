@@ -499,7 +499,7 @@ export const BESIDE_ICON_REM = 0.5 + 1.875;
  * narrows with the tile when it does not — its text wrapping — so what stands beside it ends at the tile's inner edge,
  * never on its border. Outside a unit tile (no `--tile-inner`) it is `w`'s width.
  */
-export function cappedBoxStyle(w: FieldWidth, besideRem = 0): CSSProperties {
+export function roomLeftBoxStyle(w: FieldWidth, besideRem = 0): CSSProperties {
   const box = boxRem(w);
   return { width: `min(${rem(box)}, calc(${tileInner(box + besideRem)} - ${rem(besideRem)}))` };
 }

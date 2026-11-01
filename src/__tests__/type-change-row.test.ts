@@ -8,7 +8,7 @@
  */
 import fs from "fs";
 import path from "path";
-import { BESIDE_ICON_REM, DOCUMENT, boxRem, cappedBoxStyle, unitsInnerRem } from "@/lib/ui/field-widths";
+import { BESIDE_ICON_REM, DOCUMENT, boxRem, roomLeftBoxStyle, unitsInnerRem } from "@/lib/ui/field-widths";
 
 const FORM = fs.readFileSync(path.join(process.cwd(), "src/app/documents/_components/document-form.tsx"), "utf8");
 const PX = 16;
@@ -24,10 +24,10 @@ describe("41.29 — the type row fits its tile", () => {
   });
 
   it("the box is capped at the tile's inner width less that room, and is its own width outside a tile", () => {
-    expect(cappedBoxStyle(DOCUMENT.documentTypeId, BESIDE_ICON_REM).width).toBe(
+    expect(roomLeftBoxStyle(DOCUMENT.documentTypeId, BESIDE_ICON_REM).width).toBe(
       `min(17rem, calc(var(--tile-inner, ${17 + BESIDE_ICON_REM}rem) - ${BESIDE_ICON_REM}rem))`,
     );
-    expect(cappedBoxStyle(DOCUMENT.documentTypeId).width).toBe("min(17rem, calc(var(--tile-inner, 17rem) - 0rem))");
+    expect(roomLeftBoxStyle(DOCUMENT.documentTypeId).width).toBe("min(17rem, calc(var(--tile-inner, 17rem) - 0rem))");
   });
 
   it.each([2, 3, 4, 5])("at %i units the box, the gap and the button are never wider than the tile's inner width", (units) => {
@@ -40,7 +40,7 @@ describe("41.29 — the type row fits its tile", () => {
   });
 
   it("SelectField caps the box only beside a change action, and puts 8 px between the box and the button", () => {
-    expect(FORM).toMatch(/changeAction \? cappedBoxStyle\(width, BESIDE_ICON_REM\) : boxStyle\(width\)/);
+    expect(FORM).toMatch(/changeAction \? roomLeftBoxStyle\(width, BESIDE_ICON_REM\) : boxStyle\(width\)/);
     expect(FORM).toMatch(/<div className="flex items-start gap-2" data-type-change-row>/);
   });
 });
