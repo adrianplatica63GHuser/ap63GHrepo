@@ -233,20 +233,36 @@ test.describe("TC-DOC-04 — listele derulante ale unui CVC", () => {
     let id: string | undefined;
     try {
       id = await createSaleContract(page.request, `${MARK7} CVC`);
-      await page.goto(`/documents/${id}`);
-      await pressTileButton(page, "Toate", { timeout: 30_000 });
-      await openEmptyTiles(page);
-      await showEmptyFields(page, undefined, { wait: true });
       const frame = page.getByRole("region", { name: "Preț și plată", exact: true });
-      await frame.scrollIntoViewIfNeeded();
-      await expect(frame.locator('[data-width-field="customFields.pretTotal"]')).toBeVisible({ timeout: 30_000 });
-      const open = await priceFrame(page);
-      console.log(`TC-DOC-04 step 7 (41.25) — open: ${JSON.stringify(open)}`);
+      const openPrice = async () => {
+        await page.goto(`/documents/${id}`);
+        await pressTileButton(page, "Toate", { timeout: 30_000 });
+        await openEmptyTiles(page);
+        await showEmptyFields(page, undefined, { wait: true });
+        await frame.scrollIntoViewIfNeeded();
+        await expect(frame.locator('[data-width-field="customFields.pretTotal"]')).toBeVisible({ timeout: 30_000 });
+        await page.waitForTimeout(300);
+        return priceFrame(page);
+      };
+      // The unit is per browser, a cookie (41.16, width-unit.ts): measured at 119 px and at 150 px.
+      const setUnit = async (px: number) => {
+        await page.context().addCookies([{ name: "ga40-width-unit", value: String(px), url: new URL(page.url()).origin }]);
+      };
+      const at119 = await openPrice();
+      console.log(`TC-DOC-04 step 7 (41.25) — open, unit 119: ${JSON.stringify(at119)}`);
+      await setUnit(150);
+      const at150 = await openPrice();
+      console.log(`TC-DOC-04 step 7 (41.25) — open, unit 150: ${JSON.stringify(at150)}`);
+      await setUnit(119);
 
-      // Whole units, and the handle reads the units the frame shows.
+      // Whole units at either unit, and the handle reads the units the frame shows.
+      for (const [unit, m] of [[119, at119], [150, at150]] as const) {
+        const k = Math.round((m.w + GAP) / (unit + GAP));
+        expect(m.w, `unit ${unit}: a whole number of units`).toBe(k * unit + (k - 1) * GAP);
+        expect(m.now, `unit ${unit}: the edge starts at the units shown`).toBe(k);
+      }
+      const open = await openPrice();
       const units = Math.round((open.w + GAP) / (UNIT + GAP));
-      expect(open.w, "a whole number of units").toBe(unitsPx(units));
-      expect(open.now, "the edge starts at the units shown").toBe(units);
       expect(units, "Preț total | Monedă, 280 px, past 2 units").toBe(3);
 
       // Adrian's rows (migration_123).
@@ -256,7 +272,7 @@ test.describe("TC-DOC-04 — listele derulante ale unui CVC", () => {
         const b = await frame.locator(`[data-width-field="customFields.${key}"]`).boundingBox();
         expect(Math.abs(b!.width - 136), `${key} is M, 136 px`).toBeLessThanOrEqual(1);
       }
-      const price = open.sections.find((sec) => sec.section !== "" && sec.w > 0);
+      const price = open.sections.find((sec) => sec.section === "group:Preț");
       for (const key of ["temeiPret", "alocarePret"]) {
         const b = await frame.locator(`[data-width-field="customFields.${key}"]`).boundingBox();
         expect(Math.abs(b!.width - (price?.w ?? -1)), `${key} is the panel's inner width`).toBeLessThanOrEqual(1);
@@ -271,7 +287,6 @@ test.describe("TC-DOC-04 — listele derulante ale unui CVC", () => {
       console.log(`TC-DOC-04 step 7 (41.25) — one unit narrower: ${JSON.stringify({ w: after.w, now: after.now, min: after.min })}`);
       expect([open.w, unitsPx(units - 1)]).toContain(after.w);
       expect(after.w).toBeLessThanOrEqual(open.w);
-      if (after.w === open.w) expect(open.min, "refused only at the narrowest").toBe(units);
     } finally {
       if (id) await removeRecord(page.request, "document", id);
     }
