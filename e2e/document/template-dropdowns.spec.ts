@@ -188,7 +188,8 @@ test.describe("TC-DOC-04 — listele derulante ale unui CVC", () => {
 
       // Step 5 — 40.89, Adrian's three moves, back at 1366.
       await page.setViewportSize({ width: 1366, height: 900 });
-      expect(await rowsOf(page, "Preț")).toEqual([["pretTotal", "monedaPret", "pretRealDeclarat"], ["temeiPret"], ["alocarePret"]]);
+      // 41.25 (migration_123) re-laid „Preț" — step 7 reads its rows now (it was [["pretTotal", "monedaPret",
+      // "pretRealDeclarat"], ["temeiPret"], ["alocarePret"]]).
       expect(await rowsOf(page, "Situația în cartea funciară")).toEqual([["marcajCarteFunciara"], ["consimtamantRadiere", "poateFiIntabulat"]]);
       expect(await rowsOf(page, "Excepția de la cadastru")).toEqual([
         ["temeiExceptieCadastru"],
@@ -206,7 +207,7 @@ test.describe("TC-DOC-04 — listele derulante ale unui CVC", () => {
       const contentBox = await general.locator('[data-width-field="customFields.dataContinut"]').boundingBox();
       expect(contentBox!.y, "Data conținutului under Temei autentificare").toBeGreaterThan(authBox!.y + authBox!.height - 1);
       expect(Math.abs(contentBox!.x - authBox!.x), "both at the left").toBeLessThanOrEqual(1);
-      expect(await rowsOf(page, "Plată")).toEqual([["starePlata", "dataPlatii"], ["modalitatePlata"]]);
+      // 41.25 — „Plată" is step 7's now (it was [["starePlata", "dataPlatii"], ["modalitatePlata"]]).
       expect(await rowsOf(page, "Dosar cadastral")).toEqual([["categorieInterna"], ["documentatieFinalizata"]]);
       expect(await rowsOf(page, "Garanții")).toEqual([["garantieEvictiune", "garantieVicii"], ["temeiLegalEvictiune"]]);
       expect(await rowsOf(page, "Taxe și onorarii")).toEqual([["onorariuNotarial", "impozitTransfer"], ["timbruJudiciar", "taxaTimbruPublicitate"]]);

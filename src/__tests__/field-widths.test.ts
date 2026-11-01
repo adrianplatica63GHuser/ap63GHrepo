@@ -1001,8 +1001,9 @@ const SIZED_FIELDS = [
   ...["calitateExemplar=M", "exemplareEmise=TILE",
     // 40.93 — Temei autentificare TILE
     "temeiAutentificare=TILE",
-    // 40.89 — Preț și plată; 40.93: Stare plată and Modalitate plată L
-    "pretTotal=S", "monedaPret=S", "pretRealDeclarat=M", "starePlata=L", "modalitatePlata=L",
+    // 40.89 — Preț și plată; 40.93: Stare plată and Modalitate plată L; 41.25 (migration_123): Preț total and Monedă M
+    // (were S), Temei preț and Alocare preț TILE (had none)
+    "pretTotal=M", "monedaPret=M", "pretRealDeclarat=M", "temeiPret=TILE", "alocarePret=TILE", "starePlata=L", "modalitatePlata=L",
     // Carte funciară; 40.93: Documentație finalizată has no width again (its widest choice, 184 px)
     "categorieInterna=XL", "marcajCarteFunciara=L", "poateFiIntabulat=M", "consimtamantRadiere=M",
     "temeiExceptieCadastru=TILE", "renuntareCercetareOcpi=M", "obligatieNrCadastral=M", "termenFormalitati=TILE", "completareUlterioara=TILE",

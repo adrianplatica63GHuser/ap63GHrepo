@@ -98,8 +98,9 @@ describe("the CVC's tiles and panels (#37.54, rebuilt by #38.33)", () => {
     expect(keys.slice(keys.indexOf("marcajCarteFunciara"), keys.indexOf("marcajCarteFunciara") + 3)).toEqual(["marcajCarteFunciara", "consimtamantRadiere", "poateFiIntabulat"]);
     // 40.93 (migration_122) adds eleven row marks: Modalitate plată under Stare plată, Documentație finalizată under
     // Categorie internă, rows of two on the two declarations panels, Timbru judiciar and Taxe locale la zi.
+    // 41.25 (migration_123) adds two: Preț declarat real under Preț total, Data plății under Stare plată.
     expect([...CVC].sort((a, b) => a.order - b.order).filter((f) => (f as { newRow?: unknown }).newRow === true).map((f) => f.key)).toEqual([
-      "modalitatePlata", "documentatieFinalizata", "consimtamantRadiere",
+      "pretRealDeclarat", "dataPlatii", "modalitatePlata", "documentatieFinalizata", "consimtamantRadiere",
       "faraServituti", "nepromisAltcuiva", "neaportatSocietate", "faraExpropriere", "nedezmembratContrar",
       "consimtamantDatePersonale", "preemptiunePadure", "timbruJudiciar", "taxeLocaleLaZi",
     ]);

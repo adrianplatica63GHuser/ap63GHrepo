@@ -22,6 +22,10 @@ import {
   templateFieldTakesRow,
   templateFieldWidth,
   unitsInnerRem,
+  framePanelStyle,
+  FRAME_INNER_STYLE,
+  tileInnerCss,
+  unitsCss,
   type FieldWidth,
 } from "@/lib/ui/field-widths";
 import { isCertificatesGroup, isFeesGroup, isIdentificationGroup } from "@/lib/documents/template-groups";
@@ -195,17 +199,21 @@ const CVC_ROWS: { label: string; units: number; rows: string[][] }[] = [
     ["temeiAutentificare"],
     ["dataContinut"],
   ] },
-  // 40.89 (migration_121): Preț total S | Monedă S | Preț declarat real M — 19.5rem, so the panel takes 3 units (Ask
-  // first 5), and the two text boxes at XL below, one a row.
+  // 40.89 (migration_121): Preț total S | Monedă S | Preț declarat real M, then the two text boxes. 41.25
+  // (migration_123): Preț total M | Monedă M — 17.5rem, 280 px, past 2 units' 228 inside — then Preț declarat real
+  // under Preț total (`newRow`), then Temei preț and Alocare preț at TILE. It was
+  // [["pretTotal", "monedaPret", "pretRealDeclarat"], ["temeiPret"], ["alocarePret"]].
   { label: "Preț", units: 3, rows: [
-    ["pretTotal", "monedaPret", "pretRealDeclarat"],
+    ["pretTotal", "monedaPret"],
+    ["pretRealDeclarat"],
     ["temeiPret"],
     ["alocarePret"],
   ] },
-  // 40.93 (migration_122): Stare plată L | Data plății M, then Modalitate plată L under Stare plată (`newRow`).
-  // 22.25rem with the gap — still 3 units.
+  // 40.93 (migration_122): Stare plată L | Data plății, then Modalitate plată L. 41.25 (migration_123): Data plății under
+  // Stare plată (`newRow`) — one a row. It was [["starePlata", "dataPlatii"], ["modalitatePlata"]]. Still 3 units (the floor).
   { label: "Plată", units: 3, rows: [
-    ["starePlata", "dataPlatii"],
+    ["starePlata"],
+    ["dataPlatii"],
     ["modalitatePlata"],
   ] },
   // Slice #38.49 (migration_102): „Descrierea obiectului" first in „Obiectul vânzării", a panel of its own.
@@ -303,5 +311,26 @@ describe("dropdowns on the 119-px unit (40.98; three to a row until then, #37.53
     expect(packFieldRows([{ key: "a", width: D }, { key: "b", width: D }])).toEqual({ units: 3, rows: [["a", "b"]] });
     // One dropdown and two M boxes: three units, the M pair first, the dropdown on the next row.
     expect(packFieldRows([{ key: "a", width: M }, { key: "b", width: M }, { key: "c", width: D }])).toEqual({ units: 3, rows: [["a", "b"], ["c"]] });
+  });
+});
+
+// Slice 41.25 — Adrian: „it looks like 2.5 units; When I try to grab the right edge and make it narrower it jumps to
+// three units instead". A frame is as wide as its widest panel; a panel fell back to a width worked out on 119 px while
+// the grid uses the unit set on „Setări" (41.16). TC-DOC-04 step 7 measures it in the browser at 119 and 150 px.
+describe("a document frame's panels are in live units (41.25)", () => {
+  const FORM = fs.readFileSync(path.join(process.cwd(), "src/app/documents/_components/document-form.tsx"), "utf8");
+  it("a framed Section takes framePanelStyle(units) — never the 119-px `tileInner(unitsInnerRem(units))`", () => {
+    expect(FORM).toMatch(/<section data-section=\{panel\} style=\{hiddenFieldStyle\(allHidden, framePanelStyle\(units\)\)\}/);
+    expect(FORM).not.toMatch(/tileInner\(unitsInnerRem\(units\)\)/);
+  });
+  it("the frame passes the packing's --tile-inner on as --frame-inner, folded or not", () => {
+    expect(FORM).toContain("style={{ ...FRAME_INNER_STYLE, ...(tiles ? { order: tiles.order(tile) } : {}), ...(folded ? unitStyle(2) : {}) }}");
+    expect(FRAME_INNER_STYLE).toEqual({ "--frame-inner": "var(--tile-inner)" });
+  });
+  it("framePanelStyle: the frame's inner width when set, else n live units less the frame — and the same for what fills it", () => {
+    const s = framePanelStyle(3) as Record<string, string>;
+    expect(s.width).toBe(`var(--frame-inner, ${tileInnerCss(unitsCss(3))})`);
+    expect(s["--tile-inner"]).toBe(s.width);
+    expect(s.width).toContain("var(--unit");
   });
 });
