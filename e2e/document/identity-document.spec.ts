@@ -11,10 +11,12 @@
  *   - a change of type: to Pașaport names the values removed and removes them; to an ordinary type is refused while
  *     a value is held;
  *   - Documente → Adaugă act with an identity type: the tile, empty, and the value saved.
+ * 41.29 (steps 5b, 6b): „Identificarea actului" at 2 units — on the Pașaport and on an invented Contract de vânzare —
+ *   keeps „Schimbă tipul…" inside the tile's inner edge; the width is put back after.
  * No map, no Street View, no address look-up.
  */
 import { test, expect, type Page } from "../helpers/test";
-import { E2E_MARKER, createDocumentOfType, removeLeftovers, removeRecord } from "../helpers/records";
+import { E2E_MARKER, createDocumentOfType, createSaleContract, removeLeftovers, removeRecord } from "../helpers/records";
 import { editTile, saveTile } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}DOC-28`;
@@ -37,6 +39,50 @@ async function tileRows(page: Page): Promise<string[][]> {
     }
     return [...rows.entries()].sort((a, b) => a[0] - b[0]).map(([, r]) => r.sort((x, y) => x.left - y.left).map((i) => i.key));
   });
+}
+
+/** 41.29: the frame or tile around „Identificarea actului" — the one whose edge the packing drags. */
+async function generalHandle(page: Page): Promise<string> {
+  return general(page).evaluate((el) => {
+    const t = el.closest<HTMLElement>("[data-frame], [data-tile]");
+    return t?.dataset.frame ?? t?.dataset.tile ?? "";
+  });
+}
+
+/** 41.29: the button's and the value box's right edges against the general panel's inner edge. */
+async function typeRowEdges(page: Page): Promise<{ inner: number; button: number | null; box: number }> {
+  return general(page).evaluate((el) => {
+    const s = getComputedStyle(el);
+    const inner = el.getBoundingClientRect().right - parseFloat(s.paddingRight) - parseFloat(s.borderRightWidth);
+    const button = el.querySelector<HTMLElement>("[data-type-change-open]")?.getBoundingClientRect().right ?? null;
+    const box = el.querySelector<HTMLElement>('[data-width-field="documentTypeId"]')?.getBoundingClientRect().right ?? -1;
+    return { inner, button, box };
+  });
+}
+
+/** 41.29: at 2 units, in edit and at rest; then the tile's own width again. */
+async function expectTypeButtonInside(page: Page): Promise<void> {
+  const id = await generalHandle(page);
+  expect(id, "the general panel sits in a tile with an edge").not.toBe("");
+  const edge = page.locator(`[data-tile-handle="${id}"]`);
+  await edge.focus();
+  const units = Number(await edge.getAttribute("aria-valuenow"));
+  for (let n = units; n > 2; n -= 1) {
+    await page.keyboard.press("ArrowLeft");
+    await page.waitForTimeout(250);
+  }
+  await expect.poll(async () => Number(await edge.getAttribute("aria-valuenow"))).toBe(Math.min(units, 2));
+  await editTile(page, "general");
+  const inEdit = await typeRowEdges(page);
+  console.log(`TC-DOC-28 step 5b (41.29) — at 2 units in edit: ${JSON.stringify(inEdit)}`);
+  expect(inEdit.button, "„Schimbă tipul…\" is drawn in edit").not.toBeNull();
+  expect(Math.abs(inEdit.button! - inEdit.inner), "the button ends at the tile's inner edge").toBeLessThanOrEqual(1);
+  await page.locator('[data-tile-cancel="general"]').click();
+  const atRest = await typeRowEdges(page);
+  expect(atRest.box, "at rest the value box stays inside the tile").toBeLessThanOrEqual(atRest.inner + 1);
+  await edge.focus();
+  await page.keyboard.press("Home");
+  await expect.poll(async () => Number(await edge.getAttribute("aria-valuenow"))).toBe(units);
 }
 
 // An invented CNP: a man born 1985-04-21, control digit valid.
@@ -165,6 +211,11 @@ test.describe("TC-DOC-28 — actul de identitate pe ecranul lui", () => {
       await expect(box(page, "identity.lastName")).toHaveText("Testescu");
       await expect(box(page, "identity.domicileAddress")).toHaveCount(0);
 
+      // Step 5b (41.29) — „Identificarea actului" one unit narrower (3 → 2 units): „Schimbă tipul…" ends at the tile's
+      // inner edge, so its gap to the border is the tile's padding plus border; at rest the value box stays inside too.
+      // The width is put back with Home (the tile's own width).
+      await expectTypeButtonInside(page);
+
       // Step 6 — to an ordinary type while a value is held: said, and refused — 40.92: the confirmation says why and
       // offers no „Confirmă"; „Anulează" leaves the type as it was.
       await editTile(page, "general");
@@ -176,6 +227,13 @@ test.describe("TC-DOC-28 — actul de identitate pe ecranul lui", () => {
       await expect(general(page).locator('[data-read-value="documentTypeId"]')).toHaveText("Pașaport");
       await page.locator('[data-tile-cancel="general"]').click();
       await expect(page.locator('[data-tile-edit-bar="general"]')).toHaveCount(0);
+
+      // Step 6b (41.29) — the same on an invented Contract de vânzare.
+      const contract = await createSaleContract(page.request, `${MARK} Contract`);
+      made.push(contract);
+      await page.goto(`/documents/${contract}`);
+      await expect(general(page)).toBeVisible({ timeout: 30_000 });
+      await expectTypeButtonInside(page);
 
       // Step 7 — Documente → Adaugă act with an identity type: the tile, empty; saved.
       await page.goto("/documents/new");
