@@ -880,9 +880,9 @@
       "loading": "Se încarcă…",
       "error": "Metadatele nu au putut fi încărcate",
       "backTo": "Înapoi la {name}",
-      "lastChangedToday": "Actualizat azi",
-      "lastChangedYesterday": "Actualizat ieri",
-      "lastChangedDays": "Actualizat acum {days} zile",
+      "lastChangedToday": "(actualizat azi)",
+      "lastChangedYesterday": "(actualizat ieri)",
+      "lastChangedDays": "(actualizat acum {days} zile)",
       "reviewWarning": "Neverificat de {days} zile — vă rugăm să revedeți",
       "importance": {
         "title": "Importanță",
@@ -938,6 +938,7 @@
         "algorithmViewRun": "Vezi calculul",
         "algorithmNotFound": "Calculul sursă nu a fost găsit (posibil șters).",
         "historyTitle": "Istoric",
+        "historyNote": "Fiecare schimbare de proveniență este consemnată în istoric, cu data la care a fost făcută.",
         "historyEmpty": "Niciun istoric înregistrat încă",
         "save": "Salvează",
         "saving": "Se salvează…",
@@ -946,7 +947,8 @@
       "markReviewed": {
         "button": "Marchează ca verificat",
         "marking": "Se marchează…",
-        "marked": "✓ Verificat"
+        "marked": "✓ Verificat",
+        "today": "Verificat azi"
       },
       "tags": {
         "title": "Etichete / Cuvinte cheie",

@@ -18,6 +18,7 @@ import type { MetadataSnapshot, MetadataVersionItem } from "@/lib/metadata/queri
 import { PROVENANCE_VALUES, provenanceI18nKey } from "@/lib/metadata/provenance";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { CLASSIFICATION_UNITS, boxRem, rem, screenBox, tileInner, unitsInnerRem } from "@/lib/ui/field-widths";
+import { daysSince, updatedToday as isUpdatedToday } from "@/lib/metadata/updated-days";
 import { HintBubble } from "@/lib/ui/hint-bubble";
 import { Divider } from "@/lib/ui/divider";
 import { MAX_GROUPS_PER_ITEM, MAX_GROUPS_PER_PROPERTY } from "@/lib/groups/validation";
@@ -91,12 +92,6 @@ type Props = {
 // Helpers
 // ---------------------------------------------------------------------------
 
-/** Days since an ISO timestamp, or null if no timestamp. */
-function daysSince(isoDate: string | null): number | null {
-  if (!isoDate) return null;
-  const ms = Date.now() - new Date(isoDate).getTime();
-  return Math.floor(ms / (1000 * 60 * 60 * 24));
-}
 
 /** Compute green/red highlight for one metadata field (prev vs curr). */
 function fieldHighlight(
@@ -252,8 +247,7 @@ const TAG_CHIP =
 function ClassificationItem({
   item,
   title,
-  note,
-  about,
+  describedBy,
   value,
   valueText,
   editing,
@@ -264,6 +258,7 @@ function ClassificationItem({
   markLabels,
   daysText,
   reviewWarning,
+  updatedToday,
   onMarkReviewed,
   latest,
   highlight,
@@ -271,8 +266,8 @@ function ClassificationItem({
 }: {
   item:          "importance" | "relevance" | "provenance";
   title:         string;
-  note:          string;
-  about:         string;
+  /** 41.28: the tile's one „i" bubble — what describes the select (its per-item note was its own „i" until then). */
+  describedBy:   string;
   /** The value's code — empty string means none. */
   value:         string;
   /** The value's words, read. */
@@ -283,11 +278,13 @@ function ClassificationItem({
   options:       { value: string; label: string }[];
   statementMap:  Record<string, string>;
   placeholder:   string;
-  markLabels:    { mark: string; marking: string; marked: string };
-  /** „Actualizat acum N zile", or null if never saved. */
+  markLabels:    { mark: string; marking: string; marked: string; today: string };
+  /** „(actualizat acum N zile)", or null if never saved. */
   daysText:      string | null;
   /** Non-null past the review threshold — shown in red. */
   reviewWarning: string | null;
+  /** 41.28: set or marked reviewed today — its button is drawn reviewed. */
+  updatedToday:  boolean;
   onMarkReviewed: () => Promise<void>;
   /** The latest version — not an older one being looked at, which reads only. */
   latest:        boolean;
@@ -311,7 +308,6 @@ function ClassificationItem({
 
   const statement = value ? statementMap[value] : null;
   const uid = useId();
-  const noteId = `${uid}-note`;
   const statementId = `${uid}-statement`;
 
   const control = editing ? (
@@ -322,7 +318,7 @@ function ClassificationItem({
       placeholder={placeholder}
       options={options}
       highlight={highlight}
-      describedBy={statement ? `${noteId} ${statementId}` : noteId}
+      describedBy={statement ? `${describedBy} ${statementId}` : describedBy}
     />
   ) : (
     <ReadValue
@@ -335,10 +331,13 @@ function ClassificationItem({
 
   return (
     <section className="flex flex-col gap-0.5" data-classification-item={item}>
-      <ItemTitle id={noteId} title={title} note={note} about={about} />
+      {/* 41.28: the title alone — the tile's one „i" explains the three (it was each item's own). */}
+      <ItemTitle id={`${uid}-title`} title={title} about="" />
+      {/* 41.28 (Ask first 2): one line — the value, then „(actualizat azi)", then „Marchează ca verificat" at its right
+          end; the date goes under the value when the three do not fit 228 px. In edit the select fills the line. */}
       <div className="flex items-center gap-2">
-        {/* Slice #37.63 — what the chosen value means is a bubble ON the value. */}
-        <div className="min-w-0 flex-1">
+        <div className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-1.5" data-classification-line="">
+          {/* Slice #37.63 — what the chosen value means is a bubble ON the value. */}
           {statement ? (
             <HintBubble id={statementId} text={statement}>
               {control}
@@ -346,19 +345,22 @@ function ClassificationItem({
           ) : (
             control
           )}
+          {latest && !editing && daysText && (
+            <span className="text-xs text-fade" data-classification-date="">
+              {daysText}
+            </span>
+          )}
         </div>
         {latest && !editing && (
-          // #37.44 (A031): BadgeCheck, filled once reviewed — an icon, its words the hint and the name (40.96).
-          <MarkReviewedButton reviewed={reviewed} reviewing={reviewing} labels={markLabels} onClick={handleMarkReviewed} />
+          // #37.44 (A031): BadgeCheck, filled once reviewed — an icon, its words the hint and the name (40.96). 41.28: a
+          // value set or marked today is drawn reviewed — „Verificat azi", disabled.
+          <MarkReviewedButton reviewed={reviewed} today={updatedToday} reviewing={reviewing} labels={markLabels} onClick={handleMarkReviewed} />
         )}
       </div>
 
-      {/* What says something about THIS record: when it last changed, and the review warning. */}
-      {latest && (daysText || reviewWarning) && (
-        <div className="flex flex-col gap-0.5 px-2">
-          {daysText && <p className="text-xs text-fade dark:text-zinc-500">{daysText}</p>}
-          {reviewWarning && <p className="text-xs font-medium text-red-600 dark:text-red-400">{reviewWarning}</p>}
-        </div>
+      {/* The review warning keeps its own line — never on a value updated today. */}
+      {latest && reviewWarning && !updatedToday && (
+        <p className="px-2 text-xs font-medium text-red-600 dark:text-red-400">{reviewWarning}</p>
       )}
 
       {children && <div className="mt-1 flex flex-col gap-1 px-2">{children}</div>}
@@ -1259,6 +1261,8 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
   const [editing, setEditing] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const itemsId = useId();
+  /** 41.28: the tile's one „i" bubble — each select's description too. */
+  const aboutId = `${itemsId}-about`;
   const { data: tf } = useTimeFrames();
 
   const backLabel = t("backTo", { name: backEntityName });
@@ -1612,7 +1616,7 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
   // ── Render ────────────────────────────────────────────────────────────────
 
   const about = (title: string) => t("about", { title });
-  const markLabels = { mark: t("markReviewed.button"), marking: t("markReviewed.marking"), marked: t("markReviewed.marked") };
+  const markLabels = { mark: t("markReviewed.button"), marking: t("markReviewed.marking"), marked: t("markReviewed.marked"), today: t("markReviewed.today") };
 
   // Slice #37.82: „Conexiuni"'s groups that are drawn, in order — the lines go between them.
   const connectionGroups: { key: string; node: React.ReactNode }[] = [];
@@ -1718,12 +1722,38 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
         {showClassification && (<>
         {/* ── Version nav (only when there are multiple versions) ──────────── */}
         {/* Slice #37.81: the line under it is the shared divider, as the tile's other two are. */}
-        {totalVer > 1 && !folded && (<>
-          <div className="flex items-center gap-2">
-            <VersionNavControls nav={navView} labels={navLabels} />
+        {/* Slice 41.28 (Ask first 3, 4): a top line, always drawn — the version controls at its left when there is more
+            than one version — and at its right end the tile's ONE „i": Importanță, Relevanță, Proveniență and Istoric,
+            each a short headed paragraph. It replaced an „i" on each item's title. The divider stays the version
+            line's only. */}
+        {!folded && (
+          <div className="flex items-center gap-2" data-classification-top="">
+            {totalVer > 1 && <VersionNavControls nav={navView} labels={navLabels} />}
+            <HintBubble
+              id={aboutId}
+              text={
+                <>
+                  {(["importance", "relevance", "provenance"] as const).map((k) => (
+                    <span key={k} className="mb-1.5 block">
+                      <strong className="block font-semibold">{t(`${k}.title`)}</strong>
+                      {t(`${k}.note`)}
+                    </span>
+                  ))}
+                  <span className="block">
+                    <strong className="block font-semibold">{t("provenance.historyTitle")}</strong>
+                    {t("provenance.historyNote")}
+                  </span>
+                </>
+              }
+              triggerLabel={about(chrome?.title ?? t("sectionClassification"))}
+              align="end"
+              className="ml-auto"
+            >
+              {null}
+            </HintBubble>
           </div>
-          <Divider />
-        </>)}
+        )}
+        {totalVer > 1 && !folded && <Divider />}
 
         {!part && (
           <h3 className="border-b border-card-rim pb-1 text-xs font-semibold uppercase tracking-wide text-fade dark:border-zinc-700 dark:text-zinc-500">
@@ -1755,8 +1785,7 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
         <ClassificationItem
           item="importance"
           title={t("importance.title")}
-          note={t("importance.note")}
-          about={about(t("importance.title"))}
+          describedBy={aboutId}
           value={displayImportance}
           valueText={importanceOptions.find((o) => o.value === displayImportance)?.label ?? ""}
           editing={editing}
@@ -1767,6 +1796,7 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
           markLabels={markLabels}
           daysText={buildDaysText(data.importanceUpdatedAt)}
           reviewWarning={buildReviewWarning(data.importanceUpdatedAt)}
+          updatedToday={isOnLatest && isUpdatedToday(data.importanceUpdatedAt)}
           onMarkReviewed={() => touchField("importance")}
           latest={isOnLatest}
           highlight={highlights.importance}
@@ -1776,8 +1806,7 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
         <ClassificationItem
           item="relevance"
           title={t("relevance.title")}
-          note={t("relevance.note")}
-          about={about(t("relevance.title"))}
+          describedBy={aboutId}
           value={displayRelevance}
           valueText={relevanceOptions.find((o) => o.value === displayRelevance)?.label ?? ""}
           editing={editing}
@@ -1788,6 +1817,7 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
           markLabels={markLabels}
           daysText={buildDaysText(data.relevanceUpdatedAt)}
           reviewWarning={buildReviewWarning(data.relevanceUpdatedAt)}
+          updatedToday={isOnLatest && isUpdatedToday(data.relevanceUpdatedAt)}
           onMarkReviewed={() => touchField("relevance")}
           latest={isOnLatest}
           highlight={highlights.relevance}
@@ -1797,8 +1827,7 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
         <ClassificationItem
           item="provenance"
           title={t("provenance.title")}
-          note={t("provenance.note")}
-          about={about(t("provenance.title"))}
+          describedBy={aboutId}
           value={displayProvenance}
           valueText={provenanceLabelMap[displayProvenance] ?? ""}
           editing={editing}
@@ -1809,6 +1838,7 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
           markLabels={markLabels}
           daysText={buildDaysText(data.provenanceUpdatedAt)}
           reviewWarning={buildReviewWarning(data.provenanceUpdatedAt)}
+          updatedToday={isOnLatest && isUpdatedToday(data.provenanceUpdatedAt)}
           onMarkReviewed={() => touchField("provenance")}
           latest={isOnLatest}
           highlight={highlights.provenance}

@@ -880,9 +880,9 @@
       "loading": "Loading…",
       "error": "Failed to load metadata",
       "backTo": "Back to {name}",
-      "lastChangedToday": "Updated today",
-      "lastChangedYesterday": "Updated yesterday",
-      "lastChangedDays": "Updated {days} days ago",
+      "lastChangedToday": "(updated today)",
+      "lastChangedYesterday": "(updated yesterday)",
+      "lastChangedDays": "(updated {days} days ago)",
       "reviewWarning": "Not reviewed in {days} days — please review",
       "importance": {
         "title": "Importance",
@@ -938,6 +938,7 @@
         "algorithmViewRun": "View calculation",
         "algorithmNotFound": "Source calculation not found (may have been deleted).",
         "historyTitle": "History",
+        "historyNote": "Every change of provenance is logged in the history, with the date it was made.",
         "historyEmpty": "No history recorded yet",
         "save": "Save",
         "saving": "Saving…",
@@ -946,7 +947,8 @@
       "markReviewed": {
         "button": "Mark as reviewed",
         "marking": "Marking…",
-        "marked": "✓ Reviewed"
+        "marked": "✓ Reviewed",
+        "today": "Reviewed today"
       },
       "tags": {
         "title": "Tags / Keywords",

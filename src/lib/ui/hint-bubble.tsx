@@ -74,7 +74,8 @@ type Props = {
    */
   id: string;
   /** The explanation itself. */
-  text: string;
+  /** 41.28: any inline content — the Clasificare bubble's four headed paragraphs are spans. */
+  text: ReactNode;
   /**
    * Slice #38.07: a sentence after the explanation, drawn in italics — what a
    * disabled control needs before it works. Part of the same tooltip text.

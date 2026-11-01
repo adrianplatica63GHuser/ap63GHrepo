@@ -28,23 +28,31 @@ export function MarkReviewedButton({
   reviewing,
   labels,
   onClick,
+  today = false,
 }: {
   reviewed: boolean;
   reviewing: boolean;
-  labels: { mark: string; marking: string; marked: string };
+  labels: { mark: string; marking: string; marked: string; today?: string };
   onClick: () => void;
+  /**
+   * Slice 41.28: the value was set or marked reviewed today (`updatedToday`) — drawn reviewed, filled, named „Verificat
+   * azi", disabled; from the next day an ordinary button again.
+   */
+  today?: boolean;
 }) {
+  const done = reviewed || today;
   return (
     <IconButton
-      icon={reviewed ? FilledBadgeCheck : BadgeCheck}
-      label={reviewed ? labels.marked : labels.mark}
+      icon={done ? FilledBadgeCheck : BadgeCheck}
+      label={today && !reviewed && labels.today ? labels.today : done ? labels.marked : labels.mark}
       busy={reviewing}
       busyLabel={labels.marking}
       variant="secondary"
       size="md"
-      aria-pressed={reviewed}
+      aria-pressed={done}
       onClick={onClick}
-      disabled={reviewing || reviewed}
+      disabled={reviewing || done}
+      data-reviewed-today={today ? "" : undefined}
     />
   );
 }
