@@ -511,8 +511,10 @@ export function tileTableRem(units: number): number {
  */
 export const JUDICIAL_PERSON = {
   name: { step: "XXL", kind: "grows", fill: true }, //      „SOCIETATEA AGRICOLĂ … S.R.L." can pass 60 — it wraps; the panel's whole width since #37.29; m: 0
-  nickname: { step: "M", kind: "grows" }, //                m: 0 — M since #39.71, so Tip's XL keeps Poreclă | Tip in three units
-  // 40.90 — Adrian's mark: XL → L. Poreclă | Tip (8.5 + 0.5 + 13) still fit three units; a longer type wraps (40.78).
+  // 41.24 — Adrian: „bring the Type field under the Nickname; make the nickname to be tile size". The panel's whole width,
+  // as Denumire; a long nickname wraps. (M from #39.71, so that Poreclă | Tip fitted three units.)
+  nickname: { step: "TILE", kind: "grows", fill: true }, // m: 0
+  // 40.90 — Adrian's mark: XL → L; a longer type wraps (40.78). 41.24: on its own row, under Poreclă.
   judicialPersonTypeId: { step: "L", kind: "select" }, //  #39.71: 17 options; 41.03: the longest „Birou de executor judecătoresc" (30) — fits L (was „Cabinet sau societate de avocatură", 34, 243.5 px, which wrapped)
   cuiNumber: { step: "M", kind: "grows" }, //    „RO12345678", up to 10 digits; m: 0
   tradeRegisterNumber: { step: "M", kind: "grows" }, // „J40/12345/2020"; m: 0
@@ -906,12 +908,13 @@ type DocField = keyof typeof DOCUMENT;
 export const SCREEN_ROWS = {
   naturalPerson: NATURAL_PERSON_ROWS,
   judicialPerson: {
-    // Denumire, the whole width — Poreclă | Tip — CUI | Nr. Reg. Com. (rule 14: the
-    // identifiers together; #37.57 took the system ID out — it is the heading's corner)
-    // — Note, the whole width.
+    // Denumire, the whole width — Poreclă, the whole width — Tip (41.24: under Poreclă, on a row of its own; it was
+    // Poreclă | Tip) — CUI | Nr. Reg. Com. (rule 14: the identifiers together; #37.57 took the system ID out — since
+    // 41.22 it is in the page bar) — Note, the whole width.
     identity: [
       ["name"],
-      ["nickname", "judicialPersonTypeId"],
+      ["nickname"],
+      ["judicialPersonTypeId"],
       ["cuiNumber", "tradeRegisterNumber"],
       ["notes"],
     ],
@@ -1002,7 +1005,7 @@ const TWO_UNIT_REM = unitsRem(TWO_UNIT_PANEL_UNITS);
 export const PANEL_MIN_REM = {
   // 41.05: „Contact" 2 units (TWO_UNIT_PANEL_UNITS), its phones one to a row and its e-mails the panel's width.
   naturalPerson: { ...panelMinRemOf(SCREEN_ROWS.naturalPerson, NATURAL_PERSON), contact: TWO_UNIT_REM, address: ADDRESS_PANEL_MIN_REM },
-  //  identity 3 — Poreclă | Tip and ID | CUI | Nr. Reg. Com., both 26.5rem; contactPersons 2 — the XL box, 17rem.
+  //  identity 3 — 41.24: CUI | Nr. Reg. Com., 17.5rem, the widest fixed row (Tip alone 13); contactPersons 2 — the XL box, 17rem.
   // 41.05: „Reprezentanți și contact" 2 units, the e-mail and the contact persons the panel's width.
   judicialPerson: { ...panelMinRemOf(SCREEN_ROWS.judicialPerson, JUDICIAL_PERSON), contactPersons: TWO_UNIT_REM, address: ADDRESS_PANEL_MIN_REM },
   //  cadastral 3 — Cod | Nr. tarla / sola | Nr. parcelă, 26.5rem; address 3 — Cod poștal | Localitate, 18.5rem (40.80).

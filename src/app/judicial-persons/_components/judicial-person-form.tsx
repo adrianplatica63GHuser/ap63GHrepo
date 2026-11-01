@@ -919,27 +919,27 @@ export function JudicialPersonForm({
             width={JP.name}
             fillRem={PANEL_UNIT_INNER_REM.judicialPerson.identity}
           />
-          <div className={STACKED_ROW_CLASS}>
-            <Field
-              label={t("fields.nickname")}
-              name="nickname"
-              register={register}
-              error={errors.nickname?.message}
-              highlight={displayHighlights?.fields.nickname}
-              width={JP.nickname}
-            />
-            <SelectField
-              label={t("fields.judicialType")}
-              name="judicialPersonTypeId"
-              register={register}
-              control={control}
-              error={errors.judicialPersonTypeId?.message}
-              options={judicialPersonTypeSelectOptions}
-              highlight={displayHighlights?.fields.judicialPersonTypeId}
-              snapshot={snapshotLookups.judicialPersonTypeId}
-              width={JP.judicialPersonTypeId}
-            />
-          </div>
+          {/* Slice 41.24: Poreclă the panel's whole width, as Denumire; Tip on its own row under it (was Poreclă | Tip). */}
+          <Field
+            label={t("fields.nickname")}
+            name="nickname"
+            register={register}
+            error={errors.nickname?.message}
+            highlight={displayHighlights?.fields.nickname}
+            width={JP.nickname}
+            fillRem={PANEL_UNIT_INNER_REM.judicialPerson.identity}
+          />
+          <SelectField
+            label={t("fields.judicialType")}
+            name="judicialPersonTypeId"
+            register={register}
+            control={control}
+            error={errors.judicialPersonTypeId?.message}
+            options={judicialPersonTypeSelectOptions}
+            highlight={displayHighlights?.fields.judicialPersonTypeId}
+            snapshot={snapshotLookups.judicialPersonTypeId}
+            width={JP.judicialPersonTypeId}
+          />
           {/* Rule 14: the registry numbers together (#37.57: the app's own
               code is the heading's corner now). Rule 15: the CUI lock hint
               sits under CUI, inside its width. */}
