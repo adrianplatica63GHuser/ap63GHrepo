@@ -700,7 +700,9 @@ export const IDENTITY_DOCUMENT = {
   cnp: NATURAL_PERSON.cnp,
   sex: NATURAL_PERSON.gender,
   dateOfBirth: NATURAL_PERSON.dateOfBirth,
-  placeOfBirth: { step: "L", kind: "grows" }, //    41.04: its own L — the person's is TILE now, the card's rows did not move
+  // 41.04: its own L — the person's is TILE now. 41.32 — Adrian: „For “Pașaport” and “Pașaport CRDS” make Place of birth
+  // to be M size": M, its value wrapping, so Data nașterii | Locul nașterii is two M boxes. The cards draw it at TILE.
+  placeOfBirth: { step: "M", kind: "grows" },
   nrDocument: { step: "M", kind: "grows" }, //      the series and number, or the passport's nine digits
   dateDocument: NATURAL_PERSON.idValidFrom,
   dateValidUntil: NATURAL_PERSON.idValidUntil,
@@ -716,7 +718,7 @@ export const IDENTITY_DOCUMENT = {
   fatherFirstName: { step: "M", kind: "grows" }, // a first name, as Prenume
   motherFirstName: { step: "M", kind: "grows" },
   civilStatus: { step: "M", kind: "grows" }, //     „căsătorit(ă)", „necăsătorit(ă)"
-  issuerOfficer: { step: "L", kind: "grows" }, //   the officer's rank and name
+  issuerOfficer: { step: "L", kind: "grows" }, //   the officer's rank and name; at TILE on the booklet's own row (41.32)
   passportType: { step: "XS", kind: "grows" }, //   „P"
   countryCode: { step: "XS", kind: "grows" }, //    „ROU"
 } as const satisfies Record<string, FieldWidth>;

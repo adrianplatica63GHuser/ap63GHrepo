@@ -1464,21 +1464,13 @@ export function DocumentForm({
         highlight={f.target === "identity" ? identityHighlight(path) : identityHighlight(f.key)}
         width={f.width}
         fillRem={fillRem}
+        // 41.32 — VALABIL / EXPIRAT right under „Valabil până la" / „Data expirării", in the date's own column: no third
+        // cell, so that row is two M boxes. It takes no height — it sits on the next row's label line, at the right,
+        // where that row's label (MRZ, Autoritatea emitentă) is at the left: the overlap Adrian allows.
+        below={f.key === "dateValidUntil" ? <IdentityValidity validUntil={watchedValues.dateValidUntil} /> : undefined}
       />
     );
-    if (f.key !== "dateValidUntil") return field;
-    // VALABIL / EXPIRAT beside „Valabil până la", as on the person's tile (40.79).
-    return (
-      <div key={path} className="contents">
-        {field}
-        <div className={STACKED_FIELD_CLASS} data-validity-status="">
-          <span aria-hidden="true" className={`invisible ${STACKED_LABEL_CLASS}`}>{" "}</span>
-          <div className="flex min-h-[1.875rem] items-center leading-tight">
-            <IdentityValidity validUntil={watchedValues.dateValidUntil} />
-          </div>
-        </div>
-      </div>
-    );
+    return field;
   };
   const identitySection = identityKind !== null && identityRowsNow ? (
     <Section
@@ -2564,7 +2556,15 @@ function Field({
   width,
   fillRem,
   maxLength,
-}: FieldProps & { maxLength?: number }) {
+  below,
+}: FieldProps & {
+  maxLength?: number;
+  /**
+   * Slice 41.32: a statement drawn right under the box, in its column, taking no height of its own (the identity
+   * date's VALABIL / EXPIRAT). Hidden from the field's accessible name in edit, where the cell is its <label>.
+   */
+  below?: React.ReactNode;
+}) {
   const hiddenEmpty = useFieldHidden(name); // Slice 40.71: behind its tile's „Arată N câmpuri goale"
   const read = useFieldRead(name);
   const ring = usePulseRing(highlight);
@@ -2584,6 +2584,7 @@ function Field({
       <div className={STACKED_FIELD_CLASS} style={hiddenFieldStyle(hiddenEmpty, box)} data-empty-hidden={hiddenEmpty || undefined}>
         <span className={STACKED_LABEL_CLASS}>{label}</span>
         <ReadValue name={name} kind={width.kind} text={readText(read.value, type === "date" ? "date" : "text")} style={box} className={ring} />
+        {below !== undefined && <BelowBox>{below}</BelowBox>}
       </div>
     );
   }
@@ -2623,10 +2624,25 @@ function Field({
           data-width-kind={width.kind}
         />
       )}
+      {below !== undefined && <BelowBox hidden>{below}</BelowBox>}
       {error && (
         <span className="text-xs text-alert">{error}</span>
       )}
     </label>
+  );
+}
+
+/**
+ * Slice 41.32: what `Field`'s `below` draws — under the box, at its left edge, out of the flow (no height), so the row
+ * keeps its height and the statement overlaps the next row's label line. `hidden`: kept out of an accessible name.
+ */
+function BelowBox({ children, hidden = false }: { children: React.ReactNode; hidden?: boolean }) {
+  return (
+    <div className="relative h-0" data-validity-status="">
+      <div className="absolute left-0 top-0 whitespace-nowrap leading-tight" aria-hidden={hidden || undefined}>
+        {children}
+      </div>
+    </div>
   );
 }
 

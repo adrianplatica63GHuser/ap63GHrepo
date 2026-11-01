@@ -156,7 +156,7 @@ export type IdentityKindDef = {
 
 /**
  * The passports' rows (Adrian, 2026-10-28): „Titular" is the holder line the tile draws above them, and the status
- * (VALABIL / EXPIRAT) is drawn beside Data expirării — neither is a field. The domicile, beside CNP, is a county on
+ * (VALABIL / EXPIRAT) is drawn under Data expirării (41.32; beside it until then) — neither is a field. The domicile, beside CNP, is a county on
  * a Pașaport and a country on a Pașaport CRDS.
  */
 function passportRows(domicile: IdentityFieldDef): readonly (readonly IdentityFieldDef[])[] {
@@ -187,8 +187,10 @@ export const IDENTITY_KINDS: Readonly<Record<IdentityKind, IdentityKindDef>> = {
       [tile(F.placeOfBirth)],
       [tile(F.domicileAddress)],
       [tile(F.issuer)],
-      [F.issueDate, F.issuerOfficer],
-      [F.seriesAndNumber],
+      // 41.32 — Adrian: „switch the positions of fields “Lucrătorul care a eliberat-o” and “Seria și numărul”; make
+      // “Lucrătorul care a eliberat-o” to be TILE size". Were [issueDate, issuerOfficer], then [seriesAndNumber].
+      [F.issueDate, F.seriesAndNumber],
+      [tile(F.issuerOfficer)],
     ],
   }),
   // Today's „Carte de Identitate", renamed; its key is kept, so everything keyed on it keeps working. The laminated
