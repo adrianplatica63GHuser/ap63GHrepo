@@ -121,10 +121,12 @@ export type TileEditing<T extends string> = {
 };
 
 /**
- * Slice 41.26: how a tile's edit ended — „Renunță" or Esc, or saved. Not when another tile is opened over it: a tile
- * opened with „Adaugă" stays open then, so pressing every „Adaugă" in turn opens them all (TC-DOC-04's steps do).
+ * Slice 41.26: how a tile's edit ended — „Renunță" or Esc, or saved. Slice 41.30: or „switch", another tile opened over
+ * it (after the guard discarded its changes, when it had any) — so a tile opened with „Adaugă" and left by opening the
+ * next one folds back too, and pressing every „Adaugă" in turn leaves one open at a time (41.26's decision 2 reversed,
+ * on Adrian's report). A screen folds on „switch" as on „cancel", without moving the focus.
  */
-export type TileLeave = "cancel" | "save";
+export type TileLeave = "cancel" | "save" | "switch";
 
 export function useTileEditing<T extends string>({
   dirty,
@@ -146,14 +148,17 @@ export function useTileEditing<T extends string>({
   }, [onLeave]);
   const edit = useCallback(
     (tile: T, selector: string) => {
+      const switching = open !== null && open !== tile;
       const go = () => {
         discard();
         setOpen(tile);
+        if (switching) leave.current?.(open, "switch");
         focusFirstField(selector);
       };
-      if (open !== null && open !== tile && dirty) guardedAction(go);
+      if (switching && dirty) guardedAction(go);
       else {
         setOpen(tile);
+        if (switching) leave.current?.(open, "switch");
         focusFirstField(selector);
       }
     },

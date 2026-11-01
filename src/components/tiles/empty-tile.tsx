@@ -59,6 +59,14 @@ export type EmptyTiles = {
  */
 export function useEmptyTiles({ active, canAdd }: { active: boolean; canAdd: boolean }): EmptyTiles {
   const [opened, setOpened] = useState<ReadonlySet<string>>(() => new Set());
+  // Slice 41.30: leaving edit at page level (the page's view mode, an older version shown) ends every visit — each
+  // opened tile that is still empty folds back to its line. Adjusted while rendering, as React advises for state that
+  // follows a prop, so no frame is drawn with the old set.
+  const [adding, setAdding] = useState(canAdd);
+  if (adding !== canAdd) {
+    setAdding(canAdd);
+    if (!canAdd && opened.size > 0) setOpened(new Set());
+  }
   const collapsed = useCallback(
     (key: string, empty: boolean, whole = false) => active && empty && !whole && !opened.has(key),
     [active, opened],
