@@ -2,6 +2,8 @@
  * Case:   TC-DOC-20 — Actul adițional: „Actul modificat" legat de contractul pe care îl modifică, câmpurile text doar fără legătură, un singur act modificat
  * Source: docs/testing/cases/TC-DOC-20.md, „Last green" 2026-10-08
  *
+ * 41.31: steps 3 and 5 — no „Arată N câmpuri goale" for the fallback while a deed is linked; unlinked, it shows them.
+ *
  * A translation of the case file, step for step (Slice #38.34). Every Romanian
  * string below is quoted from it verbatim.
  *
@@ -110,6 +112,12 @@ test.describe("TC-DOC-20 — actul adițional și actul pe care îl modifică", 
       await expect(deed.getByRole("link", { name: "Deschide", exact: true })).toHaveAttribute("href", /\/documents\//);
       await expect(fallback(page)).toBeHidden();
       await expect(amended(page).getByText("Actul modificat nu e în arhivă", { exact: false })).toHaveCount(0);
+      // 41.31: linked, the fallback's empty fields (date, notariat, type) are not offered — at rest, and in edit.
+      await expect(amended(page).locator("[data-empty-fields-show]")).toHaveCount(0);
+      await editTileNamed(page, "Actul modificat");
+      await expect(amended(page).locator("[data-empty-fields-show]")).toHaveCount(0);
+      await amended(page).locator("[data-tile-cancel]").click();
+      await expect(amended(page).locator("[data-empty-fields-show]")).toHaveCount(0);
       await photograph(page, "amended-linked", amended(page));
       await photograph(page, "addendum-page", null);
 
@@ -130,6 +138,13 @@ test.describe("TC-DOC-20 — actul adițional și actul pe care îl modifică", 
       await expect(amended(page).getByRole("button", { name: "Leagă actul modificat", exact: true })).toBeVisible({ timeout: 15_000 });
       await expect(fallback(page)).toBeVisible();
       await expect(fallback(page)).toHaveText("TC-1"); // 40.75: read as text
+      // 41.31: unlinked, the empty three are behind their own „Arată 3 câmpuri goale", which shows them.
+      const amendedLink = amended(page).locator("[data-empty-fields-show]");
+      await expect(amendedLink).toBeVisible({ timeout: 15_000 });
+      await expect(amendedLink).toContainText("Notariat act părinte");
+      await amendedLink.click();
+      await expect(amended(page).locator('[data-width-field="customFields.actParinteNotariat"]')).toBeVisible();
+      await expect(amendedLink).toHaveCount(0);
 
       // Step 6 — 40.88, Adrian's sizes. „Editează" on „Identificarea actului": Tip document and Notariat XL;
       // Calitate exemplar | Onorariu notarial on one row, Exemplare emise across the tile under them.
