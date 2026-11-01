@@ -167,16 +167,23 @@ test.describe("TC-DOC-28 — actul de identitate pe ecranul lui", () => {
         ["passportType", "countryCode", "nrDocument"], ["lastName", "firstName"], ["nationality", "sex"],
         ["dateOfBirth", "placeOfBirth"], ["dateDocument", "dateValidUntil"], ["issuerPersonId"], ["cnp", "domicileCounty"], ["mrz"],
       ]);
+      // 41.32: Locul nașterii at M; the status right under Data expirării, its left edge the date box's.
+      expect(Math.abs((await box(page, "identity.placeOfBirth").boundingBox())!.width - 136), "Locul nașterii is M").toBeLessThanOrEqual(1);
+      const statusBox = (await tile(page).locator("[data-identity-validity]").boundingBox())!;
+      const untilBox = (await box(page, "dateValidUntil").boundingBox())!;
+      expect(Math.abs(statusBox.x - untilBox.x), "the status starts at the date box's left edge").toBeLessThanOrEqual(1);
+      expect(statusBox.y, "the status under the date box").toBeGreaterThanOrEqual(untilBox.y + untilBox.height - 1);
       await page.locator('[data-tile-cancel="identity"]').click();
       await page.goto(`/documents/${vechi}`);
       await expect(tile(page)).toBeVisible({ timeout: 30_000 });
       await editTile(page, "identity");
       expect(await tileRows(page)).toEqual([
         ["lastName", "firstName"], ["fatherFirstName", "motherFirstName"], ["civilStatus", "dateOfBirth"], ["placeOfBirth"],
-        ["domicileAddress"], ["issuerPersonId"], ["dateDocument", "issuerOfficer"], ["nrDocument"],
+        // 41.32: „Seria și numărul" beside the issue date, the officer across the tile (was ["dateDocument", "issuerOfficer"], ["nrDocument"]).
+        ["domicileAddress"], ["issuerPersonId"], ["dateDocument", "nrDocument"], ["issuerOfficer"],
       ]);
       // Locul nașterii, Domiciliu and Emisă de across the tile, as wide as each other.
-      const across = await Promise.all(["identity.placeOfBirth", "identity.domicileAddress", "issuerPersonId"].map(async (f) => (await box(page, f).boundingBox())!.width));
+      const across = await Promise.all(["identity.placeOfBirth", "identity.domicileAddress", "issuerPersonId", "identity.issuerOfficer"].map(async (f) => (await box(page, f).boundingBox())!.width));
       expect(Math.max(...across) - Math.min(...across), `TILE widths ${across.join(", ")}`).toBeLessThanOrEqual(1);
       await page.locator('[data-tile-cancel="identity"]').click();
 

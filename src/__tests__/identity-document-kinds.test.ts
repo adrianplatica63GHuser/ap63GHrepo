@@ -53,9 +53,11 @@ describe("the four kinds", () => {
 describe("each kind's fields — the design's matrix, Adrian's lists exactly", () => {
   it("tip vechi (the booklet): no CNP, no sex, no validity end, no MRZ (Q #15)", () => {
     // 40.94: in Adrian's rows, left to right and top to bottom (the fields are the same twelve).
+    // 41.32: „Seria și numărul" beside „Data eliberării", „Lucrătorul care a eliberat-o" last (was dateDocument,
+    // issuerOfficer, nrDocument).
     expect(fieldsOf("CI_VECHE")).toEqual([
       "lastName", "firstName", "fatherFirstName", "motherFirstName", "civilStatus", "dateOfBirth", "placeOfBirth",
-      "domicileAddress", "issuer", "dateDocument", "issuerOfficer", "nrDocument",
+      "domicileAddress", "issuer", "dateDocument", "nrDocument", "issuerOfficer",
     ]);
     for (const absent of ["cnp", "sex", "dateValidUntil", "mrz", "cardNumber"] as const) expect(kindHasField("CI_VECHE", absent)).toBe(false);
   });
@@ -106,6 +108,11 @@ describe("each kind's fields — the design's matrix, Adrian's lists exactly", (
     // 40.94: Emisă de, MRZ and Domiciliu are TILE on the new card (Adrian's rows); on the passports Emisă de's own is
     // „Autoritatea emitentă", TILE too, and the MRZ keeps its two lines at TILE.
     expect(w("PASAPORT", "dateOfBirth").step).toBe("M");
+    // 41.32 — Adrian: „make Place of birth to be M size" on both passports, its value wrapping (L, 208, until then).
+    expect(w("PASAPORT", "placeOfBirth")).toEqual({ step: "M", kind: "grows" });
+    expect(w("PASAPORT_CRDS", "placeOfBirth")).toEqual({ step: "M", kind: "grows" });
+    // 41.32: the booklet's officer on a row of its own, at TILE.
+    expect(w("CI_VECHE", "issuerOfficer")).toEqual({ step: "TILE", kind: "grows", fill: true });
     expect(w("CI_NOU", "issuer")).toEqual({ step: "TILE", kind: "select", fill: true });
     expect(w("CI_NOU", "mrz")).toMatchObject({ step: "TILE", kind: "lines", rows: 2, fill: true });
     expect(w("CI_NOU", "domicileAddress")).toEqual({ step: "TILE", kind: "grows", fill: true });
@@ -113,7 +120,8 @@ describe("each kind's fields — the design's matrix, Adrian's lists exactly", (
 
   // 40.94 — Adrian's rows, 2026-10-28, verbatim: each kind's tile, top to bottom and left to right; TILE alone on its row.
   it.each([
-    ["CI_VECHE", [["lastName", "firstName"], ["fatherFirstName", "motherFirstName"], ["civilStatus", "dateOfBirth"], ["placeOfBirth*"], ["domicileAddress*"], ["issuer*"], ["dateDocument", "issuerOfficer"], ["nrDocument"]]],
+    // 41.32 inverted in place: was […, ["dateDocument", "issuerOfficer"], ["nrDocument"]].
+    ["CI_VECHE", [["lastName", "firstName"], ["fatherFirstName", "motherFirstName"], ["civilStatus", "dateOfBirth"], ["placeOfBirth*"], ["domicileAddress*"], ["issuer*"], ["dateDocument", "nrDocument"], ["issuerOfficer*"]]],
     ["CI_NOU", [["nrDocument", "cnp"], ["lastName", "firstName"], ["nationality", "sex"], ["placeOfBirth*"], ["domicileAddress*"], ["issuer*"], ["dateDocument", "dateValidUntil"], ["mrz*"], ["cardNumber"]]],
     ["PASAPORT", [["passportType", "countryCode", "nrDocument"], ["lastName", "firstName"], ["nationality", "sex"], ["dateOfBirth", "placeOfBirth"], ["dateDocument", "dateValidUntil"], ["issuer*"], ["cnp", "domicileCounty"], ["mrz*"]]],
     ["PASAPORT_CRDS", [["passportType", "countryCode", "nrDocument"], ["lastName", "firstName"], ["nationality", "sex"], ["dateOfBirth", "placeOfBirth"], ["dateDocument", "dateValidUntil"], ["issuer*"], ["cnp", "domicileCountry"], ["mrz*"]]],

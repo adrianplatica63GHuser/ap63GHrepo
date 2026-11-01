@@ -26,11 +26,16 @@ import {
 } from "@/app/documents/_components/form-schema";
 import { documentTileRegistry, IDENTITY_TILE, FIELDS_TILE } from "@/app/documents/_components/document-tiles";
 import type { DocumentSnapshot } from "@/lib/documents/validation";
+import { rowRem } from "@/lib/ui/field-widths";
+import { readFileSync } from "fs";
+import { join } from "path";
 
 const CNP = (() => {
   const first12 = "185042140012";
   return `${first12}${cnpControlDigit(first12)}`;
 })();
+
+const FORM = readFileSync(join(process.cwd(), "src/app/documents/_components/document-form.tsx"), "utf8");
 
 describe("the tile's fields", () => {
   it.each([...IDENTITY_KIND_VALUES])("%s: every field once, in the card's order, in whole-unit rows", (kind) => {
@@ -41,6 +46,20 @@ describe("the tile's fields", () => {
 
   // 40.94 (Ask first 1, 6): the kind's own rows, as written — never re-flowed — in a tile of 3 units, the least it
   // takes; the widest row (the passports' Data nașterii | Locul nașterii) fits in it.
+  // 41.32: the status is no third cell on the date's row any more (it sits under the date), so no row is wider than
+  // two M boxes and a gap — 280 px — on any kind: the tile stays at its floor of 3 units.
+  it.each([...IDENTITY_KIND_VALUES])("%s: no row wider than two M boxes (41.32)", (kind) => {
+    const { rows } = identityFieldRows(kind);
+    for (const r of rows) {
+      if (r.some((f) => f.width.fill)) continue;
+      expect(rowRem(r.map((f) => f.width)) * 16).toBeLessThanOrEqual(280);
+    }
+  });
+  it("the status is drawn under its date, in the date's own cell — never a cell of its own (41.32)", () => {
+    expect(FORM).toContain('below={f.key === "dateValidUntil" ? <IdentityValidity validUntil={watchedValues.dateValidUntil} /> : undefined}');
+    expect(FORM).not.toMatch(/<div className=\{STACKED_FIELD_CLASS\} data-validity-status="">/);
+    expect(FORM).toMatch(/<div className="relative h-0" data-validity-status="">\s*<div className="absolute left-0 top-0/);
+  });
   it.each([...IDENTITY_KIND_VALUES])("%s: the kind's rows as written, 3 units", (kind) => {
     const { units, rows } = identityFieldRows(kind);
     expect(rows.map((r) => r.map((f) => f.key))).toEqual(IDENTITY_KINDS[kind].rows.map((r) => r.map((f) => f.key)));
