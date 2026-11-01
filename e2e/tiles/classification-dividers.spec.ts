@@ -69,6 +69,22 @@ async function steps(page: Page, url: string, olderToo: boolean) {
   await expect(tile.locator('[data-tile-edit="classification"]')).toBeVisible();
   expect(await read(tile)).toMatchObject({ width: 254, stacked: true, within: true, selects: 0 });
 
+  // Step 3b — 41.28: Importanță was set today — „(actualizat azi)" after its value, its button „Verificat azi", disabled;
+  // one „i" in the tile, at the right end of its top line, whose bubble names Importanță, Relevanță, Proveniență, Istoric.
+  const imp = tile.locator('[data-classification-item="importance"]');
+  await expect(imp.locator("[data-classification-date]")).toHaveText("(actualizat azi)");
+  const [rv, dt] = await Promise.all([imp.locator('[data-read-value="classification.importance"]').boundingBox(), imp.locator("[data-classification-date]").boundingBox()]);
+  expect(dt!.x >= rv!.x + rv!.width - 1 || dt!.y >= rv!.y + rv!.height - 1, "the date follows the value").toBe(true);
+  await expect(imp.getByRole("button", { name: "Verificat azi", exact: true })).toBeDisabled();
+  await expect(tile.locator("[data-info-glyph]")).toHaveCount(1);
+  const info = tile.locator("[data-classification-top] button:has([data-info-glyph])");
+  const [ib, tb] = await Promise.all([info.boundingBox(), tile.boundingBox()]);
+  expect(tb!.x + tb!.width - (ib!.x + ib!.width), "the „i” at the right end").toBeLessThanOrEqual(16);
+  await info.click();
+  const tip = tile.locator("[data-classification-top] [role=tooltip]");
+  for (const w of ["Importanță", "Relevanță", "Proveniență", "Istoric"]) await expect(tip).toContainText(w);
+  await info.click();
+
   // Step 4 — after a reload the value is still there; with two versions the version line has the one divider.
   await page.reload();
   const again = await showTile(page, "Clasificare");

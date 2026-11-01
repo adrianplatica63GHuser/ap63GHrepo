@@ -88,12 +88,27 @@ describe("„Clasificare”: read, and edited with „Editează” (Slice 41.10)
     expect(items().map((i) => i.querySelector("[data-read-value]")?.textContent)).toEqual(["importance.low", "relevance.current", "provenance.manual"]);
     for (const i of items()) {
       expect(i.querySelector("h3")!.compareDocumentPosition(i.querySelector("[data-read-value]")!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-      expect(within(i).getByRole("button", { name: "markReviewed.button" })).toBeTruthy();
       expect(i.querySelector("h3")!.className).toBe("font-colhead text-xs font-normal tracking-[0.02em] text-label");
+      // 41.28: no „i" on an item's title any more — the tile has one.
+      expect(i.querySelector("[data-info-glyph]")).toBeNull();
     }
-    // „Actualizat …" stays under its own value.
-    expect(within(items()[0]).getByText("lastChangedToday")).toBeTruthy();
+    // 41.28 (Ask first 1): Importanță and Proveniență were stamped today — drawn reviewed, „Verificat azi", disabled;
+    // Relevanță never was — the ordinary button. (Until 41.28 every item read „markReviewed.button".)
+    for (const k of [0, 2]) {
+      const b = within(items()[k]).getByRole("button", { name: "markReviewed.today" });
+      expect(b).toBeDisabled();
+      expect(b).toHaveAttribute("aria-pressed", "true");
+    }
+    expect(within(items()[1]).getByRole("button", { name: "markReviewed.button" })).toBeEnabled();
+    // 41.28 (Ask first 2): „(actualizat azi)" follows the value on its line, before the button.
+    const line = items()[0].querySelector("[data-classification-line]")!;
+    expect(line.querySelector("[data-read-value]")!.compareDocumentPosition(within(items()[0]).getByText("lastChangedToday")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(line.contains(within(items()[0]).getByText("lastChangedToday"))).toBe(true);
     expect(within(items()[1]).queryByText("lastChangedToday")).toBeNull();
+    // 41.28 (Ask first 3): one „i" in the tile, at the right end of its top line, named for the tile.
+    expect(document.querySelectorAll("[data-info-glyph]")).toHaveLength(1);
+    const top = document.querySelector("[data-classification-top]")!;
+    expect(top.querySelector("[data-info-glyph]")).not.toBeNull();
     // No save while reading: „Editează" is the way in.
     expect(screen.queryByRole("button", { name: "save" })).toBeNull();
     expect(screen.getByRole("button", { name: /^editTile/ })).toBeTruthy();

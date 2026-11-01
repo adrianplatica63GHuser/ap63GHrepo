@@ -85,3 +85,9 @@ the runner's browser before and after (20261005T185820Z-28557, 20261005T190111Z-
 **2026-10-05 — `automated` (Slice #38.01).** The test runner's full run 20261005T190755Z-21923 on
 c53d919 ran the changed `e2e/tiles/classification-dividers.spec.ts` green with the other 87 (lint,
 tsc, jest and forms-drift green too).
+
+**2026-10-31 — Slice 41.28.** Step 3b added: after the save, Importanță reads „(actualizat azi)" after its value and its
+button is „Verificat azi", disabled (a value set today counts as reviewed); the tile has one „i", at the right end of its
+top line, whose bubble names Importanță, Relevanță, Proveniență and Istoric — the three per-item „i" are gone. Run on the
+spec's invented property and contract (the same component on all four screens). Written from the slice's own change;
+not driven by hand first.

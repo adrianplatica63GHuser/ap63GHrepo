@@ -91,15 +91,21 @@ describe("every explanation is a bubble, not a paragraph (Slice #37.63)", () => 
   it("the notes are HintBubbles on the titles, with an ⓘ named after the item; the statement is one on the value", () => {
     expect(META).toMatch(/<HintBubble id=\{id\} text=\{note\} triggerLabel=\{about\}>/);
     expect(META).toMatch(/<HintBubble id=\{statementId\} text=\{statement\}>/);
-    expect(META).toMatch(/describedBy=\{statement \? `\$\{noteId\} \$\{statementId\}` : noteId\}/);
-    for (const note of ["importance.note", "relevance.note", "provenance.note", "tags.note", "crossRef.note"]) {
+    // 41.28: Clasificare's three notes are ONE bubble, at the right end of its top line, which also describes each
+    // select (it was `${noteId} ${statementId}`, each item's own „i"); tags and „Vezi și" keep theirs.
+    expect(META).toMatch(/describedBy=\{statement \? `\$\{describedBy\} \$\{statementId\}` : describedBy\}/);
+    expect(META).toContain('{(["importance", "relevance", "provenance"] as const).map((k) => (');
+    expect(META).toContain("{t(`${k}.note`)}");
+    expect(META).toContain('{t("provenance.historyNote")}');
+    for (const note of ["tags.note", "crossRef.note"]) {
       expect(META).toContain(`t("${note}")`);
     }
     expect(ro.shared.entityMetadata.about).toBe("Despre „{title}”");
   });
 
   it("what is true of this record stays visible: the days since, the review warning, „Istoric”", () => {
-    expect(META).toMatch(/\{daysText\}<\/p>/);
+    // 41.28: the days since follow the value on its line, a span (it was its own paragraph under it).
+    expect(META).toMatch(/\{daysText\}\s*<\/span>/);
     expect(META).toMatch(/\{reviewWarning\}<\/p>/);
     expect(META).toMatch(/t\("provenance\.historyTitle"\)/);
   });
