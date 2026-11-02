@@ -109,7 +109,7 @@ test.describe("TC-TILES-10 (41.39) — alegerea grupului se închide, dala se î
     await removeLeftovers(page.request, MARK39);
     await page.setViewportSize({ width: 1920, height: 1080 });
     const person = await createNaturalPerson(page.request, { lastName: MARK39, firstName: "Ion" });
-    const g = await page.request.post("/api/groups", { data: { targetType: "PERSON", description: `${MARK39} ${"descriere lungă ".repeat(25).trim()}` } });
+    const g = await page.request.post("/api/groups", { data: { targetType: "PHYSICAL_PERSON", description: `${MARK39} ${"descriere lungă ".repeat(25).trim()}` } });
     expect(g.ok(), await g.text()).toBeTruthy();
     const groupId = ((await g.json()) as { group?: { id: string }; id?: string }).group?.id ?? ((await g.json()) as { id?: string }).id;
     try {

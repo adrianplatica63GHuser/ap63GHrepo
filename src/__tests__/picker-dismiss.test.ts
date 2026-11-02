@@ -58,7 +58,11 @@ describe("41.39 — no picker can widen the tile", () => {
   });
 
   it("both selects take what is left of their row, and each option carries the whole description as its title", () => {
-    expect(META.match(/className="min-w-0 flex-1 rounded border/g) ?? []).toHaveLength(2);
+    for (const mark of ["data-groups-picker", "data-stamps-picker"]) {
+      const at = META.indexOf(`${mark}=""`);
+      expect(at).toBeGreaterThan(0);
+      expect(META.slice(META.lastIndexOf("<select", at), at)).toContain('className="min-w-0 flex-1 rounded border');
+    }
     expect(META).toContain("{pickerOptionText(g.code, g.description)}");
     expect(META).toContain("{pickerOptionText(s.code, s.shortDescription)}");
     expect(META).toContain("title={g.description ?? undefined}");
