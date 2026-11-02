@@ -37,7 +37,7 @@ Fiecare rând are patru butoane:
 
 | Butonul | Ce face |
 |---|---|
-| „Previzualizare” | Arată, lângă listă, un rezumat scurt: numele, apoi porecla și CNP-ul, apoi „născut:” (sau „născută:”) cu data și locul nașterii. |
+| „Previzualizare” | Arată, lângă listă, un rezumat scurt: numele, apoi porecla și CNP-ul, apoi „Născut:” (sau „Născută:”) cu data și locul nașterii. |
 | „Incursiune” | Arată, lângă listă, fișa „Interacțiuni” a persoanei (secțiunea [[persons-interactions]]). |
 | „Legături” | Arată, lângă listă, legăturile persoanei, numai pentru citit (secțiunea [[links-related]]). |
 | numele, link | Deschide ecranul persoanei; Ctrl + clic, într-o filă nouă. |

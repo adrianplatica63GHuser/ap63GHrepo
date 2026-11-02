@@ -37,7 +37,7 @@ Each row has four buttons:
 
 | The button | What it does |
 |---|---|
-| „Preview” | Shows, beside the list, a short summary: the name, then the nickname and the CNP, then „born:” with the date and place of birth. |
+| „Preview” | Shows, beside the list, a short summary: the name, then the nickname and the CNP, then „Born:” with the date and place of birth. |
 | „Peek inside” | Shows, beside the list, the person's „Interactions” tile (section [[persons-interactions]]). |
 | „Links” | Shows, beside the list, the person's links, read-only (section [[links-related]]). |
 | the name, a link | Opens the person's screen; Ctrl + click, in a new tab. |

@@ -205,11 +205,11 @@
           "section": "persons-list",
           "ro": {
             "question": "În lista persoanelor fizice, vreți să aflați repede data și locul nașterii unei persoane, fără să-i deschideți ecranul. Ce apăsați pe rândul ei?",
-            "explanation": "„Previzualizare” arată, lângă listă, un rezumat scurt: numele, apoi porecla și CNP-ul, apoi „născut:” (sau „născută:”) cu data și locul nașterii. Un al doilea clic îl închide."
+            "explanation": "„Previzualizare” arată, lângă listă, un rezumat scurt: numele, apoi porecla și CNP-ul, apoi „Născut:” (sau „Născută:”) cu data și locul nașterii. Un al doilea clic îl închide."
           },
           "en": {
             "question": "In the list of natural persons, you want to learn quickly a person's date and place of birth without opening their screen. What do you press on their row?",
-            "explanation": "„Previzualizare” shows, beside the list, a short summary: the name, then the nickname and the CNP, then „născut:” (or „născută:”) with the date and place of birth. A second click closes it."
+            "explanation": "„Previzualizare” shows, beside the list, a short summary: the name, then the nickname and the CNP, then „Născut:” (or „Născută:”) with the date and place of birth. A second click closes it."
           },
           "options": [
             {
@@ -233,8 +233,8 @@
             {
               "id": "o4",
               "correct": true,
-              "ro": "„Previzualizare”: lângă listă apare un rezumat cu „născut:”.",
-              "en": "„Previzualizare”: a summary with „născut:” appears beside the list."
+              "ro": "„Previzualizare”: lângă listă apare un rezumat cu „Născut:”.",
+              "en": "„Previzualizare”: a summary with „Născut:” appears beside the list."
             }
           ]
         },
