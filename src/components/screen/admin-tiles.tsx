@@ -16,9 +16,12 @@ import type { TileRegistry } from "@/lib/ui/tiles";
 
 export type AdminTiles<K extends string> = { choice: TileChoice<K>; menu: TilesMenu };
 
-/** The screen's choice and its „Panouri". `visit`: tiles shown for this visit only, never stored (41.45). */
-export function useAdminTiles<K extends string>(registry: TileRegistry<K>, visit: readonly K[] = []): AdminTiles<K> {
-  const choice = useTileChoice(registry, visit);
+/**
+ * The screen's choice and its „Panouri". 41.45 — `only`: the tiles a `?tiles=` names, the screen opened from a record —
+ * these and no other for this visit, nothing stored (`useTileChoice`'s `only`).
+ */
+export function useAdminTiles<K extends string>(registry: TileRegistry<K>, only: readonly K[] = []): AdminTiles<K> {
+  const choice = useTileChoice(registry, [], [], only);
   const menu = useTilesMenu();
   return { choice, menu };
 }
@@ -41,4 +44,11 @@ export function AdminTilesBar<K extends string>({
       <TileSelector all={registry.all} labels={labels} choice={tiles.choice} menu={tiles.menu} />
     </>
   );
+}
+
+/** 41.45: `?tiles=identity,members` → the registry's tiles it names, in no particular order; nothing else. */
+export function tilesParam<K extends string>(raw: string | string[] | undefined, all: readonly K[]): K[] {
+  const text = Array.isArray(raw) ? raw.join(",") : raw ?? "";
+  const names = text.split(",").map((s) => s.trim());
+  return all.filter((k) => names.includes(k));
 }

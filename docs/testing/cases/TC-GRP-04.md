@@ -43,6 +43,18 @@ Nothing.
 | 5 | Ticks A on the left, presses „Scoate › (1)" | A back on the right |
 | 6 | Presses „Salvează grupul", then reloads | B and C on the left, each with its position, „[01]" or „[02]"; nothing „în așteptare"; A not a member |
 
+### Opened from a record (41.45)
+
+An invented natural person in an invented group of persons, with an invented stamp and a „Vezi și" reference to a
+second invented person; nothing stored for the group's or the stamp's tiles.
+
+| # | A person does | And sees |
+|---|---|---|
+| 7 | On the person, in „Etichete și grupuri", clicks the group | The group's screen, `?tiles=identity` in the address: „Identitatea grupului" only; „Panouri" lists „Membrii grupului" and „Cum lucrezi cu grupurile" unticked; nothing stored for the screen's tiles |
+| 8 | Opens the same group from „Grupuri" | Its stored choice: every tile |
+| 9 | Back on the person, clicks the stamp | The stamp's screen, `?tiles=description`: „Descrierea ștampilei" only; then from „Ștampile", every tile |
+| 10 | Back on the person, clicks the „Vezi și" reference | The second person's screen (/natural-persons/…) |
+
 ## At the end — leaving things as they were found
 
 Delete the group and the three properties (`DELETE` on each); remove `ga40-tile-positions-admin-group-v1`.

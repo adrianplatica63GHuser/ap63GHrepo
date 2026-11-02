@@ -20,6 +20,10 @@
  * brings it back as the user had it — so „Toate" ticks every enabled tile and
  * „Implicit" resets the enabled ones only. Which of them is on screen is the
  * caller's (`shown` still says what is stored).
+ *
+ * Slice 41.45: `only` — a group or stamp opened from a record (`?tiles=`) shows these tiles and no other, FOR THIS VISIT:
+ * the stored choice is neither read for the screen nor written. „Panouri" ticks and unticks within the visit, „Toate"
+ * shows every tile for it, and „Implicit" leaves the visit's set for the stored choice — without writing anything.
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { TILES_ALL_UP, TILE_POSITIONS_RESET, tilePositionsKey } from "@/lib/ui/tile-positions";
@@ -63,6 +67,7 @@ export function useTileChoice<K extends string>(
   reg: TileRegistry<K>,
   initialVisit: readonly K[] = [],
   disabled: readonly K[] = NONE,
+  only: readonly K[] = NONE,
 ): TileChoice<K> {
   const storageKey = tileStorageKey(reg.entity);
   // Slice #38.41: the user's own set for this kind of record, when „Contul meu" saved one —
@@ -75,6 +80,11 @@ export function useTileChoice<K extends string>(
   );
   const [stored, setStored] = useState<K[]>(() => [...reg.defaults]);
   const [visit, setVisit] = useState<K[]>(() => [...initialVisit]);
+  // 41.45: the visit's own set, while the screen was opened with `?tiles=`; null once „Implicit" leaves it.
+  const [onlySet, setOnlySet] = useState<K[] | null>(() => {
+    const known = reg.all.filter((k) => only.includes(k));
+    return known.length > 0 ? known : null;
+  });
 
   useEffect(() => {
     const id = setTimeout(() => {
@@ -89,27 +99,40 @@ export function useTileChoice<K extends string>(
     return () => clearTimeout(id);
   }, [storageKey, reg, defaults]);
 
-  const shown = useMemo(() => shownTiles(stored, visit, reg.all), [stored, visit, reg.all]);
+  const fromStore = useMemo(() => shownTiles(stored, visit, reg.all), [stored, visit, reg.all]);
+  const shown = onlySet ?? fromStore;
 
   const toggle = useCallback(
     (key: K) => {
       const next = toggleTile(shown, key, reg.all);
+      if (onlySet) {
+        setOnlySet(next); // 41.45: within the visit, never written
+        return;
+      }
       setStored(next);
       setVisit([]);
       write(storageKey, next);
     },
-    [shown, reg.all, storageKey],
+    [shown, reg.all, storageKey, onlySet],
   );
 
   const showAll = useCallback(() => {
+    if (onlySet) {
+      setOnlySet([...reg.all]); // 41.45: every tile, for the visit
+      return;
+    }
     // #38.04: a disabled tile keeps what was stored for it.
     const next = reg.all.filter((k) => !disabled.includes(k) || stored.includes(k));
     setStored(next);
     setVisit([]);
     write(storageKey, next);
-  }, [reg.all, storageKey, disabled, stored]);
+  }, [reg.all, storageKey, disabled, stored, onlySet]);
 
   const reset = useCallback(() => {
+    if (onlySet) {
+      setOnlySet(null); // 41.45: the visit's set left for the stored choice; nothing written
+      return;
+    }
     if (disabled.length === 0) {
       setStored([...defaults]);
       write(storageKey, null);
@@ -123,7 +146,7 @@ export function useTileChoice<K extends string>(
     // Slice #37.76 (its Ask first): „Implicit" returns the screen to how it first was — #37.75's places.
     write(tilePositionsKey(reg.entity), null);
     window.dispatchEvent(new CustomEvent(TILE_POSITIONS_RESET, { detail: reg.entity }));
-  }, [reg.all, reg.entity, defaults, storageKey, disabled, stored]);
+  }, [reg.all, reg.entity, defaults, storageKey, disabled, stored, onlySet]);
 
   const reveal = useCallback((key: K) => {
     setVisit((v) => (v.includes(key) ? v : [...v, key]));

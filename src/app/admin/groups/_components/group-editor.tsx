@@ -15,7 +15,7 @@ import { WorkflowsTile } from "@/components/screen/workflows-tile";
 import { TileUnitRow } from "@/components/screen/tile-unit-row";
 import { TileTitle } from "@/components/screen/tile-title";
 import { GROUP_REGISTRY, GROUP_SCREEN, IDENTITY_UNITS, TWO_LISTS_UNITS } from "@/lib/ui/screen-tiles";
-import { AdminTilesBar, useAdminTiles } from "@/components/screen/admin-tiles";
+import { AdminTilesBar, tilesParam, useAdminTiles } from "@/components/screen/admin-tiles";
 
 /** Slice #37.35: every tile of the editor is 3 units (#37.22's panel on the unit). */
 
@@ -80,12 +80,15 @@ async function saveGroup(
 export function GroupEditor({
   groupId,
   initialDetail,
+  onlyTiles,
 }: {
   groupId: string;
   initialDetail: GroupDetail;
+  /** 41.45: the page's `?tiles=` — opened from a record, only these tiles for this visit. */
+  onlyTiles?: string;
 }) {
   const t = useTranslations("group");
-  const tiles = useAdminTiles(GROUP_REGISTRY);
+  const tiles = useAdminTiles(GROUP_REGISTRY, tilesParam(onlyTiles, GROUP_REGISTRY.all));
   const tUnnamed = useTranslations("shared.unnamed");
   const qc = useQueryClient();
   // FU-219 (Slice #37.07): the description's caption is its label.

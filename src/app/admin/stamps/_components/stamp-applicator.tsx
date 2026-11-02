@@ -18,7 +18,7 @@ import { GrowingText } from "@/components/forms/growing-text";
 import { TileUnitRow } from "@/components/screen/tile-unit-row";
 import { TileTitle } from "@/components/screen/tile-title";
 import { IDENTITY_UNITS, STAMP_REGISTRY, STAMP_SCREEN, TWO_LISTS_UNITS } from "@/lib/ui/screen-tiles";
-import { AdminTilesBar, useAdminTiles } from "@/components/screen/admin-tiles";
+import { AdminTilesBar, tilesParam, useAdminTiles } from "@/components/screen/admin-tiles";
 
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -93,12 +93,15 @@ async function saveStamp(
 export function StampApplicator({
   stampId,
   initialDetail,
+  onlyTiles,
 }: {
   stampId:       string;
   initialDetail: StampDetail;
+  /** 41.45: the page's `?tiles=` — opened from a record, only these tiles for this visit. */
+  onlyTiles?:    string;
 }) {
   const t  = useTranslations("stamp");
-  const tiles = useAdminTiles(STAMP_REGISTRY);
+  const tiles = useAdminTiles(STAMP_REGISTRY, tilesParam(onlyTiles, STAMP_REGISTRY.all));
   const tUnnamed = useTranslations("shared.unnamed");
   const qc = useQueryClient();
   // Slice #38.13: the two tiles that are not lists are regions named by their titles.

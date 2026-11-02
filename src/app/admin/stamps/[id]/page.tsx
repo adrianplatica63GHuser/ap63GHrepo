@@ -11,14 +11,15 @@ import { StampApplicator } from "../_components/stamp-applicator";
 
 type Props = {
   params:       Promise<{ id: string }>;
-  searchParams: Promise<{ from?: string; fromLabel?: string }>;
+  searchParams: Promise<{ from?: string; fromLabel?: string; tiles?: string }>;
 };
 
 export default async function StampApplicatorPage({ params, searchParams }: Props) {
   const { id } = await params;
   // searchParams destructured so Next.js opts this page into dynamic rendering;
   // the values are only consumed client-side by BreadcrumbBar.
-  await searchParams;
+  // 41.45: `?tiles=` — opened from a record, only the tiles it names, for this visit (the screen reads it).
+  const { tiles } = await searchParams;
   const t = await getTranslations("stamp");
 
   const detail = await getStampDetail(id, "PHYSICAL_PERSON");
@@ -36,7 +37,7 @@ export default async function StampApplicatorPage({ params, searchParams }: Prop
           </h1>
         </header>
 
-        <StampApplicator stampId={id} initialDetail={detail} />
+        <StampApplicator stampId={id} initialDetail={detail} onlyTiles={tiles} />
       </main>
     </div>
   );

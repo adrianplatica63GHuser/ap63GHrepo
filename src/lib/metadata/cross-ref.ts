@@ -46,6 +46,8 @@ export type CrossRefItem = {
   peerName:          string | null;
   /** The entity's detail-page id (person.id / property.id / document.id). */
   peerEntityId:      string;
+  /** 41.45: NATURAL | JUDICIAL for a person (person.type), null otherwise — so „Vezi și" opens the person's own screen. */
+  peerPersonKind:    "NATURAL" | "JUDICIAL" | null;
   /** Optional explanatory note typed by the creator. */
   note:              string | null;
   /** True when this entity is the source (i.e. it created the link → can delete). */
@@ -85,6 +87,7 @@ export async function listCrossRefs(
       peerCode:               peerPO.code,
       peerType:               peerPO.objectType,
       peerPersonId:           peerPer.id,
+      peerPersonKind:         peerPer.type,
       peerPersonName:         peerPer.displayName,
       peerPropertyId:         peerPro.id,
       peerPropertyName:       peerPro.nickname,
@@ -115,6 +118,7 @@ export async function listCrossRefs(
       peerCode:               peerPO2.code,
       peerType:               peerPO2.objectType,
       peerPersonId:           peerPer2.id,
+      peerPersonKind:         peerPer2.type,
       peerPersonName:         peerPer2.displayName,
       peerPropertyId:         peerPro2.id,
       peerPropertyName:       peerPro2.nickname,
@@ -148,6 +152,7 @@ export async function listCrossRefs(
       peerType:              row.peerType,
       peerName,
       peerEntityId,
+      peerPersonKind:        row.peerPersonKind ?? null,
       note:                  row.note,
       isOwner,
       createdAt:             row.createdAt.toISOString(),

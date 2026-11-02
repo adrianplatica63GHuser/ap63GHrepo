@@ -10,7 +10,7 @@ import { GroupEditor } from "../_components/group-editor";
 
 type PageParams = {
   params:       Promise<{ id: string }>;
-  searchParams: Promise<{ from?: string; fromLabel?: string }>;
+  searchParams: Promise<{ from?: string; fromLabel?: string; tiles?: string }>;
 };
 
 export default async function GroupEditorPage({ params, searchParams }: PageParams) {
@@ -18,7 +18,8 @@ export default async function GroupEditorPage({ params, searchParams }: PagePara
   // searchParams destructured so Next.js opts this page into dynamic rendering
   // (it reads searchParams); the values are only consumed client-side by
   // BreadcrumbBar, so we don't use them here.
-  await searchParams;
+  // 41.45: `?tiles=` — opened from a record, only the tiles it names, for this visit (the screen reads it).
+  const { tiles } = await searchParams;
   const t = await getTranslations("group");
 
   const detail = await getGroupDetail(id);
@@ -34,7 +35,7 @@ export default async function GroupEditorPage({ params, searchParams }: PagePara
           </h1>
         </header>
 
-        <GroupEditor groupId={id} initialDetail={detail} />
+        <GroupEditor groupId={id} initialDetail={detail} onlyTiles={tiles} />
       </main>
     </div>
   );

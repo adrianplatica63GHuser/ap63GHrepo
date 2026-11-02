@@ -1,6 +1,7 @@
 "use client";
 
 import { useNameOr } from "@/components/record/use-name-or";
+import { groupFromRecordHref, peerHref, stampFromRecordHref, type PersonKind } from "@/lib/metadata/peer-href";
 import { unnamedKindOf } from "@/lib/ui/unnamed";
 import { Fragment, useCallback, useEffect, useId, useState, useRef } from "react";
 import { Calculator, Check, Link as LinkIcon, Plus, X } from "lucide-react";
@@ -721,7 +722,7 @@ function InlineGroupsSection({
           {currentGroups.map((g) => (
             <li key={g.code} className="group flex items-center gap-2">
               <Link
-                href={withBack(`/admin/groups/${encodeURIComponent(g.id)}`)}
+                href={groupFromRecordHref(g.id, withBack)}
                 className="inline-flex items-center gap-3 rounded-md px-2 py-1 text-sm transition-colors hover:bg-canvas dark:hover:bg-zinc-800"
               >
                 {/* Slice #38.11: how many members the group has now — not this
@@ -898,7 +899,7 @@ function InlineStampsSection({
           {currentStamps.map((s) => (
             <li key={s.code} className="group flex items-center gap-2">
               <Link
-                href={withBack(`/admin/stamps/${encodeURIComponent(s.id)}`)}
+                href={stampFromRecordHref(s.id, withBack)}
                 className="inline-flex items-center gap-3 rounded-md px-2 py-1 text-sm transition-colors hover:bg-canvas dark:hover:bg-zinc-800"
               >
                 <span className="font-mono text-xs rounded border border-card-rim bg-card px-1.5 py-0.5 text-fade dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
@@ -938,17 +939,13 @@ type CrossRefItem = {
   peerType:              string;
   peerName:              string | null;
   peerEntityId:          string;
+  /** 41.45: a person's kind, so the link opens its own screen (peer-href.ts). */
+  peerPersonKind?:       PersonKind | null;
   note:                  string | null;
   isOwner:               boolean;
   createdAt:             string;
 };
 
-/** Derive the detail-page href from the peer entity type + id. */
-function peerHref(peerType: string, peerEntityId: string): string {
-  if (peerType === "PROPERTY") return `/properties/${peerEntityId}`;
-  if (peerType === "DOCUMENT") return `/documents/${peerEntityId}`;
-  return `/persons/${peerEntityId}`;
-}
 
 /** Short type badge label. */
 function peerTypeBadge(peerType: string, t: (k: string) => string): string {
@@ -1116,7 +1113,7 @@ function CrossRefsSection({
                   {/* Name / link */}
                   {ref.peerEntityId ? (
                     <Link
-                      href={withBack(peerHref(ref.peerType, ref.peerEntityId))}
+                      href={withBack(peerHref(ref.peerType, ref.peerEntityId, ref.peerPersonKind))}
                       className="text-sm text-ink dark:text-zinc-100 underline-offset-2 hover:underline"
                     >
                       {nameOr(ref.peerName, unnamedKindOf(ref.peerType))}
