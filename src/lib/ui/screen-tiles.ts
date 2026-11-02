@@ -50,16 +50,16 @@ export type AdminTileRegistry<K extends string> = {
 };
 const adminRegistry = <K extends string>(entity: string, all: readonly K[]): AdminTileRegistry<K> => ({ entity, all, defaults: all, form: [] });
 
-/** Administrare → Grupuri: what a group is, and the list. */
-export const ADMIN_GROUPS_REGISTRY = adminRegistry("admin-groups", ["about", "list"] as const);
-/** Administrare → Ștampile: what a stamp is, and the list. */
-export const ADMIN_STAMPS_REGISTRY = adminRegistry("admin-stamps", ["about", "list"] as const);
+/** Administrare → Grupuri: what a group is, how you work with groups (41.44), and the list. */
+export const ADMIN_GROUPS_REGISTRY = adminRegistry("admin-groups", ["about", "workflows", "list"] as const);
+/** Administrare → Ștampile: what a stamp is, how you work with stamps (41.44), and the list. */
+export const ADMIN_STAMPS_REGISTRY = adminRegistry("admin-stamps", ["about", "workflows", "list"] as const);
 /** Administrare → Etichete: the page's note, and the cloud. */
 export const ADMIN_TAGS_REGISTRY = adminRegistry("admin-tags", ["note", "cloud"] as const);
 
 /** The list screens' packed rows: what it is (7 units), the list (or the cloud) beside or under it. */
-export const ADMIN_GROUPS_SCREEN: ScreenTiles = { entity: "admin-groups", tiles: ["about", "list"], units: 7, flowUnits: 14 };
-export const ADMIN_STAMPS_SCREEN: ScreenTiles = { entity: "admin-stamps", tiles: ["about", "list"], units: 7, flowUnits: 14 };
+export const ADMIN_GROUPS_SCREEN: ScreenTiles = { entity: "admin-groups", tiles: ["about", "workflows", "list"], units: 7, flowUnits: 14 };
+export const ADMIN_STAMPS_SCREEN: ScreenTiles = { entity: "admin-stamps", tiles: ["about", "workflows", "list"], units: 7, flowUnits: 14 };
 export const ADMIN_TAGS_SCREEN: ScreenTiles = { entity: "admin-tags", tiles: ["note", "cloud"], units: 7, flowUnits: 14 };
 
 /**
@@ -79,9 +79,10 @@ export const TWO_LISTS_UNITS = 7;
  */
 export const GROUP_SCREEN: ScreenTiles = {
   entity: "admin-group",
-  tiles: ["identity", "members"],
+  tiles: ["identity", "members", "workflows"],
   units: TWO_LISTS_UNITS,
-  tileUnits: { identity: IDENTITY_UNITS, members: TWO_LISTS_UNITS },
+  // 41.44: „Cum lucrezi cu grupurile", as wide as the two lists.
+  tileUnits: { identity: IDENTITY_UNITS, members: TWO_LISTS_UNITS, workflows: TWO_LISTS_UNITS },
   flowUnits: IDENTITY_UNITS + TWO_LISTS_UNITS,
 };
 
@@ -90,8 +91,8 @@ export const GROUP_SCREEN: ScreenTiles = {
  * and „Deja în grup" are one tile, „members" — a choice stored under either old name reads as it; a place stored under
  * them names no tile any more and is not read (the record screens' renamed tiles, #37.54).
  */
-export const GROUP_REGISTRY: AdminTileRegistry<"identity" | "members"> = {
-  ...adminRegistry(GROUP_SCREEN.entity, ["identity", "members"] as const),
+export const GROUP_REGISTRY: AdminTileRegistry<"identity" | "members" | "workflows"> = {
+  ...adminRegistry(GROUP_SCREEN.entity, ["identity", "members", "workflows"] as const),
   renamed: { available: "members", "in-group": "members" },
 };
 
@@ -101,9 +102,10 @@ export const GROUP_REGISTRY: AdminTileRegistry<"identity" | "members"> = {
  */
 export const STAMP_SCREEN: ScreenTiles = {
   entity: "admin-stamp",
-  tiles: ["description", "records"],
+  tiles: ["description", "records", "workflows"],
   units: TWO_LISTS_UNITS,
-  tileUnits: { description: IDENTITY_UNITS, records: TWO_LISTS_UNITS },
+  // 41.44: „Cum lucrezi cu ștampilele", as wide as the two lists.
+  tileUnits: { description: IDENTITY_UNITS, records: TWO_LISTS_UNITS, workflows: TWO_LISTS_UNITS },
   flowUnits: IDENTITY_UNITS + TWO_LISTS_UNITS,
 };
 
@@ -111,8 +113,8 @@ export const STAMP_SCREEN: ScreenTiles = {
  * 41.41: one stamp's screen — its tiles chosen with „Panouri". 41.43: „Tip element" and the two lists are one tile,
  * „records"; a choice stored under the old names reads as it, a place stored under them is not read (as 41.42).
  */
-export const STAMP_REGISTRY: AdminTileRegistry<"description" | "records"> = {
-  ...adminRegistry(STAMP_SCREEN.entity, ["description", "records"] as const),
+export const STAMP_REGISTRY: AdminTileRegistry<"description" | "records" | "workflows"> = {
+  ...adminRegistry(STAMP_SCREEN.entity, ["description", "records", "workflows"] as const),
   renamed: { type: "records", stamped: "records", available: "records" },
 };
 

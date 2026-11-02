@@ -4023,6 +4023,31 @@
       "body3": "Stamps can also describe subjective qualifiers: the level of trust, an object's potential, a priority or any other personal assessment label. It is good practice to apply as many stamps as you can and to create varied ones — it adds value and richness to how the data is used.",
       "codeNote": "Each stamp gets a unique three-letter code (e.g. STMP-AAA), assigned automatically.",
       "seeAlso": "For temporary actions on a single type of object, use Groups."
+    },
+    "workflows": {
+      "title": "How you work with stamps",
+      "steps": {
+        "find": {
+          "title": "Finding a stamp",
+          "body": "In „Stamps”, the „search by Code or Short description” box finds a stamp by its code or by the words of its description, in any order."
+        },
+        "create": {
+          "title": "Making a stamp",
+          "body": "„Create stamp” opens the form: write „Short description” and, if you like, „Notes”, then press „Save”. The code is given on saving."
+        },
+        "members": {
+          "title": "Applying and removing the stamp, on its screen",
+          "body": "„Apply” on the stamp's row opens its screen. In „Stamped objects”, choose the kind of objects in „Object type”, then tick on the right and press „‹ Apply stamp”, or tick on the left and press „Remove stamp ›”; a double click moves a single row. Nothing is written until you press „Save stamps”."
+        },
+        "record": {
+          "title": "From „Tags and groups”, on an object",
+          "body": "„Edit” opens the tile; „+ Apply stamp” picks a stamp, and „Remove stamp” (×) takes it off. Each change is written at once; „Done” closes the tile."
+        },
+        "delete": {
+          "title": "Deleting a stamp",
+          "body": "„Delete” on the stamp's row asks to confirm. The stamp goes from the objects too, and the objects stay in the archive."
+        }
+      }
     }
   },
   "group": {
@@ -4092,6 +4117,31 @@
       "note": "Create the property group, then go back to the map: the selection is waiting and the new group will be in the list.",
       "created": "Group {code} has been created. Go back to the map to add the selected properties to it.",
       "back": "Back to the map"
+    },
+    "workflows": {
+      "title": "How you work with groups",
+      "steps": {
+        "find": {
+          "title": "Finding a group",
+          "body": "In „Groups”, the „search by Code or Description” box finds a group by its code or by the words of its description, in any order."
+        },
+        "create": {
+          "title": "Making a group",
+          "body": "„Add” opens „Add new group”: choose „Target”, write „Description” and press „Save”. The code is given on saving."
+        },
+        "members": {
+          "title": "Adding and taking out members, on the group's screen",
+          "body": "„Edit” on the group's row opens its screen. In „Group members”, tick on the right and press „‹ Include”, or tick on the left and press „Take out ›”; a double click moves a single row. Nothing is written until you press „Save group”."
+        },
+        "record": {
+          "title": "From „Tags and groups”, on an object",
+          "body": "„Edit” opens the tile; „+ Add to group” picks a group, and „Remove from group” (×) takes the object out. Each change is written at once; „Done” closes the tile. An object is in at most 3 groups."
+        },
+        "delete": {
+          "title": "Deleting a group",
+          "body": "„Delete” on the group's row asks to confirm. The group goes, and the objects in it stay in the archive."
+        }
+      }
     }
   },
   "globalSearch": {

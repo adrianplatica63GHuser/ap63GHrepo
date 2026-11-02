@@ -4023,6 +4023,31 @@
       "body3": "Ștampilele pot descrie și calificatori subiectivi: nivelul de încredere, potențialul unui obiect, prioritatea sau orice altă etichetă de evaluare personală. Este o practică recomandată să aplici cât mai multe ștampile și să creezi ștampile variate — aceasta adaugă valoare și bogăție utilizării datelor.",
       "codeNote": "Fiecare ștampilă primește un cod unic de trei litere (ex. STMP-AAA) atribuit automat.",
       "seeAlso": "Pentru acțiuni temporare pe un singur tip de obiect, folosește Grupuri."
+    },
+    "workflows": {
+      "title": "Cum lucrezi cu ștampilele",
+      "steps": {
+        "find": {
+          "title": "Găsești o ștampilă",
+          "body": "În „Ștampile”, caseta „caută după Cod sau Descriere scurtă” găsește ștampila după cod sau după cuvintele descrierii, în orice ordine."
+        },
+        "create": {
+          "title": "Faci o ștampilă",
+          "body": "„Creare ștampilă” deschide formularul: scrii „Descriere scurtă” și, dacă vrei, „Note”, apoi apeși „Salvează”. Codul se dă la salvare."
+        },
+        "members": {
+          "title": "Aplici și scoți ștampila, pe ecranul ei",
+          "body": "„Aplică” pe rândul ștampilei deschide ecranul ei. În „Elementele ștampilei” alegi felul obiectelor în „Tip element”, apoi bifezi în dreapta și apeși „‹ Aplică ștampila”, sau bifezi în stânga și apeși „Elimină ștampila ›”; un dublu clic mută un singur rând. Nimic nu se scrie până nu apeși „Salvează ștampilele”."
+        },
+        "record": {
+          "title": "Din „Etichete și grupuri”, pe un obiect",
+          "body": "„Editează” deschide fișa; „+ Aplică ștampilă” alege o ștampilă, iar „Elimină ștampila” (×) o scoate. Fiecare schimbare se scrie pe loc; „Gata” închide fișa."
+        },
+        "delete": {
+          "title": "Ștergi o ștampilă",
+          "body": "„Șterge” pe rândul ștampilei cere confirmarea. Ștampila dispare și de pe obiecte, iar obiectele rămân în arhivă."
+        }
+      }
     }
   },
   "group": {
@@ -4092,6 +4117,31 @@
       "note": "Creați grupul de proprietăți, apoi reveniți la hartă: selecția vă așteaptă, iar grupul nou va fi în listă.",
       "created": "Grupul {code} a fost creat. Reveniți la hartă pentru a-i adăuga proprietățile selectate.",
       "back": "Înapoi la hartă"
+    },
+    "workflows": {
+      "title": "Cum lucrezi cu grupurile",
+      "steps": {
+        "find": {
+          "title": "Găsești un grup",
+          "body": "În „Grupuri”, caseta „caută după Cod sau Descriere” găsește grupul după cod sau după cuvintele descrierii, în orice ordine."
+        },
+        "create": {
+          "title": "Faci un grup",
+          "body": "„Adaugă” deschide „Adaugă grup nou”: alegi „Țintă”, scrii „Descriere” și apeși „Salvează”. Codul se dă la salvare."
+        },
+        "members": {
+          "title": "Adaugi și scoți membri, pe ecranul grupului",
+          "body": "„Editează” pe rândul grupului deschide ecranul lui. În „Membrii grupului” bifezi în dreapta și apeși „‹ Include”, sau bifezi în stânga și apeși „Scoate ›”; un dublu clic mută un singur rând. Nimic nu se scrie până nu apeși „Salvează grupul”."
+        },
+        "record": {
+          "title": "Din „Etichete și grupuri”, pe un obiect",
+          "body": "„Editează” deschide fișa; „+ Adaugă în grup” alege un grup, iar „Elimină din grup” (×) îl scoate. Fiecare schimbare se scrie pe loc; „Gata” închide fișa. Un obiect stă în cel mult 3 grupuri."
+        },
+        "delete": {
+          "title": "Ștergi un grup",
+          "body": "„Șterge” pe rândul grupului cere confirmarea. Grupul dispare, iar obiectele din el rămân în arhivă."
+        }
+      }
     }
   },
   "globalSearch": {

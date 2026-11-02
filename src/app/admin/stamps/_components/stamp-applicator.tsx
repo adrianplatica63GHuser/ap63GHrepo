@@ -13,6 +13,7 @@ import {
 import { HelpHint } from "@/components/help/help-hint";
 import { NOTE_FOLD_LINES, screenBox, screenPanel, tileInner, unitsInnerRem } from "@/lib/ui/field-widths";
 import { TwoLists, type TwoListRow } from "@/components/screen/two-lists";
+import { WorkflowsTile } from "@/components/screen/workflows-tile";
 import { GrowingText } from "@/components/forms/growing-text";
 import { TileUnitRow } from "@/components/screen/tile-unit-row";
 import { TileTitle } from "@/components/screen/tile-title";
@@ -311,7 +312,7 @@ export function StampApplicator({
     {/* Slice 41.41: the screen's tiles chosen with „Panouri" (in the page bar); „Implicit" there puts the places back. */}
     <AdminTilesBar
       registry={STAMP_REGISTRY}
-      labels={{ description: t("applicator.descriptionTile"), records: t("applicator.records") }}
+      labels={{ description: t("applicator.descriptionTile"), records: t("applicator.records"), workflows: t("workflows.title") }}
       tiles={tiles}
     />
     <TileUnitRow screen={STAMP_SCREEN}>
@@ -459,6 +460,9 @@ export function StampApplicator({
           />
         </div>
       </section>
+
+      {/* 41.44: „Cum lucrezi cu ștampilele" */}
+      <WorkflowsTile kind="stamp" hidden={!tiles.choice.isShown("workflows")} />
     </TileUnitRow>
     </>
   );
