@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Save } from "lucide-react";
+import { ListMinus, ListPlus, Save } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
 import { unnamedKindOf } from "@/lib/ui/unnamed";
@@ -329,6 +329,8 @@ export function GroupEditor({
             }}
             includeLabel={(count) => t("include", { count })}
             takeOutLabel={(count) => t("takeOut", { count })}
+            includeIcon={ListPlus}
+            takeOutIcon={ListMinus}
             onInclude={include}
             onTakeOut={takeOut}
           />

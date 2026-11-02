@@ -17,10 +17,15 @@
  * which keeps the moves pending until its own „Salvează" — a moved row comes back with `pending` and is marked.
  *
  * The headings are not heading elements: inside a tile, only TileTitle writes one (tile-heading-one-piece).
+ *
+ * 41.43 — a stamp's records: `head` stands above both lists („Tip element", which chooses what both show), and the
+ * buttons carry the icons the catalogue gives their action (#37.46: ListPlus / ListMinus for a group's members — A083,
+ * kept from the buttons they replace — Stamp / Eraser for a stamp's — A080, A081).
  */
 import { useId, useMemo, useState, type ReactNode } from "react";
+import type { LucideIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { buttonClass } from "@/lib/ui/button-styles";
+import { IconButton } from "@/lib/ui/icon-button";
 
 /** Rows a list shows before it scrolls (41.42 Ask first 2). */
 export const TWO_LIST_ROWS = 12;
@@ -64,7 +69,16 @@ export function TwoLists({
   takeOutLabel,
   onInclude,
   onTakeOut,
+  head,
+  includeIcon: IncludeIcon,
+  takeOutIcon: TakeOutIcon,
 }: {
+  /** 41.43: above both lists — a control that chooses what they show. */
+  head?: ReactNode;
+  /** The catalogue's icon for the action (#37.46): ListPlus / Stamp. The buttons are IconButtons, icon and words. */
+  includeIcon: LucideIcon;
+  /** ListMinus / Eraser. */
+  takeOutIcon: LucideIcon;
   left: TwoListSide;
   right: TwoListSide;
   /** „‹ Include (n)" — the right's checked rows go left. */
@@ -91,30 +105,41 @@ export function TwoLists({
     setTickedLeft((s) => new Set([...s].filter((id) => !ids.includes(id))));
   };
 
-  return (
+  const grid = (
     <div className="grid items-start gap-2" style={{ gridTemplateColumns: "minmax(0, 1fr) auto minmax(0, 1fr)" }} data-two-lists="">
       <TwoList side={left} checked={checkedLeft} setChecked={setTickedLeft} move={(id) => takeOut([id])} />
       <div className="flex w-[6.5rem] flex-col gap-2 self-center" data-two-list-buttons="">
-        <button
-          type="button"
-          className={`${buttonClass({ variant: "primary", size: "sm" })} whitespace-normal leading-tight`}
+        <IconButton
+          icon={IncludeIcon}
+          label={includeLabel(checkedRight.size)}
+          showLabel
+          variant="primary"
+          size="sm"
+          className="whitespace-normal leading-tight"
           disabled={checkedRight.size === 0}
           onClick={() => include([...checkedRight])}
           data-two-list-include=""
-        >
-          {includeLabel(checkedRight.size)}
-        </button>
-        <button
-          type="button"
-          className={`${buttonClass({ variant: "secondary", size: "sm" })} whitespace-normal leading-tight`}
+        />
+        <IconButton
+          icon={TakeOutIcon}
+          label={takeOutLabel(checkedLeft.size)}
+          showLabel
+          variant="secondary"
+          size="sm"
+          className="whitespace-normal leading-tight"
           disabled={checkedLeft.size === 0}
           onClick={() => takeOut([...checkedLeft])}
           data-two-list-take-out=""
-        >
-          {takeOutLabel(checkedLeft.size)}
-        </button>
+        />
       </div>
       <TwoList side={right} checked={checkedRight} setChecked={setTickedRight} move={(id) => include([id])} />
+    </div>
+  );
+  if (!head) return grid;
+  return (
+    <div className="flex flex-col gap-2">
+      <div data-two-list-head="">{head}</div>
+      {grid}
     </div>
   );
 }
