@@ -36,16 +36,19 @@ export function usePickerDismiss(
       const root = scope.current;
       if (root && e.target instanceof Node && !root.contains(e.target)) close();
     };
+    // Captured, and marked handled: this Esc closes the picker only — the tile around it (41.40's edit, which leaves on
+    // Esc through `onTileKeyDown`) sees it handled and stays open.
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape" || e.defaultPrevented) return;
+      e.preventDefault();
       close();
       focusBack?.()?.focus();
     };
     document.addEventListener("pointerdown", onDown, true);
-    document.addEventListener("keydown", onKey);
+    document.addEventListener("keydown", onKey, true);
     return () => {
       document.removeEventListener("pointerdown", onDown, true);
-      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("keydown", onKey, true);
     };
   }, [open, close, scope, focusBack]);
 }
