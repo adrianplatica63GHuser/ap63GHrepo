@@ -165,11 +165,15 @@ async function three(page: Page, list: string, name: string, other: string, shot
   for (const width of [1366, 1920]) {
     await page.setViewportSize({ width, height: 900 });
     await page.waitForTimeout(400);
+    // 41.36: a person's or a company's preview is 2 units (254 px) beside the list too; the other two the column's width.
     const off = await column.evaluate((c) => {
       const px = 41.1875 * parseFloat(getComputedStyle(document.documentElement).fontSize);
-      return [...c.children].map((k) => Math.round((k.getBoundingClientRect().width - px) * 10) / 10);
+      return [...c.children].map((k) => {
+        const want = k.hasAttribute("data-preview-compact") ? 254 : px;
+        return Math.round((k.getBoundingClientRect().width - want) * 10) / 10;
+      });
     });
-    for (const o of off) expect(Math.abs(o), `${list} at ${width}: a tile ${o} px off 41.1875 rem (40.98: 5 units of 119 px; 40 before)`).toBeLessThanOrEqual(2);
+    for (const o of off) expect(Math.abs(o), `${list} at ${width}: a tile ${o} px off its width (41.1875 rem, 5 units; a compact preview 254 px, 41.36)`).toBeLessThanOrEqual(2);
     await page.mouse.move(1, 1);
     await page.screenshot({ path: `playwright-report/row-tiles/${shot}-${width}.png` });
   }
