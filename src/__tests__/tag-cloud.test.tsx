@@ -16,6 +16,8 @@ jest.mock("next-intl", () => ({
   useTranslations: () => (key: string, values?: Record<string, unknown>) =>
     values ? `${key}:${Object.values(values).join("|")}` : key,
 }));
+// 41.41: the page's „Panouri" panel carries a „?" (HelpHint), which reads the help data; not this suite's subject.
+jest.mock("@/components/help/help-hint", () => ({ HelpHint: () => null }));
 
 const read = (...p: string[]) => readFileSync(join(process.cwd(), ...p), "utf8");
 let tags = [

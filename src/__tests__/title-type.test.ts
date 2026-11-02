@@ -100,8 +100,8 @@ describe("every place that draws a kind reads its constant", () => {
     "src/app/admin/settings/_components/settings-view.tsx": ["PANEL_TITLE_TYPE"],
     "src/app/admin/settings/_components/cost-tiles.tsx": ["PANEL_TITLE_TYPE"],
     "src/app/admin/settings/_components/my-tile-defaults.tsx": ["PANEL_TITLE_TYPE"],
-    "src/app/admin/groups/page.tsx": ["PAGE_HEADING_TYPE"],
-    "src/app/admin/stamps/page.tsx": ["PAGE_HEADING_TYPE"],
+    // 41.41 — was: Grupuri's and Ștampile's pages read PAGE_HEADING_TYPE for their „Ce este …?" panel. That panel is a
+    // tile now, chosen with „Panouri", so its heading is TileTitle's (tile-heading-one-piece) and kind 7a has no reader.
     "src/components/screen/tile-title.tsx": ["SCREEN_TILE_TITLE_TYPE"],
   };
   it.each(Object.entries(READS))("%s", (rel, names) => {

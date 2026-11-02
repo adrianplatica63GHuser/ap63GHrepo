@@ -24,6 +24,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { screenBox, screenPanel } from "@/lib/ui/field-widths";
 import { TileUnitRow } from "@/components/screen/tile-unit-row";
+import { TileTitle } from "@/components/tiles/tile-title";
 import { AdminTilesBar, useAdminTiles } from "@/components/screen/admin-tiles";
 import { ADMIN_TAGS_REGISTRY, ADMIN_TAGS_SCREEN } from "@/lib/ui/screen-tiles";
 import { useFitToWindow } from "@/lib/ui/use-fit-to-window";
@@ -390,9 +391,7 @@ export function TagManager({ note }: { note?: string } = {}) {
       <section {...screenPanel("tag-cloud", CLOUD_UNITS)} data-tile="cloud" hidden={!tiles.choice.isShown("cloud")} className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
           <div className="flex flex-col gap-0.5">
-            <h2 className="text-lg font-semibold text-ink dark:text-zinc-100">
-              {t("cloud.title")}
-            </h2>
+            <TileTitle title={t("cloud.title")} className="" />
             <span className="text-xs text-fade dark:text-zinc-500">
               {t("cloud.count", { count: tags.length })}
             </span>

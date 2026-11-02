@@ -1,7 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import { GroupsListView } from "./_components/groups-list-view";
 import { screenPanel } from "@/lib/ui/field-widths";
-import { PAGE_HEADING_TYPE } from "@/lib/ui/title-type";
+import { TileTitle } from "@/components/tiles/tile-title";
 
 // Slice #20.17: BackLink removed — BreadcrumbBar shows the trail. Slice #38.20:
 // „Acasă › Administrare › Grupuri", the section as text (it has no screen).
@@ -28,9 +28,8 @@ export default async function GroupsPage({ searchParams }: PageProps) {
           fromMap={fromMap}
           about={
             <section {...screenPanel("about-groups", 7 /* 40.98: re-pinned, 6 of 148 px */)} data-tile="about" className="rounded-lg border border-blue-200 bg-blue-50 px-5 py-4 dark:border-blue-900 dark:bg-blue-950/40">
-          <h2 className={`mb-3 ${PAGE_HEADING_TYPE}`}>
-            {t("infoPanel.title")}
-          </h2>
+          {/* 41.41: a tile of the screen now, so its heading is TileTitle's (tile-heading-one-piece). */}
+          <TileTitle title={t("infoPanel.title")} className="mb-3" />
           <div className="flex flex-col gap-2 text-sm text-blue-800 dark:text-blue-300">
             <p>{t("infoPanel.body1")}</p>
             <p>{t("infoPanel.body2")}</p>
