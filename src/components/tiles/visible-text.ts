@@ -84,7 +84,12 @@ export function headingParts(h: HTMLElement, box: HTMLElement): { parts: Heading
     const hr = h.getBoundingClientRect();
     const px = (v: string) => parseFloat(v) || 0;
     const left = hr.left + px(cs.borderLeftWidth) + px(cs.paddingLeft) - b.left;
-    const right = b.right - (hr.right - px(cs.borderRightWidth) - px(cs.paddingRight));
+    // 41.38: beside „Editează" (and Clasificare's „i") the heading shares its row with them; their room is not the
+    // heading's frame — the title wraps before them at a narrow width rather than widening the tile — so its right is
+    // measured from the row's end, as it was from the heading's own while the pen sat on the line under it.
+    const line = h.closest<HTMLElement>("[data-tile-title-line]");
+    const rowRight = line ? line.getBoundingClientRect().right : hr.right - px(cs.borderRightWidth) - px(cs.paddingRight);
+    const right = b.right - rowRight;
     return { parts, spaces, frame: Math.max(0, left) + Math.max(0, right) };
   } finally {
     if (ws) h.style.setProperty("white-space", ws);
