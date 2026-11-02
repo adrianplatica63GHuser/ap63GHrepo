@@ -1,4 +1,4 @@
-# TC-STAMP-02 — Aplicarea unei ștampile: patru fișe cu nume în două coloane, trase ca pe formulare
+# TC-STAMP-02 — Aplicarea unei ștampile: descrierea compactă și elementele în două liste (41.43; patru fișe până atunci)
 
 | | |
 |---|---|
@@ -10,22 +10,20 @@
 
 ## What this proves
 
-Since Slice #38.13 the stamp screen (Administrare → Ștampile → „Aplică") has four tiles named by their
-titles — „Descrierea ștampilei", „Tip element", „Elemente disponibile pentru ștampilare" and „Elemente
-deja ștampilate" — drawn by the record forms' packing and drag, as the group screen's since #38.12. „Tip
-element" is the tile's title and names its select; no label stands over it. By default the first two
-stand where they stood, „Elemente deja ștampilate" under „Descrierea ștampilei" and „Elemente disponibile
-pentru ștampilare" under „Tip element", at 1366 px and at 1920 px alike. A tile dragged to a free place
-stays there after a reload, under the screen's own key (`ga40-tile-positions-admin-stamp-v1`), and
-„Implicit" puts it back. Lists in other places, a select with no name, or a place lost on reload, is
-the defect.
+Since Slice 41.43 a stamp's screen („Aplică ștampila: …") has two tiles, as a group's (TC-GRP-04): „Descrierea
+ștampilei", compact at 2 units — the code and the short description on one line, „Note", „Salvează ștampilele" at its
+foot — and „Elementele ștampilei", 7 units: „Tip element" over two lists, „Elemente deja ștampilate" on the left,
+„Elemente disponibile pentru ștampilare" on the right, each with its search, its count and its own scroll bar, and
+between them „‹ Aplică ștampila (n)" and „Elimină ștampila › (n)". Checked rows move by the buttons, one row by a
+double-click; a moved row reads „în așteptare" until „Salvează ștampilele", and a reload shows what was saved.
+
+(Until 41.43: four tiles of 4 units in two columns, dragged and put back by „Implicit" — the runs below.)
 
 ## Before you start
 
 - TC-AUTH-01 is green.
-- **Created through the API** as `e2e/helpers/records.ts` creates prerequisites: a stamp „TC-STAMP-02
-  Ștampilă de test" and three natural persons `Ion`, `Ana` and `Dan TC-STAMP-02`; the stamp applied to
-  Ion (`POST /api/metadata/{id}/stamps`, what „Conexiuni"'s „+ Aplică ștampilă" sends).
+- **Created through the API**: a stamp „TC-STAMP-02 Ștampilă de test" on nothing, and three natural persons „Ion",
+  „Ana" and „Dan", each with the last name „TC-STAMP-02".
 - The browser holds no arrangement for the screen (`ga40-tile-positions-admin-stamp-v1` removed).
 
 ## What Adrian is asked for
@@ -36,11 +34,12 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | With the window 1366 px wide, opens the stamp's „Aplică" screen | Four tiles: „Descrierea ștampilei" (Cod, the description, Note, the save button) and, at its right, „Tip element" (the select, read as „Tip element", „Persoană fizică" chosen, and the note „Sunt afișate doar elementele de tipul selectat…"); **under „Descrierea ștampilei"** „Elemente deja ștampilate" — count 1, `Ion TC-STAMP-02`; **under „Tip element"** „Elemente disponibile pentru ștampilare". „Implicit" at the screen's top right |
-| 2 | Widens the window to 1920 px | The same four places; the space at the right of „Tip element" is empty |
-| 3 | Presses on „Elemente deja ștampilate"'s unused space (the padding of its bottom bar, beside „Elimină ștampila (0)") and drags it to the right of „Elemente disponibile pentru ștampilare", level with „Tip element"'s top | While it moves, a dashed outline where it would land; released, the tile stays there. The other three have not moved |
-| 4 | Reloads the page | „Elemente deja ștampilate" is where it was dropped |
-| 5 | Presses „Implicit" | „Elemente deja ștampilate" goes back under „Descrierea ștampilei"; the browser no longer holds an arrangement for the screen |
+| 1 | With the window 1366 px wide, opens „Aplică" on the stamp | „Descrierea ștampilei" 254 px wide, „STMP-… · TC-STAMP-02 Ștampilă de test" on one line, „Salvează ștampilele" disabled; „Elementele ștampilei" 929 px wide, **under it**, „Tip element" on „Persoană fizică" over both lists, the type note under it; „Niciun element ștampilat încă" on the left; „Panouri" in the page bar |
+| 2 | Widens the window to 1920 px | „Elementele ștampilei" at the description's right, tops level |
+| 3 | Types „TC-STAMP-02" in „Caută în elementele disponibile", ticks Ion and Ana, presses „‹ Aplică ștampila (2)" | Ion and Ana on the left, each „în așteptare"; „Modificări în așteptare" beside „Tip element" |
+| 4 | Double-clicks Dan on the right | Dan on the left, „în așteptare"; the left list's count 3 |
+| 5 | Ticks Ion on the left, presses „Elimină ștampila › (1)" | Ion back on the right |
+| 6 | Presses „Salvează ștampilele", then reloads | Ana and Dan on the left; nothing „în așteptare"; Ion not stamped |
 
 ## At the end — leaving things as they were found
 

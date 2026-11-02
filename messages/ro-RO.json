@@ -3993,6 +3993,7 @@
     "applicator": {
       "pageTitle": "Aplică ștampila: {stamp}",
       "descriptionTile": "Descrierea ștampilei",
+      "records": "Elementele ștampilei",
       "targetTypeLabel": "Tip element",
       "typeNote": "Sunt afișate doar elementele de tipul selectat. Schimbă lista de mai sus pentru a vedea sau ștampila elemente de alt tip.",
       "unsavedChangesForType": "Modificări în așteptare",
@@ -4005,8 +4006,8 @@
       "searchPlaceholder": "Caută…",
       "searchAvailable": "Caută în elementele disponibile",
       "searchStamped": "Caută în elementele ștampilate",
-      "applyStamp": "Aplică ștampila ({count})",
-      "removeStamp": "Elimină ștampila ({count})",
+      "applyStamp": "‹ Aplică ștampila ({count})",
+      "removeStamp": "Elimină ștampila › ({count})",
       "saveStamps": "Salvează ștampilele"
     },
     "confirm": {

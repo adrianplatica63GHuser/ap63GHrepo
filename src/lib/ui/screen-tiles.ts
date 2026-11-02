@@ -95,16 +95,26 @@ export const GROUP_REGISTRY: AdminTileRegistry<"identity" | "members"> = {
   renamed: { available: "members", "in-group": "members" },
 };
 
-/** Administrare → Ștampile → „Aplică" (#38.13). */
+/**
+ * Administrare → Ștampile → „Aplică" (#38.13). 41.43: two tiles, as a group's — „Descrierea ștampilei" (2 units) and
+ * „Elementele ștampilei" (7): „Tip element" over the two lists, the stamped left, the available right.
+ */
 export const STAMP_SCREEN: ScreenTiles = {
   entity: "admin-stamp",
-  tiles: ["description", "type", "stamped", "available"],
-  units: 4, // 40.98: re-pinned, 476 → 524 px
-  flowUnits: 2 * 4,
+  tiles: ["description", "records"],
+  units: TWO_LISTS_UNITS,
+  tileUnits: { description: IDENTITY_UNITS, records: TWO_LISTS_UNITS },
+  flowUnits: IDENTITY_UNITS + TWO_LISTS_UNITS,
 };
 
-/** 41.41: one stamp's screen — its tiles chosen with „Panouri". */
-export const STAMP_REGISTRY = adminRegistry(STAMP_SCREEN.entity, ["description", "type", "stamped", "available"] as const);
+/**
+ * 41.41: one stamp's screen — its tiles chosen with „Panouri". 41.43: „Tip element" and the two lists are one tile,
+ * „records"; a choice stored under the old names reads as it, a place stored under them is not read (as 41.42).
+ */
+export const STAMP_REGISTRY: AdminTileRegistry<"description" | "records"> = {
+  ...adminRegistry(STAMP_SCREEN.entity, ["description", "records"] as const),
+  renamed: { type: "records", stamped: "records", available: "records" },
+};
 
 /**
  * Slice #39.77 — a tarla's page (/tarlale/[id]). Adrian, 2026-10-17: every panel a third of a maximized window, the

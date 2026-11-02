@@ -161,7 +161,7 @@ fixed fixture where the existing one will do.
 | [TC-TAG-02](cases/TC-TAG-02.md) | „Etichete": o etichetă aleasă în nor redenumită pe loc, două fuzionate | tag | happy | — | `automated` | 2026-10-06 | `e2e/tag/tag-cloud.spec.ts` |
 | [TC-TAG-03](cases/TC-TAG-03.md) | „Etichete": doar norul se derulează; titlul și cele două butoane rămân la vedere | tag | happy | — | `automated` | 2026-10-06 | `e2e/tag/tag-cloud-scroll.spec.ts` |
 | [TC-STAMP-01](cases/TC-STAMP-01.md) | Ștampilă creată, aplicată unei persoane și găsită din ambele capete | stamp | happy | — | `automated` | 2026-09-26 | `e2e/stamp/stamp-person.spec.ts` |
-| [TC-STAMP-02](cases/TC-STAMP-02.md) | Aplicarea unei ștampile: patru fișe cu nume în două coloane, trase ca pe formulare | stamp | happy | — | `automated` | 2026-10-05 | `e2e/stamp/stamp-screen-tiles.spec.ts` |
+| [TC-STAMP-02](cases/TC-STAMP-02.md) | Aplicarea unei ștampile: descrierea compactă și elementele în două liste (41.43; patru fișe până atunci) | stamp | happy | — | `automated` | 2026-10-05 | `e2e/stamp/stamp-screen-tiles.spec.ts` |
 | [TC-VER-01](cases/TC-VER-01.md) | Versiunile unei persoane fizice: salvare, înapoi, „Fă curentă” | versioning | happy | — | `automated` | 2026-10-02 | `e2e/versioning/person-versioning.spec.ts` |
 | [TC-VER-02](cases/TC-VER-02.md) | Versiunile unui act: salvare, înapoi, „Fă curentă” | versioning | happy | — | `automated` | 2026-10-02 | `e2e/versioning/document-versioning.spec.ts` |
 | [TC-HELP-01](cases/TC-HELP-01.md) | Text de ajutor scris pentru un ecran și citit în spatele „?” | help | happy | — | `automated` | 2026-09-26 | `e2e/help/help-screen.spec.ts` |
