@@ -132,6 +132,9 @@ describe("positions under the stamp screen's own key (#38.13)", () => {
   it("#38.12's row and reset, not a copy", () => {
     expect(read("src", "app", "admin", "stamps", "_components", "stamp-applicator.tsx")).toContain("<TileUnitRow screen={STAMP_SCREEN}>");
     const page = read("src", "app", "admin", "stamps", "[id]", "page.tsx");
-    expect(page).toMatch(/<header className="[^"]*justify-between[^"]*">\s*<h1[\s\S]*<\/h1>\s*<TilePositionsReset entity=\{STAMP_SCREEN\.entity\} \/>/);
+    // Inverted by 41.41 — was: „<TilePositionsReset entity={STAMP_SCREEN.entity} />" at the header's top right.
+    // „Implicit" is now in „Panouri" (useTileChoice's reset forgets the places too).
+    expect(page).not.toContain("TilePositionsReset");
+    expect(read("src", "app", "admin", "stamps", "_components", "stamp-applicator.tsx")).toContain("<AdminTilesBar");
   });
 });

@@ -65,7 +65,7 @@ test.describe("TC-STAMP-01 — Ștampilă creată, aplicată unei persoane și g
       await stampsLink.click();
       await expect(page).toHaveURL(/\/admin\/stamps$/, { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: "Ștampile", exact: true })).toBeVisible({ timeout: 30_000 });
-      await expect(page.getByText("Ce este o Ștampilă?")).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Ce este o Ștampilă?", exact: true })).toBeVisible();
       const count = page.getByText(/^\d+ ștampile$/);
       await expect(count).toBeVisible({ timeout: 15_000 });
       const before = Number(/^(\d+)/.exec((await count.textContent()) ?? "")?.[1]);
@@ -107,7 +107,7 @@ test.describe("TC-STAMP-01 — Ștampilă creată, aplicată unei persoane și g
       await expect(page.getByText("Cod", { exact: true }).first()).toBeVisible();
       // #38.13: the tiles' names; „Tip element" is the tile's title, and names its select.
       await expect(page.getByRole("region", { name: "Descrierea ștampilei", exact: true })).toBeVisible();
-      await expect(page.getByText("Tip element", { exact: true })).toBeVisible();
+      await expect(page.getByRole("region", { name: "Tip element", exact: true })).toBeVisible(); // 41.41: the name is in „Panouri" too
       const targetType = page.getByRole("combobox", { name: "Tip element", exact: true });
       await expect(targetType.locator("option")).toHaveText(["Persoană fizică", "Persoană juridică", "Proprietate", "Document"]);
       await expect(targetType.locator("option:checked")).toHaveText("Persoană fizică");

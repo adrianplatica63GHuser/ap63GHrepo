@@ -59,7 +59,7 @@ test.describe("TC-GRP-01 — Grup cu două proprietăți", () => {
       await groupsLink.click();
       await expect(page).toHaveURL(/\/admin\/groups$/, { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: "Grupuri", exact: true })).toBeVisible({ timeout: 30_000 });
-      await expect(page.getByText("Ce este un Grup?")).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Ce este un Grup?", exact: true })).toBeVisible();
       const count = page.getByText(/^\d+ grupuri$/);
       await expect(count).toBeVisible({ timeout: 15_000 });
       const before = Number((await count.textContent())?.match(/\d+/)?.[0]);

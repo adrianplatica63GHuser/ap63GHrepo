@@ -135,8 +135,9 @@ describe("positions under the group screen's own key (#38.12)", () => {
     expect(read("src", "components", "screen", "tile-unit-row.tsx")).toContain("useTilePacking(ref, { entity: screen.entity, flowUnits: screen.flowUnits, words })");
     expect(read("src", "app", "admin", "groups", "_components", "group-editor.tsx")).toContain("<TileUnitRow screen={GROUP_SCREEN}>");
     const page = read("src", "app", "admin", "groups", "[id]", "page.tsx");
-    expect(page).toContain("<TilePositionsReset entity={GROUP_SCREEN.entity} />");
-    // At the screen's top right: in the header, after the title, the header spread across.
-    expect(page).toMatch(/<header className="[^"]*justify-between[^"]*">\s*<h1[\s\S]*<\/h1>\s*<TilePositionsReset/);
+    // Inverted by 41.41 — was: „<TilePositionsReset entity={GROUP_SCREEN.entity} />" at the header's top right.
+    // „Implicit" is now in „Panouri" (useTileChoice's reset, which also forgets the places and sends the same event).
+    expect(page).not.toContain("TilePositionsReset");
+    expect(read("src", "app", "admin", "groups", "_components", "group-editor.tsx")).toContain("<AdminTilesBar registry={GROUP_REGISTRY}");
   });
 });

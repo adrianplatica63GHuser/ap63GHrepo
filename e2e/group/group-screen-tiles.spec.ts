@@ -14,7 +14,7 @@
  */
 
 import { test, expect, type APIRequestContext, type Page } from "../helpers/test";
-import { expectPanouriRoundTrip } from "../helpers/tiles";
+import { expectPanouriRoundTrip, pressTileButton, tilesMenuButton } from "../helpers/tiles";
 import { E2E_MARKER, createProperty, removeGroupLeftovers, removeLeftovers, removeRecord } from "../helpers/records";
 
 const MARK = `${E2E_MARKER}GRP-04`;
@@ -83,11 +83,8 @@ test.describe("TC-GRP-04 — ecranul unui grup: trei fișe", () => {
       await expect(inGroup.locator("span.text-xs").first()).toHaveText("2");
       await available.getByPlaceholder("Caută…").fill(MARK);
       await expect(available.getByText(`${MARK} Teren C`)).toBeVisible({ timeout: 15_000 });
-      const reset = page.getByRole("button", { name: "Implicit", exact: true });
-      await expect(reset).toBeVisible();
-      const [r, h] = await Promise.all([reset.boundingBox(), page.getByRole("heading", { level: 1 }).boundingBox()]);
-      expect((r?.x ?? 0) + (r?.width ?? 0)).toBeGreaterThan(1366 - 80); // the top right
-      expect(Math.abs((r?.y ?? 0) - (h?.y ?? 0))).toBeLessThan(40);
+      // 41.41: „Implicit" is in „Panouri" now — the screen's button in the page bar, as on the record screens.
+      await expect(tilesMenuButton(page)).toBeVisible({ timeout: 30_000 });
       await expect.poll(async () => { const b = await boxes(page); return JSON.stringify(at(b)) === JSON.stringify(defaults(b)); }, { timeout: 20_000 }).toBe(true);
 
       // Step 2 — 1920: the same three places, the space at the right empty.
@@ -125,7 +122,7 @@ test.describe("TC-GRP-04 — ecranul unui grup: trei fișe", () => {
       await expect.poll(async () => { const b = (await boxes(page))["in-group"]; return { x: b.x, y: b.y }; }, { timeout: 20_000 }).toEqual(dropped);
 
       // Step 5 — „Implicit": back under „Identitatea grupului"; nothing kept.
-      await page.getByRole("button", { name: "Implicit", exact: true }).click();
+      await pressTileButton(page, "Implicit");
       await expect.poll(async () => { const b = (await boxes(page))["in-group"]; return { x: b.x, y: b.y }; }, { timeout: 20_000 }).toEqual(defaults(rule)["in-group"]);
       expect(await page.evaluate((k) => localStorage.getItem(k), KEY)).toBeNull();
     } finally {

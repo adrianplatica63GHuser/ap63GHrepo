@@ -41,7 +41,7 @@ test.describe("TC-TAG-02 — o etichetă aleasă în nor redenumită pe loc, dou
 
       // Step 1 — the cloud alone; the three tags „×1"; both buttons inactive; the explanation's end.
       await page.goto("/admin/tags");
-      await expect(page.getByText("Nor de etichete", { exact: true })).toBeVisible({ timeout: 30_000 });
+      await expect(page.getByRole("heading", { name: "Nor de etichete", exact: true })).toBeVisible({ timeout: 30_000 });
       await expect(page.locator("table")).toHaveCount(0);
       for (const s of ["a", "b", "c"]) await expect(chip(s)).toHaveText(`${TAG(s)}×1`);
       await expect(rename).toBeDisabled();
