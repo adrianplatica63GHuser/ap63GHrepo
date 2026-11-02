@@ -66,9 +66,11 @@ export function TileTitle({
   id?: string;
   children?: ReactNode;
   /**
-   * Slice 40.72: a control at the right of the line under the heading — „Editează"
-   * (src/components/tiles/read-edit-tile.tsx). Outside the heading, so its name stays the tile's own, and under it,
-   * so the heading's own corner keeps the tile's top-right corner (the system ID's until 41.22 moved it to the page bar).
+   * Slice 40.72: a control at the tile's top right — „Editează" (src/components/tiles/read-edit-tile.tsx). Outside the
+   * heading, so its name stays the tile's own. Slice 41.38 — Adrian: „move the Edit button up so it has the same gap to
+   * the upper edge of the tile as it has to the right edge": it is on the heading's row now, at its right end, its top
+   * at the tile's padding as its right is; the title wraps before it, and the subtitle takes the whole width under them.
+   * (Until 41.38 it sat on the subtitle's line, ≈36 px from the top and 13 from the right.)
    */
   action?: ReactNode;
   /**
@@ -77,32 +79,30 @@ export function TileTitle({
    */
   hint?: ReactNode;
 }) {
+  // 41.38: beside a 30-px action the title's first line (24 px) is centred on it — 3 px down — so a tile without one
+  // keeps today's title height.
   const heading = (
-    <h2 id={id} className={TILE_TITLE_CLASS}>
+    <h2 id={id} className={`${TILE_TITLE_CLASS} min-w-0${action ? " mt-[3px]" : ""}`}>
       {title}
       {children}
     </h2>
   );
   return (
     <div className={`min-w-0 ${className}`} data-tile-title="">
-      {hint ? (
-        <div className="flex items-center gap-1.5" data-tile-title-line="">
+      {hint || action ? (
+        <div className="flex items-start gap-1.5" data-tile-title-line="">
           {heading}
-          {hint}
+          {hint && <div className={`flex shrink-0 items-center${action ? " mt-[3px]" : ""}`}>{hint}</div>}
+          {action && (
+            <div className="ml-auto shrink-0 pl-0.5" data-tile-title-action="">
+              {action}
+            </div>
+          )}
         </div>
       ) : (
         heading
       )}
-      {action ? (
-        <div className="flex items-center gap-2">
-          <div className="min-w-0 flex-1">
-            <TileSubtitle text={subtitle} />
-          </div>
-          <div className="shrink-0">{action}</div>
-        </div>
-      ) : (
-        <TileSubtitle text={subtitle} />
-      )}
+      <TileSubtitle text={subtitle} />
     </div>
   );
 }
