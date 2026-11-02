@@ -79,6 +79,7 @@ import { AsyncSelect } from "@/components/forms/async-select";
 import { GrowingText } from "@/components/forms/growing-text";
 import { ALWAYS_SHOWN_FIELDS,
   ADDRESS,
+  ADDRESS_ROWS,
   MAP_BOX_HEIGHT_REM,
   MAP_BOX_STYLE,
   PANEL_GAP,
@@ -1685,42 +1686,23 @@ export function PropertyForm({
                   )}
                 </label>
                 )}
-                <div className={STACKED_ROW_CLASS}>
-                  <Field
-                    label={t("address.postalCode")}
-                    name="address.postalCode"
-                    register={register}
-                    error={errors.address?.postalCode?.message}
-                    highlight={displayHighlights?.address.postalCode}
-                    width={ADDRESS.postalCode}
-                  />
-                  <Field
-                    label={t("address.locality")}
-                    name="address.locality"
-                    register={register}
-                    error={errors.address?.locality?.message}
-                    highlight={displayHighlights?.address.locality}
-                    width={ADDRESS.locality}
-                  />
-                </div>
-                <div className={STACKED_ROW_CLASS}>
-                  <Field
-                    label={t("address.county")}
-                    name="address.county"
-                    register={register}
-                    error={errors.address?.county?.message}
-                    highlight={displayHighlights?.address.county}
-                    width={ADDRESS.county}
-                  />
-                  <Field
-                    label={t("address.country")}
-                    name="address.country"
-                    register={register}
-                    error={errors.address?.country?.message}
-                    highlight={displayHighlights?.address.country}
-                    width={ADDRESS.country}
-                  />
-                </div>
+                {/* 41.35: the address's two pairs from ADDRESS_ROWS — Cod poștal | Localitate, Județ / Sector | Țară, each M —
+                    the same rows the persons' address block draws, so the two cannot drift. */}
+                {ADDRESS_ROWS.filter((row) => row.length === 2).map((row) => (
+                  <div key={row.join("|")} className={STACKED_ROW_CLASS}>
+                    {row.map((key) => (
+                      <Field
+                        key={key}
+                        label={t(`address.${key}`)}
+                        name={`address.${key}`}
+                        register={register}
+                        error={errors.address?.[key]?.message}
+                        highlight={displayHighlights?.address[key]}
+                        width={ADDRESS[key]}
+                      />
+                    ))}
+                  </div>
+                ))}
                 {/* Slice #37.04 (FU-013): a blank „Țară" is saved as „România".
                     Slice #37.30 (rule 15): under Țară's row, inside the panel. */}
                 <p className="text-xs text-fade">{t("address.countryDefault")}</p>

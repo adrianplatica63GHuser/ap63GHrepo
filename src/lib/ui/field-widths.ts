@@ -248,11 +248,14 @@ export const ADDRESS = {
   // size shorter; Make the country field to be one size shorter" — on every address tile (the two persons', the
   // property's; the ID-card dialog's reads this too, rule 17). Stradă TILE (was XL since 40.80, XXL before), Localitate M
   // (was L), Țară S (was M). A longer value wraps (40.78). m: 0
+  // Slice 41.35 — Adrian: „make the fields Postal Code, Locality, County / Sector, Country to be size M and align them
+  // nice, like last name, first name, nickname": all four M, two pairs (ADDRESS_ROWS), the right boxes one column. Cod
+  // poștal and Țară were S (since 41.05), which is what kept the tile at 2 units.
   streetLine: { step: "TILE", kind: "grows", fill: true },
-  postalCode: { step: "S", kind: "grows" }, // six digits; m: 0
+  postalCode: { step: "M", kind: "grows" }, // six digits; m: 0
   locality: { step: "M", kind: "grows" }, //                m: 0
   county: { step: "M", kind: "grows" }, // „Caraș-Severin", the longest county; m: 0
-  country: { step: "S", kind: "grows" }, //      „România" (55 px at text-sm); m: 0
+  country: { step: "M", kind: "grows" }, //      „România" (55 px at text-sm); m: 0
   notes: { step: "TILE", kind: "lines", fold: NOTE_FOLD_LINES, rows: 1, fill: true }, // m: 0; on a stacked panel, its whole width (#37.26)
 } as const satisfies Record<string, FieldWidth>;
 
@@ -1031,9 +1034,9 @@ function mapUnits<T extends Record<string, number>, V>(units: T, f: (n: number) 
 }
 
 /**
- * The shared address block, stacked: 2 units on every screen since 41.05 (TWO_UNIT_PANEL_UNITS) — its widest rows,
- * Cod poștal | Localitate and Județ | Țară, are 5 + 0.5 + 8.5 = 14rem, inside the 14.25rem 2 units hold. Was 3 (the gray
- * floor; Cod poștal | Localitate 18.5rem with Localitate L).
+ * The shared address block, stacked. 41.35: 3 units on every screen (the property's too) — its widest rows, Cod poștal |
+ * Localitate and Județ | Țară, are two M boxes, 8.5 + 0.5 + 8.5 = 17.5rem, past the 14.25rem 2 units hold. It was 2 units
+ * from 41.05 (Cod poștal and Țară S, 14rem), and 3 before that (Localitate L).
  */
 const ADDRESS_PANEL_MIN_REM = Math.max(unitsRem(TWO_UNIT_PANEL_UNITS), panelRem(widestRow(ADDRESS_ROWS, ADDRESS)));
 const TWO_UNIT_REM = unitsRem(TWO_UNIT_PANEL_UNITS);
@@ -1069,9 +1072,9 @@ export const PANEL_MIN_REM = {
     corners: unitsRem(4),
     map: unitsRem(4),
     streetView: unitsRem(4),
-    // 41.05: the address 2 units, as every address tile — „Preia din Street View" goes under its box when it does not
-    // fit beside it.
-    address: TWO_UNIT_REM,
+    // 41.05: the address as every address tile — „Preia din Street View" goes under its box when it does not fit beside
+    // it. 41.35: 3 units with them (two M boxes a row).
+    address: ADDRESS_PANEL_MIN_REM,
   },
   //  general 3 — held at 3 since 40.88: Tip document and Emitent went XXL → XL, and the rows alone
   //  would now fit 2 units (Nr. document | Data, 17.5rem), but Adrian marked Etichetă scurtă,
