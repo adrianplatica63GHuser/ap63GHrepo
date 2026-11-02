@@ -44,7 +44,7 @@ Nothing.
 | 2 | Presses on „Acte de identitate"'s left padding and drags it until its top-left corner is at „Corelate"'s; holds; releases | While it is held the outline turns from red to free, and „Corelate" — with any tile the outline covers — slides straight down, its left edge unchanged, clear of the outline; every other tile stays. Released, „Acte de identitate" stands where the outline was, and „Corelate" stays where it slid |
 | 3 | Reloads the page | „Acte de identitate" and „Corelate" where step 2 left them |
 | 4 | Drags „Acte de identitate" over „Identitate"; holds until a tile has slid; presses Esc; releases | Every tile, „Acte de identitate" too, back where step 3 had it |
-| 5 | The window at 1920 px. Opens the group's screen; presses on „Deja în grup"'s bottom bar and drags it until its top-left corner is at „Membri disponibili pentru includere"'s; holds; releases | While it is held the outline turns free and „Membri disponibili…" slides straight down under it. Released, „Deja în grup" stands where the outline was; „Identitatea grupului" never moves |
+| 5 | The window at 1920 px. Opens the group's screen (41.42: two tiles, „Identitatea grupului" and „Membrii grupului" at its right); presses on the identity's empty corner and drags it until its top-left corner is at „Membrii grupului"'s; holds; releases | While it is held the outline turns free and „Membrii grupului" slides straight down under it. Released, „Identitatea grupului" stands where the outline was |
 | 6 | Reloads the page | Both places hold |
 
 ## At the end — leaving things as they were found

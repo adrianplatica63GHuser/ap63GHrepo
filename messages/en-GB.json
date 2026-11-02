@@ -1209,6 +1209,10 @@
         "property": "Property",
         "document": "Document"
       }
+    },
+    "twoLists": {
+      "pending": "pending",
+      "moveHint": "Double-click or Enter: move to the other list"
     }
   },
   "naturalPerson": {
@@ -4038,12 +4042,9 @@
     "saveErrorSession": "Your session expired. Please sign in again and retry.",
     "codeAssignedOnSave": "Assigned automatically on save",
     "descriptionCount": "{count}/{max} characters",
-    "addItems": "Add items",
-    "hideItems": "Hide items",
     "searchPlaceholder": "Search…",
-    "addToGroup": "Add to Group ({count})",
-    "removeFromGroup": "Remove from Group ({count})",
-    "pendingPosition": "[new]",
+    "include": "‹ Include ({count})",
+    "takeOut": "Take out › ({count})",
     "fields": {
       "target": "Target",
       "description": "Description",
@@ -4067,6 +4068,7 @@
     },
     "panels": {
       "identity": "Group identity",
+      "members": "Group members",
       "available": "Members available to include",
       "inGroup": "In Group already",
       "availableEmpty": "No items available",

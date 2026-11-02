@@ -1209,6 +1209,10 @@
         "property": "Proprietate",
         "document": "Act"
       }
+    },
+    "twoLists": {
+      "pending": "în așteptare",
+      "moveHint": "Dublu clic sau Enter: mută în cealaltă listă"
     }
   },
   "naturalPerson": {
@@ -4038,12 +4042,9 @@
     "saveErrorSession": "Sesiunea a expirat. Autentifică-te din nou și reîncearcă.",
     "codeAssignedOnSave": "Atribuit automat la salvare",
     "descriptionCount": "{count}/{max} caractere",
-    "addItems": "Adaugă elemente",
-    "hideItems": "Ascunde elementele",
     "searchPlaceholder": "Caută…",
-    "addToGroup": "Adaugă în grup ({count})",
-    "removeFromGroup": "Elimină din grup ({count})",
-    "pendingPosition": "[nou]",
+    "include": "‹ Include ({count})",
+    "takeOut": "Scoate › ({count})",
     "fields": {
       "target": "Țintă",
       "description": "Descriere",
@@ -4067,6 +4068,7 @@
     },
     "panels": {
       "identity": "Identitatea grupului",
+      "members": "Membrii grupului",
       "available": "Membri disponibili pentru includere",
       "inGroup": "Deja în grup",
       "availableEmpty": "Niciun element disponibil",

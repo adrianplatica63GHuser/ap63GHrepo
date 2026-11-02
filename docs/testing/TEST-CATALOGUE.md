@@ -156,7 +156,7 @@ fixed fixture where the existing one will do.
 | [TC-GRP-01](cases/TC-GRP-01.md) | Grup cu două proprietăți | group | happy | — | `automated` | 2026-09-25 | `e2e/group/group-two-properties.spec.ts` |
 | [TC-GRP-02](cases/TC-GRP-02.md) | O proprietate în trei grupuri: limita spusă în cuvinte, „+" inactiv | group | happy | — | `automated` | 2026-10-05 | `e2e/group/groups-limit.spec.ts` |
 | [TC-GRP-03](cases/TC-GRP-03.md) | „Grupuri" arată câți membri are grupul, nu locul înregistrării în el | group | happy | — | `automated` | 2026-10-05 | `e2e/group/group-member-count.spec.ts` |
-| [TC-GRP-04](cases/TC-GRP-04.md) | Ecranul unui grup: trei fișe cu nume, „Deja în grup" sub identitate, trase ca pe formulare | group | happy | — | `automated` | 2026-10-05 | `e2e/group/group-screen-tiles.spec.ts` |
+| [TC-GRP-04](cases/TC-GRP-04.md) | Ecranul unui grup: identitatea compactă și membrii în două liste (41.42; trei fișe până atunci) | group | happy | — | `automated` | 2026-10-05 | `e2e/group/group-screen-tiles.spec.ts` |
 | [TC-TAG-01](cases/TC-TAG-01.md) | Etichetă aplicată unei proprietăți și găsită după ea | tag | happy | — | `automated` | 2026-10-02 | `e2e/tag/tag-property.spec.ts` |
 | [TC-TAG-02](cases/TC-TAG-02.md) | „Etichete": o etichetă aleasă în nor redenumită pe loc, două fuzionate | tag | happy | — | `automated` | 2026-10-06 | `e2e/tag/tag-cloud.spec.ts` |
 | [TC-TAG-03](cases/TC-TAG-03.md) | „Etichete": doar norul se derulează; titlul și cele două butoane rămân la vedere | tag | happy | — | `automated` | 2026-10-06 | `e2e/tag/tag-cloud-scroll.spec.ts` |

@@ -132,7 +132,7 @@ A tag removed from the last object that carried it disappears from the cloud.
 
 ### 7.4.3 Groups {#links-classify-groups}
 
-A group gathers, for a short-lived task, objects of one kind — for instance the plots of land for a valuation. The group is made in „Administration” → „Groups” (section [[admin-groups]]): „Add”, choose „Target” and type „Description”, then „Save”; the code, in the form GRP-001, is given automatically. „Edit” on the group's row opens its screen: tick objects in „Members available to include”, press „Add to Group” and then „Save group”. Until „Save group” nothing is written, and the screen shows „Unsaved changes”.
+A group gathers, for a short-lived task, objects of one kind — for instance the plots of land for a valuation. The group is made in „Administration” → „Groups” (section [[admin-groups]]): „Add”, choose „Target” and type „Description”, then „Save”; the code, in the form GRP-001, is given automatically. „Edit” on the group's row opens its screen: tick objects in „Members available to include”, press „‹ Include” and then „Save group”. Until „Save group” nothing is written, and the screen shows „Unsaved changes”.
 
 On an object, „Groups” in „Tags and groups” shows its groups. „+ Add to group” opens the list of groups; „×” on a group takes the object out of it. Beside the group's code, the number in brackets is how many members the group has now — for instance „GRP-001 [2]”, with „2 members” when you rest the mouse on it.
 
@@ -193,7 +193,7 @@ A sale contract cites the certificate of inheritance the seller's right comes fr
 ### 7.7.3 Gather a few plots for a valuation {#links-example-group}
 
 1. In „Administration” → „Groups”, make a group with „Target” „Property” and a description, for instance „Spring valuation” (section [[links-classify-groups]]).
-2. On the group's screen, tick the plots, press „Add to Group”, then „Save group”.
+2. On the group's screen, tick the plots, press „‹ Include”, then „Save group”.
 3. In „Global Search”, type the group's code into „Group code” and press „Search”: every plot in the group appears (section [[reports-search]]).
 4. When the valuation is over, delete the group; the plots stay in the archive.
 

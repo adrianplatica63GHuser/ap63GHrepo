@@ -1,21 +1,22 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronUp, ListMinus, ListPlus, Plus, Save } from "lucide-react";
+import { Save } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
 import { unnamedKindOf } from "@/lib/ui/unnamed";
 import { useId, useMemo, useState } from "react";
 import type { GroupTargetType } from "@/lib/groups/validation";
 import { HelpHint } from "@/components/help/help-hint";
-import { screenBox, screenPanel } from "@/lib/ui/field-widths";
+import { screenBox, screenPanel, tileInner, unitsInnerRem } from "@/lib/ui/field-widths";
+import { GrowingText } from "@/components/forms/growing-text";
+import { TwoLists, type TwoListRow } from "@/components/screen/two-lists";
 import { TileUnitRow } from "@/components/screen/tile-unit-row";
 import { TileTitle } from "@/components/screen/tile-title";
-import { GROUP_REGISTRY, GROUP_SCREEN } from "@/lib/ui/screen-tiles";
+import { GROUP_REGISTRY, GROUP_SCREEN, IDENTITY_UNITS, TWO_LISTS_UNITS } from "@/lib/ui/screen-tiles";
 import { AdminTilesBar, useAdminTiles } from "@/components/screen/admin-tiles";
 
 /** Slice #37.35: every tile of the editor is 3 units (#37.22's panel on the unit). */
-const EDITOR_UNITS = GROUP_SCREEN.units;
 
 // ── Types (mirror GroupDetail from src/lib/groups/queries.ts) ────────────────
 // Normalised shapes: memberId is the FK id for the group's target type.
@@ -89,6 +90,7 @@ export function GroupEditor({
   // FU-219 (Slice #37.07): the description's caption is its label.
   const descriptionId = useId();
   const identityTitleId = useId();
+  const membersTitleId = useId();
 
   const { data: detail } = useQuery<GroupDetail>({
     queryKey: ["group", groupId],
@@ -110,10 +112,7 @@ export function GroupEditor({
     () => new Set(detail.members.map((m) => m.memberId)),
   );
 
-  const [showItems, setShowItems] = useState(true);
   const [search, setSearch] = useState("");
-  const [selAvailable, setSelAvailable] = useState<Set<string>>(() => new Set());
-  const [selMembers, setSelMembers] = useState<Set<string>>(() => new Set());
   const [error, setError] = useState<string | null>(null);
 
   // Lookups: memberId → displayLabel (from both members and candidates).
@@ -182,32 +181,26 @@ export function GroupEditor({
 
   // ── Move actions ───────────────────────────────────────────────────────────
 
-  function addSelected() {
+  // 41.42: the two lists' moves — pending until „Salvează grupul", as the buttons' were.
+  function include(ids: string[]) {
+    setMemberIds((prev) => new Set([...prev, ...ids]));
+  }
+
+  function takeOut(ids: string[]) {
     setMemberIds((prev) => {
       const next = new Set(prev);
-      for (const id of selAvailable) next.add(id);
+      for (const id of ids) next.delete(id);
       return next;
     });
-    setSelAvailable(new Set());
   }
 
-  function removeSelected() {
-    setMemberIds((prev) => {
-      const next = new Set(prev);
-      for (const id of selMembers) next.delete(id);
-      return next;
-    });
-    setSelMembers(new Set());
-  }
-
-  function toggle(set: Set<string>, setter: (s: Set<string>) => void, id: string) {
-    const next = new Set(set);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
-    setter(next);
-  }
-
-  // ── Save ───────────────────────────────────────────────────────────────────
+  const baseMembers = useMemo(() => new Set(baseMemberIds), [baseMemberIds]);
+  // A member's position once saved; a moved row is marked „în așteptare" until then (41.42 Ask first 4).
+  const leftRows: TwoListRow[] = memberRows.map((id) => {
+    const pos = baseMembers.has(id) ? originalPositionById.get(id) : undefined;
+    return { id, label: label(id), note: pos !== undefined ? `[${pad2(pos)}]` : undefined, pending: !baseMembers.has(id) };
+  });
+  const rightRows: TwoListRow[] = availableRows.map((id) => ({ id, label: label(id), pending: baseMembers.has(id) }));
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -222,8 +215,6 @@ export function GroupEditor({
       setBaseMemberIds(updated.members.map((m) => m.memberId));
       setDescription(updated.description);
       setMemberIds(new Set(updated.members.map((m) => m.memberId)));
-      setSelAvailable(new Set());
-      setSelMembers(new Set());
       setError(null);
     },
     onError: (err: Error) => {
@@ -234,98 +225,60 @@ export function GroupEditor({
   // ── Render ───────────────────────────────────────────────────────────────────
 
   return (
-    // Slice #38.12: the three tiles on the record forms' packing and drag
-    // (`TileUnitRow`), under the group screen's own key; by default „Deja în
-    // grup" under „Identitatea grupului", „Membri disponibili pentru includere"
-    // at their right (`GROUP_SCREEN.flowUnits`).
+    // Slice #38.12: the screen's tiles on the record forms' packing and drag (`TileUnitRow`), under the group screen's own
+    // key. 41.42: two of them — the identity (2 units) and the members' two lists (7), side by side where 9 units fit.
     <>
     {/* Slice 41.41: the screen's tiles chosen with „Panouri" (in the page bar); „Implicit" there puts the places back. */}
-    <AdminTilesBar registry={GROUP_REGISTRY} labels={{ identity: t("panels.identity"), available: t("panels.available"), "in-group": t("panels.inGroup") }} tiles={tiles} />
+    <AdminTilesBar registry={GROUP_REGISTRY} labels={{ identity: t("panels.identity"), members: t("panels.members") }} tiles={tiles} />
     <TileUnitRow screen={GROUP_SCREEN}>
-      {/* „Identitatea grupului" — read-only target + code, editable description, Add items */}
+      {/* „Identitatea grupului" — 41.42: compact, 2 units: the code and the target on one line, the description, „Salvează grupul". */}
       <section
         hidden={!tiles.choice.isShown("identity")}
         aria-labelledby={identityTitleId}
-        {...screenPanel("group", EDITOR_UNITS)}
+        {...screenPanel("group", IDENTITY_UNITS)}
         data-tile="identity"
         className="flex flex-col rounded-md border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
       >
         <TileTitle id={identityTitleId} title={t("panels.identity")} />
-        <div className="flex flex-col gap-4 p-4">
-          <div className="flex flex-wrap items-start gap-4">
-            {/* Target (read-only) */}
-            <div className="flex flex-col gap-1">
-              <span className="text-xs font-medium text-fade dark:text-zinc-400">
-                {t("fields.target")}
-              </span>
-              <div {...screenBox("groupTarget")} className="rounded-md border border-wire bg-canvas px-3 py-1.5 text-sm text-ink dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-                {t(`targets.${detail.targetType}`)}
-              </div>
-            </div>
-
-            {/* Code (read-only) */}
-            <div className="flex flex-col gap-1">
-              <span className="text-xs font-medium text-fade dark:text-zinc-400">
-                {t("fields.code")}
-              </span>
-              <div {...screenBox("groupCode")} className="rounded-md border border-wire bg-canvas px-3 py-1.5 font-mono text-sm font-semibold text-ink dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100">
-                {detail.code}
-              </div>
-            </div>
-
-            {/* Description (editable) */}
-            <div className="flex flex-col gap-1">
-              <label htmlFor={descriptionId} className="text-xs font-medium text-fade dark:text-zinc-400">
-                {t("fields.description")}
-                <span className="ml-0.5 text-red-500">*</span>
-              </label>
-              <textarea
-                {...screenBox("groupDescription")}
-                id={descriptionId}
-                rows={2}
-                maxLength={DESCRIPTION_MAX}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950 resize-y"
-              />
-              <span className="text-xs text-fade dark:text-zinc-500">
-                {t("descriptionCount", {
-                  count: description.trim().length,
-                  max: DESCRIPTION_MAX,
-                })}
-              </span>
-            </div>
-
-            {/* Add items toggle */}
-            <div className="flex flex-col gap-1">
-              <span className="text-xs font-medium text-transparent select-none">.</span>
-              {/* #37.44 (A040): Plus while the picker is hidden, ChevronUp while it
-                  shows (as the META INFO toggles); the words the name and tooltip. */}
-              <IconButton
-                icon={showItems ? ChevronUp : Plus}
-                label={showItems ? t("hideItems") : t("addItems")}
-                variant="secondary"
-                size="md"
-                aria-expanded={showItems}
-                onClick={() => setShowItems((v) => !v)}
-              />
-            </div>
-          </div>
+        <div className="flex flex-col gap-1 p-3">
+          <p className="text-sm text-ink dark:text-zinc-200" data-group-identity-line="">
+            <span className="font-mono font-semibold" title={t("fields.code")}>{detail.code}</span>
+            {" · "}
+            <span title={t("fields.target")}>{t(`targets.${detail.targetType}`)}</span>
+          </p>
+          <label htmlFor={descriptionId} className="mt-1 text-xs font-medium text-fade dark:text-zinc-400">
+            {t("fields.description")}
+            <span className="ml-0.5 text-red-500">*</span>
+          </label>
+          <GrowingText
+            id={descriptionId}
+            value={description}
+            onValueChange={setDescription}
+            width={tileInner(unitsInnerRem(IDENTITY_UNITS))}
+            lines
+            minRows={1}
+            maxLength={DESCRIPTION_MAX}
+            data-width-field="groupDescription"
+            className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950"
+          />
+          <span className="text-xs text-fade dark:text-zinc-500">
+            {t("descriptionCount", { count: description.trim().length, max: DESCRIPTION_MAX })}
+          </span>
           {error && (
             <p className="text-sm text-red-600 dark:text-red-400" role="alert">
               {error}
             </p>
           )}
 
-          {/* Save */}
-          <div className="flex items-center gap-3 border-t border-crease pt-4 dark:border-zinc-800">
+          {/* „Salvează grupul" at the tile's foot */}
+          <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-crease pt-3 dark:border-zinc-800" data-group-save="">
             <IconButton
               icon={Save}
               label={t("saveGroup")}
               busy={mutation.isPending}
               busyLabel={t("saving")}
               variant="primary"
-              size="lg"
+              size="md"
               onClick={() => mutation.mutate()}
               disabled={!dirty || !descriptionValid || mutation.isPending}
             />
@@ -339,168 +292,49 @@ export function GroupEditor({
         </div>
       </section>
 
-      {/* Areas B + C — member editor */}
-      {showItems && (
-        <>
-          {/* Panel B — available */}
-          <Panel
-            hidden={!tiles.choice.isShown("available")}
-            name="available"
-            title={t("panels.available")}
-            rows={availableRows}
-            renderRow={(id) => (
-              <MemberRow
-                key={id}
-                label={label(id)}
-                checked={selAvailable.has(id)}
-                onToggle={() => toggle(selAvailable, setSelAvailable, id)}
-              />
-            )}
-            empty={t("panels.availableEmpty")}
-            toolbar={
-              <input
-                type="search"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder={t("searchPlaceholder")}
-                aria-label={t("searchPlaceholder")}
-                {...screenBox("memberSearch")}
-                className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm placeholder:text-fade focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950"
-              />
-            }
-            footer={
-              // #37.46 (A083): ListPlus + „Adaugă în grup (n)" — the count
-              // stays in the words, no badge.
-              <IconButton
-                icon={ListPlus}
-                label={t("addToGroup", { count: selAvailable.size })}
-                showLabel
-                variant="primary"
-                size="sm"
-                onClick={addSelected}
-                disabled={selAvailable.size === 0}
-              />
-            }
-          />
-
-          {/* Panel C — in group */}
-          <Panel
-            hidden={!tiles.choice.isShown("in-group")}
-            name="in-group"
-            title={
-              <span className="flex items-center gap-1">
-                {t("panels.inGroup")}
-                <HelpHint hintKey="group-pending-position" />
-              </span>
-            }
-            rows={memberRows}
-            renderRow={(id) => {
-              const pos = originalPositionById.get(id);
-              return (
-                <MemberRow
-                  key={id}
-                  label={label(id)}
-                  position={pos !== undefined ? `[${pad2(pos)}]` : t("pendingPosition")}
-                  checked={selMembers.has(id)}
-                  onToggle={() => toggle(selMembers, setSelMembers, id)}
-                />
-              );
+      {/* „Membrii grupului" — 41.42: „Deja în grup" and „Membri disponibili pentru includere" as one tile of two lists. */}
+      <section
+        hidden={!tiles.choice.isShown("members")}
+        aria-labelledby={membersTitleId}
+        {...screenPanel("members", TWO_LISTS_UNITS)}
+        data-tile="members"
+        className="flex flex-col rounded-md border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+      >
+        <TileTitle id={membersTitleId} title={t("panels.members")} />
+        <div className="p-3">
+          <TwoLists
+            left={{
+              name: "in-group",
+              title: t("panels.inGroup"),
+              hint: <HelpHint hintKey="group-pending-position" />,
+              rows: leftRows,
+              empty: t("panels.inGroupEmpty"),
             }}
-            empty={t("panels.inGroupEmpty")}
-            footer={
-              // #37.46 (A083): ListMinus + „Elimină din grup (n)".
-              <IconButton
-                icon={ListMinus}
-                label={t("removeFromGroup", { count: selMembers.size })}
-                showLabel
-                variant="danger"
-                size="sm"
-                onClick={removeSelected}
-                disabled={selMembers.size === 0}
-              />
-            }
+            right={{
+              name: "available",
+              title: t("panels.available"),
+              rows: rightRows,
+              empty: t("panels.availableEmpty"),
+              toolbar: (
+                <input
+                  type="search"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder={t("searchPlaceholder")}
+                  aria-label={t("searchPlaceholder")}
+                  {...screenBox("memberSearch", { width: "100%" })}
+                  className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm placeholder:text-fade focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950"
+                />
+              ),
+            }}
+            includeLabel={(count) => t("include", { count })}
+            takeOutLabel={(count) => t("takeOut", { count })}
+            onInclude={include}
+            onTakeOut={takeOut}
           />
-        </>
-      )}
-
+        </div>
+      </section>
     </TileUnitRow>
     </>
-  );
-}
-
-// ── Presentational helpers ────────────────────────────────────────────────────
-
-function Panel({
-  name,
-  title,
-  rows,
-  renderRow,
-  empty,
-  toolbar,
-  footer,
-  hidden = false,
-}: {
-  /** Slice 41.41: left out of the row while „Panouri" hides it (TileUnitRow skips a hidden tile). */
-  hidden?: boolean;
-  /** Its name for the e2e width check (`data-panel`). */
-  name: string;
-  title: React.ReactNode;
-  rows: string[];
-  renderRow: (id: string) => React.ReactNode;
-  empty: string;
-  toolbar?: React.ReactNode;
-  footer: React.ReactNode;
-}) {
-  // FU-219 (Slice #37.07): the panel is a region named by its own title, so
-  // „Membri disponibili pentru includere" and „Deja în grup" (#38.12; „Disponibile" and „În grup" then) can be reached as landmarks.
-  const titleId = useId();
-  return (
-    <section
-      aria-labelledby={titleId}
-      {...screenPanel(name, EDITOR_UNITS)}
-      // Slice #38.12: a tile of the screen's packed row, its place stored by this name.
-      data-tile={name}
-      hidden={hidden}
-      className="flex flex-col rounded-md border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
-    >
-      <TileTitle id={titleId} title={title} count={rows.length} />
-      {toolbar && <div className="border-b border-card-rim p-3 dark:border-zinc-800">{toolbar}</div>}
-      <ul className="max-h-[360px] flex-1 divide-y divide-crease overflow-y-auto dark:divide-zinc-800">
-        {rows.length === 0 ? (
-          <li className="px-4 py-6 text-center text-sm text-fade">{empty}</li>
-        ) : (
-          rows.map((id) => renderRow(id))
-        )}
-      </ul>
-      <div className="border-t border-card-rim p-3 dark:border-zinc-800">{footer}</div>
-    </section>
-  );
-}
-
-function MemberRow({
-  label,
-  position,
-  checked,
-  onToggle,
-}: {
-  label: string;
-  position?: string;
-  checked: boolean;
-  onToggle: () => void;
-}) {
-  return (
-    <li className="flex items-center gap-3 px-4 py-2 text-sm hover:bg-cta-pale dark:hover:bg-zinc-800/50">
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={onToggle}
-        aria-label={label}
-        className="h-4 w-4 rounded border-wire accent-cta"
-      />
-      <span className="flex-1 truncate text-ink dark:text-zinc-200">{label}</span>
-      {position && (
-        <span className="font-mono text-xs text-fade dark:text-zinc-400">{position}</span>
-      )}
-    </li>
   );
 }

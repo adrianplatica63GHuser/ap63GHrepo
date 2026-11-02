@@ -132,7 +132,7 @@ O etichetă scoasă de pe ultimul obiect care o purta dispare din nor.
 
 ### 7.4.3 Grupurile {#links-classify-groups}
 
-Un grup strânge, pentru o treabă de scurtă durată, obiecte de un singur fel — de exemplu terenurile pentru o evaluare. Grupul se face în „Administrare” → „Grupuri” (secțiunea [[admin-groups]]): „Adaugă”, alegeți „Țintă” și scrieți „Descriere”, apoi „Salvează”; codul, de forma GRP-001, se dă singur. „Editează” pe rândul grupului deschide ecranul lui: bifați obiecte în „Membri disponibili pentru includere”, apăsați „Adaugă în grup” și apoi „Salvează grupul”. Până la „Salvează grupul” nu se scrie nimic, iar ecranul arată „Modificări nesalvate”.
+Un grup strânge, pentru o treabă de scurtă durată, obiecte de un singur fel — de exemplu terenurile pentru o evaluare. Grupul se face în „Administrare” → „Grupuri” (secțiunea [[admin-groups]]): „Adaugă”, alegeți „Țintă” și scrieți „Descriere”, apoi „Salvează”; codul, de forma GRP-001, se dă singur. „Editează” pe rândul grupului deschide ecranul lui: bifați obiecte în „Membri disponibili pentru includere”, apăsați „‹ Include” și apoi „Salvează grupul”. Până la „Salvează grupul” nu se scrie nimic, iar ecranul arată „Modificări nesalvate”.
 
 Pe un obiect, „Grupuri” din „Etichete și grupuri” arată grupurile lui. „+ Adaugă în grup” deschide lista grupurilor; „×” pe un grup îl scoate din grup. Lângă codul grupului, numărul din paranteze este câți membri are grupul acum — de exemplu „GRP-001 [2]”, cu „2 membri” când țineți mouse-ul pe el.
 
@@ -193,7 +193,7 @@ Un contract de vânzare-cumpărare citează certificatul de moștenitor din care
 ### 7.7.3 Strângeți câteva terenuri pentru o evaluare {#links-example-group}
 
 1. În „Administrare” → „Grupuri”, faceți un grup cu „Țintă” „Proprietate” și o descriere, de exemplu „Evaluare primăvară” (secțiunea [[links-classify-groups]]).
-2. Pe ecranul grupului, bifați terenurile, apăsați „Adaugă în grup”, apoi „Salvează grupul”.
+2. Pe ecranul grupului, bifați terenurile, apăsați „‹ Include”, apoi „Salvează grupul”.
 3. În „Căutare globală”, scrieți codul grupului în „Cod grup” și apăsați „Caută”: apar toate terenurile grupului (secțiunea [[reports-search]]).
 4. Când evaluarea s-a încheiat, ștergeți grupul; terenurile rămân în arhivă.
 

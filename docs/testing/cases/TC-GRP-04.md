@@ -1,4 +1,4 @@
-# TC-GRP-04 — Ecranul unui grup: trei fișe cu nume, „Deja în grup" sub identitate, trase ca pe formulare
+# TC-GRP-04 — Ecranul unui grup: identitatea compactă și membrii în două liste (41.42; trei fișe până atunci)
 
 | | |
 |---|---|
@@ -10,21 +10,22 @@
 
 ## What this proves
 
-Since Slice #38.12 the group screen (Administrare → Grupuri → a group) has three tiles named by their
-titles — „Identitatea grupului", „Membri disponibili pentru includere" and „Deja în grup" — drawn by the
-record forms' own packing and drag (#37.75, #37.76). By default „Deja în grup" stands under „Identitatea
-grupului", with „Membri disponibili pentru includere" at their right, at 1366 px and at 1920 px alike
-(the three are never one row). A tile dragged by its unused space to a free place stays there, and
-after a reload, under the screen's own key (`ga40-tile-positions-admin-group-v1`); „Implicit" at the
-screen's top right puts it back. A tile that opens in one row with the others, a place lost on reload,
-or an „Implicit" that leaves it where it was dragged, is the defect.
+Since Slice 41.42 the group screen (Administrare → Grupuri → a group) has two tiles: „Identitatea grupului", compact
+at 2 units — the code and the target on one line, the description, „Salvează grupul" at its foot — and „Membrii
+grupului", 7 units, holding two lists: „Deja în grup" on the left, „Membri disponibili pentru includere" on the right,
+each with its count and its own scroll bar, and between them „‹ Include (n)" and „Scoate › (n)". At 1366 px the members
+stand under the identity, at 1920 px at its right. Checked rows move by the buttons, one row by a double-click; a moved
+row reads „în așteptare" until „Salvează grupul", and a reload shows what was saved. A move that writes before „Salvează
+grupul", a moved row not marked, or a saved member missing after the reload, is the defect.
+
+(Until 41.42: three tiles of 4 units, „Deja în grup" under the identity, dragged and put back by „Implicit" — the runs
+below. The drag on this screen is TC-TILES-24's step 5.)
 
 ## Before you start
 
 - TC-AUTH-01 is green.
-- **Created through the API** as `e2e/helpers/records.ts` creates prerequisites: a property group
-  „TC-GRP-04 Grup de test" and three properties „TC-GRP-04 Teren A", „B" and „C"; A and B added to the
-  group (`POST /api/metadata/{id}/groups`, what „Conexiuni"'s picker sends), C not.
+- **Created through the API** as `e2e/helpers/records.ts` creates prerequisites: an empty property group „TC-GRP-04
+  Grup de test" and three properties „TC-GRP-04 Teren A", „B" and „C".
 - The browser holds no arrangement for the screen (`ga40-tile-positions-admin-group-v1` removed).
 
 ## What Adrian is asked for
@@ -35,11 +36,12 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | With the window 1366 px wide, opens the group | Three tiles: „Identitatea grupului" (Țintă, Cod, Descriere, the save button); „Deja în grup" — count 2, A and B — **under it**; „Membri disponibili pentru includere" — with C — **at their right**, its top level with „Identitatea grupului"'s. „Implicit" at the screen's top right |
-| 2 | Widens the window to 1920 px | The same three places: „Deja în grup" still under „Identitatea grupului"; the space at the right of „Membri disponibili pentru includere" is empty |
-| 3 | Presses on „Deja în grup"'s unused space (the padding of its bottom bar, beside „Elimină din grup (0)") and drags it to the right of „Membri disponibili pentru includere", level with its top | While it moves, a dashed outline where it would land; released, the tile stays there. „Identitatea grupului" and „Membri disponibili…" have not moved |
-| 4 | Reloads the page | „Deja în grup" is where it was dropped |
-| 5 | Presses „Implicit" | „Deja în grup" goes back under „Identitatea grupului"; the browser no longer holds an arrangement for the screen |
+| 1 | With the window 1366 px wide, opens the group | „Identitatea grupului" 254 px wide, „GRP-… · Proprietate" on one line, „Salvează grupul" disabled; „Membrii grupului" 929 px wide, **under it**; „Deja în grup" on its left says „Niciun element în acest grup încă", „Membri disponibili pentru includere" on its right; „Panouri" in the page bar |
+| 2 | Widens the window to 1920 px | „Membrii grupului" at the identity's right, tops level |
+| 3 | Types „TC-GRP-04" in „Caută…", ticks A and B on the right, presses „‹ Include (2)" | A and B on the left, each „în așteptare"; „Modificări nesalvate" |
+| 4 | Double-clicks C on the right | C on the left, „în așteptare"; the left list's count 3 |
+| 5 | Ticks A on the left, presses „Scoate › (1)" | A back on the right |
+| 6 | Presses „Salvează grupul", then reloads | B and C on the left, each with its position, „[01]" or „[02]"; nothing „în așteptare"; A not a member |
 
 ## At the end — leaving things as they were found
 

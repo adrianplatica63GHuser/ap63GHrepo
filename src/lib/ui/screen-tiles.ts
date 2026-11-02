@@ -28,8 +28,10 @@ export interface ScreenTiles {
   entity: string;
   /** Every tile's `data-tile`, in reading (DOM) order. */
   tiles: readonly string[];
-  /** Each tile's width in units. */
+  /** Each tile's width in units — and, since 41.42, the widest tile's, which the row never goes under. */
   units: number;
+  /** 41.42: a tile whose width is not `units`, by its `data-tile`. */
+  tileUnits?: Readonly<Record<string, number>>;
   /** How many units the flow may take across: two tiles, so the third wraps under the first. */
   flowUnits: number;
 }
@@ -38,7 +40,14 @@ export interface ScreenTiles {
  * Slice 41.41: the five admin screens' tile registries — the record screens' choice („Panouri", `useTileChoice`), kept
  * per screen in localStorage under `ga40-tiles-<entity>-v1`. No form tiles; at least one tile stays (`toggleTile`).
  */
-export type AdminTileRegistry<K extends string> = { entity: string; all: readonly K[]; defaults: readonly K[]; form: readonly K[] };
+export type AdminTileRegistry<K extends string> = {
+  entity: string;
+  all: readonly K[];
+  defaults: readonly K[];
+  form: readonly K[];
+  /** 41.42: a tile name stored before a rename, read as the new one (`parseStoredTiles`). */
+  renamed?: Readonly<Record<string, K | readonly K[]>>;
+};
 const adminRegistry = <K extends string>(entity: string, all: readonly K[]): AdminTileRegistry<K> => ({ entity, all, defaults: all, form: [] });
 
 /** Administrare → Grupuri: what a group is, and the list. */
@@ -53,16 +62,38 @@ export const ADMIN_GROUPS_SCREEN: ScreenTiles = { entity: "admin-groups", tiles:
 export const ADMIN_STAMPS_SCREEN: ScreenTiles = { entity: "admin-stamps", tiles: ["about", "list"], units: 7, flowUnits: 14 };
 export const ADMIN_TAGS_SCREEN: ScreenTiles = { entity: "admin-tags", tiles: ["note", "cloud"], units: 7, flowUnits: 14 };
 
-/** Administrare → Grupuri → a group. */
+/**
+ * 41.42: the compact identity tile — „GRP-001 · Proprietate", the description, „Salvează grupul" — 2 units (254 px).
+ * Adrian: „I would like to have the “group identity” tile much more compact then it is now".
+ */
+export const IDENTITY_UNITS = 2;
+/**
+ * 41.42: the two-list tile — two lists of 3 units with the buttons between them (src/components/screen/two-lists.tsx):
+ * 7 units, 929 px — 903 inside, two lists of ≈391 px and a 104-px column of buttons with 8 px either side.
+ */
+export const TWO_LISTS_UNITS = 7;
+
+/**
+ * Administrare → Grupuri → a group. 41.42: two tiles — „Identitatea grupului" (2 units) and „Membrii grupului" (the two
+ * lists, 7 units); side by side where 9 units fit, the members under the identity where they do not (1366 px holds 8).
+ */
 export const GROUP_SCREEN: ScreenTiles = {
   entity: "admin-group",
-  tiles: ["identity", "available", "in-group"],
-  units: 4, // 40.98: re-pinned, 476 → 524 px
-  flowUnits: 2 * 4,
+  tiles: ["identity", "members"],
+  units: TWO_LISTS_UNITS,
+  tileUnits: { identity: IDENTITY_UNITS, members: TWO_LISTS_UNITS },
+  flowUnits: IDENTITY_UNITS + TWO_LISTS_UNITS,
 };
 
-/** 41.41: one group's screen — its tiles chosen with „Panouri", under the screen's own entity. */
-export const GROUP_REGISTRY = adminRegistry(GROUP_SCREEN.entity, ["identity", "available", "in-group"] as const);
+/**
+ * 41.41: one group's screen — its tiles chosen with „Panouri", under the screen's own entity. 41.42: „Membri disponibili…"
+ * and „Deja în grup" are one tile, „members" — a choice stored under either old name reads as it; a place stored under
+ * them names no tile any more and is not read (the record screens' renamed tiles, #37.54).
+ */
+export const GROUP_REGISTRY: AdminTileRegistry<"identity" | "members"> = {
+  ...adminRegistry(GROUP_SCREEN.entity, ["identity", "members"] as const),
+  renamed: { available: "members", "in-group": "members" },
+};
 
 /** Administrare → Ștampile → „Aplică" (#38.13). */
 export const STAMP_SCREEN: ScreenTiles = {

@@ -121,9 +121,9 @@ Grupurile, ștampilele și etichetele se pun pe obiecte din fișa „Etichete ș
 Caseta de lângă „Adaugă”, „caută după Cod sau Descriere”, găsește un grup după cod sau după cuvintele descrierii — toate cuvintele scrise, în orice ordine, cu sau fără diacritice; un cod scris întreg vine primul. Cât timp scrieți, numărul spune câte grupuri se văd din câte sunt, de exemplu „1 din 4”; dacă nu se potrivește niciunul, tabelul spune „Niciun grup nu se potrivește căutării.”.
 
 1. „Adaugă” deschide „Adaugă grup nou”. Alegeți „Țintă” — „Proprietate”, „Persoană fizică”, „Persoană juridică” sau „Document” —, scrieți „Descriere” și apăsați „Salvează”. Rămâneți pe listă, cu grupul nou primul; codul, de forma GRP-001, se dă la salvare.
-2. „Editează” deschide „Grup GRP-…”, cu trei fișe: „Identitatea grupului” („Țintă” și „Cod” doar de citit, „Descriere”), „Membri disponibili pentru includere” și „Deja în grup”.
-3. Căutați în „Caută…”, bifați obiectele și apăsați „Adaugă în grup”; ca să scoateți unul, bifați-l în „Deja în grup” și apăsați „Elimină din grup”. Membrii adăugați poartă „[nou]”, iar ecranul arată „Modificări nesalvate”: încă nu s-a scris nimic.
-4. „Salvează grupul” scrie schimbările; „[nou]” devine poziția membrului în grup, „[01]”, „[02]”.
+2. „Editează” deschide „Grup GRP-…”, cu două fișe: „Identitatea grupului” (codul și ținta pe un rând, „Descriere”, „Salvează grupul”) și „Membrii grupului”, cu două liste: „Deja în grup” în stânga, „Membri disponibili pentru includere” în dreapta.
+3. Căutați în „Caută…”, bifați obiectele din dreapta și apăsați „‹ Include”; ca să scoateți unul, bifați-l în „Deja în grup” și apăsați „Scoate ›”. Un dublu clic pe un rând îl mută în cealaltă listă. Rândurile mutate poartă „în așteptare”, iar ecranul arată „Modificări nesalvate”: încă nu s-a scris nimic.
+4. „Salvează grupul” scrie schimbările; fiecare membru primește poziția lui în grup, „[01]”, „[02]”.
 
 Fișele ecranului se pot muta trăgându-le de un loc gol, iar „Implicit”, sus în dreapta, le pune la loc. „Șterge” pe rândul unui grup întreabă „Ștergeți acest grup? Această acțiune nu poate fi anulată.”; obiectele din grup rămân în arhivă.
 

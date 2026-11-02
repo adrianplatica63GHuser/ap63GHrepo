@@ -121,9 +121,9 @@ Groups, stamps and tags are put on objects from each object's „Tags and groups
 The box beside „Add”, „search by Code or Description”, finds a group by its code or by the words of its description — every word typed, in any order, with or without diacritics; a code typed whole comes first. While you type, the count says how many groups show out of how many there are, for instance „1 of 4”; when none matches, the table says „No group matches the search.”.
 
 1. „Add” opens „Add new group”. Choose „Target” — „Property”, „Physical person”, „Juridical person” or „Document” —, write „Description” and press „Save”. You stay on the list, with the new group first; the code, of the form GRP-001, is given on saving.
-2. „Edit” opens „Group GRP-…”, with three tiles: „Group identity” („Target” and „Code” read-only, „Description”), „Members available to include” and „In Group already”.
-3. Search in „Search…”, tick the objects and press „Add to Group”; to take one out, tick it in „In Group already” and press „Remove from Group”. Members added carry „[new]”, and the screen shows „Unsaved changes”: nothing has been written yet.
-4. „Save group” writes the changes; „[new]” becomes the member's position in the group, „[01]”, „[02]”.
+2. „Edit” opens „Group GRP-…”, with two tiles: „Group identity” (the code and the target on one line, „Description”, „Save group”) and „Group members”, with two lists: „In Group already” on the left, „Members available to include” on the right.
+3. Search in „Search…”, tick the objects on the right and press „‹ Include”; to take one out, tick it in „In Group already” and press „Take out ›”. A double click on a row moves it to the other list. Moved rows carry „pending”, and the screen shows „Unsaved changes”: nothing has been written yet.
+4. „Save group” writes the changes; each member gets its position in the group, „[01]”, „[02]”.
 
 The screen's tiles can be moved by dragging them by an empty spot, and „Default”, at the top right, puts them back. „Delete” on a group's row asks „Delete this group? This cannot be undone.”; the objects in the group stay in the archive.
 
