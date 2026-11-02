@@ -25,7 +25,7 @@ import { MAX_GROUPS_PER_ITEM, MAX_GROUPS_PER_PROPERTY } from "@/lib/groups/valid
 import { FIELD_LABEL } from "@/lib/ui/field-box";
 import { ReadValue, TileEditBar, TileEditButton, onTileKeyDown } from "@/components/tiles/read-edit-tile";
 import { EmptyTileLine, focusFirstField } from "@/components/tiles/empty-tile";
-import { TileAction, useTileChrome } from "@/components/tiles/list-tile";
+import { TileAction, TileHint, useTileChrome } from "@/components/tiles/list-tile";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -1696,6 +1696,37 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
     ) });
   }
 
+  // Slice 41.37: Clasificare's one „i" — the three items, Istoric, and the review timeline („Revizuire"), its day counts
+  // the settings' own (`tfDays`, as `buildReviewWarning`), never written into the text.
+  const reviewWarnDays = tfDays(tf, "metadata_review_warning");
+  const reviewStaleDays = tfDays(tf, "dashboard_stale_metadata");
+  const aboutBubble = (
+    <HintBubble
+      id={aboutId}
+      text={
+        <>
+          {(["importance", "relevance", "provenance"] as const).map((k) => (
+            <span key={k} className="mb-1.5 block">
+              <strong className="block font-semibold">{t(`${k}.title`)}</strong>
+              {t(`${k}.note`)}
+            </span>
+          ))}
+          <span className="mb-1.5 block">
+            <strong className="block font-semibold">{t("provenance.historyTitle")}</strong>
+            {t("provenance.historyNote")}
+          </span>
+          <span className="block" data-review-note="">
+            <strong className="block font-semibold">{t("review.title")}</strong>
+            {t("review.note", { warn: reviewWarnDays, stale: reviewStaleDays })}
+          </span>
+        </>
+      }
+      triggerLabel={about(chrome?.title ?? t("sectionClassification"))}
+      align={chrome ? "start" : "end"}
+    >
+      {null}
+    </HintBubble>
+  );
   return (
     <>
       {/* "Make current" confirmation dialog */}
@@ -1726,31 +1757,16 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
             than one version — and at its right end the tile's ONE „i": Importanță, Relevanță, Proveniență and Istoric,
             each a short headed paragraph. It replaced an „i" on each item's title. The divider stays the version
             line's only. */}
-        {!folded && (
+        {/* Slice 41.37 — Adrian: „move the “i” button right after the title of the tile; add to the information message
+            some clarification on the timeline for metadata reviews". The one „i" sits on the tile's title line, right
+            after „Clasificare" (`TileHint`); its bubble adds „Revizuire", the day counts read from Setări through the
+            helper the red warning uses. The top line is the version controls' alone again, drawn only with several
+            versions (as before 41.28); without a tile around it (both sections drawn), the „i" stays on that line. */}
+        {!folded && chrome && <TileHint>{aboutBubble}</TileHint>}
+        {!folded && (totalVer > 1 || !chrome) && (
           <div className="flex items-center gap-2" data-classification-top="">
             {totalVer > 1 && <VersionNavControls nav={navView} labels={navLabels} />}
-            <HintBubble
-              id={aboutId}
-              text={
-                <>
-                  {(["importance", "relevance", "provenance"] as const).map((k) => (
-                    <span key={k} className="mb-1.5 block">
-                      <strong className="block font-semibold">{t(`${k}.title`)}</strong>
-                      {t(`${k}.note`)}
-                    </span>
-                  ))}
-                  <span className="block">
-                    <strong className="block font-semibold">{t("provenance.historyTitle")}</strong>
-                    {t("provenance.historyNote")}
-                  </span>
-                </>
-              }
-              triggerLabel={about(chrome?.title ?? t("sectionClassification"))}
-              align="end"
-              className="ml-auto"
-            >
-              {null}
-            </HintBubble>
+            {!chrome && <span className="ml-auto">{aboutBubble}</span>}
           </div>
         )}
         {totalVer > 1 && !folded && <Divider />}

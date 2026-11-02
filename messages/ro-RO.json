@@ -944,6 +944,10 @@
         "saving": "Se salvează…",
         "saved": "✓ Salvat"
       },
+      "review": {
+        "title": "Revizuire",
+        "note": "O valoare care nu a fost schimbată și nici verificată de mai mult de {warn, plural, one {# zi} few {# zile} other {# de zile}} apare cu roșu. „Marchează ca verificat” confirmă că încă este adevărată și pornește numărătoarea din nou; o valoare schimbată azi se socotește verificată. Tabloul de bord numără elementul ca neverificat când una dintre cele trei valori e mai veche de {stale, plural, one {# zi} few {# zile} other {# de zile}}. Ambele termene se schimbă în Administrare → Setări."
+      },
       "markReviewed": {
         "button": "Marchează ca verificat",
         "marking": "Se marchează…",

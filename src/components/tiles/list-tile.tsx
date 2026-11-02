@@ -30,6 +30,8 @@ export type TileChrome = {
   title: string;
   /** Where „Editează" goes; null until the frame has drawn it. */
   actionSlot: HTMLElement | null;
+  /** Slice 41.37: where the tile's „i" goes, right after its title; null until drawn. */
+  hintSlot: HTMLElement | null;
   setEditing: (editing: boolean) => void;
   setFolded: (folded: boolean) => void;
 };
@@ -46,6 +48,13 @@ export function TileAction({ children }: { children: ReactNode }) {
   const chrome = useTileChrome();
   if (!chrome) return <div className="flex justify-end">{children}</div>;
   return chrome.actionSlot ? createPortal(children, chrome.actionSlot) : null;
+}
+
+/** Slice 41.37: the tile's „i", drawn right after its title (`TileTitle`'s `hint`); in place where there is no tile. */
+export function TileHint({ children }: { children: ReactNode }) {
+  const chrome = useTileChrome();
+  if (!chrome) return <>{children}</>;
+  return chrome.hintSlot ? createPortal(children, chrome.hintSlot) : null;
 }
 
 export function ListTile({
@@ -76,9 +85,10 @@ export function ListTile({
   children: ReactNode;
 }) {
   const [actionSlot, setActionSlot] = useState<HTMLElement | null>(null);
+  const [hintSlot, setHintSlot] = useState<HTMLElement | null>(null);
   const [editing, setEditing] = useState(false);
   const [folded, setFolded] = useState(false);
-  const chrome = useMemo<TileChrome>(() => ({ title, actionSlot, setEditing, setFolded }), [title, actionSlot]);
+  const chrome = useMemo<TileChrome>(() => ({ title, actionSlot, hintSlot, setEditing, setFolded }), [title, actionSlot, hintSlot]);
   return (
     <section
       data-tile={tile}
@@ -91,7 +101,15 @@ export function ListTile({
     >
       {readEdit ? (
         <>
-          {!folded && <TileTitle title={title} subtitle={subtitle} action={<span ref={setActionSlot} className="flex items-center" data-tile-action-slot="" />} />}
+          {!folded && (
+            <TileTitle
+              title={title}
+              subtitle={subtitle}
+              action={<span ref={setActionSlot} className="flex items-center" data-tile-action-slot="" />}
+              // 41.37: `empty:hidden` — no gap after the title while nothing is drawn there.
+              hint={<span ref={setHintSlot} className="flex items-center empty:hidden" data-tile-hint-slot="" />}
+            />
+          )}
           <TileChromeContext.Provider value={chrome}>{children}</TileChromeContext.Provider>
         </>
       ) : (

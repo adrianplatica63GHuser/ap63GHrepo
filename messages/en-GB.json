@@ -944,6 +944,10 @@
         "saving": "Saving…",
         "saved": "✓ Saved"
       },
+      "review": {
+        "title": "Review",
+        "note": "A value neither changed nor reviewed for more than {warn, plural, one {# day} other {# days}} is marked in red. „Mark as reviewed” confirms it is still true and starts the count again; a value changed today counts as reviewed. The Dashboard counts the record as not reviewed when one of the three values is older than {stale, plural, one {# day} other {# days}}. Both periods are changed in Administration → Settings."
+      },
       "markReviewed": {
         "button": "Mark as reviewed",
         "marking": "Marking…",

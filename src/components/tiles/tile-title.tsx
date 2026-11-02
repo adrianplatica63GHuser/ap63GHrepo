@@ -55,6 +55,7 @@ export function TileTitle({
   id,
   children,
   action,
+  hint,
 }: {
   title: ReactNode;
   /** One line saying what the tile holds; absent, the title stands alone. */
@@ -70,13 +71,28 @@ export function TileTitle({
    * so the heading's own corner keeps the tile's top-right corner (the system ID's until 41.22 moved it to the page bar).
    */
   action?: ReactNode;
+  /**
+   * Slice 41.37: an „i" (a HintBubble) right after the title's text, on its line — Clasificare's. Outside the `h2`, so
+   * the heading's name stays the tile's own.
+   */
+  hint?: ReactNode;
 }) {
+  const heading = (
+    <h2 id={id} className={TILE_TITLE_CLASS}>
+      {title}
+      {children}
+    </h2>
+  );
   return (
     <div className={`min-w-0 ${className}`} data-tile-title="">
-      <h2 id={id} className={TILE_TITLE_CLASS}>
-        {title}
-        {children}
-      </h2>
+      {hint ? (
+        <div className="flex items-center gap-1.5" data-tile-title-line="">
+          {heading}
+          {hint}
+        </div>
+      ) : (
+        heading
+      )}
       {action ? (
         <div className="flex items-center gap-2">
           <div className="min-w-0 flex-1">
