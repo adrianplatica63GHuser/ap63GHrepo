@@ -10,6 +10,9 @@ import { GROUP_REGISTRY, STAMP_REGISTRY } from "@/lib/ui/screen-tiles";
 import { tileStorageKey } from "@/lib/ui/tiles";
 
 jest.mock("@/components/tiles/saved-tile-defaults", () => ({ useSavedTileDefaults: () => ({}) }));
+// admin-tiles.tsx also holds „Panouri"'s pieces, which read next-intl (ESM) and the help data; neither is this suite's.
+jest.mock("next-intl", () => ({ useTranslations: () => (key: string) => key }));
+jest.mock("@/components/help/help-hint", () => ({ HelpHint: () => null }));
 
 const KEY = tileStorageKey(GROUP_REGISTRY.entity);
 const tick = () => act(() => new Promise<void>((r) => setTimeout(r, 0)));

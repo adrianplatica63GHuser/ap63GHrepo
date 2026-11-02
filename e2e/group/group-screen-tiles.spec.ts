@@ -155,7 +155,8 @@ test.describe("TC-GRP-04 (41.41) — „Panouri” pe Grupuri, pe ecranul unui g
 // the stored choice. And a „Vezi și" reference to a natural person opens that person, not the old /persons/{id}.
 test.describe("TC-GRP-04 (41.45) — deschis dintr-o fișă: doar identitatea; „Vezi și” ajunge la persoană", () => {
   test("grupul și ștampila unei persoane, din „Etichete și grupuri”; apoi din liste; apoi „Vezi și”", async ({ page }) => {
-    test.slow();
+    // Six screens and seven records: more than test.slow()'s 90 s (the first run finished its steps and ran out in the cleanup).
+    test.setTimeout(240_000);
     const M = `${MARK}-FROM`;
     await removeGroupLeftovers(page.request, M);
     await removeStampLeftovers(page.request, M);

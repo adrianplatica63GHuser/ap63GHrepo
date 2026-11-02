@@ -40,7 +40,9 @@ async function twoTiles(page: Page, url: string): Promise<{ cls: Locator; con: L
   await expect(cls.locator("h3, h4")).toHaveText(["Importanță", "Relevanță", "Proveniență", "Istoric"], { timeout: 30_000 });
   await expect(con.locator("h3")).toHaveText(["Etichete / Cuvinte cheie", "Grupuri", "Ștampile", "Vezi și"]);
   // No explanation under any title: the only lines are what is true of this record.
-  await expect(cls.locator("p:not(.sr-only)")).toHaveText(["Actualizat azi", "Niciun istoric înregistrat încă"]);
+  // 41.37 — was ["Actualizat azi", "Niciun istoric înregistrat încă"]: on a record of one version the top line went
+  // into „Clasificare"'s „i" bubble (the review), so the tile's only line is the history's.
+  await expect(cls.locator("p:not(.sr-only)")).toHaveText(["Niciun istoric înregistrat încă"]);
   await expect(con.locator("p:not(.sr-only)")).toHaveText([
     "Nicio etichetă adăugată încă", "Nu face parte din niciun grup", "Nicio ștampilă aplicată", "Nicio trimitere adăugată încă",
   ]);
