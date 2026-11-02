@@ -501,7 +501,7 @@ describe("the Natural Person: every label above its box, every panel as wide as 
     // | Cetățenie).
     // 41.05: Contact's phones one to a row (8.5; the e-mails fill), the address's widest rows 5 + 0.5 + 8.5 = 14 (was
     // 17.5, the two phones, and 18.5, Cod poștal | Localitate L).
-    expect(rowsOf).toEqual({ identity: 18, idCard: 23.75, contact: 8.5, address: 14 });
+    expect(rowsOf).toEqual({ identity: 18, idCard: 23.75, contact: 8.5, address: 17.5 }); // 41.35: two M boxes, 8.5 + 0.5 + 8.5 (was 14 — Cod poștal S)
     // 40.98 (the 119-px unit): Carte de identitate 4 — its first row, 23.75rem, is Adrian's and past the 363 px inside
     // 3; Contact 3, the gray panels' floor (was 2 of 148 px). Was { identity: 3, idCard: 3, contact: 2, address: 3 }.
     // 41.05: Contact and the address 2 units, the exception by name (TWO_UNIT_PANEL_UNITS).
@@ -577,16 +577,17 @@ describe("the Natural Person: every label above its box, every panel as wide as 
     expect(rowRem([ADDRESS.county, ADDRESS.country]) * 16).toBe(280);
     expect(unitsInnerRem(2) * 16).toBeLessThan(280);
     expect(unitsInnerRem(3) * 16).toBeGreaterThanOrEqual(280);
-    // The property draws the same pairs, from ADDRESS_ROWS.
-    expect(code(read("src", "app", "properties", "_components", "property-form.tsx"))).toMatch(/ADDRESS_ROWS\.filter\(\(row\) => row\.length === 2\)\.map\(/);
+    // The property's rows name the same pairs as ADDRESS_ROWS, so the two cannot drift (its form draws SCREEN_ROWS —
+    // „the Property … draws exactly the rows the file names", below).
+    expect(SCREEN_ROWS.property.address.filter((r) => r.length === 2)).toEqual(ADDRESS_ROWS.filter((r) => r.length === 2).map((r) => r.map((k) => `address.${k}`)));
     expect(ADDRESS.notes.fill).toBe(true);
     // Every caller draws the shared widths: the block itself, and the Property's own address rows.
     expect(ADDRESS_BLOCK).toMatch(/ADDRESS_ROWS\.map\(/);
     expect(code(read("src", "app", "properties", "_components", "property-form.tsx"))).toMatch(/width=\{ADDRESS\.streetLine\}\s+fillRem=\{PANEL_UNIT_INNER_REM\.property\.address\}/);
-    // 41.05: every address panel 2 units (was 3).
-    expect(PANEL_UNITS.naturalPerson.address).toBe(2);
-    expect(PANEL_UNITS.judicialPerson.address).toBe(2);
-    expect(PANEL_UNITS.property.address).toBe(2);
+    // 41.05: every address panel 2 units (was 3). 41.35: 3 again — two M boxes a row.
+    expect(PANEL_UNITS.naturalPerson.address).toBe(3);
+    expect(PANEL_UNITS.judicialPerson.address).toBe(3);
+    expect(PANEL_UNITS.property.address).toBe(3);
   });
 
   it("no label beside a box is left on the form, and the row is as wide as its panels", () => {

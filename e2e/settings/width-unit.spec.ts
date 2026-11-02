@@ -54,15 +54,16 @@ test.describe("TC-SET-06 — „Unitatea de lățime”", () => {
       await expect(unitBox(page)).toHaveValue("100", { timeout: 30_000 });
       expect(await widthOf(account(page))).toBe(unitsPx(settingsUnits, 100));
 
-      // Step 4 — „Adaugă persoană”: Contact the fewest 100-px units at least 254 px wide, Adresă at least 389 (41.35); the fields as they were.
+      // Step 4 — „Adaugă persoană”: Contact the fewest 100-px units at least 254 px wide, Adresă the fewest that hold two M boxes (41.35); the fields as they were.
       await page.goto("/natural-persons/new");
       const address = page.locator('[data-panel="addresses.HOME"]');
       await expect(address).toBeVisible({ timeout: 30_000 });
       const two = fewest(unitsPx(2, 119), 100);
       expect(two).toBe(3);
-      // 41.35: the address is 3 units of 119 px now (two M boxes a row) — the fewest 100-px units at least 389 px: 4.
-      const three = fewest(unitsPx(3, 119), 100);
-      expect(three).toBe(4);
+      // 41.35: the address holds two M boxes a row now (280 px, 306 with its frame) — the fewest 100-px units that hold it: 3,
+      // as many as Contact's.
+      const three = fewest(280 + 26, 100);
+      expect(three).toBe(3);
       for (const [panel, units] of [["contact", two], ["addresses.HOME", three]] as const) {
         const w = await widthOf(page.locator(`[data-panel="${panel}"]`));
         expect([panel, w]).toEqual([panel, unitsPx(units, 100)]);
