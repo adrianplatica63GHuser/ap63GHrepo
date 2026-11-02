@@ -108,13 +108,22 @@ describe("„Clasificare”: read, and edited with „Editează” (Slice 41.10)
     // 41.28 (Ask first 3): one „i" in the tile, named for the tile. 41.37 inverted in place — it was „at the right end
     // of its top line" ([data-classification-top]); now on the title's line, right after „Clasificare" (the tile's hint
     // slot), and the top line is drawn only with several versions.
+    // Rendered here without a tile around it, so the „i" stays on that top line; in a tile, the next test.
     expect(document.querySelectorAll("[data-info-glyph]")).toHaveLength(1);
-    const titleLine = document.querySelector("[data-tile-title-line]")!;
-    expect(titleLine.querySelector("h2")!.nextElementSibling!.querySelector("[data-info-glyph]")).not.toBeNull();
-    expect(document.querySelector("[data-classification-top]")).toBeNull();
+    expect(document.querySelector("[data-classification-top] [data-info-glyph]")).not.toBeNull();
     // No save while reading: „Editează" is the way in.
     expect(screen.queryByRole("button", { name: "save" })).toBeNull();
     expect(screen.getByRole("button", { name: /^editTile/ })).toBeTruthy();
+  });
+
+  it("41.37: in its tile the one „i” sits on the title's line, right after „Clasificare”; no top line with one version", async () => {
+    renderInFrame();
+    await waitFor(() => expect(document.querySelector("[data-tile-title-line] [data-info-glyph]")).not.toBeNull());
+    const line = document.querySelector("[data-tile-title-line]")!;
+    expect(line.querySelector("h2")!.textContent).toBe("Clasificare");
+    expect(line.querySelector("h2")!.nextElementSibling!.querySelector("[data-info-glyph]")).not.toBeNull();
+    expect(document.querySelectorAll("[data-info-glyph]")).toHaveLength(1);
+    expect(document.querySelector("[data-classification-top]")).toBeNull();
   });
 
   it("„Editează”: three selects, „Salvează” disabled until something changes, then one save writes the three values and it reads again", async () => {

@@ -34,7 +34,8 @@ describe("41.37 — Clasificare's „i” and its review paragraph", () => {
     }
     // The names it quotes are the app's own.
     expect(ro.shared.entityMetadata.review.note).toContain(`„${ro.shared.entityMetadata.markReviewed.button}”`);
-    expect(ro.shared.entityMetadata.review.note).toContain(ro.nav.sections.dashboard);
+    // The menu's „Tablou de bord", articulated in the sentence: „Tabloul de bord".
+    expect(ro.shared.entityMetadata.review.note).toContain(ro.nav.sections.dashboard.replace(/^Tablou /, "Tabloul "));
     expect(en.shared.entityMetadata.review.note).toContain(en.nav.sections.dashboard);
   });
 
