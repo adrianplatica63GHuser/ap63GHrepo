@@ -180,12 +180,13 @@ test.describe("TC-GRP-04 (41.45) — deschis dintr-o fișă: doar identitatea; �
       const twoCode = ((await (await page.request.get(`/api/people/${two}`)).json()) as { person: { code: string } }).person.code;
       expect((await page.request.post(`/api/metadata/${one}/cross-refs`, { data: { targetCode: twoCode } })).ok()).toBeTruthy();
       // Nothing stored for either screen's tiles, so their stored choice is every tile.
-      await page.goto(`/natural-persons/${people[0]}`);
+      // `?tab=metadata` brings „Etichete și grupuri" for the visit (it is not a default tile of a person).
+      await page.goto(`/natural-persons/${people[0]}?tab=metadata`);
       await page.evaluate(() => { localStorage.removeItem("ga40-tiles-admin-group-v1"); localStorage.removeItem("ga40-tiles-admin-stamp-v1"); });
       const connections = page.locator('[data-tile="connections"]');
 
       // Step 1 — the group's link: its screen with „Identitatea grupului" only; „Panouri" lists the others unticked.
-      await connections.locator('a[href*="/admin/groups/"]').first().click();
+      await connections.locator('a[href*="/admin/groups/"]').first().click({ timeout: 30_000 });
       await expect(page).toHaveURL(/\/admin\/groups\/[0-9a-f-]+\?.*tiles=identity/, { timeout: 30_000 });
       await expect(page.getByRole("region", { name: "Identitatea grupului", exact: true })).toBeVisible({ timeout: 30_000 });
       await expect(page.locator('[data-tile="members"]')).toBeHidden();
@@ -201,8 +202,8 @@ test.describe("TC-GRP-04 (41.45) — deschis dintr-o fișă: doar identitatea; �
       await expect(page.getByRole("region", { name: "Cum lucrezi cu grupurile", exact: true })).toBeVisible();
 
       // Step 3 — the stamp's link: „Descrierea ștampilei" only.
-      await page.goto(`/natural-persons/${people[0]}`);
-      await connections.locator('a[href*="/admin/stamps/"]').first().click();
+      await page.goto(`/natural-persons/${people[0]}?tab=metadata`);
+      await connections.locator('a[href*="/admin/stamps/"]').first().click({ timeout: 30_000 });
       await expect(page).toHaveURL(/\/admin\/stamps\/[0-9a-f-]+\?.*tiles=description/, { timeout: 30_000 });
       await expect(page.getByRole("region", { name: "Descrierea ștampilei", exact: true })).toBeVisible({ timeout: 30_000 });
       await expect(page.locator('[data-tile="records"]')).toBeHidden();
@@ -212,10 +213,10 @@ test.describe("TC-GRP-04 (41.45) — deschis dintr-o fișă: doar identitatea; �
       await expect(page.getByRole("region", { name: "Elementele ștampilei", exact: true })).toBeVisible({ timeout: 30_000 });
 
       // Step 4 — „Vezi și": the other person, on the natural persons' screen.
-      await page.goto(`/natural-persons/${people[0]}`);
+      await page.goto(`/natural-persons/${people[0]}?tab=metadata`);
       const peer = connections.locator(`a[href*="/natural-persons/${people[1]}"]`);
       await expect(peer).toBeVisible({ timeout: 30_000 });
-      await peer.click();
+      await peer.click({ timeout: 30_000 });
       await expect(page).toHaveURL(new RegExp(`/natural-persons/${people[1]}`), { timeout: 30_000 });
       await expect(page.locator("[data-record-header] h1")).toContainText(`${M} Doi`, { timeout: 30_000 });
     } finally {

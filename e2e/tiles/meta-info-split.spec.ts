@@ -49,14 +49,18 @@ async function twoTiles(page: Page, url: string): Promise<{ cls: Locator; con: L
   return { cls, con };
 }
 
-/** Step 2: a rest on „Importanță" opens its bubble; leaving closes it. */
+/**
+ * Step 2: „Importanță"'s explanation. Inverted in place for 41.28 („one „i"") and 41.37 (the „i" on the title's line) —
+ * it was: a rest on the heading „Importanță" opens its own bubble and leaving closes it. The headings have no bubble of
+ * their own since 41.28; the tile's one „i" holds every explanation (TC-TILES-16 step 3b, classification-dividers).
+ */
 async function importanceBubble(page: Page, cls: Locator): Promise<void> {
-  const bubble = cls.getByRole("tooltip").filter({ hasText: "Reflectă valoarea subiectivă pe care o acorzi acestui element" });
-  await expect(bubble).toHaveClass(/sr-only/);
-  await cls.getByRole("heading", { name: "Importanță", exact: true }).hover();
-  await expect(bubble).not.toHaveClass(/sr-only/);
+  const info = cls.locator("[data-tile-title-line] button:has([data-info-glyph])");
+  await expect(info).toHaveCount(1);
+  await info.click();
+  await expect(cls.locator("[data-tile-title-line] [role=tooltip]")).toContainText("Reflectă valoarea subiectivă pe care o acorzi acestui element");
+  await info.click();
   await page.mouse.move(5, 5);
-  await expect(bubble).toHaveClass(/sr-only/);
 }
 
 async function photograph(page: Page, kind: string, cls: Locator, con: Locator, sizes: Record<string, unknown>): Promise<void> {
