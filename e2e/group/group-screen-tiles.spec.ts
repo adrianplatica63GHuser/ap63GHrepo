@@ -14,8 +14,8 @@
  */
 
 import { test, expect, type Page } from "../helpers/test";
-import { expectPanouriRoundTrip, tilesMenuButton } from "../helpers/tiles";
-import { E2E_MARKER, createProperty, removeGroupLeftovers, removeLeftovers, removeRecord } from "../helpers/records";
+import { expectPanouriRoundTrip, tileBox, tilesMenuButton } from "../helpers/tiles";
+import { E2E_MARKER, createNaturalPerson, createProperty, removeGroupLeftovers, removeLeftovers, removeRecord, removeStampLeftovers } from "../helpers/records";
 
 const MARK = `${E2E_MARKER}GRP-04`;
 const KEY = "ga40-tile-positions-admin-group-v1";
@@ -147,6 +147,80 @@ test.describe("TC-GRP-04 (41.41) — „Panouri” pe Grupuri, pe ecranul unui g
       await expectPanouriRoundTrip(page, "Etichete", "note");
     } finally {
       if (groupId) await page.request.delete(`/api/groups/${groupId}`);
+    }
+  });
+});
+
+// Slice 41.45 — a group or a stamp opened from a record shows only its identity tile, for that visit; from the lists,
+// the stored choice. And a „Vezi și" reference to a natural person opens that person, not the old /persons/{id}.
+test.describe("TC-GRP-04 (41.45) — deschis dintr-o fișă: doar identitatea; „Vezi și” ajunge la persoană", () => {
+  test("grupul și ștampila unei persoane, din „Etichete și grupuri”; apoi din liste; apoi „Vezi și”", async ({ page }) => {
+    test.slow();
+    const M = `${MARK}-FROM`;
+    await removeGroupLeftovers(page.request, M);
+    await removeStampLeftovers(page.request, M);
+    await removeLeftovers(page.request, M);
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    const people: string[] = [];
+    let groupId = "";
+    let stampId = "";
+    try {
+      for (const n of ["Unu", "Doi"]) people.push(await createNaturalPerson(page.request, { lastName: `${M} ${n}`, firstName: "Ion" }));
+      const po = async (id: string) => ((await (await page.request.get(`/api/people/${id}/entity-references`)).json()) as { principalObjectId: string }).principalObjectId;
+      const [one, two] = [await po(people[0]), people[1]];
+      const g = await page.request.post("/api/groups", { data: { targetType: "PHYSICAL_PERSON", description: `${M} Grup` } });
+      expect(g.status()).toBe(201);
+      groupId = ((await g.json()) as { id: string }).id;
+      expect((await page.request.post(`/api/metadata/${one}/groups`, { data: { groupId } })).ok()).toBeTruthy();
+      const s = await page.request.post("/api/stamps", { data: { shortDescription: `${M} Ștampilă`, notes: "" } });
+      expect(s.status()).toBe(201);
+      stampId = ((await s.json()) as { id: string }).id;
+      expect((await page.request.post(`/api/metadata/${one}/stamps`, { data: { stampId } })).ok()).toBeTruthy();
+      const twoCode = ((await (await page.request.get(`/api/people/${two}`)).json()) as { person: { code: string } }).person.code;
+      expect((await page.request.post(`/api/metadata/${one}/cross-refs`, { data: { targetCode: twoCode } })).ok()).toBeTruthy();
+      // Nothing stored for either screen's tiles, so their stored choice is every tile.
+      await page.goto(`/natural-persons/${people[0]}`);
+      await page.evaluate(() => { localStorage.removeItem("ga40-tiles-admin-group-v1"); localStorage.removeItem("ga40-tiles-admin-stamp-v1"); });
+      const connections = page.locator('[data-tile="connections"]');
+
+      // Step 1 — the group's link: its screen with „Identitatea grupului" only; „Panouri" lists the others unticked.
+      await connections.locator('a[href*="/admin/groups/"]').first().click();
+      await expect(page).toHaveURL(/\/admin\/groups\/[0-9a-f-]+\?.*tiles=identity/, { timeout: 30_000 });
+      await expect(page.getByRole("region", { name: "Identitatea grupului", exact: true })).toBeVisible({ timeout: 30_000 });
+      await expect(page.locator('[data-tile="members"]')).toBeHidden();
+      await expect(page.locator('[data-tile="workflows"]')).toBeHidden();
+      await expect(tileBox(page, "Identitatea grupului")).toBeChecked();
+      await expect(tileBox(page, "Membrii grupului")).not.toBeChecked();
+      await expect(tileBox(page, "Cum lucrezi cu grupurile")).not.toBeChecked();
+      expect(await page.evaluate(() => localStorage.getItem("ga40-tiles-admin-group-v1"))).toBeNull();
+
+      // Step 2 — the same group from the list: its stored choice, every tile.
+      await page.goto(`/admin/groups/${groupId}`);
+      await expect(page.getByRole("region", { name: "Membrii grupului", exact: true })).toBeVisible({ timeout: 30_000 });
+      await expect(page.getByRole("region", { name: "Cum lucrezi cu grupurile", exact: true })).toBeVisible();
+
+      // Step 3 — the stamp's link: „Descrierea ștampilei" only.
+      await page.goto(`/natural-persons/${people[0]}`);
+      await connections.locator('a[href*="/admin/stamps/"]').first().click();
+      await expect(page).toHaveURL(/\/admin\/stamps\/[0-9a-f-]+\?.*tiles=description/, { timeout: 30_000 });
+      await expect(page.getByRole("region", { name: "Descrierea ștampilei", exact: true })).toBeVisible({ timeout: 30_000 });
+      await expect(page.locator('[data-tile="records"]')).toBeHidden();
+      await expect(tileBox(page, "Elementele ștampilei")).not.toBeChecked();
+      expect(await page.evaluate(() => localStorage.getItem("ga40-tiles-admin-stamp-v1"))).toBeNull();
+      await page.goto(`/admin/stamps/${stampId}`);
+      await expect(page.getByRole("region", { name: "Elementele ștampilei", exact: true })).toBeVisible({ timeout: 30_000 });
+
+      // Step 4 — „Vezi și": the other person, on the natural persons' screen.
+      await page.goto(`/natural-persons/${people[0]}`);
+      const peer = connections.locator(`a[href*="/natural-persons/${people[1]}"]`);
+      await expect(peer).toBeVisible({ timeout: 30_000 });
+      await peer.click();
+      await expect(page).toHaveURL(new RegExp(`/natural-persons/${people[1]}`), { timeout: 30_000 });
+      await expect(page.locator("[data-record-header] h1")).toContainText(`${M} Doi`, { timeout: 30_000 });
+    } finally {
+      if (groupId) await page.request.delete(`/api/groups/${groupId}`);
+      if (stampId) await page.request.delete(`/api/stamps/${stampId}`);
+      for (const id of people) await removeRecord(page.request, "person", id);
     }
   });
 });
