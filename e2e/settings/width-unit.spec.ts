@@ -54,15 +54,18 @@ test.describe("TC-SET-06 — „Unitatea de lățime”", () => {
       await expect(unitBox(page)).toHaveValue("100", { timeout: 30_000 });
       expect(await widthOf(account(page))).toBe(unitsPx(settingsUnits, 100));
 
-      // Step 4 — „Adaugă persoană”: Adresă and Contact the fewest 100-px units at least 254 px wide; the fields as they were.
+      // Step 4 — „Adaugă persoană”: Contact the fewest 100-px units at least 254 px wide, Adresă at least 389 (41.35); the fields as they were.
       await page.goto("/natural-persons/new");
       const address = page.locator('[data-panel="addresses.HOME"]');
       await expect(address).toBeVisible({ timeout: 30_000 });
       const two = fewest(unitsPx(2, 119), 100);
       expect(two).toBe(3);
-      for (const panel of ["contact", "addresses.HOME"]) {
+      // 41.35: the address is 3 units of 119 px now (two M boxes a row) — the fewest 100-px units at least 389 px: 4.
+      const three = fewest(unitsPx(3, 119), 100);
+      expect(three).toBe(4);
+      for (const [panel, units] of [["contact", two], ["addresses.HOME", three]] as const) {
         const w = await widthOf(page.locator(`[data-panel="${panel}"]`));
-        expect([panel, w]).toEqual([panel, unitsPx(two, 100)]);
+        expect([panel, w]).toEqual([panel, unitsPx(units, 100)]);
         expect([panel, Number.isInteger((w + GAP) / (100 + GAP))]).toEqual([panel, true]);
       }
       const box = (await address.boundingBox())!;
@@ -74,9 +77,9 @@ test.describe("TC-SET-06 — „Unitatea de lățime”", () => {
         expect([name, b.x >= box.x - 0.5 && b.x + b.width <= box.x + box.width + 0.5]).toEqual([name, true]);
       }
       expect(await widthOf(page.locator('[data-width-field="addresses.HOME.locality"]'))).toBe(136);
-      expect(await widthOf(page.locator('[data-width-field="addresses.HOME.country"]'))).toBe(80);
+      expect(await widthOf(page.locator('[data-width-field="addresses.HOME.country"]'))).toBe(136); // 41.35: M (was S, 80)
       // TILE: the tile's whole inner width — its 12-px padding and 1-px border off each side.
-      expect(await widthOf(page.locator('[data-width-field="addresses.HOME.streetLine"]'))).toBe(unitsPx(two, 100) - 2 * 13);
+      expect(await widthOf(page.locator('[data-width-field="addresses.HOME.streetLine"]'))).toBe(unitsPx(three, 100) - 2 * 13);
 
       // Step 5 — „Revino la 119 px”.
       await page.goto("/admin/settings");

@@ -120,17 +120,22 @@ test.describe("TC-PERS-01 — Persoană fizică creată manual", () => {
       // Slice 40.80 — „Stradă, Nr., etaj, ap" in the address block, and a long street wraps: taller, never wider.
       // Slice 41.05 — the address and „Contact" tiles 2 units (254 px); Stradă TILE, the panel's whole inner width
       // (228; was XL, 272); Localitate M, Țară S.
-      for (const panel of ["contact", "addresses.HOME"]) {
-        expect([panel, Math.round((await page.locator(`[data-panel="${panel}"]`).boundingBox())!.width)]).toEqual([panel, 254]);
-      }
+      // Slice 41.35 — the address 3 units (389 px, 363 inside), its four boxes M in two pairs, the right ones one column
+      // (Localitate's left = Țară's, Cod poștal's = Județ / Sector's). „Contact" stays 2 units.
+      expect(Math.round((await page.locator('[data-panel="contact"]').boundingBox())!.width)).toBe(254);
+      expect(Math.round((await page.locator('[data-panel="addresses.HOME"]').boundingBox())!.width)).toBe(389);
       const street = page.locator('[data-width-field="addresses.HOME.streetLine"]');
       const streetOne = await street.boundingBox();
-      expect(streetOne?.width).toBe(228);
-      expect((await page.locator('[data-width-field="addresses.HOME.locality"]').boundingBox())?.width).toBe(SCALE.M * rem);
-      expect((await page.locator('[data-width-field="addresses.HOME.country"]').boundingBox())?.width).toBe(SCALE.S * rem);
+      expect(streetOne?.width).toBe(363);
+      const addressBox = async (k: string) => (await page.locator(`[data-width-field="addresses.HOME.${k}"]`).boundingBox())!;
+      const [postal, locality, county, country] = await Promise.all(["postalCode", "locality", "county", "country"].map(addressBox));
+      for (const b of [postal, locality, county, country]) expect(b.width).toBe(SCALE.M * rem);
+      expect(Math.abs(locality.x - country.x), "Localitate and Țară one column").toBeLessThanOrEqual(1);
+      expect(Math.abs(postal.x - county.x), "Cod poștal and Județ / Sector one column").toBeLessThanOrEqual(1);
+      expect(Math.round(locality.x - (postal.x + postal.width)), "8 px between the pair").toBe(8);
       await street.fill("Strada Exemplului Foarte Lungă nr. 123, bl. A4, sc. 2, et. 7, ap. 45");
       const streetGrown = await street.boundingBox();
-      expect(streetGrown?.width).toBe(228);
+      expect(streetGrown?.width).toBe(363);
       expect(streetGrown?.height ?? 0).toBeGreaterThan((streetOne?.height ?? 0) + 10);
       await street.fill("");
 
