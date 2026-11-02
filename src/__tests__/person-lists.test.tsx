@@ -154,7 +154,8 @@ describe("a person's and a company's preview: three compact lines (Slice #37.60)
     );
     const region = screen.getByRole("region", { name: "Exemplu Ion" });
     expect(region.hasAttribute("data-preview-compact")).toBe(true);
-    expect(region.style.width).toBe("");
+    // 41.36: 2 units (it was "" — as wide as its widest line).
+    expect(region.style.width).not.toBe("");
     const lines = [...region.querySelectorAll("[data-preview-line]")].map((l) => l.textContent);
     expect(lines).toEqual(["Poreclă: Ionel, CNP: 1234567890123", "Locul nașterii: Localitatea Exemplu"]);
     expect(region.querySelector("[data-preview-fields]")).toBeNull();

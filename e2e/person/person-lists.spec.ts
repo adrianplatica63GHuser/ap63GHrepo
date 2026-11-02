@@ -49,7 +49,7 @@ async function previewOf(page: Page): Promise<{ title: string; lines: string[]; 
       // The values only: each value's own text, without its read-aloud label.
       lines: [...el.querySelectorAll("[data-preview-line]")].map((l) =>
         [...l.querySelectorAll("[data-preview-value]")]
-          .map((v) => [...v.childNodes].filter((n) => n.nodeType === Node.TEXT_NODE).map((n) => n.textContent).join(""))
+          .map((v) => [...v.childNodes].filter((n) => !(n instanceof HTMLElement && n.classList.contains("sr-only"))).map((n) => n.textContent).join("")) // 41.36: the prefix is a span
           .join(""),
       ),
       width: r.width,
@@ -132,7 +132,7 @@ test.describe("TC-PERS-04 — listele de persoane", () => {
       expect(np.title).toBe(`${MARK} Ion`);
       // #39.28: it read [`Ionel TC, ${CNP}`, "născut: 01.01.1980, Localitatea Exemplu"] — #37.70's two lines.
       expect(np.lines).toEqual([
-        `Ionel TC · CNP: ${CNP} · născut: 01.01.1980, Localitatea Exemplu`,
+        `Ionel TC · CNP: ${CNP} · Născut: 01.01.1980, Localitatea Exemplu`, // 41.36: „Născut:" capitalised
         "+40 700 000 001 · ion.tc@example.ro",
         NOTE,
       ]);

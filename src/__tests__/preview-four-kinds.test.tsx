@@ -13,6 +13,8 @@ import { firstFilled, loadPreview, oneLine } from "@/components/tiles/preview-da
 import { readFileSync } from "fs";
 import { join } from "path";
 import {
+  PREVIEW_COMPACT_STYLE,
+  unitStyle,
   DOCUMENT, PREVIEW_FIELDS, PREVIEW_INNER_REM, PREVIEW_ROWS, PREVIEW_SUBJECT_REM, PREVIEW_UNITS, PREVIEW_WIDTHS, boxRem, rowRem,
 } from "@/lib/ui/field-widths";
 import ro from "../../messages/ro-RO.json";
@@ -28,6 +30,10 @@ function stubFetch(routes: Record<string, unknown>) {
       : { ok: false, status: 404, json: async () => ({}) };
   }) as unknown as typeof fetch;
 }
+
+/** 41.36: what a compact value shows — its text and its prefix span, the screen reader's hidden label left out. */
+const shown = (v: Element): string =>
+  [...v.childNodes].filter((n) => !(n instanceof HTMLElement && n.classList.contains("sr-only"))).map((n) => n.textContent).join("");
 
 describe("loadPreview reads each kind's short set (Slice #37.70)", () => {
   // #39.28: and the first filled phone and e-mail, and the notes on one line — it read the four values alone,
@@ -138,8 +144,8 @@ describe("the body draws them (Slice #37.70)", () => {
 
   it("„născut:” printed before the date, not a label on hover", () => {
     const { container } = renderPerson("12.03.1960");
-    const lines = [...container.querySelectorAll("[data-preview-line]")].map((l) =>
-      [...l.querySelectorAll("[data-preview-value]")].map((v) => [...v.childNodes].filter((n) => n.nodeType === Node.TEXT_NODE).map((n) => n.textContent).join("")).join(""));
+    // 41.36: the prefix is a span of its own (in the labels' navy); the line reads as before, the hidden label left out.
+    const lines = [...container.querySelectorAll("[data-preview-line]")].map((l) => [...l.querySelectorAll("[data-preview-value]")].map(shown).join(""));
     expect(lines).toEqual(["Ani", "născută: 12.03.1960, Bragadiru"]);
   });
 
@@ -175,8 +181,12 @@ describe("the body draws them (Slice #37.70)", () => {
 
 describe("the messages and the rows (Slice #37.70)", () => {
   it("„născut:” / „născută:” and the plural count, Romanian first", () => {
-    expect([ro.shared.preview.bornMale, ro.shared.preview.bornFemale]).toEqual(["născut:", "născută:"]);
-    expect(en.shared.preview.bornMale).toBe("born:");
+    // 41.36 inverted in place (were „născut:", „născută:", „born:") — Adrian: „capitalize the words: născută, born".
+    expect([ro.shared.preview.bornMale, ro.shared.preview.bornFemale]).toEqual(["Născut:", "Născută:"]);
+    expect([ro.shared.preview.diedMale, ro.shared.preview.diedFemale]).toEqual(["Decedat:", "Decedată:"]);
+    expect([en.shared.preview.bornMale, en.shared.preview.bornFemale, en.shared.preview.diedMale, en.shared.preview.diedFemale]).toEqual(["Born:", "Born:", "Died:", "Died:"]);
+    // „dată necunoscută" is a value, not a label: lower-case still.
+    expect(ro.shared.preview.deathDateUnknown).toBe("dată necunoscută");
     // #39.28: the count is gone (it held „{count, plural, =0 {(niciun contact)} …}"); „CNP:" and „CUI:" came.
     expect(ro.shared.preview).not.toHaveProperty("contacts");
     expect([ro.shared.preview.cnpPrefix, ro.shared.preview.cuiPrefix]).toEqual(["CNP:", "CUI:"]);
@@ -213,8 +223,7 @@ describe("the persons' previews on four lines (#39.28)", () => {
   function draw(lines: Parameters<typeof PreviewTileBody>[0]["lines"]) {
     return render(<PreviewTileBody title="Pop Ana" fields={[]} lines={lines} openHref="/natural-persons/p1" labels={LABELS} onClose={() => {}} width="panel" />);
   }
-  const text = (el: Element) =>
-    [...el.querySelectorAll("[data-preview-value]")].map((v) => [...v.childNodes].filter((n) => n.nodeType === Node.TEXT_NODE).map((n) => n.textContent).join("")).join("");
+  const text = (el: Element) => [...el.querySelectorAll("[data-preview-value]")].map(shown).join("");
 
   it("line 2 reads „Poreclă · CNP: … · născută: date, place”; line 3 the phone · the e-mail; line 4 the notes", () => {
     const { container } = draw([
@@ -269,5 +278,38 @@ describe("the persons' previews on four lines (#39.28)", () => {
     expect(tiles).toContain('sep: name === "dateOfBirth" ? ", " : " · ",');
     expect(tiles).toContain('cut: name === "notes",');
     expect(tiles).not.toContain('t("contacts"');
+  });
+});
+
+// Slice 41.36 — Adrian: „The Preview small green tiles have a non standard width; Let's make them two units wide and as
+// tall as needed; let's make the labels, field names the same Navy that other labels have".
+describe("the compact previews: 2 units, navy labels (41.36)", () => {
+  it("a person's or a company's preview is 2 units wide, its lines wrapping inside", () => {
+    const { container } = render(
+      <PreviewTileBody title="Pop Ana" fields={[]} lines={[[{ label: "CNP", value: "2600312000000", prefix: "CNP:" }]]} openHref="/natural-persons/p1" labels={LABELS} onClose={() => {}} width="panel" />,
+    );
+    const tile = container.querySelector<HTMLElement>("[data-preview]")!;
+    expect(tile.style.width).toBe(String(PREVIEW_COMPACT_STYLE.width));
+    expect(PREVIEW_COMPACT_STYLE).toEqual(unitStyle(2));
+    expect(tile.className).not.toMatch(/w-max/);
+    const line = container.querySelector<HTMLElement>("[data-preview-line]")!;
+    expect(line.className).not.toMatch(/whitespace-nowrap/);
+    expect(line.className).toMatch(/break-words/);
+  });
+
+  it("each prefix in the labels' navy, the value after it in ink", () => {
+    const { container } = render(
+      <PreviewTileBody title="Pop Ana" fields={[]} lines={[[{ label: "Data nașterii", value: "12.03.1960", prefix: "Născută:" }]]} openHref="/natural-persons/p1" labels={LABELS} onClose={() => {}} width="panel" />,
+    );
+    const prefix = container.querySelector<HTMLElement>("[data-preview-prefix]")!;
+    expect(prefix.textContent).toBe("Născută:");
+    expect(prefix.className).toMatch(/\btext-label\b/);
+    expect(container.querySelector("[data-preview-lines]")!.className).toMatch(/\btext-ink\b/);
+  });
+
+  it("the stacked previews' labels are navy too (the property's and the document's)", () => {
+    const body = readFileSync(join(process.cwd(), "src/components/tiles/preview-tile-body.tsx"), "utf8");
+    expect(body).toContain('const PREVIEW_LABEL_CLASS = "self-end text-xs font-medium text-label";');
+    expect(body).not.toMatch(/PREVIEW_LABEL_CLASS = "[^"]*text-fade/);
   });
 });

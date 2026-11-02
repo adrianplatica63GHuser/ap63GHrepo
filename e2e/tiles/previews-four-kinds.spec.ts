@@ -183,7 +183,7 @@ async function three(page: Page, list: string, name: string, other: string, shot
 async function linesOf(tile: Locator): Promise<string[]> {
   return tile.evaluate((el) => [...el.querySelectorAll("[data-preview-line]")].map((l) =>
     [...l.querySelectorAll("[data-preview-value]")]
-      .map((v) => [...v.childNodes].filter((n) => n.nodeType === Node.TEXT_NODE).map((n) => n.textContent).join(""))
+      .map((v) => [...v.childNodes].filter((n) => !(n instanceof HTMLElement && n.classList.contains("sr-only"))).map((n) => n.textContent).join("")) // 41.36: the prefix is a span
       .join("")));
 }
 
@@ -225,7 +225,19 @@ test.describe("TC-TILES-11 — cele patru previzualizări", () => {
       // ["Ioni", "născută: 12.03.1960, Bragadiru"]).
       const p = await preview(page, "/natural-persons", "Ioana");
       await expect(p.locator("h2")).toHaveText(`${MARK} Ioana`);
-      await expect.poll(() => linesOf(p)).toEqual(["Ioni · născută: 12.03.1960, Bragadiru"]);
+      // 41.36: „Născută:" capitalised, in the labels' navy; the tile 2 units (254 px), its line wrapping inside.
+      await expect.poll(() => linesOf(p)).toEqual(["Ioni · Născută: 12.03.1960, Bragadiru"]);
+      expect(Math.round((await p.boundingBox())!.width)).toBe(254);
+      const navy = await page.evaluate(() => {
+        const probe = document.createElement("span");
+        probe.className = "text-label";
+        document.body.appendChild(probe);
+        const c = getComputedStyle(probe).color;
+        probe.remove();
+        return c;
+      });
+      await expect(p.locator("[data-preview-prefix]").first()).toHaveText("Născută:");
+      await expect(p.locator("[data-preview-prefix]").first()).toHaveCSS("color", navy);
       await closeByMagnifier(page, "Ioana");
 
       // Step 2 — the company: „Firma". #39.28: no „(2 contacte)" after its name any more — Adrian's lines do not
