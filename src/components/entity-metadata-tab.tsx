@@ -2,7 +2,7 @@
 
 import { useNameOr } from "@/components/record/use-name-or";
 import { unnamedKindOf } from "@/lib/ui/unnamed";
-import { Fragment, useEffect, useId, useState, useRef } from "react";
+import { Fragment, useCallback, useEffect, useId, useState, useRef } from "react";
 import { Calculator, Link as LinkIcon, Plus, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { AddToggleButton, MarkReviewedButton } from "@/components/metadata-buttons";
@@ -20,6 +20,7 @@ import { buttonClass } from "@/lib/ui/button-styles";
 import { CLASSIFICATION_UNITS, boxRem, rem, screenBox, tileInner, unitsInnerRem } from "@/lib/ui/field-widths";
 import { daysSince, updatedToday as isUpdatedToday } from "@/lib/metadata/updated-days";
 import { HintBubble } from "@/lib/ui/hint-bubble";
+import { pickerOptionText, usePickerDismiss } from "@/lib/ui/picker-dismiss";
 import { Divider } from "@/lib/ui/divider";
 import { MAX_GROUPS_PER_ITEM, MAX_GROUPS_PER_PROPERTY } from "@/lib/groups/validation";
 import { FIELD_LABEL } from "@/lib/ui/field-box";
@@ -607,6 +608,11 @@ function InlineGroupsSection({
   const [adding,    setAdding]    = useState(false);
   const [removing,  setRemoving]  = useState<string | null>(null);
   const selectRef   = useRef<HTMLSelectElement>(null);
+  // 41.39: the picker closes on a press outside this section and on Esc, the focus back on its „+".
+  const sectionRef  = useRef<HTMLElement>(null);
+  const closePicker = useCallback(() => setShowAdd(false), []);
+  const pickerToggle = useCallback(() => sectionRef.current?.querySelector<HTMLElement>("[data-picker-toggle] button, button"), []);
+  usePickerDismiss(showAdd, closePicker, sectionRef, pickerToggle);
 
   const { data: availData, isLoading: availLoading } = useQuery<{ groups: AvailableGroup[] }>({
     queryKey:             [availKey],
@@ -659,7 +665,7 @@ function InlineGroupsSection({
   }
 
   return (
-    <section className="flex flex-col gap-1">
+    <section ref={sectionRef} className="flex flex-col gap-1" data-groups-picker-section="">
       <div className="flex items-center justify-between">
         <h3 className={ITEM_TITLE}>{labelTitle}</h3>
         {isOnLatest && (
@@ -684,14 +690,17 @@ function InlineGroupsSection({
             defaultValue=""
             disabled={adding || availLoading}
             onChange={(e) => { void handleAdd(e.target.value); }}
-            className="rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-ink dark:text-zinc-100 text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:opacity-50"
+            // 41.39: what is left of its row (`flex-1 min-w-0`, as the tag box since 41.27) — never wider than the tile.
+            className="min-w-0 flex-1 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-ink dark:text-zinc-100 text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:opacity-50"
+            data-groups-picker=""
           >
             <option value="" disabled data-blank="">
               {availLoading ? "…" : available.length === 0 ? labelNoneAvailable : labelAddPlaceholder}
             </option>
             {available.map((g) => (
-              <option key={g.id} value={g.id}>
-                {g.code} — {g.description}
+              // 41.39: the description cut to about 60 characters, whole on hover.
+              <option key={g.id} value={g.id} title={g.description ?? undefined}>
+                {pickerOptionText(g.code, g.description)}
               </option>
             ))}
           </select>
@@ -783,6 +792,11 @@ function InlineStampsSection({
   const stampsApiBase = `/api/metadata/${principalObjectId}/stamps`;
 
   const [showAdd,  setShowAdd]  = useState(false);
+  // 41.39: as the group picker — closed by a press outside or Esc, the focus back on its „+".
+  const sectionRef  = useRef<HTMLElement>(null);
+  const closePicker = useCallback(() => setShowAdd(false), []);
+  const pickerToggle = useCallback(() => sectionRef.current?.querySelector<HTMLElement>("button"), []);
+  usePickerDismiss(showAdd, closePicker, sectionRef, pickerToggle);
   const [adding,   setAdding]   = useState(false);
   const [removing, setRemoving] = useState<string | null>(null);
 
@@ -833,7 +847,7 @@ function InlineStampsSection({
   }
 
   return (
-    <section className="flex flex-col gap-1">
+    <section ref={sectionRef} className="flex flex-col gap-1" data-stamps-picker-section="">
       <div className="flex items-center justify-between">
         <h3 className={ITEM_TITLE}>{labelTitle}</h3>
         {isOnLatest && (
@@ -855,14 +869,15 @@ function InlineStampsSection({
             defaultValue=""
             disabled={adding || availLoading}
             onChange={(e) => { void handleAdd(e.target.value); }}
-            className="rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-ink dark:text-zinc-100 text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:opacity-50"
+            className="min-w-0 flex-1 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-ink dark:text-zinc-100 text-sm px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-500 disabled:opacity-50"
+            data-stamps-picker=""
           >
             <option value="" disabled data-blank="">
               {availLoading ? "…" : labelAddPlaceholder}
             </option>
             {available.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.code} — {s.shortDescription}
+              <option key={s.id} value={s.id} title={s.shortDescription ?? undefined}>
+                {pickerOptionText(s.code, s.shortDescription)}
               </option>
             ))}
           </select>
