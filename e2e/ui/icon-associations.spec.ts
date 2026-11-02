@@ -22,7 +22,7 @@
 
 import { test, expect, type Locator, type Page } from "../helpers/test";
 import { E2E_MARKER, createNaturalPerson, createProperty, removeLeftovers, removeRecord, type RecordKind } from "../helpers/records";
-import { showTile, editTile, saveTile } from "../helpers/tiles";
+import { showTile, editTile, saveTile, editConnections } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}ICON-03`;
 const PROPERTY = `${MARK} Teren`;
@@ -143,6 +143,7 @@ test.describe("TC-ICON-03 — „Asociază” și „Dezasociază” cu pictogra
       await page.goto(`/properties/${propertyId}`);
       await expect(page.getByRole("heading", { name: `${PROPERTY} v1` })).toBeVisible({ timeout: 30_000 });
       await showTile(page, "Etichete și grupuri");
+      await editConnections(page); // 41.40: „+" only in edit
       const addToGroup = page.getByRole("button", { name: "+ Adaugă în grup" });
       await expect(addToGroup).toBeVisible({ timeout: 30_000 });
       expect(await iconOf(addToGroup)).toBe("lucide-plus");

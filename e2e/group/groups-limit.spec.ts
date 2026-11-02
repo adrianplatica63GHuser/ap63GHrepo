@@ -16,7 +16,7 @@
 
 import { test, expect, type APIRequestContext, type Locator } from "../helpers/test";
 import { E2E_MARKER, createProperty, removeGroupLeftovers, removeLeftovers, removeRecord } from "../helpers/records";
-import { showTile } from "../helpers/tiles";
+import { showTile, editConnections } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}GRP-02`;
 const SHOTS = "playwright-report/groups-limit";
@@ -53,7 +53,8 @@ test.describe("TC-GRP-02 — limita de trei grupuri", () => {
 
       // Step 1 — three groups; „+" inactive, named by the limit; the italic line; no picker.
       await page.goto(`/properties/${propertyId}`);
-      const tile = await showTile(page, "Etichete și grupuri");
+      await showTile(page, "Etichete și grupuri");
+      const tile = await editConnections(page); // 41.40: „+" and „×" only in edit
       const groups = groupsOf(tile);
       await expect(groups.locator("li")).toHaveCount(3, { timeout: 30_000 });
       const capped = groups.getByRole("button", { name: "Cel mult 3 grupuri", exact: true });

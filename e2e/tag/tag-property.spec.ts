@@ -25,7 +25,7 @@
 import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createProperty, removeLeftovers, removeRecord } from "../helpers/records";
 import { sidebar } from "../helpers/sidebar";
-import { showTile } from "../helpers/tiles";
+import { showTile, editConnections } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}TAG-01`;
 const PROPERTY = `${MARK} Teren de test`;
@@ -44,6 +44,7 @@ async function openMetaInfo(page: Page, propertyId: string): Promise<void> {
   // Slice #37.63: META INFO is two tiles; the case reads both.
   await showTile(page, "Clasificare");
   await showTile(page, "Etichete și grupuri");
+  await editConnections(page); // 41.40: the tag box and „×" only in edit
   await expect(page.getByPlaceholder("Introduceți o etichetă…")).toBeVisible({ timeout: 30_000 });
 }
 

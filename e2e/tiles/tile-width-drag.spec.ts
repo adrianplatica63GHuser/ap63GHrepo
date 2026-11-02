@@ -16,7 +16,7 @@
  */
 import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, createCompany, createNaturalPerson, createProperty, createSaleContract, removeLeftovers, removeRecord, type RecordKind } from "../helpers/records";
-import { pressTileButton } from "../helpers/tiles";
+import { pressTileButton, editConnections } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}TILES-26`;
 const UNIT = 119;
@@ -311,7 +311,8 @@ test.describe("TC-TILES-26 — lățimea unei plăci", () => {
         expect(now, `${m.kind}: one unit narrower is taken`).toBe("2");
         await expect.poll(async () => (await measure(page, "connections")).tile).toBe(unitsPx(2));
         if (m.kind === "person") {
-          // A tag typed and added at 2 units: the box beside „Adaugă" holds it.
+          // A tag typed and added at 2 units: the box beside „Adaugă" holds it. 41.40: the box only in edit.
+          await editConnections(page);
           const box = page.locator("[data-tag-input]");
           await expect(box).toHaveAttribute("aria-label", "Etichetă nouă");
           const bw = (await box.boundingBox())!.width;

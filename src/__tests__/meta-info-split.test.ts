@@ -69,7 +69,9 @@ describe("META INFO is two tiles on the four screens (Slice #37.63)", () => {
     ]) {
       const page = read("src", "app", file[0], "_components", file[1]);
       expect(page).toMatch(/<ListTile tile="classification"[\s\S]*?part="classification"/);
-      expect(page).toMatch(/<ListTile tile="connections"[\s\S]*?part="connections"/);
+      // 41.40 inverted in place (it was `<ListTile tile="connections" … part="connections">` without readEdit): a gray
+      // form tile now — calm at rest, its pen opens it.
+      expect(page).toMatch(/<ListTile tile="connections"[^>]*\breadEdit\b[^>]*>[\s\S]*?part="connections"/);
       expect(page).not.toMatch(/tile="metadata"/);
       // One query key for both halves, so the record's metadata is fetched once.
       const keys = [...page.matchAll(/queryKey=\{(`[^`]+`)\}/g)].map((m) => m[1]);

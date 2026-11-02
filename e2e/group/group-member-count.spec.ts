@@ -15,7 +15,7 @@
 
 import { test, expect, type APIRequestContext, type Locator, type Page } from "../helpers/test";
 import { E2E_MARKER, createProperty, removeGroupLeftovers, removeLeftovers, removeRecord } from "../helpers/records";
-import { showTile } from "../helpers/tiles";
+import { showTile, editConnections } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}GRP-03`;
 const GROUP = `${MARK} Grup`;
@@ -28,7 +28,8 @@ async function principalOf(request: APIRequestContext, propertyId: string): Prom
 /** The group's row in this screen's „Grupuri", and its chip. */
 async function groupRow(page: Page, propertyId: string): Promise<{ groups: Locator; row: Locator; chip: Locator }> {
   await page.goto(`/properties/${propertyId}`);
-  const tile = await showTile(page, "Etichete și grupuri");
+  await showTile(page, "Etichete și grupuri");
+  const tile = await editConnections(page); // 41.40: „+" and „×" only in edit
   const groups = tile.locator("section").filter({ has: page.getByRole("heading", { name: "Grupuri", exact: true }) });
   const row = groups.locator("li").filter({ hasText: GROUP });
   return { groups, row, chip: row.locator("[data-group-member-count]") };

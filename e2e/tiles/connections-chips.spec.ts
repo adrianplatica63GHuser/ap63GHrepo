@@ -16,6 +16,7 @@
  */
 
 import { test, expect, type Locator } from "../helpers/test";
+import { editConnections } from "../helpers/tiles";
 import {
   E2E_MARKER, createNaturalPerson, removeLeftovers, removeRecord,
 } from "../helpers/records";
@@ -54,6 +55,15 @@ test.describe("TC-TILES-10 — etichete mici, „×” doar la mouse sau la foca
       const con = page.getByRole("region", { name: "Etichete și grupuri", exact: true });
       const chips = con.locator("[data-tag-chip]");
       await expect(chips).toHaveText(TAGS, { timeout: 30_000 });
+      // Slice 41.40 — at rest the tile is calm: the chips, and no tag box, no „+", no „×", no „Leagă".
+      await expect(con.locator("[data-tag-input]")).toHaveCount(0);
+      await expect(con.getByRole("button", { name: /^\+ / })).toHaveCount(0);
+      await expect(con.getByRole("button", { name: /^Elimină / })).toHaveCount(0);
+      await expect(con.getByRole("button", { name: /^Leagă/ })).toHaveCount(0);
+      // The pen opens it in edit: everything back.
+      await editConnections(page);
+      await expect(con.locator("[data-tag-input]")).toBeVisible();
+      await expect(con.getByRole("button", { name: "+ Adaugă în grup", exact: true })).toBeVisible();
       // In view first, so the hovers below never scroll and every box is read from one place.
       await chips.nth(1).scrollIntoViewIfNeeded();
       await page.mouse.move(2, 2);
@@ -116,6 +126,7 @@ test.describe("TC-TILES-10 (41.39) — alegerea grupului se închide, dala se î
       await page.goto(`/natural-persons/${person}?tab=metadata`);
       const con = page.getByRole("region", { name: "Etichete și grupuri", exact: true });
       await expect(con).toBeVisible({ timeout: 30_000 });
+      await editConnections(page); // 41.40: the pickers are in edit
       const plus = con.getByRole("button", { name: "Adaugă în grup", exact: false }).first();
       const picker = con.locator("[data-groups-picker]");
       // A press outside closes it.
@@ -151,6 +162,10 @@ test.describe("TC-TILES-10 (41.39) — alegerea grupului se închide, dala se î
       await expect.poll(async () => Number(await edge.getAttribute("aria-valuenow"))).toBe(before - 1);
       await page.keyboard.press("Home");
       await expect.poll(async () => Number(await edge.getAttribute("aria-valuenow"))).toBe(before);
+      // 41.40: „Gata" puts the tile back at rest — no „+" any more.
+      await con.locator('[data-tile-done="connections"]').click();
+      await expect(con.locator('[data-tile-edit-bar="connections"]')).toHaveCount(0);
+      await expect(con.getByRole("button", { name: /^\+ / })).toHaveCount(0);
     } finally {
       if (groupId) await page.request.delete(`/api/groups/${encodeURIComponent(groupId)}`);
       await removeRecord(page.request, "person", person);

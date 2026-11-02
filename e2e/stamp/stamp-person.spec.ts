@@ -39,7 +39,7 @@ import {
   removeStampLeftovers,
 } from "../helpers/records";
 import { sidebar } from "../helpers/sidebar";
-import { showTile } from "../helpers/tiles";
+import { showTile, editConnections } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}STAMP-01`;
 const DESCRIPTION = `${MARK} Ștampilă de test`;
@@ -168,6 +168,7 @@ test.describe("TC-STAMP-01 — Ștampilă creată, aplicată unei persoane și g
       await page.goto(`/natural-persons/${personId}`);
       await expect(page.getByRole("heading", { name: PERSON })).toBeVisible({ timeout: 30_000 });
       await showTile(page, "Etichete și grupuri");
+      await editConnections(page); // 41.40: „+" only in edit
       await expect(page.getByRole("button", { name: "+ Aplică ștampilă" })).toBeVisible();
       await expect(page.getByText(code, { exact: true })).toBeVisible();
       await expect(page.getByText(DESCRIPTION, { exact: true })).toBeVisible();

@@ -280,6 +280,23 @@ export async function expectEditInCorner(tile: Locator): Promise<{ top: number; 
   return gaps!;
 }
 
+/**
+ * Slice 41.40: Etichete și grupuri reads at rest — no tag box, no „+", no „×", no „Leagă" — and its pen opens it in
+ * edit. A spec that adds or removes there presses the pen first (a tile already in edit is left as it is).
+ */
+export async function editConnections(page: Page): Promise<Locator> {
+  const tile = page.getByRole("region", { name: "Etichete și grupuri", exact: true });
+  await expect(tile).toBeVisible({ timeout: 30_000 });
+  const bar = tile.locator('[data-tile-edit-bar="connections"]');
+  if ((await bar.count()) === 0) {
+    const pen = tile.locator('[data-tile-edit="connections"]');
+    await expect(pen).toBeVisible({ timeout: 30_000 });
+    await pen.click();
+  }
+  await expect(bar).toBeVisible();
+  return tile;
+}
+
 /** `saveTile` by the tile's heading. */
 export async function saveTileNamed(page: Page, name: string): Promise<void> {
   const region = page.getByRole("region", { name, exact: true });
