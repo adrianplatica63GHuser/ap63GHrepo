@@ -142,7 +142,10 @@ test.describe("TC-TILES-10 (41.39) — alegerea grupului se închide, dala se î
       await expect.poll(async () => Number(await edge.getAttribute("aria-valuenow"))).toBe(before - 1);
       await page.keyboard.press("Home");
       await expect.poll(async () => Number(await edge.getAttribute("aria-valuenow"))).toBe(before);
-      await expect(picker).toHaveCount(0); // the press on the edge was outside the picker
+      // The keyboard on the edge is no press outside — the picker is still open; Esc closes it.
+      await expect(picker).toBeVisible();
+      await page.keyboard.press("Escape");
+      await expect(picker).toHaveCount(0);
       await edge.focus();
       await page.keyboard.press("ArrowLeft");
       await expect.poll(async () => Number(await edge.getAttribute("aria-valuenow"))).toBe(before - 1);
