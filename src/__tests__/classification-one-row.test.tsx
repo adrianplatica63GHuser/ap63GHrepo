@@ -105,10 +105,13 @@ describe("„Clasificare”: read, and edited with „Editează” (Slice 41.10)
     expect(line.querySelector("[data-read-value]")!.compareDocumentPosition(within(items()[0]).getByText("lastChangedToday")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(line.contains(within(items()[0]).getByText("lastChangedToday"))).toBe(true);
     expect(within(items()[1]).queryByText("lastChangedToday")).toBeNull();
-    // 41.28 (Ask first 3): one „i" in the tile, at the right end of its top line, named for the tile.
+    // 41.28 (Ask first 3): one „i" in the tile, named for the tile. 41.37 inverted in place — it was „at the right end
+    // of its top line" ([data-classification-top]); now on the title's line, right after „Clasificare" (the tile's hint
+    // slot), and the top line is drawn only with several versions.
     expect(document.querySelectorAll("[data-info-glyph]")).toHaveLength(1);
-    const top = document.querySelector("[data-classification-top]")!;
-    expect(top.querySelector("[data-info-glyph]")).not.toBeNull();
+    const titleLine = document.querySelector("[data-tile-title-line]")!;
+    expect(titleLine.querySelector("h2")!.nextElementSibling!.querySelector("[data-info-glyph]")).not.toBeNull();
+    expect(document.querySelector("[data-classification-top]")).toBeNull();
     // No save while reading: „Editează" is the way in.
     expect(screen.queryByRole("button", { name: "save" })).toBeNull();
     expect(screen.getByRole("button", { name: /^editTile/ })).toBeTruthy();

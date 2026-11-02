@@ -70,19 +70,27 @@ async function steps(page: Page, url: string, olderToo: boolean) {
   expect(await read(tile)).toMatchObject({ width: 254, stacked: true, within: true, selects: 0 });
 
   // Step 3b — 41.28: Importanță was set today — „(actualizat azi)" after its value, its button „Verificat azi", disabled;
-  // one „i" in the tile, at the right end of its top line, whose bubble names Importanță, Relevanță, Proveniență, Istoric.
+  // one „i" in the tile, whose bubble names Importanță, Relevanță, Proveniență, Istoric. 41.37 inverted in place — it was
+  // „at the right end of its top line": now on the title's line, right after „Clasificare", and its bubble adds
+  // „Revizuire" with the configured day counts (90 on the seed).
   const imp = tile.locator('[data-classification-item="importance"]');
   await expect(imp.locator("[data-classification-date]")).toHaveText("(actualizat azi)");
   const [rv, dt] = await Promise.all([imp.locator('[data-read-value="classification.importance"]').boundingBox(), imp.locator("[data-classification-date]").boundingBox()]);
   expect(dt!.x >= rv!.x + rv!.width - 1 || dt!.y >= rv!.y + rv!.height - 1, "the date follows the value").toBe(true);
   await expect(imp.getByRole("button", { name: "Verificat azi", exact: true })).toBeDisabled();
   await expect(tile.locator("[data-info-glyph]")).toHaveCount(1);
-  const info = tile.locator("[data-classification-top] button:has([data-info-glyph])");
-  const [ib, tb] = await Promise.all([info.boundingBox(), tile.boundingBox()]);
-  expect(tb!.x + tb!.width - (ib!.x + ib!.width), "the „i” at the right end").toBeLessThanOrEqual(16);
+  const titleLine = tile.locator("[data-tile-title-line]");
+  const info = titleLine.locator("button:has([data-info-glyph])");
+  const [ib, hb] = await Promise.all([info.boundingBox(), titleLine.locator("h2").boundingBox()]);
+  expect(Math.abs(ib!.y + ib!.height / 2 - (hb!.y + hb!.height / 2)), "the „i” on the title's line").toBeLessThanOrEqual(4);
+  expect(ib!.x - (hb!.x + hb!.width), "the „i” right after the title").toBeLessThanOrEqual(12);
+  expect(ib!.x - (hb!.x + hb!.width)).toBeGreaterThanOrEqual(0);
   await info.click();
-  const tip = tile.locator("[data-classification-top] [role=tooltip]");
-  for (const w of ["Importanță", "Relevanță", "Proveniență", "Istoric"]) await expect(tip).toContainText(w);
+  const tip = titleLine.locator("[role=tooltip]");
+  for (const w of ["Importanță", "Relevanță", "Proveniență", "Istoric", "Revizuire"]) await expect(tip).toContainText(w);
+  await expect(tip).toContainText("mai mult de 90 de zile");
+  await expect(tip).toContainText("mai veche de 90 de zile");
+  await expect(tip).toContainText("Administrare → Setări");
   await info.click();
 
   // Step 4 — after a reload the value is still there; with two versions the version line has the one divider.
