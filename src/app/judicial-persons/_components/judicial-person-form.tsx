@@ -208,25 +208,35 @@ const JP_LABEL_KEY: Readonly<Record<string, string>> = { judicialPersonTypeId: "
  * (src/components/tiles/read-edit-tile.tsx). What each tile's „Salvează" sends: its own fields; the route takes a
  * partial update and merges the addresses by kind, and one save makes one version.
  */
-type JpEditTile = "identity" | "contactPersons" | "addresses";
+type JpEditTile = "identity" | "contactPersons" | "headquarters" | "correspondence";
 const JP_EDIT_PAYLOAD: Record<JpEditTile, readonly (keyof ReturnType<typeof toApiPayload>)[]> = {
   identity: ["name", "nickname", "judicialPersonTypeId", "cuiNumber", "tradeRegisterNumber", "notes"],
   contactPersons: ["phone", "email", "contactPerson1Id", "contactPerson2Id"],
-  addresses: ["addresses", "correspondenceSameAsHq"],
+  // Slice 41.34: each address its own tile (the route merges the addresses by kind); the correspondence's save carries
+  // the „Aceeași cu adresa sediului social" box.
+  headquarters: ["addresses"],
+  correspondence: ["addresses", "correspondenceSameAsHq"],
 };
 /** Each tile's `data-panel`, bare (as on the natural person: the tile is this file's only `data-panel="…"`). */
 const JP_EDIT_PANEL: Record<JpEditTile, string> = {
   identity: "identity",
   contactPersons: "contact-persons",
-  addresses: "addresses.HEADQUARTERS",
+  headquarters: "addresses.HEADQUARTERS",
+  correspondence: "addresses.CORRESPONDENCE",
 };
 /** The tile 40.64's one-line panels and 40.71's links belong to. */
 const JP_EDIT_OF: Readonly<Record<string, JpEditTile>> = {
   identity: "identity",
   contactPersons: "contactPersons",
-  headquarters: "addresses",
-  correspondence: "addresses",
+  headquarters: "headquarters",
+  correspondence: "correspondence",
 };
+/** Slice 41.34: the edit tile a field is on — the two addresses apart, the same-as-registered box with the correspondence. */
+function jpEditTileOf(path: string): JpEditTile {
+  const tile = jpTileOfField(path);
+  if (tile !== "addresses") return tile as JpEditTile;
+  return path.startsWith("addresses.HEADQUARTERS.") ? "headquarters" : "correspondence";
+}
 
 export function JudicialPersonForm({
   mode,
@@ -506,7 +516,8 @@ export function JudicialPersonForm({
       const full = toApiPayload(values);
       // Slice 40.73: a tile's „Salvează" sends that tile's fields only — and „Completează din ANAF" on „Identitate",
       // which also writes the registered address and the firm's phone, sends those with it.
-      const anafKeys: readonly (keyof typeof full)[] = [...JP_EDIT_PAYLOAD.addresses, "phone"];
+      // 41.34 (Ask first 4): unchanged — the registered office, the box and the phone, as when both addresses were one tile.
+      const anafKeys: readonly (keyof typeof full)[] = ["addresses", "correspondenceSameAsHq", "phone"];
       const keys = tile ? [...JP_EDIT_PAYLOAD[tile], ...(tile === "identity" && anafApplied ? anafKeys : [])] : null;
       const payload = keys ? Object.fromEntries(keys.map((key) => [key, full[key]])) : full;
       const url =
@@ -716,7 +727,7 @@ export function JudicialPersonForm({
   const editingTile: JpEditTile | null = canEditTiles ? tileEditing.open : null;
   const reading = (tile: JpEditTile): boolean => perTile && editingTile !== tile;
   const readMode: ReadMode = {
-    reading: (name) => perTile && jpTileOfField(name) !== editingTile,
+    reading: (name) => perTile && jpEditTileOf(name) !== editingTile,
     value: (name) => valueAt(watchedValues, name),
   };
   const saveTile = async (tile: JpEditTile): Promise<boolean> => {
@@ -784,6 +795,51 @@ export function JudicialPersonForm({
   const contactPersonsFolded = folded("contactPersons");
   const headquartersFolded = folded("headquarters");
   const correspondenceFolded = folded("correspondence");
+  // Slice 41.34: „Aceeași cu adresa sediului social" — the correspondence tile's footer while it is open on a saved firm;
+  // the registered office's last line on a new one.
+  const sameAsHqBox = (
+    <Controller
+      control={control}
+      name="correspondenceSameAsHq"
+      render={({ field }) => (
+        <label
+          className={[
+            "flex cursor-pointer items-center gap-2 rounded-md text-sm select-none",
+            field.value
+              ? "font-bold text-ink dark:text-zinc-200"
+              : "font-normal text-fade dark:text-zinc-400",
+            displayHighlights?.fields.correspondenceSameAsHq
+              ? "px-1 " +
+                highlightRingClass(
+                  displayHighlights.fields.correspondenceSameAsHq,
+                  pulsing,
+                )
+              : "",
+          ].join(" ")}
+        >
+          <input
+            type="checkbox"
+            checked={field.value}
+            onChange={(e) => {
+              field.onChange(e.target.checked);
+              // When toggling to "same", copy HQ into correspondence so
+              // there's no stale data sitting in the hidden inputs.
+              if (e.target.checked) {
+                const hq = getValues("addresses.HEADQUARTERS");
+                setValue("addresses.CORRESPONDENCE", { ...hq }, { shouldDirty: true });
+              } else {
+                // Slice 40.64: unticked to give it its own address — the panel opens, the focus in it.
+                emptyTiles.open("correspondence", '[data-panel="addresses.CORRESPONDENCE"]');
+              }
+            }}
+            className="accent-cta"
+            aria-label={t("fields.sameAsRegistered")}
+          />
+          {t("fields.sameAsRegistered")}
+        </label>
+      )}
+    />
+  );
 
   // Is CUI already set? Show lock hint in edit mode.
   const cuiIsLocked =
@@ -1070,60 +1126,19 @@ export function JudicialPersonForm({
         highlights={displayHighlights?.addresses.HEADQUARTERS}
         collapsed={headquartersFolded ? { tile: "headquarters", onAdd: addTo("headquarters", "addresses.HEADQUARTERS") } : undefined}
         emptyFields={emptyFieldsLink("headquarters")}
-        titleAction={editButton("addresses", t("tiles.addresses"))}
-        after={editBar("addresses")}
-        sectionClassName={editingClass("addresses").trim()}
-        onKeyDown={editKeys("addresses")}
-        footer={reading("addresses") ? undefined : (
-          <Controller
-            control={control}
-            name="correspondenceSameAsHq"
-            render={({ field }) => (
-              <label
-                className={[
-                  "flex cursor-pointer items-center gap-2 rounded-md text-sm select-none",
-                  field.value
-                    ? "font-bold text-ink dark:text-zinc-200"
-                    : "font-normal text-fade dark:text-zinc-400",
-                  displayHighlights?.fields.correspondenceSameAsHq
-                    ? "px-1 " +
-                      highlightRingClass(
-                        displayHighlights.fields.correspondenceSameAsHq,
-                        pulsing,
-                      )
-                    : "",
-                ].join(" ")}
-              >
-                <input
-                  type="checkbox"
-                  checked={field.value}
-                  onChange={(e) => {
-                    field.onChange(e.target.checked);
-                    // When toggling to "same", copy HQ into correspondence so
-                    // there's no stale data sitting in the hidden inputs.
-                    if (e.target.checked) {
-                      const hq = getValues("addresses.HEADQUARTERS");
-                      setValue("addresses.CORRESPONDENCE", { ...hq }, { shouldDirty: true });
-                    } else {
-                      // Slice 40.64: unticked to give it its own address — the panel opens, the focus in it.
-                      emptyTiles.open("correspondence", '[data-panel="addresses.CORRESPONDENCE"]');
-                    }
-                  }}
-                  className="accent-cta"
-                  aria-label={t("fields.sameAsRegistered")}
-                />
-                {t("fields.sameAsRegistered")}
-              </label>
-            )}
-          />
-        )}
+        titleAction={editButton("headquarters", t("sections.registeredAddress"))}
+        after={editBar("headquarters")}
+        sectionClassName={editingClass("headquarters").trim()}
+        onKeyDown={editKeys("headquarters")}
+        // 41.34: on a saved firm the box is the correspondence tile's; one form (a new firm) keeps it here.
+        footer={perTile ? undefined : sameAsHqBox}
       />
 
       {/* ── Correspondence Address — only when not same as registered: its own
           3-unit panel, as on the Natural Person. ── */}
       {/* Slice 40.64: on a saved record, the same as the registered address reads as one line, „aceeași cu sediul
           social", whose „Adaugă" unticks the box and opens the panel. */}
-      {correspondenceSameAsHq && !isCreate && (
+      {correspondenceSameAsHq && !isCreate && editingTile !== "correspondence" && (
         <AddressLine
           prefix="addresses.CORRESPONDENCE"
           tile="correspondence"
@@ -1132,8 +1147,9 @@ export function JudicialPersonForm({
           onAdd={
             emptyTiles.canAdd
               ? () => {
-                  // 40.73: on a saved firm „Adaugă" opens „Adrese" in edit first, then gives it its own address.
-                  if (canEditTiles) tileEditing.edit("addresses", '[data-panel="addresses.CORRESPONDENCE"]');
+                  // 40.73: on a saved firm „Adaugă" opens the tile in edit first, then gives it its own address — 41.34: the
+                  // correspondence tile itself.
+                  if (canEditTiles) tileEditing.edit("correspondence", '[data-panel="addresses.CORRESPONDENCE"]');
                   setValue("correspondenceSameAsHq", false, { shouldDirty: true });
                   emptyTiles.open("correspondence", '[data-panel="addresses.CORRESPONDENCE"]');
                 }
@@ -1141,7 +1157,8 @@ export function JudicialPersonForm({
           }
         />
       )}
-      {!correspondenceSameAsHq && (
+      {/* 41.34: drawn while open even with the box ticked, so the box can be changed where it now lives. */}
+      {(!correspondenceSameAsHq || editingTile === "correspondence") && (
         <AddressBlock<FormValues>
           title={t("sections.correspondenceAddress")}
           prefix="addresses.CORRESPONDENCE"
@@ -1150,8 +1167,11 @@ export function JudicialPersonForm({
           highlights={displayHighlights?.addresses.CORRESPONDENCE}
           collapsed={correspondenceFolded ? { tile: "correspondence", onAdd: addTo("correspondence", "addresses.CORRESPONDENCE") } : undefined}
           emptyFields={emptyFieldsLink("correspondence")}
-          sectionClassName={editingClass("addresses").trim()}
-          onKeyDown={editKeys("addresses")}
+          titleAction={editButton("correspondence", t("sections.correspondenceAddress"))}
+          after={editBar("correspondence")}
+          footer={perTile && editingTile === "correspondence" ? sameAsHqBox : undefined}
+          sectionClassName={editingClass("correspondence").trim()}
+          onKeyDown={editKeys("correspondence")}
         />
       )}
       </div>{/* end „Adrese" tile */}

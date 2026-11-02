@@ -202,11 +202,15 @@ const NP_LABEL_KEY: Readonly<Record<string, string>> = { citizenshipId: "citizen
  * (src/components/tiles/read-edit-tile.tsx). What each tile's „Salvează" sends — its own fields and nothing else; the
  * route takes a partial update, and one save makes one version.
  */
-type NpEditTile = "identity" | "contact" | "addresses";
+type NpEditTile = "identity" | "contact" | "home" | "correspondence";
 const NP_EDIT_PAYLOAD: Record<NpEditTile, readonly (keyof ReturnType<typeof toApiPayload>)[]> = {
   identity: ["lastName", "firstName", "nickname", "cnp", "citizenshipId", "gender", "dateOfBirth", "isDeceased", "dateOfDeath", "placeOfBirth", "physicalPersonTypeId", "notes"],
   contact: ["personalPhone1", "personalPhone2", "workPhone", "personalEmail1", "personalEmail2", "workEmail"],
-  addresses: ["addresses", "correspondenceSameAsHome"],
+  // Slice 41.34 — Adrian: „tile Correspondence Address is missing Edit Save and Cancel buttons … as it is a piece of
+  // content different from the home address". Each address its own tile: each save sends the addresses whole (the other
+  // one as saved — one tile is open at a time), the correspondence's with the „aceeași cu domiciliul" box.
+  home: ["addresses"],
+  correspondence: ["addresses", "correspondenceSameAsHome"],
 };
 /**
  * Where each tile's first field is, for the focus „Editează" puts there: the tile's `data-panel`. Kept as the bare
@@ -216,15 +220,22 @@ const NP_EDIT_PAYLOAD: Record<NpEditTile, readonly (keyof ReturnType<typeof toAp
 const NP_EDIT_PANEL: Record<NpEditTile, string> = {
   identity: "identity",
   contact: "contact",
-  addresses: "addresses.HOME",
+  home: "addresses.HOME",
+  correspondence: "addresses.CORRESPONDENCE",
 };
 /** The tile 40.64's one-line panels and 40.71's links belong to. */
 const NP_EDIT_OF: Readonly<Record<string, NpEditTile>> = {
   identity: "identity",
   contact: "contact",
-  home: "addresses",
-  correspondence: "addresses",
+  home: "home",
+  correspondence: "correspondence",
 };
+/** Slice 41.34: the edit tile a field is on — the two addresses apart, the same-as-home box with the correspondence. */
+function npEditTileOf(path: string): NpEditTile {
+  const tile = npTileOfField(path);
+  if (tile !== "addresses") return tile as NpEditTile;
+  return path.startsWith("addresses.HOME.") ? "home" : "correspondence";
+}
 
 export function NaturalPersonForm({
   mode,
@@ -795,7 +806,7 @@ export function NaturalPersonForm({
   const editingTile: NpEditTile | null = canEditTiles ? tileEditing.open : null;
   const reading = (tile: NpEditTile): boolean => perTile && editingTile !== tile;
   const readMode: ReadMode = {
-    reading: (name) => perTile && npTileOfField(name) !== editingTile,
+    reading: (name) => perTile && npEditTileOf(name) !== editingTile,
     value: (name) => valueAt(watchedValues, name),
   };
   const saveTile = async (tile: NpEditTile): Promise<boolean> => {
@@ -873,6 +884,45 @@ export function NaturalPersonForm({
   const contactFolded = folded("contact");
   const homeFolded = folded("home");
   const correspondenceFolded = folded("correspondence");
+  // Slice 41.34: „Adresa de corespondență aceeași cu domiciliul" — the correspondence tile's footer while it is open on a
+  // saved person; the home address's last line on a new one.
+  const sameAsHomeBox = (
+    <Controller
+      control={form.control}
+      name="correspondenceSameAsHome"
+      render={({ field }) => (
+        <label
+          className={[
+            "flex cursor-pointer items-center gap-2 rounded-md text-sm select-none",
+            watchedValues.correspondenceSameAsHome
+              ? "font-bold text-ink"
+              : "font-normal text-fade",
+            displayHighlights?.fields.correspondenceSameAsHome
+              ? "px-1 " + highlightRingClass(displayHighlights.fields.correspondenceSameAsHome, pulsing)
+              : "",
+          ].join(" ")}
+        >
+          <input
+            type="checkbox"
+            checked={field.value}
+            onChange={(e) => {
+              field.onChange(e.target.checked);
+              if (e.target.checked) {
+                const home = form.getValues("addresses.HOME");
+                form.setValue("addresses.CORRESPONDENCE", { ...home }, { shouldDirty: true });
+              } else {
+                // Slice 40.64: unticked to give it its own address — the panel opens, the focus in it.
+                emptyTiles.open("correspondence", '[data-panel="addresses.CORRESPONDENCE"]');
+              }
+            }}
+            className="accent-cta"
+            aria-label={t("fields.correspondenceSameAsHome")}
+          />
+          {t("fields.correspondenceSameAsHome")}
+        </label>
+      )}
+    />
+  );
 
   // Is the CNP already set? Show lock hint wherever the field is editable.
   //                                                          (Slice #32.18)
@@ -1251,52 +1301,17 @@ export function NaturalPersonForm({
         highlights={displayHighlights?.addresses.HOME}
         collapsed={homeFolded ? { tile: "home", onAdd: addTo("home", "addresses.HOME") } : undefined}
         emptyFields={emptyFieldsLink("home")}
-        titleAction={editButton("addresses", t("tiles.addresses"))}
-        after={editBar("addresses")}
-        sectionClassName={editingClass("addresses").trim()}
-        onKeyDown={editKeys("addresses")}
-        footer={reading("addresses") ? undefined : (
-            <Controller
-              control={form.control}
-              name="correspondenceSameAsHome"
-              render={({ field }) => (
-                <label
-                  className={[
-                    "flex cursor-pointer items-center gap-2 rounded-md text-sm select-none",
-                    watchedValues.correspondenceSameAsHome
-                      ? "font-bold text-ink"
-                      : "font-normal text-fade",
-                    displayHighlights?.fields.correspondenceSameAsHome
-                      ? "px-1 " + highlightRingClass(displayHighlights.fields.correspondenceSameAsHome, pulsing)
-                      : "",
-                  ].join(" ")}
-                >
-                  <input
-                    type="checkbox"
-                    checked={field.value}
-                    onChange={(e) => {
-                      field.onChange(e.target.checked);
-                      if (e.target.checked) {
-                        const home = form.getValues("addresses.HOME");
-                        form.setValue("addresses.CORRESPONDENCE", { ...home }, { shouldDirty: true });
-                      } else {
-                        // Slice 40.64: unticked to give it its own address — the panel opens, the focus in it.
-                        emptyTiles.open("correspondence", '[data-panel="addresses.CORRESPONDENCE"]');
-                      }
-                    }}
-                    className="accent-cta"
-                    aria-label={t("fields.correspondenceSameAsHome")}
-                  />
-                  {t("fields.correspondenceSameAsHome")}
-                </label>
-              )}
-            />
-        )}
+        titleAction={editButton("home", t("sections.homeAddress"))}
+        after={editBar("home")}
+        sectionClassName={editingClass("home").trim()}
+        onKeyDown={editKeys("home")}
+        // 41.34: on a saved person the box is the correspondence tile's; one form (a new person) keeps it here.
+        footer={perTile ? undefined : sameAsHomeBox}
       />
 
       {/* CORRESPONDENCE address — only when not same as home. Slice 40.64: on a saved record, the same as home reads
           as one line, „aceeași cu domiciliul", whose „Adaugă" unticks the box and opens the panel. */}
-      {watchedValues.correspondenceSameAsHome && !isCreate && (
+      {watchedValues.correspondenceSameAsHome && !isCreate && editingTile !== "correspondence" && (
         <AddressLine
           prefix="addresses.CORRESPONDENCE"
           tile="correspondence"
@@ -1305,8 +1320,9 @@ export function NaturalPersonForm({
           onAdd={
             emptyTiles.canAdd
               ? () => {
-                  // 40.72: on a saved person „Adaugă" opens „Adrese" in edit first, then gives it its own address.
-                  if (canEditTiles) tileEditing.edit("addresses", '[data-panel="addresses.CORRESPONDENCE"]');
+                  // 40.72: on a saved person „Adaugă" opens the tile in edit first, then gives it its own address — 41.34: the
+                  // correspondence tile itself, not the home address.
+                  if (canEditTiles) tileEditing.edit("correspondence", '[data-panel="addresses.CORRESPONDENCE"]');
                   form.setValue("correspondenceSameAsHome", false, { shouldDirty: true });
                   emptyTiles.open("correspondence", '[data-panel="addresses.CORRESPONDENCE"]');
                 }
@@ -1314,7 +1330,8 @@ export function NaturalPersonForm({
           }
         />
       )}
-      {!watchedValues.correspondenceSameAsHome && (
+      {/* 41.34: drawn while open even with the box ticked, so the box can be unticked (or ticked) where it now lives. */}
+      {(!watchedValues.correspondenceSameAsHome || editingTile === "correspondence") && (
         <AddressBlock<FormValues>
           title={t("sections.correspondenceAddress")}
           prefix="addresses.CORRESPONDENCE"
@@ -1323,8 +1340,11 @@ export function NaturalPersonForm({
           highlights={displayHighlights?.addresses.CORRESPONDENCE}
           collapsed={correspondenceFolded ? { tile: "correspondence", onAdd: addTo("correspondence", "addresses.CORRESPONDENCE") } : undefined}
           emptyFields={emptyFieldsLink("correspondence")}
-          sectionClassName={editingClass("addresses").trim()}
-          onKeyDown={editKeys("addresses")}
+          titleAction={editButton("correspondence", t("sections.correspondenceAddress"))}
+          after={editBar("correspondence")}
+          footer={perTile && editingTile === "correspondence" ? sameAsHomeBox : undefined}
+          sectionClassName={editingClass("correspondence").trim()}
+          onKeyDown={editKeys("correspondence")}
         />
       )}
       </div>{/* end „Adrese" tile */}
