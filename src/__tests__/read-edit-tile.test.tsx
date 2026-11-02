@@ -164,7 +164,8 @@ describe("the Natural Person uses it (Ask first 2, 3, 6)", () => {
   const src = read("src", "app", "natural-persons", "_components", "natural-person-form.tsx");
   it("each tile's „Salvează” sends that tile's fields only", () => {
     expect(src).toMatch(/NP_EDIT_PAYLOAD\[tile\]\.map\(\(key\) => \[key, full\[key\]\]\)/);
-    expect(src).toMatch(/addresses: \["addresses", "correspondenceSameAsHome"\]/);
+    // 41.34: the two addresses are two tiles (was one, `addresses: ["addresses", "correspondenceSameAsHome"]`).
+    expect(src).toMatch(/home: \["addresses"\],\s*correspondence: \["addresses", "correspondenceSameAsHome"\]/);
   });
   it("no record-level Save on a saved person; a new one keeps its one Save", () => {
     expect((src.match(/\{!perTile && \(/g) ?? []).length).toBe(2);

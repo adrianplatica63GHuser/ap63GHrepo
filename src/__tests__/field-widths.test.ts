@@ -263,7 +263,12 @@ describe("THE WINDOW DECIDES HOW MANY PANELS FIT, NEVER HOW WIDE ANYTHING IS", (
     // Slice #37.27: the same-as-home checkbox is the home address panel's last line, not a panel of its own.
     expect(panels).not.toMatch(/data-panel="correspondence"/);
     // Slice 40.72: the footer is drawn while the tile is open (in the read view the address reads as text).
-    expect(panels).toMatch(/prefix="addresses\.HOME"[\s\S]*?footer=\{reading\("addresses"\) \? undefined : \(\s*<Controller[\s\S]*?name="correspondenceSameAsHome"/);
+    // 41.34 inverted in place — was: the box the home address's footer while „Adrese" was open
+    // (footer={reading("addresses") ? undefined : (<Controller … name="correspondenceSameAsHome")). Now the correspondence
+    // tile's footer while it is open on a saved person; the home address's last line only on a new one.
+    expect(panels).toMatch(/prefix="addresses\.HOME"[\s\S]*?footer=\{perTile \? undefined : sameAsHomeBox\}/);
+    expect(panels).toMatch(/prefix="addresses\.CORRESPONDENCE"[\s\S]*?footer=\{perTile && editingTile === "correspondence" \? sameAsHomeBox : undefined\}/);
+    expect(NP_FORM).toMatch(/const sameAsHomeBox = \(\s*<Controller[\s\S]*?name="correspondenceSameAsHome"/);
     expect(ADDRESS_BLOCK).toMatch(/\{footer && <div/);
     expect(panels.match(/<AddressBlock<FormValues>/g) ?? []).toHaveLength(2);
     // Slice #37.17: as tiles, the page's tile row carries the width and the form is `contents`.
@@ -682,7 +687,9 @@ describe("the Judicial Person: labels above, rows by meaning, every tile on the 
   it("no label is left beside a box, the checkbox is the registered address's last line, and the loose panel is gone", () => {
     expect(JP_FORM).not.toMatch(/LABEL_STYLE/);
     expect(panels).not.toMatch(/data-panel="correspondence"/);
-    expect(panels).toMatch(/prefix="addresses\.HEADQUARTERS"[\s\S]*?footer=\{reading\("addresses"\) \? undefined : \(\s*<Controller[\s\S]*?name="correspondenceSameAsHq"/ /* 40.73: drawn while the tile is open */);
+    // 41.34 inverted in place (was the registered office's footer while „Adrese" was open): the correspondence tile's.
+    expect(panels).toMatch(/prefix="addresses\.HEADQUARTERS"[\s\S]*?footer=\{perTile \? undefined : sameAsHqBox\}/);
+    expect(panels).toMatch(/prefix="addresses\.CORRESPONDENCE"[\s\S]*?footer=\{perTile && editingTile === "correspondence" \? sameAsHqBox : undefined\}/);
   });
 
   it("the company's list tiles are the Natural Person's, at the same units (rule 17), META INFO's two halves among them", () => {

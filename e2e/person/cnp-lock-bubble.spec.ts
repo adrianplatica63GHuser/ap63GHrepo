@@ -194,18 +194,20 @@ test.describe("TC-PERS-03 — nota CNP-ului într-un balon, refuzul în română
       await emptyTileLine(page, "home").getByRole("button").click();
       await expect(emptyTileLine(page, "home")).toHaveCount(0);
       await expect(emptyTileLine(page, "contact"), "Contact folded when the address opened").toBeVisible();
-      await page.locator('[data-tile-cancel="addresses"]').click();
+      await page.locator('[data-tile-cancel="home"]').click(); // 41.34: the home address is its own tile
       await expect(emptyTileLine(page, "home")).toBeVisible();
       await expect(emptyTileLine(page, "contact")).toBeVisible();
 
-      // Step 12 — the home address opened, its box ticked: the correspondence reads „aceeași cu domiciliul".
-      await openEmptyTile(page, "home");
+      // Step 12 — 41.34: the box is the correspondence address's own now. Opened, ticked, saved: the correspondence
+      // reads „aceeași cu domiciliul". (It was the home address's footer, with both addresses one tile.)
+      await openEmptyTile(page, "correspondence");
       await page.getByRole("checkbox", { name: "Adresa de corespondență aceeași cu domiciliul" }).check();
+      await page.locator('[data-tile-save="correspondence"]').click();
+      await expect(page.locator('[data-tile-edit-bar="correspondence"]')).toHaveCount(0, { timeout: 30_000 });
       await expect(emptyTileLine(page, "correspondence").locator("[data-empty-tile-state]")).toHaveText("aceeași cu domiciliul");
 
       // Step 13 — Slice 40.85: „Adaugă" on „Acte de identitate" asks which identity document; „Renunță" closes it.
       // (The card's „Până la" and its EXPIRAT are an identity document's since 40.85 — TC-PERS-16, TC-DOC-28.)
-      await page.locator('[data-tile-cancel="addresses"]').click();
       await emptyTileLine(page, "idCard").getByRole("button").click();
       const chooser = page.locator("[data-identity-kind-chooser]");
       await expect(chooser.getByText("Ce act de identitate adăugați?", { exact: true })).toBeVisible();
