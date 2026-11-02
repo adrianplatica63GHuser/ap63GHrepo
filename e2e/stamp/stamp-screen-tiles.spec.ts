@@ -16,6 +16,7 @@
  */
 
 import { test, expect, type Page } from "../helpers/test";
+import { expectPanouriRoundTrip } from "../helpers/tiles";
 import { E2E_MARKER, createNaturalPerson, removeLeftovers, removeRecord, removeStampLeftovers } from "../helpers/records";
 
 const MARK = `${E2E_MARKER}STAMP-02`;
@@ -134,6 +135,28 @@ test.describe("TC-STAMP-02 — aplicarea unei ștampile: patru fișe", () => {
       if (stampId) await page.request.delete(`/api/stamps/${stampId}`);
       await removeStampLeftovers(page.request, MARK);
       for (const id of ids) await removeRecord(page.request, "person", id);
+    }
+  });
+});
+
+// Slice 41.41: on Ștampile and on one stamp's screen, „Panouri" hides a tile, a reload keeps it hidden, „Implicit" brings it back.
+test.describe("TC-STAMP-02 (41.41) — „Panouri” pe Ștampile și pe ecranul unei ștampile", () => {
+  test("ascunsă, păstrată la reîncărcare, adusă înapoi de „Implicit”", async ({ page }) => {
+    test.slow();
+    const MARK41 = `${MARK}-PANOURI`;
+    await removeStampLeftovers(page.request, MARK41);
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    try {
+      await page.goto("/admin/stamps");
+      await expectPanouriRoundTrip(page, "Ce este o Ștampilă?", "about");
+      const s = await page.request.post("/api/stamps", { data: { shortDescription: `${MARK41} Ștampilă`, notes: "" } });
+      expect(s.ok(), await s.text()).toBeTruthy();
+      const body = (await s.json()) as { id?: string; stamp?: { id: string } };
+      const stampId = body.stamp?.id ?? body.id;
+      await page.goto(`/admin/stamps/${stampId}`);
+      await expectPanouriRoundTrip(page, "Tip element", "type");
+    } finally {
+      await removeStampLeftovers(page.request, MARK41);
     }
   });
 });

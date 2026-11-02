@@ -297,6 +297,29 @@ export async function editConnections(page: Page): Promise<Locator> {
   return tile;
 }
 
+/**
+ * Slice 41.41: on an admin screen, „Panouri" hides the tile `tile` (its box `label`); a reload keeps it hidden; „Implicit"
+ * brings it back.
+ */
+export async function expectPanouriRoundTrip(page: Page, label: string, tile: string): Promise<void> {
+  const box = tileBox(page, label);
+  const el = page.locator(`[data-tile="${tile}"]`).first();
+  await expect(el).toBeVisible({ timeout: 30_000 });
+  await openTiles(page);
+  await expect(async () => {
+    if (await box.isChecked()) await box.click();
+    await expect(box).not.toBeChecked({ timeout: 2_000 });
+  }).toPass({ timeout: 30_000 });
+  await closeTiles(page);
+  await expect(el).toBeHidden();
+  await page.reload();
+  await expect(tileBox(page, label)).toBeAttached({ timeout: 30_000 });
+  await expect(tileBox(page, label)).not.toBeChecked();
+  await expect(page.locator(`[data-tile="${tile}"]`).first()).toBeHidden();
+  await pressTileButton(page, "Implicit");
+  await expect(page.locator(`[data-tile="${tile}"]`).first()).toBeVisible({ timeout: 15_000 });
+}
+
 /** `saveTile` by the tile's heading. */
 export async function saveTileNamed(page: Page, name: string): Promise<void> {
   const region = page.getByRole("region", { name, exact: true });

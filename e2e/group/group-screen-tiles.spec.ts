@@ -14,6 +14,7 @@
  */
 
 import { test, expect, type APIRequestContext, type Page } from "../helpers/test";
+import { expectPanouriRoundTrip } from "../helpers/tiles";
 import { E2E_MARKER, createProperty, removeGroupLeftovers, removeLeftovers, removeRecord } from "../helpers/records";
 
 const MARK = `${E2E_MARKER}GRP-04`;
@@ -131,6 +132,33 @@ test.describe("TC-GRP-04 — ecranul unui grup: trei fișe", () => {
       await page.evaluate((k) => localStorage.removeItem(k), KEY).catch(() => undefined);
       if (groupId) await page.request.delete(`/api/groups/${groupId}`);
       for (const id of ids) await removeRecord(page.request, "property", id);
+    }
+  });
+});
+
+// Slice 41.41 — Adrian: „For Groups stamps and tags I would like to have tiles, and I would like to implement the feature
+// panels functionality as for the principal objects tiles". On Grupuri, on one group's screen and on Etichete: „Panouri"
+// hides a tile, a reload keeps it hidden, „Implicit" brings it back.
+test.describe("TC-GRP-04 (41.41) — „Panouri” pe Grupuri, pe ecranul unui grup și pe Etichete", () => {
+  test("ascunsă, păstrată la reîncărcare, adusă înapoi de „Implicit”", async ({ page }) => {
+    test.slow();
+    const MARK41 = `${MARK}-PANOURI`;
+    await removeGroupLeftovers(page.request, MARK41);
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    let groupId: string | undefined;
+    try {
+      await page.goto("/admin/groups");
+      await expectPanouriRoundTrip(page, "Ce este un Grup?", "about");
+      const g = await page.request.post("/api/groups", { data: { targetType: "PROPERTY", description: `${MARK41} Grup` } });
+      expect(g.ok(), await g.text()).toBeTruthy();
+      const body = (await g.json()) as { id?: string; group?: { id: string } };
+      groupId = body.group?.id ?? body.id;
+      await page.goto(`/admin/groups/${groupId}`);
+      await expectPanouriRoundTrip(page, "Identitatea grupului", "identity");
+      await page.goto("/admin/tags");
+      await expectPanouriRoundTrip(page, "Etichete", "note");
+    } finally {
+      if (groupId) await page.request.delete(`/api/groups/${groupId}`);
     }
   });
 });
