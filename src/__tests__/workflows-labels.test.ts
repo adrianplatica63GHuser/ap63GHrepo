@@ -12,6 +12,9 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import { WORKFLOW_STEPS } from "@/components/screen/workflows-tile";
 
+// The tile's module reads next-intl (ESM, not this node suite's subject); only its list of workflows is read here.
+jest.mock("next-intl", () => ({ useTranslations: () => (key: string) => key }));
+
 type Tree = { [k: string]: string | Tree };
 const read = (l: string) => JSON.parse(readFileSync(join(process.cwd(), "messages", `${l}.json`), "utf8")) as Tree;
 

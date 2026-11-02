@@ -86,7 +86,7 @@ describe("the group screen's two tiles (41.42)", () => {
     expect(within(identity).getByRole("button", { name: "saveGroup" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: /^(addItems|hideItems)$/ })).toBeNull();
     // 2 units and 7: the row is never narrower than the members' tile.
-    expect(GROUP_SCREEN.tileUnits).toEqual({ identity: 2, members: 7 });
+    expect(GROUP_SCREEN.tileUnits).toEqual({ identity: 2, members: 7, workflows: 7 }); // 41.44: the workflows tile
     expect(GROUP_SCREEN.units).toBe(7);
     expect(GROUP_SCREEN.flowUnits).toBe(9);
   });
