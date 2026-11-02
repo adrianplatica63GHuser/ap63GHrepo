@@ -44,6 +44,16 @@ export const LAYOUT_EXCEPTIONS: readonly LayoutException[] = [
       "Etichete și grupuri's tag box (41.27) takes what is left of its row beside „Adaugă”, never narrower than M (TAG_BOX_STYLE's minWidth), so the tile fits 2 units and the box grows on 3 — Adrian asked for the tile at 2 units, and a fixed XL box (272 px) is wider than 2 units' 228 inside.",
   },
   {
+    line: "data-groups-picker",
+    reason:
+      "Etichete și grupuri's group picker (41.39) takes what is left of its row, as the tag box does: a native select is as wide as its longest option, and a group's description of up to 500 characters spilled past the tile and refused every narrower width — so the options are cut to about 60 characters and the box never sets the tile's width.",
+  },
+  {
+    line: "data-stamps-picker",
+    reason:
+      "Etichete și grupuri's stamp picker (41.39) takes what is left of its row, for the same reason as the group picker: its options' descriptions are cut, and the box never widens the tile.",
+  },
+  {
     line: "fixed inset-",
     reason:
       "A dialog's card is fixed by design: its max-w-sm, -md or -lg — or, since #37.37, the value lists' editors' whole width units (`dialogCardStyle`) — holds it at one width over the page, and centring it over the page is what makes it a dialog.",
