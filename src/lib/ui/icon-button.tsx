@@ -328,8 +328,10 @@ export function IconButton(props: IconButtonProps) {
       // Lets the pointer through to the wrapper, whose handlers open the
       // tooltip — see the module note on disabled buttons.
       "disabled:pointer-events-none",
-      // Slice 41.33: a button disabled but kept focusable (`aria-disabled`, so its note reaches the keyboard) looks it.
-      "aria-disabled:cursor-not-allowed aria-disabled:opacity-50",
+      // Slice 41.33: a button disabled but kept focusable (`aria-disabled`, so its note reaches the keyboard) looks it —
+      // the surfaced variants' own disabled face (button-styles.ts SURFACE_DISABLED), never an opacity dip.
+      "aria-disabled:cursor-not-allowed aria-disabled:border-wire aria-disabled:bg-white aria-disabled:text-fade aria-disabled:shadow-none",
+      "dark:aria-disabled:border-zinc-700 dark:aria-disabled:bg-zinc-900 dark:aria-disabled:text-zinc-500",
     ]
       .filter(Boolean)
       .join(" "),
