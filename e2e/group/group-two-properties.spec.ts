@@ -100,12 +100,12 @@ test.describe("TC-GRP-01 — Grup cu două proprietăți", () => {
       await available.getByPlaceholder("Caută…").fill(MARK);
       await expect(available.getByRole("checkbox")).toHaveCount(2, { timeout: 15_000 });
 
-      // Step 6 — tick both, „Adaugă în grup (2)": „[nou]" each, „Modificări nesalvate".
+      // Step 6 — tick both, „‹ Include (2)" (41.42; „Adaugă în grup (2)" until then): „în așteptare" each, „Modificări nesalvate".
       await available.getByRole("checkbox", { name: FIRST }).check();
       await available.getByRole("checkbox", { name: SECOND }).check();
-      await page.getByRole("button", { name: "Adaugă în grup (2)" }).click();
+      await page.getByRole("button", { name: "‹ Include (2)", exact: true }).click();
       for (const name of [FIRST, SECOND]) {
-        await expect(inGroup.getByRole("listitem").filter({ hasText: name })).toContainText("[nou]");
+        await expect(inGroup.getByRole("listitem").filter({ hasText: name })).toContainText("în așteptare");
       }
       await expect(page.getByText("Modificări nesalvate")).toBeVisible();
 

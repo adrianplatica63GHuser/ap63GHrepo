@@ -212,11 +212,11 @@ test.describe("TC-LAYOUT-01 — Celelalte ecrane, la lățimi fixe", () => {
       });
       await screen(page, "groups", "/admin/groups", (p) => p.locator("table[data-width-table]"), { mask: rows, unitGrid: true });
       await screen(page, "group", `/admin/groups/${groupId}`, (p) => p.locator('[data-width-field="groupDescription"]'), {
-        // The member panels are open when the editor opens („Ascunde elementele").
+        // 41.42: the members are one tile of two lists, always there.
         prepare: async (p) => {
-          await expect(p.locator('[data-panel="available"]')).toBeVisible({ timeout: 30_000 });
+          await expect(p.locator('[data-panel="members"]')).toBeVisible({ timeout: 30_000 });
         },
-        mask: (p) => [p.locator('[data-panel="available"] ul'), p.locator('[data-panel="in-group"] ul')],
+        mask: (p) => [p.locator('[data-panel="members"] ul')],
         unitGrid: true,
         alsoAt: [1366, 2560],
       });

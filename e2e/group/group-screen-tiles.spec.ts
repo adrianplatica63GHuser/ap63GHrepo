@@ -1,5 +1,5 @@
 /**
- * Case:   TC-GRP-04 — Ecranul unui grup: trei fișe cu nume, „Deja în grup" sub identitate, trase ca pe formulare
+ * Case:   TC-GRP-04 — Ecranul unui grup: identitatea compactă și membrii în două liste (41.42; trei fișe până atunci)
  * Source: docs/testing/cases/TC-GRP-04.md, „Last green" 2026-10-05
  *
  * A translation of the case file, step for step. Every Romanian string below
@@ -13,8 +13,8 @@
  *     the expected ones are computed from the tiles' own sizes, not written down.
  */
 
-import { test, expect, type APIRequestContext, type Page } from "../helpers/test";
-import { expectPanouriRoundTrip, pressTileButton, tilesMenuButton } from "../helpers/tiles";
+import { test, expect, type Page } from "../helpers/test";
+import { expectPanouriRoundTrip, tilesMenuButton } from "../helpers/tiles";
 import { E2E_MARKER, createProperty, removeGroupLeftovers, removeLeftovers, removeRecord } from "../helpers/records";
 
 const MARK = `${E2E_MARKER}GRP-04`;
@@ -22,11 +22,6 @@ const KEY = "ga40-tile-positions-admin-group-v1";
 const GAP = 16;
 
 type Box = { x: number; y: number; w: number; h: number };
-
-async function principalOf(request: APIRequestContext, propertyId: string): Promise<string> {
-  const res = await request.get(`/api/properties/${propertyId}/entity-references`);
-  return ((await res.json()) as { principalObjectId: string }).principalObjectId;
-}
 
 /** Every tile of the row, relative to the row. */
 async function boxes(page: Page): Promise<Record<string, Box>> {
@@ -41,17 +36,8 @@ async function boxes(page: Page): Promise<Record<string, Box>> {
   });
 }
 
-/** The default places: „Deja în grup" under „Identitatea grupului", „Membri disponibili…" at their right, tops level. */
-function defaults(b: Record<string, Box>) {
-  return {
-    available: { x: b.identity.w + GAP, y: 0 },
-    "in-group": { x: 0, y: b.identity.h + GAP },
-  };
-}
-const at = (b: Record<string, Box>) => ({ available: { x: b.available.x, y: b.available.y }, "in-group": { x: b["in-group"].x, y: b["in-group"].y } });
-
-test.describe("TC-GRP-04 — ecranul unui grup: trei fișe", () => {
-  test("1366 și 1920: locurile implicite; „Deja în grup” trasă, după reîncărcare, „Implicit”", async ({ page }) => {
+test.describe("TC-GRP-04 — ecranul unui grup: identitatea și membrii, două liste într-o fișă (41.42)", () => {
+  test("1366 și 1920: identitatea compactă, membrii sub ea sau alături; incluși cu bifă și buton, cu dublu clic, unul scos; salvat", async ({ page }) => {
     test.slow();
     await removeLeftovers(page.request, MARK);
     await removeGroupLeftovers(page.request, MARK);
@@ -61,70 +47,68 @@ test.describe("TC-GRP-04 — ecranul unui grup: trei fișe", () => {
       const g = await page.request.post("/api/groups", { data: { targetType: "PROPERTY", description: `${MARK} Grup de test` } });
       expect(g.status()).toBe(201);
       groupId = ((await g.json()) as { id: string }).id;
-      for (const n of ["A", "B", "C"]) {
-        const id = await createProperty(page.request, { nickname: `${MARK} Teren ${n}` });
-        ids.push(id);
-        if (n !== "C") expect((await page.request.post(`/api/metadata/${await principalOf(page.request, id)}/groups`, { data: { groupId } })).ok()).toBeTruthy();
-      }
+      for (const n of ["A", "B", "C"]) ids.push(await createProperty(page.request, { nickname: `${MARK} Teren ${n}` }));
       await page.setViewportSize({ width: 1366, height: 900 });
       await page.goto(`/admin/groups/${groupId}`);
       await page.evaluate((k) => localStorage.removeItem(k), KEY);
       await page.reload();
       const region = (name: string) => page.getByRole("region", { name, exact: true });
-
-      // Step 1 — 1366: three tiles; „Deja în grup" under „Identitatea grupului", „Membri disponibili…" at their right; „Implicit".
       const identity = region("Identitatea grupului");
-      const available = region("Membri disponibili pentru includere");
-      const inGroup = region("Deja în grup");
+      const members = region("Membrii grupului");
+      const inGroup = members.getByRole("region", { name: "Deja în grup", exact: true });
+      const available = members.getByRole("region", { name: "Membri disponibili pentru includere", exact: true });
+      const row = (list: typeof inGroup, n: string) => list.getByRole("listitem").filter({ hasText: `${MARK} Teren ${n}` });
+
+      // Step 1 — 1366: the identity 2 units, its code and target on one line; the members 7 units, under it; „Panouri".
       await expect(identity).toBeVisible({ timeout: 30_000 });
-      await expect(identity.getByText("Țintă", { exact: true })).toBeVisible();
-      await expect(inGroup.getByText(`${MARK} Teren A`)).toBeVisible({ timeout: 30_000 });
-      await expect(inGroup.getByText(`${MARK} Teren B`)).toBeVisible();
-      await expect(inGroup.locator("span.text-xs").first()).toHaveText("2");
-      await available.getByPlaceholder("Caută…").fill(MARK);
-      await expect(available.getByText(`${MARK} Teren C`)).toBeVisible({ timeout: 15_000 });
-      // 41.41: „Implicit" is in „Panouri" now — the screen's button in the page bar, as on the record screens.
+      await expect(identity.locator("[data-group-identity-line]")).toHaveText(/^GRP-\d+ · Proprietate$/);
+      await expect(identity.getByRole("button", { name: "Salvează grupul" })).toBeDisabled();
       await expect(tilesMenuButton(page)).toBeVisible({ timeout: 30_000 });
-      await expect.poll(async () => { const b = await boxes(page); return JSON.stringify(at(b)) === JSON.stringify(defaults(b)); }, { timeout: 20_000 }).toBe(true);
+      await expect(inGroup.getByText("Niciun element în acest grup încă")).toBeVisible({ timeout: 30_000 });
+      await expect.poll(async () => { const b = await boxes(page); return [b.identity?.w, b.members?.w]; }, { timeout: 20_000 }).toEqual([254, 929]);
+      await expect.poll(async () => { const b = await boxes(page); return { x: b.members.x, y: b.members.y }; }, { timeout: 20_000 })
+        .toEqual({ x: 0, y: (await boxes(page)).identity.h + GAP });
+      // „Deja în grup" on the left, the available members on the right, at 3 units each (≈391 px).
+      const [l, r] = await Promise.all([inGroup.boundingBox(), available.boundingBox()]);
+      if (!l || !r) throw new Error("a list is not on the page");
+      expect(l.x).toBeLessThan(r.x);
+      expect(Math.min(l.width, r.width)).toBeGreaterThanOrEqual(363);
 
-      // Step 2 — 1920: the same three places, the space at the right empty.
+      // Step 2 — 1920: the members at the identity's right, tops level.
       await page.setViewportSize({ width: 1920, height: 1000 });
-      await expect.poll(async () => page.evaluate(() => Math.round(document.querySelector("[data-tile-row]")!.getBoundingClientRect().width)), { timeout: 10_000 }).toBeGreaterThan(1400);
-      await page.waitForTimeout(500);
-      const rule = await boxes(page);
-      expect(at(rule)).toEqual(defaults(rule));
+      await expect.poll(async () => { const b = await boxes(page); return { x: b.members.x, y: b.members.y }; }, { timeout: 20_000 }).toEqual({ x: 254 + GAP, y: 0 });
 
-      // Step 3 — „Deja în grup" by its bottom bar's padding to the right of „Membri disponibili…", level with its top.
-      const bar = inGroup.locator(":scope > div").last();
-      const p = await bar.boundingBox();
-      const [ig, av] = await Promise.all([inGroup.boundingBox(), available.boundingBox()]);
-      if (!p || !ig || !av) throw new Error("a tile is not on the page");
-      const x = p.x + 4;
-      const y = p.y + 4;
-      await page.mouse.move(x, y);
-      await expect.poll(() => inGroup.evaluate((e) => getComputedStyle(e).cursor)).toBe("grab");
-      const tx = x + (av.x + av.width + GAP - ig.x);
-      const ty = y + (av.y - ig.y);
-      await page.mouse.down();
-      await page.mouse.move(x + 10, y - 10, { steps: 3 });
-      await page.mouse.move(tx, ty, { steps: 12 });
-      await expect(page.locator("[data-tile-outline]")).toHaveAttribute("data-free", "true");
-      await page.mouse.up();
-      const dropped = { x: rule.available.x + rule.available.w + GAP, y: 0 };
-      await expect.poll(async () => { const b = (await boxes(page))["in-group"]; return { x: b.x, y: b.y }; }).toEqual(dropped);
-      const after = await boxes(page);
-      expect(after.identity).toEqual(rule.identity);
-      expect(after.available).toEqual(rule.available);
+      // Step 3 — „Caută…", A and B ticked, „‹ Include (2)": both on the left, „în așteptare".
+      await available.getByPlaceholder("Caută…").fill(MARK);
+      await expect(row(available, "C")).toBeVisible({ timeout: 15_000 });
+      const include = members.getByRole("button", { name: /^‹ Include \(\d+\)$/ });
+      await expect(include).toHaveText("‹ Include (0)");
+      await expect(include).toBeDisabled();
+      for (const n of ["A", "B"]) await row(available, n).getByRole("checkbox").check();
+      await expect(include).toHaveText("‹ Include (2)");
+      await include.click();
+      for (const n of ["A", "B"]) await expect(row(inGroup, n)).toContainText("în așteptare");
+      await expect(identity.getByText("Modificări nesalvate")).toBeVisible();
 
-      // Step 4 — after a reload, where it was dropped.
+      // Step 4 — a double-click on C moves it left.
+      await row(available, "C").dblclick();
+      await expect(row(inGroup, "C")).toContainText("în așteptare");
+      await expect(inGroup.locator("[data-two-list-count]")).toHaveText("3");
+
+      // Step 5 — A ticked on the left, „Scoate › (1)": back on the right.
+      await row(inGroup, "A").getByRole("checkbox").check();
+      await members.getByRole("button", { name: "Scoate › (1)", exact: true }).click();
+      await expect(row(available, "A")).toBeVisible();
+      await expect(row(inGroup, "A")).toHaveCount(0);
+
+      // Step 6 — „Salvează grupul": B and C are members, numbered; nothing pending; after a reload the same.
+      await identity.getByRole("button", { name: "Salvează grupul" }).click();
+      await expect(identity.getByText("Modificări nesalvate")).toHaveCount(0, { timeout: 15_000 });
+      await expect(inGroup.getByText("în așteptare")).toHaveCount(0);
       await page.reload();
-      await expect(inGroup).toBeVisible({ timeout: 30_000 });
-      await expect.poll(async () => { const b = (await boxes(page))["in-group"]; return { x: b.x, y: b.y }; }, { timeout: 20_000 }).toEqual(dropped);
-
-      // Step 5 — „Implicit": back under „Identitatea grupului"; nothing kept.
-      await pressTileButton(page, "Implicit");
-      await expect.poll(async () => { const b = (await boxes(page))["in-group"]; return { x: b.x, y: b.y }; }, { timeout: 20_000 }).toEqual(defaults(rule)["in-group"]);
-      expect(await page.evaluate((k) => localStorage.getItem(k), KEY)).toBeNull();
+      await expect(inGroup.locator("[data-two-list-count]")).toHaveText("2", { timeout: 30_000 });
+      for (const n of ["B", "C"]) await expect(row(inGroup, n)).toContainText(/\[0[12]\]/);
+      await expect(row(inGroup, "A")).toHaveCount(0);
     } finally {
       await page.evaluate((k) => localStorage.removeItem(k), KEY).catch(() => undefined);
       if (groupId) await page.request.delete(`/api/groups/${groupId}`);

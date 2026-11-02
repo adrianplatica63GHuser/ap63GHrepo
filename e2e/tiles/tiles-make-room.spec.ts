@@ -168,7 +168,7 @@ test.describe("TC-TILES-24 — o fișă ținută peste alta îi face loc", () =>
     }
   });
 
-  test("ecranul unui grup (TileUnitRow): „Deja în grup” ținută peste „Membri disponibili…”; lăsată; după reîncărcare", async ({ page }) => {
+  test("ecranul unui grup (TileUnitRow; 41.42: două fișe): „Identitatea grupului” ținută peste „Membrii grupului”; lăsată; după reîncărcare", async ({ page }) => {
     test.slow();
     await removeLeftovers(page.request, MARK);
     await removeGroupLeftovers(page.request, MARK);
@@ -190,32 +190,32 @@ test.describe("TC-TILES-24 — o fișă ținută peste alta îi face loc", () =>
       await page.evaluate((k) => localStorage.removeItem(k), GROUP_KEY);
       await page.reload();
       const region = (name: string) => page.getByRole("region", { name, exact: true });
-      const inGroup = region("Deja în grup");
-      const available = region("Membri disponibili pentru includere");
+      // 41.42: two tiles — the identity (2 units) and the members' two lists (7), side by side at 1920.
+      const identity = region("Identitatea grupului");
+      const members = region("Membrii grupului");
 
-      // Step 5 — „Deja în grup" by its bottom bar, its top-left corner to „Membri disponibili…"'s, held: that one slides down.
-      await expect(inGroup.getByText(`${MARK} Teren B`)).toBeVisible({ timeout: 30_000 });
+      // Step 5 — „Identitatea grupului" by its empty corner, its top-left corner to „Membrii grupului"'s, held: that one slides down.
+      await expect(members.getByText(`${MARK} Teren B`)).toBeVisible({ timeout: 30_000 });
       await page.waitForTimeout(2500);
       const rule = await boxes(page);
-      const bar = await inGroup.locator(":scope > div").last().boundingBox();
-      if (!bar) throw new Error("„Deja în grup” has no bar on the page");
-      await holdOver(page, inGroup, { x: bar.x + 4, y: bar.y + 4 }, { x: rule.available.x, y: rule.available.y });
+      const body = await identity.locator(":scope > div").last().boundingBox();
+      if (!body) throw new Error("„Identitatea grupului” has no body on the page");
+      await holdOver(page, identity, { x: body.x + 4, y: body.y + 4 }, { x: rule.members.x, y: rule.members.y });
       await expect.poll(async () => (await outline(page)).free, { timeout: 5_000 }).toBe("true");
       const o = await outline(page);
       await expect.poll(async () => {
         const now = await boxes(page);
-        return { x: now.available.x, clear: now.available.y >= o.y + o.h + GAP - 1 };
-      }, { timeout: 5_000 }).toEqual({ x: rule.available.x, clear: true });
+        return { x: now.members.x, clear: now.members.y >= o.y + o.h + GAP - 1 };
+      }, { timeout: 5_000 }).toEqual({ x: rule.members.x, clear: true });
       await page.mouse.up();
-      await expect.poll(async () => { const b = (await boxes(page))["in-group"]; return { x: b.x, y: b.y }; }).toEqual({ x: o.x, y: o.y });
+      await expect.poll(async () => { const b = (await boxes(page)).identity; return { x: b.x, y: b.y }; }).toEqual({ x: o.x, y: o.y });
       const dropped = await boxes(page);
-      expect(dropped.identity).toEqual(rule.identity);
-      await expect(available).toBeVisible();
+      await expect(members).toBeVisible();
 
       // Step 6 — after a reload, both places hold.
       await page.reload();
-      await expect(inGroup).toBeVisible({ timeout: 30_000 });
-      const two = (b: Record<string, Box>) => ({ in: b["in-group"] && [b["in-group"].x, b["in-group"].y], av: b.available && [b.available.x, b.available.y] });
+      await expect(identity).toBeVisible({ timeout: 30_000 });
+      const two = (b: Record<string, Box>) => ({ id: b.identity && [b.identity.x, b.identity.y], m: b.members && [b.members.x, b.members.y] });
       await expect.poll(async () => two(await boxes(page)), { timeout: 20_000 }).toEqual(two(dropped));
     } finally {
       await page.evaluate((k) => localStorage.removeItem(k), GROUP_KEY).catch(() => undefined);
