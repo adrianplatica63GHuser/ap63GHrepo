@@ -241,7 +241,8 @@ test.describe("TC-TILES-26 — lățimea unei plăci", () => {
         return {
           parts,
           gap: parseFloat(cs.columnGap) || 0,
-          frame: hr.left - b.left + (b.right - hr.right),
+          // 41.38: „Editează" shares the heading's row — the frame is to the row's end, the pen's room not the heading's.
+          frame: hr.left - b.left + (b.right - (h.closest<HTMLElement>("[data-tile-title-line]") ?? h).getBoundingClientRect().right),
           tile: b.width,
           padding: [bs.paddingLeft, bs.borderLeftWidth],
           scrollWidth: box.scrollWidth,
