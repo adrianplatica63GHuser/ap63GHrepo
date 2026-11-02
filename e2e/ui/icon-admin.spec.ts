@@ -159,16 +159,17 @@ test.describe("TC-ICON-05 — redenumită, fuzionată, ștampilată, cu pictogra
       await page.getByRole("searchbox", { name: "Caută în elementele disponibile" }).fill(MARK);
       const item = page.getByRole("checkbox", { name: PROPERTY });
       await expect(item).toHaveCount(1, { timeout: 15_000 });
-      const apply0 = page.getByRole("button", { name: "Aplică ștampila (0)", exact: true });
-      const remove0 = page.getByRole("button", { name: "Elimină ștampila (0)", exact: true });
+      // 41.43: the two lists' buttons, the icons kept (A080, A081).
+      const apply0 = page.getByRole("button", { name: "‹ Aplică ștampila (0)", exact: true });
+      const remove0 = page.getByRole("button", { name: "Elimină ștampila › (0)", exact: true });
       expect(await iconOf(apply0)).toBe("lucide-stamp");
       expect(await iconOf(remove0)).toBe("lucide-eraser");
       await expect(apply0).toBeDisabled();
       await expect(remove0).toBeDisabled();
 
-      // Step 8 — ticked, „Aplică ștampila (1)": it moves across, „Modificări nesalvate".
+      // Step 8 — ticked, „‹ Aplică ștampila (1)": it moves across, „Modificări nesalvate".
       await item.check();
-      await page.getByRole("button", { name: "Aplică ștampila (1)", exact: true }).click();
+      await page.getByRole("button", { name: "‹ Aplică ștampila (1)", exact: true }).click();
       await expect(page.getByText("Modificări nesalvate")).toBeVisible();
       await expect(page.getByText("Niciun element ștampilat încă")).toHaveCount(0);
       await photograph(page, "stamp-applicator", () => moveAway(page));

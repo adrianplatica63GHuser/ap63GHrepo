@@ -5,6 +5,7 @@
  */
 import { useState } from "react";
 import { fireEvent, render, screen, within } from "@testing-library/react";
+import { Eraser, ListMinus, ListPlus, Stamp } from "lucide-react";
 import { TWO_LIST_ROWS, TWO_LIST_ROW_REM, TwoLists, type TwoListRow } from "@/components/screen/two-lists";
 
 jest.mock("next-intl", () => ({
@@ -23,6 +24,8 @@ function Harness({ start, spy }: { start: string[]; spy: { include: string[][]; 
       right={{ name: "out", title: "Disponibile", rows: right.map(row), empty: "nimic" }}
       includeLabel={(n) => `‹ Include (${n})`}
       takeOutLabel={(n) => `Scoate › (${n})`}
+      includeIcon={ListPlus}
+      takeOutIcon={ListMinus}
       onInclude={(ids) => { spy.include.push(ids); setLeft((l) => [...l, ...ids]); }}
       onTakeOut={(ids) => { spy.takeOut.push(ids); setLeft((l) => l.filter((x) => !ids.includes(x))); }}
     />
@@ -97,6 +100,27 @@ describe("TwoLists (41.42)", () => {
       expect(list.querySelector<HTMLElement>("[data-two-list-rows]")!.className).toContain("overflow-y-auto");
     }
     expect(left().textContent).toContain("gol");
+  });
+
+  it("41.43: a head stands over both lists, and the buttons may carry their action's icons", () => {
+    render(
+      <TwoLists
+        head={<label>Tip element<select aria-label="Tip element" /></label>}
+        left={{ name: "in", title: "Ștampilate", rows: [], empty: "gol" }}
+        right={{ name: "out", title: "Disponibile", rows: [], empty: "nimic" }}
+        includeLabel={(n) => `‹ Aplică ștampila (${n})`}
+        takeOutLabel={(n) => `Elimină ștampila › (${n})`}
+        includeIcon={Stamp}
+        takeOutIcon={Eraser}
+        onInclude={() => {}}
+        onTakeOut={() => {}}
+      />,
+    );
+    const head = document.querySelector<HTMLElement>("[data-two-list-head]")!;
+    expect(head.nextElementSibling?.matches("[data-two-lists]")).toBe(true);
+    expect(within(head).getByRole("combobox", { name: "Tip element" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "‹ Aplică ștampila (0)" }).querySelector("svg")?.getAttribute("class")).toContain("lucide-stamp");
+    expect(screen.getByRole("button", { name: "Elimină ștampila › (0)" }).querySelector("svg")?.getAttribute("class")).toContain("lucide-eraser");
   });
 
   it("no heading element: inside a tile only TileTitle writes one", () => {

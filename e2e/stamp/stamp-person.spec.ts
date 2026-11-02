@@ -104,10 +104,10 @@ test.describe("TC-STAMP-01 — Ștampilă creată, aplicată unei persoane și g
       }).toPass({ timeout: 90_000 });
       await expect(page.getByRole("heading", { name: new RegExp(`^Aplică ștampila: STMP-[A-Z]{3} - ${DESCRIPTION}$`) }))
         .toBeVisible({ timeout: 30_000 });
-      await expect(page.getByText("Cod", { exact: true }).first()).toBeVisible();
-      // #38.13: the tiles' names; „Tip element" is the tile's title, and names its select.
-      await expect(page.getByRole("region", { name: "Descrierea ștampilei", exact: true })).toBeVisible();
-      await expect(page.getByRole("region", { name: "Tip element", exact: true })).toBeVisible(); // 41.41: the name is in „Panouri" too
+      // 41.43: two tiles — „Descrierea ștampilei" (the code and the short description on one line) and „Elementele
+      // ștampilei", „Tip element" over its two lists, naming the select.
+      await expect(page.getByRole("region", { name: "Descrierea ștampilei", exact: true }).locator("[data-stamp-identity-line]")).toContainText(/STMP-[A-Z]{3} · /);
+      await expect(page.getByRole("region", { name: "Elementele ștampilei", exact: true })).toBeVisible();
       const targetType = page.getByRole("combobox", { name: "Tip element", exact: true });
       await expect(targetType.locator("option")).toHaveText(["Persoană fizică", "Persoană juridică", "Proprietate", "Document"]);
       await expect(targetType.locator("option:checked")).toHaveText("Persoană fizică");
@@ -115,14 +115,14 @@ test.describe("TC-STAMP-01 — Ștampilă creată, aplicată unei persoane și g
       await expect(page.getByRole("region", { name: "Elemente disponibile pentru ștampilare", exact: true })).toBeVisible();
       await expect(page.getByRole("region", { name: "Elemente deja ștampilate", exact: true })).toBeVisible();
       await expect(page.getByText("Niciun element ștampilat încă")).toBeVisible();
-      await expect(page.getByRole("button", { name: "Aplică ștampila (0)" })).toBeVisible();
-      await expect(page.getByRole("button", { name: "Elimină ștampila (0)" })).toBeVisible();
+      await expect(page.getByRole("button", { name: "‹ Aplică ștampila (0)", exact: true })).toBeVisible();
+      await expect(page.getByRole("button", { name: "Elimină ștampila › (0)", exact: true })).toBeVisible();
       await expect(page.getByRole("button", { name: "Salvează ștampilele" })).toBeVisible();
 
-      // Step 6 — tick the person, „Aplică ștampila (1)": it moves across, „Modificări nesalvate".
+      // Step 6 — tick the person, „‹ Aplică ștampila (1)" (41.43): it moves across, „Modificări nesalvate".
       await page.getByRole("searchbox", { name: "Caută în elementele disponibile" }).fill(MARK, { timeout: 15_000 });
       await page.getByRole("checkbox", { name: PERSON }).check({ timeout: 15_000 });
-      await page.getByRole("button", { name: "Aplică ștampila (1)" }).click();
+      await page.getByRole("button", { name: "‹ Aplică ștampila (1)", exact: true }).click();
       await expect(page.getByText("Modificări nesalvate")).toBeVisible();
       await expect(page.getByText("Niciun element ștampilat încă")).toHaveCount(0);
 

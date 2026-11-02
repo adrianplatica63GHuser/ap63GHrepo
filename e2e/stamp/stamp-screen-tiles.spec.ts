@@ -1,5 +1,5 @@
 /**
- * Case:   TC-STAMP-02 — Aplicarea unei ștampile: patru fișe cu nume în două coloane, trase ca pe formulare
+ * Case:   TC-STAMP-02 — Aplicarea unei ștampile: descrierea compactă și elementele în două liste (41.43; patru fișe până atunci)
  * Source: docs/testing/cases/TC-STAMP-02.md, „Last green" 2026-10-05
  *
  * A translation of the case file, step for step. Every Romanian string below
@@ -16,7 +16,7 @@
  */
 
 import { test, expect, type Page } from "../helpers/test";
-import { expectPanouriRoundTrip, pressTileButton, tilesMenuButton } from "../helpers/tiles";
+import { expectPanouriRoundTrip, tilesMenuButton } from "../helpers/tiles";
 import { E2E_MARKER, createNaturalPerson, removeLeftovers, removeRecord, removeStampLeftovers } from "../helpers/records";
 
 const MARK = `${E2E_MARKER}STAMP-02`;
@@ -38,20 +38,8 @@ async function boxes(page: Page): Promise<Record<string, Box>> {
   });
 }
 
-/** The default places, from the tiles' own sizes. */
-function defaults(b: Record<string, Box>) {
-  return {
-    description: { x: 0, y: 0 },
-    type: { x: b.description.w + GAP, y: 0 },
-    stamped: { x: 0, y: b.description.h + GAP },
-    available: { x: b.description.w + GAP, y: b.type.h + GAP },
-  };
-}
-const at = (b: Record<string, Box>) => Object.fromEntries(["description", "type", "stamped", "available"].map((k) => [k, { x: b[k]?.x, y: b[k]?.y }]));
-const same = (b: Record<string, Box>) => JSON.stringify(at(b)) === JSON.stringify(defaults(b));
-
-test.describe("TC-STAMP-02 — aplicarea unei ștampile: patru fișe", () => {
-  test("1366 și 1920: locurile implicite; „Elemente deja ștampilate” trasă, după reîncărcare, „Implicit”", async ({ page }) => {
+test.describe("TC-STAMP-02 — aplicarea unei ștampile: descrierea și elementele, două liste într-o fișă (41.43)", () => {
+  test("1366 și 1920: descrierea compactă, elementele sub ea sau alături; ștampilate cu bifă și buton, cu dublu clic, una scoasă; salvat", async ({ page }) => {
     test.slow();
     await removeStampLeftovers(page.request, MARK);
     await removeLeftovers(page.request, MARK);
@@ -61,72 +49,70 @@ test.describe("TC-STAMP-02 — aplicarea unei ștampile: patru fișe", () => {
       const s = await page.request.post("/api/stamps", { data: { shortDescription: `${MARK} Ștampilă de test`, notes: "" } });
       expect(s.status()).toBe(201);
       stampId = ((await s.json()) as { id: string }).id;
-      for (const n of ["Ion", "Ana", "Dan"]) {
-        const id = await createNaturalPerson(page.request, { lastName: MARK, firstName: n });
-        ids.push(id);
-        if (n === "Ion") {
-          const refs = (await (await page.request.get(`/api/people/${id}/entity-references`)).json()) as { principalObjectId: string };
-          expect((await page.request.post(`/api/metadata/${refs.principalObjectId}/stamps`, { data: { stampId } })).ok()).toBeTruthy();
-        }
-      }
+      for (const n of ["Ion", "Ana", "Dan"]) ids.push(await createNaturalPerson(page.request, { lastName: MARK, firstName: n }));
       await page.setViewportSize({ width: 1366, height: 900 });
       await page.goto(`/admin/stamps/${stampId}`);
       await page.evaluate((k) => localStorage.removeItem(k), KEY);
       await page.reload();
       const region = (name: string) => page.getByRole("region", { name, exact: true });
-
-      // Step 1 — 1366: the four tiles and their places; „Tip element" names the select; „Implicit".
       const description = region("Descrierea ștampilei");
-      const type = region("Tip element");
-      const stamped = region("Elemente deja ștampilate");
-      const available = region("Elemente disponibile pentru ștampilare");
+      const records = region("Elementele ștampilei");
+      const stamped = records.getByRole("region", { name: "Elemente deja ștampilate", exact: true });
+      const available = records.getByRole("region", { name: "Elemente disponibile pentru ștampilare", exact: true });
+      const row = (list: typeof stamped, n: string) => list.getByRole("listitem").filter({ hasText: `${n} ${MARK}` });
+
+      // Step 1 — 1366: the description 2 units, the code and the short description on one line; the records 7 units,
+      // under it, „Tip element" over both lists on „Persoană fizică"; „Panouri".
       await expect(description).toBeVisible({ timeout: 30_000 });
-      await expect(description.getByText("Cod", { exact: true })).toBeVisible();
-      const select = page.getByRole("combobox", { name: "Tip element", exact: true });
+      await expect(description.locator("[data-stamp-identity-line]")).toHaveText(new RegExp(`^STMP-[A-Z]{3} · ${MARK} Ștampilă de test$`));
+      await expect(description.getByRole("button", { name: "Salvează ștampilele" })).toBeDisabled();
+      const select = records.getByRole("combobox", { name: "Tip element", exact: true });
       await expect(select.locator("option:checked")).toHaveText("Persoană fizică");
-      await expect(type.getByText("Sunt afișate doar elementele de tipul selectat", { exact: false })).toBeVisible();
-      await expect(stamped.getByText(`Ion ${MARK}`)).toBeVisible({ timeout: 30_000 });
-      await expect(stamped.locator("span.text-xs").first()).toHaveText("1");
-      await expect(available).toBeVisible();
-      // 41.41: „Implicit" is in „Panouri" now — the screen's button in the page bar, as on the record screens.
+      await expect(records.getByText("Sunt afișate doar elementele de tipul selectat", { exact: false })).toBeVisible();
+      await expect(stamped.getByText("Niciun element ștampilat încă")).toBeVisible({ timeout: 30_000 });
       await expect(tilesMenuButton(page)).toBeVisible({ timeout: 30_000 });
-      await expect.poll(async () => same(await boxes(page)), { timeout: 20_000 }).toBe(true);
+      await expect.poll(async () => { const b = await boxes(page); return [b.description?.w, b.records?.w]; }, { timeout: 20_000 }).toEqual([254, 929]);
+      await expect.poll(async () => { const b = await boxes(page); return { x: b.records.x, y: b.records.y - b.description.h }; }, { timeout: 20_000 })
+        .toEqual({ x: 0, y: GAP });
+      const [l, r] = await Promise.all([stamped.boundingBox(), available.boundingBox()]);
+      if (!l || !r) throw new Error("a list is not on the page");
+      expect(l.x).toBeLessThan(r.x);
+      expect(Math.min(l.width, r.width)).toBeGreaterThanOrEqual(363);
 
-      // Step 2 — 1920: the same four places.
+      // Step 2 — 1920: the records at the description's right, tops level.
       await page.setViewportSize({ width: 1920, height: 1000 });
-      await expect.poll(async () => page.evaluate(() => Math.round(document.querySelector("[data-tile-row]")!.getBoundingClientRect().width)), { timeout: 10_000 }).toBeGreaterThan(1400);
-      await page.waitForTimeout(500);
-      const rule = await boxes(page);
-      expect(at(rule)).toEqual(defaults(rule));
+      await expect.poll(async () => { const b = await boxes(page); return { x: b.records.x, y: b.records.y }; }, { timeout: 20_000 }).toEqual({ x: 254 + GAP, y: 0 });
 
-      // Step 3 — „Elemente deja ștampilate" by its bottom bar's padding, to the right of „Elemente disponibile…", level with „Tip element".
-      const bar = stamped.locator(":scope > div").last();
-      const p = await bar.boundingBox();
-      const [me, av, ty] = await Promise.all([stamped.boundingBox(), available.boundingBox(), type.boundingBox()]);
-      if (!p || !me || !av || !ty) throw new Error("a tile is not on the page");
-      const x = p.x + 4;
-      const y = p.y + 4;
-      await page.mouse.move(x, y);
-      await expect.poll(() => stamped.evaluate((e) => getComputedStyle(e).cursor)).toBe("grab");
-      await page.mouse.down();
-      await page.mouse.move(x + 10, y - 10, { steps: 3 });
-      await page.mouse.move(x + (av.x + av.width + GAP - me.x), y + (ty.y - me.y), { steps: 12 });
-      await expect(page.locator("[data-tile-outline]")).toHaveAttribute("data-free", "true");
-      await page.mouse.up();
-      const dropped = { x: rule.available.x + rule.available.w + GAP, y: 0 };
-      await expect.poll(async () => { const b = (await boxes(page)).stamped; return { x: b.x, y: b.y }; }).toEqual(dropped);
-      const after = await boxes(page);
-      for (const k of ["description", "type", "available"]) expect({ k, box: after[k] }).toEqual({ k, box: rule[k] });
+      // Step 3 — the search, Ion and Ana ticked, „‹ Aplică ștampila (2)": both on the left, „în așteptare".
+      await available.getByRole("searchbox", { name: "Caută în elementele disponibile" }).fill(MARK);
+      await expect(row(available, "Dan")).toBeVisible({ timeout: 15_000 });
+      const apply = records.getByRole("button", { name: /^‹ Aplică ștampila \(\d+\)$/ });
+      await expect(apply).toHaveText("‹ Aplică ștampila (0)");
+      await expect(apply).toBeDisabled();
+      for (const n of ["Ion", "Ana"]) await row(available, n).getByRole("checkbox").check();
+      await apply.click();
+      for (const n of ["Ion", "Ana"]) await expect(row(stamped, n)).toContainText("în așteptare");
+      await expect(records.getByText("Modificări în așteptare")).toBeVisible();
 
-      // Step 4 — after a reload, where it was dropped.
+      // Step 4 — a double-click on Dan moves him left.
+      await row(available, "Dan").dblclick();
+      await expect(row(stamped, "Dan")).toContainText("în așteptare");
+      await expect(stamped.locator("[data-two-list-count]")).toHaveText("3");
+
+      // Step 5 — Ion ticked on the left, „Elimină ștampila › (1)": back on the right.
+      await row(stamped, "Ion").getByRole("checkbox").check();
+      await records.getByRole("button", { name: "Elimină ștampila › (1)", exact: true }).click();
+      await expect(row(available, "Ion")).toBeVisible();
+      await expect(row(stamped, "Ion")).toHaveCount(0);
+
+      // Step 6 — „Salvează ștampilele": Ana and Dan stamped, nothing pending; after a reload the same.
+      await description.getByRole("button", { name: "Salvează ștampilele" }).click();
+      await expect(description.getByText("Modificări nesalvate")).toHaveCount(0, { timeout: 15_000 });
+      await expect(stamped.getByText("în așteptare")).toHaveCount(0);
       await page.reload();
-      await expect(stamped).toBeVisible({ timeout: 30_000 });
-      await expect.poll(async () => { const b = (await boxes(page)).stamped; return { x: b.x, y: b.y }; }, { timeout: 20_000 }).toEqual(dropped);
-
-      // Step 5 — „Implicit": back under „Descrierea ștampilei"; nothing kept.
-      await pressTileButton(page, "Implicit");
-      await expect.poll(async () => { const b = (await boxes(page)).stamped; return { x: b.x, y: b.y }; }, { timeout: 20_000 }).toEqual(defaults(rule).stamped);
-      expect(await page.evaluate((k) => localStorage.getItem(k), KEY)).toBeNull();
+      await expect(stamped.locator("[data-two-list-count]")).toHaveText("2", { timeout: 30_000 });
+      for (const n of ["Ana", "Dan"]) await expect(row(stamped, n)).toBeVisible();
+      await expect(row(stamped, "Ion")).toHaveCount(0);
     } finally {
       await page.evaluate((k) => localStorage.removeItem(k), KEY).catch(() => undefined);
       if (stampId) await page.request.delete(`/api/stamps/${stampId}`);
@@ -151,7 +137,7 @@ test.describe("TC-STAMP-02 (41.41) — „Panouri” pe Ștampile și pe ecranul
       const body = (await s.json()) as { id?: string; stamp?: { id: string } };
       const stampId = body.stamp?.id ?? body.id;
       await page.goto(`/admin/stamps/${stampId}`);
-      await expectPanouriRoundTrip(page, "Tip element", "type");
+      await expectPanouriRoundTrip(page, "Elementele ștampilei", "records");
     } finally {
       await removeStampLeftovers(page.request, MARK41);
     }

@@ -221,8 +221,8 @@ test.describe("TC-LAYOUT-01 — Celelalte ecrane, la lățimi fixe", () => {
         alsoAt: [1366, 2560],
       });
       await screen(page, "stamps", "/admin/stamps", (p) => p.locator("table[data-width-table]"), { mask: rows, unitGrid: true });
-      await screen(page, "stamp", `/admin/stamps/${stampId}`, (p) => p.locator('[data-panel="available"]'), {
-        mask: (p) => [p.locator('[data-panel="available"] ul'), p.locator('[data-panel="stamped"] ul')],
+      await screen(page, "stamp", `/admin/stamps/${stampId}`, (p) => p.locator('[data-panel="records"]'), {
+        mask: (p) => [p.locator('[data-panel="records"] ul')],
         unitGrid: true,
       });
       // Fixed in passing (#39.89): the cloud, not the heading — the heading is drawn while the tags still load, and a
