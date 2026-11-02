@@ -98,7 +98,7 @@ describe("the form panels (41.16, Ask first 3)", () => {
         expect([screen, panel, (PANEL_UNIT_INNER_REM[screen] as Record<string, number>)[panel]]).toEqual([screen, panel, unitsInnerRem(units[panel])]);
       }
     }
-    expect(PANEL_UNITS.naturalPerson).toEqual({ identity: 3, idCard: 4, contact: 2, address: 2 });
+    expect(PANEL_UNITS.naturalPerson).toEqual({ identity: 3, idCard: 4, contact: 2, address: 3 }); // 41.35: the address 3 (two M boxes a row; 2 since 41.05)
   });
 
   it("a panel counted from its rows is recomputed on a new unit; a count pinned by hand keeps its 119-px width", () => {

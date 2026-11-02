@@ -145,8 +145,10 @@ test.describe("TC-PERS-04 — listele de persoane", () => {
       const rem = await page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).fontSize));
       // Slice #39.04: on a list the preview is the row tiles' column's width, 40 rem. It read
       // `expect(np.width).toBeLessThan((3 * 9.25 + 2) * rem)` — three units and a little.
-      expect(Math.abs(np.width - 40 * rem)).toBeLessThanOrEqual(2);
-      expect(np.height).toBeLessThan(10 * rem);
+      // 41.36 — Adrian: „two units wide and as tall as needed": 254 px beside the list too (it was the column's 40 rem,
+      // #39.04), its lines wrapping, so taller than it was (under 10 rem).
+      expect(Math.abs(np.width - 254)).toBeLessThanOrEqual(1);
+      expect(np.height).toBeLessThan(20 * rem);
       await photograph(page, "natural-person-preview", page.locator("[data-preview]"));
 
       // Step 5 — „Persoane Juridice": „Câmpuri afișate 0/4", its four fields (#37.71: „Persoană de contact").

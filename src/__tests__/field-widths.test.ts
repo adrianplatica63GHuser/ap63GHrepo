@@ -1382,7 +1382,7 @@ describe("a Previzualizare tile: whole units, its screen's rows (Slice #37.33)",
   it("the body takes its width from the unit and its rows from the screen; the 5.5rem label column is gone", () => {
     const body = code(read("src", "components", "tiles", "preview-tile-body.tsx"));
     // 41.36 inverted in place (was `lines ? style : …`, the compact tile as wide as its widest line): 2 units.
-    expect(body).toMatch(/style=\{lines \? \{ \.\.\.PREVIEW_COMPACT_STYLE, \.\.\.style \} : \{ \.\.\.PREVIEW_STYLE\[width\], \.\.\.style \}\}/);
+    expect(body).toMatch(/style=\{lines \? \{ \.\.\.style, \.\.\.PREVIEW_COMPACT_STYLE \} : \{ \.\.\.PREVIEW_STYLE\[width\], \.\.\.style \}\}/);
     expect(body).not.toMatch(/PANEL_STYLE\b|PAGES_PANEL_STYLE|5\.5rem|<dl/);
     expect(body).toMatch(/className=\{STACKED_ROW_CLASS\}/);
     const tiles = code(read("src", "components", "tiles", "preview-tiles.tsx"));

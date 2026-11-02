@@ -139,8 +139,9 @@ export function PreviewTileBody({
       // Slice #37.88: „Corelate"'s light green — a preview is what „Corelate" opens. The dashed
       // rim still says it is a look, not the record's own tile.
       className="rounded-md border border-dashed border-card-related-rim bg-card-related p-3 shadow-sm dark:border-card-related-rim-dark dark:bg-card-related-dark"
-      // 41.36: a compact preview is 2 units (254 px), as tall as its lines need; the others their kind's units.
-      style={lines ? { ...PREVIEW_COMPACT_STYLE, ...style } : { ...PREVIEW_STYLE[width], ...style }}
+      // 41.36: a compact preview is 2 units (254 px) wherever it opens — beside a list too, where the column would stretch
+      // it (#39.04) — and as tall as its lines need; the others their kind's units.
+      style={lines ? { ...style, ...PREVIEW_COMPACT_STYLE } : { ...PREVIEW_STYLE[width], ...style }}
     >
       {/* Slice #37.70: one row, whatever the name's length — a long name wraps inside it and
           „Numai citire" and the two buttons stay at its right. */}
