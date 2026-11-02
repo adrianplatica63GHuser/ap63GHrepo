@@ -1016,6 +1016,7 @@
       "sectionClassification": "Classification",
       "sectionConnections": "Tags and groups",
       "hideAdd": "Hide",
+      "done": "Done",
       "about": "About “{title}”"
     },
     "errorBoundary": {

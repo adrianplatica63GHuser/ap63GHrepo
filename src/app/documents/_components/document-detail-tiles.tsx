@@ -270,7 +270,7 @@ export function DocumentDetailTiles({
           )}
           {choice.isShown("connections") && (
             <div className="max-w-full" style={{ order: order("connections") }}>
-              <ListTile tile="connections" title={labels.connections} subtitle={t("tileSubtitles.connections")} units={LIST_UNITS.document.connections} surface={groupSurface(tileGroupOf(reg, "connections"))}>
+              <ListTile tile="connections" title={labels.connections} subtitle={t("tileSubtitles.connections")} units={LIST_UNITS.document.connections} surface={groupSurface(tileGroupOf(reg, "connections"))} readEdit>
                 <EntityMetadataTab
                   apiPath={`/api/documents/${encodeURIComponent(documentId)}/entity-references`}
                   queryKey={`entity-references-document-${documentId}`}

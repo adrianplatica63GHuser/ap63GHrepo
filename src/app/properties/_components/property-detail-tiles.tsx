@@ -189,7 +189,7 @@ export function PropertyDetailTiles({
             </ListTile>
           )}
           {choice.isShown("connections") && (
-            <ListTile tile="connections" title={labels.connections} subtitle={t("tileSubtitles.connections")} units={LIST_UNITS.property.connections} surface={groupSurface(tileGroupOf(PROP_TILE_REGISTRY, "connections"))}>
+            <ListTile tile="connections" title={labels.connections} subtitle={t("tileSubtitles.connections")} units={LIST_UNITS.property.connections} surface={groupSurface(tileGroupOf(PROP_TILE_REGISTRY, "connections"))} readEdit>
               <EntityMetadataTab
                 apiPath={`/api/properties/${encodeURIComponent(propertyId)}/entity-references`}
                 queryKey={`entity-references-property-${propertyId}`}

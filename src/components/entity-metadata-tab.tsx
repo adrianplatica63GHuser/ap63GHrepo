@@ -3,7 +3,7 @@
 import { useNameOr } from "@/components/record/use-name-or";
 import { unnamedKindOf } from "@/lib/ui/unnamed";
 import { Fragment, useCallback, useEffect, useId, useState, useRef } from "react";
-import { Calculator, Link as LinkIcon, Plus, X } from "lucide-react";
+import { Calculator, Check, Link as LinkIcon, Plus, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { AddToggleButton, MarkReviewedButton } from "@/components/metadata-buttons";
 import Link from "next/link";
@@ -385,9 +385,12 @@ function TagsSection({
   labelAdding,
   labelRemove,
   labelEmpty,
+  editing = true,
 }: {
   principalObjectId: string;
   queryKey:          string;
+  /** Slice 41.40: the tag box, „Adaugă" and each „×" only in edit; at rest the chips alone. */
+  editing?:          boolean;
   labelTitle:        string;
   labelNote:         string;
   labelAbout:        string;
@@ -486,6 +489,7 @@ function TagsSection({
       <ItemTitle id={noteId} title={labelTitle} note={labelNote} about={labelAbout} />
 
       {/* Autocomplete suggestions list — native HTML5, zero deps */}
+      {editing && (<>
       <datalist id={datalistId}>
         {suggestions.map((t) => (
           <option key={t.tag} value={t.tag} />
@@ -524,6 +528,7 @@ function TagsSection({
           disabled={adding || !input.trim()}
         />
       </div>
+      </>)}
 
       {/* Chip display */}
       {tags.length === 0 ? (
@@ -534,15 +539,17 @@ function TagsSection({
           {tags.map((tag) => (
             <span key={tag} className={TAG_CHIP} data-tag-chip="">
               {tag}
-              <IconButton
-                icon={X}
-                label={`${labelRemove} ${tag}`}
-                variant="bare-danger"
-                size="xs"
-                className={`${CHIP_REMOVE_PLACE} ${REMOVE_REVEAL}`}
-                onClick={() => handleRemove(tag)}
-                disabled={removing === tag}
-              />
+              {editing && (
+                <IconButton
+                  icon={X}
+                  label={`${labelRemove} ${tag}`}
+                  variant="bare-danger"
+                  size="xs"
+                  className={`${CHIP_REMOVE_PLACE} ${REMOVE_REVEAL}`}
+                  onClick={() => handleRemove(tag)}
+                  disabled={removing === tag}
+                />
+              )}
             </span>
           ))}
         </div>
@@ -1493,12 +1500,18 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
     !data.importance && !data.relevance && !data.provenance;
   const setChromeFolded = chrome?.setFolded;
   const setChromeEditing = chrome?.setEditing;
+  // Slice 41.40 — Adrian: „On the “tags and groups” tile we should have the edit functionality triggered by the “pen”
+  // button … While the tile is in calm mode … we only have the items". Etichete și grupuri reads at rest — no tag box,
+  // no „+", no „×", no „Leagă" — and its pen opens it in edit, where adding and removing still save at once, so the bar
+  // is one „Gata" (and Esc). Without a tile around it (both sections drawn on one page) it stays editable as before.
+  const [connEditing, setConnEditing] = useState(false);
+  const canChange = isOnLatest && (connEditing || !chrome);
   useEffect(() => {
     setChromeFolded?.(folded);
   }, [setChromeFolded, folded]);
   useEffect(() => {
-    setChromeEditing?.(editing);
-  }, [setChromeEditing, editing]);
+    setChromeEditing?.(editing || connEditing);
+  }, [setChromeEditing, editing, connEditing]);
 
   // ── Display values (local on latest; snapshot on historical) ─────────────
 
@@ -1650,6 +1663,7 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
           labelAdding={t("tags.adding")}
           labelRemove={t("tags.remove")}
           labelEmpty={t("tags.empty")}
+          editing={canChange}
         />
     ) });
     // ── 5. Grupuri / Groups
@@ -1658,7 +1672,7 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
           principalObjectId={data.principalObjectId}
           currentGroups={data.groups}
           mainQueryKey={queryKey}
-          isOnLatest={isOnLatest}
+          isOnLatest={canChange}
           labelTitle={t("groups.title")}
           labelEmpty={t("groups.empty")}
           labelAdd={t("groups.add")}
@@ -1684,7 +1698,7 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
           principalObjectId={data.principalObjectId}
           currentStamps={data.stamps}
           mainQueryKey={queryKey}
-          isOnLatest={isOnLatest}
+          isOnLatest={canChange}
           labelTitle={t("stamps.title")}
           labelEmpty={t("stamps.empty")}
           labelAdd={t("stamps.add")}
@@ -1704,7 +1718,7 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
         <CrossRefsSection
           principalObjectId={data.principalObjectId}
           mainQueryKey={queryKey}
-          isOnLatest={isOnLatest}
+          isOnLatest={canChange}
           t={(key, opts) => t(key as Parameters<typeof t>[0], opts)}
           withBack={withBack}
         />
@@ -1931,7 +1945,18 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
             older version „Etichete" is not drawn, and „Grupuri" comes first with
             no line above it). The groups stand 0.5rem from each line, so two
             groups are the 1rem they were apart plus the line. */}
-        <div className="flex flex-col gap-2" data-connections-groups="">
+        {/* 41.40: the pen in the tile's corner at rest; in edit, Esc or „Gata" puts it back at rest. */}
+        {chrome && isOnLatest && !connEditing && (
+          <TileAction>
+            <TileEditButton tile="connections" title={chrome.title} onEdit={() => setConnEditing(true)} />
+          </TileAction>
+        )}
+        <div
+          className="flex flex-col gap-2"
+          data-connections-groups=""
+          data-connections-calm={chrome && !connEditing ? "" : undefined}
+          onKeyDown={onTileKeyDown(connEditing, () => setConnEditing(false))}
+        >
           {connectionGroups.map((group, i) => (
             <Fragment key={group.key}>
               {i > 0 && <Divider />}
@@ -1939,6 +1964,11 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
             </Fragment>
           ))}
         </div>
+        {chrome && connEditing && (
+          <div className="flex justify-end pt-1" data-tile-edit-bar="connections">
+            <IconButton icon={Check} label={t("done")} showLabel variant="secondary" size="sm" onClick={() => setConnEditing(false)} data-tile-done="connections" />
+          </div>
+        )}
         </>)}
       </div>
     </>

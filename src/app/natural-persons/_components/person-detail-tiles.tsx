@@ -176,7 +176,7 @@ export function PersonDetailTiles({
             </ListTile>
           )}
           {choice.isShown("connections") && (
-            <ListTile tile="connections" title={labels.connections} subtitle={t("tileSubtitles.connections")} units={NP_LIST_UNITS.connections} surface={groupSurface(tileGroupOf(NP_TILE_REGISTRY, "connections"))}>
+            <ListTile tile="connections" title={labels.connections} subtitle={t("tileSubtitles.connections")} units={NP_LIST_UNITS.connections} surface={groupSurface(tileGroupOf(NP_TILE_REGISTRY, "connections"))} readEdit>
               <EntityMetadataTab
                 apiPath={`/api/people/${encodeURIComponent(personId)}/entity-references`}
                 queryKey={`entity-references-person-${personId}`}
