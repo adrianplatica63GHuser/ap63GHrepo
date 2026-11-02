@@ -30,7 +30,7 @@
  */
 
 import { test, expect, type Page } from "../helpers/test";
-import { E2E_MARKER, createNaturalPerson, removeLeftovers, removeRecord } from "../helpers/records";
+import { E2E_MARKER, createCompany, createNaturalPerson, removeLeftovers, removeRecord } from "../helpers/records";
 import { editTile, emptyTileLine, openEmptyTile } from "../helpers/tiles";
 import { emptyFieldsLink } from "../helpers/empty-fields";
 
@@ -269,6 +269,65 @@ test.describe("TC-PERS-03 — nota CNP-ului într-un balon, refuzul în română
       await expect(emptyFieldsLink(identity, "identity")).toBeVisible();
     } finally {
       if (personId) await removeRecord(page.request, "person", personId);
+    }
+  });
+});
+
+const MARK20 = `${E2E_MARKER}PERS-03-CORESP`;
+const readValue = (page: Page, path: string) => page.locator(`[data-read-value="${path}"]`);
+
+async function correspondenceOnItsOwn(page: Page, first: "home" | "headquarters"): Promise<void> {
+  // Opened with its line's „Adaugă": only the correspondence tile is in edit.
+  await emptyTileLine(page, "correspondence").locator("[data-empty-tile-add]").click();
+  await expect(page.locator('[data-tile-edit-bar="correspondence"]')).toBeVisible();
+  await expect(page.locator(`[data-tile-edit-bar="${first}"]`)).toHaveCount(0);
+  await page.locator('input[name="addresses.CORRESPONDENCE.locality"], textarea[name="addresses.CORRESPONDENCE.locality"]').fill(`${MARK20} Ploiești`);
+  await page.locator('input[name="addresses.CORRESPONDENCE.country"], textarea[name="addresses.CORRESPONDENCE.country"]').fill("România");
+  await page.locator('[data-tile-save="correspondence"]').click();
+  await expect(page.locator('[data-tile-edit-bar="correspondence"]')).toHaveCount(0, { timeout: 30_000 });
+
+  await page.reload();
+  await expect(readValue(page, "addresses.CORRESPONDENCE.locality")).toHaveText(`${MARK20} Ploiești`, { timeout: 30_000 });
+
+  // Its own „Editează"; „Renunță" puts the saved value back.
+  await page.locator('[data-tile-edit="correspondence"]').click();
+  await expect(page.locator('[data-tile-edit-bar="correspondence"]')).toBeVisible();
+  await expect(page.locator(`[data-tile-edit-bar="${first}"]`)).toHaveCount(0);
+  await page.locator('input[name="addresses.CORRESPONDENCE.locality"], textarea[name="addresses.CORRESPONDENCE.locality"]').fill("Altceva");
+  await page.locator('[data-tile-cancel="correspondence"]').click();
+  await expect(readValue(page, "addresses.CORRESPONDENCE.locality")).toHaveText(`${MARK20} Ploiești`);
+}
+
+// Slice 41.34 — Adrian: „tile Correspondence Address is missing Edit Save and Cancel buttons … the same is true for the
+// correspondence address of a juridical person". On an invented natural person and an invented firm: the correspondence
+// opened alone, saved, reloaded with the home address (the registered office) unchanged; „Editează" and „Renunță".
+test.describe("TC-PERS-03 (41.34) — adresa de corespondență, tile-ul ei", () => {
+  test("persoana fizică și persoana juridică", async ({ page }) => {
+    test.slow();
+    await removeLeftovers(page.request, MARK20);
+    await page.setViewportSize({ width: 1366, height: 900 });
+    let personId: string | undefined;
+    let companyId: string | undefined;
+    try {
+      personId = await createNaturalPerson(page.request, { lastName: MARK, firstName: "Corespondență" });
+      await page.goto(`/natural-persons/${personId}`);
+      await expect(emptyTileLine(page, "correspondence")).toBeVisible({ timeout: 30_000 });
+      await correspondenceOnItsOwn(page, "home");
+      // The home address is still empty — one line.
+      await expect(emptyTileLine(page, "home")).toBeVisible();
+
+      companyId = await createCompany(page.request, {
+        name: `${MARK20} SRL`,
+        addresses: [{ kind: "HEADQUARTERS", locality: `${MARK20} Cluj`, country: "România" }],
+      });
+      await page.goto(`/judicial-persons/${companyId}`);
+      await expect(emptyTileLine(page, "correspondence")).toBeVisible({ timeout: 30_000 });
+      await correspondenceOnItsOwn(page, "headquarters");
+      // The registered office unchanged.
+      await expect(readValue(page, "addresses.HEADQUARTERS.locality")).toHaveText(`${MARK20} Cluj`);
+    } finally {
+      if (personId) await removeRecord(page.request, "person", personId);
+      if (companyId) await removeRecord(page.request, "company", companyId);
     }
   });
 });
