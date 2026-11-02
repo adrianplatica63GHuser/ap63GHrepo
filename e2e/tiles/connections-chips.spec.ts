@@ -97,3 +97,60 @@ test.describe("TC-TILES-10 — etichete mici, „×” doar la mouse sau la foca
     }
   });
 });
+
+// Slice 41.39 — Adrian: „once I click on the groups dropdown the tile freezes: if I click out of the drop The drop down
+// doesn't come back to closed, it stays open; Also I cannot resize the tile". On an invented person and an invented group
+// of persons with a 400-character description: the picker closes on a press outside and on Esc, its box never wider than
+// the tile, and the tile steps from 3 units to 2 with the picker open and again once closed; Home gives the width back.
+test.describe("TC-TILES-10 (41.39) — alegerea grupului se închide, dala se îngustează", () => {
+  test("clic în afară, Esc, 3 → 2 unități cu alegerea deschisă și închisă", async ({ page }) => {
+    test.slow();
+    const MARK39 = `${MARK}-GRUP`;
+    await removeLeftovers(page.request, MARK39);
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    const person = await createNaturalPerson(page.request, { lastName: MARK39, firstName: "Ion" });
+    const g = await page.request.post("/api/groups", { data: { targetType: "PERSON", description: `${MARK39} ${"descriere lungă ".repeat(25).trim()}` } });
+    expect(g.ok(), await g.text()).toBeTruthy();
+    const groupId = ((await g.json()) as { group?: { id: string }; id?: string }).group?.id ?? ((await g.json()) as { id?: string }).id;
+    try {
+      await page.goto(`/natural-persons/${person}?tab=metadata`);
+      const con = page.getByRole("region", { name: "Etichete și grupuri", exact: true });
+      await expect(con).toBeVisible({ timeout: 30_000 });
+      const plus = con.getByRole("button", { name: "Adaugă în grup", exact: false }).first();
+      const picker = con.locator("[data-groups-picker]");
+      // A press outside closes it.
+      await plus.click();
+      await expect(picker).toBeVisible({ timeout: 15_000 });
+      const [pb, cb] = await Promise.all([picker.boundingBox(), con.boundingBox()]);
+      expect(pb!.x + pb!.width, "the box inside the tile").toBeLessThanOrEqual(cb!.x + cb!.width + 0.5);
+      await page.mouse.click(5, 5);
+      await expect(picker).toHaveCount(0);
+      // Esc closes it, the focus back on „+".
+      await plus.click();
+      await expect(picker).toBeVisible();
+      await picker.focus();
+      await page.keyboard.press("Escape");
+      await expect(picker).toHaveCount(0);
+      // 3 → 2 units with the picker open, then with it closed.
+      const edge = page.locator('[data-tile-handle="connections"]');
+      await expect(edge).toBeAttached({ timeout: 30_000 });
+      const before = Number(await edge.getAttribute("aria-valuenow"));
+      await plus.click();
+      await expect(picker).toBeVisible();
+      await edge.focus();
+      await page.keyboard.press("ArrowLeft");
+      await expect.poll(async () => Number(await edge.getAttribute("aria-valuenow"))).toBe(before - 1);
+      await page.keyboard.press("Home");
+      await expect.poll(async () => Number(await edge.getAttribute("aria-valuenow"))).toBe(before);
+      await expect(picker).toHaveCount(0); // the press on the edge was outside the picker
+      await edge.focus();
+      await page.keyboard.press("ArrowLeft");
+      await expect.poll(async () => Number(await edge.getAttribute("aria-valuenow"))).toBe(before - 1);
+      await page.keyboard.press("Home");
+      await expect.poll(async () => Number(await edge.getAttribute("aria-valuenow"))).toBe(before);
+    } finally {
+      if (groupId) await page.request.delete(`/api/groups/${encodeURIComponent(groupId)}`);
+      await removeRecord(page.request, "person", person);
+    }
+  });
+});
