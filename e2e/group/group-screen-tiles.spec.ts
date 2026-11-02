@@ -130,12 +130,19 @@ test.describe("TC-GRP-04 (41.41) — „Panouri” pe Grupuri, pe ecranul unui g
     try {
       await page.goto("/admin/groups");
       await expectPanouriRoundTrip(page, "Ce este un Grup?", "about");
+      // 41.44: „Cum lucrezi cu grupurile", beside it, names the buttons by their labels; „Panouri" hides it too.
+      const workflows = page.getByRole("region", { name: "Cum lucrezi cu grupurile", exact: true });
+      await expect(workflows).toContainText("„‹ Include”");
+      await expect(workflows.locator("[data-workflow-step]")).toHaveCount(5);
+      await expectPanouriRoundTrip(page, "Cum lucrezi cu grupurile", "workflows");
       const g = await page.request.post("/api/groups", { data: { targetType: "PROPERTY", description: `${MARK41} Grup` } });
       expect(g.ok(), await g.text()).toBeTruthy();
       const body = (await g.json()) as { id?: string; group?: { id: string } };
       groupId = body.group?.id ?? body.id;
       await page.goto(`/admin/groups/${groupId}`);
       await expectPanouriRoundTrip(page, "Identitatea grupului", "identity");
+      await expect(page.getByRole("region", { name: "Cum lucrezi cu grupurile", exact: true })).toBeVisible();
+      await expectPanouriRoundTrip(page, "Cum lucrezi cu grupurile", "workflows");
       await page.goto("/admin/tags");
       await expectPanouriRoundTrip(page, "Etichete", "note");
     } finally {

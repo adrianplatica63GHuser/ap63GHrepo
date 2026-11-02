@@ -61,11 +61,13 @@ describe("the group screen's two tiles (41.42)", () => {
     const { container } = renderEditor();
     const identity = screen.getByRole("region", { name: "panels.identity" });
     const members = screen.getByRole("region", { name: "panels.members" });
-    expect([identity, members].map((e) => e.dataset.tile)).toEqual([...GROUP_SCREEN.tiles]);
-    expect(GROUP_SCREEN.tiles).toEqual(["identity", "members"]);
+    // 41.44: and „Cum lucrezi cu grupurile" after them.
+    const workflows = screen.getByRole("region", { name: "title" });
+    expect([identity, members, workflows].map((e) => e.dataset.tile)).toEqual([...GROUP_SCREEN.tiles]);
+    expect(GROUP_SCREEN.tiles).toEqual(["identity", "members", "workflows"]);
     const row = container.querySelector<HTMLElement>("[data-tile-row]")!;
     expect(row.dataset.tileScreen).toBe("admin-group");
-    expect([...row.querySelectorAll<HTMLElement>("[data-tile]")].map((e) => e.dataset.tile)).toEqual(["identity", "members"]);
+    expect([...row.querySelectorAll<HTMLElement>("[data-tile]")].map((e) => e.dataset.tile)).toEqual(["identity", "members", "workflows"]);
     // „Deja în grup" on the left, the available members on the right; the counts in their headings.
     const inGroup = within(members).getByRole("region", { name: "panels.inGroup" });
     const available = within(members).getByRole("region", { name: "panels.available" });

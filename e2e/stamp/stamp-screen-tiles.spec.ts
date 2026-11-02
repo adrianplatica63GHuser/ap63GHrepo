@@ -132,12 +132,19 @@ test.describe("TC-STAMP-02 (41.41) — „Panouri” pe Ștampile și pe ecranul
     try {
       await page.goto("/admin/stamps");
       await expectPanouriRoundTrip(page, "Ce este o Ștampilă?", "about");
+      // 41.44: „Cum lucrezi cu ștampilele", beside it; „Panouri" hides it too.
+      const workflows = page.getByRole("region", { name: "Cum lucrezi cu ștampilele", exact: true });
+      await expect(workflows).toContainText("„‹ Aplică ștampila”");
+      await expect(workflows.locator("[data-workflow-step]")).toHaveCount(5);
+      await expectPanouriRoundTrip(page, "Cum lucrezi cu ștampilele", "workflows");
       const s = await page.request.post("/api/stamps", { data: { shortDescription: `${MARK41} Ștampilă`, notes: "" } });
       expect(s.ok(), await s.text()).toBeTruthy();
       const body = (await s.json()) as { id?: string; stamp?: { id: string } };
       const stampId = body.stamp?.id ?? body.id;
       await page.goto(`/admin/stamps/${stampId}`);
       await expectPanouriRoundTrip(page, "Elementele ștampilei", "records");
+      await expect(page.getByRole("region", { name: "Cum lucrezi cu ștampilele", exact: true })).toBeVisible();
+      await expectPanouriRoundTrip(page, "Cum lucrezi cu ștampilele", "workflows");
     } finally {
       await removeStampLeftovers(page.request, MARK41);
     }

@@ -63,8 +63,10 @@ describe("the stamp screen's two tiles (41.43)", () => {
     const { container } = renderApplicator();
     const description = screen.getByRole("region", { name: "applicator.descriptionTile" });
     const records = screen.getByRole("region", { name: "applicator.records" });
-    expect([description, records].map((e) => e.dataset.tile)).toEqual([...STAMP_SCREEN.tiles]);
-    expect(STAMP_SCREEN.tiles).toEqual(["description", "records"]);
+    // 41.44: and „Cum lucrezi cu ștampilele" after them.
+    const workflows = screen.getByRole("region", { name: "title" });
+    expect([description, records, workflows].map((e) => e.dataset.tile)).toEqual([...STAMP_SCREEN.tiles]);
+    expect(STAMP_SCREEN.tiles).toEqual(["description", "records", "workflows"]);
     const row = container.querySelector<HTMLElement>("[data-tile-row]")!;
     expect(row.dataset.tileScreen).toBe("admin-stamp");
     const stamped = await within(records).findByRole("region", { name: "applicator.stamped" });
