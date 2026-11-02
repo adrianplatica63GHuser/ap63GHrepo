@@ -263,6 +263,23 @@ export async function forEachFrame(
   }
 }
 
+/**
+ * Slice 41.38: „Editează" in the tile's top-right corner — its gap to the tile's top edge equals its gap to the right
+ * edge (±1 px). `tile` is the bordered box itself (a gray panel, a frame, a list tile).
+ */
+export async function expectEditInCorner(tile: Locator): Promise<{ top: number; right: number }> {
+  const gaps = await tile.evaluate((el) => {
+    const pen = el.querySelector<HTMLElement>("[data-tile-edit]");
+    if (!pen) return null;
+    const t = el.getBoundingClientRect();
+    const b = pen.getBoundingClientRect();
+    return { top: Math.round((b.top - t.top) * 10) / 10, right: Math.round((t.right - b.right) * 10) / 10 };
+  });
+  expect(gaps, "the tile has an „Editează”").not.toBeNull();
+  expect(Math.abs(gaps!.top - gaps!.right), `top gap ${gaps!.top} px, right gap ${gaps!.right} px`).toBeLessThanOrEqual(1);
+  return gaps!;
+}
+
 /** `saveTile` by the tile's heading. */
 export async function saveTileNamed(page: Page, name: string): Promise<void> {
   const region = page.getByRole("region", { name, exact: true });

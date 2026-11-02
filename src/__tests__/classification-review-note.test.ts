@@ -40,7 +40,8 @@ describe("41.37 — Clasificare's „i” and its review paragraph", () => {
   });
 
   it("the „i” right after the title, outside the heading, through the tile's hint slot", () => {
-    expect(TITLE).toMatch(/<div className="flex items-center gap-1\.5" data-tile-title-line="">\s*\{heading\}\s*\{hint\}/);
+    // 41.38: the line holds the action too now, at its right end.
+    expect(TITLE).toMatch(/<div className="flex items-start gap-1\.5" data-tile-title-line="">\s*\{heading\}\s*\{hint && /);
     expect(LIST).toContain('hint={<span ref={setHintSlot} className="flex items-center empty:hidden" data-tile-hint-slot="" />}');
     expect(META).toContain("{!folded && chrome && <TileHint>{aboutBubble}</TileHint>}");
     // The top line is the version controls' again, drawn only with several versions (or with no tile around it).

@@ -7,8 +7,8 @@
  * `data-tile-edit-bar`. The versions are read from the record's own API and the „N versiuni" pill.
  */
 import { test, expect, type Page } from "../helpers/test";
-import { E2E_MARKER, createNaturalPerson, removeLeftovers, removeRecord } from "../helpers/records";
-import { editTile, saveTile } from "../helpers/tiles";
+import { E2E_MARKER, createCompany, createNaturalPerson, createProperty, createSaleContract, removeLeftovers, removeRecord } from "../helpers/records";
+import { editTile, expectEditInCorner, saveTile } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}PERS-15`;
 
@@ -96,6 +96,49 @@ test.describe("TC-PERS-15 — persoana fizică citită ca text, „Editează” 
       expect(await versionCount(page, id)).toBe(before + 1);
     } finally {
       if (id) await removeRecord(page.request, "person", id);
+    }
+  });
+});
+
+// Slice 41.38 — Adrian: „For all tiles move the Edit button up so it has the same gap to the upper edge of the tile as it
+// has to the right edge of the tile". One tile per screen, on invented records: the person's and the firm's identity, the
+// property's first tile with a pen, and a contract's. (Clasificare is the same TileTitle — tile-title-action.test.tsx —
+// and folds to its one line on a new record, with no pen to measure.)
+test.describe("TC-PERS-15 (41.38) — „Editează” în colțul dalei", () => {
+  test("persoană, firmă, proprietate, contract", async ({ page }) => {
+    test.slow();
+    const MARK38 = `${E2E_MARKER}PERS-15-COLT`;
+    await removeLeftovers(page.request, MARK38);
+    await page.setViewportSize({ width: 1366, height: 900 });
+    const made: [Parameters<typeof removeRecord>[1], string][] = [];
+    try {
+      const person = await createNaturalPerson(page.request, { lastName: MARK38, firstName: "Colț" });
+      made.push(["person", person]);
+      await page.goto(`/natural-persons/${person}`);
+      await expect(page.locator('[data-panel="identity"] [data-tile-edit]')).toBeVisible({ timeout: 30_000 });
+      const corner = await expectEditInCorner(page.locator('[data-panel="identity"]'));
+      expect(corner.top, "the pen at the tile's padding, not under the title").toBeLessThan(20);
+
+      const firm = await createCompany(page.request, { name: `${MARK38} SRL` });
+      made.push(["company", firm]);
+      await page.goto(`/judicial-persons/${firm}`);
+      await expect(page.locator('[data-panel="identity"] [data-tile-edit]')).toBeVisible({ timeout: 30_000 });
+      await expectEditInCorner(page.locator('[data-panel="identity"]'));
+
+      const property = await createProperty(page.request, { nickname: `${MARK38} Teren` });
+      made.push(["property", property]);
+      await page.goto(`/properties/${property}`);
+      const cadastral = page.locator("section:has(> [data-tile-title] [data-tile-edit])").first();
+      await expect(cadastral).toBeVisible({ timeout: 30_000 });
+      await expectEditInCorner(cadastral);
+
+      const contract = await createSaleContract(page.request, `${MARK38} CVC`);
+      made.push(["document", contract]);
+      await page.goto(`/documents/${contract}`);
+      await expect(page.locator("[data-tile-edit]").first()).toBeVisible({ timeout: 30_000 });
+      await expectEditInCorner(page.locator("section:has(> [data-tile-title] [data-tile-edit])").first());
+    } finally {
+      for (const [kind, id] of made) await removeRecord(page.request, kind, id);
     }
   });
 });
