@@ -34,6 +34,25 @@ export interface ScreenTiles {
   flowUnits: number;
 }
 
+/**
+ * Slice 41.41: the five admin screens' tile registries — the record screens' choice („Panouri", `useTileChoice`), kept
+ * per screen in localStorage under `ga40-tiles-<entity>-v1`. No form tiles; at least one tile stays (`toggleTile`).
+ */
+export type AdminTileRegistry<K extends string> = { entity: string; all: readonly K[]; defaults: readonly K[]; form: readonly K[] };
+const adminRegistry = <K extends string>(entity: string, all: readonly K[]): AdminTileRegistry<K> => ({ entity, all, defaults: all, form: [] });
+
+/** Administrare → Grupuri: what a group is, and the list. */
+export const ADMIN_GROUPS_REGISTRY = adminRegistry("admin-groups", ["about", "list"] as const);
+/** Administrare → Ștampile: what a stamp is, and the list. */
+export const ADMIN_STAMPS_REGISTRY = adminRegistry("admin-stamps", ["about", "list"] as const);
+/** Administrare → Etichete: the page's note, and the cloud. */
+export const ADMIN_TAGS_REGISTRY = adminRegistry("admin-tags", ["note", "cloud"] as const);
+
+/** The list screens' packed rows: what it is (7 units), the list (or the cloud) beside or under it. */
+export const ADMIN_GROUPS_SCREEN: ScreenTiles = { entity: "admin-groups", tiles: ["about", "list"], units: 7, flowUnits: 14 };
+export const ADMIN_STAMPS_SCREEN: ScreenTiles = { entity: "admin-stamps", tiles: ["about", "list"], units: 7, flowUnits: 14 };
+export const ADMIN_TAGS_SCREEN: ScreenTiles = { entity: "admin-tags", tiles: ["note", "cloud"], units: 7, flowUnits: 14 };
+
 /** Administrare → Grupuri → a group. */
 export const GROUP_SCREEN: ScreenTiles = {
   entity: "admin-group",
@@ -42,6 +61,9 @@ export const GROUP_SCREEN: ScreenTiles = {
   flowUnits: 2 * 4,
 };
 
+/** 41.41: one group's screen — its tiles chosen with „Panouri", under the screen's own entity. */
+export const GROUP_REGISTRY = adminRegistry(GROUP_SCREEN.entity, ["identity", "available", "in-group"] as const);
+
 /** Administrare → Ștampile → „Aplică" (#38.13). */
 export const STAMP_SCREEN: ScreenTiles = {
   entity: "admin-stamp",
@@ -49,6 +71,9 @@ export const STAMP_SCREEN: ScreenTiles = {
   units: 4, // 40.98: re-pinned, 476 → 524 px
   flowUnits: 2 * 4,
 };
+
+/** 41.41: one stamp's screen — its tiles chosen with „Panouri". */
+export const STAMP_REGISTRY = adminRegistry(STAMP_SCREEN.entity, ["description", "type", "stamped", "available"] as const);
 
 /**
  * Slice #39.77 — a tarla's page (/tarlale/[id]). Adrian, 2026-10-17: every panel a third of a maximized window, the

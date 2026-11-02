@@ -23,7 +23,9 @@ import { IconButton } from "@/lib/ui/icon-button";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { screenBox, screenPanel } from "@/lib/ui/field-widths";
-import { UnitRow } from "@/components/screen/unit-row";
+import { TileUnitRow } from "@/components/screen/tile-unit-row";
+import { AdminTilesBar, useAdminTiles } from "@/components/screen/admin-tiles";
+import { ADMIN_TAGS_REGISTRY, ADMIN_TAGS_SCREEN } from "@/lib/ui/screen-tiles";
 import { useFitToWindow } from "@/lib/ui/use-fit-to-window";
 
 /** Slice #37.35: the cloud is 6 units (#37.22's two panels); 7 of 119 px since 40.98. */
@@ -235,8 +237,11 @@ export function cloudActions(n: number): { rename: boolean; merge: boolean } {
   return { rename: n === 1, merge: n >= 2 };
 }
 
-export function TagManager() {
+export function TagManager({ note }: { note?: string } = {}) {
   const t           = useTranslations("adminTags");
+  // Slice 41.41: the note and the cloud chosen with „Panouri" (in the page bar), packed and dragged like a record's tiles.
+  const tiles = useAdminTiles(ADMIN_TAGS_REGISTRY);
+  const tileLabels = { note: t("pageTitle"), cloud: t("cloud.title") };
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError } = useQuery<{ tags: TagRow[] }>({
@@ -369,13 +374,20 @@ export function TagManager() {
 
   return (
     <>
-      <UnitRow units={[CLOUD_UNITS]}>
+      <AdminTilesBar registry={ADMIN_TAGS_REGISTRY} labels={tileLabels} tiles={tiles} />
+      <TileUnitRow screen={{ ...ADMIN_TAGS_SCREEN, units: CLOUD_UNITS }}>
+      {note && tiles.choice.isShown("note") && (
+        // 41.41: what the screen is for — an information tile, chosen with „Panouri".
+        <section {...screenPanel("tags-note", CLOUD_UNITS)} data-tile="note" className="rounded-lg border border-blue-200 bg-blue-50 px-5 py-4 text-sm text-blue-800 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300">
+          <p>{note}</p>
+        </section>
+      )}
       {/* ── Tag Cloud ──────────────────────────────────────────────────────── */}
       {/* Slice #37.22: the cloud is two panels wide and wraps downward. Slice
           #38.14: it is the page; its two buttons stand at its top right. Slice
           #38.19: the header and the explanation stay put; only the chips' box
           under them scrolls (`data-tag-cloud-scroll`). */}
-      <section {...screenPanel("tag-cloud", CLOUD_UNITS)} className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <section {...screenPanel("tag-cloud", CLOUD_UNITS)} data-tile="cloud" hidden={!tiles.choice.isShown("cloud")} className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
           <div className="flex flex-col gap-0.5">
             <h2 className="text-lg font-semibold text-ink dark:text-zinc-100">
@@ -474,7 +486,7 @@ export function TagManager() {
           </p>
         )}
       </section>
-      </UnitRow>
+      </TileUnitRow>
 
       {/* ── Merge ──────────────────────────────────────────────────────────── */}
       {showMerge && (

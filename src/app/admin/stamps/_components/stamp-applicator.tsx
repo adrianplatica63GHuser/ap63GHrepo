@@ -15,7 +15,8 @@ import { NOTE_FOLD_LINES, SCREEN, boxStyle, screenBox, screenPanel } from "@/lib
 import { GrowingText } from "@/components/forms/growing-text";
 import { TileUnitRow } from "@/components/screen/tile-unit-row";
 import { TileTitle } from "@/components/screen/tile-title";
-import { STAMP_SCREEN } from "@/lib/ui/screen-tiles";
+import { STAMP_REGISTRY, STAMP_SCREEN } from "@/lib/ui/screen-tiles";
+import { AdminTilesBar, useAdminTiles } from "@/components/screen/admin-tiles";
 
 /** Slice #37.35: every tile of the editor is 3 units (#37.22's panel on the unit). */
 const EDITOR_UNITS = STAMP_SCREEN.units;
@@ -97,6 +98,7 @@ export function StampApplicator({
   initialDetail: StampDetail;
 }) {
   const t  = useTranslations("stamp");
+  const tiles = useAdminTiles(STAMP_REGISTRY);
   const tUnnamed = useTranslations("shared.unnamed");
   const qc = useQueryClient();
   // Slice #38.13: the two tiles that are not lists are regions named by their titles.
@@ -326,9 +328,17 @@ export function StampApplicator({
     // order — „Descrierea ștampilei", „Tip element" where they stood, then
     // „Elemente deja ștampilate" under the first and „Elemente disponibile
     // pentru ștampilare" under the second (`STAMP_SCREEN.flowUnits`).
+    <>
+    {/* Slice 41.41: the screen's tiles chosen with „Panouri" (in the page bar); „Implicit" there puts the places back. */}
+    <AdminTilesBar
+      registry={STAMP_REGISTRY}
+      labels={{ description: t("applicator.descriptionTile"), type: t("applicator.targetTypeLabel"), stamped: t("applicator.stamped"), available: t("applicator.available") }}
+      tiles={tiles}
+    />
     <TileUnitRow screen={STAMP_SCREEN}>
       {/* „Descrierea ștampilei" — code (read-only), short description (read-only), notes (editable) */}
       <section
+        hidden={!tiles.choice.isShown("description")}
         aria-labelledby={descriptionTitleId}
         {...screenPanel("stamp", EDITOR_UNITS)}
         data-tile="description"
@@ -403,6 +413,7 @@ export function StampApplicator({
 
       {/* „Tip element" — the target type selector, named by the tile's title (#38.13: no label over it) */}
       <section
+        hidden={!tiles.choice.isShown("type")}
         aria-labelledby={typeTitleId}
         {...screenPanel("stamp-target", EDITOR_UNITS)}
         data-tile="type"
@@ -453,6 +464,7 @@ export function StampApplicator({
         <>
           {/* „Elemente deja ștampilate" — under „Descrierea ștampilei" by default (#38.13) */}
           <Panel
+            hidden={!tiles.choice.isShown("stamped")}
             name="stamped"
             title={t("applicator.stamped")}
             count={stampedRows.length}
@@ -494,6 +506,7 @@ export function StampApplicator({
 
           {/* „Elemente disponibile pentru ștampilare" — under „Tip element" by default (#38.13) */}
           <Panel
+            hidden={!tiles.choice.isShown("available")}
             name="available"
             title={t("applicator.available")}
             count={availableRows.length}
@@ -537,6 +550,7 @@ export function StampApplicator({
       )}
 
     </TileUnitRow>
+    </>
   );
 }
 
@@ -551,7 +565,10 @@ function Panel({
   renderRow,
   empty,
   footer,
+  hidden = false,
 }: {
+  /** Slice 41.41: left out of the row while „Panouri" hides it (TileUnitRow skips a hidden tile). */
+  hidden?: boolean;
   /** Its name for the e2e width check (`data-panel`). */
   name:       string;
   title:      string;
@@ -569,6 +586,7 @@ function Panel({
       aria-labelledby={titleId}
       {...screenPanel(name, EDITOR_UNITS)}
       data-tile={name}
+      hidden={hidden}
       className="flex flex-col rounded-md border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
     >
       <TileTitle id={titleId} title={title} count={count} />

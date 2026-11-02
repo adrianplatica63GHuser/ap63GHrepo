@@ -21,7 +21,7 @@ export default async function StampsPage() {
         {/* Info panel — what is a Stamp and when to use it. Slice #37.35: the first tile of the list's unit row (6 units; 7 of 119 px since 40.98). */}
         <StampsListView
           about={
-            <section {...screenPanel("about-stamps", 7 /* 40.98: re-pinned, 6 of 148 px */)} className="rounded-lg border border-amber-200 bg-amber-50 px-5 py-4 dark:border-amber-900 dark:bg-amber-950/40">
+            <section {...screenPanel("about-stamps", 7 /* 40.98: re-pinned, 6 of 148 px */)} data-tile="about" className="rounded-lg border border-amber-200 bg-amber-50 px-5 py-4 dark:border-amber-900 dark:bg-amber-950/40">
           <h2 className={`mb-3 ${PAGE_HEADING_TYPE}`}>
             {t("infoPanel.title")}
           </h2>

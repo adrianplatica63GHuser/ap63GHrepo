@@ -16,7 +16,9 @@ import { WRAPS, columnHead } from "@/components/table/fixed-columns";
 import { screenBox, screenPanel, tableUnits, type ColumnName } from "@/lib/ui/field-widths";
 import { ADMIN_LIST_FRAME, ADMIN_LIST_HEAD, ADMIN_LIST_PANEL, AdminListTable, AdminListToolbar } from "@/components/list/admin-list";
 import { filterByWords } from "@/lib/search/fold-words";
-import { UnitRow } from "@/components/screen/unit-row";
+import { TileUnitRow } from "@/components/screen/tile-unit-row";
+import { AdminTilesBar, useAdminTiles } from "@/components/screen/admin-tiles";
+import { ADMIN_GROUPS_REGISTRY, ADMIN_GROUPS_SCREEN } from "@/lib/ui/screen-tiles";
 
 /** The groups, at #37.16's column widths (Slice #37.22). */
 const COLUMNS: readonly ColumnName[] = ["groupCode", "description", "rowActions"];
@@ -205,6 +207,9 @@ export function GroupsListView({ about, fromMap = false }: { about?: ReactNode; 
   const t = useTranslations("group");
   const qc = useQueryClient();
   const router = useRouter();
+  // Slice 41.41: the screen's tiles chosen with „Panouri" (in the page bar), packed and dragged like a record's.
+  const tiles = useAdminTiles(ADMIN_GROUPS_REGISTRY);
+  const tileLabels = { about: t("infoPanel.title"), list: t("pageTitle") };
 
   // Slice #39.73: from the big map's „Grup nou…" the add form is open on arrival (its target is „Proprietăți" by
   // default), and the group it creates is remembered for the map's picker.
@@ -247,8 +252,9 @@ export function GroupsListView({ about, fromMap = false }: { about?: ReactNode; 
         />
       </section>
     )}
-    <UnitRow units={[ABOUT_UNITS, LIST_UNITS]}>
-      {about}
+    <AdminTilesBar registry={ADMIN_GROUPS_REGISTRY} labels={tileLabels} tiles={tiles} />
+    <TileUnitRow screen={{ ...ADMIN_GROUPS_SCREEN, units: Math.max(ABOUT_UNITS, LIST_UNITS) }}>
+      {tiles.choice.isShown("about") && about}
       {adding && (
         <AddForm
           onClose={() => setAdding(false)}
@@ -264,7 +270,7 @@ export function GroupsListView({ about, fromMap = false }: { about?: ReactNode; 
         />
       )}
 
-      <section {...screenPanel("groups", LIST_UNITS)} className={ADMIN_LIST_PANEL}>
+      <section {...screenPanel("groups", LIST_UNITS)} className={ADMIN_LIST_PANEL} data-tile="list" hidden={!tiles.choice.isShown("list")}>
 
       {/* Toolbar — Slice #39.89: the search beside „+ Adaugă"; the count „n din m" while something is typed. */}
       <AdminListToolbar
@@ -402,7 +408,7 @@ export function GroupsListView({ about, fromMap = false }: { about?: ReactNode; 
           </div>
         </>
       )}
-    </UnitRow>
+    </TileUnitRow>
     </>
   );
 }

@@ -3,8 +3,6 @@ import { getTranslations } from "next-intl/server";
 import { getStampDetail } from "@/lib/stamps/queries";
 import { stampDisplayName } from "@/lib/stamps/code";
 import { StampApplicator } from "../_components/stamp-applicator";
-import { TilePositionsReset } from "@/components/screen/tile-positions-reset";
-import { STAMP_SCREEN } from "@/lib/ui/screen-tiles";
 
 // Slice #20.17: BackLink removed — the BreadcrumbBar now handles back
 // navigation universally.  ?from= / ?fromLabel= searchParams are still
@@ -36,7 +34,6 @@ export default async function StampApplicatorPage({ params, searchParams }: Prop
           <h1 className="text-2xl font-semibold tracking-tight">
             {t("applicator.pageTitle", { stamp: title })}
           </h1>
-          <TilePositionsReset entity={STAMP_SCREEN.entity} />
         </header>
 
         <StampApplicator stampId={id} initialDetail={detail} />

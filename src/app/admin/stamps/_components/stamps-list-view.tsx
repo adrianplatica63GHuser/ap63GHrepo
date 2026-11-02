@@ -11,7 +11,9 @@ import { ADMIN_LIST_FRAME, ADMIN_LIST_HEAD, ADMIN_LIST_PANEL, AdminListTable, Ad
 import { filterByWords } from "@/lib/search/fold-words";
 import { SCREEN, screenBox, screenPanel, tableUnits, type ColumnName } from "@/lib/ui/field-widths";
 import { GrowingText } from "@/components/forms/growing-text";
-import { UnitRow } from "@/components/screen/unit-row";
+import { TileUnitRow } from "@/components/screen/tile-unit-row";
+import { AdminTilesBar, useAdminTiles } from "@/components/screen/admin-tiles";
+import { ADMIN_STAMPS_REGISTRY, ADMIN_STAMPS_SCREEN } from "@/lib/ui/screen-tiles";
 
 /** The stamps, at #37.16's column widths (Slice #37.22). */
 const COLUMNS: readonly ColumnName[] = ["description", "count", "rowActions"];
@@ -203,6 +205,9 @@ function CreateForm({ onClose }: { onClose: () => void }) {
 
 export function StampsListView({ about }: { about?: ReactNode } = {}) {
   const t = useTranslations("stamp");
+  // Slice 41.41: the screen's tiles chosen with „Panouri" (in the page bar), packed and dragged like a record's.
+  const tiles = useAdminTiles(ADMIN_STAMPS_REGISTRY);
+  const tileLabels = { about: t("infoPanel.title"), list: t("pageTitle") };
   const qc = useQueryClient();
 
   const [creating, setCreating] = useState(false);
@@ -225,11 +230,13 @@ export function StampsListView({ about }: { about?: ReactNode } = {}) {
   });
 
   return (
-    <UnitRow units={[ABOUT_UNITS, LIST_UNITS]}>
-      {about}
+    <>
+    <AdminTilesBar registry={ADMIN_STAMPS_REGISTRY} labels={tileLabels} tiles={tiles} />
+    <TileUnitRow screen={{ ...ADMIN_STAMPS_SCREEN, units: Math.max(ABOUT_UNITS, LIST_UNITS) }}>
+      {tiles.choice.isShown("about") && about}
       {creating && <CreateForm onClose={() => setCreating(false)} />}
 
-      <section {...screenPanel("stamps", LIST_UNITS)} className={ADMIN_LIST_PANEL}>
+      <section {...screenPanel("stamps", LIST_UNITS)} className={ADMIN_LIST_PANEL} data-tile="list" hidden={!tiles.choice.isShown("list")}>
 
       {/* Toolbar — Slice #39.89: the search beside „+ Creare ștampilă"; the count „n din m" while something is typed. */}
       <AdminListToolbar
@@ -373,6 +380,7 @@ export function StampsListView({ about }: { about?: ReactNode } = {}) {
           </div>
         </>
       )}
-    </UnitRow>
+    </TileUnitRow>
+    </>
   );
 }

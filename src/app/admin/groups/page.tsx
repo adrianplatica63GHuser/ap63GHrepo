@@ -27,7 +27,7 @@ export default async function GroupsPage({ searchParams }: PageProps) {
         <GroupsListView
           fromMap={fromMap}
           about={
-            <section {...screenPanel("about-groups", 7 /* 40.98: re-pinned, 6 of 148 px */)} className="rounded-lg border border-blue-200 bg-blue-50 px-5 py-4 dark:border-blue-900 dark:bg-blue-950/40">
+            <section {...screenPanel("about-groups", 7 /* 40.98: re-pinned, 6 of 148 px */)} data-tile="about" className="rounded-lg border border-blue-200 bg-blue-50 px-5 py-4 dark:border-blue-900 dark:bg-blue-950/40">
           <h2 className={`mb-3 ${PAGE_HEADING_TYPE}`}>
             {t("infoPanel.title")}
           </h2>

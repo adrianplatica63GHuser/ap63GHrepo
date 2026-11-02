@@ -11,7 +11,8 @@ import { HelpHint } from "@/components/help/help-hint";
 import { screenBox, screenPanel } from "@/lib/ui/field-widths";
 import { TileUnitRow } from "@/components/screen/tile-unit-row";
 import { TileTitle } from "@/components/screen/tile-title";
-import { GROUP_SCREEN } from "@/lib/ui/screen-tiles";
+import { GROUP_REGISTRY, GROUP_SCREEN } from "@/lib/ui/screen-tiles";
+import { AdminTilesBar, useAdminTiles } from "@/components/screen/admin-tiles";
 
 /** Slice #37.35: every tile of the editor is 3 units (#37.22's panel on the unit). */
 const EDITOR_UNITS = GROUP_SCREEN.units;
@@ -82,6 +83,7 @@ export function GroupEditor({
   initialDetail: GroupDetail;
 }) {
   const t = useTranslations("group");
+  const tiles = useAdminTiles(GROUP_REGISTRY);
   const tUnnamed = useTranslations("shared.unnamed");
   const qc = useQueryClient();
   // FU-219 (Slice #37.07): the description's caption is its label.
@@ -236,9 +238,13 @@ export function GroupEditor({
     // (`TileUnitRow`), under the group screen's own key; by default „Deja în
     // grup" under „Identitatea grupului", „Membri disponibili pentru includere"
     // at their right (`GROUP_SCREEN.flowUnits`).
+    <>
+    {/* Slice 41.41: the screen's tiles chosen with „Panouri" (in the page bar); „Implicit" there puts the places back. */}
+    <AdminTilesBar registry={GROUP_REGISTRY} labels={{ identity: t("panels.identity"), available: t("panels.available"), "in-group": t("panels.inGroup") }} tiles={tiles} />
     <TileUnitRow screen={GROUP_SCREEN}>
       {/* „Identitatea grupului" — read-only target + code, editable description, Add items */}
       <section
+        hidden={!tiles.choice.isShown("identity")}
         aria-labelledby={identityTitleId}
         {...screenPanel("group", EDITOR_UNITS)}
         data-tile="identity"
@@ -338,6 +344,7 @@ export function GroupEditor({
         <>
           {/* Panel B — available */}
           <Panel
+            hidden={!tiles.choice.isShown("available")}
             name="available"
             title={t("panels.available")}
             rows={availableRows}
@@ -378,6 +385,7 @@ export function GroupEditor({
 
           {/* Panel C — in group */}
           <Panel
+            hidden={!tiles.choice.isShown("in-group")}
             name="in-group"
             title={
               <span className="flex items-center gap-1">
@@ -416,6 +424,7 @@ export function GroupEditor({
       )}
 
     </TileUnitRow>
+    </>
   );
 }
 
@@ -429,7 +438,10 @@ function Panel({
   empty,
   toolbar,
   footer,
+  hidden = false,
 }: {
+  /** Slice 41.41: left out of the row while „Panouri" hides it (TileUnitRow skips a hidden tile). */
+  hidden?: boolean;
   /** Its name for the e2e width check (`data-panel`). */
   name: string;
   title: React.ReactNode;
@@ -448,6 +460,7 @@ function Panel({
       {...screenPanel(name, EDITOR_UNITS)}
       // Slice #38.12: a tile of the screen's packed row, its place stored by this name.
       data-tile={name}
+      hidden={hidden}
       className="flex flex-col rounded-md border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
     >
       <TileTitle id={titleId} title={title} count={rows.length} />
