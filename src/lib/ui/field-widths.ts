@@ -1418,6 +1418,13 @@ export const ID_CARD_DIALOG_CARD_STYLE: CSSProperties = {
  */
 export const PREVIEW_UNITS = { panel: 4, pages: 5 } as const; // 40.98: re-pinned to the width they had (3 → 4, 4 → 5)
 export type PreviewWidth = keyof typeof PREVIEW_UNITS;
+/**
+ * Slice 41.36 — Adrian: „The Preview small green tiles have a non standard width; Let's make them two units wide and as
+ * tall as needed". A person's and a company's compact preview (#37.60's lines) is 2 units (254 px) wherever it opens,
+ * its lines wrapping inside; it was as wide as its widest line (`w-max`), off the unit.
+ */
+export const PREVIEW_COMPACT_UNITS = 2;
+export const PREVIEW_COMPACT_STYLE: CSSProperties = unitStyle(PREVIEW_COMPACT_UNITS);
 export const PREVIEW_STYLE: Readonly<Record<PreviewWidth, CSSProperties>> = {
   panel: unitStyle(PREVIEW_UNITS.panel),
   pages: unitStyle(PREVIEW_UNITS.pages),

@@ -10,6 +10,7 @@ import type { CSSProperties } from "react";
 import { ArrowRight, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import {
+  PREVIEW_COMPACT_STYLE,
   PREVIEW_FILL,
   PREVIEW_INNER_REM,
   PREVIEW_STYLE,
@@ -22,8 +23,15 @@ import { STACKED_FIELD_CLASS, STACKED_ROW_CLASS } from "@/lib/ui/stacked";
 import { RotatedImage } from "@/components/documents/rotated-image";
 import { rotationOf, type PageRotation } from "@/lib/documents/page-rotation";
 
-/** A stacked label (`self-end`, rule 16), quieter than the value it names: the value is what a preview is for. */
-const PREVIEW_LABEL_CLASS = "self-end text-xs font-medium text-fade dark:text-zinc-400";
+/**
+ * A stacked label (`self-end`, rule 16), small beside the value it names. Slice 41.36 — Adrian: „let's make the labels,
+ * field names the same Navy that other labels have": `text-label`, the navy every field label uses (its dark value is
+ * the token's own). It was `text-fade`, grey.
+ */
+const PREVIEW_LABEL_CLASS = "self-end text-xs font-medium text-label";
+
+/** Slice 41.36: a compact line's printed prefix („CNP:", „Născută:") in the labels' navy; the value after it in ink. */
+const PREVIEW_PREFIX_CLASS = "font-medium text-label";
 
 /**
  * One field of a preview.                                       (Slice #37.33)
@@ -130,8 +138,9 @@ export function PreviewTileBody({
       data-preview-compact={lines ? "" : undefined}
       // Slice #37.88: „Corelate"'s light green — a preview is what „Corelate" opens. The dashed
       // rim still says it is a look, not the record's own tile.
-      className={`rounded-md border border-dashed border-card-related-rim bg-card-related p-3 shadow-sm dark:border-card-related-rim-dark dark:bg-card-related-dark${lines ? " w-max max-w-full" : ""}`}
-      style={lines ? style : { ...PREVIEW_STYLE[width], ...style }}
+      className="rounded-md border border-dashed border-card-related-rim bg-card-related p-3 shadow-sm dark:border-card-related-rim-dark dark:bg-card-related-dark"
+      // 41.36: a compact preview is 2 units (254 px), as tall as its lines need; the others their kind's units.
+      style={lines ? { ...PREVIEW_COMPACT_STYLE, ...style } : { ...PREVIEW_STYLE[width], ...style }}
     >
       {/* Slice #37.70: one row, whatever the name's length — a long name wraps inside it and
           „Numai citire" and the two buttons stay at its right. */}
@@ -182,11 +191,12 @@ export function PreviewTileBody({
                 </span>
               </p>
             ) : (
-              <p key={line.map((v) => v.label).join("|")} className="whitespace-nowrap" data-preview-line>
+              // 41.36: the line wraps inside the 2-unit tile (it was one line, the tile as wide as it).
+              <p key={line.map((v) => v.label).join("|")} className="break-words" data-preview-line>
                 {line.map((v, i) => (
                   <span key={v.label} title={v.label} data-preview-value>
                     <span className="sr-only">{v.label}: </span>
-                    {v.prefix ? `${v.prefix} ` : ""}
+                    {v.prefix ? <><span className={PREVIEW_PREFIX_CLASS} data-preview-prefix="">{v.prefix}</span>{" "}</> : null}
                     {v.value}
                     {i < line.length - 1 ? (v.sep ?? ", ") : ""}
                   </span>
