@@ -239,21 +239,18 @@ test.describe("TC-TILES-21 — un dublu-clic urcă o fișă; o fișă trasă las
       // moved one unit right, leaving a gap beside it (its stored column + 1; a unit is 119 px and the 16-px gap).
       const step = 119 + GAP;
       const rowWidth = await page.locator("[data-tile-row]").evaluate((r) => r.getBoundingClientRect().width);
-      // Only a tile whose place is stored can be moved by its stored column — „Toate sus" stored those it moved.
-      const storedIds = await page.evaluate((k) => Object.keys(JSON.parse(localStorage.getItem(k) ?? "{}")), KEY);
       const loose = Object.entries(up).find(([id, b]) =>
-        storedIds.includes(id) &&
         b.x + b.w + step <= rowWidth + 1 &&
         !Object.entries(up).some(([k, o]) => k !== id && o.y < b.y + b.h && b.y < o.y + o.h && o.x >= b.x + b.w && o.x < b.x + b.w + step + GAP),
       );
       if (!loose) throw new Error(`no tile has a unit free on its right: ${JSON.stringify(up)}`);
       const [looseId, was] = loose;
-      await page.evaluate(([k, id]) => {
-        const all = JSON.parse(localStorage.getItem(k) ?? "{}") as Record<string, { col: number }>;
-        if (!all[id]) throw new Error(`${id} has no stored place`);
-        all[id].col += 1;
+      // „Toate sus" stored only the tiles it moved; one it left is given its place as it stands, a column to the right.
+      await page.evaluate(([k, id, col, top]) => {
+        const all = JSON.parse(localStorage.getItem(k) ?? "{}") as Record<string, { col: number; top: number }>;
+        all[id] = all[id] ? { ...all[id], col: all[id].col + 1 } : { col: Number(col) + 1, top: Number(top) };
         localStorage.setItem(k, JSON.stringify(all));
-      }, [KEY, looseId]);
+      }, [KEY, looseId, String(Math.round(was.x / step)), String(was.y)]);
       await page.reload();
       await expect(region("Etichete și grupuri")).toBeVisible({ timeout: 30_000 });
       await expect.poll(async () => (await boxes(page))[looseId]?.x, { timeout: 20_000 }).toBe(was.x + step);
