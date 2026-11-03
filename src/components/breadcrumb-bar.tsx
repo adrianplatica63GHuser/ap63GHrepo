@@ -402,12 +402,11 @@ function BreadcrumbBarInner() {
     recordScreen(pathname);
   }, [pathname]);
 
-  // Auth pages and home: hide
-  if (
-    pathname === "/" ||
-    pathname.startsWith("/login") ||
-    pathname.startsWith("/signup")
-  ) {
+  // Auth pages: hide. Slice 41.61 — Adrian: „For the dashboard I should have the top bar with back and forward buttons
+  // … After the buttons I should have the Home … and at the right I should have the panels and the question mark".
+  // The home page has the bar too: „Înapoi", „Înainte", the one crumb „Acasă", the slot (its „Panouri") and „?" — no
+  // system ID and no versions, it is not a record. Until 41.61 the bar hid itself on "/".
+  if (pathname.startsWith("/login") || pathname.startsWith("/signup")) {
     return null;
   }
 
@@ -416,8 +415,6 @@ function BreadcrumbBarInner() {
 
   const segments = buildSegments(pathname, t, pageLabels, fromHref, fromLabel);
 
-  // Only one segment (home) → nothing to show
-  if (segments.length <= 1) return null;
 
   return (
     /*

@@ -12,9 +12,9 @@ import { ListTile } from "@/components/tiles/list-tile";
 import { TileSelector } from "@/components/tiles/tile-selector";
 import { useTileChoice } from "@/components/tiles/use-tile-choice";
 import { TilesMenuButton, useTilesMenu } from "@/components/tiles/tiles-menu";
+import { PageBarControls } from "@/components/page-bar-slot";
 import { TileAreas } from "@/components/tiles/tile-areas";
 import { HOME_TILES, HOME_TILE_REGISTRY, type HomeTile } from "./home-tiles";
-import { ScreenHelpButton } from "@/components/help/screen-help-button";
 
 /** The expiring documents, at #37.16's column widths (Slice #37.22). */
 // Slice #37.57: no „Cod" — the title is the link; a record's system ID is shown on its own screen only.
@@ -620,25 +620,16 @@ export function DashboardClient() {
   return (
     <div className="px-6 py-8 flex flex-col gap-6">
       <header>
-        {/*
-          The dashboard mounts its own help button because <BreadcrumbBar>
-          hides itself on the home page, so the app-wide auto-mount does not
-          reach here. This is the ONLY screen that needs a manual placement.
-
-          align="left" because this button sits at the LEFT of the page, unlike
-          the breadcrumb bar's, which sits at the far right. With the default
-          right-anchoring the 320px panel hung off the left edge of the app
-          shell's scrolling content column and 97px of it were clipped away
-          below ~1250px of window width (Slice #32.20).
-        */}
-        <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-semibold tracking-tight text-strong">
-            {t("title")}
-          </h1>
-          <ScreenHelpButton align="left" />
-          {/* Slice 41.02 (Ask first 1): „Panouri" beside the title and its „?"; its panel a popover under the header. */}
+        {/* Slice 41.61 (Ask first 1, 2): the page bar is on the home page too (`BreadcrumbBar`) — „Înapoi", „Înainte",
+            „Acasă", and at its right „Panouri", portalled into its slot as on a record screen, and the bar's own „?".
+            The title and the subtitle stay here, under it. Until 41.61 this header held its own „?" (align="left",
+            #32.20) and „Panouri" beside the title (41.02), the bar hiding itself on "/". */}
+        <h1 className="text-2xl font-semibold tracking-tight text-strong">
+          {t("title")}
+        </h1>
+        <PageBarControls>
           <TilesMenuButton menu={tilesMenu} />
-        </div>
+        </PageBarControls>
         <p className="mt-1 text-sm text-fade">
           {t("subtitle")}
         </p>
