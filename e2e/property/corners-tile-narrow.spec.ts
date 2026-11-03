@@ -67,19 +67,27 @@ async function steps(page: Page, id: string, width: number): Promise<void> {
     await tile.getByRole("button", { name: display, exact: true }).click();
     const rows = tile.locator("tbody tr");
     await expect(rows).toHaveCount(5);
-    const probe = await tile.locator("[data-corner-buttons]").first().evaluate((d) => ({
-      cell: (d.parentElement as HTMLElement).clientWidth,
-      buttons: d.scrollWidth,
-      tile: (d.closest("[data-panel]") as HTMLElement).getBoundingClientRect().width,
-    }));
-    test.info().annotations.push({ type: "corners", description: `${width} ${display}: tile ${probe.tile}, action cell ${probe.cell}, buttons ${probe.buttons}` });
+    const probe = await tile.locator("table").evaluate((t) => {
+      const d = t.querySelector("[data-corner-buttons]") as HTMLElement;
+      const cells = [...t.querySelectorAll("tbody tr")].map((tr) =>
+        [...tr.querySelectorAll("td")].slice(0, 4).map((td) => `${td.scrollWidth}/${td.clientWidth}`).join(" "));
+      return {
+        tile: Math.round((t.closest("[data-panel]") as HTMLElement).getBoundingClientRect().width),
+        table: t.clientWidth,
+        cell: (d.parentElement as HTMLElement).clientWidth,
+        buttons: d.scrollWidth,
+        values: cells[0],
+      };
+    });
+    // The measure, so a wrap or a cut names its numbers.
+    console.log(`TC-PROP-08 ${width} ${display}: ${JSON.stringify(probe)}`);
     for (let i = 0; i < 5; i++) {
       const r = rows.nth(i);
       const tops = await Promise.all(names.map(async (n) => (await boxOf(r.getByRole("button", { name: n, exact: true }))).t));
-      expect(new Set(tops).size, `${width} ${display}: corner ${i + 1}'s four buttons on one line (${JSON.stringify(probe)})`).toBe(1);
+      expect.soft(new Set(tops).size, `${width} ${display}: corner ${i + 1}'s four buttons on one line (${JSON.stringify(probe)})`).toBe(1);
       const cut = await r.locator("td").evaluateAll((tds) =>
         (tds as HTMLElement[]).slice(0, 4).filter((td) => td.scrollWidth > td.clientWidth).map((td) => td.textContent));
-      expect(cut, `${width} ${display}: corner ${i + 1}'s values whole`).toEqual([]);
+      expect.soft(cut, `${width} ${display}: corner ${i + 1}'s values whole (${JSON.stringify(probe)})`).toEqual([]);
     }
   }
   await tile.getByRole("button", { name: "Stereo 70", exact: true }).click();
