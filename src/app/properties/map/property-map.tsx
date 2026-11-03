@@ -1045,11 +1045,12 @@ export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean 
 
   // ── Slice 41.70 — „Caută pe hartă": find one place and fly to it ──────────────────────────────────────────────
   // The rules are map-search.ts's; here are the look-up and the camera.
-  const flightRef = useRef<{ raf: number; stop: () => void } | null>(null);
+  const flightRef = useRef<{ raf: number; timer: number; stop: () => void } | null>(null);
   const stopFlight = useCallback((how: "stopped" | null) => {
     const f = flightRef.current;
     if (!f) return;
     cancelAnimationFrame(f.raf);
+    window.clearTimeout(f.timer);
     f.stop();
     flightRef.current = null;
     if (how) setSearchFlight(how);
@@ -1086,19 +1087,29 @@ export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean 
         div.removeEventListener("wheel", userMoved);
       };
       const start = performance.now();
+      const finish = () => {
+        const f = flightRef.current;
+        if (f) {
+          cancelAnimationFrame(f.raf);
+          window.clearTimeout(f.timer);
+        }
+        stop();
+        flightRef.current = null;
+        land();
+      };
       const tick = (now: number) => {
         const t = Math.max(0, now - start);
         if (t >= duration) {
-          stop();
-          flightRef.current = null;
-          land();
+          finish();
           return;
         }
         map.moveCamera(cameraAt(t, from, to, peak, duration));
         if (flightRef.current) flightRef.current.raf = requestAnimationFrame(tick);
       };
       setSearchFlight("flying");
-      flightRef.current = { raf: requestAnimationFrame(tick), stop };
+      // A page that gets no animation frames (a background tab; measured in the desktop app's browser pane, where none
+      // came at all) still lands: at 4 s a timer puts the camera on the target, as the last frame would.
+      flightRef.current = { raf: requestAnimationFrame(tick), timer: window.setTimeout(finish, duration + 100), stop };
     },
     [stopFlight],
   );
