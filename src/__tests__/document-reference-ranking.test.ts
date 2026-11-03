@@ -805,7 +805,9 @@ describe("the already-associated answer", () => {
 
   it("reports what it wrote rather than returning void", () => {
     expect(body).toMatch(/associateDocumentToDocument[\s\S]{0,400}Promise<DocumentAssociationResult>/);
-    expect(body).toContain(".returning({ documentIdA: documentDocument.documentIdA");
+    // 41.63's CI #680: whitespace-tolerant, since 41.54 wrote `.returning({` over several lines (it read
+    // `toContain(".returning({ documentIdA: documentDocument.documentIdA")`).
+    expect(body).toMatch(/\.returning\(\{\s*documentIdA: documentDocument\.documentIdA/);
   });
 
   it("names the role an already-linked pair carries", () => {
