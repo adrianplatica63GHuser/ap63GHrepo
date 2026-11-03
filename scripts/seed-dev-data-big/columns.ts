@@ -93,7 +93,7 @@ export const SEED_COLUMNS: Record<string, TableFill> = {
     },
   },
   lookup_judicial_person_type: { scope: null, columns: { name: REF, sort_order: REF, public_body: REF } },
-  lookup_citizenship: { scope: null, columns: { name: REF, sort_order: REF } },
+  lookup_citizenship: { scope: null, columns: { name: REF, printed_forms: REF, sort_order: REF } }, // 41.52: printed_forms
   lookup_address_country: { scope: null, columns: { name: REF, sort_order: REF } }, // Slice 41.51
   lookup_document_type: { scope: null, columns: { key: REF, name: REF, short_name: REF, sort_order: REF, template_fields: REF, origin: REF, identity_kind: REF } },
   lookup_doc_type_person_role: { scope: null, columns: { document_type_id: REF, person_role_id: REF, holds_share: REF } },

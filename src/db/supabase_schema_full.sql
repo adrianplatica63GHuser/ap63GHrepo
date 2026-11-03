@@ -4,7 +4,7 @@
 -- GENERATED FILE -- DO NOT EDIT BY HAND.
 -- Regenerate with:  .\scripts\Export-SupabaseSchema.ps1
 --
--- Generated : 2026-11-02 21:39
+-- Generated : 2026-11-02 21:59
 -- Source    : local Docker database (ga40db @ ga40prj-postgres)
 --
 -- Applies the complete schema from scratch after running
@@ -713,8 +713,16 @@ CREATE TABLE public.lookup_citizenship (
     name text NOT NULL,
     sort_order integer DEFAULT 0 NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    printed_forms text
 );
+
+
+--
+-- Name: COLUMN lookup_citizenship.printed_forms; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.lookup_citizenship.printed_forms IS 'Slice 41.52: „Forme tipărite" - what an identity document may print for this citizenship, comma-separated (ROU, ROUMAINE). The import recognises them.';
 
 
 --

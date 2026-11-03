@@ -244,7 +244,7 @@ Shape:
     "idValidFrom": string | null,     // ISO yyyy-mm-dd — the ISSUE date: "Valabilitate" start on a card, "Data eliberării" in a booklet, "Data emiterii" on a passport
     "idValidUntil": string | null,    // ISO yyyy-mm-dd, "Valabilitate" end / a passport's "Data expirării"; null on a booklet
     "idMrzRaw": string | null,        // the raw machine-readable zone text (back of card), verbatim, lines joined with \\n
-    "citizenshipRaw": string | null,  // citizenship/nationality as printed, e.g. "ROU" or "Romana"
+    "citizenshipRaw": string | null,  // "Cetățenie" / "Nationality" EXACTLY as printed, the whole text — both halves and the separator between them, e.g. "Română / ROU" or "ROMÂNĂ / ROU"; never only one half of it
     "addressStreetLine": string | null,  // "Domiciliu" — the street/number/block/floor/apartment part only, e.g. "Str. Valea Calugareasca nr.9 bl.Z4 et.7 ap.44" (do not include the city/sector/county part here)
     "addressPostalCode": string | null,  // postal code, if printed (rare on Romanian ID cards) — else null, do not guess
     "addressLocality": string | null,    // city/town/commune/sector, e.g. "Sector 6" or "Mun. Bucuresti Sector 6" or "Ploiesti"
@@ -539,7 +539,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     // of a public-body type), in its order.
     const [citizenshipRows, issuerRows] = await Promise.all([
       db
-        .select({ id: lookupCitizenship.id, name: lookupCitizenship.name })
+        .select({ id: lookupCitizenship.id, name: lookupCitizenship.name, printedForms: lookupCitizenship.printedForms })
         .from(lookupCitizenship)
         .orderBy(asc(lookupCitizenship.sortOrder), asc(lookupCitizenship.name)),
       listIssuers(),

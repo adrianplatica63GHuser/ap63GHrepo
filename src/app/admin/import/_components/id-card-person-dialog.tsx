@@ -1709,6 +1709,9 @@ export function IdCardPersonDialog({
         ? t("citizenshipHiddenNotListedNamed", { name: citizenshipRaw })
         : t("citizenshipHiddenNotListed")
       : undefined;
+  // Slice 41.52: what the document printed, read-only, under the person's citizenship — „Pe act: „Română / ROU”". A
+  // plain note, not the hint's alert: nothing is wrong, the person's value is the list's and the document keeps this.
+  const citizenshipPrinted = citizenshipRaw.trim() !== "" ? t("citizenshipPrinted", { raw: citizenshipRaw.trim() }) : undefined;
 
   const unmappedEntries = Object.entries(unmappedRaw);
   const addressWarnFields = new Set(
@@ -1757,6 +1760,7 @@ export function IdCardPersonDialog({
           warn={lowConfidence.has("citizenshipRaw")}
           width={width}
           hint={citizenshipHint}
+          note={citizenshipPrinted}
           hintAction={
             citizenshipListState === "failed" ? (
               <IconButton
@@ -2336,9 +2340,11 @@ function Field({ label, name, type = "text", register, error, warn, width }: Fie
 }
 
 function SelectField({
-  label, name, register, control, error, warn, width, hint, hintAction, options,
+  label, name, register, control, error, warn, width, hint, hintAction, options, note,
 }: FieldProps & {
   control: Control<FormValues>;
+  /** Slice 41.52: a plain line under the box — what the document printed — when no hint or error stands there. */
+  note?: string;
   /** `title`: the whole word behind a short label („Masculin" behind „M", 40.79). */
   options: { value: string; label: string; title?: string }[];
 }) {
@@ -2411,6 +2417,11 @@ function SelectField({
           )}
           {showHint && hintAction}
         </div>
+      )}
+      {note && !error && !showHint && (
+        <span className="text-xs text-fade" data-citizenship-printed="">
+          {note}
+        </span>
       )}
     </div>
   );

@@ -2514,6 +2514,7 @@
     },
     "fields": {
       "name": "Name",
+      "printedForms": "Printed forms",
       "indicativ": "Code",
       "descriere": "Description",
       "description": "Description",
@@ -3011,6 +3012,7 @@
           "citizenshipHiddenListFailed": "The citizenship list could not be read, so “—” does not mean “no citizenship”: the citizenship read off the card cannot be shown and is NOT saved along with the person. Try reading the list again, then create the person.",
           "citizenshipHiddenNotListed": "The citizenship read off the card is no longer in the citizenship list, so it cannot be shown and is NOT saved along with the person. Add it back under Reference Data → Citizenship, then fill it in on the person's record.",
           "citizenshipHiddenNotListedNamed": "The citizenship read off the card (printed there as “{name}”) is no longer in the citizenship list, so it cannot be shown and is NOT saved along with the person. Add the matching citizenship under Reference Data → Citizenship, then fill it in on the person's record.",
+          "citizenshipPrinted": "On the document: “{raw}”",
           "citizenshipListFailed": "The citizenship list could not be read, so you cannot choose one here. Try reading the list again, or fill the citizenship in on the person's record after creating them.",
           "citizenshipRetry": "Try again",
           "citizenshipRetrying": "Trying again…",

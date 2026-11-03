@@ -322,12 +322,33 @@ export const CITIZENSHIP_ALIASES: Readonly<Record<string, string>> = Object.free
   english: "Engleză",
 });
 
-/** Loose match of a free-text citizenship string against `lookup_citizenship`. */
+/**
+ * A citizenship's printed forms, as aliases: „ROU, ROUMAINE" on „Română" → { rou: "Română", roumaine: "Română" }.
+ *                                                                                                  (Slice 41.52)
+ * „Cetățenie"'s „Forme tipărite" (lookup_citizenship.printed_forms), comma- or semicolon-separated, each folded. A
+ * form already in the code's `CITIZENSHIP_ALIASES` for another row is the user's word and wins — it is what this
+ * archive's cards print.
+ */
+export function printedFormAliases(rows: readonly (NamedLookupRow & { printedForms?: string | null })[]): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const r of rows) {
+    for (const form of (r.printedForms ?? "").split(/[,;]/)) {
+      const key = foldLookupName(form);
+      if (key !== "") out[key] = r.name;
+    }
+  }
+  return out;
+}
+
+/**
+ * Loose match of a free-text citizenship string against `lookup_citizenship`. Slice 41.52: a row's „Forme tipărite"
+ * count beside the code's aliases, which stay.
+ */
 export function matchCitizenship(
   raw: string | null | undefined,
-  rows: readonly NamedLookupRow[],
+  rows: readonly (NamedLookupRow & { printedForms?: string | null })[],
 ): string | null {
-  return matchLookupByName(raw, rows, CITIZENSHIP_ALIASES);
+  return matchLookupByName(raw, rows, { ...CITIZENSHIP_ALIASES, ...printedFormAliases(rows) });
 }
 
 // ---------------------------------------------------------------------------

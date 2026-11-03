@@ -2514,6 +2514,7 @@
     },
     "fields": {
       "name": "Denumire",
+      "printedForms": "Forme tipărite",
       "indicativ": "Indicativ",
       "descriere": "Descriere",
       "description": "Descriere",
@@ -3011,6 +3012,7 @@
           "citizenshipHiddenListFailed": "Lista de cetățenii nu a putut fi citită, așa că „—” nu înseamnă „fără cetățenie”: cetățenia citită de pe card nu se poate afișa și NU se salvează odată cu persoana. Reîncercați citirea listei, apoi creați persoana.",
           "citizenshipHiddenNotListed": "Cetățenia citită de pe card nu mai există în lista de cetățenii, așa că nu se poate afișa și NU se salvează odată cu persoana. Adăugați-o la loc în Date de referință → Cetățenie, apoi completați-o pe fișa persoanei.",
           "citizenshipHiddenNotListedNamed": "Cetățenia citită de pe card (scrisă pe card „{name}”) nu se mai regăsește în lista de cetățenii, așa că nu se poate afișa și NU se salvează odată cu persoana. Adăugați cetățenia corespunzătoare în Date de referință → Cetățenie, apoi completați-o pe fișa persoanei.",
+          "citizenshipPrinted": "Pe act: „{raw}”",
           "citizenshipListFailed": "Lista de cetățenii nu a putut fi citită, așa că nu puteți alege una aici. Reîncercați citirea listei sau completați cetățenia pe fișa persoanei după creare.",
           "citizenshipRetry": "Reîncearcă",
           "citizenshipRetrying": "Se reîncearcă…",

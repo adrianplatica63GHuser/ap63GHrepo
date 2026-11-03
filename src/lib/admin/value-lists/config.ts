@@ -244,7 +244,11 @@ export const LIST_META: Record<ListKey, ListMeta> = {
   },
   citizenships: {
     titleKey: "citizenships",
-    fields: [{ key: "name", labelKey: "name", required: true }],
+    fields: [
+      { key: "name", labelKey: "name", required: true },
+      // Slice 41.52 (migration_125): what a document may print for it, comma-separated — the ID-card import reads it.
+      { key: "printedForms", labelKey: "printedForms", required: false },
+    ],
   },
   // Slice 41.51 — „Țara adresei": the countries an address tile's „Țară" is chosen from, kept in step with „Cetățenie".
   "address-countries": {

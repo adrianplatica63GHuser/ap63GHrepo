@@ -266,6 +266,11 @@ export const citizenshipSchema = z.object({
   sortOrder,
 });
 
+/** Slice 41.52: „Cetățenie" alone carries „Forme tipărite" (printed_forms), comma-separated, optional. */
+export const citizenshipWithFormsSchema = citizenshipSchema.extend({
+  printedForms: z.string().trim().max(500).nullish().transform((v) => (v ? v : null)),
+});
+
 // Slice #21.03.Import / Slice 3 — optional type-specific field template.
 // Mirrors DocumentTemplateField (src/lib/documents/template-fields.ts) but is
 // declared separately here rather than imported: that module is deliberately
@@ -443,7 +448,7 @@ export const LIST_SCHEMAS: Record<ListKey, z.ZodType<any>> = {
   "use-categories":  useCategorySchema,
   "person-types":    personTypeSchema,
   "person-roles":    personRoleSchema,
-  "citizenships":    citizenshipSchema,
+  "citizenships":    citizenshipWithFormsSchema,
   "address-countries": citizenshipSchema, // Slice 41.51: the same shape, a name and a place
   "person-relationships": citizenshipSchema, // Slice #39.70: the same shape, a name and a place
   "judicial-person-types": judicialPersonTypeSchema,
@@ -628,7 +633,7 @@ export const LIST_UPDATE_SCHEMAS: Record<ListKey, z.ZodType<any>> = {
   // No `.extend` — `personRoleSchema` carries no `sortOrder` to override, and
   // a PUT must not reintroduce one. See the schema's header. (Slice #34.01)
   "person-roles":          personRoleSchema,
-  "citizenships":          citizenshipSchema.extend({ sortOrder: sortOrderOnUpdate }),
+  "citizenships":          citizenshipWithFormsSchema.extend({ sortOrder: sortOrderOnUpdate }),
   "address-countries":     citizenshipSchema.extend({ sortOrder: sortOrderOnUpdate }),
   "person-relationships":  citizenshipSchema.extend({ sortOrder: sortOrderOnUpdate }),
   "judicial-person-types": judicialPersonTypeSchema.extend({ sortOrder: sortOrderOnUpdate }),
