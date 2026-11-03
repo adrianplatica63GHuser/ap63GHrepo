@@ -274,3 +274,63 @@ export function reapplyTarget(
   }
   return { target };
 }
+
+// ---------------------------------------------------------------------------
+// Slice 41.62 — supabase:sync leaves the migration record filled
+// ---------------------------------------------------------------------------
+//
+// Adrian's supabase:migrate stopped on 2026-11-01 with „schema_migrations is EMPTY, but this project already holds 61
+// table(s)", right after a supabase:sync: the sync drops everything, rebuilds from supabase_schema_full.sql — which
+// creates schema_migrations EMPTY — and never wrote it. So the sync now copies the LOCAL record into Supabase's, rows
+// and checksums as stored: the record of what actually built the schema the file was exported from, never a claim
+// made from the files on disk. Before anything is dropped, three guards (Ask first 2, 3).
+
+/** A row of the local `schema_migrations`, checksum `null` where the column is NULL. */
+export interface LocalRecordRow {
+  filename: string;
+  checksum: string | null;
+  appliedAt: Date | string | null;
+}
+
+/** The line Export-SupabaseSchema.ps1 writes into the schema file's header (Ask first 3). */
+export const SCHEMA_MIGRATIONS_LINE_RE = /^-- Migrations\s*:\s*(\d+), newest (migration_\d{3}_\S+\.sql)\s*$/m;
+
+/** The newest migration the schema file says it was exported with, or null when it carries no such line. */
+export function schemaFileNewest(sql: string): { count: number; newest: string } | null {
+  const m = SCHEMA_MIGRATIONS_LINE_RE.exec(sql);
+  return m ? { count: Number(m[1]), newest: m[2] } : null;
+}
+
+export type SyncRecordPlan =
+  | { ok: true; rows: LocalRecordRow[]; headerMissing: boolean }
+  | { ok: false; unapplied: string[]; orphans: string[]; stale: { file: string; local: string } | null };
+
+/**
+ * What the sync writes into Supabase's `schema_migrations`, or why it must stop first:
+ *  - `unapplied` — a migration on disk the local database never recorded (run migrate-local / Apply-Migration);
+ *  - `orphans`   — a local row naming no file on disk (a file renamed or deleted after it was applied);
+ *  - `stale`     — the schema file names a newest migration other than the local record's (regenerate it).
+ * A schema file with no „-- Migrations" line (exported before 41.62) is not refused — `headerMissing` says so, and
+ * the next migrate-local writes the line.
+ */
+export function planSyncRecord(disk: readonly DiskMigration[], local: readonly LocalRecordRow[], schemaSql: string): SyncRecordPlan {
+  const recorded = new Set(local.map((r) => r.filename));
+  const onDisk = new Set(disk.map((d) => d.name));
+  const unapplied = disk.map((d) => d.name).filter((n) => !recorded.has(n));
+  const orphans = local.map((r) => r.filename).filter((n) => !onDisk.has(n)).sort();
+  const header = schemaFileNewest(schemaSql);
+  const newestLocal = [...recorded].sort().at(-1) ?? "";
+  const stale = header && header.newest !== newestLocal ? { file: header.newest, local: newestLocal } : null;
+  if (unapplied.length || orphans.length || stale) return { ok: false, unapplied, orphans, stale };
+  const rows = [...local].sort((a, b) => a.filename.localeCompare(b.filename));
+  return { ok: true, rows, headerMissing: header === null };
+}
+
+/**
+ * The baseline to advise when a project's record is empty (Ask first 4): the newest migration number on disk, three
+ * digits — it was a hard-coded „086" until 41.62, which by then was 37 migrations short.
+ */
+export function suggestedBaseline(disk: readonly DiskMigration[]): string {
+  const newest = disk.reduce((m, d) => Math.max(m, d.number), 0);
+  return String(newest).padStart(3, "0");
+}

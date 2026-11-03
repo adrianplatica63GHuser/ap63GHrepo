@@ -189,6 +189,10 @@ SELECT pg_catalog.set_config('search_path', 'public', false);
 $body = $body -replace "`r`n", "`n"
 
 $stamp  = Get-Date -Format "yyyy-MM-dd HH:mm"
+# Slice 41.62 (Ask first 3): the newest migration this schema holds -- the pre-flight above proved every file on disk is
+# applied, so it is the newest file. supabase:sync refuses a file whose line names another than the local record's.
+$newestMigration = $allFiles[-1].Name
+$migrationCount  = $allFiles.Count
 $header = @"
 -- ============================================================
 -- ga40prj -- Full Schema Script (Supabase)
@@ -197,6 +201,7 @@ $header = @"
 -- Regenerate with:  .\scripts\Export-SupabaseSchema.ps1
 --
 -- Generated : $stamp
+-- Migrations : $migrationCount, newest $newestMigration
 -- Source    : local Docker database ($Database @ $Container)
 --
 -- Applies the complete schema from scratch after running

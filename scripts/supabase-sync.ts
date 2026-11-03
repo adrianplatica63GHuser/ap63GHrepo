@@ -31,6 +31,7 @@ import { Pool } from "pg";
 import { execSync } from "child_process";
 import fs from "fs";
 import path from "path";
+import { planSyncRecord, readMigrationsOnDisk, type LocalRecordRow } from "./migration-state";
 
 // ---------------------------------------------------------------------------
 // Connection setup
@@ -401,13 +402,37 @@ async function syncPropertyTypeUses(): Promise<void> {
 // ---------------------------------------------------------------------------
 
 async function main() {
-  const TOTAL = 5;
+  const TOTAL = 6;
 
   console.log("\n══════════════════════════════════════════════════");
   console.log("   ga40prj — Supabase Sync (Full Reset from Dev)  ");
   console.log("══════════════════════════════════════════════════");
   console.log("  Source : local Docker  (DATABASE_URL)");
   console.log("  Target : Supabase      (SUPABASE_SYNC_URL)");
+
+  // Slice 41.62 (Ask first 2, 3): before anything is dropped — the local record must name every migration on disk and
+  // nothing else, and the schema file must have been exported with the local record's newest. Its rows are what step 3
+  // copies, so a later supabase:migrate applies only what came after them.
+  log("Checking the local migration record against the files and the schema file...");
+  const disk = readMigrationsOnDisk(path.resolve(process.cwd(), "src/db"));
+  const { rows: localRecord } = await localPool.query<LocalRecordRow>(
+    "SELECT filename, checksum, applied_at AS \"appliedAt\" FROM schema_migrations ORDER BY filename",
+  );
+  const schemaSql = fs.readFileSync(path.resolve(process.cwd(), "src/db/supabase_schema_full.sql"), "utf-8");
+  const plan = planSyncRecord(disk, localRecord, schemaSql);
+  if (!plan.ok) {
+    console.error("\n❌  STOPPING before anything is dropped -- the migration record would not be true.");
+    for (const f of plan.unapplied) console.error(`    not applied locally : ${f}   -> run the runner's migrate-local (or scripts\\Apply-Migration.ps1)`);
+    for (const f of plan.orphans) console.error(`    recorded, no file   : ${f}   -> a migration renamed or deleted after it was applied`);
+    if (plan.stale) {
+      console.error(`    schema file is stale: it names ${plan.stale.file}, the local record ends at ${plan.stale.local}`);
+      console.error("                          -> regenerate it: scripts\\Export-SupabaseSchema.ps1");
+    }
+    process.exitCode = 2;
+    return;
+  }
+  ok(`Local record: ${plan.rows.length} migration(s), every file on disk among them`);
+  if (plan.headerMissing) log("(the schema file carries no „-- Migrations\" line yet -- exported before 41.62; the next migrate-local writes it)");
 
   // Step 1: Drop all Supabase objects
   step(1, TOTAL, "Dropping all Supabase objects...");
@@ -419,8 +444,18 @@ async function main() {
   await execFile(supaPool, "src/db/supabase_schema_full.sql");
   ok("Schema rebuilt");
 
-  // Step 3: Replace default seed data with exact Docker state
-  step(3, TOTAL, "Syncing reference data from Docker to Supabase...");
+  // Step 3 (41.62, Ask first 1): the migration record — the local rows as stored, checksums NULL where local has NULL.
+  step(3, TOTAL, "Recording the migrations the schema was built from...");
+  for (const r of plan.rows) {
+    await supaPool.query(
+      "INSERT INTO schema_migrations (filename, applied_at, checksum) VALUES ($1, coalesce($2::timestamptz, now()), $3) ON CONFLICT (filename) DO NOTHING",
+      [r.filename, r.appliedAt, r.checksum],
+    );
+  }
+  ok(`${plan.rows.length} migration(s) recorded, ${plan.rows[0]?.filename ?? "-"} .. ${plan.rows.at(-1)?.filename ?? "-"}`);
+
+  // Step 4: Replace default seed data with exact Docker state
+  step(4, TOTAL, "Syncing reference data from Docker to Supabase...");
   log("Resolving column plans before anything is truncated...");
   await planAll(SIMPLE_TABLES);
   log("Truncating defaults seeded by schema SQL...");
@@ -489,10 +524,10 @@ async function main() {
   await syncTarlaCorners();
   await syncTarlaParcels();
 
-  // Step 4: Seed domain data (persons, properties, documents, judicial persons)
+  // Step 5: Seed domain data (persons, properties, documents, judicial persons)
   // Run seed.ts as a child process with DATABASE_URL temporarily pointed at Supabase.
   // The seed is idempotent — it skips any table that already has rows.
-  step(4, TOTAL, "Seeding domain data (persons, properties, documents)...");
+  step(5, TOTAL, "Seeding domain data (persons, properties, documents)...");
   execSync(
     "node node_modules/tsx/dist/cli.mjs src/db/seed.ts",
     {
@@ -507,10 +542,10 @@ async function main() {
   );
   ok("Domain data seeded");
 
-  // Step 5: Done
-  step(5, TOTAL, "Done.");
+  // Step 6: Done
+  step(6, TOTAL, "Done.");
   console.log("\n   ✅  Supabase matches local Docker exactly.");
-  console.log("       Reference data + domain data are in sync.");
+  console.log("       Reference data + domain data are in sync, and schema_migrations names what built the schema.");
   console.log();
   console.log("   Note: the admin user account is NOT reset by this script.");
   console.log("   If needed, re-run: npm run seed:admin");

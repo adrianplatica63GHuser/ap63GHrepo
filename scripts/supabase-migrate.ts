@@ -97,6 +97,7 @@ import {
   compareMigrationState,
   parseBaselineArg,
   readMigrationsOnDisk,
+  suggestedBaseline,
   selectBaseline,
   reapplyTarget,
   type AppliedRow,
@@ -270,7 +271,7 @@ async function main(): Promise<number> {
     console.log("");
     console.log("schema_migrations does not exist on this project yet, so nothing is recorded.");
     console.log("Declare the baseline to create it (this RUNS no migration):");
-    log(`npm run supabase:migrate -- --baseline 086`);
+    log(`npm run supabase:migrate -- --baseline ${suggestedBaseline(disk)}`);
     return 0;
   }
 
@@ -460,8 +461,8 @@ async function main(): Promise<number> {
       console.log("most of these files are not idempotent.");
       console.log("");
       console.log("Declare the baseline once -- this RUNS nothing, it only records:");
-      log(`npm run supabase:migrate -- --baseline 086`);
-      console.log("(use the highest migration number this project actually holds), then run this");
+      log(`npm run supabase:migrate -- --baseline ${suggestedBaseline(disk)}`);
+      console.log("(41.62: the newest migration on disk; use a lower number only if this project holds less), then run this");
       console.log("again and it will apply only what came after it.");
       return 2;
     }
