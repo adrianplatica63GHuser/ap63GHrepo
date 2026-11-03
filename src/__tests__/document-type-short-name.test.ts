@@ -130,7 +130,8 @@ describe("the Documents list's „Tip” (#37.95)", () => {
   const view = read("src/app/documents/list-view.tsx");
   it("shows the short name, the full name in the tooltip", () => {
     expect(view).toContain("documentTypeShortName({ name: item.documentTypeName, shortName: item.documentTypeShortName })");
-    expect(view).toContain("title={item.documentTypeName ?? undefined}");
+    // 41.46: it read `title={item.documentTypeName ?? undefined}` — the full name is in the icon buttons' bubble now.
+    expect(view).toContain('<TextTooltip as="td" always key={key} className={`px-4 py-1 text-fade dark:text-zinc-400 ${ONE_LINE}`} text={item.documentTypeName ?? undefined}>');
     expect(read("src/lib/documents/queries.ts")).toContain("documentTypeShortName: lookupDocumentType.shortName,");
   });
 });
