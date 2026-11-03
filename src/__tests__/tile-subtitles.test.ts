@@ -89,7 +89,7 @@ describe("the renames and subtitles are the request's table (Adrian.Request.txt)
     ["judicialPerson", "connections", "Etichete și grupuri", "Etichete, grupuri, ștampile, vezi și"],
     ["document", "connections", "Etichete și grupuri", "Etichete, grupuri, ștampile, vezi și"],
     ["property", "cadastral", "Identificare cadastrală", "Tarla, parcelă, CF, nr. cadastral, suprafețe"],
-    ["property", "corners", "Puncte de contur", "Colțurile parcelei (Stereo 70), în ordine"],
+    ["property", "corners", "Puncte de contur", "Colțurile parcelei, în ordine"], // 41.64: it read „Colțurile parcelei (Stereo 70), în ordine"
     // Slice 40.85: the tile lists the person's identity documents (was „Act de identitate", „Carte de identitate sau pașaport").
     ["naturalPerson", "idCard", "Acte de identitate", "Actele de identitate ale persoanei, cel curent primul"],
     ["naturalPerson", "addresses", "Adrese", "Domiciliu și corespondență"],
