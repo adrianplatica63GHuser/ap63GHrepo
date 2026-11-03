@@ -569,6 +569,10 @@ FROM (VALUES
   ('Contract de Vânzare',           'Vânzător'),
   ('Contract de Vânzare',           'Cumpărător'),
   ('Contract de Vânzare',           'Notar'),
+  -- Slice 41.53 (migration_126): the three „Notariat" types that did not offer „Notar".
+  ('Act Adițional',                 'Notar'),
+  ('Act de Donație',                'Notar'),
+  ('Testament',                     'Notar'),
   ('Contract de Vânzare',           'Reprezentant legal / Mandatar'),
   ('Contract de Vânzare',           'Moștenitor'),
   ('Extras din Carte Funciară',     'Solicitant'),

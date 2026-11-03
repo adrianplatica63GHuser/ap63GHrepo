@@ -1662,6 +1662,9 @@ export const personDocument = pgTable(
     // so renaming a label is not a data migration.
     // DB-enforced by person_document_cota_mod_check (migration_084).
     cotaMod:    text("cota_mod"),
+    // Slice 41.53, migration_126: the link the document's issuer made („Notariat" → „Notar"), kept in step with it by
+    // `syncIssuerNotaryLink`, which removes only rows it marked. Never set on a link made by hand.
+    fromIssuer: boolean("from_issuer").notNull().default(false),
     createdAt:  timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [

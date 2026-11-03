@@ -1693,6 +1693,9 @@ CREATE TABLE IF NOT EXISTS tarla_corner (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS tarla_corner_tarla_seq_unique ON tarla_corner (tarla_id, sequence_no);
 
+-- migration_126 (Slice 41.53) -- a link the document's issuer made
+ALTER TABLE person_document ADD COLUMN IF NOT EXISTS from_issuer boolean NOT NULL DEFAULT false;
+
 -- migration_125 (Slice 41.52) -- „Cetățenie"'s „Forme tipărite"
 ALTER TABLE lookup_citizenship ADD COLUMN IF NOT EXISTS printed_forms text;
 
