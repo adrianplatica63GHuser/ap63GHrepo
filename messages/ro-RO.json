@@ -277,6 +277,18 @@
       "cancelSelect": "Anulează selecția",
       "selectEnterTitle": "Intră în modul de selecție — un clic pe o proprietate o adaugă la selecție sau o scoate, apoi selecția se adaugă la un grup",
       "selectExitTitle": "Ieși din modul de selecție",
+      "searchButton": "Caută pe hartă",
+      "searchHint": "O adresă, un nume de pe hartă sau numărul unei proprietăți — harta zboară la locul găsit",
+      "search": {
+        "intro": "Această căutare găsește un singur loc: o adresă, un nume de pe hartă sau numărul unei proprietăți. Pentru mai multe proprietăți deodată, folosiți <link>Căutarea globală</link>.",
+        "inputLabel": "Ce căutați pe hartă",
+        "placeholder": "ex. 42, Livada Mare, Strada Florilor 12, Bragadiru",
+        "submit": "Caută",
+        "searching": "Se caută…",
+        "notFound": "Nu s-a găsit nimic pentru „{text}”. Harta a rămas unde era.",
+        "failed": "Căutarea adresei nu a reușit. Încercați din nou peste câteva clipe.",
+        "more": "{count, plural, one {Încă o potrivire} few {Încă # potriviri} other {Încă # de potriviri}} — le vedeți în <link>Căutarea globală</link>."
+      },
       "settingsButton": "Setări hartă",
       "settingsHint": "Distanța la care picăturile se unesc într-o picătură cu număr",
       "mergeDistanceLabel": "Picăturile se unesc sub",
@@ -1672,7 +1684,8 @@
       },
       "navigation": {
         "title": "Navigare",
-        "intro": "Drumul până la o proprietate, în Google Maps.",
+        "intro": "Drumul până la o proprietate, în Google Maps, și un loc găsit pe harta tuturor proprietăților.",
+        "search": "Pe harta tuturor proprietăților: o casetă în care scrieți o adresă, un nume de pe hartă sau numărul unei proprietăți; harta zboară, în patru secunde, la locul găsit și îl arată la mijloc.",
         "navigate": "Deschide traseul până la proprietate în Google Maps, cu un cod QR pentru telefon. Îl găsiți pe fișa proprietății și în fereastra care se deschide la un clic pe o proprietate pe harta tuturor proprietăților."
       }
     }

@@ -9,6 +9,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import {
   AdvancedMarker,
+  AdvancedMarkerAnchorPoint,
   Circle,
   InfoWindow,
   Map,
@@ -77,6 +78,20 @@ import {
 import { useMergeDistance } from "@/components/maps/use-merge-distance";
 import { PropertyCornerDot, PropertyDrop, SHAPE_COLOR, SHAPE_FILL, type PlacedDrop as PlacedDropOf } from "@/components/maps/property-shapes";
 import { useToast } from "@/components/toast";
+import { MapSearchPanel, type MapSearchOutcome } from "@/components/maps/map-search-panel";
+import {
+  cameraAt,
+  cameraForCorners,
+  cameraForGeocode,
+  classifySearch,
+  findByCode,
+  flightMs,
+  flightPeak,
+  rankMapMatches,
+  readGeocodeResult,
+  type Camera,
+  type MapSearchHit,
+} from "@/lib/geo/map-search";
 import { GROUPS_FROM_MAP_PATH, forgetNewGroup, readMapSelection, readNewGroup, writeMapSelection } from "@/lib/groups/map-selection";
 import { MAX_GROUPS_PER_PROPERTY } from "@/lib/groups/validation";
 
@@ -956,6 +971,12 @@ export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean 
   const [zoom, setZoom] = useState(DEFAULT_ZOOM);
   const [mergeDistance, setMergeDistance] = useMergeDistance();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  // Slice 41.70 — „Caută pe hartă": the box, the flight's state (read by TC-MAP-11), the found property's blink and a
+  // geocoded street address's temporary pin.
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchFlight, setSearchFlight] = useState<"flying" | "landed" | "stopped" | null>(null);
+  const [searchBlink, setSearchBlink] = useState<{ prop: MapProperty; n: number } | null>(null);
+  const [searchPin, setSearchPin] = useState<{ at: LatLng; fading: boolean } | null>(null);
   // When a drop took a click: the map's own click, if Google sends it too, must not close the bubble it opened.
   const dropClickAt = useRef(-Infinity);
 
@@ -1021,6 +1042,136 @@ export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean 
       })),
     [data?.tarlale, data?.items],
   );
+
+  // ── Slice 41.70 — „Caută pe hartă": find one place and fly to it ──────────────────────────────────────────────
+  // The rules are map-search.ts's; here are the look-up and the camera.
+  const flightRef = useRef<{ raf: number; stop: () => void } | null>(null);
+  const stopFlight = useCallback((how: "stopped" | null) => {
+    const f = flightRef.current;
+    if (!f) return;
+    cancelAnimationFrame(f.raf);
+    f.stop();
+    flightRef.current = null;
+    if (how) setSearchFlight(how);
+  }, []);
+  useEffect(() => () => stopFlight(null), [stopFlight]);
+
+  /** Flies the camera to `to` over 4 s (a jump under prefers-reduced-motion); a drag or a wheel stops it. */
+  const flyTo = useCallback(
+    (to: Camera, onLanded?: () => void) => {
+      const map = mapRef.current;
+      if (!map) return;
+      stopFlight(null);
+      const div = map.getDiv();
+      const c = map.getCenter();
+      const z = map.getZoom();
+      const reduced = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
+      const duration = flightMs(reduced);
+      const land = () => {
+        map.moveCamera(to);
+        setSearchFlight("landed");
+        onLanded?.();
+      };
+      if (!c || z === undefined || duration === 0) {
+        land();
+        return;
+      }
+      const from: Camera = { center: { lat: c.lat(), lng: c.lng() }, zoom: z };
+      const peak = flightPeak(from, to, div.clientWidth, div.clientHeight);
+      const userMoved = () => stopFlight("stopped");
+      const drag = map.addListener("dragstart", userMoved);
+      div.addEventListener("wheel", userMoved, { passive: true });
+      const stop = () => {
+        drag.remove();
+        div.removeEventListener("wheel", userMoved);
+      };
+      const start = performance.now();
+      const tick = (now: number) => {
+        const t = Math.max(0, now - start);
+        if (t >= duration) {
+          stop();
+          flightRef.current = null;
+          land();
+          return;
+        }
+        map.moveCamera(cameraAt(t, from, to, peak, duration));
+        if (flightRef.current) flightRef.current.raf = requestAnimationFrame(tick);
+      };
+      setSearchFlight("flying");
+      flightRef.current = { raf: requestAnimationFrame(tick), stop };
+    },
+    [stopFlight],
+  );
+
+  const flyToHit = useCallback(
+    (hit: MapSearchHit) => {
+      const div = mapRef.current?.getDiv();
+      if (!div) return;
+      flyTo(cameraForCorners(hit.corners, div.clientWidth, div.clientHeight), () => {
+        // A property blinks on landing, as ?focus does (Ask first 3); a tarla's outline is its own line.
+        const prop = hit.kind === "property" ? withGeometryRef.current.find((p) => p.id === hit.id) : undefined;
+        if (prop) setSearchBlink((b) => ({ prop, n: (b?.n ?? 0) + 1 }));
+      });
+    },
+    [flyTo],
+  );
+
+  const closeSearch = useCallback(() => setSearchOpen(false), [setSearchOpen]);
+
+  const tarlaSearch = useMemo(() => tarlaOnMap.map((tl) => ({ id: tl.id, indicativ: tl.indicativ, corners: tl.outline.path })), [tarlaOnMap]);
+
+  const runMapSearch = useCallback(
+    async (raw: string): Promise<MapSearchOutcome> => {
+      const q = classifySearch(raw);
+      if (q.kind === "empty") return { kind: "none" };
+      const properties = data?.items ?? [];
+      // (a) a property's number.
+      if (q.kind === "code") {
+        const hit = findByCode(q.code, properties);
+        if (!hit) return { kind: "none" };
+        flyToHit(hit);
+        return { kind: "found", more: 0 };
+      }
+      // (b) the map's own names — no Google call.
+      const hits = rankMapMatches(q.text, properties, tarlaSearch);
+      if (hits.length > 0) {
+        flyToHit(hits[0]);
+        return { kind: "found", more: hits.length - 1 };
+      }
+      // (c) one Geocoder look-up, region RO, biased to the map's view. Places is not used (Ask first 1).
+      const map = mapRef.current;
+      if (!map || typeof google === "undefined") return { kind: "failed" };
+      try {
+        const { Geocoder } = (await google.maps.importLibrary("geocoding")) as google.maps.GeocodingLibrary;
+        const bounds = map.getBounds() ?? undefined;
+        const { results } = await new Geocoder().geocode({ address: q.text, region: "RO", bounds });
+        const target = readGeocodeResult(results[0]);
+        if (!target) return { kind: "none" };
+        const div = map.getDiv();
+        flyTo(cameraForGeocode(target, div.clientWidth, div.clientHeight), () => {
+          if (target.kind === "point") setSearchPin({ at: target.at, fading: false });
+        });
+        return { kind: "found", more: 0 };
+      } catch (err) {
+        // ZERO_RESULTS arrives as a rejection too; anything else is a failure worth saying so.
+        const code = (err as { code?: string } | null)?.code;
+        return code === "ZERO_RESULTS" ? { kind: "none" } : { kind: "failed" };
+      }
+    },
+    [data?.items, tarlaSearch, flyToHit, flyTo],
+  );
+
+  // A geocoded street address's pin fades after a few seconds and goes (Ask first 2).
+  useEffect(() => {
+    if (!searchPin || searchPin.fading) return;
+    const fade = window.setTimeout(() => setSearchPin((p) => (p ? { ...p, fading: true } : p)), 4000);
+    return () => window.clearTimeout(fade);
+  }, [searchPin]);
+  useEffect(() => {
+    if (!searchPin?.fading) return;
+    const gone = window.setTimeout(() => setSearchPin(null), 1000);
+    return () => window.clearTimeout(gone);
+  }, [searchPin]);
 
   // Group filter — applied only on the "all" tab. A property is hidden only
   // when every group it belongs to is unchecked (see isPropertyVisibleForGroups).
@@ -1859,6 +2010,7 @@ export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean 
         ref={containerRef}
         data-property-map
         data-focus-blink={focusBlink ?? undefined}
+        data-map-search-flight={searchFlight ?? undefined}
         className="flex-1 min-h-0 relative"
         style={{
           cursor: anglesMode
@@ -1977,6 +2129,22 @@ export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean 
           {/* Slice #37.38 — the focused Property blinks green, over its own shape */}
           {focusProp && focusBlink === "on" && (
             <FocusBlink prop={focusProp} onDone={endFocusBlink} />
+          )}
+
+          {/* Slice 41.70 — a property found by „Caută pe hartă" blinks on landing, as ?focus does. */}
+          {searchBlink && (
+            <FocusBlink key={`search-${searchBlink.n}`} prop={searchBlink.prop} onDone={() => setSearchBlink(null)} />
+          )}
+          {/* Slice 41.70 — a geocoded street address: a pin that fades after a few seconds. */}
+          {searchPin && (
+            <AdvancedMarker position={searchPin.at} anchorPoint={AdvancedMarkerAnchorPoint.CENTER} zIndex={1001}>
+              <div
+                data-map-search-pin=""
+                aria-hidden="true"
+                style={{ opacity: searchPin.fading ? 0 : 1, transition: "opacity 1s ease" }}
+                className="h-4 w-4 rounded-full border-2 border-white bg-red-500 shadow-md"
+              />
+            </AdvancedMarker>
           )}
 
           {/* Slice #39.60 — corners: 4-px dots in the polygon's own colour, only while the polygon is drawn */}
@@ -2167,6 +2335,20 @@ export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean 
         {/* clamp at all — English and Romanian both lay out exactly as before. */}
         {activeTab === "all" && (
           <div data-map-ui className="absolute top-3 right-3 z-20 flex flex-wrap justify-end items-start gap-2 max-w-[calc(100%-6rem)]">
+            {/* Slice 41.70 — „Caută pe hartă", first in the row; its box under it, inside data-map-ui (Ask first 6). */}
+            <div className="relative mr-2">
+              <IconButton
+                icon={MAP_TOOL_ICON.search}
+                label={t(MAP_TOOL_LABEL.search)}
+                note={t("map.searchHint")}
+                variant={searchOpen ? "primary" : "secondary"}
+                size="sm"
+                aria-expanded={searchOpen}
+                onClick={() => setSearchOpen((o) => !o)}
+                data-map-search-button=""
+              />
+              {searchOpen && <MapSearchPanel onSearch={runMapSearch} onClose={closeSearch} />}
+            </div>
             {/* Angles tool — show interior angles at corners (Slice #19.05).   */}
             {/* Sits to the left of Ruler; depressed while active.              */}
             {/* #37.45 (A058, A057, A061, A063): icons. Angles, ruler and   */}

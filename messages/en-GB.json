@@ -277,6 +277,18 @@
       "cancelSelect": "Cancel select",
       "selectEnterTitle": "Enter selection mode — a click on a property adds it to the selection or takes it out; then the selection is added to a group",
       "selectExitTitle": "Exit selection mode",
+      "searchButton": "Search the map",
+      "searchHint": "An address, a name on the map or a property's number — the map flies to the place found",
+      "search": {
+        "intro": "This search finds one place: an address, a name on the map or a property's number. For several properties at once, use <link>Global Search</link>.",
+        "inputLabel": "What to find on the map",
+        "placeholder": "e.g. 42, Livada Mare, Strada Florilor 12, Bragadiru",
+        "submit": "Search",
+        "searching": "Searching…",
+        "notFound": "Nothing found for “{text}”. The map stayed where it was.",
+        "failed": "The address search did not work. Try again in a few moments.",
+        "more": "{count, plural, one {One more match} other {# more matches}} — see them in <link>Global Search</link>."
+      },
       "settingsButton": "Map settings",
       "settingsHint": "The distance at which drops merge into a numbered drop",
       "mergeDistanceLabel": "Drops merge under",
@@ -1672,7 +1684,8 @@
       },
       "navigation": {
         "title": "Navigation",
-        "intro": "The way to a property, in Google Maps.",
+        "intro": "The way to a property, in Google Maps, and a place found on the map of all properties.",
+        "search": "On the map of all properties: a box where you type an address, a name on the map or a property's number; the map flies, in four seconds, to the place found and shows it in the middle.",
         "navigate": "Opens the route to the property in Google Maps, with a QR code for the phone. You find it on the property form, and in the window that opens when you click a property on the map of all properties."
       }
     }

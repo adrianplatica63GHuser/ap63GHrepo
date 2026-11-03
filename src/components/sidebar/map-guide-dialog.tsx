@@ -65,7 +65,11 @@ export function MapGuideDialog({
 
   const rows: Row[] =
     guide === "navigation"
-      ? [{ key: "navigate", icon: NAVIGATE_ICON, name: tNav("button"), text: t("navigation.navigate") }]
+      ? [
+          { key: "navigate", icon: NAVIGATE_ICON, name: tNav("button"), text: t("navigation.navigate") },
+          // 41.70: „Caută pe hartă", the big map's magnifier — its icon and name from the map's own table.
+          { key: "search", icon: MAP_TOOL_ICON.search, name: tMap(MAP_TOOL_LABEL.search), text: t("navigation.search") },
+        ]
       : guideTools(guide).map((tool) => ({
           key: tool,
           icon: MAP_TOOL_ICON[tool],
