@@ -194,7 +194,8 @@ test.describe("TC-DOC-28 — actul de identitate pe ecranul lui", () => {
       await page.goto(`/documents/${nou}`);
       await editTile(page, "general");
       await general(page).getByRole("button", { name: "Schimbă tipul…", exact: true }).click();
-      await typeChangeDialog(page).getByLabel("Tipul nou").selectOption({ label: "Pașaport" });
+      // 41.50: the identity types are marked „(F)" in this list too (it read `{ label: "Pașaport" }`).
+      await typeChangeDialog(page).getByLabel("Tipul nou").selectOption({ label: "Pașaport (F)" });
       const named = typeChangeDialog(page).locator('[data-type-change-list="identity"]');
       await expect(named).toContainText("Domiciliu");
       await expect(named).toContainText("Nr. card");

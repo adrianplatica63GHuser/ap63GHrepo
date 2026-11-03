@@ -65,7 +65,7 @@ describe("the screen and the import's link (#38.51)", () => {
 
   it("the retained rows and the backlog banner keep their guarantees under the new filter", () => {
     // 41.50: it read `documentTypeHasForm(row.templateFields)` — the identity types count as having a form.
-    expect(modal).toMatch(/formFilterKeeps\(formFilter, documentTypeShowsForm\(row\)\) \|\| touchedTypeIds\.has\(row\.id\)/);
+    expect(modal).toMatch(/formFilterKeeps\(formFilter, documentTypeShowsForm\(\{ templateFields: row\.templateFields, key: row\.key, identityKind: row\.identityKind \}\)\) \|\| touchedTypeIds\.has\(row\.id\)/);
     expect(modal).toContain("if (filterOn) {");
     expect(modal.replace(/\s+/g, "")).toContain("constbacklogEmpty=awaitingOn&&");
   });

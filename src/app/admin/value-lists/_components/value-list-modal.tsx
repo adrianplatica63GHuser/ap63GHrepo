@@ -1530,7 +1530,7 @@ export function ValueListModal({
   // both or neither, the whole list. The retained rows (`touchedTypeIds`) keep their guarantee.
   const filteredRows = isDocumentTypes
     ? formFilterNarrows(formFilter)
-      ? query.data?.filter((row) => formFilterKeeps(formFilter, documentTypeShowsForm(row)) || touchedTypeIds.has(row.id))
+      ? query.data?.filter((row) => formFilterKeeps(formFilter, documentTypeShowsForm({ templateFields: row.templateFields, key: row.key, identityKind: row.identityKind })) || touchedTypeIds.has(row.id))
       : query.data
     : onlyAwaiting && review
       ? query.data?.filter((row) => review.awaits(row) || touchedTypeIds.has(row.id))
