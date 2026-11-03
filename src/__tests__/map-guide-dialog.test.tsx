@@ -61,7 +61,7 @@ describe("what each guide is about", () => {
       for (const g of ["measure", "groups"] as const) {
         for (const k of ["title", "intro", ...PULSE_SETS[g]]) expect(at(tree, `nav.guides.${g}.${k}`)).toBeTruthy();
       }
-      for (const k of ["title", "intro", "navigate"]) expect(at(tree, `nav.guides.navigation.${k}`)).toBeTruthy();
+      for (const k of ["title", "intro", "navigate", "search"]) expect(at(tree, `nav.guides.navigation.${k}`)).toBeTruthy(); // 41.70: „search"
     }
   });
   it("the titles are the items' names", () => {
@@ -86,7 +86,8 @@ describe("the box", () => {
   it.each([
     ["measure", ["Unghiuri", "Riglă", "Suprafața unei zone delimitate", "Suprafața unei zone oarecare"]],
     ["groups", ["Tarlale", "Grupuri", "Selectează"]],
-    ["navigation", ["Navighează"]],
+    // 41.70: and „Caută pe hartă" after it (it read `["Navighează"]`).
+    ["navigation", ["Navighează", "Caută pe hartă"]],
   ] as const)("%s: a row per button, in the toolbar's order, the button drawn with its name", (guide, names) => {
     render(<MapGuideDialog guide={guide} onClose={() => {}} onOpenMap={() => {}} />);
     const dialog = screen.getByRole("dialog", { name: at(RO, `nav.guides.${guide}.title`) });
@@ -106,7 +107,9 @@ describe("the box", () => {
     expect(SOURCE).toContain("icon: MAP_TOOL_ICON[tool]");
     expect(SOURCE).toContain("icon: NAVIGATE_ICON");
     expect(SOURCE).toContain("name: tMap(MAP_TOOL_LABEL[tool])");
-    expect(Object.keys(MAP_TOOL_ICON)).toEqual(["angles", "ruler", "areaDelimited", "areaFree", "tarlale", "groups", "select"]);
+    // 41.70: „search" first, as in the toolbar (it read the seven tools alone).
+    expect(Object.keys(MAP_TOOL_ICON)).toEqual(["search", "angles", "ruler", "areaDelimited", "areaFree", "tarlale", "groups", "select"]);
+    expect(SOURCE).toContain("icon: MAP_TOOL_ICON.search, name: tMap(MAP_TOOL_LABEL.search)");
     expect(NAVIGATE_ICON).toBeTruthy();
   });
 
