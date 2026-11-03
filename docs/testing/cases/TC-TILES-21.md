@@ -48,6 +48,9 @@ Nothing.
 | 7a | (40.42) Looks at the diagram | Redrawn: one rectangle per tile box, stacked as the tiles now stand |
 | 8 | Presses „Toate sus" again | Nothing moves |
 | 9 | Reloads the page | Every box where step 7 put it |
+| 10 | (Slice 41.60) Moves one tile a unit to the right, leaving a gap beside it, and opens „Panouri" | „Toate sus", „Toate la stânga", „Toate" in that order; the first two three chevrons each, named by their words |
+| 11 | Presses „Toate la stânga" | The tile slides back against its neighbour on the left (or the row's edge), its top unchanged |
+| 12 | Reloads the page | The tile where step 11 put it |
 
 ## At the end — leaving things as they were found
 

@@ -85,7 +85,14 @@ test.describe("TC-AUTH-01 — Conectare și tabloul de bord", () => {
     await openTiles(page);
     const panel = page.locator("[data-tiles-panel]");
     await expect(panel.getByRole("checkbox")).toHaveCount(4);
-    await expect(panel.locator("[data-tile-bar-buttons] button")).toHaveText(["Toate sus", "Toate", "Implicit"]);
+    // 41.60 rewritten in place — was `toHaveText(["Toate sus", "Toate", "Implicit"])`: „Toate sus" was words. Now it
+    // and „Toate la stânga" are three chevrons, found by their names; then „Toate", „Implicit".
+    const barButtons = panel.locator("[data-tile-bar-buttons] button");
+    await expect(barButtons).toHaveCount(4);
+    await expect(barButtons.nth(0)).toHaveAccessibleName("Toate sus");
+    await expect(barButtons.nth(1)).toHaveAccessibleName("Toate la stânga");
+    await expect(barButtons.nth(2)).toHaveText("Toate");
+    await expect(barButtons.nth(3)).toHaveText("Implicit");
     await closeTiles(page);
     await hideTile(page, "Activitate recentă");
     await expect(page.locator('[data-panel="recent-activity"]')).toHaveCount(0);

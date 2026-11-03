@@ -11,7 +11,9 @@ import path from "node:path";
 import { grow, packTiles, settle, type PackBox, type Placed } from "@/lib/ui/tile-packing";
 import {
   FIXED_PREFIX,
+  TILES_ALL_LEFT,
   TILES_ALL_UP,
+  allLeft,
   allUp,
   evenColumns,
   tileColumns,
@@ -935,5 +937,59 @@ describe("„Toate sus”: every tile up, then the columns evened (40.40)", () =
     expect(hook).toMatch(/slide\(r\.moved\);\s*store\(r\.moved\[0\], r\.moved\.slice\(1\)\);\s*apply\(\);/);
     const choice = code(read("src", "components", "tiles", "use-tile-choice.ts"));
     expect(choice).toContain("window.dispatchEvent(new CustomEvent(TILES_ALL_UP, { detail: reg.entity }));");
+  });
+});
+
+describe("„Toate la stânga”: every tile left into the room beside it, never up or down (41.60)", () => {
+  const tile = (id: string, col: number, top: number, height: number, units = 3): Placed => ({ id, col, units, top, height });
+  const bar: Placed = { id: "actions", col: 0, units: 9, top: 2000, height: 63, rowEnd: true };
+
+  it("a gap closed: a tile dragged right slides back against its neighbour, its top unchanged", () => {
+    const placed = [tile("a", 0, 0, 300, 2), tile("b", 5, 0, 200), bar];
+    const r = allLeft(placed)!;
+    expect(at(r.placed, "b")).toMatchObject({ col: 2, top: 0 });
+    expect(at(r.placed, "a")).toMatchObject({ col: 0, top: 0 });
+    expect(r.moved).toEqual(["b"]);
+  });
+
+  it("left to right, each against the one settled before it; to column 0 when nothing is beside it", () => {
+    const placed = [tile("a", 2, 0, 200, 2), tile("b", 6, 50, 200), tile("c", 4, 400, 100), bar];
+    const r = allLeft(placed)!;
+    expect(at(r.placed, "a").col).toBe(0);
+    expect(at(r.placed, "b").col).toBe(2); // beside „a" (0–200 and 50–250 overlap): against its right edge
+    expect(at(r.placed, "c").col).toBe(0); // 400–500 beside nothing
+    expect(r.placed.filter((p) => !p.rowEnd).map((p) => p.top)).toEqual([0, 50, 400]);
+    expect(r.moved.sort()).toEqual(["a", "b", "c"]);
+  });
+
+  it("never up or down, never right; a tile only touching another's bottom edge is not beside it", () => {
+    const placed = [tile("a", 0, 0, 200), tile("b", 4, 200 + GAP, 100), bar];
+    const r = allLeft(placed)!;
+    expect(at(r.placed, "b")).toMatchObject({ col: 0, top: 200 + GAP });
+  });
+
+  it("the banners and fixed tiles never move, and are walls; the action bar stays", () => {
+    const placed = [{ id: "box#0", col: 0, units: 9, top: 0, height: 40 }, { ...tile("f", 0, 56, 300, 2), fixed: true }, tile("x", 6, 56, 100), bar];
+    const r = allLeft(placed, new Set(["box#0"]))!;
+    expect(at(r.placed, "box#0")).toMatchObject({ col: 0, top: 0 });
+    expect(at(r.placed, "f")).toMatchObject({ col: 0, top: 56 });
+    expect(at(r.placed, "x")).toMatchObject({ col: 2, top: 56 });
+    expect(at(r.placed, "actions")).toMatchObject({ col: 0, top: 2000 });
+    expect(r.moved).toEqual(["x"]);
+  });
+
+  it("null when everything is already packed to the left", () => {
+    expect(allLeft([tile("a", 0, 0, 300), tile("b", 3, 0, 200), tile("c", 0, 316, 100), bar])).toBeNull();
+  });
+
+  it("is a window event like „Toate sus”'s, heard by the packing hook, slid and stored like a drop", () => {
+    expect(TILES_ALL_LEFT).toBe("ga40-tiles-all-left");
+    const hook = code(read("src", "components", "tiles", "use-tile-packing.ts"));
+    expect(hook).toContain("window.addEventListener(TILES_ALL_LEFT, onAllLeft);");
+    expect(hook).toContain("window.removeEventListener(TILES_ALL_LEFT, onAllLeft);");
+    expect(hook).toContain("const r = allLeft(placed, still);");
+    expect(hook).toMatch(/allLeft\(placed, still\);\s*if \(!r\) return;\s*placed = r\.placed;\s*slide\(r\.moved\);\s*store\(r\.moved\[0\], r\.moved\.slice\(1\)\);\s*apply\(\);/);
+    const choice = code(read("src", "components", "tiles", "use-tile-choice.ts"));
+    expect(choice).toContain("window.dispatchEvent(new CustomEvent(TILES_ALL_LEFT, { detail: reg.entity }));");
   });
 });

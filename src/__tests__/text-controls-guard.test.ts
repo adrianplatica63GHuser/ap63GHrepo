@@ -371,7 +371,8 @@ const ALLOW: Record<string, Allowed[]> = {
     ["A113", "{children}"],
   ],
   "src/components/tiles/tile-selector.tsx": [
-    ["A020", "{t(\"allUp\")}"], // Slice 40.40: „Toate sus", left of „Toate", words like it
+    // 41.60: „Toate sus" left the list — three chevrons now (an IconButton), its words the hint. Was A020's
+    // `{t("allUp")}` „left of „Toate", words like it".
     ["A020", "{t(\"all\")}"],
     ["A020", "{t(\"defaults\")}"],
   ],

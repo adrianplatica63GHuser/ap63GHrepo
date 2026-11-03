@@ -70,8 +70,9 @@ export async function closeTiles(page: Page): Promise<void> {
 }
 
 /**
- * Press the bar's „Toate", „Toate sus" or „Implicit" (in English „All", „All up", „Default") — the panel opened for it,
- * and closed after if this opened it.
+ * Press the bar's „Toate", „Toate sus", „Toate la stânga" or „Implicit" (in English „All", „All up", „All left",
+ * „Default") — by name, which the two chevron buttons (41.60) carry as their label — the panel opened for it, and closed
+ * after if this opened it.
  */
 export async function pressTileButton(page: Page, name: string, options?: { timeout?: number }): Promise<void> {
   const opened = await openTiles(page);

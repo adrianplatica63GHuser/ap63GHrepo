@@ -231,6 +231,54 @@ test.describe("TC-TILES-21 — un dublu-clic urcă o fișă; o fișă trasă las
         const now = await boxes(page);
         return Object.fromEntries(Object.entries(now).map(([k, b]) => [k, [b.x, b.y]]));
       }, { timeout: 20_000 }).toEqual(Object.fromEntries(Object.entries(up).map(([k, b]) => [k, [b.x, b.y]])));
+
+      // Step 10 (41.60) — „Toate la stânga", right after „Toate sus", three chevrons each, their words the name. A tile
+      // moved one unit right, leaving a gap beside it (its stored column + 1; a unit is 119 px and the 16-px gap).
+      const step = 119 + GAP;
+      const rowWidth = await page.locator("[data-tile-row]").evaluate((r) => r.getBoundingClientRect().width);
+      const loose = Object.entries(up).find(([id, b]) =>
+        b.x + b.w + step <= rowWidth + 1 &&
+        !Object.entries(up).some(([k, o]) => k !== id && o.y < b.y + b.h && b.y < o.y + o.h && o.x >= b.x + b.w && o.x < b.x + b.w + step + GAP),
+      );
+      if (!loose) throw new Error(`no tile has a unit free on its right: ${JSON.stringify(up)}`);
+      const [looseId, was] = loose;
+      await page.evaluate(([k, id]) => {
+        const all = JSON.parse(localStorage.getItem(k) ?? "{}") as Record<string, { col: number }>;
+        if (!all[id]) throw new Error(`${id} has no stored place`);
+        all[id].col += 1;
+        localStorage.setItem(k, JSON.stringify(all));
+      }, [KEY, looseId]);
+      await page.reload();
+      await expect(region("Etichete și grupuri")).toBeVisible({ timeout: 30_000 });
+      await expect.poll(async () => (await boxes(page))[looseId]?.x, { timeout: 20_000 }).toBe(was.x + step);
+      await openTiles(page);
+      const allLeft = page.getByRole("button", { name: "Toate la stânga", exact: true });
+      const upAgain = page.getByRole("button", { name: "Toate sus", exact: true });
+      const [ub, lb, ab] = await Promise.all([upAgain.boundingBox(), allLeft.boundingBox(), page.getByRole("button", { name: "Toate", exact: true }).boundingBox()]);
+      expect(ub!.x < lb!.x && lb!.x < ab!.x, "„Toate sus”, „Toate la stânga”, „Toate”").toBe(true);
+      await expect(allLeft.locator("svg path")).toHaveCount(3);
+      await expect(upAgain.locator("svg path")).toHaveCount(3);
+      // Step 11 — pressed: it slides back against its neighbour (or the row's left edge), its top unchanged.
+      await allLeft.click();
+      const flush = (all: Record<string, Box>, id: string): number => {
+        const me = all[id];
+        const left = Object.entries(all).filter(([k, b]) => k !== id && b.x < me.x && b.y < me.y + me.h && me.y < b.y + b.h);
+        return left.length ? Math.max(...left.map(([, b]) => b.x + b.w)) + GAP : 0;
+      };
+      await expect.poll(async () => {
+        const now = await boxes(page);
+        return [now[looseId].x === flush(now, looseId), now[looseId].y];
+      }, { timeout: 5_000 }).toEqual([true, was.y]);
+      const left = await boxes(page);
+      expect(left[looseId].x).toBeLessThanOrEqual(was.x);
+      await closeTiles(page);
+      // Step 12 — after a reload, the same places.
+      await page.reload();
+      await expect(region("Etichete și grupuri")).toBeVisible({ timeout: 30_000 });
+      await expect.poll(async () => {
+        const now = await boxes(page);
+        return now[looseId] && [now[looseId].x, now[looseId].y];
+      }, { timeout: 20_000 }).toEqual([left[looseId].x, left[looseId].y]);
     } finally {
       await page.evaluate(([k, c]) => {
         localStorage.removeItem(k);
