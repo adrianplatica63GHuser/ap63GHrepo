@@ -20,6 +20,14 @@
  * colour: the text beside the icon keeps its own. `ENTITY_ICON_PLAIN` is the uncoloured four, for the one place that
  * must not take the kind's colour — the dashboard's amber warning cards. `ENTITY_COLOUR_CLASS` is for a drawing that
  * is not one of these four but stands for a kind: the lists' plural title icons.
+ *
+ * Slice 41.63 — Adrian, 2026-11-03: „on Navy background (like the associate buttons on the links tile) please do not
+ * use the colours - keep using the gray line that we used before". So the inline colour is
+ * `var(--kind-ink, var(--color-kind-…))`: wherever an ancestor sets `--kind-ink`, the icon draws in that instead. The
+ * primary variant sets it to `currentColor` (button-styles.ts `ENABLED.primary`), so inside every primary (navy)
+ * button — „Legături"'s „Asociază X", the lists' „Adaugă" — the four draw in the button's own colour, its disabled
+ * face's `text-fade` included, and a future dark button cannot get it wrong. It is a rule in the variant, not an edit
+ * at each call site.
  */
 import { createElement, forwardRef } from "react";
 import { Building2, FileText, Map as MapIcon, User, type LucideIcon, type LucideProps } from "lucide-react";
@@ -33,6 +41,12 @@ export const ENTITY_ICON_PLAIN: Readonly<Record<EntityKind, LucideIcon>> = {
   property: MapIcon,
   document: FileText,
 };
+
+/**
+ * The custom property an ancestor sets to draw the four in another colour (41.63) — the primary variant sets it to
+ * `currentColor`. Unset, the icon keeps its kind's colour.
+ */
+export const KIND_INK = "--kind-ink";
 
 /** Each kind's colour, as the CSS variable globals.css defines for light and for dark. */
 export const ENTITY_COLOUR_VAR: Readonly<Record<EntityKind, string>> = {
@@ -53,7 +67,7 @@ export const ENTITY_COLOUR_CLASS: Readonly<Record<EntityKind, string>> = {
 function coloured(kind: EntityKind): LucideIcon {
   const Icon = ENTITY_ICON_PLAIN[kind];
   const KindIcon = forwardRef<SVGSVGElement, LucideProps>(function KindIcon({ style, ...props }, ref) {
-    return createElement(Icon, { ...props, ref, "data-kind-icon": kind, style: { ...style, color: ENTITY_COLOUR_VAR[kind] } } as LucideProps);
+    return createElement(Icon, { ...props, ref, "data-kind-icon": kind, style: { ...style, color: `var(${KIND_INK}, ${ENTITY_COLOUR_VAR[kind]})` } } as LucideProps);
   });
   KindIcon.displayName = `KindIcon(${kind})`;
   return KindIcon as LucideIcon;

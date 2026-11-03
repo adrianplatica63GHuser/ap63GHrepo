@@ -12,7 +12,11 @@ import { Building2, FileText, Map as MapIcon, User } from "lucide-react";
 
 import { EntityMark } from "@/components/record/entity-mark";
 import { NAV_SECTIONS } from "@/components/sidebar/nav-config";
-import { ENTITY_COLOUR_CLASS, ENTITY_COLOUR_VAR, ENTITY_ICON, ENTITY_ICON_PLAIN, type EntityKind } from "@/lib/ui/entity-icon";
+import { AddNewButton } from "@/components/list/add-new-button";
+import { buttonClass, type ButtonVariant } from "@/lib/ui/button-styles";
+import { ENTITY_COLOUR_CLASS, ENTITY_COLOUR_VAR, ENTITY_ICON, ENTITY_ICON_PLAIN, KIND_INK, type EntityKind } from "@/lib/ui/entity-icon";
+import { IconButton } from "@/lib/ui/icon-button";
+import { Link as LinkIcon } from "lucide-react";
 
 const read = (...p: string[]) => readFileSync(join(process.cwd(), ...p), "utf8");
 const code = (s: string) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\{\/\*[\s\S]*?\*\/\}/g, "");
@@ -128,7 +132,9 @@ describe("the four kinds' icons in their own colours (41.47)", () => {
     const Icon = ENTITY_ICON[kind];
     const { container } = render(<Icon size={16} aria-hidden="true" className="text-fade" style={{ marginTop: 1 }} />);
     const svg = container.querySelector("svg")!;
-    expect(svg.style.color).toBe(ENTITY_COLOUR_VAR[kind]);
+    // 41.63: the kind's colour is the fallback of `--kind-ink`, which a primary button sets (it read
+    // `toBe(ENTITY_COLOUR_VAR[kind])`).
+    expect(svg.style.color).toBe(`var(${KIND_INK}, ${ENTITY_COLOUR_VAR[kind]})`);
     expect(svg.style.marginTop).toBe("1px");
     expect(svg.getAttribute("data-kind-icon")).toBe(kind);
     expect(svg.getAttribute("stroke")).toBe("currentColor");
@@ -154,5 +160,35 @@ describe("the four kinds' icons in their own colours (41.47)", () => {
     for (const [name, kind] of [["people-group", "natural"], ["buildings", "judicial"], ["map-pins", "property"], ["pages", "document"]]) {
       expect(icons).toContain(`name="${name}" {...props} data-kind-icon="${kind}" style={{ ...props.style, color: ENTITY_COLOUR_VAR.${kind} }}`);
     }
+  });
+});
+
+describe("the four kinds' icons on a dark (primary) button: the button's own colour (41.63)", () => {
+  const INK = `[${KIND_INK}:currentColor]`;
+
+  it("the primary variant, and only it, sets --kind-ink to currentColor", () => {
+    const variants: ButtonVariant[] = ["primary", "secondary", "danger", "ghost", "accent", "attention", "attention-outline", "bare"];
+    for (const v of variants) expect([v, buttonClass({ variant: v }).split(" ").includes(INK)]).toEqual([v, v === "primary"]);
+  });
+
+  it("„Asociază X” (primary): the kind's icon reads --kind-ink, which the button sets — no kind colour drawn", () => {
+    const { container } = render(<IconButton icon={LinkIcon} secondIcon={ENTITY_ICON.natural} label="Asociază persoană fizică" variant="primary" size="sm" />);
+    const button = container.querySelector("button")!;
+    const svg = container.querySelector("svg[data-icon-second]") as SVGElement;
+    expect(button.className.split(" ")).toContain(INK);
+    expect(svg.getAttribute("data-kind-icon")).toBe("natural");
+    expect(svg.style.color).toBe(`var(${KIND_INK}, ${ENTITY_COLOUR_VAR.natural})`);
+  });
+
+  it("a secondary button keeps the kind's colour: nothing sets --kind-ink", () => {
+    const { container } = render(<IconButton icon={ENTITY_ICON.judicial} label="Alege persoana juridică" variant="secondary" size="sm" />);
+    expect(container.querySelector("button")!.className).not.toContain(KIND_INK);
+  });
+
+  it("„Adaugă” (AddNewButton, primary): its sparkling kind icon sits inside the button that sets --kind-ink", () => {
+    const { container } = render(<AddNewButton name="Adaugă proprietate" icon={ENTITY_ICON.property} onClick={() => {}} />);
+    const button = container.querySelector("button[data-add-new]")!;
+    expect(button.className.split(" ")).toContain(INK);
+    expect(button.querySelector("svg[data-kind-icon=property]")).not.toBeNull();
   });
 });

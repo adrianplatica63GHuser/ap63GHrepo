@@ -15,6 +15,8 @@
  *   - Step 7 (40.38) compares each list's icon with the Natural Person's, opened again at 1920, by the same reading.
  *   - Slice 41.47: each icon's colour is read in light and, with the page's `dark` class put on for the reading only,
  *     in dark — the theme's own switch is TC-SET's.
+ *   - Slice 41.63: step 3b reads „Asociază persoană fizică"'s person icon on the property's „Legături" — on a primary
+ *     (navy) button it takes the button's own colour, not the kind's.
  *   - Slice #37.49's pictures, not steps of the case: the top of each of the
  *     four records and of the long-named act, at 1366 and 1920 px, into
  *     `playwright-report/record-heading/`. The sidebar's „Recente" list is
@@ -171,6 +173,27 @@ test.describe("TC-ICON-07 — pictograma înregistrării înaintea numelui", () 
       heading = await openHeading(page, `/properties/${propertyId}`, PROPERTY);
       expectIcon(await measure(heading), "lucide-map", "property");
       await photograph(page, "property");
+
+      // Slice 41.63, step 3b — on the property's „Legături", „Asociază persoană fizică" is a primary (navy) button: its
+      // person icon draws in the button's own colour, not #5A2781, light and dark, while the heading's map above keeps
+      // #00A84C (step 3).
+      const associate = page.locator('button[data-associate="natural"], a[data-associate="natural"]').first();
+      await expect(associate).toBeVisible({ timeout: 30_000 });
+      const onNavy = await associate.evaluate((b) => {
+        const svg = b.querySelector('svg[data-kind-icon="natural"]') as SVGElement;
+        const read = () => ({ icon: getComputedStyle(svg).color, button: getComputedStyle(b).color });
+        const light = read();
+        const root = document.documentElement;
+        const had = root.classList.contains("dark");
+        root.classList.add("dark");
+        const dark = read();
+        if (!had) root.classList.remove("dark");
+        return { light, dark };
+      });
+      expect(onNavy.light.icon).toBe(onNavy.light.button);
+      expect(onNavy.dark.icon).toBe(onNavy.dark.button);
+      expect([onNavy.light.icon, onNavy.dark.icon]).not.toContain(KIND_COLOUR.natural.light);
+      expect(onNavy.dark.icon).not.toBe(KIND_COLOUR.natural.dark);
 
       // Step 4 — the Document `TC-ICON-07 Act`: whole, `lucide-file-text`.
       heading = await openHeading(page, `/documents/${documentId}`, DOCUMENT);

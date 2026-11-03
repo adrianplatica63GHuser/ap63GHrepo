@@ -253,8 +253,11 @@ const BARE_DISABLED = "disabled:text-wire dark:disabled:text-zinc-700";
  * stops signalling "destructive".
  */
 const ENABLED: Record<ButtonVariant, string> = {
+  // Slice 41.63: `--kind-ink: currentColor` — a kind's icon inside a primary (navy) button draws in the button's own
+  // colour, not its kind's (entity-icon.ts `KIND_INK`). Adrian, 2026-11-03: „on Navy background […] please do not use
+  // the colours - keep using the gray line that we used before". On the variant, so every primary button gets it.
   primary:
-    "border border-cta bg-cta text-white shadow-sm " +
+    "[--kind-ink:currentColor] border border-cta bg-cta text-white shadow-sm " +
     "enabled:hover:border-cta-d enabled:hover:bg-cta-d " +
     "dark:border-slate-400 dark:bg-slate-400 dark:text-slate-900 " +
     "dark:enabled:hover:border-slate-300 dark:enabled:hover:bg-slate-300",
