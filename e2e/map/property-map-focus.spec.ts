@@ -131,7 +131,16 @@ test.describe("TC-MAP-01 — Harta proprietăților deschisă pe proprietatea de
       await expect(bubble).toContainText(NICKNAME);
       await expect(bubble.getByRole("link", { name: "Deschide", exact: true })).toHaveAttribute("href", `/properties/${id}`);
       await page.screenshot({ path: `${SHOTS}/02a-bubble-1920.png`, mask: [recent(page)] });
-      await page.mouse.click(box.x + 40, box.y + box.height - 40);
+      // 41.69: on a map corner with no drop near it — the archive's own properties can draw one at the bottom-left
+      // (measured: „2 proprietăți" there, so the click zoomed in and the bubble stayed). The top-right holds the
+      // toolbar, so it is never tried.
+      const empty = await page.evaluate((b) => {
+        const drops = [...document.querySelectorAll("[data-map-drop]")].map((d) => d.getBoundingClientRect());
+        const spots = [[b.x + 40, b.y + b.height - 40], [b.x + b.width / 2, b.y + b.height - 40], [b.x + 40, b.y + b.height / 2], [b.x + b.width - 40, b.y + b.height - 40]];
+        const near = ([x, y]: number[]) => drops.some((r) => x > r.left - 30 && x < r.right + 30 && y > r.top - 30 && y < r.bottom + 30);
+        return spots.find((s) => !near(s)) ?? spots[0];
+      }, box);
+      await page.mouse.click(empty[0], empty[1]);
       await expect(bubble).toHaveCount(0, { timeout: 15_000 });
 
       // Step 3 — a reload is the ordinary map.

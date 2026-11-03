@@ -1834,7 +1834,9 @@ export function PropertyForm({
           everything via document.body so no layout shift occurs. Dismiss via
           the ✕ button, the backdrop, or the Escape key. */}
       {bigMap && createPortal(
-        <div role="dialog" aria-modal="true" aria-label={t("corners.theaterTitle")}>
+        // 41.69: the dialog has a box of its own — the whole window its backdrop and panel already cover. With only
+        // `fixed` children it measured 0 × 0, so it read as hidden to anything that asks (TC-MAP-09 step 2).
+        <div role="dialog" aria-modal="true" aria-label={t("corners.theaterTitle")} className="fixed inset-0 z-50">
           {/* Backdrop — click to close */}
           <div
             className="fixed inset-0 z-50 bg-black/50"
