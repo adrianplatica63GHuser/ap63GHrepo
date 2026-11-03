@@ -141,7 +141,7 @@ test.describe("TC-DOC-20 — actul adițional și actul pe care îl modifică", 
       // 41.31: unlinked, the empty three are behind their own „Arată 3 câmpuri goale", which shows them.
       const amendedLink = amended(page).locator("[data-empty-fields-show]");
       await expect(amendedLink).toBeVisible({ timeout: 15_000 });
-      await expect(amendedLink).toHaveAttribute("title", /Notariat act părinte/);
+      await expect(amendedLink).toHaveAttribute("data-hint", /Notariat act părinte/); // 41.46: was `title`
       await amendedLink.click();
       await expect(amended(page).locator('[data-width-field="customFields.actParinteNotariat"]')).toBeVisible();
       await expect(amendedLink).toHaveCount(0);
