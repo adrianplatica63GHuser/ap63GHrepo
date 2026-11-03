@@ -33,7 +33,8 @@ test.describe("TC-VL-12 — „Țara adresei”", () => {
       const group = nav.locator("[data-category]").filter({ has: page.getByRole("button", { name: "Cetățenie", exact: true }) });
       await expect(group.locator("button[data-list-key]")).toHaveText(["Indicative Tarla", "Cetățenie", "Țara adresei", "Relația cu firma"], { timeout: 30_000 });
       const panel = page.getByRole("region", { name: "Țara adresei", exact: true });
-      await expect(panel.locator("tbody tr").first()).toBeVisible({ timeout: 30_000 });
+      // The rows once loaded (a „Se încarcă…" row stands first while the list is fetched).
+      await expect(panel.locator("tbody tr td:first-child").first()).toHaveText("România", { timeout: 30_000 });
       const names = await panel.locator("tbody tr td:first-child").allInnerTexts();
       expect(names.map((n) => n.trim()).slice(0, 8)).toEqual(EIGHT);
 
