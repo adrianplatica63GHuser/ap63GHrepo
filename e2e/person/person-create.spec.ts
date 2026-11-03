@@ -140,11 +140,11 @@ test.describe("TC-PERS-01 — Persoană fizică creată manual", () => {
       await street.fill("");
       // Slice 41.51 — „Țară" is a dropdown of „Țara adresei": the blank, then the eight countries in their order; one
       // chosen, then the blank again, so the person is saved without an address, as before.
-      const country = page.locator('select[name="addresses.HOME.country"]');
-      await expect(country.locator("option")).toHaveText(["—", "România", "Moldova", "Statele Unite ale Americii", "Germania", "Franța", "Italia", "Spania", "Regatul Unit"], { timeout: 30_000 });
-      await country.selectOption("Germania");
-      await expect(country).toHaveValue("Germania");
-      await country.selectOption("");
+      const countrySelect = page.locator('select[name="addresses.HOME.country"]');
+      await expect(countrySelect.locator("option")).toHaveText(["—", "România", "Moldova", "Statele Unite ale Americii", "Germania", "Franța", "Italia", "Spania", "Regatul Unit"], { timeout: 30_000 });
+      await countrySelect.selectOption("Germania");
+      await expect(countrySelect).toHaveValue("Germania");
+      await countrySelect.selectOption("");
 
       // Steps 3–4 — „Nume" and „Prenume".
       await page.getByLabel(/^Nume(\s|$)/).fill(LAST_NAME);

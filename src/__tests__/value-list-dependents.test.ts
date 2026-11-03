@@ -173,7 +173,10 @@ describe("the dependency map", () => {
     // otherwise produce a count of zero — a delete offered as safe on a row
     // that half the archive depends on.
     expect(ownerTable(def.idColumn)).toBe(getTableName(def.table));
-    expect(def.refs.length).toBeGreaterThan(0);
+    // 41.51: „Țara adresei" is the one list nothing refers to — an address keeps the country's NAME, as text — so it
+    // has no refs by design (it read `expect(def.refs.length).toBeGreaterThan(0)` for every list).
+    if (list === "address-countries") expect(def.refs).toEqual([]);
+    else expect(def.refs.length).toBeGreaterThan(0);
     for (const ref of def.refs) {
       expect(ownerTable(ref.column)).toBe(getTableName(ref.table));
       for (const u of ref.uniqueWith ?? []) {

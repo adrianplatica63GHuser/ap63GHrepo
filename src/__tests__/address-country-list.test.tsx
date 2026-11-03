@@ -4,7 +4,7 @@
 import { readFileSync } from "fs";
 import { join } from "path";
 
-import { countryOptions } from "@/components/address/country-select";
+import { countryOptions } from "@/lib/address/country-options";
 import { sisterOf } from "@/lib/admin/value-lists/sister-lists";
 import { LIST_META, VALID_LIST_KEYS } from "@/lib/admin/value-lists/config";
 import { VALUE_LIST_CATEGORIES } from "@/lib/admin/value-lists/categories";

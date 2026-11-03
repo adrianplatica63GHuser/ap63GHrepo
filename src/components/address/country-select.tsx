@@ -18,13 +18,7 @@ import type { CSSProperties } from "react";
 import type { UseFormRegisterReturn } from "react-hook-form";
 
 import { useAddressCountryOptions } from "@/hooks/use-lookup-options";
-
-/** The options: the blank, a stored value the list lacks, then the list in its order. */
-export function countryOptions(list: readonly { value: string; label: string }[], current: unknown): { value: string; label: string }[] {
-  const now = typeof current === "string" ? current : "";
-  const extra = now.trim() !== "" && !list.some((o) => o.value === now) ? [{ value: now, label: now }] : [];
-  return [{ value: "", label: "—" }, ...extra, ...list];
-}
+import { countryOptions } from "@/lib/address/country-options";
 
 export function CountrySelect({
   registration,

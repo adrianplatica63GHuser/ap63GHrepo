@@ -138,7 +138,8 @@ describe("„Tipuri de obiecte” without the wasted space (#38.66)", () => {
     for (const [, column, field] of OWN.filter(([l]) => l === "property-types")) expect(MODAL).toContain(`${field}: "${column}",`);
     expect(MODAL).toMatch(/const own = OWN_COLUMNS\[listKey\]\?\.\[f\.key\];\s*if \(own\) return own;\s*if \(f\.type === "checkbox"\) return "valueFlag";/);
     // #39.70: „person-types" left — the professions are long. Was ["use-categories", "person-types", "citizenships"].
-    expect(MODAL).toContain('const SHORT_NAME_LISTS: ReadonlySet<ListKey> = new Set(["use-categories", "citizenships"]);');
+    // 41.51: „Țara adresei" as its sister (it read new Set(["use-categories", "citizenships"])).
+    expect(MODAL).toContain('const SHORT_NAME_LISTS: ReadonlySet<ListKey> = new Set(["use-categories", "citizenships", "address-countries"]);');
   });
 
   it("each is narrower than the shared column it replaced", () => {
