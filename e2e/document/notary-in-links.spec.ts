@@ -32,7 +32,7 @@ async function juridical(page: Page): Promise<string[]> {
 
 async function chooseIssuer(page: Page, label: string): Promise<void> {
   await editTile(page, "general");
-  await page.locator('[data-panel="general"]').getByRole("combobox", { name: "Notariat", exact: true }).selectOption(label === "" ? { value: "" } : { label });
+  await page.locator('[data-panel="general"]').getByRole("combobox", { name: "Notariat", exact: true }).selectOption({ label });
   await saveTile(page, "general");
 }
 
@@ -67,8 +67,11 @@ test.describe("TC-DOC-29 — notariatul în „Legături”", () => {
       expect(del.status()).toBe(409);
       expect(((await del.json()) as { code: string }).code).toBe("ISSUER_LINK");
 
-      // Step 4 — „Notariat" emptied: none.
-      await chooseIssuer(page, "");
+      // Step 4 — „Notariat" emptied: none. The screen's „—" cannot be chosen once an issuer is set, so the empty issuer
+      // is sent the way an import or an older version's „Fă curentă" sends it — through the document's PATCH.
+      const cleared = await page.request.patch(`/api/documents/${doc}`, { data: { issuerPersonId: null } });
+      expect(cleared.ok(), `PATCH failed (${cleared.status()})`).toBeTruthy();
+      await page.reload();
       await expect.poll(() => juridical(page), { timeout: 30_000 }).toEqual([]);
     } finally {
       for (const [kind, id] of made.reverse()) await removeRecord(page.request, kind, id);

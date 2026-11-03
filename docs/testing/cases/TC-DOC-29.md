@@ -31,7 +31,7 @@ Nothing.
 | 1 | On an invented Contract de Vânzare, „Editează" on „Identificarea actului", „Notariat" `TC-E2E-DOC-29 Birou A`, „Salvează" | „Legături" → „Persoane juridice": `TC-E2E-DOC-29 Birou A (Notar)` |
 | 2 | The same with `TC-E2E-DOC-29 Birou B` | Only `… Birou B (Notar)` |
 | 3 | „Dezasociază" on it | Refused: „Biroul notarial se schimbă din „Identificarea actului”." |
-| 4 | „Notariat" emptied, „Salvează" | No juridical person in „Legături" |
+| 4 | „Notariat" emptied (through the document's PATCH — the screen's „—" is not offered once an issuer is set) | No juridical person in „Legături" |
 
 ## At the end — leaving things as they were found
 
