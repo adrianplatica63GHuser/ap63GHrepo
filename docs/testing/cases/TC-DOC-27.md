@@ -42,10 +42,10 @@ Nothing.
 | 4 | Ticks „Data" in „Câmpuri afișate"; presses the funnel beside it; at „De la" writes 01.01.2026 | The filter opens right under the funnel (#39.82); after the date, A alone; the address carries `dateDocument=2026-01-01..` beside the type and the field |
 | 5 | Reloads the page | A alone; the chip „Data din 01.01.2026"; the type and the field as they were |
 | 6 | Presses „Șterge filtrele" — on the toolbar since 40.49, right of the sort button | A, B, C and D; the address keeps the search, and has no `dateDocument`, no type and no field; „Tip document:" reads „Toate tipurile"; „Șterge filtrele" disabled |
-| 7 | (Slice 40.31) Opens „Acte" with `TC-DOC-27-T` in the search — one „Contract de Vânzare" (V), one „Adeverință" (A) — and presses the funnel on „Tip" | A and V; the funnel 13 × 13 in the cell's corner, named „Filtrează după „Tip”", not pressed; under it the checklist of „Tip document:", „Toate tipurile" ticked |
-| 8 | Unticks „Adeverință" there | V alone; `documentTypeIds` in the address; the funnel filled; no chip; „Tip document:" no longer „Toate tipurile", and opened it shows „Adeverință" unticked |
-| 9 | Reloads | V alone, the funnel filled |
-| 10 | Ticks „Toate tipurile" under the funnel | A and V; the funnel plain |
+| 7 | (Slice 41.55; was 40.31's funnel) Opens „Acte" with `TC-DOC-27-T` in the search — one „Contract de Vânzare" (V), one „Adeverință" (A) | A and V; the column „Tip" has **no funnel** — before 41.55: „the funnel 13 × 13 in the cell's corner, named „Filtrează după „Tip”", not pressed; under it the checklist of „Tip document:"" |
+| 8 | Unticks „Adeverință" in the toolbar's „Tip document:" | V alone; `documentTypeIds` in the address; no chip; „Tip document:" no longer „Toate tipurile" |
+| 9 | Reloads | V alone, „Tip document:" still not „Toate tipurile" |
+| 10 | Ticks „Toate tipurile" in „Tip document:" | A and V; „Tip document:" reads „Toate tipurile" |
 
 ## At the end — leaving things as they were found
 

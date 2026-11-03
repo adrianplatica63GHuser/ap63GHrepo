@@ -246,15 +246,18 @@ describe("„Tip document” — the search box (#38.48)", () => {
   });
 
   it("the screen: the box under „Toate tipurile”, above the divider; focused on opening, emptied on closing; the rows it hides never untick", () => {
-    // Slice 40.31: the checklist is its own component (`TypeChecklist`), drawn by the toolbar's dropdown and by the
-    // funnel on „Tip"; it mounts when either opens and unmounts when it closes — focused on opening, emptied by closing.
+    // Slice 40.31: the checklist is its own component (`TypeChecklist`), drawn by the toolbar's dropdown (and, until
+    // 41.55, by the funnel on „Tip"); it mounts when it opens and unmounts when it closes — focused on opening, emptied by closing.
     const dropdown = VIEW.slice(VIEW.indexOf("function TypeChecklist"), VIEW.indexOf("// Types"));
     expect(dropdown.indexOf("{allTypesLabel}\n")).toBeLessThan(dropdown.indexOf("data-type-search"));
     expect(dropdown).toMatch(/<div className="border-b border-crease[^"]*">\s*<input\s+ref=\{searchRef\}/);
     expect(dropdown).toMatch(/useEffect\(\(\) => \{\s*searchRef\.current\?\.focus\(\);\s*\}, \[\]\);/);
     expect(dropdown).toContain('const [query, setQuery] = useState("");');
     expect(dropdown).toMatch(/\{open && \(\s*<div className="absolute z-20[^"]*">\s*<TypeChecklist/);
-    expect(VIEW).toMatch(/own=\{\{\s*key: TYPE_FUNNEL,[\s\S]*?<TypeChecklist/);
+    // 41.55: the funnel on „Tip" is gone — was `own={{ key: TYPE_FUNNEL, … <TypeChecklist`. The toolbar draws it alone.
+    expect(VIEW).not.toContain("TYPE_FUNNEL");
+    expect(VIEW).not.toMatch(/own=\{\{/);
+    expect(VIEW.match(/<TypeChecklist\b/g)).toHaveLength(1);
     expect(dropdown).toContain("const shownTypes = typesMatching(types, query);");
     expect(dropdown).toContain("{shownTypes.map((ty) => (");
     // „Toate tipurile" and each row act on the whole list, never on what the search shows.

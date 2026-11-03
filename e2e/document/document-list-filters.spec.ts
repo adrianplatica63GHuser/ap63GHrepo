@@ -113,9 +113,11 @@ test.describe("TC-DOC-27 — filtrele listei actelor", () => {
     }
   });
 
-  // Slice 40.31 — steps 7–10: a funnel on „Tip", the first column. It opens, under itself, the checklist of „Tip
-  // document:" — the same control, writing the same documentTypeIds — so the two always show one choice.
-  test("pâlnia de pe „Tip”: aceeași listă de tipuri ca „Tip document:”, păstrată la reîncărcare", async ({ page }) => {
+  // Slice 40.31 — steps 7–10 were a funnel on „Tip", the first column, opening the checklist of „Tip document:".
+  // 41.55, Adrian: „Remove the filter funnel for the Type column on the Document list" — inverted in place. The old
+  // step 7 read: „the funnel 13 × 13 in the cell's corner, named „Filtrează după „Tip”", not pressed; under it the
+  // checklist of „Tip document:"". Now „Tip" has no funnel, and the toolbar's „Tip document:" is the one door.
+  test("„Tip” fără pâlnie: tipurile se aleg din „Tip document:”, păstrate la reîncărcare", async ({ page }) => {
     // 40.66: the lists open on four default columns; these steps were written against the earlier ones.
     await listsOnTheirEarlierColumns(page);
     test.slow();
@@ -132,53 +134,45 @@ test.describe("TC-DOC-27 — filtrele listei actelor", () => {
         expect
           .poll(async () => (await titles.allInnerTexts()).map((t) => t.trim()).filter((t) => t.includes(TMARK)).sort(), { timeout: 30_000 })
           .toEqual(ns.map((n) => `${TMARK} ${n}`));
-      const funnel = main.locator('[data-filter-funnel="documentType"] button');
-      const editor = page.locator('[data-filter-editor="documentType"]');
+      const trigger = main.getByRole("button", { name: /^Tip document:/ });
       const tick = async (name: string, want: boolean) => {
-        const box = editor.getByRole("checkbox", { name, exact: true });
+        const box = main.getByRole("checkbox", { name, exact: true });
         await expect(async () => {
-          if (!(await editor.isVisible())) await funnel.click();
+          if (!(await box.isVisible())) await trigger.click();
           if ((await box.isChecked()) !== want) await box.click();
           await expect(box).toBeChecked({ checked: want, timeout: 2_000 });
         }).toPass({ timeout: 30_000 });
       };
+      const close = () => page.getByRole("heading", { level: 1 }).first().click();
 
-      // Step 7 — the funnel on „Tip", like the others: 13 × 13 in the cell's corner, not pressed; it opens the
-      // checklist right under itself, „Toate tipurile" first.
+      // Step 7 — „Tip" is a column like the others, but with no funnel; no column filters the type.
       await page.goto(`/documents?q=${TMARK}`);
       await shows("A", "V");
-      await expect(funnel).toHaveAttribute("aria-pressed", "false");
-      const box = await funnel.boundingBox();
-      expect([Math.round(box!.width), Math.round(box!.height)]).toEqual([13, 13]);
-      await expect(funnel).toHaveAccessibleName("Filtrează după „Tip”");
-      await funnel.click();
-      await expectUnder(page, '[data-filter-funnel="documentType"]', '[data-filter-editor="documentType"]');
-      await expect(editor.getByRole("checkbox", { name: "Toate tipurile", exact: true })).toBeChecked();
+      const typeHead = main.locator("thead th").filter({ has: page.locator("[data-head-text]", { hasText: /^Tip$/ }) });
+      await expect(typeHead).toHaveCount(1);
+      await expect(typeHead.locator("[data-head-band]")).toHaveAttribute("data-head-band", "plain");
+      await expect(typeHead.locator("[data-head-funnel]")).toHaveCount(0);
+      await expect(main.locator('[data-filter-funnel="documentType"]')).toHaveCount(0);
+      await expect(main.getByRole("button", { name: "Filtrează după „Tip”", exact: true })).toHaveCount(0);
 
-      // Step 8 — „Adeverință" unticked there: the list narrows; the address and „Tip document:" say the same; the
-      // funnel is filled; the bar shows no chip for it.
+      // Step 8 — „Adeverință" unticked in „Tip document:": the list narrows; the address says so; no chip.
       await tick("Adeverință", false);
       await shows("V");
       await expect.poll(() => new URL(page.url()).searchParams.get("documentTypeIds")).toBeTruthy();
-      await expect(funnel).toHaveAttribute("aria-pressed", "true");
-      await expect(main.getByRole("button", { name: /^Tip document:/ })).not.toContainText("Toate tipurile");
+      await expect(trigger).not.toContainText("Toate tipurile");
       await expect(main.locator("[data-filter-chip]")).toHaveCount(0);
-      await page.keyboard.press("Escape");
-      await expect(editor).toHaveCount(0);
-      await main.getByRole("button", { name: /^Tip document:/ }).click();
-      await expect(main.getByRole("checkbox", { name: "Adeverință", exact: true })).not.toBeChecked();
-      await expect(main.getByRole("checkbox", { name: "Contract de Vânzare", exact: true })).toBeChecked();
-      await page.getByRole("heading", { level: 1 }).first().click();
+      await close();
 
       // Step 9 — a reload keeps it.
       await page.reload();
       await shows("V");
-      await expect(funnel).toHaveAttribute("aria-pressed", "true", { timeout: 30_000 });
+      await expect(trigger).not.toContainText("Toate tipurile", { timeout: 30_000 });
 
-      // Step 10 — „Toate tipurile" under the funnel: both again, the funnel plain.
+      // Step 10 — „Toate tipurile" there: both again.
       await tick("Toate tipurile", true);
       await shows("A", "V");
-      await expect(funnel).toHaveAttribute("aria-pressed", "false");
+      await close();
+      await expect(trigger).toContainText("Toate tipurile");
     } finally {
       for (const id of ids) await removeRecord(page.request, "document", id);
     }

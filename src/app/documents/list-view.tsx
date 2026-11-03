@@ -132,9 +132,6 @@ async function fetchCustomFieldValues(
   return body.items ?? [];
 }
 
-/** Slice 40.31: the „Tip" column's funnel — its `data-filter-funnel` and the filter bar's `editing` while open. */
-const TYPE_FUNNEL = "documentType";
-
 /** Slice #39.26: Acte's own filters in its address — „Expiră curând" and the custom field's key and value. */
 const DOCUMENT_ADDRESS_FILTERS = ["expiring", "field", "value"] as const;
 /** Slice #39.63: and the shared bar's fields — every key the list reads from, and carries in, its address. */
@@ -273,7 +270,7 @@ function TypeChecklist({
   );
 }
 
-/** Slice 40.31: every type ticked — the address names none — or not; the funnel on „Tip" is filled while not. */
+/** Slice 40.31: every type ticked — the address names none — or not; while not, „Șterge filtrele" is offered (41.55: „Tip" has no funnel). */
 function typesNarrowed(types: DocumentTypeOption[], initialDocumentTypeIds?: string[]): boolean {
   return initialDocumentTypeIds !== undefined && !(types.length > 0 && types.every((ty) => initialDocumentTypeIds.includes(ty.id)));
 }
@@ -1029,23 +1026,6 @@ export function DocumentListView({
         onEditing={setEditingFilter}
         loadValues={(key) => fetchFilterValues(key, debouncedSearch, initialDocumentTypeIds, expiringSoon, customFieldKey, customFieldValue, filters)}
         valuesKey={(key) => ["documents", "filter-values", key, debouncedSearch, typeFiltersKey, expiringSoon, customFieldKey, customFieldValue, filterSig]}
-        // Slice 40.31: the funnel on „Tip" opens, under itself, the checklist of „Tip document:" — the same control,
-        // the same documentTypeIds in the address; no chip, the toolbar already says it (Ask first 1–3).
-        own={{
-          key: TYPE_FUNNEL,
-          label: t("table.type"),
-          content: (
-            <div className="-mx-3 max-h-80 overflow-y-auto" data-type-checklist="funnel">
-              <TypeChecklist
-                types={typeOptions}
-                initialDocumentTypeIds={initialDocumentTypeIds}
-                allTypesLabel={t("allTypes")}
-                searchPlaceholder={t("typeSearchPlaceholder")}
-                searchEmptyLabel={t("typeSearchEmpty")}
-              />
-            </div>
-          ),
-        }}
       />
 
 
@@ -1070,7 +1050,7 @@ export function DocumentListView({
                     {/* Slice 40.25: in the order dragged, each name cell its column's handle. */}
                     {order.keys.map((key) => {
                       // Slice 40.31: „Tip" has a funnel too — the checklist of „Tip document:", filled while not every type is ticked.
-                      if (key === "type") return <ListHeadCell key={key} column="listDocumentType" name={tHead("type")} full={t("table.type")} funnel={<FilterFunnel field={TYPE_FUNNEL} label={t("table.type")} active={typesNarrowed(typeOptions, initialDocumentTypeIds)} onOpen={() => setEditingFilter(TYPE_FUNNEL)} />} drag={drag.headProps(key)} />;
+                      if (key === "type") return <ListHeadCell key={key} column="listDocumentType" name={tHead("type")} full={t("table.type")} drag={drag.headProps(key)} />;
                       if (key === "title") return <ListHeadCell key={key} column="listDocumentTitle" name={tHead("title")} full={t("table.title")} drag={drag.headProps(key)} />;
                       const col = shownCols.find((c) => c.key === key);
                       if (!col) return null;
