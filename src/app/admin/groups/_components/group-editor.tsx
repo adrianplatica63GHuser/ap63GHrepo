@@ -116,7 +116,9 @@ export function GroupEditor({
     () => new Set(detail.members.map((m) => m.memberId)),
   );
 
-  const [search, setSearch] = useState("");
+  // 41.67: a search over each list — the in-group members' and the available ones' — as the stamp's screen has.
+  const [searchMembers, setSearchMembers] = useState("");
+  const [searchAvailable, setSearchAvailable] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   // Lookups: memberId → displayLabel (from both members and candidates).
@@ -146,9 +148,9 @@ export function GroupEditor({
 
   const label = (id: string): string => labelById.get(id) ?? id;
 
-  // Left panel = pool minus current members, filtered by search, sorted by label.
+  // „Membri disponibili" (the right list since 41.42) = pool minus current members, filtered by its search, sorted by label.
   const availableRows = useMemo(() => {
-    const q = search.trim().toLowerCase();
+    const q = searchAvailable.trim().toLowerCase();
     return [...poolIds]
       .filter((id) => !memberIds.has(id))
       .filter((id) => {
@@ -157,12 +159,13 @@ export function GroupEditor({
       })
       .sort((a, b) => label(a).localeCompare(label(b)));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [poolIds, memberIds, search, labelById]);
+  }, [poolIds, memberIds, searchAvailable, labelById]);
 
-  // Right panel = current members: saved ones (with position) first by
-  // position, then staged additions (no position yet) by label.
+  // „Deja în grup" (the left list since 41.42) = current members: saved ones (with position) first by
+  // position, then staged additions (no position yet) by label. 41.67: filtered by its own search, the order kept.
   const memberRows = useMemo(() => {
-    const ids = [...memberIds];
+    const q = searchMembers.trim().toLowerCase();
+    const ids = [...memberIds].filter((id) => !q || label(id).toLowerCase().includes(q));
     const withPos = ids
       .filter((id) => originalPositionById.has(id))
       .sort((a, b) => originalPositionById.get(a)! - originalPositionById.get(b)!);
@@ -171,7 +174,7 @@ export function GroupEditor({
       .sort((a, b) => label(a).localeCompare(label(b)));
     return [...withPos, ...staged];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [memberIds, originalPositionById, labelById]);
+  }, [memberIds, originalPositionById, searchMembers, labelById]);
 
   // Dirty check vs baseline.
   const memberSetChanged = useMemo(() => {
@@ -313,6 +316,20 @@ export function GroupEditor({
               hint: <HelpHint hintKey="group-pending-position" />,
               rows: leftRows,
               empty: t("panels.inGroupEmpty"),
+              // 41.67, Adrian: „please add the search box to the list on the left […] So both lists will look very
+              // similar With the exception of their titles and counts" — the right box's twin, its own state.
+              toolbar: (
+                <input
+                  type="search"
+                  value={searchMembers}
+                  onChange={(e) => setSearchMembers(e.target.value)}
+                  placeholder={t("searchPlaceholder")}
+                  aria-label={t("searchInGroup")}
+                  data-member-search="in-group"
+                  {...screenBox("memberSearch", { width: "100%" })}
+                  className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm placeholder:text-fade focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950"
+                />
+              ),
             }}
             right={{
               name: "available",
@@ -322,10 +339,11 @@ export function GroupEditor({
               toolbar: (
                 <input
                   type="search"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  value={searchAvailable}
+                  onChange={(e) => setSearchAvailable(e.target.value)}
                   placeholder={t("searchPlaceholder")}
-                  aria-label={t("searchPlaceholder")}
+                  aria-label={t("searchAvailable")}
+                  data-member-search="available"
                   {...screenBox("memberSearch", { width: "100%" })}
                   className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm placeholder:text-fade focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950"
                 />

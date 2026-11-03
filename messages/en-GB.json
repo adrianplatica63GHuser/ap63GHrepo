@@ -4088,6 +4088,8 @@
     "codeAssignedOnSave": "Assigned automatically on save",
     "descriptionCount": "{count}/{max} characters",
     "searchPlaceholder": "Search…",
+    "searchInGroup": "Search the group's members",
+    "searchAvailable": "Search the available members",
     "include": "‹ Include ({count})",
     "takeOut": "Take out › ({count})",
     "fields": {

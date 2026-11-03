@@ -4088,6 +4088,8 @@
     "codeAssignedOnSave": "Atribuit automat la salvare",
     "descriptionCount": "{count}/{max} caractere",
     "searchPlaceholder": "Caută…",
+    "searchInGroup": "Caută în membrii grupului",
+    "searchAvailable": "Caută în membrii disponibili",
     "include": "‹ Include ({count})",
     "takeOut": "Scoate › ({count})",
     "fields": {

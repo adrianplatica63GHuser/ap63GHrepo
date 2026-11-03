@@ -95,6 +95,22 @@ test.describe("TC-GRP-04 — ecranul unui grup: identitatea și membrii, două l
       await expect(row(inGroup, "C")).toContainText("în așteptare");
       await expect(inGroup.locator("[data-two-list-count]")).toHaveText("3");
 
+      // Step 4b — 41.67, Adrian: „please add the search box to the list on the left […] So both lists will look very
+      // similar With the exception of their titles and counts". Part of B's name in the left box leaves one row;
+      // cleared, the three are back; the two boxes' tops within 1 px.
+      const leftBox = inGroup.getByRole("searchbox", { name: "Caută în membrii grupului", exact: true });
+      await expect(leftBox).toHaveAttribute("placeholder", "Caută…");
+      await leftBox.fill("Teren B");
+      await expect(inGroup.getByRole("listitem")).toHaveCount(1);
+      await expect(row(inGroup, "B")).toBeVisible();
+      await expect(inGroup.locator("[data-two-list-count]")).toHaveText("1");
+      await leftBox.fill("");
+      await expect(inGroup.locator("[data-two-list-count]")).toHaveText("3");
+      const [lb, rb] = await Promise.all([leftBox.boundingBox(), available.getByPlaceholder("Caută…").boundingBox()]);
+      if (!lb || !rb) throw new Error("a search box is not on the page");
+      expect(Math.abs(lb.y - rb.y), "the two boxes' tops").toBeLessThanOrEqual(1);
+      expect(Math.abs(lb.width - rb.width), "the two boxes' widths").toBeLessThanOrEqual(1);
+
       // Step 5 — A ticked on the left, „Scoate › (1)": back on the right.
       await row(inGroup, "A").getByRole("checkbox").check();
       await members.getByRole("button", { name: "Scoate › (1)", exact: true }).click();

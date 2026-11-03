@@ -74,7 +74,30 @@ describe("the group screen's two tiles (41.42)", () => {
     expect([...members.querySelectorAll<HTMLElement>("[data-two-list]")].map((e) => e.dataset.twoList)).toEqual(["in-group", "available"]);
     expect(inGroup.querySelector("[data-two-list-count]")?.textContent).toBe("2");
     expect(available.querySelector("[data-two-list-count]")?.textContent).toBe("1");
-    expect(within(available).getByRole("searchbox", { name: "searchPlaceholder" })).toBeTruthy();
+    // 41.67: a search box over each list, each named for its list (it read `getByRole("searchbox", { name:
+    // "searchPlaceholder" })` on the available list alone).
+    expect(within(available).getByRole("searchbox", { name: "searchAvailable" })).toHaveAttribute("placeholder", "searchPlaceholder");
+    expect(within(inGroup).getByRole("searchbox", { name: "searchInGroup" })).toHaveAttribute("placeholder", "searchPlaceholder");
+  });
+
+  it("41.67: the left box narrows „Deja în grup” by name, keeps the members' order, and its count follows", () => {
+    renderEditor();
+    const inGroup = screen.getByRole("region", { name: "panels.inGroup" });
+    const box = within(inGroup).getByRole("searchbox", { name: "searchInGroup" });
+    const rows = () => [...inGroup.querySelectorAll<HTMLElement>("[data-two-list-row]")].map((r) => r.dataset.twoListRow);
+    expect(rows()).toEqual(["a", "b"]);
+    fireEvent.change(box, { target: { value: "N b" } }); // ignoring case: „Teren B"
+    expect(rows()).toEqual(["b"]);
+    expect(inGroup.querySelector("[data-two-list-count]")?.textContent).toBe("1");
+    fireEvent.change(box, { target: { value: "teren" } });
+    expect(rows()).toEqual(["a", "b"]); // the members' position order
+    fireEvent.change(box, { target: { value: "zzz" } });
+    expect(rows()).toEqual([]);
+    expect(inGroup.querySelector("[data-two-list-count]")?.textContent).toBe("0");
+    fireEvent.change(box, { target: { value: "" } });
+    expect(rows()).toEqual(["a", "b"]);
+    // The right list keeps its own search: the left box does not narrow it.
+    expect(screen.getByRole("region", { name: "panels.available" }).querySelectorAll("[data-two-list-row]")).toHaveLength(1);
   });
 
   it("the identity tile is compact: the code and the target on one line, the description, „Salvează grupul” at its foot; no toggle", () => {
