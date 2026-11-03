@@ -11,7 +11,7 @@
  * subtitle the widest thing in the tile and push the tile wider, which would
  * move every tile packed after it. So the line is `width: 0` with
  * `min-width: 100%` — it takes the width the tile already has and adds none of
- * its own — and is cut with an ellipsis, its full text in the tooltip.
+ * its own — and is cut with an ellipsis, its full text in the tooltip (41.46: TextTooltip's bubble).
  *
  * ⚠️ **IT SHOWS WHENEVER THE TITLE SHOWS** (the header's Ask first 1). A line
  * that came and went with the window's width would move the fields under it.
@@ -25,6 +25,7 @@
  */
 import type { ReactNode } from "react";
 import { TILE_TITLE_TYPE } from "@/lib/ui/title-type";
+import { TextTooltip } from "@/lib/ui/text-tooltip";
 
 /**
  * The title's classes. Slice 40.18: set in Roboto Slab, navy, as alternative 13 draws kinds 1, 2 and 4
@@ -42,9 +43,10 @@ export function TileSubtitle({ text }: { text: string | undefined }) {
   return (
     // A `div`, not a `p`: the tiles' own specs read their paragraphs as a list
     // (TC-TILES-08's empty-state sentences), and this line is not one of them.
-    <div className={TILE_SUBTITLE_CLASS} title={text} data-tile-subtitle="">
+    // 41.46: its whole text in the icon buttons' bubble when it is cut (TextTooltip), not the browser's small title.
+    <TextTooltip as="div" className={TILE_SUBTITLE_CLASS} text={text} data-tile-subtitle="">
       {text}
-    </div>
+    </TextTooltip>
   );
 }
 

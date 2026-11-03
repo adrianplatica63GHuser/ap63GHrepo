@@ -22,6 +22,7 @@ import {
 import { STACKED_FIELD_CLASS, STACKED_ROW_CLASS } from "@/lib/ui/stacked";
 import { RotatedImage } from "@/components/documents/rotated-image";
 import { rotationOf, type PageRotation } from "@/lib/documents/page-rotation";
+import { TextTooltip } from "@/lib/ui/text-tooltip";
 
 /**
  * A stacked label (`self-end`, rule 16), small beside the value it names. Slice 41.36 — Adrian: „let's make the labels,
@@ -179,18 +180,20 @@ export function PreviewTileBody({
           {compactLines(lines).map((line) =>
             line.length === 1 && line[0].cut ? (
               // Slice #39.28: `w-0 min-w-full` — the tile's width, none of its own (`TileSubtitle`'s rule) — then cut.
-              <p
+              // 41.46: whole in the icon buttons' bubble when cut (TextTooltip).
+              <TextTooltip
+                as="p"
                 key={line[0].label}
                 className="w-0 min-w-full truncate text-fade dark:text-zinc-400"
-                title={line[0].value ?? undefined}
-                data-preview-line
+                text={line[0].value ?? undefined}
+                data-preview-line=""
                 data-preview-cut=""
               >
                 <span data-preview-value>
                   <span className="sr-only">{line[0].label}: </span>
                   {line[0].value}
                 </span>
-              </p>
+              </TextTooltip>
             ) : (
               // 41.36: the line wraps inside the 2-unit tile (it was one line, the tile as wide as it).
               <p key={line.map((v) => v.label).join("|")} className="break-words" data-preview-line>

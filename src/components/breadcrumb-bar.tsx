@@ -45,6 +45,7 @@ import {
   recordScreen,
   subscribeForwardStack,
 } from "@/lib/ui/back-stack";
+import { TextTooltip } from "@/lib/ui/text-tooltip";
 
 // ---------------------------------------------------------------------------
 // Route segment map
@@ -498,25 +499,28 @@ function BreadcrumbBarInner() {
               </svg>
             )}
             {!isLast && seg.href === null ? (
-              <span className="truncate min-w-6 max-w-[200px]" title={seg.label} data-crumb-section="">
+              // 41.46: a crumb cut short, whole in the icon buttons' bubble (TextTooltip).
+              <TextTooltip className="truncate min-w-6 max-w-[200px]" text={seg.label} data-crumb-section="">
                 {seg.label}
-              </span>
+              </TextTooltip>
             ) : isLast ? (
-              <span
+              <TextTooltip
                 className="truncate max-w-[240px] font-medium text-zinc-700 dark:text-zinc-200"
                 aria-current="page"
-                title={seg.label}
+                text={seg.label}
               >
                 {seg.label}
-              </span>
+              </TextTooltip>
             ) : (
-              <Link
-                href={seg.href ?? "/"}
-                className="truncate min-w-6 max-w-[200px] hover:text-zinc-800 hover:underline dark:hover:text-zinc-200 transition-colors"
-                title={seg.label}
-              >
-                {seg.label}
-              </Link>
+              // 41.46: the link stays a <Link> (the text-controls scan reads it); the bubble's wrapper measures it.
+              <TextTooltip className="flex min-w-0" text={seg.label}>
+                <Link
+                  href={seg.href ?? "/"}
+                  className="truncate min-w-6 max-w-[200px] hover:text-zinc-800 hover:underline dark:hover:text-zinc-200 transition-colors"
+                >
+                  {seg.label}
+                </Link>
+              </TextTooltip>
             )}
           </span>
         );

@@ -20,6 +20,7 @@
 import { createContext, useCallback, useContext, useState, type CSSProperties, type KeyboardEvent } from "react";
 import { useTranslations } from "next-intl";
 import { emptyFieldsToHide } from "@/lib/ui/empty-fields";
+import { TextTooltip } from "@/lib/ui/text-tooltip";
 
 export const HiddenFieldsContext = createContext<ReadonlySet<string>>(new Set());
 
@@ -85,20 +86,22 @@ export function EmptyFieldsLink({ tile, labels, onShow }: { tile: string; labels
     // tile sized by its content (a property's „Identificare cadastrală", a document's frame) never widens for the names,
     // which TC-TILES-07 found pushing „Hartă" under it at 1366 px.
     <div className="flex w-0 min-w-full items-baseline gap-2 pt-1 text-sm" data-empty-fields={tile} data-empty-fields-count={labels.length}>
-      <span
+      {/* 41.46: both hovers in the icon buttons' bubble (TextTooltip), always — the link's says what it will show. */}
+      <TextTooltip
+        always
+        text={t("all", { names })}
         role="button"
         tabIndex={0}
         onClick={onShow}
         onKeyDown={onKeyDown}
-        title={t("all", { names })}
         className="shrink-0 cursor-pointer text-bl-strong underline-offset-2 hover:underline focus-visible:underline focus-visible:outline-none dark:text-blue-300"
         data-empty-fields-show=""
       >
         {t("show", { count: labels.length })}
-      </span>
-      <span className="min-w-0 truncate text-fade dark:text-zinc-400" title={names} data-empty-fields-names="">
+      </TextTooltip>
+      <TextTooltip always text={names} className="min-w-0 truncate text-fade dark:text-zinc-400" data-empty-fields-names="">
         {names}
-      </span>
+      </TextTooltip>
     </div>
   );
 }

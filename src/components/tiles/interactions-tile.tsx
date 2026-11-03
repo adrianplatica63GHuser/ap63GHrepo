@@ -49,6 +49,7 @@ import { ChannelPill, DirectionMark, StatusPill } from "@/components/interaction
 import { PAGE_MAX, type InteractionListItem } from "@/lib/interactions/model";
 import { interactionsHref } from "@/lib/interactions/links";
 import { TileTitle } from "./tile-title";
+import { TextTooltip } from "@/lib/ui/text-tooltip";
 
 /**
  * Slice 40.43: the most B is, inside a tile that also holds C — the ceiling (436 px, „Pagini"'s) less the surface's p-3
@@ -191,19 +192,28 @@ export function InteractionsTile({
                         <DirectionMark direction={row.direction} />
                       </td>
                       <td className="border-b border-black/5 px-1.5 py-1.5 align-middle dark:border-white/10">
-                        <div className="truncate" title={row.subject} data-subject="">
+                        {/* 41.46: whole in the icon buttons' bubble when cut (TextTooltip). */}
+                        <TextTooltip as="div" className="truncate" text={row.subject} data-subject="">
                           {row.subject}
-                        </div>
+                        </TextTooltip>
                       </td>
                       <td className="border-b border-black/5 px-1.5 py-1.5 align-middle dark:border-white/10">
                         <StatusPill status={row.status} />
                       </td>
                       <td className="border-b border-black/5 px-1.5 py-1.5 align-middle dark:border-white/10">
                         {row.documentCount > 0 && (
-                          <span className="inline-flex items-center gap-0.5 text-xs text-fade dark:text-zinc-400" title={t("interactionsDocs", { count: row.documentCount })} data-documents-count={row.documentCount}>
+                          // 41.46: „3 acte legate" in the icon buttons' bubble (TextTooltip), always; its accessible name too.
+                          <TextTooltip
+                            always
+                            text={t("interactionsDocs", { count: row.documentCount })}
+                            role="img"
+                            aria-label={t("interactionsDocs", { count: row.documentCount })}
+                            className="inline-flex items-center gap-0.5 text-xs text-fade dark:text-zinc-400"
+                            data-documents-count={row.documentCount}
+                          >
                             <Paperclip aria-hidden="true" size={12} />
                             {row.documentCount}
-                          </span>
+                          </TextTooltip>
                         )}
                       </td>
                     </tr>

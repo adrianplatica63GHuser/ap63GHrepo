@@ -35,6 +35,7 @@ import { appendFilterParams, filterAddressPatch, filterSignature, type FacetValu
 import { JUDICIAL_PERSON_COLUMN_FILTERS, JUDICIAL_PERSON_FILTER_FIELDS, parsePersonFilters, personFilterKeys } from "@/lib/persons/list-filters";
 import type { ColumnName } from "@/lib/ui/field-widths";
 import { modifiedOn } from "@/lib/persons/person-age";
+import { TextTooltip } from "@/lib/ui/text-tooltip";
 
 /** Slice #37.16: the list's columns, each a fixed width from `COLUMN` — the optional ones (#37.60) between the nickname and the buttons. */
 // Slice #37.94: the key and the defaults are LIST_COLUMN_CHOICE.company (four since 40.66).
@@ -336,7 +337,7 @@ export function JudicialPersonListView() {
                 >
                   {order.keys.map((key) =>
                     key === "name" ? (
-                      <td key={key} className={`px-4 py-1 font-medium ${ONE_LINE}`} title={cellTitle(item.displayName)}>
+                      <TextTooltip as="td" key={key} className={`px-4 py-1 font-medium ${ONE_LINE}`} text={cellTitle(item.displayName)}>
                         <FirstCellText badges={<RecencyBadge createdAt={item.createdAt} updatedAt={item.updatedAt} />}>
                           <RowNameLink href={`/judicial-persons/${item.id}`} emptyLabel={item.displayName ? undefined : t("open")}>
                             {item.displayName || (
@@ -344,15 +345,15 @@ export function JudicialPersonListView() {
                             )}
                           </RowNameLink>
                         </FirstCellText>
-                      </td>
+                      </TextTooltip>
                     ) : key === "nickname" ? (
-                      <td key={key} className={`px-4 py-1 text-fade dark:text-zinc-400 ${ONE_LINE}`} title={cellTitle(item.nickname)}>
+                      <TextTooltip as="td" key={key} className={`px-4 py-1 text-fade dark:text-zinc-400 ${ONE_LINE}`} text={cellTitle(item.nickname)}>
                         {item.nickname || <span className="italic">—</span>}
-                      </td>
+                      </TextTooltip>
                     ) : (
-                      <td key={key} className={`px-4 py-1 text-fade dark:text-zinc-400 ${ONE_LINE}`} title={cellTitle(cellValue(item, key))}>
+                      <TextTooltip as="td" key={key} className={`px-4 py-1 text-fade dark:text-zinc-400 ${ONE_LINE}`} text={cellTitle(cellValue(item, key))}>
                         {cellValue(item, key) ?? <span className="italic">—</span>}
-                      </td>
+                      </TextTooltip>
                     ),
                   )}
                   <td className="px-4 py-1" onClick={(e) => e.stopPropagation()}>

@@ -35,6 +35,7 @@ import type { ComponentType, MouseEvent, ReactNode } from "react";
 import { createContext, useContext } from "react";
 import type { LucideProps } from "lucide-react";
 import { ROW_SELECT_REM, ROW_SLOT_REM, rem, type RowSlot } from "@/lib/ui/field-widths";
+import { TextTooltip } from "@/lib/ui/text-tooltip";
 
 const SlotsContext = createContext<readonly RowSlot[]>([]);
 
@@ -148,7 +149,8 @@ export function OneLineRow({
       )}
       {Icon && <Icon size={16} aria-hidden="true" className="shrink-0 text-fade dark:text-zinc-400" />}
       {kindLabel && <span className="sr-only">{kindLabel}: </span>}
-      <span data-row-content="" className={tag ? "flex min-w-0 flex-1 items-center gap-2" : "min-w-0 flex-1 truncate"} title={title}>
+      {/* 41.46: the whole text in the icon buttons' bubble when it is cut (TextTooltip). */}
+      <TextTooltip data-row-content="" className={tag ? "flex min-w-0 flex-1 items-center gap-2" : "min-w-0 flex-1 truncate"} text={title}>
         {tag ? (
           <>
             {/* 41.09: the name takes the room up to its tag, which stays at the content's right edge (40.65). */}
@@ -158,7 +160,7 @@ export function OneLineRow({
         ) : (
           content
         )}
-      </span>
+      </TextTooltip>
       {/* `div`s, not `span`s: a slot may hold a block (the share panel, a bubble). */}
       <div
         className={

@@ -36,6 +36,7 @@ import type { ReactNode } from "react";
 import { columnHead } from "@/components/table/fixed-columns";
 import type { ColumnName } from "@/lib/ui/field-widths";
 import type { HeadDragProps } from "@/components/list/column-order";
+import { TextTooltip } from "@/lib/ui/text-tooltip";
 
 /**
  * Two rows of the names' line: 17 px since Slice 40.30 (18 in 40.21; before it two text rows and the funnel's 26-px
@@ -77,9 +78,10 @@ export function ListHeadCell({
     >
       <div className="flex items-center justify-center" style={{ height: HEAD_BAND_PX }} data-head-band={funnel ? "filter" : "plain"}>
         <span className="flex min-w-0 items-center justify-center" data-head-name="">
-          <span className="line-clamp-2 min-w-0 text-balance break-words text-center leading-[17px]" data-head-text="" title={full}>
+          {/* 41.46: the whole label in the icon buttons' bubble (TextTooltip), always — the name is often a short form. */}
+          <TextTooltip always text={full} className="line-clamp-2 min-w-0 text-balance break-words text-center leading-[17px]" data-head-text="">
             {name}
-          </span>
+          </TextTooltip>
         </span>
       </div>
       {/* Slice 40.47: 2 px left of the funnel's 13 px (2 + 13 + 2 = 17 px from the edge), or in its place. Drawn

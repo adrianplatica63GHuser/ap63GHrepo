@@ -45,7 +45,6 @@
 import Link from "next/link";
 import {
   useId,
-  useLayoutEffect,
   useRef,
   type ButtonHTMLAttributes,
   type ComponentProps,
@@ -53,7 +52,6 @@ import {
   type ReactNode,
   type Ref,
 } from "react";
-import { createPortal } from "react-dom";
 import { LoaderCircle, type LucideProps } from "lucide-react";
 
 import {
@@ -63,6 +61,7 @@ import {
   type ButtonVariant,
   type SmallSquare,
 } from "@/lib/ui/button-styles";
+import { TooltipBubble, useTooltipPlacement } from "@/lib/ui/tooltip-bubble";
 import { useTooltipTriggers } from "@/lib/ui/use-tooltip";
 
 /**
@@ -81,26 +80,7 @@ export const SQUARE_ICON_PX: Record<SmallSquare, number> = { corner: 9, row: 14 
 const LABEL_GAP = "gap-1.5";
 
 // ── The tooltip ──────────────────────────────────────────────────────────────
-
-/** Space kept between the tooltip and the control, and the window's edge. */
-const GAP_PX = 6;
-const EDGE_PX = 4;
-
-/**
- * Put the bubble under the anchor, centred, inside the window; above it when
- * the window has no room below. Writes the position straight onto the node.
- */
-function place(anchor: HTMLElement, tip: HTMLElement): void {
-  const a = anchor.getBoundingClientRect();
-  const w = tip.offsetWidth;
-  const h = tip.offsetHeight;
-  const maxLeft = Math.max(EDGE_PX, window.innerWidth - w - EDGE_PX);
-  const left = Math.min(Math.max(EDGE_PX, a.left + a.width / 2 - w / 2), maxLeft);
-  const below = a.bottom + GAP_PX;
-  const top = below + h > window.innerHeight - EDGE_PX ? Math.max(EDGE_PX, a.top - GAP_PX - h) : below;
-  tip.style.left = `${Math.round(left)}px`;
-  tip.style.top = `${Math.round(top)}px`;
-}
+// 41.46: the bubble's look and placement moved to `tooltip-bubble.tsx`, shared with TextTooltip.
 
 type IconTooltipProps = {
   /** The text shown — for an icon button, its accessible name. */
@@ -138,22 +118,7 @@ export function IconTooltip({ label, note, noteMono = false, children, className
   const { isOpen, setOpen, wrapRef, handlers } = useTooltipTriggers<HTMLSpanElement>();
   const tipRef = useRef<HTMLSpanElement | null>(null);
 
-  useLayoutEffect(() => {
-    if (!isOpen) return;
-    const anchor = wrapRef.current;
-    const tip = tipRef.current;
-    if (!anchor || !tip) return;
-    const update = () => place(anchor, tip);
-    update();
-    // Capture: a scroll inside any container (a table frame, the page's own
-    // column) moves the anchor, not only a scroll of the window.
-    window.addEventListener("scroll", update, true);
-    window.addEventListener("resize", update);
-    return () => {
-      window.removeEventListener("scroll", update, true);
-      window.removeEventListener("resize", update);
-    };
-  }, [isOpen, label, wrapRef]);
+  useTooltipPlacement(isOpen, wrapRef, tipRef, label);
 
   return (
     <span
@@ -164,22 +129,14 @@ export function IconTooltip({ label, note, noteMono = false, children, className
       onClickCapture={() => setOpen(false)}
     >
       {children}
-      {isOpen &&
-        createPortal(
-          <span
-            ref={tipRef}
-            role="tooltip"
-            data-icon-tooltip=""
-            style={{ left: 0, top: 0 }}
-            className="pointer-events-none fixed z-[70] max-w-[20rem] rounded-md border border-card-rim bg-white px-2 py-1 text-xs leading-snug font-medium text-ink shadow-lg dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200"
-          >
-            {label}
-            {note && (
-              <span className={`mt-0.5 block font-normal text-fade dark:text-zinc-400${noteMono ? " font-mono" : ""}`}>{note}</span>
-            )}
-          </span>,
-          document.body,
-        )}
+      {isOpen && (
+        <TooltipBubble tipRef={tipRef} mark="data-icon-tooltip">
+          {label}
+          {note && (
+            <span className={`mt-0.5 block font-normal text-fade dark:text-zinc-400${noteMono ? " font-mono" : ""}`}>{note}</span>
+          )}
+        </TooltipBubble>
+      )}
     </span>
   );
 }

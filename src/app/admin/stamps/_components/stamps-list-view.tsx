@@ -15,6 +15,7 @@ import { TileUnitRow } from "@/components/screen/tile-unit-row";
 import { WorkflowsTile } from "@/components/screen/workflows-tile";
 import { AdminTilesBar, useAdminTiles } from "@/components/screen/admin-tiles";
 import { ADMIN_STAMPS_REGISTRY, ADMIN_STAMPS_SCREEN } from "@/lib/ui/screen-tiles";
+import { TextTooltip } from "@/lib/ui/text-tooltip";
 
 /** The stamps, at #37.16's column widths (Slice #37.22). */
 const COLUMNS: readonly ColumnName[] = ["description", "count", "rowActions"];
@@ -316,9 +317,10 @@ export function StampsListView({ about }: { about?: ReactNode } = {}) {
                     — {s.shortDescription}
                   </span>
                   {s.notes && (
-                    <div className="mt-0.5 text-xs text-fade dark:text-zinc-500 line-clamp-1">
+                    // 41.46: the notes whole in the icon buttons' bubble when cut — their first hover.
+                    <TextTooltip as="div" text={s.notes} className="mt-0.5 text-xs text-fade dark:text-zinc-500 line-clamp-1" data-stamp-notes="">
                       {s.notes}
-                    </div>
+                    </TextTooltip>
                   )}
                 </td>
                 <td className="px-4 py-2 text-fade dark:text-zinc-400">

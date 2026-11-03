@@ -23,7 +23,7 @@ import {
   RotateCw,
   SquarePen,
 } from "lucide-react";
-import { IconButton } from "@/lib/ui/icon-button";
+import { IconButton, IconTooltip } from "@/lib/ui/icon-button";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { useSessionValue } from "@/lib/ui/use-session-value";
 import { useNameOr } from "@/components/record/use-name-or";
@@ -59,6 +59,7 @@ import {
   SubjectContains,
   type FiltersChange,
 } from "./filter-controls";
+import { TextTooltip } from "@/lib/ui/text-tooltip";
 
 /** The column widths, kept for the browser session (§3: the user can resize them). */
 const WIDTHS_KEY = "ga.interactions.columnWidths";
@@ -482,13 +483,14 @@ function HistoryRow({
         </div>
       </td>
       <td className={cell}>
-        <div className="truncate" title={row.subject} data-subject="">
+        {/* 41.46: the subject and the description whole in the icon buttons' bubble when cut (TextTooltip). */}
+        <TextTooltip as="div" className="truncate" text={row.subject} data-subject="">
           {row.subject}
-        </div>
+        </TextTooltip>
         {selected && (
-          <div className="truncate text-xs text-fade dark:text-zinc-400" data-description-preview="" title={record.data?.description ?? undefined}>
+          <TextTooltip as="div" className="truncate text-xs text-fade dark:text-zinc-400" data-description-preview="" text={record.data?.description ?? undefined}>
             {record.isPending ? "…" : (record.data?.description ?? t("screen.noDescription"))}
-          </div>
+          </TextTooltip>
         )}
       </td>
       <td className={cell}>{row.documentCount > 0 && <DocumentsCount interactionId={row.id} count={row.documentCount} />}</td>
@@ -496,10 +498,10 @@ function HistoryRow({
         <StatusPill status={row.status} />
         {/* 38.85 (Ask first #4): the follow-up's date is kept and shown here; nothing notifies. */}
         {followUp && (
-          <span className="mt-0.5 flex items-center gap-1 whitespace-nowrap text-xs text-fade dark:text-zinc-400" data-follow-up="" title={t("screen.followUp", { date: followUp })}>
+          <TextTooltip always text={t("screen.followUp", { date: followUp })} className="mt-0.5 flex w-fit items-center gap-1 whitespace-nowrap text-xs text-fade dark:text-zinc-400" data-follow-up="">
             <CalendarClock aria-hidden="true" size={12} />
             {followUp}
-          </span>
+          </TextTooltip>
         )}
         {/* Under the pill, out of the flow, so the pill stays in the row's middle like its neighbours. */}
         {!selected && !followUp && (
@@ -523,9 +525,10 @@ function DocumentsCount({ interactionId, count }: { interactionId: string; count
         label={label}
         align="right"
         trigger={(open, toggle) => (
+          // 41.46: its name in the icon buttons' bubble — it is an icon button, so IconTooltip, not the browser's title.
+          <IconTooltip label={label}>
           <button
             type="button"
-            title={label}
             aria-label={label}
             aria-expanded={open}
             aria-haspopup="dialog"
@@ -536,6 +539,7 @@ function DocumentsCount({ interactionId, count }: { interactionId: string; count
             <Paperclip aria-hidden="true" size={14} />
             {count}
           </button>
+          </IconTooltip>
         )}
       >
         <DocumentsList interactionId={interactionId} />

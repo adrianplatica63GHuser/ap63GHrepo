@@ -45,6 +45,7 @@ import {
   type FilterState,
 } from "@/lib/list/filter-bar";
 import { PROPERTY_COLUMN_FILTERS, PROPERTY_FILTER_FIELDS, PROPERTY_FILTER_KEYS, parsePropertyFilters } from "@/lib/properties/list-filters";
+import { TextTooltip } from "@/lib/ui/text-tooltip";
 
 // Slice #37.94: the key and the defaults are LIST_COLUMN_CHOICE.property (four since 40.66).
 const MAX_OPT   = 4;
@@ -447,7 +448,7 @@ export function PropertyListView() {
                 >
                   {order.keys.map((key) =>
                     key === "nickname" ? (
-                      <td key={key} className={`px-4 py-1 text-fade dark:text-zinc-400 ${ONE_LINE}`} data-col="nickname" title={cellTitle(item.nickname)}>
+                      <TextTooltip as="td" key={key} className={`px-4 py-1 text-fade dark:text-zinc-400 ${ONE_LINE}`} data-col="nickname" text={cellTitle(item.nickname)}>
                         <FirstCellText
                           badges={
                             <>
@@ -460,11 +461,11 @@ export function PropertyListView() {
                             {item.nickname ?? <span className="text-fade italic">—</span>}
                           </RowNameLink>
                         </FirstCellText>
-                      </td>
+                      </TextTooltip>
                     ) : (
-                      <td key={key} className={`px-4 py-1 text-fade dark:text-zinc-400 ${ONE_LINE}`} title={cellTitle(cellValue(item, key))}>
+                      <TextTooltip as="td" key={key} className={`px-4 py-1 text-fade dark:text-zinc-400 ${ONE_LINE}`} text={cellTitle(cellValue(item, key))}>
                         {cellValue(item, key)}
-                      </td>
+                      </TextTooltip>
                     ),
                   )}
                   <td className="px-4 py-1" onClick={(e) => e.stopPropagation()}>

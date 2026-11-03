@@ -42,6 +42,7 @@ import { ColumnSort, ariaSortOf } from "@/components/list/column-sort";
 import { DEFAULT_LIST_ORDER, LIST_SORTS, ORDER_KEYS, appendOrderParams, orderAddressPatch, orderSignature, readListOrder, type ListOrder } from "@/lib/list/list-order";
 import { appendFilterParams, filterAddressPatch, filterSignature, type FacetValue, type FilterState } from "@/lib/list/filter-bar";
 import { DOCUMENT_COLUMN_FILTERS, DOCUMENT_FILTER_FIELDS, DOCUMENT_FILTER_KEYS, parseDocumentFilters } from "@/lib/documents/list-filters";
+import { TextTooltip } from "@/lib/ui/text-tooltip";
 
 // Slice #37.94: the key and the defaults are LIST_COLUMN_CHOICE.document (four since 40.66).
 const MAX_OPT     = 4;
@@ -1126,15 +1127,15 @@ export function DocumentListView({
                       {order.keys.map((key) =>
                         key === "type" ? (
                           // Slice #37.95: the type by its short name (CVC, PAD…, or the rule's), the full name in its tooltip.
-                          <td key={key} className={`px-4 py-1 text-fade dark:text-zinc-400 ${ONE_LINE}`} title={item.documentTypeName ?? undefined}>
+                          <TextTooltip as="td" always key={key} className={`px-4 py-1 text-fade dark:text-zinc-400 ${ONE_LINE}`} text={item.documentTypeName ?? undefined}>
                             <FirstCellText badges={<RecencyBadge createdAt={item.createdAt} updatedAt={item.updatedAt} />}>
                               {item.documentTypeName
                                 ? documentTypeShortName({ name: item.documentTypeName, shortName: item.documentTypeShortName })
                                 : "—"}
                             </FirstCellText>
-                          </td>
+                          </TextTooltip>
                         ) : key === "title" ? (
-                          <td key={key} className={`px-4 py-1 font-medium ${ONE_LINE}`} title={cellTitle(item.title)}>
+                          <TextTooltip as="td" key={key} className={`px-4 py-1 font-medium ${ONE_LINE}`} text={cellTitle(item.title)}>
                             {/* 40.60: Acte's first cell is the type („CVC" on every contract), so the link is the title — the
                                 document's name. */}
                             <RowNameLink href={`/documents/${item.id}`} emptyLabel={item.title ? undefined : t("open")}>
@@ -1142,11 +1143,11 @@ export function DocumentListView({
                                 <span className="text-fade italic">—</span>
                               )}
                             </RowNameLink>
-                          </td>
+                          </TextTooltip>
                         ) : (
-                          <td key={key} className={`px-4 py-1 text-fade dark:text-zinc-400 ${ONE_LINE}`} title={cellTitle(cellValue(item, key))}>
+                          <TextTooltip as="td" key={key} className={`px-4 py-1 text-fade dark:text-zinc-400 ${ONE_LINE}`} text={cellTitle(cellValue(item, key))}>
                             {cellValue(item, key)}
-                          </td>
+                          </TextTooltip>
                         ),
                       )}
                       <td className="px-4 py-1" onClick={(e) => e.stopPropagation()}>

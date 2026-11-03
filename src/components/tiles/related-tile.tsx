@@ -64,6 +64,7 @@ import { RELATED_READONLY_SLOTS, RELATED_SLOTS, type RowSlot } from "@/lib/ui/fi
 import { newTabIfAsked } from "@/lib/ui/row-link";
 import { RELATED_ROWS_SURFACE } from "@/lib/ui/tile-surface";
 import { partyGroupOrder } from "@/lib/documents/sale-parties";
+import { TextTooltip } from "@/lib/ui/text-tooltip";
 
 export type RelatedKind = "natural" | "judicial" | "property" | "document";
 
@@ -152,16 +153,17 @@ function kindLabel(t: (key: string) => string, kind: RelatedKind): string {
  */
 export function RoleTag({ role }: { role: string }) {
   return (
-    <span
+    // 41.46: the whole role in the icon buttons' bubble when it is cut (TextTooltip).
+    <TextTooltip
       data-row-role=""
       data-role-shown="role"
       className="ml-auto max-w-[10rem] shrink-0 truncate rounded-full border border-wire bg-card px-2 text-xs leading-5 text-ink dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200"
-      title={role}
+      text={role}
     >
       <span className="sr-only"> (</span>
       {role}
       <span className="sr-only">)</span>
-    </span>
+    </TextTooltip>
   );
 }
 
