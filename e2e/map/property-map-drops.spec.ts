@@ -57,6 +57,18 @@ test.describe("TC-MAP-05 — picăturile hărții", () => {
       for (const corners of LOTS)
         await expect(page.locator(`[data-corner-marker="${corners[0].lat},${corners[0].lon}"]`)).toHaveCount(0);
 
+      // Step 1b — 41.69: a normal drop is filled with the sides' green #15803D, outlined in champagne #F7E7CE, and the
+      // numbered drop's count is champagne too (they were #3b82f6 and white).
+      const ink = (drop: typeof single) =>
+        drop.evaluate((d) => {
+          const path = d.querySelector("svg path") as SVGPathElement;
+          const count = d.querySelector("[data-map-drop-count]") as HTMLElement | null;
+          return { fill: getComputedStyle(path).fill, stroke: getComputedStyle(path).stroke, count: count ? getComputedStyle(count).color : null };
+        });
+      expect(await single.getAttribute("data-map-drop-tone")).toBe("normal");
+      expect(await ink(single)).toEqual({ fill: "rgb(21, 128, 61)", stroke: "rgb(247, 231, 206)", count: null });
+      expect(await ink(numbered)).toEqual({ fill: "rgb(21, 128, 61)", stroke: "rgb(247, 231, 206)", count: "rgb(247, 231, 206)" });
+
       // Step 2 — the single drop: the bubble with the lot's name and „Deschide".
       const bubble = page.locator(".gm-style-iw");
       const s = (await single.boundingBox())!;

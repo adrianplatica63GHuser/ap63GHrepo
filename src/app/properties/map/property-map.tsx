@@ -75,7 +75,7 @@ import {
   type DropTone,
 } from "@/lib/geo/map-drops";
 import { useMergeDistance } from "@/components/maps/use-merge-distance";
-import { PropertyCornerDot, PropertyDrop, SHAPE_COLOR, type PlacedDrop as PlacedDropOf } from "@/components/maps/property-shapes";
+import { PropertyCornerDot, PropertyDrop, SHAPE_COLOR, SHAPE_FILL, type PlacedDrop as PlacedDropOf } from "@/components/maps/property-shapes";
 import { useToast } from "@/components/toast";
 import { GROUPS_FROM_MAP_PATH, forgetNewGroup, readMapSelection, readNewGroup, writeMapSelection } from "@/lib/groups/map-selection";
 import { MAX_GROUPS_PER_PROPERTY } from "@/lib/groups/validation";
@@ -1917,23 +1917,18 @@ export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean 
           />
 
           {/* Polygons / circles */}
-          {/* Colour: selected (red) > duplicate (blinking pink) > normal (blue) */}
+          {/* Colour: selected (red) > duplicate (blinking pink) > normal (green, 41.69) — SHAPE_COLOR / SHAPE_FILL */}
           {displayItems.map((prop) => {
             const isSelected  = selectedIds.has(prop.id);
-            // In "selected" tab, show all items in normal blue (they're all "selected"
+            // In "selected" tab, show all items in the normal colour (they're all "selected"
             // and red would be confusing when everything is red).
             const effectiveSelected = isSelected && activeTab === "all";
             const isDuplicate = duplicateIds.has(prop.id);
 
-            const strokeColor =
-              effectiveSelected ? "#ef4444" :
-              isDuplicate       ? "#ec4899" :
-                                  "#3b82f6";
-
-            const fillColor =
-              effectiveSelected ? "#ef4444" :
-              isDuplicate       ? "#ec4899" :
-                                  "#3b82f6";
+            // 41.69: one colour source with the tile and „Hartă extinsă" (property-shapes.tsx) — it hard-coded the three.
+            const shapeTone = effectiveSelected ? "selected" : isDuplicate ? "duplicate" : "normal";
+            const strokeColor = SHAPE_COLOR[shapeTone];
+            const fillColor = SHAPE_FILL[shapeTone];
 
             const fillOpacity =
               effectiveSelected ? 0.30 :

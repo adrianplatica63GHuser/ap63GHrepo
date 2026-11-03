@@ -24,7 +24,7 @@ import {
 import { HelpHint } from "@/components/help/help-hint";
 import { MapCameraProbe } from "@/components/maps/map-camera-probe";
 import { usePolygonDraw } from "@/components/maps/use-polygon-draw";
-import { SHAPE_COLOR } from "@/components/maps/property-shapes";
+import { SHAPE_COLOR, SHAPE_FILL } from "@/components/maps/property-shapes";
 import { CORNER_DOT_PX } from "@/lib/geo/map-drops";
 import type { MapView } from "@/lib/geo/map-focus";
 
@@ -226,6 +226,8 @@ export default function PropertyMiniMapInner({ corners, onChange, readOnly = fal
   // Slice #37.38: the box the camera probe writes the centre and zoom onto.
   const boxRef = useRef<HTMLDivElement>(null);
   const shapeColor = SHAPE_COLOR[tone];
+  // 41.69: the inside lighter than the sides (green-500 inside green-700); red fills in its own colour.
+  const shapeFill = SHAPE_FILL[tone];
 
   // -------------------------------------------------------------------------
   // Render
@@ -262,7 +264,7 @@ export default function PropertyMiniMapInner({ corners, onChange, readOnly = fal
             strokeColor={shapeColor}
             strokeOpacity={1}
             strokeWeight={2}
-            fillColor={shapeColor}
+            fillColor={shapeFill}
             fillOpacity={FILL_OPACITY[tone]}
             // A click passes through to the map: while drawing it adds a corner, as before.
             clickable={false}

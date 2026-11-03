@@ -15,8 +15,26 @@ import { CORNER_DOT_PX, DROP_SIZE, type DropTone } from "@/lib/geo/map-drops";
  * „Hartă extinsă" began drawing every other property the same way — one drawing, not two copies of it.
  */
 
-/** A shape's colour by what it says, strongest first: selected (red), a duplicate (pink), neither (blue). */
-export const SHAPE_COLOR: Record<DropTone, string> = { selected: "#ef4444", duplicate: "#ec4899", normal: "#3b82f6" };
+/**
+ * A shape's colour by what it says, strongest first: selected (red), a duplicate (pink), neither (green) — its sides,
+ * its corner dots and its drop.
+ *
+ * Slice 41.69 — Adrian, 2026-11-03: „the blue hues used for borders and for the area of the property will be replaced
+ * with a similar shade of green (darker for sides, lighter for the inside) […] The bubbles […] will change their color
+ * from current blue to the shade of green that is now used for the sides of the property; and the white that is used
+ * for the contour of the bubbles and for showing the count of properties behind the bubble will be replaced with a hue
+ * of Champagne". So the sides are #15803D (green-700, the app's success green) and the inside #22C55E (green-500, the
+ * counterpart of the blue-500 it replaces), at the opacities the blue had. Not 41.47's property green #00A84C: champagne
+ * on it is 2.6:1 and the count would not read; on #15803D it is 4.1:1 (white on the old #3b82f6 was 3.7:1). Red and
+ * pink are unchanged. This is the ONE source: the big map, the „Hartă" tile and „Hartă extinsă" all read it.
+ */
+export const SHAPE_COLOR: Record<DropTone, string> = { selected: "#ef4444", duplicate: "#ec4899", normal: "#15803D" };
+
+/** Slice 41.69: a shape's inside — lighter than its sides for a normal property; red and pink fill in their own colour. */
+export const SHAPE_FILL: Record<DropTone, string> = { selected: "#ef4444", duplicate: "#ec4899", normal: "#22C55E" };
+
+/** Slice 41.69: a drop's outline and its count — champagne on the green, white on the red and the pink as before. */
+export const DROP_INK: Record<DropTone, string> = { selected: "#fff", duplicate: "#fff", normal: "#F7E7CE" };
 
 type DotCorner = { lat: number; lon: number };
 
@@ -48,7 +66,7 @@ export type PlacedDrop<T extends { id: string }> = {
 
 /**
  * A drop, its tip on the property's centre (AdvancedMarker's own bottom-centre anchor), or a numbered drop with the
- * count in white. Clickable only when the map says so; otherwise a click goes through to the map.
+ * count in its ink (`DROP_INK`: champagne on a normal drop since 41.69, white on the red and the pink). Clickable only when the map says so; otherwise a click goes through to the map.
  */
 export function PropertyDrop<T extends { id: string }>({
   drop,
@@ -93,13 +111,15 @@ export function PropertyDrop<T extends { id: string }>({
             fill={SHAPE_COLOR[drop.tone]}
             // A duplicate blinks as its polygon does (#39.60: „pink applies to the drop as it does to the polygon").
             fillOpacity={drop.tone === "duplicate" && !blinkOn ? 0.35 : 1}
-            stroke="#fff"
+            stroke={DROP_INK[drop.tone]}
             strokeWidth={1.4}
+            data-map-drop-ink=""
           />
         </svg>
         {count > 1 && (
           <span
             aria-hidden="true"
+            data-map-drop-count=""
             style={{
               position:      "absolute",
               left:          0,
@@ -108,7 +128,7 @@ export function PropertyDrop<T extends { id: string }>({
               height:        size.w,
               lineHeight:    `${size.w}px`,
               textAlign:     "center",
-              color:         "#fff",
+              color:         DROP_INK[drop.tone],
               fontWeight:    700,
               fontSize:      fontPx,
               pointerEvents: "none",

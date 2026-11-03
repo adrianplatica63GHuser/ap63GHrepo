@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { Circle, Polygon, useMap } from "@vis.gl/react-google-maps";
 import { useNameOr } from "@/components/record/use-name-or";
 import { useMergeDistance } from "@/components/maps/use-merge-distance";
-import { PropertyCornerDot, PropertyDrop, SHAPE_COLOR, type PlacedDrop } from "@/components/maps/property-shapes";
+import { PropertyCornerDot, PropertyDrop, SHAPE_COLOR, SHAPE_FILL, type PlacedDrop } from "@/components/maps/property-shapes";
 import { POINT_RADIUS_M, placeShapes } from "@/lib/geo/map-drops";
 
 /**
@@ -69,6 +69,7 @@ export default function TheaterOthersLayer({ excludeId }: { excludeId?: string |
   if (zoom === null || others.length === 0) return null;
   const placed = placeShapes(others, zoom, mergeDistance);
   const color = SHAPE_COLOR.normal;
+  const fill = SHAPE_FILL.normal; // 41.69: the inside lighter than the sides
   const drops: PlacedDrop<OtherProperty>[] = placed.drops.map((cl) => {
     const ids = cl.items.map((p) => p.id);
     return {
@@ -89,7 +90,7 @@ export default function TheaterOthersLayer({ excludeId }: { excludeId?: string |
             strokeColor={color}
             strokeOpacity={1}
             strokeWeight={2}
-            fillColor={color}
+            fillColor={fill}
             fillOpacity={NORMAL_FILL.polygon}
             clickable={false}
           />
@@ -101,7 +102,7 @@ export default function TheaterOthersLayer({ excludeId }: { excludeId?: string |
             strokeColor={color}
             strokeOpacity={1}
             strokeWeight={2}
-            fillColor={color}
+            fillColor={fill}
             fillOpacity={NORMAL_FILL.circle}
             clickable={false}
           />
