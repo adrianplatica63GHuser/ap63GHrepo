@@ -4,8 +4,14 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import { META_TILE_SURFACE, PINNED_TILE_SURFACE, RELATED_ROWS_SURFACE, RELATED_TILE_SURFACE, TILE_SURFACE, groupStrip, groupSurface, tileSurface } from "@/lib/ui/tile-surface";
+import {
+  FAMILY_TILE_SURFACE, META_TILE_SURFACE, PINNED_TILE_SURFACE, RELATED_ROWS_SURFACE, RELATED_TILE_SURFACE, TILE_SURFACE,
+  groupColours, groupStrip, groupSurface, tileHue, tileScreenOf, tileSurface,
+} from "@/lib/ui/tile-surface";
 import { PROP_TILE_REGISTRY } from "@/app/properties/_components/property-tiles";
+import { NP_TILE_REGISTRY } from "@/app/natural-persons/_components/person-tiles";
+import { JP_TILE_REGISTRY } from "@/app/judicial-persons/_components/person-tiles";
+import { tileGroupOf } from "@/lib/ui/tiles";
 
 const ROOT = process.cwd();
 const read = (...p: string[]): string => fs.readFileSync(path.join(ROOT, ...p), "utf8");
@@ -51,7 +57,8 @@ describe("the right column's tiles are tinted (#37.78)", () => {
   it("the Property draws its three right tiles from the registry, its other tiles as cards", () => {
     expect(PROP_TILE_REGISTRY.placement?.right).toEqual(["map", "corners", "streetView"]);
     const src = code(read("src", "app", "properties", "_components", "property-form.tsx"));
-    expect(src).toMatch(/const surface = \(tile: PropTile\): string => tileSurface\(!!tiles\?\.right\?\.has\(tile\)\)/);
+    // 41.68: in the property's hue for the right-hand tiles (it read `tileSurface(!!tiles?.right?.has(tile))`).
+    expect(src).toMatch(/const surface = \(tile: PropTile\): string => tileSurface\(!!tiles\?\.right\?\.has\(tile\), "property"\)/);
     for (const [panel, tile] of [["map", "map"], ["corners", "corners"], ["street-view", "streetView"]]) {
       const at = src.indexOf(`data-panel="${panel}"`);
       expect(at).toBeGreaterThan(0);
@@ -65,7 +72,9 @@ describe("the right column's tiles are tinted (#37.78)", () => {
 
   it("the Document's „Pagini” takes the surface its place in the column gives it", () => {
     const form = code(read("src", "app", "documents", "_components", "document-form.tsx"));
-    expect(form).toContain('surface={tileSurface(!!tiles?.right?.has("pages"))}');
+    // 41.68: in the document's hue (it read `surface={tileSurface(!!tiles?.right?.has("pages"))}`).
+    expect(form).toContain('surface={tileSurface(!!tiles?.right?.has("pages"), "document")}');
+    expect(form).toContain('surface={tileSurface(true, "document")}');
     const panel = code(read("src", "app", "documents", "_components", "pages-panel.tsx"));
     expect(panel).toContain("surface = TILE_SURFACE,");
     expect(panel).toMatch(/className=\{\[\s*surface,/);
@@ -147,20 +156,90 @@ describe("„Corelate” a stronger green, its rows a lighter one (#38.15)", () 
   });
 
   it("text keeps at least 4.5:1 on the tile and on the rows, light and dark", () => {
-    for (const bg of [token("card-related"), token("card-related-row")]) {
+    for (const bg of [token("card-related"), token("card-related-row"), token("card-row")]) {
       for (const fg of [token("ink"), token("fade")]) expect({ fg, bg, ok: contrast(fg, bg) >= 4.5 }).toEqual({ fg, bg, ok: true });
     }
-    for (const bg of [token("card-related-dark"), token("card-related-row-dark")]) {
+    for (const bg of [token("card-related-dark"), token("card-related-row-dark"), token("card-row-dark")]) {
       for (const fg of ["#D4D4D8", "#A1A1AA"]) expect({ fg, bg, ok: contrast(fg, bg) >= 4.5 }).toEqual({ fg, bg, ok: true }); // zinc-300, zinc-400
     }
   });
 
   it("the rows' container takes the rows' token; the tile, its strip and a preview keep sharing the tile's", () => {
-    expect(RELATED_ROWS_SURFACE.split(" ")).toEqual(expect.arrayContaining(["bg-card-related-row", "dark:bg-card-related-row-dark", "border-card-related-rim"]));
+    // 41.68: „Legături" wears the card, its rows a lighter row of it (it read `bg-card-related-row`,
+    // `dark:bg-card-related-row-dark`, `border-card-related-rim`).
+    expect(RELATED_ROWS_SURFACE.split(" ")).toEqual(expect.arrayContaining(["bg-card-row", "dark:bg-card-row-dark", "border-card-rim"]));
     const tile = code(read("src", "components", "tiles", "related-tile.tsx"));
     expect(tile).toMatch(/data-related-rows=""\s*className=\{RELATED_ROWS_SURFACE\}/);
     expect(tile).not.toMatch(/data-related-rows=""\s*className="[^"]*bg-card\b/);
-    expect(groupStrip("related")).toContain("bg-card-related ");
-    expect(code(read("src", "components", "tiles", "preview-tile-body.tsx"))).toContain("bg-card-related p-3");
+    expect(groupStrip("related")).toContain("bg-card-related "); // with no screen named, the old green
+    expect(groupStrip("related", false, "property")).toContain("bg-card ");
+    // 41.68: a preview is the card itself (it read `toContain("bg-card-related p-3")`).
+    expect(code(read("src", "components", "tiles", "preview-tile-body.tsx"))).toContain("border-dashed border-card-rim bg-card p-3");
+  });
+});
+
+describe("41.68 — the tiles' colours switched round to follow the kinds", () => {
+  const SAVED_DOCUMENT_ENTITY = "document-ADEVERINTA";
+
+  it("the four screens' entities name their screen; others none", () => {
+    expect([PROP_TILE_REGISTRY.entity, NP_TILE_REGISTRY.entity, JP_TILE_REGISTRY.entity].map(tileScreenOf)).toEqual(["property", "natural-person", "judicial-person"]);
+    expect(tileScreenOf(SAVED_DOCUMENT_ENTITY)).toBe("document");
+    expect(tileScreenOf("document-untyped")).toBe("document");
+    for (const e of [undefined, "home", "settings", "admin-group", "tarla"]) expect(tileScreenOf(e)).toBeUndefined();
+  });
+
+  it.each([
+    // [screen entity, tile's group, hue, surface] — Adrian's list, per tile
+    ["property", tileGroupOf(PROP_TILE_REGISTRY, "related"), "card", TILE_SURFACE],
+    ["property", tileGroupOf(PROP_TILE_REGISTRY, "map"), "green", RELATED_TILE_SURFACE],
+    ["property", tileGroupOf(PROP_TILE_REGISTRY, "corners"), "green", RELATED_TILE_SURFACE],
+    ["property", tileGroupOf(PROP_TILE_REGISTRY, "streetView"), "green", RELATED_TILE_SURFACE],
+    ["property", tileGroupOf(PROP_TILE_REGISTRY, "classification"), "yellow", META_TILE_SURFACE],
+    ["natural-person", tileGroupOf(NP_TILE_REGISTRY, "related"), "card", TILE_SURFACE],
+    ["natural-person", tileGroupOf(NP_TILE_REGISTRY, "interactions"), "purple", PINNED_TILE_SURFACE],
+    ["natural-person", tileGroupOf(NP_TILE_REGISTRY, "inheritanceTree"), "purple", PINNED_TILE_SURFACE],
+    ["natural-person", tileGroupOf(NP_TILE_REGISTRY, "connections"), "yellow", META_TILE_SURFACE],
+    ["judicial-person", tileGroupOf(JP_TILE_REGISTRY, "related"), "card", TILE_SURFACE],
+    ["judicial-person", tileGroupOf(JP_TILE_REGISTRY, "interactions"), "purple", PINNED_TILE_SURFACE],
+    [SAVED_DOCUMENT_ENTITY, "related", "card", TILE_SURFACE],
+    [SAVED_DOCUMENT_ENTITY, "fixed", "blue", FAMILY_TILE_SURFACE],
+    [SAVED_DOCUMENT_ENTITY, "meta", "yellow", META_TILE_SURFACE],
+  ] as const)("%s, group %s → %s", (entity, group, hue, surface) => {
+    expect(tileHue(group, entity)).toBe(hue);
+    expect(groupSurface(group, entity)).toBe(surface);
+    // The strip on the bar and the rectangle in „Panouri" wear the same hue as the tile.
+    const fill = surface.split(" ").find((c) => c.startsWith("bg-"))!;
+    expect(groupColours(group, entity).split(" ")).toContain(fill);
+    expect(groupStrip(group, true, entity)).toContain(groupColours(group, entity));
+  });
+
+  it("a document's „Pagini” and a property's right tiles from tileSurface, with the screen named", () => {
+    expect(tileSurface(true, "document")).toBe(FAMILY_TILE_SURFACE);
+    expect(tileSurface(true, "property")).toBe(RELATED_TILE_SURFACE);
+    expect(tileSurface(false, "property")).toBe(TILE_SURFACE);
+  });
+
+  it("with no screen named (the dashboard, Setări), a group keeps its old hue", () => {
+    expect(["record", "related", "meta", "family", "fixed"].map((g) => tileHue(g as never))).toEqual(["card", "green", "yellow", "blue", "purple"]);
+  });
+
+  it("every record screen names its entity: its tiles, its bar's strips and its diagram", () => {
+    for (const [file, reg] of [
+      [["properties", "_components", "property-detail-tiles.tsx"], "PROP_TILE_REGISTRY"],
+      [["natural-persons", "_components", "person-detail-tiles.tsx"], "NP_TILE_REGISTRY"],
+      [["judicial-persons", "_components", "person-detail-tiles.tsx"], "JP_TILE_REGISTRY"],
+      [["documents", "_components", "document-detail-tiles.tsx"], "reg"],
+    ] as const) {
+      const src = code(read("src", "app", ...file));
+      const calls = [...src.matchAll(/groupSurface\(tileGroupOf\((\w+), "\w+"\)(, [\w.]+)?\)/g)];
+      expect(calls.length).toBeGreaterThan(0);
+      expect(src.match(/groupSurface\(/g)).toHaveLength(calls.length);
+      for (const c of calls) expect([file.join("/"), c[0], c[2]]).toEqual([file.join("/"), c[0], `, ${reg}.entity`]);
+      expect(src).toMatch(new RegExp(`<TileSelector [^>]*diagram=\\{${reg}\\.entity\\}`));
+    }
+    const bar = code(read("src", "components", "tiles", "tile-selector.tsx"));
+    expect(bar.match(/groupStrip\(/g)).toHaveLength(2);
+    expect(bar.match(/groupStrip\([^)]*, diagram\)/g)).toHaveLength(2);
+    expect(code(read("src", "components", "tiles", "tiles-diagram.tsx"))).toContain("groupColours(r.group, entity)");
   });
 });

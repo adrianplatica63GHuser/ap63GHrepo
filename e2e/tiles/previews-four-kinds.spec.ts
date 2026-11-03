@@ -12,6 +12,8 @@
  *     reads; the spec compares the preview with its indicativ.
  *   - Slice #39.04: a second record of each kind (whose name holds none of the
  *     first's words), so step 7 has „another row" on every list.
+ *   - Slice 41.68: step 13 reads the tiles' fills on the four records' own screens, and the bar's strip for the
+ *     property's right-hand tiles.
  */
 
 import fs from "node:fs";
@@ -23,6 +25,7 @@ import {
 } from "../helpers/records";
 import { ROW_TILE_CEILING_PX, rowTileMinPx } from "../../src/lib/ui/field-widths";
 import { listsOnTheirEarlierColumns } from "../helpers/list-columns";
+import { closeTiles, openTiles, showTile } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}TILES-11`;
 /**
@@ -351,10 +354,17 @@ test.describe("TC-TILES-11 — cele patru previzualizări", () => {
   });
 });
 
-// ── Step 9 (Slice #38.75): the Incursiune as tall as the list, in its own purple ─────────────────────────────
+// ── Step 9 (Slice #38.75): the Incursiune as tall as the list, in its screen's hue (41.68; it read „its own purple") ─────────────────────────────
 
 type Box = { top: number; bottom: number; height: number };
-type Measure = { list: Box; frame: Box; tile: Box; wrapped: boolean; surface: string; pinned: string; card: string };
+type Measure = { list: Box; frame: Box; tile: Box; wrapped: boolean; surface: string; pinned: string; card: string; green: string; blue: string };
+
+/**
+ * Slice 41.68: the fill each kind's Incursiune wears — its own screen's hue for the tile it shows: a person's and a
+ * company's „Interacțiuni" the purple, a property's „Hartă" the green, a document's „Pagini" the blue. (It read „the
+ * pinned purple" for all four.)
+ */
+const INCURSION_HUE: Record<string, "pinned" | "green" | "blue"> = { person: "pinned", company: "pinned", property: "green", document: "blue" };
 
 /** The list's body (toolbar to pagination) and the Incursiune beside it; the reused tile's fill and the two fills it may wear. */
 async function measure(page: Page): Promise<Measure> {
@@ -383,6 +393,8 @@ async function measure(page: Page): Promise<Measure> {
       surface: getComputedStyle(document.querySelector("[data-incursion] > section")!).backgroundColor,
       pinned: fill("bg-card-pinned"),
       card: fill("bg-card"),
+      green: fill("bg-card-related"),
+      blue: fill("bg-card-family"),
     };
   });
 }
@@ -431,13 +443,13 @@ async function asTall(page: Page, list: string, kind: string, shot: string): Pro
       await searchFor(page, TALL, PAGE);
       const tall = await measure(page);
       expect(Math.abs(tall.tile.height - rowTileMinPx(kind)), `${at}, a page: still the preview's height`).toBeLessThanOrEqual(2);
-      expect(tall.surface, `${at}: the tile's fill is the pinned purple`).toBe(tall.pinned);
+      expect(tall.surface, `${at}: the tile's fill is its screen's hue (41.68)`).toBe(tall[INCURSION_HUE[kind]]);
       if (tall.wrapped) await page.locator("[data-incursion]").evaluate((el) => el.scrollIntoView({ block: "end" }));
       await page.mouse.move(1, 1);
       await page.screenshot({ path: `playwright-report/incursion-height/${shot}-${width}.png` });
       continue;
     }
-    expect(short.surface, `${at}: the tile's fill is the pinned purple`).toBe(short.pinned);
+    expect(short.surface, `${at}: the tile's fill is its screen's hue (41.68)`).toBe(short[INCURSION_HUE[kind]]);
     expect(short.surface, `${at}: not the card's grey-blue`).not.toBe(short.card);
     if (width === 1920) {
       expect(short.wrapped, `${at}: the tile stands beside the list`).toBe(false);
@@ -460,7 +472,7 @@ async function asTall(page: Page, list: string, kind: string, shot: string): Pro
       expect(Math.abs(tall.tile.top - tall.list.top), `${at}: tops ${tall.tile.top} / ${tall.list.top}`).toBeLessThanOrEqual(2);
       expect(Math.abs(tall.tile.bottom - tall.list.bottom), `${at}: bottoms ${tall.tile.bottom} / ${tall.list.bottom}`).toBeLessThanOrEqual(2);
     }
-    expect(tall.surface, `${at}: the tile's fill is the pinned purple`).toBe(tall.pinned);
+    expect(tall.surface, `${at}: the tile's fill is its screen's hue (41.68)`).toBe(tall[INCURSION_HUE[kind]]);
     // The spec's own records only: nothing in the picture identifies anyone. A tile under the list is scrolled
     // into the picture (the page scrolls inside the layout, so `fullPage` stops at the window); the pointer off the
     // rows, so the eye's tooltip does not cover the list.
@@ -471,7 +483,7 @@ async function asTall(page: Page, list: string, kind: string, shot: string): Pro
 }
 
 test.describe("TC-TILES-11 — the Incursiune as tall as the list (#38.75)", () => {
-  test("step 9: on the four lists, level with the list's top and bottom, in the pinned purple", async ({ page }) => {
+  test("step 9: on the four lists, level with the list's top and bottom, in its screen's hue", async ({ page }) => {
     // 40.66: the lists open on four default columns; these steps were written against the earlier ones.
     await listsOnTheirEarlierColumns(page);
     test.slow();
@@ -495,7 +507,7 @@ test.describe("TC-TILES-11 — the Incursiune as tall as the list (#38.75)", () 
   });
 });
 
-// ── Step 10 (Slice #38.76): the chain link shows „Legături” beside the list, read-only, in green ─────────────
+// ── Step 10 (Slice #38.76): the chain link shows „Legături” beside the list, read-only, in the card (41.68; it read „in green") ─────────────
 
 /** Step 10's own records and links. Its own marker: neither holds `MARK` or `TALL`, nor is held by them. */
 const LINKS = `${E2E_MARKER}LEGATURI-10`;
@@ -558,11 +570,12 @@ async function links(page: Page, list: string, name: string, kind: string, rows:
   await expect(inner.getByRole("button", { name: /^Asociază/ })).toHaveCount(0);
   await expect(inner.getByRole("button", { name: "Dezasociază" })).toHaveCount(0);
   await expect(inner.locator("[data-share-button]")).toHaveCount(0);
-  // The green its screen gives it — the tile and, calmer, its rows.
-  const [tileFill, related] = await fills(page, `[data-incursion-view="links"] [data-tile="incursion-links"]`, "bg-card-related");
-  expect(tileFill, `${list}: „Legături” in the related green`).toBe(related);
-  const [rowsFill, relatedRow] = await fills(page, `[data-incursion-view="links"] [data-related-rows]`, "bg-card-related-row");
-  expect(rowsFill, `${list}: its rows in the rows' green`).toBe(relatedRow);
+  // The colour its screen gives it — the tile and, lighter, its rows. 41.68: the card's grey-blue and a lighter row of
+  // it (it read „in the related green" — bg-card-related — and „in the rows' green" — bg-card-related-row).
+  const [tileFill, card] = await fills(page, `[data-incursion-view="links"] [data-tile="incursion-links"]`, "bg-card");
+  expect(tileFill, `${list}: „Legături” in the card's grey-blue`).toBe(card);
+  const [rowsFill, cardRow] = await fills(page, `[data-incursion-view="links"] [data-related-rows]`, "bg-card-row");
+  expect(rowsFill, `${list}: its rows on the card's lighter row`).toBe(cardRow);
   for (const width of [1366, 1920]) {
     await page.setViewportSize({ width, height: 1000 });
     await page.waitForTimeout(400);
@@ -592,7 +605,7 @@ async function links(page: Page, list: string, name: string, kind: string, rows:
 }
 
 test.describe("TC-TILES-11 — the chain link shows „Legături” (#38.76)", () => {
-  test("step 10: on the four lists, the object's „Legături” beside the list, read-only, in green, beside the eye's tile", async ({ page }) => {
+  test("step 10: on the four lists, the object's „Legături” beside the list, read-only, in the card, beside the eye's tile", async ({ page }) => {
     // 40.66: the lists open on four default columns; these steps were written against the earlier ones.
     await listsOnTheirEarlierColumns(page);
     test.slow();
@@ -847,6 +860,82 @@ test.describe("TC-TILES-11 — Back returns to the list as it was (#39.26)", () 
       await expect(page).toHaveURL((u) => u.pathname === "/documents" && u.search === "", { timeout: 30_000 });
       await expect(page.locator("main").locator('input[placeholder^="caută"]').first()).toHaveValue("", { timeout: 30_000 });
       await expect(page.locator("[data-list-row-tiles]")).toHaveCount(0);
+    } finally {
+      for (const [kind, id] of made) await removeRecord(page.request, kind, id);
+    }
+  });
+});
+
+// ── Step 13 (Slice 41.68): the tiles' colours switched round to follow the kinds ─────────────────────────────
+
+/** Step 13's own records. Its own marker, which neither holds the others' nor is held by them. */
+const HUES = `${E2E_MARKER}TILE-HUES`;
+
+/** The tile's fill — the region or, when the region is a bare wrapper, the first box inside it that has one. */
+async function tileFill(tile: Locator): Promise<string> {
+  return tile.evaluate((el) => {
+    const queue: Element[] = [el];
+    while (queue.length) {
+      const e = queue.shift()!;
+      const c = getComputedStyle(e).backgroundColor;
+      if (c !== "rgba(0, 0, 0, 0)" && c !== "transparent") return c;
+      queue.push(...[...e.children].slice(0, 3));
+    }
+    return "none";
+  });
+}
+
+/** A probe's fill for each hue's class, light. */
+async function hueFills(page: Page): Promise<Record<"card" | "green" | "blue" | "purple", string>> {
+  return page.evaluate(() => {
+    const fill = (cls: string) => {
+      const probe = document.createElement("div");
+      probe.className = cls;
+      document.body.append(probe);
+      const c = getComputedStyle(probe).backgroundColor;
+      probe.remove();
+      return c;
+    };
+    return { card: fill("bg-card"), green: fill("bg-card-related"), blue: fill("bg-card-family"), purple: fill("bg-card-pinned") };
+  });
+}
+
+test.describe("TC-TILES-11 — the tiles' colours follow the kinds (41.68)", () => {
+  test("step 13: „Legături” the card; the maps green; „Interacțiuni” and the tree purple; „Pagini” blue", async ({ page }) => {
+    test.slow();
+    await removeLeftovers(page.request, HUES);
+    await page.setViewportSize({ width: 1920, height: 1000 });
+    const made: [RecordKind, string][] = [];
+    try {
+      const person = await createNaturalPerson(page.request, { lastName: HUES, firstName: "Ana" });
+      made.push(["person", person]);
+      const company = await createCompany(page.request, { name: `${HUES} Firmă` });
+      made.push(["company", company]);
+      const property = await createProperty(page.request, { nickname: `${HUES} Teren` });
+      made.push(["property", property]);
+      const doc = await createDocumentOfType(page.request, "ADEVERINTA", `${HUES} Act`);
+      made.unshift(["document", doc]);
+
+      const expectFills = async (url: string, heading: string, want: [string, "card" | "green" | "blue" | "purple"][]) => {
+        await page.goto(url);
+        await expect(page.getByRole("heading", { level: 1, name: heading, exact: true })).toBeVisible({ timeout: 30_000 });
+        const hue = await hueFills(page);
+        for (const [name, h] of want) {
+          const tile = await showTile(page, name);
+          expect(await tileFill(tile), `${url}: „${name}” in the ${h}`).toBe(hue[h]);
+        }
+        return hue;
+      };
+      const hue = await expectFills(`/properties/${property}`, `${HUES} Teren`, [["Legături", "card"], ["Hartă", "green"], ["Puncte de contur", "green"]]);
+      // The bar's strip for the property's right-hand tiles takes their green too.
+      await openTiles(page);
+      const strip = page.locator('[data-tile-group="fixed"]').first();
+      await expect(strip).toBeVisible({ timeout: 15_000 });
+      expect(await strip.evaluate((e) => getComputedStyle(e).backgroundColor), "the bar's strip for „Hartă”…").toBe(hue.green);
+      await closeTiles(page);
+      await expectFills(`/natural-persons/${person}`, `Ana ${HUES}`, [["Legături", "card"], ["Interacțiuni", "purple"], ["Arbore de moștenire", "purple"]]);
+      await expectFills(`/judicial-persons/${company}`, `${HUES} Firmă`, [["Legături", "card"], ["Interacțiuni", "purple"]]);
+      await expectFills(`/documents/${doc}`, `${HUES} Act`, [["Legături", "card"], ["Pagini", "blue"]]);
     } finally {
       for (const [kind, id] of made) await removeRecord(page.request, kind, id);
     }
