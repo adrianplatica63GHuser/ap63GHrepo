@@ -38,7 +38,7 @@ TRUNCATE lookup_doc_type_person_role CASCADE;
 -- Slice #39.66: the type ↔ use pairs, before the two lists they join (the CASCADE below would clear them anyway).
 TRUNCATE lookup_property_type_use CASCADE;
 TRUNCATE lookup_person_role, lookup_property_type, lookup_tarla,
-         lookup_use_category, lookup_person_type, lookup_person_relationship, lookup_citizenship,
+         lookup_use_category, lookup_person_type, lookup_person_relationship, lookup_citizenship, lookup_address_country,
          lookup_document_type,
          lookup_judicial_person_type,
          lookup_property_property_role, lookup_document_document_role CASCADE;
@@ -125,6 +125,12 @@ INSERT INTO lookup_person_relationship (name, sort_order) VALUES
 INSERT INTO lookup_citizenship (name, sort_order) VALUES
   ('Română', 1), ('Moldoveană', 2), ('Americană', 3), ('Germană',  4),
   ('Franceză', 5), ('Italiană', 6), ('Spaniolă',  7), ('Engleză',  8);
+
+-- ── lookup_address_country (Slice 41.51, migration_124) ──────────────────────
+-- The countries of the eight citizenships above, as country names, in their order.
+INSERT INTO lookup_address_country (name, sort_order) VALUES
+  ('România', 1), ('Moldova', 2), ('Statele Unite ale Americii', 3), ('Germania', 4),
+  ('Franța', 5), ('Italia', 6), ('Spania', 7), ('Regatul Unit', 8);
 
 -- ── lookup_judicial_person_type (Slice #15.07) ───────────────────────────────
 -- Slice #39.71 (migration_115): the seven public-body types, at 21–27 so they list after the company forms, and

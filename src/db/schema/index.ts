@@ -1063,6 +1063,16 @@ export const lookupCitizenship = pgTable("lookup_citizenship", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+// Slice 41.51, migration_124: „Țara adresei" — the countries an address tile's „Țară" is chosen from. The address
+// keeps the NAME (address.country, property_address.country are text), so nothing refers to a row here.
+export const lookupAddressCountry = pgTable("lookup_address_country", {
+  id:        uuid("id").primaryKey().defaultRandom(),
+  name:      text("name").notNull(),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 // ── Document group ──────────────────────────────────────────────────────────
 
 // `key` (Slice #15.05) is an immutable slug — e.g. "CONTRACT_VANZARE" — that

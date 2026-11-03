@@ -1693,6 +1693,15 @@ CREATE TABLE IF NOT EXISTS tarla_corner (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS tarla_corner_tarla_seq_unique ON tarla_corner (tarla_id, sequence_no);
 
+-- migration_124 (Slice 41.51) -- „Țara adresei", the countries an address tile's „Țară" is chosen from
+CREATE TABLE IF NOT EXISTS lookup_address_country (
+  id         uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  name       text        NOT NULL,
+  sort_order integer     NOT NULL DEFAULT 0,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
 -- migration_114 (Slice #39.70) -- „Relația cu firma" and the relationships a natural person holds
 CREATE TABLE IF NOT EXISTS lookup_person_relationship (
   id         uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
