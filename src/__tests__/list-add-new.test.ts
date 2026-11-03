@@ -9,7 +9,7 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import { Building2, FileText, Map, User } from "lucide-react";
+import { ENTITY_ICON } from "@/lib/ui/entity-icon";
 
 import { NAV_SECTIONS, domainIcon } from "@/components/sidebar/nav-config";
 import { LIST_SEARCH_REM } from "@/lib/ui/field-widths";
@@ -18,11 +18,12 @@ import EN from "../../messages/en-GB.json";
 
 const read = (...p: string[]) => fs.readFileSync(path.join(process.cwd(), ...p), "utf8");
 
+// 41.47: the kinds' marks in their colours, ENTITY_ICON (it read the Lucide User, Building2, Map and FileText).
 const LISTS = [
-  { dir: "natural-persons", ns: "naturalPerson", nav: "naturalPeople", icon: User, ro: "Nouă", old: "Adaugă persoană" },
-  { dir: "judicial-persons", ns: "judicialPerson", nav: "judicialPeople", icon: Building2, ro: "Nouă", old: "Adaugă persoană juridică" },
-  { dir: "properties", ns: "property", nav: "propertyList", icon: Map, ro: "Nouă", old: "Adaugă proprietate" },
-  { dir: "documents", ns: "document", nav: "document", icon: FileText, ro: "Nou", old: "Adaugă act" },
+  { dir: "natural-persons", ns: "naturalPerson", nav: "naturalPeople", icon: ENTITY_ICON.natural, ro: "Nouă", old: "Adaugă persoană" },
+  { dir: "judicial-persons", ns: "judicialPerson", nav: "judicialPeople", icon: ENTITY_ICON.judicial, ro: "Nouă", old: "Adaugă persoană juridică" },
+  { dir: "properties", ns: "property", nav: "propertyList", icon: ENTITY_ICON.property, ro: "Nouă", old: "Adaugă proprietate" },
+  { dir: "documents", ns: "document", nav: "document", icon: ENTITY_ICON.document, ro: "Nou", old: "Adaugă act" },
 ] as const;
 
 describe("domainIcon (40.37)", () => {

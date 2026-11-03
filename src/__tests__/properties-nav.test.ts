@@ -12,6 +12,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { Map as MapIcon } from "lucide-react";
 import { NAV_SECTIONS } from "@/components/sidebar/nav-config";
+import { ENTITY_ICON, ENTITY_ICON_PLAIN } from "@/lib/ui/entity-icon";
 import { getActiveHref } from "@/components/sidebar/sidebar-helpers";
 
 const read = (rel: string) => fs.readFileSync(path.join(process.cwd(), rel), "utf8");
@@ -37,7 +38,9 @@ describe("the sidebar's one property item (#37.92)", () => {
     const domain = NAV_SECTIONS.find((s) => s.key === "domain");
     const item = domain?.items.find((i) => i.href === "/properties");
     expect(item?.key).toBe("propertyList");
-    expect(item?.icon).toBe(MapIcon);
+    // 41.47: the map in the property's colour, ENTITY_ICON.property (it read `toBe(MapIcon)`, the plain Lucide Map).
+    expect(item?.icon).toBe(ENTITY_ICON.property);
+    expect(ENTITY_ICON_PLAIN.property).toBe(MapIcon);
     expect(RO.nav.items.propertyList).toBe("Proprietăți");
     expect(EN.nav.items.propertyList).toBe("Properties");
   });
