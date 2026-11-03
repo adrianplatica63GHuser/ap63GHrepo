@@ -128,7 +128,8 @@ describe("one gap on every page: „Categorii Folosință”'s (Slice #39.88)", 
   });
 
   it("„Cetățenie” and „Relația cu firma” keep their list and narrow their tile, off the grid where units miss (Ask first 3)", () => {
-    expect(MODAL).toContain('export const REFERENCE_TILE_FOLLOWS_LIST: ReadonlySet<ListKey> = new Set(["citizenships", "person-relationships"]);');
+    // 41.51: „Țara adresei" too, its sister's shape (it read new Set(["citizenships", "person-relationships"])).
+    expect(MODAL).toContain('export const REFERENCE_TILE_FOLLOWS_LIST: ReadonlySet<ListKey> = new Set(["citizenships", "address-countries", "person-relationships"]);');
     // Their tables, measured at 1920 px when the slice started: 464 and 600 px.
     for (const [table, tile] of [[29, 508], [37.5, 644]] as const) {
       expect(columnsRem(table === 29 ? ["valueNameShort", "valueUsage", "valueActions"] : ["valueName", "valueUsage", "valueActions"])).toBe(table);

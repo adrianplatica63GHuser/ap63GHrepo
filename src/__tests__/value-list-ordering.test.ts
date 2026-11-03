@@ -398,6 +398,7 @@ const FIXED_BY_34_01: ListKey[] = [
   "use-categories",
   "person-types",
   "citizenships",
+  "address-countries", // 41.51: built this way from the start
   "judicial-person-types",
   // "institutions" was the seventh, until Slice #39.72 retired the list (migration_116).
 ];

@@ -64,7 +64,8 @@ test.describe("TC-VL-11 — tipurile de proprietate și folosințele", () => {
       await expect(nav.getByRole("button", { name: "Tipuri de Proprietate și Folosințe", exact: true })).toHaveAttribute("aria-current", "page", { timeout: 30_000 });
       const valueLists = nav.locator("[data-category]").nth(2).locator("button[data-list-key]");
       // #39.70: „Relația cu firma" after „Cetățenie" — was the three without it.
-      await expect(valueLists).toHaveText(["Indicative Tarla", "Cetățenie", "Relația cu firma"]);
+      // 41.51: „Țara adresei" after „Cetățenie" (it read ["Indicative Tarla", "Cetățenie", "Relația cu firma"]).
+      await expect(valueLists).toHaveText(["Indicative Tarla", "Cetățenie", "Țara adresei", "Relația cu firma"]);
       const types = page.getByRole("region", { name: "Tipuri de Proprietate", exact: true });
       const uses = page.getByRole("region", { name: "Categorii Folosință", exact: true });
       await expect(types).toBeVisible({ timeout: 30_000 });

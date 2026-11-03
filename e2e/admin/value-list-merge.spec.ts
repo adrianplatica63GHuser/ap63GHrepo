@@ -87,8 +87,8 @@ test.describe("TC-VL-02 — „Date de referință” pe o pagină, două valori
         // #39.66: „Categorii Folosință" is a tile on the property types' page, named for both.
         ["Tipuri de Persoană Fizică", "Tipuri de Persoană Juridică", "Tipuri de Proprietate și Folosințe", "Tipuri de Document"],
         ["Roluri Persoane", "Legături Proprietate → Proprietate", "Legături Document → Document"],
-        // #39.70: „Relația cu firma" after „Cetățenie".
-        ["Indicative Tarla", "Cetățenie", "Relația cu firma"],
+        // #39.70: „Relația cu firma" after „Cetățenie". 41.51: „Țara adresei" between them.
+        ["Indicative Tarla", "Cetățenie", "Țara adresei", "Relația cu firma"],
       ]);
       expect(groups.flat().filter((b) => !b.oneLine || !b.whole).map((b) => b.name)).toEqual([]);
       await expect(nav.getByRole("button", { name: "Tipuri de Proprietate și Folosințe", exact: true })).toHaveAttribute("aria-current", "page");

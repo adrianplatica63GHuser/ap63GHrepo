@@ -42,12 +42,13 @@ describe("the categories (nothing disappears)", () => {
       // #39.66: „Categorii Folosință" left this group — a tile on the property types' page (below).
       // #39.70: „Relația cu firma" after „Cetățenie".
       // #39.72: „Instituții" retired — its institutions are juridical persons.
-      ["Indicative Tarla", "Cetățenie", "Relația cu firma"],
+      // 41.51: „Țara adresei" right after „Cetățenie" (it read ["Indicative Tarla", "Cetățenie", "Relația cu firma"]).
+      ["Indicative Tarla", "Cetățenie", "Țara adresei", "Relația cu firma"],
     ]);
     expect(titles(en)).toEqual([
       ["Natural Person Types", "Juridical Person Types", "Property Types", "Document Types"],
       ["Person Roles", "Property → Property Links", "Document → Document Links"],
-      ["Tarla Codes", "Citizenship", "Relationship to the business"],
+      ["Tarla Codes", "Citizenship", "Address country", "Relationship to the business"],
     ]);
   });
 
@@ -81,6 +82,7 @@ describe("the categories (nothing disappears)", () => {
     expect(categoryOfList("document-types")).toBe("objectTypes");
     expect(categoryOfList("tarla")).toBe("valueLists");
     expect(categoryOfList("citizenships")).toBe("valueLists");
+    expect(categoryOfList("address-countries")).toBe("valueLists"); // 41.51
     expect(categoryOfList("person-roles")).toBe("rolesLinks");
     expect(categoryOfList("document-document-roles")).toBe("rolesLinks");
   });

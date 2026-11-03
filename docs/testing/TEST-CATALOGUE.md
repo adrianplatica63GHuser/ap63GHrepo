@@ -190,6 +190,7 @@ fixed fixture where the existing one will do.
 | [TC-VL-09](cases/TC-VL-09.md) | „Date de referință”: titlurile coloanelor rămân în vedere cât lista derulează | value lists | happy | — | `automated` | 2026-10-09 | `e2e/admin/reference-sticky-header.spec.ts` |
 | [TC-VL-10](cases/TC-VL-10.md) | „Roluri și legături”: triunghiul legăturilor deasupra listelor | value lists | happy | — | `automated` | 2026-10-09 | `e2e/admin/relationship-triangle.spec.ts` |
 | [TC-VL-11](cases/TC-VL-11.md) | „Tipuri de Proprietate și Folosințe”: tipurile, folosințele și ce folosințe permite fiecare tip | value lists | happy | — | `automated` | 2026-10-18 | `e2e/admin/property-type-uses.spec.ts` |
+| [TC-VL-12](cases/TC-VL-12.md) | „Țara adresei” după „Cetățenie”, cu cele opt țări; o schimbare în una cere verificarea celeilalte | value lists | happy | TC-E2E-VL-12 | `automated` | 2026-11-02 | `e2e/admin/address-country-list.spec.ts` |
 | [TC-ACCT-01](cases/TC-ACCT-01.md) | Parola contului de test schimbată și pusă la loc | account | happy | — | `driven` | 2026-09-28 | — |
 | [TC-TILES-01](cases/TC-TILES-01.md) | Părțile unei persoane fizice, alese cu bife | tiles | happy | — | `driven` | 2026-09-28 | — |
 | [TC-TILES-02](cases/TC-TILES-02.md) | Părțile unei persoane juridice, alese cu bife | tiles | happy | — | `driven` | 2026-09-28 | — |

@@ -282,7 +282,8 @@ async function correspondenceOnItsOwn(page: Page, first: "home" | "headquarters"
   await expect(page.locator('[data-tile-edit-bar="correspondence"]')).toBeVisible();
   await expect(page.locator(`[data-tile-edit-bar="${first}"]`)).toHaveCount(0);
   await page.locator('input[name="addresses.CORRESPONDENCE.locality"], textarea[name="addresses.CORRESPONDENCE.locality"]').fill(`${MARK20} Ploiești`);
-  await page.locator('input[name="addresses.CORRESPONDENCE.country"], textarea[name="addresses.CORRESPONDENCE.country"]').fill("România");
+  // 41.51: „Țară" is a dropdown of „Țara adresei" (it read `input[…], textarea[…]` and `.fill("România")`).
+  await page.locator('select[name="addresses.CORRESPONDENCE.country"]').selectOption("România");
   await page.locator('[data-tile-save="correspondence"]').click();
   await expect(page.locator('[data-tile-edit-bar="correspondence"]')).toHaveCount(0, { timeout: 30_000 });
 

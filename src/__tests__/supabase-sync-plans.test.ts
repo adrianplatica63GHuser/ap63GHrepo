@@ -32,4 +32,9 @@ describe("supabase-sync: every syncSimple call has a column plan", () => {
   it("plans lookup_person_relationship (the 41.14 failure)", () => {
     expect(planned).toContain("lookup_person_relationship:sort_order");
   });
+
+  it("plans lookup_address_country, after lookup_citizenship (41.51)", () => {
+    expect(planned).toContain("lookup_address_country:sort_order");
+    expect(planned.indexOf("lookup_address_country:sort_order")).toBe(planned.indexOf("lookup_citizenship:sort_order") + 1);
+  });
 });

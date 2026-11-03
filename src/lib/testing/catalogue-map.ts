@@ -97,7 +97,7 @@ export const CATALOGUE_ROUTE_CASES: Readonly<Record<string, readonly CatalogueCa
   "/skills-map":                           ["TC-SKILL-01", "TC-NAV-01", "TC-SKILL-03"], // Slices #39.42, #39.50
   "/skills-map/[skill]":                   ["TC-SKILL-01", "TC-SKILL-02"], // Slices #39.42, #39.43
   "/ask":                                  ["TC-HELP-03", "TC-NAV-01"], // Slice #39.45
-  "/admin/value-lists":                    ["TC-VL-01", "TC-LAYOUT-01", "TC-DOC-07", "TC-DOC-15", "TC-AUTH-02", "TC-VL-02", "TC-VL-03", "TC-VL-04", "TC-VL-05", "TC-VL-06", "TC-VL-07", "TC-VL-08", "TC-VL-09", "TC-VL-10", "TC-VL-11", "TC-LAYOUT-07"],
+  "/admin/value-lists":                    ["TC-VL-01", "TC-LAYOUT-01", "TC-DOC-07", "TC-DOC-15", "TC-AUTH-02", "TC-VL-02", "TC-VL-03", "TC-VL-04", "TC-VL-05", "TC-VL-06", "TC-VL-07", "TC-VL-08", "TC-VL-09", "TC-VL-10", "TC-VL-11", "TC-LAYOUT-07", "TC-VL-12"],
   "/admin/value-lists/document-types/[code]": ["TC-VL-04"],
   "/account/change-password":              ["TC-ACCT-01", "TC-LAYOUT-01"],
 };
@@ -176,6 +176,10 @@ export const PROMOTED_WITHOUT_DRIVING: Readonly<Record<CatalogueCaseId, string>>
   "TC-TILES-27":
     "Slice 41.19: the slice's header asks for this spec in the slice itself — one tile's width, set on a person and read " +
     "on a property in px. Its green run on the test runner is the case's proof.",
+  "TC-VL-12":
+    "Slice 41.51: the slice's header asks for this case in the slice itself — the new list's place and seed, and the " +
+    "notice a save shows; an invented country added and deleted through the screen. Its green run on the test runner " +
+    "is the case's proof.",
   "TC-TILES-28":
     "Slice 41.46: the slice's header asks for this step in the slice itself — a bubble's computed font size, weight and " +
     "wrap, compared with an icon button's, which a hand run reads no better than the spec. Its green run on the test " +
