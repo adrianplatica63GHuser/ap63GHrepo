@@ -19,7 +19,8 @@ import {
   useForm,
   useWatch,
 } from "react-hook-form";
-import { ArrowLeft, Building2, Minimize2, MousePointerClick, Pencil, Save, Trash2, User, X } from "lucide-react";
+import { ArrowLeft, Minimize2, MousePointerClick, Pencil, Save, Trash2, X } from "lucide-react";
+import { ENTITY_ICON } from "@/lib/ui/entity-icon";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
 import { UnsavedChangesBanner } from "@/components/unsaved-changes-banner";
@@ -2918,7 +2919,7 @@ function SurveyorPickerDialog({
             </p>
             <div className="flex gap-3">
               <IconButton
-                icon={User}
+                icon={ENTITY_ICON.natural}
                 label={t("surveyorPicker.btnNatural")}
                 showLabel
                 variant="secondary"
@@ -2927,7 +2928,7 @@ function SurveyorPickerDialog({
                 onClick={() => handleChooseType("NATURAL")}
               />
               <IconButton
-                icon={Building2}
+                icon={ENTITY_ICON.judicial}
                 label={t("surveyorPicker.btnJudicial")}
                 showLabel
                 variant="secondary"

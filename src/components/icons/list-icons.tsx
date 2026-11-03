@@ -10,16 +10,20 @@
  * Drawn at 30 px (1.25em of the title) they keep the stroke the record screens' 24-px icons have, scaled: a 24-unit
  * box keeps the drawing simple enough to read at that size — three people rather than the picture's five, a dot in
  * the middle pin rather than a house in each.
+ *
+ * Slice 41.47: each of the four draws its line in its kind's colour (`ENTITY_COLOUR_VAR`, src/lib/ui/entity-icon.ts),
+ * inline, as `ENTITY_ICON`'s do; the title beside it keeps its own colour.
  */
 import { forwardRef } from "react";
 import type { LucideProps } from "lucide-react";
 
 import { Glyph } from "@/components/icons/area-icons";
+import { ENTITY_COLOUR_VAR } from "@/lib/ui/entity-icon";
 
 /** Persoane fizice — three people, the front one in the middle. */
 export const PeopleGroupIcon = forwardRef<SVGSVGElement, LucideProps>(function PeopleGroupIcon(props, ref) {
   return (
-    <Glyph ref={ref} name="people-group" {...props}>
+    <Glyph ref={ref} name="people-group" {...props} data-kind-icon="natural" style={{ ...props.style, color: ENTITY_COLOUR_VAR.natural }}>
       <circle cx="12" cy="9.5" r="3" />
       <path d="M6.5 21v-1a5.5 5.5 0 0 1 11 0v1" />
       <circle cx="4.8" cy="7.5" r="2.2" />
@@ -33,7 +37,7 @@ export const PeopleGroupIcon = forwardRef<SVGSVGElement, LucideProps>(function P
 /** Persoane juridice — three office blocks, the middle one tallest, on one ground line. */
 export const BuildingsIcon = forwardRef<SVGSVGElement, LucideProps>(function BuildingsIcon(props, ref) {
   return (
-    <Glyph ref={ref} name="buildings" {...props}>
+    <Glyph ref={ref} name="buildings" {...props} data-kind-icon="judicial" style={{ ...props.style, color: ENTITY_COLOUR_VAR.judicial }}>
       <path d="M9 21V3.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 .5.5V21" />
       <path d="M9 9H3.5a.5.5 0 0 0-.5.5V21" />
       <path d="M15 7h5.5a.5.5 0 0 1 .5.5V21" />
@@ -47,7 +51,7 @@ export const BuildingsIcon = forwardRef<SVGSVGElement, LucideProps>(function Bui
 /** Proprietăți — a folded map under three location pins. */
 export const MapPinsIcon = forwardRef<SVGSVGElement, LucideProps>(function MapPinsIcon(props, ref) {
   return (
-    <Glyph ref={ref} name="map-pins" {...props}>
+    <Glyph ref={ref} name="map-pins" {...props} data-kind-icon="property" style={{ ...props.style, color: ENTITY_COLOUR_VAR.property }}>
       <path d="M2 18l5-2 5 2 5-2 5 2v4l-5-2-5 2-5-2-5 2z" />
       <path d="M12 14s-3-2.9-3-5.3a3 3 0 0 1 6 0c0 2.4-3 5.3-3 5.3z" />
       <circle cx="12" cy="8.7" r=".6" />
@@ -60,7 +64,7 @@ export const MapPinsIcon = forwardRef<SVGSVGElement, LucideProps>(function MapPi
 /** Acte — three stacked pages, the front one with lines of text. */
 export const PagesIcon = forwardRef<SVGSVGElement, LucideProps>(function PagesIcon(props, ref) {
   return (
-    <Glyph ref={ref} name="pages" {...props}>
+    <Glyph ref={ref} name="pages" {...props} data-kind-icon="document" style={{ ...props.style, color: ENTITY_COLOUR_VAR.document }}>
       <path d="M10 2h6l4 4v11" />
       <path d="M7 4.5h6l4 4V19" />
       <path d="M4 7h6l4 4v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z" />

@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { useNameOr } from "@/components/record/use-name-or";
 import Link from "next/link";
-import { ENTITY_ICON, type EntityKind } from "@/lib/ui/entity-icon";
+import { ENTITY_ICON, ENTITY_ICON_PLAIN, type EntityKind } from "@/lib/ui/entity-icon";
 import { EntityMark } from "@/components/record/entity-mark";
 import { useTimeFrames, tfDays } from "@/hooks/use-time-frames";
 import { columnRem, screenRowStyle, tableUnits, type ColumnName } from "@/lib/ui/field-widths";
@@ -311,7 +311,8 @@ function KindCountCard({
   /** The e2e's handle: `data-recent-count` or `data-stale-count`, valued with the kind. */
   mark: "data-recent-count" | "data-stale-count";
 }) {
-  const Icon = ENTITY_ICON[kind];
+  // 41.47: the kind's colour on a plain card; a warning card stays amber, so its mark is the plain one.
+  const Icon = tone === "warning" ? ENTITY_ICON_PLAIN[kind] : ENTITY_ICON[kind];
   const colours =
     tone === "warning"
       ? "border-warning-rim bg-warning-wash text-warning"

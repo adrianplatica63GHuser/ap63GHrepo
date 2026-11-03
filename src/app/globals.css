@@ -148,6 +148,11 @@
   --color-info:         #1d4ed8;  /* blue-700  */
   --color-scrim:        #000000;  /* bg-scrim/40 — the shade behind a dialog (40.83) */
   --color-label:        #1E3A8A;  /* text-label — a field's label and a tile's explanations: the tile header's navy (40.95) */
+  /* Slice 41.47 — the four kinds' icons, Adrian's colours (entity-icon.ts). */
+  --color-kind-natural:  #5A2781;  /* text-kind-natural  — a natural person's mark  */
+  --color-kind-judicial: #123456;  /* text-kind-judicial — a juridical person's mark */
+  --color-kind-property: #00A84C;  /* text-kind-property — a property's mark         */
+  --color-kind-document: #008AF2;  /* text-kind-document — a document's mark         */
 }
 
 .dark {
@@ -178,6 +183,11 @@
   --color-info:         #93c5fd;  /* blue-300 */
   --color-scrim:        #000000;  /* the shade stays black in the dark */
   --color-label:        #BFDBFE;  /* the titles' dark navy (40.95) */
+  /* Slice 41.47 — the same hues lighter, each over 6:1 on the dark card #18181b (Adrian's two dark ones are 1.7 and 1.4). */
+  --color-kind-natural:  #B382D9;  /* 6.0:1 */
+  --color-kind-judicial: #70A8E1;  /* 7.1:1 */
+  --color-kind-property: #00CC5C;  /* 8.3:1 */
+  --color-kind-document: #1F9FFF;  /* 6.3:1 */
 }
 
 /* ───────────────────────────────────────────────────────────────────────────

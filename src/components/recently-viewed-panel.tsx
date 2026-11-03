@@ -36,7 +36,8 @@
 import { useId, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { User, Building2, List, FileText, History, ChevronDown } from "lucide-react";
+import { History, ChevronDown } from "lucide-react";
+import { ENTITY_ICON, type EntityKind } from "@/lib/ui/entity-icon";
 import { IconTooltip } from "@/lib/ui/icon-button";
 import {
   useNavigationHistory,
@@ -49,14 +50,17 @@ import { useUnsavedChanges } from "@/components/providers/unsaved-changes-provid
 // Entity type → icon
 // ---------------------------------------------------------------------------
 
+/** 41.47: the kinds' one mark (`ENTITY_ICON`), in its colour — a property shows the Map, not the List it drew before. */
+const KIND: Record<EntityType, EntityKind> = {
+  NATURAL_PERSON: "natural",
+  JUDICIAL_PERSON: "judicial",
+  PROPERTY: "property",
+  DOCUMENT: "document",
+};
+
 function EntityIcon({ type }: { type: EntityType }) {
-  const cls = "shrink-0 text-fade";
-  switch (type) {
-    case "NATURAL_PERSON":  return <User       size={13} className={cls} aria-hidden="true" />;
-    case "JUDICIAL_PERSON": return <Building2  size={13} className={cls} aria-hidden="true" />;
-    case "PROPERTY":        return <List       size={13} className={cls} aria-hidden="true" />;
-    case "DOCUMENT":        return <FileText   size={13} className={cls} aria-hidden="true" />;
-  }
+  const Icon = ENTITY_ICON[KIND[type]];
+  return <Icon size={13} className="shrink-0" aria-hidden="true" />;
 }
 
 // ---------------------------------------------------------------------------
