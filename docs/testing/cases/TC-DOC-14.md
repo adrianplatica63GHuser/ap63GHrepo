@@ -11,7 +11,7 @@
 ## What this proves
 
 Since Slice #37.93 a new document („Acte" → „Adaugă act") has „Pagini" before it is first saved:
-at the form's right, purple, as on a saved document. The chosen files wait there with their
+at the form's right, blue (41.68; purple before), as on a saved document. The chosen files wait there with their
 thumbnails, in an order the user sets, removable; a file „Pagini" does not take is refused there,
 in the same words as „+ Adaugă pagină" on a saved document. „Salvează" creates the document and then
 uploads the pages in that order, and the new document opens on its own screen showing them.
@@ -34,7 +34,7 @@ The window is 1920 × 1080.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | „Acte" in the sidebar, then „Adaugă act" | The form „Act nou"; at its right „Pagini", purple, with „+ Adaugă pagină" and „Nicio pagină adăugată" |
+| 1 | „Acte" in the sidebar, then „Adaugă act" | The form „Act nou"; at its right „Pagini", blue (41.68), with „+ Adaugă pagină" and „Nicio pagină adăugată" |
 | 2 | „+ Adaugă pagină", chooses `tc-e2e-pagina-1.jpg`, `tc-e2e-pagina-2.jpg` and `tc-e2e-pagina-3.pdf` | Three rows, 1 to 3, in that order: the two JPGs with their picture, the PDF with a file icon. Nothing is saved yet |
 | 3 | „+ Adaugă pagină", chooses a file `poza.heic` | Refused there: „poza.heic: Acest tip de fișier nu poate fi adăugat ca pagină. …"; still three rows |
 | 4 | „Mută mai sus" on row 3, then „Mută mai jos" on row 2 | The PDF goes to 2, then back to 3: 1 `…-1.jpg`, 2 `…-2.jpg`, 3 `…-3.pdf`. Row 1's „Mută mai sus" is inactive |

@@ -30,7 +30,7 @@ import {
   rowTileStyle,
 } from "@/lib/ui/field-widths";
 import { PagesPanel, PEEK_NAME_CHARS, peekName, usePagesPanelState } from "@/app/documents/_components/pages-panel";
-import { RELATED_TILE_SURFACE } from "@/lib/ui/tile-surface";
+import { FAMILY_TILE_SURFACE, RELATED_TILE_SURFACE, TILE_SURFACE } from "@/lib/ui/tile-surface";
 import type { PreviewTarget } from "@/lib/ui/previews";
 import { groupSurface, PINNED_TILE_SURFACE } from "@/lib/ui/tile-surface";
 import { tileGroupOf } from "@/lib/ui/tiles";
@@ -230,7 +230,7 @@ describe("a look, not an edit (#38.72)", () => {
   });
 });
 
-describe("as tall as the list, in the purple it has on its own screen (#38.75)", () => {
+describe("as tall as the list, in the hue it has on its own screen (#38.75; 41.68 by screen)", () => {
   const TILE = read("src", "app", "_components", "incursion-tile.tsx");
   const row = () => document.querySelector<HTMLElement>("[data-list-incursion-row]")!;
   const body = () => document.querySelector<HTMLElement>("[data-list-body]")!;
@@ -282,24 +282,27 @@ describe("as tall as the list, in the purple it has on its own screen (#38.75)",
     expect(pages).toContain('"relative min-h-[320px] flex-1 overflow-hidden');
   });
 
-  it("each tile's surface is its registry group's on its own screen — the fixed group's purple, for all three", () => {
+  // 41.68: the fixed group's hue on each screen — a person's and a company's purple, a property's green, a document's
+  // blue (it read „the fixed group's purple, for all three", `groupSurface(group)` → PINNED_TILE_SURFACE).
+  it("each tile's surface is its registry group's on its own screen — the fixed group, in that screen's hue", () => {
     const saved = documentTileRegistry({ typeKey: null, tabs: [], pages: true });
-    for (const group of [
-      tileGroupOf(NP_TILE_REGISTRY, "interactions"),
-      tileGroupOf(JP_TILE_REGISTRY, "interactions"),
-      tileGroupOf(PROP_TILE_REGISTRY, "map"),
-      tileGroupOf(saved, "pages"),
-    ]) {
+    for (const [group, entity, surface] of [
+      [tileGroupOf(NP_TILE_REGISTRY, "interactions"), NP_TILE_REGISTRY.entity, PINNED_TILE_SURFACE],
+      [tileGroupOf(JP_TILE_REGISTRY, "interactions"), JP_TILE_REGISTRY.entity, PINNED_TILE_SURFACE],
+      [tileGroupOf(PROP_TILE_REGISTRY, "map"), PROP_TILE_REGISTRY.entity, RELATED_TILE_SURFACE],
+      [tileGroupOf(saved, "pages"), saved.entity, FAMILY_TILE_SURFACE],
+    ] as const) {
       expect(group).toBe("fixed");
-      expect(groupSurface(group)).toBe(PINNED_TILE_SURFACE);
+      expect([entity, groupSurface(group, entity)]).toEqual([entity, surface]);
     }
   });
 
   it("takes the surface from the registry, not a second list, and never the card's", () => {
-    expect(TILE).toContain('person: groupSurface(tileGroupOf(NP_TILE_REGISTRY, "interactions")),');
-    expect(TILE).toContain('company: groupSurface(tileGroupOf(JP_TILE_REGISTRY, "interactions")),');
-    expect(TILE).toContain('property: groupSurface(tileGroupOf(PROP_TILE_REGISTRY, "map")),');
-    expect(TILE).toContain('document: groupSurface(tileGroupOf(documentTileRegistry(SAVED_DOCUMENT), "pages")),');
+    // 41.68: each with its screen's entity, so it wears that screen's hue (it read `groupSurface(tileGroupOf(…))`).
+    expect(TILE).toContain('person: groupSurface(tileGroupOf(NP_TILE_REGISTRY, "interactions"), NP_TILE_REGISTRY.entity),');
+    expect(TILE).toContain('company: groupSurface(tileGroupOf(JP_TILE_REGISTRY, "interactions"), JP_TILE_REGISTRY.entity),');
+    expect(TILE).toContain('property: groupSurface(tileGroupOf(PROP_TILE_REGISTRY, "map"), PROP_TILE_REGISTRY.entity),');
+    expect(TILE).toContain('document: groupSurface(tileGroupOf(documentTileRegistry(SAVED_DOCUMENT), "pages"), documentTileRegistry(SAVED_DOCUMENT).entity),');
     expect(TILE).not.toMatch(/\bTILE_SURFACE\b/);
     expect(TILE).not.toContain("PINNED_TILE_SURFACE");
     expect(TILE).toContain('surface={INCURSION_SURFACE.property}');
@@ -307,7 +310,7 @@ describe("as tall as the list, in the purple it has on its own screen (#38.75)",
   });
 });
 
-describe("the chain link shows „Legături” beside the list, read-only, in green (#38.76)", () => {
+describe("the chain link shows „Legături” beside the list, read-only, in its screen's colour (#38.76; 41.68 the card)", () => {
   const TILE = read("src", "app", "_components", "incursion-tile.tsx");
   const RELATED = read("src", "components", "tiles", "related-tile.tsx");
   const BUTTON = read("src", "components", "tiles", "incursion-button.tsx");
@@ -368,7 +371,8 @@ describe("the chain link shows „Legături” beside the list, read-only, in gr
     }
   });
 
-  it("wears its screen's green: the registry's `related` group, RELATED_TILE_SURFACE, on all four", () => {
+  // 41.68: „Legături" wears the card on all four screens now (it read „its screen's green … RELATED_TILE_SURFACE").
+  it("wears its screen's colour: the registry's `related` group, in the card on all four", () => {
     const saved = documentTileRegistry({ typeKey: null, tabs: [], pages: true });
     for (const group of [
       tileGroupOf(NP_TILE_REGISTRY, "related"),
@@ -377,9 +381,12 @@ describe("the chain link shows „Legături” beside the list, read-only, in gr
       tileGroupOf(saved, "related"),
     ]) {
       expect(group).toBe("related");
-      expect(groupSurface(group)).toBe(RELATED_TILE_SURFACE);
+      expect(groupSurface(group)).toBe(RELATED_TILE_SURFACE); // with no screen named, the old green
     }
-    expect(TILE).toContain('person: groupSurface(tileGroupOf(NP_TILE_REGISTRY, "related")),');
+    for (const entity of [NP_TILE_REGISTRY.entity, JP_TILE_REGISTRY.entity, PROP_TILE_REGISTRY.entity, saved.entity]) {
+      expect([entity, groupSurface("related", entity)]).toEqual([entity, TILE_SURFACE]);
+    }
+    expect(TILE).toContain('person: groupSurface(tileGroupOf(NP_TILE_REGISTRY, "related"), NP_TILE_REGISTRY.entity),');
     // #39.04: was `flex flex-1 flex-col` — „Legături" keeps its own height in the column now.
     // #39.25: was `className={`${LINKS_SURFACE[target.kind]} flex flex-col`}` with `style={{ height: INTERACTIONS_TILE_STYLE.minHeight }}`
     // — now as tall as its rows, under the ceiling, and the empty tile its preview's height.

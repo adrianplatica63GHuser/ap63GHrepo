@@ -39,13 +39,13 @@ test.describe("TC-DOC-14 — un act nou primește paginile înainte de prima sal
     await page.setViewportSize({ width: 1920, height: 1080 });
     let id: string | undefined;
     try {
-      // Step 1 — „Acte", „Adaugă act": „Pagini", purple, empty.
+      // Step 1 — „Acte", „Adaugă act": „Pagini", blue (41.68; it read „purple"), empty.
       await page.goto("/");
       await openFromSidebar(page, "Acte");
       await page.getByRole("link", { name: "Adaugă act", exact: true }).click();
       await expect(page.getByRole("heading", { name: "Act nou" })).toBeVisible({ timeout: 30_000 });
       await expect(panel(page)).toHaveAttribute("aria-label", "Pagini");
-      await expect(panel(page)).toHaveClass(/bg-card-pinned/);
+      await expect(panel(page)).toHaveClass(/bg-card-family/); // 41.68: a document's „Pagini" blue (it read /bg-card-pinned/)
       await expect(panel(page).getByRole("button", { name: "+ Adaugă pagină", exact: true })).toBeVisible();
       await expect(panel(page).getByText("Nicio pagină adăugată")).toBeVisible();
 
