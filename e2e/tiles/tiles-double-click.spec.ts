@@ -236,7 +236,7 @@ test.describe("TC-TILES-21 — un dublu-clic urcă o fișă; o fișă trasă las
       }, { timeout: 20_000 }).toEqual(Object.fromEntries(Object.entries(up).map(([k, b]) => [k, [b.x, b.y]])));
 
       // Step 10 (41.60) — „Toate la stânga", right after „Toate sus", three chevrons each, their words the name. A tile
-      // moved one unit right, leaving a gap beside it (its stored column + 1; a unit is 119 px and the 16-px gap).
+      // dragged one unit right, leaving a gap beside it (a unit is 119 px and the 16-px gap).
       const step = 119 + GAP;
       const rowWidth = await page.locator("[data-tile-row]").evaluate((r) => r.getBoundingClientRect().width);
       const loose = Object.entries(up).find(([id, b]) =>
@@ -245,15 +245,17 @@ test.describe("TC-TILES-21 — un dublu-clic urcă o fișă; o fișă trasă las
       );
       if (!loose) throw new Error(`no tile has a unit free on its right: ${JSON.stringify(up)}`);
       const [looseId, was] = loose;
-      // „Toate sus" stored only the tiles it moved; one it left is given its place as it stands, a column to the right.
-      await page.evaluate(([k, id, col, top]) => {
-        const all = JSON.parse(localStorage.getItem(k) ?? "{}") as Record<string, { col: number; top: number }>;
-        all[id] = all[id] ? { ...all[id], col: all[id].col + 1 } : { col: Number(col) + 1, top: Number(top) };
-        localStorage.setItem(k, JSON.stringify(all));
-      }, [KEY, looseId, String(Math.round(was.x / step)), String(was.y)]);
-      await page.reload();
-      await expect(region("Etichete și grupuri")).toBeVisible({ timeout: 30_000 });
-      await expect.poll(async () => (await boxes(page))[looseId]?.x, { timeout: 20_000 }).toBe(was.x + step);
+      // Dragged by its left padding one unit to the right, at the same height.
+      await closeTiles(page);
+      const looseBox = page.locator(`[data-tile-row] [data-packed-col][data-tile="${looseId}"], [data-tile-row] [data-packed-col][data-panel="${looseId}"]`);
+      const lp = await padding(looseBox);
+      await page.mouse.move(lp.x, lp.y);
+      await page.mouse.down();
+      await page.mouse.move(lp.x + 10, lp.y + 3, { steps: 3 });
+      await page.mouse.move(lp.x + step, lp.y, { steps: 12 });
+      await page.mouse.up();
+      await expect.poll(async () => (await boxes(page))[looseId]?.x, { timeout: 10_000 }).toBe(was.x + step);
+      expect((await boxes(page))[looseId].y).toBe(was.y);
       await openTiles(page);
       const allLeft = page.getByRole("button", { name: "Toate la stânga", exact: true });
       const upAgain = page.getByRole("button", { name: "Toate sus", exact: true });
