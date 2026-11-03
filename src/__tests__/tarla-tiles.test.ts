@@ -9,7 +9,7 @@
  */
 import fs from "fs";
 import path from "path";
-import { COLUMN, CORNER_COLUMNS, SCALE, columnRem, tightCornerColumn, unitsInnerRem, unitsRem } from "@/lib/ui/field-widths";
+import { COLUMN, CORNER_COLUMNS, CORNER_DMS_EXTRA_REM, SCALE, columnRem, cornerCoordinateColumn, rem, tightCornerColumn, unitsInnerRem, unitsRem } from "@/lib/ui/field-widths";
 import { TARLA_HALF_UNITS, TARLA_SCREEN, TARLA_THIRD_UNITS } from "@/lib/ui/screen-tiles";
 
 const read = (...p: string[]) => fs.readFileSync(path.join(process.cwd(), ...p), "utf8");
@@ -131,10 +131,29 @@ describe("„Contur”: one line per corner, by narrower gaps (#39.87, Ask first
     expect([loose, tight]).toEqual([152, 212]);
   });
 
-  it("only the tarla page asks for it — the property form and a document's pages keep their table", () => {
+  // 41.57 inverted in place — was „only the tarla page asks for it — the property form and a document's pages keep
+  // their table". Adrian: „Please make room for them on one line by squeezing all the other columns".
+  it("the tarla page and the property form ask for it — a document's pages keep their table", () => {
     expect(PAGE).toMatch(/<CornersManager [^>]*\btight\b/);
-    expect(PROPERTY_FORM).not.toMatch(/<CornersManager[^>]*\btight\b/);
+    expect(PROPERTY_FORM).toMatch(/<CornersManager[^>]*\btight\b/);
     expect(PAGES_PANEL).not.toMatch(/<CornersManager[^>]*\btight\b/);
     expect(CORNERS).toContain('const padX      = tight ? "px-1.5" : "px-3";');
+    // 41.57: the four never fall to a second line.
+    expect(CORNERS).toContain('<div className="flex flex-nowrap justify-end gap-1 items-center" data-corner-buttons="">');
+    expect(CORNERS).not.toMatch(/flex-wrap[^"]*" data-corner-buttons/);
+  });
+
+  // 41.57: „DMS" alone is 0.25rem wider in N and E — „44°26'06.43"N" needs 82 px of content, 6.5rem less px-3 gave 80.
+  it("in DMS the coordinate columns hold „44°26'06.43\"N” (82 px) at either gap; DD and Stereo 70 keep their width", () => {
+    for (const w of [CORNER_COLUMNS.north, CORNER_COLUMNS.east]) {
+      expect(cornerCoordinateColumn(w, "DD")).toBe(w);
+      expect(cornerCoordinateColumn(w, "S70")).toBe(w);
+      const dms = parseFloat(cornerCoordinateColumn(w, "DMS"));
+      expect(dms - parseFloat(w)).toBe(CORNER_DMS_EXTRA_REM);
+      expect(dms * REM - 24).toBeGreaterThanOrEqual(82);
+      expect(parseFloat(tightCornerColumn(rem(dms))) * REM - 12).toBeGreaterThanOrEqual(82);
+    }
+    expect(CORNERS).toMatch(/colWidth\(cornerCoordinateColumn\(CORNER_COLUMNS\.north, displayFmt\)\)/);
+    expect(CORNERS).toMatch(/colWidth\(cornerCoordinateColumn\(CORNER_COLUMNS\.east, displayFmt\)\)/);
   });
 });

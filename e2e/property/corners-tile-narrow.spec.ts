@@ -59,7 +59,8 @@ async function steps(page: Page, id: string, width: number): Promise<void> {
   const boxes = await Promise.all(names.map((n) => boxOf(row.getByRole("button", { name: n, exact: true }))));
   expect(new Set(boxes.map((b) => b.t)).size, `${width}: the four buttons on one line`).toBe(1);
   const table = await boxOf(tile.locator("table"));
-  expect(Math.abs(table.r - 1 - boxes[3].r - 12), `${width}: „Șterge" 12 px from the edge`).toBeLessThanOrEqual(1);
+  // 41.57: the form's table is `tight` — 6-px cell padding, so „Șterge" stands 6 px from the edge (it was 12).
+  expect(Math.abs(table.r - 1 - boxes[3].r - 6), `${width}: „Șterge" 6 px from the edge`).toBeLessThanOrEqual(1);
 
   // Step 2b — 41.57, Adrian: „the 4 buttons get wrapped on a second line … squeezing all the other columns". In every
   // display — DD, DMS, Stereo 70 — every corner's four buttons share one top, and no corner value is cut.
@@ -84,10 +85,10 @@ async function steps(page: Page, id: string, width: number): Promise<void> {
     for (let i = 0; i < 5; i++) {
       const r = rows.nth(i);
       const tops = await Promise.all(names.map(async (n) => (await boxOf(r.getByRole("button", { name: n, exact: true }))).t));
-      expect.soft(new Set(tops).size, `${width} ${display}: corner ${i + 1}'s four buttons on one line (${JSON.stringify(probe)})`).toBe(1);
+      expect(new Set(tops).size, `${width} ${display}: corner ${i + 1}'s four buttons on one line (${JSON.stringify(probe)})`).toBe(1);
       const cut = await r.locator("td").evaluateAll((tds) =>
         (tds as HTMLElement[]).slice(0, 4).filter((td) => td.scrollWidth > td.clientWidth).map((td) => td.textContent));
-      expect.soft(cut, `${width} ${display}: corner ${i + 1}'s values whole (${JSON.stringify(probe)})`).toEqual([]);
+      expect(cut, `${width} ${display}: corner ${i + 1}'s values whole (${JSON.stringify(probe)})`).toEqual([]);
     }
   }
   await tile.getByRole("button", { name: "Stereo 70", exact: true }).click();

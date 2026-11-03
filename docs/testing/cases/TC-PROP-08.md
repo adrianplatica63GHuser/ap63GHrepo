@@ -38,7 +38,8 @@ Steps 1–4 at **1920 px**, then again at **1366 px**.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Opens the property | „Hartă", „Puncte de contur" and „Street View" the same width, their right edges on one line; the right column as wide as they are |
-| 2 | Looks at the first corner row | „Mută mai sus", „Mută mai jos", „Editează", „Șterge" on one line; the right edge of „Șterge" 12 px (the cell's padding) from the table's inner right edge, ±1 |
+| 2 | Looks at the first corner row | „Mută mai sus", „Mută mai jos", „Editează", „Șterge" on one line; the right edge of „Șterge" 6 px (the cell's padding — 12 before 41.57's narrower gaps) from the table's inner right edge, ±1 |
+| 2b | (Slice 41.57) „DD", „DMS", „Stereo 70" in turn | In each, every corner's four buttons on one line, and no value in Nr., Nr. orig., N or E cut (`scrollWidth` ≤ `clientWidth`) |
 | 3 | „Editează" on the first row | The edit row with „Salvează" and „Anulează"; every box and button of it inside the tile; the table does not scroll sideways. „Anulează" closes it |
 | 4 | „DMS", then „Editează" on the first row | The latitude's three boxes and „N" „S" on one line, all left of „Salvează"; each of the six boxes shows its whole value; the table does not scroll sideways. „Anulează" closes it |
 

@@ -13,7 +13,7 @@ import {
 } from "@/lib/geo/convert-client";
 import type { Corner, CornerDiffEntry } from "./form-schema";
 import { HelpHint } from "@/components/help/help-hint";
-import { CORNER_COLUMNS, tightCornerColumn } from "@/lib/ui/field-widths";
+import { CORNER_COLUMNS, cornerCoordinateColumn, tightCornerColumn } from "@/lib/ui/field-widths";
 import { COLUMN_NAMES_BAND } from "@/lib/ui/title-type";
 
 // ---------------------------------------------------------------------------
@@ -48,8 +48,8 @@ type Props = {
   // shown as a thick red line at their former position.
   cornerDiff?:       CornerDiffEntry[];
   // Slice #39.87 — the tarla page's „Contur" only: 6-px cell padding instead of 12 and each column narrower by what that
-  // saves (`tightCornerColumn`), so a corner's four buttons share one line in a third. The property form and a
-  // document's pages leave it off and do not change (Ask first 1).
+  // saves (`tightCornerColumn`), so a corner's four buttons share one line in a third. 41.57: the property form asks
+  // for it too (Adrian: „squeezing all the other columns"); a document's pages leave it off and do not change.
   tight?:            boolean;
   // Slice 40.35 — the corners tile's title row on a property's form: the toolbar („+ Adaugă punct", and on
   // „Adaugă proprietate" the Street View toggle beside it) is drawn there, at the right, not on a line under the table.
@@ -596,8 +596,9 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
           <colgroup>
             <col style={{ width: colWidth(CORNER_COLUMNS.seq) }} />
             <col style={{ width: colWidth(CORNER_COLUMNS.originalIndex) }} />
-            <col style={{ width: colWidth(CORNER_COLUMNS.north) }} />
-            <col style={{ width: colWidth(CORNER_COLUMNS.east) }} />
+            {/* 41.57: in „DMS" the two a little wider, so „44°26'06.43"N" is never cut. */}
+            <col style={{ width: colWidth(cornerCoordinateColumn(CORNER_COLUMNS.north, displayFmt)) }} />
+            <col style={{ width: colWidth(cornerCoordinateColumn(CORNER_COLUMNS.east, displayFmt)) }} />
             {!readOnly && <col />}
           </colgroup>
           <thead className={COLUMN_NAMES_BAND}>
@@ -661,8 +662,10 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
                   // #37.77: right-aligned, so „Șterge" stands against the table's edge.
                   // #39.87: in a third the four (116 px) did NOT fit — the cell held 104 —
                   // and the bin wrapped; the tarla page's `tight` gives it 164.
+                  // 41.57, Adrian: „the 4 buttons get wrapped on a second line … squeezing all the other columns". The
+                  // property form is `tight` too now, and the four never wrap: `flex-nowrap`.
                   <td className={cellCls}>
-                    <div className="flex flex-wrap justify-end gap-1 items-center" data-corner-buttons="">
+                    <div className="flex flex-nowrap justify-end gap-1 items-center" data-corner-buttons="">
                       {/* #37.45 (A068): ArrowUp / ArrowDown. The bare „↑" / „↓"
                           were the names; the hint they carried („Mută mai sus" /
                           „Mută mai jos") is the name and the tooltip now. */}

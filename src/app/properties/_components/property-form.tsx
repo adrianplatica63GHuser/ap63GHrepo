@@ -1567,6 +1567,8 @@ export function PropertyForm({
           <TileTitle title={t("tiles.corners")} subtitle={t("tileSubtitles.corners")} action={editButton("corners", t("tiles.corners"))} />
           <CornersManager
             addOnDisplayLine
+            // 41.57: the tarla page's narrower gaps — the four row buttons get 48 px more, and never wrap.
+            tight
             corners={corners}
             onChange={setCorners}
             readOnly={effectiveMode === "view" || reading("corners")}
