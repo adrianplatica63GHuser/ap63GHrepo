@@ -94,7 +94,8 @@ const sorted = (xs: readonly string[]): string[] => [...xs].sort();
 // ---------------------------------------------------------------------------
 
 // Slice 40.82: `identity` is a nested block too — compared by identitySnapshotsEqual, framed by 40.83's screen.
-const DOC_EXPECTED = [...DOCUMENT_SNAPSHOT_KEYS].filter((k) => k !== "customFields" && k !== "identity");
+// 41.54: `parentDeed` is a link, drawn by „Actul modificat", not a field frame (it read `… && k !== "identity"`).
+const DOC_EXPECTED = [...DOCUMENT_SNAPSHOT_KEYS].filter((k) => k !== "customFields" && k !== "identity" && k !== "parentDeed");
 
 function docSnap(value: string | null): DocumentSnapshot {
   return {

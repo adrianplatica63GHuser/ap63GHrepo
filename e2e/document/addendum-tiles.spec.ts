@@ -24,6 +24,7 @@ import { test, expect, type Locator, type Page } from "../helpers/test";
 import { E2E_MARKER, createDocumentOfType, removeLeftovers, removeRecord } from "../helpers/records";
 import { openEmptyTile, openFoldedTile, showTile, editTile, editTileNamed, saveTileNamed } from "../helpers/tiles";
 import { showEmptyFields } from "../helpers/empty-fields";
+import { clickMakeCurrentAndConfirm, clickPrev } from "../helpers/version-nav";
 
 const MARK = `${E2E_MARKER}DOC-20`;
 const ACT = `${MARK} Act`;
@@ -110,6 +111,8 @@ test.describe("TC-DOC-20 — actul adițional și actul pe care îl modifică", 
       await expect(deed).toContainText(CVC, { timeout: 15_000 });
       await expect(deed).toContainText("Contract de Vânzare");
       await expect(deed.getByRole("link", { name: "Deschide", exact: true })).toHaveAttribute("href", /\/documents\//);
+      // 41.54: the link is a version of the act adițional — „v 2", at once.
+      await expect(page.getByText("v 2", { exact: true }).first()).toBeVisible({ timeout: 30_000 });
       await expect(fallback(page)).toBeHidden();
       await expect(amended(page).getByText("Actul modificat nu e în arhivă", { exact: false })).toHaveCount(0);
       // 41.31: linked, the fallback's empty fields (date, notariat, type) are not offered — at rest, and in edit.
@@ -145,6 +148,18 @@ test.describe("TC-DOC-20 — actul adițional și actul pe care îl modifică", 
       await amendedLink.click();
       await expect(amended(page).locator('[data-width-field="customFields.actParinteNotariat"]')).toBeVisible();
       await expect(amendedLink).toHaveCount(0);
+
+      // Step 5b — 41.54, Adrian: „the version counter on the top band Did not get incremented". „Dezleagă" was v 3; back
+      // on v 2 the tile names the contract it amended; „Fă curentă" links it again: v 4. Then unlinked again (v 5), so
+      // the steps below find the act as step 5 left it.
+      await expect(page.getByText("v 3", { exact: true }).first()).toBeVisible({ timeout: 30_000 });
+      await clickPrev(page);
+      await expect(amended(page).locator("[data-version-deed]")).toContainText(CVC, { timeout: 15_000 });
+      await clickMakeCurrentAndConfirm(page, 3);
+      await expect(amended(page).locator("[data-parent-deed]")).toContainText(CVC, { timeout: 15_000 });
+      await amended(page).getByRole("button", { name: "Dezleagă", exact: true }).click();
+      await expect(page.getByText("v 5", { exact: true }).first()).toBeVisible({ timeout: 30_000 });
+      await expect(amended(page).getByRole("button", { name: "Leagă actul modificat", exact: true })).toBeVisible({ timeout: 15_000 });
 
       // Step 6 — 40.88, Adrian's sizes. „Editează" on „Identificarea actului": Tip document and Notariat XL;
       // Calitate exemplar | Onorariu notarial on one row, Exemplare emise across the tile under them.

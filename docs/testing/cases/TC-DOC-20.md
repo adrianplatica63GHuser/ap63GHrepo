@@ -40,6 +40,7 @@ The window is 1366 × 900.
 | 3 | Presses „Leagă actul modificat", types `TC-DOC-20` into „Caută actul modificat", presses „Leagă" on `TC-DOC-20 CVC` | The two contracts are listed. The tile then shows `TC-DOC-20 CVC`, „Contract de Vânzare" and „Deschide"; the line and the four fields are gone |
 | 4 | On „Legături", „Asociază act": ticks `TC-DOC-20 Alt CVC`, picks „Act adițional la" in „Tip legătură", presses „Asociază selecția"; then „Anulează" | „Acest act adițional modifică deja „TC-DOC-20 CVC”. Dezlegați-l întâi." — nothing is linked; back on the act |
 | 5 | Presses „Dezleagă" on „Actul modificat" | „Leagă actul modificat" again, and the four fields, `TC-1` still in „Nr. act părinte" |
+| 5b | (41.54) Reads the page bar; „◀" once; „Fă curentă", OK; „Dezleagă" | The link was „v 2", the unlink „v 3"; on v 2 „Actul modificat" names the contract, read-only; „Fă curentă" links it again, „v 4"; unlinked, „v 5" |
 | 6 | (40.88) Presses „Editează" on „Identificarea actului"; presses „Schimbă tipul…", then „Anulează"; then „Renunță", and „Editează" on „Ce modifică" | „Tip document" reads „Act Adițional" as text, with „Schimbă tipul…" beside it (40.92); in its list a type with a form reads „Contract de Vânzare (F)", „Contract de Vânzare (are formular)" on hover. „Tip document" and „Notariat" are 272 px wide. „Calitate exemplar" (136 px) and „Onorariu notarial" share a row; „Exemplare emise" is under them, across the tile (363 px since 40.98; 450 in 3 units of 148). On „Ce modifică", „Temei legal completare" is its panel's whole width (363 px since 40.98, 3 units; 286 in 2 of 148); „Efect urmărit", „Preț neschimbat" and the clauses are 136 px |
 | 7 | (40.92) Opens `TC-DOC-20 CVC tip`, „Editează" on „Identificarea actului", „Schimbă tipul…", „Tipul nou" „Act Adițional (F)"; „Anulează"; again, „Confirmă"; „Salvează"; reloads | The confirmation lists „Preț total" under „Câmpurile formularului care se șterg la salvare:". After „Anulează" the type is still „Contract de Vânzare"; after „Confirmă" it reads „Act Adițional", and after the reload too |
 
@@ -62,3 +63,5 @@ through `openEmptyTile` / `openEmptyTiles` (e2e/helpers/tiles.ts). Not driven by
 **2026-10-08 — Slice #38.34, `automated` the same day.** Written with the change and translated into
 `e2e/document/addendum-tiles.spec.ts`, with `TC-E2E-DOC-20` names. The runner's run is in #38.34's
 handover.
+
+**2026-11-02 — Slice 41.54.** Step 5b: linking and unlinking „Actul modificat" each make a version; an older version names the deed it amended; „Fă curentă" links it again.

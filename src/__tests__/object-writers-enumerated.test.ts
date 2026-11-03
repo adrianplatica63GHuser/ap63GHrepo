@@ -290,7 +290,9 @@ const EXPECTED_WRITERS = [
   //    writer on purpose, and it writes that column and nothing else: no
   //    `updated_by`, no `updated_at`, no version row, because it is not an edit
   //    of the document.
-  "src/lib/documents/queries.ts:document:UPDATE:2",
+  // Slice 41.54: THREE — `recordParentDeedChange` stamps `updated_by` on the act adițional whose „Actul modificat" link
+  //    was made or removed, in the same transaction that appends its version (it read `document:UPDATE:2`).
+  "src/lib/documents/queries.ts:document:UPDATE:3",
   "src/lib/judicial-persons/queries.ts:judicial_person:INSERT:1",
   "src/lib/judicial-persons/queries.ts:judicial_person:UPDATE:1",
   "src/lib/persons/queries.ts:natural_person:INSERT:1",

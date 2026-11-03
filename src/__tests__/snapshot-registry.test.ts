@@ -227,6 +227,7 @@ describe("DOCUMENT_SNAPSHOT_KEYS", () => {
       customFields:      null,
       // Slice 40.82
       identity:          null,
+      parentDeed:        { id: null }, // Slice 41.54
     };
     expect(sortedKeys(dummy)).toEqual(sortedArray(DOCUMENT_SNAPSHOT_KEYS));
   });
