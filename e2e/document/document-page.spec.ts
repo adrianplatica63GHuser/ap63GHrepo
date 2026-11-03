@@ -208,7 +208,8 @@ test.describe("TC-DOC-01 — Act creat, pagină atașată, pagina se deschide", 
       await expect(top).toContainText("CVC"); // #37.95: the type by its short name
       // The type's full name its tooltip — read on the row, as the list's columns have moved since (the type is first,
       // with „Nou!" beside it).
-      await expect(top.locator('[title="Contract de Vânzare"]')).toHaveCount(1);
+      // 41.46: `data-hint`, the icon buttons' bubble (it read `[title="Contract de Vânzare"]`).
+      await expect(top.locator('[data-hint="Contract de Vânzare"]')).toHaveCount(1);
       await expect(page.getByText(new RegExp(`^Se afișează \\d+ din ${totalBefore + 1}$`))).toBeVisible();
       // Slice #37.16: the list's fixed columns, on the archive's real rows; then
       // its pictures, narrowed to this spec's own row first — the other rows

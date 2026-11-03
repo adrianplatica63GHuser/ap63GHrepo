@@ -44,7 +44,9 @@ describe("the four lists, one line per row (#38.57)", () => {
 
   it.each(LISTS)("%s: every text cell is ONE_LINE with its whole text as a tooltip", (l) => {
     // Slice 40.25: the chosen columns' cells are drawn by their key, in the order dragged (`cellValue(item, key)`).
-    expect(VIEW[l]).toMatch(/\$\{ONE_LINE\}`\}\s+title=\{cellTitle\(cellValue\(item, key\)\)\}/);
+    // 41.46: it read `title={cellTitle(cellValue(item, key))}` — the cell is a TextTooltip now, the icon buttons' bubble.
+    expect(VIEW[l]).toMatch(/<TextTooltip as="td" key=\{key\} className=\{`[^`]*\$\{ONE_LINE\}`\}\s+text=\{cellTitle\(cellValue\(item, key\)\)\}/);
+    expect(VIEW[l]).not.toMatch(/title=\{cellTitle\(/);
     expect((VIEW[l].match(/\bONE_LINE\b/g) ?? []).length).toBeGreaterThanOrEqual(3);
   });
 

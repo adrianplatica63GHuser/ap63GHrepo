@@ -85,7 +85,10 @@ describe("the link (Ask first 3)", () => {
     render(<EmptyFieldsLink tile="contact" labels={["Telefon 2", "Telefon serviciu", "Email 1", "Email 2"]} onShow={onShow} />);
     const link = screen.getByRole("button");
     expect(link).toHaveTextContent('show:{"count":4}');
-    expect(link.getAttribute("title")).toBe('all:{"names":"Telefon 2, Telefon serviciu, Email 1, Email 2"}');
+    // 41.46: it read `link.getAttribute("title")` — the tooltip is the icon buttons' bubble now, its text in `data-hint`.
+    expect(link.getAttribute("title")).toBeNull();
+    expect(link.getAttribute("data-hint")).toBe('all:{"names":"Telefon 2, Telefon serviciu, Email 1, Email 2"}');
+    expect(document.querySelector("[data-empty-fields-names]")?.getAttribute("data-hint")).toBe("Telefon 2, Telefon serviciu, Email 1, Email 2");
     expect(document.querySelector("[data-empty-fields-names]")).toHaveTextContent("Telefon 2, Telefon serviciu, Email 1, Email 2");
     expect(document.querySelector("[data-empty-fields-names]")?.className).toMatch(/\btruncate\b/);
     expect(document.querySelector("[data-empty-fields]")?.getAttribute("data-empty-fields-count")).toBe("4");

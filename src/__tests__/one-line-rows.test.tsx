@@ -90,7 +90,7 @@ describe("one line a row", () => {
     expect(row.className).toContain("whitespace-nowrap");
     const content = row.querySelector("[data-row-content]") as HTMLElement;
     expect(content.textContent).toBe("Maria Proiectant (Proiectant / Consultant)");
-    expect(content).toHaveAttribute("title", "Maria Proiectant (Proiectant / Consultant)");
+    expect(content).toHaveAttribute("data-hint", "Maria Proiectant (Proiectant / Consultant)"); // 41.46: was `title`
     // Slice 40.65: the role is a tag at the content's right edge, its brackets visually hidden; the name is what is
     // cut with „…" (was: the content span itself truncated, the role in brackets after the name).
     expect(content.querySelector("[data-row-role]")).toHaveTextContent("Proiectant / Consultant");
@@ -214,7 +214,7 @@ describe("„Proprietăți”", () => {
     renderTile(<DocumentRelatedTile documentId="doc" label="Corelate" />);
     await screen.findByRole("group", { name: "Corelate" });
     const row = within(screen.getByRole("list", { name: "group.property" })).getByRole("listitem");
-    expect(row.querySelector("[data-row-content]")).toHaveAttribute("title", "Livada de la deal");
+    expect(row.querySelector("[data-row-content]")).toHaveAttribute("data-hint", "Livada de la deal"); // 41.46: was `title`
     // The two buttons it has, in their slots; the share and relationship slots empty.
     const slots = [...row.querySelectorAll<HTMLElement>("[data-slot]")];
     expect(slots.map((s) => [s.dataset.slot, s.childElementCount > 0])).toEqual([["share", false], ["relation", false], ["preview", false]]);

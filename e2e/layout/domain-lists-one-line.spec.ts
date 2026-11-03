@@ -547,8 +547,8 @@ test.describe("TC-LAYOUT-05 — cele patru liste, câte un rând pe linie", () =
             await expect(names).toHaveCount(list.fixed.length + group.length, { timeout: 30_000 });
             const heads = msgs[locale][list.ns].listHeads as Record<string, string>;
             await expect(names).toHaveText([...list.fixed, ...group].map((k) => heads[k]));
-            // The whole label on hover: a title on every name.
-            const titles = await names.evaluateAll((els) => els.map((e) => e.getAttribute("title") ?? ""));
+            // The whole label on hover: a hint on every name (41.46: `data-hint`, the icon buttons' bubble; it read `title`).
+            const titles = await names.evaluateAll((els) => els.map((e) => e.getAttribute("data-hint") ?? ""));
             expect(titles.every((t) => t.length > 0)).toBe(true);
           }
         }

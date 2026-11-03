@@ -138,7 +138,7 @@ test.describe("TC-PERS-04 — listele de persoane", () => {
       ]);
       // The notes are cut on one line, whole on hover, and do not widen the tile.
       const cut = page.locator("[data-preview] [data-preview-cut]");
-      await expect(cut).toHaveAttribute("title", NOTE);
+      await expect(cut).toHaveAttribute("data-hint", NOTE); // 41.46: was `title`
       expect(await cut.evaluate((el) => el.scrollWidth > el.clientWidth && getComputedStyle(el).textOverflow === "ellipsis")).toBe(true);
       await expect(page.locator("[data-preview]")).not.toContainText(/PPERS\d+/);
       await expect(page.locator("[data-preview]")).not.toContainText("Prenume");

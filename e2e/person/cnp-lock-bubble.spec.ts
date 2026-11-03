@@ -237,7 +237,7 @@ test.describe("TC-PERS-03 — nota CNP-ului într-un balon, refuzul în română
       const HIDDEN = ["Telefon Personal 1", "Telefon serviciu", "Email Personal 1", "Email Personal 2"];
       await expect(link).toHaveText("Arată 4 câmpuri goale");
       await expect(contact.locator("[data-empty-fields-names]")).toHaveText(HIDDEN.join(", "));
-      await expect(link).toHaveAttribute("title", `Câmpuri goale: ${HIDDEN.join(", ")}`);
+      await expect(link).toHaveAttribute("data-hint", `Câmpuri goale: ${HIDDEN.join(", ")}`); // 41.46: was `title`
       // Slice 40.72: read as text.
       await expect(contact.locator('[data-read-value="personalPhone2"]')).toHaveText("0700 000 002");
       await expect(contact.locator('[data-read-value="workEmail"]')).toHaveText("goale@example.invalid");

@@ -43,7 +43,9 @@ describe("one mark for each kind (40.61)", () => {
   it("a mark is an image named by the kind's words, which are its tooltip too", () => {
     render(<EntityMark kind="judicial" label="Persoană juridică" />);
     const mark = screen.getByRole("img", { name: "Persoană juridică" });
-    expect(mark).toHaveAttribute("title", "Persoană juridică");
+    // 41.46: it read `toHaveAttribute("title", …)` — the name is in the icon buttons' bubble now, from `data-hint`.
+    expect(mark).not.toHaveAttribute("title");
+    expect(mark).toHaveAttribute("data-hint", "Persoană juridică");
     expect(mark).toHaveAttribute("data-entity-mark", "judicial");
     expect(mark.className).not.toMatch(/font-mono/);
   });

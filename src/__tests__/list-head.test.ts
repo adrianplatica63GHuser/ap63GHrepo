@@ -79,7 +79,8 @@ describe("Adrian's short names (Slice 40.20)", () => {
     expect(exists("src", "lib", "ui", "list-head.ts")).toBe(false);
     const cell = read("src", "components", "table", "list-head.tsx").replace(/\/\*[\s\S]*?\*\//g, "");
     expect(cell).not.toMatch(/twoRows|splitName/);
-    expect(cell).toContain('data-head-text="" title={full}');
+    // 41.46: it read `data-head-text="" title={full}` — the whole label is in the icon buttons' bubble now.
+    expect(cell).toContain('<TextTooltip always text={full} className="line-clamp-2');
     expect(read("src", "components", "list", "field-chooser.tsx")).toContain('title={f.full}');
   });
 });

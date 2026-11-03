@@ -122,7 +122,10 @@ describe("each screen draws the line", () => {
   it("the line never widens a tile, is cut with an ellipsis and keeps its full text as a tooltip", () => {
     const src = read("src", "components", "tiles", "tile-title.tsx");
     expect(src).toMatch(/TILE_SUBTITLE_CLASS =\s*"w-0 min-w-full truncate /);
-    expect(src).toMatch(/<div className=\{TILE_SUBTITLE_CLASS\} title=\{text\} data-tile-subtitle="">/);
+    // 41.46: it read `<div className={TILE_SUBTITLE_CLASS} title={text} data-tile-subtitle="">` — the browser's small
+    // title; the whole text is in the icon buttons' bubble now, opened when the line is cut.
+    expect(src).toMatch(/<TextTooltip as="div" className=\{TILE_SUBTITLE_CLASS\} text=\{text\} data-tile-subtitle="">/);
+    expect(src).not.toMatch(/title=\{text\}/);
   });
 
   it("the list tiles, „Interacțiuni”, the addresses, „Părți” and „Pagini” take a subtitle", () => {

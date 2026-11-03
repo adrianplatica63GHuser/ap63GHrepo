@@ -87,12 +87,24 @@ test.describe("TC-INT-03 — acte legate, etichete și o proprietate", () => {
       const record = (await (await saved).json()) as { id: string; relatedPropertyId: string | null; tags: string[] };
       // #39.06: the row of his history on his screen (it read the module's grid row).
       await expect(page.locator(`[data-person-interaction="${record.id}"] [data-documents-count]`)).toHaveText("2", { timeout: 30_000 });
+      // 41.46: its hover is the icon buttons' bubble, 12 px, not the browser's title.
+      const mine = page.locator(`[data-person-interaction="${record.id}"] [data-documents-count]`);
+      await expect(mine).not.toHaveAttribute("title");
+      await expect(mine).toHaveAttribute("data-hint", "2 acte legate");
+      await mine.hover();
+      await expect(page.locator("[data-text-tooltip]")).toHaveText("2 acte legate");
+      await expect(page.locator("[data-text-tooltip]")).toHaveCSS("font-size", "12px");
+      await page.mouse.move(0, 0);
 
       // Step 5 — the paperclip: both documents; „Contract v3" opens the archive's document. (#39.06: the popover is
       // the history's on the Rapoarte screen, A scoped to Radu.)
       await page.goto(`/interactions?person=${person}`);
       const row = page.locator(`[data-interaction-row="${record.id}"]`);
       await expect(row.locator("[data-documents-count]")).toHaveText("2", { timeout: 30_000 });
+      // 41.46: the history's paperclip is an icon button: its name in IconTooltip's bubble.
+      await expect(row.locator("[data-documents-count]")).not.toHaveAttribute("title");
+      await row.locator("[data-documents-count]").hover();
+      await expect(page.locator("[data-icon-tooltip]")).toHaveCSS("font-size", "12px");
       await row.locator("[data-documents-count]").click();
       const popover = page.locator("[data-documents-popover]");
       await expect(popover.getByRole("button")).toHaveText([`${MARK} Contract v3`, `${MARK} Extras CF`]);

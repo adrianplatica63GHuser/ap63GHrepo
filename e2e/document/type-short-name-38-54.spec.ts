@@ -16,7 +16,7 @@ async function tipOf(page: Page, title: string): Promise<[string, string | null]
   // 40.60: the badges' column is gone, so „Tip" is the first cell.
   const cell = main.locator("tbody tr").filter({ hasText: title }).locator("td").nth(0);
   // A record made in the last days carries „Nou!" after its first cell's text (the recency badge): not the type's name.
-  return [(await cell.textContent())?.replace(/Nou!\s*$/, "").trim() ?? "", await cell.getAttribute("title")];
+  return [(await cell.textContent())?.replace(/Nou!\s*$/, "").trim() ?? "", await cell.getAttribute("data-hint")]; // 41.46: was `title`
 }
 
 test.describe("TC-DOC-23 — noile denumiri scurte", () => {

@@ -243,7 +243,7 @@ describe("the persons' previews on four lines (#39.28)", () => {
   it("the notes' line is cut, whole on hover, and takes the tile's width without adding any", () => {
     const { container } = draw([[{ label: "Poreclă", value: "Ani" }], [{ label: "Note", value: NOTE, cut: true }]]);
     const cut = container.querySelector<HTMLElement>("[data-preview-cut]")!;
-    expect(cut.title).toBe(NOTE);
+    expect(cut.getAttribute("data-hint")).toBe(NOTE); // 41.46: it read `cut.title` — the icon buttons' bubble now
     expect(cut.className).toMatch(/\bw-0\b/);
     expect(cut.className).toMatch(/\bmin-w-full\b/);
     expect(cut.className).toMatch(/\btruncate\b/);
