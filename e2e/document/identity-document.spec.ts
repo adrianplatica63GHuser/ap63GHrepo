@@ -116,6 +116,8 @@ test.describe("TC-DOC-28 — actul de identitate pe ecranul lui", () => {
       // (a read view hides an empty field behind „Arată N câmpuri goale", 40.71).
       await page.goto(`/documents/${nou}`);
       await expect(tile(page)).toBeVisible({ timeout: 30_000 });
+      // 41.49: the tile is „Actul oficial" (it was „Act de identitate").
+      await expect(tile(page).getByRole("heading", { level: 2 }).first()).toHaveText("Actul oficial");
       await expect(box(page, "nrDocument")).toHaveText("IF 123456");
       await expect(box(page, "identity.lastName")).toHaveText("Testescu");
       await expect(tile(page).locator('[data-identity-validity="expired"]')).toHaveText("EXPIRAT");
