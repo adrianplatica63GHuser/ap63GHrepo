@@ -180,7 +180,9 @@ describe("the Natural Person uses it (Ask first 2, 3, 6)", () => {
     const ro = JSON.parse(read("messages", "ro-RO.json")).shared.readEdit;
     // 41.23 (Adrian: „replace "(35 de ani)" with "(35 ani)"”): no „de" — 1 an, 2 ani, 20 ani, 35 ani. It was
     // „{count, plural, one {# an} few {# ani} other {# de ani}}”.
-    expect(ro).toEqual({ edit: "Editează", editTile: "Editează — {tile}", save: "Salvează", cancel: "Renunță", yes: "Da", age: "{count, plural, one {# an} other {# ani}}" });
+    // 41.66 (Adrian: „it should show (nn y) for English and (nn a) for Romanian"): „a" at every number, as English's
+    // „y" — 1 a, 41 a. It was „{count, plural, one {# an} other {# ani}}" (41.23).
+    expect(ro).toEqual({ edit: "Editează", editTile: "Editează — {tile}", save: "Salvează", cancel: "Renunță", yes: "Da", age: "{count, plural, other {# a}}" });
     // English „(35 y)” at every number, 1 y included (it was „# year” / „# years”).
     expect(JSON.parse(read("messages", "en-GB.json")).shared.readEdit.age).toBe("{count, plural, other {# y}}");
     expect(Object.keys(JSON.parse(read("messages", "en-GB.json")).shared.readEdit)).toEqual(Object.keys(ro));

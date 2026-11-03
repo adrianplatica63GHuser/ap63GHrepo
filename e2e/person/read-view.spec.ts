@@ -41,7 +41,7 @@ test.describe("TC-PERS-15 — persoana fizică citită ca text, „Editează” 
       // Step 1 — read as text: no box in the tiles, the birth date with the age, „Editează" in each corner, no
       // record-level „Salvează".
       await expect(identity.locator('[data-read-value="lastName"]')).toHaveText(MARK);
-      await expect(identity.locator('[data-read-value="dateOfBirth"]')).toHaveText(`15.06.1985 (${ageToday()} ani)`); // 41.23: „ani”, no „de”
+      await expect(identity.locator('[data-read-value="dateOfBirth"]')).toHaveText(`15.06.1985 (${ageToday()} a)`); // 41.66: „a” at every number (41.23 read „ani”)
       await expect(identity.getByRole("textbox")).toHaveCount(0);
       await expect(contact.getByRole("textbox")).toHaveCount(0);
       await expect(contact.locator('[data-read-value="personalPhone2"]')).toHaveText("0700 000 015");
