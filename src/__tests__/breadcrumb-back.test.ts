@@ -88,7 +88,8 @@ describe("where „Înapoi” goes", () => {
   it("with neither: nothing, and the button is disabled", () => {
     expect(backTarget(["/x"], [{ href: "/x" }], "/x")).toBeNull();
     expect(backTarget([], [{ href: null }, { href: "/x" }], "/x")).toBeNull();
-    expect(BAR).toMatch(/disabled=\{backTarget\(currentBackStack\(\), segments, pathname\) === null\}/);
+    // 41.61: from the subscribed record (`stack`), not one read at render — was `backTarget(currentBackStack(), …)`.
+    expect(BAR).toMatch(/disabled=\{backTarget\(stack, segments, pathname\) === null\}/);
   });
 });
 
