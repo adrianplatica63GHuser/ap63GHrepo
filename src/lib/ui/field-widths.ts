@@ -1991,6 +1991,8 @@ export const SCREEN = {
   stampNotes: { step: "XXL", kind: "lines", fold: NOTE_FOLD_LINES, rows: 3 },
   groupCodePending: { step: "XL", kind: "input" }, //  „Codul se atribuie la salvare", before there is a code
   memberSearch: { step: "XXL", kind: "input" }, //     the search above the candidates
+  // „Proprietăți — Hartă"
+  mapSearch: { step: "XL", kind: "input" }, // 41.70: „Caută pe hartă"'s box — a number, a name or an address
   // Setări
   timeFrameDays: { step: "S", kind: "input" }, // 1–3650, with the spinner (w-20 before)
   widthUnitPx: { step: "S", kind: "input" }, // 41.16: the width unit, 80–200 px, with the spinner

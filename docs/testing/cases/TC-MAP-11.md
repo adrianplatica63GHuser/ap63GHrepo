@@ -5,8 +5,8 @@
 | **Area** | map |
 | **Kind** | happy |
 | **Data** | — |
-| **State** | `draft` |
-| **Last green** | — |
+| **State** | `automated` |
+| **Last green** | 2026-11-03 |
 
 ## What this proves
 

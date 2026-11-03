@@ -68,7 +68,8 @@ export function classifySearch(raw: string): MapSearchQuery {
 /** The property a code names, when it is on the map. */
 export function findByCode(code: string, properties: readonly MapSearchProperty[]): MapSearchHit | null {
   const p = properties.find((x) => x.code.toUpperCase() === code && x.corners.length > 0);
-  return p ? { kind: "property", id: p.id, label: p.nickname ?? p.code, corners: p.corners } : null;
+  // The label is for ranking only; a record with no name is never named by its code (system-id-one-place).
+  return p ? { kind: "property", id: p.id, label: p.nickname ?? "", corners: p.corners } : null;
 }
 
 /** 0 exact, 1 starts with, 2 contains, -1 no match — on folded text. */

@@ -21,6 +21,7 @@ import { Search } from "lucide-react";
 
 import { IconButton } from "@/lib/ui/icon-button";
 import { globalSearchHref } from "@/lib/geo/map-search";
+import { screenBox } from "@/lib/ui/field-widths";
 
 /** How a search went: found (and how many other matches), nothing found, or the look-up failed. */
 export type MapSearchOutcome = { kind: "found"; more: number } | { kind: "none" } | { kind: "failed" };
@@ -97,7 +98,8 @@ export function MapSearchPanel({
           placeholder={t("placeholder")}
           autoComplete="off"
           data-map-search-input=""
-          className="min-w-0 flex-1 rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm placeholder:text-fade focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950"
+          {...screenBox("mapSearch")}
+          className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm placeholder:text-fade focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-950"
         />
         <IconButton icon={Search} label={t("submit")} busy={busy} busyLabel={t("searching")} variant="primary" size="sm" type="submit" disabled={!text.trim()} />
       </form>

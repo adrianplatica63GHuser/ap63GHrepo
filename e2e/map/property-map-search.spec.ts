@@ -11,7 +11,7 @@
  *   - A property's number is read from the map's own data (GET /api/properties/map), as the box reads it.
  *   - The flight is read from `data-map-search-flight` on the map's box, and the landed lot from its four corner dots
  *     (`data-corner-marker`), whose box is the lot's.
- *   - No address is looked up (no `realAddressLookups`): that branch is jest's and the hand check's.
+ *   - No address is looked up — the spec opts in for the map alone: that branch is jest's and the hand check's.
  */
 
 import { test, expect, type Page } from "../helpers/test";
