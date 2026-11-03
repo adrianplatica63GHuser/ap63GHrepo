@@ -124,7 +124,8 @@ export const SEED_COLUMNS: Record<string, TableFill> = {
   property_property: { scope: { column: "property_id_a", set: "properties" }, columns: { property_id_a: S, property_id_b: S, relationship_role_id: S, role_reads_a_to_b: APP } },
   person_document: {
     scope: { column: "document_id", set: "documents" },
-    columns: { person_id: S, document_id: S, person_role_id: S, cota_parte: S, cota_suprafata_mp: S, cota_mod: S },
+    // 41.53: from_issuer is the app's — written by syncIssuerNotaryLink when a document's issuer is saved.
+    columns: { person_id: S, document_id: S, person_role_id: S, cota_parte: S, cota_suprafata_mp: S, cota_mod: S, from_issuer: APP },
   },
   person_person: { scope: { column: "person_id_a", set: "persons" }, columns: { person_id_a: S, person_id_b: S, relationship_role_id: S, role_reads_a_to_b: APP } },
   document_page: {

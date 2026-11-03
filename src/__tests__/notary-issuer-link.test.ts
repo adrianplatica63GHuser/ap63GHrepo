@@ -1,4 +1,7 @@
 /**
+ * @jest-environment node
+ */
+/**
  * Slice 41.53 — the notary office chosen on „Identificarea actului" is a „Notar" link in „Legături".
  *
  * The sync runs inside the document's own transaction, against the database, so what is pinned here is its RULE and

@@ -853,6 +853,8 @@ export function DocumentForm({
       // Slice #18.06: a save appended a new version — drop the cached list so
       // reopening shows it (and the ◀/▶ nav enables / advances).
       await queryClient.invalidateQueries({ queryKey: ["document-versions"] });
+      // Slice 41.53: a „Notariat" issuer is a „Notar" link — „Legături" reads it again after the save.
+      await queryClient.invalidateQueries({ queryKey: ["document-persons"] });
       // Keep the form itself in step with what was sent. Without this the
       // stripped keys stay in React Hook Form, `editDirty` compares them
       // against a baseline that no longer has them, and Save stays lit for ever

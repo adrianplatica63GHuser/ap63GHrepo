@@ -27,7 +27,7 @@ async function juridical(page: Page): Promise<string[]> {
   const tile = page.getByRole("region", { name: "Legături", exact: true });
   const group = tile.locator('[data-related-group="judicial"]');
   if ((await group.count()) === 0) return [];
-  return (await group.locator("li[data-one-line-row] [data-row-content]").allInnerTexts()).map((t) => t.replace(/\s+/g, " ").trim());
+  return (await group.locator("li[data-one-line-row] [data-row-content]").allTextContents()).map((t) => t.replace(/\s+/g, " ").trim());
 }
 
 async function chooseIssuer(page: Page, label: string): Promise<void> {
