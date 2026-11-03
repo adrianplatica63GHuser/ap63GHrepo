@@ -102,11 +102,14 @@ function CornerInputRow({
   initialMode = "DD",
   onSave,
   onCancel,
+  padX = "px-3",
 }: {
   initial?:     Corner;
   initialMode?: InputMode;
   onSave:       (c: Corner) => void;
   onCancel:     () => void;
+  /** 41.57: the table's cell padding — `px-1.5` when `tight`, so the inputs keep the room they had (240 px in DMS). */
+  padX?:        string;
 }) {
   const t = useTranslations("property.corners");
 
@@ -233,11 +236,11 @@ function CornerInputRow({
 
   return (
     <tr className="bg-card dark:bg-blue-950/30">
-      <td className="px-3 py-2 text-fade text-xs">—</td>
+      <td className={`${padX} py-2 text-fade text-xs`}>—</td>
 
       {/* Slice #37.77: the inputs span „Nr. orig.", N and E (16.5rem) — a DMS line is about
           15rem — and each line wraps downward, never sideways into the buttons. */}
-      <td colSpan={3} className="px-3 py-2">
+      <td colSpan={3} className={`${padX} py-2`}>
         <div className="flex flex-col gap-2">
           {mode === "DD" ? (
             <div className="grid grid-cols-2 gap-2">
@@ -336,7 +339,7 @@ function CornerInputRow({
 
       {/* Slice #37.14: may wrap under the fixed columns — the row grows downward.
           #37.77: against the cell's right edge, as the row buttons are. */}
-      <td className="px-3 py-2">
+      <td className={`${padX} py-2`}>
         <div className="flex flex-wrap justify-end gap-2">
           <IconButton
             icon={Save}
@@ -639,6 +642,7 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
                   initialMode={displayFmtToInputMode(displayFmt)}
                   onSave={(updated) => handleEdit(idx, updated)}
                   onCancel={() => setEditingIdx(null)}
+                  padX={padX}
                 />
               ) : (
                 <tr
@@ -711,6 +715,7 @@ export function CornersManager({ corners, onChange, readOnly = false, hoveredCor
                 initialMode={displayFmtToInputMode(displayFmt)}
                 onSave={handleAdd}
                 onCancel={() => setAdding(false)}
+                padX={padX}
               />
             )}
             </>
