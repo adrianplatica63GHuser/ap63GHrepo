@@ -137,9 +137,10 @@ export function PreviewTileBody({
       data-preview-anchor={anchor}
       aria-label={title}
       data-preview-compact={lines ? "" : undefined}
-      // Slice #37.88: „Corelate"'s light green — a preview is what „Corelate" opens. The dashed
-      // rim still says it is a look, not the record's own tile.
-      className="rounded-md border border-dashed border-card-related-rim bg-card-related p-3 shadow-sm dark:border-card-related-rim-dark dark:bg-card-related-dark"
+      // Slice #37.88: „Corelate"'s colour — a preview is what „Corelate" opens. The dashed
+      // rim still says it is a look, not the record's own tile. 41.68: „Legături" wears the card now, so the preview
+      // is the card itself (it read the light green, `border-card-related-rim bg-card-related`).
+      className="rounded-md border border-dashed border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
       // 41.36: a compact preview is 2 units (254 px) wherever it opens — beside a list too, where the column would stretch
       // it (#39.04) — and as tall as its lines need; the others their kind's units.
       style={lines ? { ...style, ...PREVIEW_COMPACT_STYLE } : { ...PREVIEW_STYLE[width], ...style }}

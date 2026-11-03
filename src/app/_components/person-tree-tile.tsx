@@ -84,7 +84,7 @@ export function PersonTreeTile({
         <TileTitle title={title} subtitle={subtitle} className="flex-1" />
         <IconButton href={wholeTreeHref(personId)} icon={Maximize2} label={t("wholeTree")} variant="secondary" size="sm" data-tree-whole="" />
       </div>
-      <div className="relative aspect-square w-full overflow-hidden rounded-md border border-card-family-rim bg-white/70 dark:border-card-family-rim-dark dark:bg-zinc-950" data-tree-tile-canvas="">
+      <div className="relative aspect-square w-full overflow-hidden rounded-md border border-card-pinned-rim bg-white/70 dark:border-card-pinned-rim-dark dark:bg-zinc-950" data-tree-tile-canvas="">
         {q.isLoading && <p className="p-3 text-xs text-fade">{t("loading")}</p>}
         {q.isError && <p role="alert" className="p-3 text-xs text-red-600">{t("error")}</p>}
         {layout && layout.nodes.length === 0 && <p className="p-3 text-xs text-fade">{t("empty")}</p>}

@@ -147,14 +147,14 @@ export function JudicialPersonDetailTiles({
           />
           {/* Slice #37.67: „Persoane corelate", Proprietăți and Acte are one tile, „Corelate". */}
           {choice.isShown("related") && (
-            <ListTile tile="related" title={labels.related} subtitle={t("tileSubtitles.related")} units={LIST_UNITS.judicialPerson.related} surface={groupSurface(tileGroupOf(JP_TILE_REGISTRY, "related"))}>
+            <ListTile tile="related" title={labels.related} subtitle={t("tileSubtitles.related")} units={LIST_UNITS.judicialPerson.related} surface={groupSurface(tileGroupOf(JP_TILE_REGISTRY, "related"), JP_TILE_REGISTRY.entity)}>
               <PersonRelatedTile personId={personId} backBase="/judicial-persons" label={labels.related} />
             </ListTile>
           )}
           {/* Slice #37.63: META INFO is two tiles, each reading the record's metadata
               through the same query key — fetched once. */}
           {choice.isShown("classification") && (
-            <ListTile tile="classification" readEdit title={labels.classification} subtitle={t("tileSubtitles.classification")} units={LIST_UNITS.judicialPerson.classification} surface={groupSurface(tileGroupOf(JP_TILE_REGISTRY, "classification"))}>
+            <ListTile tile="classification" readEdit title={labels.classification} subtitle={t("tileSubtitles.classification")} units={LIST_UNITS.judicialPerson.classification} surface={groupSurface(tileGroupOf(JP_TILE_REGISTRY, "classification"), JP_TILE_REGISTRY.entity)}>
               <EntityMetadataTab
                 apiPath={`/api/people/${encodeURIComponent(personId)}/entity-references`}
                 queryKey={`entity-references-person-${personId}`}
@@ -165,7 +165,7 @@ export function JudicialPersonDetailTiles({
             </ListTile>
           )}
           {choice.isShown("connections") && (
-            <ListTile tile="connections" title={labels.connections} subtitle={t("tileSubtitles.connections")} units={LIST_UNITS.judicialPerson.connections} surface={groupSurface(tileGroupOf(JP_TILE_REGISTRY, "connections"))} readEdit>
+            <ListTile tile="connections" title={labels.connections} subtitle={t("tileSubtitles.connections")} units={LIST_UNITS.judicialPerson.connections} surface={groupSurface(tileGroupOf(JP_TILE_REGISTRY, "connections"), JP_TILE_REGISTRY.entity)} readEdit>
               <EntityMetadataTab
                 apiPath={`/api/people/${encodeURIComponent(personId)}/entity-references`}
                 queryKey={`entity-references-person-${personId}`}
@@ -177,7 +177,7 @@ export function JudicialPersonDetailTiles({
           )}
           <PreviewTiles previews={previews} />
           {choice.isShown("interactions") && interactionsSlot && createPortal(
-            <PersonInteractionsTile personId={personId} personName={personName} title={labels.interactions} subtitle={t("tileSubtitles.interactions")} surface={groupSurface(tileGroupOf(JP_TILE_REGISTRY, "interactions"))} />,
+            <PersonInteractionsTile personId={personId} personName={personName} title={labels.interactions} subtitle={t("tileSubtitles.interactions")} surface={groupSurface(tileGroupOf(JP_TILE_REGISTRY, "interactions"), JP_TILE_REGISTRY.entity)} />,
             interactionsSlot,
           )}
         </TileAreas>

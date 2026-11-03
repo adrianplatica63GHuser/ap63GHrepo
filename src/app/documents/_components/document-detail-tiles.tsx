@@ -239,7 +239,7 @@ export function DocumentDetailTiles({
           {/* Slice #38.33: a contract de vânzare's sellers and buyers, with their shares. */}
           {layout.parties && choice.isShown("parties") && (
             <div className="max-w-full" style={{ order: order("parties") }}>
-              <ListTile tile="parties" title={labels.parties} subtitle={t("tileSubtitles.parties")} units={LIST_UNITS.document.related} surface={groupSurface(tileGroupOf(reg, "parties"))}>
+              <ListTile tile="parties" title={labels.parties} subtitle={t("tileSubtitles.parties")} units={LIST_UNITS.document.related} surface={groupSurface(tileGroupOf(reg, "parties"), reg.entity)}>
                 <DocumentPartiesTile documentId={documentId} label={labels.parties} typeKey={layout.typeKey} />
               </ListTile>
             </div>
@@ -247,7 +247,7 @@ export function DocumentDetailTiles({
           {/* Slice #37.65: Persoane, Proprietăți and „Acte corelate" are one tile, „Corelate". */}
           {choice.isShown("related") && (
             <div className="max-w-full" style={{ order: order("related") }}>
-              <ListTile tile="related" title={labels.related} subtitle={t("tileSubtitles.related")} units={LIST_UNITS.document.related} surface={groupSurface(tileGroupOf(reg, "related"))}>
+              <ListTile tile="related" title={labels.related} subtitle={t("tileSubtitles.related")} units={LIST_UNITS.document.related} surface={groupSurface(tileGroupOf(reg, "related"), reg.entity)}>
                 {/* Slice #38.33: with „Părți" on screen, the parties are there and not here; with it unticked, here. */}
                 <DocumentRelatedTile documentId={documentId} label={labels.related} personScope={layout.parties && choice.isShown("parties") ? "notParties" : "all"} />
               </ListTile>
@@ -257,7 +257,7 @@ export function DocumentDetailTiles({
               through the same query key — fetched once. */}
           {choice.isShown("classification") && (
             <div className="max-w-full" style={{ order: order("classification") }}>
-              <ListTile tile="classification" readEdit title={labels.classification} subtitle={t("tileSubtitles.classification")} units={LIST_UNITS.document.classification} surface={groupSurface(tileGroupOf(reg, "classification"))}>
+              <ListTile tile="classification" readEdit title={labels.classification} subtitle={t("tileSubtitles.classification")} units={LIST_UNITS.document.classification} surface={groupSurface(tileGroupOf(reg, "classification"), reg.entity)}>
                 <EntityMetadataTab
                   apiPath={`/api/documents/${encodeURIComponent(documentId)}/entity-references`}
                   queryKey={`entity-references-document-${documentId}`}
@@ -270,7 +270,7 @@ export function DocumentDetailTiles({
           )}
           {choice.isShown("connections") && (
             <div className="max-w-full" style={{ order: order("connections") }}>
-              <ListTile tile="connections" title={labels.connections} subtitle={t("tileSubtitles.connections")} units={LIST_UNITS.document.connections} surface={groupSurface(tileGroupOf(reg, "connections"))} readEdit>
+              <ListTile tile="connections" title={labels.connections} subtitle={t("tileSubtitles.connections")} units={LIST_UNITS.document.connections} surface={groupSurface(tileGroupOf(reg, "connections"), reg.entity)} readEdit>
                 <EntityMetadataTab
                   apiPath={`/api/documents/${encodeURIComponent(documentId)}/entity-references`}
                   queryKey={`entity-references-document-${documentId}`}

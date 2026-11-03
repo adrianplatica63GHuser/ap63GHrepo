@@ -2215,7 +2215,7 @@ export function DocumentForm({
                 state={pagesState}
                 onToggleBigPage={handleToggleBigPage}
                 sidebar
-                surface={tileSurface(!!tiles?.right?.has("pages"))}
+                surface={tileSurface(!!tiles?.right?.has("pages"), "document")}
                 subtitle={t("tileSubtitles.pages")}
               />
             </ErrorBoundary>
@@ -2224,7 +2224,7 @@ export function DocumentForm({
       </>
     ) : isCreate ? (
       // Slice #37.93: „Pagini" on a new document stands where it stands on a
-      // saved one — beside the form, purple — holding the chosen files.
+      // saved one — beside the form, in the document's `fixed` hue (41.68: blue, it was purple) — holding the chosen files.
       <div className="flex flex-wrap items-stretch" style={{ gap: PANEL_GAP }}>
         <div className="min-w-0">{formElement}</div>
         <div className="flex flex-col" style={PAGES_PANEL_STYLE} data-panel="pages">
@@ -2232,7 +2232,7 @@ export function DocumentForm({
             <NewPagesPanel
               pages={stagedPages}
               onChange={setStagedPages}
-              surface={tileSurface(true)}
+              surface={tileSurface(true, "document")}
               disabled={submitting}
             />
           </ErrorBoundary>

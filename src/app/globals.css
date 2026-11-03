@@ -73,6 +73,8 @@
   --color-card-related-rim-dark: #183520;  /* dark:border-card-related-rim-dark */
   --color-card-related-row:      #F4FBF5;  /* bg-card-related-row — the rows inside „Corelate" */
   --color-card-related-row-dark: #101711;  /* dark:bg-card-related-row-dark  */
+  --color-card-row:              #F7FAFD;  /* bg-card-row — 41.68: „Legături"'s rows, a lighter row of the card */
+  --color-card-row-dark:         #111114;  /* dark:bg-card-row-dark — nearer zinc-950 than the card's zinc-900 */
   --color-card-meta:             #F8F3E5;  /* bg-card-meta                   */
   --color-card-meta-rim:         #DDD3AE;  /* border-card-meta-rim           */
   --color-card-meta-dark:        #1D1808;  /* dark:bg-card-meta-dark         */

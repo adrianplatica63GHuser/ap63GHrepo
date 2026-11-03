@@ -281,7 +281,7 @@ export function TileSelector<K extends string>({
     };
     // `row`: which of the two rows the piece is on ("" while the bar wraps) — read by the measuring and the specs.
     const piece = (row: string, p: BarPiece) => (
-      <span key={`${p.key}:${p.from}`} className={`my-1 ${groupStrip(p.key as TileGroup, true)}`} data-tile-group={p.key} data-bar-row={row}>
+      <span key={`${p.key}:${p.from}`} className={`my-1 ${groupStrip(p.key as TileGroup, true, diagram)}`} data-tile-group={p.key} data-bar-row={row}>
         {itemsOf(p.key).slice(p.from, p.to)}
       </span>
     );
@@ -324,7 +324,7 @@ export function TileSelector<K extends string>({
     <div role="group" aria-label={t("groupLabel")} className="flex flex-wrap items-center gap-x-4 gap-y-2" data-tile-selector>
       {groups ? (
         groups.map(({ group, tiles }) => (
-          <span key={group} className={groupStrip(group)} data-tile-group={group}>
+          <span key={group} className={groupStrip(group, false, diagram)} data-tile-group={group}>
             {tiles.map(box)}
             {group === "related" && extras}
           </span>

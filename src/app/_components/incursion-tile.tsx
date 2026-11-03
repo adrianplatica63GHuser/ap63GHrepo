@@ -82,21 +82,21 @@ const SAVED_DOCUMENT: DocumentLayout = { typeKey: null, tabs: [], pages: true };
 
 /**
  * Slice #38.75: each kind's tile wears its own screen's surface — the registry's group for that tile, never a
- * second list, so the Incursiune is tinted as the tile's screen tints it (today `fixed`, the purple, for all three).
+ * second list, so the Incursiune is tinted as the tile's screen tints it (41.68: in that screen's hue — `tileHue`).
  */
 export const INCURSION_SURFACE: Readonly<Record<PreviewKind, string>> = {
-  person: groupSurface(tileGroupOf(NP_TILE_REGISTRY, "interactions")),
-  company: groupSurface(tileGroupOf(JP_TILE_REGISTRY, "interactions")),
-  property: groupSurface(tileGroupOf(PROP_TILE_REGISTRY, "map")),
-  document: groupSurface(tileGroupOf(documentTileRegistry(SAVED_DOCUMENT), "pages")),
+  person: groupSurface(tileGroupOf(NP_TILE_REGISTRY, "interactions"), NP_TILE_REGISTRY.entity),
+  company: groupSurface(tileGroupOf(JP_TILE_REGISTRY, "interactions"), JP_TILE_REGISTRY.entity),
+  property: groupSurface(tileGroupOf(PROP_TILE_REGISTRY, "map"), PROP_TILE_REGISTRY.entity),
+  document: groupSurface(tileGroupOf(documentTileRegistry(SAVED_DOCUMENT), "pages"), documentTileRegistry(SAVED_DOCUMENT).entity),
 };
 
 /** Slice #38.76: „Legături"'s surface on each kind's own screen — the registry's group for `related`. */
 export const LINKS_SURFACE: Readonly<Record<PreviewKind, string>> = {
-  person: groupSurface(tileGroupOf(NP_TILE_REGISTRY, "related")),
-  company: groupSurface(tileGroupOf(JP_TILE_REGISTRY, "related")),
-  property: groupSurface(tileGroupOf(PROP_TILE_REGISTRY, "related")),
-  document: groupSurface(tileGroupOf(documentTileRegistry(SAVED_DOCUMENT), "related")),
+  person: groupSurface(tileGroupOf(NP_TILE_REGISTRY, "related"), NP_TILE_REGISTRY.entity),
+  company: groupSurface(tileGroupOf(JP_TILE_REGISTRY, "related"), JP_TILE_REGISTRY.entity),
+  property: groupSurface(tileGroupOf(PROP_TILE_REGISTRY, "related"), PROP_TILE_REGISTRY.entity),
+  document: groupSurface(tileGroupOf(documentTileRegistry(SAVED_DOCUMENT), "related"), documentTileRegistry(SAVED_DOCUMENT).entity),
 };
 
 const UNNAMED_KIND: Record<PreviewKind, UnnamedKind> = { person: "person", company: "person", property: "property", document: "document" };

@@ -343,8 +343,9 @@ export function PropertyForm({
   // Slice #37.56: a tile that stands in the right column is rendered here, as
   // before, and placed in its slot there; nothing until the slot exists, so
   // the map is never mounted twice.
-  // Slice #37.78: a right-hand tile is tinted purple, its group's colour; since 40.32 it moves like any tile.
-  const surface = (tile: PropTile): string => tileSurface(!!tiles?.right?.has(tile));
+  // Slice #37.78: a right-hand tile is tinted, its group's colour; since 40.32 it moves like any tile. 41.68: the
+  // property's `fixed` hue, green (it was the purple).
+  const surface = (tile: PropTile): string => tileSurface(!!tiles?.right?.has(tile), "property");
   const placeTile = (tile: PropTile, node: React.ReactNode): React.ReactNode => {
     if (!tiles?.right?.has(tile)) return node;
     const slot = tiles.right.slot(tile);

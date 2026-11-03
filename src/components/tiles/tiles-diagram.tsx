@@ -243,7 +243,7 @@ export function TilesDiagram({
             data-diagram-rect={r.id}
             data-group={r.group}
             data-diagram-dragged={dragged?.id === r.id ? (refused ? "refused" : "free") : undefined}
-            className={`pointer-events-auto absolute rounded-[2px] border ${groupColours(r.group)} ${dragged?.id === r.id ? "z-10 cursor-grabbing shadow" : "cursor-grab"}${refused && dragged?.id === r.id ? " !border-red-600 ring-1 ring-red-600" : ""}`}
+            className={`pointer-events-auto absolute rounded-[2px] border ${groupColours(r.group, entity)} ${dragged?.id === r.id ? "z-10 cursor-grabbing shadow" : "cursor-grab"}${refused && dragged?.id === r.id ? " !border-red-600 ring-1 ring-red-600" : ""}`}
             style={{ left: at.x, top: at.y, width: at.w, height: at.h, touchAction: "none" }}
             onPointerDown={press(r)}
           />
