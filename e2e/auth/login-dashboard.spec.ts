@@ -125,14 +125,18 @@ test.describe("TC-AUTH-01 — Conectare și tabloul de bord", () => {
       return rs.filter((r) => Math.abs(r.top - top) > 1 && !rs.some((o) => o !== r && o.left < r.right - 1 && r.left < o.right - 1 && Math.abs(r.top - o.bottom - 16) <= 1)).length;
     }), { timeout: 15_000 }).toBe(0);
 
-    // Step 6d (41.61) — from „Persoane Fizice" to the dashboard; „Înapoi" returns to the list, „Înainte" to the dashboard.
+    // Step 6d (41.61) — through „Persoane Fizice" and „Acte" to the dashboard; „Înapoi" returns to „Acte", „Înainte" to
+    // the dashboard. (Two screens, not one: straight back to the screen just before is itself a step back — the back
+    // stack's rule, #39.03 — so „Acasă" from a list opened from the dashboard leaves nothing under the dashboard.)
     await page.goto("/natural-persons");
+    await expect(page.locator("[data-page-bar]")).toBeVisible({ timeout: 30_000 });
+    await page.goto("/documents");
     await expect(page.locator("[data-page-bar]")).toBeVisible({ timeout: 30_000 });
     await page.locator("[data-page-bar]").getByRole("link", { name: "Acasă", exact: true }).click();
     await expect(page).toHaveURL(/\/$/, { timeout: 30_000 });
     await expect(page.getByRole("heading", { name: "Tablou de bord" })).toBeVisible({ timeout: 30_000 });
     await page.locator("[data-page-bar]").getByRole("button", { name: "Înapoi", exact: true }).click();
-    await expect(page).toHaveURL(/\/natural-persons$/, { timeout: 30_000 });
+    await expect(page).toHaveURL(/\/documents$/, { timeout: 30_000 });
     await page.locator("[data-page-bar]").getByRole("button", { name: "Înainte", exact: true }).click();
     await expect(page).toHaveURL(/\/$/, { timeout: 30_000 });
     await expect(page.getByRole("heading", { name: "Tablou de bord" })).toBeVisible({ timeout: 30_000 });
