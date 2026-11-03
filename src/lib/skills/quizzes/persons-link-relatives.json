@@ -286,7 +286,7 @@
           },
           "en": {
             "question": "In „Asociere persoană corelată”, Ciprian searches „Popescu” under „Nume”. Under „Rezultate” both natural and juridical persons appear. How does he recognise the relative he ticks?",
-            "explanation": "Natural and juridical persons stand in the same table, and the „Tip” column says which is which: „Fizică” (natural) or „Juridică” (judicial). A relative is a natural person."
+            "explanation": "Natural and juridical persons stand in the same table, and the „Tip” column says which is which: „Fizică” (natural) or „Juridică” (juridical). A relative is a natural person."
           },
           "options": [
             {

@@ -1205,7 +1205,7 @@
       "shared": "The width applies to the tile {title} on every form.",
       "forms": {
         "natural-person": "Natural person",
-        "judicial-person": "Legal entity",
+        "judicial-person": "Juridical person",
         "property": "Property",
         "document": "Document"
       }

@@ -16,7 +16,7 @@ A link between two objects is called an association. It is made once, from eithe
 On an object's „Links” tile (section [[links-related]]) there are three buttons: „Associate person”, „Associate property” and „Associate document”, each with two icons — the chain and the person, the property or the document; „Dissociate” has the chain and a broken link. Each „Associate …” opens an association screen, with three tiles one under another (Figure [[fig-links-associate]]):
 
 - „Search” — the filters. For persons they are „Name” and „Code”; for properties and documents there is a single box, „Search”, which searches by code and by name or title.
-- „Results” — the objects found. Tick the row or rows you want to link. Natural and juridical persons stand in the same table, and the „Type” column says which is which: „Natural” or „Judicial”.
+- „Results” — the objects found. Tick the row or rows you want to link. Natural and juridical persons stand in the same table, and the „Type” column says which is which: „Natural” or „Juridical”.
 - „Association” — „Role” or „Link type”, where the link has one, then „Associate Selected” and „Cancel”. The tile stays in sight at the bottom of the screen, even under a long list of results.
 
 Until you tick something, the line under the buttons says what is missing — for instance „Select at least one person”. „Associate Selected” takes you back to the object you started from, with the new link in „Links”. „Cancel” takes you back without linking anything.
