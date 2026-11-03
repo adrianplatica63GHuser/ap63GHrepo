@@ -84,7 +84,7 @@ export const MANUAL_QUOTES_NOT_LABELS: Readonly<Record<ManualLocale, Readonly<Re
     "Firm's name (Reprezentat(ă) / Mandant(ă))": "an example row: a placeholder for the firm's name, and a role (data)",
     "Example: A document shows «expiring soon» 30 days ahead.": "the threshold's example sentence and its value, drawn together by settings-view.tsx",
     "Firm's name (Proprietar)": "an example row: a placeholder for the firm's name, and a role (data)",
-    "România": "the default country — data, Romanian on both screens",
+    // 41.51: „România" left — it is data now, the first of „Țara adresei"'s seeded countries.
     "Bragadiru plot": "an example nickname a person types",
     "mostenitor": "an example search for a document type, whose names are Romanian data on both screens",
     "Name (Role)": "the shape of a row, described — not a label",
