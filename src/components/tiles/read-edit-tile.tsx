@@ -46,6 +46,11 @@ export function useFieldRead(name: string): { reading: boolean; value: unknown }
   return { reading, value: reading ? mode.value(name) : undefined };
 }
 
+/** Slice 41.51: the field's value now, whether it is read or edited — the form's own; undefined outside one. */
+export function useFieldValue(name: string): unknown {
+  return useContext(ReadModeContext).value(name);
+}
+
 /** „2026-10-25" → „25.10.2026"; anything else as it is. */
 export function readDate(value: unknown): string {
   const s = typeof value === "string" ? value.trim() : "";

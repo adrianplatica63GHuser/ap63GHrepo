@@ -146,6 +146,7 @@ import {
   documentDocument,
   judicialPerson,
   lookupCitizenship,
+  lookupAddressCountry,
   lookupPersonRelationship,
   naturalPersonRelationship,
   lookupDocTypePersonRole,
@@ -585,6 +586,14 @@ export const LIST_DEPENDENCIES: Record<ListKey, ListDependencies> = {
       },
     ],
     snapshot: { keys: NATURAL_PERSON_SNAPSHOT_FIELDS_KEYS, field: "citizenshipId" },
+  },
+
+  // Slice 41.51 (migration_124): „Țara adresei". An address keeps the country's NAME (text), never the row, so nothing
+  // depends on a value: a delete or a rename leaves every stored address as it was.
+  "address-countries": {
+    table: lookupAddressCountry,
+    idColumn: lookupAddressCountry.id,
+    refs: [],
   },
 
   // Slice #39.70 (migration_114): „Relația cu firma". A person holding the value is a dependent — it holds a delete

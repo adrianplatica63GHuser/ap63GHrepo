@@ -50,6 +50,8 @@ import { documentTypeShowsForm } from "@/lib/documents/status";
 import { joinedCellText } from "@/lib/admin/value-lists/joined-cell";
 import { frameMaxHeight } from "@/lib/ui/frame-height";
 import { LIST_HEAD } from "@/components/list/list-fit";
+import { sisterOf } from "@/lib/admin/value-lists/sister-lists";
+import { useNotice } from "@/components/toast";
 
 /**
  * Slice #38.56: the frame's height — the window's remaining height, or a screen of its own where the list
@@ -136,7 +138,7 @@ const REVIEWED_LISTS: ReadonlySet<ListKey> = new Set(["document-types", "tarla"]
  * column, so their table is as wide as its content needs (measured at 1920 px: 125 px the longest).
  */
 // Slice #39.70: „Tipuri de Persoană Fizică" left — its professions („Contabil / consultant fiscal") are not short.
-const SHORT_NAME_LISTS: ReadonlySet<ListKey> = new Set(["use-categories", "citizenships"]);
+const SHORT_NAME_LISTS: ReadonlySet<ListKey> = new Set(["use-categories", "citizenships", "address-countries"]); // 41.51: and its sister
 
 /**
  * Slice #38.66: the lists of „Tipuri de obiecte" whose shared columns were too wide — each of these fields has a
@@ -318,7 +320,7 @@ export function valueListCardUnits(listKey: ListKey): number {
  *   where it has none (Ask first 2).
  */
 export const REFERENCE_LISTS_UNTOUCHED: ReadonlySet<ListKey> = new Set(["person-roles", "property-property-roles", "document-document-roles"]);
-export const REFERENCE_TILE_FOLLOWS_LIST: ReadonlySet<ListKey> = new Set(["citizenships", "person-relationships"]);
+export const REFERENCE_TILE_FOLLOWS_LIST: ReadonlySet<ListKey> = new Set(["citizenships", "address-countries", "person-relationships"]);
 
 /** The column that takes the width a list gains: its description, else its first column, the name. */
 export function referenceFillColumn(listKey: ListKey): ColumnName {
@@ -980,6 +982,13 @@ export function ValueListModal({
 }) {
   const t = useTranslations("valueList");
   const meta = LIST_META[listKey];
+  // Slice 41.51: after a change to „Cetățenie" or „Țara adresei" succeeds — an add, an edit, a delete, a merge — a
+  // notice that stays until closed says the sister list may need the same change (sister-lists.ts).
+  const { notice: sisterNotice, show: showSisterNotice } = useNotice(t("sister.close"));
+  const sister = sisterOf(listKey);
+  const afterChange = () => {
+    if (sister) showSisterNotice(t("sister.notice", { list: t(`lists.${LIST_META[listKey].titleKey}`), sister: t(`lists.${LIST_META[sister].titleKey}`) }));
+  };
   // Names the panel for assistive technology — and it has to, now that focus
   // can LAND here (after a delete, when the button that opened the dialog has
   // gone with the row): an `aria-modal` container with no accessible name
@@ -1666,7 +1675,10 @@ export function ValueListModal({
                 listKey={listKey}
                 state={form}
                 onClose={() => setForm(null)}
-                onSaved={() => setForm(null)}
+                onSaved={() => {
+                  setForm(null);
+                  afterChange();
+                }}
               />
               </div>
             )}
@@ -1681,7 +1693,10 @@ export function ValueListModal({
                   listKey={listKey}
                   state={form}
                   onClose={() => setForm(null)}
-                  onSaved={() => setForm(null)}
+                  onSaved={() => {
+                    setForm(null);
+                    afterChange();
+                  }}
                 />
               </div>,
               formSlot,
@@ -2153,9 +2168,11 @@ export function ValueListModal({
             deleteOpenerRef.current = null;
             deletedRef.current = true;
             setConfirmDeleteId(null);
+            afterChange(); // 41.51: a delete or a merge on a sister list
           }}
         />
       )}
+      {sisterNotice}
     </>
   );
 }

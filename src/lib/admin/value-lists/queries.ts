@@ -61,6 +61,7 @@ import {
   lookupPersonType,
   lookupPersonRole,
   lookupCitizenship,
+  lookupAddressCountry,
   lookupPersonRelationship,
   lookupJudicialPersonType,
   lookupDocumentType,
@@ -358,6 +359,13 @@ export async function listValues(key: ListKey): Promise<LookupRow[]> {
           asc(lookupCitizenship.name),
           asc(lookupCitizenship.id),
         ) as Promise<LookupRow[]>;
+    case "address-countries": // Slice 41.51
+      return db.select().from(lookupAddressCountry)
+        .orderBy(
+          asc(lookupAddressCountry.sortOrder),
+          asc(lookupAddressCountry.name),
+          asc(lookupAddressCountry.id),
+        ) as Promise<LookupRow[]>;
     case "judicial-person-types":
       return db.select().from(lookupJudicialPersonType)
         .orderBy(
@@ -593,6 +601,10 @@ export async function createValue(
     }
     case "citizenships": {
       const [row] = await db.insert(lookupCitizenship).values(data).returning();
+      return row as LookupRow;
+    }
+    case "address-countries": {
+      const [row] = await db.insert(lookupAddressCountry).values(data).returning();
       return row as LookupRow;
     }
     case "person-relationships": {
@@ -964,6 +976,10 @@ export async function updateValue(
     }
     case "citizenships": {
       const [row] = await db.update(lookupCitizenship).set(data).where(eq(lookupCitizenship.id, id)).returning();
+      return (row as LookupRow) ?? null;
+    }
+    case "address-countries": {
+      const [row] = await db.update(lookupAddressCountry).set(data).where(eq(lookupAddressCountry.id, id)).returning();
       return (row as LookupRow) ?? null;
     }
     case "person-relationships": {

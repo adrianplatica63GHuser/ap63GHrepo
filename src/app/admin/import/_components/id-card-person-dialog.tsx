@@ -710,6 +710,8 @@ export function IdCardPersonDialog({
   });
   const { register, control, formState, setValue, getValues, handleSubmit } = form;
   const errors = formState.errors;
+  // Slice 41.51: „Țară" is a dropdown of „Țara adresei"; the country the card printed stays selectable (CountrySelect).
+  const homeCountry = useWatch({ control, name: "addresses.HOME.country" });
 
   // ── 1 + 2: extract, then resolve ─────────────────────────────────────────
   //
@@ -2207,6 +2209,7 @@ export function IdCardPersonDialog({
               register={register}
               errors={errors.addresses?.HOME}
               warnFields={addressWarnFields}
+              countryValue={typeof homeCountry === "string" ? homeCountry : ""}
             />
           </div>
 

@@ -110,6 +110,7 @@ import { propTileOfField, type PropTile } from "./property-tiles";
 import { firstErrorPath } from "@/lib/ui/tiles";
 import { RecordSyncNotice, useRecordSaveSync } from "@/components/record-save-sync";
 import { TileTitle } from "@/components/tiles/tile-title";
+import { CountrySelect } from "@/components/address/country-select";
 import { EmptyTileLine, useEmptyTiles } from "@/components/tiles/empty-tile";
 import { EmptyFieldsLink, HiddenFieldsContext, hiddenFieldStyle, useEmptyFields, useFieldHidden } from "@/components/tiles/empty-fields";
 import {
@@ -121,6 +122,7 @@ import {
   onTileKeyDown,
   readText,
   useFieldRead,
+  useFieldValue,
   useTileEditing,
   type ReadMode,
 } from "@/components/tiles/read-edit-tile";
@@ -2148,6 +2150,9 @@ type FieldProps = {
 function Field({ label, name, type = "text", register, error, hint, highlight, width, maxLength, fillRem }: FieldProps) {
   const hiddenEmpty = useFieldHidden(name); // Slice 40.71: behind its tile's „Arată N câmpuri goale"
   const read = useFieldRead(name);
+  const formValue = useFieldValue(name);
+  // Slice 41.51: the address's „Țară" is a dropdown of „Țara adresei"; a blank still saves „România" (37.04).
+  const country = name === "address.country";
   const ring = usePulseRing(highlight);
   const className = [
     FIELD_BOX,
@@ -2171,7 +2176,17 @@ function Field({ label, name, type = "text", register, error, hint, highlight, w
   return (
     <label className={STACKED_FIELD_CLASS} style={hiddenFieldStyle(hiddenEmpty, box)} data-empty-hidden={hiddenEmpty || undefined}>
       <span className={STACKED_LABEL_CLASS}>{label}</span>
-      {grows ? (
+      {country ? (
+        <CountrySelect
+          registration={register(name)}
+          current={formValue}
+          invalid={Boolean(error)}
+          className={className}
+          style={box}
+          name={name}
+          kind={width.kind}
+        />
+      ) : grows ? (
         <GrowingText
           registration={register(name)}
           width={String(box.width)}

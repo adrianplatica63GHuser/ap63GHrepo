@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, type ReactNode } from "react";
-import { CircleCheck } from "lucide-react";
+import { CircleCheck, TriangleAlert, X } from "lucide-react";
 
 /** How long a toast stays, in ms. */
 export const TOAST_MS = 4000;
@@ -36,4 +36,42 @@ export function useToast(): { toast: ReactNode; show: (text: string) => void } {
     </div>
   );
   return { toast, show };
+}
+
+/**
+ * A notice: the toast's warning sibling — amber, a TriangleAlert, and it STAYS until closed.           (Slice 41.51)
+ *
+ * Adrian, 2026-11-02: saving a change in „Cetățenie" or „Țara adresei" must say, at that moment, that the sister list
+ * may need the same change. A sentence that asks the user to go and do something cannot leave after four seconds, so
+ * it stays, with a close button (`closeLabel`), until it is closed or a newer one replaces it. Same corner, same live
+ * region (`role="status"`), the toast's look in the warning tokens. `show` from an event handler, never from an effect.
+ */
+export function useNotice(closeLabel: string): { notice: ReactNode; show: (text: string) => void } {
+  const [shown, setShown] = useState<{ text: string; n: number } | null>(null);
+  const show = (text: string) => setShown((prev) => ({ text, n: (prev?.n ?? 0) + 1 }));
+  const notice = (
+    <div role="status" aria-live="polite" data-notice="" className="fixed bottom-4 right-4 z-50">
+      {shown && (
+        <div
+          key={shown.n}
+          className="flex max-w-[28rem] items-start gap-2 rounded-lg border border-warning-rim bg-warning-wash px-4 py-3 text-sm font-medium text-warning shadow-lg"
+          data-notice-text=""
+        >
+          <TriangleAlert aria-hidden="true" size={18} className="mt-0.5 shrink-0" />
+          <span className="min-w-0 flex-1">{shown.text}</span>
+          <button
+            type="button"
+            onClick={() => setShown(null)}
+            aria-label={closeLabel}
+            title={closeLabel}
+            className="-mr-1 shrink-0 rounded p-0.5 hover:bg-warning-rim/40 focus-visible:outline-2 focus-visible:outline-focus"
+            data-notice-close=""
+          >
+            <X aria-hidden="true" size={16} />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+  return { notice, show };
 }

@@ -263,6 +263,7 @@ const SIMPLE_TABLES: Array<[string, string]> = [
   ["lookup_person_type", "sort_order"],
   ["lookup_person_relationship", "sort_order"], // Slice #39.70; missing here until 41.14, so every sync since failed at it
   ["lookup_citizenship", "sort_order"],
+  ["lookup_address_country", "sort_order"], // Slice 41.51
   ["lookup_document_type", "sort_order"],
   ["lookup_person_role", "sort_order"],
   ["lookup_judicial_person_type", "sort_order"],
@@ -454,6 +455,7 @@ async function main() {
       lookup_person_relationship,
       lookup_judicial_person_type,
       lookup_citizenship,
+      lookup_address_country,
       lookup_document_type,
       lookup_property_property_role,
       lookup_document_document_role
@@ -469,6 +471,7 @@ async function main() {
   await syncSimple("lookup_person_type",   "sort_order");
   await syncSimple("lookup_person_relationship", "sort_order"); // Slice #39.70
   await syncSimple("lookup_citizenship",   "sort_order");
+  await syncSimple("lookup_address_country", "sort_order"); // Slice 41.51
   await syncSimple("lookup_document_type", "sort_order");
   await syncSimple("lookup_person_role",   "sort_order");
   await syncSimple("lookup_judicial_person_type", "sort_order");

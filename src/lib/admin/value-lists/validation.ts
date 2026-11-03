@@ -444,6 +444,7 @@ export const LIST_SCHEMAS: Record<ListKey, z.ZodType<any>> = {
   "person-types":    personTypeSchema,
   "person-roles":    personRoleSchema,
   "citizenships":    citizenshipSchema,
+  "address-countries": citizenshipSchema, // Slice 41.51: the same shape, a name and a place
   "person-relationships": citizenshipSchema, // Slice #39.70: the same shape, a name and a place
   "judicial-person-types": judicialPersonTypeSchema,
   "document-types":  documentTypeSchema,
@@ -628,6 +629,7 @@ export const LIST_UPDATE_SCHEMAS: Record<ListKey, z.ZodType<any>> = {
   // a PUT must not reintroduce one. See the schema's header. (Slice #34.01)
   "person-roles":          personRoleSchema,
   "citizenships":          citizenshipSchema.extend({ sortOrder: sortOrderOnUpdate }),
+  "address-countries":     citizenshipSchema.extend({ sortOrder: sortOrderOnUpdate }),
   "person-relationships":  citizenshipSchema.extend({ sortOrder: sortOrderOnUpdate }),
   "judicial-person-types": judicialPersonTypeSchema.extend({ sortOrder: sortOrderOnUpdate }),
   // Already carries `sortOrderOnUpdate` — the omit-plus-extend is on the

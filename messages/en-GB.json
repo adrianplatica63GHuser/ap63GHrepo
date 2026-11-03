@@ -2504,6 +2504,7 @@
       "personTypes": "Natural Person Types",
       "personRoles": "Person Roles",
       "citizenships": "Citizenship",
+      "addressCountries": "Address country",
       "personRelationships": "Relationship to the business",
       "judicialPersonTypes": "Juridical Person Types",
       "documentTypes": "Document Types",
@@ -2720,6 +2721,10 @@
       "nothingMoves": "Nothing uses this value: after the merge it is gone and the value kept stays.",
       "confirm": "Merge",
       "merging": "Merging…"
+    },
+    "sister": {
+      "notice": "You saved a change in „{list}”. Check whether „{sister}” needs the same change, so the two lists stay in step.",
+      "close": "Close"
     },
     "roleEditor": {
       "appliesTo": "Applies to",

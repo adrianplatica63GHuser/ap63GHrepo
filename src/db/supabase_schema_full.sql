@@ -4,7 +4,7 @@
 -- GENERATED FILE -- DO NOT EDIT BY HAND.
 -- Regenerate with:  .\scripts\Export-SupabaseSchema.ps1
 --
--- Generated : 2026-10-31 20:28
+-- Generated : 2026-11-02 21:39
 -- Source    : local Docker database (ga40db @ ga40prj-postgres)
 --
 -- Applies the complete schema from scratch after running
@@ -682,6 +682,26 @@ CREATE TABLE public.judicial_person (
     phone text,
     email text
 );
+
+
+--
+-- Name: lookup_address_country; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.lookup_address_country (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    sort_order integer DEFAULT 0 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: TABLE lookup_address_country; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public.lookup_address_country IS 'Slice 41.51: „Țara adresei" - the countries an address tile''s „Țară" is chosen from. Kept in step with lookup_citizenship by hand; a save in either list says so.';
 
 
 --
@@ -1753,6 +1773,14 @@ ALTER TABLE ONLY public.interaction_tag
 
 ALTER TABLE ONLY public.judicial_person
     ADD CONSTRAINT judicial_person_pkey PRIMARY KEY (person_id);
+
+
+--
+-- Name: lookup_address_country lookup_address_country_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.lookup_address_country
+    ADD CONSTRAINT lookup_address_country_pkey PRIMARY KEY (id);
 
 
 --

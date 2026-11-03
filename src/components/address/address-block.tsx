@@ -44,7 +44,8 @@ import { EMPTY_MARK, FIELD_BOX, fieldBorder } from "@/lib/ui/field-box";
 import { TileTitle } from "@/components/tiles/tile-title";
 import { EmptyTileLine, type EmptyTileState } from "@/components/tiles/empty-tile";
 import { hiddenFieldStyle, useFieldHidden } from "@/components/tiles/empty-fields";
-import { ReadValue, readText, useFieldRead } from "@/components/tiles/read-edit-tile";
+import { ReadValue, readText, useFieldRead, useFieldValue } from "@/components/tiles/read-edit-tile";
+import { CountrySelect } from "@/components/address/country-select";
 
 /** Per-subfield version-diff highlight frames (Slice #18.05). Keys match the
  *  address subfield names; omitted = no frame. */
@@ -120,6 +121,11 @@ type Props<TFormValues extends FieldValues> = {
   sectionClassName?: string;
   /** Slice 40.72: Esc in the open tile is „Renunță". */
   onKeyDown?: KeyboardEventHandler<HTMLElement>;
+  /**
+   * Slice 41.51: „Țară"'s value now, for a form that gives no `ReadModeContext` (the ID-card dialog) — so a stored
+   * country the list lacks stays selectable (`CountrySelect`). The person forms leave it out: the context has it.
+   */
+  countryValue?: string;
 };
 
 export function AddressBlock<TFormValues extends FieldValues>({
@@ -137,6 +143,7 @@ export function AddressBlock<TFormValues extends FieldValues>({
   after,
   sectionClassName,
   onKeyDown,
+  countryValue,
 }: Props<TFormValues>) {
   const t = useTranslations("address");
   const f = (sub: string) => `${prefix}.${sub}` as FieldPath<TFormValues>;
@@ -171,6 +178,8 @@ export function AddressBlock<TFormValues extends FieldValues>({
       highlight={hl(sub)}
       width={ADDRESS[sub]}
       fillRem={NP_PANEL_INNER_REM.address}
+      country={sub === "country"}
+      countryValue={countryValue}
     />
   );
   return (
@@ -238,6 +247,8 @@ function Field<TFormValues extends FieldValues>({
   highlight,
   width,
   fillRem,
+  country = false,
+  countryValue,
 }: {
   label: string;
   name: FieldPath<TFormValues>;
@@ -248,9 +259,13 @@ function Field<TFormValues extends FieldValues>({
   width: FieldWidth;
   /** The panel's inner width, for the box that `fill`s it (Note). */
   fillRem: number;
+  /** Slice 41.51: „Țară" — a dropdown of „Țara adresei" (`CountrySelect`), not a text box. */
+  country?: boolean;
+  countryValue?: string;
 }) {
   const hiddenEmpty = useFieldHidden(name); // Slice 40.71: behind its tile's „Arată N câmpuri goale"
   const read = useFieldRead(name);
+  const formValue = useFieldValue(name);
   // Static ring on a historical version; animated pulse on the freshly-
   // navigated-to latest (Bug 1). The pulsing flag comes from FieldPulseContext,
   // which the versioned person form provides; defaults to a static ring
@@ -279,7 +294,17 @@ function Field<TFormValues extends FieldValues>({
         {label}
         {warn && <span className="ml-1 text-amber-600 dark:text-amber-400" data-low-confidence>⚠</span>}
       </span>
-      {grows ? (
+      {country ? (
+        <CountrySelect
+          registration={register(name)}
+          current={countryValue ?? formValue}
+          invalid={Boolean(error)}
+          className={boxClass}
+          style={box}
+          name={name}
+          kind={width.kind}
+        />
+      ) : grows ? (
         <GrowingText
           registration={register(name)}
           width={String(box.width)}

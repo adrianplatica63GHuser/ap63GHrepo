@@ -44,6 +44,8 @@ export const VALID_LIST_KEYS = [
   "person-types",
   "person-roles",
   "citizenships",
+  // Slice 41.51 — „Țara adresei" (migration_124).
+  "address-countries",
   // Slice #39.70 — „Relația cu firma" (migration_114).
   "person-relationships",
   "judicial-person-types",
@@ -242,6 +244,11 @@ export const LIST_META: Record<ListKey, ListMeta> = {
   },
   citizenships: {
     titleKey: "citizenships",
+    fields: [{ key: "name", labelKey: "name", required: true }],
+  },
+  // Slice 41.51 — „Țara adresei": the countries an address tile's „Țară" is chosen from, kept in step with „Cetățenie".
+  "address-countries": {
+    titleKey: "addressCountries",
     fields: [{ key: "name", labelKey: "name", required: true }],
   },
   "judicial-person-types": {

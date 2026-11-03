@@ -283,6 +283,30 @@ export function useCitizenshipOptions(): LookupOptions {
   };
 }
 
+/**
+ * `lookup_address_country` — „Țara adresei", for every address tile's „Țară" (Slice 41.51).
+ *
+ * ⚠️ **THE VALUE IS THE NAME, NOT THE ID.** An address stores its country as text (address.country,
+ * property_address.country), so the dropdown writes the chosen name and no stored address changes when the list does.
+ */
+export function useAddressCountryOptions(): LookupOptions {
+  const { data, isPending, isLoadingError, fetchStatus, refetch } = useQuery({
+    queryKey: ["value-list", "address-countries"],
+    queryFn:  () => fetchValueList<NamedRow>("address-countries"),
+    select:   (rows: NamedRow[]): LookupOption[] => rows.map((r) => ({ value: r.name, label: r.name })),
+    retry:    LOOKUP_QUERY_RETRY,
+  });
+  const reload = useCallback((): void => {
+    void refetch();
+  }, [refetch]);
+  return {
+    options: data ?? NO_OPTIONS,
+    listState: lookupListState(isPending, isLoadingError, fetchStatus),
+    reload,
+    isReloading: fetchStatus === "fetching" || (fetchStatus === "paused" && !isPending),
+  };
+}
+
 /** `lookup_person_relationship` — „Relația cu firma" on the natural-person form (Slice #39.70). */
 export function usePersonRelationshipOptions(): LookupOptions {
   const { data, isPending, isLoadingError, fetchStatus, refetch } = useQuery({
