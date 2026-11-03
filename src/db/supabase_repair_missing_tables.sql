@@ -1693,6 +1693,9 @@ CREATE TABLE IF NOT EXISTS tarla_corner (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS tarla_corner_tarla_seq_unique ON tarla_corner (tarla_id, sequence_no);
 
+-- migration_125 (Slice 41.52) -- „Cetățenie"'s „Forme tipărite"
+ALTER TABLE lookup_citizenship ADD COLUMN IF NOT EXISTS printed_forms text;
+
 -- migration_124 (Slice 41.51) -- „Țara adresei", the countries an address tile's „Țară" is chosen from
 CREATE TABLE IF NOT EXISTS lookup_address_country (
   id         uuid        PRIMARY KEY DEFAULT gen_random_uuid(),

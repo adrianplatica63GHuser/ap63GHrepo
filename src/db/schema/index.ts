@@ -1058,6 +1058,8 @@ export const lookupJudicialPersonType = pgTable("lookup_judicial_person_type", {
 export const lookupCitizenship = pgTable("lookup_citizenship", {
   id:        uuid("id").primaryKey().defaultRandom(),
   name:      text("name").notNull(),
+  // Slice 41.52, migration_125: „Forme tipărite" — what a document may print for it, comma-separated („ROU, ROUMAINE").
+  printedForms: text("printed_forms"),
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
