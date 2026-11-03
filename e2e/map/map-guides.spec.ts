@@ -126,10 +126,11 @@ test.describe("TC-MAP-08 — ghidurile din „Instrumente”", () => {
     await box.getByRole("button", { name: "OK", exact: true }).click();
     await expectPulsing(page, GROUPS);
 
-    // Step 9 — „Navigare": one row, „Navighează", where it is.
+    // Step 9 — „Navigare": „Navighează", where it is, then (41.70) „Caută pe hartă" (it read „one row, „Navighează"").
     const before = page.url();
     box = await openGuide(page, "Navigare");
-    expect(await rowNames(box)).toEqual(["Navighează"]);
+    expect(await rowNames(box)).toEqual(["Navighează", "Caută pe hartă"]);
+    await expect(box.locator('[data-map-guide-row="search"]')).toContainText("numărul unei proprietăți");
     await expect(box.locator('[data-map-guide-row="navigate"]')).toContainText("fișa proprietății");
     await expect(box.locator('[data-map-guide-row="navigate"]')).toContainText("clic pe o proprietate pe harta tuturor proprietăților");
     await page.screenshot({ path: `${SHOTS}/navigation-1366.png`, mask: [recent(page)] });

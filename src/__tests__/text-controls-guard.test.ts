@@ -300,6 +300,9 @@ const ALLOW: Record<string, Allowed[]> = {
   "src/components/breadcrumb-bar.tsx": [
     ["A112", "{seg.label}"],
   ],
+  "src/components/maps/map-search-panel.tsx": [
+    ["A096", "{chunks}"], // 41.70: „Căutarea globală" in the big map's search box's message — a link in a sentence, same tab
+  ],
   "src/components/entity-metadata-tab.tsx": [
     ["A113", "<span className=\"font-mono text-xs rounded border border"],
     ["A113", "<span className=\"font-mono text-xs rounded border border"],

@@ -37,7 +37,7 @@ Nothing.
 | 6 | Opens „Instrumente" and presses „Grupări de proprietăți" | A box „Grupări de proprietăți": three rows — „Tarlale", „Grupuri", „Selectează" — the last saying it puts the selection into a group and deletes nothing |
 | 7 | Presses „OK" | The address ends `?pulse=groups`; „Tarlale", „Grupuri" and „Selectează" pulse together, and no other button does |
 | 8 | Waits four seconds, then presses „Grupări de proprietăți" again, and „OK" | The box opens again; on the same address, the three pulse again |
-| 9 | Presses „Navigare" | A box „Navigare": one row, „Navighează", saying it is on the property form and in the window a property's click opens on the map of all properties |
+| 9 | Presses „Navigare" | A box „Navigare": two rows (41.70) — „Navighează", saying it is on the property form and in the window a property's click opens on the map of all properties, then „Caută pe hartă", the big map's search for a property's number |
 | 10 | Presses „OK" | The box closes; the page and the address are as before |
 
 ## At the end — leaving things as they were found
