@@ -10,7 +10,7 @@
  *   - Step 4 fills the date box as a browser does — `2026-01-01`; the box shows it as the locale writes it.
  */
 
-import { test, expect } from "../helpers/test";
+import { test, expect, type Locator } from "../helpers/test";
 import { E2E_MARKER, createDocumentOfType, removeLeftovers, removeRecord } from "../helpers/records";
 import { expectUnder } from "../helpers/filter-editor";
 import { listsOnTheirEarlierColumns } from "../helpers/list-columns";
@@ -173,6 +173,21 @@ test.describe("TC-DOC-27 — filtrele listei actelor", () => {
       await shows("A", "V");
       await close();
       await expect(trigger).toContainText("Toate tipurile");
+
+      // Step 11 — 41.56, Adrian: „as compact as … the list from the field chooser button". A type's row is as tall as a
+      // field's in „Câmpuri afișate", within 2 px.
+      const height = async (row: Locator) => (await row.boundingBox())!.height;
+      await trigger.click();
+      const typeRow = main.locator('[data-type-row=""]').first();
+      await expect(typeRow).toBeVisible();
+      const typeH = await height(typeRow);
+      await close();
+      await main.getByRole("button", { name: /^Câmpuri afișate \d+\/\d+$/ }).click();
+      const fieldRow = main.locator("[data-field-row]").first();
+      await expect(fieldRow).toBeVisible();
+      const fieldH = await height(fieldRow);
+      await close();
+      expect(Math.abs(typeH - fieldH), `type row ${typeH} px, field row ${fieldH} px`).toBeLessThanOrEqual(2);
     } finally {
       for (const id of ids) await removeRecord(page.request, "document", id);
     }

@@ -46,6 +46,7 @@ Nothing.
 | 8 | Unticks „Adeverință" in the toolbar's „Tip document:" | V alone; `documentTypeIds` in the address; no chip; „Tip document:" no longer „Toate tipurile" |
 | 9 | Reloads | V alone, „Tip document:" still not „Toate tipurile" |
 | 10 | Ticks „Toate tipurile" in „Tip document:" | A and V; „Tip document:" reads „Toate tipurile" |
+| 11 | (Slice 41.56) Opens „Tip document:", then „Câmpuri afișate", and compares one row of each | A type's row is as tall as a field's, within 2 px — the checklist as tight as the field chooser |
 
 ## At the end — leaving things as they were found
 

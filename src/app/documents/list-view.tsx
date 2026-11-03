@@ -216,7 +216,7 @@ function TypeChecklist({
     <>
       {/* The two top rows stay in view while the checklist scrolls under them. */}
       <div className="sticky top-0 z-10 bg-white dark:bg-zinc-900">
-      <label className="flex items-center gap-2 px-3 py-2 text-sm font-medium cursor-pointer hover:bg-cta-pale dark:hover:bg-zinc-800/50">
+      <label className="flex items-center gap-2 px-3 py-0.5 text-sm font-medium cursor-pointer hover:bg-cta-pale dark:hover:bg-zinc-800/50" data-type-row="all">
         <input
           ref={selectAllRef}
           type="checkbox"
@@ -229,7 +229,7 @@ function TypeChecklist({
       {/* Slice #38.48: under „Toate tipurile", above the divider (this row's border-b), as wide as the
           dropdown's w-64 less its px-3 — a fixed width, never w-full (layout-guard). Searching
           only hides rows; „Toate tipurile" still ticks and unticks the whole list. Esc closes. */}
-      <div className="border-b border-crease px-3 pb-2 dark:border-zinc-800">
+      <div className="border-b border-crease px-3 pb-1.5 dark:border-zinc-800">
         <input
           ref={searchRef}
           type="search"
@@ -255,7 +255,9 @@ function TypeChecklist({
       {shownTypes.map((ty) => (
         <label
           key={ty.id}
-          className="flex items-center gap-2 px-3 py-2 text-sm cursor-pointer hover:bg-cta-pale dark:hover:bg-zinc-800/50"
+          // 41.56, Adrian: „as compact as the field chooser's list" — its py-0.5; the hover stays, the whole row clicks.
+          className="flex items-center gap-2 px-3 py-0.5 text-sm cursor-pointer hover:bg-cta-pale dark:hover:bg-zinc-800/50"
+          data-type-row=""
         >
           <input
             type="checkbox"

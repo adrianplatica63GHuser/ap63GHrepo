@@ -267,4 +267,23 @@ describe("„Tip document” — the search box (#38.48)", () => {
     expect(dropdown).toContain("{types.length > 0 && shownTypes.length === 0 && (");
     expect(dropdown).toContain('className="px-3 py-2 text-sm italic text-fade"');
   });
+
+  it("41.56: the rows sit as close as the field chooser's — the same vertical padding, so the two cannot drift", () => {
+    // Adrian: „decrease the gap between the items … Just like the list from the field chooser button". No shared row
+    // component for two lists (the third copy is the time); this ties their vertical padding instead.
+    const chooser = read("src", "components", "list", "field-chooser.tsx");
+    const padY = (cls: string) => cls.split(/\s+/).filter((c) => /^(py|pt|pb)-/.test(c)).sort();
+    const chooserRow = /<label key=\{f\.key\} className="([^"]*)"[^>]*data-field-row=""/.exec(chooser)?.[1];
+    expect(chooserRow).toBeDefined();
+    const dropdown = VIEW.slice(VIEW.indexOf("function TypeChecklist"), VIEW.indexOf("// Types"));
+    const rows = [...dropdown.matchAll(/className="([^"]*)"\s*(?:\n\s*)?data-type-row="(?:all)?"/g)].map((m) => m[1]);
+    expect(rows).toHaveLength(2); // „Toate tipurile" and the type row
+    for (const row of rows) {
+      expect(padY(row)).toEqual(padY(chooserRow!));
+      expect(row).toContain("px-3");
+      // The hover stays — the cue that the whole row clicks, in a list of about thirty.
+      expect(row).toContain("hover:bg-cta-pale");
+    }
+    expect(dropdown).toContain('<div className="border-b border-crease px-3 pb-1.5 dark:border-zinc-800">');
+  });
 });

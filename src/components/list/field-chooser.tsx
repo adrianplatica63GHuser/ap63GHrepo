@@ -138,7 +138,7 @@ export function FieldChooser({
             const checked = visible.includes(f.key);
             const disabled = !checked && visible.length >= max;
             return (
-              <label key={f.key} className="flex cursor-pointer items-center gap-2 py-0.5" title={f.full}>
+              <label key={f.key} className="flex cursor-pointer items-center gap-2 py-0.5" title={f.full} data-field-row="">
                 <input
                   type="checkbox"
                   checked={checked}
