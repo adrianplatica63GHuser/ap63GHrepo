@@ -6,7 +6,15 @@
 import { useState } from "react";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { Eraser, ListMinus, ListPlus, Stamp } from "lucide-react";
-import { TWO_LIST_ROWS, TWO_LIST_ROW_REM, TwoLists, type TwoListRow } from "@/components/screen/two-lists";
+import {
+  TWO_LIST_FRAME_REM,
+  TWO_LIST_HEAD_REM,
+  TWO_LIST_ROWS,
+  TWO_LIST_ROW_REM,
+  TWO_LIST_TOOLBAR_REM,
+  TwoLists,
+  type TwoListRow,
+} from "@/components/screen/two-lists";
 
 jest.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
@@ -92,14 +100,42 @@ describe("TwoLists (41.42)", () => {
     expect(spy.include).toEqual([]);
   });
 
-  it("each list scrolls after twelve rows; the empty list says so", () => {
-    const { left, right } = setup([]);
+  // 41.58 inverted in place — was „each list scrolls after twelve rows", a max-height of 24rem on both lists, so the side
+  // with no search box was a toolbar shorter. Adrian: „the list on the left should not be sized to hold only 12 items
+  // just like the list on the right". Both frames are one fixed height now; the side without a toolbar gives its band
+  // to its rows.
+  it("both frames one height, toolbar or not — twelve rows under a toolbar, its band too without one; the empty list says so", () => {
     expect(TWO_LIST_ROWS).toBe(12);
-    for (const list of [left(), right()]) {
-      expect(list.querySelector<HTMLElement>("[data-two-list-rows]")!.style.maxHeight).toBe(`${TWO_LIST_ROWS * TWO_LIST_ROW_REM}rem`);
-      expect(list.querySelector<HTMLElement>("[data-two-list-rows]")!.className).toContain("overflow-y-auto");
+    expect(TWO_LIST_FRAME_REM).toBe(TWO_LIST_HEAD_REM + TWO_LIST_TOOLBAR_REM + TWO_LIST_ROWS * TWO_LIST_ROW_REM);
+    render(
+      <TwoLists
+        left={{ name: "in", title: "Deja în grup", rows: [], empty: "gol" }}
+        right={{ name: "out", title: "Disponibile", rows: [], empty: "nimic", toolbar: <input type="search" aria-label="Caută" /> }}
+        includeLabel={(n) => `‹ Include (${n})`}
+        takeOutLabel={(n) => `Scoate › (${n})`}
+        includeIcon={ListPlus}
+        takeOutIcon={ListMinus}
+        onInclude={() => {}}
+        onTakeOut={() => {}}
+      />,
+    );
+    const left = screen.getByRole("region", { name: "Deja în grup" });
+    const right = screen.getByRole("region", { name: "Disponibile" });
+    for (const list of [left, right]) {
+      // A height, not a max-height: equal however few rows each holds.
+      // (jsdom's cssstyle writes the calc as „calc(2px + …rem)" — so its two terms, not its order.)
+      expect(list.style.height).toMatch(/^calc\(/);
+      expect(list.style.height).toContain(`${TWO_LIST_FRAME_REM}rem`);
+      expect(list.style.height).toContain("2px");
+      expect(list.style.maxHeight).toBe("");
+      const rows = list.querySelector<HTMLElement>("[data-two-list-rows]")!;
+      expect(rows.style.maxHeight).toBe("");
+      expect(rows.className).toContain("flex-1");
+      expect(rows.className).toContain("overflow-y-auto");
     }
-    expect(left().textContent).toContain("gol");
+    expect(right.querySelector<HTMLElement>("input[type=search]")!.parentElement!.style.height).toBe(`${TWO_LIST_TOOLBAR_REM}rem`);
+    expect(left.querySelector("input")).toBeNull();
+    expect(left.textContent).toContain("gol");
   });
 
   it("41.43: a head stands over both lists, and the buttons may carry their action's icons", () => {

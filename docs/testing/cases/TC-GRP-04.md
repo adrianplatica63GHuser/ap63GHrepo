@@ -42,6 +42,7 @@ Nothing.
 | 4 | Double-clicks C on the right | C on the left, „în așteptare"; the left list's count 3 |
 | 5 | Ticks A on the left, presses „Scoate › (1)" | A back on the right |
 | 6 | Presses „Salvează grupul", then reloads | B and C on the left, each with its position, „[01]" or „[02]"; nothing „în așteptare"; A not a member |
+| 6b | (Slice 41.58) Looks at the two lists, two members on the left | The two frames share a top and a bottom (±1 px), and stand as far from the tile's bottom edge — the left list as tall as the right, whose search box is above it |
 
 ### Opened from a record (41.45)
 

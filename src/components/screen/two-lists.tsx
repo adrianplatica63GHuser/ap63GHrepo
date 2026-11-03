@@ -31,6 +31,18 @@ import { IconButton } from "@/lib/ui/icon-button";
 export const TWO_LIST_ROWS = 12;
 /** One row's height, in rem: `h-8`. */
 export const TWO_LIST_ROW_REM = 2;
+/**
+ * 41.58, Adrian: „the list on the left should not be sized to hold only 12 items just like the list on the right — It
+ * should be sized to have similar gaps up and down to the tile edges". So both frames take ONE fixed height — the
+ * heading, a toolbar's band and twelve rows — and a side with no toolbar gives that band to its rows. A height, not a
+ * max-height: the frames are equal however few rows each holds, and the tile never jumps as items move.
+ */
+/** The heading row, in rem: `py-1.5` around a 20-px line, and its 1-px rule (33 px). */
+export const TWO_LIST_HEAD_REM = 2.0625;
+/** A toolbar's band, in rem: `p-2` around a 34-px search box, and its 1-px rule (51 px). */
+export const TWO_LIST_TOOLBAR_REM = 3.1875;
+/** The frame's whole inner height, in rem — the same on both sides, toolbar or not. */
+export const TWO_LIST_FRAME_REM = TWO_LIST_HEAD_REM + TWO_LIST_TOOLBAR_REM + TWO_LIST_ROWS * TWO_LIST_ROW_REM;
 /** Each list's width in units (41.42 Ask first 2); the tile is `TWO_LISTS_UNITS` (screen-tiles.ts). */
 export const TWO_LIST_UNITS = 3;
 
@@ -168,8 +180,14 @@ function TwoList({
       aria-labelledby={titleId}
       data-two-list={side.name}
       className="flex min-w-0 flex-col rounded-md border border-card-rim bg-white dark:border-zinc-800 dark:bg-zinc-950"
+      // 41.58: the frame's height, its 1-px border on either side included — equal for both lists.
+      style={{ height: `calc(${TWO_LIST_FRAME_REM}rem + 2px)` }}
+      data-two-list-frame=""
     >
-      <div className="flex items-center gap-1.5 border-b border-card-rim px-3 py-1.5 dark:border-zinc-800">
+      <div
+        className="flex shrink-0 items-center gap-1.5 border-b border-card-rim px-3 dark:border-zinc-800"
+        style={{ height: `${TWO_LIST_HEAD_REM}rem` }}
+      >
         <span id={titleId} className="min-w-0 truncate text-sm font-semibold text-ink dark:text-zinc-100">
           {side.title}
         </span>
@@ -178,10 +196,17 @@ function TwoList({
           {side.rows.length}
         </span>
       </div>
-      {side.toolbar && <div className="border-b border-card-rim p-2 dark:border-zinc-800">{side.toolbar}</div>}
+      {side.toolbar && (
+        <div
+          className="flex shrink-0 items-center border-b border-card-rim px-2 dark:border-zinc-800"
+          style={{ height: `${TWO_LIST_TOOLBAR_REM}rem` }}
+        >
+          {side.toolbar}
+        </div>
+      )}
+      {/* Twelve rows under a toolbar; with none, its band too (41.58) — the rest of the frame, by flex. */}
       <ul
-        className="divide-y divide-crease overflow-y-auto dark:divide-zinc-800"
-        style={{ maxHeight: `${TWO_LIST_ROWS * TWO_LIST_ROW_REM}rem` }}
+        className="min-h-0 flex-1 divide-y divide-crease overflow-y-auto dark:divide-zinc-800"
         data-two-list-rows=""
       >
         {side.rows.length === 0 ? (

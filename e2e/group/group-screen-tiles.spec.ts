@@ -108,6 +108,16 @@ test.describe("TC-GRP-04 — ecranul unui grup: identitatea și membrii, două l
       await page.reload();
       await expect(inGroup.locator("[data-two-list-count]")).toHaveText("2", { timeout: 30_000 });
       for (const n of ["B", "C"]) await expect(row(inGroup, n)).toContainText(/\[0[12]\]/);
+
+      // Step 6b — 41.58, Adrian: the left list „should be sized to have similar gaps up and down to the tile edges –
+      // similar to the list on the right". Two members on the left, the rest on the right: the two frames share a top
+      // and a bottom (±1 px), and stand as far from the tile's bottom edge.
+      const [li, av, tile] = await Promise.all([inGroup.boundingBox(), available.boundingBox(), members.boundingBox()]);
+      if (!li || !av || !tile) throw new Error("a list is not on the page");
+      expect(Math.abs(li.y - av.y), "the two frames' tops").toBeLessThanOrEqual(1);
+      expect(Math.abs(li.y + li.height - (av.y + av.height)), "the two frames' bottoms").toBeLessThanOrEqual(1);
+      const gap = (b: { y: number; height: number }) => tile.y + tile.height - (b.y + b.height);
+      expect(Math.abs(gap(li) - gap(av)), "the gaps to the tile's bottom").toBeLessThanOrEqual(1);
       await expect(row(inGroup, "A")).toHaveCount(0);
     } finally {
       await page.evaluate((k) => localStorage.removeItem(k), KEY).catch(() => undefined);
