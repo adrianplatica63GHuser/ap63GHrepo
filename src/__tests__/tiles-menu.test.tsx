@@ -122,13 +122,15 @@ describe("where it is drawn", () => {
     expect(read(...RECORD[3])).toContain("<TilesMenuButton menu={tilesMenu} badge={hiddenMarked(marked, choice.shown)} />");
   });
 
-  // Slice 41.02: the home page's bar is behind „Panouri" too, beside its title and „?". Was: „Setări and the home
-  // page keep the open bar".
-  it("the home page's bar is behind „Panouri”, beside its title; Setări keeps the open bar", () => {
+  // Slice 41.02: the home page's bar is behind „Panouri" too. Was: „Setări and the home page keep the open bar".
+  // 41.61 inverted in place — was „beside its title and „?"" (`<ScreenHelpButton align="left" />` then the button):
+  // „Panouri" is portalled into the page bar's slot, as on a record screen, and „?" is the bar's own.
+  it("the home page's bar is behind „Panouri”, in the page bar; Setări keeps the open bar", () => {
     const home = read("src", "app", "_components", "dashboard-client.tsx");
     expect(home).toMatch(/<TileSelector [^>]*\bmenu=\{tilesMenu\}/);
     expect(home).toContain("const tilesMenu = useTilesMenu();");
-    expect(home).toMatch(/<ScreenHelpButton align="left" \/>\s*\{\/\*[^]*?\*\/\}\s*<TilesMenuButton menu=\{tilesMenu\} \/>/);
+    expect(home).toMatch(/<PageBarControls>\s*<TilesMenuButton menu=\{tilesMenu\} \/>\s*<\/PageBarControls>/);
+    expect(home).not.toContain("<ScreenHelpButton");
     expect(read("src", "app", "admin", "settings", "_components", "settings-view.tsx")).not.toMatch(/<TileSelector [^>]*\bmenu=/);
   });
 

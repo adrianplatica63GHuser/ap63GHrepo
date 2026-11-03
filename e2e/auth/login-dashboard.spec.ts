@@ -73,15 +73,33 @@ test.describe("TC-AUTH-01 — Conectare și tabloul de bord", () => {
     await showTile(page, STALE);
     await expect(staleTile).toBeVisible({ timeout: 15_000 });
 
-    // Step 6c (Slice 41.02) — „Panouri" beside the title and its „?", closed when the page opens; inside it the four
-    // boxes, „Toate sus", „Toate" and „Implicit". Unticking „Activitate recentă" hides it; „Toate sus" leaves every
-    // tile right under the one above it (or at the top of the row).
+    // Step 6c (Slice 41.02; 41.61 rewritten in place) — was „„Panouri" beside the title and its „?"" (the button's middle
+    // within 8 px of the title's). Adrian, 41.61: „For the dashboard I should have the top bar with back and forward
+    // buttons … After the buttons I should have the Home … and at the right I should have the panels and the question
+    // mark". So the page bar: „Înapoi", „Înainte", „Acasă", „Panouri", „?" in that order; no system ID, no versions;
+    // the title under it. „Panouri" closed when the page opens; inside it the four boxes and the bar's buttons.
+    const bar = page.locator("[data-page-bar]");
+    await expect(bar).toBeVisible();
     const panelsButton = tilesMenuButton(page);
     await expect(panelsButton).toBeVisible();
     await expect(panelsButton).toHaveAttribute("aria-expanded", "false");
-    const titleBox = (await page.getByRole("heading", { name: "Tablou de bord" }).boundingBox())!;
-    const buttonBox = (await panelsButton.boundingBox())!;
-    expect(Math.abs(buttonBox.y + buttonBox.height / 2 - (titleBox.y + titleBox.height / 2))).toBeLessThanOrEqual(8);
+    await expect(bar.locator("[data-page-bar-slot]").locator(panelsButton)).toHaveCount(1);
+    const inBar = [
+      bar.getByRole("button", { name: "Înapoi", exact: true }),
+      bar.getByRole("button", { name: "Înainte", exact: true }),
+      bar.getByText("Acasă", { exact: true }),
+      panelsButton,
+      bar.locator("[data-page-bar-help] button"),
+    ];
+    const xs = await Promise.all(inBar.map(async (l) => (await l.boundingBox())!.x));
+    expect(xs, "„Înapoi”, „Înainte”, „Acasă”, „Panouri”, „?”").toEqual([...xs].sort((a, b) => a - b));
+    await expect(bar.locator("[data-system-id]")).toHaveCount(0);
+    await expect(bar.locator("[data-version-slot]")).toHaveCount(0);
+    await expect(bar.getByRole("button", { name: "Versiunea anterioară" })).toHaveCount(0);
+    const [barBox, titleBox] = await Promise.all([bar.boundingBox(), page.getByRole("heading", { name: "Tablou de bord" }).boundingBox()]);
+    expect(titleBox!.y).toBeGreaterThanOrEqual(barBox!.y + barBox!.height);
+    // The page's own „?" is gone — the bar's is the one.
+    await expect(page.locator("main").getByRole("button", { name: "Ajutor", exact: true })).toHaveCount(0);
     await openTiles(page);
     const panel = page.locator("[data-tiles-panel]");
     await expect(panel.getByRole("checkbox")).toHaveCount(4);
@@ -106,6 +124,18 @@ test.describe("TC-AUTH-01 — Conectare și tabloul de bord", () => {
       // A tile is „up" when it stands at the row's top, or right under (16 px) a tile it shares columns with.
       return rs.filter((r) => Math.abs(r.top - top) > 1 && !rs.some((o) => o !== r && o.left < r.right - 1 && r.left < o.right - 1 && Math.abs(r.top - o.bottom - 16) <= 1)).length;
     }), { timeout: 15_000 }).toBe(0);
+
+    // Step 6d (41.61) — from „Persoane Fizice" to the dashboard; „Înapoi" returns to the list, „Înainte" to the dashboard.
+    await page.goto("/natural-persons");
+    await expect(page.locator("[data-page-bar]")).toBeVisible({ timeout: 30_000 });
+    await page.locator("[data-page-bar]").getByRole("link", { name: "Acasă", exact: true }).click();
+    await expect(page).toHaveURL(/\/$/, { timeout: 30_000 });
+    await expect(page.getByRole("heading", { name: "Tablou de bord" })).toBeVisible({ timeout: 30_000 });
+    await page.locator("[data-page-bar]").getByRole("button", { name: "Înapoi", exact: true }).click();
+    await expect(page).toHaveURL(/\/natural-persons$/, { timeout: 30_000 });
+    await page.locator("[data-page-bar]").getByRole("button", { name: "Înainte", exact: true }).click();
+    await expect(page).toHaveURL(/\/$/, { timeout: 30_000 });
+    await expect(page.getByRole("heading", { name: "Tablou de bord" })).toBeVisible({ timeout: 30_000 });
 
     // Step 6b (Slice 41.01) — both count tiles draw the four kinds the same way, two by two: Persoane fizice |
     // Persoane juridice, then Proprietăți | Acte; the grid sits evenly in its tile; every card with a count opens its

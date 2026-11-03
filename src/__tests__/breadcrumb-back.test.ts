@@ -108,8 +108,13 @@ describe("the bar", () => {
     expect(BAR).not.toMatch(/onClick=\{\(\) => router\./);
   });
 
-  it("the bar records every pathname, the home page's too (before it hides itself)", () => {
-    expect(BAR).toMatch(/useEffect\(\(\) => \{\s*recordScreen\(pathname\);\s*\}, \[pathname\]\);[\s\S]*?if \(\s*pathname === "\/"/);
+  // 41.61 inverted in place — was „the bar records every pathname, the home page's too (before it hides itself)", with
+  // `if (pathname === "/"` after the recording. Adrian: „For the dashboard I should have the top bar with back and
+  // forward buttons". It records every pathname, and hides on the sign-in pages only.
+  it("the bar records every pathname, and draws itself on the home page too — it hides on the sign-in pages only", () => {
+    expect(BAR).toMatch(/useEffect\(\(\) => \{\s*recordScreen\(pathname\);\s*\}, \[pathname\]\);[\s\S]*?if \(pathname\.startsWith\("\/login"\) \|\| pathname\.startsWith\("\/signup"\)\) \{\s*return null;\s*\}/);
+    expect(BAR).not.toContain('pathname === "/"');
+    expect(BAR).not.toContain("segments.length <= 1");
   });
 
   it("„Înapoi” / „Back”", () => {
