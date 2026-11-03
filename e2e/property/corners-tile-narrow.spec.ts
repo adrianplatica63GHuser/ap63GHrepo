@@ -61,6 +61,29 @@ async function steps(page: Page, id: string, width: number): Promise<void> {
   const table = await boxOf(tile.locator("table"));
   expect(Math.abs(table.r - 1 - boxes[3].r - 12), `${width}: „Șterge" 12 px from the edge`).toBeLessThanOrEqual(1);
 
+  // Step 2b — 41.57, Adrian: „the 4 buttons get wrapped on a second line … squeezing all the other columns". In every
+  // display — DD, DMS, Stereo 70 — every corner's four buttons share one top, and no corner value is cut.
+  for (const display of ["DD", "DMS", "Stereo 70"]) {
+    await tile.getByRole("button", { name: display, exact: true }).click();
+    const rows = tile.locator("tbody tr");
+    await expect(rows).toHaveCount(5);
+    const probe = await tile.locator("[data-corner-buttons]").first().evaluate((d) => ({
+      cell: (d.parentElement as HTMLElement).clientWidth,
+      buttons: d.scrollWidth,
+      tile: (d.closest("[data-panel]") as HTMLElement).getBoundingClientRect().width,
+    }));
+    test.info().annotations.push({ type: "corners", description: `${width} ${display}: tile ${probe.tile}, action cell ${probe.cell}, buttons ${probe.buttons}` });
+    for (let i = 0; i < 5; i++) {
+      const r = rows.nth(i);
+      const tops = await Promise.all(names.map(async (n) => (await boxOf(r.getByRole("button", { name: n, exact: true }))).t));
+      expect(new Set(tops).size, `${width} ${display}: corner ${i + 1}'s four buttons on one line (${JSON.stringify(probe)})`).toBe(1);
+      const cut = await r.locator("td").evaluateAll((tds) =>
+        (tds as HTMLElement[]).slice(0, 4).filter((td) => td.scrollWidth > td.clientWidth).map((td) => td.textContent));
+      expect(cut, `${width} ${display}: corner ${i + 1}'s values whole`).toEqual([]);
+    }
+  }
+  await tile.getByRole("button", { name: "Stereo 70", exact: true }).click();
+
   // Step 3 — „Editează": the edit row inside the tile, nothing to scroll; „Anulează".
   const t = await boxOf(tile);
   await row.getByRole("button", { name: "Editează", exact: true }).click();
