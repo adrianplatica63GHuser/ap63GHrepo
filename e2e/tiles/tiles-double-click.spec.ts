@@ -20,7 +20,6 @@ const MARK = `${E2E_MARKER}TILES-21`;
 const KEY = "ga40-tile-positions-natural-person-v1";
 const CHOICE = "ga40-tiles-natural-person-v1";
 const GAP = 16;
-const CORR = "addresses.CORRESPONDENCE";
 
 type Box = { x: number; y: number; w: number; h: number };
 
@@ -83,7 +82,6 @@ test.describe("TC-TILES-21 — un dublu-clic urcă o fișă; o fișă trasă las
       }, [KEY, CHOICE]);
       await page.reload();
       const region = (name: string) => page.getByRole("region", { name, exact: true });
-      const corr = page.locator(`[data-tile-row] [data-packed-col][data-panel="${CORR}"]`);
 
       // Step 1 — „Toate", „Interacțiuni" unticked: „Adresă corespondență" right under „Acte de identitate".
       await pressTileButton(page, "Toate", { timeout: 30_000 });
@@ -92,8 +90,13 @@ test.describe("TC-TILES-21 — un dublu-clic urcă o fișă; o fișă trasă las
       await setTile(page, "Arbore de moștenire", false); // #39.12: the family tile packs under „Legături", where step 2 drops
       await page.waitForTimeout(2500); // past the first layout's settling
       const rule = await boxes(page);
-      expect(rule[CORR].x).toBe(rule.idCard.x);
-      expect(rule[CORR].y).toBe(rule.idCard.y + rule.idCard.h + GAP);
+      // 41.60: the tile right under „Acte de identitate" is read, not assumed. It was „Adresă corespondență"
+      // (`expect(rule[below].x).toBe(rule.idCard.x)`), until „Acte de identitate" went to 4 units and the row's first line
+      // filled — it wraps to under „Identitate" now, and „Corelate" stands under the card. Red since then, unseen by a
+      // targeted run; the steps are the same with whichever tile it is.
+      const below = Object.keys(rule).find((k) => k !== "idCard" && rule[k].x === rule.idCard.x && rule[k].y === rule.idCard.y + rule.idCard.h + GAP);
+      if (!below) throw new Error(`nothing right under „Acte de identitate": ${JSON.stringify(rule)}`);
+      const corr = page.locator(`[data-tile-row] [data-packed-col][data-tile="${below}"], [data-tile-row] [data-packed-col][data-panel="${below}"]`);
 
       // Step 2 — „Acte de identitate" dragged to „Corelate"'s left edge, 60 px under it: it stays there; nothing else moves.
       const card = region("Acte de identitate");
@@ -118,18 +121,18 @@ test.describe("TC-TILES-21 — un dublu-clic urcă o fișă; o fișă trasă las
       }).toEqual({ x: rule.related.x, y: true });
       const dropped = await boxes(page);
       for (const id of Object.keys(rule).filter((k) => k !== "idCard")) expect({ id, box: dropped[id] }).toEqual({ id, box: rule[id] });
-      expect(dropped[CORR].y).toBeGreaterThan(rightUnder(dropped, CORR)); // the space „Acte de identitate" left stays empty
+      expect(dropped[below].y).toBeGreaterThan(rightUnder(dropped, below)); // the space „Acte de identitate" left stays empty
 
       // Step 3 — a double-click on „Adresă corespondență"'s left padding: it rises right under the lowest tile above it.
       const q = await padding(corr);
       await page.mouse.dblclick(q.x, q.y);
       await expect.poll(async () => {
         const now = await boxes(page);
-        return { x: now[CORR].x, under: now[CORR].y - rightUnder(now, CORR) };
-      }).toEqual({ x: dropped[CORR].x, under: 0 });
+        return { x: now[below].x, under: now[below].y - rightUnder(now, below) };
+      }).toEqual({ x: dropped[below].x, under: 0 });
       const risen = await boxes(page);
-      expect(risen[CORR].y).toBeLessThan(dropped[CORR].y);
-      for (const id of Object.keys(dropped).filter((k) => k !== CORR)) expect({ id, box: risen[id] }).toEqual({ id, box: dropped[id] });
+      expect(risen[below].y).toBeLessThan(dropped[below].y);
+      for (const id of Object.keys(dropped).filter((k) => k !== below)) expect({ id, box: risen[id] }).toEqual({ id, box: dropped[id] });
 
       // Step 4 — again: nothing moves.
       const q2 = await padding(corr);
@@ -142,8 +145,8 @@ test.describe("TC-TILES-21 — un dublu-clic urcă o fișă; o fișă trasă las
       await expect(region("Etichete și grupuri")).toBeVisible({ timeout: 30_000 });
       await expect.poll(async () => {
         const now = await boxes(page);
-        return now.idCard && now[CORR] ? { card: [now.idCard.x, now.idCard.y], corr: [now[CORR].x, now[CORR].y] } : null;
-      }, { timeout: 20_000 }).toEqual({ card: [risen.idCard.x, risen.idCard.y], corr: [risen[CORR].x, risen[CORR].y] });
+        return now.idCard && now[below] ? { card: [now.idCard.x, now.idCard.y], corr: [now[below].x, now[below].y] } : null;
+      }, { timeout: 20_000 }).toEqual({ card: [risen.idCard.x, risen.idCard.y], corr: [risen[below].x, risen[below].y] });
     } finally {
       await page.evaluate(([k, c]) => {
         localStorage.removeItem(k);
@@ -236,7 +239,10 @@ test.describe("TC-TILES-21 — un dublu-clic urcă o fișă; o fișă trasă las
       // moved one unit right, leaving a gap beside it (its stored column + 1; a unit is 119 px and the 16-px gap).
       const step = 119 + GAP;
       const rowWidth = await page.locator("[data-tile-row]").evaluate((r) => r.getBoundingClientRect().width);
+      // Only a tile whose place is stored can be moved by its stored column — „Toate sus" stored those it moved.
+      const storedIds = await page.evaluate((k) => Object.keys(JSON.parse(localStorage.getItem(k) ?? "{}")), KEY);
       const loose = Object.entries(up).find(([id, b]) =>
+        storedIds.includes(id) &&
         b.x + b.w + step <= rowWidth + 1 &&
         !Object.entries(up).some(([k, o]) => k !== id && o.y < b.y + b.h && b.y < o.y + o.h && o.x >= b.x + b.w && o.x < b.x + b.w + step + GAP),
       );
