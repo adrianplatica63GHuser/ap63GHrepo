@@ -38,7 +38,7 @@ import { test, expect, type Page } from "../helpers/test";
 import { E2E_MARKER, removeLeftovers, removeRecord } from "../helpers/records";
 import { expectDropdownsWrap, expectStableWidths, photograph } from "../helpers/field-widths";
 import { hideTile, showTile, editTile, saveTile } from "../helpers/tiles";
-import { MAP_BOX_STYLE } from "../../src/lib/ui/field-widths";
+import { PANEL_UNIT_INNER_REM } from "../../src/lib/ui/field-widths";
 
 const MARK = `${E2E_MARKER}PROP-04`;
 const NICKNAME = `${MARK} Teren din fisier`;
@@ -109,7 +109,9 @@ test.describe("TC-PROP-04 — Un colț editat în „Puncte de contur”, văzut
 
       // Slice #37.14 — the same widths at 1400 and 2400 px, the map at its fixed size, the pictures.
       const widths = await expectStableWidths(page);
-      expect(widths.fields.map).toBe(parseFloat(String(MAP_BOX_STYLE.width)) * 16);
+      // 41.57: since 41.16 MAP_BOX_STYLE.width is `var(--tile-inner, …rem)`, which parseFloat read as NaN — the map is
+      // its tile's inner width, 4 units at the default 119 px.
+      expect(widths.fields.map).toBe(PANEL_UNIT_INNER_REM.property.map * 16);
       await expectDropdownsWrap(page); // 40.78: every dropdown its width, a long value wrapped
       // The widest real X and Y, and the point labels, fit their fixed columns.
       const cut = await page.locator('[data-width-field="corners"] td').evaluateAll((cells) =>

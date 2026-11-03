@@ -85,7 +85,8 @@ async function steps(page: Page, id: string, width: number): Promise<void> {
     for (let i = 0; i < 5; i++) {
       const r = rows.nth(i);
       const tops = await Promise.all(names.map(async (n) => (await boxOf(r.getByRole("button", { name: n, exact: true }))).t));
-      expect(new Set(tops).size, `${width} ${display}: corner ${i + 1}'s four buttons on one line (${JSON.stringify(probe)})`).toBe(1);
+      // One line: the tops within a pixel (a second line would be a button's 26 px down).
+      expect(Math.max(...tops) - Math.min(...tops), `${width} ${display}: corner ${i + 1}'s four buttons on one line (${JSON.stringify(probe)}, tops ${tops})`).toBeLessThanOrEqual(1);
       const cut = await r.locator("td").evaluateAll((tds) =>
         (tds as HTMLElement[]).slice(0, 4).filter((td) => td.scrollWidth > td.clientWidth).map((td) => td.textContent));
       expect(cut, `${width} ${display}: corner ${i + 1}'s values whole (${JSON.stringify(probe)})`).toEqual([]);
