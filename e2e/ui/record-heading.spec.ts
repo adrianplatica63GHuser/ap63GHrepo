@@ -34,6 +34,7 @@ import {
   removeRecord,
   type RecordKind,
 } from "../helpers/records";
+import { hideTile, showTile } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}ICON-07`;
 const PERSON = `Persoană ${MARK}`;
@@ -177,7 +178,8 @@ test.describe("TC-ICON-07 — pictograma înregistrării înaintea numelui", () 
       // Slice 41.63, step 3b — on the property's „Legături", „Asociază persoană fizică" is a primary (navy) button: its
       // person icon draws in the button's own colour, not #5A2781, light and dark, while the heading's map above keeps
       // #00A84C (step 3).
-      const associate = page.locator('button[data-associate="natural"], a[data-associate="natural"]').first();
+      const links = await showTile(page, "Legături");
+      const associate = links.locator('[data-associate="natural"]').first();
       await expect(associate).toBeVisible({ timeout: 30_000 });
       const onNavy = await associate.evaluate((b) => {
         const svg = b.querySelector('svg[data-kind-icon="natural"]') as SVGElement;
@@ -194,6 +196,7 @@ test.describe("TC-ICON-07 — pictograma înregistrării înaintea numelui", () 
       expect(onNavy.dark.icon).toBe(onNavy.dark.button);
       expect([onNavy.light.icon, onNavy.dark.icon]).not.toContain(KIND_COLOUR.natural.light);
       expect(onNavy.dark.icon).not.toBe(KIND_COLOUR.natural.dark);
+      await hideTile(page, "Legături"); // as it was found
 
       // Step 4 — the Document `TC-ICON-07 Act`: whole, `lucide-file-text`.
       heading = await openHeading(page, `/documents/${documentId}`, DOCUMENT);
