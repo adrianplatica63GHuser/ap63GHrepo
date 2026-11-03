@@ -524,7 +524,7 @@ test.describe("the manual's figures (Slice #39.37) — only when this file is na
     await tile("inheritanceTree").screenshot({ path: `${dir}/persons-tree.png` });
 
     // 40.87 — an identity document and its holder, from the big dev seed's invented cards (it files no passport).
-    // Figura 6.2: the card's „Act de identitate" tile; Figura 3.2: its holder's „Acte de identitate". Seed records
+    // Figura 6.2: the card's „Actul oficial" tile; Figura 3.2: its holder's „Acte de identitate". Seed records
     // only; the CNP and the MRZ are blurred all the same, and so is every series and number in the holder's list.
     const card = objects!.find((o) => o.kind === "DOCUMENT" && o.label.startsWith("Carte de identitate"))!;
     const blurIdentity = () =>

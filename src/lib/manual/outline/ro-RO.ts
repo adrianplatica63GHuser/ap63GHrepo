@@ -98,7 +98,7 @@ export const OUTLINE: Readonly<Record<string, string>> = {
   "documents-add-delete": "Cum ștergi (elimini) definitiv un act din arhivă, ce întrebare apare și ce se întâmplă când ștergerea nu reușește.",
   "documents-type": "Ce hotărăște tipul actului (câmpuri, roluri, denumiri), ce înseamnă „(F)”, ce faci la un tip fără formular și cum se țin minte fișele pe tip.",
   "documents-identification": "Ce câmpuri are identificarea actului (emitent, notariat, număr, dată, etichetă, subiect, note), cum golești o valoare și cum completează AI-ul actele importate.",
-  "documents-identity": "Fișa „Act de identitate” a unui buletin sau pașaport: câmpurile felului lui, titularul, VALABIL sau EXPIRAT, verificarea CNP-ului și schimbarea tipului.",
+  "documents-identity": "Fișa „Actul oficial” a unui buletin sau pașaport: câmpurile felului lui, titularul, VALABIL sau EXPIRAT, verificarea CNP-ului și schimbarea tipului.",
   "documents-parties": "Cum legi persoane de un act cu rolul lor (vânzător, cumpărător, notar, moștenitor), cum scrii cota-parte și de ce suma cotelor poate să nu dea 100%.",
   "documents-sale": "Cum arată și se completează contractul de vânzare-cumpărare: preț și plată, obiectul vânzării, carte funciară, taxe, părți și recompunerea descrierii.",
   "documents-antecontract": "Cum înregistrezi un antecontract (promisiune de vânzare), de ce nu are formular și cum îl legi de contractul de vânzare care îl îndeplinește.",

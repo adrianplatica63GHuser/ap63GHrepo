@@ -141,7 +141,7 @@ test.describe("TC-FOLD-01 — „Note” și MRZ lungi se strâng la cinci rând
       // lines (was 310). Fixed in passing by 41.03, whose run met it.
       await expectFolds(page, "Note", 270);
 
-      // Steps 6–7 — the MRZ: five of seven lines. Slice 40.85: on the identity document's „Act de identitate",
+      // Steps 6–7 — the MRZ: five of seven lines. Slice 40.85: on the identity document's „Actul oficial",
       // opened with „Editează" (40.83's tile reads as text, as every tile).
       await page.goto(`/documents/${ids[2].id}`);
       await editTile(page, "identity");

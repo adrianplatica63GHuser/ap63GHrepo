@@ -103,9 +103,9 @@ The document's classification, tags, groups and stamps sit on the tiles „Class
 
 ### 6.4.1 The identity document {#documents-identity}
 
-A document of one of the four identity document types (section [[persons-identity-documents]]) has no „Document details”: it has the „Identity document” tile, with exactly the fields of its kind, in the order the document prints them (Figure [[fig-identity-document]]). The number, the issue date, „Valid until” and the issuer sit here, not in „Document identification”.
+A document of one of the four identity document types (section [[persons-identity-documents]]) has no „Document details”: it has the „Official document” tile, with exactly the fields of its kind, in the order the document prints them (Figure [[fig-identity-document]]). The number, the issue date, „Valid until” and the issuer sit here, not in „Document identification”.
 
-![6.2 The „Identity document” tile of an identity card](identity-document.png){#fig-identity-document}
+![6.2 The „Official document” tile of an identity card](identity-document.png){#fig-identity-document}
 
 - At the top, „Holder:” names the person linked to the document as „Titular act de identitate”, with the link to them.
 - Beside „Valid until” — on a passport, „Expiry date” — stands the state: „VALID”, „EXPIRED” or „EXPIRES IN 30 DAYS”, as on the person. The old booklet has no such date, so no state either.

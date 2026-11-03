@@ -37,7 +37,7 @@ Nothing.
 | 2 | „Editează" on „Identitate" | „Cetățenie" after „Locul nașterii"; „Renunță" |
 | 3 | Presses the card's code | The card's own screen |
 | 4 | Back on the person, „Adaugă act de identitate" | „Ce act de identitate adăugați?" and the four kinds; picks „Carte de identitate (tip vechi)", „Continuă" |
-| 5 | Looks at „Adaugă act" | Tip document „Carte de Identitate (tip vechi)"; under „Act de identitate" „Titular: Ion TC-E2E-PERS-16"; Nume and Prenume filled in |
+| 5 | Looks at „Adaugă act" | Tip document „Carte de Identitate (tip vechi)"; under „Actul oficial" (41.49; it was „Act de identitate") „Titular: Ion TC-E2E-PERS-16"; Nume and Prenume filled in |
 | 6 | „Salvează"; then back on the person | The new document opens with the person as its holder; „Acte de identitate" lists three |
 
 ## At the end — leaving things as they were found

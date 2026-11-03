@@ -1,7 +1,7 @@
 /**
  * The identity tile's pure rules — what the document screen draws and refuses.            (Slice 40.83)
  *
- * The tile „Act de identitate" shows exactly the kind's fields from the registry (kinds.ts), in the kind's rows
+ * The tile „Actul oficial" shows exactly the kind's fields from the registry (kinds.ts), in the kind's rows
  * (40.94), the document's own four (number, issue date, validity end, issuer) among them, so nothing shows twice. These helpers are what the form asks: the rows the fields flow into, the notice a
  * change of type gives, the validity status, and the check before a save.
  *

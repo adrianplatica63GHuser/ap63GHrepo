@@ -47,7 +47,7 @@ A run also reads `data-folded` on the box and its height, because „five lines"
 | 3 | Presses „Arată mai puțin…" | Five lines again, and „Arată mai mult…" |
 | 4 | Opens `TC-FOLD-01 Teren cu notă lungă` | „Note" — one paragraph, no line break — shows five lines, with „Arată mai mult…" |
 | 5 | Presses it, then „Arată mai puțin…" | The whole paragraph (fifteen lines at 1920 px, 310 px), then five lines again |
-| 6 | Opens `TC-FOLD-01 Carte de identitate cu MRZ`, „Editează" on „Act de identitate" | „MRZ" shows five of its seven lines, with „Arată mai mult…" |
+| 6 | Opens `TC-FOLD-01 Carte de identitate cu MRZ`, „Editează" on „Actul oficial" (41.49; it was „Act de identitate") | „MRZ" shows five of its seven lines, with „Arată mai mult…" |
 | 7 | Presses it, then „Arată mai puțin…" | All seven lines (290 px at L, two lines each), then five again |
 
 ## At the end — leaving things as they were found

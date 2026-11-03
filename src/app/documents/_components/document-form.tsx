@@ -474,7 +474,7 @@ export function DocumentForm({
   const selectedTypeKey = selectedType?.key;
   const cfg = getTypeConfig(selectedTypeKey);
   // Slice 40.83: the identity kind of the type picked — read off its marker; null on an ordinary type. Its fields are
-  // the registry's (src/lib/identity-documents/kinds.ts), drawn in the „Act de identitate" tile.
+  // the registry's (src/lib/identity-documents/kinds.ts), drawn in the „Actul oficial" tile.
   const identityKind = selectedType ? identityKindOfType(selectedType) : null;
 
   // Slice #21.03.Import: the selected type's template fields, if any (Phase 3
@@ -1174,7 +1174,7 @@ export function DocumentForm({
       return tileOfTabIndex(tabs, tabOfCustomField(key ?? ""));
     }
     // Slice #38.32: the issuer, the number and the date are there too.
-    // Slice 40.83: on an identity type they are on „Act de identitate", with the validity end and the kind's own.
+    // Slice 40.83: on an identity type they are on „Actul oficial", with the validity end and the kind's own.
     if (identityKind !== null && (root === "identity" || root === "dateValidUntil" || ISSUE_FIELDS.has(root))) return IDENTITY_TILE;
     if (ISSUE_FIELDS.has(root)) return "general";
     return "general";
@@ -1287,7 +1287,7 @@ export function DocumentForm({
   // type's identification group, a frame its custom fields — and what hides in each.
   const generalFieldPaths: readonly string[] = [
     "documentTypeId",
-    // Slice 40.83: on an identity type these three are on „Act de identitate".
+    // Slice 40.83: on an identity type these three are on „Actul oficial".
     ...(identityKind === null ? ["issuerPersonId", "nrDocument", "dateDocument"] : []),
     ...(identificationGroup?.fields ?? []).map((f) => `customFields.${f.key}`),
     "title",
@@ -1307,7 +1307,7 @@ export function DocumentForm({
   const docMarked = (path: string): boolean =>
     !!valueAt(errors, path) || !!(displayHighlights as Record<string, unknown> | null)?.[path];
   const docTilePaths = new Map<string, readonly string[]>([["general", generalFieldPaths]]);
-  // Slice 40.83: „Act de identitate"'s fields, in the order the card prints them.
+  // Slice 40.83: „Actul oficial"'s fields, in the order the card prints them.
   if (identityKind !== null) docTilePaths.set(IDENTITY_TILE, identityTilePaths(identityKind));
   const identityLabel = new Map<string, string>(
     identityKind === null ? [] : identityFieldRows(identityKind).rows.flat().map((f) => [identityFieldPath(f), tId(f.messageKey.slice("identityDocument.".length))]),
@@ -1388,7 +1388,7 @@ export function DocumentForm({
     }, 60);
   };
 
-  // ── Slice 40.83: „Act de identitate" ─────────────────────────────────────
+  // ── Slice 40.83: „Actul oficial" ─────────────────────────────────────
   // An identity document's one tile: exactly its kind's fields (the 40.82 registry), in the order the card prints
   // them, the document's own four — the number, the issue date, the validity end, the issuer — among them, so none
   // shows twice. Each is the form's own field, so it reads, edits, frames a version's change and pulses like any.
@@ -1679,7 +1679,7 @@ export function DocumentForm({
   // The tile's units: its own, or its custom rows' (moved up from the tile's drawing for the issuer's TILE, 41.04).
   const generalUnits = Math.max(PANEL_UNITS.document.general, identificationPacked.units);
   const issueFields = (
-    // Slice 40.83: an identity type shows these on „Act de identitate", where its card prints them — never twice.
+    // Slice 40.83: an identity type shows these on „Actul oficial", where its card prints them — never twice.
     identityKind !== null ? null : (
     <>
       {/* Slice #39.72: the issuer, a juridical person — public-body persons listed, every one on search, and the
@@ -1913,7 +1913,7 @@ export function DocumentForm({
     <>
       {/* Slice #37.20: as tiles, the general data is a tile of its own. */}
       {tab === 0 && !tiled && generalSection}
-      {/* Slice 40.83: an identity type's „Act de identitate", beside it. */}
+      {/* Slice 40.83: an identity type's „Actul oficial", beside it. */}
       {tab === 0 && !tiled && identitySection}
 
       {/* ── Taxe și onorarii (alone or paired with Financiar) ──────────── */}

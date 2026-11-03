@@ -68,7 +68,7 @@ export interface DocumentLayout {
   ready?: boolean;
   /**
    * Slice 40.83: the type is an identity document (it carries `identity_kind`): its one record tile is
-   * „Act de identitate" (`IDENTITY_TILE`), holding the kind's fields — the number, the dates and the issuer among
+   * „Actul oficial" (`IDENTITY_TILE`), holding the kind's fields — the number, the dates and the issuer among
    * them — in place of a form's tile. An identity type holds no form and no parties. Absent means false.
    */
   identity?: boolean;
@@ -122,7 +122,7 @@ export const FIELDS_TILE = "fields";
 /** Slice #38.33: a contract de vânzare's sellers and buyers (`layout.parties`). */
 export const PARTIES_TILE = "parties";
 
-/** Slice 40.83: an identity document's tile, „Act de identitate". */
+/** Slice 40.83: an identity document's tile, „Actul oficial". */
 export const IDENTITY_TILE = "identity";
 
 /** The tile of notebook page `index` — or the fields tile when there is no notebook. */

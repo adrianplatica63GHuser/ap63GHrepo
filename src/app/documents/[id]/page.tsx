@@ -22,7 +22,7 @@ export default async function EditDocumentPage({ params, searchParams }: PagePar
   const record  = await getDocumentWithSurveyor(id);
   if (!record) notFound();
 
-  // Slice 40.83: an identity document's own values, for its „Act de identitate" tile (null on an ordinary type).
+  // Slice 40.83: an identity document's own values, for its „Actul oficial" tile (null on an ordinary type).
   const initialValues = fromApiRecord({ ...record, identity: await identityBlockFor(db, record.id, record.documentTypeId) });
   const tUnnamed = await getTranslations("shared.unnamed");
   const label = record.title ?? tUnnamed("document") /* #37.57: never the system ID */;

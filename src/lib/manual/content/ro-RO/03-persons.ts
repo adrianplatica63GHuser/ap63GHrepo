@@ -125,7 +125,7 @@ Când cartea de identitate este deja un act în arhivă, cu scanarea ei ca pagin
 4. În „Părinții titularului”, tatăl și mama citiți de pe carte sunt deja bifați, cu numele de familie al titularului, marcat ca presupus. Verificați-i, apoi apăsați „Creează și leagă” pentru fiecare.
 5. Sub buton, aplicația scrie ce a făcut: „Titularul a fost creat și legat de act.”, „Tatăl: creat(ă) și legat(ă)”, „Mama: creat(ă) și legat(ă)”.
 
-Titularul este legat de act ca „Titular act de identitate”, iar părinții sunt legați de titular ca „Tată” și „Mamă”. Ce a tipărit actul se scrie pe act, în fișa lui „Act de identitate”; pe persoană ajung numele, CNP-ul, genul, nașterea și cetățenia, iar o persoană care exista deja primește doar câmpurile pe care nu le avea completate. Dacă citirea nu găsește prenumele părinților, cele două rânduri apar goale și nebifate, cu nota „Cartea nu tipărește prenumele părinților, sau citirea nu le-a găsit…”: le puteți scrie voi.
+Titularul este legat de act ca „Titular act de identitate”, iar părinții sunt legați de titular ca „Tată” și „Mamă”. Ce a tipărit actul se scrie pe act, în fișa lui „Actul oficial”; pe persoană ajung numele, CNP-ul, genul, nașterea și cetățenia, iar o persoană care exista deja primește doar câmpurile pe care nu le avea completate. Dacă citirea nu găsește prenumele părinților, cele două rânduri apar goale și nebifate, cu nota „Cartea nu tipărește prenumele părinților, sau citirea nu le-a găsit…”: le puteți scrie voi.
 
 Cum citește aplicația o carte de identitate la importul unui dosar întreg, vedeți în secțiunea [[import-scanning]].
 

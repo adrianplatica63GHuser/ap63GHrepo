@@ -103,9 +103,9 @@ Clasificarea, etichetele, grupurile și ștampilele actului stau în fișele „
 
 ### 6.4.1 Actul de identitate {#documents-identity}
 
-Un act de unul dintre cele patru tipuri de act de identitate (secțiunea [[persons-identity-documents]]) nu are „Detalii act”: are fișa „Act de identitate”, cu exact câmpurile felului său, în ordinea în care le tipărește actul (Figura [[fig-identity-document]]). Numărul, data eliberării, „Valabil până la” și emitentul stau aici, nu în „Identificarea actului”.
+Un act de unul dintre cele patru tipuri de act de identitate (secțiunea [[persons-identity-documents]]) nu are „Detalii act”: are fișa „Actul oficial”, cu exact câmpurile felului său, în ordinea în care le tipărește actul (Figura [[fig-identity-document]]). Numărul, data eliberării, „Valabil până la” și emitentul stau aici, nu în „Identificarea actului”.
 
-![6.2 Fișa „Act de identitate” a unei cărți de identitate](identity-document.png){#fig-identity-document}
+![6.2 Fișa „Actul oficial” a unei cărți de identitate](identity-document.png){#fig-identity-document}
 
 - Sus, „Titular:” numește persoana legată de act ca „Titular act de identitate”, cu legătura spre ea.
 - Lângă „Valabil până la” — la pașaport, „Data expirării” — stă starea: „VALABIL”, „EXPIRAT” sau „EXPIRĂ ÎN 30 ZILE”, ca pe persoană. Buletinul vechi nu are această dată, deci nici stare.

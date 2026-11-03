@@ -933,7 +933,7 @@
         "statementAlgorithm": "Acest element a fost generat automat de un algoritm (ex: divizare poligon sau calcul geometric).",
         "statementAiInterpreted": "Acest element a fost interpretat de un model AI dintr-o imagine sau document prin intermediul unui API cloud — rezultatul trebuie verificat de o persoană.",
         "statementExternalFeed": "Acest element a provenit dintr-un sistem sau flux de date extern — verificați sursa și exactitatea datelor.",
-        "statementRelativeIdCard": "Această persoană a fost creată din actul de identitate al unei rude — tatăl sau mama titularului unei cărți de identitate, după numele tipărite pe ea sau introduse în fișa „Act de identitate” a titularului. Numele de familie poate fi presupus; verificați-l.",
+        "statementRelativeIdCard": "Această persoană a fost creată din actul de identitate al unei rude — tatăl sau mama titularului unei cărți de identitate, după numele tipărite pe ea sau introduse în fișa „Actul oficial” a titularului. Numele de familie poate fi presupus; verificați-l.",
         "algorithmSource": "Calcul sursă",
         "algorithmViewRun": "Vezi calculul",
         "algorithmNotFound": "Calculul sursă nu a fost găsit (posibil șters).",
@@ -1989,7 +1989,7 @@
       "choose": "Alegeți tipul…",
       "dropsFields": "Câmpurile formularului care se șterg la salvare:",
       "dropsIdentity": "Câmpurile de identitate care se șterg la salvare:",
-      "held": "Tipul nu se poate schimba într-un tip de document obișnuit cât timp actul are date de identitate completate: goliți-le întâi în „Act de identitate”, apoi schimbați tipul.",
+      "held": "Tipul nu se poate schimba într-un tip de document obișnuit cât timp actul are date de identitate completate: goliți-le întâi în „Actul oficial”, apoi schimbați tipul.",
       "partiesKept": "Părțile legate cu un rol pe care noul tip nu îl are — rămân legate, cu rolul lor:",
       "party": "{name} ({code}) — {role}",
       "partiesLoading": "Se verifică părțile legate…",
@@ -2044,7 +2044,7 @@
       "classification": "Clasificare",
       "connections": "Etichete și grupuri",
       "parties": "Părți",
-      "identity": "Act de identitate"
+      "identity": "Actul oficial"
     },
     "tileSubtitles": {
       "general": "Tip, emitent, număr, dată",

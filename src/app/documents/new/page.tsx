@@ -14,7 +14,7 @@ type PageProps = {
 
 /**
  * Slice 40.85: „Adaugă act de identitate" on a person opens this screen with `?identityKind=<kind>&holder=<person>`:
- * the type of that kind is chosen, the holder is named under „Act de identitate" and linked once the document is
+ * the type of that kind is chosen, the holder is named under „Actul oficial" and linked once the document is
  * saved, and the person's names, CNP, sex, date and place of birth are filled in (Ask first 3) — each kind's tile
  * shows only its own fields, and saves only those. Nothing is written until „Salvează".
  */

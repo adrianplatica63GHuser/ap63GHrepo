@@ -98,7 +98,7 @@ export const OUTLINE: Readonly<Record<string, string>> = {
   "documents-add-delete": "How to delete (remove) a document from the archive for good, the confirmation it asks for, and what happens when the delete fails.",
   "documents-type": "What a document's type decides (fields, roles, labels), what „(F)” means, what a type with no form keeps, and how tiles are remembered per type.",
   "documents-identification": "Which fields a document's identification holds (issuer, notary, number, date, label, subject, notes), how to clear a value, and how AI fills in imported deeds.",
-  "documents-identity": "The „Identity document” tile of an ID card or passport: its kind's fields, the holder, VALID or EXPIRED, the CNP check and changing the type.",
+  "documents-identity": "The „Official document” tile of an ID card or passport: its kind's fields, the holder, VALID or EXPIRED, the CNP check and changing the type.",
   "documents-parties": "How to link people to a document with their role (seller, buyer, notary, heir), enter each party's share or portion, and why shares may not add up to 100%.",
   "documents-sale": "How the sale contract (deed of sale) is laid out and filled in: price and payment, what is sold, land register, taxes, parties, and recomposing the description.",
   "documents-antecontract": "How to record a preliminary contract (promise to sell), why it has no form of its own, and how to link it to the sale contract that fulfils it.",

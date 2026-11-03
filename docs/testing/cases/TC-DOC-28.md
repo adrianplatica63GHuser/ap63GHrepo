@@ -10,7 +10,7 @@
 
 ## What this proves
 
-A document of any of the four identity types (Slice 40.82) shows, on its own screen, one tile „Act de identitate" with
+A document of any of the four identity types (Slice 40.82) shows, on its own screen, one tile „Actul oficial" (41.49; it was „Act de identitate") with
 exactly its kind's fields, in the order the card prints them, and the number, the dates and the issuer once — not in
 „Identificarea actului" (Slice 40.83). It says VALABIL or EXPIRAT from „Valabil până la", refuses a CNP without its
 control digit and warns, without refusing, when the CNP disagrees with Sex. A change between identity kinds names the
@@ -33,17 +33,17 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens the tip nou document | „Act de identitate": Seria și numărul, CNP, Sex, Nume, Prenume, Cetățenia, Locul nașterii, Domiciliu, Emisă de, Data eliberării, Valabil până la, MRZ, Nr. card — no Data nașterii; „Identificarea actului" without the number; EXPIRAT; „CNP-ul nu corespunde sexului de pe act." |
-| 2 | „Editează" on „Act de identitate"; CNP 1850421400124 | „CNP-ul trebuie să aibă 13 cifre și o cifră de control corectă." |
+| 1 | Opens the tip nou document | The tile headed „Actul oficial" (41.49): Seria și numărul, CNP, Sex, Nume, Prenume, Cetățenia, Locul nașterii, Domiciliu, Emisă de, Data eliberării, Valabil până la, MRZ, Nr. card — no Data nașterii; „Identificarea actului" without the number; EXPIRAT; „CNP-ul nu corespunde sexului de pe act." |
+| 2 | „Editează" on „Actul oficial"; CNP 1850421400124 | „CNP-ul trebuie să aibă 13 cifre și o cifră de control corectă." |
 | 3 | CNP back, Sex M, Prenume „Ionel"; „Salvează"; reloads | the warning gone; Prenume Ionel, Sex M |
 | 4 | Opens the tip vechi document | Prenumele tatălui, Prenumele mamei, Starea civilă, Lucrătorul care a eliberat-o; no CNP; no VALABIL / EXPIRAT |
 | 5 | Opens the Pașaport, then the Pașaport CRDS | VALABIL and Domiciliu — județul Ilfov; Domiciliu — țara Spania |
-| 5b | (40.94) „Editează" on „Act de identitate" on the Pașaport, „Renunță"; the same on the tip vechi | The Pașaport: Tip, Codul țării, Nr. pașaportului; Nume, Prenume; Cetățenia, Sex; Data nașterii, Locul nașterii; Data emiterii, Data expirării and its status; Autoritatea emitentă across the tile; CNP, Domiciliu — județul; MRZ across the tile — under the „Titular" line. The tip vechi: Nume, Prenume; Prenumele tatălui, Prenumele mamei; Starea civilă, Data nașterii; then Locul nașterii, Domiciliu and Emisă de, each across the tile; Data eliberării, Lucrătorul care a eliberat-o; Seria și numărul |
+| 5b | (40.94) „Editează" on „Actul oficial" on the Pașaport, „Renunță"; the same on the tip vechi | The Pașaport: Tip, Codul țării, Nr. pașaportului; Nume, Prenume; Cetățenia, Sex; Data nașterii, Locul nașterii; Data emiterii, Data expirării and its status; Autoritatea emitentă across the tile; CNP, Domiciliu — județul; MRZ across the tile — under the „Titular" line. The tip vechi: Nume, Prenume; Prenumele tatălui, Prenumele mamei; Starea civilă, Data nașterii; then Locul nașterii, Domiciliu and Emisă de, each across the tile; Data eliberării, Lucrătorul care a eliberat-o; Seria și numărul |
 | 6 | On the tip nou: „Editează" on „Identificarea actului", „Schimbă tipul…", „Tipul nou" „Pașaport"; „Confirmă" | the confirmation lists Domiciliu and Nr. card under „Câmpurile de identitate care se șterg la salvare:"; after „Confirmă", under Tip document: „La salvare se șterg: Domiciliu, Nr. card — noul tip nu are aceste câmpuri." |
 | 7 | „Salvează"; reloads | the passport's fields (Nr. pașaportului …); Nume kept; no Domiciliu |
-| 8 | „Editează" again, „Schimbă tipul…", „Tipul nou" „Adeverință" | „Tipul nu se poate schimba într-un tip de document obișnuit cât timp actul are date de identitate completate: goliți-le întâi în „Act de identitate”, apoi schimbați tipul." — and no „Confirmă" |
+| 8 | „Editează" again, „Schimbă tipul…", „Tipul nou" „Adeverință" | „Tipul nu se poate schimba într-un tip de document obișnuit cât timp actul are date de identitate completate: goliți-le întâi în „Actul oficial”, apoi schimbați tipul." — and no „Confirmă" |
 | 9 | „Anulează"; „Renunță" | Tip document still „Pașaport"; the tile closes |
-| 10 | „Acte" → „Adaugă act", Tip document „Carte de Identitate (tip vechi)", Nume „Testescu", „Salvează" | „Act de identitate" empty before; the new document opens with Nume Testescu |
+| 10 | „Acte" → „Adaugă act", Tip document „Carte de Identitate (tip vechi)", Nume „Testescu", „Salvează" | „Actul oficial" empty before; the new document opens with Nume Testescu |
 
 ## At the end — leaving things as they were found
 
