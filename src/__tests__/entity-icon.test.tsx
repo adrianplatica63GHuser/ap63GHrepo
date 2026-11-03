@@ -12,14 +12,16 @@ import { Building2, FileText, Map as MapIcon, User } from "lucide-react";
 
 import { EntityMark } from "@/components/record/entity-mark";
 import { NAV_SECTIONS } from "@/components/sidebar/nav-config";
-import { ENTITY_ICON } from "@/lib/ui/entity-icon";
+import { ENTITY_COLOUR_CLASS, ENTITY_COLOUR_VAR, ENTITY_ICON, ENTITY_ICON_PLAIN, type EntityKind } from "@/lib/ui/entity-icon";
 
 const read = (...p: string[]) => readFileSync(join(process.cwd(), ...p), "utf8");
 const code = (s: string) => s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\{\/\*[\s\S]*?\*\/\}/g, "");
 
 describe("one mark for each kind (40.61)", () => {
   it("the four marks, defined once", () => {
-    expect(ENTITY_ICON).toEqual({ natural: User, judicial: Building2, property: MapIcon, document: FileText });
+    // 41.47: the four shapes are ENTITY_ICON_PLAIN; ENTITY_ICON draws each in its kind's colour (it read
+    // `expect(ENTITY_ICON).toEqual({ natural: User, … })`).
+    expect(ENTITY_ICON_PLAIN).toEqual({ natural: User, judicial: Building2, property: MapIcon, document: FileText });
   });
 
   it("Legături's icons are the same map (Ask first 1)", () => {
@@ -67,7 +69,8 @@ describe("where the marks replaced words and colours", () => {
     // 40.76: the same look through the role tokens — ink, a raised card with the wire border — which carry their dark.
     expect(counts).toContain('className="text-xl font-bold leading-7 tabular-nums"');
     expect(counts).toContain('"border-wire bg-raised text-ink"');
-    expect(counts).toContain("const Icon = ENTITY_ICON[kind];");
+    // 41.47: a warning card's mark stays amber — the plain one (it read `const Icon = ENTITY_ICON[kind];`).
+    expect(counts).toContain('const Icon = tone === "warning" ? ENTITY_ICON_PLAIN[kind] : ENTITY_ICON[kind];');
     expect(counts).not.toMatch(/text-(blue|emerald|violet)-600|bg-(blue|emerald|violet)-50/);
   });
 
@@ -89,6 +92,67 @@ describe("where the marks replaced words and colours", () => {
     for (const [f, nat, jud] of [["ro-RO.json", "Persoană fizică", "Persoană juridică"], ["en-GB.json", "Natural person", "Juridical person"]]) {
       const ra = JSON.parse(read("messages", f)).dashboard.recentActivity;
       expect([ra.typeNatural, ra.typeJudicial, ra.typePerson]).toEqual([nat, jud, undefined]);
+    }
+  });
+});
+
+describe("the four kinds' icons in their own colours (41.47)", () => {
+  const KINDS: EntityKind[] = ["natural", "judicial", "property", "document"];
+  const css = read("src", "app", "globals.css");
+  const block = (start: string) => css.slice(css.indexOf(start), css.indexOf("}", css.indexOf(start)));
+
+  it("Adrian's four values in light, lighter values of the same hues in dark", () => {
+    const light = block("@theme {");
+    const dark = block(".dark {");
+    expect(light).toMatch(/--color-kind-natural:\s+#5A2781;/);
+    expect(light).toMatch(/--color-kind-judicial:\s+#123456;/);
+    expect(light).toMatch(/--color-kind-property:\s+#00A84C;/);
+    expect(light).toMatch(/--color-kind-document:\s+#008AF2;/);
+    for (const k of KINDS) expect(dark).toMatch(new RegExp(`--color-kind-${k}:\\s+#[0-9A-F]{6};`));
+  });
+
+  it("every dark value reaches 3:1 on the dark card #18181b", () => {
+    const lum = (hex: string) => {
+      const c = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+      return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+    };
+    const ratio = (a: string, b: string) => (Math.max(lum(a), lum(b)) + 0.05) / (Math.min(lum(a), lum(b)) + 0.05);
+    const dark = block(".dark {");
+    for (const k of KINDS) {
+      const hex = new RegExp(`--color-kind-${k}:\\s+(#[0-9A-F]{6});`).exec(dark)![1];
+      expect([k, ratio(hex, "#18181b") >= 3]).toEqual([k, true]);
+    }
+  });
+
+  it.each(KINDS)("%s: the icon draws its line in the kind's colour, whatever class the call site gives it", (kind) => {
+    const Icon = ENTITY_ICON[kind];
+    const { container } = render(<Icon size={16} aria-hidden="true" className="text-fade" style={{ marginTop: 1 }} />);
+    const svg = container.querySelector("svg")!;
+    expect(svg.style.color).toBe(ENTITY_COLOUR_VAR[kind]);
+    expect(svg.style.marginTop).toBe("1px");
+    expect(svg.getAttribute("data-kind-icon")).toBe(kind);
+    expect(svg.getAttribute("stroke")).toBe("currentColor");
+    expect(ENTITY_COLOUR_CLASS[kind]).toBe(`text-kind-${kind}`);
+  });
+
+  it("the plain four are drawn only where a card must stay amber; „Recente” and the surveyor picker draw the coloured four", () => {
+    const users = ["src/app/_components/dashboard-client.tsx"];
+    const all = read("src", "lib", "ui", "entity-icon.ts");
+    expect(all).toContain("export const ENTITY_ICON_PLAIN");
+    const recent = code(read("src", "components", "recently-viewed-panel.tsx"));
+    expect(recent).toContain("const Icon = ENTITY_ICON[KIND[type]];");
+    expect(recent).not.toMatch(/\b(User|Building2|List|FileText)\b/);
+    const form = code(read("src", "app", "documents", "_components", "document-form.tsx"));
+    expect(form).toContain("icon={ENTITY_ICON.natural}");
+    expect(form).toContain("icon={ENTITY_ICON.judicial}");
+    expect(form).not.toMatch(/icon=\{(User|Building2)\}/);
+    for (const f of users) expect(read(...f.split("/"))).toContain("ENTITY_ICON_PLAIN[kind]");
+  });
+
+  it("the lists' plural title icons draw in their kind's colour too", () => {
+    const icons = read("src", "components", "icons", "list-icons.tsx");
+    for (const [name, kind] of [["people-group", "natural"], ["buildings", "judicial"], ["map-pins", "property"], ["pages", "document"]]) {
+      expect(icons).toContain(`name="${name}" {...props} data-kind-icon="${kind}" style={{ ...props.style, color: ENTITY_COLOUR_VAR.${kind} }}`);
     }
   });
 });

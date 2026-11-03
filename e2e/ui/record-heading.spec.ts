@@ -13,6 +13,8 @@
  *   - The hand run read the sizes with a script on the page; here they are
  *     Playwright's bounding boxes of the same elements.
  *   - Step 7 (40.38) compares each list's icon with the Natural Person's, opened again at 1920, by the same reading.
+ *   - Slice 41.47: each icon's colour is read in light and, with the page's `dark` class put on for the reading only,
+ *     in dark — the theme's own switch is TC-SET's.
  *   - Slice #37.49's pictures, not steps of the case: the top of each of the
  *     four records and of the long-named act, at 1366 and 1920 px, into
  *     `playwright-report/record-heading/`. The sidebar's „Recente" list is
@@ -57,7 +59,16 @@ async function photograph(page: Page, name: string): Promise<void> {
   await page.setViewportSize({ width: 1366, height: 900 });
 }
 
-type Measured = { icon: string; ariaHidden: string | null; first: boolean; fontSize: number; iconH: number; iconW: number; gap: number; dy: number; sameColour: boolean };
+type Measured = { icon: string; ariaHidden: string | null; first: boolean; fontSize: number; iconH: number; iconW: number; gap: number; dy: number; colour: string; dark: string; nameColour: string };
+
+/** Slice 41.47: each kind's line colour — Adrian's in light, the same hue lighter in dark (globals.css). */
+type Kind = "natural" | "judicial" | "property" | "document";
+const KIND_COLOUR: Record<Kind, { light: string; dark: string }> = {
+  natural: { light: "rgb(90, 39, 129)", dark: "rgb(179, 130, 217)" }, // #5A2781 / #B382D9
+  judicial: { light: "rgb(18, 52, 86)", dark: "rgb(112, 168, 225)" }, // #123456 / #70A8E1
+  property: { light: "rgb(0, 168, 76)", dark: "rgb(0, 204, 92)" }, // #00A84C / #00CC5C
+  document: { light: "rgb(0, 138, 242)", dark: "rgb(31, 159, 255)" }, // #008AF2 / #1F9FFF
+};
 
 /** The case's „icon", its size and its gap, read from the heading. */
 async function measure(heading: Locator): Promise<Measured> {
@@ -75,13 +86,25 @@ async function measure(heading: Locator): Promise<Measured> {
       iconW: ir.width,
       gap: nr.left - ir.right,
       dy: (ir.top + ir.bottom) / 2 - (nr.top + nr.bottom) / 2,
-      sameColour: getComputedStyle(svg).color === getComputedStyle(h).color,
+      // 41.47: the icon's line in its kind's colour, read in light and, with the page's `dark` class put on for the
+      // reading, in dark; the name beside it keeps the heading's own colour. (It read `sameColour`: the icon's colour
+      // the heading's — #37.49's „the same colour as the words".)
+      colour: getComputedStyle(svg).color,
+      dark: (() => {
+        const root = document.documentElement;
+        const had = root.classList.contains("dark");
+        root.classList.add("dark");
+        const c = getComputedStyle(svg).color;
+        if (!had) root.classList.remove("dark");
+        return c;
+      })(),
+      nameColour: getComputedStyle(name).color === getComputedStyle(h).color ? "heading" : getComputedStyle(name).color,
     };
   });
 }
 
 /** Steps 1–4's „the same size, gap and hiding". */
-function expectIcon(m: Measured, icon: string): void {
+function expectIcon(m: Measured, icon: string, kind: Kind): void {
   expect(m.icon).toBe(icon);
   expect(m.first).toBe(true);
   expect(m.ariaHidden).toBe("true");
@@ -89,15 +112,15 @@ function expectIcon(m: Measured, icon: string): void {
   expect(m.gap / m.fontSize).toBeGreaterThanOrEqual(0.5);
   expect(m.gap / m.fontSize).toBeLessThanOrEqual(0.6);
   expect(Math.abs(m.dy)).toBeLessThanOrEqual(1);
-  expect(m.sameColour).toBe(true);
+  expect([m.colour, m.dark, m.nameColour]).toEqual([KIND_COLOUR[kind].light, KIND_COLOUR[kind].dark, "heading"]);
 }
 
 /** Step 7 (40.38): the four lists, their titles and their many-records icons. */
 const LIST_TITLES = [
-  ["/natural-persons", "Persoane fizice", "lucide-people-group"],
-  ["/judicial-persons", "Persoane juridice", "lucide-buildings"],
-  ["/properties", "Proprietăți", "lucide-map-pins"],
-  ["/documents", "Acte", "lucide-pages"],
+  ["/natural-persons", "Persoane fizice", "lucide-people-group", "natural"],
+  ["/judicial-persons", "Persoane juridice", "lucide-buildings", "judicial"],
+  ["/properties", "Proprietăți", "lucide-map-pins", "property"],
+  ["/documents", "Acte", "lucide-pages", "document"],
 ] as const;
 
 /** Where the heading's icon starts, from the page's left edge, and its gap to the words. */
@@ -136,22 +159,22 @@ test.describe("TC-ICON-07 — pictograma înregistrării înaintea numelui", () 
 
       // Step 1 — the Natural Person: `lucide-user`, hidden, as tall as the letters, two spaces.
       let heading = await openHeading(page, `/natural-persons/${personId}`, PERSON);
-      expectIcon(await measure(heading), "lucide-user");
+      expectIcon(await measure(heading), "lucide-user", "natural");
       await photograph(page, "natural-person");
 
       // Step 2 — the Judicial Person: `lucide-building2`.
       heading = await openHeading(page, `/judicial-persons/${companyId}`, COMPANY);
-      expectIcon(await measure(heading), "lucide-building2");
+      expectIcon(await measure(heading), "lucide-building2", "judicial");
       await photograph(page, "judicial-person");
 
       // Step 3 — the Property: `lucide-map`.
       heading = await openHeading(page, `/properties/${propertyId}`, PROPERTY);
-      expectIcon(await measure(heading), "lucide-map");
+      expectIcon(await measure(heading), "lucide-map", "property");
       await photograph(page, "property");
 
       // Step 4 — the Document `TC-ICON-07 Act`: whole, `lucide-file-text`.
       heading = await openHeading(page, `/documents/${documentId}`, DOCUMENT);
-      expectIcon(await measure(heading), "lucide-file-text");
+      expectIcon(await measure(heading), "lucide-file-text", "document");
       expect(await heading.locator("span").evaluate((s) => s.scrollWidth > s.clientWidth)).toBe(false);
       await photograph(page, "document");
 
@@ -163,7 +186,7 @@ test.describe("TC-ICON-07 — pictograma înregistrării înaintea numelui", () 
         // Step 6 is the same reading at 1920 × 1080.
         await page.setViewportSize({ width, height: width === 1366 ? 900 : 1080 });
         const m = await measure(heading);
-        expectIcon(m, "lucide-file-text");
+        expectIcon(m, "lucide-file-text", "document");
         expect(Math.abs(m.iconW - m.fontSize)).toBeLessThanOrEqual(2);
         const layout = await heading.evaluate((h) => {
           const name = h.querySelector("span") as HTMLElement;
@@ -196,7 +219,7 @@ test.describe("TC-ICON-07 — pictograma înregistrării înaintea numelui", () 
       await page.setViewportSize({ width: 1920, height: 1080 });
       const record = await openHeading(page, `/natural-persons/${personId}`, PERSON);
       const at = await place(record);
-      for (const [url, title, icon] of LIST_TITLES) {
+      for (const [url, title, icon, kind] of LIST_TITLES) {
         const heading = await openHeading(page, url, title);
         const m = await measure(heading);
         expect(m.icon).toBe(icon);
@@ -205,7 +228,8 @@ test.describe("TC-ICON-07 — pictograma înregistrării înaintea numelui", () 
         expect(Math.abs(m.iconH - 30)).toBeLessThanOrEqual(1);
         expect(Math.abs(m.iconW - 30)).toBeLessThanOrEqual(1);
         expect(Math.abs(m.dy)).toBeLessThanOrEqual(1);
-        expect(m.sameColour).toBe(true);
+        // 41.47: the plural icon in its kind's colour too (it read `expect(m.sameColour).toBe(true)`).
+        expect([m.colour, m.dark, m.nameColour]).toEqual([KIND_COLOUR[kind].light, KIND_COLOUR[kind].dark, "heading"]);
         const p = await place(heading);
         expect(Math.abs(p.left - at.left)).toBeLessThanOrEqual(1);
         expect(Math.abs(m.gap - at.gap)).toBeLessThanOrEqual(1);

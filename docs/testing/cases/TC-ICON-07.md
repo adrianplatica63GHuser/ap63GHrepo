@@ -41,13 +41,13 @@ size.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens the Natural Person | The heading `Persoană TC-ICON-07`, named so for a screen reader; before the name the icon `lucide-user`, hidden (`aria-hidden="true"`), as tall as the letters, two spaces before the name, centred on it and in the heading's colour |
+| 1 | Opens the Natural Person | The heading `Persoană TC-ICON-07`, named so for a screen reader; before the name the icon `lucide-user`, hidden (`aria-hidden="true"`), as tall as the letters, two spaces before the name, centred on it; its line in the natural person's colour, #5A2781 (#B382D9 in dark) — 41.47; it read „in the heading's colour" |
 | 2 | Opens the Judicial Person | The heading `TC-ICON-07 Firmă`; the icon `lucide-building2`, the same size, gap and hiding |
 | 3 | Opens the Property | The heading `TC-ICON-07 Teren`; the icon `lucide-map`, the same size, gap and hiding |
 | 4 | Opens the Document `TC-ICON-07 Act` | The heading `TC-ICON-07 Act`, whole; the icon `lucide-file-text`, the same size, gap and hiding |
 | 5 | Opens the Document with the long name | The heading named by the whole long name, its tooltip (`title`) the whole name; on screen the name ends in „…"; the icon whole (as tall and as wide as the font size); after the name „Neprocesat", then the version controls, inside the header |
 | 6 | Widens the window to 1920 × 1080 | Still „…" at the end of the name; the icon still whole, the gap still two spaces |
-| 7 | At 1920 × 1080 opens „Persoane fizice", „Persoane juridice", „Proprietăți" and „Acte" | Before each title an icon of several records — `lucide-people-group`, `lucide-buildings`, `lucide-map-pins`, `lucide-pages` — hidden, 30 px (a quarter larger than a record's 24), centred on the title and in its colour; its left edge and its gap to the title the Natural Person's, within 1 px; each heading named by its title alone (40.38) |
+| 7 | At 1920 × 1080 opens „Persoane fizice", „Persoane juridice", „Proprietăți" and „Acte" | Before each title an icon of several records — `lucide-people-group`, `lucide-buildings`, `lucide-map-pins`, `lucide-pages` — hidden, 30 px (a quarter larger than a record's 24), centred on the title, its line in its kind's colour (41.47; it read „in its colour"); its left edge and its gap to the title the Natural Person's, within 1 px; each heading named by its title alone (40.38) |
 
 ## At the end — leaving things as they were found
 
@@ -95,3 +95,8 @@ the sidebar item by its new name; nothing else in them changed.
 
 **2026-10-23 — Slice 40.38.** Step 7 added: the four lists' many-records icons, drawn by hand after Big.Icons.docx, at
 1.25em of the title with a record screen's left edge and gap.
+
+**2026-11-02 — Slice 41.47.** Steps 1–5 and 7: each icon's line in its kind's colour — natural person #5A2781,
+juridical person #123456, property #00A84C, document #008AF2 — and, read with the page's dark class, the same hue
+lighter (#B382D9, #70A8E1, #00CC5C, #1F9FFF); the name beside it keeps the heading's colour. Steps 2–4 say the same of
+their own kind.
