@@ -178,8 +178,9 @@ test.describe("TC-ICON-07 — pictograma înregistrării înaintea numelui", () 
       expect(await heading.locator("span").evaluate((s) => s.scrollWidth > s.clientWidth)).toBe(false);
       await photograph(page, "document");
 
-      // Step 5 — the long name: named in full, titled in full, „…" on screen, the icon whole,
-      // „Neprocesat" then the version controls after it, inside the header.
+      // Step 5 — the long name: named in full, titled in full, „…" on screen, the icon whole, „Neprocesat" after it,
+      // inside the header. (41.47: it read „…then the version controls after it" — 41.08 moved them to the page bar,
+      // so the pill is the header's last element; found stale by 41.47's run, the first since.)
       heading = await openHeading(page, `/documents/${longId}`, LONG);
       await expect(heading).toHaveAttribute("title", LONG);
       for (const width of [1366, 1920]) {
@@ -192,25 +193,24 @@ test.describe("TC-ICON-07 — pictograma înregistrării înaintea numelui", () 
           const name = h.querySelector("span") as HTMLElement;
           const header = h.parentElement as HTMLElement;
           const pill = header.querySelector("span.rounded-full") as HTMLElement;
-          const nav = header.lastElementChild as HTMLElement;
           const nr = name.getBoundingClientRect();
           const pr = pill.getBoundingClientRect();
-          const vr = nav.getBoundingClientRect();
           return {
             truncated: name.scrollWidth > name.clientWidth,
             overflow: getComputedStyle(name).textOverflow,
             pill: pill.textContent ?? "",
             pillAfterName: pr.left >= nr.right,
-            navAfterPill: vr.left >= pr.right,
-            navInside: vr.right <= header.getBoundingClientRect().right + 0.5,
+            // Nothing drawn after the pill in the header (a portal's empty anchor, if any, has no width).
+            pillLast: [...header.children].slice([...header.children].indexOf(pill) + 1).every((e) => e.getBoundingClientRect().width === 0),
+            pillInside: pr.right <= header.getBoundingClientRect().right + 0.5,
           };
         });
         expect(layout.truncated).toBe(true);
         expect(layout.overflow).toBe("ellipsis");
         expect(layout.pill).toContain("Neprocesat");
         expect(layout.pillAfterName).toBe(true);
-        expect(layout.navAfterPill).toBe(true);
-        expect(layout.navInside).toBe(true);
+        expect(layout.pillLast).toBe(true);
+        expect(layout.pillInside).toBe(true);
       }
       await photograph(page, "document-long-name");
 
