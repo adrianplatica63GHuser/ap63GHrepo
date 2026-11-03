@@ -361,6 +361,11 @@ const ALLOW: Record<string, Allowed[]> = {
     ["A110", "{t(\"cancel\")}"],
     ["A110", "{t(\"confirm\")}"],
   ],
+  // Slice 41.59: Clasificare's confirmation — „Înapoi" and „Confirmă" (A110, a confirmation's answers).
+  "src/components/classification-review.tsx": [
+    ["A110", "{labelBack}"],
+    ["A110", "{labelOk}"],
+  ],
   // Slice 40.96: a „Legături" row's name is its link — the text is the data (A113), as on the lists.
   "src/components/tiles/related-tile.tsx": [
     ["A113", "{children}"],
