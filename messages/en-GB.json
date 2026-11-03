@@ -2396,7 +2396,9 @@
       "taken": "This addendum already amends “{document}”. Unlink it first.",
       "several": "An addendum amends one deed — choose one.",
       "noRole": "The “Act adițional la” relation is missing from Reference data.",
-      "error": "The link could not be saved. Try again."
+      "error": "The link could not be saved. Try again.",
+      "relinkGone": "The document „{document}” no longer exists; the link was not made again.",
+      "relinkTaken": "„{document}” already amends another deed; the link was not made again."
     },
     "idCardPeople": {
       "action": "Create people from the ID card",

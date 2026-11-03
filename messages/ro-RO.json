@@ -2396,7 +2396,9 @@
       "taken": "Acest act adițional modifică deja „{document}”. Dezlegați-l întâi.",
       "several": "Un act adițional modifică un singur act — alegeți unul.",
       "noRole": "Relația „Act adițional la” lipsește din Date de referință.",
-      "error": "Legătura nu s-a putut salva. Încercați din nou."
+      "error": "Legătura nu s-a putut salva. Încercați din nou.",
+      "relinkGone": "Actul „{document}” nu mai există; legătura nu s-a refăcut.",
+      "relinkTaken": "„{document}” modifică deja alt act; legătura nu s-a refăcut."
     },
     "idCardPeople": {
       "action": "Creează persoane din CI",

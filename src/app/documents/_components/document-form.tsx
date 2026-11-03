@@ -83,7 +83,9 @@ import { SALE_OBJECT_FIELD_KEY } from "@/lib/documents/sale-object-description";
 import { PagesPanel, PagesViewerBox, usePagesPanelState } from "./pages-panel";
 import { NewPagesPanel } from "./new-pages-panel";
 import { rememberUnsavedPages, saveNewDocument, type StagedPage } from "@/lib/documents/new-document-pages";
-import { AmendedDeedLink, useParentDeed } from "./amended-deed-panel";
+import { AmendedDeedLink, relinkParentDeed, useParentDeed } from "./amended-deed-panel";
+import { deedOfVersion } from "@/lib/documents/parent-deed-versions";
+import { useNameOr } from "@/components/record/use-name-or";
 import { ErrorBoundary, PanelError } from "@/components/error-boundary";
 import { inferProvenance } from "@/lib/metadata/provenance-rules";
 import { buttonClass } from "@/lib/ui/button-styles";
@@ -364,6 +366,9 @@ export function DocumentForm({
   const tGenderShort = useTranslations("naturalPerson.options.genderShort");
   const router = useRouter();
   const queryClient = useQueryClient();
+  // Slice 41.54: a deed's name for „Fă curentă"'s line.
+  const nameOr = useNameOr();
+  const nameOrDoc = (title: string | null) => nameOr(title, "document");
 
   // Shared Pages-panel state — lifted so the panel table and the theater
   // overlay viewer both read/write the same selected-page data.
@@ -428,6 +433,8 @@ export function DocumentForm({
   const [submitError,       setSubmitError]       = useState<string | null>(null);
   const [confirmDelete,     setConfirmDelete]     = useState(false);
   const [confirmMakeCurrent, setConfirmMakeCurrent] = useState(false);
+  // Slice 41.54: why „Fă curentă" could not link the version's deed again, under „Actul modificat".
+  const [relinkNote, setRelinkNote] = useState<string | null>(null);
   // Slice #21.04.Import: an associated record (opened via ?readonly=true from
   // another record's association tab) starts read-only with a "Modify" button;
   // clicking it flips this on, which makes effectiveMode resolve to "edit"
@@ -973,10 +980,27 @@ export function DocumentForm({
   // (it differs from the current latest); we then follow it.
   const handleMakeCurrent = async () => {
     const values = form.getValues();
+    // Slice 41.54: the deed the viewed version amended, read before the save moves the history on.
+    const relink =
+      amendedGroup && documentId && viewingVersion !== null
+        ? { from: parentDeed?.id ?? null, to: deedOfVersion(versions, viewingVersion, parentDeed?.id ?? null) }
+        : null;
     const saved = await doSave(values);
     if (!saved) {
       setConfirmMakeCurrent(false);
       return;
+    }
+    // Slice 41.54: „Fă curentă" links that deed again when it still can; otherwise a line says why not.
+    setRelinkNote(null);
+    if (relink && documentId && relink.from !== relink.to) {
+      const outcome = await relinkParentDeed(documentId, relink.from, relink.to);
+      if (outcome !== "ok" && relink.to) {
+        const title = queryClient.getQueryData<string | null>(["document-title", relink.to]) ?? null;
+        const name = nameOrDoc(title);
+        setRelinkNote(outcome === "gone" ? t("amended.relinkGone", { document: name }) : t("amended.relinkTaken", { document: name }));
+      }
+      await queryClient.invalidateQueries({ queryKey: ["document-references", documentId] });
+      await queryClient.invalidateQueries({ queryKey: ["document-versions", documentId] });
     }
     // Bug 1: pulse the restored change once the new version refetches in.
     pendingPulseRef.current = makeCurrentNextNumber;
@@ -1949,10 +1973,18 @@ export function DocumentForm({
           there is no link. Hidden, never unmounted, so linking clears nothing. */}
       {amendedGroup && tabIndexOfPanel(amendedGroup.fields, tabs) === tab && (() => {
         const packed = packCustomFields(amendedGroup.fields);
-        const linked = !!parentDeed;
+        // Slice 41.54: an older version shows the deed IT amended, read-only (`deedOfVersion`).
+        const versionDeedId =
+          !isOnLatest && effectiveVersion !== null ? deedOfVersion(versions, effectiveVersion, parentDeed?.id ?? null) : undefined;
+        const linked = versionDeedId !== undefined ? versionDeedId !== null : !!parentDeed;
         return (
           <Section panel="amended" units={Math.max(packed.units, AMENDED_DEED_UNITS)}>
-            <AmendedDeedLink documentId={documentId} readOnly={effectiveMode === "view"} />
+            <AmendedDeedLink documentId={documentId} readOnly={effectiveMode === "view"} versionDeedId={versionDeedId} />
+            {relinkNote && (
+              <p role="alert" className="text-sm text-alert" data-relink-note="">
+                {relinkNote}
+              </p>
+            )}
             <div hidden={linked} className={linked ? "hidden" : "flex flex-col gap-2"} data-amended-fallback="">
               {packed.nodes}
             </div>

@@ -81,7 +81,12 @@ export function useRecordSaveSync({
   }, [recordPath, subscribe]);
 
   return {
-    baseVersion: () => savedVersion ?? latestVersion ?? undefined,
+    // Slice 41.54: the newer of the two — a version appended by something other than this form's save (a link
+    // „Actul modificat" made or removed) moves `latestVersion` past the one this form last saved.
+    baseVersion: () => {
+      const known = [savedVersion, latestVersion].filter((v): v is number => typeof v === "number");
+      return known.length > 0 ? Math.max(...known) : undefined;
+    },
     remember: async (res) => {
       try {
         const body = (await res.clone().json()) as { version?: unknown };

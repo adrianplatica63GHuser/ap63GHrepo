@@ -195,4 +195,12 @@ export type DocumentSnapshot = {
   // Slice 40.82: an identity document's values (null on an ordinary type). Compared by `identitySnapshotsEqual`,
   // like `customFields` a nested block; a snapshot written before 40.82 has no such key and reads as holding none.
   identity:          IdentitySnapshot | null;
+  // Slice 41.54: the deed an act adițional amends („Actul modificat", the „Act adițional la" link) — `id` null when
+  // none. ABSENT from every snapshot written before 41.54 (never rewritten): such a snapshot reads its deed from the
+  // next snapshot that has the block (`deedOfVersion`, src/lib/documents/parent-deed-versions.ts), whose `before`
+  // records the deed linked just before the first link change made over a history without it.
+  parentDeed?:       ParentDeedSnapshot;
 };
+
+/** Slice 41.54: a snapshot's „Actul modificat". */
+export type ParentDeedSnapshot = { id: string | null; before?: string | null };

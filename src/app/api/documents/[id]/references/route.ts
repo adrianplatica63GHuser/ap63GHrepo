@@ -6,6 +6,7 @@ import type { NextRequest } from "next/server";
 import { unexpectedError, zodErrorToResponse } from "@/lib/api/errors";
 import { listDocumentReferences, associateDocumentToDocument, parentLinkConflict } from "@/lib/documents/queries";
 import { parentConflictBody } from "@/lib/documents/parent-deed";
+import { getCurrentUserEmail } from "@/lib/auth/current-user";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -35,6 +36,9 @@ export async function POST(request: NextRequest, ctx: Ctx): Promise<Response> {
       id,
       parsed.data.documentIds,
       parsed.data.relationshipRoleId ?? null,
+      undefined,
+      // Slice 41.54: the user, for the act adițional's new version.
+      await getCurrentUserEmail(),
     );
     /**
      * ⚠️ **A BODY WHERE THIS USED TO ANSWER 204, AND THE SILENCE WAS THE

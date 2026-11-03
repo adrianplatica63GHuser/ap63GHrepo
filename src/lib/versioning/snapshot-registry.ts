@@ -253,6 +253,10 @@ export const DOCUMENT_SNAPSHOT_KEYS = [
   // `customFields`; null on an ordinary type, and absent from every snapshot written before 40.82, which reads as
   // holding none (`identitySnapshotsEqual`). Its keys are IDENTITY_SNAPSHOT_KEYS below.
   "identity",
+  // Slice 41.54: „Actul modificat" — the act adițional's parent deed, a nested block `{ id, before? }`; absent from
+  // every snapshot written before 41.54, which compares equal to any (`parentDeedSnapshotsEqual`), so an ordinary save
+  // over an old history appends no phantom version. Read through `tx` in buildSnapshots, as `identity` is.
+  "parentDeed",
 ] as const satisfies ReadonlyArray<keyof DocumentSnapshot>;
 
 const _documentCheck: AssertExactKeys<

@@ -411,8 +411,14 @@ const SNAPSHOT_KEYS: ReadonlyArray<keyof DocumentSnapshot> = DOCUMENT_SNAPSHOT_K
  * Slice 40.82: `identity` is the document's identity_document row, read by the caller in the same transaction —
  * null on an ordinary type, or on an identity document that has no row yet.
  */
-export function snapshotFromFull(full: DocumentFull, identity: IdentityValues | null = null): DocumentSnapshot {
+export function snapshotFromFull(
+  full: DocumentFull,
+  identity: IdentityValues | null = null,
+  /** Slice 41.54: the deed it amends, read through the caller's `tx`; left out, the snapshot holds no such block. */
+  parentDeedId?: string | null,
+): DocumentSnapshot {
   return {
+    ...(parentDeedId !== undefined ? { parentDeed: { id: parentDeedId } } : {}),
     documentTypeId:    full.documentTypeId    ?? null,
     title:             full.title             ?? null,
     nrDocument:        full.nrDocument        ?? null,
@@ -513,6 +519,11 @@ function snapshotsEqual(a: DocumentSnapshot, b: DocumentSnapshot): boolean {
       if (!identitySnapshotsEqual(a.identity, b.identity)) return false;
       continue;
     }
+    // Slice 41.54: absent on either side (a snapshot from before 41.54) is equal; `before` is never compared.
+    if (k === "parentDeed") {
+      if (a.parentDeed !== undefined && b.parentDeed !== undefined && (a.parentDeed.id ?? null) !== (b.parentDeed.id ?? null)) return false;
+      continue;
+    }
     if (a[k] !== b[k]) return false;
   }
   return true;
@@ -571,7 +582,9 @@ export async function recordDocumentVersionsIfChanged(
           .where(inArray(document.id, idList));
         // Slice 40.82: each document's identity values, through `tx`, so the snapshot is the whole of it.
         const identities = await getIdentityValuesFor(tx, idList);
-        return new Map(rows.map((r) => [r.id, snapshotFromFull(r, identities.get(r.id) ?? null)]));
+        // Slice 41.54: and the deed each amends, through `tx`.
+        const deeds = await parentDeedIdsFor(tx, idList);
+        return new Map(rows.map((r) => [r.id, snapshotFromFull(r, identities.get(r.id) ?? null, deeds.get(r.id) ?? null)]));
       },
       latestVersions: async (batch) => {
         const idList = [...batch];
@@ -676,7 +689,7 @@ export async function createDocument(
     await tx.insert(documentVersion).values({
       documentId:    row.id,
       versionNumber: 0,
-      snapshot:      snapshotFromFull(row, identity),
+      snapshot:      snapshotFromFull(row, identity, null), // 41.54: a new document amends nothing yet
       updatedBy,
     });
 
@@ -787,7 +800,7 @@ export async function updateDocument(
       tx,
       [id],
       updatedBy,
-      new Map([[id, snapshotFromFull(updated, identityOutcome.values)]]),
+      new Map([[id, snapshotFromFull(updated, identityOutcome.values, (await parentDeedIdsFor(tx, [id])).get(id) ?? null)]]),
     );
 
     return {
@@ -1878,6 +1891,8 @@ export async function associateDocumentToDocument(
   otherIds:           string[],
   relationshipRoleId: string | null = null,
   roleReadsAToB?:     boolean,
+  /** Slice 41.54: who made the link — the act adițional's version is theirs. */
+  updatedBy:          string | null = null,
 ): Promise<DocumentAssociationResult> {
   const targets = otherIds.filter((id) => id !== documentId);
   if (targets.length === 0) return { inserted: 0, skipped: 0, alreadyLinked: [] };
@@ -1888,80 +1903,180 @@ export async function associateDocumentToDocument(
     );
   }
 
-  const values = targets.map((otherId) => {
-    const manual = manualLinkDirection(documentId, otherId);
-    return {
-      documentIdA:        manual.documentIdA,
-      documentIdB:        manual.documentIdB,
-      relationshipRoleId: relationshipRoleId ?? undefined,
-      // The caller's direction when it has one (the linker, one pair only);
-      // otherwise the role reads from the screen it was chosen on.
-      roleReadsAToB:      roleReadsAToB ?? manual.roleReadsAToB,
-    };
-  });
+  return await db.transaction(async (tx) => {
+    const values = targets.map((otherId) => {
+      const manual = manualLinkDirection(documentId, otherId);
+      return {
+        documentIdA:        manual.documentIdA,
+        documentIdB:        manual.documentIdB,
+        relationshipRoleId: relationshipRoleId ?? undefined,
+        // The caller's direction when it has one (the linker, one pair only);
+        // otherwise the role reads from the screen it was chosen on.
+        roleReadsAToB:      roleReadsAToB ?? manual.roleReadsAToB,
+      };
+    });
 
-  // ⚠️ **`.returning()` IS WHAT MAKES THE ANSWER POSSIBLE, AND IT IS EXACT.**
-  // Postgres returns a row per row actually INSERTED, so the conflicts are the
-  // difference — no second query is needed to count them, and no count can
-  // drift from what the insert did. What DOES need a second query is naming the
-  // role each conflict already holds, and it runs only when there was one.
-  const written = await db
-    .insert(documentDocument)
-    .values(values)
-    .onConflictDoNothing()
-    .returning({ documentIdA: documentDocument.documentIdA, documentIdB: documentDocument.documentIdB });
+    // ⚠️ **`.returning()` IS WHAT MAKES THE ANSWER POSSIBLE, AND IT IS EXACT.**
+    // Postgres returns a row per row actually INSERTED, so the conflicts are the
+    // difference — no second query is needed to count them, and no count can
+    // drift from what the insert did. What DOES need a second query is naming the
+    // role each conflict already holds, and it runs only when there was one.
+    const written = await tx
+      .insert(documentDocument)
+      .values(values)
+      .onConflictDoNothing()
+      .returning({
+        documentIdA: documentDocument.documentIdA,
+        documentIdB: documentDocument.documentIdB,
+        relationshipRoleId: documentDocument.relationshipRoleId,
+        roleReadsAToB: documentDocument.roleReadsAToB,
+      });
 
-  const insertedPairs = new Set(written.map((r) => `${r.documentIdA}|${r.documentIdB}`));
-  const skippedIds = targets.filter((otherId) => {
-    const [a, b] = [documentId, otherId].sort();
-    return !insertedPairs.has(`${a}|${b}`);
-  });
+    // Slice 41.54: a new „Act adițional la" link is a new version of the act adițional — the deed before it: none.
+    for (const w of written) await recordParentDeedChange(tx, w, null, updatedBy);
 
-  if (skippedIds.length === 0) {
-    return { inserted: written.length, skipped: 0, alreadyLinked: [] };
-  }
+    const insertedPairs = new Set(written.map((r) => `${r.documentIdA}|${r.documentIdB}`));
+    const skippedIds = targets.filter((otherId) => {
+      const [a, b] = [documentId, otherId].sort();
+      return !insertedPairs.has(`${a}|${b}`);
+    });
 
-  const existing = await db
-    .select({
-      documentIdA: documentDocument.documentIdA,
-      documentIdB: documentDocument.documentIdB,
-      roleName:    lookupDocumentDocumentRole.name,
-    })
-    .from(documentDocument)
-    .leftJoin(
-      lookupDocumentDocumentRole,
-      eq(documentDocument.relationshipRoleId, lookupDocumentDocumentRole.id),
-    )
-    .where(
-      or(
-        and(eq(documentDocument.documentIdA, documentId), inArray(documentDocument.documentIdB, skippedIds)),
-        and(eq(documentDocument.documentIdB, documentId), inArray(documentDocument.documentIdA, skippedIds)),
-      ),
+    if (skippedIds.length === 0) {
+      return { inserted: written.length, skipped: 0, alreadyLinked: [] };
+    }
+
+    const existing = await tx
+      .select({
+        documentIdA: documentDocument.documentIdA,
+        documentIdB: documentDocument.documentIdB,
+        roleName:    lookupDocumentDocumentRole.name,
+      })
+      .from(documentDocument)
+      .leftJoin(
+        lookupDocumentDocumentRole,
+        eq(documentDocument.relationshipRoleId, lookupDocumentDocumentRole.id),
+      )
+      .where(
+        or(
+          and(eq(documentDocument.documentIdA, documentId), inArray(documentDocument.documentIdB, skippedIds)),
+          and(eq(documentDocument.documentIdB, documentId), inArray(documentDocument.documentIdA, skippedIds)),
+        ),
+      );
+
+    const roleByOther = new Map<string, string | null>(
+      existing.map((r) => [r.documentIdA === documentId ? r.documentIdB : r.documentIdA, r.roleName ?? null]),
     );
 
-  const roleByOther = new Map<string, string | null>(
-    existing.map((r) => [r.documentIdA === documentId ? r.documentIdB : r.documentIdA, r.roleName ?? null]),
-  );
-
-  return {
-    inserted: written.length,
-    skipped:  skippedIds.length,
-    alreadyLinked: skippedIds.map((documentIdOther) => ({
-      documentId: documentIdOther,
-      // `?? null` rather than `!`: a pair that vanished between the insert and
-      // this read (another session dissociating it) is not in the map, and
-      // „already linked, role unknown" is a true sentence where a crash is not.
-      roleName:   roleByOther.get(documentIdOther) ?? null,
-    })),
-  };
+    return {
+      inserted: written.length,
+      skipped:  skippedIds.length,
+      alreadyLinked: skippedIds.map((documentIdOther) => ({
+        documentId: documentIdOther,
+        // `?? null` rather than `!`: a pair that vanished between the insert and
+        // this read (another session dissociating it) is not in the map, and
+        // „already linked, role unknown" is a true sentence where a crash is not.
+        roleName:   roleByOther.get(documentIdOther) ?? null,
+      })),
+    };
+  });
 }
 
-export async function dissociateDocumentFromDocument(documentId: string, otherId: string): Promise<boolean> {
+export async function dissociateDocumentFromDocument(
+  documentId: string,
+  otherId: string,
+  /** Slice 41.54: who removed the link — the act adițional's version is theirs. */
+  updatedBy: string | null = null,
+): Promise<boolean> {
   const [a, b] = [documentId, otherId].sort();
-  const result = await db.delete(documentDocument)
-    .where(and(eq(documentDocument.documentIdA, a), eq(documentDocument.documentIdB, b)))
-    .returning({ id: documentDocument.id });
-  return result.length > 0;
+  return await db.transaction(async (tx) => {
+    const result = await tx.delete(documentDocument)
+      .where(and(eq(documentDocument.documentIdA, a), eq(documentDocument.documentIdB, b)))
+      .returning({
+        id: documentDocument.id,
+        documentIdA: documentDocument.documentIdA,
+        documentIdB: documentDocument.documentIdB,
+        relationshipRoleId: documentDocument.relationshipRoleId,
+        roleReadsAToB: documentDocument.roleReadsAToB,
+      });
+    // Slice 41.54: an „Act adițional la" link removed is a new version of the act adițional; the deed before: this one.
+    for (const r of result) {
+      const deed = r.roleReadsAToB ? r.documentIdB : r.documentIdA;
+      await recordParentDeedChange(tx, r, deed, updatedBy);
+    }
+    return result.length > 0;
+  });
+}
+
+/** Slice 41.54: the „Act adițional la" role's id, or null when the archive has no such role. */
+async function parentRoleIdIn(tx: DbTransaction): Promise<string | null> {
+  const wanted = foldLookupName(PURPOSE_ROLE_NAME.PARENT);
+  const rows = await tx.select({ id: lookupDocumentDocumentRole.id, name: lookupDocumentDocumentRole.name }).from(lookupDocumentDocumentRole);
+  return rows.find((r) => foldLookupName(r.name) === wanted)?.id ?? null;
+}
+
+/**
+ * The deed each of these documents amends — its „Act adițional la" link, read FROM the document (the role reads from
+ * the act adițional's side) — through `tx`.                                                        (Slice 41.54)
+ */
+export async function parentDeedIdsFor(tx: DbTransaction, ids: readonly string[]): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  if (ids.length === 0) return out;
+  const roleId = await parentRoleIdIn(tx);
+  if (roleId === null) return out;
+  const rows = await tx
+    .select({ a: documentDocument.documentIdA, b: documentDocument.documentIdB, aToB: documentDocument.roleReadsAToB })
+    .from(documentDocument)
+    .where(and(
+      eq(documentDocument.relationshipRoleId, roleId),
+      or(inArray(documentDocument.documentIdA, [...ids]), inArray(documentDocument.documentIdB, [...ids])),
+    ));
+  const wanted = new Set(ids);
+  for (const r of rows) {
+    const act = r.aToB ? r.a : r.b;
+    const deed = r.aToB ? r.b : r.a;
+    if (wanted.has(act) && !out.has(act)) out.set(act, deed);
+  }
+  return out;
+}
+
+/**
+ * A link „Act adițional la" made or removed: the act adițional gets a version of its own.           (Slice 41.54)
+ *
+ * Adrian, 2026-11-02: unlinking „Actul modificat" „has obviously created a new version … however the version counter
+ * on the top band Did not get incremented". So the act's row is locked, stamped with who did it, and a version is
+ * appended — ALWAYS, since a link change is a change: when the latest version predates 41.54 (no `parentDeed`), the
+ * snapshots would compare equal, and the new one records `before` — the deed linked just before — which is what lets
+ * that older version read the deed it had (`deedOfVersion`). Only the act adițional: the amended deed's content did
+ * not change. Any other role is not this.
+ */
+async function recordParentDeedChange(
+  tx: DbTransaction,
+  link: { documentIdA: string; documentIdB: string; relationshipRoleId: string | null; roleReadsAToB: boolean },
+  before: string | null,
+  updatedBy: string | null,
+): Promise<void> {
+  if (link.relationshipRoleId === null) return;
+  if (link.relationshipRoleId !== (await parentRoleIdIn(tx))) return;
+  const act = link.roleReadsAToB ? link.documentIdA : link.documentIdB;
+  const [row] = await tx.select().from(document).where(eq(document.id, act)).limit(1).for("update");
+  if (!row) return;
+  await tx.update(document).set({ updatedBy }).where(eq(document.id, act));
+  const identities = await getIdentityValuesFor(tx, [act]);
+  const deed = (await parentDeedIdsFor(tx, [act])).get(act) ?? null;
+  const snapshot = snapshotFromFull({ ...row, updatedBy }, identities.get(act) ?? null, deed);
+  const [latest] = await tx
+    .select({ versionNumber: documentVersion.versionNumber, snapshot: documentVersion.snapshot })
+    .from(documentVersion)
+    .where(eq(documentVersion.documentId, act))
+    .orderBy(desc(documentVersion.versionNumber))
+    .limit(1);
+  if (latest && (latest.snapshot as DocumentSnapshot).parentDeed === undefined) snapshot.parentDeed = { id: deed, before };
+  await tx.insert(documentVersion).values({
+    documentId: act,
+    versionNumber: (latest?.versionNumber ?? -1) + 1,
+    snapshot,
+    updatedBy,
+  });
 }
 
 // ---------------------------------------------------------------------------

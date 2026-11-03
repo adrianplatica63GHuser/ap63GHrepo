@@ -83,7 +83,72 @@ async function parentRoleId(): Promise<string | null> {
   return items.find((r) => foldLookupName(r.name) === wanted)?.id ?? null;
 }
 
-export function AmendedDeedLink({ documentId, readOnly }: { documentId: string | undefined; readOnly: boolean }) {
+/**
+ * Slice 41.54: „Fă curentă" on a version that amended another deed than the act does now — unlink the one it has,
+ * link the one the version had. „gone" when that deed no longer exists, „taken" when it cannot be linked (the route's
+ * 409), „ok" otherwise. Each step makes the act a version of its own (queries.ts → recordParentDeedChange).
+ */
+export async function relinkParentDeed(
+  documentId: string,
+  from: string | null,
+  to: string | null,
+): Promise<"ok" | "gone" | "taken" | "error"> {
+  if (from === to) return "ok";
+  if (from) {
+    const res = await fetch(`/api/documents/${encodeURIComponent(documentId)}/references/${encodeURIComponent(from)}`, { method: "DELETE" });
+    if (!res.ok && res.status !== 404) return "error";
+  }
+  if (!to) return "ok";
+  const exists = await fetch(`/api/documents/${encodeURIComponent(to)}`);
+  if (exists.status === 404) return "gone";
+  const roleId = await parentRoleId();
+  if (roleId === null) return "error";
+  const res = await fetch(`/api/documents/${encodeURIComponent(documentId)}/references`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ documentIds: [to], relationshipRoleId: roleId }),
+  });
+  if (res.status === 409) return "taken";
+  return res.ok ? "ok" : "error";
+}
+
+/** Slice 41.54: a document's title by its id, for an older version's deed. */
+async function fetchTitle(id: string): Promise<string | null> {
+  const res = await fetch(`/api/documents/${encodeURIComponent(id)}`);
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return ((await res.json()) as { title?: string | null }).title ?? null;
+}
+
+/**
+ * Slice 41.54: an older version's „Actul modificat" — that version's deed, read-only, by name (or „—"). `deedId` is
+ * `deedOfVersion`'s answer (parent-deed-versions.ts).
+ */
+function VersionDeed({ deedId }: { deedId: string | null }) {
+  const nameOr = useNameOr();
+  const title = useQuery({ queryKey: ["document-title", deedId], queryFn: () => fetchTitle(deedId as string), enabled: !!deedId });
+  return (
+    <div className="flex flex-col gap-2 text-sm" data-amended-deed="version" data-version-deed={deedId ?? ""}>
+      <p className="font-medium text-ink dark:text-zinc-100">{deedId ? (title.isPending ? "…" : nameOr(title.data, "document")) : "—"}</p>
+    </div>
+  );
+}
+
+export function AmendedDeedLink({
+  documentId,
+  readOnly,
+  versionDeedId,
+}: {
+  documentId: string | undefined;
+  readOnly: boolean;
+  /** Slice 41.54: on an older version, the deed that version amended (null: none); undefined on the latest. */
+  versionDeedId?: string | null;
+}) {
+  if (versionDeedId !== undefined) return <VersionDeed deedId={versionDeedId} />;
+  return <AmendedDeedLinkLatest documentId={documentId} readOnly={readOnly} />;
+}
+
+function AmendedDeedLinkLatest({ documentId, readOnly }: { documentId: string | undefined; readOnly: boolean }) {
   const t = useTranslations("document.amended");
   const nameOr = useNameOr();
   const queryClient = useQueryClient();
@@ -100,7 +165,12 @@ export function AmendedDeedLink({ documentId, readOnly }: { documentId: string |
     enabled: searching && term.length >= 2,
   });
 
-  const refresh = () => queryClient.invalidateQueries({ queryKey: ["document-references", documentId] });
+  // Slice 41.54: a link made or removed is a new version of the act — the page bar's counter reads it at once.
+  const refresh = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["document-references", documentId] }),
+      queryClient.invalidateQueries({ queryKey: ["document-versions", documentId] }),
+    ]);
 
   const link = async (candidate: Candidate) => {
     if (!documentId) return;

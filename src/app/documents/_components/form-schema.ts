@@ -290,13 +290,14 @@ export function identityPayload(identity: Record<string, string>, kind: Identity
 // back.
 // Slice 40.82: `identity` is a nested block too (an identity document's own values), diffed by
 // `identitySnapshotsEqual`; its per-field frames are Slice 40.83's screen.
-type DocFieldKey = Exclude<(typeof DOCUMENT_SNAPSHOT_KEYS)[number], "customFields" | "identity">;
+// Slice 41.54: `parentDeed` is a link, not a field — „Actul modificat" draws it, and „Fă curentă" relinks it.
+type DocFieldKey = Exclude<(typeof DOCUMENT_SNAPSHOT_KEYS)[number], "customFields" | "identity" | "parentDeed">;
 
 // The `satisfies` is what the old list's `satisfies readonly (keyof FormValues)[]`
 // gave and a bare annotation would drop: it still fails to compile if the
 // snapshot ever grows a key the FORM does not carry under the same name.
 const DOC_FIELD_KEYS: readonly DocFieldKey[] = DOCUMENT_SNAPSHOT_KEYS.filter(
-  (key): key is DocFieldKey => key !== "customFields" && key !== "identity",
+  (key): key is DocFieldKey => key !== "customFields" && key !== "identity" && key !== "parentDeed",
 ) satisfies readonly (keyof FormValues)[];
 
 /** Per-field highlight frames, keyed by document field name — and, since 40.83, `identity.<field>`. */
