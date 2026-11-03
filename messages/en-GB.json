@@ -4264,7 +4264,7 @@
       "expiresInDays": "Expires in {days} days"
     },
     "staleMetadata": {
-      "title": "Metadata not updated in over {days, plural, one {a day} other {# days}}",
+      "title": "Not updated in over {days, plural, one {a day} other {# days}}",
       "allGood": "All metadata is up to date"
     },
     "kindCounts": {

@@ -4264,7 +4264,7 @@
       "expiresInDays": "Expiră în {days, plural, one {o zi} few {# zile} other {# de zile}}"
     },
     "staleMetadata": {
-      "title": "{days, plural, one {Metadate neactualizate de peste o zi} few {Metadate neactualizate de peste # zile} other {Metadate neactualizate de peste # de zile}}",
+      "title": "{days, plural, one {Neactualizate de peste o zi} few {Neactualizate de peste # zile} other {Neactualizate de peste # de zile}}",
       "allGood": "Toate metadatele sunt actualizate"
     },
     "kindCounts": {

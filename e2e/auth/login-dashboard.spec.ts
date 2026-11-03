@@ -60,7 +60,8 @@ test.describe("TC-AUTH-01 — Conectare și tabloul de bord", () => {
     // „Metadate neactualizate de peste N zile" (it was „Metadate care necesită atenție"); N is the archive's setting.
     await expect(page.locator('[data-panel="stale-metadata"]')).toBeVisible({ timeout: 30_000 });
     const STALE = (await page.locator('[data-panel="stale-metadata"]').getAttribute("aria-label"))!;
-    expect(STALE).toMatch(/^Metadate neactualizate de peste (o zi|\d+ zile|\d+ de zile)$/);
+    // 41.65: „Neactualizate de peste N zile", no „Metadate" (it read /^Metadate neactualizate de peste …$/).
+    expect(STALE).toMatch(/^Neactualizate de peste (o zi|\d+ zile|\d+ de zile)$/);
     const staleTile = page.getByRole("region", { name: STALE, exact: true });
     await expect(staleTile).toBeVisible({ timeout: 30_000 });
     // Slice 41.02: the bar is behind „Panouri" — hideTile / showTile open it for the tick and close it again.
