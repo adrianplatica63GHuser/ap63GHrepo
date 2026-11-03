@@ -162,7 +162,8 @@ test.describe("TC-DOC-28 — actul de identitate pe ecranul lui", () => {
 
       // Step 4a — 41.52: „Cetățenia" kept exactly as printed. Typed on the CRDS and on the tip nou, saved, reloaded:
       // „Română / ROU" and „ROMÂNĂ / ROU" read back to the letter.
-      for (const [id, printed] of [[crds, "ROMÂNĂ / ROU"], [nou, "Română / ROU"]] as const) {
+      // The tip nou was made with „Română / ROU", so it takes the other form (a save needs a change).
+      for (const [id, printed] of [[crds, "Română / ROU"], [nou, "ROMÂNĂ / ROU"]] as const) {
         await page.goto(`/documents/${id}`);
         await editTile(page, "identity");
         await box(page, "identity.nationality").fill(printed);
