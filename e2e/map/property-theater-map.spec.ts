@@ -1,5 +1,5 @@
 /**
- * Case:   TC-MAP-09 — Harta unei proprietăți: colțuri mici albastre; „Hartă extinsă" arată toate proprietățile, pe
+ * Case:   TC-MAP-09 — Harta unei proprietăți: colțuri mici verzi; „Hartă extinsă" arată toate proprietățile, pe
  *         aceasta în roșu, la mijloc, la aceeași mărime
  * Source: docs/testing/cases/TC-MAP-09.md, „Last green" 2026-10-19 (confirmed by two hand runs, Slice #39.94)
  *
@@ -34,7 +34,8 @@ const rect = (lon: number) => {
 const LOT = rect(24.44);
 const NEIGHBOUR = rect(24.441);
 const CENTER = "45.7202000,24.4404000";
-const BLUE = "rgb(59, 130, 246)";
+// 41.69: a property's sides and corner dots green-700 #15803D (it read "rgb(59, 130, 246)", #3b82f6).
+const GREEN = "rgb(21, 128, 61)";
 const RED = "rgb(239, 68, 68)";
 
 const tileMap = (page: Page) => page.locator('[data-tile="map"] [data-mini-map]');
@@ -48,7 +49,7 @@ async function dots(page: Page, scope: string): Promise<{ color: string; width: 
 }
 
 test.describe("TC-MAP-09 — harta unei proprietăți și „Hartă extinsă”", () => {
-  test("colțuri mici albastre pe fișă; „Hartă extinsă” cu vecinul, lotul în roșu, la mijloc, la aceeași scară; Esc", async ({ page }) => {
+  test("colțuri mici verzi pe fișă; „Hartă extinsă” cu vecinul, lotul în roșu, la mijloc, la aceeași scară; Esc", async ({ page }) => {
     test.slow();
     await removeLeftovers(page.request, MARK);
     await page.setViewportSize({ width: 1366, height: 900 });
@@ -62,14 +63,14 @@ test.describe("TC-MAP-09 — harta unei proprietăți și „Hartă extinsă”"
       ids.push(await createProperty(page.request, { nickname: NICKNAME, corners: LOT }));
       ids.push(await createProperty(page.request, { nickname: `${MARK} Vecinul`, corners: NEIGHBOUR }));
 
-      // Step 1 — the tile shows the lot, centred on it; each of its four corners a small blue dot.
+      // Step 1 — the tile shows the lot, centred on it; each of its four corners a small green dot (41.69; blue before).
       await page.goto(`/properties/${ids[0]}`);
       await expect(page.getByRole("heading", { name: NICKNAME })).toBeVisible({ timeout: 30_000 });
       await tileMap(page).scrollIntoViewIfNeeded();
       await expect(tileMap(page)).toHaveAttribute("data-map-zoom", /\d/, { timeout: 30_000 });
       await expect(tileMap(page)).toHaveAttribute("data-map-center", CENTER);
       const zoom = (await tileMap(page).getAttribute("data-map-zoom"))!;
-      await expect.poll(() => dots(page, '[data-tile="map"]'), { timeout: 15_000 }).toEqual(LOT.map(() => ({ color: BLUE, width: 4 })));
+      await expect.poll(() => dots(page, '[data-tile="map"]'), { timeout: 15_000 }).toEqual(LOT.map(() => ({ color: GREEN, width: 4 })));
 
       // Step 2 — „Hartă extinsă": centred on the lot at the tile's zoom; the lot red; „Vecinul" with its corner dots.
       await page.locator('[data-tile="map"]').getByRole("button", { name: "Hartă extinsă", exact: true }).click();
@@ -81,11 +82,11 @@ test.describe("TC-MAP-09 — harta unei proprietăți și „Hartă extinsă”"
       for (const c of NEIGHBOUR)
         await expect(theater(page).locator(`[data-corner-marker="${c.lat},${c.lon}"]`)).toHaveCount(1, { timeout: 15_000 });
 
-      // Step 3 — Esc: the full-screen map is gone; the form as it was, the tile's corners still small blue dots.
+      // Step 3 — Esc: the full-screen map is gone; the form as it was, the tile's corners still small green dots (41.69).
       await page.keyboard.press("Escape");
       await expect(theater(page)).toHaveCount(0);
       await expect(page.getByRole("heading", { name: NICKNAME })).toBeVisible();
-      expect(await dots(page, '[data-tile="map"]')).toEqual(LOT.map(() => ({ color: BLUE, width: 4 })));
+      expect(await dots(page, '[data-tile="map"]')).toEqual(LOT.map(() => ({ color: GREEN, width: 4 })));
       expect(problems, "console errors and page errors during the run").toEqual([]);
     } finally {
       for (const id of ids) await removeRecord(page.request, "property", id);

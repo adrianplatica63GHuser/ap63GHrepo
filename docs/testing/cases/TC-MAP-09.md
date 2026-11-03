@@ -1,4 +1,4 @@
-# TC-MAP-09 — Harta unei proprietăți: colțuri mici albastre; „Hartă extinsă" arată toate proprietățile, pe aceasta în roșu, la mijloc, la aceeași mărime
+# TC-MAP-09 — Harta unei proprietăți: colțuri mici verzi; „Hartă extinsă" arată toate proprietățile, pe aceasta în roșu, la mijloc, la aceeași mărime
 
 | | |
 |---|---|
@@ -11,7 +11,7 @@
 ## What this proves
 
 On a property's form (Slice #39.94) the „Hartă" tile draws the property's corners as „Proprietăți — Hartă" draws them:
-4 px dots in the polygon's blue, centred on each corner — no longer the 14 px red dots with a white border. Its
+4 px dots in the polygon's colour (green since 41.69, blue before), centred on each corner — no longer the 14 px red dots with a white border. Its
 „Hartă extinsă" opens the full-screen map with every other property drawn as the big map draws it, and this
 property in red, centred in the window, at the zoom the tile showed when the button was pressed — so the property is
 the same size on screen. Esc closes it and the form is as it was.
@@ -30,9 +30,9 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „Lotul de pe formular" | The „Hartă" tile shows the lot, centred on it; each of its four corners is a small blue dot |
-| 2 | Presses „Hartă extinsă" at the left of the map's top row | The full-screen map „Hartă extinsă", centred on the lot at the tile's zoom; the lot and its corners in red; „Vecinul" beside it in blue, with its four small blue corner dots |
-| 3 | Presses Esc | The full-screen map is gone; the form is as it was, the tile's corners still small blue dots |
+| 1 | Opens „Lotul de pe formular" | The „Hartă" tile shows the lot, centred on it; each of its four corners is a small green dot (41.69) |
+| 2 | Presses „Hartă extinsă" at the left of the map's top row | The full-screen map „Hartă extinsă", centred on the lot at the tile's zoom; the lot and its corners in red; „Vecinul" beside it in green (41.69), with its four small green corner dots |
+| 3 | Presses Esc | The full-screen map is gone; the form is as it was, the tile's corners still small green dots |
 
 ## At the end — leaving things as they were found
 
