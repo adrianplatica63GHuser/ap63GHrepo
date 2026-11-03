@@ -64,6 +64,7 @@ import {
   documentTypeHasForm,
   documentTypeNeedsFormHint,
   documentTypeOptionLabel,
+  documentTypeShowsForm,
 } from "@/lib/documents/status";
 import { typeMayHoldAForm } from "@/lib/import/discover-run";
 import { documentTypeIsIdentity, identityKindOfType, type IdentityFieldDef } from "@/lib/identity-documents/kinds";
@@ -1819,10 +1820,11 @@ export function DocumentForm({
               opt.name,
               opt.templateFields,
               (name) => t("typeForm.optionHasForm", { name }),
+              opt, // Slice 41.50: an identity type is „(F)" too
             ),
             // Slice 40.88: the mark is „(F)" (Adrian: „(are formular)" was too long); the option's hover text and its
             // accessible name keep the whole words, so the letter is never unexplained.
-            title: documentTypeHasForm(opt.templateFields) ? t("typeForm.optionHasFormTitle", { name: opt.name }) : undefined,
+            title: documentTypeShowsForm(opt) ? t("typeForm.optionHasFormTitle", { name: opt.name }) : undefined,
           }))}
           highlight={displayHighlights?.documentTypeId}
           width={DOC.documentTypeId}

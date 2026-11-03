@@ -46,7 +46,7 @@ import { isKinship } from "@/lib/persons/kinship";
 import { RoleScope } from "./role-scope";
 import { documentTypePageHref } from "@/lib/admin/value-lists/document-type-page";
 import { formFilterFrom, formFilterKeeps, formFilterNarrows, type FormFilter } from "@/lib/admin/value-lists/form-filter";
-import { documentTypeHasForm } from "@/lib/documents/status";
+import { documentTypeShowsForm } from "@/lib/documents/status";
 import { joinedCellText } from "@/lib/admin/value-lists/joined-cell";
 import { frameMaxHeight } from "@/lib/ui/frame-height";
 import { LIST_HEAD } from "@/components/list/list-fit";
@@ -1482,7 +1482,8 @@ export function ValueListModal({
               ? "identity"
               : documentTypeStatus({ origin: row.origin, templateFields: row.templateFields }),
           nameClass: (row) =>
-            documentTypeNameClass({ origin: row.origin, templateFields: row.templateFields }),
+            // Slice 41.50: the key and the marker too — an identity type is bold green.
+            documentTypeNameClass({ origin: row.origin, templateFields: row.templateFields, key: row.key, identityKind: row.identityKind }),
           colouredField: "name",
           alwaysOffered: true,
         }
@@ -1524,11 +1525,12 @@ export function ValueListModal({
   // dead code is the edit that makes the bug reachable.
   //
   // Slice #38.51: on the document types the lens is „Cu formular" / „Fără formular" — every type
-  // whose form is (or is not) empty, the catch-all and the identity card included (Ask first 1);
+  // whose form is (or is not) empty, the catch-all included (Ask first 1). Slice 41.50: the four identity types count
+  // as having a form (`documentTypeShowsForm`) — #38.51 had „the identity card included" under „Fără formular";
   // both or neither, the whole list. The retained rows (`touchedTypeIds`) keep their guarantee.
   const filteredRows = isDocumentTypes
     ? formFilterNarrows(formFilter)
-      ? query.data?.filter((row) => formFilterKeeps(formFilter, documentTypeHasForm(row.templateFields)) || touchedTypeIds.has(row.id))
+      ? query.data?.filter((row) => formFilterKeeps(formFilter, documentTypeShowsForm(row)) || touchedTypeIds.has(row.id))
       : query.data
     : onlyAwaiting && review
       ? query.data?.filter((row) => review.awaits(row) || touchedTypeIds.has(row.id))

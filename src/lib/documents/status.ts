@@ -65,6 +65,7 @@
  */
 
 import { parseTemplateFields } from "./template-fields";
+import { identityKindOfRow } from "@/lib/identity-documents/kinds";
 
 // ---------------------------------------------------------------------------
 // Origin — the stored fact
@@ -122,6 +123,24 @@ export function documentTypeHasForm(templateFields: unknown): boolean {
 }
 
 /**
+ * Does this type SHOW as having a form — bold green, under „Cu formular”, „(F)” in the type dropdown?  (Slice 41.50)
+ *
+ * Adrian, 2026-11-02: the four identity document types — „Carte de Identitate (tip vechi)”, „(tip nou)”, „Pașaport”,
+ * „Pașaport CRDS” — „do have a form", and the app said they had none. Their form is the application's own (40.82,
+ * 40.94: the kind's fields live in code, src/lib/identity-documents/kinds.ts), so their `template_fields` is empty and
+ * `documentTypeHasForm` is false — correctly, for what IT answers: whether the type's stored fields draw „Detalii
+ * act", feed the import's extraction and gate the form editor. That must not change.
+ *
+ * ⚠️ **SO THIS IS A SECOND QUESTION, ASKED IN THREE PLACES AND NOWHERE ELSE** (the header's Ask first 1): the name's
+ * colour (`documentTypeNameClass`), the „Cu / Fără formular” filter and the dropdown's „(F)” and its title. A type
+ * with stored fields, or an identity type — by its marker, else its key, never its name (`identityKindOfRow`).
+ */
+export function documentTypeShowsForm(row: { templateFields?: unknown; key?: unknown; identityKind?: unknown }): boolean {
+  if (documentTypeHasForm(row.templateFields)) return true;
+  return identityKindOfRow({ key: row.key, ...(row.identityKind !== undefined ? { identityKind: row.identityKind } : {}) }) !== null;
+}
+
+/**
  * How a document type is written in a PICKER: marked when it has a form, left
  * exactly as it is when it does not.                            (Slice #27.02)
  *
@@ -148,8 +167,10 @@ export function documentTypeOptionLabel(
   name: string,
   templateFields: unknown,
   mark: (name: string) => string,
+  /** Slice 41.50: the option's key and identity marker — an identity type is marked too (`documentTypeShowsForm`). */
+  type: { key?: unknown; identityKind?: unknown } = {},
 ): string {
-  return documentTypeHasForm(templateFields) ? mark(name) : name;
+  return documentTypeShowsForm({ ...type, templateFields }) ? mark(name) : name;
 }
 
 /**
@@ -192,6 +213,9 @@ export type DocumentTypeStatusInput = {
   origin?: unknown;
   /** `lookup_document_type.template_fields`, raw. */
   templateFields?: unknown;
+  /** Slice 41.50: the key and the identity marker, for the name's colour only (`documentTypeNameClass`). */
+  key?: unknown;
+  identityKind?: unknown;
 };
 
 export function documentTypeStatus(row: DocumentTypeStatusInput): DocumentTypeStatus {
@@ -225,7 +249,8 @@ export const DOCUMENT_TYPE_STATUS_CLASS: Record<DocumentTypeStatus, string> = {
 
 /** Convenience: the class for a row, without naming the status twice. */
 export function documentTypeNameClass(row: DocumentTypeStatusInput): string {
-  return DOCUMENT_TYPE_STATUS_CLASS[documentTypeStatus(row)];
+  // Slice 41.50: an identity type is bold green, as a type with a form is (`documentTypeShowsForm`).
+  return DOCUMENT_TYPE_STATUS_CLASS[documentTypeShowsForm(row) ? "aiCompleted" : documentTypeStatus(row)];
 }
 
 /**
