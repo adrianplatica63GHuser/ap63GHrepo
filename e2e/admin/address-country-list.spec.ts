@@ -12,6 +12,7 @@ const MARK = `${E2E_MARKER}VL-12`;
 const NEW = `${MARK} Țară`;
 const LIST = "/api/admin/value-lists/address-countries";
 const EIGHT = ["România", "Moldova", "Statele Unite ale Americii", "Germania", "Franța", "Italia", "Spania", "Regatul Unit"];
+const SISTER_NOTICE = "Ați salvat o schimbare în „Cetățenie”. Verificați dacă „Țara adresei” are nevoie de aceeași schimbare, ca listele să rămână în acord.";
 const NOTICE = "Ați salvat o schimbare în „Țara adresei”. Verificați dacă „Cetățenie” are nevoie de aceeași schimbare, ca listele să rămână în acord.";
 
 async function removeMine(request: APIRequestContext): Promise<void> {
@@ -56,6 +57,26 @@ test.describe("TC-VL-12 — „Țara adresei”", () => {
       await page.getByRole("alertdialog").getByRole("button", { name: "Șterge", exact: true }).click();
       await expect(panel.getByText(NEW, { exact: true })).toHaveCount(0, { timeout: 30_000 });
       await expect(notice).toHaveText(NOTICE);
+      await page.locator("[data-notice-close]").click();
+
+      // Step 4 — 41.52: „Cetățenie" has „Forme tipărite"; saved on „Română", the notice names „Țara adresei". Put back.
+      await page.goto("/admin/value-lists?list=citizenships");
+      const citizenships = page.getByRole("region", { name: "Cetățenie", exact: true });
+      const romana = citizenships.locator("tbody tr").filter({ has: page.getByText("Română", { exact: true }) });
+      await expect(romana).toHaveCount(1, { timeout: 30_000 });
+      await romana.getByRole("button", { name: "Editează", exact: true }).click();
+      // The form's second box (its labels are not tied to the boxes): „Denumire", then „Forme tipărite".
+      await expect(citizenships.getByText("Forme tipărite", { exact: true }).first()).toBeVisible();
+      const forms = citizenships.getByRole("textbox").nth(1);
+      const before = await forms.inputValue();
+      await forms.fill(`ROU, ${MARK}`);
+      await citizenships.getByRole("button", { name: "Salvează", exact: true }).click();
+      await expect(romana).toContainText(`ROU, ${MARK}`, { timeout: 30_000 });
+      await expect(notice).toHaveText(SISTER_NOTICE);
+      await romana.getByRole("button", { name: "Editează", exact: true }).click();
+      await forms.fill(before);
+      await citizenships.getByRole("button", { name: "Salvează", exact: true }).click();
+      await expect(romana).not.toContainText(MARK, { timeout: 30_000 });
     } finally {
       await removeMine(page.request);
     }

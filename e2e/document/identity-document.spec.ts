@@ -160,6 +160,17 @@ test.describe("TC-DOC-28 — actul de identitate pe ecranul lui", () => {
       await page.goto(`/documents/${crds}`);
       await expect(box(page, "identity.domicileCountry")).toHaveText("Spania", { timeout: 30_000 });
 
+      // Step 4a — 41.52: „Cetățenia" kept exactly as printed. Typed on the CRDS and on the tip nou, saved, reloaded:
+      // „Română / ROU" and „ROMÂNĂ / ROU" read back to the letter.
+      for (const [id, printed] of [[crds, "ROMÂNĂ / ROU"], [nou, "Română / ROU"]] as const) {
+        await page.goto(`/documents/${id}`);
+        await editTile(page, "identity");
+        await box(page, "identity.nationality").fill(printed);
+        await saveTile(page, "identity");
+        await page.reload();
+        await expect(box(page, "identity.nationality")).toHaveText(printed, { timeout: 30_000 });
+      }
+
       // Step 4b — 40.94, Adrian's rows, opened so every field is drawn: the Pașaport, then the tip vechi. „Titular" is
       // the holder line above the rows, and the status sits beside Data expirării — neither is a field.
       await page.goto(`/documents/${pas}`);

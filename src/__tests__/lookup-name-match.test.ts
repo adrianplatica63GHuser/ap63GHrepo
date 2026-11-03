@@ -20,6 +20,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 import {
+  printedFormAliases,
   CITIZENSHIP_ALIASES,
   INSTITUTION_ALIASES,
   foldLookupName,
@@ -320,6 +321,30 @@ describe("matchCitizenship — what the route used to do, and the case it got wr
 
   it("returns null for a citizenship the list does not hold", () => {
     expect(matchCitizenship("Suedeză", CITIZENSHIPS)).toBeNull();
+  });
+});
+
+describe("matchCitizenship — „Forme tipărite” (41.52)", () => {
+  const WITH_FORMS = CITIZENSHIPS.map((r) =>
+    r.name === "Română" ? { ...r, printedForms: "ROUMAINE, Romeno" } : r.name === "Suedeză" ? r : r,
+  );
+
+  it("reads the whole printed text — both halves and the separator", () => {
+    expect(matchCitizenship("Română / ROU", CITIZENSHIPS)).toBe(c_ro);
+    expect(matchCitizenship("ROMÂNĂ / ROU", CITIZENSHIPS)).toBe(c_ro);
+  });
+
+  it("a form taught in „Cetățenie” matches, folded; the code's aliases still match beside it", () => {
+    expect(matchCitizenship("ROUMAINE", CITIZENSHIPS)).toBeNull(); // not taught yet
+    expect(matchCitizenship("ROUMAINE", WITH_FORMS)).toBe(c_ro);
+    expect(matchCitizenship("roméno", WITH_FORMS)).toBe(c_ro);
+    expect(matchCitizenship("ROU", WITH_FORMS)).toBe(c_ro); // CITIZENSHIP_ALIASES
+    expect(matchCitizenship("MDA", WITH_FORMS)).toBe(c_md);
+  });
+
+  it("a form names its own row, and an empty or blank list of forms adds nothing", () => {
+    expect(printedFormAliases([{ id: "x", name: "Suedeză", printedForms: " SWE ; Svensk ,, " }])).toEqual({ swe: "Suedeză", svensk: "Suedeză" });
+    expect(printedFormAliases([{ id: "x", name: "Suedeză", printedForms: null }, { id: "y", name: "Y", printedForms: " , " }])).toEqual({});
   });
 });
 

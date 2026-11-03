@@ -31,6 +31,7 @@ Nothing.
 | 1 | Opens „Date de referință", „Țara adresei" | In „Liste de valori": „Indicative Tarla", „Cetățenie", „Țara adresei", „Relația cu firma"; the list starts România, Moldova, Statele Unite ale Americii, Germania, Franța, Italia, Spania, Regatul Unit |
 | 2 | „+ Adaugă", `TC-E2E-VL-12 Țară`, „Salvează" | The row; at the bottom right, in amber: „Ați salvat o schimbare în „Țara adresei”. Verificați dacă „Cetățenie” are nevoie de aceeași schimbare, ca listele să rămână în acord." — still there after 4 s; „Închide" closes it |
 | 3 | „Șterge" on it, „Șterge" | The row gone; the same note |
+| 4 | (41.52) „Cetățenie", „Editează" on „Română", „Forme tipărite" `ROU, TC-E2E-VL-12`, „Salvează"; then back as it was | The forms in the row; the note now names „Țara adresei" |
 
 ## At the end — leaving things as they were found
 
