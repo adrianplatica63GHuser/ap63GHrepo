@@ -264,8 +264,9 @@ export async function expectStableColumns(page: Page, widths: readonly number[] 
           const th = heads[i];
           if (th?.dataset.widthKind !== "fixed") return;
           if (td.scrollWidth <= td.clientWidth + 1) return;
-          // Slice #38.50/#38.57: a one-line cell cut with „…" that shows its whole text on hover holds its value.
-          if (getComputedStyle(td).textOverflow === "ellipsis" && (td.title || "").trim()) return;
+          // Slice #38.50/#38.57: a one-line cell cut with „…" that shows its whole text on hover holds its value. 41.46: the
+          // four lists' cells carry it in `data-hint` (the icon buttons' bubble); other tables still in `title`.
+          if (getComputedStyle(td).textOverflow === "ellipsis" && (td.dataset.hint || td.title || "").trim()) return;
           // Slice #39.64: a cell marked `data-spills-into-padding` (#39.24's tick-box columns, where „Nou!" runs past the
           // narrow column on purpose) may overflow by as much as the next cell's left padding — no further, so it still
           // never reaches the next cell's text. TC-PERS-02 found the juridical list's „Nou!" 10 px over, in 16 of padding.

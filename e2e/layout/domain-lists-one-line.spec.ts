@@ -126,7 +126,7 @@ async function reading(page: Page) {
         if (col === "listBadges" || col === "selectNew" || col === "listSelectPerson") return;
         const cs = getComputedStyle(td);
         const cut = td.scrollWidth > td.clientWidth + 1;
-        if (cs.whiteSpace !== "nowrap" || cs.textOverflow !== "ellipsis" || (cut && !(td.title || "").trim())) notOneLine.push(col);
+        if (cs.whiteSpace !== "nowrap" || cs.textOverflow !== "ellipsis" || (cut && !(td.dataset.hint || td.title || "").trim())) notOneLine.push(col);
       });
     }
     // The toolbar's two sides: „Adaugă …"'s group never over the controls on its left.
