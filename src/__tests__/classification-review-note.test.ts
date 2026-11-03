@@ -39,6 +39,22 @@ describe("41.37 — Clasificare's „i” and its review paragraph", () => {
     expect(en.shared.entityMetadata.review.note).toContain(en.nav.sections.dashboard);
   });
 
+  // 41.59 (Ask first 4): rewritten for one block — the three together, the oldest's date, „Salvează" confirming too,
+  // and the way back.
+  it("41.59: the paragraph speaks of one block, the save confirming too, and „Înapoi”", () => {
+    const r = ro.shared.entityMetadata;
+    expect(r.review.note).toContain("un singur bloc");
+    expect(r.review.note).toContain("celei mai vechi");
+    expect(r.review.note).toContain(`„${r.save}”`);
+    expect(r.review.note).toContain(`„${r.confirmReview.back}”`);
+    const e = en.shared.entityMetadata;
+    expect(e.review.note).toContain("one block");
+    expect(e.review.note).toContain(`„${e.save}”`);
+    expect(e.review.note).toContain(`„${e.confirmReview.back}”`);
+    expect([r.confirmReview.ok, e.confirmReview.ok]).toEqual(["Confirmă", "Confirm"]);
+    expect(r.confirmReview.heading).toBe("Confirmați că toate trei sunt încă valabile azi:");
+  });
+
   it("the „i” right after the title, outside the heading, through the tile's hint slot", () => {
     // 41.38: the line holds the action too now, at its right end.
     expect(TITLE).toMatch(/<div className="flex items-start gap-1\.5" data-tile-title-line="">\s*\{heading\}\s*\{hint && /);

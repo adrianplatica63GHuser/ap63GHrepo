@@ -80,7 +80,9 @@ function renderInFrame() {
  * „Editează" opens the three selects with „Salvează" and „Renunță"; 2 units; with no value, one line.
  */
 describe("„Clasificare”: read, and edited with „Editează” (Slice 41.10)", () => {
-  it("reads the three values as text, one to a row, label above value, each with its review button; no select", async () => {
+  // 41.59 inverted in place — was „… each with its review button". Adrian: „I need to treat all three as one metadata
+  // item Therefore I need only one review button".
+  it("reads the three values as text, one to a row, label above value; ONE review line under them; no select", async () => {
     renderTile();
     await screen.findByRole("heading", { name: "importance.title" });
     expect(items().map((i) => i.dataset.classificationItem)).toEqual(["importance", "relevance", "provenance"]);
@@ -92,19 +94,20 @@ describe("„Clasificare”: read, and edited with „Editează” (Slice 41.10)
       // 41.28: no „i" on an item's title any more — the tile has one.
       expect(i.querySelector("[data-info-glyph]")).toBeNull();
     }
-    // 41.28 (Ask first 1): Importanță and Proveniență were stamped today — drawn reviewed, „Verificat azi", disabled;
-    // Relevanță never was — the ordinary button. (Until 41.28 every item read „markReviewed.button".)
-    for (const k of [0, 2]) {
-      const b = within(items()[k]).getByRole("button", { name: "markReviewed.today" });
-      expect(b).toBeDisabled();
-      expect(b).toHaveAttribute("aria-pressed", "true");
+    // 41.59 (Ask first 1, 2): no item has a button or a date of its own; one line under the three, before Istoric.
+    // Was 41.28's: Importanță and Proveniență „Verificat azi" (stamped today), Relevanță the ordinary button. Read as
+    // one block, the oldest stamp decides — Relevanță was never stamped, so the block reads not reviewed: no date, the
+    // ordinary button.
+    for (const i of items()) {
+      expect(within(i).queryByRole("button", { name: /^markReviewed\./ })).toBeNull();
+      expect(i.querySelector("[data-classification-date]")).toBeNull();
     }
-    expect(within(items()[1]).getByRole("button", { name: "markReviewed.button" })).toBeEnabled();
-    // 41.28 (Ask first 2): „(actualizat azi)" follows the value on its line, before the button.
-    const line = items()[0].querySelector("[data-classification-line]")!;
-    expect(line.querySelector("[data-read-value]")!.compareDocumentPosition(within(items()[0]).getByText("lastChangedToday")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(line.contains(within(items()[0]).getByText("lastChangedToday"))).toBe(true);
-    expect(within(items()[1]).queryByText("lastChangedToday")).toBeNull();
+    const review = document.querySelectorAll<HTMLElement>("[data-classification-review]");
+    expect(review).toHaveLength(1);
+    expect(items()[2].compareDocumentPosition(review[0]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(review[0].compareDocumentPosition(document.querySelector("[data-history-line]")!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(within(review[0]).getByRole("button", { name: "markReviewed.button" })).toBeEnabled();
+    expect(review[0].querySelector("[data-classification-date]")!.textContent).toBe("");
     // 41.28 (Ask first 3): one „i" in the tile, named for the tile. 41.37 inverted in place — it was „at the right end
     // of its top line" ([data-classification-top]); now on the title's line, right after „Clasificare" (the tile's hint
     // slot), and the top line is drawn only with several versions.
@@ -126,7 +129,9 @@ describe("„Clasificare”: read, and edited with „Editează” (Slice 41.10)
     expect(document.querySelector("[data-classification-top]")).toBeNull();
   });
 
-  it("„Editează”: three selects, „Salvează” disabled until something changes, then one save writes the three values and it reads again", async () => {
+  // 41.59 (Ask first 3): „Salvează" opens the confirmation first — the three as they will stand, the changed one
+  // marked, and that the save confirms all three as checked today; „Confirmă" saves.
+  it("„Editează”: three selects, „Salvează” disabled until something changes, then the confirmation, and one save writes the three values", async () => {
     renderTile();
     fireEvent.click(await screen.findByRole("button", { name: /^editTile/ }));
     const selects = await screen.findAllByRole("combobox");
@@ -140,11 +145,71 @@ describe("„Clasificare”: read, and edited with „Editează” (Slice 41.10)
     // Queried afresh: IconButton replaces its button when `disabled` flips (FU-291).
     await waitFor(() => expect(screen.getByRole("button", { name: "save" })).toBeEnabled());
     fireEvent.click(screen.getByRole("button", { name: "save" }));
+    const confirm = await screen.findByRole("dialog", { name: "confirmReview.heading" });
+    expect(confirm.dataset.classificationConfirm).toBe("save");
+    expect(confirm.textContent).toContain("confirmReview.saveNote");
+    expect([...confirm.querySelectorAll<HTMLElement>("[data-confirm-item]")].map((li) => [li.dataset.confirmItem, li.dataset.changed !== undefined]))
+      .toEqual([["importance", true], ["relevance", false], ["provenance", false]]);
+    expect(confirm.querySelector('[data-confirm-item="importance"]')!.textContent).toContain("importance.high");
+    expect(calls.some((c) => c.method === "PATCH")).toBe(false);
+    fireEvent.click(within(confirm).getByRole("button", { name: "confirmReview.ok" }));
     await waitFor(() => expect(calls.some((c) => c.method === "PATCH")).toBe(true));
     const patch = calls.find((c) => c.method === "PATCH")!;
     expect(patch.url).toBe("/api/metadata/po-1");
     expect(JSON.parse(patch.body!)).toEqual({ importance: "HIGH", relevance: "CURRENT", provenance: "MANUAL" });
     await waitFor(() => expect(document.querySelectorAll("select")).toHaveLength(0));
+  });
+
+  it("41.59: „Înapoi” on the save's confirmation sends nothing and keeps the edit, the chosen value still chosen; Esc the same", async () => {
+    renderTile();
+    fireEvent.click(await screen.findByRole("button", { name: /^editTile/ }));
+    fireEvent.change((await screen.findAllByRole("combobox"))[0], { target: { value: "HIGH" } });
+    await waitFor(() => expect(screen.getByRole("button", { name: "save" })).toBeEnabled());
+    fireEvent.click(screen.getByRole("button", { name: "save" }));
+    fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "confirmReview.back" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect((screen.getAllByRole("combobox")[0] as HTMLSelectElement).value).toBe("HIGH");
+    // Esc on the confirmation is „Înapoi" — it does not reach the tile, whose Esc would close the edit.
+    fireEvent.click(screen.getByRole("button", { name: "save" }));
+    fireEvent.keyDown(await screen.findByRole("dialog"), { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(screen.getAllByRole("combobox")).toHaveLength(3);
+    expect(calls.some((c) => c.method === "PATCH")).toBe(false);
+  });
+
+  it("41.59: „Marchează ca verificat” lists the three and asks; „Confirmă” stamps all three in one call, „Înapoi” sends nothing", async () => {
+    renderTile();
+    const review = await screen.findByRole("button", { name: "markReviewed.button" });
+    fireEvent.click(review);
+    let confirm = await screen.findByRole("dialog", { name: "confirmReview.heading" });
+    expect(confirm.dataset.classificationConfirm).toBe("review");
+    expect([...confirm.querySelectorAll<HTMLElement>("[data-confirm-item]")].map((li) => li.textContent))
+      .toEqual(["importance.title:importance.low", "relevance.title:relevance.current", "provenance.title:provenance.manual"]);
+    expect(confirm.querySelector("[data-changed]")).toBeNull();
+    fireEvent.click(within(confirm).getByRole("button", { name: "confirmReview.back" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(calls.some((c) => c.method === "PATCH")).toBe(false);
+    fireEvent.click(screen.getByRole("button", { name: "markReviewed.button" }));
+    confirm = await screen.findByRole("dialog");
+    fireEvent.click(within(confirm).getByRole("button", { name: "confirmReview.ok" }));
+    await waitFor(() => expect(calls.some((c) => c.method === "PATCH")).toBe(true));
+    const patch = calls.filter((c) => c.method === "PATCH");
+    expect(patch).toHaveLength(1);
+    expect(patch[0].url).toBe("/api/meta");
+    expect(JSON.parse(patch[0].body!)).toEqual({ action: "touch-all" });
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  });
+
+  it("41.59: all three stamped today — one „Verificat azi”, disabled, „(actualizat azi)”; no warning", async () => {
+    const today = new Date().toISOString();
+    meta = { ...META, importanceUpdatedAt: today, relevanceUpdatedAt: today, provenanceUpdatedAt: today };
+    renderTile();
+    const b = await screen.findByRole("button", { name: "markReviewed.today" });
+    expect(b).toBeDisabled();
+    expect(b).toHaveAttribute("aria-pressed", "true");
+    expect(document.querySelectorAll("[data-reviewed-today]")).toHaveLength(1);
+    expect(document.querySelector("[data-classification-review] [data-classification-date]")!.textContent).toBe("lastChangedToday");
+    expect(document.querySelector("[data-classification-warning]")).toBeNull();
   });
 
   it("„Renunță” puts the values back and sends nothing", async () => {

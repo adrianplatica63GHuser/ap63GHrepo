@@ -35,8 +35,10 @@ Nothing.
 | # | Does | Sees |
 |---|---|---|
 | 1 | (41.10) At 1366 px, opens an invented property, tile „Clasificare" | 254 px wide; it reads — Importanță, Relevanță and Proveniență one to a row, Proveniență „Manual (Adaugă nou)" as text, no select |
+| 1b | (41.59) Looks under the three, then presses „Marchează ca verificat": „Înapoi", then again and „Confirmă" | One review line under the three, before Istoric, no button on an item; the confirmation lists Importanță, Relevanță, Proveniență with their values; „Înapoi" sends nothing; „Confirmă": one „Verificat azi", disabled, and „(actualizat azi)" |
 | 2 | Presses „Editează" | Importanță, Relevanță and Proveniență as selects, one to a row, nothing past the tile's edge; „Salvează" disabled |
-| 3 | Chooses an Importanță value, presses „Salvează" | The tile reads: the value as text, no select, „Editează" in the corner; still 254 px |
+| 3 | Chooses an Importanță value, presses „Salvează"; (41.59) „Înapoi", then „Salvează" and „Confirmă" | The confirmation first: the three values, Importanță marked „(modificat)", „Salvarea le confirmă pe toate trei ca verificate azi."; „Înapoi" keeps the edit and the choice. After „Confirmă" the tile reads: the value as text, no select, „Editează" in the corner; still 254 px |
+| 3b | (41.59, was 41.28's per-item rule) Looks at the review line | One line under the three, before Istoric: „(actualizat azi)" and one „Verificat azi", disabled; no item has a date or a button of its own; the „i" bubble says the three are reviewed as one block |
 | 4 | Reloads the page | The value is still there; the version controls, with one line under them, inside the padding |
 | 5 | „Editează", Importanță back to blank, „Renunță" | The value as it was — nothing written |
 | 6 | „Versiunea anterioară" | No „Editează", no „Marchează ca verificat" |

@@ -106,9 +106,12 @@ describe("every explanation is a bubble, not a paragraph (Slice #37.63)", () => 
   });
 
   it("what is true of this record stays visible: the days since, the review warning, „Istoric”", () => {
-    // 41.28: the days since follow the value on its line, a span (it was its own paragraph under it).
-    expect(META).toMatch(/\{daysText\}\s*<\/span>/);
-    expect(META).toMatch(/\{reviewWarning\}<\/p>/);
+    // 41.28: the days since follow the value on its line, a span (it was its own paragraph under it). 41.59: one line
+    // for the three, under them — the review component's (`classification-review.tsx`), the oldest stamp's.
+    const REVIEW = read("src/components/classification-review.tsx");
+    expect(REVIEW).toMatch(/\{daysText\}\s*<\/span>/);
+    expect(REVIEW).toMatch(/\{warning\}\s*<\/p>/);
+    expect(META).toContain("<ClassificationReviewLine");
     expect(META).toMatch(/t\("provenance\.historyTitle"\)/);
   });
 });

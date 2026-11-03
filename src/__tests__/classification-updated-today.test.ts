@@ -4,7 +4,7 @@
  * Adrian, 2026-10-31: „on the Classification tile if one item was updated today it should automatically be marked as
  * reviewed". „Today" is the reckoning the line's „(actualizat azi)" uses — under one whole day since the stamp.
  */
-import { daysSince, updatedToday } from "@/lib/metadata/updated-days";
+import { daysSince, oldestStamp, updatedToday } from "@/lib/metadata/updated-days";
 
 const NOW = Date.parse("2026-10-31T18:00:00Z");
 const ago = (h: number) => new Date(NOW - h * 3600 * 1000).toISOString();
@@ -31,5 +31,21 @@ describe("updated today (41.28)", () => {
     expect([en.lastChangedToday, en.lastChangedYesterday, en.lastChangedDays]).toEqual(["(updated today)", "(updated yesterday)", "(updated {days} days ago)"]);
     expect([ro.markReviewed.today, en.markReviewed.today]).toEqual(["Verificat azi", "Reviewed today"]);
     expect(ro.provenance.historyNote).toMatch(/^Fiecare schimbare de proveniență/);
+  });
+});
+
+// 41.59 (Ask first 1): the three reviewed as one block — its date and its warning read the OLDEST of the three, so a
+// record whose provenance alone was stamped at import, or whose other two are older, honestly reads as not reviewed.
+describe("the block's stamp is the oldest of the three (41.59)", () => {
+  it("the oldest wins; today only when all three are today", () => {
+    expect(oldestStamp([ago(1), ago(50), ago(3)])).toBe(ago(50));
+    expect(updatedToday(oldestStamp([ago(1), ago(2), ago(3)]), NOW)).toBe(true);
+    expect(updatedToday(oldestStamp([ago(1), ago(30), ago(3)]), NOW)).toBe(false);
+  });
+
+  it("one never stamped — no date at all: the block was never reviewed", () => {
+    expect(oldestStamp([ago(1), null, ago(3)])).toBeNull();
+    expect(oldestStamp([null, null, ago(0)])).toBeNull(); // provenance alone, stamped at import
+    expect(daysSince(oldestStamp([ago(1), null, ago(3)]), NOW)).toBeNull();
   });
 });

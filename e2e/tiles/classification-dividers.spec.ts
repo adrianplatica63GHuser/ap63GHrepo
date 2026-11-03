@@ -55,13 +55,43 @@ async function steps(page: Page, url: string, olderToo: boolean) {
   await expect(tile.locator('[data-read-value="classification.provenance"]')).toHaveText("Manual (Adaugă nou)", { timeout: 30_000 });
   expect(await read(tile)).toMatchObject({ items: ["importance", "relevance", "provenance"], stacked: true, within: true, selects: 0 });
 
+  // Step 1b — 41.59: one review line under the three, no button on an item. A new record has only its provenance
+  // stamped, so the block reads not reviewed: „Marchează ca verificat" asks first — the three values, „Confirmă" /
+  // „Înapoi"; „Înapoi" sends nothing, „Confirmă" stamps all three: one „Verificat azi", „(actualizat azi)".
+  await expect(tile.locator("[data-classification-review]")).toHaveCount(1);
+  await expect(tile.locator("[data-classification-item] button[aria-pressed]")).toHaveCount(0);
+  const mark = tile.getByRole("button", { name: "Marchează ca verificat", exact: true });
+  await expect(mark).toBeEnabled();
+  await mark.click();
+  let confirm = tile.getByRole("dialog", { name: "Confirmați că toate trei sunt încă valabile azi:" });
+  await expect(confirm).toBeVisible();
+  for (const w of ["Importanță", "Relevanță", "Proveniență:", "Manual (Adaugă nou)"]) await expect(confirm).toContainText(w);
+  await confirm.getByRole("button", { name: "Înapoi", exact: true }).click();
+  await expect(confirm).toHaveCount(0);
+  await expect(mark).toBeEnabled();
+  await mark.click();
+  await tile.getByRole("dialog").getByRole("button", { name: "Confirmă", exact: true }).click();
+  await expect(tile.getByRole("button", { name: "Verificat azi", exact: true })).toBeDisabled({ timeout: 15_000 });
+  await expect(tile.locator("[data-classification-review] [data-classification-date]")).toHaveText("(actualizat azi)");
+
   // Step 2 — „Editează": the three selects, one to a row, inside the tile; „Salvează" disabled until a choice.
   await openEdit(tile);
   expect(await read(tile)).toMatchObject({ items: ["importance", "relevance", "provenance"], stacked: true, within: true, selects: 3 });
   await expect(tile.locator('[data-tile-save="classification"]')).toBeDisabled();
   await tile.getByRole("combobox", { name: "Importanță", exact: true }).selectOption({ index: 1 });
   const chosen = (await tile.getByRole("combobox", { name: "Importanță", exact: true }).locator("option:checked").textContent())!.trim();
+  // 41.59 (Ask first 3): „Salvează" asks first — the three as they will stand, Importanță marked changed, and that
+  // the save confirms all three as checked today. „Înapoi" keeps the edit, the choice still chosen; then „Confirmă".
   await tile.locator('[data-tile-save="classification"]').click();
+  confirm = tile.getByRole("dialog", { name: "Confirmați că toate trei sunt încă valabile azi:" });
+  await expect(confirm).toContainText("Salvarea le confirmă pe toate trei ca verificate azi.");
+  await expect(confirm.locator('[data-confirm-item="importance"]')).toContainText(`${chosen}(modificat)`);
+  await expect(confirm.locator("[data-changed]")).toHaveCount(1);
+  await confirm.getByRole("button", { name: "Înapoi", exact: true }).click();
+  await expect(confirm).toHaveCount(0);
+  await expect(tile.locator("select")).toHaveCount(3);
+  await tile.locator('[data-tile-save="classification"]').click();
+  await tile.getByRole("dialog").getByRole("button", { name: "Confirmă", exact: true }).click();
 
   // Step 3 — saved, it reads: the value as text, no select, „Editează" in the corner; still 254 px.
   await expect(tile.locator("select")).toHaveCount(0, { timeout: 15_000 });
@@ -69,15 +99,21 @@ async function steps(page: Page, url: string, olderToo: boolean) {
   await expect(tile.locator('[data-tile-edit="classification"]')).toBeVisible();
   expect(await read(tile)).toMatchObject({ width: 254, stacked: true, within: true, selects: 0 });
 
-  // Step 3b — 41.28: Importanță was set today — „(actualizat azi)" after its value, its button „Verificat azi", disabled;
-  // one „i" in the tile, whose bubble names Importanță, Relevanță, Proveniență, Istoric. 41.37 inverted in place — it was
-  // „at the right end of its top line": now on the title's line, right after „Clasificare", and its bubble adds
-  // „Revizuire" with the configured day counts (90 on the seed).
-  const imp = tile.locator('[data-classification-item="importance"]');
-  await expect(imp.locator("[data-classification-date]")).toHaveText("(actualizat azi)");
-  const [rv, dt] = await Promise.all([imp.locator('[data-read-value="classification.importance"]').boundingBox(), imp.locator("[data-classification-date]").boundingBox()]);
-  expect(dt!.x >= rv!.x + rv!.width - 1 || dt!.y >= rv!.y + rv!.height - 1, "the date follows the value").toBe(true);
-  await expect(imp.getByRole("button", { name: "Verificat azi", exact: true })).toBeDisabled();
+  // Step 3b — 41.59 rewritten in place. Was 41.28's: „Importanță was set today — „(actualizat azi)" after its value, its
+  // button „Verificat azi", disabled". Now the three are one block: ONE line under them, before Istoric — „(actualizat
+  // azi)" and one „Verificat azi", disabled; no item has a date or a button of its own. One „i" in the tile, whose
+  // bubble names Importanță, Relevanță, Proveniență, Istoric; on the title's line, right after „Clasificare" (41.37),
+  // with „Revizuire" and the configured day counts (90 on the seed).
+  const review = tile.locator("[data-classification-review]");
+  await expect(review).toHaveCount(1);
+  await expect(review.locator("[data-classification-date]")).toHaveText("(actualizat azi)");
+  await expect(review.getByRole("button", { name: "Verificat azi", exact: true })).toBeDisabled();
+  await expect(tile.locator("[data-classification-item] [data-classification-date]")).toHaveCount(0);
+  await expect(tile.getByRole("button", { name: "Verificat azi", exact: true })).toHaveCount(1);
+  const [prov, rl, hist] = await Promise.all([
+    tile.locator('[data-classification-item="provenance"]').boundingBox(), review.boundingBox(), tile.locator("[data-history-line]").boundingBox(),
+  ]);
+  expect(rl!.y >= prov!.y + prov!.height - 1 && hist!.y >= rl!.y + rl!.height - 1, "under the three, before Istoric").toBe(true);
   await expect(tile.locator("[data-info-glyph]")).toHaveCount(1);
   const titleLine = tile.locator("[data-tile-title-line]");
   const info = titleLine.locator("button:has([data-info-glyph])");
@@ -87,7 +123,7 @@ async function steps(page: Page, url: string, olderToo: boolean) {
   expect(ib!.x - (hb!.x + hb!.width)).toBeGreaterThanOrEqual(0);
   await info.click();
   const tip = titleLine.locator("[role=tooltip]");
-  for (const w of ["Importanță", "Relevanță", "Proveniență", "Istoric", "Revizuire"]) await expect(tip).toContainText(w);
+  for (const w of ["Importanță", "Relevanță", "Proveniență", "Istoric", "Revizuire", "un singur bloc"]) await expect(tip).toContainText(w);
   await expect(tip).toContainText("mai mult de 90 de zile");
   await expect(tip).toContainText("mai veche de 90 de zile");
   await expect(tip).toContainText("Administrare → Setări");
