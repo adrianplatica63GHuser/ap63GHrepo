@@ -101,11 +101,20 @@ let tabForward: ForwardStack = NO_FORWARD;
 // Slice #39.97: „Înainte" is drawn enabled or not from the forward record, which changes AFTER the bar has rendered
 // the new screen (the bar records in an effect) — so the button subscribes to it and re-renders.
 const listeners = new Set<() => void>();
+// Slice 41.61: „Înapoi" too. On a screen with a parent crumb it is enabled by the crumb before the record catches up;
+// the home page has none, so drawn from the record read at render — before the bar records "/" — it stayed disabled
+// after arriving from another screen. It subscribes to the back record the same way.
+const backListeners = new Set<() => void>();
+const NO_BACK: BackStack = [];
 
 /** Called by the bar whenever the pathname changes. */
 export function recordScreen(pathname: string): void {
   const forward = nextForwardStack(tabStack, tabForward, pathname);
-  tabStack = nextBackStack(tabStack, pathname);
+  const back = nextBackStack(tabStack, pathname);
+  if (back !== tabStack) {
+    tabStack = back;
+    for (const l of backListeners) l();
+  }
   if (forward !== tabForward) {
     tabForward = forward;
     for (const l of listeners) l();
@@ -123,6 +132,19 @@ export function currentForwardStack(): ForwardStack {
 /** The empty record, the same array every time — the server's snapshot for `useSyncExternalStore`. */
 export function noForwardStack(): ForwardStack {
   return NO_FORWARD;
+}
+
+/** Slice 41.61: the empty back record, the same array every time — the server's snapshot. */
+export function noBackStack(): BackStack {
+  return NO_BACK;
+}
+
+/** Slice 41.61: told whenever the back record changes. Returns the unsubscribe. */
+export function subscribeBackStack(listener: () => void): () => void {
+  backListeners.add(listener);
+  return () => {
+    backListeners.delete(listener);
+  };
 }
 
 /** Told whenever the forward record changes. Returns the unsubscribe. */

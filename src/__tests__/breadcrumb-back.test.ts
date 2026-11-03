@@ -16,10 +16,12 @@ import {
   forwardEnabled,
   nextBackStack,
   nextForwardStack,
+  noBackStack,
   noForwardStack,
   parentCrumbHref,
   recordScreen,
   resetBackStack,
+  subscribeBackStack,
   subscribeForwardStack,
 } from "@/lib/ui/back-stack";
 
@@ -185,6 +187,29 @@ describe("„Înainte” (#39.97)", () => {
     expect(calls).toBe(2);
     expect(noForwardStack()).toBe(noForwardStack());
     resetBackStack();
+  });
+
+  // 41.61: „Înapoi" subscribes to the back record too — the home page has no parent crumb, so a record read at render
+  // (before the bar records "/") left it disabled after arriving from another screen.
+  it("41.61: the back record tells its own subscribers when it changes, and only then; „Înapoi” is drawn from it", () => {
+    resetBackStack();
+    let calls = 0;
+    const off = subscribeBackStack(() => {
+      calls += 1;
+    });
+    recordScreen(LIST);
+    expect(calls).toBe(1);
+    recordScreen(LIST);
+    expect(calls).toBe(1);
+    recordScreen("/");
+    expect(calls).toBe(2);
+    off();
+    recordScreen(DOCS);
+    expect(calls).toBe(2);
+    expect(noBackStack()).toBe(noBackStack());
+    resetBackStack();
+    expect(BAR).toContain("const stack = useSyncExternalStore(subscribeBackStack, currentBackStack, noBackStack);");
+    expect(BAR).toContain("disabled={backTarget(stack, segments, pathname) === null}");
   });
 
   it("the bar draws it right of „Înapoi”, in the same form, inside the same span, before the rule", () => {

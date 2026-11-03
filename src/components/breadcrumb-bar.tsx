@@ -41,8 +41,10 @@ import {
   currentBackStack,
   currentForwardStack,
   forwardEnabled,
+  noBackStack,
   noForwardStack,
   recordScreen,
+  subscribeBackStack,
   subscribeForwardStack,
 } from "@/lib/ui/back-stack";
 import { TextTooltip } from "@/lib/ui/text-tooltip";
@@ -314,6 +316,9 @@ function BackButton({ segments, pathname }: { segments: Segment[]; pathname: str
   const t = useTranslations("navigation.breadcrumb");
   const router = useRouter();
   const { guardedAction, guardedNavigate } = useUnsavedChanges();
+  // Slice 41.61: drawn from the record as it stands after the bar recorded this screen — on the home page, with no
+  // parent crumb to fall back on, the record read at render was the one before it, and „Înapoi" stayed disabled.
+  const stack = useSyncExternalStore(subscribeBackStack, currentBackStack, noBackStack);
   const goBack = () => {
     const target = backTarget(currentBackStack(), segments, pathname);
     if (!target) return;
@@ -330,7 +335,7 @@ function BackButton({ segments, pathname }: { segments: Segment[]; pathname: str
           size="xs"
           showLabel
           onClick={goBack}
-          disabled={backTarget(currentBackStack(), segments, pathname) === null}
+          disabled={backTarget(stack, segments, pathname) === null}
         />
         <ForwardButton />
       </span>
