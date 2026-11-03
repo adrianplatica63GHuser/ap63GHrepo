@@ -7,6 +7,7 @@ import type { ZodError } from "zod/v4";
 import { RoleNotOfferedError } from "@/lib/admin/value-lists/role-attachment";
 import { DocumentNotFoundError } from "@/lib/documents/document-not-found";
 import { ShareNotHeldError } from "@/lib/documents/share-not-held-error";
+import { ISSUER_LINK_CODE, IssuerLinkDissociationError } from "@/lib/documents/issuer-link-error";
 import { DEATH_PROBLEM_TEXT, DeathRefusedError } from "@/lib/persons/death";
 
 /** Postgres errors come through pg with a numeric SQLSTATE code. */
@@ -339,6 +340,15 @@ export function shareNotHeldToResponse(err: unknown): Response | null {
       code:  "SHARE_NOT_HELD",
     },
     { status: 400 },
+  );
+}
+
+/** Slice 41.53: the issuer's „Notar" link is not dissociated in „Legături" — 409, with the screen's own sentence. */
+export function issuerLinkToResponse(err: unknown): Response | null {
+  if (!(err instanceof IssuerLinkDissociationError)) return null;
+  return Response.json(
+    { error: "Biroul notarial se schimbă din „Identificarea actului”.", code: ISSUER_LINK_CODE },
+    { status: 409 },
   );
 }
 

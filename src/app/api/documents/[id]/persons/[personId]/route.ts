@@ -25,7 +25,7 @@
  */
 import { z } from "zod/v4";
 import type { NextRequest } from "next/server";
-import { shareNotHeldToResponse, unexpectedError, zodErrorToResponse } from "@/lib/api/errors";
+import { issuerLinkToResponse, shareNotHeldToResponse, unexpectedError, zodErrorToResponse } from "@/lib/api/errors";
 import {
   dissociatePersonFromDocument,
   updateDocumentPersonCota,
@@ -57,6 +57,9 @@ export async function DELETE(req: NextRequest, ctx: Ctx): Promise<Response> {
     if (!ok) return Response.json({ error: "Association not found" }, { status: 404 });
     return new Response(null, { status: 204 });
   } catch (err) {
+    // Slice 41.53: the issuer's „Notar" link is changed on „Identificarea actului".
+    const issuer = issuerLinkToResponse(err);
+    if (issuer) return issuer;
     return unexpectedError(err, "DELETE /api/documents/[id]/persons/[personId]");
   }
 }

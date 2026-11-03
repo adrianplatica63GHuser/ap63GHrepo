@@ -45,6 +45,8 @@ import { customFieldFilter } from "./custom-field-filter";
 // by the caller, because only the caller knows which whitelist governs it.
 import { assertRoleMayBeAttached } from "@/lib/admin/value-lists/role-attachment";
 import { DocumentNotFoundError } from "@/lib/documents/document-not-found";
+import { IssuerLinkDissociationError } from "@/lib/documents/issuer-link-error";
+import { issuerIsNotary } from "@/lib/documents/type-config";
 import { cotaFromDb, cotaToDb, isCotaMod, type CotaMod } from "./cota-parte";
 import { assertLinkMayStoreShare, assertShareMayBeStored } from "./share-not-held";
 import {
@@ -667,6 +669,9 @@ export async function createDocument(
     // carries — so the document's values are in version 0. An ordinary type refuses a block that holds anything.
     const identity = await writeIdentityOnCreate(tx, row.id, row.documentTypeId, input.identity);
 
+    // Slice 41.53: a „Notariat" issuer is a „Notar" link in „Legături" too.
+    await syncIssuerNotaryLink(tx, row.id);
+
     // Slice #18.06: record version 0 — the state at creation.
     await tx.insert(documentVersion).values({
       documentId:    row.id,
@@ -761,6 +766,8 @@ export async function updateDocument(
     // patch always has at least updatedBy
     await tx.update(document).set(patch).where(eq(document.id, id));
     await identityOutcome.apply();
+    // Slice 41.53: the issuer's „Notar" link follows the issuer (and the type).
+    await syncIssuerNotaryLink(tx, id);
 
     const [updated] = await tx
       .select()
@@ -1650,6 +1657,58 @@ export async function listPersonRolesForDocumentType(documentTypeId: string): Pr
 }
 
 /**
+ * Slice 41.53: refuse to dissociate the link a document's issuer made (`from_issuer`) — its office is changed on
+ * „Identificarea actului", so „Legături" and the issuer never disagree. Exported for the person side's route too.
+ */
+export async function refuseIssuerLink(linkId: string): Promise<void> {
+  const [row] = await db
+    .select({ fromIssuer: personDocument.fromIssuer })
+    .from(personDocument)
+    .where(eq(personDocument.id, linkId))
+    .limit(1);
+  if (row?.fromIssuer) throw new IssuerLinkDissociationError(linkId);
+}
+
+/**
+ * The issuer's „Notar" link, kept in step with „Identificarea actului".                              (Slice 41.53)
+ *
+ * Adrian, 2026-11-02: „If the user updates the notary office this update should reflect on the links tile under
+ * juridical persons". On a type whose issuer is „Notariat" (`issuerIsNotary`), the office chosen there is a real link
+ * in `person_document`, role „Notar", marked `from_issuer` — found from the office's side too. Run inside the
+ * document's own create or update transaction, on every save:
+ *  - every link this sync made that is no longer the issuer (another office, a cleared one, a type that is no longer
+ *    „Notariat") is removed — and ONLY those: a „Notar" link made by hand is never touched;
+ *  - the issuer gets its link when it has no „Notar" link on the document yet — one made by hand counts, and is left
+ *    alone.
+ * Not a version of its own: the issuer is in the document's snapshot, which is what records the change.
+ */
+export async function syncIssuerNotaryLink(tx: DbTransaction, documentId: string): Promise<void> {
+  const [doc] = await tx
+    .select({ issuerPersonId: document.issuerPersonId, typeKey: lookupDocumentType.key })
+    .from(document)
+    .leftJoin(lookupDocumentType, eq(lookupDocumentType.id, document.documentTypeId))
+    .where(eq(document.id, documentId))
+    .limit(1);
+  if (!doc) return;
+  const issuer = issuerIsNotary(doc.typeKey) ? doc.issuerPersonId : null;
+  const [notar] = await tx.select({ id: lookupPersonRole.id }).from(lookupPersonRole).where(eq(lookupPersonRole.name, "Notar")).limit(1);
+  const mine = await tx
+    .select({ id: personDocument.id, personId: personDocument.personId, roleId: personDocument.personRoleId })
+    .from(personDocument)
+    .where(and(eq(personDocument.documentId, documentId), eq(personDocument.fromIssuer, true)));
+  const stale = mine.filter((r) => r.personId !== issuer || !notar || r.roleId !== notar.id).map((r) => r.id);
+  if (stale.length > 0) await tx.delete(personDocument).where(inArray(personDocument.id, stale));
+  if (!issuer || !notar) return;
+  const [has] = await tx
+    .select({ id: personDocument.id })
+    .from(personDocument)
+    .where(and(eq(personDocument.documentId, documentId), eq(personDocument.personId, issuer), eq(personDocument.personRoleId, notar.id)))
+    .limit(1);
+  if (has) return;
+  await tx.insert(personDocument).values({ documentId, personId: issuer, personRoleId: notar.id, fromIssuer: true }).onConflictDoNothing();
+}
+
+/**
  * ⚠️ **`linkId` IS REQUIRED, AND MAKING IT REQUIRED IS A DEFECT FIX.**
  *                                                              (Slice #36.02)
  *
@@ -1668,6 +1727,8 @@ export async function dissociatePersonFromDocument(
   personId:   string,
   linkId:     string,
 ): Promise<boolean> {
+  // Slice 41.53: the issuer's „Notar" link follows „Identificarea actului"; it is not removed here.
+  await refuseIssuerLink(linkId);
   const result = await db.delete(personDocument)
     .where(and(
       eq(personDocument.id, linkId),

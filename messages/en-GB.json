@@ -770,7 +770,8 @@
       "loading": "Loading…",
       "error": "Failed to load documents",
       "relationship": "Relationship",
-      "roleInDocument": "Role: “{role}”"
+      "roleInDocument": "Role: “{role}”",
+      "issuerLink": "The notary office is changed on „Document identification”."
     },
     "associateDocument": {
       "title": "Associate Document",
@@ -2102,7 +2103,8 @@
       "shareNotHeld": "This role holds no share on this document type — the saved values stay, read-only.",
       "share": "Share",
       "shareTitle": "Share",
-      "shareSummary": "Share: {parte} · Equivalent area (sqm): {mp} · How the share is held: {mod}"
+      "shareSummary": "Share: {parte} · Equivalent area (sqm): {mp} · How the share is held: {mod}",
+      "issuerLink": "The notary office is changed on „Document identification”."
     },
     "associatePerson": {
       "title": "Associate Person",

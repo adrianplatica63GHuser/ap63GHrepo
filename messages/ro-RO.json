@@ -770,7 +770,8 @@
       "loading": "Se încarcă…",
       "error": "Eroare la încărcarea actelor",
       "relationship": "Relația",
-      "roleInDocument": "Rol: „{role}”"
+      "roleInDocument": "Rol: „{role}”",
+      "issuerLink": "Biroul notarial se schimbă din „Identificarea actului”."
     },
     "associateDocument": {
       "title": "Asociere act",
@@ -2102,7 +2103,8 @@
       "shareNotHeld": "Rolul nu deține o cotă pe acest tip de act — valorile salvate rămân, doar de citit.",
       "share": "Cotă",
       "shareTitle": "Cota-parte",
-      "shareSummary": "Cotă-parte: {parte} · Suprafață echivalentă (mp): {mp} · Mod de deținere: {mod}"
+      "shareSummary": "Cotă-parte: {parte} · Suprafață echivalentă (mp): {mp} · Mod de deținere: {mod}",
+      "issuerLink": "Biroul notarial se schimbă din „Identificarea actului”."
     },
     "associatePerson": {
       "title": "Asociere persoană",

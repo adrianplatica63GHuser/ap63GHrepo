@@ -230,3 +230,12 @@ export function getTypeConfig(key: string | undefined | null): TypeConfig {
   if (!key) return GENERIC;
   return CONFIG[key] ?? GENERIC;
 }
+
+/**
+ * Slice 41.53: is the issuer of this type a notary office — „Notariat" on „Identificarea actului"? Then the office is a
+ * link in „Legături" too, role „Notar" (`syncIssuerNotaryLink`). Read off the label, so a type that gains or loses
+ * „Notariat" here gains or loses the link with it.
+ */
+export function issuerIsNotary(key: string | undefined | null): boolean {
+  return getTypeConfig(key).labels.institution === "typeLabels.institutionNotary";
+}

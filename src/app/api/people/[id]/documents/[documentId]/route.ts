@@ -10,7 +10,8 @@
  */
 import { z } from "zod/v4";
 import type { NextRequest } from "next/server";
-import { shareNotHeldToResponse, unexpectedError, zodErrorToResponse } from "@/lib/api/errors";
+import { issuerLinkToResponse, shareNotHeldToResponse, unexpectedError, zodErrorToResponse } from "@/lib/api/errors";
+import { refuseIssuerLink } from "@/lib/documents/queries";
 import {
   dissociateDocumentFromPerson,
   updatePersonDocumentCota,
@@ -38,10 +39,14 @@ export async function DELETE(req: NextRequest, ctx: Ctx): Promise<Response> {
   const linkId = readLinkId(req);
   if (!linkId) return missingLinkId();
   try {
+    // Slice 41.53: the document's issuer's „Notar" link is changed on the document's „Identificarea actului".
+    await refuseIssuerLink(linkId);
     const ok = await dissociateDocumentFromPerson(id, documentId, linkId);
     if (!ok) return Response.json({ error: "Association not found" }, { status: 404 });
     return new Response(null, { status: 204 });
   } catch (err) {
+    const issuer = issuerLinkToResponse(err);
+    if (issuer) return issuer;
     return unexpectedError(err, "DELETE /api/people/[id]/documents/[documentId]");
   }
 }

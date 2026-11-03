@@ -82,6 +82,8 @@ export function usePersonDocumentRows(personId: string, backBase: string): Perso
     );
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
+      // Slice 41.53: the issuer's „Notar" link — the sentence in the screen's language.
+      if (body?.code === "ISSUER_LINK") throw new Error(t("issuerLink"));
       throw new Error(body?.error ?? `HTTP ${res.status}`);
     }
     await queryClient.invalidateQueries({ queryKey: ["person-documents", personId] });

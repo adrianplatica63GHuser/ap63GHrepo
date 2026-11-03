@@ -4,7 +4,7 @@
 -- GENERATED FILE -- DO NOT EDIT BY HAND.
 -- Regenerate with:  .\scripts\Export-SupabaseSchema.ps1
 --
--- Generated : 2026-11-02 21:59
+-- Generated : 2026-11-02 22:14
 -- Source    : local Docker database (ga40db @ ga40prj-postgres)
 --
 -- Applies the complete schema from scratch after running
@@ -1086,6 +1086,7 @@ CREATE TABLE public.person_document (
     cota_parte numeric(7,4),
     cota_suprafata_mp numeric(12,2),
     cota_mod text,
+    from_issuer boolean DEFAULT false NOT NULL,
     CONSTRAINT person_document_cota_mod_check CHECK (((cota_mod IS NULL) OR (cota_mod = ANY (ARRAY['NUME_PROPRIU'::text, 'DEVALMASIE'::text, 'INDIVIZIUNE'::text, 'PRIN_MANDATAR'::text]))))
 );
 
@@ -1109,6 +1110,13 @@ COMMENT ON COLUMN public.person_document.cota_suprafata_mp IS 'The equivalent ar
 --
 
 COMMENT ON COLUMN public.person_document.cota_mod IS 'How the share is held: NUME_PROPRIU (in nume propriu), DEVALMASIE (comunitate devalmasa - spouses, no determinate shares between them), INDIVIZIUNE (coproprietate pe cote-parti), PRIN_MANDATAR (held through a mandatar). ASCII keys, not display text; the Romanian with diacritics is in messages/ro-RO.json under document.persons.cotaMod.*. DEVALMASIE is the reason this column exists: in 5-CVC 2-2-5000 CRH 2016 the sellers are two married couples holding 60% and 40% - four people, two shares - and splitting 60 into 30/30 is legally wrong while writing 60 on both rows makes the sellers total 200%. The counting rule (a devalmasie block counts ONCE) is in src/lib/documents/cota-parte-total.ts, not restated as a constraint.';
+
+
+--
+-- Name: COLUMN person_document.from_issuer; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.person_document.from_issuer IS 'Slice 41.53: the link the document''s issuer made („Notariat" on „Identificarea actului"), kept in step with it. Never set on a link made by hand.';
 
 
 --
