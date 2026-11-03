@@ -4,7 +4,7 @@ import { db } from "@/db";
 import { person } from "@/db/schema";
 import { listEntityGroupTags } from "@/lib/groups/queries";
 import { listEntityStampTags } from "@/lib/stamps/queries";
-import { getEntityMetadata, patchEntityMetadata, restoreEntityMetadataSnapshot, touchEntityMetadataField } from "@/lib/metadata/queries";
+import { getEntityMetadata, patchEntityMetadata, restoreEntityMetadataSnapshot, touchAllEntityMetadataFields, touchEntityMetadataField } from "@/lib/metadata/queries";
 import type { MetadataPatch, MetadataSnapshot } from "@/lib/metadata/queries";
 import { getCurrentUserEmail } from "@/lib/auth/current-user";
 
@@ -55,7 +55,8 @@ export async function PATCH(
   const body = (await req.json()) as { field: string; value?: string | null; action?: string };
   const { field, value, action } = body;
 
-  if (!["importance", "relevance", "provenance"].includes(field)) {
+  // Slice 41.59: „touch-all" names no field — „Marchează ca verificat" confirms the three as one block.
+  if (action !== "touch-all" && !["importance", "relevance", "provenance"].includes(field)) {
     return NextResponse.json({ error: "Invalid field" }, { status: 400 });
   }
 
@@ -74,6 +75,11 @@ export async function PATCH(
 
   // Resolve caller identity for the updated_by audit column
   const updatedBy = await getCurrentUserEmail();
+
+  if (action === "touch-all") {
+    const updated = await touchAllEntityMetadataFields(principalObjectId, updatedBy);
+    return NextResponse.json(updated);
+  }
 
   if (action === "touch") {
     const updated = await touchEntityMetadataField(principalObjectId, metaField, updatedBy);

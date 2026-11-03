@@ -24,3 +24,23 @@ export function daysSince(isoDate: string | null, now: number = Date.now()): num
 export function updatedToday(isoDate: string | null, now: number = Date.now()): boolean {
   return daysSince(isoDate, now) === 0;
 }
+
+/**
+ * Slice 41.59 — „Clasificare" is reviewed as one block: its date and its warning read the OLDEST of the three stamps,
+ * so a record whose provenance alone was stamped at import, or whose other two are older, honestly reads as not
+ * reviewed. Null when any of the three was never stamped — no date, and the button an ordinary one.
+ */
+export function oldestStamp(stamps: readonly (string | null)[]): string | null {
+  let oldest: string | null = null;
+  let oldestMs = Infinity;
+  for (const s of stamps) {
+    if (!s) return null;
+    const ms = new Date(s).getTime();
+    if (Number.isNaN(ms)) return null;
+    if (ms < oldestMs) {
+      oldestMs = ms;
+      oldest = s;
+    }
+  }
+  return oldest;
+}

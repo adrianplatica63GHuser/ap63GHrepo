@@ -6,7 +6,8 @@ import { unnamedKindOf } from "@/lib/ui/unnamed";
 import { Fragment, useCallback, useEffect, useId, useState, useRef } from "react";
 import { Calculator, Check, Link as LinkIcon, Plus, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
-import { AddToggleButton, MarkReviewedButton } from "@/components/metadata-buttons";
+import { AddToggleButton } from "@/components/metadata-buttons";
+import { ClassificationConfirm, ClassificationReviewLine } from "@/components/classification-review";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
@@ -19,7 +20,7 @@ import type { MetadataSnapshot, MetadataVersionItem } from "@/lib/metadata/queri
 import { PROVENANCE_VALUES, provenanceI18nKey } from "@/lib/metadata/provenance";
 import { buttonClass } from "@/lib/ui/button-styles";
 import { CLASSIFICATION_UNITS, boxRem, rem, screenBox, tileInner, unitsInnerRem } from "@/lib/ui/field-widths";
-import { daysSince, updatedToday as isUpdatedToday } from "@/lib/metadata/updated-days";
+import { daysSince, oldestStamp, updatedToday as isUpdatedToday } from "@/lib/metadata/updated-days";
 import { HintBubble } from "@/lib/ui/hint-bubble";
 import { pickerOptionText, usePickerDismiss } from "@/lib/ui/picker-dismiss";
 import { Divider } from "@/lib/ui/divider";
@@ -257,12 +258,6 @@ function ClassificationItem({
   options,
   statementMap,
   placeholder,
-  markLabels,
-  daysText,
-  reviewWarning,
-  updatedToday,
-  onMarkReviewed,
-  latest,
   highlight,
   children,
 }: {
@@ -280,34 +275,10 @@ function ClassificationItem({
   options:       { value: string; label: string }[];
   statementMap:  Record<string, string>;
   placeholder:   string;
-  markLabels:    { mark: string; marking: string; marked: string; today: string };
-  /** „(actualizat acum N zile)", or null if never saved. */
-  daysText:      string | null;
-  /** Non-null past the review threshold — shown in red. */
-  reviewWarning: string | null;
-  /** 41.28: set or marked reviewed today — its button is drawn reviewed. */
-  updatedToday:  boolean;
-  onMarkReviewed: () => Promise<void>;
-  /** The latest version — not an older one being looked at, which reads only. */
-  latest:        boolean;
   /** Version-diff highlight colour for this field. */
   highlight?:    HighlightColor | undefined;
   children?:     React.ReactNode;
 }) {
-  const [reviewing, setReviewing] = useState(false);
-  const [reviewed,  setReviewed]  = useState(false);
-
-  async function handleMarkReviewed() {
-    setReviewing(true);
-    try {
-      await onMarkReviewed();
-      setReviewed(true);
-      setTimeout(() => setReviewed(false), 2000);
-    } finally {
-      setReviewing(false);
-    }
-  }
-
   const statement = value ? statementMap[value] : null;
   const uid = useId();
   const statementId = `${uid}-statement`;
@@ -335,8 +306,8 @@ function ClassificationItem({
     <section className="flex flex-col gap-0.5" data-classification-item={item}>
       {/* 41.28: the title alone — the tile's one „i" explains the three (it was each item's own). */}
       <ItemTitle id={`${uid}-title`} title={title} about="" />
-      {/* 41.28 (Ask first 2): one line — the value, then „(actualizat azi)", then „Marchează ca verificat" at its right
-          end; the date goes under the value when the three do not fit 228 px. In edit the select fills the line. */}
+      {/* 41.28 (Ask first 2): one line — the value. 41.59: its „(actualizat …)" and „Marchează ca verificat" are the
+          block's, one line under the three (`ClassificationReviewLine`). In edit the select fills the line. */}
       <div className="flex items-center gap-2">
         <div className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-1.5" data-classification-line="">
           {/* Slice #37.63 — what the chosen value means is a bubble ON the value. */}
@@ -347,23 +318,8 @@ function ClassificationItem({
           ) : (
             control
           )}
-          {latest && !editing && daysText && (
-            <span className="text-xs text-fade" data-classification-date="">
-              {daysText}
-            </span>
-          )}
         </div>
-        {latest && !editing && (
-          // #37.44 (A031): BadgeCheck, filled once reviewed — an icon, its words the hint and the name (40.96). 41.28: a
-          // value set or marked today is drawn reviewed — „Verificat azi", disabled.
-          <MarkReviewedButton reviewed={reviewed} today={updatedToday} reviewing={reviewing} labels={markLabels} onClick={handleMarkReviewed} />
-        )}
       </div>
-
-      {/* The review warning keeps its own line — never on a value updated today. */}
-      {latest && reviewWarning && !updatedToday && (
-        <p className="px-2 text-xs font-medium text-red-600 dark:text-red-400">{reviewWarning}</p>
-      )}
 
       {children && <div className="mt-1 flex flex-col gap-1 px-2">{children}</div>}
     </section>
@@ -1298,6 +1254,9 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
   const [localRelevance,  setLocalRelevance]  = useState<string>("");
   const [localProvenance, setLocalProvenance] = useState<string>("");
   const [saving,          setSaving]          = useState(false);
+  // Slice 41.59: the confirmation open — before „Marchează ca verificat" or „Salvează" takes effect.
+  const [confirming,      setConfirming]      = useState<"review" | "save" | null>(null);
+  const [reviewing,       setReviewing]       = useState(false);
   // Tracks the last server-data key so we can sync state during rendering
   // instead of in a useEffect (React "adjusting state during rendering" pattern).
   const [lastFetchedKey, setLastFetchedKey] = useState<string>("");
@@ -1470,6 +1429,7 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
       setSaveError(err instanceof Error ? err.message : String(err));
     } finally {
       setSaving(false);
+      setConfirming(null);
     }
   }
 
@@ -1487,6 +1447,7 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
     setLocalRelevance(data?.relevance ?? "");
     setLocalProvenance(data?.provenance ?? "");
     setSaveError(null);
+    setConfirming(null);
     setEditing(false);
   }
 
@@ -1518,14 +1479,26 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
 
   // ── Mark as reviewed helper ───────────────────────────────────────────────
 
-  async function touchField(field: "importance" | "relevance" | "provenance") {
-    const res = await fetch(apiPath, {
-      method:  "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify({ field, action: "touch" }),
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    await queryClient.invalidateQueries({ queryKey: [queryKey] });
+  // Slice 41.59: the three reviewed as one block — one call stamps all three (was `touchField(field)`, one each).
+  async function touchAll() {
+    setReviewing(true);
+    setSaveError(null);
+    try {
+      const res = await fetch(apiPath, {
+        method:  "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ action: "touch-all" }),
+      });
+      if (res.redirected) throw new Error(t("saveErrorSession"));
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      await queryClient.invalidateQueries({ queryKey: [queryKey] });
+      setConfirming(null);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : String(err));
+      setConfirming(null);
+    } finally {
+      setReviewing(false);
+    }
   }
 
   // ── Make current ─────────────────────────────────────────────────────────
@@ -1642,6 +1615,16 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
 
   const about = (title: string) => t("about", { title });
   const markLabels = { mark: t("markReviewed.button"), marking: t("markReviewed.marking"), marked: t("markReviewed.marked"), today: t("markReviewed.today") };
+  // Slice 41.59: the block's stamp is the oldest of the three — one never stamped, and it reads as not reviewed.
+  const reviewStamp = data ? oldestStamp([data.importanceUpdatedAt, data.relevanceUpdatedAt, data.provenanceUpdatedAt]) : null;
+  // What the confirmation lists: the three as they will stand — in edit the chosen ones, a changed one marked.
+  const confirmItems = data
+    ? [
+        { key: "importance", label: t("importance.title"), value: importanceOptions.find((o) => o.value === localImportance)?.label ?? "", changed: editing && localImportance !== (data.importance ?? "") },
+        { key: "relevance", label: t("relevance.title"), value: relevanceOptions.find((o) => o.value === localRelevance)?.label ?? "", changed: editing && localRelevance !== (data.relevance ?? "") },
+        { key: "provenance", label: t("provenance.title"), value: provenanceLabelMap[localProvenance] ?? "", changed: editing && localProvenance !== (data.provenance ?? "") },
+      ]
+    : [];
 
   // Slice #37.82: „Conexiuni"'s groups that are drawn, in order — the lines go between them.
   const connectionGroups: { key: string; node: React.ReactNode }[] = [];
@@ -1835,12 +1818,6 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
           options={importanceOptions}
           statementMap={importanceStatements}
           placeholder={t("importance.placeholder")}
-          markLabels={markLabels}
-          daysText={buildDaysText(data.importanceUpdatedAt)}
-          reviewWarning={buildReviewWarning(data.importanceUpdatedAt)}
-          updatedToday={isOnLatest && isUpdatedToday(data.importanceUpdatedAt)}
-          onMarkReviewed={() => touchField("importance")}
-          latest={isOnLatest}
           highlight={highlights.importance}
         />
 
@@ -1856,12 +1833,6 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
           options={relevanceOptions}
           statementMap={relevanceStatements}
           placeholder={t("relevance.placeholder")}
-          markLabels={markLabels}
-          daysText={buildDaysText(data.relevanceUpdatedAt)}
-          reviewWarning={buildReviewWarning(data.relevanceUpdatedAt)}
-          updatedToday={isOnLatest && isUpdatedToday(data.relevanceUpdatedAt)}
-          onMarkReviewed={() => touchField("relevance")}
-          latest={isOnLatest}
           highlight={highlights.relevance}
         />
 
@@ -1877,12 +1848,6 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
           options={provenanceOptions}
           statementMap={provenanceStatements}
           placeholder={t("provenance.placeholder")}
-          markLabels={markLabels}
-          daysText={buildDaysText(data.provenanceUpdatedAt)}
-          reviewWarning={buildReviewWarning(data.provenanceUpdatedAt)}
-          updatedToday={isOnLatest && isUpdatedToday(data.provenanceUpdatedAt)}
-          onMarkReviewed={() => touchField("provenance")}
-          latest={isOnLatest}
           highlight={highlights.provenance}
         >
           {/* Slice #20.09: calculation source link (shown when provenance = ALGORITHM) */}
@@ -1896,6 +1861,38 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
             />
           )}
 
+        </ClassificationItem>
+
+        {/* Slice 41.59 (Ask first 2) — Adrian: „I need to treat all three as one metadata item". One line under the
+            three, before Istoric: the oldest stamp's „(actualizat …)" and one „Marchează ca verificat" at its right
+            end, the red warning under it. Its press opens the confirmation; the review is its „Confirmă". */}
+        {isOnLatest && !editing && (
+          <ClassificationReviewLine
+            daysText={buildDaysText(reviewStamp)}
+            warning={buildReviewWarning(reviewStamp)}
+            today={isUpdatedToday(reviewStamp)}
+            labels={markLabels}
+            onReview={() => setConfirming("review")}
+            confirm={confirming === "review" && (
+              <ClassificationConfirm
+                heading={t("confirmReview.heading")}
+                items={confirmItems}
+                changedLabel={t("confirmReview.changed")}
+                labelOk={reviewing ? t("markReviewed.marking") : t("confirmReview.ok")}
+                labelBack={t("confirmReview.back")}
+                busy={reviewing}
+                onOk={() => void touchAll()}
+                onBack={() => setConfirming(null)}
+              />
+            )}
+          />
+        )}
+        {isOnLatest && !editing && saveError && (
+          <p role="alert" className="px-2 text-xs text-alert">{saveError}</p>
+        )}
+
+        {/* Istoric — under the review line (41.59; it was Proveniență's own, under its value). */}
+        <div className="flex flex-col gap-1 px-2" data-history-block="">
           {/* History — sourced from entity_provenance_log via the main query. It says something about THIS record,
               so it stays visible (#37.63). Slice 41.10: a label as the others; the save moved to „Salvează". */}
           <h4 className={FIELD_LABEL} data-history-line="">
@@ -1913,17 +1910,35 @@ export function EntityMetadataTab({ apiPath, queryKey, backHref, backEntityName,
               ))}
             </ul>
           )}
-        </ClassificationItem>
+        </div>
 
         {editing && (
-          <TileEditBar
-            tile="classification"
-            onSave={() => void saveAll()}
-            onCancel={cancelEdit}
-            saving={saving}
-            canSave={isDirty}
-            error={saveError}
-          />
+          // 41.59 (Ask first 3): „Salvează" opens the same confirmation — the save also confirms the three as checked
+          // today, the changed ones marked; „Înapoi" keeps the edit open.
+          <div className="relative">
+            <TileEditBar
+              tile="classification"
+              onSave={() => setConfirming("save")}
+              onCancel={cancelEdit}
+              saving={saving}
+              canSave={isDirty}
+              error={saveError}
+            />
+            {confirming === "save" && (
+              <ClassificationConfirm
+                placement="above"
+                heading={t("confirmReview.heading")}
+                note={t("confirmReview.saveNote")}
+                items={confirmItems}
+                changedLabel={t("confirmReview.changed")}
+                labelOk={saving ? t("saving") : t("confirmReview.ok")}
+                labelBack={t("confirmReview.back")}
+                busy={saving}
+                onOk={() => void saveAll()}
+                onBack={() => setConfirming(null)}
+              />
+            )}
+          </div>
         )}
         </div>
         )}

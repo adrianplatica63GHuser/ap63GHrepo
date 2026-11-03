@@ -947,13 +947,20 @@
       },
       "review": {
         "title": "Revizuire",
-        "note": "O valoare care nu a fost schimbată și nici verificată de mai mult de {warn, plural, one {# zi} few {# zile} other {# de zile}} apare cu roșu. „Marchează ca verificat” confirmă că încă este adevărată și pornește numărătoarea din nou; o valoare schimbată azi se socotește verificată. Tabloul de bord numără elementul ca neverificat când una dintre cele trei valori e mai veche de {stale, plural, one {# zi} few {# zile} other {# de zile}}. Ambele termene se schimbă în Administrare → Setări."
+        "note": "Cele trei valori se verifică împreună, ca un singur bloc: data de sub ele este a celei mai vechi. Când au trecut mai mult de {warn, plural, one {# zi} few {# zile} other {# de zile}} fără nicio schimbare sau verificare, apare un avertisment cu roșu. „Marchează ca verificat” confirmă că toate trei sunt încă adevărate și pornește numărătoarea din nou; „Salvează” le confirmă și el pe toate trei. Înainte de amândouă vedeți cele trei valori și puteți reveni cu „Înapoi”. Tabloul de bord numără elementul ca neverificat când una dintre cele trei valori e mai veche de {stale, plural, one {# zi} few {# zile} other {# de zile}}. Ambele termene se schimbă în Administrare → Setări."
       },
       "markReviewed": {
         "button": "Marchează ca verificat",
         "marking": "Se marchează…",
         "marked": "✓ Verificat",
         "today": "Verificat azi"
+      },
+      "confirmReview": {
+        "heading": "Confirmați că toate trei sunt încă valabile azi:",
+        "saveNote": "Salvarea le confirmă pe toate trei ca verificate azi.",
+        "changed": "modificat",
+        "ok": "Confirmă",
+        "back": "Înapoi"
       },
       "tags": {
         "title": "Etichete / Cuvinte cheie",

@@ -524,6 +524,40 @@ export async function touchEntityMetadataField(
   return getEntityMetadata(principalObjectId);
 }
 
+/**
+ * Slice 41.59 — „Clasificare" reviewed as one block: „Marchează ca verificat" stamps all three `<field>_updated_at` at
+ * once, values unchanged (Adrian: „I need to treat all three as one metadata item"). Creates the row when there is none.
+ */
+export async function touchAllEntityMetadataFields(
+  principalObjectId: string,
+  updatedBy?: string | null,
+): Promise<EntityMetadataRow> {
+  const current = await getEntityMetadata(principalObjectId);
+  const now     = new Date();
+  await db
+    .insert(entityMetadata)
+    .values({
+      principalObjectId,
+      importance:          current.importance,
+      relevance:           current.relevance,
+      provenance:          current.provenance,
+      importanceUpdatedAt: now,
+      relevanceUpdatedAt:  now,
+      provenanceUpdatedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: entityMetadata.principalObjectId,
+      set: {
+        importanceUpdatedAt: now,
+        relevanceUpdatedAt:  now,
+        provenanceUpdatedAt: now,
+        updatedBy:           updatedBy ?? null,
+        updatedAt:           now,
+      },
+    });
+  return getEntityMetadata(principalObjectId);
+}
+
 // ---------------------------------------------------------------------------
 // Tags — list, add, remove
 // ---------------------------------------------------------------------------
