@@ -25,6 +25,7 @@
  * and a new arrangement settles in one more render, before the paint. Too narrow for two rows, the pieces wrap in one
  * row as before, the buttons still last.
  *
+ * Slice 41.60: and „Toate la stânga" after it — both three chevrons, their words the hint (`allLeft` in tile-positions.ts).
  * Slice 40.40: `allUp` draws „Toate sus" left of „Toate" — on the four record screens and (41.02) the home page, not
  * on Setări's bar. Pressed, every tile slides up and the tile columns are evened (`allUp` in tile-positions.ts).
  *
@@ -36,6 +37,8 @@ import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { HelpHint } from "@/components/help/help-hint";
 import { buttonClass } from "@/lib/ui/button-styles";
+import { IconButton } from "@/lib/ui/icon-button";
+import { TripleChevronLeftIcon, TripleChevronUpIcon } from "@/components/icons/chevron-icons";
 import type { TileChoice } from "./use-tile-choice";
 import type { TileGroup } from "@/lib/ui/tiles";
 import { groupStrip } from "@/lib/ui/tile-surface";
@@ -252,10 +255,14 @@ export function TileSelector<K extends string>({
       {/* Slice #37.23 — what the choice does and where it is kept. The text is
           Adrian's, in Texte de ajutor; until he writes it the hint draws nothing. */}
       <HelpHint hintKey="tile-selector" />
+      {/* Slice 41.60 (Ask first 2, 3) — Adrian: „we should have an All Left button … the label of the buttons should be
+          replaced with three chevrons pointing up or pointing left". Both icons, their words the name and the hint;
+          „Toate la stânga" exactly where „Toate sus" is, right after it. */}
       {allUp && (
-        <button type="button" onClick={choice.allUp} className={buttonClass({ variant: "secondary", size: "sm" })} data-tiles-all-up="">
-          {t("allUp")}
-        </button>
+        <>
+          <IconButton icon={TripleChevronUpIcon} label={t("allUp")} variant="secondary" size="sm" onClick={choice.allUp} data-tiles-all-up="" />
+          <IconButton icon={TripleChevronLeftIcon} label={t("allLeft")} variant="secondary" size="sm" onClick={choice.allLeft} data-tiles-all-left="" />
+        </>
       )}
       <button type="button" onClick={choice.showAll} className={buttonClass({ variant: "secondary", size: "sm" })}>
         {t("all")}

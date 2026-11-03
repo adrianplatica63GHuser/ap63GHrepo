@@ -11,7 +11,9 @@ import { act, fireEvent, render, renderHook, screen } from "@testing-library/rea
 
 import { TileSelector } from "@/components/tiles/tile-selector";
 import { useTileChoice, type TileChoice } from "@/components/tiles/use-tile-choice";
-import { TILES_ALL_UP } from "@/lib/ui/tile-positions";
+import { TILES_ALL_LEFT, TILES_ALL_UP } from "@/lib/ui/tile-positions";
+import ro from "../../messages/ro-RO.json";
+import en from "../../messages/en-GB.json";
 import type { TileRegistry } from "@/lib/ui/tiles";
 
 jest.mock("next-intl", () => ({
@@ -27,22 +29,46 @@ const ALL: readonly K[] = ["a", "b"];
 const LABELS: Record<K, string> = { a: "Unu", b: "Doi" };
 
 function fakeChoice(): TileChoice<K> {
-  return { shown: ["a", "b"], isShown: () => true, toggle: jest.fn(), showAll: jest.fn(), reset: jest.fn(), reveal: jest.fn(), allUp: jest.fn() };
+  return { shown: ["a", "b"], isShown: () => true, toggle: jest.fn(), showAll: jest.fn(), reset: jest.fn(), reveal: jest.fn(), allUp: jest.fn(), allLeft: jest.fn() };
 }
 
 describe("„Toate sus” (40.40)", () => {
-  it("is drawn left of „Toate” when asked for, and presses choice.allUp", () => {
+  // 41.60 (Ask first 2, 3) inverted in place — was `textContent` ["allUp", "all", "defaults"]: „Toate sus" was words.
+  // Now „Toate sus" and „Toate la stânga" are three chevrons each, their words the name; then „Toate", „Implicit".
+  it("is drawn left of „Toate” when asked for, „Toate la stânga” right after it — three chevrons each; they press choice.allUp / allLeft", () => {
     const choice = fakeChoice();
     render(<TileSelector all={ALL} labels={LABELS} choice={choice} allUp />);
-    const buttons = screen.getAllByRole("button").map((b) => b.textContent);
-    expect(buttons).toEqual(["allUp", "all", "defaults"]);
-    fireEvent.click(screen.getByRole("button", { name: "allUp" }));
+    const names = screen.getAllByRole("button").map((b) => b.getAttribute("aria-label") ?? b.textContent);
+    expect(names).toEqual(["allUp", "allLeft", "all", "defaults"]);
+    const up = screen.getByRole("button", { name: "allUp" });
+    const left = screen.getByRole("button", { name: "allLeft" });
+    expect(up.querySelector("svg.lucide-triple-chevron-up")!.querySelectorAll("path")).toHaveLength(3);
+    expect(left.querySelector("svg.lucide-triple-chevron-left")!.querySelectorAll("path")).toHaveLength(3);
+    expect(up.textContent).toBe("");
+    expect(left.hasAttribute("data-tiles-all-left")).toBe(true);
+    fireEvent.click(up);
     expect(choice.allUp).toHaveBeenCalledTimes(1);
+    fireEvent.click(left);
+    expect(choice.allLeft).toHaveBeenCalledTimes(1);
+  });
+
+  it("41.60: the tile choice sends TILES_ALL_LEFT with its record kind; the words in both languages", () => {
+    const reg = { entity: "test-41-60", all: ALL, defaults: ALL } as unknown as TileRegistry<K>;
+    const heard: string[] = [];
+    const listen = (e: Event) => heard.push((e as CustomEvent<string>).detail);
+    window.addEventListener(TILES_ALL_LEFT, listen);
+    const { result } = renderHook(() => useTileChoice(reg));
+    act(() => result.current.allLeft());
+    window.removeEventListener(TILES_ALL_LEFT, listen);
+    expect(heard).toEqual(["test-41-60"]);
+    expect([ro.shared.tiles.allUp, ro.shared.tiles.allLeft]).toEqual(["Toate sus", "Toate la stânga"]);
+    expect([en.shared.tiles.allUp, en.shared.tiles.allLeft]).toEqual(["All up", "All left"]);
   });
 
   it("is not drawn without it", () => {
     render(<TileSelector all={ALL} labels={LABELS} choice={fakeChoice()} />);
     expect(screen.queryByRole("button", { name: "allUp" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "allLeft" })).toBeNull();
   });
 
   it("the tile choice sends TILES_ALL_UP with its record kind", () => {

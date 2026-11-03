@@ -744,3 +744,40 @@ export function allUp(
   even.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
   return { placed: even, moved };
 }
+
+/**
+ * „TOATE LA STÂNGA" (Slice 41.60). Adrian, 2026-11-02: „Similar to the “all up” button we should have an All Left button
+ * on the panels function". The mirror of the rise (Ask first 1): every tile that is not a banner (`still`), fixed, nor
+ * a row end, taken left to right (then top to bottom), slides LEFT within its own vertical span — never up or down — to
+ * the right edge of the nearest tile already settled that it overlaps vertically, or to column 0. So a tile settled
+ * first is the wall of those to its right. Across, positions are whole units: side by side, the gap between two tiles
+ * is the unit's own. It does not even out rows. `null` when nothing would move.
+ */
+
+/** The window event „Toate la stânga" sends, the record kind's entity as its detail (as `TILES_ALL_UP`). */
+export const TILES_ALL_LEFT = "ga40-tiles-all-left";
+
+export function allLeft(
+  placed: readonly Placed[],
+  still: ReadonlySet<string> = new Set(),
+): { placed: Placed[]; moved: string[] } | null {
+  const out = placed.map((p) => ({ ...p }));
+  const moves = (p: Placed): boolean => !p.fixed && !p.rowEnd && !still.has(p.id);
+  const settled = out.filter((p) => !p.rowEnd && !moves(p));
+  // Vertically overlapping: their spans share more than a pixel.
+  const besides = (a: Placed, b: Placed): boolean => a.top < b.top + b.height - 0.5 && b.top < a.top + a.height - 0.5;
+  const moved: string[] = [];
+  for (const me of out.filter(moves).sort((a, b) => a.col - b.col || a.top - b.top)) {
+    const wall = settled
+      .filter((p) => p.col < me.col && besides(p, me))
+      .reduce((m, p) => Math.max(m, p.col + p.units), 0);
+    const col = Math.min(me.col, wall);
+    if (col !== me.col) {
+      me.col = col;
+      moved.push(me.id);
+    }
+    settled.push(me);
+  }
+  if (moved.length === 0) return null;
+  return { placed: out, moved };
+}

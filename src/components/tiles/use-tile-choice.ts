@@ -26,7 +26,7 @@
  * shows every tile for it, and „Implicit" leaves the visit's set for the stored choice — without writing anything.
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { TILES_ALL_UP, TILE_POSITIONS_RESET, tilePositionsKey } from "@/lib/ui/tile-positions";
+import { TILES_ALL_LEFT, TILES_ALL_UP, TILE_POSITIONS_RESET, tilePositionsKey } from "@/lib/ui/tile-positions";
 import {
   parseStoredTiles,
   shownTiles,
@@ -59,6 +59,8 @@ export interface TileChoice<K extends string> {
   reveal: (key: K) => void;
   /** Slice 40.40 „Toate sus": tells this kind of record's tile row to rise every tile and even its columns. */
   allUp: () => void;
+  /** Slice 41.60 „Toate la stânga": tells the tile row to slide every tile left, never up or down. */
+  allLeft: () => void;
 }
 
 const NONE: readonly never[] = [];
@@ -158,6 +160,9 @@ export function useTileChoice<K extends string>(
   const allUp = useCallback(() => {
     window.dispatchEvent(new CustomEvent(TILES_ALL_UP, { detail: reg.entity }));
   }, [reg.entity]);
+  const allLeft = useCallback(() => {
+    window.dispatchEvent(new CustomEvent(TILES_ALL_LEFT, { detail: reg.entity }));
+  }, [reg.entity]);
 
-  return { shown, isShown, toggle, showAll, reset, reveal, allUp };
+  return { shown, isShown, toggle, showAll, reset, reveal, allUp, allLeft };
 }

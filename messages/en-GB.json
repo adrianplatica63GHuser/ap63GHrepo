@@ -852,6 +852,7 @@
       "panels": "Panels",
       "panelsMarked": "{count, plural, one {one hidden part has highlighted fields} other {# hidden parts have highlighted fields}}",
       "allUp": "All up",
+      "allLeft": "All left",
       "all": "All",
       "defaults": "Default",
       "lastOne": "At least one part stays shown.",

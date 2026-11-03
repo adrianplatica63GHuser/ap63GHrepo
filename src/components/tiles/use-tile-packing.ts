@@ -117,7 +117,9 @@ import { columnsIn, fitsBeside, grow, packedHeight, unitsOf, type PackBox, type 
 import {
   MAKE_ROOM_SLIDE_MS,
   TILE_POSITIONS_RESET,
+  TILES_ALL_LEFT,
   TILES_ALL_UP,
+  allLeft,
   allUp,
   WRAPPED_PREFIX,
   canDrop,
@@ -1056,6 +1058,20 @@ export function useTilePacking(
     };
     window.addEventListener(TILES_ALL_UP, onAllUp);
 
+    // 41.60 „Toate la stânga": every tile left into the room beside it, never up or down (`allLeft`); slid and stored as
+    // one arrangement, as „Toate sus". The banners never move; a press with nothing to move moves nothing.
+    const onAllLeft = (e: Event) => {
+      if ((e as CustomEvent<string>).detail !== entity || drag?.active) return;
+      const still = new Set(boxes.filter((b) => b.full).map((b) => b.id));
+      const r = allLeft(placed, still);
+      if (!r) return;
+      placed = r.placed;
+      slide(r.moved);
+      store(r.moved[0], r.moved.slice(1));
+      apply();
+    };
+    window.addEventListener(TILES_ALL_LEFT, onAllLeft);
+
     // ---- 41.17: a tile's width, dragged by its right edge ------------------------------------------------------------
     // Ask first 1: the lists' column handle (40.12) on its side — an 8-px strip on the tile's right edge, its whole height,
     // the col-resize cursor, a line darker while hovered or dragged; a focusable separator named „Lățimea panoului
@@ -1606,6 +1622,7 @@ export function useTilePacking(
       container.removeEventListener("dblclick", onDouble);
       window.removeEventListener(TILE_POSITIONS_RESET, onReset);
       window.removeEventListener(TILES_ALL_UP, onAllUp);
+      window.removeEventListener(TILES_ALL_LEFT, onAllLeft);
       window.removeEventListener(TILE_DIAGRAM_DRAG, onDiagram);
       document.removeEventListener("visibilitychange", shown);
     };

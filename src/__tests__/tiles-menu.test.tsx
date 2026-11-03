@@ -25,7 +25,7 @@ const read = (...p: string[]) => readFileSync(join(ROOT, ...p), "utf8");
 type K = "a" | "b" | "c";
 const ALL: readonly K[] = ["a", "b", "c"];
 const LABELS: Record<K, string> = { a: "Unu", b: "Doi", c: "Trei" };
-const choice = (): TileChoice<K> => ({ shown: ["a"], isShown: (k) => k === "a", toggle: jest.fn(), showAll: jest.fn(), reset: jest.fn(), reveal: jest.fn(), allUp: jest.fn() });
+const choice = (): TileChoice<K> => ({ shown: ["a"], isShown: (k) => k === "a", toggle: jest.fn(), showAll: jest.fn(), reset: jest.fn(), reveal: jest.fn(), allUp: jest.fn(), allLeft: jest.fn() });
 
 function Screen({ badge = 0 }: { badge?: number }) {
   const menu = useTilesMenu();
