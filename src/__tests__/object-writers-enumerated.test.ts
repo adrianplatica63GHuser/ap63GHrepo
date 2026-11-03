@@ -487,7 +487,8 @@ describe("every snapshot comparison reads the registry, not its own copy", () =>
    */
   const ALLOWED_QUOTED: Record<string, readonly string[]> = {
     // Slice 40.82: `identity` is the second nested block (`if (k === "identity")`), compared by identitySnapshotsEqual.
-    "src/lib/documents/queries.ts": ["customFields", "identity"],
+    // Slice 41.54: `parentDeed` is the third (`if (k === "parentDeed")`) — compared by its `id` only, absent equal.
+    "src/lib/documents/queries.ts": ["customFields", "identity", "parentDeed"],
   };
 
   it("so nothing re-lists the keys as literals beside the assignment", () => {

@@ -24,7 +24,7 @@ import { test, expect, type Locator, type Page } from "../helpers/test";
 import { E2E_MARKER, createDocumentOfType, removeLeftovers, removeRecord } from "../helpers/records";
 import { openEmptyTile, openFoldedTile, showTile, editTile, editTileNamed, saveTileNamed } from "../helpers/tiles";
 import { showEmptyFields } from "../helpers/empty-fields";
-import { clickMakeCurrentAndConfirm, clickPrev } from "../helpers/version-nav";
+import { clickPrev } from "../helpers/version-nav";
 
 const MARK = `${E2E_MARKER}DOC-20`;
 const ACT = `${MARK} Act`;
@@ -155,7 +155,11 @@ test.describe("TC-DOC-20 — actul adițional și actul pe care îl modifică", 
       await expect(page.getByText("v 3", { exact: true }).first()).toBeVisible({ timeout: 30_000 });
       await clickPrev(page);
       await expect(amended(page).locator("[data-version-deed]")).toContainText(CVC, { timeout: 15_000 });
-      await clickMakeCurrentAndConfirm(page, 3);
+      await page.getByRole("button", { name: "Fă curentă" }).click();
+      const makeCurrent = page.getByRole("dialog");
+      await makeCurrent.getByRole("button", { name: "OK", exact: true }).click();
+      await expect(makeCurrent).toHaveCount(0, { timeout: 15_000 });
+      await expect(page.getByText("v 4", { exact: true }).first()).toBeVisible({ timeout: 30_000 });
       await expect(amended(page).locator("[data-parent-deed]")).toContainText(CVC, { timeout: 15_000 });
       await amended(page).getByRole("button", { name: "Dezleagă", exact: true }).click();
       await expect(page.getByText("v 5", { exact: true }).first()).toBeVisible({ timeout: 30_000 });

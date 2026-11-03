@@ -113,7 +113,10 @@ describe("the template group „Actul modificat”", () => {
     const form = read("src", "app", "documents", "_components", "document-form.tsx");
     expect(form).toContain("const amendedGroup = customFieldGroups.find((g) => isAmendedDeedGroup(g.label));");
     expect(form).toMatch(/g !== identificationGroup && g !== amendedGroup/);
-    expect(form).toMatch(/<AmendedDeedLink documentId=\{documentId\} readOnly=\{effectiveMode === "view"\} \/>\s*<div hidden=\{linked\}/);
+    // 41.54: the link also takes the deed of the version on screen, and the „Fă curentă" note sits between them.
+    expect(form).toMatch(
+      /<AmendedDeedLink documentId=\{documentId\} readOnly=\{effectiveMode === "view"\} versionDeedId=\{versionDeedId\} \/>[\s\S]{0,300}?<div hidden=\{linked\}/,
+    );
   });
 });
 
