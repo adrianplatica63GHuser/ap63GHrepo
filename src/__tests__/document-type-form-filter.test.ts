@@ -4,7 +4,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { formFilterFrom, formFilterKeeps, formFilterNarrows } from "@/lib/admin/value-lists/form-filter";
-import { documentTypeHasForm } from "@/lib/documents/status";
+import { documentTypeShowsForm } from "@/lib/documents/status";
 
 const read = (...p: string[]) => fs.readFileSync(path.join(process.cwd(), ...p), "utf8");
 const code = (src: string): string => src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:"'`])\/\/.*$/gm, "$1");
@@ -14,18 +14,24 @@ const TYPES = [
   { name: "Contract de Vânzare", templateFields: [FIELD] },
   { name: "Adeverință", templateFields: [] },
   { name: "Document necunoscut", templateFields: null }, // the catch-all
-  { name: "Carte de identitate", templateFields: null }, // the identity card
+  // Slice 41.50: the identity card by its marker; its form is the application's (it read `templateFields: null` alone).
+  { name: "Carte de identitate", templateFields: null, key: "CARTE_IDENTITATE_VECHE", identityKind: "CI_VECHE" },
+  // …and a type merely NAMED like one, without the marker: an ordinary type, no form.
+  { name: "Carte de identitate (copie)", templateFields: null, key: "CI_COPIE", identityKind: null },
 ];
+// Slice 41.50: the filter asks `documentTypeShowsForm(row)` (it asked `documentTypeHasForm(t.templateFields)`).
 const shown = (withForm: boolean, withoutForm: boolean) =>
-  TYPES.filter((t) => formFilterKeeps({ withForm, withoutForm }, documentTypeHasForm(t.templateFields))).map((t) => t.name);
+  TYPES.filter((t) => formFilterKeeps({ withForm, withoutForm }, documentTypeShowsForm(t))).map((t) => t.name);
 
 describe("the two predicates (#38.51)", () => {
-  it("„Cu formular” alone: the types with at least one field", () => {
-    expect(shown(true, false)).toEqual(["Contract de Vânzare"]);
+  it("„Cu formular” alone: the types with at least one field, and the identity types (41.50)", () => {
+    expect(shown(true, false)).toEqual(["Contract de Vânzare", "Carte de identitate"]);
   });
 
-  it("„Fără formular” alone: every type whose form is empty — the catch-all and the identity card included (Ask first 1)", () => {
-    expect(shown(false, true)).toEqual(["Adeverință", "Document necunoscut", "Carte de identitate"]);
+  // Slice 41.50 overturns #38.51's Ask first 1, which read: „„Fără formular” alone: every type whose form is empty —
+  // the catch-all and the identity card included". That predates the identity types' system form (40.82, 40.94).
+  it("„Fără formular” alone: every type whose form is empty — the catch-all included, the identity card not (41.50)", () => {
+    expect(shown(false, true)).toEqual(["Adeverință", "Document necunoscut", "Carte de identitate (copie)"]);
   });
 
   it("both, or neither, is the whole list — two checkboxes, not a radio (Ask first 2); the two add up to it", () => {
@@ -58,7 +64,8 @@ describe("the screen and the import's link (#38.51)", () => {
   });
 
   it("the retained rows and the backlog banner keep their guarantees under the new filter", () => {
-    expect(modal).toMatch(/formFilterKeeps\(formFilter, documentTypeHasForm\(row\.templateFields\)\) \|\| touchedTypeIds\.has\(row\.id\)/);
+    // 41.50: it read `documentTypeHasForm(row.templateFields)` — the identity types count as having a form.
+    expect(modal).toMatch(/formFilterKeeps\(formFilter, documentTypeShowsForm\(row\)\) \|\| touchedTypeIds\.has\(row\.id\)/);
     expect(modal).toContain("if (filterOn) {");
     expect(modal.replace(/\s+/g, "")).toContain("constbacklogEmpty=awaitingOn&&");
   });

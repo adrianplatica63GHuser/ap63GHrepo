@@ -43,7 +43,7 @@ Nothing.
 | 7 | „Salvează"; reloads | the passport's fields (Nr. pașaportului …); Nume kept; no Domiciliu |
 | 8 | „Editează" again, „Schimbă tipul…", „Tipul nou" „Adeverință" | „Tipul nu se poate schimba într-un tip de document obișnuit cât timp actul are date de identitate completate: goliți-le întâi în „Actul oficial”, apoi schimbați tipul." — and no „Confirmă" |
 | 9 | „Anulează"; „Renunță" | Tip document still „Pașaport"; the tile closes |
-| 10 | „Acte" → „Adaugă act", Tip document „Carte de Identitate (tip vechi)", Nume „Testescu", „Salvează" | „Actul oficial" empty before; the new document opens with Nume Testescu |
+| 10 | „Acte" → „Adaugă act", Tip document „Carte de Identitate (tip vechi) (F)" — the four identity types marked „(F)" since 41.50, „Pașaport (F)" among them —, Nume „Testescu", „Salvează" | „Actul oficial" empty before; the new document opens with Nume Testescu |
 
 ## At the end — leaving things as they were found
 

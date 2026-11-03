@@ -39,6 +39,7 @@ import {
   documentTypeNeedsFormHint,
   documentTypeOptionLabel,
   documentTypeOriginOf,
+  documentTypeShowsForm,
   documentTypeStatus,
   isDocumentTypeOrigin,
 } from "@/lib/documents/status";
@@ -455,5 +456,36 @@ describe("the brief's own sentence, as a property", () => {
     // 4 origins × 13 template shapes × 4 stamps. Update it deliberately when a
     // row is added; that is the point of it being a number.
     expect(checked).toBe(208);
+  });
+});
+
+describe("documentTypeShowsForm — the four identity types count as having a form (41.50)", () => {
+  const KINDS = [
+    ["CARTE_IDENTITATE_VECHE", "CI_VECHE"],
+    ["CARTE_IDENTITATE", "CI_NOU"],
+    ["PASAPORT", "PASAPORT"],
+    ["PASAPORT_CRDS", "PASAPORT_CRDS"],
+  ] as const;
+
+  it.each(KINDS)("%s (%s): shows a form — bold green, „(F)” — while documentTypeHasForm stays false", (key, identityKind) => {
+    const row = { origin: "MANUAL", templateFields: null, key, identityKind };
+    expect(documentTypeShowsForm(row)).toBe(true);
+    expect(documentTypeHasForm(row.templateFields)).toBe(false);
+    expect(documentTypeNameClass(row)).toBe(DOCUMENT_TYPE_STATUS_CLASS.aiCompleted);
+    expect(documentTypeOptionLabel("Pașaport", null, (n) => `${n} (F)`, row)).toBe("Pașaport (F)");
+  });
+
+  it("the marker is believed as it stands: null is an ordinary type, whatever its key; without the column, the key", () => {
+    expect(documentTypeShowsForm({ templateFields: null, key: "PASAPORT", identityKind: null })).toBe(false);
+    expect(documentTypeShowsForm({ templateFields: null, key: "PASAPORT" })).toBe(true);
+    expect(documentTypeShowsForm({ templateFields: null, key: "ADEVERINTA" })).toBe(false);
+    expect(documentTypeShowsForm({ templateFields: null })).toBe(false);
+  });
+
+  it("a type with stored fields shows a form, as before; one without, and no marker, does not", () => {
+    expect(documentTypeShowsForm({ templateFields: [FIELD] })).toBe(true);
+    expect(documentTypeOptionLabel("Contract", [FIELD], (n) => `${n} (F)`)).toBe("Contract (F)");
+    expect(documentTypeOptionLabel("Adeverință", null, (n) => `${n} (F)`)).toBe("Adeverință");
+    expect(documentTypeNameClass({ origin: "IMPORT", templateFields: null, key: "X" })).toBe(DOCUMENT_TYPE_STATUS_CLASS.aiScanned);
   });
 });

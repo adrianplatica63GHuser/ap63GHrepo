@@ -31,8 +31,8 @@ Nothing.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Opens „Date de referință", „Tipuri de Document" | Both checkboxes unticked; every type |
-| 2 | Ticks „Cu formular" | Only types whose status reads „Are formular"; „Contract de Vânzare" among them |
-| 3 | Unticks it; ticks „Fără formular" | Only types whose status does not read „Are formular"; the catch-all among them; the two counts add up to step 1's |
+| 2 | Ticks „Cu formular" | Only types whose status reads „Are formular" or „Act de identitate", every name bold green; „Contract de Vânzare" and the four identity types — „Carte de Identitate (tip vechi)", „(tip nou)", „Pașaport", „Pașaport CRDS" — among them (41.50; it read „Only types whose status reads „Are formular"") |
+| 3 | Unticks it; ticks „Fără formular" | Only types whose status reads neither; the catch-all among them, no identity type; the two counts add up to step 1's |
 | 4 | Ticks „Cu formular" too | Every type again |
 | 5 | Opens `/admin/value-lists?list=document-types&form=without` (the import's link) | „Fără formular" ticked, the list as in step 3 |
 
@@ -45,3 +45,6 @@ Nothing to undo.
 **2026-10-08 — `automated` (Slice #38.51).** Written with the change, and translated at once into
 `e2e/admin/document-type-form-filter.spec.ts`, which the test runner ran green (the slice's handover
 names the run).
+
+**2026-11-02 — Slice 41.50.** The four identity document types count as having a form: steps 2 and 3 say so. The
+spec reads each name's colour and weight.

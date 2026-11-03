@@ -227,8 +227,11 @@ test.describe("TC-DOC-28 — actul de identitate pe ecranul lui", () => {
       // too. Was „(model vechi)" or „(tip vechi)", either accepted. Found by its option first: a label the list lacks
       // made selectOption wait out the whole test.
       const typeSelect = page.getByLabel(/^Tip document/);
-      const booklet = typeSelect.locator("option", { hasText: /^Carte de Identitate \(tip vechi\)$/ });
+      // Slice 41.50: an identity type is marked „(F)" in the list, as a type with a form is (it read
+      // `/^Carte de Identitate \(tip vechi\)$/`).
+      const booklet = typeSelect.locator("option", { hasText: /^Carte de Identitate \(tip vechi\) \(F\)$/ });
       await expect(booklet).toHaveCount(1, { timeout: 30_000 });
+      await expect(typeSelect.locator("option", { hasText: /^Pașaport \(F\)$/ })).toHaveCount(1);
       await typeSelect.selectOption((await booklet.getAttribute("value"))!);
       await expect(tile(page)).toBeVisible({ timeout: 30_000 });
       await expect(box(page, "identity.lastName")).toHaveValue("");

@@ -345,7 +345,9 @@ describe("has-a-form is decided once, and the dropdown asks that one function", 
     expect(field).toMatch(/documentTypeOptionLabel\(\s*opt\.name,\s*opt\.templateFields,/);
     expect(field).toContain('t("typeForm.optionHasForm"');
     // 40.88: the whole words on hover and as the option's name, only where the type has a form.
-    expect(field).toMatch(/title:\s*documentTypeHasForm\(opt\.templateFields\)\s*\?\s*t\("typeForm\.optionHasFormTitle", \{ name: opt\.name \}\)\s*:\s*undefined/);
+    // 41.50: an identity type is „(F)" too — `documentTypeShowsForm(opt)`; it read `documentTypeHasForm(opt.templateFields)`.
+    expect(field).toMatch(/title:\s*documentTypeShowsForm\(opt\)\s*\?\s*t\("typeForm\.optionHasFormTitle", \{ name: opt\.name \}\)\s*:\s*undefined/);
+    expect(field).toMatch(/\(name\) => t\("typeForm\.optionHasForm", \{ name \}\),\s*opt,/);
     expect(FORM_CODE).toContain("<option key={o.value} value={o.value} title={o.title} aria-label={o.title}>");
     expect(field).toContain('t.rich("typeForm.noFormHint"');
     // No carve-out on which options are marked. Both that were tried made the
