@@ -662,12 +662,13 @@ export function tightCornerColumn(width: string): string {
 }
 
 /**
- * Slice 41.57 — the N and E columns in „DMS": „44°26'06.43"N" is 13 mono glyphs, 82 px, and 6.5rem less its px-3
- * leaves 80 — measured in TC-PROP-08, `scrollWidth` 106 over a 104-px cell, the last two glyphs cut in every row. DD
- * („44.4351200") and Stereo 70 („512345.67") fit as they are. So DMS alone takes 0.25rem more (4 px: the 2 it needs and
- * 2 to spare), and every other display keeps its width — the buttons' cell gives up 8 px in DMS only.
+ * Slice 41.57 — the N and E columns in „DMS": „44°26'06.43"N" is 13 mono glyphs, measured in TC-PROP-08 at 82 px plain
+ * (`scrollWidth` 106 over a 104-px cell at px-3) and 88 px in the hovered row's semibold (100 over 96 at px-1.5) — cut
+ * in every row either way. DD („44.4351200") and Stereo 70 („512345.67") fit as they are. So DMS alone takes 0.75rem
+ * more (12 px: 96 px of content in the tight table, 8 to spare), and every other display keeps its width — the
+ * buttons' cell gives up 24 px in DMS only, and still holds the four with 90 to spare.
  */
-export const CORNER_DMS_EXTRA_REM = 0.25;
+export const CORNER_DMS_EXTRA_REM = 0.75;
 
 /** A coordinate column's width in a display: DMS's a little wider (`CORNER_DMS_EXTRA_REM`), the others as they are. */
 export function cornerCoordinateColumn(width: string, display: "DD" | "DMS" | "S70"): string {
