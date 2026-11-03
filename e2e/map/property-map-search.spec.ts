@@ -1,6 +1,6 @@
 /**
  * Case:   TC-MAP-11 — „Caută pe hartă": un singur loc, găsit și arătat la mijloc, după un zbor de 4 secunde
- * Source: docs/testing/cases/TC-MAP-11.md (Slice 41.70)
+ * Source: docs/testing/cases/TC-MAP-11.md, „Last green" 2026-11-03 (Slice 41.70)
  *
  * A translation of the case file, step for step. Every Romanian string below is quoted from it verbatim.
  *
