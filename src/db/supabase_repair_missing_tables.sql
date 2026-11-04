@@ -935,7 +935,10 @@ INSERT INTO time_frame_setting (key, value, unit, label_en, label_ro, descriptio
   ('recency_badge_amber',      15, 'minutes', 'Recency badge amber threshold',   'Prag insignă recentă (chihlimbar)',    'Entities updated within this time get an amber badge',                 'Entitățile actualizate în această perioadă primesc o insignă chihlimbar'),
   ('recency_badge_window',     30, 'minutes', 'Recency badge display window',    'Fereastră afișare insignă recentă',    'Entities updated within this time show any recency badge',             'Entitățile actualizate în această perioadă afișează o insignă de recență'),
   -- migration_117 (Slice 39.92): the make-room delay, in milliseconds.
-  ('tile_make_room_delay',   1000, 'milliseconds', 'Hold time over another tile', 'Timp de ținere peste altă fișă', 'How long a dragged tile is held over another before that one slides down to make room', 'Cât timp e ținută o fișă trasă peste alta până când aceea alunecă în jos ca să-i facă loc')
+  ('tile_make_room_delay',   1000, 'milliseconds', 'Hold time over another tile', 'Timp de ținere peste altă fișă', 'How long a dragged tile is held over another before that one slides down to make room', 'Cât timp e ținută o fișă trasă peste alta până când aceea alunecă în jos ca să-i facă loc'),
+  -- migration_127 (Slice 41.75): „Hartă extinsă"'s two parts, in milliseconds.
+  ('map_expand_grow',     3000, 'milliseconds', 'Expanded map — the tile grows', 'Hartă extinsă — mărirea fișei', 'How long the „Map” tile takes to grow into the expanded map, the property travelling to the middle', 'Cât durează până când fișa „Hartă” se mărește până la harta extinsă, iar proprietatea ajunge la mijloc'),
+  ('map_expand_zoom_out', 3000, 'milliseconds', 'Expanded map — zooming out', 'Hartă extinsă — depărtarea', 'How long the expanded map then takes to zoom out, until the property is a tenth of its height', 'Cât durează apoi depărtarea hărții extinse, până când proprietatea are o zecime din înălțimea ei')
 ON CONFLICT (key) DO NOTHING;
 
 
