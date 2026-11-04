@@ -145,11 +145,12 @@ test.describe("TC-TILES-07 — unde stau părțile la deschidere", () => {
       expect(Math.abs(sv.re)).toBeLessThanOrEqual(1);
       expect(sv.y).toBeGreaterThan((await at(page, "corners")).bottom);
       // 40.98 (Adrian's red notes): on the 119-px unit, Date cadastrale, Puncte de contur, Hartă and Street View are
-      // 4 units, 524 px each, the three in the column beside the cadastral tile; Adresă 2 units, 254 px (41.05; 3, 389).
+      // 4 units, 524 px each, the three in the column beside the cadastral tile; Adresă 3 units, 389 px since 41.35 —
+      // „3 units on every screen (the property's too)" (it read 2 units, 254 px, from 41.05).
       const widths = await page.evaluate(() =>
         Object.fromEntries(["cadastral", "corners", "map", "streetView", "address"].map((n) => [n, Math.round(document.querySelector<HTMLElement>(`[data-tile="${n}"]`)!.getBoundingClientRect().width)])),
       );
-      expect(widths).toEqual({ cadastral: 524, corners: 524, map: 524, streetView: 524, address: 254 });
+      expect(widths).toEqual({ cadastral: 524, corners: 524, map: 524, streetView: 524, address: 389 });
 
       // Step 4 — „Hartă" unticked: „Puncte de contur" at the top of the column, „Street View" under it.
       await hideTile(page, "Hartă");

@@ -34,7 +34,7 @@ Nothing.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Opens „TC-DOC-13 Certificat" | Under „Tip document" („Certificat de Moștenitor"): „Acest tip nu are încă formular; formularul se construiește în Distilare Tipizate.", „Distilare Tipizate" a link. No „Descoperire AI" anywhere; not „Acest tip de document nu are formular propriu" |
-| 2 | Opens „TC-DOC-13 Carte de identitate" | „Tip document" reads „Carte de Identitate", with nothing under it; no „Descoperire AI" |
+| 2 | Opens „TC-DOC-13 Carte de identitate" | „Tip document" reads „Carte de Identitate (tip nou)" (the type's name since 40.83), with nothing under it; no „Descoperire AI" |
 | 3 | „Acte" → „Adaugă act", chooses „Certificat de Moștenitor" in „Tip document" | The same line as in step 1; no „Descoperire AI". Leaves without saving |
 | 4 | Back on „TC-DOC-13 Certificat", presses „Distilare Tipizate" | „Distilare Tipizate" opens, „Tipul de document care primește formularul" set to „Certificat de Moștenitor" |
 

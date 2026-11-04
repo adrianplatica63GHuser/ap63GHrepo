@@ -68,7 +68,9 @@ test.describe("TC-TAG-01 — Etichetă aplicată unei proprietăți și găsită
       await expect(page.getByRole("heading", { name: "Etichete", exact: true })).toBeVisible({ timeout: 30_000 });
       const before = await readDistinct(page);
       // #38.14: the cloud is the page; its two buttons, nothing selected, both inactive.
-      await expect(page.getByText("Nor de etichete").first()).toBeVisible();
+      // 41.41: „Etichete" chooses its tiles with „Panouri", so the first „Nor de etichete" on the page is its box in the
+      // closed panel — the tile itself is read (it read `page.getByText("Nor de etichete").first()`).
+      await expect(page.locator('[data-tile="cloud"]').getByText("Nor de etichete", { exact: true })).toBeVisible();
       await expect(page.getByText("Toate etichetele", { exact: true })).toHaveCount(0);
       for (const name of ["Redenumește etichetă", "Fuzionează etichete"]) {
         await expect(page.getByRole("button", { name, exact: true })).toBeDisabled();

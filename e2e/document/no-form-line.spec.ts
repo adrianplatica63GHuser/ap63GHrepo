@@ -48,7 +48,8 @@ test.describe("TC-DOC-13 — un tip fără formular, fără „Descoperire AI”
       // Step 2 — the identity card: nothing under „Tip document", no button.
       await page.goto(`/documents/${card}`);
       const cardType = await typeField(page);
-      await expect(cardType).toHaveText("Carte de Identitate");
+      // The type's name since 40.83: „Carte de Identitate (tip nou)" (it read „Carte de Identitate").
+      await expect(cardType).toHaveText("Carte de Identitate (tip nou)");
       await expect(page.getByText(LINE)).toHaveCount(0);
       await expect(page.getByRole("button", { name: "Descoperire AI" })).toHaveCount(0);
 

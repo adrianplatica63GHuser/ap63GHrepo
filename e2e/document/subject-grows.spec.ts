@@ -28,7 +28,9 @@ const SHORT_TITLE = `${MARK} Act scurt`;
 const SUBJECT =
   "Vânzarea terenului din tarlaua 40, parcela 212, cu toate construcțiile de pe el, către cumpărătorul din contract, " +
   "cu plata prețului în trei tranșe egale, la datele stabilite de părți în actul autentic";
-const TYPED = ", cu cheltuielile suportate de cumpărător";
+// 2026-11-04: long enough to add a line at any box width. On the 119-px unit (40.98) the box is narrower and the subject
+// already takes four lines, read or open — it read ", cu cheltuielile suportate de cumpărător", which made the fourth.
+const TYPED = ", cu cheltuielile de notariat, de intabulare și de transcriere în cartea funciară suportate în întregime de cumpărător";
 const SHOTS = "playwright-report/subject-grows";
 
 async function createDocument(page: Page, title: string, subject: string): Promise<string> {
@@ -62,9 +64,10 @@ async function expectAbove(upper: Locator, lower: Locator): Promise<void> {
   expect((await edges(upper)).bottom).toBeLessThanOrEqual((await edges(lower)).top + 0.5);
 }
 
-async function expectInOrder(page: Page, subjectLines: number): Promise<void> {
+async function expectInOrder(page: Page, subjectLines: number | ((n: number) => boolean)): Promise<void> {
   await expect(box(page, "subject")).toBeVisible({ timeout: 30_000 });
-  await expect.poll(() => lines(box(page, "subject"))).toBe(subjectLines);
+  if (typeof subjectLines === "number") await expect.poll(() => lines(box(page, "subject"))).toBe(subjectLines);
+  else await expect.poll(async () => subjectLines(await lines(box(page, "subject")))).toBe(true);
   await expectAbove(box(page, "subject"), labelOf(page, "notes"));
   await expectAbove(box(page, "title"), labelOf(page, "subject"));
   const tile = page.locator("section").filter({ has: box(page, "subject") });
@@ -97,22 +100,25 @@ test.describe("TC-DOC-02 — „Subiect” pe mai multe rânduri împinge „Not
       // 40.75: read-only reads as text — the value's box at the box's width, the same lines.
       await expect(page.locator('[data-read-value="subject"]')).toBeVisible({ timeout: 30_000 });
       await showEmptyFields(page, "general", { wait: true }); // „Note extinse" is empty, so behind the link
-      await expectInOrder(page, 3);
+      // 2026-11-04: several lines — four on the 119-px unit (40.98); it read exactly three, on the 148-px one.
+      await expectInOrder(page, (n) => n >= 3);
+      const reading = await lines(box(page, "subject"));
       await photograph(page, "general-three-lines");
 
-      // Step 2 — for editing: the same.
+      // Step 2 — for editing: the same lines as read.
       await page.goto(`/documents/${longId}`);
       await editTile(page, "general"); // 40.75
       await expect(box(page, "subject")).toBeEditable({ timeout: 30_000 });
-      await expectInOrder(page, 3);
+      await expectInOrder(page, reading);
+      const editing = reading;
       const before = await edges(labelOf(page, "notes"));
 
-      // Step 3 — typed at the end: four lines, „Note extinse" moved down, the tile grown.
+      // Step 3 — typed at the end: at least one line more (it read „four lines"), „Note extinse" moved down, the tile grown.
       await box(page, "subject").click();
       await page.keyboard.press("Control+End");
       await page.keyboard.type(TYPED);
       await expect(box(page, "subject")).toHaveValue(SUBJECT + TYPED);
-      await expectInOrder(page, 4);
+      await expectInOrder(page, (n) => n > editing);
       expect((await edges(labelOf(page, "notes"))).top).toBeGreaterThan(before.top);
 
       // Step 4 — the short one: one line, above „Note extinse".

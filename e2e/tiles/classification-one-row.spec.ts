@@ -87,6 +87,8 @@ test.describe("TC-TILES-09 — „Clasificare” îngustă: cele trei una sub al
       await cls.getByRole("combobox", { name: "Importanță", exact: true }).selectOption({ label: "Ridicată" });
       await expect(cls.getByRole("button", { name: "Salvează", exact: true })).toBeEnabled();
       await cls.getByRole("button", { name: "Salvează", exact: true }).click();
+      // 41.59: „Salvează" asks first — the three as they will stand, „Confirmă" / „Înapoi" (TC-TILES-16); „Confirmă".
+      await cls.getByRole("dialog").getByRole("button", { name: "Confirmă", exact: true }).click();
       await expect(cls.locator('[data-read-value="classification.importance"]')).toHaveText("Ridicată", { timeout: 15_000 });
       const again = await tile(page, personUrl);
       await expect(again.locator('[data-read-value="classification.importance"]')).toHaveText("Ridicată");

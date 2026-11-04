@@ -21,7 +21,10 @@ function expectOrdered(items: Row[], dir: "desc" | "asc"): void {
   expect(items.length).toBeGreaterThan(1);
   for (let i = 1; i < items.length; i++) {
     const [a, b] = [lastChange(items[i - 1]), lastChange(items[i])];
-    expect([i, dir === "desc" ? a >= b : a <= b]).toEqual([i, true]);
+    // 2026-11-04: auto-20261104T050800Z-full met the documents list out of order at its first pair, ascending, and the
+    // same spec passed alone — so a failure now names the two rows and their stamps, for the run that shows it again.
+    const pair = [items[i - 1], items[i]].map((r) => `${r.id} created ${r.createdAt} updated ${r.updatedAt}`).join(" | ");
+    expect([i, dir === "desc" ? a >= b : a <= b], `${dir} at ${i}: ${pair}`).toEqual([i, true]);
   }
 }
 

@@ -518,6 +518,9 @@ test.describe("TC-LAYOUT-05 — cele patru liste, câte un rând pe linie", () =
   // Step 17 (Slice 40.20): Adrian's short names in the band, in both languages, every column of each list — four at a
   // time, as „Câmpuri afișate" allows — with the field's whole label on hover. Only the band is read: no record's text.
   test("numele scurte ale coloanelor, în română și în engleză", async ({ page }) => {
+    // 2026-11-04: twenty list loads and reloads (four lists, two languages, their column groups) do not fit the
+    // default 30 s in a whole regression — auto-20261104T050800Z-full ran out of it; alone it passes.
+    test.slow();
     const fs = await import("node:fs");
     const msgs = {
       "ro-RO": JSON.parse(fs.readFileSync("messages/ro-RO.json", "utf8")),

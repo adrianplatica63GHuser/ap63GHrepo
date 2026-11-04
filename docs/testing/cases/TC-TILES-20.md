@@ -44,9 +44,9 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „TC-TILES-20 Unu"; „Toate" in „Părți afișate"; unticks „Interacțiuni" | Every tile but „Interacțiuni", each where #37.75 places it; „Clasificare" at the left edge, under „Adresă domiciliu" |
+| 1 | Opens „TC-TILES-20 Unu"; „Toate" in „Părți afișate"; unticks „Interacțiuni" | Every tile but „Interacțiuni", each where #37.75 places it; „Clasificare" right under the tiles above it in its columns — at 1920 under „Contact" since 41.35's 3-unit addresses (it was at the left edge, under „Adresă domiciliu") |
 | 2 | Presses on „Etichete și grupuri"'s left padding and drags until its top-left corner is one unit right of „Clasificare"'s left edge and 60 px under the lowest other tile in the columns it will span; releases | While dragging the outline is marked free. Released, „Etichete și grupuri" stays where the outline was: its left edge one unit right of „Clasificare"'s, its top about 60 px under „Clasificare" — under two tiles, „Clasificare" and „Adresă corespondență", the lower one — with that empty space above it. Every other box where it was in step 1 |
-| 3 | Opens „TC-TILES-20 Doi"; unticks „Clasificare" | „Etichete și grupuri" keeps its left edge, and stands under the tiles left in its columns („Adresă domiciliu" and „Adresă corespondență") with the same empty space above it as in step 2 — it rose by what „Clasificare" held |
+| 3 | Opens „TC-TILES-20 Doi"; unticks „Clasificare" | „Etichete și grupuri" keeps its left edge, and stands under the tiles left in its columns (at 1920 today „Contact" and „Adresă domiciliu") with the same empty space above it as in step 2 — it rose by what „Clasificare" held |
 | 4 | Ticks „Clasificare" again | „Clasificare" where step 1 had it, and „Etichete și grupuri" where step 2 left it, its left edge unchanged |
 | 5 | Reloads the page | „Etichete și grupuri" where step 4 had it |
 

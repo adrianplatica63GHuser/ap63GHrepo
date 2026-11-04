@@ -24,10 +24,16 @@ test.describe("TC-VL-07 — cheia în bula denumirii", () => {
     const name = page.locator("tbody tr [data-name-tip]").filter({ hasText: /^Contract de Vânzare$/ });
     await expect(name).toHaveCount(1);
     await expect(name.locator("xpath=ancestor::td[1]")).not.toHaveAttribute("title", /.+/);
-    await name.hover();
     const tip = page.getByRole("tooltip");
-    await expect(tip).toHaveCount(1);
-    await expect(tip).toHaveText("Contract de VânzareCONTRACT_VANZARE");
+    // 2026-11-04: hovered and read as one step, again if need be — in auto-20261104T050800Z-full the bubble opened and
+    // was gone before its text was read: the row re-rendered under the mouse (the usage counts arriving late). Alone it
+    // passed. It read: hover, then count 1, then the text.
+    await expect(async () => {
+      await page.mouse.move(5, 5);
+      await name.hover();
+      await expect(tip).toHaveCount(1, { timeout: 2_000 });
+      await expect(tip).toHaveText("Contract de VânzareCONTRACT_VANZARE", { timeout: 2_000 });
+    }).toPass({ timeout: 20_000 });
     const key = tip.locator("span").filter({ hasText: /^CONTRACT_VANZARE$/ });
     expect(await key.evaluate((el) => getComputedStyle(el).fontFamily)).toMatch(/mono|Consolas|Courier|Menlo/i);
 

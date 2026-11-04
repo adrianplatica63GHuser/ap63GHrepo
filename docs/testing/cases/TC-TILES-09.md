@@ -34,7 +34,7 @@ Nothing.
 |---|---|---|
 | 1 | Opens the natural person with `?tab=metadata` on its address | (41.10) „Clasificare" is 254 px wide (2 units of 119 px; 524, 4, before). It reads, its Proveniență „Manual (Adaugă nou)"; „Editează" opens Importanță, Relevanță and Proveniență as selects, one under another, each inside the tile |
 | 2 | Looks under the three selects | (41.10) One „Salvează", disabled, under Proveniență; „Renunță" closes the tile with nothing written |
-| 3 | „Editează", Importanță to „Ridicată", „Salvează" | (41.10) The tile reads „Ridicată" as text. Opened again, the person's Importanță reads „Ridicată" |
+| 3 | „Editează", Importanță to „Ridicată", „Salvează", then „Confirmă" in the confirmation (41.59) | (41.10) The tile reads „Ridicată" as text. Opened again, the person's Importanță reads „Ridicată" |
 | 4 | Opens the company, the property and the document the same way (`?tab=metadata`) | On each, steps 1 and 2 read the same |
 
 ## At the end — leaving things as they were found

@@ -101,13 +101,15 @@ test.describe("TC-TILES-20 — o fișă trasă sub două fișe urcă sub cea ră
       await page.reload();
       const region = (name: string) => page.getByRole("region", { name, exact: true });
 
-      // Step 1 — „Toate", „Interacțiuni" unticked: every tile where #37.75 puts it, „Clasificări" at the left edge.
+      // Step 1 — „Toate", „Interacțiuni" unticked: every tile where the packing puts it, „Clasificări" right under the
+      // tiles above it in its columns. 2026-11-04: not at the left edge any more — at 1920 since 41.35's 3-unit
+      // addresses it stands under „Contact", x 945 (measured: with the tree tile and without it alike). It read
+      // `expect(rule.classification.x).toBe(0)`.
       await pressTileButton(page, "Toate", { timeout: 30_000 });
       await expect(region("Etichete și grupuri")).toBeVisible({ timeout: 30_000 });
       await setTile(page, "Interacțiuni", false);
       await page.waitForTimeout(2500); // past the first layout's settling
       const rule = await boxes(page);
-      expect(rule.classification.x).toBe(0);
       expect(rule.classification.y).toBe(rightUnder(rule, "classification"));
 
       // Step 2 — one unit right of „Clasificări", 60 px under the lowest other tile in those columns: free; released, it stays
@@ -115,8 +117,12 @@ test.describe("TC-TILES-20 — o fișă trasă sub două fișe urcă sub cea ră
       const unit = (rule.identity.w + GAP) / 3;
       const x0 = rule.classification.x + unit;
       const x1 = x0 + rule.connections.w;
+      expect(x1, "the dragged tile fits in the row one unit right of „Clasificări”").toBeLessThanOrEqual(Math.max(...Object.values(rule).map((b) => b.x + b.w)));
       const spanned = Object.entries(rule).filter(([id, b]) => id !== "connections" && b.x < x1 && x0 < b.x + b.w);
-      expect(spanned.map(([id]) => id)).toEqual(expect.arrayContaining(["classification", "addresses.CORRESPONDENCE"]));
+      // Under two tiles at least, „Clasificări" one of them (it named „Adresă corespondență" as the other, when
+      // „Clasificări" stood at the left edge under it).
+      expect(spanned.map(([id]) => id)).toContain("classification");
+      expect(spanned.length).toBeGreaterThanOrEqual(2);
       const y0 = Math.max(...spanned.map(([, b]) => b.y + b.h)) + 60;
       const conn = region("Etichete și grupuri");
       const p = await padding(conn);

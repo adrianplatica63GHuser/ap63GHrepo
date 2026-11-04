@@ -42,12 +42,13 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
+| 0 | (41.68) Reads the colours below by screen | Since 41.68 a group's colour is its screen's: „Legături" is grey-blue on all four; a property's „Hartă", „Puncte de contur" and „Street View" green; a person's „Arbore de moștenire" and „Interacțiuni" purple; a document's „Pagini" blue. Where steps 1–4 say otherwise, this row wins |
 | 1 | Opens „TC-TILES-18 Teren", presses „Toate" | Four strips, in any order since 40.41: [Date cadastrale, Adresă] grey-blue · [Corelate] green · [Clasificări, Conexiuni] yellow · [Hartă, Puncte de contur, Street View] purple. Each tile in its group's colour |
 | 2 | Opens „TC-TILES-18 Ion", presses „Toate" | Four strips: [Identitate, Carte de identitate, Contact, Adrese] grey-blue · [Corelate] green · [Clasificări, Conexiuni] yellow · [Interacțiuni] purple. Each tile in its group's colour |
 | 3 | Opens „TC-TILES-18 SRL", presses „Toate" | Four strips: [Identitate, Persoane de contact, Adrese] grey-blue · [Corelate] green · [Clasificări, Conexiuni] yellow · [Interacțiuni] purple. Each tile in its group's colour |
 | 4 | Opens „TC-TILES-18 Act", presses „Toate" | Four strips: [Date generale, Preț și plată, Obiectul vânzării, Carte funciară, Declarații și garanții, Taxe și cheltuieli, Părți] grey-blue · [Corelate] green · [Clasificări, Conexiuni] yellow · [Pagini] purple. Each tile in its group's colour |
 | 5 | Steps 1–4 at 1920 px | The same |
-| 6 | „Persoane Fizice", „Previzualizare" on „TC-TILES-18 Ion"'s row | The preview is green |
+| 6 | „Persoane Fizice", „Previzualizare" on „TC-TILES-18 Ion"'s row | The preview is the card's grey-blue, dashed (41.68; it was green) |
 | 7 | On „TC-TILES-18 Ion", unticks „Interacțiuni" (#37.89), drags „Etichete și grupuri" by its empty space to under „Legături" | It stands there, still yellow |
 | 8 | (40.41) In steps 1–5, looks at the bar itself | Two rows: no group's boxes on both (unless the group alone is wider than a row — then split at a box, both halves in its colour); „Toate sus", „Toate" and „Implicit" the last thing on the second row; the first row the wider of the two. The strips stand in whatever order makes the rows come out even — steps 1–4's groups are read in any order |
 | 9 | (40.42) In steps 1–5, looks right of the bar | A small diagram: one plain rectangle per tile on screen (not the action bar), each in its tile's group colour, as tall as its tile in proportion — one scale for all, none under 3 px (40.52; it read „all the same height"); since 40.57 inside the „Panouri" panel, right of the bar's longer row. Where the bar leaves no room — a first row as wide as the panel — it is not drawn at all |

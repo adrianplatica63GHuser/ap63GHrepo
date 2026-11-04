@@ -39,9 +39,9 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens „TC-TILES-14 Teren"; ticks „Street View" and „Clasificare" | „Hartă", „Puncte de contur" and „Street View": fill `rgb(246, 240, 254)`, rim `rgb(218, 203, 238)`. „Identificare cadastrală" and „Adresă": fill `rgb(238, 244, 250)`, rim `rgb(198, 212, 232)`; „Clasificare" the yellow group's (#37.88): fill `rgb(248, 243, 229)`, rim `rgb(221, 211, 174)`. The map's frame keeps the rim `rgb(198, 212, 232)`; the corner table's body is white |
-| 2 | Ticks „Legături" and narrows the window to 1366 px | The column's tiles stand under the left tiles (above the action bar); „Hartă", „Puncte de contur" and „Street View" are still `rgb(246, 240, 254)`, „Legături" the green group's (#37.88; #38.15's stronger green), `rgb(221, 240, 225)` |
-| 3 | Widens the window to 1920 px and opens „TC-TILES-14 Act" | „Pagini": fill `rgb(246, 240, 254)`, rim `rgb(218, 203, 238)`. „Identificarea actului" and „Preț și plată": `rgb(238, 244, 250)`, rim `rgb(198, 212, 232)` |
+| 1 | Opens „TC-TILES-14 Teren"; ticks „Street View" and „Clasificare" | „Hartă", „Puncte de contur" and „Street View": fill `rgb(221, 240, 225)`, rim `rgb(175, 213, 183)` — green since 41.68 (they were purple). „Identificare cadastrală" and „Adresă": fill `rgb(238, 244, 250)`, rim `rgb(198, 212, 232)`; „Clasificare" the yellow group's (#37.88): fill `rgb(248, 243, 229)`, rim `rgb(221, 211, 174)`. The map's frame keeps the rim `rgb(198, 212, 232)`; the corner table's body is white |
+| 2 | Ticks „Legături" and narrows the window to 1366 px | The column stands beside „Identificare cadastrală", top level with the row — the row is 8 units of 119 px since 40.98 (it stood under the left tiles); „Hartă", „Puncte de contur" and „Street View" are still green, `rgb(221, 240, 225)`, „Legături" the card's grey-blue, `rgb(238, 244, 250)`, since 41.68 (it was the green group's, #37.88, #38.15) |
+| 3 | Widens the window to 1920 px and opens „TC-TILES-14 Act" | „Pagini": fill `rgb(223, 240, 251)`, rim `rgb(169, 207, 230)` — blue since 41.68 (it was purple). „Identificarea actului" and „Preț și plată": `rgb(238, 244, 250)`, rim `rgb(198, 212, 232)` |
 
 ## At the end — leaving things as they were found
 

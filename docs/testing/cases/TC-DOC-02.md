@@ -36,9 +36,9 @@ height). „Above" is the bottom edge of one element at or above the top edge of
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens `TC-DOC-02 Act` read-only (`?readonly=true`) | „Identificarea actului": „Subiect" on three lines, its box above the „Note extinse" label; the „Etichetă scurtă" box above the „Subiect" label; the „Note extinse" box inside the tile |
+| 1 | Opens `TC-DOC-02 Act` read-only (`?readonly=true`) | „Identificarea actului": „Subiect" on several lines — four on the 119-px unit since 40.98 (three on the 148-px one) —, its box above the „Note extinse" label; the „Etichetă scurtă" box above the „Subiect" label; the „Note extinse" box inside the tile |
 | 2 | Opens it for editing | The same |
-| 3 | Clicks at the end of „Subiect" and types `, cu cheltuielile suportate de cumpărător` | „Subiect" on four lines; its box still above the „Note extinse" label, which has moved down; the „Note extinse" box still inside the tile, which has grown |
+| 3 | Clicks at the end of „Subiect" and types `, cu cheltuielile de notariat, de intabulare și de transcriere în cartea funciară suportate în întregime de cumpărător` | „Subiect" on at least one line more than in step 2; its box still above the „Note extinse" label, which has moved down; the „Note extinse" box still inside the tile, which has grown |
 | 4 | Opens `TC-DOC-02 Act scurt` | „Subiect" on one line, its box above the „Note extinse" label |
 
 ## At the end — leaving things as they were found

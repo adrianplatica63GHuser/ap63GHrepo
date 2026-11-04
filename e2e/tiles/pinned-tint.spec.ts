@@ -19,28 +19,25 @@ import { showTile } from "../helpers/tiles";
 
 const MARK = `${E2E_MARKER}TILES-14`;
 const PAGE_FILE = path.join(process.cwd(), "e2e", "fixtures", "tc-e2e-pagina.png");
-const PINNED = "rgb(246, 240, 254) / rgb(218, 203, 238)";
+// Slice 41.68 switched the colours round to follow the kinds (tile-surface.ts SCREEN_HUES): a property's right tiles
+// are green, a document's „Pagini" blue, „Legături" the card. This spec read them purple, purple and green.
+const GREEN = "rgb(221, 240, 225) / rgb(175, 213, 183)";
+const BLUE = "rgb(223, 240, 251) / rgb(169, 207, 230)";
 const CARD = "rgb(238, 244, 250) / rgb(198, 212, 232)";
 // Slice #37.88: „Clasificări" is the yellow group's, „Corelate" the green one's (TC-TILES-18).
 const META = "rgb(248, 243, 229) / rgb(221, 211, 174)";
-const RELATED = "rgb(221, 240, 225) / rgb(175, 213, 183)"; // #38.15: one step stronger
 
 /** „Its colour": the computed background and top border colour. */
 const colour = (l: Locator) =>
   l.evaluate((e) => `${getComputedStyle(e).backgroundColor} / ${getComputedStyle(e).borderTopColor}`);
 
-/**
- * The column under the left tiles. It read the right area's top against the left area's bottom; since
- * #38.46 a wrapped column's tiles are boxes of the row, under the left tiles and above the action bar,
- * so it reads every column tile's top against the lowest left tile.
- */
-const columnUnderLeft = (page: Page) =>
+/** 2026-11-04: the column beside the cadastral tile — „Hartă" top level with the row, right of „Identificare cadastrală". */
+const columnBeside = (page: Page) =>
   page.evaluate(() => {
-    // 40.32: the right-hand tiles are boxes of the one area too — the left tiles are the others.
-    const lowest = Math.max(...[...document.querySelectorAll<HTMLElement>('[data-tile-area="left"] [data-packed-col]')]
-      .filter((e) => !e.classList.contains("order-last") && !e.closest('[data-tile-area="right"]')).map((e) => e.getBoundingClientRect().bottom));
-    const tiles = [...document.querySelectorAll<HTMLElement>('[data-tile-area="right"] [data-tile-slot] > *')].filter((t) => !t.hidden && t.getClientRects().length > 0);
-    return tiles.length > 0 && tiles.every((t) => t.getBoundingClientRect().top >= lowest - 1);
+    const row = document.querySelector<HTMLElement>("[data-tile-row]")?.getBoundingClientRect();
+    const map = document.querySelector<HTMLElement>('[data-panel="map"]')?.getBoundingClientRect();
+    const cad = document.querySelector<HTMLElement>('[data-panel="cadastral"]')?.getBoundingClientRect();
+    return !!row && !!map && !!cad && Math.abs(map.top - row.top) <= 1 && map.left >= cad.right - 1;
   });
 
 test.describe("TC-TILES-14 — fișele care nu se mută sunt mov deschis", () => {
@@ -65,25 +62,27 @@ test.describe("TC-TILES-14 — fișele care nu se mută sunt mov deschis", () =>
       await showTile(page, "Street View");
       const cls = await showTile(page, "Clasificare");
       const right = ["map", "corners", "street-view"].map((p) => page.locator(`[data-panel="${p}"]`));
-      for (const t of right) await expect.poll(() => colour(t), { timeout: 20_000 }).toBe(PINNED);
+      for (const t of right) await expect.poll(() => colour(t), { timeout: 20_000 }).toBe(GREEN);
       for (const t of [page.locator('[data-panel="cadastral"]'), page.locator('[data-panel="address"]')]) expect(await colour(t)).toBe(CARD);
       expect(await colour(cls)).toBe(META);
       expect(await page.locator('[data-panel="map"] [data-width-field="map"]').evaluate((e) => getComputedStyle(e).borderTopColor)).toBe("rgb(198, 212, 232)");
       expect(await page.locator('[data-panel="corners"] table').evaluate((t) => getComputedStyle(t.parentElement!).backgroundColor)).toBe("rgb(255, 255, 255)");
 
-      // Step 2 — „Corelate", 1366: the column under the left area, still purple.
+      // Step 2 — „Corelate", 1366: still green (41.68; it read purple). 2026-11-04: the column stands BESIDE
+      // „Identificare cadastrală", top level with the row — at 1366 the row is 8 units of 119 px since 40.98, room for
+      // the 4-unit cadastral tile and the 4-unit column (TC-TILES-07 step 6). It read `columnUnderLeft(page)` true.
       const related = await showTile(page, "Legături");
       await page.setViewportSize({ width: 1366, height: 1080 });
-      await expect.poll(() => columnUnderLeft(page), { timeout: 20_000 }).toBe(true);
-      for (const t of right) expect(await colour(t)).toBe(PINNED);
-      expect(await colour(related)).toBe(RELATED);
+      await expect.poll(() => columnBeside(page), { timeout: 20_000 }).toBe(true);
+      for (const t of right) expect(await colour(t)).toBe(GREEN);
+      expect(await colour(related)).toBe(CARD);
 
-      // Step 3 — the document at 1920: „Pagini" purple, „Date generale" and „Preț și taxe" the card's.
+      // Step 3 — the document at 1920: „Pagini" blue (41.68; it read purple), „Date generale" and „Preț și taxe" the card's.
       await page.setViewportSize({ width: 1920, height: 1080 });
       await page.goto(`/documents/${docId}`);
       const pages = page.getByRole("region", { name: "Pagini", exact: true });
       await expect(pages).toBeVisible({ timeout: 30_000 });
-      await expect.poll(() => colour(pages), { timeout: 20_000 }).toBe(PINNED);
+      await expect.poll(() => colour(pages), { timeout: 20_000 }).toBe(BLUE);
       expect(await colour(page.locator('[data-panel="general"]'))).toBe(CARD);
       expect(await colour(page.getByRole("region", { name: "Preț și plată", exact: true }))).toBe(CARD);
     } finally {
