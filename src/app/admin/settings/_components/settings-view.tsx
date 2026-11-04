@@ -6,9 +6,20 @@ import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { TimeFrameRow } from "@/lib/time-frames/config";
-import { formatSeconds, isTypedInSeconds, parseSecondsDraft, parseTimeFrameDraft, secondsRangeMs } from "@/lib/time-frames/config";
+import {
+  formatHundredths,
+  formatSeconds,
+  isTypedInHundredths,
+  isTypedInSeconds,
+  MAP_SEARCH_FLIGHT_KEY,
+  parseHundredthsDraft,
+  parseSecondsDraft,
+  parseTimeFrameDraft,
+  secondsRangeMs,
+} from "@/lib/time-frames/config";
 import { forgetMakeRoomDelay } from "@/components/tiles/make-room-delay";
 import { forgetExpandDurations } from "@/components/maps/expand-map-durations";
+import { forgetSearchFlight } from "@/components/maps/search-flight-settings";
 import { TIME_FRAME_GROUPS, exampleValue } from "@/lib/time-frames/groups";
 import type { SystemStatus } from "@/lib/settings/system-status";
 import { useLocale } from "next-intl";
@@ -79,6 +90,7 @@ function TimeFramesPanel() {
 
   // Slice 39.92: a row stored in ms (the make-room delay) is typed and shown in seconds, with the locale's separator.
   function shown(row: TimeFrameRow): string {
+    if (isTypedInHundredths(row.unit)) return formatHundredths(row.value, locale); // 41.76: the coefficient a
     return isTypedInSeconds(row.unit) ? formatSeconds(row.value, locale) : String(row.value);
   }
 
@@ -106,13 +118,30 @@ function TimeFramesPanel() {
   async function handleSave() {
     const settings: { key: string; value: number }[] = [];
     for (const [key, raw] of Object.entries(drafts)) {
+      // Slice 41.76: a coefficient with two decimals — „1,25" — saved in hundredths, with its own error.
+      if (isTypedInHundredths(rows?.find((r) => r.key === key)?.unit ?? "days")) {
+        const v = parseHundredthsDraft(raw);
+        if (v === null) {
+          setSaveError(t("timeFrames.validationErrorHundredths"));
+          return;
+        }
+        settings.push({ key, value: v });
+        continue;
+      }
       // Slice 39.92: seconds with decimals — „1,5" or „1.5" — saved as ms, in their own range and with their own error.
       if (isTypedInSeconds(rows?.find((r) => r.key === key)?.unit ?? "days")) {
         // Slice 41.75: each key its own range — „Hartă extinsă"'s parts from 0, the make-room delay from 0,2 s.
         const range = secondsRangeMs(key);
         const ms = parseSecondsDraft(raw, range);
         if (ms === null) {
-          setSaveError(range.min === 0 ? t("timeFrames.validationErrorSecondsFromZero") : t("timeFrames.validationErrorSeconds"));
+          // 41.76: the search flight (0–15 s) has its own sentence too.
+          setSaveError(
+            key === MAP_SEARCH_FLIGHT_KEY
+              ? t("timeFrames.validationErrorSecondsFlight")
+              : range.min === 0
+                ? t("timeFrames.validationErrorSecondsFromZero")
+                : t("timeFrames.validationErrorSeconds"),
+          );
           return;
         }
         settings.push({ key, value: ms });
@@ -164,6 +193,8 @@ function TimeFramesPanel() {
       forgetMakeRoomDelay();
       // Slice 41.75: and „Hartă extinsă"'s two parts.
       forgetExpandDurations();
+      // Slice 41.76: and the search flight's length and arc.
+      forgetSearchFlight();
       setDrafts({});
       setSaved(true);
     } catch {
@@ -203,10 +234,15 @@ function TimeFramesPanel() {
               const val   = draftValue(row);
               const isChanged = row.key in drafts && drafts[row.key] !== shown(row);
               const seconds = isTypedInSeconds(row.unit);
-              // The example's number: the draft while it reads, the saved value otherwise — in seconds for the delay.
-              const count = seconds
-                ? exampleValue(row.key in drafts ? drafts[row.key] : undefined, row.value, (raw) => parseSecondsDraft(raw, secondsRangeMs(row.key))) / 1000
-                : exampleValue(row.key in drafts ? drafts[row.key] : undefined, row.value, parseTimeFrameDraft);
+              const hundredths = isTypedInHundredths(row.unit);
+              // The example's number: the draft while it reads, the saved value otherwise — in seconds for the delay,
+              // the coefficient itself for the search flight's arc (41.76).
+              const draft = row.key in drafts ? drafts[row.key] : undefined;
+              const count = hundredths
+                ? exampleValue(draft, row.value, parseHundredthsDraft) / 100
+                : seconds
+                  ? exampleValue(draft, row.value, (raw) => parseSecondsDraft(raw, secondsRangeMs(row.key))) / 1000
+                  : exampleValue(draft, row.value, parseTimeFrameDraft);
               const unitKey = seconds ? "seconds" : row.unit;
 
               return (
@@ -220,7 +256,7 @@ function TimeFramesPanel() {
                     <input
                       id={`time-frame-${row.key}`}
                       {...screenBox("timeFrameDays")}
-                      {...(seconds ? { type: "text", inputMode: "decimal" as const } : { type: "number", min: 1, max: 3650 })}
+                      {...(seconds || hundredths ? { type: "text", inputMode: "decimal" as const } : { type: "number", min: 1, max: 3650 })}
                       value={val}
                       onChange={(e) => handleChange(row.key, e.target.value)}
                       className={[

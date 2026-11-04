@@ -3,8 +3,12 @@
 // Pure types and utilities for the time_frame_setting feature (Slice #20.19).
 // Safe to import from both client and server modules.
 
-/** Slice 39.92: "milliseconds" — the make-room delay, typed and shown in seconds with decimals. */
-export type TimeFrameUnit = "days" | "hours" | "minutes" | "months" | "milliseconds";
+/**
+ * Slice 39.92: "milliseconds" — the make-room delay, typed and shown in seconds with decimals.
+ * Slice 41.76: "hundredths" — a number that is not a time, the search flight's coefficient a, typed and shown with two
+ * decimals and stored ×100 so the column stays an integer (1,00 is 100).
+ */
+export type TimeFrameUnit = "days" | "hours" | "minutes" | "months" | "milliseconds" | "hundredths";
 
 export interface TimeFrameRow {
   key: string;
@@ -33,6 +37,9 @@ export const TIME_FRAME_KEYS = [
   // Slice 41.75: „Hartă extinsă" opens in two animated parts, each its own length.
   "map_expand_grow",
   "map_expand_zoom_out",
+  // Slice 41.76: „Caută pe hartă"'s flight — its length and the parabola's coefficient a.
+  "map_search_flight",
+  "map_search_arc",
 ] as const;
 
 export type TimeFrameKey = (typeof TIME_FRAME_KEYS)[number];
@@ -51,13 +58,16 @@ export function toMs(value: number, unit: TimeFrameUnit): number {
     case "days":    return value * 24 * 60 * 60 * 1000;
     case "months":  return value * 30 * 24 * 60 * 60 * 1000;
     case "milliseconds": return value;
+    // Not a time: a coefficient's hundredths have no length. Read with `getHundredths`.
+    case "hundredths": return 0;
   }
 }
 
 /**
  * Fallback values used when the DB is unreachable or a key is missing.
  * Must match the seeded defaults in migration_063 — and migration_117 for the
- * make-room delay (Slice 39.92), migration_127 for „Hartă extinsă"'s two parts (Slice 41.75).
+ * make-room delay (Slice 39.92), migration_127 for „Hartă extinsă"'s two parts (Slice 41.75), migration_128 for the
+ * search flight's length and arc (Slice 41.76).
  */
 export const TIME_FRAME_DEFAULTS: Record<TimeFrameKey, { value: number; unit: TimeFrameUnit }> = {
   dashboard_recent_days:    { value: 7,  unit: "days" },
@@ -73,6 +83,8 @@ export const TIME_FRAME_DEFAULTS: Record<TimeFrameKey, { value: number; unit: Ti
   tile_make_room_delay:     { value: 1000, unit: "milliseconds" },
   map_expand_grow:          { value: 3000, unit: "milliseconds" },
   map_expand_zoom_out:      { value: 3000, unit: "milliseconds" },
+  map_search_flight:        { value: 4000, unit: "milliseconds" },
+  map_search_arc:           { value: 100,  unit: "hundredths" },
 };
 
 /** Read a numeric day-value from a TimeFrameMap (falls back to default). */
@@ -152,8 +164,16 @@ export function isTypedInSeconds(unit: TimeFrameUnit): boolean {
  */
 export const MAP_EXPAND_KEYS = ["map_expand_grow", "map_expand_zoom_out"] as const satisfies readonly TimeFrameKey[];
 
-/** The range a key typed in seconds accepts, in ms: 0,2 s – 10 s for the make-room delay, 0 – 10 s for the map's parts. */
+/** Slice 41.76: the search flight's length — 0 (a jump) to 15 s. */
+export const MAP_SEARCH_FLIGHT_KEY = "map_search_flight" satisfies TimeFrameKey;
+export const MAP_SEARCH_FLIGHT_MAX_MS = 15_000;
+
+/**
+ * The range a key typed in seconds accepts, in ms: 0,2 s – 10 s for the make-room delay, 0 – 10 s for „Hartă extinsă"'s
+ * parts, 0 – 15 s for the search flight.
+ */
 export function secondsRangeMs(key: string): { min: number; max: number } {
+  if (key === MAP_SEARCH_FLIGHT_KEY) return { min: 0, max: MAP_SEARCH_FLIGHT_MAX_MS };
   return (MAP_EXPAND_KEYS as readonly string[]).includes(key) ? { min: 0, max: SECONDS_MAX_MS } : { min: SECONDS_MIN_MS, max: SECONDS_MAX_MS };
 }
 
@@ -173,4 +193,34 @@ export function parseSecondsDraft(raw: string, range: { min: number; max: number
 /** A value in ms as the editor shows it: seconds, one or two decimals, the locale's separator („1,5" / „1.5"). */
 export function formatSeconds(ms: number, locale: string): string {
   return new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 2, useGrouping: false }).format(ms / 1000);
+}
+
+// ---------------------------------------------------------------------------
+// Hundredths — a coefficient with two decimals                    (Slice 41.76)
+// ---------------------------------------------------------------------------
+
+/** The search flight's parabola coefficient a, stored in hundredths: 0,00 to 3,00. */
+export const MAP_SEARCH_ARC_KEY = "map_search_arc" satisfies TimeFrameKey;
+export const HUNDREDTHS_MIN = 0;
+export const HUNDREDTHS_MAX = 300;
+
+/** Is a row of this unit typed and shown as a number with two decimals? */
+export function isTypedInHundredths(unit: TimeFrameUnit): boolean {
+  return unit === "hundredths";
+}
+
+/**
+ * Read a coefficient typed with a comma or a dot — „1,5", „1.25", „2" — as hundredths; `null` if it is not one, or
+ * outside 0,00 – 3,00. As with seconds, a sign, „1e3", a third decimal or a space inside are refused.
+ */
+export function parseHundredthsDraft(raw: string): number | null {
+  const trimmed = raw.trim();
+  if (!/^\d(?:[.,]\d{1,2})?$/.test(trimmed)) return null;
+  const v = Math.round(Number(trimmed.replace(",", ".")) * 100);
+  return v >= HUNDREDTHS_MIN && v <= HUNDREDTHS_MAX ? v : null;
+}
+
+/** Hundredths as the editor shows them: two decimals, the locale's separator („1,00" / „1.00"). */
+export function formatHundredths(v: number, locale: string): string {
+  return new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false }).format(v / 100);
 }

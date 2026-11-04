@@ -7,7 +7,17 @@ import { NextResponse } from "next/server";
 import { getAllTimeFrameRows, upsertTimeFrameSettings } from "@/lib/time-frames/queries";
 import { z } from "zod/v4";
 import { requireFullAccess } from "@/lib/auth/current-role";
-import { MAKE_ROOM_DELAY_KEY, MAP_EXPAND_KEYS, SECONDS_MAX_MS, SECONDS_MIN_MS } from "@/lib/time-frames/config";
+import {
+  HUNDREDTHS_MAX,
+  HUNDREDTHS_MIN,
+  MAKE_ROOM_DELAY_KEY,
+  MAP_EXPAND_KEYS,
+  MAP_SEARCH_ARC_KEY,
+  MAP_SEARCH_FLIGHT_KEY,
+  MAP_SEARCH_FLIGHT_MAX_MS,
+  SECONDS_MAX_MS,
+  SECONDS_MIN_MS,
+} from "@/lib/time-frames/config";
 
 // ---------------------------------------------------------------------------
 // GET
@@ -29,7 +39,8 @@ export async function GET() {
 
 // Slice 39.92: the make-room delay is stored in ms and has its own range (0,2 s – 10 s); every other key keeps 1..3650.
 // Slice 41.75: „Hartă extinsă"'s two parts are stored in ms too, from 0 (the part skipped) to 10 s.
-const IN_MS: readonly string[] = [MAKE_ROOM_DELAY_KEY, ...MAP_EXPAND_KEYS];
+// Slice 41.76: the search flight in ms, 0..15 s; its coefficient a in hundredths, 0..300.
+const IN_MS: readonly string[] = [MAKE_ROOM_DELAY_KEY, ...MAP_EXPAND_KEYS, MAP_SEARCH_FLIGHT_KEY, MAP_SEARCH_ARC_KEY];
 const PatchSchema = z.object({
   settings: z.array(
     z.union([
@@ -40,6 +51,14 @@ const PatchSchema = z.object({
       z.object({
         key:   z.enum(MAP_EXPAND_KEYS),
         value: z.number().int().min(0).max(SECONDS_MAX_MS),
+      }),
+      z.object({
+        key:   z.literal(MAP_SEARCH_FLIGHT_KEY),
+        value: z.number().int().min(0).max(MAP_SEARCH_FLIGHT_MAX_MS),
+      }),
+      z.object({
+        key:   z.literal(MAP_SEARCH_ARC_KEY),
+        value: z.number().int().min(HUNDREDTHS_MIN).max(HUNDREDTHS_MAX),
       }),
       z.object({
         key:   z.string().min(1).refine((k) => !IN_MS.includes(k)),

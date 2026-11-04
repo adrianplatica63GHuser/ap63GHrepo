@@ -4319,12 +4319,15 @@
       "validationError": "All values must be whole numbers between 1 and 3650.",
       "validationErrorSeconds": "The hold time over another tile is written in seconds, with at most two decimals, between 0.2 and 10 — for example 1.5.",
       "validationErrorSecondsFromZero": "„Expand map” is written in seconds, with at most two decimals, between 0 and 10 — for example 3 or 2.5; 0 skips that part.",
+      "validationErrorSecondsFlight": "The flight time is written in seconds, with at most two decimals, between 0 and 15 — for example 4 or 2.5; 0 jumps straight to the place found.",
+      "validationErrorHundredths": "The coefficient a is written with at most two decimals, between 0 and 3 — for example 1 or 1.25.",
       "unit": {
         "days": "days",
         "hours": "hours",
         "minutes": "minutes",
         "months": "months",
-        "seconds": "seconds"
+        "seconds": "seconds",
+        "hundredths": "coefficient"
       },
       "groups": {
         "dashboard": "Dashboard",
@@ -4339,7 +4342,8 @@
         "hours": "{count, plural, one {one hour} other {# hours}}",
         "minutes": "{count, plural, one {one minute} other {# minutes}}",
         "months": "{count, plural, one {one month} other {# months}}",
-        "seconds": "{count, plural, one {one second} other {# seconds}}"
+        "seconds": "{count, plural, one {one second} other {# seconds}}",
+        "hundredths": "{count}"
       },
       "examples": {
         "dashboard_recent_days": "On the Dashboard, «Recent» counts what was added or changed in the last {duration}.",
@@ -4354,7 +4358,9 @@
         "recency_badge_window": "{duration} after the last change, the «New!» badge goes.",
         "tile_make_room_delay": "A tile dragged over another and held there for {duration} makes that one slide down to make room.",
         "map_expand_grow": "With „Expand map”, the „Map” tile grows into the expanded map in {duration}, while the property travels to the middle.",
-        "map_expand_zoom_out": "Then the expanded map zooms out in {duration}, until the property is about a tenth of the map's height."
+        "map_expand_zoom_out": "Then the expanded map zooms out in {duration}, until the property is about a tenth of the map's height.",
+        "map_search_flight": "A place found with „Search the map” is reached after a flight of {duration}; with 0 the map jumps straight there.",
+        "map_search_arc": "With a = {duration}, the flight's top is {duration} × the height from which both places show; with 0 it glides straight, without rising."
       },
       "example": "Example:"
     },

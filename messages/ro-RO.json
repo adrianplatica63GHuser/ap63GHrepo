@@ -4319,12 +4319,15 @@
       "validationError": "Toate valorile trebuie să fie numere întregi între 1 și 3650.",
       "validationErrorSeconds": "Timpul de ținere peste altă fișă se scrie în secunde, cu cel mult două zecimale, între 0,2 și 10 — de exemplu 1,5.",
       "validationErrorSecondsFromZero": "„Hartă extinsă” se scrie în secunde, cu cel mult două zecimale, între 0 și 10 — de exemplu 3 sau 2,5; 0 sare peste acea parte.",
+      "validationErrorSecondsFlight": "Durata zborului se scrie în secunde, cu cel mult două zecimale, între 0 și 15 — de exemplu 4 sau 2,5; 0 sare direct la locul găsit.",
+      "validationErrorHundredths": "Coeficientul a se scrie cu cel mult două zecimale, între 0 și 3 — de exemplu 1 sau 1,25.",
       "unit": {
         "days": "zile",
         "hours": "ore",
         "minutes": "minute",
         "months": "luni",
-        "seconds": "secunde"
+        "seconds": "secunde",
+        "hundredths": "coeficient"
       },
       "groups": {
         "dashboard": "Tablou de bord",
@@ -4339,7 +4342,8 @@
         "hours": "{count, plural, one {o oră} few {# ore} other {# de ore}}",
         "minutes": "{count, plural, one {un minut} few {# minute} other {# de minute}}",
         "months": "{count, plural, one {o lună} few {# luni} other {# de luni}}",
-        "seconds": "{count, plural, one {o secundă} few {# secunde} other {# de secunde}}"
+        "seconds": "{count, plural, one {o secundă} few {# secunde} other {# de secunde}}",
+        "hundredths": "{count}"
       },
       "examples": {
         "dashboard_recent_days": "Pe Tablou de bord, «Recente» numără ce s-a adăugat sau schimbat în ultimele {duration}.",
@@ -4354,7 +4358,9 @@
         "recency_badge_window": "La {duration} după ultima schimbare, insigna «Nou!» dispare.",
         "tile_make_room_delay": "O fișă trasă peste alta și ținută acolo {duration} o face pe aceea să alunece în jos, ca să-i facă loc.",
         "map_expand_grow": "La „Hartă extinsă”, fișa „Hartă” se mărește până la harta extinsă în {duration}, iar proprietatea ajunge la mijloc.",
-        "map_expand_zoom_out": "Apoi harta extinsă se depărtează în {duration}, până când proprietatea are cam o zecime din înălțimea hărții."
+        "map_expand_zoom_out": "Apoi harta extinsă se depărtează în {duration}, până când proprietatea are cam o zecime din înălțimea hărții.",
+        "map_search_flight": "Un loc găsit cu „Caută pe hartă” e atins după un zbor de {duration}; cu 0, harta sare direct acolo.",
+        "map_search_arc": "Cu a = {duration}, vârful zborului e la {duration} × înălțimea de la care se văd ambele locuri; cu 0, zborul alunecă drept, fără să urce."
       },
       "example": "Exemplu:"
     },

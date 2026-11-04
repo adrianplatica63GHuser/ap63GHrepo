@@ -17,6 +17,14 @@
  * height, whichever binds first (`zoomForBoxFraction`); a geocoded point → zoom 18 (`POINT_ZOOM`); a geocoded area →
  * its viewport filling the map. The flight (Ask first 3): 4 s, ease-in-out, centre and zoom together, zooming out
  * first when the two ends do not both fit in the view (`flightPeak`, `cameraAt`).
+ *
+ * Slice 41.76 (Adrian: „the observer of the map moves on a parabola up from the current location (zoom out) and towards
+ * the new location and then zooms in to the new location … the duration of the transition and “a” coefficient of the
+ * parabola"): the zoom is no longer a V down to `flightPeak` and back. The observer's height, in zoom levels, is the
+ * straight line from the start's to the end's plus a · R · 4x(1 − x) — x the share of the way, eased; R the climb that
+ * brings both places into one view, at least one level (`flightRise`). a = 0 is a straight glide, a = 1 tops out where
+ * both places just show, a = 2 climbs twice that. Its length and a are settings (`map_search_flight`,
+ * `map_search_arc`, „Setări" → „Hărți").
  */
 
 export type LatLng = { lat: number; lng: number };
@@ -33,8 +41,12 @@ export type MapSearchHit = { kind: "property" | "tarla"; id: string; label: stri
 /** What the text is, before anything is looked up. */
 export type MapSearchQuery = { kind: "empty" } | { kind: "code"; code: string } | { kind: "text"; text: string };
 
-/** The flight's length, Adrian's „over a 4 seconds animation". */
+/** The flight's length, Adrian's „over a 4 seconds animation" — since 41.76 the default of `map_search_flight`. */
 export const FLIGHT_MS = 4000;
+/** 41.76: the parabola's coefficient a, by default — `map_search_arc`, stored in hundredths (100). */
+export const FLIGHT_ARC = 1;
+/** 41.76: the least the observer rises, in zoom levels, so a short hop still climbs. */
+export const MIN_RISE = 1;
 /** A geocoded street address: centred at this zoom (Ask first 2). */
 export const POINT_ZOOM = 18;
 /** The share of the map's width or height a found record's box takes on landing. */
@@ -214,28 +226,35 @@ export function flightPeak(from: Camera, to: Camera, widthPx: number, heightPx: 
   return Math.min(from.zoom, to.zoom, seeBoth);
 }
 
-/** The flight's length: none under prefers-reduced-motion — the camera jumps. */
-export function flightMs(reducedMotion: boolean): number {
-  return reducedMotion ? 0 : FLIGHT_MS;
+/** The flight's length: the setting's (4 s by default), none under prefers-reduced-motion — the camera jumps. */
+export function flightMs(reducedMotion: boolean, durationMs = FLIGHT_MS): number {
+  return reducedMotion ? 0 : Math.max(0, durationMs);
 }
 
 const lerp = (a: number, b: number, s: number) => a + (b - a) * s;
 
 /**
- * The camera `tMs` into a flight from `from` to `to` lasting `durationMs`: the centre moves in the projection, eased;
- * the zoom goes down to `peak` and back up to the target's in the same eased time — or straight across when there is
- * no dip. At 0 the start, at the end (and after) the target exactly; a flight of 0 ms is the target at once.
+ * 41.76: R — how many zoom levels the observer must climb above the lower end for both places to show (`flightPeak`),
+ * and at least `MIN_RISE`, so a short hop still rises (Ask first 1).
  */
-export function cameraAt(tMs: number, from: Camera, to: Camera, peak: number, durationMs = FLIGHT_MS): Camera {
+export function flightRise(from: Camera, to: Camera, peak: number): number {
+  return Math.max(MIN_RISE, Math.min(from.zoom, to.zoom) - peak);
+}
+
+/**
+ * The camera `tMs` into the flight. The centre eased in Mercator, as 41.70 did; the zoom on the parabola (41.76): the
+ * straight line from the start's zoom to the end's, less a · R · 4x(1 − x) — x the share of the way, eased — so the
+ * top, half way, is a · R above the line. Never below zoom 0.
+ */
+export function cameraAt(tMs: number, from: Camera, to: Camera, peak: number, durationMs = FLIGHT_MS, arc = FLIGHT_ARC): Camera {
   if (durationMs <= 0 || tMs >= durationMs) return to;
-  const e = easeInOut(Math.max(0, tMs) / durationMs);
+  const x = easeInOut(Math.max(0, tMs) / durationMs);
   const center = {
-    lat: latOfMercatorY(lerp(mercatorY(from.center.lat), mercatorY(to.center.lat), e)),
-    lng: lerp(from.center.lng, to.center.lng, e),
+    lat: latOfMercatorY(lerp(mercatorY(from.center.lat), mercatorY(to.center.lat), x)),
+    lng: lerp(from.center.lng, to.center.lng, x),
   };
-  const dips = peak < Math.min(from.zoom, to.zoom) - 0.01;
-  const zoom = !dips ? lerp(from.zoom, to.zoom, e) : e < 0.5 ? lerp(from.zoom, peak, e * 2) : lerp(peak, to.zoom, (e - 0.5) * 2);
-  return { center, zoom };
+  const rise = Math.max(0, arc) * flightRise(from, to, peak) * 4 * x * (1 - x);
+  return { center, zoom: Math.max(0, lerp(from.zoom, to.zoom, x) - rise) };
 }
 
 /** „Căutare globală" with the typed text, which it reads from `?search=` (global-search-view.tsx). */

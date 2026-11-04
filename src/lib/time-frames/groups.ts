@@ -25,7 +25,8 @@ export const TIME_FRAME_GROUPS = [
   // Slice 39.92: the make-room delay, under the screen's own word for a tile.
   { id: "tiles", keys: ["tile_make_room_delay"] },
   // Slice 41.75: „Hărți", last — „Hartă extinsă"'s two animated parts.
-  { id: "maps", keys: ["map_expand_grow", "map_expand_zoom_out"] },
+  // Slice 41.76: and „Caută pe hartă"'s flight — its length and its arc.
+  { id: "maps", keys: ["map_expand_grow", "map_expand_zoom_out", "map_search_flight", "map_search_arc"] },
 ] as const satisfies readonly { id: string; keys: readonly TimeFrameKey[] }[];
 
 export type TimeFrameGroupId = (typeof TIME_FRAME_GROUPS)[number]["id"];

@@ -92,6 +92,7 @@ import {
   type Camera,
   type MapSearchHit,
 } from "@/lib/geo/map-search";
+import { loadSearchFlight, searchFlightSetting } from "@/components/maps/search-flight-settings";
 import { GROUPS_FROM_MAP_PATH, forgetNewGroup, readMapSelection, readNewGroup, writeMapSelection } from "@/lib/groups/map-selection";
 import { MAX_GROUPS_PER_PROPERTY } from "@/lib/groups/validation";
 
@@ -1057,7 +1058,12 @@ export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean 
   }, []);
   useEffect(() => () => stopFlight(null), [stopFlight]);
 
-  /** Flies the camera to `to` over 4 s (a jump under prefers-reduced-motion); a drag or a wheel stops it. */
+  // Slice 41.76: the flight's length and its arc, from „Setări" — read once per page load.
+  useEffect(() => {
+    void loadSearchFlight();
+  }, []);
+
+  /** Flies the camera to `to` on the parabola, over the set length (a jump under prefers-reduced-motion); a drag or a wheel stops it. */
   const flyTo = useCallback(
     (to: Camera, onLanded?: () => void) => {
       const map = mapRef.current;
@@ -1067,7 +1073,8 @@ export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean 
       const c = map.getCenter();
       const z = map.getZoom();
       const reduced = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
-      const duration = flightMs(reduced);
+      const { durationMs, arc } = searchFlightSetting();
+      const duration = flightMs(reduced, durationMs);
       const land = () => {
         map.moveCamera(to);
         setSearchFlight("landed");
@@ -1103,12 +1110,12 @@ export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean 
           finish();
           return;
         }
-        map.moveCamera(cameraAt(t, from, to, peak, duration));
+        map.moveCamera(cameraAt(t, from, to, peak, duration, arc));
         if (flightRef.current) flightRef.current.raf = requestAnimationFrame(tick);
       };
       setSearchFlight("flying");
       // A page that gets no animation frames (a background tab; measured in the desktop app's browser pane, where none
-      // came at all) still lands: at 4 s a timer puts the camera on the target, as the last frame would.
+      // came at all) still lands: at the flight's length (+100 ms) a timer puts the camera on the target, as the last frame would.
       flightRef.current = { raf: requestAnimationFrame(tick), timer: window.setTimeout(finish, duration + 100), stop };
     },
     [stopFlight],
