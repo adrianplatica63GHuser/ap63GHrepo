@@ -49,7 +49,7 @@ async function dots(page: Page, scope: string): Promise<{ color: string; width: 
 }
 
 test.describe("TC-MAP-09 — harta unei proprietăți și „Hartă extinsă”", () => {
-  test("colțuri mici verzi pe fișă; „Hartă extinsă” cu vecinul, lotul în roșu, la mijloc, la aceeași scară; Esc", async ({ page }) => {
+  test("colțuri mici verzi pe fișă; „Hartă extinsă” cu vecinul, lotul în roșu, la mijloc, la aceeași scară; Esc și „Restrânge” înapoi în fișă", async ({ page }) => {
     test.slow();
     await removeLeftovers(page.request, MARK);
     await page.setViewportSize({ width: 1366, height: 900 });
@@ -105,11 +105,40 @@ test.describe("TC-MAP-09 — harta unei proprietăți și „Hartă extinsă”"
       for (const c of NEIGHBOUR)
         await expect(theater(page).locator(`[data-corner-marker="${c.lat},${c.lon}"]`)).toHaveCount(1, { timeout: 15_000 });
 
-      // Step 3 — Esc: the full-screen map is gone; the form as it was, the tile's corners still small green dots (41.69).
+      // Step 3 — Esc (41.77: the way back — the map not moved, so no return; the zoom back to the tile's, then the panel
+      // into the tile, 3 s each): the full-screen map is gone; the form as it was, the tile where it looked before, its
+      // corners still small green dots (41.69), and focus on the tile's „Hartă extinsă".
+      const expandButton = page.locator('[data-tile="map"]').getByRole("button", { name: "Hartă extinsă", exact: true });
       await page.keyboard.press("Escape");
-      await expect(theater(page)).toHaveCount(0);
+      await expect(theater(page)).toHaveAttribute("data-collapse", "running");
+      await expect(theater(page)).toHaveAttribute("data-collapse-return", "skipped");
+      await expect(theater(page)).toHaveCount(0, { timeout: 30_000 });
       await expect(page.getByRole("heading", { name: NICKNAME })).toBeVisible();
       expect(await dots(page, '[data-tile="map"]')).toEqual(LOT.map(() => ({ color: GREEN, width: 4 })));
+      await expect(tileMap(page)).toHaveAttribute("data-map-center", CENTER);
+      await expect(tileMap(page)).toHaveAttribute("data-map-zoom", zoom);
+      await expect(expandButton).toBeFocused();
+
+      // Step 4 — „Hartă extinsă" again; once open, the map dragged and zoomed away from the lot.
+      await expandButton.click();
+      await expect(theater(page)).toHaveAttribute("data-expand", "done", { timeout: 30_000 });
+      const box = (await big.boundingBox())!;
+      // Grabbed at a quarter of the width, clear of the lot and its corners in the middle.
+      await page.mouse.move(box.x + box.width / 4, box.y + box.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(box.x + box.width / 4 + 300, box.y + box.height / 2 + 120, { steps: 8 });
+      await page.mouse.up();
+      await page.mouse.wheel(0, 400);
+      await expect(big).not.toHaveAttribute("data-map-center", CENTER, { timeout: 15_000 });
+
+      // Step 5 — „Restrânge": first the return (41.76's flight, 4 s by default) to where the opening ended, then the two
+      // parts in reverse. The overlay is gone; the tile as before the opening; focus on its „Hartă extinsă".
+      await theater(page).getByRole("button", { name: "Restrânge", exact: true }).click();
+      await expect(theater(page)).toHaveAttribute("data-collapse-return", "flies");
+      await expect(theater(page)).toHaveCount(0, { timeout: 40_000 });
+      await expect(tileMap(page)).toHaveAttribute("data-map-center", CENTER);
+      await expect(tileMap(page)).toHaveAttribute("data-map-zoom", zoom);
+      await expect(expandButton).toBeFocused();
       expect(problems, "console errors and page errors during the run").toEqual([]);
     } finally {
       for (const id of ids) await removeRecord(page.request, "property", id);

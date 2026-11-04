@@ -5,20 +5,30 @@
  */
 import {
   EXPAND_DEFAULT_MS,
+  atOpeningEnd,
   backdropAt,
+  collapseBackdropAt,
+  collapseCameraAt,
+  collapsePanelAt,
+  collapseTotalMs,
+  collapseZooming,
   easeInOut,
   expandCameraAt,
   expandStartView,
   expandTotalMs,
   mapRectAt,
   panelRectAt,
+  planCollapse,
   planExpand,
   usableExpandMs,
   zoomForHeightFraction,
+  type Camera,
+  type CollapseInput,
   type Corner,
   type ExpandInput,
   type LatLng,
 } from "@/lib/geo/expand-map-animation";
+import { cameraAt, flightPeak } from "@/lib/geo/map-search";
 
 // About 64 m × 44 m at 45.72° N — TC-MAP-09's lot.
 const LOT: Corner[] = [
@@ -181,5 +191,117 @@ describe("the lengths", () => {
   it("eases in and out", () => {
     expect([easeInOut(0), easeInOut(0.5), easeInOut(1)]).toEqual([0, 0.5, 1]);
     expect(easeInOut(0.1)).toBeLessThan(0.1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Slice 41.77 — the way back
+// ---------------------------------------------------------------------------
+
+const back = (over: Partial<CollapseInput> = {}): CollapseInput => {
+  const { tileMap, ...rest } = input();
+  return { ...rest, tileMap, flightMs: 4000, arc: 1, openingCut: false, ...over };
+};
+/** Where the opening ended: the lot in the middle at a tenth of the map's height. */
+const endOf = (i: CollapseInput): Camera => {
+  const p = planExpand({ ...i, tileMap: i.tileMap ?? input().tileMap });
+  return { center: p.target, zoom: p.endZoom };
+};
+const near = (a: Camera, b: Camera) => {
+  expect(a.center.lat).toBeCloseTo(b.center.lat, 9);
+  expect(a.center.lng).toBeCloseTo(b.center.lng, 9);
+  expect(a.zoom).toBeCloseTo(b.zoom, 9);
+};
+
+describe("the way back: the return (41.77, Ask first 2)", () => {
+  it("is skipped when the map stands where the opening ended, or within 2 % and half a level of it", () => {
+    const end = endOf(back());
+    expect(planCollapse(back(), end).returnMs).toBe(0);
+    // 1 % of the map's width east, a quarter level in.
+    const w = world(end.center, end.zoom);
+    const size = 256 * 2 ** end.zoom;
+    const east = { lat: end.center.lat, lng: ((w.x + 0.01 * 1334) / size) * 360 - 180 };
+    expect(planCollapse(back(), { center: east, zoom: end.zoom + 0.25 }).returnMs).toBe(0);
+  });
+
+  it("is taken beyond them: 3 % of the width away, or 0.6 of a level, or an opening stopped part way", () => {
+    const end = endOf(back());
+    const w = world(end.center, end.zoom);
+    const size = 256 * 2 ** end.zoom;
+    const east = { lat: end.center.lat, lng: ((w.x + 0.03 * 1334) / size) * 360 - 180 };
+    expect(atOpeningEnd({ center: east, zoom: end.zoom }, end, 1334, 687)).toBe(false);
+    expect(planCollapse(back(), { center: east, zoom: end.zoom }).returnMs).toBe(4000);
+    expect(planCollapse(back(), { center: end.center, zoom: end.zoom - 0.6 }).returnMs).toBe(4000);
+    expect(planCollapse(back({ openingCut: true }), end).returnMs).toBe(4000);
+  });
+
+  it("flies on 41.76's parabola: its camera at 0, half way and the end is cameraAt's, with the flight's length and a", () => {
+    const moved: Camera = { center: { lat: 45.75, lng: 24.5 }, zoom: 12 };
+    const c = planCollapse(back({ flightMs: 5000, arc: 1.5 }), moved);
+    expect(c.returnMs).toBe(5000);
+    expect(c.peak).toBe(flightPeak(moved, c.end, 1334, 687));
+    for (const t of [0, 2500, 5000]) near(collapseCameraAt(t, c), cameraAt(t, moved, c.end, c.peak, 5000, 1.5));
+    near(collapseCameraAt(5000, c), c.end);
+    // The panel stays the expanded map's, the backdrop dark, the whole while.
+    expect(collapsePanelAt(2500, c)).toEqual(c.expand.to);
+    expect(collapseBackdropAt(2500, c)).toBe(1);
+  });
+});
+
+describe("the way back: the opening's two parts in reverse (41.77, Ask first 3)", () => {
+  const c = planCollapse(back(), endOf(back()));
+  const p = c.expand;
+
+  it("zooms back to the tile's zoom first, the lot held in the middle, as long as map_expand_zoom_out", () => {
+    expect(c.zoomMs).toBe(3000);
+    near(collapseCameraAt(0, c), { center: LOT_CENTRE, zoom: p.endZoom });
+    near(collapseCameraAt(1500, c), expandCameraAt(p.growMs + 1500, p));
+    near(collapseCameraAt(3000, c), { center: LOT_CENTRE, zoom: 19 });
+    expect(collapseZooming(1500, c)).toBe(true);
+    expect(collapsePanelAt(1500, c)).toEqual(p.to);
+  });
+
+  it("then shrinks the panel into the tile, the lot travelling back, the backdrop fading, as long as map_expand_grow", () => {
+    expect(collapseTotalMs(c)).toBe(6000);
+    expect(collapsePanelAt(3000, c)).toEqual(p.to);
+    expect(collapsePanelAt(4500, c)).toEqual(panelRectAt(1500, p));
+    expect(collapsePanelAt(6000, c)).toEqual(p.from);
+    expect(collapseBackdropAt(4500, c)).toBeCloseTo(backdropAt(1500, p), 9);
+    expect(collapseBackdropAt(6000, c)).toBe(0);
+    near(collapseCameraAt(4500, c), expandCameraAt(1500, p));
+    near(collapseCameraAt(6000, c), { center: input().tileCenter, zoom: 19 });
+    // On the tile at the end: the lot back where the tile drew it.
+    const end = lotOnScreen(0, p);
+    const tile = world(LOT_CENTRE, 19);
+    const tc = world(input().tileCenter, 19);
+    expect(end.x).toBeCloseTo(900 + 220 + (tile.x - tc.x), 6);
+    expect(end.y).toBeCloseTo(300 + 220 + (tile.y - tc.y), 6);
+  });
+
+  it("lands on the tile where it stands now, not where it stood at the opening", () => {
+    const moved = planCollapse(back({ tileMap: { x: 900, y: 120, w: 440, h: 440 } }), endOf(back()));
+    expect(collapsePanelAt(collapseTotalMs(moved), moved)).toEqual({ x: 900, y: 120 - 49, w: 440, h: 440 + 49 });
+  });
+
+  it("a part whose setting is 0 is skipped", () => {
+    const noZoom = planCollapse(back({ zoomMs: 0 }), endOf(back()));
+    expect(noZoom.zoomMs).toBe(0);
+    expect(collapseTotalMs(noZoom)).toBe(3000);
+    const noGrow = planCollapse(back({ growMs: 0 }), endOf(back()));
+    expect(collapseTotalMs(noGrow)).toBe(3000);
+    expect(collapsePanelAt(3000, noGrow)).toEqual(noGrow.expand.to);
+  });
+
+  it("under reduced motion it closes at once", () => {
+    const moved: Camera = { center: { lat: 45.75, lng: 24.5 }, zoom: 12 };
+    expect(collapseTotalMs(planCollapse(back({ reducedMotion: true }), moved))).toBe(0);
+  });
+
+  it("a tile that cannot be measured: the return still flies, then it closes", () => {
+    const moved: Camera = { center: { lat: 45.75, lng: 24.5 }, zoom: 12 };
+    const c2 = planCollapse(back({ tileMap: null }), moved);
+    expect(c2.returnMs).toBe(4000);
+    expect(c2.zoomMs + c2.growMs).toBe(0);
+    expect(collapsePanelAt(4000, c2)).toEqual(c2.expand.to);
   });
 });

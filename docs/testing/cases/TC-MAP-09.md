@@ -14,7 +14,8 @@ On a property's form (Slice #39.94) the „Hartă" tile draws the property's cor
 4 px dots in the polygon's colour (green since 41.69, blue before), centred on each corner — no longer the 14 px red dots with a white border. Its
 „Hartă extinsă" opens the full-screen map with every other property drawn as the big map draws it, and this
 property in red, centred in the window, at the zoom the tile showed when the button was pressed — so the property is
-the same size on screen. Esc closes it and the form is as it was.
+the same size on screen. Esc and „Restrânge" take it back into the tile as an animation (41.77) — first flying back to
+where the opening ended when the map was moved — and the form is as it was.
 
 ## Before you start
 
@@ -32,7 +33,9 @@ Nothing.
 |---|---|---|
 | 1 | Opens „Lotul de pe formular" | The „Hartă" tile shows the lot, centred on it; each of its four corners is a small green dot (41.69) |
 | 2 | Presses „Hartă extinsă" at the left of the map's top row, and waits about six seconds | (41.75) It opens as an animation: for 3 s the tile grows into the full-screen map while the lot travels to the middle, the same size on screen; then for 3 s the map zooms out until the lot is about a tenth of the map's height. At the end: „Hartă extinsă", the lot centred, its height 7–13 % of the map's (to 14 % on a map that zooms by whole levels); the lot and its corners in red; „Vecinul" beside it in green (41.69), with its four small green corner dots |
-| 3 | Presses Esc | The full-screen map is gone; the form is as it was, the tile's corners still small green dots |
+| 3 | Presses Esc, and waits about six seconds | (41.77) It goes back as the opening came, in reverse: for 3 s the map zooms back in to the tile's zoom, the lot held in the middle; then for 3 s the panel shrinks into the tile, where the tile stands, while the lot travels back to its place on it and the backdrop fades. The map was not moved, so there is no return first. The full-screen map is gone; the form is as it was, the tile looking where it looked before, its corners still small green dots, and focus on the tile's „Hartă extinsă" |
+| 4 | Presses „Hartă extinsă" again and, once it has opened, drags the map away and turns the mouse wheel | The map moves away from the lot |
+| 5 | Presses „Restrânge", and waits about ten seconds | (41.77) First the return: the map flies back on „Caută pe hartă"'s parabola (4 s by default) to where the opening ended — the lot in the middle at a tenth of the map's height; then step 3's two parts. The full-screen map is gone; the tile as it was before the opening; focus on its „Hartă extinsă" |
 
 ## At the end — leaving things as they were found
 
