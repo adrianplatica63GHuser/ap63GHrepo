@@ -164,7 +164,7 @@ test.describe("TC-INHER-02 — arborele persoanei", () => {
 
   // Slice 41.71 — Adrian: „if there are only two persons featured the tile should open with a width of two units …
   // at zoom level 2 of 3; … more than two … three units … zoom level one of three".
-  test("41.71 — the tile as wide as its family: two persons 2 units at level 2, more 3 units at level 1", async ({ page }) => {
+  test("41.71 — the tile as wide as its family: two persons 2 units at level 2, more 3 units at level 1; 41.79 — a width stored before 41.71 forgotten, the person centred", async ({ page }) => {
     test.setTimeout(180_000);
     const mark = `${MARK}-W`;
     await removeLeftovers(page.request, mark);
@@ -202,18 +202,33 @@ test.describe("TC-INHER-02 — arborele persoanei", () => {
       };
       const width = async () => Math.round((await tile(page).boundingBox())!.width);
       const level = () => tile(page).locator("[data-tree-level]");
+      // 41.79 (Ask first 3): the screen's own person's box in the middle of the drawing's square, within 5 % of it.
+      const centred = async (id: string) => {
+        const sq = (await tile(page).locator("[data-tree-tile-canvas]").boundingBox())!;
+        const n = (await node(page, id).boundingBox())!;
+        const dx = Math.abs(n.x + n.width / 2 - (sq.x + sq.width / 2)) / sq.width;
+        const dy = Math.abs(n.y + n.height / 2 - (sq.y + sq.height / 2)) / sq.height;
+        return dx <= 0.05 && dy <= 0.05 ? "centred" : JSON.stringify({ dx, dy });
+      };
 
       await opened(andrei, [petru]);
       await expect.poll(width, { timeout: 20_000 }).toBe(254);
       await expect(level()).toHaveAttribute("data-tree-level", "2");
       const twoBox = (await tile(page).locator("[data-tree-tile-canvas]").boundingBox())!;
       expect(Math.abs(twoBox.width - twoBox.height), `the drawing ${twoBox.width} × ${twoBox.height}`).toBeLessThanOrEqual(2);
+      await expect.poll(() => centred(andrei), { timeout: 10_000 }).toBe("centred");
 
+      // 41.79 (Ask first 1) — Adrian's Chrome held this width, dragged before 41.71, and it held the tile at 2 units
+      // for every person. Stored again here, under the same key, it is forgotten: Maria still opens 3 units wide.
+      await page.evaluate(() =>
+        localStorage.setItem("ga40-tile-positions-natural-person-v1", JSON.stringify({ inheritanceTree: { col: 2, top: 0, units: 2 } })),
+      );
       await opened(maria, [vasile, sorin, mihai]);
       await expect.poll(width, { timeout: 20_000 }).toBe(389);
       await expect(level()).toHaveAttribute("data-tree-level", "1");
       const manyBox = (await tile(page).locator("[data-tree-tile-canvas]").boundingBox())!;
       expect(Math.abs(manyBox.width - manyBox.height), `the drawing ${manyBox.width} × ${manyBox.height}`).toBeLessThanOrEqual(2);
+      await expect.poll(() => centred(maria), { timeout: 10_000 }).toBe("centred");
     } finally {
       for (const id of ids) await removeRecord(page.request, "person", id);
     }
