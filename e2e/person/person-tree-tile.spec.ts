@@ -85,6 +85,21 @@ test.describe("TC-INHER-02 — arborele persoanei", () => {
       await expect(removeBtn).toHaveAccessibleName("Scoate o rudă");
       await expect(addBtn).toHaveAttribute("aria-pressed", "false");
       await expect(removeBtn).toHaveAttribute("aria-pressed", "false");
+      // 41.80 — each button draws two icons as „Asociază persoană" does, the same size: the person first, then the chain
+      // or the bin (41.72 drew one composed icon, a small chain or bin at the person's lower right).
+      const icons = (b: ReturnType<Page["locator"]>) =>
+        b.locator("svg").evaluateAll((els) =>
+          els.map((e) => {
+            const r = e.getBoundingClientRect();
+            const c = e.getAttribute("class") ?? "";
+            return { icon: /lucide-user\b/.test(c) ? "person" : /lucide-link\b/.test(c) ? "chain" : /lucide-trash/.test(c) ? "bin" : c, w: Math.round(r.width), h: Math.round(r.height) };
+          }),
+        );
+      const [addIcons, removeIcons] = [await icons(addBtn), await icons(removeBtn)];
+      expect(addIcons.map((i) => i.icon)).toEqual(["person", "chain"]);
+      expect(removeIcons.map((i) => i.icon)).toEqual(["person", "bin"]);
+      const sizes = new Set([...addIcons, ...removeIcons].map((i) => `${i.w}×${i.h}`));
+      expect(sizes.size, `icon sizes ${[...sizes].join(", ")}`).toBe(1);
       await showTile(page, "Legături");
       const associate = page.locator('[data-tile="related"]').getByRole("button", { name: "Asociază persoană", exact: true });
       const looks = (l: ReturnType<Page["locator"]>) =>

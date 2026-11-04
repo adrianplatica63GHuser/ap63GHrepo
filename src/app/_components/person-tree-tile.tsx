@@ -27,9 +27,9 @@ import { useCallback, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronUp, Maximize2, Plus, Trash2 } from "lucide-react";
+import { ChevronUp, Link as LinkIcon, Maximize2, Plus, Trash2 } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
-import { PersonBinIcon, PersonLinkIcon } from "@/lib/ui/person-badge-icons";
+import { ENTITY_ICON } from "@/lib/ui/entity-icon";
 import { useToast } from "@/components/toast";
 import { useUnsavedChanges, useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
 import { layoutTree, type TreePerson } from "@/lib/inheritance/layout";
@@ -109,8 +109,12 @@ export function PersonTreeTile({
           pressed again, it closes the half. The line between the halves only when both are open (Ask firsts 2, 3). */}
       <div className="mt-3 flex flex-col gap-3" data-tree-panel={addOpen || removeOpen ? "expanded" : "collapsed"}>
         <div className="flex items-start gap-2" data-tree-buttons="">
+          {/* 41.80 (Adrian: „similar to the first button on Links Tile but the two icons should be switched"): drawn as
+              „Asociază persoană" draws its two — icon and secondIcon, each at the button's icon size — the person
+              first, then the chain; „Scoate o rudă" the person, then the bin. */}
           <IconButton
-            icon={PersonLinkIcon}
+            icon={ENTITY_ICON.natural}
+            secondIcon={LinkIcon}
             label={t("addRelative")}
             variant="primary"
             size="sm"
@@ -119,7 +123,8 @@ export function PersonTreeTile({
             onClick={() => (addOpen ? guardedAction(() => setAddOpen(false)) : setAddOpen(true))}
           />
           <IconButton
-            icon={PersonBinIcon}
+            icon={ENTITY_ICON.natural}
+            secondIcon={Trash2}
             label={t("removeRelative")}
             variant="primary"
             size="sm"
