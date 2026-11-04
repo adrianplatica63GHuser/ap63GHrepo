@@ -229,7 +229,7 @@ describe("„Înainte” (#39.97)", () => {
   });
 });
 
-describe("41.81 — „Înapoi" follows the tab's record when the browser's previous entry is another screen", () => {
+describe("41.81 — „Înapoi” follows the tab's record when the browser's previous entry is another screen", () => {
   const CRUMBS = [{ href: "/" }, { href: null }, { href: "/admin/calculation" }];
   it("the dashboard → „Calcul drum lateral": the browser agrees, so its back", () => {
     expect(backTarget(["/", "/admin/calculation"], CRUMBS, "/admin/calculation", "/")).toEqual({ kind: "history" });
