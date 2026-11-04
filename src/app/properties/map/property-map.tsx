@@ -2072,6 +2072,13 @@ export default function PropertyMap({ canEditGroups }: { canEditGroups: boolean 
           onClick={(e) => { if (performance.now() - dropClickAt.current < 400) return; if (areaMode === "free") freeDraw.onMapClick(e); else if (!rulerMode && !anglesMode && !areaOn) handleMapClick(e.detail.latLng); }}
           // Slice #39.60: polygon or drop is decided at the zoom shown, so every zoom change recomputes them.
           onZoomChanged={(e) => setZoom(e.detail.zoom)}
+          // 2026-11-04 (TC-MAP-07): and read again each time the map comes to rest. The ?focus arrival moves the camera
+          // from an effect inside the map, which runs before <Map> attaches its listeners — that first zoom_changed is
+          // never heard, the state stays at DEFAULT_ZOOM, and at zoom 19 every property was drawn as a drop.
+          onIdle={(e) => {
+            const z = e.map.getZoom();
+            if (z !== undefined) setZoom(z);
+          }}
           onMousemove={areaMode === "free" ? freeDraw.onMouseMove : undefined}
           onDblclick={(e) => { if (!rulerMode && !anglesMode && !areaOn) handleMapDblClick(e.detail.latLng); }}
         >

@@ -5,6 +5,8 @@
  * distance (a setting, 20–80 px, default 40) merge, repeatedly, into a numbered drop; a numbered drop's click zooms
  * to fit its properties, and at the closest zoom opens their list instead.
  */
+import { readFileSync } from "fs";
+import { join } from "path";
 import {
   CORNER_DOT_PX,
   DROP_SIZE,
@@ -274,5 +276,14 @@ describe("placeShapes — polygons and drops at one zoom (#39.94: the big map an
 
   it("places nothing for properties with no corners", () => {
     expect(placeShapes([none], 14, 40)).toEqual({ polygons: [], drops: [] });
+  });
+});
+
+describe("the zoom the big map decides at (2026-11-04, TC-MAP-07)", () => {
+  const MAP = readFileSync(join(process.cwd(), "src/app/properties/map/property-map.tsx"), "utf8");
+  it("is read on every zoom change AND every time the map comes to rest — a ?focus arrival's first change is not heard", () => {
+    expect(MAP).toContain("onZoomChanged={(e) => setZoom(e.detail.zoom)}");
+    expect(MAP).toMatch(/onIdle=\{\(e\) => \{\s*const z = e\.map\.getZoom\(\);\s*if \(z !== undefined\) setZoom\(z\);/);
+    expect(MAP).toContain("const placed = placeShapes(displayItems, zoom, mergeDistance);");
   });
 });
