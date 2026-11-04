@@ -23,14 +23,15 @@ const KEY = "ga40-tile-positions-natural-person-v1";
 // Slice 41.68 switched the colours round to follow the kinds: a group's colour is now its screen's (tile-surface.ts
 // SCREEN_HUES). It read one colour per group everywhere —
 // `{ record: card, related: green, meta: yellow, family: blue, fixed: purple }`.
-const HUE = { card: "rgb(238, 244, 250)", green: "rgb(221, 240, 225)", yellow: "rgb(248, 243, 229)", blue: "rgb(223, 240, 251)", purple: "rgb(246, 240, 254)" } as const;
+// 41.82: „Clasificare" and „Etichete și grupuri" salmon #FFB48F on the four record screens (they were the yellow).
+const HUE = { card: "rgb(238, 244, 250)", green: "rgb(221, 240, 225)", yellow: "rgb(248, 243, 229)", salmon: "rgb(255, 180, 143)", blue: "rgb(223, 240, 251)", purple: "rgb(246, 240, 254)" } as const;
 type Group = "record" | "related" | "meta" | "family" | "fixed";
 const DEFAULT: Record<Group, keyof typeof HUE> = { record: "card", related: "green", meta: "yellow", family: "blue", fixed: "purple" };
 const SCREEN: Record<string, Partial<Record<Group, keyof typeof HUE>>> = {
-  properties: { related: "card", fixed: "green" },
-  "natural-persons": { related: "card", family: "purple", fixed: "purple" },
-  "judicial-persons": { related: "card", fixed: "purple" },
-  documents: { related: "card", fixed: "blue" },
+  properties: { related: "card", meta: "salmon", fixed: "green" },
+  "natural-persons": { related: "card", meta: "salmon", family: "purple", fixed: "purple" },
+  "judicial-persons": { related: "card", meta: "salmon", fixed: "purple" },
+  documents: { related: "card", meta: "salmon", fixed: "blue" },
 };
 /** A group's fill on the screen `url` opens. */
 const fillOf = (url: string, group: Group): string => HUE[SCREEN[url.split("/")[1]]?.[group] ?? DEFAULT[group]];
@@ -223,7 +224,7 @@ test.describe("TC-TILES-18 — bifele în patru grupuri colorate", () => {
       // 41.68: the card itself, dashed — „Legături" wears the card now (it read FILL.related, the green).
       expect(await preview.evaluate((e) => getComputedStyle(e).backgroundColor)).toBe(HUE.card);
 
-      // Step 7 — „Conexiuni" dragged under „Corelate" stands there, still yellow.
+      // Step 7 — „Conexiuni" dragged under „Corelate" stands there, still its colour (41.82: salmon; yellow before).
       await page.setViewportSize({ width: 1920, height: 1300 });
       await page.goto(`/natural-persons/${np}`);
       await page.evaluate((k) => localStorage.removeItem(k), KEY);
@@ -251,7 +252,7 @@ test.describe("TC-TILES-18 — bifele în patru grupuri colorate", () => {
         const [now, rr] = [await conn.boundingBox(), await related.boundingBox()];
         return { x: Math.round(now?.x ?? 0), under: (now?.y ?? 0) >= (rr?.y ?? 0) + (rr?.height ?? 0) };
       }, { timeout: 15_000 }).toEqual({ x: Math.round(r?.x ?? 0), under: true });
-      expect(await fill(conn)).toBe(HUE.yellow);
+      expect(await fill(conn)).toBe(HUE.salmon); // 41.82: it read HUE.yellow
 
       // Step 10 (40.57) — „Panouri": closed when the record opens, the data right under the name, no badge (nothing is
       // marked); right after the version controls; opened, a tick keeps it open; Esc closes it.
