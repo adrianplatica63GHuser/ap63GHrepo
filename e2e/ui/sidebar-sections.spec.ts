@@ -372,6 +372,39 @@ test.describe("TC-NAV-01 — the sidebar draws only what exists", () => {
       await removeRecord(page.request, "person", personId);
     }
   });
+
+  // Steps 10a–10b (Slice 41.81) — Adrian: „If I click on “Calculation of a side road” under Tools … just click on the
+  // Back button I end up, unexpectedly, on the big map". No real map and no record.
+  test("„Înapoi” din „Calcul drum lateral”: înapoi pe tabloul de bord și în lista persoanelor, cu „Domeniu” deschis", async ({ page }) => {
+    await page.setViewportSize({ width: 1366, height: 900 });
+    const nav = sidebar(page);
+    const section = (name: string) => nav.getByRole("button", { name, exact: true });
+    const back = page.locator("[data-breadcrumb-back]").getByRole("button", { name: "Înapoi", exact: true });
+    const openCalculation = async () => {
+      await openSection(page, "Instrumente");
+      await nav.getByRole("link", { name: "Calcul drum lateral", exact: true }).click();
+      await expect(page).toHaveURL(/\/admin\/calculation$/, { timeout: 30_000 });
+      // „Instrumente" stays open while the calculation is shown.
+      await expect(section("Instrumente")).toHaveAttribute("aria-expanded", "true");
+    };
+
+    // Step 10a — the dashboard → „Instrumente" → „Calcul drum lateral" → „Înapoi": the dashboard, never the big map.
+    await page.goto("/");
+    await expect(page.getByRole("heading", { name: "Tablou de bord" })).toBeVisible({ timeout: 30_000 });
+    await openCalculation();
+    await back.click();
+    await expect(page).toHaveURL((u) => u.pathname === "/", { timeout: 30_000 });
+    await expect(page.getByRole("heading", { name: "Tablou de bord" })).toBeVisible();
+
+    // Step 10b — „Persoane Fizice" → „Calcul drum lateral" → „Înapoi": the list, and „Domeniu" open.
+    await openSection(page, "Domeniu");
+    await nav.getByRole("link", { name: "Persoane Fizice", exact: true }).click();
+    await expect(page).toHaveURL(/\/natural-persons$/, { timeout: 30_000 });
+    await openCalculation();
+    await back.click();
+    await expect(page).toHaveURL((u) => u.pathname === "/natural-persons", { timeout: 30_000 });
+    await expect(section("Domeniu")).toHaveAttribute("aria-expanded", "true");
+  });
 });
 
 test.describe("TC-NAV-01 — o fereastră îngustă: bara laterală e șirul de pictograme (40.68)", () => {

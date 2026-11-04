@@ -56,6 +56,8 @@ Nothing.
 | 8a | (Slice #39.97) Looks at „Înainte", right of „Înapoi", then presses it; „Înapoi" again; then „Domeniu" → „Acte" | Disabled on the person before the step back; on „Persoane Fizice" after it, enabled — a right arrow and „Înainte", on the same line as „Înapoi". Pressed: the person again, and „Înainte" disabled. „Înapoi": the list, „Înainte" enabled; „Acte": disabled — a new screen ends the way forward |
 | 9 | Opens the person again, changes „Prenume", presses „Înapoi"; „Anulează"; „Înapoi" again, „Renunță" | „Modificări nesalvate"; „Anulează" keeps the person's screen with what was typed; „Renunță" goes back to the list, nothing saved |
 | 10 | Types the person's address into the bar, then presses „Înapoi" | Nothing in the tab to go back to: the parent crumb, „Persoane Fizice" |
+| 10a | (Slice 41.81) From „Tablou de bord": „Instrumente" → „Calcul drum lateral", then „Înapoi" | „Instrumente" stays open while the calculation is shown; „Înapoi" returns to „Tablou de bord", never to the big map |
+| 10b | (41.81) „Domeniu" → „Persoane Fizice", then „Instrumente" → „Calcul drum lateral", then „Înapoi" | Back on „Persoane Fizice", „Domeniu" open |
 | 11 | (Slice 40.68, the sidebar stored expanded, `sidebar-collapsed` = `false`) Sets the window 800 × 900 and reloads | The sidebar is its icon rail, about 56 px; `sidebar-collapsed` still `false` |
 | 12 | Presses „Extinde bara laterală"; then Esc; again, a click on the page beside it; again, „Proprietăți" | Each time the whole sidebar over a dimmed page, the page not moved; Esc closes it, the click outside closes it, „Proprietăți" opens its list and closes it; `sidebar-collapsed` still `false` |
 | 13 | Sets the window 1280 × 900 | The sidebar expanded, as stored |
