@@ -51,7 +51,8 @@ describe("the six groups", () => {
       dashboard: "Tablou de bord", documents: "Acte", persons: "Persoane", recency: "Insigna „Nou!”", tiles: "Fișe", maps: "Hărți",
     });
     expect(TIME_FRAME_GROUPS.find((g) => g.id === "tiles")?.keys).toEqual(["tile_make_room_delay"]);
-    expect(TIME_FRAME_GROUPS.find((g) => g.id === "maps")?.keys).toEqual(["map_expand_grow", "map_expand_zoom_out"]);
+    // 41.76: + the search flight's length and arc, after 41.75's two (it read the two alone).
+    expect(TIME_FRAME_GROUPS.find((g) => g.id === "maps")?.keys).toEqual(["map_expand_grow", "map_expand_zoom_out", "map_search_flight", "map_search_arc"]);
   });
 
   it("hold every threshold exactly once", () => {
@@ -266,5 +267,18 @@ describe("„Hartă extinsă”'s two parts, their examples in seconds (41.75)",
     ["map_expand_zoom_out", 2.5, "Apoi harta extinsă se depărtează în 2,5 secunde, până când proprietatea are cam o zecime din înălțimea hărții."],
   ])("%s at %s s", (key, count, sentence) => {
     expect(exampleRo(key, "seconds", count)).toBe(sentence);
+  });
+});
+
+describe("„Caută pe hartă”'s flight, its examples (41.76)", () => {
+  it("its length, in seconds", () => {
+    expect(exampleRo("map_search_flight", "seconds", 4)).toBe("Un loc găsit cu „Caută pe hartă” e atins după un zbor de 4 secunde; cu 0, harta sare direct acolo.");
+  });
+  it("its coefficient a, as a number with the locale's comma", () => {
+    expect(exampleRo("map_search_arc", "hundredths", 1.5)).toBe(
+      "Cu a = 1,5, vârful zborului e la 1,5 × înălțimea de la care se văd ambele locuri; cu 0, zborul alunecă drept, fără să urce.",
+    );
+    expect(ro.timeFrames.unit.hundredths).toBe("coeficient");
+    expect(en.timeFrames.unit.hundredths).toBe("coefficient");
   });
 });

@@ -1,10 +1,13 @@
 /**
- * Slice 41.70 — „Caută pe hartă": what the box understands, where the camera lands, and the flight.
+ * Slice 41.70 — „Caută pe hartă": what the box understands, where the camera lands, and the flight (41.76: on a
+ * parabola, its length and coefficient a from „Setări").
  */
 import { readFileSync } from "fs";
 import { join } from "path";
 import {
+  FLIGHT_ARC,
   FLIGHT_MS,
+  MIN_RISE,
   POINT_ZOOM,
   cameraAt,
   cameraForCorners,
@@ -14,6 +17,7 @@ import {
   findByCode,
   flightMs,
   flightPeak,
+  flightRise,
   foldText,
   globalSearchHref,
   propertyCode,
@@ -159,13 +163,15 @@ describe("the item at a tenth of the map (Ask first 2)", () => {
   });
 });
 
-describe("the flight (Ask first 3)", () => {
+describe("the flight (Ask first 3; 41.76 — on a parabola)", () => {
   const from: Camera = { center: { lat: 44.4, lng: 26.1 }, zoom: 12 };
   const to: Camera = { center: { lat: 45.7, lng: 24.4 }, zoom: 17 };
 
-  it("4 s; none under prefers-reduced-motion — the camera jumps", () => {
+  it("4 s and a = 1 by default; the setting's length; none under prefers-reduced-motion — the camera jumps", () => {
     expect(FLIGHT_MS).toBe(4000);
+    expect(FLIGHT_ARC).toBe(1);
     expect([flightMs(false), flightMs(true)]).toEqual([4000, 0]);
+    expect([flightMs(false, 2500), flightMs(true, 2500), flightMs(false, 0)]).toEqual([2500, 0, 0]);
     expect(cameraAt(0, from, to, 7, 0)).toEqual(to);
   });
 
@@ -175,33 +181,56 @@ describe("the flight (Ask first 3)", () => {
     expect(easeInOut(0.9)).toBeGreaterThan(0.9);
   });
 
-  it("far apart: it zooms out first, so the path is seen; never above either end", () => {
+  it("far apart: the climb that shows both is R; a near hop still rises one level", () => {
     const peak = flightPeak(from, to, 1366, 768);
     expect(peak).toBeLessThan(from.zoom);
+    expect(flightRise(from, to, peak)).toBeCloseTo(from.zoom - peak, 9);
     const near: Camera = { center: { lat: 44.4005, lng: 26.1005 }, zoom: 17 };
     expect(flightPeak(from, near, 1366, 768)).toBe(from.zoom);
+    expect(flightRise(from, near, flightPeak(from, near, 1366, 768))).toBe(MIN_RISE);
   });
 
-  it("the camera at 0, 2 and 4 s", () => {
+  /** The straight line's zoom at share x of the way. */
+  const line = (x: number) => from.zoom + (to.zoom - from.zoom) * x;
+
+  it.each([0, 1, 2])("a = %i: the camera at 0, a quarter, half way and the end", (a) => {
     const peak = flightPeak(from, to, 1366, 768);
-    const at0 = cameraAt(0, from, to, peak);
+    const R = flightRise(from, to, peak);
+    const at0 = cameraAt(0, from, to, peak, 4000, a);
     expect(at0.center.lat).toBeCloseTo(from.center.lat, 9);
     expect(at0.center.lng).toBeCloseTo(from.center.lng, 9);
     expect(at0.zoom).toBeCloseTo(from.zoom, 9);
-    const at2 = cameraAt(2000, from, to, peak);
-    expect(at2.zoom).toBeCloseTo(peak, 6); // the lowest point, half way
+    // A quarter of the time: x = easeInOut(0.25) = 0.0625 — 4x(1 − x) of a · R above the line.
+    const x = easeInOut(0.25);
+    expect(cameraAt(1000, from, to, peak, 4000, a).zoom).toBeCloseTo(Math.max(0, line(x) - a * R * 4 * x * (1 - x)), 9);
+    // Half way: the top, a · R above the line.
+    const at2 = cameraAt(2000, from, to, peak, 4000, a);
+    expect(at2.zoom).toBeCloseTo(Math.max(0, line(0.5) - a * R), 9);
     expect(at2.center.lng).toBeCloseTo((from.center.lng + to.center.lng) / 2, 6);
-    expect(at2.center.lat).toBeGreaterThan(Math.min(from.center.lat, to.center.lat));
-    expect(at2.center.lat).toBeLessThan(Math.max(from.center.lat, to.center.lat));
-    expect(cameraAt(4000, from, to, peak)).toEqual(to);
-    expect(cameraAt(9000, from, to, peak)).toEqual(to);
+    expect(cameraAt(4000, from, to, peak, 4000, a)).toEqual(to);
+    expect(cameraAt(9000, from, to, peak, 4000, a)).toEqual(to);
   });
 
-  it("no dip when the two ends already fit: the zoom goes straight across", () => {
+  it("a = 0 glides straight; a larger a climbs higher", () => {
+    const peak = flightPeak(from, to, 1366, 768);
+    expect(cameraAt(2000, from, to, peak, 4000, 0).zoom).toBeCloseTo(line(0.5), 9);
+    const z1 = cameraAt(2000, from, to, peak, 4000, 1).zoom;
+    const z2 = cameraAt(2000, from, to, peak, 4000, 2).zoom;
+    expect(z2).toBeLessThan(z1);
+    expect(z1).toBeLessThan(line(0.5));
+  });
+
+  it("a near hop rises a level at a = 1, half way", () => {
     const a: Camera = { center: { lat: 45.7, lng: 24.4 }, zoom: 14 };
     const b: Camera = { center: { lat: 45.7001, lng: 24.4001 }, zoom: 18 };
     const peak = flightPeak(a, b, 1366, 768);
-    expect(cameraAt(2000, a, b, peak).zoom).toBeCloseTo(16, 6);
+    expect(cameraAt(2000, a, b, peak).zoom).toBeCloseTo(16 - MIN_RISE, 6);
+  });
+
+  it("the zoom never goes below 0", () => {
+    const world: Camera = { center: { lat: 0, lng: -170 }, zoom: 2 };
+    const far: Camera = { center: { lat: 10, lng: 170 }, zoom: 3 };
+    expect(cameraAt(2000, world, far, -5, 4000, 3).zoom).toBe(0);
   });
 });
 
@@ -222,7 +251,9 @@ describe("the box on the map (Ask first 4–6)", () => {
     expect(MAP).toContain('new Geocoder().geocode({ address: q.text, region: "RO", bounds })');
     expect(MAP.indexOf("rankMapMatches(")).toBeLessThan(MAP.indexOf("new Geocoder()"));
     expect(MAP).not.toMatch(/importLibrary\("places"\)|PlacesService|Autocomplete/);
-    expect(MAP).toContain("map.moveCamera(cameraAt(t, from, to, peak, duration))");
+    // 41.76: with the arc from „Setări" (it read `cameraAt(t, from, to, peak, duration)` until then).
+    expect(MAP).toContain("map.moveCamera(cameraAt(t, from, to, peak, duration, arc))");
+    expect(MAP).toContain("const duration = flightMs(reduced, durationMs);");
     expect(MAP).toContain('map.addListener("dragstart", userMoved)');
     expect(MAP).toContain('div.addEventListener("wheel", userMoved, { passive: true })');
   });

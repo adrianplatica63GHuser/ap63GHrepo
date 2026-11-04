@@ -63,6 +63,17 @@ test.describe("TC-SET-02 — „Setări” în patru secțiuni", () => {
       expect(ms, `${key} is seeded (migration_127)`).toBeDefined();
       if (ms === 3000) await expect(maps.getByLabel(label, { exact: true })).toHaveValue("3,0");
     }
+    // Step 2b (41.76) — „Caută pe hartă"'s flight: its length in seconds („4,0"), its coefficient a with two decimals
+    // („1,00"), unless someone has changed them.
+    const flight = lengths.find((i) => i.key === "map_search_flight")?.value;
+    const arc = lengths.find((i) => i.key === "map_search_arc")?.value;
+    expect([flight, arc], "map_search_flight and map_search_arc are seeded (migration_128)").not.toContain(undefined);
+    const flightBox = maps.getByLabel("Căutare pe hartă — durata zborului", { exact: true });
+    const arcBox = maps.getByLabel("Căutare pe hartă — coeficientul a al parabolei", { exact: true });
+    await expect(flightBox).toHaveValue(/^\d{1,2}(,\d{1,2})?$/);
+    await expect(arcBox).toHaveValue(/^\d,\d{2}$/);
+    if (flight === 4000) await expect(flightBox).toHaveValue("4,0");
+    if (arc === 100) await expect(arcBox).toHaveValue("1,00");
 
     // Step 3 — „Fereastră filtru expiră curând": its example names its value.
     const box = page.getByLabel("Fereastră filtru expiră curând", { exact: true });

@@ -44,6 +44,7 @@ The window is 1366 × 900.
 | 1 | Opens „Setări” | Five sections: „Contul meu”, „Praguri de timp”, „Copii de siguranță”, „AI”, „Despre” |
 | 2 | Reads „Praguri de timp” | Six groups: „Tablou de bord”, „Acte”, „Persoane”, „Insigna „Nou!””, „Fișe”, „Hărți” (41.75) |
 | 2a | (41.75) Reads „Hărți” | „Hartă extinsă — mărirea fișei” and „Hartă extinsă — depărtarea”, each in seconds, „3,0” unless changed |
+| 2b | (41.76) Reads the rest of „Hărți” | „Căutare pe hartă — durata zborului” in seconds, „4,0”, and „Căutare pe hartă — coeficientul a al parabolei” with two decimals, „1,00”, unless changed |
 | 3 | Reads „Fereastră filtru expiră curând” | Its value, and „Exemplu: Un act apare «expiră curând» cu 30 de zile înainte.” for the value 30 |
 | 4 | Types `45` (nothing saved), then „Anulează” | The example reads „… cu 45 de zile înainte.” at once; after „Anulează” the value and the example are back |
 | 5 | Reads „Copii de siguranță” | „Ultima copie” and „Ultima probă de restaurare”, with the result — or „Copiile de siguranță nu pot fi citite de aici…” on an installation without them; no button |

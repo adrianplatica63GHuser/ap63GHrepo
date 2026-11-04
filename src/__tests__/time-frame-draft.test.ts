@@ -38,6 +38,9 @@ import {
   isTypedInSeconds,
   parseSecondsDraft,
   secondsRangeMs,
+  formatHundredths,
+  isTypedInHundredths,
+  parseHundredthsDraft,
 } from "@/lib/time-frames/config";
 import { MAKE_ROOM_DELAY_MS } from "@/lib/ui/tile-positions";
 
@@ -188,9 +191,13 @@ describe("seconds with decimals — the make-room delay (39.92)", () => {
     // 41.75 rewrote this in place: it read `.refine((k) => k !== MAKE_ROOM_DELAY_KEY)` — now every key kept in ms is
     // kept out of the 1..3650 arm, „Hartă extinsă"'s two parts holding 0..10 s in an arm of their own.
     expect(route).toContain(".refine((k) => !IN_MS.includes(k))");
-    expect(route).toContain("const IN_MS: readonly string[] = [MAKE_ROOM_DELAY_KEY, ...MAP_EXPAND_KEYS];");
+    // (41.75's IN_MS, `[MAKE_ROOM_DELAY_KEY, ...MAP_EXPAND_KEYS]`, gained the search flight's two keys in 41.76.)
     expect(route).toContain("key:   z.enum(MAP_EXPAND_KEYS),");
     expect(route).toContain("value: z.number().int().min(0).max(SECONDS_MAX_MS),");
+    // 41.76: the search flight 0..15 s, its coefficient a 0..300 hundredths, both out of the 1..3650 arm.
+    expect(route).toContain("const IN_MS: readonly string[] = [MAKE_ROOM_DELAY_KEY, ...MAP_EXPAND_KEYS, MAP_SEARCH_FLIGHT_KEY, MAP_SEARCH_ARC_KEY];");
+    expect(route).toContain("value: z.number().int().min(0).max(MAP_SEARCH_FLIGHT_MAX_MS),");
+    expect(route).toContain("value: z.number().int().min(HUNDREDTHS_MIN).max(HUNDREDTHS_MAX),");
     expect(SECONDS_MIN_MS).toBe(200);
     expect(SECONDS_MAX_MS).toBe(10_000);
   });
@@ -199,7 +206,8 @@ describe("seconds with decimals — the make-room delay (39.92)", () => {
     const view = codeOnly(read("src", "app", "admin", "settings", "_components", "settings-view.tsx"));
     // 41.75 rewrote this in place: it read `const ms = parseSecondsDraft(raw); if (ms === null) { setSaveError(t("timeFrames.validationErrorSeconds"))`.
     // Each key now has its own range, and the map's parts their own error.
-    expect(view).toMatch(/const range = secondsRangeMs\(key\);\s*const ms = parseSecondsDraft\(raw, range\);\s*if \(ms === null\) \{\s*setSaveError\(range\.min === 0 \? t\("timeFrames\.validationErrorSecondsFromZero"\) : t\("timeFrames\.validationErrorSeconds"\)\)/);
+    // 41.76: and the search flight its own sentence (it read `setSaveError(range.min === 0 ? … : …)` in 41.75).
+    expect(view).toMatch(/const range = secondsRangeMs\(key\);\s*const ms = parseSecondsDraft\(raw, range\);\s*if \(ms === null\) \{\s*setSaveError\(\s*key === MAP_SEARCH_FLIGHT_KEY\s*\?\s*t\("timeFrames\.validationErrorSecondsFlight"\)\s*:\s*range\.min === 0\s*\?\s*t\("timeFrames\.validationErrorSecondsFromZero"\)\s*:\s*t\("timeFrames\.validationErrorSeconds"\)/);
     expect(view).toContain("forgetMakeRoomDelay();");
     expect(view).toContain("forgetExpandDurations();");
     expect(view).toContain('inputMode: "decimal"');
@@ -238,5 +246,42 @@ describe("seconds from 0 — „Hartă extinsă”'s two parts (41.75)", () => {
     const text = messages.settings.timeFrames.validationErrorSecondsFromZero;
     expect(text).toMatch(/\b0\b/);
     expect(text).toMatch(/\b10\b/);
+  });
+});
+
+describe("the search flight (41.76): its length in seconds, 0 – 15; its coefficient a in hundredths", () => {
+  it("are stored as 4000 ms and 100 hundredths by default", () => {
+    expect(TIME_FRAME_DEFAULTS.map_search_flight).toEqual({ value: 4000, unit: "milliseconds" });
+    expect(TIME_FRAME_DEFAULTS.map_search_arc).toEqual({ value: 100, unit: "hundredths" });
+  });
+
+  it("the length accepts 0 to 15 s", () => {
+    const range = secondsRangeMs("map_search_flight");
+    expect(range).toEqual({ min: 0, max: 15_000 });
+    expect(["0", "4", "2,5", "15"].map((r) => parseSecondsDraft(r, range))).toEqual([0, 4000, 2500, 15_000]);
+    expect(parseSecondsDraft("15,5", range)).toBeNull();
+  });
+
+  it.each([["1", 100], ["1,25", 125], ["0.5", 50], ["0", 0], ["3", 300], [" 2,00 ", 200]])("a: accepts %s as %i", (raw, v) => {
+    expect(parseHundredthsDraft(raw as string)).toBe(v);
+  });
+
+  it.each(["", "abc", "3,01", "4", "-1", "1,234", "1e2", ",5", "10"])("a: refuses %p", (raw) => {
+    expect(parseHundredthsDraft(raw)).toBeNull();
+  });
+
+  it("a is shown with two decimals and read back", () => {
+    expect(formatHundredths(100, "ro-RO")).toBe("1,00");
+    expect(formatHundredths(125, "en-GB")).toBe("1.25");
+    for (const v of [0, 50, 100, 125, 300]) expect(parseHundredthsDraft(formatHundredths(v, "ro-RO"))).toBe(v);
+    expect(isTypedInHundredths("hundredths")).toBe(true);
+    expect(isTypedInHundredths("milliseconds")).toBe(false);
+    expect(isTypedInSeconds("hundredths")).toBe(false);
+  });
+
+  it.each(["en-GB", "ro-RO"])("%s: each error names its own range", (locale) => {
+    const tf = (JSON.parse(read("messages", `${locale}.json`)) as { settings: { timeFrames: Record<string, string> } }).settings.timeFrames;
+    expect(tf.validationErrorSecondsFlight).toMatch(/\b15\b/);
+    expect(tf.validationErrorHundredths).toMatch(/\b3\b/);
   });
 });
