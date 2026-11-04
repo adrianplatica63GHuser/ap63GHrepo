@@ -19,8 +19,18 @@
  * Each part's length is a setting (`map_expand_grow`, `map_expand_zoom_out`, 3,0 s each); 0 skips that part, and
  * under prefers-reduced-motion both are 0 — the overlay opens at the end at once (Ask first 3).
  *
+ * Slice 41.77, the way back („Restrânge", Escape, the backdrop): the opening's steps in reverse, after a return when the
+ * map was moved. Phase 0, „the return" (Ask first 2): when the camera is more than 2 % of the map away from the opening's
+ * end, or more than half a zoom level from its zoom, or the opening was stopped part way, it flies there on 41.76's
+ * parabola (`cameraAt`, with „Caută pe hartă"'s length and a). Then part 2 backwards — the zoom back to the tile's, the
+ * polygon held in the middle — and part 1 backwards — the panel down to the tile's map where it stands now, the polygon
+ * travelling back to its place on it, the backdrop fading out (Ask first 3). `planCollapse` builds the opening's plan
+ * from the tile as it is now and reads it backwards.
+ *
  * Pure: no Google object, no DOM. The overlay (property-form.tsx) and its animator (expand-map-animator.tsx) draw it.
  */
+import { cameraAt, flightMs as flightLength, flightPeak } from "@/lib/geo/map-search";
+
 
 export type LatLng = { lat: number; lng: number };
 export type Corner = { lat: number; lon: number };
@@ -212,4 +222,115 @@ export function expandCameraAt(t: number, p: ExpandPlan): Camera {
 /** Where the overlay's map is created: the camera at the start (the end, when both parts are 0). */
 export function expandStartView(p: ExpandPlan): Camera {
   return expandCameraAt(0, p);
+}
+
+// ---------------------------------------------------------------------------
+// Slice 41.77 — the way back
+// ---------------------------------------------------------------------------
+
+/** How far the camera may be from the opening's end, as a share of the map's width or height, before it flies back. */
+export const COLLAPSE_RETURN_TOLERANCE = 0.02;
+
+export type CollapseInput = Omit<ExpandInput, "tileMap"> & {
+  /** The tile's map on screen now; null when it cannot be measured (hidden through „Panouri", off the screen). */
+  tileMap: Rect | null;
+  /** „Caută pe hartă"'s flight (41.76): its length in ms and the parabola's a. */
+  flightMs: number;
+  arc: number;
+  /** The opening was stopped part way (a drag or the wheel). */
+  openingCut: boolean;
+};
+
+export type CollapsePlan = {
+  /** The opening as it would play now, from the tile where it stands: read backwards. */
+  expand: ExpandPlan;
+  /** The camera as the way back starts, and the opening's end. */
+  current: Camera;
+  end: Camera;
+  /** Phase 0, the return: its length (0 when skipped), the flight's peak and a. */
+  returnMs: number;
+  peak: number;
+  arc: number;
+  /** After the return, nothing but the reverse of the opening's parts; a tile not measured closes after the return. */
+  zoomMs: number;
+  growMs: number;
+};
+
+/** Whether the camera stands where the opening ended: within 2 % of the map's size, and half a zoom level. */
+export function atOpeningEnd(current: Camera, end: Camera, mapW: number, mapH: number): boolean {
+  if (Math.abs(current.zoom - end.zoom) > EXPAND_SKIP_ZOOM) return false;
+  const a = toWorld(current.center, current.zoom);
+  const b = toWorld(end.center, current.zoom);
+  return Math.abs(a.x - b.x) <= COLLAPSE_RETURN_TOLERANCE * mapW && Math.abs(a.y - b.y) <= COLLAPSE_RETURN_TOLERANCE * mapH;
+}
+
+export function planCollapse(i: CollapseInput, current: Camera): CollapsePlan {
+  const measured = i.tileMap !== null;
+  const panel = {
+    x: EXPAND_INSET_PX,
+    y: EXPAND_INSET_PX,
+    w: Math.max(1, i.viewport.w - 2 * EXPAND_INSET_PX),
+    h: Math.max(1, i.viewport.h - 2 * EXPAND_INSET_PX),
+  };
+  // A tile not measured: the panel stays where it is, and only the return plays.
+  const tileMap = i.tileMap ?? { x: panel.x, y: panel.y + i.headerPx, w: panel.w, h: panel.h - i.headerPx };
+  const expand = planExpand({
+    ...i,
+    tileMap,
+    growMs: measured ? i.growMs : 0,
+    zoomMs: measured ? i.zoomMs : 0,
+  });
+  const end: Camera = { center: expand.target, zoom: expand.endZoom };
+  const mapW = expand.to.w;
+  const mapH = Math.max(1, expand.to.h - expand.headerPx);
+  const back = i.openingCut || !atOpeningEnd(current, end, mapW, mapH);
+  return {
+    expand,
+    current,
+    end,
+    returnMs: back ? flightLength(i.reducedMotion, i.flightMs) : 0,
+    peak: flightPeak(current, end, mapW, mapH),
+    arc: i.arc,
+    zoomMs: expand.zoomMs,
+    growMs: expand.growMs,
+  };
+}
+
+/** How long the whole way back lasts. */
+export function collapseTotalMs(c: CollapsePlan): number {
+  return c.returnMs + c.zoomMs + c.growMs;
+}
+
+/** Where in the opening the way back stands at `t` — the opening's own clock, running backwards — or null in the return. */
+function openingClock(t: number, c: CollapsePlan): number | null {
+  const u = t - c.returnMs;
+  if (u < 0) return null;
+  const p = c.expand;
+  if (u < c.zoomMs) return p.growMs + p.zoomMs - u;
+  return Math.max(0, p.growMs - (u - c.zoomMs));
+}
+
+/** The camera at `t` ms into the way back. */
+export function collapseCameraAt(t: number, c: CollapsePlan): Camera {
+  const o = openingClock(t, c);
+  if (o === null) return cameraAt(t, c.current, c.end, c.peak, c.returnMs, c.arc);
+  return expandCameraAt(o, c.expand);
+}
+
+/** The panel at `t`: the expanded map's until part 1 starts back, then down to the tile. */
+export function collapsePanelAt(t: number, c: CollapsePlan): Rect {
+  const o = openingClock(t, c);
+  return panelRectAt(o === null ? c.expand.growMs : o, c.expand);
+}
+
+/** The backdrop's opacity at `t`: full until part 1 starts back, then fading out with it. */
+export function collapseBackdropAt(t: number, c: CollapsePlan): number {
+  const o = openingClock(t, c);
+  return backdropAt(o === null ? c.expand.growMs : o, c.expand);
+}
+
+/** Whether `t` is in part 2 backwards — the zoom — where a raster map steps by whole levels. */
+export function collapseZooming(t: number, c: CollapsePlan): boolean {
+  const u = t - c.returnMs;
+  return u >= 0 && u < c.zoomMs;
 }

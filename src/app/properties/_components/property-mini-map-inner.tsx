@@ -374,6 +374,8 @@ export default function PropertyMiniMapInner({ corners, onChange, readOnly = fal
               size="sm"
               // Slice 41.75: the map's rectangle on screen, where „Hartă extinsă"'s opening starts.
               onClick={() => onFullScreen(boxRef.current?.getBoundingClientRect())}
+              // Slice 41.77: where focus returns when „Hartă extinsă" has gone back into the tile.
+              data-map-full-screen=""
             />
           )}
           {/* #37.45 (A066): PenTool / Check, icon-only, the words as the name

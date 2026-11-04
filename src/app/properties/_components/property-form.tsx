@@ -68,13 +68,15 @@ import { NavigateButton } from "@/components/maps/navigate-dialog";
 import { StraightenDialog } from "./straighten-dialog";
 import { PropertyMiniMap } from "./property-mini-map";
 import { setMapFocusSource, theaterOpenView, type MapView } from "@/lib/geo/map-focus";
-import { expandStartView, panelRectAt, planExpand, type ExpandInput } from "@/lib/geo/expand-map-animation";
+import { expandStartView, panelRectAt, planExpand, type CollapseInput, type ExpandInput } from "@/lib/geo/expand-map-animation";
 import { expandDurations, loadExpandDurations } from "@/components/maps/expand-map-durations";
+import { loadSearchFlight, searchFlightSetting } from "@/components/maps/search-flight-settings";
 
 // Slice #39.94: „Hartă extinsă"'s every other property — loaded with the overlay, never with the form.
 const TheaterOthersLayer = dynamic(() => import("./theater-others-layer"), { ssr: false });
 // Slice 41.75: „Hartă extinsă"'s opening, played inside its map — loaded with the overlay, like the others' layer.
 const ExpandMapAnimator = dynamic(() => import("@/components/maps/expand-map-animator").then((m) => m.ExpandMapAnimator), { ssr: false });
+const CollapseMapAnimator = dynamic(() => import("@/components/maps/expand-map-animator").then((m) => m.CollapseMapAnimator), { ssr: false });
 /** The overlay's header, before it is measured: py-2, a small button, its border. The animator measures the real one. */
 const THEATER_HEADER_PX = 49;
 import { StreetViewPanel } from "./street-view-panel";
@@ -476,8 +478,15 @@ export function PropertyForm({
   const [openedAnimated, setOpenedAnimated] = useState(false);
   const theaterPanelRef = useRef<HTMLDivElement>(null);
   const theaterBackdropRef = useRef<HTMLDivElement>(null);
+  // Slice 41.77: the way back's input while it plays (null otherwise); whether the opening was stopped part way; the
+  // tile's map, measured when the way back starts.
+  const [collapsing, setCollapsing] = useState<CollapseInput | null>(null);
+  const openingCutRef = useRef(false);
+  const tileMapBoxRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     void loadExpandDurations();
+    // 41.77: the way back's return flies as „Caută pe hartă" does, with its length and its a.
+    void loadSearchFlight();
   }, []);
   const handleOpenTheaterMap = (tileMap?: DOMRect) => {
     const opening = theaterOpenView(corners, { center: miniMapCenterRef.current, zoom: miniMapZoomRef.current });
@@ -498,24 +507,68 @@ export function PropertyForm({
     // The map is created where the opening starts: on the tile's own camera (the end, under reduced motion).
     setTheaterView(input ? expandStartView(planExpand(input)) : opening);
     setExpanding(input);
+    setCollapsing(null);
+    openingCutRef.current = false;
     setOpenedAnimated(input !== null);
     setBigMap(true);
     onBigMapChange?.(true);
   };
-  const handleCloseTheaterMap = () => { setBigMap(false); setExpanding(null); onBigMapChange?.(false); };
-  const handleExpandDone = useCallback(() => setExpanding(null), []);
+  // Closes at once, as every exit did before 41.77: a second press during the way back, reduced motion, the opening
+  // still playing, or nothing to go back to.
+  const closeTheaterNow = useCallback(() => {
+    setBigMap(false);
+    setExpanding(null);
+    setCollapsing(null);
+    onBigMapChange?.(false);
+  }, [onBigMapChange]);
+  // Slice 41.77 (Ask first 1): „Restrânge", Escape and the backdrop all take the way back — the return when the map was
+  // moved, then the opening's two parts in reverse, into the tile where it stands now.
+  const handleCloseTheaterMap = useCallback(() => {
+    if (collapsing || expanding || typeof window === "undefined") return closeTheaterNow();
+    const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+    const opening = theaterOpenView(corners, { center: miniMapCenterRef.current, zoom: miniMapZoomRef.current });
+    const tileCenter = miniMapCenterRef.current;
+    if (reducedMotion || !opening || !tileCenter) return closeTheaterNow();
+    // The tile's map where it stands now, after any scroll; not measured when hidden („Panouri") or off the screen.
+    const r = tileMapBoxRef.current?.getBoundingClientRect();
+    const onScreen = r && r.width > 0 && r.height > 0 && r.bottom > 0 && r.right > 0 && r.top < window.innerHeight && r.left < window.innerWidth;
+    const { durationMs, arc } = searchFlightSetting();
+    setCollapsing({
+      tileMap: r && onScreen ? { x: r.x, y: r.y, w: r.width, h: r.height } : null,
+      viewport: { w: window.innerWidth, h: window.innerHeight },
+      headerPx: THEATER_HEADER_PX,
+      tileCenter,
+      zoom: opening.zoom,
+      corners,
+      ...expandDurations(),
+      reducedMotion,
+      flightMs: durationMs,
+      arc,
+      openingCut: openingCutRef.current,
+    });
+  }, [collapsing, expanding, closeTheaterNow, corners]);
+  // Arrived on the tile: the overlay goes, and focus returns to the tile's expand button (Ask first 4).
+  const handleCollapseDone = useCallback(() => {
+    closeTheaterNow();
+    // A timer, not a frame: the desktop app's browser pane gets no animation frames (58fb1aa8).
+    setTimeout(() => tileMapBoxRef.current?.querySelector<HTMLElement>("[data-map-full-screen]")?.focus(), 0);
+  }, [closeTheaterNow]);
+  const handleExpandDone = useCallback((cut: boolean) => {
+    openingCutRef.current = cut;
+    setExpanding(null);
+  }, []);
   // The panel's first frame, before the animator has the map: on the tile, the backdrop clear.
   const expandFirst = useMemo(() => (expanding ? panelRectAt(0, planExpand(expanding)) : null), [expanding]);
 
-  // Close theater overlay on Escape key.
+  // Close theater overlay on Escape key — 41.77: the way back, as „Restrânge".
   useEffect(() => {
     if (!bigMap) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") { setBigMap(false); setExpanding(null); onBigMapChange?.(false); }
+      if (e.key === "Escape") handleCloseTheaterMap();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [bigMap, onBigMapChange]);
+  }, [bigMap, handleCloseTheaterMap]);
 
   // Slice #37.19: as tiles, Street View is a tile of its own, and the corners
   // table's button ticks it; „Adaugă proprietate" keeps the panel's own state.
@@ -1806,7 +1859,8 @@ export function PropertyForm({
             data-width-field="map"
             data-width-kind="fixed"
           >
-            <div className="absolute inset-0">
+            {/* 41.77: measured when „Hartă extinsă" goes back, so the panel lands where the tile's map stands. */}
+            <div className="absolute inset-0" ref={tileMapBoxRef}>
               <ErrorBoundary fallback={<PanelError>{tShared("errorBoundary.map")}</PanelError>}>
                 <PropertyMiniMap
                   corners={corners}
@@ -1873,7 +1927,7 @@ export function PropertyForm({
       {bigMap && createPortal(
         // 41.69: the dialog has a box of its own — the whole window its backdrop and panel already cover. With only
         // `fixed` children it measured 0 × 0, so it read as hidden to anything that asks (TC-MAP-09 step 2).
-        <div role="dialog" aria-modal="true" aria-label={t("corners.theaterTitle")} className="fixed inset-0 z-50" data-expand={expanding ? "running" : "done"}>
+        <div role="dialog" aria-modal="true" aria-label={t("corners.theaterTitle")} className="fixed inset-0 z-50" data-expand={expanding ? "running" : "done"} data-collapse={collapsing ? "running" : undefined}>
           {/* Backdrop — click to close. 41.75: it fades in as the tile grows. */}
           <div
             ref={theaterBackdropRef}
@@ -1904,8 +1958,8 @@ export function PropertyForm({
                   #37.91: Minimize — corner brackets, Street View's exit — matching the map's Maximize. */}
               <IconButton icon={Minimize} label={t("corners.theaterClose")} variant="secondary" size="sm" onClick={handleCloseTheaterMap} />
             </div>
-            {/* Map fills the rest */}
-            <div className="relative flex-1 min-h-0">
+            {/* Map fills the rest. 41.77: inert while the way back plays — a drag, the wheel or a button there does nothing. */}
+            <div className={`relative flex-1 min-h-0${collapsing ? " pointer-events-none" : ""}`} inert={collapsing ? true : undefined}>
               <div className="absolute inset-0">
                 <ErrorBoundary fallback={<PanelError>{tShared("errorBoundary.map")}</PanelError>}>
                   <PropertyMiniMap
@@ -1923,6 +1977,9 @@ export function PropertyForm({
                     <TheaterOthersLayer excludeId={propertyId} />
                     {expanding && (
                       <ExpandMapAnimator input={expanding} panelRef={theaterPanelRef} backdropRef={theaterBackdropRef} onDone={handleExpandDone} />
+                    )}
+                    {collapsing && (
+                      <CollapseMapAnimator input={collapsing} panelRef={theaterPanelRef} backdropRef={theaterBackdropRef} onDone={handleCollapseDone} />
                     )}
                   </PropertyMiniMap>
                 </ErrorBoundary>
