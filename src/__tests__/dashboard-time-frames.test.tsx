@@ -216,8 +216,9 @@ describe("the day-count sentences are not fixed strings", () => {
   const CASES = [
     ["recentCounts.title", "dashboard_recent_days"],
     ["expiringDocuments.empty", "dashboard_expiring_docs"],
-    // Slice 41.01: the stale tile's sentence is gone; its age is in its title.
-    ["staleMetadata.title", "dashboard_stale_metadata"],
+    // Slice 41.01: the stale tile's sentence is gone; its age is in its title. 41.78 rewrote this in place — it read
+    // `["staleMetadata.title", "dashboard_stale_metadata"]`: the title is „Clasificări de revizuit", the age its subtitle.
+    ["staleMetadata.subtitle", "dashboard_stale_metadata"],
   ] as const;
 
   it.each(LOCALES)("%s: every sentence interpolates `days`", (locale) => {
@@ -229,7 +230,9 @@ describe("the day-count sentences are not fixed strings", () => {
   it.each(LOCALES)("%s: no sentence still carries its default baked in", (locale) => {
     for (const [key, setting] of CASES) {
       const literal = String(TIME_FRAME_DEFAULTS[setting].value);
-      expect(raw(locale, key)).not.toContain(literal);
+      // 41.78: an exact arm (`=7 {Adăugate în ultima săptămână}`) names its number on purpose — it is said only when
+      // the setting IS that number (Ask first 1) — so it is set aside; every other arm must still count `#`.
+      expect(raw(locale, key).replace(/=\d+\s*\{[^{}]*\}/g, "")).not.toContain(literal);
     }
   });
 
@@ -261,7 +264,8 @@ describe("the day-count sentences are not fixed strings", () => {
       // The stale tile's sentence quoted the age its title now carries, and its hint explained the cards.
       const ns = (MESSAGES[locale].dashboard as Record<string, Record<string, unknown>>);
       expect(Object.keys(ns.recentCounts)).toEqual(["title"]);
-      expect(Object.keys(ns.staleMetadata).sort()).toEqual(["allGood", "title"]);
+      // 41.78: and a subtitle, the age „Clasificări de revizuit" counts against (it read `["allGood", "title"]`).
+      expect(Object.keys(ns.staleMetadata).sort()).toEqual(["allGood", "subtitle", "title"]);
     },
   );
 });
@@ -302,7 +306,10 @@ describe("the rendered sentence follows the setting", () => {
     expect(document.body.textContent).toContain(String(EXPIRING));
   });
 
-  it.each(LOCALES)("%s: the stale-metadata title quotes its age (Slice 41.01: the sentence under it is gone)", (locale) => {
+  // 41.78 rewrote this in place. It read „the stale-metadata title quotes its age (Slice 41.01: the sentence under it is
+  // gone)" and asserted the heading was the formatted title: the title is now „Clasificări de revizuit", with no number,
+  // and its age is said once, in the subtitle under it (Ask first 2).
+  it.each(LOCALES)("%s: „Clasificări de revizuit\" stands without a number; its subtitle quotes the age", (locale) => {
     render(
       <StaleMetadataSection
         data={{ total: 5, naturalPersons: 2, judicialPersons: 0, properties: 3, documents: 0 }}
@@ -310,9 +317,24 @@ describe("the rendered sentence follows the setting", () => {
         staleDays={STALE}
       />,
     );
-    const expected = formatIcu(raw(locale, "staleMetadata.title"), { days: STALE }, locale);
-    expect(screen.getByRole("heading").textContent).toBe(expected);
-    expect(document.body.textContent).toContain(String(STALE));
+    expect(screen.getByRole("heading").textContent).toBe(raw(locale, "staleMetadata.title"));
+    expect(screen.getByRole("heading").textContent).not.toMatch(/\d/);
+    const subtitle = formatIcu(raw(locale, "staleMetadata.subtitle"), { days: STALE }, locale);
+    expect(screen.getByText(subtitle)).toBeInTheDocument();
+    expect(subtitle).toContain(String(STALE));
+  });
+
+  it("41.78: „Adăugate în ultima săptămână\" / „Added last week\" only at 7 days; any other window keeps its count", () => {
+    expect(formatIcu(raw("ro-RO", "recentCounts.title"), { days: 7 }, "ro-RO")).toBe("Adăugate în ultima săptămână");
+    expect(formatIcu(raw("en-GB", "recentCounts.title"), { days: 7 }, "en-GB")).toBe("Added last week");
+    expect(formatIcu(raw("ro-RO", "recentCounts.title"), { days: 6 }, "ro-RO")).toBe("Adăugate în ultimele 6 zile");
+    expect(formatIcu(raw("ro-RO", "recentCounts.title"), { days: 1 }, "ro-RO")).toBe("Adăugate în ultima zi");
+    expect(formatIcu(raw("en-GB", "recentCounts.title"), { days: 14 }, "en-GB")).toBe("Added in the last 14 days");
+    expect(formatIcu(raw("en-GB", "recentCounts.title"), { days: 1 }, "en-GB")).toBe("Added in the last day");
+    expect(raw("ro-RO", "staleMetadata.title")).toBe("Clasificări de revizuit");
+    expect(raw("en-GB", "staleMetadata.title")).toBe("Classifications to review");
+    expect(formatIcu(raw("ro-RO", "staleMetadata.subtitle"), { days: 90 }, "ro-RO")).toBe("Neconfirmate de peste 90 de zile");
+    expect(formatIcu(raw("en-GB", "staleMetadata.subtitle"), { days: 90 }, "en-GB")).toBe("Not confirmed in over 90 days");
   });
 
   it("Romanian says 'de zile' above nineteen and plain 'zile' below it", () => {
@@ -400,7 +422,8 @@ describe("the two count tiles: four kinds, one card, no 404 (Slice 41.01)", () =
       />,
     );
     expect(container.querySelectorAll("[data-stale-count]")).toHaveLength(0);
-    expect(screen.getByText("Toate metadatele sunt actualizate")).toBeInTheDocument();
+    // 41.78: the empty line follows the title (it read „Toate metadatele sunt actualizate").
+    expect(screen.getByText("Nicio clasificare de revizuit")).toBeInTheDocument();
   });
 
   it("each card opens its kind's list — never /persons, which is no route", () => {

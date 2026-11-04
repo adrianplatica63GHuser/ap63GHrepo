@@ -61,7 +61,13 @@ test.describe("TC-AUTH-01 — Conectare și tabloul de bord", () => {
     await expect(page.locator('[data-panel="stale-metadata"]')).toBeVisible({ timeout: 30_000 });
     const STALE = (await page.locator('[data-panel="stale-metadata"]').getAttribute("aria-label"))!;
     // 41.65: „Neactualizate de peste N zile", no „Metadate" (it read /^Metadate neactualizate de peste …$/).
-    expect(STALE).toMatch(/^Neactualizate de peste (o zi|\d+ zile|\d+ de zile)$/);
+    // 41.78 rewritten in place — it read /^Neactualizate de peste (o zi|\d+ zile|\d+ de zile)$/: „Clasificări de
+    // revizuit", the age under it as the tile's subtitle; and the first tile, at the default 7 days, „Adăugate în ultima
+    // săptămână".
+    expect(STALE).toBe("Clasificări de revizuit");
+    await expect(page.locator('[data-panel="stale-metadata"]').getByText(/^Neconfirmate de peste (o zi|\d+ zile|\d+ de zile)$/)).toBeVisible();
+    const RECENT = (await page.locator('[data-panel="recent-counts"]').getAttribute("aria-label"))!;
+    expect(RECENT).toMatch(/^Adăugate în (ultima săptămână|ultima zi|ultimele \d+ zile|ultimele \d+ de zile)$/);
     const staleTile = page.getByRole("region", { name: STALE, exact: true });
     await expect(staleTile).toBeVisible({ timeout: 30_000 });
     // Slice 41.02: the bar is behind „Panouri" — hideTile / showTile open it for the tick and close it again.
@@ -155,7 +161,7 @@ test.describe("TC-AUTH-01 — Conectare și tabloul de bord", () => {
       const tile = page.locator(`[data-panel="${panel}"]`);
       const cards = tile.locator(`[${mark}]`);
       if (panel === "stale-metadata" && (await cards.count()) === 0) {
-        await expect(tile.getByText("Toate metadatele sunt actualizate")).toBeVisible();
+        await expect(tile.getByText("Nicio clasificare de revizuit")).toBeVisible(); // 41.78: it read „Toate metadatele sunt actualizate"
         continue;
       }
       await expect(cards).toHaveCount(4, { timeout: 30_000 });
