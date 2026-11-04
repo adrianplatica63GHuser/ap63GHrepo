@@ -108,7 +108,8 @@ describe("the tile — a square as wide as its family, light blue, ticked by def
   it("C writes only through the association route", () => {
     const tile = read("src/app/_components/person-tree-tile.tsx");
     const urls = [...tile.matchAll(/fetch\(`([^`]+)`/g)].map((m) => m[1]);
-    expect(urls.filter((u) => !u.startsWith("/api/people?q="))).toEqual([
+    // 41.72: the remove half now comes before the add half in the file, so the two are compared as a set.
+    expect(urls.filter((u) => !u.startsWith("/api/people?q=")).sort()).toEqual([
       "/api/people/${encodeURIComponent(personId)}/references",
       "/api/people/${encodeURIComponent(personId)}/references/${encodeURIComponent(otherId)}",
     ]);
