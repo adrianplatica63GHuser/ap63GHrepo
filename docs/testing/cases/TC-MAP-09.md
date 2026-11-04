@@ -31,7 +31,7 @@ Nothing.
 | # | A person does | And sees |
 |---|---|---|
 | 1 | Opens „Lotul de pe formular" | The „Hartă" tile shows the lot, centred on it; each of its four corners is a small green dot (41.69) |
-| 2 | Presses „Hartă extinsă" at the left of the map's top row | The full-screen map „Hartă extinsă", centred on the lot at the tile's zoom; the lot and its corners in red; „Vecinul" beside it in green (41.69), with its four small green corner dots |
+| 2 | Presses „Hartă extinsă" at the left of the map's top row, and waits about six seconds | (41.75) It opens as an animation: for 3 s the tile grows into the full-screen map while the lot travels to the middle, the same size on screen; then for 3 s the map zooms out until the lot is about a tenth of the map's height. At the end: „Hartă extinsă", the lot centred, its height 7–13 % of the map's (to 14 % on a map that zooms by whole levels); the lot and its corners in red; „Vecinul" beside it in green (41.69), with its four small green corner dots |
 | 3 | Presses Esc | The full-screen map is gone; the form is as it was, the tile's corners still small green dots |
 
 ## At the end — leaving things as they were found

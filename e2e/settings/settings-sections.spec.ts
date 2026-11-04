@@ -48,9 +48,20 @@ test.describe("TC-SET-02 — „Setări” în patru secțiuni", () => {
       await expect(main.getByRole("heading", { name: title, exact: true, level: 2 })).toBeVisible({ timeout: 30_000 });
     }
 
-    // Step 2 — the thresholds in five groups (39.92: „Fișe").
-    for (const group of ["Tablou de bord", "Acte", "Persoane", "Insigna „Nou!”", "Fișe"]) {
+    // Step 2 — the thresholds in six groups (39.92: „Fișe"; 41.75: „Hărți", last).
+    for (const group of ["Tablou de bord", "Acte", "Persoane", "Insigna „Nou!”", "Fișe", "Hărți"]) {
       await expect(main.getByRole("heading", { name: group, exact: true, level: 3 })).toBeVisible();
+    }
+    // Step 2a (41.75) — „Hărți": „Hartă extinsă"'s two parts, in seconds, 3,0 each unless someone has changed them.
+    const maps = main.locator('[data-time-frame-group="maps"]');
+    for (const label of ["Hartă extinsă — mărirea fișei", "Hartă extinsă — depărtarea"]) {
+      await expect(maps.getByLabel(label, { exact: true })).toHaveValue(/^\d{1,2}(,\d{1,2})?$/);
+    }
+    const lengths = ((await (await page.request.get("/api/time-frames")).json()) as { items: { key: string; value: number }[] }).items;
+    for (const [key, label] of [["map_expand_grow", "Hartă extinsă — mărirea fișei"], ["map_expand_zoom_out", "Hartă extinsă — depărtarea"]] as const) {
+      const ms = lengths.find((i) => i.key === key)?.value;
+      expect(ms, `${key} is seeded (migration_127)`).toBeDefined();
+      if (ms === 3000) await expect(maps.getByLabel(label, { exact: true })).toHaveValue("3,0");
     }
 
     // Step 3 — „Fereastră filtru expiră curând": its example names its value.

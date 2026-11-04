@@ -37,6 +37,7 @@ import {
   formatSeconds,
   isTypedInSeconds,
   parseSecondsDraft,
+  secondsRangeMs,
 } from "@/lib/time-frames/config";
 import { MAKE_ROOM_DELAY_MS } from "@/lib/ui/tile-positions";
 
@@ -184,15 +185,23 @@ describe("seconds with decimals — the make-room delay (39.92)", () => {
     const route = read("src", "app", "api", "time-frames", "route.ts");
     expect(route).toContain("key:   z.literal(MAKE_ROOM_DELAY_KEY),");
     expect(route).toContain("value: z.number().int().min(SECONDS_MIN_MS).max(SECONDS_MAX_MS),");
-    expect(route).toContain(".refine((k) => k !== MAKE_ROOM_DELAY_KEY)");
+    // 41.75 rewrote this in place: it read `.refine((k) => k !== MAKE_ROOM_DELAY_KEY)` — now every key kept in ms is
+    // kept out of the 1..3650 arm, „Hartă extinsă"'s two parts holding 0..10 s in an arm of their own.
+    expect(route).toContain(".refine((k) => !IN_MS.includes(k))");
+    expect(route).toContain("const IN_MS: readonly string[] = [MAKE_ROOM_DELAY_KEY, ...MAP_EXPAND_KEYS];");
+    expect(route).toContain("key:   z.enum(MAP_EXPAND_KEYS),");
+    expect(route).toContain("value: z.number().int().min(0).max(SECONDS_MAX_MS),");
     expect(SECONDS_MIN_MS).toBe(200);
     expect(SECONDS_MAX_MS).toBe(10_000);
   });
 
   it("the editor saves it through its own parser and error, and tells the tile screens to read it afresh", () => {
     const view = codeOnly(read("src", "app", "admin", "settings", "_components", "settings-view.tsx"));
-    expect(view).toMatch(/const ms = parseSecondsDraft\(raw\);\s*if \(ms === null\) \{\s*setSaveError\(t\("timeFrames\.validationErrorSeconds"\)\)/);
+    // 41.75 rewrote this in place: it read `const ms = parseSecondsDraft(raw); if (ms === null) { setSaveError(t("timeFrames.validationErrorSeconds"))`.
+    // Each key now has its own range, and the map's parts their own error.
+    expect(view).toMatch(/const range = secondsRangeMs\(key\);\s*const ms = parseSecondsDraft\(raw, range\);\s*if \(ms === null\) \{\s*setSaveError\(range\.min === 0 \? t\("timeFrames\.validationErrorSecondsFromZero"\) : t\("timeFrames\.validationErrorSeconds"\)\)/);
     expect(view).toContain("forgetMakeRoomDelay();");
+    expect(view).toContain("forgetExpandDurations();");
     expect(view).toContain('inputMode: "decimal"');
   });
 
@@ -201,5 +210,33 @@ describe("seconds with decimals — the make-room delay (39.92)", () => {
     const text = messages.settings.timeFrames.validationErrorSeconds;
     expect(text).toContain(locale === "en-GB" ? "0.2" : "0,2");
     expect(text).toContain("10");
+  });
+});
+
+describe("seconds from 0 — „Hartă extinsă”'s two parts (41.75)", () => {
+  it("are stored in ms, 3,0 s each by default", () => {
+    expect(TIME_FRAME_DEFAULTS.map_expand_grow).toEqual({ value: 3000, unit: "milliseconds" });
+    expect(TIME_FRAME_DEFAULTS.map_expand_zoom_out).toEqual({ value: 3000, unit: "milliseconds" });
+  });
+
+  it("accept 0 (the part skipped) to 10 s; the make-room delay keeps 0,2 s – 10 s", () => {
+    for (const key of ["map_expand_grow", "map_expand_zoom_out"]) {
+      const range = secondsRangeMs(key);
+      expect(range).toEqual({ min: 0, max: 10_000 });
+      expect(parseSecondsDraft("0", range)).toBe(0);
+      expect(parseSecondsDraft("0,1", range)).toBe(100);
+      expect(parseSecondsDraft("3", range)).toBe(3000);
+      expect(parseSecondsDraft("10", range)).toBe(10_000);
+      expect(parseSecondsDraft("10,5", range)).toBeNull();
+    }
+    expect(secondsRangeMs("tile_make_room_delay")).toEqual({ min: SECONDS_MIN_MS, max: SECONDS_MAX_MS });
+    expect(parseSecondsDraft("0", secondsRangeMs("tile_make_room_delay"))).toBeNull();
+  });
+
+  it.each(["en-GB", "ro-RO"])("%s: their error names 0 and 10", (locale) => {
+    const messages = JSON.parse(read("messages", `${locale}.json`)) as { settings: { timeFrames: { validationErrorSecondsFromZero: string } } };
+    const text = messages.settings.timeFrames.validationErrorSecondsFromZero;
+    expect(text).toMatch(/\b0\b/);
+    expect(text).toMatch(/\b10\b/);
   });
 });

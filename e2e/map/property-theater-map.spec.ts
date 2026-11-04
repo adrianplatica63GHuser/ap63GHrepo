@@ -72,13 +72,36 @@ test.describe("TC-MAP-09 — harta unei proprietăți și „Hartă extinsă”"
       const zoom = (await tileMap(page).getAttribute("data-map-zoom"))!;
       await expect.poll(() => dots(page, '[data-tile="map"]'), { timeout: 15_000 }).toEqual(LOT.map(() => ({ color: GREEN, width: 4 })));
 
-      // Step 2 — „Hartă extinsă": centred on the lot at the tile's zoom; the lot red; „Vecinul" with its corner dots.
+      // Step 2 — „Hartă extinsă" (41.75: it opens in two animated parts, 3 s each by default — the tile grows into the
+      // expanded map, the lot travelling to the middle at the tile's zoom, then the map zooms to the lot at a tenth of
+      // its height). Part 1 starts on the tile: the map at the tile's zoom. Once both have run: the lot centred within
+      // 5 % of the map, its height 7–13 % of the map's; the lot red; „Vecinul" with its corner dots.
       await page.locator('[data-tile="map"]').getByRole("button", { name: "Hartă extinsă", exact: true }).click();
       await expect(theater(page)).toBeVisible();
+      await expect(theater(page)).toHaveAttribute("data-expand", "done", { timeout: 30_000 });
       const big = theater(page).locator("[data-mini-map]");
-      await expect(big).toHaveAttribute("data-map-zoom", zoom, { timeout: 30_000 });
-      await expect(big).toHaveAttribute("data-map-center", CENTER);
+      await expect(big).not.toHaveAttribute("data-map-zoom", zoom, { timeout: 15_000 });
       await expect.poll(() => dots(page, '[role="dialog"]'), { timeout: 15_000 }).toEqual(LOT.map(() => ({ color: RED, width: 4 })));
+      const lotBox = async () => {
+        const map = (await big.boundingBox())!;
+        const pts = await page.locator('[role="dialog"] [data-mini-map-dot]').evaluateAll((els) =>
+          els.map((el) => { const r = el.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; }),
+        );
+        const xs = pts.map((p) => p.x), ys = pts.map((p) => p.y);
+        const cx = (Math.min(...xs) + Math.max(...xs)) / 2 - map.x, cy = (Math.min(...ys) + Math.max(...ys)) / 2 - map.y;
+        return {
+          offCentreX: Math.abs(cx / map.width - 0.5),
+          offCentreY: Math.abs(cy / map.height - 0.5),
+          height: (Math.max(...ys) - Math.min(...ys)) / map.height,
+        };
+      };
+      // A raster map (no WebGL 2 — the runner's) lands on the nearest whole zoom, so its tenth is 10 % × 2^±0.5.
+      const endZoom = Number(await big.getAttribute("data-map-zoom"));
+      const most = Number.isInteger(endZoom) ? 0.142 : 0.13;
+      await expect
+        .poll(async () => { const b = await lotBox(); return b.offCentreX <= 0.05 && b.offCentreY <= 0.05 && b.height >= 0.07 && b.height <= most ? "ok" : JSON.stringify(b); }, { timeout: 15_000 })
+        .toBe("ok");
+      await expect(big).toHaveAttribute("data-map-center", CENTER);
       for (const c of NEIGHBOUR)
         await expect(theater(page).locator(`[data-corner-marker="${c.lat},${c.lon}"]`)).toHaveCount(1, { timeout: 15_000 });
 

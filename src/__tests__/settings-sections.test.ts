@@ -42,14 +42,16 @@ function exampleRo(key: string, unit: string, count: number): string {
   return say("ro-RO", ro.timeFrames.examples[key], { duration });
 }
 
-describe("the five groups", () => {
+describe("the six groups", () => {
   // Slice 39.92: a fifth, „Fișe" — the screen's own word for a tile — for the make-room delay.
-  it("are Tablou de bord, Acte, Persoane, the „Nou!” badge and Fișe, in that order", () => {
-    expect(TIME_FRAME_GROUPS.map((g) => g.id)).toEqual(["dashboard", "documents", "persons", "recency", "tiles"]);
+  // Slice 41.75: a sixth, „Hărți", for „Hartă extinsă"'s two parts (it read „the five groups" until then).
+  it("are Tablou de bord, Acte, Persoane, the „Nou!” badge, Fișe and Hărți, in that order", () => {
+    expect(TIME_FRAME_GROUPS.map((g) => g.id)).toEqual(["dashboard", "documents", "persons", "recency", "tiles", "maps"]);
     expect(ro.timeFrames.groups).toEqual({
-      dashboard: "Tablou de bord", documents: "Acte", persons: "Persoane", recency: "Insigna „Nou!”", tiles: "Fișe",
+      dashboard: "Tablou de bord", documents: "Acte", persons: "Persoane", recency: "Insigna „Nou!”", tiles: "Fișe", maps: "Hărți",
     });
     expect(TIME_FRAME_GROUPS.find((g) => g.id === "tiles")?.keys).toEqual(["tile_make_room_delay"]);
+    expect(TIME_FRAME_GROUPS.find((g) => g.id === "maps")?.keys).toEqual(["map_expand_grow", "map_expand_zoom_out"]);
   });
 
   it("hold every threshold exactly once", () => {
@@ -255,5 +257,14 @@ describe("the make-room delay's example, in seconds (39.92)", () => {
     expect(ro.timeFrames.unit.seconds).toBe("secunde");
     expect(en.timeFrames.unit.seconds).toBe("seconds");
     expect(say("en-GB", en.timeFrames.duration.seconds, { count: 1.5 })).toBe("1.5 seconds");
+  });
+});
+
+describe("„Hartă extinsă”'s two parts, their examples in seconds (41.75)", () => {
+  it.each([
+    ["map_expand_grow", 3, "La „Hartă extinsă”, fișa „Hartă” se mărește până la harta extinsă în 3 secunde, iar proprietatea ajunge la mijloc."],
+    ["map_expand_zoom_out", 2.5, "Apoi harta extinsă se depărtează în 2,5 secunde, până când proprietatea are cam o zecime din înălțimea hărții."],
+  ])("%s at %s s", (key, count, sentence) => {
+    expect(exampleRo(key, "seconds", count)).toBe(sentence);
   });
 });

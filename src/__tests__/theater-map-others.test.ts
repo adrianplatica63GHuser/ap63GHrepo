@@ -76,9 +76,11 @@ describe("„Hartă extinsă\" (#39.94)", () => {
   });
 
   it("opens where the tile looks when the button is pressed: centred on the live corners, at the tile's zoom", () => {
-    expect(FORM).toContain(
-      "setTheaterView(theaterOpenView(corners, { center: miniMapCenterRef.current, zoom: miniMapZoomRef.current }));",
-    );
+    // 41.75 rewrote this in place. It read
+    // `setTheaterView(theaterOpenView(corners, { center: miniMapCenterRef.current, zoom: miniMapZoomRef.current }));` —
+    // the overlay now starts where its opening starts (on the tile's camera), and theaterOpenView is its fallback.
+    expect(FORM).toContain("const opening = theaterOpenView(corners, { center: miniMapCenterRef.current, zoom: miniMapZoomRef.current });");
+    expect(FORM).toContain("setTheaterView(input ? expandStartView(planExpand(input)) : opening);");
     expect(INNER).toContain("defaultCenter={initialView?.center ?? DEFAULT_CENTER}");
     expect(INNER).toContain("defaultZoom={initialView?.zoom ?? DEFAULT_ZOOM}");
     expect(INNER).toContain("{!initialView && <FitBounds corners={corners} />}");

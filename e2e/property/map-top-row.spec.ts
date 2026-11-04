@@ -104,6 +104,8 @@ test.describe("TC-PROP-09 — „Hartă”: rândul de sus și harta extinsă", 
       await open.click();
       const big = fullScreen(page);
       await expect(big.restore).toBeVisible();
+      // 41.75: „Hartă extinsă" opens as an animation; its top row is read once the panel has its full size.
+      await expect(big.dialog).toHaveAttribute("data-expand", "done", { timeout: 30_000 });
       expect(await iconOf(big.restore)).toBe("lucide-minimize");
       await expectTopRow(big.dialog, ["Desenează", "Arată Unghiuri", "HARTĂ", "SATELIT"]);
       await expect(big.dialog.getByRole("button", { name: "Hartă extinsă", exact: true })).toHaveCount(0);

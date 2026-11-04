@@ -596,17 +596,19 @@ describe("the seeded time-frame rows", () => {
     expect(Object.fromEntries(repair)).toEqual(Object.fromEntries(migrated));
   });
 
-  it("cover all eleven settings, and none of the Romanian is left un-accented", () => {
-    // Ten seeded by 063; the eleventh, the make-room delay, added by migration_117 (Slice 39.92).
+  it("cover all thirteen settings, and none of the Romanian is left un-accented", () => {
+    // Ten seeded by 063; the eleventh, the make-room delay, added by migration_117 (Slice 39.92); the twelfth and
+    // thirteenth, „Hartă extinsă"'s two parts, by migration_127 (Slice 41.75). It read „all eleven" until 41.75.
     const migrated = effectiveRows();
-    expect(migrated.size).toBe(11);
+    expect(migrated.size).toBe(13);
     expect(migrated.has("tile_make_room_delay")).toBe(true);
+    expect(migrated.has("map_expand_grow") && migrated.has("map_expand_zoom_out")).toBe(true);
 
     const romanian = [...migrated.entries()].flatMap(([key, r]) => [
       [`${key}.label_ro`, r.labelRo] as const,
       [`${key}.description_ro`, r.descriptionRo] as const,
     ]);
-    expect(romanian).toHaveLength(22);
+    expect(romanian).toHaveLength(26);
 
     // Every one of the twenty strings carries at least one Romanian diacritic.
     // That is what a reversion to the 063 spelling would fail — those strings
