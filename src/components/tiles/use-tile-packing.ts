@@ -1407,7 +1407,12 @@ export function useTilePacking(
         }
         if (h.parentElement !== container) container.appendChild(h);
         const w = resize?.box.id === p.id ? resize.px : b.el.offsetWidth;
-        h.style.setProperty("left", `${p.col * (unit + gap) + w - TILE_HANDLE_PX / 2}px`);
+        // Centred on the tile's right edge — but never past the row's: a tile that ends at the row's edge would put half
+        // the handle outside it, and a column that scrolls sideways (the value lists' side, 2026-11-04, TC-VL-10) then
+        // scrolled by those 4 px. There it stands just inside the edge.
+        const edge = p.col * (unit + gap) + w;
+        const inside = container.clientWidth > 0 ? Math.min(edge - TILE_HANDLE_PX / 2, container.clientWidth - TILE_HANDLE_PX) : edge - TILE_HANDLE_PX / 2;
+        h.style.setProperty("left", `${inside}px`);
         h.style.setProperty("top", `${p.top}px`);
         h.style.setProperty("height", `${Math.max(p.height, b.el.offsetHeight)}px`);
         h.setAttribute("aria-label", words.current.handle(titleOf(b)));
