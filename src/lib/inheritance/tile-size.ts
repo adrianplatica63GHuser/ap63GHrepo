@@ -13,7 +13,7 @@
  * level asked: up to level 2's floor for two persons or fewer, down to just under it for more. A tree that needs a
  * smaller scale than level 1's ceiling is drawn smaller, still level 1. The wheel and the drag work as before after it.
  */
-import { LEVEL_2_AT, LEVEL_3_AT } from "./layout";
+import { LEVEL_2_AT, LEVEL_3_AT, type TreeLayout } from "./layout";
 
 /** The tile's units: 2 for one or two persons (and while loading), 3 for more. */
 export function treeTileUnits(persons: number | null): 2 | 3 {
@@ -27,4 +27,19 @@ export const LEVEL_1_CEILING = LEVEL_2_AT - 0.01;
 export function treeTileOpeningScale(persons: number, fit: number): number {
   if (persons > 2) return Math.min(fit, LEVEL_1_CEILING);
   return Math.min(Math.max(fit, LEVEL_2_AT), LEVEL_3_AT - 0.01);
+}
+
+/** The drawing's first view: its scale and where its origin goes in the box. */
+export type TreeView = { scale: number; tx: number; ty: number };
+
+/**
+ * Slice 41.79 — Adrian: „the natural person that is current for the screen should be centred in the middle of the
+ * inheritance tree tile". The first view at `scale` in a `W` × `H` box: centred on `centre`'s box when it is drawn,
+ * even where that leaves part of the tree outside the square (Ask first 3); otherwise the whole drawing centred, as
+ * the whole tree's screen opens (`centre` not given) — never higher than 12 px from the top.
+ */
+export function treeOpeningView(W: number, H: number, layout: TreeLayout, scale: number, centre?: string | null): TreeView {
+  const n = centre ? layout.nodes.find((x) => x.id === centre) : undefined;
+  if (n) return { scale, tx: W / 2 - n.x * scale, ty: H / 2 - n.y * scale };
+  return { scale, tx: (W - layout.width * scale) / 2, ty: Math.max(12, (H - layout.height * scale) / 2) };
 }

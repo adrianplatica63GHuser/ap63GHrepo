@@ -81,7 +81,8 @@ export function PersonTreeTile({
   const docs = useMemo(() => (q.data ? indexDocuments(q.data.documents ?? [], q.data.appearances ?? []) : null), [q.data]);
   // 41.71: as wide as its family — 2 units for one or two persons (and while loading), 3 for more; the drawing opens at
   // level 2 or 1 to match (tile-size.ts). Read again when a tie comes or goes, so the width follows the family.
-  const count = sub ? sub.persons.length : null;
+  // 41.79 (Ask first 2): the persons the drawing places — the count of what is drawn, not of what was asked for.
+  const count = layout ? layout.nodes.length : null;
   const units = treeTileUnits(count);
   const opening = useCallback((fit: number) => treeTileOpeningScale(count ?? 0, fit), [count]);
 
@@ -98,8 +99,9 @@ export function PersonTreeTile({
         {q.isError && <p role="alert" className="p-3 text-xs text-red-600">{t("error")}</p>}
         {layout && layout.nodes.length === 0 && <p className="p-3 text-xs text-fade">{t("empty")}</p>}
         {sub && layout && layout.nodes.length > 0 && (
-          // A new width is a new first view: keyed on the units, the drawing fits its new square again.
-          <TreeCanvas key={units} data={sub} layout={layout} mark={personId} linkOf={plainHref} docs={docs} openingScale={opening} className="absolute inset-0" />
+          // A new width is a new first view: keyed on the units, the drawing fits its new square again — 41.79: centred
+          // on the screen's own person (Ask firsts 3, 4).
+          <TreeCanvas key={units} data={sub} layout={layout} mark={personId} linkOf={plainHref} docs={docs} openingScale={opening} openingCentre={personId} className="absolute inset-0" />
         )}
       </div>
       {/* 41.72 (Adrian: „This button should be replaced with two buttons"): where the one button stood (40.34), side by

@@ -127,9 +127,23 @@ export interface StoredPlace {
    * changed on „Setări" (41.16) keeps every count.
    */
   units?: number;
+  /**
+   * Slice 41.79: for a tile in `WIDTH_EPOCHS`, the epoch its `units` were dragged in. A width without the tile's epoch
+   * was dragged before its own width learned something new, and is forgotten once.
+   */
+  widthEpoch?: number;
 }
 
 export type StoredPlaces = Readonly<Record<string, StoredPlace>>;
+
+/**
+ * Slice 41.79: tiles whose dragged width is forgotten once — a new storage version for that tile alone, every other
+ * tile's place and width kept as stored. „Arbore de moștenire" since 41.71 opens 3 units wide for more than two
+ * persons; a width dragged before that (Adrian's Chrome held `inheritanceTree: { col: 2, top: 0, units: 2 }` in
+ * `ga40-tile-positions-natural-person-v1`, 2026-11-04) held it at 2 for every person. A width dragged from now on
+ * carries the epoch and wins again, as for every tile.
+ */
+export const WIDTH_EPOCHS: Readonly<Record<string, number>> = { inheritanceTree: 2 };
 
 /** The step a dragged tile snaps to down the screen, in px (half a PANEL_GAP). */
 export const ROW_STEP = 8;
@@ -199,8 +213,14 @@ export function parseStoredPlaces(raw: string | null | undefined): Record<string
     const { space } = v as { space?: unknown };
     if (typeof space === "number" && Number.isFinite(space) && space >= 1 && space <= MAX_TOP) out[id].space = Math.round(space);
     // 41.17: a corrupt width is the screen's own width — the place itself still holds.
-    const { units } = v as { units?: unknown };
-    if (Number.isInteger(units) && (units as number) >= 1 && (units as number) <= MAX_UNITS) out[id].units = units as number;
+    const { units, widthEpoch } = v as { units?: unknown; widthEpoch?: unknown };
+    // 41.79: a width dragged before its tile's epoch is forgotten — the place itself still holds.
+    const epoch = Object.prototype.hasOwnProperty.call(WIDTH_EPOCHS, id) ? WIDTH_EPOCHS[id] : undefined;
+    const current = epoch === undefined || widthEpoch === epoch;
+    if (current && Number.isInteger(units) && (units as number) >= 1 && (units as number) <= MAX_UNITS) {
+      out[id].units = units as number;
+      if (epoch !== undefined) out[id].widthEpoch = epoch;
+    }
   }
   return out;
 }
@@ -466,7 +486,12 @@ export function placesToStore(
     if (fallback.includes(p.id) && !moved.includes(p.id)) continue;
     // 41.17: a place written anew keeps the width stored with it — a width is changed only by its own edge.
     const units = previous[p.id]?.units;
-    out[p.id] = units === undefined ? storedPlaceOf(placed, p, gap, lead) : { ...storedPlaceOf(placed, p, gap, lead), units };
+    // 41.79: and its epoch, so a width dragged in the tile's epoch is not forgotten by a later move.
+    const widthEpoch = previous[p.id]?.widthEpoch;
+    out[p.id] =
+      units === undefined
+        ? storedPlaceOf(placed, p, gap, lead)
+        : { ...storedPlaceOf(placed, p, gap, lead), units, ...(widthEpoch === undefined ? {} : { widthEpoch }) };
   }
   return out;
 }
@@ -633,8 +658,10 @@ export function withStoredWidth(stored: StoredPlaces, id: string, units: number 
   const out: Record<string, StoredPlace> = { ...stored };
   const place = out[id];
   if (!place) return out;
-  const { units: _was, ...rest } = place;
-  out[id] = units === undefined ? rest : { ...rest, units };
+  const { units: _was, widthEpoch: _epoch, ...rest } = place;
+  // 41.79: a width dragged now carries its tile's epoch, so it is kept.
+  const epoch = Object.prototype.hasOwnProperty.call(WIDTH_EPOCHS, id) ? WIDTH_EPOCHS[id] : undefined;
+  out[id] = units === undefined ? rest : epoch === undefined ? { ...rest, units } : { ...rest, units, widthEpoch: epoch };
   return out;
 }
 
