@@ -74,20 +74,55 @@ test.describe("TC-INHER-02 — arborele persoanei", () => {
       expect((await look(treeTitle))[0]).toBe("uppercase");
       await expect(tile(page).locator("[data-tile-subtitle]")).toHaveCount(1);
 
-      // Step 1a (Slice 40.34) — the button reads „Adaugă sau scoate", named and tooltipped „Adaugă sau scoate o rudă";
-      // „Asociază persoană"'s kind: its height and its colour, as wide as its words, at the tile's left.
-      const open = tile(page).locator("[data-tree-expand]");
-      // 40.96: icon-only — its words are its name and tooltip, „Adaugă sau scoate o rudă" (40.34 showed „Adaugă sau scoate").
-      await expect(open).toHaveText("");
-      await expect(open).toHaveAccessibleName("Adaugă sau scoate o rudă");
+      // Step 1a (Slice 41.72, which replaced 40.34's one button „Adaugă sau scoate o rudă") — two icon buttons,
+      // „Adaugă o rudă" then „Scoate o rudă", each named and tooltipped so, „Asociază persoană"'s kind — its height
+      // and colour — at the tile's left, neither pressed.
+      const addBtn = tile(page).locator("[data-tree-add]");
+      const removeBtn = tile(page).locator("[data-tree-remove]");
+      await expect(tile(page).locator("[data-tree-expand]")).toHaveCount(0);
+      await expect(addBtn).toHaveText("");
+      await expect(addBtn).toHaveAccessibleName("Adaugă o rudă");
+      await expect(removeBtn).toHaveAccessibleName("Scoate o rudă");
+      await expect(addBtn).toHaveAttribute("aria-pressed", "false");
+      await expect(removeBtn).toHaveAttribute("aria-pressed", "false");
       await showTile(page, "Legături");
       const associate = page.locator('[data-tile="related"]').getByRole("button", { name: "Asociază persoană", exact: true });
       const looks = (l: ReturnType<Page["locator"]>) =>
         l.evaluate((e) => ({ h: Math.round(e.getBoundingClientRect().height), bg: getComputedStyle(e).backgroundColor }));
-      expect(await looks(open)).toEqual(await looks(associate));
-      const [ob, tb] = [(await open.boundingBox())!, (await tile(page).boundingBox())!];
-      expect(ob.width).toBeLessThan(tb.width / 2);
-      expect(ob.x - tb.x).toBeLessThanOrEqual(16);
+      expect(await looks(addBtn)).toEqual(await looks(associate));
+      expect(await looks(removeBtn)).toEqual(await looks(associate));
+      const [ab, rb, tb] = [(await addBtn.boundingBox())!, (await removeBtn.boundingBox())!, (await tile(page).boundingBox())!];
+      expect(ab.x - tb.x).toBeLessThanOrEqual(16);
+      expect(rb.x).toBeGreaterThan(ab.x + ab.width - 1);
+      expect(Math.abs(rb.y - ab.y)).toBeLessThanOrEqual(1);
+
+      // Step 1b (41.72) — each opens only its half; both together; each collapses, by its own ChevronUp and by its
+      // button pressed again.
+      const addHalf = tile(page).locator('[data-tree-half="add"]');
+      const removeHalf = tile(page).locator('[data-tree-half="remove"]');
+      await addBtn.click();
+      await expect(addHalf).toBeVisible();
+      await expect(addHalf.getByRole("searchbox", { name: "Ruda" })).toBeVisible();
+      await expect(addHalf).toContainText(`O rudă nouă a lui Elena ${MARK}`);
+      await expect(removeHalf).toHaveCount(0);
+      await expect(tile(page).locator("[data-tree-ties]")).toHaveCount(0);
+      await expect(addBtn).toHaveAttribute("aria-pressed", "true");
+      await addBtn.click();
+      await expect(addHalf).toHaveCount(0);
+      await removeBtn.click();
+      await expect(removeHalf).toContainText("Legăturile de familie ale persoanei");
+      await expect(removeHalf.locator("[data-tree-ties]")).toContainText(`Ion ${MARK}`);
+      await expect(tile(page).getByRole("searchbox", { name: "Ruda" })).toHaveCount(0);
+      await addBtn.click();
+      await expect(addHalf).toBeVisible();
+      await expect(removeHalf).toBeVisible();
+      const [rh, ah] = [(await removeHalf.boundingBox())!, (await addHalf.boundingBox())!];
+      expect(rh.y).toBeLessThan(ah.y); // the ties above, the new relative below
+      await removeHalf.locator('[data-tree-collapse="remove"]').click();
+      await expect(removeHalf).toHaveCount(0);
+      await addHalf.locator('[data-tree-collapse="add"]').click();
+      await expect(addHalf).toHaveCount(0);
+      await expect(tile(page).locator('[data-tree-panel="collapsed"]')).toBeVisible();
 
       // Step 2 — from the whole tree, Elena's name: her screen with C expanded.
       await page.goto("/inheritance-tree");
@@ -98,6 +133,10 @@ test.describe("TC-INHER-02 — arborele persoanei", () => {
       await expect(page).toHaveURL(new RegExp(`/natural-persons/${elena}\\?tree=open$`), { timeout: 30_000 });
       const panel = tile(page).locator('[data-tree-panel="expanded"]');
       await expect(panel).toBeVisible({ timeout: 30_000 });
+      // 41.72 (Ask first 4): `?tree=open` opens the add half alone; the ties half is opened by its own button.
+      await expect(panel.locator('[data-tree-half="add"]')).toBeVisible();
+      await expect(panel.locator('[data-tree-half="remove"]')).toHaveCount(0);
+      await tile(page).locator("[data-tree-remove]").click();
       await expect(panel.locator("[data-tree-ties]")).toContainText(`Ion ${MARK}`);
 
       // Step 3 — „Ruda": Dan; „Ce este pentru …": „Frate"; „Adaugă legătura" — Dan in the tile, beside Elena.

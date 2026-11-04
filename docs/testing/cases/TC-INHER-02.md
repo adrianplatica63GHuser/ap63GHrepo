@@ -30,9 +30,10 @@ Nothing.
 
 | # | A person does | And sees |
 |---|---|---|
-| 1 | Opens Elena's screen as from the list | „Arbore de moștenire", light blue: Ion on top, Elena under him, Radu under her; no Dan; the drawing square; under it one large button, „Adaugă sau scoate o rudă". The tile's title in capitals, the size and colour of „Identitate"'s, its grey subtitle on one line under it (Slice 40.06) |
-| 1a | (Slice 40.34) Looks at the button under the drawing; ticks „Legături" | It reads „Adaugă sau scoate" (its name and tooltip „Adaugă sau scoate o rudă"); the height and colour of „Asociază persoană", as wide as its words, at the tile's left |
-| 2 | „Rapoarte" → „Arbori de moștenire", finds Elena, clicks her name | Elena's screen with the panel expanded: „Legăturile de familie ale persoanei" lists Ion |
+| 1 | Opens Elena's screen as from the list | „Arbore de moștenire", light blue: Ion on top, Elena under him, Radu under her; no Dan; the drawing square; under it two icon buttons, „Adaugă o rudă" and „Scoate o rudă" (41.72). The tile's title in capitals, the size and colour of „Identitate"'s, its grey subtitle on one line under it (Slice 40.06) |
+| 1a | (Slice 41.72, which replaced 40.34's one button) Looks at the buttons under the drawing; ticks „Legături" | Two icon buttons side by side at the tile's left, a person with a chain link named „Adaugă o rudă" and a person with a bin named „Scoate o rudă", each its name as its tooltip, neither pressed; the height and colour of „Asociază persoană" |
+| 1b | (41.72) Presses „Adaugă o rudă", then again; „Scoate o rudă"; „Adaugă o rudă"; each half's „Restrânge" | The first opens only „O rudă nouă a lui Elena …" with „Ruda", pressed, and closes when pressed again; the second only „Legăturile de familie ale persoanei" with Ion; both open together, the ties above; each „Restrânge" closes its own half |
+| 2 | „Rapoarte" → „Arbori de moștenire", finds Elena, clicks her name | Elena's screen with „Adaugă o rudă"'s half open, and only it (41.72); „Scoate o rudă" then opens „Legăturile de familie ale persoanei", which lists Ion |
 | 3 | „Ruda": types Dan, picks him; „Ce este pentru Elena…": „Frate"; „Adaugă legătura" | Dan in the tile, on Elena's row; the list reads „Frate — Dan …" |
 | 4 | „Scoate legătura cu Dan …", then „Scoate" | Dan gone from the tile and the list |
 
