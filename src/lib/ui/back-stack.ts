@@ -52,8 +52,24 @@ export function parentCrumbHref(crumbs: readonly { href: string | null }[], path
   return null;
 }
 
-export function backTarget(stack: BackStack, crumbs: readonly { href: string | null }[], pathname: string): BackTarget {
-  if (stack.length >= 2) return { kind: "history" };
+/**
+ * Slice 41.81 — Adrian: „if I … just click on the Back button I end up, unexpectedly, on the big map". „Înapoi" goes to
+ * the screen before this one in the tab's record. The browser's back reaches it only while the browser's previous entry
+ * IS that screen; where the browser says what its previous entry is (`browserPrevious`, its pathname — the Navigation
+ * API) and it is another screen, the record wins and „Înapoi" goes to the recorded screen by its address. `undefined`
+ * (no Navigation API) trusts the browser, as before.
+ */
+export function backTarget(
+  stack: BackStack,
+  crumbs: readonly { href: string | null }[],
+  pathname: string,
+  browserPrevious?: string | null,
+): BackTarget {
+  if (stack.length >= 2) {
+    const recorded = stack[stack.length - 2];
+    if (browserPrevious !== undefined && browserPrevious !== recorded) return { kind: "href", href: recorded };
+    return { kind: "history" };
+  }
   const href = parentCrumbHref(crumbs, pathname);
   return href ? { kind: "href", href } : null;
 }
@@ -159,4 +175,23 @@ export function subscribeForwardStack(listener: () => void): () => void {
 export function resetBackStack(): void {
   tabStack = [];
   tabForward = NO_FORWARD;
+}
+
+/**
+ * 41.81: the pathname of the browser's previous entry in this tab, from the Navigation API (Chrome, Edge); `null` when
+ * there is none, `undefined` where the browser does not say.
+ */
+export function browserPreviousPath(): string | null | undefined {
+  if (typeof window === "undefined") return undefined;
+  const nav = (window as unknown as { navigation?: { currentEntry: { index: number } | null; entries(): { url: string | null }[] } }).navigation;
+  if (!nav?.currentEntry) return undefined;
+  const i = nav.currentEntry.index;
+  if (i < 1) return null;
+  const url = nav.entries()[i - 1]?.url;
+  if (!url) return undefined;
+  try {
+    return new URL(url).pathname;
+  } catch {
+    return undefined;
+  }
 }

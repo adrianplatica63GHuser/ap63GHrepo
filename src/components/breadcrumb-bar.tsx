@@ -46,6 +46,7 @@ import {
   recordScreen,
   subscribeBackStack,
   subscribeForwardStack,
+  browserPreviousPath,
 } from "@/lib/ui/back-stack";
 import { TextTooltip } from "@/lib/ui/text-tooltip";
 
@@ -320,7 +321,8 @@ function BackButton({ segments, pathname }: { segments: Segment[]; pathname: str
   // parent crumb to fall back on, the record read at render was the one before it, and „Înapoi" stayed disabled.
   const stack = useSyncExternalStore(subscribeBackStack, currentBackStack, noBackStack);
   const goBack = () => {
-    const target = backTarget(currentBackStack(), segments, pathname);
+    // 41.81: the browser's previous entry, so a record and a history that disagree go where the record says.
+    const target = backTarget(currentBackStack(), segments, pathname, browserPreviousPath());
     if (!target) return;
     if (target.kind === "history") guardedAction(() => router.back());
     else guardedNavigate(target.href);
