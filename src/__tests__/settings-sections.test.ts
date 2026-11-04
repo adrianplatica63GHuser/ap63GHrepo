@@ -34,7 +34,10 @@ function say(locale: string, template: string, values: Record<string, unknown>):
     // Slice 39.92: a fraction is printed as ICU prints it, with the locale's separator („1,5"); a whole number as before.
     return arm.replace(/#/g, Number.isInteger(n) ? String(n) : new Intl.NumberFormat(locale).format(n));
   }
-  return template.replace(/\{(\w+)\}/g, (_m, k: string) => String(values[k]));
+  // Slice 41.76: `{x, number}` — a number in the locale's own digits („1,5"), as ICU prints it.
+  return template
+    .replace(/\{(\w+), number\}/g, (_m, k: string) => new Intl.NumberFormat(locale).format(Number(values[k])))
+    .replace(/\{(\w+)\}/g, (_m, k: string) => String(values[k]));
 }
 /** The example the screen prints for one key at one value, in Romanian. */
 function exampleRo(key: string, unit: string, count: number): string {
