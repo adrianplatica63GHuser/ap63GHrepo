@@ -94,11 +94,14 @@ describe("the links", () => {
   });
 });
 
-describe("the tile — a square as wide as „Identitate”, light blue, ticked by default", () => {
+describe("the tile — a square as wide as its family, light blue, ticked by default", () => {
   const read = (f: string) => fs.readFileSync(path.join(process.cwd(), f), "utf8");
-  it("is as wide as the identity tile and its drawing is square", () => {
-    expect(read("src/app/natural-persons/_components/person-detail-tiles.tsx")).toContain("units={PANEL_UNITS.naturalPerson.identity}");
+  // 41.71 inverted this in place. It read: „is as wide as the identity tile and its drawing is square" —
+  // `units={PANEL_UNITS.naturalPerson.identity}` passed from person-detail-tiles.tsx. The width is now the family's.
+  it("is as wide as its family (tile-size.ts), not the identity tile, and its drawing is square", () => {
+    expect(read("src/app/natural-persons/_components/person-detail-tiles.tsx")).not.toContain("units={PANEL_UNITS.naturalPerson.identity}");
     const tile = read("src/app/_components/person-tree-tile.tsx");
+    expect(tile).toContain("const units = treeTileUnits(count);");
     expect(tile).toContain("style={unitStyle(units)}");
     expect(tile).toMatch(/className="relative aspect-square w-full/);
   });

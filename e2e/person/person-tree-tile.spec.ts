@@ -9,6 +9,9 @@
  *     `TC-E2E-INHER-02` names, and removed in `finally` (their ties go with them).
  *   - The screen is opened by its address, as the list's „Deschide" opens it — no `?tree=`.
  *   - The picture is the tile alone, at 1366 px: only the test family is in it.
+ *
+ * Slice 41.71 adds a second test: the tile as wide as its family — two persons 254 px at level 2, more 389 px at
+ * level 1 — over its own invented persons.
  */
 
 import { showTile } from "../helpers/tiles";
@@ -115,6 +118,63 @@ test.describe("TC-INHER-02 — arborele persoanei", () => {
       await panel.getByRole("button", { name: "Scoate", exact: true }).click();
       await expect(node(page, dan)).toHaveCount(0, { timeout: 30_000 });
       await expect(panel.locator(`[data-tree-tie="${dan}"]`)).toHaveCount(0);
+    } finally {
+      for (const id of ids) await removeRecord(page.request, "person", id);
+    }
+  });
+
+  // Slice 41.71 — Adrian: „if there are only two persons featured the tile should open with a width of two units …
+  // at zoom level 2 of 3; … more than two … three units … zoom level one of three".
+  test("41.71 — the tile as wide as its family: two persons 2 units at level 2, more 3 units at level 1", async ({ page }) => {
+    test.setTimeout(180_000);
+    const mark = `${MARK}-W`;
+    await removeLeftovers(page.request, mark);
+    await page.setViewportSize({ width: 1366, height: 900 });
+    const ids: string[] = [];
+    try {
+      const make = async (firstName: string, gender: "MALE" | "FEMALE", dateOfBirth: string) => {
+        const id = await createNaturalPerson(page.request, { lastName: mark, firstName, gender, dateOfBirth });
+        ids.push(id);
+        return id;
+      };
+      const tie = async (holder: string, role: string, other: string) => {
+        const res = await page.request.post(`/api/people/${other}/references`, { data: { personIds: [holder], relationshipRoleId: role } });
+        expect(res.ok(), `POST references failed (${res.status()})`).toBeTruthy();
+      };
+      const father = await roleId(page.request, "Tată");
+      const mother = await roleId(page.request, "Mamă");
+      // Two persons: Andrei and his father Petru.
+      const petru = await make("Petru", "MALE", "1950-01-01");
+      const andrei = await make("Andrei", "MALE", "1980-03-03");
+      await tie(petru, father, andrei);
+      // Four: Maria, her father Vasile and her two sons.
+      const vasile = await make("Vasile", "MALE", "1935-04-04");
+      const maria = await make("Maria", "FEMALE", "1962-06-06");
+      const sorin = await make("Sorin", "MALE", "1988-07-07");
+      const mihai = await make("Mihai", "MALE", "1991-10-10");
+      await tie(vasile, father, maria);
+      await tie(maria, mother, sorin);
+      await tie(maria, mother, mihai);
+
+      const opened = async (id: string, others: string[]) => {
+        await page.goto(`/natural-persons/${id}`);
+        await expect(tile(page)).toBeVisible({ timeout: 30_000 });
+        for (const o of others) await expect(node(page, o)).toBeAttached({ timeout: 30_000 });
+      };
+      const width = async () => Math.round((await tile(page).boundingBox())!.width);
+      const level = () => tile(page).locator("[data-tree-level]");
+
+      await opened(andrei, [petru]);
+      await expect.poll(width, { timeout: 20_000 }).toBe(254);
+      await expect(level()).toHaveAttribute("data-tree-level", "2");
+      const twoBox = (await tile(page).locator("[data-tree-tile-canvas]").boundingBox())!;
+      expect(Math.abs(twoBox.width - twoBox.height), `the drawing ${twoBox.width} × ${twoBox.height}`).toBeLessThanOrEqual(2);
+
+      await opened(maria, [vasile, sorin, mihai]);
+      await expect.poll(width, { timeout: 20_000 }).toBe(389);
+      await expect(level()).toHaveAttribute("data-tree-level", "1");
+      const manyBox = (await tile(page).locator("[data-tree-tile-canvas]").boundingBox())!;
+      expect(Math.abs(manyBox.width - manyBox.height), `the drawing ${manyBox.width} × ${manyBox.height}`).toBeLessThanOrEqual(2);
     } finally {
       for (const id of ids) await removeRecord(page.request, "person", id);
     }
