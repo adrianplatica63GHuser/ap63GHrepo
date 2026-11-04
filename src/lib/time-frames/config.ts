@@ -30,6 +30,9 @@ export const TIME_FRAME_KEYS = [
   "recency_badge_amber",
   "recency_badge_window",
   "tile_make_room_delay",
+  // Slice 41.75: „Hartă extinsă" opens in two animated parts, each its own length.
+  "map_expand_grow",
+  "map_expand_zoom_out",
 ] as const;
 
 export type TimeFrameKey = (typeof TIME_FRAME_KEYS)[number];
@@ -54,7 +57,7 @@ export function toMs(value: number, unit: TimeFrameUnit): number {
 /**
  * Fallback values used when the DB is unreachable or a key is missing.
  * Must match the seeded defaults in migration_063 — and migration_117 for the
- * make-room delay (Slice 39.92).
+ * make-room delay (Slice 39.92), migration_127 for „Hartă extinsă"'s two parts (Slice 41.75).
  */
 export const TIME_FRAME_DEFAULTS: Record<TimeFrameKey, { value: number; unit: TimeFrameUnit }> = {
   dashboard_recent_days:    { value: 7,  unit: "days" },
@@ -68,6 +71,8 @@ export const TIME_FRAME_DEFAULTS: Record<TimeFrameKey, { value: number; unit: Ti
   recency_badge_amber:      { value: 15, unit: "minutes" },
   recency_badge_window:     { value: 30, unit: "minutes" },
   tile_make_room_delay:     { value: 1000, unit: "milliseconds" },
+  map_expand_grow:          { value: 3000, unit: "milliseconds" },
+  map_expand_zoom_out:      { value: 3000, unit: "milliseconds" },
 };
 
 /** Read a numeric day-value from a TimeFrameMap (falls back to default). */
@@ -142,16 +147,27 @@ export function isTypedInSeconds(unit: TimeFrameUnit): boolean {
 }
 
 /**
+ * Slice 41.75: „Hartă extinsă"'s two parts, typed in seconds like the make-room delay, but from 0 — a part of 0 is
+ * skipped — to 10 s.
+ */
+export const MAP_EXPAND_KEYS = ["map_expand_grow", "map_expand_zoom_out"] as const satisfies readonly TimeFrameKey[];
+
+/** The range a key typed in seconds accepts, in ms: 0,2 s – 10 s for the make-room delay, 0 – 10 s for the map's parts. */
+export function secondsRangeMs(key: string): { min: number; max: number } {
+  return (MAP_EXPAND_KEYS as readonly string[]).includes(key) ? { min: 0, max: SECONDS_MAX_MS } : { min: SECONDS_MIN_MS, max: SECONDS_MAX_MS };
+}
+
+/**
  * Read seconds typed with a comma or a dot — „1,5" or „1.5" — up to two
  * decimals, as ms; `null` if it is not one, or outside 0,2 s – 10 s. Whole
  * seconds („2") are accepted; „1e3", a sign, a third decimal or a space inside
  * are not: the field says seconds, and anything else is a mistyping.
  */
-export function parseSecondsDraft(raw: string): number | null {
+export function parseSecondsDraft(raw: string, range: { min: number; max: number } = { min: SECONDS_MIN_MS, max: SECONDS_MAX_MS }): number | null {
   const trimmed = raw.trim();
   if (!/^\d{1,2}(?:[.,]\d{1,2})?$/.test(trimmed)) return null;
   const ms = Math.round(Number(trimmed.replace(",", ".")) * 1000);
-  return ms >= SECONDS_MIN_MS && ms <= SECONDS_MAX_MS ? ms : null;
+  return ms >= range.min && ms <= range.max ? ms : null;
 }
 
 /** A value in ms as the editor shows it: seconds, one or two decimals, the locale's separator („1,5" / „1.5"). */

@@ -68,9 +68,15 @@ import { NavigateButton } from "@/components/maps/navigate-dialog";
 import { StraightenDialog } from "./straighten-dialog";
 import { PropertyMiniMap } from "./property-mini-map";
 import { setMapFocusSource, theaterOpenView, type MapView } from "@/lib/geo/map-focus";
+import { expandStartView, panelRectAt, planExpand, type ExpandInput } from "@/lib/geo/expand-map-animation";
+import { expandDurations, loadExpandDurations } from "@/components/maps/expand-map-durations";
 
 // Slice #39.94: „Hartă extinsă"'s every other property — loaded with the overlay, never with the form.
 const TheaterOthersLayer = dynamic(() => import("./theater-others-layer"), { ssr: false });
+// Slice 41.75: „Hartă extinsă"'s opening, played inside its map — loaded with the overlay, like the others' layer.
+const ExpandMapAnimator = dynamic(() => import("@/components/maps/expand-map-animator").then((m) => m.ExpandMapAnimator), { ssr: false });
+/** The overlay's header, before it is measured: py-2, a small button, its border. The animator measures the real one. */
+const THEATER_HEADER_PX = 49;
 import { StreetViewPanel } from "./street-view-panel";
 import { HelpHint } from "@/components/help/help-hint";
 import { ErrorBoundary, PanelError } from "@/components/error-boundary";
@@ -463,18 +469,49 @@ export function PropertyForm({
   // Slice #39.94: it opens centred on the property, at the zoom the tile shows when the button is pressed, so the
   // polygon is the same size on screen (`theaterOpenView`) — the corners as they are on the form, unsaved ones too.
   const [theaterView, setTheaterView] = useState<MapView | null>(null);
-  const handleOpenTheaterMap = () => {
-    setTheaterView(theaterOpenView(corners, { center: miniMapCenterRef.current, zoom: miniMapZoomRef.current }));
+  // Slice 41.75: the opening's input while it plays — the tile's map on screen, its camera, the corners, the two lengths
+  // from „Setări". Null once it has ended, or when there is nothing to start from (the tile reported no camera).
+  const [expanding, setExpanding] = useState<ExpandInput | null>(null);
+  // Whether this opening played: then its end is the panel at inset-4, with no 180-ms entrance replayed over it.
+  const [openedAnimated, setOpenedAnimated] = useState(false);
+  const theaterPanelRef = useRef<HTMLDivElement>(null);
+  const theaterBackdropRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    void loadExpandDurations();
+  }, []);
+  const handleOpenTheaterMap = (tileMap?: DOMRect) => {
+    const opening = theaterOpenView(corners, { center: miniMapCenterRef.current, zoom: miniMapZoomRef.current });
+    const tileCenter = miniMapCenterRef.current;
+    const input: ExpandInput | null =
+      opening && tileMap && tileCenter && typeof window !== "undefined"
+        ? {
+            tileMap: { x: tileMap.x, y: tileMap.y, w: tileMap.width, h: tileMap.height },
+            viewport: { w: window.innerWidth, h: window.innerHeight },
+            headerPx: THEATER_HEADER_PX,
+            tileCenter,
+            zoom: opening.zoom,
+            corners,
+            ...expandDurations(),
+            reducedMotion: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false,
+          }
+        : null;
+    // The map is created where the opening starts: on the tile's own camera (the end, under reduced motion).
+    setTheaterView(input ? expandStartView(planExpand(input)) : opening);
+    setExpanding(input);
+    setOpenedAnimated(input !== null);
     setBigMap(true);
     onBigMapChange?.(true);
   };
-  const handleCloseTheaterMap = () => { setBigMap(false); onBigMapChange?.(false); };
+  const handleCloseTheaterMap = () => { setBigMap(false); setExpanding(null); onBigMapChange?.(false); };
+  const handleExpandDone = useCallback(() => setExpanding(null), []);
+  // The panel's first frame, before the animator has the map: on the tile, the backdrop clear.
+  const expandFirst = useMemo(() => (expanding ? panelRectAt(0, planExpand(expanding)) : null), [expanding]);
 
   // Close theater overlay on Escape key.
   useEffect(() => {
     if (!bigMap) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") { setBigMap(false); onBigMapChange?.(false); }
+      if (e.key === "Escape") { setBigMap(false); setExpanding(null); onBigMapChange?.(false); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -1836,20 +1873,30 @@ export function PropertyForm({
       {bigMap && createPortal(
         // 41.69: the dialog has a box of its own — the whole window its backdrop and panel already cover. With only
         // `fixed` children it measured 0 × 0, so it read as hidden to anything that asks (TC-MAP-09 step 2).
-        <div role="dialog" aria-modal="true" aria-label={t("corners.theaterTitle")} className="fixed inset-0 z-50">
-          {/* Backdrop — click to close */}
+        <div role="dialog" aria-modal="true" aria-label={t("corners.theaterTitle")} className="fixed inset-0 z-50" data-expand={expanding ? "running" : "done"}>
+          {/* Backdrop — click to close. 41.75: it fades in as the tile grows. */}
           <div
+            ref={theaterBackdropRef}
             className="fixed inset-0 z-50 bg-black/50"
             aria-hidden="true"
             onClick={handleCloseTheaterMap}
+            style={expandFirst ? { opacity: 0 } : undefined}
           />
-          {/* Panel */}
+          {/* Panel. 41.75: while the opening plays it is placed frame by frame from the tile's map to inset-4
+              (ExpandMapAnimator); without an opening it enters as before, in 180 ms. */}
           <div
-            className="fixed inset-4 z-50 flex flex-col rounded-xl border border-card-rim bg-white shadow-2xl overflow-hidden dark:border-zinc-700 dark:bg-zinc-900"
-            style={{ animation: "ga-theater-in 180ms ease" }}
+            ref={theaterPanelRef}
+            className={`fixed z-50 flex flex-col rounded-xl border border-card-rim bg-white shadow-2xl overflow-hidden dark:border-zinc-700 dark:bg-zinc-900${expandFirst ? "" : " inset-4"}`}
+            style={
+              expandFirst
+                ? { left: expandFirst.x, top: expandFirst.y, width: expandFirst.w, height: expandFirst.h }
+                : openedAnimated
+                  ? undefined
+                  : { animation: "ga-theater-in 180ms ease" }
+            }
           >
             {/* Header */}
-            <div className="flex items-center justify-between gap-4 px-4 py-2 border-b border-crease dark:border-zinc-700 bg-white dark:bg-zinc-900">
+            <div className="flex items-center justify-between gap-4 px-4 py-2 border-b border-crease dark:border-zinc-700 bg-white dark:bg-zinc-900" data-theater-header="">
               <span className="text-sm font-semibold text-ink dark:text-zinc-200">
                 {t("corners.theaterTitle")}
               </span>
@@ -1874,6 +1921,9 @@ export function PropertyForm({
                     initialView={theaterView}
                   >
                     <TheaterOthersLayer excludeId={propertyId} />
+                    {expanding && (
+                      <ExpandMapAnimator input={expanding} panelRef={theaterPanelRef} backdropRef={theaterBackdropRef} onDone={handleExpandDone} />
+                    )}
                   </PropertyMiniMap>
                 </ErrorBoundary>
               </div>

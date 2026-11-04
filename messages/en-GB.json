@@ -4318,6 +4318,7 @@
       "saveError": "Save failed. Please try again.",
       "validationError": "All values must be whole numbers between 1 and 3650.",
       "validationErrorSeconds": "The hold time over another tile is written in seconds, with at most two decimals, between 0.2 and 10 — for example 1.5.",
+      "validationErrorSecondsFromZero": "„Expand map” is written in seconds, with at most two decimals, between 0 and 10 — for example 3 or 2.5; 0 skips that part.",
       "unit": {
         "days": "days",
         "hours": "hours",
@@ -4330,7 +4331,8 @@
         "documents": "Documents",
         "persons": "Persons",
         "recency": "The „New!” badge",
-        "tiles": "Tiles"
+        "tiles": "Tiles",
+        "maps": "Maps"
       },
       "duration": {
         "days": "{count, plural, one {one day} other {# days}}",
@@ -4350,7 +4352,9 @@
         "recency_badge_red": "An object changed at most {duration} ago carries the red «New!» badge.",
         "recency_badge_amber": "An object changed at most {duration} ago carries the amber «New!» badge.",
         "recency_badge_window": "{duration} after the last change, the «New!» badge goes.",
-        "tile_make_room_delay": "A tile dragged over another and held there for {duration} makes that one slide down to make room."
+        "tile_make_room_delay": "A tile dragged over another and held there for {duration} makes that one slide down to make room.",
+        "map_expand_grow": "With „Expand map”, the „Map” tile grows into the expanded map in {duration}, while the property travels to the middle.",
+        "map_expand_zoom_out": "Then the expanded map zooms out in {duration}, until the property is about a tenth of the map's height."
       },
       "example": "Example:"
     },

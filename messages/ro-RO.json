@@ -4318,6 +4318,7 @@
       "saveError": "Salvarea a eșuat. Reîncercați.",
       "validationError": "Toate valorile trebuie să fie numere întregi între 1 și 3650.",
       "validationErrorSeconds": "Timpul de ținere peste altă fișă se scrie în secunde, cu cel mult două zecimale, între 0,2 și 10 — de exemplu 1,5.",
+      "validationErrorSecondsFromZero": "„Hartă extinsă” se scrie în secunde, cu cel mult două zecimale, între 0 și 10 — de exemplu 3 sau 2,5; 0 sare peste acea parte.",
       "unit": {
         "days": "zile",
         "hours": "ore",
@@ -4330,7 +4331,8 @@
         "documents": "Acte",
         "persons": "Persoane",
         "recency": "Insigna „Nou!”",
-        "tiles": "Fișe"
+        "tiles": "Fișe",
+        "maps": "Hărți"
       },
       "duration": {
         "days": "{count, plural, one {o zi} few {# zile} other {# de zile}}",
@@ -4350,7 +4352,9 @@
         "recency_badge_red": "Un obiect schimbat acum cel mult {duration} poartă insigna «Nou!» roșie.",
         "recency_badge_amber": "Un obiect schimbat acum cel mult {duration} poartă insigna «Nou!» chihlimbar.",
         "recency_badge_window": "La {duration} după ultima schimbare, insigna «Nou!» dispare.",
-        "tile_make_room_delay": "O fișă trasă peste alta și ținută acolo {duration} o face pe aceea să alunece în jos, ca să-i facă loc."
+        "tile_make_room_delay": "O fișă trasă peste alta și ținută acolo {duration} o face pe aceea să alunece în jos, ca să-i facă loc.",
+        "map_expand_grow": "La „Hartă extinsă”, fișa „Hartă” se mărește până la harta extinsă în {duration}, iar proprietatea ajunge la mijloc.",
+        "map_expand_zoom_out": "Apoi harta extinsă se depărtează în {duration}, până când proprietatea are cam o zecime din înălțimea hărții."
       },
       "example": "Exemplu:"
     },

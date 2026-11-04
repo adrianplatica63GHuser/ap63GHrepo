@@ -37,7 +37,7 @@ type Props = {
   /** Slice #37.38 — see property-mini-map-inner.tsx. The form's tile only. */
   onZoomChange?:     (zoom: number | null) => void;
   /** Slice #37.91 — see property-mini-map-inner.tsx. The form's tile only. */
-  onFullScreen?:     () => void;
+  onFullScreen?:     (tileMap?: DOMRect) => void;
   /** Slice #38.09 — see property-mini-map-inner.tsx. Both maps. */
   onToggleAngles?:   () => void;
   /** Slice #39.94 — see property-mini-map-inner.tsx. „Hartă extinsă" draws the property red. */

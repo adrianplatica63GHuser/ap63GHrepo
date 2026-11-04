@@ -173,7 +173,7 @@ type Props = {
    * theater overlay in property-form.tsx. The overlay's own map is not given
    * it, so it draws no second door: „Restrânge" and Escape close it.
    */
-  onFullScreen?:     () => void;
+  onFullScreen?:     (tileMap?: DOMRect) => void;
   /**
    * Slice #38.09: „Arată Unghiuri" / „Ascunde Unghiuri" stands in the map's top
    * row, between „Desenează" and „Străzi | Satelit" — it was in the corners
@@ -372,7 +372,8 @@ export default function PropertyMiniMapInner({ corners, onChange, readOnly = fal
               label={t("map.miniMap.fullScreen")}
               variant="secondary"
               size="sm"
-              onClick={onFullScreen}
+              // Slice 41.75: the map's rectangle on screen, where „Hartă extinsă"'s opening starts.
+              onClick={() => onFullScreen(boxRef.current?.getBoundingClientRect())}
             />
           )}
           {/* #37.45 (A066): PenTool / Check, icon-only, the words as the name

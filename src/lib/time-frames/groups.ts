@@ -4,7 +4,7 @@
  * Ten thresholds in one column said nothing about where any of them shows. The
  * four groups are the four places: the dashboard, the documents, the persons,
  * and the „Nou!" badge — and since Slice 39.92 a fifth, „Fișe", for the
- * make-room delay of a dragged tile. Every key is in exactly one group — the test holds it —
+ * make-room delay of a dragged tile; since 41.75 a sixth, „Hărți", for how „Hartă extinsă" opens. Every key is in exactly one group — the test holds it —
  * so a key added to TIME_FRAME_KEYS without a group fails rather than vanishes.
  *
  * The worked example under each threshold is a message per key
@@ -24,6 +24,8 @@ export const TIME_FRAME_GROUPS = [
   { id: "recency", keys: ["recency_badge_red", "recency_badge_amber", "recency_badge_window"] },
   // Slice 39.92: the make-room delay, under the screen's own word for a tile.
   { id: "tiles", keys: ["tile_make_room_delay"] },
+  // Slice 41.75: „Hărți", last — „Hartă extinsă"'s two animated parts.
+  { id: "maps", keys: ["map_expand_grow", "map_expand_zoom_out"] },
 ] as const satisfies readonly { id: string; keys: readonly TimeFrameKey[] }[];
 
 export type TimeFrameGroupId = (typeof TIME_FRAME_GROUPS)[number]["id"];

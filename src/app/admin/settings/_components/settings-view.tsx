@@ -6,8 +6,9 @@ import { IconButton } from "@/lib/ui/icon-button";
 import { useTranslations } from "next-intl";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { TimeFrameRow } from "@/lib/time-frames/config";
-import { formatSeconds, isTypedInSeconds, parseSecondsDraft, parseTimeFrameDraft } from "@/lib/time-frames/config";
+import { formatSeconds, isTypedInSeconds, parseSecondsDraft, parseTimeFrameDraft, secondsRangeMs } from "@/lib/time-frames/config";
 import { forgetMakeRoomDelay } from "@/components/tiles/make-room-delay";
+import { forgetExpandDurations } from "@/components/maps/expand-map-durations";
 import { TIME_FRAME_GROUPS, exampleValue } from "@/lib/time-frames/groups";
 import type { SystemStatus } from "@/lib/settings/system-status";
 import { useLocale } from "next-intl";
@@ -107,9 +108,11 @@ function TimeFramesPanel() {
     for (const [key, raw] of Object.entries(drafts)) {
       // Slice 39.92: seconds with decimals — „1,5" or „1.5" — saved as ms, in their own range and with their own error.
       if (isTypedInSeconds(rows?.find((r) => r.key === key)?.unit ?? "days")) {
-        const ms = parseSecondsDraft(raw);
+        // Slice 41.75: each key its own range — „Hartă extinsă"'s parts from 0, the make-room delay from 0,2 s.
+        const range = secondsRangeMs(key);
+        const ms = parseSecondsDraft(raw, range);
         if (ms === null) {
-          setSaveError(t("timeFrames.validationErrorSeconds"));
+          setSaveError(range.min === 0 ? t("timeFrames.validationErrorSecondsFromZero") : t("timeFrames.validationErrorSeconds"));
           return;
         }
         settings.push({ key, value: ms });
@@ -159,6 +162,8 @@ function TimeFramesPanel() {
       await queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       // Slice 39.92: the tile screens read the make-room delay once per page load — the next one reads it afresh.
       forgetMakeRoomDelay();
+      // Slice 41.75: and „Hartă extinsă"'s two parts.
+      forgetExpandDurations();
       setDrafts({});
       setSaved(true);
     } catch {
@@ -200,7 +205,7 @@ function TimeFramesPanel() {
               const seconds = isTypedInSeconds(row.unit);
               // The example's number: the draft while it reads, the saved value otherwise — in seconds for the delay.
               const count = seconds
-                ? exampleValue(row.key in drafts ? drafts[row.key] : undefined, row.value, parseSecondsDraft) / 1000
+                ? exampleValue(row.key in drafts ? drafts[row.key] : undefined, row.value, (raw) => parseSecondsDraft(raw, secondsRangeMs(row.key))) / 1000
                 : exampleValue(row.key in drafts ? drafts[row.key] : undefined, row.value, parseTimeFrameDraft);
               const unitKey = seconds ? "seconds" : row.unit;
 
