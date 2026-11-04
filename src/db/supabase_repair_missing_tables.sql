@@ -938,7 +938,10 @@ INSERT INTO time_frame_setting (key, value, unit, label_en, label_ro, descriptio
   ('tile_make_room_delay',   1000, 'milliseconds', 'Hold time over another tile', 'Timp de ținere peste altă fișă', 'How long a dragged tile is held over another before that one slides down to make room', 'Cât timp e ținută o fișă trasă peste alta până când aceea alunecă în jos ca să-i facă loc'),
   -- migration_127 (Slice 41.75): „Hartă extinsă"'s two parts, in milliseconds.
   ('map_expand_grow',     3000, 'milliseconds', 'Expanded map — the tile grows', 'Hartă extinsă — mărirea fișei', 'How long the „Map” tile takes to grow into the expanded map, the property travelling to the middle', 'Cât durează până când fișa „Hartă” se mărește până la harta extinsă, iar proprietatea ajunge la mijloc'),
-  ('map_expand_zoom_out', 3000, 'milliseconds', 'Expanded map — zooming out', 'Hartă extinsă — depărtarea', 'How long the expanded map then takes to zoom out, until the property is a tenth of its height', 'Cât durează apoi depărtarea hărții extinse, până când proprietatea are o zecime din înălțimea ei')
+  ('map_expand_zoom_out', 3000, 'milliseconds', 'Expanded map — zooming out', 'Hartă extinsă — depărtarea', 'How long the expanded map then takes to zoom out, until the property is a tenth of its height', 'Cât durează apoi depărtarea hărții extinse, până când proprietatea are o zecime din înălțimea ei'),
+  -- migration_128 (Slice 41.76): „Caută pe hartă"'s flight — its length in milliseconds, its arc in hundredths.
+  ('map_search_flight', 4000, 'milliseconds', 'Map search — flight time', 'Căutare pe hartă — durata zborului', 'How long the big map takes to fly to a place found with „Search the map”', 'Cât durează zborul hărții mari până la locul găsit cu „Caută pe hartă”'),
+  ('map_search_arc',     100, 'hundredths',   'Map search — the parabola''s coefficient a', 'Căutare pe hartă — coeficientul a al parabolei', 'How high the flight rises, as a share of the height from which both places show: 0 glides straight', 'Cât de sus urcă zborul, față de înălțimea de la care se văd ambele locuri: 0 alunecă drept')
 ON CONFLICT (key) DO NOTHING;
 
 
