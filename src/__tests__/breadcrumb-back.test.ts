@@ -11,6 +11,7 @@ import path from "node:path";
 import {
   MAX_BACK_STACK,
   backTarget,
+  browserPreviousPath,
   currentBackStack,
   currentForwardStack,
   forwardEnabled,
@@ -225,5 +226,35 @@ describe("„Înainte” (#39.97)", () => {
   it("„Înainte” / „Forward”", () => {
     expect(RO.navigation.breadcrumb.forward).toBe("Înainte");
     expect(EN.navigation.breadcrumb.forward).toBe("Forward");
+  });
+});
+
+describe("41.81 — „Înapoi" follows the tab's record when the browser's previous entry is another screen", () => {
+  const CRUMBS = [{ href: "/" }, { href: null }, { href: "/admin/calculation" }];
+  it("the dashboard → „Calcul drum lateral": the browser agrees, so its back", () => {
+    expect(backTarget(["/", "/admin/calculation"], CRUMBS, "/admin/calculation", "/")).toEqual({ kind: "history" });
+  });
+  it("a browser whose previous entry is the big map while the record says the list: the list, by its address", () => {
+    expect(backTarget(["/natural-persons", "/admin/calculation"], CRUMBS, "/admin/calculation", "/properties/map")).toEqual({
+      kind: "href",
+      href: "/natural-persons",
+    });
+  });
+  it("from the big map, where both agree: the big map (Ask first 3)", () => {
+    expect(backTarget(["/properties/map", "/admin/calculation"], CRUMBS, "/admin/calculation", "/properties/map")).toEqual({ kind: "history" });
+  });
+  it("no Navigation API: the browser's back, as before; no previous entry at all: the record's", () => {
+    expect(backTarget(["/", "/admin/calculation"], CRUMBS, "/admin/calculation")).toEqual({ kind: "history" });
+    expect(backTarget(["/", "/admin/calculation"], CRUMBS, "/admin/calculation", null)).toEqual({ kind: "href", href: "/" });
+  });
+  it("a calculation opened by its address, with no screen recorded before it: the dashboard (Ask first 2)", () => {
+    expect(backTarget(["/admin/calculation"], [{ href: "/" }, { href: "/admin/calculation" }], "/admin/calculation", "/properties/map")).toEqual({
+      kind: "href",
+      href: "/",
+    });
+  });
+  it("the bar asks the browser for its previous entry when „Înapoi\" is pressed", () => {
+    expect(BAR).toContain("backTarget(currentBackStack(), segments, pathname, browserPreviousPath())");
+    expect(typeof browserPreviousPath).toBe("function");
   });
 });
