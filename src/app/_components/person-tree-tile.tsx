@@ -10,8 +10,9 @@
  * form was reached from the Person list and shows up expanded when the form was reached by clicking the person link".
  *
  * B is the whole tree's drawing (`TreeCanvas`, #39.11) over `personSubtree` — up to great-grandparents, down to
- * great-grandchildren, the siblings and every spouse — the person ringed in amber, in a square as wide as the
- * „Identitate" tile. „Deschide arborele întreg" opens A centred on the person. #39.13: each person's documents badge, as
+ * great-grandchildren, the siblings and every spouse — the person ringed in amber, in a square as wide as the tile:
+ * 2 units for one or two persons, 3 for more (41.71, tile-size.ts; it was „Identitate"'s width). „Deschide arborele
+ * întreg" opens A centred on the person. #39.13: each person's documents badge, as
  * in A; the year slider and „Acte comune" are A's alone — the tile stays the person's family at a glance.
  *
  * C, the same A/B/C pattern as „Interacțiuni" (#39.05): collapsed to one large button; `?tree=open` expands it — a
@@ -20,7 +21,7 @@
  * the association route that exists (POST/DELETE /api/people/<id>/references, „Asociază persoană"'s), offering only
  * the roles with a kinship (#39.10). A C typed into is the screen's unsaved change.
  */
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -30,6 +31,7 @@ import { useToast } from "@/components/toast";
 import { useUnsavedChanges, useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
 import { layoutTree, type TreePerson } from "@/lib/inheritance/layout";
 import { familyRoles, personSubtree } from "@/lib/inheritance/subtree";
+import { treeTileOpeningScale, treeTileUnits } from "@/lib/inheritance/tile-size";
 import { indexDocuments } from "@/lib/inheritance/documents";
 import { TREE_PARAM, readTree, wholeTreeHref } from "@/lib/inheritance/links";
 import { roleHeldBy, personRoleShown } from "@/lib/persons/relation-roles";
@@ -50,15 +52,12 @@ export function PersonTreeTile({
   title,
   subtitle,
   surface,
-  units,
 }: {
   personId: string;
   personName: string;
   title: string;
   subtitle?: string;
   surface: string;
-  /** The „Identitate" tile's width, in units: the tile is that wide, its drawing that tall. */
-  units: number;
 }) {
   const t = useTranslations("inheritance.tile");
   const params = useSearchParams();
@@ -75,9 +74,14 @@ export function PersonTreeTile({
   const sub = useMemo(() => (q.data ? personSubtree(personId, q.data.persons, q.data.ties) : null), [q.data, personId]);
   const layout = useMemo(() => (sub ? layoutTree(sub.persons, sub.ties) : null), [sub]);
   const docs = useMemo(() => (q.data ? indexDocuments(q.data.documents ?? [], q.data.appearances ?? []) : null), [q.data]);
+  // 41.71: as wide as its family — 2 units for one or two persons (and while loading), 3 for more; the drawing opens at
+  // level 2 or 1 to match (tile-size.ts). Read again when a tie comes or goes, so the width follows the family.
+  const count = sub ? sub.persons.length : null;
+  const units = treeTileUnits(count);
+  const opening = useCallback((fit: number) => treeTileOpeningScale(count ?? 0, fit), [count]);
 
   return (
-    <section data-tile="inheritanceTree" aria-label={title} className={`max-w-full ${surface}`} style={unitStyle(units)}>
+    <section data-tile="inheritanceTree" aria-label={title} className={`max-w-full ${surface}`} style={unitStyle(units)} data-tree-tile-units={units}>
       {/* Slice 40.06: the title and its one-line subtitle are every tile's (TileTitle); „Deschide arborele întreg"
           stays at the right of the title's line, beside the heading rather than inside it. */}
       <div className="mb-2 flex items-start justify-between gap-2">
@@ -89,7 +93,8 @@ export function PersonTreeTile({
         {q.isError && <p role="alert" className="p-3 text-xs text-red-600">{t("error")}</p>}
         {layout && layout.nodes.length === 0 && <p className="p-3 text-xs text-fade">{t("empty")}</p>}
         {sub && layout && layout.nodes.length > 0 && (
-          <TreeCanvas data={sub} layout={layout} mark={personId} linkOf={plainHref} docs={docs} className="absolute inset-0" />
+          // A new width is a new first view: keyed on the units, the drawing fits its new square again.
+          <TreeCanvas key={units} data={sub} layout={layout} mark={personId} linkOf={plainHref} docs={docs} openingScale={opening} className="absolute inset-0" />
         )}
       </div>
       {expanded ? (

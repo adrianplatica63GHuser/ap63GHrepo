@@ -48,7 +48,6 @@ import { TileAreas, useRightColumn } from "@/components/tiles/tile-areas";
 // Slice #39.05: the history (B) and the action panel (C) under it.
 import { PersonInteractionsTile } from "@/app/_components/person-interactions-tile";
 import { PersonTreeTile } from "@/app/_components/person-tree-tile";
-import { PANEL_UNITS } from "@/lib/ui/field-widths";
 import { PreviewOpenerProvider, PreviewTiles, usePreviewSelectorEntries, usePreviews } from "@/components/tiles/preview-tiles";
 
 import type { PersonIdentityDocument } from "@/lib/identity-documents/person-list";
@@ -186,7 +185,7 @@ export function PersonDetailTiles({
               />
             </ListTile>
           )}
-          {/* Slice #39.12: the person's tree (B) and its action panel (C) — as wide as „Identitate", the drawing square. */}
+          {/* Slice #39.12: the person's tree (B) and its action panel (C), the drawing square; 41.71: as wide as its family. */}
           {choice.isShown("inheritanceTree") && (
             <PersonTreeTile
               personId={personId}
@@ -194,7 +193,6 @@ export function PersonDetailTiles({
               title={labels.inheritanceTree}
               subtitle={t("tileSubtitles.inheritanceTree")}
               surface={groupSurface(tileGroupOf(NP_TILE_REGISTRY, "inheritanceTree"), NP_TILE_REGISTRY.entity)}
-              units={PANEL_UNITS.naturalPerson.identity}
             />
           )}
           <PreviewTiles previews={previews} />

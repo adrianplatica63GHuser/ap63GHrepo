@@ -84,6 +84,7 @@ export function TreeCanvas({
   docs = null,
   year = null,
   shared = false,
+  openingScale,
   // Positions the canvas: `relative` on its own, `absolute inset-0` to fill a frame. Never both — `relative` wins
   // in the stylesheet, the box falls to 0 px high and the side card is clipped under its parent (#39.12).
   className = "relative",
@@ -104,6 +105,8 @@ export function TreeCanvas({
   year?: number | null;
   /** #39.13: „Acte comune" — on each line, how many documents the two are both on. */
   shared?: boolean;
+  /** 41.71: the first view's scale from the fit — a tile opens at the level its family asks for. Today's fit without it. */
+  openingScale?: (fit: number) => number;
   className?: string;
 }) {
   const t = useTranslations("inheritance");
@@ -126,9 +129,10 @@ export function TreeCanvas({
     const box = boxRef.current;
     if (!box || view !== null || layout.nodes.length === 0) return;
     const { width: W, height: H } = box.getBoundingClientRect();
-    const scale = Math.min(1, Math.max(MIN_SCALE, Math.min((W - 40) / layout.width, (H - 40) / layout.height)));
+    const fit = Math.min(1, Math.max(MIN_SCALE, Math.min((W - 40) / layout.width, (H - 40) / layout.height)));
+    const scale = openingScale ? Math.min(MAX_SCALE, Math.max(MIN_SCALE, openingScale(fit))) : fit;
     setView({ scale, tx: (W - layout.width * scale) / 2, ty: Math.max(12, (H - layout.height * scale) / 2) });
-  }, [layout, view]);
+  }, [layout, view, openingScale]);
 
   // ── The wheel zooms about the cursor (a native listener: React's is passive) ─────
   useEffect(() => {
