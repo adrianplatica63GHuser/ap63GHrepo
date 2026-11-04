@@ -71,9 +71,18 @@ export const RELATED_TILE_SURFACE =
 export const RELATED_ROWS_SURFACE =
   "rounded-md border border-card-rim bg-card-row shadow-sm dark:border-zinc-800 dark:bg-card-row-dark";
 
-/** Slice #37.88: „Clasificări" and „Conexiuni", the same box in light yellow. */
+/**
+ * Slice #37.88: „Clasificări" and „Conexiuni", the same box in light yellow. Slice 41.82 (Adrian: „Inside the principal
+ * objects screens … “Classification”, “Tags and groups” … #FFB48F"): on the four record screens the box is salmon —
+ *   `--color-card-meta` #FFB48F / rim #E39A74 / dark #2B1A10 / dark rim #45291A (h ≈ 20); the ink #3C4149 reads ≈ 6 : 1 on it
+ * — and the yellow it was stays where no screen is named, under tokens of its own (`YELLOW_TILE_SURFACE`).
+ */
 export const META_TILE_SURFACE =
   "rounded-md border border-card-meta-rim bg-card-meta p-3 shadow-sm dark:border-card-meta-rim-dark dark:bg-card-meta-dark";
+
+/** 41.82: the light yellow „Clasificări" and „Conexiuni" wore until then — Setări's cost tile still does. */
+export const YELLOW_TILE_SURFACE =
+  "rounded-md border border-card-yellow-rim bg-card-yellow p-3 shadow-sm dark:border-card-yellow-rim-dark dark:bg-card-yellow-dark";
 
 /**
  * Slice #39.12: a natural person's „Arbore de moștenire" — „light blue as light as the other coloured tiles" (Adrian).
@@ -84,12 +93,13 @@ export const FAMILY_TILE_SURFACE =
   "rounded-md border border-card-family-rim bg-card-family p-3 shadow-sm dark:border-card-family-rim-dark dark:bg-card-family-dark";
 
 /** Slice 41.68: the five tile colours, by hue — the tokens behind them keep their names (the file note). */
-export type TileHue = "card" | "green" | "yellow" | "blue" | "purple";
+export type TileHue = "card" | "green" | "yellow" | "salmon" | "blue" | "purple";
 
 const HUE_SURFACE: Readonly<Record<TileHue, string>> = {
   card: TILE_SURFACE,
   green: RELATED_TILE_SURFACE,
-  yellow: META_TILE_SURFACE,
+  yellow: YELLOW_TILE_SURFACE,
+  salmon: META_TILE_SURFACE,
   blue: FAMILY_TILE_SURFACE,
   purple: PINNED_TILE_SURFACE,
 };
@@ -97,7 +107,8 @@ const HUE_SURFACE: Readonly<Record<TileHue, string>> = {
 const HUE_COLOURS: Readonly<Record<TileHue, string>> = {
   card:   "border-card-rim bg-card dark:border-zinc-800 dark:bg-zinc-900",
   green:  "border-card-related-rim bg-card-related dark:border-card-related-rim-dark dark:bg-card-related-dark",
-  yellow: "border-card-meta-rim bg-card-meta dark:border-card-meta-rim-dark dark:bg-card-meta-dark",
+  yellow: "border-card-yellow-rim bg-card-yellow dark:border-card-yellow-rim-dark dark:bg-card-yellow-dark",
+  salmon: "border-card-meta-rim bg-card-meta dark:border-card-meta-rim-dark dark:bg-card-meta-dark",
   blue:   "border-card-family-rim bg-card-family dark:border-card-family-rim-dark dark:bg-card-family-dark",
   purple: "border-card-pinned-rim bg-card-pinned dark:border-card-pinned-rim-dark dark:bg-card-pinned-dark",
 };
@@ -113,10 +124,11 @@ const DEFAULT_HUES: Readonly<Record<TileGroup, TileHue>> = { record: "card", rel
  * keeps the default.
  */
 export const SCREEN_HUES: Readonly<Record<TileScreen, Readonly<Record<TileGroup, TileHue>>>> = {
-  property:          { ...DEFAULT_HUES, related: "card", fixed: "green" },
-  "natural-person":  { ...DEFAULT_HUES, related: "card", family: "purple", fixed: "purple" },
-  "judicial-person": { ...DEFAULT_HUES, related: "card", fixed: "purple" },
-  document:          { ...DEFAULT_HUES, related: "card", fixed: "blue" },
+  // 41.82: „Clasificare" and „Etichete și grupuri" salmon on every record screen.
+  property:          { ...DEFAULT_HUES, related: "card", meta: "salmon", fixed: "green" },
+  "natural-person":  { ...DEFAULT_HUES, related: "card", meta: "salmon", family: "purple", fixed: "purple" },
+  "judicial-person": { ...DEFAULT_HUES, related: "card", meta: "salmon", fixed: "purple" },
+  document:          { ...DEFAULT_HUES, related: "card", meta: "salmon", fixed: "blue" },
 };
 
 /** The record screen a registry's entity names, or none. */
