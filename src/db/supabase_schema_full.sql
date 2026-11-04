@@ -4,8 +4,8 @@
 -- GENERATED FILE -- DO NOT EDIT BY HAND.
 -- Regenerate with:  .\scripts\Export-SupabaseSchema.ps1
 --
--- Generated : 2026-11-03 20:24
--- Migrations : 123, newest migration_127_map_expand_durations.sql
+-- Generated : 2026-11-03 20:44
+-- Migrations : 124, newest migration_128_map_search_flight.sql
 -- Source    : local Docker database (ga40db @ ga40prj-postgres)
 --
 -- Applies the complete schema from scratch after running
