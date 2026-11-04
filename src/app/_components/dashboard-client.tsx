@@ -233,15 +233,18 @@ function Skeleton({ className }: { className?: string }) {
  */
 function SectionCard({
   title,
+  subtitle,
   children,
   tile,
 }: {
   title: string;
+  /** Slice 41.78: the grey line under the title — the stale tile's age. */
+  subtitle?: string;
   children: React.ReactNode;
   tile: HomeTile;
 }) {
   return (
-    <ListTile tile={tile} panel={PANEL_NAME[tile]} title={title} units={HOME_UNITS[tile]}>
+    <ListTile tile={tile} panel={PANEL_NAME[tile]} title={title} subtitle={subtitle} units={HOME_UNITS[tile]}>
       {children}
     </ListTile>
   );
@@ -504,13 +507,14 @@ export function StaleMetadataSection({
 }: {
   data: StaleMetadataCount | undefined;
   t: ReturnType<typeof useTranslations>;
-  /** `dashboard_stale_metadata` — the age the count was computed against, quoted by the title (41.01). */
+  /** `dashboard_stale_metadata` — the age the count was computed against, quoted by the subtitle (41.78; the title, 41.01). */
   staleDays: number;
 }) {
   // Slice 41.01: the recent tile's four cards, in amber (Ask first 1, 5); the sentence and the hint under the links are
   // gone, the age they quoted is in the title (Ask first 6).
   return (
-    <SectionCard tile="staleMetadata" title={t("staleMetadata.title", { days: staleDays })}>
+    // Slice 41.78: „Clasificări de revizuit" (Adrian), with no number; the age it counts against said once, under it.
+    <SectionCard tile="staleMetadata" title={t("staleMetadata.title")} subtitle={t("staleMetadata.subtitle", { days: staleDays })}>
       {data !== undefined && data.total === 0 ? (
         <p className="text-sm text-success text-center py-3 font-medium">
           {t("staleMetadata.allGood")}
@@ -597,7 +601,7 @@ export function DashboardClient() {
   const tilesMenu = useTilesMenu();
   const labels: Record<HomeTile, string> = {
     recentCounts: t("recentCounts.title", { days: tfDays(tf, "dashboard_recent_days") }),
-    staleMetadata: t("staleMetadata.title", { days: tfDays(tf, "dashboard_stale_metadata") }),
+    staleMetadata: t("staleMetadata.title"),
     expiringDocuments: t("expiringDocuments.title"),
     recentActivity: t("recentActivity.title"),
   };

@@ -4266,7 +4266,7 @@
     "subtitle": "What needs your attention today",
     "loadError": "Failed to load dashboard",
     "recentCounts": {
-      "title": "Added in the last {days, plural, one {day} other {# days}}"
+      "title": "{days, plural, =7 {Added last week} one {Added in the last day} other {Added in the last # days}}"
     },
     "expiringDocuments": {
       "title": "Documents with limited validity",
@@ -4279,8 +4279,9 @@
       "expiresInDays": "Expires in {days} days"
     },
     "staleMetadata": {
-      "title": "Not updated in over {days, plural, one {a day} other {# days}}",
-      "allGood": "All metadata is up to date"
+      "title": "Classifications to review",
+      "subtitle": "Not confirmed in over {days, plural, one {a day} other {# days}}",
+      "allGood": "No classifications to review"
     },
     "kindCounts": {
       "natural": "Natural persons",

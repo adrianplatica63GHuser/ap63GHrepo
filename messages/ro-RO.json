@@ -4266,7 +4266,7 @@
     "subtitle": "Ce necesită atenția dumneavoastră azi",
     "loadError": "Eroare la încărcarea tabloului de bord",
     "recentCounts": {
-      "title": "{days, plural, one {Adăugate în ultima zi} few {Adăugate în ultimele # zile} other {Adăugate în ultimele # de zile}}"
+      "title": "{days, plural, =7 {Adăugate în ultima săptămână} one {Adăugate în ultima zi} few {Adăugate în ultimele # zile} other {Adăugate în ultimele # de zile}}"
     },
     "expiringDocuments": {
       "title": "Acte cu valabilitate limitată",
@@ -4279,8 +4279,9 @@
       "expiresInDays": "Expiră în {days, plural, one {o zi} few {# zile} other {# de zile}}"
     },
     "staleMetadata": {
-      "title": "{days, plural, one {Neactualizate de peste o zi} few {Neactualizate de peste # zile} other {Neactualizate de peste # de zile}}",
-      "allGood": "Toate metadatele sunt actualizate"
+      "title": "Clasificări de revizuit",
+      "subtitle": "{days, plural, one {Neconfirmate de peste o zi} few {Neconfirmate de peste # zile} other {Neconfirmate de peste # de zile}}",
+      "allGood": "Nicio clasificare de revizuit"
     },
     "kindCounts": {
       "natural": "Persoane fizice",
