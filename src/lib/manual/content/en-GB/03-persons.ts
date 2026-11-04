@@ -208,7 +208,7 @@ The „Inheritance tree” tile, light blue, draws the person's family: parents 
 
 Only links with a kinship role go into the tree — the roles marked „Kinship” in „Person Roles”. A person with no such links shows „No family ties yet.”
 
-Under the drawing, the button „Add or remove” opens the panel of family ties; rest the mouse on it and you see its whole name, „Add or remove a relative”. When you reach the person from „Reporting” → „Inheritance trees”, with a click on their name (section [[reports-inheritance]]), the panel is already open.
+Under the drawing stand two buttons: „Add a relative” (a person with a chain link) opens the half where you tie in a new relative, and „Remove a relative” (a person with a bin) the one with the person's family ties; each collapses from its own button. When you reach the person from „Reporting” → „Inheritance trees”, with a click on their name (section [[reports-inheritance]]), „Add a relative” is already open.
 
 - „The person's family ties” shows their relatives, each with the role.
 - To add a relative: under „Relative”, type the name and choose the person; under „What they are to …”, choose the kinship; press „Add the tie”. The relative appears in the drawing.
@@ -262,7 +262,7 @@ You learn from a certificate of inheritance that a person in the archive has die
 Two persons are in the archive, but nothing says they are father and son.
 
 1. Open the son.
-2. In „Inheritance tree”, press „Add or remove” (section [[persons-relatives-tree]]).
+2. In „Inheritance tree”, press „Add a relative” (section [[persons-relatives-tree]]).
 3. Under „Relative”, choose the father; under „What they are to …”, choose „Tată”; press „Add the tie”.
 4. The father appears in the drawing above the son, and in „Links” each sees the other (section [[persons-relatives-link]]).
 

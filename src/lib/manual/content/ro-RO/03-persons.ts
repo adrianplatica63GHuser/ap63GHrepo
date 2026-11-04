@@ -208,7 +208,7 @@ Fișa „Arbore de moștenire”, albastru deschis, desenează familia persoanei
 
 În arbore intră doar legăturile cu un rol de rudenie — rolurile marcate „Rudenie” în „Roluri Persoane”. O persoană fără astfel de legături arată „Nicio legătură de familie încă.”.
 
-Sub desen, butonul „Adaugă sau scoate” deschide panoul legăturilor de familie; țineți mouse-ul pe el și vedeți numele lui întreg, „Adaugă sau scoate o rudă”. Când ajungeți la persoană din „Rapoarte” → „Arbori de moștenire”, cu un clic pe numele ei (secțiunea [[reports-inheritance]]), panoul este deja deschis.
+Sub desen stau două butoane: „Adaugă o rudă” (o persoană cu o za de lanț) deschide jumătatea în care legați o rudă nouă, iar „Scoate o rudă” (o persoană cu un coș) pe cea cu legăturile de familie ale persoanei; fiecare se restrânge din butonul ei. Când ajungeți la persoană din „Rapoarte” → „Arbori de moștenire”, cu un clic pe numele ei (secțiunea [[reports-inheritance]]), „Adaugă o rudă” este deja deschisă.
 
 - „Legăturile de familie ale persoanei” arată rudele ei, fiecare cu rolul.
 - Ca să adăugați o rudă: la „Ruda”, scrieți numele și alegeți persoana; la „Ce este pentru …”, alegeți rudenia; apăsați „Adaugă legătura”. Ruda apare în desen.
@@ -262,7 +262,7 @@ Aflați dintr-un certificat de moștenitor că o persoană din arhivă a murit.
 Două persoane sunt în arhivă, dar nimic nu spune că sunt tată și fiu.
 
 1. Deschideți fiul.
-2. În „Arbore de moștenire”, apăsați „Adaugă sau scoate” (secțiunea [[persons-relatives-tree]]).
+2. În „Arbore de moștenire”, apăsați „Adaugă o rudă” (secțiunea [[persons-relatives-tree]]).
 3. La „Ruda”, alegeți tatăl; la „Ce este pentru …”, alegeți „Tată”; apăsați „Adaugă legătura”.
 4. Tatăl apare în desen deasupra fiului, iar în „Legături” fiecare îl vede pe celălalt (secțiunea [[persons-relatives-link]]).
 

@@ -15,18 +15,21 @@
  * întreg" opens A centred on the person. #39.13: each person's documents badge, as
  * in A; the year slider and „Acte comune" are A's alone — the tile stays the person's family at a glance.
  *
- * C, the same A/B/C pattern as „Interacțiuni" (#39.05): collapsed to one large button; `?tree=open` expands it — a
- * name in the whole tree links there (`personTreeHref`). Expanding writes nothing. C lists the person's own family
- * ties, each with „Scoate", and adds one: a person, and the role they hold towards this one. It writes ONLY through
+ * C, the same A/B/C pattern as „Interacțiuni" (#39.05). 41.72 split it in two, each behind its own button: „Adaugă o
+ * rudă" (a person with a chain link) opens the half that adds one — a person, and the role they hold towards this one;
+ * „Scoate o rudă" (a person with a bin) the half that lists the person's own family ties, each with „Scoate". Both may
+ * be open, the ties above; each has its own collapse, and pressing its button again closes it. `?tree=open` opens the
+ * add half — a name in the whole tree links there (`personTreeHref`). Opening writes nothing. C writes ONLY through
  * the association route that exists (POST/DELETE /api/people/<id>/references, „Asociază persoană"'s), offering only
- * the roles with a kinship (#39.10). A C typed into is the screen's unsaved change.
+ * the roles with a kinship (#39.10). An add half typed into is the screen's unsaved change.
  */
 import { useCallback, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronUp, Maximize2, Plus, Trash2, Users } from "lucide-react";
+import { ChevronUp, Maximize2, Plus, Trash2 } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
+import { PersonBinIcon, PersonLinkIcon } from "@/lib/ui/person-badge-icons";
 import { useToast } from "@/components/toast";
 import { useUnsavedChanges, useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
 import { layoutTree, type TreePerson } from "@/lib/inheritance/layout";
@@ -62,11 +65,13 @@ export function PersonTreeTile({
   const t = useTranslations("inheritance.tile");
   const params = useSearchParams();
   const asked = readTree(params?.get(TREE_PARAM) ?? null);
-  const [expanded, setExpanded] = useState(asked);
+  // 41.72: two halves, each its own button's; `?tree=open` opens the add half (Ask first 4).
+  const [addOpen, setAddOpen] = useState(asked);
+  const [removeOpen, setRemoveOpen] = useState(false);
   const [prevAsked, setPrevAsked] = useState(asked);
   if (prevAsked !== asked) {
     setPrevAsked(asked);
-    if (asked) setExpanded(true);
+    if (asked) setAddOpen(true);
   }
   const { guardedAction } = useUnsavedChanges();
 
@@ -97,27 +102,122 @@ export function PersonTreeTile({
           <TreeCanvas key={units} data={sub} layout={layout} mark={personId} linkOf={plainHref} docs={docs} openingScale={opening} className="absolute inset-0" />
         )}
       </div>
-      {expanded ? (
-        <FamilyPanel personId={personId} personName={personName} onCollapse={() => guardedAction(() => setExpanded(false))} />
-      ) : (
-        // Slice 40.34 (Adrian: „the caption is too long It should just read add or remove, because the icon in front of
-        // it gets the information across that it's a person"): „Adaugă sau scoate" on screen, the whole „Adaugă sau
-        // scoate o rudă" as its name and tooltip (Ask first 1); „Asociază …"'s kind — primary, sm, as wide as its
-        // words, at the tile's left (Ask first 2). It was one large indigo button stretched across the tile (#39.05).
-        <div className="mt-3 flex flex-col items-start" data-tree-panel="collapsed">
-          <IconButton icon={Users} label={t("open")} variant="primary" size="sm" data-tree-expand="" onClick={() => setExpanded(true)} />
+      {/* 41.72 (Adrian: „This button should be replaced with two buttons"): where the one button stood (40.34), side by
+          side, primary and sm — „Adaugă o rudă" first. Each stays on screen while its half is open, shown pressed;
+          pressed again, it closes the half. The line between the halves only when both are open (Ask firsts 2, 3). */}
+      <div className="mt-3 flex flex-col gap-3" data-tree-panel={addOpen || removeOpen ? "expanded" : "collapsed"}>
+        <div className="flex items-start gap-2" data-tree-buttons="">
+          <IconButton
+            icon={PersonLinkIcon}
+            label={t("addRelative")}
+            variant="primary"
+            size="sm"
+            aria-pressed={addOpen}
+            data-tree-add=""
+            onClick={() => (addOpen ? guardedAction(() => setAddOpen(false)) : setAddOpen(true))}
+          />
+          <IconButton
+            icon={PersonBinIcon}
+            label={t("removeRelative")}
+            variant="primary"
+            size="sm"
+            aria-pressed={removeOpen}
+            data-tree-remove=""
+            onClick={() => setRemoveOpen((o) => !o)}
+          />
         </div>
-      )}
+        {removeOpen && <RemoveHalf personId={personId} onCollapse={() => setRemoveOpen(false)} />}
+        {addOpen && (
+          <AddHalf personId={personId} personName={personName} lined={removeOpen} onCollapse={() => guardedAction(() => setAddOpen(false))} />
+        )}
+      </div>
     </section>
   );
 }
 
-/** C, expanded: the person's own family ties, and one more to add. */
-function FamilyPanel({ personId, personName, onCollapse }: { personId: string; personName: string; onCollapse: () => void }) {
+/** A half's own collapse, at its top right. */
+function HalfCollapse({ which, onCollapse }: { which: "add" | "remove"; onCollapse: () => void }) {
+  const t = useTranslations("inheritance.tile");
+  return <IconButton icon={ChevronUp} label={t("collapse")} variant="secondary" size="xs" data-tree-collapse={which} onClick={onCollapse} />;
+}
+
+/** „Scoate o rudă"'s half: the person's own family ties, each with „Scoate" and its confirmation. */
+function RemoveHalf({ personId, onCollapse }: { personId: string; onCollapse: () => void }) {
   const t = useTranslations("inheritance.tile");
   const qc = useQueryClient();
   const { toast, show } = useToast();
   const tree = useQuery({ queryKey: ["inheritance-tree"], queryFn: fetchTree });
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState(false);
+  const [confirm, setConfirm] = useState<string | null>(null);
+
+  // The person's own ties, as the tile names them: the other person and what they are to this one.
+  const byId = useMemo(() => new Map((tree.data?.persons ?? []).map((p) => [p.id, p])), [tree.data]);
+  const mine = (tree.data?.ties ?? [])
+    .filter((x) => x.personIdA === personId || x.personIdB === personId)
+    .map((x) => {
+      const otherId = x.personIdA === personId ? x.personIdB : x.personIdA;
+      const p: TreePerson | undefined = byId.get(otherId);
+      const shown = personRoleShown(x.role, roleHeldBy(otherId, x.personIdA, x.roleReadsAToB), p?.gender ?? null);
+      return { id: x.id, otherId, name: p?.displayName ?? "…", word: shown.kind === "role" ? shown.name : x.role.name };
+    });
+
+  const remove = async (otherId: string) => {
+    setBusy(true);
+    setError(false);
+    try {
+      const res = await fetch(`/api/people/${encodeURIComponent(personId)}/references/${encodeURIComponent(otherId)}`, { method: "DELETE" });
+      if (!res.ok && res.status !== 404) throw new Error(`references ${res.status}`);
+      setConfirm(null);
+      show(t("removed"));
+      await qc.invalidateQueries();
+    } catch {
+      setError(true);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-1" data-tree-half="remove">
+      <div className="flex items-start justify-between gap-2">
+        <span className="text-xs font-medium text-ink dark:text-zinc-300">{t("tiesTitle")}</span>
+        <HalfCollapse which="remove" onCollapse={onCollapse} />
+      </div>
+      {mine.length === 0 ? (
+        <p className="text-xs text-fade">{t("noTies")}</p>
+      ) : (
+        <ul className="flex flex-col gap-1" data-tree-ties="">
+          {mine.map((m) => (
+            <li key={m.id} className="flex items-center justify-between gap-2 text-sm" data-tree-tie={m.otherId}>
+              <span>
+                <span className="text-fade">{m.word} — </span>
+                {m.name}
+              </span>
+              {confirm === m.otherId ? (
+                <span className="flex items-center gap-1" role="group" aria-label={t("removeConfirm", { name: m.name })}>
+                  <span className="text-xs text-ink">{t("removeConfirm", { name: m.name })}</span>
+                  <IconButton icon={Trash2} label={t("removeYes")} variant="danger" size="xs" busy={busy} onClick={() => void remove(m.otherId)} />
+                  <IconButton icon={ChevronUp} label={t("removeNo")} variant="secondary" size="xs" onClick={() => setConfirm(null)} />
+                </span>
+              ) : (
+                <IconButton icon={Trash2} label={t("remove", { name: m.name })} variant="secondary" size="xs" onClick={() => setConfirm(m.otherId)} />
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+      {error && <p role="alert" className="text-xs text-red-600 dark:text-red-400">{t("error")}</p>}
+      {toast}
+    </div>
+  );
+}
+
+/** „Adaugă o rudă"'s half: one more relative — a person, and the role they hold towards this one. */
+function AddHalf({ personId, personName, lined, onCollapse }: { personId: string; personName: string; lined: boolean; onCollapse: () => void }) {
+  const t = useTranslations("inheritance.tile");
+  const qc = useQueryClient();
+  const { toast, show } = useToast();
   const roles = useQuery({
     queryKey: ["value-list", "person-roles"],
     queryFn: async () => {
@@ -134,7 +234,6 @@ function FamilyPanel({ personId, personName, onCollapse }: { personId: string; p
   const [roleId, setRoleId] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
-  const [confirm, setConfirm] = useState<string | null>(null);
 
   const found = useQuery({
     queryKey: ["tree-person-search", text],
@@ -145,17 +244,6 @@ function FamilyPanel({ personId, personName, onCollapse }: { personId: string; p
       return ((await res.json()) as { items: Found[] }).items.filter((p) => p.id !== personId);
     },
   });
-
-  // The person's own ties, as the tile names them: the other person and what they are to this one.
-  const byId = useMemo(() => new Map((tree.data?.persons ?? []).map((p) => [p.id, p])), [tree.data]);
-  const mine = (tree.data?.ties ?? [])
-    .filter((x) => x.personIdA === personId || x.personIdB === personId)
-    .map((x) => {
-      const otherId = x.personIdA === personId ? x.personIdB : x.personIdA;
-      const p: TreePerson | undefined = byId.get(otherId);
-      const shown = personRoleShown(x.role, roleHeldBy(otherId, x.personIdA, x.roleReadsAToB), p?.gender ?? null);
-      return { id: x.id, otherId, name: p?.displayName ?? "…", word: shown.kind === "role" ? shown.name : x.role.name };
-    });
 
   const dirty = other !== null || roleId !== "";
   const add = async (): Promise<boolean> => {
@@ -185,103 +273,58 @@ function FamilyPanel({ personId, personName, onCollapse }: { personId: string; p
   };
   useUnsavedChangesGuard({ isDirty: dirty, onSave: add });
 
-  const remove = async (otherId: string) => {
-    setBusy(true);
-    setError(false);
-    try {
-      const res = await fetch(`/api/people/${encodeURIComponent(personId)}/references/${encodeURIComponent(otherId)}`, { method: "DELETE" });
-      if (!res.ok && res.status !== 404) throw new Error(`references ${res.status}`);
-      setConfirm(null);
-      show(t("removed"));
-      await qc.invalidateQueries();
-    } catch {
-      setError(true);
-    } finally {
-      setBusy(false);
-    }
-  };
-
   return (
-    <div className="mt-3 flex flex-col gap-3" data-tree-panel="expanded">
-      <div className="flex justify-end">
-        <IconButton icon={ChevronUp} label={t("collapse")} variant="secondary" size="xs" data-tree-collapse="" onClick={onCollapse} />
+    <fieldset className={`relative flex flex-col gap-2${lined ? " border-t border-crease pt-3 dark:border-zinc-700" : ""}`} data-tree-half="add">
+      {/* The legend stays the fieldset's first child — its name; the collapse sits at the top right over it. */}
+      <legend className="pr-8 text-xs font-medium text-ink dark:text-zinc-300">{t("addTitle", { name: personName })}</legend>
+      <div className={`absolute right-0 ${lined ? "top-3" : "top-0"}`}>
+        <HalfCollapse which="add" onCollapse={onCollapse} />
       </div>
-
-      <div className="flex flex-col gap-1">
-        <span className="text-xs font-medium text-ink dark:text-zinc-300">{t("tiesTitle")}</span>
-        {mine.length === 0 ? (
-          <p className="text-xs text-fade">{t("noTies")}</p>
-        ) : (
-          <ul className="flex flex-col gap-1" data-tree-ties="">
-            {mine.map((m) => (
-              <li key={m.id} className="flex items-center justify-between gap-2 text-sm" data-tree-tie={m.otherId}>
-                <span>
-                  <span className="text-fade">{m.word} — </span>
-                  {m.name}
-                </span>
-                {confirm === m.otherId ? (
-                  <span className="flex items-center gap-1" role="group" aria-label={t("removeConfirm", { name: m.name })}>
-                    <span className="text-xs text-ink">{t("removeConfirm", { name: m.name })}</span>
-                    <IconButton icon={Trash2} label={t("removeYes")} variant="danger" size="xs" busy={busy} onClick={() => void remove(m.otherId)} />
-                    <IconButton icon={ChevronUp} label={t("removeNo")} variant="secondary" size="xs" onClick={() => setConfirm(null)} />
-                  </span>
-                ) : (
-                  <IconButton icon={Trash2} label={t("remove", { name: m.name })} variant="secondary" size="xs" onClick={() => setConfirm(m.otherId)} />
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-
-      <fieldset className="flex flex-col gap-2 border-t border-crease pt-3 dark:border-zinc-700">
-        <legend className="text-xs font-medium text-ink dark:text-zinc-300">{t("addTitle", { name: personName })}</legend>
-        <label className="flex flex-col gap-1 text-xs">
-          <span className="text-fade">{t("personLabel")}</span>
-          <input
-            type="search"
-            value={text}
-            onChange={(e) => {
-              setText(e.target.value);
-              setOther(null);
-            }}
-            placeholder={t("searchPlaceholder")}
-            className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
-          />
-        </label>
-        {text.trim().length >= 2 && !other && (
-          <div className="flex max-h-40 flex-col gap-1 overflow-y-auto" role="radiogroup" aria-label={t("personLabel")}>
-            {(found.data ?? []).length === 0 && !found.isLoading && <p className="text-xs text-fade">{t("noResults")}</p>}
-            {(found.data ?? []).map((p) => (
-              <label key={p.id} className="flex cursor-pointer items-center gap-2 text-sm">
-                <input type="radio" name="tree-relative" checked={false} onChange={() => setOther(p)} />
-                {p.displayName}
-              </label>
-            ))}
-          </div>
-        )}
-        {other && <p className="text-sm" data-tree-chosen="">{other.displayName}</p>}
-        <label className="flex flex-col gap-1 text-xs">
-          <span className="text-fade">{t("roleLabel", { name: personName })}</span>
-          <select
-            value={roleId}
-            onChange={(e) => setRoleId(e.target.value)}
-            className="w-fit rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
-          >
-            <option value="">{t("rolePick")}</option>
-            {offered.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <div>
-          <IconButton icon={Plus} label={t("add")} variant="primary" size="sm" busy={busy} disabled={!other || !roleId} onClick={() => void add()} />
+      <label className="flex flex-col gap-1 text-xs">
+        <span className="text-fade">{t("personLabel")}</span>
+        <input
+          type="search"
+          value={text}
+          onChange={(e) => {
+            setText(e.target.value);
+            setOther(null);
+          }}
+          placeholder={t("searchPlaceholder")}
+          className="rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
+        />
+      </label>
+      {text.trim().length >= 2 && !other && (
+        <div className="flex max-h-40 flex-col gap-1 overflow-y-auto" role="radiogroup" aria-label={t("personLabel")}>
+          {(found.data ?? []).length === 0 && !found.isLoading && <p className="text-xs text-fade">{t("noResults")}</p>}
+          {(found.data ?? []).map((p) => (
+            <label key={p.id} className="flex cursor-pointer items-center gap-2 text-sm">
+              <input type="radio" name="tree-relative" checked={false} onChange={() => setOther(p)} />
+              {p.displayName}
+            </label>
+          ))}
         </div>
-        {error && <p role="alert" className="text-xs text-red-600 dark:text-red-400">{t("error")}</p>}
-      </fieldset>
+      )}
+      {other && <p className="text-sm" data-tree-chosen="">{other.displayName}</p>}
+      <label className="flex flex-col gap-1 text-xs">
+        <span className="text-fade">{t("roleLabel", { name: personName })}</span>
+        <select
+          value={roleId}
+          onChange={(e) => setRoleId(e.target.value)}
+          className="w-fit rounded-md border border-wire bg-white px-3 py-1.5 text-sm shadow-sm focus:border-focus focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
+        >
+          <option value="">{t("rolePick")}</option>
+          {offered.map((r) => (
+            <option key={r.id} value={r.id}>
+              {r.name}
+            </option>
+          ))}
+        </select>
+      </label>
+      <div>
+        <IconButton icon={Plus} label={t("add")} variant="primary" size="sm" busy={busy} disabled={!other || !roleId} onClick={() => void add()} />
+      </div>
+      {error && <p role="alert" className="text-xs text-red-600 dark:text-red-400">{t("error")}</p>}
       {toast}
-    </div>
+    </fieldset>
   );
 }
