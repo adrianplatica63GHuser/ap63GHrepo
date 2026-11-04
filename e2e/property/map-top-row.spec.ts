@@ -112,9 +112,9 @@ test.describe("TC-PROP-09 — „Hartă”: rândul de sus și harta extinsă", 
       // Slice 40.35: „Navighează" is the tile's map's only, not „Hartă extinsă"'s.
       await expect(big.dialog.getByRole("button", { name: "Navighează", exact: true })).toHaveCount(0);
 
-      // Step 4 — „Restrânge": gone; the tile's map in place.
+      // Step 4 — „Restrânge": gone; the tile's map in place. 41.77: after the way back, 3 s + 3 s by default.
       await big.restore.click();
-      await expect(big.restore).toHaveCount(0);
+      await expect(big.restore).toHaveCount(0, { timeout: 30_000 });
       await expect(map.locator("[data-mini-map]")).toBeVisible();
 
       // Step 5 — „Hartă extinsă", then Escape.
@@ -136,7 +136,8 @@ test.describe("TC-PROP-09 — „Hartă”: rândul de sus și harta extinsă", 
       await page.mouse.click(area.x + area.width * 0.2, area.y + area.height * 0.4);
       await done.click();
       await big.restore.click();
-      await expect(big.restore).toHaveCount(0);
+      // 41.77: the way back when the opening has ended; at once while it still plays.
+      await expect(big.restore).toHaveCount(0, { timeout: 30_000 });
       await expect(corners.locator("tbody tr")).toHaveCount(4);
     } finally {
       // At the end — nothing saved; the property deleted.
