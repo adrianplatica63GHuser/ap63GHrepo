@@ -1508,7 +1508,8 @@ describe("the home page as unit tiles, in the detail screens' frame (Slice #37.3
   const src = code(read("src", "app", "_components", "dashboard-client.tsx"));
 
   it("each section is a ListTile of whole units, on the unit row, ticked with the detail screens' selector", () => {
-    expect(src).toMatch(/<ListTile tile=\{tile\} panel=\{PANEL_NAME\[tile\]\} title=\{title\} units=\{HOME_UNITS\[tile\]\}>/);
+    // 41.78: and the stale tile's age as its subtitle (it read `title=\{title\} units=…`).
+    expect(src).toMatch(/<ListTile tile=\{tile\} panel=\{PANEL_NAME\[tile\]\} title=\{title\} subtitle=\{subtitle\} units=\{HOME_UNITS\[tile\]\}>/);
     expect(src).toMatch(/recentCounts: 2,\s*staleMetadata: 2,\s*expiringDocuments: tableUnits\(EXPIRING_COLUMNS\),\s*recentActivity: 3,/); // 40.98: re-pinned; 41.01: the counts 2; 41.02: the activity 3
     // 41.02: the record screens' packing (TileAreas) on a row as wide as the widest tile — was `<UnitRow units=…>`.
     expect(src).toMatch(/<div className="flex flex-col gap-4" style=\{screenRowStyle\(HOME_WIDEST_UNITS\)\}>/);
