@@ -231,7 +231,7 @@ describe("„Înainte” (#39.97)", () => {
 
 describe("41.81 — „Înapoi” follows the tab's record when the browser's previous entry is another screen", () => {
   const CRUMBS = [{ href: "/" }, { href: null }, { href: "/admin/calculation" }];
-  it("the dashboard → „Calcul drum lateral": the browser agrees, so its back", () => {
+  it("the dashboard → „Calcul drum lateral”: the browser agrees, so its back", () => {
     expect(backTarget(["/", "/admin/calculation"], CRUMBS, "/admin/calculation", "/")).toEqual({ kind: "history" });
   });
   it("a browser whose previous entry is the big map while the record says the list: the list, by its address", () => {
@@ -253,7 +253,7 @@ describe("41.81 — „Înapoi” follows the tab's record when the browser's pr
       href: "/",
     });
   });
-  it("the bar asks the browser for its previous entry when „Înapoi\" is pressed", () => {
+  it("the bar asks the browser for its previous entry when „Înapoi” is pressed", () => {
     expect(BAR).toContain("backTarget(currentBackStack(), segments, pathname, browserPreviousPath())");
     expect(typeof browserPreviousPath).toBe("function");
   });
