@@ -4343,7 +4343,7 @@
         "minutes": "{count, plural, one {un minut} few {# minute} other {# de minute}}",
         "months": "{count, plural, one {o lună} few {# luni} other {# de luni}}",
         "seconds": "{count, plural, one {o secundă} few {# secunde} other {# de secunde}}",
-        "hundredths": "{count}"
+        "hundredths": "{count, number}"
       },
       "examples": {
         "dashboard_recent_days": "Pe Tablou de bord, «Recente» numără ce s-a adăugat sau schimbat în ultimele {duration}.",

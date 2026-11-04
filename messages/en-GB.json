@@ -4343,7 +4343,7 @@
         "minutes": "{count, plural, one {one minute} other {# minutes}}",
         "months": "{count, plural, one {one month} other {# months}}",
         "seconds": "{count, plural, one {one second} other {# seconds}}",
-        "hundredths": "{count}"
+        "hundredths": "{count, number}"
       },
       "examples": {
         "dashboard_recent_days": "On the Dashboard, «Recent» counts what was added or changed in the last {duration}.",
