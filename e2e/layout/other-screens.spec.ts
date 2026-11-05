@@ -397,23 +397,29 @@ test.describe("TC-LAYOUT-01 — o fereastră îngustă (40.69)", () => {
     test.slow();
     await page.setViewportSize({ width: 1366, height: 768 });
     const RED = "rgb(192, 0, 0)";
-    const OFF_WHITE = "rgb(250, 250, 250)";
     const CARD = "rgb(238, 244, 250)";
     const look = (l: Locator) => l.evaluate((e) => `${getComputedStyle(e).fontSize} ${getComputedStyle(e).color}`);
-    for (const url of ["/admin/users", "/admin/groups", "/admin/stamps", "/admin/tags", "/admin/settings", "/admin/value-lists?list=tarla"]) {
-      await page.goto(url);
-      const h1 = page.locator("h1").first();
-      await expect(h1, url).toBeVisible({ timeout: 30_000 });
-      expect(await look(h1), url).toBe(`16px ${RED}`);
-      // The screen's background: the nearest box under the heading that paints one.
-      const ground = await h1.evaluate((e) => {
+    /** The screen's background: the nearest box under the heading that paints one. */
+    const groundOf = (h: Locator) =>
+      h.evaluate((e) => {
         for (let p = e.parentElement; p; p = p.parentElement) {
           const c = getComputedStyle(p).backgroundColor;
           if (c !== "rgba(0, 0, 0, 0)") return c;
         }
         return null;
       });
-      expect(ground, url).toBe(OFF_WHITE);
+    // The record screens' off-white, as the browser computes it (Tailwind's zinc-50 is lab(98.26 0 0), not an rgb).
+    await page.goto("/natural-persons");
+    const listHeading = page.locator("h1").first();
+    await expect(listHeading).toBeVisible({ timeout: 30_000 });
+    const OFF_WHITE = await groundOf(listHeading);
+    expect(OFF_WHITE).not.toBeNull();
+    for (const url of ["/admin/users", "/admin/groups", "/admin/stamps", "/admin/tags", "/admin/settings", "/admin/value-lists?list=tarla"]) {
+      await page.goto(url);
+      const h1 = page.locator("h1").first();
+      await expect(h1, url).toBeVisible({ timeout: 30_000 });
+      expect(await look(h1), url).toBe(`16px ${RED}`);
+      expect(await groundOf(h1), url).toBe(OFF_WHITE);
       // Every tile shown: the record tile's grey; every tile title red.
       await expect.poll(() => page.locator("[data-tile]").count(), { timeout: 15_000 }).toBeGreaterThan(0);
       const tiles = await page.locator("[data-tile]").evaluateAll((els) =>
