@@ -30,7 +30,7 @@ export default async function GroupEditorPage({ params, searchParams }: PagePara
       <main className="w-full px-6 py-8 flex flex-col gap-6">
         {/* Slice 41.41: „Implicit" is in „Panouri" (the page bar) now, as on a record screen — it puts the places back too. */}
         <header className="flex flex-wrap items-start justify-between gap-4">
-          <h1 className="text-2xl font-semibold tracking-tight">
+          <h1 className="text-base font-semibold tracking-tight text-admin-title">
             {t("editorTitle", { code: detail.code })}
           </h1>
         </header>

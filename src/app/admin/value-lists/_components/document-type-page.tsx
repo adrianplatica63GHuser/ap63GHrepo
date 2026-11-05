@@ -84,7 +84,7 @@ export function DocumentTypePage({ code, initialTab }: { code: string; initialTa
   const name = String(row.name ?? "");
   return (
     <div className="flex flex-col gap-4" data-document-type-page={code}>
-      <h1 className="text-2xl font-semibold tracking-tight text-ink">{name}</h1>
+      <h1 className="text-base font-semibold tracking-tight text-admin-title">{name}</h1>
       <div role="tablist" aria-label={t("tabsLabel")} className="flex gap-1 border-b border-card-rim">
         {DOCUMENT_TYPE_TABS.map((key) => (
           <button

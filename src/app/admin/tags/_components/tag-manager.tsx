@@ -379,7 +379,7 @@ export function TagManager({ note }: { note?: string } = {}) {
       <TileUnitRow screen={{ ...ADMIN_TAGS_SCREEN, units: CLOUD_UNITS }}>
       {note && tiles.choice.isShown("note") && (
         // 41.41: what the screen is for — an information tile, chosen with „Panouri".
-        <section {...screenPanel("tags-note", CLOUD_UNITS)} data-tile="note" className="rounded-lg border border-blue-200 bg-blue-50 px-5 py-4 text-sm text-blue-800 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300">
+        <section {...screenPanel("tags-note", CLOUD_UNITS)} data-tile="note" className="rounded-lg border border-card-rim bg-card px-5 py-4 text-sm text-ink">
           <p>{note}</p>
         </section>
       )}
@@ -391,7 +391,7 @@ export function TagManager({ note }: { note?: string } = {}) {
       <section {...screenPanel("tag-cloud", CLOUD_UNITS)} data-tile="cloud" hidden={!tiles.choice.isShown("cloud")} className="rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
           <div className="flex flex-col gap-0.5">
-            <TileTitle title={t("cloud.title")} className="" />
+            <TileTitle title={t("cloud.title")} className="" admin />
             <span className="text-xs text-fade dark:text-zinc-500">
               {t("cloud.count", { count: tags.length })}
             </span>

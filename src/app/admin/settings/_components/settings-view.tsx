@@ -36,7 +36,7 @@ import { groupedTiles } from "@/lib/ui/tiles";
 import { COST_PROVIDERS } from "@/lib/costs/catalogue";
 import { SETTINGS_TILES, SETTINGS_TILE_REGISTRY, type SettingsTile } from "./settings-tiles";
 import { CostTile, useCosts } from "./cost-tiles";
-import { PANEL_TITLE_TYPE } from "@/lib/ui/title-type";
+import { ADMIN_PANEL_TITLE_TYPE } from "@/lib/ui/title-type";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 /** Slice #37.35: Setări's tiles, 3 units each. Slice #39.17: ticked on and off like a record's (`settings-tiles.ts`). */
@@ -211,7 +211,7 @@ function TimeFramesPanel() {
   }
 
   return (
-    <section {...screenPanel("time-frames", TIME_FRAMES_UNITS)} className="rounded-lg border border-wire bg-card p-5 flex flex-col gap-4">
+    <section {...screenPanel("time-frames", TIME_FRAMES_UNITS)} className="rounded-lg border border-card-rim bg-card p-5 flex flex-col gap-4">
       <h2 className="text-sm font-semibold text-ink">{t("sectionTimeFrames")}</h2>
 
       {isLoading && (
@@ -225,7 +225,7 @@ function TimeFramesPanel() {
         <>
           {grouped.map((group) => (
           <div key={group.id} className="flex flex-col gap-3" data-time-frame-group={group.id}>
-            <h3 className={PANEL_TITLE_TYPE}>
+            <h3 className={ADMIN_PANEL_TITLE_TYPE}>
               {t(`timeFrames.groups.${group.id}`)}
             </h3>
             {group.rows.map((row) => {
@@ -345,7 +345,7 @@ function megabytes(bytes: number): string {
 
 function Tile({ name, title, children }: { name: string; title: string; children: React.ReactNode }) {
   return (
-    <section {...screenPanel(name, SETTINGS_TILE_UNITS)} aria-label={title} className="rounded-lg border border-wire bg-card p-5 flex flex-col gap-3">
+    <section {...screenPanel(name, SETTINGS_TILE_UNITS)} aria-label={title} className="rounded-lg border border-card-rim bg-card p-5 flex flex-col gap-3">
       <h2 className="text-sm font-semibold text-ink">{title}</h2>
       {children}
     </section>
@@ -446,7 +446,7 @@ function SystemTiles({ choice }: { choice: TileChoice<SettingsTile> }) {
             ) : (
               <>
                 <div className="flex flex-col gap-0.5" data-backups="last">
-                  <h3 className={PANEL_TITLE_TYPE}>{t("backups.lastBackup")}</h3>
+                  <h3 className={ADMIN_PANEL_TITLE_TYPE}>{t("backups.lastBackup")}</h3>
                   {backups.lastBackup ? (
                     <>
                       <p className="text-ink">{when(backups.lastBackup.at)}</p>
@@ -463,7 +463,7 @@ function SystemTiles({ choice }: { choice: TileChoice<SettingsTile> }) {
                   )}
                 </div>
                 <div className="flex flex-col gap-0.5" data-backups="drill">
-                  <h3 className={PANEL_TITLE_TYPE}>{t("backups.lastDrill")}</h3>
+                  <h3 className={ADMIN_PANEL_TITLE_TYPE}>{t("backups.lastDrill")}</h3>
                   {backups.lastDrill ? (
                     <>
                       <p className="text-ink">
@@ -522,7 +522,7 @@ function LanguageChoice() {
   const router = useRouter();
   return (
     <fieldset className="flex flex-col gap-1.5" data-account-language="">
-      <legend className={`mb-1 ${PANEL_TITLE_TYPE}`}>{t("language")}</legend>
+      <legend className={`mb-1 ${ADMIN_PANEL_TITLE_TYPE}`}>{t("language")}</legend>
       {SUPPORTED_LOCALES.map((l) => (
         <label key={l} className="flex cursor-pointer items-center gap-2 text-sm text-ink">
           <input
@@ -548,7 +548,7 @@ function AppearanceChoice() {
   const t = useTranslations("theme");
   return (
     <fieldset className="flex flex-col gap-1.5" data-account-appearance="">
-      <legend className={`mb-1 ${PANEL_TITLE_TYPE}`}>{t("appearance")}</legend>
+      <legend className={`mb-1 ${ADMIN_PANEL_TITLE_TYPE}`}>{t("appearance")}</legend>
       <ThemeToggle />
     </fieldset>
   );
@@ -575,7 +575,7 @@ function WidthUnitChoice({ initial }: { initial: number }) {
   };
   return (
     <fieldset className="flex flex-col gap-1.5" data-account-width-unit="">
-      <legend className={`mb-1 ${PANEL_TITLE_TYPE}`}>{t("title")}</legend>
+      <legend className={`mb-1 ${ADMIN_PANEL_TITLE_TYPE}`}>{t("title")}</legend>
       <p className="text-xs text-fade">{t("intro")}</p>
       <div className="flex flex-wrap items-center gap-2">
         <label htmlFor="width-unit-px" className="text-sm text-ink">{t("label")}</label>
@@ -631,7 +631,7 @@ function AccountTile({ uat, unitPx }: { uat: boolean; unitPx: number }) {
   return (
     <Tile name="settings-account" title={t("sections.account")}>
       <div className="flex flex-col gap-2" data-account-password="">
-        <h3 className={PANEL_TITLE_TYPE}>{t("account.password")}</h3>
+        <h3 className={ADMIN_PANEL_TITLE_TYPE}>{t("account.password")}</h3>
         {uat ? (
           <p className="text-sm text-fade" role="note" data-uat-no-accounts="password">{tPwd("uatNoAccounts")}</p>
         ) : (

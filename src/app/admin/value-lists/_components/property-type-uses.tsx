@@ -109,7 +109,7 @@ export function PropertyTypeUses({
       aria-labelledby="property-type-uses-title"
     >
       <div className="border-b border-card-rim px-5 py-3 dark:border-zinc-800">
-        <h2 id="property-type-uses-title" className="text-base font-semibold text-ink dark:text-zinc-100">{t("title")}</h2>
+        <h2 id="property-type-uses-title" className="text-base font-semibold text-admin-title">{t("title")}</h2>
         <p className="mt-1 text-xs text-fade dark:text-zinc-400">{t("hint")}</p>
       </div>
       <div className={`overflow-x-auto px-5 ${fill ? "pb-5 pt-3" : "py-3"}`} data-type-uses-frame="">

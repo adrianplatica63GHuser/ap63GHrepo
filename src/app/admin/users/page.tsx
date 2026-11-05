@@ -19,8 +19,8 @@ export default async function UsersAccessPage() {
   // request — the screen says so in one sentence instead of sending the person home silently.
   if (appUser.isUat) {
     return (
-      <div className="p-6">
-        <h1 className="text-2xl font-bold text-ink mb-1">{t("title")}</h1>
+      <div className="flex flex-1 flex-col bg-zinc-50 p-6 dark:bg-zinc-950">
+        <h1 className="text-base font-bold text-admin-title mb-1">{t("title")}</h1>
         <p className="text-sm text-fade" style={PROSE_STYLE} role="note" data-uat-no-accounts="users">
           {t("uatNoAccounts")}
         </p>
@@ -35,8 +35,9 @@ export default async function UsersAccessPage() {
   if (!canManageAccounts(appUser)) redirect("/");
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold text-ink mb-1">{t("title")}</h1>
+    // 41.83: the record screens' off-white (it stood on the canvas's beige), its heading in #C00000.
+    <div className="flex flex-1 flex-col bg-zinc-50 p-6 dark:bg-zinc-950">
+      <h1 className="text-base font-bold text-admin-title mb-1">{t("title")}</h1>
       <p className="text-sm text-fade mb-6" style={PROSE_STYLE}>{t("description")}</p>
       <UsersAccessClient />
     </div>

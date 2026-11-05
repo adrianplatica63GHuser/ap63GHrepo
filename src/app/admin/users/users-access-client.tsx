@@ -178,7 +178,7 @@ export function UsersAccessClient() {
 
   return (
     <UnitRow units={[TAB_UNITS[tab]]}>
-    <section {...screenPanel("users", TAB_UNITS[tab])} className="flex flex-col rounded-md border border-wire bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+    <section {...screenPanel("users", TAB_UNITS[tab])} className="flex flex-col rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
       {actionSuccess && (
         <div className="mb-4 rounded-md bg-green-50 border border-green-200 text-green-800 px-4 py-2 text-sm flex items-center gap-2">
           <CheckCircle size={14} className="shrink-0" />

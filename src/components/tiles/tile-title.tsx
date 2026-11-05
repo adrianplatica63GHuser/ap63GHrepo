@@ -24,7 +24,7 @@
  * is the `h2`'s, for a tile that names itself with `aria-labelledby`.
  */
 import type { ReactNode } from "react";
-import { TILE_TITLE_TYPE } from "@/lib/ui/title-type";
+import { ADMIN_TILE_TITLE_TYPE, TILE_TITLE_TYPE } from "@/lib/ui/title-type";
 import { TextTooltip } from "@/lib/ui/text-tooltip";
 
 /**
@@ -33,6 +33,8 @@ import { TextTooltip } from "@/lib/ui/text-tooltip";
  * is 24 px, so a tile's title is 4 px taller than it was.
  */
 export const TILE_TITLE_CLASS = `flex items-center gap-2 ${TILE_TITLE_TYPE}`;
+/** Slice 41.83: a tile's title under Administrare — the same, in #C00000. */
+export const ADMIN_TILE_TITLE_CLASS = `flex items-center gap-2 ${ADMIN_TILE_TITLE_TYPE}`;
 
 /** The subtitle's classes: one line, cut with an ellipsis, adding no width. 40.95: the header's navy (`text-label`). */
 export const TILE_SUBTITLE_CLASS =
@@ -58,6 +60,7 @@ export function TileTitle({
   children,
   action,
   hint,
+  admin = false,
 }: {
   title: ReactNode;
   /** One line saying what the tile holds; absent, the title stands alone. */
@@ -80,11 +83,13 @@ export function TileTitle({
    * the heading's name stays the tile's own.
    */
   hint?: ReactNode;
+  /** Slice 41.83: a tile under Administrare — its title in #C00000. */
+  admin?: boolean;
 }) {
   // 41.38: beside a 30-px action the title's first line (24 px) is centred on it — 3 px down — so a tile without one
   // keeps today's title height.
   const heading = (
-    <h2 id={id} className={`${TILE_TITLE_CLASS} min-w-0${action ? " mt-[3px]" : ""}`}>
+    <h2 id={id} className={`${admin ? ADMIN_TILE_TITLE_CLASS : TILE_TITLE_CLASS} min-w-0${action ? " mt-[3px]" : ""}`}>
       {title}
       {children}
     </h2>

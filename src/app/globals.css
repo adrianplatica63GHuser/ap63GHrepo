@@ -157,6 +157,8 @@
   --color-info:         #1d4ed8;  /* blue-700  */
   --color-scrim:        #000000;  /* bg-scrim/40 — the shade behind a dialog (40.83) */
   --color-label:        #1E3A8A;  /* text-label — a field's label and a tile's explanations: the tile header's navy (40.95) */
+  /* Slice 41.83 (Adrian: „all titles under Administration should … have the color #C00000"). */
+  --color-admin-title:  #C00000;  /* text-admin-title — every title under Administrare (title-type.ts ADMIN_*) */
   /* Slice 41.47 — the four kinds' icons, Adrian's colours (entity-icon.ts). */
   --color-kind-natural:  #5A2781;  /* text-kind-natural  — a natural person's mark  */
   --color-kind-judicial: #123456;  /* text-kind-judicial — a juridical person's mark */
@@ -172,6 +174,7 @@
   --color-canvas:       #0a0a0a;
   --color-card:         #18181b;  /* zinc-900 */
   --color-card-rim:     #27272a;  /* zinc-800 */
+  --color-admin-title:  #F87171;  /* 41.83: #C00000 cannot be read on zinc-900; red-400, as danger-dark */
   --color-success:      #4ade80;  /* = success-dark */
   --color-ink:          #e4e4e7;  /* zinc-200 */
   --color-fade:         #a1a1aa;  /* zinc-400 */

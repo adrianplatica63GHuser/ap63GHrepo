@@ -937,9 +937,12 @@ export function ValueListModal({
   fill = false,
   formSlot = null,
   onFormOpen,
+  adminTitle = false,
 }: {
   listKey: ListKey;
   /** Slice #39.75: a tile's card — as wide as its tile (`ReferenceTiles` gives the tile its units), not capped. */
+  /** Slice 41.83: under „Tipuri de obiecte" or „Liste de valori", its title in #C00000; „Roluri și legături" not. */
+  adminTitle?: boolean;
   fill?: boolean;
   /**
    * Slice #39.76: a tile of its own for the add/edit form — a role's fields, where it applies and its document types
@@ -1624,7 +1627,7 @@ export function ValueListModal({
           >
             <h2
               id={listTitleId}
-              className="text-base font-semibold text-ink"
+              className={adminTitle ? "text-base font-semibold text-admin-title" : "text-base font-semibold text-ink"}
             >
               {/* Slice #38.68: marked, the title looks like the marked name in the column — a filled rounded box. */}
               <span

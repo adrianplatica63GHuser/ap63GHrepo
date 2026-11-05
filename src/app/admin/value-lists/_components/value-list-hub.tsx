@@ -34,7 +34,7 @@ import { ReferenceTiles, type ReferenceTile } from "./reference-tiles";
 import { RelationshipTriangle } from "./relationship-triangle";
 import { REFERENCE_NAV_REM, rem, unitsCss } from "@/lib/ui/field-widths";
 import { UnitRow } from "@/components/screen/unit-row";
-import { PANEL_TITLE_TYPE } from "@/lib/ui/title-type";
+import { ADMIN_PANEL_TITLE_TYPE } from "@/lib/ui/title-type";
 
 /**
  * The categories' column: as wide as its longest name, the gap after it equal to the gap before it — 16rem
@@ -119,6 +119,8 @@ export function ValueListHub({
       initialAddName={key === arrival && !addNameUsed ? initialAddName : undefined}
       initialFormFilter={key === arrival && !addNameUsed ? initialFormFilter : undefined}
       titleMarked={marking.list === key}
+      // 41.83: a list of „Tipuri de obiecte" or „Liste de valori" titled in #C00000; „Roluri și legături"'s keep theirs.
+      adminTitle={categoryOfList(key) !== "rolesLinks"}
     />
   );
 
@@ -182,7 +184,7 @@ export function ValueListHub({
       {/* Slice #38.65: the title and the column, one above the other; the list's side beside both, from the top. */}
       <div className="flex flex-col gap-6" data-value-list-column="">
         <header>
-          <h1 className="whitespace-nowrap text-2xl font-semibold tracking-tight">{t("pageTitle")}</h1>
+          <h1 className="whitespace-nowrap text-base font-semibold tracking-tight text-admin-title">{t("pageTitle")}</h1>
         </header>
         <nav
           ref={navRef}
@@ -195,7 +197,8 @@ export function ValueListHub({
         >
           {listsByCategory().map((category) => (
             <div key={category.id} className="flex flex-col gap-1" data-category={category.id}>
-              <h2 className={`px-1.5 ${PANEL_TITLE_TYPE}`}>
+              {/* 41.83: the three section names in #C00000 at a tile title's size (Adrian). */}
+              <h2 className={`px-1.5 ${ADMIN_PANEL_TITLE_TYPE}`}>
                 {t(`categories.${category.id}`)}
               </h2>
               <ul className="flex flex-col">

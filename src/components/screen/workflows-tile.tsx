@@ -22,13 +22,14 @@ export const WORKFLOW_STEPS = ["find", "create", "members", "record", "delete"] 
 /** As wide as „Ce este …?" (7 units). */
 export const WORKFLOWS_UNITS = 7;
 
+// Slice 41.83: under Administrare every tile is the record tile's grey — both kinds alike (they were blue and amber).
 const SURFACE = {
-  group: "rounded-lg border border-blue-200 bg-blue-50 px-5 py-4 dark:border-blue-900 dark:bg-blue-950/40",
-  stamp: "rounded-lg border border-amber-200 bg-amber-50 px-5 py-4 dark:border-amber-900 dark:bg-amber-950/40",
+  group: "rounded-lg border border-card-rim bg-card px-5 py-4",
+  stamp: "rounded-lg border border-card-rim bg-card px-5 py-4",
 } as const;
 const TEXT = {
-  group: "text-blue-800 dark:text-blue-300",
-  stamp: "text-amber-800 dark:text-amber-300",
+  group: "text-ink",
+  stamp: "text-ink",
 } as const;
 
 export function WorkflowsTile({ kind, hidden = false }: { kind: "group" | "stamp"; hidden?: boolean }) {
@@ -42,7 +43,7 @@ export function WorkflowsTile({ kind, hidden = false }: { kind: "group" | "stamp
       aria-labelledby={titleId}
       className={SURFACE[kind]}
     >
-      <TileTitle id={titleId} title={t("title")} className="mb-3" />
+      <TileTitle id={titleId} title={t("title")} className="mb-3" admin />
       <ol className={`flex flex-col gap-2.5 text-sm ${TEXT[kind]}`}>
         {WORKFLOW_STEPS.map((key) => (
           <li key={key} data-workflow-step={key}>

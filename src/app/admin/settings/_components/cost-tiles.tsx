@@ -24,11 +24,11 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronDown, ChevronUp, ExternalLink, Plus, Trash2 } from "lucide-react";
 import { IconButton, TrailingIcon } from "@/lib/ui/icon-button";
 import { screenBox, screenPanel } from "@/lib/ui/field-widths";
-import { groupSurface } from "@/lib/ui/tile-surface";
+import { TILE_SURFACE } from "@/lib/ui/tile-surface";
 import { CAD_PER, PROVIDER_FACTS, type CostProvider } from "@/lib/costs/catalogue";
 import { ENTERED_CURRENCIES, formatCad, parseTypedAmount, type DayCost, type EnteredCurrency } from "@/lib/costs/compute";
 import type { CostSummary, EnteredAmount, ProviderSummary } from "@/lib/costs/summary";
-import { PANEL_TITLE_TYPE } from "@/lib/ui/title-type";
+import { ADMIN_PANEL_TITLE_TYPE } from "@/lib/ui/title-type";
 
 /** The cost tiles are as wide as Setări's own tiles. */
 const COST_TILE_UNITS = 4; // 40.98: re-pinned (3 of 148 px)
@@ -150,7 +150,7 @@ function EnteredAmounts({ p }: { p: ProviderSummary }) {
   const label = "text-xs text-fade";
   return (
     <div className="flex flex-col gap-2" data-cost-entered="">
-      <h3 className={PANEL_TITLE_TYPE}>{t("heading")}</h3>
+      <h3 className={ADMIN_PANEL_TITLE_TYPE}>{t("heading")}</h3>
       {p.entered.length > 0 && (
         <ul className="flex flex-col gap-1 text-xs">
           {p.entered.map((e) => (
@@ -285,7 +285,7 @@ function Details({ p }: { p: ProviderSummary }) {
           ? "allowance"
           : "entered";
   const total = p.chart.reduce((n, d) => n + d.cad, 0);
-  const h3 = PANEL_TITLE_TYPE;
+  const h3 = ADMIN_PANEL_TITLE_TYPE;
   return (
     <div className="flex flex-col gap-3 text-sm" data-cost-details="">
       <Figures p={p} />
@@ -376,7 +376,8 @@ export function CostTile({
     <section
       {...screenPanel(`settings-cost-${provider}`, COST_TILE_UNITS)}
       aria-label={title}
-      className={`${groupSurface("meta")} flex flex-col gap-3`}
+      // 41.83: under Administrare every tile is the record tile's grey (it wore the meta group's yellow).
+      className={`${TILE_SURFACE} flex flex-col gap-3`}
       data-cost-tile={provider}
       data-cost-state={open ? "expanded" : "collapsed"}
     >

@@ -32,7 +32,7 @@ export default async function StampApplicatorPage({ params, searchParams }: Prop
       <main className="w-full px-6 py-8 flex flex-col gap-6">
         {/* Slices #38.12–#38.13: „Implicit" at the screen's top right puts the dragged tiles back in their default places. */}
         <header className="flex flex-wrap items-start justify-between gap-4">
-          <h1 className="text-2xl font-semibold tracking-tight">
+          <h1 className="text-base font-semibold tracking-tight text-admin-title">
             {t("applicator.pageTitle", { stamp: title })}
           </h1>
         </header>

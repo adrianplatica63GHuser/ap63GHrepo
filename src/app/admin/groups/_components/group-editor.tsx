@@ -246,7 +246,7 @@ export function GroupEditor({
         data-tile="identity"
         className="flex flex-col rounded-md border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
       >
-        <TileTitle id={identityTitleId} title={t("panels.identity")} />
+        <TileTitle id={identityTitleId} title={t("panels.identity")} admin />
         <div className="flex flex-col gap-1 p-3">
           <p className="text-sm text-ink dark:text-zinc-200" data-group-identity-line="">
             <span className="font-mono font-semibold" title={t("fields.code")}>{detail.code}</span>
@@ -307,7 +307,7 @@ export function GroupEditor({
         data-tile="members"
         className="flex flex-col rounded-md border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
       >
-        <TileTitle id={membersTitleId} title={t("panels.members")} />
+        <TileTitle id={membersTitleId} title={t("panels.members")} admin />
         <div className="p-3">
           <TwoLists
             left={{

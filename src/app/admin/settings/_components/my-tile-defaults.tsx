@@ -30,7 +30,7 @@ import {
   type TileDefaultKind,
 } from "@/lib/ui/tile-defaults";
 import { forgetSavedTileDefaults, type SavedTileDefaults } from "@/components/tiles/saved-tile-defaults";
-import { PANEL_TITLE_TYPE } from "@/lib/ui/title-type";
+import { ADMIN_PANEL_TITLE_TYPE } from "@/lib/ui/title-type";
 
 /** Each kind's parts, its built-in set, and the namespace its part names live in. */
 const KINDS: Record<TileDefaultKind, { all: readonly string[]; builtIn: readonly string[]; names: string }> = {
@@ -137,7 +137,7 @@ export function MyTileDefaults() {
   const { data, isLoading, isError } = useQuery({ queryKey: QUERY_KEY, queryFn: fetchSaved });
   return (
     <div className="flex flex-col gap-2" data-account-tile-defaults="">
-      <h3 className={PANEL_TITLE_TYPE}>{t("title")}</h3>
+      <h3 className={ADMIN_PANEL_TITLE_TYPE}>{t("title")}</h3>
       <p className="text-xs text-fade">{t("intro")}</p>
       {isLoading ? (
         <p className="text-sm text-fade">{t("loading")}</p>

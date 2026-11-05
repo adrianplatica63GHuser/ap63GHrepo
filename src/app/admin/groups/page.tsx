@@ -18,7 +18,7 @@ export default async function GroupsPage({ searchParams }: PageProps) {
     <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-zinc-950">
       <main className="w-full px-6 py-8 flex flex-col gap-6">
         <header className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight">
+          <h1 className="text-base font-semibold tracking-tight text-admin-title">
             {t("pageTitle")}
           </h1>
         </header>
@@ -27,16 +27,16 @@ export default async function GroupsPage({ searchParams }: PageProps) {
         <GroupsListView
           fromMap={fromMap}
           about={
-            <section {...screenPanel("about-groups", 7 /* 40.98: re-pinned, 6 of 148 px */)} data-tile="about" className="rounded-lg border border-blue-200 bg-blue-50 px-5 py-4 dark:border-blue-900 dark:bg-blue-950/40">
+            <section {...screenPanel("about-groups", 7 /* 40.98: re-pinned, 6 of 148 px */)} data-tile="about" className="rounded-lg border border-card-rim bg-card px-5 py-4">
           {/* 41.41: a tile of the screen now, so its heading is TileTitle's (tile-heading-one-piece). */}
-          <TileTitle title={t("infoPanel.title")} className="mb-3" />
-          <div className="flex flex-col gap-2 text-sm text-blue-800 dark:text-blue-300">
+          <TileTitle title={t("infoPanel.title")} className="mb-3" admin />
+          <div className="flex flex-col gap-2 text-sm text-ink">
             <p>{t("infoPanel.body1")}</p>
             <p>{t("infoPanel.body2")}</p>
-            <p className="text-xs text-blue-600 dark:text-blue-400">
+            <p className="text-xs text-fade">
               {t("infoPanel.codeNote")}
             </p>
-            <p className="mt-1 border-t border-blue-200 pt-2 text-xs italic text-blue-600 dark:border-blue-800 dark:text-blue-400">
+            <p className="mt-1 border-t border-card-rim pt-2 text-xs italic text-fade">
               {t("infoPanel.seeAlso")}
             </p>
           </div>

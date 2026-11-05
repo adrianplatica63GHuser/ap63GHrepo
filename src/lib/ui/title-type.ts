@@ -52,3 +52,15 @@ export const PAGE_HEADING_TYPE = "font-title text-xl font-semibold text-navy dar
 
 /** Kind 7b: a group's and a stamp's screen tiles. */
 export const SCREEN_TILE_TITLE_TYPE = "font-title text-base font-medium text-navy dark:text-[#BFDBFE]";
+
+/**
+ * Slice 41.83 — Adrian, 2026-11-04: „all titles under Administration should: have the size that Principal Objects tile
+ * titles have; have the color #C00000". Each Administrare title keeps its family, weight and case and takes a record
+ * tile title's size (16 px, line 24 px — `text-base`) and `--color-admin-title` (#C00000; #F87171 in dark). The page
+ * heading's pieces are `ADMIN_TITLE`; the kinds above have their Administrare twin here, so the seven kinds and these
+ * stay side by side. „Roluri și legături"'s tiles keep theirs (Adrian: „“Roles and links” is not affected").
+ */
+export const ADMIN_TITLE = "text-base text-admin-title";
+export const ADMIN_TILE_TITLE_TYPE = "font-title text-base font-semibold uppercase tracking-[0.04em] text-admin-title";
+export const ADMIN_PANEL_TITLE_TYPE = "font-title text-base font-semibold uppercase tracking-[0.08em] text-admin-title";
+export const ADMIN_SCREEN_TILE_TITLE_TYPE = "font-title text-base font-medium text-admin-title";

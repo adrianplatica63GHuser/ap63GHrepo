@@ -22,7 +22,7 @@ export default async function SettingsPage() {
     <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-zinc-950">
       <main className="w-full px-6 py-8 flex flex-col gap-6">
         <header>
-          <h1 className="text-2xl font-semibold tracking-tight">
+          <h1 className="text-base font-semibold tracking-tight text-admin-title">
             {t("pageTitle")}
           </h1>
         </header>

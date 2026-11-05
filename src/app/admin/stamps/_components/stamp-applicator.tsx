@@ -327,7 +327,7 @@ export function StampApplicator({
         data-tile="description"
         className="flex flex-col rounded-md border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
       >
-        <TileTitle id={descriptionTitleId} title={t("applicator.descriptionTile")} />
+        <TileTitle id={descriptionTitleId} title={t("applicator.descriptionTile")} admin />
         <div className="flex flex-col gap-1 p-3">
           <p className="text-sm text-ink dark:text-zinc-200" data-stamp-identity-line="">
             <span className="font-mono font-semibold" title={t("fields.code")}>{detail?.code ?? initialDetail.code}</span>
@@ -386,7 +386,7 @@ export function StampApplicator({
         data-tile="records"
         className="flex flex-col rounded-md border border-card-rim bg-card shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
       >
-        <TileTitle id={recordsTitleId} title={t("applicator.records")} />
+        <TileTitle id={recordsTitleId} title={t("applicator.records")} admin />
         <div className="p-3">
           <TwoLists
             head={

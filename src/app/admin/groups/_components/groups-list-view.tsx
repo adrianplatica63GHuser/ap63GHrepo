@@ -114,7 +114,7 @@ function AddForm({ onClose, onCreated }: { onClose: () => void; onCreated?: (gro
 
   return (
     <div {...screenPanel("add-group", FORM_UNITS)} className="rounded-md border border-card-rim bg-card p-4 dark:border-zinc-700 dark:bg-zinc-800">
-      <h3 className="mb-3 text-sm font-semibold text-ink dark:text-zinc-100">
+      <h3 className="mb-3 text-base font-semibold text-admin-title">
         {t("addTitle")}
       </h3>
 
