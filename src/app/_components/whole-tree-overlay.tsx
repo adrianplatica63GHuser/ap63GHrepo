@@ -10,7 +10,8 @@
  * The whole tree opens OVER the person's screen (Ask first 1): the same panel as /inheritance-tree
  * (`InheritanceTreePanel`), portalled, so the tile can be measured on the way in and on the way back. The address gains
  * `?tree=whole`, pushed, so the browser's Back takes the way back and a reload reopens it (at its end, with no tile
- * to start from). The side panel's „Arbori de moștenire" keeps its own page.
+ * to start from). Pushed with `window.history.pushState`, which Next's router follows without a round trip to the
+ * server (use-list-address.tsx does the same) — `router.push` would fetch the page again and land late. The side panel's „Arbori de moștenire" keeps its own page.
  *
  * The opening and the way back are `expand-tree-animation.ts`'s plans, played by `playTimeline`
  * (`@/lib/ui/expand-animation`): the panel and the backdrop written straight onto their elements, the drawing's view
@@ -21,7 +22,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { createPortal } from "react-dom";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { fetchTree, InheritanceTreePanel } from "@/app/inheritance-tree/_components/inheritance-tree-screen";
 import type { TreeControl, TreeFocus } from "@/components/inheritance/tree-canvas";
@@ -72,7 +73,6 @@ export function useWholeTree({
   /** „Deschide arborele întreg", which gets the focus back. */
   button: RefObject<HTMLElement | null>;
 }) {
-  const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
   const q = useQuery({ queryKey: ["inheritance-tree"], queryFn: fetchTree });
@@ -124,8 +124,8 @@ export function useWholeTree({
     pushed.current = true;
     const next = new URLSearchParams(params?.toString() ?? "");
     next.set(TREE_PARAM, TREE_WHOLE);
-    router.push(`${pathname}?${next.toString()}`, { scroll: false });
-  }, [tileBox, tileControl, personId, layout, params, pathname, router]);
+    window.history.pushState(null, "", `${pathname}?${next.toString()}`);
+  }, [tileBox, tileControl, personId, layout, params, pathname]);
 
   // Gone: the overlay away, the address back without the mark (unless Back already took it), focus on the button.
   const closeNow = useCallback(() => {
@@ -134,18 +134,18 @@ export function useWholeTree({
     setOpening(null);
     setClosing(null);
     if (readWholeTree(new URLSearchParams(window.location.search).get(TREE_PARAM))) {
-      if (pushed.current) router.back();
+      if (pushed.current) window.history.back();
       else {
         const next = new URLSearchParams(window.location.search);
         next.delete(TREE_PARAM);
         const rest = next.toString();
-        router.replace(rest ? `${pathname}?${rest}` : pathname, { scroll: false });
+        window.history.replaceState(null, "", rest ? `${pathname}?${rest}` : pathname);
       }
     }
     pushed.current = false;
     // A timer, not a frame: the desktop app's browser pane gets no animation frames (58fb1aa8).
     setTimeout(() => button.current?.focus(), 0);
-  }, [router, pathname, button]);
+  }, [pathname, button]);
 
   const close = useCallback(() => {
     if (!shown) return;
