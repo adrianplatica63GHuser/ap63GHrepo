@@ -844,6 +844,20 @@ export function PagesPanel({
               )}
             </div>
           )}
+          {/* Slice 41.89 (Adrian: „The “Add page” button … should move to the right of the “save the turn” button, using a
+              gap similar to the one between the “next” button And the “turn right” button"): after the turn group, at this
+              cluster's gap-3 — 12 px, the gap between „Următoare" and „Rotește la dreapta". #37.45 (A052): FilePlus; the
+              name keeps its „+" — e2e finds the button by „+ Adaugă pagină", as #37.44 kept „+ Adaugă". */}
+          {mode === "edit" && (
+            <IconButton
+              icon={FilePlus}
+              label={`+ ${t("addPage")}`}
+              variant="primary"
+              size="sm"
+              onClick={() => setDialogOpen(true)}
+              data-page-add=""
+            />
+          )}
         </div>
         <div className="flex items-center gap-2">
           {onToggleBigPage && (
@@ -859,17 +873,6 @@ export function PagesPanel({
             />
           )}
           {bigPage && <HelpHint hintKey="big-page-zoom" />}
-          {mode === "edit" && (
-            // #37.45 (A052): FilePlus. The name keeps its „+" — e2e finds
-            // the button by „+ Adaugă pagină", as #37.44 kept „+ Adaugă".
-            <IconButton
-              icon={FilePlus}
-              label={`+ ${t("addPage")}`}
-              variant="primary"
-              size="sm"
-              onClick={() => setDialogOpen(true)}
-            />
-          )}
           {peekHead && <IncursionClose label={peekHead.closeLabel} onClose={peekHead.onClose} />}
         </div>
       </div>
@@ -943,7 +946,8 @@ export function PagesPanel({
                           {t("colNotes")}
                         </th>
                       )}
-                      <th className="pb-1.5 font-medium">{t("colActions")}</th>
+                      {/* 41.89: right-aligned, as its buttons are. */}
+                      <th className="pb-1.5 text-right font-medium" data-page-actions-head="">{t("colActions")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -997,10 +1001,12 @@ export function PagesPanel({
                           </td>
                         )}
 
-                        {/* Action buttons */}
+                        {/* Action buttons — 41.89 (Adrian: „buttons shifted all the way to the right So the delete button
+                            aligns with the actual shown page"): against the list's right edge, which is the viewer's. */}
                         <td className="py-1.5">
                           <div
-                            className="flex items-center gap-1"
+                            className="flex items-center justify-end gap-1"
+                            data-page-actions=""
                             onClick={(e) => e.stopPropagation()}
                             onKeyDown={(e) => e.stopPropagation()}
                           >

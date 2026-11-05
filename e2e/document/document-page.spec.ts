@@ -269,6 +269,18 @@ test.describe("TC-DOC-01 — Act creat, pagină atașată, pagina se deschide", 
       }
       await expect(pages.getByText("1 / 1")).toHaveCount(0);
 
+      // Step 9a (Slice 41.89) — „+ Adaugă pagină" right after „Salvează rotirea", on its line, 12 px from it (the gap
+      // between „Următoare" and „Rotește la dreapta"); the row's last button, „Șterge", against the table's right edge.
+      const saveTurn = pages.locator("[data-page-turn]").getByRole("button").last();
+      const addPage = pages.getByRole("button", { name: "+ Adaugă pagină" });
+      const [sb, ab] = [(await saveTurn.boundingBox())!, (await addPage.boundingBox())!];
+      expect(Math.abs(ab.x - (sb.x + sb.width) - 12), `the gap ${ab.x - (sb.x + sb.width)} px`).toBeLessThanOrEqual(1);
+      expect(Math.abs(ab.y + ab.height / 2 - (sb.y + sb.height / 2))).toBeLessThanOrEqual(2);
+      const table = (await pages.locator("table").boundingBox())!;
+      const lastButton = (await pages.locator("[data-page-actions]").first().getByRole("button").last().boundingBox())!;
+      expect(Math.abs(lastButton.x + lastButton.width - (table.x + table.width)), "„Șterge” against the table's right edge").toBeLessThanOrEqual(1);
+      await expect(pages.locator("[data-page-actions]").first().getByRole("button").last()).toHaveAccessibleName("Șterge");
+
       // Slice #37.15 — the page panel's width in a maximised 1920-pixel window,
       // written beside the layout screenshots for the handover. Recorded, not
       // asserted: #37.15 reads it once before its layout change and once after.
