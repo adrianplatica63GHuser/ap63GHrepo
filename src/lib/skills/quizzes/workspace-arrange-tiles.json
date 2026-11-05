@@ -15,18 +15,18 @@
           "section": "properties-type-tiles",
           "ro": {
             "question": "Pe ecranul unei proprietăți, vreți fișa „Hartă” în stânga, lângă „Adresă”, nu în dreapta, unde pornește. Ce faceți?",
-            "explanation": "Fișele mov deschis — pe o proprietate, „Hartă”, „Puncte de contur” și „Street View” — pornesc lângă marginea dreaptă, una sub alta, dar se trag ca orice altă fișă: o apucați de spațiul ei gol și o lăsați acolo. Locul în care o lăsați se păstrează."
+            "explanation": "Fișele din dreapta — pe o proprietate, verzi, „Hartă”, „Puncte de contur” și „Street View” — pornesc lângă marginea dreaptă, una sub alta, dar se trag ca orice altă fișă: o apucați de spațiul ei gol și o lăsați acolo. Locul în care o lăsați se păstrează."
           },
           "en": {
             "question": "On a property's screen, you want the „Hartă” (map) tile on the left, beside „Adresă”, not on the right, where it starts. What do you do?",
-            "explanation": "The light purple tiles — on a property, „Hartă”, „Puncte de contur” and „Street View” — start by the right edge, one under another, but are dragged like any other tile: grab it by its empty space and drop it there. The place you leave it in is kept."
+            "explanation": "The right-hand tiles — on a property, green, „Hartă”, „Puncte de contur” and „Street View” — start by the right edge, one under another, but are dragged like any other tile: grab it by its empty space and drop it there. The place you leave it in is kept."
           },
           "options": [
             {
               "id": "o1",
               "correct": false,
-              "ro": "Nu se poate: fișele mov deschis stau mereu în dreapta.",
-              "en": "You cannot: the light purple tiles always stay on the right."
+              "ro": "Nu se poate: fișele din dreapta stau mereu acolo.",
+              "en": "You cannot: the right-hand tiles always stay there."
             },
             {
               "id": "o2",

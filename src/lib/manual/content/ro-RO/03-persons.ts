@@ -202,7 +202,9 @@ O legătură se scoate din „Legături”: alegeți rândul și apăsați „De
 
 ### 3.5.2 Fișa „Arbore de moștenire” {#persons-relatives-tree}
 
-Fișa „Arbore de moștenire”, albastru deschis, desenează familia persoanei: părinții și bunicii până la străbunici, copiii până la strănepoți, frații și soțul sau soția (Figura [[fig-persons-tree]]). Dacă nu o vedeți, bifați „Arbore de moștenire” în „Panouri”.
+Fișa „Arbore de moștenire”, mov deschis, desenează familia persoanei: părinții și bunicii până la străbunici, copiii până la strănepoți, frații și soțul sau soția (Figura [[fig-persons-tree]]). Dacă nu o vedeți, bifați „Arbore de moștenire” în „Panouri”.
+
+„Deschide arborele întreg” deschide arborele întreg chiar peste ecranul persoanei. Fișa crește până umple fereastra, iar persoana pleacă de unde stă în fișă spre mijloc, la aceeași mărime; apoi arborele se apropie până se citesc datele și se deschide fișa persoanei. „Restrânge”, Esc, un clic în afara arborelui sau butonul înapoi al browserului îl strâng în fișă pe același drum. Dacă între timp l-ați mutat, l-ați mărit sau ați căutat altă persoană, întâi se întoarce, pe un arc, acolo unde se terminase deschiderea. Cât durează fiecare parte se alege în „Setări”, la „Praguri de timp” (secțiunea [[admin-settings-thresholds]]) — aceleași valori ca la „Hartă extinsă”.
 
 ![3.3 Fișa „Arbore de moștenire” a unei persoane](persons-tree.png){#fig-persons-tree}
 

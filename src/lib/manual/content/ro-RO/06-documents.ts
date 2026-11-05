@@ -45,7 +45,7 @@ Paginile se văd în fișa „Pagini”, mov, în dreapta formularului — pe un
 
 ### 6.2.1 Adăugarea paginilor {#documents-add-pages}
 
-Pe un act salvat, „+ Adaugă pagină” deschide fereastra „Adaugă pagină”: „Număr pagină” (completat deja), „Denumire pagină”, „Note pagină” și „Încarcă”, care alege fișierul de pe calculator. „Salvează” rămâne inactiv până alegeți un fișier. Dacă lăsați „Denumire pagină” goală, pagina primește numele fișierului.
+Pe un act salvat, „+ Adaugă pagină” — în capul fișei, imediat după „Salvează rotirea” — deschide fereastra „Adaugă pagină”: „Număr pagină” (completat deja), „Denumire pagină”, „Note pagină” și „Încarcă”, care alege fișierul de pe calculator. „Salvează” rămâne inactiv până alegeți un fișier. Dacă lăsați „Denumire pagină” goală, pagina primește numele fișierului.
 
 O pagină poate fi o fotografie sau o scanare, un PDF ori un document Word, Excel, OpenOffice sau text. Alt fel de fișier este refuzat chiar acolo, cu explicația „Acest tip de fișier nu poate fi adăugat ca pagină”.
 
@@ -53,7 +53,7 @@ O pagină poate fi o fotografie sau o scanare, un PDF ori un document Word, Exce
 
 ### 6.2.2 Citirea paginilor {#documents-add-read}
 
-Un clic pe rândul unei pagini o arată în fișă. Cu două pagini sau mai multe apare și numărătoarea lor. „Pagini extinse” deschide paginile pe toată fereastra, destul de mari ca să se citească; „Restrânge” le închide.
+Un clic pe rândul unei pagini o arată în fișă. Cu două pagini sau mai multe apare și numărătoarea lor. „Pagini extinse” deschide paginile pe toată fereastra, destul de mari ca să se citească: fișa crește până umple fereastra, iar pagina arătată pleacă de unde stă spre mijloc, la mărimea din fișă, apoi se mărește cât încape. „Restrânge”, Esc sau un clic în afară le strâng înapoi în fișă, pe același drum; dacă ați mărit sau mutat pagina, întâi revine la mărimea întreagă. Cât durează fiecare parte se alege în „Setări”, la „Praguri de timp” (secțiunea [[admin-settings-thresholds]]).
 
 - Un PDF se arată doar ca pagină, fără coloana de miniaturi a browserului.
 - Un fișier care nu se poate arăta în browser (de exemplu un document Word) spune „Acest tip de fișier nu poate fi previzualizat în browser.” și se poate descărca.
@@ -63,7 +63,7 @@ Un clic pe rândul unei pagini o arată în fișă. Cu două pagini sau mai mult
 
 O pagină scanată întoarsă se îndreaptă cu „Rotește la dreapta”: fiecare apăsare o rotește cu un sfert de tură. „Salvează rotirea” păstrează rotirea, iar de atunci pagina se deschide așa, și în „Pagini extinse”. Fișierul însuși nu se schimbă. O rotire nesalvată se pierde când plecați, fără întrebare. Se rotesc doar paginile imagine.
 
-Pe rândul fiecărei pagini sunt „Notițe pagină” (un creion), „Tipărire” și „Șterge”. Creionul deschide notițele paginii: scrieți, schimbați sau goliți „Note pagină” și apăsați „Salvează”; coloana „Note” a rândului arată ce ați salvat.
+Pe rândul fiecărei pagini, lipite de marginea din dreapta a listei, sunt „Notițe pagină” (un creion), „Tipărire” și „Șterge”; stau estompate până treceți cu mouse-ul peste rând. Creionul deschide notițele paginii: scrieți, schimbați sau goliți „Note pagină” și apăsați „Salvează”; coloana „Note” a rândului arată ce ați salvat.
 
 ### 6.2.4 Ștergerea unui act {#documents-add-delete}
 

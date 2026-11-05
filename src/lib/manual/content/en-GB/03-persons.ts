@@ -202,7 +202,9 @@ A link is removed from „Links”: choose the row and press „Dissociate”.
 
 ### 3.5.2 The „Inheritance tree” tile {#persons-relatives-tree}
 
-The „Inheritance tree” tile, light blue, draws the person's family: parents and grandparents up to great-grandparents, children down to great-grandchildren, siblings and the husband or wife (Figure [[fig-persons-tree]]). If you do not see it, tick „Inheritance tree” in „Panels”.
+The „Inheritance tree” tile, light purple, draws the person's family: parents and grandparents up to great-grandparents, children down to great-grandchildren, siblings and the husband or wife (Figure [[fig-persons-tree]]). If you do not see it, tick „Inheritance tree” in „Panels”.
+
+„Open the whole tree” opens the whole tree right over the person's screen. The tile grows until it fills the window, and the person travels from where they stand on the tile to the middle, at the same size; then the tree comes closer until the details can be read, and the person's card opens. „Collapse”, Esc, a click outside the tree or the browser's back button take it back into the tile the same way. If you moved it, zoomed it or searched for another person meanwhile, it first returns, on an arc, to where the opening ended. How long each part lasts is set in „Settings”, under „Time thresholds” (section [[admin-settings-thresholds]]) — the same values as „Map — expanded”.
 
 ![3.3 A person's „Inheritance tree” tile](persons-tree.png){#fig-persons-tree}
 

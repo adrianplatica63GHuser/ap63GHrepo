@@ -45,7 +45,7 @@ The pages are shown in the „Pages” tile, purple, to the right of the form �
 
 ### 6.2.1 Adding pages {#documents-add-pages}
 
-On a saved document, „+ Add Page” opens the dialog „Add Page”: „Page Number” (already filled in), „Page Name”, „Page Notes” and „Upload”, which picks the file from the computer. „Save” stays disabled until you choose a file. If you leave „Page Name” empty, the page takes the file's name.
+On a saved document, „+ Add Page” — at the tile's head, right after „Save the turn” — opens the dialog „Add Page”: „Page Number” (already filled in), „Page Name”, „Page Notes” and „Upload”, which picks the file from the computer. „Save” stays disabled until you choose a file. If you leave „Page Name” empty, the page takes the file's name.
 
 A page can be a photograph or a scan, a PDF, or a Word, Excel, OpenOffice or text document. Any other kind of file is refused on the spot, with the explanation „This kind of file cannot be added as a page”.
 
@@ -53,7 +53,7 @@ A page can be a photograph or a scan, a PDF, or a Word, Excel, OpenOffice or tex
 
 ### 6.2.2 Reading the pages {#documents-add-read}
 
-A click on a page's row shows it in the tile. With two pages or more, their count appears as well. „Expand Pages” opens the pages over the whole window, large enough to read; „Collapse” closes them.
+A click on a page's row shows it in the tile. With two pages or more, their count appears as well. „Expand Pages” opens the pages over the whole window, large enough to read: the tile grows until it fills the window, and the page shown travels from where it stands to the middle, at its size on the tile, then grows as large as fits. „Collapse”, Esc or a click outside take them back into the tile the same way; if you zoomed or moved the page, it first returns to its whole size. How long each part lasts is set in „Settings”, under „Time thresholds” (section [[admin-settings-thresholds]]).
 
 - A PDF is shown as the page alone, without the browser's column of thumbnails.
 - A file the browser cannot show (a Word document, for example) says „This file type cannot be previewed in the browser.” and can be downloaded.
@@ -63,7 +63,7 @@ A click on a page's row shows it in the tile. With two pages or more, their coun
 
 A page scanned the wrong way round is turned with „Turn right”: each press turns it a quarter turn. „Save the turn” keeps the turn, and from then on the page opens that way, in „Expand Pages” too. The file itself is not changed. An unsaved turn is lost when you leave, without a question. Only image pages can be rotated.
 
-On each page's row are „Page notes” (a pen), „Print” and „Delete”. The pen opens the page's notes: write, change or clear „Page Notes” and press „Save”; the row's „Notes” column shows what you saved.
+On each page's row, against the list's right edge, are „Page notes” (a pen), „Print” and „Delete”; they stay faint until you move the mouse over the row. The pen opens the page's notes: write, change or clear „Page Notes” and press „Save”; the row's „Notes” column shows what you saved.
 
 ### 6.2.4 Deleting a document {#documents-add-delete}
 
