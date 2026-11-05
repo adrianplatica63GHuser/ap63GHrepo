@@ -1,7 +1,5 @@
 import { getTranslations } from "next-intl/server";
 import { GroupsListView } from "./_components/groups-list-view";
-import { screenPanel } from "@/lib/ui/field-widths";
-import { TileTitle } from "@/components/tiles/tile-title";
 
 // Slice #20.17: BackLink removed — BreadcrumbBar shows the trail. Slice #38.20:
 // „Acasă › Administrare › Grupuri", the section as text (it has no screen).
@@ -23,25 +21,9 @@ export default async function GroupsPage({ searchParams }: PageProps) {
           </h1>
         </header>
 
-        {/* Info panel — what is a Group and when to use it. Slice #37.35: the first tile of the list's unit row (6 units; 7 of 119 px since 40.98). */}
+        {/* 41.84: „Ce este un Grup?" is GroupsListView's own tile (group-about-tile.tsx), with its „Am înțeles". */}
         <GroupsListView
           fromMap={fromMap}
-          about={
-            <section {...screenPanel("about-groups", 7 /* 40.98: re-pinned, 6 of 148 px */)} data-tile="about" className="rounded-lg border border-card-rim bg-card px-5 py-4">
-          {/* 41.41: a tile of the screen now, so its heading is TileTitle's (tile-heading-one-piece). */}
-          <TileTitle title={t("infoPanel.title")} className="mb-3" admin />
-          <div className="flex flex-col gap-2 text-sm text-ink">
-            <p>{t("infoPanel.body1")}</p>
-            <p>{t("infoPanel.body2")}</p>
-            <p className="text-xs text-fade">
-              {t("infoPanel.codeNote")}
-            </p>
-            <p className="mt-1 border-t border-card-rim pt-2 text-xs italic text-fade">
-              {t("infoPanel.seeAlso")}
-            </p>
-          </div>
-        </section>
-          }
         />
       </main>
     </div>

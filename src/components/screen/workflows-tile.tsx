@@ -15,6 +15,7 @@
 import { useId } from "react";
 import { useTranslations } from "next-intl";
 import { TileTitle } from "@/components/tiles/tile-title";
+import { GroupWorkflowsWizard } from "@/components/screen/group-workflows-wizard";
 import { screenPanel } from "@/lib/ui/field-widths";
 
 /** The workflows, in reading order — each `<kind>.workflows.steps.<key>.{title,body}`. */
@@ -32,7 +33,13 @@ const TEXT = {
   stamp: "text-ink",
 } as const;
 
+/** Slice 41.84: the group's tile asks first what you want to do (group-workflows-wizard.tsx); „Ștampile" keeps the list. */
 export function WorkflowsTile({ kind, hidden = false }: { kind: "group" | "stamp"; hidden?: boolean }) {
+  if (kind === "group") return <GroupWorkflowsWizard units={WORKFLOWS_UNITS} hidden={hidden} />;
+  return <WorkflowsList kind={kind} hidden={hidden} />;
+}
+
+function WorkflowsList({ kind, hidden }: { kind: "group" | "stamp"; hidden: boolean }) {
   const t = useTranslations(kind === "group" ? "group.workflows" : "stamp.workflows");
   const titleId = useId();
   return (

@@ -18,6 +18,7 @@ import { ADMIN_LIST_FRAME, ADMIN_LIST_HEAD, ADMIN_LIST_PANEL, AdminListTable, Ad
 import { filterByWords } from "@/lib/search/fold-words";
 import { TileUnitRow } from "@/components/screen/tile-unit-row";
 import { WorkflowsTile } from "@/components/screen/workflows-tile";
+import { GroupAboutTile } from "./group-about-tile";
 import { AdminTilesBar, useAdminTiles } from "@/components/screen/admin-tiles";
 import { ADMIN_GROUPS_REGISTRY, ADMIN_GROUPS_SCREEN } from "@/lib/ui/screen-tiles";
 
@@ -255,7 +256,8 @@ export function GroupsListView({ about, fromMap = false }: { about?: ReactNode; 
     )}
     <AdminTilesBar registry={ADMIN_GROUPS_REGISTRY} labels={tileLabels} tiles={tiles} />
     <TileUnitRow screen={{ ...ADMIN_GROUPS_SCREEN, units: Math.max(ABOUT_UNITS, LIST_UNITS) }}>
-      {tiles.choice.isShown("about") && about}
+      {/* 41.84: „Ce este un Grup?" closes with „Am înțeles" — unticked in „Panouri", where it comes back from. */}
+      {tiles.choice.isShown("about") && (about ?? <GroupAboutTile onUnderstood={() => tiles.choice.toggle("about")} />)}
       {/* 41.44: how you work with them — a second information tile. */}
       <WorkflowsTile kind="group" hidden={!tiles.choice.isShown("workflows")} />
       {adding && (

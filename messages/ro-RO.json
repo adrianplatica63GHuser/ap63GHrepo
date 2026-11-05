@@ -4145,7 +4145,8 @@
       "body1": "Un grup reunește elemente de un singur tip — proprietăți, persoane fizice, persoane juridice sau documente — pentru acțiuni și activități pe termen scurt. De exemplu: grupezi câteva proprietăți pentru o evaluare, câteva persoane pentru a le trimite un mesaj, sau câteva documente relevante pentru un eveniment cu o instituție.",
       "body2": "Elementele pot face parte din unul sau mai multe grupuri și pot fi eliminate oricând. Când un grup și-a îndeplinit misiunea, poate fi șters — elementele continuă să existe independent.",
       "codeNote": "Fiecare grup primește un cod numeric unic (ex. GRP-001, GRP-002…) atribuit automat.",
-      "seeAlso": "Pentru caracteristici pe termen lung sau permanente care se aplică pe mai multe tipuri de obiecte, folosește Ștampile."
+      "seeAlso": "Pentru caracteristici pe termen lung sau permanente care se aplică pe mai multe tipuri de obiecte, folosește Ștampile.",
+      "understood": "Am înțeles"
     },
     "fromMap": {
       "note": "Creați grupul de proprietăți, apoi reveniți la hartă: selecția vă așteaptă, iar grupul nou va fi în listă.",
@@ -4174,6 +4175,55 @@
         "delete": {
           "title": "Ștergi un grup",
           "body": "„Șterge” pe rândul grupului cere confirmarea. Grupul dispare, iar obiectele din el rămân în arhivă."
+        }
+      },
+      "wizard": {
+        "question": "Ce vrei să faci?",
+        "noteTitle": "Notă",
+        "headings": {
+          "self": "Grupul însuși",
+          "members": "Membrii grupului",
+          "map": "Pe hartă"
+        },
+        "choices": {
+          "find": {
+            "label": "Caut un grup",
+            "why": "Ca să văd dacă grupul de care am nevoie există deja, sau ca să-l deschid."
+          },
+          "create": {
+            "label": "Fac un grup nou",
+            "why": "Când căutarea nu l-a găsit — caută întâi, ca să nu faci același grup de două ori."
+          },
+          "describe": {
+            "label": "Schimb descrierea unui grup",
+            "why": "Când grupul are acum alt scop, sau descrierea nu-l mai spune bine."
+          },
+          "delete": {
+            "label": "Șterg un grup",
+            "why": "Când și-a făcut treaba — membrii lui rămân în arhivă."
+          },
+          "members": {
+            "label": "Adaug sau scot membri",
+            "why": "Ca grupul să cuprindă exact elementele de care ai nevoie."
+          },
+          "map": {
+            "label": "Văd grupuri de proprietăți pe hartă",
+            "why": "Ca să vezi pe harta mare doar proprietățile unor grupuri, sau să faci un grup din proprietăți alese acolo."
+          }
+        },
+        "steps": {
+          "describe": {
+            "title": "Schimbi descrierea",
+            "body": "„Editează” pe rândul grupului deschide ecranul lui. În „Identitatea grupului” schimbi „Descriere” și apeși „Salvează grupul”."
+          },
+          "mapShow": {
+            "title": "Arăți grupuri pe hartă",
+            "body": "Pe harta mare, „Grupuri” deschide alegerea grupurilor: rămân la vedere proprietățile din grupurile bifate. O proprietate dispare când toate grupurile ei sunt debifate."
+          },
+          "mapNew": {
+            "title": "Faci un grup din proprietăți alese pe hartă",
+            "body": "Alegi proprietățile pe hartă și apeși „Grup nou…”. Se deschide „Adaugă grup nou” cu ele."
+          }
         }
       }
     }

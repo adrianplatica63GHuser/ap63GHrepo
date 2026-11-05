@@ -4145,7 +4145,8 @@
       "body1": "Un grup reunește elemente de un singur tip — proprietăți, persoane fizice, persoane juridice sau documente — pentru acțiuni și activități pe termen scurt. De exemplu: grupezi câteva proprietăți pentru o evaluare, câteva persoane pentru a le trimite un mesaj, sau câteva documente relevante pentru un eveniment cu o instituție.",
       "body2": "Elementele pot face parte din unul sau mai multe grupuri și pot fi eliminate oricând. Când un grup și-a îndeplinit misiunea, poate fi șters — elementele continuă să există independent.",
       "codeNote": "Fiecare grup primește un cod numeric unic (ex. GRP-001, GRP-002…) atribuit automat.",
-      "seeAlso": "Pentru caracteristici pe termen lung sau permanente care se aplică pe mai multe tipuri de obiecte, folosește Ștampile."
+      "seeAlso": "Pentru caracteristici pe termen lung sau permanente care se aplică pe mai multe tipuri de obiecte, folosește Ștampile.",
+      "understood": "I understand"
     },
     "fromMap": {
       "note": "Create the property group, then go back to the map: the selection is waiting and the new group will be in the list.",
@@ -4174,6 +4175,55 @@
         "delete": {
           "title": "Deleting a group",
           "body": "„Delete” on the group's row asks to confirm. The group goes, and the objects in it stay in the archive."
+        }
+      },
+      "wizard": {
+        "question": "What do you want to do?",
+        "noteTitle": "Note",
+        "headings": {
+          "self": "The group itself",
+          "members": "The group's members",
+          "map": "On the map"
+        },
+        "choices": {
+          "find": {
+            "label": "Find a group",
+            "why": "To see whether the group you need already exists, or to open it."
+          },
+          "create": {
+            "label": "Make a new group",
+            "why": "When the search found none — search first, so the same group is not made twice."
+          },
+          "describe": {
+            "label": "Change a group's description",
+            "why": "When the group's purpose has changed, or its description no longer says it."
+          },
+          "delete": {
+            "label": "Delete a group",
+            "why": "When it has done its job — its members stay in the archive."
+          },
+          "members": {
+            "label": "Add or take out members",
+            "why": "So the group holds exactly the items you need."
+          },
+          "map": {
+            "label": "See groups of properties on the map",
+            "why": "To show only some groups' properties on the big map, or to make a group from properties chosen there."
+          }
+        },
+        "steps": {
+          "describe": {
+            "title": "Changing the description",
+            "body": "„Edit” on the group's row opens its screen. In „Group identity” change „Description” and press „Save group”."
+          },
+          "mapShow": {
+            "title": "Showing groups on the map",
+            "body": "On the big map, „Groups” opens the choice of groups: the properties of the ticked groups stay in view. A property goes when all its groups are unticked."
+          },
+          "mapNew": {
+            "title": "Making a group from properties chosen on the map",
+            "body": "Choose the properties on the map and press „New group…”. „Add new group” opens with them."
+          }
         }
       }
     }
