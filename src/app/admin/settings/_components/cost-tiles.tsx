@@ -380,7 +380,6 @@ export function CostTile({
       // 41.83: under Administrare every tile is the record tile's grey (it wore the meta group's yellow).
       className={`${TILE_SURFACE} flex flex-col gap-3`}
       data-cost-tile={provider}
-      data-tile={provider}
       data-cost-state={open ? "expanded" : "collapsed"}
     >
       <div className="flex items-start justify-between gap-2">

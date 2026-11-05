@@ -99,7 +99,8 @@ test.describe("TC-SET-02 — „Setări” în patru secțiuni", () => {
     } else {
       await expect(backups.getByText("Copiile de siguranță nu pot fi citite de aici", { exact: false })).toBeVisible();
     }
-    await expect(backups.getByRole("button")).toHaveCount(0); // read-only: nothing to start
+    // 41.91: nothing to start but the tile's own X (it read `backups.getByRole("button")` at 0).
+    await expect(backups.locator("button:not([data-tile-close])")).toHaveCount(0); // read-only: nothing to start
 
     // Step 6 — „AI": the four uses and a model each; „Despre": version, commit, environment, database.
     // Since #39.17 „AI" is a cost part that opens collapsed: „Detalii" first.

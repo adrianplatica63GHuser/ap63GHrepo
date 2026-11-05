@@ -41,6 +41,9 @@ import {
 } from "@/lib/ui/tiles";
 import { effectiveDefaults, kindOfEntity } from "@/lib/ui/tile-defaults";
 import { useSavedTileDefaults } from "./saved-tile-defaults";
+import { registerTileCloser, type TileCloser } from "./tile-closers";
+
+export { subscribeTileClosers, tileClosable, tileCloserFor, tileClosersCount, tileClosersVersion, type TileCloser } from "./tile-closers";
 
 function write(key: string, value: string[] | null): void {
   try {
@@ -70,44 +73,8 @@ export interface TileChoice<K extends string> {
 
 const NONE: readonly never[] = [];
 
-// ---------------------------------------------------------------------------
-// Slice 41.91 — the screens' choices, for the X in each tile's corner
-// ---------------------------------------------------------------------------
-
-/** What a tile's X needs from the screen's choice. */
-export type TileCloser = { all: readonly string[]; shown: readonly string[]; close: (key: string) => void };
-
-let closers: TileCloser[] = [];
-let closersVersion = 0;
-const closerListeners = new Set<() => void>();
-function closersChanged(): void {
-  closersVersion += 1;
-  for (const l of closerListeners) l();
-}
-
-/** For `useSyncExternalStore`: a change of any screen's choice. */
-export function subscribeTileClosers(listener: () => void): () => void {
-  closerListeners.add(listener);
-  return () => closerListeners.delete(listener);
-}
-export function tileClosersVersion(): number {
-  return closersVersion;
-}
-/** How many screens' choices are mounted: a title draws the X's place only where one is. */
-export function tileClosersCount(): number {
-  return closers.length;
-}
-
-/** The choice that holds `key` — the latest registered, when two screens' choices both name it. */
-export function tileCloserFor(key: string): TileCloser | undefined {
-  for (let i = closers.length - 1; i >= 0; i--) if (closers[i].all.includes(key)) return closers[i];
-  return undefined;
-}
-
-/** Whether a tile's X shows: the tile is on screen and is not the last one shown. */
-export function tileClosable(closer: TileCloser | undefined, key: string): boolean {
-  return !!closer && closer.shown.includes(key) && closer.shown.length > 1;
-}
+// Slice 41.91: the screens' choices, for the X in each tile's corner — a module of their own (tile-closers.ts), so a
+// tile's title can read them without loading this hook's imports.
 
 export function useTileChoice<K extends string>(
   reg: TileRegistry<K>,
@@ -209,12 +176,7 @@ export function useTileChoice<K extends string>(
         if (reg.all.includes(key as K) && shown.includes(key as K)) toggle(key as K);
       },
     };
-    closers = [...closers, closer];
-    closersChanged();
-    return () => {
-      closers = closers.filter((c) => c !== closer);
-      closersChanged();
-    };
+    return registerTileCloser(closer);
   }, [reg.all, shown, toggle]);
 
   // Slice 40.40: the packing hook (use-tile-packing.ts) does the moving; the bar does not need it.

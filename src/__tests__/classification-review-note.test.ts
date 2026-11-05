@@ -12,7 +12,6 @@ import ro from "../../messages/ro-RO.json";
 import en from "../../messages/en-GB.json";
 
 const META = readFileSync(join(process.cwd(), "src/components/entity-metadata-tab.tsx"), "utf8");
-const TITLE = readFileSync(join(process.cwd(), "src/components/tiles/tile-title.tsx"), "utf8");
 const LIST = readFileSync(join(process.cwd(), "src/components/tiles/list-tile.tsx"), "utf8");
 
 describe("41.37 — Clasificare's „i” and its review paragraph", () => {
@@ -57,7 +56,9 @@ describe("41.37 — Clasificare's „i” and its review paragraph", () => {
 
   it("the „i” right after the title, outside the heading, through the tile's hint slot", () => {
     // 41.38: the line holds the action too now, at its right end.
-    expect(TITLE).toMatch(/<div className="flex items-start gap-1\.5" data-tile-title-line="">\s*\{heading\}\s*\{hint && /);
+    // 41.91: the title's line is TileTitleRow's now (tile-title-row.tsx), which adds the tile's X; the „i" still comes
+    // right after the heading (it read TileTitle's own `<div className="flex items-start gap-1.5" data-tile-title-line="">`).
+    expect(readFileSync(join(process.cwd(), "src/components/tiles/tile-title-row.tsx"), "utf8")).toMatch(/data-tile-title-line="">\s*\{heading\}\s*\{hint && /);
     expect(LIST).toContain('hint={<span ref={setHintSlot} className="flex items-center empty:hidden" data-tile-hint-slot="" />}');
     expect(META).toContain("{!folded && chrome && <TileHint>{aboutBubble}</TileHint>}");
     // The top line is the version controls' again, drawn only with several versions (or with no tile around it).

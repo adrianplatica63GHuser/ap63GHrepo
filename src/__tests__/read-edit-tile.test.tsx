@@ -182,7 +182,8 @@ describe("the Natural Person uses it (Ask first 2, 3, 6)", () => {
     // „{count, plural, one {# an} few {# ani} other {# de ani}}”.
     // 41.66 (Adrian: „it should show (nn y) for English and (nn a) for Romanian"): „a" at every number, as English's
     // „y" — 1 a, 41 a. It was „{count, plural, one {# an} other {# ani}}" (41.23).
-    expect(ro).toEqual({ edit: "Editează", editTile: "Editează — {tile}", save: "Salvează", cancel: "Renunță", yes: "Da", age: "{count, plural, other {# a}}" });
+    // 41.91 adds closeTile, the tile's X (it read the six keys without it).
+    expect(ro).toEqual({ edit: "Editează", editTile: "Editează — {tile}", closeTile: "Închide — {tile}", save: "Salvează", cancel: "Renunță", yes: "Da", age: "{count, plural, other {# a}}" });
     // English „(35 y)” at every number, 1 y included (it was „# year” / „# years”).
     expect(JSON.parse(read("messages", "en-GB.json")).shared.readEdit.age).toBe("{count, plural, other {# y}}");
     expect(Object.keys(JSON.parse(read("messages", "en-GB.json")).shared.readEdit)).toEqual(Object.keys(ro));

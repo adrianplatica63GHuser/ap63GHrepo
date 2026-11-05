@@ -28,13 +28,10 @@
  * screen whose „Panouri" can hide the tile; `close={false}` for a tile in edit, or one that draws its X itself after
  * buttons of its own beside the title.
  */
-import { useSyncExternalStore, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { ADMIN_TILE_TITLE_TYPE, TILE_TITLE_TYPE } from "@/lib/ui/title-type";
 import { TextTooltip } from "@/lib/ui/text-tooltip";
-import { TileCloseButton } from "./tile-close";
-import { subscribeTileClosers, tileClosersCount } from "./use-tile-choice";
-
-const noVersion = () => 0;
+import { TileTitleRow } from "./tile-title-row";
 
 /**
  * The title's classes. Slice 40.18: set in Roboto Slab, navy, as alternative 13 draws kinds 1, 2 and 4
@@ -98,9 +95,6 @@ export function TileTitle({
   /** Slice 41.91: the tile's X at the line's end; false in edit, or where the tile draws its own. */
   close?: boolean;
 }) {
-  // 41.91: a screen with a tile choice on it (any registered) gets the X's place; a title drawn anywhere else is as it was.
-  const screenHasTiles = useSyncExternalStore(subscribeTileClosers, tileClosersCount, noVersion) > 0;
-  const closer = close && screenHasTiles ? <TileCloseButton title={typeof title === "string" ? title : undefined} firstTitle /> : null;
   // 41.38: beside a 30-px action the title's first line (24 px) is centred on it — 3 px down — so a tile without one
   // keeps today's title height.
   const heading = (
@@ -111,24 +105,9 @@ export function TileTitle({
   );
   return (
     <div className={`min-w-0 ${className}`} data-tile-title="">
-      {hint || action || closer ? (
-        // 41.91: with the X and no action, the title is centred on the X as it is on an action (3 px down).
-        <div className="flex items-start gap-1.5 [&:has([data-tile-close])>h2]:mt-[3px]" data-tile-title-line="">
-          {heading}
-          {hint && <div className={`flex shrink-0 items-center${action ? " mt-[3px]" : ""}`}>{hint}</div>}
-          {action ? (
-            <div className="ml-auto flex shrink-0 items-center gap-2 pl-0.5" data-tile-title-action="">
-              {action}
-              {closer}
-            </div>
-          ) : (
-            closer && (
-              <div className="ml-auto flex shrink-0 items-center pl-0.5" data-tile-title-close="">
-                {closer}
-              </div>
-            )
-          )}
-        </div>
+      {hint || action || close ? (
+        // 41.91: the line is TileTitleRow's (a client piece), which adds the tile's X on a screen with „Panouri".
+        <TileTitleRow heading={heading} hint={hint} action={action} close={close} title={typeof title === "string" ? title : undefined} />
       ) : (
         heading
       )}

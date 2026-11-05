@@ -24,7 +24,7 @@ import { useCallback, useState, useSyncExternalStore } from "react";
 import { useTranslations } from "next-intl";
 import { X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
-import { subscribeTileClosers, tileClosable, tileCloserFor, tileClosersVersion } from "./use-tile-choice";
+import { subscribeTileClosers, tileClosable, tileCloserFor, tileClosersVersion } from "./tile-closers";
 
 const noVersion = () => 0;
 

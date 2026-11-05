@@ -212,7 +212,7 @@ function TimeFramesPanel() {
   }
 
   return (
-    <section {...screenPanel("time-frames", TIME_FRAMES_UNITS)} aria-label={t("sectionTimeFrames")} data-tile="timeFrames" className="rounded-lg border border-card-rim bg-card p-5 flex flex-col gap-4">
+    <section {...screenPanel("time-frames", TIME_FRAMES_UNITS)} aria-label={t("sectionTimeFrames")} className="rounded-lg border border-card-rim bg-card p-5 flex flex-col gap-4">
       {/* 41.91: the tile's X at the title's right. */}
       <div className="flex items-start justify-between gap-2">
         <h2 className="text-sm font-semibold text-ink">{t("sectionTimeFrames")}</h2>
@@ -352,7 +352,7 @@ function Tile({ name, title, children }: { name: string; title: string; children
   // 41.91: its key in the screen's tile choice — `settings-about` is „about" — for its X, „Închide — <tile>".
   const tile = name.replace(/^settings-/, "");
   return (
-    <section {...screenPanel(name, SETTINGS_TILE_UNITS)} aria-label={title} data-tile={tile} className="rounded-lg border border-card-rim bg-card p-5 flex flex-col gap-3">
+    <section {...screenPanel(name, SETTINGS_TILE_UNITS)} aria-label={title} className="rounded-lg border border-card-rim bg-card p-5 flex flex-col gap-3">
       <div className="flex items-start justify-between gap-2">
         <h2 className="text-sm font-semibold text-ink">{title}</h2>
         <TileCloseButton tile={tile} title={title} />

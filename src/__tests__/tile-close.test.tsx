@@ -53,7 +53,7 @@ describe("41.91 — the tile's X", () => {
   it("on every shown tile, named „Închide — <tile>”, after the tile's „Editează”, and only on its first title", async () => {
     wrap(<Screen />);
     await flush();
-    const x = screen.getByRole("button", { name: "Închide — Tile a" });
+    const x = await screen.findByRole("button", { name: "Închide — Tile a" });
     expect(x).toHaveAttribute("data-tile-close", "a");
     expect(screen.getAllByRole("button", { name: /^Închide — / })).toHaveLength(2);
     // „Editează" first, then the X, in the title's corner.
@@ -64,7 +64,7 @@ describe("41.91 — the tile's X", () => {
   it("pressing it is the screen's untick: the tile goes, the choice stored; the focus on „Panouri”", async () => {
     wrap(<Screen />);
     await flush();
-    fireEvent.click(screen.getByRole("button", { name: "Închide — Tile a" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Închide — Tile a" }));
     await flush();
     expect(screen.getByText("b", { selector: "output" })).toBeInTheDocument();
     expect(JSON.parse(localStorage.getItem("ga40-tiles-tile-close-test-v1")!)).toEqual(["b"]);
@@ -74,7 +74,7 @@ describe("41.91 — the tile's X", () => {
   it("the last tile shown has none", async () => {
     wrap(<Screen />);
     await flush();
-    fireEvent.click(screen.getByRole("button", { name: "Închide — Tile a" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Închide — Tile a" }));
     await flush();
     expect(screen.queryAllByRole("button", { name: /^Închide — / })).toHaveLength(0);
   });
@@ -82,8 +82,8 @@ describe("41.91 — the tile's X", () => {
   it("a tile in edit has none", async () => {
     wrap(<Screen edit="a" />);
     await flush();
+    expect(await screen.findByRole("button", { name: "Închide — Tile b" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Închide — Tile a" })).toBeNull();
-    expect(screen.getByRole("button", { name: "Închide — Tile b" })).toBeInTheDocument();
   });
 
   it("the message is the one ro-RO.json holds", () => {
@@ -110,7 +110,8 @@ describe("41.91 — the tile's X", () => {
 describe("41.91 — every tile's corner draws it (a guard, so a new tile cannot miss it)", () => {
   const read = (...p: string[]) => readFileSync(join(process.cwd(), ...p), "utf8");
   it("TileTitle draws it after its action unless told not to; the screen title, the folded line and the lists' toolbar draw it", () => {
-    expect(read("src", "components", "tiles", "tile-title.tsx")).toMatch(/<TileCloseButton title=\{typeof title === "string" \? title : undefined\} firstTitle \/>/);
+    expect(read("src", "components", "tiles", "tile-title.tsx")).toContain("<TileTitleRow heading={heading} hint={hint} action={action} close={close}");
+    expect(read("src", "components", "tiles", "tile-title-row.tsx")).toContain("<TileCloseButton title={title} firstTitle />");
     expect(read("src", "components", "screen", "tile-title.tsx")).toContain("<TileCloseButton");
     expect(read("src", "components", "tiles", "empty-tile.tsx")).toContain("<TileCloseButton title={title} untitled />");
     expect(read("src", "components", "list", "admin-list.tsx")).toContain("<TileCloseButton />");
