@@ -158,15 +158,22 @@ describe("41.83 — every title under Administrare: a tile title's size, in #C00
     expect(css).toMatch(/--color-admin-title:\s*#C00000;/);
     expect(css).toMatch(/\.dark \{[\s\S]*--color-admin-title:\s*#F87171;/);
   });
-  it("every Administrare page heading is 16 px and red", () => {
+  // 41.92 rewrote this in place: the five screens Adrian named are headed at the lists' 24 px with their icon (ListHeading
+  // admin, list-heading.test.tsx); the rest keep 16 px. It read every one of the nine at 16 px.
+  it("every other Administrare page heading is 16 px and red", () => {
     for (const rel of [
-      "src/app/admin/users/page.tsx", "src/app/admin/tags/page.tsx", "src/app/admin/groups/page.tsx", "src/app/admin/groups/[id]/page.tsx",
-      "src/app/admin/stamps/page.tsx", "src/app/admin/stamps/[id]/page.tsx", "src/app/admin/settings/page.tsx",
-      "src/app/admin/value-lists/_components/value-list-hub.tsx", "src/app/admin/value-lists/_components/document-type-page.tsx",
+      "src/app/admin/users/page.tsx", "src/app/admin/groups/[id]/page.tsx", "src/app/admin/stamps/[id]/page.tsx",
+      "src/app/admin/value-lists/_components/document-type-page.tsx",
     ]) {
       const h1s = [...read(rel).matchAll(/<h1[^>]*className="([^"]+)"/g)].map((m) => tokens(m[1]));
       expect([rel, h1s.length > 0]).toEqual([rel, true]);
       for (const h of h1s) expect([rel, h.includes("text-base") && h.includes("text-admin-title") && !h.includes("text-2xl")]).toEqual([rel, true]);
+    }
+    for (const rel of [
+      "src/app/admin/tags/page.tsx", "src/app/admin/groups/page.tsx", "src/app/admin/stamps/page.tsx", "src/app/admin/settings/page.tsx",
+      "src/app/admin/value-lists/_components/value-list-hub.tsx",
+    ]) {
+      expect([rel, /<ListHeading icon=\{adminIcon\("\w+"\)\} title=\{t\("pageTitle"\)\} admin/.test(read(rel)), /<h1\b/.test(read(rel))]).toEqual([rel, true, false]);
     }
   });
   it("„Roluri și legături\" keeps its titles: the list card is red only outside it", () => {
