@@ -266,7 +266,8 @@ test.describe("TC-GRP-04 (41.84) — „Am înțeles”; „Cum lucrezi cu grupu
     /** The colours of every piece of text in a tile — its title, paragraphs, question and choices. */
     const colours = (l: ReturnType<Page["locator"]>) =>
       l.locator("h2, p, legend, [data-wizard-choice] span span").evaluateAll((els) => [
-        ...new Set(els.filter((e) => (e.textContent ?? "").trim()).map((e) => getComputedStyle(e).color)),
+        // 41.91: the tile's X is drawn a tick later and its bubble's text may be read mid-swap, with no colour yet.
+        ...new Set(els.filter((e) => e.isConnected && !e.closest("[data-tile-close-anchor]") && (e.textContent ?? "").trim()).map((e) => getComputedStyle(e).color).filter(Boolean)),
       ]);
 
     // „Ce este un Grup?": red; „Am înțeles" closes it and unticks it in „Panouri", which brings it back.
