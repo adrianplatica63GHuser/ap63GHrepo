@@ -38,10 +38,16 @@ test.describe("TC-TILES-29 — „Închide — <panou>”", () => {
       const x = xOf(page, "Identitate");
       await expect(x).toBeVisible({ timeout: 15_000 });
       await expect(x).toHaveAttribute("data-tile-close", "identity");
-      const [xb, pb, tb] = [await box(x), await box(identity.locator("[data-tile-edit]")), await box(identity)];
-      expect(Math.abs(xb.x - (pb.x + pb.width) - 8), `„Editează” ${xb.x - (pb.x + pb.width)} px left of the X`).toBeLessThanOrEqual(1);
-      expect(Math.abs(xb.y - pb.y)).toBeLessThanOrEqual(1);
-      expect(Math.abs(tb.x + tb.width - (xb.x + xb.width) - (xb.y - tb.y)), "the X as far from the right edge as from the top").toBeLessThanOrEqual(1);
+      // Polled: the X is drawn a tick after the tile (the screen's choice registers, then its button loads).
+      const corner = async () => {
+        const [xb, pb, tb] = [await box(x), await box(identity.locator("[data-tile-edit]")), await box(identity)];
+        const penGap = Math.round(xb.x - (pb.x + pb.width));
+        const level = Math.round(xb.y - pb.y);
+        const square = Math.round(tb.x + tb.width - (xb.x + xb.width) - (xb.y - tb.y));
+        return Math.abs(penGap - 8) <= 1 && Math.abs(level) <= 1 && Math.abs(square) <= 1 ? "in the corner" : JSON.stringify({ penGap, level, square });
+      };
+      await expect.poll(corner, { timeout: 10_000 }).toBe("in the corner");
+      const [xb, pb] = [await box(x), await box(identity.locator("[data-tile-edit]"))];
       // „Renunță"'s icon, „Editează"'s size.
       expect(await x.locator("svg").getAttribute("class")).toMatch(/lucide-x\b/);
       expect(Math.round(xb.height)).toBe(Math.round(pb.height));
@@ -62,18 +68,18 @@ test.describe("TC-TILES-29 — „Închide — <panou>”", () => {
       await identity.locator("[data-tile-edit]").click();
       await expect(identity.locator('[data-tile-edit-bar="identity"]')).toBeVisible();
       await expect(identity.locator("[data-tile-close]")).toHaveCount(0);
-      await expect(xOf(page, "Contact")).toBeVisible();
+      await expect(page.locator("[data-tile-close]").first()).toBeVisible(); // the other tiles keep theirs
       await identity.locator('[data-tile-cancel="identity"]').click();
       await expect(xOf(page, "Identitate")).toBeVisible();
 
-      // Step 5 — the last tile shown has none: everything but „Identitate" closed by its X.
-      for (;;) {
-        const others = page.locator("[data-tile-close]:not([data-tile-close='identity'])");
-        if ((await others.count()) === 0) break;
-        await others.first().click();
-      }
+      // Step 5 — the last tile shown has none: „Identitate" stored as the only tile, the screen reloaded. (An empty tile
+      // that its screen keeps out of sight while it is ticked cannot be closed by a press, so the choice is stored.)
+      await page.evaluate(() => localStorage.setItem("ga40-tiles-natural-person-v1", JSON.stringify(["identity"])));
+      await page.reload();
+      await expect(identity.locator("[data-tile-edit]")).toBeVisible({ timeout: 30_000 });
+      await expect.poll(() => ticked(page), { timeout: 10_000 }).toBe(1);
+      await page.waitForTimeout(500);
       await expect(page.locator("[data-tile-close]")).toHaveCount(0);
-      expect(await ticked(page)).toBe(1);
       await pressTileButton(page, "Implicit");
       await expect(xOf(page, "Identitate")).toBeVisible({ timeout: 15_000 });
     } finally {

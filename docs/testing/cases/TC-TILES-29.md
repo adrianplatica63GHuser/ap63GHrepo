@@ -33,8 +33,8 @@ Nothing.
 | 1 | Opens an invented person, `TC-E2E-TILES-29 Colț`, at 1920 × 1080 | On „Identitate", „Închide — Identitate" (an X) in the corner, „Editează" 8 px to its left on its line |
 | 2 | Presses the X | „Identitate" leaves the screen, its box in „Panouri" is unticked, the focus is on „Panouri" |
 | 3 | Ticks „Identitate" in „Panouri" | It comes back, with its X |
-| 4 | Presses „Editează" on „Identitate", then „Renunță" | No X on it while it is open; „Contact" keeps its X; back at rest, its X again |
-| 5 | Closes every other tile by its X | The last tile shown has no X; „Implicit" brings them back |
+| 4 | Presses „Editează" on „Identitate", then „Renunță" | No X on it while it is open; the other tiles keep theirs; back at rest, its X again |
+| 5 | Leaves „Identitate" the only tile ticked | The last tile shown has no X; „Implicit" brings them back |
 | 6 | On the dashboard, then on „Grupuri", presses the first X | That tile goes, one box fewer ticked, the focus on „Panouri"; „Implicit" brings it back |
 
 ## At the end — leaving things as they were found

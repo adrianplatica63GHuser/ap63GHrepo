@@ -42,7 +42,7 @@ describe("41.38 — „Editează” in the tile's top-right corner", () => {
     // 41.91: and the tile's X after it, not while the block is in edit (it read `… action={titleAction} />`).
     expect(read("src", "components", "address", "address-block.tsx")).toContain("<TileTitle title={title} subtitle={subtitle} action={titleAction} close={titleClose} />");
     expect(read("src", "components", "tiles", "list-tile.tsx")).toMatch(/action=\{<span ref=\{setActionSlot\}/);
-    expect(read("src", "app", "documents", "_components", "document-form.tsx")).toMatch(/<TileTitle title=\{framed \? panelSubtitle\(title\) : title\} subtitle=\{framed \? undefined : subtitle\} action=\{framed \? undefined : action\} \/>/);
+    expect(read("src", "app", "documents", "_components", "document-form.tsx")).toMatch(/<TileTitle title=\{framed \? panelSubtitle\(title\) : title\} subtitle=\{framed \? undefined : subtitle\} action=\{framed \? undefined : action\} close=\{!framed && !editing\} \/>/ /* 41.91: the tile's X, none in edit */);
     expect(read("src", "app", "natural-persons", "_components", "person-identity-documents.tsx")).toContain("<TileTitle title={title} subtitle={subtitle} action={addButton} />");
   });
 });

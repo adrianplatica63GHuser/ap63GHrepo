@@ -133,7 +133,8 @@ describe("each screen draws the line", () => {
     // 41.91: „Interacțiuni" draws its X after its own two buttons (it read `<TileTitle title={title} subtitle={subtitle} />`).
     expect(read("src", "components", "tiles", "interactions-tile.tsx")).toContain("<TileTitle title={title} subtitle={subtitle} close={false} />");
     // Slice 40.72: the address tile's title also carries its „Editează" (`titleAction`).
-    expect(read("src", "components", "address", "address-block.tsx")).toContain("<TileTitle title={title} subtitle={subtitle} action={titleAction} />");
+    // 41.91: the block's X follows (it read `… action={titleAction} />`).
+    expect(read("src", "components", "address", "address-block.tsx")).toContain("<TileTitle title={title} subtitle={subtitle} action={titleAction} close={titleClose} />");
     expect(read("src", "app", "documents", "_components", "pages-panel.tsx")).toContain("<TileSubtitle text={subtitle} />");
   });
 });
