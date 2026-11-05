@@ -14,7 +14,7 @@
  */
 
 import { test, expect, type Page } from "../helpers/test";
-import { expectPanouriRoundTrip, tileBox, tilesMenuButton } from "../helpers/tiles";
+import { expectPanouriRoundTrip, showTile, tileBox, tilesMenuButton } from "../helpers/tiles";
 import { E2E_MARKER, createNaturalPerson, createProperty, removeGroupLeftovers, removeLeftovers, removeRecord, removeStampLeftovers } from "../helpers/records";
 
 const MARK = `${E2E_MARKER}GRP-04`;
@@ -156,10 +156,11 @@ test.describe("TC-GRP-04 (41.41) — „Panouri” pe Grupuri, pe ecranul unui g
     try {
       await page.goto("/admin/groups");
       await expectPanouriRoundTrip(page, "Ce este un Grup?", "about");
-      // 41.44: „Cum lucrezi cu grupurile", beside it, names the buttons by their labels; „Panouri" hides it too.
+      // 41.44: „Cum lucrezi cu grupurile", beside it; „Panouri" hides it too. 41.84 rewrote this in place — it read
+      // `toContainText("„‹ Include”")` and five [data-workflow-step]: the tile now asks first, and shows no step yet.
       const workflows = page.getByRole("region", { name: "Cum lucrezi cu grupurile", exact: true });
-      await expect(workflows).toContainText("„‹ Include”");
-      await expect(workflows.locator("[data-workflow-step]")).toHaveCount(5);
+      await expect(workflows).toContainText("Ce vrei să faci?");
+      await expect(workflows.locator("[data-workflow-step]")).toHaveCount(0);
       await expectPanouriRoundTrip(page, "Cum lucrezi cu grupurile", "workflows");
       const g = await page.request.post("/api/groups", { data: { targetType: "PROPERTY", description: `${MARK41} Grup` } });
       expect(g.ok(), await g.text()).toBeTruthy();
@@ -250,5 +251,55 @@ test.describe("TC-GRP-04 (41.45) — deschis dintr-o fișă: doar identitatea; �
       if (stampId) await page.request.delete(`/api/stamps/${stampId}`);
       for (const id of people) await removeRecord(page.request, "person", id);
     }
+  });
+});
+
+// Slice 41.84 — Adrian: „“Ce este un Grup?” … should have a button that says “I understand”, which will close the tile";
+// „How you work with groups … too much information, too fast! … a tile with radio buttons that is asking the user basically
+// “what do you want to do”"; „All the text inside these tiles … must have the colour #C00000".
+test.describe("TC-GRP-04 (41.84) — „Am înțeles”; „Cum lucrezi cu grupurile” întreabă întâi ce vrei să faci", () => {
+  test("„Am înțeles” o ascunde, „Panouri” o aduce înapoi; pașii doar ai alegerii; textul roșu", async ({ page }) => {
+    test.slow();
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await page.goto("/admin/groups");
+    const RED = "rgb(192, 0, 0)";
+    /** The colours of every piece of text in a tile — its title, paragraphs, question and choices. */
+    const colours = (l: ReturnType<Page["locator"]>) =>
+      l.locator("h2, p, legend, [data-wizard-choice] span span").evaluateAll((els) => [
+        ...new Set(els.filter((e) => (e.textContent ?? "").trim()).map((e) => getComputedStyle(e).color)),
+      ]);
+
+    // „Ce este un Grup?": red; „Am înțeles" closes it and unticks it in „Panouri", which brings it back.
+    const about = page.getByRole("region", { name: "Ce este un Grup?", exact: true });
+    await expect(about).toBeVisible({ timeout: 30_000 });
+    expect(await colours(about)).toEqual([RED]);
+    await about.getByRole("button", { name: "Am înțeles", exact: true }).click();
+    await expect(about).toHaveCount(0);
+    await showTile(page, "Ce este un Grup?");
+    await expect(about).toBeVisible();
+
+    // The wizard: the question and the choices, no step until one is chosen; then only that choice's steps.
+    const wizard = page.getByRole("region", { name: "Cum lucrezi cu grupurile", exact: true });
+    await expect(wizard.getByText("Ce vrei să faci?", { exact: true })).toBeVisible();
+    await expect(wizard.locator("[data-workflow-step]")).toHaveCount(0);
+    expect(await colours(wizard)).toEqual([RED]);
+    await wizard.getByRole("radio", { name: /^Fac un grup nou/ }).check();
+    await expect(wizard.locator("[data-workflow-step]")).toHaveCount(2);
+    await expect(wizard.locator('[data-workflow-step="create"]')).toContainText("„Adaugă grup nou”");
+    await expect(wizard.locator("[data-workflow-note]")).toHaveCount(0);
+    // The members: their steps, and the note that a record's „Etichete și grupuri" adds a member too.
+    await wizard.getByRole("radio", { name: /^Adaug sau scot membri/ }).check();
+    await expect(wizard.locator('[data-workflow-step="members"]')).toBeVisible();
+    await expect(wizard.locator("[data-workflow-note]")).toContainText("„Etichete și grupuri”");
+    // The map: the groups button and „Grup nou…".
+    await wizard.getByRole("radio", { name: /^Văd grupuri de proprietăți pe hartă/ }).check();
+    await expect(wizard.locator("[data-workflow-step]")).toHaveCount(2);
+    await expect(wizard).toContainText("„Grupuri”");
+    await expect(wizard).toContainText("„Grup nou…”");
+    expect(await colours(wizard)).toEqual([RED]);
+    // Remembered per browser.
+    await page.reload();
+    await expect(wizard.getByRole("radio", { name: /^Văd grupuri de proprietăți pe hartă/ })).toBeChecked({ timeout: 30_000 });
+    await page.evaluate(() => localStorage.removeItem("ga40-group-wizard-v1"));
   });
 });

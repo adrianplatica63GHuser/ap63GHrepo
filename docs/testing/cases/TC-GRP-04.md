@@ -55,6 +55,8 @@ second invented person; nothing stored for the group's or the stamp's tiles.
 | 8 | Opens the same group from „Grupuri" | Its stored choice: every tile |
 | 9 | Back on the person, clicks the stamp | The stamp's screen, `?tiles=description`: „Descrierea ștampilei" only; then from „Ștampile", every tile |
 | 10 | Back on the person, clicks the „Vezi și" reference | The second person's screen (/natural-persons/…) |
+| 41.84a | (Slice 41.84) On „Grupuri", presses „Am înțeles" at the foot of „Ce este un Grup?", then ticks it again in „Panouri" | The tile goes and its box in „Panouri" is unticked; ticked, it is back. All its text in `rgb(192, 0, 0)` |
+| 41.84b | (41.84) Looks at „Cum lucrezi cu grupurile"; chooses „Fac un grup nou", then „Adaug sau scot membri", then „Văd grupuri de proprietăți pe hartă"; reloads | First only „Ce vrei să faci?" and the choices under „Grupul însuși", „Membrii grupului", „Pe hartă", each with why — no step. Each choice shows only its steps: making a group the search then „Adaugă grup nou"; the members theirs, with a note on a record's „Etichete și grupuri"; the map „Grupuri" and „Grup nou…". All the text `rgb(192, 0, 0)`; after the reload the last choice is still chosen |
 
 ## At the end — leaving things as they were found
 
