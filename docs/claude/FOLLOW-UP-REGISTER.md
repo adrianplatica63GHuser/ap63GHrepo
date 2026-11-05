@@ -12,17 +12,17 @@ are not repeated here either — `CATALOGUE_NOT_YET` in `src/lib/testing/catalog
 list, and one row below points at it.
 
 <!-- summary:begin -->
-As of 2026-11-05 — 392 entries (FU-360 filed by 40.18, FU-361 by 40.27, FU-362 by 40.78, FU-363 by 40.79, FU-364–365 by 40.84, FU-366–369 by 40.85, FU-370–371 by 40.86, FU-372 by 40.87, FU-373 by 40.88, FU-374 by 40.90, FU-375 by 40.92, FU-376 by 40.96, 40.98, FU-381 by 41.01, FU-382 by 41.03, FU-383–384 by 41.10, FU-385 by 41.13, FU-386–387 by 41.16, FU-388 by 41.22, FU-389 by 41.81, FU-390 by 41.82, FU-391 by 41.83, FU-392 by 41.87). Rows are status, columns are impact.
+As of 2026-11-05 — 394 entries (FU-360 filed by 40.18, FU-361 by 40.27, FU-362 by 40.78, FU-363 by 40.79, FU-364–365 by 40.84, FU-366–369 by 40.85, FU-370–371 by 40.86, FU-372 by 40.87, FU-373 by 40.88, FU-374 by 40.90, FU-375 by 40.92, FU-376 by 40.96, 40.98, FU-381 by 41.01, FU-382 by 41.03, FU-383–384 by 41.10, FU-385 by 41.13, FU-386–387 by 41.16, FU-388 by 41.22, FU-389 by 41.81, FU-390 by 41.82, FU-391 by 41.83, FU-392 by 41.87, FU-393 by 41.91, FU-394 by 41.92). Rows are status, columns are impact.
 
 | Status | data | user | dev | cosmetic | Total |
 |---|---:|---:|---:|---:|---:|
-| open | 20 | 93 | 86 | 33 | 232 |
+| open | 20 | 94 | 86 | 34 | 234 |
 | planned | 0 | 0 | 1 | 0 | 1 |
 | resolved | 41 | 63 | 32 | 3 | 139 |
 | ignored | 4 | 3 | 4 | 2 | 13 |
 | duplicate | 0 | 0 | 0 | 0 | 0 |
 | superseded | 0 | 6 | 1 | 0 | 7 |
-| **total** | 65 | 165 | 124 | 38 | 392 |
+| **total** | 65 | 166 | 124 | 39 | 394 |
 <!-- summary:end -->
 
 `src/__tests__/follow-up-register.test.ts` recounts the table and fails when this block disagrees
@@ -476,3 +476,5 @@ Nothing is filed from memory: every row carries evidence someone actually looked
 | FU-390 | 2026-11-05 41.82 Handover.41.82.md | tooling | UI shell | A change to src/app/globals.css is not compiled by a `next dev` that starts on a warm Turbopack cache: the runner's `.next/runner/dev` still served the 05:08 stylesheet (old `--color-card-meta`, no `bg-card-yellow`) on two runs after 41.82's commit, and Adrian's server on 3000 served it too. TSX and JSON changes were picked up. 41.82 cleared `.next/runner/dev` by hand while the runner was idle. | .next/runner/dev/static/chunks/src_app_globals_css_*.css dated 2026-11-04 05:08 at 2026-11-05 00:05; runner results 20261104T235858Z-4656, 20261105T000445Z-26925 | dev | S | open | Have the runner compare globals.css's mtime with its compiled stylesheet's before starting e2e and clear `.next/runner/dev` when the source is newer (a recovery like its others); say so in a note. | 2026-11-05 |
 | FU-391 | 2026-11-05 41.83 Handover.41.83.md | recommendation | UI shell | A natural person's own screen stands on the canvas's beige (bg-canvas, #F3F1ED), while the other record screens and, since 41.83, every Administrare screen stand on the off-white (bg-zinc-50). | src/app/natural-persons — the screen's wrapper draws bg-canvas (41.83's header, TODAY) | cosmetic | XS | open | Give the person's screen the off-white wrapper the property, juridical person and document screens have. | 2026-11-05 |
 | FU-392 | 2026-11-05 41.87 Handover.41.87.md | debt | Map | „Hartă extinsă"'s animator still runs its own clock (a frame loop plus a timer per part) while the whole tree's and the big page's openings share `playTimeline` (41.87, src/lib/ui/expand-animation.ts); three openings, two clocks. | src/components/maps/expand-map-animator.tsx — ExpandMapAnimator / CollapseMapAnimator's own tick and timers at 8511062 | dev | S | open | Play both animators through `playTimeline` (the camera rounding on a raster map and the stop on a drag stay theirs); TC-MAP-09 then runs with real maps. | 2026-11-05 |
+| FU-393 | 2026-11-05 41.91 Handover.41.91.md | defect | UI shell | On a natural person with no contact and no address, „Contact" and „Adrese" stay ticked in „Panouri" while the screen draws neither, so their X (41.91) cannot be pressed and „Panouri" counts three tiles shown where one is seen. | e2e/tiles/tile-close.spec.ts step 5 at c4e7a07: data-tile-close contact and addresses present, offsetParent null | user | S | open | Either draw an empty ticked tile as its one folded line, or leave its box unticked while it is kept out of sight. | 2026-11-05 |
+| FU-394 | 2026-11-05 41.92 Handover.41.92.md | recommendation | Admin & settings | A group's and a stamp's own screen, a document type's page and „Utilizatori & Acces" keep 41.83's 16-px heading, while Date de referință, Grupuri, Ștampile, Etichete and Setări are headed at the lists' 24 px with their icon (41.92). | src/app/admin/groups/[id], src/app/admin/stamps/[id], src/app/admin/users/page.tsx, value-lists document-type-page.tsx at the 41.92 commit | cosmetic | XS | open | Head them with ListHeading admin too, the group's and stamp's with the Users and Stamp icons. | 2026-11-05 |
