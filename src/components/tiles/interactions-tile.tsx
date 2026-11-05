@@ -49,6 +49,7 @@ import { ChannelPill, DirectionMark, StatusPill } from "@/components/interaction
 import { PAGE_MAX, type InteractionListItem } from "@/lib/interactions/model";
 import { interactionsHref } from "@/lib/interactions/links";
 import { TileTitle } from "./tile-title";
+import { TileCloseButton } from "./tile-close";
 import { TextTooltip } from "@/lib/ui/text-tooltip";
 
 /**
@@ -114,7 +115,7 @@ export function InteractionsTile({
   const head = peek ? peek.head : (
       <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1">
-          <TileTitle title={title} subtitle={subtitle} />
+          <TileTitle title={title} subtitle={subtitle} close={false} />
         </div>
         <IconButton
           icon={ArrowRight}
@@ -134,6 +135,8 @@ export function InteractionsTile({
             onClick={onNew}
           />
         )}
+        {/* 41.91: the tile's X, rightmost. */}
+        <TileCloseButton tile="interactions" title={title} />
       </div>
   );
   const body = (

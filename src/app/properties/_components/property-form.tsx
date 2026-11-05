@@ -1483,7 +1483,7 @@ export function PropertyForm({
           <section data-panel="cadastral" onKeyDown={editKeys("cadastral")} className={`rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${editingClass("cadastral")}`}>
             {/* Slice #38.30: the tile's title and the line saying what it holds — in every mode. */}
             {/* Slice 41.22: the heading is only its title — the system ID is in the page bar, left of the versions pill. */}
-            <TileTitle title={t("tiles.cadastral")} subtitle={t("tileSubtitles.cadastral")} action={editButton("cadastral", t("tiles.cadastral"))} />
+            <TileTitle title={t("tiles.cadastral")} subtitle={t("tileSubtitles.cadastral")} action={editButton("cadastral", t("tiles.cadastral"))} close={editingTile !== "cadastral"} />
             <div className="flex flex-col gap-2">
               {!typeConfig.hideTarlaParcela && (
                 <div className={STACKED_ROW_CLASS}>
@@ -1655,7 +1655,7 @@ export function PropertyForm({
           {/* Slice 40.97 (Adrian, 2026-10-28): Editează at the tile's top right, as on every other tile; „+ Adaugă punct"
               only once it is pressed, on the „Afișare:" line at the right (`addOnDisplayLine`). 40.35–40.96 it stood in
               the title row, through a portal, disabled while read-only. */}
-          <TileTitle title={t("tiles.corners")} subtitle={t("tileSubtitles.corners")} action={editButton("corners", t("tiles.corners"))} />
+          <TileTitle title={t("tiles.corners")} subtitle={t("tileSubtitles.corners")} action={editButton("corners", t("tiles.corners"))} close={editingTile !== "corners"} />
           <CornersManager
             addOnDisplayLine
             // 41.57: the tarla page's narrower gaps — the four row buttons get 48 px more, and never wrap.
@@ -1699,7 +1699,7 @@ export function PropertyForm({
                 />
               )}
               <div className={addressFolded ? "hidden" : "contents"}>
-              <TileTitle title={t("tiles.address")} subtitle={t("tileSubtitles.address")} action={editButton("address", t("tiles.address"))} />
+              <TileTitle title={t("tiles.address")} subtitle={t("tileSubtitles.address")} action={editButton("address", t("tiles.address"))} close={editingTile !== "address"} />
               <div className="flex flex-col gap-2">
                 <Field
                   label={t("address.streetLine")}

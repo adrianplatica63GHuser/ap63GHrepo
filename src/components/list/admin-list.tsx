@@ -22,6 +22,7 @@ import { LIST_HEAD } from "@/components/list/list-fit";
 import { ListSearchBox } from "@/components/list/list-search";
 import { COLUMN_LINES, ColumnHandles, measuredRoomRem, useColumnWidths } from "@/components/table/column-resize";
 import { columnRem, rem, type ColumnName } from "@/lib/ui/field-widths";
+import { TileCloseButton } from "@/components/tiles/tile-close";
 
 /** The list's tile: Reference Data's standard gap — the 1-px border and p-5. */
 export const ADMIN_LIST_PANEL =
@@ -102,7 +103,11 @@ export function AdminListToolbar({
         {add}
         <ListSearchBox value={search} onChange={onSearch} explanation={explanation} />
       </div>
-      {count !== null && <span className="text-xs text-fade dark:text-zinc-400" data-admin-list-count="">{count}</span>}
+      {/* 41.91: on a screen with „Panouri" (Grupuri, Ștampile) the list tile's X follows the count. */}
+      <span className="ml-auto flex items-center gap-2">
+        {count !== null && <span className="text-xs text-fade dark:text-zinc-400" data-admin-list-count="">{count}</span>}
+        <TileCloseButton />
+      </span>
     </div>
   );
 }

@@ -269,16 +269,29 @@ export async function forEachFrame(
  * edge (±1 px). `tile` is the bordered box itself (a gray panel, a frame, a list tile).
  */
 export async function expectEditInCorner(tile: Locator): Promise<{ top: number; right: number }> {
+  // Slice 41.91 rewrote this in place: the corner is the tile's X, „Închide — <tile>", where there is one, and
+  // „Editează" stands one place to its left, 8 px from it, on its line (it read the pen's own gaps to the corner).
   const gaps = await tile.evaluate((el) => {
     const pen = el.querySelector<HTMLElement>("[data-tile-edit]");
     if (!pen) return null;
+    const corner = el.querySelector<HTMLElement>("[data-tile-close]") ?? pen;
     const t = el.getBoundingClientRect();
-    const b = pen.getBoundingClientRect();
-    return { top: Math.round((b.top - t.top) * 10) / 10, right: Math.round((t.right - b.right) * 10) / 10 };
+    const b = corner.getBoundingClientRect();
+    const p = pen.getBoundingClientRect();
+    return {
+      top: Math.round((b.top - t.top) * 10) / 10,
+      right: Math.round((t.right - b.right) * 10) / 10,
+      penGap: corner === pen ? null : Math.round((b.left - p.right) * 10) / 10,
+      penTop: Math.round((p.top - b.top) * 10) / 10,
+    };
   });
   expect(gaps, "the tile has an „Editează”").not.toBeNull();
   expect(Math.abs(gaps!.top - gaps!.right), `top gap ${gaps!.top} px, right gap ${gaps!.right} px`).toBeLessThanOrEqual(1);
-  return gaps!;
+  if (gaps!.penGap !== null) {
+    expect(Math.abs(gaps!.penGap - 8), `„Editează” ${gaps!.penGap} px left of the X`).toBeLessThanOrEqual(1);
+    expect(Math.abs(gaps!.penTop), "„Editează” on the X's line").toBeLessThanOrEqual(1);
+  }
+  return { top: gaps!.top, right: gaps!.right };
 }
 
 /**

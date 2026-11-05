@@ -1195,6 +1195,7 @@
     "readEdit": {
       "edit": "Edit",
       "editTile": "Edit — {tile}",
+      "closeTile": "Close — {tile}",
       "save": "Save",
       "cancel": "Cancel",
       "yes": "Yes",

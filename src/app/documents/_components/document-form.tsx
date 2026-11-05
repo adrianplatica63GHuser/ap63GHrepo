@@ -1368,7 +1368,7 @@ export function DocumentForm({
           />
         )}
         <div className={folded ? "hidden" : "contents"}>
-          <TileTitle title={title} subtitle={subtitle} action={editButton(tile, title)} />
+          <TileTitle title={title} subtitle={subtitle} action={editButton(tile, title)} close={editingTile !== tile} />
           <FrameContext.Provider value={true}>
             <div className="flex flex-col gap-4">
               {children}
@@ -2486,7 +2486,7 @@ function Section({
   const heading = title === undefined ? null : (
     // Slice #37.90: inside a tile, a panel's subtitle reads in square brackets.
     // Slice 41.22: only the title — the system ID (#37.57's corner, drawn here by „Date generale") is in the page bar.
-    <TileTitle title={framed ? panelSubtitle(title) : title} subtitle={framed ? undefined : subtitle} action={framed ? undefined : action} />
+    <TileTitle title={framed ? panelSubtitle(title) : title} subtitle={framed ? undefined : subtitle} action={framed ? undefined : action} close={!framed && !editing} />
   );
   if (framed) {
     const allHidden = paths !== undefined && paths.length > 0 && paths.every((p) => hidden.has(p));

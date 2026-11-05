@@ -24,6 +24,11 @@
  * Slice 41.45: `only` — a group or stamp opened from a record (`?tiles=`) shows these tiles and no other, FOR THIS VISIT:
  * the stored choice is neither read for the screen nor written. „Panouri" ticks and unticks within the visit, „Toate"
  * shows every tile for it, and „Implicit" leaves the visit's set for the stored choice — without writing anything.
+ *
+ * Slice 41.91 — „Închide — <tile>", an X in each tile's corner (`TileCloseButton`, tile-close.tsx), is this choice's
+ * `toggle`: the screen's choice registers itself here while it is mounted (`tileCloserFor`), so a tile's X reaches it
+ * without a provider round each screen's tiles. Pressing it is unticking the tile in „Panouri" — stored as an untick
+ * is, or held for the visit under 41.45's `only`; the last tile shown has no X, since `toggleTile` keeps one.
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { TILES_ALL_LEFT, TILES_ALL_UP, TILE_POSITIONS_RESET, tilePositionsKey } from "@/lib/ui/tile-positions";
@@ -64,6 +69,45 @@ export interface TileChoice<K extends string> {
 }
 
 const NONE: readonly never[] = [];
+
+// ---------------------------------------------------------------------------
+// Slice 41.91 — the screens' choices, for the X in each tile's corner
+// ---------------------------------------------------------------------------
+
+/** What a tile's X needs from the screen's choice. */
+export type TileCloser = { all: readonly string[]; shown: readonly string[]; close: (key: string) => void };
+
+let closers: TileCloser[] = [];
+let closersVersion = 0;
+const closerListeners = new Set<() => void>();
+function closersChanged(): void {
+  closersVersion += 1;
+  for (const l of closerListeners) l();
+}
+
+/** For `useSyncExternalStore`: a change of any screen's choice. */
+export function subscribeTileClosers(listener: () => void): () => void {
+  closerListeners.add(listener);
+  return () => closerListeners.delete(listener);
+}
+export function tileClosersVersion(): number {
+  return closersVersion;
+}
+/** How many screens' choices are mounted: a title draws the X's place only where one is. */
+export function tileClosersCount(): number {
+  return closers.length;
+}
+
+/** The choice that holds `key` — the latest registered, when two screens' choices both name it. */
+export function tileCloserFor(key: string): TileCloser | undefined {
+  for (let i = closers.length - 1; i >= 0; i--) if (closers[i].all.includes(key)) return closers[i];
+  return undefined;
+}
+
+/** Whether a tile's X shows: the tile is on screen and is not the last one shown. */
+export function tileClosable(closer: TileCloser | undefined, key: string): boolean {
+  return !!closer && closer.shown.includes(key) && closer.shown.length > 1;
+}
 
 export function useTileChoice<K extends string>(
   reg: TileRegistry<K>,
@@ -155,6 +199,23 @@ export function useTileChoice<K extends string>(
   }, []);
 
   const isShown = useCallback((key: K) => shown.includes(key), [shown]);
+
+  // 41.91: registered while mounted, so each tile's X can close its tile through `toggle`.
+  useEffect(() => {
+    const closer: TileCloser = {
+      all: reg.all,
+      shown,
+      close: (key) => {
+        if (reg.all.includes(key as K) && shown.includes(key as K)) toggle(key as K);
+      },
+    };
+    closers = [...closers, closer];
+    closersChanged();
+    return () => {
+      closers = closers.filter((c) => c !== closer);
+      closersChanged();
+    };
+  }, [reg.all, shown, toggle]);
 
   // Slice 40.40: the packing hook (use-tile-packing.ts) does the moving; the bar does not need it.
   const allUp = useCallback(() => {

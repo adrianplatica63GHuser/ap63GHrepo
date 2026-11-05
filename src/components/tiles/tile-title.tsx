@@ -22,10 +22,19 @@
  * Slice 40.06: every record and dashboard tile draws its title through this piece — the inheritance tree tile and
  * Tarla's tiles included — so one class string changes them all. `tile-heading-one-piece.test.ts` keeps it so. `id`
  * is the `h2`'s, for a tile that names itself with `aria-labelledby`.
+ *
+ * Slice 41.91: the title's line ends with the tile's X, „Închide — <tile>" (`TileCloseButton`), after `action` — so
+ * „Editează" stands one place to its left at the corner's 8-px gap. Only the tile's first title draws it, and only on a
+ * screen whose „Panouri" can hide the tile; `close={false}` for a tile in edit, or one that draws its X itself after
+ * buttons of its own beside the title.
  */
-import type { ReactNode } from "react";
+import { useSyncExternalStore, type ReactNode } from "react";
 import { ADMIN_TILE_TITLE_TYPE, TILE_TITLE_TYPE } from "@/lib/ui/title-type";
 import { TextTooltip } from "@/lib/ui/text-tooltip";
+import { TileCloseButton } from "./tile-close";
+import { subscribeTileClosers, tileClosersCount } from "./use-tile-choice";
+
+const noVersion = () => 0;
 
 /**
  * The title's classes. Slice 40.18: set in Roboto Slab, navy, as alternative 13 draws kinds 1, 2 and 4
@@ -61,6 +70,7 @@ export function TileTitle({
   action,
   hint,
   admin = false,
+  close = true,
 }: {
   title: ReactNode;
   /** One line saying what the tile holds; absent, the title stands alone. */
@@ -85,7 +95,12 @@ export function TileTitle({
   hint?: ReactNode;
   /** Slice 41.83: a tile under Administrare — its title in #C00000. */
   admin?: boolean;
+  /** Slice 41.91: the tile's X at the line's end; false in edit, or where the tile draws its own. */
+  close?: boolean;
 }) {
+  // 41.91: a screen with a tile choice on it (any registered) gets the X's place; a title drawn anywhere else is as it was.
+  const screenHasTiles = useSyncExternalStore(subscribeTileClosers, tileClosersCount, noVersion) > 0;
+  const closer = close && screenHasTiles ? <TileCloseButton title={typeof title === "string" ? title : undefined} firstTitle /> : null;
   // 41.38: beside a 30-px action the title's first line (24 px) is centred on it — 3 px down — so a tile without one
   // keeps today's title height.
   const heading = (
@@ -96,14 +111,22 @@ export function TileTitle({
   );
   return (
     <div className={`min-w-0 ${className}`} data-tile-title="">
-      {hint || action ? (
-        <div className="flex items-start gap-1.5" data-tile-title-line="">
+      {hint || action || closer ? (
+        // 41.91: with the X and no action, the title is centred on the X as it is on an action (3 px down).
+        <div className="flex items-start gap-1.5 [&:has([data-tile-close])>h2]:mt-[3px]" data-tile-title-line="">
           {heading}
           {hint && <div className={`flex shrink-0 items-center${action ? " mt-[3px]" : ""}`}>{hint}</div>}
-          {action && (
-            <div className="ml-auto shrink-0 pl-0.5" data-tile-title-action="">
+          {action ? (
+            <div className="ml-auto flex shrink-0 items-center gap-2 pl-0.5" data-tile-title-action="">
               {action}
+              {closer}
             </div>
+          ) : (
+            closer && (
+              <div className="ml-auto flex shrink-0 items-center pl-0.5" data-tile-title-close="">
+                {closer}
+              </div>
+            )
           )}
         </div>
       ) : (

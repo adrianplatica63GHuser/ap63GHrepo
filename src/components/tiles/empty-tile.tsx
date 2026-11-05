@@ -24,6 +24,7 @@ import { useTranslations } from "next-intl";
 import { Plus } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { TILE_TITLE_CLASS } from "@/components/tiles/tile-title";
+import { TileCloseButton } from "@/components/tiles/tile-close";
 
 /** The first box a person types into, inside the tile's panel. */
 const FIRST_FIELD =
@@ -126,17 +127,21 @@ export function EmptyTileLine({
       <span className="min-w-0 truncate text-sm text-fade dark:text-zinc-400" data-empty-tile-state={state}>
         {t(`state.${state}`)}
       </span>
-      {onAdd && (
-        <IconButton
-          icon={Plus}
-          label={t("addTo", { tile: title })}
-          variant="secondary"
-          size="sm"
-          className="ml-auto shrink-0"
-          onClick={onAdd}
-          data-empty-tile-add=""
-        />
-      )}
+      {/* 41.91: „Adaugă" and, after it at the corner's 8 px, the tile's X — a folded tile draws no title of its own. */}
+      <span className="ml-auto flex shrink-0 items-center gap-2" data-empty-tile-corner="">
+        {onAdd && (
+          <IconButton
+            icon={Plus}
+            label={t("addTo", { tile: title })}
+            variant="secondary"
+            size="sm"
+            className="shrink-0"
+            onClick={onAdd}
+            data-empty-tile-add=""
+          />
+        )}
+        <TileCloseButton title={title} untitled />
+      </span>
     </div>
   );
 }

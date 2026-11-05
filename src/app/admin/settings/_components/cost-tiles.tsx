@@ -29,6 +29,7 @@ import { CAD_PER, PROVIDER_FACTS, type CostProvider } from "@/lib/costs/catalogu
 import { ENTERED_CURRENCIES, formatCad, parseTypedAmount, type DayCost, type EnteredCurrency } from "@/lib/costs/compute";
 import type { CostSummary, EnteredAmount, ProviderSummary } from "@/lib/costs/summary";
 import { ADMIN_PANEL_TITLE_TYPE } from "@/lib/ui/title-type";
+import { TileCloseButton } from "@/components/tiles/tile-close";
 
 /** The cost tiles are as wide as Setări's own tiles. */
 const COST_TILE_UNITS = 4; // 40.98: re-pinned (3 of 148 px)
@@ -379,10 +380,13 @@ export function CostTile({
       // 41.83: under Administrare every tile is the record tile's grey (it wore the meta group's yellow).
       className={`${TILE_SURFACE} flex flex-col gap-3`}
       data-cost-tile={provider}
+      data-tile={provider}
       data-cost-state={open ? "expanded" : "collapsed"}
     >
       <div className="flex items-start justify-between gap-2">
         <h2 className="text-sm font-semibold text-ink">{title}</h2>
+        {/* 41.91: the toggle, then the tile's X at the corner's 8 px. */}
+        <span className="flex items-center gap-2">
         <IconButton
           icon={open ? ChevronUp : ChevronDown}
           label={open ? t("collapse") : t("expand")}
@@ -392,6 +396,8 @@ export function CostTile({
           data-cost-toggle=""
           onClick={() => setOpen((o) => !o)}
         />
+        <TileCloseButton tile={provider} title={title} />
+        </span>
       </div>
       {status ?? (line && <p className="text-sm text-ink" data-cost-line="">{line}</p>)}
       {open && (

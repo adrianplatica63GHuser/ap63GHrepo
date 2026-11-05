@@ -1195,6 +1195,7 @@
     "readEdit": {
       "edit": "Editează",
       "editTile": "Editează — {tile}",
+      "closeTile": "Închide — {tile}",
       "save": "Salvează",
       "cancel": "Renunță",
       "yes": "Da",

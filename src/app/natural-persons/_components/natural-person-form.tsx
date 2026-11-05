@@ -1024,7 +1024,7 @@ export function NaturalPersonForm({
       <section style={NP_PANEL_STYLE.identity} data-panel="identity" {...tileProps("identity")} onKeyDown={editKeys("identity")} className={`rounded-md border border-card-rim bg-card p-3 shadow-sm${hiddenClass("identity")}${editingClass("identity")}`}>
         {/* Slice #38.30: the tile's title and the line saying what it holds — in every mode, so „Adaugă nou" reads as the record does. */}
         {/* Slice 41.22: the heading is only its title — the system ID is in the page bar, left of the versions pill. */}
-        <TileTitle title={t("tiles.identity")} subtitle={t("tileSubtitles.identity")} action={editButton("identity", t("tiles.identity"))} />
+        <TileTitle title={t("tiles.identity")} subtitle={t("tileSubtitles.identity")} action={editButton("identity", t("tiles.identity"))} close={editingTile !== "identity"} />
         {/* Slice #37.26 — the rows of `NP_ROWS.identity`. */}
         <div className="flex flex-col gap-2">
           <div className={STACKED_ROW_CLASS}>
@@ -1226,7 +1226,7 @@ export function NaturalPersonForm({
       <section style={NP_PANEL_STYLE.contact} data-panel="contact" {...tileProps("contact")} onKeyDown={editKeys("contact")} className={`rounded-md border border-card-rim bg-card p-3 shadow-sm${hiddenClass("contact")}${editingClass("contact")}`}>
         {contactFolded && <EmptyTileLine tile="contact" title={t("tiles.contact")} onAdd={addTo("contact", "contact")} />}
         <div className={contactFolded ? "hidden" : "contents"}>
-        <TileTitle title={t("tiles.contact")} subtitle={t("tileSubtitles.contact")} action={editButton("contact", t("tiles.contact"))} />
+        <TileTitle title={t("tiles.contact")} subtitle={t("tileSubtitles.contact")} action={editButton("contact", t("tiles.contact"))} close={editingTile !== "contact"} />
         {/* Slice #37.26 — the rows of `NP_ROWS.contact`. Slice 41.05: the tile is 2 units, so the two phones are one to
             a row and the e-mails take the panel's whole width. */}
         <div className="flex flex-col gap-2">
@@ -1302,6 +1302,7 @@ export function NaturalPersonForm({
         collapsed={homeFolded ? { tile: "home", onAdd: addTo("home", "addresses.HOME") } : undefined}
         emptyFields={emptyFieldsLink("home")}
         titleAction={editButton("home", t("sections.homeAddress"))}
+        titleClose={editingTile !== "home" && editingTile !== "correspondence"}
         after={editBar("home")}
         sectionClassName={editingClass("home").trim()}
         onKeyDown={editKeys("home")}
@@ -1341,6 +1342,7 @@ export function NaturalPersonForm({
           collapsed={correspondenceFolded ? { tile: "correspondence", onAdd: addTo("correspondence", "addresses.CORRESPONDENCE") } : undefined}
           emptyFields={emptyFieldsLink("correspondence")}
           titleAction={editButton("correspondence", t("sections.correspondenceAddress"))}
+          titleClose={editingTile !== "home" && editingTile !== "correspondence"}
           after={editBar("correspondence")}
           footer={perTile && editingTile === "correspondence" ? sameAsHomeBox : undefined}
           sectionClassName={editingClass("correspondence").trim()}

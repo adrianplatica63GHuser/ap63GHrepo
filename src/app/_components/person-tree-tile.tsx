@@ -44,6 +44,7 @@ import { useWholeTree } from "./whole-tree-overlay";
 import { fetchTree } from "@/app/inheritance-tree/_components/inheritance-tree-screen";
 import { unitStyle } from "@/lib/ui/field-widths";
 import { TileTitle } from "@/components/tiles/tile-title";
+import { TileCloseButton } from "@/components/tiles/tile-close";
 
 type Role = { id: string; name: string; validForPerson?: boolean | null; kinship?: string | null };
 type Found = { id: string; displayName: string };
@@ -98,9 +99,11 @@ export function PersonTreeTile({
       {/* Slice 40.06: the title and its one-line subtitle are every tile's (TileTitle); „Deschide arborele întreg"
           stays at the right of the title's line, beside the heading rather than inside it. */}
       <div className="mb-2 flex items-start justify-between gap-2">
-        <TileTitle title={title} subtitle={subtitle} className="flex-1" />
+        <TileTitle title={title} subtitle={subtitle} className="flex-1" close={false} />
         {/* 41.87: a button now — the whole tree opens over this screen (it was a link to /inheritance-tree?focus=). */}
         <IconButton ref={wholeButton} icon={Maximize2} label={t("wholeTree")} variant="secondary" size="sm" aria-expanded={whole.shown} data-tree-whole="" onClick={whole.open} />
+        {/* 41.91: the tile's X, right of „Deschide arborele întreg". */}
+        <TileCloseButton tile="inheritanceTree" title={title} />
       </div>
       <div ref={canvasBox} className="relative aspect-square w-full overflow-hidden rounded-md border border-card-pinned-rim bg-white/70 dark:border-card-pinned-rim-dark dark:bg-zinc-950" data-tree-tile-canvas="">
         {q.isLoading && <p className="p-3 text-xs text-fade">{t("loading")}</p>}

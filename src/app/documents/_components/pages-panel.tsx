@@ -46,6 +46,7 @@ import { useCallback, useEffect, useRef, useState, useId, type RefObject } from 
 import { ChevronLeft, ChevronRight, Download, FilePlus, ImageOff, Maximize2, Minimize2, Pencil, Printer, RotateCw, Save, Trash2, Upload, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { QUIET_ROW, QUIET_ROW_BUTTONS, QUIET_ROW_MARK } from "@/lib/ui/quiet-row";
+import { TileCloseButton } from "@/components/tiles/tile-close";
 import { HelpHint } from "@/components/help/help-hint";
 import { UPLOAD_ACCEPT_ATTRIBUTE } from "@/lib/files/file-kinds";
 import { contentTypeOf } from "@/lib/files/file-mime";
@@ -874,6 +875,8 @@ export function PagesPanel({
             />
           )}
           {bigPage && <HelpHint hintKey="big-page-zoom" />}
+          {/* 41.91: the tile's X, rightmost; an Incursiune keeps its own close. */}
+          {mode !== "peek" && <TileCloseButton tile="pages" title={t("sectionTitle")} />}
           {peekHead && <IncursionClose label={peekHead.closeLabel} onClose={peekHead.onClose} />}
         </div>
       </div>

@@ -105,6 +105,8 @@ export function ListTile({
             <TileTitle
               title={title}
               subtitle={subtitle}
+              // 41.91: no X while the content is in edit („Clasificare" open, „Etichete și grupuri" before „Gata").
+              close={!editing}
               action={<span ref={setActionSlot} className="flex items-center" data-tile-action-slot="" />}
               // 41.37: `empty:hidden` — no gap after the title while nothing is drawn there.
               hint={<span ref={setHintSlot} className="flex items-center empty:hidden" data-tile-hint-slot="" />}

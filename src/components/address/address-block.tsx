@@ -115,6 +115,8 @@ type Props<TFormValues extends FieldValues> = {
   emptyFields?: ReactNode;
   /** Slice 40.72: „Editează", beside the panel's title. */
   titleAction?: ReactNode;
+  /** Slice 41.91: false while the block is in edit — the tile's X (`TileTitle`'s) is not drawn then. */
+  titleClose?: boolean;
   /** Slice 40.72: under the panel's fields — the open tile's „Salvează" and „Renunță". */
   after?: ReactNode;
   /** Slice 40.72: the open tile's outline, on the panel. */
@@ -140,6 +142,7 @@ export function AddressBlock<TFormValues extends FieldValues>({
   collapsed,
   emptyFields,
   titleAction,
+  titleClose = true,
   after,
   sectionClassName,
   onKeyDown,
@@ -191,7 +194,7 @@ export function AddressBlock<TFormValues extends FieldValues>({
     >
       {collapsed && <EmptyTileLine tile={collapsed.tile} title={title} onAdd={collapsed.onAdd} />}
       <div className={collapsed ? "hidden" : "contents"}>
-      <TileTitle title={title} subtitle={subtitle} action={titleAction} />
+      <TileTitle title={title} subtitle={subtitle} action={titleAction} close={titleClose} />
       <div className="flex flex-col gap-2">
         {ADDRESS_ROWS.map((row) => (
           <div key={row.join("|")} className={STACKED_ROW_CLASS}>

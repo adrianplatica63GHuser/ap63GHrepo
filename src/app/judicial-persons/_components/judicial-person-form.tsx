@@ -969,7 +969,7 @@ export function JudicialPersonForm({
       <section style={PANEL_UNIT_STYLE.judicialPerson.identity} data-panel="identity" {...tileProps("identity")} onKeyDown={editKeys("identity")} className={`rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${hiddenClass("identity")}${editingClass("identity")}`}>
         {/* Slice #38.30: the tile's title and the line saying what it holds — in every mode. */}
         {/* Slice 41.22: the heading is only its title — the system ID is in the page bar, left of the versions pill. */}
-        <TileTitle title={t("tiles.identity")} subtitle={t("tileSubtitles.identity")} action={editButton("identity", t("tiles.identity"))} />
+        <TileTitle title={t("tiles.identity")} subtitle={t("tileSubtitles.identity")} action={editButton("identity", t("tiles.identity"))} close={editingTile !== "identity"} />
         <div className="flex flex-col gap-2">
           <Field
             label={t("fields.name")}
@@ -1056,7 +1056,7 @@ export function JudicialPersonForm({
       <section style={PANEL_UNIT_STYLE.judicialPerson.contactPersons} data-panel="contact-persons" {...tileProps("contactPersons")} onKeyDown={editKeys("contactPersons")} className={`rounded-md border border-card-rim bg-card p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-900${hiddenClass("contactPersons")}${editingClass("contactPersons")}`}>
         {contactPersonsFolded && <EmptyTileLine tile="contactPersons" title={t("tiles.contactPersons")} onAdd={addTo("contactPersons", "contact-persons")} />}
         <div className={contactPersonsFolded ? "hidden" : "contents"}>
-        <TileTitle title={t("tiles.contactPersons")} subtitle={t("tileSubtitles.contactPersons")} className="mb-3" action={editButton("contactPersons", t("tiles.contactPersons"))} />
+        <TileTitle title={t("tiles.contactPersons")} subtitle={t("tileSubtitles.contactPersons")} className="mb-3" action={editButton("contactPersons", t("tiles.contactPersons"))} close={editingTile !== "contactPersons"} />
         <div className="flex flex-col gap-3">
           {/* Slice #38.31: the firm's own phone and e-mail, above its contact persons —
               the rows of `SCREEN_ROWS.judicialPerson.contactPersons`. */}
@@ -1127,6 +1127,7 @@ export function JudicialPersonForm({
         collapsed={headquartersFolded ? { tile: "headquarters", onAdd: addTo("headquarters", "addresses.HEADQUARTERS") } : undefined}
         emptyFields={emptyFieldsLink("headquarters")}
         titleAction={editButton("headquarters", t("sections.registeredAddress"))}
+        titleClose={editingTile !== "headquarters" && editingTile !== "correspondence"}
         after={editBar("headquarters")}
         sectionClassName={editingClass("headquarters").trim()}
         onKeyDown={editKeys("headquarters")}
@@ -1168,6 +1169,7 @@ export function JudicialPersonForm({
           collapsed={correspondenceFolded ? { tile: "correspondence", onAdd: addTo("correspondence", "addresses.CORRESPONDENCE") } : undefined}
           emptyFields={emptyFieldsLink("correspondence")}
           titleAction={editButton("correspondence", t("sections.correspondenceAddress"))}
+          titleClose={editingTile !== "headquarters" && editingTile !== "correspondence"}
           after={editBar("correspondence")}
           footer={perTile && editingTile === "correspondence" ? sameAsHqBox : undefined}
           sectionClassName={editingClass("correspondence").trim()}

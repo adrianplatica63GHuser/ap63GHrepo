@@ -11,12 +11,17 @@
  */
 import type { ReactNode } from "react";
 import { ADMIN_SCREEN_TILE_TITLE_TYPE, SCREEN_TILE_TITLE_TYPE } from "@/lib/ui/title-type";
+import { TileCloseButton } from "@/components/tiles/tile-close";
 
 export function TileTitle({ id, title, count, admin = false }: { id: string; title: ReactNode; count?: number; /** 41.83: under Administrare, #C00000. */ admin?: boolean }) {
   return (
     <div className="flex items-center justify-between gap-2 border-b border-card-rim px-4 py-2 dark:border-zinc-800">
       <span id={id} className={admin ? ADMIN_SCREEN_TILE_TITLE_TYPE : SCREEN_TILE_TITLE_TYPE}>{title}</span>
-      {count !== undefined && <span className="text-xs text-fade dark:text-zinc-400">{count}</span>}
+      {/* 41.91: the tile's X at the row's right end, after the count. */}
+      <span className="ml-auto flex items-center gap-2">
+        {count !== undefined && <span className="text-xs text-fade dark:text-zinc-400">{count}</span>}
+        <TileCloseButton title={typeof title === "string" ? title : undefined} />
+      </span>
     </div>
   );
 }
