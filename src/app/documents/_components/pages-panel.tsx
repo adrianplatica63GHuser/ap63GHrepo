@@ -45,6 +45,7 @@ import { NOTE_FOLD_LINES } from "@/lib/ui/field-widths";
 import { useCallback, useEffect, useRef, useState, useId, type RefObject } from "react";
 import { ChevronLeft, ChevronRight, Download, FilePlus, ImageOff, Maximize2, Minimize2, Pencil, Printer, RotateCw, Save, Trash2, Upload, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
+import { QUIET_ROW, QUIET_ROW_BUTTONS, QUIET_ROW_MARK } from "@/lib/ui/quiet-row";
 import { HelpHint } from "@/components/help/help-hint";
 import { UPLOAD_ACCEPT_ATTRIBUTE } from "@/lib/files/file-kinds";
 import { contentTypeOf } from "@/lib/files/file-mime";
@@ -962,7 +963,8 @@ export function PagesPanel({
                           if (e.key === "Enter" || e.key === " ") loadView(page);
                         }}
                         className={[
-                          "cursor-pointer border-b border-wire/50 transition-colors dark:border-zinc-800",
+                          // 41.90: a calm row, as „Legături"'s (quiet-row.ts) — its buttons faint until it is hovered.
+                          `${QUIET_ROW} cursor-pointer border-b border-wire/50 transition-colors dark:border-zinc-800`,
                           "hover:bg-canvas dark:hover:bg-zinc-800/50",
                           selectedPageId === page.id
                             ? "bg-cta-pale dark:bg-zinc-800"
@@ -1005,8 +1007,9 @@ export function PagesPanel({
                             aligns with the actual shown page"): against the list's right edge, which is the viewer's. */}
                         <td className="py-1.5">
                           <div
-                            className="flex items-center justify-end gap-1"
+                            className={`flex items-center justify-end gap-1 ${QUIET_ROW_BUTTONS}`}
                             data-page-actions=""
+                            data-row-buttons={QUIET_ROW_MARK}
                             onClick={(e) => e.stopPropagation()}
                             onKeyDown={(e) => e.stopPropagation()}
                           >

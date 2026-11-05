@@ -38,6 +38,7 @@ import { NATURAL_PERSON_COLUMN_FILTERS, NATURAL_PERSON_FILTER_FIELDS, parsePerso
 import { dmyFromIso, modifiedOn, personAgeText } from "@/lib/persons/person-age";
 import { DeceasedMark } from "@/components/persons/deceased-mark";
 import { TextTooltip } from "@/lib/ui/text-tooltip";
+import { QUIET_ROW_BUTTONS } from "@/lib/ui/quiet-row";
 
 // Slice #37.94: the key and the defaults are LIST_COLUMN_CHOICE.person (four since 40.66).
 const MAX_OPT   = 4;
@@ -385,7 +386,7 @@ export function NaturalPersonListView() {
                   )}
                   <td className="px-4 py-1" onClick={(e) => e.stopPropagation()}>
                     {/* Slice #38.57: side by side, always. */}
-                    <span className="flex flex-nowrap gap-1.5 opacity-35 transition-opacity group-hover/row:opacity-100 group-focus-within/row:opacity-100 [@media(hover:none)]:opacity-100" data-row-actions="">
+                    <span className={`flex flex-nowrap gap-1.5 ${QUIET_ROW_BUTTONS}`} data-row-actions="">
                       {/* Slice #38.71/#38.72/#38.76: the magnifier („Previzualizare"), the eye („Incursiune"), the chain link („Legături"). 40.60: the arrow („Deschide") went — the name is the link (`RowNameLink`); the three are faint at rest, full on the row under the mouse or holding the focus. */}
                       <PreviewButton target={{ kind: "person", id: item.id }} square="row" />
                       <IncursionButton target={{ kind: "person", id: item.id }} square="row" />

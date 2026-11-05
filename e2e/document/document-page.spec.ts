@@ -281,6 +281,20 @@ test.describe("TC-DOC-01 — Act creat, pagină atașată, pagina se deschide", 
       expect(Math.abs(lastButton.x + lastButton.width - (table.x + table.width)), "„Șterge” against the table's right edge").toBeLessThanOrEqual(1);
       await expect(pages.locator("[data-page-actions]").first().getByRole("button").last()).toHaveAccessibleName("Șterge");
 
+      // Step 9b (Slice 41.90) — the rows are calm, as „Legături"'s: a row's buttons at 0.35 at rest, 1 under the mouse
+      // and with the focus in the row.
+      const rowButtons = pages.locator('tbody tr [data-row-buttons="quiet"]').first();
+      const opacity = () => rowButtons.evaluate((e) => getComputedStyle(e).opacity);
+      await page.mouse.move(2, 2);
+      await expect.poll(opacity, { timeout: 5_000 }).toBe("0.35");
+      await pages.locator("tbody tr").first().hover();
+      await expect.poll(opacity, { timeout: 5_000 }).toBe("1");
+      await page.mouse.move(2, 2);
+      await expect.poll(opacity, { timeout: 5_000 }).toBe("0.35");
+      await rowButtons.getByRole("button", { name: "Tipărire", exact: true }).focus();
+      await expect.poll(opacity, { timeout: 5_000 }).toBe("1");
+      await rowButtons.getByRole("button", { name: "Tipărire", exact: true }).blur();
+
       // Slice #37.15 — the page panel's width in a maximised 1920-pixel window,
       // written beside the layout screenshots for the handover. Recorded, not
       // asserted: #37.15 reads it once before its layout change and once after.

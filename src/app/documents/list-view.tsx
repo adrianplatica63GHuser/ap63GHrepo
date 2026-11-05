@@ -43,6 +43,7 @@ import { DEFAULT_LIST_ORDER, LIST_SORTS, ORDER_KEYS, appendOrderParams, orderAdd
 import { appendFilterParams, filterAddressPatch, filterSignature, type FacetValue, type FilterState } from "@/lib/list/filter-bar";
 import { DOCUMENT_COLUMN_FILTERS, DOCUMENT_FILTER_FIELDS, DOCUMENT_FILTER_KEYS, parseDocumentFilters } from "@/lib/documents/list-filters";
 import { TextTooltip } from "@/lib/ui/text-tooltip";
+import { QUIET_ROW_BUTTONS } from "@/lib/ui/quiet-row";
 
 // Slice #37.94: the key and the defaults are LIST_COLUMN_CHOICE.document (four since 40.66).
 const MAX_OPT     = 4;
@@ -1134,7 +1135,7 @@ export function DocumentListView({
                       )}
                       <td className="px-4 py-1" onClick={(e) => e.stopPropagation()}>
                         {/* Slice #38.57: side by side, always. */}
-                        <span className="flex flex-nowrap gap-1.5 opacity-35 transition-opacity group-hover/row:opacity-100 group-focus-within/row:opacity-100 [@media(hover:none)]:opacity-100" data-row-actions="">
+                        <span className={`flex flex-nowrap gap-1.5 ${QUIET_ROW_BUTTONS}`} data-row-actions="">
                           {/* Slice #38.71/#38.72/#38.76: the magnifier („Previzualizare"), the eye („Incursiune"), the chain link („Legături"). 40.60: the arrow („Deschide") went — the name is the link (`RowNameLink`); the three are faint at rest, full on the row under the mouse or holding the focus. */}
                           <PreviewButton target={{ kind: "document", id: item.id }} square="row" />
                           <IncursionButton target={{ kind: "document", id: item.id }} square="row" />

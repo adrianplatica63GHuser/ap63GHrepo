@@ -36,6 +36,7 @@ import { createContext, useContext } from "react";
 import type { LucideProps } from "lucide-react";
 import { ROW_SELECT_REM, ROW_SLOT_REM, rem, type RowSlot } from "@/lib/ui/field-widths";
 import { TextTooltip } from "@/lib/ui/text-tooltip";
+import { QUIET_ROW_BUTTONS, QUIET_ROW_MARK } from "@/lib/ui/quiet-row";
 
 const SlotsContext = createContext<readonly RowSlot[]>([]);
 
@@ -164,11 +165,10 @@ export function OneLineRow({
       {/* `div`s, not `span`s: a slot may hold a block (the share panel, a bubble). */}
       <div
         className={
-          quiet
-            ? "flex shrink-0 items-center gap-1 opacity-35 transition-opacity group-hover/row:opacity-100 group-focus-within/row:opacity-100 has-[[aria-pressed=true]]:opacity-100 has-[[aria-expanded=true]]:opacity-100 [@media(hover:none)]:opacity-100"
-            : "flex shrink-0 items-center gap-1"
+          // 41.90: the recipe is one constant now (quiet-row.ts), read by „Pagini"'s rows too.
+          quiet ? `flex shrink-0 items-center gap-1 ${QUIET_ROW_BUTTONS}` : "flex shrink-0 items-center gap-1"
         }
-        data-row-buttons={quiet ? "quiet" : undefined}
+        data-row-buttons={quiet ? QUIET_ROW_MARK : undefined}
         onClick={keep}
         onAuxClick={keep}
         onDoubleClick={keep}

@@ -54,7 +54,9 @@ describe("the four lists, one line per row (#38.57)", () => {
     // Slice 40.30: 24-px buttons (`square="row"`) 6 px apart — 4 × 24 + 3 × 6 = 114 px, inside the column's 128.
     // Slice 40.39: the column is those 114 px (`ROW_ACTIONS_REM`), so the band ends 16 px past „Deschide".
     // 40.60: faint at rest, full on the row under the mouse or holding the focus, and where nothing hovers.
-    expect(VIEW[l]).toContain('<span className="flex flex-nowrap gap-1.5 opacity-35 transition-opacity group-hover/row:opacity-100 group-focus-within/row:opacity-100 [@media(hover:none)]:opacity-100" data-row-actions="">');
+    // 41.90 rewrote this in place: the recipe is QUIET_ROW_BUTTONS (src/lib/ui/quiet-row.ts), one source for the lists,
+    // „Legături" and „Pagini" — it read the class string itself, without the pressed/expanded arms.
+    expect(VIEW[l]).toContain('<span className={`flex flex-nowrap gap-1.5 ${QUIET_ROW_BUTTONS}`} data-row-actions="">');
     // 40.60: three — „Deschide" left the rows (it was 4, 4 × 24 + 3 × 6 = 114 px, 40.39).
     expect((VIEW[l].match(/square="row"/g) ?? []).length).toBe(3);
     // #38.57 held two xs buttons (60 px); #38.72 adds the eye between them — three side by side, 94 px
