@@ -963,7 +963,7 @@ export function PagesPanel({
                           if (e.key === "Enter" || e.key === " ") loadView(page);
                         }}
                         className={[
-                          // 41.90: a calm row, as „Legături"'s (quiet-row.ts) — its buttons faint until it is hovered.
+                          // 41.90: a calm row, as in „Legături” (quiet-row.ts) — its buttons faint until it is hovered.
                           `${QUIET_ROW} cursor-pointer border-b border-wire/50 transition-colors dark:border-zinc-800`,
                           "hover:bg-canvas dark:hover:bg-zinc-800/50",
                           selectedPageId === page.id
