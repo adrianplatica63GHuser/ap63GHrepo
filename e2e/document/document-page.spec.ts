@@ -291,10 +291,37 @@ test.describe("TC-DOC-01 — Act creat, pagină atașată, pagina se deschide", 
       await expect(collapse).toBeVisible();
       await expect(page.getByRole("heading", { name: "Pagini", exact: true })).toBeVisible();
 
-      // Step 11 — „✕ Restrânge": the large view closes.
+      // Step 11 — „✕ Restrânge": the large view closes. (41.88: pressed while the opening plays, it closes at once.)
       await collapse.click();
-      await expect(collapse).toHaveCount(0);
+      await expect(collapse).toHaveCount(0, { timeout: 20_000 });
       await expect(pages.getByRole("button", { name: "Pagini extinse" })).toBeVisible();
+
+      // Step 11a (Slice 41.88) — „Pagini extinse" grows out of the tile: the overlay ends at inset-4 with the page at its
+      // fit in the middle of the big viewer.
+      const theater = page.getByRole("dialog", { name: "Pagini", exact: true });
+      await pages.getByRole("button", { name: "Pagini extinse" }).click();
+      await expect(theater).toHaveAttribute("data-expand", "done", { timeout: 20_000 });
+      const vp = page.viewportSize()!;
+      const panelBox = (await theater.locator("[data-pages-theater-panel]").boundingBox())!;
+      expect([panelBox.x, panelBox.y, panelBox.width, panelBox.height].map(Math.round)).toEqual([16, 16, vp.width - 32, vp.height - 32]);
+      const bigViewer = theater.locator('[data-pages-viewer="big"]');
+      const fitted = async () => {
+        const v = (await bigViewer.boundingBox())!;
+        const i = (await bigViewer.getByRole("img", { name: FIXTURE_NAME }).boundingBox())!;
+        const inside = i.x >= v.x - 1 && i.y >= v.y - 1 && i.x + i.width <= v.x + v.width + 1 && i.y + i.height <= v.y + v.height + 1;
+        const centred = Math.abs(i.x + i.width / 2 - (v.x + v.width / 2)) <= 2 && Math.abs(i.y + i.height / 2 - (v.y + v.height / 2)) <= 2;
+        return inside && centred ? "fitted" : JSON.stringify({ v, i });
+      };
+      await expect.poll(fitted, { timeout: 10_000 }).toBe("fitted");
+
+      // Step 11b (41.88) — zoomed with the wheel, then „Restrânge": the return plays first, the overlay goes, the focus
+      // is on „Pagini extinse".
+      await page.mouse.move(vp.width / 2, vp.height / 2);
+      await page.mouse.wheel(0, -400);
+      await theater.getByRole("button", { name: "Restrânge", exact: true }).click();
+      await expect(theater).toHaveAttribute("data-collapse-return", "flies");
+      await expect(theater).toHaveCount(0, { timeout: 25_000 });
+      await expect(pages.getByRole("button", { name: "Pagini extinse" })).toBeFocused();
     } finally {
       if (documentId) await removeRecord(page.request, "document", documentId);
     }
