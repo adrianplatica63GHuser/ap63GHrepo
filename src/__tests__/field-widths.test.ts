@@ -169,7 +169,7 @@ const CONVERTED: [string, string][] = [
   ["the Property's ReadOnlyField", region(PROP_FORM, "function ReadOnlyField(", "\nfunction ")],
   // Slice #37.15
   ["the Document's panels", region(DOC_FORM, "const renderCustomField = (", "const formElement = (")],
-  ["the Document's form and its row", region(DOC_FORM, "const formElement = (", "{bigPage && mode !== \"create\"")],
+  ["the Document's form and its row", region(DOC_FORM, "const formElement = (", "{mode !== \"create\" && documentId && theater.overlay}")], // 41.88: the overlay is pages-theater.tsx's (it read "{bigPage && mode !== \"create\"")
   ["the Document's Section", region(DOC_FORM, "function Section(", "\ntype FieldProps")],
   ["the Document's Field", region(DOC_FORM, "function Field(", "\nfunction ")],
   ["the Document's SelectField", region(DOC_FORM, "function SelectField(", "\ntype TFunc")],

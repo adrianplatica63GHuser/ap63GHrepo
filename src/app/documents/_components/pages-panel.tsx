@@ -42,7 +42,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
 import { GrowingText } from "@/components/forms/growing-text";
 import { NOTE_FOLD_LINES } from "@/lib/ui/field-widths";
-import { useCallback, useEffect, useRef, useState, useId } from "react";
+import { useCallback, useEffect, useRef, useState, useId, type RefObject } from "react";
 import { ChevronLeft, ChevronRight, Download, FilePlus, ImageOff, Maximize2, Minimize2, Pencil, Printer, RotateCw, Save, Trash2, Upload, X } from "lucide-react";
 import { IconButton } from "@/lib/ui/icon-button";
 import { HelpHint } from "@/components/help/help-hint";
@@ -374,13 +374,26 @@ export type PagesPanelState = ReturnType<typeof usePagesPanelState>;
 // resets don't allocate a new object shape each time.
 const IDENTITY_TRANSFORM = { scale: MIN_SCALE, tx: 0, ty: 0 };
 
+/**
+ * Slice 41.88: the big viewer driven from outside, frame by frame — „Pagini extinse"'s opening and way back
+ * (pages-theater.tsx) read its zoom and pan and set them. `transform` is the content's: scale, then translate, from
+ * the box's top-left; at rest (the fit) it is { scale: 1, tx: 0, ty: 0 }.
+ */
+export type PagesViewerControl = {
+  transform: () => { scale: number; tx: number; ty: number };
+  setTransform: (t: { scale: number; tx: number; ty: number }) => void;
+};
+
 export function PagesViewerBox({
   state,
   fill = false,
+  controlRef,
 }: {
   state: PagesPanelState;
   /** When true, fills 100% of its parent's height instead of using a fixed min-height. Used in "Show Big Page" mode. */
   fill?: boolean;
+  /** 41.88: filled with the viewer's controls while it is mounted. */
+  controlRef?: RefObject<PagesViewerControl | null>;
 }) {
   const { t, viewLoading, viewError, viewMissing, viewData, selectedPageId } = state;
   // Slice #38.17: the turn shown (a state built by hand in a test may not carry one).
@@ -429,6 +442,23 @@ export function PagesViewerBox({
     (contentKind === "image" || contentKind === "pdf");
 
   const [transform, setTransform] = useState(IDENTITY_TRANSFORM);
+  const transformRef = useRef(transform);
+  useEffect(() => {
+    transformRef.current = transform;
+  }, [transform]);
+  useEffect(() => {
+    if (!controlRef) return;
+    controlRef.current = {
+      transform: () => transformRef.current,
+      setTransform: (t) => {
+        transformRef.current = t;
+        setTransform(t);
+      },
+    };
+    return () => {
+      controlRef.current = null;
+    };
+  }, [controlRef]);
 
   // Reset zoom/pan whenever a different page is displayed. This uses React's
   // documented "adjust state during render when a prop changes" pattern
@@ -540,6 +570,7 @@ export function PagesViewerBox({
   return (
     <div
       ref={containerRef}
+      data-pages-viewer={fill ? "big" : "tile"}
       className={
         (fill
           ? "relative h-full w-full overflow-hidden rounded-md border border-wire bg-white dark:border-zinc-700 dark:bg-zinc-950"
@@ -824,6 +855,7 @@ export function PagesPanel({
               size="sm"
               aria-pressed={bigPage}
               onClick={onToggleBigPage}
+              data-pages-expand=""
             />
           )}
           {bigPage && <HelpHint hintKey="big-page-zoom" />}

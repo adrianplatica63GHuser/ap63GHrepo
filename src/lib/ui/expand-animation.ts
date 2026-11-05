@@ -11,8 +11,10 @@
  *   - `playTimeline`, the clock: a frame each time the browser gives one, and a timer at each part's end + 100 ms,
  *     because the desktop app's browser pane gives none at all (58fb1aa8).
  * What moves inside the panel — a map's camera, the tree's scale and pan, the page's — is each one's own module
- * (`expand-map-animation.ts`, `expand-tree-animation.ts`, `expand-page-animation.ts`).
+ * (`expand-map-animation.ts`, `expand-tree-animation.ts`, `expand-page-animation.ts`). The tree's and the page's are
+ * the same kind of thing — a scale and a pan in a box (`View`) — so their return shares `returnViewAt` below.
  */
+import { MIN_RISE, easeInOut as easeSearch, parabolaZoom } from "@/lib/geo/map-search";
 
 export type Rect = { x: number; y: number; w: number; h: number };
 export type Point = { x: number; y: number };
@@ -137,4 +139,49 @@ export function placeRect(el: HTMLElement | null, r: Rect): void {
 /** Under prefers-reduced-motion every part is 0: the panel opens and closes at once. */
 export function prefersReducedMotion(): boolean {
   return typeof window !== "undefined" && (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false);
+}
+
+// ---------------------------------------------------------------------------
+// A scale and a pan in a box — the tree's drawing (41.87), the big page (41.88)
+// ---------------------------------------------------------------------------
+
+/** A point (x, y) of the content stands at (tx + x · scale, ty + y · scale) from the box's top-left. */
+export type View = { scale: number; tx: number; ty: number };
+
+/** The view that holds `at` in the middle of `box` at `scale`. */
+export function centredOn(at: Point, scale: number, box: { w: number; h: number }): View {
+  return { scale, tx: box.w / 2 - at.x * scale, ty: box.h / 2 - at.y * scale };
+}
+
+/** The content point at the middle of `box` under `v`. */
+export function middleOf(v: View, box: { w: number; h: number }): Point {
+  return { x: (box.w / 2 - v.tx) / v.scale, y: (box.h / 2 - v.ty) / v.scale };
+}
+
+/**
+ * R for a return from `from` to `to`, in levels of log2(scale) — 41.76's rule, as the map's `flightRise`: climb until
+ * both middles show in 80 % of the box, at least `MIN_RISE`.
+ */
+export function viewFlightRise(from: View, to: View, box: { w: number; h: number }): number {
+  const a = middleOf(from, box);
+  const b = middleOf(to, box);
+  const dx = Math.abs(a.x - b.x);
+  const dy = Math.abs(a.y - b.y);
+  const seeBoth = Math.min(dx > 0 ? (0.8 * box.w) / dx : Infinity, dy > 0 ? (0.8 * box.h) / dy : Infinity);
+  const low = Math.min(Math.log2(from.scale), Math.log2(to.scale));
+  const peak = Number.isFinite(seeBoth) ? Math.min(low, Math.log2(seeBoth)) : low;
+  return Math.max(MIN_RISE, low - peak);
+}
+
+/**
+ * The return, `t` ms into `ms`: the middle glides from `from`'s to `to`'s while the scale rides 41.76's parabola
+ * (`parabolaZoom`, a = `arc`), as a map's camera does between two searches.
+ */
+export function returnViewAt(t: number, from: View, to: View, box: { w: number; h: number }, ms: number, rise: number, arc: number): View {
+  if (ms <= 0 || t >= ms) return to;
+  const x = easeSearch(Math.max(0, t) / ms);
+  const a = middleOf(from, box);
+  const b = middleOf(to, box);
+  const scale = 2 ** parabolaZoom(x, Math.log2(from.scale), Math.log2(to.scale), rise, arc);
+  return centredOn(lerpPoint(a, b, x), scale, box);
 }

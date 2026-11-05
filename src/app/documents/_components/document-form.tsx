@@ -19,7 +19,7 @@ import {
   useForm,
   useWatch,
 } from "react-hook-form";
-import { ArrowLeft, Minimize2, MousePointerClick, Pencil, Save, Trash2, X } from "lucide-react";
+import { ArrowLeft, MousePointerClick, Pencil, Save, Trash2, X } from "lucide-react";
 import { ENTITY_ICON } from "@/lib/ui/entity-icon";
 import { IconButton } from "@/lib/ui/icon-button";
 import { useUnsavedChangesGuard } from "@/components/providers/unsaved-changes-provider";
@@ -80,7 +80,8 @@ import { IdentityHolderLine, IdentityValidity } from "./identity-tile-parts";
 import { IdCardPeopleAction } from "./id-card-people-action";
 import { SaleObjectRecompose } from "@/components/documents/sale-object-recompose";
 import { SALE_OBJECT_FIELD_KEY } from "@/lib/documents/sale-object-description";
-import { PagesPanel, PagesViewerBox, usePagesPanelState } from "./pages-panel";
+import { PagesPanel, usePagesPanelState } from "./pages-panel";
+import { usePagesTheater } from "./pages-theater";
 import { NewPagesPanel } from "./new-pages-panel";
 import { rememberUnsavedPages, saveNewDocument, type StagedPage } from "@/lib/documents/new-document-pages";
 import { AmendedDeedLink, relinkParentDeed, useParentDeed } from "./amended-deed-panel";
@@ -373,24 +374,10 @@ export function DocumentForm({
   // Shared Pages-panel state — lifted so the panel table and the theater
   // overlay viewer both read/write the same selected-page data.
   const pagesState = usePagesPanelState(documentId);
-  const [bigPage, setBigPage] = useState(false);
-  // Slice #20.16: Theater overlay — opens a portal full-screen pages viewer.
-  const handleToggleBigPage = () => {
-    const next = !bigPage;
-    setBigPage(next);
-    onBigPageChange?.(next);
-  };
-  const handleCloseTheaterPage = () => { setBigPage(false); onBigPageChange?.(false); };
-
-  // Close theater overlay on Escape key.
-  useEffect(() => {
-    if (!bigPage) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") { setBigPage(false); onBigPageChange?.(false); }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [bigPage, onBigPageChange]);
+  // Slice #20.16: Theater overlay — opens a portal full-screen pages viewer. Slice 41.88: grown out of the tile and back
+  // into it, as „Hartă extinsă" is (pages-theater.tsx) — „Restrânge", the backdrop and Escape take the way back.
+  const theater = usePagesTheater({ state: pagesState, onChange: onBigPageChange });
+  const handleToggleBigPage = () => (theater.shown ? theater.close() : theater.open());
 
   const { data: documentTypes, isFetched: documentTypesFetched } = useQuery({
     queryKey: ["document-types"],
@@ -2261,39 +2248,7 @@ export function DocumentForm({
         Reads the same pagesState as the panel above, so selecting a page
         in the overlay immediately reflects in the panel. Dismiss via ✕,
         backdrop, or Escape. */}
-    {bigPage && mode !== "create" && documentId && createPortal(
-      <div role="dialog" aria-modal="true" aria-label={t("pages.theaterTitle")}>
-        {/* Backdrop — click to close */}
-        <div
-          className="fixed inset-0 z-50 bg-scrim/50"
-          aria-hidden="true"
-          onClick={handleCloseTheaterPage}
-        />
-        {/* Panel */}
-        <div
-          className="fixed inset-4 z-50 flex flex-col rounded-xl border border-card-rim bg-raised shadow-2xl overflow-hidden"
-          style={{ animation: "ga-theater-in 180ms ease" }}
-        >
-          {/* Header */}
-          <div className="flex items-center justify-between gap-4 px-4 py-2 border-b border-crease bg-raised">
-            <span className="text-sm font-semibold text-ink">
-              {t("pages.theaterTitle")}
-            </span>
-            {/* #37.44 (A028): Minimize2 in place of „✕ Restrânge"; „Restrânge" its name and tooltip. */}
-            <IconButton icon={Minimize2} label={t("pages.theaterClose")} variant="secondary" size="sm" onClick={handleCloseTheaterPage} />
-          </div>
-          {/* Viewer fills the rest */}
-          <div className="relative flex-1 min-h-0">
-            <div className="absolute inset-0 p-3">
-              <ErrorBoundary fallback={<PanelError>{tShared("errorBoundary.pages")}</PanelError>}>
-                <PagesViewerBox state={pagesState} fill />
-              </ErrorBoundary>
-            </div>
-          </div>
-        </div>
-      </div>,
-      document.body
-    )}
+    {mode !== "create" && documentId && theater.overlay}
 
     {/* ── Action buttons — at the very bottom, full width. In true read-only
          view (opened via ?readonly=true from an association list) this shows

@@ -20,23 +20,27 @@
  * Pure: no DOM, no React. `TreeView` is the drawing's transform in its own box (tile-size.ts): a drawing point (x, y)
  * stands at (tx + x · scale, ty + y · scale) from the box's top-left.
  */
-import { MIN_RISE, flightMs, parabolaZoom } from "@/lib/geo/map-search";
+import { flightMs } from "@/lib/geo/map-search";
 import {
   COLLAPSE_RETURN_TOLERANCE,
   bodyOf,
   centreOf,
-  easeInOut,
+  centredOn,
   expandedRect,
   growProgress,
-  lerp,
   lerpPoint,
   lerpRect,
+  middleOf,
   openingClockBack,
   panelOverTile,
   partTwoProgress,
+  returnViewAt,
+  viewFlightRise,
   type Point,
   type Rect,
 } from "@/lib/ui/expand-animation";
+
+export { centredOn, middleOf };
 import { levelAt } from "@/lib/inheritance/layout";
 import type { TreeView } from "@/lib/inheritance/tile-size";
 
@@ -128,15 +132,6 @@ export function treeViewAt(t: number, p: TreeExpandPlan): TreeView {
   return centredOn(p.person, scale, box);
 }
 
-/** The view that holds `at` in the middle of `box` at `scale`. */
-export function centredOn(at: Point, scale: number, box: { w: number; h: number }): TreeView {
-  return { scale, tx: box.w / 2 - at.x * scale, ty: box.h / 2 - at.y * scale };
-}
-
-/** The drawing point at the middle of `box` under `v`. */
-export function middleOf(v: TreeView, box: { w: number; h: number }): Point {
-  return { x: (box.w / 2 - v.tx) / v.scale, y: (box.h / 2 - v.ty) / v.scale };
-}
 
 // ---------------------------------------------------------------------------
 // The way back
@@ -174,17 +169,8 @@ export function atTreeOpeningEnd(current: TreeView, end: TreeView, person: Point
   return Math.abs(x - box.w / 2) <= COLLAPSE_RETURN_TOLERANCE * box.w && Math.abs(y - box.h / 2) <= COLLAPSE_RETURN_TOLERANCE * box.h;
 }
 
-/** R, in levels of log2(scale): enough to see both middles in the drawing, at least `MIN_RISE` (the map's rule). */
-export function treeFlightRise(from: TreeView, to: TreeView, box: { w: number; h: number }): number {
-  const a = middleOf(from, box);
-  const b = middleOf(to, box);
-  const dx = Math.abs(a.x - b.x);
-  const dy = Math.abs(a.y - b.y);
-  const seeBoth = Math.min(dx > 0 ? (0.8 * box.w) / dx : Infinity, dy > 0 ? (0.8 * box.h) / dy : Infinity);
-  const low = Math.min(Math.log2(from.scale), Math.log2(to.scale));
-  const peak = Number.isFinite(seeBoth) ? Math.min(low, Math.log2(seeBoth)) : low;
-  return Math.max(MIN_RISE, low - peak);
-}
+/** R, in levels of log2(scale): enough to see both middles in the drawing, at least one level (the map's rule). */
+export const treeFlightRise = viewFlightRise;
 
 export function planTreeCollapse(i: TreeCollapseInput): TreeCollapsePlan {
   const measured = i.tileBox !== null && i.personOnScreen !== null;
@@ -219,12 +205,7 @@ export function treeCollapseTotalMs(c: TreeCollapsePlan): number {
 export function treeCollapseViewAt(t: number, c: TreeCollapsePlan): TreeView {
   const o = openingClockBack(t, c.returnMs, c.expand.growMs, c.zoomMs);
   if (o !== null) return treeViewAt(o, c.expand);
-  const box = treeBoxAt(c.expand.growMs, c.expand);
-  const x = easeInOut(Math.max(0, t) / c.returnMs);
-  const a = middleOf(c.current, box);
-  const b = middleOf(c.end, box);
-  const scale = 2 ** parabolaZoom(x, Math.log2(c.current.scale), Math.log2(c.end.scale), c.rise, c.arc);
-  return centredOn({ x: lerp(a.x, b.x, x), y: lerp(a.y, b.y, x) }, scale, box);
+  return returnViewAt(t, c.current, c.end, treeBoxAt(c.expand.growMs, c.expand), c.returnMs, c.rise, c.arc);
 }
 
 /** The panel at `t`: the expanded one until part 1 starts back, then down to the tile. */
